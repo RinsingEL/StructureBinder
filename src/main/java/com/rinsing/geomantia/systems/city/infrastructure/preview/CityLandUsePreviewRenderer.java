@@ -145,9 +145,9 @@ public final class CityLandUsePreviewRenderer {
             throw new IOException("CITY_LAND_USE_PREVIEW_PNG_WRITER_UNAVAILABLE: " + output);
         }
         JsonObject metadata = new JsonObject();
-        metadata.addProperty("schemaVersion", surfacePrintPlan != null
-                ? "city_land_use_preview.v0.5"
-                : urbanSpacePlan == null ? "city_land_use_preview.v0.1" : "city_land_use_preview.v0.2");
+        metadata.addProperty("schema", surfacePrintPlan != null
+                ? "city_land_use_preview"
+                : urbanSpacePlan == null ? "city_land_use_preview" : "city_land_use_preview");
         metadata.addProperty("cityId", plan.cityId());
         metadata.addProperty("planHash", plan.planHash());
         metadata.addProperty("fileName", output.getFileName().toString());
@@ -158,7 +158,7 @@ public final class CityLandUsePreviewRenderer {
         metadata.addProperty("unclaimedSpanCount", plan.unclaimedSpans().size());
         metadata.addProperty("corridorExclusionCount", plan.corridorExclusions().size());
         if (surfacePrintPlan != null) {
-            metadata.addProperty("surfacePrintPlanSchemaVersion", surfacePrintPlan.schemaVersion());
+            metadata.addProperty("surfacePrintPlanSchema", surfacePrintPlan.schema());
             metadata.addProperty("surfacePrintPlanHash", surfacePrintPlan.planHash());
             metadata.addProperty("featureCellCount", surfacePrintPlan.featureCells().size());
             metadata.addProperty("relayGrowthAreaCount", surfacePrintPlan.areas().stream()
@@ -223,7 +223,7 @@ public final class CityLandUsePreviewRenderer {
         }
         if (urbanSpacePlan != null) {
             CityUrbanSpacePlan.CoverageSummary coverage = urbanSpacePlan.coverageSummary();
-            metadata.addProperty("urbanSpacePlanSchemaVersion", urbanSpacePlan.schemaVersion());
+            metadata.addProperty("urbanSpacePlanSchema", urbanSpacePlan.schema());
             metadata.addProperty("urbanSpacePlanHash", urbanSpacePlan.planHash());
             metadata.addProperty("urbanSpaceEnabled", urbanSpacePlan.enabled());
             metadata.addProperty("envelopeBlocks", coverage.envelopeBlocks());

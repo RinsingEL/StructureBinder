@@ -50,7 +50,7 @@ public final class LandUseTerrainFieldCompiler {
                 cells.putIfAbsent(new CellKey(cell.globalCellX(), cell.globalCellZ()), compiled);
             }
         }
-        return new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION, cityId, planningBounds, step,
+        return new LandUseTerrainField(LandUseTerrainField.SCHEMA, cityId, planningBounds, step,
                 new ArrayList<>(cells.values()));
     }
 

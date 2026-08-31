@@ -252,7 +252,7 @@ class CityDecorationNbtPlacerTest {
         NbtIo.writeCompressed(template, root.resolve("templates/test.nbt").toFile());
 
         JsonObject index = new JsonObject();
-        index.addProperty("schemaVersion", CityDecorationContentCatalog.SCHEMA);
+        index.addProperty("schema", CityDecorationContentCatalog.SCHEMA);
         JsonObject content = new JsonObject();
         content.addProperty("contentId", "city:prefab/test");
         content.addProperty("contentKind", "prefab");

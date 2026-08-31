@@ -58,8 +58,8 @@ class PatchCandidateTerrainPreviewServiceTest {
                 "candidate boundary must be highlighted directly on the terrain preview");
 
         JsonObject evidence = first.evidence();
-        assertEquals(PatchCandidateTerrainPreviewService.SCHEMA_VERSION,
-                evidence.get("schemaVersion").getAsString());
+        assertEquals(PatchCandidateTerrainPreviewService.SCHEMA,
+                evidence.get("schema").getAsString());
         assertEquals("candidate_comparison", evidence.get("evaluationLevel").getAsString());
         assertEquals(16, evidence.getAsJsonObject("grid").get("sampleStepBlocks").getAsInt());
         assertEquals(1024, evidence.getAsJsonObject("grid").get("windowDiameterBlocks").getAsInt());

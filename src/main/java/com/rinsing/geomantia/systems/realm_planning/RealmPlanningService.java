@@ -42,7 +42,7 @@ import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
 public final class RealmPlanningService {
-    public static final String SCHEMA_VERSION = "realm_planning.v1.2";
+    public static final String SCHEMA = "realm_planning";
     private static final int DEFAULT_SNAP_RADIUS_CELLS = 2;
     private static final int MIN_SEED_DISTANCE_CELLS = 2;
     public static final int DEFAULT_MICRO_SAMPLE_STRIDE_BLOCKS = 32;
@@ -2192,7 +2192,7 @@ public final class RealmPlanningService {
 
     private JsonObject acceptanceReport(RealmRun run, long durationMs) {
         JsonObject report = new JsonObject();
-        report.addProperty("caseId", "realm_v1_2_quality_acceptance");
+        report.addProperty("caseId", "realm_quality_acceptance");
         report.addProperty("runId", run.runId);
         report.addProperty("durationMs", durationMs);
         JsonObject scoreManifest = run.scoreManifest == null ? scoreManifest(run) : run.scoreManifest;
@@ -2250,7 +2250,7 @@ public final class RealmPlanningService {
         boolean passed = hardBlocks.size() == 0 && totalScore >= 70.0;
 
         JsonObject manifest = new JsonObject();
-        manifest.addProperty("schemaVersion", SCHEMA_VERSION);
+        manifest.addProperty("schema", SCHEMA);
         manifest.addProperty("runId", run.runId);
         manifest.addProperty("surveyId", run.surveyResult.surveyId());
         manifest.addProperty("qualityMode", run.qualityMode);
@@ -2724,7 +2724,7 @@ public final class RealmPlanningService {
 
     private JsonObject surveyJson(RealmRun run) {
         JsonObject json = new JsonObject();
-        json.addProperty("schemaVersion", SCHEMA_VERSION);
+        json.addProperty("schema", SCHEMA);
         json.addProperty("surveyId", run.surveyResult.surveyId());
         json.addProperty("dimensionId", run.surveyResult.dimensionId());
         json.addProperty("worldSeed", run.surveyResult.worldSeed());
@@ -2769,7 +2769,7 @@ public final class RealmPlanningService {
 
     private JsonObject worldPatchMapJson(RealmRun run) {
         JsonObject json = new JsonObject();
-        json.addProperty("schemaVersion", SCHEMA_VERSION);
+        json.addProperty("schema", SCHEMA);
         json.addProperty("surveyId", "survey_" + run.runId);
         JsonArray cells = new JsonArray();
         for (WorldCell cell : run.worldCells) {
@@ -3413,7 +3413,7 @@ public final class RealmPlanningService {
     private JsonObject tagAuditReport(RealmRun run, List<TagAuditSample> samples, int requestedSampleCount,
             int radiusBlocks, int strideBlocks, int slopeRadiusBlocks, String sampleSeed) {
         JsonObject report = new JsonObject();
-        report.addProperty("schemaVersion", SCHEMA_VERSION);
+        report.addProperty("schema", SCHEMA);
         report.addProperty("runId", run.runId);
         report.addProperty("sampleSeed", sampleSeed);
         report.addProperty("requestedSampleCount", requestedSampleCount);
@@ -3658,7 +3658,7 @@ public final class RealmPlanningService {
             };
             String id = "realm_" + names[i % names.length] + "_" + i;
             profiles.add(new RealmProfile(id, displayName(id), continentId, allowAiDraftProfile ? "AI draft realm" : "debug realm",
-                    List.of("debug", "v1_1"), List.of(), List.of(), List.of("plain", "shore", "terrace"),
+                    List.of("debug", "current"), List.of(), List.of(), List.of("plain", "shore", "terrace"),
                     List.of("water", "unknown"), scale, style));
         }
         return profiles;

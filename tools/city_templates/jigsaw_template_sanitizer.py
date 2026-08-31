@@ -17,9 +17,9 @@ from typing import Any, Callable, Iterable
 import nbtlib
 
 
-MANIFEST_SCHEMA = "city_standalone_jigsaw_sanitize_manifest.v0.1"
-AUDIT_SCHEMA = "city_standalone_jigsaw_audit.v0.1"
-SANITIZE_REPORT_SCHEMA = "city_standalone_jigsaw_sanitize_report.v0.1"
+MANIFEST_SCHEMA = "city_standalone_jigsaw_sanitize_manifest"
+AUDIT_SCHEMA = "city_standalone_jigsaw_audit"
+SANITIZE_REPORT_SCHEMA = "city_standalone_jigsaw_sanitize_report"
 BLOCK_STATE_PATTERN = re.compile(r"^([a-z0-9_.-]+:[a-z0-9_./-]+)(?:\[([^]]+)\])?$")
 RESOURCE_LOCATION_PATTERN = re.compile(r"^([a-z0-9_.-]+):([a-z0-9_./-]+)$")
 CARDINAL_DIRECTIONS = {"north", "south", "east", "west"}
@@ -329,7 +329,7 @@ def build_audit(source: Path, target_namespace: str,
             }
         entries.append(entry)
     report = {
-        "schemaVersion": AUDIT_SCHEMA,
+        "schema": AUDIT_SCHEMA,
         "sourceRoot": str(source_root),
         "summary": {
             "templateCount": len(entries),
@@ -340,7 +340,7 @@ def build_audit(source: Path, target_namespace: str,
         "templates": entries,
     }
     draft = {
-        "schemaVersion": MANIFEST_SCHEMA,
+        "schema": MANIFEST_SCHEMA,
         "sourceRoot": str(source_root),
         "templates": draft_templates,
     }
@@ -352,8 +352,8 @@ def load_manifest(path: Path) -> dict[str, Any]:
         value = json.loads(path.read_text(encoding="utf-8"))
     except Exception as ex:
         raise SanitizeFailure("JIGSAW_MANIFEST_INVALID", str(ex)) from ex
-    if value.get("schemaVersion") != MANIFEST_SCHEMA:
-        raise SanitizeFailure("JIGSAW_MANIFEST_SCHEMA_UNSUPPORTED", str(value.get("schemaVersion")))
+    if value.get("schema") != MANIFEST_SCHEMA:
+        raise SanitizeFailure("JIGSAW_MANIFEST_SCHEMA_UNSUPPORTED", str(value.get("schema")))
     templates = value.get("templates")
     if not isinstance(templates, list) or not templates:
         raise SanitizeFailure("JIGSAW_MANIFEST_EMPTY", "templates must be a non-empty array")
@@ -472,7 +472,7 @@ def sanitize(source_root: Path, output_root: Path, manifest: dict[str, Any],
                 if temporary is not None and temporary.exists():
                     temporary.unlink()
     return {
-        "schemaVersion": SANITIZE_REPORT_SCHEMA,
+        "schema": SANITIZE_REPORT_SCHEMA,
         "sourceRoot": str(source_root.resolve()),
         "outputRoot": str(output_root.resolve()),
         "dryRun": dry_run,

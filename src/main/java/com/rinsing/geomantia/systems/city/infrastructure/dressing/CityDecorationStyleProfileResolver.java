@@ -30,11 +30,11 @@ public final class CityDecorationStyleProfileResolver {
                     program.terrainPolicy(), program.conflictPolicy(), program.priority(), program.seed()));
             resolutions.add(palette.trace());
         }
-        DecorationProgramIntentPlan resolved = new DecorationProgramIntentPlan(intentPlan.schemaVersion(),
+        DecorationProgramIntentPlan resolved = new DecorationProgramIntentPlan(intentPlan.schema(),
                 intentPlan.cityId(), intentPlan.catalogHash(), intentPlan.styleProfileId(),
                 intentPlan.styleProfileHash(), programs);
         JsonObject trace = new JsonObject();
-        trace.addProperty("schemaVersion", "city_decoration_style_resolution.v0.1");
+        trace.addProperty("schema", "city_decoration_style_resolution");
         trace.addProperty("styleProfileId", styleProfile.styleProfileId());
         trace.addProperty("styleProfileHash", styleProfile.styleProfileHash());
         trace.add("programs", resolutions);

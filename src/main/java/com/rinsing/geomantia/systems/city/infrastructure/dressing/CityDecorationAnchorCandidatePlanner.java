@@ -19,8 +19,8 @@ import java.util.TreeMap;
 
 /** Finds reviewable anchors for a single required prefab without reading or mutating world chunks. */
 public final class CityDecorationAnchorCandidatePlanner {
-    public static final String CANDIDATE_SET_SCHEMA = "city_decoration_anchor_candidate_set.v0.1";
-    public static final String QUALITY_SCHEMA = "city_decoration_anchor_candidate_quality.v0.1";
+    public static final String CANDIDATE_SET_SCHEMA = "city_decoration_anchor_candidate_set";
+    public static final String QUALITY_SCHEMA = "city_decoration_anchor_candidate_quality";
     private static final int MAX_INTERIOR_CLEARANCE_SCORE_BLOCKS = 8;
     private static final int MAX_OBSTACLE_CLEARANCE_SCORE_BLOCKS = 16;
 
@@ -267,7 +267,7 @@ public final class CityDecorationAnchorCandidatePlanner {
                                            List<FixedDecoration> fixedDecorations,
                                            JsonObject rejectionCounts) {
         JsonObject root = new JsonObject();
-        root.addProperty("schemaVersion", CANDIDATE_SET_SCHEMA);
+        root.addProperty("schema", CANDIDATE_SET_SCHEMA);
         root.addProperty("cityId", plan.cityId());
         root.addProperty("catalogHash", plan.catalogHash());
         root.addProperty("programId", program.programId());
@@ -333,7 +333,7 @@ public final class CityDecorationAnchorCandidatePlanner {
                                             int selectedCount,
                                             JsonObject rejectionCounts) {
         JsonObject root = new JsonObject();
-        root.addProperty("schemaVersion", QUALITY_SCHEMA);
+        root.addProperty("schema", QUALITY_SCHEMA);
         root.addProperty("cityId", plan.cityId());
         root.addProperty("programId", program.programId());
         root.addProperty("passed", selectedCount > 0);

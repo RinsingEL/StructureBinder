@@ -75,7 +75,7 @@ record CityDecorationTerrainRunTestFixture(CityDecorationContentCatalog catalog,
         JsonArray contents = new JsonArray();
         contents.add(content);
         JsonObject index = new JsonObject();
-        index.addProperty("schemaVersion", CityDecorationContentCatalog.SCHEMA);
+        index.addProperty("schema", CityDecorationContentCatalog.SCHEMA);
         index.add("contents", contents);
         Files.writeString(root.resolve("content_index.json"), CityJson.GSON.toJson(index));
         return new CityDecorationContentCatalogLoader().load(root);

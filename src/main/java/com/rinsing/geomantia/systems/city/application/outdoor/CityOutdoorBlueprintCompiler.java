@@ -12,10 +12,12 @@ import com.rinsing.geomantia.systems.city.application.landuse.LandUseTerrainFiel
 import com.rinsing.geomantia.systems.city.algorithm.landuse.CityFoundationPlanner;
 import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprint;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSeedGroup;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandscapeFillProgram;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSurfaceSettings;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseTerrainField;
 import com.rinsing.geomantia.systems.city.domain.landuse.BoundaryPolicy;
+import com.rinsing.geomantia.systems.city.domain.landuse.CardinalDirection;
 import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRule;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
@@ -91,6 +93,10 @@ public final class CityOutdoorBlueprintCompiler {
                 .filter(footprint -> !allFootprints.contains(footprint))
                 .forEach(allFootprints::add);
         List<String> allAnchorIds = foundationAnchors.stream().map(AnchorData::anchorId).sorted().toList();
+        List<LandUseAreaPlan.GateSlot> foundationGates =
+                foundationAnchors.stream().flatMap(anchor -> anchor.gates().stream())
+                        .sorted(Comparator.comparing(LandUseAreaPlan.GateSlot::gateId))
+                        .toList();
         CityBlueprintReferenceCatalog.FoundationProfile foundationProfile = catalog.foundationProfiles().get(
                 blueprint.outdoorPlan().foundationProfileRef());
         if (foundationProfile == null) {
@@ -115,7 +121,7 @@ public final class CityOutdoorBlueprintCompiler {
         List<LandUseSeedGroup> groups = new ArrayList<>();
         groups.add(new LandUseSeedGroup(foundationGroupId, foundationRule,
                 surfaceSettings(foundationRule, foundationRecipe, false), allAnchorIds, structureFootprints,
-                foundationSeeds, List.of(), foundationArea, foundationArea, foundationArea,
+                foundationSeeds, foundationGates, foundationArea, foundationArea, foundationArea,
                 foundationRule.actionBudget(), foundationRule.competitionWeight(), List.of(foundationRegion),
                 LandUseSeedGroup.GrowthBias.neutral(), LandUseSeedGroup.TerrainBias.BALANCED, List.of(),
                 LandUseSeedGroup.LayerRole.FOUNDATION, foundationSettings));
@@ -257,7 +263,7 @@ public final class CityOutdoorBlueprintCompiler {
     private static CityOutdoorIntentPlan preserveIntent(CityBlueprint blueprint,
                                                         CityBlueprintReferenceCatalog catalog,
                                                         SourceHashes sourceHashes) {
-        return new CityOutdoorIntentPlan(CityOutdoorIntentPlan.SCHEMA_VERSION, blueprint.cityId(),
+        return new CityOutdoorIntentPlan(CityOutdoorIntentPlan.SCHEMA, blueprint.cityId(),
                 CityBlueprint.OutdoorMode.PRESERVE, catalog.landUseRuleCatalog().profileHash(),
                 sourceHashes.blueprint(), sourceHashes.d6(), sourceHashes.terrain(), sourceHashes.catalog(),
                 "", List.of(),
@@ -271,7 +277,7 @@ public final class CityOutdoorBlueprintCompiler {
                                                 List<CityOutdoorIntentPlan.SourceIntent> sources,
                                                 Set<String> urbanGroupIds,
                                                 int closeRadius) {
-        return new CityOutdoorIntentPlan(CityOutdoorIntentPlan.SCHEMA_VERSION, blueprint.cityId(),
+        return new CityOutdoorIntentPlan(CityOutdoorIntentPlan.SCHEMA, blueprint.cityId(),
                 blueprint.outdoorPlan().mode(), catalog.landUseRuleCatalog().profileHash(),
                 sourceHashes.blueprint(), sourceHashes.d6(), sourceHashes.terrain(), sourceHashes.catalog(),
                 "", sources,
@@ -704,6 +710,7 @@ public final class CityOutdoorBlueprintCompiler {
             if (collision.size() == 0) {
                 throw new IllegalArgumentException("CITY_OUTDOOR_D6_COLLISION_MISSING:" + anchorId);
             }
+            List<LandUseAreaPlan.GateSlot> gates = roadEntranceGates(item, anchorId);
             BlockPoint entrance = firstRoadEntrance(item);
             JsonObject parcelPlan = object(item, "buildingParcelPlan");
             BlockBounds buildingParcelBounds = parcelPlan.size() == 0
@@ -719,7 +726,7 @@ public final class CityOutdoorBlueprintCompiler {
                     requiredString(parcelPlan, "greeneryDensity"))
                     : CityBlueprintReferenceCatalog.GreenParcelDensity.LOW;
             result.computeIfAbsent(groupId, ignored -> new ArrayList<>()).add(new AnchorData(anchorId, groupId,
-                    structureRef, bounds(footprint), bounds(collision), entrance, phase,
+                    structureRef, bounds(footprint), bounds(collision), entrance, gates, phase,
                     buildingParcelBounds, greenerySelected, greeneryPattern, greeneryDensity));
         }
         result.replaceAll((ignored, values) -> values.stream().sorted(Comparator.comparing(AnchorData::anchorId))
@@ -822,6 +829,26 @@ public final class CityOutdoorBlueprintCompiler {
         return List.copyOf(result);
     }
 
+    private static List<LandUseAreaPlan.GateSlot> roadEntranceGates(JsonObject item, String anchorId) {
+        JsonObject placement = object(item, "templatePlacementPlan");
+        JsonObject transformed = object(placement, "transformed");
+        JsonArray entrances = array(transformed, "roadEntrances");
+        List<LandUseAreaPlan.GateSlot> result = new ArrayList<>();
+        int ordinal = 0;
+        for (JsonElement element : entrances) {
+            if (!element.isJsonObject()) continue;
+            JsonObject entrance = element.getAsJsonObject();
+            JsonObject position = object(entrance, "worldPosition");
+            CardinalDirection direction = CardinalDirection.from(
+                    stringValue(entrance, "direction", ""), null);
+            if (position.size() == 0 || direction == null) continue;
+            String entranceId = stringValue(entrance, "entranceId", "entrance_" + (++ordinal));
+            result.add(new LandUseAreaPlan.GateSlot(
+                    anchorId + "::" + entranceId, point(position), direction, anchorId));
+        }
+        return List.copyOf(result);
+    }
+
     private static BlockPoint firstRoadEntrance(JsonObject item) {
         JsonObject placement = object(item, "templatePlacementPlan");
         JsonObject transformed = object(placement, "transformed");
@@ -902,8 +929,8 @@ public final class CityOutdoorBlueprintCompiler {
             }
             return CapacityReservation.empty();
         }
-        if (!CityLandscapeCapacityReservationPlanner.SCHEMA_VERSION.equals(
-                stringValue(plan, "schemaVersion", ""))
+        if (!CityLandscapeCapacityReservationPlanner.SCHEMA.equals(
+                stringValue(plan, "schema", ""))
                 || !blueprint.cityId().equals(stringValue(plan, "cityId", ""))
                 || !"reserved".equals(stringValue(plan, "status", ""))) {
             throw new IllegalArgumentException("CITY_OUTDOOR_LANDSCAPE_CAPACITY_STALE");
@@ -1146,11 +1173,15 @@ public final class CityOutdoorBlueprintCompiler {
                               BlockBounds footprint,
                               BlockBounds collision,
                               BlockPoint entrance,
+                              List<LandUseAreaPlan.GateSlot> gates,
                               BlueprintPlacementPhase phase,
                               BlockBounds buildingParcelBounds,
                               boolean greenerySelected,
                               CityBlueprintReferenceCatalog.GreenParcelPattern greeneryPattern,
                               CityBlueprintReferenceCatalog.GreenParcelDensity greeneryDensity) {
+        private AnchorData {
+            gates = List.copyOf(gates);
+        }
     }
 
     private record ParcelSpec(String parcelId,

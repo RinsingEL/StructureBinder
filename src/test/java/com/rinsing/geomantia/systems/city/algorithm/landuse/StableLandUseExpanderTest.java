@@ -55,7 +55,7 @@ class StableLandUseExpanderTest {
                         "minecraft:plains", "plain", "plain", true));
             }
         }
-        return new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION, "city_test",
+        return new LandUseTerrainField(LandUseTerrainField.SCHEMA, "city_test",
                 new BlockBounds(0, 0, 63, 39), 4, cells);
     }
 }

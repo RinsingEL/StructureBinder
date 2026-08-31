@@ -13,7 +13,7 @@ import java.util.Set;
 /** Strict codec for activation-time terrain runs and foundation segments. */
 public final class CityDecorationFrozenTerrainPlanCodec {
     private static final Set<String> ROOT_FIELDS = Set.of(
-            "schemaVersion", "cityId", "catalogHash", "runs", "foundationSegments");
+            "schema", "cityId", "catalogHash", "runs", "foundationSegments");
     private static final Set<String> RUN_FIELDS = Set.of(
             "runId", "programId", "paletteSlotId", "continuationAxis", "crossCoordinate",
             "terminationOrdinal", "terminationReasonCode", "slots", "foundationSegments");
@@ -29,7 +29,7 @@ public final class CityDecorationFrozenTerrainPlanCodec {
 
     public JsonObject toJson(CityDecorationTerrainRunCompiler.FrozenPlan plan) {
         JsonObject root = new JsonObject();
-        root.addProperty("schemaVersion", plan.schemaVersion());
+        root.addProperty("schema", plan.schema());
         root.addProperty("cityId", plan.cityId());
         root.addProperty("catalogHash", plan.catalogHash());
         JsonArray runs = new JsonArray();
@@ -89,7 +89,7 @@ public final class CityDecorationFrozenTerrainPlanCodec {
         for (JsonElement element : array(root, "foundationSegments")) {
             segments.add(parseSegment(object(element, "foundation segment")));
         }
-        return new CityDecorationTerrainRunCompiler.FrozenPlan(string(root, "schemaVersion"),
+        return new CityDecorationTerrainRunCompiler.FrozenPlan(string(root, "schema"),
                 string(root, "cityId"), string(root, "catalogHash"), runs, segments);
     }
 
@@ -170,7 +170,7 @@ public final class CityDecorationFrozenTerrainPlanCodec {
     }
 
     private static void requireSchema(JsonObject root) {
-        String schema = string(root, "schemaVersion");
+        String schema = string(root, "schema");
         if (!CityDecorationTerrainRunCompiler.SCHEMA.equals(schema)) {
             throw new IllegalArgumentException("CITY_DECORATION_FROZEN_TERRAIN_SCHEMA_UNSUPPORTED");
         }

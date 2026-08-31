@@ -14,7 +14,7 @@ class LandUseIntentPlanCodecTest {
     void parsesLockedPublicWireShape() {
         LandUseIntentPlan plan = new LandUseIntentPlanCodec().parse(JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_land_use_intent_plan.v0.3",
+                  "schema":"city_land_use_intent_plan",
                   "cityId":"city_test",
                   "seedSalt":"reviewed",
                   "groupOverrides":[{"groupId":"market","memberAnchorIds":["a","b"],"ruleRef":"plaza"}],
@@ -58,26 +58,26 @@ class LandUseIntentPlanCodecTest {
     void rejectsUnknownFieldsAndInvalidRuleModes() {
         assertThrows(IllegalArgumentException.class, () -> new LandUseIntentPlanCodec().parse(
                 JsonParser.parseString("""
-                        {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"c","cost":1}
+                        {"schema":"city_land_use_intent_plan","cityId":"c","cost":1}
                         """).getAsJsonObject(), "c"));
         assertThrows(IllegalArgumentException.class, () -> new LandUseIntentPlanCodec().parse(
                 JsonParser.parseString("""
-                        {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"c",
+                        {"schema":"city_land_use_intent_plan","cityId":"c",
                          "subjectOverrides":[{"targetType":"group","targetId":"g","mode":"exclude","ruleRef":"plaza"}]}
                         """).getAsJsonObject(), "c"));
         assertThrows(IllegalArgumentException.class, () -> new LandUseIntentPlanCodec().parse(
                 JsonParser.parseString("""
-                        {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"c",
+                        {"schema":"city_land_use_intent_plan","cityId":"c",
                          "continuityOverrides":[]}
                         """).getAsJsonObject(), "c"));
         assertThrows(IllegalArgumentException.class, () -> new LandUseIntentPlanCodec().parse(
                 JsonParser.parseString("""
-                        {"schemaVersion":"city_land_use_intent_plan.v0.1","cityId":"c",
+                        {"schema":"obsolete_city_land_use_intent_plan","cityId":"c",
                          "groupOverrides":[]}
                         """).getAsJsonObject(), "c"));
         assertThrows(IllegalArgumentException.class, () -> new LandUseIntentPlanCodec().parse(
                 JsonParser.parseString("""
-                        {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"c",
+                        {"schema":"city_land_use_intent_plan","cityId":"c",
                          "surfaceOverrides":[
                            {"targetGroupId":"g","autoConnect":true},
                            {"targetGroupId":"g","surfacePrintEnabled":false}
@@ -85,34 +85,34 @@ class LandUseIntentPlanCodecTest {
                         """).getAsJsonObject(), "c"));
         assertThrows(IllegalArgumentException.class, () -> new LandUseIntentPlanCodec().parse(
                 JsonParser.parseString("""
-                        {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"c",
+                        {"schema":"city_land_use_intent_plan","cityId":"c",
                          "surfaceOverrides":[{"targetGroupId":"g","surfaceBlockId":"Minecraft:Stone"}]}
                         """).getAsJsonObject(), "c"));
         assertThrows(IllegalArgumentException.class, () -> new LandUseIntentPlanCodec().parse(
                 JsonParser.parseString("""
-                        {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"c",
+                        {"schema":"city_land_use_intent_plan","cityId":"c",
                          "surfaceOverrides":[{"targetGroupId":"g","autoConnect":"yes"}]}
                         """).getAsJsonObject(), "c"));
         assertThrows(IllegalArgumentException.class, () -> new LandUseIntentPlanCodec().parse(
                 JsonParser.parseString("""
-                        {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"c",
+                        {"schema":"city_land_use_intent_plan","cityId":"c",
                          "surfaceOverrides":[{"targetGroupId":"g","autoConnectDistanceBlocks":64}]}
                         """).getAsJsonObject(), "c"));
         LandUseIntentPlan anchorOnly = new LandUseIntentPlanCodec().parse(
                 JsonParser.parseString("""
-                        {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"c",
+                        {"schema":"city_land_use_intent_plan","cityId":"c",
                          "surfaceOverrides":[{"targetGroupId":"g","algorithmAnchor":{"x":1,"z":2}}]}
                         """).getAsJsonObject(), "c");
         assertEquals(new BlockPoint(1, 2), anchorOnly.surfaceOverrides().get(0).algorithmAnchor());
         assertThrows(IllegalArgumentException.class, () -> new LandUseIntentPlanCodec().parse(
                 JsonParser.parseString("""
-                        {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"c",
+                        {"schema":"city_land_use_intent_plan","cityId":"c",
                          "surfaceOverrides":[{"targetGroupId":"g","directionMode":"radial",
                          "directionCenter":{"x":1,"z":2}}]}
                         """).getAsJsonObject(), "c"));
         assertThrows(IllegalArgumentException.class, () -> new LandUseIntentPlanCodec().parse(
                 JsonParser.parseString("""
-                        {"schemaVersion":"city_land_use_intent_plan.v0.2","cityId":"c"}
+                        {"schema":"obsolete_city_land_use_intent_plan","cityId":"c"}
                         """).getAsJsonObject(), "c"));
     }
 
@@ -120,7 +120,7 @@ class LandUseIntentPlanCodecTest {
     void explicitNullAlgorithmAnchorMeansNoGroupOverride() {
         LandUseIntentPlan plan = new LandUseIntentPlanCodec().parse(
                 JsonParser.parseString("""
-                        {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"c",
+                        {"schema":"city_land_use_intent_plan","cityId":"c",
                          "surfaceOverrides":[{
                            "targetGroupId":"g","surfaceAlgorithm":"contour_bands",
                            "algorithmAnchor":null

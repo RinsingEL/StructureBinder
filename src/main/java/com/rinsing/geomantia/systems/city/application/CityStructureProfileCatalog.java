@@ -20,9 +20,8 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 public final class CityStructureProfileCatalog {
-    public static final String SCHEMA_VERSION = "city_semantic_profile_catalog.v0.4";
-    public static final String SOURCE_SCHEMA_V01 = "terrasense_structure_profile_source.v0.1";
-    public static final String SOURCE_SCHEMA_V02 = "terrasense_structure_profile_source.v0.2";
+    public static final String SCHEMA = "city_semantic_profile_catalog";
+    public static final String SOURCE_SCHEMA = "terrasense_structure_profile_source";
     private static final Pattern RESOURCE_ID = Pattern.compile("[a-z0-9_.-]+:[a-z0-9_./-]+");
     private static final Set<String> LEGACY_SEMANTIC_FIELDS = Set.of(
             "semanticTerms", "semantic_terms",
@@ -181,10 +180,13 @@ public final class CityStructureProfileCatalog {
     }
 
     private static SourceDescriptor validateSourceDescriptor(JsonObject source) {
-        String schema = requiredString(source, "schemaVersion");
+        String schema = requiredString(source, "schema");
         String sourceType = requiredString(source, "sourceType");
         String catalogMode = requiredString(source, "catalogMode");
-        if (SOURCE_SCHEMA_V01.equals(schema)) {
+        if (!SOURCE_SCHEMA.equals(schema)) {
+            throw new IllegalArgumentException("Unsupported TerraSense profile source schema: " + schema);
+        }
+        if (Set.of("official", "debug").contains(catalogMode)) {
             if (!Set.of("official", "debug").contains(catalogMode)) {
                 throw new IllegalArgumentException("Unsupported catalogMode for " + schema + ": " + catalogMode);
             }
@@ -196,7 +198,7 @@ public final class CityStructureProfileCatalog {
             }
             return new SourceDescriptor(sourceType, catalogMode, false);
         }
-        if (SOURCE_SCHEMA_V02.equals(schema)) {
+        if ("binder".equals(catalogMode)) {
             if (!"binder".equals(catalogMode)) {
                 throw new IllegalArgumentException("Unsupported catalogMode for " + schema + ": " + catalogMode);
             }
@@ -213,7 +215,7 @@ public final class CityStructureProfileCatalog {
             requiredString(source, "vocabularySnapshotPath");
             return new SourceDescriptor(sourceType, catalogMode, true);
         }
-        throw new IllegalArgumentException("Unsupported TerraSense profile source schemaVersion: " + schema);
+        throw new IllegalArgumentException("Unsupported catalogMode for " + schema + ": " + catalogMode);
     }
 
     private static Path resolve(Path baseDirectory, String raw) {
@@ -340,7 +342,7 @@ public final class CityStructureProfileCatalog {
 
         public JsonObject asJson() {
             JsonObject obj = new JsonObject();
-            obj.addProperty("schemaVersion", SCHEMA_VERSION);
+            obj.addProperty("schema", SCHEMA);
             obj.addProperty("catalogMode", catalogMode);
             obj.add("source", source.deepCopy());
             JsonArray array = new JsonArray();

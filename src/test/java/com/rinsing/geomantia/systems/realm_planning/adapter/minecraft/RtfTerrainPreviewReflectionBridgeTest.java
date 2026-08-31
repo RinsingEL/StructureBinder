@@ -33,7 +33,7 @@ class RtfTerrainPreviewReflectionBridgeTest {
         assertFalse(sample.water());
         assertEquals("rtf:plateau", sample.terrainId());
         assertEquals("rtf:temperate_forest", sample.sourceBiomeId());
-        assertEquals("v0_0_5", binding.apiVariant());
+        assertEquals("inferred_climate", binding.apiVariant());
         assertEquals(1, heightmap.calls);
     }
 
@@ -51,7 +51,7 @@ class RtfTerrainPreviewReflectionBridgeTest {
         assertEquals(50, sample.elevation());
         assertTrue(sample.water());
         assertTrue(heightmap.applyClimate);
-        assertEquals("v0_0_6", binding.apiVariant());
+        assertEquals("explicit_climate", binding.apiVariant());
     }
 
     @Test

@@ -34,7 +34,7 @@ import java.util.Set;
 
 /** Produces one height-colored, shaded and candidate-highlighted terrain preview. */
 public final class PatchCandidateTerrainPreviewService {
-    public static final String SCHEMA_VERSION = "patch_candidate_terrain_preview.v0.1";
+    public static final String SCHEMA = "patch_candidate_terrain_preview";
     public static final String REQUIRED_NEXT_GATE = RealmT4CoarseTerrainPreviewService.REQUIRED_NEXT_GATE;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final int[][] CARDINAL = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
@@ -102,7 +102,7 @@ public final class PatchCandidateTerrainPreviewService {
         }
         try {
             JsonObject evidence = readObject(evidencePath);
-            if (!SCHEMA_VERSION.equals(stringValue(evidence, "schemaVersion", ""))
+            if (!SCHEMA.equals(stringValue(evidence, "schema", ""))
                     || !sourceIdentity.equals(stringValue(evidence, "sourceIdentity", ""))) {
                 return null;
             }
@@ -263,7 +263,7 @@ public final class PatchCandidateTerrainPreviewService {
             ViewGrid viewGrid, TerrainPreviewProviderSelection selection, List<SampleCell> cells,
             BuildableResult buildable, Path runDirectory, Path terrainPreviewPath) {
         JsonObject root = new JsonObject();
-        root.addProperty("schemaVersion", SCHEMA_VERSION);
+        root.addProperty("schema", SCHEMA);
         root.addProperty("runId", runId);
         root.addProperty("realmId", realmId);
         root.addProperty("dimensionId", dimensionId);
@@ -313,7 +313,7 @@ public final class PatchCandidateTerrainPreviewService {
 
     private static JsonObject buildabilityPolicy() {
         JsonObject policy = new JsonObject();
-        policy.addProperty("policyId", "patch_candidate_buildability_advisory_v0_1");
+        policy.addProperty("policyId", "patch_candidate_buildability_advisory");
         policy.addProperty("maximumSlopeDegrees", MAX_BUILDABLE_SLOPE_DEGREES);
         policy.addProperty("maximumLocalReliefBlocks", MAX_BUILDABLE_LOCAL_RELIEF_BLOCKS);
         policy.addProperty("waterAllowed", false);
@@ -474,7 +474,7 @@ public final class PatchCandidateTerrainPreviewService {
     private static String sourceIdentity(String runId, String realmId, String dimensionId,
             String scopeSourceIdentity, Target target, Level level, ViewGrid viewGrid,
             TerrainPreviewProviderSelection selection) {
-        StringBuilder source = new StringBuilder(String.join("\n", SCHEMA_VERSION, runId, realmId, dimensionId,
+        StringBuilder source = new StringBuilder(String.join("\n", SCHEMA, runId, realmId, dimensionId,
                 scopeSourceIdentity, target.scopeType(), target.candidateId(), level.contractName(),
                 Integer.toString(viewGrid.sampleStepBlocks()), Integer.toString(viewGrid.minBlockX()),
                 Integer.toString(viewGrid.minBlockZ()), Integer.toString(viewGrid.windowDiameterBlocks()),

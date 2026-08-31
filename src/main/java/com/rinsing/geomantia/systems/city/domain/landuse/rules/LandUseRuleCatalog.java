@@ -15,7 +15,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 
 public final class LandUseRuleCatalog {
-    public static final String RULE_VERSION = "city_land_use_rules.v0.1";
+    public static final String RULE_VERSION = "city_land_use_rules";
 
     private final Map<String, LandUseRule> rules;
 

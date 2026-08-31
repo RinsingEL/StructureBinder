@@ -218,7 +218,7 @@ class CityDecorationProgramPlannerTest {
                 .getMessage().contains("FIELD_UNSUPPORTED"));
 
         JsonObject legacy = valid.deepCopy();
-        legacy.addProperty("schemaVersion", "city_dressing_brush_plan.v0.1");
+        legacy.addProperty("schema", "city_dressing_brush_plan");
         assertTrue(assertThrows(IllegalArgumentException.class, () -> codec.parsePlan(legacy))
                 .getMessage().contains("SCHEMA_UNSUPPORTED"));
 
@@ -226,7 +226,7 @@ class CityDecorationProgramPlannerTest {
         DecorationProgramIntentPlan parsed = planner.parse(valid);
         CompiledDecorationProgramPlan compiled = planner.compile(parsed, ignored ->
                 new ResolvedDecorationProgramContext(fullMask(), defaultFrame()));
-        assertEquals(CompiledDecorationProgramPlan.SCHEMA, compiled.schemaVersion());
+        assertEquals(CompiledDecorationProgramPlan.SCHEMA, compiled.schema());
         assertEquals("catalog_sha256", compiled.catalogHash());
         assertFalse(planner.project(compiled, WHOLE).isEmpty());
     }

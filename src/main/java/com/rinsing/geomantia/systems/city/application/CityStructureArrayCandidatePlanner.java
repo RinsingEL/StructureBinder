@@ -24,8 +24,8 @@ import java.util.Map;
 import java.util.Set;
 
 public final class CityStructureArrayCandidatePlanner {
-    public static final String PLAN_SCHEMA = "city_d4_array_candidate_plan.v0.1";
-    public static final String CANDIDATE_SET_SCHEMA = "city_d4_array_candidate_set.v0.1";
+    public static final String PLAN_SCHEMA = "city_d4_array_candidate_plan";
+    public static final String CANDIDATE_SET_SCHEMA = "city_d4_array_candidate_set";
 
     private static final int MAX_GROUP_CANDIDATES = 5;
     private static final List<String> DEFAULT_PATTERNS =
@@ -136,7 +136,7 @@ public final class CityStructureArrayCandidatePlanner {
         }
 
         JsonObject candidateSet = new JsonObject();
-        candidateSet.addProperty("schemaVersion", CANDIDATE_SET_SCHEMA);
+        candidateSet.addProperty("schema", CANDIDATE_SET_SCHEMA);
         candidateSet.addProperty("cityId", reviewPackage.cityId());
         candidateSet.addProperty("arrayId", arrayId);
         candidateSet.addProperty("displayRole", displayRole);
@@ -277,11 +277,11 @@ public final class CityStructureArrayCandidatePlanner {
         candidate.add("scoreBreakdown", score(pattern, pivot, groupCollisionUnion, items.size(), arrayCount));
         candidate.add("risks", risks(pivot, rejected));
         JsonObject expanded = new JsonObject();
-        expanded.addProperty("schemaVersion", CityStructureAnchorPlanner.PLAN_SCHEMA);
+        expanded.addProperty("schema", CityStructureAnchorPlanner.PLAN_SCHEMA);
         expanded.addProperty("cityId", stringValue(plan, "cityId", ""));
         expanded.add("anchors", anchors);
         JsonObject trace = new JsonObject();
-        trace.addProperty("schemaVersion", PLAN_SCHEMA);
+        trace.addProperty("schema", PLAN_SCHEMA);
         trace.addProperty("arrayId", arrayId);
         trace.addProperty("arrayPattern", pattern);
         trace.addProperty("arrayShape", compoundShape(plan, pattern));

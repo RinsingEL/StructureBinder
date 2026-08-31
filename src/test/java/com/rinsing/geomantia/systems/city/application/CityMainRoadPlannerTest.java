@@ -98,7 +98,7 @@ class CityMainRoadPlannerTest {
     void waterBarrierWithRealExitsCreatesCityOwnedBridgeBands() {
         List<LandUseTerrainField.Cell> cells = List.of(cell(0, 0, false), cell(1, 0, true),
                 cell(2, 0, false));
-        LandUseTerrainField terrain = new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION,
+        LandUseTerrainField terrain = new LandUseTerrainField(LandUseTerrainField.SCHEMA,
                 "city:test", new BlockBounds(0, 0, 95, 31), 32, cells);
 
         CityMainRoadPlanner.Result result = planner.plan(blueprint("HIERARCHICAL"),
@@ -124,7 +124,7 @@ class CityMainRoadPlannerTest {
     void spatialGrowthSkipDoesNotCancelExplicitTrafficBridge() {
         List<LandUseTerrainField.Cell> cells = List.of(cell(0, 0, false), cell(1, 0, true),
                 cell(2, 0, false));
-        LandUseTerrainField terrain = new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION,
+        LandUseTerrainField terrain = new LandUseTerrainField(LandUseTerrainField.SCHEMA,
                 "city:test", new BlockBounds(0, 0, 95, 31), 32, cells);
 
         CityMainRoadPlanner.Result result = planner.plan(blueprint("HIERARCHICAL"),
@@ -161,7 +161,7 @@ class CityMainRoadPlannerTest {
     @Test
     void hierarchyAndParentArrayWithoutExplicitTrafficConnectionDoNotCreateRoads() {
         CityBlueprint source = blueprint("HIERARCHICAL");
-        CityBlueprint noTraffic = new CityBlueprint(source.schemaVersion(), source.cityId(),
+        CityBlueprint noTraffic = new CityBlueprint(source.schema(), source.cityId(),
                 source.sourceD3Ref(), source.catalogSnapshotRef(), source.generationSeed(),
                 source.designIntent(), source.styleProfile(), source.groups(), source.arrayCompositions(),
                 List.of(new CityBlueprint.Relation("a", "b", CityBlueprint.RelationKind.HIERARCHY,
@@ -220,7 +220,7 @@ class CityMainRoadPlannerTest {
     }
 
     private static CityBlueprint blueprint(String hierarchy) {
-        return new CityBlueprint(CityBlueprint.SCHEMA_VERSION, "city:test",
+        return new CityBlueprint(CityBlueprint.SCHEMA, "city:test",
                 new CityBlueprint.ArtifactRef("d3.json", "d3", "sha256:d3"),
                 new CityBlueprint.ArtifactRef("catalog.json", "catalog", "sha256:catalog"),
                 42L, new CityBlueprint.DesignIntent("test", "test", List.of()),
@@ -256,7 +256,7 @@ class CityMainRoadPlannerTest {
                 cells.add(cell(x, z, waterDetour && x == 1 && z == 0));
             }
         }
-        return new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION, "city:test",
+        return new LandUseTerrainField(LandUseTerrainField.SCHEMA, "city:test",
                 new BlockBounds(0, 0, 95, 95), 32, cells);
     }
 

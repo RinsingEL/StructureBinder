@@ -21,7 +21,7 @@ public final class AtlasRegion {
     private final int cellStepBlocks;
     private final int cellsPerSide;
     private final int atlasVersion;
-    private final String configVersion;
+    private final String configId;
     private final AtlasCell[][] cells;
     private final List<LandformPatch> patches = new ArrayList<>();
     private RegionStatus status = RegionStatus.EMPTY;
@@ -38,7 +38,7 @@ public final class AtlasRegion {
         this.blockMinZ = regionZ * config.regionSizeBlocks();
         this.regionId = RegionKey.regionId(dimensionId, cellStepBlocks, regionX, regionZ);
         this.atlasVersion = GisAtlasConstants.ATLAS_VERSION;
-        this.configVersion = GisAtlasConstants.CONFIG_VERSION;
+        this.configId = GisAtlasConstants.CONFIG_ID;
         this.cells = new AtlasCell[cellsPerSide][cellsPerSide];
         for (int x = 0; x < cellsPerSide; x++) {
             for (int z = 0; z < cellsPerSide; z++) {
@@ -91,8 +91,8 @@ public final class AtlasRegion {
         return atlasVersion;
     }
 
-    public String configVersion() {
-        return configVersion;
+    public String configId() {
+        return configId;
     }
 
     public RegionStatus status() {

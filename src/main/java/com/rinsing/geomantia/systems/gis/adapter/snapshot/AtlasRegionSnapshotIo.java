@@ -31,7 +31,7 @@ public final class AtlasRegionSnapshotIo {
         root.addProperty("snapshotPurpose", "test-reproduction-and-field-restore");
         root.addProperty("productionPersistence", false);
         root.addProperty("atlasVersion", GisAtlasConstants.ATLAS_VERSION);
-        root.addProperty("configVersion", GisAtlasConstants.CONFIG_VERSION);
+        root.addProperty("configId", GisAtlasConstants.CONFIG_ID);
         root.addProperty("regionId", region.regionId());
         root.addProperty("dimensionId", region.dimensionId());
         root.addProperty("regionX", region.regionX());

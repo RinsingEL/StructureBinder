@@ -27,8 +27,8 @@ test("publishes the program-only context tool and one-shot structure plus outdoo
     ["kind", "patchRefs", "groupRefs"]);
   assert.deepEqual(groupProperties.extentClass.enum, ["SMALL", "MEDIUM", "LARGE"]);
   assert.deepEqual(groupProperties.densityClass.enum, ["SPARSE", "BALANCED", "DENSE"]);
-  assert.deepEqual(submit.inputSchema.properties.cityBlueprint.properties.schemaVersion.enum,
-    ["city_blueprint.v0.12"]);
+  assert.deepEqual(submit.inputSchema.properties.cityBlueprint.properties.schema.enum,
+    ["city_blueprint"]);
   assert.equal(groupProperties.connectionPlan.additionalProperties, false);
   assert.deepEqual(groupProperties.connectionPlan.properties.parameters.properties.sideMode.enum,
     ["LEFT", "RIGHT", "BOTH"]);
@@ -94,9 +94,17 @@ test("publishes the program-only context tool and one-shot structure plus outdoo
   assert.equal(outdoor.properties.residualPolicy, undefined);
 });
 
-test("labels the old direct anchor endpoint as legacy debug", () => {
-  const oldD4 = realmTools.find((tool) => tool.name === "city_plan_d4");
-  assert.match(oldD4.description, /Legacy\/debug/);
+test("does not publish superseded D4 planning tools", () => {
+  const removed = new Set([
+    "city_plan_d4",
+    "city_plan_d4_candidates",
+    "city_plan_d4_array_candidates",
+    "city_create_d4_array_layout_loop",
+    "city_create_d4_design_loop_state",
+    "city_plan_d4_structure_cluster_groups",
+    "city_create_d4_candidate_session",
+  ]);
+  assert.deepEqual(realmTools.filter((tool) => removed.has(tool.name)), []);
 });
 
 test("publishes the programmatic compiler and defaults workflow to Blueprint", () => {
@@ -106,18 +114,18 @@ test("publishes the programmatic compiler and defaults workflow to Blueprint", (
   assert.deepEqual(compile.inputSchema.required, ["runId", "citySeedId"]);
   assert.equal(compile.inputSchema.additionalProperties, false);
   assert.match(compile.description, /不调用 AI/);
-  assert.ok(workflow.inputSchema.properties.d4CandidateMode.enum.includes("blueprint"));
-  assert.match(workflow.inputSchema.properties.d4CandidateMode.description, /默认 blueprint/);
+  assert.equal(workflow.inputSchema.properties.d4CandidateMode, undefined);
   assert.match(workflow.description, /同一 Blueprint 自动编译户外空间/);
-  assert.match(workflow.inputSchema.properties.enableLandUseLayer.description, /仅 legacy\/debug/);
-  assert.match(workflow.inputSchema.properties.landUseIntentPlan.description, /正式 blueprint 模式从已接受 CityBlueprint 自动派生/);
+  assert.equal(workflow.inputSchema.properties.enableLandUseLayer, undefined);
+  assert.equal(workflow.inputSchema.properties.landUseIntentPlan, undefined);
+  assert.deepEqual(workflow.inputSchema.required, ["runId", "citySeedId"]);
 });
 
-test("publishes the current strict LandUse v0.3 intent wire shape", () => {
+test("publishes the current strict LandUse intent wire shape", () => {
   const landUse = realmTools.find((tool) => tool.name === "city_plan_land_use");
   const intent = landUse.inputSchema.properties.landUseIntentPlan;
   assert.equal(intent.additionalProperties, false);
-  assert.deepEqual(intent.properties.schemaVersion.enum, ["city_land_use_intent_plan.v0.3"]);
+  assert.deepEqual(intent.properties.schema.enum, ["city_land_use_intent_plan"]);
   assert.ok(intent.properties.surfaceAlgorithmDefaults);
   assert.ok(intent.properties.surfaceOverrides);
 
@@ -142,19 +150,19 @@ test("publishes the current strict LandUse v0.3 intent wire shape", () => {
   assert.deepEqual(override.properties.algorithmAnchor.required, ["x", "z"]);
 });
 
-test("requires the v0.9 Blueprint reference catalog with greenery and exact Landscape Parcel profiles", () => {
+test("requires the Blueprint reference catalog with greenery and exact Landscape Parcel profiles", () => {
   const prepare = realmTools.find((tool) => tool.name === "city_prepare_d4_blueprint_context");
   const catalog = prepare.inputSchema.properties.blueprintReferenceCatalog;
-  assert.match(catalog.description, /city_blueprint_reference_catalog\.v0\.9/);
+  assert.match(catalog.description, /city_blueprint_reference_catalog/);
   assert.match(catalog.description, /户外/);
   assert.equal(catalog.additionalProperties, false);
   assert.deepEqual(catalog.required, [
-    "schemaVersion", "structureRefs", "fillPools", "algorithmProfiles", "compositionProfiles",
+    "schema", "structureRefs", "fillPools", "algorithmProfiles", "compositionProfiles",
     "styleProfiles", "roadProfiles", "surfaceDetailProfiles", "landUseRuleProfile", "foundationProfiles", "surfaceRecipes",
     "landscapeProfiles", "landscapeFillProfiles",
   ]);
-  assert.deepEqual(catalog.properties.schemaVersion.enum,
-    ["city_blueprint_reference_catalog.v0.9"]);
+  assert.deepEqual(catalog.properties.schema.enum,
+    ["city_blueprint_reference_catalog"]);
 
   for (const namespace of ["structureRefs", "fillPools", "algorithmProfiles", "compositionProfiles",
     "styleProfiles", "roadProfiles", "surfaceDetailProfiles", "foundationProfiles", "surfaceRecipes",
@@ -211,8 +219,8 @@ test("requires the v0.9 Blueprint reference catalog with greenery and exact Land
 
   const ruleProfile = catalog.properties.landUseRuleProfile;
   assert.equal(ruleProfile.additionalProperties, false);
-  assert.deepEqual(ruleProfile.required, ["schemaVersion", "profileId", "rules"]);
-  assert.deepEqual(ruleProfile.properties.schemaVersion.enum, ["city_land_use_rules.v0.1"]);
+  assert.deepEqual(ruleProfile.required, ["schema", "profileId", "rules"]);
+  assert.deepEqual(ruleProfile.properties.schema.enum, ["city_land_use_rules"]);
   assert.equal(ruleProfile.properties.rules.minItems, 1);
   const rule = ruleProfile.properties.rules.items;
   assert.equal(rule.additionalProperties, false);

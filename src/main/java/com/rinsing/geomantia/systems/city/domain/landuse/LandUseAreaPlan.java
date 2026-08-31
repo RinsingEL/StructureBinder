@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Objects;
 
 public record LandUseAreaPlan(
-        String schemaVersion,
+        String schema,
         String ruleVersion,
         String cityId,
         String planHash,
@@ -18,11 +18,11 @@ public record LandUseAreaPlan(
         List<CorridorExclusion> corridorExclusions,
         List<String> warnings) {
 
-    public static final String CURRENT_SCHEMA_VERSION = "city_land_use_area_plan.v0.2";
+    public static final String SCHEMA = "city_land_use_area_plan";
 
     public LandUseAreaPlan {
-        if (!CURRENT_SCHEMA_VERSION.equals(schemaVersion)) {
-            throw new IllegalArgumentException("Unsupported LandUse area plan schema: " + schemaVersion);
+        if (!SCHEMA.equals(schema)) {
+            throw new IllegalArgumentException("Unsupported LandUse area plan schema: " + schema);
         }
         if (ruleVersion == null || ruleVersion.isBlank()) throw new IllegalArgumentException("ruleVersion is required");
         if (cityId == null || cityId.isBlank()) throw new IllegalArgumentException("cityId is required");
@@ -36,15 +36,15 @@ public record LandUseAreaPlan(
     }
 
     public LandUseAreaPlan withPlanHash(String hash) {
-        return new LandUseAreaPlan(schemaVersion, ruleVersion, cityId, hash, planningBounds, areas,
+        return new LandUseAreaPlan(schema, ruleVersion, cityId, hash, planningBounds, areas,
                 sharedBoundarySpans,
                 unclaimedSpans, corridorExclusions, warnings);
     }
 
-    public LandUseAreaPlan(String schemaVersion, String ruleVersion, String cityId, String planHash,
+    public LandUseAreaPlan(String schema, String ruleVersion, String cityId, String planHash,
                            BlockBounds planningBounds, List<Area> areas, List<ScanlineSpan> unclaimedSpans,
                            List<CorridorExclusion> corridorExclusions, List<String> warnings) {
-        this(schemaVersion, ruleVersion, cityId, planHash, planningBounds, areas, List.of(),
+        this(schema, ruleVersion, cityId, planHash, planningBounds, areas, List.of(),
                 unclaimedSpans, corridorExclusions, warnings);
     }
 

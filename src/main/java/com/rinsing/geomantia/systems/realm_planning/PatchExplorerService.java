@@ -47,11 +47,11 @@ import java.util.UUID;
 
 /** Artifact-backed patch exploration shared by realm T2/T4 and City D4. */
 public final class PatchExplorerService {
-    public static final String SESSION_SCHEMA = "patch_explorer_session.v0.1";
-    public static final String PAGE_SCHEMA = "patch_explorer_candidate_page.v0.1";
-    public static final String SELECTION_SCHEMA = "patch_selection.v0.1";
-    private static final String SNAPSHOT_SCHEMA = "patch_explorer_scope_snapshot.v0.2";
-    private static final String CANDIDATE_MODEL = "landform_patch_candidates_v0_2";
+    public static final String SESSION_SCHEMA = "patch_explorer_session";
+    public static final String PAGE_SCHEMA = "patch_explorer_candidate_page";
+    public static final String SELECTION_SCHEMA = "patch_selection";
+    private static final String SNAPSHOT_SCHEMA = "patch_explorer_scope_snapshot";
+    private static final String CANDIDATE_MODEL = "landform_patch_candidates";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Set<String> SCOPES = Set.of("realm_t2", "realm_t4", "city_d4");
     private static final int DEFAULT_PAGE_SIZE = 3;
@@ -87,7 +87,7 @@ public final class PatchExplorerService {
         sessionId = safeId(sessionId, "sessionId");
         Scope scope = loadScope(runId, scopeType, scopeId, terrainPatchRunner);
         JsonObject session = new JsonObject();
-        session.addProperty("schemaVersion", SESSION_SCHEMA);
+        session.addProperty("schema", SESSION_SCHEMA);
         session.addProperty("sessionId", sessionId);
         session.addProperty("runId", runId);
         session.addProperty("scopeType", scopeType);
@@ -191,7 +191,7 @@ public final class PatchExplorerService {
         renderOverview(scope, displayed, OverviewMode.TOP_PATCHES, topPatchesOverviewPath);
 
         JsonObject pageArtifact = new JsonObject();
-        pageArtifact.addProperty("schemaVersion", PAGE_SCHEMA);
+        pageArtifact.addProperty("schema", PAGE_SCHEMA);
         pageArtifact.addProperty("sessionId", sessionId);
         pageArtifact.addProperty("runId", runId);
         pageArtifact.addProperty("scopeType", scope.scopeType());
@@ -257,7 +257,7 @@ public final class PatchExplorerService {
         String terrainPreviewSourceIdentity = terrainPreview == null ? "" : terrainPreview.sourceIdentity();
         String selectionRef = selectionRef(sessionId, candidateId, scope.sourceIdentity(), terrainPreviewSourceIdentity);
         JsonObject selection = new JsonObject();
-        selection.addProperty("schemaVersion", SELECTION_SCHEMA);
+        selection.addProperty("schema", SELECTION_SCHEMA);
         selection.addProperty("patchSelectionRef", selectionRef);
         selection.addProperty("sessionId", sessionId);
         selection.addProperty("runId", runId);
@@ -331,7 +331,7 @@ public final class PatchExplorerService {
             throw new IllegalArgumentException("PATCH_SELECTION_REF_NOT_FOUND: " + patchSelectionRef);
         }
         JsonObject selection = readObject(path);
-        if (!SELECTION_SCHEMA.equals(stringValue(selection, "schemaVersion", ""))) {
+        if (!SELECTION_SCHEMA.equals(stringValue(selection, "schema", ""))) {
             throw new IllegalArgumentException("PATCH_SELECTION_SCHEMA_UNSUPPORTED");
         }
         JsonObject session = loadSession(runId, requiredString(selection, "sessionId"));
@@ -523,7 +523,7 @@ public final class PatchExplorerService {
 
     private void writeScopeSnapshot(Path path, Scope scope) throws IOException {
         JsonObject snapshot = new JsonObject();
-        snapshot.addProperty("schemaVersion", SNAPSHOT_SCHEMA);
+        snapshot.addProperty("schema", SNAPSHOT_SCHEMA);
         snapshot.addProperty("runId", scope.runId());
         snapshot.addProperty("scopeType", scope.scopeType());
         snapshot.addProperty("scopeId", scope.scopeId());
@@ -593,7 +593,7 @@ public final class PatchExplorerService {
     private Scope readScopeSnapshot(Path path, String expectedIdentity, List<String> sourceArtifacts)
             throws IOException {
         JsonObject snapshot = readObject(path);
-        if (!SNAPSHOT_SCHEMA.equals(stringValue(snapshot, "schemaVersion", ""))
+        if (!SNAPSHOT_SCHEMA.equals(stringValue(snapshot, "schema", ""))
                 || !CANDIDATE_MODEL.equals(stringValue(snapshot, "candidateModel", ""))
                 || !expectedIdentity.equals(stringValue(snapshot, "sourceIdentity", ""))) {
             throw new IllegalArgumentException("PATCH_EXPLORER_SCOPE_SNAPSHOT_STALE_OR_UNSUPPORTED");
@@ -800,8 +800,8 @@ public final class PatchExplorerService {
     private TerrainEvidenceBundle loadTerrainEvidence(String runId, String realmId, Path runDir,
             Path evidencePath, int expectedStep) throws IOException {
         JsonObject evidence = readObject(evidencePath);
-        if (!RealmT4CoarseTerrainPreviewService.SCHEMA_VERSION.equals(
-                stringValue(evidence, "schemaVersion", ""))) {
+        if (!RealmT4CoarseTerrainPreviewService.SCHEMA.equals(
+                stringValue(evidence, "schema", ""))) {
             throw new IllegalArgumentException("PATCH_EXPLORER_T4_TERRAIN_EVIDENCE_SCHEMA_UNSUPPORTED");
         }
         if (!runId.equals(stringValue(evidence, "runId", ""))
@@ -858,7 +858,7 @@ public final class PatchExplorerService {
         requireFile(d3Path, "PATCH_EXPLORER_D3_PACKAGE_MISSING");
         requireFile(terrainPath, "PATCH_EXPLORER_D3_TERRAIN_FIELD_MISSING");
         JsonObject review = readObject(d3Path);
-        if (!"city_landform_review.v0.1".equals(stringValue(review, "schemaVersion", ""))) {
+        if (!"city_landform_review".equals(stringValue(review, "schema", ""))) {
             throw new IllegalArgumentException("PATCH_EXPLORER_D3_SCHEMA_UNSUPPORTED");
         }
         if (!cityId.equals(stringValue(review, "cityId", cityId))) {
@@ -1092,7 +1092,7 @@ public final class PatchExplorerService {
 
     private static JsonObject patchTypePalette() {
         JsonObject palette = new JsonObject();
-        palette.addProperty("schemaVersion", LandformPatchPalette.SCHEMA_VERSION);
+        palette.addProperty("schema", LandformPatchPalette.SCHEMA);
         JsonObject colors = new JsonObject();
         LandformPatchPalette.colorsByType().forEach(colors::addProperty);
         palette.add("colors", colors);
@@ -1179,7 +1179,7 @@ public final class PatchExplorerService {
     private JsonObject terrainPreviewJson(PatchCandidateTerrainPreviewService.Result result) {
         JsonObject evidence = result.evidence();
         JsonObject terrainPreview = new JsonObject();
-        terrainPreview.addProperty("schemaVersion", PatchCandidateTerrainPreviewService.SCHEMA_VERSION);
+        terrainPreview.addProperty("schema", PatchCandidateTerrainPreviewService.SCHEMA);
         terrainPreview.addProperty("sourceIdentity", result.sourceIdentity());
         terrainPreview.addProperty("evidenceIdentity", result.evidenceIdentity());
         terrainPreview.addProperty("evaluationLevel", requiredString(evidence, "evaluationLevel"));
@@ -1203,8 +1203,8 @@ public final class PatchExplorerService {
     }
 
     private String validateFrozenTerrainPreview(JsonObject terrainPreview) throws IOException {
-        if (!PatchCandidateTerrainPreviewService.SCHEMA_VERSION.equals(
-                requiredString(terrainPreview, "schemaVersion"))) {
+        if (!PatchCandidateTerrainPreviewService.SCHEMA.equals(
+                requiredString(terrainPreview, "schema"))) {
             throw new IllegalArgumentException("PATCH_SELECTION_TERRAIN_PREVIEW_SCHEMA_UNSUPPORTED");
         }
         JsonObject artifacts = object(terrainPreview, "artifacts");
@@ -1219,8 +1219,8 @@ public final class PatchExplorerService {
             throw new IllegalArgumentException("PATCH_SELECTION_TERRAIN_PREVIEW_TAMPERED");
         }
         JsonObject evidence = readObject(evidencePath);
-        if (!PatchCandidateTerrainPreviewService.SCHEMA_VERSION.equals(
-                stringValue(evidence, "schemaVersion", ""))
+        if (!PatchCandidateTerrainPreviewService.SCHEMA.equals(
+                stringValue(evidence, "schema", ""))
                 || !requiredString(terrainPreview, "sourceIdentity")
                 .equals(stringValue(evidence, "sourceIdentity", ""))) {
             throw new IllegalArgumentException("PATCH_SELECTION_TERRAIN_PREVIEW_CONTENT_MISMATCH");
@@ -1605,7 +1605,7 @@ public final class PatchExplorerService {
         Path path = sessionDir(runId, sessionId).resolve("patch_explorer_session.json");
         requireFile(path, "PATCH_EXPLORER_SESSION_NOT_FOUND");
         JsonObject session = readObject(path);
-        if (!SESSION_SCHEMA.equals(stringValue(session, "schemaVersion", ""))
+        if (!SESSION_SCHEMA.equals(stringValue(session, "schema", ""))
                 || !CANDIDATE_MODEL.equals(stringValue(session, "candidateModel", ""))) {
             throw new IllegalArgumentException("PATCH_EXPLORER_SESSION_SCHEMA_UNSUPPORTED");
         }
@@ -1741,7 +1741,7 @@ public final class PatchExplorerService {
     private static JsonObject base(String operation, String runId, String sessionId) {
         JsonObject response = new JsonObject();
         response.addProperty("ok", true);
-        response.addProperty("schemaVersion", "patch_explorer_response.v0.1");
+        response.addProperty("schema", "patch_explorer_response");
         response.addProperty("operation", operation);
         response.addProperty("runId", runId);
         response.addProperty("sessionId", sessionId);
@@ -1950,7 +1950,7 @@ public final class PatchExplorerService {
 
     private static JsonObject legalRegionJson(Candidate candidate, int step, String selectionRef) {
         JsonObject region = new JsonObject();
-        region.addProperty("schemaVersion", CityD4CandidateLegalRegion.SCHEMA);
+        region.addProperty("schema", CityD4CandidateLegalRegion.SCHEMA);
         region.addProperty("patchSelectionRef", selectionRef);
         region.addProperty("cellStepBlocks", step);
         JsonObject blockBounds = new JsonObject();

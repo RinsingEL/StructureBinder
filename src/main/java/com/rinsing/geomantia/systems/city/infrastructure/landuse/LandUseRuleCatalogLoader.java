@@ -22,7 +22,7 @@ import java.util.Set;
 
 /** Strict loader for the user-owned LandUse rule profile selected by settings.json. */
 public final class LandUseRuleCatalogLoader {
-    private static final Set<String> ROOT_FIELDS = Set.of("schemaVersion", "profileId", "rules");
+    private static final Set<String> ROOT_FIELDS = Set.of("schema", "profileId", "rules");
     private static final Set<String> RULE_FIELDS = Set.of(
             "ruleRef", "landUseType", "semanticTerms", "footprintMultiplier", "extraAreaBlocks",
             "minAreaBlocks", "maxAreaBlocks", "actionBudget", "baseStepCost", "slopeCost", "reliefCost",
@@ -58,9 +58,9 @@ public final class LandUseRuleCatalogLoader {
 
     public static LandUseRuleCatalog parse(JsonObject root, String selectedProfileId) {
         requireExactFields(root, ROOT_FIELDS, "LAND_USE_RULE_PROFILE");
-        String schemaVersion = requiredString(root, "schemaVersion", "LAND_USE_RULE_PROFILE");
-        if (!LandUseRuleCatalog.RULE_VERSION.equals(schemaVersion)) {
-            throw new IllegalArgumentException("LAND_USE_RULE_PROFILE_SCHEMA_UNSUPPORTED: " + schemaVersion);
+        String schema = requiredString(root, "schema", "LAND_USE_RULE_PROFILE");
+        if (!LandUseRuleCatalog.RULE_VERSION.equals(schema)) {
+            throw new IllegalArgumentException("LAND_USE_RULE_PROFILE_SCHEMA_UNSUPPORTED: " + schema);
         }
         String profileId = requiredString(root, "profileId", "LAND_USE_RULE_PROFILE");
         if (!selectedProfileId.equals(profileId)) {

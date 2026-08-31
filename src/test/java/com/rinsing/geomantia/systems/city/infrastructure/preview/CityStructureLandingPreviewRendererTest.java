@@ -100,7 +100,7 @@ final class CityStructureLandingPreviewRendererTest {
     void d4StructureClusterGroupPreviewWritesGroupColorOverview(@TempDir Path tempDir) throws Exception {
         JsonObject candidateSet = JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_d4_structure_cluster_group_candidate_set.v0.1",
+                  "schema": "city_d4_structure_cluster_group_candidate_set",
                   "planningMode": "structure_cluster_group_candidates",
                   "grid": {
                     "blockBounds": {"minX": 0, "minZ": 0, "maxX": 256, "maxZ": 256}
@@ -187,8 +187,8 @@ final class CityStructureLandingPreviewRendererTest {
     void d4ArrayLayoutLoopPreviewWritesExecutedZoneOverview(@TempDir Path tempDir) throws Exception {
         JsonObject loopState = JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_d4_array_layout_loop_state.v0.2",
-                  "planningMode": "array_layout_loop_v0_2",
+                  "schema": "city_d4_array_layout_loop_state",
+                  "planningMode": "array_candidate_selection_loop",
                   "stateId": "loop_state_0001",
                   "iteration": 1,
                   "maxArrayPlans": 4,
@@ -197,7 +197,7 @@ final class CityStructureLandingPreviewRendererTest {
                     "blockBounds": {"minX": 0, "minZ": 0, "maxX": 256, "maxZ": 256}
                   },
                   "functionalArrayZones": {
-                    "schemaVersion": "city_d4_functional_array_zones.v0.2",
+                    "schema": "city_d4_functional_array_zones",
                     "arrayZones": [
                       {
                         "arrayZoneId": "residential_cluster",
@@ -262,7 +262,7 @@ final class CityStructureLandingPreviewRendererTest {
         assertEquals(new BlockBounds(44, 76, 52, 84), body);
         JsonObject extentMap = JsonParser.parseString("""
                 {
-                  "schemaVersion":"group_extent_map.v0.10",
+                  "schema":"group_extent_map",
                   "groups":[{
                     "groupId":"civic",
                     "functionAreaEnvelope":{"minX":12,"minZ":36,"maxX":84,"maxZ":124}
@@ -296,7 +296,7 @@ final class CityStructureLandingPreviewRendererTest {
                 """).getAsJsonObject();
         JsonObject extentMap = JsonParser.parseString("""
                 {
-                  "schemaVersion":"group_extent_map.v0.10",
+                  "schema":"group_extent_map",
                   "groups":[{
                     "groupId":"civic",
                     "functionAreaEnvelope":{"minX":32,"minZ":32,"maxX":127,"maxZ":95},

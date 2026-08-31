@@ -23,7 +23,7 @@ class CityTemplateCatalogTest {
                 """));
 
         CityTemplateCatalog.Template template = catalog.requireTemplate("city:house", "oak");
-        assertEquals("city_template_catalog.v0.1", catalog.schemaVersion());
+        assertEquals("city_template_catalog", catalog.schema());
         assertEquals("residential", template.buildingSemantic());
         assertEquals("medieval", template.style());
         assertEquals("templates/house_oak.nbt", template.nbtFile());
@@ -41,7 +41,7 @@ class CityTemplateCatalogTest {
     void acceptsCanonicalTemplateRefAndVariantFields() {
         CityTemplateCatalog.Template template = loader.load("""
                 {
-                  "schemaVersion": "city_template_catalog.v0.1",
+                  "schema": "city_template_catalog",
                   "templates": [{
                     "buildingSemantic": "market",
                     "style": "coastal_medieval",
@@ -147,7 +147,7 @@ class CityTemplateCatalogTest {
         String roadEntrances = entrances.equals("[]") ? "[]" : "[" + entrances + "]";
         return """
                 {
-                  "schemaVersion": "city_template_catalog.v0.1",
+                  "schema": "city_template_catalog",
                   "templates": [{
                     "buildingSemantic": "residential",
                     "style": "medieval",
@@ -172,7 +172,7 @@ class CityTemplateCatalogTest {
     private static String catalogWithTemplates(String templates) {
         return """
                 {
-                  "schemaVersion": "city_template_catalog.v0.1",
+                  "schema": "city_template_catalog",
                   "templates": [%s]
                 }
                 """.formatted(templates);

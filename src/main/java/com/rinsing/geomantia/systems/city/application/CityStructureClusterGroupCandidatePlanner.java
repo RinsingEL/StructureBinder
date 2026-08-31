@@ -18,7 +18,7 @@ import java.util.Set;
 
 public final class CityStructureClusterGroupCandidatePlanner {
     public static final String CANDIDATE_SET_SCHEMA =
-            "city_d4_structure_cluster_group_candidate_set.v0.1";
+            "city_d4_structure_cluster_group_candidate_set";
 
     private static final int DEFAULT_GROUP_COUNT = 5;
     private static final int DEFAULT_CANDIDATES_PER_SLOT = 5;
@@ -104,7 +104,7 @@ public final class CityStructureClusterGroupCandidatePlanner {
         }
 
         JsonObject candidateSet = new JsonObject();
-        candidateSet.addProperty("schemaVersion", CANDIDATE_SET_SCHEMA);
+        candidateSet.addProperty("schema", CANDIDATE_SET_SCHEMA);
         candidateSet.addProperty("cityId", reviewPackage.cityId());
         candidateSet.addProperty("planningMode", "structure_cluster_group_candidates");
         candidateSet.addProperty("generatedAt", Instant.now().toString());
@@ -148,7 +148,7 @@ public final class CityStructureClusterGroupCandidatePlanner {
 
         JsonObject expandedPlan = finalized.structureAnchorPlan().deepCopy();
         JsonObject trace = new JsonObject();
-        trace.addProperty("schemaVersion", CANDIDATE_SET_SCHEMA);
+        trace.addProperty("schema", CANDIDATE_SET_SCHEMA);
         trace.addProperty("planningMode", "structure_cluster_group_candidates");
         trace.addProperty("groupCandidateId", groupId);
         trace.addProperty("groupSignature", group.signature());

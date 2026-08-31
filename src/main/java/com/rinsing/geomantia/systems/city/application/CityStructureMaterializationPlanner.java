@@ -15,10 +15,10 @@ import java.util.Set;
 
 /** D6/D7 fixed-template planner. Configured StructureStart geometry is intentionally unsupported. */
 public final class CityStructureMaterializationPlanner {
-    public static final String PLAN_SCHEMA = "city_template_placement_plan.v0.1";
-    public static final String LEDGER_SCHEMA = "city_template_placement_ledger.v0.1";
-    public static final String TRACE_SCHEMA = "city_template_placement_trace.v0.1";
-    public static final String INFERRED_SCHEMA = "city_inferred_function_area_map.v0.1";
+    public static final String PLAN_SCHEMA = "city_template_placement_plan";
+    public static final String LEDGER_SCHEMA = "city_template_placement_ledger";
+    public static final String TRACE_SCHEMA = "city_template_placement_trace";
+    public static final String INFERRED_SCHEMA = "city_inferred_function_area_map";
     public static final String TEMPLATE_MATERIALIZATION_SOURCE = "structure_template_nbt";
     public static final String TEMPLATE_DATUM_POLICY_GENERATOR_BASE_HEIGHT =
             CityTemplateTerrainPosePolicy.DATUM_POLICY_GENERATOR_BASE_HEIGHT;
@@ -89,7 +89,7 @@ public final class CityStructureMaterializationPlanner {
         }
 
         JsonObject plan = new JsonObject();
-        plan.addProperty("schemaVersion", PLAN_SCHEMA);
+        plan.addProperty("schema", PLAN_SCHEMA);
         plan.addProperty("cityId", cityId);
         plan.addProperty("materializationSource", TEMPLATE_MATERIALIZATION_SOURCE);
         plan.addProperty("preflightMode", "current_world_template_nbt");
@@ -104,7 +104,7 @@ public final class CityStructureMaterializationPlanner {
     public Result executeWorldgen(JsonObject plan, JsonObject runtimeLedger, ChunkStatusInspector inspector,
                                   boolean observeRuntimePlacement) {
         long started = System.nanoTime();
-        if (plan == null || !PLAN_SCHEMA.equals(stringValue(plan, "schemaVersion", ""))) {
+        if (plan == null || !PLAN_SCHEMA.equals(stringValue(plan, "schema", ""))) {
             throw removed();
         }
         String cityId = requiredString(plan, "cityId");
@@ -158,7 +158,7 @@ public final class CityStructureMaterializationPlanner {
         }
 
         JsonObject ledger = new JsonObject();
-        ledger.addProperty("schemaVersion", LEDGER_SCHEMA);
+        ledger.addProperty("schema", LEDGER_SCHEMA);
         ledger.addProperty("cityId", cityId);
         ledger.add("placedStructures", placed);
         JsonObject outputPlan = plan.deepCopy();
@@ -169,7 +169,7 @@ public final class CityStructureMaterializationPlanner {
     private static Result result(String cityId, JsonObject plan, JsonObject ledger, JsonArray attempts,
                                  JsonArray waiting, JsonArray failures, JsonArray geometrySource) {
         JsonObject trace = new JsonObject();
-        trace.addProperty("schemaVersion", TRACE_SCHEMA);
+        trace.addProperty("schema", TRACE_SCHEMA);
         trace.addProperty("cityId", cityId);
         trace.add("attempts", attempts);
         trace.add("waiting", waiting);
@@ -177,7 +177,7 @@ public final class CityStructureMaterializationPlanner {
         trace.add("waitingSummary", summarize(waiting));
         trace.add("failureSummary", summarize(failures));
         JsonObject inferred = new JsonObject();
-        inferred.addProperty("schemaVersion", INFERRED_SCHEMA);
+        inferred.addProperty("schema", INFERRED_SCHEMA);
         inferred.addProperty("cityId", cityId);
         JsonArray areas = new JsonArray();
         for (JsonElement element : geometrySource) {
@@ -293,7 +293,7 @@ public final class CityStructureMaterializationPlanner {
 
     private static JsonObject emptyLedger(String cityId) {
         JsonObject ledger = new JsonObject();
-        ledger.addProperty("schemaVersion", LEDGER_SCHEMA);
+        ledger.addProperty("schema", LEDGER_SCHEMA);
         ledger.addProperty("cityId", cityId);
         ledger.add("placedStructures", new JsonArray());
         return ledger;

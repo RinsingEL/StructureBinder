@@ -89,7 +89,7 @@ class CityRealDataTest {
                 "Real run territory map should be wired into D2");
 
         JsonObject ctxJson = ctx.asJson();
-        assertTrue(ctxJson.has("schemaVersion"));
+        assertTrue(ctxJson.has("schema"));
         assertTrue(ctxJson.has("grid"));
         assertTrue(ctxJson.has("bounds"));
         assertTrue(ctxJson.has("entryCandidates"));

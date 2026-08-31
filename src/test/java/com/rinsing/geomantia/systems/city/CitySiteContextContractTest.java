@@ -29,7 +29,7 @@ class CitySiteContextContractTest {
     @Test
     void missingCityId_throwsIllegalArgument() {
         assertThrows(IllegalArgumentException.class, () ->
-                new CitySiteContext(CitySiteContext.CURRENT_SCHEMA_VERSION, null, "realm1",
+                new CitySiteContext(CitySiteContext.SCHEMA, null, "realm1",
                         "overworld", "seed1", "cand1",
                         new BlockBounds(0, 0, 100, 100),
                         new PlanningGrid(0, 0, 16, 10, 10),
@@ -41,7 +41,7 @@ class CitySiteContextContractTest {
     @Test
     void blankCityId_throwsIllegalArgument() {
         assertThrows(IllegalArgumentException.class, () ->
-                new CitySiteContext(CitySiteContext.CURRENT_SCHEMA_VERSION, "  ", "realm1",
+                new CitySiteContext(CitySiteContext.SCHEMA, "  ", "realm1",
                         "overworld", "seed1", "cand1",
                         new BlockBounds(0, 0, 100, 100),
                         new PlanningGrid(0, 0, 16, 10, 10),
@@ -53,7 +53,7 @@ class CitySiteContextContractTest {
     @Test
     void missingGrid_throwsIllegalArgument() {
         assertThrows(IllegalArgumentException.class, () ->
-                new CitySiteContext(CitySiteContext.CURRENT_SCHEMA_VERSION, "city1", "realm1",
+                new CitySiteContext(CitySiteContext.SCHEMA, "city1", "realm1",
                         "overworld", "seed1", "cand1",
                         new BlockBounds(0, 0, 100, 100),
                         null, new BlockPoint(50, 50), "capital",
@@ -63,7 +63,7 @@ class CitySiteContextContractTest {
 
     @Test
     void schemaVersionConstant_isCorrect() {
-        assertEquals("city_site_context.v0.1", CitySiteContext.CURRENT_SCHEMA_VERSION);
+        assertEquals("city_site_context", CitySiteContext.SCHEMA);
     }
 
     @Test
@@ -93,7 +93,7 @@ class CitySiteContextContractTest {
                 64, 4, null);
 
         String json = ctx.asJson().toString();
-        assertTrue(json.contains("city_site_context.v0.1"));
+        assertTrue(json.contains("city_site_context"));
         assertTrue(json.contains("city_test"));
         assertTrue(json.contains("realm_salt"));
         assertTrue(json.contains("grid"));
@@ -105,7 +105,7 @@ class CitySiteContextContractTest {
 
     @Test
     void cityLandformReviewPackage_schemaVersion_isCorrect() {
-        assertEquals("city_landform_review.v0.1", CityLandformReviewPackage.CURRENT_SCHEMA_VERSION);
+        assertEquals("city_landform_review", CityLandformReviewPackage.SCHEMA);
     }
 
     @Test
@@ -118,11 +118,11 @@ class CitySiteContextContractTest {
                         List.of(), List.of(), List.of(), "", List.of()));
 
         assertThrows(IllegalArgumentException.class, () ->
-                new CityLandformReviewPackage(CityLandformReviewPackage.CURRENT_SCHEMA_VERSION,
+                new CityLandformReviewPackage(CityLandformReviewPackage.SCHEMA,
                         null, grid, ts, "", List.of(), List.of(), List.of(), "", List.of()));
 
         assertThrows(IllegalArgumentException.class, () ->
-                new CityLandformReviewPackage(CityLandformReviewPackage.CURRENT_SCHEMA_VERSION,
+                new CityLandformReviewPackage(CityLandformReviewPackage.SCHEMA,
                         "city1", null, ts, "", List.of(), List.of(), List.of(), "", List.of()));
     }
 

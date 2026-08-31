@@ -110,7 +110,7 @@ class JigsawTemplateSanitizerTest(unittest.TestCase):
             first.write_bytes(template_bytes("minecraft:stone"))
             second.write_bytes(template_bytes("minecraft:air", "other:structural_pool"))
             manifest = {
-                "schemaVersion": sanitizer.MANIFEST_SCHEMA,
+                "schema": sanitizer.MANIFEST_SCHEMA,
                 "templates": [
                     self._entry(first, "approved.nbt", "geomantia:city/approved", True),
                     self._entry(second, "pending.nbt", "geomantia:city/pending", False),
@@ -136,7 +136,7 @@ class JigsawTemplateSanitizerTest(unittest.TestCase):
             source_file = source / "house.nbt"
             source_file.write_bytes(template_bytes())
             entry = self._entry(source_file, "house.nbt", "geomantia:city/house", True)
-            manifest = {"schemaVersion": sanitizer.MANIFEST_SCHEMA, "templates": [entry]}
+            manifest = {"schema": sanitizer.MANIFEST_SCHEMA, "templates": [entry]}
             sanitizer.sanitize(source, output, manifest, overwrite=False, dry_run=False)
 
             with self.assertRaises(sanitizer.SanitizeFailure) as overwrite:
@@ -152,7 +152,7 @@ class JigsawTemplateSanitizerTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp) / "manifest.json"
             value = {
-                "schemaVersion": sanitizer.MANIFEST_SCHEMA,
+                "schema": sanitizer.MANIFEST_SCHEMA,
                 "templates": [{
                     "sourceFile": "../house.nbt",
                     "sourceSha256": "0" * 64,

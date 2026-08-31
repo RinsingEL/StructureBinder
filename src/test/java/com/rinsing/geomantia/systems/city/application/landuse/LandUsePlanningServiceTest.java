@@ -104,7 +104,7 @@ class LandUsePlanningServiceTest {
         LandUsePlanningService.Result result = new LandUsePlanningService().plan(
                 d6, null, null, null, terrain(64), smallCommercialCatalog());
 
-        assertEquals("city_land_use_planning_trace.v0.6", result.trace().get("schemaVersion").getAsString());
+        assertEquals("city_land_use_planning_trace", result.trace().get("schema").getAsString());
         assertEquals(3, result.trace().getAsJsonArray("automaticSurfaceConnections").size());
         assertTrue(result.trace().getAsJsonArray("automaticSurfaceConnections").asList().stream()
                 .allMatch(value -> "PAVE".equals(value.getAsJsonObject()
@@ -169,12 +169,12 @@ class LandUsePlanningServiceTest {
     @Test
     void unknownRuleRefsFailBeforeExcludeOrGroupingCanBypassValidation() {
         JsonObject groupIntent = JsonParser.parseString("""
-                {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"city_test",
+                {"schema":"city_land_use_intent_plan","cityId":"city_test",
                  "groupOverrides":[{"groupId":"override","memberAnchorIds":["house"],"ruleRef":"missing"}],
                  "subjectOverrides":[{"targetType":"group","targetId":"override","mode":"exclude"}]}
                 """).getAsJsonObject();
         JsonObject subjectIntent = JsonParser.parseString("""
-                {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"city_test",
+                {"schema":"city_land_use_intent_plan","cityId":"city_test",
                  "subjectOverrides":[{"targetType":"anchor","targetId":"house","mode":"set_rule","ruleRef":"missing"}]}
                 """).getAsJsonObject();
 
@@ -192,7 +192,7 @@ class LandUsePlanningServiceTest {
                         cell.cellStepBlocks(), cell.elevation(), 50, cell.localRelief(), cell.roughness(),
                         cell.water(), cell.waterDepth(), cell.waterDistance(), cell.biomeId(), cell.landformType(),
                         cell.landformPatchId(), true)).toList();
-        LandUseTerrainField blocked = new LandUseTerrainField(open.schemaVersion(), open.cityId(),
+        LandUseTerrainField blocked = new LandUseTerrainField(open.schema(), open.cityId(),
                 open.planningBounds(), open.cellStepBlocks(), blockedCells);
 
         LandUsePlanningService.Result result = new LandUsePlanningService().plan(d6Plan(), null, blocked);
@@ -237,7 +237,7 @@ class LandUsePlanningServiceTest {
         JsonObject d6 = plan("shop_a", "shop_block_a", 8, 10, 10, 12, "commercial",
                 "shop_b", "shop_block_b", 25, 27, 10, 12, "commercial");
         JsonObject intent = JsonParser.parseString("""
-                {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"city_test",
+                {"schema":"city_land_use_intent_plan","cityId":"city_test",
                  "surfaceAlgorithmDefaults":[{
                    "surfaceAlgorithm":"uniform",
                    "surfaceBlockId":"minecraft:sandstone"
@@ -274,7 +274,7 @@ class LandUsePlanningServiceTest {
         JsonObject agriculturalD6 = plan(
                 "farm", "fields", 14, 18, 24, 28, "agriculture");
         JsonObject anchorOnly = JsonParser.parseString("""
-                {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"city_test",
+                {"schema":"city_land_use_intent_plan","cityId":"city_test",
                  "surfaceOverrides":[{
                    "targetGroupId":"fields",
                    "algorithmAnchor":{"x":16,"z":26}
@@ -293,7 +293,7 @@ class LandUsePlanningServiceTest {
         JsonObject commercialD6 = plan(
                 "shop", "market", 14, 18, 24, 28, "commercial");
         JsonObject invalidUniformAnchor = JsonParser.parseString("""
-                {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"city_test",
+                {"schema":"city_land_use_intent_plan","cityId":"city_test",
                  "surfaceOverrides":[{
                    "targetGroupId":"market",
                    "algorithmAnchor":{"x":48,"z":-12}
@@ -310,7 +310,7 @@ class LandUsePlanningServiceTest {
         JsonObject d6 = plan("house_a", "housing_a", 8, 10, 10, 12, "residential",
                 "house_b", "housing_b", 25, 27, 10, 12, "residential");
         JsonObject intent = JsonParser.parseString("""
-                {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"city_test",
+                {"schema":"city_land_use_intent_plan","cityId":"city_test",
                  "surfaceOverrides":[
                    {"targetGroupId":"housing_a","surfacePrintEnabled":true,"autoConnect":true,
                     "surfaceBlockId":"minecraft:cobblestone"},
@@ -331,11 +331,11 @@ class LandUsePlanningServiceTest {
     @Test
     void rejectsUnknownSurfaceOverrideTargetAndEnabledSurfaceWithoutBlock() {
         JsonObject unknown = JsonParser.parseString("""
-                {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"city_test",
+                {"schema":"city_land_use_intent_plan","cityId":"city_test",
                  "surfaceOverrides":[{"targetGroupId":"missing","autoConnect":false}]}
                 """).getAsJsonObject();
         JsonObject missingBlock = JsonParser.parseString("""
-                {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"city_test",
+                {"schema":"city_land_use_intent_plan","cityId":"city_test",
                  "surfaceOverrides":[{"targetGroupId":"housing","surfacePrintEnabled":true}]}
                 """).getAsJsonObject();
 
@@ -467,7 +467,7 @@ class LandUsePlanningServiceTest {
                         "minecraft:plains", "plain", "p", true));
             }
         }
-        return new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION, "city_test",
+        return new LandUseTerrainField(LandUseTerrainField.SCHEMA, "city_test",
                 new BlockBounds(0, 0, blocks - 1, blocks - 1), 4, cells);
     }
 
@@ -478,7 +478,7 @@ class LandUsePlanningServiceTest {
                         cell.cellStepBlocks(), cell.elevation(), cell.cellX() == blockedCellX ? 50 : cell.slope(),
                         cell.localRelief(), cell.roughness(), cell.water(), cell.waterDepth(), cell.waterDistance(),
                         cell.biomeId(), cell.landformType(), cell.landformPatchId(), cell.sampled())).toList();
-        return new LandUseTerrainField(open.schemaVersion(), open.cityId(), open.planningBounds(),
+        return new LandUseTerrainField(open.schema(), open.cityId(), open.planningBounds(),
                 open.cellStepBlocks(), cells);
     }
 

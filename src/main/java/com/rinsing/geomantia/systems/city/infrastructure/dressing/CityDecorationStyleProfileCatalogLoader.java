@@ -24,7 +24,7 @@ import java.util.Set;
 /** Loads style profiles from config/geomantia/city_decoration/styles/*.json. */
 public final class CityDecorationStyleProfileCatalogLoader {
     private static final String STYLES_DIR = "styles";
-    private static final Set<String> PROFILE_FIELDS = Set.of("schemaVersion", "styleProfileId", "mappings");
+    private static final Set<String> PROFILE_FIELDS = Set.of("schema", "styleProfileId", "mappings");
     private static final Set<String> MAPPING_FIELDS = Set.of("semanticRef", "variants");
     private static final Set<String> VARIANT_FIELDS = Set.of("contentRef", "weight");
 
@@ -83,7 +83,7 @@ public final class CityDecorationStyleProfileCatalogLoader {
             throw fail("CITY_DECORATION_STYLE_PROFILE_READ_FAILED", "Cannot read style profile: " + path, ex);
         }
         requireOnly(source, PROFILE_FIELDS, "profile");
-        if (!CityDecorationStyleProfileCatalog.SCHEMA.equals(requiredString(source, "schemaVersion"))) {
+        if (!CityDecorationStyleProfileCatalog.SCHEMA.equals(requiredString(source, "schema"))) {
             throw fail("CITY_DECORATION_STYLE_PROFILE_SCHEMA_UNSUPPORTED", "Unsupported profile schema: " + path);
         }
         String styleProfileId = requiredString(source, "styleProfileId");

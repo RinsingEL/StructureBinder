@@ -21,10 +21,10 @@ import java.util.Set;
 /** Strict persistence codec for resolved internal programs. Never use this codec on AI input. */
 public final class CompiledDecorationProgramCodec {
     public CompiledDecorationProgramPlan parsePlan(JsonObject source) {
-        requireOnly(source, Set.of("schemaVersion", "cityId", "catalogHash", "styleProfileId", "styleProfileHash",
+        requireOnly(source, Set.of("schema", "cityId", "catalogHash", "styleProfileId", "styleProfileHash",
                 "hardObstacles", "programs"),
                 "compiled program plan");
-        String schema = requiredString(source, "schemaVersion");
+        String schema = requiredString(source, "schema");
         if (!CompiledDecorationProgramPlan.SCHEMA.equals(schema)) {
             throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_PLAN_SCHEMA_UNSUPPORTED: " + schema);
         }
@@ -53,10 +53,10 @@ public final class CompiledDecorationProgramCodec {
     }
 
     public CompiledDecorationProgram parseProgram(JsonObject source) {
-        requireOnly(source, Set.of("schemaVersion", "programId", "priority", "seed", "targetMask",
+        requireOnly(source, Set.of("schema", "programId", "priority", "seed", "targetMask",
                 "coordinateFrame", "shape", "pattern", "contentPalette", "terrainPolicy", "conflictPolicy"),
                 "program");
-        String schema = requiredString(source, "schemaVersion");
+        String schema = requiredString(source, "schema");
         if (!CompiledDecorationProgram.SCHEMA.equals(schema)) {
             throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_SCHEMA_UNSUPPORTED: " + schema);
         }
@@ -77,7 +77,7 @@ public final class CompiledDecorationProgramCodec {
 
     public JsonObject toJson(CompiledDecorationProgramPlan plan) {
         JsonObject obj = new JsonObject();
-        obj.addProperty("schemaVersion", plan.schemaVersion());
+        obj.addProperty("schema", plan.schema());
         obj.addProperty("cityId", plan.cityId());
         obj.addProperty("catalogHash", plan.catalogHash());
         obj.addProperty("styleProfileId", plan.styleProfileId());
@@ -99,7 +99,7 @@ public final class CompiledDecorationProgramCodec {
 
     public JsonObject toJson(CompiledDecorationProgram program) {
         JsonObject obj = new JsonObject();
-        obj.addProperty("schemaVersion", program.schemaVersion());
+        obj.addProperty("schema", program.schema());
         obj.addProperty("programId", program.programId());
         obj.addProperty("priority", program.priority());
         obj.addProperty("seed", program.seed());

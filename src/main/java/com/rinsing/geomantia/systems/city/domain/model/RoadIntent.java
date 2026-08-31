@@ -8,17 +8,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public record RoadIntent(
-        String schemaVersion,
+        String schema,
         String cityId,
         List<Node> nodes,
         List<Edge> edges,
         CityQualityReport connectivityReport) {
 
-    public static final String CURRENT_SCHEMA_VERSION = "road_intent.v0.1";
+    public static final String SCHEMA = "road_intent";
 
     public RoadIntent {
-        if (schemaVersion == null || schemaVersion.isBlank()) {
-            throw new IllegalArgumentException("schemaVersion is required");
+        if (schema == null || schema.isBlank()) {
+            throw new IllegalArgumentException("schema is required");
         }
         if (cityId == null || cityId.isBlank()) {
             throw new IllegalArgumentException("cityId is required");
@@ -110,7 +110,7 @@ public record RoadIntent(
 
     public JsonObject asJson() {
         JsonObject obj = new JsonObject();
-        obj.addProperty("schemaVersion", schemaVersion);
+        obj.addProperty("schema", schema);
         obj.addProperty("cityId", cityId);
         JsonArray nodeArray = new JsonArray();
         nodes.forEach(node -> nodeArray.add(node.asJson()));
@@ -132,7 +132,7 @@ public record RoadIntent(
             edges.add(Edge.fromJson(elem.getAsJsonObject()));
         }
         return new RoadIntent(
-                requiredString(obj, "schemaVersion"),
+                requiredString(obj, "schema"),
                 requiredString(obj, "cityId"),
                 nodes,
                 edges,

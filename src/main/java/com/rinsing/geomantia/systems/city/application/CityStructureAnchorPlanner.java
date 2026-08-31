@@ -20,8 +20,8 @@ import java.util.Locale;
 import java.util.Map;
 
 public final class CityStructureAnchorPlanner {
-    public static final String PLAN_SCHEMA = "city_structure_anchor_plan.v0.3";
-    public static final String MAP_SCHEMA = "city_structure_anchor_map.v0.3";
+    public static final String PLAN_SCHEMA = "city_structure_anchor_plan";
+    public static final String MAP_SCHEMA = "city_structure_anchor_map";
     public static final int DEFAULT_CLEARANCE_BLOCKS = 8;
     public static final int DEFAULT_SMALL_CLEARANCE_BLOCKS = 4;
     public static final int DEFAULT_MASK_MARGIN_BLOCKS = 8;
@@ -94,7 +94,7 @@ public final class CityStructureAnchorPlanner {
         }
 
         JsonObject anchorMap = new JsonObject();
-        anchorMap.addProperty("schemaVersion", MAP_SCHEMA);
+        anchorMap.addProperty("schema", MAP_SCHEMA);
         anchorMap.addProperty("cityId", reviewPackage.cityId());
         anchorMap.add("grid", reviewPackage.grid().asJson());
         anchorMap.add("sourceTerraSenseProfileSource", terraSenseProfileSource.deepCopy());
@@ -140,7 +140,7 @@ public final class CityStructureAnchorPlanner {
         anchorMap.add("quality", quality);
         anchorMap.add("timingMs", timing(started));
         JsonObject normalizedPlan = structureAnchorPlan.deepCopy();
-        normalizedPlan.addProperty("schemaVersion", PLAN_SCHEMA);
+        normalizedPlan.addProperty("schema", PLAN_SCHEMA);
         for (JsonElement elem : requiredArray(normalizedPlan, "anchors")) {
             if (elem.isJsonObject()) applyPlacementProvenance(elem.getAsJsonObject(), elem.getAsJsonObject());
         }

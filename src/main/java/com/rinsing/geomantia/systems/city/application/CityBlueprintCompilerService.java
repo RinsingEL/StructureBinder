@@ -35,8 +35,8 @@ import java.util.Set;
 
 /** Compiles an accepted, coordinate-free Blueprint into the existing fixed-template D4 anchor contract. */
 public final class CityBlueprintCompilerService {
-    public static final String TRACE_SCHEMA = "city_generation_compile_trace.v0.14";
-    public static final String EXTENT_SCHEMA = "group_extent_map.v0.11";
+    public static final String TRACE_SCHEMA = "city_generation_compile_trace";
+    public static final String EXTENT_SCHEMA = "group_extent_map";
     private static final int INTERNAL_MAX_ANCHORS_PER_GROUP = 256;
     static final int MINIMUM_GROUP_SEPARATION_BLOCKS = 12;
 
@@ -70,7 +70,7 @@ public final class CityBlueprintCompilerService {
         Path d3Path = resolveArtifact(debugRoot, requiredObject(context, "sourceD3Ref"));
 
         String contextId = string(context, "contextId");
-        if (!CityBlueprintService.CONTEXT_SCHEMA.equals(string(context, "schemaVersion"))
+        if (!CityBlueprintService.CONTEXT_SCHEMA.equals(string(context, "schema"))
                 || !cityId.equals(string(context, "cityId"))
                 || !contextId.equals(contextIdentity(context))
                 || !contextId.equals(string(validation, "contextId"))
@@ -86,7 +86,7 @@ public final class CityBlueprintCompilerService {
         }
         requireArtifactCurrent(debugRoot, requiredObject(context, "sourceD3Ref"), "CITY_BLUEPRINT_D3_STALE");
         JsonObject catalogSnapshotRef = requiredObject(context, "catalogSnapshotRef");
-        if (!CityBlueprintService.SNAPSHOT_SCHEMA.equals(string(catalogSnapshotRef, "schemaVersion"))) {
+        if (!CityBlueprintService.SNAPSHOT_SCHEMA.equals(string(catalogSnapshotRef, "schema"))) {
             throw fail("CITY_BLUEPRINT_CATALOG_STALE", "Unsupported catalog snapshot reference schema.");
         }
         requireArtifactCurrent(debugRoot, catalogSnapshotRef,
@@ -96,15 +96,15 @@ public final class CityBlueprintCompilerService {
         }
 
         JsonObject snapshot = readObject(snapshotPath, "CITY_BLUEPRINT_CATALOG_STALE");
-        if (!CityBlueprintService.SNAPSHOT_SCHEMA.equals(string(snapshot, "schemaVersion"))) {
+        if (!CityBlueprintService.SNAPSHOT_SCHEMA.equals(string(snapshot, "schema"))) {
             throw fail("CITY_BLUEPRINT_CATALOG_STALE", "Unsupported catalog snapshot schema.");
         }
         JsonObject semanticCatalogJson = requiredObject(snapshot, "structureCatalog");
-        if (!CityStructureProfileCatalog.SCHEMA_VERSION.equals(string(semanticCatalogJson, "schemaVersion"))) {
+        if (!CityStructureProfileCatalog.SCHEMA.equals(string(semanticCatalogJson, "schema"))) {
             throw fail("CITY_BLUEPRINT_CATALOG_STALE", "Unsupported structure semantic catalog schema.");
         }
         JsonObject terrainFieldRef = requiredObject(snapshot, "terrainFieldRef");
-        if (!LandUseTerrainField.CURRENT_SCHEMA_VERSION.equals(string(terrainFieldRef, "schemaVersion"))) {
+        if (!LandUseTerrainField.SCHEMA.equals(string(terrainFieldRef, "schema"))) {
             throw fail("CITY_BLUEPRINT_TERRAIN_FIELD_STALE", "Unsupported D3 terrain field schema.");
         }
         requireArtifactCurrent(debugRoot, terrainFieldRef, "CITY_BLUEPRINT_TERRAIN_FIELD_STALE");
@@ -164,7 +164,7 @@ public final class CityBlueprintCompilerService {
         Set<String> landscapeGapCirculationGroups = landscapeGapCirculationGroups(blueprint);
         for (CityBlueprint.Group group : groups) {
             if (group.groupKind() != CityBlueprint.GroupKind.STRUCTURE) {
-                throw fail("CITY_BLUEPRINT_GROUP_KIND_UNSUPPORTED", "Only STRUCTURE groups compile in v0.2.");
+                throw fail("CITY_BLUEPRINT_GROUP_KIND_UNSUPPORTED", "Only STRUCTURE groups compile in the current Blueprint pipeline.");
             }
             List<LandformPatchSummary> preferredPatches = new ArrayList<>();
             for (String patchRef : group.preferredPatchRefs()) {
@@ -416,7 +416,7 @@ public final class CityBlueprintCompilerService {
         refreshConnections(connectivityPlan, states);
         freezeBuildingParcelPlans(anchors, blueprint, catalog, cityPlanningBounds);
         JsonObject anchorPlan = new JsonObject();
-        anchorPlan.addProperty("schemaVersion", CityStructureAnchorPlanner.PLAN_SCHEMA);
+        anchorPlan.addProperty("schema", CityStructureAnchorPlanner.PLAN_SCHEMA);
         anchorPlan.addProperty("cityId", cityId);
         anchorPlan.add("anchors", anchors);
         JsonArray streetBands = internalStreetBands(states, anchors, catalog);
@@ -438,7 +438,7 @@ public final class CityBlueprintCompilerService {
             anchorPlan.addProperty("arrayVisualGapRecorded", true);
         }
         JsonObject provenance = new JsonObject();
-        provenance.addProperty("schemaVersion", TRACE_SCHEMA);
+        provenance.addProperty("schema", TRACE_SCHEMA);
         provenance.addProperty("generationSeed", blueprint.generationSeed());
         provenance.addProperty("selectionMode", "programmatic_blueprint_compiler");
         provenance.addProperty("contextId", contextId);
@@ -647,7 +647,7 @@ public final class CityBlueprintCompilerService {
                     : "SELECTED";
 
             JsonObject plan = new JsonObject();
-            plan.addProperty("schemaVersion", "city_building_parcel_plan.v0.1");
+            plan.addProperty("schema", "city_building_parcel_plan");
             plan.addProperty("planningStage", "D4_BEFORE_ARRAY_COMMIT");
             plan.addProperty("collisionPolicy", "HARD_STRUCTURE_SOFT_COMPRESSIBLE_PARCEL");
             plan.addProperty("marginBlocks", margin);
@@ -1343,7 +1343,7 @@ public final class CityBlueprintCompilerService {
         JsonArray anchors = array(requiredObject(candidate, "expandedStructureAnchorPlan"), "anchors");
         JsonArray items = array(candidate, "items");
         JsonObject trace = new JsonObject();
-        trace.addProperty("schemaVersion", "city_structure_terrain_gate_batch_trace.v0.1");
+        trace.addProperty("schema", "city_structure_terrain_gate_batch_trace");
         trace.addProperty("evaluationScope", "all_pair_member_footprints");
         trace.addProperty("structureRef", structureRef);
         JsonArray members = new JsonArray();
@@ -2468,8 +2468,8 @@ public final class CityBlueprintCompilerService {
     private static JsonObject automaticLoopState(CityBlueprint blueprint, JsonObject templateCatalog,
                                                  JsonArray occupied) {
         JsonObject state = new JsonObject();
-        state.addProperty("schemaVersion", CityStructureArrayLayoutLoopPlanner.STATE_SCHEMA_V04);
-        state.addProperty("planningMode", CityStructureArrayLayoutLoopPlanner.PLANNING_MODE_V04);
+        state.addProperty("schema", CityStructureArrayLayoutLoopPlanner.STATE_SCHEMA);
+        state.addProperty("planningMode", CityStructureArrayLayoutLoopPlanner.PLANNING_MODE);
         state.addProperty("cityId", blueprint.cityId());
         state.addProperty("stateId", "blueprint_automatic_connectivity");
         state.addProperty("iteration", 0);
@@ -2759,7 +2759,7 @@ public final class CityBlueprintCompilerService {
                                      List<LandformPatchSummary> overridePatches,
                                      String patchSelectionScope) {
         JsonObject plan = new JsonObject();
-        plan.addProperty("schemaVersion", CityStructureArrayCandidatePlanner.PLAN_SCHEMA);
+        plan.addProperty("schema", CityStructureArrayCandidatePlanner.PLAN_SCHEMA);
         plan.addProperty("cityId", blueprint.cityId());
         plan.addProperty("arrayId", state.group().groupId() + "_" + phase.anchorLabel
                 + "_" + String.format("%03d", ordinal));
@@ -3140,7 +3140,7 @@ public final class CityBlueprintCompilerService {
         List<String> patchRefs = patches.stream().map(LandformPatchSummary::landformPatchId).toList();
         int step = state.patchStepBlocks();
         JsonObject region = new JsonObject();
-        region.addProperty("schemaVersion", CityD4CandidateLegalRegion.SCHEMA);
+        region.addProperty("schema", CityD4CandidateLegalRegion.SCHEMA);
         region.addProperty("patchSelectionRef", connectivityExpansion
                 ? "city_blueprint_connectivity_grid:" + state.group().groupId()
                 : "city_blueprint_preferred:" + String.join("+", patchRefs));
@@ -3869,7 +3869,7 @@ public final class CityBlueprintCompilerService {
                                     Map<String, GroupState> states, ConnectivityPlan connectivityPlan,
                                     String status, String reasonCode) {
         JsonObject trace = new JsonObject();
-        trace.addProperty("schemaVersion", TRACE_SCHEMA);
+        trace.addProperty("schema", TRACE_SCHEMA);
         trace.addProperty("cityId", blueprint.cityId());
         trace.addProperty("status", status);
         trace.addProperty("reasonCode", reasonCode);
@@ -3895,7 +3895,7 @@ public final class CityBlueprintCompilerService {
                                         ConnectivityPlan connectivityPlan,
                                         JsonObject functionAreaFormationPlan) {
         JsonObject map = new JsonObject();
-        map.addProperty("schemaVersion", EXTENT_SCHEMA);
+        map.addProperty("schema", EXTENT_SCHEMA);
         map.addProperty("cityId", blueprint.cityId());
         map.addProperty("generationSeed", blueprint.generationSeed());
         map.addProperty("connectivityPolicy", "RELATION_GRAPH_ARRAY_GROWTH_THEN_LAND_USE");
@@ -3923,7 +3923,7 @@ public final class CityBlueprintCompilerService {
     private static JsonObject functionAreaFormationPlan(Map<String, GroupState> states,
                                                         BlockBounds planningBounds) {
         JsonObject plan = new JsonObject();
-        plan.addProperty("schemaVersion", "city_function_area_formation_plan.v0.1");
+        plan.addProperty("schema", "city_function_area_formation_plan");
         plan.addProperty("status", "formed_from_committed_structures");
         plan.addProperty("policy", "COMMIT_BUILDINGS_BEFORE_FORMING_FUNCTION_AREAS");
         plan.addProperty("preallocatedAreaCount", 0);
@@ -4108,7 +4108,7 @@ public final class CityBlueprintCompilerService {
     }
 
     private static CityBlueprint.ArtifactRef artifactRef(JsonObject object) {
-        return new CityBlueprint.ArtifactRef(string(object, "path"), string(object, "schemaVersion"),
+        return new CityBlueprint.ArtifactRef(string(object, "path"), string(object, "schema"),
                 string(object, "contentHash"));
     }
 
@@ -4822,7 +4822,7 @@ public final class CityBlueprintCompilerService {
                     streetBounds.minZ(), Math.max(resolvedStart.x(), resolvedEnd.x()) + platformHalfWidth,
                     streetBounds.maxZ());
             JsonObject value = new JsonObject();
-            value.addProperty("schemaVersion", "city_internal_street_band.v0.2");
+            value.addProperty("schema", "city_internal_street_band");
             value.addProperty("streetBandId", group.groupId() + "::internal_street");
             value.addProperty("roadNetworkId", group.groupId() + "::LINEAR_STREET_BAND");
             value.addProperty("roadKind", "LINEAR_STREET_BAND");
@@ -5073,7 +5073,7 @@ public final class CityBlueprintCompilerService {
         }
         JsonObject functionAreaJson() {
             JsonObject value = new JsonObject();
-            value.addProperty("schemaVersion", "city_function_area.v0.1");
+            value.addProperty("schema", "city_function_area");
             value.addProperty("groupId", group.groupId());
             value.addProperty("status", envelopes.isEmpty() && landscapeFormationSpans.isEmpty()
                     ? "EMPTY_NO_COMMITTED_CLAIM" : "FORMED_FROM_COMMITTED_CLAIMS");

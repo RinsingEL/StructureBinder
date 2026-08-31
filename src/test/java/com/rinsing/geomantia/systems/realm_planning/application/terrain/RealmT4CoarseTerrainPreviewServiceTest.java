@@ -51,8 +51,8 @@ class RealmT4CoarseTerrainPreviewServiceTest {
         assertTrue(Files.size(result.previewPath()) > 0L);
         assertNotNull(ImageIO.read(result.previewPath().toFile()));
         JsonObject evidence = result.evidence();
-        assertEquals(RealmT4CoarseTerrainPreviewService.SCHEMA_VERSION,
-                evidence.get("schemaVersion").getAsString());
+        assertEquals(RealmT4CoarseTerrainPreviewService.SCHEMA,
+                evidence.get("schema").getAsString());
         assertTrue(evidence.get("advisoryOnly").getAsBoolean());
         assertEquals("city_d3_site_review", evidence.get("requiredNextGate").getAsString());
         assertEquals(3, evidence.getAsJsonArray("cells").size());

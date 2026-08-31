@@ -35,17 +35,17 @@ class CityBlueprintServiceTest {
 
         assertEquals(0, prepared.get("aiCityDesignCallCount").getAsInt());
         JsonObject context = prepared.getAsJsonObject("cityBlueprintContext");
-        assertEquals("city_blueprint_context.v0.10", context.get("schemaVersion").getAsString());
-        assertEquals("city_blueprint_catalog_snapshot.v0.10",
-                context.getAsJsonObject("catalogSnapshotRef").get("schemaVersion").getAsString());
-        assertEquals("city_blueprint_catalog_snapshot.v0.10",
-                context.getAsJsonObject("catalogSnapshot").get("schemaVersion").getAsString());
+        assertEquals("city_blueprint_context", context.get("schema").getAsString());
+        assertEquals("city_blueprint_catalog_snapshot",
+                context.getAsJsonObject("catalogSnapshotRef").get("schema").getAsString());
+        assertEquals("city_blueprint_catalog_snapshot",
+                context.getAsJsonObject("catalogSnapshot").get("schema").getAsString());
         JsonObject semanticProfile = context.getAsJsonObject("catalogSnapshot")
                 .getAsJsonObject("structureCatalog")
                 .getAsJsonArray("semanticProfiles").get(0).getAsJsonObject();
-        assertEquals("city_semantic_profile_catalog.v0.4",
+        assertEquals("city_semantic_profile_catalog",
                 context.getAsJsonObject("catalogSnapshot").getAsJsonObject("structureCatalog")
-                        .get("schemaVersion").getAsString());
+                        .get("schema").getAsString());
         assertEquals("approved", semanticProfile.get("reviewState").getAsString());
         assertTrue(semanticProfile.has("functionTerms"));
         assertTrue(semanticProfile.has("planningRoleTerms"));
@@ -59,10 +59,10 @@ class CityBlueprintServiceTest {
                 prepared.get("contextId").getAsString(), blueprint);
         assertTrue(submitted.get("ok").getAsBoolean());
         assertEquals(1, submitted.get("aiCityDesignSubmissionCount").getAsInt());
-        assertEquals("city_blueprint_validation_report.v0.4",
-                submitted.getAsJsonObject("validationReport").get("schemaVersion").getAsString());
-        assertEquals("city_blueprint_submission_trace.v0.4",
-                submitted.getAsJsonObject("submissionTrace").get("schemaVersion").getAsString());
+        assertEquals("city_blueprint_validation_report",
+                submitted.getAsJsonObject("validationReport").get("schema").getAsString());
+        assertEquals("city_blueprint_submission_trace",
+                submitted.getAsJsonObject("submissionTrace").get("schema").getAsString());
 
         Path blueprintPath = fixture.runDir().resolve("city_blueprint_city_test/city_blueprint.json");
         Path reportPath = fixture.runDir().resolve(
@@ -259,7 +259,7 @@ class CityBlueprintServiceTest {
         Path contextPath = fixture.runDir().resolve("city_blueprint_" + safe(fixture.cityId()))
                 .resolve("city_blueprint_context.json");
         JsonObject context = JsonParser.parseString(Files.readString(contextPath)).getAsJsonObject();
-        context.addProperty("schemaVersion", "city_blueprint_context.v0.7");
+        context.addProperty("schema", "obsolete_city_blueprint_context");
         Files.writeString(contextPath, context.toString());
 
         JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
@@ -280,7 +280,7 @@ class CityBlueprintServiceTest {
         Path snapshotPath = fixture.runDir().resolve("city_blueprint_" + safe(fixture.cityId()))
                 .resolve("city_blueprint_catalog_snapshot.json");
         JsonObject snapshot = JsonParser.parseString(Files.readString(snapshotPath)).getAsJsonObject();
-        snapshot.addProperty("schemaVersion", "city_blueprint_catalog_snapshot.v0.8");
+        snapshot.addProperty("schema", "city_blueprint_catalog_snapshot");
         Files.writeString(snapshotPath, snapshot.toString());
 
         JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
@@ -777,7 +777,7 @@ class CityBlueprintServiceTest {
     void rejectsPreviousReferenceCatalogSchema() throws Exception {
         Fixture fixture = fixture("run_old_reference_catalog", "city:old_reference_catalog");
         JsonObject catalog = fixture.referenceCatalog().deepCopy();
-        catalog.addProperty("schemaVersion", "city_blueprint_reference_catalog.v0.6");
+        catalog.addProperty("schema", "obsolete_city_blueprint_reference_catalog");
 
         CityBlueprintContractException failure = assertThrows(CityBlueprintContractException.class,
                 () -> new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
@@ -801,7 +801,7 @@ class CityBlueprintServiceTest {
         registry.add("citySeeds", seeds);
         Files.writeString(runDir.resolve("city_seed_registry.json"), registry.toString());
         JsonObject d3 = new JsonObject();
-        d3.addProperty("schemaVersion", "city_landform_review.v0.1");
+        d3.addProperty("schema", "city_landform_review");
         d3.addProperty("cityId", cityId);
         d3.add("grid", JsonParser.parseString("""
                 {"originBlockX":0,"originBlockZ":0,"cellStepBlocks":16,"cellsX":1,"cellsZ":1}
@@ -820,7 +820,7 @@ class CityBlueprintServiceTest {
         Files.createDirectories(terrainDirectory);
         Files.writeString(terrainDirectory.resolve("land_use_terrain_field.json"), """
                 {
-                  "schemaVersion":"city_land_use_terrain_field.v0.1","cityId":"%s",
+                  "schema":"city_land_use_terrain_field","cityId":"%s",
                   "planningBounds":{"minX":0,"minZ":0,"maxX":15,"maxZ":15},"cellStepBlocks":16,
                   "cells":[{"cellX":0,"cellZ":0,"blockMinX":0,"blockMinZ":0,"cellStepBlocks":16,
                     "elevation":64,"slope":0.2,"localRelief":1,"roughness":0.1,"water":false,
@@ -841,13 +841,13 @@ class CityBlueprintServiceTest {
                 """);
         JsonObject terraSource = new JsonObject();
         terraSource.addProperty("sourceType", "debug_catalog");
-        terraSource.addProperty("schemaVersion", "terrasense_structure_profile_source.v0.1");
+        terraSource.addProperty("schema", "terrasense_structure_profile_source");
         terraSource.addProperty("catalogMode", "debug");
         terraSource.addProperty("debugCatalogPath", "structure_debug_catalog.json");
         JsonObject templateSource = new JsonObject();
         templateSource.add("catalog", JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_template_catalog.v0.1",
+                  "schema":"city_template_catalog",
                   "templates":[{
                     "buildingSemantic":"administration","style":"stone",
                     "templateId":"geomantia:town_hall","templateRef":"geomantia:town_hall",
@@ -865,7 +865,7 @@ class CityBlueprintServiceTest {
     private static JsonObject referenceCatalog() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint_reference_catalog.v0.9",
+                  "schema":"city_blueprint_reference_catalog",
                   "structureRefs":[{"structureRef":"geomantia:town_hall","templateCandidates":[{"templateId":"geomantia:town_hall","variantId":"default"}]}],
                   "fillPools":[{"poolRef":"pool:civic","structureRefs":["geomantia:town_hall"]}],
                   "algorithmProfiles":[
@@ -877,7 +877,7 @@ class CityBlueprintServiceTest {
                   "styleProfiles":[{"profileRef":"style:river_stone"}],
                   "roadProfiles":[{"profileRef":"road:town","hierarchy":"HIERARCHICAL","density":"BALANCED"}],
                   "surfaceDetailProfiles":[{"profileRef":"surface:working","intensity":"MEDIUM"}],
-                  "landUseRuleProfile":{"schemaVersion":"city_land_use_rules.v0.1","profileId":"blueprint_test","rules":[{
+                  "landUseRuleProfile":{"schema":"city_land_use_rules","profileId":"blueprint_test","rules":[{
                     "ruleRef":"civic","landUseType":"civic","semanticTerms":["administration"],
                     "footprintMultiplier":1.5,"extraAreaBlocks":80,"minAreaBlocks":80,"maxAreaBlocks":1536,
                     "actionBudget":300,"baseStepCost":1.0,"slopeCost":1.2,"reliefCost":1.2,"waterCost":8.0,
@@ -1019,7 +1019,7 @@ class CityBlueprintServiceTest {
 
     private static JsonObject blueprint(JsonObject context) {
         JsonObject blueprint = new JsonObject();
-        blueprint.addProperty("schemaVersion", "city_blueprint.v0.12");
+        blueprint.addProperty("schema", "city_blueprint");
         blueprint.addProperty("cityId", context.get("cityId").getAsString());
         blueprint.add("sourceD3Ref", context.getAsJsonObject("sourceD3Ref").deepCopy());
         blueprint.add("catalogSnapshotRef", context.getAsJsonObject("catalogSnapshotRef").deepCopy());

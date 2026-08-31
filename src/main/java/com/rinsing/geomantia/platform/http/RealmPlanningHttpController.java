@@ -259,7 +259,7 @@ final class RealmPlanningHttpController {
             }
             ServerLevel level = resolveLevel(dimensionId, player);
             String normalizedDimension = level.dimension().location().toString();
-            String fallbackFingerprint = String.join("|", "minecraft_prior_v1", normalizedDimension,
+            String fallbackFingerprint = String.join("|", "minecraft_prior", normalizedDimension,
                     Long.toString(level.getSeed()), level.getChunkSource().getGenerator().getClass().getName());
             TerrainPreviewProviderSelection selection = MinecraftTerrainPreviewProviderFactory
                     .createSelector(level, new MinecraftPriorAtlasSampler(level), fallbackFingerprint)
@@ -654,7 +654,7 @@ final class RealmPlanningHttpController {
             rejectLegacyCityFields(request, "patchGroupPlan", "zoneChoices", "functionType", "functionTag",
                     "function_candidates");
             if (request.has("dressingBrushPlan")
-                    || "city_dressing_brush_plan.v0.1".equals(stringValue(request, "schemaVersion", ""))) {
+                    || "city_dressing_brush_plan".equals(stringValue(request, "schema", ""))) {
                 throw new IllegalArgumentException("CITY_DRESSING_LEGACY_SCHEMA_REMOVED: "
                         + "plan_city_dressing accepts decorationProgramPlan only.");
             }
@@ -880,19 +880,8 @@ final class RealmPlanningHttpController {
             String runId = requiredString(request, "runId");
             String citySeedId = requiredString(request, "citySeedId");
             return CityPlanningEndpointHandler.handlePlanD5(debugRoot(), runId, citySeedId,
-                    stringValue(request, "wallVersion", "v2"),
                     intValue(request, "wallMarginBlocks", 24),
-                    intValue(request, "segmentLengthBlocks", 15),
-                    intValue(request, "wallCorridorHalfWidthBlocks", 4),
-                    new CityWallReservationPlanner.V3Options(
-                            intValue(request, "wallBreathingRoomBlocks",
-                                    CityWallReservationPlanner.DEFAULT_WALL_BREATHING_ROOM_BLOCKS),
-                            intValue(request, "patchExpansionMaxRounds",
-                                    CityWallReservationPlanner.DEFAULT_PATCH_EXPANSION_MAX_ROUNDS),
-                            intValue(request, "concavityOpeningMaxBlocks",
-                                    CityWallReservationPlanner.DEFAULT_CONCAVITY_OPENING_MAX_BLOCKS),
-                            doubleValue(request, "concavityDepthRatioMin",
-                                    CityWallReservationPlanner.DEFAULT_CONCAVITY_DEPTH_RATIO_MIN)));
+                    intValue(request, "wallCorridorHalfWidthBlocks", 4));
         });
     }
 
@@ -902,7 +891,6 @@ final class RealmPlanningHttpController {
             String runId = requiredString(request, "runId");
             String citySeedId = requiredString(request, "citySeedId");
             boolean confirmWorldMutation = booleanValue(request, "confirmWorldMutation", false);
-            String roadProvider = stringValue(request, "roadProvider", "auto");
             ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
             String dimensionId = stringValue(request, "dimensionId", "");
             if (dimensionId.isBlank()) {
@@ -911,7 +899,7 @@ final class RealmPlanningHttpController {
             ServerLevel level = resolveLevel(dimensionId, player);
             JsonObject response = CityPlanningEndpointHandler.handleExecuteD5(debugRoot(),
                     server.getWorldPath(LevelResource.ROOT),
-                    runId, citySeedId, confirmWorldMutation, level, roadProvider);
+                    runId, citySeedId, confirmWorldMutation, level);
             response.addProperty("worldSaveRequested", false);
             return response;
         }));
@@ -948,13 +936,13 @@ final class RealmPlanningHttpController {
         boolean acceptedBlueprint = hasAcceptedBlueprintD6(debugRoot, runId, citySeedId);
         if (request.has("landUseIntentPlan")) {
             throw new IllegalArgumentException("CITY_BLUEPRINT_WORKFLOW_LAND_USE_OVERRIDE_FORBIDDEN: "
-                    + "CityBlueprint v0.6 is the only outdoor design authority.");
+                    + "current CityBlueprint is the only outdoor design authority.");
         }
         if (acceptedBlueprint) {
             return CityPlanningEndpointHandler.handlePlanBlueprintOutdoor(debugRoot, runId, citySeedId);
         }
         throw new IllegalArgumentException("CITY_BLUEPRINT_WORKFLOW_REQUIRED: prepare, submit and compile "
-                + "CityBlueprint v0.6 before planning city outdoor space.");
+                + "current CityBlueprint before planning city outdoor space.");
     }
 
     private static boolean hasAcceptedBlueprintD6(Path debugRoot,
@@ -986,14 +974,14 @@ final class RealmPlanningHttpController {
             JsonObject validation = JsonParser.parseString(Files.readString(validationPath)).getAsJsonObject();
             JsonObject submission = JsonParser.parseString(Files.readString(submissionPath)).getAsJsonObject();
             JsonObject d6 = JsonParser.parseString(Files.readString(d6Path)).getAsJsonObject();
-            boolean accepted = CityBlueprint.SCHEMA_VERSION.equals(stringValue(blueprint, "schemaVersion", ""))
+            boolean accepted = CityBlueprint.SCHEMA.equals(stringValue(blueprint, "schema", ""))
                     && citySeedId.equals(stringValue(blueprint, "cityId", ""))
                     && booleanValue(validation, "valid", false)
                     && "accepted".equals(stringValue(submission, "status", ""))
                     && intValue(submission, "aiCityDesignSubmissionCount", 0) == 1;
             if (!accepted) {
                 throw new IllegalArgumentException("CITY_BLUEPRINT_LAND_USE_ROUTE_NOT_ACCEPTED: "
-                        + "Blueprint authority exists but is not an accepted v0.6 submission.");
+                        + "Blueprint authority exists but is not an accepted current submission.");
             }
             if (!citySeedId.equals(stringValue(d6, "cityId", ""))
                     || !booleanValue(d6, "locked", false)) {
@@ -1064,70 +1052,23 @@ final class RealmPlanningHttpController {
             }
             ServerLevel level = resolveLevel(dimensionId, player);
             return CityPlanningEndpointHandler.handlePlanCityWalls(debugRoot(), runId, citySeedId,
-                    intValue(request, "wallMarginBlocks", 24),
-                    intValue(request, "segmentLengthBlocks", 15),
-                    intValue(request, "gateWidthBlocks", 9),
-                    stringValue(request, "wallVersion", "v2"),
                     level,
                     intValue(request, "roadScanMarginBlocks", 8),
-                    intValue(request, "roadProtectionMarginBlocks", 2),
-                    intValue(request, "maxFoundationDepthBlocks", 8),
-                    intValue(request, "maxSegmentHeightDeltaBlocks", 7),
-                    new CityWallPlanner.V3Options(
-                            intValue(request, "gateClusterRadiusBlocks",
-                                    CityWallPlanner.DEFAULT_GATE_CLUSTER_RADIUS_BLOCKS),
-                            intValue(request, "terrainFitUnitLengthBlocks",
-                                    CityWallPlanner.DEFAULT_TERRAIN_FIT_UNIT_LENGTH_BLOCKS),
-                            stringValue(request, "wallTerrainPolicy",
-                                    CityWallPlanner.DEFAULT_WALL_TERRAIN_POLICY),
-                            intValue(request, "flatMaxDeltaBlocks",
-                                    CityWallPlanner.DEFAULT_FLAT_MAX_DELTA_BLOCKS),
-                            intValue(request, "steppedMaxDeltaBlocks",
-                                    CityWallPlanner.DEFAULT_STEPPED_MAX_DELTA_BLOCKS),
-                            intValue(request, "mountainProbeDistanceBlocks",
-                                    CityWallPlanner.DEFAULT_MOUNTAIN_PROBE_DISTANCE_BLOCKS),
-                            intValue(request, "naturalBoundaryMinDeltaBlocks",
-                                    CityWallPlanner.DEFAULT_NATURAL_BOUNDARY_MIN_DELTA_BLOCKS),
-                            booleanValue(request, "embeddedSlopeTower", true),
-                            stringValue(request, "wallDesignPolicy",
-                                    CityWallPlanner.DEFAULT_WALL_DESIGN_POLICY),
-                            intValue(request, "minGateSpacingBlocks",
-                                    CityWallPlanner.DEFAULT_MIN_GATE_SPACING_BLOCKS),
-                            intValue(request, "minGateRoadLengthBlocks",
-                                    CityWallPlanner.DEFAULT_MIN_GATE_ROAD_LENGTH_BLOCKS),
-                            intValue(request, "naturalWaterBoundaryMinAreaBlocks",
-                                    CityWallPlanner.DEFAULT_NATURAL_WATER_BOUNDARY_MIN_AREA_BLOCKS),
-                            intValue(request, "roadProjectionMaxDistanceBlocks",
-                                    CityWallPlanner.DEFAULT_ROAD_PROJECTION_MAX_DISTANCE_BLOCKS)),
-                    new CityWallPlanner.V4Options(
+                    new CityWallPlanner.Options(
                             intValue(request, "wallUnitLengthBlocks",
                                     CityWallPlanner.DEFAULT_WALL_UNIT_LENGTH_BLOCKS),
-                            intValue(request, "waterRunMinUnits",
-                                    CityWallPlanner.DEFAULT_WATER_RUN_MIN_UNITS),
-                            intValue(request, "waterRetreatMaxCells",
-                                    CityWallPlanner.DEFAULT_WATER_RETREAT_MAX_CELLS),
-                            intValue(request, "structureWallBreathingRoomBlocks",
-                                    intValue(request, "wallMarginBlocks",
-                                            CityWallPlanner.DEFAULT_STRUCTURE_WALL_BREATHING_ROOM_BLOCKS)),
-                            intValue(request, "heightDatumClampBlocks",
-                                    CityWallPlanner.DEFAULT_HEIGHT_DATUM_CLAMP_BLOCKS),
-                            intValue(request, "localMedianWindowUnits",
-                                    CityWallPlanner.DEFAULT_LOCAL_MEDIAN_WINDOW_UNITS)),
-                    new CityWallPlanner.V5Options(
-                            intValue(request, "wallUnitLengthBlocks",
-                                    CityWallPlanner.DEFAULT_V5_WALL_UNIT_LENGTH_BLOCKS),
                             intValue(request, "nominalWallHeightBlocks",
-                                    CityWallPlanner.DEFAULT_V5_NOMINAL_WALL_HEIGHT_BLOCKS),
+                                    CityWallPlanner.DEFAULT_NOMINAL_WALL_HEIGHT_BLOCKS),
                             intValue(request, "waterRunMinBlocks",
-                                    CityWallPlanner.DEFAULT_V5_WATER_RUN_MIN_BLOCKS),
+                                    CityWallPlanner.DEFAULT_WATER_RUN_MIN_BLOCKS),
                             doubleValue(request, "waterFluidRatioMin",
-                                    CityWallPlanner.DEFAULT_V5_WATER_FLUID_RATIO_MIN),
+                                    CityWallPlanner.DEFAULT_WATER_FLUID_RATIO_MIN),
                             intValue(request, "heightSegmentMaxDeltaBlocks",
-                                    CityWallPlanner.DEFAULT_V5_SEGMENT_MAX_DELTA_BLOCKS),
+                                    CityWallPlanner.DEFAULT_SEGMENT_MAX_DELTA_BLOCKS),
                             intValue(request, "heightSteppedTransitionMaxDeltaBlocks",
-                                    CityWallPlanner.DEFAULT_V5_STEPPED_TRANSITION_MAX_DELTA_BLOCKS),
+                                    CityWallPlanner.DEFAULT_STEPPED_TRANSITION_MAX_DELTA_BLOCKS),
                             intValue(request, "naturalBoundaryMinDeltaBlocks",
-                                    CityWallPlanner.DEFAULT_V5_NATURAL_BOUNDARY_MIN_DELTA_BLOCKS)));
+                                    CityWallPlanner.DEFAULT_NATURAL_BOUNDARY_MIN_DELTA_BLOCKS)));
         }));
     }
 
@@ -1302,7 +1243,7 @@ final class RealmPlanningHttpController {
         BlockPos center = resolveCenter(request, player);
         String runId = stringValue(request, "runId", "");
         MinecraftPriorAtlasSampler minecraftSampler = new MinecraftPriorAtlasSampler(level);
-        String fallbackFingerprint = String.join("|", "minecraft_prior_v1",
+        String fallbackFingerprint = String.join("|", "minecraft_prior",
                 level.dimension().location().toString(), Long.toString(level.getSeed()),
                 level.getChunkSource().getGenerator().getClass().getName());
         boolean preferGeneratorNative = booleanValue(request, "preferGeneratorNativeTerrain", true);

@@ -46,7 +46,7 @@ class CityDecorationContentCatalogLoaderTest {
     void v4LoadsResolvedCropPlantStateWithoutNbtTemplate(@TempDir Path root) throws Exception {
         writeIndex(root, """
                 {
-                  "schemaVersion": "city_decoration_content_index.v0.4",
+                  "schema": "city_decoration_content_index",
                   "contents": [{
                     "contentId": "city:plant/wheat",
                     "contentKind": "plant",
@@ -77,7 +77,7 @@ class CityDecorationContentCatalogLoaderTest {
     void rejectsLegacyCatalogSchema(@TempDir Path root) throws Exception {
         writeIndex(root, """
                 {
-                  "schemaVersion": "city_decoration_content_index.v0.3",
+                  "schema": "obsolete_city_decoration_content_index",
                   "contents": [{
                     "contentId": "city:plant/wheat",
                     "contentKind": "plant",
@@ -171,7 +171,7 @@ class CityDecorationContentCatalogLoaderTest {
     void rejectsDuplicateAndUnknownContentIds(@TempDir Path root) throws Exception {
         writeTemplate(root.resolve("templates/one.nbt"), 1, 1, 1, "minecraft:stone", false);
         String entry = contentEntry("city:prefab/one", "templates/one.nbt", "");
-        writeIndex(root, "{\n  \"schemaVersion\": \"city_decoration_content_index.v0.4\",\n"
+        writeIndex(root, "{\n  \"schema\": \"city_decoration_content_index\",\n"
                 + "  \"contents\": [" + entry + "," + entry + "]\n}");
 
         CityDecorationContentCatalog.CatalogException duplicate = assertThrows(
@@ -224,7 +224,7 @@ class CityDecorationContentCatalogLoaderTest {
 
         CityDecorationContentCatalog catalog = new CityDecorationContentCatalogLoader().load(root);
         CityDecorationContentCatalog.Content content = catalog.requireContent("city:prefab/channel");
-        assertEquals(CityDecorationContentCatalog.SCHEMA, catalog.schemaVersion());
+        assertEquals(CityDecorationContentCatalog.SCHEMA, catalog.schema());
         assertEquals(1, content.groundPlaneLocalY());
         assertEquals(2, content.embedDepthBlocks());
         assertEquals("clear_template_air", content.clearanceMode());
@@ -247,7 +247,7 @@ class CityDecorationContentCatalogLoaderTest {
         writeTemplate(root.resolve("templates/channel.nbt"), 1, 2, 1, "minecraft:water", false);
         writeIndex(root, """
                 {
-                  "schemaVersion": "city_decoration_content_index.v0.4",
+                  "schema": "obsolete_city_decoration_content_index",
                   "contents": [{
                     "contentId": "city:prefab/channel",
                     "contentKind": "prefab",
@@ -273,7 +273,7 @@ class CityDecorationContentCatalogLoaderTest {
         writeTemplate(root.resolve("templates/legacy.nbt"), 1, 1, 1, "minecraft:stone", false);
         writeIndex(root, """
                 {
-                  "schemaVersion": "city_decoration_content_index.v0.2",
+                  "schema": "obsolete_city_decoration_content_index",
                   "contents": []
                 }
                 """);
@@ -293,7 +293,7 @@ class CityDecorationContentCatalogLoaderTest {
         Files.createDirectories(styles);
         Files.writeString(styles.resolve("forest_village.json"), """
                 {
-                  "schemaVersion": "city_decoration_style_profile.v0.1",
+                  "schema": "city_decoration_style_profile",
                   "styleProfileId": "forest_village",
                   "mappings": [
                     {
@@ -313,7 +313,7 @@ class CityDecorationContentCatalogLoaderTest {
 
         Files.writeString(styles.resolve("forest_village.json"), """
                 {
-                  "schemaVersion": "city_decoration_style_profile.v0.1",
+                  "schema": "city_decoration_style_profile",
                   "styleProfileId": "forest_village",
                   "mappings": [
                     {
@@ -337,7 +337,7 @@ class CityDecorationContentCatalogLoaderTest {
         writeTemplate(root.resolve("templates/channel.nbt"), 1, 1, 1, "minecraft:water", false);
         writeIndex(root, """
                 {
-                  "schemaVersion": "city_decoration_content_index.v0.4",
+                  "schema": "city_decoration_content_index",
                   "contents": [
                     {
                       "contentId": "city:prefab/crop",
@@ -374,7 +374,7 @@ class CityDecorationContentCatalogLoaderTest {
                 "minecraft:oak_slab", false);
         writeIndex(root, """
                 {
-                  "schemaVersion": "city_decoration_content_index.v0.4",
+                  "schema": "city_decoration_content_index",
                   "contents": [
                     {
                       "contentId": "city:prefab/lined_straight",
@@ -406,7 +406,7 @@ class CityDecorationContentCatalogLoaderTest {
 
         writeIndex(root, """
                 {
-                  "schemaVersion": "city_decoration_content_index.v0.4",
+                  "schema": "city_decoration_content_index",
                   "contents": [
                     {
                       "contentId": "city:prefab/channel",
@@ -427,7 +427,7 @@ class CityDecorationContentCatalogLoaderTest {
 
         writeIndex(root, """
                 {
-                  "schemaVersion": "city_decoration_content_index.v0.4",
+                  "schema": "city_decoration_content_index",
                   "contents": [
                     {
                       "contentId": "city:prefab/crop",
@@ -458,7 +458,7 @@ class CityDecorationContentCatalogLoaderTest {
     }
 
     private static String content(String contentId, String nbtFile, String extraFields) {
-        return "{\n  \"schemaVersion\": \"city_decoration_content_index.v0.4\",\n"
+        return "{\n  \"schema\": \"city_decoration_content_index\",\n"
                 + "  \"contents\": [" + contentEntry(contentId, nbtFile, extraFields) + "]\n}";
     }
 

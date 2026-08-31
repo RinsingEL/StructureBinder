@@ -37,10 +37,10 @@ except ImportError:
     )
 
 
-MANIFEST_SCHEMA = "geomantia_trek_fixed_import_manifest.v1"
-CATALOG_SCHEMA = "city_template_catalog.v0.1"
-PROFILE_SOURCE_SCHEMA = "terrasense_structure_profile_source.v0.1"
-VOCABULARY_SCHEMA = "terrasense_structure_vocabulary_snapshot.v0.1"
+MANIFEST_SCHEMA = "geomantia_trek_fixed_import_manifest"
+CATALOG_SCHEMA = "city_template_catalog"
+PROFILE_SOURCE_SCHEMA = "terrasense_structure_profile_source"
+VOCABULARY_SCHEMA = "terrasense_structure_vocabulary_snapshot"
 DEFAULT_MANIFEST = Path(__file__).with_name("trek_fixed_manifest.json")
 DEFAULT_QUERY_URL = "http://127.0.0.1:5000/realm/city/query_template_metadata"
 ALLOWED_MARKER_PREFIX = "trek:mobs/"
@@ -67,7 +67,7 @@ class ImportFailure(RuntimeError):
 @dataclass(frozen=True)
 class ImportedTemplate:
     manifest_entry: dict[str, Any]
-    entrance_review_version: str
+    entrance_review_ref: str
     source_configured_id: str
     source_pool: str
     source_nbt: str
@@ -96,15 +96,15 @@ def sha256_file(path: Path) -> str:
 
 def load_manifest(path: Path) -> dict[str, Any]:
     value = json.loads(path.read_text(encoding="utf-8"))
-    if value.get("schemaVersion") != MANIFEST_SCHEMA:
-        raise ImportFailure("TREK_TEMPLATE_MANIFEST_SCHEMA_UNSUPPORTED", str(value.get("schemaVersion")))
+    if value.get("schema") != MANIFEST_SCHEMA:
+        raise ImportFailure("TREK_TEMPLATE_MANIFEST_SCHEMA_UNSUPPORTED", str(value.get("schema")))
     templates = value.get("templates")
     if not isinstance(templates, list) or not templates:
         raise ImportFailure("TREK_TEMPLATE_MANIFEST_EMPTY", "templates must be a non-empty array")
-    entrance_review_version = value.get("entranceReviewVersion")
-    if not isinstance(entrance_review_version, str) or not entrance_review_version:
+    entrance_review_ref = value.get("entranceReviewRef")
+    if not isinstance(entrance_review_ref, str) or not entrance_review_ref:
         raise ImportFailure("TREK_TEMPLATE_ENTRANCE_REVIEW_INVALID",
-                            "entranceReviewVersion must be a non-empty string")
+                            "entranceReviewRef must be a non-empty string")
     source_ids: list[str] = []
     for entry in templates:
         configured_id = entry.get("sourceConfiguredId")
@@ -376,7 +376,7 @@ def inspect_entry(archive: zipfile.ZipFile, manifest: dict[str, Any], entry: dic
     rules = load_processor_rules(archive, processor_id)
     processor_replacements = bake_processor(
         nbt, rules,
-        [manifest["importerVersion"], jar_hash, source_identity, processor_id],
+        [manifest["importerId"], jar_hash, source_identity, processor_id],
     )
     raw_size_values = [int(value) for value in nbt["size"]]
     raw_size = dict(zip(("width", "height", "depth"), raw_size_values))
@@ -386,7 +386,7 @@ def inspect_entry(archive: zipfile.ZipFile, manifest: dict[str, Any], entry: dic
     target_ref = f"{manifest['targetNamespace']}:{target_path}"
     return ImportedTemplate(
         manifest_entry=entry,
-        entrance_review_version=entry.get("entranceReviewVersion", manifest["entranceReviewVersion"]),
+        entrance_review_ref=entry.get("entranceReviewRef", manifest["entranceReviewRef"]),
         source_configured_id=source_identity,
         source_pool=start_pool,
         source_nbt=source_nbt,
@@ -555,7 +555,7 @@ def build_catalog(imported: list[ImportedTemplate], runtime: dict[str, dict[str,
             "templateId": item.target_ref,
             "templateRef": item.target_ref,
             "contentHash": metadata["templateHash"],
-            "variant": "trek_b0_6_fixed_v1",
+            "variant": "trek_b0_6_fixed",
             "rawSize": runtime_size,
             "allowedRotations": ROTATIONS,
             "allowedMirrors": ["NONE"],
@@ -568,7 +568,7 @@ def build_catalog(imported: list[ImportedTemplate], runtime: dict[str, dict[str,
             "supportPolicy": "full_footprint_support",
             "clearanceBlocks": source["clearanceBlocks"],
         })
-    return {"schemaVersion": CATALOG_SCHEMA, "templates": entries}
+    return {"schema": CATALOG_SCHEMA, "templates": entries}
 
 
 def build_structure_profiles(manifest: dict[str, Any],
@@ -609,7 +609,7 @@ def write_profile_package(profile_dir: Path, manifest: dict[str, Any],
     vocabulary_terms = [term for term in profile_export["vocabularyTerms"]
                         if term["term_id"] in used_term_ids]
     vocabulary = {
-        "schemaVersion": VOCABULARY_SCHEMA,
+        "schema": VOCABULARY_SCHEMA,
         "snapshotId": profile_export["profileSetId"],
         "exportedAt": profile_export["exportedAt"],
         "sourceWorkspace": profile_export["sourceWorkspace"],
@@ -622,7 +622,7 @@ def write_profile_package(profile_dir: Path, manifest: dict[str, Any],
     vocabulary_path.write_text(json.dumps(vocabulary, ensure_ascii=False, indent=2) + "\n",
                                encoding="utf-8")
     source = {
-        "schemaVersion": PROFILE_SOURCE_SCHEMA,
+        "schema": PROFILE_SOURCE_SCHEMA,
         "sourceType": "structure_profile_jsonl",
         "catalogMode": "official",
         "profilePath": str(profile_path),
@@ -661,7 +661,7 @@ def write_outputs(save_dir: Path, imported: list[ImportedTemplate], overwrite: b
             "runtimeHash": "",
             "runtimeRawSize": None,
             "targetRef": item.target_ref,
-            "entranceReviewVersion": item.entrance_review_version,
+            "entranceReviewRef": item.entrance_review_ref,
             "entranceConfirmed": item.manifest_entry["entranceConfirmed"],
             "entrance": item.manifest_entry["entrance"],
             "entranceEvidence": item.manifest_entry["entranceEvidence"],
@@ -733,8 +733,8 @@ def main(argv: list[str] | None = None) -> int:
                 entry["runtimeHash"] = metadata["templateHash"]
                 entry["runtimeRawSize"] = metadata["rawSize"]
         report = {
-            "schemaVersion": "geomantia_trek_fixed_import_report.v1",
-            "importerVersion": manifest["importerVersion"],
+            "schema": "geomantia_trek_fixed_import_report",
+            "importerId": manifest["importerId"],
             "sourceJar": str(jar_path),
             "sourceJarSha256": jar_hash,
             "targetSave": str(save_dir),

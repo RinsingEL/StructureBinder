@@ -271,7 +271,7 @@ public final class CityLandUseGameTests {
                 List.of(new LandUseAreaPlan.BoundaryLoop(fencePoints, false)), List.of(),
                 20, SurfacePolicy.PRESERVE, VegetationPolicy.PRESERVE, BoundaryPolicy.FENCE, "");
         return new LandUseAreaPlanCodec().withComputedHash(new LandUseAreaPlan(
-                LandUseAreaPlan.CURRENT_SCHEMA_VERSION, "land_use_rules.v0.1", cityId, "",
+                LandUseAreaPlan.SCHEMA, "land_use_rules", cityId, "",
                 new BlockBounds(minX, cropZ, maxX, fenceZ),
                 List.of(cropArea, fenceArea), List.of(), List.of(), List.of()));
     }
@@ -300,7 +300,7 @@ public final class CityLandUseGameTests {
                 cropArea.memberSpans(), List.of(), LandUseSurfaceSettings.SurfaceAlgorithm.CONTOUR_BANDS,
                 anchor, recipe);
         return new CityLandUseSurfacePrintPlanCodec().withComputedHash(new CityLandUseSurfacePrintPlan(
-                CityLandUseSurfacePrintPlan.CURRENT_SCHEMA_VERSION, areaPlan.cityId(),
+                CityLandUseSurfacePrintPlan.SCHEMA, areaPlan.cityId(),
                 areaPlan.planHash(), "", List.of(print)));
     }
 

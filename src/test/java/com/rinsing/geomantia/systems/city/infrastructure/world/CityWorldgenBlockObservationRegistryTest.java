@@ -300,7 +300,7 @@ class CityWorldgenBlockObservationRegistryTest {
 
     private static JsonObject observation(String phase, int matched) {
         JsonObject observation = new JsonObject();
-        observation.addProperty("schemaVersion", CityWorldgenBlockObservationRegistry.SCHEMA_VERSION);
+        observation.addProperty("schema", CityWorldgenBlockObservationRegistry.SCHEMA);
         observation.addProperty("phase", phase);
         observation.addProperty("matchedExpectedBlockCount", matched);
         observation.add("blocks", new com.google.gson.JsonArray());

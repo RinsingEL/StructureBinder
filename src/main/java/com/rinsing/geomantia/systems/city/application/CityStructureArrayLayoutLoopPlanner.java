@@ -24,23 +24,15 @@ import java.util.Map;
 import java.util.Set;
 
 public final class CityStructureArrayLayoutLoopPlanner {
-    public static final String PLAN_SCHEMA = "city_d4_array_layout_plan.v0.2";
-    public static final String PLAN_SCHEMA_V03 = "city_d4_array_layout_plan.v0.3";
-    public static final String PLAN_SCHEMA_V04 = "city_d4_array_layout_plan.v0.4";
-    public static final String STATE_SCHEMA = "city_d4_array_layout_loop_state.v0.2";
-    public static final String STATE_SCHEMA_V03 = "city_d4_array_layout_loop_state.v0.3";
-    public static final String STATE_SCHEMA_V04 = "city_d4_array_layout_loop_state.v0.4";
-    public static final String TRACE_SCHEMA = "city_d4_array_layout_execution_trace.v0.2";
-    public static final String TRACE_SCHEMA_V03 = "city_d4_array_layout_execution_trace.v0.3";
-    public static final String TRACE_SCHEMA_V04 = "city_d4_array_layout_execution_trace.v0.4";
-    public static final String OCCUPIED_SCHEMA = "city_d4_array_occupied_field.v0.2";
-    public static final String PATCH_AVAILABILITY_SCHEMA = "city_d4_array_patch_availability.v0.2";
-    public static final String ZONES_SCHEMA = "city_d4_functional_array_zones.v0.2";
-    public static final String EXPANSION_SPACE_SCHEMA_V04 = "city_d4_array_expansion_space.v0.4";
-    public static final String EXPANSION_CANDIDATE_SCHEMA_V04 = "city_d4_array_expansion_candidate_set.v0.4";
-    public static final String PLANNING_MODE_V02 = "array_layout_loop_v0_2";
-    public static final String PLANNING_MODE_V03 = "array_layout_loop_v0_3";
-    public static final String PLANNING_MODE_V04 = "array_candidate_selection_loop_v0_4";
+    public static final String PLAN_SCHEMA = "city_d4_array_layout_plan";
+    public static final String STATE_SCHEMA = "city_d4_array_layout_loop_state";
+    public static final String TRACE_SCHEMA = "city_d4_array_layout_execution_trace";
+    public static final String OCCUPIED_SCHEMA = "city_d4_array_occupied_field";
+    public static final String PATCH_AVAILABILITY_SCHEMA = "city_d4_array_patch_availability";
+    public static final String ZONES_SCHEMA = "city_d4_functional_array_zones";
+    public static final String EXPANSION_SPACE_SCHEMA = "city_d4_array_expansion_space";
+    public static final String EXPANSION_CANDIDATE_SCHEMA = "city_d4_array_expansion_candidate_set";
+    public static final String PLANNING_MODE = "array_candidate_selection_loop";
 
     private static final Set<String> PLANNER_TYPES = Set.of(
             "plaza_ring", "compound_cluster", "guide_line_dual_side", "riverbank_dual_side", "contour_band",
@@ -74,7 +66,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         JsonArray occupied = occupiedFromAnchorMap(normalizedBaseMap);
         String planningMode = planningMode(normalizedPlan);
         JsonObject state = new JsonObject();
-        state.addProperty("schemaVersion", stateSchema(planningMode));
+        state.addProperty("schema", stateSchema(planningMode));
         state.addProperty("planningMode", planningMode);
         state.addProperty("loopId", reviewPackage.cityId() + "/d4_array_layout");
         state.addProperty("stateId", stateId(0));
@@ -115,14 +107,14 @@ public final class CityStructureArrayLayoutLoopPlanner {
                                  JsonObject currentState,
                                  JsonObject nextItem) throws IOException {
         long started = System.nanoTime();
-        if (currentState == null || !validStateSchema(stringValue(currentState, "schemaVersion", ""))) {
+        if (currentState == null || !validStateSchema(stringValue(currentState, "schema", ""))) {
             throw new IllegalArgumentException("D4_ARRAY_LAYOUT_LOOP_STATE_REQUIRED: current loop state is required.");
         }
         if (nextItem == null) {
             throw new IllegalArgumentException("nextArrayLayoutPlanItem object is required.");
         }
-        if (PLANNING_MODE_V04.equals(planningMode(currentState))) {
-            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_V04_CANDIDATE_SELECTION_REQUIRED: "
+        if (PLANNING_MODE.equals(planningMode(currentState))) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_CANDIDATE_SELECTION_REQUIRED: "
                     + "generate candidates and select one complete candidate before committing state.");
         }
         if (nextItem.has("layoutPlans")) {
@@ -194,7 +186,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
     public ExpansionSpaceResult queryExpansionSpace(CityLandformReviewPackage reviewPackage,
                                                      JsonObject currentState,
                                                      JsonObject request) {
-        requireV04State(currentState);
+        requireCurrentState(currentState);
         ExpansionContext context = expansionContext(reviewPackage, currentState, request);
         return new ExpansionSpaceResult(expansionSpace(reviewPackage, currentState, context));
     }
@@ -209,7 +201,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
                                                                 JsonObject currentState,
                                                                 JsonObject request) throws IOException {
         long started = System.nanoTime();
-        requireV04State(currentState);
+        requireCurrentState(currentState);
         if (request.has("minCandidateCount")) {
             throw new IllegalArgumentException("D4_ARRAY_LAYOUT_MIN_CANDIDATE_COUNT_REMOVED: "
                     + "candidate menus were removed; one complete legal candidate is sufficient.");
@@ -317,8 +309,8 @@ public final class CityStructureArrayLayoutLoopPlanner {
                     + "0 complete candidates.");
         }
         JsonObject set = new JsonObject();
-        set.addProperty("schemaVersion", EXPANSION_CANDIDATE_SCHEMA_V04);
-        set.addProperty("planningMode", PLANNING_MODE_V04);
+        set.addProperty("schema", EXPANSION_CANDIDATE_SCHEMA);
+        set.addProperty("planningMode", PLANNING_MODE);
         set.addProperty("cityId", reviewPackage.cityId());
         set.addProperty("sourceStateId", stringValue(currentState, "stateId"));
         set.addProperty("generatedAt", Instant.now().toString());
@@ -526,8 +518,8 @@ public final class CityStructureArrayLayoutLoopPlanner {
                     + candidates.size() + " complete candidates; frontier trace=" + frontierTrace + ".");
         }
         JsonObject set = new JsonObject();
-        set.addProperty("schemaVersion", EXPANSION_CANDIDATE_SCHEMA_V04);
-        set.addProperty("planningMode", PLANNING_MODE_V04);
+        set.addProperty("schema", EXPANSION_CANDIDATE_SCHEMA);
+        set.addProperty("planningMode", PLANNING_MODE);
         set.addProperty("cityId", reviewPackage.cityId());
         set.addProperty("sourceStateId", stringValue(currentState, "stateId"));
         set.addProperty("generatedAt", Instant.now().toString());
@@ -545,7 +537,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
     }
 
     /**
-     * Applies one previously generated complete candidate to a matching v0.4 state. The caller
+     * Applies one previously generated complete candidate to a matching current state. The caller
      * writes the returned snapshot once, which keeps anchors, occupied envelopes and zones atomic.
      */
     public ExpansionSelectionResult selectExpansionCandidate(CityLandformReviewPackage reviewPackage,
@@ -555,12 +547,12 @@ public final class CityStructureArrayLayoutLoopPlanner {
                                                               boolean autoSelectHighestScore,
                                                               String selectionReason) {
         long started = System.nanoTime();
-        requireV04State(currentState);
+        requireCurrentState(currentState);
         if (intValue(currentState, "iteration", 0) >= intValue(currentState, "maxArrayPlans", 7)) {
             throw new IllegalArgumentException("D4_ARRAY_LAYOUT_LOOP_MAX_ITERATIONS: maxArrayPlans reached.");
         }
-        if (!EXPANSION_CANDIDATE_SCHEMA_V04.equals(stringValue(candidateSet, "schemaVersion"))) {
-            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_CANDIDATE_SET_REQUIRED: v0.4 candidate set is required.");
+        if (!EXPANSION_CANDIDATE_SCHEMA.equals(stringValue(candidateSet, "schema"))) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_CANDIDATE_SET_REQUIRED: current candidate set is required.");
         }
         String stateId = stringValue(currentState, "stateId");
         if (!stateId.equals(stringValue(candidateSet, "sourceStateId"))) {
@@ -625,12 +617,12 @@ public final class CityStructureArrayLayoutLoopPlanner {
     }
 
     public FinalizeResult finalizeLoop(JsonObject state) {
-        if (state == null || !validStateSchema(stringValue(state, "schemaVersion", ""))) {
+        if (state == null || !validStateSchema(stringValue(state, "schema", ""))) {
             throw new IllegalArgumentException("D4_ARRAY_LAYOUT_LOOP_STATE_REQUIRED: current loop state is required.");
         }
         JsonObject base = object(state, "baseStructureAnchorPlan");
         JsonObject plan = new JsonObject();
-        plan.addProperty("schemaVersion", CityStructureAnchorPlanner.PLAN_SCHEMA);
+        plan.addProperty("schema", CityStructureAnchorPlanner.PLAN_SCHEMA);
         plan.addProperty("cityId", stringValue(state, "cityId", stringValue(base, "cityId", "")));
         JsonArray anchors = new JsonArray();
         LinkedHashSet<String> anchorIds = new LinkedHashSet<>();
@@ -638,7 +630,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         appendAnchors(anchors, anchorIds, state, "arrayAnchors", "arrayLayoutLoopState");
         plan.add("anchors", anchors);
         JsonObject trace = new JsonObject();
-        trace.addProperty("schemaVersion", traceSchema(state));
+        trace.addProperty("schema", traceSchema(state));
         trace.addProperty("planningMode", planningMode(state));
         trace.addProperty("stateId", stringValue(state, "stateId"));
         trace.addProperty("iteration", intValue(state, "iteration", 0));
@@ -1058,7 +1050,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         obj.add("estimatedCollisionEnvelope",
                 CityStructureCandidateEnvelope.boundsJson(accepted.estimate().collisionEnvelope()));
         obj.add("estimatedMaskEnvelope", CityStructureCandidateEnvelope.boundsJson(accepted.estimate().maskEnvelope()));
-        obj.addProperty("roadAccessIntent", "array_zone_gateway_deferred_to_roadweaver");
+        obj.addProperty("roadAccessIntent", "array_zone_gateway_to_city_road");
         if (accepted.orientationDecision() != null) {
             obj.add("orientationDecision", accepted.orientationDecision().asJson());
         }
@@ -1080,7 +1072,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         anchor.add("intentTerms", intentTerms(arrayId, stringValue(sourceItem, "role",
                 stringValue(sourceItem, "displayRole", arrayId)), plannerType));
         anchor.addProperty("priority", intValue(sourceItem, "priority", 100) + index);
-        anchor.addProperty("roadAccessIntent", "array_zone_gateway_deferred_to_roadweaver");
+        anchor.addProperty("roadAccessIntent", "array_zone_gateway_to_city_road");
         anchor.addProperty("selectionReason", "Selected from D4 array layout loop " + arrayId
                 + " planner " + plannerType);
         if (accepted.orientationDecision() != null) {
@@ -1814,19 +1806,15 @@ public final class CityStructureArrayLayoutLoopPlanner {
         return stringValue(compound, key, stringValue(item, key, defaultValue));
     }
 
-    private void requireV04State(JsonObject state) {
-        if (state == null || !STATE_SCHEMA_V04.equals(stringValue(state, "schemaVersion"))
-                || !PLANNING_MODE_V04.equals(planningMode(state))) {
-            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_V04_STATE_REQUIRED: create an explicit v0.4 array candidate loop first.");
+    private void requireCurrentState(JsonObject state) {
+        if (state == null || !STATE_SCHEMA.equals(stringValue(state, "schema"))
+                || !PLANNING_MODE.equals(planningMode(state))) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_STATE_REQUIRED: create the current array candidate loop first.");
         }
     }
 
     private String stateSchema(String planningMode) {
-        return switch (planningMode) {
-            case PLANNING_MODE_V04 -> STATE_SCHEMA_V04;
-            case PLANNING_MODE_V03 -> STATE_SCHEMA_V03;
-            default -> STATE_SCHEMA;
-        };
+        return STATE_SCHEMA;
     }
 
     private ExpansionContext expansionContext(CityLandformReviewPackage reviewPackage,
@@ -1886,8 +1874,8 @@ public final class CityStructureArrayLayoutLoopPlanner {
                                       ExpansionContext selected) {
         List<BlockBounds> occupied = occupiedBounds(array(state, "occupiedEnvelopes"));
         JsonObject result = new JsonObject();
-        result.addProperty("schemaVersion", EXPANSION_SPACE_SCHEMA_V04);
-        result.addProperty("planningMode", PLANNING_MODE_V04);
+        result.addProperty("schema", EXPANSION_SPACE_SCHEMA);
+        result.addProperty("planningMode", PLANNING_MODE);
         result.addProperty("cityId", reviewPackage.cityId());
         result.addProperty("sourceStateId", stringValue(state, "stateId"));
         result.addProperty("searchScope", selected.newFunctionalArea()
@@ -2516,12 +2504,16 @@ public final class CityStructureArrayLayoutLoopPlanner {
 
     private JsonObject normalizePlan(JsonObject source, String cityId) {
         JsonObject plan = source.deepCopy();
-        String rawSchema = stringValue(plan, "schemaVersion", PLAN_SCHEMA);
+        String rawSchema = stringValue(plan, "schema", PLAN_SCHEMA);
         String rawMode = stringValue(plan, "planningMode", "");
-        boolean v04 = PLAN_SCHEMA_V04.equals(rawSchema) || PLANNING_MODE_V04.equals(rawMode);
-        boolean v03 = PLAN_SCHEMA_V03.equals(rawSchema) || PLANNING_MODE_V03.equals(rawMode);
-        plan.addProperty("schemaVersion", v04 ? PLAN_SCHEMA_V04 : v03 ? PLAN_SCHEMA_V03 : PLAN_SCHEMA);
-        plan.addProperty("planningMode", v04 ? PLANNING_MODE_V04 : v03 ? PLANNING_MODE_V03 : PLANNING_MODE_V02);
+        if (!PLAN_SCHEMA.equals(rawSchema)) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_SCHEMA_UNSUPPORTED: " + rawSchema);
+        }
+        if (!rawMode.isBlank() && !PLANNING_MODE.equals(rawMode)) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_MODE_UNSUPPORTED: " + rawMode);
+        }
+        plan.addProperty("schema", PLAN_SCHEMA);
+        plan.addProperty("planningMode", PLANNING_MODE);
         if (stringValue(plan, "cityId").isBlank()) {
             plan.addProperty("cityId", cityId);
         }
@@ -2534,16 +2526,16 @@ public final class CityStructureArrayLayoutLoopPlanner {
         if (!plan.has("layoutPlans")) {
             plan.add("layoutPlans", new JsonArray());
         }
-        if (v04 && !array(plan, "layoutPlans").isEmpty()) {
-            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_V04_ONE_THEME_PER_ROUND: "
-                    + "create the v0.4 loop with an empty layoutPlans array and submit one candidate item per round.");
+        if (!array(plan, "layoutPlans").isEmpty()) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_ONE_THEME_PER_ROUND: "
+                    + "create the loop with an empty layoutPlans array and submit one candidate item per round.");
         }
         return plan;
     }
 
     private JsonObject normalizeBaseAnchorPlan(JsonObject basePlan, String cityId) {
         JsonObject plan = basePlan == null ? new JsonObject() : basePlan.deepCopy();
-        plan.addProperty("schemaVersion", CityStructureAnchorPlanner.PLAN_SCHEMA);
+        plan.addProperty("schema", CityStructureAnchorPlanner.PLAN_SCHEMA);
         if (stringValue(plan, "cityId").isBlank()) {
             plan.addProperty("cityId", cityId);
         }
@@ -2598,7 +2590,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
 
     private JsonObject patchAvailability(CityLandformReviewPackage reviewPackage, JsonArray occupiedEnvelopes) {
         JsonObject obj = new JsonObject();
-        obj.addProperty("schemaVersion", PATCH_AVAILABILITY_SCHEMA);
+        obj.addProperty("schema", PATCH_AVAILABILITY_SCHEMA);
         obj.addProperty("cityId", reviewPackage.cityId());
         JsonArray patches = new JsonArray();
         List<BlockBounds> occupied = occupiedBounds(occupiedEnvelopes);
@@ -2626,7 +2618,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
 
     private JsonObject executionTrace(JsonArray items, String planningMode) {
         JsonObject obj = new JsonObject();
-        obj.addProperty("schemaVersion", traceSchemaForMode(planningMode));
+        obj.addProperty("schema", traceSchemaForMode(planningMode));
         obj.addProperty("planningMode", planningMode);
         obj.add("items", items);
         return obj;
@@ -2634,7 +2626,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
 
     private JsonObject zones(JsonArray arrayZones, String planningMode) {
         JsonObject obj = new JsonObject();
-        obj.addProperty("schemaVersion", ZONES_SCHEMA);
+        obj.addProperty("schema", ZONES_SCHEMA);
         obj.addProperty("planningMode", planningMode);
         obj.add("arrayZones", arrayZones);
         return obj;
@@ -3011,15 +3003,15 @@ public final class CityStructureArrayLayoutLoopPlanner {
     }
 
     private boolean validStateSchema(String schema) {
-        return STATE_SCHEMA.equals(schema) || STATE_SCHEMA_V03.equals(schema) || STATE_SCHEMA_V04.equals(schema);
+        return STATE_SCHEMA.equals(schema);
     }
 
     private String planningMode(JsonObject obj) {
         String mode = stringValue(obj, "planningMode", "");
-        if (PLANNING_MODE_V04.equals(mode)) {
-            return PLANNING_MODE_V04;
+        if (!mode.isBlank() && !PLANNING_MODE.equals(mode)) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_MODE_UNSUPPORTED: " + mode);
         }
-        return PLANNING_MODE_V03.equals(mode) ? PLANNING_MODE_V03 : PLANNING_MODE_V02;
+        return PLANNING_MODE;
     }
 
     private String traceSchema(JsonObject obj) {
@@ -3027,11 +3019,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
     }
 
     private String traceSchemaForMode(String planningMode) {
-        return switch (planningMode) {
-            case PLANNING_MODE_V04 -> TRACE_SCHEMA_V04;
-            case PLANNING_MODE_V03 -> TRACE_SCHEMA_V03;
-            default -> TRACE_SCHEMA;
-        };
+        return TRACE_SCHEMA;
     }
 
     private List<String> toStrings(JsonArray array) {
@@ -3133,7 +3121,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
             JsonObject obj = new JsonObject();
             obj.addProperty("ok", qualityReport.get("passed").getAsBoolean());
             obj.addProperty("planningMode", loopState != null && loopState.has("planningMode")
-                    ? loopState.get("planningMode").getAsString() : PLANNING_MODE_V02);
+                    ? loopState.get("planningMode").getAsString() : PLANNING_MODE);
             obj.add("arrayLayoutLoopState", loopState.deepCopy());
             obj.add("arrayLayoutPlan", arrayLayoutPlan.deepCopy());
             obj.add("executionTrace", executionTrace.deepCopy());
@@ -3156,7 +3144,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
             JsonObject obj = new JsonObject();
             obj.addProperty("ok", qualityReport.get("passed").getAsBoolean());
             obj.addProperty("planningMode", loopState != null && loopState.has("planningMode")
-                    ? loopState.get("planningMode").getAsString() : PLANNING_MODE_V02);
+                    ? loopState.get("planningMode").getAsString() : PLANNING_MODE);
             obj.add("arrayLayoutLoopState", loopState.deepCopy());
             obj.add("arrayLayoutPlan", arrayLayoutPlan.deepCopy());
             obj.add("executionTrace", executionTrace.deepCopy());
@@ -3172,7 +3160,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         public JsonObject asJson() {
             JsonObject obj = new JsonObject();
             obj.addProperty("ok", qualityReport.get("passed").getAsBoolean());
-            obj.addProperty("planningMode", PLANNING_MODE_V02);
+            obj.addProperty("planningMode", PLANNING_MODE);
             obj.add("structureAnchorPlan", structureAnchorPlan.deepCopy());
             obj.add("qualityReport", qualityReport.deepCopy());
             return obj;
@@ -3192,7 +3180,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         public JsonObject asJson() {
             JsonObject obj = new JsonObject();
             obj.addProperty("ok", qualityReport.get("passed").getAsBoolean());
-            obj.addProperty("planningMode", PLANNING_MODE_V04);
+            obj.addProperty("planningMode", PLANNING_MODE);
             obj.add("arrayExpansionCandidateSet", candidateSet.deepCopy());
             obj.add("qualityReport", qualityReport.deepCopy());
             return obj;
@@ -3204,7 +3192,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         public JsonObject asJson() {
             JsonObject obj = new JsonObject();
             obj.addProperty("ok", qualityReport.get("passed").getAsBoolean());
-            obj.addProperty("planningMode", PLANNING_MODE_V04);
+            obj.addProperty("planningMode", PLANNING_MODE);
             obj.add("arrayLayoutLoopState", loopState.deepCopy());
             obj.add("selectedArrayCandidate", selectedCandidate.deepCopy());
             obj.add("executionTrace", objectForResult(loopState, "executionTrace"));

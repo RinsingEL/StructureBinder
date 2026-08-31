@@ -26,7 +26,7 @@ class CityStructureProfileCatalogTest {
                 {"structureId":"test:no_function","sourceProfileRef":"terrasense://no_function","reviewState":"approved","planningRoleTerms":["planning_role.fill"]}
                 """);
         JsonObject source = new JsonObject();
-        source.addProperty("schemaVersion", CityStructureProfileCatalog.SOURCE_SCHEMA_V01);
+        source.addProperty("schema", CityStructureProfileCatalog.SOURCE_SCHEMA);
         source.addProperty("sourceType", "structure_profile_jsonl");
         source.addProperty("catalogMode", "official");
         source.addProperty("profilePath", profilePath.toString());
@@ -64,7 +64,7 @@ class CityStructureProfileCatalogTest {
                 {"catalogMode":"debug","structures":[{"structureId":"test:debug","sourceProfileRef":"debug://profile","functionTerms":["function.test"]}]}
                 """);
         JsonObject source = new JsonObject();
-        source.addProperty("schemaVersion", CityStructureProfileCatalog.SOURCE_SCHEMA_V01);
+        source.addProperty("schema", CityStructureProfileCatalog.SOURCE_SCHEMA);
         source.addProperty("sourceType", "debug_catalog");
         source.addProperty("catalogMode", "debug");
         source.addProperty("debugCatalogPath", catalogPath.toString());
@@ -84,7 +84,7 @@ class CityStructureProfileCatalogTest {
                 {"catalogMode":"debug","structures":[{"structureId":"test:legacy","functionTerms":["function.test"],"qualityTerms":["quality.legacy"]}]}
                 """);
         JsonObject source = new JsonObject();
-        source.addProperty("schemaVersion", CityStructureProfileCatalog.SOURCE_SCHEMA_V01);
+        source.addProperty("schema", CityStructureProfileCatalog.SOURCE_SCHEMA);
         source.addProperty("sourceType", "debug_catalog");
         source.addProperty("catalogMode", "debug");
         source.addProperty("debugCatalogPath", catalogPath.toString());
@@ -103,7 +103,7 @@ class CityStructureProfileCatalogTest {
                 {"structureId":"test:trek_house","sourceProfileRef":"terrasense://run-v3/trek_house","reviewState":"approved","functionTerms":["function.household"],"planningRoleTerms":["planning_role.fill"],"terrainModes":["SURFACE"],"styleTerms":["style.木石混合"]}
                 """);
         JsonObject source = new JsonObject();
-        source.addProperty("schemaVersion", CityStructureProfileCatalog.SOURCE_SCHEMA_V02);
+        source.addProperty("schema", CityStructureProfileCatalog.SOURCE_SCHEMA);
         source.addProperty("sourceType", "structure_profile_jsonl");
         source.addProperty("catalogMode", "binder");
         source.addProperty("sampleType", "single_template");
@@ -125,7 +125,7 @@ class CityStructureProfileCatalogTest {
     @Test
     void officialProfilesRequireKnownUniqueTerrainModesAndRejectLegacyTerrainTerms() throws Exception {
         JsonObject source = new JsonObject();
-        source.addProperty("schemaVersion", CityStructureProfileCatalog.SOURCE_SCHEMA_V01);
+        source.addProperty("schema", CityStructureProfileCatalog.SOURCE_SCHEMA);
         source.addProperty("sourceType", "structure_profile_jsonl");
         source.addProperty("catalogMode", "official");
 

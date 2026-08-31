@@ -48,7 +48,7 @@ public final class CityLandformReviewBuilder {
         String aiPrompt = buildAiPromptContext(context, summaries);
 
         return new CityLandformReviewPackage(
-                CityLandformReviewPackage.CURRENT_SCHEMA_VERSION,
+                CityLandformReviewPackage.SCHEMA,
                 context.cityId(),
                 context.grid(),
                 targetScale,
@@ -100,7 +100,7 @@ public final class CityLandformReviewBuilder {
                         biomeSummaryByPatch.getOrDefault(summary.landformPatchId(), BiomeSummary.empty())))
                 .toList();
         return new CityLandformReviewPackage(
-                pkg.schemaVersion(),
+                pkg.schema(),
                 pkg.cityId(),
                 pkg.grid(),
                 pkg.targetScale(),

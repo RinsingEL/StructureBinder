@@ -48,7 +48,7 @@ public final class CitySiteContextBuilder {
         TerritoryCheckResult territoryCheck = checkTerritory(bounds, anchor, territoryCells, gisCellStepBlocks);
 
         return new CitySiteContext(
-                CitySiteContext.CURRENT_SCHEMA_VERSION,
+                CitySiteContext.SCHEMA,
                 cityId, realmId, dimensionId,
                 seedId, siteCandidateId,
                 bounds, grid, anchor,

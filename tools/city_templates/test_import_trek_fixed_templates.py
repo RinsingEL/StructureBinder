@@ -85,8 +85,8 @@ class TrekFixedImporterTest(unittest.TestCase):
         self.assertEqual("TREK_TEMPLATE_SEMANTIC_VOCABULARY_INCOMPLETE", raised.exception.code)
 
     def test_all_entrances_are_confirmed_with_fixed_nbt_evidence(self):
-        self.assertEqual("fixed_nbt_and_terrasense_four_view_20260727_v1",
-                         self.manifest["entranceReviewVersion"])
+        self.assertEqual("fixed_nbt_and_terrasense_four_view_20260727",
+                         self.manifest["entranceReviewRef"])
         self.assertTrue(all(item.manifest_entry["entranceConfirmed"] for item in self.templates))
         for item in self.templates:
             importer.validate_confirmed_entrance(item.nbt, item.manifest_entry, item.raw_size)
@@ -106,7 +106,7 @@ class TrekFixedImporterTest(unittest.TestCase):
         fountain = next(item for item in self.templates
                         if item.target_ref.endswith("/landmark/plains_fountain_01"))
         self.assertEqual(4, len(importer.entry_entrances(fountain.manifest_entry)))
-        self.assertEqual("live_game_review_20260826_v1", fountain.entrance_review_version)
+        self.assertEqual("live_game_review_20260826", fountain.entrance_review_ref)
         self.assertEqual(10, fountain.marker_count)
         short_tower = next(item for item in self.templates
                            if item.target_ref.endswith("/defense/mangrove_watchtower_1"))
@@ -196,8 +196,8 @@ class TrekFixedImporterTest(unittest.TestCase):
             _, first_report = importer.write_outputs(save, self.templates[:1], overwrite=False)
             output = Path(first_report[0]["outputFile"])
             self.assertTrue(first_report[0]["entranceConfirmed"])
-            self.assertEqual(self.manifest["entranceReviewVersion"],
-                             first_report[0]["entranceReviewVersion"])
+            self.assertEqual(self.manifest["entranceReviewRef"],
+                             first_report[0]["entranceReviewRef"])
             first_bytes = output.read_bytes()
             with self.assertRaises(importer.ImportFailure) as raised:
                 importer.write_outputs(save, self.templates[:1], overwrite=False)

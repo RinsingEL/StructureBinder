@@ -73,8 +73,8 @@ class CityLandUseSurfacePrintPlannerTest {
         List<LandUseAreaPlan.ScanlineSpan> members = diamondSpans(32, 32, 30);
         LandUseAreaPlan.Area farm = area("hill_farm", "farm_group", SurfacePolicy.CULTIVATE,
                 members, new BlockBounds(31, 31, 33, 33));
-        LandUseAreaPlan areaPlan = new LandUseAreaPlan(LandUseAreaPlan.CURRENT_SCHEMA_VERSION,
-                "city_land_use_rules.v0.1", "city_test", "hill-land-use-hash",
+        LandUseAreaPlan areaPlan = new LandUseAreaPlan(LandUseAreaPlan.SCHEMA,
+                "city_land_use_rules", "city_test", "hill-land-use-hash",
                 new BlockBounds(0, 0, 64, 64), List.of(farm), List.of(), List.of(), List.of());
 
         CityLandUseSurfacePrintPlan plan = new CityLandUseSurfacePrintPlanner().plan(areaPlan,
@@ -189,8 +189,8 @@ class CityLandUseSurfacePrintPlannerTest {
                 List.of(groupId), List.of(groupId), List.of(new BlockPoint(2, 0)), members,
                 List.of(), List.of(), List.of(), 1, SurfacePolicy.CULTIVATE,
                 VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN, "woodland");
-        LandUseAreaPlan plan = new LandUseAreaPlan(LandUseAreaPlan.CURRENT_SCHEMA_VERSION,
-                "city_land_use_rules.v0.1", "city_test", "land-use-hash", new BlockBounds(0, 0, 7, 7),
+        LandUseAreaPlan plan = new LandUseAreaPlan(LandUseAreaPlan.SCHEMA,
+                "city_land_use_rules", "city_test", "land-use-hash", new BlockBounds(0, 0, 7, 7),
                 List.of(area), List.of(), List.of(), List.of());
         LandscapeFillProgram fill = new LandscapeFillProgram("fill:branched_woodland", "TREE_GROVE",
                 List.of(
@@ -313,8 +313,8 @@ class CityLandUseSurfacePrintPlannerTest {
         LandUseAreaPlan.Area area = new LandUseAreaPlan.Area("green", "green", "green", List.of(groupId),
                 List.of(), List.of(new BlockPoint(19, 20)), spans(0, 8, 0, 8), List.of(), List.of(), List.of(),
                 1, SurfacePolicy.CULTIVATE, VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN, "green");
-        LandUseAreaPlan plan = new LandUseAreaPlan(LandUseAreaPlan.CURRENT_SCHEMA_VERSION,
-                "city_land_use_rules.v0.1", "city_test", "land-use-hash", new BlockBounds(0, 0, 31, 31),
+        LandUseAreaPlan plan = new LandUseAreaPlan(LandUseAreaPlan.SCHEMA,
+                "city_land_use_rules", "city_test", "land-use-hash", new BlockBounds(0, 0, 31, 31),
                 List.of(area), List.of(), List.of(), List.of());
 
         IllegalArgumentException failure = assertThrows(IllegalArgumentException.class, () ->
@@ -330,8 +330,8 @@ class CityLandUseSurfacePrintPlannerTest {
                 spans(0, 8, 0, 30), new BlockBounds(12, 5, 14, 7));
         LandUseAreaPlan.Area market = area("market", "market_group", SurfacePolicy.PAVE,
                 spans(0, 8, 40, 50), new BlockBounds(42, 2, 43, 3));
-        return new LandUseAreaPlan(LandUseAreaPlan.CURRENT_SCHEMA_VERSION,
-                "city_land_use_rules.v0.1", "city_test", "land-use-hash",
+        return new LandUseAreaPlan(LandUseAreaPlan.SCHEMA,
+                "city_land_use_rules", "city_test", "land-use-hash",
                 new BlockBounds(0, 0, 63, 31), List.of(farm, market), List.of(), List.of(), List.of());
     }
 
@@ -404,7 +404,7 @@ class CityLandUseSurfacePrintPlannerTest {
                         "minecraft:plains", "plain", "p", true));
             }
         }
-        return new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION,
+        return new LandUseTerrainField(LandUseTerrainField.SCHEMA,
                 "city_test", bounds, 4, cells);
     }
 }

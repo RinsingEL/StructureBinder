@@ -321,7 +321,7 @@ class ContourBandSurfaceClassifierTest {
                         "minecraft:plains", "plain", "test", true));
             }
         }
-        return new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION, "city_test",
+        return new LandUseTerrainField(LandUseTerrainField.SCHEMA, "city_test",
                 bounds, step, cells);
     }
 

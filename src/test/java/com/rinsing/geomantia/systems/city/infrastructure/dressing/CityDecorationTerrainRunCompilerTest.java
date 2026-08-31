@@ -268,7 +268,7 @@ class CityDecorationTerrainRunCompilerTest {
         writeTemplate(root.resolve("templates/channel.nbt"), "minecraft:water");
         writeTemplate(root.resolve("templates/end_cap.nbt"), "minecraft:farmland");
         JsonObject index = new JsonObject();
-        index.addProperty("schemaVersion", CityDecorationContentCatalog.SCHEMA);
+        index.addProperty("schema", CityDecorationContentCatalog.SCHEMA);
         JsonArray contents = new JsonArray();
         contents.add(content("city:prefab/end_cap", "templates/end_cap.nbt", null));
         contents.add(content("city:prefab/channel", "templates/channel.nbt", "city:prefab/end_cap"));

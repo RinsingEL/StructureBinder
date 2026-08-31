@@ -11,7 +11,7 @@ import java.util.List;
 /** Resolves DecorationProgram targets from a compiled block-level LandUseAreaPlan. */
 public final class LandUseAreaDecorationProgramContextResolver
         implements ResolvedDecorationProgramContext.Resolver {
-    public static final String PLAN_SCHEMA = "city_land_use_area_plan.v0.2";
+    public static final String PLAN_SCHEMA = "city_land_use_area_plan";
 
     private final JsonObject areaPlan;
     private final List<CompiledDecorationProgramPlan.HardObstacle> hardObstacles;
@@ -23,7 +23,7 @@ public final class LandUseAreaDecorationProgramContextResolver
     public LandUseAreaDecorationProgramContextResolver(
             JsonObject areaPlan,
             List<CompiledDecorationProgramPlan.HardObstacle> hardObstacles) {
-        if (areaPlan == null || !PLAN_SCHEMA.equals(stringValue(areaPlan, "schemaVersion"))) {
+        if (areaPlan == null || !PLAN_SCHEMA.equals(stringValue(areaPlan, "schema"))) {
             throw new IllegalArgumentException("CITY_DECORATION_LAND_USE_PLAN_SCHEMA_UNSUPPORTED");
         }
         this.areaPlan = areaPlan.deepCopy();

@@ -109,7 +109,7 @@ class CityD4StagedPlanCompilerTest {
         JsonObject plan = compiler.arrayCandidatePlanFromSlot(source, slot);
 
         assertEquals(CityStructureArrayCandidatePlanner.PLAN_SCHEMA,
-                plan.get("schemaVersion").getAsString());
+                plan.get("schema").getAsString());
         assertEquals("city_test", plan.get("cityId").getAsString());
         assertEquals("housing_array", plan.get("arrayId").getAsString());
         assertEquals("housing", plan.get("displayRole").getAsString());
@@ -143,21 +143,16 @@ class CityD4StagedPlanCompilerTest {
     }
 
     @Test
-    void createsMinimalArrayLayoutPlanForV02AndV03() {
+    void createsMinimalArrayLayoutPlanForCurrentMode() {
         JsonObject source = json("{\"cityId\":\"city_test\",\"cityScale\":\"large_town\"}");
 
-        JsonObject v02 = compiler.minimalArrayLayoutPlan(
-                source, CityStructureArrayLayoutLoopPlanner.PLANNING_MODE_V02);
-        JsonObject v03 = compiler.minimalArrayLayoutPlan(
-                source, CityStructureArrayLayoutLoopPlanner.PLANNING_MODE_V03);
+        JsonObject plan = compiler.minimalArrayLayoutPlan(
+                source, CityStructureArrayLayoutLoopPlanner.PLANNING_MODE);
 
         assertEquals(CityStructureArrayLayoutLoopPlanner.PLAN_SCHEMA,
-                v02.get("schemaVersion").getAsString());
-        assertEquals(CityStructureArrayLayoutLoopPlanner.PLAN_SCHEMA_V03,
-                v03.get("schemaVersion").getAsString());
-        assertEquals("large_town", v03.get("cityScale").getAsString());
-        assertTrue(v02.getAsJsonArray("layoutPlans").isEmpty());
-        assertTrue(v03.getAsJsonObject("designIntent").get("summary").getAsString().contains("v0_3"));
+                plan.get("schema").getAsString());
+        assertEquals("large_town", plan.get("cityScale").getAsString());
+        assertTrue(plan.getAsJsonArray("layoutPlans").isEmpty());
     }
 
     @Test
@@ -173,7 +168,7 @@ class CityD4StagedPlanCompilerTest {
 
         JsonObject merged = compiler.mergeStructureAnchorPlans(base, appended, "", trace);
 
-        assertEquals(CityStructureAnchorPlanner.PLAN_SCHEMA, merged.get("schemaVersion").getAsString());
+        assertEquals(CityStructureAnchorPlanner.PLAN_SCHEMA, merged.get("schema").getAsString());
         assertEquals("city_test", merged.get("cityId").getAsString());
         assertEquals(3, merged.getAsJsonArray("anchors").size());
         assertEquals(1, merged.getAsJsonObject("stagedD4Trace").get("stageCount").getAsInt());

@@ -9,7 +9,7 @@ public final class CityWallTemplateCatalog {
 
     public static JsonObject libraryJson() {
         JsonObject obj = new JsonObject();
-        obj.addProperty("schemaVersion", "city_wall_template_library.v0.1");
+        obj.addProperty("schema", "city_wall_template_library");
         obj.addProperty("templateSource", "GPT城墙设计.txt");
         JsonArray templates = new JsonArray();
         templates.add(template("wall_straight_15", 15, 5, 12,

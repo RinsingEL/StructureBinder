@@ -12,7 +12,7 @@ import java.util.Map;
 
 /** Freezes outward-guided fill buildings as explicit, road-owning residential subzones. */
 final class CityResidentialOverflowPlanner {
-    static final String SCHEMA_VERSION = "city_residential_overflow_plan.v0.1";
+    static final String SCHEMA = "city_residential_overflow_plan";
     private static final int MINIMUM_BUILDING_COUNT = 3;
 
     Result plan(List<JsonObject> anchors, List<JsonObject> streetBands) {
@@ -60,7 +60,7 @@ final class CityResidentialOverflowPlanner {
             zones.add(zone);
         });
         JsonObject plan = new JsonObject();
-        plan.addProperty("schemaVersion", SCHEMA_VERSION);
+        plan.addProperty("schema", SCHEMA);
         plan.addProperty("minimumBuildingCount", MINIMUM_BUILDING_COUNT);
         plan.addProperty("zoneCount", zones.size());
         plan.add("zones", zones);

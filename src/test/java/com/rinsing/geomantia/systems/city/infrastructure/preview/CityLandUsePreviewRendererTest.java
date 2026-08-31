@@ -49,8 +49,8 @@ class CityLandUsePreviewRendererTest {
                 List.of(new LandUseAreaPlan.GateSlot("farm_gate", new BlockPoint(12, 8),
                         CardinalDirection.NORTH, "farmhouse")), 42,
                 SurfacePolicy.CULTIVATE, VegetationPolicy.CLEAR, BoundaryPolicy.FENCE, "agriculture");
-        LandUseAreaPlan plan = new LandUseAreaPlan(LandUseAreaPlan.CURRENT_SCHEMA_VERSION,
-                "city_land_use_rules.v0.1", "city_preview", "hash", bounds, List.of(area),
+        LandUseAreaPlan plan = new LandUseAreaPlan(LandUseAreaPlan.SCHEMA,
+                "city_land_use_rules", "city_preview", "hash", bounds, List.of(area),
                 List.of(new LandUseAreaPlan.ScanlineSpan(0, 0, 31)),
                 List.of(new LandUseAreaPlan.CorridorExclusion("farm_corridor",
                         new BlockBounds(12, 5, 12, 8), "farm_gate")), List.of());
@@ -59,7 +59,7 @@ class CityLandUsePreviewRendererTest {
 
         Path output = tempDir.resolve("land_use_preview.png");
         assertTrue(Files.isRegularFile(output));
-        assertEquals("city_land_use_preview.v0.1", metadata.get("schemaVersion").getAsString());
+        assertEquals("city_land_use_preview", metadata.get("schema").getAsString());
         assertEquals(1, metadata.get("logicalAreaCount").getAsInt());
         BufferedImage image = ImageIO.read(output.toFile());
         assertNotNull(image);
@@ -88,13 +88,13 @@ class CityLandUsePreviewRendererTest {
                             ? "farm_group" : "",
                     3, false, false));
         }
-        CityUrbanSpacePlan urban = new CityUrbanSpacePlan(CityUrbanSpacePlan.SCHEMA_VERSION,
+        CityUrbanSpacePlan urban = new CityUrbanSpacePlan(CityUrbanSpacePlan.SCHEMA,
                 "city_preview", "sha256:test", true, 6, bounds, envelope, residuals,
                 new CityUrbanSpacePlan.CoverageSummary(576, 120, 9, 4, 3, 12, 4));
 
         JsonObject metadata = new CityLandUsePreviewRenderer().render(terrain, plan, urban, tempDir);
 
-        assertEquals("city_land_use_preview.v0.2", metadata.get("schemaVersion").getAsString());
+        assertEquals("city_land_use_preview", metadata.get("schema").getAsString());
         assertEquals("sha256:test", metadata.get("urbanSpacePlanHash").getAsString());
         assertEquals(576, metadata.get("envelopeBlocks").getAsInt());
         assertEquals(3, metadata.get("absorbedResidualBlocks").getAsInt());
@@ -157,17 +157,17 @@ class CityLandUsePreviewRendererTest {
                                         LandscapeFillProgram.GrowthForm.PATCH, new BlockPoint(14, 8),
                                         new BlockPoint(13, 8), 21, 21)));
         CityLandUseSurfacePrintPlan surfacePlan = new CityLandUseSurfacePrintPlan(
-                CityLandUseSurfacePrintPlan.CURRENT_SCHEMA_VERSION, plan.cityId(), plan.planHash(), "",
+                CityLandUseSurfacePrintPlan.SCHEMA, plan.cityId(), plan.planHash(), "",
                 List.of(new CityLandUseSurfacePrintPlan.AreaPrint("farm/surface", "farmstead",
                         List.of("farm_group"), settings, plan.areas().get(0).memberSpans(), List.of(),
                         LandUseSurfaceSettings.SurfaceAlgorithm.RELAY_REGION_GROWTH, source, recipe)));
 
         JsonObject metadata = new CityLandUsePreviewRenderer().render(terrain, plan, surfacePlan, tempDir);
 
-        assertEquals("city_land_use_preview.v0.5", metadata.get("schemaVersion").getAsString());
+        assertEquals("city_land_use_preview", metadata.get("schema").getAsString());
         assertEquals(1, metadata.get("relayGrowthAreaCount").getAsInt());
-        assertEquals(CityLandUseSurfacePrintPlan.CURRENT_SCHEMA_VERSION,
-                metadata.get("surfacePrintPlanSchemaVersion").getAsString());
+        assertEquals(CityLandUseSurfacePrintPlan.SCHEMA,
+                metadata.get("surfacePrintPlanSchema").getAsString());
         JsonObject fillArea = metadata.getAsJsonArray("relayGrowthAreas").get(0).getAsJsonObject();
         assertEquals("fill:flower_leaf", fillArea.get("fillProfileRef").getAsString());
         assertEquals(51, fillArea.get("actualBlockCount").getAsInt());
@@ -193,8 +193,8 @@ class CityLandUsePreviewRendererTest {
                 new BlockBounds(91, 26, 94, 29));
         LandUseAreaPlan.Area woodland = landscapeArea("woodland", "woodland_group", woodlandSpans,
                 new BlockBounds(79, 83, 82, 86));
-        LandUseAreaPlan plan = new LandUseAreaPlan(LandUseAreaPlan.CURRENT_SCHEMA_VERSION,
-                "city_land_use_rules.v0.1", "city_preview", "landscape-review-hash", bounds,
+        LandUseAreaPlan plan = new LandUseAreaPlan(LandUseAreaPlan.SCHEMA,
+                "city_land_use_rules", "city_preview", "landscape-review-hash", bounds,
                 List.of(farm, flowers, woodland), List.of(), List.of(), List.of());
         LandUseSurfaceSettings settings = LandUseSurfaceSettings.defaults(SurfacePolicy.CULTIVATE)
                 .forRelayRegionGrowth();
@@ -262,8 +262,8 @@ class CityLandUsePreviewRendererTest {
                 List.of(new LandUseAreaPlan.GateSlot("farm_gate", new BlockPoint(12, 8),
                         CardinalDirection.NORTH, "farmhouse")), 42,
                 SurfacePolicy.CULTIVATE, VegetationPolicy.CLEAR, BoundaryPolicy.FENCE, "agriculture");
-        return new LandUseAreaPlan(LandUseAreaPlan.CURRENT_SCHEMA_VERSION,
-                "city_land_use_rules.v0.1", "city_preview", "hash", bounds, List.of(area),
+        return new LandUseAreaPlan(LandUseAreaPlan.SCHEMA,
+                "city_land_use_rules", "city_preview", "hash", bounds, List.of(area),
                 List.of(new LandUseAreaPlan.ScanlineSpan(0, 0, 31)),
                 List.of(new LandUseAreaPlan.CorridorExclusion("farm_corridor",
                         new BlockBounds(12, 5, 12, 8), "farm_gate")), List.of());
@@ -350,7 +350,7 @@ class CityLandUsePreviewRendererTest {
                         x < 2 ? "minecraft:forest" : "minecraft:plains", "plain", "p", true));
             }
         }
-        return new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION,
+        return new LandUseTerrainField(LandUseTerrainField.SCHEMA,
                 "city_preview", bounds, 4, cells);
     }
 

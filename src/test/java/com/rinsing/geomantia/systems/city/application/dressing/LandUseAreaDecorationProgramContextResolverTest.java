@@ -15,7 +15,7 @@ class LandUseAreaDecorationProgramContextResolverTest {
     void resolvesExactAreaSpansAndSubtractsInsetAndObstacles() {
         JsonObject plan = json("""
                 {
-                  "schemaVersion":"city_land_use_area_plan.v0.2",
+                  "schema":"city_land_use_area_plan",
                   "areas":[{
                     "areaId":"farm_1",
                     "memberSpans":[
@@ -41,21 +41,21 @@ class LandUseAreaDecorationProgramContextResolverTest {
     @Test
     void rejectsUnknownAreaAndUnsupportedSchema() {
         JsonObject plan = json("""
-                {"schemaVersion":"city_land_use_area_plan.v0.2","areas":[]}
+                {"schema":"city_land_use_area_plan","areas":[]}
                 """);
         LandUseAreaDecorationProgramContextResolver resolver =
                 new LandUseAreaDecorationProgramContextResolver(plan);
 
         assertThrows(IllegalArgumentException.class, () -> resolver.resolve(intent("missing", 0)));
         assertThrows(IllegalArgumentException.class, () ->
-                new LandUseAreaDecorationProgramContextResolver(json("{\"schemaVersion\":\"old\"}")));
+                new LandUseAreaDecorationProgramContextResolver(json("{\"schema\":\"old\"}")));
     }
 
     @Test
     void mergesDisconnectedComponentsWithSameAreaIdBeforeSubtractingObstacles() {
         JsonObject plan = json("""
                 {
-                  "schemaVersion":"city_land_use_area_plan.v0.2",
+                  "schema":"city_land_use_area_plan",
                   "areas":[
                     {"areaId":"housing","memberSpans":[{"z":0,"minX":0,"maxX":0}]},
                     {"areaId":"housing","memberSpans":[{"z":10,"minX":10,"maxX":12}]}
@@ -75,7 +75,7 @@ class LandUseAreaDecorationProgramContextResolverTest {
     @Test
     void compositeResolverKeepsSourceBoundariesExplicit() {
         JsonObject plan = json("""
-                {"schemaVersion":"city_land_use_area_plan.v0.2","areas":[{
+                {"schema":"city_land_use_area_plan","areas":[{
                   "areaId":"plaza","memberSpans":[{"z":0,"minX":0,"maxX":2}]
                 }]}
                 """);

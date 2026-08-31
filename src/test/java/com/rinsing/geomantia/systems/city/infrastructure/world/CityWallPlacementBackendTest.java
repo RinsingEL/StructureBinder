@@ -20,7 +20,7 @@ class CityWallPlacementBackendTest {
         medians.addProperty("u1", 70);
         medians.addProperty("u2", 76);
 
-        JsonObject plan = CityWallPlacementBackend.debugV5HeightPlan(units, medians, 7, 16, 17);
+        JsonObject plan = CityWallPlacementBackend.debugWallHeightPlan(units, medians, 7, 16, 17);
 
         assertEquals(2, plan.get("heightSegmentCount").getAsInt());
         assertTrue(plan.getAsJsonArray("heightSegments").toString().contains("\"u0\",\"u1\""),
@@ -43,7 +43,7 @@ class CityWallPlacementBackendTest {
         medians.addProperty("u2", 76);
         medians.addProperty("u3", 92);
 
-        JsonObject plan = CityWallPlacementBackend.debugV5HeightPlan(units, medians, 7, 16, 17);
+        JsonObject plan = CityWallPlacementBackend.debugWallHeightPlan(units, medians, 7, 16, 17);
 
         assertEquals(66, plan.get("baselineSurfaceY").getAsInt());
         assertEquals(3, plan.get("heightSegmentCount").getAsInt());

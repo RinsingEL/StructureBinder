@@ -89,7 +89,7 @@ class CityDecorationDefaultCatalogBootstrapTest {
         assertMappedTags(profile, catalog, "civic_notice", "civic", "notice");
         assertMappedTags(profile, catalog, "civic_plaza", "civic", "plaza");
         assertTrue(Files.readString(root.resolve("bootstrap_manifest.json"))
-                .contains("functional_settlement_lined_channels.v0.5"));
+                .contains("functional_settlement_lined_channels"));
     }
 
     @Test

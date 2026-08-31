@@ -10,17 +10,17 @@ import java.util.Map;
 import java.util.Objects;
 
 public final class CityDecorationContentCatalog {
-    public static final String SCHEMA = "city_decoration_content_index.v0.4";
+    public static final String SCHEMA = "city_decoration_content_index";
 
     private final Path catalogRoot;
-    private final String schemaVersion;
+    private final String schema;
     private final String catalogHash;
     private final Map<String, Content> contents;
 
-    CityDecorationContentCatalog(Path catalogRoot, String schemaVersion, String catalogHash,
+    CityDecorationContentCatalog(Path catalogRoot, String schema, String catalogHash,
                                  Map<String, Content> contents) {
         this.catalogRoot = Objects.requireNonNull(catalogRoot, "catalogRoot");
-        this.schemaVersion = Objects.requireNonNull(schemaVersion, "schemaVersion");
+        this.schema = Objects.requireNonNull(schema, "schema");
         this.catalogHash = Objects.requireNonNull(catalogHash, "catalogHash");
         this.contents = Collections.unmodifiableMap(new LinkedHashMap<>(contents));
     }
@@ -29,8 +29,8 @@ public final class CityDecorationContentCatalog {
         return catalogRoot;
     }
 
-    public String schemaVersion() {
-        return schemaVersion;
+    public String schema() {
+        return schema;
     }
 
     public String catalogHash() {

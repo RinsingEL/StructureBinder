@@ -44,7 +44,7 @@ class CityLandUseSurfacePrintPlanCodecTest {
         assertTrue(unknownFailure.getMessage().contains("CITY_LAND_USE_SURFACE_PRINT_FIELD_UNKNOWN"));
 
         JsonObject oldSchema = com.google.gson.JsonParser.parseString("""
-                {"schemaVersion":"city_land_use_surface_print_plan.v0.1",
+                {"schema":"obsolete_city_land_use_surface_print_plan",
                  "cityId":"old","sourceLandUsePlanHash":"old-hash","catalogHash":"",
                  "areas":[{"printAreaId":"old-shape-without-v02-fields"}]}
                 """).getAsJsonObject();
@@ -143,7 +143,7 @@ class CityLandUseSurfacePrintPlanCodecTest {
                 "farm/surface/10_20", "farm", List.of("farm_group"), settings,
                 List.of(new LandUseAreaPlan.ScanlineSpan(20, 10, 14)), List.of(),
                 LandUseSurfaceSettings.SurfaceAlgorithm.RELAY_REGION_GROWTH, source, recipe);
-        return new CityLandUseSurfacePrintPlan(CityLandUseSurfacePrintPlan.CURRENT_SCHEMA_VERSION,
+        return new CityLandUseSurfacePrintPlan(CityLandUseSurfacePrintPlan.SCHEMA,
                 "city_test", "land-use-hash", "", List.of(area));
     }
 
@@ -170,7 +170,7 @@ class CityLandUseSurfacePrintPlanCodecTest {
                 "farm/surface/10_20", "farm", List.of("farm_group"), settings,
                 List.of(new LandUseAreaPlan.ScanlineSpan(20, 10, 14)), List.of(),
                 LandUseSurfaceSettings.SurfaceAlgorithm.CONTOUR_BANDS, anchor, recipe);
-        return new CityLandUseSurfacePrintPlan(CityLandUseSurfacePrintPlan.CURRENT_SCHEMA_VERSION,
+        return new CityLandUseSurfacePrintPlan(CityLandUseSurfacePrintPlan.SCHEMA,
                 "city_test", "land-use-hash", "", List.of(area));
     }
 }

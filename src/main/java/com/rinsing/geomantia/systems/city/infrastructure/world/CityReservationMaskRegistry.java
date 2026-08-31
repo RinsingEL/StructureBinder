@@ -32,8 +32,8 @@ import java.util.Set;
 public final class CityReservationMaskRegistry {
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    public static final String PLANNED_REGISTRY_SCHEMA = "city_active_template_placement_registry.v0.1";
-    public static final String WORLDGEN_LEDGER_SCHEMA = "city_template_placement_ledger.v0.1";
+    public static final String PLANNED_REGISTRY_SCHEMA = "city_active_template_placement_registry";
+    public static final String WORLDGEN_LEDGER_SCHEMA = "city_template_placement_ledger";
 
     private static final String ACTIVE_DIR = "geomantia_city_masks";
     private static final String ACTIVE_MASK_FILE = "active_reservation_mask_plan.json";
@@ -540,7 +540,7 @@ public final class CityReservationMaskRegistry {
 
     public static synchronized JsonObject ledgerForCity(String runId, String citySeedId, String cityId) {
         JsonObject ledger = new JsonObject();
-        ledger.addProperty("schemaVersion", WORLDGEN_LEDGER_SCHEMA);
+        ledger.addProperty("schema", WORLDGEN_LEDGER_SCHEMA);
         if (runId != null && !runId.isBlank()) {
             ledger.addProperty("runId", runId);
         }
@@ -836,7 +836,7 @@ public final class CityReservationMaskRegistry {
 
     private static JsonObject emptyWorldgenLedger() {
         JsonObject obj = new JsonObject();
-        obj.addProperty("schemaVersion", WORLDGEN_LEDGER_SCHEMA);
+        obj.addProperty("schema", WORLDGEN_LEDGER_SCHEMA);
         obj.add("placedStructures", new JsonArray());
         obj.add("templateFragments", new JsonArray());
         obj.add("templatePendingFragments", new JsonArray());
@@ -962,7 +962,7 @@ public final class CityReservationMaskRegistry {
         }
     }
 
-    private record ActivePlannedStructures(String schemaVersion, String runId, String citySeedId, String cityId,
+    private record ActivePlannedStructures(String schema, String runId, String citySeedId, String cityId,
                                            List<PlannedStructure> plannedStructures) {
         static ActivePlannedStructures empty() {
             return new ActivePlannedStructures(PLANNED_REGISTRY_SCHEMA, "", "", "", List.of());
@@ -1008,7 +1008,7 @@ public final class CityReservationMaskRegistry {
         }
 
         static ActivePlannedStructures fromRegistry(JsonObject registry) {
-            String schema = stringValue(registry, "schemaVersion", "");
+            String schema = stringValue(registry, "schema", "");
             if (!PLANNED_REGISTRY_SCHEMA.equals(schema)) {
                 throw new IllegalArgumentException("CITY_CONFIGURED_STRUCTURE_FLOW_REMOVED");
             }
@@ -1033,7 +1033,7 @@ public final class CityReservationMaskRegistry {
 
         JsonObject asJson() {
             JsonObject obj = new JsonObject();
-            obj.addProperty("schemaVersion", schemaVersion);
+            obj.addProperty("schema", schema);
             obj.addProperty("runId", runId);
             obj.addProperty("citySeedId", citySeedId);
             obj.addProperty("cityId", cityId);

@@ -236,7 +236,7 @@ class CityLandscapeCapacityReservationPlannerTest {
                 CityBlueprint.ExtentClass.SMALL, group.densityClass(), group.algorithmProfileRef(),
                 group.terrainPolicy(), group.requiredStructureRefs(), group.fillPoolRef(),
                 group.connectionPlan(), group.compositionProfileRef(), group.attachedFeatures());
-        CityBlueprint blueprint = new CityBlueprint(source.schemaVersion(), source.cityId(),
+        CityBlueprint blueprint = new CityBlueprint(source.schema(), source.cityId(),
                 source.sourceD3Ref(), source.catalogSnapshotRef(), source.generationSeed(),
                 source.designIntent(), source.styleProfile(), List.of(smallGroup),
                 source.arrayCompositions(), source.relations(),
@@ -309,7 +309,7 @@ class CityLandscapeCapacityReservationPlannerTest {
                 anchors.add(anchor);
             }
             CityBlueprint.OutdoorPlan outdoor = source.outdoorPlan();
-            CityBlueprint blueprint = new CityBlueprint(source.schemaVersion(), source.cityId(),
+            CityBlueprint blueprint = new CityBlueprint(source.schema(), source.cityId(),
                     source.sourceD3Ref(), source.catalogSnapshotRef(), source.generationSeed(),
                     source.designIntent(), source.styleProfile(), groups,
                     source.arrayCompositions(), source.relations(),
@@ -340,7 +340,7 @@ class CityLandscapeCapacityReservationPlannerTest {
                 new CityBlueprint.LandscapeOwner("farm", "windmill"), null, 1, parcelCount,
                 List.of("patch"), CityBlueprint.TerrainPolicy.CONFORM, true,
                 new CityBlueprint.FillSelection(List.of()));
-        return new CityBlueprint(CityBlueprint.SCHEMA_VERSION, "city",
+        return new CityBlueprint(CityBlueprint.SCHEMA, "city",
                 new CityBlueprint.ArtifactRef("d3", "d3", "sha256:" + "1".repeat(64)),
                 new CityBlueprint.ArtifactRef("catalog", "catalog", "sha256:" + "2".repeat(64)), generationSeed,
                 new CityBlueprint.DesignIntent("town", "farm", List.of("agriculture")),
@@ -364,7 +364,7 @@ class CityLandscapeCapacityReservationPlannerTest {
                 original.terrainPolicy(), original.required(),
                 new CityBlueprint.FillSelection(List.of(variant)));
         CityBlueprint.OutdoorPlan outdoor = source.outdoorPlan();
-        return new CityBlueprint(source.schemaVersion(), source.cityId(), source.sourceD3Ref(),
+        return new CityBlueprint(source.schema(), source.cityId(), source.sourceD3Ref(),
                 source.catalogSnapshotRef(), source.generationSeed(), source.designIntent(), source.styleProfile(),
                 source.groups(), source.arrayCompositions(), source.relations(), source.roadProfile(),
                 source.surfaceDetailProfile(), new CityBlueprint.OutdoorPlan(outdoor.mode(),
@@ -437,7 +437,7 @@ class CityLandscapeCapacityReservationPlannerTest {
                         water.test(x, z), 0, 0, "minecraft:plains", "plain", "patch", true));
             }
         }
-        return new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION, "city", bounds, 4, cells);
+        return new LandUseTerrainField(LandUseTerrainField.SCHEMA, "city", bounds, 4, cells);
     }
 
     private static Set<BlockPoint> cells(JsonArray spans) {

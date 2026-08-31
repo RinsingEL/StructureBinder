@@ -25,7 +25,7 @@ import java.util.Set;
 
 /** Pure chunk-local compiler. It resolves fragments but never mutates a Minecraft level. */
 public final class CityDecorationChunkCompiler {
-    public static final String RESULT_SCHEMA = "city_decoration_chunk_compilation.v0.3";
+    public static final String RESULT_SCHEMA = "city_decoration_chunk_compilation";
     public static final int FOUNDATION_SURFACE_TOLERANCE_BLOCKS = 1;
 
     private final CityDecorationProgramPlanner planner;
@@ -492,7 +492,7 @@ public final class CityDecorationChunkCompiler {
         }
     }
 
-    public record CompilationResult(String schemaVersion,
+    public record CompilationResult(String schema,
                                     String cityId,
                                     String catalogHash,
                                     int chunkX,
@@ -511,7 +511,7 @@ public final class CityDecorationChunkCompiler {
                 .thenComparing(Fragment::slotId);
 
         private final String fragmentId;
-        private final String programSchemaVersion;
+        private final String programSchema;
         private final String programId;
         private final String programHash;
         private final String slotId;
@@ -529,7 +529,7 @@ public final class CityDecorationChunkCompiler {
         private final List<FragmentLayer> layers;
 
         private Fragment(String fragmentId,
-                         String programSchemaVersion,
+                         String programSchema,
                          String programId,
                          String programHash,
                          String slotId,
@@ -544,7 +544,7 @@ public final class CityDecorationChunkCompiler {
                          Status status,
                          String reasonCode,
                          CityDecorationTerrainRunCompiler.SlotOutcome frozenOutcome) {
-            this(fragmentId, programSchemaVersion, programId, programHash, slotId, paletteSlotId,
+            this(fragmentId, programSchema, programId, programHash, slotId, paletteSlotId,
                     priority, worldAnchor, content,
                     rotationDegrees, footprint, suppressionBounds, datumY, status, reasonCode, frozenOutcome,
                     List.of(new FragmentLayer("primary", CompiledDecorationProgram.Phase.MAJOR,
@@ -552,7 +552,7 @@ public final class CityDecorationChunkCompiler {
         }
 
         private Fragment(String fragmentId,
-                         String programSchemaVersion,
+                         String programSchema,
                          String programId,
                          String programHash,
                          String slotId,
@@ -569,7 +569,7 @@ public final class CityDecorationChunkCompiler {
                          CityDecorationTerrainRunCompiler.SlotOutcome frozenOutcome,
                          List<FragmentLayer> layers) {
             this.fragmentId = fragmentId;
-            this.programSchemaVersion = programSchemaVersion;
+            this.programSchema = programSchema;
             this.programId = programId;
             this.programHash = programHash;
             this.slotId = slotId;
@@ -588,7 +588,7 @@ public final class CityDecorationChunkCompiler {
         }
 
         private Fragment withLayers(List<FragmentLayer> layers) {
-            return new Fragment(fragmentId, programSchemaVersion, programId, programHash, slotId, paletteSlotId,
+            return new Fragment(fragmentId, programSchema, programId, programHash, slotId, paletteSlotId,
                     priority, worldAnchor, content, rotationDegrees, footprint, suppressionBounds, datumY,
                     status, reasonCode, frozenOutcome, layers);
         }
@@ -597,8 +597,8 @@ public final class CityDecorationChunkCompiler {
             return fragmentId;
         }
 
-        public String programSchemaVersion() {
-            return programSchemaVersion;
+        public String programSchema() {
+            return programSchema;
         }
 
         public String programId() {
@@ -767,7 +767,7 @@ public final class CityDecorationChunkCompiler {
         }
 
         Fragment toFragment() {
-            return new Fragment(fragmentId, program.schemaVersion(), program.programId(), programHash,
+            return new Fragment(fragmentId, program.schema(), program.programId(), programHash,
                     slot.slotId(), slot.paletteSlotId(), program.priority(), slot.worldAnchor(), content,
                     rotation, footprint, conflictBounds, datumY, status, reasonCode, frozenOutcome);
         }

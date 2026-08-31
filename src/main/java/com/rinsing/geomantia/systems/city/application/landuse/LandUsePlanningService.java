@@ -153,7 +153,7 @@ public final class LandUsePlanningService {
                 }
             }
         }
-        LandUseAreaPlan rawPlan = new LandUseAreaPlan(LandUseAreaPlan.CURRENT_SCHEMA_VERSION,
+        LandUseAreaPlan rawPlan = new LandUseAreaPlan(LandUseAreaPlan.SCHEMA,
                 LandUseRuleCatalog.RULE_VERSION, cityId, "", terrainField.planningBounds(), geometry.areas(),
                 sharedBoundaries(geometry.areas(), sources.landscapeParentParcelIds()),
                 geometry.unclaimedSpans(), corridors, warnings);
@@ -354,7 +354,7 @@ public final class LandUsePlanningService {
                                     int resolvedFoundationComponentCount,
                                      Set<String> skippedLandscapes) {
         JsonObject trace = new JsonObject();
-        trace.addProperty("schemaVersion", "city_land_use_planning_trace.v0.6");
+        trace.addProperty("schema", "city_land_use_planning_trace");
         trace.addProperty("foundationResolvedCloseRadiusBlocks", resolvedFoundationCloseRadius);
         trace.addProperty("foundationComponentCount", resolvedFoundationComponentCount);
         JsonArray groups = new JsonArray();
@@ -495,7 +495,7 @@ public final class LandUsePlanningService {
                                       CityUrbanSpacePlan urbanSpacePlan,
                                        Set<String> skippedLandscapes) {
         JsonObject quality = new JsonObject();
-        quality.addProperty("schemaVersion", "city_land_use_quality.v0.1");
+        quality.addProperty("schema", "city_land_use_quality");
         quality.addProperty("status", plan.warnings().isEmpty() ? "pass" : "warning");
         quality.addProperty("seedGroupCount", sources.seedGroups().size());
         quality.addProperty("areaCount", plan.areas().size());

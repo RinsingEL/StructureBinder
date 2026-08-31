@@ -35,7 +35,7 @@ class CityDecorationChunkCompilerTest {
         CityDecorationContentCatalog catalog = layeredCatalog(root);
         CompiledDecorationProgram source = pointProgram("layered_field", 1, 40L, 8, 8,
                 entries("city:prefab/farmland"), 2);
-        CompiledDecorationProgram program = new CompiledDecorationProgram(source.schemaVersion(), source.programId(),
+        CompiledDecorationProgram program = new CompiledDecorationProgram(source.schema(), source.programId(),
                 source.priority(), source.seed(), source.targetMask(), source.coordinateFrame(), source.shape(),
                 source.pattern(), new CompiledDecorationProgram.ContentPalette(List.of(
                 new CompiledDecorationProgram.PaletteSlot("item", List.of(
@@ -391,7 +391,7 @@ class CityDecorationChunkCompilerTest {
 
     private static CityDecorationContentCatalog catalog(Path root, ContentSpec... specs) throws Exception {
         JsonObject index = new JsonObject();
-        index.addProperty("schemaVersion", CityDecorationContentCatalog.SCHEMA);
+        index.addProperty("schema", CityDecorationContentCatalog.SCHEMA);
         JsonArray contents = new JsonArray();
         for (ContentSpec spec : specs) {
             String fileName = spec.contentId().substring(spec.contentId().lastIndexOf('/') + 1) + ".nbt";

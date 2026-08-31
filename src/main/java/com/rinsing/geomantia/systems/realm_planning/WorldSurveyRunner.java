@@ -48,7 +48,7 @@ public final class WorldSurveyRunner {
     public static final int DEFAULT_CELL_STEP_BLOCKS = 128;
     public static final int DEFAULT_PLANNING_RADIUS_BLOCKS = 8192;
     public static final int DEFAULT_LOCAL_SLOPE_RADIUS_BLOCKS = 8;
-    private static final String SCHEMA_VERSION = RealmPlanningService.SCHEMA_VERSION;
+    private static final String SCHEMA = RealmPlanningService.SCHEMA;
     private static final int TILE_REFRESH_RADIUS_CHUNKS = 24;
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -372,7 +372,7 @@ public final class WorldSurveyRunner {
     private static void writeFeatureGrid(Path path, Config config, MicroSamplingResult result, String configHash)
             throws IOException {
         JsonObject json = new JsonObject();
-        json.addProperty("schemaVersion", SCHEMA_VERSION);
+        json.addProperty("schema", SCHEMA);
         json.addProperty("surveyId", "survey_" + config.runId);
         json.addProperty("runId", config.runId);
         json.addProperty("configHash", configHash);
@@ -544,7 +544,7 @@ public final class WorldSurveyRunner {
     private static void writeManifest(WorldSurveyResult result, List<TileManifest> tiles, Config config,
             SurveyBounds bounds, Path path) throws IOException {
         JsonObject json = new JsonObject();
-        json.addProperty("schemaVersion", SCHEMA_VERSION);
+        json.addProperty("schema", SCHEMA);
         json.addProperty("surveyId", result.surveyId());
         json.addProperty("runId", result.runId());
         json.addProperty("status", result.sealed() ? "sealed" : "failed");
@@ -968,7 +968,7 @@ public final class WorldSurveyRunner {
             long etaMs = estimateRemainingMs(processed, microCells, elapsedMs, phaseElapsedMs);
             double phasePercent = phasePercent(processed, microCells);
             JsonObject json = new JsonObject();
-            json.addProperty("schemaVersion", "realm_world_survey_progress.v1");
+            json.addProperty("schema", "realm_world_survey_progress");
             json.addProperty("runId", config.runId);
             json.addProperty("status", status);
             json.addProperty("phase", phase);

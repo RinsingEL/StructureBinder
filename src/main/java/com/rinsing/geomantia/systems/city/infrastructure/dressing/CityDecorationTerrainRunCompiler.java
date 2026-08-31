@@ -19,7 +19,7 @@ import java.util.Set;
 
 /** Compiles complete continuous-pattern runs before activation; it never groups by owner chunk. */
 public final class CityDecorationTerrainRunCompiler {
-    public static final String SCHEMA = "city_decoration_frozen_terrain_runs.v0.2";
+    public static final String SCHEMA = "city_decoration_frozen_terrain_runs";
 
     private final CityDecorationProgramPlanner planner = new CityDecorationProgramPlanner();
     private final CityContinuousTerrainRunPlanner runPlanner = new CityContinuousTerrainRunPlanner();
@@ -174,10 +174,10 @@ public final class CityDecorationTerrainRunCompiler {
         PLACE, END_CAP, TERMINATE, DEFER
     }
 
-    public record FrozenPlan(String schemaVersion, String cityId, String catalogHash,
+    public record FrozenPlan(String schema, String cityId, String catalogHash,
                              List<Run> runs, List<FoundationSegment> foundationSegments) {
         public FrozenPlan {
-            if (!SCHEMA.equals(schemaVersion) || cityId == null || cityId.isBlank()
+            if (!SCHEMA.equals(schema) || cityId == null || cityId.isBlank()
                     || catalogHash == null || catalogHash.isBlank()) {
                 throw new IllegalArgumentException("CITY_DECORATION_FROZEN_TERRAIN_PLAN_INVALID");
             }

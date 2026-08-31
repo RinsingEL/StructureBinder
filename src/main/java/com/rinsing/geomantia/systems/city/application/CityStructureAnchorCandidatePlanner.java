@@ -25,12 +25,12 @@ import java.util.Optional;
 import java.util.Set;
 
 public final class CityStructureAnchorCandidatePlanner {
-    public static final String DESIGN_SLOT_PLAN_SCHEMA = "city_d4_design_slot_plan.v0.1";
-    public static final String CANDIDATE_SET_SCHEMA = "city_d4_anchor_candidate_set.v0.1";
-    public static final String SELECTION_PLAN_SCHEMA = "city_d4_anchor_selection_plan.v0.1";
-    public static final String SESSION_SCHEMA = "city_d4_candidate_session.v0.2";
-    public static final String SLOT_CANDIDATE_SET_SCHEMA = "city_d4_slot_candidate_set.v0.2";
-    public static final String DESIGN_TIME_REPORT_SCHEMA = "city_d4_design_time_report.v0.2";
+    public static final String DESIGN_SLOT_PLAN_SCHEMA = "city_d4_design_slot_plan";
+    public static final String CANDIDATE_SET_SCHEMA = "city_d4_anchor_candidate_set";
+    public static final String SELECTION_PLAN_SCHEMA = "city_d4_anchor_selection_plan";
+    public static final String SESSION_SCHEMA = "city_d4_candidate_session";
+    public static final String SLOT_CANDIDATE_SET_SCHEMA = "city_d4_slot_candidate_set";
+    public static final String DESIGN_TIME_REPORT_SCHEMA = "city_d4_design_time_report";
 
     private static final int MAX_CANDIDATES_PER_SLOT = 5;
     public Result plan(Path baseDirectory,
@@ -87,7 +87,7 @@ public final class CityStructureAnchorCandidatePlanner {
         }
 
         JsonObject candidateSet = new JsonObject();
-        candidateSet.addProperty("schemaVersion", CANDIDATE_SET_SCHEMA);
+        candidateSet.addProperty("schema", CANDIDATE_SET_SCHEMA);
         candidateSet.addProperty("cityId", reviewPackage.cityId());
         candidateSet.addProperty("planningMode", "all_slots_tentative_order_debug");
         candidateSet.add("grid", reviewPackage.grid().asJson());
@@ -158,11 +158,11 @@ public final class CityStructureAnchorCandidatePlanner {
         }
 
         JsonObject plan = new JsonObject();
-        plan.addProperty("schemaVersion", CityStructureAnchorPlanner.PLAN_SCHEMA);
+        plan.addProperty("schema", CityStructureAnchorPlanner.PLAN_SCHEMA);
         plan.addProperty("cityId", cityId);
         plan.add("anchors", anchors);
         JsonObject trace = new JsonObject();
-        trace.addProperty("schemaVersion", SELECTION_PLAN_SCHEMA);
+        trace.addProperty("schema", SELECTION_PLAN_SCHEMA);
         trace.add("sourceAnchorSelectionPlan", anchorSelectionPlan.deepCopy());
         trace.addProperty("selectedAnchorCount", anchors.size());
         plan.add("candidateSelectionTrace", trace);
@@ -207,7 +207,7 @@ public final class CityStructureAnchorCandidatePlanner {
             }
         }
         JsonObject session = new JsonObject();
-        session.addProperty("schemaVersion", SESSION_SCHEMA);
+        session.addProperty("schema", SESSION_SCHEMA);
         session.addProperty("sessionId", requestedSessionId == null || requestedSessionId.isBlank()
                 ? cityId + "_d4_session" : requestedSessionId);
         session.addProperty("cityId", cityId);
@@ -285,7 +285,7 @@ public final class CityStructureAnchorCandidatePlanner {
         JsonObject quality = quality(hardBlocks, warnings, new ArrayList<>(catalog.needsReview()), slotCandidates);
 
         JsonObject candidateSet = new JsonObject();
-        candidateSet.addProperty("schemaVersion", SLOT_CANDIDATE_SET_SCHEMA);
+        candidateSet.addProperty("schema", SLOT_CANDIDATE_SET_SCHEMA);
         candidateSet.addProperty("cityId", cityId);
         candidateSet.addProperty("sessionId", requiredString(session, "sessionId"));
         candidateSet.addProperty("planningMode", "sequential_current_slot");
@@ -411,7 +411,7 @@ public final class CityStructureAnchorCandidatePlanner {
         quickReport.addProperty("status", "deferred_to_d6");
         quickReport.addProperty("reasonCode", "D4_QUICK_PREFLIGHT_DEFERRED_TO_D6");
         quickReport.addProperty("quickPreflightRequested", quickPreflight);
-        quickReport.addProperty("message", "D4 v0.2 defers MC actual bbox probe to D6.");
+        quickReport.addProperty("message", "D4 defers MC actual bbox probe to D6.");
         return new SelectionResult(updatedSession, selected, quickReport, designTimeReport(updatedSession));
     }
 
@@ -429,11 +429,11 @@ public final class CityStructureAnchorCandidatePlanner {
             anchors.add(anchorFromSelected(elem.getAsJsonObject(), index));
         }
         JsonObject plan = new JsonObject();
-        plan.addProperty("schemaVersion", CityStructureAnchorPlanner.PLAN_SCHEMA);
+        plan.addProperty("schema", CityStructureAnchorPlanner.PLAN_SCHEMA);
         plan.addProperty("cityId", requiredString(session, "cityId"));
         plan.add("anchors", anchors);
         JsonObject trace = new JsonObject();
-        trace.addProperty("schemaVersion", SELECTION_PLAN_SCHEMA);
+        trace.addProperty("schema", SELECTION_PLAN_SCHEMA);
         trace.addProperty("planningMode", "sequential_slot_session");
         trace.addProperty("sessionId", requiredString(session, "sessionId"));
         trace.addProperty("selectedAnchorCount", anchors.size());
@@ -844,9 +844,9 @@ public final class CityStructureAnchorCandidatePlanner {
     }
 
     private static void ensureSession(JsonObject session) {
-        if (session == null || !SESSION_SCHEMA.equals(stringValue(session, "schemaVersion", ""))) {
+        if (session == null || !SESSION_SCHEMA.equals(stringValue(session, "schema", ""))) {
             throw new IllegalArgumentException("D4_CANDIDATE_SESSION_NOT_FOUND: "
-                    + "city_d4_candidate_session.v0.2 session object is required.");
+                    + "city_d4_candidate_session session object is required.");
         }
     }
 
@@ -1171,7 +1171,7 @@ public final class CityStructureAnchorCandidatePlanner {
                 ? session.getAsJsonObject("timing")
                 : new JsonObject();
         JsonObject report = new JsonObject();
-        report.addProperty("schemaVersion", DESIGN_TIME_REPORT_SCHEMA);
+        report.addProperty("schema", DESIGN_TIME_REPORT_SCHEMA);
         report.addProperty("cityId", requiredString(session, "cityId"));
         report.addProperty("sessionId", requiredString(session, "sessionId"));
         report.addProperty("slotCount", optionalArray(session, "placementOrder").size());

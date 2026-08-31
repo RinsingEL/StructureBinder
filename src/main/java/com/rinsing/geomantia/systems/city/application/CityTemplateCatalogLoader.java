@@ -45,10 +45,10 @@ public final class CityTemplateCatalogLoader {
         if (root == null) {
             throw fail("CITY_TEMPLATE_CATALOG_ROOT_INVALID", "Catalog root must not be null.");
         }
-        rejectUnknownFields(root, Set.of("schemaVersion", "templates"), "catalog");
-        String schema = requiredString(root, "schemaVersion");
+        rejectUnknownFields(root, Set.of("schema", "templates"), "catalog");
+        String schema = requiredString(root, "schema");
         if (!CityTemplateCatalog.SCHEMA.equals(schema)) {
-            throw fail("CITY_TEMPLATE_CATALOG_SCHEMA_UNSUPPORTED", "Unsupported schemaVersion: " + schema);
+            throw fail("CITY_TEMPLATE_CATALOG_SCHEMA_UNSUPPORTED", "Unsupported schema: " + schema);
         }
         JsonArray entries = requiredArray(root, "templates");
         List<CityTemplateCatalog.Template> templates = new ArrayList<>();

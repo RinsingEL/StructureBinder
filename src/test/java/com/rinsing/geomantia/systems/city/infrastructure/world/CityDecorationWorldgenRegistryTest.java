@@ -123,7 +123,7 @@ class CityDecorationWorldgenRegistryTest {
 
         JsonObject active = JsonParser.parseString(Files.readString(
                 CityDecorationWorldgenRegistry.activePlansPath(serverRoot))).getAsJsonObject();
-        assertEquals(CityDecorationWorldgenRegistry.ACTIVE_SCHEMA, active.get("schemaVersion").getAsString());
+        assertEquals(CityDecorationWorldgenRegistry.ACTIVE_SCHEMA, active.get("schema").getAsString());
         assertEquals(3, active.getAsJsonArray("plans").size());
     }
 
@@ -560,19 +560,23 @@ class CityDecorationWorldgenRegistryTest {
     }
 
     @Test
-    void loadingLegacyActivePlanSchemaIsRejected(@TempDir Path temp)
+    void loadingObsoleteActivePlanSchemaIsQuarantined(@TempDir Path temp)
             throws Exception {
         Path serverRoot = temp.resolve("server");
         JsonObject active = new JsonObject();
-        active.addProperty("schemaVersion", "city_active_decoration_program_plans.v0.3");
+        active.addProperty("schema", "obsolete_city_active_decoration_program_plans");
         active.add("plans", new JsonArray());
         Path activePath = CityDecorationWorldgenRegistry.activePlansPath(serverRoot);
         Files.createDirectories(activePath.getParent());
         Files.writeString(activePath, CityJson.GSON.toJson(active));
 
-        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
-                () -> CityDecorationWorldgenRegistry.load(serverRoot, temp.resolve("catalog")));
-        assertTrue(error.getMessage().contains("CITY_DECORATION_ACTIVE_PLAN_SCHEMA_UNSUPPORTED"));
+        CityDecorationWorldgenRegistry.load(serverRoot, temp.resolve("catalog"));
+        JsonObject current = JsonParser.parseString(Files.readString(activePath)).getAsJsonObject();
+        assertEquals(CityDecorationWorldgenRegistry.ACTIVE_SCHEMA, current.get("schema").getAsString());
+        assertEquals(0, current.getAsJsonArray("plans").size());
+        try (var files = Files.list(activePath.getParent())) {
+            assertTrue(files.anyMatch(path -> path.getFileName().toString().contains(".obsolete-")));
+        }
     }
 
     private static int appliedCount() {
@@ -679,19 +683,19 @@ class CityDecorationWorldgenRegistryTest {
 
     private static CompiledDecorationProgramPlan continuousPlan(CompiledDecorationProgramPlan base) {
         CompiledDecorationProgram source = base.programs().get(0);
-        CompiledDecorationProgram continuous = new CompiledDecorationProgram(source.schemaVersion(),
+        CompiledDecorationProgram continuous = new CompiledDecorationProgram(source.schema(),
                 source.programId(), source.priority(), source.seed(), source.targetMask(), source.coordinateFrame(),
                 source.shape(), new CompiledDecorationProgram.CrossSectionRepeatPattern(
                 CompiledDecorationProgram.Axis.V, 0,
                 List.of(new CompiledDecorationProgram.CrossSectionBand("item", 1))),
                 source.contentPalette(), source.terrainPolicy(), source.conflictPolicy());
-        return new CompiledDecorationProgramPlan(base.schemaVersion(), base.cityId(), base.catalogHash(),
+        return new CompiledDecorationProgramPlan(base.schema(), base.cityId(), base.catalogHash(),
                 base.styleProfileId(), base.styleProfileHash(), base.hardObstacles(), List.of(continuous));
     }
 
     private static CompiledDecorationProgramPlan foundationContinuousPlan(CompiledDecorationProgramPlan base) {
         CompiledDecorationProgram source = base.programs().get(0);
-        CompiledDecorationProgram continuous = new CompiledDecorationProgram(source.schemaVersion(),
+        CompiledDecorationProgram continuous = new CompiledDecorationProgram(source.schema(),
                 source.programId(), source.priority(), source.seed(), source.targetMask(), source.coordinateFrame(),
                 source.shape(), new CompiledDecorationProgram.ParallelRowsPattern(
                 CompiledDecorationProgram.Axis.U, "item", 1, 1, 0), source.contentPalette(),
@@ -699,7 +703,7 @@ class CityDecorationWorldgenRegistryTest {
                         CompiledDecorationProgram.InvalidTerrainAction.CLIP, 100, 8,
                         CompiledDecorationProgram.FoundationMode.FILL_ONLY, 4, 2),
                 source.conflictPolicy());
-        return new CompiledDecorationProgramPlan(base.schemaVersion(), base.cityId(), base.catalogHash(),
+        return new CompiledDecorationProgramPlan(base.schema(), base.cityId(), base.catalogHash(),
                 base.styleProfileId(), base.styleProfileHash(), base.hardObstacles(), List.of(continuous));
     }
 
@@ -722,7 +726,7 @@ class CityDecorationWorldgenRegistryTest {
         NbtIo.writeCompressed(template, root.resolve("templates/test.nbt").toFile());
 
         JsonObject index = new JsonObject();
-        index.addProperty("schemaVersion", CityDecorationContentCatalog.SCHEMA);
+        index.addProperty("schema", CityDecorationContentCatalog.SCHEMA);
         JsonObject content = new JsonObject();
         content.addProperty("contentId", "city:prefab/test");
         content.addProperty("contentKind", "prefab");
@@ -744,7 +748,7 @@ class CityDecorationWorldgenRegistryTest {
         Files.createDirectories(styles);
         Files.writeString(styles.resolve("test_style.json"), """
                 {
-                  "schemaVersion": "city_decoration_style_profile.v0.1",
+                  "schema": "city_decoration_style_profile",
                   "styleProfileId": "test_style",
                   "mappings": [
                     {

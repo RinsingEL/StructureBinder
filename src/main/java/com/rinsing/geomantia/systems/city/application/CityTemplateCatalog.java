@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public final class CityTemplateCatalog {
-    public static final String SCHEMA = "city_template_catalog.v0.1";
+    public static final String SCHEMA = "city_template_catalog";
 
     private final List<Template> templates;
     private final Map<String, Template> templatesByKey;
@@ -30,7 +30,7 @@ public final class CityTemplateCatalog {
         return templates;
     }
 
-    public String schemaVersion() {
+    public String schema() {
         return SCHEMA;
     }
 

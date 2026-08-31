@@ -15,7 +15,7 @@ import java.util.TreeSet;
 
 /** Frozen explanation of the city envelope and every non-structure residual inside it. */
 public record CityUrbanSpacePlan(
-        String schemaVersion,
+        String schema,
         String cityId,
         String planHash,
         boolean enabled,
@@ -25,11 +25,11 @@ public record CityUrbanSpacePlan(
         List<ResidualRegion> residualRegions,
         CoverageSummary coverageSummary) {
 
-    public static final String SCHEMA_VERSION = "city_urban_space_plan.v0.1";
+    public static final String SCHEMA = "city_urban_space_plan";
 
     public CityUrbanSpacePlan {
-        if (!SCHEMA_VERSION.equals(schemaVersion)) {
-            throw new IllegalArgumentException("Unsupported city urban space plan schema: " + schemaVersion);
+        if (!SCHEMA.equals(schema)) {
+            throw new IllegalArgumentException("Unsupported city urban space plan schema: " + schema);
         }
         if (cityId == null || cityId.isBlank()) throw new IllegalArgumentException("cityId is required");
         planHash = planHash == null ? "" : planHash;
@@ -40,14 +40,14 @@ public record CityUrbanSpacePlan(
     }
 
     public CityUrbanSpacePlan withComputedHash() {
-        CityUrbanSpacePlan withoutHash = new CityUrbanSpacePlan(schemaVersion, cityId, "", enabled,
+        CityUrbanSpacePlan withoutHash = new CityUrbanSpacePlan(schema, cityId, "", enabled,
                 closeRadiusBlocks, workingBounds, envelopeSpans, residualRegions, coverageSummary);
         JsonObject canonical = canonical(withoutHash.toJson()).getAsJsonObject();
         canonical.remove("planHash");
         try {
             String hash = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
                     .digest(canonical.toString().getBytes(StandardCharsets.UTF_8)));
-            return new CityUrbanSpacePlan(schemaVersion, cityId, hash, enabled, closeRadiusBlocks,
+            return new CityUrbanSpacePlan(schema, cityId, hash, enabled, closeRadiusBlocks,
                     workingBounds, envelopeSpans, residualRegions, coverageSummary);
         } catch (NoSuchAlgorithmException exception) {
             throw new IllegalStateException("SHA-256 is unavailable", exception);
@@ -56,7 +56,7 @@ public record CityUrbanSpacePlan(
 
     public JsonObject toJson() {
         JsonObject root = new JsonObject();
-        root.addProperty("schemaVersion", schemaVersion);
+        root.addProperty("schema", schema);
         root.addProperty("cityId", cityId);
         if (!planHash.isBlank()) root.addProperty("planHash", planHash);
         root.addProperty("enabled", enabled);
@@ -129,7 +129,7 @@ public record CityUrbanSpacePlan(
     }
 
     public static CityUrbanSpacePlan disabled(String cityId) {
-        return new CityUrbanSpacePlan(SCHEMA_VERSION, cityId, "", false, 0, null, List.of(), List.of(),
+        return new CityUrbanSpacePlan(SCHEMA, cityId, "", false, 0, null, List.of(), List.of(),
                 new CoverageSummary(0, 0, 0, 0, 0, 0, 0)).withComputedHash();
     }
 

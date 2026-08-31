@@ -61,13 +61,13 @@ public final class CityDecorationPlantCatalogTestFixture {
         contents.add(base);
         contents.add(plant);
         JsonObject index = new JsonObject();
-        index.addProperty("schemaVersion", CityDecorationContentCatalog.SCHEMA);
+        index.addProperty("schema", CityDecorationContentCatalog.SCHEMA);
         index.add("contents", contents);
         Files.writeString(root.resolve("content_index.json"), CityJson.GSON.toJson(index));
         Files.createDirectories(root.resolve("styles"));
         Files.writeString(root.resolve("styles/test_style.json"), """
                 {
-                  "schemaVersion": "city_decoration_style_profile.v0.1",
+                  "schema": "city_decoration_style_profile",
                   "styleProfileId": "test_style",
                   "mappings": [
                     {"semanticRef": "farmland", "variants": [

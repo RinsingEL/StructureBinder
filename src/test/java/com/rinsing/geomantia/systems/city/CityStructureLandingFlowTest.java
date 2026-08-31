@@ -75,7 +75,7 @@ final class CityStructureLandingFlowTest {
 
         JsonObject candidateSet = result.anchorCandidateSet();
         assertTrue(result.asJson().get("ok").getAsBoolean());
-        assertEquals("city_d4_anchor_candidate_set.v0.1", candidateSet.get("schemaVersion").getAsString());
+        assertEquals("city_d4_anchor_candidate_set", candidateSet.get("schema").getAsString());
         assertEquals(2, candidateSet.getAsJsonArray("slotCandidates").size());
         JsonObject firstSlot = candidateSet.getAsJsonArray("slotCandidates").get(0).getAsJsonObject();
         assertFalse(firstSlot.getAsJsonArray("candidates").isEmpty());
@@ -95,7 +95,7 @@ final class CityStructureLandingFlowTest {
 
         JsonObject selectionPlan = JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_d4_anchor_selection_plan.v0.1",
+                  "schema": "city_d4_anchor_selection_plan",
                   "cityId": "city_test",
                   "selectedCandidates": [
                     {
@@ -109,7 +109,7 @@ final class CityStructureLandingFlowTest {
                 """.formatted(firstCandidate.get("candidateId").getAsString())).getAsJsonObject();
         JsonObject anchorPlan = planner.select(candidateSet, selectionPlan);
 
-        assertEquals(CityStructureAnchorPlanner.PLAN_SCHEMA, anchorPlan.get("schemaVersion").getAsString());
+        assertEquals(CityStructureAnchorPlanner.PLAN_SCHEMA, anchorPlan.get("schema").getAsString());
         JsonObject anchor = anchorPlan.getAsJsonArray("anchors").get(0).getAsJsonObject();
         assertEquals("admin_core_01", anchor.get("anchorId").getAsString());
         assertEquals(firstCandidate.get("templateId").getAsString(), anchor.get("templateId").getAsString());
@@ -182,7 +182,7 @@ final class CityStructureLandingFlowTest {
 
         JsonObject selectionPlan = JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_d4_anchor_selection_plan.v0.1",
+                  "schema": "city_d4_anchor_selection_plan",
                   "cityId": "city_test",
                   "selectedCandidates": [
                     {
@@ -209,7 +209,7 @@ final class CityStructureLandingFlowTest {
         Fixture fixture = fixture();
         JsonObject catalog = JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_template_catalog.v0.1",
+                  "schema": "city_template_catalog",
                   "templates": [{
                     "buildingSemantic": "civic_hall",
                     "style": "test",
@@ -246,7 +246,7 @@ final class CityStructureLandingFlowTest {
                 fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), plan, "template_session");
         assertTrue(created.qualityReport().get("passed").getAsBoolean());
         assertEquals(CityTemplateCatalog.SCHEMA,
-                created.session().getAsJsonObject("templateCatalog").get("schemaVersion").getAsString());
+                created.session().getAsJsonObject("templateCatalog").get("schema").getAsString());
 
         CityStructureAnchorCandidatePlanner.NextCandidateResult next = planner.planNext(
                 fixture.baseDir(), fixture.review(), created.session());
@@ -360,11 +360,11 @@ final class CityStructureLandingFlowTest {
 
         CityStructureAnchorCandidatePlanner.FinalizeResult finalized = planner.finalizeSession(session);
         JsonObject plan = finalized.structureAnchorPlan();
-        assertEquals(CityStructureAnchorPlanner.PLAN_SCHEMA, plan.get("schemaVersion").getAsString());
+        assertEquals(CityStructureAnchorPlanner.PLAN_SCHEMA, plan.get("schema").getAsString());
         assertEquals(2, plan.getAsJsonArray("anchors").size());
         assertTrue(plan.has("candidateSelectionTrace"));
-        assertEquals("city_d4_design_time_report.v0.2",
-                finalized.designTimeReport().get("schemaVersion").getAsString());
+        assertEquals("city_d4_design_time_report",
+                finalized.designTimeReport().get("schema").getAsString());
     }
 
     @Test
@@ -377,7 +377,7 @@ final class CityStructureLandingFlowTest {
 
         JsonObject candidateSet = result.arrayCandidateSet();
         assertTrue(result.asJson().get("ok").getAsBoolean());
-        assertEquals("city_d4_array_candidate_set.v0.1", candidateSet.get("schemaVersion").getAsString());
+        assertEquals("city_d4_array_candidate_set", candidateSet.get("schema").getAsString());
         JsonArray groups = candidateSet.getAsJsonArray("arrayCandidates");
         assertFalse(groups.isEmpty());
         Set<String> patterns = new HashSet<>();
@@ -567,7 +567,7 @@ final class CityStructureLandingFlowTest {
         JsonObject candidateSet = result.structureClusterGroupCandidateSet();
         assertTrue(result.asJson().get("ok").getAsBoolean());
         assertEquals(CityStructureClusterGroupCandidatePlanner.CANDIDATE_SET_SCHEMA,
-                candidateSet.get("schemaVersion").getAsString());
+                candidateSet.get("schema").getAsString());
         assertEquals("structure_cluster_group_candidates",
                 candidateSet.get("planningMode").getAsString());
         JsonArray groups = candidateSet.getAsJsonArray("groupCandidates");
@@ -638,7 +638,7 @@ final class CityStructureLandingFlowTest {
                 """).getAsJsonObject();
         Files.writeString(profilePath, profile + "\n");
         JsonObject source = new JsonObject();
-        source.addProperty("schemaVersion", "terrasense_structure_profile_source.v0.1");
+        source.addProperty("schema", "terrasense_structure_profile_source");
         source.addProperty("sourceType", "structure_profile_jsonl");
         source.addProperty("catalogMode", "official");
         source.addProperty("profilePath", profilePath.toString());
@@ -703,115 +703,17 @@ final class CityStructureLandingFlowTest {
         assertFalse(operations.contains("surfaceFill"));
     }
 
-   @Test
-    void wallReservationAddsNonRectangularCorridorAndRoadMaskCutsGate() throws Exception {
-        Fixture fixture = fixture();
-        JsonObject anchorMap = new CityStructureAnchorPlanner()
-                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), anchorPlan(fixture.review()))
-                .structureAnchorMap();
-        JsonObject reservation = new CityWallReservationPlanner().plan(
-                fixture.review(), anchorMap, "v2", 24, 15, 4);
-
-        assertEquals("city_wall_reservation_plan.v0.2", reservation.get("schemaVersion").getAsString());
-        assertEquals("d3_patch_member_cell_outer_boundary", reservation.get("boundarySource").getAsString());
-        assertFalse(reservation.getAsJsonArray("wallCenterline").isEmpty());
-        assertFalse(reservation.getAsJsonArray("wallCorridorMask").isEmpty());
-
-        JsonObject mask = new CityReservationMaskPlanner()
-                .plan(fixture.context(), anchorMap, reservation)
-                .reservationMaskPlan();
-        assertTrue(mask.getAsJsonArray("noVegetationMask").toString().contains("wall_reservation_corridor"));
-        assertTrue(mask.getAsJsonArray("noVanillaStructureMask").toString().contains("wall_reservation_corridor"));
-
-        JsonObject firstLine = reservation.getAsJsonArray("wallCenterline").get(0).getAsJsonObject();
-        JsonObject lineBounds = firstLine.getAsJsonObject("blockBounds");
-        int roadX = (lineBounds.get("minX").getAsInt() + lineBounds.get("maxX").getAsInt()) / 2;
-        int roadZ = (lineBounds.get("minZ").getAsInt() + lineBounds.get("maxZ").getAsInt()) / 2;
-        JsonObject actualRoadMask = JsonParser.parseString("""
-                {
-                  "schemaVersion": "city_actual_road_mask.v0.2",
-                  "cityId": "city_test",
-                  "status": "observed",
-                  "roadMask": [
-                    {
-                      "maskId": "road_0",
-                      "maskType": "actual_road",
-                      "blockBounds": {"minX": %d, "minZ": %d, "maxX": %d, "maxZ": %d}
-                    }
-                  ]
-                }
-                """.formatted(roadX, roadZ, roadX, roadZ)).getAsJsonObject();
-        JsonObject ledger = JsonParser.parseString("""
-                {
-                  "schemaVersion": "city_placed_structure_ledger.v0.1",
-                  "cityId": "city_test",
-                  "placedStructures": [
-                    {"anchorId": "a", "actualFootprint": {"minX": -8, "minZ": -8, "maxX": 8, "maxZ": 8}}
-                  ]
-                }
-                """).getAsJsonObject();
-
-        JsonObject wallPlan = new CityWallPlanner().planV2(ledger, reservation, actualRoadMask, 9, 2, 8, 7);
-        assertEquals("city_wall_plan.v0.2", wallPlan.get("schemaVersion").getAsString());
-        assertFalse(wallPlan.getAsJsonArray("generatedGates").isEmpty());
-        assertTrue(wallPlan.getAsJsonArray("wallSegments").toString().contains("WALL_GATE_FROM_ROAD"));
-    }
-
     @Test
-    void wallReservationV3BuildsStructureSeededDomainHullAndMaskContribution() throws Exception {
-        Fixture fixture = fixture();
-        JsonObject anchorMap = new CityStructureAnchorPlanner()
-                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), anchorPlan(fixture.review()))
-                .structureAnchorMap();
+    void wallPlannerKeepsD5WallLineAndDeclaresNoRelineDowngradePolicies() {
+        JsonObject reservation = syntheticWallReservation();
+        JsonObject wallPlan = new CityWallPlanner().plan(syntheticWallLedger(), reservation,
+                roadMaskFromBlocks("city_test", new int[][]{}), CityWallPlanner.Options.defaults());
 
-        JsonObject reservation = new CityWallReservationPlanner().plan(
-                fixture.review(), anchorMap, "v3", 24, 15, 4,
-                new CityWallReservationPlanner.V3Options(24, 2, 64, 0.6));
-
-        assertEquals("city_wall_reservation_plan.v0.3", reservation.get("schemaVersion").getAsString());
-        assertEquals("structure_seeded_patch_region_hull", reservation.get("boundarySource").getAsString());
-        assertFalse(reservation.getAsJsonArray("seedPatches").isEmpty());
-        assertFalse(reservation.getAsJsonArray("cityDomainMask").isEmpty());
-        assertFalse(reservation.getAsJsonArray("wallCenterline").isEmpty());
-        assertTrue(reservation.getAsJsonObject("domainCleanupReport").has("filledCellCount"));
-
-        JsonObject mask = new CityReservationMaskPlanner()
-                .plan(fixture.context(), anchorMap, reservation)
-                .reservationMaskPlan();
-        assertTrue(mask.getAsJsonArray("noVegetationMask").toString().contains("wall_reservation_corridor"));
-        assertTrue(mask.getAsJsonArray("noVanillaStructureMask").toString().contains("wall_reservation_corridor"));
-    }
-
-    @Test
-    void wallReservationV4KeepsD5MaskButDefersFinalBoundaryToD7Graph() throws Exception {
-        Fixture fixture = fixture();
-        JsonObject anchorMap = new CityStructureAnchorPlanner()
-                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), anchorPlan(fixture.review()))
-                .structureAnchorMap();
-
-        JsonObject reservation = new CityWallReservationPlanner().plan(
-                fixture.review(), anchorMap, "v4", 24, 15, 4,
-                new CityWallReservationPlanner.V3Options(24, 2, 64, 0.6));
-
-        assertEquals("city_wall_reservation_plan.v0.3", reservation.get("schemaVersion").getAsString());
-        assertEquals("v4", reservation.get("wallVersion").getAsString());
-        assertEquals("actual_footprint_land_ring_deferred_to_d7",
-                reservation.get("boundarySource").getAsString());
-        assertTrue(reservation.get("finalBoundaryDeferredToD7").getAsBoolean());
-        assertFalse(reservation.getAsJsonArray("wallCorridorMask").isEmpty());
-    }
-
-    @Test
-    void wallPlannerV5KeepsD5WallLineAndDeclaresNoRelineDowngradePolicies() {
-        JsonObject reservation = syntheticV5Reservation();
-        JsonObject wallPlan = new CityWallPlanner().planV5(syntheticWallLedger(), reservation,
-                roadMaskFromBlocks("city_test", new int[][]{}), CityWallPlanner.V5Options.defaults());
-
-        assertEquals("city_wall_plan.v0.5", wallPlan.get("schemaVersion").getAsString());
+        assertEquals("city_wall_plan", wallPlan.get("schema").getAsString());
         assertEquals("d5_final_wall_line", wallPlan.get("wallBoundaryMode").getAsString());
         assertEquals(reservation.getAsJsonArray("wallLine").toString(),
                 wallPlan.getAsJsonArray("wallLine").toString());
-        assertEquals("disabled_v5_no_reline_after_d5", wallPlan.get("wallContourMode").getAsString());
+        assertEquals("disabled_wall_no_reline_after_d5", wallPlan.get("wallContourMode").getAsString());
         assertEquals("keep_gate_opening_or_downgrade_without_reline",
                 wallPlan.get("gateFailurePolicy").getAsString());
         assertEquals("downgrade_to_wall_or_skip_without_reline",
@@ -829,7 +731,7 @@ final class CityStructureLandingFlowTest {
                 wallPlan.getAsJsonObject("surfaceCachePolicy").get("requiredFields").getAsString());
         assertTrue(wallPlan.getAsJsonArray("wallUnits").toString()
                 .contains("surface_cache_1_block_median_at_execute"));
-        assertTrue(wallPlan.getAsJsonArray("wallUnits").toString().contains("D5_V5_GATE_SLOT_OPENING"));
+        assertTrue(wallPlan.getAsJsonArray("wallUnits").toString().contains("D5_GATE_SLOT_OPENING"));
         assertTrue(wallPlan.getAsJsonArray("wallNodes").toString().contains("beacon_5x5"));
         assertEquals("X", wallNodeAxis(wallPlan, "node_0"));
         assertEquals("Z", wallNodeAxis(wallPlan, "node_2"));
@@ -837,11 +739,11 @@ final class CityStructureLandingFlowTest {
     }
 
     @Test
-    void wallPlannerV5HardStopsWhenD7ActualFootprintExceedsD5Coverage() {
-        JsonObject reservation = syntheticV5Reservation();
+    void wallPlannerHardStopsWhenD7ActualFootprintExceedsD5Coverage() {
+        JsonObject reservation = syntheticWallReservation();
         JsonObject ledger = JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_placed_structure_ledger.v0.1",
+                  "schema": "city_placed_structure_ledger",
                   "cityId": "city_test",
                   "placedStructures": [
                     {"anchorId": "outside", "actualFootprint": {"minX": 120, "minZ": 0, "maxX": 140, "maxZ": 20}}
@@ -850,383 +752,10 @@ final class CityStructureLandingFlowTest {
                 """).getAsJsonObject();
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> new CityWallPlanner().planV5(ledger, reservation,
-                        roadMaskFromBlocks("city_test", new int[][]{}), CityWallPlanner.V5Options.defaults()));
+                () -> new CityWallPlanner().plan(ledger, reservation,
+                        roadMaskFromBlocks("city_test", new int[][]{}), CityWallPlanner.Options.defaults()));
 
-        assertTrue(ex.getMessage().contains("D5_V5_LOCKED_FOOTPRINT_OUTSIDE_RESERVATION"));
-    }
-
-    @Test
-    void wallReservationV4CarriesPatchMemberCellsIntoSeedPatches() {
-        CityLandformReviewPackage review = preciseMemberCellReview();
-        JsonObject anchorMap = JsonParser.parseString("""
-                {
-                  "schemaVersion": "city_structure_anchor_map.v0.3",
-                  "cityId": "city_test",
-                  "anchors": [
-                    {
-                      "anchorId": "a",
-                      "sourcePatchIds": ["water_cells"],
-                      "anchorBlock": {"x": 0, "z": 0}
-                    }
-                  ]
-                }
-                """).getAsJsonObject();
-
-        JsonObject reservation = new CityWallReservationPlanner().plan(
-                review, anchorMap, "v4", 24, 15, 4,
-                new CityWallReservationPlanner.V3Options(24, 1, 64, 0.6));
-
-        assertTrue(reservation.getAsJsonArray("seedPatches").toString().contains("\"memberCells\""),
-                reservation.getAsJsonArray("seedPatches").toString());
-        assertTrue(reservation.getAsJsonArray("seedPatches").toString().contains("\"cellStepBlocks\":16"),
-                reservation.getAsJsonArray("seedPatches").toString());
-    }
-
-    @Test
-    void wallPlannerV3ClustersExternalRoadGatesAndIgnoresInsideRoads() throws Exception {
-        Fixture fixture = fixture();
-        JsonObject anchorMap = new CityStructureAnchorPlanner()
-                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), singleAnchorPlan(fixture.review()))
-                .structureAnchorMap();
-        JsonObject reservation = new CityWallReservationPlanner().plan(
-                fixture.review(), anchorMap, "v3", 24, 15, 4,
-                new CityWallReservationPlanner.V3Options(24, 2, 64, 0.6));
-        JsonObject line = reservation.getAsJsonArray("wallCenterline").get(0).getAsJsonObject();
-        BlockBounds lineBounds = bounds(line.getAsJsonObject("blockBounds"));
-        BlockBounds domain = bounds(reservation.getAsJsonArray("cityDomainMask").get(0)
-                .getAsJsonObject().getAsJsonObject("blockBounds"));
-        int roadX = lineBounds.center().x();
-        int roadZ = lineBounds.center().z();
-        BlockBounds externalRoad = lineBounds.widthBlocks() >= lineBounds.heightBlocks()
-                ? new BlockBounds(roadX - 1, lineBounds.minZ() - 2, roadX + 1, lineBounds.maxZ() + 2)
-                : new BlockBounds(lineBounds.minX() - 2, roadZ - 1, lineBounds.maxX() + 2, roadZ + 1);
-        int insideX = domain.center().x();
-        int insideZ = domain.center().z();
-        JsonObject actualRoadMask = JsonParser.parseString("""
-                {
-                  "schemaVersion": "city_actual_road_mask.v0.2",
-                  "cityId": "city_test",
-                  "status": "observed",
-                  "roadMask": [
-                    {"maskId": "road_external_a", "maskType": "actual_road", "blockBounds": {"minX": %d, "minZ": %d, "maxX": %d, "maxZ": %d}},
-                    {"maskId": "road_external_b", "maskType": "actual_road", "blockBounds": {"minX": %d, "minZ": %d, "maxX": %d, "maxZ": %d}},
-                    {"maskId": "road_inside_a", "maskType": "actual_road", "blockBounds": {"minX": %d, "minZ": %d, "maxX": %d, "maxZ": %d}},
-                    {"maskId": "road_inside_b", "maskType": "actual_road", "blockBounds": {"minX": %d, "minZ": %d, "maxX": %d, "maxZ": %d}}
-                  ]
-                }
-                """.formatted(
-                externalRoad.minX(), externalRoad.minZ(), externalRoad.maxX(), externalRoad.maxZ(),
-                externalRoad.minX() + 1, externalRoad.minZ(), externalRoad.maxX() + 1, externalRoad.maxZ(),
-                insideX, insideZ, insideX, insideZ,
-                insideX + 16, insideZ, insideX + 16, insideZ)).getAsJsonObject();
-        JsonObject ledger = JsonParser.parseString("""
-                {
-                  "schemaVersion": "city_placed_structure_ledger.v0.1",
-                  "cityId": "city_test",
-                  "placedStructures": [
-                    {"anchorId": "a", "actualFootprint": {"minX": -8, "minZ": -8, "maxX": 8, "maxZ": 8}}
-                  ]
-                }
-                """).getAsJsonObject();
-
-        JsonObject wallPlan = new CityWallPlanner().planV3(ledger, reservation, actualRoadMask, 9, 2, 8, 7,
-                new CityWallPlanner.V3Options(24, 5));
-
-        assertEquals("city_wall_plan.v0.3", wallPlan.get("schemaVersion").getAsString());
-        assertEquals("v3", wallPlan.get("wallVersion").getAsString());
-        assertEquals("structure_seeded_patch_region_hull", wallPlan.get("wallBoundaryMode").getAsString());
-        assertFalse(wallPlan.getAsJsonArray("gateClusters").isEmpty());
-        assertTrue(wallPlan.getAsJsonArray("classifiedRoadComponents").toString().contains("insideRoad"));
-        assertTrue(wallPlan.getAsJsonArray("insideRoadIgnoredIntersections").toString().contains("insideRoad"));
-        assertTrue(wallPlan.getAsJsonArray("wallSegments").toString().contains("DOMAIN_HULL_WALL_SEGMENT"));
-        assertEquals("v3", wallPlan.getAsJsonObject("terrainFitPolicy").get("policyVersion").getAsString());
-    }
-
-    @Test
-    void wallPlannerV3CanEmitTerrainPolicyV31() {
-        JsonObject reservation = JsonParser.parseString("""
-                {
-                  "schemaVersion": "city_wall_reservation_plan.v0.3",
-                  "cityId": "city_test",
-                  "wallBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": 32},
-                  "cityDomainMask": [
-                    {"blockBounds": {"minX": -16, "minZ": -16, "maxX": 16, "maxZ": 16}}
-                  ],
-                  "wallCenterline": [
-                    {"segmentId": "north", "blockBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": -28}}
-                  ],
-                  "gateCandidateZones": []
-                }
-                """).getAsJsonObject();
-        JsonObject actualRoadMask = JsonParser.parseString("""
-                {"schemaVersion":"city_actual_road_mask.v0.1","cityId":"city_test","roadMask":[]}
-                """).getAsJsonObject();
-        JsonObject ledger = JsonParser.parseString("""
-                {
-                  "schemaVersion": "city_placed_structure_ledger.v0.1",
-                  "cityId": "city_test",
-                  "placedStructures": [
-                    {"anchorId": "a", "actualFootprint": {"minX": -8, "minZ": -8, "maxX": 8, "maxZ": 8}}
-                  ]
-                }
-                """).getAsJsonObject();
-
-        JsonObject wallPlan = new CityWallPlanner().planV3(ledger, reservation, actualRoadMask, 9, 2, 8, 7,
-                new CityWallPlanner.V3Options(24, 5, "v3.1", 7, 16, 6, 17, true));
-
-        JsonObject policy = wallPlan.getAsJsonObject("terrainFitPolicy");
-        assertEquals("v3.1", wallPlan.get("wallTerrainPolicy").getAsString());
-        assertEquals("v3.1", policy.get("policyVersion").getAsString());
-        assertEquals(7, policy.get("flatMaxDeltaBlocks").getAsInt());
-        assertEquals(16, policy.get("steppedMaxDeltaBlocks").getAsInt());
-        assertEquals(6, policy.get("mountainProbeDistanceBlocks").getAsInt());
-        assertEquals(17, policy.get("naturalBoundaryMinDeltaBlocks").getAsInt());
-        assertTrue(policy.get("embeddedSlopeTower").getAsBoolean());
-        assertEquals("low_flat_mid_stepped_high_embedded_or_cliff", policy.get("slopeMode").getAsString());
-    }
-
-    @Test
-    void wallPlannerV3MarksWallAxisForExecution() {
-        JsonObject reservation = JsonParser.parseString("""
-                {
-                  "schemaVersion": "city_wall_reservation_plan.v0.3",
-                  "cityId": "city_test",
-                  "wallBounds": {"minX": -40, "minZ": -40, "maxX": 40, "maxZ": 40},
-                  "cityDomainMask": [
-                    {"blockBounds": {"minX": -16, "minZ": -16, "maxX": 16, "maxZ": 16}}
-                  ],
-                  "wallCenterline": [
-                    {"segmentId": "north", "blockBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": -24}},
-                    {"segmentId": "west", "blockBounds": {"minX": -32, "minZ": -32, "maxX": -24, "maxZ": 32}}
-                  ],
-                  "gateCandidateZones": []
-                }
-                """).getAsJsonObject();
-        JsonObject actualRoadMask = JsonParser.parseString("""
-                {"schemaVersion":"city_actual_road_mask.v0.1","cityId":"city_test","roadMask":[]}
-                """).getAsJsonObject();
-        JsonObject ledger = JsonParser.parseString("""
-                {
-                  "schemaVersion": "city_placed_structure_ledger.v0.1",
-                  "cityId": "city_test",
-                  "placedStructures": [
-                    {"anchorId": "a", "actualFootprint": {"minX": -8, "minZ": -8, "maxX": 8, "maxZ": 8}}
-                  ]
-                }
-                """).getAsJsonObject();
-
-        JsonObject wallPlan = new CityWallPlanner().planV3(ledger, reservation, actualRoadMask, 9, 2, 8, 7,
-                new CityWallPlanner.V3Options(24, 5, "v3.1", 7, 16, 6, 17, true));
-
-        String segments = wallPlan.getAsJsonArray("wallSegments").toString();
-        assertTrue(segments.contains("\"wallAxis\":\"X\""));
-        assertTrue(segments.contains("\"wallAxis\":\"Z\""));
-    }
-
-    @Test
-    void wallPlannerV32EmitsNaturalBoundariesGatehousesAndTrendSkips() {
-        JsonObject reservation = JsonParser.parseString("""
-                {
-                  "schemaVersion": "city_wall_reservation_plan.v0.3",
-                  "cityId": "city_test",
-                  "wallBounds": {"minX": -64, "minZ": -64, "maxX": 64, "maxZ": 64},
-                  "seedPatches": [
-                    {"landformPatchId": "water_big", "mapLabel": "水域01", "landformType": "water",
-                     "blockBounds": {"minX": -96, "minZ": -96, "maxX": 96, "maxZ": -48}},
-                    {"landformPatchId": "shore_01", "mapLabel": "海岸01", "landformType": "shore",
-                     "blockBounds": {"minX": -64, "minZ": -48, "maxX": 64, "maxZ": -32}}
-                  ],
-                  "cityDomainMask": [
-                    {"blockBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": 32}}
-                  ],
-                  "wallCenterline": [
-                    {"segmentId": "north", "blockBounds": {"minX": -64, "minZ": -64, "maxX": 64, "maxZ": -60}},
-                    {"segmentId": "east", "blockBounds": {"minX": 60, "minZ": -64, "maxX": 64, "maxZ": 64}}
-                  ],
-                  "gateCandidateZones": []
-                }
-                """).getAsJsonObject();
-        JsonObject actualRoadMask = JsonParser.parseString("""
-                {
-                  "schemaVersion": "city_actual_road_mask.v0.2",
-                  "cityId": "city_test",
-                  "status": "observed",
-                  "roadMask": [
-                    {"maskId": "road_long_0", "maskType": "actual_road", "blockBounds": {"minX": 16, "minZ": -48, "maxX": 64, "maxZ": 16}},
-                    {"maskId": "road_touch_0", "maskType": "actual_road", "blockBounds": {"minX": -4, "minZ": -64, "maxX": -3, "maxZ": -63}}
-                  ]
-                }
-                """).getAsJsonObject();
-        JsonObject ledger = JsonParser.parseString("""
-                {
-                  "schemaVersion": "city_placed_structure_ledger.v0.1",
-                  "cityId": "city_test",
-                  "placedStructures": [
-                    {"anchorId": "a", "actualFootprint": {"minX": -8, "minZ": -8, "maxX": 8, "maxZ": 8}}
-                  ]
-                }
-                """).getAsJsonObject();
-
-        JsonObject wallPlan = new CityWallPlanner().planV3(ledger, reservation, actualRoadMask, 9, 2, 8, 7,
-                new CityWallPlanner.V3Options(24, 5, "v3.1", 7, 16, 6, 17, true,
-                        "v3.2", 48, 24, 4096));
-
-        assertEquals("v3.2", wallPlan.get("wallDesignPolicy").getAsString());
-        assertTrue(wallPlan.getAsJsonArray("wallSegments").toString().contains("\"segmentType\":\"gatehouse\""),
-                wallPlan.toString());
-        assertTrue(wallPlan.getAsJsonArray("wallSegments").toString().contains("\"segmentType\":\"natural_boundary\""));
-        assertTrue(wallPlan.getAsJsonArray("roadTrendSkippedIntersections").toString()
-                .contains("WALL_ROAD_TOUCH_ONLY_SKIP"));
-        assertTrue(wallPlan.getAsJsonArray("naturalBoundaries").toString().contains("NATURAL_WATER_BOUNDARY"));
-    }
-
-    @Test
-    void wallPlannerV33ProjectsNearbyExternalRoadIntoGatehouse() {
-        JsonObject wallPlan = new CityWallPlanner().planV3(syntheticWallLedger(), syntheticEastWallReservation(),
-                roadMaskFromBlocks("city_test",
-                        new int[][]{
-                                {70, 0}, {71, 0}, {72, 0}, {73, 0},
-                                {74, 0}, {75, 0}, {76, 0}, {77, 0}
-                        }),
-                9, 2, 8, 7, v33Options());
-
-        assertEquals("v3.3", wallPlan.get("wallDesignPolicy").getAsString());
-        assertTrue(wallPlan.getAsJsonArray("generatedGates").toString()
-                        .contains("WALL_GATE_FROM_ROAD_PROJECTION"),
-                wallPlan.toString());
-        assertFalse(wallPlan.getAsJsonArray("projectedRoadGateCandidates").isEmpty());
-        assertTrue(wallPlan.getAsJsonArray("wallSegments").toString().contains("\"segmentType\":\"gatehouse\""));
-    }
-
-    @Test
-    void wallPlannerV33DoesNotProjectInsideRoads() {
-        JsonObject wallPlan = new CityWallPlanner().planV3(syntheticWallLedger(), syntheticEastWallReservation(),
-                roadMaskFromBlocks("city_test",
-                        new int[][]{
-                                {0, 0}, {1, 0}, {2, 0}, {3, 0},
-                                {4, 0}, {5, 0}, {6, 0}, {7, 0}
-                        }),
-                9, 2, 8, 7, v33Options());
-
-        assertTrue(wallPlan.getAsJsonArray("projectedRoadGateCandidates").isEmpty());
-        assertTrue(wallPlan.getAsJsonArray("insideRoadIgnoredIntersections").toString().contains("insideRoad"));
-        assertEquals("NO_VALID_GATE_CANDIDATE_AFTER_FILTER",
-                wallPlan.get("gateFallbackReasonCode").getAsString());
-    }
-
-    @Test
-    void wallPlannerV33KeepsTouchOnlyRoadsSkipped() {
-        JsonObject wallPlan = new CityWallPlanner().planV3(syntheticWallLedger(), syntheticEastWallReservation(),
-                roadMaskFromBlocks("city_test", new int[][]{{70, 0}}),
-                9, 2, 8, 7, v33Options());
-
-        assertTrue(wallPlan.getAsJsonArray("projectedRoadGateCandidates").isEmpty());
-        assertTrue(wallPlan.getAsJsonArray("roadTrendSkippedIntersections").toString()
-                .contains("WALL_ROAD_TOUCH_ONLY_SKIP"));
-        assertTrue(wallPlan.getAsJsonArray("roadProjectionSkippedIntersections").toString()
-                .contains("WALL_ROAD_TOUCH_ONLY_SKIP"));
-    }
-
-    @Test
-    void wallPlannerV33DoesNotProjectParallelRoads() {
-        JsonObject wallPlan = new CityWallPlanner().planV3(syntheticWallLedger(), syntheticEastWallReservation(),
-                roadMaskFromBlocks("city_test",
-                        new int[][]{
-                                {70, 0}, {70, 1}, {70, 2}, {70, 3},
-                                {70, 4}, {70, 5}, {70, 6}, {70, 7}
-                        }),
-                9, 2, 8, 7, v33Options());
-
-        assertTrue(wallPlan.getAsJsonArray("projectedRoadGateCandidates").isEmpty());
-        assertTrue(wallPlan.getAsJsonArray("roadProjectionSkippedIntersections").toString()
-                .contains("WALL_ROAD_PROJECTION_NOT_ALIGNED"));
-    }
-
-    @Test
-    void wallPlannerV33MergesNearbyProjectedGatesBySpacing() {
-        JsonObject wallPlan = new CityWallPlanner().planV3(syntheticWallLedger(), syntheticEastWallReservation(),
-                roadMaskFromBlocks("city_test",
-                        new int[][]{
-                                {70, 0}, {71, 0}, {72, 0}, {73, 0},
-                                {74, 0}, {75, 0}, {76, 0}, {77, 0},
-                                {70, 20}, {71, 20}, {72, 20}, {73, 20},
-                                {74, 20}, {75, 20}, {76, 20}, {77, 20}
-                        }),
-                9, 2, 8, 7, v33Options());
-
-        assertEquals(2, wallPlan.getAsJsonArray("projectedRoadGateCandidates").size());
-        assertEquals(1, wallPlan.getAsJsonArray("gateClusters").size());
-        assertEquals(1, wallPlan.getAsJsonArray("generatedGates").size());
-    }
-
-    @Test
-    void wallPlannerV33FallbackReasonDistinguishesFilteredRoadsFromEmptyRoadMask() {
-        JsonObject wallPlan = new CityWallPlanner().planV3(syntheticWallLedger(), syntheticEastWallReservation(),
-                roadMaskFromBlocks("city_test", new int[][]{}),
-                9, 2, 8, 7, v33Options());
-
-        assertEquals("NO_VALID_GATE_CANDIDATE_AFTER_FILTER",
-                wallPlan.get("gateFallbackReasonCode").getAsString());
-        assertTrue(wallPlan.getAsJsonArray("generatedGates").toString()
-                .contains("NO_VALID_GATE_CANDIDATE_AFTER_FILTER"));
-    }
-
-    @Test
-    void wallPlannerV4EmitsGraphDatumAndIncludesActualFootprintOutsidePatch() {
-        JsonObject wallPlan = new CityWallPlanner().planV4(syntheticWideWallLedger(), syntheticV4Reservation(),
-                roadMaskFromBlocks("city_test", new int[][]{}), 9, 2, 8, 7,
-                new CityWallPlanner.V3Options(24, 5, "v3.1", 7, 16, 6, 17, true),
-                CityWallPlanner.V4Options.defaults());
-
-        assertEquals("city_wall_plan.v0.4", wallPlan.get("schemaVersion").getAsString());
-        assertEquals("v4", wallPlan.get("wallVersion").getAsString());
-        assertEquals("actual_footprint_land_ring", wallPlan.get("wallBoundaryMode").getAsString());
-        assertTrue(wallPlan.has("cityWallDatumY"));
-        assertFalse(wallPlan.getAsJsonArray("wallNodes").isEmpty());
-        assertFalse(wallPlan.getAsJsonArray("wallUnits").isEmpty());
-        assertFalse(wallPlan.getAsJsonArray("nodeConnectorUnits").isEmpty());
-        BlockBounds wallBounds = bounds(wallPlan.getAsJsonObject("wallBounds"));
-        assertTrue(wallBounds.contains(132, 12), wallPlan.toString());
-        assertTrue(wallPlan.getAsJsonArray("wallUnits").toString().contains("\"targetY\""));
-        assertTrue(wallPlan.getAsJsonArray("wallNodes").toString().contains("\"surfaceMedianY\""));
-        assertTrue(wallPlan.getAsJsonObject("wallGraphValidation").has("breaks"));
-        assertTrue(wallPlan.getAsJsonObject("wallGraphValidation").has("outsideKnownPatchUnitCount"));
-    }
-
-    @Test
-    void wallPlannerV4UsesDomainCellsToBreakRectangularLandRing() {
-        JsonObject wallPlan = new CityWallPlanner().planV4(syntheticWallLedger(),
-                syntheticV4TerrainContourReservation(), roadMaskFromBlocks("city_test", new int[][]{}),
-                9, 2, 8, 7,
-                new CityWallPlanner.V3Options(24, 5, "v3.1", 7, 16, 6, 17, true),
-                CityWallPlanner.V4Options.defaults());
-
-        assertEquals("terrain_adaptive_domain_guided_land_ring",
-                wallPlan.get("wallContourMode").getAsString());
-        assertFalse(wallPlan.getAsJsonArray("terrainContourEvents").isEmpty(), wallPlan.toString());
-        assertTrue(wallPlan.getAsJsonObject("wallGraphValidation")
-                .get("terrainContourAdjustedUnitCount").getAsInt() > 0, wallPlan.toString());
-        assertTrue(wallPlan.getAsJsonObject("wallGraphValidation")
-                .get("terrainContourLinkUnitCount").getAsInt() > 0, wallPlan.toString());
-
-        Set<Integer> northWallZ = new HashSet<>();
-        boolean sawContourLink = false;
-        for (com.google.gson.JsonElement elem : wallPlan.getAsJsonArray("wallUnits")) {
-            JsonObject unit = elem.getAsJsonObject();
-            if (!unit.get("terrainContourAdjusted").getAsBoolean()) {
-                continue;
-            }
-            if (unit.get("terrainContourLink").getAsBoolean()) {
-                sawContourLink = true;
-            }
-            if ("north".equals(unit.get("side").getAsString())
-                    && "X".equals(unit.get("wallAxis").getAsString())) {
-                northWallZ.add(bounds(unit.getAsJsonObject("blockBounds")).center().z());
-            }
-        }
-        assertTrue(sawContourLink, wallPlan.getAsJsonArray("wallUnits").toString());
-        assertTrue(northWallZ.size() > 1, wallPlan.getAsJsonArray("wallUnits").toString());
+        assertTrue(ex.getMessage().contains("D5_LOCKED_FOOTPRINT_OUTSIDE_RESERVATION"));
     }
 
     @Test
@@ -1255,138 +784,6 @@ final class CityStructureLandingFlowTest {
                         .flatMap(patch -> patch.memberCells().stream())
                         .anyMatch(cell -> cell.blockMinX() == 512),
                 review.asJson().toString());
-    }
-
-    @Test
-    void wallPlannerV4AlignsNodesWithWallUnitsInsteadOfCreatingInnerColumnRing() {
-        JsonObject wallPlan = new CityWallPlanner().planV4(syntheticWideWallLedger(), syntheticV4Reservation(),
-                roadMaskFromBlocks("city_test", new int[][]{}), 9, 2, 8, 7,
-                new CityWallPlanner.V3Options(24, 5, "v3.1", 7, 16, 6, 17, true),
-                CityWallPlanner.V4Options.defaults());
-
-        java.util.Map<String, BlockBounds> nodeBoundsById = new java.util.HashMap<>();
-        int junctionCount = 0;
-        for (com.google.gson.JsonElement elem : wallPlan.getAsJsonArray("wallNodes")) {
-            JsonObject node = elem.getAsJsonObject();
-            nodeBoundsById.put(node.get("nodeId").getAsString(), bounds(node.getAsJsonObject("blockBounds")));
-            if ("junction".equals(node.get("nodeType").getAsString())) {
-                junctionCount++;
-                assertEquals("graph_only", node.get("placementRole").getAsString());
-            }
-        }
-        assertTrue(junctionCount > 0, wallPlan.getAsJsonArray("wallNodes").toString());
-
-        for (com.google.gson.JsonElement elem : wallPlan.getAsJsonArray("wallUnits")) {
-            JsonObject unit = elem.getAsJsonObject();
-            if ("natural_boundary_gap".equals(unit.get("unitType").getAsString())) {
-                continue;
-            }
-            BlockBounds unitBounds = bounds(unit.getAsJsonObject("blockBounds"));
-            BlockBounds fromNodeBounds = nodeBoundsById.get(unit.get("fromNodeId").getAsString());
-            assertTrue(fromNodeBounds != null, unit.toString());
-            assertTrue(fromNodeBounds.overlaps(unitBounds), unit.toString() + " node=" + fromNodeBounds);
-        }
-    }
-
-    @Test
-    void wallPlannerV4PlacesGatehouseNodeOnSkippedRoadUnit() {
-        JsonObject wallPlan = new CityWallPlanner().planV4(syntheticWideWallLedger(), syntheticV4Reservation(),
-                roadMaskFromBlocks("city_test", new int[][]{{175, 0}, {175, 1}, {175, 2}}),
-                9, 2, 8, 7,
-                new CityWallPlanner.V3Options(24, 5, "v3.1", 7, 16, 6, 17, true),
-                CityWallPlanner.V4Options.defaults());
-
-        java.util.Map<String, BlockBounds> nodeBoundsById = new java.util.HashMap<>();
-        java.util.Map<String, String> nodeTypesById = new java.util.HashMap<>();
-        for (com.google.gson.JsonElement elem : wallPlan.getAsJsonArray("wallNodes")) {
-            JsonObject node = elem.getAsJsonObject();
-            nodeBoundsById.put(node.get("nodeId").getAsString(), bounds(node.getAsJsonObject("blockBounds")));
-            nodeTypesById.put(node.get("nodeId").getAsString(), node.get("nodeType").getAsString());
-        }
-
-        boolean sawGatehouseOpening = false;
-        for (com.google.gson.JsonElement elem : wallPlan.getAsJsonArray("wallUnits")) {
-            JsonObject unit = elem.getAsJsonObject();
-            if (!"skipped_wall_unit".equals(unit.get("unitType").getAsString())) {
-                continue;
-            }
-            if (!"ROAD_MASK_GATEHOUSE_OPENING".equals(unit.get("reasonCode").getAsString())) {
-                continue;
-            }
-            sawGatehouseOpening = true;
-            String fromNodeId = unit.get("fromNodeId").getAsString();
-            assertEquals("gatehouse", nodeTypesById.get(fromNodeId), unit.toString());
-            assertTrue(nodeBoundsById.get(fromNodeId).overlaps(bounds(unit.getAsJsonObject("blockBounds"))),
-                    unit.toString());
-        }
-        assertTrue(sawGatehouseOpening, wallPlan.toString());
-    }
-
-    @Test
-    void wallPlannerV4IgnoresMasonryRoadMaskFalsePositives() {
-        JsonObject wallPlan = new CityWallPlanner().planV4(syntheticWideWallLedger(), syntheticV4Reservation(),
-                roadMaskFromBlocks("city_test", new int[][]{{175, 0}, {175, 1}, {175, 2}},
-                        "minecraft:stone_bricks"),
-                9, 2, 8, 7,
-                new CityWallPlanner.V3Options(24, 5, "v3.1", 7, 16, 6, 17, true),
-                CityWallPlanner.V4Options.defaults());
-
-        assertFalse(wallPlan.getAsJsonArray("wallUnits").toString().contains("ROAD_MASK_GATEHOUSE_OPENING"),
-                wallPlan.toString());
-    }
-
-    @Test
-    void wallPlannerV4RetreatsContinuousWaterRunAndLeavesNoOrdinaryWaterUnits() {
-        JsonObject wallPlan = new CityWallPlanner().planV4(syntheticWallLedger(), syntheticV4WaterReservation(),
-                roadMaskFromBlocks("city_test", new int[][]{}), 9, 2, 8, 7,
-                new CityWallPlanner.V3Options(24, 5, "v3.1", 7, 16, 6, 17, true),
-                CityWallPlanner.V4Options.defaults());
-
-        assertFalse(wallPlan.getAsJsonArray("waterRetreatEvents").isEmpty(), wallPlan.toString());
-        assertEquals(0, wallPlan.getAsJsonObject("wallGraphValidation")
-                .get("ordinaryWallUnitsInWater").getAsInt(), wallPlan.toString());
-        for (com.google.gson.JsonElement elem : wallPlan.getAsJsonArray("wallUnits")) {
-            JsonObject unit = elem.getAsJsonObject();
-            if (unit.get("placementAllowed").getAsBoolean()) {
-                assertFalse(unit.get("waterOverlapAfterRetreat").getAsBoolean(), unit.toString());
-            }
-        }
-    }
-
-    @Test
-    void wallPlannerV4UsesWaterMemberCellsInsteadOfPatchEnvelope() {
-        JsonObject wallPlan = new CityWallPlanner().planV4(syntheticWallLedger(),
-                syntheticV4PreciseWaterReservation(), roadMaskFromBlocks("city_test", new int[][]{}),
-                9, 2, 8, 7,
-                new CityWallPlanner.V3Options(24, 5, "v3.1", 7, 16, 6, 17, true),
-                CityWallPlanner.V4Options.defaults());
-
-        int wallUnitCount = wallPlan.getAsJsonArray("wallUnits").size();
-        int naturalGapCount = wallPlan.getAsJsonObject("wallGraphValidation")
-                .get("naturalBoundaryGapCount").getAsInt();
-        assertTrue(naturalGapCount < wallUnitCount, wallPlan.toString());
-        assertTrue(wallPlan.getAsJsonArray("wallUnits").toString().contains("\"unitType\":\"wall_unit\""),
-                wallPlan.toString());
-        assertEquals(0, wallPlan.getAsJsonObject("wallGraphValidation")
-                .get("ordinaryWallUnitsInWater").getAsInt(), wallPlan.toString());
-    }
-
-    @Test
-    void wallPlannerV4CreatesSteppedUnitsTerraceNodesAndConnectorsForHeightBands() {
-        JsonObject wallPlan = new CityWallPlanner().planV4(syntheticWallLedger(), syntheticV4Reservation(),
-                roadMaskFromBlocks("city_test", new int[][]{}), 9, 2, 8, 7,
-                new CityWallPlanner.V3Options(24, 5, "v3.1", 7, 16, 6, 17, true),
-                CityWallPlanner.V4Options.defaults());
-
-        assertTrue(wallPlan.getAsJsonArray("wallUnits").toString().contains("\"unitType\":\"stepped_wall_unit\"")
-                        || wallPlan.getAsJsonArray("wallUnits").toString().contains("\"unitType\":\"terraced_wall_unit\""),
-                wallPlan.toString());
-        assertTrue(wallPlan.getAsJsonArray("wallNodes").toString().contains("\"nodeType\":\"terrace_node\""),
-                wallPlan.toString());
-        assertTrue(wallPlan.getAsJsonArray("nodeConnectorUnits").toString()
-                .contains("\"connectorStatus\":\"stepped\""));
-        assertTrue(wallPlan.getAsJsonObject("wallGraphValidation")
-                .get("heightBreakCount").getAsInt() > 0);
     }
 
     @Test
@@ -1471,7 +868,7 @@ final class CityStructureLandingFlowTest {
     }
 
     @Test
-    void wallBackendFoundationDepthUsesOriginalV5SurfaceHeight() throws Exception {
+    void wallBackendFoundationDepthUsesOriginalSurfaceSurfaceHeight() throws Exception {
         Method depth = Class.forName("com.rinsing.geomantia.systems.city.infrastructure.world.CityWallPlacementBackend")
                 .getDeclaredMethod("foundationDepth", int.class, int.class, int.class);
         depth.setAccessible(true);
@@ -1517,7 +914,7 @@ final class CityStructureLandingFlowTest {
         Path catalogPath = baseDir.resolve("debug_structure_profile_catalog.json");
         Files.writeString(catalogPath, debugStructureCatalog());
         JsonObject source = new JsonObject();
-        source.addProperty("schemaVersion", "terrasense_structure_profile_source.v0.1");
+        source.addProperty("schema", "terrasense_structure_profile_source");
         source.addProperty("sourceType", "debug_catalog");
         source.addProperty("catalogMode", "debug");
         source.addProperty("debugCatalogPath", catalogPath.toString());
@@ -1537,7 +934,7 @@ final class CityStructureLandingFlowTest {
         Path catalogPath = baseDir.resolve("debug_structure_profile_catalog.json");
         Files.writeString(catalogPath, debugStructureCatalog());
         JsonObject source = new JsonObject();
-        source.addProperty("schemaVersion", "terrasense_structure_profile_source.v0.1");
+        source.addProperty("schema", "terrasense_structure_profile_source");
         source.addProperty("sourceType", "debug_catalog");
         source.addProperty("catalogMode", "debug");
         source.addProperty("debugCatalogPath", catalogPath.toString());
@@ -1547,7 +944,7 @@ final class CityStructureLandingFlowTest {
     private static CityLandformReviewPackage preciseMemberCellReview() {
         return CityLandformReviewPackage.fromJson(JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_landform_review.v0.1",
+                  "schema": "city_landform_review",
                   "cityId": "city_test",
                   "grid": {
                     "originBlockX": -32,
@@ -1606,7 +1003,7 @@ final class CityStructureLandingFlowTest {
         LandformPatchSummary second = review.landformPatches().get(1);
         return JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_structure_anchor_plan.v0.3",
+                  "schema": "city_structure_anchor_plan",
                   "cityId": "city_test",
                   "anchors": [
                     {
@@ -1657,7 +1054,7 @@ final class CityStructureLandingFlowTest {
         LandformPatchSummary second = patches.size() > 1 ? patches.get(1) : first;
         JsonObject plan = JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_d4_design_slot_plan.v0.1",
+                  "schema": "city_d4_design_slot_plan",
                   "cityId": "city_test",
                   "placementOrder": ["admin_core", "residential_01"],
                   "slots": [
@@ -1690,7 +1087,7 @@ final class CityStructureLandingFlowTest {
         LandformPatchSummary first = review.landformPatches().get(0);
         JsonObject plan = JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_d4_array_candidate_plan.v0.1",
+                  "schema": "city_d4_array_candidate_plan",
                   "cityId": "city_test",
                   "arrayId": "residential_cluster",
                   "displayRole": "住宅阵列",
@@ -1709,7 +1106,7 @@ final class CityStructureLandingFlowTest {
         LandformPatchSummary first = review.landformPatches().get(0);
         return JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_structure_anchor_plan.v0.3",
+                  "schema": "city_structure_anchor_plan",
                   "cityId": "city_test",
                   "anchors": [
                     {
@@ -1738,7 +1135,7 @@ final class CityStructureLandingFlowTest {
 
     private static JsonObject fixedTemplateCatalog() {
         return JsonParser.parseString("""
-                {"schemaVersion":"city_template_catalog.v0.1","templates":[
+                {"schema":"city_template_catalog","templates":[
                   {"buildingSemantic":"house","style":"test","templateId":"geomantia:test_house",
                    "templateRef":"geomantia:city/test_house","contentHash":"sha256:test-house",
                    "variantId":"fixed_v1","rawSize":{"width":20,"height":10,"depth":12},
@@ -1763,7 +1160,7 @@ final class CityStructureLandingFlowTest {
                                           int maxZ) {
         int step = review.grid().cellStepBlocks();
         JsonObject region = new JsonObject();
-        region.addProperty("schemaVersion", "patch_selection_legal_region.v0.1");
+        region.addProperty("schema", "patch_selection_legal_region");
         region.addProperty("patchSelectionRef", selectionRef);
         region.addProperty("cellStepBlocks", step);
         JsonObject bounds = new JsonObject();
@@ -1820,7 +1217,7 @@ final class CityStructureLandingFlowTest {
     private static String debugStructureCatalog() {
         return """
                 {
-                  "schemaVersion": "city_semantic_profile_catalog.v0.2",
+                  "schema": "city_semantic_profile_catalog",
                   "catalogMode": "debug",
                   "source": {"basis": "synthetic unit-test fixture"},
                   "structures": [
@@ -1893,7 +1290,7 @@ final class CityStructureLandingFlowTest {
     private static String trekDebugCatalog() {
         return """
                 {
-                  "schemaVersion": "city_semantic_profile_catalog.v0.2",
+                  "schema": "city_semantic_profile_catalog",
                   "catalogMode": "debug",
                   "source": {"basis": "synthetic trek unit-test fixture"},
                   "structures": [
@@ -1939,7 +1336,7 @@ final class CityStructureLandingFlowTest {
         Path catalogPath = fixture.baseDir().resolve("static_jigsaw_debug_catalog.json");
         Files.writeString(catalogPath, CityJson.GSON.toJson(catalog));
         JsonObject source = new JsonObject();
-        source.addProperty("schemaVersion", "terrasense_structure_profile_source.v0.1");
+        source.addProperty("schema", "terrasense_structure_profile_source");
         source.addProperty("sourceType", "debug_catalog");
         source.addProperty("catalogMode", "debug");
         source.addProperty("debugCatalogPath", catalogPath.toString());
@@ -1958,7 +1355,7 @@ final class CityStructureLandingFlowTest {
     private static JsonObject syntheticWallLedger() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_placed_structure_ledger.v0.1",
+                  "schema": "city_placed_structure_ledger",
                   "cityId": "city_test",
                   "placedStructures": [
                     {"anchorId": "a", "actualFootprint": {"minX": -8, "minZ": -8, "maxX": 8, "maxZ": 8}}
@@ -1970,7 +1367,7 @@ final class CityStructureLandingFlowTest {
     private static JsonObject syntheticWideWallLedger() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_placed_structure_ledger.v0.1",
+                  "schema": "city_placed_structure_ledger",
                   "cityId": "city_test",
                   "placedStructures": [
                     {"anchorId": "a", "actualFootprint": {"minX": -8, "minZ": -8, "maxX": 8, "maxZ": 8}},
@@ -1980,12 +1377,11 @@ final class CityStructureLandingFlowTest {
                 """).getAsJsonObject();
     }
 
-    private static JsonObject syntheticV5Reservation() {
+    private static JsonObject syntheticWallReservation() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_wall_reservation_plan.v0.5",
+                  "schema": "city_wall_reservation_plan",
                   "cityId": "city_test",
-                  "wallVersion": "v5",
                   "boundarySource": "d4_planned_footprint_envelope_rectilinear_hull",
                   "wallBounds": {"minX": -64, "minZ": -64, "maxX": 64, "maxZ": 64},
                   "wallCoverageBounds": {"minX": -96, "minZ": -96, "maxX": 96, "maxZ": 96},
@@ -2020,9 +1416,8 @@ final class CityStructureLandingFlowTest {
     private static JsonObject syntheticV4Reservation() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_wall_reservation_plan.v0.3",
+                  "schema": "city_wall_reservation_plan",
                   "cityId": "city_test",
-                  "wallVersion": "v4",
                   "boundarySource": "actual_footprint_land_ring_deferred_to_d7",
                   "wallBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": 32},
                   "seedPatches": [
@@ -2041,9 +1436,8 @@ final class CityStructureLandingFlowTest {
     private static JsonObject syntheticV4WaterReservation() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_wall_reservation_plan.v0.3",
+                  "schema": "city_wall_reservation_plan",
                   "cityId": "city_test",
-                  "wallVersion": "v4",
                   "boundarySource": "actual_footprint_land_ring_deferred_to_d7",
                   "wallBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": 32},
                   "seedPatches": [
@@ -2064,9 +1458,8 @@ final class CityStructureLandingFlowTest {
     private static JsonObject syntheticV4PreciseWaterReservation() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_wall_reservation_plan.v0.3",
+                  "schema": "city_wall_reservation_plan",
                   "cityId": "city_test",
-                  "wallVersion": "v4",
                   "boundarySource": "actual_footprint_land_ring_deferred_to_d7",
                   "wallBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": 32},
                   "seedPatches": [
@@ -2099,9 +1492,8 @@ final class CityStructureLandingFlowTest {
     private static JsonObject syntheticV4TerrainContourReservation() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_wall_reservation_plan.v0.3",
+                  "schema": "city_wall_reservation_plan",
                   "cityId": "city_test",
-                  "wallVersion": "v4",
                   "boundarySource": "actual_footprint_land_ring_deferred_to_d7",
                   "wallBounds": {"minX": -64, "minZ": -64, "maxX": 64, "maxZ": 64},
                   "seedPatches": [
@@ -2131,7 +1523,7 @@ final class CityStructureLandingFlowTest {
     private static JsonObject syntheticEastWallReservation() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_wall_reservation_plan.v0.3",
+                  "schema": "city_wall_reservation_plan",
                   "cityId": "city_test",
                   "wallBounds": {"minX": -64, "minZ": -64, "maxX": 64, "maxZ": 64},
                   "cityDomainMask": [
@@ -2153,7 +1545,7 @@ final class CityStructureLandingFlowTest {
 
     private static JsonObject roadMaskFromBlocks(String cityId, int[][] blocks, String blockId) {
         JsonObject obj = new JsonObject();
-        obj.addProperty("schemaVersion", "city_actual_road_mask.v0.2");
+        obj.addProperty("schema", "city_actual_road_mask");
         obj.addProperty("cityId", cityId);
         obj.addProperty("status", blocks.length == 0 ? "empty" : "observed");
         JsonArray roadMask = new JsonArray();
@@ -2171,8 +1563,8 @@ final class CityStructureLandingFlowTest {
         return obj;
     }
 
-    private static CityWallPlanner.V3Options v33Options() {
-        return new CityWallPlanner.V3Options(
+    private static CityWallPlanner.TerrainOptions terrainOptions() {
+        return new CityWallPlanner.TerrainOptions(
                 24, 5, "v3.1", 7, 16, 6, 17, true,
                 "v3.3", 48, 24, 4096, 32);
     }

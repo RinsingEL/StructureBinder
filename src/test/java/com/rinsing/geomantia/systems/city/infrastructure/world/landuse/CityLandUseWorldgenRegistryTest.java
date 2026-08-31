@@ -67,7 +67,7 @@ class CityLandUseWorldgenRegistryTest {
                 CityLandUseWorldgenRegistry.activePlansPath(serverRoot))).getAsJsonObject();
         JsonObject entry = active.getAsJsonArray("plans").get(0).getAsJsonObject();
         assertEquals(CityLandUseWorldgenRegistry.ACTIVE_SCHEMA,
-                active.get("schemaVersion").getAsString());
+                active.get("schema").getAsString());
         assertFalse(entry.has("catalogHash"));
         assertFalse(entry.has("catalogRoot"));
         assertFalse(entry.has("surfaceMode"));
@@ -178,23 +178,27 @@ class CityLandUseWorldgenRegistryTest {
     }
 
     @Test
-    void loadRejectsLegacyActiveAndLedgerSchemas() throws IOException {
+    void loadQuarantinesObsoleteActiveAndLedgerSchemasWithoutBlockingServerStart() throws IOException {
         Path activePath = CityLandUseWorldgenRegistry.activePlansPath(serverRoot);
         Files.createDirectories(activePath.getParent());
         Files.writeString(activePath,
-                "{\"schemaVersion\":\"city_active_land_use_area_plans.v0.1\",\"plans\":[]}");
+                "{\"schema\":\"obsolete_city_active_land_use_area_plans\",\"plans\":[]}");
 
-        IllegalArgumentException activeFailure = assertThrows(IllegalArgumentException.class,
-                () -> CityLandUseWorldgenRegistry.load(serverRoot));
-        assertTrue(activeFailure.getMessage().contains("CITY_LAND_USE_ACTIVE_PLAN_SCHEMA_UNSUPPORTED"));
+        CityLandUseWorldgenRegistry.load(serverRoot);
+        assertTrue(Files.exists(activePath));
+        JsonObject currentActive = JsonParser.parseString(Files.readString(activePath)).getAsJsonObject();
+        assertEquals(CityLandUseWorldgenRegistry.ACTIVE_SCHEMA,
+                currentActive.get("schema").getAsString());
+        assertEquals(0, currentActive.getAsJsonArray("plans").size());
 
-        Files.writeString(activePath,
-                "{\"schemaVersion\":\"city_active_land_use_area_plans.v0.2\",\"plans\":[]}");
         Files.writeString(CityLandUseWorldgenRegistry.worldgenLedgerPath(serverRoot),
-                "{\"schemaVersion\":\"city_land_use_worldgen_ledger.v0.2\",\"appliedOwners\":[]}");
-        IllegalArgumentException ledgerFailure = assertThrows(IllegalArgumentException.class,
-                () -> CityLandUseWorldgenRegistry.load(serverRoot));
-        assertTrue(ledgerFailure.getMessage().contains("CITY_LAND_USE_LEDGER_SCHEMA_UNSUPPORTED"));
+                "{\"schema\":\"obsolete_city_land_use_worldgen_ledger\",\"appliedOwners\":[]}");
+        CityLandUseWorldgenRegistry.load(serverRoot);
+        assertEquals(0, CityLandUseWorldgenRegistry.ledgerSnapshot()
+                .getAsJsonArray("appliedOwners").size());
+        try (var files = Files.list(activePath.getParent())) {
+            assertTrue(files.anyMatch(path -> path.getFileName().toString().contains(".obsolete-")));
+        }
     }
 
     @Test
@@ -209,21 +213,6 @@ class CityLandUseWorldgenRegistryTest {
                 "minecraft:overworld", 20, 0));
         assertTrue(CityLandUseWorldgenRegistry.vegetationLike("configured_tree_oak"));
         assertFalse(CityLandUseWorldgenRegistry.vegetationLike("ore_diamond"));
-    }
-
-    @Test
-    void loadMigratesV03LedgerToFoundationDiagnosticSchema() throws IOException {
-        Path activePath = CityLandUseWorldgenRegistry.activePlansPath(serverRoot);
-        Files.createDirectories(activePath.getParent());
-        Files.writeString(activePath,
-                "{\"schemaVersion\":\"city_active_land_use_area_plans.v0.2\",\"plans\":[]}");
-        Files.writeString(CityLandUseWorldgenRegistry.worldgenLedgerPath(serverRoot),
-                "{\"schemaVersion\":\"city_land_use_worldgen_ledger.v0.3\",\"appliedOwners\":[]}");
-
-        CityLandUseWorldgenRegistry.load(serverRoot);
-
-        assertEquals(CityLandUseWorldgenRegistry.LEDGER_SCHEMA,
-                CityLandUseWorldgenRegistry.ledgerSnapshot().get("schemaVersion").getAsString());
     }
 
     @Test
@@ -257,7 +246,7 @@ class CityLandUseWorldgenRegistryTest {
                 spans, List.of(footprint), List.of(), List.of(), 1.0, SurfacePolicy.PAVE,
                 VegetationPolicy.CLEAR, BoundaryPolicy.OPEN, "foundation");
         LandUseAreaPlan plan = new LandUseAreaPlanCodec().withComputedHash(new LandUseAreaPlan(
-                LandUseAreaPlan.CURRENT_SCHEMA_VERSION, "land_use_rules.v0.1", "city_foundation_datum", "",
+                LandUseAreaPlan.SCHEMA, "land_use_rules", "city_foundation_datum", "",
                 new BlockBounds(0, 0, 15, 15), List.of(area), List.of(), List.of(), List.of()));
         CityLandUseWorldgenRegistry.activate("minecraft:overworld", plan,
                 CityLandUseChunkCompilerTest.uniformPlan(plan), serverRoot);

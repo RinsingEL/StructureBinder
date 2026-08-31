@@ -22,8 +22,8 @@ class LandUseSettingsLoaderTest {
         LandUseSettings settings = new LandUseSettingsLoader().load(root);
 
         assertFalse(settings.enabledInWorkflow());
-        assertEquals("default_v0_1", settings.profileId());
-        assertTrue(Files.isRegularFile(root.resolve("profiles/default_v0_1.json")));
+        assertEquals("default", settings.profileId());
+        assertTrue(Files.isRegularFile(root.resolve("profiles/default.json")));
 
         Files.writeString(root.resolve("settings.json"), "user-owned");
         LandUseDefaultConfigBootstrap.ensureInstalled(root);

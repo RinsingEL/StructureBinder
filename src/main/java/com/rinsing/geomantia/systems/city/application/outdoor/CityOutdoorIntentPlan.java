@@ -15,7 +15,7 @@ import java.util.TreeSet;
 
 /** Program-resolved outdoor intent; it contains decisions and derived budgets, not final geometry. */
 public record CityOutdoorIntentPlan(
-        String schemaVersion,
+        String schema,
         String cityId,
         CityBlueprint.OutdoorMode mode,
         String ruleProfileHash,
@@ -28,11 +28,11 @@ public record CityOutdoorIntentPlan(
         EnvelopeIntent envelope,
         ResidualIntent residual) {
 
-    public static final String SCHEMA_VERSION = "city_outdoor_intent_plan.v0.4";
+    public static final String SCHEMA = "city_outdoor_intent_plan";
 
     public CityOutdoorIntentPlan {
-        if (!SCHEMA_VERSION.equals(schemaVersion)) {
-            throw new IllegalArgumentException("Unsupported city outdoor intent schema: " + schemaVersion);
+        if (!SCHEMA.equals(schema)) {
+            throw new IllegalArgumentException("Unsupported city outdoor intent schema: " + schema);
         }
         if (cityId == null || cityId.isBlank()) throw new IllegalArgumentException("cityId is required");
         if (mode == null) throw new IllegalArgumentException("mode is required");
@@ -49,7 +49,7 @@ public record CityOutdoorIntentPlan(
     }
 
     public CityOutdoorIntentPlan withComputedHash() {
-        CityOutdoorIntentPlan withoutHash = new CityOutdoorIntentPlan(schemaVersion, cityId, mode,
+        CityOutdoorIntentPlan withoutHash = new CityOutdoorIntentPlan(schema, cityId, mode,
                 ruleProfileHash, sourceBlueprintHash, sourceD6Hash, sourceTerrainFieldHash,
                 sourceOutdoorCatalogHash, "", sources, envelope, residual);
         JsonObject canonical = canonical(withoutHash.toJson()).getAsJsonObject();
@@ -57,7 +57,7 @@ public record CityOutdoorIntentPlan(
         try {
             String hash = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
                     .digest(canonical.toString().getBytes(StandardCharsets.UTF_8)));
-            return new CityOutdoorIntentPlan(schemaVersion, cityId, mode, ruleProfileHash,
+            return new CityOutdoorIntentPlan(schema, cityId, mode, ruleProfileHash,
                     sourceBlueprintHash, sourceD6Hash, sourceTerrainFieldHash, sourceOutdoorCatalogHash,
                     hash, sources, envelope, residual);
         } catch (NoSuchAlgorithmException exception) {
@@ -67,7 +67,7 @@ public record CityOutdoorIntentPlan(
 
     public JsonObject toJson() {
         JsonObject root = new JsonObject();
-        root.addProperty("schemaVersion", schemaVersion);
+        root.addProperty("schema", schema);
         root.addProperty("cityId", cityId);
         root.addProperty("mode", mode.name());
         root.addProperty("ruleProfileHash", ruleProfileHash);

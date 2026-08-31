@@ -14,7 +14,7 @@ import java.util.Set;
 
 public final class LandUseIntentPlanCodec {
     private static final Set<String> TOP_FIELDS = Set.of(
-            "schemaVersion", "cityId", "seedSalt", "groupOverrides", "subjectOverrides",
+            "schema", "cityId", "seedSalt", "groupOverrides", "subjectOverrides",
             "surfaceAlgorithmDefaults", "surfaceOverrides");
     private static final Set<String> GROUP_FIELDS = Set.of("groupId", "memberAnchorIds", "ruleRef");
     private static final Set<String> SUBJECT_FIELDS = Set.of("targetType", "targetId", "mode", "ruleRef");
@@ -30,7 +30,7 @@ public final class LandUseIntentPlanCodec {
     public LandUseIntentPlan parse(JsonObject source, String defaultCityId) {
         JsonObject obj = source == null ? defaultPlan(defaultCityId) : source;
         rejectUnknown(obj, TOP_FIELDS, "landUseIntentPlan");
-        String schema = requiredString(obj, "schemaVersion");
+        String schema = requiredString(obj, "schema");
         if (!LandUseIntentPlan.SCHEMA.equals(schema)) {
             throw new IllegalArgumentException("LAND_USE_INTENT_SCHEMA_UNSUPPORTED: " + schema);
         }
@@ -142,7 +142,7 @@ public final class LandUseIntentPlanCodec {
     private static JsonObject defaultPlan(String cityId) {
         if (cityId == null || cityId.isBlank()) throw new IllegalArgumentException("cityId is required");
         JsonObject obj = new JsonObject();
-        obj.addProperty("schemaVersion", LandUseIntentPlan.SCHEMA);
+        obj.addProperty("schema", LandUseIntentPlan.SCHEMA);
         obj.addProperty("cityId", cityId);
         obj.add("groupOverrides", new JsonArray());
         obj.add("subjectOverrides", new JsonArray());

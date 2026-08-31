@@ -1054,15 +1054,15 @@ class CityBlueprintCompilerServiceTest {
 
         assertTrue(first.ok(), first.compileTrace().toString());
         assertEquals(first.structureAnchorPlan(), second.structureAnchorPlan());
-        assertEquals("city_generation_compile_trace.v0.14",
-                first.compileTrace().get("schemaVersion").getAsString());
-        assertEquals("group_extent_map.v0.11",
-                first.groupExtentMap().get("schemaVersion").getAsString());
+        assertEquals("city_generation_compile_trace",
+                first.compileTrace().get("schema").getAsString());
+        assertEquals("group_extent_map",
+                first.groupExtentMap().get("schema").getAsString());
         assertEquals("COMMITTED_BUILDINGS_THEN_RELATION_AND_PERCENTAGE_EXPANSION",
                 first.groupExtentMap().get("functionAreaPolicy").getAsString());
-        assertEquals("city_function_area_formation_plan.v0.1",
+        assertEquals("city_function_area_formation_plan",
                 first.groupExtentMap().getAsJsonObject("functionAreaFormationPlan")
-                        .get("schemaVersion").getAsString());
+                        .get("schema").getAsString());
         assertEquals(0, first.groupExtentMap().getAsJsonObject("functionAreaFormationPlan")
                 .get("preallocatedAreaCount").getAsInt());
         assertTrue(first.groupExtentMap().get("structureGraphConnected").getAsBoolean());
@@ -1692,7 +1692,7 @@ class CityBlueprintCompilerServiceTest {
                 ]}
                 """);
         JsonObject terraSource = new JsonObject();
-        terraSource.addProperty("schemaVersion", "terrasense_structure_profile_source.v0.1");
+        terraSource.addProperty("schema", "terrasense_structure_profile_source");
         terraSource.addProperty("sourceType", "debug_catalog");
         terraSource.addProperty("catalogMode", "debug");
         terraSource.addProperty("debugCatalogPath", "structure_debug_catalog.json");
@@ -1750,7 +1750,7 @@ class CityBlueprintCompilerServiceTest {
     private static JsonObject d3(String cityId) {
         JsonObject root = JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_landform_review.v0.1",
+                  "schema":"city_landform_review",
                   "grid":{"originBlockX":-256,"originBlockZ":-256,"cellStepBlocks":16,"cellsX":64,"cellsZ":32},
                   "targetScale":{"scale":"town","radiusBlocks":512,"cellStepBlocks":16},
                   "reviewMapImage":"review.png",
@@ -1814,7 +1814,7 @@ class CityBlueprintCompilerServiceTest {
         int cellsX = grid.get("cellsX").getAsInt();
         int cellsZ = grid.get("cellsZ").getAsInt();
         JsonObject field = new JsonObject();
-        field.addProperty("schemaVersion", "city_land_use_terrain_field.v0.1");
+        field.addProperty("schema", "city_land_use_terrain_field");
         field.addProperty("cityId", review.get("cityId").getAsString());
         JsonObject bounds = new JsonObject();
         bounds.addProperty("minX", originX);
@@ -2003,7 +2003,7 @@ class CityBlueprintCompilerServiceTest {
     private static JsonObject templateCatalog(int width, int depth) {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_template_catalog.v0.1",
+                  "schema":"city_template_catalog",
                   "templates":[{
                     "buildingSemantic":"administration","style":"stone",
                     "templateId":"geomantia:town_hall","templateRef":"geomantia:town_hall",
@@ -2056,7 +2056,7 @@ class CityBlueprintCompilerServiceTest {
     private static JsonObject referenceCatalog() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint_reference_catalog.v0.9",
+                  "schema":"city_blueprint_reference_catalog",
                   "structureRefs":[
                     {"structureRef":"geomantia:town_hall","templateCandidates":[{"templateId":"geomantia:town_hall","variantId":"default"}],
                      "greenParcel":{"pattern":"FREEFORM","density":"MEDIUM","groundBlockId":"minecraft:grass_block","pathBlockId":"minecraft:gravel"}},
@@ -2085,7 +2085,7 @@ class CityBlueprintCompilerServiceTest {
                   "styleProfiles":[{"profileRef":"style:stone","plantPalette":[{"blockId":"minecraft:poppy","weight":1}]}],
                   "roadProfiles":[{"profileRef":"road:town","hierarchy":"SIMPLE","density":"BALANCED"}],
                   "surfaceDetailProfiles":[{"profileRef":"surface:working","intensity":"MEDIUM"}],
-                  "landUseRuleProfile":{"schemaVersion":"city_land_use_rules.v0.1","profileId":"blueprint_test","rules":[{
+                  "landUseRuleProfile":{"schema":"city_land_use_rules","profileId":"blueprint_test","rules":[{
                     "ruleRef":"civic","landUseType":"civic","semanticTerms":["administration"],
                     "footprintMultiplier":1.5,"extraAreaBlocks":80,"minAreaBlocks":80,"maxAreaBlocks":1536,
                     "actionBudget":300,"baseStepCost":1.0,"slopeCost":1.2,"reliefCost":1.2,"waterCost":8.0,
@@ -2119,7 +2119,7 @@ class CityBlueprintCompilerServiceTest {
     private static JsonObject blueprint(JsonObject context, String extentClass) {
         JsonObject root = JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint.v0.12","cityId":"placeholder","generationSeed":1,
+                  "schema":"city_blueprint","cityId":"placeholder","generationSeed":1,
                   "sourceD3Ref":{},"catalogSnapshotRef":{},
                   "designIntent":{"cityIdentity":"town","theme":"stone","functionalRoles":["administration"]},
                   "styleProfile":{"profileRef":"style:stone"},

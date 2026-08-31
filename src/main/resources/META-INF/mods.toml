@@ -18,24 +18,9 @@ config="geomantia.mixins.json"
     versionRange="${forge_version_range}"
     ordering="NONE"
     side="BOTH"
-
 [[dependencies.${mod_id}]]
     modId="minecraft"
     mandatory=true
     versionRange="${minecraft_version_range}"
     ordering="NONE"
-    side="BOTH"
-
-[[dependencies.${mod_id}]]
-    modId="worldedit"
-    mandatory=true
-    versionRange="[7.2.15,)"
-    ordering="AFTER"
-    side="BOTH"
-
-[[dependencies.${mod_id}]]
-    modId="roadweaver"
-    mandatory=false
-    versionRange="[2.2.2,)"
-    ordering="AFTER"
     side="BOTH"

@@ -40,7 +40,7 @@ public final class CityBlueprintValidator {
             }
             if (group.groupKind() != CityBlueprint.GroupKind.STRUCTURE) {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_GROUP_KIND_UNSUPPORTED, path + ".groupKind",
-                        "LANDSCAPE is reserved for case 04 and is not supported by v0.2.");
+                        "LANDSCAPE is reserved for case 04 and is not supported by the current blueprint schema.");
             }
             if (group.priority() == CityBlueprint.GroupPriority.CORE) highestPriorityGroupCount++;
             if (!Double.isFinite(group.targetAreaShare()) || group.targetAreaShare() <= 0.0

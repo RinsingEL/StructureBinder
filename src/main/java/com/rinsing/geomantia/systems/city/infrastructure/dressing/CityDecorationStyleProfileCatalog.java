@@ -8,7 +8,7 @@ import java.util.Objects;
 
 /** Maps AI-facing semantic decoration references to concrete content catalog entries. */
 public final class CityDecorationStyleProfileCatalog {
-    public static final String SCHEMA = "city_decoration_style_profile.v0.1";
+    public static final String SCHEMA = "city_decoration_style_profile";
 
     private final Map<String, StyleProfile> profiles;
 

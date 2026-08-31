@@ -66,7 +66,7 @@ public final class CityD4StagedPlanCompiler {
                 ? slot.getAsJsonObject("arrayCandidatePlan").deepCopy() : new JsonObject();
         String cityId = stringValue(sourceDesignSlotPlan, "cityId");
         String slotId = requiredString(slot, "slotId");
-        plan.addProperty("schemaVersion", CityStructureArrayCandidatePlanner.PLAN_SCHEMA);
+        plan.addProperty("schema", CityStructureArrayCandidatePlanner.PLAN_SCHEMA);
         if (stringValue(plan, "cityId").isBlank()) {
             plan.addProperty("cityId", cityId);
         }
@@ -113,18 +113,12 @@ public final class CityD4StagedPlanCompiler {
 
     public JsonObject minimalArrayLayoutPlan(JsonObject sourceDesignSlotPlan, String planningMode) {
         JsonObject plan = new JsonObject();
-        boolean v03 = CityStructureArrayLayoutLoopPlanner.PLANNING_MODE_V03.equals(planningMode);
-        plan.addProperty("schemaVersion", v03
-                ? CityStructureArrayLayoutLoopPlanner.PLAN_SCHEMA_V03
-                : CityStructureArrayLayoutLoopPlanner.PLAN_SCHEMA);
-        plan.addProperty("planningMode", v03
-                ? CityStructureArrayLayoutLoopPlanner.PLANNING_MODE_V03
-                : CityStructureArrayLayoutLoopPlanner.PLANNING_MODE_V02);
+        plan.addProperty("schema", CityStructureArrayLayoutLoopPlanner.PLAN_SCHEMA);
+        plan.addProperty("planningMode", CityStructureArrayLayoutLoopPlanner.PLANNING_MODE);
         plan.addProperty("cityId", stringValue(sourceDesignSlotPlan, "cityId"));
         plan.addProperty("cityScale", stringValue(sourceDesignSlotPlan, "cityScale", "town"));
         JsonObject intent = new JsonObject();
-        intent.addProperty("summary", "created by " + (v03 ? "array_layout_loop_v0_3" : "array_layout_loop_v0_2")
-                + " workflow");
+        intent.addProperty("summary", "created by current array layout workflow");
         plan.add("designIntent", intent);
         plan.add("layoutPlans", new JsonArray());
         return plan;
@@ -141,11 +135,11 @@ public final class CityD4StagedPlanCompiler {
         appendAnchors(anchors, anchorIds, basePlan, "base");
         appendAnchors(anchors, anchorIds, appendedPlan, "array");
         JsonObject plan = new JsonObject();
-        plan.addProperty("schemaVersion", CityStructureAnchorPlanner.PLAN_SCHEMA);
+        plan.addProperty("schema", CityStructureAnchorPlanner.PLAN_SCHEMA);
         plan.addProperty("cityId", normalizedCityId);
         plan.add("anchors", anchors);
         JsonObject trace = new JsonObject();
-        trace.addProperty("schemaVersion", "city_d4_staged_key_then_array_trace.v0.1");
+        trace.addProperty("schema", "city_d4_staged_key_then_array_trace");
         trace.addProperty("planningMode", "key_then_array");
         trace.addProperty("stageCount", stageTrace.size());
         trace.add("stages", stageTrace.deepCopy());

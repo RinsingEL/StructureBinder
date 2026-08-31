@@ -15,7 +15,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public final class CityReservationMaskPlanner {
-    public static final String MASK_SCHEMA = "city_reservation_mask_plan.v0.1";
+    public static final String MASK_SCHEMA = "city_reservation_mask_plan";
 
     public Result plan(CitySiteContext context, JsonObject structureAnchorMap) {
         return plan(context, structureAnchorMap, null);
@@ -71,7 +71,7 @@ public final class CityReservationMaskPlanner {
         appendWallReservation(noVegetation, vegetationLimited, noVanillaStructure, reasons, wallReservationPlan);
 
         JsonObject mask = new JsonObject();
-        mask.addProperty("schemaVersion", MASK_SCHEMA);
+        mask.addProperty("schema", MASK_SCHEMA);
         mask.addProperty("cityId", cityId);
         mask.add("grid", context.grid().asJson());
         mask.add("noVegetationMask", noVegetation);
@@ -117,9 +117,9 @@ public final class CityReservationMaskPlanner {
         metrics.addProperty("d5RoadOperationCount", 0);
         quality.add("metrics", metrics);
 
-        RoadIntent roadIntent = new RoadIntent(RoadIntent.CURRENT_SCHEMA_VERSION, cityId, nodes, edges,
+        RoadIntent roadIntent = new RoadIntent(RoadIntent.SCHEMA, cityId, nodes, edges,
                 simpleQuality(true, edges.size()));
-        BuildOperationPlan operationPlan = new BuildOperationPlan(BuildOperationPlan.CURRENT_SCHEMA_VERSION,
+        BuildOperationPlan operationPlan = new BuildOperationPlan(BuildOperationPlan.SCHEMA,
                 cityId, "geomantia_templates/d5", operations);
         return new Result(mask, roadIntent.asJson(), operationPlan.asJson(), quality);
     }

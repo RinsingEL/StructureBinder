@@ -74,19 +74,19 @@ class LandUseRuleCatalogLoaderTest {
         Path root = tempDir.resolve("city_land_use");
         Path profiles = Files.createDirectories(root.resolve("profiles"));
         Files.writeString(profiles.resolve("stubbs.json"), profile("stubbs", "military", "barracks")
-                .replace("city_land_use_rules.v0.1", "city_land_use_rules.v0.2"));
+                .replace("city_land_use_rules", "obsolete_city_land_use_rules"));
 
         IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
                 () -> new LandUseRuleCatalogLoader().load(root,
                         new LandUseSettings(LandUseSettings.SCHEMA, false, "stubbs")));
 
-        assertEquals("LAND_USE_RULE_PROFILE_SCHEMA_UNSUPPORTED: city_land_use_rules.v0.2", error.getMessage());
+        assertEquals("LAND_USE_RULE_PROFILE_SCHEMA_UNSUPPORTED: obsolete_city_land_use_rules", error.getMessage());
     }
 
     private static String profile(String profileId, String ruleRef, String term) {
         return """
                 {
-                  "schemaVersion":"city_land_use_rules.v0.1",
+                  "schema":"city_land_use_rules",
                   "profileId":"%s",
                   "rules":[{
                     "ruleRef":"%s",

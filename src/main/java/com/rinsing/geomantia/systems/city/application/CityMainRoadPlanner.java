@@ -21,8 +21,8 @@ import java.util.Set;
 
 /** Plans terrain-aware city main roads from the parent Blueprint array graph. */
 final class CityMainRoadPlanner {
-    static final String PLAN_SCHEMA_VERSION = "city_main_road_plan.v0.1";
-    static final String BAND_SCHEMA_VERSION = "city_main_road_band.v0.1";
+    static final String PLAN_SCHEMA = "city_main_road_plan";
+    static final String BAND_SCHEMA = "city_main_road_band";
     private static final String MAIN_ROAD_GROUP_ID = "__city_main_road__";
     private static final int MINIMUM_MAIN_ROAD_WIDTH_BLOCKS = 7;
     private static final int MAXIMUM_SLOPE = 18;
@@ -323,7 +323,7 @@ final class CityMainRoadPlanner {
     private static JsonObject basePlan(CityBlueprint blueprint, JsonObject roadProfile,
                                        int internalWidth, int mainWidth) {
         JsonObject plan = new JsonObject();
-        plan.addProperty("schemaVersion", PLAN_SCHEMA_VERSION);
+        plan.addProperty("schema", PLAN_SCHEMA);
         plan.addProperty("cityId", blueprint.cityId());
         plan.addProperty("roadProfileRef", blueprint.roadProfile().profileRef());
         plan.addProperty("hierarchy", string(roadProfile, "hierarchy"));
@@ -746,7 +746,7 @@ final class CityMainRoadPlanner {
         if (start.equals(end)) return null;
         BlockBounds bounds = roadBounds(connector.localWidth(), start, end);
         JsonObject value = new JsonObject();
-        value.addProperty("schemaVersion", "city_main_road_transition_band.v0.1");
+        value.addProperty("schema", "city_main_road_transition_band");
         value.addProperty("streetBandId", connectionId + "::" + side + "_transition");
         value.addProperty("roadNetworkId", "city::main_road_network");
         value.addProperty("connectionId", connectionId);
@@ -783,7 +783,7 @@ final class CityMainRoadPlanner {
         }
         BlockBounds bounds = roadBounds(width, start, end);
         JsonObject value = new JsonObject();
-        value.addProperty("schemaVersion", BAND_SCHEMA_VERSION);
+        value.addProperty("schema", BAND_SCHEMA);
         value.addProperty("streetBandId", connectionId + "::segment_"
                 + String.format("%03d", segmentIndex + 1));
         value.addProperty("roadNetworkId", "city::main_road_network");

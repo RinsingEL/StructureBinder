@@ -11,7 +11,7 @@ import java.nio.file.Path;
 import java.util.Set;
 
 public final class LandUseSettingsLoader {
-    private static final Set<String> FIELDS = Set.of("schemaVersion", "enabledInWorkflow", "profileId");
+    private static final Set<String> FIELDS = Set.of("schema", "enabledInWorkflow", "profileId");
 
     public LandUseSettings load(Path cityLandUseConfigRoot) {
         if (cityLandUseConfigRoot == null) throw new IllegalArgumentException("LAND_USE_CONFIG_ROOT_MISSING");
@@ -24,7 +24,7 @@ public final class LandUseSettingsLoader {
             for (String key : obj.keySet()) {
                 if (!FIELDS.contains(key)) throw new IllegalArgumentException("LAND_USE_SETTINGS_UNKNOWN_FIELD: " + key);
             }
-            return new LandUseSettings(requiredString(obj, "schemaVersion"),
+            return new LandUseSettings(requiredString(obj, "schema"),
                     requiredBoolean(obj, "enabledInWorkflow"), requiredString(obj, "profileId"));
         } catch (IOException ex) {
             throw new IllegalArgumentException("LAND_USE_SETTINGS_READ_FAILED: " + path, ex);

@@ -8,14 +8,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/** Strict codec for AI-submitted v0.4 intent. Resolved masks and world coordinates are forbidden. */
+/** Strict codec for AI-submitted decoration intent. Resolved masks and world coordinates are forbidden. */
 public final class DecorationProgramIntentCodec {
     private final CompiledDecorationProgramCodec primitiveCodec = new CompiledDecorationProgramCodec();
 
     public DecorationProgramIntentPlan parsePlan(JsonObject source) {
-        requireOnly(source, Set.of("schemaVersion", "cityId", "catalogHash", "styleProfileId", "styleProfileHash",
+        requireOnly(source, Set.of("schema", "cityId", "catalogHash", "styleProfileId", "styleProfileHash",
                 "programs"), "program plan");
-        String schema = requiredString(source, "schemaVersion");
+        String schema = requiredString(source, "schema");
         if (!DecorationProgramIntentPlan.SCHEMA.equals(schema)) {
             throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_PLAN_SCHEMA_UNSUPPORTED: " + schema);
         }
@@ -52,7 +52,7 @@ public final class DecorationProgramIntentCodec {
 
     public JsonObject toJson(DecorationProgramIntentPlan plan) {
         JsonObject obj = new JsonObject();
-        obj.addProperty("schemaVersion", plan.schemaVersion());
+        obj.addProperty("schema", plan.schema());
         obj.addProperty("cityId", plan.cityId());
         obj.addProperty("catalogHash", plan.catalogHash());
         obj.addProperty("styleProfileId", plan.styleProfileId());

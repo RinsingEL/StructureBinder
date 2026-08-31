@@ -56,7 +56,7 @@ import java.util.function.Function;
 /** Records actual block states at Minecraft lifecycle boundaries after City worldgen writes. */
 @Mod.EventBusSubscriber(modid = GeomantiaMod.MOD_ID)
 public final class CityWorldgenBlockObservationRegistry {
-    public static final String SCHEMA_VERSION = "city_worldgen_block_observation.v0.1";
+    public static final String SCHEMA = "city_worldgen_block_observation";
     public static final String POST_FEATURES = "post_features";
     public static final String CHUNK_SAVE = "chunk_save";
     private static final String ROOT_DIRECTORY = "geomantia_city_masks/worldgen_block_observations";
@@ -453,7 +453,7 @@ public final class CityWorldgenBlockObservationRegistry {
         }
 
         JsonObject observation = new JsonObject();
-        observation.addProperty("schemaVersion", SCHEMA_VERSION);
+        observation.addProperty("schema", SCHEMA);
         observation.addProperty("observationId", captured.observationId);
         observation.addProperty("observedAt", captured.observedAt);
         observation.addProperty("phase", captured.phase);

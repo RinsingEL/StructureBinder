@@ -17,7 +17,7 @@ import java.util.Set;
 
 /** Rejects legal-but-unrecognizable array geometry before D4 can report quality success. */
 final class CityArrayVisualQualityGate {
-    static final String SCHEMA_VERSION = "city_array_visual_quality.v0.1";
+    static final String SCHEMA = "city_array_visual_quality";
 
     Result evaluate(JsonArray anchorsJson, JsonArray streetsJson) {
         List<Anchor> anchors = anchorsJson.asList().stream()
@@ -70,7 +70,7 @@ final class CityArrayVisualQualityGate {
             groups.add(metrics);
         }
         JsonObject value = new JsonObject();
-        value.addProperty("schemaVersion", SCHEMA_VERSION);
+        value.addProperty("schema", SCHEMA);
         value.addProperty("passed", hardBlocks.isEmpty());
         value.addProperty("roadStructureOverlapCount", roadStructureOverlapCount);
         JsonArray blocks = new JsonArray();

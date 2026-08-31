@@ -8,17 +8,17 @@ import java.util.Objects;
 import java.util.Optional;
 
 public record LandUseTerrainField(
-        String schemaVersion,
+        String schema,
         String cityId,
         BlockBounds planningBounds,
         int cellStepBlocks,
         List<Cell> cells) {
 
-    public static final String CURRENT_SCHEMA_VERSION = "city_land_use_terrain_field.v0.1";
+    public static final String SCHEMA = "city_land_use_terrain_field";
 
     public LandUseTerrainField {
-        if (!CURRENT_SCHEMA_VERSION.equals(schemaVersion)) {
-            throw new IllegalArgumentException("Unsupported LandUse terrain field schema: " + schemaVersion);
+        if (!SCHEMA.equals(schema)) {
+            throw new IllegalArgumentException("Unsupported LandUse terrain field schema: " + schema);
         }
         if (cityId == null || cityId.isBlank()) throw new IllegalArgumentException("cityId is required");
         Objects.requireNonNull(planningBounds, "planningBounds");

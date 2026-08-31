@@ -130,7 +130,7 @@ public final class CityUrbanResidualResolver {
             throw new IllegalStateException("CITY_URBAN_COVERAGE_INVARIANT_VIOLATED:"
                     + accounted + "!=" + envelope.size());
         }
-        CityUrbanSpacePlan plan = new CityUrbanSpacePlan(CityUrbanSpacePlan.SCHEMA_VERSION, cityId, "", true,
+        CityUrbanSpacePlan plan = new CityUrbanSpacePlan(CityUrbanSpacePlan.SCHEMA, cityId, "", true,
                 config.closeRadiusBlocks(), workingBounds, scanlines(envelope), regions,
                 new CityUrbanSpacePlan.CoverageSummary(envelope.size(), landUseOwned.size(),
                         structureOwned.size(), corridorOwned.size(), absorbed, explicit, 0))

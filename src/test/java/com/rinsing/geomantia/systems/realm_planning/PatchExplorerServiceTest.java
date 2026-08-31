@@ -42,8 +42,8 @@ class PatchExplorerServiceTest {
 
         JsonObject t2Open = service.open(request("run_a", "realm_t2", "realm_a"));
         assertEquals("sealed_w_landform_patch", t2Open.get("candidateBasis").getAsString());
-        assertEquals("patch_explorer_session.v0.1", read(root.resolve(t2Open.getAsJsonObject("artifacts")
-                .get("explorationSession").getAsString())).get("schemaVersion").getAsString());
+        assertEquals("patch_explorer_session", read(root.resolve(t2Open.getAsJsonObject("artifacts")
+                .get("explorationSession").getAsString())).get("schema").getAsString());
         assertTrue(t2Open.getAsJsonArray("typeCatalog").size() >= 2);
         assertTrue(hasPatchType(t2Open.getAsJsonArray("typeCatalog"), "plain"));
         assertFalse(hasPatchType(t2Open.getAsJsonArray("typeCatalog"), "minecraft:plains"));
@@ -144,8 +144,8 @@ class PatchExplorerServiceTest {
         String d4SelectionRef = d4Selection.get("patchSelectionRef").getAsString();
         JsonObject selectedComponent = d4Selection.getAsJsonObject("selection")
                 .getAsJsonObject("selectedComponent");
-        assertEquals("patch_selection_legal_region.v0.1",
-                selectedComponent.get("schemaVersion").getAsString());
+        assertEquals("patch_selection_legal_region",
+                selectedComponent.get("schema").getAsString());
         assertEquals(4, selectedComponent.getAsJsonArray("memberCells").size());
         assertEquals("smaller verified component",
                 d4Selection.getAsJsonObject("selection").get("selectionReason").getAsString());
@@ -249,7 +249,7 @@ class PatchExplorerServiceTest {
         PatchExplorerService service = new PatchExplorerService(root);
 
         JsonObject t4Open = service.open(request("run_terrain", "realm_t4", "realm_a"));
-        assertEquals("landform_patch_candidates_v0_2",
+        assertEquals("landform_patch_candidates",
                 read(root.resolve(t4Open.getAsJsonObject("artifacts").get("explorationSession").getAsString()))
                         .get("candidateModel").getAsString());
         assertEquals("run_terrain/realm_t4_terrain_preview/realm_a_coarse_height_water_preview.png",
@@ -553,14 +553,14 @@ class PatchExplorerServiceTest {
 
     private static void writeRealmArtifacts(Path run) throws Exception {
         JsonObject context = new JsonObject();
-        context.addProperty("schemaVersion", "realm_planning.v1.2");
+        context.addProperty("schema", "realm_planning");
         context.addProperty("surveyId", "survey_fixture");
         context.addProperty("sealed", true);
         context.addProperty("cellStepBlocks", 16);
         Files.writeString(run.resolve("world_survey_context.json"), context.toString());
 
         JsonObject map = new JsonObject();
-        map.addProperty("schemaVersion", "realm_planning.v1.2");
+        map.addProperty("schema", "realm_planning");
         JsonArray cells = new JsonArray();
         addPatch(cells, "p1", "plain", 0, 0, 5);
         addPatch(cells, "p2", "plain", 0, 2, 4);
@@ -646,7 +646,7 @@ class PatchExplorerServiceTest {
         Path d3 = layout.stepDirectory(CityTestRunLayout.D3);
         Files.createDirectories(d3);
         JsonObject review = new JsonObject();
-        review.addProperty("schemaVersion", "city_landform_review.v0.1");
+        review.addProperty("schema", "city_landform_review");
         review.addProperty("cityId", "city_a");
         JsonObject grid = new JsonObject();
         grid.addProperty("cellStepBlocks", 16);
@@ -677,7 +677,7 @@ class PatchExplorerServiceTest {
         Path landUse = layout.stepDirectory(CityTestRunLayout.LAND_USE);
         Files.createDirectories(landUse);
         JsonObject terrainField = new JsonObject();
-        terrainField.addProperty("schemaVersion", "city_land_use_terrain_field.v0.1");
+        terrainField.addProperty("schema", "city_land_use_terrain_field");
         terrainField.addProperty("cityId", "city_a");
         terrainField.add("planningBounds", bounds.deepCopy());
         terrainField.addProperty("cellStepBlocks", 16);
@@ -747,7 +747,7 @@ class PatchExplorerServiceTest {
         Path preview = directory.resolve("realm_a_coarse_height_water_preview.png");
         Files.write(preview, new byte[]{1, 2, 3});
         JsonObject evidence = new JsonObject();
-        evidence.addProperty("schemaVersion", RealmT4CoarseTerrainPreviewService.SCHEMA_VERSION);
+        evidence.addProperty("schema", RealmT4CoarseTerrainPreviewService.SCHEMA);
         evidence.addProperty("runId", runId);
         evidence.addProperty("realmId", "realm_a");
         evidence.addProperty("advisoryOnly", true);

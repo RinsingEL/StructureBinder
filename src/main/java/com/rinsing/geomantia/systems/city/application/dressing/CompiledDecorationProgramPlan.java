@@ -5,15 +5,15 @@ import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import java.util.ArrayList;
 import java.util.List;
 
-public record CompiledDecorationProgramPlan(String schemaVersion, String cityId, String catalogHash,
+public record CompiledDecorationProgramPlan(String schema, String cityId, String catalogHash,
                                             String styleProfileId, String styleProfileHash,
                                             List<HardObstacle> hardObstacles,
                                             List<CompiledDecorationProgram> programs) {
-    public static final String SCHEMA = "city_decoration_compiled_program_plan.v0.4";
+    public static final String SCHEMA = "city_decoration_compiled_program_plan";
 
     public CompiledDecorationProgramPlan {
-        if (!SCHEMA.equals(schemaVersion)) {
-            throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_PLAN_SCHEMA_UNSUPPORTED: " + schemaVersion);
+        if (!SCHEMA.equals(schema)) {
+            throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_PLAN_SCHEMA_UNSUPPORTED: " + schema);
         }
         if (cityId == null || cityId.isBlank()) {
             throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_PLAN_CITY_ID_REQUIRED");
@@ -38,15 +38,15 @@ public record CompiledDecorationProgramPlan(String schemaVersion, String cityId,
         }
     }
 
-    public CompiledDecorationProgramPlan(String schemaVersion, String cityId, String catalogHash,
+    public CompiledDecorationProgramPlan(String schema, String cityId, String catalogHash,
                                          List<CompiledDecorationProgram> programs) {
-        this(schemaVersion, cityId, catalogHash, "direct_catalog", "direct_catalog", List.of(), programs);
+        this(schema, cityId, catalogHash, "direct_catalog", "direct_catalog", List.of(), programs);
     }
 
-    public CompiledDecorationProgramPlan(String schemaVersion, String cityId, String catalogHash,
+    public CompiledDecorationProgramPlan(String schema, String cityId, String catalogHash,
                                          List<HardObstacle> hardObstacles,
                                          List<CompiledDecorationProgram> programs) {
-        this(schemaVersion, cityId, catalogHash, "direct_catalog", "direct_catalog", hardObstacles, programs);
+        this(schema, cityId, catalogHash, "direct_catalog", "direct_catalog", hardObstacles, programs);
     }
 
     public List<CompiledDecorationProgram> programsInExecutionOrder() {

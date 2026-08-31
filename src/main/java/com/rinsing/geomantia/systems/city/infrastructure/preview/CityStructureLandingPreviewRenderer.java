@@ -352,7 +352,7 @@ public final class CityStructureLandingPreviewRenderer {
                 }
             }
             title(g, "City D4 array layout loop preview",
-                    "bbox hidden; parent/subZones shown for v0.3; square = RoadWeaver gateway; iteration="
+                    "bbox hidden; parent/subZones shown; square = City road gateway; iteration="
                             + intValue(loopState, "iteration", 0));
             arrayLayoutLoopSummary(g, loopState);
         } finally {

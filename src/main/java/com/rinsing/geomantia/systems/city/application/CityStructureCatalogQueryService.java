@@ -24,7 +24,7 @@ import java.util.Set;
  * {@code terrasenseProfileSource}; City does not maintain a second tag dictionary.</p>
  */
 public final class CityStructureCatalogQueryService {
-    public static final String SCHEMA_VERSION = "city_structure_catalog_query.v0.5";
+    public static final String SCHEMA = "city_structure_catalog_query";
     private static final int DEFAULT_LIMIT = 20;
     private static final int MAX_LIMIT = 100;
 
@@ -45,7 +45,7 @@ public final class CityStructureCatalogQueryService {
                 .toList();
 
         JsonObject response = new JsonObject();
-        response.addProperty("schemaVersion", SCHEMA_VERSION);
+        response.addProperty("schema", SCHEMA);
         response.addProperty("ok", true);
         response.addProperty("readOnly", true);
         response.add("source", catalog.source().deepCopy());

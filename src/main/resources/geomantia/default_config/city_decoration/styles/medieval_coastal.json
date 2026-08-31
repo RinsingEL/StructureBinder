@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "city_decoration_style_profile.v0.1",
+  "schema": "city_decoration_style_profile",
   "styleProfileId": "medieval_coastal",
   "mappings": [
     {

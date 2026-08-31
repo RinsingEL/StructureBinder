@@ -4,7 +4,7 @@ import java.util.List;
 
 /** The complete, coordinate-free result of the single D4 city-design decision. */
 public record CityBlueprint(
-        String schemaVersion,
+        String schema,
         String cityId,
         ArtifactRef sourceD3Ref,
         ArtifactRef catalogSnapshotRef,
@@ -18,7 +18,7 @@ public record CityBlueprint(
         ProfileRef surfaceDetailProfile,
         OutdoorPlan outdoorPlan) {
 
-    public static final String SCHEMA_VERSION = "city_blueprint.v0.12";
+    public static final String SCHEMA = "city_blueprint";
 
     public CityBlueprint {
         groups = List.copyOf(groups);
@@ -26,7 +26,7 @@ public record CityBlueprint(
         relations = List.copyOf(relations);
     }
 
-    public record ArtifactRef(String path, String schemaVersion, String contentHash) {
+    public record ArtifactRef(String path, String schema, String contentHash) {
     }
 
     public record DesignIntent(String cityIdentity, String theme, List<String> functionalRoles) {

@@ -6,7 +6,7 @@ import com.google.gson.JsonObject;
 import java.util.List;
 
 public record WorldMutationReport(
-        String schemaVersion,
+        String schema,
         String cityId,
         String backend,
         boolean executed,
@@ -19,11 +19,11 @@ public record WorldMutationReport(
         List<String> warnings,
         List<String> failures) {
 
-    public static final String CURRENT_SCHEMA_VERSION = "world_mutation_report.v0.1";
+    public static final String SCHEMA = "world_mutation_report";
 
     public WorldMutationReport {
-        if (schemaVersion == null || schemaVersion.isBlank()) {
-            throw new IllegalArgumentException("schemaVersion is required");
+        if (schema == null || schema.isBlank()) {
+            throw new IllegalArgumentException("schema is required");
         }
         if (cityId == null || cityId.isBlank()) {
             throw new IllegalArgumentException("cityId is required");
@@ -55,7 +55,7 @@ public record WorldMutationReport(
 
     public JsonObject asJson() {
         JsonObject obj = new JsonObject();
-        obj.addProperty("schemaVersion", schemaVersion);
+        obj.addProperty("schema", schema);
         obj.addProperty("cityId", cityId);
         obj.addProperty("backend", backend);
         obj.addProperty("executed", executed);

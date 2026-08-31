@@ -8,7 +8,7 @@ import java.util.Map;
 
 /** Fixed landform colors shared by T and D patch previews. */
 public final class LandformPatchPalette {
-    public static final String SCHEMA_VERSION = "landform_patch_palette.v0.1";
+    public static final String SCHEMA = "landform_patch_palette";
     private static final Map<String, String> COLORS = colors();
 
     private LandformPatchPalette() {

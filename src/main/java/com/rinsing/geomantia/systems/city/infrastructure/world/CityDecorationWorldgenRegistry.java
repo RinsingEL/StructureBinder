@@ -50,8 +50,8 @@ import java.util.WeakHashMap;
 import java.util.function.Function;
 
 public final class CityDecorationWorldgenRegistry {
-    public static final String ACTIVE_SCHEMA = "city_active_decoration_program_plans.v0.4";
-    public static final String LEDGER_SCHEMA = "city_decoration_worldgen_ledger.v0.4";
+    public static final String ACTIVE_SCHEMA = "city_active_decoration_program_plans";
+    public static final String LEDGER_SCHEMA = "city_decoration_worldgen_ledger";
 
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final String ACTIVE_DIR = "geomantia_city_masks";
@@ -172,9 +172,9 @@ public final class CityDecorationWorldgenRegistry {
     private static void validateFrozenPlan(CompiledDecorationProgramPlan plan,
                                            CityDecorationTerrainRunCompiler.FrozenPlan frozenTerrainPlan) {
         Objects.requireNonNull(frozenTerrainPlan, "frozenTerrainPlan");
-        if (!CityDecorationTerrainRunCompiler.SCHEMA.equals(frozenTerrainPlan.schemaVersion())) {
+        if (!CityDecorationTerrainRunCompiler.SCHEMA.equals(frozenTerrainPlan.schema())) {
             throw new IllegalArgumentException("CITY_DECORATION_FROZEN_TERRAIN_SCHEMA_UNSUPPORTED: "
-                    + frozenTerrainPlan.schemaVersion());
+                    + frozenTerrainPlan.schema());
         }
         if (!plan.cityId().equals(frozenTerrainPlan.cityId())) {
             throw new IllegalArgumentException("CITY_DECORATION_FROZEN_TERRAIN_CITY_ID_MISMATCH");
@@ -274,7 +274,18 @@ public final class CityDecorationWorldgenRegistry {
         Path server = normalized(serverRoot, "CITY_DECORATION_SERVER_ROOT_REQUIRED");
         Path catalogPath = catalogRoot == null ? null
                 : normalized(catalogRoot, "CITY_DECORATION_CATALOG_ROOT_REQUIRED");
-        LoadedState loaded = readState(server, catalogPath, excludedKey, true);
+        LoadedState loaded;
+        boolean resetObsoleteState = false;
+        try {
+            loaded = readState(server, catalogPath, excludedKey, true);
+        } catch (IllegalArgumentException obsoleteState) {
+            if (!isObsoleteRegistryFailure(obsoleteState)) throw obsoleteState;
+            List<Path> quarantined = quarantineObsoleteRegistryFiles(server);
+            LOGGER.warn("Ignored obsolete City decoration registry state and started with an empty current registry: files={}, reason={}",
+                    quarantined, obsoleteState.getMessage());
+            loaded = readState(server, catalogPath, excludedKey, true);
+            resetObsoleteState = true;
+        }
         ACTIVE.clear();
         ACTIVE.putAll(loaded.activePlans());
         SUPPRESSIONS.clear();
@@ -288,6 +299,9 @@ public final class CityDecorationWorldgenRegistry {
         nextLedgerPersistenceRetryNanos = 0L;
         ledgerMutationVersion = 0L;
         ledgerPersistenceInProgress = false;
+        if (resetObsoleteState) {
+            persistActive();
+        }
         if (loaded.staleCatalogPlanCount() > 0) {
             persistActive();
             LOGGER.warn("Discarded {} stale City decoration active plan(s) after catalog change; replan before activation.",
@@ -296,8 +310,31 @@ public final class CityDecorationWorldgenRegistry {
         if (!loaded.ledgerExists()) {
             persistLedger();
         }
-        LOGGER.info("Loaded City decoration v0.4 registry: activePlans={}, appliedFragments={}",
+        LOGGER.info("Loaded City decoration registry: activePlans={}, appliedFragments={}",
                 ACTIVE.size(), appliedEntries().size());
+    }
+
+    private static List<Path> quarantineObsoleteRegistryFiles(Path server) {
+        List<Path> quarantined = new ArrayList<>();
+        String suffix = ".obsolete-" + Instant.now().toEpochMilli();
+        for (Path source : List.of(activePath(server), ledgerPath(server))) {
+            if (!Files.isRegularFile(source)) continue;
+            Path target = source.resolveSibling(source.getFileName() + suffix);
+            try {
+                Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+                quarantined.add(target);
+            } catch (IOException ex) {
+                throw new IllegalStateException("CITY_DECORATION_OBSOLETE_REGISTRY_QUARANTINE_FAILED: " + source, ex);
+            }
+        }
+        return List.copyOf(quarantined);
+    }
+
+    private static boolean isObsoleteRegistryFailure(IllegalArgumentException failure) {
+        String message = failure.getMessage() == null ? "" : failure.getMessage();
+        return message.contains("CITY_DECORATION_RUNTIME_FIELD_REQUIRED: schema")
+                || message.contains("CITY_DECORATION_ACTIVE_PLAN_SCHEMA_UNSUPPORTED")
+                || message.contains("CITY_DECORATION_LEDGER_SCHEMA_UNSUPPORTED");
     }
 
     private static LoadedState readState(Path server,
@@ -653,7 +690,7 @@ public final class CityDecorationWorldgenRegistry {
 
     public static synchronized JsonObject activeSummary() {
         JsonObject summary = new JsonObject();
-        summary.addProperty("schemaVersion", "city_active_decoration_summary.v0.4");
+        summary.addProperty("schema", "city_active_decoration_summary");
         summary.addProperty("activePlanCount", ACTIVE.size());
         summary.addProperty("appliedFragmentCount", appliedEntries().size());
         summary.addProperty("fragmentOutcomeCount", outcomeEntries().size());
@@ -1040,7 +1077,7 @@ public final class CityDecorationWorldgenRegistry {
 
     private static JsonObject emptyActivePlans() {
         JsonObject root = new JsonObject();
-        root.addProperty("schemaVersion", ACTIVE_SCHEMA);
+        root.addProperty("schema", ACTIVE_SCHEMA);
         root.add("plans", new JsonArray());
         return root;
     }
@@ -1185,21 +1222,21 @@ public final class CityDecorationWorldgenRegistry {
 
     private static JsonObject emptyLedger() {
         JsonObject root = new JsonObject();
-        root.addProperty("schemaVersion", LEDGER_SCHEMA);
+        root.addProperty("schema", LEDGER_SCHEMA);
         root.add("appliedFragments", new JsonArray());
         root.add("fragmentOutcomes", new JsonArray());
         return root;
     }
 
     private static void requireSchema(JsonObject object, String expected, String reasonCode) {
-        String actual = requiredString(object, "schemaVersion");
+        String actual = requiredString(object, "schema");
         if (!expected.equals(actual)) {
             throw new IllegalArgumentException(reasonCode + ": " + actual);
         }
     }
 
     private static String requireOneOfSchemas(JsonObject object, String reasonCode, String... supported) {
-        String actual = requiredString(object, "schemaVersion");
+        String actual = requiredString(object, "schema");
         for (String expected : supported) {
             if (expected.equals(actual)) {
                 return actual;

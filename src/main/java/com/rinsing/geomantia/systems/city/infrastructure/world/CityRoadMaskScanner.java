@@ -14,13 +14,13 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public final class CityRoadMaskScanner {
-    public static final String SCHEMA = "city_actual_road_mask.v0.2";
+    public static final String SCHEMA = "city_actual_road_mask";
     public static final int DEFAULT_ROAD_SCAN_MARGIN_BLOCKS = 8;
 
     public JsonObject scan(ServerLevel level, JsonObject wallReservationPlan, int roadScanMarginBlocks) {
         int margin = roadScanMarginBlocks <= 0 ? DEFAULT_ROAD_SCAN_MARGIN_BLOCKS : roadScanMarginBlocks;
         JsonObject mask = new JsonObject();
-        mask.addProperty("schemaVersion", SCHEMA);
+        mask.addProperty("schema", SCHEMA);
         mask.addProperty("roadMaskSource", "actual_world_blocks");
         mask.addProperty("roadScanMarginBlocks", margin);
         mask.addProperty("cityId", stringValue(wallReservationPlan, "cityId", "unknown_city"));

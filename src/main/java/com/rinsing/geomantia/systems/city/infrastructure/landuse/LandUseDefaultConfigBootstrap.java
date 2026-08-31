@@ -10,7 +10,7 @@ import java.util.Map;
 public final class LandUseDefaultConfigBootstrap {
     private static final Map<String, String> DEFAULT_FILES = Map.of(
             "settings.json", "/geomantia/default_config/city_land_use/settings.json",
-            "profiles/default_v0_1.json", "/geomantia/default_config/city_land_use/profiles/default_v0_1.json");
+            "profiles/default.json", "/geomantia/default_config/city_land_use/profiles/default.json");
 
     private LandUseDefaultConfigBootstrap() {
     }

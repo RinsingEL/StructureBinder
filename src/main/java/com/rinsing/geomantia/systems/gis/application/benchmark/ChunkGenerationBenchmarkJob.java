@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public final class ChunkGenerationBenchmarkJob {
-    public static final String SCHEMA_VERSION = "gis_chunk_generation_benchmark.v0.1";
+    public static final String SCHEMA = "gis_chunk_generation_benchmark";
 
     private final String jobId;
     private final String dimensionId;
@@ -134,7 +134,7 @@ public final class ChunkGenerationBenchmarkJob {
         long elapsedMs = elapsedMs(terminal() ? finishedAtNanos : nowNanos);
         int completed = completedChunks.size();
         JsonObject root = new JsonObject();
-        root.addProperty("schemaVersion", SCHEMA_VERSION);
+        root.addProperty("schema", SCHEMA);
         root.addProperty("ok", "running".equals(status) || "completed".equals(status));
         root.addProperty("jobId", jobId);
         root.addProperty("status", status);

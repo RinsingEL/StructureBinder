@@ -48,7 +48,7 @@ public final class CityDecorationAnchorCandidatePreviewRenderer {
                 .orElseThrow(() -> new IllegalArgumentException(
                         "CITY_DECORATION_ANCHOR_CANDIDATE_PROGRAM_UNKNOWN: " + programId));
         if (!CityDecorationAnchorCandidatePlanner.CANDIDATE_SET_SCHEMA.equals(
-                requiredString(candidateSet, "schemaVersion"))) {
+                requiredString(candidateSet, "schema"))) {
             throw new IllegalArgumentException("CITY_DECORATION_ANCHOR_CANDIDATE_SET_SCHEMA_UNSUPPORTED");
         }
 
@@ -60,7 +60,7 @@ public final class CityDecorationAnchorCandidatePreviewRenderer {
         renderImage(program, plan.hardObstacles(), fixedDecorations, candidates, imagePath);
 
         JsonObject result = new JsonObject();
-        result.addProperty("schemaVersion", "city_decoration_anchor_candidate_preview.v0.1");
+        result.addProperty("schema", "city_decoration_anchor_candidate_preview");
         result.addProperty("cityId", plan.cityId());
         result.addProperty("programId", programId);
         result.addProperty("fileName", imagePath.getFileName().toString());

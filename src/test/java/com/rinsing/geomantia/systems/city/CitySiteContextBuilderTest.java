@@ -150,7 +150,7 @@ class CitySiteContextBuilderTest {
                 40, 4, null);
 
         assertEquals(CityScale.HAMLET, ctx.scaleClass());
-        assertEquals(CitySiteContext.CURRENT_SCHEMA_VERSION, ctx.schemaVersion());
+        assertEquals(CitySiteContext.SCHEMA, ctx.schema());
         assertEquals(5, ctx.entryCandidates().size());
         assertTrue(ctx.planningRadiusBlocks() >= 160 && ctx.planningRadiusBlocks() <= 240);
         assertEquals(TerritoryCheckResult.UNKNOWN, ctx.territoryCheckResult());

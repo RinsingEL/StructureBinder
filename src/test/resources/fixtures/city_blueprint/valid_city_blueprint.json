@@ -1,14 +1,14 @@
 {
-  "schemaVersion": "city_blueprint.v0.12",
+  "schema": "city_blueprint",
   "cityId": "city:test",
   "sourceD3Ref": {
     "path": "run/city_d3_city_test/city_landform_review_package.json",
-    "schemaVersion": "city_landform_review.v0.1",
+    "schema": "city_landform_review",
     "contentHash": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
   },
   "catalogSnapshotRef": {
     "path": "run/city_blueprint_city_test/city_blueprint_catalog_snapshot.json",
-    "schemaVersion": "city_blueprint_catalog_snapshot.v0.10",
+    "schema": "city_blueprint_catalog_snapshot",
     "contentHash": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
   },
   "generationSeed": 42,

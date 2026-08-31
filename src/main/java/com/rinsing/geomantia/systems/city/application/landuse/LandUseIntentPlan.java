@@ -15,7 +15,7 @@ public record LandUseIntentPlan(
         List<SurfaceAlgorithmDefault> surfaceAlgorithmDefaults,
         List<SurfaceOverride> surfaceOverrides) {
 
-    public static final String SCHEMA = "city_land_use_intent_plan.v0.3";
+    public static final String SCHEMA = "city_land_use_intent_plan";
 
     public LandUseIntentPlan {
         if (cityId == null || cityId.isBlank()) throw new IllegalArgumentException("cityId is required");

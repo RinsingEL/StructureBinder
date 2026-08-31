@@ -17,10 +17,10 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Set;
 
-/** Strict current-only JSON codec and canonical hash owner for SurfacePrintPlan v0.7. */
+/** Strict current-only JSON codec and canonical hash owner for SurfacePrintPlan. */
 public final class CityLandUseSurfacePrintPlanCodec {
     private static final Set<String> ROOT_FIELDS = Set.of(
-            "schemaVersion", "cityId", "sourceLandUsePlanHash", "planHash", "areas",
+            "schema", "cityId", "sourceLandUsePlanHash", "planHash", "areas",
             "sharedBoundarySpans", "featureCells");
     private static final Set<String> FEATURE_FIELDS = Set.of(
             "sourceId", "x", "z", "blockId", "surfaceOffset", "kind", "facing");
@@ -71,7 +71,7 @@ public final class CityLandUseSurfacePrintPlanCodec {
 
     public JsonObject toJson(CityLandUseSurfacePrintPlan plan) {
         JsonObject root = new JsonObject();
-        root.addProperty("schemaVersion", plan.schemaVersion());
+        root.addProperty("schema", plan.schema());
         root.addProperty("cityId", plan.cityId());
         root.addProperty("sourceLandUsePlanHash", plan.sourceLandUsePlanHash());
         if (!plan.planHash().isBlank()) root.addProperty("planHash", plan.planHash());
@@ -109,9 +109,9 @@ public final class CityLandUseSurfacePrintPlanCodec {
 
     public CityLandUseSurfacePrintPlan fromJson(JsonObject root) {
         requireObject(root, "root");
-        String schemaVersion = text(root, "schemaVersion", false);
-        if (!CityLandUseSurfacePrintPlan.CURRENT_SCHEMA_VERSION.equals(schemaVersion)) {
-            throw fail("CITY_LAND_USE_SURFACE_PRINT_SCHEMA_UNSUPPORTED", schemaVersion);
+        String schema = text(root, "schema", false);
+        if (!CityLandUseSurfacePrintPlan.SCHEMA.equals(schema)) {
+            throw fail("CITY_LAND_USE_SURFACE_PRINT_SCHEMA_UNSUPPORTED", schema);
         }
         rejectUnknown(root, ROOT_FIELDS, "root");
         List<CityLandUseSurfacePrintPlan.AreaPrint> areas = new ArrayList<>();
@@ -136,7 +136,7 @@ public final class CityLandUseSurfacePrintPlanCodec {
                             text(value, "facing", false))));
         }
         CityLandUseSurfacePrintPlan plan = new CityLandUseSurfacePrintPlan(
-                schemaVersion, text(root, "cityId", false), text(root, "sourceLandUsePlanHash", false),
+                schema, text(root, "cityId", false), text(root, "sourceLandUsePlanHash", false),
                 optionalText(root, "planHash"), areas, shared, features);
         if (!plan.planHash().isBlank() && !plan.planHash().equals(computePlanHash(plan))) {
             throw fail("CITY_LAND_USE_SURFACE_PRINT_PLAN_HASH_MISMATCH", "planHash does not match payload");

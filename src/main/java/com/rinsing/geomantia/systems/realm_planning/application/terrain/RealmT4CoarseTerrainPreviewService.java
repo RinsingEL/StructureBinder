@@ -29,7 +29,7 @@ import java.util.Objects;
 
 /** Builds an advisory, generation-prior terrain preview over one realm's T3 owned cells. */
 public final class RealmT4CoarseTerrainPreviewService {
-    public static final String SCHEMA_VERSION = "realm_t4_coarse_terrain_evidence.v0.1";
+    public static final String SCHEMA = "realm_t4_coarse_terrain_evidence";
     public static final String REQUIRED_NEXT_GATE = "city_d3_site_review";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final int[][] CARDINAL = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
@@ -120,7 +120,7 @@ public final class RealmT4CoarseTerrainPreviewService {
                 return null;
             }
             JsonObject evidence = readObject(evidencePath, "");
-            if (!SCHEMA_VERSION.equals(stringValue(evidence, "schemaVersion", ""))
+            if (!SCHEMA.equals(stringValue(evidence, "schema", ""))
                     || !cacheKey.equals(stringValue(evidence, "sourceIdentity", ""))) {
                 return null;
             }
@@ -184,7 +184,7 @@ public final class RealmT4CoarseTerrainPreviewService {
             TerrainPreviewProviderSelection selection, Map<String, SampleCell> cells, Path previewPath,
             Path runDirectory) {
         JsonObject root = new JsonObject();
-        root.addProperty("schemaVersion", SCHEMA_VERSION);
+        root.addProperty("schema", SCHEMA);
         root.addProperty("runId", runId);
         root.addProperty("realmId", realmId);
         root.addProperty("dimensionId", dimensionId);
@@ -352,7 +352,7 @@ public final class RealmT4CoarseTerrainPreviewService {
 
     private static String sourceIdentity(String runId, String realmId, String dimensionId, int step,
             String territoryIdentity, String contextIdentity, TerrainPreviewProviderSelection selection) {
-        return "sha256:" + sha256(String.join("\n", SCHEMA_VERSION, runId, realmId, dimensionId,
+        return "sha256:" + sha256(String.join("\n", SCHEMA, runId, realmId, dimensionId,
                 Integer.toString(step), territoryIdentity, contextIdentity, selection.providerId(),
                 selection.sourceKind(), Boolean.toString(selection.fastPath()), selection.fallbackReason(),
                 selection.sourceFingerprint(), selection.samplingSemantics()));

@@ -252,13 +252,13 @@ public final class PreviewExporter {
         root.put("sampleMode", job.sampleMode().contractName());
         root.put("sourceCounts", sourceCounts);
         root.put("atlasVersion", GisAtlasConstants.ATLAS_VERSION);
-        root.put("configVersion", GisAtlasConstants.CONFIG_VERSION);
+        root.put("configId", GisAtlasConstants.CONFIG_ID);
         root.put("generatedAt", System.currentTimeMillis());
         root.put("layers", layers);
         root.put("legend", legendFile);
         root.put("hasEdgeDirty", edgeDirty);
         root.put("unknownCellCount", unknown);
-        root.put("notes", "GIS v1 debug preview; JSON is not the production atlas cache.");
+        root.put("notes", "GIS current debug preview; JSON is not the production atlas cache.");
         Files.writeString(path, AtlasJson.GSON.toJson(root));
     }
 

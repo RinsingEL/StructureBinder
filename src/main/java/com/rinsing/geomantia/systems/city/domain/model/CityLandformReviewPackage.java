@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public record CityLandformReviewPackage(
-        String schemaVersion,
+        String schema,
         String cityId,
         PlanningGrid grid,
         TargetScale targetScale,
@@ -23,10 +23,10 @@ public record CityLandformReviewPackage(
         String aiPromptContext,
         List<String> debugRefs) {
 
-    public static final String CURRENT_SCHEMA_VERSION = "city_landform_review.v0.1";
+    public static final String SCHEMA = "city_landform_review";
 
     public CityLandformReviewPackage {
-        if (schemaVersion == null) throw new IllegalArgumentException("schemaVersion is required");
+        if (schema == null) throw new IllegalArgumentException("schema is required");
         if (cityId == null || cityId.isBlank()) throw new IllegalArgumentException("cityId is required");
         if (grid == null) throw new IllegalArgumentException("grid is required");
         if (targetScale == null) throw new IllegalArgumentException("targetScale is required");
@@ -48,7 +48,7 @@ public record CityLandformReviewPackage(
 
     public CityLandformReviewPackage withReviewMap(String reviewMapImage, List<String> debugRefs) {
         return new CityLandformReviewPackage(
-                schemaVersion,
+                schema,
                 cityId,
                 grid,
                 targetScale,
@@ -62,7 +62,7 @@ public record CityLandformReviewPackage(
 
     public JsonObject asJson() {
         JsonObject obj = new JsonObject();
-        obj.addProperty("schemaVersion", schemaVersion);
+        obj.addProperty("schema", schema);
         obj.addProperty("cityId", cityId);
         obj.add("grid", grid.asJson());
 
@@ -159,7 +159,7 @@ public record CityLandformReviewPackage(
         PlanningGrid grid = gridFromJson(requiredObject(obj, "grid"));
         TargetScale targetScale = targetScaleFromJson(requiredObject(obj, "targetScale"));
         return new CityLandformReviewPackage(
-                requiredString(obj, "schemaVersion"),
+                requiredString(obj, "schema"),
                 requiredString(obj, "cityId"),
                 grid,
                 targetScale,

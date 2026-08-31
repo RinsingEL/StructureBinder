@@ -26,7 +26,7 @@ export function beginMcpCall(toolName: string, args: Record<string, unknown>): M
     monotonicStartedAtMs: performance.now(),
   };
   append({
-    schemaVersion: "geomantia_mcp_call_log.v0.2",
+    schema: "geomantia_mcp_call_log",
     eventType: "mcp_call_started",
     callId: context.callId,
     recordedAt: context.startedAt,
@@ -47,7 +47,7 @@ export function completeMcpCall(
 ) {
   const endedAtEpochMs = Date.now();
   append({
-    schemaVersion: "geomantia_mcp_call_log.v0.2",
+    schema: "geomantia_mcp_call_log",
     eventType: "mcp_call_completed",
     callId: context.callId,
     recordedAt: new Date(endedAtEpochMs).toISOString(),

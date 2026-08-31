@@ -36,7 +36,7 @@ public final class LandUseAreaPlanCodec {
 
     public JsonObject toJson(LandUseAreaPlan plan) {
         JsonObject obj = new JsonObject();
-        obj.addProperty("schemaVersion", plan.schemaVersion());
+        obj.addProperty("schema", plan.schema());
         obj.addProperty("ruleVersion", plan.ruleVersion());
         obj.addProperty("cityId", plan.cityId());
         if (!plan.planHash().isBlank()) obj.addProperty("planHash", plan.planHash());
@@ -89,7 +89,7 @@ public final class LandUseAreaPlanCodec {
                     requiredString(value, "writerAreaId"), requiredString(value, "neighborAreaId"),
                     LandUseAreaPlan.SharedBoundaryRelation.valueOf(requiredString(value, "relation"))));
         }
-        LandUseAreaPlan plan = new LandUseAreaPlan(requiredString(obj, "schemaVersion"),
+        LandUseAreaPlan plan = new LandUseAreaPlan(requiredString(obj, "schema"),
                 requiredString(obj, "ruleVersion"), requiredString(obj, "cityId"),
                 stringValue(obj, "planHash", ""), bounds(requiredObject(obj, "planningBounds")), areas,
                 shared, spans(requiredArray(obj, "unclaimedSpans")), corridors,

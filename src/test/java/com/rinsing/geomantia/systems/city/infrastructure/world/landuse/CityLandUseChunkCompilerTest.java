@@ -37,7 +37,7 @@ class CityLandUseChunkCompilerTest {
                 List.of(), List.of(entrance), 16, SurfacePolicy.PAVE,
                 VegetationPolicy.CLEAR, BoundaryPolicy.OPEN, "foundation");
         LandUseAreaPlan areaPlan = new LandUseAreaPlanCodec().withComputedHash(new LandUseAreaPlan(
-                LandUseAreaPlan.CURRENT_SCHEMA_VERSION, "land_use_rules.v0.1", "city_foundation", "",
+                LandUseAreaPlan.SCHEMA, "land_use_rules", "city_foundation", "",
                 new BlockBounds(0, 0, 15, 15), List.of(area), List.of(), List.of(), List.of()));
 
         CityLandUseChunkCompiler.ChunkFragment fragment = compiler.compile(
@@ -124,21 +124,21 @@ class CityLandUseChunkCompilerTest {
                 List.of(new LandUseAreaPlan.ScanlineSpan(0, 0, 3)));
         CityLandUseSurfacePrintPlan valid = uniformPlan(areaPlan);
         CityLandUseSurfacePrintPlan changedBehindHash = new CityLandUseSurfacePrintPlan(
-                valid.schemaVersion(), valid.cityId(), valid.sourceLandUsePlanHash(),
+                valid.schema(), valid.cityId(), valid.sourceLandUsePlanHash(),
                 valid.planHash(), List.of());
         assertTrue(assertThrows(IllegalArgumentException.class,
                 () -> compiler.compile(areaPlan, changedBehindHash, 0, 0))
                 .getMessage().contains("CITY_LAND_USE_SURFACE_PRINT_PLAN_HASH_MISMATCH"));
 
         CityLandUseSurfacePrintPlan wrongCity = new CityLandUseSurfacePrintPlanCodec().withComputedHash(
-                new CityLandUseSurfacePrintPlan(valid.schemaVersion(), "other_city",
+                new CityLandUseSurfacePrintPlan(valid.schema(), "other_city",
                         valid.sourceLandUsePlanHash(), "", valid.areas()));
         assertTrue(assertThrows(IllegalArgumentException.class,
                 () -> compiler.compile(areaPlan, wrongCity, 0, 0))
                 .getMessage().contains("CITY_LAND_USE_SURFACE_PRINT_CITY_MISMATCH"));
 
         CityLandUseSurfacePrintPlan wrongSource = new CityLandUseSurfacePrintPlanCodec().withComputedHash(
-                new CityLandUseSurfacePrintPlan(valid.schemaVersion(), valid.cityId(),
+                new CityLandUseSurfacePrintPlan(valid.schema(), valid.cityId(),
                         "other-land-use-hash", "", valid.areas()));
         assertTrue(assertThrows(IllegalArgumentException.class,
                 () -> compiler.compile(areaPlan, wrongSource, 0, 0))
@@ -192,7 +192,7 @@ class CityLandUseChunkCompilerTest {
                 List.of(), 10, SurfacePolicy.CULTIVATE, VegetationPolicy.CLEAR,
                 BoundaryPolicy.FENCE, "area");
         LandUseAreaPlan areaPlan = new LandUseAreaPlanCodec().withComputedHash(new LandUseAreaPlan(
-                LandUseAreaPlan.CURRENT_SCHEMA_VERSION, "land_use_rules.v0.1", "city_boundary", "",
+                LandUseAreaPlan.SCHEMA, "land_use_rules", "city_boundary", "",
                 new BlockBounds(0, 0, 3, 0), List.of(area), List.of(), List.of(), List.of()));
         BlockPoint anchor = new BlockPoint(0, 0);
         LandUseSurfaceSettings settings = new LandUseSurfaceSettings(true, true,
@@ -233,7 +233,7 @@ class CityLandUseChunkCompilerTest {
         LandUseAreaPlan.SharedBoundarySpan shared = new LandUseAreaPlan.SharedBoundarySpan(0, 0, 0,
                 parent.areaId(), child.areaId(), LandUseAreaPlan.SharedBoundaryRelation.PARENT_CHILD);
         LandUseAreaPlan areaPlan = new LandUseAreaPlanCodec().withComputedHash(new LandUseAreaPlan(
-                LandUseAreaPlan.CURRENT_SCHEMA_VERSION, "land_use_rules.v0.1", "city_shared", "",
+                LandUseAreaPlan.SCHEMA, "land_use_rules", "city_shared", "",
                 new BlockBounds(0, 0, 15, 15), List.of(parent, child), List.of(shared),
                 List.of(), List.of(), List.of()));
         LandUseSurfaceSettings settings = new LandUseSurfaceSettings(true, true,
@@ -249,7 +249,7 @@ class CityLandUseChunkCompilerTest {
                         new CityLandUseSurfacePrintPlan.UniformRecipe(settings.surfaceBlockId(),
                                 settings.boundaryBlockId())));
         CityLandUseSurfacePrintPlan surfacePlan = new CityLandUseSurfacePrintPlanCodec().withComputedHash(
-                new CityLandUseSurfacePrintPlan(CityLandUseSurfacePrintPlan.CURRENT_SCHEMA_VERSION,
+                new CityLandUseSurfacePrintPlan(CityLandUseSurfacePrintPlan.SCHEMA,
                         areaPlan.cityId(), areaPlan.planHash(), "", prints,
                         List.of(new CityLandUseSurfacePrintPlan.SharedBoundaryPrintSpan(0, 0, 0,
                                 parent.areaId(), child.areaId(),
@@ -270,7 +270,7 @@ class CityLandUseChunkCompilerTest {
         LandUseAreaPlan.SharedBoundarySpan shared = new LandUseAreaPlan.SharedBoundarySpan(0, 15, 15,
                 parent.areaId(), child.areaId(), LandUseAreaPlan.SharedBoundaryRelation.PARENT_CHILD);
         LandUseAreaPlan areaPlan = new LandUseAreaPlanCodec().withComputedHash(new LandUseAreaPlan(
-                LandUseAreaPlan.CURRENT_SCHEMA_VERSION, "land_use_rules.v0.1", "city_shared_chunks", "",
+                LandUseAreaPlan.SCHEMA, "land_use_rules", "city_shared_chunks", "",
                 new BlockBounds(0, 0, 31, 15), List.of(parent, child), List.of(shared),
                 List.of(), List.of(), List.of()));
         LandUseSurfaceSettings settings = new LandUseSurfaceSettings(true, true,
@@ -286,7 +286,7 @@ class CityLandUseChunkCompilerTest {
                         new CityLandUseSurfacePrintPlan.UniformRecipe(settings.surfaceBlockId(),
                                 settings.boundaryBlockId())));
         CityLandUseSurfacePrintPlan surfacePlan = new CityLandUseSurfacePrintPlanCodec().withComputedHash(
-                new CityLandUseSurfacePrintPlan(CityLandUseSurfacePrintPlan.CURRENT_SCHEMA_VERSION,
+                new CityLandUseSurfacePrintPlan(CityLandUseSurfacePrintPlan.SCHEMA,
                         areaPlan.cityId(), areaPlan.planHash(), "", prints,
                         List.of(new CityLandUseSurfacePrintPlan.SharedBoundaryPrintSpan(0, 15, 15,
                                 parent.areaId(), child.areaId(),
@@ -307,7 +307,7 @@ class CityLandUseChunkCompilerTest {
                 List.of(new LandUseAreaPlan.ScanlineSpan(0, 0, 31)));
         CityLandUseSurfacePrintPlan base = uniformPlan(areaPlan);
         CityLandUseSurfacePrintPlan plan = new CityLandUseSurfacePrintPlanCodec().withComputedHash(
-                new CityLandUseSurfacePrintPlan(base.schemaVersion(), base.cityId(),
+                new CityLandUseSurfacePrintPlan(base.schema(), base.cityId(),
                         base.sourceLandUsePlanHash(), "", base.areas(), base.sharedBoundarySpans(), List.of(
                         new CityLandUseSurfacePrintPlan.FeatureCell("road", 15, 0,
                                 "minecraft:stone_brick_slab", 0,
@@ -408,7 +408,7 @@ class CityLandUseChunkCompilerTest {
                 List.of(), 10, SurfacePolicy.PAVE, VegetationPolicy.CLEAR,
                 BoundaryPolicy.FENCE, "greenbelt");
         LandUseAreaPlan areaPlan = new LandUseAreaPlanCodec().withComputedHash(new LandUseAreaPlan(
-                LandUseAreaPlan.CURRENT_SCHEMA_VERSION, "land_use_rules.v0.1", "city_frozen_boundary", "",
+                LandUseAreaPlan.SCHEMA, "land_use_rules", "city_frozen_boundary", "",
                 new BlockBounds(0, 0, 3, 0), List.of(area), List.of(), List.of(), List.of()));
         LandUseSurfaceSettings settings = LandUseSurfaceSettings.defaults(SurfacePolicy.PAVE)
                 .withOverrides(true, true, LandUseSurfaceSettings.SurfaceAlgorithm.UNIFORM,
@@ -435,7 +435,7 @@ class CityLandUseChunkCompilerTest {
                 members, List.of(), List.of(), List.of(), 10, policy,
                 VegetationPolicy.CLEAR, BoundaryPolicy.OPEN, "area");
         return new LandUseAreaPlanCodec().withComputedHash(new LandUseAreaPlan(
-                LandUseAreaPlan.CURRENT_SCHEMA_VERSION, "land_use_rules.v0.1", cityId, "",
+                LandUseAreaPlan.SCHEMA, "land_use_rules", cityId, "",
                 new BlockBounds(0, 0, 31, 15), List.of(area), List.of(), List.of(), List.of()));
     }
 
@@ -458,7 +458,7 @@ class CityLandUseChunkCompilerTest {
             LandUseAreaPlan areaPlan,
             List<CityLandUseSurfacePrintPlan.AreaPrint> areas) {
         return new CityLandUseSurfacePrintPlanCodec().withComputedHash(
-                new CityLandUseSurfacePrintPlan(CityLandUseSurfacePrintPlan.CURRENT_SCHEMA_VERSION,
+                new CityLandUseSurfacePrintPlan(CityLandUseSurfacePrintPlan.SCHEMA,
                         areaPlan.cityId(), areaPlan.planHash(), "", areas));
     }
 

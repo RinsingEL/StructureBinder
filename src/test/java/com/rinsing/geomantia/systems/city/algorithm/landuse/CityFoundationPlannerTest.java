@@ -125,7 +125,7 @@ class CityFoundationPlannerTest {
     }
 
     private static LandUseTerrainField terrain(List<LandUseTerrainField.Cell> cells) {
-        return new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION, "city", bounds(), 1, cells);
+        return new LandUseTerrainField(LandUseTerrainField.SCHEMA, "city", bounds(), 1, cells);
     }
 
     private static LandUseTerrainField.Cell cell(int x, int z, boolean water) {

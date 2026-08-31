@@ -77,7 +77,7 @@ Export only the TerraSense semantic package; this does not write a world or emit
 
 ```powershell
 python tools/city_templates/import_trek_fixed_templates.py `
-  --profile-dir "run/config/structureTemplate/terrasense/geomantia_trek_fixed_b0_6_v1"
+  --profile-dir "run/config/structureTemplate/terrasense/geomantia_trek_fixed_b0_6"
 ```
 
 The profile package contains `StructureProfile.jsonl`, a complete frozen vocabulary snapshot, and

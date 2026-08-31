@@ -37,8 +37,8 @@ class CityLandformReviewBuilderTest {
 
         CityLandformReviewPackage pkg = reviewBuilder.build(ctx, List.of(p1, p2, p3, p4));
 
-        assertNotNull(pkg.schemaVersion());
-        assertEquals(CityLandformReviewPackage.CURRENT_SCHEMA_VERSION, pkg.schemaVersion());
+        assertNotNull(pkg.schema());
+        assertEquals(CityLandformReviewPackage.SCHEMA, pkg.schema());
         assertEquals("city_full", pkg.cityId());
         assertEquals(ctx.grid(), pkg.grid());
         assertNotNull(pkg.targetScale());
@@ -200,7 +200,7 @@ class CityLandformReviewBuilderTest {
         CityLandformReviewPackage pkg = reviewBuilder.build(ctx, List.of(p1));
         String json = pkg.asJson().toString();
 
-        assertTrue(json.contains("city_landform_review.v0.1"));
+        assertTrue(json.contains("city_landform_review"));
         assertTrue(json.contains("city_json"));
         assertTrue(json.contains("landformPatches"));
         assertTrue(json.contains("legend"));

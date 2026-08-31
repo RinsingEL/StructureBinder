@@ -27,7 +27,7 @@ import java.security.NoSuchAlgorithmException;
 
 /** Deterministic D4 terrain-fit reservation for required Landscape instances. */
 public final class CityLandscapeCapacityReservationPlanner {
-    public static final String SCHEMA_VERSION = "city_landscape_capacity_reservation_plan.v0.2";
+    public static final String SCHEMA = "city_landscape_capacity_reservation_plan";
     public static final int CANDIDATES_PER_INSTANCE = 32;
     public static final int SEARCH_NODE_LIMIT = 100_000;
     private static final int[][] DIRECTIONS = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
@@ -882,7 +882,7 @@ public final class CityLandscapeCapacityReservationPlanner {
 
     private static JsonObject basePlan(CityBlueprint blueprint, String status, int nodes) {
         JsonObject root = new JsonObject();
-        root.addProperty("schemaVersion", SCHEMA_VERSION);
+        root.addProperty("schema", SCHEMA);
         root.addProperty("cityId", blueprint.cityId());
         root.addProperty("sourceBlueprintHash", hash(new CityBlueprintCodec().write(blueprint)));
         root.addProperty("status", status);

@@ -99,7 +99,7 @@ public final class CityLandUseSurfacePrintPlanner {
                             span.maxX(), span.writerAreaId(), span.neighborAreaId(), span.relation(), block);
                 }).toList();
         CityLandUseSurfacePrintPlan raw = new CityLandUseSurfacePrintPlan(
-                CityLandUseSurfacePrintPlan.CURRENT_SCHEMA_VERSION, landUsePlan.cityId(),
+                CityLandUseSurfacePrintPlan.SCHEMA, landUsePlan.cityId(),
                 landUsePlan.planHash(), "", prints, shared,
                 featureCells(roadBands, greenParcels, overflowZones));
         return new CityLandUseSurfacePrintPlanCodec().withComputedHash(raw);

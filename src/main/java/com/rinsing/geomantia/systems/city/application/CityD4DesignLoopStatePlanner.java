@@ -13,14 +13,14 @@ import java.util.List;
 import java.util.Locale;
 
 public final class CityD4DesignLoopStatePlanner {
-    public static final String STATE_SCHEMA = "city_d4_design_loop_state.v0.1";
-    public static final String OCCUPIED_FIELD_SCHEMA = "city_d4_design_loop_occupied_field.v0.1";
-    public static final String FUNCTION_ZONES_SCHEMA = "city_d4_design_loop_function_zones.v0.1";
-    public static final String ARRAY_ZONES_SCHEMA = "city_d4_design_loop_array_zones.v0.1";
-    public static final String PATCH_AVAILABILITY_SCHEMA = "city_d4_design_loop_patch_availability.v0.1";
-    public static final String TRACE_SCHEMA = "city_d4_design_loop_execution_trace.v0.1";
-    public static final String SUMMARY_SCHEMA = "city_d4_design_loop_next_ai_context_summary.v0.1";
-    public static final String DEFAULT_PLANNING_MODE = "d4_multi_round_design_loop_v0_1";
+    public static final String STATE_SCHEMA = "city_d4_design_loop_state";
+    public static final String OCCUPIED_FIELD_SCHEMA = "city_d4_design_loop_occupied_field";
+    public static final String FUNCTION_ZONES_SCHEMA = "city_d4_design_loop_function_zones";
+    public static final String ARRAY_ZONES_SCHEMA = "city_d4_design_loop_array_zones";
+    public static final String PATCH_AVAILABILITY_SCHEMA = "city_d4_design_loop_patch_availability";
+    public static final String TRACE_SCHEMA = "city_d4_design_loop_execution_trace";
+    public static final String SUMMARY_SCHEMA = "city_d4_design_loop_next_ai_context_summary";
+    public static final String DEFAULT_PLANNING_MODE = "d4_multi_round_design_loop";
 
     public CreateResult create(CityLandformReviewPackage reviewPackage,
                                JsonObject options,
@@ -32,7 +32,7 @@ public final class CityD4DesignLoopStatePlanner {
         String cityId = stringValue(config, "cityId", reviewPackage.cityId());
         String planningMode = stringValue(config, "planningMode", DEFAULT_PLANNING_MODE);
         JsonObject state = new JsonObject();
-        state.addProperty("schemaVersion", STATE_SCHEMA);
+        state.addProperty("schema", STATE_SCHEMA);
         state.addProperty("cityId", cityId);
         state.addProperty("planningMode", planningMode);
         state.addProperty("loopId", cityId + "/d4_design_loop");
@@ -97,7 +97,7 @@ public final class CityD4DesignLoopStatePlanner {
     }
 
     public JsonObject normalizeForWriteBack(JsonObject currentState) {
-        if (currentState == null || !STATE_SCHEMA.equals(stringValue(currentState, "schemaVersion"))) {
+        if (currentState == null || !STATE_SCHEMA.equals(stringValue(currentState, "schema"))) {
             throw new IllegalArgumentException("D4_DESIGN_LOOP_STATE_REQUIRED: current design loop state is required.");
         }
         JsonObject state = currentState.deepCopy();
@@ -206,7 +206,7 @@ public final class CityD4DesignLoopStatePlanner {
     private void refreshDerivedState(JsonObject state, JsonObject requestedSummary) {
         JsonArray occupied = rebuildOccupiedField(state);
         JsonObject occupiedField = new JsonObject();
-        occupiedField.addProperty("schemaVersion", OCCUPIED_FIELD_SCHEMA);
+        occupiedField.addProperty("schema", OCCUPIED_FIELD_SCHEMA);
         occupiedField.addProperty("cityId", stringValue(state, "cityId"));
         occupiedField.addProperty("planningMode", planningMode(state));
         occupiedField.addProperty("roundIndex", intValue(state, "roundIndex", 0));
@@ -243,7 +243,7 @@ public final class CityD4DesignLoopStatePlanner {
 
     private JsonObject patchAvailability(JsonObject state, JsonArray occupied) {
         JsonObject obj = new JsonObject();
-        obj.addProperty("schemaVersion", PATCH_AVAILABILITY_SCHEMA);
+        obj.addProperty("schema", PATCH_AVAILABILITY_SCHEMA);
         obj.addProperty("cityId", stringValue(state, "cityId"));
         obj.addProperty("planningMode", planningMode(state));
         obj.addProperty("roundIndex", intValue(state, "roundIndex", 0));
@@ -276,7 +276,7 @@ public final class CityD4DesignLoopStatePlanner {
     private JsonObject nextAiContextSummary(JsonObject state, JsonObject requestedSummary) {
         JsonObject summary = requestedSummary == null ? new JsonObject() : requestedSummary.deepCopy();
         stripRetiredEnvelopeFields(summary);
-        summary.addProperty("schemaVersion", SUMMARY_SCHEMA);
+        summary.addProperty("schema", SUMMARY_SCHEMA);
         summary.addProperty("cityId", stringValue(state, "cityId"));
         summary.addProperty("planningMode", planningMode(state));
         summary.addProperty("roundIndex", intValue(state, "roundIndex", 0));
@@ -328,7 +328,7 @@ public final class CityD4DesignLoopStatePlanner {
 
     private JsonObject trace(String planningMode) {
         JsonObject trace = new JsonObject();
-        trace.addProperty("schemaVersion", TRACE_SCHEMA);
+        trace.addProperty("schema", TRACE_SCHEMA);
         trace.addProperty("planningMode", planningMode);
         trace.add("rounds", new JsonArray());
         return trace;
@@ -336,14 +336,14 @@ public final class CityD4DesignLoopStatePlanner {
 
     private JsonObject zones(String schema, String planningMode, String arrayKey) {
         JsonObject obj = new JsonObject();
-        obj.addProperty("schemaVersion", schema);
+        obj.addProperty("schema", schema);
         obj.addProperty("planningMode", planningMode);
         obj.add(arrayKey, new JsonArray());
         return obj;
     }
 
     private void normalizeZones(JsonObject obj, String schema, String arrayKey) {
-        obj.addProperty("schemaVersion", schema);
+        obj.addProperty("schema", schema);
         if (!obj.has("planningMode")) {
             obj.addProperty("planningMode", DEFAULT_PLANNING_MODE);
         }

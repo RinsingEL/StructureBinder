@@ -90,7 +90,7 @@ class CityStructureTerrainGateTest {
     }
 
     private static LandUseTerrainField field(List<LandUseTerrainField.Cell> cells) {
-        return new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION, "city_test",
+        return new LandUseTerrainField(LandUseTerrainField.SCHEMA, "city_test",
                 new BlockBounds(0, 0, 31, 15), 16, cells);
     }
 

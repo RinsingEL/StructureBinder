@@ -1,6 +1,6 @@
 {
-  "schemaVersion": "city_land_use_rules.v0.1",
-  "profileId": "default_v0_1",
+  "schema": "city_land_use_rules",
+  "profileId": "default",
   "rules": [
     {"ruleRef":"agriculture","landUseType":"agriculture","semanticTerms":["agriculture","farm","farmland","farmstead","barn","crop","农","田"],"footprintMultiplier":6.0,"extraAreaBlocks":192,"minAreaBlocks":192,"maxAreaBlocks":4096,"actionBudget":520,"baseStepCost":1.0,"slopeCost":0.7,"reliefCost":0.8,"waterCost":5.0,"forestAffinity":0.0,"competitionWeight":1.0,"mergeSameType":true,"surfacePolicy":"CULTIVATE","vegetationPolicy":"CLEAR","boundaryPolicy":"FENCE","decorationPolicy":"agriculture"},
     {"ruleRef":"plaza","landUseType":"plaza","semanticTerms":["plaza","square","market_center","fountain","courtyard","广场","喷泉","庭院"],"footprintMultiplier":2.2,"extraAreaBlocks":96,"minAreaBlocks":96,"maxAreaBlocks":2048,"actionBudget":360,"baseStepCost":1.0,"slopeCost":1.2,"reliefCost":1.3,"waterCost":8.0,"forestAffinity":0.0,"competitionWeight":1.0,"mergeSameType":true,"surfacePolicy":"PAVE","vegetationPolicy":"CLEAR","boundaryPolicy":"OPEN","decorationPolicy":"plaza"},

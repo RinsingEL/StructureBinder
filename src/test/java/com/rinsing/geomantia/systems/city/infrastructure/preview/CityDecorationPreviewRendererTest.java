@@ -78,7 +78,7 @@ class CityDecorationPreviewRendererTest {
         CityDecorationPreviewRenderer renderer = new CityDecorationPreviewRenderer();
         JsonObject index = renderer.render(plan, slots, tempDir);
 
-        assertEquals("city_decoration_preview_index.v0.3", index.get("schemaVersion").getAsString());
+        assertEquals("city_decoration_preview_index", index.get("schema").getAsString());
         assertFalse(index.get("terrainOutcomeAvailable").getAsBoolean());
         assertEquals(4, index.getAsJsonArray("previews").size());
         assertTrue(Files.exists(tempDir.resolve("city_decoration_preview_index.json")));

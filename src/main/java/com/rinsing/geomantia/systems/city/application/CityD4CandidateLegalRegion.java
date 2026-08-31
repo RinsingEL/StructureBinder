@@ -15,7 +15,7 @@ import java.util.Set;
 /** Hard member-cell mask carried from a City D4 Patch Explorer selection. */
 public final class CityD4CandidateLegalRegion {
     public static final String FIELD = "candidateLegalRegion";
-    public static final String SCHEMA = "patch_selection_legal_region.v0.1";
+    public static final String SCHEMA = "patch_selection_legal_region";
 
     private final String patchSelectionRef;
     private final int cellStepBlocks;
@@ -43,8 +43,8 @@ public final class CityD4CandidateLegalRegion {
     }
 
     public static CityD4CandidateLegalRegion fromJson(JsonObject json) {
-        if (json == null || !SCHEMA.equals(stringValue(json, "schemaVersion"))) {
-            throw invalid("unsupported schemaVersion");
+        if (json == null || !SCHEMA.equals(stringValue(json, "schema"))) {
+            throw invalid("unsupported schema");
         }
         String selectionRef = stringValue(json, "patchSelectionRef");
         if (selectionRef.isBlank()) {

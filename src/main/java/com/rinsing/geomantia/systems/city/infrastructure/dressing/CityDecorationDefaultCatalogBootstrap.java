@@ -27,8 +27,8 @@ public final class CityDecorationDefaultCatalogBootstrap {
     private static final String STYLE_PROFILE = "styles/medieval_coastal.json";
     private static final String MANIFEST = "bootstrap_manifest.json";
     private static final String MANAGED_SOURCE = "geomantia:default_config/city_decoration";
-    private static final String MANIFEST_SCHEMA = "city_decoration_default_bootstrap.v0.4";
-    private static final String DEFAULT_CATALOG_REVISION = "functional_settlement_lined_channels.v0.5";
+    private static final String MANIFEST_SCHEMA = "city_decoration_default_bootstrap";
+    private static final String DEFAULT_CATALOG_REVISION = "functional_settlement_lined_channels";
     private static final int MINECRAFT_1_20_1_DATA_VERSION = 3465;
 
     private CityDecorationDefaultCatalogBootstrap() {
@@ -78,7 +78,7 @@ public final class CityDecorationDefaultCatalogBootstrap {
         writeTemplate(staging.resolve("templates/fountain_01.nbt"), fountain());
         Files.writeString(staging.resolve(MANIFEST), """
                 {
-                  "schemaVersion": "%s",
+                  "schema": "%s",
                   "source": "%s",
                   "defaultCatalogRevision": "%s",
                   "installedAt": "%s"

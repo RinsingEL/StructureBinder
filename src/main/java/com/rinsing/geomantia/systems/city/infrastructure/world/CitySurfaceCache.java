@@ -15,7 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public final class CitySurfaceCache {
-    public static final String SCHEMA = "city_surface_cache.v0.1";
+    public static final String SCHEMA = "city_surface_cache";
     private static final int MAGIC = 0x43534643; // CSFC
     private static final int VERSION = 1;
 
@@ -25,7 +25,7 @@ public final class CitySurfaceCache {
     public static JsonObject writeBackfill(ServerLevel level, BlockBounds bounds, Path outputDirectory,
                                            String cityId) throws IOException {
         JsonObject report = new JsonObject();
-        report.addProperty("schemaVersion", SCHEMA);
+        report.addProperty("schema", SCHEMA);
         report.addProperty("cityId", cityId == null || cityId.isBlank() ? "unknown_city" : cityId);
         report.add("bounds", boundsJson(bounds));
         report.addProperty("storageFormat", ".dat");
@@ -38,7 +38,7 @@ public final class CitySurfaceCache {
         }
         Files.createDirectories(outputDirectory.resolve("surface_cache"));
         Path datPath = outputDirectory.resolve("surface_cache")
-                .resolve(safe(cityId) + "_surface_v5.dat");
+                .resolve(safe(cityId) + "_surface.dat");
         int count = 0;
         try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(datPath)))) {
             out.writeInt(MAGIC);

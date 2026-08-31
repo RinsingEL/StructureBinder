@@ -170,6 +170,6 @@ class CityUrbanResidualResolverTest {
                         "minecraft:plains", "plain", "patch", true));
             }
         }
-        return new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION, "city", bounds(), 4, cells);
+        return new LandUseTerrainField(LandUseTerrainField.SCHEMA, "city", bounds(), 4, cells);
     }
 }

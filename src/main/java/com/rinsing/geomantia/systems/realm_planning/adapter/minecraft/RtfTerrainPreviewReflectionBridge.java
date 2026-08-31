@@ -82,7 +82,7 @@ final class RtfTerrainPreviewReflectionBridge {
                 cellType.getField("terrain"),
                 cellType.getField("biome"),
                 cellType.getField("terrain").getType().getMethod("getName"),
-                explicitClimate ? "v0_0_6" : "v0_0_5",
+                explicitClimate ? "explicit_climate" : "inferred_climate",
                 presetFingerprintMaterial(preset)
         );
     }

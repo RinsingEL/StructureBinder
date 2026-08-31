@@ -28,53 +28,12 @@ def devAutoLoadWorldBase64 = !devAutoLoadWorldBase64Override.isBlank()
 def devUseStructurePacks = providers.gradleProperty('geomantiaDevUseStructurePacks')
         .orElse('false')
         .get()
-def devUseRoadWeaver = providers.gradleProperty('geomantiaDevUseRoadWeaver')
-        .orElse('false')
-        .get()
 def devUseReTerraForged = providers.gradleProperty('geomantiaDevUseReTerraForged')
         .orElse('false')
         .get()
 def devUseVisualPreview = providers.gradleProperty('geomantiaDevUseVisualPreview')
         .orElse('false')
         .get()
-def devRoadWeaverVersion = '2.3.0-1.20.1'
-def devRoadWeaverModrinthVersionId = '7dhS67wp'
-def devRoadWeaverJarName = "roadweaver-forge-${devRoadWeaverVersion}.jar"
-def devRoadWeaverJarFile = layout.projectDirectory.file("libs/local/roadweaver/${devRoadWeaverVersion}/${devRoadWeaverJarName}")
-def devRoadWeaverJarUrl = "https://cdn.modrinth.com/data/6jk8Pote/versions/${devRoadWeaverModrinthVersionId}/${devRoadWeaverJarName}"
-tasks.register('downloadDevRoadWeaverForge') {
-    outputs.file(devRoadWeaverJarFile)
-    doLast {
-        def outputFile = devRoadWeaverJarFile.asFile
-        outputFile.parentFile.mkdirs()
-
-        def hasForgeMetadata = { File jarFile ->
-            if (!jarFile.isFile() || jarFile.length() == 0L) {
-                return false
-            }
-            def zip = new java.util.zip.ZipFile(jarFile)
-            try {
-                return zip.getEntry('META-INF/mods.toml') != null
-            } finally {
-                zip.close()
-            }
-        }
-
-        if (!hasForgeMetadata(outputFile)) {
-            logger.lifecycle("Downloading RoadWeaver Forge dev jar from ${devRoadWeaverJarUrl}")
-            new URL(devRoadWeaverJarUrl).withInputStream { input ->
-                outputFile.withOutputStream { output ->
-                    output << input
-                }
-            }
-        }
-
-        if (!hasForgeMetadata(outputFile)) {
-            throw new GradleException("Downloaded RoadWeaver jar is not a Forge mod: ${outputFile}")
-        }
-    }
-}
-
 minecraft {
     mappings channel: mapping_channel, version: mapping_version
     copyIdeResources = true
@@ -99,7 +58,7 @@ minecraft {
             if (!devAutoLoadWorldBase64.isBlank()) {
                 property 'geomantia.devAutoLoadWorldBase64', devAutoLoadWorldBase64
             }
-            if (devUseReTerraForged.toBoolean() || devUseRoadWeaver.toBoolean()) {
+            if (devUseReTerraForged.toBoolean()) {
                 property 'mixin.env.remapRefMap', 'true'
                 property 'mixin.env.refMapRemappingFile', "${project.layout.buildDirectory.get().asFile}/createSrgToMcp/output.srg"
             }
@@ -154,13 +113,11 @@ repositories {
         dirs 'libs/local/trek/B0.6'
         dirs 'libs/local/t_and_t/1.12'
         dirs 'libs/local/cristellib/1.1.6'
-        dirs "libs/local/roadweaver/${devRoadWeaverVersion}"
     }
 }
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
-    implementation fg.deobf("curse.maven:worldedit-225608:4586218")
     if (devUseReTerraForged.toBoolean()) {
         runtimeOnly fg.deobf("local.reterraforged:reterraforged:0.0.5")
     }
@@ -168,11 +125,6 @@ dependencies {
         runtimeOnly fg.deobf("local.trek:trek:B0.6")
         runtimeOnly fg.deobf("local.t_and_t:t_and_t:1.12")
         runtimeOnly fg.deobf("local.cristellib:cristellib:1.1.6")
-    }
-    if (devUseRoadWeaver.toBoolean()) {
-        runtimeOnly fg.deobf("local.roadweaver:roadweaver-forge:${devRoadWeaverVersion}")
-        runtimeOnly fg.deobf("dev.architectury:architectury-forge:9.2.14")
-        runtimeOnly fg.deobf("me.shedaniel.cloth:cloth-config-forge:11.1.136")
     }
     if (devUseVisualPreview.toBoolean()) {
         // ForgeGradle must remap client mods before a userdev run can load them.
@@ -182,12 +134,6 @@ dependencies {
     }
     testImplementation platform('org.junit:junit-bom:5.10.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'
-}
-
-if (devUseRoadWeaver.toBoolean()) {
-    tasks.matching { it.name in ['runClient', 'runServer', 'runGameTestServer'] }.configureEach {
-        dependsOn tasks.named('downloadDevRoadWeaverForge')
-    }
 }
 
 tasks.named('test', Test).configure {

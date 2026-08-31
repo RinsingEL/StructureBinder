@@ -38,8 +38,8 @@ public record CityBlueprintReferenceCatalog(
         Map<String, LandscapeProfile> landscapeProfiles,
         Map<String, LandscapeFillProfile> landscapeFillProfiles) {
 
-    public static final String SCHEMA_VERSION = "city_blueprint_reference_catalog.v0.9";
-    private static final Set<String> ROOT_FIELDS = Set.of("schemaVersion", "structureRefs", "fillPools",
+    public static final String SCHEMA = "city_blueprint_reference_catalog";
+    private static final Set<String> ROOT_FIELDS = Set.of("schema", "structureRefs", "fillPools",
             "algorithmProfiles", "compositionProfiles", "styleProfiles", "roadProfiles",
             "surfaceDetailProfiles", "landUseRuleProfile", "surfaceRecipes", "foundationProfiles",
             "landscapeProfiles", "landscapeFillProfiles");
@@ -69,10 +69,10 @@ public record CityBlueprintReferenceCatalog(
         if (root == null) fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
                 "$", "blueprintReferenceCatalog object is required.");
         exactFields(root, ROOT_FIELDS, "$", CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID);
-        String schema = string(root, "schemaVersion", "$.schemaVersion");
-        if (!SCHEMA_VERSION.equals(schema)) {
+        String schema = string(root, "schema", "$.schema");
+        if (!SCHEMA.equals(schema)) {
             fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_SCHEMA_UNSUPPORTED,
-                    "$.schemaVersion", "Unsupported blueprint reference catalog schema: " + schema);
+                    "$.schema", "Unsupported blueprint reference catalog schema: " + schema);
         }
         StructureCatalog structures = structureRefs(array(root, "structureRefs"), templateCatalog);
         Set<String> pools = refs(array(root, "fillPools"), "poolRef", Set.of("poolRef", "structureRefs"),

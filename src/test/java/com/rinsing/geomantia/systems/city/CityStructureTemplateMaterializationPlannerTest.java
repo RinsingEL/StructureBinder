@@ -215,7 +215,7 @@ class CityStructureTemplateMaterializationPlannerTest {
     private static JsonObject anchorMap() {
         JsonObject root = JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_structure_anchor_map.v0.3",
+                  "schema": "city_structure_anchor_map",
                   "cityId": "city_template_test",
                   "anchors": [{
                     "anchorId": "house_1",

@@ -17,7 +17,7 @@ import java.util.Set;
 
 /** Evaluates one transformed D4 collision footprint using City-owned placement topology modes. */
 final class CityStructureTerrainGate {
-    static final String TRACE_SCHEMA = "city_structure_terrain_gate_trace.v0.2";
+    static final String TRACE_SCHEMA = "city_structure_terrain_gate_trace";
     private static final int MAX_FAILURE_SAMPLES = 8;
 
     private final LandUseTerrainField terrainField;
@@ -175,7 +175,7 @@ final class CityStructureTerrainGate {
     }
 
     String terrainFieldSchema() {
-        return terrainField.schemaVersion();
+        return terrainField.schema();
     }
 
     static TerrainLimits limits(CityBlueprint.TerrainPolicy policy) {
@@ -189,7 +189,7 @@ final class CityStructureTerrainGate {
     private static JsonObject baseTrace(String structureRef, List<CityStructureTerrainMode> modes,
                                         BlockBounds footprint) {
         JsonObject trace = new JsonObject();
-        trace.addProperty("schemaVersion", TRACE_SCHEMA);
+        trace.addProperty("schema", TRACE_SCHEMA);
         trace.addProperty("evaluationScope", "all_intersecting_terrain_field_cells");
         trace.addProperty("structureRef", structureRef);
         JsonArray declared = new JsonArray();

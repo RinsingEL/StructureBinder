@@ -43,10 +43,7 @@ public final class CityWallPreviewRenderer {
             g.setColor(new Color(22, 28, 36));
             g.drawString("City wall preview", 36, 42);
             g.setFont(new Font("SansSerif", Font.PLAIN, 13));
-            boolean v4 = "city_wall_plan.v0.4".equals(string(wallPlan, "schemaVersion"));
-            g.drawString(v4
-                            ? "patch backdrop brown=unit olive=terrain contour purple=stair connector green=terrace red=gate blue=footprint cyan=road"
-                            : "patch backdrop brown=wall red=gate dark=tower blue=actual footprint cyan=actual road",
+            g.drawString("patch backdrop brown=unit olive=terrain contour purple=stair connector green=terrace red=gate blue=footprint cyan=road",
                     36, 64);
             drawPatchBackdrop(g, t, bounds, d3Package);
             drawGrid(g, t, bounds);
@@ -67,25 +64,7 @@ public final class CityWallPreviewRenderer {
                 drawRect(g, t, bounds(elem.getAsJsonObject().getAsJsonObject("blockBounds")),
                         new Color(42, 164, 190, 88), new Color(25, 111, 135, 180), 1.2f);
             }
-            if (v4) {
-                drawWallGraph(g, t, wallPlan);
-            } else {
-                for (JsonElement elem : array(wallPlan, "wallSegments")) {
-                    JsonObject segment = elem.getAsJsonObject();
-                    String type = string(segment, "segmentType");
-                    Color fill = switch (type) {
-                        case "tower" -> new Color(70, 65, 58, 150);
-                        case "gate_gap" -> new Color(200, 68, 56, 120);
-                        default -> new Color(134, 96, 59, 135);
-                    };
-                    Color stroke = switch (type) {
-                        case "tower" -> new Color(42, 42, 38, 220);
-                        case "gate_gap" -> new Color(171, 42, 38, 220);
-                        default -> new Color(105, 73, 43, 220);
-                    };
-                    drawRect(g, t, bounds(segment.getAsJsonObject("blockBounds")), fill, stroke, 2.0f);
-                }
-            }
+            drawWallGraph(g, t, wallPlan);
         } finally {
             g.dispose();
         }

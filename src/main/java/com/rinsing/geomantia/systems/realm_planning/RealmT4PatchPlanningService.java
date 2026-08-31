@@ -21,7 +21,7 @@ import java.util.UUID;
 
 /** Artifact-backed T4 city registry planning driven by Patch Explorer selections. */
 public final class RealmT4PatchPlanningService {
-    public static final String SESSION_SCHEMA = "realm_t4_patch_planning_session.v0.2";
+    public static final String SESSION_SCHEMA = "realm_t4_patch_planning_session";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private final Path debugRoot;
     private final PatchExplorerService patchExplorer;
@@ -60,7 +60,7 @@ public final class RealmT4PatchPlanningService {
         }
 
         JsonObject session = new JsonObject();
-        session.addProperty("schemaVersion", SESSION_SCHEMA);
+        session.addProperty("schema", SESSION_SCHEMA);
         session.addProperty("planningSessionId", sessionId);
         session.addProperty("runId", runId);
         session.addProperty("realmId", realmId);
@@ -252,7 +252,7 @@ public final class RealmT4PatchPlanningService {
 
     private JsonObject loadOpenSession(String runId, String sessionId) throws IOException {
         JsonObject session = readObject(sessionPath(runId, sessionId), "T4_PATCH_PLANNING_SESSION_NOT_FOUND");
-        if (!SESSION_SCHEMA.equals(stringValue(session, "schemaVersion", ""))
+        if (!SESSION_SCHEMA.equals(stringValue(session, "schema", ""))
                 || !runId.equals(stringValue(session, "runId", ""))
                 || !sessionId.equals(stringValue(session, "planningSessionId", ""))) {
             throw new IllegalArgumentException("T4_PATCH_PLANNING_SESSION_IDENTITY_MISMATCH");
@@ -452,7 +452,7 @@ public final class RealmT4PatchPlanningService {
     private JsonObject response(String operation, JsonObject session, Path sessionPath) {
         JsonObject result = new JsonObject();
         result.addProperty("ok", true);
-        result.addProperty("schemaVersion", "realm_t4_patch_planning_response.v0.2");
+        result.addProperty("schema", "realm_t4_patch_planning_response");
         result.addProperty("operation", operation);
         result.addProperty("runId", requiredString(session, "runId"));
         result.addProperty("planningSessionId", requiredString(session, "planningSessionId"));

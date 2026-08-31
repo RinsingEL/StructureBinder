@@ -9,7 +9,7 @@ import java.util.Objects;
 
 /** Internal, terrain-independent program after target references and coordinate policy are resolved. */
 public record CompiledDecorationProgram(
-        String schemaVersion,
+        String schema,
         String programId,
         int priority,
         long seed,
@@ -21,14 +21,14 @@ public record CompiledDecorationProgram(
         TerrainPolicy terrainPolicy,
         ConflictPolicy conflictPolicy) {
 
-    public static final String SCHEMA = "city_decoration_compiled_program.v0.4";
+    public static final String SCHEMA = "city_decoration_compiled_program";
     public static final Comparator<CompiledDecorationProgram> EXECUTION_ORDER = Comparator
             .comparingInt(CompiledDecorationProgram::priority).reversed()
             .thenComparing(CompiledDecorationProgram::programId);
 
     public CompiledDecorationProgram {
-        if (!SCHEMA.equals(schemaVersion)) {
-            throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_SCHEMA_UNSUPPORTED: " + schemaVersion);
+        if (!SCHEMA.equals(schema)) {
+            throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_SCHEMA_UNSUPPORTED: " + schema);
         }
         if (programId == null || programId.isBlank()) {
             throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_ID_REQUIRED");

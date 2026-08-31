@@ -19,7 +19,7 @@ class CityBlueprintCodecTest {
 
     @Test
     void readsAndWritesGoldenBlueprint() throws IOException {
-        JsonObject json = fixture("valid_city_blueprint_v0_1.json");
+        JsonObject json = fixture("valid_city_blueprint.json");
         CityBlueprint blueprint = codec.read(json);
         assertEquals("city:test", blueprint.cityId());
         assertEquals(CityBlueprint.GroupKind.STRUCTURE, blueprint.groups().get(0).groupKind());
@@ -40,7 +40,7 @@ class CityBlueprintCodecTest {
 
     @Test
     void readsAndWritesOptionalConnectionPlan() throws IOException {
-        JsonObject json = fixture("valid_city_blueprint_v0_1.json");
+        JsonObject json = fixture("valid_city_blueprint.json");
         json.getAsJsonArray("groups").get(0).getAsJsonObject().add("connectionPlan",
                 JsonParser.parseString("""
                         {"structurePoolRef":"pool:street","algorithmProfileRef":"algorithm:street_band",
@@ -54,7 +54,7 @@ class CityBlueprintCodecTest {
 
     @Test
     void readsAndWritesFunctionAreaOwnedLandscape() throws IOException {
-        JsonObject json = fixture("valid_city_blueprint_v0_1.json");
+        JsonObject json = fixture("valid_city_blueprint.json");
         JsonObject owner = json.getAsJsonObject("outdoorPlan").getAsJsonArray("landscapes")
                 .get(0).getAsJsonObject().getAsJsonObject("owner");
         owner.remove("requiredStructureRef");
@@ -67,8 +67,8 @@ class CityBlueprintCodecTest {
 
     @Test
     void rejectsPreviousBlueprintSchema() throws IOException {
-        JsonObject json = fixture("valid_city_blueprint_v0_1.json");
-        json.addProperty("schemaVersion", "city_blueprint.v0.8");
+        JsonObject json = fixture("valid_city_blueprint.json");
+        json.addProperty("schema", "obsolete_city_blueprint");
         CityBlueprintContractException exception = assertThrows(CityBlueprintContractException.class,
                 () -> codec.read(json));
         assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_SCHEMA_UNSUPPORTED, exception.reasonCode());
@@ -85,7 +85,7 @@ class CityBlueprintCodecTest {
 
     @Test
     void rejectsUnknownFieldsInsideFillVariant() throws IOException {
-        JsonObject json = fixture("valid_city_blueprint_v0_1.json");
+        JsonObject json = fixture("valid_city_blueprint.json");
         json.getAsJsonObject("outdoorPlan").getAsJsonArray("landscapes").get(0).getAsJsonObject()
                 .getAsJsonObject("fillSelection").getAsJsonArray("variants").get(0).getAsJsonObject()
                 .addProperty("blockPalette", "forbidden");

@@ -12,7 +12,7 @@ import java.util.List;
 public final class LandUseTerrainFieldCodec {
     public JsonObject toJson(LandUseTerrainField field) {
         JsonObject obj = new JsonObject();
-        obj.addProperty("schemaVersion", field.schemaVersion());
+        obj.addProperty("schema", field.schema());
         obj.addProperty("cityId", field.cityId());
         obj.add("planningBounds", boundsJson(field.planningBounds()));
         obj.addProperty("cellStepBlocks", field.cellStepBlocks());
@@ -47,7 +47,7 @@ public final class LandUseTerrainFieldCodec {
 
     public LandUseTerrainField fromJson(JsonObject obj) {
         if (obj == null) throw new IllegalArgumentException("LandUse terrain field JSON is required");
-        String schema = requiredString(obj, "schemaVersion");
+        String schema = requiredString(obj, "schema");
         int defaultStep = requiredInt(obj, "cellStepBlocks");
         List<LandUseTerrainField.Cell> cells = new ArrayList<>();
         for (JsonElement element : requiredArray(obj, "cells")) {

@@ -283,7 +283,7 @@ class LandUseAutoConnectionPlannerTest {
                         "minecraft:plains", "plain", "p", true));
             }
         }
-        return new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION, "city_test",
+        return new LandUseTerrainField(LandUseTerrainField.SCHEMA, "city_test",
                 new BlockBounds(0, 0, 63, 39), 4, cells);
     }
 
@@ -306,7 +306,7 @@ class LandUseAutoConnectionPlannerTest {
                         "minecraft:plains", "rough", "rough", true));
             }
         }
-        return new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION, "city_test",
+        return new LandUseTerrainField(LandUseTerrainField.SCHEMA, "city_test",
                 new BlockBounds(0, 0, 63, 39), 4, cells);
     }
 
@@ -319,7 +319,7 @@ class LandUseAutoConnectionPlannerTest {
                         "minecraft:plains", "plain", x < 8 ? "preferred" : "other", true));
             }
         }
-        return new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION, "city_test",
+        return new LandUseTerrainField(LandUseTerrainField.SCHEMA, "city_test",
                 new BlockBounds(0, 0, 63, 39), 4, cells);
     }
 }

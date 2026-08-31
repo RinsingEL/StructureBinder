@@ -321,7 +321,7 @@ final class CityInternalStreetPlanner {
         }
         BlockBounds bounds = segmentBounds(width, start, end);
         JsonObject value = new JsonObject();
-        value.addProperty("schemaVersion", "city_internal_street_band.v0.2");
+        value.addProperty("schema", "city_internal_street_band");
         value.addProperty("streetBandId", groupId + "::" + networkId + "::segment_"
                 + String.format("%03d", segmentIndex + 1));
         value.addProperty("roadNetworkId", groupId + "::" + networkId);

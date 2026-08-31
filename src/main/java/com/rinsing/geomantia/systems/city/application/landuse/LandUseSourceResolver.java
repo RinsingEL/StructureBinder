@@ -170,7 +170,7 @@ public final class LandUseSourceResolver {
             }
             if (!item.has("placementGroupId") || !item.has("placementProvenance")
                     || !item.get("placementProvenance").isJsonObject()) {
-                throw new IllegalArgumentException("LAND_USE_D4_V02_PROVENANCE_REQUIRED: " + anchorId);
+                throw new IllegalArgumentException("LAND_USE_D4_PROVENANCE_REQUIRED: " + anchorId);
             }
             String groupId = requiredString(item, "placementGroupId");
             List<String> terms = new ArrayList<>();

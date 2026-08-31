@@ -9,7 +9,7 @@ import com.rinsing.geomantia.systems.city.domain.model.PatchMemberCell;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Resolves the v0.2 patch-only intent slice against D3 member-cell truth. */
+/** Resolves the patch-only intent slice against D3 member-cell truth. */
 public final class D3PatchDecorationProgramContextResolver implements ResolvedDecorationProgramContext.Resolver {
     private final CityLandformReviewPackage reviewPackage;
     private final List<CompiledDecorationProgramPlan.HardObstacle> hardObstacles;

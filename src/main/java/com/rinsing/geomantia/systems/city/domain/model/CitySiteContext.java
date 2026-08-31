@@ -6,7 +6,7 @@ import com.google.gson.JsonObject;
 import java.util.List;
 
 public record CitySiteContext(
-        String schemaVersion,
+        String schema,
         String cityId,
         String realmId,
         String dimensionId,
@@ -21,10 +21,10 @@ public record CitySiteContext(
         List<EntryCandidate> entryCandidates,
         TerritoryCheckResult territoryCheckResult) {
 
-    public static final String CURRENT_SCHEMA_VERSION = "city_site_context.v0.1";
+    public static final String SCHEMA = "city_site_context";
 
     public CitySiteContext {
-        if (schemaVersion == null) throw new IllegalArgumentException("schemaVersion is required");
+        if (schema == null) throw new IllegalArgumentException("schema is required");
         if (cityId == null || cityId.isBlank()) throw new IllegalArgumentException("cityId is required");
         if (realmId == null || realmId.isBlank()) throw new IllegalArgumentException("realmId is required");
         if (dimensionId == null) throw new IllegalArgumentException("dimensionId is required");
@@ -41,7 +41,7 @@ public record CitySiteContext(
 
     public JsonObject asJson() {
         JsonObject obj = new JsonObject();
-        obj.addProperty("schemaVersion", schemaVersion);
+        obj.addProperty("schema", schema);
         obj.addProperty("cityId", cityId);
         obj.addProperty("realmId", realmId);
         obj.addProperty("dimensionId", dimensionId);

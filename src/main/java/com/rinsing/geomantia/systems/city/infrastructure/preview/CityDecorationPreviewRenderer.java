@@ -70,7 +70,7 @@ public final class CityDecorationPreviewRenderer {
 
         Files.createDirectories(outputDirectory);
         JsonObject index = new JsonObject();
-        index.addProperty("schemaVersion", "city_decoration_preview_index.v0.3");
+        index.addProperty("schema", "city_decoration_preview_index");
         index.addProperty("cityId", plan.cityId());
         index.addProperty("catalogHash", plan.catalogHash());
         index.addProperty("previewMode", "per_program_zoomed");

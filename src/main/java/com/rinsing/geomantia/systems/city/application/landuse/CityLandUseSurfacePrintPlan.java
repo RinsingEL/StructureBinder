@@ -14,7 +14,7 @@ import java.util.Set;
 
 /** Frozen, execution-independent description of current LandUse surface printing. */
 public record CityLandUseSurfacePrintPlan(
-        String schemaVersion,
+        String schema,
         String cityId,
         String sourceLandUsePlanHash,
         String planHash,
@@ -22,11 +22,11 @@ public record CityLandUseSurfacePrintPlan(
         List<SharedBoundaryPrintSpan> sharedBoundarySpans,
         List<FeatureCell> featureCells) {
 
-    public static final String CURRENT_SCHEMA_VERSION = "city_land_use_surface_print_plan.v0.7";
+    public static final String SCHEMA = "city_land_use_surface_print_plan";
 
     public CityLandUseSurfacePrintPlan {
-        if (!CURRENT_SCHEMA_VERSION.equals(schemaVersion)) {
-            throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_SCHEMA_UNSUPPORTED:" + schemaVersion);
+        if (!SCHEMA.equals(schema)) {
+            throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_SCHEMA_UNSUPPORTED:" + schema);
         }
         requireText(cityId, "CITY_LAND_USE_SURFACE_PRINT_CITY_ID_REQUIRED");
         requireText(sourceLandUsePlanHash, "CITY_LAND_USE_SURFACE_PRINT_SOURCE_HASH_REQUIRED");
@@ -51,19 +51,19 @@ public record CityLandUseSurfacePrintPlan(
     }
 
     public CityLandUseSurfacePrintPlan withPlanHash(String hash) {
-        return new CityLandUseSurfacePrintPlan(schemaVersion, cityId, sourceLandUsePlanHash, hash, areas,
+        return new CityLandUseSurfacePrintPlan(schema, cityId, sourceLandUsePlanHash, hash, areas,
                 sharedBoundarySpans, featureCells);
     }
 
-    public CityLandUseSurfacePrintPlan(String schemaVersion, String cityId, String sourceLandUsePlanHash,
+    public CityLandUseSurfacePrintPlan(String schema, String cityId, String sourceLandUsePlanHash,
                                        String planHash, List<AreaPrint> areas) {
-        this(schemaVersion, cityId, sourceLandUsePlanHash, planHash, areas, List.of(), List.of());
+        this(schema, cityId, sourceLandUsePlanHash, planHash, areas, List.of(), List.of());
     }
 
-    public CityLandUseSurfacePrintPlan(String schemaVersion, String cityId, String sourceLandUsePlanHash,
+    public CityLandUseSurfacePrintPlan(String schema, String cityId, String sourceLandUsePlanHash,
                                        String planHash, List<AreaPrint> areas,
                                        List<SharedBoundaryPrintSpan> sharedBoundarySpans) {
-        this(schemaVersion, cityId, sourceLandUsePlanHash, planHash, areas, sharedBoundarySpans, List.of());
+        this(schema, cityId, sourceLandUsePlanHash, planHash, areas, sharedBoundarySpans, List.of());
     }
 
     public record FeatureCell(String sourceId,

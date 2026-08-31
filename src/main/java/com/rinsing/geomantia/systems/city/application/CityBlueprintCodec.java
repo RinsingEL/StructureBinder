@@ -13,7 +13,7 @@ import java.util.Set;
 
 public final class CityBlueprintCodec {
     public static final long MAX_SAFE_GENERATION_SEED = 9_007_199_254_740_991L;
-    private static final Set<String> ROOT_FIELDS = Set.of("schemaVersion", "cityId", "sourceD3Ref",
+    private static final Set<String> ROOT_FIELDS = Set.of("schema", "cityId", "sourceD3Ref",
             "catalogSnapshotRef", "generationSeed", "designIntent", "styleProfile", "groups",
             "arrayCompositions", "relations", "roadProfile", "surfaceDetailProfile", "outdoorPlan");
     private static final Set<String> FORBIDDEN_FIELDS = Set.of("x", "y", "z", "blockX", "blockY", "blockZ",
@@ -23,10 +23,10 @@ public final class CityBlueprintCodec {
     public CityBlueprint read(JsonObject root) {
         rejectForbidden(root, "$");
         exactFields(root, ROOT_FIELDS, "$");
-        String schema = requiredString(root, "schemaVersion", "$.schemaVersion");
-        if (!CityBlueprint.SCHEMA_VERSION.equals(schema)) {
-            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_SCHEMA_UNSUPPORTED, "$.schemaVersion",
-                    "Unsupported CityBlueprint schemaVersion: " + schema);
+        String schema = requiredString(root, "schema", "$.schema");
+        if (!CityBlueprint.SCHEMA.equals(schema)) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_SCHEMA_UNSUPPORTED, "$.schema",
+                    "Unsupported CityBlueprint schema: " + schema);
         }
         return new CityBlueprint(
                 schema,
@@ -48,7 +48,7 @@ public final class CityBlueprintCodec {
 
     public JsonObject write(CityBlueprint blueprint) {
         JsonObject root = new JsonObject();
-        root.addProperty("schemaVersion", blueprint.schemaVersion());
+        root.addProperty("schema", blueprint.schema());
         root.addProperty("cityId", blueprint.cityId());
         root.add("sourceD3Ref", artifactRefJson(blueprint.sourceD3Ref()));
         root.add("catalogSnapshotRef", artifactRefJson(blueprint.catalogSnapshotRef()));
@@ -244,14 +244,14 @@ public final class CityBlueprintCodec {
     }
 
     private static CityBlueprint.ArtifactRef artifactRef(JsonObject object, String path) {
-        exactFields(object, Set.of("path", "schemaVersion", "contentHash"), path);
+        exactFields(object, Set.of("path", "schema", "contentHash"), path);
         String hash = requiredString(object, "contentHash", path + ".contentHash");
         if (!hash.matches("sha256:[0-9a-f]{64}")) {
             fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path + ".contentHash",
                     "contentHash must use sha256:<64 lowercase hex>.");
         }
         return new CityBlueprint.ArtifactRef(requiredString(object, "path", path + ".path"),
-                requiredString(object, "schemaVersion", path + ".schemaVersion"), hash);
+                requiredString(object, "schema", path + ".schema"), hash);
     }
 
     private static CityBlueprint.DesignIntent designIntent(JsonObject object) {
@@ -625,7 +625,7 @@ public final class CityBlueprintCodec {
     private static JsonObject artifactRefJson(CityBlueprint.ArtifactRef ref) {
         JsonObject object = new JsonObject();
         object.addProperty("path", ref.path());
-        object.addProperty("schemaVersion", ref.schemaVersion());
+        object.addProperty("schema", ref.schema());
         object.addProperty("contentHash", ref.contentHash());
         return object;
     }

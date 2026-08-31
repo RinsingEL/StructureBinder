@@ -27,7 +27,7 @@ import java.util.Set;
 
 /** Pure block-to-owner compiler. It never samples terrain and never writes a level. */
 public final class CityLandUseChunkCompiler {
-    public static final String RESULT_SCHEMA = "city_land_use_chunk_fragment.v0.3";
+    public static final String RESULT_SCHEMA = "city_land_use_chunk_fragment";
     public static final String MICRO_FILL_SUBGRADE_KEY = "MICRO_FILL_SUBGRADE";
 
     private final MaterialPalette palette;
@@ -617,7 +617,7 @@ public final class CityLandUseChunkCompiler {
         }
     }
 
-    public record ChunkFragment(String schemaVersion,
+    public record ChunkFragment(String schema,
                                 String cityId,
                                 String planHash,
                                 String paletteHash,
@@ -636,7 +636,7 @@ public final class CityLandUseChunkCompiler {
                                 List<PlatformPurposeAnchor> platformPurposeAnchors,
                                 List<PlatformAccessDemand> platformAccessDemands) {
         public ChunkFragment {
-            if (!RESULT_SCHEMA.equals(schemaVersion)) {
+            if (!RESULT_SCHEMA.equals(schema)) {
                 throw new IllegalArgumentException("CITY_LAND_USE_FRAGMENT_SCHEMA_UNSUPPORTED");
             }
             Objects.requireNonNull(cityId, "cityId");
@@ -656,7 +656,7 @@ public final class CityLandUseChunkCompiler {
                     platformAccessDemands == null ? List.of() : platformAccessDemands);
         }
 
-        public ChunkFragment(String schemaVersion, String cityId, String planHash, String paletteHash,
+        public ChunkFragment(String schema, String cityId, String planHash, String paletteHash,
                              int chunkX, int chunkZ, int relevantCellCount, int footprintExcludedCount,
                              int corridorExcludedCount, int gateExcludedCount, String microFillBlockId,
                              List<GradingMaskCell> gradingMaskCells,
@@ -664,32 +664,32 @@ public final class CityLandUseChunkCompiler {
                              List<BoundaryOperation> boundaryOperations,
                              List<FeatureOperation> featureOperations,
                              List<FeatureOperation> gradingFeatureOperations) {
-            this(schemaVersion, cityId, planHash, paletteHash, chunkX, chunkZ, relevantCellCount,
+            this(schema, cityId, planHash, paletteHash, chunkX, chunkZ, relevantCellCount,
                     footprintExcludedCount, corridorExcludedCount, gateExcludedCount, microFillBlockId,
                     gradingMaskCells, surfaceOperations, boundaryOperations, featureOperations,
                     gradingFeatureOperations, List.of(), List.of());
         }
 
-        public ChunkFragment(String schemaVersion, String cityId, String planHash, String paletteHash,
+        public ChunkFragment(String schema, String cityId, String planHash, String paletteHash,
                              int chunkX, int chunkZ, int relevantCellCount, int footprintExcludedCount,
                              int corridorExcludedCount, int gateExcludedCount, String microFillBlockId,
                              List<GradingMaskCell> gradingMaskCells,
                              List<SurfaceOperation> surfaceOperations,
                              List<BoundaryOperation> boundaryOperations,
                              List<FeatureOperation> featureOperations) {
-            this(schemaVersion, cityId, planHash, paletteHash, chunkX, chunkZ, relevantCellCount,
+            this(schema, cityId, planHash, paletteHash, chunkX, chunkZ, relevantCellCount,
                     footprintExcludedCount, corridorExcludedCount, gateExcludedCount, microFillBlockId,
                     gradingMaskCells, surfaceOperations, boundaryOperations, featureOperations,
                     featureOperations, List.of(), List.of());
         }
 
-        public ChunkFragment(String schemaVersion, String cityId, String planHash, String paletteHash,
+        public ChunkFragment(String schema, String cityId, String planHash, String paletteHash,
                              int chunkX, int chunkZ, int relevantCellCount, int footprintExcludedCount,
                              int corridorExcludedCount, int gateExcludedCount, String microFillBlockId,
                              List<GradingMaskCell> gradingMaskCells,
                              List<SurfaceOperation> surfaceOperations,
                              List<BoundaryOperation> boundaryOperations) {
-            this(schemaVersion, cityId, planHash, paletteHash, chunkX, chunkZ, relevantCellCount,
+            this(schema, cityId, planHash, paletteHash, chunkX, chunkZ, relevantCellCount,
                     footprintExcludedCount, corridorExcludedCount, gateExcludedCount, microFillBlockId,
                     gradingMaskCells, surfaceOperations, boundaryOperations, List.of(), List.of());
         }

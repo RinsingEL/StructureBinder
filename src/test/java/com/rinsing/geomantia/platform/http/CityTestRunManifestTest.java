@@ -48,7 +48,7 @@ class CityTestRunManifestTest {
         CityPlanningEndpointHandler.writeTestRunState(layout.manifestPath(), secondManifest, secondAttempt);
 
         JsonObject stored = JsonParser.parseString(Files.readString(layout.manifestPath())).getAsJsonObject();
-        assertEquals("city_test_run_manifest.v0.1", stored.get("schemaVersion").getAsString());
+        assertEquals("city_test_run_manifest", stored.get("schema").getAsString());
         assertEquals("realm_run::capital", stored.get("testRunId").getAsString());
         assertEquals("minecraft:overworld",
                 stored.getAsJsonObject("worldIdentity").get("dimensionId").getAsString());
@@ -65,7 +65,7 @@ class CityTestRunManifestTest {
 
     private static JsonObject attempt(int index, String status) {
         JsonObject attempt = new JsonObject();
-        attempt.addProperty("schemaVersion", "city_workflow_attempt.v0.1");
+        attempt.addProperty("schema", "city_workflow_attempt");
         attempt.addProperty("attemptIndex", index);
         attempt.addProperty("status", status);
         attempt.add("steps", new JsonArray());

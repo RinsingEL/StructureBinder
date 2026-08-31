@@ -8,16 +8,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public record BuildOperationPlan(
-        String schemaVersion,
+        String schema,
         String cityId,
         String templateDirectory,
         List<Operation> operations) {
 
-    public static final String CURRENT_SCHEMA_VERSION = "build_operation_plan.v0.1";
+    public static final String SCHEMA = "build_operation_plan";
 
     public BuildOperationPlan {
-        if (schemaVersion == null || schemaVersion.isBlank()) {
-            throw new IllegalArgumentException("schemaVersion is required");
+        if (schema == null || schema.isBlank()) {
+            throw new IllegalArgumentException("schema is required");
         }
         if (cityId == null || cityId.isBlank()) {
             throw new IllegalArgumentException("cityId is required");
@@ -81,7 +81,7 @@ public record BuildOperationPlan(
 
     public JsonObject asJson() {
         JsonObject obj = new JsonObject();
-        obj.addProperty("schemaVersion", schemaVersion);
+        obj.addProperty("schema", schema);
         obj.addProperty("cityId", cityId);
         obj.addProperty("templateDirectory", templateDirectory);
         JsonArray array = new JsonArray();
@@ -96,7 +96,7 @@ public record BuildOperationPlan(
             operations.add(Operation.fromJson(elem.getAsJsonObject()));
         }
         return new BuildOperationPlan(
-                RoadIntent.requiredString(obj, "schemaVersion"),
+                RoadIntent.requiredString(obj, "schema"),
                 RoadIntent.requiredString(obj, "cityId"),
                 RoadIntent.stringValue(obj, "templateDirectory", "geomantia_templates/d5"),
                 operations);

@@ -15,7 +15,7 @@ import java.util.Set;
 
 /** Read-only terrain assessment over the already projected decoration slots. */
 public final class CityDecorationTerrainProbe {
-    public static final String SCHEMA = "city_decoration_terrain_probe.v0.1";
+    public static final String SCHEMA = "city_decoration_terrain_probe";
 
     public JsonObject probe(CompiledDecorationProgramPlan plan,
                             List<DecorationSlot> slots,
@@ -61,7 +61,7 @@ public final class CityDecorationTerrainProbe {
         }
 
         JsonObject response = new JsonObject();
-        response.addProperty("schemaVersion", SCHEMA);
+        response.addProperty("schema", SCHEMA);
         response.addProperty("cityId", plan.cityId());
         response.addProperty("catalogHash", plan.catalogHash());
         response.addProperty("styleProfileId", plan.styleProfileId());

@@ -46,9 +46,8 @@ import java.util.function.Predicate;
 
 /** Server-root registry for current LandUse surface plans and owner-chunk application ledgers. */
 public final class CityLandUseWorldgenRegistry {
-    public static final String ACTIVE_SCHEMA = "city_active_land_use_area_plans.v0.2";
-    public static final String LEDGER_SCHEMA = "city_land_use_worldgen_ledger.v0.4";
-    private static final String LEGACY_LEDGER_SCHEMA = "city_land_use_worldgen_ledger.v0.3";
+    public static final String ACTIVE_SCHEMA = "city_active_land_use_area_plans";
+    public static final String LEDGER_SCHEMA = "city_land_use_worldgen_ledger";
 
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final Gson STATE_GSON = new GsonBuilder().disableHtmlEscaping()
@@ -176,7 +175,18 @@ public final class CityLandUseWorldgenRegistry {
 
     public static synchronized void load(Path serverRoot) {
         Path server = normalized(serverRoot);
-        LoadedState state = readState(server);
+        LoadedState state;
+        boolean resetObsoleteState = false;
+        try {
+            state = readState(server);
+        } catch (IllegalArgumentException obsoleteState) {
+            if (!isObsoleteRegistryFailure(obsoleteState)) throw obsoleteState;
+            List<Path> quarantined = quarantineObsoleteRegistryFiles(server);
+            LOGGER.warn("Ignored obsolete City LandUse registry state and started with an empty current registry: files={}, reason={}",
+                    quarantined, obsoleteState.getMessage());
+            state = readState(server);
+            resetObsoleteState = true;
+        }
         ACTIVE.clear();
         ACTIVE.putAll(state.activePlans());
         IN_FLIGHT.clear();
@@ -189,11 +199,37 @@ public final class CityLandUseWorldgenRegistry {
         nextLedgerPersistenceNanos = 0L;
         ledgerMutationVersion = 0L;
         ledgerPersistenceInProgress = false;
-        if (!state.ledgerExists() || state.ledgerMigrated()) {
+        if (resetObsoleteState) {
+            persistActive();
+        }
+        if (!state.ledgerExists()) {
             persistLedger();
         }
         LOGGER.info("Loaded City LandUse registry: activePlans={}, appliedOwners={}",
                 ACTIVE.size(), appliedOwners().size());
+    }
+
+    private static List<Path> quarantineObsoleteRegistryFiles(Path server) {
+        List<Path> quarantined = new ArrayList<>();
+        String suffix = ".obsolete-" + Instant.now().toEpochMilli();
+        for (Path source : List.of(activePlansPath(server), worldgenLedgerPath(server))) {
+            if (!Files.isRegularFile(source)) continue;
+            Path target = source.resolveSibling(source.getFileName() + suffix);
+            try {
+                Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+                quarantined.add(target);
+            } catch (IOException ex) {
+                throw new IllegalStateException("CITY_LAND_USE_OBSOLETE_REGISTRY_QUARANTINE_FAILED: " + source, ex);
+            }
+        }
+        return List.copyOf(quarantined);
+    }
+
+    private static boolean isObsoleteRegistryFailure(IllegalArgumentException failure) {
+        String message = failure.getMessage() == null ? "" : failure.getMessage();
+        return message.contains("CITY_LAND_USE_RUNTIME_FIELD_REQUIRED: schema")
+                || message.contains("CITY_LAND_USE_ACTIVE_PLAN_SCHEMA_UNSUPPORTED")
+                || message.contains("CITY_LAND_USE_LEDGER_SCHEMA_UNSUPPORTED");
     }
 
     public static void enterFeatureOrigin(WorldGenLevel level, BlockPos origin) {
@@ -592,7 +628,7 @@ public final class CityLandUseWorldgenRegistry {
         if (Files.isRegularFile(activePath)) {
             JsonObject root = readObject(activePath, "CITY_LAND_USE_ACTIVE_PLAN_READ_FAILED");
             requireSchema(root, ACTIVE_SCHEMA, "CITY_LAND_USE_ACTIVE_PLAN_SCHEMA_UNSUPPORTED");
-            requireFields(root, Set.of("schemaVersion", "plans"), "CITY_LAND_USE_ACTIVE_PLAN_FIELDS_UNSUPPORTED");
+            requireFields(root, Set.of("schema", "plans"), "CITY_LAND_USE_ACTIVE_PLAN_FIELDS_UNSUPPORTED");
             for (JsonElement element : requiredArray(root, "plans")) {
                 JsonObject entry = requiredObject(element, "CITY_LAND_USE_ACTIVE_PLAN_ENTRY_INVALID");
                 requireFields(entry, Set.of("dimensionId", "cityId", "areaPlanHash", "surfacePrintPlanHash",
@@ -633,12 +669,11 @@ public final class CityLandUseWorldgenRegistry {
         boolean ledgerExists = Files.isRegularFile(ledgerPath);
         JsonObject persistedLedger = ledgerExists
                 ? readObject(ledgerPath, "CITY_LAND_USE_LEDGER_READ_FAILED") : emptyLedger();
-        String ledgerSchema = requiredString(persistedLedger, "schemaVersion");
-        boolean legacyLedger = LEGACY_LEDGER_SCHEMA.equals(ledgerSchema);
-        if (!legacyLedger && !LEDGER_SCHEMA.equals(ledgerSchema)) {
+        String ledgerSchema = requiredString(persistedLedger, "schema");
+        if (!LEDGER_SCHEMA.equals(ledgerSchema)) {
             throw new IllegalArgumentException("CITY_LAND_USE_LEDGER_SCHEMA_UNSUPPORTED: " + ledgerSchema);
         }
-        requireFields(persistedLedger, Set.of("schemaVersion", "appliedOwners"),
+        requireFields(persistedLedger, Set.of("schema", "appliedOwners"),
                 "CITY_LAND_USE_LEDGER_FIELDS_UNSUPPORTED");
         for (JsonElement element : requiredArray(persistedLedger, "appliedOwners")) {
             JsonObject entry = requiredObject(element, "CITY_LAND_USE_LEDGER_ENTRY_INVALID");
@@ -649,7 +684,7 @@ public final class CityLandUseWorldgenRegistry {
                     "preparedCropOperationCount", "appliedCropOperationCount",
                     "preparedBoundaryOperationCount", "appliedBoundaryOperationCount",
                     "naturalSurfaceSkippedCount", "occupiedBoundarySkippedCount", "appliedAt"));
-            if (!legacyLedger) entryFields.add("foundationDiagnostics");
+            entryFields.add("foundationDiagnostics");
             requireFields(entry, entryFields,
                     "CITY_LAND_USE_LEDGER_ENTRY_FIELDS_UNSUPPORTED");
             dimensionId(requiredString(entry, "dimensionId"));
@@ -659,16 +694,13 @@ public final class CityLandUseWorldgenRegistry {
             requiredString(entry, "paletteHash");
             requiredInt(entry, "chunkX");
             requiredInt(entry, "chunkZ");
-            if (legacyLedger) entry.add("foundationDiagnostics",
-                    foundationDiagnosticsJson(CityLandUseChunkExecutor.FoundationDiagnostics.empty()));
         }
-        if (legacyLedger) persistedLedger.addProperty("schemaVersion", LEDGER_SCHEMA);
-        return new LoadedState(Map.copyOf(active), persistedLedger, ledgerExists, legacyLedger);
+        return new LoadedState(Map.copyOf(active), persistedLedger, ledgerExists);
     }
 
     private static synchronized void persistActive() {
         JsonObject root = new JsonObject();
-        root.addProperty("schemaVersion", ACTIVE_SCHEMA);
+        root.addProperty("schema", ACTIVE_SCHEMA);
         JsonArray plans = new JsonArray();
         ACTIVE.values().stream()
                 .sorted(Comparator.comparing((ActivePlan active) -> active.key().dimensionId())
@@ -774,14 +806,14 @@ public final class CityLandUseWorldgenRegistry {
 
     private static JsonObject emptyLedger() {
         JsonObject root = new JsonObject();
-        root.addProperty("schemaVersion", LEDGER_SCHEMA);
+        root.addProperty("schema", LEDGER_SCHEMA);
         root.add("appliedOwners", new JsonArray());
         return root;
     }
 
     private static synchronized JsonObject activeSummary() {
         JsonObject summary = new JsonObject();
-        summary.addProperty("schemaVersion", ACTIVE_SCHEMA);
+        summary.addProperty("schema", ACTIVE_SCHEMA);
         summary.addProperty("activePlanCount", ACTIVE.size());
         summary.addProperty("surfacePrintPlanCount", ACTIVE.size());
         return summary;
@@ -917,7 +949,7 @@ public final class CityLandUseWorldgenRegistry {
     }
 
     private static void requireSchema(JsonObject object, String expected, String reason) {
-        String actual = requiredString(object, "schemaVersion");
+        String actual = requiredString(object, "schema");
         if (!expected.equals(actual)) throw new IllegalArgumentException(reason + ": " + actual);
     }
 
@@ -1181,7 +1213,6 @@ public final class CityLandUseWorldgenRegistry {
 
     private record LoadedState(Map<ActiveKey, ActivePlan> activePlans,
                                JsonObject ledger,
-                               boolean ledgerExists,
-                               boolean ledgerMigrated) {
+                               boolean ledgerExists) {
     }
 }
