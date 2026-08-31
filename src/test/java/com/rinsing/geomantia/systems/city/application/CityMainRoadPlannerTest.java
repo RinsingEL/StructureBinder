@@ -39,6 +39,8 @@ class CityMainRoadPlannerTest {
 
         assertTrue(result.ok(), result.plan().toString());
         assertEquals("planned", result.plan().get("status").getAsString());
+        assertEquals("ONE_NETWORK_SERVES_MULTIPLE_TRAFFIC_DEMANDS",
+                result.plan().get("sharedNetworkPolicy").getAsString());
         assertEquals(7, result.plan().get("mainRoadWidthBlocks").getAsInt());
         assertFalse(result.streetBands().isEmpty());
         assertTrue(result.streetBands().stream().allMatch(band ->

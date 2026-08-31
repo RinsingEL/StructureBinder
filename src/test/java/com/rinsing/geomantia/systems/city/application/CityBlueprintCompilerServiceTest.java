@@ -31,6 +31,23 @@ class CityBlueprintCompilerServiceTest {
     Path temporary;
 
     @Test
+    void normalizesLegacySchemaVersionsOnlyOnADeepCopy() {
+        JsonObject legacy = JsonParser.parseString("""
+                {"schemaVersion":"city_blueprint_context.v0.10","nested":{
+                  "schemaVersion":"city_landform_review.v0.1"}}
+                """).getAsJsonObject();
+
+        JsonObject normalized = CityBlueprintCompilerService.normalizeLegacySchemasForRead(legacy);
+
+        assertEquals("city_blueprint_context", normalized.get("schema").getAsString());
+        assertEquals("city_landform_review",
+                normalized.getAsJsonObject("nested").get("schema").getAsString());
+        assertFalse(normalized.has("schemaVersion"));
+        assertTrue(legacy.has("schemaVersion"));
+        assertFalse(legacy.has("schema"));
+    }
+
+    @Test
     void cityScaleAndGroupExtentDeriveMinimumInternalPopulation() {
         assertEquals(2, CityBlueprintCompilerService.minimumGroupStructureCount(
                 CityScale.HAMLET, CityBlueprint.ExtentClass.SMALL));
@@ -88,6 +105,25 @@ class CityBlueprintCompilerServiceTest {
         assertTrue(first.ok(), first.compileTrace().toString());
         assertEquals(first.structureAnchorPlan(), second.structureAnchorPlan());
         assertEquals(first.compileTrace(), second.compileTrace());
+        JsonObject streetFirst = first.compileTrace().getAsJsonObject("streetFirstNetworkTrace");
+        assertEquals("CORE_THEN_SHARED_SKELETON_THEN_FILL_THEN_USAGE_REVIEW",
+                streetFirst.get("planningOrder").getAsString());
+        assertTrue(streetFirst.get("reservedSkeletonSegmentCount").getAsInt() > 0);
+        assertTrue(streetFirst.getAsJsonArray("accessOutcomes").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .noneMatch(outcome -> "UNRESOLVED".equals(outcome.get("status").getAsString())));
+        assertTrue(first.structureAnchorPlan().getAsJsonObject("compilationAcceptance")
+                .get("passed").getAsBoolean());
+        assertTrue(first.structureAnchorPlan().getAsJsonObject("compilationAcceptance")
+                .get("allStreetEntrancesConnected").getAsBoolean());
+        assertTrue(first.structureAnchorPlan().getAsJsonArray("streetBands").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .filter(road -> road.has("reservedBeforeFill") && road.get("reservedBeforeFill").getAsBoolean())
+                .allMatch(road -> first.structureAnchorPlan().getAsJsonArray("anchors").asList().stream()
+                        .map(JsonElement::getAsJsonObject)
+                        .noneMatch(anchor -> CityStructureCandidateEnvelope.bounds(
+                                road.getAsJsonObject("bounds")).overlaps(CityStructureCandidateEnvelope.bounds(
+                                anchor.getAsJsonObject("collisionEnvelope"))))));
         JsonArray selections = first.compileTrace().getAsJsonArray("selections");
         assertEquals("required", selections.get(0).getAsJsonObject().get("phase").getAsString());
         assertTrue(selections.size() >= 3, first.compileTrace().toString());

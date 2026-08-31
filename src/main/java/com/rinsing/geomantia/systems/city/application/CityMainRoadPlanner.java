@@ -84,6 +84,8 @@ final class CityMainRoadPlanner {
         List<JsonObject> bands = new ArrayList<>();
         JsonArray connections = new JsonArray();
         JsonArray skippedConnections = new JsonArray();
+        Set<BlockPoint> sharedRoadPoints = new LinkedHashSet<>();
+        int sharedReuseBlocks = 0;
         int connectionIndex = 0;
         for (Link link : links) {
             GroupGeometry from = groups.get(link.fromGroupId());
@@ -140,7 +142,7 @@ final class CityMainRoadPlanner {
                 continue;
             }
             List<BlockPoint> polyline = blockPolyline(connectors.from().point(), connectors.to().point(),
-                    cellPath, terrain, structureObstacles, mainWidth + 2);
+                    cellPath, terrain, structureObstacles, mainWidth + 2, sharedRoadPoints);
             if (polyline.size() < 2) {
                 skippedConnections.add(skippedConnection(link,
                         "CITY_BLUEPRINT_MAIN_ROAD_FULL_WIDTH_ROUTE_UNAVAILABLE"));
@@ -149,6 +151,11 @@ final class CityMainRoadPlanner {
             connectionIndex++;
             String connectionId = "city_main_road_" + String.format("%03d", connectionIndex);
             JsonObject connection = connectionJson(connectionId, link, connectors, cellPath, polyline);
+            List<BlockPoint> unitRoad = unitPolyline(polyline);
+            int reusedByConnection = (int) unitRoad.stream().filter(sharedRoadPoints::contains).count();
+            sharedReuseBlocks += reusedByConnection;
+            connection.addProperty("sharedNetworkReuseBlocks", reusedByConnection);
+            connection.addProperty("routingPolicy", "SHARED_NETWORK_REUSE_BEFORE_NEW_CORRIDOR");
             JsonArray segmentIds = new JsonArray();
             JsonObject sourceTransition = transitionBand(connectionId, "source", link.fromGroupId(),
                     connectors.from());
@@ -170,6 +177,7 @@ final class CityMainRoadPlanner {
             }
             connection.add("streetBandIds", segmentIds);
             connections.add(connection);
+            sharedRoadPoints.addAll(unitRoad);
         }
         plan.addProperty("status", "planned");
         plan.addProperty("reasonCode", "");
@@ -177,6 +185,8 @@ final class CityMainRoadPlanner {
         plan.addProperty("bridgeConnectionCount", bridgeConnections.size());
         plan.addProperty("skippedConnectionCount", skippedConnections.size());
         plan.addProperty("segmentCount", bands.size());
+        plan.addProperty("sharedNetworkReuseBlocks", sharedReuseBlocks);
+        plan.addProperty("sharedNetworkPolicy", "ONE_NETWORK_SERVES_MULTIPLE_TRAFFIC_DEMANDS");
         plan.add("connections", connections);
         plan.add("skippedConnections", skippedConnections);
         return Result.ok(List.copyOf(bands), plan);
@@ -619,7 +629,8 @@ final class CityMainRoadPlanner {
                                                    List<LandUseTerrainField.Cell> cellPath,
                                                    LandUseTerrainField terrain,
                                                    List<BlockBounds> obstacles,
-                                                   int width) {
+                                                   int width,
+                                                   Set<BlockPoint> sharedRoadPoints) {
         int margin = terrain.cellStepBlocks();
         int minX = Math.min(from.x(), cellPath.stream().mapToInt(LandUseTerrainField.Cell::blockMinX)
                 .min().orElse(from.x())) - margin;
@@ -629,6 +640,12 @@ final class CityMainRoadPlanner {
                 cell.blockMinX() + cell.cellStepBlocks() - 1).max().orElse(to.x())) + margin;
         int maxZ = Math.max(to.z(), cellPath.stream().mapToInt(cell ->
                 cell.blockMinZ() + cell.cellStepBlocks() - 1).max().orElse(to.z())) + margin;
+        if (!sharedRoadPoints.isEmpty()) {
+            minX = Math.min(minX, sharedRoadPoints.stream().mapToInt(BlockPoint::x).min().orElse(minX) - margin);
+            minZ = Math.min(minZ, sharedRoadPoints.stream().mapToInt(BlockPoint::z).min().orElse(minZ) - margin);
+            maxX = Math.max(maxX, sharedRoadPoints.stream().mapToInt(BlockPoint::x).max().orElse(maxX) + margin);
+            maxZ = Math.max(maxZ, sharedRoadPoints.stream().mapToInt(BlockPoint::z).max().orElse(maxZ) + margin);
+        }
         BlockBounds planning = terrain.planningBounds();
         BlockBounds search = new BlockBounds(Math.max(planning.minX(), minX), Math.max(planning.minZ(), minZ),
                 Math.min(planning.maxX(), maxX), Math.min(planning.maxZ(), maxZ));
@@ -658,7 +675,7 @@ final class CityMainRoadPlanner {
                 }
                 LandUseTerrainField.Cell nextCell = lookup.at(next);
                 if (!LandscapeTerrainContinuity.allows("BALANCED", currentCell, nextCell)) continue;
-                int cost = current.cost() + 1;
+                int cost = current.cost() + (sharedRoadPoints.contains(next) ? 1 : 4);
                 if (cost >= distance.getOrDefault(next, Integer.MAX_VALUE)) continue;
                 distance.put(next, cost);
                 previous.put(next, current.point());

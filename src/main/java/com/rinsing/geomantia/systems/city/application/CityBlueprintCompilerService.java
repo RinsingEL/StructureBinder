@@ -95,7 +95,8 @@ public final class CityBlueprintCompilerService {
             throw fail("CITY_BLUEPRINT_CATALOG_STALE", "Context catalog snapshot path is not the active city snapshot.");
         }
 
-        JsonObject snapshot = readObject(snapshotPath, "CITY_BLUEPRINT_CATALOG_STALE");
+        JsonObject snapshot = normalizeLegacySchemasForRead(
+                readObject(snapshotPath, "CITY_BLUEPRINT_CATALOG_STALE"));
         if (!CityBlueprintService.SNAPSHOT_SCHEMA.equals(string(snapshot, "schema"))) {
             throw fail("CITY_BLUEPRINT_CATALOG_STALE", "Unsupported catalog snapshot schema.");
         }
@@ -108,17 +109,18 @@ public final class CityBlueprintCompilerService {
             throw fail("CITY_BLUEPRINT_TERRAIN_FIELD_STALE", "Unsupported D3 terrain field schema.");
         }
         requireArtifactCurrent(debugRoot, terrainFieldRef, "CITY_BLUEPRINT_TERRAIN_FIELD_STALE");
-        LandUseTerrainField terrainField = new LandUseTerrainFieldCodec().fromJson(readObject(
-                resolveArtifact(debugRoot, terrainFieldRef), "CITY_BLUEPRINT_TERRAIN_FIELD_STALE"));
+        LandUseTerrainField terrainField = new LandUseTerrainFieldCodec().fromJson(normalizeLegacySchemasForRead(
+                readObject(resolveArtifact(debugRoot, terrainFieldRef), "CITY_BLUEPRINT_TERRAIN_FIELD_STALE")));
         JsonObject templateCatalogJson = requiredObject(snapshot, "templateCatalog");
         CityTemplateCatalog templates = new CityTemplateCatalogLoader().load(templateCatalogJson);
         CityBlueprintReferenceCatalog references = CityBlueprintReferenceCatalog.parse(
                 requiredObject(snapshot, "referenceCatalog"), templates);
-        JsonObject d3Json = readObject(d3Path, "CITY_BLUEPRINT_D3_STALE");
+        JsonObject d3Json = normalizeLegacySchemasForRead(readObject(d3Path, "CITY_BLUEPRINT_D3_STALE"));
         CityLandformReviewPackage review = CityLandformReviewPackage.fromJson(d3Json);
         validateTerrainField(review, terrainField);
         CityStructureTerrainGate terrainGate = new CityStructureTerrainGate(terrainField, semanticCatalogJson);
-        CityBlueprint blueprint = codec.read(JsonParser.parseString(blueprintRaw).getAsJsonObject());
+        CityBlueprint blueprint = codec.read(normalizeLegacySchemasForRead(
+                JsonParser.parseString(blueprintRaw).getAsJsonObject()));
         CityBlueprint.ArtifactRef expectedD3 = artifactRef(requiredObject(context, "sourceD3Ref"));
         CityBlueprint.ArtifactRef expectedCatalog = artifactRef(requiredObject(context, "catalogSnapshotRef"));
         CityBlueprintValidator.ValidationResult revalidation = validator.validate(blueprint,
@@ -280,6 +282,27 @@ public final class CityBlueprintCompilerService {
         }
         ConnectivityPlan connectivityPlan = ConnectivityPlan.empty();
 
+        // Street-first city planning: required/core buildings establish each district's frame, then
+        // the shared main-road and internal street skeletons reserve the city blocks before any fill
+        // building is allowed to occupy them.
+        JsonArray preFillStreetSkeleton = streetSkeletonBands(states, anchors, catalog);
+        List<JsonObject> requiredStageAnchors = anchors.asList().stream()
+                .map(JsonElement::getAsJsonObject).toList();
+        CityMainRoadPlanner.Result mainRoads = mainRoadPlanner.plan(blueprint, references, terrainField,
+                requiredStageAnchors,
+                preFillStreetSkeleton.asList().stream().map(JsonElement::getAsJsonObject).toList(),
+                Set.of());
+        if (!mainRoads.ok()) {
+            JsonObject failureTrace = trace(blueprint, context, selections, states,
+                    connectivityPlan, "failed", mainRoads.reasonCode());
+            failureTrace.add("streetBands", preFillStreetSkeleton.deepCopy());
+            failureTrace.add("cityMainRoadPlan", mainRoads.plan().deepCopy());
+            return CompilationResult.failed(failureTrace, mainRoads.reasonCode(), mainRoads.message());
+        }
+        addRoadBandsToOccupied(preFillStreetSkeleton.asList().stream()
+                .map(JsonElement::getAsJsonObject).toList(), occupied);
+        addRoadBandsToOccupied(mainRoads.streetBands(), occupied);
+
         // Form each group with its own array before connection growth. Connection structures are
         // city stitching and must not substitute for the group's required/fill population.
         for (CityBlueprint.Group group : groups) {
@@ -349,31 +372,14 @@ public final class CityBlueprintCompilerService {
         applyLandscapeFormationClaims(states, landscapeCapacity.plan());
 
         states.values().forEach(GroupState::freezeCoreExtent);
-        // Function-area relations own spatial growth. A hierarchical main road is planned only
-        // after that growth and must never stand in for the two groups expanding toward each other.
+        // Function-area relations still own spatial growth. They consume the already-reserved road
+        // skeleton as an obstacle; spatial adjacency never gets to invent another physical road.
         connectivityPlan = buildConnectivityPlan(blueprint, states);
         growConnectivity(runDir, review, structureSource,
                 templateCatalogJson, templates, blueprint, states, occupied, anchors, selections,
                 catalog, connectivityPlan, terrainGate);
 
-        // Freeze the inter-group road skeleton after relation handoff and before percentage fill.
-        // Later buildings must grow around this corridor instead of making the road solve through them.
-        JsonArray relationStageStreetBands = internalStreetBands(states, anchors, catalog);
-        List<JsonObject> relationStageAnchors = anchors.asList().stream()
-                .map(JsonElement::getAsJsonObject).toList();
-        CityMainRoadPlanner.Result mainRoads = mainRoadPlanner.plan(blueprint, references, terrainField,
-                relationStageAnchors,
-                relationStageStreetBands.asList().stream().map(JsonElement::getAsJsonObject).toList(),
-                connectivityPlan.skippedPairKeys());
-        if (!mainRoads.ok()) {
-            JsonObject failureTrace = trace(blueprint, context, selections, states,
-                    connectivityPlan, "failed", mainRoads.reasonCode());
-            failureTrace.add("streetBands", relationStageStreetBands.deepCopy());
-            failureTrace.add("cityMainRoadPlan", mainRoads.plan().deepCopy());
-            return CompilationResult.failed(failureTrace, mainRoads.reasonCode(), mainRoads.message());
-        }
         connectivityPlan.markBridgeDelegated(mainRoads.plan());
-        addRoadBandsToOccupied(mainRoads.streetBands(), occupied);
 
         // The percentage baseline is intentionally frozen only after every explicit relation has
         // reached handoff. Percentage fill is a second outward-growth phase, not the connection.
@@ -419,20 +425,25 @@ public final class CityBlueprintCompilerService {
         anchorPlan.addProperty("schema", CityStructureAnchorPlanner.PLAN_SCHEMA);
         anchorPlan.addProperty("cityId", cityId);
         anchorPlan.add("anchors", anchors);
-        JsonArray streetBands = internalStreetBands(states, anchors, catalog);
         List<JsonObject> anchorObjects = anchors.asList().stream()
                 .map(JsonElement::getAsJsonObject).toList();
+        CityInternalStreetPlanner.Finalization streetFinalization = internalStreetPlanner.finalizeSkeleton(
+                preFillStreetSkeleton.asList().stream().map(JsonElement::getAsJsonObject).toList(),
+                mainRoads.streetBands(), anchorObjects);
+        JsonArray streetBands = new JsonArray();
+        streetFinalization.streetBands().forEach(streetBands::add);
         CityResidentialOverflowPlanner.Result residentialOverflow = residentialOverflowPlanner.plan(
                 anchorObjects, streetBands.asList().stream().map(JsonElement::getAsJsonObject).toList());
         anchorPlan.add("streetBands", streetBands);
         anchorPlan.add("residentialOverflowPlan", residentialOverflow.plan().deepCopy());
         mainRoads.streetBands().forEach(streetBands::add);
         anchorPlan.add("cityMainRoadPlan", mainRoads.plan().deepCopy());
+        anchorPlan.add("streetFirstNetworkTrace", streetFinalization.trace().deepCopy());
         CityArrayVisualQualityGate.Result arrayVisualQuality = arrayVisualQualityGate.evaluate(
                 anchors, streetBands);
         anchorPlan.add("arrayVisualQuality", arrayVisualQuality.json().deepCopy());
         JsonObject compilationAcceptance = compilationAcceptance(
-                blueprint, states, connectivityPlan, arrayVisualQuality);
+                blueprint, states, connectivityPlan, arrayVisualQuality, streetFinalization.trace());
         anchorPlan.add("compilationAcceptance", compilationAcceptance.deepCopy());
         if (!arrayVisualQuality.passed()) {
             anchorPlan.addProperty("arrayVisualGapRecorded", true);
@@ -450,6 +461,7 @@ public final class CityBlueprintCompilerService {
                 connectivityPlan, "compiled", "");
         compileTrace.add("streetBands", streetBands.deepCopy());
         compileTrace.add("cityMainRoadPlan", mainRoads.plan().deepCopy());
+        compileTrace.add("streetFirstNetworkTrace", streetFinalization.trace().deepCopy());
         compileTrace.add("residentialOverflowPlan", residentialOverflow.plan().deepCopy());
         compileTrace.add("arrayVisualQuality", arrayVisualQuality.json().deepCopy());
         compileTrace.addProperty("arrayVisualGapRecorded", !arrayVisualQuality.passed());
@@ -538,7 +550,8 @@ public final class CityBlueprintCompilerService {
     private static JsonObject compilationAcceptance(CityBlueprint blueprint,
                                                     Map<String, GroupState> states,
                                                     ConnectivityPlan connectivityPlan,
-                                                    CityArrayVisualQualityGate.Result visualQuality) {
+                                                    CityArrayVisualQualityGate.Result visualQuality,
+                                                    JsonObject streetFirstNetworkTrace) {
         JsonArray hardBlocks = new JsonArray();
         Set<String> relatedGroupIds = new LinkedHashSet<>();
         blueprint.relations().forEach(relation -> {
@@ -571,6 +584,13 @@ public final class CityBlueprintCompilerService {
             if (state.group().priority() == CityBlueprint.GroupPriority.CORE) hardBlocks.add(message);
             else warnings.add(message);
         }));
+        JsonArray streetAccessOutcomes = array(streetFirstNetworkTrace, "accessOutcomes");
+        streetAccessOutcomes.asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .filter(outcome -> "UNRESOLVED".equals(string(outcome, "status")))
+                .forEach(outcome -> warnings.add(string(outcome, "entranceId")
+                        + ": STREET_ENTRANCE_UNRESOLVED reasonCode="
+                        + string(outcome, "reasonCode")));
         visualQuality.hardBlocks().forEach(warnings::add);
 
         JsonObject acceptance = new JsonObject();
@@ -585,6 +605,9 @@ public final class CityBlueprintCompilerService {
         acceptance.addProperty("allRequiredStructuresCommitted",
                 states.values().stream().allMatch(state -> state.missingRequiredStructures().isEmpty()));
         acceptance.addProperty("arrayVisualGeometryPassed", visualQuality.passed());
+        acceptance.addProperty("allStreetEntrancesConnected", streetAccessOutcomes.asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .noneMatch(outcome -> "UNRESOLVED".equals(string(outcome, "status"))));
         acceptance.add("hardBlocks", hardBlocks);
         acceptance.add("warnings", warnings);
         return acceptance;
@@ -1443,19 +1466,22 @@ public final class CityBlueprintCompilerService {
         }
     }
 
-    private JsonArray internalStreetBands(Map<String, GroupState> states,
+    private JsonArray streetSkeletonBands(Map<String, GroupState> states,
                                           JsonArray anchors,
                                           CatalogIndex catalog) {
         JsonArray streetBands = new JsonArray();
         List<JsonObject> anchorObjects = anchors.asList().stream()
                 .map(JsonElement::getAsJsonObject).toList();
         states.values().forEach(state -> {
-            JsonObject streetBand = state.streetBandPlan();
-            if (streetBand != null) streetBands.add(streetBand);
             if (!state.landscapeGapCirculation()) {
-                internalStreetPlanner.plan(state.group().groupId(), state.layoutAlgorithm(),
+                internalStreetPlanner.planSkeleton(state.group().groupId(), state.layoutAlgorithm(),
                                 state.layoutParameters(), anchorObjects,
-                                catalog.centerAxisStreetEnabled(state.group().algorithmProfileRef()))
+                                catalog.centerAxisStreetEnabled(state.group().algorithmProfileRef()),
+                                state.spatialDemand().plannedStructureCount(),
+                                "LINEAR".equals(state.layoutAlgorithm())
+                                        ? state.spatialDemand().formationLengthBlocks()
+                                        : state.spatialDemand().formationSpanBlocks(),
+                                state.layoutFrame())
                         .forEach(streetBands::add);
             }
         });
@@ -4124,6 +4150,41 @@ public final class CityBlueprintCompilerService {
         return JsonParser.parseString(requireFile(path, reason)).getAsJsonObject();
     }
 
+    /**
+     * Keeps already accepted pre-schema-migration artifacts readable without rewriting them or
+     * weakening their content-hash checks. Normalization is applied only to in-memory copies after
+     * the original files have passed identity validation.
+     */
+    public static JsonObject normalizeLegacySchemasForRead(JsonObject source) {
+        JsonObject copy = source.deepCopy();
+        normalizeLegacySchemas((JsonElement) copy);
+        return copy;
+    }
+
+    private static void normalizeLegacySchemas(JsonElement element) {
+        if (element == null || element.isJsonNull()) return;
+        if (element.isJsonArray()) {
+            element.getAsJsonArray().forEach(CityBlueprintCompilerService::normalizeLegacySchemas);
+            return;
+        }
+        if (!element.isJsonObject()) return;
+        JsonObject object = element.getAsJsonObject();
+        if (!object.has("schema") && object.has("schemaVersion")
+                && object.get("schemaVersion").isJsonPrimitive()) {
+            object.addProperty("schema", currentSchemaName(object.get("schemaVersion").getAsString()));
+        }
+        object.remove("schemaVersion");
+        object.entrySet().forEach(entry -> normalizeLegacySchemas(entry.getValue()));
+    }
+
+    private static String currentSchemaName(String value) {
+        int versionMarker = value.lastIndexOf(".v");
+        if (versionMarker > 0 && value.substring(versionMarker + 2).matches("[0-9]+(?:\\.[0-9]+)*")) {
+            return value.substring(0, versionMarker);
+        }
+        return value;
+    }
+
     private static String requireFile(Path path, String reason) throws IOException {
         if (!Files.isRegularFile(path)) throw fail(reason, path.toString());
         return Files.readString(path);
@@ -4179,6 +4240,10 @@ public final class CityBlueprintCompilerService {
     }
 
     private static String string(JsonObject object, String key) {
+        if (object != null && "schema".equals(key) && !object.has(key)
+                && object.has("schemaVersion") && !object.get("schemaVersion").isJsonNull()) {
+            return currentSchemaName(object.get("schemaVersion").getAsString());
+        }
         return object != null && object.has(key) && !object.get(key).isJsonNull()
                 ? object.get(key).getAsString() : "";
     }

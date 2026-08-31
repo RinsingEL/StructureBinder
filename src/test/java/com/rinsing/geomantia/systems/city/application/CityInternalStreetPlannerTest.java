@@ -104,6 +104,42 @@ class CityInternalStreetPlannerTest {
                 .startsWith("CENTER_AXIS_")));
     }
 
+    @Test
+    void gridStreetSkeletonCutsBlocksFromTheCoreBeforeFillBuildingsExist() {
+        JsonObject core = gridAnchor("grid_core", 0, 0, 0, 0);
+        core.addProperty("blueprintPlacementPhase", "required");
+        core.getAsJsonObject("blueprintLayout").addProperty("gridPitchBlocks", 20);
+        core.getAsJsonObject("blueprintLayout").addProperty("spacingBlocks", 20);
+
+        var roads = planner.planSkeleton("grid", "GRID", parameters("GRID"), List.of(core),
+                false, 6, 60, layout.worldFrame(new com.rinsing.geomantia.systems.city.domain.model.BlockPoint(0, 0)));
+
+        assertFalse(roads.isEmpty());
+        assertTrue(roads.stream().allMatch(road -> road.get("reservedBeforeFill").getAsBoolean()));
+        assertTrue(roads.stream().allMatch(road -> "STREET_SKELETON_BEFORE_FILL".equals(
+                road.get("planningPhase").getAsString())));
+        var coreBounds = CityStructureCandidateEnvelope.bounds(core.getAsJsonObject("collisionEnvelope"));
+        assertTrue(roads.stream().noneMatch(road -> CityStructureCandidateEnvelope.bounds(
+                road.getAsJsonObject("bounds")).overlaps(coreBounds)));
+    }
+
+    @Test
+    void compactStreetSkeletonScalesWithThePlannedFormationInsteadOfStayingLocal() {
+        JsonObject core = compactAnchor("compact_core", 0, 0);
+        core.addProperty("blueprintPlacementPhase", "required");
+
+        var roads = planner.planSkeleton("compact", "COMPACT", parameters("COMPACT"), List.of(core),
+                false, 8, 232,
+                layout.worldFrame(new com.rinsing.geomantia.systems.city.domain.model.BlockPoint(0, 0)));
+
+        assertEquals(3, roads.size());
+        int span = roads.stream().map(road -> CityStructureCandidateEnvelope.bounds(
+                        road.getAsJsonObject("bounds")))
+                .mapToInt(bounds -> Math.max(bounds.widthBlocks(), bounds.heightBlocks()))
+                .max().orElseThrow();
+        assertTrue(span >= 100);
+    }
+
     private CityBlueprintGroupLayoutPlanner.Parameters parameters(String algorithm) {
         return layout.parameters(algorithm, CityBlueprint.DensityClass.DENSE);
     }

@@ -5123,7 +5123,8 @@ final class CityPlanningEndpointHandler {
         String runId = runDir.getFileName().toString();
         loadCitySeedForD4(runDir, runId, citySeedId);
         return CityLandformReviewPackage.fromJson(
-                JsonParser.parseString(Files.readString(d3PackagePath)).getAsJsonObject());
+                CityBlueprintCompilerService.normalizeLegacySchemasForRead(
+                        JsonParser.parseString(Files.readString(d3PackagePath)).getAsJsonObject()));
     }
 
     private static Path d4SessionDir(Path runDir, String citySeedId) {
@@ -5524,7 +5525,8 @@ final class CityPlanningEndpointHandler {
         Path manifestPath = layout.manifestPath();
         JsonObject manifest;
         if (Files.isRegularFile(manifestPath)) {
-            manifest = JsonParser.parseString(Files.readString(manifestPath)).getAsJsonObject();
+            manifest = CityBlueprintCompilerService.normalizeLegacySchemasForRead(
+                    JsonParser.parseString(Files.readString(manifestPath)).getAsJsonObject());
             if (!"city_test_run_manifest".equals(stringValue(manifest, "schema", ""))
                     || !runId.equals(stringValue(manifest, "runId", ""))
                     || !citySeedId.equals(stringValue(manifest, "citySeedId", ""))) {

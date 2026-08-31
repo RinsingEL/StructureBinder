@@ -7,6 +7,7 @@ import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 
 import java.util.ArrayList;
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,6 +18,146 @@ import java.util.TreeMap;
 
 /** Freezes internal array roads as straight segments consumed by preview, D6, and Foundation. */
 final class CityInternalStreetPlanner {
+    List<JsonObject> planSkeleton(String groupId,
+                                  String algorithm,
+                                  CityBlueprintGroupLayoutPlanner.Parameters parameters,
+                                  List<JsonObject> requiredAnchors,
+                                  boolean centerAxisStreetEnabled,
+                                  int plannedStructureCount,
+                                  int plannedSpanBlocks,
+                                  CityBlueprintGroupLayoutPlanner.Frame frame) {
+        List<Anchor> anchors = requiredAnchors.stream()
+                .filter(anchor -> groupId.equals(string(anchor, "placementGroupId")))
+                .map(Anchor::parse)
+                .toList();
+        if (anchors.isEmpty()) return List.of();
+        List<JsonObject> planned = switch (algorithm) {
+            case "GRID" -> gridSkeleton(groupId, parameters, anchors,
+                    Math.max(4, plannedStructureCount));
+            case "COURTYARD" -> courtyard(groupId, parameters, anchors);
+            case "LINEAR" -> linearSkeleton(groupId, parameters, anchors,
+                    Math.max(2, plannedStructureCount), plannedSpanBlocks, frame);
+            case "COMPACT" -> compactSkeleton(groupId, parameters, anchors,
+                    Math.max(3, plannedStructureCount), plannedSpanBlocks, frame);
+            case "CENTER_SYMMETRIC" -> centerAxisStreetEnabled
+                    ? centerSkeleton(groupId, parameters, anchors, plannedSpanBlocks, frame) : List.of();
+            default -> List.of();
+        };
+        planned.forEach(CityInternalStreetPlanner::markReservedSkeleton);
+        return List.copyOf(planned);
+    }
+
+    Finalization finalizeSkeleton(List<JsonObject> skeletonBands,
+                                  List<JsonObject> mainRoadBands,
+                                  List<JsonObject> anchors) {
+        List<Anchor> parsed = anchors.stream().map(Anchor::parse).toList();
+        List<JsonObject> allSkeleton = new ArrayList<>();
+        skeletonBands.forEach(band -> allSkeleton.add(band.deepCopy()));
+        List<JsonObject> retained = new ArrayList<>();
+        com.google.gson.JsonArray removedIds = new com.google.gson.JsonArray();
+        for (JsonObject band : allSkeleton) {
+            List<Entrance> served = parsed.stream().flatMap(anchor -> entrances(anchor).stream())
+                    .filter(entrance -> distanceToBand(entrance.point(), band) <= serviceDistance(band))
+                    .toList();
+            boolean districtFrontage = parsed.stream().anyMatch(anchor -> anchor.groupId().equals(
+                    string(band, "groupId"))) && ("LINEAR_STREET_BAND".equals(string(band, "roadKind"))
+                    || parsed.stream().filter(anchor -> anchor.groupId().equals(string(band, "groupId")))
+                    .map(Anchor::layout).filter(layout -> layout.has("frontageTarget"))
+                    .map(layout -> point(layout.getAsJsonObject("frontageTarget")))
+                    .anyMatch(frontage -> distanceToBand(frontage, band) <= serviceDistance(band) + 1));
+            long junctions = allSkeleton.stream().filter(other -> other != band)
+                    .filter(other -> bounds(other).overlaps(bounds(band))).count()
+                    + mainRoadBands.stream().filter(other -> bounds(other).overlaps(bounds(band))).count();
+            if (served.isEmpty() && junctions == 0 && !districtFrontage) {
+                removedIds.add(string(band, "streetBandId"));
+                continue;
+            }
+            band.addProperty("planningPhase", "FINAL_NETWORK_AFTER_BUILDING_USE_REVIEW");
+            band.addProperty("usageReview", served.isEmpty()
+                    ? districtFrontage ? "SERVES_DISTRICT_FRONTAGE" : "SHARED_TRANSIT_JUNCTION"
+                    : "SERVES_REAL_ENTRANCE");
+            com.google.gson.JsonArray ids = new com.google.gson.JsonArray();
+            served.stream().map(Entrance::id).distinct().sorted().forEach(ids::add);
+            band.add("servedEntranceIds", ids);
+            band.addProperty("junctionCount", junctions);
+            retained.add(band);
+        }
+
+        List<JsonObject> shortAlleys = new ArrayList<>();
+        List<JsonObject> networkExtensions = new ArrayList<>();
+        com.google.gson.JsonArray accessOutcomes = new com.google.gson.JsonArray();
+        List<JsonObject> network = new ArrayList<>(retained);
+        network.addAll(mainRoadBands);
+        for (Anchor anchor : parsed) {
+            for (Entrance entrance : entrances(anchor)) {
+                List<JsonObject> groupNetwork = network.stream()
+                        .filter(band -> anchor.groupId().equals(string(band, "groupId")))
+                        .toList();
+                if (groupNetwork.stream().anyMatch(band -> distanceToBand(entrance.point(), band)
+                        <= serviceDistance(band))) {
+                    accessOutcomes.add(accessOutcome(entrance, "CONNECTED_TO_SHARED_SKELETON", ""));
+                    continue;
+                }
+                Alley alley = shortestLegalAlley(entrance, anchor, parsed, groupNetwork);
+                if (alley == null) {
+                    Alley extension = shortestLegalNetworkExtension(entrance, anchor, parsed, groupNetwork);
+                    if (extension == null) {
+                        accessOutcomes.add(accessOutcome(entrance, "UNRESOLVED",
+                                "CITY_INTERNAL_STREET_ENTRANCE_NETWORK_EXTENSION_UNAVAILABLE"));
+                        continue;
+                    }
+                    int baseIndex = networkExtensions.size();
+                    for (int index = 0; index + 1 < extension.path().size(); index++) {
+                        JsonObject band = segment(anchor.groupId(), "USAGE_REVIEW_EXTENSIONS",
+                                "SHARED_NETWORK_EXTENSION", baseIndex + index, extension.width(),
+                                extension.path().get(index), extension.path().get(index + 1));
+                        band.addProperty("hardSkeleton", false);
+                        band.addProperty("reservedBeforeFill", false);
+                        band.addProperty("planningPhase", "FINAL_SHARED_NETWORK_REROUTE");
+                        band.addProperty("usageReview", "EXTENDS_SHARED_NETWORK_TO_REMOTE_ENTRANCE");
+                        com.google.gson.JsonArray ids = new com.google.gson.JsonArray();
+                        ids.add(entrance.id());
+                        band.add("servedEntranceIds", ids);
+                        networkExtensions.add(band);
+                    }
+                    network.addAll(networkExtensions.subList(baseIndex, networkExtensions.size()));
+                    accessOutcomes.add(accessOutcome(entrance, "CONNECTED_BY_SHARED_EXTENSION", ""));
+                    continue;
+                }
+                int baseIndex = shortAlleys.size();
+                for (int index = 0; index + 1 < alley.path().size(); index++) {
+                    JsonObject band = segment(anchor.groupId(), "ENTRANCE_SHORT_ALLEYS",
+                            "ENTRANCE_SHORT_ALLEY", baseIndex + index, alley.width(),
+                            alley.path().get(index), alley.path().get(index + 1));
+                    band.addProperty("hardSkeleton", false);
+                    band.addProperty("reservedBeforeFill", false);
+                    band.addProperty("planningPhase", "FINAL_INDIVIDUAL_ENTRANCE_FALLBACK");
+                    band.addProperty("usageReview", "SERVES_SINGLE_NEARBY_ENTRANCE");
+                    com.google.gson.JsonArray ids = new com.google.gson.JsonArray();
+                    ids.add(entrance.id());
+                    band.add("servedEntranceIds", ids);
+                    shortAlleys.add(band);
+                }
+                network.addAll(shortAlleys.subList(baseIndex, shortAlleys.size()));
+                accessOutcomes.add(accessOutcome(entrance, "CONNECTED_BY_SHORT_ALLEY", ""));
+            }
+        }
+        int retainedSkeletonCount = retained.size();
+        retained.addAll(networkExtensions);
+        retained.addAll(shortAlleys);
+        JsonObject trace = new JsonObject();
+        trace.addProperty("schema", "city_street_first_network_trace");
+        trace.addProperty("planningOrder", "CORE_THEN_SHARED_SKELETON_THEN_FILL_THEN_USAGE_REVIEW");
+        trace.addProperty("reservedSkeletonSegmentCount", skeletonBands.size());
+        trace.addProperty("retainedSkeletonSegmentCount", retainedSkeletonCount);
+        trace.addProperty("removedUnusedSegmentCount", removedIds.size());
+        trace.addProperty("networkExtensionSegmentCount", networkExtensions.size());
+        trace.addProperty("shortAlleySegmentCount", shortAlleys.size());
+        trace.add("removedStreetBandIds", removedIds);
+        trace.add("accessOutcomes", accessOutcomes);
+        return new Finalization(List.copyOf(retained), trace);
+    }
+
     List<JsonObject> plan(String groupId,
                           String algorithm,
                           CityBlueprintGroupLayoutPlanner.Parameters parameters,
@@ -70,6 +211,135 @@ final class CityInternalStreetPlanner {
                     new BlockPoint(usedExtent.maxX(), gap.center())));
         }
         return List.copyOf(roads);
+    }
+
+    private static List<JsonObject> gridSkeleton(String groupId,
+                                                 CityBlueprintGroupLayoutPlanner.Parameters parameters,
+                                                 List<Anchor> anchors,
+                                                 int plannedStructureCount) {
+        Anchor core = anchors.stream().filter(anchor -> "required".equals(anchor.phase()))
+                .findFirst().orElse(anchors.get(0));
+        JsonObject layout = core.layout();
+        BlockPoint origin = layout.has("theoreticalAnchor")
+                ? point(layout.getAsJsonObject("theoreticalAnchor")) : center(core.collision());
+        int pitch = Math.max(1, intValue(layout, "gridPitchBlocks",
+                intValue(layout, "spacingBlocks", core.collision().widthBlocks()
+                        + parameters.targetEdgeGapBlocks())));
+        List<GridOffset> slots = new ArrayList<>();
+        for (int index = 0; index < plannedStructureCount; index++) slots.add(squareSpiral(index));
+        int minRow = slots.stream().mapToInt(GridOffset::row).min().orElse(0);
+        int maxRow = slots.stream().mapToInt(GridOffset::row).max().orElse(1);
+        int minColumn = slots.stream().mapToInt(GridOffset::column).min().orElse(0);
+        int maxColumn = slots.stream().mapToInt(GridOffset::column).max().orElse(1);
+        int lotHalf = Math.max(2, (pitch - parameters.targetEdgeGapBlocks()) / 2);
+        int minX = origin.x() + minRow * pitch - lotHalf;
+        int maxX = origin.x() + maxRow * pitch + lotHalf;
+        int minZ = origin.z() + minColumn * pitch - lotHalf;
+        int maxZ = origin.z() + maxColumn * pitch + lotHalf;
+        int narrow = Math.max(1, parameters.streetBandWidthBlocks() / 2);
+        List<JsonObject> roads = new ArrayList<>();
+        for (int row = minRow; row < maxRow; row++) {
+            int x = origin.x() + row * pitch + pitch / 2;
+            int width = Math.floorMod(row - minRow, 2) == 0
+                    ? parameters.streetBandWidthBlocks() : narrow;
+            roads.add(segment(groupId, "GRID_BLOCK_SKELETON",
+                    width == parameters.streetBandWidthBlocks() ? "GRID_MAIN_STREET" : "GRID_ROW_LANE",
+                    roads.size(), width, new BlockPoint(x, minZ), new BlockPoint(x, maxZ)));
+        }
+        for (int column = minColumn; column < maxColumn; column++) {
+            int z = origin.z() + column * pitch + pitch / 2;
+            roads.add(segment(groupId, "GRID_BLOCK_SKELETON", "GRID_COLUMN_LANE", roads.size(), narrow,
+                    new BlockPoint(minX, z), new BlockPoint(maxX, z)));
+        }
+        return List.copyOf(roads);
+    }
+
+    private static List<JsonObject> linearSkeleton(String groupId,
+                                                   CityBlueprintGroupLayoutPlanner.Parameters parameters,
+                                                   List<Anchor> anchors,
+                                                   int plannedStructureCount,
+                                                   int plannedSpanBlocks,
+                                                   CityBlueprintGroupLayoutPlanner.Frame frame) {
+        Anchor core = anchors.stream().filter(anchor -> "required".equals(anchor.phase()))
+                .findFirst().orElse(anchors.get(0));
+        JsonObject layout = core.layout();
+        int pitch = Math.max(1, intValue(layout, "spacingBlocks",
+                core.collision().widthBlocks() + parameters.targetEdgeGapBlocks()));
+        int length = Math.max(plannedSpanBlocks, Math.max(1, plannedStructureCount / 2) * pitch);
+        BlockPoint start = frame == null ? center(core.collision()) : frame.center();
+        int dx = frame == null ? 1 : cardinal(frame.axisX(), frame.axisZ())[0];
+        int dz = frame == null ? 0 : cardinal(frame.axisX(), frame.axisZ())[1];
+        BlockPoint end = new BlockPoint(start.x() + dx * length, start.z() + dz * length);
+        return List.of(segment(groupId, "LINEAR_BLOCK_SKELETON", "LINEAR_STREET_BAND", 0,
+                parameters.streetBandWidthBlocks(), start, end));
+    }
+
+    private static List<JsonObject> compactSkeleton(String groupId,
+                                                    CityBlueprintGroupLayoutPlanner.Parameters parameters,
+                                                    List<Anchor> anchors,
+                                                    int plannedStructureCount,
+                                                    int plannedSpanBlocks,
+                                                    CityBlueprintGroupLayoutPlanner.Frame frame) {
+        Anchor core = anchors.stream().filter(anchor -> "required".equals(anchor.phase()))
+                .findFirst().orElse(anchors.get(0));
+        BlockPoint lane = compactRoadPoint(core, parameters.streetBandWidthBlocks(),
+                anchors, parameters.maximumEdgeGapBlocks());
+        BlockPoint coreCenter = center(core.body());
+        int dx = lane.x() - coreCenter.x();
+        int dz = lane.z() - coreCenter.z();
+        int[] outward = Math.abs(dx) >= Math.abs(dz)
+                ? new int[]{dx >= 0 ? 1 : -1, 0}
+                : new int[]{0, dz >= 0 ? 1 : -1};
+        int tangentX = -outward[1];
+        int tangentZ = outward[0];
+        int half = Math.max(6, Math.min(Math.max(6, plannedSpanBlocks / 4),
+                Math.max(60, parameters.maximumEdgeGapBlocks() * 3)));
+        int bend = Math.max(3, parameters.streetBandWidthBlocks() + 1);
+        BlockPoint start = new BlockPoint(lane.x() - tangentX * half, lane.z() - tangentZ * half);
+        BlockPoint middle = new BlockPoint(lane.x() + tangentX * half, lane.z() + tangentZ * half);
+        BlockPoint end = new BlockPoint(middle.x() + outward[0] * bend,
+                middle.z() + outward[1] * bend);
+        for (int shift = 0; shift <= parameters.maximumEdgeGapBlocks(); shift++) {
+            BlockBounds firstBounds = segmentBounds(parameters.streetBandWidthBlocks(), start, middle);
+            BlockBounds secondBounds = segmentBounds(parameters.streetBandWidthBlocks(), middle, end);
+            if (!firstBounds.overlaps(core.collision()) && !secondBounds.overlaps(core.collision())) break;
+            start = new BlockPoint(start.x() + outward[0], start.z() + outward[1]);
+            middle = new BlockPoint(middle.x() + outward[0], middle.z() + outward[1]);
+            end = new BlockPoint(end.x() + outward[0], end.z() + outward[1]);
+        }
+        List<JsonObject> roads = new ArrayList<>();
+        roads.add(segment(groupId, "COMPACT_BLOCK_SKELETON", "COMPACT_ALLEY", 0,
+                parameters.streetBandWidthBlocks(), start, middle));
+        roads.add(segment(groupId, "COMPACT_BLOCK_SKELETON", "COMPACT_ALLEY", 1,
+                parameters.streetBandWidthBlocks(), middle, end));
+        int oppositeBranchLength = Math.max(half,
+                parameters.maximumEdgeGapBlocks() + parameters.streetBandWidthBlocks() + 7);
+        BlockPoint oppositeEnd = new BlockPoint(middle.x() - outward[0] * oppositeBranchLength,
+                middle.z() - outward[1] * oppositeBranchLength);
+        roads.add(segment(groupId, "COMPACT_BLOCK_SKELETON", "COMPACT_ALLEY", 2,
+                parameters.streetBandWidthBlocks(), middle, oppositeEnd));
+        return List.copyOf(roads);
+    }
+
+    private static List<JsonObject> centerSkeleton(String groupId,
+                                                   CityBlueprintGroupLayoutPlanner.Parameters parameters,
+                                                   List<Anchor> anchors,
+                                                   int plannedSpanBlocks,
+                                                   CityBlueprintGroupLayoutPlanner.Frame frame) {
+        Anchor core = anchors.stream().filter(anchor -> "required".equals(anchor.phase()))
+                .findFirst().orElse(anchors.get(0));
+        int[] axis = frame == null ? new int[]{0, 1} : cardinal(frame.axisX(), frame.axisZ());
+        BlockPoint center = center(core.collision());
+        int half = Math.max(parameters.streetBandWidthBlocks() + 4, plannedSpanBlocks / 2);
+        BlockPoint negative = new BlockPoint(center.x() - axis[0] * half, center.z() - axis[1] * half);
+        BlockPoint positive = new BlockPoint(center.x() + axis[0] * half, center.z() + axis[1] * half);
+        BlockPoint beforeCore = boundaryPoint(core.body(), center, -axis[0], -axis[1]);
+        BlockPoint afterCore = boundaryPoint(core.body(), center, axis[0], axis[1]);
+        return List.of(
+                segment(groupId, "CENTER_AXIS_BLOCK_SKELETON", "CENTER_AXIS_PRIMARY", 0,
+                        parameters.streetBandWidthBlocks(), negative, beforeCore),
+                segment(groupId, "CENTER_AXIS_BLOCK_SKELETON", "CENTER_AXIS_PRIMARY", 1,
+                        parameters.streetBandWidthBlocks(), afterCore, positive));
     }
 
     private static List<JsonObject> courtyard(String groupId,
@@ -309,6 +579,252 @@ final class CityInternalStreetPlanner {
         return result;
     }
 
+    private static void markReservedSkeleton(JsonObject band) {
+        band.addProperty("planningPhase", "STREET_SKELETON_BEFORE_FILL");
+        band.addProperty("reservedBeforeFill", true);
+        band.addProperty("usageReview", "PENDING_FINAL_BUILDING_FRONTAGE");
+    }
+
+    private static List<Entrance> entrances(Anchor anchor) {
+        JsonObject transformed = object(object(anchor.source(), "templatePlacementPlan"), "transformed");
+        if (!transformed.has("roadEntrances") || !transformed.get("roadEntrances").isJsonArray()) {
+            return List.of();
+        }
+        List<Entrance> result = new ArrayList<>();
+        for (var element : transformed.getAsJsonArray("roadEntrances")) {
+            if (!element.isJsonObject()) continue;
+            JsonObject value = element.getAsJsonObject();
+            JsonObject position = object(value, "worldPosition");
+            if (position.size() == 0) continue;
+            result.add(new Entrance(anchor.anchorId() + "::" + string(value, "entranceId"),
+                    point(position), string(value, "direction"), anchor.groupId()));
+        }
+        return List.copyOf(result);
+    }
+
+    private static int serviceDistance(JsonObject band) {
+        return Math.max(2, intValue(band, "widthBlocks", 1) / 2 + 2);
+    }
+
+    private static int distanceToBand(BlockPoint point, JsonObject band) {
+        JsonObject startJson = object(band, "start");
+        JsonObject endJson = object(band, "end");
+        if (startJson.size() == 0 || endJson.size() == 0) {
+            BlockBounds bounds = bounds(band);
+            int x = Math.max(bounds.minX(), Math.min(bounds.maxX(), point.x()));
+            int z = Math.max(bounds.minZ(), Math.min(bounds.maxZ(), point.z()));
+            return Math.abs(point.x() - x) + Math.abs(point.z() - z);
+        }
+        BlockPoint start = point(startJson);
+        BlockPoint end = point(endJson);
+        BlockPoint nearest = nearestPoint(point, start, end);
+        return Math.abs(point.x() - nearest.x()) + Math.abs(point.z() - nearest.z());
+    }
+
+    private static BlockPoint nearestPoint(BlockPoint point, BlockPoint start, BlockPoint end) {
+        if (start.x() == end.x()) {
+            return new BlockPoint(start.x(), Math.max(Math.min(start.z(), end.z()),
+                    Math.min(Math.max(start.z(), end.z()), point.z())));
+        }
+        return new BlockPoint(Math.max(Math.min(start.x(), end.x()),
+                Math.min(Math.max(start.x(), end.x()), point.x())), start.z());
+    }
+
+    private static Alley shortestLegalAlley(Entrance entrance,
+                                             Anchor source,
+                                             List<Anchor> anchors,
+                                             List<JsonObject> network) {
+        if (network.isEmpty()) return null;
+        List<Alley> candidates = new ArrayList<>();
+        for (JsonObject band : network) {
+            JsonObject startJson = object(band, "start");
+            JsonObject endJson = object(band, "end");
+            if (startJson.size() == 0 || endJson.size() == 0) continue;
+            int width = Math.max(1, Math.min(3, intValue(band, "widthBlocks", 1)));
+            BlockPoint start = outsideBody(entrance.point(), entrance.direction(), source.body(), width);
+            BlockPoint target = nearestPoint(start, point(startJson), point(endJson));
+            int distance = Math.abs(start.x() - target.x()) + Math.abs(start.z() - target.z());
+            if (distance == 0 || distance > 32) continue;
+            for (List<BlockPoint> path : orthogonalPaths(start, target)) {
+                if (path.size() >= 2 && alleyClear(path, width, anchors)) {
+                    candidates.add(new Alley(path, width, distance));
+                }
+            }
+        }
+        return candidates.stream().min(Comparator.comparingInt(Alley::length)
+                .thenComparing(alley -> alley.path().toString())).orElse(null);
+    }
+
+    private static List<List<BlockPoint>> orthogonalPaths(BlockPoint start, BlockPoint target) {
+        List<List<BlockPoint>> result = new ArrayList<>();
+        if (start.x() == target.x() || start.z() == target.z()) {
+            result.add(List.of(start, target));
+        } else {
+            result.add(List.of(start, new BlockPoint(target.x(), start.z()), target));
+            result.add(List.of(start, new BlockPoint(start.x(), target.z()), target));
+        }
+        return result;
+    }
+
+    private static Alley shortestLegalNetworkExtension(Entrance entrance,
+                                                        Anchor source,
+                                                        List<Anchor> anchors,
+                                                        List<JsonObject> network) {
+        if (network.isEmpty()) return null;
+        int width = 3;
+        BlockPoint start = outsideBody(entrance.point(), entrance.direction(), source.body(), width);
+        List<BlockBounds> searchParts = new ArrayList<>(anchors.stream().map(Anchor::body).toList());
+        network.stream().map(CityInternalStreetPlanner::bounds).forEach(searchParts::add);
+        searchParts.add(new BlockBounds(start.x(), start.z(), start.x(), start.z()));
+        BlockBounds search = expand(union(searchParts), 16);
+        ArrayDeque<BlockPoint> queue = new ArrayDeque<>();
+        Map<BlockPoint, BlockPoint> previous = new HashMap<>();
+        Map<BlockPoint, Integer> distance = new HashMap<>();
+        queue.add(start);
+        distance.put(start, 0);
+        BlockPoint found = null;
+        int[][] directions = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
+        while (!queue.isEmpty()) {
+            BlockPoint current = queue.removeFirst();
+            int currentDistance = distance.get(current);
+            if (currentDistance > 0 && network.stream().map(CityInternalStreetPlanner::bounds)
+                    .anyMatch(value -> value.contains(current.x(), current.z()))) {
+                found = current;
+                break;
+            }
+            if (currentDistance >= 160) continue;
+            for (int[] direction : directions) {
+                BlockPoint next = new BlockPoint(current.x() + direction[0], current.z() + direction[1]);
+                if (!search.contains(next.x(), next.z()) || distance.containsKey(next)
+                        || !roadPointClear(next, width, anchors)) continue;
+                previous.put(next, current);
+                distance.put(next, currentDistance + 1);
+                queue.addLast(next);
+            }
+        }
+        if (found == null) return null;
+        List<BlockPoint> cells = new ArrayList<>();
+        for (BlockPoint point = found; point != null; point = previous.get(point)) cells.add(point);
+        Collections.reverse(cells);
+        List<BlockPoint> corners = compressOrthogonalPath(cells);
+        return new Alley(corners, width, Math.max(0, cells.size() - 1));
+    }
+
+    private static boolean roadPointClear(BlockPoint point, int width, List<Anchor> anchors) {
+        int lower = (width - 1) / 2 + 1;
+        int upper = width / 2 + 1;
+        BlockBounds road = new BlockBounds(point.x() - lower, point.z() - lower,
+                point.x() + upper, point.z() + upper);
+        return anchors.stream().map(Anchor::body).noneMatch(road::overlaps);
+    }
+
+    private static List<BlockPoint> compressOrthogonalPath(List<BlockPoint> cells) {
+        if (cells.size() <= 2) return List.copyOf(cells);
+        List<BlockPoint> result = new ArrayList<>();
+        result.add(cells.get(0));
+        int previousDx = Integer.compare(cells.get(1).x(), cells.get(0).x());
+        int previousDz = Integer.compare(cells.get(1).z(), cells.get(0).z());
+        for (int index = 2; index < cells.size(); index++) {
+            int dx = Integer.compare(cells.get(index).x(), cells.get(index - 1).x());
+            int dz = Integer.compare(cells.get(index).z(), cells.get(index - 1).z());
+            if (dx != previousDx || dz != previousDz) result.add(cells.get(index - 1));
+            previousDx = dx;
+            previousDz = dz;
+        }
+        result.add(cells.get(cells.size() - 1));
+        return List.copyOf(result);
+    }
+
+    private static boolean alleyClear(List<BlockPoint> path, int width, List<Anchor> anchors) {
+        for (int index = 0; index + 1 < path.size(); index++) {
+            BlockPoint start = path.get(index);
+            BlockPoint end = path.get(index + 1);
+            int dx = Integer.compare(end.x(), start.x());
+            int dz = Integer.compare(end.z(), start.z());
+            int length = Math.abs(end.x() - start.x()) + Math.abs(end.z() - start.z());
+            for (int step = 0; step <= length; step++) {
+                BlockPoint point = new BlockPoint(start.x() + dx * step, start.z() + dz * step);
+                int lower = (width - 1) / 2 + 1;
+                int upper = width / 2 + 1;
+                BlockBounds road = new BlockBounds(point.x() - lower, point.z() - lower,
+                        point.x() + upper, point.z() + upper);
+                if (anchors.stream().map(Anchor::body).anyMatch(road::overlaps)) return false;
+            }
+        }
+        return true;
+    }
+
+    private static BlockPoint outsideBody(BlockPoint entrance, String direction, BlockBounds body, int width) {
+        int dx = switch (direction) { case "EAST" -> 1; case "WEST" -> -1; default -> 0; };
+        int dz = switch (direction) { case "SOUTH" -> 1; case "NORTH" -> -1; default -> 0; };
+        BlockPoint result = entrance;
+        for (int step = 0; step <= Math.max(body.widthBlocks(), body.heightBlocks()) + 2; step++) {
+            if (!body.contains(result.x(), result.z())) {
+                int crossSectionClearance = Math.max((width - 1) / 2, width / 2) + 1;
+                return new BlockPoint(result.x() + dx * crossSectionClearance,
+                        result.z() + dz * crossSectionClearance);
+            }
+            result = new BlockPoint(result.x() + dx, result.z() + dz);
+        }
+        return entrance;
+    }
+
+    private static JsonObject accessOutcome(Entrance entrance, String status, String reasonCode) {
+        JsonObject value = new JsonObject();
+        value.addProperty("entranceId", entrance.id());
+        value.addProperty("groupId", entrance.groupId());
+        value.addProperty("status", status);
+        value.addProperty("reasonCode", reasonCode);
+        return value;
+    }
+
+    private static BlockBounds bounds(JsonObject band) {
+        JsonObject value = object(band, "bounds");
+        return CityStructureCandidateEnvelope.bounds(value);
+    }
+
+    private static BlockPoint center(BlockBounds bounds) {
+        return new BlockPoint((bounds.minX() + bounds.maxX()) / 2,
+                (bounds.minZ() + bounds.maxZ()) / 2);
+    }
+
+    private static int[] cardinal(double axisX, double axisZ) {
+        if (Math.abs(axisX) >= Math.abs(axisZ)) return new int[]{axisX >= 0.0 ? 1 : -1, 0};
+        return new int[]{0, axisZ >= 0.0 ? 1 : -1};
+    }
+
+    private static BlockPoint boundaryPoint(BlockBounds body, BlockPoint center, int dx, int dz) {
+        if (dx < 0) return new BlockPoint(body.minX() - 1, center.z());
+        if (dx > 0) return new BlockPoint(body.maxX() + 1, center.z());
+        if (dz < 0) return new BlockPoint(center.x(), body.minZ() - 1);
+        return new BlockPoint(center.x(), body.maxZ() + 1);
+    }
+
+    private static GridOffset squareSpiral(int index) {
+        if (index <= 0) return new GridOffset(0, 0);
+        int x = 0;
+        int z = 0;
+        int dx = 1;
+        int dz = 0;
+        int segmentLength = 1;
+        int segmentUsed = 0;
+        int turns = 0;
+        for (int i = 0; i < index; i++) {
+            x += dx;
+            z += dz;
+            segmentUsed++;
+            if (segmentUsed == segmentLength) {
+                segmentUsed = 0;
+                int nextDx = -dz;
+                dz = dx;
+                dx = nextDx;
+                turns++;
+                if ((turns & 1) == 0) segmentLength++;
+            }
+        }
+        return new GridOffset(x, z);
+    }
+
     private static JsonObject segment(String groupId,
                                       String networkId,
                                       String roadKind,
@@ -397,10 +913,11 @@ final class CityInternalStreetPlanner {
         return value.has(key) && !value.get(key).isJsonNull() ? value.get(key).getAsInt() : fallback;
     }
 
-    private record Anchor(String anchorId, String phase, BlockBounds body, BlockBounds collision,
+    private record Anchor(String anchorId, String groupId, String phase, BlockBounds body, BlockBounds collision,
                           JsonObject layout, JsonObject source) {
         static Anchor parse(JsonObject value) {
-            return new Anchor(string(value, "anchorId"), string(value, "blueprintPlacementPhase"),
+            return new Anchor(string(value, "anchorId"), string(value, "placementGroupId"),
+                    string(value, "blueprintPlacementPhase"),
                     bodyBounds(value),
                     CityStructureCandidateEnvelope.bounds(value.getAsJsonObject("collisionEnvelope")),
                     value.getAsJsonObject("blueprintLayout"), value);
@@ -420,5 +937,24 @@ final class CityInternalStreetPlanner {
     }
 
     private record LaneTarget(BlockPoint point) {
+    }
+
+    record Finalization(List<JsonObject> streetBands, JsonObject trace) {
+        Finalization {
+            streetBands = List.copyOf(streetBands);
+            trace = trace.deepCopy();
+        }
+    }
+
+    private record Entrance(String id, BlockPoint point, String direction, String groupId) {
+    }
+
+    private record Alley(List<BlockPoint> path, int width, int length) {
+        Alley {
+            path = List.copyOf(path);
+        }
+    }
+
+    private record GridOffset(int row, int column) {
     }
 }
