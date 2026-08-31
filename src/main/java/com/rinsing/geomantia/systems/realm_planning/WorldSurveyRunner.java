@@ -77,7 +77,8 @@ public final class WorldSurveyRunner {
         AtlasRegionStore store = new AtlasRegionStore(sampleConfig);
         GisRefreshService service = new GisRefreshService(sampleConfig, classifierConfig, store, sampler);
         SurveyBounds bounds = SurveyBounds.from(normalized, sampleConfig.regionSizeBlocks());
-        List<TilePlan> tiles = planTiles(normalized.dimensionId, normalized.sampleMode, bounds, sampleConfig.regionSizeBlocks());
+        List<TilePlan> tiles = planTiles(normalized.dimensionId, normalized.sampleMode, bounds,
+                sampleConfig.regionSizeBlocks());
         ProgressTracker progress = new ProgressTracker(runDirectory, normalized, tiles.size(),
                 (long) bounds.gridWidth * bounds.gridHeight,
                 microSampleBudgetPerCell(normalized.cellStepBlocks, normalized.microSampleStrideBlocks),

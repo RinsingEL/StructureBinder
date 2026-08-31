@@ -28,6 +28,8 @@ import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainS
 import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainPreviewAtlasSampler;
 import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainPreviewProviderSelection;
 import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainSamplingProvenance;
+import com.rinsing.geomantia.systems.realm_planning.application.access.PlanningAreaAccessConfig;
+import com.rinsing.geomantia.systems.city.application.queue.CityDesignQueue;
 import com.sun.net.httpserver.HttpExchange;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
@@ -44,13 +46,18 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-final class RealmPlanningHttpController {
+final class RealmPlanningHttpController implements AutoCloseable {
     private final MinecraftServer server;
     private final RealmPlanningService realmPlanningService;
+    private final CityDesignQueue cityDesignQueue;
+    private final CityPostD4AutoCompileQueue postD4AutoCompileQueue;
 
     RealmPlanningHttpController(MinecraftServer server) {
         this.server = server;
         this.realmPlanningService = RealmPlanningServices.forServer(server);
+        this.cityDesignQueue = new CityDesignQueue(debugRoot(), cityDesignQueueConfigPath());
+        this.postD4AutoCompileQueue = new CityPostD4AutoCompileQueue(debugRoot(), this::runPostD4AutoCompile,
+                cityDesignQueue::onPostD4State);
     }
 
     void handleStatus(HttpExchange exchange) {
@@ -60,10 +67,13 @@ final class RealmPlanningHttpController {
     void handleWRefresh(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            PreparedWorldSurvey prepared = callOnServerThread(() -> prepareWorldSurvey(request));
+            WorldSurveyExecution execution = runWorldSurvey(prepared);
             return callOnServerThread(() -> {
-                WorldSurveyExecution execution = runWorldSurvey(request);
                 JsonObject response = realmPlanningService.runW(execution.result(), request.get("worldTheme"));
                 response.add("terrainProvider", execution.terrainProvider().asJson());
+                response.addProperty("executionMode", "api_worker_complete_scan");
+                response.addProperty("serverThreadBlocked", false);
                 if (booleanValue(request, "runTagAudit", false)) {
                     JsonObject audit = realmPlanningService.runTagAudit(execution.result().runId(), execution.sampler(),
                             intValue(request, "tagAuditSampleCount", 120),
@@ -118,6 +128,7 @@ final class RealmPlanningHttpController {
                 reason = reason + (reason.isBlank() ? "" : "; ") + "patchSelectionRef=" + selectionRef;
             }
             String finalReason = reason;
+            requireRealmCoreOutsideInitialActivityArea(runId, gridX, gridZ);
             return callOnServerThread(() -> realmPlanningService.selectT2(
                     runId,
                     realmId,
@@ -145,30 +156,56 @@ final class RealmPlanningHttpController {
     void handleT4BuildRegistry(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
-            return callOnServerThread(() -> realmPlanningService.buildT4(requiredString(request, "runId")));
+            String runId = requiredString(request, "runId");
+            JsonObject response = callOnServerThread(() -> realmPlanningService.buildT4(runId));
+            response.add("cityDesignQueue", cityDesignQueue.refresh(runId,
+                    stringValue(request, "cityQueueOrderingMode", "")));
+            return response;
         });
     }
 
     void handleT4PatchPlanningCreate(HttpExchange exchange) {
-        handle(exchange, "POST", () -> new RealmT4PatchPlanningService(debugRoot())
+        handle(exchange, "POST", () -> realmT4PatchPlanningService()
                 .create(GisHttpUtil.readJsonObject(exchange)));
     }
 
     void handleT4PatchPlanningSelectCapital(HttpExchange exchange) {
-        handle(exchange, "POST", () -> new RealmT4PatchPlanningService(debugRoot())
+        handle(exchange, "POST", () -> realmT4PatchPlanningService()
                 .selectCapital(GisHttpUtil.readJsonObject(exchange)));
     }
 
     void handleT4PatchPlanningAddCity(HttpExchange exchange) {
-        handle(exchange, "POST", () -> new RealmT4PatchPlanningService(debugRoot())
+        handle(exchange, "POST", () -> realmT4PatchPlanningService()
                 .add(GisHttpUtil.readJsonObject(exchange)));
     }
 
     void handleT4PatchPlanningFinalize(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
-            return callOnServerThread(() -> new RealmT4PatchPlanningService(debugRoot(),
-                    realmPlanningService::synchronizeT4RegistryArtifacts).finalizePlanning(request));
+            String runId = requiredString(request, "runId");
+            JsonObject response = callOnServerThread(() -> realmT4PatchPlanningService().finalizePlanning(request));
+            if (cityDesignQueue.registryCoversAllRealms(runId)) {
+                response.add("cityDesignQueue", cityDesignQueue.refresh(runId,
+                        stringValue(request, "cityQueueOrderingMode", "")));
+            } else {
+                response.addProperty("cityDesignQueueStatus", "awaiting_remaining_realms");
+            }
+            return response;
+        });
+    }
+
+    void handleCityDesignQueueRefresh(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return cityDesignQueue.refresh(requiredString(request, "runId"),
+                    stringValue(request, "orderingMode", ""));
+        });
+    }
+
+    void handleCityDesignQueueStatus(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return cityDesignQueue.status(requiredString(request, "runId"));
         });
     }
 
@@ -306,6 +343,7 @@ final class RealmPlanningHttpController {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             String runId = requiredString(request, "runId");
             String citySeedId = requiredString(request, "citySeedId");
+            cityDesignQueue.requireCurrentIfManaged(runId, citySeedId);
             Integer cellStepBlocks = hasValue(request, "cellStepBlocks")
                     ? intValue(request, "cellStepBlocks", 4)
                     : null;
@@ -318,6 +356,7 @@ final class RealmPlanningHttpController {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             String runId = requiredString(request, "runId");
             String citySeedId = requiredString(request, "citySeedId");
+            cityDesignQueue.requireCurrentIfManaged(runId, citySeedId);
             Integer cellStepBlocks = hasValue(request, "cellStepBlocks")
                     ? intValue(request, "cellStepBlocks", 4)
                     : null;
@@ -343,6 +382,8 @@ final class RealmPlanningHttpController {
     void handleCityReviewD3Site(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            cityDesignQueue.requireCurrentIfManaged(requiredString(request, "runId"),
+                    requiredString(request, "citySeedId"));
             return CityPlanningEndpointHandler.handleReviewD3Site(debugRoot(),
                     requiredString(request, "runId"),
                     requiredString(request, "citySeedId"),
@@ -355,6 +396,8 @@ final class RealmPlanningHttpController {
     void handleCityPrepareD4BlueprintContext(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            cityDesignQueue.requireCurrentIfManaged(requiredString(request, "runId"),
+                    requiredString(request, "citySeedId"));
             return CityPlanningEndpointHandler.handlePrepareD4BlueprintContext(debugRoot(),
                     requiredString(request, "runId"), requiredString(request, "citySeedId"),
                     requiredObject(request, "terrasenseProfileSource"),
@@ -366,10 +409,57 @@ final class RealmPlanningHttpController {
     void handleCitySubmitD4Blueprint(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
-            return CityPlanningEndpointHandler.handleSubmitD4Blueprint(debugRoot(),
-                    requiredString(request, "runId"), requiredString(request, "citySeedId"),
-                    requiredString(request, "contextId"), requiredObject(request, "cityBlueprint"));
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            cityDesignQueue.requireCurrentIfManaged(runId, citySeedId);
+            JsonObject response = CityPlanningEndpointHandler.handleSubmitD4Blueprint(debugRoot(),
+                    runId, citySeedId, requiredString(request, "contextId"),
+                    requiredObject(request, "cityBlueprint"));
+            if (booleanValue(response, "ok", false)
+                    && booleanValue(request, "autoAdvanceAfterD4", true)) {
+                response.add("postD4AutoCompile", postD4AutoCompileQueue.enqueue(runId, citySeedId));
+            }
+            return response;
         });
+    }
+
+    void handleCityPostD4AutoCompileStatus(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return postD4AutoCompileQueue.status(requiredString(request, "runId"),
+                    requiredString(request, "citySeedId"));
+        });
+    }
+
+    void handleCityPostD4AutoCompileRetry(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            cityDesignQueue.requireCurrentIfManaged(runId, citySeedId);
+            JsonObject response = new JsonObject();
+            response.addProperty("ok", true);
+            response.addProperty("operation", "city_post_d4_auto_compile_retry");
+            response.add("postD4AutoCompile", postD4AutoCompileQueue.enqueue(runId, citySeedId));
+            return response;
+        });
+    }
+
+    private JsonObject runPostD4AutoCompile(String runId, String citySeedId) throws Exception {
+        String dimensionId = restoredRunDimensionId(runId);
+        ServerLevel level = callOnServerThread(() -> resolveLevel(dimensionId, null));
+        JsonObject request = new JsonObject();
+        request.addProperty("runId", runId);
+        request.addProperty("citySeedId", citySeedId);
+        request.addProperty("d4CandidateMode", "blueprint");
+        request.addProperty("skipExisting", true);
+        request.addProperty("confirmWorldMutation", true);
+        request.addProperty("stopAfterActivation", true);
+        request.addProperty("planWalls", false);
+        request.addProperty("executeWalls", false);
+        return CityPlanningEndpointHandler.handleRunWorkflow(debugRoot(),
+                server.getWorldPath(LevelResource.ROOT), runId, citySeedId, request,
+                new CityPlanningEndpointHandler.MinecraftServerHolder(server), level);
     }
 
     void handleCityCompileD4Blueprint(HttpExchange exchange) {
@@ -1235,6 +1325,16 @@ final class RealmPlanningHttpController {
     }
 
     private WorldSurveyExecution runWorldSurvey(JsonObject request) throws Exception {
+        return runWorldSurvey(prepareWorldSurvey(request));
+    }
+
+    private WorldSurveyExecution runWorldSurvey(PreparedWorldSurvey prepared) throws Exception {
+        WorldSurveyResult result = new WorldSurveyRunner(debugRoot(), GisClassifierConfig.defaults()).run(
+                prepared.config(), prepared.sampler(), prepared.progressListener());
+        return new WorldSurveyExecution(result, prepared.sampler(), prepared.terrainProvider());
+    }
+
+    private PreparedWorldSurvey prepareWorldSurvey(JsonObject request) {
         int planningRadiusBlocks = intValue(request, "planningRadiusBlocks", 0);
         if (planningRadiusBlocks <= 0) {
             int radiusChunks = intValue(request, "radiusChunks", 512);
@@ -1285,9 +1385,10 @@ final class RealmPlanningHttpController {
         );
         AtlasSampler sampler = providerSelection.fastPath()
                 ? new TerrainPreviewAtlasSampler(providerSelection) : minecraftSampler;
-        WorldSurveyResult result = new WorldSurveyRunner(debugRoot(), GisClassifierConfig.defaults()).run(config,
-                sampler, WorldSurveyChatProgress.forPlayer(player));
-        return new WorldSurveyExecution(result, minecraftSampler, terrainProvider);
+        WorldSurveyRunner.ProgressListener chatProgress = WorldSurveyChatProgress.forPlayer(player);
+        WorldSurveyRunner.ProgressListener serverSafeProgress = update ->
+                server.execute(() -> chatProgress.onProgress(update));
+        return new PreparedWorldSurvey(config, sampler, terrainProvider, serverSafeProgress);
     }
 
     private ServerPlayer resolvePlayer(String playerName) {
@@ -1356,6 +1457,39 @@ final class RealmPlanningHttpController {
 
     private Path debugRoot() {
         return server.getServerDirectory().toPath().resolve("realm_debug").toAbsolutePath().normalize();
+    }
+
+    private RealmT4PatchPlanningService realmT4PatchPlanningService() throws IOException {
+        return new RealmT4PatchPlanningService(debugRoot(),
+                realmPlanningService::synchronizeT4RegistryArtifacts, planningAreaAccessConfig());
+    }
+
+    private PlanningAreaAccessConfig planningAreaAccessConfig() throws IOException {
+        return PlanningAreaAccessConfig.loadOrCreate(server.getServerDirectory().toPath()
+                .resolve("config").resolve("geomantia").resolve("planning_area_access.json"));
+    }
+
+    private Path cityDesignQueueConfigPath() {
+        return server.getServerDirectory().toPath().resolve("config").resolve("geomantia")
+                .resolve("city_design_queue.json");
+    }
+
+    private void requireRealmCoreOutsideInitialActivityArea(String runId, int gridX, int gridZ) throws IOException {
+        PlanningAreaAccessConfig config = planningAreaAccessConfig();
+        if (!config.enabled() || !config.managedDimensions().contains(restoredRunDimensionId(runId))) return;
+        int step = restoredRunCellStepBlocks(runId);
+        long blockX = (long) gridX * step;
+        long blockZ = (long) gridZ * step;
+        long radius = config.firstCityMinimumDistanceBlocks();
+        if (blockX * blockX + blockZ * blockZ < radius * radius) {
+            throw new IllegalArgumentException("T2_REALM_CORE_INSIDE_INITIAL_ACTIVITY_AREA: minimumDistanceBlocks="
+                    + radius);
+        }
+    }
+
+    @Override
+    public void close() {
+        postD4AutoCompileQueue.close();
     }
 
     static String relativeArtifact(Path debugRoot, Path artifact) {
@@ -1517,6 +1651,11 @@ final class RealmPlanningHttpController {
 
     private record WorldSurveyExecution(WorldSurveyResult result, AtlasSampler sampler,
             TerrainSamplingProvenance terrainProvider) {
+    }
+
+    private record PreparedWorldSurvey(WorldSurveyRunner.Config config, AtlasSampler sampler,
+            TerrainSamplingProvenance terrainProvider,
+            WorldSurveyRunner.ProgressListener progressListener) {
     }
 
     private record TerrainPreviewRuntime(String dimensionId, TerrainPreviewProviderSelection selection) {

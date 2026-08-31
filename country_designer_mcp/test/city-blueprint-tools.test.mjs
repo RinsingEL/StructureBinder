@@ -6,8 +6,18 @@ import { realmTools } from "../dist/src/realm/tools.js";
 test("publishes the program-only context tool and one-shot structure plus outdoor Blueprint schema", () => {
   const prepare = realmTools.find((tool) => tool.name === "city_prepare_d4_blueprint_context");
   const submit = realmTools.find((tool) => tool.name === "city_submit_d4_blueprint");
+  const autoStatus = realmTools.find((tool) => tool.name === "city_post_d4_auto_compile_status");
+  const designQueueRefresh = realmTools.find((tool) => tool.name === "city_design_queue_refresh");
+  const designQueueStatus = realmTools.find((tool) => tool.name === "city_design_queue_status");
   assert.ok(prepare);
   assert.ok(submit);
+  assert.ok(autoStatus);
+  assert.ok(designQueueRefresh);
+  assert.ok(designQueueStatus);
+  assert.equal(submit.inputSchema.properties.autoAdvanceAfterD4.type, "boolean");
+  assert.deepEqual(autoStatus.inputSchema.required, ["runId", "citySeedId"]);
+  assert.deepEqual(designQueueRefresh.inputSchema.properties.orderingMode.enum,
+    ["global_radial", "realm_grouped"]);
   assert.equal(prepare.inputSchema.additionalProperties, false);
   assert.deepEqual(prepare.inputSchema.required, [
     "runId", "citySeedId", "terrasenseProfileSource", "templateCatalogSource", "blueprintReferenceCatalog",

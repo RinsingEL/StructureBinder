@@ -15,6 +15,7 @@ import com.rinsing.geomantia.systems.gis.domain.landform.LandformPatch;
 import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegion;
 import com.rinsing.geomantia.systems.gis.preview.AtlasJson;
 import com.rinsing.geomantia.systems.gis.preview.BiomeOverviewRenderer;
+import com.rinsing.geomantia.systems.realm_planning.application.access.PlanningAreaAccessConfig;
 
 import javax.imageio.ImageIO;
 import java.awt.BasicStroke;
@@ -88,10 +89,19 @@ public final class RealmPlanningService {
     private static final double TERRAIN_RANK_DRIFT_THRESHOLD = 0.25;
     private static final double MIXED_CELL_SUPPORT_THRESHOLD = 0.65;
     private final Path debugRoot;
+    private final PlanningAreaAccessConfig accessConfig;
     private final Map<String, RealmRun> runs = new LinkedHashMap<>();
 
     public RealmPlanningService(Path debugRoot) {
+        this(debugRoot, new PlanningAreaAccessConfig(false,
+                PlanningAreaAccessConfig.DEFAULT_INITIAL_RADIUS_BLOCKS,
+                PlanningAreaAccessConfig.DEFAULT_FIRST_CITY_DISTANCE_BLOCKS,
+                Set.of("minecraft:overworld")));
+    }
+
+    public RealmPlanningService(Path debugRoot, PlanningAreaAccessConfig accessConfig) {
         this.debugRoot = Objects.requireNonNull(debugRoot, "debugRoot");
+        this.accessConfig = Objects.requireNonNull(accessConfig, "accessConfig");
     }
 
     public JsonObject status() {
@@ -939,6 +949,10 @@ public final class RealmPlanningService {
             errors.add("Selected grid coordinate is outside allowed patches.");
             return false;
         }
+        if (!outsideOriginRadius(cell, run, accessConfig.firstCityMinimumDistanceBlocks())) {
+            errors.add("Selected grid coordinate is inside the initial city exclusion radius.");
+            return false;
+        }
         for (RealmSeed seed : run.seeds.values()) {
             double distance = distanceCells(cell.gridX, cell.gridZ, seed.seedGrid.x, seed.seedGrid.z);
             if (distance < MIN_SEED_DISTANCE_CELLS) {
@@ -984,6 +998,7 @@ public final class RealmPlanningService {
         }
         List<WorldCell> landCells = run.worldCells.stream()
                 .filter(cell -> cell.assignableLand() && group.equals(cell.continentId))
+                .filter(cell -> outsideOriginRadius(cell, run, accessConfig.initialActivityRadiusBlocks()))
                 .toList();
         if (landCells.isEmpty()) {
             throw new IllegalArgumentException("No assignable land cells for normalizationGroup: " + group);
@@ -1732,6 +1747,7 @@ public final class RealmPlanningService {
                 .filter(cell -> realmId.equals(cell.realmId))
                 .map(cell -> run.worldCellsByKey.get(key(cell.gridX, cell.gridZ)))
                 .filter(Objects::nonNull)
+                .filter(cell -> outsideOriginRadius(cell, run, accessConfig.firstCityMinimumDistanceBlocks()))
                 .filter(predicate::test)
                 .filter(cell -> citySpacingOk(run, realmId, new GridPoint(cell.gridX, cell.gridZ), planningRadius,
                         role, selectedSeeds))
@@ -1742,10 +1758,27 @@ public final class RealmPlanningService {
     }
 
     private void addCitySeed(RealmRun run, List<CitySeed> seeds, CitySeed candidate) {
-        if (citySpacingOk(run, candidate.realmId, candidate.anchorGrid, candidate.planningRadiusCells,
+        WorldCell cell = run.worldCellsByKey.get(key(candidate.anchorGrid.x, candidate.anchorGrid.z));
+        if (outsideOriginRadius(cell, run, accessConfig.firstCityMinimumDistanceBlocks())
+                && citySpacingOk(run, candidate.realmId, candidate.anchorGrid, candidate.planningRadiusCells,
                 candidate.role, seeds)) {
             seeds.add(candidate);
         }
+    }
+
+    private boolean outsideOriginRadius(WorldCell cell, RealmRun run, int radiusBlocks) {
+        if (!accessConfig.enabled()
+                || !accessConfig.managedDimensions().contains(run.surveyResult.dimensionId())) {
+            return true;
+        }
+        if (cell == null) {
+            return false;
+        }
+        long step = run.surveyResult.cellStepBlocks();
+        long blockX = (long) cell.gridX * step;
+        long blockZ = (long) cell.gridZ * step;
+        long radius = radiusBlocks;
+        return blockX * blockX + blockZ * blockZ >= radius * radius;
     }
 
     private boolean citySpacingOk(RealmRun run, String realmId, GridPoint point, int planningRadius, String role,

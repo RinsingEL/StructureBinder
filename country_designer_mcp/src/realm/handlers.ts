@@ -52,6 +52,16 @@ export const realmHandlers: Record<string, ToolHandler> = {
     return textResult(JSON.stringify(res.data, null, 2));
   },
 
+  async city_design_queue_refresh(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/design_queue/refresh`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async city_design_queue_status(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/design_queue/status`, payload(args), TIMEOUTS.quick);
+    return { ...textResult(JSON.stringify(res.data, null, 2)), isError: res.data?.status === "needs_agent" };
+  },
+
   async patch_explorer_open(args) {
     const res = await postJson(`${MC_API_URL}/realm/patch_explorer/open`, payload(args), TIMEOUTS.refresh);
     return textResult(JSON.stringify(res.data, null, 2));
@@ -104,6 +114,16 @@ export const realmHandlers: Record<string, ToolHandler> = {
 
   async city_submit_d4_blueprint(args) {
     const res = await postJson(`${MC_API_URL}/realm/city/submit_d4_blueprint`, payload(args), TIMEOUTS.quick);
+    return { ...textResult(JSON.stringify(res.data, null, 2)), isError: res.data?.ok === false };
+  },
+
+  async city_post_d4_auto_compile_status(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/post_d4_auto_compile_status`, payload(args), TIMEOUTS.quick);
+    return { ...textResult(JSON.stringify(res.data, null, 2)), isError: res.data?.status === "needs_agent" };
+  },
+
+  async city_post_d4_auto_compile_retry(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/post_d4_auto_compile_retry`, payload(args), TIMEOUTS.quick);
     return { ...textResult(JSON.stringify(res.data, null, 2)), isError: res.data?.ok === false };
   },
 

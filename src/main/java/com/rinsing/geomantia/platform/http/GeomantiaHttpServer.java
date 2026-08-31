@@ -21,6 +21,7 @@ public final class GeomantiaHttpServer {
     private static final int DEFAULT_PORT = 5000;
     private static HttpServer httpServer;
     private static ExecutorService httpExecutor;
+    private static RealmPlanningHttpController activeRealmController;
 
     private GeomantiaHttpServer() {
     }
@@ -42,10 +43,12 @@ public final class GeomantiaHttpServer {
         int port = Integer.getInteger("geomantia.apiPort", DEFAULT_PORT);
         HttpServer createdServer = null;
         ExecutorService createdExecutor = null;
+        RealmPlanningHttpController createdRealmController = null;
         try {
             createdServer = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
             GisHttpController controller = new GisHttpController(minecraftServer);
-            RealmPlanningHttpController realmController = new RealmPlanningHttpController(minecraftServer);
+            createdRealmController = new RealmPlanningHttpController(minecraftServer);
+            RealmPlanningHttpController realmController = createdRealmController;
             createdServer.createContext("/gis/status", controller::handleStatus);
             createdServer.createContext("/gis/refresh", controller::handleRefresh);
             createdServer.createContext("/gis/test_run", controller::handleTestRun);
@@ -70,12 +73,20 @@ public final class GeomantiaHttpServer {
             createdServer.createContext("/realm/tag_audit", realmController::handleTagAudit);
             createdServer.createContext("/realm/debug/command", realmController::handleDebugCommand);
             createdServer.createContext("/realm/city/plan_d2", realmController::handleCityPlanD2);
+            createdServer.createContext("/realm/city/design_queue/refresh",
+                    realmController::handleCityDesignQueueRefresh);
+            createdServer.createContext("/realm/city/design_queue/status",
+                    realmController::handleCityDesignQueueStatus);
             createdServer.createContext("/realm/city/plan_d3", realmController::handleCityPlanD3);
             createdServer.createContext("/realm/city/review_d3_site", realmController::handleCityReviewD3Site);
             createdServer.createContext("/realm/city/prepare_d4_blueprint_context",
                     realmController::handleCityPrepareD4BlueprintContext);
             createdServer.createContext("/realm/city/submit_d4_blueprint",
                     realmController::handleCitySubmitD4Blueprint);
+            createdServer.createContext("/realm/city/post_d4_auto_compile_status",
+                    realmController::handleCityPostD4AutoCompileStatus);
+            createdServer.createContext("/realm/city/post_d4_auto_compile_retry",
+                    realmController::handleCityPostD4AutoCompileRetry);
             createdServer.createContext("/realm/city/compile_d4_blueprint",
                     realmController::handleCityCompileD4Blueprint);
             createdServer.createContext("/realm/city/plan_d4_candidates", realmController::handleCityPlanD4Candidates);
@@ -125,6 +136,7 @@ public final class GeomantiaHttpServer {
             createdServer.start();
             httpServer = createdServer;
             httpExecutor = createdExecutor;
+            activeRealmController = realmController;
             LOGGER.info("Geomantia GIS API server started on 127.0.0.1:{}.", port);
         } catch (IOException | RuntimeException ex) {
             LOGGER.error("Failed to start Geomantia GIS API server.", ex);
@@ -132,23 +144,32 @@ public final class GeomantiaHttpServer {
                 createdServer.stop(0);
             }
             shutdownExecutor(createdExecutor);
+            if (createdRealmController != null) {
+                createdRealmController.close();
+            }
             httpServer = null;
             httpExecutor = null;
+            activeRealmController = null;
         }
     }
 
     private static synchronized void stop() {
         HttpServer server = httpServer;
         ExecutorService executor = httpExecutor;
+        RealmPlanningHttpController realmController = activeRealmController;
         httpServer = null;
         httpExecutor = null;
-        if (server == null && executor == null) {
+        activeRealmController = null;
+        if (server == null && executor == null && realmController == null) {
             return;
         }
         if (server != null) {
             server.stop(0);
         }
         shutdownExecutor(executor);
+        if (realmController != null) {
+            realmController.close();
+        }
         LOGGER.info("Geomantia GIS API server stopped.");
     }
 

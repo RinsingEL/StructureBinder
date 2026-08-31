@@ -2801,6 +2801,12 @@ final class CityPlanningEndpointHandler {
             return ctx.workflow().finish(workflowStarted, "failed");
         }
 
+        if (booleanValue(request, "stopAfterActivation", false)) {
+            ctx.workflow().addStop("worldgen_wait", "waiting_for_generation", "WAITING_FOR_GENERATION",
+                    "D4 and all program-owned downstream stages are complete; active plans are waiting for chunk generation.");
+            return ctx.workflow().finish(workflowStarted, "waiting_for_generation");
+        }
+
         if (!ctx.workflow().runStep("city_execute_d7", null,
                 () -> serverHolder.callOnServerThread(() -> handleExecuteD7(
                         debugRoot, runId, citySeedId, level.getSeed(), true, serverHolder, level)))) {

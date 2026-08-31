@@ -694,7 +694,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "realm_w_refresh",
-    description: "执行 W 粗扫，生成 WorldSurveyContext、WorldPatchMap 和带网格坐标预览图。",
+    description: "对配置的规划范围执行一次完整、可恢复的 W 分片粗扫。扫描在 API worker 执行，不阻塞服务器主线程；城市距 0,0 的排序由后续 City 调度负责。生成 WorldSurveyContext、WorldPatchMap 和带网格坐标预览图。",
     inputSchema: {
       type: "object",
       properties: {
@@ -779,6 +779,7 @@ export const realmTools: ToolDefinition[] = [
       properties: {
         runId: { type: "string" },
         cityPlanningMode: { type: "string", enum: ["auto", "strict"], description: "T4 城市规划模式；默认 strict。" },
+        cityQueueOrderingMode: { type: "string", enum: ["global_radial", "realm_grouped"], description: "生成名册后建立城市设计队列的顺序；默认读取整合包配置。" },
       },
       required: ["runId"],
     },
@@ -851,6 +852,7 @@ export const realmTools: ToolDefinition[] = [
       properties: {
         runId: { type: "string" },
         planningSessionId: { type: "string" },
+        cityQueueOrderingMode: { type: "string", enum: ["global_radial", "realm_grouped"], description: "合并名册后建立城市设计队列的顺序；默认读取整合包配置。" },
       },
       required: ["runId", "planningSessionId"],
     },
@@ -980,6 +982,27 @@ export const realmTools: ToolDefinition[] = [
     },
   },
   {
+    name: "city_design_queue_refresh",
+    description: "从当前 CitySeedRegistry 建立或合并持久化城市设计队列。默认全局按距 0,0 从近到远；可按国度分组。已完成城市不会因刷新丢失状态。",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        runId: nonEmptyString("已有 T4 CitySeedRegistry 的 run。"),
+        orderingMode: { type: "string", enum: ["global_radial", "realm_grouped"] },
+      },
+      required: ["runId"],
+    },
+  },
+  {
+    name: "city_design_queue_status",
+    description: "读取城市设计队列和唯一当前城市。waiting_for_agent 时 Agent 处理 currentCity；post_d4_running 时等待；needs_agent 时检查当前城市；completed 表示全部进入 WAITING_FOR_GENERATION。",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: { runId: nonEmptyString("城市设计队列所属 run。") },
+      required: ["runId"],
+    },
+  },
+  {
     name: "city_plan_d2",
     description: "City D2: 基于已有 W/T run 的 CitySeed 构建 CitySiteContext（城市局部上下文）。需提供 runId 和 citySeedId。",
     inputSchema: {
@@ -1053,8 +1076,33 @@ export const realmTools: ToolDefinition[] = [
         citySeedId: nonEmptyString("上下文所属城市。"),
         contextId: nonEmptyString("prepare-context 返回的冻结 contextId。"),
         cityBlueprint: cityBlueprintSchema,
+        autoAdvanceAfterD4: { type: "boolean", description: "默认 true；D4 接受后自动进入程序队列，推进到 WAITING_FOR_GENERATION。false 仅提交 Blueprint。" },
       },
       required: ["runId", "citySeedId", "contextId", "cityBlueprint"],
+    },
+  },
+  {
+    name: "city_post_d4_auto_compile_status",
+    description: "查询 D4 后自动编译队列状态。waiting_for_generation 表示正常完成；needs_agent 表示失败并需要 Agent 处理。",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        runId: nonEmptyString("W/T run ID。"),
+        citySeedId: nonEmptyString("目标城市。"),
+      },
+      required: ["runId", "citySeedId"],
+    },
+  },
+  {
+    name: "city_post_d4_auto_compile_retry",
+    description: "当前城市的 D4 后程序阶段失败并修复原因后，重新加入后半段队列；不重新提交或重新调用 AI D4。",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        runId: nonEmptyString("W/T run ID。"),
+        citySeedId: nonEmptyString("必须是城市设计队列当前城市。"),
+      },
+      required: ["runId", "citySeedId"],
     },
   },
   {

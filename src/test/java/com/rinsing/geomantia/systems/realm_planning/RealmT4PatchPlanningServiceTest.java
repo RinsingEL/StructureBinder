@@ -3,6 +3,7 @@ package com.rinsing.geomantia.systems.realm_planning;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.rinsing.geomantia.systems.realm_planning.application.access.PlanningAreaAccessConfig;
 import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainScalePatchService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -11,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -20,6 +22,31 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class RealmT4PatchPlanningServiceTest {
     @TempDir
     Path tempDir;
+
+    @Test
+    void rejectsSelectedCityInsideConfiguredOriginExclusion() throws Exception {
+        Path root = tempDir.resolve("gated_realm_debug");
+        Path run = root.resolve("run_t4");
+        Files.createDirectories(run);
+        writeArtifacts(run);
+        PatchExplorerService explorer = new PatchExplorerService(root);
+        String selectionRef = select(explorer, "gated_capital", "plain", "PLAIN-01");
+        RealmT4PatchPlanningService service = new RealmT4PatchPlanningService(root, (runId, registry) -> null,
+                new PlanningAreaAccessConfig(true, 64, 512, Set.of("minecraft:overworld")));
+        JsonObject createRequest = new JsonObject();
+        createRequest.addProperty("runId", "run_t4");
+        createRequest.addProperty("realmId", "realm_a");
+        createRequest.addProperty("planningSessionId", "gated_plan");
+        service.create(createRequest);
+        JsonObject capitalRequest = new JsonObject();
+        capitalRequest.addProperty("runId", "run_t4");
+        capitalRequest.addProperty("planningSessionId", "gated_plan");
+        capitalRequest.addProperty("patchSelectionRef", selectionRef);
+
+        IllegalArgumentException failure = assertThrows(IllegalArgumentException.class,
+                () -> service.selectCapital(capitalRequest));
+        assertTrue(failure.getMessage().startsWith("T4_CITY_INSIDE_INITIAL_ACTIVITY_EXCLUSION"));
+    }
 
     @Test
     void migratesLegacyCapitalCoordinatesToIntentWithoutInheritingTheSite() throws Exception {

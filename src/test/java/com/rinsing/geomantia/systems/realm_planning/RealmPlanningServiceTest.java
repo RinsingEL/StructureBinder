@@ -398,7 +398,6 @@ class RealmPlanningServiceTest {
         assertEquals(4096, manifestStats.get("microSampleBudget").getAsLong());
         assertEquals(16, manifestStats.get("microSampleBudgetPerCell").getAsInt());
         assertFalse(manifestStats.get("adaptiveSampling").getAsBoolean());
-
         JsonObject restoredAudit = new RealmPlanningService(tempDir.resolve("realm_debug"))
                 .runTagAudit("realm_world_survey_test", new SyntheticAtlasSampler(testCase.profile()), 12, 32, 8, 4);
         assertEquals("completed", restoredAudit.get("status").getAsString());

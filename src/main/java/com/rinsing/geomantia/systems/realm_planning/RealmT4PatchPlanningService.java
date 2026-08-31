@@ -6,6 +6,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.rinsing.geomantia.systems.realm_planning.application.access.PlanningAreaAccessConfig;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -26,6 +27,7 @@ public final class RealmT4PatchPlanningService {
     private final Path debugRoot;
     private final PatchExplorerService patchExplorer;
     private final RegistryArtifactSynchronizer artifactSynchronizer;
+    private final PlanningAreaAccessConfig accessConfig;
 
     @FunctionalInterface
     public interface RegistryArtifactSynchronizer {
@@ -34,13 +36,19 @@ public final class RealmT4PatchPlanningService {
 
     public RealmT4PatchPlanningService(Path debugRoot) {
         this(debugRoot, (runId, registry) -> new RealmPlanningService(debugRoot)
-                .synchronizeT4RegistryArtifacts(runId, registry));
+                .synchronizeT4RegistryArtifacts(runId, registry), unrestrictedAccess());
     }
 
     public RealmT4PatchPlanningService(Path debugRoot, RegistryArtifactSynchronizer artifactSynchronizer) {
+        this(debugRoot, artifactSynchronizer, unrestrictedAccess());
+    }
+
+    public RealmT4PatchPlanningService(Path debugRoot, RegistryArtifactSynchronizer artifactSynchronizer,
+                                       PlanningAreaAccessConfig accessConfig) {
         this.debugRoot = debugRoot.toAbsolutePath().normalize();
         this.patchExplorer = new PatchExplorerService(this.debugRoot);
         this.artifactSynchronizer = artifactSynchronizer;
+        this.accessConfig = accessConfig;
     }
 
     public JsonObject create(JsonObject request) throws IOException {
@@ -157,6 +165,7 @@ public final class RealmT4PatchPlanningService {
         JsonObject anchorGrid = object(selection, "suggestedAnchor");
         int anchorBlockX = intValue(anchorGrid, "blockX", 0);
         int anchorBlockZ = intValue(anchorGrid, "blockZ", 0);
+        requireOutsideInitialCityExclusion(runId, anchorBlockX, anchorBlockZ);
         int worldSurveyStep = worldSurveyCellStep(runId);
         int gridX = Math.floorDiv(anchorBlockX, worldSurveyStep);
         int gridZ = Math.floorDiv(anchorBlockZ, worldSurveyStep);
@@ -201,6 +210,26 @@ public final class RealmT4PatchPlanningService {
         seeds.add(seed);
         session.getAsJsonArray("usedPatchSelectionRefs").add(selectionRef);
         return seed;
+    }
+
+    private void requireOutsideInitialCityExclusion(String runId, int blockX, int blockZ) throws IOException {
+        JsonObject context = readObject(runDir(runId).resolve("world_survey_context.json"),
+                "T4_PATCH_W_CONTEXT_NOT_FOUND");
+        String dimensionId = stringValue(context, "dimensionId", "minecraft:overworld");
+        if (!accessConfig.enabled() || !accessConfig.managedDimensions().contains(dimensionId)) return;
+        long distanceSquared = (long) blockX * blockX + (long) blockZ * blockZ;
+        long minimum = accessConfig.firstCityMinimumDistanceBlocks();
+        if (distanceSquared < minimum * minimum) {
+            throw new IllegalArgumentException("T4_CITY_INSIDE_INITIAL_ACTIVITY_EXCLUSION: minimumDistanceBlocks="
+                    + minimum);
+        }
+    }
+
+    private static PlanningAreaAccessConfig unrestrictedAccess() {
+        return new PlanningAreaAccessConfig(false,
+                PlanningAreaAccessConfig.DEFAULT_INITIAL_RADIUS_BLOCKS,
+                PlanningAreaAccessConfig.DEFAULT_FIRST_CITY_DISTANCE_BLOCKS,
+                Set.of("minecraft:overworld"));
     }
 
     public JsonObject finalizePlanning(JsonObject request) throws IOException {
