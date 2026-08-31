@@ -994,7 +994,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_plan_d3",
-    description: "City D3: 以固定 16-block step 构建局部地貌审查包与群系图。默认优先 RTF 二维快速采样，未安装或不可用时整批回退 Minecraft prior。对 T4 AI 候选选出的首都，返回 siteReviewStatus=awaiting_review，必须调用 city_review_d3_site 后才能进入 D4。",
+    description: "City D3: 在 API 工作线程以固定 16-block step 构建局部地貌审查包与群系图，不阻塞服务器 tick。默认优先 RTF 二维快速采样，未安装或不可用时整批回退 Minecraft prior。对 T4 AI 候选选出的首都，返回 siteReviewStatus=awaiting_review，必须调用 city_review_d3_site 后才能进入 D4。",
     inputSchema: {
       type: "object",
       properties: {
@@ -1211,7 +1211,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_execute_d7",
-    description: "City Execute D7: 只检查固定模板 worldgen ledger。不会 late paste；未生成模板返回等待，ledger 完整后基于 exact NBT footprint 生成道路/边界后处理。",
+    description: "City Execute D7: 检查固定模板 worldgen ledger；不会 late paste。执行模式下把缺失 LandUse owner 放入每 tick 最多一个动作的异步区块队列，返回 waiting_for_worldgen 时使用同一 run/city 轮询进度。",
     inputSchema: {
       type: "object",
       properties: {

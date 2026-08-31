@@ -314,19 +314,21 @@ final class RealmPlanningHttpController {
     }
 
     void handleCityPlanD3(HttpExchange exchange) {
-        handle(exchange, "POST", () -> callOnServerThread(() -> {
+        handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             String runId = requiredString(request, "runId");
             String citySeedId = requiredString(request, "citySeedId");
             Integer cellStepBlocks = hasValue(request, "cellStepBlocks")
                     ? intValue(request, "cellStepBlocks", 4)
                     : null;
-            ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
+            String playerName = stringValue(request, "playerName", "");
             String dimensionId = stringValue(request, "dimensionId", "");
             if (dimensionId.isBlank()) {
                 dimensionId = restoredRunDimensionId(runId);
             }
-            ServerLevel level = resolveLevel(dimensionId, player);
+            String resolvedDimensionId = dimensionId;
+            ServerLevel level = callOnServerThread(() -> resolveLevel(
+                    resolvedDimensionId, resolvePlayer(playerName)));
             return CityPlanningEndpointHandler.handlePlanD3(debugRoot(), runId, citySeedId,
                     cellStepBlocks,
                     hasValue(request, "patchScanPaddingBlocks")
@@ -335,7 +337,7 @@ final class RealmPlanningHttpController {
                             : null,
                     booleanValue(request, "preferGeneratorNativeTerrain", true),
                     level);
-        }));
+        });
     }
 
     void handleCityReviewD3Site(HttpExchange exchange) {
@@ -1107,20 +1109,24 @@ final class RealmPlanningHttpController {
     }
 
     void handleCityRunWorkflow(HttpExchange exchange) {
-        handle(exchange, "POST", () -> callOnServerThread(() -> {
+        handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             String runId = requiredString(request, "runId");
             String citySeedId = requiredString(request, "citySeedId");
-            ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
+            String playerName = stringValue(request, "playerName", "");
             String dimensionId = stringValue(request, "dimensionId", "");
             if (dimensionId.isBlank()) {
                 dimensionId = restoredRunDimensionId(runId);
             }
-            ServerLevel level = resolveLevel(dimensionId, player);
+            String resolvedDimensionId = dimensionId;
+            ServerLevel level = callOnServerThread(() -> resolveLevel(
+                    resolvedDimensionId, resolvePlayer(playerName)));
+            CityPlanningEndpointHandler.MinecraftServerHolder serverHolder =
+                    new CityPlanningEndpointHandler.MinecraftServerHolder(server);
             JsonObject response = CityPlanningEndpointHandler.handleRunWorkflow(debugRoot(),
                     server.getWorldPath(LevelResource.ROOT),
                     runId, citySeedId, request,
-                    new CityPlanningEndpointHandler.MinecraftServerHolder(server),
+                    serverHolder,
                     level);
             boolean saveAfter = booleanValue(request, "executeWalls", false)
                     && response.has("ok")
@@ -1131,7 +1137,7 @@ final class RealmPlanningHttpController {
             }
             response.addProperty("worldSaveRequested", saveAfter);
             return response;
-        }));
+        });
     }
 
     void handleTagAudit(HttpExchange exchange) {

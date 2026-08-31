@@ -133,6 +133,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 final class CityPlanningEndpointHandler {
     static final int DEFAULT_D3_PATCH_SCAN_PADDING_BLOCKS = 128;
@@ -282,6 +285,7 @@ final class CityPlanningEndpointHandler {
     static JsonObject handlePlanD3(Path debugRoot, String runId, String citySeedId,
                                     Integer requestedCellStepBlocks, Integer requestedPatchScanPaddingBlocks,
                                     boolean preferGeneratorNativeTerrain, ServerLevel level) throws IOException {
+        long started = System.nanoTime();
         if (requestedCellStepBlocks != null && requestedCellStepBlocks != D3_CELL_STEP_BLOCKS) {
             throw new IllegalArgumentException("CITY_D3_CELL_STEP_FIXED: cellStepBlocks must be 16.");
         }
@@ -352,6 +356,10 @@ final class CityPlanningEndpointHandler {
 
         JsonObject response = new JsonObject();
         response.addProperty("ok", true);
+        boolean serverThreadBlocked = level.getServer().isSameThread();
+        response.addProperty("executionMode", serverThreadBlocked ? "server_thread_legacy" : "api_worker");
+        response.addProperty("serverThreadBlocked", serverThreadBlocked);
+        response.addProperty("durationMs", (System.nanoTime() - started) / 1_000_000.0);
         response.addProperty("patchCount", reviewPkg.landformPatches().size());
         response.addProperty("refreshedRegionCount", refreshResults.size());
         response.addProperty("patchScanPaddingBlocks", patchScanPaddingBlocks);
@@ -2408,11 +2416,11 @@ final class CityPlanningEndpointHandler {
                     JsonParser.parseString(Files.readString(landUseAreaPlanPath)).getAsJsonObject());
             CityLandUseSurfacePrintPlan landUseSurfacePlan = new CityLandUseSurfacePrintPlanCodec().fromJson(
                     JsonParser.parseString(Files.readString(landUseSurfacePlanPath)).getAsJsonObject());
-            landUseBackfill = CityLandUseWorldgenRegistry.backfillMissingOwners(
+            landUseBackfill = CityLandUseWorldgenRegistry.enqueueD7Backfill(
                     level.dimension().location().toString(), landUseAreaPlan, landUseSurfacePlan, level);
             Files.writeString(landUseBackfillPath, CityJson.GSON.toJson(
                     landUseBackfillJson(landUseBackfill)));
-            if (!landUseBackfill.complete()) {
+            if (!landUseBackfill.failures().isEmpty()) {
                 throw new IllegalArgumentException("CITY_LAND_USE_D7_OWNER_INCOMPLETE: plannedOwners="
                         + landUseBackfill.plannedOwnerCount() + ", appliedOwners="
                         + landUseBackfill.appliedAfterCount() + ", missingOwners="
@@ -2450,6 +2458,11 @@ final class CityPlanningEndpointHandler {
         if (landUseBackfill != null) {
             response.add("landUseOwnerCompletion", landUseBackfillJson(landUseBackfill));
             artifacts.addProperty("landUseOwnerCompletion", debugRef(debugRoot, landUseBackfillPath));
+            if (!landUseBackfill.complete()) {
+                response.addProperty("ok", true);
+                response.addProperty("status", "waiting_for_worldgen");
+                response.addProperty("reasonCode", "CITY_LAND_USE_D7_BACKFILL_IN_PROGRESS");
+            }
         }
         response.add("artifacts", artifacts);
         response.addProperty("structurePlacementExecuted", executeStructurePlacement);
@@ -2705,8 +2718,8 @@ final class CityPlanningEndpointHandler {
         if (!ctx.workflow().runStep("city_plan_d6",
                 !blueprintWorkflow || workflowArtifactMatchesAnchorMap(workflowD6Plan, workflowAnchorMap)
                         ? workflowD6Plan : null,
-                () -> handlePlanD6(debugRoot, runId, citySeedId,
-                serverHolder, level))) {
+                () -> serverHolder.callOnServerThread(() -> handlePlanD6(
+                        debugRoot, runId, citySeedId, serverHolder, level)))) {
             return ctx.workflow().finish(workflowStarted, "failed");
         }
 
@@ -2781,16 +2794,16 @@ final class CityPlanningEndpointHandler {
                         .resolve("city_land_use_planning_complete.json"),
                 decorationDir(runDir, citySeedId).resolve("city_decoration_planning_complete.json"))
                 ? activeD5Registry : null;
-        if (!ctx.workflow().runStep("city_execute_d5", executeD5SkipArtifact, () -> handleExecuteD5(debugRoot, serverRoot,
-                runId, citySeedId, true, level, null, blueprintWorkflow ? null : enableLandUseLayer))) {
+        if (!ctx.workflow().runStep("city_execute_d5", executeD5SkipArtifact,
+                () -> serverHolder.callOnServerThread(() -> handleExecuteD5(
+                        debugRoot, serverRoot, runId, citySeedId, true, level, null,
+                        blueprintWorkflow ? null : enableLandUseLayer)))) {
             return ctx.workflow().finish(workflowStarted, "failed");
         }
 
-        if (!ctx.workflow().runStep("city_execute_d7", null, () -> handleExecuteD7(debugRoot, runId, citySeedId,
-                level.getSeed(),
-                true,
-                serverHolder,
-                level))) {
+        if (!ctx.workflow().runStep("city_execute_d7", null,
+                () -> serverHolder.callOnServerThread(() -> handleExecuteD7(
+                        debugRoot, runId, citySeedId, level.getSeed(), true, serverHolder, level)))) {
             return ctx.workflow().finish(workflowStarted, "failed");
         }
         JsonObject d7Step = steps.get(steps.size() - 1).getAsJsonObject();
@@ -2798,7 +2811,8 @@ final class CityPlanningEndpointHandler {
         String d7Reason = stringValue(d7Step, "reasonCode", "");
         if ("WAITING_FOR_WORLDGEN".equals(d7Reason) || "waiting_for_worldgen".equals(d7Status)) {
             ctx.workflow().addStop("worldgen_wait", "waiting_for_worldgen", "WAITING_FOR_WORLDGEN",
-                    "TP/load target chunks, then rerun this workflow with the same runId/citySeedId.");
+                    "D7 is generating or observing owner chunks through the bounded server queue; "
+                            + "rerun this workflow with the same runId/citySeedId to poll progress.");
             return ctx.workflow().finish(workflowStarted, "waiting_for_worldgen");
         }
 
@@ -2806,19 +2820,21 @@ final class CityPlanningEndpointHandler {
             Path wallPlanPath = cityStageDir(runDir, citySeedId, CityTestRunLayout.WALLS)
                     .resolve("city_wall_plan.json");
             Path wallSkipArtifact = workflowWallPlanMatchesRequest(wallPlanPath, request) ? wallPlanPath : null;
-            if (!ctx.workflow().runStep("city_plan_city_walls", wallSkipArtifact, () -> handlePlanCityWalls(debugRoot, runId, citySeedId,
-                    level,
-                    intValue(request, "roadScanMarginBlocks", 8),
-                    workflowWallOptions(request)))) {
+            if (!ctx.workflow().runStep("city_plan_city_walls", wallSkipArtifact,
+                    () -> serverHolder.callOnServerThread(() -> handlePlanCityWalls(
+                            debugRoot, runId, citySeedId, level,
+                            intValue(request, "roadScanMarginBlocks", 8),
+                            workflowWallOptions(request))))) {
                 return ctx.workflow().finish(workflowStarted, "failed");
             }
         }
 
         if (booleanValue(request, "executeWalls", false)) {
             if (!ctx.workflow().runStep("city_execute_city_walls", null,
-                    () -> handleExecuteCityWalls(debugRoot, runId, citySeedId, true, level,
+                    () -> serverHolder.callOnServerThread(() -> handleExecuteCityWalls(
+                            debugRoot, runId, citySeedId, true, level,
                             booleanValue(request, "debugScan", true),
-                            intValue(request, "debugScanStepBlocks", 1)))) {
+                            intValue(request, "debugScanStepBlocks", 1))))) {
                 return ctx.workflow().finish(workflowStarted, "failed");
             }
         }
@@ -3814,14 +3830,17 @@ final class CityPlanningEndpointHandler {
         return json;
     }
 
-    private static JsonObject landUseBackfillJson(
+    static JsonObject landUseBackfillJson(
             CityLandUseWorldgenRegistry.BackfillSummary result) {
         JsonObject json = new JsonObject();
-        json.addProperty("schema", "city_land_use_owner_completion");
+        json.addProperty("schema", "city_land_use_owner_completion.v0.2");
         json.addProperty("cityId", result.cityId());
         json.addProperty("areaPlanHash", result.areaPlanHash());
         json.addProperty("surfacePrintPlanHash", result.surfacePrintPlanHash());
         json.addProperty("complete", result.complete());
+        json.addProperty("status", result.status());
+        json.addProperty("maxOwnerActionsPerTick", result.maxOwnerActionsPerTick());
+        json.addProperty("synchronousChunkLoads", result.synchronousChunkLoads());
         json.addProperty("plannedOwnerCount", result.plannedOwnerCount());
         json.addProperty("appliedBeforeCount", result.appliedBeforeCount());
         json.addProperty("backfilledOwnerCount", result.backfilledOwnerCount());
@@ -3834,6 +3853,12 @@ final class CityPlanningEndpointHandler {
             missing.add(item);
         }
         json.add("missingOwners", missing);
+        if (result.currentOwner() != null) {
+            JsonObject current = new JsonObject();
+            current.addProperty("chunkX", result.currentOwner().chunkX());
+            current.addProperty("chunkZ", result.currentOwner().chunkZ());
+            json.add("currentOwner", current);
+        }
         JsonArray failures = new JsonArray();
         for (CityLandUseWorldgenRegistry.OwnerFailure failure : result.failures()) {
             JsonObject item = new JsonObject();
@@ -5766,5 +5791,27 @@ final class CityPlanningEndpointHandler {
     }
 
     record MinecraftServerHolder(net.minecraft.server.MinecraftServer server) {
+        <T> T callOnServerThread(Callable<T> action) throws Exception {
+            if (server.isSameThread()) {
+                return action.call();
+            }
+            CompletableFuture<T> future = new CompletableFuture<>();
+            server.execute(() -> {
+                try {
+                    future.complete(action.call());
+                } catch (Exception ex) {
+                    future.completeExceptionally(ex);
+                }
+            });
+            try {
+                return future.get();
+            } catch (ExecutionException ex) {
+                Throwable cause = ex.getCause();
+                if (cause instanceof Exception exception) {
+                    throw exception;
+                }
+                throw new RuntimeException(cause);
+            }
+        }
     }
 }

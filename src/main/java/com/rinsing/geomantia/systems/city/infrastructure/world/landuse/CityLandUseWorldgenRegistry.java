@@ -6,6 +6,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mojang.datafixers.util.Either;
 import com.mojang.logging.LogUtils;
 import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan;
 import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlanCodec;
@@ -17,10 +18,14 @@ import com.rinsing.geomantia.systems.city.infrastructure.world.CityWorldgenBlock
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import org.slf4j.Logger;
 
@@ -42,6 +47,8 @@ import java.util.Objects;
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.function.Predicate;
 
 /** Server-root registry for current LandUse surface plans and owner-chunk application ledgers. */
@@ -65,6 +72,7 @@ public final class CityLandUseWorldgenRegistry {
     private static final Map<ActiveKey, ActivePlan> ACTIVE = new LinkedHashMap<>();
     private static final Set<OwnerKey> IN_FLIGHT = new HashSet<>();
     private static final Set<OwnerKey> APPLIED_OWNER_KEYS = new HashSet<>();
+    private static final Map<D7BackfillJobKey, D7BackfillJob> D7_BACKFILL_JOBS = new LinkedHashMap<>();
     private static final Map<Object, Set<FeatureOwnerKey>> FEATURE_OWNER_APPLICATIONS = new WeakHashMap<>();
     private static final ThreadLocal<Integer> FEATURE_INVOCATION_DEPTH = new ThreadLocal<>();
     private static JsonObject ledger = emptyLedger();
@@ -92,6 +100,7 @@ public final class CityLandUseWorldgenRegistry {
         ensureLoaded(server);
         synchronized (CityLandUseWorldgenRegistry.class) {
             ActiveKey key = new ActiveKey(dimension, areaPlan.cityId());
+            cancelD7BackfillsFor(key);
             ACTIVE.put(key, ActivePlan.create(key, areaPlan, surfacePrintPlan));
             FEATURE_OWNER_APPLICATIONS.clear();
             persistActive();
@@ -165,6 +174,7 @@ public final class CityLandUseWorldgenRegistry {
         ensureLoaded(server);
         synchronized (CityLandUseWorldgenRegistry.class) {
             ACTIVE.remove(key);
+            cancelD7BackfillsFor(key);
             IN_FLIGHT.removeIf(owner -> owner.key().equals(key));
             FEATURE_OWNER_APPLICATIONS.clear();
             persistActive();
@@ -189,6 +199,7 @@ public final class CityLandUseWorldgenRegistry {
         }
         ACTIVE.clear();
         ACTIVE.putAll(state.activePlans());
+        cancelAllD7Backfills();
         IN_FLIGHT.clear();
         FEATURE_OWNER_APPLICATIONS.clear();
         FEATURE_INVOCATION_DEPTH.remove();
@@ -349,71 +360,177 @@ public final class CityLandUseWorldgenRegistry {
     }
 
     /**
-     * Completes only the frozen owner chunks missing from the current city's exact plan identity.
-     * This is intentionally available only to the explicit D7 world-mutation path.
+     * Starts or polls a D7 owner-completion job. Chunk generation is requested asynchronously and the
+     * server-tick hook advances at most one owner action per tick.
      */
-    public static BackfillSummary backfillMissingOwners(String dimensionId,
-                                                        LandUseAreaPlan areaPlan,
-                                                        CityLandUseSurfacePrintPlan surfacePrintPlan,
-                                                        ServerLevel level) {
+    public static BackfillSummary enqueueD7Backfill(String dimensionId,
+                                                    LandUseAreaPlan areaPlan,
+                                                    CityLandUseSurfacePrintPlan surfacePrintPlan,
+                                                    ServerLevel level) {
         Objects.requireNonNull(level, "level");
         validatePlanHash(Objects.requireNonNull(areaPlan, "areaPlan"));
         validateSurfacePrintLink(areaPlan, surfacePrintPlan);
+        if (!level.getServer().isSameThread()) {
+            throw new IllegalStateException("CITY_LAND_USE_D7_QUEUE_REQUIRES_SERVER_THREAD");
+        }
         String dimension = dimensionId(dimensionId);
         ActivePlan active;
-        synchronized (CityLandUseWorldgenRegistry.class) {
-            active = ACTIVE.get(new ActiveKey(dimension, areaPlan.cityId()));
-        }
-        if (active == null
-                || !active.areaPlan().planHash().equals(areaPlan.planHash())
-                || !active.surfacePrintPlan().planHash().equals(surfacePrintPlan.planHash())) {
-            throw new IllegalArgumentException("CITY_LAND_USE_D7_ACTIVE_PLAN_IDENTITY_MISMATCH");
-        }
-
         List<CityLandUseChunkStatusPreflight.OwnerChunk> owners =
                 CityLandUseChunkStatusPreflight.ownerChunks(areaPlan, surfacePrintPlan);
-        int appliedBefore = 0;
-        List<OwnerFailure> failures = new ArrayList<>();
-        CityLandUseChunkExecutor.ExecutionWorld world =
-                new CityLandUseChunkExecutor.WorldGenExecutionWorld(level);
-        for (CityLandUseChunkStatusPreflight.OwnerChunk owner : owners) {
-            OwnerKey ownerKey = new OwnerKey(active.key(), areaPlan.planHash(), surfacePrintPlan.planHash(),
-                    active.palette().paletteHash(), owner.chunkX(), owner.chunkZ());
-            if (isApplied(ownerKey)) {
-                appliedBefore++;
-                continue;
+        D7BackfillJob job;
+        synchronized (CityLandUseWorldgenRegistry.class) {
+            ActiveKey activeKey = new ActiveKey(dimension, areaPlan.cityId());
+            active = ACTIVE.get(activeKey);
+            if (active == null
+                    || !active.areaPlan().planHash().equals(areaPlan.planHash())
+                    || !active.surfacePrintPlan().planHash().equals(surfacePrintPlan.planHash())) {
+                throw new IllegalArgumentException("CITY_LAND_USE_D7_ACTIVE_PLAN_IDENTITY_MISMATCH");
             }
-            var chunk = level.getChunk(owner.chunkX(), owner.chunkZ());
-            CityWorldgenBlockObservationRegistry.begin(level, chunk);
-            ApplySummary result;
-            try {
-                result = applyForChunk(dimension, owner.chunkX(), owner.chunkZ(),
-                        CityLandUseChunkExecutor.GenerationEligibility.CONTROLLED_D7_BACKFILL,
-                        world, areaPlan.cityId());
-                if (result.failedOwnerCount() == 0) {
-                    CityWorldgenBlockObservationRegistry.finishAfterRetry(level, chunk);
-                } else {
-                    CityWorldgenBlockObservationRegistry.abort();
-                }
-            } catch (RuntimeException | Error failure) {
+            D7BackfillJobKey jobKey = new D7BackfillJobKey(activeKey,
+                    areaPlan.planHash(), surfacePrintPlan.planHash(), active.palette().paletteHash());
+            D7_BACKFILL_JOBS.entrySet().removeIf(entry -> {
+                boolean replaced = entry.getKey().activeKey().equals(activeKey)
+                        && !entry.getKey().equals(jobKey);
+                if (replaced) entry.getValue().cancel();
+                return replaced;
+            });
+            job = D7_BACKFILL_JOBS.computeIfAbsent(jobKey,
+                    ignored -> new D7BackfillJob(jobKey, level, areaPlan, surfacePrintPlan, owners,
+                            countAppliedOwners(jobKey, owners)));
+            if (job.level() != level) {
+                throw new IllegalArgumentException("CITY_LAND_USE_D7_QUEUE_LEVEL_MISMATCH");
+            }
+            return backfillSummary(job);
+        }
+    }
+
+    /** Advances at most one queued chunk request or one owner application for this server tick. */
+    public static void tickD7Backfills(MinecraftServer server) {
+        Objects.requireNonNull(server, "server");
+        if (!server.isSameThread()) {
+            throw new IllegalStateException("CITY_LAND_USE_D7_QUEUE_TICK_REQUIRES_SERVER_THREAD");
+        }
+        List<D7BackfillJob> jobs;
+        synchronized (CityLandUseWorldgenRegistry.class) {
+            jobs = D7_BACKFILL_JOBS.values().stream()
+                    .filter(candidate -> candidate.level().getServer() == server && !candidate.terminal())
+                    .toList();
+        }
+        for (D7BackfillJob job : jobs) {
+            if (advanceD7Backfill(job)) break;
+        }
+    }
+
+    public static synchronized void clearD7Backfills(MinecraftServer server) {
+        D7_BACKFILL_JOBS.entrySet().removeIf(entry -> {
+            boolean remove = entry.getValue().level().getServer() == server;
+            if (remove) entry.getValue().cancel();
+            return remove;
+        });
+    }
+
+    private static boolean advanceD7Backfill(D7BackfillJob job) {
+        while (!job.terminal() && job.cursor() < job.owners().size()
+                && isApplied(job.ownerKey(job.owners().get(job.cursor())))) {
+            job.advanceCursor();
+        }
+        if (job.cursor() >= job.owners().size()) {
+            job.complete();
+            flushPendingLedgerNow();
+            return false;
+        }
+
+        CityLandUseChunkStatusPreflight.OwnerChunk owner = job.owners().get(job.cursor());
+        if (job.pendingLoad() == null) {
+            job.beginLoad(owner, job.level().getChunkSource().getChunkFuture(
+                    owner.chunkX(), owner.chunkZ(), ChunkStatus.FULL, true));
+            return true;
+        }
+        if (!job.pendingLoad().isDone()) return false;
+
+        Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure> loaded;
+        try {
+            loaded = job.pendingLoad().join();
+        } catch (CompletionException failure) {
+            job.fail(owner, "CITY_LAND_USE_D7_CHUNK_LOAD_FAILED");
+            flushPendingLedgerNow();
+            return true;
+        }
+        ChunkAccess chunk = loaded.left().orElse(null);
+        if (chunk == null) {
+            job.fail(owner, "CITY_LAND_USE_D7_CHUNK_LOAD_FAILED");
+            flushPendingLedgerNow();
+            return true;
+        }
+        job.clearPendingLoad();
+        if (isApplied(job.ownerKey(owner))) {
+            job.advanceCursor();
+            return true;
+        }
+
+        CityWorldgenBlockObservationRegistry.begin(job.level(), chunk);
+        ApplySummary result;
+        try {
+            CityLandUseChunkExecutor.ExecutionWorld world =
+                    new CityLandUseChunkExecutor.WorldGenExecutionWorld(job.level());
+            result = applyForChunk(job.key().activeKey().dimensionId(), owner.chunkX(), owner.chunkZ(),
+                    CityLandUseChunkExecutor.GenerationEligibility.CONTROLLED_D7_BACKFILL,
+                    world, job.areaPlan().cityId());
+            if (result.failedOwnerCount() == 0) {
+                CityWorldgenBlockObservationRegistry.finishAfterRetry(job.level(), chunk);
+            } else {
                 CityWorldgenBlockObservationRegistry.abort();
-                throw failure;
             }
-            failures.addAll(result.failures());
+        } catch (RuntimeException | Error failure) {
+            CityWorldgenBlockObservationRegistry.abort();
+            job.fail(owner, failure.getClass().getSimpleName());
+            flushPendingLedgerNow();
+            return true;
         }
-        flushPendingLedgerNow();
-        int appliedAfter = 0;
-        List<CityLandUseChunkStatusPreflight.OwnerChunk> missing = new ArrayList<>();
+        job.record(owner, result);
+        if (job.terminal() || job.cursor() >= job.owners().size()) {
+            if (!job.terminal()) job.complete();
+            flushPendingLedgerNow();
+        }
+        return true;
+    }
+
+    private static synchronized BackfillSummary backfillSummary(D7BackfillJob job) {
+        int appliedAfter = countAppliedOwners(job.key(), job.owners());
+        List<CityLandUseChunkStatusPreflight.OwnerChunk> missing = job.owners().stream()
+                .filter(owner -> !isApplied(job.ownerKey(owner)))
+                .toList();
+        String status = job.failed() ? "failed"
+                : missing.isEmpty() ? "completed"
+                : job.pendingLoad() != null ? "loading_chunk" : "queued";
+        return new BackfillSummary(job.areaPlan().cityId(), job.areaPlan().planHash(),
+                job.surfacePrintPlan().planHash(), job.owners().size(), job.appliedBeforeCount(),
+                Math.max(0, appliedAfter - job.appliedBeforeCount()), appliedAfter, missing,
+                job.failures(), foundationDiagnostics(job.areaPlan().cityId(), job.areaPlan().planHash(),
+                job.surfacePrintPlan().planHash()), status, 1, false, job.pendingOwner());
+    }
+
+    private static int countAppliedOwners(D7BackfillJobKey key,
+                                          List<CityLandUseChunkStatusPreflight.OwnerChunk> owners) {
+        int count = 0;
         for (CityLandUseChunkStatusPreflight.OwnerChunk owner : owners) {
-            OwnerKey ownerKey = new OwnerKey(active.key(), areaPlan.planHash(), surfacePrintPlan.planHash(),
-                    active.palette().paletteHash(), owner.chunkX(), owner.chunkZ());
-            if (isApplied(ownerKey)) appliedAfter++;
-            else missing.add(owner);
+            if (isApplied(new OwnerKey(key.activeKey(), key.areaPlanHash(), key.surfacePrintPlanHash(),
+                    key.paletteHash(), owner.chunkX(), owner.chunkZ()))) count++;
         }
-        return new BackfillSummary(areaPlan.cityId(), areaPlan.planHash(), surfacePrintPlan.planHash(),
-                owners.size(), appliedBefore, appliedAfter - appliedBefore, appliedAfter, List.copyOf(missing),
-                List.copyOf(failures), foundationDiagnostics(areaPlan.cityId(), areaPlan.planHash(),
-                surfacePrintPlan.planHash()));
+        return count;
+    }
+
+    private static void cancelD7BackfillsFor(ActiveKey activeKey) {
+        D7_BACKFILL_JOBS.entrySet().removeIf(entry -> {
+            boolean remove = entry.getKey().activeKey().equals(activeKey);
+            if (remove) entry.getValue().cancel();
+            return remove;
+        });
+    }
+
+    private static void cancelAllD7Backfills() {
+        D7_BACKFILL_JOBS.values().forEach(D7BackfillJob::cancel);
+        D7_BACKFILL_JOBS.clear();
     }
 
     /** CLEAR suppresses natural features; selective clearing is owned by exact Decoration/D5 masks. */
@@ -1000,6 +1117,7 @@ public final class CityLandUseWorldgenRegistry {
 
     static synchronized void resetForTests() {
         ACTIVE.clear();
+        cancelAllD7Backfills();
         IN_FLIGHT.clear();
         APPLIED_OWNER_KEYS.clear();
         FEATURE_OWNER_APPLICATIONS.clear();
@@ -1068,7 +1186,11 @@ public final class CityLandUseWorldgenRegistry {
                                   int appliedAfterCount,
                                   List<CityLandUseChunkStatusPreflight.OwnerChunk> missingOwners,
                                   List<OwnerFailure> failures,
-                                  JsonArray foundationDiagnostics) {
+                                  JsonArray foundationDiagnostics,
+                                  String status,
+                                  int maxOwnerActionsPerTick,
+                                  boolean synchronousChunkLoads,
+                                  CityLandUseChunkStatusPreflight.OwnerChunk currentOwner) {
         public BackfillSummary {
             missingOwners = List.copyOf(missingOwners);
             failures = List.copyOf(failures);
@@ -1078,6 +1200,107 @@ public final class CityLandUseWorldgenRegistry {
 
         public boolean complete() {
             return appliedAfterCount == plannedOwnerCount && missingOwners.isEmpty();
+        }
+    }
+
+    private record D7BackfillJobKey(ActiveKey activeKey,
+                                    String areaPlanHash,
+                                    String surfacePrintPlanHash,
+                                    String paletteHash) {
+    }
+
+    private static final class D7BackfillJob {
+        private final D7BackfillJobKey key;
+        private final ServerLevel level;
+        private final LandUseAreaPlan areaPlan;
+        private final CityLandUseSurfacePrintPlan surfacePrintPlan;
+        private final List<CityLandUseChunkStatusPreflight.OwnerChunk> owners;
+        private final int appliedBeforeCount;
+        private final List<OwnerFailure> failures = new ArrayList<>();
+        private int cursor;
+        private boolean completed;
+        private boolean failed;
+        private boolean cancelled;
+        private CityLandUseChunkStatusPreflight.OwnerChunk pendingOwner;
+        private CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> pendingLoad;
+
+        private D7BackfillJob(D7BackfillJobKey key,
+                              ServerLevel level,
+                              LandUseAreaPlan areaPlan,
+                              CityLandUseSurfacePrintPlan surfacePrintPlan,
+                              List<CityLandUseChunkStatusPreflight.OwnerChunk> owners,
+                              int appliedBeforeCount) {
+            this.key = key;
+            this.level = level;
+            this.areaPlan = areaPlan;
+            this.surfacePrintPlan = surfacePrintPlan;
+            this.owners = List.copyOf(owners);
+            this.appliedBeforeCount = appliedBeforeCount;
+        }
+
+        private D7BackfillJobKey key() { return key; }
+        private ServerLevel level() { return level; }
+        private LandUseAreaPlan areaPlan() { return areaPlan; }
+        private CityLandUseSurfacePrintPlan surfacePrintPlan() { return surfacePrintPlan; }
+        private List<CityLandUseChunkStatusPreflight.OwnerChunk> owners() { return owners; }
+        private int appliedBeforeCount() { return appliedBeforeCount; }
+        private int cursor() { return cursor; }
+        private boolean failed() { return failed; }
+        private boolean terminal() { return completed || failed || cancelled; }
+        private CityLandUseChunkStatusPreflight.OwnerChunk pendingOwner() { return pendingOwner; }
+        private CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> pendingLoad() {
+            return pendingLoad;
+        }
+        private List<OwnerFailure> failures() { return List.copyOf(failures); }
+
+        private OwnerKey ownerKey(CityLandUseChunkStatusPreflight.OwnerChunk owner) {
+            return new OwnerKey(key.activeKey(), key.areaPlanHash(), key.surfacePrintPlanHash(),
+                    key.paletteHash(), owner.chunkX(), owner.chunkZ());
+        }
+
+        private void beginLoad(CityLandUseChunkStatusPreflight.OwnerChunk owner,
+                               CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> load) {
+            pendingOwner = owner;
+            pendingLoad = load;
+        }
+
+        private void clearPendingLoad() {
+            pendingOwner = null;
+            pendingLoad = null;
+        }
+
+        private void advanceCursor() {
+            clearPendingLoad();
+            cursor++;
+            if (cursor >= owners.size()) completed = true;
+        }
+
+        private void record(CityLandUseChunkStatusPreflight.OwnerChunk owner, ApplySummary result) {
+            failures.addAll(result.failures());
+            if (result.failedOwnerCount() > 0) {
+                failed = true;
+                clearPendingLoad();
+                return;
+            }
+            advanceCursor();
+        }
+
+        private void fail(CityLandUseChunkStatusPreflight.OwnerChunk owner, String reasonCode) {
+            failures.add(new OwnerFailure(areaPlan.cityId(), areaPlan.planHash(), surfacePrintPlan.planHash(),
+                    owner.chunkX(), owner.chunkZ(), reasonCode, false));
+            failed = true;
+            clearPendingLoad();
+        }
+
+        private void complete() {
+            completed = true;
+            clearPendingLoad();
+        }
+
+        private void cancel() {
+            cancelled = true;
+            if (pendingLoad != null) pendingLoad.cancel(false);
+            clearPendingLoad();
         }
     }
 

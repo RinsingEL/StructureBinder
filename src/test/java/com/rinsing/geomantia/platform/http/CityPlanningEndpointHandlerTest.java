@@ -35,6 +35,7 @@ import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecoration
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.TestDecorationCatalogs;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
+import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseChunkStatusPreflight;
 import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseWorldgenRegistry;
 import com.rinsing.geomantia.systems.gis.domain.cell.LandformType;
 import com.rinsing.geomantia.systems.gis.domain.landform.LandformPatch;
@@ -75,6 +76,27 @@ class CityPlanningEndpointHandlerTest {
                 CityPlanningEndpointHandler.handlePlanD3(Path.of("."), "run", "city", 32, null));
 
         assertEquals("CITY_D3_CELL_STEP_FIXED: cellStepBlocks must be 16.", error.getMessage());
+    }
+
+    @Test
+    void d7OwnerCompletionExposesBoundedAsynchronousQueueState() {
+        CityLandUseChunkStatusPreflight.OwnerChunk current =
+                new CityLandUseChunkStatusPreflight.OwnerChunk(12, -7);
+        CityLandUseWorldgenRegistry.BackfillSummary summary =
+                new CityLandUseWorldgenRegistry.BackfillSummary(
+                        "city_queue", "area_hash", "surface_hash", 3, 1, 0, 1,
+                        List.of(current, new CityLandUseChunkStatusPreflight.OwnerChunk(13, -7)),
+                        List.of(), new JsonArray(), "loading_chunk", 1, false, current);
+
+        JsonObject json = CityPlanningEndpointHandler.landUseBackfillJson(summary);
+
+        assertEquals("city_land_use_owner_completion.v0.2", json.get("schema").getAsString());
+        assertFalse(json.get("complete").getAsBoolean());
+        assertEquals("loading_chunk", json.get("status").getAsString());
+        assertEquals(1, json.get("maxOwnerActionsPerTick").getAsInt());
+        assertFalse(json.get("synchronousChunkLoads").getAsBoolean());
+        assertEquals(12, json.getAsJsonObject("currentOwner").get("chunkX").getAsInt());
+        assertEquals(-7, json.getAsJsonObject("currentOwner").get("chunkZ").getAsInt());
     }
 
     @Test
