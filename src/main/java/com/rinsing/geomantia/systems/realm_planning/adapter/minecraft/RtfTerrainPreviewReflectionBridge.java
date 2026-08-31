@@ -19,6 +19,10 @@ final class RtfTerrainPreviewReflectionBridge {
     }
 
     static Probe probe(Object randomState) {
+        return probe(randomState, null);
+    }
+
+    static Probe probe(Object randomState, Object registryAccess) {
         Objects.requireNonNull(randomState, "randomState");
         ClassLoader loader = randomState.getClass().getClassLoader();
         try {
@@ -27,7 +31,7 @@ final class RtfTerrainPreviewReflectionBridge {
                 return Probe.unavailable("random_state_not_rtf");
             }
             Class<?> cellType = Class.forName(RTF_CELL, false, loader);
-            return Probe.available(bind(randomState, randomStateContract, cellType));
+            return Probe.available(bind(randomState, randomStateContract, cellType, registryAccess));
         } catch (ClassNotFoundException ex) {
             return Probe.unavailable("rtf_api_not_present");
         } catch (GeneratorContextUnavailableException ex) {
@@ -41,12 +45,27 @@ final class RtfTerrainPreviewReflectionBridge {
 
     static Binding bind(Object randomState, Class<?> randomStateContract, Class<?> cellType)
             throws ReflectiveOperationException {
+        return bind(randomState, randomStateContract, cellType, null);
+    }
+
+    static Binding bind(Object randomState, Class<?> randomStateContract, Class<?> cellType,
+            Object registryAccess) throws ReflectiveOperationException {
         Objects.requireNonNull(randomState, "randomState");
         Objects.requireNonNull(randomStateContract, "randomStateContract");
         Objects.requireNonNull(cellType, "cellType");
 
         Method generatorContextMethod = randomStateContract.getMethod("generatorContext");
         Object context = invoke(generatorContextMethod, randomState);
+        if (context == null && registryAccess != null) {
+            synchronized (randomState) {
+                context = invoke(generatorContextMethod, randomState);
+                if (context == null) {
+                    Method initialize = findInitializeMethod(randomStateContract, registryAccess);
+                    invoke(initialize, randomState, registryAccess);
+                    context = invoke(generatorContextMethod, randomState);
+                }
+            }
+        }
         if (context == null) {
             throw new GeneratorContextUnavailableException();
         }
@@ -85,6 +104,17 @@ final class RtfTerrainPreviewReflectionBridge {
                 explicitClimate ? "explicit_climate" : "inferred_climate",
                 presetFingerprintMaterial(preset)
         );
+    }
+
+    private static Method findInitializeMethod(Class<?> contract, Object registryAccess)
+            throws NoSuchMethodException {
+        for (Method method : contract.getMethods()) {
+            if (method.getName().equals("initialize") && method.getParameterCount() == 1
+                    && method.getParameterTypes()[0].isAssignableFrom(registryAccess.getClass())) {
+                return method;
+            }
+        }
+        throw new NoSuchMethodException("RTFRandomState.initialize(RegistryAccess)");
     }
 
     @SuppressWarnings("unchecked")

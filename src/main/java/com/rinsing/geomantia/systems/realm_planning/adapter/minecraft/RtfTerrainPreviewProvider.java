@@ -47,7 +47,7 @@ public final class RtfTerrainPreviewProvider implements TerrainPreviewProvider {
         RtfTerrainPreviewReflectionBridge.Probe result;
         try {
             Object randomState = level.getChunkSource().randomState();
-            result = RtfTerrainPreviewReflectionBridge.probe(randomState);
+            result = RtfTerrainPreviewReflectionBridge.probe(randomState, level.registryAccess());
         } catch (RuntimeException ex) {
             result = RtfTerrainPreviewReflectionBridge.Probe.unavailable(
                     "random_state_unavailable:" + ex.getClass().getSimpleName());

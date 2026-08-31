@@ -333,6 +333,7 @@ final class RealmPlanningHttpController {
                             ? intValue(request, "patchScanPaddingBlocks",
                             CityPlanningEndpointHandler.DEFAULT_D3_PATCH_SCAN_PADDING_BLOCKS)
                             : null,
+                    booleanValue(request, "preferGeneratorNativeTerrain", true),
                     level);
         }));
     }

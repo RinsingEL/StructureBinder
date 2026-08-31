@@ -74,6 +74,18 @@ class CitySiteContextBuilderTest {
     }
 
     @Test
+    void fixedD3GridUsesStep16WithoutShrinkingSourceRadius() {
+        CitySiteContext ctx = builder.buildWithFixedGridStep(
+                "city", "realm", "minecraft:overworld", "seed", "candidate",
+                0, 0, "capital", "city", 12, 128, 16, null);
+
+        assertEquals(1536, ctx.planningRadiusBlocks());
+        assertEquals(16, ctx.grid().cellStepBlocks());
+        assertEquals(-1536, ctx.bounds().minX());
+        assertEquals(1536, ctx.bounds().maxX());
+    }
+
+    @Test
     void entryCandidates_containsAnchorAndGates() {
         BlockBounds bounds = new BlockBounds(-200, -200, 200, 200);
         List<EntryCandidate> entries = builder.buildEntryCandidates(

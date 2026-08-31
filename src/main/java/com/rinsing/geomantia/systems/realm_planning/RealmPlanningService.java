@@ -14,6 +14,7 @@ import com.rinsing.geomantia.systems.gis.domain.cell.LandformType;
 import com.rinsing.geomantia.systems.gis.domain.landform.LandformPatch;
 import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegion;
 import com.rinsing.geomantia.systems.gis.preview.AtlasJson;
+import com.rinsing.geomantia.systems.gis.preview.BiomeOverviewRenderer;
 
 import javax.imageio.ImageIO;
 import java.awt.BasicStroke;
@@ -1897,6 +1898,7 @@ public final class RealmPlanningService {
         writeJson(run.runDirectory.resolve("world_patch_map.json"), worldPatchMapJson(run));
         exportWorldPreview(run, run.runDirectory.resolve("world_patch_preview.png"), false, null);
         exportWorldPreview(run, run.runDirectory.resolve("grid_overlay_preview.png"), true, null);
+        exportWorldBiomePreview(run, run.runDirectory.resolve("world_biome_preview.png"));
         JsonObject manifest = new JsonObject();
         manifest.addProperty("runId", run.runId);
         manifest.addProperty("surveyId", run.surveyResult.surveyId());
@@ -1924,6 +1926,7 @@ public final class RealmPlanningService {
         run.artifacts.put("worldPatchMap", "world_patch_map.json");
         run.artifacts.put("worldPatchPreview", "world_patch_preview.png");
         run.artifacts.put("gridOverlayPreview", "grid_overlay_preview.png");
+        run.artifacts.put("worldBiomePreview", "world_biome_preview.png");
         run.artifacts.put("wManifest", "w_manifest.json");
         if (Files.exists(run.runDirectory.resolve("world_feature_grid.json"))) {
             run.artifacts.put("worldFeatureGrid", "world_feature_grid.json");
@@ -2052,6 +2055,25 @@ public final class RealmPlanningService {
             g.dispose();
         }
         ImageIO.write(image, "png", path.toFile());
+    }
+
+    private static void exportWorldBiomePreview(RealmRun run, Path path) throws IOException {
+        List<BiomeOverviewRenderer.Cell> cells = run.worldCells.stream()
+                .map(cell -> new BiomeOverviewRenderer.Cell(cell.gridX, cell.gridZ, dominantBiome(cell)))
+                .toList();
+        new BiomeOverviewRenderer().render(cells, path, "W biome overview",
+                run.surveyResult.cellStepBlocks());
+    }
+
+    private static String dominantBiome(WorldCell cell) {
+        if (cell == null || cell.feature == null || cell.feature.biomeHistogram().isEmpty()) {
+            return "unknown";
+        }
+        return cell.feature.biomeHistogram().entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue(Comparator.reverseOrder())
+                        .thenComparing(Map.Entry.comparingByKey()))
+                .map(Map.Entry::getKey)
+                .findFirst().orElse("unknown");
     }
 
     private void exportTerritoryPreview(RealmRun run, Path path) throws IOException {
@@ -2208,7 +2230,8 @@ public final class RealmPlanningService {
         report.add("ratioChecks", ratioChecks(run));
         report.add("scoreManifest", scoreManifest);
         JsonArray visualChecks = new JsonArray();
-        for (String key : List.of("worldPatchPreview", "gridOverlayPreview", "territoryPreview", "citySeedPreview")) {
+        for (String key : List.of("worldPatchPreview", "gridOverlayPreview", "worldBiomePreview",
+                "territoryPreview", "citySeedPreview")) {
             if (run.artifacts.containsKey(key)) {
                 visualChecks.add(run.artifacts.get(key));
             }
@@ -2265,7 +2288,8 @@ public final class RealmPlanningService {
                 "检查 territory_preview.png 中每个非海洋国度是否连成主块，边界是否可读。",
                 "逐国查看 realm_city_candidate_packages.json，确认城市候选点覆盖首都、港口、矿业、边境功能。"));
         JsonArray previews = new JsonArray();
-        for (String key : List.of("worldPatchPreview", "gridOverlayPreview", "territoryPreview", "citySeedPreview")) {
+        for (String key : List.of("worldPatchPreview", "gridOverlayPreview", "worldBiomePreview",
+                "territoryPreview", "citySeedPreview")) {
             if (run.artifacts.containsKey(key)) {
                 previews.add(run.artifacts.get(key));
             }
@@ -4105,6 +4129,7 @@ public final class RealmPlanningService {
         registerArtifact(run, "worldPatchMap", "world_patch_map.json");
         registerArtifact(run, "worldPatchPreview", "world_patch_preview.png");
         registerArtifact(run, "gridOverlayPreview", "grid_overlay_preview.png");
+        registerArtifact(run, "worldBiomePreview", "world_biome_preview.png");
         registerArtifact(run, "wManifest", "w_manifest.json");
         registerArtifact(run, "worldFeatureGrid", "world_feature_grid.json");
         registerArtifact(run, "worldSurveyManifest", "world_survey_manifest.json");

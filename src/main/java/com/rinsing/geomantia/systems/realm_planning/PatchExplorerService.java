@@ -11,6 +11,7 @@ import com.rinsing.geomantia.systems.city.application.CityTestRunLayout;
 import com.rinsing.geomantia.systems.city.application.landuse.LandUseTerrainFieldCodec;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseTerrainField;
 import com.rinsing.geomantia.systems.gis.preview.LandformPatchPalette;
+import com.rinsing.geomantia.systems.gis.preview.BiomeOverviewRenderer;
 import com.rinsing.geomantia.systems.realm_planning.application.terrain.PatchCandidateTerrainPreviewService;
 import com.rinsing.geomantia.systems.realm_planning.application.terrain.RealmT4CoarseTerrainPreviewService;
 import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainScalePatchService;
@@ -122,12 +123,15 @@ public final class PatchExplorerService {
         session.addProperty("scopeSnapshotIdentity", "sha256:" + sha256(snapshotPath));
         Path terrainOverviewPath = sessionDir.resolve("terrain_overview.png");
         Path allPatchesOverviewPath = sessionDir.resolve("all_patches_overview.png");
+        Path biomeOverviewPath = sessionDir.resolve("biome_overview.png");
         renderOverview(scope, List.of(), OverviewMode.TERRAIN, terrainOverviewPath);
         renderOverview(scope, List.of(), OverviewMode.ALL_PATCHES, allPatchesOverviewPath);
+        renderBiomeOverview(scope, biomeOverviewPath);
         session.add("patchTypePalette", patchTypePalette());
         JsonObject overviewArtifacts = new JsonObject();
         overviewArtifacts.addProperty("terrainOverview", debugRef(terrainOverviewPath));
         overviewArtifacts.addProperty("allPatchesOverview", debugRef(allPatchesOverviewPath));
+        overviewArtifacts.addProperty("biomeOverview", debugRef(biomeOverviewPath));
         session.add("overviewArtifacts", overviewArtifacts);
         writeJson(sessionDir.resolve("patch_explorer_session.json"), session);
 
@@ -146,6 +150,7 @@ public final class PatchExplorerService {
         JsonObject artifacts = artifactRefs(sessionDir, null, null, scope.coarseTerrainSource());
         artifacts.addProperty("terrainOverview", debugRef(terrainOverviewPath));
         artifacts.addProperty("allPatchesOverview", debugRef(allPatchesOverviewPath));
+        artifacts.addProperty("biomeOverview", debugRef(biomeOverviewPath));
         response.add("artifacts", artifacts);
         response.add("nextActions", strings(List.of("patch_explorer_show_candidates")));
         return response;
@@ -245,10 +250,20 @@ public final class PatchExplorerService {
         JsonObject artifacts = artifactRefs(sessionDir, pagePath, null, scope.coarseTerrainSource());
         artifacts.addProperty("terrainOverview", debugRef(sessionDir.resolve("terrain_overview.png")));
         artifacts.addProperty("allPatchesOverview", debugRef(sessionDir.resolve("all_patches_overview.png")));
+        artifacts.addProperty("biomeOverview", debugRef(sessionDir.resolve("biome_overview.png")));
         artifacts.addProperty("topPatchesOverview", debugRef(topPatchesOverviewPath));
         response.add("artifacts", artifacts);
         response.add("nextActions", strings(List.of("patch_explorer_show_candidates", "patch_explorer_select_candidate")));
         return response;
+    }
+
+    private static void renderBiomeOverview(Scope scope, Path output) throws IOException {
+        List<BiomeOverviewRenderer.Cell> cells = scope.scopeCells().stream()
+                .map(cell -> new BiomeOverviewRenderer.Cell(cell.x(), cell.z(),
+                        cell.coarseTerrain() == null ? "unknown" : cell.coarseTerrain().biomeId()))
+                .toList();
+        new BiomeOverviewRenderer().render(cells, output,
+                "Biome overview / " + scope.scopeType(), scope.cellStepBlocks());
     }
 
     public JsonObject selectCandidate(JsonObject request) throws IOException {

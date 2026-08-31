@@ -50,6 +50,7 @@ class RealmPlanningServiceTest {
         assertTrue(Files.exists(runDir.resolve("world_survey_context.json")));
         assertTrue(Files.exists(runDir.resolve("world_patch_map.json")));
         assertTrue(Files.exists(runDir.resolve("grid_overlay_preview.png")));
+        assertTrue(Files.exists(runDir.resolve("world_biome_preview.png")));
         assertTrue(Files.exists(runDir.resolve("realm_profiles.json")));
         assertTrue(Files.exists(runDir.resolve("candidate_map_packages.json")));
         assertTrue(Files.exists(runDir.resolve("realm_coordinate_selections.json")));

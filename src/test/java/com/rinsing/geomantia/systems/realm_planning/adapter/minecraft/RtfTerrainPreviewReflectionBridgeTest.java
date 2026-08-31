@@ -55,6 +55,17 @@ class RtfTerrainPreviewReflectionBridgeTest {
     }
 
     @Test
+    void initializesMissingGeneratorContextBeforeFallingBack() throws Exception {
+        InitializableRandomState state = new InitializableRandomState();
+
+        var binding = RtfTerrainPreviewReflectionBridge.bind(
+                state, InitializableRandomStateContract.class, FakeCell.class, "registry_access");
+
+        assertEquals(1, state.initializeCalls);
+        assertEquals(75, binding.sample(3, 4).elevation());
+    }
+
+    @Test
     void usesIndependentCellsAcrossSamplingThreads() throws Exception {
         FakeHeightmap005 heightmap = new FakeHeightmap005();
         var binding = RtfTerrainPreviewReflectionBridge.bind(
@@ -138,6 +149,28 @@ class RtfTerrainPreviewReflectionBridgeTest {
 
     public interface FakeRandomStateContract {
         FakeContext generatorContext();
+    }
+
+    public interface InitializableRandomStateContract {
+        FakeContext generatorContext();
+
+        void initialize(Object registryAccess);
+    }
+
+    public static final class InitializableRandomState implements InitializableRandomStateContract {
+        private FakeContext context;
+        private int initializeCalls;
+
+        @Override
+        public FakeContext generatorContext() {
+            return context;
+        }
+
+        @Override
+        public void initialize(Object registryAccess) {
+            initializeCalls++;
+            context = new FakeContext(new FakeGenerator(new FakeHeightmap005()));
+        }
     }
 
     public static final class FakeRandomState implements FakeRandomStateContract {

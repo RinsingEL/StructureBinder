@@ -994,13 +994,14 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_plan_d3",
-    description: "City D3: 构建局部真实地貌审查包。对 T4 AI 候选选出的首都，返回 siteReviewStatus=awaiting_review，必须调用 city_review_d3_site 后才能进入 D4。",
+    description: "City D3: 以固定 16-block step 构建局部地貌审查包与群系图。默认优先 RTF 二维快速采样，未安装或不可用时整批回退 Minecraft prior。对 T4 AI 候选选出的首都，返回 siteReviewStatus=awaiting_review，必须调用 city_review_d3_site 后才能进入 D4。",
     inputSchema: {
       type: "object",
       properties: {
         runId: { type: "string", description: "已有 W/T run ID。" },
         citySeedId: { type: "string", description: "目标城市种子的 citySeedId（来自 city_seed_registry.json）。" },
-        cellStepBlocks: { type: "number", description: "可选覆盖；未传时从 run 的 world_survey_manifest.json 恢复 W/T 采样步长。" },
+        cellStepBlocks: { type: "number", enum: [16], description: "兼容字段；D3 固定为 16，省略即可。" },
+        preferGeneratorNativeTerrain: { type: "boolean", description: "默认 true：优先 RTF 快速采样；不可用时整批回退 Minecraft prior。" },
         patchScanPaddingBlocks: { type: "number", description: "D3 patch 上下文额外扫描 padding，默认 128；用于让结构边界和当前城墙落在已扫描 patch 内。" },
         dimensionId: { type: "string", description: "维度 ID，省略时从 run manifest 恢复。" },
         playerName: { type: "string", description: "玩家名，用于定位维度。" },

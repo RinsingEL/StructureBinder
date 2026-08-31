@@ -70,6 +70,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CityPlanningEndpointHandlerTest {
 
     @Test
+    void d3RejectsAnyCellStepOtherThanFixed16() {
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class, () ->
+                CityPlanningEndpointHandler.handlePlanD3(Path.of("."), "run", "city", 32, null));
+
+        assertEquals("CITY_D3_CELL_STEP_FIXED: cellStepBlocks must be 16.", error.getMessage());
+    }
+
+    @Test
     void blueprintEndpointHandlersPrepareAndAcceptOneCompleteSubmission() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-blueprint-endpoint-test");
         String runId = "run_blueprint_endpoint";

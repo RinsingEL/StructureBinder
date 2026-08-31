@@ -56,6 +56,41 @@ public final class CitySiteContextBuilder {
                 entryCandidates, territoryCheck);
     }
 
+    public CitySiteContext buildWithFixedGridStep(
+            String cityId,
+            String realmId,
+            String dimensionId,
+            String seedId,
+            String siteCandidateId,
+            int anchorBlockX,
+            int anchorBlockZ,
+            String cityRole,
+            String scaleLabel,
+            int planningRadiusCells,
+            int sourceCellStepBlocks,
+            int fixedGridStepBlocks,
+            List<TerritoryCellRef> territoryCells) {
+        if (sourceCellStepBlocks <= 0 || fixedGridStepBlocks <= 0) {
+            throw new IllegalArgumentException("Source and fixed grid steps must be positive.");
+        }
+        CityScale scale = CityScale.fromContractName(scaleLabel);
+        if (scale == null) {
+            throw new IllegalArgumentException("Unknown scale label: " + scaleLabel);
+        }
+        int radiusBlocks = config.radiusFor(scale).clampRadius(planningRadiusCells * sourceCellStepBlocks);
+        BlockBounds bounds = computeBounds(anchorBlockX, anchorBlockZ, radiusBlocks);
+        PlanningGrid grid = buildFixedGrid(bounds, fixedGridStepBlocks);
+        BlockPoint anchor = new BlockPoint(anchorBlockX, anchorBlockZ);
+        return new CitySiteContext(
+                CitySiteContext.SCHEMA,
+                cityId, realmId, dimensionId,
+                seedId, siteCandidateId,
+                bounds, grid, anchor,
+                cityRole, scale, radiusBlocks,
+                buildEntryCandidates(anchor, bounds, scale),
+                checkTerritory(bounds, anchor, territoryCells, sourceCellStepBlocks));
+    }
+
     public BlockBounds computeBounds(int anchorBlockX, int anchorBlockZ, int radiusBlocks) {
         return new BlockBounds(
                 anchorBlockX - radiusBlocks,
@@ -73,6 +108,15 @@ public final class CitySiteContextBuilder {
         int cellsZ = Math.max(1, bounds.heightBlocks() / cellStep);
 
         return new PlanningGrid(bounds.minX(), bounds.minZ(), cellStep, cellsX, cellsZ);
+    }
+
+    public PlanningGrid buildFixedGrid(BlockBounds bounds, int cellStepBlocks) {
+        if (cellStepBlocks <= 0) {
+            throw new IllegalArgumentException("cellStepBlocks must be positive.");
+        }
+        return new PlanningGrid(bounds.minX(), bounds.minZ(), cellStepBlocks,
+                Math.max(1, bounds.widthBlocks() / cellStepBlocks),
+                Math.max(1, bounds.heightBlocks() / cellStepBlocks));
     }
 
     public List<EntryCandidate> buildEntryCandidates(BlockPoint anchor, BlockBounds bounds, CityScale scale) {

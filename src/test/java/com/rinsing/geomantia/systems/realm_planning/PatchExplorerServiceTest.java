@@ -556,7 +556,9 @@ class PatchExplorerServiceTest {
     private static void assertOverviewSet(Path root, JsonObject artifacts) throws Exception {
         BufferedImage terrain = ImageIO.read(root.resolve(artifacts.get("terrainOverview").getAsString()).toFile());
         BufferedImage patches = ImageIO.read(root.resolve(artifacts.get("allPatchesOverview").getAsString()).toFile());
+        BufferedImage biomes = ImageIO.read(root.resolve(artifacts.get("biomeOverview").getAsString()).toFile());
         assertTrue(terrain.getWidth() > 0 && terrain.getHeight() > 0);
+        assertTrue(biomes.getWidth() > 0 && biomes.getHeight() > 0);
         assertEquals(terrain.getWidth(), patches.getWidth());
         assertEquals(terrain.getHeight(), patches.getHeight());
     }

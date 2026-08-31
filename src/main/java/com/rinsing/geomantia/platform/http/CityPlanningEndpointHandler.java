@@ -105,6 +105,10 @@ import com.rinsing.geomantia.systems.gis.application.refresh.SampleMode;
 import com.rinsing.geomantia.systems.gis.domain.landform.LandformPatch;
 import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegion;
 import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegionStore;
+import com.rinsing.geomantia.systems.gis.preview.BiomeOverviewRenderer;
+import com.rinsing.geomantia.systems.realm_planning.adapter.minecraft.MinecraftTerrainPreviewProviderFactory;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainPreviewAtlasSampler;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainPreviewProviderSelection;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkStatus;
@@ -132,6 +136,7 @@ import java.util.TreeSet;
 
 final class CityPlanningEndpointHandler {
     static final int DEFAULT_D3_PATCH_SCAN_PADDING_BLOCKS = 128;
+    static final int D3_CELL_STEP_BLOCKS = 16;
     private static final String BLUEPRINT_OUTDOOR_COMPLETION_SCHEMA =
             "city_land_use_planning_complete";
     private static final CityD4StagedPlanCompiler D4_STAGED_PLAN_COMPILER =
@@ -264,16 +269,26 @@ final class CityPlanningEndpointHandler {
 
     static JsonObject handlePlanD3(Path debugRoot, String runId, String citySeedId,
                                     Integer requestedCellStepBlocks, ServerLevel level) throws IOException {
-        return handlePlanD3(debugRoot, runId, citySeedId, requestedCellStepBlocks, null, level);
+        return handlePlanD3(debugRoot, runId, citySeedId, requestedCellStepBlocks, null, true, level);
     }
 
     static JsonObject handlePlanD3(Path debugRoot, String runId, String citySeedId,
                                     Integer requestedCellStepBlocks, Integer requestedPatchScanPaddingBlocks,
                                     ServerLevel level) throws IOException {
+        return handlePlanD3(debugRoot, runId, citySeedId, requestedCellStepBlocks,
+                requestedPatchScanPaddingBlocks, true, level);
+    }
+
+    static JsonObject handlePlanD3(Path debugRoot, String runId, String citySeedId,
+                                    Integer requestedCellStepBlocks, Integer requestedPatchScanPaddingBlocks,
+                                    boolean preferGeneratorNativeTerrain, ServerLevel level) throws IOException {
+        if (requestedCellStepBlocks != null && requestedCellStepBlocks != D3_CELL_STEP_BLOCKS) {
+            throw new IllegalArgumentException("CITY_D3_CELL_STEP_FIXED: cellStepBlocks must be 16.");
+        }
         Path runDir = debugRoot.resolve(runId);
         requireMatchingRunWorldIdentity(runDir, level);
         JsonObject seed = loadCitySeed(runDir, runId, citySeedId);
-        RunMetadata metadata = loadRunMetadata(runDir, requestedCellStepBlocks,
+        RunMetadata metadata = loadRunMetadata(runDir, null,
                 level.dimension().location().toString());
 
         CityPlanningConfig config = CityPlanningConfig.defaults();
@@ -282,15 +297,17 @@ final class CityPlanningEndpointHandler {
         CityLandformReviewMapRenderer mapRenderer = new CityLandformReviewMapRenderer();
 
         List<TerritoryCellRef> territoryCells = loadTerritoryCells(runDir, stringValue(seed, "realmId"));
-        CitySiteContext ctx = buildSiteContext(siteBuilder, seed, metadata, territoryCells);
+        CitySiteContext ctx = buildD3SiteContext(siteBuilder, seed, metadata, territoryCells);
 
         int patchScanPaddingBlocks = normalizeD3PatchScanPaddingBlocks(requestedPatchScanPaddingBlocks);
         BlockBounds patchContextBounds = expandBounds(ctx.bounds(), patchScanPaddingBlocks);
         int localCellStepBlocks = ctx.grid().cellStepBlocks();
         GisSampleConfig sampleConfig = GisSampleConfig.defaults().withCellStepBlocks(localCellStepBlocks);
         AtlasRegionStore store = new AtlasRegionStore(sampleConfig);
+        TerrainPreviewProviderSelection terrainProvider = selectD3TerrainProvider(level,
+                preferGeneratorNativeTerrain);
         GisRefreshService gisService = new GisRefreshService(sampleConfig, GisClassifierConfig.defaults(),
-                store, new MinecraftPriorAtlasSampler(level));
+                store, new TerrainPreviewAtlasSampler(terrainProvider));
         Path outputDirectory = cityStageDir(runDir, citySeedId, CityTestRunLayout.D3);
         List<RefreshResult> refreshResults = refreshCityD3Regions(gisService, sampleConfig,
                 level.dimension().location().toString(), patchContextBounds, outputDirectory);
@@ -308,11 +325,17 @@ final class CityPlanningEndpointHandler {
                 : reviewBuilder.buildFromRegions(ctx, regions, patches, patchContextBounds);
         Path reviewMapPath = mapRenderer.render(ctx, reviewPkg, patches, outputDirectory);
         String reviewMapRef = debugRef(debugRoot, reviewMapPath);
+        Path biomeOverviewPath = outputDirectory.resolve("biome_overview.png");
+        renderD3BiomeOverview(regions, patchContextBounds, localCellStepBlocks, biomeOverviewPath);
+        String biomeOverviewRef = debugRef(debugRoot, biomeOverviewPath);
         reviewPkg = reviewPkg.withReviewMap(reviewMapRef, List.of(
                 reviewMapRef,
+                biomeOverviewRef,
                 debugRef(debugRoot, outputDirectory)));
         Path packagePath = outputDirectory.resolve("city_landform_review_package.json");
         JsonObject packageJson = reviewPkg.asJson();
+        packageJson.addProperty("biomeOverviewImage", biomeOverviewRef);
+        packageJson.add("terrainProvider", terrainProviderJson(terrainProvider));
         addD3PatchScanMetadata(packageJson, patchScanPaddingBlocks, patchContextBounds, refreshResults);
         Files.writeString(packagePath, CityJson.GSON.toJson(packageJson));
         Files.deleteIfExists(d3SiteDecisionPath(runDir, citySeedId));
@@ -333,12 +356,14 @@ final class CityPlanningEndpointHandler {
         response.addProperty("refreshedRegionCount", refreshResults.size());
         response.addProperty("patchScanPaddingBlocks", patchScanPaddingBlocks);
         response.addProperty("landUseTerrainCellCount", landUseTerrainField.cells().size());
+        response.add("terrainProvider", terrainProviderJson(terrainProvider));
         boolean siteReviewRequired = requiresD3SiteReview(seed);
         response.addProperty("siteReviewStatus", siteReviewRequired ? "awaiting_review" : "not_required");
         response.add("citySiteContext", ctx.asJson());
         response.add("landformReviewPackage", packageJson);
         JsonObject artifacts = new JsonObject();
         artifacts.addProperty("landformReviewMap", reviewMapRef);
+        artifacts.addProperty("biomeOverview", biomeOverviewRef);
         artifacts.addProperty("cityLandformReviewPackage", debugRef(debugRoot, packagePath));
         artifacts.addProperty("landUseTerrainField", debugRef(debugRoot, landUseTerrainFieldPath));
         CityTestRunLayout testRunLayout = CityTestRunLayout.open(runDir, citySeedId);
@@ -347,9 +372,8 @@ final class CityPlanningEndpointHandler {
             stageRequest.addProperty("toolName", "city_plan_d3");
             stageRequest.addProperty("runId", runId);
             stageRequest.addProperty("citySeedId", citySeedId);
-            if (requestedCellStepBlocks != null) {
-                stageRequest.addProperty("cellStepBlocks", requestedCellStepBlocks);
-            }
+            stageRequest.addProperty("cellStepBlocks", D3_CELL_STEP_BLOCKS);
+            stageRequest.addProperty("preferGeneratorNativeTerrain", preferGeneratorNativeTerrain);
             if (requestedPatchScanPaddingBlocks != null) {
                 stageRequest.addProperty("patchScanPaddingBlocks", requestedPatchScanPaddingBlocks);
             }
@@ -371,6 +395,41 @@ final class CityPlanningEndpointHandler {
             response.add("nextActions", nextActions);
         }
         return response;
+    }
+
+    private static TerrainPreviewProviderSelection selectD3TerrainProvider(ServerLevel level,
+            boolean preferGeneratorNativeTerrain) {
+        String dimensionId = level.dimension().location().toString();
+        String fallbackFingerprint = String.join("|", "minecraft_prior", dimensionId,
+                Long.toString(level.getSeed()), level.getChunkSource().getGenerator().getClass().getName());
+        return MinecraftTerrainPreviewProviderFactory
+                .createSelector(level, new MinecraftPriorAtlasSampler(level), fallbackFingerprint)
+                .select(preferGeneratorNativeTerrain);
+    }
+
+    private static JsonObject terrainProviderJson(TerrainPreviewProviderSelection selection) {
+        JsonObject value = new JsonObject();
+        value.addProperty("providerId", selection.providerId());
+        value.addProperty("sourceKind", selection.sourceKind());
+        value.addProperty("fastPath", selection.fastPath());
+        value.addProperty("fallbackReason", selection.fallbackReason());
+        value.addProperty("sourceFingerprint", selection.sourceFingerprint());
+        value.addProperty("samplingSemantics", selection.samplingSemantics());
+        return value;
+    }
+
+    private static void renderD3BiomeOverview(List<AtlasRegion> regions, BlockBounds bounds,
+            int cellStepBlocks, Path output) throws IOException {
+        List<BiomeOverviewRenderer.Cell> cells = regions.stream()
+                .flatMap(region -> region.cells().stream())
+                .filter(cell -> cell.blockMinX() <= bounds.maxX()
+                        && cell.blockMinX() + cellStepBlocks - 1 >= bounds.minX()
+                        && cell.blockMinZ() <= bounds.maxZ()
+                        && cell.blockMinZ() + cellStepBlocks - 1 >= bounds.minZ())
+                .map(cell -> new BiomeOverviewRenderer.Cell(
+                        cell.globalCellX(), cell.globalCellZ(), cell.biomeId()))
+                .toList();
+        new BiomeOverviewRenderer().render(cells, output, "D3 biome overview", cellStepBlocks);
     }
 
     private static String d3PatchNamespace(ServerLevel level, int cellStepBlocks, String citySeedId) {
@@ -2591,6 +2650,7 @@ final class CityPlanningEndpointHandler {
                 hasValue(request, "cellStepBlocks") ? intValue(request, "cellStepBlocks", 4) : null,
                 hasValue(request, "patchScanPaddingBlocks")
                         ? intValue(request, "patchScanPaddingBlocks", DEFAULT_D3_PATCH_SCAN_PADDING_BLOCKS) : null,
+                booleanValue(request, "preferGeneratorNativeTerrain", true),
                 level))) {
             return ctx.workflow().finish(workflowStarted, "failed");
         }
@@ -4359,6 +4419,24 @@ final class CityPlanningEndpointHandler {
                 role, scale,
                 planningRadiusCells, metadata.cellStepBlocks(),
                 territoryCells);
+    }
+
+    private static CitySiteContext buildD3SiteContext(CitySiteContextBuilder builder, JsonObject seed,
+                                                       RunMetadata metadata,
+                                                       List<TerritoryCellRef> territoryCells) {
+        String cityId = stringValue(seed, "citySeedId");
+        String candidateId = stringValue(seed, "candidateId");
+        if (candidateId.isBlank()) {
+            candidateId = cityId;
+        }
+        return builder.buildWithFixedGridStep(
+                cityId, stringValue(seed, "realmId"), metadata.dimensionId(),
+                cityId, candidateId,
+                blockCoord(seed, "x", metadata.cellStepBlocks()),
+                blockCoord(seed, "z", metadata.cellStepBlocks()),
+                stringValue(seed, "role"), stringValue(seed, "theoreticalScale"),
+                intValue(seed, "planningRadiusCells", 64), metadata.cellStepBlocks(),
+                D3_CELL_STEP_BLOCKS, territoryCells);
     }
 
     private static void requireMatchingRunWorldIdentity(Path runDir, ServerLevel level) throws IOException {
