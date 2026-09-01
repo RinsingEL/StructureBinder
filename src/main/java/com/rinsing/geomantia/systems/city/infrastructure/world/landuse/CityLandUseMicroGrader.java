@@ -148,7 +148,9 @@ final class CityLandUseMicroGrader {
                 .thenComparing(FoundationDecision::areaId));
         List<RetainingWallDecision> retainingWalls = retainingWalls(outputCells, foundationAreaByCell,
                 platformTargets, terrain);
-        return new FoundationPlan(List.copyOf(decisions), retainingWalls, stairs,
+        List<TerraceEdgeDecision> terraceEdges = terraceEdges(fragment, outputCells,
+                foundationAreaByCell, platformTargets, terrain, stairs, accessPlan.paths());
+        return new FoundationPlan(List.copyOf(decisions), retainingWalls, terraceEdges, stairs,
                 accessPlan.paths(), accessPlan.outcomes(), model.platformAdjustments());
     }
 
@@ -923,6 +925,97 @@ final class CityLandUseMicroGrader {
                 .thenComparingInt(RetainingWallDecision::y)).toList();
     }
 
+    private static List<TerraceEdgeDecision> terraceEdges(
+            CityLandUseChunkCompiler.ChunkFragment fragment,
+            Set<Cell> outputCells,
+            Map<Cell, String> areaByCell,
+            Map<Cell, Integer> platformTargets,
+            TerrainView terrain,
+            List<StairDecision> stairs,
+            List<AccessPathDecision> accessPaths) {
+        Set<Cell> protectedCells = new HashSet<>();
+        stairs.forEach(stair -> protectEdgeOpening(protectedCells, new Cell(stair.x(), stair.z())));
+        accessPaths.forEach(path -> protectEdgeOpening(protectedCells, new Cell(path.x(), path.z())));
+        fragment.platformAccessDemands().forEach(demand -> protectEdgeOpening(protectedCells,
+                new Cell(demand.entrance().x(), demand.entrance().z())));
+
+        Set<Cell> occupiedCells = new HashSet<>();
+        fragment.platformPurposeAnchors().stream()
+                .filter(anchor -> anchor.purpose() == CityLandUseChunkCompiler.PlatformPurpose.BUILDING)
+                .forEach(anchor -> {
+                    for (int z = anchor.bounds().minZ(); z <= anchor.bounds().maxZ(); z++) {
+                        for (int x = anchor.bounds().minX(); x <= anchor.bounds().maxX(); x++) {
+                            occupiedCells.add(new Cell(x, z));
+                        }
+                    }
+                });
+        fragment.surfaceOperations().stream()
+                .filter(operation -> operation.surfaceOffset() > 0)
+                .map(operation -> new Cell(operation.x(), operation.z()))
+                .forEach(occupiedCells::add);
+        fragment.gradingFeatureOperations().stream()
+                .filter(operation -> operation.surfaceOffset() > 0)
+                .map(operation -> new Cell(operation.x(), operation.z()))
+                .forEach(occupiedCells::add);
+        fragment.boundaryOperations().stream()
+                .map(operation -> new Cell(operation.x(), operation.z()))
+                .forEach(occupiedCells::add);
+
+        Set<Cell> roadCells = fragment.gradingFeatureOperations().stream()
+                .filter(operation -> operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB)
+                .map(operation -> new Cell(operation.x(), operation.z()))
+                .collect(java.util.stream.Collectors.toSet());
+        List<TerraceEdgeDecision> result = new ArrayList<>();
+        outputCells.stream().sorted(Comparator.comparingInt(Cell::z).thenComparingInt(Cell::x))
+                .forEach(cell -> {
+                    if (protectedCells.contains(cell) || occupiedCells.contains(cell)) return;
+                    Integer targetY = platformTargets.get(cell);
+                    if (targetY == null) return;
+                    String areaId = areaByCell.get(cell);
+                    int[] outward = null;
+                    int greatestDrop = 0;
+                    int lowerNeighbourCount = 0;
+                    for (int[] direction : CARDINAL_OFFSETS) {
+                        Cell neighbour = offset(cell, direction);
+                        int neighbourY = areaId.equals(areaByCell.get(neighbour))
+                                ? platformTargets.getOrDefault(neighbour, required(terrain, neighbour).surfaceY())
+                                : required(terrain, neighbour).surfaceY();
+                        int drop = targetY - neighbourY;
+                        if (drop < 2) continue;
+                        lowerNeighbourCount++;
+                        if (outward == null || drop > greatestDrop) {
+                            outward = direction;
+                            greatestDrop = drop;
+                        }
+                    }
+                    if (outward == null) return;
+                    TerraceEdgeKind kind = roadCells.contains(cell) || lowerNeighbourCount > 1
+                            ? TerraceEdgeKind.RAILING
+                            : terraceEdgeKind(areaId, targetY, cell, outward);
+                    String blockId = kind == TerraceEdgeKind.GREENERY
+                            ? "minecraft:flowering_azalea_leaves"
+                            : "minecraft:stone_brick_wall";
+                    result.add(new TerraceEdgeDecision(areaId, cell.x(), targetY + 1, cell.z(),
+                            blockId, kind));
+                });
+        return List.copyOf(result);
+    }
+
+    private static void protectEdgeOpening(Set<Cell> protectedCells, Cell center) {
+        for (int dz = -1; dz <= 1; dz++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                protectedCells.add(new Cell(center.x() + dx, center.z() + dz));
+            }
+        }
+    }
+
+    private static TerraceEdgeKind terraceEdgeKind(String areaId, int targetY, Cell cell, int[] outward) {
+        int tangent = outward[0] != 0 ? cell.z() : cell.x();
+        int phase = Math.floorMod(Objects.hash(areaId, targetY, outward[0], outward[1]), 8);
+        return Math.floorMod(tangent - phase, 8) < 2
+                ? TerraceEdgeKind.GREENERY : TerraceEdgeKind.RAILING;
+    }
+
     private static Integer referenceHeight(Cell center, TerrainView terrain) {
         List<Integer> heights = new ArrayList<>();
         for (int z = center.z() - REFERENCE_RADIUS_BLOCKS;
@@ -1022,6 +1115,7 @@ final class CityLandUseMicroGrader {
 
     record FoundationPlan(List<FoundationDecision> decisions,
                           List<RetainingWallDecision> retainingWalls,
+                          List<TerraceEdgeDecision> terraceEdges,
                           List<StairDecision> stairs,
                           List<AccessPathDecision> accessPaths,
                           List<AccessOutcome> accessOutcomes,
@@ -1029,6 +1123,7 @@ final class CityLandUseMicroGrader {
         FoundationPlan {
             decisions = List.copyOf(decisions);
             retainingWalls = List.copyOf(retainingWalls);
+            terraceEdges = List.copyOf(terraceEdges);
             stairs = List.copyOf(stairs);
             accessPaths = List.copyOf(accessPaths);
             accessOutcomes = List.copyOf(accessOutcomes);
@@ -1038,7 +1133,7 @@ final class CityLandUseMicroGrader {
         FoundationPlan(List<FoundationDecision> decisions,
                        List<RetainingWallDecision> retainingWalls,
                        List<StairDecision> stairs) {
-            this(decisions, retainingWalls, stairs, List.of(), List.of(), List.of());
+            this(decisions, retainingWalls, List.of(), stairs, List.of(), List.of(), List.of());
         }
     }
 
@@ -1095,6 +1190,24 @@ final class CityLandUseMicroGrader {
             Objects.requireNonNull(areaId, "areaId");
             Objects.requireNonNull(blockId, "blockId");
         }
+    }
+
+    record TerraceEdgeDecision(String areaId,
+                               int x,
+                               int y,
+                               int z,
+                               String blockId,
+                               TerraceEdgeKind kind) {
+        TerraceEdgeDecision {
+            Objects.requireNonNull(areaId, "areaId");
+            Objects.requireNonNull(blockId, "blockId");
+            Objects.requireNonNull(kind, "kind");
+        }
+    }
+
+    enum TerraceEdgeKind {
+        RAILING,
+        GREENERY
     }
 
     enum FoundationMode {

@@ -99,6 +99,12 @@ class CityLandUseChunkExecutorTest {
         assertTrue(world.featureWrites.contains("6,66,8=ROAD_STAIR:EAST"));
         assertTrue(world.featureWrites.contains("7,67,8=ROAD_STAIR:EAST"));
         assertTrue(world.featureWrites.contains("8,68,8=ROAD_SLAB:NONE"));
+        assertTrue(world.writes.stream().anyMatch(write ->
+                write.startsWith("8,69,") && write.endsWith("=minecraft:stone_brick_wall")));
+        assertTrue(world.writes.stream().anyMatch(write ->
+                write.startsWith("8,69,") && write.endsWith("=minecraft:flowering_azalea_leaves")));
+        assertTrue(world.writes.stream().noneMatch(write -> write.startsWith("8,69,7=")
+                || write.startsWith("8,69,8=") || write.startsWith("8,69,9=")));
     }
 
     @Test

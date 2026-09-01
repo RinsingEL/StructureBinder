@@ -161,6 +161,27 @@ public final class CityLandUseChunkExecutor {
             basePrepared.add(mutation);
         }
 
+        Set<ColumnKey> explicitBoundaryColumns = fragment.boundaryOperations().stream()
+                .map(operation -> new ColumnKey(operation.x(), operation.z()))
+                .collect(java.util.stream.Collectors.toSet());
+        for (CityLandUseMicroGrader.TerraceEdgeDecision edge : foundationPlan.terraceEdges()) {
+            if (explicitBoundaryColumns.contains(new ColumnKey(edge.x(), edge.z()))) continue;
+            boolean clearedByBaseMutation = baseMutationClearsTarget(basePrepared,
+                    edge.x(), edge.y(), edge.z());
+            PreparedMutation mutation = prepare(world, edge.areaId(), OperationPhase.BOUNDARY,
+                    edge.x(), edge.y(), edge.z(), edge.blockId(), !clearedByBaseMutation);
+            if (mutation.failureReason() != null) {
+                if ("CITY_LAND_USE_BOUNDARY_TARGET_OCCUPIED".equals(mutation.failureReason())) {
+                    occupiedBoundarySkipped++;
+                    continue;
+                }
+                return ExecutionResult.failed(fragment, mutation.failureReason(),
+                        preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
+                        naturalSurfaceSkipped, occupiedBoundarySkipped, true);
+            }
+            boundaryPrepared.add(mutation);
+        }
+
         for (CityLandUseChunkCompiler.BoundaryOperation operation : fragment.boundaryOperations()) {
             ColumnKey key = new ColumnKey(operation.x(), operation.z());
             if (preservedFoundationColumns.contains(key)) continue;
@@ -733,8 +754,8 @@ public final class CityLandUseChunkExecutor {
     }
 
     static BlockState featureBlockState(BlockState requested,
-                                        CityLandUseSurfacePrintPlan.FeatureKind kind,
-                                        CityLandUseSurfacePrintPlan.HorizontalFacing facing) {
+                                         CityLandUseSurfacePrintPlan.FeatureKind kind,
+                                         CityLandUseSurfacePrintPlan.HorizontalFacing facing) {
         if ((kind == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
                 || kind == CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK)
                 && requested.hasProperty(BlockStateProperties.SLAB_TYPE)) {
@@ -758,6 +779,16 @@ public final class CityLandUseChunkExecutor {
             if (requested.hasProperty(BlockStateProperties.STAIRS_SHAPE)) {
                 requested = requested.setValue(BlockStateProperties.STAIRS_SHAPE, StairsShape.STRAIGHT);
             }
+        }
+        if (requested.hasProperty(BlockStateProperties.WATERLOGGED)) {
+            requested = requested.setValue(BlockStateProperties.WATERLOGGED, false);
+        }
+        return requested;
+    }
+
+    static BlockState boundaryBlockState(BlockState requested) {
+        if (requested.hasProperty(LeavesBlock.PERSISTENT)) {
+            requested = requested.setValue(LeavesBlock.PERSISTENT, true);
         }
         if (requested.hasProperty(BlockStateProperties.WATERLOGGED)) {
             requested = requested.setValue(BlockStateProperties.WATERLOGGED, false);
@@ -952,8 +983,8 @@ public final class CityLandUseChunkExecutor {
                 return false;
             }
             BlockPos pos = new BlockPos(worldX, y, worldZ);
-            boolean written = writeExactBlockState(this, pos,
-                    BuiltInRegistries.BLOCK.get(key).defaultBlockState(),
+            boolean written = writeExactBlockState(this, pos, boundaryBlockState(
+                            BuiltInRegistries.BLOCK.get(key).defaultBlockState()),
                     Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
             if (written) watchObservedNeighborhood(pos);
             return written;

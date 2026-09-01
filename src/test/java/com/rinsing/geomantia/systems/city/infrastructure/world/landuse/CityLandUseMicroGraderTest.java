@@ -278,6 +278,34 @@ class CityLandUseMicroGraderTest {
     }
 
     @Test
+    void nonStairPlatformEdgeGetsStableRailingsAndGreeneryWithClearStairMouth() {
+        FakeTerrain terrain = splitTerrain();
+        List<CityLandUseChunkCompiler.FeatureOperation> features = new ArrayList<>(
+                horizontalRoad(0, 15, 8));
+        features.add(new CityLandUseChunkCompiler.FeatureOperation("existing-greenery", 8, 0,
+                "minecraft:poppy", 1, CityLandUseSurfacePrintPlan.FeatureKind.GREEN_PLANT,
+                CityLandUseSurfacePrintPlan.HorizontalFacing.NONE));
+        CityLandUseChunkCompiler.ChunkFragment fragment = foundationFragment(
+                platformSurfaces(), features);
+
+        CityLandUseMicroGrader.FoundationPlan first =
+                CityLandUseMicroGrader.planFoundationPlatform(fragment, terrain);
+        CityLandUseMicroGrader.FoundationPlan second =
+                CityLandUseMicroGrader.planFoundationPlatform(fragment, terrain);
+
+        assertEquals(first.terraceEdges(), second.terraceEdges());
+        assertTrue(first.terraceEdges().stream().anyMatch(edge ->
+                edge.kind() == CityLandUseMicroGrader.TerraceEdgeKind.RAILING
+                        && edge.x() == 8 && edge.y() == 69));
+        assertTrue(first.terraceEdges().stream().anyMatch(edge ->
+                edge.kind() == CityLandUseMicroGrader.TerraceEdgeKind.GREENERY
+                        && edge.x() == 8 && edge.y() == 69));
+        assertTrue(first.terraceEdges().stream().noneMatch(edge ->
+                edge.x() == 8 && edge.z() >= 7 && edge.z() <= 9));
+        assertTrue(first.terraceEdges().stream().noneMatch(edge -> edge.x() == 8 && edge.z() == 0));
+    }
+
+    @Test
     void shortFrontRunCreatesTwoLowSideFlightsMeetingCentralHighPlatform() {
         FakeTerrain terrain = splitTerrain();
         List<CityLandUseChunkCompiler.SurfaceOperation> surfaces = platformSurfaces();
