@@ -28,6 +28,7 @@ public final class CityDesignQueue {
     public static final String SCHEMA = "city_design_queue.v0.1";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final String WAITING_FOR_AGENT = "waiting_for_agent";
+    private static final String WAITING_FOR_PATCH_REVIEW = "waiting_for_patch_review";
     private static final String PENDING = "pending";
     private static final String POST_D4_RUNNING = "post_d4_running";
     private static final String WAITING_FOR_GENERATION = "waiting_for_generation";
@@ -128,9 +129,31 @@ public final class CityDesignQueue {
                     + ", requested=" + citySeedId);
         }
         String status = stringValue(state, "status", "");
-        if (!WAITING_FOR_AGENT.equals(status) && !NEEDS_AGENT.equals(status)) {
+        if (!WAITING_FOR_AGENT.equals(status) && !WAITING_FOR_PATCH_REVIEW.equals(status)
+                && !NEEDS_AGENT.equals(status)) {
             throw new IllegalArgumentException("CITY_DESIGN_QUEUE_CURRENT_NOT_ACCEPTING_D4: status=" + status);
         }
+    }
+
+    public synchronized void onAgentWorkflowState(String runId, String citySeedId, String status,
+                                                   String reasonCode, String sessionId) throws IOException {
+        CityDesignQueueConfig config = CityDesignQueueConfig.loadOrCreate(configPath);
+        if (!config.enabled() || !Files.isRegularFile(runDirectory(runId).resolve("city_seed_registry.json"))) return;
+        JsonObject state = readState(runId);
+        if (state == null) state = refresh(runId, "");
+        JsonObject item = findItem(state, citySeedId);
+        if (item == null || !citySeedId.equals(stringValue(state, "currentCitySeedId", ""))) {
+            throw new IllegalArgumentException("CITY_DESIGN_QUEUE_OUT_OF_ORDER: current="
+                    + stringValue(state, "currentCitySeedId", "") + ", requested=" + citySeedId);
+        }
+        if (!WAITING_FOR_AGENT.equals(status) && !WAITING_FOR_PATCH_REVIEW.equals(status)) {
+            throw new IllegalArgumentException("CITY_DESIGN_QUEUE_AGENT_STATUS_INVALID: " + status);
+        }
+        setItemStatus(item, status, reasonCode);
+        if (sessionId == null || sessionId.isBlank()) item.remove("patchExplorerSessionId");
+        else item.addProperty("patchExplorerSessionId", sessionId);
+        normalize(state);
+        writeState(runId, state);
     }
 
     public synchronized void onPostD4State(JsonObject postD4State) {
@@ -184,7 +207,12 @@ public final class CityDesignQueue {
             if (WAITING_FOR_GENERATION.equals(status)) continue;
             if (current == null) {
                 current = item;
-                if (!POST_D4_RUNNING.equals(status) && !NEEDS_AGENT.equals(status)) {
+                String reasonCode = stringValue(item, "reasonCode", "");
+                boolean agentPhase = WAITING_FOR_PATCH_REVIEW.equals(status)
+                        || WAITING_FOR_AGENT.equals(status) && ("D3_SITE_REVIEW_REQUIRED".equals(reasonCode)
+                        || "PATCH_REVIEW_COMPLETED".equals(reasonCode)
+                        || "D4_CONTEXT_PREPARED".equals(reasonCode));
+                if (!POST_D4_RUNNING.equals(status) && !NEEDS_AGENT.equals(status) && !agentPhase) {
                     setItemStatus(item, WAITING_FOR_AGENT, "NEXT_CITY_BY_PRIORITY");
                 }
             } else if (!WAITING_FOR_GENERATION.equals(status)) {
@@ -208,9 +236,15 @@ public final class CityDesignQueue {
         state.addProperty("status", currentStatus);
         state.addProperty("currentCitySeedId", stringValue(current, "citySeedId", ""));
         state.addProperty("nextAction", switch (currentStatus) {
-            case WAITING_FOR_AGENT -> "city_plan_d3";
+            case WAITING_FOR_AGENT -> switch (stringValue(current, "reasonCode", "")) {
+                case "D3_SITE_REVIEW_REQUIRED" -> "city_review_d3_site";
+                case "PATCH_REVIEW_COMPLETED" -> "city_prepare_d4_blueprint_context";
+                case "D4_CONTEXT_PREPARED" -> "city_submit_d4_blueprint";
+                default -> "city_plan_d3";
+            };
+            case WAITING_FOR_PATCH_REVIEW -> "patch_explorer_show_candidates";
             case POST_D4_RUNNING -> "city_post_d4_auto_compile_status";
-            case NEEDS_AGENT -> "inspect_current_city";
+            case NEEDS_AGENT -> "city_post_d4_auto_compile_status";
             default -> "";
         });
     }

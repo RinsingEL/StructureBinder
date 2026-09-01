@@ -94,6 +94,40 @@ class CityWorkflowStepRunnerTest {
         assertEquals("D4_STAGE_FAILED: invalid plan", step.get("error").getAsString());
     }
 
+    @Test
+    void preservesBlueprintFailureBudgetAndBlackBoxRetryGuidanceInWorkflowReport() throws Exception {
+        JsonObject report = report();
+        JsonArray steps = report.getAsJsonArray("steps");
+        CityWorkflowStepRunner runner = new CityWorkflowStepRunner(report, steps, false,
+                Path::toString, value -> { });
+
+        boolean ok = runner.runStep("city_compile_d4_blueprint", null, () -> {
+            JsonObject response = new JsonObject();
+            response.addProperty("ok", false);
+            response.addProperty("status", "failed");
+            response.addProperty("reasonCode", "D4_LAYOUT_FAILED");
+            response.addProperty("message", "Choose another Patch.");
+            response.addProperty("failureCount", 2);
+            response.addProperty("maximumFailureCount", 5);
+            response.addProperty("remainingFailureCount", 3);
+            response.addProperty("retryAllowed", true);
+            response.addProperty("nextAction", "city_submit_d4_blueprint");
+            JsonObject policy = new JsonObject();
+            policy.addProperty("sourceCodeInspectionAllowed", false);
+            response.add("agentRecoveryPolicy", policy);
+            return response;
+        });
+
+        JsonObject step = steps.get(0).getAsJsonObject();
+        assertFalse(ok);
+        assertEquals(2, step.get("failureCount").getAsInt());
+        assertEquals(3, step.get("remainingFailureCount").getAsInt());
+        assertTrue(step.get("retryAllowed").getAsBoolean());
+        assertEquals("city_submit_d4_blueprint", step.get("nextAction").getAsString());
+        assertFalse(step.getAsJsonObject("agentRecoveryPolicy")
+                .get("sourceCodeInspectionAllowed").getAsBoolean());
+    }
+
     private static JsonObject report() {
         JsonObject report = new JsonObject();
         report.add("steps", new JsonArray());

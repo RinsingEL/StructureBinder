@@ -76,8 +76,7 @@ public final class CityBlueprintCompilerService {
                 || !contextId.equals(string(validation, "contextId"))
                 || !contextId.equals(string(submission, "contextId"))
                 || !booleanValue(validation, "valid", false)
-                || !"accepted".equals(string(submission, "status"))
-                || intValue(submission, "aiCityDesignSubmissionCount", 0) != 1) {
+                || !"accepted".equals(string(submission, "status"))) {
             throw fail("CITY_BLUEPRINT_NOT_ACCEPTED", "Blueprint validation/submission artifacts are not accepted.");
         }
         String blueprintRaw = requireFile(blueprintPath, "CITY_BLUEPRINT_NOT_FOUND");

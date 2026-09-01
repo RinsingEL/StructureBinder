@@ -18,7 +18,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 
-/** Runs the program-owned half of City planning after one accepted D4 submission. */
+/** Runs the program-owned half of City planning after an accepted D4 Blueprint revision. */
 final class CityPostD4AutoCompileQueue implements AutoCloseable {
     private static final Logger LOGGER = LogUtils.getLogger();
     static final String SCHEMA = "city_post_d4_auto_compile_job.v0.1";

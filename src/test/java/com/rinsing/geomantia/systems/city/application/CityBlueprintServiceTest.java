@@ -19,6 +19,7 @@ import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -27,7 +28,7 @@ class CityBlueprintServiceTest {
     Path temporary;
 
     @Test
-    void prepareDoesNotCountAsAiCallAndOneValidSubmissionIsFrozen() throws Exception {
+    void prepareCreatesFiveFailureBudgetAndValidRevisionCanBeReplacedBeforeCompile() throws Exception {
         Fixture fixture = fixture("run_valid", "city:test");
         CityBlueprintService service = new CityBlueprintService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
@@ -54,11 +55,17 @@ class CityBlueprintServiceTest {
         assertTrue(semanticProfile.has("styleTerms"));
         assertFalse(semanticProfile.has("semanticTerms"));
         assertFalse(semanticProfile.has("qualityTerms"));
+        JsonObject boundary = context.getAsJsonObject("decisionBoundary");
+        assertEquals(5, boundary.get("maximumBlueprintCompileFailures").getAsInt());
+        assertFalse(boundary.get("submissionValidationFailuresCountTowardBudget").getAsBoolean());
+        assertFalse(boundary.has("maximumAiCityDesignSubmissions"));
+        assertFalse(boundary.getAsJsonObject("agentRecoveryBoundary")
+                .get("sourceCodeInspectionAllowed").getAsBoolean());
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
         JsonObject submitted = service.submit(temporary, fixture.runId(), fixture.cityId(),
                 prepared.get("contextId").getAsString(), blueprint);
         assertTrue(submitted.get("ok").getAsBoolean());
-        assertEquals(1, submitted.get("aiCityDesignSubmissionCount").getAsInt());
+        assertEquals(0, submitted.get("failureCount").getAsInt());
         assertEquals("city_blueprint_validation_report",
                 submitted.getAsJsonObject("validationReport").get("schema").getAsString());
         assertEquals("city_blueprint_submission_trace",
@@ -70,21 +77,107 @@ class CityBlueprintServiceTest {
         Path tracePath = fixture.runDir().resolve(
                 "city_blueprint_city_test/city_blueprint_submission_trace.json");
         String accepted = Files.readString(blueprintPath);
-        String acceptedReport = Files.readString(reportPath);
-        String acceptedTrace = Files.readString(tracePath);
+        JsonObject revised = blueprint.deepCopy();
+        revised.getAsJsonObject("designIntent").addProperty("theme", "revised theme");
         JsonObject second = service.submit(temporary, fixture.runId(), fixture.cityId(),
-                prepared.get("contextId").getAsString(), blueprint);
-        assertFalse(second.get("ok").getAsBoolean());
-        assertEquals(1, second.get("aiCityDesignSubmissionCount").getAsInt());
-        assertEquals(accepted, Files.readString(blueprintPath), "a rejected retry must not overwrite the valid Blueprint");
-        assertEquals(acceptedReport, Files.readString(reportPath),
-                "a rejected retry must not overwrite the accepted validation report");
-        assertEquals(acceptedTrace, Files.readString(tracePath),
-                "a rejected retry must not overwrite the accepted submission trace");
+                prepared.get("contextId").getAsString(), revised);
+        assertTrue(second.get("ok").getAsBoolean());
+        assertEquals(0, second.get("failureCount").getAsInt());
+        assertNotEquals(accepted, Files.readString(blueprintPath));
+        assertTrue(JsonParser.parseString(Files.readString(reportPath)).getAsJsonObject()
+                .get("valid").getAsBoolean());
+        assertEquals("accepted", JsonParser.parseString(Files.readString(tracePath)).getAsJsonObject()
+                .get("status").getAsString());
     }
 
     @Test
-    void concurrentSubmissionsAtomicallyConsumeOneBudget() throws Exception {
+    void prepareFreezesPatchReviewEvidenceIntoContextIdentity() throws Exception {
+        Fixture fixture = fixture("run_patch_review", "city:test");
+        JsonObject evidence = new JsonObject();
+        evidence.addProperty("schema", "city_d4_patch_review");
+        evidence.addProperty("status", "reviewed");
+        evidence.addProperty("sessionId", "pex_review");
+        evidence.addProperty("sourceIdentity", "sha256:source");
+        evidence.add("interestTypes", JsonParser.parseString("[\"plain\",\"slope\"]"));
+        evidence.addProperty("topPatchesOverview", "run_patch_review/top.png");
+
+        JsonObject prepared = new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog(), evidence);
+        JsonObject frozen = prepared.getAsJsonObject("cityBlueprintContext")
+                .getAsJsonObject("patchReviewEvidence");
+        assertEquals("pex_review", frozen.get("sessionId").getAsString());
+        assertEquals("run_patch_review/top.png", frozen.get("topPatchesOverview").getAsString());
+    }
+
+    @Test
+    void rejectedRevisionDoesNotOverwriteCurrentAcceptedArtifacts() throws Exception {
+        Fixture fixture = fixture("run_rejected_revision", "city:rejected_revision");
+        CityBlueprintService service = new CityBlueprintService();
+        JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
+        String contextId = prepared.get("contextId").getAsString();
+        JsonObject accepted = service.submit(temporary, fixture.runId(), fixture.cityId(), contextId,
+                blueprint(prepared.getAsJsonObject("cityBlueprintContext")));
+        assertTrue(accepted.get("ok").getAsBoolean());
+        Path directory = fixture.runDir().resolve("city_blueprint_city_rejected_revision");
+        String blueprintBefore = Files.readString(directory.resolve("city_blueprint.json"));
+        String reportBefore = Files.readString(directory.resolve("city_blueprint_validation_report.json"));
+        String traceBefore = Files.readString(directory.resolve("city_blueprint_submission_trace.json"));
+
+        JsonObject invalid = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+        invalid.getAsJsonArray("groups").get(0).getAsJsonObject().addProperty("groupKind", "LANDSCAPE");
+        JsonObject rejected = service.submit(temporary, fixture.runId(), fixture.cityId(), contextId, invalid);
+
+        assertFalse(rejected.get("ok").getAsBoolean());
+        assertEquals(0, rejected.get("failureCount").getAsInt());
+        assertEquals(blueprintBefore, Files.readString(directory.resolve("city_blueprint.json")));
+        assertEquals(reportBefore, Files.readString(directory.resolve("city_blueprint_validation_report.json")));
+        assertEquals(traceBefore, Files.readString(directory.resolve("city_blueprint_submission_trace.json")));
+        assertTrue(Files.isRegularFile(directory.resolve("city_blueprint_last_rejection_report.json")));
+        assertTrue(Files.isRegularFile(directory.resolve("city_blueprint_last_rejection_trace.json")));
+    }
+
+    @Test
+    void validationFailureInNewContextDoesNotConsumeCompileFailureBudget() throws Exception {
+        Fixture fixture = fixture("run_context_retry", "city:context_retry");
+        CityBlueprintService service = new CityBlueprintService();
+        JsonObject oldPrepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
+        JsonObject oldBlueprint = blueprint(oldPrepared.getAsJsonObject("cityBlueprintContext"));
+        JsonObject oldSubmission = service.submit(temporary, fixture.runId(), fixture.cityId(),
+                oldPrepared.get("contextId").getAsString(), oldBlueprint);
+        assertTrue(oldSubmission.get("ok").getAsBoolean());
+
+        JsonObject evidence = new JsonObject();
+        evidence.addProperty("schema", "city_d4_patch_review");
+        evidence.addProperty("status", "reviewed");
+        evidence.addProperty("sessionId", "pex_retry");
+        JsonObject newPrepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog(), evidence);
+        String newContextId = newPrepared.get("contextId").getAsString();
+        assertFalse(oldPrepared.get("contextId").getAsString().equals(newContextId));
+
+        JsonObject staleBlueprint = blueprint(newPrepared.getAsJsonObject("cityBlueprintContext"));
+        staleBlueprint.getAsJsonObject("sourceD3Ref").addProperty("contentHash",
+                "sha256:0000000000000000000000000000000000000000000000000000000000000000");
+        JsonObject rejected = service.submit(temporary, fixture.runId(), fixture.cityId(),
+                newContextId, staleBlueprint);
+        assertFalse(rejected.get("ok").getAsBoolean());
+        assertEquals("CITY_BLUEPRINT_D3_STALE",
+                rejected.getAsJsonObject("validationReport").getAsJsonArray("issues")
+                        .get(0).getAsJsonObject().get("reasonCode").getAsString());
+        assertEquals(0, rejected.get("failureCount").getAsInt());
+        assertFalse(rejected.getAsJsonObject("submissionTrace")
+                .get("compilationFailureConsumed").getAsBoolean());
+
+        JsonObject corrected = service.submit(temporary, fixture.runId(), fixture.cityId(),
+                newContextId, blueprint(newPrepared.getAsJsonObject("cityBlueprintContext")));
+        assertTrue(corrected.get("ok").getAsBoolean());
+        assertEquals(0, corrected.get("failureCount").getAsInt());
+    }
+
+    @Test
+    void concurrentValidSubmissionsAreNotRejectedByAnArtificialOneShotClaim() throws Exception {
         Fixture fixture = fixture("run_concurrent", "city:concurrent");
         CityBlueprintService service = new CityBlueprintService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
@@ -106,11 +199,71 @@ class CityBlueprintServiceTest {
             });
             start.countDown();
             List<JsonObject> results = List.of(first.get(), second.get());
-            assertEquals(1, results.stream().filter(result -> result.get("ok").getAsBoolean()).count());
-            assertEquals(1, results.stream().filter(result -> !result.get("ok").getAsBoolean()
-                    && "CITY_BLUEPRINT_AI_SUBMISSION_ALREADY_CONSUMED".equals(
-                    result.getAsJsonObject("validationReport").getAsJsonArray("issues")
-                            .get(0).getAsJsonObject().get("reasonCode").getAsString())).count());
+            assertEquals(2, results.stream().filter(result -> result.get("ok").getAsBoolean()).count());
+            assertEquals(0, new CityBlueprintFailureBudget()
+                    .current(temporary, fixture.runId(), fixture.cityId())
+                    .get("failureCount").getAsInt());
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void fiveCompilationFailuresExhaustBudgetAndBlockAnotherRevision() throws Exception {
+        Fixture fixture = fixture("run_failure_budget", "city:failure_budget");
+        CityBlueprintService service = new CityBlueprintService();
+        JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
+        String contextId = prepared.get("contextId").getAsString();
+        JsonObject submitted = service.submit(temporary, fixture.runId(), fixture.cityId(), contextId,
+                blueprint(prepared.getAsJsonObject("cityBlueprintContext")));
+        assertTrue(submitted.get("ok").getAsBoolean());
+
+        CityBlueprintFailureBudget budget = new CityBlueprintFailureBudget();
+        JsonObject state = null;
+        for (int attempt = 1; attempt <= 5; attempt++) {
+            state = budget.recordFailure(temporary, fixture.runId(), fixture.cityId(),
+                    "D4_TEST_FAILURE_" + attempt, "failure " + attempt);
+            assertEquals(attempt, state.get("failureCount").getAsInt());
+        }
+        assertFalse(state.get("retryAllowed").getAsBoolean());
+        assertEquals("exhausted", state.get("status").getAsString());
+
+        JsonObject blocked = service.submit(temporary, fixture.runId(), fixture.cityId(), contextId,
+                blueprint(prepared.getAsJsonObject("cityBlueprintContext")));
+        assertFalse(blocked.get("ok").getAsBoolean());
+        assertEquals(5, blocked.get("failureCount").getAsInt());
+        assertEquals("stop_for_human_review", blocked.get("nextAction").getAsString());
+        assertEquals("CITY_BLUEPRINT_FAILURE_BUDGET_EXHAUSTED",
+                blocked.getAsJsonObject("validationReport").getAsJsonArray("issues")
+                        .get(0).getAsJsonObject().get("reasonCode").getAsString());
+    }
+
+    @Test
+    void concurrentCompilationFailuresIncrementOneAtomicLedgerWithoutCompileLock() throws Exception {
+        Fixture fixture = fixture("run_concurrent_failure_budget", "city:concurrent_failure_budget");
+        CityBlueprintService service = new CityBlueprintService();
+        service.prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
+        CityBlueprintFailureBudget budget = new CityBlueprintFailureBudget();
+        CountDownLatch start = new CountDownLatch(1);
+        var executor = Executors.newFixedThreadPool(2);
+        try {
+            var first = executor.submit(() -> {
+                start.await();
+                return budget.recordFailure(temporary, fixture.runId(), fixture.cityId(), "D4_A", "a");
+            });
+            var second = executor.submit(() -> {
+                start.await();
+                return budget.recordFailure(temporary, fixture.runId(), fixture.cityId(), "D4_B", "b");
+            });
+            start.countDown();
+            first.get();
+            second.get();
+            JsonObject state = budget.current(temporary, fixture.runId(), fixture.cityId());
+            assertEquals(2, state.get("failureCount").getAsInt());
+            assertEquals(2, state.getAsJsonArray("failures").size());
+            assertTrue(state.get("retryAllowed").getAsBoolean());
         } finally {
             executor.shutdownNow();
         }
@@ -362,7 +515,7 @@ class CityBlueprintServiceTest {
                 prepared.get("contextId").getAsString(), blueprint);
 
         assertFalse(submitted.get("ok").getAsBoolean());
-        assertEquals(0, submitted.get("aiCityDesignSubmissionCount").getAsInt());
+        assertEquals(0, submitted.get("failureCount").getAsInt());
         assertTrue(submitted.getAsJsonObject("validationReport").getAsJsonArray("issues").asList().stream()
                 .map(JsonElement::getAsJsonObject)
                 .anyMatch(issue -> "CITY_BLUEPRINT_FUNCTION_AREA_RELATION_UNSPECIFIED"

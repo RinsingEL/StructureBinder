@@ -1262,6 +1262,10 @@ public final class PatchExplorerService {
             item.addProperty("originalAreaBlocks", candidate.originalAreaBlocks());
             item.addProperty("cellCount", candidate.cells().size());
             item.addProperty("hardLegal", candidate.areaBlocks() > 0);
+            item.addProperty("hardLegalMeaning", "candidate_has_available_cells_only");
+            if ("city_d4".equals(scope.scopeType())) {
+                item.add("structurePlacementCapacity", structurePlacementCapacity(candidate, scope.cellStepBlocks()));
+            }
             item.addProperty("confidence", candidate.confidence());
             item.add("sourcePatchRefs", strings(candidate.sourcePatchRefs()));
             item.add("bounds", boundsJson(candidate.bounds(), scope.cellStepBlocks()));
@@ -1277,6 +1281,67 @@ public final class PatchExplorerService {
             result.add(item);
         }
         return result;
+    }
+
+    private static JsonObject structurePlacementCapacity(Candidate candidate, int cellStepBlocks) {
+        SolidRectangle rectangle = largestSolidRectangle(candidate.cells());
+        JsonObject result = new JsonObject();
+        result.addProperty("evidenceResolution", "coarse_member_cells");
+        result.addProperty("cellStepBlocks", cellStepBlocks);
+        result.addProperty("maxSolidRectangleWidthCells", rectangle.widthCells());
+        result.addProperty("maxSolidRectangleDepthCells", rectangle.depthCells());
+        result.addProperty("maxSolidRectangleAreaCells", rectangle.areaCells());
+        result.addProperty("maxSolidRectangleWidthBlocks", rectangle.widthCells() * cellStepBlocks);
+        result.addProperty("maxSolidRectangleDepthBlocks", rectangle.depthCells() * cellStepBlocks);
+        result.addProperty("maxSolidSquareSpanBlocks", rectangle.squareSpanCells() * cellStepBlocks);
+        result.addProperty("guaranteesTemplateFit", false);
+        result.addProperty("agentGuidance",
+                "Before Blueprint submission, compare required template width/depth plus clearance and Group spatial demand "
+                        + "against this coarse capacity and areaBlocks. hardLegal only means the patch is non-empty; "
+                        + "it does not prove that a required structure or Group can be placed.");
+        return result;
+    }
+
+    private static SolidRectangle largestSolidRectangle(List<Cell> cells) {
+        if (cells.isEmpty()) return new SolidRectangle(0, 0, 0, 0);
+        Set<Long> occupied = new HashSet<>();
+        int minX = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int minZ = Integer.MAX_VALUE;
+        int maxZ = Integer.MIN_VALUE;
+        for (Cell cell : cells) {
+            occupied.add(cellKey(cell.x(), cell.z()));
+            minX = Math.min(minX, cell.x());
+            maxX = Math.max(maxX, cell.x());
+            minZ = Math.min(minZ, cell.z());
+            maxZ = Math.max(maxZ, cell.z());
+        }
+        int columns = maxX - minX + 1;
+        int[] heights = new int[columns];
+        SolidRectangle best = new SolidRectangle(0, 0, 0, 0);
+        for (int z = minZ; z <= maxZ; z++) {
+            for (int column = 0; column < columns; column++) {
+                heights[column] = occupied.contains(cellKey(minX + column, z)) ? heights[column] + 1 : 0;
+            }
+            for (int left = 0; left < columns; left++) {
+                int depth = Integer.MAX_VALUE;
+                for (int right = left; right < columns && heights[right] > 0; right++) {
+                    depth = Math.min(depth, heights[right]);
+                    int width = right - left + 1;
+                    int area = width * depth;
+                    int squareSpan = Math.min(width, depth);
+                    if (area > best.areaCells()
+                            || area == best.areaCells() && squareSpan > best.squareSpanCells()) {
+                        best = new SolidRectangle(width, depth, area, squareSpan);
+                    }
+                }
+            }
+        }
+        return best;
+    }
+
+    private static long cellKey(int x, int z) {
+        return ((long) x << 32) ^ (z & 0xffffffffL);
     }
 
     private PatchCandidateTerrainPreviewService.Result createTerrainPreview(Scope scope, Candidate candidate,
@@ -2531,6 +2596,9 @@ public final class PatchExplorerService {
     private record Candidate(String candidateId, String type, List<String> sourcePatchRefs, List<Cell> cells,
                              long areaBlocks, long largestContinuousAreaBlocks, long originalAreaBlocks,
                              Bounds bounds, double confidence) {
+    }
+
+    private record SolidRectangle(int widthCells, int depthCells, int areaCells, int squareSpanCells) {
     }
 
     private record RawCandidate(List<String> sourcePatchRefs, int componentIndex, String type, List<Cell> original,

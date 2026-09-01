@@ -878,7 +878,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "patch_explorer_show_candidates",
-    description: "按 AI 主动选择的 landform 类型返回每类稳定面积分页和仅限当前页候选的稀疏几何关系，默认每类 Top 3。三个 scope 都在 open 的原始地形总览同一边界、同一比例上，把本页所有类型的 Top Patch 聚合高亮并标注候选 ID；批量比较不再为每个候选单独生成自适应取景图。",
+    description: "按 AI 主动选择的 landform 类型返回每类稳定面积分页和仅限当前页候选的稀疏几何关系，默认每类 Top 3。三个 scope 都在 open 的原始地形总览同一边界、同一比例上，把本页所有类型的 Top Patch 聚合高亮并标注候选 ID；city_d4 候选额外返回 structurePlacementCapacity。注意 hardLegal 只表示地块非空，不保证模板或 Group 可落地；提交蓝图前必须用该容量、areaBlocks 与模板尺寸/clearance、Group 空间需求做对照。成功查看一页后写入 Patch Review evidence，并解锁 city_prepare_d4_blueprint_context。",
     inputSchema: {
       type: "object",
       additionalProperties: false,
@@ -995,7 +995,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_design_queue_status",
-    description: "读取城市设计队列和唯一当前城市。waiting_for_agent 时 Agent 处理 currentCity；post_d4_running 时等待；needs_agent 时检查当前城市；completed 表示全部进入 WAITING_FOR_GENERATION。",
+    description: "读取城市设计队列和唯一当前城市。D3 后自动进入 waiting_for_patch_review，必须按 nextAction 调用 patch_explorer_show_candidates；完成 review 后才允许准备 D4 context。post_d4_running 时等待；needs_agent 时按 nextAction 查询程序返回的失败信息，不读取服务端源码、项目文档或原始 run 文件；completed 表示全部进入 WAITING_FOR_GENERATION。",
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: { runId: nonEmptyString("城市设计队列所属 run。") },
@@ -1017,7 +1017,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_plan_d3",
-    description: "City D3: 在 API 工作线程以固定 16-block step 构建局部地貌审查包与群系图，不阻塞服务器 tick。默认优先 RTF 二维快速采样，未安装或不可用时整批回退 Minecraft prior。对 T4 AI 候选选出的首都，返回 siteReviewStatus=awaiting_review，必须调用 city_review_d3_site 后才能进入 D4。",
+    description: "City D3: 在 API 工作线程以固定 16-block step 构建局部地貌审查包与群系图，不阻塞服务器 tick。D3 或必要的 site review 完成后，服务端自动打开 city_d4 Patch Explorer，并返回 sessionId 与 nextAction=patch_explorer_show_candidates；Agent 必须查看所选地貌类型的 Top Patch 后才能准备 D4 context。",
     inputSchema: {
       type: "object",
       properties: {
@@ -1050,7 +1050,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_prepare_d4_blueprint_context",
-    description: "程序准备并冻结 D4 单次城市决策的完整只读上下文。该工具不调用模型，也不计入 AI 城市设计调用次数。",
+    description: "程序准备并冻结 D4 城市决策的完整只读上下文和 5 次程序编译失败预算。调用前必须完成当前 D3 sourceIdentity 对应的 city_d4 Top Patch review；review evidence 会冻结进 context。该工具不调用模型；提交参数/schema/引用校验失败不增加 failureCount。",
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: {
@@ -1068,7 +1068,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_submit_d4_blueprint",
-    description: "正式 AI 边界：对同一 contextId 只接受一次包含结构与户外意图的完整 CityBlueprint 提交；AI 必须明确选择核心/填充建筑、阵列关系和景观占比；不会进入逐栋建筑候选、slot、阵列或户外 AI 循环。",
+    description: "正式 AI 边界：提交包含结构与户外意图的完整 CityBlueprint revision；AI 必须明确选择核心/填充建筑、阵列关系和景观占比。提交校验拒绝不增加 failureCount；D4 编译失败且 failureCount<5 时，只依据工具响应和返回 artifacts 修正后用同一 contextId 重提。禁止读取服务端源码、项目文档或原始 run 文件寻找答案。",
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: {
@@ -1083,7 +1083,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_post_d4_auto_compile_status",
-    description: "查询 D4 后自动编译队列状态。waiting_for_generation 表示正常完成；needs_agent 表示失败并需要 Agent 处理。",
+    description: "查询 D4 后自动编译队列状态。waiting_for_generation 表示正常完成；needs_agent 时只读取响应内 workflowResponse、failureCount、retryAllowed、nextAction 与返回 artifacts；禁止转去读取服务端源码、项目文档或原始 run 文件。retryAllowed=true 时修正完整 Blueprint 并调用 city_submit_d4_blueprint。",
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: {
@@ -1095,7 +1095,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_post_d4_auto_compile_retry",
-    description: "当前城市的 D4 后程序阶段失败并修复原因后，重新加入后半段队列；不重新提交或重新调用 AI D4。",
+    description: "仅用于 Blueprint 本身不变、程序或环境原因已经修复后的后半段重跑。若响应 retryAllowed=true 且要求修改城市设计，应改用 city_submit_d4_blueprint 提交修订版；不得用本工具绕过 Blueprint 失败预算。",
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: {
@@ -1107,7 +1107,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_compile_d4_blueprint",
-    description: "程序化编译已接受的完整 CityBlueprint：保留 AI 指定核心/填充模板与阵列关系，按关系图、阵列和范围完成连接与 fill；普通非水体坑洼/起伏由台基消化，无法承载的单栋由 PCG 跳过，不升级为整城失败。输出标准 D4 anchor、compile trace 与 Group extent，不调用 AI、不接受 candidateId。",
+    description: "程序化编译当前已接受的完整 CityBlueprint revision：保留 AI 指定核心/填充模板与阵列关系，按关系图、阵列和范围完成连接与 fill。明确的 D4 编译或终审失败会原子增加 failureCount，最多 5 次；retryAllowed=true 时必须仅依据本响应和返回 artifacts 修正后重提，禁止读取服务端源码、项目文档或原始 run 文件。输出标准 D4 anchor、compile trace 与 Group extent，不调用 AI、不接受 candidateId。",
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: {

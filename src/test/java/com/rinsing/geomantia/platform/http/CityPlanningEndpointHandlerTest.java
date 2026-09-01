@@ -100,7 +100,7 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
-    void blueprintEndpointHandlersPrepareAndAcceptOneCompleteSubmission() throws Exception {
+    void blueprintEndpointHandlersPrepareFailureBudgetAndAcceptCompleteRevision() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-blueprint-endpoint-test");
         String runId = "run_blueprint_endpoint";
         String citySeedId = "city_test";
@@ -112,12 +112,17 @@ class CityPlanningEndpointHandlerTest {
                 citySeedId, terraSenseSource(runDir.resolve("debug_structure_profile_catalog.json")),
                 templateCatalogSource(runDir.resolve("template_catalog.json")), blueprintReferenceCatalog());
         assertEquals(0, prepared.get("aiCityDesignCallCount").getAsInt());
+        assertEquals(0, prepared.get("failureCount").getAsInt());
+        assertEquals(5, prepared.get("maximumFailureCount").getAsInt());
 
         JsonObject submitted = CityPlanningEndpointHandler.handleSubmitD4Blueprint(debugRoot, runId, citySeedId,
                 prepared.get("contextId").getAsString(), blueprintForContext(
                         prepared.getAsJsonObject("cityBlueprintContext")));
         assertTrue(submitted.get("ok").getAsBoolean());
+        assertEquals(0, submitted.get("failureCount").getAsInt());
         assertTrue(Files.isRegularFile(runDir.resolve("city_blueprint_city_test/city_blueprint.json")));
+        assertTrue(Files.isRegularFile(runDir.resolve(
+                "city_blueprint_city_test/city_blueprint_failure_budget.json")));
     }
 
     @Test
@@ -2147,6 +2152,60 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
+    void handlePlanD5UsesPatchContextCoverageOutsideCoreGrid() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-wall-v5-padding-test");
+        String runId = "run_wall_v5_padding";
+        String citySeedId = "city_test";
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+        Path d3Path = debugRoot.resolve(runId).resolve("city_d3_" + citySeedId)
+                .resolve("city_landform_review_package.json");
+        JsonObject d3 = JsonParser.parseString(Files.readString(d3Path)).getAsJsonObject();
+        JsonObject grid = d3.getAsJsonObject("grid");
+        grid.addProperty("originBlockX", -16);
+        grid.addProperty("originBlockZ", -16);
+        grid.addProperty("cellStepBlocks", 4);
+        grid.addProperty("cellsX", 8);
+        grid.addProperty("cellsZ", 8);
+        d3.add("patchContextBounds", JsonParser.parseString(
+                "{\"minX\":-256,\"minZ\":-256,\"maxX\":256,\"maxZ\":256}"));
+        Files.writeString(d3Path, CityJson.GSON.toJson(d3));
+
+        JsonObject response = CityPlanningEndpointHandler.handlePlanD5(debugRoot, runId, citySeedId, 24, 4);
+
+        JsonObject coverage = response.getAsJsonObject("wallReservationPlan")
+                .getAsJsonObject("coverageCheck");
+        assertEquals("patch_context_bounds", coverage.get("coverageSource").getAsString());
+        assertEquals(-16, coverage.getAsJsonObject("coreGridBounds").get("minX").getAsInt());
+        assertEquals(256, coverage.getAsJsonObject("d3CoverageBounds").get("maxX").getAsInt());
+    }
+
+    @Test
+    void handlePlanD5StillRequiresRescanOutsidePatchContextCoverage() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-wall-v5-padding-rescan-test");
+        String runId = "run_wall_v5_padding_rescan";
+        String citySeedId = "city_test";
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+        Path d3Path = debugRoot.resolve(runId).resolve("city_d3_" + citySeedId)
+                .resolve("city_landform_review_package.json");
+        JsonObject d3 = JsonParser.parseString(Files.readString(d3Path)).getAsJsonObject();
+        JsonObject grid = d3.getAsJsonObject("grid");
+        grid.addProperty("originBlockX", -16);
+        grid.addProperty("originBlockZ", -16);
+        grid.addProperty("cellStepBlocks", 4);
+        grid.addProperty("cellsX", 8);
+        grid.addProperty("cellsZ", 8);
+        d3.add("patchContextBounds", JsonParser.parseString(
+                "{\"minX\":-20,\"minZ\":-20,\"maxX\":20,\"maxZ\":20}"));
+        Files.writeString(d3Path, CityJson.GSON.toJson(d3));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handlePlanD5(debugRoot, runId, citySeedId, 24, 4));
+
+        assertTrue(ex.getMessage().contains("D5_REQUIRES_PATCH_RESCAN"));
+        assertTrue(ex.getMessage().contains("[-20,-20 -> 20,20]"));
+    }
+
+    @Test
     void handlePlanCityWallsKeepsD5WallLineAndBackfillsSurfaceCacheReport() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-wall-v5-plan-test");
         String runId = "run_wall_v5_plan";
@@ -2344,7 +2403,7 @@ class CityPlanningEndpointHandlerTest {
                 {"valid":true,"contextId":"sha256:context"}
                 """);
         Files.writeString(blueprintDir.resolve("city_blueprint_submission_trace.json"), """
-                {"status":"accepted","contextId":"sha256:context","aiCityDesignSubmissionCount":1,
+                {"status":"accepted","contextId":"sha256:context",
                  "cityBlueprintHash":"%s"}
                 """.formatted(blueprintHash));
         Files.writeString(blueprintDir.resolve("city_blueprint.json"), blueprint);

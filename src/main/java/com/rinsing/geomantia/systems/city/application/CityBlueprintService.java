@@ -15,31 +15,40 @@ import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
-import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.HexFormat;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
-/** Prepares a read-only D4 decision context and accepts exactly one AI Blueprint submission per context. */
+/** Prepares a read-only D4 decision context and validates replaceable Blueprint revisions. */
 public final class CityBlueprintService {
     public static final String CONTEXT_SCHEMA = "city_blueprint_context";
     public static final String SNAPSHOT_SCHEMA = "city_blueprint_catalog_snapshot";
     public static final String REPORT_SCHEMA = "city_blueprint_validation_report";
     public static final String TRACE_SCHEMA = "city_blueprint_submission_trace";
+    private static final Map<Path, Object> SUBMISSION_ARTIFACT_LOCKS = new ConcurrentHashMap<>();
 
     private final CityBlueprintCodec codec = new CityBlueprintCodec();
     private final CityBlueprintValidator validator = new CityBlueprintValidator();
+    private final CityBlueprintFailureBudget failureBudget = new CityBlueprintFailureBudget();
 
     public JsonObject prepare(Path debugRoot, String runId, String cityId,
                                JsonObject terraSenseProfileSource, JsonObject templateCatalogSource,
                                JsonObject blueprintReferenceCatalog) throws IOException {
+        return prepare(debugRoot, runId, cityId, terraSenseProfileSource, templateCatalogSource,
+                blueprintReferenceCatalog, null);
+    }
+
+    public JsonObject prepare(Path debugRoot, String runId, String cityId,
+                               JsonObject terraSenseProfileSource, JsonObject templateCatalogSource,
+                               JsonObject blueprintReferenceCatalog, JsonObject patchReviewEvidence) throws IOException {
         Path runDir = requireRunDirectory(debugRoot, runId);
         JsonObject seed = loadCitySeed(runDir, cityId);
         Path d3Path = d3Path(runDir, cityId);
@@ -99,12 +108,23 @@ public final class CityBlueprintService {
         contextCore.addProperty("cityId", cityId);
         contextCore.add("sourceD3Ref", artifactRefJson(d3Ref));
         contextCore.add("catalogSnapshotRef", artifactRefJson(snapshotRef));
+        if (patchReviewEvidence != null) {
+            contextCore.add("patchReviewEvidence", patchReviewEvidence.deepCopy());
+        }
         contextCore.addProperty("generationSeedSuggestion", stableSeed(cityId, d3Ref.contentHash(),
                 snapshotRef.contentHash()));
         JsonObject boundary = new JsonObject();
         boundary.addProperty("contextPreparationCountsAsAiCityDesignCall", false);
-        boundary.addProperty("maximumAiCityDesignSubmissions", 1);
-        boundary.addProperty("postSubmissionAiCandidateRequestsAllowed", false);
+        boundary.addProperty("maximumBlueprintCompileFailures",
+                CityBlueprintFailureBudget.MAX_FAILURE_COUNT);
+        boundary.addProperty("submissionValidationFailuresCountTowardBudget", false);
+        boundary.addProperty("blueprintRevisionAllowedAfterCompileFailure", true);
+        JsonObject recoveryBoundary = new JsonObject();
+        recoveryBoundary.addProperty("evidenceSource", "tool_responses_and_returned_artifacts_only");
+        recoveryBoundary.addProperty("sourceCodeInspectionAllowed", false);
+        recoveryBoundary.addProperty("projectDocumentationInspectionAllowed", false);
+        recoveryBoundary.addProperty("rawRunArtifactInspectionAllowed", false);
+        boundary.add("agentRecoveryBoundary", recoveryBoundary);
         contextCore.add("decisionBoundary", boundary);
         contextCore.add("citySeed", seed.deepCopy());
         contextCore.add("d3ReviewPackage", d3.deepCopy());
@@ -116,6 +136,7 @@ public final class CityBlueprintService {
         context.addProperty("preparedAt", Instant.now().toString());
         Path contextPath = outputDir.resolve("city_blueprint_context.json");
         writeAtomic(contextPath, context);
+        JsonObject budget = failureBudget.initialize(debugRoot, runId, cityId, contextId);
 
         JsonObject response = new JsonObject();
         response.addProperty("ok", true);
@@ -126,6 +147,7 @@ public final class CityBlueprintService {
         artifacts.addProperty("cityBlueprintContext", ref(debugRoot, contextPath));
         artifacts.addProperty("cityBlueprintCatalogSnapshot", ref(debugRoot, snapshotPath));
         response.add("artifacts", artifacts);
+        CityBlueprintFailureBudget.attach(response, budget, debugRoot, runId, cityId);
         return response;
     }
 
@@ -135,10 +157,13 @@ public final class CityBlueprintService {
         Path outputDir = outputDirectory(runDir, cityId);
         Path contextPath = outputDir.resolve("city_blueprint_context.json");
         Path snapshotPath = outputDir.resolve("city_blueprint_catalog_snapshot.json");
-        Path reportPath = outputDir.resolve("city_blueprint_validation_report.json");
-        Path tracePath = outputDir.resolve("city_blueprint_submission_trace.json");
+        Path reportPath = outputDir.resolve("city_blueprint_last_rejection_report.json");
+        Path tracePath = outputDir.resolve("city_blueprint_last_rejection_trace.json");
+        Path acceptedReportPath = outputDir.resolve("city_blueprint_validation_report.json");
+        Path acceptedTracePath = outputDir.resolve("city_blueprint_submission_trace.json");
         Path blueprintPath = outputDir.resolve("city_blueprint.json");
         JsonObject context = readObject(contextPath, CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_NOT_FOUND);
+        JsonObject budget = failureBudget.initialize(debugRoot, runId, cityId, string(context, "contextId"));
         if (!CONTEXT_SCHEMA.equals(string(context, "schema"))
                 || !contextId.equals(string(context, "contextId"))
                 || !contextId.equals(contextIdentity(context))
@@ -149,51 +174,41 @@ public final class CityBlueprintService {
                 "schema"))) {
             return failure(debugRoot, cityId, contextId, reportPath, tracePath,
                     CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_STALE, "$context",
-                    "The submitted contextId is not the current prepared context.", false);
+                    "The submitted contextId is not the current prepared context.", budget, runId);
         }
-        if (Files.isRegularFile(tracePath)) {
-            JsonObject priorTrace = parseObject(Files.readString(tracePath), "CITY_BLUEPRINT_TRACE_INVALID");
-            if (contextId.equals(string(priorTrace, "contextId"))
-                    && integer(priorTrace, "aiCityDesignSubmissionCount", 0) >= 1) {
-                return alreadyConsumed(debugRoot, cityId, contextId, context);
-            }
+        if (CityBlueprintFailureBudget.exhausted(budget)) {
+            return failure(debugRoot, cityId, contextId, reportPath, tracePath,
+                    CityBlueprintReasonCode.CITY_BLUEPRINT_FAILURE_BUDGET_EXHAUSTED, "$context",
+                    "This context has reached its five failed D4 compilations.", budget, runId);
         }
-
-        Path claimPath = outputDir.resolve(".city_blueprint_submission_"
-                + contextId.replace("sha256:", "") + ".claim");
-        JsonObject claim = trace(cityId, contextId, "received", 1, context, new JsonArray());
-        claim.addProperty("attemptConsumed", true);
-        try {
-            writeNew(claimPath, claim);
-        } catch (FileAlreadyExistsException exception) {
-            return alreadyConsumed(debugRoot, cityId, contextId, context);
+        if (CityBlueprintFailureBudget.succeeded(budget)) {
+            budget = failureBudget.reopenForRevision(debugRoot, runId, cityId);
         }
-
         CityBlueprint.ArtifactRef expectedD3 = artifactRefFromJson(context.getAsJsonObject("sourceD3Ref"));
         CityBlueprint.ArtifactRef expectedSnapshot = artifactRefFromJson(
                 context.getAsJsonObject("catalogSnapshotRef"));
         if (!hashStillCurrent(debugRoot, expectedD3) || !hashStillCurrent(debugRoot, expectedSnapshot)) {
             return failure(debugRoot, cityId, contextId, reportPath, tracePath,
                     CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_STALE, "$context",
-                    "A frozen D3 or catalog snapshot artifact changed after context preparation.", true);
+                    "A frozen D3 or catalog snapshot artifact changed after context preparation.", budget, runId);
         }
         JsonObject snapshot = readObject(snapshotPath, CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_STALE);
         if (!SNAPSHOT_SCHEMA.equals(string(snapshot, "schema"))) {
             return failure(debugRoot, cityId, contextId, reportPath, tracePath,
                     CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_STALE, "$.catalogSnapshot.schema",
-                    "Unsupported frozen catalog snapshot schema.", true);
+                    "Unsupported frozen catalog snapshot schema.", budget, runId);
         }
         if (!snapshotArtifactsCurrent(debugRoot, snapshot)) {
             return failure(debugRoot, cityId, contextId, reportPath, tracePath,
                     CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_STALE, "$.catalogSnapshot",
-                    "The frozen D3 terrain field artifact changed after context preparation.", true);
+                    "The frozen D3 terrain field artifact changed after context preparation.", budget, runId);
         }
         JsonObject structureCatalog = snapshot.getAsJsonObject("structureCatalog");
         if (structureCatalog == null || !CityStructureProfileCatalog.SCHEMA.equals(
                 string(structureCatalog, "schema"))) {
             return failure(debugRoot, cityId, contextId, reportPath, tracePath,
                     CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_STALE, "$.catalogSnapshot.structureCatalog",
-                    "Unsupported frozen structure semantic catalog schema.", true);
+                    "Unsupported frozen structure semantic catalog schema.", budget, runId);
         }
         CityTemplateCatalog templates = new CityTemplateCatalogLoader().load(snapshot.getAsJsonObject("templateCatalog"));
         CityBlueprintReferenceCatalog references = CityBlueprintReferenceCatalog.parse(
@@ -203,66 +218,57 @@ public final class CityBlueprintService {
                 blueprint = codec.read(blueprintJson);
         } catch (CityBlueprintContractException exception) {
             return failure(debugRoot, cityId, contextId, reportPath, tracePath, exception.reasonCode(),
-                    exception.fieldPath(), exception.getMessage(), false);
+                    exception.fieldPath(), exception.getMessage(), budget, runId);
         } catch (RuntimeException exception) {
             return failure(debugRoot, cityId, contextId, reportPath, tracePath,
-                    CityBlueprintReasonCode.CITY_BLUEPRINT_JSON_INVALID, "$", exception.getMessage(), false);
+                    CityBlueprintReasonCode.CITY_BLUEPRINT_JSON_INVALID, "$", exception.getMessage(), budget, runId);
         }
         Set<String> patchRefs = patchRefs(context.getAsJsonObject("d3ReviewPackage"));
         CityBlueprintValidator.ValidationResult result = validator.validate(blueprint,
                 new CityBlueprintValidator.ExpectedContext(cityId, expectedD3, expectedSnapshot, patchRefs),
                 references);
         if (!result.valid()) {
-            return failure(debugRoot, cityId, contextId, reportPath, tracePath, result.issues(), false);
+            return failure(debugRoot, cityId, contextId, reportPath, tracePath, result.issues(), budget, runId);
         }
+        budget = failureBudget.reopenForRevision(debugRoot, runId, cityId);
 
         JsonObject canonical = codec.write(blueprint);
-        writeAtomic(blueprintPath, canonical);
         JsonObject report = report(cityId, contextId, true, new JsonArray());
-        writeAtomic(reportPath, report);
-        JsonObject trace = trace(cityId, contextId, "accepted", 1, context, new JsonArray());
-        trace.addProperty("cityBlueprintHash", sha256(Files.readString(blueprintPath)));
-        writeAtomic(tracePath, trace);
-        return response(debugRoot, true, report, trace, blueprintPath, reportPath, tracePath);
+        JsonObject trace = trace(cityId, contextId, "accepted", context, new JsonArray());
+        synchronized (submissionArtifactLock(outputDir)) {
+            writeAtomic(blueprintPath, canonical);
+            writeAtomic(acceptedReportPath, report);
+            trace.addProperty("cityBlueprintHash", sha256(Files.readString(blueprintPath)));
+            writeAtomic(acceptedTracePath, trace);
+        }
+        JsonObject response = response(debugRoot, true, report, trace, blueprintPath,
+                acceptedReportPath, acceptedTracePath);
+        response.addProperty("nextAction", "city_compile_d4_blueprint");
+        CityBlueprintFailureBudget.attach(response, budget, debugRoot, runId, cityId);
+        return response;
     }
 
     private JsonObject failure(Path debugRoot, String cityId, String contextId, Path reportPath, Path tracePath,
                                CityBlueprintReasonCode reason, String path, String message,
-                               boolean consumeSubmission) throws IOException {
+                               JsonObject budget, String runId) throws IOException {
         return failure(debugRoot, cityId, contextId, reportPath, tracePath,
-                java.util.List.of(new CityBlueprintValidator.Issue(reason, path, message)), consumeSubmission);
+                java.util.List.of(new CityBlueprintValidator.Issue(reason, path, message)), budget, runId);
     }
 
     private JsonObject failure(Path debugRoot, String cityId, String contextId, Path reportPath, Path tracePath,
                                java.util.List<CityBlueprintValidator.Issue> issues,
-                               boolean consumeSubmission) throws IOException {
+                               JsonObject budget, String runId) throws IOException {
         JsonArray issueArray = new JsonArray();
         issues.forEach(issue -> issueArray.add(issue.asJson()));
         JsonObject report = report(cityId, contextId, false, issueArray);
-        writeAtomic(reportPath, report);
-        if (!consumeSubmission) {
-            Path claimPath = reportPath.getParent().resolve(".city_blueprint_submission_"
-                    + contextId.replace("sha256:", "") + ".claim");
-            Files.deleteIfExists(claimPath);
-        }
         // Trace intentionally contains only frozen identities, never the rejected Blueprint payload.
-        int priorCount = 0;
-        if (Files.isRegularFile(tracePath)) {
-            try {
-                priorCount = integer(parseObject(Files.readString(tracePath), "CITY_BLUEPRINT_TRACE_INVALID"),
-                        "aiCityDesignSubmissionCount", 0);
-            } catch (RuntimeException ignored) {
-                priorCount = 0;
-            }
-        }
         JsonObject trace = new JsonObject();
         trace.addProperty("schema", TRACE_SCHEMA);
         trace.addProperty("cityId", cityId);
         trace.addProperty("contextId", contextId);
         trace.addProperty("status", "rejected");
-        trace.addProperty("aiCityDesignSubmissionCount", consumeSubmission ? Math.max(1, priorCount) : priorCount);
         trace.addProperty("contextPreparationCountsAsAiCityDesignCall", false);
-        trace.addProperty("attemptConsumed", consumeSubmission);
+        trace.addProperty("compilationFailureConsumed", false);
         trace.addProperty("recordedAt", Instant.now().toString());
         Path contextPath = reportPath.getParent().resolve("city_blueprint_context.json");
         if (Files.isRegularFile(contextPath)) {
@@ -280,23 +286,19 @@ public final class CityBlueprintService {
             }
         }
         trace.add("failureReasons", issueArray.deepCopy());
-        writeAtomic(tracePath, trace);
-        return response(debugRoot, false, report, trace, null, reportPath, tracePath);
-    }
-
-    private static JsonObject alreadyConsumed(Path debugRoot, String cityId, String contextId,
-                                               JsonObject context) {
-        JsonObject issue = new JsonObject();
-        issue.addProperty("reasonCode",
-                CityBlueprintReasonCode.CITY_BLUEPRINT_AI_SUBMISSION_ALREADY_CONSUMED.name());
-        issue.addProperty("fieldPath", "$context");
-        issue.addProperty("message", "This context has already consumed its single AI city-design submission.");
-        JsonArray issues = new JsonArray();
-        issues.add(issue);
-        JsonObject report = report(cityId, contextId, false, issues);
-        JsonObject trace = trace(cityId, contextId, "rejected", 1, context, issues.deepCopy());
-        trace.addProperty("attemptConsumed", false);
-        return response(debugRoot, false, report, trace, null, null, null);
+        synchronized (submissionArtifactLock(reportPath.getParent())) {
+            writeAtomic(reportPath, report);
+            writeAtomic(tracePath, trace);
+        }
+        JsonObject response = response(debugRoot, false, report, trace, null, reportPath, tracePath);
+        String firstReason = issueArray.isEmpty() ? ""
+                : string(issueArray.get(0).getAsJsonObject(), "reasonCode");
+        response.addProperty("nextAction", CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_STALE.name()
+                .equals(firstReason) ? "city_prepare_d4_blueprint_context"
+                : CityBlueprintReasonCode.CITY_BLUEPRINT_FAILURE_BUDGET_EXHAUSTED.name().equals(firstReason)
+                ? "stop_for_human_review" : "city_submit_d4_blueprint");
+        CityBlueprintFailureBudget.attach(response, budget, debugRoot, runId, cityId);
+        return response;
     }
 
     private static JsonObject report(String cityId, String contextId, boolean valid, JsonArray issues) {
@@ -310,14 +312,13 @@ public final class CityBlueprintService {
         return report;
     }
 
-    private static JsonObject trace(String cityId, String contextId, String status, int count,
+    private static JsonObject trace(String cityId, String contextId, String status,
                                     JsonObject context, JsonArray failures) {
         JsonObject trace = new JsonObject();
         trace.addProperty("schema", TRACE_SCHEMA);
         trace.addProperty("cityId", cityId);
         trace.addProperty("contextId", contextId);
         trace.addProperty("status", status);
-        trace.addProperty("aiCityDesignSubmissionCount", count);
         trace.addProperty("contextPreparationCountsAsAiCityDesignCall", false);
         trace.addProperty("recordedAt", Instant.now().toString());
         trace.add("sourceD3Ref", context.getAsJsonObject("sourceD3Ref").deepCopy());
@@ -330,8 +331,6 @@ public final class CityBlueprintService {
                                        Path blueprintPath, Path reportPath, Path tracePath) {
         JsonObject response = new JsonObject();
         response.addProperty("ok", ok);
-        response.addProperty("aiCityDesignSubmissionCount",
-                integer(trace, "aiCityDesignSubmissionCount", 0));
         response.add("validationReport", report);
         response.add("submissionTrace", trace);
         JsonObject artifacts = new JsonObject();
@@ -536,10 +535,9 @@ public final class CityBlueprintService {
         }
     }
 
-    private static void writeNew(Path path, JsonObject value) throws IOException {
-        Files.createDirectories(path.getParent());
-        Files.writeString(path, CityJson.GSON.toJson(value), StandardOpenOption.CREATE_NEW,
-                StandardOpenOption.WRITE);
+    private static Object submissionArtifactLock(Path outputDirectory) {
+        return SUBMISSION_ARTIFACT_LOCKS.computeIfAbsent(outputDirectory.toAbsolutePath().normalize(),
+                ignored -> new Object());
     }
 
     private static long stableSeed(String cityId, String d3Hash, String catalogHash) {

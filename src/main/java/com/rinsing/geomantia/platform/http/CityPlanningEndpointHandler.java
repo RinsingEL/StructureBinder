@@ -8,6 +8,7 @@ import com.rinsing.geomantia.systems.city.application.CityD4DesignLoopStatePlann
 import com.rinsing.geomantia.systems.city.application.CityD4StagedPlanCompiler;
 import com.rinsing.geomantia.systems.city.application.CityBlueprintService;
 import com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService;
+import com.rinsing.geomantia.systems.city.application.CityBlueprintFailureBudget;
 import com.rinsing.geomantia.systems.city.application.CityBlueprintCodec;
 import com.rinsing.geomantia.systems.city.application.CityBlueprintReferenceCatalog;
 import com.rinsing.geomantia.systems.city.application.CityLandformReviewBuilder;
@@ -154,8 +155,17 @@ final class CityPlanningEndpointHandler {
                                                        JsonObject terraSenseProfileSource,
                                                        JsonObject templateCatalogSource,
                                                        JsonObject blueprintReferenceCatalog) throws IOException {
+        return handlePrepareD4BlueprintContext(debugRoot, runId, citySeedId, terraSenseProfileSource,
+                templateCatalogSource, blueprintReferenceCatalog, null);
+    }
+
+    static JsonObject handlePrepareD4BlueprintContext(Path debugRoot, String runId, String citySeedId,
+                                                       JsonObject terraSenseProfileSource,
+                                                       JsonObject templateCatalogSource,
+                                                       JsonObject blueprintReferenceCatalog,
+                                                       JsonObject patchReviewEvidence) throws IOException {
         JsonObject response = new CityBlueprintService().prepare(debugRoot, runId, citySeedId,
-                terraSenseProfileSource, templateCatalogSource, blueprintReferenceCatalog);
+                terraSenseProfileSource, templateCatalogSource, blueprintReferenceCatalog, patchReviewEvidence);
         JsonObject request = standaloneRequest("city_prepare_d4_blueprint_context", runId, citySeedId);
         request.add("terraSenseProfileSource", terraSenseProfileSource.deepCopy());
         request.add("templateCatalogSource", templateCatalogSource.deepCopy());
@@ -172,19 +182,43 @@ final class CityPlanningEndpointHandler {
         request.addProperty("contextId", contextId);
         request.add("cityBlueprint", cityBlueprint.deepCopy());
         boolean accepted = booleanValue(response, "ok", false);
+        String nextAction = stringValue(response, "nextAction",
+                accepted ? "city_compile_d4_blueprint" : "city_submit_d4_blueprint");
         return recordStandaloneTestRunState(debugRoot, runId, citySeedId, request,
-                accepted ? "awaiting_d4_compile" : "failed",
-                accepted ? "city_compile_d4_blueprint" : "city_prepare_d4_blueprint_context", response);
+                accepted ? "awaiting_d4_compile"
+                        : "stop_for_human_review".equals(nextAction) ? "failed" : "awaiting_city_blueprint",
+                nextAction, response);
     }
 
     static JsonObject handleCompileD4Blueprint(Path debugRoot, String runId, String citySeedId) throws IOException {
+        CityBlueprintFailureBudget failureBudget = new CityBlueprintFailureBudget();
+        JsonObject currentBudget = failureBudget.current(debugRoot, runId, citySeedId);
+        if (CityBlueprintFailureBudget.exhausted(currentBudget)) {
+            JsonObject exhausted = new JsonObject();
+            exhausted.addProperty("ok", false);
+            exhausted.addProperty("status", "failure_budget_exhausted");
+            exhausted.addProperty("reasonCode", "CITY_BLUEPRINT_FAILURE_BUDGET_EXHAUSTED");
+            exhausted.addProperty("message", "The current D4 context has reached five failed compilations.");
+            exhausted.add("artifacts", new JsonObject());
+            CityBlueprintFailureBudget.attach(exhausted, currentBudget, debugRoot, runId, citySeedId);
+            addBlueprintRetryGuidance(exhausted);
+            return recordStandaloneTestRunState(debugRoot, runId, citySeedId,
+                    standaloneRequest("city_compile_d4_blueprint", runId, citySeedId),
+                    "failed", "stop_for_human_review", exhausted);
+        }
         CityBlueprintCompilerService compiler = new CityBlueprintCompilerService();
         CityBlueprintCompilerService.CompilationResult compiled = compiler.compile(debugRoot, runId, citySeedId);
         JsonObject compileResponse = compiler.persist(debugRoot, runId, citySeedId, compiled);
         if (!compiled.ok()) {
+            JsonObject budget = failureBudget.recordFailure(debugRoot, runId, citySeedId,
+                    compiled.reasonCode(), compiled.message());
+            CityBlueprintFailureBudget.attach(compileResponse, budget, debugRoot, runId, citySeedId);
+            addBlueprintRetryGuidance(compileResponse);
             return recordStandaloneTestRunState(debugRoot, runId, citySeedId,
                     standaloneRequest("city_compile_d4_blueprint", runId, citySeedId),
-                    "failed", "inspect_failed_attempt", compileResponse);
+                    CityBlueprintFailureBudget.retryAllowed(budget)
+                            ? "awaiting_city_blueprint_revision" : "failed",
+                    stringValue(compileResponse, "nextAction", "stop_for_human_review"), compileResponse);
         }
         JsonObject finalized = handleFinalizeCompiledD4(debugRoot, runId, citySeedId,
                 compiled.terraSenseProfileSource(), compiled.structureAnchorPlan(),
@@ -199,11 +233,36 @@ final class CityPlanningEndpointHandler {
                 ? "compiled" : "anchor_finalization_failed");
         finalized.add("cityGenerationCompileTrace", compiled.compileTrace().deepCopy());
         finalized.add("groupExtentMap", compiled.groupExtentMap().deepCopy());
+        JsonObject budget = booleanValue(finalized, "ok", false)
+                ? failureBudget.recordSuccess(debugRoot, runId, citySeedId)
+                : failureBudget.recordFailure(debugRoot, runId, citySeedId,
+                stringValue(finalized, "reasonCode", "CITY_BLUEPRINT_COMPILED_ANCHOR_FINALIZATION_FAILED"),
+                stringValue(finalized, "message", "Compiled D4 anchor finalization failed."));
+        CityBlueprintFailureBudget.attach(finalized, budget, debugRoot, runId, citySeedId);
+        if (!booleanValue(finalized, "ok", false)) addBlueprintRetryGuidance(finalized);
+        else finalized.addProperty("nextAction", "city_run_workflow");
         JsonObject request = standaloneRequest("city_compile_d4_blueprint", runId, citySeedId);
         return recordStandaloneTestRunState(debugRoot, runId, citySeedId, request,
-                booleanValue(finalized, "ok", false) ? "awaiting_workflow_resume" : "failed",
-                booleanValue(finalized, "ok", false) ? "city_run_workflow" : "inspect_failed_attempt",
+                booleanValue(finalized, "ok", false) ? "awaiting_workflow_resume"
+                        : CityBlueprintFailureBudget.retryAllowed(budget)
+                        ? "awaiting_city_blueprint_revision" : "failed",
+                stringValue(finalized, "nextAction", booleanValue(finalized, "ok", false)
+                        ? "city_run_workflow" : "stop_for_human_review"),
                 finalized);
+    }
+
+    private static void addBlueprintRetryGuidance(JsonObject response) {
+        boolean retryAllowed = booleanValue(response, "retryAllowed", false);
+        response.addProperty("nextAction", retryAllowed
+                ? "city_submit_d4_blueprint" : "stop_for_human_review");
+        JsonObject policy = new JsonObject();
+        policy.addProperty("instruction", retryAllowed
+                ? "Revise and resubmit the complete Blueprint using only this tool response and returned artifacts."
+                : "Stop this Agent Loop and request human review.");
+        policy.addProperty("sourceCodeInspectionAllowed", false);
+        policy.addProperty("projectDocumentationInspectionAllowed", false);
+        policy.addProperty("rawRunArtifactInspectionAllowed", false);
+        response.add("agentRecoveryPolicy", policy);
     }
 
     private static JsonObject handleFinalizeCompiledD4(Path debugRoot, String runId, String citySeedId,
@@ -390,18 +449,16 @@ final class CityPlanningEndpointHandler {
             artifacts.addProperty("testRunManifest", debugRef(debugRoot, testRunLayout.manifestPath()));
             artifacts.addProperty("testRunPackage", debugRef(debugRoot, testRunLayout.packageDirectory()));
             JsonObject stageState = new JsonObject();
-            stageState.addProperty("status", siteReviewRequired ? "awaiting_site_review" : "awaiting_city_blueprint");
+            stageState.addProperty("status", siteReviewRequired ? "awaiting_site_review" : "waiting_for_patch_review");
             stageState.addProperty("nextAction", siteReviewRequired
-                    ? "city_review_d3_site" : "city_prepare_d4_blueprint_context");
+                    ? "city_review_d3_site" : "patch_explorer_open");
             stageState.add("artifacts", artifacts.deepCopy());
             writeTestRunState(testRunLayout.manifestPath(), manifest, stageState);
         }
         response.add("artifacts", artifacts);
-        if (siteReviewRequired) {
-            JsonArray nextActions = new JsonArray();
-            nextActions.add("city_review_d3_site");
-            response.add("nextActions", nextActions);
-        }
+        JsonArray nextActions = new JsonArray();
+        nextActions.add(siteReviewRequired ? "city_review_d3_site" : "patch_explorer_open");
+        response.add("nextActions", nextActions);
         return response;
     }
 
@@ -490,16 +547,16 @@ final class CityPlanningEndpointHandler {
         response.add("artifacts", artifacts);
         JsonArray nextActions = new JsonArray();
         nextActions.add("accept_selected_site".equals(decision)
-                ? "city_plan_d4" : "realm_t4_patch_planning_create");
+                ? "patch_explorer_open" : "realm_t4_patch_planning_create");
         response.add("nextActions", nextActions);
         JsonObject request = standaloneRequest("city_review_d3_site", runId, citySeedId);
         request.addProperty("decision", decision);
         request.addProperty("decisionReason", decisionReason);
         request.addProperty("reviewedBy", reviewedBy == null || reviewedBy.isBlank() ? "ai" : reviewedBy);
         return recordStandaloneTestRunState(debugRoot, runId, citySeedId, request,
-                "accept_selected_site".equals(decision) ? "awaiting_city_blueprint" : "reselection_required",
+                "accept_selected_site".equals(decision) ? "waiting_for_patch_review" : "reselection_required",
                 "accept_selected_site".equals(decision)
-                        ? "city_prepare_d4_blueprint_context" : "realm_t4_patch_planning_create", response);
+                        ? "patch_explorer_open" : "realm_t4_patch_planning_create", response);
     }
 
     private static int normalizeD3PatchScanPaddingBlocks(Integer requestedPatchScanPaddingBlocks) {
@@ -1194,10 +1251,14 @@ final class CityPlanningEndpointHandler {
         }
 
         JsonObject anchorMap = JsonParser.parseString(Files.readString(anchorMapPath)).getAsJsonObject();
-        CityLandformReviewPackage reviewPackage = CityLandformReviewPackage.fromJson(
-                JsonParser.parseString(Files.readString(d3PackagePath)).getAsJsonObject());
+        JsonObject reviewPackageJson = JsonParser.parseString(Files.readString(d3PackagePath)).getAsJsonObject();
+        CityLandformReviewPackage reviewPackage = CityLandformReviewPackage.fromJson(reviewPackageJson);
+        BlockBounds patchContextBounds = reviewPackageJson.has("patchContextBounds")
+                && reviewPackageJson.get("patchContextBounds").isJsonObject()
+                ? bounds(reviewPackageJson.getAsJsonObject("patchContextBounds"))
+                : null;
         JsonObject wallReservationPlan = new CityWallReservationPlanner().plan(
-                reviewPackage, anchorMap, wallMarginBlocks, wallCorridorHalfWidthBlocks);
+                reviewPackage, anchorMap, wallMarginBlocks, wallCorridorHalfWidthBlocks, patchContextBounds);
         CityReservationMaskPlanner.Result result = new CityReservationMaskPlanner().plan(ctx, anchorMap,
                 wallReservationPlan);
 
@@ -2927,7 +2988,6 @@ final class CityPlanningEndpointHandler {
                     && booleanValue(validation, "valid", false)
                     && contextId.equals(stringValue(validation, "contextId", ""))
                     && "accepted".equals(stringValue(submission, "status", ""))
-                    && intValue(submission, "aiCityDesignSubmissionCount", 0) == 1
                     && contextId.equals(stringValue(submission, "contextId", ""))
                     && blueprintHash.equals(stringValue(submission, "cityBlueprintHash", ""));
         } catch (RuntimeException | IOException ignored) {
@@ -2956,7 +3016,7 @@ final class CityPlanningEndpointHandler {
             ctx.report().addProperty("nextAction", "city_submit_d4_blueprint");
             ctx.workflow().addStop("city_compile_d4_blueprint", "awaiting_city_blueprint",
                     "CITY_BLUEPRINT_NOT_FOUND",
-                    "Submit the single complete CityBlueprint before continuing D4.");
+                    "Submit a complete CityBlueprint revision before continuing D4.");
             return false;
         }
         Path skipArtifact = workflowBlueprintAnchorMapCurrent(anchorMapPath, blueprintDir)
@@ -3520,7 +3580,6 @@ final class CityPlanningEndpointHandler {
                 || !citySeedId.equals(stringValue(context, "cityId", ""))
                 || !booleanValue(validation, "valid", false)
                 || !"accepted".equals(stringValue(submission, "status", ""))
-                || intValue(submission, "aiCityDesignSubmissionCount", 0) != 1
                 || !sha256(blueprintRaw).equals(stringValue(submission, "cityBlueprintHash", ""))) {
             throw new IllegalArgumentException("CITY_BLUEPRINT_OUTDOOR_NOT_ACCEPTED: "
                     + "the active Blueprint does not match its accepted submission artifacts.");

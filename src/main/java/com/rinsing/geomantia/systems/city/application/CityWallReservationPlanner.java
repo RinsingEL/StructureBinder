@@ -33,6 +33,14 @@ public final class CityWallReservationPlanner {
                            JsonObject anchorMap,
                            int wallMarginBlocks,
                            int wallCorridorHalfWidthBlocks) {
+        return plan(reviewPackage, anchorMap, wallMarginBlocks, wallCorridorHalfWidthBlocks, null);
+    }
+
+    public JsonObject plan(CityLandformReviewPackage reviewPackage,
+                           JsonObject anchorMap,
+                           int wallMarginBlocks,
+                           int wallCorridorHalfWidthBlocks,
+                           BlockBounds patchContextBounds) {
         int margin = wallMarginBlocks <= 0 ? DEFAULT_WALL_MARGIN_BLOCKS : wallMarginBlocks;
         int halfWidth = wallCorridorHalfWidthBlocks <= 0
                 ? DEFAULT_WALL_CORRIDOR_HALF_WIDTH_BLOCKS : wallCorridorHalfWidthBlocks;
@@ -55,11 +63,14 @@ public final class CityWallReservationPlanner {
         BlockBounds corridorBounds = union(segments);
         int rescanMargin = Math.max(DEFAULT_COVERAGE_RESCAN_MARGIN_BLOCKS, halfWidth + unitLength);
         BlockBounds requiredCoverage = expand(corridorBounds, rescanMargin);
-        BlockBounds d3Coverage = new BlockBounds(
+        BlockBounds coreGridCoverage = new BlockBounds(
                 reviewPackage.grid().blockMinX(),
                 reviewPackage.grid().blockMinZ(),
                 reviewPackage.grid().blockMaxX() - 1,
                 reviewPackage.grid().blockMaxZ() - 1);
+        boolean usePatchContext = patchContextBounds != null
+                && containsBounds(patchContextBounds, coreGridCoverage);
+        BlockBounds d3Coverage = usePatchContext ? patchContextBounds : coreGridCoverage;
         if (!containsBounds(d3Coverage, requiredCoverage)) {
             throw new IllegalArgumentException("D5_REQUIRES_PATCH_RESCAN: wall/structure reservation requires "
                     + boundsText(requiredCoverage) + " but D3 coverage is " + boundsText(d3Coverage) + ".");
@@ -86,7 +97,9 @@ public final class CityWallReservationPlanner {
         plan.add("sourcePlannedFootprintUnion", plannedFootprintUnion == null
                 ? new JsonObject() : boundsJson(plannedFootprintUnion));
         plan.add("sourceEnvelopeUnion", envelopeUnion == null ? new JsonObject() : boundsJson(envelopeUnion));
+        plan.add("sourceD3CoreGridBounds", boundsJson(coreGridCoverage));
         plan.add("sourceD3CoverageBounds", boundsJson(d3Coverage));
+        plan.addProperty("d3CoverageSource", usePatchContext ? "patch_context_bounds" : "grid");
         plan.add("requiredD3CoverageBounds", boundsJson(requiredCoverage));
         plan.add("wallBounds", boundsJson(wallBounds));
         plan.add("wallCoverageBounds", boundsJson(requiredCoverage));
@@ -108,6 +121,8 @@ public final class CityWallReservationPlanner {
         coverage.addProperty("reasonCode", "D5_COVERAGE_OK");
         coverage.addProperty("patchBoundaryIsFinalWallLine", false);
         coverage.addProperty("rescanMarginBlocks", rescanMargin);
+        coverage.addProperty("coverageSource", usePatchContext ? "patch_context_bounds" : "grid");
+        coverage.add("coreGridBounds", boundsJson(coreGridCoverage));
         coverage.add("requiredCoverageBounds", boundsJson(requiredCoverage));
         coverage.add("d3CoverageBounds", boundsJson(d3Coverage));
         plan.add("coverageCheck", coverage);

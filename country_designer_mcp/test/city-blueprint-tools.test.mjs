@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { realmTools } from "../dist/src/realm/tools.js";
 
-test("publishes the program-only context tool and one-shot structure plus outdoor Blueprint schema", () => {
+test("publishes the program-only context tool and retryable structure plus outdoor Blueprint schema", () => {
   const prepare = realmTools.find((tool) => tool.name === "city_prepare_d4_blueprint_context");
   const submit = realmTools.find((tool) => tool.name === "city_submit_d4_blueprint");
   const autoStatus = realmTools.find((tool) => tool.name === "city_post_d4_auto_compile_status");
@@ -14,6 +14,19 @@ test("publishes the program-only context tool and one-shot structure plus outdoo
   assert.ok(autoStatus);
   assert.ok(designQueueRefresh);
   assert.ok(designQueueStatus);
+  const d3 = realmTools.find((tool) => tool.name === "city_plan_d3");
+  const showCandidates = realmTools.find((tool) => tool.name === "patch_explorer_show_candidates");
+  assert.match(d3.description, /自动打开 city_d4 Patch Explorer/);
+  assert.match(showCandidates.description, /解锁 city_prepare_d4_blueprint_context/);
+  assert.match(showCandidates.description, /structurePlacementCapacity/);
+  assert.match(showCandidates.description, /hardLegal 只表示地块非空/);
+  assert.match(prepare.description, /Top Patch review/);
+  assert.match(prepare.description, /5 次程序编译失败预算/);
+  assert.match(submit.description, /failureCount<5/);
+  assert.match(submit.description, /禁止读取服务端源码/);
+  assert.match(autoStatus.description, /workflowResponse/);
+  assert.match(autoStatus.description, /禁止转去读取服务端源码/);
+  assert.match(designQueueStatus.description, /waiting_for_patch_review/);
   assert.equal(submit.inputSchema.properties.autoAdvanceAfterD4.type, "boolean");
   assert.deepEqual(autoStatus.inputSchema.required, ["runId", "citySeedId"]);
   assert.deepEqual(designQueueRefresh.inputSchema.properties.orderingMode.enum,
@@ -124,6 +137,8 @@ test("publishes the programmatic compiler and defaults workflow to Blueprint", (
   assert.deepEqual(compile.inputSchema.required, ["runId", "citySeedId"]);
   assert.equal(compile.inputSchema.additionalProperties, false);
   assert.match(compile.description, /不调用 AI/);
+  assert.match(compile.description, /最多 5 次/);
+  assert.match(compile.description, /禁止读取服务端源码/);
   assert.equal(workflow.inputSchema.properties.d4CandidateMode, undefined);
   assert.match(workflow.description, /同一 Blueprint 自动编译户外空间/);
   assert.equal(workflow.inputSchema.properties.enableLandUseLayer, undefined);

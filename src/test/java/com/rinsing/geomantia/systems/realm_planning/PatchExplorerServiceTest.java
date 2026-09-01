@@ -353,7 +353,16 @@ class PatchExplorerServiceTest {
         JsonObject d4Opened = service.open(request("run_refined", "city_d4", "city_a"));
         JsonObject d4Show = sessionRequest(d4Opened);
         d4Show.add("interestTypes", strings("plain"));
-        assertTopPatchesOverview(root, service.showCandidates(d4Show, runner));
+        JsonObject d4Shown = service.showCandidates(d4Show, runner);
+        assertTopPatchesOverview(root, d4Shown);
+        JsonObject d4Candidate = d4Shown.getAsJsonArray("typePages").get(0).getAsJsonObject()
+                .getAsJsonArray("candidates").get(0).getAsJsonObject();
+        assertEquals("candidate_has_available_cells_only", d4Candidate.get("hardLegalMeaning").getAsString());
+        JsonObject capacity = d4Candidate.getAsJsonObject("structurePlacementCapacity");
+        assertEquals(4, capacity.get("maxSolidRectangleWidthCells").getAsInt());
+        assertEquals(1, capacity.get("maxSolidRectangleDepthCells").getAsInt());
+        assertEquals(16, capacity.get("maxSolidSquareSpanBlocks").getAsInt());
+        assertFalse(capacity.get("guaranteesTemplateFit").getAsBoolean());
 
         Path refinementEvidence = root.resolve(confirmation.getAsJsonObject("artifacts")
                 .get("evidence").getAsString());

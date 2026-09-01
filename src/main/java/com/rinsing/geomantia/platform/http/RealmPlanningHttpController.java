@@ -12,6 +12,7 @@ import com.rinsing.geomantia.systems.gis.application.sample.AtlasSampler;
 import com.rinsing.geomantia.systems.city.application.CityWallPlanner;
 import com.rinsing.geomantia.systems.city.application.CityWallReservationPlanner;
 import com.rinsing.geomantia.systems.city.application.CityTestRunLayout;
+import com.rinsing.geomantia.systems.city.application.CityD4PatchReviewService;
 import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprint;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityWorldgenBlockObservationRegistry;
 import com.rinsing.geomantia.platform.RealmPlanningServices;
@@ -241,6 +242,19 @@ final class RealmPlanningHttpController implements AutoCloseable {
                 artifacts.addProperty("heightWaterPreview",
                         relativeArtifact(debugRoot(), terrainPreview.previewPath()));
             }
+            if ("city_d4".equals(scopeType)) {
+                String runId = requiredString(request, "runId");
+                String citySeedId = requiredString(response, "scopeId");
+                JsonObject evidence = new CityD4PatchReviewService(debugRoot())
+                        .begin(runId, citySeedId, response);
+                response.add("patchReviewEvidence", evidence);
+                addAgentNextAction(response, "waiting_for_patch_review",
+                        "D4_REQUIRES_TOP_PATCH_REVIEW", "patch_explorer_show_candidates",
+                        stringValue(response, "sessionId", ""));
+                cityDesignQueue.onAgentWorkflowState(runId, citySeedId,
+                        "waiting_for_patch_review", "D4_REQUIRES_TOP_PATCH_REVIEW",
+                        stringValue(response, "sessionId", ""));
+            }
             return response;
         });
     }
@@ -272,9 +286,21 @@ final class RealmPlanningHttpController implements AutoCloseable {
                     context.preferGeneratorNativeTerrain(), "", "");
             PatchCandidateTerrainPreviewService service =
                     new PatchCandidateTerrainPreviewService(debugRoot());
-            return explorer.showCandidates(request, (runId, realmId, scopeIdentity, target, level) ->
+            JsonObject response = explorer.showCandidates(request, (runId, realmId, scopeIdentity, target, level) ->
                     service.ensure(runId, realmId, runtime.dimensionId(), scopeIdentity,
                             target, level, runtime.selection()));
+            if ("city_d4".equals(stringValue(response, "scopeType", ""))) {
+                String runId = requiredString(request, "runId");
+                String citySeedId = requiredString(response, "scopeId");
+                JsonObject evidence = new CityD4PatchReviewService(debugRoot())
+                        .complete(runId, citySeedId, request, response);
+                response.add("patchReviewEvidence", evidence);
+                addAgentNextAction(response, "patch_review_completed", "PATCH_REVIEW_COMPLETED",
+                        "city_prepare_d4_blueprint_context", "");
+                cityDesignQueue.onAgentWorkflowState(runId, citySeedId,
+                        "waiting_for_agent", "PATCH_REVIEW_COMPLETED", "");
+            }
+            return response;
         });
     }
 
@@ -368,7 +394,7 @@ final class RealmPlanningHttpController implements AutoCloseable {
             String resolvedDimensionId = dimensionId;
             ServerLevel level = callOnServerThread(() -> resolveLevel(
                     resolvedDimensionId, resolvePlayer(playerName)));
-            return CityPlanningEndpointHandler.handlePlanD3(debugRoot(), runId, citySeedId,
+            JsonObject response = CityPlanningEndpointHandler.handlePlanD3(debugRoot(), runId, citySeedId,
                     cellStepBlocks,
                     hasValue(request, "patchScanPaddingBlocks")
                             ? intValue(request, "patchScanPaddingBlocks",
@@ -376,6 +402,12 @@ final class RealmPlanningHttpController implements AutoCloseable {
                             : null,
                     booleanValue(request, "preferGeneratorNativeTerrain", true),
                     level);
+            if ("awaiting_review".equals(stringValue(response, "siteReviewStatus", ""))) {
+                cityDesignQueue.onAgentWorkflowState(runId, citySeedId,
+                        "waiting_for_agent", "D3_SITE_REVIEW_REQUIRED", "");
+                return response;
+            }
+            return beginCityD4PatchReview(runId, citySeedId, response);
         });
     }
 
@@ -384,12 +416,17 @@ final class RealmPlanningHttpController implements AutoCloseable {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             cityDesignQueue.requireCurrentIfManaged(requiredString(request, "runId"),
                     requiredString(request, "citySeedId"));
-            return CityPlanningEndpointHandler.handleReviewD3Site(debugRoot(),
-                    requiredString(request, "runId"),
-                    requiredString(request, "citySeedId"),
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            JsonObject response = CityPlanningEndpointHandler.handleReviewD3Site(debugRoot(),
+                    runId, citySeedId,
                     requiredString(request, "decision"),
                     stringValue(request, "decisionReason", ""),
                     stringValue(request, "reviewedBy", "ai"));
+            if ("accepted".equals(stringValue(response, "siteReviewStatus", ""))) {
+                return beginCityD4PatchReview(runId, citySeedId, response);
+            }
+            return response;
         });
     }
 
@@ -398,12 +435,58 @@ final class RealmPlanningHttpController implements AutoCloseable {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             cityDesignQueue.requireCurrentIfManaged(requiredString(request, "runId"),
                     requiredString(request, "citySeedId"));
-            return CityPlanningEndpointHandler.handlePrepareD4BlueprintContext(debugRoot(),
-                    requiredString(request, "runId"), requiredString(request, "citySeedId"),
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            JsonObject patchReviewEvidence = new CityD4PatchReviewService(debugRoot())
+                    .requireReviewed(runId, citySeedId);
+            JsonObject response = CityPlanningEndpointHandler.handlePrepareD4BlueprintContext(debugRoot(),
+                    runId, citySeedId,
                     requiredObject(request, "terrasenseProfileSource"),
                     requiredObject(request, "templateCatalogSource"),
-                    requiredObject(request, "blueprintReferenceCatalog"));
+                    requiredObject(request, "blueprintReferenceCatalog"), patchReviewEvidence);
+            cityDesignQueue.onAgentWorkflowState(runId, citySeedId,
+                    "waiting_for_agent", "D4_CONTEXT_PREPARED", "");
+            return response;
         });
+    }
+
+    private JsonObject beginCityD4PatchReview(String runId, String citySeedId,
+                                               JsonObject response) throws IOException {
+        JsonObject openRequest = new JsonObject();
+        openRequest.addProperty("runId", runId);
+        openRequest.addProperty("scopeType", "city_d4");
+        openRequest.addProperty("scopeId", citySeedId);
+        openRequest.addProperty("citySeedId", citySeedId);
+        JsonObject patchExplorer = new PatchExplorerService(debugRoot()).open(openRequest);
+        JsonObject evidence = new CityD4PatchReviewService(debugRoot())
+                .begin(runId, citySeedId, patchExplorer);
+        response.add("patchExplorer", patchExplorer);
+        response.add("patchReviewEvidence", evidence);
+        addAgentNextAction(response, "waiting_for_patch_review", "D4_REQUIRES_TOP_PATCH_REVIEW",
+                "patch_explorer_show_candidates", stringValue(patchExplorer, "sessionId", ""));
+        cityDesignQueue.onAgentWorkflowState(runId, citySeedId,
+                "waiting_for_patch_review", "D4_REQUIRES_TOP_PATCH_REVIEW",
+                stringValue(patchExplorer, "sessionId", ""));
+        return response;
+    }
+
+    private static void addAgentNextAction(JsonObject response, String status, String reasonCode,
+                                           String tool, String sessionId) {
+        response.addProperty("status", status);
+        response.addProperty("reasonCode", reasonCode);
+        response.addProperty("nextAction", tool);
+        JsonObject details = new JsonObject();
+        details.addProperty("tool", tool);
+        if (!sessionId.isBlank()) details.addProperty("sessionId", sessionId);
+        if ("patch_explorer_show_candidates".equals(tool)) {
+            JsonArray requiredArguments = new JsonArray();
+            requiredArguments.add("interestTypes");
+            details.add("requiredArguments", requiredArguments);
+        }
+        response.add("nextActionDetails", details);
+        JsonArray nextActions = new JsonArray();
+        nextActions.add(tool);
+        response.add("nextActions", nextActions);
     }
 
     void handleCitySubmitD4Blueprint(HttpExchange exchange) {
@@ -1081,8 +1164,7 @@ final class RealmPlanningHttpController implements AutoCloseable {
             boolean accepted = CityBlueprint.SCHEMA.equals(stringValue(blueprint, "schema", ""))
                     && citySeedId.equals(stringValue(blueprint, "cityId", ""))
                     && booleanValue(validation, "valid", false)
-                    && "accepted".equals(stringValue(submission, "status", ""))
-                    && intValue(submission, "aiCityDesignSubmissionCount", 0) == 1;
+                    && "accepted".equals(stringValue(submission, "status", ""));
             if (!accepted) {
                 throw new IllegalArgumentException("CITY_BLUEPRINT_LAND_USE_ROUTE_NOT_ACCEPTED: "
                         + "Blueprint authority exists but is not an accepted current submission.");

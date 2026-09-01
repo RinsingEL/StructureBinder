@@ -18,6 +18,22 @@ class CityDesignQueueTest {
     Path temporaryDirectory;
 
     @Test
+    void agentWorkflowStateIsNoOpForUnmanagedRun() throws Exception {
+        CityDesignQueue queue = new CityDesignQueue(
+                temporaryDirectory.resolve("debug"),
+                temporaryDirectory.resolve("config.json")
+        );
+
+        queue.onAgentWorkflowState(
+                "standalone-run",
+                "standalone-city",
+                "waiting_for_patch_review",
+                "D4_REQUIRES_TOP_PATCH_REVIEW",
+                "session-1"
+        );
+    }
+
+    @Test
     void sortsAllCitiesByDistanceFromOriginAndAdvancesAfterPostD4() throws Exception {
         CityDesignQueue queue = queue();
         writeRegistry("run_global",
@@ -68,9 +84,34 @@ class CityDesignQueueTest {
         queue.onPostD4State(postState("run_failure", "city_1", "needs_agent"));
         JsonObject state = queue.status("run_failure");
         assertEquals("needs_agent", state.get("status").getAsString());
+        assertEquals("city_post_d4_auto_compile_status", state.get("nextAction").getAsString());
         assertEquals("city_1", state.get("currentCitySeedId").getAsString());
         assertEquals("pending", state.getAsJsonArray("items").get(1).getAsJsonObject()
                 .get("status").getAsString());
+    }
+
+    @Test
+    void exposesMandatoryPatchReviewBetweenD3AndBlueprintPreparation() throws Exception {
+        CityDesignQueue queue = queue();
+        writeRegistry("run_review", seed("city_1", "realm_a", "capital", 4000, 0));
+        queue.refresh("run_review", "global_radial");
+
+        queue.onAgentWorkflowState("run_review", "city_1", "waiting_for_patch_review",
+                "D4_REQUIRES_TOP_PATCH_REVIEW", "pex_review");
+        JsonObject pending = queue.status("run_review");
+        assertEquals("waiting_for_patch_review", pending.get("status").getAsString());
+        assertEquals("patch_explorer_show_candidates", pending.get("nextAction").getAsString());
+        assertEquals("pex_review", pending.getAsJsonObject("currentCity")
+                .get("patchExplorerSessionId").getAsString());
+
+        queue.onAgentWorkflowState("run_review", "city_1", "waiting_for_agent",
+                "PATCH_REVIEW_COMPLETED", "");
+        assertEquals("city_prepare_d4_blueprint_context",
+                queue.status("run_review").get("nextAction").getAsString());
+        queue.onAgentWorkflowState("run_review", "city_1", "waiting_for_agent",
+                "D4_CONTEXT_PREPARED", "");
+        assertEquals("city_submit_d4_blueprint",
+                queue.status("run_review").get("nextAction").getAsString());
     }
 
     @Test

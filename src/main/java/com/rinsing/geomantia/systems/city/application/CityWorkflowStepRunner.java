@@ -96,6 +96,16 @@ public final class CityWorkflowStepRunner {
     }
 
     private static void copyResponseSummary(JsonObject response, JsonObject step) {
+        copyString(response, step, "message");
+        copyString(response, step, "nextAction");
+        copyInt(response, step, "failureCount");
+        copyInt(response, step, "maximumFailureCount");
+        copyInt(response, step, "remainingFailureCount");
+        copyBoolean(response, step, "retryAllowed");
+        if (response != null && response.has("agentRecoveryPolicy")
+                && response.get("agentRecoveryPolicy").isJsonObject()) {
+            step.add("agentRecoveryPolicy", response.getAsJsonObject("agentRecoveryPolicy").deepCopy());
+        }
         if (response != null && response.has("artifacts") && response.get("artifacts").isJsonObject()) {
             step.add("artifacts", response.getAsJsonObject("artifacts").deepCopy());
         }
@@ -110,6 +120,24 @@ public final class CityWorkflowStepRunner {
             JsonObject session = response.getAsJsonObject("d4CandidateSession");
             step.addProperty("selectedAnchorCount", intValue(session, "selectedAnchorCount", 0));
             step.addProperty("remainingSlotCount", intValue(session, "remainingSlotCount", 0));
+        }
+    }
+
+    private static void copyString(JsonObject source, JsonObject target, String key) {
+        if (source != null && source.has(key) && !source.get(key).isJsonNull()) {
+            target.addProperty(key, source.get(key).getAsString());
+        }
+    }
+
+    private static void copyInt(JsonObject source, JsonObject target, String key) {
+        if (source != null && source.has(key) && !source.get(key).isJsonNull()) {
+            target.addProperty(key, source.get(key).getAsInt());
+        }
+    }
+
+    private static void copyBoolean(JsonObject source, JsonObject target, String key) {
+        if (source != null && source.has(key) && !source.get(key).isJsonNull()) {
+            target.addProperty(key, source.get(key).getAsBoolean());
         }
     }
 
