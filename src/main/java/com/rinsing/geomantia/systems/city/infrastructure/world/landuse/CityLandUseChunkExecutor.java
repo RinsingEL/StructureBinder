@@ -50,6 +50,9 @@ public final class CityLandUseChunkExecutor {
         List<PreparedMutation> boundaryPrepared = new ArrayList<>();
         int naturalSurfaceSkipped = 0;
         int occupiedBoundarySkipped = 0;
+        int terraceRailingPrepared = 0;
+        int terraceGreeneryPrepared = 0;
+        int terraceEdgeOccupiedSkipped = 0;
         Map<ColumnKey, ColumnSample> terrain = new HashMap<>();
         CityLandUseMicroGrader.TerrainView terrainView = (x, z) ->
                 terrain.computeIfAbsent(new ColumnKey(x, z), ignored -> requiredColumn(world, x, z));
@@ -173,6 +176,7 @@ public final class CityLandUseChunkExecutor {
             if (mutation.failureReason() != null) {
                 if ("CITY_LAND_USE_BOUNDARY_TARGET_OCCUPIED".equals(mutation.failureReason())) {
                     occupiedBoundarySkipped++;
+                    terraceEdgeOccupiedSkipped++;
                     continue;
                 }
                 return ExecutionResult.failed(fragment, mutation.failureReason(),
@@ -180,6 +184,11 @@ public final class CityLandUseChunkExecutor {
                         naturalSurfaceSkipped, occupiedBoundarySkipped, true);
             }
             boundaryPrepared.add(mutation);
+            if (edge.kind() == CityLandUseMicroGrader.TerraceEdgeKind.RAILING) {
+                terraceRailingPrepared++;
+            } else {
+                terraceGreeneryPrepared++;
+            }
         }
 
         for (CityLandUseChunkCompiler.BoundaryOperation operation : fragment.boundaryOperations()) {
@@ -316,7 +325,8 @@ public final class CityLandUseChunkExecutor {
                     naturalSurfaceSkipped, occupiedBoundarySkipped, rolledBack);
         }
         return ExecutionResult.applied(fragment, preparedBlockCount,
-                naturalSurfaceSkipped, occupiedBoundarySkipped, foundationPlan);
+                naturalSurfaceSkipped, occupiedBoundarySkipped, foundationPlan,
+                terraceRailingPrepared, terraceGreeneryPrepared, terraceEdgeOccupiedSkipped);
     }
 
     /** Selects paired rail columns at a stable seven-block cadence as in-water bridge piers. */
@@ -618,12 +628,17 @@ public final class CityLandUseChunkExecutor {
                                                int applied,
                                                int naturalSkipped,
                                                int boundarySkipped,
-                                               CityLandUseMicroGrader.FoundationPlan foundationPlan) {
+                                               CityLandUseMicroGrader.FoundationPlan foundationPlan,
+                                               int terraceRailingPrepared,
+                                               int terraceGreeneryPrepared,
+                                               int terraceEdgeOccupiedSkipped) {
             return new ExecutionResult(Status.APPLIED, "CITY_LAND_USE_OWNER_APPLIED",
                     fragment.cityId(), fragment.planHash(), fragment.paletteHash(),
                     fragment.chunkX(), fragment.chunkZ(), applied, applied,
                     naturalSkipped, boundarySkipped, true,
-                    FoundationDiagnostics.from(fragment, foundationPlan));
+                    FoundationDiagnostics.from(fragment, foundationPlan,
+                            terraceRailingPrepared, terraceGreeneryPrepared,
+                            terraceEdgeOccupiedSkipped));
         }
 
         private static ExecutionResult failed(CityLandUseChunkCompiler.ChunkFragment fragment,
@@ -665,6 +680,11 @@ public final class CityLandUseChunkExecutor {
             int accessDemandCount,
             int accessPathCellCount,
             int stairCellCount,
+            int terraceEdgePlannedCount,
+            int terraceEdgePreparedCount,
+            int terraceRailingPreparedCount,
+            int terraceGreeneryPreparedCount,
+            int terraceEdgeOccupiedSkippedCount,
             List<CityLandUseMicroGrader.PlatformAdjustment> platformAdjustments,
             List<CityLandUseMicroGrader.AccessOutcome> accessOutcomes) {
         public FoundationDiagnostics {
@@ -675,13 +695,26 @@ public final class CityLandUseChunkExecutor {
         private static FoundationDiagnostics from(
                 CityLandUseChunkCompiler.ChunkFragment fragment,
                 CityLandUseMicroGrader.FoundationPlan plan) {
+            return from(fragment, plan, 0, 0, 0);
+        }
+
+        private static FoundationDiagnostics from(
+                CityLandUseChunkCompiler.ChunkFragment fragment,
+                CityLandUseMicroGrader.FoundationPlan plan,
+                int terraceRailingPrepared,
+                int terraceGreeneryPrepared,
+                int terraceEdgeOccupiedSkipped) {
             return new FoundationDiagnostics(fragment.platformPurposeAnchors().size(),
                     fragment.platformAccessDemands().size(), plan.accessPaths().size(),
-                    plan.stairs().size(), plan.platformAdjustments(), plan.accessOutcomes());
+                    plan.stairs().size(), plan.terraceEdges().size(),
+                    terraceRailingPrepared + terraceGreeneryPrepared,
+                    terraceRailingPrepared, terraceGreeneryPrepared,
+                    terraceEdgeOccupiedSkipped, plan.platformAdjustments(), plan.accessOutcomes());
         }
 
         static FoundationDiagnostics empty() {
-            return new FoundationDiagnostics(0, 0, 0, 0, List.of(), List.of());
+            return new FoundationDiagnostics(0, 0, 0, 0,
+                    0, 0, 0, 0, 0, List.of(), List.of());
         }
     }
 

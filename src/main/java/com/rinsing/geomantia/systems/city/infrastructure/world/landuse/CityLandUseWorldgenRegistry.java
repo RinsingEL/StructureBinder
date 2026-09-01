@@ -650,7 +650,8 @@ public final class CityLandUseWorldgenRegistry {
         entry.addProperty("chunkX", key.chunkX());
         entry.addProperty("chunkZ", key.chunkZ());
         entry.addProperty("surfaceOperationCount", fragment.surfaceOperations().size());
-        entry.addProperty("boundaryOperationCount", fragment.boundaryOperations().size());
+        entry.addProperty("boundaryOperationCount", fragment.boundaryOperations().size()
+                + result.foundationDiagnostics().terraceEdgePlannedCount());
         entry.addProperty("featureOperationCount", fragment.featureOperations().size());
         entry.addProperty("appliedOperationCount", result.appliedOperationCount());
         entry.addProperty("preparedBaseOperationCount", phaseCounts.preparedBase());
@@ -675,6 +676,12 @@ public final class CityLandUseWorldgenRegistry {
         json.addProperty("accessDemandCount", diagnostics.accessDemandCount());
         json.addProperty("accessPathCellCount", diagnostics.accessPathCellCount());
         json.addProperty("stairCellCount", diagnostics.stairCellCount());
+        json.addProperty("terraceEdgePlannedCount", diagnostics.terraceEdgePlannedCount());
+        json.addProperty("terraceEdgePreparedCount", diagnostics.terraceEdgePreparedCount());
+        json.addProperty("terraceRailingPreparedCount", diagnostics.terraceRailingPreparedCount());
+        json.addProperty("terraceGreeneryPreparedCount", diagnostics.terraceGreeneryPreparedCount());
+        json.addProperty("terraceEdgeOccupiedSkippedCount",
+                diagnostics.terraceEdgeOccupiedSkippedCount());
         JsonArray platforms = new JsonArray();
         for (CityLandUseMicroGrader.PlatformAdjustment adjustment : diagnostics.platformAdjustments()) {
             JsonObject item = new JsonObject();
@@ -729,8 +736,14 @@ public final class CityLandUseWorldgenRegistry {
                 .count();
         preparedCrop += (int) fragment.featureOperations().stream()
                 .filter(operation -> operation.surfaceOffset() > 0).count();
+        int terraceSkipped = result.foundationDiagnostics().terraceEdgeOccupiedSkippedCount();
+        int explicitBoundarySkipped = result.occupiedBoundarySkippedCount() - terraceSkipped;
+        if (explicitBoundarySkipped < 0) {
+            throw new IllegalStateException("CITY_LAND_USE_LEDGER_BOUNDARY_COUNTS_INVALID");
+        }
         int preparedBoundary = fragment.boundaryOperations().size()
-                - result.occupiedBoundarySkippedCount();
+                - explicitBoundarySkipped
+                + result.foundationDiagnostics().terraceEdgePreparedCount();
         int preparedBase = result.preparedOperationCount() - preparedCrop - preparedBoundary;
         if (preparedBase < 0 || result.preparedOperationCount() != result.appliedOperationCount()) {
             throw new IllegalStateException("CITY_LAND_USE_LEDGER_PHASE_COUNTS_INVALID");
