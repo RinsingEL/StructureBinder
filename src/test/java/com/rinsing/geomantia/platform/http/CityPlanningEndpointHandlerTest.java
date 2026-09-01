@@ -2232,7 +2232,8 @@ class CityPlanningEndpointHandlerTest {
         assertTrue(response.get("ok").getAsBoolean());
         assertEquals("awaiting_city_blueprint", response.get("status").getAsString());
         JsonObject report = response.getAsJsonObject("workflowReport");
-        assertEquals("blueprint", report.get("d4CandidateMode").getAsString());
+        assertFalse(report.has("d4CandidateMode"));
+        assertEquals("city_blueprint", report.get("landUseControlSource").getAsString());
         assertEquals("city_prepare_d4_blueprint_context", report.get("nextAction").getAsString());
         assertTrue(report.getAsJsonArray("steps").toString().contains("CITY_BLUEPRINT_CONTEXT_NOT_FOUND"));
     }

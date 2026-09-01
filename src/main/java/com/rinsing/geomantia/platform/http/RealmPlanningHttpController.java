@@ -448,18 +448,22 @@ final class RealmPlanningHttpController implements AutoCloseable {
     private JsonObject runPostD4AutoCompile(String runId, String citySeedId) throws Exception {
         String dimensionId = restoredRunDimensionId(runId);
         ServerLevel level = callOnServerThread(() -> resolveLevel(dimensionId, null));
+        JsonObject request = postD4AutoCompileWorkflowRequest(runId, citySeedId);
+        return CityPlanningEndpointHandler.handleRunWorkflow(debugRoot(),
+                server.getWorldPath(LevelResource.ROOT), runId, citySeedId, request,
+                new CityPlanningEndpointHandler.MinecraftServerHolder(server), level);
+    }
+
+    static JsonObject postD4AutoCompileWorkflowRequest(String runId, String citySeedId) {
         JsonObject request = new JsonObject();
         request.addProperty("runId", runId);
         request.addProperty("citySeedId", citySeedId);
-        request.addProperty("d4CandidateMode", "blueprint");
         request.addProperty("skipExisting", true);
         request.addProperty("confirmWorldMutation", true);
         request.addProperty("stopAfterActivation", true);
         request.addProperty("planWalls", false);
         request.addProperty("executeWalls", false);
-        return CityPlanningEndpointHandler.handleRunWorkflow(debugRoot(),
-                server.getWorldPath(LevelResource.ROOT), runId, citySeedId, request,
-                new CityPlanningEndpointHandler.MinecraftServerHolder(server), level);
+        return request;
     }
 
     void handleCityCompileD4Blueprint(HttpExchange exchange) {

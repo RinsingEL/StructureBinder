@@ -6,6 +6,7 @@ import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMa
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityTemplateTerrainStructureRegistries;
 import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.landuse.LandUseDefaultConfigBootstrap;
+import com.rinsing.geomantia.platform.network.AdventurerMapNetwork;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.common.MinecraftForge;
@@ -32,6 +33,7 @@ public final class GeomantiaMod {
     }
 
     private void onCommonSetup(final FMLCommonSetupEvent event) {
+        event.enqueueWork(AdventurerMapNetwork::register);
         LOGGER.info("Geomantia initialized.");
     }
 

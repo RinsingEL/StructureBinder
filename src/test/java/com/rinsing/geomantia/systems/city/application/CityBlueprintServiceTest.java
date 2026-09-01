@@ -333,10 +333,40 @@ class CityBlueprintServiceTest {
         second.addProperty("targetAreaShare", 0.5);
         blueprint.getAsJsonArray("groups").add(second);
         addStructureGround(blueprint, "market");
+        blueprint.getAsJsonArray("relations").add(JsonParser.parseString("""
+                {"fromGroupId":"civic","toGroupId":"market","relationKind":"ADJACENCY",
+                 "strength":"SOFT","distancePreference":"NONE","directionPreference":"NONE"}
+                """).getAsJsonObject());
 
         JsonObject submitted = service.submit(temporary, fixture.runId(), fixture.cityId(),
                 prepared.get("contextId").getAsString(), blueprint);
         assertTrue(submitted.get("ok").getAsBoolean(), submitted.toString());
+    }
+
+    @Test
+    void relationEnabledGroupsMustDeclareAtLeastOneFunctionalRelation() throws Exception {
+        Fixture fixture = fixture("run_missing_function_area_relation", "city:missing_function_area_relation");
+        CityBlueprintService service = new CityBlueprintService();
+        JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
+        JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+        JsonObject second = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject().deepCopy();
+        second.addProperty("groupId", "market");
+        second.addProperty("priority", "STANDARD");
+        blueprint.getAsJsonArray("groups").get(0).getAsJsonObject().addProperty("targetAreaShare", 0.5);
+        second.addProperty("targetAreaShare", 0.5);
+        blueprint.getAsJsonArray("groups").add(second);
+        addStructureGround(blueprint, "market");
+
+        JsonObject submitted = service.submit(temporary, fixture.runId(), fixture.cityId(),
+                prepared.get("contextId").getAsString(), blueprint);
+
+        assertFalse(submitted.get("ok").getAsBoolean());
+        assertEquals(0, submitted.get("aiCityDesignSubmissionCount").getAsInt());
+        assertTrue(submitted.getAsJsonObject("validationReport").getAsJsonArray("issues").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .anyMatch(issue -> "CITY_BLUEPRINT_FUNCTION_AREA_RELATION_UNSPECIFIED"
+                        .equals(issue.get("reasonCode").getAsString())));
     }
 
     @Test

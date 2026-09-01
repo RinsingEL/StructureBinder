@@ -116,9 +116,12 @@ public final class CityBlueprintValidator {
         validatePlacementGroupRefs(issues, blueprint.groups(), groupIds);
         validateArrayCompositions(issues, blueprint.arrayCompositions(), groupsById, catalog);
 
+        Set<String> relatedGroupIds = new HashSet<>();
         for (int index = 0; index < blueprint.relations().size(); index++) {
             CityBlueprint.Relation relation = blueprint.relations().get(index);
             String path = "$.relations[" + index + "]";
+            relatedGroupIds.add(relation.fromGroupId());
+            relatedGroupIds.add(relation.toGroupId());
             if (!groupIds.contains(relation.fromGroupId()) || !groupIds.contains(relation.toGroupId())) {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_RELATION_ENDPOINT_UNKNOWN, path,
                         "Both relation endpoints must name existing groups.");
@@ -140,6 +143,18 @@ public final class CityBlueprintValidator {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_RELATION_DIRECTION_INVALID,
                         path + ".directionPreference",
                         "DIRECTION requires a compass preference; other relation kinds require NONE.");
+            }
+        }
+        if (blueprint.groups().size() > 1) {
+            for (int index = 0; index < blueprint.groups().size(); index++) {
+                CityBlueprint.Group group = blueprint.groups().get(index);
+                if (group.expansionPolicy().allowRelationConnection()
+                        && !relatedGroupIds.contains(group.groupId())) {
+                    add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_FUNCTION_AREA_RELATION_UNSPECIFIED,
+                            "$.groups[" + index + "].expansionPolicy.allowRelationConnection",
+                            "A relation-enabled Group in a multi-Group city must appear in at least one relation: "
+                                    + group.groupId());
+                }
             }
         }
         requireRef(issues, catalog.styleProfileRefs(), blueprint.styleProfile().profileRef(),

@@ -2594,6 +2594,9 @@ final class CityPlanningEndpointHandler {
                                         JsonObject request,
                                         MinecraftServerHolder serverHolder,
                                         ServerLevel level) throws IOException {
+        if (request.has("d4CandidateMode")) {
+            throw new IllegalArgumentException("D4_WORKFLOW_MODE_REMOVED: CityBlueprint is the only D4 workflow.");
+        }
         Path runDir = debugRoot.resolve(runId);
         requireMatchingRunWorldIdentity(runDir, level);
         JsonObject citySeedSnapshot = loadCitySeed(runDir, runId, citySeedId);
@@ -2621,7 +2624,6 @@ final class CityPlanningEndpointHandler {
         report.addProperty("skipExisting", booleanValue(request, "skipExisting", true));
         report.addProperty("planWalls", booleanValue(request, "planWalls", false));
         report.addProperty("executeWalls", booleanValue(request, "executeWalls", false));
-        report.addProperty("d4CandidateMode", stringValue(request, "d4CandidateMode", "blueprint"));
         JsonArray steps = new JsonArray();
         report.add("steps", steps);
         JsonObject artifacts = new JsonObject();
@@ -2640,22 +2642,21 @@ final class CityPlanningEndpointHandler {
 
         WorkflowContext ctx = new WorkflowContext(debugRoot, runDir, runId, citySeedId, request, report, workflow);
 
-        boolean blueprintWorkflow = "blueprint".equals(
-                stringValue(request, "d4CandidateMode", "blueprint"));
-        if (blueprintWorkflow && (request.has("enableLandUseLayer") || request.has("landUseIntentPlan"))) {
+        if (request.has("enableLandUseLayer") || request.has("landUseIntentPlan")) {
             throw new IllegalArgumentException("CITY_BLUEPRINT_WORKFLOW_LAND_USE_OVERRIDE_FORBIDDEN: "
                     + "Blueprint workflow derives LandUse planning exclusively from cityBlueprint.outdoorPlan.");
         }
+        boolean blueprintWorkflow = true;
         LandUseSettings landUseSettings = loadWorkflowLandUseSettings();
         boolean configuredLandUseLayer = hasValue(request, "enableLandUseLayer")
                 ? booleanValue(request, "enableLandUseLayer", landUseSettings.enabledInWorkflow())
                 : landUseSettings.enabledInWorkflow();
-        report.addProperty("landUseControlSource", blueprintWorkflow ? "city_blueprint" : "legacy_debug_request");
+        report.addProperty("landUseControlSource", "city_blueprint");
         report.addProperty("landUseProfileId", landUseSettings.profileId());
         Path workflowTerrainField = cityStageDir(runDir, citySeedId, CityTestRunLayout.LAND_USE)
                 .resolve("land_use_terrain_field.json");
         Path d3WorkflowArtifact = configuredLandUseLayer
-                || blueprintWorkflow && (level != null || Files.isRegularFile(workflowTerrainField))
+                || level != null || Files.isRegularFile(workflowTerrainField)
                 ? workflowTerrainField : d3PackagePath(runDir, citySeedId);
 
         if (!ctx.workflow().runStep("city_plan_d3", d3WorkflowArtifact, () -> handlePlanD3(
@@ -2849,9 +2850,6 @@ final class CityPlanningEndpointHandler {
     }
 
     private static boolean workflowRunD4(WorkflowContext ctx) throws IOException {
-        if (ctx.request().has("d4CandidateMode")) {
-            throw new IllegalArgumentException("D4_WORKFLOW_MODE_REMOVED: CityBlueprint is the only D4 workflow.");
-        }
         return workflowRunD4Blueprint(ctx);
     }
 
@@ -3075,7 +3073,7 @@ final class CityPlanningEndpointHandler {
         if (!workflowRunD4Session(ctx, stagePlan.keyDesignSlotPlan(), "city_d4_key_structure")) {
             return false;
         }
-        String mode = stringValue(ctx.request(), "d4CandidateMode", "array_candidate_selection_loop");
+        String mode = "array_candidate_selection_loop";
         JsonObject arrayLayoutPlan = ctx.request().has("arrayLayoutPlan")
                 && ctx.request().get("arrayLayoutPlan").isJsonObject()
                 ? ctx.request().getAsJsonObject("arrayLayoutPlan").deepCopy()

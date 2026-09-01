@@ -1297,7 +1297,7 @@ class CityBlueprintCompilerServiceTest {
     }
 
     @Test
-    void incompleteRelationsUseDeterministicShortestFallback() throws Exception {
+    void relationOptOutUsesNoUnrelatedFallback() throws Exception {
         Fixture fixture = acceptedFixture("run_fallback_three", "city:fallback_three", 9, 9, "SMALL",
                 d3 -> configureSeparatedPlanningPatches(d3, true), blueprint -> {
                     JsonObject civic = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
@@ -1321,8 +1321,8 @@ class CityBlueprintCompilerServiceTest {
         assertEquals("EXPLICIT_RELATIONS_ONLY_NO_UNRELATED_FALLBACK",
                 plan.get("topologyPolicy").getAsString());
         JsonObject acceptance = result.compileTrace().getAsJsonObject("compilationAcceptance");
-        assertFalse(acceptance.get("passed").getAsBoolean(), acceptance.toString());
-        assertTrue(acceptance.getAsJsonArray("hardBlocks").toString()
+        assertTrue(acceptance.get("passed").getAsBoolean(), acceptance.toString());
+        assertFalse(acceptance.getAsJsonArray("hardBlocks").toString()
                 .contains("far: FUNCTION_AREA_RELATION_UNSPECIFIED"), acceptance.toString());
         assertFalse(acceptance.getAsJsonArray("hardBlocks").toString()
                 .contains("REQUIRED_GROUP_RELATION_GRAPH_DISCONNECTED"), acceptance.toString());
@@ -1742,6 +1742,7 @@ class CityBlueprintCompilerServiceTest {
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"), extentClass);
         customizeBlueprint.accept(blueprint);
         normalizeCaseGroups(blueprint);
+        disableUnspecifiedRelationConnections(blueprint);
         syncOutdoorGrounds(blueprint);
         JsonObject submitted = service.submit(temporary, runId, cityId,
                 prepared.get("contextId").getAsString(), blueprint);
@@ -1775,6 +1776,24 @@ class CityBlueprintCompilerServiceTest {
         if (Math.abs(totalShare - 1.0) > 0.000001 && !groups.isEmpty()) {
             double share = 1.0 / groups.size();
             for (JsonElement element : groups) element.getAsJsonObject().addProperty("targetAreaShare", share);
+        }
+    }
+
+    private static void disableUnspecifiedRelationConnections(JsonObject blueprint) {
+        JsonArray groups = blueprint.getAsJsonArray("groups");
+        if (groups.size() <= 1) return;
+        Set<String> relatedGroupIds = new LinkedHashSet<>();
+        for (JsonElement element : blueprint.getAsJsonArray("relations")) {
+            JsonObject relation = element.getAsJsonObject();
+            relatedGroupIds.add(relation.get("fromGroupId").getAsString());
+            relatedGroupIds.add(relation.get("toGroupId").getAsString());
+        }
+        for (JsonElement element : groups) {
+            JsonObject group = element.getAsJsonObject();
+            if (!relatedGroupIds.contains(group.get("groupId").getAsString())) {
+                group.getAsJsonObject("expansionPolicy")
+                        .addProperty("allowRelationConnection", false);
+            }
         }
     }
 
