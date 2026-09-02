@@ -5,6 +5,7 @@ import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMa
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityTemplateTerrainStructureRegistries;
 import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.landuse.LandUseDefaultConfigBootstrap;
+import com.rinsing.geomantia.systems.realm_planning.adapter.minecraft.AdventurerMapStarterGrant;
 import com.rinsing.geomantia.platform.network.AdventurerMapNetwork;
 import com.rinsing.geomantia.platform.network.ProviderNetwork;
 import com.rinsing.geomantia.platform.registry.GeomantiaItems;
@@ -31,6 +32,7 @@ public final class GeomantiaMod {
         CityTemplateTerrainStructureRegistries.register(modEventBus);
         modEventBus.addListener(this::onCommonSetup);
         MinecraftForge.EVENT_BUS.register(this);
+        MinecraftForge.EVENT_BUS.register(new AdventurerMapStarterGrant());
         registerClientDevHooks();
     }
 
