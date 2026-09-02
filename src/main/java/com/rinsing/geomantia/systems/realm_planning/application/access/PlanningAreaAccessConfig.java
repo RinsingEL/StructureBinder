@@ -19,6 +19,9 @@ public record PlanningAreaAccessConfig(boolean enabled,
     public static final String SCHEMA = "geomantia_planning_area_access.v0.1";
     public static final int DEFAULT_INITIAL_RADIUS_BLOCKS = 2048;
     public static final int DEFAULT_FIRST_CITY_DISTANCE_BLOCKS = 3072;
+    public static final int DEFAULT_TRAVEL_CORRIDOR_RADIUS_BLOCKS = 256;
+    public static final int DEFAULT_BOUNDARY_WARNING_DISTANCE_BLOCKS = 96;
+    public static final double DEFAULT_MAX_ROUTE_DETOUR_RATIO = 2.0D;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     public PlanningAreaAccessConfig {
