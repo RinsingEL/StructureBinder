@@ -772,6 +772,8 @@ public final class CityLandUseWorldgenRegistry {
                 CityLandUseChunkCompiler.MaterialPalette palette =
                         CityLandUseChunkCompiler.MaterialPalette.fromJson(
                                 requiredObject(entry, "materialPalette"));
+                // Keep the persisted legacy hash so linked surface plans and existing ledger
+                // owner keys remain stable across the migration.
                 validatePlanHash(areaPlan);
                 validateSurfacePrintLink(areaPlan, surfacePlan);
                 if (!cityId.equals(areaPlan.cityId())) {
@@ -965,7 +967,7 @@ public final class CityLandUseWorldgenRegistry {
     }
 
     private static void validatePlanHash(LandUseAreaPlan plan) {
-        if (plan.planHash().isBlank() || !plan.planHash().equals(AREA_CODEC.computePlanHash(plan))) {
+        if (!AREA_CODEC.isValidPlanHash(plan)) {
             throw new IllegalArgumentException("LAND_USE_PLAN_HASH_MISMATCH");
         }
     }

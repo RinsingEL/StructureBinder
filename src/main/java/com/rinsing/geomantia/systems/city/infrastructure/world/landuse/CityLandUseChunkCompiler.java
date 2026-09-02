@@ -446,7 +446,7 @@ public final class CityLandUseChunkCompiler {
 
     private void validateLandUsePlan(LandUseAreaPlan plan) {
         Objects.requireNonNull(plan, "plan");
-        if (plan.planHash().isBlank() || !plan.planHash().equals(codec.computePlanHash(plan))) {
+        if (!codec.isValidPlanHash(plan)) {
             throw new IllegalArgumentException("LAND_USE_PLAN_HASH_MISMATCH");
         }
     }
