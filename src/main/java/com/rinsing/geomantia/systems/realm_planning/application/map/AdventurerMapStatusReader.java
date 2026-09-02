@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapSnapshot.CityNode;
+import com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapSnapshot.CoarseMap;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,13 +13,20 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeSet;
 
 /** Builds a read-only map snapshot from the current save's persisted planning artifacts. */
 public final class AdventurerMapStatusReader {
+    private static final int MAX_MAP_SIDE = 96;
+    private static Path cachedMapRun;
+    private static String cachedMapFingerprint = "";
+    private static CoarseMap cachedMap = CoarseMap.empty();
+
     private AdventurerMapStatusReader() {
     }
 
@@ -55,11 +63,175 @@ public final class AdventurerMapStatusReader {
         int completedCount = intValue(queue, "completedCount", 0);
         int remainingCount = intValue(queue, "remainingCount", 0);
         List<CityNode> nodes = cityNodes(run.resolve("city_seed_registry.json"), queueItems, currentCityId);
+        CoarseMap coarseMap = coarseMap(run);
 
         return new AdventurerMapSnapshot(runId, wStatus, wPhase, wProgress,
                 stageState.stage(), stageState.status(), currentRealmId, currentRealmName,
                 currentCityId, cityStatus, completedCount, remainingCount,
-                initialActivityRadiusBlocks, nodes);
+                initialActivityRadiusBlocks, coarseMap, nodes);
+    }
+
+    private static synchronized CoarseMap coarseMap(Path run) throws IOException {
+        Path featurePath = run.resolve("world_feature_grid.json");
+        Path territoryPath = run.resolve("realm_territory_map.json");
+        Path contextPath = run.resolve("world_survey_context.json");
+        String fingerprint = fileFingerprint(featurePath) + '|' + fileFingerprint(territoryPath)
+                + '|' + fileFingerprint(contextPath);
+        if (run.equals(cachedMapRun) && fingerprint.equals(cachedMapFingerprint)) {
+            return cachedMap;
+        }
+
+        JsonObject context = readObjectIfPresent(contextPath);
+        String dimensionId = stringValue(context, "dimensionId", "minecraft:overworld");
+        JsonObject featureGrid = readObjectIfPresent(featurePath);
+        if (featureGrid == null || !featureGrid.has("cells") || !featureGrid.get("cells").isJsonArray()) {
+            return cacheMap(run, fingerprint, new CoarseMap(dimensionId, 0, 0, 1,
+                    0, 0, new byte[0], new byte[0], List.of()));
+        }
+
+        JsonArray cells = featureGrid.getAsJsonArray("cells");
+        if (cells.isEmpty()) {
+            return cacheMap(run, fingerprint, new CoarseMap(dimensionId, 0, 0, 1,
+                    0, 0, new byte[0], new byte[0], List.of()));
+        }
+
+        int minGridX = Integer.MAX_VALUE;
+        int minGridZ = Integer.MAX_VALUE;
+        int maxGridX = Integer.MIN_VALUE;
+        int maxGridZ = Integer.MIN_VALUE;
+        for (JsonElement element : cells) {
+            if (!element.isJsonObject()) continue;
+            JsonObject cell = element.getAsJsonObject();
+            int gridX = intValue(cell, "gridX", 0);
+            int gridZ = intValue(cell, "gridZ", 0);
+            minGridX = Math.min(minGridX, gridX);
+            minGridZ = Math.min(minGridZ, gridZ);
+            maxGridX = Math.max(maxGridX, gridX);
+            maxGridZ = Math.max(maxGridZ, gridZ);
+        }
+        if (minGridX == Integer.MAX_VALUE) {
+            return cacheMap(run, fingerprint, CoarseMap.empty());
+        }
+
+        int sourceWidth = maxGridX - minGridX + 1;
+        int sourceHeight = maxGridZ - minGridZ + 1;
+        int reduction = Math.max(1, (Math.max(sourceWidth, sourceHeight) + MAX_MAP_SIDE - 1) / MAX_MAP_SIDE);
+        int width = (sourceWidth + reduction - 1) / reduction;
+        int height = (sourceHeight + reduction - 1) / reduction;
+        int sourceCellSize = Math.max(1, intValue(featureGrid, "cellStepBlocks",
+                intValue(context, "cellStepBlocks", 128)));
+        int outputCellSize = sourceCellSize * reduction;
+        int pixelCount = width * height;
+        int[][] terrainCounts = new int[pixelCount][12];
+        byte[] terrainCodes = new byte[pixelCount];
+        byte[] realmCodes = new byte[pixelCount];
+
+        TerritoryPalette territory = territoryPalette(territoryPath);
+        for (JsonElement element : cells) {
+            if (!element.isJsonObject()) continue;
+            JsonObject cell = element.getAsJsonObject();
+            int gridX = intValue(cell, "gridX", 0);
+            int gridZ = intValue(cell, "gridZ", 0);
+            int column = (gridX - minGridX) / reduction;
+            int row = (gridZ - minGridZ) / reduction;
+            if (column < 0 || column >= width || row < 0 || row >= height) continue;
+            int index = row * width + column;
+            int terrainCode = terrainCode(cell);
+            terrainCounts[index][terrainCode]++;
+            String realmId = territory.cellRealms().get(cellKey(gridX, gridZ));
+            Integer realmCode = realmId == null ? null : territory.realmCodes().get(realmId);
+            if (realmCode != null && Byte.toUnsignedInt(realmCodes[index]) == 0) {
+                realmCodes[index] = (byte) (int) realmCode;
+            }
+        }
+        for (int index = 0; index < pixelCount; index++) {
+            int selected = 0;
+            for (int code = 1; code < terrainCounts[index].length; code++) {
+                if (terrainCounts[index][code] > terrainCounts[index][selected]) selected = code;
+            }
+            terrainCodes[index] = (byte) selected;
+        }
+
+        CoarseMap value = new CoarseMap(dimensionId, minGridX * sourceCellSize,
+                minGridZ * sourceCellSize, outputCellSize, width, height,
+                terrainCodes, realmCodes, territory.realmIds());
+        return cacheMap(run, fingerprint, value);
+    }
+
+    private static CoarseMap cacheMap(Path run, String fingerprint, CoarseMap value) {
+        cachedMapRun = run;
+        cachedMapFingerprint = fingerprint;
+        cachedMap = value;
+        return value;
+    }
+
+    private static TerritoryPalette territoryPalette(Path path) throws IOException {
+        JsonObject territory = readObjectIfPresent(path);
+        if (territory == null || !territory.has("territoryCells")
+                || !territory.get("territoryCells").isJsonArray()) {
+            return new TerritoryPalette(Map.of(), Map.of(), List.of());
+        }
+        Map<Long, String> cellRealms = new HashMap<>();
+        TreeSet<String> sortedRealmIds = new TreeSet<>();
+        for (JsonElement element : territory.getAsJsonArray("territoryCells")) {
+            if (!element.isJsonObject()) continue;
+            JsonObject cell = element.getAsJsonObject();
+            String realmId = stringValue(cell, "realmId", "");
+            if (realmId.isBlank()) continue;
+            int gridX = intValue(cell, "gridX", 0);
+            int gridZ = intValue(cell, "gridZ", 0);
+            cellRealms.put(cellKey(gridX, gridZ), realmId);
+            sortedRealmIds.add(realmId);
+        }
+        List<String> realmIds = new ArrayList<>(sortedRealmIds);
+        if (realmIds.size() > 255) realmIds = new ArrayList<>(realmIds.subList(0, 255));
+        Map<String, Integer> realmCodes = new LinkedHashMap<>();
+        for (int index = 0; index < realmIds.size() && index < 255; index++) {
+            realmCodes.put(realmIds.get(index), index + 1);
+        }
+        return new TerritoryPalette(Map.copyOf(cellRealms), Map.copyOf(realmCodes), List.copyOf(realmIds));
+    }
+
+    private static int terrainCode(JsonObject cell) {
+        double waterFraction = doubleValue(cell, "waterFrac", 0.0D);
+        String biome = dominantBiome(cell).toLowerCase(java.util.Locale.ROOT);
+        if (waterFraction >= 0.5D || biome.contains("ocean") || biome.contains("river")) {
+            return biome.contains("frozen") ? 2 : 1;
+        }
+        double height = doubleValue(cell, "heightP50", 64.0D);
+        double relief = doubleValue(cell, "robustRelief", 0.0D);
+        if (biome.contains("snow") || biome.contains("frozen") || biome.contains("ice")) return 9;
+        if (biome.contains("badlands")) return 6;
+        if (biome.contains("desert") || biome.contains("beach")) return 5;
+        if (biome.contains("swamp") || biome.contains("mangrove")) return 8;
+        if (height >= 105.0D || relief >= 42.0D || biome.contains("peak")
+                || biome.contains("windswept") || biome.contains("mountain")) return 7;
+        if (biome.contains("forest") || biome.contains("taiga") || biome.contains("jungle")) return 4;
+        if (height >= 82.0D || relief >= 24.0D) return 10;
+        return 3;
+    }
+
+    private static String dominantBiome(JsonObject cell) {
+        if (cell == null || !cell.has("biomeHist") || !cell.get("biomeHist").isJsonObject()) return "";
+        String selected = "";
+        int count = -1;
+        for (Map.Entry<String, JsonElement> entry : cell.getAsJsonObject("biomeHist").entrySet()) {
+            int value = entry.getValue().getAsInt();
+            if (value > count || value == count && entry.getKey().compareTo(selected) < 0) {
+                selected = entry.getKey();
+                count = value;
+            }
+        }
+        return selected;
+    }
+
+    private static long cellKey(int gridX, int gridZ) {
+        return ((long) gridX << 32) ^ (gridZ & 0xffffffffL);
+    }
+
+    private static String fileFingerprint(Path path) throws IOException {
+        if (!Files.isRegularFile(path)) return "missing";
+        return Files.size(path) + ":" + Files.getLastModifiedTime(path).toMillis();
     }
 
     private static Optional<Path> resolveRunDirectory(Path root, String preferredRunId) throws IOException {
@@ -193,5 +365,9 @@ public final class AdventurerMapStatusReader {
     }
 
     private record StageState(String stage, String status) {
+    }
+
+    private record TerritoryPalette(Map<Long, String> cellRealms, Map<String, Integer> realmCodes,
+                                    List<String> realmIds) {
     }
 }

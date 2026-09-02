@@ -1,11 +1,15 @@
 package com.rinsing.geomantia.client;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapSnapshot;
 import com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapSnapshot.CityNode;
+import com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapSnapshot.CoarseMap;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.Locale;
 
@@ -19,12 +23,25 @@ public final class AdventurerMapScreen extends Screen {
     private static final int STATUS_GOOD = 0xFF69C779;
     private static final int STATUS_WARNING = 0xFFE5B95C;
     private static final int STATUS_ERROR = 0xFFE06B6B;
+    private static final int PLAYER_MARKER = 0xFFFFF36A;
+    private static final int[] TERRAIN_COLORS = {
+            0xFF202B2A, 0xFF315E83, 0xFF789CB2, 0xFF6E9252,
+            0xFF3F7047, 0xFFC6AA62, 0xFFB86B3C, 0xFF777A76,
+            0xFF687548, 0xFFD9E7E8, 0xFF8B815F, 0xFF6E9252
+    };
+    private static final int[] REALM_COLORS = {
+            0xFFD95F59, 0xFF5C88D8, 0xFFD2A64D, 0xFF7FB267,
+            0xFF9A70C7, 0xFF53A7A0, 0xFFC8769B, 0xFFA7764B
+    };
 
     private AdventurerMapSnapshot snapshot;
     private boolean loading;
     private boolean debugLayer;
     private double zoom = 1.0D;
     private Button debugButton;
+    private DynamicTexture mapTexture;
+    private ResourceLocation mapTextureLocation;
+    private int automaticRefreshTicks;
 
     AdventurerMapScreen(AdventurerMapSnapshot snapshot) {
         super(Component.translatable("gui.geomantia.adventurer_map.title"));
@@ -40,26 +57,40 @@ public final class AdventurerMapScreen extends Screen {
         addRenderableWidget(Button.builder(Component.translatable("gui.geomantia.adventurer_map.refresh"),
                         button -> refresh())
                 .bounds(16, controlsY, 72, 20).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.geomantia.provider_settings.title"),
+                        button -> ProviderSettingsClient.open(this))
+                .bounds(94, controlsY, 108, 20).build());
         debugButton = addRenderableWidget(Button.builder(debugLabel(), button -> {
                     debugLayer = !debugLayer;
                     button.setMessage(debugLabel());
                 })
-                .bounds(94, controlsY, 112, 20).build());
+                .bounds(208, controlsY, 112, 20).build());
         addRenderableWidget(Button.builder(Component.literal("−"), button -> zoom = Math.max(0.5D, zoom / 1.25D))
-                .bounds(212, controlsY, 24, 20).build());
+                .bounds(326, controlsY, 24, 20).build());
         addRenderableWidget(Button.builder(Component.literal("+"), button -> zoom = Math.min(4.0D, zoom * 1.25D))
-                .bounds(240, controlsY, 24, 20).build());
+                .bounds(354, controlsY, 24, 20).build());
+        rebuildMapTexture();
         refresh();
     }
 
     void receiveSnapshot(AdventurerMapSnapshot snapshot) {
         this.snapshot = snapshot == null ? AdventurerMapSnapshot.empty() : snapshot;
         this.loading = false;
+        rebuildMapTexture();
     }
 
     private void refresh() {
         loading = true;
+        automaticRefreshTicks = 0;
         AdventurerMapClient.requestSnapshot();
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (!loading && ++automaticRefreshTicks >= 100) {
+            refresh();
+        }
     }
 
     private Component debugLabel() {
@@ -93,8 +124,20 @@ public final class AdventurerMapScreen extends Screen {
     }
 
     private void drawMap(GuiGraphics graphics, int left, int top, int right, int bottom, int mouseX, int mouseY) {
-        int centerX = (left + right) / 2;
-        int centerY = (top + bottom) / 2;
+        MapTransform transform = mapTransform(left, top, right, bottom);
+        int centerX = transform.screenX(0.0D);
+        int centerY = transform.screenY(0.0D);
+        graphics.enableScissor(left, top, right, bottom);
+        CoarseMap coarseMap = snapshot.coarseMap();
+        if (coarseMap.available() && mapTextureLocation != null) {
+            int textureLeft = transform.screenX(coarseMap.minBlockX());
+            int textureTop = transform.screenY(coarseMap.minBlockZ());
+            int textureRight = transform.screenX(coarseMap.maxBlockX());
+            int textureBottom = transform.screenY(coarseMap.maxBlockZ());
+            graphics.blit(mapTextureLocation, textureLeft, textureTop, 0.0F, 0.0F,
+                    Math.max(1, textureRight - textureLeft), Math.max(1, textureBottom - textureTop),
+                    coarseMap.width(), coarseMap.height());
+        }
         if (debugLayer) {
             for (int x = centerX; x < right; x += 32) graphics.fill(x, top, x + 1, bottom, MAP_GRID);
             for (int x = centerX; x > left; x -= 32) graphics.fill(x, top, x + 1, bottom, MAP_GRID);
@@ -102,31 +145,19 @@ public final class AdventurerMapScreen extends Screen {
             for (int y = centerY; y > top; y -= 32) graphics.fill(left, y, right, y + 1, MAP_GRID);
         }
 
-        int availableHalfWidth = Math.max(1, (right - left) / 2 - 12);
-        int availableHalfHeight = Math.max(1, (bottom - top) / 2 - 12);
         int initialRadiusBlocks = Math.max(1, snapshot.initialActivityRadiusBlocks());
-        int maxAbsX = initialRadiusBlocks;
-        int maxAbsZ = initialRadiusBlocks;
-        for (CityNode node : snapshot.cityNodes()) {
-            maxAbsX = Math.max(maxAbsX, Math.abs(node.blockX()));
-            maxAbsZ = Math.max(maxAbsZ, Math.abs(node.blockZ()));
-        }
-        double baseScale = Math.min((double) availableHalfWidth / maxAbsX,
-                (double) availableHalfHeight / maxAbsZ);
-        double scale = baseScale * zoom;
-
-        int initialLeft = centerX - (int) Math.round(initialRadiusBlocks * scale);
-        int initialTop = centerY - (int) Math.round(initialRadiusBlocks * scale);
-        int initialRight = centerX + (int) Math.round(initialRadiusBlocks * scale);
-        int initialBottom = centerY + (int) Math.round(initialRadiusBlocks * scale);
+        int initialLeft = transform.screenX(-initialRadiusBlocks);
+        int initialTop = transform.screenY(-initialRadiusBlocks);
+        int initialRight = transform.screenX(initialRadiusBlocks);
+        int initialBottom = transform.screenY(initialRadiusBlocks);
         drawOutline(graphics, initialLeft, initialTop, initialRight, initialBottom, 0xFF5A8F69);
         graphics.fill(centerX - 2, centerY, centerX + 3, centerY + 1, 0xFFD7D7D7);
         graphics.fill(centerX, centerY - 2, centerX + 1, centerY + 3, 0xFFD7D7D7);
         graphics.drawString(font, Component.literal("0,0"), centerX + 4, centerY + 4, TEXT_MUTED, false);
 
         for (CityNode node : snapshot.cityNodes()) {
-            int x = centerX + (int) Math.round(node.blockX() * scale);
-            int y = centerY + (int) Math.round(node.blockZ() * scale);
+            int x = transform.screenX(node.blockX());
+            int y = transform.screenY(node.blockZ());
             if (x < left + 2 || x > right - 2 || y < top + 2 || y > bottom - 2) continue;
             int radius = node.current() ? 5 : "capital".equals(node.role()) ? 4 : 3;
             int color = nodeColor(node);
@@ -141,8 +172,113 @@ public final class AdventurerMapScreen extends Screen {
             }
         }
 
+        drawPlayerMarker(graphics, transform, left, top, right, bottom);
+        graphics.disableScissor();
+
         graphics.drawString(font, Component.translatable("gui.geomantia.adventurer_map.initial_area"),
                 left + 6, bottom - 14, 0xFF77B788, false);
+    }
+
+    private MapTransform mapTransform(int left, int top, int right, int bottom) {
+        CoarseMap map = snapshot.coarseMap();
+        double minX;
+        double minZ;
+        double maxX;
+        double maxZ;
+        if (map.available()) {
+            minX = map.minBlockX();
+            minZ = map.minBlockZ();
+            maxX = map.maxBlockX();
+            maxZ = map.maxBlockZ();
+        } else {
+            int radius = Math.max(1, snapshot.initialActivityRadiusBlocks());
+            minX = -radius;
+            minZ = -radius;
+            maxX = radius;
+            maxZ = radius;
+            for (CityNode node : snapshot.cityNodes()) {
+                minX = Math.min(minX, node.blockX());
+                minZ = Math.min(minZ, node.blockZ());
+                maxX = Math.max(maxX, node.blockX());
+                maxZ = Math.max(maxZ, node.blockZ());
+            }
+        }
+        double worldWidth = Math.max(1.0D, maxX - minX);
+        double worldHeight = Math.max(1.0D, maxZ - minZ);
+        double scale = Math.min((right - left - 16.0D) / worldWidth,
+                (bottom - top - 16.0D) / worldHeight) * zoom;
+        return new MapTransform((minX + maxX) * 0.5D, (minZ + maxZ) * 0.5D,
+                (left + right) * 0.5D, (top + bottom) * 0.5D, Math.max(0.00001D, scale));
+    }
+
+    private void drawPlayerMarker(GuiGraphics graphics, MapTransform transform,
+                                  int left, int top, int right, int bottom) {
+        if (minecraft == null || minecraft.player == null) return;
+        CoarseMap map = snapshot.coarseMap();
+        String dimensionId = minecraft.player.level().dimension().location().toString();
+        if (map.available() && !map.dimensionId().isBlank() && !map.dimensionId().equals(dimensionId)) return;
+        int x = transform.screenX(minecraft.player.getX());
+        int y = transform.screenY(minecraft.player.getZ());
+        if (x < left || x > right || y < top || y > bottom) return;
+        graphics.fill(x - 3, y - 3, x + 4, y + 4, 0xFF1A1A1A);
+        graphics.fill(x - 2, y - 2, x + 3, y + 3, PLAYER_MARKER);
+        graphics.fill(x, y - 4, x + 1, y - 2, PLAYER_MARKER);
+        graphics.drawString(font, Component.translatable("gui.geomantia.adventurer_map.player_position",
+                        (int) Math.floor(minecraft.player.getX()), (int) Math.floor(minecraft.player.getZ())),
+                Math.min(right - 92, x + 6), Math.max(top + 2, y - 4), TEXT_PRIMARY, true);
+    }
+
+    private void rebuildMapTexture() {
+        releaseMapTexture();
+        CoarseMap map = snapshot.coarseMap();
+        if (!map.available() || minecraft == null) return;
+        NativeImage image = new NativeImage(map.width(), map.height(), true);
+        byte[] terrainCodes = map.terrainCodes();
+        byte[] realmCodes = map.realmCodes();
+        for (int row = 0; row < map.height(); row++) {
+            for (int column = 0; column < map.width(); column++) {
+                int index = row * map.width() + column;
+                int terrainCode = Math.min(TERRAIN_COLORS.length - 1, Byte.toUnsignedInt(terrainCodes[index]));
+                int color = TERRAIN_COLORS[terrainCode];
+                int realmCode = Byte.toUnsignedInt(realmCodes[index]);
+                if (realmCode > 0 && realmCode <= map.realmIds().size()) {
+                    String realmId = map.realmIds().get(realmCode - 1);
+                    int realmColor = REALM_COLORS[Math.floorMod(realmId.hashCode(), REALM_COLORS.length)];
+                    color = blend(color, realmColor, 0.28D);
+                }
+                image.setPixelRGBA(column, row, argbToAbgr(color));
+            }
+        }
+        mapTexture = new DynamicTexture(image);
+        mapTextureLocation = minecraft.getTextureManager().register("geomantia/adventurer_map", mapTexture);
+    }
+
+    private void releaseMapTexture() {
+        if (mapTextureLocation != null && minecraft != null) {
+            minecraft.getTextureManager().release(mapTextureLocation);
+        } else if (mapTexture != null) {
+            mapTexture.close();
+        }
+        mapTexture = null;
+        mapTextureLocation = null;
+    }
+
+    private static int blend(int base, int overlay, double amount) {
+        double inverse = 1.0D - amount;
+        int red = (int) Math.round(((base >> 16) & 0xff) * inverse + ((overlay >> 16) & 0xff) * amount);
+        int green = (int) Math.round(((base >> 8) & 0xff) * inverse + ((overlay >> 8) & 0xff) * amount);
+        int blue = (int) Math.round((base & 0xff) * inverse + (overlay & 0xff) * amount);
+        return 0xff000000 | red << 16 | green << 8 | blue;
+    }
+
+    private static int argbToAbgr(int color) {
+        return color & 0xff00ff00 | color >> 16 & 0xff | (color & 0xff) << 16;
+    }
+
+    @Override
+    public void removed() {
+        releaseMapTexture();
+        super.removed();
     }
 
     private void drawStatusPanel(GuiGraphics graphics, int x, int y, int right) {
@@ -259,5 +395,16 @@ public final class AdventurerMapScreen extends Screen {
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    private record MapTransform(double worldCenterX, double worldCenterZ,
+                                double screenCenterX, double screenCenterY, double scale) {
+        int screenX(double blockX) {
+            return (int) Math.round(screenCenterX + (blockX - worldCenterX) * scale);
+        }
+
+        int screenY(double blockZ) {
+            return (int) Math.round(screenCenterY + (blockZ - worldCenterZ) * scale);
+        }
     }
 }

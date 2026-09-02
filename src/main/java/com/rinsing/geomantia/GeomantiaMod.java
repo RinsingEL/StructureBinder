@@ -6,6 +6,8 @@ import com.rinsing.geomantia.systems.city.infrastructure.world.CityTemplateTerra
 import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.landuse.LandUseDefaultConfigBootstrap;
 import com.rinsing.geomantia.platform.network.AdventurerMapNetwork;
+import com.rinsing.geomantia.platform.network.ProviderNetwork;
+import com.rinsing.geomantia.platform.registry.GeomantiaItems;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.common.MinecraftForge;
@@ -25,6 +27,7 @@ public final class GeomantiaMod {
 
     public GeomantiaMod(FMLJavaModLoadingContext context) {
         IEventBus modEventBus = context.getModEventBus();
+        GeomantiaItems.register(modEventBus);
         CityTemplateTerrainStructureRegistries.register(modEventBus);
         modEventBus.addListener(this::onCommonSetup);
         MinecraftForge.EVENT_BUS.register(this);
@@ -32,7 +35,10 @@ public final class GeomantiaMod {
     }
 
     private void onCommonSetup(final FMLCommonSetupEvent event) {
-        event.enqueueWork(AdventurerMapNetwork::register);
+        event.enqueueWork(() -> {
+            AdventurerMapNetwork.register();
+            ProviderNetwork.register();
+        });
         LOGGER.info("Geomantia initialized.");
     }
 

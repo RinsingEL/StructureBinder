@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    { "item": "minecraft:map" },
+    { "item": "minecraft:compass" }
+  ],
+  "result": {
+    "item": "geomantia:adventurer_map",
+    "count": 1
+  }
+}
