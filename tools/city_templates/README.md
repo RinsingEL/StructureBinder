@@ -1,5 +1,26 @@
 # Trek fixed-template importer
 
+## Trek v3 catalog curation
+
+`curate_trek_v3_catalog.py` synchronizes an already reviewed Trek v3 standalone batch into the
+active City catalogs. `StructureProfile.jsonl` remains the semantic source of truth. The tool grants
+all four Minecraft rotations to `trek_v3_sanitized_v1`, replaces the collapsed `trek_v3` template
+style/building semantic, adds concrete AI style profiles, and derives non-empty fill pools from
+reviewed planning roles, styles, and function terms.
+
+Preview and then write an active configuration directory:
+
+```powershell
+python tools/city_templates/curate_trek_v3_catalog.py `
+  --config-dir "run/config/structureTemplate/terrasense/<catalog>"
+
+python tools/city_templates/curate_trek_v3_catalog.py `
+  --config-dir "run/config/structureTemplate/terrasense/<catalog>" --write
+```
+
+The tool does not infer waterfront, underground, or multi-piece eligibility. It only operates on
+the 46 already approved `trek_v3_sanitized_v1` surface templates and preserves other variants.
+
 ## Generic standalone Jigsaw sanitizer
 
 `jigsaw_template_sanitizer.py` accepts loose `.nbt` files collected from any mod. It does not run
