@@ -2,6 +2,7 @@ package com.rinsing.geomantia.platform.http;
 
 import com.mojang.logging.LogUtils;
 import com.rinsing.geomantia.GeomantiaMod;
+import com.rinsing.geomantia.systems.provider.application.PlayerProviderService;
 import com.sun.net.httpserver.HttpServer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.event.server.ServerStartedEvent;
@@ -132,6 +133,9 @@ public final class GeomantiaHttpServer {
             httpServer = createdServer;
             httpExecutor = createdExecutor;
             activeRealmController = realmController;
+            PlayerProviderService.instance().startAutomation(
+                    minecraftServer.getServerDirectory().toPath(), port,
+                    minecraftServer.overworld().getSeed());
             LOGGER.info("Geomantia GIS API server started on 127.0.0.1:{}.", port);
         } catch (IOException | RuntimeException ex) {
             LOGGER.error("Failed to start Geomantia GIS API server.", ex);
@@ -149,6 +153,7 @@ public final class GeomantiaHttpServer {
     }
 
     private static synchronized void stop() {
+        PlayerProviderService.instance().stopAutomation();
         HttpServer server = httpServer;
         ExecutorService executor = httpExecutor;
         RealmPlanningHttpController realmController = activeRealmController;

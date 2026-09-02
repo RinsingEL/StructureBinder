@@ -18,6 +18,7 @@ public final class PlayerProviderService {
     private final ProviderConfigStore store;
     private final ProviderConnectionTester tester;
     private final MultimodalProviderClient client;
+    private final PlayerProviderAgentRunner agentRunner;
     private final ExecutorService executor;
     private volatile String connectionState = "not_tested";
     private volatile String message = "";
@@ -27,6 +28,8 @@ public final class PlayerProviderService {
         this.store = store;
         this.tester = tester;
         this.client = client;
+        this.agentRunner = new PlayerProviderAgentRunner(store, new DeepSeekToolLoopClient(),
+                ignored -> { });
         this.executor = Executors.newSingleThreadExecutor(runnable -> {
             Thread thread = new Thread(runnable, "Geomantia-Player-Provider");
             thread.setDaemon(true);
@@ -36,6 +39,14 @@ public final class PlayerProviderService {
 
     public static PlayerProviderService instance() {
         return INSTANCE;
+    }
+
+    public void startAutomation(Path serverDirectory, int apiPort, long worldSeed) {
+        agentRunner.start(serverDirectory, apiPort, worldSeed);
+    }
+
+    public void stopAutomation() {
+        agentRunner.close();
     }
 
     public ProviderSettingsSnapshot snapshot(boolean editable) {
@@ -58,6 +69,7 @@ public final class PlayerProviderService {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 store.save(config, replacementApiKey, clearStoredApiKey);
+                agentRunner.retryNow();
                 connectionState = "saved";
                 message = "PROVIDER_SETTINGS_SAVED";
                 return snapshot(true);
@@ -108,13 +120,16 @@ public final class PlayerProviderService {
         ProviderSettingsSnapshot value = snapshot(false);
         return new ProviderSettingsSnapshot(value.providerKind(), value.enabled(), value.baseUrl(),
                 value.model(), value.timeoutSeconds(), value.hasApiKey(), value.apiKeySource(),
-                false, "forbidden", "PROVIDER_ADMIN_REQUIRED");
+                false, "forbidden", "PROVIDER_ADMIN_REQUIRED", value.automationState(),
+                value.automationMessage(), value.activeRunId(), value.activeCitySeedId(), value.activeTool());
     }
 
-    private static ProviderSettingsSnapshot snapshot(PlayerProviderConfig config, Credentials credentials,
-                                                     boolean editable, String state, String message) {
+    private ProviderSettingsSnapshot snapshot(PlayerProviderConfig config, Credentials credentials,
+                                              boolean editable, String state, String message) {
+        PlayerProviderAgentRunner.AutomationStatus automation = agentRunner.status();
         return new ProviderSettingsSnapshot(config.providerKind(), config.enabled(), config.baseUrl(),
                 config.model(), config.timeoutSeconds(), credentials.present(), credentials.source(),
-                editable, state, message);
+                editable, state, message, automation.state(), automation.message(), automation.runId(),
+                automation.citySeedId(), automation.activeTool());
     }
 }

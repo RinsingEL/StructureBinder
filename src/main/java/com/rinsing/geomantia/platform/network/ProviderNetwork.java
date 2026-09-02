@@ -20,7 +20,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 public final class ProviderNetwork {
-    private static final String PROTOCOL = "1";
+    private static final String PROTOCOL = "2";
     private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.fromNamespaceAndPath(GeomantiaMod.MOD_ID, "player_provider"),
             () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
@@ -100,12 +100,19 @@ public final class ProviderNetwork {
             buffer.writeBoolean(value.editable());
             buffer.writeUtf(value.connectionState());
             buffer.writeUtf(value.message());
+            buffer.writeUtf(value.automationState());
+            buffer.writeUtf(value.automationMessage());
+            buffer.writeUtf(value.activeRunId());
+            buffer.writeUtf(value.activeCitySeedId());
+            buffer.writeUtf(value.activeTool());
         }
 
         static SettingsResponse decode(FriendlyByteBuf buffer) {
             return new SettingsResponse(new ProviderSettingsSnapshot(buffer.readUtf(), buffer.readBoolean(),
                     buffer.readUtf(512), buffer.readUtf(160), buffer.readVarInt(), buffer.readBoolean(),
-                    buffer.readUtf(32), buffer.readBoolean(), buffer.readUtf(64), buffer.readUtf(256)));
+                    buffer.readUtf(32), buffer.readBoolean(), buffer.readUtf(64), buffer.readUtf(256),
+                    buffer.readUtf(64), buffer.readUtf(256), buffer.readUtf(160), buffer.readUtf(256),
+                    buffer.readUtf(160)));
         }
 
         static void handle(SettingsResponse response, Supplier<NetworkEvent.Context> contextSupplier) {

@@ -30,6 +30,9 @@ public final class ProviderSettingsScreen extends Screen {
     private boolean testAfterSave;
     private String connectionState = "loading";
     private String statusMessage = "";
+    private String automationState = "idle";
+    private String automationMessage = "";
+    private String activeTool = "";
 
     private EditBox baseUrl;
     private EditBox model;
@@ -40,6 +43,7 @@ public final class ProviderSettingsScreen extends Screen {
     private Button saveButton;
     private Button testButton;
     private Button clearKeyButton;
+    private int statusRefreshTicks;
 
     ProviderSettingsScreen(Screen parent) {
         super(Component.translatable("gui.geomantia.provider_settings.title"));
@@ -107,6 +111,9 @@ public final class ProviderSettingsScreen extends Screen {
         apiKeySource = snapshot.apiKeySource();
         connectionState = snapshot.connectionState();
         statusMessage = snapshot.message();
+        automationState = snapshot.automationState();
+        automationMessage = snapshot.automationMessage();
+        activeTool = snapshot.activeTool();
         baseUrl.setValue(snapshot.baseUrl());
         model.setValue(snapshot.model());
         timeout.setValue(Integer.toString(snapshot.timeoutSeconds()));
@@ -124,6 +131,15 @@ public final class ProviderSettingsScreen extends Screen {
             testAfterSave = false;
             connectionState = "testing";
             ProviderNetwork.testConnection();
+        }
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (++statusRefreshTicks >= 40) {
+            statusRefreshTicks = 0;
+            ProviderSettingsClient.request();
         }
     }
 
@@ -204,9 +220,10 @@ public final class ProviderSettingsScreen extends Screen {
         y += 32;
         drawLabel(graphics, "gui.geomantia.provider_settings.timeout", labelX, y);
         graphics.drawString(font, statusComponent(), labelX, 252, statusColor(), false);
+        graphics.drawString(font, automationComponent(), labelX, 286, automationColor(), false);
         if (!editable && !"loading".equals(connectionState)) {
             graphics.drawString(font, Component.translatable("gui.geomantia.provider_settings.admin_only"),
-                    labelX, 268, WARN, false);
+                    labelX, 302, WARN, false);
         }
         super.render(graphics, mouseX, mouseY, partialTick);
     }
@@ -240,6 +257,32 @@ public final class ProviderSettingsScreen extends Screen {
         return switch (connectionState) {
             case "connected_multimodal", "saved" -> GOOD;
             case "error", "forbidden", "missing_key", "model_missing" -> ERROR;
+            default -> WARN;
+        };
+    }
+
+    private Component automationComponent() {
+        String key = switch (automationState) {
+            case "running" -> "running";
+            case "waiting" -> "waiting";
+            case "error" -> "error";
+            case "missing_key" -> "missing_key";
+            case "disabled" -> "disabled";
+            default -> "idle";
+        };
+        Component value = Component.translatable("gui.geomantia.provider_settings.automation." + key);
+        if (!activeTool.isBlank()) value = value.copy().append(Component.literal(" · " + activeTool));
+        if (!automationMessage.isBlank() && "error".equals(automationState)) {
+            value = value.copy().append(Component.literal(" · " + automationMessage));
+        }
+        return Component.translatable("gui.geomantia.provider_settings.automation")
+                .append(Component.literal(": ")).append(value);
+    }
+
+    private int automationColor() {
+        return switch (automationState) {
+            case "running" -> GOOD;
+            case "error", "missing_key" -> ERROR;
             default -> WARN;
         };
     }
