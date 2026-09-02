@@ -18,6 +18,53 @@ final class ProviderPlanningToolCatalog {
 
     private static JsonObject definition(String name) {
         return switch (name) {
+            case "realm_w_refresh" -> function(name,
+                    "Run or resume the one sealed W survey for this world. The host locks runId. Use the requested "
+                            + "origin-centered release defaults from the current planning state.",
+                    object(properties(
+                            "runId", string(), "planningRadiusBlocks", integer(), "cellStepBlocks", integer(),
+                            "microSampleStrideBlocks", integer(), "localSlopeRadiusBlocks", integer(),
+                            "preferGeneratorNativeTerrain", bool(), "qualityMode", enumeration("smoke", "strict"),
+                            "resumePolicy", enumeration("use_cache", "rescan", "use_cache_strict"),
+                            "centerBlockX", integer(), "centerBlockZ", integer(), "dimensionId", string(),
+                            "worldTheme", object())));
+            case "realm_t1_prepare" -> function(name,
+                    "Create all RealmProfiles together from the sealed W overview and attached map previews. "
+                            + "Use distinct culture, industry, material and landform preferences.",
+                    object(properties("runId", string(), "realmProfiles", array(object()),
+                            "realmCount", integer(), "targetContinentId", string(), "allowAiDraftProfile", bool()),
+                            "realmProfiles", "realmCount"));
+            case "realm_t2_select_coordinate" -> function(name,
+                    "Submit the frozen realm_t2 Patch selection for the active realm. Normal Provider operation "
+                            + "must use patchSelectionRef, not invented grid coordinates.",
+                    object(properties("runId", string(), "realmId", string(), "patchSelectionRef", string(),
+                            "reason", string(), "selectedBy", enumeration("ai"), "allowSnap", bool()),
+                            "patchSelectionRef", "reason"));
+            case "realm_t3_expand" -> function(name,
+                    "Expand every T2-complete realm together exactly once. Never call this separately per realm.",
+                    object(properties("runId", string(), "normalizationGroup", string(),
+                            "allowUnclaimedLand", bool(), "qualityMode", enumeration("smoke", "strict"),
+                            "expansionModel", enumeration("quota_frontier", "action_budget"))));
+            case "realm_t4_patch_planning_create" -> function(name,
+                    "Create the artifact-backed T4 planning session for only the active realm.",
+                    object(properties("runId", string(), "realmId", string(), "planningSessionId", string())));
+            case "realm_t4_patch_planning_select_capital" -> function(name,
+                    "Turn one reviewed realm_t4 patchSelectionRef into the realm's unique capital.",
+                    t4SeedSchema(false));
+            case "realm_t4_patch_planning_add_city" -> function(name,
+                    "Add one non-capital city from a distinct reviewed realm_t4 patchSelectionRef. Use a stable "
+                            + "citySeedId derived from the realm and function.",
+                    t4SeedSchema(true));
+            case "realm_t4_patch_planning_finalize" -> function(name,
+                    "Finalize the active realm after its required city seeds are present. The existing service merges "
+                            + "the realm into the registry and creates the City queue only when all realms are covered.",
+                    object(properties("runId", string(), "planningSessionId", string(),
+                            "cityQueueOrderingMode", enumeration("global_radial", "realm_grouped")),
+                            "planningSessionId"));
+            case "city_design_queue_refresh" -> function(name,
+                    "Build or reconcile the existing persistent City queue after all realms completed T4.",
+                    object(properties("runId", string(),
+                            "orderingMode", enumeration("global_radial", "realm_grouped"))));
             case "city_design_queue_status" -> function(name,
                     "Read the current persistent city queue. Follow its status, reasonCode and nextAction.",
                     object(properties("runId", string()), "runId"));
@@ -36,18 +83,25 @@ final class ProviderPlanningToolCatalog {
                             "decisionReason", string(), "reviewedBy", enumeration("ai")),
                             "decision", "decisionReason"));
             case "patch_explorer_open" -> function(name,
-                    "Open or restore the current city_d4 Patch Explorer session when a prior Agent turn is not in "
-                            + "conversation history. Use scopeType=city_d4 and the active city as scopeId.",
+                    "Open or restore Patch Explorer for the active host-locked realm_t2, realm_t4 or city_d4 scope. "
+                            + "Inspect returned overview images; never invent scope identities or patch IDs.",
                     object(properties(
-                            "runId", string(), "scopeType", enumeration("city_d4"), "scopeId", string(),
-                            "citySeedId", string(), "sessionId", string()), "scopeType"));
+                            "runId", string(), "scopeType", enumeration("realm_t2", "realm_t4", "city_d4"),
+                            "scopeId", string(), "realmId", string(), "citySeedId", string(), "sessionId", string(),
+                            "preferGeneratorNativeTerrain", bool())));
             case "patch_explorer_show_candidates" -> function(name,
-                    "Show Top Patch candidates for landform types you choose from the open city_d4 session. "
-                            + "Inspect the attached preview and capacity evidence before preparing D4.",
+                    "Show Top Patch candidates for landform types you choose from the active session. Inspect the "
+                            + "attached preview, area and capacity evidence before selecting.",
                     object(properties(
                             "runId", string(), "sessionId", string(),
-                            "interestTypes", array(string()), "page", integer(), "pageSize", integer()),
+                            "interestTypes", array(string()), "page", integer(), "pageToken", string(),
+                            "pageSize", integer()),
                             "sessionId", "interestTypes"));
+            case "patch_explorer_select_candidate" -> function(name,
+                    "Freeze one candidate already shown in this Patch Explorer session. Use the exact candidateId "
+                            + "and explain the terrain/profile evidence supporting it.",
+                    object(properties("runId", string(), "sessionId", string(), "candidateId", string(),
+                            "selectionReason", string()), "sessionId", "candidateId", "selectionReason"));
             case "city_prepare_d4_blueprint_context" -> function(name,
                     "Freeze the complete D4 decision context after Patch review. The host injects installed "
                             + "TerraSense profiles, template catalog and Blueprint reference catalog; never pass paths.",
@@ -69,6 +123,23 @@ final class ProviderPlanningToolCatalog {
                     object(properties("runId", string(), "citySeedId", string())));
             default -> throw new IllegalArgumentException("Unsupported Provider planning tool: " + name);
         };
+    }
+
+    private static JsonObject t4SeedSchema(boolean addCity) {
+        JsonObject values = properties("runId", string(), "planningSessionId", string(),
+                "patchSelectionRef", string(), "candidateRangeCells", integer(), "minimumAreaBlocks", integer(),
+                "subregionId", string(), "requiredConditions", array(string()), "coreFunctions", array(string()),
+                "selectionReason", string());
+        if (addCity) {
+            values.add("citySeedId", string());
+            values.add("role", string());
+            values.add("theoreticalScale", enumeration("large_city", "city", "town", "village", "outpost"));
+            values.add("satelliteOf", string());
+            values.add("trigger", string());
+            return object(values, "planningSessionId", "patchSelectionRef", "citySeedId", "role",
+                    "selectionReason");
+        }
+        return object(values, "planningSessionId", "patchSelectionRef", "selectionReason");
     }
 
     private static JsonObject submitSchema() {

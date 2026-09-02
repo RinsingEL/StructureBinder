@@ -37,21 +37,42 @@ public final class ProviderPlanningToolGateway implements DeepSeekToolLoopClient
     private final Path debugRoot;
     private final String runId;
     private final String citySeedId;
+    private final String realmId;
+    private final String patchScopeType;
     private final ManagedCityPlanningSources managedSources;
 
     public ProviderPlanningToolGateway(int apiPort, Path serverDirectory, String runId, String citySeedId) {
         this(HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build(), apiPort,
-                serverDirectory, runId, citySeedId);
+                serverDirectory, runId, citySeedId, "", "city_d4");
     }
 
     ProviderPlanningToolGateway(HttpClient httpClient, int apiPort, Path serverDirectory,
                                 String runId, String citySeedId) {
+        this(httpClient, apiPort, serverDirectory, runId, citySeedId, "", "city_d4");
+    }
+
+    public static ProviderPlanningToolGateway forStep(int apiPort, Path serverDirectory,
+                                                       ProviderPlanningDiscovery.PlanningStep step) {
+        String patchScope = switch (step.stage()) {
+            case T2 -> "realm_t2";
+            case T4 -> "realm_t4";
+            case CITY -> "city_d4";
+            default -> "";
+        };
+        return new ProviderPlanningToolGateway(HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build(),
+                apiPort, serverDirectory, step.runId(), step.citySeedId(), step.realmId(), patchScope);
+    }
+
+    private ProviderPlanningToolGateway(HttpClient httpClient, int apiPort, Path serverDirectory,
+                                String runId, String citySeedId, String realmId, String patchScopeType) {
         this.httpClient = httpClient;
         this.apiBase = URI.create("http://127.0.0.1:" + apiPort);
         this.serverDirectory = serverDirectory.toAbsolutePath().normalize();
         this.debugRoot = this.serverDirectory.resolve("realm_debug").normalize();
         this.runId = requireIdentity(runId, "runId");
-        this.citySeedId = requireIdentity(citySeedId, "citySeedId");
+        this.citySeedId = optionalIdentity(citySeedId, "citySeedId");
+        this.realmId = optionalIdentity(realmId, "realmId");
+        this.patchScopeType = patchScopeType == null ? "" : patchScopeType;
         this.managedSources = new ManagedCityPlanningSources(this.serverDirectory);
     }
 
@@ -65,11 +86,26 @@ public final class ProviderPlanningToolGateway implements DeepSeekToolLoopClient
         if (endpoint == null) return error("PROVIDER_AGENT_TOOL_NOT_ALLOWED", toolName);
         JsonObject arguments = suppliedArguments == null ? new JsonObject() : suppliedArguments.deepCopy();
         injectIdentity(arguments, "runId", runId);
-        if (endpoint.cityScoped()) injectIdentity(arguments, "citySeedId", citySeedId);
-        if ("patch_explorer_open".equals(toolName)) {
-            injectIdentity(arguments, "scopeId", citySeedId);
-            injectIdentity(arguments, "scopeType", "city_d4");
+        if (endpoint.cityScoped()) injectIdentity(arguments, "citySeedId", requiredScope(citySeedId, "citySeedId"));
+        if ("realm_t1_prepare".equals(toolName) && !arguments.has("realmCount")) {
+            arguments.addProperty("realmCount", 3);
         }
+        if ("realm_t2_select_coordinate".equals(toolName)
+                || "realm_t4_patch_planning_create".equals(toolName)) {
+            injectIdentity(arguments, "realmId", requiredScope(realmId, "realmId"));
+        }
+        if ("patch_explorer_open".equals(toolName)) {
+            String scopeId = "city_d4".equals(patchScopeType)
+                    ? requiredScope(citySeedId, "citySeedId") : requiredScope(realmId, "realmId");
+            injectIdentity(arguments, "scopeId", scopeId);
+            injectIdentity(arguments, "scopeType", requiredScope(patchScopeType, "scopeType"));
+            if ("city_d4".equals(patchScopeType)) injectIdentity(arguments, "citySeedId", citySeedId);
+            else injectIdentity(arguments, "realmId", realmId);
+        }
+        if ("patch_explorer_show_candidates".equals(toolName)
+                || "patch_explorer_select_candidate".equals(toolName)) validatePatchSession(arguments);
+        if (toolName.startsWith("realm_t4_patch_planning_")
+                && !"realm_t4_patch_planning_create".equals(toolName)) validateT4Session(arguments);
         if ("city_prepare_d4_blueprint_context".equals(toolName)) managedSources.resolve().applyTo(arguments);
         if (arguments.toString().length() > MAX_ARGUMENT_CHARS) {
             return error("PROVIDER_AGENT_TOOL_ARGUMENTS_TOO_LARGE", toolName);
@@ -190,16 +226,75 @@ public final class ProviderPlanningToolGateway implements DeepSeekToolLoopClient
         return value;
     }
 
+    private static String optionalIdentity(String value, String field) {
+        if (value == null || value.isBlank()) return "";
+        return requireIdentity(value, field);
+    }
+
+    private static String requiredScope(String value, String field) {
+        if (value == null || value.isBlank()) throw new IllegalArgumentException("PROVIDER_AGENT_SCOPE_MISSING: " + field);
+        return value;
+    }
+
+    private void validatePatchSession(JsonObject arguments) throws IOException {
+        String sessionId = requireIdentity(string(arguments, "sessionId"), "sessionId");
+        Path path = debugRoot.resolve(runId).resolve("patch_explorer_" + sessionId)
+                .resolve("patch_explorer_session.json").normalize();
+        if (!path.startsWith(debugRoot.resolve(runId)) || !Files.isRegularFile(path)) {
+            throw new IllegalArgumentException("PROVIDER_AGENT_PATCH_SESSION_NOT_FOUND");
+        }
+        JsonObject session = JsonParser.parseString(Files.readString(path)).getAsJsonObject();
+        String expectedId = "city_d4".equals(patchScopeType) ? citySeedId : realmId;
+        if (!runId.equals(string(session, "runId")) || !patchScopeType.equals(string(session, "scopeType"))
+                || !expectedId.equals(string(session, "scopeId"))) {
+            throw new IllegalArgumentException("PROVIDER_AGENT_PATCH_SESSION_SCOPE_MISMATCH");
+        }
+    }
+
+    private void validateT4Session(JsonObject arguments) throws IOException {
+        String sessionId = requireIdentity(string(arguments, "planningSessionId"), "planningSessionId");
+        Path path = debugRoot.resolve(runId).resolve("realm_t4_patch_planning_" + sessionId + ".json").normalize();
+        if (!path.startsWith(debugRoot.resolve(runId)) || !Files.isRegularFile(path)) {
+            throw new IllegalArgumentException("PROVIDER_AGENT_T4_SESSION_NOT_FOUND");
+        }
+        JsonObject session = JsonParser.parseString(Files.readString(path)).getAsJsonObject();
+        if (!runId.equals(string(session, "runId")) || !realmId.equals(string(session, "realmId"))) {
+            throw new IllegalArgumentException("PROVIDER_AGENT_T4_SESSION_SCOPE_MISMATCH");
+        }
+    }
+
+    private static String string(JsonObject object, String key) {
+        return object != null && object.has(key) && !object.get(key).isJsonNull()
+                ? object.get(key).getAsString() : "";
+    }
+
     private static Map<String, Endpoint> endpoints() {
         Map<String, Endpoint> endpoints = new LinkedHashMap<>();
+        endpoints.put("realm_w_refresh", new Endpoint("/realm/w/refresh", false, true));
+        endpoints.put("realm_t1_prepare", new Endpoint("/realm/t1/prepare", false, false));
+        endpoints.put("realm_t2_select_coordinate",
+                new Endpoint("/realm/t2/select_coordinate", false, false));
+        endpoints.put("realm_t3_expand", new Endpoint("/realm/t3/expand", false, true));
+        endpoints.put("realm_t4_patch_planning_create",
+                new Endpoint("/realm/t4/patch_planning/create", false, false));
+        endpoints.put("realm_t4_patch_planning_select_capital",
+                new Endpoint("/realm/t4/patch_planning/select_capital", false, false));
+        endpoints.put("realm_t4_patch_planning_add_city",
+                new Endpoint("/realm/t4/patch_planning/add_city", false, false));
+        endpoints.put("realm_t4_patch_planning_finalize",
+                new Endpoint("/realm/t4/patch_planning/finalize", false, false));
+        endpoints.put("city_design_queue_refresh",
+                new Endpoint("/realm/city/design_queue/refresh", false, false));
         endpoints.put("city_design_queue_status",
                 new Endpoint("/realm/city/design_queue/status", false, false));
         endpoints.put("city_plan_d3", new Endpoint("/realm/city/plan_d3", true, true));
         endpoints.put("city_review_d3_site", new Endpoint("/realm/city/review_d3_site", true, false));
         endpoints.put("patch_explorer_open",
-                new Endpoint("/realm/patch_explorer/open", true, true));
+                new Endpoint("/realm/patch_explorer/open", false, true));
         endpoints.put("patch_explorer_show_candidates",
                 new Endpoint("/realm/patch_explorer/show_candidates", false, true));
+        endpoints.put("patch_explorer_select_candidate",
+                new Endpoint("/realm/patch_explorer/select_candidate", false, true));
         endpoints.put("city_prepare_d4_blueprint_context",
                 new Endpoint("/realm/city/prepare_d4_blueprint_context", true, false));
         endpoints.put("city_submit_d4_blueprint",

@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Objects;
-import java.util.Optional;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -27,7 +27,7 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
     private final Consumer<AutomationStatus> statusListener;
     private final AtomicBoolean turnRunning = new AtomicBoolean();
     private volatile ScheduledExecutorService scheduler;
-    private volatile ProviderRunDiscovery discovery;
+    private volatile ProviderPlanningDiscovery discovery;
     private volatile Path serverDirectory;
     private volatile int apiPort;
     private volatile long retryAfterEpochSecond;
@@ -45,7 +45,7 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
         close();
         this.serverDirectory = serverDirectory.toAbsolutePath().normalize();
         this.apiPort = apiPort;
-        this.discovery = new ProviderRunDiscovery(this.serverDirectory.resolve("realm_debug"), worldSeed);
+        this.discovery = new ProviderPlanningDiscovery(this.serverDirectory.resolve("realm_debug"), worldSeed);
         this.lastCompletedIdentity = "";
         this.retryAfterEpochSecond = 0;
         this.scheduler = Executors.newSingleThreadScheduledExecutor(runnable -> {
@@ -92,21 +92,22 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
             return;
         }
         if (Instant.now().getEpochSecond() < retryAfterEpochSecond) return;
-        Optional<ProviderRunDiscovery.ActiveRun> active = discovery.newestActionableRun();
-        if (active.isEmpty()) {
-            updateIfChanged(new AutomationStatus("idle", "", "", "", "", Instant.now().toString()));
+        ProviderPlanningDiscovery.PlanningStep run = discovery.nextStep();
+        if (!run.stage().actionable()) {
+            String state = run.stage() == ProviderPlanningDiscovery.Stage.COMPLETE ? "completed" : "waiting";
+            updateIfChanged(new AutomationStatus(state, "", run.runId(), run.citySeedId(),
+                    run.nextAction(), Instant.now().toString()));
             return;
         }
-        ProviderRunDiscovery.ActiveRun run = active.get();
         if (run.semanticIdentity().equals(lastCompletedIdentity)) return;
         if (!turnRunning.compareAndSet(false, true)) return;
         update(new AutomationStatus("running", "", run.runId(), run.citySeedId(), run.nextAction(),
                 Instant.now().toString()));
         try {
-            ProviderPlanningToolGateway gateway = new ProviderPlanningToolGateway(
-                    apiPort, serverDirectory, run.runId(), run.citySeedId());
+            ProviderPlanningToolGateway gateway = ProviderPlanningToolGateway.forStep(
+                    apiPort, serverDirectory, run);
             DeepSeekToolLoopClient.LoopResult result = agentClient.run(config, credentials,
-                    run.queueState(), ProviderPlanningToolGateway.allowedTools(), gateway);
+                    run.state(), run.initialImages(), toolsFor(run.stage()), gateway);
             if (result.success()) {
                 lastCompletedIdentity = run.semanticIdentity();
                 retryAfterEpochSecond = Instant.now().getEpochSecond() + NO_PROGRESS_BACKOFF_SECONDS;
@@ -120,6 +121,26 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
         } finally {
             turnRunning.set(false);
         }
+    }
+
+    private static List<String> toolsFor(ProviderPlanningDiscovery.Stage stage) {
+        return switch (stage) {
+            case W -> List.of("realm_w_refresh");
+            case T1 -> List.of("realm_t1_prepare");
+            case T2 -> List.of("patch_explorer_open", "patch_explorer_show_candidates",
+                    "patch_explorer_select_candidate", "realm_t2_select_coordinate");
+            case T3 -> List.of("realm_t3_expand");
+            case T4 -> List.of("realm_t4_patch_planning_create", "patch_explorer_open",
+                    "patch_explorer_show_candidates", "patch_explorer_select_candidate",
+                    "realm_t4_patch_planning_select_capital", "realm_t4_patch_planning_add_city",
+                    "realm_t4_patch_planning_finalize");
+            case QUEUE_REFRESH -> List.of("city_design_queue_refresh");
+            case CITY -> List.of("city_design_queue_status", "city_plan_d3", "city_review_d3_site",
+                    "patch_explorer_open", "patch_explorer_show_candidates",
+                    "city_prepare_d4_blueprint_context", "city_submit_d4_blueprint",
+                    "city_post_d4_auto_compile_status", "city_post_d4_auto_compile_retry");
+            case WAITING, COMPLETE -> List.of();
+        };
     }
 
     private void updateIfChanged(AutomationStatus value) {

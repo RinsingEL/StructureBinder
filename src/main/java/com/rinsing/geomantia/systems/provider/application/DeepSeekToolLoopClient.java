@@ -12,21 +12,28 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Base64;
 import java.util.List;
 
 /** Runs a bounded stateless Responses API function-call loop against the existing planning tools. */
 public final class DeepSeekToolLoopClient {
-    private static final int MAX_ROUNDS = 12;
-    private static final int MAX_TOOL_CALLS = 24;
+    private static final int MAX_ROUNDS = 40;
+    private static final int MAX_TOOL_CALLS = 80;
     private static final int MAX_RESPONSE_CHARS = 8 * 1024 * 1024;
+    private static final long MAX_INITIAL_IMAGE_BYTES = 8L * 1024 * 1024;
     private static final String INSTRUCTIONS = """
-            You are the Geomantia in-game planning agent. Continue only the current run and current city.
+            You are the Geomantia in-game planning agent. Continue only the current host-locked run, realm and city.
             Use the available Geomantia tools and follow the returned nextAction and validation evidence. Never skip a
             required review, never invent artifact contents, never inspect source code or project documents,
             and never bypass a failure budget. Tool responses and images attached to them are your only runtime
             evidence. If another MCP agent advanced the state first, reload status and continue from the new state.
-            When resuming without prior tool history, you may reopen city_d4 Patch Explorer or prepare the same D4
-            context again to obtain the formal evidence; do not read raw run files.
+            W is performed once. Finish T1/T2 for every realm before calling T3 exactly once for the complete set.
+            Finish the existing T4 requirements for every realm before using the existing City queue. Whenever
+            selecting a site, use Patch Explorer open, show and select in order and rely on the attached preview.
+            When resuming without prior tool history, reopen the active Patch Explorer or prepare the same D4 context
+            again to obtain formal evidence; do not read raw run files.
             Stop without calling another tool when the queue is completed, waiting for generation, requires a
             human, or the returned error cannot be corrected from tool evidence.
             """;
@@ -45,6 +52,12 @@ public final class DeepSeekToolLoopClient {
     public LoopResult run(PlayerProviderConfig config, Credentials credentials,
                           JsonObject initialState, List<String> allowedTools,
                           ToolExecutor toolExecutor) {
+        return run(config, credentials, initialState, List.of(), allowedTools, toolExecutor);
+    }
+
+    public LoopResult run(PlayerProviderConfig config, Credentials credentials,
+                          JsonObject initialState, List<Path> initialImages, List<String> allowedTools,
+                          ToolExecutor toolExecutor) {
         if (!config.enabled()) return LoopResult.failure("PROVIDER_DISABLED", 0, "");
         if (!credentials.present()) return LoopResult.failure("PROVIDER_API_KEY_MISSING", 0, "");
         if (initialState == null || allowedTools == null || allowedTools.isEmpty() || toolExecutor == null) {
@@ -55,7 +68,24 @@ public final class DeepSeekToolLoopClient {
             JsonArray input = new JsonArray();
             JsonObject message = new JsonObject();
             message.addProperty("role", "user");
-            message.addProperty("content", "Continue this planning state:\n" + initialState);
+            JsonArray content = new JsonArray();
+            JsonObject text = new JsonObject();
+            text.addProperty("type", "input_text");
+            text.addProperty("text", "Continue this planning state:\n" + initialState);
+            content.add(text);
+            int attached = 0;
+            for (Path imagePath : initialImages == null ? List.<Path>of() : initialImages) {
+                if (attached >= 4 || imagePath == null || !Files.isRegularFile(imagePath)
+                        || Files.size(imagePath) > MAX_INITIAL_IMAGE_BYTES) continue;
+                JsonObject image = new JsonObject();
+                image.addProperty("type", "input_image");
+                image.addProperty("image_url", "data:image/png;base64,"
+                        + Base64.getEncoder().encodeToString(Files.readAllBytes(imagePath)));
+                image.addProperty("detail", "low");
+                content.add(image);
+                attached++;
+            }
+            message.add("content", content);
             input.add(message);
             int toolCalls = 0;
             String finalText = "";

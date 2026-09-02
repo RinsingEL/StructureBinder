@@ -38,6 +38,10 @@ class ProviderPlanningToolGatewayTest {
             received.set(read(exchange));
             reply(exchange, "{\"ok\":true,\"contextId\":\"sha256:test\"}");
         });
+        server.createContext("/realm/patch_explorer/open", exchange -> {
+            received.set(read(exchange));
+            reply(exchange, "{\"ok\":true,\"sessionId\":\"pex_test\"}");
+        });
         server.start();
     }
 
@@ -93,6 +97,38 @@ class ProviderPlanningToolGatewayTest {
         assertTrue(actual.has("blueprintReferenceCatalog"));
         assertTrue(actual.getAsJsonObject("templateCatalogSource").get("catalogPath")
                 .getAsString().endsWith("template_catalog.json"));
+    }
+
+    @Test
+    void locksRealmPatchExplorerToTheDiscoveredT2Scope() throws Exception {
+        JsonObject state = new JsonObject();
+        var step = new ProviderPlanningDiscovery.PlanningStep(ProviderPlanningDiscovery.Stage.T2,
+                "run_a", "realm_a", "", "patch_explorer_open", state,
+                serverDirectory.resolve("realm_debug/run_a"), java.util.List.of(), "identity");
+        ProviderPlanningToolGateway gateway = ProviderPlanningToolGateway.forStep(
+                server.getAddress().getPort(), serverDirectory, step);
+
+        gateway.execute("patch_explorer_open", new JsonObject());
+
+        assertEquals("run_a", received.get().get("runId").getAsString());
+        assertEquals("realm_t2", received.get().get("scopeType").getAsString());
+        assertEquals("realm_a", received.get().get("scopeId").getAsString());
+        assertEquals("realm_a", received.get().get("realmId").getAsString());
+    }
+
+    @Test
+    void rejectsRealmPatchExplorerScopeSwitching() {
+        JsonObject state = new JsonObject();
+        var step = new ProviderPlanningDiscovery.PlanningStep(ProviderPlanningDiscovery.Stage.T4,
+                "run_a", "realm_a", "", "patch_explorer_open", state,
+                serverDirectory.resolve("realm_debug/run_a"), java.util.List.of(), "identity");
+        ProviderPlanningToolGateway gateway = ProviderPlanningToolGateway.forStep(
+                server.getAddress().getPort(), serverDirectory, step);
+        JsonObject arguments = new JsonObject();
+        arguments.addProperty("scopeId", "realm_b");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> gateway.execute("patch_explorer_open", arguments));
     }
 
     private ProviderPlanningToolGateway gateway() {
