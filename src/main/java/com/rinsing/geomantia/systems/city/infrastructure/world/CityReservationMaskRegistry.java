@@ -22,9 +22,11 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
@@ -33,6 +35,8 @@ public final class CityReservationMaskRegistry {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     public static final String PLANNED_REGISTRY_SCHEMA = "city_active_template_placement_registry";
+    public static final String PLANNED_REGISTRIES_SCHEMA = "city_active_template_placement_registries";
+    public static final String MASK_REGISTRIES_SCHEMA = "city_active_reservation_mask_plans";
     public static final String WORLDGEN_LEDGER_SCHEMA = "city_template_placement_ledger";
 
     private static final String ACTIVE_DIR = "geomantia_city_masks";
@@ -40,8 +44,9 @@ public final class CityReservationMaskRegistry {
     private static final String ACTIVE_PLANNED_FILE = "active_planned_structure_registry.json";
     private static final String WORLDGEN_LEDGER_FILE = "worldgen_placement_ledger.json";
 
-    private static volatile ActiveMask activeMask = ActiveMask.empty();
-    private static volatile ActivePlannedStructures activePlannedStructures = ActivePlannedStructures.empty();
+    private static volatile Map<String, ActiveMask> activeMasks = Map.of();
+    private static volatile Map<String, ActivePlannedStructures> activePlannedRegistries = Map.of();
+    private static volatile List<PlannedStructure> activePlannedStructureIndex = List.of();
     private static volatile JsonObject worldgenLedger = emptyWorldgenLedger();
     private static volatile Path activeServerRoot;
     private static volatile long featureHookCalls;
@@ -68,21 +73,34 @@ public final class CityReservationMaskRegistry {
                                                    String runId,
                                                    String citySeedId,
                                                    Path serverRoot) throws IOException {
-        activeServerRoot = serverRoot;
-        activeMask = ActiveMask.from(reservationMaskPlan);
+        Path normalizedRoot = normalizedRoot(serverRoot);
+        if (normalizedRoot != null && !normalizedRoot.equals(activeServerRoot)) {
+            load(normalizedRoot);
+        }
+        activeServerRoot = normalizedRoot;
+        ActiveMask activatedMask = ActiveMask.from(reservationMaskPlan);
+        Map<String, ActiveMask> masks = new LinkedHashMap<>(activeMasks);
+        masks.put(registryKey(activatedMask.cityId()), activatedMask);
+        activeMasks = Map.copyOf(masks);
+        ActivePlannedStructures activatedRegistry = null;
         if (materializationPlan != null) {
-            activePlannedStructures = ActivePlannedStructures.fromMaterializationPlan(
+            activatedRegistry = ActivePlannedStructures.fromMaterializationPlan(
                     materializationPlan, runId, citySeedId);
         } else if (structureAnchorMap != null) {
-            activePlannedStructures = ActivePlannedStructures.from(structureAnchorMap, runId, citySeedId);
+            activatedRegistry = ActivePlannedStructures.from(structureAnchorMap, runId, citySeedId);
         }
-        if (serverRoot != null) {
-            Path dir = activeDir(serverRoot);
+        if (activatedRegistry != null) {
+            Map<String, ActivePlannedStructures> registries = new LinkedHashMap<>(activePlannedRegistries);
+            registries.put(registryKey(activatedRegistry.cityId()), activatedRegistry);
+            activePlannedRegistries = Map.copyOf(registries);
+            rebuildActivePlannedStructureIndex();
+        }
+        if (normalizedRoot != null) {
+            Path dir = activeDir(normalizedRoot);
             Files.createDirectories(dir);
-            Files.writeString(dir.resolve(ACTIVE_MASK_FILE), CityJson.GSON.toJson(reservationMaskPlan));
+            atomicWrite(dir.resolve(ACTIVE_MASK_FILE), activeMasksJson());
             if (materializationPlan != null || structureAnchorMap != null) {
-                Files.writeString(dir.resolve(ACTIVE_PLANNED_FILE),
-                        CityJson.GSON.toJson(activePlannedStructures.asJson()));
+                atomicWrite(dir.resolve(ACTIVE_PLANNED_FILE), activePlannedRegistriesJson());
             }
             Path ledgerPath = dir.resolve(WORLDGEN_LEDGER_FILE);
             if (Files.exists(ledgerPath)) {
@@ -96,35 +114,42 @@ public final class CityReservationMaskRegistry {
                 persistWorldgenLedger();
             }
         }
-        LOGGER.info("Activated City reservation mask: noVegetation={}, noVanillaStructure={}, plannedStructures={}, serverRoot={}",
-                activeMask.noVegetation.size(), activeMask.noVanillaStructure.size(),
-                activePlannedStructures.plannedStructures.size(), serverRoot);
-        return activePlannedStructures.asJson();
+        LOGGER.info("Activated City reservation mask: activeCities={}, noVegetation={}, noVanillaStructure={}, plannedStructures={}, serverRoot={}",
+                activeCityCount(), noVegetationMaskCount(), noVanillaStructureMaskCount(),
+                activePlannedStructureCount(), serverRoot);
+        return activatedRegistry == null ? ActivePlannedStructures.empty().asJson() : activatedRegistry.asJson();
     }
 
     public static synchronized void load(Path serverRoot) {
-        if (serverRoot == null) {
+        Path normalizedRoot = normalizedRoot(serverRoot);
+        if (normalizedRoot == null) {
             return;
         }
-        activeServerRoot = serverRoot;
-        Path dir = activeDir(serverRoot);
+        activeServerRoot = normalizedRoot;
+        Path dir = activeDir(normalizedRoot);
         Path maskPath = dir.resolve(ACTIVE_MASK_FILE);
         if (Files.exists(maskPath)) {
             try {
-                activeMask = ActiveMask.from(JsonParser.parseString(Files.readString(maskPath)).getAsJsonObject());
+                activeMasks = parseActiveMasks(
+                        JsonParser.parseString(Files.readString(maskPath)).getAsJsonObject());
             } catch (Exception ignored) {
-                activeMask = ActiveMask.empty();
+                activeMasks = Map.of();
             }
+        } else {
+            activeMasks = Map.of();
         }
         Path plannedPath = dir.resolve(ACTIVE_PLANNED_FILE);
         if (Files.exists(plannedPath)) {
             try {
-                activePlannedStructures = ActivePlannedStructures.fromRegistry(
+                activePlannedRegistries = parseActivePlannedRegistries(
                         JsonParser.parseString(Files.readString(plannedPath)).getAsJsonObject());
             } catch (Exception ignored) {
-                activePlannedStructures = ActivePlannedStructures.empty();
+                activePlannedRegistries = Map.of();
             }
+        } else {
+            activePlannedRegistries = Map.of();
         }
+        rebuildActivePlannedStructureIndex();
         Path ledgerPath = dir.resolve(WORLDGEN_LEDGER_FILE);
         if (Files.exists(ledgerPath)) {
             try {
@@ -133,9 +158,9 @@ public final class CityReservationMaskRegistry {
                 worldgenLedger = emptyWorldgenLedger();
             }
         }
-        LOGGER.info("Loaded City reservation mask registry: noVegetation={}, noVanillaStructure={}, plannedStructures={}, ledgerPlacements={}, serverRoot={}",
-                activeMask.noVegetation.size(), activeMask.noVanillaStructure.size(),
-                activePlannedStructures.plannedStructures.size(), ledgerPlacedStructures().size(), serverRoot);
+        LOGGER.info("Loaded City reservation mask registry: activeCities={}, noVegetation={}, noVanillaStructure={}, plannedStructures={}, ledgerPlacements={}, serverRoot={}",
+                activeCityCount(), noVegetationMaskCount(), noVanillaStructureMaskCount(),
+                activePlannedStructureCount(), ledgerPlacedStructures().size(), serverRoot);
     }
 
     public static boolean hooksAvailable() {
@@ -148,11 +173,11 @@ public final class CityReservationMaskRegistry {
 
     public static void recordStructureHookCall(ChunkPos chunkPos) {
         structureHookCalls++;
-        ActivePlannedStructures registry = activePlannedStructures;
-        if (registry.plannedStructures.isEmpty() || chunkPos == null) {
+        List<PlannedStructure> plannedStructures = activePlannedStructures();
+        if (plannedStructures.isEmpty() || chunkPos == null) {
             return;
         }
-        for (PlannedStructure planned : registry.plannedStructures) {
+        for (PlannedStructure planned : plannedStructures) {
             if (planned.coversChunk(chunkPos)) {
                 LOGGER.info("City worldgen structure hook reached planned owner chunk {},{} for {} ({})",
                         chunkPos.x, chunkPos.z, planned.anchorId(), planned.templateId());
@@ -163,15 +188,16 @@ public final class CityReservationMaskRegistry {
 
     public static boolean suppressFeature(ConfiguredFeature<?, ?> feature, BlockPos origin) {
         recordFeatureHookCall();
-        ActiveMask mask = activeMask;
-        if (mask.noVegetation.isEmpty() || origin == null || feature == null) {
+        Map<String, ActiveMask> masks = activeMasks;
+        if (masks.isEmpty() || origin == null || feature == null) {
             return false;
         }
         String description = feature.toString().toLowerCase(Locale.ROOT);
         if (!vegetationLike(description)) {
             return false;
         }
-        boolean suppressed = mask.containsNoVegetation(origin.getX(), origin.getZ());
+        boolean suppressed = masks.values().stream()
+                .anyMatch(mask -> mask.containsNoVegetation(origin.getX(), origin.getZ()));
         if (suppressed) {
             recordFeatureSuppression(feature.toString(), origin);
         }
@@ -180,8 +206,8 @@ public final class CityReservationMaskRegistry {
 
     public static boolean suppressVanillaStructure(Structure structure, ChunkPos chunkPos) {
         recordStructureHookCall(chunkPos);
-        ActiveMask mask = activeMask;
-        if (mask.noVanillaStructure.isEmpty() || chunkPos == null || structure == null) {
+        Map<String, ActiveMask> masks = activeMasks;
+        if (masks.isEmpty() || chunkPos == null || structure == null) {
             return false;
         }
         String structureName = structure.toString().toLowerCase(Locale.ROOT);
@@ -192,16 +218,16 @@ public final class CityReservationMaskRegistry {
         }
         BlockBounds chunkBounds = new BlockBounds(chunkPos.getMinBlockX(), chunkPos.getMinBlockZ(),
                 chunkPos.getMaxBlockX(), chunkPos.getMaxBlockZ());
-        return mask.overlapsNoVanillaStructure(chunkBounds);
+        return masks.values().stream().anyMatch(mask -> mask.overlapsNoVanillaStructure(chunkBounds));
     }
 
     public static synchronized List<PlannedStructure> plannedStructuresForChunk(ChunkPos chunkPos) {
-        ActivePlannedStructures registry = activePlannedStructures;
-        if (chunkPos == null || registry.plannedStructures.isEmpty()) {
+        List<PlannedStructure> plannedStructures = activePlannedStructures();
+        if (chunkPos == null || plannedStructures.isEmpty()) {
             return List.of();
         }
         List<PlannedStructure> result = new ArrayList<>();
-        for (PlannedStructure planned : registry.plannedStructures) {
+        for (PlannedStructure planned : plannedStructures) {
             boolean pendingTemplateFragment = planned.coversChunk(chunkPos)
                     && !templateFragmentRecorded(planned, chunkPos);
             if (!ledgerContains(planned) && pendingTemplateFragment) {
@@ -215,8 +241,8 @@ public final class CityReservationMaskRegistry {
     }
 
     public static boolean hasWorldgenLedger(String anchorId) {
-        ActivePlannedStructures registry = activePlannedStructures;
-        return ledgerContains(registry.runId(), registry.citySeedId(), registry.cityId(), anchorId);
+        return activePlannedStructures().stream().anyMatch(planned ->
+                planned.anchorId().equals(anchorId) && ledgerContains(planned));
     }
 
     public static boolean overlapsWorldgenLedger(BlockBounds candidate, String exceptAnchorId) {
@@ -378,12 +404,13 @@ public final class CityReservationMaskRegistry {
     }
 
     public static synchronized Optional<PlannedStructure> findTemplatePlacement(
-            String anchorId, String templateRef, String templateHash) {
-        for (PlannedStructure planned : activePlannedStructures.plannedStructures) {
+            String anchorId, String templateRef, String templateHash, BlockPoint anchorBlock) {
+        for (PlannedStructure planned : activePlannedStructures()) {
             if (planned.isTemplatePlacement()
                     && planned.anchorId().equals(anchorId)
                     && templateRef(planned).equals(templateRef)
-                    && templateHash(planned).equals(templateHash)) {
+                    && templateHash(planned).equals(templateHash)
+                    && planned.anchorBlock().equals(anchorBlock)) {
                 return Optional.of(planned);
             }
         }
@@ -396,7 +423,7 @@ public final class CityReservationMaskRegistry {
             return List.of();
         }
         List<PlannedStructure> result = new ArrayList<>();
-        for (PlannedStructure planned : activePlannedStructures.plannedStructures) {
+        for (PlannedStructure planned : activePlannedStructures()) {
             if (planned.isTemplatePlacement()
                     && planned.coversChunk(ownerChunk)
                     && templatePendingRecorded(planned, ownerChunk)
@@ -499,6 +526,9 @@ public final class CityReservationMaskRegistry {
                                                           String message) {
         JsonArray failures = ensureArray(worldgenLedger, "failures");
         JsonObject obj = new JsonObject();
+        obj.addProperty("runId", planned.runId());
+        obj.addProperty("citySeedId", planned.citySeedId());
+        obj.addProperty("cityId", planned.cityId());
         obj.addProperty("anchorId", planned.anchorId());
         obj.addProperty("templateRef", templateRef(planned));
         obj.addProperty("reasonCode", reasonCode == null ? "WORLDGEN_PLACEMENT_FAILED" : reasonCode);
@@ -514,8 +544,21 @@ public final class CityReservationMaskRegistry {
     }
 
     public static JsonObject activeSummary() {
-        JsonObject obj = activeMask.asJson();
-        obj.addProperty("activePlannedStructureCount", activePlannedStructures.plannedStructures.size());
+        JsonObject obj = new JsonObject();
+        List<String> cityIds = activeMasks.values().stream().map(ActiveMask::cityId)
+                .filter(value -> !value.isBlank()).distinct().sorted().toList();
+        obj.addProperty("cityId", cityIds.size() == 1 ? cityIds.get(0) : "");
+        JsonArray cityIdArray = new JsonArray();
+        cityIds.forEach(cityIdArray::add);
+        obj.add("cityIds", cityIdArray);
+        obj.addProperty("activeCityCount", activeCityCount());
+        obj.addProperty("noVegetationMaskCount", noVegetationMaskCount());
+        obj.addProperty("noVanillaStructureMaskCount", noVanillaStructureMaskCount());
+        obj.addProperty("gateCorridorMaskCount", activeMasks.values().stream()
+                .mapToInt(mask -> mask.gateCorridor().size()).sum());
+        obj.addProperty("noRoadsideStructureMaskCount", activeMasks.values().stream()
+                .mapToInt(mask -> mask.noRoadsideStructure().size()).sum());
+        obj.addProperty("activePlannedStructureCount", activePlannedStructureCount());
         obj.addProperty("worldgenPlacementMode", true);
         obj.addProperty("worldgenLedgerCount", ledgerPlacedStructures().size());
         obj.addProperty("worldgenTemplateFragmentCount", ledgerTemplateFragments().size());
@@ -527,7 +570,20 @@ public final class CityReservationMaskRegistry {
     }
 
     public static JsonObject plannedRegistrySummary() {
-        return activePlannedStructures.asJson();
+        JsonObject obj = new JsonObject();
+        obj.addProperty("schema", PLANNED_REGISTRY_SCHEMA);
+        if (activePlannedRegistries.size() == 1) {
+            ActivePlannedStructures only = activePlannedRegistries.values().iterator().next();
+            obj.addProperty("runId", only.runId());
+            obj.addProperty("citySeedId", only.citySeedId());
+            obj.addProperty("cityId", only.cityId());
+        }
+        obj.addProperty("activeCityCount", activePlannedRegistries.size());
+        obj.addProperty("worldgenPlacementMode", true);
+        JsonArray planned = new JsonArray();
+        activePlannedStructures().forEach(item -> planned.add(item.asJson()));
+        obj.add("plannedStructures", planned);
+        return obj;
     }
 
     public static synchronized JsonObject worldgenLedgerSnapshot() {
@@ -563,21 +619,16 @@ public final class CityReservationMaskRegistry {
     }
 
     public static int activePlannedStructureCount() {
-        return activePlannedStructures.plannedStructures.size();
+        return activePlannedStructures().size();
     }
 
     public static boolean hasActivePlannedStructuresFor(String runId, String citySeedId, String cityId) {
-        ActivePlannedStructures registry = activePlannedStructures;
-        if (registry.plannedStructures.isEmpty()) {
-            return false;
-        }
-        if (runId != null && !runId.isBlank() && !runId.equals(registry.runId())) {
-            return false;
-        }
-        if (citySeedId != null && !citySeedId.isBlank() && !citySeedId.equals(registry.citySeedId())) {
-            return false;
-        }
-        return cityId == null || cityId.isBlank() || cityId.equals(registry.cityId());
+        return activePlannedRegistries.values().stream().anyMatch(registry ->
+                !registry.plannedStructures().isEmpty()
+                        && (runId == null || runId.isBlank() || runId.equals(registry.runId()))
+                        && (citySeedId == null || citySeedId.isBlank()
+                        || citySeedId.equals(registry.citySeedId()))
+                        && (cityId == null || cityId.isBlank() || cityId.equals(registry.cityId())));
     }
 
     public static Path plannedRegistryPath(Path serverRoot) {
@@ -586,6 +637,111 @@ public final class CityReservationMaskRegistry {
 
     public static Path worldgenLedgerPath(Path serverRoot) {
         return activeDir(serverRoot).resolve(WORLDGEN_LEDGER_FILE);
+    }
+
+    private static List<PlannedStructure> activePlannedStructures() {
+        return activePlannedStructureIndex;
+    }
+
+    private static void rebuildActivePlannedStructureIndex() {
+        activePlannedStructureIndex = activePlannedRegistries.values().stream()
+                .sorted(java.util.Comparator.comparing(ActivePlannedStructures::cityId))
+                .flatMap(registry -> registry.plannedStructures().stream()).toList();
+    }
+
+    private static int activeCityCount() {
+        Set<String> cityIds = new LinkedHashSet<>();
+        activeMasks.values().stream().map(ActiveMask::cityId).filter(value -> !value.isBlank())
+                .forEach(cityIds::add);
+        activePlannedRegistries.values().stream().map(ActivePlannedStructures::cityId)
+                .filter(value -> !value.isBlank()).forEach(cityIds::add);
+        return cityIds.size();
+    }
+
+    private static int noVegetationMaskCount() {
+        return activeMasks.values().stream().mapToInt(mask -> mask.noVegetation().size()).sum();
+    }
+
+    private static int noVanillaStructureMaskCount() {
+        return activeMasks.values().stream().mapToInt(mask -> mask.noVanillaStructure().size()).sum();
+    }
+
+    private static Map<String, ActiveMask> parseActiveMasks(JsonObject root) {
+        Map<String, ActiveMask> result = new LinkedHashMap<>();
+        if (MASK_REGISTRIES_SCHEMA.equals(stringValue(root, "schema", ""))) {
+            JsonArray plans = root.getAsJsonArray("plans");
+            if (plans != null) {
+                for (JsonElement element : plans) {
+                    if (!element.isJsonObject()) continue;
+                    ActiveMask mask = ActiveMask.from(element.getAsJsonObject());
+                    result.put(registryKey(mask.cityId()), mask);
+                }
+            }
+        } else {
+            ActiveMask mask = ActiveMask.from(root);
+            result.put(registryKey(mask.cityId()), mask);
+        }
+        return Map.copyOf(result);
+    }
+
+    private static Map<String, ActivePlannedStructures> parseActivePlannedRegistries(JsonObject root) {
+        Map<String, ActivePlannedStructures> result = new LinkedHashMap<>();
+        if (PLANNED_REGISTRIES_SCHEMA.equals(stringValue(root, "schema", ""))) {
+            JsonArray registries = root.getAsJsonArray("registries");
+            if (registries != null) {
+                for (JsonElement element : registries) {
+                    if (!element.isJsonObject()) continue;
+                    ActivePlannedStructures registry = ActivePlannedStructures.fromRegistry(
+                            element.getAsJsonObject());
+                    result.put(registryKey(registry.cityId()), registry);
+                }
+            }
+        } else {
+            ActivePlannedStructures registry = ActivePlannedStructures.fromRegistry(root);
+            result.put(registryKey(registry.cityId()), registry);
+        }
+        return Map.copyOf(result);
+    }
+
+    private static JsonObject activeMasksJson() {
+        JsonObject root = new JsonObject();
+        root.addProperty("schema", MASK_REGISTRIES_SCHEMA);
+        JsonArray plans = new JsonArray();
+        activeMasks.values().stream().sorted(java.util.Comparator.comparing(ActiveMask::cityId))
+                .forEach(mask -> plans.add(mask.asPlanJson()));
+        root.add("plans", plans);
+        return root;
+    }
+
+    private static JsonObject activePlannedRegistriesJson() {
+        JsonObject root = new JsonObject();
+        root.addProperty("schema", PLANNED_REGISTRIES_SCHEMA);
+        JsonArray registries = new JsonArray();
+        activePlannedRegistries.values().stream()
+                .sorted(java.util.Comparator.comparing(ActivePlannedStructures::cityId))
+                .forEach(registry -> registries.add(registry.asJson()));
+        root.add("registries", registries);
+        return root;
+    }
+
+    private static String registryKey(String cityId) {
+        return cityId == null || cityId.isBlank() ? "__legacy__" : cityId;
+    }
+
+    private static void atomicWrite(Path target, JsonObject value) throws IOException {
+        Path dir = target.getParent();
+        Files.createDirectories(dir);
+        Path temp = Files.createTempFile(dir, target.getFileName() + ".", ".tmp");
+        try {
+            Files.writeString(temp, CityJson.GSON.toJson(value));
+            try {
+                Files.move(temp, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            } catch (AtomicMoveNotSupportedException ignored) {
+                Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            Files.deleteIfExists(temp);
+        }
     }
 
     private static synchronized void recordFeatureSuppression(String featureDescription, BlockPos origin) {
@@ -834,6 +990,10 @@ public final class CityReservationMaskRegistry {
         return serverRoot.resolve(ACTIVE_DIR);
     }
 
+    private static Path normalizedRoot(Path serverRoot) {
+        return serverRoot == null ? null : serverRoot.toAbsolutePath().normalize();
+    }
+
     private static JsonObject emptyWorldgenLedger() {
         JsonObject obj = new JsonObject();
         obj.addProperty("schema", WORLDGEN_LEDGER_SCHEMA);
@@ -959,6 +1119,24 @@ public final class CityReservationMaskRegistry {
             obj.addProperty("gateCorridorMaskCount", gateCorridor.size());
             obj.addProperty("noRoadsideStructureMaskCount", noRoadsideStructure.size());
             return obj;
+        }
+
+        JsonObject asPlanJson() {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("cityId", cityId);
+            obj.add("noVegetationMask", maskJson(noVegetation));
+            obj.add("noVanillaStructureMask", maskJson(noVanillaStructure));
+            obj.add("gateCorridorMask", maskJson(gateCorridor));
+            JsonObject channels = new JsonObject();
+            channels.add("noRoadsideStructure", maskJson(noRoadsideStructure));
+            obj.add("worldgenMaskChannels", channels);
+            return obj;
+        }
+
+        private static JsonArray maskJson(List<BlockBounds> masks) {
+            JsonArray array = new JsonArray();
+            masks.forEach(mask -> array.add(boundsJson(mask)));
+            return array;
         }
     }
 

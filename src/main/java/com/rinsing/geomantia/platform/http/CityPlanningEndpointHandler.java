@@ -1646,7 +1646,10 @@ final class CityPlanningEndpointHandler {
         JsonObject response = new JsonObject();
         response.addProperty("ok", report.failedOperations() == 0);
         response.add("activeMaskSummary", CityReservationMaskRegistry.activeSummary());
-        response.addProperty("activePlannedStructureCount", CityReservationMaskRegistry.activePlannedStructureCount());
+        response.addProperty("activePlannedStructureCount",
+                activeRegistry.getAsJsonArray("plannedStructures").size());
+        response.addProperty("totalActivePlannedStructureCount",
+                CityReservationMaskRegistry.activePlannedStructureCount());
         response.addProperty("plannedStructureRegistryPath",
                 CityReservationMaskRegistry.plannedRegistryPath(serverRoot).toString());
         response.addProperty("worldgenPlacementMode", true);
@@ -2240,6 +2243,7 @@ final class CityPlanningEndpointHandler {
                 workflowD5Plan, workflowD6Plan,
                 cityStageDir(runDir, citySeedId, CityTestRunLayout.LAND_USE)
                         .resolve("city_land_use_planning_complete.json"))
+                && workflowD5RuntimeActivationCurrent(workflowD6Plan, runId, citySeedId)
                 ? activeD5Registry : null;
         if (!ctx.workflow().runStep("city_execute_d5", executeD5SkipArtifact,
                 () -> serverHolder.callOnServerThread(() -> handleExecuteD5(
@@ -2332,6 +2336,19 @@ final class CityPlanningEndpointHandler {
                     stringValue(provenance, "sourceD6Hash", ""))
                     && optionalArtifactHash(landUseCompletionPath).equals(
                     stringValue(provenance, "sourceLandUseCompletionHash", ""));
+        } catch (RuntimeException | IOException ignored) {
+            return false;
+        }
+    }
+
+    static boolean workflowD5RuntimeActivationCurrent(Path d6PlanPath,
+                                                      String runId,
+                                                      String citySeedId) {
+        if (!Files.isRegularFile(d6PlanPath)) return false;
+        try {
+            JsonObject d6Plan = JsonParser.parseString(Files.readString(d6PlanPath)).getAsJsonObject();
+            return CityReservationMaskRegistry.hasActivePlannedStructuresFor(
+                    runId, citySeedId, stringValue(d6Plan, "cityId", citySeedId));
         } catch (RuntimeException | IOException ignored) {
             return false;
         }

@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.rinsing.geomantia.systems.city.application.CityTemplatePlacementGeometry;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
+import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import net.minecraft.world.level.ChunkPos;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -167,6 +168,81 @@ class CityReservationMaskRegistryTemplateFragmentTest {
     }
 
     @Test
+    void activatingSecondCityKeepsBothTemplateRegistriesAndMasksAcrossReload() throws Exception {
+        BlockBounds firstFootprint = new BlockBounds(8, 8, 15, 15);
+        BlockBounds secondFootprint = new BlockBounds(40, 8, 47, 15);
+        activate("city_first", "seed_first", firstFootprint);
+        activate("city_second", "seed_second", secondFootprint);
+
+        assertEquals(2, CityReservationMaskRegistry.activePlannedStructureCount());
+        assertTrue(CityReservationMaskRegistry.hasActivePlannedStructuresFor(
+                "run_fragment_test", "seed_first", "city_first"));
+        assertTrue(CityReservationMaskRegistry.hasActivePlannedStructuresFor(
+                "run_fragment_test", "seed_second", "city_second"));
+        assertEquals("city_first", CityReservationMaskRegistry.plannedStructuresForChunk(new ChunkPos(0, 0))
+                .get(0).cityId());
+        assertEquals("city_second", CityReservationMaskRegistry.plannedStructuresForChunk(new ChunkPos(2, 0))
+                .get(0).cityId());
+        assertEquals(2, CityReservationMaskRegistry.activeSummary().get("activeCityCount").getAsInt());
+        assertEquals(2, CityReservationMaskRegistry.activeSummary().get("noVegetationMaskCount").getAsInt());
+
+        JsonObject persistedStructures = com.google.gson.JsonParser.parseString(Files.readString(
+                CityReservationMaskRegistry.plannedRegistryPath(tempDir))).getAsJsonObject();
+        assertEquals(CityReservationMaskRegistry.PLANNED_REGISTRIES_SCHEMA,
+                persistedStructures.get("schema").getAsString());
+        assertEquals(2, persistedStructures.getAsJsonArray("registries").size());
+
+        CityReservationMaskRegistry.load(tempDir);
+
+        assertEquals(2, CityReservationMaskRegistry.activePlannedStructureCount());
+        assertEquals(2, CityReservationMaskRegistry.activeSummary().get("activeCityCount").getAsInt());
+        assertEquals(2, CityReservationMaskRegistry.activeSummary().get("noVegetationMaskCount").getAsInt());
+        assertEquals(new BlockPoint(8, 8), CityReservationMaskRegistry.findTemplatePlacement(
+                "anchor_windmill", "geomantia:city/test/windmill", "sha256:template",
+                new BlockPoint(8, 8)).orElseThrow().anchorBlock());
+        assertEquals(new BlockPoint(40, 8), CityReservationMaskRegistry.findTemplatePlacement(
+                "anchor_windmill", "geomantia:city/test/windmill", "sha256:template",
+                new BlockPoint(40, 8)).orElseThrow().anchorBlock());
+    }
+
+    @Test
+    void legacySingleCityFilesStillLoadIntoTheMultiCityRegistry() throws Exception {
+        BlockBounds footprint = new BlockBounds(8, 8, 15, 15);
+        activate("city_legacy", "seed_legacy", footprint);
+        Path stateDir = tempDir.resolve("geomantia_city_masks");
+        JsonObject plannedCollection = com.google.gson.JsonParser.parseString(Files.readString(
+                CityReservationMaskRegistry.plannedRegistryPath(tempDir))).getAsJsonObject();
+        JsonObject maskCollection = com.google.gson.JsonParser.parseString(Files.readString(
+                stateDir.resolve("active_reservation_mask_plan.json"))).getAsJsonObject();
+        Files.writeString(CityReservationMaskRegistry.plannedRegistryPath(tempDir),
+                plannedCollection.getAsJsonArray("registries").get(0).toString());
+        Files.writeString(stateDir.resolve("active_reservation_mask_plan.json"),
+                maskCollection.getAsJsonArray("plans").get(0).toString());
+
+        CityReservationMaskRegistry.load(tempDir);
+
+        assertEquals(1, CityReservationMaskRegistry.activePlannedStructureCount());
+        assertTrue(CityReservationMaskRegistry.hasActivePlannedStructuresFor(
+                "run_fragment_test", "seed_legacy", "city_legacy"));
+        assertEquals(1, CityReservationMaskRegistry.activeSummary().get("activeCityCount").getAsInt());
+        assertEquals("city_legacy", CityReservationMaskRegistry.activeSummary().get("cityId").getAsString());
+    }
+
+    @Test
+    void reactivatingOneCityReplacesOnlyThatCityRevision() throws Exception {
+        activate("city_first", "seed_first", new BlockBounds(8, 8, 15, 15));
+        activate("city_second", "seed_second", new BlockBounds(40, 8, 47, 15));
+        activate("city_first", "seed_first", new BlockBounds(72, 8, 79, 15));
+
+        assertEquals(2, CityReservationMaskRegistry.activePlannedStructureCount());
+        assertTrue(CityReservationMaskRegistry.plannedStructuresForChunk(new ChunkPos(0, 0)).isEmpty());
+        assertEquals("city_second", CityReservationMaskRegistry.plannedStructuresForChunk(new ChunkPos(2, 0))
+                .get(0).cityId());
+        assertEquals("city_first", CityReservationMaskRegistry.plannedStructuresForChunk(new ChunkPos(4, 0))
+                .get(0).cityId());
+    }
+
+    @Test
     void persistenceFailureDoesNotAuthorizeWorldWriteOrKeepInMemoryDatum() throws Exception {
         CityReservationMaskRegistry.PlannedStructure planned = activate(new BlockBounds(8, 8, 15, 15));
         Path blocker = tempDir.resolve("not-a-server-directory");
@@ -237,9 +313,19 @@ class CityReservationMaskRegistryTemplateFragmentTest {
 
     private CityReservationMaskRegistry.PlannedStructure activate(
             BlockBounds footprint, CityTemplatePlacementGeometry.Rotation rotation) throws Exception {
-        CityReservationMaskRegistry.activate(maskPlan(), null, materializationPlan(footprint, rotation),
+        CityReservationMaskRegistry.activate(maskPlan("city_fragment_test", footprint), null,
+                materializationPlan("city_fragment_test", footprint, rotation),
                 "run_fragment_test", "seed_fragment_test", tempDir);
         return CityReservationMaskRegistry.plannedStructuresForChunk(new ChunkPos(0, 0)).get(0);
+    }
+
+    private CityReservationMaskRegistry.PlannedStructure activate(
+            String cityId, String citySeedId, BlockBounds footprint) throws Exception {
+        CityReservationMaskRegistry.activate(maskPlan(cityId, footprint), null,
+                materializationPlan(cityId, footprint, CityTemplatePlacementGeometry.Rotation.NONE),
+                "run_fragment_test", citySeedId, tempDir);
+        return CityReservationMaskRegistry.plannedStructuresForChunk(
+                new ChunkPos(Math.floorDiv(footprint.minX(), 16), Math.floorDiv(footprint.minZ(), 16))).get(0);
     }
 
     private static CityReservationMaskRegistry.TemplateFragmentRecordResult record(
@@ -259,24 +345,26 @@ class CityReservationMaskRegistryTemplateFragmentTest {
         return owners;
     }
 
-    private static JsonObject maskPlan() {
+    private static JsonObject maskPlan(String cityId, BlockBounds footprint) {
         JsonObject mask = new JsonObject();
-        mask.addProperty("cityId", "city_fragment_test");
-        mask.add("noVegetationMask", new JsonArray());
+        mask.addProperty("cityId", cityId);
+        JsonArray noVegetation = new JsonArray();
+        noVegetation.add(bounds(footprint));
+        mask.add("noVegetationMask", noVegetation);
         mask.add("noVanillaStructureMask", new JsonArray());
         return mask;
     }
 
     private static JsonObject materializationPlan(
-            BlockBounds footprint, CityTemplatePlacementGeometry.Rotation rotation) {
+            String cityId, BlockBounds footprint, CityTemplatePlacementGeometry.Rotation rotation) {
         JsonObject plan = new JsonObject();
-        plan.addProperty("cityId", "city_fragment_test");
+        plan.addProperty("cityId", cityId);
         JsonArray structures = new JsonArray();
         JsonObject structure = new JsonObject();
         structure.addProperty("status", "planned_worldgen");
         structure.addProperty("anchorId", "anchor_windmill");
         structure.addProperty("templateId", "geomantia:city/test/windmill");
-        structure.add("anchorBlock", point(8, 8));
+        structure.add("anchorBlock", point(footprint.minX(), footprint.minZ()));
         structure.add("plannedFootprint", bounds(footprint));
         structure.add("reservedEnvelope", bounds(footprint));
         structure.add("lockedActualFootprint", bounds(footprint));

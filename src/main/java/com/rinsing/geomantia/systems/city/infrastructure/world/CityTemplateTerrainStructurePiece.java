@@ -107,7 +107,8 @@ public final class CityTemplateTerrainStructurePiece extends StructurePiece {
                             ChunkPos chunkPos,
                             BlockPos pivot) {
         Optional<CityReservationMaskRegistry.PlannedStructure> planned =
-                CityReservationMaskRegistry.findTemplatePlacement(anchorId, templateRef.toString(), templateHash);
+                CityReservationMaskRegistry.findTemplatePlacement(
+                        anchorId, templateRef.toString(), templateHash, anchor);
         if (planned.isEmpty()) {
             return;
         }
