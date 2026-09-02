@@ -48,7 +48,7 @@ class CityLandUsePreviewRendererTest {
                         new BlockPoint(21, 8), new BlockPoint(21, 11), new BlockPoint(4, 11)), false)),
                 List.of(new LandUseAreaPlan.GateSlot("farm_gate", new BlockPoint(12, 8),
                         CardinalDirection.NORTH, "farmhouse")), 42,
-                SurfacePolicy.CULTIVATE, VegetationPolicy.CLEAR, BoundaryPolicy.FENCE, "agriculture");
+                SurfacePolicy.CULTIVATE, VegetationPolicy.CLEAR, BoundaryPolicy.FENCE);
         LandUseAreaPlan plan = new LandUseAreaPlan(LandUseAreaPlan.SCHEMA,
                 "city_land_use_rules", "city_preview", "hash", bounds, List.of(area),
                 List.of(new LandUseAreaPlan.ScanlineSpan(0, 0, 31)),
@@ -261,7 +261,7 @@ class CityLandUsePreviewRendererTest {
                         new BlockPoint(21, 8), new BlockPoint(21, 11), new BlockPoint(4, 11)), false)),
                 List.of(new LandUseAreaPlan.GateSlot("farm_gate", new BlockPoint(12, 8),
                         CardinalDirection.NORTH, "farmhouse")), 42,
-                SurfacePolicy.CULTIVATE, VegetationPolicy.CLEAR, BoundaryPolicy.FENCE, "agriculture");
+                SurfacePolicy.CULTIVATE, VegetationPolicy.CLEAR, BoundaryPolicy.FENCE);
         return new LandUseAreaPlan(LandUseAreaPlan.SCHEMA,
                 "city_land_use_rules", "city_preview", "hash", bounds, List.of(area),
                 List.of(new LandUseAreaPlan.ScanlineSpan(0, 0, 31)),
@@ -277,7 +277,7 @@ class CityLandUsePreviewRendererTest {
         return new LandUseAreaPlan.Area(areaId, areaId, areaId, List.of(groupId), List.of(groupId),
                 List.of(new BlockPoint(footprint.minX() - 1, footprint.minZ())), spans, List.of(footprint),
                 List.of(), List.of(), blockCount, SurfacePolicy.CULTIVATE, VegetationPolicy.PRESERVE,
-                BoundaryPolicy.OPEN, areaId);
+                BoundaryPolicy.OPEN);
     }
 
     private static LandUseSeedGroup landscapeGroup(String groupId,
@@ -286,7 +286,7 @@ class CityLandUsePreviewRendererTest {
                                                     LandscapeFillProgram fill) {
         LandUseRule rule = new LandUseRule(groupId, groupId, List.of(groupId), 1, 0, 1,
                 4_000, 4_000, 1, 0, 0, 10, 0, 1, false, SurfacePolicy.CULTIVATE,
-                VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN, groupId);
+                VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN);
         return new LandUseSeedGroup(groupId, rule, settings, List.of(groupId), List.of(footprint),
                 List.of(new BlockPoint(footprint.minX() - 8, footprint.minZ())), List.of(),
                 1, 100, 4_000, 4_000, 1, List.of(), LandUseSeedGroup.GrowthBias.neutral(),

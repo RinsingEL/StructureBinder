@@ -75,8 +75,7 @@ public record LandUseAreaPlan(
             double claimCostTotal,
             SurfacePolicy surfacePolicy,
             VegetationPolicy vegetationPolicy,
-            BoundaryPolicy boundaryPolicy,
-            String decorationPolicy) {
+            BoundaryPolicy boundaryPolicy) {
 
         public Area {
             if (areaId == null || areaId.isBlank()) throw new IllegalArgumentException("areaId is required");
@@ -93,7 +92,6 @@ public record LandUseAreaPlan(
             Objects.requireNonNull(surfacePolicy, "surfacePolicy");
             Objects.requireNonNull(vegetationPolicy, "vegetationPolicy");
             Objects.requireNonNull(boundaryPolicy, "boundaryPolicy");
-            decorationPolicy = decorationPolicy == null ? "" : decorationPolicy;
         }
     }
 

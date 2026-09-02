@@ -1,7 +1,6 @@
 package com.rinsing.geomantia.mixin;
 
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
-import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityWorldgenBlockObservationRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityWorldgenStructurePlacer;
 import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseChunkExecutor;
@@ -72,7 +71,6 @@ public abstract class ChunkGeneratorStructureMaskMixin {
                     chunk.getPos().z,
                     CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES,
                     new CityLandUseChunkExecutor.WorldGenExecutionWorld(level));
-            CityDecorationWorldgenRegistry.applyForChunk(level, chunk);
         } catch (RuntimeException | Error ex) {
             CityWorldgenBlockObservationRegistry.abort();
             throw ex;

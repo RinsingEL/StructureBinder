@@ -333,6 +333,7 @@ public final class CityLandUsePreviewRenderer {
             g.setColor(switch (cell.kind()) {
                 case ROAD_SLAB -> new Color(96, 72, 58, 238);
                 case ROAD_STAIR -> new Color(65, 45, 34, 245);
+                case ROAD_LAMP -> new Color(239, 185, 71, 245);
                 case BRIDGE_DECK -> new Color(126, 79, 38, 245);
                 case BRIDGE_RAIL -> new Color(77, 45, 24, 252);
                 case GREEN_GROUND -> new Color(101, 158, 82, 218);

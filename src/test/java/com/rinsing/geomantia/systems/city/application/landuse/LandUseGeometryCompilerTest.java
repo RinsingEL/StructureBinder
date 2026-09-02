@@ -36,7 +36,7 @@ class LandUseGeometryCompilerTest {
     void touchingSameRuleClaimsWithDifferentExactSurfaceSettingsRemainSeparate() {
         LandUseRule rule = new LandUseRule("commercial", "commercial", List.of("commercial"),
                 1, 0, 1, 20, 20, 1, 0, 0, 1, 0, 1, true,
-                SurfacePolicy.PAVE, VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN, "commercial");
+                SurfacePolicy.PAVE, VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN);
         LandUseSeedGroup stone = group("stone", rule,
                 new LandUseSurfaceSettings(true, true, "minecraft:stone_bricks", "", "PAVE"),
                 new BlockPoint(0, 0));

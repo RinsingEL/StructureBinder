@@ -215,7 +215,7 @@ class LandscapeParcelExpanderTest {
                                           int maximum) {
         LandUseRule rule = new LandUseRule("agriculture", "Agriculture", List.of("agriculture"),
                 1, 0, minimum, maximum, 600, 1, 0, 0, 5, 0, 1, false,
-                SurfacePolicy.CULTIVATE, VegetationPolicy.CLEAR, BoundaryPolicy.FENCE, "agriculture");
+                SurfacePolicy.CULTIVATE, VegetationPolicy.CLEAR, BoundaryPolicy.FENCE);
         LandUseSeedGroup.GrowthRegion region = new LandUseSeedGroup.GrowthRegion(groupId,
                 List.of(groupId), List.of(seed), minimum, preferred, maximum);
         return new LandUseSeedGroup(groupId, rule, LandUseSurfaceSettings.defaults(SurfacePolicy.CULTIVATE),
@@ -246,7 +246,7 @@ class LandscapeParcelExpanderTest {
                 rule.footprintMultiplier(), rule.extraAreaBlocks(), rule.minAreaBlocks(), rule.maxAreaBlocks(),
                 actionBudget, rule.baseStepCost(), rule.slopeCost(), rule.reliefCost(), rule.waterCost(),
                 rule.forestAffinity(), rule.competitionWeight(), rule.mergeSameType(), rule.surfacePolicy(),
-                rule.vegetationPolicy(), rule.boundaryPolicy(), rule.decorationPolicy());
+                rule.vegetationPolicy(), rule.boundaryPolicy());
         return new LandUseSeedGroup(source.groupId(), limitedRule, source.surfaceSettings(), source.anchorIds(),
                 source.structureFootprints(), source.seedPoints(), source.gateSlots(), source.minAreaBlocks(),
                 source.preferredAreaBlocks(), source.maxAreaBlocks(), actionBudget, source.competitionWeight(),

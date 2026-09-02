@@ -20,7 +20,6 @@ public final class CityTestRunLayout {
     public static final String D4_STAGED = "d4_staged";
     public static final String D5 = "d5";
     public static final String LAND_USE = "land_use";
-    public static final String DECORATION = "decoration";
     public static final String D6 = "d6";
     public static final String D7 = "d7";
     public static final String WALLS = "walls";
@@ -64,10 +63,6 @@ public final class CityTestRunLayout {
                 : packageDirectory.resolve("steps").resolve(stage);
     }
 
-    public Path legacyDressingDirectory() {
-        return runDirectory.resolve("city_dressing_" + safeCityId);
-    }
-
     public boolean legacy() {
         return legacy;
     }
@@ -99,7 +94,6 @@ public final class CityTestRunLayout {
         prefixes.put(D4_STAGED, "city_d4_staged_");
         prefixes.put(D5, "city_d5_");
         prefixes.put(LAND_USE, "city_land_use_");
-        prefixes.put(DECORATION, "city_decoration_");
         prefixes.put(D6, "city_d6_");
         prefixes.put(D7, "city_d7_");
         prefixes.put(WALLS, "city_walls_");

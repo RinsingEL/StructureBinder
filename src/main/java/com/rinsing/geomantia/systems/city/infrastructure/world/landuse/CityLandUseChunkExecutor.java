@@ -12,6 +12,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CrossCollisionBlock;
 import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.Half;
@@ -251,6 +252,34 @@ public final class CityLandUseChunkExecutor {
             }
             (operation.surfaceOffset() == 0 ? basePrepared : cropPrepared).add(mutation);
             if (operation.surfaceOffset() == 0) plannedSurfaceY.put(key, surfaceY);
+        }
+
+        for (CityRoadsideLightingPlanner.Lamp lamp : CityRoadsideLightingPlanner.plan(fragment)) {
+            List<PreparedMutation> lampPrepared = new ArrayList<>();
+            boolean obstructed = false;
+            for (CityRoadsideLightingPlanner.BlockDecision block : lamp.blocks()) {
+                ColumnKey datumKey = new ColumnKey(block.datumX(), block.datumZ());
+                ColumnSample datumColumn = terrainView.sample(block.datumX(), block.datumZ());
+                CityLandUseMicroGrader.FoundationDecision foundation = foundationByColumn.get(datumKey);
+                CityLandUseMicroGrader.FillDecision fill = fillByColumn.get(datumKey);
+                CityLandUseMicroGrader.StairDecision stair = platformStairByColumn.get(datumKey);
+                int roadY = plannedSurfaceY.getOrDefault(datumKey, stair != null ? stair.targetY()
+                        : foundation != null ? foundation.targetY()
+                        : fill == null ? datumColumn.surfaceY() : fill.targetY());
+                CityLandUseChunkCompiler.FeatureOperation operation =
+                        new CityLandUseChunkCompiler.FeatureOperation(block.lampId(), block.x(), block.z(),
+                                block.blockId(), block.verticalOffset(),
+                                CityLandUseSurfacePrintPlan.FeatureKind.ROAD_LAMP,
+                                CityLandUseSurfacePrintPlan.HorizontalFacing.NONE);
+                PreparedMutation mutation = prepareFeature(world, operation,
+                        roadY + block.verticalOffset(), false);
+                if (mutation.failureReason() != null) {
+                    obstructed = true;
+                    break;
+                }
+                lampPrepared.add(mutation);
+            }
+            if (!obstructed) cropPrepared.addAll(lampPrepared);
         }
 
         Set<ColumnKey> platformStairColumns = foundationPlan.stairs().stream()
@@ -789,8 +818,11 @@ public final class CityLandUseChunkExecutor {
     static BlockState featureBlockState(BlockState requested,
                                          CityLandUseSurfacePrintPlan.FeatureKind kind,
                                          CityLandUseSurfacePrintPlan.HorizontalFacing facing) {
-        if ((kind == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
-                || kind == CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK)
+        if (kind == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
+                && requested.hasProperty(BlockStateProperties.SLAB_TYPE)) {
+            requested = requested.setValue(BlockStateProperties.SLAB_TYPE, SlabType.DOUBLE);
+        }
+        if (kind == CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK
                 && requested.hasProperty(BlockStateProperties.SLAB_TYPE)) {
             requested = requested.setValue(BlockStateProperties.SLAB_TYPE, SlabType.BOTTOM);
         }
@@ -812,6 +844,10 @@ public final class CityLandUseChunkExecutor {
             if (requested.hasProperty(BlockStateProperties.STAIRS_SHAPE)) {
                 requested = requested.setValue(BlockStateProperties.STAIRS_SHAPE, StairsShape.STRAIGHT);
             }
+        }
+        if (kind == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_LAMP
+                && requested.hasProperty(BlockStateProperties.HANGING)) {
+            requested = requested.setValue(BlockStateProperties.HANGING, true);
         }
         if (requested.hasProperty(BlockStateProperties.WATERLOGGED)) {
             requested = requested.setValue(BlockStateProperties.WATERLOGGED, false);
@@ -989,7 +1025,8 @@ public final class CityLandUseChunkExecutor {
                                        CityLandUseSurfacePrintPlan.HorizontalFacing facing) {
             if (kind != CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
                     && kind != CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK
-                    && kind != CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR) {
+                    && kind != CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR
+                    && kind != CityLandUseSurfacePrintPlan.FeatureKind.ROAD_LAMP) {
                 return setBlock(worldX, y, worldZ, blockId);
             }
             ResourceLocation key = ResourceLocation.tryParse(blockId);
@@ -997,7 +1034,9 @@ public final class CityLandUseChunkExecutor {
             BlockPos pos = new BlockPos(worldX, y, worldZ);
             BlockState requested = featureBlockState(
                     BuiltInRegistries.BLOCK.get(key).defaultBlockState(), kind, facing);
-            boolean written = writeExactBlockState(this, pos, requested, Block.UPDATE_ALL);
+            boolean written = requested.getBlock() instanceof CrossCollisionBlock
+                    ? writeConnectionCompatibleBlockState(pos, requested)
+                    : writeExactBlockState(this, pos, requested, Block.UPDATE_ALL);
             if (written) watchObservedNeighborhood(pos);
             return written;
         }
@@ -1095,7 +1134,8 @@ public final class CityLandUseChunkExecutor {
 
         @Override
         public boolean isHorizontalConnectionBlock(BlockState state) {
-            return state.getBlock() instanceof CrossCollisionBlock;
+            return state.getBlock() instanceof CrossCollisionBlock
+                    || state.getBlock() instanceof WallBlock;
         }
 
         @Override

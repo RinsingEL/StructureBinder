@@ -24,8 +24,7 @@ public record LandUseRule(
         boolean mergeSameType,
         SurfacePolicy surfacePolicy,
         VegetationPolicy vegetationPolicy,
-        BoundaryPolicy boundaryPolicy,
-        String decorationPolicy) {
+        BoundaryPolicy boundaryPolicy) {
 
     public LandUseRule {
         if (ruleRef == null || ruleRef.isBlank()) throw new IllegalArgumentException("ruleRef is required");
@@ -35,7 +34,6 @@ public record LandUseRule(
             throw new IllegalArgumentException("Invalid LandUse area rule");
         }
         if (actionBudget <= 0 || baseStepCost <= 0) throw new IllegalArgumentException("Invalid LandUse cost rule");
-        decorationPolicy = decorationPolicy == null ? "" : decorationPolicy;
     }
 
     public int preferredArea(int footprintArea) {

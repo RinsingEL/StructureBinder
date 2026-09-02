@@ -20,13 +20,11 @@ public final class CityWorldgenLedgerPersistenceEvents {
         }
         CityLandUseWorldgenRegistry.tickD7Backfills(event.getServer());
         CityLandUseWorldgenRegistry.flushPendingLedgerIfDue();
-        CityDecorationWorldgenRegistry.flushPendingLedgerIfDue();
     }
 
     @SubscribeEvent
     public static void onServerStopping(ServerStoppingEvent event) {
         CityLandUseWorldgenRegistry.clearD7Backfills(event.getServer());
         CityLandUseWorldgenRegistry.flushPendingLedgerNow();
-        CityDecorationWorldgenRegistry.flushPendingLedgerNow();
     }
 }

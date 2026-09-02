@@ -101,13 +101,8 @@ public final class GeomantiaHttpServer {
             createdServer.createContext("/realm/city/plan_d4_array_expansion_candidates", realmController::handleCityPlanD4ArrayExpansionCandidates);
             createdServer.createContext("/realm/city/select_d4_array_expansion_candidate", realmController::handleCitySelectD4ArrayExpansionCandidate);
             createdServer.createContext("/realm/city/finalize_d4_array_layout_loop", realmController::handleCityFinalizeD4ArrayLayoutLoop);
-            createdServer.createContext("/realm/city/query_decoration_catalog", realmController::handleCityQueryDecorationCatalog);
-            createdServer.createContext("/realm/city/probe_decoration_terrain", realmController::handleCityProbeDecorationTerrain);
             createdServer.createContext("/realm/city/query_structure_catalog", realmController::handleCityQueryStructureCatalog);
             createdServer.createContext("/realm/city/query_template_metadata", realmController::handleCityQueryTemplateMetadata);
-            createdServer.createContext("/realm/city/plan_decoration_anchor_candidates",
-                    realmController::handleCityPlanDecorationAnchorCandidates);
-            createdServer.createContext("/realm/city/plan_city_dressing", realmController::handleCityPlanDressing);
             createdServer.createContext("/realm/city/plan_d4_structure_cluster_groups", realmController::handleCityPlanD4StructureClusterGroups);
             createdServer.createContext("/realm/city/select_d4_candidates", realmController::handleCitySelectD4Candidates);
             createdServer.createContext("/realm/city/select_d4_structure_cluster_group", realmController::handleCitySelectD4StructureClusterGroup);

@@ -12,7 +12,6 @@ import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRule;
 import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRuleCatalog;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
-import com.rinsing.geomantia.systems.city.infrastructure.dressing.TestDecorationCatalogs;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -407,7 +406,7 @@ class LandUsePlanningServiceTest {
     private static LandUseRule rule(String ruleRef) {
         return new LandUseRule(ruleRef, ruleRef, List.of(ruleRef), 6.0, 0, 1, 64,
                 100, 1.0, 0, 0, 10, 0, 1.0, true,
-                SurfacePolicy.PAVE, VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN, ruleRef);
+                SurfacePolicy.PAVE, VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN);
     }
 
     private static JsonObject templatePlan(String entranceId, String direction, int x, int z) {

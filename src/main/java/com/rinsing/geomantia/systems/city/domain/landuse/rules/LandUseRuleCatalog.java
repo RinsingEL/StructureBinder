@@ -71,7 +71,7 @@ public final class LandUseRuleCatalog {
                     .append('|').append(rule.waterCost()).append('|').append(rule.forestAffinity())
                     .append('|').append(rule.competitionWeight()).append('|').append(rule.mergeSameType())
                     .append('|').append(rule.surfacePolicy()).append('|').append(rule.vegetationPolicy())
-                    .append('|').append(rule.boundaryPolicy()).append('|').append(rule.decorationPolicy());
+                    .append('|').append(rule.boundaryPolicy());
         }
         try {
             return "sha256:" + HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
@@ -125,7 +125,7 @@ public final class LandUseRuleCatalog {
                                     double forestAffinity, SurfacePolicy surface, VegetationPolicy vegetation,
                                     BoundaryPolicy boundary) {
         return new LandUseRule(ref, ref, terms, multiplier, extra, min, max, budget, base, slope, relief, water,
-                forestAffinity, 1.0, true, surface, vegetation, boundary, ref);
+                forestAffinity, 1.0, true, surface, vegetation, boundary);
     }
 
     private record SemanticMatch(LandUseRule rule, String token, String input) {

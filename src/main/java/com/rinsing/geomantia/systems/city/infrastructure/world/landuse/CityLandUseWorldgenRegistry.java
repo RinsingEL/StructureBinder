@@ -533,7 +533,7 @@ public final class CityLandUseWorldgenRegistry {
         D7_BACKFILL_JOBS.clear();
     }
 
-    /** CLEAR suppresses natural features; selective clearing is owned by exact Decoration/D5 masks. */
+    /** CLEAR suppresses natural features; selective clearing is owned by exact LandUse/D5 masks. */
     public static boolean suppressesVegetation(String dimensionId, int worldX, int worldZ) {
         String dimension = dimensionId(dimensionId);
         for (ActivePlan active : activePlans(dimension)) {

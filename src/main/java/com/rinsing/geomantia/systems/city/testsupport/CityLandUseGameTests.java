@@ -262,14 +262,14 @@ public final class CityLandUseGameTests {
         LandUseAreaPlan.Area cropArea = new LandUseAreaPlan.Area(
                 "crop_line", "gametest", "agriculture", List.of("crop_group"), List.of("crop_anchor"),
                 List.of(new BlockPoint(minX, cropZ)), List.of(cropSpan), List.of(), List.of(), List.of(),
-                20, SurfacePolicy.CULTIVATE, VegetationPolicy.CLEAR, BoundaryPolicy.OPEN, "");
+                20, SurfacePolicy.CULTIVATE, VegetationPolicy.CLEAR, BoundaryPolicy.OPEN);
         List<BlockPoint> fencePoints = new ArrayList<>();
         for (int x = minX; x <= maxX; x++) fencePoints.add(new BlockPoint(x, fenceZ));
         LandUseAreaPlan.Area fenceArea = new LandUseAreaPlan.Area(
                 "fence_line", "gametest", "agriculture", List.of("fence_group"), List.of("fence_anchor"),
                 List.of(new BlockPoint(minX, fenceZ)), List.of(fenceSpan), List.of(),
                 List.of(new LandUseAreaPlan.BoundaryLoop(fencePoints, false)), List.of(),
-                20, SurfacePolicy.PRESERVE, VegetationPolicy.PRESERVE, BoundaryPolicy.FENCE, "");
+                20, SurfacePolicy.PRESERVE, VegetationPolicy.PRESERVE, BoundaryPolicy.FENCE);
         return new LandUseAreaPlanCodec().withComputedHash(new LandUseAreaPlan(
                 LandUseAreaPlan.SCHEMA, "land_use_rules", cityId, "",
                 new BlockBounds(minX, cropZ, maxX, fenceZ),

@@ -4,10 +4,8 @@ import com.rinsing.geomantia.systems.city.application.terrain.CityTerrainFoundat
 
 import java.util.List;
 
-public interface CityDecorationBeardifierAccess {
-    void geomantia$setFoundationSegments(
-            List<? extends CityTerrainFoundationDensityComputer.FoundationSegmentView> foundationSegments);
-
+/** Supplies fixed structure-platform foundations to Minecraft's beardifier. */
+public interface CityStructureFoundationBeardifierAccess {
     void geomantia$setFoundationPlatforms(
             List<? extends CityTerrainFoundationDensityComputer.FoundationPlatformView> foundationPlatforms);
 }

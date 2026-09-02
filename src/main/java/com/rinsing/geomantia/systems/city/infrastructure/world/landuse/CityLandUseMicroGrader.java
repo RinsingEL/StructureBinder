@@ -89,8 +89,17 @@ final class CityLandUseMicroGrader {
         Map<Cell, String> foundationAreaByCell = model.areaByCell();
         if (foundationAreaByCell.isEmpty()) return new FoundationPlan(List.of(), List.of(), List.of());
         Map<Cell, Integer> platformTargets = new HashMap<>(model.platformTargets());
-        List<StairDecision> roadStairs = platformStairs(fragment, foundationAreaByCell,
-                platformTargets);
+        Map<Cell, Integer> roadTargets = roadPlatformTargets(fragment, model.desiredTargets(), terrain);
+        platformTargets.putAll(roadTargets);
+        List<StairDecision> roadStairs = new ArrayList<>(platformStairs(fragment,
+                foundationAreaByCell, platformTargets));
+        roadStairs.addAll(junctionStairs(fragment, foundationAreaByCell, platformTargets));
+        roadStairs = roadStairs.stream().collect(java.util.stream.Collectors.toMap(
+                stair -> new Cell(stair.x(), stair.z()), stair -> stair,
+                (left, right) -> left, LinkedHashMap::new)).values().stream()
+                .sorted(Comparator.comparingInt(StairDecision::z)
+                        .thenComparingInt(StairDecision::x)
+                        .thenComparing(StairDecision::sourceId)).toList();
         AccessPlan accessPlan = platformAccess(fragment, foundationAreaByCell,
                 platformTargets, roadStairs);
         List<StairDecision> stairs = new ArrayList<>(roadStairs);
@@ -184,7 +193,7 @@ final class CityLandUseMicroGrader {
             }
         }
         if (foundationAreaByCell.isEmpty()) {
-            return new PlatformModel(Map.of(), Map.of(), Set.of(), List.of());
+            return new PlatformModel(Map.of(), Map.of(), Map.of(), Set.of(), List.of());
         }
 
         Map<Cell, Integer> desiredTargets = new HashMap<>();
@@ -200,7 +209,7 @@ final class CityLandUseMicroGrader {
         closeSmallDryPlatformHoles(foundationAreaByCell, platformTargets);
         closeSmallLiquidHoles(foundationAreaByCell, platformTargets, terrain);
         return new PlatformModel(Map.copyOf(foundationAreaByCell), Map.copyOf(platformTargets),
-                resolution.droppedCells(), resolution.adjustments());
+                Map.copyOf(desiredTargets), resolution.droppedCells(), resolution.adjustments());
     }
 
     private static int localDominantHeight(Cell center,
@@ -220,6 +229,82 @@ final class CityLandUseMicroGrader {
         }
         if (heights.isEmpty()) return required(terrain, center).surfaceY();
         return dominantHeight(heights);
+    }
+
+    /**
+     * Roads keep one locally sampled, quantized height per longitudinal owner section instead of
+     * inheriting owner-local platform-component merges. The surrounding city still uses the merged
+     * platform model, while road interiors remain flat and only owner-section boundaries can step.
+     */
+    private static Map<Cell, Integer> roadPlatformTargets(
+            CityLandUseChunkCompiler.ChunkFragment fragment,
+            Map<Cell, Integer> desiredTargets,
+            TerrainView terrain) {
+        Map<String, List<CityLandUseChunkCompiler.FeatureOperation>> roadsBySource = new LinkedHashMap<>();
+        for (CityLandUseChunkCompiler.FeatureOperation operation : fragment.gradingFeatureOperations()) {
+            if (operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
+                    && operation.surfaceOffset() == 0) {
+                roadsBySource.computeIfAbsent(operation.sourceId(), ignored -> new ArrayList<>())
+                        .add(operation);
+            }
+        }
+        Map<Cell, Integer> result = new HashMap<>();
+        roadsBySource.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(entry -> {
+            Axis axis = roadAxis(fragment, entry.getKey(), entry.getValue());
+            Map<Integer, List<CityLandUseChunkCompiler.FeatureOperation>> ownerSections = new LinkedHashMap<>();
+            entry.getValue().stream().sorted(Comparator
+                            .comparingInt(CityLandUseChunkCompiler.FeatureOperation::z)
+                            .thenComparingInt(CityLandUseChunkCompiler.FeatureOperation::x))
+                    .forEach(operation -> ownerSections.computeIfAbsent(Math.floorDiv(
+                            axis == Axis.HORIZONTAL ? operation.x() : operation.z(), 16),
+                            ignored -> new ArrayList<>()).add(operation));
+            if (ownerSections.size() < 2) return;
+            Map<Integer, Integer> sectionTargets = new LinkedHashMap<>();
+            ownerSections.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(section -> {
+                List<Integer> heights = section.getValue().stream().map(operation -> {
+                    Cell cell = new Cell(operation.x(), operation.z());
+                    int desired = desiredTargets.getOrDefault(cell, required(terrain, cell).surfaceY());
+                    return quantizedPlatformHeight(desired);
+                }).toList();
+                sectionTargets.put(section.getKey(), dominantHeight(heights));
+            });
+            Set<Integer> transitioningSections = new HashSet<>();
+            List<Integer> orderedSections = sectionTargets.keySet().stream().sorted().toList();
+            for (int index = 1; index < orderedSections.size(); index++) {
+                int previous = orderedSections.get(index - 1);
+                int current = orderedSections.get(index);
+                if (current == previous + 1
+                        && !sectionTargets.get(previous).equals(sectionTargets.get(current))) {
+                    transitioningSections.add(previous);
+                    transitioningSections.add(current);
+                }
+            }
+            transitioningSections.forEach(section -> ownerSections.get(section).forEach(operation ->
+                    result.put(new Cell(operation.x(), operation.z()), sectionTargets.get(section))));
+        });
+        return Map.copyOf(result);
+    }
+
+    private static Axis roadAxis(CityLandUseChunkCompiler.ChunkFragment fragment,
+                                 String sourceId,
+                                 List<CityLandUseChunkCompiler.FeatureOperation> roadCells) {
+        for (CityLandUseChunkCompiler.FeatureOperation operation : fragment.gradingFeatureOperations()) {
+            if (!sourceId.equals(operation.sourceId())
+                    || operation.kind() != CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR) continue;
+            if (operation.facing() == CityLandUseSurfacePrintPlan.HorizontalFacing.NORTH
+                    || operation.facing() == CityLandUseSurfacePrintPlan.HorizontalFacing.SOUTH) {
+                return Axis.HORIZONTAL;
+            }
+            if (operation.facing() == CityLandUseSurfacePrintPlan.HorizontalFacing.EAST
+                    || operation.facing() == CityLandUseSurfacePrintPlan.HorizontalFacing.WEST) {
+                return Axis.VERTICAL;
+            }
+        }
+        int minX = roadCells.stream().mapToInt(CityLandUseChunkCompiler.FeatureOperation::x).min().orElse(0);
+        int maxX = roadCells.stream().mapToInt(CityLandUseChunkCompiler.FeatureOperation::x).max().orElse(0);
+        int minZ = roadCells.stream().mapToInt(CityLandUseChunkCompiler.FeatureOperation::z).min().orElse(0);
+        int maxZ = roadCells.stream().mapToInt(CityLandUseChunkCompiler.FeatureOperation::z).max().orElse(0);
+        return maxX - minX >= maxZ - minZ ? Axis.HORIZONTAL : Axis.VERTICAL;
     }
 
     private static PlatformResolution platformTargets(
@@ -609,6 +694,88 @@ final class CityLandUseMicroGrader {
         });
         return result.values().stream()
                 .filter(stair -> ownedSurfaceCells.contains(new Cell(stair.x(), stair.z())))
+                .sorted(Comparator.comparingInt(StairDecision::z)
+                        .thenComparingInt(StairDecision::x)
+                        .thenComparing(StairDecision::sourceId))
+                .toList();
+    }
+
+    /** Covers turns and intersections where adjacent road cells belong to different frozen bands. */
+    private static List<StairDecision> junctionStairs(
+            CityLandUseChunkCompiler.ChunkFragment fragment,
+            Map<Cell, String> areaByCell,
+            Map<Cell, Integer> platformTargets) {
+        Map<Cell, CityLandUseChunkCompiler.FeatureOperation> roadByCell = new HashMap<>();
+        for (CityLandUseChunkCompiler.FeatureOperation operation : fragment.gradingFeatureOperations()) {
+            if (operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
+                    && operation.surfaceOffset() == 0) {
+                roadByCell.putIfAbsent(new Cell(operation.x(), operation.z()), operation);
+            }
+        }
+        if (roadByCell.isEmpty()) return List.of();
+
+        Set<Cell> roadCells = roadByCell.keySet();
+        Map<TransitionKey, List<Cell>> transitions = new LinkedHashMap<>();
+        roadCells.stream().sorted(Comparator.comparingInt(Cell::z).thenComparingInt(Cell::x))
+                .forEach(cell -> {
+                    CityLandUseChunkCompiler.FeatureOperation current = roadByCell.get(cell);
+                    for (int[] direction : new int[][]{{1, 0}, {0, 1}}) {
+                        Cell next = new Cell(cell.x() + direction[0], cell.z() + direction[1]);
+                        CityLandUseChunkCompiler.FeatureOperation neighbour = roadByCell.get(next);
+                        if (neighbour == null || current.sourceId().equals(neighbour.sourceId())) continue;
+                        Integer currentY = platformTargets.get(cell);
+                        Integer nextY = platformTargets.get(next);
+                        if (currentY == null || nextY == null
+                                || Math.abs(currentY - nextY) < PLATFORM_LEVEL_STEP_BLOCKS) continue;
+                        boolean currentLow = currentY < nextY;
+                        Cell low = currentLow ? cell : next;
+                        CityLandUseChunkCompiler.FeatureOperation lowOperation = currentLow ? current : neighbour;
+                        int highDx = currentLow ? direction[0] : -direction[0];
+                        int highDz = currentLow ? direction[1] : -direction[1];
+                        Axis axis = direction[0] != 0 ? Axis.HORIZONTAL : Axis.VERTICAL;
+                        int boundary = axis == Axis.HORIZONTAL ? cell.x() : cell.z();
+                        TransitionKey key = new TransitionKey(lowOperation.sourceId(), axis, boundary,
+                                Math.min(currentY, nextY), Math.max(currentY, nextY), highDx, highDz);
+                        transitions.computeIfAbsent(key, ignored -> new ArrayList<>()).add(low);
+                    }
+                });
+
+        Map<Cell, StairDecision> result = new LinkedHashMap<>();
+        transitions.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(transition -> {
+            TransitionKey key = transition.getKey();
+            CityLandUseChunkCompiler.FeatureOperation material = roadByCell.get(transition.getValue().get(0));
+            String stairBlock = material == null ? "" : derivedStairBlock(material.blockId());
+            if (stairBlock.isBlank()) return;
+            List<Cell> lowCells = transition.getValue().stream().distinct()
+                    .sorted(key.axis() == Axis.HORIZONTAL
+                            ? Comparator.comparingInt(Cell::z).thenComparingInt(Cell::x)
+                            : Comparator.comparingInt(Cell::x).thenComparingInt(Cell::z))
+                    .toList();
+            int delta = key.highY() - key.lowY();
+            boolean direct = lowCells.stream().allMatch(low -> directRunAvailable(low, key,
+                    delta, roadCells, platformTargets));
+            if (direct) {
+                for (Cell low : lowCells) {
+                    for (int step = 0; step < delta; step++) {
+                        Cell stairCell = new Cell(low.x() - key.highDx() * step,
+                                low.z() - key.highDz() * step);
+                        putStair(result, new StairDecision(key.sourceId(), stairCell.x(), stairCell.z(),
+                                key.highY() - 1 - step, stairBlock,
+                                facing(key.highDx(), key.highDz()), StairMode.DIRECT));
+                    }
+                }
+            } else {
+                addSplitStairs(result, key.sourceId(), stairBlock, key, lowCells,
+                        areaByCell, platformTargets);
+            }
+        });
+
+        Set<Cell> ownedSurfaceCells = fragment.surfaceOperations().stream()
+                .filter(operation -> operation.surfaceOffset() == 0)
+                .map(operation -> new Cell(operation.x(), operation.z()))
+                .collect(java.util.stream.Collectors.toSet());
+        return result.values().stream().filter(stair ->
+                        ownedSurfaceCells.contains(new Cell(stair.x(), stair.z())))
                 .sorted(Comparator.comparingInt(StairDecision::z)
                         .thenComparingInt(StairDecision::x)
                         .thenComparing(StairDecision::sourceId))
@@ -1268,6 +1435,7 @@ final class CityLandUseMicroGrader {
 
     private record PlatformModel(Map<Cell, String> areaByCell,
                                  Map<Cell, Integer> platformTargets,
+                                 Map<Cell, Integer> desiredTargets,
                                  Set<Cell> droppedCells,
                                  List<PlatformAdjustment> platformAdjustments) {
     }

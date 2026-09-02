@@ -77,8 +77,7 @@ public final class LandUseGeometryCompiler {
                 areas.add(new LandUseAreaPlan.Area(areaId, primary.rule().ruleRef(), primary.rule().landUseType(),
                         sortedGroupIds, anchorIds, seeds, scanlines(component), structureFootprints,
                         boundaryLoops(component), gates, claimCost, primary.rule().surfacePolicy(),
-                        primary.rule().vegetationPolicy(), primary.rule().boundaryPolicy(),
-                        primary.rule().decorationPolicy()));
+                        primary.rule().vegetationPolicy(), primary.rule().boundaryPolicy()));
             }
         }
         areas.sort(Comparator.comparing(LandUseAreaPlan.Area::areaId)

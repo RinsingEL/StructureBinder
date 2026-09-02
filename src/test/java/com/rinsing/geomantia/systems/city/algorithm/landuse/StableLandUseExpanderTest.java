@@ -41,7 +41,7 @@ class StableLandUseExpanderTest {
     private static LandUseSeedGroup group(String groupId, List<BlockPoint> seeds) {
         LandUseRule rule = new LandUseRule("agriculture", "Agriculture", List.of("agriculture"),
                 1, 0, 1, 256, 64, 1, 0, 0, 0, 0, 1, true,
-                SurfacePolicy.CULTIVATE, VegetationPolicy.CLEAR, BoundaryPolicy.FENCE, "agriculture");
+                SurfacePolicy.CULTIVATE, VegetationPolicy.CLEAR, BoundaryPolicy.FENCE);
         return new LandUseSeedGroup(groupId, rule, LandUseSurfaceSettings.defaults(SurfacePolicy.CULTIVATE),
                 List.of(groupId), List.of(), seeds, List.of(), 1, 32, 64, 256, 1);
     }

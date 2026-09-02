@@ -27,7 +27,7 @@ public final class LandUseRuleCatalogLoader {
             "ruleRef", "landUseType", "semanticTerms", "footprintMultiplier", "extraAreaBlocks",
             "minAreaBlocks", "maxAreaBlocks", "actionBudget", "baseStepCost", "slopeCost", "reliefCost",
             "waterCost", "forestAffinity", "competitionWeight", "mergeSameType", "surfacePolicy",
-            "vegetationPolicy", "boundaryPolicy", "decorationPolicy");
+            "vegetationPolicy", "boundaryPolicy");
 
     public LandUseRuleCatalog load(Path cityLandUseConfigRoot, LandUseSettings settings) {
         if (cityLandUseConfigRoot == null) {
@@ -101,8 +101,7 @@ public final class LandUseRuleCatalogLoader {
                 requiredBoolean(json, "mergeSameType", "LAND_USE_RULE"),
                 requiredPolicy(json, "surfacePolicy", SurfacePolicy.class),
                 requiredPolicy(json, "vegetationPolicy", VegetationPolicy.class),
-                requiredPolicy(json, "boundaryPolicy", BoundaryPolicy.class),
-                requiredString(json, "decorationPolicy", "LAND_USE_RULE"));
+                requiredPolicy(json, "boundaryPolicy", BoundaryPolicy.class));
     }
 
     private static void requireExactFields(JsonObject object, Set<String> expected, String scope) {

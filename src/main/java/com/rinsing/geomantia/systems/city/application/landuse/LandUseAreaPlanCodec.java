@@ -134,7 +134,6 @@ public final class LandUseAreaPlanCodec {
         obj.addProperty("surfacePolicy", area.surfacePolicy().name().toLowerCase());
         obj.addProperty("vegetationPolicy", area.vegetationPolicy().name().toLowerCase());
         obj.addProperty("boundaryPolicy", area.boundaryPolicy().name().toLowerCase());
-        obj.addProperty("decorationPolicy", area.decorationPolicy());
         return obj;
     }
 
@@ -162,8 +161,7 @@ public final class LandUseAreaPlanCodec {
                 spans(requiredArray(obj, "memberSpans")), exclusions, loops, gates,
                 doubleValue(obj, "claimCostTotal", 0), enumValue(SurfacePolicy.class, requiredString(obj, "surfacePolicy")),
                 enumValue(VegetationPolicy.class, requiredString(obj, "vegetationPolicy")),
-                enumValue(BoundaryPolicy.class, requiredString(obj, "boundaryPolicy")),
-                stringValue(obj, "decorationPolicy", ""));
+                enumValue(BoundaryPolicy.class, requiredString(obj, "boundaryPolicy")));
     }
 
     private static JsonArray spansJson(List<LandUseAreaPlan.ScanlineSpan> spans) {

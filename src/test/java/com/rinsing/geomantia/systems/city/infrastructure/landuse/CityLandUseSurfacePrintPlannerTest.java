@@ -1,4 +1,4 @@
-package com.rinsing.geomantia.systems.city.infrastructure.dressing;
+package com.rinsing.geomantia.systems.city.infrastructure.landuse;
 
 import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan;
 import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlanner;
@@ -188,7 +188,7 @@ class CityLandUseSurfacePrintPlannerTest {
         LandUseAreaPlan.Area area = new LandUseAreaPlan.Area("woodland", "woodland", "woodland",
                 List.of(groupId), List.of(groupId), List.of(new BlockPoint(2, 0)), members,
                 List.of(), List.of(), List.of(), 1, SurfacePolicy.CULTIVATE,
-                VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN, "woodland");
+                VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN);
         LandUseAreaPlan plan = new LandUseAreaPlan(LandUseAreaPlan.SCHEMA,
                 "city_land_use_rules", "city_test", "land-use-hash", new BlockBounds(0, 0, 7, 7),
                 List.of(area), List.of(), List.of(), List.of());
@@ -312,7 +312,7 @@ class CityLandUseSurfacePrintPlannerTest {
         LandUseSeedGroup landscape = landscapeGroup(groupId, new BlockBounds(20, 20, 22, 22), settings, fill);
         LandUseAreaPlan.Area area = new LandUseAreaPlan.Area("green", "green", "green", List.of(groupId),
                 List.of(), List.of(new BlockPoint(19, 20)), spans(0, 8, 0, 8), List.of(), List.of(), List.of(),
-                1, SurfacePolicy.CULTIVATE, VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN, "green");
+                1, SurfacePolicy.CULTIVATE, VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN);
         LandUseAreaPlan plan = new LandUseAreaPlan(LandUseAreaPlan.SCHEMA,
                 "city_land_use_rules", "city_test", "land-use-hash", new BlockBounds(0, 0, 31, 31),
                 List.of(area), List.of(), List.of(), List.of());
@@ -342,7 +342,7 @@ class CityLandUseSurfacePrintPlannerTest {
                                              BlockBounds footprint) {
         return new LandUseAreaPlan.Area(areaId, areaId, areaId, List.of(groupId), List.of(groupId),
                 List.of(new BlockPoint(footprint.minX() - 1, footprint.minZ())), spans, List.of(footprint),
-                List.of(), List.of(), 1, policy, VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN, areaId);
+                List.of(), List.of(), 1, policy, VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN);
     }
 
     private static LandUseSeedGroup group(String id, SurfacePolicy policy, BlockBounds footprint) {
@@ -355,7 +355,7 @@ class CityLandUseSurfacePrintPlannerTest {
                                           LandUseSurfaceSettings settings) {
         LandUseRule rule = new LandUseRule(id, id, List.of(id), 1, 0, 1, 200,
                 200, 1, 0, 0, 10, 0, 1, true, policy,
-                VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN, id);
+                VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN);
         return new LandUseSeedGroup(id, rule, settings, List.of(id),
                 List.of(footprint), List.of(new BlockPoint(footprint.minX(), footprint.minZ())),
                 List.of(), 1, 100, 200, 200, 1);
@@ -367,7 +367,7 @@ class CityLandUseSurfacePrintPlannerTest {
                                                    LandscapeFillProgram fill) {
         LandUseRule rule = new LandUseRule(id, id, List.of(id), 1, 0, 1, 200,
                 200, 1, 0, 0, 10, 0, 1, false, SurfacePolicy.CULTIVATE,
-                VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN, id);
+                VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN);
         return new LandUseSeedGroup(id, rule, settings, List.of(id), List.of(footprint),
                 List.of(new BlockPoint(footprint.minX() - 1, footprint.minZ())), List.of(),
                 1, 100, 200, 200, 1, List.of(), LandUseSeedGroup.GrowthBias.neutral(),

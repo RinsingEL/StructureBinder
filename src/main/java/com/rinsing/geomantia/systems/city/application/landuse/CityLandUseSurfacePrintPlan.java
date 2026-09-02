@@ -89,6 +89,7 @@ public record CityLandUseSurfacePrintPlan(
     public enum FeatureKind {
         ROAD_SLAB,
         ROAD_STAIR,
+        ROAD_LAMP,
         BRIDGE_DECK,
         BRIDGE_RAIL,
         GREEN_GROUND,

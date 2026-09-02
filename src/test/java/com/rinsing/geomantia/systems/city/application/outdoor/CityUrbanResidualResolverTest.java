@@ -151,7 +151,7 @@ class CityUrbanResidualResolverTest {
                                           List<BlockBounds> structureFootprints) {
         LandUseRule rule = new LandUseRule(groupId, groupId, List.of(groupId), 1, 0, 1, 4096,
                 512, 1, 0, 0, 10, 0, 1, true, SurfacePolicy.PAVE,
-                VegetationPolicy.CLEAR, BoundaryPolicy.OPEN, groupId);
+                VegetationPolicy.CLEAR, BoundaryPolicy.OPEN);
         return new LandUseSeedGroup(groupId, rule, LandUseSurfaceSettings.defaults(SurfacePolicy.PAVE),
                 List.of(groupId), structureFootprints, List.of(new BlockPoint(5, 5)), List.of(),
                 1, Math.min(64, maxAreaBlocks), maxAreaBlocks, 512, 1);

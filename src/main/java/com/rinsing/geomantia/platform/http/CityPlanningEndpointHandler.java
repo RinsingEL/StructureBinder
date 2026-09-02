@@ -32,18 +32,6 @@ import com.rinsing.geomantia.systems.city.application.CityWallPlanner;
 import com.rinsing.geomantia.systems.city.application.CityWallReservationPlanner;
 import com.rinsing.geomantia.systems.city.application.CityWorkflowCandidateSelector;
 import com.rinsing.geomantia.systems.city.application.CityWorkflowStepRunner;
-import com.rinsing.geomantia.systems.city.application.dressing.CityDecorationProgramPlanner;
-import com.rinsing.geomantia.systems.city.application.dressing.CityDecorationProgramContextResolver;
-import com.rinsing.geomantia.systems.city.application.dressing.CityDecorationTerrainProbe;
-import com.rinsing.geomantia.systems.city.application.dressing.CompiledDecorationProgram;
-import com.rinsing.geomantia.systems.city.application.dressing.CompiledDecorationProgramCodec;
-import com.rinsing.geomantia.systems.city.application.dressing.CompiledDecorationProgramPlan;
-import com.rinsing.geomantia.systems.city.application.dressing.D3PatchDecorationProgramContextResolver;
-import com.rinsing.geomantia.systems.city.application.dressing.DecorationProgramIntent;
-import com.rinsing.geomantia.systems.city.application.dressing.DecorationProgramIntentCodec;
-import com.rinsing.geomantia.systems.city.application.dressing.DecorationProgramIntentPlan;
-import com.rinsing.geomantia.systems.city.application.dressing.DecorationSlot;
-import com.rinsing.geomantia.systems.city.application.dressing.LandUseAreaDecorationProgramContextResolver;
 import com.rinsing.geomantia.systems.city.application.landuse.LandUseAreaPlanCodec;
 import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan;
 import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlanCodec;
@@ -66,31 +54,18 @@ import com.rinsing.geomantia.systems.city.domain.model.CityLandformReviewPackage
 import com.rinsing.geomantia.systems.city.domain.model.CitySiteContext;
 import com.rinsing.geomantia.systems.city.domain.model.WorldMutationReport;
 import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
-import com.rinsing.geomantia.systems.city.infrastructure.preview.CityDecorationPreviewRenderer;
-import com.rinsing.geomantia.systems.city.infrastructure.preview.CityDecorationAnchorCandidatePreviewRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityLandUsePreviewRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityLandformReviewMapRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityStructureLandingPreviewRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityWallPreviewRenderer;
-import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationContentCatalog;
-import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationAnchorCandidatePlanner;
-import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationContentCatalogLoader;
-import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationDefaultCatalogBootstrap;
-import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationFrozenTerrainPlanCodec;
-import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationStyleProfileCatalog;
-import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationStyleProfileCatalogLoader;
-import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationStyleProfileResolver;
-import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationTerrainRunCompiler;
 import com.rinsing.geomantia.systems.city.infrastructure.landuse.LandUseDefaultConfigBootstrap;
 import com.rinsing.geomantia.systems.city.infrastructure.landuse.LandUseRuleCatalogLoader;
 import com.rinsing.geomantia.systems.city.infrastructure.landuse.LandUseSettingsLoader;
-import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityWallArtifactWriter;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityRoadMaskScanner;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CitySurfaceCache;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityWallPlacementBackend;
-import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityDecorationTerrainSampler;
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityTemplateReader;
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityWorldgenStatusInspector;
 import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseChunkStatusPreflight;
@@ -410,8 +385,6 @@ final class CityPlanningEndpointHandler {
         Files.writeString(landUseTerrainFieldPath, CityJson.GSON.toJson(
                 new LandUseTerrainFieldCodec().toJson(landUseTerrainField)));
         Files.deleteIfExists(landUseDirectory.resolve("city_land_use_planning_complete.json"));
-        Files.deleteIfExists(decorationDir(runDir, citySeedId)
-                .resolve("city_decoration_planning_complete.json"));
 
         JsonObject response = new JsonObject();
         response.addProperty("ok", true);
@@ -1378,8 +1351,6 @@ final class CityPlanningEndpointHandler {
         completion.addProperty("sourceD6Hash", sha256(
                 CityJson.GSON.toJson(d6Plan)));
         completion.addProperty("completedAt", Instant.now().toString());
-        Files.deleteIfExists(decorationDir(runDir, citySeedId)
-                .resolve("city_decoration_planning_complete.json"));
         writePlanningCompletion(completePath, completion);
 
         JsonObject response = new JsonObject();
@@ -1474,8 +1445,6 @@ final class CityPlanningEndpointHandler {
 
         JsonObject completion = blueprintOutdoorCompletion(inputs, compiled.intentPlan(),
                 result.urbanSpacePlan(), result.plan(), result.surfacePrintPlan());
-        Files.deleteIfExists(decorationDir(runDir, citySeedId)
-                .resolve("city_decoration_planning_complete.json"));
         writePlanningCompletion(completePath, completion);
 
         JsonObject response = new JsonObject();
@@ -1515,19 +1484,19 @@ final class CityPlanningEndpointHandler {
     static JsonObject handleExecuteD5(Path debugRoot, Path serverRoot, String runId, String citySeedId,
                                       boolean confirmWorldMutation, ServerLevel level) throws IOException {
         return handleExecuteD5(debugRoot, serverRoot, runId, citySeedId, confirmWorldMutation, level,
-                null, null);
+                null);
     }
 
     static JsonObject handleExecuteD5(Path debugRoot, Path serverRoot, String runId, String citySeedId,
                                       boolean confirmWorldMutation, ServerLevel level,
-                                      Path requestedDecorationCatalogRoot) throws IOException {
+                                      Path ignoredRemovedStageRoot,
+                                      Boolean requestedLandUseLayer) throws IOException {
         return handleExecuteD5(debugRoot, serverRoot, runId, citySeedId, confirmWorldMutation, level,
-                requestedDecorationCatalogRoot, null);
+                requestedLandUseLayer);
     }
 
     static JsonObject handleExecuteD5(Path debugRoot, Path serverRoot, String runId, String citySeedId,
                                       boolean confirmWorldMutation, ServerLevel level,
-                                      Path requestedDecorationCatalogRoot,
                                       Boolean requestedLandUseLayer) throws IOException {
         long started = System.nanoTime();
         if (!confirmWorldMutation) {
@@ -1627,28 +1596,6 @@ final class CityPlanningEndpointHandler {
             validateLandUseCompletionArtifacts(debugRoot, runDir, citySeedId, materializationPlan,
                     landUsePlan, landUseSurfacePrintPlan, blueprintInputs);
         }
-        Path decorationDirectory = decorationDir(runDir, citySeedId);
-        rejectLegacyDressingArtifacts(decorationDirectory, false);
-        rejectLegacyDressingArtifacts(CityTestRunLayout.open(runDir, citySeedId)
-                .legacyDressingDirectory(), true);
-        Path compiledDecorationPath = decorationDirectory.resolve("city_decoration_compiled_program_plan.json");
-        Path decorationSlotProjectionPath = decorationDirectory.resolve("city_decoration_slot_projection.json");
-        Path decorationCompletePath = decorationDirectory.resolve("city_decoration_planning_complete.json");
-        boolean compiledDecorationExists = Files.isRegularFile(compiledDecorationPath);
-        boolean decorationSlotProjectionExists = Files.isRegularFile(decorationSlotProjectionPath);
-        boolean decorationCompleteExists = Files.isRegularFile(decorationCompletePath);
-        if ((compiledDecorationExists && (!decorationCompleteExists || !decorationSlotProjectionExists))
-                || (!compiledDecorationExists && decorationCompleteExists)) {
-            throw new IllegalArgumentException("CITY_DECORATION_PLAN_INCOMPLETE: compiled plan, slot projection and "
-                    + "completion marker must all exist; rerun city_plan_city_dressing.");
-        }
-        boolean decorationWorldgenMode = compiledDecorationExists;
-        Path decorationCatalogRoot = requestedDecorationCatalogRoot;
-        if (decorationWorldgenMode && decorationCatalogRoot == null) {
-            decorationCatalogRoot = defaultDecorationCatalogRoot();
-        } else if (decorationCatalogRoot == null) {
-            decorationCatalogRoot = optionalDefaultDecorationCatalogRoot();
-        }
         RunMetadata metadata = loadRunMetadata(runDir, null, "");
         CityLandUseChunkStatusPreflight.PreflightResult landUseChunkPreflight = null;
         if (landUsePlan != null) {
@@ -1665,63 +1612,10 @@ final class CityPlanningEndpointHandler {
                         + landUseChunkPreflight.unknownCount());
             }
         }
-        CompiledDecorationProgramPlan compiledDecorationPlan = null;
-        CityDecorationTerrainRunCompiler.FrozenPlan frozenDecorationTerrainPlan = null;
-        List<DecorationSlot> decorationSlots = List.of();
-        DecorationMaskCounts decorationMaskCounts = DecorationMaskCounts.empty();
-        if (decorationWorldgenMode) {
-            JsonObject completion = readDecorationCompletion(decorationCompletePath);
-            JsonObject compiledDecorationJson = JsonParser.parseString(
-                    Files.readString(compiledDecorationPath)).getAsJsonObject();
-            compiledDecorationPlan = new CompiledDecorationProgramCodec().parsePlan(compiledDecorationJson);
-            String expectedCityId = stringValue(materializationPlan, "cityId", citySeedId);
-            if (!expectedCityId.equals(compiledDecorationPlan.cityId())) {
-                throw new IllegalArgumentException("CITY_DECORATION_CITY_ID_MISMATCH: expected "
-                        + expectedCityId + " but found " + compiledDecorationPlan.cityId());
-            }
-            validateDecorationCompletion(completion, compiledDecorationPlan, expectedCityId);
-            CityDecorationContentCatalog catalog =
-                    new CityDecorationContentCatalogLoader().load(decorationCatalogRoot);
-            if (!catalog.catalogHash().equals(compiledDecorationPlan.catalogHash())) {
-                throw new IllegalArgumentException("CITY_DECORATION_CATALOG_HASH_MISMATCH: expected "
-                        + catalog.catalogHash() + " but found " + compiledDecorationPlan.catalogHash());
-            }
-            validateCompiledDecorationContentRefs(compiledDecorationPlan, catalog);
-            validateCompiledDecorationStyleProfile(compiledDecorationPlan, catalog, decorationCatalogRoot);
-            validateNoLandUseSurfaceDecorationBulkConflict(compiledDecorationPlan, landUseSurfacePrintPlan);
-            JsonObject projection = JsonParser.parseString(Files.readString(decorationSlotProjectionPath))
-                    .getAsJsonObject();
-            decorationSlots = parseDecorationProjectionSlots(projection, compiledDecorationPlan,
-                    "CITY_DECORATION_D5_SLOT_PROJECTION");
-            validateDecorationSlotProjection(compiledDecorationPlan, decorationSlots,
-                    "CITY_DECORATION_D5_SLOT_PROJECTION_MISMATCH");
-            decorationMaskCounts = appendDecorationProjectionMasks(activeMaskPlan, compiledDecorationPlan,
-                    decorationSlots);
-            boolean requiresTerrainSampler = compiledDecorationPlan.programsInExecutionOrder().stream()
-                    .anyMatch(program -> program.pattern() instanceof CompiledDecorationProgram.CrossSectionRepeatPattern
-                            || program.pattern() instanceof CompiledDecorationProgram.ParallelRowsPattern);
-            if (requiresTerrainSampler && level == null) {
-                throw new IllegalArgumentException("CITY_DECORATION_TERRAIN_SAMPLER_LEVEL_REQUIRED: "
-                        + "load the target ServerLevel before city_execute_d5 so continuous runs can be frozen.");
-            }
-            frozenDecorationTerrainPlan = requiresTerrainSampler
-                    ? new CityDecorationTerrainRunCompiler().compile(compiledDecorationPlan, catalog,
-                    new MinecraftCityDecorationTerrainSampler(level))
-                    : new CityDecorationTerrainRunCompiler.FrozenPlan(CityDecorationTerrainRunCompiler.SCHEMA,
-                    compiledDecorationPlan.cityId(), compiledDecorationPlan.catalogHash(), List.of(), List.of());
-        }
-        String decorationCityId = stringValue(materializationPlan, "cityId", citySeedId);
-        if (decorationWorldgenMode) {
-            CityDecorationWorldgenRegistry.preflightActivate(metadata.dimensionId(), compiledDecorationPlan,
-                    frozenDecorationTerrainPlan, serverRoot, decorationCatalogRoot);
-        } else {
-            CityDecorationWorldgenRegistry.preflightDeactivate(metadata.dimensionId(), decorationCityId,
-                    serverRoot, decorationCatalogRoot);
-        }
         BuildOperationPlan plan = BuildOperationPlan.fromJson(
                 JsonParser.parseString(Files.readString(operationPath)).getAsJsonObject());
         WorldMutationReport report = skippedWorldMutationReport(plan,
-                "D5 activates worldgen-time masks and City-owned structure, road, land-use, and decoration plans.");
+                "D5 activates worldgen-time masks and City-owned structure, road, and land-use plans.");
         JsonObject activeRegistry = CityReservationMaskRegistry.activate(activeMaskPlan, null, materializationPlan,
                 runId, citySeedId, serverRoot);
         JsonObject activationProvenance = new JsonObject();
@@ -1729,17 +1623,12 @@ final class CityPlanningEndpointHandler {
         activationProvenance.addProperty("sourceD5Hash", sha256(Files.readString(maskPath)));
         activationProvenance.addProperty("sourceD6Hash", sha256(Files.readString(d6PlanPath)));
         activationProvenance.addProperty("sourceLandUseCompletionHash", optionalArtifactHash(landUseCompletePath));
-        activationProvenance.addProperty("sourceDecorationCompletionHash", optionalArtifactHash(decorationCompletePath));
         activeRegistry.add("activationProvenance", activationProvenance);
-        JsonObject activeDecorationSummary = decorationWorldgenMode
-                ? CityDecorationWorldgenRegistry.activate(metadata.dimensionId(), compiledDecorationPlan,
-                        frozenDecorationTerrainPlan, serverRoot, decorationCatalogRoot)
-                : CityDecorationWorldgenRegistry.deactivate(metadata.dimensionId(),
-                        decorationCityId, serverRoot, decorationCatalogRoot);
+        String cityId = stringValue(materializationPlan, "cityId", citySeedId);
         JsonObject activeLandUseSummary;
         if (landUsePlan == null) {
             activeLandUseSummary = CityLandUseWorldgenRegistry.deactivate(
-                    metadata.dimensionId(), decorationCityId, serverRoot);
+                    metadata.dimensionId(), cityId, serverRoot);
         } else {
             activeLandUseSummary = CityLandUseWorldgenRegistry.activate(metadata.dimensionId(), landUsePlan,
                     landUseSurfacePrintPlan, serverRoot);
@@ -1748,25 +1637,10 @@ final class CityPlanningEndpointHandler {
         Path reportPath = d5Dir.resolve("world_mutation_report.json");
         Path activeMaskPath = d5Dir.resolve("active_mask_summary.json");
         Path activePlannedPath = d5Dir.resolve("active_planned_structure_registry.json");
-        Path activeDecorationPath = d5Dir.resolve("active_city_decoration_summary.json");
-        Path frozenDecorationTerrainPath = d5Dir.resolve("frozen_city_decoration_terrain_plan.json");
-        Path decorationTerrainTracePath = d5Dir.resolve("city_decoration_terrain_activation_trace.json");
-        Path decorationActivationPreviewPath = d5Dir.resolve("city_decoration_preview_index.json");
         Path activeLandUsePath = d5Dir.resolve("active_city_land_use_summary.json");
         Files.writeString(reportPath, CityJson.GSON.toJson(report.asJson()));
         Files.writeString(activeMaskPath, CityJson.GSON.toJson(CityReservationMaskRegistry.activeSummary()));
         Files.writeString(activePlannedPath, CityJson.GSON.toJson(activeRegistry));
-        Files.writeString(activeDecorationPath, CityJson.GSON.toJson(activeDecorationSummary));
-        JsonObject decorationTerrainTrace = null;
-        JsonObject decorationActivationPreview = null;
-        if (frozenDecorationTerrainPlan != null) {
-            Files.writeString(frozenDecorationTerrainPath, CityJson.GSON.toJson(
-                    new CityDecorationFrozenTerrainPlanCodec().toJson(frozenDecorationTerrainPlan)));
-            decorationTerrainTrace = decorationTerrainActivationTrace(frozenDecorationTerrainPlan);
-            Files.writeString(decorationTerrainTracePath, CityJson.GSON.toJson(decorationTerrainTrace));
-            decorationActivationPreview = new CityDecorationPreviewRenderer().render(
-                    compiledDecorationPlan, decorationSlots, frozenDecorationTerrainPlan, d5Dir);
-        }
         Files.writeString(activeLandUsePath, CityJson.GSON.toJson(activeLandUseSummary));
 
         JsonObject response = new JsonObject();
@@ -1776,9 +1650,6 @@ final class CityPlanningEndpointHandler {
         response.addProperty("plannedStructureRegistryPath",
                 CityReservationMaskRegistry.plannedRegistryPath(serverRoot).toString());
         response.addProperty("worldgenPlacementMode", true);
-        response.addProperty("decorationWorldgenMode", decorationWorldgenMode);
-        response.addProperty("decorationVegetationMaskCount", decorationMaskCounts.vegetationMaskCount());
-        response.addProperty("decorationStructureMaskCount", decorationMaskCounts.structureMaskCount());
         response.addProperty("landUseWorldgenMode", landUsePlan != null);
         response.addProperty("landUseSurfacePrintMode", landUseSurfacePrintPlan != null);
         response.addProperty("landUsePlanningSource", blueprintInputs == null ? "legacy_debug" : "city_blueprint");
@@ -1788,13 +1659,6 @@ final class CityPlanningEndpointHandler {
         response.addProperty("landUseGeometryMaskDuplicated", false);
         response.addProperty("requiresLockedMaterializationPlan", true);
         response.addProperty("roadPlanningSource", "city_owned");
-        response.add("activeDecorationSummary", activeDecorationSummary);
-        if (frozenDecorationTerrainPlan != null) {
-            response.add("frozenDecorationTerrainPlan",
-                    new CityDecorationFrozenTerrainPlanCodec().toJson(frozenDecorationTerrainPlan));
-            response.add("decorationTerrainActivationTrace", decorationTerrainTrace);
-            response.add("decorationActivationPreviewIndex", decorationActivationPreview);
-        }
         response.add("activeLandUseSummary", activeLandUseSummary);
         if (landUseChunkPreflight != null) {
             response.add("landUseChunkPreflight", landUseChunkPreflightJson(landUseChunkPreflight));
@@ -1810,24 +1674,7 @@ final class CityPlanningEndpointHandler {
         artifacts.addProperty("activePlannedStructureRegistry", debugRef(debugRoot, activePlannedPath));
         artifacts.addProperty("serverPlannedStructureRegistry",
                 CityReservationMaskRegistry.plannedRegistryPath(serverRoot).toString());
-        artifacts.addProperty("activeDecorationSummary", debugRef(debugRoot, activeDecorationPath));
         artifacts.addProperty("activeLandUseSummary", debugRef(debugRoot, activeLandUsePath));
-        if (decorationWorldgenMode) {
-            artifacts.addProperty("sourceCompiledDecorationProgramPlan",
-                    debugRef(debugRoot, compiledDecorationPath));
-            artifacts.addProperty("sourceDecorationSlotProjection",
-                    debugRef(debugRoot, decorationSlotProjectionPath));
-            artifacts.addProperty("frozenDecorationTerrainPlan",
-                    debugRef(debugRoot, frozenDecorationTerrainPath));
-            artifacts.addProperty("decorationTerrainActivationTrace",
-                    debugRef(debugRoot, decorationTerrainTracePath));
-            artifacts.addProperty("decorationActivationPreviewIndex",
-                    debugRef(debugRoot, decorationActivationPreviewPath));
-            artifacts.addProperty("serverActiveDecorationPlans",
-                    CityDecorationWorldgenRegistry.activePlansPath(serverRoot).toString());
-            artifacts.addProperty("serverDecorationWorldgenLedger",
-                    CityDecorationWorldgenRegistry.worldgenLedgerPath(serverRoot).toString());
-        }
         if (landUsePlan != null) {
             artifacts.addProperty("sourceLandUseAreaPlan", debugRef(debugRoot, landUsePlanPath));
             artifacts.addProperty("sourceLandUsePlanningComplete", debugRef(debugRoot, landUseCompletePath));
@@ -1848,120 +1695,13 @@ final class CityPlanningEndpointHandler {
         return response;
     }
 
-    static JsonObject handleQueryDecorationCatalog() {
-        return handleQueryDecorationCatalog(defaultDecorationCatalogRoot());
-    }
 
-    static JsonObject handleQueryDecorationCatalog(Path catalogRoot) {
-        CityDecorationContentCatalog catalog = new CityDecorationContentCatalogLoader().load(catalogRoot);
-        CityDecorationStyleProfileCatalog styles = new CityDecorationStyleProfileCatalogLoader()
-                .load(catalogRoot, catalog);
-        return decorationCatalogSummary(catalog, styles);
-    }
 
-    static JsonObject handleProbeDecorationTerrain(Path debugRoot, String runId, String citySeedId,
-                                                   ServerLevel level) throws IOException {
-        if (level == null) {
-            throw new IllegalArgumentException("CITY_DECORATION_TERRAIN_PROBE_LEVEL_REQUIRED");
-        }
-        requireMatchingRunWorldIdentity(debugRoot.resolve(runId), level);
-        return handleProbeDecorationTerrain(debugRoot, runId, citySeedId,
-                new LoadedChunkDecorationTerrainView(level));
-    }
 
-    static JsonObject handleProbeDecorationTerrain(Path debugRoot, String runId, String citySeedId,
-                                                   CityDecorationTerrainProbe.TerrainView terrain) throws IOException {
-        if (terrain == null) {
-            throw new IllegalArgumentException("CITY_DECORATION_TERRAIN_PROBE_TERRAIN_VIEW_REQUIRED");
-        }
-        Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
-        Path outputDirectory = decorationDir(runDir, citySeedId);
-        Path compiledPath = outputDirectory.resolve("city_decoration_compiled_program_plan.json");
-        Path slotProjectionPath = outputDirectory.resolve("city_decoration_slot_projection.json");
-        if (!Files.isRegularFile(compiledPath) || !Files.isRegularFile(slotProjectionPath)) {
-            throw new IllegalArgumentException("CITY_DECORATION_TERRAIN_PROBE_PLAN_INCOMPLETE: "
-                    + "compiled plan and slot projection are both required.");
-        }
-        CompiledDecorationProgramPlan compiled = new CompiledDecorationProgramCodec().parsePlan(
-                JsonParser.parseString(Files.readString(compiledPath)).getAsJsonObject());
-        if (!citySeedId.equals(compiled.cityId())) {
-            throw new IllegalArgumentException("CITY_DECORATION_TERRAIN_PROBE_CITY_ID_MISMATCH: expected "
-                    + citySeedId + " but found " + compiled.cityId());
-        }
-        JsonObject projection = JsonParser.parseString(Files.readString(slotProjectionPath)).getAsJsonObject();
-        List<DecorationSlot> slots = parseDecorationTerrainSlots(projection, compiled);
-        JsonObject response = new CityDecorationTerrainProbe().probe(compiled, slots, terrain);
-        response.addProperty("ok", true);
-        response.addProperty("samplingMode", "heightmap_motion_blocking_no_leaves");
-        response.addProperty("unavailableBehavior", "slot_is_reported_unavailable_without_chunk_generation");
-        JsonObject artifacts = new JsonObject();
-        artifacts.addProperty("sourceCompiledDecorationProgramPlan", debugRef(debugRoot, compiledPath));
-        artifacts.addProperty("sourceDecorationSlotProjection", debugRef(debugRoot, slotProjectionPath));
-        response.add("artifacts", artifacts);
-        return response;
-    }
 
-    private static List<DecorationSlot> parseDecorationTerrainSlots(JsonObject projection,
-                                                                      CompiledDecorationProgramPlan compiled) {
-        return parseDecorationProjectionSlots(projection, compiled,
-                "CITY_DECORATION_TERRAIN_PROBE_SLOT_PROJECTION");
-    }
 
-    private static List<DecorationSlot> parseDecorationProjectionSlots(JsonObject projection,
-                                                                         CompiledDecorationProgramPlan compiled,
-                                                                         String reasonPrefix) {
-        if (!"city_decoration_slot_projection".equals(stringValue(projection, "schema", ""))) {
-            throw new IllegalArgumentException(reasonPrefix + "_SCHEMA_UNSUPPORTED");
-        }
-        if (!compiled.cityId().equals(stringValue(projection, "cityId", ""))
-                || !compiled.catalogHash().equals(stringValue(projection, "catalogHash", ""))) {
-            throw new IllegalArgumentException(reasonPrefix + "_MISMATCH");
-        }
-        if (!projection.has("slots") || !projection.get("slots").isJsonArray()) {
-            throw new IllegalArgumentException(reasonPrefix + "_INVALID");
-        }
-        Set<String> programIds = new LinkedHashSet<>();
-        compiled.programs().forEach(program -> programIds.add(program.programId()));
-        Set<String> slotIds = new LinkedHashSet<>();
-        List<DecorationSlot> result = new ArrayList<>();
-        for (JsonElement element : projection.getAsJsonArray("slots")) {
-            if (!element.isJsonObject()) {
-                throw new IllegalArgumentException(reasonPrefix + "_INVALID");
-            }
-            JsonObject slot = element.getAsJsonObject();
-            String slotId = requiredString(slot, "slotId");
-            String programId = requiredString(slot, "programId");
-            if (!programIds.contains(programId) || !slotIds.add(slotId)) {
-                throw new IllegalArgumentException(reasonPrefix + "_MISMATCH");
-            }
-            JsonObject worldAnchor = requiredDecorationProjectionObject(slot, "worldAnchor", reasonPrefix);
-            JsonObject localAnchor = requiredDecorationProjectionObject(slot, "localAnchor", reasonPrefix);
-            result.add(new DecorationSlot(slotId, programId,
-                    requiredString(slot, "paletteSlotId"),
-                    new BlockPoint(requiredDecorationProjectionInt(worldAnchor, "x", reasonPrefix),
-                            requiredDecorationProjectionInt(worldAnchor, "z", reasonPrefix)),
-                    new CompiledDecorationProgram.LocalPoint(requiredDecorationProjectionInt(localAnchor, "u", reasonPrefix),
-                            requiredDecorationProjectionInt(localAnchor, "v", reasonPrefix)),
-                    requiredDecorationProjectionInt(slot, "rotationQuarterTurns", reasonPrefix)));
-        }
-        return List.copyOf(result);
-    }
 
-    private static JsonObject requiredDecorationProjectionObject(JsonObject source, String key, String reasonPrefix) {
-        if (!source.has(key) || !source.get(key).isJsonObject()) {
-            throw new IllegalArgumentException(reasonPrefix + "_INVALID: " + key);
-        }
-        return source.getAsJsonObject(key);
-    }
 
-    private static int requiredDecorationProjectionInt(JsonObject source, String key, String reasonPrefix) {
-        if (!source.has(key) || !source.get(key).isJsonPrimitive()
-                || !source.getAsJsonPrimitive(key).isNumber()) {
-            throw new IllegalArgumentException(reasonPrefix + "_INVALID: " + key);
-        }
-        return source.get(key).getAsInt();
-    }
 
     static JsonObject handleQueryStructureCatalog(Path baseDirectory, JsonObject terraSenseProfileSource,
                                                    JsonObject query) throws IOException {
@@ -2006,343 +1746,10 @@ final class CityPlanningEndpointHandler {
         return response;
     }
 
-    static JsonObject handlePlanDecorationAnchorCandidates(Path debugRoot, String runId, String citySeedId,
-                                                            JsonObject decorationProgramPlan, String programId,
-                                                            int candidateCount) throws IOException {
-        return handlePlanDecorationAnchorCandidates(debugRoot, runId, citySeedId, decorationProgramPlan, programId,
-                candidateCount, defaultDecorationCatalogRoot());
-    }
 
-    static JsonObject handlePlanDecorationAnchorCandidates(Path debugRoot, String runId, String citySeedId,
-                                                            JsonObject decorationProgramPlan, String programId,
-                                                            int candidateCount, Path catalogRoot) throws IOException {
-        rejectLegacyDressingPlan(decorationProgramPlan);
-        if (programId == null || programId.isBlank()) {
-            throw new IllegalArgumentException("CITY_DECORATION_CANDIDATE_PROGRAM_ID_REQUIRED");
-        }
-        if (candidateCount < 1 || candidateCount > 8) {
-            throw new IllegalArgumentException("CITY_DECORATION_CANDIDATE_COUNT_INVALID: "
-                    + "candidateCount must be between 1 and 8.");
-        }
 
-        Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
-        CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
-        Path d4Dir = cityStageDir(runDir, citySeedId, CityTestRunLayout.D4);
-        Path d5Dir = cityStageDir(runDir, citySeedId, CityTestRunLayout.D5);
-        Path d6Dir = cityStageDir(runDir, citySeedId, CityTestRunLayout.D6);
-        Path landUsePath = cityStageDir(runDir, citySeedId, CityTestRunLayout.LAND_USE)
-                .resolve("city_land_use_area_plan.json");
-        Path landUseSurfacePrintPath = cityStageDir(runDir, citySeedId, CityTestRunLayout.LAND_USE)
-                .resolve("city_land_use_surface_print_plan.json");
-        Path landUseCompletePath = cityStageDir(runDir, citySeedId, CityTestRunLayout.LAND_USE)
-                .resolve("city_land_use_planning_complete.json");
-        Path anchorMapPath = d4Dir.resolve("structure_anchor_map.json");
-        Path reservationMaskPath = d5Dir.resolve("reservation_mask_plan.json");
-        Path wallReservationPath = d5Dir.resolve("wall_reservation_plan.json");
-        Path materializationPath = d6Dir.resolve("structure_materialization_plan.json");
-        if (!Files.exists(anchorMapPath)) {
-            rejectLegacyArtifacts(d4Dir, "D4");
-            throw new IllegalArgumentException("D4 structure_anchor_map.json not found. Run city_plan_d4 first: "
-                    + debugRef(debugRoot, anchorMapPath));
-        }
-        if (!Files.exists(reservationMaskPath)) {
-            rejectLegacyArtifacts(d5Dir, "D5");
-            throw new IllegalArgumentException("D5 reservation_mask_plan.json not found. Run city_plan_d5 first: "
-                    + debugRef(debugRoot, reservationMaskPath));
-        }
-        if (!Files.exists(materializationPath)) {
-            throw new IllegalArgumentException("D6 structure_materialization_plan.json not found. Run city_plan_d6 first: "
-                    + debugRef(debugRoot, materializationPath));
-        }
 
-        JsonObject materializationPlan = JsonParser.parseString(Files.readString(materializationPath)).getAsJsonObject();
-        JsonObject wallReservationPlan = Files.exists(wallReservationPath)
-                ? JsonParser.parseString(Files.readString(wallReservationPath)).getAsJsonObject() : new JsonObject();
-        List<CompiledDecorationProgramPlan.HardObstacle> hardObstacles = new ArrayList<>(
-                decorationHardObstacles(materializationPlan, wallReservationPlan));
-        CityDecorationContentCatalog catalog = new CityDecorationContentCatalogLoader().load(catalogRoot);
-        CityDecorationStyleProfileCatalog styleProfiles = new CityDecorationStyleProfileCatalogLoader()
-                .load(catalogRoot, catalog);
-        CityDecorationProgramPlanner programPlanner = new CityDecorationProgramPlanner();
-        DecorationProgramIntentPlan intentPlan = programPlanner.parse(decorationProgramPlan);
-        if (!reviewPackage.cityId().equals(intentPlan.cityId())) {
-            throw new IllegalArgumentException("CITY_DECORATION_CITY_ID_MISMATCH: expected "
-                    + reviewPackage.cityId() + " but found " + intentPlan.cityId());
-        }
-        if (!catalog.catalogHash().equals(intentPlan.catalogHash())) {
-            throw new IllegalArgumentException("CITY_DECORATION_CATALOG_HASH_MISMATCH: expected "
-                    + catalog.catalogHash() + " but found " + intentPlan.catalogHash());
-        }
-        CityDecorationStyleProfileCatalog.StyleProfile styleProfile = styleProfiles
-                .requireProfile(intentPlan.styleProfileId());
-        CityDecorationStyleProfileResolver.Resolution styleResolution = new CityDecorationStyleProfileResolver()
-                .resolve(intentPlan, styleProfile);
-        DecorationProgramIntentPlan resolvedIntent = styleResolution.resolvedIntent();
-        validateDecorationContentRefs(resolvedIntent, catalog);
 
-        LandUseAreaDecorationProgramContextResolver landUseResolver = null;
-        CityLandUseSurfacePrintPlan landUseSurfacePrintPlanForDecoration = null;
-        boolean requiresLandUse = resolvedIntent.programs().stream()
-                .anyMatch(program -> "land_use_area".equals(program.targetArea().sourceType()));
-        if (requiresLandUse) {
-            requireDecorationLandUseArtifacts(landUsePath, landUseSurfacePrintPath, landUseCompletePath);
-            LandUseAreaPlan typedLandUsePlan = new LandUseAreaPlanCodec().fromJson(
-                    JsonParser.parseString(Files.readString(landUsePath)).getAsJsonObject());
-            if (!reviewPackage.cityId().equals(typedLandUsePlan.cityId())) {
-                throw new IllegalArgumentException("CITY_DECORATION_LAND_USE_CITY_ID_MISMATCH: expected "
-                        + reviewPackage.cityId() + " but found " + typedLandUsePlan.cityId());
-            }
-            landUseSurfacePrintPlanForDecoration = new CityLandUseSurfacePrintPlanCodec().fromJson(
-                    JsonParser.parseString(Files.readString(landUseSurfacePrintPath)).getAsJsonObject());
-            validateLandUseCompletionArtifacts(debugRoot, runDir, citySeedId, materializationPlan,
-                    typedLandUsePlan, landUseSurfacePrintPlanForDecoration,
-                    currentBlueprintOutdoorInputs(debugRoot, runDir, citySeedId));
-            appendLandUseDecorationObstacles(hardObstacles, typedLandUsePlan);
-            landUseResolver = new LandUseAreaDecorationProgramContextResolver(
-                    new LandUseAreaPlanCodec().toJson(typedLandUsePlan), hardObstacles);
-        }
-
-        CompiledDecorationProgramPlan compiled = programPlanner.compile(resolvedIntent,
-                new CityDecorationProgramContextResolver(
-                        new D3PatchDecorationProgramContextResolver(reviewPackage, hardObstacles), landUseResolver),
-                hardObstacles);
-        validateNoLandUseSurfaceDecorationBulkConflict(compiled, landUseSurfacePrintPlanForDecoration);
-
-        DecorationProgramIntent selectedIntent = intentPlan.programs().stream()
-                .filter(program -> program.programId().equals(programId))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "CITY_DECORATION_CANDIDATE_PROGRAM_UNKNOWN: " + programId));
-        CityDecorationAnchorCandidatePlanner.Result result = new CityDecorationAnchorCandidatePlanner()
-                .plan(compiled, programId, catalog, candidateCount);
-        JsonObject candidateSet = result.candidateSet().deepCopy();
-        addAbsoluteCandidateFramePatches(candidateSet, selectedIntent.coordinateFrame());
-        JsonObject qualityReport = result.qualityReport().deepCopy();
-
-        Path outputDirectory = decorationDir(runDir, citySeedId).resolve("anchor_candidates")
-                .resolve(safeFileName(programId));
-        Files.createDirectories(outputDirectory);
-        JsonObject preview = new CityDecorationAnchorCandidatePreviewRenderer()
-                .render(compiled, candidateSet, outputDirectory);
-        Path candidateSetPath = outputDirectory.resolve("decoration_anchor_candidate_set.json");
-        Path qualityPath = outputDirectory.resolve("quality_report.json");
-        Files.writeString(candidateSetPath, CityJson.GSON.toJson(candidateSet));
-        Files.writeString(qualityPath, CityJson.GSON.toJson(qualityReport));
-
-        JsonObject response = new JsonObject();
-        response.addProperty("ok", true);
-        response.add("candidateSet", candidateSet.deepCopy());
-        response.add("qualityReport", qualityReport.deepCopy());
-        response.add("preview", preview.deepCopy());
-        JsonObject artifacts = new JsonObject();
-        artifacts.addProperty("candidateSet", debugRef(debugRoot, candidateSetPath));
-        artifacts.addProperty("qualityReport", debugRef(debugRoot, qualityPath));
-        Path previewPath = outputDirectory.resolve(preview.get("fileName").getAsString());
-        if (Files.isRegularFile(previewPath)) {
-            artifacts.addProperty("preview", debugRef(debugRoot, previewPath));
-        }
-        artifacts.addProperty("sourceD3Package", debugRef(debugRoot, d3PackagePath(runDir, citySeedId)));
-        artifacts.addProperty("sourceStructureAnchorMap", debugRef(debugRoot, anchorMapPath));
-        artifacts.addProperty("sourceReservationMaskPlan", debugRef(debugRoot, reservationMaskPath));
-        artifacts.addProperty("sourceStructureMaterializationPlan", debugRef(debugRoot, materializationPath));
-        if (Files.exists(wallReservationPath)) {
-            artifacts.addProperty("sourceWallReservationPlan", debugRef(debugRoot, wallReservationPath));
-        }
-        if (requiresLandUse) {
-            artifacts.addProperty("sourceLandUseAreaPlan", debugRef(debugRoot, landUsePath));
-            artifacts.addProperty("sourceLandUsePlanningComplete", debugRef(debugRoot, landUseCompletePath));
-        }
-        response.add("artifacts", artifacts);
-        return response;
-    }
-
-    private static void addAbsoluteCandidateFramePatches(
-            JsonObject candidateSet, DecorationProgramIntent.CoordinateFrameIntent sourceFrame) {
-        if (!candidateSet.has("candidates") || !candidateSet.get("candidates").isJsonArray()) {
-            throw new IllegalArgumentException("CITY_DECORATION_CANDIDATE_SET_INVALID: candidates[] missing");
-        }
-        for (JsonElement element : candidateSet.getAsJsonArray("candidates")) {
-            JsonObject candidate = element.getAsJsonObject();
-            JsonObject delta = candidate.getAsJsonObject("coordinateFramePatch");
-            int offsetUDelta = requiredDecorationProjectionInt(delta, "offsetUDeltaBlocks",
-                    "CITY_DECORATION_CANDIDATE_FRAME_PATCH");
-            int offsetVDelta = requiredDecorationProjectionInt(delta, "offsetVDeltaBlocks",
-                    "CITY_DECORATION_CANDIDATE_FRAME_PATCH");
-            JsonObject absolutePatch = new JsonObject();
-            absolutePatch.addProperty("originMode", sourceFrame.originMode());
-            absolutePatch.addProperty("orientationMode", sourceFrame.orientationMode());
-            absolutePatch.addProperty("quarterTurns", sourceFrame.quarterTurns());
-            absolutePatch.addProperty("offsetUBlocks", sourceFrame.offsetUBlocks() + offsetUDelta);
-            absolutePatch.addProperty("offsetVBlocks", sourceFrame.offsetVBlocks() + offsetVDelta);
-            candidate.add("coordinateFramePatch", absolutePatch);
-        }
-    }
-
-    static JsonObject handlePlanCityDressing(Path debugRoot, String runId, String citySeedId,
-                                             JsonObject decorationProgramPlan) throws IOException {
-        rejectLegacyDressingPlan(decorationProgramPlan);
-        return handlePlanCityDressing(debugRoot, runId, citySeedId, decorationProgramPlan,
-                defaultDecorationCatalogRoot());
-    }
-
-    static JsonObject handlePlanCityDressing(Path debugRoot, String runId, String citySeedId,
-                                             JsonObject decorationProgramPlan,
-                                             Path catalogRoot) throws IOException {
-        rejectLegacyDressingPlan(decorationProgramPlan);
-        Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
-        CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
-        Path d4Dir = cityStageDir(runDir, citySeedId, CityTestRunLayout.D4);
-        Path d5Dir = cityStageDir(runDir, citySeedId, CityTestRunLayout.D5);
-        Path d6Dir = cityStageDir(runDir, citySeedId, CityTestRunLayout.D6);
-        Path landUsePath = cityStageDir(runDir, citySeedId, CityTestRunLayout.LAND_USE)
-                .resolve("city_land_use_area_plan.json");
-        Path landUseSurfacePrintPath = cityStageDir(runDir, citySeedId, CityTestRunLayout.LAND_USE)
-                .resolve("city_land_use_surface_print_plan.json");
-        Path landUseCompletePath = cityStageDir(runDir, citySeedId, CityTestRunLayout.LAND_USE)
-                .resolve("city_land_use_planning_complete.json");
-        Path anchorMapPath = d4Dir.resolve("structure_anchor_map.json");
-        Path reservationMaskPath = d5Dir.resolve("reservation_mask_plan.json");
-        Path wallReservationPath = d5Dir.resolve("wall_reservation_plan.json");
-        Path materializationPath = d6Dir.resolve("structure_materialization_plan.json");
-        if (!Files.exists(anchorMapPath)) {
-            rejectLegacyArtifacts(d4Dir, "D4");
-            throw new IllegalArgumentException("D4 structure_anchor_map.json not found. Run city_plan_d4 first: "
-                    + debugRef(debugRoot, anchorMapPath));
-        }
-        if (!Files.exists(reservationMaskPath)) {
-            rejectLegacyArtifacts(d5Dir, "D5");
-            throw new IllegalArgumentException("D5 reservation_mask_plan.json not found. Run city_plan_d5 first: "
-                    + debugRef(debugRoot, reservationMaskPath));
-        }
-        if (!Files.exists(materializationPath)) {
-            throw new IllegalArgumentException("D6 structure_materialization_plan.json not found. Run city_plan_d6 first: "
-                    + debugRef(debugRoot, materializationPath));
-        }
-        JsonObject materializationPlan = JsonParser.parseString(Files.readString(materializationPath)).getAsJsonObject();
-        JsonObject wallReservationPlan = Files.exists(wallReservationPath)
-                ? JsonParser.parseString(Files.readString(wallReservationPath)).getAsJsonObject() : new JsonObject();
-        List<CompiledDecorationProgramPlan.HardObstacle> hardObstacles = new ArrayList<>(
-                decorationHardObstacles(materializationPlan, wallReservationPlan));
-        CityDecorationContentCatalog catalog = new CityDecorationContentCatalogLoader().load(catalogRoot);
-        CityDecorationStyleProfileCatalog styleProfiles = new CityDecorationStyleProfileCatalogLoader()
-                .load(catalogRoot, catalog);
-        CityDecorationProgramPlanner planner = new CityDecorationProgramPlanner();
-        DecorationProgramIntentPlan intentPlan = planner.parse(decorationProgramPlan);
-        if (!reviewPackage.cityId().equals(intentPlan.cityId())) {
-            throw new IllegalArgumentException("CITY_DECORATION_CITY_ID_MISMATCH: expected "
-                    + reviewPackage.cityId() + " but found " + intentPlan.cityId());
-        }
-        if (!catalog.catalogHash().equals(intentPlan.catalogHash())) {
-            throw new IllegalArgumentException("CITY_DECORATION_CATALOG_HASH_MISMATCH: expected "
-                    + catalog.catalogHash() + " but found " + intentPlan.catalogHash());
-        }
-        CityDecorationStyleProfileCatalog.StyleProfile styleProfile = styleProfiles
-                .requireProfile(intentPlan.styleProfileId());
-        CityDecorationStyleProfileResolver.Resolution styleResolution = new CityDecorationStyleProfileResolver()
-                .resolve(intentPlan, styleProfile);
-        DecorationProgramIntentPlan resolvedIntent = styleResolution.resolvedIntent();
-        validateDecorationContentRefs(resolvedIntent, catalog);
-        LandUseAreaDecorationProgramContextResolver landUseResolver = null;
-        CityLandUseSurfacePrintPlan landUseSurfacePrintPlanForDecoration = null;
-        boolean requiresLandUse = resolvedIntent.programs().stream()
-                .anyMatch(program -> "land_use_area".equals(program.targetArea().sourceType()));
-        if (requiresLandUse) {
-            requireDecorationLandUseArtifacts(landUsePath, landUseSurfacePrintPath, landUseCompletePath);
-            LandUseAreaPlan typedLandUsePlan = new LandUseAreaPlanCodec().fromJson(
-                    JsonParser.parseString(Files.readString(landUsePath)).getAsJsonObject());
-            if (!reviewPackage.cityId().equals(typedLandUsePlan.cityId())) {
-                throw new IllegalArgumentException("CITY_DECORATION_LAND_USE_CITY_ID_MISMATCH: expected "
-                        + reviewPackage.cityId() + " but found " + typedLandUsePlan.cityId());
-            }
-            landUseSurfacePrintPlanForDecoration = new CityLandUseSurfacePrintPlanCodec().fromJson(
-                    JsonParser.parseString(Files.readString(landUseSurfacePrintPath)).getAsJsonObject());
-            validateLandUseCompletionArtifacts(debugRoot, runDir, citySeedId, materializationPlan,
-                    typedLandUsePlan, landUseSurfacePrintPlanForDecoration,
-                    currentBlueprintOutdoorInputs(debugRoot, runDir, citySeedId));
-            appendLandUseDecorationObstacles(hardObstacles, typedLandUsePlan);
-            landUseResolver = new LandUseAreaDecorationProgramContextResolver(
-                    new LandUseAreaPlanCodec().toJson(typedLandUsePlan), hardObstacles);
-        }
-        CompiledDecorationProgramPlan compiled = planner.compile(resolvedIntent,
-                new CityDecorationProgramContextResolver(
-                        new D3PatchDecorationProgramContextResolver(reviewPackage, hardObstacles),
-                        landUseResolver),
-                hardObstacles);
-        validateNoLandUseSurfaceDecorationBulkConflict(compiled, landUseSurfacePrintPlanForDecoration);
-        BlockBounds projectionBounds = decorationProjectionBounds(compiled.programs());
-        List<DecorationSlot> slots = planner.project(compiled, projectionBounds);
-
-        DecorationProgramIntentCodec intentCodec = new DecorationProgramIntentCodec();
-        CompiledDecorationProgramCodec compiledCodec = new CompiledDecorationProgramCodec();
-        JsonObject normalizedIntent = intentCodec.toJson(intentPlan);
-        JsonObject compiledJson = compiledCodec.toJson(compiled);
-        JsonObject slotProjection = decorationSlotProjection(compiled, slots);
-        JsonObject quality = decorationPlanningQuality(intentPlan, compiled, slots);
-        JsonObject trace = decorationPlanningTrace(intentPlan, compiled, slots);
-
-        Path outputDirectory = decorationDir(runDir, citySeedId);
-        Files.createDirectories(outputDirectory);
-        Path intentPath = outputDirectory.resolve("city_decoration_program_plan.json");
-        Path compiledPath = outputDirectory.resolve("city_decoration_compiled_program_plan.json");
-        Path slotsPath = outputDirectory.resolve("city_decoration_slot_projection.json");
-        Path qualityPath = outputDirectory.resolve("quality_report.json");
-        Path tracePath = outputDirectory.resolve("city_decoration_planning_trace.json");
-        Path styleResolutionPath = outputDirectory.resolve("city_decoration_style_resolution.json");
-        Path previewIndexPath = outputDirectory.resolve("city_decoration_preview_index.json");
-        Path completePath = outputDirectory.resolve("city_decoration_planning_complete.json");
-        Files.deleteIfExists(completePath);
-        JsonObject previewIndex = new CityDecorationPreviewRenderer().render(compiled, slots, outputDirectory);
-        Files.writeString(intentPath, CityJson.GSON.toJson(normalizedIntent));
-        Files.writeString(compiledPath, CityJson.GSON.toJson(compiledJson));
-        Files.writeString(slotsPath, CityJson.GSON.toJson(slotProjection));
-        Files.writeString(qualityPath, CityJson.GSON.toJson(quality));
-        Files.writeString(tracePath, CityJson.GSON.toJson(trace));
-        Files.writeString(styleResolutionPath, CityJson.GSON.toJson(styleResolution.trace()));
-        JsonObject completion = new JsonObject();
-        completion.addProperty("schema", "city_decoration_planning_complete");
-        completion.addProperty("cityId", compiled.cityId());
-        completion.addProperty("catalogHash", compiled.catalogHash());
-        completion.addProperty("styleProfileId", compiled.styleProfileId());
-        completion.addProperty("styleProfileHash", compiled.styleProfileHash());
-        completion.addProperty("completedAt", Instant.now().toString());
-        Files.writeString(completePath, CityJson.GSON.toJson(completion));
-
-        JsonObject response = new JsonObject();
-        response.addProperty("ok", true);
-        response.addProperty("planningMode", "city_decoration_program");
-        response.add("decorationProgramPlan", normalizedIntent.deepCopy());
-        response.add("compiledDecorationProgramPlan", compiledJson.deepCopy());
-        response.add("slotProjection", slotProjection.deepCopy());
-        response.add("qualityReport", quality.deepCopy());
-        response.add("planningTrace", trace.deepCopy());
-        response.add("styleResolution", styleResolution.trace().deepCopy());
-        response.add("decorationPreviewIndex", previewIndex.deepCopy());
-        response.add("planningComplete", completion.deepCopy());
-        JsonObject artifacts = new JsonObject();
-        artifacts.addProperty("decorationProgramPlan", debugRef(debugRoot, intentPath));
-        artifacts.addProperty("compiledDecorationProgramPlan", debugRef(debugRoot, compiledPath));
-        artifacts.addProperty("decorationSlotProjection", debugRef(debugRoot, slotsPath));
-        artifacts.addProperty("qualityReport", debugRef(debugRoot, qualityPath));
-        artifacts.addProperty("planningTrace", debugRef(debugRoot, tracePath));
-        artifacts.addProperty("styleResolution", debugRef(debugRoot, styleResolutionPath));
-        artifacts.addProperty("decorationPreviewIndex", debugRef(debugRoot, previewIndexPath));
-        artifacts.addProperty("planningComplete", debugRef(debugRoot, completePath));
-        artifacts.addProperty("sourceD3Package", debugRef(debugRoot, d3PackagePath(runDir, citySeedId)));
-        artifacts.addProperty("sourceStructureAnchorMap", debugRef(debugRoot, anchorMapPath));
-        artifacts.addProperty("sourceReservationMaskPlan", debugRef(debugRoot, reservationMaskPath));
-        if (Files.exists(wallReservationPath)) {
-            artifacts.addProperty("sourceWallReservationPlan", debugRef(debugRoot, wallReservationPath));
-        }
-        artifacts.addProperty("sourceStructureMaterializationPlan", debugRef(debugRoot, materializationPath));
-        if (requiresLandUse) {
-            artifacts.addProperty("sourceLandUseAreaPlan", debugRef(debugRoot, landUsePath));
-            artifacts.addProperty("sourceLandUsePlanningComplete", debugRef(debugRoot, landUseCompletePath));
-        }
-        response.add("artifacts", artifacts);
-        return response;
-    }
 
     static JsonObject handlePlanD6(Path debugRoot, String runId, String citySeedId,
                                    MinecraftServerHolder serverHolder,
@@ -2408,8 +1815,6 @@ final class CityPlanningEndpointHandler {
                 .renderD6(result.structureMaterializationPlan(), result.structureMaterializationTrace(), outputDirectory);
         Files.deleteIfExists(cityStageDir(runDir, citySeedId, CityTestRunLayout.LAND_USE)
                 .resolve("city_land_use_planning_complete.json"));
-        Files.deleteIfExists(decorationDir(runDir, citySeedId)
-                .resolve("city_decoration_planning_complete.json"));
 
         JsonObject response = result.asJson();
         JsonObject artifacts = new JsonObject();
@@ -2822,25 +2227,6 @@ final class CityPlanningEndpointHandler {
             report.addProperty("blueprintOutdoorStatus", "preserved");
         }
 
-        if (booleanValue(request, "enableDressingLayer", false)
-                || request.has("decorationProgramPlan") || request.has("dressingBrushPlan")) {
-            if (request.has("dressingBrushPlan")) {
-                throw new IllegalArgumentException("CITY_DRESSING_LEGACY_SCHEMA_REMOVED: "
-                        + "workflow no longer accepts dressingBrushPlan.");
-            }
-            if (!ctx.workflow().runStep("city_plan_city_dressing", decorationDir(runDir, citySeedId)
-                    .resolve("city_decoration_planning_complete.json"), () -> {
-                if (!request.has("decorationProgramPlan") || !request.get("decorationProgramPlan").isJsonObject()) {
-                    throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_PLAN_REQUIRED: "
-                            + "decorationProgramPlan object is required when enableDressingLayer=true.");
-                }
-                return handlePlanCityDressing(debugRoot, runId, citySeedId,
-                        request.getAsJsonObject("decorationProgramPlan"));
-            })) {
-                return ctx.workflow().finish(workflowStarted, "failed");
-            }
-        }
-
         if (!booleanValue(request, "confirmWorldMutation", false)) {
             ctx.workflow().addStop("city_execute_d5", "needs_confirmation",
                     "WORKFLOW_CONFIRM_WORLD_MUTATION_REQUIRED",
@@ -2853,12 +2239,11 @@ final class CityPlanningEndpointHandler {
         Path executeD5SkipArtifact = workflowD5ActivationCurrent(activeD5Registry,
                 workflowD5Plan, workflowD6Plan,
                 cityStageDir(runDir, citySeedId, CityTestRunLayout.LAND_USE)
-                        .resolve("city_land_use_planning_complete.json"),
-                decorationDir(runDir, citySeedId).resolve("city_decoration_planning_complete.json"))
+                        .resolve("city_land_use_planning_complete.json"))
                 ? activeD5Registry : null;
         if (!ctx.workflow().runStep("city_execute_d5", executeD5SkipArtifact,
                 () -> serverHolder.callOnServerThread(() -> handleExecuteD5(
-                        debugRoot, serverRoot, runId, citySeedId, true, level, null,
+                        debugRoot, serverRoot, runId, citySeedId, true, level,
                         blueprintWorkflow ? null : enableLandUseLayer)))) {
             return ctx.workflow().finish(workflowStarted, "failed");
         }
@@ -2930,8 +2315,7 @@ final class CityPlanningEndpointHandler {
     static boolean workflowD5ActivationCurrent(Path activeRegistryPath,
                                                Path d5PlanPath,
                                                Path d6PlanPath,
-                                               Path landUseCompletionPath,
-                                               Path decorationCompletionPath) {
+                                               Path landUseCompletionPath) {
         if (!Files.isRegularFile(activeRegistryPath)
                 || !Files.isRegularFile(d5PlanPath)
                 || !Files.isRegularFile(d6PlanPath)) return false;
@@ -2947,9 +2331,7 @@ final class CityPlanningEndpointHandler {
                     && sha256(Files.readString(d6PlanPath)).equals(
                     stringValue(provenance, "sourceD6Hash", ""))
                     && optionalArtifactHash(landUseCompletionPath).equals(
-                    stringValue(provenance, "sourceLandUseCompletionHash", ""))
-                    && optionalArtifactHash(decorationCompletionPath).equals(
-                    stringValue(provenance, "sourceDecorationCompletionHash", ""));
+                    stringValue(provenance, "sourceLandUseCompletionHash", ""));
         } catch (RuntimeException | IOException ignored) {
             return false;
         }
@@ -3401,140 +2783,13 @@ final class CityPlanningEndpointHandler {
     private record LandUseConfiguration(LandUseSettings settings, LandUseRuleCatalog rules) {
     }
 
-    private static Path defaultDecorationCatalogRoot() {
-        Path catalogRoot = optionalDefaultDecorationCatalogRoot();
-        if (catalogRoot == null) {
-            throw new IllegalArgumentException("CITY_DECORATION_CATALOG_ROOT_UNAVAILABLE: Forge config directory is not initialized.");
-        }
-        try {
-            return CityDecorationDefaultCatalogBootstrap.ensureInstalled(catalogRoot);
-        } catch (IOException ex) {
-            throw new IllegalArgumentException("CITY_DECORATION_DEFAULT_CATALOG_BOOTSTRAP_FAILED: "
-                    + catalogRoot, ex);
-        }
-    }
 
-    private static Path optionalDefaultDecorationCatalogRoot() {
-        Path configDir = FMLPaths.CONFIGDIR.get();
-        if (configDir == null) {
-            return null;
-        }
-        return configDir.resolve("geomantia").resolve("city_decoration");
-    }
 
-    private static void rejectLegacyDressingPlan(JsonObject plan) {
-        if (plan == null) {
-            throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_PLAN_REQUIRED: decorationProgramPlan is required.");
-        }
-        String schema = stringValue(plan, "schema", "");
-        if (schema.startsWith("city_dressing_brush_plan")
-                || plan.has("dressingLayoutItems") || plan.has("brushes") || plan.has("dressingBrushPlan")) {
-            throw new IllegalArgumentException("CITY_DRESSING_OBSOLETE_SCHEMA_REMOVED: dressingBrushPlan is no longer accepted.");
-        }
-    }
 
-    private static JsonObject decorationCatalogSummary(CityDecorationContentCatalog catalog,
-                                                       CityDecorationStyleProfileCatalog styleProfiles) {
-        JsonObject response = new JsonObject();
-        response.addProperty("schema", "city_decoration_catalog_query");
-        response.addProperty("contentIndexSchema", catalog.schema());
-        response.addProperty("catalogHash", catalog.catalogHash());
-        JsonArray contents = new JsonArray();
-        for (CityDecorationContentCatalog.Content content : catalog.contents().values()) {
-            JsonObject summary = new JsonObject();
-            summary.addProperty("contentRef", content.contentId());
-            summary.addProperty("contentKind", content.contentKind());
-            JsonArray rotations = new JsonArray();
-            content.allowedRotations().forEach(rotations::add);
-            summary.add("allowedRotations", rotations);
-            summary.addProperty("supportMode", content.supportMode());
-            summary.addProperty("placementMode", content.placementMode());
-            summary.addProperty("replacePolicy", content.replacePolicy());
-            summary.addProperty("maxFootprintHeightSpreadBlocks", content.maxFootprintHeightSpreadBlocks());
-            summary.addProperty("comfortMarginBlocks", content.comfortMarginBlocks());
-            summary.addProperty("groundPlaneLocalY", content.groundPlaneLocalY());
-            summary.addProperty("embedDepthBlocks", content.embedDepthBlocks());
-            summary.addProperty("clearanceMode", content.clearanceMode());
-            JsonArray tags = new JsonArray();
-            content.tags().forEach(tags::add);
-            summary.add("tags", tags);
-            JsonObject size = new JsonObject();
-            size.addProperty("widthBlocks", content.size().widthBlocks());
-            size.addProperty("heightBlocks", content.size().heightBlocks());
-            size.addProperty("depthBlocks", content.size().depthBlocks());
-            summary.add("size", size);
-            summary.addProperty("contentHash", content.contentHash());
-            contents.add(summary);
-        }
-        response.add("contents", contents);
-        JsonArray profiles = new JsonArray();
-        styleProfiles.profiles().values().forEach(profile -> {
-            JsonObject summary = new JsonObject();
-            summary.addProperty("styleProfileId", profile.styleProfileId());
-            summary.addProperty("styleProfileHash", profile.styleProfileHash());
-            JsonArray semanticRefs = new JsonArray();
-            profile.mappings().keySet().stream().sorted().forEach(semanticRefs::add);
-            summary.add("semanticRefs", semanticRefs);
-            profiles.add(summary);
-        });
-        response.add("styleProfiles", profiles);
-        return response;
-    }
 
-    private static void validateDecorationContentRefs(DecorationProgramIntentPlan plan,
-                                                      CityDecorationContentCatalog catalog) {
-        for (DecorationProgramIntent program : plan.programs()) {
-            for (CompiledDecorationProgram.PaletteSlot slot : program.contentPalette().slots()) {
-                slot.layers().forEach(layer -> layer.entries().forEach(entry ->
-                        catalog.requireContent(entry.contentRef())));
-            }
-        }
-    }
 
-    private static void validateCompiledDecorationContentRefs(CompiledDecorationProgramPlan plan,
-                                                              CityDecorationContentCatalog catalog) {
-        for (CompiledDecorationProgram program : plan.programs()) {
-            for (CompiledDecorationProgram.PaletteSlot slot : program.contentPalette().slots()) {
-                slot.layers().forEach(layer -> layer.entries().forEach(entry ->
-                        catalog.requireContent(entry.contentRef())));
-            }
-        }
-    }
 
-    private static void validateCompiledDecorationStyleProfile(CompiledDecorationProgramPlan plan,
-                                                               CityDecorationContentCatalog catalog,
-                                                               Path catalogRoot) {
-        CityDecorationStyleProfileCatalog styles = new CityDecorationStyleProfileCatalogLoader()
-                .load(catalogRoot, catalog);
-        CityDecorationStyleProfileCatalog.StyleProfile profile = styles.requireProfile(plan.styleProfileId());
-        if (!profile.styleProfileHash().equals(plan.styleProfileHash())) {
-            throw new IllegalArgumentException("CITY_DECORATION_STYLE_PROFILE_HASH_MISMATCH: expected "
-                    + profile.styleProfileHash() + " but found " + plan.styleProfileHash());
-        }
-    }
 
-    static void validateNoLandUseSurfaceDecorationBulkConflict(
-            CompiledDecorationProgramPlan decorationPlan,
-            CityLandUseSurfacePrintPlan surfacePrintPlan) {
-        if (decorationPlan == null || surfacePrintPlan == null || surfacePrintPlan.areas().isEmpty()) {
-            return;
-        }
-        Set<String> surfaceOwnedMasks = surfacePrintPlan.areas().stream()
-                .map(area -> "land_use_area:" + area.landUseAreaId())
-                .collect(java.util.stream.Collectors.toUnmodifiableSet());
-        for (CompiledDecorationProgram program : decorationPlan.programs()) {
-            boolean bulkPattern = program.pattern() instanceof CompiledDecorationProgram.UniformFillPattern
-                    || program.pattern() instanceof CompiledDecorationProgram.CrossSectionRepeatPattern
-                    || program.pattern() instanceof CompiledDecorationProgram.ParallelRowsPattern;
-            if (bulkPattern && surfaceOwnedMasks.contains(program.targetMask().maskId())) {
-                throw new IllegalArgumentException(
-                        "CITY_LAND_USE_SURFACE_PRINT_DECORATION_BULK_CONFLICT: program="
-                                + program.programId() + ", targetMask=" + program.targetMask().maskId()
-                                + ". Use LandUse surface printing for bulk ground/crop/channel work; "
-                                + "Decoration remains available for sparse details.");
-            }
-        }
-    }
 
     private static BlueprintOutdoorInputs currentBlueprintOutdoorInputs(Path debugRoot,
                                                                          Path runDir,
@@ -3546,6 +2801,7 @@ final class CityPlanningEndpointHandler {
         return isBlueprintAnchorMap(anchorMap)
                 ? loadBlueprintOutdoorInputs(debugRoot, runDir, citySeedId) : null;
     }
+
 
     private static boolean isBlueprintAnchorMap(JsonObject anchorMap) {
         if (anchorMap == null || !anchorMap.has("cityBlueprintCompileProvenance")
@@ -3872,15 +3128,6 @@ final class CityPlanningEndpointHandler {
         }
     }
 
-    static void requireDecorationLandUseArtifacts(Path areaPlanPath,
-                                                  Path surfacePrintPlanPath,
-                                                  Path completionPath) {
-        if (!Files.isRegularFile(areaPlanPath) || !Files.isRegularFile(surfacePrintPlanPath)
-                || !Files.isRegularFile(completionPath)) {
-            throw new IllegalArgumentException(
-                    "CITY_DECORATION_LAND_USE_PLAN_REQUIRED: run city_plan_land_use first.");
-        }
-    }
 
     private static JsonObject landUseChunkPreflightJson(
             CityLandUseChunkStatusPreflight.PreflightResult result) {
@@ -3936,300 +3183,22 @@ final class CityPlanningEndpointHandler {
         return json;
     }
 
-    private static void validateDecorationCompletion(JsonObject completion,
-                                                     CompiledDecorationProgramPlan compiledPlan,
-                                                     String expectedCityId) {
-        if (!"city_decoration_planning_complete".equals(stringValue(completion, "schema", ""))) {
-            throw new IllegalArgumentException("CITY_DECORATION_PLAN_INCOMPLETE: completion schema is invalid.");
-        }
-        if (!expectedCityId.equals(stringValue(completion, "cityId", ""))
-                || !compiledPlan.cityId().equals(stringValue(completion, "cityId", ""))) {
-            throw new IllegalArgumentException("CITY_DECORATION_PLAN_INCOMPLETE: completion cityId does not match compiled plan.");
-        }
-        if (!compiledPlan.catalogHash().equals(stringValue(completion, "catalogHash", ""))) {
-            throw new IllegalArgumentException("CITY_DECORATION_PLAN_INCOMPLETE: completion catalogHash does not match compiled plan.");
-        }
-        if (!compiledPlan.styleProfileId().equals(stringValue(completion, "styleProfileId", ""))
-                || !compiledPlan.styleProfileHash().equals(stringValue(completion, "styleProfileHash", ""))) {
-            throw new IllegalArgumentException("CITY_DECORATION_PLAN_INCOMPLETE: completion style profile does not match compiled plan.");
-        }
-        if (stringValue(completion, "completedAt", "").isBlank()) {
-            throw new IllegalArgumentException("CITY_DECORATION_PLAN_INCOMPLETE: completion completedAt is required.");
-        }
-    }
 
-    private static JsonObject readDecorationCompletion(Path completionPath) throws IOException {
-        try {
-            JsonElement parsed = JsonParser.parseString(Files.readString(completionPath));
-            if (!parsed.isJsonObject()) {
-                throw new IllegalArgumentException("completion root must be an object");
-            }
-            return parsed.getAsJsonObject();
-        } catch (RuntimeException ex) {
-            throw new IllegalArgumentException("CITY_DECORATION_PLAN_INCOMPLETE: completion marker is invalid: "
-                    + completionPath, ex);
-        }
-    }
 
-    private static List<CompiledDecorationProgramPlan.HardObstacle> decorationHardObstacles(
-            JsonObject materializationPlan,
-            JsonObject wallReservationPlan) {
-        List<CompiledDecorationProgramPlan.HardObstacle> result = new ArrayList<>();
-        for (JsonElement element : array(materializationPlan, "plannedWorldgenStructures")) {
-            if (!element.isJsonObject()) {
-                continue;
-            }
-            JsonObject structure = element.getAsJsonObject();
-            String sourceRef = stringValue(structure, "anchorId", "planned_structure");
-            for (String field : List.of("lockedCollisionEnvelope", "lockedActualFootprint")) {
-                if (structure.has(field) && structure.get(field).isJsonObject()) {
-                    result.add(new CompiledDecorationProgramPlan.HardObstacle(
-                            "structure_" + field, sourceRef, bounds(structure.getAsJsonObject(field))));
-                }
-            }
-        }
-        appendDecorationMaskObstacles(result, wallReservationPlan, "wallCorridorMask", "wall_corridor");
-        appendDecorationMaskObstacles(result, wallReservationPlan, "gateCorridorMask", "gate_corridor");
-        return List.copyOf(result);
-    }
 
-    private static void appendLandUseDecorationObstacles(
-            List<CompiledDecorationProgramPlan.HardObstacle> target,
-            LandUseAreaPlan plan) {
-        for (LandUseAreaPlan.CorridorExclusion corridor : plan.corridorExclusions()) {
-            target.add(new CompiledDecorationProgramPlan.HardObstacle(
-                    "land_use_entrance_corridor", corridor.exclusionId(), corridor.blockBounds()));
-        }
-        for (LandUseAreaPlan.Area area : plan.areas()) {
-            for (LandUseAreaPlan.GateSlot gate : area.gateSlots()) {
-                target.add(new CompiledDecorationProgramPlan.HardObstacle(
-                        "land_use_gate", gate.gateId(),
-                        new BlockBounds(gate.block().x(), gate.block().z(), gate.block().x(), gate.block().z())));
-            }
-        }
-    }
 
-    private static void appendDecorationMaskObstacles(
-            List<CompiledDecorationProgramPlan.HardObstacle> target,
-            JsonObject plan,
-            String arrayKey,
-            String obstacleType) {
-        int index = 0;
-        for (JsonElement element : array(plan, arrayKey)) {
-            if (!element.isJsonObject()) {
-                continue;
-            }
-            JsonObject mask = element.getAsJsonObject();
-            if (!mask.has("blockBounds") || !mask.get("blockBounds").isJsonObject()) {
-                continue;
-            }
-            target.add(new CompiledDecorationProgramPlan.HardObstacle(obstacleType,
-                    stringValue(mask, "maskId", arrayKey + "_" + index),
-                    bounds(mask.getAsJsonObject("blockBounds"))));
-            index++;
-        }
-    }
 
-    private static BlockBounds decorationProjectionBounds(List<CompiledDecorationProgram> programs) {
-        int minX = Integer.MAX_VALUE;
-        int minZ = Integer.MAX_VALUE;
-        int maxX = Integer.MIN_VALUE;
-        int maxZ = Integer.MIN_VALUE;
-        for (CompiledDecorationProgram program : programs) {
-            BlockBounds bounds = program.targetMask().bounds();
-            minX = Math.min(minX, bounds.minX());
-            minZ = Math.min(minZ, bounds.minZ());
-            maxX = Math.max(maxX, bounds.maxX());
-            maxZ = Math.max(maxZ, bounds.maxZ());
-        }
-        return new BlockBounds(minX, minZ, maxX, maxZ);
-    }
 
-    private static void validateDecorationSlotProjection(CompiledDecorationProgramPlan compiledDecorationPlan,
-                                                         List<DecorationSlot> projectedSlots,
-                                                         String mismatchCode) {
-        List<DecorationSlot> expectedSlots = new CityDecorationProgramPlanner().project(compiledDecorationPlan,
-                decorationProjectionBounds(compiledDecorationPlan.programs()));
-        if (expectedSlots.size() != projectedSlots.size()) {
-            throw new IllegalArgumentException(mismatchCode);
-        }
-        Map<String, DecorationSlot> expectedById = new LinkedHashMap<>();
-        for (DecorationSlot expected : expectedSlots) {
-            if (expectedById.put(expected.slotId(), expected) != null) {
-                throw new IllegalArgumentException(mismatchCode);
-            }
-        }
-        for (DecorationSlot projected : projectedSlots) {
-            if (!projected.equals(expectedById.remove(projected.slotId()))) {
-                throw new IllegalArgumentException(mismatchCode);
-            }
-        }
-        if (!expectedById.isEmpty()) {
-            throw new IllegalArgumentException(mismatchCode);
-        }
-    }
 
-    private static DecorationMaskCounts appendDecorationProjectionMasks(JsonObject activeMaskPlan,
-                                                                          CompiledDecorationProgramPlan compiledDecorationPlan,
-                                                                          List<DecorationSlot> projectedSlots) {
-        JsonArray noVegetation = activeMaskPlan.has("noVegetationMask")
-                && activeMaskPlan.get("noVegetationMask").isJsonArray()
-                ? activeMaskPlan.getAsJsonArray("noVegetationMask") : new JsonArray();
-        JsonArray noVanillaStructure = activeMaskPlan.has("noVanillaStructureMask")
-                && activeMaskPlan.get("noVanillaStructureMask").isJsonArray()
-                ? activeMaskPlan.getAsJsonArray("noVanillaStructureMask") : new JsonArray();
-        JsonArray reasons = activeMaskPlan.has("reservationReason")
-                && activeMaskPlan.get("reservationReason").isJsonArray()
-                ? activeMaskPlan.getAsJsonArray("reservationReason") : new JsonArray();
-        Map<String, BlockBounds> projectionBoundsByProgram = new LinkedHashMap<>();
-        for (DecorationSlot slot : projectedSlots) {
-            BlockBounds slotBounds = new BlockBounds(slot.worldAnchor().x(), slot.worldAnchor().z(),
-                    slot.worldAnchor().x(), slot.worldAnchor().z());
-            projectionBoundsByProgram.merge(slot.programId(), slotBounds,
-                    CityPlanningEndpointHandler::unionBounds);
-        }
-        int vegetationMaskCount = 0;
-        int structureMaskCount = 0;
-        for (CompiledDecorationProgram program : compiledDecorationPlan.programs()) {
-            BlockBounds projection = projectionBoundsByProgram.get(program.programId());
-            if (projection == null) {
-                continue;
-            }
-            String sourceRef = "decoration_program:" + program.programId();
-            addMask(noVegetation, "decoration_" + program.programId() + "_no_vegetation", projection,
-                    "decoration_projection", sourceRef);
-            addMask(noVanillaStructure, "decoration_" + program.programId() + "_no_vanilla_structure",
-                    projection, "decoration_projection", sourceRef);
-            addReason(reasons, program.programId(), "decoration_projection", projection,
-                    "suppress vegetation and normal worldgen structure starts in the planned decoration projection "
-                            + "before worldgen placement");
-            vegetationMaskCount++;
-            structureMaskCount++;
-        }
-        activeMaskPlan.add("noVegetationMask", noVegetation);
-        activeMaskPlan.add("noVanillaStructureMask", noVanillaStructure);
-        activeMaskPlan.add("reservationReason", reasons);
-        return new DecorationMaskCounts(vegetationMaskCount, structureMaskCount);
-    }
 
     private static BlockBounds unionBounds(BlockBounds first, BlockBounds second) {
         return new BlockBounds(Math.min(first.minX(), second.minX()), Math.min(first.minZ(), second.minZ()),
                 Math.max(first.maxX(), second.maxX()), Math.max(first.maxZ(), second.maxZ()));
     }
 
-    private static JsonObject decorationSlotProjection(CompiledDecorationProgramPlan plan,
-                                                       List<DecorationSlot> slots) {
-        JsonObject projection = new JsonObject();
-        projection.addProperty("schema", "city_decoration_slot_projection");
-        projection.addProperty("cityId", plan.cityId());
-        projection.addProperty("catalogHash", plan.catalogHash());
-        JsonArray array = new JsonArray();
-        for (DecorationSlot slot : slots) {
-            JsonObject item = new JsonObject();
-            item.addProperty("slotId", slot.slotId());
-            item.addProperty("programId", slot.programId());
-            item.addProperty("paletteSlotId", slot.paletteSlotId());
-            item.add("worldAnchor", slot.worldAnchor().asJson());
-            JsonObject local = new JsonObject();
-            local.addProperty("u", slot.localAnchor().u());
-            local.addProperty("v", slot.localAnchor().v());
-            item.add("localAnchor", local);
-            item.addProperty("rotationQuarterTurns", slot.rotationQuarterTurns());
-            array.add(item);
-        }
-        projection.add("slots", array);
-        return projection;
-    }
 
-    private static JsonObject decorationPlanningQuality(DecorationProgramIntentPlan intent,
-                                                        CompiledDecorationProgramPlan compiled,
-                                                        List<DecorationSlot> slots) {
-        JsonObject quality = new JsonObject();
-        quality.addProperty("schema", "city_decoration_quality_report");
-        quality.addProperty("passed", true);
-        quality.addProperty("score", 100);
-        quality.add("warnings", new JsonArray());
-        quality.add("hardBlocks", new JsonArray());
-        JsonObject metrics = new JsonObject();
-        metrics.addProperty("intentProgramCount", intent.programs().size());
-        metrics.addProperty("compiledProgramCount", compiled.programs().size());
-        metrics.addProperty("projectedSlotCount", slots.size());
-        quality.add("metrics", metrics);
-        return quality;
-    }
 
-    private static JsonObject decorationPlanningTrace(DecorationProgramIntentPlan intent,
-                                                      CompiledDecorationProgramPlan compiled,
-                                                      List<DecorationSlot> slots) {
-        JsonObject trace = new JsonObject();
-        trace.addProperty("schema", "city_decoration_planning_trace");
-        trace.addProperty("cityId", intent.cityId());
-        trace.addProperty("catalogHash", intent.catalogHash());
-        trace.addProperty("projectedSlotCount", slots.size());
-        trace.addProperty("hardObstacleCount", compiled.hardObstacles().size());
-        JsonArray obstacles = new JsonArray();
-        for (CompiledDecorationProgramPlan.HardObstacle obstacle : compiled.hardObstacles()) {
-            JsonObject item = new JsonObject();
-            item.addProperty("obstacleType", obstacle.obstacleType());
-            item.addProperty("sourceRef", obstacle.sourceRef());
-            item.add("blockBounds", boundsJson(obstacle.blockBounds()));
-            obstacles.add(item);
-        }
-        trace.add("hardObstacles", obstacles);
-        JsonArray programs = new JsonArray();
-        for (int i = 0; i < intent.programs().size(); i++) {
-            DecorationProgramIntent source = intent.programs().get(i);
-            CompiledDecorationProgram resolved = compiled.programs().get(i);
-            JsonObject item = new JsonObject();
-            item.addProperty("programId", source.programId());
-            item.addProperty("targetSourceType", source.targetArea().sourceType());
-            item.addProperty("targetRef", source.targetArea().ref());
-            item.addProperty("resolvedMaskMemberCount", resolved.targetMask().memberBounds().size());
-            item.add("resolvedOrigin", resolved.coordinateFrame().origin().asJson());
-            item.addProperty("shapeType", source.shape().type());
-            item.addProperty("patternType", source.pattern().type());
-            programs.add(item);
-        }
-        trace.add("programs", programs);
-        return trace;
-    }
 
-    private static JsonObject decorationTerrainActivationTrace(
-            CityDecorationTerrainRunCompiler.FrozenPlan frozen) {
-        JsonObject trace = new JsonObject();
-        trace.addProperty("schema", "city_decoration_terrain_activation_trace");
-        trace.addProperty("cityId", frozen.cityId());
-        trace.addProperty("catalogHash", frozen.catalogHash());
-        trace.addProperty("runCount", frozen.runs().size());
-        trace.addProperty("foundationSegmentCount", frozen.foundationSegments().size());
-        Map<String, Integer> decisionCounts = new java.util.TreeMap<>();
-        Map<String, Integer> terrainClassCounts = new java.util.TreeMap<>();
-        Map<String, Integer> reasonCounts = new java.util.TreeMap<>();
-        JsonArray runs = new JsonArray();
-        for (CityDecorationTerrainRunCompiler.Run run : frozen.runs()) {
-            JsonObject item = new JsonObject();
-            item.addProperty("runId", run.runId());
-            item.addProperty("programId", run.programId());
-            item.addProperty("paletteSlotId", run.paletteSlotId());
-            item.addProperty("continuationAxis", run.continuationAxis().serializedName());
-            item.addProperty("crossCoordinate", run.crossCoordinate());
-            item.addProperty("slotCount", run.slots().size());
-            item.addProperty("terminationOrdinal", run.terminationOrdinal());
-            item.addProperty("terminationReasonCode", run.terminationReasonCode());
-            item.addProperty("foundationSegmentCount", run.foundationSegments().size());
-            runs.add(item);
-            for (CityDecorationTerrainRunCompiler.SlotOutcome outcome : run.slots()) {
-                decisionCounts.merge(outcome.decision().name(), 1, Integer::sum);
-                terrainClassCounts.merge(outcome.terrainClass().name(), 1, Integer::sum);
-                reasonCounts.merge(outcome.reasonCode(), 1, Integer::sum);
-            }
-        }
-        trace.add("runs", runs);
-        trace.add("decisionCounts", countMapJson(decisionCounts));
-        trace.add("terrainClassCounts", countMapJson(terrainClassCounts));
-        trace.add("reasonCounts", countMapJson(reasonCounts));
-        return trace;
-    }
 
     private static JsonObject countMapJson(Map<String, Integer> counts) {
         JsonObject result = new JsonObject();
@@ -4237,9 +3206,6 @@ final class CityPlanningEndpointHandler {
         return result;
     }
 
-    private static Path decorationDir(Path runDir, String citySeedId) {
-        return cityStageDir(runDir, citySeedId, CityTestRunLayout.DECORATION);
-    }
 
     private static Path cityStageDir(Path runDir, String citySeedId, String stage) {
         return CityTestRunLayout.open(runDir, citySeedId).stepDirectory(stage);
@@ -5106,22 +4072,6 @@ final class CityPlanningEndpointHandler {
         return copy;
     }
 
-    private static void rejectLegacyDressingArtifacts(Path directory, boolean rejectAnyFile) throws IOException {
-        if (!Files.isDirectory(directory)) {
-            return;
-        }
-        try (var paths = Files.walk(directory)) {
-            Path legacyPath = paths.filter(Files::isRegularFile)
-                    .filter(path -> rejectAnyFile
-                            || path.getFileName().toString().startsWith("city_dressing_")
-                            || path.getFileName().toString().startsWith("active_city_dressing_"))
-                    .findFirst().orElse(null);
-            if (legacyPath != null) {
-                throw new IllegalArgumentException("CITY_DRESSING_LEGACY_SCHEMA_REMOVED: legacy artifact found: "
-                        + legacyPath);
-            }
-        }
-    }
 
     private static void appendMasksByType(JsonObject source, JsonArray target, String arrayKey, String sourceTypePrefix) {
         for (JsonElement elem : source.has(arrayKey) && source.get(arrayKey).isJsonArray()
@@ -5823,35 +4773,10 @@ final class CityPlanningEndpointHandler {
                                    CityWorkflowStepRunner workflow) {
     }
 
-    private record DecorationMaskCounts(int vegetationMaskCount, int structureMaskCount) {
-        static DecorationMaskCounts empty() {
-            return new DecorationMaskCounts(0, 0);
-        }
-    }
 
     private record RunMetadata(int cellStepBlocks, String dimensionId) {
     }
 
-    private static final class LoadedChunkDecorationTerrainView implements CityDecorationTerrainProbe.TerrainView {
-        private final ServerLevel level;
-
-        private LoadedChunkDecorationTerrainView(ServerLevel level) {
-            this.level = level;
-        }
-
-        @Override
-        public CityDecorationTerrainProbe.Sample sample(int worldX, int worldZ) {
-            int chunkX = Math.floorDiv(worldX, 16);
-            int chunkZ = Math.floorDiv(worldZ, 16);
-            ChunkAccess chunk = level.getChunkSource().getChunk(chunkX, chunkZ, ChunkStatus.FULL, false);
-            if (chunk == null) {
-                return CityDecorationTerrainProbe.Sample.unavailable();
-            }
-            int surfaceY = Math.max(level.getMinBuildHeight(),
-                    level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, worldX, worldZ) - 1);
-            return new CityDecorationTerrainProbe.Sample(true, surfaceY);
-        }
-    }
 
     record MinecraftServerHolder(net.minecraft.server.MinecraftServer server) {
         <T> T callOnServerThread(Callable<T> action) throws Exception {

@@ -1,7 +1,6 @@
 package com.rinsing.geomantia;
 
 import com.mojang.logging.LogUtils;
-import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityTemplateTerrainStructureRegistries;
 import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseWorldgenRegistry;
@@ -49,9 +48,6 @@ public final class GeomantiaMod {
         } catch (java.io.IOException ex) {
             LOGGER.error("Failed to install default City LandUse settings at {}.", landUseRoot, ex);
         }
-        java.nio.file.Path catalogRoot = FMLPaths.CONFIGDIR.get()
-                .resolve("geomantia").resolve("city_decoration");
-        CityDecorationWorldgenRegistry.load(serverRoot, catalogRoot);
     }
 
     private void registerClientDevHooks() {

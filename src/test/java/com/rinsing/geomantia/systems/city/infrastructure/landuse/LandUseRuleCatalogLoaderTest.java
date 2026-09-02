@@ -59,8 +59,8 @@ class LandUseRuleCatalogLoaderTest {
         Path root = tempDir.resolve("city_land_use");
         Path profiles = Files.createDirectories(root.resolve("profiles"));
         Files.writeString(profiles.resolve("stubbs.json"), profile("stubbs", "military", "barracks")
-                .replace("\"decorationPolicy\":\"military\"",
-                        "\"decorationPolicy\":\"military\",\"nearbyMergeMaxBridgeBlocks\":24"));
+                .replace("\"boundaryPolicy\":\"OPEN\"",
+                        "\"boundaryPolicy\":\"OPEN\",\"nearbyMergeMaxBridgeBlocks\":24"));
 
         IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
                 () -> new LandUseRuleCatalogLoader().load(root,
@@ -106,8 +106,7 @@ class LandUseRuleCatalogLoaderTest {
                     "mergeSameType":true,
                     "surfacePolicy":"PRESERVE",
                     "vegetationPolicy":"PRESERVE",
-                    "boundaryPolicy":"OPEN",
-                    "decorationPolicy":"%s"
+                    "boundaryPolicy":"OPEN"
                   }]
                 }
                 """.formatted(profileId, ruleRef, ruleRef, term, ruleRef);

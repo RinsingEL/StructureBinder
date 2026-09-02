@@ -244,7 +244,7 @@ class CityLandUseWorldgenRegistryTest {
         LandUseAreaPlan.Area area = new LandUseAreaPlan.Area("foundation", "foundation", "urban",
                 List.of("city::foundation"), List.of("house"), List.of(new BlockPoint(0, 0)),
                 spans, List.of(footprint), List.of(), List.of(), 1.0, SurfacePolicy.PAVE,
-                VegetationPolicy.CLEAR, BoundaryPolicy.OPEN, "foundation");
+                VegetationPolicy.CLEAR, BoundaryPolicy.OPEN);
         LandUseAreaPlan plan = new LandUseAreaPlanCodec().withComputedHash(new LandUseAreaPlan(
                 LandUseAreaPlan.SCHEMA, "land_use_rules", "city_foundation_datum", "",
                 new BlockBounds(0, 0, 15, 15), List.of(area), List.of(), List.of(), List.of()));

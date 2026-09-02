@@ -1065,31 +1065,31 @@ class CityBlueprintServiceTest {
                     "footprintMultiplier":1.5,"extraAreaBlocks":80,"minAreaBlocks":80,"maxAreaBlocks":1536,
                     "actionBudget":300,"baseStepCost":1.0,"slopeCost":1.2,"reliefCost":1.2,"waterCost":8.0,
                     "forestAffinity":0.0,"competitionWeight":1.0,"mergeSameType":true,
-                    "surfacePolicy":"PAVE","vegetationPolicy":"CLEAR","boundaryPolicy":"OPEN","decorationPolicy":"none"
+                    "surfacePolicy":"PAVE","vegetationPolicy":"CLEAR","boundaryPolicy":"OPEN"
                   },{
                     "ruleRef":"agriculture","landUseType":"agriculture","semanticTerms":["farm"],
                     "footprintMultiplier":1.0,"extraAreaBlocks":256,"minAreaBlocks":128,"maxAreaBlocks":4096,
                     "actionBudget":600,"baseStepCost":1.0,"slopeCost":1.4,"reliefCost":1.2,"waterCost":4.0,
                     "forestAffinity":0.2,"competitionWeight":1.0,"mergeSameType":true,
-                    "surfacePolicy":"CULTIVATE","vegetationPolicy":"CLEAR","boundaryPolicy":"FENCE","decorationPolicy":"none"
+                    "surfacePolicy":"CULTIVATE","vegetationPolicy":"CLEAR","boundaryPolicy":"FENCE"
                   },{
                     "ruleRef":"meadow","landUseType":"meadow","semanticTerms":["flower"],
                     "footprintMultiplier":0.8,"extraAreaBlocks":192,"minAreaBlocks":96,"maxAreaBlocks":3072,
                     "actionBudget":480,"baseStepCost":1.0,"slopeCost":1.0,"reliefCost":1.0,"waterCost":6.0,
                     "forestAffinity":0.1,"competitionWeight":0.9,"mergeSameType":true,
-                    "surfacePolicy":"CULTIVATE","vegetationPolicy":"SELECTIVE_CLEAR","boundaryPolicy":"OPEN","decorationPolicy":"none"
+                    "surfacePolicy":"CULTIVATE","vegetationPolicy":"SELECTIVE_CLEAR","boundaryPolicy":"OPEN"
                   },{
                     "ruleRef":"greenbelt","landUseType":"greenbelt","semanticTerms":["park"],
                     "footprintMultiplier":0.6,"extraAreaBlocks":128,"minAreaBlocks":64,"maxAreaBlocks":2048,
                     "actionBudget":420,"baseStepCost":1.0,"slopeCost":1.0,"reliefCost":1.0,"waterCost":5.0,
                     "forestAffinity":0.0,"competitionWeight":0.8,"mergeSameType":true,
-                    "surfacePolicy":"PAVE","vegetationPolicy":"PRESERVE","boundaryPolicy":"HEDGE","decorationPolicy":"none"
+                    "surfacePolicy":"PAVE","vegetationPolicy":"PRESERVE","boundaryPolicy":"HEDGE"
                   },{
                     "ruleRef":"forestry","landUseType":"forestry","semanticTerms":["woodland"],
                     "footprintMultiplier":1.0,"extraAreaBlocks":320,"minAreaBlocks":160,"maxAreaBlocks":4096,
                     "actionBudget":640,"baseStepCost":1.0,"slopeCost":0.8,"reliefCost":0.8,"waterCost":7.0,
                     "forestAffinity":-0.4,"competitionWeight":0.85,"mergeSameType":true,
-                    "surfacePolicy":"PRESERVE","vegetationPolicy":"PRESERVE","boundaryPolicy":"FENCE","decorationPolicy":"none"
+                    "surfacePolicy":"PRESERVE","vegetationPolicy":"PRESERVE","boundaryPolicy":"FENCE"
                   }]},
                   "surfaceRecipes":[
                     {"surfaceRecipeRef":"surface_recipe:civic","surfacePrintEnabled":true,

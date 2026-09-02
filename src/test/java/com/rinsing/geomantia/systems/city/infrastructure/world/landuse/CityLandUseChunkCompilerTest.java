@@ -35,7 +35,7 @@ class CityLandUseChunkCompilerTest {
                 "foundation", "foundation", "urban", List.of("city::foundation"),
                 List.of("house"), List.of(new BlockPoint(5, 8)), members, List.of(footprint),
                 List.of(), List.of(entrance), 16, SurfacePolicy.PAVE,
-                VegetationPolicy.CLEAR, BoundaryPolicy.OPEN, "foundation");
+                VegetationPolicy.CLEAR, BoundaryPolicy.OPEN);
         LandUseAreaPlan areaPlan = new LandUseAreaPlanCodec().withComputedHash(new LandUseAreaPlan(
                 LandUseAreaPlan.SCHEMA, "land_use_rules", "city_foundation", "",
                 new BlockBounds(0, 0, 15, 15), List.of(area), List.of(), List.of(), List.of()));
@@ -190,7 +190,7 @@ class CityLandUseChunkCompilerTest {
                         new BlockPoint(0, 0), new BlockPoint(1, 0),
                         new BlockPoint(2, 0), new BlockPoint(3, 0)), false)),
                 List.of(), 10, SurfacePolicy.CULTIVATE, VegetationPolicy.CLEAR,
-                BoundaryPolicy.FENCE, "area");
+                BoundaryPolicy.FENCE);
         LandUseAreaPlan areaPlan = new LandUseAreaPlanCodec().withComputedHash(new LandUseAreaPlan(
                 LandUseAreaPlan.SCHEMA, "land_use_rules", "city_boundary", "",
                 new BlockBounds(0, 0, 3, 0), List.of(area), List.of(), List.of(), List.of()));
@@ -336,7 +336,7 @@ class CityLandUseChunkCompilerTest {
         return new LandUseAreaPlan.Area(areaId, areaId, "agriculture", List.of(groupId), List.of("anchor"),
                 List.of(point), List.of(new LandUseAreaPlan.ScanlineSpan(0, x, x)), List.of(),
                 List.of(new LandUseAreaPlan.BoundaryLoop(List.of(point), false)), List.of(), 1,
-                SurfacePolicy.CULTIVATE, VegetationPolicy.CLEAR, BoundaryPolicy.FENCE, areaId);
+                SurfacePolicy.CULTIVATE, VegetationPolicy.CLEAR, BoundaryPolicy.FENCE);
     }
 
     @Test
@@ -406,7 +406,7 @@ class CityLandUseChunkCompilerTest {
                         new BlockPoint(0, 0), new BlockPoint(1, 0),
                         new BlockPoint(2, 0), new BlockPoint(3, 0)), false)),
                 List.of(), 10, SurfacePolicy.PAVE, VegetationPolicy.CLEAR,
-                BoundaryPolicy.FENCE, "greenbelt");
+                BoundaryPolicy.FENCE);
         LandUseAreaPlan areaPlan = new LandUseAreaPlanCodec().withComputedHash(new LandUseAreaPlan(
                 LandUseAreaPlan.SCHEMA, "land_use_rules", "city_frozen_boundary", "",
                 new BlockBounds(0, 0, 3, 0), List.of(area), List.of(), List.of(), List.of()));
@@ -433,7 +433,7 @@ class CityLandUseChunkCompilerTest {
         LandUseAreaPlan.Area area = new LandUseAreaPlan.Area("area", "area", "land_use",
                 List.of("group"), List.of("anchor"), List.of(new BlockPoint(members.get(0).minX(), 0)),
                 members, List.of(), List.of(), List.of(), 10, policy,
-                VegetationPolicy.CLEAR, BoundaryPolicy.OPEN, "area");
+                VegetationPolicy.CLEAR, BoundaryPolicy.OPEN);
         return new LandUseAreaPlanCodec().withComputedHash(new LandUseAreaPlan(
                 LandUseAreaPlan.SCHEMA, "land_use_rules", cityId, "",
                 new BlockBounds(0, 0, 31, 15), List.of(area), List.of(), List.of(), List.of()));

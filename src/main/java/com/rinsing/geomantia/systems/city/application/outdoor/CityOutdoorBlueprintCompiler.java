@@ -374,8 +374,7 @@ public final class CityOutdoorBlueprintCompiler {
                 source.footprintMultiplier(), source.extraAreaBlocks(), source.minAreaBlocks(),
                 source.maxAreaBlocks(), source.actionBudget(), source.baseStepCost(), source.slopeCost(),
                 source.reliefCost(), source.waterCost(), source.forestAffinity(), source.competitionWeight(),
-                false, source.surfacePolicy(), source.vegetationPolicy(), BoundaryPolicy.OPEN,
-                source.decorationPolicy());
+                false, source.surfacePolicy(), source.vegetationPolicy(), BoundaryPolicy.OPEN);
     }
 
     private static LandUseRule independentParcelRule(LandUseRule source) {
@@ -383,8 +382,7 @@ public final class CityOutdoorBlueprintCompiler {
                 source.footprintMultiplier(), source.extraAreaBlocks(), source.minAreaBlocks(),
                 source.maxAreaBlocks(), source.actionBudget(), source.baseStepCost(), source.slopeCost(),
                 source.reliefCost(), source.waterCost(), source.forestAffinity(), source.competitionWeight(),
-                false, source.surfacePolicy(), source.vegetationPolicy(), source.boundaryPolicy(),
-                source.decorationPolicy());
+                false, source.surfacePolicy(), source.vegetationPolicy(), source.boundaryPolicy());
     }
 
     private static List<ParcelSpec> landscapeParcels(

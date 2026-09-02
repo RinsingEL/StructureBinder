@@ -1,7 +1,6 @@
 package com.rinsing.geomantia.mixin;
 
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
-import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseWorldgenRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
@@ -23,8 +22,7 @@ public abstract class ConfiguredFeatureMaskMixin {
                                                   CallbackInfoReturnable<Boolean> cir) {
         ConfiguredFeature<?, ?> feature = (ConfiguredFeature<?, ?>) (Object) this;
         String dimensionId = level.getLevel().dimension().location().toString();
-        if (CityDecorationWorldgenRegistry.suppressFeature(level, feature, origin)
-                || CityLandUseWorldgenRegistry.suppressFeature(dimensionId, feature, origin)
+        if (CityLandUseWorldgenRegistry.suppressFeature(dimensionId, feature, origin)
                 || CityReservationMaskRegistry.suppressFeature(feature, origin)) {
             cir.setReturnValue(false);
         }

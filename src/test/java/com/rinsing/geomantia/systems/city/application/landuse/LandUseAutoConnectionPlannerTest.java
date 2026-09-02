@@ -185,7 +185,7 @@ class LandUseAutoConnectionPlannerTest {
     void terrainPolicyChangesSoftReachWithoutChangingHardTerrainGate() {
         LandUseRule rule = new LandUseRule("terrain", "terrain", List.of("terrain"), 1, 0, 1, 512,
                 40, 1, 5, 0, 0, 0, 1, true, SurfacePolicy.PAVE,
-                VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN, "terrain");
+                VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN);
         LandUseSeedGroup defaults = new LandUseSeedGroup("terrain", rule,
                 LandUseSurfaceSettings.defaults(SurfacePolicy.PAVE), List.of("terrain"), List.of(),
                 List.of(new BlockPoint(31, 20)), List.of(), 1, 256, 512, 40, 1);
@@ -208,7 +208,7 @@ class LandUseAutoConnectionPlannerTest {
     void preferredPatchActsAsSoftAffinityForAttachedSources() {
         LandUseRule rule = new LandUseRule("patch", "patch", List.of("patch"), 1, 0, 1, 256,
                 256, 1, 0, 0, 0, 0, 1, true, SurfacePolicy.PAVE,
-                VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN, "patch");
+                VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN);
         LandUseSeedGroup defaults = new LandUseSeedGroup("patch", rule,
                 LandUseSurfaceSettings.defaults(SurfacePolicy.PAVE), List.of("attached"), List.of(),
                 List.of(new BlockPoint(31, 20)), List.of(), 1, 200, 200, 256, 1);
@@ -268,7 +268,7 @@ class LandUseAutoConnectionPlannerTest {
                                           int maxAreaBlocks) {
         LandUseRule rule = new LandUseRule(id, id, List.of(id), 1, 0, 1, 256,
                 256, 1, 0, 0, 10, 0, 1, true, surfacePolicy,
-                VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN, id);
+                VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN);
         return new LandUseSeedGroup(id, rule, LandUseSurfaceSettings.defaults(surfacePolicy),
                 List.of(id), List.of(), List.of(seed),
                 List.of(), 1, Math.min(32, maxAreaBlocks), maxAreaBlocks, 256, 1);
