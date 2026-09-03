@@ -66,9 +66,9 @@ public final class AdventurerMapScreen extends Screen {
                     button.setMessage(debugLabel());
                 })
                 .bounds(208, controlsY, 112, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("−"), button -> zoom = Math.max(0.5D, zoom / 1.25D))
+        addRenderableWidget(Button.builder(Component.literal("−"), button -> changeZoom(Math.max(0.5D, zoom / 1.25D)))
                 .bounds(326, controlsY, 24, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("+"), button -> zoom = Math.min(4.0D, zoom * 1.25D))
+        addRenderableWidget(Button.builder(Component.literal("+"), button -> changeZoom(Math.min(4.0D, zoom * 1.25D)))
                 .bounds(354, controlsY, 24, 20).build());
         addRenderableWidget(Button.builder(Component.translatable("gui.geomantia.agent_activity.open"),
                         button -> ProviderSettingsClient.openActivity(this))
@@ -86,7 +86,13 @@ public final class AdventurerMapScreen extends Screen {
     private void refresh() {
         loading = true;
         automaticRefreshTicks = 0;
-        AdventurerMapClient.requestSnapshot();
+        AdventurerMapClient.requestSnapshot(zoom);
+    }
+
+    private void changeZoom(double value) {
+        if (Double.compare(zoom, value) == 0) return;
+        zoom = value;
+        refresh();
     }
 
     @Override
@@ -138,9 +144,11 @@ public final class AdventurerMapScreen extends Screen {
             int textureTop = transform.screenY(coarseMap.minBlockZ());
             int textureRight = transform.screenX(coarseMap.maxBlockX());
             int textureBottom = transform.screenY(coarseMap.maxBlockZ());
-            graphics.blit(mapTextureLocation, textureLeft, textureTop, 0.0F, 0.0F,
-                    Math.max(1, textureRight - textureLeft), Math.max(1, textureBottom - textureTop),
-                    coarseMap.width(), coarseMap.height());
+            int textureScreenWidth = Math.max(1, textureRight - textureLeft);
+            int textureScreenHeight = Math.max(1, textureBottom - textureTop);
+            graphics.blit(mapTextureLocation, textureLeft, textureTop,
+                    textureScreenWidth, textureScreenHeight, 0.0F, 0.0F,
+                    coarseMap.width(), coarseMap.height(), coarseMap.width(), coarseMap.height());
         }
         if (debugLayer) {
             for (int x = centerX; x < right; x += 32) graphics.fill(x, top, x + 1, bottom, MAP_GRID);
@@ -211,7 +219,7 @@ public final class AdventurerMapScreen extends Screen {
         double worldWidth = Math.max(1.0D, maxX - minX);
         double worldHeight = Math.max(1.0D, maxZ - minZ);
         double scale = Math.min((right - left - 16.0D) / worldWidth,
-                (bottom - top - 16.0D) / worldHeight) * zoom;
+                (bottom - top - 16.0D) / worldHeight);
         return new MapTransform((minX + maxX) * 0.5D, (minZ + maxZ) * 0.5D,
                 (left + right) * 0.5D, (top + bottom) * 0.5D, Math.max(0.00001D, scale));
     }

@@ -9,6 +9,7 @@ import com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMa
 import com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapSnapshot.CityNode;
 import com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapSnapshot.CoarseMap;
 import com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapStatusReader;
+import com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapStatusReader.MapViewport;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -29,7 +30,11 @@ import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 public final class AdventurerMapNetwork {
-    private static final String PROTOCOL = "3";
+    private static final String PROTOCOL = "4";
+    private static final int VIEW_RADIUS_AT_ZOOM_ONE = 4096;
+    private static final int MIN_VIEW_RADIUS = 1024;
+    private static final int MAX_VIEW_RADIUS = 8192;
+    private static final int VIEWPORT_CENTER_QUANTUM_BLOCKS = 256;
     private static final int MAX_NODES = 8192;
     private static final int MAX_MAP_PIXELS = 128 * 128;
     private static final int MAX_REALMS = 255;
@@ -61,20 +66,21 @@ public final class AdventurerMapNetwork {
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
 
-    public static void requestSnapshot() {
-        CHANNEL.sendToServer(new SnapshotRequest());
+    public static void requestSnapshot(double zoom) {
+        CHANNEL.sendToServer(new SnapshotRequest(normalizeZoom(zoom)));
     }
 
     public static void openFor(ServerPlayer player) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new OpenMap());
     }
 
-    private record SnapshotRequest() {
-        static void encode(SnapshotRequest ignored, FriendlyByteBuf buffer) {
+    private record SnapshotRequest(double zoom) {
+        static void encode(SnapshotRequest request, FriendlyByteBuf buffer) {
+            buffer.writeDouble(request.zoom);
         }
 
         static SnapshotRequest decode(FriendlyByteBuf buffer) {
-            return new SnapshotRequest();
+            return new SnapshotRequest(normalizeZoom(buffer.readDouble()));
         }
 
         static void handle(SnapshotRequest ignored, Supplier<NetworkEvent.Context> contextSupplier) {
@@ -84,21 +90,27 @@ public final class AdventurerMapNetwork {
                 context.setPacketHandled(true);
                 return;
             }
-            context.enqueueWork(() -> queueSnapshot(sender));
+            context.enqueueWork(() -> queueSnapshot(sender, ignored.zoom));
             context.setPacketHandled(true);
         }
     }
 
-    private static void queueSnapshot(ServerPlayer sender) {
+    private static void queueSnapshot(ServerPlayer sender, double requestedZoom) {
         final java.nio.file.Path debugRoot;
         final String preferredRunId;
         final PlanningAreaAccessConfig accessConfig;
+        final MapViewport viewport;
         try {
             var planningService = RealmPlanningServices.forServer(sender.server);
             JsonObject status = planningService.status();
             preferredRunId = status.has("runId") ? status.get("runId").getAsString() : "";
             accessConfig = planningService.planningAreaAccessConfig();
             debugRoot = sender.server.getServerDirectory().toPath().resolve("realm_debug");
+            double zoom = normalizeZoom(requestedZoom);
+            int radius = Math.max(MIN_VIEW_RADIUS, Math.min(MAX_VIEW_RADIUS,
+                    (int) Math.round(VIEW_RADIUS_AT_ZOOM_ONE / zoom)));
+            viewport = new MapViewport(snapViewportCenter((int) Math.floor(sender.getX())),
+                    snapViewportCenter((int) Math.floor(sender.getZ())), radius);
         } catch (RuntimeException exception) {
             CHANNEL.send(PacketDistributor.PLAYER.with(() -> sender), new SnapshotResponse(errorSnapshot()));
             return;
@@ -107,7 +119,7 @@ public final class AdventurerMapNetwork {
             AdventurerMapSnapshot snapshot;
             try {
                 snapshot = AdventurerMapStatusReader.read(
-                        debugRoot, preferredRunId, accessConfig);
+                        debugRoot, preferredRunId, accessConfig, viewport);
             } catch (IOException | RuntimeException exception) {
                 snapshot = errorSnapshot();
             }
@@ -115,6 +127,15 @@ public final class AdventurerMapNetwork {
             sender.server.execute(() -> CHANNEL.send(
                     PacketDistributor.PLAYER.with(() -> sender), new SnapshotResponse(completed)));
         });
+    }
+
+    private static double normalizeZoom(double zoom) {
+        return Double.isFinite(zoom) ? Math.max(0.5D, Math.min(4.0D, zoom)) : 1.0D;
+    }
+
+    private static int snapViewportCenter(int blockCoordinate) {
+        return Math.floorDiv(blockCoordinate, VIEWPORT_CENTER_QUANTUM_BLOCKS)
+                * VIEWPORT_CENTER_QUANTUM_BLOCKS + VIEWPORT_CENTER_QUANTUM_BLOCKS / 2;
     }
 
     private record SnapshotResponse(AdventurerMapSnapshot snapshot) {

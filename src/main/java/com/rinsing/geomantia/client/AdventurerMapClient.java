@@ -23,8 +23,8 @@ public final class AdventurerMapClient {
         minecraft.setScreen(new AdventurerMapScreen(lastSnapshot));
     }
 
-    static void requestSnapshot() {
-        AdventurerMapNetwork.requestSnapshot();
+    static void requestSnapshot(double zoom) {
+        AdventurerMapNetwork.requestSnapshot(zoom);
     }
 
 }

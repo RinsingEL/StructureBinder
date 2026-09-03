@@ -46,6 +46,12 @@ public final class AdventurerMapStatusReader {
 
     public static AdventurerMapSnapshot read(Path debugRoot, String preferredRunId,
                                               PlanningAreaAccessConfig accessConfig) throws IOException {
+        return read(debugRoot, preferredRunId, accessConfig, MapViewport.full());
+    }
+
+    public static AdventurerMapSnapshot read(Path debugRoot, String preferredRunId,
+                                              PlanningAreaAccessConfig accessConfig,
+                                              MapViewport viewport) throws IOException {
         Path root = debugRoot.toAbsolutePath().normalize();
         Optional<Path> runDirectory = resolveRunDirectory(root, preferredRunId);
         if (runDirectory.isEmpty()) {
@@ -72,8 +78,11 @@ public final class AdventurerMapStatusReader {
         String cityStatus = stringValue(queue, "status", currentCityId.isBlank() ? "not_started" : "pending");
         int completedCount = intValue(queue, "completedCount", 0);
         int remainingCount = intValue(queue, "remainingCount", 0);
-        List<CityNode> nodes = cityNodes(run.resolve("city_seed_registry.json"), queueItems, currentCityId);
-        CoarseMap coarseMap = coarseMap(root, run, accessConfig);
+        CoarseMap coarseMap = coarseMap(root, run, accessConfig,
+                viewport == null ? MapViewport.full() : viewport);
+        List<CityNode> nodes = visibleCityNodes(
+                cityNodes(run.resolve("city_seed_registry.json"), queueItems, currentCityId), coarseMap,
+                viewport == null ? MapViewport.full() : viewport);
 
         return new AdventurerMapSnapshot(runId, wStatus, wPhase, wProgress,
                 stageState.stage(), stageState.status(), currentRealmId, currentRealmName,
@@ -82,13 +91,14 @@ public final class AdventurerMapStatusReader {
     }
 
     private static synchronized CoarseMap coarseMap(Path debugRoot, Path run,
-                                                    PlanningAreaAccessConfig accessConfig) throws IOException {
+                                                    PlanningAreaAccessConfig accessConfig,
+                                                    MapViewport viewport) throws IOException {
         Path featurePath = run.resolve("world_feature_grid.json");
         Path territoryPath = run.resolve("realm_territory_map.json");
         Path contextPath = run.resolve("world_survey_context.json");
         String fingerprint = fileFingerprint(featurePath) + '|' + fileFingerprint(territoryPath)
                 + '|' + fileFingerprint(contextPath) + '|' + PlanningAreaAccessPolicy.sourceStamp(debugRoot)
-                + '|' + accessConfig;
+                + '|' + accessConfig + '|' + viewport;
         if (run.equals(cachedMapRun) && fingerprint.equals(cachedMapFingerprint)) {
             return cachedMap;
         }
@@ -125,13 +135,28 @@ public final class AdventurerMapStatusReader {
             return cacheMap(run, fingerprint, CoarseMap.empty());
         }
 
+        int sourceCellSize = Math.max(1, intValue(featureGrid, "cellStepBlocks",
+                intValue(context, "cellStepBlocks", 128)));
+        if (viewport.bounded()) {
+            minGridX = Math.max(minGridX, Math.floorDiv(viewport.centerBlockX() - viewport.radiusBlocks(),
+                    sourceCellSize));
+            minGridZ = Math.max(minGridZ, Math.floorDiv(viewport.centerBlockZ() - viewport.radiusBlocks(),
+                    sourceCellSize));
+            maxGridX = Math.min(maxGridX, Math.floorDiv(viewport.centerBlockX() + viewport.radiusBlocks() - 1,
+                    sourceCellSize));
+            maxGridZ = Math.min(maxGridZ, Math.floorDiv(viewport.centerBlockZ() + viewport.radiusBlocks() - 1,
+                    sourceCellSize));
+            if (minGridX > maxGridX || minGridZ > maxGridZ) {
+                return cacheMap(run, fingerprint, new CoarseMap(dimensionId, 0, 0, 1,
+                        0, 0, new byte[0], new byte[0], new byte[0], List.of()));
+            }
+        }
+
         int sourceWidth = maxGridX - minGridX + 1;
         int sourceHeight = maxGridZ - minGridZ + 1;
         int reduction = Math.max(1, (Math.max(sourceWidth, sourceHeight) + MAX_MAP_SIDE - 1) / MAX_MAP_SIDE);
         int width = (sourceWidth + reduction - 1) / reduction;
         int height = (sourceHeight + reduction - 1) / reduction;
-        int sourceCellSize = Math.max(1, intValue(featureGrid, "cellStepBlocks",
-                intValue(context, "cellStepBlocks", 128)));
         int outputCellSize = sourceCellSize * reduction;
         int pixelCount = width * height;
         int[][] terrainCounts = new int[pixelCount][12];
@@ -145,6 +170,7 @@ public final class AdventurerMapStatusReader {
             JsonObject cell = element.getAsJsonObject();
             int gridX = intValue(cell, "gridX", 0);
             int gridZ = intValue(cell, "gridZ", 0);
+            if (gridX < minGridX || gridX > maxGridX || gridZ < minGridZ || gridZ > maxGridZ) continue;
             int column = (gridX - minGridX) / reduction;
             int row = (gridZ - minGridZ) / reduction;
             if (column < 0 || column >= width || row < 0 || row >= height) continue;
@@ -360,6 +386,15 @@ public final class AdventurerMapStatusReader {
         return List.copyOf(nodes);
     }
 
+    private static List<CityNode> visibleCityNodes(List<CityNode> nodes, CoarseMap map, MapViewport viewport) {
+        if (!viewport.bounded()) return nodes;
+        if (!map.available()) return List.of();
+        return nodes.stream()
+                .filter(node -> node.blockX() >= map.minBlockX() && node.blockX() < map.maxBlockX()
+                        && node.blockZ() >= map.minBlockZ() && node.blockZ() < map.maxBlockZ())
+                .toList();
+    }
+
     private static JsonObject readObjectIfPresent(Path path) throws IOException {
         JsonElement value = readElementIfPresent(path);
         return value != null && value.isJsonObject() ? value.getAsJsonObject() : null;
@@ -394,5 +429,19 @@ public final class AdventurerMapStatusReader {
 
     private record TerritoryPalette(Map<Long, String> cellRealms, Map<String, Integer> realmCodes,
                                     List<String> realmIds) {
+    }
+
+    public record MapViewport(int centerBlockX, int centerBlockZ, int radiusBlocks) {
+        public MapViewport {
+            radiusBlocks = Math.max(0, radiusBlocks);
+        }
+
+        public static MapViewport full() {
+            return new MapViewport(0, 0, 0);
+        }
+
+        boolean bounded() {
+            return radiusBlocks > 0;
+        }
     }
 }

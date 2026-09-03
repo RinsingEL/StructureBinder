@@ -1,10 +1,14 @@
 package com.rinsing.geomantia.systems.realm_planning.application.map;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.rinsing.geomantia.systems.realm_planning.application.access.PlanningAreaAccessConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -146,5 +150,49 @@ class AdventurerMapStatusReaderTest {
         assertEquals(0, Byte.toUnsignedInt(map.revealedCodes()[20]));
         assertTrue(map.revealedAt(64, 64));
         assertFalse(map.revealedAt(20 * 128 + 64, 64));
+    }
+
+    @Test
+    void cropsAndRefinesTheWGridForThePlayerViewportAndOmitsOffscreenNodes() throws Exception {
+        Path run = Files.createDirectories(temporaryDirectory.resolve("realm_debug/run_viewport"));
+        Files.writeString(run.resolve("world_survey_context.json"),
+                "{\"dimensionId\":\"minecraft:overworld\",\"cellStepBlocks\":128}");
+        JsonObject grid = new JsonObject();
+        grid.addProperty("cellStepBlocks", 128);
+        JsonArray cells = new JsonArray();
+        for (int gridX = -80; gridX < 80; gridX++) {
+            JsonObject cell = new JsonObject();
+            cell.addProperty("gridX", gridX);
+            cell.addProperty("gridZ", 0);
+            cell.addProperty("heightP50", 65);
+            cell.addProperty("waterFrac", 0);
+            JsonObject biomes = new JsonObject();
+            biomes.addProperty("minecraft:plains", 16);
+            cell.add("biomeHist", biomes);
+            cells.add(cell);
+        }
+        grid.add("cells", cells);
+        Files.writeString(run.resolve("world_feature_grid.json"), grid.toString());
+        Files.writeString(run.resolve("city_seed_registry.json"), """
+                {"citySeeds":[
+                  {"citySeedId":"visible","realmId":"realm_a","role":"city","anchorBlock":{"x":448,"z":64}},
+                  {"citySeedId":"offscreen","realmId":"realm_a","role":"city","anchorBlock":{"x":4096,"z":64}}
+                ]}
+                """);
+        PlanningAreaAccessConfig accessConfig = new PlanningAreaAccessConfig(true, 8192,
+                8192, Set.of("minecraft:overworld"));
+
+        var overview = AdventurerMapStatusReader.read(temporaryDirectory.resolve("realm_debug"),
+                "run_viewport", accessConfig).coarseMap();
+        var snapshot = AdventurerMapStatusReader.read(temporaryDirectory.resolve("realm_debug"),
+                "run_viewport", accessConfig, new AdventurerMapStatusReader.MapViewport(512, 64, 1024));
+        var viewport = snapshot.coarseMap();
+
+        assertEquals(256, overview.cellSizeBlocks());
+        assertEquals(128, viewport.cellSizeBlocks());
+        assertEquals(-512, viewport.minBlockX());
+        assertEquals(16, viewport.width());
+        assertEquals(1, snapshot.cityNodes().size());
+        assertEquals("visible", snapshot.cityNodes().get(0).citySeedId());
     }
 }
