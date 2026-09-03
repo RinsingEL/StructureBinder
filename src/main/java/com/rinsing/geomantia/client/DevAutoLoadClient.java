@@ -3,6 +3,8 @@ package com.rinsing.geomantia.client;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -17,6 +19,8 @@ public final class DevAutoLoadClient {
     private static final int SCREEN_STABLE_TICKS = 20;
     private static boolean registered;
     private static boolean attemptedAutoLoad;
+    private static boolean attemptedAutoTeleport;
+    private static int playerReadyTicks;
     private static String lastObservedScreenName = "";
     private static int observedScreenTicks;
 
@@ -34,9 +38,11 @@ public final class DevAutoLoadClient {
 
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || attemptedAutoLoad) {
+        if (event.phase != TickEvent.Phase.END) {
             return;
         }
+        tryAutoTeleport();
+        if (attemptedAutoLoad) return;
         String targetWorld = decodeTargetWorld();
         if (targetWorld.isBlank()) {
             return;
@@ -69,6 +75,41 @@ public final class DevAutoLoadClient {
         minecraft.execute(() -> loadLevelWithConfirmedWarning(minecraft, targetWorld));
     }
 
+    private static void tryAutoTeleport() {
+        if (attemptedAutoTeleport) return;
+        String encoded = System.getProperty("geomantia.devAutoTeleport", "").trim();
+        if (encoded.isBlank()) return;
+        Minecraft minecraft = Minecraft.getInstance();
+        MinecraftServer server = minecraft.getSingleplayerServer();
+        if (minecraft.player == null || server == null) {
+            playerReadyTicks = 0;
+            return;
+        }
+        if (++playerReadyTicks < autoTeleportDelayTicks()) return;
+        attemptedAutoTeleport = true;
+        String[] parts = encoded.split(",", -1);
+        if (parts.length != 3) {
+            LOGGER.error("Invalid geomantia.devAutoTeleport value {}; expected x,y,z.", encoded);
+            return;
+        }
+        try {
+            double x = Double.parseDouble(parts[0].trim());
+            double y = Double.parseDouble(parts[1].trim());
+            double z = Double.parseDouble(parts[2].trim());
+            java.util.UUID playerId = minecraft.player.getUUID();
+            server.execute(() -> {
+                ServerPlayer player = server.getPlayerList().getPlayer(playerId);
+                if (player == null) return;
+                player.setInvulnerable(true);
+                player.teleportTo(player.serverLevel(), x, y, z, player.getYRot(), player.getXRot());
+                LOGGER.info("Geomantia development auto-teleported player {} to {},{},{}.",
+                        player.getGameProfile().getName(), x, y, z);
+            });
+        } catch (NumberFormatException ex) {
+            LOGGER.error("Invalid geomantia.devAutoTeleport value {}; expected numeric x,y,z.", encoded, ex);
+        }
+    }
+
     private static void loadLevelWithConfirmedWarning(Minecraft minecraft, String targetWorld) {
         Screen screen = minecraft.screen;
         Object openFlows = minecraft.createWorldOpenFlows();
@@ -95,5 +136,15 @@ public final class DevAutoLoadClient {
             }
         }
         return System.getProperty("geomantia.devAutoLoadWorld", "").trim();
+    }
+
+    private static int autoTeleportDelayTicks() {
+        String configured = System.getProperty("geomantia.devAutoTeleportDelayTicks", "40").trim();
+        try {
+            return Math.max(1, Integer.parseInt(configured));
+        } catch (NumberFormatException ex) {
+            LOGGER.warn("Invalid geomantia.devAutoTeleportDelayTicks value {}; using 40.", configured);
+            return 40;
+        }
     }
 }

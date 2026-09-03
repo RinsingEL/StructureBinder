@@ -168,6 +168,29 @@ class CityReservationMaskRegistryTemplateFragmentTest {
     }
 
     @Test
+    void fragmentLedgerWritesAreBatchedButForcedFlushRemainsRestartSafe() throws Exception {
+        CityReservationMaskRegistry.PlannedStructure planned = activate(new BlockBounds(8, 8, 23, 23));
+        ChunkPos owner = new ChunkPos(0, 0);
+        assertTrue(CityReservationMaskRegistry.prepareTemplateTerrainStart(planned, 88).ready());
+
+        JsonObject durableBefore = com.google.gson.JsonParser.parseString(Files.readString(
+                CityReservationMaskRegistry.worldgenLedgerPath(tempDir))).getAsJsonObject();
+        assertEquals(0, durableBefore.getAsJsonArray("templateFragments").size());
+
+        assertTrue(record(planned, owner, 88).recorded());
+        assertEquals(1, CityReservationMaskRegistry.worldgenLedgerSnapshot()
+                .getAsJsonArray("templateFragments").size());
+        JsonObject stillBatched = com.google.gson.JsonParser.parseString(Files.readString(
+                CityReservationMaskRegistry.worldgenLedgerPath(tempDir))).getAsJsonObject();
+        assertEquals(0, stillBatched.getAsJsonArray("templateFragments").size());
+
+        CityReservationMaskRegistry.flushPendingWorldgenLedgerNow();
+        JsonObject durableAfter = com.google.gson.JsonParser.parseString(Files.readString(
+                CityReservationMaskRegistry.worldgenLedgerPath(tempDir))).getAsJsonObject();
+        assertEquals(1, durableAfter.getAsJsonArray("templateFragments").size());
+    }
+
+    @Test
     void activatingSecondCityKeepsBothTemplateRegistriesAndMasksAcrossReload() throws Exception {
         BlockBounds firstFootprint = new BlockBounds(8, 8, 15, 15);
         BlockBounds secondFootprint = new BlockBounds(40, 8, 47, 15);

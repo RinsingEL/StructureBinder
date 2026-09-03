@@ -192,6 +192,7 @@ final class RtfTerrainPreviewReflectionBridge {
         private final Field terrain;
         private final Field biome;
         private final Method terrainName;
+        private final int waterSurfaceElevation;
         private final String apiVariant;
         private final String presetFingerprintMaterial;
         private final ThreadLocal<Object> cells;
@@ -211,6 +212,7 @@ final class RtfTerrainPreviewReflectionBridge {
             this.terrain = terrain;
             this.biome = biome;
             this.terrainName = terrainName;
+            this.waterSurfaceElevation = ((Number) invoke(scale, levels, water.getFloat(levels))).intValue();
             this.apiVariant = apiVariant;
             this.presetFingerprintMaterial = presetFingerprintMaterial;
             cellConstructor.newInstance();
@@ -233,7 +235,7 @@ final class RtfTerrainPreviewReflectionBridge {
                 Object sampledBiome = Objects.requireNonNull(biome.get(cell), "RTF cell biome is null.");
                 String terrainId = "rtf:" + normalize(String.valueOf(invoke(terrainName, sampledTerrain)));
                 String sourceBiomeId = "rtf:" + normalize(enumName(sampledBiome));
-                return new RawSample(elevation, sampledWater, terrainId, sourceBiomeId);
+                return new RawSample(elevation, sampledWater, waterSurfaceElevation, terrainId, sourceBiomeId);
             } catch (ReflectiveOperationException | RuntimeException ex) {
                 throw new IllegalStateException("RTF heightmap preview sample failed at "
                         + blockX + "," + blockZ + ": " + message(ex), ex);
@@ -271,7 +273,8 @@ final class RtfTerrainPreviewReflectionBridge {
         }
     }
 
-    record RawSample(int elevation, boolean water, String terrainId, String sourceBiomeId) {
+    record RawSample(int elevation, boolean water, int waterSurfaceElevation,
+                     String terrainId, String sourceBiomeId) {
     }
 
     private static final class GeneratorContextUnavailableException extends ReflectiveOperationException {

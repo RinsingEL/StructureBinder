@@ -164,24 +164,45 @@ final class CityLandUseMicroGrader {
     }
 
     static OptionalInt resolveStructureDatum(CityLandUseChunkCompiler.ChunkFragment fragment,
-                                             TerrainView terrain,
-                                             BlockBounds footprint) {
-        Objects.requireNonNull(footprint, "footprint");
+                                              TerrainView terrain,
+                                              BlockBounds footprint) {
+        return prepareStructureDatum(fragment, terrain).resolve(footprint);
+    }
+
+    static StructureDatumResolver prepareStructureDatum(CityLandUseChunkCompiler.ChunkFragment fragment,
+                                                         TerrainView terrain) {
+        Objects.requireNonNull(fragment, "fragment");
+        Objects.requireNonNull(terrain, "terrain");
         PlatformModel model = platformModel(fragment, terrain);
-        Map<Cell, String> areaByCell = model.areaByCell();
-        for (int radius = 1; radius <= REFERENCE_RADIUS_BLOCKS; radius++) {
-            int candidateRadius = radius;
-            List<Integer> candidates = areaByCell.entrySet().stream()
-                    .filter(entry -> outsideDistance(entry.getKey(), footprint) == candidateRadius)
-                    .map(Map.Entry::getKey)
-                    .map(model.platformTargets()::get)
-                    .filter(Objects::nonNull)
-                    .toList();
-            if (!candidates.isEmpty()) {
-                return OptionalInt.of(dominantHeight(candidates) + 1);
-            }
+        return new StructureDatumResolver(model.areaByCell(), model.platformTargets());
+    }
+
+    static final class StructureDatumResolver {
+        private final Map<Cell, String> areaByCell;
+        private final Map<Cell, Integer> platformTargets;
+
+        private StructureDatumResolver(Map<Cell, String> areaByCell,
+                                       Map<Cell, Integer> platformTargets) {
+            this.areaByCell = areaByCell;
+            this.platformTargets = platformTargets;
         }
-        return OptionalInt.empty();
+
+        OptionalInt resolve(BlockBounds footprint) {
+            Objects.requireNonNull(footprint, "footprint");
+            for (int radius = 1; radius <= REFERENCE_RADIUS_BLOCKS; radius++) {
+                int candidateRadius = radius;
+                List<Integer> candidates = areaByCell.entrySet().stream()
+                        .filter(entry -> outsideDistance(entry.getKey(), footprint) == candidateRadius)
+                        .map(Map.Entry::getKey)
+                        .map(platformTargets::get)
+                        .filter(Objects::nonNull)
+                        .toList();
+                if (!candidates.isEmpty()) {
+                    return OptionalInt.of(dominantHeight(candidates) + 1);
+                }
+            }
+            return OptionalInt.empty();
+        }
     }
 
     private static PlatformModel platformModel(CityLandUseChunkCompiler.ChunkFragment fragment,

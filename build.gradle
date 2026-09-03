@@ -46,6 +46,12 @@ def devUseReTerraForged = providers.gradleProperty('geomantiaDevUseReTerraForged
 def devUseVisualPreview = providers.gradleProperty('geomantiaDevUseVisualPreview')
         .orElse('false')
         .get()
+def devAutoTeleport = providers.gradleProperty('geomantiaDevAutoTeleport')
+        .orElse('')
+        .get()
+def devAutoTeleportDelayTicks = providers.gradleProperty('geomantiaDevAutoTeleportDelayTicks')
+        .orElse('40')
+        .get()
 minecraft {
     mappings channel: mapping_channel, version: mapping_version
     copyIdeResources = true
@@ -69,6 +75,10 @@ minecraft {
             property 'forge.enabledGameTestNamespaces', mod_id
             if (!devAutoLoadWorldBase64.isBlank()) {
                 property 'geomantia.devAutoLoadWorldBase64', devAutoLoadWorldBase64
+            }
+            if (!devAutoTeleport.isBlank()) {
+                property 'geomantia.devAutoTeleport', devAutoTeleport
+                property 'geomantia.devAutoTeleportDelayTicks', devAutoTeleportDelayTicks
             }
             if (devUseReTerraForged.toBoolean()) {
                 property 'mixin.env.remapRefMap', 'true'

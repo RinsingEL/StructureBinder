@@ -259,6 +259,40 @@ class CityLandUseWorldgenRegistryTest {
         assertEquals(65, datum);
     }
 
+    @Test
+    void structureDatumReusesPreparedTerrainAcrossNearbyBuildings() {
+        List<LandUseAreaPlan.ScanlineSpan> spans = new ArrayList<>();
+        for (int z = 0; z <= 15; z++) spans.add(new LandUseAreaPlan.ScanlineSpan(z, 0, 15));
+        LandUseAreaPlan.Area area = new LandUseAreaPlan.Area("foundation", "foundation", "urban",
+                List.of("city::foundation"), List.of("house"), List.of(new BlockPoint(0, 0)),
+                spans, List.of(new BlockBounds(4, 4, 5, 5), new BlockBounds(9, 9, 10, 10)),
+                List.of(), List.of(), 1.0, SurfacePolicy.PAVE,
+                VegetationPolicy.CLEAR, BoundaryPolicy.OPEN);
+        LandUseAreaPlan plan = new LandUseAreaPlanCodec().withComputedHash(new LandUseAreaPlan(
+                LandUseAreaPlan.SCHEMA, "land_use_rules", "city_shared_terrain", "",
+                new BlockBounds(0, 0, 15, 15), List.of(area), List.of(), List.of(), List.of()));
+        CityLandUseWorldgenRegistry.activate("minecraft:overworld", plan,
+                CityLandUseChunkCompilerTest.uniformPlan(plan), serverRoot);
+        Object terrainIdentity = new Object();
+        AtomicInteger sampleCalls = new AtomicInteger();
+        CityLandUseWorldgenRegistry.ExactTerrainSampler terrain = (x, z) -> {
+            sampleCalls.incrementAndGet();
+            return new CityLandUseChunkExecutor.ColumnSample(64, "minecraft:grass_block", true);
+        };
+
+        int first = CityLandUseWorldgenRegistry.resolveStructureFoundationDatum(
+                plan.cityId(), new BlockBounds(4, 4, 5, 5), terrainIdentity, terrain).orElseThrow();
+        int callsAfterFirst = sampleCalls.get();
+        int second = CityLandUseWorldgenRegistry.resolveStructureFoundationDatum(
+                plan.cityId(), new BlockBounds(9, 9, 10, 10), terrainIdentity, terrain).orElseThrow();
+
+        assertEquals(65, first);
+        assertEquals(65, second);
+        assertTrue(callsAfterFirst > 0);
+        assertEquals(callsAfterFirst, sampleCalls.get(),
+                "nearby buildings must reuse the prepared owner-chunk platform model");
+    }
+
     private static LandUseAreaPlan areaPlan(String cityId) {
         return CityLandUseChunkCompilerTest.areaPlan(cityId, SurfacePolicy.PAVE,
                 List.of(new LandUseAreaPlan.ScanlineSpan(0, 0, 3)));

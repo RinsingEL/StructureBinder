@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class CityReservationMaskRegistry {
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -43,14 +44,26 @@ public final class CityReservationMaskRegistry {
     private static final String ACTIVE_MASK_FILE = "active_reservation_mask_plan.json";
     private static final String ACTIVE_PLANNED_FILE = "active_planned_structure_registry.json";
     private static final String WORLDGEN_LEDGER_FILE = "worldgen_placement_ledger.json";
+    private static final long LEDGER_FLUSH_INTERVAL_NANOS = 1_000_000_000L;
+    private static final long LEDGER_RETRY_DELAY_NANOS = 1_000_000_000L;
 
     private static volatile Map<String, ActiveMask> activeMasks = Map.of();
     private static volatile Map<String, ActivePlannedStructures> activePlannedRegistries = Map.of();
     private static volatile List<PlannedStructure> activePlannedStructureIndex = List.of();
+    private static volatile Map<Long, List<PlannedStructure>> activePlannedStructuresByChunk = Map.of();
+    private static volatile Map<TemplatePlacementKey, PlannedStructure> activeTemplatePlacementIndex = Map.of();
     private static volatile JsonObject worldgenLedger = emptyWorldgenLedger();
     private static volatile Path activeServerRoot;
     private static volatile long featureHookCalls;
     private static volatile long structureHookCalls;
+    private static final Set<LedgerIdentity> placedStructureIndex = ConcurrentHashMap.newKeySet();
+    private static final Set<TemplateOwnerIdentity> pendingFragmentIndex = ConcurrentHashMap.newKeySet();
+    private static final Set<TemplateFragmentIdentity> completedFragmentIndex = ConcurrentHashMap.newKeySet();
+    private static final Map<TemplateDatumIdentity, Integer> templateDatumIndex = new ConcurrentHashMap<>();
+    private static final Set<TemplateDatumIdentity> conflictingTemplateDatums = ConcurrentHashMap.newKeySet();
+    private static boolean ledgerPersistencePending;
+    private static long nextLedgerPersistenceNanos;
+    private static boolean ledgerPersistenceInProgress;
 
     private CityReservationMaskRegistry() {
     }
@@ -74,6 +87,9 @@ public final class CityReservationMaskRegistry {
                                                    String citySeedId,
                                                    Path serverRoot) throws IOException {
         Path normalizedRoot = normalizedRoot(serverRoot);
+        if (ledgerPersistencePending && !persistWorldgenLedger()) {
+            throw new IOException("CITY_WORLDGEN_LEDGER_FLUSH_FAILED");
+        }
         if (normalizedRoot != null && !normalizedRoot.equals(activeServerRoot)) {
             load(normalizedRoot);
         }
@@ -113,6 +129,7 @@ public final class CityReservationMaskRegistry {
                 worldgenLedger = emptyWorldgenLedger();
                 persistWorldgenLedger();
             }
+            rebuildLedgerIndexes();
         }
         LOGGER.info("Activated City reservation mask: activeCities={}, noVegetation={}, noVanillaStructure={}, plannedStructures={}, serverRoot={}",
                 activeCityCount(), noVegetationMaskCount(), noVanillaStructureMaskCount(),
@@ -121,6 +138,9 @@ public final class CityReservationMaskRegistry {
     }
 
     public static synchronized void load(Path serverRoot) {
+        if (ledgerPersistencePending && !persistWorldgenLedger()) {
+            LOGGER.warn("Unable to flush the previous City template ledger before loading {}.", serverRoot);
+        }
         Path normalizedRoot = normalizedRoot(serverRoot);
         if (normalizedRoot == null) {
             return;
@@ -157,7 +177,13 @@ public final class CityReservationMaskRegistry {
             } catch (Exception ignored) {
                 worldgenLedger = emptyWorldgenLedger();
             }
+        } else {
+            worldgenLedger = emptyWorldgenLedger();
         }
+        rebuildLedgerIndexes();
+        ledgerPersistencePending = false;
+        nextLedgerPersistenceNanos = 0L;
+        ledgerPersistenceInProgress = false;
         LOGGER.info("Loaded City reservation mask registry: activeCities={}, noVegetation={}, noVanillaStructure={}, plannedStructures={}, ledgerPlacements={}, serverRoot={}",
                 activeCityCount(), noVegetationMaskCount(), noVanillaStructureMaskCount(),
                 activePlannedStructureCount(), ledgerPlacedStructures().size(), serverRoot);
@@ -173,17 +199,13 @@ public final class CityReservationMaskRegistry {
 
     public static void recordStructureHookCall(ChunkPos chunkPos) {
         structureHookCalls++;
-        List<PlannedStructure> plannedStructures = activePlannedStructures();
+        List<PlannedStructure> plannedStructures = plannedStructuresCovering(chunkPos);
         if (plannedStructures.isEmpty() || chunkPos == null) {
             return;
         }
-        for (PlannedStructure planned : plannedStructures) {
-            if (planned.coversChunk(chunkPos)) {
-                LOGGER.info("City worldgen structure hook reached planned owner chunk {},{} for {} ({})",
-                        chunkPos.x, chunkPos.z, planned.anchorId(), planned.templateId());
-                return;
-            }
-        }
+        PlannedStructure planned = plannedStructures.get(0);
+        LOGGER.debug("City worldgen structure hook reached planned owner chunk {},{} for {} ({})",
+                chunkPos.x, chunkPos.z, planned.anchorId(), planned.templateId());
     }
 
     public static boolean suppressFeature(ConfiguredFeature<?, ?> feature, BlockPos origin) {
@@ -222,20 +244,19 @@ public final class CityReservationMaskRegistry {
     }
 
     public static synchronized List<PlannedStructure> plannedStructuresForChunk(ChunkPos chunkPos) {
-        List<PlannedStructure> plannedStructures = activePlannedStructures();
+        List<PlannedStructure> plannedStructures = plannedStructuresCovering(chunkPos);
         if (chunkPos == null || plannedStructures.isEmpty()) {
             return List.of();
         }
         List<PlannedStructure> result = new ArrayList<>();
         for (PlannedStructure planned : plannedStructures) {
-            boolean pendingTemplateFragment = planned.coversChunk(chunkPos)
-                    && !templateFragmentRecorded(planned, chunkPos);
+            boolean pendingTemplateFragment = !templateFragmentRecorded(planned, chunkPos);
             if (!ledgerContains(planned) && pendingTemplateFragment) {
                 result.add(planned);
             }
         }
         if (!result.isEmpty()) {
-            LOGGER.info("City planned structures matched chunk {},{}: {}", chunkPos.x, chunkPos.z, result.size());
+            LOGGER.debug("City planned structures matched chunk {},{}: {}", chunkPos.x, chunkPos.z, result.size());
         }
         return List.copyOf(result);
     }
@@ -300,6 +321,7 @@ public final class CityReservationMaskRegistry {
             pending.addProperty("message", "Owner was observed during first worldgen FEATURES before completion.");
             pending.addProperty("observedAt", Instant.now().toString());
             ledgerTemplatePendingFragments().add(pending);
+            pendingFragmentIndex.add(TemplateOwnerIdentity.of(planned, ownerChunk));
         }
 
         OptionalInt resolved = resolvedTemplateDatumInternal(planned);
@@ -308,6 +330,7 @@ public final class CityReservationMaskRegistry {
             if (datum <= minBuildHeight) {
                 if (!persistWorldgenLedger()) {
                     worldgenLedger = before;
+                    rebuildLedgerIndexes();
                     return TemplateDatumPreparation.persistenceFailed();
                 }
                 return TemplateDatumPreparation.waiting("TEMPLATE_DATUM_SURFACE_UNAVAILABLE",
@@ -315,6 +338,7 @@ public final class CityReservationMaskRegistry {
             }
             if (resolved.isPresent() && resolved.getAsInt() != datum) {
                 worldgenLedger = before;
+                rebuildLedgerIndexes();
                 return TemplateDatumPreparation.conflict("TEMPLATE_DATUM_CONFLICT",
                         "Template datum was already frozen at " + resolved.getAsInt()
                                 + " but a later callback proposed " + datum + ".");
@@ -328,12 +352,14 @@ public final class CityReservationMaskRegistry {
                 datumState.addProperty("resolvedByChunkZ", ownerChunk.z);
                 datumState.addProperty("resolvedAt", Instant.now().toString());
                 ledgerTemplateDatums().add(datumState);
+                indexTemplateDatum(TemplateDatumIdentity.of(planned), datum);
                 resolved = OptionalInt.of(datum);
             }
         }
 
         if (!persistWorldgenLedger()) {
             worldgenLedger = before;
+            rebuildLedgerIndexes();
             return TemplateDatumPreparation.persistenceFailed();
         }
         if (resolved.isEmpty()) {
@@ -373,6 +399,7 @@ public final class CityReservationMaskRegistry {
             datumState.addProperty("resolvedByChunkZ", planned.anchorChunkZ());
             datumState.addProperty("resolvedAt", Instant.now().toString());
             ledgerTemplateDatums().add(datumState);
+            indexTemplateDatum(TemplateDatumIdentity.of(planned), templateDatumY);
             resolved = OptionalInt.of(templateDatumY);
         }
         for (ChunkPos owner : templateOwnerChunks(planned)) {
@@ -387,9 +414,11 @@ public final class CityReservationMaskRegistry {
             pending.addProperty("message", "Owner was authorized before StructureStart piece placement.");
             pending.addProperty("observedAt", Instant.now().toString());
             ledgerTemplatePendingFragments().add(pending);
+            pendingFragmentIndex.add(TemplateOwnerIdentity.of(planned, owner));
         }
         if (!persistWorldgenLedger()) {
             worldgenLedger = before;
+            rebuildLedgerIndexes();
             return TemplateDatumPreparation.persistenceFailed();
         }
         return TemplateDatumPreparation.ready(resolved.getAsInt());
@@ -405,16 +434,8 @@ public final class CityReservationMaskRegistry {
 
     public static synchronized Optional<PlannedStructure> findTemplatePlacement(
             String anchorId, String templateRef, String templateHash, BlockPoint anchorBlock) {
-        for (PlannedStructure planned : activePlannedStructures()) {
-            if (planned.isTemplatePlacement()
-                    && planned.anchorId().equals(anchorId)
-                    && templateRef(planned).equals(templateRef)
-                    && templateHash(planned).equals(templateHash)
-                    && planned.anchorBlock().equals(anchorBlock)) {
-                return Optional.of(planned);
-            }
-        }
-        return Optional.empty();
+        return Optional.ofNullable(activeTemplatePlacementIndex.get(new TemplatePlacementKey(
+                nullToEmpty(anchorId), nullToEmpty(templateRef), nullToEmpty(templateHash), anchorBlock)));
     }
 
     /** Returns only owners that are authorized for delayed first-generation retry. */
@@ -423,9 +444,8 @@ public final class CityReservationMaskRegistry {
             return List.of();
         }
         List<PlannedStructure> result = new ArrayList<>();
-        for (PlannedStructure planned : activePlannedStructures()) {
+        for (PlannedStructure planned : plannedStructuresCovering(ownerChunk)) {
             if (planned.isTemplatePlacement()
-                    && planned.coversChunk(ownerChunk)
                     && templatePendingRecorded(planned, ownerChunk)
                     && !templateFragmentRecorded(planned, ownerChunk)
                     && !ledgerContains(planned)) {
@@ -466,7 +486,6 @@ public final class CityReservationMaskRegistry {
         if (frozenDatum.getAsInt() != templateDatumY) {
             return TemplateFragmentRecordResult.rejectedResult("TEMPLATE_DATUM_CONFLICT");
         }
-        JsonObject before = worldgenLedger.deepCopy();
         JsonArray fragments = ledgerTemplateFragments();
         if (!templateFragmentRecorded(planned, generatingChunk)) {
             JsonObject fragment = new JsonObject();
@@ -487,6 +506,7 @@ public final class CityReservationMaskRegistry {
             fragment.addProperty("generatingChunkX", generatingChunk.x);
             fragment.addProperty("generatingChunkZ", generatingChunk.z);
             fragments.add(fragment);
+            completedFragmentIndex.add(TemplateFragmentIdentity.of(planned, generatingChunk, templateDatumY));
         }
 
         List<ChunkPos> requiredOwners = templateOwnerChunks(planned);
@@ -508,13 +528,11 @@ public final class CityReservationMaskRegistry {
             obj.addProperty("beardifierSeen", false);
             obj.addProperty("terrainAdaptationReasonCode", "CITY_TERRAIN_ADAPTATION_HOOK_UNAVAILABLE");
             placed.add(obj);
-            LOGGER.info("Recorded completed City template worldgen placement {} {} after {} owner chunks at datum {}",
+            placedStructureIndex.add(LedgerIdentity.of(planned));
+            LOGGER.debug("Recorded completed City template worldgen placement {} {} after {} owner chunks at datum {}",
                     planned.anchorId(), planned.templateId(), requiredOwners.size(), frozenDatum.getAsInt());
         }
-        if (!persistWorldgenLedger()) {
-            worldgenLedger = before;
-            return TemplateFragmentRecordResult.rejectedResult("TEMPLATE_LEDGER_PERSISTENCE_FAILED");
-        }
+        markWorldgenLedgerDirty();
         return allTemplateFragmentsRecorded(planned, requiredOwners)
                 ? TemplateFragmentRecordResult.completedResult()
                 : TemplateFragmentRecordResult.fragmentRecorded();
@@ -643,10 +661,75 @@ public final class CityReservationMaskRegistry {
         return activePlannedStructureIndex;
     }
 
+    private static List<PlannedStructure> plannedStructuresCovering(ChunkPos chunkPos) {
+        if (chunkPos == null) {
+            return List.of();
+        }
+        return activePlannedStructuresByChunk.getOrDefault(ChunkPos.asLong(chunkPos.x, chunkPos.z), List.of());
+    }
+
     private static void rebuildActivePlannedStructureIndex() {
-        activePlannedStructureIndex = activePlannedRegistries.values().stream()
+        List<PlannedStructure> planned = activePlannedRegistries.values().stream()
                 .sorted(java.util.Comparator.comparing(ActivePlannedStructures::cityId))
                 .flatMap(registry -> registry.plannedStructures().stream()).toList();
+        Map<Long, List<PlannedStructure>> byChunk = new LinkedHashMap<>();
+        Map<TemplatePlacementKey, PlannedStructure> byPlacement = new LinkedHashMap<>();
+        for (PlannedStructure item : planned) {
+            BlockBounds footprint = item.lockedActualFootprint();
+            for (int chunkX = Math.floorDiv(footprint.minX(), 16);
+                 chunkX <= Math.floorDiv(footprint.maxX(), 16); chunkX++) {
+                for (int chunkZ = Math.floorDiv(footprint.minZ(), 16);
+                     chunkZ <= Math.floorDiv(footprint.maxZ(), 16); chunkZ++) {
+                    byChunk.computeIfAbsent(ChunkPos.asLong(chunkX, chunkZ), ignored -> new ArrayList<>()).add(item);
+                }
+            }
+            if (item.isTemplatePlacement()) {
+                byPlacement.put(new TemplatePlacementKey(item.anchorId(), templateRef(item), templateHash(item),
+                        item.anchorBlock()), item);
+            }
+        }
+        Map<Long, List<PlannedStructure>> frozenByChunk = new LinkedHashMap<>();
+        byChunk.forEach((key, value) -> frozenByChunk.put(key, List.copyOf(value)));
+        activePlannedStructureIndex = planned;
+        activePlannedStructuresByChunk = Map.copyOf(frozenByChunk);
+        activeTemplatePlacementIndex = Map.copyOf(byPlacement);
+    }
+
+    private static void rebuildLedgerIndexes() {
+        placedStructureIndex.clear();
+        pendingFragmentIndex.clear();
+        completedFragmentIndex.clear();
+        templateDatumIndex.clear();
+        conflictingTemplateDatums.clear();
+        for (JsonElement element : ledgerPlacedStructures()) {
+            if (element.isJsonObject()) {
+                placedStructureIndex.add(LedgerIdentity.from(element.getAsJsonObject()));
+            }
+        }
+        for (JsonElement element : ledgerTemplatePendingFragments()) {
+            if (element.isJsonObject()) {
+                pendingFragmentIndex.add(TemplateOwnerIdentity.from(element.getAsJsonObject()));
+            }
+        }
+        for (JsonElement element : ledgerTemplateDatums()) {
+            if (element.isJsonObject()) {
+                JsonObject datum = element.getAsJsonObject();
+                indexTemplateDatum(TemplateDatumIdentity.from(datum),
+                        intValue(datum, "templateDatumY", Integer.MIN_VALUE));
+            }
+        }
+        for (JsonElement element : ledgerTemplateFragments()) {
+            if (element.isJsonObject()) {
+                completedFragmentIndex.add(TemplateFragmentIdentity.from(element.getAsJsonObject()));
+            }
+        }
+    }
+
+    private static void indexTemplateDatum(TemplateDatumIdentity identity, int datum) {
+        Integer previous = templateDatumIndex.putIfAbsent(identity, datum);
+        if (previous != null && previous != datum) {
+            conflictingTemplateDatums.add(identity);
+        }
     }
 
     private static int activeCityCount() {
@@ -756,12 +839,13 @@ public final class CityReservationMaskRegistry {
         obj.addProperty("z", origin.getZ());
         obj.addProperty("recordedAt", Instant.now().toString());
         array.add(obj);
-        if (array.size() == 1 || array.size() % 32 == 0) {
-            persistWorldgenLedger();
-        }
+        markWorldgenLedgerDirty();
     }
 
     private static boolean ledgerContains(PlannedStructure planned) {
+        if (hasExactIdentity(planned)) {
+            return placedStructureIndex.contains(LedgerIdentity.of(planned));
+        }
         for (JsonElement elem : ledgerPlacedStructures()) {
             if (elem.isJsonObject() && ledgerIdentityMatches(planned, elem.getAsJsonObject())) {
                 return true;
@@ -771,6 +855,9 @@ public final class CityReservationMaskRegistry {
     }
 
     private static boolean ledgerContains(String runId, String citySeedId, String cityId, String anchorId) {
+        if (nonBlank(runId) && nonBlank(citySeedId) && nonBlank(cityId) && nonBlank(anchorId)) {
+            return placedStructureIndex.contains(new LedgerIdentity(runId, citySeedId, cityId, anchorId));
+        }
         for (JsonElement elem : ledgerPlacedStructures()) {
             if (!elem.isJsonObject()) {
                 continue;
@@ -832,6 +919,9 @@ public final class CityReservationMaskRegistry {
         if (planned == null || ownerChunk == null) {
             return false;
         }
+        if (hasExactIdentity(planned)) {
+            return pendingFragmentIndex.contains(TemplateOwnerIdentity.of(planned, ownerChunk));
+        }
         for (JsonElement elem : ledgerTemplatePendingFragments()) {
             if (elem.isJsonObject() && templateOwnerIdentityMatches(
                     planned, ownerChunk, elem.getAsJsonObject())) {
@@ -844,6 +934,14 @@ public final class CityReservationMaskRegistry {
     private static OptionalInt resolvedTemplateDatumInternal(PlannedStructure planned) {
         if (planned == null) {
             return OptionalInt.empty();
+        }
+        if (hasExactIdentity(planned)) {
+            TemplateDatumIdentity identity = TemplateDatumIdentity.of(planned);
+            if (conflictingTemplateDatums.contains(identity)) {
+                return OptionalInt.empty();
+            }
+            Integer indexed = templateDatumIndex.get(identity);
+            return indexed == null ? OptionalInt.empty() : OptionalInt.of(indexed);
         }
         Integer resolved = null;
         for (JsonElement elem : ledgerTemplateDatums()) {
@@ -870,6 +968,11 @@ public final class CityReservationMaskRegistry {
         if (planned == null || ownerChunk == null) {
             return false;
         }
+        if (hasExactIdentity(planned)) {
+            OptionalInt datum = resolvedTemplateDatumInternal(planned);
+            return datum.isPresent() && completedFragmentIndex.contains(
+                    TemplateFragmentIdentity.of(planned, ownerChunk, datum.getAsInt()));
+        }
         for (JsonElement elem : ledgerTemplateFragments()) {
             if (elem.isJsonObject() && templateFragmentIdentityMatches(
                     planned, ownerChunk, elem.getAsJsonObject())) {
@@ -881,6 +984,15 @@ public final class CityReservationMaskRegistry {
 
     private static boolean allTemplateFragmentsRecorded(PlannedStructure planned, List<ChunkPos> owners) {
         return owners.stream().allMatch(owner -> templateFragmentRecorded(planned, owner));
+    }
+
+    private static boolean hasExactIdentity(PlannedStructure planned) {
+        return planned != null && nonBlank(planned.runId()) && nonBlank(planned.citySeedId())
+                && nonBlank(planned.cityId()) && nonBlank(planned.anchorId());
+    }
+
+    private static boolean nonBlank(String value) {
+        return value != null && !value.isBlank();
     }
 
     private static boolean templateFragmentIdentityMatches(PlannedStructure planned,
@@ -954,35 +1066,56 @@ public final class CityReservationMaskRegistry {
         return obj.getAsJsonArray(key);
     }
 
-    private static boolean persistWorldgenLedger() {
+    public static void flushPendingWorldgenLedgerIfDue() {
+        flushWorldgenLedger(false);
+    }
+
+    public static void flushPendingWorldgenLedgerNow() {
+        flushWorldgenLedger(true);
+    }
+
+    private static synchronized void flushWorldgenLedger(boolean force) {
+        long now = System.nanoTime();
+        if (!ledgerPersistencePending || ledgerPersistenceInProgress
+                || (!force && now < nextLedgerPersistenceNanos)
+                || activeServerRoot == null) {
+            return;
+        }
+        ledgerPersistenceInProgress = true;
+        nextLedgerPersistenceNanos = now + LEDGER_FLUSH_INTERVAL_NANOS;
+        try {
+            atomicWrite(worldgenLedgerPath(activeServerRoot), worldgenLedger);
+            ledgerPersistencePending = false;
+            nextLedgerPersistenceNanos = 0L;
+        } catch (IOException ex) {
+            LOGGER.warn("City template ledger persistence deferred; in-memory placement idempotence is retained.",
+                    ex);
+            nextLedgerPersistenceNanos = System.nanoTime() + LEDGER_RETRY_DELAY_NANOS;
+        } finally {
+            ledgerPersistenceInProgress = false;
+        }
+    }
+
+    private static void markWorldgenLedgerDirty() {
+        ledgerPersistencePending = true;
+        if (nextLedgerPersistenceNanos == 0L) {
+            nextLedgerPersistenceNanos = System.nanoTime() + LEDGER_FLUSH_INTERVAL_NANOS;
+        }
+    }
+
+    private static synchronized boolean persistWorldgenLedger() {
         Path root = activeServerRoot;
         if (root == null) {
             return true;
         }
-        Path temp = null;
         try {
-            Path dir = activeDir(root);
-            Files.createDirectories(dir);
-            Path target = dir.resolve(WORLDGEN_LEDGER_FILE);
-            temp = Files.createTempFile(dir, WORLDGEN_LEDGER_FILE + ".", ".tmp");
-            Files.writeString(temp, CityJson.GSON.toJson(worldgenLedger));
-            try {
-                Files.move(temp, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-            } catch (AtomicMoveNotSupportedException ignored) {
-                Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING);
-            }
+            atomicWrite(worldgenLedgerPath(root), worldgenLedger);
+            ledgerPersistencePending = false;
+            nextLedgerPersistenceNanos = 0L;
             return true;
         } catch (IOException ex) {
             LOGGER.error("Failed to persist City worldgen ledger; template writes remain pending.", ex);
             return false;
-        } finally {
-            if (temp != null) {
-                try {
-                    Files.deleteIfExists(temp);
-                } catch (IOException ignored) {
-                    // A unique temporary file can be cleaned up on the next server start.
-                }
-            }
         }
     }
 
@@ -1016,6 +1149,57 @@ public final class CityReservationMaskRegistry {
                 || value.contains("vine")
                 || value.contains("patch")
                 || value.contains("forest");
+    }
+
+    private record TemplatePlacementKey(String anchorId, String templateRef, String templateHash,
+                                        BlockPoint anchorBlock) {
+    }
+
+    private record LedgerIdentity(String runId, String citySeedId, String cityId, String anchorId) {
+        private static LedgerIdentity of(PlannedStructure planned) {
+            return new LedgerIdentity(planned.runId(), planned.citySeedId(), planned.cityId(), planned.anchorId());
+        }
+
+        private static LedgerIdentity from(JsonObject object) {
+            return new LedgerIdentity(stringValue(object, "runId", ""),
+                    stringValue(object, "citySeedId", ""), stringValue(object, "cityId", ""),
+                    stringValue(object, "anchorId", ""));
+        }
+    }
+
+    private record TemplateDatumIdentity(LedgerIdentity placement, String templateHash) {
+        private static TemplateDatumIdentity of(PlannedStructure planned) {
+            return new TemplateDatumIdentity(LedgerIdentity.of(planned),
+                    CityReservationMaskRegistry.templateHash(planned));
+        }
+
+        private static TemplateDatumIdentity from(JsonObject object) {
+            return new TemplateDatumIdentity(LedgerIdentity.from(object), stringValue(object, "templateHash", ""));
+        }
+    }
+
+    private record TemplateOwnerIdentity(LedgerIdentity placement, String templateHash, int chunkX, int chunkZ) {
+        private static TemplateOwnerIdentity of(PlannedStructure planned, ChunkPos owner) {
+            return new TemplateOwnerIdentity(LedgerIdentity.of(planned),
+                    CityReservationMaskRegistry.templateHash(planned), owner.x, owner.z);
+        }
+
+        private static TemplateOwnerIdentity from(JsonObject object) {
+            return new TemplateOwnerIdentity(LedgerIdentity.from(object), stringValue(object, "templateHash", ""),
+                    intValue(object, "generatingChunkX", Integer.MIN_VALUE),
+                    intValue(object, "generatingChunkZ", Integer.MIN_VALUE));
+        }
+    }
+
+    private record TemplateFragmentIdentity(TemplateOwnerIdentity owner, int templateDatumY) {
+        private static TemplateFragmentIdentity of(PlannedStructure planned, ChunkPos owner, int templateDatumY) {
+            return new TemplateFragmentIdentity(TemplateOwnerIdentity.of(planned, owner), templateDatumY);
+        }
+
+        private static TemplateFragmentIdentity from(JsonObject object) {
+            return new TemplateFragmentIdentity(TemplateOwnerIdentity.from(object),
+                    intValue(object, "templateDatumY", Integer.MIN_VALUE));
+        }
     }
 
     public record TemplateDatumPreparation(TemplateDatumPreparationStatus status,

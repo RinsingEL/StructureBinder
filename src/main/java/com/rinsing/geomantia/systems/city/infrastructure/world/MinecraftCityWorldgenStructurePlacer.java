@@ -9,6 +9,7 @@ import com.rinsing.geomantia.systems.city.application.CityTemplatePlacementGeome
 import com.rinsing.geomantia.systems.city.application.CityTemplateTerrainPosePolicy;
 import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseChunkExecutor;
 import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseWorldgenRegistry;
+import com.rinsing.geomantia.systems.realm_planning.adapter.minecraft.RtfNativeTerrainSampler;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -31,13 +32,24 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.function.IntBinaryOperator;
 import org.slf4j.Logger;
 
 public final class MinecraftCityWorldgenStructurePlacer {
     private static final Logger LOGGER = LogUtils.getLogger();
+    private static final int RTF_CALIBRATION_REGION_BLOCKS = 512;
+    private static final int RTF_MAX_CALIBRATION_RESIDUAL_BLOCKS = 2;
+    private static final Map<ChunkGenerator, GeneratorFastPath> RTF_FAST_PATHS =
+            Collections.synchronizedMap(new WeakHashMap<>());
 
     private MinecraftCityWorldgenStructurePlacer() {
     }
@@ -156,9 +168,11 @@ public final class MinecraftCityWorldgenStructurePlacer {
                 return;
             }
             LevelHeightAccessor heightAccessor = chunk.getHeightAccessorForGeneration();
+            TerrainSamplingChoice terrainSampling = terrainSamplingChoice(generator, registryAccess,
+                    randomState, heightAccessor, footprint);
             int datumY = CityLandUseWorldgenRegistry.resolveStructureFoundationDatum(
-                            item.cityId(), footprint,
-                            (x, z) -> generatorTerrainSample(generator, heightAccessor, randomState, x, z))
+                            item.cityId(), footprint, terrainSampling.cacheIdentity(),
+                            terrainSampling.sampler())
                     .orElseGet(() -> medianFoundationDatum(footprint,
                             (x, z) -> generator.getBaseHeight(x, z,
                                     Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
@@ -239,10 +253,128 @@ public final class MinecraftCityWorldgenStructurePlacer {
         return new CityLandUseChunkExecutor.ColumnSample(surfaceY, blockId.toString(), true);
     }
 
+    private static TerrainSamplingChoice terrainSamplingChoice(
+            ChunkGenerator generator,
+            RegistryAccess registryAccess,
+            RandomState randomState,
+            LevelHeightAccessor heightAccessor,
+            BlockBounds footprint) {
+        GeneratorFastPath fastPath;
+        synchronized (RTF_FAST_PATHS) {
+            fastPath = RTF_FAST_PATHS.computeIfAbsent(generator, ignored ->
+                    new GeneratorFastPath(RtfNativeTerrainSampler.probe(randomState, registryAccess)));
+        }
+        if (!fastPath.probe().available()) {
+            return exactTerrainSampling(generator, heightAccessor, randomState);
+        }
+        int centerX = Math.floorDiv(footprint.minX() + footprint.maxX(), 2);
+        int centerZ = Math.floorDiv(footprint.minZ() + footprint.maxZ(), 2);
+        long regionKey = (((long) Math.floorDiv(centerX, RTF_CALIBRATION_REGION_BLOCKS)) << 32)
+                ^ (Math.floorDiv(centerZ, RTF_CALIBRATION_REGION_BLOCKS) & 0xffffffffL);
+        FastCalibration calibration;
+        synchronized (RTF_FAST_PATHS) {
+            calibration = fastPath.calibrations().get(regionKey);
+            if (calibration == null) {
+                calibration = calibrateFastPath(fastPath.probe().sampler(), generator,
+                        heightAccessor, randomState, footprint);
+                fastPath.calibrations().put(regionKey, calibration);
+                if (calibration.usable()) {
+                    LOGGER.info("Enabled RTF native City terrain sampling for region {},{}: api={}, offset={}, maxResidual={}",
+                            Math.floorDiv(centerX, RTF_CALIBRATION_REGION_BLOCKS),
+                            Math.floorDiv(centerZ, RTF_CALIBRATION_REGION_BLOCKS),
+                            fastPath.probe().sampler().apiVariant(), calibration.offsetBlocks(),
+                            calibration.maxResidualBlocks());
+                } else {
+                    LOGGER.warn("RTF native City terrain sampling calibration rejected for region {},{}: {}; using exact generator sampling.",
+                            Math.floorDiv(centerX, RTF_CALIBRATION_REGION_BLOCKS),
+                            Math.floorDiv(centerZ, RTF_CALIBRATION_REGION_BLOCKS), calibration.reason());
+                }
+            }
+        }
+        if (!calibration.usable()) {
+            return exactTerrainSampling(generator, heightAccessor, randomState);
+        }
+        RtfNativeTerrainSampler.Sampler sampler = fastPath.probe().sampler();
+        int offset = calibration.offsetBlocks();
+        CityLandUseWorldgenRegistry.ExactTerrainSampler terrain = (x, z) -> {
+            RtfNativeTerrainSampler.Sample sample = sampler.sample(x, z);
+            int rawSurfaceY = sample.water() ? sample.waterSurfaceElevation() : sample.elevation();
+            return new CityLandUseChunkExecutor.ColumnSample(rawSurfaceY + offset,
+                    sample.water() ? "minecraft:water" : "minecraft:grass_block", true);
+        };
+        return new TerrainSamplingChoice(calibration, terrain);
+    }
+
+    private static FastCalibration calibrateFastPath(
+            RtfNativeTerrainSampler.Sampler sampler,
+            ChunkGenerator generator,
+            LevelHeightAccessor heightAccessor,
+            RandomState randomState,
+            BlockBounds footprint) {
+        Set<BlockPoint> controls = new LinkedHashSet<>();
+        controls.add(new BlockPoint(Math.floorDiv(footprint.minX() + footprint.maxX(), 2),
+                Math.floorDiv(footprint.minZ() + footprint.maxZ(), 2)));
+        controls.add(new BlockPoint(footprint.minX(), footprint.minZ()));
+        controls.add(new BlockPoint(footprint.minX(), footprint.maxZ()));
+        controls.add(new BlockPoint(footprint.maxX(), footprint.minZ()));
+        controls.add(new BlockPoint(footprint.maxX(), footprint.maxZ()));
+        List<Integer> offsets = new ArrayList<>();
+        try {
+            for (BlockPoint control : controls) {
+                RtfNativeTerrainSampler.Sample fast = sampler.sample(control.x(), control.z());
+                int fastSurfaceY = fast.water() ? fast.waterSurfaceElevation() : fast.elevation();
+                int exactSurfaceY = generator.getBaseHeight(control.x(), control.z(),
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, heightAccessor, randomState) - 1;
+                offsets.add(exactSurfaceY - fastSurfaceY);
+            }
+        } catch (RuntimeException ex) {
+            return FastCalibration.rejected("sampling_failed:" + ex.getClass().getSimpleName());
+        }
+        offsets.sort(Comparator.naturalOrder());
+        int medianOffset = offsets.get(offsets.size() / 2);
+        int maxResidual = offsets.stream().mapToInt(value -> Math.abs(value - medianOffset)).max().orElse(0);
+        if (maxResidual > RTF_MAX_CALIBRATION_RESIDUAL_BLOCKS) {
+            return FastCalibration.rejected("calibration_residual=" + maxResidual);
+        }
+        return FastCalibration.usable(medianOffset, maxResidual);
+    }
+
+    private static TerrainSamplingChoice exactTerrainSampling(
+            ChunkGenerator generator,
+            LevelHeightAccessor heightAccessor,
+            RandomState randomState) {
+        return new TerrainSamplingChoice(generator,
+                (x, z) -> generatorTerrainSample(generator, heightAccessor, randomState, x, z));
+    }
+
     private static List<Integer> sampleAxis(int minimum, int maximum) {
         List<Integer> result = new java.util.ArrayList<>();
         for (int value = minimum; value <= maximum; value += 4) result.add(value);
         if (result.get(result.size() - 1) != maximum) result.add(maximum);
         return result;
+    }
+
+    private record TerrainSamplingChoice(Object cacheIdentity,
+                                         CityLandUseWorldgenRegistry.ExactTerrainSampler sampler) {
+    }
+
+    private record GeneratorFastPath(RtfNativeTerrainSampler.Probe probe,
+                                     Map<Long, FastCalibration> calibrations) {
+        private GeneratorFastPath(RtfNativeTerrainSampler.Probe probe) {
+            this(probe, new java.util.HashMap<>());
+        }
+    }
+
+    private record FastCalibration(boolean usable,
+                                   int offsetBlocks,
+                                   int maxResidualBlocks,
+                                   String reason) {
+        private static FastCalibration usable(int offsetBlocks, int maxResidualBlocks) {
+            return new FastCalibration(true, offsetBlocks, maxResidualBlocks, "");
+        }
+
+        private static FastCalibration rejected(String reason) {
+            return new FastCalibration(false, 0, Integer.MAX_VALUE, reason);
+        }
     }
 }

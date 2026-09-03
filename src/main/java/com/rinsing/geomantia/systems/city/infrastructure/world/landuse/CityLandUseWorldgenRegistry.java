@@ -68,10 +68,14 @@ public final class CityLandUseWorldgenRegistry {
     private static final CityLandUseChunkExecutor EXECUTOR = new CityLandUseChunkExecutor();
     private static final long LEDGER_FLUSH_INTERVAL_NANOS = 1_000_000_000L;
     private static final long LEDGER_RETRY_DELAY_NANOS = 1_000_000_000L;
+    private static final int MAX_STRUCTURE_TERRAIN_SAMPLES_PER_SESSION = 131_072;
 
     private static final Map<ActiveKey, ActivePlan> ACTIVE = new LinkedHashMap<>();
     private static final Set<OwnerKey> IN_FLIGHT = new HashSet<>();
     private static final Set<OwnerKey> APPLIED_OWNER_KEYS = new HashSet<>();
+    private static final Map<PreparedChunkKey, CityLandUseChunkCompiler.ChunkFragment> PREPARED_CHUNK_CACHE =
+            new HashMap<>();
+    private static final Map<Object, StructureTerrainSession> STRUCTURE_TERRAIN_SESSIONS = new WeakHashMap<>();
     private static final Map<D7BackfillJobKey, D7BackfillJob> D7_BACKFILL_JOBS = new LinkedHashMap<>();
     private static final Map<Object, Set<FeatureOwnerKey>> FEATURE_OWNER_APPLICATIONS = new WeakHashMap<>();
     private static final ThreadLocal<Integer> FEATURE_INVOCATION_DEPTH = new ThreadLocal<>();
@@ -102,6 +106,8 @@ public final class CityLandUseWorldgenRegistry {
             ActiveKey key = new ActiveKey(dimension, areaPlan.cityId());
             cancelD7BackfillsFor(key);
             ACTIVE.put(key, ActivePlan.create(key, areaPlan, surfacePrintPlan));
+            PREPARED_CHUNK_CACHE.clear();
+            STRUCTURE_TERRAIN_SESSIONS.clear();
             FEATURE_OWNER_APPLICATIONS.clear();
             persistActive();
             ensureLedgerFile();
@@ -135,11 +141,23 @@ public final class CityLandUseWorldgenRegistry {
             ExactTerrainSampler terrain) {
         Objects.requireNonNull(footprint, "footprint");
         Objects.requireNonNull(terrain, "terrain");
+        return resolveStructureFoundationDatum(cityId, footprint, terrain, terrain);
+    }
+
+    public static synchronized OptionalInt resolveStructureFoundationDatum(
+            String cityId,
+            BlockBounds footprint,
+            Object terrainCacheIdentity,
+            ExactTerrainSampler terrain) {
+        Objects.requireNonNull(footprint, "footprint");
+        Objects.requireNonNull(terrainCacheIdentity, "terrainCacheIdentity");
+        Objects.requireNonNull(terrain, "terrain");
         String requiredCityId = requiredCityId(cityId);
         List<Integer> candidates = new ArrayList<>();
-        Map<Long, CityLandUseChunkExecutor.ColumnSample> sampleCache = new HashMap<>();
-        CityLandUseMicroGrader.TerrainView cachedTerrain = (x, z) -> sampleCache.computeIfAbsent(
-                (((long) x) << 32) ^ (z & 0xffffffffL), ignored -> terrain.sample(x, z));
+        StructureTerrainSession terrainSession = STRUCTURE_TERRAIN_SESSIONS.computeIfAbsent(
+                terrainCacheIdentity, ignored -> new StructureTerrainSession());
+        CityLandUseMicroGrader.TerrainView cachedTerrain =
+                (x, z) -> terrainSession.sample(terrain, x, z);
         for (ActivePlan active : ACTIVE.values()) {
             if (!active.key().cityId().equals(requiredCityId)) continue;
             int minChunkX = Math.floorDiv(footprint.minX() - CityLandUseMicroGrader.REFERENCE_RADIUS_BLOCKS, 16);
@@ -148,11 +166,20 @@ public final class CityLandUseWorldgenRegistry {
             int maxChunkZ = Math.floorDiv(footprint.maxZ() + CityLandUseMicroGrader.REFERENCE_RADIUS_BLOCKS, 16);
             for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
                 for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+                    int preparedChunkX = chunkX;
+                    int preparedChunkZ = chunkZ;
                     CityLandUseChunkCompiler.ChunkFragment fragment =
-                            new CityLandUseChunkCompiler(active.palette())
-                                    .compilePrepared(active.preparedSurfacePlan(), chunkX, chunkZ);
-                    OptionalInt datum = CityLandUseMicroGrader.resolveStructureDatum(
-                            fragment, cachedTerrain, footprint);
+                            PREPARED_CHUNK_CACHE.computeIfAbsent(
+                                    new PreparedChunkKey(active.key(), preparedChunkX, preparedChunkZ), ignored ->
+                                            new CityLandUseChunkCompiler(active.palette())
+                                                     .compilePrepared(active.preparedSurfacePlan(),
+                                                             preparedChunkX, preparedChunkZ));
+                    PreparedChunkKey preparedKey = new PreparedChunkKey(
+                            active.key(), preparedChunkX, preparedChunkZ);
+                    CityLandUseMicroGrader.StructureDatumResolver resolver =
+                            terrainSession.resolvers.computeIfAbsent(preparedKey, ignored ->
+                                    CityLandUseMicroGrader.prepareStructureDatum(fragment, cachedTerrain));
+                    OptionalInt datum = resolver.resolve(footprint);
                     datum.ifPresent(candidates::add);
                 }
             }
@@ -174,6 +201,8 @@ public final class CityLandUseWorldgenRegistry {
         ensureLoaded(server);
         synchronized (CityLandUseWorldgenRegistry.class) {
             ACTIVE.remove(key);
+            PREPARED_CHUNK_CACHE.clear();
+            STRUCTURE_TERRAIN_SESSIONS.clear();
             cancelD7BackfillsFor(key);
             IN_FLIGHT.removeIf(owner -> owner.key().equals(key));
             FEATURE_OWNER_APPLICATIONS.clear();
@@ -199,6 +228,8 @@ public final class CityLandUseWorldgenRegistry {
         }
         ACTIVE.clear();
         ACTIVE.putAll(state.activePlans());
+        PREPARED_CHUNK_CACHE.clear();
+        STRUCTURE_TERRAIN_SESSIONS.clear();
         cancelAllD7Backfills();
         IN_FLIGHT.clear();
         FEATURE_OWNER_APPLICATIONS.clear();
@@ -920,6 +951,8 @@ public final class CityLandUseWorldgenRegistry {
 
     private static void rebuildAppliedOwnerIndex() {
         APPLIED_OWNER_KEYS.clear();
+        PREPARED_CHUNK_CACHE.clear();
+        STRUCTURE_TERRAIN_SESSIONS.clear();
         for (JsonElement element : appliedOwners()) {
             JsonObject entry = element.getAsJsonObject();
             APPLIED_OWNER_KEYS.add(new OwnerKey(
@@ -1135,6 +1168,8 @@ public final class CityLandUseWorldgenRegistry {
         cancelAllD7Backfills();
         IN_FLIGHT.clear();
         APPLIED_OWNER_KEYS.clear();
+        PREPARED_CHUNK_CACHE.clear();
+        STRUCTURE_TERRAIN_SESSIONS.clear();
         FEATURE_OWNER_APPLICATIONS.clear();
         FEATURE_INVOCATION_DEPTH.remove();
         ledger = emptyLedger();
@@ -1320,6 +1355,27 @@ public final class CityLandUseWorldgenRegistry {
     }
 
     private record ActiveKey(String dimensionId, String cityId) {
+    }
+
+    private record PreparedChunkKey(ActiveKey activeKey, int chunkX, int chunkZ) {
+    }
+
+    private static final class StructureTerrainSession {
+        private final Map<Long, CityLandUseChunkExecutor.ColumnSample> samples =
+                new LinkedHashMap<>(1024, 0.75f, true) {
+                    @Override
+                    protected boolean removeEldestEntry(
+                            Map.Entry<Long, CityLandUseChunkExecutor.ColumnSample> eldest) {
+                        return size() > MAX_STRUCTURE_TERRAIN_SAMPLES_PER_SESSION;
+                    }
+                };
+        private final Map<PreparedChunkKey, CityLandUseMicroGrader.StructureDatumResolver> resolvers =
+                new HashMap<>();
+
+        private CityLandUseChunkExecutor.ColumnSample sample(ExactTerrainSampler terrain, int x, int z) {
+            long key = (((long) x) << 32) ^ (z & 0xffffffffL);
+            return samples.computeIfAbsent(key, ignored -> terrain.sample(x, z));
+        }
     }
 
     private record ActivePlan(ActiveKey key,

@@ -13,14 +13,17 @@ import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.WeakHashMap;
 
 /**
  * Reads fixed City building templates without going through configured structures or Jigsaw pools.
  */
 public final class MinecraftCityTemplateReader {
     public static final String MINECRAFT_TEMPLATE_MANAGER_SOURCE = "minecraft:structure_template_manager";
+    private static final Map<StructureTemplate, String> RUNTIME_CONTENT_HASH_CACHE = new WeakHashMap<>();
 
     private final TemplateSource source;
 
@@ -202,7 +205,19 @@ public final class MinecraftCityTemplateReader {
             }
             StructureTemplate value = template.get();
             String sourceId = MINECRAFT_TEMPLATE_MANAGER_SOURCE + ":" + templateRef;
-            return Optional.of(TemplateSnapshot.loaded(value, contentHash(value), sourceId));
+            return Optional.of(TemplateSnapshot.loaded(value, cachedContentHash(value), sourceId));
+        }
+    }
+
+    private static String cachedContentHash(StructureTemplate template) throws IOException {
+        synchronized (RUNTIME_CONTENT_HASH_CACHE) {
+            String cached = RUNTIME_CONTENT_HASH_CACHE.get(template);
+            if (cached != null) {
+                return cached;
+            }
+            String computed = contentHash(template);
+            RUNTIME_CONTENT_HASH_CACHE.put(template, computed);
+            return computed;
         }
     }
 
