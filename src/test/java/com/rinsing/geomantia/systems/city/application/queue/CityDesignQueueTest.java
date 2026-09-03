@@ -84,7 +84,7 @@ class CityDesignQueueTest {
         queue.onPostD4State(postState("run_failure", "city_1", "needs_agent"));
         JsonObject state = queue.status("run_failure");
         assertEquals("needs_agent", state.get("status").getAsString());
-        assertEquals("city_post_d4_auto_compile_status", state.get("nextAction").getAsString());
+        assertEquals("city_post_d4_auto_compile_retry", state.get("nextAction").getAsString());
         assertEquals("city_1", state.get("currentCitySeedId").getAsString());
         assertEquals("pending", state.getAsJsonArray("items").get(1).getAsJsonObject()
                 .get("status").getAsString());

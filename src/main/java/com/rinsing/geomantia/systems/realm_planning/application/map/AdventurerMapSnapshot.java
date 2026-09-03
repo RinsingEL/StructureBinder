@@ -58,7 +58,7 @@ public record AdventurerMapSnapshot(
     }
 
     public record CoarseMap(String dimensionId, int minBlockX, int minBlockZ, int cellSizeBlocks,
-                            int width, int height, byte[] terrainCodes, byte[] realmCodes,
+                            int width, int height, byte[] terrainCodes, byte[] realmCodes, byte[] revealedCodes,
                             List<String> realmIds) {
         private static final int MAX_SIDE = 128;
 
@@ -70,7 +70,8 @@ public record AdventurerMapSnapshot(
             int expected = width * height;
             terrainCodes = terrainCodes == null ? new byte[expected] : terrainCodes.clone();
             realmCodes = realmCodes == null ? new byte[expected] : realmCodes.clone();
-            if (terrainCodes.length != expected || realmCodes.length != expected) {
+            revealedCodes = revealedCodes == null ? new byte[expected] : revealedCodes.clone();
+            if (terrainCodes.length != expected || realmCodes.length != expected || revealedCodes.length != expected) {
                 throw new IllegalArgumentException("ADVENTURER_MAP_RASTER_SIZE_MISMATCH");
             }
             realmIds = realmIds == null ? List.of() : List.copyOf(realmIds);
@@ -80,7 +81,7 @@ public record AdventurerMapSnapshot(
         }
 
         public static CoarseMap empty() {
-            return new CoarseMap("", 0, 0, 1, 0, 0, new byte[0], new byte[0], List.of());
+            return new CoarseMap("", 0, 0, 1, 0, 0, new byte[0], new byte[0], new byte[0], List.of());
         }
 
         public boolean available() {
@@ -93,6 +94,13 @@ public record AdventurerMapSnapshot(
 
         public int maxBlockZ() {
             return minBlockZ + height * cellSizeBlocks;
+        }
+
+        public boolean revealedAt(double blockX, double blockZ) {
+            int column = (int) Math.floor((blockX - minBlockX) / cellSizeBlocks);
+            int row = (int) Math.floor((blockZ - minBlockZ) / cellSizeBlocks);
+            if (column < 0 || column >= width || row < 0 || row >= height) return false;
+            return revealedCodes[row * width + column] != 0;
         }
     }
 }

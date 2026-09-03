@@ -13,8 +13,12 @@ import com.rinsing.geomantia.systems.city.application.CityWallPlanner;
 import com.rinsing.geomantia.systems.city.application.CityWallReservationPlanner;
 import com.rinsing.geomantia.systems.city.application.CityTestRunLayout;
 import com.rinsing.geomantia.systems.city.application.CityD4PatchReviewService;
+import com.rinsing.geomantia.systems.city.application.CityTemplateCatalog;
+import com.rinsing.geomantia.systems.city.application.CityTemplateCatalogLoader;
 import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprint;
+import com.rinsing.geomantia.systems.city.infrastructure.world.CityTemplateAvailabilityPreflight;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityWorldgenBlockObservationRegistry;
+import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityTemplateReader;
 import com.rinsing.geomantia.platform.RealmPlanningServices;
 import com.rinsing.geomantia.platform.WorldSurveyChatProgress;
 import com.rinsing.geomantia.systems.realm_planning.RealmPlanningService;
@@ -438,12 +442,21 @@ final class RealmPlanningHttpController implements AutoCloseable {
                     requiredString(request, "citySeedId"));
             String runId = requiredString(request, "runId");
             String citySeedId = requiredString(request, "citySeedId");
+            JsonObject templateCatalogSource = requiredObject(request, "templateCatalogSource");
+            CityTemplateCatalog templateCatalog = loadTemplateCatalogSource(templateCatalogSource);
+            String dimensionId = restoredRunDimensionId(runId);
+            callOnServerThread(() -> {
+                ServerLevel level = resolveLevel(dimensionId, null);
+                CityTemplateAvailabilityPreflight.requireAvailable(templateCatalog,
+                        new MinecraftCityTemplateReader(level.getStructureManager()));
+                return null;
+            });
             JsonObject patchReviewEvidence = new CityD4PatchReviewService(debugRoot())
                     .requireReviewed(runId, citySeedId);
             JsonObject response = CityPlanningEndpointHandler.handlePrepareD4BlueprintContext(debugRoot(),
                     runId, citySeedId,
                     requiredObject(request, "terrasenseProfileSource"),
-                    requiredObject(request, "templateCatalogSource"),
+                    templateCatalogSource,
                     requiredObject(request, "blueprintReferenceCatalog"), patchReviewEvidence);
             cityDesignQueue.onAgentWorkflowState(runId, citySeedId,
                     "waiting_for_agent", "D4_CONTEXT_PREPARED", "");
@@ -1491,6 +1504,20 @@ final class RealmPlanningHttpController implements AutoCloseable {
     private Path cityDesignQueueConfigPath() {
         return server.getServerDirectory().toPath().resolve("config").resolve("geomantia")
                 .resolve("city_design_queue.json");
+    }
+
+    private static CityTemplateCatalog loadTemplateCatalogSource(JsonObject source) throws IOException {
+        if (source.has("catalog") && source.get("catalog").isJsonObject()) {
+            return new CityTemplateCatalogLoader().load(source.getAsJsonObject("catalog"));
+        }
+        for (String key : new String[]{"catalogPath", "templateCatalogPath", "path"}) {
+            if (source.has(key) && source.get(key).isJsonPrimitive()
+                    && source.getAsJsonPrimitive(key).isString()
+                    && !source.get(key).getAsString().isBlank()) {
+                return new CityTemplateCatalogLoader().load(Path.of(source.get(key).getAsString().trim()));
+            }
+        }
+        throw new IllegalArgumentException("CITY_TEMPLATE_CONTENT_CATALOG_SOURCE_MISSING");
     }
 
     private Path worldSurveySettingsConfigPath() {

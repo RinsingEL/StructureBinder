@@ -24,6 +24,7 @@ public final class AdventurerMapScreen extends Screen {
     private static final int STATUS_WARNING = 0xFFE5B95C;
     private static final int STATUS_ERROR = 0xFFE06B6B;
     private static final int PLAYER_MARKER = 0xFFFFF36A;
+    private static final int UNREVEALED_MAP = 0xFF050607;
     private static final int[] TERRAIN_COLORS = {
             0xFF202B2A, 0xFF315E83, 0xFF789CB2, 0xFF6E9252,
             0xFF3F7047, 0xFFC6AA62, 0xFFB86B3C, 0xFF777A76,
@@ -159,6 +160,7 @@ public final class AdventurerMapScreen extends Screen {
         graphics.drawString(font, Component.literal("0,0"), centerX + 4, centerY + 4, TEXT_MUTED, false);
 
         for (CityNode node : snapshot.cityNodes()) {
+            if (!debugLayer && coarseMap.available() && !coarseMap.revealedAt(node.blockX(), node.blockZ())) continue;
             int x = transform.screenX(node.blockX());
             int y = transform.screenY(node.blockZ());
             if (x < left + 2 || x > right - 2 || y < top + 2 || y > bottom - 2) continue;
@@ -241,6 +243,10 @@ public final class AdventurerMapScreen extends Screen {
         for (int row = 0; row < map.height(); row++) {
             for (int column = 0; column < map.width(); column++) {
                 int index = row * map.width() + column;
+                if (map.revealedCodes()[index] == 0) {
+                    image.setPixelRGBA(column, row, argbToAbgr(UNREVEALED_MAP));
+                    continue;
+                }
                 int terrainCode = Math.min(TERRAIN_COLORS.length - 1, Byte.toUnsignedInt(terrainCodes[index]));
                 int color = TERRAIN_COLORS[terrainCode];
                 int realmCode = Byte.toUnsignedInt(realmCodes[index]);

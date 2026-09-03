@@ -295,6 +295,10 @@ public final class RealmPlanningService {
         return accessConfig.initialActivityRadiusBlocks();
     }
 
+    public PlanningAreaAccessConfig planningAreaAccessConfig() {
+        return accessConfig;
+    }
+
     /** Rebuilds every T4-derived artifact after an external planner replaces the registry. */
     public JsonObject synchronizeT4RegistryArtifacts(String runId, JsonObject registryJson) throws IOException {
         RealmRun run = requireRun(runId);

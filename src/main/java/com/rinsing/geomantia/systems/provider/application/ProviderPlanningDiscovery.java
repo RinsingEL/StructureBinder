@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 /** Restores the next W/T/City decision from formal artifacts for the current server world. */
 public final class ProviderPlanningDiscovery {
     private static final Set<String> CITY_ACTIONABLE = Set.of(
-            "waiting_for_agent", "waiting_for_patch_review", "needs_agent");
+            "waiting_for_agent", "waiting_for_patch_review");
     private final Path debugRoot;
     private final Path surveySettingsPath;
     private final String worldSeed;

@@ -3,8 +3,10 @@ package com.rinsing.geomantia;
 import com.mojang.logging.LogUtils;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityTemplateTerrainStructureRegistries;
+import com.rinsing.geomantia.systems.city.infrastructure.world.CityTemplateContentPackInstaller;
 import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.landuse.LandUseDefaultConfigBootstrap;
+import com.rinsing.geomantia.systems.provider.application.ManagedCityPlanningSources;
 import com.rinsing.geomantia.systems.realm_planning.adapter.minecraft.AdventurerMapStarterGrant;
 import com.rinsing.geomantia.platform.network.AdventurerMapNetwork;
 import com.rinsing.geomantia.platform.network.ProviderNetwork;
@@ -55,6 +57,23 @@ public final class GeomantiaMod {
             LandUseDefaultConfigBootstrap.ensureInstalled(landUseRoot);
         } catch (java.io.IOException ex) {
             LOGGER.error("Failed to install default City LandUse settings at {}.", landUseRoot, ex);
+        }
+        try {
+            java.nio.file.Path serverDirectory = event.getServer().getServerDirectory().toPath();
+            ManagedCityPlanningSources.ResolvedSources sources =
+                    new ManagedCityPlanningSources(serverDirectory).resolve();
+            CityTemplateContentPackInstaller.InstallReport report =
+                    new CityTemplateContentPackInstaller().install(sources.directory(), serverRoot);
+            if (report.configured()) {
+                LOGGER.info("Installed City template content pack {} into current world: templates={}, copied={}, "
+                                + "unchanged={}, repaired={}.", report.packId(), report.templateCount(),
+                        report.installedCount(), report.unchangedCount(), report.repairedCount());
+            } else {
+                LOGGER.warn("Managed City source {} has no {}; D4 template preflight will reject missing world "
+                                + "templates.", sources.directory(), CityTemplateContentPackInstaller.MANIFEST_FILE);
+            }
+        } catch (java.io.IOException ex) {
+            LOGGER.error("Failed to install the managed City template content pack into {}.", serverRoot, ex);
         }
     }
 

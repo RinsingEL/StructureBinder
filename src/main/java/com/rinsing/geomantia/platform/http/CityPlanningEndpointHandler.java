@@ -2186,7 +2186,7 @@ final class CityPlanningEndpointHandler {
         Path workflowD6Plan = cityStageDir(runDir, citySeedId, CityTestRunLayout.D6)
                 .resolve("structure_materialization_plan.json");
         if (!ctx.workflow().runStep("city_plan_d6",
-                !blueprintWorkflow || workflowArtifactMatchesAnchorMap(workflowD6Plan, workflowAnchorMap)
+                !blueprintWorkflow || workflowLockedD6ArtifactMatchesAnchorMap(workflowD6Plan, workflowAnchorMap)
                         ? workflowD6Plan : null,
                 () -> serverHolder.callOnServerThread(() -> handlePlanD6(
                         debugRoot, runId, citySeedId, serverHolder, level)))) {
@@ -2336,6 +2336,17 @@ final class CityPlanningEndpointHandler {
                     stringValue(provenance, "sourceD6Hash", ""))
                     && optionalArtifactHash(landUseCompletionPath).equals(
                     stringValue(provenance, "sourceLandUseCompletionHash", ""));
+        } catch (RuntimeException | IOException ignored) {
+            return false;
+        }
+    }
+
+    static boolean workflowLockedD6ArtifactMatchesAnchorMap(Path artifactPath, Path anchorMapPath) {
+        if (!workflowArtifactMatchesAnchorMap(artifactPath, anchorMapPath)) return false;
+        try {
+            JsonObject artifact = JsonParser.parseString(Files.readString(artifactPath)).getAsJsonObject();
+            validateLockedMaterializationPlan(artifact);
+            return true;
         } catch (RuntimeException | IOException ignored) {
             return false;
         }

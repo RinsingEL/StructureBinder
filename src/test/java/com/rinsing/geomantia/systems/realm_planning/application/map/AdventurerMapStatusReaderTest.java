@@ -124,5 +124,27 @@ class AdventurerMapStatusReaderTest {
         assertEquals(4, Byte.toUnsignedInt(map.terrainCodes()[3]));
         assertEquals(1, map.realmIds().size());
         assertEquals(1, Byte.toUnsignedInt(map.realmCodes()[1]));
+        assertEquals(1, Byte.toUnsignedInt(map.revealedCodes()[0]));
+    }
+
+    @Test
+    void masksCoarseCellsOutsideTheConfiguredOpenArea() throws Exception {
+        Path run = Files.createDirectories(temporaryDirectory.resolve("realm_debug/run_mask"));
+        Files.writeString(run.resolve("world_survey_context.json"),
+                "{\"dimensionId\":\"minecraft:overworld\",\"cellStepBlocks\":128}");
+        Files.writeString(run.resolve("world_feature_grid.json"), """
+                {"cellStepBlocks":128,"cells":[
+                  {"gridX":0,"gridZ":0,"heightP50":65,"waterFrac":0,"biomeHist":{"minecraft:plains":16}},
+                  {"gridX":20,"gridZ":0,"heightP50":65,"waterFrac":0,"biomeHist":{"minecraft:plains":16}}
+                ]}
+                """);
+
+        var map = AdventurerMapStatusReader.read(temporaryDirectory.resolve("realm_debug"), "run_mask", 128)
+                .coarseMap();
+
+        assertEquals(1, Byte.toUnsignedInt(map.revealedCodes()[0]));
+        assertEquals(0, Byte.toUnsignedInt(map.revealedCodes()[20]));
+        assertTrue(map.revealedAt(64, 64));
+        assertFalse(map.revealedAt(20 * 128 + 64, 64));
     }
 }

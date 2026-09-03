@@ -244,7 +244,7 @@ public final class CityDesignQueue {
             };
             case WAITING_FOR_PATCH_REVIEW -> "patch_explorer_show_candidates";
             case POST_D4_RUNNING -> "city_post_d4_auto_compile_status";
-            case NEEDS_AGENT -> "city_post_d4_auto_compile_status";
+            case NEEDS_AGENT -> "city_post_d4_auto_compile_retry";
             default -> "";
         });
     }

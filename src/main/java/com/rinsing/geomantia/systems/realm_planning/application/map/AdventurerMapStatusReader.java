@@ -6,6 +6,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapSnapshot.CityNode;
 import com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapSnapshot.CoarseMap;
+import com.rinsing.geomantia.systems.realm_planning.application.access.PlanningAreaAccessConfig;
+import com.rinsing.geomantia.systems.realm_planning.application.access.PlanningAreaAccessPolicy;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeSet;
 
 /** Builds a read-only map snapshot from the current save's persisted planning artifacts. */
@@ -36,6 +39,13 @@ public final class AdventurerMapStatusReader {
 
     public static AdventurerMapSnapshot read(Path debugRoot, String preferredRunId,
                                               int initialActivityRadiusBlocks) throws IOException {
+        PlanningAreaAccessConfig accessConfig = new PlanningAreaAccessConfig(true, initialActivityRadiusBlocks,
+                PlanningAreaAccessConfig.DEFAULT_FIRST_CITY_DISTANCE_BLOCKS, Set.of("minecraft:overworld"));
+        return read(debugRoot, preferredRunId, accessConfig);
+    }
+
+    public static AdventurerMapSnapshot read(Path debugRoot, String preferredRunId,
+                                              PlanningAreaAccessConfig accessConfig) throws IOException {
         Path root = debugRoot.toAbsolutePath().normalize();
         Optional<Path> runDirectory = resolveRunDirectory(root, preferredRunId);
         if (runDirectory.isEmpty()) {
@@ -63,20 +73,22 @@ public final class AdventurerMapStatusReader {
         int completedCount = intValue(queue, "completedCount", 0);
         int remainingCount = intValue(queue, "remainingCount", 0);
         List<CityNode> nodes = cityNodes(run.resolve("city_seed_registry.json"), queueItems, currentCityId);
-        CoarseMap coarseMap = coarseMap(run);
+        CoarseMap coarseMap = coarseMap(root, run, accessConfig);
 
         return new AdventurerMapSnapshot(runId, wStatus, wPhase, wProgress,
                 stageState.stage(), stageState.status(), currentRealmId, currentRealmName,
                 currentCityId, cityStatus, completedCount, remainingCount,
-                initialActivityRadiusBlocks, coarseMap, nodes);
+                accessConfig.initialActivityRadiusBlocks(), coarseMap, nodes);
     }
 
-    private static synchronized CoarseMap coarseMap(Path run) throws IOException {
+    private static synchronized CoarseMap coarseMap(Path debugRoot, Path run,
+                                                    PlanningAreaAccessConfig accessConfig) throws IOException {
         Path featurePath = run.resolve("world_feature_grid.json");
         Path territoryPath = run.resolve("realm_territory_map.json");
         Path contextPath = run.resolve("world_survey_context.json");
         String fingerprint = fileFingerprint(featurePath) + '|' + fileFingerprint(territoryPath)
-                + '|' + fileFingerprint(contextPath);
+                + '|' + fileFingerprint(contextPath) + '|' + PlanningAreaAccessPolicy.sourceStamp(debugRoot)
+                + '|' + accessConfig;
         if (run.equals(cachedMapRun) && fingerprint.equals(cachedMapFingerprint)) {
             return cachedMap;
         }
@@ -86,13 +98,13 @@ public final class AdventurerMapStatusReader {
         JsonObject featureGrid = readObjectIfPresent(featurePath);
         if (featureGrid == null || !featureGrid.has("cells") || !featureGrid.get("cells").isJsonArray()) {
             return cacheMap(run, fingerprint, new CoarseMap(dimensionId, 0, 0, 1,
-                    0, 0, new byte[0], new byte[0], List.of()));
+                    0, 0, new byte[0], new byte[0], new byte[0], List.of()));
         }
 
         JsonArray cells = featureGrid.getAsJsonArray("cells");
         if (cells.isEmpty()) {
             return cacheMap(run, fingerprint, new CoarseMap(dimensionId, 0, 0, 1,
-                    0, 0, new byte[0], new byte[0], List.of()));
+                    0, 0, new byte[0], new byte[0], new byte[0], List.of()));
         }
 
         int minGridX = Integer.MAX_VALUE;
@@ -125,6 +137,7 @@ public final class AdventurerMapStatusReader {
         int[][] terrainCounts = new int[pixelCount][12];
         byte[] terrainCodes = new byte[pixelCount];
         byte[] realmCodes = new byte[pixelCount];
+        byte[] revealedCodes = new byte[pixelCount];
 
         TerritoryPalette territory = territoryPalette(territoryPath);
         for (JsonElement element : cells) {
@@ -152,9 +165,21 @@ public final class AdventurerMapStatusReader {
             terrainCodes[index] = (byte) selected;
         }
 
-        CoarseMap value = new CoarseMap(dimensionId, minGridX * sourceCellSize,
-                minGridZ * sourceCellSize, outputCellSize, width, height,
-                terrainCodes, realmCodes, territory.realmIds());
+        PlanningAreaAccessPolicy accessPolicy = new PlanningAreaAccessPolicy(debugRoot, accessConfig);
+        int minBlockX = minGridX * sourceCellSize;
+        int minBlockZ = minGridZ * sourceCellSize;
+        for (int row = 0; row < height; row++) {
+            for (int column = 0; column < width; column++) {
+                double blockX = minBlockX + (column + 0.5D) * outputCellSize;
+                double blockZ = minBlockZ + (row + 0.5D) * outputCellSize;
+                if (accessPolicy.evaluate(dimensionId, blockX, blockZ).allowed()) {
+                    revealedCodes[row * width + column] = 1;
+                }
+            }
+        }
+
+        CoarseMap value = new CoarseMap(dimensionId, minBlockX, minBlockZ,
+                outputCellSize, width, height, terrainCodes, realmCodes, revealedCodes, territory.realmIds());
         return cacheMap(run, fingerprint, value);
     }
 

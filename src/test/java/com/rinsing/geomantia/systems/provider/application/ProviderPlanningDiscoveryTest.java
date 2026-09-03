@@ -78,6 +78,32 @@ class ProviderPlanningDiscoveryTest {
     }
 
     @Test
+    void keepsPostD4FailureOutOfTheAgentLoop() throws Exception {
+        Path run = sealedRun("run_failed_d6");
+        write(run, "realm_profiles.json", """
+                [{"realmId":"realm_a"}]
+                """);
+        write(run, "realm_coordinate_selections.json", """
+                [{"realmId":"realm_a"}]
+                """);
+        write(run, "t3_report.json", "{}");
+        write(run, "realm_territory_map.json", "{}");
+        write(run, "city_seed_registry.json", """
+                {"citySeeds":[{"citySeedId":"city_a","realmId":"realm_a","role":"capital"}]}
+                """);
+        write(run, "automation/city_design_queue.json", """
+                {"runId":"run_failed_d6","status":"needs_agent","currentCitySeedId":"city_a",
+                 "nextAction":"city_post_d4_auto_compile_retry","items":[
+                 {"citySeedId":"city_a","realmId":"realm_a","status":"needs_agent"}]}
+                """);
+
+        var step = new ProviderPlanningDiscovery(debugRoot, 42L).nextStep();
+
+        assertEquals(ProviderPlanningDiscovery.Stage.WAITING, step.stage());
+        assertEquals("city_a", step.citySeedId());
+    }
+
+    @Test
     void callsUnifiedT3OnlyAfterEveryProfileHasAT2Selection() throws Exception {
         Path run = sealedRun("run_c");
         write(run, "realm_profiles.json", """

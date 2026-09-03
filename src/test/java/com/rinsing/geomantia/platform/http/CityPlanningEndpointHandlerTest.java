@@ -39,6 +39,7 @@ import net.minecraft.nbt.NbtIo;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -61,6 +62,8 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityPlanningEndpointHandlerTest {
+    @TempDir
+    Path temporaryDirectory;
 
     @Test
     void d3RejectsAnyCellStepOtherThanFixed16() {
@@ -521,6 +524,34 @@ class CityPlanningEndpointHandlerTest {
         plan.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject().remove("materializationSource");
         assertThrows(IllegalArgumentException.class,
                 () -> CityPlanningEndpointHandler.validateLockedMaterializationPlan(plan));
+    }
+
+    @Test
+    void workflowDoesNotReuseUnlockedD6Artifact() throws Exception {
+        Path anchorMapPath = temporaryDirectory.resolve("structure_anchor_map.json");
+        Path d6PlanPath = temporaryDirectory.resolve("structure_materialization_plan.json");
+        JsonObject anchorMap = JsonParser.parseString("""
+                {"schema":"structure_anchor_map","cityId":"city_test"}
+                """).getAsJsonObject();
+        JsonObject d6Plan = JsonParser.parseString("""
+                {
+                  "schema":"city_template_placement_plan",
+                  "cityId":"city_test",
+                  "locked":false,
+                  "plannedWorldgenStructures":[],
+                  "sourceStructureAnchorMap":{
+                    "schema":"structure_anchor_map",
+                    "cityId":"city_test"
+                  }
+                }
+                """).getAsJsonObject();
+        Files.writeString(anchorMapPath, anchorMap.toString());
+        Files.writeString(d6PlanPath, d6Plan.toString());
+
+        assertTrue(CityPlanningEndpointHandler.workflowArtifactMatchesAnchorMap(d6PlanPath, anchorMapPath),
+                "The old provenance-only check reproduced the stale D6 reuse condition");
+        assertFalse(CityPlanningEndpointHandler.workflowLockedD6ArtifactMatchesAnchorMap(
+                d6PlanPath, anchorMapPath));
     }
 
     @Test

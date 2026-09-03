@@ -1,5 +1,25 @@
 # Trek fixed-template importer
 
+## Deployable City content pack
+
+`build_city_content_pack.py` takes an already reviewed `city_template_catalog` plus a source world's
+`generated` directory and writes a versioned payload beside the managed planning bundle. It copies
+only unique `templateRef` values present in the active catalog; unrelated converted templates are
+not included.
+
+```powershell
+python tools/city_templates/build_city_content_pack.py `
+  --catalog "run/config/structureTemplate/terrasense/<bundle>/template_catalog.json" `
+  --generated-root "run/saves/<reviewed-world>/generated" `
+  --output-dir "run/config/structureTemplate/terrasense/<bundle>" `
+  --pack-id "my_city_content_v1"
+```
+
+The output is `city_template_content_pack.json` plus `city_template_content_pack/`. On world start,
+Geomantia validates full catalog coverage and source file hashes, atomically installs missing or
+drifted files under that world's `generated/<namespace>/structures/`, and writes an install-state
+record at the world root. Existing unrelated generated structures are never deleted.
+
 ## Trek v3 catalog curation
 
 `curate_trek_v3_catalog.py` synchronizes an already reviewed Trek v3 standalone batch into the

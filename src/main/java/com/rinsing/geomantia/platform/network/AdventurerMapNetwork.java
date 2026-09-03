@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.rinsing.geomantia.GeomantiaMod;
 import com.rinsing.geomantia.client.AdventurerMapClient;
 import com.rinsing.geomantia.platform.RealmPlanningServices;
+import com.rinsing.geomantia.systems.realm_planning.application.access.PlanningAreaAccessConfig;
 import com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapSnapshot;
 import com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapSnapshot.CityNode;
 import com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapSnapshot.CoarseMap;
@@ -28,7 +29,7 @@ import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 public final class AdventurerMapNetwork {
-    private static final String PROTOCOL = "2";
+    private static final String PROTOCOL = "3";
     private static final int MAX_NODES = 8192;
     private static final int MAX_MAP_PIXELS = 128 * 128;
     private static final int MAX_REALMS = 255;
@@ -91,12 +92,12 @@ public final class AdventurerMapNetwork {
     private static void queueSnapshot(ServerPlayer sender) {
         final java.nio.file.Path debugRoot;
         final String preferredRunId;
-        final int initialActivityRadiusBlocks;
+        final PlanningAreaAccessConfig accessConfig;
         try {
             var planningService = RealmPlanningServices.forServer(sender.server);
             JsonObject status = planningService.status();
             preferredRunId = status.has("runId") ? status.get("runId").getAsString() : "";
-            initialActivityRadiusBlocks = planningService.initialActivityRadiusBlocks();
+            accessConfig = planningService.planningAreaAccessConfig();
             debugRoot = sender.server.getServerDirectory().toPath().resolve("realm_debug");
         } catch (RuntimeException exception) {
             CHANNEL.send(PacketDistributor.PLAYER.with(() -> sender), new SnapshotResponse(errorSnapshot()));
@@ -106,7 +107,7 @@ public final class AdventurerMapNetwork {
             AdventurerMapSnapshot snapshot;
             try {
                 snapshot = AdventurerMapStatusReader.read(
-                        debugRoot, preferredRunId, initialActivityRadiusBlocks);
+                        debugRoot, preferredRunId, accessConfig);
             } catch (IOException | RuntimeException exception) {
                 snapshot = errorSnapshot();
             }
@@ -141,6 +142,7 @@ public final class AdventurerMapNetwork {
             buffer.writeVarInt(map.height());
             buffer.writeByteArray(map.terrainCodes());
             buffer.writeByteArray(map.realmCodes());
+            buffer.writeByteArray(map.revealedCodes());
             buffer.writeVarInt(map.realmIds().size());
             for (String realmId : map.realmIds()) buffer.writeUtf(realmId);
             buffer.writeVarInt(value.cityNodes().size());
@@ -180,6 +182,7 @@ public final class AdventurerMapNetwork {
             }
             byte[] terrainCodes = buffer.readByteArray(MAX_MAP_PIXELS);
             byte[] realmCodes = buffer.readByteArray(MAX_MAP_PIXELS);
+            byte[] revealedCodes = buffer.readByteArray(MAX_MAP_PIXELS);
             int realmCount = buffer.readVarInt();
             if (realmCount < 0 || realmCount > MAX_REALMS) {
                 throw new IllegalArgumentException("ADVENTURER_MAP_REALM_COUNT_INVALID: " + realmCount);
@@ -187,7 +190,7 @@ public final class AdventurerMapNetwork {
             List<String> realmIds = new ArrayList<>(realmCount);
             for (int index = 0; index < realmCount; index++) realmIds.add(buffer.readUtf());
             CoarseMap coarseMap = new CoarseMap(dimensionId, minBlockX, minBlockZ, cellSizeBlocks,
-                    width, height, terrainCodes, realmCodes, realmIds);
+                    width, height, terrainCodes, realmCodes, revealedCodes, realmIds);
             int nodeCount = buffer.readVarInt();
             if (nodeCount < 0 || nodeCount > MAX_NODES) {
                 throw new IllegalArgumentException("ADVENTURER_MAP_NODE_COUNT_INVALID: " + nodeCount);

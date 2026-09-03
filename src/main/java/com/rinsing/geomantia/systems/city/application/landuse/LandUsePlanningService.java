@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 public final class LandUsePlanningService {
+    static final int REQUIRED_LANDSCAPE_CAPACITY_THRESHOLD_PERCENT = 90;
     public Result plan(JsonObject structureMaterializationPlan,
                        JsonObject landUseIntentPlan,
                        LandUseTerrainField terrainField) {
@@ -81,6 +82,7 @@ public final class LandUsePlanningService {
         int resolvedFoundationCloseRadius = 0;
         int resolvedFoundationComponentCount = 0;
         Set<String> skippedLandscapes = Set.of();
+        List<RequiredLandscapeCapacity> requiredLandscapeCapacities = List.of();
         if (layered) {
             if (foundations.size() != 1) {
                 throw new IllegalArgumentException("CITY_FOUNDATION_GROUP_COUNT_INVALID:" + foundations.size());
@@ -101,6 +103,7 @@ public final class LandUsePlanningService {
                     sources.landscapeParentParcelIds());
             LandUseExpansionResult landscapeExpansion = landscapeResult.expansion();
             skippedLandscapes = landscapeResult.skippedGroupIds();
+            requiredLandscapeCapacities = landscapeResult.requiredCapacities();
             expansion = overlay(foundation, foundationPlan, landscapeExpansion);
             probe = expansion;
             connectionOutcomes = List.of();
@@ -128,6 +131,13 @@ public final class LandUsePlanningService {
                 terrainField.planningBounds(), sources.seedGroups(), resolvedExpansion);
         List<String> warnings = new ArrayList<>(sources.warnings());
         warnings.addAll(residualResult.warnings());
+        requiredLandscapeCapacities.stream()
+                .filter(capacity -> capacity.realizedBlocks() < capacity.requestedBlocks())
+                .forEach(capacity -> warnings.add("CITY_LANDSCAPE_REQUIRED_CAPACITY_DEGRADED:"
+                        + capacity.instanceId() + ":realized=" + capacity.realizedBlocks()
+                        + ":requested=" + capacity.requestedBlocks()
+                        + ":ratioBasisPoints=" + capacity.ratioBasisPoints()
+                        + ":thresholdPercent=" + REQUIRED_LANDSCAPE_CAPACITY_THRESHOLD_PERCENT));
         skippedLandscapes.stream().sorted().forEach(groupId -> {
             LandUseSeedGroup group = sources.seedGroups().stream()
                     .filter(candidate -> candidate.groupId().equals(groupId)).findFirst().orElse(null);
@@ -165,7 +175,7 @@ public final class LandUsePlanningService {
                 residualResult.urbanSpacePlan(), resolvedFoundationCloseRadius,
                  resolvedFoundationComponentCount, skippedLandscapes),
                 quality(plan, sources, resolvedExpansion, connectionOutcomes, residualResult.urbanSpacePlan(),
-                         skippedLandscapes),
+                         skippedLandscapes, requiredLandscapeCapacities),
                 surfacePrintPlan,
                 residualResult.urbanSpacePlan());
     }
@@ -185,12 +195,25 @@ public final class LandUsePlanningService {
         Set<String> skipped = new LinkedHashSet<>();
         LandUseExpansionResult requiredExpansion = expander.expand(cityId, terrain.planningBounds(), terrain,
                 required, seedSalt, Set.of(), capacityDomains, parentParcelIds);
+        Map<String, List<LandUseSeedGroup>> requiredInstances = new LinkedHashMap<>();
         for (LandUseSeedGroup group : required) {
-            int claimed = requiredExpansion.claimedBlocksByGroup().getOrDefault(group.groupId(), 0);
-            int minimumExecutable = minimumExecutableArea(group);
-            if (claimed < minimumExecutable) {
+            requiredInstances.computeIfAbsent(landscapeInstanceId(group.groupId()), ignored -> new ArrayList<>())
+                    .add(group);
+        }
+        List<RequiredLandscapeCapacity> requiredCapacities = new ArrayList<>();
+        for (Map.Entry<String, List<LandUseSeedGroup>> entry : requiredInstances.entrySet()) {
+            int requested = entry.getValue().stream().mapToInt(LandUsePlanningService::minimumExecutableArea).sum();
+            int realized = entry.getValue().stream().mapToInt(group ->
+                    requiredExpansion.claimedBlocksByGroup().getOrDefault(group.groupId(), 0)).sum();
+            int threshold = minimumRequiredLandscapeCapacity(requested);
+            RequiredLandscapeCapacity capacity = new RequiredLandscapeCapacity(entry.getKey(), requested,
+                    realized, threshold, realizationRatioBasisPoints(realized, requested));
+            requiredCapacities.add(capacity);
+            if (realized < threshold) {
                 throw new IllegalArgumentException("CITY_LANDSCAPE_CORE_BELOW_MINIMUM:"
-                        + group.groupId() + ":claimed=" + claimed + ":required=" + minimumExecutable);
+                        + entry.getKey() + ":realized=" + realized + ":requested=" + requested
+                        + ":requiredThreshold=" + threshold + ":thresholdPercent="
+                        + REQUIRED_LANDSCAPE_CAPACITY_THRESHOLD_PERCENT);
             }
         }
 
@@ -236,7 +259,7 @@ public final class LandUsePlanningService {
             blocked += candidate.blockedCandidateCount();
         }
         return new LandscapeExpansion(new LandUseExpansionResult(claims, groupCounts, regionCounts, effectiveSeeds,
-                expansionOrigins, contested, blocked), Set.copyOf(skipped));
+                expansionOrigins, contested, blocked), Set.copyOf(skipped), List.copyOf(requiredCapacities));
     }
 
     private static boolean isOptionalRelayAdmissionFailure(IllegalArgumentException failure) {
@@ -253,6 +276,17 @@ public final class LandUsePlanningService {
     private static int minimumExecutableArea(LandUseSeedGroup group) {
         int stageCount = group.landscapeFillProgram() == null ? 1 : group.landscapeFillProgram().roles().size();
         return Math.max(group.minAreaBlocks(), stageCount);
+    }
+
+    static int minimumRequiredLandscapeCapacity(int requestedBlocks) {
+        if (requestedBlocks <= 0) return 0;
+        return (int) (((long) requestedBlocks * REQUIRED_LANDSCAPE_CAPACITY_THRESHOLD_PERCENT + 99L) / 100L);
+    }
+
+    private static int realizationRatioBasisPoints(int realizedBlocks, int requestedBlocks) {
+        if (requestedBlocks <= 0) return 10_000;
+        return (int) Math.min(Integer.MAX_VALUE,
+                ((long) realizedBlocks * 10_000L + requestedBlocks / 2L) / requestedBlocks);
     }
 
     private static List<LandUseAreaPlan.SharedBoundarySpan> sharedBoundaries(
@@ -493,7 +527,8 @@ public final class LandUsePlanningService {
                                       LandUseExpansionResult expansion,
                                       List<LandUseAutoConnectionPlanner.ConnectionOutcome> connectionOutcomes,
                                       CityUrbanSpacePlan urbanSpacePlan,
-                                       Set<String> skippedLandscapes) {
+                                       Set<String> skippedLandscapes,
+                                       List<RequiredLandscapeCapacity> requiredLandscapeCapacities) {
         JsonObject quality = new JsonObject();
         quality.addProperty("schema", "city_land_use_quality");
         quality.addProperty("status", plan.warnings().isEmpty() ? "pass" : "warning");
@@ -517,6 +552,26 @@ public final class LandUsePlanningService {
         quality.addProperty("skippedRequiredParcelCount", skippedLandscapes.stream()
                 .filter(groupId -> sources.seedGroups().stream().anyMatch(group -> group.groupId().equals(groupId)
                         && group.admissionPolicy() == LandUseSeedGroup.AdmissionPolicy.REQUIRED)).count());
+        quality.addProperty("requiredLandscapeCapacityThresholdPercent",
+                REQUIRED_LANDSCAPE_CAPACITY_THRESHOLD_PERCENT);
+        quality.addProperty("degradedRequiredLandscapeCount", requiredLandscapeCapacities.stream()
+                .filter(capacity -> capacity.realizedBlocks() < capacity.requestedBlocks()).count());
+        JsonArray requiredCapacityResults = new JsonArray();
+        for (RequiredLandscapeCapacity capacity : requiredLandscapeCapacities) {
+            JsonObject value = new JsonObject();
+            value.addProperty("landscapeInstanceId", capacity.instanceId());
+            value.addProperty("requestedBlocks", capacity.requestedBlocks());
+            value.addProperty("realizedBlocks", capacity.realizedBlocks());
+            value.addProperty("requiredThresholdBlocks", capacity.requiredThresholdBlocks());
+            value.addProperty("realizationRatioBasisPoints", capacity.ratioBasisPoints());
+            value.addProperty("status", capacity.realizedBlocks() < capacity.requestedBlocks()
+                    ? "degraded_capacity" : "accepted");
+            if (capacity.realizedBlocks() < capacity.requestedBlocks()) {
+                value.addProperty("reasonCode", "CITY_LANDSCAPE_REQUIRED_CAPACITY_DEGRADED");
+            }
+            requiredCapacityResults.add(value);
+        }
+        quality.add("requiredLandscapeCapacityResults", requiredCapacityResults);
         int belowMinimum = 0;
         int belowMinimumRegions = 0;
         JsonArray groupResults = new JsonArray();
@@ -583,7 +638,12 @@ public final class LandUsePlanningService {
     }
 
     private record LandscapeExpansion(LandUseExpansionResult expansion,
-                                      Set<String> skippedGroupIds) {
+                                      Set<String> skippedGroupIds,
+                                      List<RequiredLandscapeCapacity> requiredCapacities) {
+    }
+
+    private record RequiredLandscapeCapacity(String instanceId, int requestedBlocks, int realizedBlocks,
+                                             int requiredThresholdBlocks, int ratioBasisPoints) {
     }
 
     public record Result(LandUseAreaPlan plan,
