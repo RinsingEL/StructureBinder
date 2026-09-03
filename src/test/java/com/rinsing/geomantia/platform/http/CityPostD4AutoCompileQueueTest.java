@@ -1,10 +1,12 @@
 package com.rinsing.geomantia.platform.http;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonArray;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
+import java.nio.file.Files;
 import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -51,6 +53,39 @@ class CityPostD4AutoCompileQueueTest {
         }
     }
 
+    @Test
+    void enrichesPersistedWorkflowFailureFromExistingCompileTraceWithoutRetry() throws Exception {
+        Path tracePath = temporaryDirectory.resolve("run_4/city_test_runs/city_4/steps/d4")
+                .resolve("city_generation_compile_trace.json");
+        Files.createDirectories(tracePath.getParent());
+        JsonObject trace = new JsonObject();
+        JsonArray selections = new JsonArray();
+        JsonObject selection = new JsonObject();
+        selection.addProperty("status", "no_legal_candidate");
+        selection.addProperty("groupId", "civic_core");
+        selection.addProperty("structureRef", "geomantia:city/trek/landmark/plains_fountain_01");
+        JsonArray attempts = new JsonArray();
+        JsonObject placementAttempt = new JsonObject();
+        JsonArray hardBlocks = new JsonArray();
+        hardBlocks.add("D4_ARRAY_LAYOUT_FRONTAGE_ENTRANCE_AMBIGUOUS: frontageEntranceId required.");
+        placementAttempt.add("hardBlocks", hardBlocks);
+        attempts.add(placementAttempt);
+        selection.add("attempts", attempts);
+        selections.add(selection);
+        trace.add("selections", selections);
+        Files.writeString(tracePath, trace.toString());
+
+        try (CityPostD4AutoCompileQueue queue = new CityPostD4AutoCompileQueue(temporaryDirectory,
+                (runId, citySeedId) -> failedWorkflowResponse())) {
+            queue.enqueue("run_4", "city_4");
+            JsonObject failed = awaitStatus(queue, "run_4", "city_4", "needs_agent");
+            JsonObject step = failed.getAsJsonObject("workflowResponse").getAsJsonObject("workflowReport")
+                    .getAsJsonArray("steps").get(0).getAsJsonObject();
+            assertEquals("civic_core", step.getAsJsonObject("failureSummary").get("groupId").getAsString());
+            assertEquals(1, failed.get("attempt").getAsInt());
+        }
+    }
+
     private static JsonObject awaitStatus(CityPostD4AutoCompileQueue queue, String runId, String citySeedId,
                                           String expected) throws Exception {
         long deadline = System.nanoTime() + Duration.ofSeconds(5).toNanos();
@@ -70,6 +105,21 @@ class CityPostD4AutoCompileQueueTest {
         JsonObject artifacts = new JsonObject();
         artifacts.addProperty("testRunManifest", "run_1/city_1/test_run_manifest.json");
         response.add("artifacts", artifacts);
+        return response;
+    }
+
+    private static JsonObject failedWorkflowResponse() {
+        JsonObject response = response("failed", false);
+        JsonObject report = new JsonObject();
+        JsonArray steps = new JsonArray();
+        JsonObject step = new JsonObject();
+        step.addProperty("name", "city_compile_d4_blueprint");
+        step.addProperty("ok", false);
+        step.addProperty("reasonCode", "CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT");
+        step.addProperty("message", "All finite required building candidate combinations were exhausted.");
+        steps.add(step);
+        report.add("steps", steps);
+        response.add("workflowReport", report);
         return response;
     }
 }

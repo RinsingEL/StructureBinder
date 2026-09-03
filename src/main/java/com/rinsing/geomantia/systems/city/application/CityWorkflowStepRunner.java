@@ -1,13 +1,16 @@
 package com.rinsing.geomantia.systems.city.application;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 
 public final class CityWorkflowStepRunner {
@@ -102,6 +105,10 @@ public final class CityWorkflowStepRunner {
         copyInt(response, step, "maximumFailureCount");
         copyInt(response, step, "remainingFailureCount");
         copyBoolean(response, step, "retryAllowed");
+        JsonObject failureSummary = compactFailureSummary(response);
+        if (failureSummary != null) {
+            step.add("failureSummary", failureSummary);
+        }
         if (response != null && response.has("agentRecoveryPolicy")
                 && response.get("agentRecoveryPolicy").isJsonObject()) {
             step.add("agentRecoveryPolicy", response.getAsJsonObject("agentRecoveryPolicy").deepCopy());
@@ -121,6 +128,90 @@ public final class CityWorkflowStepRunner {
             step.addProperty("selectedAnchorCount", intValue(session, "selectedAnchorCount", 0));
             step.addProperty("remainingSlotCount", intValue(session, "remainingSlotCount", 0));
         }
+    }
+
+    public static JsonObject compactFailureSummary(JsonObject response) {
+        if (response == null || booleanValue(response, "ok", true)
+                || !response.has("cityGenerationCompileTrace")
+                || !response.get("cityGenerationCompileTrace").isJsonObject()) {
+            return null;
+        }
+        JsonObject trace = response.getAsJsonObject("cityGenerationCompileTrace");
+        JsonObject failedSelection = lastFailedSelection(array(trace, "selections"));
+        JsonObject summary = new JsonObject();
+        copyString(response, summary, "reasonCode");
+        copyString(response, summary, "message");
+        if (failedSelection == null) {
+            summary.addProperty("recommendedActionCode", "INSPECT_RETURNED_FAILURE_EVIDENCE");
+            summary.addProperty("recommendedAction",
+                    "Revise the Blueprint from this failure summary; request human review when it has no actionable fields.");
+            return summary;
+        }
+
+        copyInt(failedSelection, summary, "sequence");
+        copyString(failedSelection, summary, "phase");
+        copyString(failedSelection, summary, "groupId");
+        copyString(failedSelection, summary, "structureRef");
+        copyInt(failedSelection, summary, "candidateCount");
+        copyString(failedSelection, summary, "status");
+
+        JsonObject filterReasonCounts = new JsonObject();
+        mergeCounts(filterReasonCounts, object(failedSelection, "compilerFilterReasonCounts"));
+        Set<String> hardBlocks = new LinkedHashSet<>();
+        for (JsonElement element : array(failedSelection, "attempts")) {
+            if (!element.isJsonObject()) continue;
+            JsonObject attempt = element.getAsJsonObject();
+            mergeCounts(filterReasonCounts, object(attempt, "filterReasonCounts"));
+            for (JsonElement hardBlock : array(attempt, "hardBlocks")) {
+                if (hardBlock.isJsonPrimitive()) hardBlocks.add(hardBlock.getAsString());
+            }
+        }
+        if (!filterReasonCounts.entrySet().isEmpty()) {
+            summary.add("filterReasonCounts", filterReasonCounts);
+        }
+        JsonArray hardBlockArray = new JsonArray();
+        hardBlocks.stream().limit(8).forEach(hardBlockArray::add);
+        if (!hardBlockArray.isEmpty()) summary.add("hardBlocks", hardBlockArray);
+        addRecommendedAction(summary, hardBlocks);
+        return summary;
+    }
+
+    private static JsonObject lastFailedSelection(JsonArray selections) {
+        for (int index = selections.size() - 1; index >= 0; index--) {
+            JsonElement element = selections.get(index);
+            if (!element.isJsonObject()) continue;
+            JsonObject selection = element.getAsJsonObject();
+            if ("no_legal_candidate".equals(stringValue(selection, "status", ""))) return selection;
+        }
+        return null;
+    }
+
+    private static void mergeCounts(JsonObject target, JsonObject counts) {
+        if (counts == null) return;
+        counts.entrySet().forEach(entry -> {
+            if (!entry.getValue().isJsonPrimitive() || !entry.getValue().getAsJsonPrimitive().isNumber()) return;
+            int previous = intValue(target, entry.getKey(), 0);
+            target.addProperty(entry.getKey(), previous + entry.getValue().getAsInt());
+        });
+    }
+
+    private static void addRecommendedAction(JsonObject summary, Set<String> hardBlocks) {
+        boolean ambiguousFrontage = hardBlocks.stream()
+                .anyMatch(value -> value.contains("D4_ARRAY_LAYOUT_FRONTAGE_ENTRANCE_AMBIGUOUS"));
+        if (ambiguousFrontage) {
+            summary.addProperty("recommendedActionCode", "REPLACE_REQUIRED_STRUCTURE_OR_FIX_TEMPLATE_FRONTAGE");
+            summary.addProperty("recommendedAction",
+                    "The current Blueprint cannot choose frontageEntranceId. Replace this required structure with a "
+                            + "compatible catalog structure, or stop for human template-metadata repair.");
+            return;
+        }
+        summary.addProperty("recommendedActionCode", "REVISE_FAILED_GROUP_FROM_FILTER_EVIDENCE");
+        summary.addProperty("recommendedAction",
+                "Revise the reported group's structure, Patch, layout or capacity using the returned filter reasons and hard blocks.");
+    }
+
+    private static JsonObject object(JsonObject obj, String key) {
+        return obj != null && obj.has(key) && obj.get(key).isJsonObject() ? obj.getAsJsonObject(key) : null;
     }
 
     private static void copyString(JsonObject source, JsonObject target, String key) {
@@ -181,6 +272,13 @@ public final class CityWorkflowStepRunner {
             return defaultValue;
         }
         return obj.get(key).getAsInt();
+    }
+
+    private static boolean booleanValue(JsonObject obj, String key, boolean defaultValue) {
+        if (obj == null || !obj.has(key) || obj.get(key).isJsonNull()) {
+            return defaultValue;
+        }
+        return obj.get(key).getAsBoolean();
     }
 
     private static String stringValue(JsonObject obj, String key, String defaultValue) {

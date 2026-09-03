@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.rinsing.geomantia.systems.realm_planning.WorldSurveySettingsConfig;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -23,6 +24,7 @@ public final class ProviderPlanningDiscovery {
     private static final Set<String> CITY_ACTIONABLE = Set.of(
             "waiting_for_agent", "waiting_for_patch_review", "needs_agent");
     private final Path debugRoot;
+    private final Path surveySettingsPath;
     private final String worldSeed;
     private final int realmCount;
 
@@ -32,16 +34,21 @@ public final class ProviderPlanningDiscovery {
 
     ProviderPlanningDiscovery(Path debugRoot, long worldSeed, int realmCount) {
         this.debugRoot = debugRoot.toAbsolutePath().normalize();
+        this.surveySettingsPath = this.debugRoot.getParent().resolve("config").resolve("geomantia")
+                .resolve("world_survey.json");
         this.worldSeed = Long.toString(worldSeed);
         this.realmCount = Math.max(1, Math.min(12, realmCount));
     }
 
     public PlanningStep nextStep() throws IOException {
-        Optional<Path> newest = newestCurrentWorldRun();
+        WorldSurveySettingsConfig surveySettings = WorldSurveySettingsConfig.loadOrCreate(surveySettingsPath);
+        Optional<Path> newest = newestCurrentWorldRun(surveySettings);
         if (newest.isEmpty()) {
-            String runId = "provider_" + Long.toUnsignedString(Long.parseLong(worldSeed), 16);
+            String runId = "provider_" + Long.toUnsignedString(Long.parseLong(worldSeed), 16)
+                    + "_r" + surveySettings.planningRadiusBlocks();
             JsonObject state = baseState(Stage.W, runId, "realm_w_refresh");
-            state.addProperty("instruction", "Call the existing W refresh with its configured/default planning parameters.");
+            state.addProperty("hostConfiguredPlanningRadiusBlocks", surveySettings.planningRadiusBlocks());
+            state.addProperty("instruction", "Call W refresh once. The host owns and injects the complete survey range; do not provide range parameters.");
             return step(Stage.W, runId, "", "", "realm_w_refresh", state,
                     debugRoot.resolve(runId), List.of());
         }
@@ -140,17 +147,21 @@ public final class ProviderPlanningDiscovery {
         return step(Stage.COMPLETE, runId, "", "", "", state, runDirectory, List.of());
     }
 
-    private Optional<Path> newestCurrentWorldRun() throws IOException {
+    private Optional<Path> newestCurrentWorldRun(WorldSurveySettingsConfig surveySettings) throws IOException {
         if (!Files.isDirectory(debugRoot)) return Optional.empty();
         try (Stream<Path> paths = Files.list(debugRoot)) {
-            return paths.filter(Files::isDirectory).filter(this::matchesWorld)
+            return paths.filter(Files::isDirectory).filter(path -> matchesWorld(path, surveySettings))
                     .max(Comparator.comparing(this::createdAt));
         }
     }
 
-    private boolean matchesWorld(Path runDirectory) {
+    private boolean matchesWorld(Path runDirectory, WorldSurveySettingsConfig surveySettings) {
         JsonObject context = readObject(runDirectory.resolve("world_survey_context.json"));
-        return context != null && worldSeed.equals(string(context, "worldSeed"));
+        JsonObject scanBounds = object(context, "scanBounds");
+        return context != null && worldSeed.equals(string(context, "worldSeed"))
+                && integer(scanBounds, "centerBlockX") == 0
+                && integer(scanBounds, "centerBlockZ") == 0
+                && integer(scanBounds, "planningRadiusBlocks") == surveySettings.planningRadiusBlocks();
     }
 
     private Instant createdAt(Path runDirectory) {
@@ -352,6 +363,11 @@ public final class ProviderPlanningDiscovery {
     private static long longValue(JsonObject object, String key) {
         return object != null && object.has(key) && !object.get(key).isJsonNull()
                 ? object.get(key).getAsLong() : 0L;
+    }
+
+    private static int integer(JsonObject object, String key) {
+        return object != null && object.has(key) && !object.get(key).isJsonNull()
+                ? object.get(key).getAsInt() : Integer.MIN_VALUE;
     }
 
     public enum Stage {

@@ -42,6 +42,10 @@ class ProviderPlanningToolGatewayTest {
             received.set(read(exchange));
             reply(exchange, "{\"ok\":true,\"sessionId\":\"pex_test\"}");
         });
+        server.createContext("/realm/t4/patch_planning/select_capital", exchange -> {
+            received.set(read(exchange));
+            reply(exchange, "{\"ok\":true,\"status\":\"open\"}");
+        });
         server.start();
     }
 
@@ -129,6 +133,51 @@ class ProviderPlanningToolGatewayTest {
 
         assertThrows(IllegalArgumentException.class,
                 () -> gateway.execute("patch_explorer_open", arguments));
+    }
+
+    @Test
+    void resolvesArtifactBackedT4SessionAndForwardsFrozenSelection() throws Exception {
+        Path sessionPath = serverDirectory.resolve(
+                "realm_debug/run_a/realm_t4_patch_planning_t4_session/planning_session.json");
+        Files.createDirectories(sessionPath.getParent());
+        Files.writeString(sessionPath, """
+                {"runId":"run_a","realmId":"realm_a","planningSessionId":"t4_session"}
+                """);
+        var step = new ProviderPlanningDiscovery.PlanningStep(ProviderPlanningDiscovery.Stage.T4,
+                "run_a", "realm_a", "", "realm_t4_patch_planning_select_capital", new JsonObject(),
+                serverDirectory.resolve("realm_debug/run_a"), java.util.List.of(), "identity");
+        ProviderPlanningToolGateway gateway = ProviderPlanningToolGateway.forStep(
+                server.getAddress().getPort(), serverDirectory, step);
+        JsonObject arguments = new JsonObject();
+        arguments.addProperty("planningSessionId", "t4_session");
+        arguments.addProperty("patchSelectionRef", "psel_1234");
+
+        gateway.execute("realm_t4_patch_planning_select_capital", arguments);
+
+        assertEquals("t4_session", received.get().get("planningSessionId").getAsString());
+        assertEquals("psel_1234", received.get().get("patchSelectionRef").getAsString());
+    }
+
+    @Test
+    void rejectsDisplayedCandidateIdBeforeT4SelectionEndpoint() throws Exception {
+        Path sessionPath = serverDirectory.resolve(
+                "realm_debug/run_a/realm_t4_patch_planning_t4_session/planning_session.json");
+        Files.createDirectories(sessionPath.getParent());
+        Files.writeString(sessionPath, "{\"runId\":\"run_a\",\"realmId\":\"realm_a\"}");
+        var step = new ProviderPlanningDiscovery.PlanningStep(ProviderPlanningDiscovery.Stage.T4,
+                "run_a", "realm_a", "", "realm_t4_patch_planning_select_capital", new JsonObject(),
+                serverDirectory.resolve("realm_debug/run_a"), java.util.List.of(), "identity");
+        ProviderPlanningToolGateway gateway = ProviderPlanningToolGateway.forStep(
+                server.getAddress().getPort(), serverDirectory, step);
+        JsonObject arguments = new JsonObject();
+        arguments.addProperty("planningSessionId", "t4_session");
+        arguments.addProperty("patchSelectionRef", "VALLEY-01");
+
+        JsonObject result = gateway.execute(
+                "realm_t4_patch_planning_select_capital", arguments).getAsJsonObject();
+
+        assertEquals(false, result.get("ok").getAsBoolean());
+        assertEquals("PATCH_SELECTION_REF_REQUIRED", result.get("errorCode").getAsString());
     }
 
     private ProviderPlanningToolGateway gateway() {

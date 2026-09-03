@@ -12,10 +12,13 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.time.Instant;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.List;
+import java.util.StringJoiner;
+import java.util.function.Consumer;
 
 /** Runs a bounded stateless Responses API function-call loop against the existing planning tools. */
 public final class DeepSeekToolLoopClient {
@@ -52,12 +55,18 @@ public final class DeepSeekToolLoopClient {
     public LoopResult run(PlayerProviderConfig config, Credentials credentials,
                           JsonObject initialState, List<String> allowedTools,
                           ToolExecutor toolExecutor) {
-        return run(config, credentials, initialState, List.of(), allowedTools, toolExecutor);
+        return run(config, credentials, initialState, List.of(), allowedTools, toolExecutor, ignored -> { });
     }
 
     public LoopResult run(PlayerProviderConfig config, Credentials credentials,
                           JsonObject initialState, List<Path> initialImages, List<String> allowedTools,
                           ToolExecutor toolExecutor) {
+        return run(config, credentials, initialState, initialImages, allowedTools, toolExecutor, ignored -> { });
+    }
+
+    public LoopResult run(PlayerProviderConfig config, Credentials credentials,
+                          JsonObject initialState, List<Path> initialImages, List<String> allowedTools,
+                          ToolExecutor toolExecutor, Consumer<AgentActivityEvent> activityListener) {
         if (!config.enabled()) return LoopResult.failure("PROVIDER_DISABLED", 0, "");
         if (!credentials.present()) return LoopResult.failure("PROVIDER_API_KEY_MISSING", 0, "");
         if (initialState == null || allowedTools == null || allowedTools.isEmpty() || toolExecutor == null) {
@@ -103,7 +112,13 @@ public final class DeepSeekToolLoopClient {
                         input.add(item.deepCopy());
                     }
                     if ("function_call".equals(type)) calls.add(item);
-                    if ("message".equals(type)) finalText = outputText(item);
+                    if ("message".equals(type)) {
+                        finalText = outputText(item);
+                        emit(activityListener, "model", compactVisibleText(finalText));
+                    }
+                    if ("reasoning".equals(type)) {
+                        emit(activityListener, "model", compactVisibleText(reasoningSummary(item)));
+                    }
                 }
                 if (calls.isEmpty()) {
                     return new LoopResult(true, "completed", "", toolCalls, finalText);
@@ -119,6 +134,7 @@ public final class DeepSeekToolLoopClient {
                         return LoopResult.failure("PROVIDER_AGENT_TOOL_CALL_INVALID", toolCalls - 1, finalText);
                     }
                     JsonObject arguments = parseArguments(string(call, "arguments"));
+                    emit(activityListener, "tool", summarizeToolCall(toolName, arguments));
                     JsonElement toolOutput;
                     if (!allowedTools.contains(toolName)) {
                         toolOutput = errorOutput("PROVIDER_AGENT_TOOL_NOT_ALLOWED", toolName);
@@ -132,6 +148,7 @@ public final class DeepSeekToolLoopClient {
                             toolOutput = errorOutput("PROVIDER_AGENT_TOOL_FAILED", toolName);
                         }
                     }
+                    emit(activityListener, "result", summarizeToolResult(toolName, toolOutput));
                     JsonObject result = new JsonObject();
                     result.addProperty("type", "function_call_output");
                     result.addProperty("call_id", callId);
@@ -146,6 +163,85 @@ public final class DeepSeekToolLoopClient {
             return LoopResult.failure("PROVIDER_AGENT_INTERRUPTED", 0, "");
         } catch (IOException | RuntimeException exception) {
             return LoopResult.failure("PROVIDER_AGENT_REQUEST_FAILED", 0, "");
+        }
+    }
+
+    private static void emit(Consumer<AgentActivityEvent> listener, String kind, String message) {
+        if (listener == null || message == null || message.isBlank()) return;
+        listener.accept(new AgentActivityEvent(Instant.now().toString(), kind, message));
+    }
+
+    private static String compactVisibleText(String value) {
+        if (value == null) return "";
+        String compact = value.replaceAll("\\s+", " ").strip();
+        if (compact.startsWith("{") || compact.startsWith("[")) return "模型返回了结构化内容（已省略）";
+        return compact.length() <= 600 ? compact : compact.substring(0, 599) + "…";
+    }
+
+    private static String reasoningSummary(JsonObject item) {
+        if (!item.has("summary") || !item.get("summary").isJsonArray()) return "";
+        StringJoiner result = new StringJoiner(" ");
+        for (JsonElement element : item.getAsJsonArray("summary")) {
+            if (!element.isJsonObject()) continue;
+            String text = string(element.getAsJsonObject(), "text");
+            if (!text.isBlank()) result.add(text);
+        }
+        return result.toString();
+    }
+
+    private static String summarizeToolCall(String toolName, JsonObject arguments) {
+        StringJoiner values = new StringJoiner("，");
+        for (String key : List.of("realmId", "citySeedId", "scopeType", "scopeId", "candidateId",
+                "sessionId", "planningSessionId", "patchSelectionRef", "pageSize")) {
+            if (!arguments.has(key) || !arguments.get(key).isJsonPrimitive()) continue;
+            String value = arguments.get(key).getAsString();
+            if (value.length() > 80) value = value.substring(0, 79) + "…";
+            values.add(key + "=" + value);
+        }
+        String details = values.toString();
+        return "调用 " + toolName + (details.isBlank() ? "" : "（" + details + "）");
+    }
+
+    private static String summarizeToolResult(String toolName, JsonElement output) {
+        JsonObject value = structuredObject(output);
+        if (value == null) return toolName + " 已返回结果";
+        StringJoiner summary = new StringJoiner("，");
+        for (String key : List.of("ok", "status", "stage", "nextAction", "errorCode", "candidateId",
+                "patchSelectionRef", "sessionId", "planningSessionId")) {
+            if (!value.has(key) || !value.get(key).isJsonPrimitive()) continue;
+            String field = value.get(key).getAsString();
+            if (field.length() > 100) field = field.substring(0, 99) + "…";
+            summary.add(key + "=" + field);
+        }
+        String details = summary.toString();
+        return toolName + (details.isBlank() ? " 已返回结果" : " → " + details);
+    }
+
+    private static JsonObject structuredObject(JsonElement output) {
+        if (output == null || output.isJsonNull()) return null;
+        if (output.isJsonObject()) return output.getAsJsonObject();
+        if (output.isJsonPrimitive() && output.getAsJsonPrimitive().isString()) {
+            return parseObject(output.getAsString());
+        }
+        if (output.isJsonArray()) {
+            for (JsonElement part : output.getAsJsonArray()) {
+                if (!part.isJsonObject()) continue;
+                JsonObject object = part.getAsJsonObject();
+                if ("input_text".equals(string(object, "type"))) {
+                    JsonObject parsed = parseObject(string(object, "text"));
+                    if (parsed != null) return parsed;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static JsonObject parseObject(String value) {
+        try {
+            JsonElement parsed = JsonParser.parseString(value);
+            return parsed.isJsonObject() ? parsed.getAsJsonObject() : null;
+        } catch (RuntimeException ignored) {
+            return null;
         }
     }
 

@@ -16,6 +16,7 @@ import com.rinsing.geomantia.systems.gis.testsupport.GisTestCase;
 import com.rinsing.geomantia.systems.gis.testsupport.GisTestRunner;
 import com.rinsing.geomantia.systems.realm_planning.RealmPlanningService;
 import com.rinsing.geomantia.systems.realm_planning.WorldSurveyRunner;
+import com.rinsing.geomantia.systems.realm_planning.WorldSurveySettingsConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -31,7 +32,6 @@ import java.nio.file.Path;
 
 @Mod.EventBusSubscriber(modid = GeomantiaMod.MOD_ID)
 public final class GisPlatformEvents {
-    private static final int DEFAULT_REALM_RADIUS_BLOCKS = WorldSurveyRunner.DEFAULT_PLANNING_RADIUS_BLOCKS;
     private static final int DEFAULT_REALM_CELL_STEP_BLOCKS = WorldSurveyRunner.DEFAULT_CELL_STEP_BLOCKS;
 
     private GisPlatformEvents() {
@@ -66,19 +66,7 @@ public final class GisPlatformEvents {
                         .then(Commands.literal("status")
                                 .executes(GisPlatformEvents::realmStatus))
                         .then(Commands.literal("acceptance")
-                                .executes(ctx -> realmAcceptance(ctx, DEFAULT_REALM_RADIUS_BLOCKS,
-                                        DEFAULT_REALM_CELL_STEP_BLOCKS))
-                                .then(Commands.argument("planningRadiusBlocks", IntegerArgumentType.integer(512, 262144))
-                                        .executes(ctx -> realmAcceptance(ctx,
-                                                IntegerArgumentType.getInteger(ctx, "planningRadiusBlocks"),
-                                                DEFAULT_REALM_CELL_STEP_BLOCKS))
-                                        .then(Commands.argument("cellStepBlocks", IntegerArgumentType.integer(
-                                                        GisSampleConfig.MIN_CELL_STEP_BLOCKS,
-                                                        GisSampleConfig.MAX_CELL_STEP_BLOCKS))
-                                                .executes(ctx -> realmAcceptance(ctx,
-                                                        IntegerArgumentType.getInteger(ctx, "planningRadiusBlocks"),
-                                                        IntegerArgumentType.getInteger(ctx,
-                                                                "cellStepBlocks"))))))));
+                                .executes(ctx -> realmAcceptance(ctx, DEFAULT_REALM_CELL_STEP_BLOCKS)))));
     }
 
     private static int refresh(CommandContext<CommandSourceStack> ctx, SampleMode sampleMode, int cellStepBlocks) {
@@ -129,19 +117,20 @@ public final class GisPlatformEvents {
         }
     }
 
-    private static int realmAcceptance(CommandContext<CommandSourceStack> ctx, int planningRadiusBlocks, int cellStepBlocks) {
+    private static int realmAcceptance(CommandContext<CommandSourceStack> ctx, int cellStepBlocks) {
         try {
             CommandSourceStack source = ctx.getSource();
             ServerLevel level = source.getLevel();
             Path realmRoot = realmDebugRoot(source.getServer());
-            BlockPos center = BlockPos.containing(source.getPosition());
+            int planningRadiusBlocks = WorldSurveySettingsConfig.loadOrCreate(
+                    worldSurveySettingsConfigPath(source.getServer())).planningRadiusBlocks();
             WorldSurveyRunner.Config config = new WorldSurveyRunner.Config(
                     "",
                     level.dimension().location().toString(),
                     Long.toString(level.getSeed()),
                     level.getWorldBorder().getSize(),
-                    center.getX(),
-                    center.getZ(),
+                    0,
+                    0,
                     planningRadiusBlocks,
                     cellStepBlocks,
                     RealmPlanningService.DEFAULT_MICRO_SAMPLE_STRIDE_BLOCKS,
@@ -171,5 +160,10 @@ public final class GisPlatformEvents {
 
     private static Path realmDebugRoot(MinecraftServer server) {
         return server.getServerDirectory().toPath().resolve("realm_debug");
+    }
+
+    private static Path worldSurveySettingsConfigPath(MinecraftServer server) {
+        return server.getServerDirectory().toPath().resolve("config").resolve("geomantia")
+                .resolve("world_survey.json");
     }
 }

@@ -69,6 +69,9 @@ public final class AdventurerMapScreen extends Screen {
                 .bounds(326, controlsY, 24, 20).build());
         addRenderableWidget(Button.builder(Component.literal("+"), button -> zoom = Math.min(4.0D, zoom * 1.25D))
                 .bounds(354, controlsY, 24, 20).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.geomantia.agent_activity.open"),
+                        button -> ProviderSettingsClient.openActivity(this))
+                .bounds(384, controlsY, 92, 20).build());
         rebuildMapTexture();
         refresh();
     }

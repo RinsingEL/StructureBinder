@@ -3,6 +3,7 @@ package com.rinsing.geomantia.platform.http;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
+import com.rinsing.geomantia.systems.city.application.CityWorkflowStepRunner;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -67,9 +68,39 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
         if (state == null) {
             state = state(key, "not_queued", "D4_AUTO_COMPILE_JOB_NOT_FOUND", 0);
         }
+        attachPersistedFailureSummary(key, state);
         state.addProperty("active", active.containsKey(key));
         state.addProperty("statePath", debugRoot.relativize(path(key)).toString().replace('\\', '/'));
         return state;
+    }
+
+    private void attachPersistedFailureSummary(JobKey key, JsonObject state) {
+        JsonObject workflowResponse = object(state, "workflowResponse");
+        JsonObject workflowReport = object(workflowResponse, "workflowReport");
+        if (workflowReport == null || !workflowReport.has("steps") || !workflowReport.get("steps").isJsonArray()) {
+            return;
+        }
+        var steps = workflowReport.getAsJsonArray("steps");
+        for (int index = steps.size() - 1; index >= 0; index--) {
+            if (!steps.get(index).isJsonObject()) continue;
+            JsonObject step = steps.get(index).getAsJsonObject();
+            if (!"city_compile_d4_blueprint".equals(stringValue(step, "name", ""))
+                    || step.has("failureSummary") || booleanValue(step, "ok", true)) continue;
+            Path tracePath = debugRoot.resolve(key.runId).resolve("city_test_runs").resolve(key.citySeedId)
+                    .resolve("steps").resolve("d4").resolve("city_generation_compile_trace.json").normalize();
+            if (!tracePath.startsWith(debugRoot) || !Files.isRegularFile(tracePath)) return;
+            try {
+                JsonObject response = step.deepCopy();
+                response.add("cityGenerationCompileTrace",
+                        JsonParser.parseString(Files.readString(tracePath)).getAsJsonObject());
+                JsonObject summary = CityWorkflowStepRunner.compactFailureSummary(response);
+                if (summary != null) step.add("failureSummary", summary);
+            } catch (IOException | RuntimeException ex) {
+                LOGGER.warn("Could not summarize persisted D4 failure for {}/{}: {}",
+                        key.runId, key.citySeedId, ex.getMessage());
+            }
+            return;
+        }
     }
 
     private void submit(JobKey key, int attempt) throws IOException {
@@ -218,6 +249,11 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
     private static boolean booleanValue(JsonObject object, String key, boolean fallback) {
         return object != null && object.has(key) && !object.get(key).isJsonNull()
                 ? object.get(key).getAsBoolean() : fallback;
+    }
+
+    private static JsonObject object(JsonObject object, String key) {
+        return object != null && object.has(key) && object.get(key).isJsonObject()
+                ? object.getAsJsonObject(key) : null;
     }
 
     @Override

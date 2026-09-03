@@ -128,6 +128,56 @@ class CityWorkflowStepRunnerTest {
                 .get("sourceCodeInspectionAllowed").getAsBoolean());
     }
 
+    @Test
+    void exposesCompactActionableD4FailureEvidenceWithoutCopyingTheFullTrace() throws Exception {
+        JsonObject report = report();
+        JsonArray steps = report.getAsJsonArray("steps");
+        CityWorkflowStepRunner runner = new CityWorkflowStepRunner(report, steps, false,
+                Path::toString, value -> { });
+
+        boolean ok = runner.runStep("city_compile_d4_blueprint", null, () -> {
+            JsonObject response = new JsonObject();
+            response.addProperty("ok", false);
+            response.addProperty("reasonCode", "CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT");
+            response.addProperty("message", "All finite required building candidate combinations were exhausted.");
+            JsonObject trace = new JsonObject();
+            JsonArray selections = new JsonArray();
+            JsonObject selection = new JsonObject();
+            selection.addProperty("sequence", 34);
+            selection.addProperty("phase", "required");
+            selection.addProperty("groupId", "civic_core");
+            selection.addProperty("structureRef", "geomantia:city/trek/landmark/plains_fountain_01");
+            selection.addProperty("candidateCount", 0);
+            selection.addProperty("status", "no_legal_candidate");
+            JsonArray attempts = new JsonArray();
+            JsonObject attempt = new JsonObject();
+            JsonObject filters = new JsonObject();
+            filters.addProperty("INTERNAL_FRONTAGE_UNAVAILABLE", 1);
+            attempt.add("filterReasonCounts", filters);
+            JsonArray hardBlocks = new JsonArray();
+            hardBlocks.add("D4_ARRAY_LAYOUT_FRONTAGE_ENTRANCE_AMBIGUOUS: fountain requires frontageEntranceId.");
+            attempt.add("hardBlocks", hardBlocks);
+            attempts.add(attempt);
+            selection.add("attempts", attempts);
+            selections.add(selection);
+            trace.add("selections", selections);
+            response.add("cityGenerationCompileTrace", trace);
+            return response;
+        });
+
+        assertFalse(ok);
+        JsonObject step = steps.get(0).getAsJsonObject();
+        JsonObject summary = step.getAsJsonObject("failureSummary");
+        assertEquals("civic_core", summary.get("groupId").getAsString());
+        assertEquals("geomantia:city/trek/landmark/plains_fountain_01",
+                summary.get("structureRef").getAsString());
+        assertEquals(1, summary.getAsJsonObject("filterReasonCounts")
+                .get("INTERNAL_FRONTAGE_UNAVAILABLE").getAsInt());
+        assertEquals("REPLACE_REQUIRED_STRUCTURE_OR_FIX_TEMPLATE_FRONTAGE",
+                summary.get("recommendedActionCode").getAsString());
+        assertFalse(step.has("cityGenerationCompileTrace"));
+    }
+
     private static JsonObject report() {
         JsonObject report = new JsonObject();
         report.add("steps", new JsonArray());

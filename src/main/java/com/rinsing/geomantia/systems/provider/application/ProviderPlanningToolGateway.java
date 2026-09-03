@@ -106,6 +106,13 @@ public final class ProviderPlanningToolGateway implements DeepSeekToolLoopClient
                 || "patch_explorer_select_candidate".equals(toolName)) validatePatchSession(arguments);
         if (toolName.startsWith("realm_t4_patch_planning_")
                 && !"realm_t4_patch_planning_create".equals(toolName)) validateT4Session(arguments);
+        if ("realm_t4_patch_planning_select_capital".equals(toolName)
+                || "realm_t4_patch_planning_add_city".equals(toolName)) {
+            String selectionRef = string(arguments, "patchSelectionRef");
+            if (!selectionRef.startsWith("psel_")) {
+                return error("PATCH_SELECTION_REF_REQUIRED", toolName);
+            }
+        }
         if ("city_prepare_d4_blueprint_context".equals(toolName)) managedSources.resolve().applyTo(arguments);
         if (arguments.toString().length() > MAX_ARGUMENT_CHARS) {
             return error("PROVIDER_AGENT_TOOL_ARGUMENTS_TOO_LARGE", toolName);
@@ -253,7 +260,8 @@ public final class ProviderPlanningToolGateway implements DeepSeekToolLoopClient
 
     private void validateT4Session(JsonObject arguments) throws IOException {
         String sessionId = requireIdentity(string(arguments, "planningSessionId"), "planningSessionId");
-        Path path = debugRoot.resolve(runId).resolve("realm_t4_patch_planning_" + sessionId + ".json").normalize();
+        Path path = debugRoot.resolve(runId).resolve("realm_t4_patch_planning_" + sessionId)
+                .resolve("planning_session.json").normalize();
         if (!path.startsWith(debugRoot.resolve(runId)) || !Files.isRegularFile(path)) {
             throw new IllegalArgumentException("PROVIDER_AGENT_T4_SESSION_NOT_FOUND");
         }

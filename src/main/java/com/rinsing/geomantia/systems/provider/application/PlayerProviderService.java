@@ -6,11 +6,16 @@ import net.minecraftforge.fml.loading.FMLPaths;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public final class PlayerProviderService {
+    private static final int MAX_ACTIVITY_EVENTS = 160;
     private static final PlayerProviderService INSTANCE = new PlayerProviderService(
             new ProviderConfigStore(FMLPaths.CONFIGDIR.get().resolve("geomantia")),
             new ProviderConnectionTester(), new MultimodalProviderClient());
@@ -20,6 +25,7 @@ public final class PlayerProviderService {
     private final MultimodalProviderClient client;
     private final PlayerProviderAgentRunner agentRunner;
     private final ExecutorService executor;
+    private final ArrayDeque<AgentActivityEvent> activityEvents = new ArrayDeque<>();
     private volatile String connectionState = "not_tested";
     private volatile String message = "";
 
@@ -29,7 +35,7 @@ public final class PlayerProviderService {
         this.tester = tester;
         this.client = client;
         this.agentRunner = new PlayerProviderAgentRunner(store, new DeepSeekToolLoopClient(),
-                ignored -> { });
+                ignored -> { }, this::recordActivity);
         this.executor = Executors.newSingleThreadExecutor(runnable -> {
             Thread thread = new Thread(runnable, "Geomantia-Player-Provider");
             thread.setDaemon(true);
@@ -49,6 +55,12 @@ public final class PlayerProviderService {
         agentRunner.close();
     }
 
+    public List<AgentActivityEvent> activityEvents() {
+        synchronized (activityEvents) {
+            return List.copyOf(new ArrayList<>(activityEvents));
+        }
+    }
+
     public ProviderSettingsSnapshot snapshot(boolean editable) {
         try {
             PlayerProviderConfig config = store.load();
@@ -66,6 +78,8 @@ public final class PlayerProviderService {
                                                              boolean clearStoredApiKey,
                                                              boolean editable) {
         if (!editable) return CompletableFuture.completedFuture(deniedSnapshot());
+        connectionState = "saving";
+        message = "PROVIDER_SAVING";
         return CompletableFuture.supplyAsync(() -> {
             try {
                 store.save(config, replacementApiKey, clearStoredApiKey);
@@ -131,5 +145,15 @@ public final class PlayerProviderService {
                 config.model(), config.timeoutSeconds(), credentials.present(), credentials.source(),
                 editable, state, message, automation.state(), automation.message(), automation.runId(),
                 automation.citySeedId(), automation.activeTool());
+    }
+
+    private void recordActivity(AgentActivityEvent event) {
+        if (event == null || event.message().isBlank()) return;
+        AgentActivityEvent value = event.occurredAt().isBlank()
+                ? new AgentActivityEvent(Instant.now().toString(), event.kind(), event.message()) : event;
+        synchronized (activityEvents) {
+            activityEvents.addLast(value);
+            while (activityEvents.size() > MAX_ACTIVITY_EVENTS) activityEvents.removeFirst();
+        }
     }
 }

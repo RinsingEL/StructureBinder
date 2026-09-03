@@ -2,6 +2,7 @@ package com.rinsing.geomantia.platform.network;
 
 import com.rinsing.geomantia.GeomantiaMod;
 import com.rinsing.geomantia.client.ProviderSettingsClient;
+import com.rinsing.geomantia.systems.provider.application.AgentActivityEvent;
 import com.rinsing.geomantia.systems.provider.application.PlayerProviderConfig;
 import com.rinsing.geomantia.systems.provider.application.PlayerProviderService;
 import com.rinsing.geomantia.systems.provider.application.ProviderSettingsSnapshot;
@@ -16,11 +17,13 @@ import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
 public final class ProviderNetwork {
-    private static final String PROTOCOL = "2";
+    private static final String PROTOCOL = "3";
     private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.fromNamespaceAndPath(GeomantiaMod.MOD_ID, "player_provider"),
             () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
@@ -42,9 +45,15 @@ public final class ProviderNetwork {
         CHANNEL.registerMessage(id++, SaveRequest.class,
                 SaveRequest::encode, SaveRequest::decode, SaveRequest::handle,
                 Optional.of(NetworkDirection.PLAY_TO_SERVER));
-        CHANNEL.registerMessage(id, TestRequest.class,
+        CHANNEL.registerMessage(id++, TestRequest.class,
                 TestRequest::encode, TestRequest::decode, TestRequest::handle,
                 Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(id++, ActivityRequest.class,
+                ActivityRequest::encode, ActivityRequest::decode, ActivityRequest::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(id, ActivityResponse.class,
+                ActivityResponse::encode, ActivityResponse::decode, ActivityResponse::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
 
     public static void requestSettings() {
@@ -60,6 +69,10 @@ public final class ProviderNetwork {
 
     public static void testConnection() {
         CHANNEL.sendToServer(new TestRequest());
+    }
+
+    public static void requestActivity() {
+        CHANNEL.sendToServer(new ActivityRequest());
     }
 
     private static boolean editable(ServerPlayer player) {
@@ -168,10 +181,56 @@ public final class ProviderNetwork {
             ServerPlayer player = context.getSender();
             if (player != null) context.enqueueWork(() -> {
                 boolean canEdit = editable(player);
+                var test = PlayerProviderService.instance().test(canEdit);
                 send(player, PlayerProviderService.instance().snapshot(canEdit));
-                PlayerProviderService.instance().test(canEdit)
+                test
                         .thenAccept(snapshot -> player.server.execute(() -> send(player, snapshot)));
             });
+            context.setPacketHandled(true);
+        }
+    }
+
+    private record ActivityRequest() {
+        static void encode(ActivityRequest ignored, FriendlyByteBuf buffer) {
+        }
+
+        static ActivityRequest decode(FriendlyByteBuf buffer) {
+            return new ActivityRequest();
+        }
+
+        static void handle(ActivityRequest ignored, Supplier<NetworkEvent.Context> contextSupplier) {
+            NetworkEvent.Context context = contextSupplier.get();
+            ServerPlayer player = context.getSender();
+            if (player != null) context.enqueueWork(() -> CHANNEL.send(
+                    PacketDistributor.PLAYER.with(() -> player),
+                    new ActivityResponse(PlayerProviderService.instance().activityEvents())));
+            context.setPacketHandled(true);
+        }
+    }
+
+    private record ActivityResponse(List<AgentActivityEvent> events) {
+        static void encode(ActivityResponse response, FriendlyByteBuf buffer) {
+            buffer.writeVarInt(response.events.size());
+            for (AgentActivityEvent event : response.events) {
+                buffer.writeUtf(event.occurredAt(), 64);
+                buffer.writeUtf(event.kind(), 32);
+                buffer.writeUtf(event.message(), 600);
+            }
+        }
+
+        static ActivityResponse decode(FriendlyByteBuf buffer) {
+            int size = Math.min(160, Math.max(0, buffer.readVarInt()));
+            List<AgentActivityEvent> events = new ArrayList<>(size);
+            for (int index = 0; index < size; index++) {
+                events.add(new AgentActivityEvent(buffer.readUtf(64), buffer.readUtf(32), buffer.readUtf(600)));
+            }
+            return new ActivityResponse(List.copyOf(events));
+        }
+
+        static void handle(ActivityResponse response, Supplier<NetworkEvent.Context> contextSupplier) {
+            NetworkEvent.Context context = contextSupplier.get();
+            context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+                    () -> () -> ProviderSettingsClient.receiveActivity(response.events)));
             context.setPacketHandled(true);
         }
     }

@@ -22,6 +22,7 @@ import com.rinsing.geomantia.systems.realm_planning.PatchExplorerService;
 import com.rinsing.geomantia.systems.realm_planning.RealmT4PatchPlanningService;
 import com.rinsing.geomantia.systems.realm_planning.WorldSurveyResult;
 import com.rinsing.geomantia.systems.realm_planning.WorldSurveyRunner;
+import com.rinsing.geomantia.systems.realm_planning.WorldSurveySettingsConfig;
 import com.rinsing.geomantia.systems.realm_planning.adapter.minecraft.MinecraftTerrainPreviewProviderFactory;
 import com.rinsing.geomantia.systems.realm_planning.application.terrain.PatchCandidateTerrainPreviewService;
 import com.rinsing.geomantia.systems.realm_planning.application.terrain.RealmT4CoarseTerrainPreviewService;
@@ -1353,18 +1354,10 @@ final class RealmPlanningHttpController implements AutoCloseable {
         return new WorldSurveyExecution(result, prepared.sampler(), prepared.terrainProvider());
     }
 
-    private PreparedWorldSurvey prepareWorldSurvey(JsonObject request) {
-        int planningRadiusBlocks = intValue(request, "planningRadiusBlocks", 0);
-        if (planningRadiusBlocks <= 0) {
-            int radiusChunks = intValue(request, "radiusChunks", 512);
-            if (radiusChunks < 1 || radiusChunks > 8192) {
-                throw new IllegalArgumentException("radiusChunks must be between 1 and 8192.");
-            }
-            planningRadiusBlocks = radiusChunks * 16;
-        }
-        if (planningRadiusBlocks < 512 || planningRadiusBlocks > 262144) {
-            throw new IllegalArgumentException("planningRadiusBlocks must be between 512 and 262144.");
-        }
+    private PreparedWorldSurvey prepareWorldSurvey(JsonObject request) throws IOException {
+        WorldSurveySettingsConfig surveySettings = WorldSurveySettingsConfig.loadOrCreate(
+                worldSurveySettingsConfigPath());
+        int planningRadiusBlocks = surveySettings.planningRadiusBlocks();
         int cellStepBlocks = intValue(request, "cellStepBlocks", WorldSurveyRunner.DEFAULT_CELL_STEP_BLOCKS);
         int microSampleStrideBlocks = intValue(request, "microSampleStrideBlocks",
                 RealmPlanningService.DEFAULT_MICRO_SAMPLE_STRIDE_BLOCKS);
@@ -1373,7 +1366,7 @@ final class RealmPlanningHttpController implements AutoCloseable {
         SampleMode sampleMode = sampleModeValue(request);
         ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
         ServerLevel level = resolveLevel(stringValue(request, "dimensionId", ""), player);
-        BlockPos center = resolveCenter(request, player);
+        BlockPos center = BlockPos.ZERO;
         String runId = stringValue(request, "runId", "");
         MinecraftPriorAtlasSampler minecraftSampler = new MinecraftPriorAtlasSampler(level);
         String fallbackFingerprint = String.join("|", "minecraft_prior",
@@ -1387,6 +1380,13 @@ final class RealmPlanningHttpController implements AutoCloseable {
                 : selector.selectFallback("sample_mode_requires_minecraft_sampler");
         TerrainSamplingProvenance terrainProvider = TerrainSamplingProvenance.fromSelection(
                 preferGeneratorNative, providerSelection);
+        PlanningAreaAccessConfig access = planningAreaAccessConfig();
+        if (access.enabled() && access.managedDimensions().contains(level.dimension().location().toString())
+                && planningRadiusBlocks < access.firstCityMinimumDistanceBlocks()) {
+            throw new IllegalArgumentException("WORLD_SURVEY_CONFIG_EXCLUDES_REALM_CORE: planningRadiusBlocks="
+                    + planningRadiusBlocks + ", firstCityMinimumDistanceBlocks="
+                    + access.firstCityMinimumDistanceBlocks());
+        }
         WorldSurveyRunner.Config config = new WorldSurveyRunner.Config(
                 runId,
                 level.dimension().location().toString(),
@@ -1491,6 +1491,11 @@ final class RealmPlanningHttpController implements AutoCloseable {
     private Path cityDesignQueueConfigPath() {
         return server.getServerDirectory().toPath().resolve("config").resolve("geomantia")
                 .resolve("city_design_queue.json");
+    }
+
+    private Path worldSurveySettingsConfigPath() {
+        return server.getServerDirectory().toPath().resolve("config").resolve("geomantia")
+                .resolve("world_survey.json");
     }
 
     private void requireRealmCoreOutsideInitialActivityArea(String runId, int gridX, int gridZ) throws IOException {

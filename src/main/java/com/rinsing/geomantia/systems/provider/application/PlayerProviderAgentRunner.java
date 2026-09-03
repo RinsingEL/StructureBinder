@@ -21,10 +21,12 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
     private static final long POLL_SECONDS = 5;
     private static final long ERROR_BACKOFF_SECONDS = 60;
     private static final long NO_PROGRESS_BACKOFF_SECONDS = 30;
+    private static final int MAX_CONSECUTIVE_NO_PROGRESS = 3;
 
     private final ProviderConfigStore store;
     private final DeepSeekToolLoopClient agentClient;
     private final Consumer<AutomationStatus> statusListener;
+    private final Consumer<AgentActivityEvent> activityListener;
     private final AtomicBoolean turnRunning = new AtomicBoolean();
     private volatile ScheduledExecutorService scheduler;
     private volatile ProviderPlanningDiscovery discovery;
@@ -32,13 +34,23 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
     private volatile int apiPort;
     private volatile long retryAfterEpochSecond;
     private volatile String lastCompletedIdentity = "";
+    private volatile String haltedIdentity = "";
+    private volatile String noProgressIdentity = "";
+    private volatile int consecutiveNoProgress;
     private volatile AutomationStatus status = AutomationStatus.idle();
 
     public PlayerProviderAgentRunner(ProviderConfigStore store, DeepSeekToolLoopClient agentClient,
                                      Consumer<AutomationStatus> statusListener) {
+        this(store, agentClient, statusListener, ignored -> { });
+    }
+
+    public PlayerProviderAgentRunner(ProviderConfigStore store, DeepSeekToolLoopClient agentClient,
+                                     Consumer<AutomationStatus> statusListener,
+                                     Consumer<AgentActivityEvent> activityListener) {
         this.store = Objects.requireNonNull(store, "store");
         this.agentClient = Objects.requireNonNull(agentClient, "agentClient");
         this.statusListener = Objects.requireNonNull(statusListener, "statusListener");
+        this.activityListener = Objects.requireNonNull(activityListener, "activityListener");
     }
 
     public synchronized void start(Path serverDirectory, int apiPort, long worldSeed) {
@@ -47,6 +59,8 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
         this.apiPort = apiPort;
         this.discovery = new ProviderPlanningDiscovery(this.serverDirectory.resolve("realm_debug"), worldSeed);
         this.lastCompletedIdentity = "";
+        this.haltedIdentity = "";
+        resetNoProgress();
         this.retryAfterEpochSecond = 0;
         this.scheduler = Executors.newSingleThreadScheduledExecutor(runnable -> {
             Thread thread = new Thread(runnable, "Geomantia-Provider-Agent");
@@ -54,6 +68,7 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
             return thread;
         });
         update(new AutomationStatus("idle", "", "", "", "", Instant.now().toString()));
+        activity("system", "自动规划器已启动");
         scheduler.scheduleWithFixedDelay(this::safeTick, 2, POLL_SECONDS, TimeUnit.SECONDS);
     }
 
@@ -63,7 +78,11 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
 
     public void retryNow() {
         lastCompletedIdentity = "";
+        haltedIdentity = "";
+        resetNoProgress();
         retryAfterEpochSecond = 0;
+        ScheduledExecutorService current = scheduler;
+        if (current != null && !current.isShutdown()) current.execute(this::safeTick);
     }
 
     private void safeTick() {
@@ -79,7 +98,8 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
     }
 
     private void tick() throws IOException {
-        if (discovery == null || serverDirectory == null || turnRunning.get()) return;
+        ProviderPlanningDiscovery currentDiscovery = discovery;
+        if (currentDiscovery == null || serverDirectory == null || turnRunning.get()) return;
         PlayerProviderConfig config = store.load();
         if (!config.enabled()) {
             updateIfChanged(new AutomationStatus("disabled", "", "", "", "", Instant.now().toString()));
@@ -92,35 +112,106 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
             return;
         }
         if (Instant.now().getEpochSecond() < retryAfterEpochSecond) return;
-        ProviderPlanningDiscovery.PlanningStep run = discovery.nextStep();
+        ProviderPlanningDiscovery.PlanningStep run = currentDiscovery.nextStep();
         if (!run.stage().actionable()) {
             String state = run.stage() == ProviderPlanningDiscovery.Stage.COMPLETE ? "completed" : "waiting";
             updateIfChanged(new AutomationStatus(state, "", run.runId(), run.citySeedId(),
                     run.nextAction(), Instant.now().toString()));
             return;
         }
-        if (run.semanticIdentity().equals(lastCompletedIdentity)) return;
+        if (run.semanticIdentity().equals(lastCompletedIdentity)
+                || run.semanticIdentity().equals(haltedIdentity)) return;
         if (!turnRunning.compareAndSet(false, true)) return;
         update(new AutomationStatus("running", "", run.runId(), run.citySeedId(), run.nextAction(),
                 Instant.now().toString()));
+        activity("stage", "开始 " + run.stage().name() + formatScope(run)
+                + "，下一步 " + run.nextAction());
         try {
             ProviderPlanningToolGateway gateway = ProviderPlanningToolGateway.forStep(
                     apiPort, serverDirectory, run);
             DeepSeekToolLoopClient.LoopResult result = agentClient.run(config, credentials,
-                    run.state(), run.initialImages(), toolsFor(run.stage()), gateway);
+                    run.state(), run.initialImages(), toolsFor(run.stage()), gateway, this::recordLoopActivity);
             if (result.success()) {
-                lastCompletedIdentity = run.semanticIdentity();
-                retryAfterEpochSecond = Instant.now().getEpochSecond() + NO_PROGRESS_BACKOFF_SECONDS;
-                update(new AutomationStatus("waiting", "", run.runId(), run.citySeedId(),
-                        run.nextAction(), Instant.now().toString()));
+                acceptSuccessfulTurnOnlyAfterStateProgress(currentDiscovery, run);
             } else {
-                retryAfterEpochSecond = Instant.now().getEpochSecond() + ERROR_BACKOFF_SECONDS;
-                update(new AutomationStatus("error", result.errorCode(), run.runId(), run.citySeedId(),
-                        run.nextAction(), Instant.now().toString()));
+                recordFailedTurn(run, result.errorCode());
             }
         } finally {
             turnRunning.set(false);
         }
+    }
+
+    void recordFailedTurn(ProviderPlanningDiscovery.PlanningStep run, String errorCode) {
+        int attempts = recordNoProgress(run.semanticIdentity());
+        boolean exhausted = attempts >= MAX_CONSECUTIVE_NO_PROGRESS;
+        if (exhausted) haltedIdentity = run.semanticIdentity();
+        retryAfterEpochSecond = Instant.now().getEpochSecond() + ERROR_BACKOFF_SECONDS;
+        update(new AutomationStatus(exhausted ? "error" : "waiting", errorCode,
+                run.runId(), run.citySeedId(), run.nextAction(), Instant.now().toString()));
+        activity(exhausted ? "error" : "waiting", exhausted
+                ? "Agent loop 连续失败（" + attempts + "/" + MAX_CONSECUTIVE_NO_PROGRESS
+                        + "），自动规划已停止；重新保存 Provider 配置可重试：" + errorCode
+                : "Agent loop 失败（" + attempts + "/" + MAX_CONSECUTIVE_NO_PROGRESS
+                        + "），60 秒后重试：" + errorCode);
+    }
+
+    private void acceptSuccessfulTurnOnlyAfterStateProgress(
+            ProviderPlanningDiscovery currentDiscovery,
+            ProviderPlanningDiscovery.PlanningStep before) throws IOException {
+        ProviderPlanningDiscovery.PlanningStep after = currentDiscovery.nextStep();
+        boolean progressed = !after.stage().actionable()
+                || !after.semanticIdentity().equals(before.semanticIdentity());
+        if (progressed) {
+            lastCompletedIdentity = before.semanticIdentity();
+            haltedIdentity = "";
+            resetNoProgress();
+            retryAfterEpochSecond = 0;
+            String state = after.stage() == ProviderPlanningDiscovery.Stage.COMPLETE ? "completed" : "waiting";
+            update(new AutomationStatus(state, "", after.runId(), after.citySeedId(),
+                    after.nextAction(), Instant.now().toString()));
+            activity("progress", "正式状态已推进至 " + after.stage().name()
+                    + formatScope(after) + (after.nextAction().isBlank() ? "" : "，下一步 " + after.nextAction()));
+            return;
+        }
+
+        int attempts = recordNoProgress(before.semanticIdentity());
+        boolean exhausted = attempts >= MAX_CONSECUTIVE_NO_PROGRESS;
+        if (exhausted) haltedIdentity = before.semanticIdentity();
+        retryAfterEpochSecond = Instant.now().getEpochSecond()
+                + (exhausted ? ERROR_BACKOFF_SECONDS : NO_PROGRESS_BACKOFF_SECONDS);
+        update(new AutomationStatus(exhausted ? "error" : "waiting",
+                exhausted ? "PROVIDER_AGENT_NO_PROGRESS" : "PROVIDER_AGENT_NO_PROGRESS_RETRYING",
+                before.runId(), before.citySeedId(), before.nextAction(), Instant.now().toString()));
+        activity(exhausted ? "error" : "waiting", exhausted
+                ? "连续 3 次未产生正式阶段产物，自动规划已停止；重新保存 Provider 配置可重试"
+                : "本轮没有推进正式状态，30 秒后重试（" + attempts + "/3）");
+    }
+
+    private void recordLoopActivity(AgentActivityEvent event) {
+        if (event != null) activityListener.accept(event);
+    }
+
+    private void activity(String kind, String message) {
+        activityListener.accept(new AgentActivityEvent(Instant.now().toString(), kind, message));
+    }
+
+    private static String formatScope(ProviderPlanningDiscovery.PlanningStep step) {
+        if (!step.citySeedId().isBlank()) return " / 城市 " + step.citySeedId();
+        if (!step.realmId().isBlank()) return " / 国度 " + step.realmId();
+        return "";
+    }
+
+    private int recordNoProgress(String identity) {
+        if (!identity.equals(noProgressIdentity)) {
+            noProgressIdentity = identity;
+            consecutiveNoProgress = 0;
+        }
+        return ++consecutiveNoProgress;
+    }
+
+    private void resetNoProgress() {
+        noProgressIdentity = "";
+        consecutiveNoProgress = 0;
     }
 
     private static List<String> toolsFor(ProviderPlanningDiscovery.Stage stage) {

@@ -28,6 +28,10 @@ public final class ProviderSettingsScreen extends Screen {
     private String apiKeySource = "none";
     private boolean clearStoredApiKey;
     private boolean testAfterSave;
+    private boolean formInitialized;
+    private boolean formDirty;
+    private boolean applyingSnapshot;
+    private boolean savePending;
     private String connectionState = "loading";
     private String statusMessage = "";
     private String automationState = "idle";
@@ -44,6 +48,8 @@ public final class ProviderSettingsScreen extends Screen {
     private Button testButton;
     private Button clearKeyButton;
     private int statusRefreshTicks;
+    private int statusY;
+    private int automationY;
 
     ProviderSettingsScreen(Screen parent) {
         super(Component.translatable("gui.geomantia.provider_settings.title"));
@@ -64,38 +70,49 @@ public final class ProviderSettingsScreen extends Screen {
         baseUrl = addRenderableWidget(new EditBox(font, fieldLeft, y, fieldWidth, 20,
                 Component.translatable("gui.geomantia.provider_settings.base_url")));
         baseUrl.setMaxLength(512);
+        baseUrl.setResponder(ignored -> markDirty());
         y += 32;
         model = addRenderableWidget(new EditBox(font, fieldLeft, y, fieldWidth, 20,
                 Component.translatable("gui.geomantia.provider_settings.model")));
         model.setMaxLength(160);
+        model.setResponder(ignored -> markDirty());
         y += 32;
-        apiKey = addRenderableWidget(new EditBox(font, fieldLeft, y, fieldWidth, 20,
+        int clearKeyWidth = Math.min(112, Math.max(84, fieldWidth / 3));
+        apiKey = addRenderableWidget(new EditBox(font, fieldLeft, y, fieldWidth - clearKeyWidth - 4, 20,
                 Component.translatable("gui.geomantia.provider_settings.api_key")));
         apiKey.setMaxLength(4096);
         apiKey.setFormatter((value, offset) -> FormattedCharSequence.forward("•".repeat(value.length()), Style.EMPTY));
-        y += 32;
-        timeout = addRenderableWidget(new EditBox(font, fieldLeft, y, 72, 20,
-                Component.translatable("gui.geomantia.provider_settings.timeout")));
-        timeout.setMaxLength(3);
-        timeout.setFilter(value -> value.isBlank() || value.chars().allMatch(Character::isDigit));
-        enabledButton = addRenderableWidget(Button.builder(enabledLabel(), button -> {
-                    enabled = !enabled;
-                    button.setMessage(enabledLabel());
-                }).bounds(fieldLeft + 80, y, fieldWidth - 80, 20).build());
-        y += 34;
+        apiKey.setResponder(ignored -> markDirty());
         clearKeyButton = addRenderableWidget(Button.builder(
                         Component.translatable("gui.geomantia.provider_settings.clear_key"), button -> {
                             clearStoredApiKey = true;
                             hasApiKey = false;
                             apiKey.setValue("");
                             apiKey.setHint(Component.translatable("gui.geomantia.provider_settings.key_cleared"));
-                        }).bounds(fieldLeft, y, fieldWidth, 20).build());
-
-        int controlsY = Math.min(height - 30, y + 44);
+                            markDirty();
+                        }).bounds(fieldLeft + fieldWidth - clearKeyWidth, y, clearKeyWidth, 20).build());
+        y += 32;
+        timeout = addRenderableWidget(new EditBox(font, fieldLeft, y, 72, 20,
+                Component.translatable("gui.geomantia.provider_settings.timeout")));
+        timeout.setMaxLength(3);
+        timeout.setFilter(value -> value.isBlank() || value.chars().allMatch(Character::isDigit));
+        timeout.setResponder(ignored -> markDirty());
+        enabledButton = addRenderableWidget(Button.builder(enabledLabel(), button -> {
+                    enabled = !enabled;
+                    button.setMessage(enabledLabel());
+                    markDirty();
+                }).bounds(fieldLeft + 80, y, fieldWidth - 80, 20).build());
+        y += 34;
+        statusY = y;
+        automationY = y + 12;
+        int controlsY = Math.min(height - 30, y + 34);
         saveButton = addRenderableWidget(Button.builder(Component.translatable("gui.geomantia.provider_settings.save"),
                         button -> save(false)).bounds(left + 20, controlsY, 92, 20).build());
         testButton = addRenderableWidget(Button.builder(Component.translatable("gui.geomantia.provider_settings.test"),
                         button -> save(true)).bounds(left + 118, controlsY, 148, 20).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.geomantia.agent_activity.open"),
+                        button -> ProviderSettingsClient.openActivity(this))
+                .bounds(left + 272, controlsY, 70, 20).build());
         addRenderableWidget(Button.builder(Component.translatable("gui.geomantia.provider_settings.back"),
                         button -> onClose()).bounds(left + panelWidth - 92, controlsY, 72, 20).build());
         setEditable(false);
@@ -104,34 +121,64 @@ public final class ProviderSettingsScreen extends Screen {
 
     void receive(ProviderSettingsSnapshot snapshot) {
         if (snapshot == null) return;
-        providerKind = snapshot.providerKind();
-        enabled = snapshot.enabled();
         editable = snapshot.editable();
-        hasApiKey = snapshot.hasApiKey();
-        apiKeySource = snapshot.apiKeySource();
-        connectionState = snapshot.connectionState();
-        statusMessage = snapshot.message();
         automationState = snapshot.automationState();
         automationMessage = snapshot.automationMessage();
         activeTool = snapshot.activeTool();
-        baseUrl.setValue(snapshot.baseUrl());
-        model.setValue(snapshot.model());
-        timeout.setValue(Integer.toString(snapshot.timeoutSeconds()));
-        apiKey.setValue("");
-        apiKey.setHint(Component.translatable("environment".equals(apiKeySource)
-                ? "gui.geomantia.provider_settings.key_environment"
-                : hasApiKey ? "gui.geomantia.provider_settings.key_saved"
-                : "gui.geomantia.provider_settings.key_missing"));
-        clearStoredApiKey = false;
-        providerButton.setMessage(providerLabel());
-        enabledButton.setMessage(enabledLabel());
+
+        boolean saveCompleted = savePending && ("saved".equals(snapshot.connectionState())
+                || "error".equals(snapshot.connectionState())
+                || "forbidden".equals(snapshot.connectionState()));
+        if (!savePending || saveCompleted) {
+            connectionState = snapshot.connectionState();
+            statusMessage = snapshot.message();
+        }
+        if (!formInitialized || (!formDirty && !savePending) || saveCompleted) {
+            applyFormSnapshot(snapshot);
+        }
+        if (saveCompleted) {
+            savePending = false;
+            if ("saved".equals(connectionState)) {
+                formDirty = false;
+            } else {
+                testAfterSave = false;
+            }
+        }
         setEditable(editable);
-        updateProviderFieldState();
-        if (testAfterSave && "saved".equals(connectionState)) {
+        if (testAfterSave && !savePending && "saved".equals(connectionState)) {
             testAfterSave = false;
             connectionState = "testing";
             ProviderNetwork.testConnection();
         }
+    }
+
+    private void applyFormSnapshot(ProviderSettingsSnapshot snapshot) {
+        applyingSnapshot = true;
+        try {
+            providerKind = snapshot.providerKind();
+            enabled = snapshot.enabled();
+            hasApiKey = snapshot.hasApiKey();
+            apiKeySource = snapshot.apiKeySource();
+            baseUrl.setValue(snapshot.baseUrl());
+            model.setValue(snapshot.model());
+            timeout.setValue(Integer.toString(snapshot.timeoutSeconds()));
+            apiKey.setValue("");
+            apiKey.setHint(Component.translatable("environment".equals(apiKeySource)
+                    ? "gui.geomantia.provider_settings.key_environment"
+                    : hasApiKey ? "gui.geomantia.provider_settings.key_saved"
+                    : "gui.geomantia.provider_settings.key_missing"));
+            clearStoredApiKey = false;
+            providerButton.setMessage(providerLabel());
+            enabledButton.setMessage(enabledLabel());
+            updateProviderFieldState();
+            formInitialized = true;
+        } finally {
+            applyingSnapshot = false;
+        }
+    }
+
+    private void markDirty() {
+        if (formInitialized && !applyingSnapshot && !savePending) formDirty = true;
     }
 
     @Override
@@ -152,6 +199,7 @@ public final class ProviderSettingsScreen extends Screen {
         }
         providerButton.setMessage(providerLabel());
         updateProviderFieldState();
+        markDirty();
     }
 
     private void save(boolean thenTest) {
@@ -165,6 +213,7 @@ public final class ProviderSettingsScreen extends Screen {
             return;
         }
         testAfterSave = thenTest;
+        savePending = true;
         connectionState = "saving";
         ProviderNetwork.saveSettings(providerKind, enabled, baseUrl.getValue(), model.getValue(),
                 timeoutSeconds, apiKey.getValue(), clearStoredApiKey);
@@ -219,11 +268,11 @@ public final class ProviderSettingsScreen extends Screen {
         drawLabel(graphics, "gui.geomantia.provider_settings.api_key", labelX, y);
         y += 32;
         drawLabel(graphics, "gui.geomantia.provider_settings.timeout", labelX, y);
-        graphics.drawString(font, statusComponent(), labelX, 252, statusColor(), false);
-        graphics.drawString(font, automationComponent(), labelX, 286, automationColor(), false);
+        graphics.drawString(font, statusComponent(), labelX, statusY, statusColor(), false);
+        graphics.drawString(font, automationComponent(), labelX, automationY, automationColor(), false);
         if (!editable && !"loading".equals(connectionState)) {
             graphics.drawString(font, Component.translatable("gui.geomantia.provider_settings.admin_only"),
-                    labelX, 302, WARN, false);
+                    labelX, automationY + 12, WARN, false);
         }
         super.render(graphics, mouseX, mouseY, partialTick);
     }
@@ -289,7 +338,8 @@ public final class ProviderSettingsScreen extends Screen {
 
     private static Component statusDetail(String message) {
         if (message.isBlank() || "PROVIDER_SETTINGS_SAVED".equals(message)
-                || "PROVIDER_TESTING".equals(message) || "PROVIDER_MULTIMODAL_READY".equals(message)
+                || "PROVIDER_SAVING".equals(message) || "PROVIDER_TESTING".equals(message)
+                || "PROVIDER_MULTIMODAL_READY".equals(message)
                 || "PROVIDER_API_KEY_MISSING".equals(message)
                 || "PROVIDER_MODEL_NOT_AVAILABLE".equals(message)
                 || "PROVIDER_ADMIN_REQUIRED".equals(message)) return null;

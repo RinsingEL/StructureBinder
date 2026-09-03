@@ -77,5 +77,11 @@
   "gui.geomantia.provider_settings.message.provider_config_read_failed": "无法读取配置",
   "gui.geomantia.provider_settings.message.provider_config_write_failed": "无法保存配置",
   "gui.geomantia.provider_settings.message.provider_connection_failed": "无法连接到 Provider",
-  "gui.geomantia.provider_settings.message.provider_test_interrupted": "连接测试被中断"
+  "gui.geomantia.provider_settings.message.provider_test_interrupted": "连接测试被中断",
+  "gui.geomantia.agent_activity.open": "Agent 过程",
+  "gui.geomantia.agent_activity.title": "Agent 过程",
+  "gui.geomantia.agent_activity.refresh": "刷新",
+  "gui.geomantia.agent_activity.back": "返回",
+  "gui.geomantia.agent_activity.empty": "暂无 Agent 活动；启用自动规划后会在这里显示。",
+  "gui.geomantia.agent_activity.hint": "每秒刷新 · 滚轮查看历史 · 完整 JSON 与敏感字段已省略"
 }

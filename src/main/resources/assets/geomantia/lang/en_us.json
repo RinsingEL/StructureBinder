@@ -77,5 +77,11 @@
   "gui.geomantia.provider_settings.message.provider_config_read_failed": "Could not read provider settings",
   "gui.geomantia.provider_settings.message.provider_config_write_failed": "Could not save provider settings",
   "gui.geomantia.provider_settings.message.provider_connection_failed": "Could not connect to the provider",
-  "gui.geomantia.provider_settings.message.provider_test_interrupted": "Connection test was interrupted"
+  "gui.geomantia.provider_settings.message.provider_test_interrupted": "Connection test was interrupted",
+  "gui.geomantia.agent_activity.open": "Agent Activity",
+  "gui.geomantia.agent_activity.title": "Agent Activity",
+  "gui.geomantia.agent_activity.refresh": "Refresh",
+  "gui.geomantia.agent_activity.back": "Back",
+  "gui.geomantia.agent_activity.empty": "No agent activity yet. Enable automation to begin.",
+  "gui.geomantia.agent_activity.hint": "Refreshes every second · Scroll for history · Full JSON and secrets are omitted"
 }

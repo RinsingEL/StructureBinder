@@ -19,14 +19,14 @@ final class ProviderPlanningToolCatalog {
     private static JsonObject definition(String name) {
         return switch (name) {
             case "realm_w_refresh" -> function(name,
-                    "Run or resume the one sealed W survey for this world. The host locks runId. Use the requested "
-                            + "origin-centered release defaults from the current planning state.",
+                    "Run or resume the one sealed W survey for this world. The host locks runId and the complete "
+                            + "origin-centered survey range from config/geomantia/world_survey.json. Never choose "
+                            + "or override W range parameters.",
                     object(properties(
-                            "runId", string(), "planningRadiusBlocks", integer(), "cellStepBlocks", integer(),
+                            "runId", string(), "cellStepBlocks", integer(),
                             "microSampleStrideBlocks", integer(), "localSlopeRadiusBlocks", integer(),
                             "preferGeneratorNativeTerrain", bool(), "qualityMode", enumeration("smoke", "strict"),
                             "resumePolicy", enumeration("use_cache", "rescan", "use_cache_strict"),
-                            "centerBlockX", integer(), "centerBlockZ", integer(), "dimensionId", string(),
                             "worldTheme", object())));
             case "realm_t1_prepare" -> function(name,
                     "Create all RealmProfiles together from the sealed W overview and attached map previews. "
@@ -49,11 +49,14 @@ final class ProviderPlanningToolCatalog {
                     "Create the artifact-backed T4 planning session for only the active realm.",
                     object(properties("runId", string(), "realmId", string(), "planningSessionId", string())));
             case "realm_t4_patch_planning_select_capital" -> function(name,
-                    "Turn one reviewed realm_t4 patchSelectionRef into the realm's unique capital.",
+                    "Turn one reviewed realm_t4 patchSelectionRef into the realm's unique capital. The value must "
+                            + "be the psel_... reference returned by patch_explorer_select_candidate; a displayed "
+                            + "candidateId such as VALLEY-01 is not a patchSelectionRef.",
                     t4SeedSchema(false));
             case "realm_t4_patch_planning_add_city" -> function(name,
-                    "Add one non-capital city from a distinct reviewed realm_t4 patchSelectionRef. Use a stable "
-                            + "citySeedId derived from the realm and function.",
+                    "Add one non-capital city from a distinct reviewed realm_t4 patchSelectionRef returned by "
+                            + "patch_explorer_select_candidate. Never pass the displayed candidateId directly. "
+                            + "Use a stable citySeedId derived from the realm and function.",
                     t4SeedSchema(true));
             case "realm_t4_patch_planning_finalize" -> function(name,
                     "Finalize the active realm after its required city seeds are present. The existing service merges "
@@ -115,7 +118,8 @@ final class ProviderPlanningToolCatalog {
                     submitSchema());
             case "city_post_d4_auto_compile_status" -> function(name,
                     "Read the current city's deterministic post-D4 queue. If waiting_for_generation, stop. If "
-                            + "needs_agent, use only workflowResponse and returned artifacts to decide whether to revise.",
+                            + "needs_agent, use workflowResponse failureSummary (failed group, structure, filters, hard "
+                            + "blocks and recommended action) to decide whether to revise; never guess from a generic code.",
                     object(properties("runId", string(), "citySeedId", string())));
             case "city_post_d4_auto_compile_retry" -> function(name,
                     "Retry deterministic post-D4 work only when the Blueprint is unchanged and the returned evidence "
@@ -144,11 +148,13 @@ final class ProviderPlanningToolCatalog {
 
     private static JsonObject submitSchema() {
         JsonObject blueprintProperties = properties(
-                "schema", enumeration("city_blueprint"), "cityId", string(), "sourceD3Ref", object(),
-                "catalogSnapshotRef", object(), "generationSeed", integer(), "designIntent", object(),
-                "styleProfile", object(), "groups", array(object()), "arrayCompositions", array(object()),
-                "relations", array(object()), "roadProfile", object(), "surfaceDetailProfile", object(),
-                "outdoorPlan", object());
+                "schema", enumeration("city_blueprint"), "cityId", string(),
+                "sourceD3Ref", artifactRefSchema(), "catalogSnapshotRef", artifactRefSchema(),
+                "generationSeed", integer(), "designIntent", designIntentSchema(),
+                "styleProfile", profileRefSchema(), "groups", nonEmptyArray(groupSchema()),
+                "arrayCompositions", array(arrayCompositionSchema()), "relations", array(relationSchema()),
+                "roadProfile", profileRefSchema(), "surfaceDetailProfile", profileRefSchema(),
+                "outdoorPlan", outdoorPlanSchema());
         JsonObject blueprint = object(blueprintProperties,
                 "schema", "cityId", "sourceD3Ref", "catalogSnapshotRef", "generationSeed", "designIntent",
                 "styleProfile", "groups", "arrayCompositions", "relations", "roadProfile",
@@ -157,6 +163,131 @@ final class ProviderPlanningToolCatalog {
                 "runId", string(), "citySeedId", string(), "contextId", string(),
                 "cityBlueprint", blueprint, "autoAdvanceAfterD4", bool()),
                 "contextId", "cityBlueprint");
+    }
+
+    private static JsonObject artifactRefSchema() {
+        return object(properties("path", string(), "schema", string(), "contentHash", string()),
+                "path", "schema", "contentHash");
+    }
+
+    private static JsonObject designIntentSchema() {
+        return object(properties("cityIdentity", string(), "theme", string(),
+                "functionalRoles", nonEmptyArray(string())),
+                "cityIdentity", "theme", "functionalRoles");
+    }
+
+    private static JsonObject profileRefSchema() {
+        return object(properties("profileRef", string()), "profileRef");
+    }
+
+    private static JsonObject groupSchema() {
+        JsonObject values = properties(
+                "groupId", string(), "groupKind", enumeration("STRUCTURE", "LANDSCAPE"),
+                "preferredPatchRefs", nonEmptyArray(string()),
+                "preferredPatchZone", enumeration("CENTER", "NORTH", "EAST", "SOUTH", "WEST"),
+                "placementRelation", placementRelationSchema(), "role", string(),
+                "priority", enumeration("CORE", "STANDARD", "PERIPHERAL"),
+                "extentClass", enumeration("SMALL", "MEDIUM", "LARGE"),
+                "densityClass", enumeration("SPARSE", "BALANCED", "DENSE"),
+                "algorithmProfileRef", string(),
+                "terrainPolicy", enumeration("CONFORM", "BALANCED", "ASSERTIVE"),
+                "requiredStructureRefs", array(string()), "fillPoolRef", string(),
+                "connectionPlan", connectionPlanSchema(), "compositionProfileRef", string(),
+                "attachedFeatures", array(string()), "targetAreaShare", number(),
+                "spaceComposition", object(properties("buildingShare", number(), "landscapeShare", number(),
+                        "openSpaceShare", number()), "buildingShare", "landscapeShare", "openSpaceShare"),
+                "expansionPolicy", object(properties("allowOutwardExpansion", bool(),
+                        "allowRelationConnection", bool(), "stopWhenTargetReached", bool()),
+                        "allowOutwardExpansion", "allowRelationConnection", "stopWhenTargetReached"),
+                "buildingGreeneryPolicy", object(properties(
+                        "coverage", enumeration("NONE", "SPARSE", "BALANCED", "LUSH"),
+                        "patternPreference", enumeration("TEMPLATE_DEFAULT", "FREEFORM", "FIELD_GRID", "MIXED"),
+                        "densityPreference", enumeration("TEMPLATE_DEFAULT", "LOW", "MEDIUM", "HIGH")),
+                        "coverage", "patternPreference", "densityPreference"));
+        return object(values, "groupId", "groupKind", "preferredPatchRefs", "preferredPatchZone", "role",
+                "priority", "extentClass", "densityClass", "algorithmProfileRef", "terrainPolicy",
+                "requiredStructureRefs", "fillPoolRef", "compositionProfileRef", "attachedFeatures",
+                "targetAreaShare", "spaceComposition", "expansionPolicy", "buildingGreeneryPolicy");
+    }
+
+    private static JsonObject placementRelationSchema() {
+        return object(properties(
+                "kind", enumeration("BETWEEN_PATCHES", "ALONG_PATCH_BOUNDARY", "BETWEEN_GROUPS"),
+                "patchRefs", array(string()), "groupRefs", array(string())),
+                "kind", "patchRefs", "groupRefs");
+    }
+
+    private static JsonObject connectionPlanSchema() {
+        return object(properties(
+                "structurePoolRef", string(), "algorithmProfileRef", string(),
+                "densityClass", enumeration("SPARSE", "BALANCED", "DENSE"),
+                "parameters", object(properties(
+                        "clusterShape", enumeration("ORGANIC_COMPACT", "GRID", "COURTYARD", "L_SHAPE", "U_SHAPE"),
+                        "sideMode", enumeration("LEFT", "RIGHT", "BOTH"), "stagger", bool(),
+                        "widthClass", enumeration("NARROW", "MEDIUM", "WIDE")))));
+    }
+
+    private static JsonObject arrayCompositionSchema() {
+        return object(properties("compositionId", string(), "algorithmProfileRef", string(),
+                "centerGroupId", string(), "memberGroupIds", nonEmptyArray(string())),
+                "compositionId", "algorithmProfileRef", "centerGroupId", "memberGroupIds");
+    }
+
+    private static JsonObject relationSchema() {
+        return object(properties(
+                "fromGroupId", string(), "toGroupId", string(),
+                "relationKind", enumeration("HIERARCHY", "ADJACENCY", "CONNECTION", "BUFFER", "DISTANCE", "DIRECTION"),
+                "strength", enumeration("HARD", "SOFT"),
+                "distancePreference", enumeration("NONE", "NEAR", "FAR"),
+                "directionPreference", enumeration("NONE", "NORTH", "EAST", "SOUTH", "WEST")),
+                "fromGroupId", "toGroupId", "relationKind", "strength",
+                "distancePreference", "directionPreference");
+    }
+
+    private static JsonObject outdoorPlanSchema() {
+        return object(properties(
+                "mode", enumeration("GENERATE", "PRESERVE"),
+                "envelopeProfile", enumeration("COMPACT", "BALANCED", "LOOSE"),
+                "foundationProfileRef", string(), "spatialGrounds", array(spatialGroundSchema()),
+                "landscapes", array(landscapeSchema())),
+                "mode", "envelopeProfile", "foundationProfileRef", "spatialGrounds", "landscapes");
+    }
+
+    private static JsonObject spatialGroundSchema() {
+        return object(properties(
+                "sourceGroupId", string(),
+                "sharedSpaceType", enumeration("CIVIC_SQUARE", "MARKET_STREET", "RESIDENTIAL_COURT",
+                        "FARMSTEAD", "GENERAL_URBAN"),
+                "hierarchyLevel", enumeration("PRIMARY", "SECONDARY", "LOCAL"),
+                "membership", enumeration("URBAN", "LANDSCAPE")),
+                "sourceGroupId", "sharedSpaceType", "hierarchyLevel", "membership");
+    }
+
+    private static JsonObject landscapeSchema() {
+        JsonObject values = properties(
+                "landscapeId", string(), "landscapeProfileRef", string(),
+                "purpose", enumeration("FUNCTIONAL", "COMPOSITIONAL", "AMBIENT"),
+                "originMode", enumeration("ATTACHED", "FREE_STANDING"),
+                "owner", object(properties("groupId", string(), "requiredStructureRef", string()), "groupId"),
+                "placementDomain", enumeration("URBAN_RESIDUAL", "FOUNDATION_EDGE", "BETWEEN_GROUPS", "ALONG_WATER"),
+                "instanceCount", integer(), "parcelCount", integer(), "preferredPatchRefs", array(string()),
+                "terrainPolicy", enumeration("CONFORM", "BALANCED", "ASSERTIVE"), "required", bool(),
+                "fillSelection", fillSelectionSchema());
+        return object(values, "landscapeId", "landscapeProfileRef", "purpose", "originMode",
+                "instanceCount", "parcelCount", "preferredPatchRefs", "terrainPolicy", "required",
+                "fillSelection");
+    }
+
+    private static JsonObject fillSelectionSchema() {
+        JsonObject roleShare = object(properties("roleRef", string(),
+                "growthForm", enumeration("PATCH", "CORRIDOR"), "targetShare", number()),
+                "roleRef", "growthForm", "targetShare");
+        JsonObject contentWeight = object(properties("contentRef", string(), "weight", number()),
+                "contentRef", "weight");
+        JsonObject variant = object(properties("fillProfileRef", string(), "selectionWeight", number(),
+                "roleShares", nonEmptyArray(roleShare), "contentWeights", array(contentWeight)),
+                "fillProfileRef", "selectionWeight", "roleShares", "contentWeights");
+        return object(properties("variants", nonEmptyArray(variant)), "variants");
     }
 
     private static JsonObject function(String name, String description, JsonObject parameters) {
@@ -213,6 +344,12 @@ final class ProviderPlanningToolCatalog {
     private static JsonObject array(JsonObject items) {
         JsonObject result = typed("array");
         result.add("items", items);
+        return result;
+    }
+
+    private static JsonObject nonEmptyArray(JsonObject items) {
+        JsonObject result = array(items);
+        result.addProperty("minItems", 1);
         return result;
     }
 

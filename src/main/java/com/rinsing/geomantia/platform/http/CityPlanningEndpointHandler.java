@@ -232,7 +232,7 @@ final class CityPlanningEndpointHandler {
                 ? "city_submit_d4_blueprint" : "stop_for_human_review");
         JsonObject policy = new JsonObject();
         policy.addProperty("instruction", retryAllowed
-                ? "Revise and resubmit the complete Blueprint using only this tool response and returned artifacts."
+                ? "Revise and resubmit the complete Blueprint using the returned failureSummary and tool evidence."
                 : "Stop this Agent Loop and request human review.");
         policy.addProperty("sourceCodeInspectionAllowed", false);
         policy.addProperty("projectDocumentationInspectionAllowed", false);
