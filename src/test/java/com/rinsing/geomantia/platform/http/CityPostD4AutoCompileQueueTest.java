@@ -8,6 +8,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Path;
 import java.nio.file.Files;
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -79,10 +80,31 @@ class CityPostD4AutoCompileQueueTest {
                 (runId, citySeedId) -> failedWorkflowResponse())) {
             queue.enqueue("run_4", "city_4");
             JsonObject failed = awaitStatus(queue, "run_4", "city_4", "needs_agent");
+            assertEquals("D4_BLUEPRINT_REVISION_REQUIRED", failed.get("reasonCode").getAsString());
+            assertEquals("city_submit_d4_blueprint", failed.get("nextAction").getAsString());
             JsonObject step = failed.getAsJsonObject("workflowResponse").getAsJsonObject("workflowReport")
                     .getAsJsonArray("steps").get(0).getAsJsonObject();
             assertEquals("civic_core", step.getAsJsonObject("failureSummary").get("groupId").getAsString());
             assertEquals(1, failed.get("attempt").getAsInt());
+        }
+    }
+
+    @Test
+    void republishesTerminalStateToUpperQueueDuringRestart() throws Exception {
+        Path statePath = temporaryDirectory.resolve("run_5/automation/post_d4/city_5.json");
+        Files.createDirectories(statePath.getParent());
+        JsonObject persisted = new JsonObject();
+        persisted.addProperty("runId", "run_5");
+        persisted.addProperty("citySeedId", "city_5");
+        persisted.addProperty("status", "needs_agent");
+        persisted.addProperty("nextAction", "city_submit_d4_blueprint");
+        Files.writeString(statePath, persisted.toString());
+        AtomicReference<JsonObject> reconciled = new AtomicReference<>();
+
+        try (CityPostD4AutoCompileQueue ignored = new CityPostD4AutoCompileQueue(temporaryDirectory,
+                (runId, citySeedId) -> response("waiting_for_generation", true), reconciled::set)) {
+            assertEquals("city_submit_d4_blueprint",
+                    reconciled.get().get("nextAction").getAsString());
         }
     }
 
@@ -117,6 +139,7 @@ class CityPostD4AutoCompileQueueTest {
         step.addProperty("ok", false);
         step.addProperty("reasonCode", "CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT");
         step.addProperty("message", "All finite required building candidate combinations were exhausted.");
+        step.addProperty("nextAction", "city_submit_d4_blueprint");
         steps.add(step);
         report.add("steps", steps);
         response.add("workflowReport", report);

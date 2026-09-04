@@ -364,31 +364,18 @@ public final class PreviewExporter {
     }
 
     private enum Metric {
-        ELEVATION {
-            @Override
-            double value(AtlasCell cell) {
-                return cell.elevation();
-            }
-        },
-        SLOPE {
-            @Override
-            double value(AtlasCell cell) {
-                return cell.slope();
-            }
-        },
-        TPI_SMALL {
-            @Override
-            double value(AtlasCell cell) {
-                return cell.tpiSmall();
-            }
-        },
-        TPI_LARGE {
-            @Override
-            double value(AtlasCell cell) {
-                return cell.tpiLarge();
-            }
-        };
+        ELEVATION,
+        SLOPE,
+        TPI_SMALL,
+        TPI_LARGE;
 
-        abstract double value(AtlasCell cell);
+        double value(AtlasCell cell) {
+            return switch (this) {
+                case ELEVATION -> cell.elevation();
+                case SLOPE -> cell.slope();
+                case TPI_SMALL -> cell.tpiSmall();
+                case TPI_LARGE -> cell.tpiLarge();
+            };
+        }
     }
 }

@@ -23,7 +23,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 public final class ProviderNetwork {
-    private static final String PROTOCOL = "3";
+    private static final String PROTOCOL = "5";
     private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.fromNamespaceAndPath(GeomantiaMod.MOD_ID, "player_provider"),
             () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
@@ -61,9 +61,11 @@ public final class ProviderNetwork {
     }
 
     public static void saveSettings(String providerKind, boolean enabled, String baseUrl,
-                                    String model, int timeoutSeconds, String replacementApiKey,
+                                    String model, String apiProtocol, int timeoutSeconds, String agentRuntime,
+                                    String replacementApiKey,
                                     boolean clearStoredApiKey) {
-        CHANNEL.sendToServer(new SaveRequest(providerKind, enabled, baseUrl, model, timeoutSeconds,
+        CHANNEL.sendToServer(new SaveRequest(providerKind, enabled, baseUrl, model, apiProtocol, timeoutSeconds,
+                agentRuntime,
                 replacementApiKey, clearStoredApiKey));
     }
 
@@ -107,7 +109,9 @@ public final class ProviderNetwork {
             buffer.writeBoolean(value.enabled());
             buffer.writeUtf(value.baseUrl());
             buffer.writeUtf(value.model());
+            buffer.writeUtf(value.apiProtocol());
             buffer.writeVarInt(value.timeoutSeconds());
+            buffer.writeUtf(value.agentRuntime());
             buffer.writeBoolean(value.hasApiKey());
             buffer.writeUtf(value.apiKeySource());
             buffer.writeBoolean(value.editable());
@@ -122,7 +126,8 @@ public final class ProviderNetwork {
 
         static SettingsResponse decode(FriendlyByteBuf buffer) {
             return new SettingsResponse(new ProviderSettingsSnapshot(buffer.readUtf(), buffer.readBoolean(),
-                    buffer.readUtf(512), buffer.readUtf(160), buffer.readVarInt(), buffer.readBoolean(),
+                    buffer.readUtf(512), buffer.readUtf(160), buffer.readUtf(32), buffer.readVarInt(),
+                    buffer.readUtf(32), buffer.readBoolean(),
                     buffer.readUtf(32), buffer.readBoolean(), buffer.readUtf(64), buffer.readUtf(256),
                     buffer.readUtf(64), buffer.readUtf(256), buffer.readUtf(160), buffer.readUtf(256),
                     buffer.readUtf(160)));
@@ -136,21 +141,25 @@ public final class ProviderNetwork {
         }
     }
 
-    private record SaveRequest(String providerKind, boolean enabled, String baseUrl, String model,
-                               int timeoutSeconds, String replacementApiKey, boolean clearStoredApiKey) {
+    private record SaveRequest(String providerKind, boolean enabled, String baseUrl, String model, String apiProtocol,
+                               int timeoutSeconds, String agentRuntime, String replacementApiKey,
+                               boolean clearStoredApiKey) {
         static void encode(SaveRequest request, FriendlyByteBuf buffer) {
             buffer.writeUtf(request.providerKind);
             buffer.writeBoolean(request.enabled);
             buffer.writeUtf(request.baseUrl);
             buffer.writeUtf(request.model);
+            buffer.writeUtf(request.apiProtocol);
             buffer.writeVarInt(request.timeoutSeconds);
+            buffer.writeUtf(request.agentRuntime);
             buffer.writeUtf(request.replacementApiKey);
             buffer.writeBoolean(request.clearStoredApiKey);
         }
 
         static SaveRequest decode(FriendlyByteBuf buffer) {
             return new SaveRequest(buffer.readUtf(32), buffer.readBoolean(), buffer.readUtf(512),
-                    buffer.readUtf(160), buffer.readVarInt(), buffer.readUtf(4096), buffer.readBoolean());
+                    buffer.readUtf(160), buffer.readUtf(32), buffer.readVarInt(), buffer.readUtf(32),
+                    buffer.readUtf(4096), buffer.readBoolean());
         }
 
         static void handle(SaveRequest request, Supplier<NetworkEvent.Context> contextSupplier) {
@@ -159,7 +168,8 @@ public final class ProviderNetwork {
             if (player != null) context.enqueueWork(() -> {
                 boolean canEdit = editable(player);
                 PlayerProviderConfig config = new PlayerProviderConfig(request.providerKind, request.enabled,
-                        request.baseUrl, request.model, request.timeoutSeconds);
+                        request.baseUrl, request.model, request.apiProtocol, request.timeoutSeconds,
+                        request.agentRuntime);
                 PlayerProviderService.instance().save(config, request.replacementApiKey,
                                 request.clearStoredApiKey, canEdit)
                         .thenAccept(snapshot -> player.server.execute(() -> send(player, snapshot)));

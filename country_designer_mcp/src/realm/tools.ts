@@ -499,6 +499,24 @@ const artifactRefSchema = strictObject({
   contentHash: { type: "string", pattern: "^sha256:[0-9a-f]{64}$" },
 }, ["path", "schema", "contentHash"]);
 
+const connectionPlanParametersSchema: Record<string, unknown> = {
+  type: "object",
+  description: "必须按解析后的 planner family 二选一，严禁混填：compound_cluster 只能提交 clusterShape；guide_line_dual_side 只能提交 sideMode、stagger、widthClass。",
+  anyOf: [
+    strictObject({
+      clusterShape: {
+        type: "string", enum: ["ORGANIC_COMPACT", "GRID", "COURTYARD", "L_SHAPE", "U_SHAPE"],
+        description: "仅用于解析为 compound_cluster 的算法。",
+      },
+    }, []),
+    strictObject({
+      sideMode: { type: "string", enum: ["LEFT", "RIGHT", "BOTH"], description: "仅用于 guide_line_dual_side。" },
+      stagger: { type: "boolean", description: "仅用于 guide_line_dual_side。" },
+      widthClass: { type: "string", enum: ["NARROW", "MEDIUM", "WIDE"], description: "仅用于 guide_line_dual_side。" },
+    }, []),
+  ],
+};
+
 const cityBlueprintSchema = strictObject({
   schema: { type: "string", enum: ["city_blueprint"] },
   cityId: nonEmptyString("必须与冻结上下文一致。"),
@@ -539,15 +557,10 @@ const cityBlueprintSchema = strictObject({
       fillPoolRef: nonEmptyString("冻结 fill pool 引用。"),
       connectionPlan: strictObject({
         structurePoolRef: nonEmptyString("连接阵列使用的 fill pool；缺省时继承 fillPoolRef。"),
-        algorithmProfileRef: nonEmptyString("连接阵列算法 profile；缺省时继承 Group algorithmProfileRef。"),
+        algorithmProfileRef: nonEmptyString("连接阵列算法 profile；缺省时继承 Group algorithmProfileRef。提交 parameters 前必须从 Context catalog 确认解析后的 planner family。"),
         densityClass: { type: "string", enum: ["SPARSE", "BALANCED", "DENSE"],
           description: "连接阵列疏密；缺省时继承 Group densityClass。" },
-        parameters: strictObject({
-          clusterShape: { type: "string", enum: ["ORGANIC_COMPACT", "GRID", "COURTYARD", "L_SHAPE", "U_SHAPE"] },
-          sideMode: { type: "string", enum: ["LEFT", "RIGHT", "BOTH"] },
-          stagger: { type: "boolean" },
-          widthClass: { type: "string", enum: ["NARROW", "MEDIUM", "WIDE"] },
-        }, []),
+        parameters: connectionPlanParametersSchema,
       }, []),
       compositionProfileRef: nonEmptyString("冻结 composition profile 引用，只控制结构组成顺序，不限制数量。"),
       attachedFeatures: { type: "array", maxItems: 0, description: "案子 04 前必须为空。" },
@@ -1068,7 +1081,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_submit_d4_blueprint",
-    description: "正式 AI 边界：提交包含结构与户外意图的完整 CityBlueprint revision；AI 必须明确选择核心/填充建筑、阵列关系和景观占比。提交校验拒绝不增加 failureCount；D4 编译失败且 failureCount<5 时，只依据工具响应和返回 artifacts 修正后用同一 contextId 重提。禁止读取服务端源码、项目文档或原始 run 文件寻找答案。",
+    description: "正式 AI 边界：提交包含结构与户外意图的完整 CityBlueprint revision；AI 必须明确选择核心/填充建筑、阵列关系和景观占比。connectionPlan.parameters 必须按 planner family 二选一：compound_cluster 仅 clusterShape，guide_line_dual_side 仅 sideMode/stagger/widthClass，严禁混填。提交校验拒绝不增加 failureCount；D4 编译失败且 failureCount<5 时，只依据工具响应和返回 artifacts 修正后用同一 contextId 重提。禁止读取服务端源码、项目文档或原始 run 文件寻找答案。",
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: {

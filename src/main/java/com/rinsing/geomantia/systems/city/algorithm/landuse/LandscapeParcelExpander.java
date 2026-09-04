@@ -114,8 +114,16 @@ public final class LandscapeParcelExpander {
                 completedByGroup.put(state.group.groupId(), state);
                 continue;
             }
-            RelaySeed relaySeed = relaySeed(state, completedByGroup, claims, planningBounds,
-                    terrainIndex, obstacles, parentParcelIds == null ? Map.of() : parentParcelIds);
+            RelaySeed relaySeed;
+            try {
+                relaySeed = relaySeed(state, completedByGroup, claims, planningBounds,
+                        terrainIndex, obstacles, parentParcelIds == null ? Map.of() : parentParcelIds);
+            } catch (IllegalArgumentException failure) {
+                if (!isRelayAdmissionFailure(failure)) throw failure;
+                state.exhausted = true;
+                completedByGroup.put(state.group.groupId(), state);
+                continue;
+            }
             BlockPoint seed = relaySeed.start();
             if (relaySeed.roadGap() != null) obstacles.add(relaySeed.roadGap());
             if (!planningBounds.contains(seed.x(), seed.z()) || obstacles.contains(seed)
@@ -158,6 +166,12 @@ public final class LandscapeParcelExpander {
         return new LandUseExpansionResult(claims, groupCounts, regionCounts, effectiveSeedsByGroup,
                 expansionOriginsByGroup,
                 counters.contested, counters.blocked);
+    }
+
+    private static boolean isRelayAdmissionFailure(IllegalArgumentException failure) {
+        String message = failure.getMessage();
+        return message != null && (message.startsWith("CITY_LANDSCAPE_PARENT_PARCEL_UNAVAILABLE:")
+                || message.startsWith("CITY_LANDSCAPE_PARENT_INTERFACE_EXHAUSTED:"));
     }
 
     private static RelaySeed relaySeed(RegionState state, Map<String, RegionState> completed,

@@ -465,8 +465,7 @@ public final class CityOutdoorBlueprintCompiler {
                         combinedParcels(occupiedParcels, result), 0, parcelRadius)
                         : frozenCapacitySeed(parcelId, capacity, capacitySeeds);
                 if (seed == null) {
-                    warnings.add("skipped_insufficient_space:" + instanceId);
-                    instance.clear();
+                    warnings.add("skipped_insufficient_space:" + parcelId);
                     break;
                 }
                 usedSeeds.add(seed);

@@ -26,13 +26,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class LandUsePlanningServiceTest {
     @Test
-    void requiredLandscapeCapacityUsesNinetyPercentCeiling() {
-        assertEquals(778, LandUsePlanningService.minimumRequiredLandscapeCapacity(864));
-        assertTrue(850 >= LandUsePlanningService.minimumRequiredLandscapeCapacity(864));
-        assertFalse(777 >= LandUsePlanningService.minimumRequiredLandscapeCapacity(864));
-    }
-
-    @Test
     void lockedD6PlanProducesDeterministicBlockAreasAndTemplateCorridor() {
         JsonObject d6 = d6Plan();
         LandUseTerrainField terrain = terrain();

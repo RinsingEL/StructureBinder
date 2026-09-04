@@ -85,7 +85,7 @@ public final class PlanningAreaAccessRuntime {
             Path serverDirectory = server.getServerDirectory().toPath().toAbsolutePath().normalize();
             this.configPath = serverDirectory.resolve("config").resolve("geomantia")
                     .resolve("planning_area_access.json");
-            this.debugRoot = serverDirectory.resolve("realm_debug");
+            this.debugRoot = WorldScopedPlanningPaths.realmDebugRoot(server);
         }
 
         private PlanningAreaAccessPolicy.Decision evaluate(ServerPlayer player, double blockX, double blockZ) {

@@ -282,6 +282,47 @@ class CityOutdoorBlueprintCompilerTest {
                 == LandUseSeedGroup.AdmissionPolicy.OPTIONAL).count());
     }
 
+    @Test
+    void freeStandingOptionalLandscapeKeepsEarlierParcelWhenLaterSeedIsUnavailable() {
+        CityBlueprint source = blueprint();
+        CityBlueprint.Landscape first = source.outdoorPlan().landscapes().get(0);
+        CityBlueprint.Landscape optional = new CityBlueprint.Landscape("orchard", first.landscapeProfileRef(),
+                CityBlueprint.LandscapePurpose.AMBIENT, CityBlueprint.LandscapeOriginMode.FREE_STANDING,
+                null, CityBlueprint.LandscapePlacementDomain.URBAN_RESIDUAL, 1,
+                2, first.preferredPatchRefs(), first.terrainPolicy(), false,
+                first.fillSelection());
+        CityBlueprint.OutdoorPlan outdoor = new CityBlueprint.OutdoorPlan(source.outdoorPlan().mode(),
+                source.outdoorPlan().envelopeProfile(), source.outdoorPlan().foundationProfileRef(),
+                source.outdoorPlan().spatialGrounds(), List.of(first, optional));
+        CityBlueprint expanded = new CityBlueprint(source.schema(), source.cityId(), source.sourceD3Ref(),
+                source.catalogSnapshotRef(), source.generationSeed(), source.designIntent(), source.styleProfile(),
+                source.groups(), source.arrayCompositions(), source.relations(), source.roadProfile(),
+                source.surfaceDetailProfile(), outdoor);
+        JsonObject d6 = d6Plan();
+        JsonObject capacity = capacity(expanded, d6);
+        CityOutdoorBlueprintCompiler compiler = new CityOutdoorBlueprintCompiler();
+        CityOutdoorBlueprintCompiler.Result open = compiler.compile(expanded, d6, terrain(), catalog(), capacity);
+        BlockPoint firstOptionalSeed = open.resolution().seedGroups().stream()
+                .filter(group -> group.admissionPolicy() == LandUseSeedGroup.AdmissionPolicy.OPTIONAL)
+                .findFirst().orElseThrow().seedPoints().get(0);
+        LandUseTerrainField fullTerrain = terrain();
+        LandUseTerrainField.Cell onlyAvailableCell = fullTerrain.cells().stream()
+                .filter(cell -> cell.contains(firstOptionalSeed.x(), firstOptionalSeed.z()))
+                .findFirst().orElseThrow();
+        LandUseTerrainField constrained = new LandUseTerrainField(LandUseTerrainField.SCHEMA, "city",
+                fullTerrain.planningBounds(), fullTerrain.cellStepBlocks(), List.of(onlyAvailableCell));
+
+        CityOutdoorBlueprintCompiler.Result reduced = compiler.compile(
+                expanded, d6, constrained, catalog(), capacity);
+        List<LandUseSeedGroup> optionalParcels = reduced.resolution().seedGroups().stream()
+                .filter(group -> group.admissionPolicy() == LandUseSeedGroup.AdmissionPolicy.OPTIONAL).toList();
+
+        assertEquals(1, optionalParcels.size());
+        assertTrue(optionalParcels.get(0).groupId().endsWith("::parcel_01"));
+        assertTrue(reduced.resolution().warnings().stream().anyMatch(warning ->
+                warning.equals("skipped_insufficient_space:orchard::instance_01::parcel_02")));
+    }
+
     private static void assertParcelRadiiDoNotOverlap(List<LandUseSeedGroup> parcels) {
         for (int left = 0; left < parcels.size(); left++) {
             LandUseSeedGroup a = parcels.get(left);

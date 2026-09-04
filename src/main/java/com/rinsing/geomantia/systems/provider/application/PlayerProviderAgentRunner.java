@@ -24,13 +24,15 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
     private static final int MAX_CONSECUTIVE_NO_PROGRESS = 3;
 
     private final ProviderConfigStore store;
-    private final DeepSeekToolLoopClient agentClient;
+    private final ProviderAgentClient legacyClient;
+    private final ProviderAgentClient hermesClient;
     private final Consumer<AutomationStatus> statusListener;
     private final Consumer<AgentActivityEvent> activityListener;
     private final AtomicBoolean turnRunning = new AtomicBoolean();
     private volatile ScheduledExecutorService scheduler;
     private volatile ProviderPlanningDiscovery discovery;
     private volatile Path serverDirectory;
+    private volatile Path debugRoot;
     private volatile int apiPort;
     private volatile long retryAfterEpochSecond;
     private volatile String lastCompletedIdentity = "";
@@ -41,23 +43,38 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
 
     public PlayerProviderAgentRunner(ProviderConfigStore store, DeepSeekToolLoopClient agentClient,
                                      Consumer<AutomationStatus> statusListener) {
-        this(store, agentClient, statusListener, ignored -> { });
+        this(store, agentClient, agentClient, statusListener, ignored -> { });
     }
 
     public PlayerProviderAgentRunner(ProviderConfigStore store, DeepSeekToolLoopClient agentClient,
                                      Consumer<AutomationStatus> statusListener,
                                      Consumer<AgentActivityEvent> activityListener) {
+        this(store, agentClient, agentClient, statusListener, activityListener);
+    }
+
+    PlayerProviderAgentRunner(ProviderConfigStore store, ProviderAgentClient legacyClient,
+                              ProviderAgentClient hermesClient,
+                              Consumer<AutomationStatus> statusListener,
+                              Consumer<AgentActivityEvent> activityListener) {
         this.store = Objects.requireNonNull(store, "store");
-        this.agentClient = Objects.requireNonNull(agentClient, "agentClient");
+        this.legacyClient = Objects.requireNonNull(legacyClient, "legacyClient");
+        this.hermesClient = Objects.requireNonNull(hermesClient, "hermesClient");
         this.statusListener = Objects.requireNonNull(statusListener, "statusListener");
         this.activityListener = Objects.requireNonNull(activityListener, "activityListener");
     }
 
     public synchronized void start(Path serverDirectory, int apiPort, long worldSeed) {
+        start(serverDirectory, serverDirectory.resolve("realm_debug"), apiPort, worldSeed);
+    }
+
+    public synchronized void start(Path serverDirectory, Path debugRoot, int apiPort, long worldSeed) {
         close();
         this.serverDirectory = serverDirectory.toAbsolutePath().normalize();
+        this.debugRoot = debugRoot.toAbsolutePath().normalize();
         this.apiPort = apiPort;
-        this.discovery = new ProviderPlanningDiscovery(this.serverDirectory.resolve("realm_debug"), worldSeed);
+        this.discovery = new ProviderPlanningDiscovery(this.debugRoot, worldSeed);
+        legacyClient.start(this.serverDirectory, this.debugRoot, apiPort);
+        if (hermesClient != legacyClient) hermesClient.start(this.serverDirectory, this.debugRoot, apiPort);
         this.lastCompletedIdentity = "";
         this.haltedIdentity = "";
         resetNoProgress();
@@ -99,7 +116,7 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
 
     private void tick() throws IOException {
         ProviderPlanningDiscovery currentDiscovery = discovery;
-        if (currentDiscovery == null || serverDirectory == null || turnRunning.get()) return;
+        if (currentDiscovery == null || serverDirectory == null || debugRoot == null || turnRunning.get()) return;
         PlayerProviderConfig config = store.load();
         if (!config.enabled()) {
             updateIfChanged(new AutomationStatus("disabled", "", "", "", "", Instant.now().toString()));
@@ -128,9 +145,12 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
                 + "，下一步 " + run.nextAction());
         try {
             ProviderPlanningToolGateway gateway = ProviderPlanningToolGateway.forStep(
-                    apiPort, serverDirectory, run);
-            DeepSeekToolLoopClient.LoopResult result = agentClient.run(config, credentials,
-                    run.state(), run.initialImages(), toolsFor(run.stage()), gateway, this::recordLoopActivity);
+                    apiPort, serverDirectory, debugRoot, run);
+            ProviderAgentClient client = PlayerProviderConfig.HERMES.equals(config.agentRuntime())
+                    ? hermesClient : legacyClient;
+            DeepSeekToolLoopClient.LoopResult result = client.run(config, credentials,
+                    sessionId(debugRoot, run), run.state(), run.initialImages(), toolsFor(run.stage()), gateway,
+                    this::recordLoopActivity);
             if (result.success()) {
                 acceptSuccessfulTurnOnlyAfterStateProgress(currentDiscovery, run);
             } else {
@@ -201,6 +221,18 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
         return "";
     }
 
+    static String sessionId(Path debugRoot, ProviderPlanningDiscovery.PlanningStep step) {
+        String world = Integer.toUnsignedString(debugRoot.toAbsolutePath().normalize().toString().hashCode(), 36);
+        String scope = !step.citySeedId().isBlank() ? step.citySeedId()
+                : !step.realmId().isBlank() ? step.realmId() : "world";
+        return sanitize("geomantia-" + world + "-" + step.runId() + "-" + scope);
+    }
+
+    private static String sanitize(String value) {
+        String result = value.replaceAll("[^A-Za-z0-9._-]", "-");
+        return result.length() <= 200 ? result : result.substring(0, 200);
+    }
+
     private int recordNoProgress(String identity) {
         if (!identity.equals(noProgressIdentity)) {
             noProgressIdentity = identity;
@@ -214,7 +246,7 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
         consecutiveNoProgress = 0;
     }
 
-    private static List<String> toolsFor(ProviderPlanningDiscovery.Stage stage) {
+    static List<String> toolsFor(ProviderPlanningDiscovery.Stage stage) {
         return switch (stage) {
             case W -> List.of("realm_w_refresh");
             case T1 -> List.of("realm_t1_prepare");
@@ -229,7 +261,7 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
             case CITY -> List.of("city_design_queue_status", "city_plan_d3", "city_review_d3_site",
                     "patch_explorer_open", "patch_explorer_show_candidates",
                     "city_prepare_d4_blueprint_context", "city_submit_d4_blueprint",
-                    "city_post_d4_auto_compile_status", "city_post_d4_auto_compile_retry");
+                    "city_post_d4_auto_compile_retry");
             case WAITING, COMPLETE -> List.of();
         };
     }
@@ -252,8 +284,11 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
         scheduler = null;
         discovery = null;
         serverDirectory = null;
+        debugRoot = null;
         turnRunning.set(false);
         if (current != null) current.shutdownNow();
+        legacyClient.close();
+        if (hermesClient != legacyClient) hermesClient.close();
     }
 
     public record AutomationStatus(String state, String message, String runId, String citySeedId,

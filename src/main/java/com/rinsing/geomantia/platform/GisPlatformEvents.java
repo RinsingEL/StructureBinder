@@ -155,11 +155,11 @@ public final class GisPlatformEvents {
     }
 
     private static Path debugRoot(MinecraftServer server) {
-        return server.getServerDirectory().toPath().resolve("gis_debug");
+        return WorldScopedPlanningPaths.gisDebugRoot(server);
     }
 
     private static Path realmDebugRoot(MinecraftServer server) {
-        return server.getServerDirectory().toPath().resolve("realm_debug");
+        return WorldScopedPlanningPaths.realmDebugRoot(server);
     }
 
     private static Path worldSurveySettingsConfigPath(MinecraftServer server) {

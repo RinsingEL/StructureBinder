@@ -91,6 +91,32 @@ class CityDesignQueueTest {
     }
 
     @Test
+    void routesRetryableBlueprintFailureBackToRevisionSubmission() throws Exception {
+        CityDesignQueue queue = queue();
+        writeRegistry("run_revision", seed("city_1", "realm_a", "capital", 4000, 0));
+        queue.refresh("run_revision", "global_radial");
+
+        JsonObject post = postState("run_revision", "city_1", "needs_agent");
+        JsonObject workflowResponse = new JsonObject();
+        JsonObject workflowReport = new JsonObject();
+        JsonArray steps = new JsonArray();
+        JsonObject failedStep = new JsonObject();
+        failedStep.addProperty("name", "city_compile_d4_blueprint");
+        failedStep.addProperty("ok", false);
+        failedStep.addProperty("retryAllowed", true);
+        failedStep.addProperty("nextAction", "city_submit_d4_blueprint");
+        steps.add(failedStep);
+        workflowReport.add("steps", steps);
+        workflowResponse.add("workflowReport", workflowReport);
+        post.add("workflowResponse", workflowResponse);
+
+        queue.onPostD4State(post);
+        JsonObject state = queue.status("run_revision");
+        assertEquals("needs_agent", state.get("status").getAsString());
+        assertEquals("city_submit_d4_blueprint", state.get("nextAction").getAsString());
+    }
+
+    @Test
     void exposesMandatoryPatchReviewBetweenD3AndBlueprintPreparation() throws Exception {
         CityDesignQueue queue = queue();
         writeRegistry("run_review", seed("city_1", "realm_a", "capital", 4000, 0));

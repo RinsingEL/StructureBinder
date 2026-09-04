@@ -35,6 +35,7 @@ public final class PlayerProviderService {
         this.tester = tester;
         this.client = client;
         this.agentRunner = new PlayerProviderAgentRunner(store, new DeepSeekToolLoopClient(),
+                new HermesAgentClient(),
                 ignored -> { }, this::recordActivity);
         this.executor = Executors.newSingleThreadExecutor(runnable -> {
             Thread thread = new Thread(runnable, "Geomantia-Player-Provider");
@@ -48,7 +49,14 @@ public final class PlayerProviderService {
     }
 
     public void startAutomation(Path serverDirectory, int apiPort, long worldSeed) {
-        agentRunner.start(serverDirectory, apiPort, worldSeed);
+        startAutomation(serverDirectory, serverDirectory.resolve("realm_debug"), apiPort, worldSeed);
+    }
+
+    public void startAutomation(Path serverDirectory, Path debugRoot, int apiPort, long worldSeed) {
+        synchronized (activityEvents) {
+            activityEvents.clear();
+        }
+        agentRunner.start(serverDirectory, debugRoot, apiPort, worldSeed);
     }
 
     public void stopAutomation() {
@@ -133,7 +141,8 @@ public final class PlayerProviderService {
     private ProviderSettingsSnapshot deniedSnapshot() {
         ProviderSettingsSnapshot value = snapshot(false);
         return new ProviderSettingsSnapshot(value.providerKind(), value.enabled(), value.baseUrl(),
-                value.model(), value.timeoutSeconds(), value.hasApiKey(), value.apiKeySource(),
+                value.model(), value.apiProtocol(), value.timeoutSeconds(), value.agentRuntime(),
+                value.hasApiKey(), value.apiKeySource(),
                 false, "forbidden", "PROVIDER_ADMIN_REQUIRED", value.automationState(),
                 value.automationMessage(), value.activeRunId(), value.activeCitySeedId(), value.activeTool());
     }
@@ -142,7 +151,8 @@ public final class PlayerProviderService {
                                               boolean editable, String state, String message) {
         PlayerProviderAgentRunner.AutomationStatus automation = agentRunner.status();
         return new ProviderSettingsSnapshot(config.providerKind(), config.enabled(), config.baseUrl(),
-                config.model(), config.timeoutSeconds(), credentials.present(), credentials.source(),
+                config.model(), config.apiProtocol(), config.timeoutSeconds(), config.agentRuntime(),
+                credentials.present(), credentials.source(),
                 editable, state, message, automation.state(), automation.message(), automation.runId(),
                 automation.citySeedId(), automation.activeTool());
     }

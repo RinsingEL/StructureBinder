@@ -32,7 +32,7 @@ public final class RealmPlanningServices {
             var serverDirectory = server.getServerDirectory().toPath();
             PlanningAreaAccessConfig config = PlanningAreaAccessConfig.loadOrCreate(serverDirectory
                     .resolve("config").resolve("geomantia").resolve("planning_area_access.json"));
-            return new RealmPlanningService(serverDirectory.resolve("realm_debug"), config);
+            return new RealmPlanningService(WorldScopedPlanningPaths.realmDebugRoot(server), config);
         } catch (IOException exception) {
             throw new IllegalStateException("Failed to load planning area access config", exception);
         }

@@ -22,7 +22,6 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class LandscapeParcelExpanderTest {
@@ -154,7 +153,7 @@ class LandscapeParcelExpanderTest {
     }
 
     @Test
-    void declaredParentCannotFallBackToConfiguredSeedWhenItsInterfaceIsUnavailable() {
+    void unavailableDeclaredParentInterfaceKeepsEarlierParcelAndSkipsChild() {
         LandUseTerrainField terrain = flatTerrain();
         String rootId = "fields::instance_01::parcel_01";
         String childId = "fields::instance_01::parcel_02";
@@ -166,13 +165,14 @@ class LandscapeParcelExpanderTest {
                 childId, Set.of(new BlockPoint(20, 20), new BlockPoint(21, 20),
                         new BlockPoint(20, 21), new BlockPoint(21, 21)));
 
-        IllegalArgumentException failure = assertThrows(IllegalArgumentException.class,
-                () -> new LandscapeParcelExpander().expand("city_test", terrain.planningBounds(), terrain,
-                        List.of(root, child), "no-fallback", Set.of(), domains,
-                        Map.of(rootId, "", childId, rootId)));
+        LandUseExpansionResult result = new LandscapeParcelExpander().expand("city_test",
+                terrain.planningBounds(), terrain, List.of(root, child), "no-fallback", Set.of(), domains,
+                Map.of(rootId, "", childId, rootId));
 
-        assertEquals("CITY_LANDSCAPE_PARENT_INTERFACE_EXHAUSTED:" + childId + ':' + rootId,
-                failure.getMessage());
+        assertEquals(4, result.claimedBlocksByGroup().get(rootId));
+        assertEquals(0, result.claimedBlocksByGroup().get(childId));
+        assertEquals(4, result.claims().size());
+        assertTrue(result.claims().keySet().stream().noneMatch(domains.get(childId)::contains));
     }
 
     @Test

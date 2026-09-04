@@ -53,10 +53,19 @@ test("publishes the program-only context tool and retryable structure plus outdo
   assert.deepEqual(submit.inputSchema.properties.cityBlueprint.properties.schema.enum,
     ["city_blueprint"]);
   assert.equal(groupProperties.connectionPlan.additionalProperties, false);
-  assert.deepEqual(groupProperties.connectionPlan.properties.parameters.properties.sideMode.enum,
+  const connectionParameters = groupProperties.connectionPlan.properties.parameters;
+  assert.match(connectionParameters.description, /严禁混填/);
+  assert.equal(connectionParameters.anyOf.length, 2);
+  assert.equal(connectionParameters.anyOf[0].additionalProperties, false);
+  assert.deepEqual(connectionParameters.anyOf[0].properties.clusterShape.enum,
+    ["ORGANIC_COMPACT", "GRID", "COURTYARD", "L_SHAPE", "U_SHAPE"]);
+  assert.equal(connectionParameters.anyOf[1].additionalProperties, false);
+  assert.deepEqual(connectionParameters.anyOf[1].properties.sideMode.enum,
     ["LEFT", "RIGHT", "BOTH"]);
-  assert.deepEqual(groupProperties.connectionPlan.properties.parameters.properties.widthClass.enum,
+  assert.deepEqual(connectionParameters.anyOf[1].properties.widthClass.enum,
     ["NARROW", "MEDIUM", "WIDE"]);
+  assert.equal(connectionParameters.anyOf[0].properties.sideMode, undefined);
+  assert.equal(connectionParameters.anyOf[1].properties.clusterShape, undefined);
   assert.equal(submit.inputSchema.properties.cityBlueprint.properties.groups.items
     .properties.attachedFeatures.maxItems, 0);
 

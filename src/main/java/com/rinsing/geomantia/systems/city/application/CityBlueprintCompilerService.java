@@ -552,14 +552,27 @@ public final class CityBlueprintCompilerService {
                                                     CityArrayVisualQualityGate.Result visualQuality,
                                                     JsonObject streetFirstNetworkTrace) {
         JsonArray hardBlocks = new JsonArray();
+        Set<String> trafficGroupIds = states.values().stream()
+                .filter(state -> state.group().groupKind() == CityBlueprint.GroupKind.STRUCTURE)
+                .filter(state -> state.group().expansionPolicy().allowRelationConnection())
+                .map(state -> state.group().groupId())
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
         Set<String> relatedGroupIds = new LinkedHashSet<>();
         blueprint.relations().forEach(relation -> {
             relatedGroupIds.add(relation.fromGroupId());
             relatedGroupIds.add(relation.toGroupId());
         });
-        boolean graphConnected = !states.isEmpty()
-                && states.values().stream().allMatch(state -> state.anchorCount() > 0)
-                && connectivityPlan.connected(states.keySet());
+        boolean graphConnected = !trafficGroupIds.isEmpty()
+                && trafficGroupIds.stream().allMatch(groupId -> states.get(groupId).anchorCount() > 0)
+                && connectivityPlan.connected(trafficGroupIds);
+        long trafficConnectionCount = blueprint.relations().stream()
+                .filter(relation -> relation.relationKind() == CityBlueprint.RelationKind.CONNECTION)
+                .filter(relation -> trafficGroupIds.contains(relation.fromGroupId())
+                        && trafficGroupIds.contains(relation.toGroupId()))
+                .count();
+        if (trafficGroupIds.size() > 1 && trafficConnectionCount == 0) {
+            hardBlocks.add("CITY_MAIN_ROAD_CONNECTION_REQUIRED trafficGroups=" + trafficGroupIds.size());
+        }
         if (states.size() > 1) states.values().stream()
                 .filter(state -> state.group().expansionPolicy().allowRelationConnection())
                 .filter(state -> !relatedGroupIds.contains(state.group().groupId()))
@@ -568,8 +581,14 @@ public final class CityBlueprintCompilerService {
         JsonArray warnings = new JsonArray();
         connectivityPlan.links.stream()
                 .filter(link -> !link.satisfied())
-                .forEach(link -> warnings.add(link.describe()
-                        + ": CONNECTION_SKIPPED_TERRAIN_BLOCKED status=" + link.status));
+                .forEach(link -> {
+                    String message = link.describe() + ": CONNECTION_SKIPPED_TERRAIN_BLOCKED status=" + link.status;
+                    if (link.required) hardBlocks.add(message);
+                    else warnings.add(message);
+                });
+        if (trafficGroupIds.size() > 1 && !graphConnected) {
+            hardBlocks.add("STRUCTURE_RELATION_GRAPH_DISCONNECTED trafficGroups=" + trafficGroupIds.size());
+        }
         states.values().stream()
                 .filter(state -> state.anchorCount() == 0)
                 .forEach(state -> hardBlocks.add(state.group().groupId() + ": FUNCTION_AREA_EMPTY"));
@@ -580,24 +599,26 @@ public final class CityBlueprintCompilerService {
         states.values().forEach(state -> state.missingRequiredStructures().forEach(gap -> {
             String message = state.group().groupId() + ": REQUIRED_STRUCTURE_MISSING structureRef="
                     + gap.structureRef() + " missingCount=" + gap.missingCount();
-            if (state.group().priority() == CityBlueprint.GroupPriority.CORE) hardBlocks.add(message);
-            else warnings.add(message);
+            hardBlocks.add(message);
         }));
         JsonArray streetAccessOutcomes = array(streetFirstNetworkTrace, "accessOutcomes");
         streetAccessOutcomes.asList().stream()
                 .map(JsonElement::getAsJsonObject)
                 .filter(outcome -> "UNRESOLVED".equals(string(outcome, "status")))
-                .forEach(outcome -> warnings.add(string(outcome, "entranceId")
+                .forEach(outcome -> hardBlocks.add(string(outcome, "entranceId")
                         + ": STREET_ENTRANCE_UNRESOLVED reasonCode="
                         + string(outcome, "reasonCode")));
-        visualQuality.hardBlocks().forEach(warnings::add);
+        visualQuality.hardBlocks().forEach(hardBlocks::add);
 
         JsonObject acceptance = new JsonObject();
         acceptance.addProperty("passed", hardBlocks.isEmpty());
         acceptance.addProperty("previewCompiled", true);
-        acceptance.addProperty("requiredRelationCount", connectivityPlan.links.size());
+        acceptance.addProperty("trafficGroupCount", trafficGroupIds.size());
+        acceptance.addProperty("trafficConnectionCount", trafficConnectionCount);
+        acceptance.addProperty("requiredRelationCount", connectivityPlan.links.stream()
+                .filter(link -> link.required).count());
         acceptance.addProperty("requiredRelationsSatisfied", connectivityPlan.links.stream()
-                .allMatch(ConnectivityLink::satisfied));
+                .filter(link -> link.required).allMatch(ConnectivityLink::satisfied));
         acceptance.addProperty("structureGraphConnected", graphConnected);
         acceptance.addProperty("allFunctionAreasFormed",
                 states.values().stream().allMatch(state -> state.anchorCount() > 0));
@@ -2161,7 +2182,8 @@ public final class CityBlueprintCompilerService {
                 continue;
             }
             links.add(new ConnectivityLink(from.group().groupId(), to.group().groupId(),
-                    "EXPLICIT", relation.relationKind().name(), handoffThreshold(from, to),
+                    "EXPLICIT", relation.relationKind().name(),
+                    relation.strength() == CityBlueprint.RelationStrength.HARD, handoffThreshold(from, to),
                     nearestGap(from, to)));
         }
 
@@ -4478,7 +4500,7 @@ public final class CityBlueprintCompilerService {
         JsonObject asJson() {
             JsonObject value = new JsonObject();
             value.addProperty("topologyPolicy", "EXPLICIT_RELATIONS_ONLY_NO_UNRELATED_FALLBACK");
-            value.addProperty("blockedEdgePolicy", "SKIP_WITH_WARNING");
+            value.addProperty("blockedEdgePolicy", "HARD_RELATION_FAILS_ACCEPTANCE_SOFT_RELATION_WARNS");
             value.addProperty("handoffThresholdPolicy", "STRICT_BILATERAL_MINIMUM");
             value.addProperty("edgeCount", links.size());
             JsonArray edges = new JsonArray();
@@ -4499,7 +4521,8 @@ public final class CityBlueprintCompilerService {
             if (groupIds.isEmpty()) return false;
             Components components = new Components(groupIds);
             links.forEach(link -> {
-                if (link.satisfied()) {
+                if (link.satisfied() && groupIds.contains(link.fromGroupId)
+                        && groupIds.contains(link.toGroupId)) {
                     components.union(link.fromGroupId, link.toGroupId);
                 }
             });
@@ -4537,6 +4560,7 @@ public final class CityBlueprintCompilerService {
         private final String toGroupId;
         private final String source;
         private final String sourceReason;
+        private final boolean required;
         private final int handoffGapBlocks;
         private final double initialGapBlocks;
         private double finalGapBlocks;
@@ -4546,12 +4570,13 @@ public final class CityBlueprintCompilerService {
         private ConnectionEdge connectionEdge;
 
         private ConnectivityLink(String fromGroupId, String toGroupId, String source,
-                                 String sourceReason, int handoffGapBlocks,
+                                 String sourceReason, boolean required, int handoffGapBlocks,
                                  double initialGapBlocks) {
             this.fromGroupId = fromGroupId;
             this.toGroupId = toGroupId;
             this.source = source;
             this.sourceReason = sourceReason;
+            this.required = required;
             this.handoffGapBlocks = handoffGapBlocks;
             this.initialGapBlocks = initialGapBlocks;
             this.finalGapBlocks = initialGapBlocks;
@@ -4595,6 +4620,7 @@ public final class CityBlueprintCompilerService {
             value.addProperty("toGroupId", toGroupId);
             value.addProperty("topologySource", source);
             value.addProperty("topologyReason", sourceReason);
+            value.addProperty("required", required);
             value.addProperty("handoffGapBlocks", handoffGapBlocks);
             return value;
         }

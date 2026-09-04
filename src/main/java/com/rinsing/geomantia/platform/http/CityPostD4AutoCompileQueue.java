@@ -121,10 +121,14 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
             JsonObject response = runner.run(key.runId, key.citySeedId);
             String workflowStatus = stringValue(response, "status", "");
             boolean ready = "waiting_for_generation".equals(workflowStatus);
+            String recoveryAction = ready ? "" : recoveryAction(response);
+            boolean blueprintRevisionRequired = "city_submit_d4_blueprint".equals(recoveryAction);
             JsonObject finished = state(key, ready ? "waiting_for_generation" : "needs_agent",
-                    ready ? "WAITING_FOR_GENERATION" : "POST_D4_WORKFLOW_UNEXPECTED_STATUS", attempt);
+                    ready ? "WAITING_FOR_GENERATION" : blueprintRevisionRequired
+                            ? "D4_BLUEPRINT_REVISION_REQUIRED" : "POST_D4_WORKFLOW_UNEXPECTED_STATUS", attempt);
             finished.addProperty("workflowStatus", workflowStatus);
             finished.addProperty("ok", booleanValue(response, "ok", false));
+            if (!recoveryAction.isBlank()) finished.addProperty("nextAction", recoveryAction);
             if (response.has("artifacts")) {
                 finished.add("artifacts", response.get("artifacts").deepCopy());
             }
@@ -148,6 +152,24 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
         }
     }
 
+    private static String recoveryAction(JsonObject response) {
+        JsonObject workflowReport = object(response, "workflowReport");
+        if (workflowReport == null || !workflowReport.has("steps")
+                || !workflowReport.get("steps").isJsonArray()) {
+            return "city_post_d4_auto_compile_retry";
+        }
+        var steps = workflowReport.getAsJsonArray("steps");
+        for (int index = steps.size() - 1; index >= 0; index--) {
+            if (!steps.get(index).isJsonObject()) continue;
+            JsonObject step = steps.get(index).getAsJsonObject();
+            if (booleanValue(step, "ok", true)) continue;
+            String nextAction = stringValue(step, "nextAction", "");
+            return "city_submit_d4_blueprint".equals(nextAction)
+                    ? nextAction : "city_post_d4_auto_compile_retry";
+        }
+        return "city_post_d4_auto_compile_retry";
+    }
+
     private void recoverIncompleteJobs() {
         if (!Files.isDirectory(debugRoot)) return;
         try (var runs = Files.list(debugRoot)) {
@@ -159,7 +181,10 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
                         try {
                             JsonObject state = JsonParser.parseString(Files.readString(path)).getAsJsonObject();
                             String status = stringValue(state, "status", "");
-                            if (!"queued".equals(status) && !"running".equals(status)) return;
+                            if (!"queued".equals(status) && !"running".equals(status)) {
+                                stateListener.onState(state.deepCopy());
+                                return;
+                            }
                             JobKey key = JobKey.of(stringValue(state, "runId", ""),
                                     stringValue(state, "citySeedId", ""));
                             if (active.putIfAbsent(key, Boolean.TRUE) == null) {

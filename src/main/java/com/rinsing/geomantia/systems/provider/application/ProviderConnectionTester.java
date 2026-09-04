@@ -13,6 +13,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 
 public final class ProviderConnectionTester {
+    private static final int PROBE_MAX_OUTPUT_TOKENS = 16;
     private static final String PROBE_IMAGE =
             "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAdSURBVDhPY0iZ+vY/JZgBXYBUPGrAqAGjBgwWAwBvsOUfyEymUQAAAABJRU5ErkJggg==";
 
@@ -45,11 +46,13 @@ public final class ProviderConnectionTester {
                 return new TestResult("model_missing", true, false, "PROVIDER_MODEL_NOT_AVAILABLE");
             }
 
-            HttpResponse<String> visionResponse = httpClient.send(HttpRequest.newBuilder(endpoint(value, "responses"))
+            String completionPath = PlayerProviderConfig.CHAT_COMPLETIONS.equals(value.apiProtocol())
+                    ? "chat/completions" : "responses";
+            HttpResponse<String> visionResponse = httpClient.send(HttpRequest.newBuilder(endpoint(value, completionPath))
                             .timeout(Duration.ofSeconds(value.timeoutSeconds()))
                             .header("Content-Type", "application/json")
                             .header("Authorization", "Bearer " + credentials.apiKey())
-                            .POST(HttpRequest.BodyPublishers.ofString(visionProbeBody(value.model())))
+                            .POST(HttpRequest.BodyPublishers.ofString(visionProbeBody(value)))
                             .build(), HttpResponse.BodyHandlers.ofString());
             if (visionResponse.statusCode() / 100 == 2) {
                 return new TestResult("connected_multimodal", true, true, "PROVIDER_MULTIMODAL_READY");
@@ -83,7 +86,14 @@ public final class ProviderConnectionTester {
         return URI.create(base + '/' + path);
     }
 
-    private static String visionProbeBody(String model) {
+    private static String visionProbeBody(PlayerProviderConfig config) {
+        if (PlayerProviderConfig.CHAT_COMPLETIONS.equals(config.apiProtocol())) {
+            return chatCompletionsVisionProbeBody(config.model());
+        }
+        return responsesVisionProbeBody(config.model());
+    }
+
+    private static String responsesVisionProbeBody(String model) {
         JsonObject image = new JsonObject();
         image.addProperty("type", "input_image");
         image.addProperty("image_url", PROBE_IMAGE);
@@ -102,7 +112,31 @@ public final class ProviderConnectionTester {
         JsonObject body = new JsonObject();
         body.addProperty("model", model);
         body.add("input", input);
-        body.addProperty("max_output_tokens", 8);
+        body.addProperty("max_output_tokens", PROBE_MAX_OUTPUT_TOKENS);
+        return body.toString();
+    }
+
+    private static String chatCompletionsVisionProbeBody(String model) {
+        JsonObject text = new JsonObject();
+        text.addProperty("type", "text");
+        text.addProperty("text", "Reply only with OK.");
+        JsonObject imageUrl = new JsonObject();
+        imageUrl.addProperty("url", PROBE_IMAGE);
+        JsonObject image = new JsonObject();
+        image.addProperty("type", "image_url");
+        image.add("image_url", imageUrl);
+        com.google.gson.JsonArray content = new com.google.gson.JsonArray();
+        content.add(text);
+        content.add(image);
+        JsonObject message = new JsonObject();
+        message.addProperty("role", "user");
+        message.add("content", content);
+        com.google.gson.JsonArray messages = new com.google.gson.JsonArray();
+        messages.add(message);
+        JsonObject body = new JsonObject();
+        body.addProperty("model", model);
+        body.add("messages", messages);
+        body.addProperty("max_tokens", PROBE_MAX_OUTPUT_TOKENS);
         return body.toString();
     }
 

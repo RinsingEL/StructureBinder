@@ -113,7 +113,14 @@ final class ProviderPlanningToolCatalog {
                     "Submit one complete CityBlueprint using only the returned cityBlueprintContext. Root fields are "
                             + "schema, cityId, sourceD3Ref, catalogSnapshotRef, generationSeed, designIntent, "
                             + "styleProfile, groups, arrayCompositions, relations, roadProfile, surfaceDetailProfile "
-                            + "and outdoorPlan. Use exact catalog refs, reviewed Patch refs and supported enum values. "
+                            + "and outdoorPlan. CONNECTION is the only relation kind that generates a terrain-routed "
+                            + "main road. Connect all non-isolated structure groups into one reachable network and "
+                            + "use CONNECTION for the traffic backbone, especially between distant districts; only "
+                            + "an intentional peripheral outpost may opt out with allowRelationConnection=false. "
+                            + "For connectionPlan.parameters, compound_cluster accepts only clusterShape, while "
+                            + "guide_line_dual_side accepts only sideMode, stagger and widthClass; never combine "
+                            + "the two parameter families. "
+                            + "Use exact catalog refs, reviewed Patch refs and supported enum values. "
                             + "On rejection revise from the returned path/issues; on compile failure respect failureCount.",
                     submitSchema());
             case "city_post_d4_auto_compile_status" -> function(name,
@@ -197,7 +204,10 @@ final class ProviderPlanningToolCatalog {
                 "spaceComposition", object(properties("buildingShare", number(), "landscapeShare", number(),
                         "openSpaceShare", number()), "buildingShare", "landscapeShare", "openSpaceShare"),
                 "expansionPolicy", object(properties("allowOutwardExpansion", bool(),
-                        "allowRelationConnection", bool(), "stopWhenTargetReached", bool()),
+                        "allowRelationConnection", described(bool(),
+                                "Keep true for every normal structure district that must join the city relation and "
+                                        + "road network. False is reserved for an intentionally isolated peripheral "
+                                        + "outpost."), "stopWhenTargetReached", bool()),
                         "allowOutwardExpansion", "allowRelationConnection", "stopWhenTargetReached"),
                 "buildingGreeneryPolicy", object(properties(
                         "coverage", enumeration("NONE", "SPARSE", "BALANCED", "LUSH"),
@@ -219,12 +229,28 @@ final class ProviderPlanningToolCatalog {
 
     private static JsonObject connectionPlanSchema() {
         return object(properties(
-                "structurePoolRef", string(), "algorithmProfileRef", string(),
+                "structurePoolRef", string(), "algorithmProfileRef", described(string(),
+                        "Resolve this catalog profile to its planner family before choosing parameters."),
                 "densityClass", enumeration("SPARSE", "BALANCED", "DENSE"),
-                "parameters", object(properties(
-                        "clusterShape", enumeration("ORGANIC_COMPACT", "GRID", "COURTYARD", "L_SHAPE", "U_SHAPE"),
-                        "sideMode", enumeration("LEFT", "RIGHT", "BOTH"), "stagger", bool(),
-                        "widthClass", enumeration("NARROW", "MEDIUM", "WIDE")))));
+                "parameters", connectionParametersSchema()));
+    }
+
+    private static JsonObject connectionParametersSchema() {
+        JsonObject result = object();
+        result.addProperty("description", "Choose exactly one planner-family shape. compound_cluster permits only "
+                + "clusterShape. guide_line_dual_side permits only sideMode, stagger and widthClass. Never mix them.");
+        JsonArray anyOf = new JsonArray();
+        anyOf.add(object(properties("clusterShape", described(
+                enumeration("ORGANIC_COMPACT", "GRID", "COURTYARD", "L_SHAPE", "U_SHAPE"),
+                "Only for a profile resolved to compound_cluster."))));
+        anyOf.add(object(properties(
+                "sideMode", described(enumeration("LEFT", "RIGHT", "BOTH"),
+                        "Only for a profile resolved to guide_line_dual_side."),
+                "stagger", described(bool(), "Only for guide_line_dual_side."),
+                "widthClass", described(enumeration("NARROW", "MEDIUM", "WIDE"),
+                        "Only for guide_line_dual_side."))));
+        result.add("anyOf", anyOf);
+        return result;
     }
 
     private static JsonObject arrayCompositionSchema() {
@@ -236,7 +262,11 @@ final class ProviderPlanningToolCatalog {
     private static JsonObject relationSchema() {
         return object(properties(
                 "fromGroupId", string(), "toGroupId", string(),
-                "relationKind", enumeration("HIERARCHY", "ADJACENCY", "CONNECTION", "BUFFER", "DISTANCE", "DIRECTION"),
+                "relationKind", described(
+                        enumeration("HIERARCHY", "ADJACENCY", "CONNECTION", "BUFFER", "DISTANCE", "DIRECTION"),
+                        "CONNECTION is the only kind that generates a terrain-routed main road. ADJACENCY and "
+                                + "HIERARCHY may organize compact districts but do not create a road; DISTANCE, "
+                                + "BUFFER and DIRECTION are spatial constraints only."),
                 "strength", enumeration("HARD", "SOFT"),
                 "distancePreference", enumeration("NONE", "NEAR", "FAR"),
                 "directionPreference", enumeration("NONE", "NORTH", "EAST", "SOUTH", "WEST")),
@@ -359,6 +389,11 @@ final class ProviderPlanningToolCatalog {
         for (String value : values) allowed.add(value);
         result.add("enum", allowed);
         return result;
+    }
+
+    private static JsonObject described(JsonObject schema, String description) {
+        schema.addProperty("description", description);
+        return schema;
     }
 
     private static JsonObject typed(String type) {

@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.rinsing.geomantia.GeomantiaMod;
 import com.rinsing.geomantia.client.AdventurerMapClient;
 import com.rinsing.geomantia.platform.RealmPlanningServices;
+import com.rinsing.geomantia.platform.WorldScopedPlanningPaths;
 import com.rinsing.geomantia.systems.realm_planning.application.access.PlanningAreaAccessConfig;
 import com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapSnapshot;
 import com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapSnapshot.CityNode;
@@ -105,7 +106,7 @@ public final class AdventurerMapNetwork {
             JsonObject status = planningService.status();
             preferredRunId = status.has("runId") ? status.get("runId").getAsString() : "";
             accessConfig = planningService.planningAreaAccessConfig();
-            debugRoot = sender.server.getServerDirectory().toPath().resolve("realm_debug");
+            debugRoot = WorldScopedPlanningPaths.realmDebugRoot(sender.server);
             double zoom = normalizeZoom(requestedZoom);
             int radius = Math.max(MIN_VIEW_RADIUS, Math.min(MAX_VIEW_RADIUS,
                     (int) Math.round(VIEW_RADIUS_AT_ZOOM_ONE / zoom)));

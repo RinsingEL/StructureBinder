@@ -24,6 +24,8 @@ class ProviderConfigStoreTest {
         assertEquals(PlayerProviderConfig.DEEPSEEK, config.providerKind());
         assertEquals(PlayerProviderConfig.DEEPSEEK_BASE_URL, config.baseUrl());
         assertEquals(PlayerProviderConfig.DEEPSEEK_VISION_MODEL, config.model());
+        assertEquals(PlayerProviderConfig.RESPONSES, config.apiProtocol());
+        assertEquals(PlayerProviderConfig.HERMES, config.agentRuntime());
         assertFalse(config.enabled());
     }
 
@@ -32,7 +34,8 @@ class ProviderConfigStoreTest {
         Path root = temporaryDirectory.resolve("geomantia");
         ProviderConfigStore store = new ProviderConfigStore(root);
         PlayerProviderConfig config = new PlayerProviderConfig(PlayerProviderConfig.CUSTOM, true,
-                "http://127.0.0.1:8123/v1", "vision-model", 35);
+                "http://127.0.0.1:8123/v1", "vision-model",
+                PlayerProviderConfig.CHAT_COMPLETIONS, 35);
 
         store.save(config, "secret-test-key", false);
 
@@ -41,6 +44,8 @@ class ProviderConfigStoreTest {
         assertEquals("stored", store.credentials(config).source());
         assertFalse(Files.readString(root.resolve("provider.json")).contains("secret-test-key"));
         assertTrue(Files.readString(root.resolve("provider-secret.txt")).contains("secret-test-key"));
+        assertTrue(Files.readString(root.resolve("provider.json")).contains("chat_completions"));
+        assertTrue(Files.readString(root.resolve("provider.json")).contains("hermes"));
     }
 
     @Test

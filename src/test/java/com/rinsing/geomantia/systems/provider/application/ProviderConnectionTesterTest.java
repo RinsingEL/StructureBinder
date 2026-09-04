@@ -18,13 +18,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ProviderConnectionTesterTest {
     private HttpServer server;
     private int visionStatus;
+    private volatile String visionRequestBody;
 
     @BeforeEach
     void startServer() throws Exception {
         visionStatus = 200;
+        visionRequestBody = "";
         server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/models", exchange -> reply(exchange, 200,
-                "{\"data\":[{\"id\":\"vision-model\"}]}"));
+                "{\"data\":[{\"id\":\"vision-model\"},{\"id\":\"glm-5.3-flash\"}]}"));
         server.createContext("/responses", exchange -> {
             String authorization = exchange.getRequestHeaders().getFirst("Authorization");
             if (!"Bearer test-key".equals(authorization)) {
@@ -32,11 +34,22 @@ class ProviderConnectionTesterTest {
                 return;
             }
             String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            visionRequestBody = body;
             if (!body.contains("input_image")) {
                 reply(exchange, 400, "{}");
                 return;
             }
             reply(exchange, visionStatus, "{\"output_text\":\"OK\"}");
+        });
+        server.createContext("/chat/completions", exchange -> {
+            String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            visionRequestBody = body;
+            if (!body.contains("image_url")) {
+                reply(exchange, 400, "{}");
+                return;
+            }
+            reply(exchange, visionStatus,
+                    "{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"OK\"}}]}");
         });
         server.start();
     }
@@ -55,6 +68,7 @@ class ProviderConnectionTesterTest {
         assertEquals("connected_multimodal", result.state());
         assertTrue(result.connected());
         assertTrue(result.multimodal());
+        assertTrue(visionRequestBody.contains("\"max_output_tokens\":16"));
     }
 
     @Test
@@ -85,6 +99,24 @@ class ProviderConnectionTesterTest {
 
         assertTrue(result.success());
         assertEquals("OK", result.outputText());
+    }
+
+    @Test
+    void supportsChatCompletionsVisionProbeAndInvocation() {
+        PlayerProviderConfig config = new PlayerProviderConfig(PlayerProviderConfig.CUSTOM, true,
+                "http://127.0.0.1:" + server.getAddress().getPort(), "glm-5.3-flash",
+                PlayerProviderConfig.CHAT_COMPLETIONS, 10);
+
+        var test = new ProviderConnectionTester().test(config, new Credentials("test-key", "stored"));
+        assertEquals("connected_multimodal", test.state());
+        assertTrue(visionRequestBody.contains("\"messages\""));
+        assertTrue(visionRequestBody.contains("\"max_tokens\":16"));
+        assertFalse(visionRequestBody.contains("max_output_tokens"));
+
+        var invocation = new MultimodalProviderClient().analyze(config,
+                new Credentials("test-key", "stored"), new byte[]{1, 2, 3}, "image/png", "Inspect.");
+        assertTrue(invocation.success());
+        assertEquals("OK", invocation.outputText());
     }
 
     private PlayerProviderConfig customConfig() {

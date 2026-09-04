@@ -109,6 +109,14 @@ mixin {
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
+tasks.register('bundleCountryDesignerMcp', Exec) {
+    workingDir project.file('country_designer_mcp')
+    commandLine System.getProperty('os.name').toLowerCase().contains('windows') ? 'npm.cmd' : 'npm', 'run', 'bundle'
+    inputs.files(fileTree('country_designer_mcp/src'), file('country_designer_mcp/package.json'),
+            file('country_designer_mcp/package-lock.json'), file('country_designer_mcp/tsconfig.json'))
+    outputs.file(file('country_designer_mcp/dist/geomantia-mcp-bundle.mjs'))
+}
+
 repositories {
     maven {
         url "https://maven.architectury.dev/"
@@ -169,6 +177,13 @@ tasks.named('test', Test).configure {
 }
 
 tasks.named('processResources', ProcessResources).configure {
+    dependsOn tasks.named('bundleCountryDesignerMcp')
+    from('country_designer_mcp/dist/geomantia-mcp-bundle.mjs') {
+        into 'geomantia/sidecar'
+    }
+    from('runtime/hermes/hermes-runtime-0.18.2-win-x64.zip') {
+        into 'geomantia/sidecar'
+    }
     var replaceProperties = [
             minecraft_version: minecraft_version, minecraft_version_range: minecraft_version_range,
             forge_version: forge_version, forge_version_range: forge_version_range,

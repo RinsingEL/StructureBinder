@@ -53,6 +53,11 @@ public final class ProviderPlanningToolGateway implements DeepSeekToolLoopClient
 
     public static ProviderPlanningToolGateway forStep(int apiPort, Path serverDirectory,
                                                        ProviderPlanningDiscovery.PlanningStep step) {
+        return forStep(apiPort, serverDirectory, serverDirectory.resolve("realm_debug"), step);
+    }
+
+    public static ProviderPlanningToolGateway forStep(int apiPort, Path serverDirectory, Path debugRoot,
+                                                       ProviderPlanningDiscovery.PlanningStep step) {
         String patchScope = switch (step.stage()) {
             case T2 -> "realm_t2";
             case T4 -> "realm_t4";
@@ -60,15 +65,21 @@ public final class ProviderPlanningToolGateway implements DeepSeekToolLoopClient
             default -> "";
         };
         return new ProviderPlanningToolGateway(HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build(),
-                apiPort, serverDirectory, step.runId(), step.citySeedId(), step.realmId(), patchScope);
+                apiPort, serverDirectory, debugRoot, step.runId(), step.citySeedId(), step.realmId(), patchScope);
     }
 
     private ProviderPlanningToolGateway(HttpClient httpClient, int apiPort, Path serverDirectory,
                                 String runId, String citySeedId, String realmId, String patchScopeType) {
+        this(httpClient, apiPort, serverDirectory, serverDirectory.resolve("realm_debug"), runId, citySeedId,
+                realmId, patchScopeType);
+    }
+
+    private ProviderPlanningToolGateway(HttpClient httpClient, int apiPort, Path serverDirectory, Path debugRoot,
+                                String runId, String citySeedId, String realmId, String patchScopeType) {
         this.httpClient = httpClient;
         this.apiBase = URI.create("http://127.0.0.1:" + apiPort);
         this.serverDirectory = serverDirectory.toAbsolutePath().normalize();
-        this.debugRoot = this.serverDirectory.resolve("realm_debug").normalize();
+        this.debugRoot = debugRoot.toAbsolutePath().normalize();
         this.runId = requireIdentity(runId, "runId");
         this.citySeedId = optionalIdentity(citySeedId, "citySeedId");
         this.realmId = optionalIdentity(realmId, "realmId");

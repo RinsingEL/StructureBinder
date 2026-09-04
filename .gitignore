@@ -22,6 +22,7 @@ build
 eclipse
 run
 logs
+.tools/
 __pycache__/
 *.py[cod]
 

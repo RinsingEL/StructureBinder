@@ -20,6 +20,7 @@ import com.rinsing.geomantia.systems.city.infrastructure.world.CityTemplateAvail
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityWorldgenBlockObservationRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityTemplateReader;
 import com.rinsing.geomantia.platform.RealmPlanningServices;
+import com.rinsing.geomantia.platform.WorldScopedPlanningPaths;
 import com.rinsing.geomantia.platform.WorldSurveyChatProgress;
 import com.rinsing.geomantia.systems.realm_planning.RealmPlanningService;
 import com.rinsing.geomantia.systems.realm_planning.PatchExplorerService;
@@ -1488,7 +1489,7 @@ final class RealmPlanningHttpController implements AutoCloseable {
     }
 
     private Path debugRoot() {
-        return server.getServerDirectory().toPath().resolve("realm_debug").toAbsolutePath().normalize();
+        return WorldScopedPlanningPaths.realmDebugRoot(server);
     }
 
     private RealmT4PatchPlanningService realmT4PatchPlanningService() throws IOException {

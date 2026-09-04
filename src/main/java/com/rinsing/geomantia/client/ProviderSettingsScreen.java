@@ -22,6 +22,8 @@ public final class ProviderSettingsScreen extends Screen {
 
     private final Screen parent;
     private String providerKind = PlayerProviderConfig.DEEPSEEK;
+    private String apiProtocol = PlayerProviderConfig.RESPONSES;
+    private String agentRuntime = PlayerProviderConfig.HERMES;
     private boolean enabled;
     private boolean editable;
     private boolean hasApiKey;
@@ -43,12 +45,13 @@ public final class ProviderSettingsScreen extends Screen {
     private EditBox apiKey;
     private EditBox timeout;
     private Button providerButton;
+    private Button protocolButton;
     private Button enabledButton;
+    private Button runtimeButton;
     private Button saveButton;
     private Button testButton;
     private Button clearKeyButton;
     private int statusRefreshTicks;
-    private int statusY;
     private int automationY;
 
     ProviderSettingsScreen(Screen parent) {
@@ -64,8 +67,11 @@ public final class ProviderSettingsScreen extends Screen {
         int fieldWidth = panelWidth - 152;
         int y = 58;
 
+        int providerWidth = (fieldWidth - 4) / 2;
         providerButton = addRenderableWidget(Button.builder(providerLabel(), button -> toggleProvider())
-                .bounds(fieldLeft, y, fieldWidth, 20).build());
+                .bounds(fieldLeft, y, providerWidth, 20).build());
+        protocolButton = addRenderableWidget(Button.builder(protocolLabel(), button -> toggleProtocol())
+                .bounds(fieldLeft + providerWidth + 4, y, fieldWidth - providerWidth - 4, 20).build());
         y += 32;
         baseUrl = addRenderableWidget(new EditBox(font, fieldLeft, y, fieldWidth, 20,
                 Component.translatable("gui.geomantia.provider_settings.base_url")));
@@ -101,10 +107,15 @@ public final class ProviderSettingsScreen extends Screen {
                     enabled = !enabled;
                     button.setMessage(enabledLabel());
                     markDirty();
-                }).bounds(fieldLeft + 80, y, fieldWidth - 80, 20).build());
+                }).bounds(fieldLeft + 178, y, fieldWidth - 178, 20).build());
+        runtimeButton = addRenderableWidget(Button.builder(runtimeLabel(), button -> {
+                    agentRuntime = PlayerProviderConfig.HERMES.equals(agentRuntime)
+                            ? PlayerProviderConfig.LEGACY : PlayerProviderConfig.HERMES;
+                    button.setMessage(runtimeLabel());
+                    markDirty();
+                }).bounds(fieldLeft + 80, y, 94, 20).build());
         y += 34;
-        statusY = y;
-        automationY = y + 12;
+        automationY = y;
         int controlsY = Math.min(height - 30, y + 34);
         saveButton = addRenderableWidget(Button.builder(Component.translatable("gui.geomantia.provider_settings.save"),
                         button -> save(false)).bounds(left + 20, controlsY, 92, 20).build());
@@ -156,6 +167,8 @@ public final class ProviderSettingsScreen extends Screen {
         applyingSnapshot = true;
         try {
             providerKind = snapshot.providerKind();
+            apiProtocol = snapshot.apiProtocol();
+            agentRuntime = snapshot.agentRuntime();
             enabled = snapshot.enabled();
             hasApiKey = snapshot.hasApiKey();
             apiKeySource = snapshot.apiKeySource();
@@ -169,7 +182,9 @@ public final class ProviderSettingsScreen extends Screen {
                     : "gui.geomantia.provider_settings.key_missing"));
             clearStoredApiKey = false;
             providerButton.setMessage(providerLabel());
+            protocolButton.setMessage(protocolLabel());
             enabledButton.setMessage(enabledLabel());
+            runtimeButton.setMessage(runtimeLabel());
             updateProviderFieldState();
             formInitialized = true;
         } finally {
@@ -196,9 +211,19 @@ public final class ProviderSettingsScreen extends Screen {
         if (PlayerProviderConfig.DEEPSEEK.equals(providerKind)) {
             baseUrl.setValue(PlayerProviderConfig.DEEPSEEK_BASE_URL);
             model.setValue(PlayerProviderConfig.DEEPSEEK_VISION_MODEL);
+            apiProtocol = PlayerProviderConfig.RESPONSES;
         }
         providerButton.setMessage(providerLabel());
+        protocolButton.setMessage(protocolLabel());
         updateProviderFieldState();
+        markDirty();
+    }
+
+    private void toggleProtocol() {
+        if (!PlayerProviderConfig.CUSTOM.equals(providerKind)) return;
+        apiProtocol = PlayerProviderConfig.RESPONSES.equals(apiProtocol)
+                ? PlayerProviderConfig.CHAT_COMPLETIONS : PlayerProviderConfig.RESPONSES;
+        protocolButton.setMessage(protocolLabel());
         markDirty();
     }
 
@@ -215,14 +240,15 @@ public final class ProviderSettingsScreen extends Screen {
         testAfterSave = thenTest;
         savePending = true;
         connectionState = "saving";
-        ProviderNetwork.saveSettings(providerKind, enabled, baseUrl.getValue(), model.getValue(),
-                timeoutSeconds, apiKey.getValue(), clearStoredApiKey);
+        ProviderNetwork.saveSettings(providerKind, enabled, baseUrl.getValue(), model.getValue(), apiProtocol,
+                timeoutSeconds, agentRuntime, apiKey.getValue(), clearStoredApiKey);
     }
 
     private void setEditable(boolean value) {
         if (providerButton == null) return;
         providerButton.active = value;
         enabledButton.active = value;
+        runtimeButton.active = value;
         saveButton.active = value;
         testButton.active = value;
         clearKeyButton.active = value && hasApiKey && "stored".equals(apiKeySource);
@@ -236,16 +262,27 @@ public final class ProviderSettingsScreen extends Screen {
         boolean custom = PlayerProviderConfig.CUSTOM.equals(providerKind);
         baseUrl.setEditable(editable && custom);
         model.setEditable(editable && custom);
+        protocolButton.active = editable && custom;
     }
 
     private Component providerLabel() {
         return Component.translatable("gui.geomantia.provider_settings.provider_value." + providerKind);
     }
 
+    private Component protocolLabel() {
+        return Component.translatable("gui.geomantia.provider_settings.protocol")
+                .append(Component.literal(": "))
+                .append(Component.translatable("gui.geomantia.provider_settings.protocol_value." + apiProtocol));
+    }
+
     private Component enabledLabel() {
         return Component.translatable(enabled
                 ? "gui.geomantia.provider_settings.enabled"
                 : "gui.geomantia.provider_settings.disabled");
+    }
+
+    private Component runtimeLabel() {
+        return Component.translatable("gui.geomantia.provider_settings.runtime_value." + agentRuntime);
     }
 
     @Override
@@ -268,7 +305,7 @@ public final class ProviderSettingsScreen extends Screen {
         drawLabel(graphics, "gui.geomantia.provider_settings.api_key", labelX, y);
         y += 32;
         drawLabel(graphics, "gui.geomantia.provider_settings.timeout", labelX, y);
-        graphics.drawString(font, statusComponent(), labelX, statusY, statusColor(), false);
+        drawTestStatus(graphics);
         graphics.drawString(font, automationComponent(), labelX, automationY, automationColor(), false);
         if (!editable && !"loading".equals(connectionState)) {
             graphics.drawString(font, Component.translatable("gui.geomantia.provider_settings.admin_only"),
@@ -279,6 +316,18 @@ public final class ProviderSettingsScreen extends Screen {
 
     private void drawLabel(GuiGraphics graphics, String key, int x, int y) {
         graphics.drawString(font, Component.translatable(key), x, y, MUTED, false);
+    }
+
+    private void drawTestStatus(GuiGraphics graphics) {
+        int maxWidth = Math.max(120, Math.min(300, width / 2 - 24));
+        var lines = font.split(statusComponent(), maxWidth);
+        int right = width - 12;
+        int y = 10;
+        for (int index = 0; index < Math.min(2, lines.size()); index++) {
+            FormattedCharSequence line = lines.get(index);
+            graphics.drawString(font, line, right - font.width(line), y, statusColor(), false);
+            y += 10;
+        }
     }
 
     private Component statusComponent() {

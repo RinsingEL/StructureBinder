@@ -132,7 +132,10 @@ public final class ProviderPlanningDiscovery {
             String status = string(queue, "status");
             String cityId = string(queue, "currentCitySeedId");
             String nextAction = string(queue, "nextAction");
-            if (CITY_ACTIONABLE.contains(status) && !cityId.isBlank() && !nextAction.isBlank()) {
+            boolean blueprintRevision = "needs_agent".equals(status)
+                    && "city_submit_d4_blueprint".equals(nextAction);
+            if ((CITY_ACTIONABLE.contains(status) || blueprintRevision)
+                    && !cityId.isBlank() && !nextAction.isBlank()) {
                 return step(Stage.CITY, runId, string(queueCurrent(queue), "realmId"), cityId,
                         nextAction, queue.deepCopy(), runDirectory, List.of());
             }
@@ -279,11 +282,11 @@ public final class ProviderPlanningDiscovery {
     private static PlanningStep step(Stage stage, String runId, String realmId, String cityId,
                                      String nextAction, JsonObject state, Path runDirectory, List<Path> images) {
         String identity = String.join("|", stage.contractName, runId, realmId, cityId, nextAction,
-                string(state, "updatedAt"), fileStamp(runDirectory.resolve("realm_profiles.json")),
+                string(state, "status"), string(state, "reasonCode"), string(state, "errorCode"),
+                fileStamp(runDirectory.resolve("realm_profiles.json")),
                 fileStamp(runDirectory.resolve("realm_coordinate_selections.json")),
                 fileStamp(runDirectory.resolve("t3_report.json")),
-                fileStamp(runDirectory.resolve("city_seed_registry.json")),
-                fileStamp(runDirectory.resolve("automation/city_design_queue.json")));
+                fileStamp(runDirectory.resolve("city_seed_registry.json")));
         return new PlanningStep(stage, runId, realmId, cityId, nextAction, state, runDirectory, images, identity);
     }
 

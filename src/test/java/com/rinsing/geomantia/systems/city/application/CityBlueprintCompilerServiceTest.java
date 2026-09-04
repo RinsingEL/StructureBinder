@@ -1044,6 +1044,10 @@ class CityBlueprintCompilerServiceTest {
         assertTrue(result.groupExtentMap().getAsJsonArray("connections").get(0).getAsJsonObject()
                 .get("landUseHandoffReady").getAsBoolean());
         assertFalse(result.groupExtentMap().has("maxInterGroupGapBlocks"));
+        JsonObject acceptance = result.compileTrace().getAsJsonObject("compilationAcceptance");
+        assertFalse(acceptance.get("passed").getAsBoolean(), acceptance.toString());
+        assertTrue(acceptance.getAsJsonArray("hardBlocks").toString()
+                .contains("CITY_MAIN_ROAD_CONNECTION_REQUIRED"), acceptance.toString());
     }
 
     @Test
@@ -1102,8 +1106,10 @@ class CityBlueprintCompilerServiceTest {
         assertEquals(0, first.groupExtentMap().getAsJsonObject("functionAreaFormationPlan")
                 .get("preallocatedAreaCount").getAsInt());
         assertTrue(first.groupExtentMap().get("structureGraphConnected").getAsBoolean());
-        assertTrue(first.compileTrace().getAsJsonObject("compilationAcceptance")
-                .get("passed").getAsBoolean(), first.compileTrace().toString());
+        JsonObject acceptance = first.compileTrace().getAsJsonObject("compilationAcceptance");
+        assertFalse(acceptance.get("passed").getAsBoolean(), acceptance.toString());
+        assertTrue(acceptance.getAsJsonArray("hardBlocks").toString()
+                .contains("ROAD_OVERLAPS_STRUCTURE"), acceptance.toString());
         assertFalse(first.groupExtentMap().get("landUseConnected").getAsBoolean());
         assertFalse(first.groupExtentMap().has("maxInterGroupGapBlocks"));
 
@@ -1297,7 +1303,7 @@ class CityBlueprintCompilerServiceTest {
     }
 
     @Test
-    void relationOptOutUsesNoUnrelatedFallback() throws Exception {
+    void relationOptOutAvoidsGraphFailureButOtherAcceptanceFailuresRemainHard() throws Exception {
         Fixture fixture = acceptedFixture("run_fallback_three", "city:fallback_three", 9, 9, "SMALL",
                 d3 -> configureSeparatedPlanningPatches(d3, true), blueprint -> {
                     JsonObject civic = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
@@ -1321,15 +1327,16 @@ class CityBlueprintCompilerServiceTest {
         assertEquals("EXPLICIT_RELATIONS_ONLY_NO_UNRELATED_FALLBACK",
                 plan.get("topologyPolicy").getAsString());
         JsonObject acceptance = result.compileTrace().getAsJsonObject("compilationAcceptance");
-        assertTrue(acceptance.get("passed").getAsBoolean(), acceptance.toString());
+        assertFalse(acceptance.get("passed").getAsBoolean(), acceptance.toString());
+        assertEquals(2, acceptance.get("trafficGroupCount").getAsInt(), acceptance.toString());
         assertFalse(acceptance.getAsJsonArray("hardBlocks").toString()
-                .contains("far: FUNCTION_AREA_RELATION_UNSPECIFIED"), acceptance.toString());
-        assertFalse(acceptance.getAsJsonArray("hardBlocks").toString()
-                .contains("REQUIRED_GROUP_RELATION_GRAPH_DISCONNECTED"), acceptance.toString());
+                .contains("STRUCTURE_RELATION_GRAPH_DISCONNECTED"), acceptance.toString());
+        assertTrue(acceptance.getAsJsonArray("hardBlocks").toString()
+                .contains("STREET_ENTRANCE_UNRESOLVED"), acceptance.toString());
     }
 
     @Test
-    void missingTerrainCorridorSkipsBlockedConnectionAndCompilesWithWarning() throws Exception {
+    void missingTerrainCorridorFailsHardConnectionAcceptance() throws Exception {
         Fixture fixture = acceptedFixture("run_no_corridor", "city:no_corridor", 9, 9, "SMALL",
                 d3 -> configureSeparatedPlanningPatches(d3, false), blueprint -> {
                     JsonObject second = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject().deepCopy();
@@ -1350,10 +1357,12 @@ class CityBlueprintCompilerServiceTest {
         assertEquals("SKIPPED_NO_LEGAL_PATH", connectivity.getAsJsonArray("edges")
                 .get(0).getAsJsonObject().get("status").getAsString());
         JsonObject acceptance = result.compileTrace().getAsJsonObject("compilationAcceptance");
-        assertTrue(acceptance.get("passed").getAsBoolean(), acceptance.toString());
+        assertFalse(acceptance.get("passed").getAsBoolean(), acceptance.toString());
         assertFalse(acceptance.get("structureGraphConnected").getAsBoolean());
-        assertTrue(acceptance.getAsJsonArray("warnings").toString()
+        assertTrue(acceptance.getAsJsonArray("hardBlocks").toString()
                 .contains("CONNECTION_SKIPPED_TERRAIN_BLOCKED"));
+        assertTrue(acceptance.getAsJsonArray("hardBlocks").toString()
+                .contains("STRUCTURE_RELATION_GRAPH_DISCONNECTED"));
     }
 
     @Test

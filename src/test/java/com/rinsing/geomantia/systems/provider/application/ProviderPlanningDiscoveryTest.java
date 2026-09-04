@@ -104,6 +104,62 @@ class ProviderPlanningDiscoveryTest {
     }
 
     @Test
+    void reopensAgentLoopOnlyForBlueprintRevisionFailure() throws Exception {
+        Path run = sealedRun("run_failed_d4_design");
+        write(run, "realm_profiles.json", """
+                [{"realmId":"realm_a"}]
+                """);
+        write(run, "realm_coordinate_selections.json", """
+                [{"realmId":"realm_a"}]
+                """);
+        write(run, "t3_report.json", "{}");
+        write(run, "realm_territory_map.json", "{}");
+        write(run, "city_seed_registry.json", """
+                {"citySeeds":[{"citySeedId":"city_a","realmId":"realm_a","role":"capital"}]}
+                """);
+        write(run, "automation/city_design_queue.json", """
+                {"runId":"run_failed_d4_design","status":"needs_agent","currentCitySeedId":"city_a",
+                 "nextAction":"city_submit_d4_blueprint","items":[
+                 {"citySeedId":"city_a","realmId":"realm_a","status":"needs_agent"}]}
+                """);
+
+        var step = new ProviderPlanningDiscovery(debugRoot, 42L).nextStep();
+
+        assertEquals(ProviderPlanningDiscovery.Stage.CITY, step.stage());
+        assertEquals("city_a", step.citySeedId());
+        assertEquals("city_submit_d4_blueprint", step.nextAction());
+    }
+
+    @Test
+    void keepsCityIdentityStableWhenPreparingTheSameD4ContextOnlyRefreshesTimestamps() throws Exception {
+        Path run = sealedRun("run_stable_d4");
+        write(run, "realm_profiles.json", "[{\"realmId\":\"realm_a\"}]");
+        write(run, "realm_coordinate_selections.json", "[{\"realmId\":\"realm_a\"}]");
+        write(run, "t3_report.json", "{}");
+        write(run, "realm_territory_map.json", "{}");
+        write(run, "city_seed_registry.json", """
+                {"citySeeds":[{"citySeedId":"city_a","realmId":"realm_a","role":"capital"}]}
+                """);
+        write(run, "automation/city_design_queue.json", """
+                {"runId":"run_stable_d4","status":"waiting_for_agent","reasonCode":"D4_CONTEXT_PREPARED",
+                 "updatedAt":"2026-09-04T12:00:00Z","currentCitySeedId":"city_a",
+                 "nextAction":"city_submit_d4_blueprint","items":[{"citySeedId":"city_a","realmId":"realm_a",
+                 "status":"waiting_for_agent","reasonCode":"D4_CONTEXT_PREPARED"}]}
+                """);
+        var before = new ProviderPlanningDiscovery(debugRoot, 42L).nextStep();
+
+        write(run, "automation/city_design_queue.json", """
+                {"runId":"run_stable_d4","status":"waiting_for_agent","reasonCode":"D4_CONTEXT_PREPARED",
+                 "updatedAt":"2026-09-04T12:03:10Z","currentCitySeedId":"city_a",
+                 "nextAction":"city_submit_d4_blueprint","items":[{"citySeedId":"city_a","realmId":"realm_a",
+                 "status":"waiting_for_agent","reasonCode":"D4_CONTEXT_PREPARED"}]}
+                """);
+        var after = new ProviderPlanningDiscovery(debugRoot, 42L).nextStep();
+
+        assertEquals(before.semanticIdentity(), after.semanticIdentity());
+    }
+
+    @Test
     void callsUnifiedT3OnlyAfterEveryProfileHasAT2Selection() throws Exception {
         Path run = sealedRun("run_c");
         write(run, "realm_profiles.json", """

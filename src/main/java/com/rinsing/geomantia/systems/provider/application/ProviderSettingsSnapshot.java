@@ -1,7 +1,8 @@
 package com.rinsing.geomantia.systems.provider.application;
 
 public record ProviderSettingsSnapshot(String providerKind, boolean enabled, String baseUrl,
-                                       String model, int timeoutSeconds, boolean hasApiKey,
+                                       String model, String apiProtocol, int timeoutSeconds, String agentRuntime,
+                                       boolean hasApiKey,
                                        String apiKeySource, boolean editable,
                                        String connectionState, String message,
                                        String automationState, String automationMessage,
@@ -10,6 +11,8 @@ public record ProviderSettingsSnapshot(String providerKind, boolean enabled, Str
         providerKind = safe(providerKind);
         baseUrl = safe(baseUrl);
         model = safe(model);
+        apiProtocol = safe(apiProtocol);
+        agentRuntime = safe(agentRuntime);
         timeoutSeconds = Math.max(5, Math.min(120, timeoutSeconds));
         apiKeySource = safe(apiKeySource);
         connectionState = safe(connectionState);

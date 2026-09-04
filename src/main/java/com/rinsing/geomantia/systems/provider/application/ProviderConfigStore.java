@@ -36,7 +36,9 @@ public final class ProviderConfigStore {
         return new PlayerProviderConfig(string(json, "providerKind", PlayerProviderConfig.DEEPSEEK),
                 bool(json, "enabled", false), string(json, "baseUrl", PlayerProviderConfig.DEEPSEEK_BASE_URL),
                 string(json, "model", PlayerProviderConfig.DEEPSEEK_VISION_MODEL),
-                integer(json, "timeoutSeconds", 20)).validated();
+                string(json, "apiProtocol", PlayerProviderConfig.RESPONSES),
+                integer(json, "timeoutSeconds", 20),
+                string(json, "agentRuntime", PlayerProviderConfig.HERMES)).validated();
     }
 
     public synchronized Credentials credentials(PlayerProviderConfig config) throws IOException {
@@ -60,12 +62,14 @@ public final class ProviderConfigStore {
         PlayerProviderConfig value = config.validated();
         Files.createDirectories(configPath.getParent());
         JsonObject json = new JsonObject();
-        json.addProperty("schema", "geomantia_player_provider.v0.1");
+        json.addProperty("schema", "geomantia_player_provider.v0.3");
         json.addProperty("providerKind", value.providerKind());
         json.addProperty("enabled", value.enabled());
         json.addProperty("baseUrl", value.baseUrl());
         json.addProperty("model", value.model());
+        json.addProperty("apiProtocol", value.apiProtocol());
         json.addProperty("timeoutSeconds", value.timeoutSeconds());
+        json.addProperty("agentRuntime", value.agentRuntime());
         atomicWrite(configPath, GSON.toJson(json));
 
         if (clearStoredApiKey) {

@@ -168,8 +168,7 @@ public final class CityDesignQueue {
             }
             JsonObject item = findItem(state, citySeedId);
             if (item == null) return;
-            applyPostD4Status(item, stringValue(postD4State, "status", ""),
-                    stringValue(postD4State, "reasonCode", ""));
+            applyPostD4Status(item, postD4State);
             normalize(state);
             writeState(runId, state);
         } catch (Exception ignored) {
@@ -183,19 +182,44 @@ public final class CityDesignQueue {
                 .resolve(citySeedId.replaceAll("[^A-Za-z0-9._-]", "_") + ".json");
         if (!Files.isRegularFile(path)) return;
         JsonObject post = readObject(path);
-        applyPostD4Status(item, stringValue(post, "status", ""), stringValue(post, "reasonCode", ""));
+        applyPostD4Status(item, post);
     }
 
-    private static void applyPostD4Status(JsonObject item, String status, String reasonCode) {
+    private static void applyPostD4Status(JsonObject item, JsonObject post) {
+        String status = stringValue(post, "status", "");
+        String reasonCode = stringValue(post, "reasonCode", "");
         switch (status) {
             case "queued", "running" -> setItemStatus(item, POST_D4_RUNNING,
                     reasonCode.isBlank() ? "POST_D4_RUNNING" : reasonCode);
             case WAITING_FOR_GENERATION -> setItemStatus(item, WAITING_FOR_GENERATION,
                     reasonCode.isBlank() ? "WAITING_FOR_GENERATION" : reasonCode);
-            case NEEDS_AGENT -> setItemStatus(item, NEEDS_AGENT,
-                    reasonCode.isBlank() ? "POST_D4_NEEDS_AGENT" : reasonCode);
+            case NEEDS_AGENT -> {
+                setItemStatus(item, NEEDS_AGENT,
+                        reasonCode.isBlank() ? "POST_D4_NEEDS_AGENT" : reasonCode);
+                item.addProperty("nextAction", postD4RecoveryAction(post));
+            }
             default -> { }
         }
+    }
+
+    private static String postD4RecoveryAction(JsonObject post) {
+        String explicit = stringValue(post, "nextAction", "");
+        if ("city_submit_d4_blueprint".equals(explicit)) return explicit;
+        JsonObject workflowResponse = object(post, "workflowResponse");
+        JsonObject workflowReport = object(workflowResponse, "workflowReport");
+        if (workflowReport.has("steps") && workflowReport.get("steps").isJsonArray()) {
+            JsonArray steps = workflowReport.getAsJsonArray("steps");
+            for (int index = steps.size() - 1; index >= 0; index--) {
+                if (!steps.get(index).isJsonObject()) continue;
+                JsonObject step = steps.get(index).getAsJsonObject();
+                if (booleanValue(step, "ok", true)) continue;
+                if ("city_submit_d4_blueprint".equals(stringValue(step, "nextAction", ""))) {
+                    return "city_submit_d4_blueprint";
+                }
+                break;
+            }
+        }
+        return "city_post_d4_auto_compile_retry";
     }
 
     private static void normalize(JsonObject state) {
@@ -244,7 +268,7 @@ public final class CityDesignQueue {
             };
             case WAITING_FOR_PATCH_REVIEW -> "patch_explorer_show_candidates";
             case POST_D4_RUNNING -> "city_post_d4_auto_compile_status";
-            case NEEDS_AGENT -> "city_post_d4_auto_compile_retry";
+            case NEEDS_AGENT -> stringValue(current, "nextAction", "city_post_d4_auto_compile_retry");
             default -> "";
         });
     }
@@ -398,6 +422,11 @@ public final class CityDesignQueue {
     private static int intValue(JsonObject object, String key, int fallback) {
         return object != null && object.has(key) && !object.get(key).isJsonNull()
                 ? object.get(key).getAsInt() : fallback;
+    }
+
+    private static boolean booleanValue(JsonObject object, String key, boolean fallback) {
+        return object != null && object.has(key) && !object.get(key).isJsonNull()
+                ? object.get(key).getAsBoolean() : fallback;
     }
 
     private record Seed(String citySeedId, String realmId, String role, int blockX, int blockZ) {
