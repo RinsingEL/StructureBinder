@@ -38,6 +38,26 @@ class CityTemplateCatalogTest {
     }
 
     @Test
+    void frontagePolicyRequiresExplicitValidAuthorPermission() {
+        String json = catalogJson("{\"x\":1,\"z\":2,\"direction\":\"SOUTH\"}");
+        assertEquals(CityTemplateCatalog.FrontagePolicy.FIXED_FRONT,
+                loader.load(json).templates().get(0).frontagePolicy());
+        String annotated = json.replace("\"clearanceBlocks\": 2",
+                "\"clearanceBlocks\": 2, \"frontagePolicy\": \"ANY_AUTHORED_ENTRANCE\"");
+        assertEquals(CityTemplateCatalog.FrontagePolicy.ANY_AUTHORED_ENTRANCE,
+                loader.load(annotated).templates().get(0).frontagePolicy());
+        for (String value : List.of("null", "true", "7", "{}", "[]", "\"auto\"", "\"\"")) {
+            var failure = assertThrows(CityTemplateCatalog.CatalogException.class,
+                    () -> loader.load(annotated.replace("\"ANY_AUTHORED_ENTRANCE\"", value)));
+            assertEquals("CITY_TEMPLATE_CATALOG_FRONTAGE_POLICY_INVALID", failure.reasonCode());
+        }
+        var noPorts = assertThrows(CityTemplateCatalog.CatalogException.class,
+                () -> loader.load(catalogJson("[]").replace("\"clearanceBlocks\": 2",
+                        "\"clearanceBlocks\": 2, \"frontagePolicy\": \"ANY_AUTHORED_ENTRANCE\"")));
+        assertEquals("CITY_TEMPLATE_CATALOG_FRONTAGE_POLICY_INVALID", noPorts.reasonCode());
+    }
+
+    @Test
     void acceptsCanonicalTemplateRefAndVariantFields() {
         CityTemplateCatalog.Template template = loader.load("""
                 {

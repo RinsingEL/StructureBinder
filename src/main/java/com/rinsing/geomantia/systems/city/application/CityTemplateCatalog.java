@@ -57,6 +57,11 @@ public final class CityTemplateCatalog {
         return templateId + "\u0000" + variantId;
     }
 
+    public enum FrontagePolicy {
+        FIXED_FRONT,
+        ANY_AUTHORED_ENTRANCE
+    }
+
     public record Template(String buildingSemantic,
                             String style,
                             String templateId,
@@ -69,7 +74,19 @@ public final class CityTemplateCatalog {
                             List<CityTemplatePlacementGeometry.RoadEntrance> roadEntrances,
                             String terrainPosePolicy,
                             String supportPolicy,
-                            int clearanceBlocks) {
+                            int clearanceBlocks,
+                            FrontagePolicy frontagePolicy) {
+        public Template(String buildingSemantic, String style, String templateId, String nbtFile,
+                        String contentHash, String variantId, CityTemplatePlacementGeometry.Size rawSize,
+                        List<CityTemplatePlacementGeometry.Rotation> allowedRotations,
+                        List<CityTemplatePlacementGeometry.Mirror> allowedMirrors,
+                        List<CityTemplatePlacementGeometry.RoadEntrance> roadEntrances,
+                        String terrainPosePolicy, String supportPolicy, int clearanceBlocks) {
+            this(buildingSemantic, style, templateId, nbtFile, contentHash, variantId, rawSize,
+                    allowedRotations, allowedMirrors, roadEntrances, terrainPosePolicy, supportPolicy,
+                    clearanceBlocks, FrontagePolicy.FIXED_FRONT);
+        }
+
         public Template {
             buildingSemantic = required(buildingSemantic, "buildingSemantic");
             style = required(style, "style");
@@ -81,6 +98,11 @@ public final class CityTemplateCatalog {
             allowedRotations = List.copyOf(Objects.requireNonNull(allowedRotations, "allowedRotations"));
             allowedMirrors = List.copyOf(Objects.requireNonNull(allowedMirrors, "allowedMirrors"));
             roadEntrances = List.copyOf(Objects.requireNonNull(roadEntrances, "roadEntrances"));
+            Objects.requireNonNull(frontagePolicy, "frontagePolicy");
+            if (frontagePolicy == FrontagePolicy.ANY_AUTHORED_ENTRANCE && roadEntrances.isEmpty()) {
+                throw new CatalogException("CITY_TEMPLATE_CATALOG_FRONTAGE_POLICY_INVALID",
+                        "ANY_AUTHORED_ENTRANCE requires at least one authored road entrance.");
+            }
             terrainPosePolicy = CityTemplateTerrainPosePolicy.freezeForTemplate(
                     templateId, nbtFile, required(terrainPosePolicy, "terrainPosePolicy"));
             supportPolicy = required(supportPolicy, "supportPolicy");

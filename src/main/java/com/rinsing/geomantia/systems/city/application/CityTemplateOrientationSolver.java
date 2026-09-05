@@ -19,7 +19,7 @@ public final class CityTemplateOrientationSolver {
         Objects.requireNonNull(mirror, "mirror");
         Objects.requireNonNull(candidateCenter, "candidateCenter");
         Objects.requireNonNull(target, "target");
-        String entranceId = resolveEntranceId(template, frontageEntranceId);
+        List<String> entranceIds = resolveEntranceIds(template, frontageEntranceId);
         int targetX = target.direction() == null
                 ? target.point().x() - candidateCenter.x() : dx(target.direction());
         int targetZ = target.direction() == null
@@ -28,11 +28,14 @@ public final class CityTemplateOrientationSolver {
         List<RotationScore> scores = new ArrayList<>();
         for (CityTemplatePlacementGeometry.Rotation rotation : template.allowedRotations()) {
             CityTemplatePlacementGeometry geometry = template.geometry(rotation, mirror);
+            // One best authored port per rotation; do not multiply placement search by port count.
             CityTemplatePlacementGeometry.TransformedRoadEntrance entrance = geometry.roadEntrances().stream()
-                    .filter(candidate -> candidate.entranceId().equals(entranceId))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "D4_ARRAY_LAYOUT_FRONTAGE_ENTRANCE_UNAVAILABLE: " + entranceId));
+                    .filter(candidate -> entranceIds.contains(candidate.entranceId()))
+                    .sorted(Comparator.comparingDouble(
+                                    (CityTemplatePlacementGeometry.TransformedRoadEntrance port) ->
+                                            alignment(port.direction(), targetX, targetZ)).reversed()
+                            .thenComparing(CityTemplatePlacementGeometry.TransformedRoadEntrance::entranceId))
+                    .findFirst().orElseThrow();
             double alignmentScore = alignment(entrance.direction(), targetX, targetZ);
             scores.add(new RotationScore(rotation, entrance.entranceId(), entrance.direction(), alignmentScore));
         }
@@ -40,7 +43,7 @@ public final class CityTemplateOrientationSolver {
         return List.copyOf(scores);
     }
 
-    private String resolveEntranceId(CityTemplateCatalog.Template template, String requested) {
+    private List<String> resolveEntranceIds(CityTemplateCatalog.Template template, String requested) {
         if (requested != null && !requested.isBlank()) {
             String entranceId = requested.trim();
             boolean exists = template.roadEntrances().stream()
@@ -48,7 +51,7 @@ public final class CityTemplateOrientationSolver {
             if (!exists) {
                 throw new IllegalArgumentException("D4_ARRAY_LAYOUT_FRONTAGE_ENTRANCE_UNAVAILABLE: " + entranceId);
             }
-            return entranceId;
+            return List.of(entranceId);
         }
         List<CityTemplatePlacementGeometry.RoadEntrance> entrances = template.roadEntrances();
         if (entrances.isEmpty()) {
@@ -59,10 +62,13 @@ public final class CityTemplateOrientationSolver {
                 .filter(entrance -> "front".equals(entrance.entranceId().toLowerCase(Locale.ROOT)))
                 .toList();
         if (namedFront.size() == 1) {
-            return namedFront.get(0).entranceId();
+            return List.of(namedFront.get(0).entranceId());
+        }
+        if (template.frontagePolicy() == CityTemplateCatalog.FrontagePolicy.ANY_AUTHORED_ENTRANCE) {
+            return entrances.stream().map(CityTemplatePlacementGeometry.RoadEntrance::entranceId).toList();
         }
         if (entrances.size() == 1) {
-            return entrances.get(0).entranceId();
+            return List.of(entrances.get(0).entranceId());
         }
         throw new IllegalArgumentException("D4_ARRAY_LAYOUT_FRONTAGE_ENTRANCE_AMBIGUOUS: "
                 + template.templateId() + " requires frontageEntranceId.");

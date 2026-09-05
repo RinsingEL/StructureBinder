@@ -31,6 +31,37 @@ class CityBlueprintCompilerServiceTest {
     Path temporary;
 
     @Test
+    void authorOptInSurvivesContextFreezeAndUnblocksMultiEntranceCompilation() throws Exception {
+        for (boolean authorOptIn : List.of(false, true)) {
+            Fixture fixture = acceptedFixture("run_multi_" + authorOptIn, "city:multi", 9, 9, "SMALL",
+                    ignored -> { }, ignored -> { }, ignored -> { }, catalog -> {
+                        JsonObject template = catalog.getAsJsonArray("templates").get(0).getAsJsonObject();
+                        template.add("roadEntrances", JsonParser.parseString("""
+                                [{"entranceId":"north","position":{"x":4,"z":0},"direction":"NORTH"},
+                                 {"entranceId":"east","position":{"x":8,"z":4},"direction":"EAST"},
+                                 {"entranceId":"south","position":{"x":4,"z":8},"direction":"SOUTH"},
+                                 {"entranceId":"west","position":{"x":0,"z":4},"direction":"WEST"}]
+                                """));
+                        if (authorOptIn) template.addProperty("frontagePolicy", "ANY_AUTHORED_ENTRANCE");
+                    }, ignored -> { });
+            var result = new CityBlueprintCompilerService().compile(temporary, fixture.runId(), fixture.cityId());
+            assertEquals(authorOptIn, result.ok(), result.compileTrace().toString());
+            if (authorOptIn) {
+                var anchors = result.structureAnchorPlan().getAsJsonArray("anchors");
+                assertFalse(anchors.isEmpty());
+                assertFalse(result.compileTrace().toString().contains("FRONTAGE_ENTRANCE_AMBIGUOUS"));
+                assertTrue(anchors.asList().stream().map(JsonElement::getAsJsonObject)
+                        .map(anchor -> anchor.getAsJsonObject("blueprintLayout"))
+                        .anyMatch(layout -> layout.has("frontageEntranceId")
+                                && List.of("north", "east", "south", "west")
+                                .contains(layout.get("frontageEntranceId").getAsString())));
+            } else {
+                assertTrue(result.compileTrace().toString().contains("FRONTAGE_ENTRANCE_AMBIGUOUS"));
+            }
+        }
+    }
+
+    @Test
     void normalizesLegacySchemaVersionsOnlyOnADeepCopy() {
         JsonObject legacy = JsonParser.parseString("""
                 {"schemaVersion":"city_blueprint_context.v0.10","nested":{
@@ -1720,6 +1751,16 @@ class CityBlueprintCompilerServiceTest {
                                      Consumer<JsonObject> customizeTerrainField,
                                      Consumer<JsonObject> customizeReferenceCatalog,
                                      Consumer<JsonObject> customizeBlueprint) throws Exception {
+        return acceptedFixture(runId, cityId, width, depth, extentClass, customizeD3,
+                customizeTerrainField, customizeReferenceCatalog, ignored -> { }, customizeBlueprint);
+    }
+
+    private Fixture acceptedFixture(String runId, String cityId, int width, int depth, String extentClass,
+                                     Consumer<JsonObject> customizeD3,
+                                     Consumer<JsonObject> customizeTerrainField,
+                                     Consumer<JsonObject> customizeReferenceCatalog,
+                                     Consumer<JsonObject> customizeTemplateCatalog,
+                                     Consumer<JsonObject> customizeBlueprint) throws Exception {
         Path runDir = temporary.resolve(runId);
         Files.createDirectories(runDir.resolve("city_d3_" + safe(cityId)));
         JsonObject registry = new JsonObject();
@@ -1777,7 +1818,9 @@ class CityBlueprintCompilerServiceTest {
         terraSource.addProperty("catalogMode", "debug");
         terraSource.addProperty("debugCatalogPath", "structure_debug_catalog.json");
         JsonObject templateSource = new JsonObject();
-        templateSource.add("catalog", templateCatalog(width, depth));
+        JsonObject templates = templateCatalog(width, depth);
+        customizeTemplateCatalog.accept(templates);
+        templateSource.add("catalog", templates);
         CityBlueprintService service = new CityBlueprintService();
         JsonObject references = referenceCatalog();
         customizeReferenceCatalog.accept(references);

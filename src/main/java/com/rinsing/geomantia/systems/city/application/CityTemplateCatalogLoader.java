@@ -79,7 +79,7 @@ public final class CityTemplateCatalogLoader {
                 "buildingSemantic", "style", "templateId", "templateRef", "nbtFile", "contentHash", "variant",
                 "variantId",
                 "width", "height", "depth", "size", "dimensions", "rawSize", "allowedRotations", "allowedMirrors",
-                "roadEntrances", "terrainPosePolicy", "supportPolicy", "clearanceBlocks"),
+                "roadEntrances", "terrainPosePolicy", "supportPolicy", "clearanceBlocks", "frontagePolicy"),
                 "templates[" + index + "]");
         String buildingSemantic = requiredString(object, "buildingSemantic");
         String style = requiredString(object, "style");
@@ -102,12 +102,26 @@ public final class CityTemplateCatalogLoader {
         try {
             return new CityTemplateCatalog.Template(buildingSemantic, style, templateId, nbtFile, contentHash,
                     variantId, size, rotations, mirrors, entrances, terrainPosePolicy, supportPolicy,
-                    clearanceBlocks);
+                    clearanceBlocks, parseFrontagePolicy(object));
         } catch (CityTemplateCatalog.CatalogException ex) {
             throw ex;
         } catch (IllegalArgumentException ex) {
             throw fail("CITY_TEMPLATE_CATALOG_TEMPLATE_INVALID", "Invalid template at index " + index, ex);
         }
+    }
+
+    private static CityTemplateCatalog.FrontagePolicy parseFrontagePolicy(JsonObject object) {
+        if (!object.has("frontagePolicy")) return CityTemplateCatalog.FrontagePolicy.FIXED_FRONT;
+        JsonElement value = object.get("frontagePolicy");
+        if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
+            try {
+                return CityTemplateCatalog.FrontagePolicy.valueOf(value.getAsString());
+            } catch (IllegalArgumentException ignored) {
+                // Unknown values must not silently grant permission to choose another entrance.
+            }
+        }
+        throw fail("CITY_TEMPLATE_CATALOG_FRONTAGE_POLICY_INVALID",
+                "frontagePolicy must be FIXED_FRONT or ANY_AUTHORED_ENTRANCE.");
     }
 
     private static CityTemplatePlacementGeometry.Size parseSize(JsonObject object, int index) {

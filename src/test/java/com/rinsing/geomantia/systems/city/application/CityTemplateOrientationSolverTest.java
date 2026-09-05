@@ -55,6 +55,73 @@ class CityTemplateOrientationSolverTest {
         assertEquals(CityTemplatePlacementGeometry.Direction.EAST, selected.get(0).frontageDirection());
     }
 
+    @Test
+    void noFixedFrontChoosesOnlyAuthoredPortsWithoutExpandingRotationSearch() {
+        var flexible = flexible(template(List.of(
+                new CityTemplatePlacementGeometry.RoadEntrance(
+                        "north", new BlockPoint(2, 0), CityTemplatePlacementGeometry.Direction.NORTH),
+                new CityTemplatePlacementGeometry.RoadEntrance(
+                        "south", new BlockPoint(2, 8), CityTemplatePlacementGeometry.Direction.SOUTH))));
+        var target = CityTemplateOrientationSolver.FacingTarget.cardinal(
+                "road", CityTemplatePlacementGeometry.Direction.SOUTH);
+        var ranked = solver.rank(flexible, CityTemplatePlacementGeometry.Mirror.NONE, "",
+                BlockPoint.ORIGIN, target);
+        assertEquals(4, ranked.size());
+        assertEquals(CityTemplatePlacementGeometry.Rotation.NONE, ranked.get(0).rotation());
+        assertEquals("south", ranked.get(0).entranceId());
+        assertEquals(1.0, ranked.get(0).alignmentScore());
+        assertEquals(ranked, solver.rank(flexible, CityTemplatePlacementGeometry.Mirror.NONE, "",
+                BlockPoint.ORIGIN, target));
+
+        var explicit = solver.rank(flexible, CityTemplatePlacementGeometry.Mirror.NONE, "north",
+                BlockPoint.ORIGIN, target);
+        assertTrue(explicit.stream().allMatch(score -> score.entranceId().equals("north")));
+        assertEquals(CityTemplatePlacementGeometry.Rotation.CLOCKWISE_180, explicit.get(0).rotation());
+        assertThrows(IllegalArgumentException.class, () -> solver.rank(flexible,
+                CityTemplatePlacementGeometry.Mirror.NONE, "invented", BlockPoint.ORIGIN, target));
+        assertThrows(IllegalArgumentException.class, () -> solver.rank(flexible,
+                CityTemplatePlacementGeometry.Mirror.LEFT_RIGHT, "", BlockPoint.ORIGIN, target));
+    }
+
+    @Test
+    void declaredFrontIsNotOverriddenByFlexiblePolicy() {
+        var flexible = flexible(template(List.of(
+                new CityTemplatePlacementGeometry.RoadEntrance(
+                        "front", new BlockPoint(2, 0), CityTemplatePlacementGeometry.Direction.NORTH),
+                new CityTemplatePlacementGeometry.RoadEntrance(
+                        "south", new BlockPoint(2, 8), CityTemplatePlacementGeometry.Direction.SOUTH))));
+        var ranked = solver.rank(flexible, CityTemplatePlacementGeometry.Mirror.NONE, "", BlockPoint.ORIGIN,
+                CityTemplateOrientationSolver.FacingTarget.cardinal("road", CityTemplatePlacementGeometry.Direction.SOUTH));
+        assertTrue(ranked.stream().allMatch(score -> score.entranceId().equals("front")));
+    }
+
+    @Test
+    void flexibleFrontUsesTransformedDirectionsAndHonorsRestrictedRotations() {
+        var base = template(List.of(
+                new CityTemplatePlacementGeometry.RoadEntrance(
+                        "north", new BlockPoint(2, 0), CityTemplatePlacementGeometry.Direction.NORTH),
+                new CityTemplatePlacementGeometry.RoadEntrance(
+                        "south", new BlockPoint(2, 8), CityTemplatePlacementGeometry.Direction.SOUTH)));
+        var flexible = new CityTemplateCatalog.Template(base.buildingSemantic(), base.style(), base.templateId(),
+                base.nbtFile(), base.contentHash(), base.variantId(), base.rawSize(),
+                List.of(CityTemplatePlacementGeometry.Rotation.NONE),
+                List.of(CityTemplatePlacementGeometry.Mirror.LEFT_RIGHT), base.roadEntrances(),
+                base.terrainPosePolicy(), base.supportPolicy(), base.clearanceBlocks(),
+                CityTemplateCatalog.FrontagePolicy.ANY_AUTHORED_ENTRANCE);
+        var ranked = solver.rank(flexible, CityTemplatePlacementGeometry.Mirror.LEFT_RIGHT, "", BlockPoint.ORIGIN,
+                CityTemplateOrientationSolver.FacingTarget.cardinal("road", CityTemplatePlacementGeometry.Direction.SOUTH));
+        assertEquals(1, ranked.size());
+        assertEquals("north", ranked.get(0).entranceId());
+        assertEquals(CityTemplatePlacementGeometry.Direction.SOUTH, ranked.get(0).frontageDirection());
+    }
+
+    private static CityTemplateCatalog.Template flexible(CityTemplateCatalog.Template base) {
+        return new CityTemplateCatalog.Template(base.buildingSemantic(), base.style(), base.templateId(),
+                base.nbtFile(), base.contentHash(), base.variantId(), base.rawSize(), base.allowedRotations(),
+                base.allowedMirrors(), base.roadEntrances(), base.terrainPosePolicy(), base.supportPolicy(),
+                base.clearanceBlocks(), CityTemplateCatalog.FrontagePolicy.ANY_AUTHORED_ENTRANCE);
+    }
+
     private static CityTemplateCatalog.Template template(
             List<CityTemplatePlacementGeometry.RoadEntrance> entrances) {
         return new CityTemplateCatalog.Template(

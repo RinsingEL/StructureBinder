@@ -1,6 +1,7 @@
 """Read-only regression for the explicitly inspected development bundle entrance corrections.
 
-Requires nbtlib. This is a ten-template evidence check, not a general Minecraft collision oracle.
+Requires nbtlib. Checks ten corrected entrances and the author-approved four-way fountain policy;
+not a general Minecraft collision oracle.
 Run: python tools/city_templates/verify_validation_02_entrances.py [bundle-directory]
 The table also preserves the configuration correction outside the gitignored run directory.
 """
@@ -33,6 +34,19 @@ def verify(root):
         assert entry["sourceSha256"] == "sha256:" + hashlib.sha256(source.read_bytes()).hexdigest(), entry["templateRef"]
     catalog = json.loads((root / "template_catalog.json").read_text(encoding="utf-8"))
     by_ref = {t["templateRef"]: t for t in catalog["templates"]}
+    fountain_ref = "geomantia:city/trek/landmark/plains_fountain_01"
+    fountain = by_ref[fountain_ref]
+    assert fountain.get("frontagePolicy") == "ANY_AUTHORED_ENTRANCE", "Approved fountain frontage policy regressed"
+    assert {t["templateRef"] for t in catalog["templates"]
+            if t.get("frontagePolicy") == "ANY_AUTHORED_ENTRANCE"} == {fountain_ref}, "Unreviewed flexible frontage added"
+    expected_ports = {
+        "north": (4, 0, "NORTH"), "east": (8, 4, "EAST"),
+        "south": (4, 8, "SOUTH"), "west": (0, 4, "WEST"),
+    }
+    assert len(fountain["roadEntrances"]) == 4
+    for port in fountain["roadEntrances"]:
+        suffix = port["entranceId"].removeprefix("plains_fountain_01_")
+        assert (port["position"]["x"], port["position"]["z"], port["direction"]) == expected_ports[suffix]
     report = []
     for name, (door, port, direction) in CASES.items():
         ref = "geomantia:city/stubbs/" + name
