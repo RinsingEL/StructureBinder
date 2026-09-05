@@ -79,28 +79,26 @@ class ProviderPlanningToolGatewayTest {
     }
 
     @Test
-    void injectsManagedCatalogsInsteadOfAcceptingModelSelectedPaths() throws Exception {
-        Path source = serverDirectory.resolve("config/structureTemplate/terrasense/release_bundle");
-        Files.createDirectories(source);
-        Files.writeString(source.resolve("TerraSenseStructureProfileSource.official.json"),
-                "{\"schema\":\"terrasense_structure_profile_source\",\"sourceType\":\"structure_profile_jsonl\"}");
-        Files.writeString(source.resolve("StructureProfile.jsonl"), "{}\n");
-        Files.writeString(source.resolve("StructureVocabulary.snapshot.json"), "{}");
-        Files.writeString(source.resolve("template_catalog.json"), "{\"schema\":\"city_template_catalog\"}");
-        Files.writeString(source.resolve("blueprint_reference_catalog.json"),
-                "{\"schema\":\"city_blueprint_reference_catalog\"}");
-        JsonObject arguments = new JsonObject();
-        JsonObject hostile = new JsonObject();
-        hostile.addProperty("path", "C:/not/model/controlled.json");
-        arguments.add("templateCatalogSource", hostile);
-
-        gateway().execute("city_prepare_d4_blueprint_context", arguments);
-
+    void delegatesCatalogOwnershipToTheSharedHostEndpoint() throws Exception {
+        gateway().execute("city_prepare_d4_blueprint_context", new JsonObject());
         JsonObject actual = received.get();
-        assertTrue(actual.has("terrasenseProfileSource"));
-        assertTrue(actual.has("blueprintReferenceCatalog"));
-        assertTrue(actual.getAsJsonObject("templateCatalogSource").get("catalogPath")
-                .getAsString().endsWith("template_catalog.json"));
+        assertEquals("run_a", actual.get("runId").getAsString());
+        assertEquals("city_a", actual.get("citySeedId").getAsString());
+        assertEquals(2, actual.size());
+    }
+
+    @Test
+    void inlineImagesDoNotConsumeTheDecisionTextBudget() throws Exception {
+        server.removeContext("/realm/city/plan_d3");
+        String imageData = "A".repeat(7 * 1024 * 1024);
+        server.createContext("/realm/city/plan_d3", exchange -> {
+            read(exchange);
+            assertEquals("true", exchange.getRequestHeaders().getFirst("X-Geomantia-Agent-View"));
+            reply(exchange, "{\"ok\":true,\"presentation\":\"planning_decision_view.v0.1\",\"imageEvidence\":[{\"type\":\"image\",\"mimeType\":\"image/png\",\"data\":\"" + imageData + "\"}]}");
+        });
+        JsonArray output = gateway().execute("city_plan_d3", new JsonObject()).getAsJsonArray();
+        assertEquals(2, output.size());
+        assertEquals("data:image/png;base64," + imageData, output.get(1).getAsJsonObject().get("image_url").getAsString());
     }
 
     @Test

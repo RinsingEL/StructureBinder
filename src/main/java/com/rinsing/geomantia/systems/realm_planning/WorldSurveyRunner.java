@@ -66,6 +66,29 @@ public final class WorldSurveyRunner {
 
     public WorldSurveyResult run(Config config, AtlasSampler sampler, ProgressListener progressListener)
             throws IOException {
+        return run(config, sampler, progressListener, () -> false);
+    }
+
+    public WorldSurveyResult run(Config config, AtlasSampler sampler, ProgressListener progressListener,
+                                 java.util.function.BooleanSupplier worldClosed) throws IOException {
+        Thread owner = Thread.currentThread();
+        Runnable checkCancellation = () -> {
+            if (worldClosed.getAsBoolean() || owner.isInterrupted()) {
+                throw new java.util.concurrent.CancellationException("WORLD_SURVEY_CANCELLED");
+            }
+        };
+        checkCancellation.run();
+        AtlasSampler checkedSampler = new AtlasSampler() {
+            @Override public SampledCell sample(AtlasCell cell, SampleMode mode) {
+                checkCancellation.run(); SampledCell result = sampler.sample(cell, mode); checkCancellation.run(); return result;
+            }
+            @Override public SampledCell sampleFeature(AtlasCell cell, SampleMode mode) {
+                checkCancellation.run(); SampledCell result = sampler.sampleFeature(cell, mode); checkCancellation.run(); return result;
+            }
+            @Override public double sampleElevation(AtlasCell cell, SampleMode mode) {
+                checkCancellation.run(); double result = sampler.sampleElevation(cell, mode); checkCancellation.run(); return result;
+            }
+        };
         long startedAt = System.nanoTime();
         Config normalized = config.normalized();
         Path runDirectory = debugRoot.resolve(normalized.runId);
@@ -75,7 +98,7 @@ public final class WorldSurveyRunner {
         GisSampleConfig sampleConfig = GisSampleConfig.defaults().withCellStepBlocks(normalized.cellStepBlocks);
         AtlasRegionSnapshotIo snapshotIo = new AtlasRegionSnapshotIo();
         AtlasRegionStore store = new AtlasRegionStore(sampleConfig);
-        GisRefreshService service = new GisRefreshService(sampleConfig, classifierConfig, store, sampler);
+        GisRefreshService service = new GisRefreshService(sampleConfig, classifierConfig, store, checkedSampler);
         SurveyBounds bounds = SurveyBounds.from(normalized, sampleConfig.regionSizeBlocks());
         List<TilePlan> tiles = planTiles(normalized.dimensionId, normalized.sampleMode, bounds,
                 sampleConfig.regionSizeBlocks());
@@ -93,6 +116,7 @@ public final class WorldSurveyRunner {
         try {
             progress.start();
             for (TilePlan tile : tiles) {
+                checkCancellation.run();
                 Path snapshotPath = tileDirectory.resolve(tile.cacheFileName());
                 TileManifest tileManifest;
                 long tileStartedAt = System.nanoTime();
@@ -135,8 +159,10 @@ public final class WorldSurveyRunner {
             patches.sort(Comparator.comparing(LandformPatch::patchId));
             Path featureGridPath = runDirectory.resolve("world_feature_grid.json");
             progress.beginMicroSampling();
-            MicroSamplingResult micro = loadOrBuildFeatureGrid(normalized, sampler, regions, featureGridPath, configHash,
+            checkCancellation.run();
+            MicroSamplingResult micro = loadOrBuildFeatureGrid(normalized, checkedSampler, regions, featureGridPath, configHash,
                     progress);
+            checkCancellation.run();
             long durationMs = Math.max(0L, (System.nanoTime() - startedAt) / 1_000_000L);
             boolean sealed = failed == 0 && regions.size() == tiles.size();
             long bytes = directorySize(runDirectory);
@@ -179,16 +205,22 @@ public final class WorldSurveyRunner {
                     bytes,
                     sealed
             );
+            checkCancellation.run();
             writeManifest(result, manifests, normalized, bounds, manifestPath);
             if (!sealed) {
                 throw new IOException("World survey did not seal: failedTileCount=" + failed);
             }
             progress.complete(durationMs);
             return result;
+        } catch (java.util.concurrent.CancellationException ex) {
+            progress.cancel();
+            throw ex;
         } catch (IOException ex) {
+            if (worldClosed.getAsBoolean() || owner.isInterrupted()) { progress.cancel(); checkCancellation.run(); }
             progress.fail(ex.getMessage());
             throw ex;
         } catch (RuntimeException ex) {
+            if (worldClosed.getAsBoolean() || owner.isInterrupted()) { progress.cancel(); checkCancellation.run(); }
             progress.fail(ex.getMessage());
             throw ex;
         } finally {
@@ -943,6 +975,12 @@ public final class WorldSurveyRunner {
         synchronized void fail(String error) {
             status = "failed";
             detail = error == null ? "" : error;
+            publish();
+        }
+
+        synchronized void cancel() {
+            status = "cancelled";
+            detail = "WORLD_SURVEY_CANCELLED";
             publish();
         }
 

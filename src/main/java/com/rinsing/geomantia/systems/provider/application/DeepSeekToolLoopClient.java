@@ -36,7 +36,7 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
             and never bypass a failure budget. Tool responses and images attached to them are your only runtime
             evidence. If another MCP agent advanced the state first, reload status and continue from the new state.
             W is performed once. Finish T1/T2 for every realm before calling T3 exactly once for the complete set.
-            Finish the existing T4 requirements for every realm before using the existing City queue. Whenever
+            After unified T3, finish the nearest realm's T4 and its cities before the next realm. Whenever
             selecting a site, use Patch Explorer open, show and select in order and rely on the attached preview.
             When resuming without prior tool history, reopen the active Patch Explorer or prepare the same D4 context
             again to obtain formal evidence; do not read raw run files.
@@ -51,6 +51,10 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
             object may contain only sideMode, stagger and widthClass. Never combine fields from these two families.
             Stop without calling another tool when the queue is completed, waiting for generation, requires a
             human, or the returned error cannot be corrected from tool evidence.
+            You are a scene designer, not an environment operator. Structure functions and styles are authored
+            by the modpack creator before play; never infer, invent or relabel them from names or appearances.
+            Compose a civilization from the supplied functions and styles. Choose useful districts, clear hierarchy,
+            appropriate open space and purposeful connections, then let the host compile the design.
             """;
 
     private final HttpClient httpClient;
@@ -165,6 +169,7 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
                         }
                     }
                     emit(activityListener, "result", summarizeToolResult(toolName, toolOutput));
+                    if (toolExecutor instanceof PlanningTurnControl control && control.finished()) return control.result(toolCalls);
                     JsonElement deliveredOutput = modelToolOutput(toolName, toolOutput);
                     JsonObject result = new JsonObject();
                     result.addProperty("type", "function_call_output");
@@ -279,6 +284,7 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
                     }
                 }
                 emit(activityListener, "result", summarizeToolResult(toolName, toolOutput));
+                if (toolExecutor instanceof PlanningTurnControl control && control.finished()) return control.result(toolCalls);
                 JsonElement deliveredOutput = modelToolOutput(toolName, toolOutput);
                 JsonObject result = new JsonObject();
                 result.addProperty("role", "tool");
@@ -455,6 +461,7 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
         if (!"city_prepare_d4_blueprint_context".equals(toolName)) return output.deepCopy();
         JsonObject source = structuredObject(output);
         if (source == null) return output.deepCopy();
+        if (source.has("presentation")) return output.deepCopy();
         JsonObject compact = source.deepCopy();
         JsonObject context = object(compact, "cityBlueprintContext");
         if (context == null) context = compact;

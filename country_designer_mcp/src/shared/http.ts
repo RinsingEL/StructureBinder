@@ -10,11 +10,11 @@ export const TIMEOUTS = {
 };
 
 export async function getJson(url: string, timeoutMs = TIMEOUTS.quick) {
-  return axios.get(url, { timeout: timeoutMs });
+  return axios.get(url, { timeout: timeoutMs, headers: { "X-Geomantia-Agent-View": "true" } });
 }
 
 export async function postJson(url: string, body: unknown, timeoutMs = TIMEOUTS.quick) {
-  return axios.post(url, body, { timeout: timeoutMs });
+  return axios.post(url, body, { timeout: timeoutMs, headers: { "X-Geomantia-Agent-View": "true" } });
 }
 
 export function formatAxiosError(error: unknown) {

@@ -1,5 +1,7 @@
 package com.rinsing.geomantia.systems.provider.application;
 
+import com.google.gson.JsonObject;
+
 import com.mojang.logging.LogUtils;
 import com.rinsing.geomantia.systems.provider.application.ProviderConfigStore.Credentials;
 import org.slf4j.Logger;
@@ -148,14 +150,50 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
                     apiPort, serverDirectory, debugRoot, run);
             ProviderAgentClient client = PlayerProviderConfig.HERMES.equals(config.agentRuntime())
                     ? hermesClient : legacyClient;
-            DeepSeekToolLoopClient.LoopResult result = client.run(config, credentials,
-                    sessionId(debugRoot, run), run.state(), run.initialImages(), toolsFor(run.stage()), gateway,
-                    this::recordLoopActivity);
+            DeepSeekToolLoopClient.LoopResult result;
+            if (run.stage() == ProviderPlanningDiscovery.Stage.W || run.stage() == ProviderPlanningDiscovery.Stage.T3
+                    || run.stage() == ProviderPlanningDiscovery.Stage.QUEUE_REFRESH) {
+                // These transitions contain no design choice and must not cost a model turn.
+                var output = gateway.execute(run.nextAction(), new com.google.gson.JsonObject());
+                String failure = PlanningTurnControl.failure(PlanningTurnControl.payload(output));
+                if (!failure.isBlank()) throw new IOException(failure);
+                result = new DeepSeekToolLoopClient.LoopResult(true, "completed", "", 0, "");
+            } else {
+                com.google.gson.JsonObject designState = run.state().deepCopy();
+                List<Path> designImages = run.initialImages();
+                List<String> designTools = toolsFor(run.stage());
+                if (PreparedCityDesignTurn.applies(run)) {
+                    var prepared = PreparedCityDesignTurn.prepare(designState, gateway, debugRoot);
+                    designState = prepared.state();
+                    designImages = prepared.images();
+                    designTools = PreparedCityDesignTurn.TOOLS;
+                    activity("system", "宿主已备齐冻结城市设计资料与地形图，AI 直接设计/提交");
+                } else {
+                    var sources = new ManagedCityPlanningSources(serverDirectory).resolve();
+                    designState.add("authoringBrief", sources.authoringBrief().deepCopy());
+                }
+                List<String> allowed = designTools;
+                DeepSeekToolLoopClient.ToolExecutor scoped = (tool, arguments) -> {
+                    if (!allowed.contains(tool)) {
+                        var denied = new com.google.gson.JsonObject();
+                        denied.addProperty("ok", false);
+                        denied.addProperty("error", "PLANNING_TOOL_NOT_IN_CURRENT_DECISION_SCOPE: " + tool);
+                        return denied;
+                    }
+                    return gateway.execute(tool, arguments);
+                };
+                result = client.run(config, credentials,
+                        designSessionId(debugRoot, run, designState), designState, designImages, designTools, new PlanningTurnControl(scoped),
+                        this::recordLoopActivity);
+            }
             if (result.success()) {
                 acceptSuccessfulTurnOnlyAfterStateProgress(currentDiscovery, run);
             } else {
                 recordFailedTurn(run, result.errorCode());
             }
+        } catch (Exception exception) {
+            recordFailedTurn(run, "PLANNING_HOST_BLOCKED: " + (exception.getMessage() == null
+                    ? "PROVIDER_HOST_STEP_FAILED" : exception.getMessage()));
         } finally {
             turnRunning.set(false);
         }
@@ -163,14 +201,15 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
 
     void recordFailedTurn(ProviderPlanningDiscovery.PlanningStep run, String errorCode) {
         int attempts = recordNoProgress(run.semanticIdentity());
-        boolean exhausted = attempts >= MAX_CONSECUTIVE_NO_PROGRESS;
+        boolean blocked = errorCode.startsWith("PLANNING_HOST_BLOCKED") || errorCode.startsWith("PLANNING_REPEATED_REJECTION");
+        boolean exhausted = attempts >= MAX_CONSECUTIVE_NO_PROGRESS || blocked;
         if (exhausted) haltedIdentity = run.semanticIdentity();
         retryAfterEpochSecond = Instant.now().getEpochSecond() + ERROR_BACKOFF_SECONDS;
         update(new AutomationStatus(exhausted ? "error" : "waiting", errorCode,
                 run.runId(), run.citySeedId(), run.nextAction(), Instant.now().toString()));
         activity(exhausted ? "error" : "waiting", exhausted
-                ? "Agent loop 连续失败（" + attempts + "/" + MAX_CONSECUTIVE_NO_PROGRESS
-                        + "），自动规划已停止；重新保存 Provider 配置可重试：" + errorCode
+                ? (blocked ? "自动规划已停止，需先处理阻塞后再重试：" : "Agent loop 连续失败（" + attempts
+                        + "/" + MAX_CONSECUTIVE_NO_PROGRESS + "），自动规划已停止；处理后可重试：") + errorCode
                 : "Agent loop 失败（" + attempts + "/" + MAX_CONSECUTIVE_NO_PROGRESS
                         + "），60 秒后重试：" + errorCode);
     }
@@ -228,6 +267,15 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
         return sanitize("geomantia-" + world + "-" + step.runId() + "-" + scope);
     }
 
+    static String designSessionId(Path debugRoot, ProviderPlanningDiscovery.PlanningStep step, JsonObject state) {
+        if (!state.has("preparedBlueprintContext")) return sessionId(debugRoot, step);
+        String identity = debugRoot.toAbsolutePath().normalize() + "|" + step.runId() + "|" + step.citySeedId()
+                + "|" + state.get("contextId").getAsString() + "|"
+                + (state.has("failureCount") ? state.get("failureCount").getAsInt() : 0);
+        // Full current evidence is supplied by the host. Keep old sessions as audit records, not live design baggage.
+        return "geomantia-design-" + java.util.UUID.nameUUIDFromBytes(identity.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
+
     private static String sanitize(String value) {
         String result = value.replaceAll("[^A-Za-z0-9._-]", "-");
         return result.length() <= 200 ? result : result.substring(0, 200);
@@ -260,8 +308,7 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
             case QUEUE_REFRESH -> List.of("city_design_queue_refresh");
             case CITY -> List.of("city_design_queue_status", "city_plan_d3", "city_review_d3_site",
                     "patch_explorer_open", "patch_explorer_show_candidates",
-                    "city_prepare_d4_blueprint_context", "city_submit_d4_blueprint",
-                    "city_post_d4_auto_compile_retry");
+                    "city_prepare_d4_blueprint_context", "city_submit_d4_blueprint");
             case WAITING, COMPLETE -> List.of();
         };
     }

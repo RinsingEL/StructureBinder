@@ -29,6 +29,7 @@ public final class ProviderPlanningToolGateway implements DeepSeekToolLoopClient
     private static final int MAX_RESPONSE_CHARS = 6 * 1024 * 1024;
     private static final long MAX_IMAGE_BYTES = 8L * 1024 * 1024;
     private static final int MAX_IMAGES = 4;
+    private static final long MAX_TRANSPORT_CHARS = MAX_RESPONSE_CHARS + MAX_IMAGES * 4 * ((MAX_IMAGE_BYTES + 2) / 3);
     private static final Map<String, Endpoint> ENDPOINTS = endpoints();
 
     private final HttpClient httpClient;
@@ -39,7 +40,6 @@ public final class ProviderPlanningToolGateway implements DeepSeekToolLoopClient
     private final String citySeedId;
     private final String realmId;
     private final String patchScopeType;
-    private final ManagedCityPlanningSources managedSources;
 
     public ProviderPlanningToolGateway(int apiPort, Path serverDirectory, String runId, String citySeedId) {
         this(HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build(), apiPort,
@@ -84,7 +84,6 @@ public final class ProviderPlanningToolGateway implements DeepSeekToolLoopClient
         this.citySeedId = optionalIdentity(citySeedId, "citySeedId");
         this.realmId = optionalIdentity(realmId, "realmId");
         this.patchScopeType = patchScopeType == null ? "" : patchScopeType;
-        this.managedSources = new ManagedCityPlanningSources(this.serverDirectory);
     }
 
     public static List<String> allowedTools() {
@@ -124,18 +123,18 @@ public final class ProviderPlanningToolGateway implements DeepSeekToolLoopClient
                 return error("PATCH_SELECTION_REF_REQUIRED", toolName);
             }
         }
-        if ("city_prepare_d4_blueprint_context".equals(toolName)) managedSources.resolve().applyTo(arguments);
         if (arguments.toString().length() > MAX_ARGUMENT_CHARS) {
             return error("PROVIDER_AGENT_TOOL_ARGUMENTS_TOO_LARGE", toolName);
         }
         HttpRequest request = HttpRequest.newBuilder(apiBase.resolve(endpoint.path()))
                 .timeout(endpoint.longRunning() ? Duration.ofMinutes(5) : Duration.ofSeconds(45))
                 .header("Content-Type", "application/json")
+                .header("X-Geomantia-Agent-View", "true")
                 .POST(HttpRequest.BodyPublishers.ofString(arguments.toString()))
                 .build();
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         String body = response.body() == null ? "" : response.body();
-        if (body.length() > MAX_RESPONSE_CHARS) {
+        if (body.length() > MAX_TRANSPORT_CHARS) {
             return error("PROVIDER_AGENT_TOOL_RESPONSE_TOO_LARGE", toolName);
         }
         JsonElement result;
@@ -143,6 +142,15 @@ public final class ProviderPlanningToolGateway implements DeepSeekToolLoopClient
             result = JsonParser.parseString(body);
         } catch (RuntimeException exception) {
             result = error("PROVIDER_AGENT_TOOL_INVALID_JSON", toolName);
+        }
+        JsonElement decisionText = result;
+        if (result.isJsonObject() && result.getAsJsonObject().has("imageEvidence")) {
+            JsonObject withoutImages = result.getAsJsonObject().deepCopy();
+            withoutImages.remove("imageEvidence");
+            decisionText = withoutImages;
+        }
+        if (decisionText.toString().length() > MAX_RESPONSE_CHARS) {
+            return error("PROVIDER_AGENT_TOOL_RESPONSE_TOO_LARGE", toolName);
         }
         if (response.statusCode() / 100 != 2) {
             JsonObject wrapper = new JsonObject();
@@ -156,6 +164,27 @@ public final class ProviderPlanningToolGateway implements DeepSeekToolLoopClient
     }
 
     private JsonElement withImages(JsonElement result) {
+        if (result.isJsonObject() && result.getAsJsonObject().has("imageEvidence")) {
+            JsonObject textResult = result.getAsJsonObject().deepCopy();
+            JsonArray images = textResult.remove("imageEvidence").getAsJsonArray();
+            JsonArray output = new JsonArray();
+            JsonObject text = new JsonObject();
+            text.addProperty("type", "input_text");
+            text.addProperty("text", textResult.toString());
+            output.add(text);
+            for (JsonElement entry : images) {
+                JsonObject image = new JsonObject();
+                image.addProperty("type", "input_image");
+                image.addProperty("image_url", "data:image/png;base64," + entry.getAsJsonObject().get("data").getAsString());
+                image.addProperty("detail", "high");
+                output.add(image);
+            }
+            return output;
+        }
+        if (result.isJsonObject() && result.getAsJsonObject().has("presentation")) {
+            // The host already resolved or explicitly rejected every preview; do not bypass its world boundary.
+            return new JsonPrimitive(result.toString());
+        }
         Set<Path> candidates = new LinkedHashSet<>();
         collectImagePaths(result, candidates);
         if (candidates.isEmpty()) return new JsonPrimitive(result.toString());

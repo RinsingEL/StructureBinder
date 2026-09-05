@@ -126,6 +126,7 @@ public final class CityBlueprintService {
         recoveryBoundary.addProperty("rawRunArtifactInspectionAllowed", false);
         boundary.add("agentRecoveryBoundary", recoveryBoundary);
         contextCore.add("decisionBoundary", boundary);
+        contextCore.add("designGuide", CityDesignGuide.from(references));
         contextCore.add("citySeed", seed.deepCopy());
         contextCore.add("d3ReviewPackage", d3.deepCopy());
         contextCore.add("catalogSnapshot", snapshot.deepCopy());

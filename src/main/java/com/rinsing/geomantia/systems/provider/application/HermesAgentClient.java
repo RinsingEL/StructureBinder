@@ -1,6 +1,7 @@
 package com.rinsing.geomantia.systems.provider.application;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.provider.application.ProviderConfigStore.Credentials;
@@ -32,6 +33,8 @@ final class HermesAgentClient implements ProviderAgentClient {
     private static final Duration BOOT_TIMEOUT = Duration.ofSeconds(30);
     private static final Duration RUN_TIMEOUT = Duration.ofMinutes(20);
     private static final String MCP_RESOURCE = "/geomantia/sidecar/geomantia-mcp-bundle.mjs";
+    // Must match the pinned bootstrap adapter; reject locally before starting a paid turn.
+    static final int MAX_PLANNING_TEXT_LENGTH = 262_144;
     private static final String INSTRUCTIONS = """
             You are the Geomantia in-game planning agent. Work only on the current host-provided planning state.
             Use only the enabled Geomantia MCP tools and follow formal nextAction and validation evidence. Never read
@@ -42,6 +45,13 @@ final class HermesAgentClient implements ProviderAgentClient {
             For City D4, only CONNECTION creates a terrain-routed main road. Keep non-isolated groups in one reachable
             relation network and use explicit CONNECTION edges for actual destinations. Submit a complete blueprint,
             but on validation failure revise the existing design instead of redesigning the city from scratch.
+            Structure functions and styles are authored by the modpack creator before play. Never infer or relabel
+            them from names or images. Select from the supplied authored metadata to form functional civilizations.
+            Exact placement, compilation, background progression and installed catalog selection belong to the host.
+            A city_blueprint_decision_context is the complete design view of the frozen contextId, not truncated data.
+            Compiler geometry/provenance remains in the host; do not request full dumps or repeatedly prepare an unchanged
+            context. Use the shown exact authored IDs and paged candidate tools when additional local choices are needed.
+            Keep visible explanations concise; spend the turn on the design and submit its complete tool arguments.
             """;
 
     private final HttpClient httpClient;
@@ -54,6 +64,7 @@ final class HermesAgentClient implements ProviderAgentClient {
     private String apiKey = "";
     private String profileName = "";
     private String fingerprint = "";
+    private ProviderToolBridge toolBridge;
 
     HermesAgentClient() {
         this(HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5))
@@ -77,18 +88,21 @@ final class HermesAgentClient implements ProviderAgentClient {
     public DeepSeekToolLoopClient.LoopResult run(
             PlayerProviderConfig config, Credentials credentials, String sessionId,
             JsonObject initialState, List<Path> initialImages, List<String> allowedTools,
-            DeepSeekToolLoopClient.ToolExecutor ignoredToolExecutor,
+            DeepSeekToolLoopClient.ToolExecutor toolExecutor,
             Consumer<AgentActivityEvent> activityListener) {
         if (!config.enabled()) return failure("PROVIDER_DISABLED");
         if (!credentials.present()) return failure("PROVIDER_API_KEY_MISSING");
-        if (initialState == null || allowedTools == null || allowedTools.isEmpty() || sessionId == null
+        if (initialState == null || toolExecutor == null || allowedTools == null || allowedTools.isEmpty() || sessionId == null
                 || sessionId.isBlank()) return failure("PROVIDER_AGENT_INPUT_INVALID");
         Consumer<AgentActivityEvent> activity = activityListener == null ? ignored -> { } : activityListener;
         try {
+            JsonArray prompt = promptContent(initialState, initialImages);
+            if (toolBridge == null) toolBridge = new ProviderToolBridge();
+            toolBridge.bind(allowedTools, toolExecutor);
             ensureStarted(config.validated(), credentials, allowedTools, activity);
             ensureSession(sessionId, config.model());
             JsonObject requestBody = new JsonObject();
-            requestBody.addProperty("message", prompt(initialState, initialImages));
+            requestBody.add("message", prompt);
             requestBody.addProperty("instructions", INSTRUCTIONS);
             HttpRequest request = authorizedRequest("/api/sessions/" + sessionId + "/chat/stream")
                     .timeout(RUN_TIMEOUT)
@@ -100,7 +114,8 @@ final class HermesAgentClient implements ProviderAgentClient {
                 return failure("HERMES_RUN_START_FAILED");
             }
             emit(activity, "system", "Hermes 会话已接管：" + sessionId);
-            SessionStreamResult terminal = streamSession(response.body(), activity);
+            SessionStreamResult terminal = streamSession(response.body(), activity, toolExecutor);
+            if (toolExecutor instanceof PlanningTurnControl control && control.finished()) return control.result(terminal.toolCalls());
             String status = terminal.status();
             String output = terminal.output();
             if (!output.isBlank()) emit(activity, "model", compact(output));
@@ -118,6 +133,8 @@ final class HermesAgentClient implements ProviderAgentClient {
         } catch (IOException | RuntimeException exception) {
             emit(activity, "error", "Hermes 通信失败：" + exception.getClass().getSimpleName());
             return failure("HERMES_RUN_FAILED");
+        } finally {
+            if (toolBridge != null) toolBridge.unbind();
         }
     }
 
@@ -149,7 +166,7 @@ final class HermesAgentClient implements ProviderAgentClient {
         Files.writeString(profileDirectory.resolve("config.yaml"), profileConfig(config, bundle, allowedTools),
                 StandardCharsets.UTF_8);
 
-        List<String> command = new java.util.ArrayList<>(hermesCommand(hermesRuntime));
+        List<String> command = new java.util.ArrayList<>(hermesCommand(hermesRuntime, extractBootstrap()));
         command.add("-p");
         command.add(profileName);
         command.add("gateway");
@@ -213,7 +230,8 @@ final class HermesAgentClient implements ProviderAgentClient {
     }
 
     private SessionStreamResult streamSession(Stream<String> responseLines,
-                                              Consumer<AgentActivityEvent> activity) {
+                                              Consumer<AgentActivityEvent> activity,
+                                              DeepSeekToolLoopClient.ToolExecutor executor) {
         int toolCalls = 0;
         String event = "";
         String output = "";
@@ -229,6 +247,10 @@ final class HermesAgentClient implements ProviderAgentClient {
                         emit(activity, "tool", "Hermes 调用 " + first(data, "tool_name", "name", "tool"));
                     } else if ("tool.completed".equals(event)) {
                         emit(activity, "result", "Hermes 工具完成 " + first(data, "tool_name", "name", "tool"));
+                        if (executor instanceof PlanningTurnControl control && control.finished()) {
+                            status = "completed";
+                            break;
+                        }
                     } else if ("tool.failed".equals(event) || "error".equals(event)) {
                         emit(activity, "error", "Hermes：" + compact(first(data, "error", "message", "detail")));
                     } else if ("assistant.completed".equals(event)) {
@@ -249,8 +271,19 @@ final class HermesAgentClient implements ProviderAgentClient {
                 .append("  default: ").append(yaml(config.model())).append('\n')
                 .append("  base_url: ").append(yaml(config.baseUrl())).append('\n')
                 .append("  api_key: ${GEOMANTIA_PROVIDER_API_KEY}\n")
-                .append("  api_mode: ").append(yaml(apiMode(config.apiProtocol()))).append('\n')
-                .append("toolsets:\n  - geomantia\n")
+                .append("  api_mode: ").append(yaml(apiMode(config.apiProtocol()))).append('\n');
+        // Verified native multimodal model absent from Hermes 0.18.2's capability registry.
+        // Source: https://huggingface.co/zai-org/GLM-5.3-Flash (2026-09-05).
+        // Do not infer capabilities for other GLM versions or arbitrary custom model names.
+        if (List.of("glm-5.3-flash", "zai-org/glm-5.3-flash").contains(config.model().toLowerCase(Locale.ROOT))) {
+            yaml.append("  supports_vision: true\n");
+            // This model defaults to max, including when passed unsupported "medium".
+            // Use its supported low budget for interactive scene design; compiler acceptance is unchanged.
+            yaml.append("custom_providers:\n  - name: geomantia-design\n    base_url: ").append(yaml(config.baseUrl()))
+                    .append("\n    model: ").append(yaml(config.model()))
+                    .append("\n    extra_body:\n      reasoning_effort: low\n");
+        }
+        yaml.append("toolsets:\n  - geomantia\n")
                 .append("platform_toolsets:\n  api_server:\n    - geomantia\n")
                 .append("agent:\n  max_turns: 24\n  disabled_toolsets:\n")
                 .append("    - terminal\n    - file\n    - browser\n    - web\n    - memory\n")
@@ -260,6 +293,8 @@ final class HermesAgentClient implements ProviderAgentClient {
                 .append(yaml(bundle.toString())).append('\n')
                 .append("    env:\n      GEOMANTIA_MC_API_URL: ")
                 .append(yaml("http://127.0.0.1:" + minecraftApiPort)).append('\n')
+                .append(toolBridge == null ? "" : "      GEOMANTIA_PROVIDER_TOOL_URL: " + yaml(toolBridge.url()) + "\n"
+                        + "      GEOMANTIA_PROVIDER_TOOL_KEY: " + yaml(toolBridge.token()) + "\n")
                 .append("    tools:\n      include:\n");
         for (String tool : allowedTools) yaml.append("        - ").append(yaml(tool)).append('\n');
         yaml.append("      resources: false\n      prompts: false\n")
@@ -298,10 +333,20 @@ final class HermesAgentClient implements ProviderAgentClient {
         return profiles.resolve(profileName).toAbsolutePath().normalize();
     }
 
-    private static List<String> hermesCommand(Path runtime) {
+    private Path extractBootstrap() throws IOException {
+        Path target = runtimeDirectory().resolve("geomantia_hermes_bootstrap.py");
+        Files.createDirectories(target.getParent());
+        try (InputStream input = HermesAgentClient.class.getResourceAsStream("/geomantia/sidecar/geomantia_hermes_bootstrap.py")) {
+            if (input == null) throw new IOException("HERMES_BOOTSTRAP_MISSING");
+            Files.copy(input, target, StandardCopyOption.REPLACE_EXISTING);
+        }
+        return target;
+    }
+
+    private static List<String> hermesCommand(Path runtime, Path bootstrap) {
         String configured = System.getProperty("geomantia.hermes.command", "").trim();
         if (!configured.isBlank()) return List.of(configured);
-        return List.of(runtime.resolve("python").resolve("python.exe").toString(), "-m", "hermes_cli.main");
+        return List.of(runtime.resolve("python").resolve("python.exe").toString(), bootstrap.toString());
     }
 
     static String pythonPath(Path runtime) {
@@ -361,13 +406,33 @@ final class HermesAgentClient implements ProviderAgentClient {
         }
     }
 
-    private static String prompt(JsonObject state, List<Path> images) {
-        StringBuilder text = new StringBuilder("Continue this formal planning state:\n").append(state);
-        if (images != null && !images.isEmpty()) {
-            text.append("\nHost preview files (advisory evidence; prefer newer MCP image results):");
-            for (Path image : images) if (image != null) text.append("\n- ").append(image.toAbsolutePath().normalize());
+    static JsonArray promptContent(JsonObject state, List<Path> images) throws IOException {
+        JsonArray content = new JsonArray();
+        JsonObject text = new JsonObject(); text.addProperty("type", "text");
+        text.addProperty("text", "Continue this formal planning state:\n" + state);
+        content.add(text);
+        // The pinned session API caps the whole request at 10 MB, including base64 and JSON escaping.
+        long remainingImageChars = 8_000_000L - text.toString().getBytes(StandardCharsets.UTF_8).length;
+        if (remainingImageChars < 0) throw new IOException("HERMES_INITIAL_STATE_TOO_LARGE");
+        JsonArray warnings = new JsonArray();
+        for (Path path : images == null ? List.<Path>of() : images) {
+            if (content.size() >= 5) break;
+            if (!Files.isRegularFile(path) || Files.size(path) > 8L * 1024 * 1024
+                    || 4 * ((Files.size(path) + 2) / 3) > remainingImageChars) {
+                warnings.add("Initial preview unavailable or exceeds the session request budget: " + path.getFileName());
+                continue;
+            }
+            JsonObject image = new JsonObject(); image.addProperty("type", "image_url");
+            JsonObject url = new JsonObject(); url.addProperty("url", "data:image/png;base64,"
+                    + java.util.Base64.getEncoder().encodeToString(Files.readAllBytes(path)));
+            image.add("image_url", url); content.add(image);
+            remainingImageChars -= image.toString().length();
         }
-        return text.toString();
+        if (!warnings.isEmpty()) text.addProperty("text", text.get("text").getAsString() + "\npreviewWarnings: " + warnings);
+        if (text.get("text").getAsString().length() > MAX_PLANNING_TEXT_LENGTH) {
+            throw new HermesException("HERMES_INITIAL_STATE_TOO_LARGE", "规划资料超过完整输入预算，已停止；不会截断资料继续调用模型");
+        }
+        return content;
     }
 
     private static String apiMode(String protocol) {
@@ -422,6 +487,7 @@ final class HermesAgentClient implements ProviderAgentClient {
     @Override
     public synchronized void close() {
         stopProcess();
+        if (toolBridge != null) { toolBridge.close(); toolBridge = null; }
         fingerprint = "";
         apiKey = "";
         sidecarPort = 0;

@@ -46,6 +46,7 @@ def devUseReTerraForged = providers.gradleProperty('geomantiaDevUseReTerraForged
 def devUseVisualPreview = providers.gradleProperty('geomantiaDevUseVisualPreview')
         .orElse('false')
         .get()
+def devPlanningSourceDir = providers.gradleProperty('geomantiaDevPlanningSourceDir').orElse('').get()
 def devAutoTeleport = providers.gradleProperty('geomantiaDevAutoTeleport')
         .orElse('')
         .get()
@@ -73,6 +74,9 @@ minecraft {
 
         client {
             property 'forge.enabledGameTestNamespaces', mod_id
+            if (!devPlanningSourceDir.isBlank()) {
+                property 'geomantia.providerPlanningSourceDir', devPlanningSourceDir
+            }
             if (!devAutoLoadWorldBase64.isBlank()) {
                 property 'geomantia.devAutoLoadWorldBase64', devAutoLoadWorldBase64
             }
@@ -148,6 +152,7 @@ repositories {
         dirs 'libs/local/trek/B0.6'
         dirs 'libs/local/t_and_t/1.12'
         dirs 'libs/local/cristellib/1.1.6'
+        dirs 'libs/local/libraryferret/4.0.0'
     }
 }
 
@@ -161,6 +166,7 @@ dependencies {
         runtimeOnly fg.deobf("local.trek:trek:B0.6")
         runtimeOnly fg.deobf("local.t_and_t:t_and_t:1.12")
         runtimeOnly fg.deobf("local.cristellib:cristellib:1.1.6")
+        runtimeOnly fg.deobf("local.libraryferret:libraryferret:4.0.0")
     }
     if (devUseVisualPreview.toBoolean()) {
         // ForgeGradle must remap client mods before a userdev run can load them.

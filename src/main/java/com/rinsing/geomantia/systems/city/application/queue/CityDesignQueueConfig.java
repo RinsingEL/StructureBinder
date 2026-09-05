@@ -14,11 +14,11 @@ public record CityDesignQueueConfig(boolean enabled, OrderingMode orderingMode) 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     public CityDesignQueueConfig {
-        orderingMode = orderingMode == null ? OrderingMode.GLOBAL_RADIAL : orderingMode;
+        orderingMode = orderingMode == null ? OrderingMode.REALM_GROUPED : orderingMode;
     }
 
     public static CityDesignQueueConfig defaults() {
-        return new CityDesignQueueConfig(true, OrderingMode.GLOBAL_RADIAL);
+        return new CityDesignQueueConfig(true, OrderingMode.REALM_GROUPED);
     }
 
     public static CityDesignQueueConfig loadOrCreate(Path path) throws IOException {
@@ -33,7 +33,7 @@ public record CityDesignQueueConfig(boolean enabled, OrderingMode orderingMode) 
             throw new IllegalArgumentException("CITY_DESIGN_QUEUE_CONFIG_SCHEMA_UNSUPPORTED");
         }
         return new CityDesignQueueConfig(booleanValue(json, "enabled", true),
-                OrderingMode.fromContract(stringValue(json, "orderingMode", "global_radial")));
+                OrderingMode.fromContract(stringValue(json, "orderingMode", "realm_grouped")));
     }
 
     public JsonObject asJson() {

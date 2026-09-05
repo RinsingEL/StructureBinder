@@ -155,6 +155,10 @@ public final class GeomantiaHttpServer {
     }
 
     private static synchronized void stop() {
+        // Signal world-bound workers before waiting for any provider/runtime shutdown.
+        if (activeRealmController != null) {
+            activeRealmController.close();
+        }
         PlayerProviderService.instance().stopAutomation();
         HttpServer server = httpServer;
         ExecutorService executor = httpExecutor;
@@ -169,9 +173,6 @@ public final class GeomantiaHttpServer {
             server.stop(0);
         }
         shutdownExecutor(executor);
-        if (realmController != null) {
-            realmController.close();
-        }
         LOGGER.info("Geomantia GIS API server stopped.");
     }
 

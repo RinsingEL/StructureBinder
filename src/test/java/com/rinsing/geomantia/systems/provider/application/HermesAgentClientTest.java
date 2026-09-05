@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class HermesAgentClientTest {
     @TempDir
@@ -36,6 +37,30 @@ class HermesAgentClientTest {
         assertFalse(yaml.contains("city_post_d4_auto_compile_status"));
         assertTrue(yaml.contains("max_turns: 24"));
         assertTrue(yaml.contains("- terminal"));
+        assertFalse(yaml.contains("supports_vision:"));
+    }
+
+    @Test
+    void verifiedGlmNativeVisionIsPassedThroughWithoutAuxiliaryDescriptions() {
+        HermesAgentClient client = new HermesAgentClient();
+        PlayerProviderConfig config = new PlayerProviderConfig(PlayerProviderConfig.CUSTOM, true,
+                "https://open.bigmodel.cn/api/paas/v4", "glm-5.3-flash", PlayerProviderConfig.CHAT_COMPLETIONS, 120);
+        assertTrue(client.profileConfig(config, temporaryDirectory.resolve("mcp.mjs"), List.of("city_submit_d4_blueprint"))
+                .contains("  supports_vision: true\n"));
+        assertTrue(client.profileConfig(config, temporaryDirectory.resolve("mcp.mjs"), List.of("city_submit_d4_blueprint"))
+                .contains("reasoning_effort: low\n"));
+    }
+
+    @Test
+    void completeInitialContextAboveOld64kLimitIsPreservedAndOversizeIsRejected() throws Exception {
+        JsonObject state = new JsonObject();
+        state.addProperty("catalog", "x".repeat(100_000));
+        state.addProperty("contextId", "sha256:tail-must-arrive");
+        String actual = HermesAgentClient.promptContent(state, List.of()).get(0).getAsJsonObject().get("text").getAsString();
+        assertEquals("Continue this formal planning state:\n" + state, actual);
+        assertTrue(actual.contains("sha256:tail-must-arrive"));
+        state.addProperty("catalog", "x".repeat(HermesAgentClient.MAX_PLANNING_TEXT_LENGTH));
+        assertThrows(RuntimeException.class, () -> HermesAgentClient.promptContent(state, List.of()));
     }
 
     @Test
@@ -59,5 +84,21 @@ class HermesAgentClientTest {
 
         assertTrue(tools.contains("city_submit_d4_blueprint"));
         assertFalse(tools.contains("city_post_d4_auto_compile_status"));
+        assertFalse(tools.contains("city_post_d4_auto_compile_retry"));
+    }
+
+    @Test void designSessionsAreStablePerFrozenRevisionAndDoNotReuseExplorationHistory() {
+        var step = new ProviderPlanningDiscovery.PlanningStep(ProviderPlanningDiscovery.Stage.CITY,
+                "run", "realm", "city", "city_submit_d4_blueprint", new JsonObject(), temporaryDirectory, List.of(), "city");
+        JsonObject state = new JsonObject();
+        assertEquals(PlayerProviderAgentRunner.sessionId(temporaryDirectory, step),
+                PlayerProviderAgentRunner.designSessionId(temporaryDirectory, step, state));
+        state.add("preparedBlueprintContext", new JsonObject()); state.addProperty("contextId", "frozen");
+        state.addProperty("failureCount", 1);
+        String first = PlayerProviderAgentRunner.designSessionId(temporaryDirectory, step, state);
+        assertEquals(first, PlayerProviderAgentRunner.designSessionId(temporaryDirectory, step, state));
+        assertNotEquals(first, PlayerProviderAgentRunner.sessionId(temporaryDirectory, step));
+        state.addProperty("failureCount", 2);
+        assertNotEquals(first, PlayerProviderAgentRunner.designSessionId(temporaryDirectory, step, state));
     }
 }

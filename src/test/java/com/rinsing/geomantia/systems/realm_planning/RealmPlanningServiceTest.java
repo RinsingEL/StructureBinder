@@ -782,6 +782,72 @@ class RealmPlanningServiceTest {
         assertEquals(firstTerritory, repeated.getAsJsonObject("territoryMap"));
     }
 
+    @Test
+    void t3ExpandsEveryTargetContinentWithoutTreatingLogicalGroupAsLandId() throws Exception {
+        String runId = "logical_groups_multicontinent";
+        Path root = tempDir.resolve("realm_debug");
+        SyntheticTerrainProfile terrain = new SyntheticTerrainProfile() {
+            @Override public double seaLevel() { return 62; }
+            @Override public double elevationAt(double x, double z) { return Math.abs(x) < 160 ? 40 : 80; }
+        };
+        WorldSurveyRunner.Config config = new WorldSurveyRunner.Config(runId, "minecraft:overworld", "two_islands",
+                0, 0, 0, 1024, 128, 32, 8,
+                com.rinsing.geomantia.systems.gis.application.refresh.SampleMode.PRIOR,
+                WorldSurveyRunner.ResumePolicy.RESCAN);
+        RealmPlanningService service = new RealmPlanningService(root);
+        JsonObject world = service.runW(new WorldSurveyRunner(root, GisClassifierConfig.defaults())
+                .run(config, new SyntheticAtlasSampler(terrain)), null);
+        JsonArray continents = world.getAsJsonObject("summary").getAsJsonArray("continents");
+        assertEquals(2, continents.size(), world.toString());
+        JsonArray profiles = service.prepareT1(runId, null, 3, "", true).getAsJsonArray("realmProfiles");
+        for (int i = 0; i < profiles.size(); i++) {
+            JsonObject profile = profiles.get(i).getAsJsonObject();
+            profile.addProperty("targetContinentId", continents.get(i == 2 ? 1 : 0).getAsJsonObject()
+                    .get("continentId").getAsString());
+            profile.getAsJsonObject("scalePlan").addProperty("normalizationGroup",
+                    i == 1 ? "other_realms" : "primary_realms");
+            if (i == 2) {
+                profile.getAsJsonObject("scalePlan").addProperty("targetAreaRatio", 0.35);
+                profile.getAsJsonObject("scalePlan").addProperty("minAreaRatio", 0.2);
+                profile.getAsJsonObject("scalePlan").addProperty("maxAreaRatio", 0.5);
+            }
+        }
+        service.prepareT1(runId, profiles, 3, "", false);
+        for (JsonElement element : profiles) {
+            String realm = element.getAsJsonObject().get("realmId").getAsString();
+            RealmPlanningService.GridPoint point = service.suggestedPoint(runId, realm);
+            service.selectT2(runId, realm, point.x(), point.z(), null, "regression", "debug", true);
+        }
+        for (String model : List.of("quota_frontier", "action_budget")) {
+            JsonObject territory = service.expandT3(runId, "", false, "strict", model).getAsJsonObject("territoryMap");
+            assertEquals(3, territory.getAsJsonArray("realmStats").size(), territory.toString());
+            Set<String> coordinates = new HashSet<>();
+            for (JsonElement element : territory.getAsJsonArray("territoryCells")) {
+                JsonObject cell = element.getAsJsonObject();
+                assertTrue(coordinates.add(cell.get("gridX") + ":" + cell.get("gridZ")), "Overlapping continent cells");
+            }
+            for (JsonElement stat : territory.getAsJsonArray("realmStats")) {
+                assertTrue(stat.getAsJsonObject().get("areaCells").getAsInt() > 0, stat.toString());
+                JsonObject realm = stat.getAsJsonObject();
+                if (realm.get("realmId").equals(profiles.get(2).getAsJsonObject().get("realmId"))) {
+                    assertEquals(0.35, territory.getAsJsonObject("normalizedScales")
+                            .getAsJsonObject(realm.get("realmId").getAsString())
+                            .get("normalizedTargetAreaRatio").getAsDouble(), 1e-9);
+                    assertTrue(realm.get("actualAreaRatio").getAsDouble() <= 0.5, realm.toString());
+                }
+            }
+            // Both matching continents include ALL resident competitors, regardless of their logical labels.
+            JsonObject grouped = service.expandT3(runId, "primary_realms", false, "strict", model)
+                    .getAsJsonObject("territoryMap");
+            assertEquals(territory.get("territoryCells"), grouped.get("territoryCells"));
+            Path mapPath = root.resolve(runId).resolve("realm_territory_map.json");
+            String accepted = Files.readString(mapPath);
+            assertThrows(IllegalArgumentException.class,
+                    () -> service.expandT3(runId, "missing_group", false, "strict", model));
+            assertEquals(accepted, Files.readString(mapPath), "Rejected expansion must preserve accepted artifacts");
+        }
+    }
+
     private RefreshResult refreshSynthetic(String caseId, int cellStepBlocks) throws Exception {
         GisTestCase testCase = GisTestCase.byId(caseId);
         GisSampleConfig sampleConfig = GisSampleConfig.defaults().withCellStepBlocks(cellStepBlocks);

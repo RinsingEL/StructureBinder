@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { realmTools } from "../dist/src/realm/tools.js";
+import { realmTools, blueprintReferenceCatalogSchema } from "../dist/src/realm/tools.js";
 
 test("publishes the program-only context tool and retryable structure plus outdoor Blueprint schema", () => {
   const prepare = realmTools.find((tool) => tool.name === "city_prepare_d4_blueprint_context");
@@ -33,7 +33,7 @@ test("publishes the program-only context tool and retryable structure plus outdo
     ["global_radial", "realm_grouped"]);
   assert.equal(prepare.inputSchema.additionalProperties, false);
   assert.deepEqual(prepare.inputSchema.required, [
-    "runId", "citySeedId", "terrasenseProfileSource", "templateCatalogSource", "blueprintReferenceCatalog",
+    "runId", "citySeedId",
   ]);
   assert.equal(submit.inputSchema.properties.cityBlueprint.additionalProperties, false);
   assert.deepEqual(submit.inputSchema.properties.cityBlueprint.properties.groups.items
@@ -184,11 +184,10 @@ test("publishes the current strict LandUse intent wire shape", () => {
   assert.deepEqual(override.properties.algorithmAnchor.required, ["x", "z"]);
 });
 
-test("requires the Blueprint reference catalog with greenery and exact Landscape Parcel profiles", () => {
+test("author configuration retains greenery and Landscape profiles without asking the model to supply it", () => {
   const prepare = realmTools.find((tool) => tool.name === "city_prepare_d4_blueprint_context");
-  const catalog = prepare.inputSchema.properties.blueprintReferenceCatalog;
-  assert.match(catalog.description, /city_blueprint_reference_catalog/);
-  assert.match(catalog.description, /户外/);
+  assert.equal(prepare.inputSchema.properties.blueprintReferenceCatalog, undefined);
+  const catalog = blueprintReferenceCatalogSchema;
   assert.equal(catalog.additionalProperties, false);
   assert.deepEqual(catalog.required, [
     "schema", "structureRefs", "fillPools", "algorithmProfiles", "compositionProfiles",

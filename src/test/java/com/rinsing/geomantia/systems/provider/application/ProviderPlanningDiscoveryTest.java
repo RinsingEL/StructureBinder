@@ -22,7 +22,7 @@ class ProviderPlanningDiscoveryTest {
     }
 
     @Test
-    void requiresAllRealmT4BeforeConsumingAnExistingPartialCityQueue() throws Exception {
+    void consumesCurrentRealmCitiesBeforePlanningTheNextRealm() throws Exception {
         Path run = sealedRun("run_a");
         write(run, "realm_profiles.json", """
                 [{"realmId":"realm_a"},{"realmId":"realm_b"}]
@@ -43,8 +43,8 @@ class ProviderPlanningDiscoveryTest {
 
         var step = new ProviderPlanningDiscovery(debugRoot, 42L).nextStep();
 
-        assertEquals(ProviderPlanningDiscovery.Stage.T4, step.stage());
-        assertEquals("realm_b", step.realmId());
+        assertEquals(ProviderPlanningDiscovery.Stage.CITY, step.stage());
+        assertEquals("realm_a", step.realmId());
     }
 
     @Test
@@ -173,6 +173,31 @@ class ProviderPlanningDiscoveryTest {
 
         assertEquals(ProviderPlanningDiscovery.Stage.T3, step.stage());
         assertEquals("realm_t3_expand", step.nextAction());
+    }
+
+    @Test
+    void choosesNearestRealmCoreAndRestoresItsRealDirectorySession() throws Exception {
+        Path run = sealedRun("run_nearest");
+        write(run,"realm_profiles.json","[{\"realmId\":\"far\"},{\"realmId\":\"near\"}]");
+        write(run,"realm_coordinate_selections.json","[{\"realmId\":\"far\"},{\"realmId\":\"near\"}]");
+        write(run,"realm_seeds.json","[{\"realmId\":\"far\",\"seedBlock\":{\"x\":8000,\"z\":0}},{\"realmId\":\"near\",\"seedBlock\":{\"x\":3500,\"z\":0}}]");
+        write(run,"t3_report.json","{}"); write(run,"realm_territory_map.json","{}");
+        write(run,"realm_t4_patch_planning_session_1/planning_session.json",
+                "{\"realmId\":\"near\",\"status\":\"open\",\"planningSessionId\":\"session_1\"}");
+        var step = new ProviderPlanningDiscovery(debugRoot,42).nextStep();
+        assertEquals("near",step.realmId());
+        assertEquals("session_1",step.state().getAsJsonObject("openPlanningSession").get("planningSessionId").getAsString());
+    }
+
+    @Test
+    void advancesToNextRealmOnlyAfterTheCurrentCityQueueIsReady() throws Exception {
+        Path run = sealedRun("run_next_realm");
+        write(run,"realm_profiles.json","[{\"realmId\":\"a\"},{\"realmId\":\"b\"}]");
+        write(run,"realm_coordinate_selections.json","[{\"realmId\":\"a\"},{\"realmId\":\"b\"}]");
+        write(run,"t3_report.json","{}"); write(run,"realm_territory_map.json","{}");
+        write(run,"city_seed_registry.json","{\"citySeeds\":[{\"realmId\":\"a\",\"citySeedId\":\"city_a\",\"role\":\"capital\"}]}");
+        write(run,"automation/city_design_queue.json","{\"status\":\"completed\",\"items\":[{\"realmId\":\"a\",\"citySeedId\":\"city_a\",\"status\":\"waiting_for_generation\"}]}");
+        assertEquals("b",new ProviderPlanningDiscovery(debugRoot,42).nextStep().realmId());
     }
 
     private Path sealedRun(String runId) throws Exception {

@@ -1,5 +1,22 @@
 import type { ToolDefinition } from "../shared/types.js";
 
+const realmText = { type: "string", minLength: 1 };
+const realmRatio = { type: "number", minimum: 0, maximum: 1 };
+const realmProfileSchema = strictObject({
+  realmId: realmText, name: realmText, targetContinentId: realmText, theme: realmText,
+  cultureTags: { type: "array", items: realmText },
+  industryTags: { type: "array", items: realmText },
+  materialTags: { type: "array", items: realmText },
+  landformPreferences: { type: "array", items: realmText },
+  avoidLandforms: { type: "array", items: realmText },
+  scalePlan: strictObject({ priority: { type: "string", enum: ["minor", "normal", "major", "empire"] }, normalizationGroup: realmText,
+    targetAreaRatio: realmRatio, minAreaRatio: realmRatio, maxAreaRatio: realmRatio }),
+  expansionStyle: strictObject({ waterAffinity: realmRatio, compactness: realmRatio, coastalBias: realmRatio,
+    resourceSeeking: realmRatio, borderPressure: realmRatio, seaCrossingPolicy: { type: "string", enum: ["none", "limited", "allowed"] },
+    mountainAffinity: { type: "number", minimum: -1, maximum: 1 },
+    forestAffinity: { type: "number", minimum: -1, maximum: 1 } }),
+});
+
 const decorationShapeSchema: Record<string, unknown> = {
   oneOf: [
     decorationVariant("target_mask", {}),
@@ -313,7 +330,7 @@ const surfaceRecipeSchema: Record<string, unknown> = {
   ],
 };
 
-const blueprintReferenceCatalogSchema = strictObject({
+export const blueprintReferenceCatalogSchema = strictObject({
   schema: { type: "string", enum: ["city_blueprint_reference_catalog"] },
   structureRefs: {
     type: "array", minItems: 1,
@@ -742,12 +759,10 @@ export const realmTools: ToolDefinition[] = [
       type: "object",
       properties: {
         runId: { type: "string" },
-        realmProfiles: { type: "array" },
-        realmCount: { type: "number" },
-        targetContinentId: { type: "string" },
-        allowAiDraftProfile: { type: "boolean" },
+        realmProfiles: { type: "array", minItems: 1, maxItems: 12, items: realmProfileSchema },
+        realmCount: { type: "integer", minimum: 1, maximum: 12 },
       },
-      required: ["runId"],
+      required: ["runId", "realmProfiles"],
     },
   },
   {
@@ -1069,14 +1084,8 @@ export const realmTools: ToolDefinition[] = [
       properties: {
         runId: nonEmptyString("已有 W/T run ID。"),
         citySeedId: nonEmptyString("目标城市。"),
-        terrasenseProfileSource: { type: "object", description: "现有 TerraSense 结构画像源。" },
-        templateCatalogSource: { type: "object", description: "现有固定 NBT template catalog 源。" },
-        blueprintReferenceCatalog: {
-          ...blueprintReferenceCatalogSchema,
-          description: "严格 city_blueprint_reference_catalog 户外目录；AI 精确声明 Landscape 实例和 Parcel 数，required 主体与建筑联合预留，Parcel 使用父子边界接力；结构可选绿化地块，城市 style profile 可冻结植物 palette；禁止固定图形和 geometry fallback。",
-        },
       },
-      required: ["runId", "citySeedId", "terrasenseProfileSource", "templateCatalogSource", "blueprintReferenceCatalog"],
+      required: ["runId", "citySeedId"],
     },
   },
   {
@@ -1408,7 +1417,7 @@ function decorationVariant(type: string, params: Record<string, unknown>, requir
   }, ["type", "params"]);
 }
 
-function strictObject(properties: Record<string, unknown>, required: string[]) {
+function strictObject(properties: Record<string, unknown>, required: string[] = Object.keys(properties)) {
   return {
     type: "object",
     properties,

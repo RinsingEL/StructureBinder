@@ -101,26 +101,6 @@ public final class ProviderPlanningDiscovery {
         }
 
         Set<String> registeredRealms = registeredCapitalRealms(runDirectory);
-        for (JsonElement element : profiles) {
-            if (!element.isJsonObject()) continue;
-            JsonObject profile = element.getAsJsonObject();
-            String realmId = string(profile, "realmId");
-            if (registeredRealms.contains(realmId)) continue;
-            JsonObject state = baseState(Stage.T4, runId, "realm_t4_patch_planning_create");
-            state.addProperty("realmId", realmId);
-            state.add("realmProfile", profile.deepCopy());
-            JsonObject session = newestOpenT4Session(runDirectory, realmId);
-            if (session != null) {
-                state.add("openPlanningSession", session.deepCopy());
-                state.addProperty("nextAction", t4NextAction(session));
-            }
-            state.addProperty("instruction", "Continue the existing T4 contract for this realm: create or resume its "
-                    + "planning session, review Patch Explorer evidence, select the required capital and any justified "
-                    + "non-capital city seeds, then finalize. Do not start or refresh the City queue.");
-            return step(Stage.T4, runId, realmId, "", string(state, "nextAction"), state,
-                    runDirectory, List.of());
-        }
-
         JsonObject queue = readObject(runDirectory.resolve("automation/city_design_queue.json"));
         if (!registeredRealms.isEmpty() && (queue == null || queueItems(queue).size() < registeredCityCount(runDirectory))) {
             JsonObject state = baseState(Stage.QUEUE_REFRESH, runId, "city_design_queue_refresh");
@@ -143,6 +123,25 @@ public final class ProviderPlanningDiscovery {
             state.add("cityDesignQueue", queue.deepCopy());
             return step(Stage.WAITING, runId, string(queueCurrent(queue), "realmId"), cityId,
                     nextAction, state, runDirectory, List.of());
+        }
+
+
+        for (JsonObject profile : orderedRealms(profiles, runDirectory)) {
+            String realmId = string(profile, "realmId");
+            if (registeredRealms.contains(realmId)) continue;
+            JsonObject state = baseState(Stage.T4, runId, "realm_t4_patch_planning_create");
+            state.addProperty("realmId", realmId);
+            state.add("realmProfile", profile.deepCopy());
+            JsonObject session = newestOpenT4Session(runDirectory, realmId);
+            if (session != null) {
+                state.add("openPlanningSession", session.deepCopy());
+                state.addProperty("nextAction", t4NextAction(session));
+            }
+            state.addProperty("instruction", "Continue the existing T4 contract for this realm: create or resume its "
+                    + "planning session, review Patch Explorer evidence, select the required capital and any justified "
+                    + "non-capital city seeds, then finalize. Do not start or refresh the City queue.");
+            return step(Stage.T4, runId, realmId, "", string(state, "nextAction"), state,
+                    runDirectory, List.of());
         }
 
         JsonObject state = baseState(Stage.COMPLETE, runId, "");
@@ -223,7 +222,8 @@ public final class ProviderPlanningDiscovery {
     private static JsonObject newestOpenT4Session(Path runDirectory, String realmId) {
         try (Stream<Path> paths = Files.list(runDirectory)) {
             return paths.filter(path -> path.getFileName().toString().startsWith("realm_t4_patch_planning_"))
-                    .filter(path -> path.getFileName().toString().endsWith(".json"))
+                    .filter(Files::isDirectory)
+                    .map(path -> path.resolve("planning_session.json"))
                     .map(ProviderPlanningDiscovery::readObject)
                     .filter(value -> value != null && realmId.equals(string(value, "realmId"))
                             && "open".equals(string(value, "status")))
@@ -237,6 +237,22 @@ public final class ProviderPlanningDiscovery {
     private static String t4NextAction(JsonObject session) {
         int seeds = array(session, "citySeeds").size();
         return seeds == 0 ? "patch_explorer_open" : "patch_explorer_open";
+    }
+
+    private static List<JsonObject> orderedRealms(JsonArray profiles, Path runDirectory) {
+        java.util.Map<String, Double> distances = new java.util.HashMap<>();
+        for (JsonElement value : readArray(runDirectory.resolve("realm_seeds.json"), "realmSeeds")) {
+            JsonObject seed = value.getAsJsonObject();
+            JsonObject block = object(seed, "seedBlock");
+            if (block.has("x") && block.has("z")) {
+                distances.put(string(seed, "realmId"), Math.hypot(block.get("x").getAsDouble(), block.get("z").getAsDouble()));
+            }
+        }
+        List<JsonObject> result = new ArrayList<>();
+        for (JsonElement value : profiles) if (value.isJsonObject()) result.add(value.getAsJsonObject());
+        result.sort(Comparator.comparingDouble((JsonObject value) -> distances.getOrDefault(string(value, "realmId"), Double.POSITIVE_INFINITY))
+                .thenComparing(value -> string(value, "realmId")));
+        return result;
     }
 
     private static Set<String> registeredCapitalRealms(Path runDirectory) {

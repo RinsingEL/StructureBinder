@@ -341,7 +341,7 @@ public final class CityDesignQueue {
         Map<String, Integer> realmRanks = new HashMap<>();
         for (int index = 0; index < realms.size(); index++) realmRanks.put(realms.get(index), index);
         seeds.sort(Comparator.comparingInt((Seed seed) -> realmRanks.getOrDefault(seed.realmId(), Integer.MAX_VALUE))
-                .thenComparingLong(seed -> seed.distanceSquaredTo(capitals.get(seed.realmId())))
+                .thenComparingLong(Seed::originDistanceSquared)
                 .thenComparing(Seed::citySeedId));
     }
 

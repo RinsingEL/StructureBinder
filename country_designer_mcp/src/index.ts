@@ -8,6 +8,7 @@ import { realmTools } from "./realm/tools.js";
 import { formatAxiosError, isTimeoutError } from "./shared/http.js";
 import { beginMcpCall, completeMcpCall } from "./shared/logging.js";
 import type { ToolDefinition, ToolHandler } from "./shared/types.js";
+import axios from "axios";
 
 const server = new Server(
   { name: "geomantia-gis-debug", version: "0.1.0" },
@@ -31,7 +32,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     if (!handler) {
       throw new Error(`Unknown tool: ${toolName}`);
     }
-    const result = await handler(toolArgs);
+    const bridge = process.env.GEOMANTIA_PROVIDER_TOOL_URL;
+    const result = bridge ? (await axios.post(bridge, { name: toolName, arguments: toolArgs }, {
+      timeout: 600_000, headers: { "X-Geomantia-Bridge-Key": process.env.GEOMANTIA_PROVIDER_TOOL_KEY || "" },
+    })).data : await handler(toolArgs);
     completeMcpCall(call, result, result.isError ? "error" : "success");
     return result;
   } catch (error: unknown) {

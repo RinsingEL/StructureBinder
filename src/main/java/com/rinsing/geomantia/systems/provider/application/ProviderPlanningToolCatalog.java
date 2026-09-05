@@ -31,8 +31,8 @@ final class ProviderPlanningToolCatalog {
             case "realm_t1_prepare" -> function(name,
                     "Create all RealmProfiles together from the sealed W overview and attached map previews. "
                             + "Use distinct culture, industry, material and landform preferences.",
-                    object(properties("runId", string(), "realmProfiles", array(object()),
-                            "realmCount", integer(), "targetContinentId", string(), "allowAiDraftProfile", bool()),
+                    object(properties("runId", string(), "realmProfiles", array(com.rinsing.geomantia.systems.realm_planning.RealmProfileInput.schema()),
+                            "realmCount", integer()),
                             "realmProfiles", "realmCount"));
             case "realm_t2_select_coordinate" -> function(name,
                     "Submit the frozen realm_t2 Patch selection for the active realm. Normal Provider operation "

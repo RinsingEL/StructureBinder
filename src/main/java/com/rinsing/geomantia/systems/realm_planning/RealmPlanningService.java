@@ -158,20 +158,27 @@ public final class RealmPlanningService {
             throw new IllegalArgumentException("W must be completed before T1.");
         }
         String continentId = resolveTargetContinent(run, targetContinentId);
-        run.profiles.clear();
-        run.candidatePackages.clear();
+        List<RealmProfile> proposedProfiles = new ArrayList<>();
         if (realmProfiles != null && !realmProfiles.isEmpty()) {
             int index = 0;
             for (JsonElement element : realmProfiles) {
                 if (!element.isJsonObject()) {
                     throw new IllegalArgumentException("realmProfiles must contain objects.");
                 }
-                run.profiles.add(RealmProfile.fromJson(element.getAsJsonObject(), continentId, index++));
+                proposedProfiles.add(RealmProfile.fromJson(element.getAsJsonObject(), continentId, index++));
             }
         } else {
             int count = realmCount > 0 ? realmCount : 3;
-            run.profiles.addAll(defaultProfiles(continentId, count, allowAiDraftProfile));
+            proposedProfiles.addAll(defaultProfiles(continentId, count, allowAiDraftProfile));
         }
+        for (RealmProfile profile : proposedProfiles) {
+            if (!run.continentSummaries.containsKey(profile.targetContinentId)) {
+                throw new IllegalArgumentException("Profile target continent is not available: " + profile.realmId);
+            }
+        }
+        run.profiles.clear();
+        run.profiles.addAll(proposedProfiles);
+        run.candidatePackages.clear();
         validateProfiles(run, continentId);
         for (RealmProfile profile : run.profiles) {
             CandidatePackage pack = buildCandidatePackage(run, profile);
@@ -256,13 +263,19 @@ public final class RealmPlanningService {
         if (run.profiles.isEmpty() || run.seeds.size() != run.profiles.size()) {
             throw new IllegalArgumentException("All realms must complete T2 before T3.");
         }
-        run.qualityMode = normalizeQualityMode(qualityMode);
-        run.expansionModel = normalizeExpansionModel(expansionModel, run.qualityMode);
-        String group = normalizationGroup == null || normalizationGroup.isBlank()
-                ? run.profiles.get(0).scalePlan.normalizationGroup : normalizationGroup.trim();
+        RealmRun proposed = t3InputCopy(run);
+        proposed.qualityMode = normalizeQualityMode(qualityMode);
+        proposed.expansionModel = normalizeExpansionModel(expansionModel, proposed.qualityMode);
+        String group = normalizationGroup == null ? "" : normalizationGroup.trim();
+        proposed.territory = buildTerritory(proposed, group, allowUnclaimedLand);
+        // Validate and compute every requested continent before touching the accepted in-memory state or artifacts.
+        exportTerritory(proposed);
         resetT3DerivedState(run);
-        run.territory = buildTerritory(run, group, allowUnclaimedLand);
-        exportTerritory(run);
+        run.qualityMode = proposed.qualityMode;
+        run.expansionModel = proposed.expansionModel;
+        run.territory = proposed.territory;
+        mergeT3Diagnostics(run, proposed);
+        run.artifacts.putAll(proposed.artifacts);
 
         JsonObject response = baseResponse("T3", run.runId);
         response.addProperty("status", "completed");
@@ -998,25 +1011,70 @@ public final class RealmPlanningService {
     }
 
     private RealmTerritoryMap buildTerritory(RealmRun run, String group, boolean allowUnclaimedLand) {
-        List<RealmProfile> profiles = run.profiles.stream()
-                .filter(profile -> group.equals(profile.scalePlan.normalizationGroup))
-                .toList();
-        if (profiles.isEmpty()) {
+        Set<String> continents = run.profiles.stream()
+                .filter(profile -> group.isBlank() || group.equals(profile.scalePlan.normalizationGroup)
+                        || group.equals(profile.targetContinentId))
+                .map(profile -> profile.targetContinentId).collect(java.util.stream.Collectors.toCollection(java.util.TreeSet::new));
+        if (continents.isEmpty()) {
             throw new IllegalArgumentException("No profiles for normalizationGroup: " + group);
         }
+        List<TerritoryCell> cells = new ArrayList<>();
+        Map<String, RealmStats> stats = new LinkedHashMap<>();
+        Map<String, NormalizedScale> scales = new LinkedHashMap<>();
+        List<String> warnings = new ArrayList<>();
+        List<TerritoryRepair> repairs = new ArrayList<>();
+        for (String continent : continents) {
+            RealmRun local = t3InputCopy(run);
+            // All rivals on the same continent compete together, even if their logical group labels differ.
+            local.profiles.removeIf(profile -> !continent.equals(profile.targetContinentId));
+            RealmTerritoryMap part = buildContinentTerritory(local, continent, allowUnclaimedLand);
+            cells.addAll(part.cells); stats.putAll(part.stats); scales.putAll(part.scales);
+            warnings.addAll(part.warnings); repairs.addAll(part.repairs);
+            mergeT3Diagnostics(run, local);
+        }
+        cells.sort(Comparator.comparingInt(TerritoryCell::gridZ).thenComparingInt(TerritoryCell::gridX));
+        return new RealmTerritoryMap("territory_" + run.runId, run.runId,
+                group.isBlank() ? "all_target_continents" : group, cells, stats, scales, warnings, repairs,
+                run.expansionModel, run.expansionBudgets, run.terrainCostProfiles);
+    }
+
+    private static RealmRun t3InputCopy(RealmRun source) {
+        RealmRun copy = new RealmRun(source.runId, source.runDirectory, source.surveyResult);
+        copy.worldCells.addAll(source.worldCells); copy.worldCellsByKey.putAll(source.worldCellsByKey);
+        copy.profiles.addAll(source.profiles); copy.candidatePackages.putAll(source.candidatePackages);
+        copy.selections.putAll(source.selections); copy.seeds.putAll(source.seeds);
+        copy.capitalIntents.putAll(source.capitalIntents); copy.artifacts.putAll(source.artifacts);
+        copy.patchSummaries = source.patchSummaries; copy.continentSummaries = source.continentSummaries;
+        copy.worldTheme = source.worldTheme; copy.qualityMode = source.qualityMode; copy.expansionModel = source.expansionModel;
+        for (String artifact : List.of("citySeedRegistry", "citySeedPreview", "t4Report", "realmCityCandidatePackages", "scoreManifest")) {
+            copy.artifacts.remove(artifact);
+        }
+        return copy;
+    }
+
+    private static void mergeT3Diagnostics(RealmRun target, RealmRun source) {
+        target.expansionBudgets.putAll(source.expansionBudgets); target.terrainCostProfiles.putAll(source.terrainCostProfiles);
+        target.stopReasons.putAll(source.stopReasons); target.terrainCostBreakdowns.putAll(source.terrainCostBreakdowns);
+        target.realmClaimCostSums.putAll(source.realmClaimCostSums); target.realmMaxClaimCosts.putAll(source.realmMaxClaimCosts);
+        target.realmClaimCounts.putAll(source.realmClaimCounts); target.territoryCellStatuses.putAll(source.territoryCellStatuses);
+        target.territoryClaimCosts.putAll(source.territoryClaimCosts);
+    }
+
+    private RealmTerritoryMap buildContinentTerritory(RealmRun run, String continent, boolean allowUnclaimedLand) {
+        List<RealmProfile> profiles = run.profiles;
         List<WorldCell> landCells = run.worldCells.stream()
-                .filter(cell -> cell.assignableLand() && group.equals(cell.continentId))
+                .filter(cell -> cell.assignableLand() && continent.equals(cell.continentId))
                 .filter(cell -> outsideOriginRadius(cell, run, accessConfig.initialActivityRadiusBlocks()))
                 .toList();
         if (landCells.isEmpty()) {
-            throw new IllegalArgumentException("No assignable land cells for normalizationGroup: " + group);
+            throw new IllegalArgumentException("No assignable land cells for targetContinentId: " + continent);
         }
         Map<String, NormalizedScale> scales = normalizeScales(profiles);
         Map<String, Integer> quotas = quotas(scales, landCells.size(), allowUnclaimedLand);
         TerritoryBuildResult result = "action_budget".equals(run.expansionModel)
                 ? buildActionBudgetTerritory(run, profiles, landCells, quotas, allowUnclaimedLand)
                 : buildFrontierTerritory(run, profiles, landCells, quotas, allowUnclaimedLand);
-        return RealmTerritoryMap.from(run.runId, group, landCells, result.ownership, run, scales, quotas, result.repairs);
+        return RealmTerritoryMap.from(run.runId, continent, landCells, result.ownership, run, scales, quotas, result.repairs);
     }
 
     private TerritoryBuildResult buildActionBudgetTerritory(RealmRun run, List<RealmProfile> profiles,
@@ -1029,6 +1087,11 @@ public final class RealmPlanningService {
         Map<String, String> statusByKey = new LinkedHashMap<>();
         Map<String, Double> bestCosts = new LinkedHashMap<>();
         Map<String, Double> secondBestCosts = new LinkedHashMap<>();
+        Map<String, Integer> ownedCounts = new HashMap<>();
+        Map<String, Integer> maximumAreas = new HashMap<>();
+        for (RealmProfile profile : profiles) {
+            maximumAreas.put(profile.realmId, (int) Math.floor(profile.scalePlan.maxAreaRatio * landCells.size()));
+        }
         List<TerritoryRepair> repairs = new ArrayList<>();
         PriorityQueue<ActionFrontierClaim> frontier = new PriorityQueue<>(Comparator
                 .comparingDouble(ActionFrontierClaim::cumulativeCost)
@@ -1088,6 +1151,11 @@ public final class RealmPlanningService {
                 continue;
             }
             String previousOwner = ownership.get(cellKey);
+            if (!claim.realmId.equals(previousOwner)
+                    && ownedCounts.getOrDefault(claim.realmId, 0) >= maximumAreas.get(claim.realmId)) {
+                recordStopReason(run, claim.realmId, "maximum_area_reached", 1);
+                continue;
+            }
             if (previousOwner != null && !claim.realmId.equals(previousOwner)
                     && (isSeedCell(run, previousOwner, claim.cell)
                             || !canReleaseCellWithoutDisconnecting(previousOwner, claim.cell, ownership))) {
@@ -1100,6 +1168,10 @@ public final class RealmPlanningService {
                 continue;
             }
             ownership.put(cellKey, claim.realmId);
+            if (!claim.realmId.equals(previousOwner)) {
+                ownedCounts.merge(claim.realmId, 1, Integer::sum);
+                if (previousOwner != null) ownedCounts.merge(previousOwner, -1, Integer::sum);
+            }
             statusByKey.put(cellKey, "owned");
             bestCosts.put(cellKey, claim.cumulativeCost);
             secondBestCosts.remove(cellKey);
@@ -1180,9 +1252,7 @@ public final class RealmPlanningService {
         }
 
         int assigned = ownership.size();
-        int targetAssigned = allowUnclaimedLand
-                ? Math.min(landCells.size(), quotas.values().stream().mapToInt(Integer::intValue).sum())
-                : landCells.size();
+        int targetAssigned = Math.min(landCells.size(), quotas.values().stream().mapToInt(Integer::intValue).sum());
         while (assigned < targetAssigned) {
             String nextRealm = selectNextFrontierRealm(profiles, counts, quotas, frontiers);
             if (nextRealm == null) {
@@ -1194,7 +1264,7 @@ public final class RealmPlanningService {
                 continue;
             }
             int quota = quotas.getOrDefault(nextRealm, 0);
-            if (allowUnclaimedLand && counts.getOrDefault(nextRealm, 0) >= quota) {
+            if (counts.getOrDefault(nextRealm, 0) >= quota) {
                 continue;
             }
             String claimKey = key(claim.cell.gridX, claim.cell.gridZ);
@@ -1206,7 +1276,7 @@ public final class RealmPlanningService {
                     queue, sequence);
         }
 
-        if (!allowUnclaimedLand) {
+        if (!allowUnclaimedLand && targetAssigned >= landCells.size()) {
             assigned += attachUnclaimedCells(run, profilesById, landCells, ownership, counts, repairs);
         }
         rebalanceAreaQuotas(run, profiles, landByKey, ownership, quotas, repairs);
@@ -2972,19 +3042,24 @@ public final class RealmPlanningService {
     }
 
     private Map<String, NormalizedScale> normalizeScales(List<RealmProfile> profiles) {
-        double total = profiles.stream().mapToDouble(profile -> profile.scalePlan.targetAreaRatio).sum();
-        if (total <= 0.0) {
-            total = profiles.size();
+        double minimumTotal = profiles.stream().mapToDouble(profile -> profile.scalePlan.minAreaRatio).sum();
+        if (minimumTotal > 1.0 + 1e-9) {
+            throw new IllegalArgumentException("T3_AREA_CONSTRAINTS_INFEASIBLE: minimum ratios exceed continent area.");
         }
-        Map<String, Double> clamped = new LinkedHashMap<>();
-        for (RealmProfile profile : profiles) {
-            double raw = total <= 0.0 ? 1.0 / profiles.size() : profile.scalePlan.targetAreaRatio / total;
-            clamped.put(profile.realmId, clamp(raw, profile.scalePlan.minAreaRatio, profile.scalePlan.maxAreaRatio));
+        // Absolute continent fractions do not become relative weights when there is unused land.
+        // Only over-subscribed targets need normalization, with lower/upper bounds retained.
+        double low = 0.0;
+        double high = 1.0;
+        for (int iteration = 0; iteration < 64; iteration++) {
+            double multiplier = (low + high) * 0.5;
+            double total = profiles.stream().mapToDouble(profile -> clamp(profile.scalePlan.targetAreaRatio * multiplier,
+                    profile.scalePlan.minAreaRatio, profile.scalePlan.maxAreaRatio)).sum();
+            if (total > 1.0) high = multiplier; else low = multiplier;
         }
-        double clampedTotal = clamped.values().stream().mapToDouble(Double::doubleValue).sum();
         Map<String, NormalizedScale> result = new LinkedHashMap<>();
         for (RealmProfile profile : profiles) {
-            double normalized = clampedTotal <= 0.0 ? 1.0 / profiles.size() : clamped.get(profile.realmId) / clampedTotal;
+            double normalized = clamp(profile.scalePlan.targetAreaRatio * low,
+                    profile.scalePlan.minAreaRatio, profile.scalePlan.maxAreaRatio);
             result.put(profile.realmId, new NormalizedScale(profile.scalePlan, normalized));
         }
         return result;
@@ -2998,7 +3073,8 @@ public final class RealmPlanningService {
             quotas.put(entry.getKey(), quota);
             assigned += quota;
         }
-        int targetTotal = allowUnclaimedLand ? Math.min(landCount, assigned) : landCount;
+        int targetTotal = Math.min(landCount, (int) Math.round(scales.values().stream()
+                .mapToDouble(scale -> scale.normalizedTargetAreaRatio).sum() * landCount));
         List<String> ids = new ArrayList<>(quotas.keySet());
         int index = 0;
         while (assigned < targetTotal && !ids.isEmpty()) {

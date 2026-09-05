@@ -23,6 +23,7 @@ import com.rinsing.geomantia.platform.RealmPlanningServices;
 import com.rinsing.geomantia.platform.WorldScopedPlanningPaths;
 import com.rinsing.geomantia.platform.WorldSurveyChatProgress;
 import com.rinsing.geomantia.systems.realm_planning.RealmPlanningService;
+import com.rinsing.geomantia.systems.realm_planning.RealmProfileInput;
 import com.rinsing.geomantia.systems.realm_planning.PatchExplorerService;
 import com.rinsing.geomantia.systems.realm_planning.RealmT4PatchPlanningService;
 import com.rinsing.geomantia.systems.realm_planning.WorldSurveyResult;
@@ -37,6 +38,8 @@ import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainP
 import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainSamplingProvenance;
 import com.rinsing.geomantia.systems.realm_planning.application.access.PlanningAreaAccessConfig;
 import com.rinsing.geomantia.systems.city.application.queue.CityDesignQueue;
+import com.rinsing.geomantia.systems.provider.application.ManagedCityPlanningSources;
+import com.rinsing.geomantia.systems.provider.application.PlanningToolPresentation;
 import com.sun.net.httpserver.HttpExchange;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
@@ -55,6 +58,7 @@ import java.util.concurrent.ExecutionException;
 
 final class RealmPlanningHttpController implements AutoCloseable {
     private final MinecraftServer server;
+    private final java.util.concurrent.atomic.AtomicBoolean worldClosed = new java.util.concurrent.atomic.AtomicBoolean();
     private final RealmPlanningService realmPlanningService;
     private final CityDesignQueue cityDesignQueue;
     private final CityPostD4AutoCompileQueue postD4AutoCompileQueue;
@@ -74,10 +78,13 @@ final class RealmPlanningHttpController implements AutoCloseable {
     void handleWRefresh(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            JsonObject authoringBrief = new ManagedCityPlanningSources(server.getServerDirectory().toPath())
+                    .resolve().authoringBrief();
             PreparedWorldSurvey prepared = callOnServerThread(() -> prepareWorldSurvey(request));
             WorldSurveyExecution execution = runWorldSurvey(prepared);
             return callOnServerThread(() -> {
                 JsonObject response = realmPlanningService.runW(execution.result(), request.get("worldTheme"));
+                response.add("authoringBrief", authoringBrief.deepCopy());
                 response.add("terrainProvider", execution.terrainProvider().asJson());
                 response.addProperty("executionMode", "api_worker_complete_scan");
                 response.addProperty("serverThreadBlocked", false);
@@ -99,12 +106,11 @@ final class RealmPlanningHttpController implements AutoCloseable {
     void handleT1Prepare(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            JsonArray profiles = RealmProfileInput.requireProfiles(request);
             return callOnServerThread(() -> realmPlanningService.prepareT1(
                     requiredString(request, "runId"),
-                    arrayValue(request, "realmProfiles"),
-                    intValue(request, "realmCount", 3),
-                    stringValue(request, "targetContinentId", ""),
-                    booleanValue(request, "allowAiDraftProfile", true)));
+                    profiles, profiles.size(),
+                    profiles.get(0).getAsJsonObject().get("targetContinentId").getAsString(), false));
         });
     }
 
@@ -191,12 +197,7 @@ final class RealmPlanningHttpController implements AutoCloseable {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             String runId = requiredString(request, "runId");
             JsonObject response = callOnServerThread(() -> realmT4PatchPlanningService().finalizePlanning(request));
-            if (cityDesignQueue.registryCoversAllRealms(runId)) {
-                response.add("cityDesignQueue", cityDesignQueue.refresh(runId,
-                        stringValue(request, "cityQueueOrderingMode", "")));
-            } else {
-                response.addProperty("cityDesignQueueStatus", "awaiting_remaining_realms");
-            }
+            response.add("cityDesignQueue", cityDesignQueue.refresh(runId, "realm_grouped"));
             return response;
         });
     }
@@ -439,6 +440,7 @@ final class RealmPlanningHttpController implements AutoCloseable {
     void handleCityPrepareD4BlueprintContext(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            new ManagedCityPlanningSources(server.getServerDirectory().toPath()).bindDesignRequest(request);
             cityDesignQueue.requireCurrentIfManaged(requiredString(request, "runId"),
                     requiredString(request, "citySeedId"));
             String runId = requiredString(request, "runId");
@@ -1350,7 +1352,11 @@ final class RealmPlanningHttpController implements AutoCloseable {
             if (!GisHttpUtil.requireMethod(exchange, method)) {
                 return;
             }
-            GisHttpUtil.sendJson(exchange, 200, action.execute());
+            JsonObject response = action.execute();
+            if ("true".equals(exchange.getRequestHeaders().getFirst("X-Geomantia-Agent-View"))) {
+                response = PlanningToolPresentation.present(response, debugRoot());
+            }
+            GisHttpUtil.sendJson(exchange, 200, response);
         } catch (IllegalArgumentException ex) {
             sendError(exchange, 400, ex);
         } catch (Exception ex) {
@@ -1364,7 +1370,7 @@ final class RealmPlanningHttpController implements AutoCloseable {
 
     private WorldSurveyExecution runWorldSurvey(PreparedWorldSurvey prepared) throws Exception {
         WorldSurveyResult result = new WorldSurveyRunner(debugRoot(), GisClassifierConfig.defaults()).run(
-                prepared.config(), prepared.sampler(), prepared.progressListener());
+                prepared.config(), prepared.sampler(), prepared.progressListener(), worldClosed::get);
         return new WorldSurveyExecution(result, prepared.sampler(), prepared.terrainProvider());
     }
 
@@ -1541,6 +1547,7 @@ final class RealmPlanningHttpController implements AutoCloseable {
 
     @Override
     public void close() {
+        worldClosed.set(true);
         postD4AutoCompileQueue.close();
     }
 
