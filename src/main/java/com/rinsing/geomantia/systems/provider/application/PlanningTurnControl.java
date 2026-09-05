@@ -41,7 +41,8 @@ final class PlanningTurnControl implements DeepSeekToolLoopClient.ToolExecutor {
         } else {
             repeats = 0; lastFailure = "";
             if (Set.of("realm_t1_prepare", "realm_t2_select_coordinate", "realm_t4_patch_planning_finalize",
-                    "city_submit_d4_blueprint").contains(tool)) finished = true;
+                    "city_submit_d4_blueprint", "city_review_d3_site").contains(tool)
+                    || payload.has("hostDecisionCommitted") && payload.get("hostDecisionCommitted").getAsBoolean()) finished = true;
         }
         return output;
     }
@@ -72,7 +73,7 @@ final class PlanningTurnControl implements DeepSeekToolLoopClient.ToolExecutor {
             }
         }
         if ((payload.has("ok") && !payload.get("ok").getAsBoolean())
-                || (payload.has("status") && Set.of("failed", "needs_agent").contains(payload.get("status").getAsString()))) {
+                || (payload.has("status") && Set.of("failed", "needs_agent", "blocked_by_program").contains(payload.get("status").getAsString()))) {
             if (payload.has("validationReport") && payload.get("validationReport").isJsonObject()) {
                 JsonObject report = payload.getAsJsonObject("validationReport");
                 if (report.has("issues")) return report.get("issues").toString();

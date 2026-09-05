@@ -15,6 +15,35 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityPostD4AutoCompileQueueTest {
+    @Test
+    void contradictorySuccessStatusCannotCompleteTheCity() throws Exception {
+        try (CityPostD4AutoCompileQueue queue = new CityPostD4AutoCompileQueue(temporaryDirectory,
+                (run, city) -> response("waiting_for_generation", false))) {
+            queue.enqueue("run_conflict", "city_conflict");
+            assertEquals("blocked_by_program", awaitStatus(queue, "run_conflict", "city_conflict", "blocked_by_program")
+                    .get("status").getAsString());
+        }
+    }
+    @Test
+    void restartReclassifiesOldProgramFailureWithoutCompilingOrResettingBudget() throws Exception {
+        Path path = temporaryDirectory.resolve("run_old/automation/post_d4/city_old.json");
+        Files.createDirectories(path.getParent());
+        JsonObject state = new JsonObject();
+        state.addProperty("runId", "run_old"); state.addProperty("citySeedId", "city_old");
+        state.addProperty("status", "needs_agent"); state.addProperty("failureCount", 2);
+        JsonObject response = failedWorkflowResponse();
+        response.getAsJsonObject("workflowReport").getAsJsonArray("steps").get(0).getAsJsonObject()
+                .addProperty("reasonCode", "CITY_BLUEPRINT_COMPILED_ANCHOR_FINALIZATION_FAILED");
+        state.add("workflowResponse", response);
+        Files.writeString(path, state.toString());
+        try (CityPostD4AutoCompileQueue queue = new CityPostD4AutoCompileQueue(temporaryDirectory,
+                (run, city) -> { throw new AssertionError("must not compile on restart"); })) {
+            JsonObject recovered = queue.status("run_old", "city_old");
+            assertEquals("blocked_by_program", recovered.get("status").getAsString());
+            assertEquals(2, recovered.get("failureCount").getAsInt());
+            assertEquals("city_post_d4_auto_compile_retry", recovered.get("nextAction").getAsString());
+        }
+    }
     @TempDir
     Path temporaryDirectory;
 
@@ -33,14 +62,15 @@ class CityPostD4AutoCompileQueueTest {
     }
 
     @Test
-    void persistsNeedsAgentWhenWorkflowFails() throws Exception {
+    void programExceptionDoesNotAskDesignerToRewrite() throws Exception {
         try (CityPostD4AutoCompileQueue queue = new CityPostD4AutoCompileQueue(temporaryDirectory,
                 (runId, citySeedId) -> {
                     throw new IllegalStateException("broken stage");
                 })) {
             queue.enqueue("run_2", "city_2");
 
-            JsonObject failed = awaitStatus(queue, "run_2", "city_2", "needs_agent");
+            JsonObject failed = awaitStatus(queue, "run_2", "city_2", "blocked_by_program");
+            assertEquals("program", failed.get("failureOwner").getAsString());
             assertEquals("POST_D4_WORKFLOW_FAILED", failed.get("reasonCode").getAsString());
             assertEquals("broken stage", failed.get("error").getAsString());
         }

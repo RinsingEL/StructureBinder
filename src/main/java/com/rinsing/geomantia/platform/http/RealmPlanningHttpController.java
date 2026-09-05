@@ -512,9 +512,9 @@ final class RealmPlanningHttpController implements AutoCloseable {
             String runId = requiredString(request, "runId");
             String citySeedId = requiredString(request, "citySeedId");
             cityDesignQueue.requireCurrentIfManaged(runId, citySeedId);
-            JsonObject response = CityPlanningEndpointHandler.handleSubmitD4Blueprint(debugRoot(),
+            JsonObject response = CityPlanningEndpointHandler.handleSubmitD4Design(debugRoot(),
                     runId, citySeedId, requiredString(request, "contextId"),
-                    requiredObject(request, "cityBlueprint"));
+                    request);
             if (booleanValue(response, "ok", false)
                     && booleanValue(request, "autoAdvanceAfterD4", true)) {
                 response.add("postD4AutoCompile", postD4AutoCompileQueue.enqueue(runId, citySeedId));
@@ -536,7 +536,7 @@ final class RealmPlanningHttpController implements AutoCloseable {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             String runId = requiredString(request, "runId");
             String citySeedId = requiredString(request, "citySeedId");
-            cityDesignQueue.requireCurrentIfManaged(runId, citySeedId);
+            cityDesignQueue.requireProgramRetryIfManaged(runId, citySeedId);
             JsonObject response = new JsonObject();
             response.addProperty("ok", true);
             response.addProperty("operation", "city_post_d4_auto_compile_retry");

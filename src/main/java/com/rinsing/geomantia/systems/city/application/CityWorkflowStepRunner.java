@@ -79,6 +79,7 @@ public final class CityWorkflowStepRunner {
     public JsonObject finish(long workflowStarted, String status) throws IOException {
         report.addProperty("status", status);
         report.addProperty("ok", "completed".equals(status)
+                || "waiting_for_generation".equals(status)
                 || "waiting_for_worldgen".equals(status)
                 || "waiting_for_confirmation".equals(status)
                 || "awaiting_city_blueprint".equals(status));
@@ -101,6 +102,7 @@ public final class CityWorkflowStepRunner {
     private static void copyResponseSummary(JsonObject response, JsonObject step) {
         copyString(response, step, "message");
         copyString(response, step, "nextAction");
+        copyString(response, step, "failureOwner");
         copyInt(response, step, "failureCount");
         copyInt(response, step, "maximumFailureCount");
         copyInt(response, step, "remainingFailureCount");
@@ -141,10 +143,12 @@ public final class CityWorkflowStepRunner {
         JsonObject summary = new JsonObject();
         copyString(response, summary, "reasonCode");
         copyString(response, summary, "message");
+        boolean programFailure = "program".equals(stringValue(response, "failureOwner", ""));
         if (failedSelection == null) {
-            summary.addProperty("recommendedActionCode", "INSPECT_RETURNED_FAILURE_EVIDENCE");
+            summary.addProperty("recommendedActionCode", programFailure ? "HOST_DIAGNOSIS_REQUIRED" : "INSPECT_RETURNED_FAILURE_EVIDENCE");
             summary.addProperty("recommendedAction",
-                    "Revise the Blueprint from this failure summary; request human review when it has no actionable fields.");
+                    programFailure ? "Preserve the accepted Blueprint; repair the program or author-metadata failure before retrying."
+                            : "Revise the Blueprint from this failure summary; request human review when it has no actionable fields.");
             return summary;
         }
 
@@ -172,7 +176,11 @@ public final class CityWorkflowStepRunner {
         JsonArray hardBlockArray = new JsonArray();
         hardBlocks.stream().limit(8).forEach(hardBlockArray::add);
         if (!hardBlockArray.isEmpty()) summary.add("hardBlocks", hardBlockArray);
-        addRecommendedAction(summary, hardBlocks);
+        if (programFailure) {
+            summary.addProperty("recommendedActionCode", "HOST_DIAGNOSIS_REQUIRED");
+            summary.addProperty("recommendedAction", "Repair the reported execution or authored-template metadata blocker. "
+                    + "Preserve this required structure and the accepted Blueprint; do not guess a frontage or replace content to hide the problem.");
+        } else addRecommendedAction(summary, hardBlocks);
         return summary;
     }
 
@@ -199,10 +207,10 @@ public final class CityWorkflowStepRunner {
         boolean ambiguousFrontage = hardBlocks.stream()
                 .anyMatch(value -> value.contains("D4_ARRAY_LAYOUT_FRONTAGE_ENTRANCE_AMBIGUOUS"));
         if (ambiguousFrontage) {
-            summary.addProperty("recommendedActionCode", "REPLACE_REQUIRED_STRUCTURE_OR_FIX_TEMPLATE_FRONTAGE");
+            summary.addProperty("recommendedActionCode", "AUTHOR_FRONTAGE_REQUIRED");
             summary.addProperty("recommendedAction",
-                    "The current Blueprint cannot choose frontageEntranceId. Replace this required structure with a "
-                            + "compatible catalog structure, or stop for human template-metadata repair.");
+                    "The Blueprint cannot supply this missing authored frontage. Preserve the required structure and "
+                            + "request template-metadata repair; changing the layout is not a repair for this blocker.");
             return;
         }
         summary.addProperty("recommendedActionCode", "REVISE_FAILED_GROUP_FROM_FILTER_EVIDENCE");

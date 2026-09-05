@@ -78,8 +78,24 @@ public final class PlanningToolPresentation {
         JsonObject result = new JsonObject();
         JsonObject artifacts = source.getAsJsonObject().has("artifacts")
                 && source.getAsJsonObject().get("artifacts").isJsonObject()
-                ? source.getAsJsonObject().getAsJsonObject("artifacts") : new JsonObject();
+                ? source.getAsJsonObject().getAsJsonObject("artifacts").deepCopy() : new JsonObject();
+        if (!artifacts.has("structureMaterializationPlan") && artifacts.has("sourceStructureMaterializationPlan"))
+            artifacts.add("structureMaterializationPlan", artifacts.get("sourceStructureMaterializationPlan"));
         for (var entry : source.getAsJsonObject().entrySet()) {
+            if ("plannedWorldgenStructures".equals(entry.getKey()) && entry.getValue().isJsonArray()
+                    && artifacts.has("structureMaterializationPlan")
+                    && source.getAsJsonObject().has("structureMaterializationPlan")
+                    && source.getAsJsonObject().get("structureMaterializationPlan").isJsonObject()
+                    && entry.getValue().equals(source.getAsJsonObject().getAsJsonObject("structureMaterializationPlan")
+                    .get("plannedWorldgenStructures"))) {
+                JsonObject summary = new JsonObject();
+                summary.addProperty("omittedFromDecisionView", true);
+                summary.addProperty("entryCount", entry.getValue().getAsJsonArray().size());
+                summary.add("artifactPath", artifacts.get("structureMaterializationPlan").deepCopy());
+                summary.addProperty("jsonPointer", "/plannedWorldgenStructures");
+                result.add("plannedWorldgenStructuresSummary", summary);
+                continue;
+            }
             if (COMPILED_ARTIFACTS.contains(entry.getKey()) && entry.getValue().isJsonObject()
                     && artifacts.has(entry.getKey()) && artifacts.get(entry.getKey()).isJsonPrimitive()
                     && artifacts.get(entry.getKey()).getAsJsonPrimitive().isString()

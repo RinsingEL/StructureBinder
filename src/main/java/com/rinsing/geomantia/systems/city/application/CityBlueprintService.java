@@ -154,6 +154,44 @@ public final class CityBlueprintService {
 
     public JsonObject submit(Path debugRoot, String runId, String cityId, String contextId,
                              JsonObject blueprintJson) throws IOException {
+        synchronized (submissionArtifactLock(outputDirectory(requireRunDirectory(debugRoot, runId), cityId))) {
+            return submitLocked(debugRoot, runId, cityId, contextId, blueprintJson, false);
+        }
+    }
+
+    public JsonObject submitDesign(Path debugRoot, String runId, String cityId, String contextId,
+                                   JsonObject request) throws IOException {
+        Path outputDir = outputDirectory(requireRunDirectory(debugRoot, runId), cityId);
+        synchronized (submissionArtifactLock(outputDir)) {
+            if (request.has("cityBlueprint") == request.has("blueprintPatch"))
+                throw new IllegalArgumentException("CITY_BLUEPRINT_INPUT_EXACTLY_ONE_REQUIRED");
+            String mode = request.has("proportionMode") ? request.get("proportionMode").getAsString() : "EXACT_SHARES";
+            if (!java.util.Set.of("EXACT_SHARES", "RELATIVE_WEIGHTS").contains(mode))
+                throw new IllegalArgumentException("CITY_BLUEPRINT_PROPORTION_MODE_INVALID");
+            JsonObject input;
+            if (request.has("blueprintPatch")) {
+                if (!"EXACT_SHARES".equals(mode)) throw new IllegalArgumentException("CITY_BLUEPRINT_PATCH_REQUIRES_EXACT_SHARES");
+                Path blueprintPath = outputDir.resolve("city_blueprint.json");
+                if (!Files.isRegularFile(blueprintPath) || !request.has("baseBlueprintHash")
+                        || !sha256(Files.readString(blueprintPath)).equals(request.get("baseBlueprintHash").getAsString()))
+                    throw new IllegalArgumentException("CITY_BLUEPRINT_PATCH_BASE_STALE");
+                JsonObject accepted = readObject(outputDir.resolve("city_blueprint_submission_trace.json"),
+                        CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_STALE);
+                if (!contextId.equals(string(accepted, "contextId"))
+                        || !request.get("baseBlueprintHash").getAsString().equals(string(accepted, "cityBlueprintHash")))
+                    throw new IllegalArgumentException("CITY_BLUEPRINT_PATCH_BASE_STALE");
+                input = CityBlueprintDesignInput.revise(readObject(blueprintPath,
+                        CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_STALE), request.getAsJsonArray("blueprintPatch"));
+            } else {
+                if (request.has("baseBlueprintHash")) throw new IllegalArgumentException("CITY_BLUEPRINT_PATCH_REQUIRED_WITH_BASE_HASH");
+                input = request.getAsJsonObject("cityBlueprint");
+            }
+            return submitLocked(debugRoot, runId, cityId, contextId, input, "RELATIVE_WEIGHTS".equals(mode));
+        }
+    }
+
+    private JsonObject submitLocked(Path debugRoot, String runId, String cityId, String contextId,
+                                    JsonObject blueprintJson, boolean relativeWeights) throws IOException {
         Path runDir = requireRunDirectory(debugRoot, runId);
         Path outputDir = outputDirectory(runDir, cityId);
         Path contextPath = outputDir.resolve("city_blueprint_context.json");
@@ -216,7 +254,7 @@ public final class CityBlueprintService {
                 snapshot.getAsJsonObject("referenceCatalog"), templates);
         CityBlueprint blueprint;
         try {
-                blueprint = codec.read(blueprintJson);
+                blueprint = codec.read(CityBlueprintDesignInput.bind(blueprintJson, context, relativeWeights));
         } catch (CityBlueprintContractException exception) {
             return failure(debugRoot, cityId, contextId, reportPath, tracePath, exception.reasonCode(),
                     exception.fieldPath(), exception.getMessage(), budget, runId);

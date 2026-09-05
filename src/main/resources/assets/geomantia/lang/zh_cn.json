@@ -28,6 +28,7 @@
   "gui.geomantia.adventurer_map.status.post_d4_running": "D4 后自动编译中",
   "gui.geomantia.adventurer_map.status.waiting_for_generation": "等待生成",
   "gui.geomantia.adventurer_map.status.needs_agent": "需要 Agent 处理",
+  "gui.geomantia.adventurer_map.status.blocked_by_program": "程序阻塞（保留设计）",
   "gui.geomantia.adventurer_map.status.failed": "失败",
   "gui.geomantia.adventurer_map.status.error": "状态读取失败",
   "gui.geomantia.adventurer_map.status.empty": "没有城市",

@@ -49,23 +49,21 @@ final class ProviderPlanningToolCatalog {
                     "Create the artifact-backed T4 planning session for only the active realm.",
                     object(properties("runId", string(), "realmId", string(), "planningSessionId", string())));
             case "realm_t4_patch_planning_select_capital" -> function(name,
-                    "Turn one reviewed realm_t4 patchSelectionRef into the realm's unique capital. The value must "
-                            + "be the psel_... reference returned by patch_explorer_select_candidate; a displayed "
-                            + "candidateId such as VALLEY-01 is not a patchSelectionRef.",
+                    "Choose the unique capital using the displayed sessionId + candidateId and a selectionReason. "
+                            + "The host freezes and commits this decision. Existing patchSelectionRef is also accepted as an alternative.",
                     t4SeedSchema(false));
             case "realm_t4_patch_planning_add_city" -> function(name,
-                    "Add one non-capital city from a distinct reviewed realm_t4 patchSelectionRef returned by "
-                            + "patch_explorer_select_candidate. Never pass the displayed candidateId directly. "
+                    "Add a non-capital city using a displayed sessionId + candidateId and selectionReason; the host freezes it. "
                             + "Use a stable citySeedId derived from the realm and function.",
                     t4SeedSchema(true));
             case "realm_t4_patch_planning_finalize" -> function(name,
                     "Finalize the active realm after its required city seeds are present. The existing service merges "
-                            + "the realm into the registry and creates the City queue only when all realms are covered.",
+                            + "the realm into the registry; this realm's cities can start before other realms finish T4. Global T2/T3 must already be complete.",
                     object(properties("runId", string(), "planningSessionId", string(),
                             "cityQueueOrderingMode", enumeration("global_radial", "realm_grouped")),
                             "planningSessionId"));
             case "city_design_queue_refresh" -> function(name,
-                    "Build or reconcile the existing persistent City queue after all realms completed T4.",
+                    "Build or reconcile the persistent City queue from the currently finalized T4 realm registries.",
                     object(properties("runId", string(),
                             "orderingMode", enumeration("global_radial", "realm_grouped"))));
             case "city_design_queue_status" -> function(name,
@@ -110,7 +108,11 @@ final class ProviderPlanningToolCatalog {
                             + "TerraSense profiles, template catalog and Blueprint reference catalog; never pass paths.",
                     object(properties("runId", string(), "citySeedId", string())));
             case "city_submit_d4_blueprint" -> function(name,
-                    "Submit one complete CityBlueprint using only the returned cityBlueprintContext. Root fields are "
+                    "Submit a CityBlueprint, or use blueprintPatch (replace-only JSON Pointer operations) with "
+                            + "baseBlueprintHash from revisionEvidence to change only affected fields. Exactly one input is allowed. "
+                            + "The host fills omitted schema/cityId/sourceD3Ref/catalogSnapshotRef/generationSeed; conflicting explicit identities are rejected. "
+                            + "proportionMode=RELATIVE_WEIGHTS normalizes group, spaceComposition and landscape role shares before the unchanged author validation. "
+                            + "Patches use EXACT_SHARES only. Canonical root fields are "
                             + "schema, cityId, sourceD3Ref, catalogSnapshotRef, generationSeed, designIntent, "
                             + "styleProfile, groups, arrayCompositions, relations, roadProfile, surfaceDetailProfile "
                             + "and outdoorPlan. CONNECTION is the only relation kind that generates a terrain-routed "
@@ -138,6 +140,7 @@ final class ProviderPlanningToolCatalog {
 
     private static JsonObject t4SeedSchema(boolean addCity) {
         JsonObject values = properties("runId", string(), "planningSessionId", string(),
+                "sessionId", string(), "candidateId", string(),
                 "patchSelectionRef", string(), "candidateRangeCells", integer(), "minimumAreaBlocks", integer(),
                 "subregionId", string(), "requiredConditions", array(string()), "coreFunctions", array(string()),
                 "selectionReason", string());
@@ -147,10 +150,10 @@ final class ProviderPlanningToolCatalog {
             values.add("theoreticalScale", enumeration("large_city", "city", "town", "village", "outpost"));
             values.add("satelliteOf", string());
             values.add("trigger", string());
-            return object(values, "planningSessionId", "patchSelectionRef", "citySeedId", "role",
+            return object(values, "planningSessionId", "citySeedId", "role",
                     "selectionReason");
         }
-        return object(values, "planningSessionId", "patchSelectionRef", "selectionReason");
+        return object(values, "planningSessionId", "selectionReason");
     }
 
     private static JsonObject submitSchema() {
@@ -163,13 +166,17 @@ final class ProviderPlanningToolCatalog {
                 "roadProfile", profileRefSchema(), "surfaceDetailProfile", profileRefSchema(),
                 "outdoorPlan", outdoorPlanSchema());
         JsonObject blueprint = object(blueprintProperties,
-                "schema", "cityId", "sourceD3Ref", "catalogSnapshotRef", "generationSeed", "designIntent",
+                "designIntent",
                 "styleProfile", "groups", "arrayCompositions", "relations", "roadProfile",
                 "surfaceDetailProfile", "outdoorPlan");
         return object(properties(
                 "runId", string(), "citySeedId", string(), "contextId", string(),
-                "cityBlueprint", blueprint, "autoAdvanceAfterD4", bool()),
-                "contextId", "cityBlueprint");
+                "cityBlueprint", blueprint, "autoAdvanceAfterD4", bool(),
+                "proportionMode", enumeration("EXACT_SHARES", "RELATIVE_WEIGHTS"),
+                "baseBlueprintHash", string(),
+                "blueprintPatch", nonEmptyArray(object(properties("op", enumeration("replace"), "path", string(),
+                        "value", new JsonObject()), "op", "path", "value"))),
+                "contextId");
     }
 
     private static JsonObject artifactRefSchema() {
@@ -189,7 +196,7 @@ final class ProviderPlanningToolCatalog {
 
     private static JsonObject groupSchema() {
         JsonObject values = properties(
-                "groupId", string(), "groupKind", enumeration("STRUCTURE", "LANDSCAPE"),
+                "groupId", string(), "groupKind", enumeration("STRUCTURE"),
                 "preferredPatchRefs", nonEmptyArray(string()),
                 "preferredPatchZone", enumeration("CENTER", "NORTH", "EAST", "SOUTH", "WEST"),
                 "placementRelation", placementRelationSchema(), "role", string(),
@@ -270,8 +277,7 @@ final class ProviderPlanningToolCatalog {
                 "strength", enumeration("HARD", "SOFT"),
                 "distancePreference", enumeration("NONE", "NEAR", "FAR"),
                 "directionPreference", enumeration("NONE", "NORTH", "EAST", "SOUTH", "WEST")),
-                "fromGroupId", "toGroupId", "relationKind", "strength",
-                "distancePreference", "directionPreference");
+                "fromGroupId", "toGroupId", "relationKind", "strength");
     }
 
     private static JsonObject outdoorPlanSchema() {

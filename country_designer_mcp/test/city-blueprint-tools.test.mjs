@@ -22,8 +22,11 @@ test("publishes the program-only context tool and retryable structure plus outdo
   assert.match(showCandidates.description, /hardLegal 只表示地块非空/);
   assert.match(prepare.description, /Top Patch review/);
   assert.match(prepare.description, /5 次程序编译失败预算/);
-  assert.match(submit.description, /failureCount<5/);
-  assert.match(submit.description, /禁止读取服务端源码/);
+  assert.match(submit.description, /RELATIVE_WEIGHTS/);
+  assert.match(submit.description, /不读取源码/);
+  assert.ok(!submit.inputSchema.required.includes("cityBlueprint"));
+  assert.ok(!submit.inputSchema.properties.cityBlueprint.required.includes("sourceD3Ref"));
+  assert.deepEqual(submit.inputSchema.properties.blueprintPatch.items.properties.op.enum, ["replace"]);
   assert.match(autoStatus.description, /workflowResponse/);
   assert.match(autoStatus.description, /禁止转去读取服务端源码/);
   assert.match(designQueueStatus.description, /waiting_for_patch_review/);

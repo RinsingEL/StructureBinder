@@ -125,16 +125,18 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
             return;
         }
         Credentials credentials = store.credentials(config);
-        if (!credentials.present()) {
-            updateIfChanged(new AutomationStatus("missing_key", "PROVIDER_API_KEY_MISSING",
-                    "", "", "", Instant.now().toString()));
-            return;
-        }
         if (Instant.now().getEpochSecond() < retryAfterEpochSecond) return;
         ProviderPlanningDiscovery.PlanningStep run = currentDiscovery.nextStep();
+        if (run.stage().actionable() && !hostOnly(run) && !credentials.present()) {
+            updateIfChanged(new AutomationStatus("missing_key", "PROVIDER_API_KEY_MISSING",
+                    run.runId(), run.citySeedId(), run.nextAction(), Instant.now().toString()));
+            return;
+        }
         if (!run.stage().actionable()) {
-            String state = run.stage() == ProviderPlanningDiscovery.Stage.COMPLETE ? "completed" : "waiting";
-            updateIfChanged(new AutomationStatus(state, "", run.runId(), run.citySeedId(),
+            boolean programBlocked = run.state().has("cityDesignQueue") && "blocked_by_program".equals(
+                    run.state().getAsJsonObject("cityDesignQueue").get("status").getAsString());
+            String state = programBlocked ? "error" : run.stage() == ProviderPlanningDiscovery.Stage.COMPLETE ? "completed" : "waiting";
+            updateIfChanged(new AutomationStatus(state, programBlocked ? "PLANNING_HOST_BLOCKED: POST_D4_PROGRAM_FAILURE" : "", run.runId(), run.citySeedId(),
                     run.nextAction(), Instant.now().toString()));
             return;
         }
@@ -151,10 +153,9 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
             ProviderAgentClient client = PlayerProviderConfig.HERMES.equals(config.agentRuntime())
                     ? hermesClient : legacyClient;
             DeepSeekToolLoopClient.LoopResult result;
-            if (run.stage() == ProviderPlanningDiscovery.Stage.W || run.stage() == ProviderPlanningDiscovery.Stage.T3
-                    || run.stage() == ProviderPlanningDiscovery.Stage.QUEUE_REFRESH) {
+            if (hostOnly(run)) {
                 // These transitions contain no design choice and must not cost a model turn.
-                var output = gateway.execute(run.nextAction(), new com.google.gson.JsonObject());
+                var output = gateway.execute(run.nextAction(), hostArguments(run));
                 String failure = PlanningTurnControl.failure(PlanningTurnControl.payload(output));
                 if (!failure.isBlank()) throw new IOException(failure);
                 result = new DeepSeekToolLoopClient.LoopResult(true, "completed", "", 0, "");
@@ -169,6 +170,26 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
                     designTools = PreparedCityDesignTurn.TOOLS;
                     activity("system", "宿主已备齐冻结城市设计资料与地形图，AI 直接设计/提交");
                 } else {
+                    if (run.stage() == ProviderPlanningDiscovery.Stage.T2 || run.stage() == ProviderPlanningDiscovery.Stage.T4) {
+                        var prepared = PreparedRealmDesignTurn.prepare(run, gateway, debugRoot);
+                        designState = prepared.state();
+                        designImages = prepared.images();
+                    } else if (run.stage() == ProviderPlanningDiscovery.Stage.CITY) {
+                        Path d3 = debugRoot.resolve(run.runId()).resolve("city_test_runs").resolve(run.citySeedId())
+                                .resolve("steps/d3/city_landform_review_package.json");
+                        JsonObject review = com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(d3)).getAsJsonObject();
+                        designState.add("d3ReviewPackage", PlanningToolPresentation.compact(review));
+                        JsonObject registry = com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(
+                                debugRoot.resolve(run.runId()).resolve("city_seed_registry.json"))).getAsJsonObject();
+                        for (var seed : registry.getAsJsonArray("citySeeds"))
+                            if (run.citySeedId().equals(seed.getAsJsonObject().get("citySeedId").getAsString()))
+                                designState.add("citySeed", seed.deepCopy());
+                        java.util.Set<Path> images = new java.util.LinkedHashSet<>();
+                        PreparedCityDesignTurn.collectImages(review, debugRoot.toRealPath(), images);
+                        if (images.isEmpty()) throw new IOException("PLANNING_DESIGN_PREVIEW_REQUIRED");
+                        designImages = List.copyOf(images);
+                        designTools = List.of("city_review_d3_site");
+                    }
                     var sources = new ManagedCityPlanningSources(serverDirectory).resolve();
                     designState.add("authoringBrief", sources.authoringBrief().deepCopy());
                 }
@@ -180,7 +201,7 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
                         denied.addProperty("error", "PLANNING_TOOL_NOT_IN_CURRENT_DECISION_SCOPE: " + tool);
                         return denied;
                     }
-                    return gateway.execute(tool, arguments);
+                    return PreparedRealmDesignTurn.execute(run.stage(), gateway, tool, arguments);
                 };
                 result = client.run(config, credentials,
                         designSessionId(debugRoot, run, designState), designState, designImages, designTools, new PlanningTurnControl(scoped),
@@ -298,11 +319,9 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
         return switch (stage) {
             case W -> List.of("realm_w_refresh");
             case T1 -> List.of("realm_t1_prepare");
-            case T2 -> List.of("patch_explorer_open", "patch_explorer_show_candidates",
-                    "patch_explorer_select_candidate", "realm_t2_select_coordinate");
+            case T2 -> List.of("patch_explorer_show_candidates", "patch_explorer_select_candidate");
             case T3 -> List.of("realm_t3_expand");
-            case T4 -> List.of("realm_t4_patch_planning_create", "patch_explorer_open",
-                    "patch_explorer_show_candidates", "patch_explorer_select_candidate",
+            case T4 -> List.of("patch_explorer_show_candidates",
                     "realm_t4_patch_planning_select_capital", "realm_t4_patch_planning_add_city",
                     "realm_t4_patch_planning_finalize");
             case QUEUE_REFRESH -> List.of("city_design_queue_refresh");
@@ -311,6 +330,33 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
                     "city_prepare_d4_blueprint_context", "city_submit_d4_blueprint");
             case WAITING, COMPLETE -> List.of();
         };
+    }
+
+    static boolean hostOnly(ProviderPlanningDiscovery.PlanningStep step) {
+        return step.stage() == ProviderPlanningDiscovery.Stage.W || step.stage() == ProviderPlanningDiscovery.Stage.T3
+                || step.stage() == ProviderPlanningDiscovery.Stage.QUEUE_REFRESH
+                || step.stage() == ProviderPlanningDiscovery.Stage.CITY
+                && List.of("city_plan_d3", "patch_explorer_show_candidates").contains(step.nextAction());
+    }
+
+    private JsonObject hostArguments(ProviderPlanningDiscovery.PlanningStep step) throws IOException {
+        JsonObject args = new JsonObject();
+        if (!"patch_explorer_show_candidates".equals(step.nextAction())) return args;
+        for (var entry : step.state().getAsJsonArray("items")) {
+            JsonObject item = entry.getAsJsonObject();
+            if (step.citySeedId().equals(item.get("citySeedId").getAsString()))
+                args.add("sessionId", item.get("patchExplorerSessionId"));
+        }
+        Path d3 = debugRoot.resolve(step.runId()).resolve("city_test_runs").resolve(step.citySeedId())
+                .resolve("steps/d3/city_landform_review_package.json");
+        JsonObject review = com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(d3)).getAsJsonObject();
+        java.util.Set<String> unique = new java.util.LinkedHashSet<>();
+        for (var patch : review.getAsJsonArray("landformPatches")) unique.add(patch.getAsJsonObject().get("landformType").getAsString());
+        com.google.gson.JsonArray types = new com.google.gson.JsonArray();
+        unique.forEach(types::add);
+        args.add("interestTypes", types);
+        args.addProperty("pageSize", 1);
+        return args;
     }
 
     private void updateIfChanged(AutomationStatus value) {

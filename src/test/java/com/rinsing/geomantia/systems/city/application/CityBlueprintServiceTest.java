@@ -24,6 +24,33 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CityBlueprintServiceTest {
+    @Test
+    void compactSubmissionAndHashBoundPatchKeepFullValidation() throws Exception {
+        Fixture fixture = fixture("run_patch", "city:test");
+        CityBlueprintService service = new CityBlueprintService();
+        JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
+        String contextId = prepared.get("contextId").getAsString();
+        JsonObject input = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+        for (String field : java.util.List.of("schema", "cityId", "sourceD3Ref", "catalogSnapshotRef", "generationSeed")) input.remove(field);
+        JsonObject request = new JsonObject(); request.add("cityBlueprint", input);
+        JsonObject accepted = service.submitDesign(temporary, fixture.runId(), fixture.cityId(), contextId, request);
+        assertTrue(accepted.get("ok").getAsBoolean());
+        request.remove("cityBlueprint");
+        request.add("baseBlueprintHash", accepted.getAsJsonObject("submissionTrace").get("cityBlueprintHash"));
+        request.add("blueprintPatch", JsonParser.parseString("[{op:'replace',path:'/designIntent/theme',value:'local revision'}]"));
+        JsonObject revised = service.submitDesign(temporary, fixture.runId(), fixture.cityId(), contextId, request);
+        assertTrue(revised.get("ok").getAsBoolean());
+        assertThrows(IllegalArgumentException.class,
+                () -> service.submitDesign(temporary, fixture.runId(), fixture.cityId(), contextId, request));
+        request.add("baseBlueprintHash", revised.getAsJsonObject("submissionTrace").get("cityBlueprintHash"));
+        request.add("blueprintPatch", JsonParser.parseString("[{op:'replace',path:'/groups/0/requiredStructureRefs',value:['invented:structure']}]"));
+        assertFalse(service.submitDesign(temporary, fixture.runId(), fixture.cityId(), contextId, request).get("ok").getAsBoolean());
+        Path path = fixture.runDir().resolve("city_blueprint_city_test/city_blueprint.json");
+        assertEquals("local revision", JsonParser.parseString(Files.readString(path)).getAsJsonObject()
+                .getAsJsonObject("designIntent").get("theme").getAsString());
+        assertFalse(Files.readString(path).contains("invented:structure"));
+    }
     @TempDir
     Path temporary;
 

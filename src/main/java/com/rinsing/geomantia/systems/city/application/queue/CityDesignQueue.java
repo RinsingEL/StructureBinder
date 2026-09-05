@@ -118,6 +118,14 @@ public final class CityDesignQueue {
     }
 
     public synchronized void requireCurrentIfManaged(String runId, String citySeedId) throws IOException {
+        requireCurrent(runId, citySeedId, false);
+    }
+
+    public synchronized void requireProgramRetryIfManaged(String runId, String citySeedId) throws IOException {
+        requireCurrent(runId, citySeedId, true);
+    }
+
+    private void requireCurrent(String runId, String citySeedId, boolean programRetry) throws IOException {
         CityDesignQueueConfig config = CityDesignQueueConfig.loadOrCreate(configPath);
         if (!config.enabled() || !Files.isRegularFile(runDirectory(runId).resolve("city_seed_registry.json"))) return;
         JsonObject state = readState(runId);
@@ -129,6 +137,12 @@ public final class CityDesignQueue {
                     + ", requested=" + citySeedId);
         }
         String status = stringValue(state, "status", "");
+        if (programRetry) {
+            if (!("blocked_by_program".equals(status) || NEEDS_AGENT.equals(status))
+                    || !"city_post_d4_auto_compile_retry".equals(stringValue(state, "nextAction", "")))
+                throw new IllegalArgumentException("CITY_DESIGN_QUEUE_PROGRAM_RETRY_NOT_ALLOWED: status=" + status);
+            return;
+        }
         if (!WAITING_FOR_AGENT.equals(status) && !WAITING_FOR_PATCH_REVIEW.equals(status)
                 && !NEEDS_AGENT.equals(status)) {
             throw new IllegalArgumentException("CITY_DESIGN_QUEUE_CURRENT_NOT_ACCEPTING_D4: status=" + status);
@@ -191,10 +205,13 @@ public final class CityDesignQueue {
         switch (status) {
             case "queued", "running" -> setItemStatus(item, POST_D4_RUNNING,
                     reasonCode.isBlank() ? "POST_D4_RUNNING" : reasonCode);
-            case WAITING_FOR_GENERATION -> setItemStatus(item, WAITING_FOR_GENERATION,
-                    reasonCode.isBlank() ? "WAITING_FOR_GENERATION" : reasonCode);
-            case NEEDS_AGENT -> {
-                setItemStatus(item, NEEDS_AGENT,
+            case WAITING_FOR_GENERATION -> {
+                setItemStatus(item, WAITING_FOR_GENERATION,
+                        reasonCode.isBlank() ? "WAITING_FOR_GENERATION" : reasonCode);
+                item.remove("nextAction");
+            }
+            case NEEDS_AGENT, "blocked_by_program" -> {
+                setItemStatus(item, status,
                         reasonCode.isBlank() ? "POST_D4_NEEDS_AGENT" : reasonCode);
                 item.addProperty("nextAction", postD4RecoveryAction(post));
             }
@@ -204,6 +221,7 @@ public final class CityDesignQueue {
 
     private static String postD4RecoveryAction(JsonObject post) {
         String explicit = stringValue(post, "nextAction", "");
+        if ("stop_for_human_review".equals(explicit)) return explicit;
         if ("city_submit_d4_blueprint".equals(explicit)) return explicit;
         JsonObject workflowResponse = object(post, "workflowResponse");
         JsonObject workflowReport = object(workflowResponse, "workflowReport");
@@ -236,7 +254,8 @@ public final class CityDesignQueue {
                         || WAITING_FOR_AGENT.equals(status) && ("D3_SITE_REVIEW_REQUIRED".equals(reasonCode)
                         || "PATCH_REVIEW_COMPLETED".equals(reasonCode)
                         || "D4_CONTEXT_PREPARED".equals(reasonCode));
-                if (!POST_D4_RUNNING.equals(status) && !NEEDS_AGENT.equals(status) && !agentPhase) {
+                if (!POST_D4_RUNNING.equals(status) && !NEEDS_AGENT.equals(status)
+                        && !"blocked_by_program".equals(status) && !agentPhase) {
                     setItemStatus(item, WAITING_FOR_AGENT, "NEXT_CITY_BY_PRIORITY");
                 }
             } else if (!WAITING_FOR_GENERATION.equals(status)) {
@@ -268,7 +287,7 @@ public final class CityDesignQueue {
             };
             case WAITING_FOR_PATCH_REVIEW -> "patch_explorer_show_candidates";
             case POST_D4_RUNNING -> "city_post_d4_auto_compile_status";
-            case NEEDS_AGENT -> stringValue(current, "nextAction", "city_post_d4_auto_compile_retry");
+            case NEEDS_AGENT, "blocked_by_program" -> stringValue(current, "nextAction", "city_post_d4_auto_compile_retry");
             default -> "";
         });
     }

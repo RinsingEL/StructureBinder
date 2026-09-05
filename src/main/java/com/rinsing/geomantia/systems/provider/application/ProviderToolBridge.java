@@ -20,10 +20,28 @@ final class ProviderToolBridge implements AutoCloseable {
         server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/execute", exchange -> {
             try {
-                if (!"POST".equals(exchange.getRequestMethod()) || !token.equals(exchange.getRequestHeaders().getFirst("X-Geomantia-Bridge-Key"))) {
+                if (!token.equals(exchange.getRequestHeaders().getFirst("X-Geomantia-Bridge-Key"))) {
                     exchange.sendResponseHeaders(403, -1); return;
                 }
                 Binding current = binding;
+                if ("GET".equals(exchange.getRequestMethod())) {
+                    JsonArray definitions = new JsonArray();
+                    for (JsonElement element : ProviderPlanningToolCatalog.definitions(current == null ? List.of() : current.tools)) {
+                        JsonObject function = element.getAsJsonObject();
+                        JsonObject tool = new JsonObject();
+                        tool.add("name", function.get("name"));
+                        tool.add("description", function.get("description"));
+                        tool.add("inputSchema", function.get("parameters"));
+                        definitions.add(tool);
+                    }
+                    JsonObject result = new JsonObject(); result.add("tools", definitions);
+                    byte[] body = result.toString().getBytes(StandardCharsets.UTF_8);
+                    exchange.getResponseHeaders().set("Content-Type", "application/json");
+                    exchange.sendResponseHeaders(200, body.length);
+                    exchange.getResponseBody().write(body);
+                    return;
+                }
+                if (!"POST".equals(exchange.getRequestMethod())) { exchange.sendResponseHeaders(405, -1); return; }
                 byte[] bytes = exchange.getRequestBody().readNBytes(2 * 1024 * 1024 + 1);
                 if (bytes.length > 2 * 1024 * 1024) { exchange.sendResponseHeaders(413, -1); return; }
                 JsonObject request = JsonParser.parseString(new String(bytes, StandardCharsets.UTF_8)).getAsJsonObject();
@@ -72,7 +90,11 @@ final class ProviderToolBridge implements AutoCloseable {
             text.addProperty("text", output.isJsonPrimitive() ? output.getAsString() : output.toString()); content.add(text);
         }
         JsonObject result = new JsonObject(); result.add("content", content);
-        result.addProperty("isError", !PlanningTurnControl.failure(PlanningTurnControl.payload(output)).isBlank());
+        JsonObject payload = PlanningTurnControl.payload(output);
+        // Validation ran successfully and returned a negative verdict, not a broken MCP transport.
+        // PlanningTurnControl still owns repeated-rejection stopping; keep the entire negative report.
+        boolean validationVerdict = payload.has("validationReport") && payload.get("validationReport").isJsonObject();
+        result.addProperty("isError", !validationVerdict && !PlanningTurnControl.failure(payload).isBlank());
         return result;
     }
 }

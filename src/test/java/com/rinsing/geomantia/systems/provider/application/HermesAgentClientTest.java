@@ -14,6 +14,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class HermesAgentClientTest {
+    @Test
+    void sameFrozenContextContinuationDoesNotDuplicateCatalogOrImages() {
+        JsonObject state = new JsonObject(); state.addProperty("contextId", "frozen");
+        state.addProperty("catalog", "unchanged-author-data".repeat(10000));
+        var result = HermesAgentClient.continuationContent(state);
+        assertEquals(1, result.size());
+        assertTrue(result.toString().contains("frozen"));
+        assertFalse(result.toString().contains("unchanged-author-data"));
+        assertTrue(result.toString().length() < 1000);
+    }
     @TempDir
     Path temporaryDirectory;
 

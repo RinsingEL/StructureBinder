@@ -36,6 +36,7 @@ final class CityRevisionEvidence {
         JsonObject evidence = new JsonObject();
         evidence.addProperty("schema", "city_revision_decision_evidence.v0.1");
         evidence.add("previousBlueprint", blueprint);
+        evidence.addProperty("baseBlueprintHash", hash(blueprintRaw));
         evidence.add("failureBudget", budget.deepCopy());
         evidence.add("compileOutcome", pick(trace, "status", "reasonCode", "compilationAcceptance"));
         JsonArray groups = new JsonArray();

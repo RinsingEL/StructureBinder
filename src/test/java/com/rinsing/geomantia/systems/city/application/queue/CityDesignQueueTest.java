@@ -14,6 +14,18 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityDesignQueueTest {
+    @Test
+    void programBlockSurvivesRefreshAndCannotAcceptAutomaticRedesign() throws Exception {
+        CityDesignQueue queue = queue();
+        writeRegistry("run_program", seed("city_1", "realm_a", "capital", 4000, 0));
+        queue.refresh("run_program", "global_radial");
+        queue.onPostD4State(postState("run_program", "city_1", "blocked_by_program"));
+        assertEquals("blocked_by_program", queue.status("run_program").get("status").getAsString());
+        assertEquals("blocked_by_program", queue.refresh("run_program", "global_radial").get("status").getAsString());
+        assertThrows(IllegalArgumentException.class, () -> queue.requireCurrentIfManaged("run_program", "city_1"));
+        queue.requireProgramRetryIfManaged("run_program", "city_1");
+        assertThrows(IllegalArgumentException.class, () -> queue.requireProgramRetryIfManaged("run_program", "another_city"));
+    }
     @TempDir
     Path temporaryDirectory;
 
@@ -114,6 +126,7 @@ class CityDesignQueueTest {
         JsonObject state = queue.status("run_revision");
         assertEquals("needs_agent", state.get("status").getAsString());
         assertEquals("city_submit_d4_blueprint", state.get("nextAction").getAsString());
+        assertThrows(IllegalArgumentException.class, () -> queue.requireProgramRetryIfManaged("run_revision", "city_1"));
     }
 
     @Test

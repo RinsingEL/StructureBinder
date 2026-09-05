@@ -35,6 +35,12 @@ test('real MCP stdio routes sidecar calls through the host bridge and preserves 
   const directory = await mkdtemp(join(tmpdir(), 'geomantia-bridge-test-'));
   let received;
   const bridge = createServer(async (request, response) => {
+    if (request.method === 'GET') {
+      assert.equal(request.headers['x-geomantia-bridge-key'], 'offline-test-capability');
+      response.setHeader('Content-Type', 'application/json');
+      response.end(JSON.stringify({tools:[{name:'city_prepare_d4_blueprint_context',description:'host-scoped',inputSchema:{type:'object',properties:{hostDecision:{type:'string'}}}}]}));
+      return;
+    }
     const chunks = [];
     for await (const chunk of request) chunks.push(chunk);
     received = { key: request.headers['x-geomantia-bridge-key'], ...JSON.parse(Buffer.concat(chunks).toString()) };
@@ -53,6 +59,10 @@ test('real MCP stdio routes sidecar calls through the host bridge and preserves 
       env: { ...process.env, GEOMANTIA_PROVIDER_TOOL_URL: `http://127.0.0.1:${bridge.address().port}/execute`,
         GEOMANTIA_PROVIDER_TOOL_KEY: 'offline-test-capability', GEOMANTIA_MC_API_URL: 'http://127.0.0.1:1' },
     }));
+    const listed = await client.listTools();
+    assert.equal(listed.tools.length, 1);
+    assert.equal(listed.tools[0].description, 'host-scoped');
+    assert.ok(listed.tools[0].inputSchema.properties.hostDecision);
     const result = await client.callTool({ name: 'city_prepare_d4_blueprint_context', arguments: { runId: 'run', citySeedId: 'city' } });
     assert.deepEqual(received, { key: 'offline-test-capability', name: 'city_prepare_d4_blueprint_context', arguments: { runId: 'run', citySeedId: 'city' } });
     assert.equal(JSON.parse(result.content[0].text).contextId, 'host-owned');

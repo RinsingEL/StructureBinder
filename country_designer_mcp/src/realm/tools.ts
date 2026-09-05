@@ -581,12 +581,12 @@ const cityBlueprintSchema = strictObject({
       }, []),
       compositionProfileRef: nonEmptyString("冻结 composition profile 引用，只控制结构组成顺序，不限制数量。"),
       attachedFeatures: { type: "array", maxItems: 0, description: "案子 04 前必须为空。" },
-      targetAreaShare: { type: "number", exclusiveMinimum: 0, maximum: 1,
+      targetAreaShare: { type: "number", exclusiveMinimum: 0,
         description: "功能区占整座城市目标范围的比例；不提交具体面积。" },
       spaceComposition: strictObject({
-        buildingShare: { type: "number", minimum: 0, maximum: 1 },
-        landscapeShare: { type: "number", minimum: 0, maximum: 1 },
-        openSpaceShare: { type: "number", minimum: 0, maximum: 1 },
+        buildingShare: { type: "number", minimum: 0 },
+        landscapeShare: { type: "number", minimum: 0 },
+        openSpaceShare: { type: "number", minimum: 0 },
       }, ["buildingShare", "landscapeShare", "openSpaceShare"]),
       expansionPolicy: strictObject({
         allowOutwardExpansion: { type: "boolean" },
@@ -624,7 +624,7 @@ const cityBlueprintSchema = strictObject({
       strength: { type: "string", enum: ["HARD", "SOFT"] },
       distancePreference: { type: "string", enum: ["NONE", "NEAR", "FAR"] },
       directionPreference: { type: "string", enum: ["NONE", "NORTH", "EAST", "SOUTH", "WEST"] },
-    }, ["fromGroupId", "toGroupId", "relationKind", "strength", "distancePreference", "directionPreference"]),
+    }, ["fromGroupId", "toGroupId", "relationKind", "strength"]),
   },
   roadProfile: strictObject({ profileRef: nonEmptyString("冻结 road profile 引用。") }, ["profileRef"]),
   surfaceDetailProfile: strictObject({ profileRef: nonEmptyString("冻结 surface profile 引用。") }, ["profileRef"]),
@@ -677,7 +677,7 @@ const cityBlueprintSchema = strictObject({
                   roleRef: nonEmptyString("所选方案声明的角色。"),
                   growthForm: { type: "string", enum: ["PATCH", "CORRIDOR"],
                     description: "AI 选择的区域生长类型，仅作为 frontier 偏置。" },
-                  targetShare: { type: "number", exclusiveMinimum: 0, exclusiveMaximum: 1 },
+                  targetShare: { type: "number", exclusiveMinimum: 0 },
                 }, ["roleRef", "growthForm", "targetShare"]),
               },
               contentWeights: {
@@ -713,7 +713,7 @@ const cityBlueprintSchema = strictObject({
       },
     },
   }, ["mode", "envelopeProfile", "foundationProfileRef", "spatialGrounds", "landscapes"]),
-}, ["schema", "cityId", "sourceD3Ref", "catalogSnapshotRef", "generationSeed", "designIntent",
+}, ["designIntent",
   "styleProfile", "groups", "arrayCompositions", "relations", "roadProfile", "surfaceDetailProfile", "outdoorPlan"]);
 
 export const realmTools: ToolDefinition[] = [
@@ -1090,7 +1090,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_submit_d4_blueprint",
-    description: "正式 AI 边界：提交包含结构与户外意图的完整 CityBlueprint revision；AI 必须明确选择核心/填充建筑、阵列关系和景观占比。connectionPlan.parameters 必须按 planner family 二选一：compound_cluster 仅 clusterShape，guide_line_dual_side 仅 sideMode/stagger/widthClass，严禁混填。提交校验拒绝不增加 failureCount；D4 编译失败且 failureCount<5 时，只依据工具响应和返回 artifacts 修正后用同一 contextId 重提。禁止读取服务端源码、项目文档或原始 run 文件寻找答案。",
+    description: "提交 cityBlueprint 或 blueprintPatch（二选一）。schema/cityId/sourceD3Ref/catalogSnapshotRef/generationSeed 可省略，由宿主绑定；显式冲突仍拒绝。proportionMode=RELATIVE_WEIGHTS 时，程序把功能区、内部空间、景观角色的占比字段按相对权重归一化，再执行原有作者白名单和安全校验。默认 EXACT_SHARES 不归一化。局部修订使用 baseBlueprintHash + replace-only JSON Pointer blueprintPatch，必须用 EXACT_SHARES；未知路径或过期哈希拒绝。AI 仍负责全部设计选择，不读取源码、项目文档或原始 run 文件。",
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: {
@@ -1098,9 +1098,13 @@ export const realmTools: ToolDefinition[] = [
         citySeedId: nonEmptyString("上下文所属城市。"),
         contextId: nonEmptyString("prepare-context 返回的冻结 contextId。"),
         cityBlueprint: cityBlueprintSchema,
+        proportionMode: { type: "string", enum: ["EXACT_SHARES", "RELATIVE_WEIGHTS"] },
+        baseBlueprintHash: nonEmptyString("当前接受蓝图的 submissionTrace.cityBlueprintHash。"),
+        blueprintPatch: { type: "array", minItems: 1, maxItems: 128,
+          items: strictObject({ op: { type: "string", enum: ["replace"] }, path: nonEmptyString("已有字段的 JSON Pointer，如 /groups/0/densityClass。"), value: {} }, ["op", "path", "value"]) },
         autoAdvanceAfterD4: { type: "boolean", description: "默认 true；D4 接受后自动进入程序队列，推进到 WAITING_FOR_GENERATION。false 仅提交 Blueprint。" },
       },
-      required: ["runId", "citySeedId", "contextId", "cityBlueprint"],
+      required: ["runId", "citySeedId", "contextId"],
     },
   },
   {

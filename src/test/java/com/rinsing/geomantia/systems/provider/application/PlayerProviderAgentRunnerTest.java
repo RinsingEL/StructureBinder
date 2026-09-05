@@ -13,6 +13,68 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PlayerProviderAgentRunnerTest {
+    @Test
+    void mechanicalStepsNeedNoModelButSiteReviewRemainsADecision() {
+        for (String action : List.of("city_plan_d3", "patch_explorer_show_candidates", "city_review_d3_site", "city_submit_d4_blueprint")) {
+            var step = new ProviderPlanningDiscovery.PlanningStep(ProviderPlanningDiscovery.Stage.CITY,
+                    "run", "realm", "city", action, new JsonObject(), temporaryDirectory, List.of(), action);
+            assertEquals(List.of("city_plan_d3", "patch_explorer_show_candidates").contains(action), PlayerProviderAgentRunner.hostOnly(step));
+        }
+        assertFalse(PlayerProviderAgentRunner.toolsFor(ProviderPlanningDiscovery.Stage.T2).contains("patch_explorer_open"));
+        assertFalse(PlayerProviderAgentRunner.toolsFor(ProviderPlanningDiscovery.Stage.T4).contains("realm_t4_patch_planning_create"));
+    }
+
+    @Test
+    void t2DecisionIsCommittedByHostAndEndsTheTurn() throws Exception {
+        List<String> calls = new ArrayList<>();
+        DeepSeekToolLoopClient.ToolExecutor gateway = (tool, args) -> {
+            calls.add(tool);
+            JsonObject result = new JsonObject(); result.addProperty("ok", true);
+            if (tool.equals("patch_explorer_select_candidate")) result.addProperty("patchSelectionRef", "psel_frozen");
+            else {
+                assertEquals("psel_frozen", args.get("patchSelectionRef").getAsString());
+                assertEquals("authored evidence", args.get("reason").getAsString());
+            }
+            return result;
+        };
+        var control = new PlanningTurnControl((tool, args) -> PreparedRealmDesignTurn.execute(
+                ProviderPlanningDiscovery.Stage.T2, gateway, tool, args));
+        JsonObject args = new JsonObject(); args.addProperty("selectionReason", "authored evidence");
+        control.execute("patch_explorer_select_candidate", args);
+        assertTrue(control.finished());
+        assertEquals(List.of("patch_explorer_select_candidate", "realm_t2_select_coordinate"), calls);
+    }
+
+    @Test
+    void failedCandidateFreezeNeverCommitsT2() throws Exception {
+        List<String> calls = new ArrayList<>();
+        org.junit.jupiter.api.Assertions.assertThrows(java.io.IOException.class, () -> PreparedRealmDesignTurn.execute(
+                ProviderPlanningDiscovery.Stage.T2, (tool, args) -> {
+                    calls.add(tool); JsonObject result = new JsonObject(); result.addProperty("ok", false);
+                    result.addProperty("reasonCode", "INVALID_CANDIDATE"); return result;
+                }, "patch_explorer_select_candidate", new JsonObject()));
+        assertEquals(List.of("patch_explorer_select_candidate"), calls);
+    }
+
+    @Test
+    void t4CandidateChoicePreservesFunctionsAndCreatesNoExtraCity() throws Exception {
+        List<String> calls = new ArrayList<>();
+        JsonObject args = com.google.gson.JsonParser.parseString("{planningSessionId:'plan',sessionId:'explorer',candidateId:'PLAIN-01',"
+                + "selectionReason:'capacity',coreFunctions:['author_role']}").getAsJsonObject();
+        PreparedRealmDesignTurn.execute(ProviderPlanningDiscovery.Stage.T4, (tool, request) -> {
+            calls.add(tool);
+            JsonObject result = new JsonObject(); result.addProperty("ok", true);
+            if (tool.equals("patch_explorer_select_candidate")) result.addProperty("patchSelectionRef", "psel_frozen");
+            else {
+                assertFalse(request.has("candidateId"));
+                assertEquals(args.get("coreFunctions"), request.get("coreFunctions"));
+                assertEquals("psel_frozen", request.get("patchSelectionRef").getAsString());
+            }
+            return result;
+        }, "realm_t4_patch_planning_select_capital", args);
+        assertEquals(List.of("patch_explorer_select_candidate", "realm_t4_patch_planning_select_capital"), calls);
+        assertTrue(args.has("candidateId"));
+    }
     @TempDir
     Path temporaryDirectory;
 

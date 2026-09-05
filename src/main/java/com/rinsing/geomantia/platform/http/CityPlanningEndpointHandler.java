@@ -151,11 +151,19 @@ final class CityPlanningEndpointHandler {
 
     static JsonObject handleSubmitD4Blueprint(Path debugRoot, String runId, String citySeedId,
                                                String contextId, JsonObject cityBlueprint) throws IOException {
-        JsonObject response = new CityBlueprintService().submit(debugRoot, runId, citySeedId,
-                contextId, cityBlueprint);
+        JsonObject input = new JsonObject();
+        input.add("cityBlueprint", cityBlueprint);
+        return handleSubmitD4Design(debugRoot, runId, citySeedId, contextId, input);
+    }
+
+    static JsonObject handleSubmitD4Design(Path debugRoot, String runId, String citySeedId,
+                                          String contextId, JsonObject input) throws IOException {
+        JsonObject response = new CityBlueprintService().submitDesign(debugRoot, runId, citySeedId,
+                contextId, input);
         JsonObject request = standaloneRequest("city_submit_d4_blueprint", runId, citySeedId);
         request.addProperty("contextId", contextId);
-        request.add("cityBlueprint", cityBlueprint.deepCopy());
+        for (String key : java.util.List.of("cityBlueprint", "blueprintPatch", "baseBlueprintHash", "proportionMode"))
+            if (input.has(key)) request.add(key, input.get(key).deepCopy());
         boolean accepted = booleanValue(response, "ok", false);
         String nextAction = stringValue(response, "nextAction",
                 accepted ? "city_compile_d4_blueprint" : "city_submit_d4_blueprint");
@@ -185,6 +193,14 @@ final class CityPlanningEndpointHandler {
         CityBlueprintCompilerService.CompilationResult compiled = compiler.compile(debugRoot, runId, citySeedId);
         JsonObject compileResponse = compiler.persist(debugRoot, runId, citySeedId, compiled);
         if (!compiled.ok()) {
+            if (com.rinsing.geomantia.systems.city.application.CityBlueprintFailureRouting
+                    .isProgramFailure(compiled.reasonCode(), compiled.compileTrace())) {
+                CityBlueprintFailureBudget.attach(compileResponse, currentBudget, debugRoot, runId, citySeedId);
+                com.rinsing.geomantia.systems.city.application.CityBlueprintFailureRouting.blockOnProgram(compileResponse);
+                return recordStandaloneTestRunState(debugRoot, runId, citySeedId,
+                        standaloneRequest("city_compile_d4_blueprint", runId, citySeedId),
+                        "blocked_by_program", "city_post_d4_auto_compile_retry", compileResponse);
+            }
             JsonObject budget = failureBudget.recordFailure(debugRoot, runId, citySeedId,
                     compiled.reasonCode(), compiled.message());
             CityBlueprintFailureBudget.attach(compileResponse, budget, debugRoot, runId, citySeedId);
@@ -210,23 +226,22 @@ final class CityPlanningEndpointHandler {
         finalized.add("groupExtentMap", compiled.groupExtentMap().deepCopy());
         JsonObject budget = booleanValue(finalized, "ok", false)
                 ? failureBudget.recordSuccess(debugRoot, runId, citySeedId)
-                : failureBudget.recordFailure(debugRoot, runId, citySeedId,
-                stringValue(finalized, "reasonCode", "CITY_BLUEPRINT_COMPILED_ANCHOR_FINALIZATION_FAILED"),
-                stringValue(finalized, "message", "Compiled D4 anchor finalization failed."));
+                : currentBudget;
         CityBlueprintFailureBudget.attach(finalized, budget, debugRoot, runId, citySeedId);
-        if (!booleanValue(finalized, "ok", false)) addBlueprintRetryGuidance(finalized);
+        if (!booleanValue(finalized, "ok", false))
+            com.rinsing.geomantia.systems.city.application.CityBlueprintFailureRouting.blockOnProgram(finalized);
         else finalized.addProperty("nextAction", "city_run_workflow");
         JsonObject request = standaloneRequest("city_compile_d4_blueprint", runId, citySeedId);
         return recordStandaloneTestRunState(debugRoot, runId, citySeedId, request,
                 booleanValue(finalized, "ok", false) ? "awaiting_workflow_resume"
-                        : CityBlueprintFailureBudget.retryAllowed(budget)
-                        ? "awaiting_city_blueprint_revision" : "failed",
+                        : "blocked_by_program",
                 stringValue(finalized, "nextAction", booleanValue(finalized, "ok", false)
                         ? "city_run_workflow" : "stop_for_human_review"),
                 finalized);
     }
 
     private static void addBlueprintRetryGuidance(JsonObject response) {
+        response.addProperty("failureOwner", "design");
         boolean retryAllowed = booleanValue(response, "retryAllowed", false);
         response.addProperty("nextAction", retryAllowed
                 ? "city_submit_d4_blueprint" : "stop_for_human_review");

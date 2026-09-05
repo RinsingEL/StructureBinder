@@ -11,6 +11,47 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PlanningBoundaryTest {
+    @Test void designVerdictsDoNotTripTransportFailureButRepeatedRejectionStillStops() throws Exception {
+        JsonObject rejected = JsonParser.parseString("{ok:false,validationReport:{valid:false,issues:[{reasonCode:'FIELD_MISSING'}]}}").getAsJsonObject();
+        var control = new PlanningTurnControl((tool, args) -> rejected);
+        for (int i = 0; i < 3; i++) {
+            JsonObject result = ProviderToolBridge.mcpResult(control.execute("city_submit_d4_blueprint", new JsonObject()));
+            assertFalse(result.get("isError").getAsBoolean());
+            assertEquals(rejected, JsonParser.parseString(result.getAsJsonArray("content").get(0).getAsJsonObject().get("text").getAsString()));
+        }
+        assertTrue(control.finished());
+        assertTrue(control.result(3).errorCode().startsWith("PLANNING_REPEATED_REJECTION"));
+        assertTrue(ProviderToolBridge.mcpResult(JsonParser.parseString("{ok:false,error:'ConnectException'}"))
+                .get("isError").getAsBoolean());
+    }
+
+    @Test void sidecarUsesTheHostsCurrentDecisionSchemaNotTheRawMcpWorkflowSchema() throws Exception {
+        try (var bridge = new ProviderToolBridge()) {
+            bridge.bind(List.of("realm_t4_patch_planning_select_capital"), (tool, args) -> new JsonObject());
+            var client = HttpClient.newHttpClient();
+            var request = HttpRequest.newBuilder(URI.create(bridge.url())).header("X-Geomantia-Bridge-Key", bridge.token()).GET().build();
+            JsonObject result = JsonParser.parseString(client.send(request, HttpResponse.BodyHandlers.ofString()).body()).getAsJsonObject();
+            assertEquals(1, result.getAsJsonArray("tools").size());
+            JsonObject schema = result.getAsJsonArray("tools").get(0).getAsJsonObject().getAsJsonObject("inputSchema");
+            assertTrue(schema.getAsJsonObject("properties").has("candidateId"));
+            assertFalse(schema.getAsJsonArray("required").toString().contains("patchSelectionRef"));
+            assertEquals(403, client.send(HttpRequest.newBuilder(URI.create(bridge.url())).GET().build(),
+                    HttpResponse.BodyHandlers.ofString()).statusCode());
+        }
+    }
+    @Test void d7SourceAliasCompactsOnlyProvenDuplicateGeometry() throws Exception {
+        JsonObject source = JsonParser.parseString("{structureMaterializationPlan:{schema:'city_structure_materialization_plan',"
+                + "locked:true,plannedWorldgenStructures:[{geometry:'" + "g".repeat(100_000) + "'}]},"
+                + "artifacts:{sourceStructureMaterializationPlan:'run/d6.json'},qualityReport:{passed:false,hardBlocks:['COLLISION']}}").getAsJsonObject();
+        source.add("plannedWorldgenStructures", source.getAsJsonObject("structureMaterializationPlan").get("plannedWorldgenStructures").deepCopy());
+        JsonObject result = PlanningToolPresentation.present(source, directory);
+        assertEquals(source.get("qualityReport"), result.get("qualityReport"));
+        assertEquals("run/d6.json", result.getAsJsonObject("structureMaterializationPlan").get("artifactPath").getAsString());
+        assertEquals(1, result.getAsJsonObject("plannedWorldgenStructuresSummary").get("entryCount").getAsInt());
+        assertTrue(source.has("plannedWorldgenStructures"));
+        source.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject().addProperty("changed", true);
+        assertThrows(java.io.IOException.class, () -> PlanningToolPresentation.present(source, directory));
+    }
     @TempDir Path directory;
 
     @Test void authorFunctionAndStyleAreRequiredAndNeverInferredFromAnId() {

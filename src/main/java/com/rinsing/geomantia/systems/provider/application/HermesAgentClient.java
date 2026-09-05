@@ -96,11 +96,13 @@ final class HermesAgentClient implements ProviderAgentClient {
                 || sessionId.isBlank()) return failure("PROVIDER_AGENT_INPUT_INVALID");
         Consumer<AgentActivityEvent> activity = activityListener == null ? ignored -> { } : activityListener;
         try {
-            JsonArray prompt = promptContent(initialState, initialImages);
             if (toolBridge == null) toolBridge = new ProviderToolBridge();
             toolBridge.bind(allowedTools, toolExecutor);
             ensureStarted(config.validated(), credentials, allowedTools, activity);
-            ensureSession(sessionId, config.model());
+            boolean hasHistory = ensureSession(sessionId, config.model());
+            JsonArray prompt = hasHistory && sessionId.startsWith("geomantia-design-")
+                    && initialState.has("preparedBlueprintContext")
+                    ? continuationContent(initialState) : promptContent(initialState, initialImages);
             JsonObject requestBody = new JsonObject();
             requestBody.add("message", prompt);
             requestBody.addProperty("instructions", INSTRUCTIONS);
@@ -213,10 +215,15 @@ final class HermesAgentClient implements ProviderAgentClient {
         emit(activity, "system", "Hermes Gateway 已启动，规划工具 " + allowedTools.size() + " 个");
     }
 
-    private void ensureSession(String sessionId, String model) throws IOException, InterruptedException {
-        HttpResponse<Void> existing = httpClient.send(authorizedRequest("/api/sessions/" + sessionId)
-                .GET().build(), HttpResponse.BodyHandlers.discarding());
-        if (existing.statusCode() / 100 == 2) return;
+    private boolean ensureSession(String sessionId, String model) throws IOException, InterruptedException {
+        HttpResponse<String> existing = httpClient.send(authorizedRequest("/api/sessions/" + sessionId)
+                .GET().build(), HttpResponse.BodyHandlers.ofString());
+        if (existing.statusCode() / 100 == 2) {
+            JsonObject body = JsonParser.parseString(existing.body()).getAsJsonObject();
+            JsonObject session = body.has("session") ? body.getAsJsonObject("session") : new JsonObject();
+            return session.has("message_count") && !session.get("message_count").isJsonNull()
+                    && session.get("message_count").getAsInt() > 0;
+        }
         if (existing.statusCode() != 404) throw new IOException("Hermes session lookup HTTP " + existing.statusCode());
         JsonObject body = new JsonObject();
         body.addProperty("id", sessionId);
@@ -227,6 +234,17 @@ final class HermesAgentClient implements ProviderAgentClient {
         if (created.statusCode() / 100 != 2 && created.statusCode() != 409) {
             throw new IOException("Hermes session create HTTP " + created.statusCode());
         }
+        return false;
+    }
+
+    static JsonArray continuationContent(JsonObject state) {
+        JsonObject text = new JsonObject(); text.addProperty("type", "text");
+        text.addProperty("text", "Continue the same frozen city context " + state.get("contextId").getAsString()
+                + " and your latest draft/tool validation feedback already in this session. The context, author catalog and "
+                + "images are unchanged and are not repeated. Use the current tool schema, preserve unaffected design choices, "
+                + "and submit the corrected design. Do not query status or prepare again. proportionMode is a TOOL ARGUMENT "
+                + "beside cityBlueprint, never a field inside cityBlueprint. If no actionable correction remains, report the blocker.");
+        JsonArray result = new JsonArray(); result.add(text); return result;
     }
 
     private SessionStreamResult streamSession(Stream<String> responseLines,

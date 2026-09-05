@@ -28,6 +28,7 @@
   "gui.geomantia.adventurer_map.status.post_d4_running": "Post-D4 Compile Running",
   "gui.geomantia.adventurer_map.status.waiting_for_generation": "Waiting for Generation",
   "gui.geomantia.adventurer_map.status.needs_agent": "Needs Agent",
+  "gui.geomantia.adventurer_map.status.blocked_by_program": "Program Blocked (Design Preserved)",
   "gui.geomantia.adventurer_map.status.failed": "Failed",
   "gui.geomantia.adventurer_map.status.error": "Status Read Failed",
   "gui.geomantia.adventurer_map.status.empty": "No Cities",

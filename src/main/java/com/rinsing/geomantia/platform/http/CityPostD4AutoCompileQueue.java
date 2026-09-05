@@ -108,7 +108,7 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
             executor.execute(() -> run(key, attempt));
         } catch (RejectedExecutionException ex) {
             active.remove(key);
-            JsonObject failed = state(key, "needs_agent", "QUEUE_STOPPED", attempt);
+            JsonObject failed = state(key, "blocked_by_program", "QUEUE_STOPPED", attempt);
             failed.addProperty("error", ex.getMessage());
             write(key, failed);
             throw ex;
@@ -120,13 +120,17 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
             write(key, state(key, "running", "POST_D4_WORKFLOW_RUNNING", attempt));
             JsonObject response = runner.run(key.runId, key.citySeedId);
             String workflowStatus = stringValue(response, "status", "");
-            boolean ready = "waiting_for_generation".equals(workflowStatus);
+            boolean ready = "waiting_for_generation".equals(workflowStatus) && booleanValue(response, "ok", false);
             String recoveryAction = ready ? "" : recoveryAction(response);
             boolean blueprintRevisionRequired = "city_submit_d4_blueprint".equals(recoveryAction);
-            JsonObject finished = state(key, ready ? "waiting_for_generation" : "needs_agent",
+            boolean humanReviewRequired = "stop_for_human_review".equals(recoveryAction);
+            JsonObject finished = state(key, ready ? "waiting_for_generation"
+                    : blueprintRevisionRequired || humanReviewRequired ? "needs_agent" : "blocked_by_program",
                     ready ? "WAITING_FOR_GENERATION" : blueprintRevisionRequired
-                            ? "D4_BLUEPRINT_REVISION_REQUIRED" : "POST_D4_WORKFLOW_UNEXPECTED_STATUS", attempt);
+                            ? "D4_BLUEPRINT_REVISION_REQUIRED" : humanReviewRequired
+                            ? "D4_HUMAN_REVIEW_REQUIRED" : "POST_D4_WORKFLOW_UNEXPECTED_STATUS", attempt);
             finished.addProperty("workflowStatus", workflowStatus);
+            if (!ready) finished.addProperty("failureOwner", blueprintRevisionRequired || humanReviewRequired ? "design" : "program");
             finished.addProperty("ok", booleanValue(response, "ok", false));
             if (!recoveryAction.isBlank()) finished.addProperty("nextAction", recoveryAction);
             if (response.has("artifacts")) {
@@ -138,7 +142,9 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
             write(key, finished);
         } catch (Exception ex) {
             LOGGER.error("Post-D4 auto compile failed for {}/{}", key.runId, key.citySeedId, ex);
-            JsonObject failed = state(key, "needs_agent", "POST_D4_WORKFLOW_FAILED", attempt);
+            JsonObject failed = state(key, "blocked_by_program", "POST_D4_WORKFLOW_FAILED", attempt);
+            failed.addProperty("failureOwner", "program");
+            failed.addProperty("nextAction", "city_post_d4_auto_compile_retry");
             failed.addProperty("errorType", ex.getClass().getName());
             failed.addProperty("error", ex.getMessage() == null ? ex.toString() : ex.getMessage());
             try {
@@ -164,6 +170,7 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
             JsonObject step = steps.get(index).getAsJsonObject();
             if (booleanValue(step, "ok", true)) continue;
             String nextAction = stringValue(step, "nextAction", "");
+            if ("stop_for_human_review".equals(nextAction)) return nextAction;
             return "city_submit_d4_blueprint".equals(nextAction)
                     ? nextAction : "city_post_d4_auto_compile_retry";
         }
@@ -182,6 +189,26 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
                             JsonObject state = JsonParser.parseString(Files.readString(path)).getAsJsonObject();
                             String status = stringValue(state, "status", "");
                             if (!"queued".equals(status) && !"running".equals(status)) {
+                                JsonObject workflow = object(object(state, "workflowResponse"), "workflowReport");
+                                if ("needs_agent".equals(status) && workflow != null && workflow.has("steps")) {
+                                    var steps = workflow.getAsJsonArray("steps");
+                                    for (int i = steps.size() - 1; i >= 0; i--) {
+                                        JsonObject step = steps.get(i).getAsJsonObject();
+                                        if (booleanValue(step, "ok", true)) continue;
+                                        if (com.rinsing.geomantia.systems.city.application.CityBlueprintFailureRouting
+                                                .isProgramFailure(stringValue(step, "reasonCode", ""), step)) {
+                                            com.rinsing.geomantia.systems.city.application.CityBlueprintFailureRouting.blockOnProgram(step);
+                                            step.remove("failureSummary");
+                                            state.addProperty("status", "blocked_by_program");
+                                            state.addProperty("reasonCode", "POST_D4_PROGRAM_FAILURE");
+                                            state.addProperty("failureOwner", "program");
+                                            state.addProperty("nextAction", "city_post_d4_auto_compile_retry");
+                                            write(JobKey.of(stringValue(state, "runId", ""),
+                                                    stringValue(state, "citySeedId", "")), state);
+                                        }
+                                        break;
+                                    }
+                                }
                                 stateListener.onState(state.deepCopy());
                                 return;
                             }

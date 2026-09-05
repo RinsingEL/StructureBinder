@@ -15,6 +15,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityWorkflowStepRunnerTest {
     @Test
+    void waitingForGenerationIsSuccessfulProgramCompletion() throws Exception {
+        JsonObject report = report();
+        CityWorkflowStepRunner runner = new CityWorkflowStepRunner(report, report.getAsJsonArray("steps"), true,
+                Path::toString, ignored -> { });
+        assertTrue(runner.finish(System.nanoTime(), "waiting_for_generation").get("ok").getAsBoolean());
+    }
+    @Test
     void recordsResponseSummaryAndFinalWorkflowStatus() throws Exception {
         JsonObject report = report();
         JsonArray steps = report.getAsJsonArray("steps");
@@ -173,7 +180,7 @@ class CityWorkflowStepRunnerTest {
                 summary.get("structureRef").getAsString());
         assertEquals(1, summary.getAsJsonObject("filterReasonCounts")
                 .get("INTERNAL_FRONTAGE_UNAVAILABLE").getAsInt());
-        assertEquals("REPLACE_REQUIRED_STRUCTURE_OR_FIX_TEMPLATE_FRONTAGE",
+        assertEquals("AUTHOR_FRONTAGE_REQUIRED",
                 summary.get("recommendedActionCode").getAsString());
         assertFalse(step.has("cityGenerationCompileTrace"));
     }

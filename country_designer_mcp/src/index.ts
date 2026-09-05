@@ -21,7 +21,14 @@ const handlers: Record<string, ToolHandler> = {
   ...realmHandlers,
 };
 
-server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools }));
+server.setRequestHandler(ListToolsRequestSchema, async () => {
+  const bridge = process.env.GEOMANTIA_PROVIDER_TOOL_URL;
+  if (!bridge) return { tools };
+  // Provider decisions use the host's scoped schema, including combined selection actions.
+  return (await axios.get(bridge, { timeout: 10_000,
+    headers: { "X-Geomantia-Bridge-Key": process.env.GEOMANTIA_PROVIDER_TOOL_KEY || "" },
+  })).data;
+});
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const toolName = request.params.name;

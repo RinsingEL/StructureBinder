@@ -31,7 +31,11 @@ final class PreparedCityDesignTurn {
         state.addProperty("instruction", "The host has already prepared this COMPLETE current frozen design view and its "
                 + "actual terrain images. It supersedes older truncated tool results in this session. All authored "
                 + "structure functions/styles, selectable pools/profiles and design algorithms are below. Design or "
-                + "revise this city and submit a complete Blueprint. Do not query status or prepare again. Only use "
+                + "revise this city. Omit host-owned schema/cityId/sourceD3Ref/catalogSnapshotRef/generationSeed. "
+                + "For local revisions, submit replace-only blueprintPatch with revisionEvidence.baseBlueprintHash, "
+                + "preserving unaffected choices. For full input you may explicitly choose RELATIVE_WEIGHTS to avoid summing ratios by hand. "
+                + "proportionMode is a TOOL ARGUMENT beside cityBlueprint, NOT inside cityBlueprint. "
+                + "Do not query status or prepare again. Only use "
                 + "patch_explorer_show_candidates with the existing patchReviewEvidence.sessionId if you need additional "
                 + "terrain candidates. Keep prior validation feedback and the existing failure budget; do not restart the design.");
         Path root = debugRoot.toRealPath();
@@ -49,7 +53,7 @@ final class PreparedCityDesignTurn {
         return new Input(state, List.copyOf(images));
     }
 
-    private static void collectImages(JsonElement value, Path root, Set<Path> images) throws IOException {
+    static void collectImages(JsonElement value, Path root, Set<Path> images) throws IOException {
         if (value == null || value.isJsonNull() || images.size() >= 3) return;
         if (value.isJsonObject()) {
             for (var entry : value.getAsJsonObject().entrySet()) collectImages(entry.getValue(), root, images);

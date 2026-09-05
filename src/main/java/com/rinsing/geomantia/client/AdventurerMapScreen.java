@@ -375,7 +375,7 @@ public final class AdventurerMapScreen extends Screen {
         if (node.current()) return 0xFFE2BC55;
         return switch (node.status()) {
             case "waiting_for_generation" -> 0xFF71A8E0;
-            case "needs_agent" -> STATUS_ERROR;
+            case "needs_agent", "blocked_by_program" -> STATUS_ERROR;
             case "post_d4_running" -> 0xFFB78BE2;
             case "waiting_for_agent" -> STATUS_WARNING;
             default -> "capital".equals(node.role()) ? 0xFFD89A52 : 0xFFB7B7B7;
@@ -385,7 +385,7 @@ public final class AdventurerMapScreen extends Screen {
     private static int statusColor(String status) {
         return switch (status) {
             case "completed", "waiting_for_generation" -> STATUS_GOOD;
-            case "error", "needs_agent", "failed" -> STATUS_ERROR;
+            case "error", "needs_agent", "failed", "blocked_by_program" -> STATUS_ERROR;
             case "running", "pending", "waiting_for_agent", "post_d4_running" -> STATUS_WARNING;
             default -> TEXT_MUTED;
         };
