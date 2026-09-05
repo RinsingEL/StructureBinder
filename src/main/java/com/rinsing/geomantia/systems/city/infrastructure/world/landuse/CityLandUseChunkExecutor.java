@@ -2,6 +2,8 @@ package com.rinsing.geomantia.systems.city.infrastructure.world.landuse;
 
 import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityWorldgenBlockObservationRegistry;
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -32,6 +34,7 @@ import java.util.Set;
 
 /** Applies one owner-chunk LandUse fragment as a small rollback-capable transaction. */
 public final class CityLandUseChunkExecutor {
+    private static final Logger LOGGER = LogUtils.getLogger();
     private static final List<Direction> HORIZONTAL_DIRECTIONS = List.of(
             Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST);
 
@@ -342,7 +345,14 @@ public final class CityLandUseChunkExecutor {
         }
 
         List<PreparedMutation> boundaryApplied = new ArrayList<>();
-        BoundaryApplyResult boundaryResult = applyBoundary(world, boundaryPrepared, boundaryApplied);
+        List<BlockPosition> connectionPositions = new ArrayList<>();
+        for (List<PreparedMutation> batch : List.of(basePrepared, cropPrepared, boundaryPrepared)) {
+            for (PreparedMutation mutation : batch) {
+                connectionPositions.add(new BlockPosition(mutation.x(), mutation.y(), mutation.z()));
+            }
+        }
+        BoundaryApplyResult boundaryResult = applyBoundary(world, boundaryPrepared, boundaryApplied,
+                connectionPositions);
         if (!boundaryResult.success()) {
             boolean rolledBack = rollback(world, boundaryApplied);
             rolledBack &= rollback(world, cropApplied);
@@ -399,6 +409,7 @@ public final class CityLandUseChunkExecutor {
                 writeSnapshot = Objects.requireNonNull(world.beginWrite(
                         mutation.x(), mutation.y(), mutation.z(), mutation.snapshot()));
             } catch (RuntimeException ex) {
+                LOGGER.warn("City LandUse begin write failed: mutation={}", mutation, ex);
                 return false;
             }
             // A failed writer may already have mutated the target before reporting failure.
@@ -410,21 +421,29 @@ public final class CityLandUseChunkExecutor {
                         : world.setFeatureBlock(mutation.x(), mutation.y(), mutation.z(), mutation.blockId(),
                         mutation.featureKind(), mutation.facing());
             } catch (RuntimeException ex) {
+                LOGGER.warn("City LandUse write threw: mutation={}", mutation, ex);
                 written = false;
             }
             try {
                 world.endWrite(writeSnapshot);
             } catch (RuntimeException ex) {
+                LOGGER.warn("City LandUse end write failed: mutation={}", mutation, ex);
                 written = false;
             }
-            if (!written) return false;
+            if (!written) {
+                LOGGER.warn("City LandUse write rejected: phase={}, area={}, pos={},{},{}, block={}, feature={}",
+                        mutation.phase(), mutation.areaId(), mutation.x(), mutation.y(), mutation.z(),
+                        mutation.blockId(), mutation.featureKind());
+                return false;
+            }
         }
         return true;
     }
 
     private static BoundaryApplyResult applyBoundary(ExecutionWorld world,
                                                      List<PreparedMutation> prepared,
-                                                     List<PreparedMutation> applied) {
+                                                     List<PreparedMutation> applied,
+                                                     List<BlockPosition> connectionPositions) {
         for (PreparedMutation mutation : prepared) {
             Object writeSnapshot;
             try {
@@ -449,9 +468,8 @@ public final class CityLandUseChunkExecutor {
             if (!written) return BoundaryApplyResult.writeFailed();
         }
         try {
-            BoundaryFinalizeResult result = world.finalizeBoundaryConnections(prepared.stream()
-                    .map(mutation -> new BlockPosition(mutation.x(), mutation.y(), mutation.z()))
-                    .toList());
+            // Lamp poles, terrace rails and their neighbours need the same batch reconciliation as boundaries.
+            BoundaryFinalizeResult result = world.finalizeBoundaryConnections(connectionPositions);
             return result.success()
                     ? BoundaryApplyResult.applied()
                     : BoundaryApplyResult.finalizeFailed(result.rollbackComplete());
@@ -811,8 +829,15 @@ public final class CityLandUseChunkExecutor {
         Objects.requireNonNull(world, "world");
         Objects.requireNonNull(pos, "pos");
         Objects.requireNonNull(requested, "requested");
-        return world.setBlock(pos, requested, flags)
-                && requested.equals(world.getBlockState(pos));
+        if (!world.ensureCanWrite(pos)) return false;
+        // Level.setBlock reports false for an unchanged state, including an already-restored snapshot.
+        if (requested.equals(world.getBlockState(pos))) return true;
+        boolean changed = world.setBlock(pos, requested, flags);
+        S actual = world.getBlockState(pos);
+        boolean written = requested.equals(actual);
+        if (!written) LOGGER.warn("City LandUse exact write mismatch: pos={}, requested={}, actual={}, changed={}",
+                pos, requested, actual, changed);
+        return written;
     }
 
     static BlockState featureBlockState(BlockState requested,
@@ -921,9 +946,8 @@ public final class CityLandUseChunkExecutor {
         List<Map.Entry<BlockPos, S>> reverse = new ArrayList<>(snapshots.entrySet());
         Collections.reverse(reverse);
         for (Map.Entry<BlockPos, S> entry : reverse) {
-            complete &= world.setBlock(entry.getKey(), entry.getValue(),
-                    Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE)
-                    && entry.getValue().equals(world.getBlockState(entry.getKey()));
+            complete &= writeExactBlockState(world, entry.getKey(), entry.getValue(),
+                    Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
         }
         return complete;
     }
@@ -1010,7 +1034,7 @@ public final class CityLandUseChunkExecutor {
             }
             BlockPos pos = new BlockPos(worldX, y, worldZ);
             BlockState requested = BuiltInRegistries.BLOCK.get(key).defaultBlockState();
-            boolean written = requested.getBlock() instanceof CrossCollisionBlock
+            boolean written = isHorizontalConnectionBlock(requested)
                     ? writeConnectionCompatibleBlockState(pos, requested)
                     : writeExactBlockState(this, pos, requested, Block.UPDATE_ALL);
             if (written) {
@@ -1034,7 +1058,7 @@ public final class CityLandUseChunkExecutor {
             BlockPos pos = new BlockPos(worldX, y, worldZ);
             BlockState requested = featureBlockState(
                     BuiltInRegistries.BLOCK.get(key).defaultBlockState(), kind, facing);
-            boolean written = requested.getBlock() instanceof CrossCollisionBlock
+            boolean written = isHorizontalConnectionBlock(requested)
                     ? writeConnectionCompatibleBlockState(pos, requested)
                     : writeExactBlockState(this, pos, requested, Block.UPDATE_ALL);
             if (written) watchObservedNeighborhood(pos);
@@ -1042,10 +1066,9 @@ public final class CityLandUseChunkExecutor {
         }
 
         private boolean writeConnectionCompatibleBlockState(BlockPos pos, BlockState requested) {
-            if (!setBlock(pos, requested, Block.UPDATE_ALL)) return false;
-            BlockState actual = getBlockState(pos);
-            return actual.is(requested.getBlock())
-                    && actual.equals(updateFromNeighbourShapes(actual, pos));
+            // WorldGenRegion does not apply neighbour updates. Commit the requested identity first;
+            // reconcile all connection shapes together after every layer exists, just like boundary fences.
+            return writeExactBlockState(this, pos, requested, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
         }
 
         @Override

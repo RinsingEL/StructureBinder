@@ -5,6 +5,42 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ApprovedEntranceCatalogTest {
+    @Test void legacyCompatibilityIsExplicitAndDoesNotBlessOldEntrances() {
+        JsonObject source = new JsonObject();
+        assertThrows(IllegalArgumentException.class, () -> ManagedCityPlanningSources.entranceTemplates(source, catalog(), null));
+        source.addProperty("entrancePolicy", "legacy_catalog");
+        var original = catalog();
+        var result = ManagedCityPlanningSources.entranceTemplates(source, original, null);
+        assertEquals(original, result);
+        assertNotSame(original, result);
+        assertFalse(result.toString().contains("approved"));
+        source.addProperty("entranceCatalogPath", "missing.json");
+        assertThrows(IllegalArgumentException.class, () -> ManagedCityPlanningSources.entranceTemplates(source, original, null));
+    }
+    @Test void legacyModeStillValidatesInstalledReviewedCatalogAndRejectsUnknownPolicies() {
+        JsonObject source = new JsonObject(); source.addProperty("entrancePolicy", "legacy_catalog");
+        assertEquals(ApprovedEntranceCatalog.apply(catalog(), annotations()), ManagedCityPlanningSources.entranceTemplates(source, catalog(), annotations()));
+        assertThrows(IllegalArgumentException.class, () -> ManagedCityPlanningSources.entranceTemplates(source, catalog(), new JsonObject()));
+        source.addProperty("entrancePolicy", "guess");
+        assertThrows(IllegalArgumentException.class, () -> ManagedCityPlanningSources.entranceTemplates(source, catalog(), null));
+    }
+    @Test void installedDevelopmentBundleResolvesWithoutRequiringFabricatedReview(@org.junit.jupiter.api.io.TempDir java.nio.file.Path temporaryWorld) throws Exception {
+        var directory = java.nio.file.Path.of("run/config/structureTemplate/terrasense/pcl_validation_02").toAbsolutePath();
+        org.junit.jupiter.api.Assumptions.assumeTrue(java.nio.file.Files.isRegularFile(directory.resolve("template_catalog.json")));
+        String previous = System.getProperty("geomantia.providerPlanningSourceDir");
+        System.setProperty("geomantia.providerPlanningSourceDir", directory.toString());
+        try {
+            var result = new ManagedCityPlanningSources(java.nio.file.Path.of("run")).resolve();
+            assertEquals("legacy_catalog_unreviewed", result.authoringBrief().get("entranceAuthority").getAsString());
+            assertEquals(65, result.templateCatalogSource().getAsJsonObject("catalog").getAsJsonArray("templates").size());
+            var install = new com.rinsing.geomantia.systems.city.infrastructure.world.CityTemplateContentPackInstaller().install(directory, temporaryWorld);
+            assertTrue(install.configured());
+            assertEquals(65, install.templateCount());
+        } finally {
+            if (previous == null) System.clearProperty("geomantia.providerPlanningSourceDir");
+            else System.setProperty("geomantia.providerPlanningSourceDir", previous);
+        }
+    }
     private JsonObject catalog() {
         return JsonParser.parseString("""
           {"schema":"city_template_catalog","templates":[{

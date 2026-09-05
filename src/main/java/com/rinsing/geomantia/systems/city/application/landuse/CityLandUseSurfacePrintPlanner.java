@@ -346,40 +346,20 @@ public final class CityLandUseSurfacePrintPlanner {
             List<LandUseAreaPlan.ScanlineSpan> exclusions,
             BlockPoint source,
             LandscapeFillProgram program) {
-        RelayRegionGrowthClassifier.Result result = null;
-        List<LandscapeFillProgram.RoleDefinition> admittedRoles = List.of();
-        IllegalArgumentException lastTopologyFailure = null;
-        for (int stageCount = program.roles().size(); stageCount >= 1; stageCount--) {
-            List<LandscapeFillProgram.RoleDefinition> requested = program.roles().subList(0, stageCount);
-            double admittedShare = requested.stream()
-                    .mapToDouble(LandscapeFillProgram.RoleDefinition::targetShare).sum();
-            admittedRoles = requested.stream().map(role -> new LandscapeFillProgram.RoleDefinition(
-                    role.roleRef(), role.materialRole(), role.growthForm(),
-                    role.targetShare() / admittedShare)).toList();
-            List<RelayRegionGrowthClassifier.GrowthStage> stages = new ArrayList<>();
-            for (int index = 0; index < admittedRoles.size(); index++) {
-                LandscapeFillProgram.RoleDefinition role = admittedRoles.get(index);
-                String regionId = String.format(java.util.Locale.ROOT, "region-%03d-%s",
-                        index + 1, role.roleRef().replaceAll("[^A-Za-z0-9_.-]", "_"));
-                String parentRegionId = index == 0 ? "" : stages.get(index - 1).regionId();
-                stages.add(new RelayRegionGrowthClassifier.GrowthStage(regionId, parentRegionId,
-                        role.roleRef(), role.targetShare(),
-                        RelayRegionGrowthClassifier.GrowthForm.valueOf(role.growthForm().name())));
-            }
-            try {
-                result = new RelayRegionGrowthClassifier().classify(
-                        new RelayRegionGrowthClassifier.Request(area.memberSpans(), exclusions, source,
-                                program.stableSeed(), stages));
-                break;
-            } catch (IllegalArgumentException failure) {
-                if (failure.getMessage() == null
-                        || !failure.getMessage().startsWith("RELAY_GROWTH_CANDIDATE_RETRIES_EXHAUSTED:")) {
-                    throw failure;
-                }
-                lastTopologyFailure = failure;
-            }
+        List<LandscapeFillProgram.RoleDefinition> admittedRoles = program.roles();
+        List<RelayRegionGrowthClassifier.GrowthStage> stages = new ArrayList<>();
+        for (int index = 0; index < admittedRoles.size(); index++) {
+            LandscapeFillProgram.RoleDefinition role = admittedRoles.get(index);
+            String regionId = String.format(java.util.Locale.ROOT, "region-%03d-%s",
+                    index + 1, role.roleRef().replaceAll("[^A-Za-z0-9_.-]", "_"));
+            String parentRegionId = index == 0 ? "" : stages.get(index - 1).regionId();
+            stages.add(new RelayRegionGrowthClassifier.GrowthStage(regionId, parentRegionId,
+                    role.roleRef(), role.targetShare(),
+                    RelayRegionGrowthClassifier.GrowthForm.valueOf(role.growthForm().name())));
         }
-        if (result == null) throw Objects.requireNonNull(lastTopologyFailure);
+        RelayRegionGrowthClassifier.Result result = new RelayRegionGrowthClassifier().classify(
+                new RelayRegionGrowthClassifier.Request(area.memberSpans(), exclusions, source,
+                        program.stableSeed(), stages));
         RelayRegionGrowthClassifier.Result classification = result;
         List<CityLandUseSurfacePrintPlan.RelayRoleDefinition> definitions = admittedRoles.stream()
                 .map(role -> new CityLandUseSurfacePrintPlan.RelayRoleDefinition(

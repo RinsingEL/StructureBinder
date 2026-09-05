@@ -27,7 +27,7 @@ class CityArrayVisualQualityGateTest {
         var result = gate.evaluate(anchors, roads);
 
         assertFalse(result.passed());
-        assertTrue(result.hardBlocks().contains("grid: GRID_ROW_COLUMN_ERROR_EXCEEDS_ONE_BLOCK"));
+        assertTrue(result.warnings().contains("grid: GRID_ROW_COLUMN_ERROR_EXCEEDS_ONE_BLOCK"));
     }
 
     @Test
@@ -61,7 +61,7 @@ class CityArrayVisualQualityGateTest {
         var result = gate.evaluate(anchors, roads);
 
         assertFalse(result.passed());
-        assertTrue(result.hardBlocks().contains("court: COURTYARD_CENTER_OCCUPIED"));
+        assertTrue(result.warnings().contains("court: COURTYARD_CENTER_OCCUPIED"));
     }
 
     @Test
@@ -73,7 +73,9 @@ class CityArrayVisualQualityGateTest {
         var result = gate.evaluate(anchors, new JsonArray());
 
         assertFalse(result.passed());
-        assertTrue(result.hardBlocks().contains(
+        assertTrue(result.hardBlocks().isEmpty());
+        assertTrue(result.json().get("safeToMaterialize").getAsBoolean());
+        assertTrue(result.warnings().contains(
                 "organic: ORGANIC_ONE_TO_THREE_BLOCK_GAPS_DISCONNECTED"));
     }
 
@@ -96,6 +98,22 @@ class CityArrayVisualQualityGateTest {
         assertTrue(result.hardBlocks().stream().anyMatch(value ->
                 value.contains("ROAD_OVERLAPS_STRUCTURE")));
         assertTrue(result.json().get("roadStructureOverlapCount").getAsInt() > 0);
+    }
+
+    @Test
+    void connectivityGrowthBuildingsAlsoParticipateInRoadSafetyChecks() {
+        JsonObject source = anchor("link", "ORGANIC_COMPACT", 0, 0, 0, 0, new JsonObject());
+        source.addProperty("blueprintPlacementPhase", "connectivity_growth");
+        JsonArray anchors = new JsonArray();
+        anchors.add(source);
+        JsonObject road = new JsonObject();
+        road.addProperty("streetBandId", "road");
+        road.add("bounds", source.getAsJsonObject("collisionEnvelope").deepCopy());
+        JsonArray roads = new JsonArray();
+        roads.add(road);
+        var result = gate.evaluate(anchors, roads);
+        assertFalse(result.json().get("safeToMaterialize").getAsBoolean());
+        assertTrue(result.hardBlocks().toString().contains("ROAD_OVERLAPS_STRUCTURE"));
     }
 
     private JsonArray roads(String groupId, String algorithm, JsonArray anchors) {

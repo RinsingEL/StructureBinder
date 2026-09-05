@@ -78,6 +78,42 @@ class PlanningBoundaryTest {
         assertTrue(catalog.getAsJsonObject("structureGeometry").has("author:mill"));
     }
 
+    @Test void compiledGeometryUsesArtifactReferencesWhileQualityRemainsComplete() throws Exception {
+        JsonObject source = JsonParser.parseString("""
+                {"ok":true,"qualityReport":{"passed":true,"qualityFullySatisfied":false,
+                  "hardBlocks":[],"warnings":["entrance unresolved"]},
+                 "artifacts":{"cityGenerationCompileTrace":"run/trace.json"},
+                 "cityGenerationCompileTrace":{"status":"compiled","compilationAcceptance":{"passed":true}}}
+                """).getAsJsonObject();
+        source.getAsJsonObject("cityGenerationCompileTrace").addProperty("selections", "x".repeat(100_000));
+        for (String field : List.of("reservationMaskPlan", "structureMaterializationPlan", "landUseOwnerCompletion")) {
+            JsonObject plan = new JsonObject();
+            plan.addProperty("locked", true);
+            plan.addProperty("geometry", "x".repeat(100_000));
+            source.add(field, plan);
+            source.getAsJsonObject("artifacts").addProperty(field, "run/" + field + ".json");
+        }
+        source.getAsJsonObject("landUseOwnerCompletion").addProperty("complete", false);
+        source.getAsJsonObject("landUseOwnerCompletion").addProperty("plannedOwnerCount", 276);
+        source.getAsJsonObject("landUseOwnerCompletion").addProperty("appliedAfterCount", 61);
+        source.getAsJsonObject("landUseOwnerCompletion").add("failures",
+                JsonParser.parseString("[{\"reasonCode\":\"CITY_LAND_USE_BLOCK_WRITE_FAILED\"}]"));
+        String original = source.toString();
+        JsonObject result = PlanningToolPresentation.present(source, directory);
+        assertEquals(original, source.toString());
+        assertEquals(source.get("qualityReport"), result.get("qualityReport"));
+        assertTrue(result.getAsJsonObject("structureMaterializationPlan").get("locked").getAsBoolean());
+        assertFalse(result.getAsJsonObject("landUseOwnerCompletion").get("complete").getAsBoolean());
+        assertEquals(61, result.getAsJsonObject("landUseOwnerCompletion").get("appliedAfterCount").getAsInt());
+        assertEquals(source.getAsJsonObject("landUseOwnerCompletion").get("failures"),
+                result.getAsJsonObject("landUseOwnerCompletion").get("failures"));
+        assertEquals("run/trace.json", result.getAsJsonObject("cityGenerationCompileTrace")
+                .get("artifactPath").getAsString());
+        assertFalse(result.getAsJsonObject("cityGenerationCompileTrace").has("selections"));
+        source.remove("artifacts");
+        assertThrows(java.io.IOException.class, () -> PlanningToolPresentation.present(source, directory));
+    }
+
     @Test void oversizedViewsBecomeHostBlockersNotSuccessfulTruncatedResponses() throws Exception {
         JsonObject source = new JsonObject(); source.addProperty("authorData", "a".repeat(100_000));
         var control = new PlanningTurnControl((tool, args) -> PlanningToolPresentation.present(source, directory));

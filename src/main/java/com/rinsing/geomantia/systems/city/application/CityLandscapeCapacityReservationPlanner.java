@@ -84,10 +84,14 @@ public final class CityLandscapeCapacityReservationPlanner {
         }
         Map<String, JsonObject> owners = new LinkedHashMap<>();
         Map<String, JsonObject> groupOwners = new LinkedHashMap<>();
-        for (JsonElement element : anchors) {
-            JsonObject anchor = element.getAsJsonObject();
-            if (!"required".equalsIgnoreCase(text(anchor, "blueprintPlacementPhase"))) continue;
-            owners.put(text(anchor, "placementGroupId") + '\u0000' + text(anchor, "blueprintStructureRef"), anchor);
+        // Same owner ordering as D6: prefer initial required instances, then a stable actual
+        // instance of the exact authored reference. Later growth does not erase ownership.
+        List<JsonObject> orderedAnchors = anchors.asList().stream().map(JsonElement::getAsJsonObject)
+                .sorted(Comparator.comparingInt((JsonObject anchor) ->
+                        "required".equalsIgnoreCase(text(anchor, "blueprintPlacementPhase")) ? 0 : 1)
+                        .thenComparing(anchor -> text(anchor, "anchorId"))).toList();
+        for (JsonObject anchor : orderedAnchors) {
+            owners.putIfAbsent(text(anchor, "placementGroupId") + '\u0000' + text(anchor, "blueprintStructureRef"), anchor);
             groupOwners.putIfAbsent(text(anchor, "placementGroupId"), anchor);
         }
         List<Subject> result = new ArrayList<>();

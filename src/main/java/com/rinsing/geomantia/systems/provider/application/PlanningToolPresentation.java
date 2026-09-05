@@ -15,6 +15,10 @@ import java.util.Set;
 public final class PlanningToolPresentation {
     private static final Set<String> DENSE_FIELDS = Set.of("cells", "blockedCells", "occupiedSeeds",
             "allowedPatches", "cellSamples", "memberCells", "neighborLandformPatchIds", "territoryCells");
+    private static final Set<String> COMPILED_ARTIFACTS = Set.of("structureAnchorPlan", "structureAnchorMap",
+            "cityGenerationCompileTrace", "groupExtentMap", "reservationMaskPlan", "wallReservationPlan",
+            "roadAccessPlan", "buildOperationPlan", "structureMaterializationPlan", "placedStructureLedger",
+            "structureMaterializationTrace", "inferredFunctionAreaMap", "landUseOwnerCompletion");
     private PlanningToolPresentation() { }
 
     public static JsonObject present(JsonObject source, Path debugRoot) throws IOException {
@@ -72,8 +76,28 @@ public final class PlanningToolPresentation {
             source = CityPlanningDecisionView.from(source.getAsJsonObject());
         }
         JsonObject result = new JsonObject();
+        JsonObject artifacts = source.getAsJsonObject().has("artifacts")
+                && source.getAsJsonObject().get("artifacts").isJsonObject()
+                ? source.getAsJsonObject().getAsJsonObject("artifacts") : new JsonObject();
         for (var entry : source.getAsJsonObject().entrySet()) {
-            if (DENSE_FIELDS.contains(entry.getKey())
+            if (COMPILED_ARTIFACTS.contains(entry.getKey()) && entry.getValue().isJsonObject()
+                    && artifacts.has(entry.getKey()) && artifacts.get(entry.getKey()).isJsonPrimitive()
+                    && artifacts.get(entry.getKey()).getAsJsonPrimitive().isString()
+                    && !artifacts.get(entry.getKey()).getAsString().isBlank()) {
+                JsonObject summary = new JsonObject();
+                summary.addProperty("omittedFromDecisionView", true);
+                summary.add("artifactPath", artifacts.get(entry.getKey()).deepCopy());
+                JsonObject full = entry.getValue().getAsJsonObject();
+                for (String key : new String[]{"schema", "cityId", "status", "reasonCode", "locked", "compilationAcceptance",
+                        "complete", "plannedOwnerCount", "appliedBeforeCount", "backfilledOwnerCount",
+                        "appliedAfterCount", "failures", "maxOwnerActionsPerTick", "synchronousChunkLoads"}) {
+                    if (full.has(key)) summary.add(key, compact(full.get(key)));
+                }
+                if (full.has("anchors") && full.get("anchors").isJsonArray())
+                    summary.addProperty("anchorCount", full.getAsJsonArray("anchors").size());
+                summary.addProperty("detailAccess", "Complete compiled geometry and search evidence remain in the returned formal artifact; qualityReport and its warnings are not omitted.");
+                result.add(entry.getKey(), summary);
+            } else if (DENSE_FIELDS.contains(entry.getKey())
                     && (entry.getValue().isJsonArray() || entry.getValue().isJsonObject())) {
                 JsonObject summary = new JsonObject();
                 summary.addProperty("omittedFromDecisionView", true);

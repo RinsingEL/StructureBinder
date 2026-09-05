@@ -375,6 +375,39 @@ class CityOutdoorBlueprintCompilerTest {
     }
 
     @Test
+    void landscapeOwnerCanBeTheExactAuthoredBuildingCommittedDuringLaterGrowth() {
+        for (String phase : List.of("fill", "connectivity_growth", "percentage_growth")) {
+            JsonObject d6 = d6Plan();
+            d6.getAsJsonArray("plannedWorldgenStructures").get(1).getAsJsonObject()
+                    .addProperty("blueprintPlacementPhase", phase);
+            JsonObject frozen = capacity(blueprint(), d6);
+            assertEquals("farm_a", frozen.getAsJsonArray("instances").get(0).getAsJsonObject()
+                    .get("ownerAnchorId").getAsString());
+            assertDoesNotThrow(() -> new CityOutdoorBlueprintCompiler()
+                    .compile(blueprint(), d6, terrain(), catalog(), frozen));
+            JsonObject moved = d6.deepCopy();
+            moved.getAsJsonArray("plannedWorldgenStructures").get(1).getAsJsonObject()
+                    .getAsJsonObject("lockedActualFootprint").addProperty("minX", 39);
+            assertTrue(assertThrows(IllegalArgumentException.class, () -> new CityOutdoorBlueprintCompiler()
+                    .compile(blueprint(), moved, terrain(), catalog(), frozen))
+                    .getMessage().contains("OWNER_DRIFT"));
+        }
+    }
+
+    @Test
+    void landscapeOwnerChoiceIsStableAndPrefersRequiredOverLaterExactInstances() {
+        JsonObject d6 = d6Plan();
+        JsonObject extra = structure("aaa_later", "farm_group", "fill", 64, 52, 69, 57);
+        extra.addProperty("blueprintStructureRef", "farmhouse");
+        d6.getAsJsonArray("plannedWorldgenStructures").add(extra);
+        JsonObject frozen = capacity(blueprint(), d6);
+        assertEquals("farm_a", frozen.getAsJsonArray("instances").get(0).getAsJsonObject()
+                .get("ownerAnchorId").getAsString());
+        assertDoesNotThrow(() -> new CityOutdoorBlueprintCompiler()
+                .compile(blueprint(), d6, terrain(), catalog(), frozen));
+    }
+
+    @Test
     void missingD6BlueprintPlacementPhaseFailsFormally() {
         JsonObject d6 = d6Plan();
         d6.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject()

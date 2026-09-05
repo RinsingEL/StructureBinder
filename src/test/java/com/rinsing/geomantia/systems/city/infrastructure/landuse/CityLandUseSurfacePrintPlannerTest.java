@@ -177,7 +177,7 @@ class CityLandUseSurfacePrintPlannerTest {
     }
 
     @Test
-    void reducesRelayStagesWhenTerrainLeavesABranchedMaskThatCannotBeSequentiallyPartitioned() {
+    void refusesToDeleteFunctionalRolesWhenBranchedMaskCannotBePartitioned() {
         String groupId = "branched_woodland";
         List<LandUseAreaPlan.ScanlineSpan> members = List.of(
                 new LandUseAreaPlan.ScanlineSpan(0, 2, 2),
@@ -207,17 +207,10 @@ class CityLandUseSurfacePrintPlannerTest {
         LandUseSeedGroup landscape = landscapeGroup(groupId, new BlockBounds(3, 0, 3, 0),
                 LandUseSurfaceSettings.defaults(SurfacePolicy.CULTIVATE).forRelayRegionGrowth(), fill);
 
-        CityLandUseSurfacePrintPlan result = new CityLandUseSurfacePrintPlanner().plan(plan,
-                List.of(landscape), terrain(new BlockBounds(0, 0, 7, 7), false));
-        CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe recipe = assertInstanceOf(
-                CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe.class,
-                result.areas().get(0).recipe());
-
-        assertEquals(List.of("TREE_GROVE"), recipe.roleDefinitions().stream()
-                .map(CityLandUseSurfacePrintPlan.RelayRoleDefinition::roleRef).toList());
-        assertEquals(1, recipe.regionTraces().size());
-        assertEquals(9, recipe.regionSpans().stream()
-                .mapToInt(span -> span.maxX() - span.minX() + 1).sum());
+        IllegalArgumentException failure = org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class, () -> new CityLandUseSurfacePrintPlanner().plan(plan,
+                        List.of(landscape), terrain(new BlockBounds(0, 0, 7, 7), false)));
+        assertTrue(failure.getMessage().startsWith("RELAY_GROWTH_CANDIDATE_RETRIES_EXHAUSTED:"));
     }
 
     @Test

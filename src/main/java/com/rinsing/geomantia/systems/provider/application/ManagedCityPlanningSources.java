@@ -45,13 +45,12 @@ public final class ManagedCityPlanningSources {
             profile.addProperty("vocabularySnapshotPath", vocabulary.toString());
         }
         JsonObject templateSource = new JsonObject();
-        if (!Files.isRegularFile(directory.resolve(ENTRANCE_CATALOG))) {
-            throw new IOException("PLANNING_ENTRANCE_REVIEW_REQUIRED: missing " + ENTRANCE_CATALOG
-                    + "; legacy door positions are not author-approved road ports.");
+        boolean hasReviewedEntrances = Files.exists(directory.resolve(ENTRANCE_CATALOG));
+        JsonObject effectiveTemplates = entranceTemplates(profile, readObject(directory.resolve(TEMPLATE_CATALOG)),
+                hasReviewedEntrances ? readObject(directory.resolve(ENTRANCE_CATALOG)) : null);
+        if (hasReviewedEntrances) {
+            profile.addProperty("entranceCatalogPath", directory.resolve(ENTRANCE_CATALOG).toAbsolutePath().normalize().toString());
         }
-        profile.addProperty("entranceCatalogPath", directory.resolve(ENTRANCE_CATALOG).toAbsolutePath().normalize().toString());
-        JsonObject effectiveTemplates = ApprovedEntranceCatalog.apply(readObject(directory.resolve(TEMPLATE_CATALOG)),
-                readObject(directory.resolve(ENTRANCE_CATALOG)));
         templateSource.add("catalog", effectiveTemplates);
         JsonObject references = readObject(directory.resolve(REFERENCE_CATALOG));
         // Validate author-owned semantics and every reference before a model sees this bundle.
@@ -59,7 +58,22 @@ public final class ManagedCityPlanningSources {
         var referenceCatalog = CityBlueprintReferenceCatalog.parse(references, templates);
         var authored = CityStructureProfileCatalog.importCatalog(directory, profile);
         JsonObject brief = authoringBrief(authored, referenceCatalog.structureRefs());
+        brief.addProperty("entranceAuthority", hasReviewedEntrances ? "author_reviewed_sidecar" : "legacy_catalog_unreviewed");
         return new ResolvedSources(profile, templateSource, references, directory, brief);
+    }
+
+    static JsonObject entranceTemplates(JsonObject profile, JsonObject catalog, JsonObject approved) {
+        String policy = profile.has("entrancePolicy") ? profile.get("entrancePolicy").getAsString() : "reviewed_required";
+        if (!List.of("reviewed_required", "legacy_catalog").contains(policy)) {
+            throw new IllegalArgumentException("PLANNING_ENTRANCE_POLICY_INVALID: " + policy);
+        }
+        // A declared or installed reviewed catalog never silently downgrades to legacy data.
+        if (approved != null) return ApprovedEntranceCatalog.apply(catalog, approved);
+        if (!"legacy_catalog".equals(policy) || profile.has("entranceCatalogPath")) {
+            throw new IllegalArgumentException("PLANNING_ENTRANCE_REVIEW_REQUIRED: missing " + ENTRANCE_CATALOG);
+        }
+        new CityTemplateCatalogLoader().load(catalog);
+        return catalog.deepCopy();
     }
 
     static JsonObject authoringBrief(CityStructureProfileCatalog.ImportedCatalog authored, java.util.Set<String> refs) {

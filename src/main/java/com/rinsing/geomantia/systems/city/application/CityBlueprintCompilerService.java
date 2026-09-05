@@ -597,6 +597,10 @@ public final class CityBlueprintCompilerService {
                 .forEach(state -> warnings.add(state.group().groupId()
                         + ": SELECTED_PATCH_TERRAIN_UNABLE_TO_SUPPORT_REQUIRED_STRUCTURE"));
         states.values().forEach(state -> state.missingRequiredStructures().forEach(gap -> {
+            warnings.add(state.group().groupId() + ": REQUIRED_PHASE_STRUCTURE_MISSING structureRef="
+                    + gap.structureRef() + " missingCount=" + gap.missingCount());
+        }));
+        states.values().forEach(state -> state.missingRequiredContent().forEach(gap -> {
             String message = state.group().groupId() + ": REQUIRED_STRUCTURE_MISSING structureRef="
                     + gap.structureRef() + " missingCount=" + gap.missingCount();
             hardBlocks.add(message);
@@ -605,13 +609,16 @@ public final class CityBlueprintCompilerService {
         streetAccessOutcomes.asList().stream()
                 .map(JsonElement::getAsJsonObject)
                 .filter(outcome -> "UNRESOLVED".equals(string(outcome, "status")))
-                .forEach(outcome -> hardBlocks.add(string(outcome, "entranceId")
+                .forEach(outcome -> warnings.add(string(outcome, "entranceId")
                         + ": STREET_ENTRANCE_UNRESOLVED reasonCode="
                         + string(outcome, "reasonCode")));
         visualQuality.hardBlocks().forEach(hardBlocks::add);
+        visualQuality.warnings().forEach(warnings::add);
 
         JsonObject acceptance = new JsonObject();
         acceptance.addProperty("passed", hardBlocks.isEmpty());
+        acceptance.addProperty("acceptancePolicy", "SAFETY_AND_REQUIRED_CONTENT_V1");
+        acceptance.addProperty("qualityFullySatisfied", hardBlocks.isEmpty() && warnings.isEmpty());
         acceptance.addProperty("previewCompiled", true);
         acceptance.addProperty("trafficGroupCount", trafficGroupIds.size());
         acceptance.addProperty("trafficConnectionCount", trafficConnectionCount);
@@ -624,6 +631,8 @@ public final class CityBlueprintCompilerService {
                 states.values().stream().allMatch(state -> state.anchorCount() > 0));
         acceptance.addProperty("allRequiredStructuresCommitted",
                 states.values().stream().allMatch(state -> state.missingRequiredStructures().isEmpty()));
+        acceptance.addProperty("allRequiredContentPresent",
+                states.values().stream().allMatch(state -> state.missingRequiredContent().isEmpty()));
         acceptance.addProperty("arrayVisualGeometryPassed", visualQuality.passed());
         acceptance.addProperty("allStreetEntrancesConnected", streetAccessOutcomes.asList().stream()
                 .map(JsonElement::getAsJsonObject)
@@ -5059,14 +5068,12 @@ public final class CityBlueprintCompilerService {
         }
         boolean hasTerrainPlacementFailures() { return !terrainPlacementFailures.isEmpty(); }
         List<RequiredStructureGap> missingRequiredStructures() {
-            Map<String, Integer> requested = new LinkedHashMap<>();
-            group.requiredStructureRefs().forEach(ref -> requested.merge(ref, 1, Integer::sum));
-            List<RequiredStructureGap> result = new ArrayList<>();
-            requested.forEach((ref, count) -> {
-                int missing = count - requiredStructureCounts.getOrDefault(ref, 0);
-                if (missing > 0) result.add(new RequiredStructureGap(ref, missing));
-            });
-            return List.copyOf(result);
+            return missingStructureCounts(group.requiredStructureRefs(), requiredStructureCounts).entrySet()
+                    .stream().map(entry -> new RequiredStructureGap(entry.getKey(), entry.getValue())).toList();
+        }
+        List<RequiredStructureGap> missingRequiredContent() {
+            return missingStructureCounts(group.requiredStructureRefs(), structureCounts).entrySet()
+                    .stream().map(entry -> new RequiredStructureGap(entry.getKey(), entry.getValue())).toList();
         }
         void freezeCoreExtent() {
             coreExtent = extent;
@@ -5245,6 +5252,10 @@ public final class CityBlueprintCompilerService {
             missingRequiredStructures().forEach(gap -> missingRequired.add(gap.asJson()));
             value.add("missingRequiredStructures", missingRequired);
             value.addProperty("allRequiredStructuresCommitted", missingRequired.isEmpty());
+            JsonArray missingContent = new JsonArray();
+            missingRequiredContent().forEach(gap -> missingContent.add(gap.asJson()));
+            value.add("missingRequiredContent", missingContent);
+            value.addProperty("allRequiredContentPresent", missingContent.isEmpty());
             value.addProperty("derivedMinimumStructureCount", minimumStructureCount);
             value.addProperty("internalStructureCount", internalStructureCount());
             value.addProperty("minimumStructureCountReached",
@@ -5342,6 +5353,14 @@ public final class CityBlueprintCompilerService {
             value.add("terrainFailureReasonCounts", reasonCounts.deepCopy());
             return value;
         }
+    }
+
+    static Map<String, Integer> missingStructureCounts(List<String> requiredRefs, Map<String, Integer> committed) {
+        Map<String, Integer> missing = new LinkedHashMap<>();
+        requiredRefs.forEach(ref -> missing.merge(ref, 1, Integer::sum));
+        missing.replaceAll((ref, count) -> count - committed.getOrDefault(ref, 0));
+        missing.values().removeIf(count -> count <= 0);
+        return missing;
     }
 
     private record RequiredStructureGap(String structureRef, int missingCount) {

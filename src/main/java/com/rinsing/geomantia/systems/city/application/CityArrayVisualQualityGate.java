@@ -15,11 +15,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/** Rejects legal-but-unrecognizable array geometry before D4 can report quality success. */
+/** Reports layout quality separately from unsafe road/structure intersections. */
 final class CityArrayVisualQualityGate {
     static final String SCHEMA = "city_array_visual_quality";
 
     Result evaluate(JsonArray anchorsJson, JsonArray streetsJson) {
+        List<Anchor> allAnchors = anchorsJson.asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .map(Anchor::parse).toList();
         List<Anchor> anchors = anchorsJson.asList().stream()
                 .map(JsonElement::getAsJsonObject)
                 .filter(anchor -> !"connectivity_growth".equals(string(anchor, "blueprintPlacementPhase")))
@@ -35,6 +38,7 @@ final class CityArrayVisualQualityGate {
         }
 
         List<String> hardBlocks = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
         int roadStructureOverlapCount = 0;
         for (JsonElement element : streetsJson) {
             if (!element.isJsonObject()) continue;
@@ -43,7 +47,7 @@ final class CityArrayVisualQualityGate {
             if (rawBounds.size() == 0) continue;
             BlockBounds roadBounds = crossSectionBounds(road,
                     CityStructureCandidateEnvelope.bounds(rawBounds));
-            for (Anchor anchor : anchors) {
+            for (Anchor anchor : allAnchors) {
                 if (!roadBounds.overlaps(anchor.body())) continue;
                 roadStructureOverlapCount++;
                 hardBlocks.add(string(road, "streetBandId") + ": ROAD_OVERLAPS_STRUCTURE:"
@@ -57,12 +61,12 @@ final class CityArrayVisualQualityGate {
             String algorithm = group.get(0).algorithm();
             List<JsonObject> roads = roadsByGroup.getOrDefault(groupId, List.of());
             JsonObject metrics = switch (algorithm) {
-                case "GRID" -> grid(groupId, group, roads, hardBlocks);
-                case "COURTYARD" -> courtyard(groupId, group, roads, hardBlocks);
-                case "LINEAR" -> linear(groupId, roads, hardBlocks);
-                case "CENTER_SYMMETRIC" -> symmetric(groupId, group, roads, hardBlocks);
-                case "COMPACT" -> compact(groupId, group, roads, hardBlocks);
-                case "ORGANIC_COMPACT" -> organic(groupId, group, roads, hardBlocks);
+                case "GRID" -> grid(groupId, group, roads, warnings);
+                case "COURTYARD" -> courtyard(groupId, group, roads, warnings);
+                case "LINEAR" -> linear(groupId, roads, warnings);
+                case "CENTER_SYMMETRIC" -> symmetric(groupId, group, roads, warnings);
+                case "COMPACT" -> compact(groupId, group, roads, warnings);
+                case "ORGANIC_COMPACT" -> organic(groupId, group, roads, warnings);
                 default -> new JsonObject();
             };
             metrics.addProperty("groupId", groupId);
@@ -71,13 +75,18 @@ final class CityArrayVisualQualityGate {
         }
         JsonObject value = new JsonObject();
         value.addProperty("schema", SCHEMA);
-        value.addProperty("passed", hardBlocks.isEmpty());
+        boolean passed = hardBlocks.isEmpty() && warnings.isEmpty();
+        value.addProperty("passed", passed);
+        value.addProperty("safeToMaterialize", hardBlocks.isEmpty());
         value.addProperty("roadStructureOverlapCount", roadStructureOverlapCount);
         JsonArray blocks = new JsonArray();
         hardBlocks.forEach(blocks::add);
         value.add("hardBlocks", blocks);
+        JsonArray notices = new JsonArray();
+        warnings.forEach(notices::add);
+        value.add("warnings", notices);
         value.add("groups", groups);
-        return new Result(hardBlocks.isEmpty(), List.copyOf(hardBlocks), value);
+        return new Result(passed, List.copyOf(hardBlocks), List.copyOf(warnings), value);
     }
 
     private static BlockBounds crossSectionBounds(JsonObject road, BlockBounds surface) {
@@ -309,7 +318,7 @@ final class CityArrayVisualQualityGate {
         return CityStructureCandidateEnvelope.bounds(value.getAsJsonObject("collisionEnvelope"));
     }
 
-    record Result(boolean passed, List<String> hardBlocks, JsonObject json) {
+    record Result(boolean passed, List<String> hardBlocks, List<String> warnings, JsonObject json) {
     }
 
     @FunctionalInterface

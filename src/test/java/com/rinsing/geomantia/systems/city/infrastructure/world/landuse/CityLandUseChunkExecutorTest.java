@@ -305,6 +305,43 @@ class CityLandUseChunkExecutorTest {
     }
 
     @Test
+    void finalizesLampFeatureConnectionsEvenWithoutBoundaryOperations() {
+        CityLandUseChunkCompiler.ChunkFragment fragment = new CityLandUseChunkCompiler.ChunkFragment(
+                CityLandUseChunkCompiler.RESULT_SCHEMA, "city", "area-hash", "palette-hash",
+                0, 0, 1, 0, 0, 0, null, List.of(), List.of(), List.of(), List.of(
+                new CityLandUseChunkCompiler.FeatureOperation("lamp", 15, 8,
+                        "minecraft:dark_oak_fence", 2,
+                        CityLandUseSurfacePrintPlan.FeatureKind.ROAD_LAMP,
+                        CityLandUseSurfacePrintPlan.HorizontalFacing.NONE)));
+        FakeWorld world = new FakeWorld();
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED, executor.execute(fragment, world,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES).status());
+        assertTrue(world.finalized.contains(new CityLandUseChunkExecutor.BlockPosition(15, 66, 8)));
+    }
+
+    @Test
+    void acceptsAlreadyAppliedStateWithoutTreatingNoChangeAsFailure() {
+        WorldgenLikeBlockStateWorld world = new WorldgenLikeBlockStateWorld();
+        BlockPos pos = new BlockPos(15, 65, 0);
+        world.states.put(pos, TestBlockState.WHEAT);
+        world.failNextWriteAt = pos;
+        assertTrue(CityLandUseChunkExecutor.writeExactBlockState(world, pos, TestBlockState.WHEAT, 0));
+        assertEquals(pos, world.failNextWriteAt, "No redundant write or neighbour updates");
+        assertTrue(CityLandUseChunkExecutor.writeExactBlockState(world, pos.above(), TestBlockState.AIR, 0));
+    }
+
+    @Test
+    void rejectsUnwritableOrUnchangedWrongState() {
+        WorldgenLikeBlockStateWorld world = new WorldgenLikeBlockStateWorld();
+        BlockPos pos = new BlockPos(15, 65, 0);
+        world.unwritable = pos;
+        assertFalse(CityLandUseChunkExecutor.writeExactBlockState(world, pos, TestBlockState.AIR, 0));
+        world.unwritable = null;
+        world.failNextWriteAt = pos;
+        assertFalse(CityLandUseChunkExecutor.writeExactBlockState(world, pos, TestBlockState.WHEAT, 0));
+    }
+
+    @Test
     void finalizesWholeFenceBatchAfterAllRawPlacements() {
         WorldgenLikeBlockStateWorld world = new WorldgenLikeBlockStateWorld();
         List<BlockPos> line = new ArrayList<>();
@@ -374,6 +411,7 @@ class CityLandUseChunkExecutorTest {
         private final List<String> writes = new ArrayList<>();
         private final List<String> featureWrites = new ArrayList<>();
         private final List<String> restores = new ArrayList<>();
+        private final List<CityLandUseChunkExecutor.BlockPosition> finalized = new ArrayList<>();
         private int sampleCount;
         private int writeCount;
         private int mutateThenFailWriteIndex = -1;
@@ -420,6 +458,13 @@ class CityLandUseChunkExecutorTest {
         public boolean restoreBlock(int worldX, int y, int worldZ, Object snapshot) {
             restores.add(worldX + "," + y + "," + worldZ + "=" + snapshot);
             return true;
+        }
+
+        @Override
+        public CityLandUseChunkExecutor.BoundaryFinalizeResult finalizeBoundaryConnections(
+                List<CityLandUseChunkExecutor.BlockPosition> positions) {
+            finalized.addAll(positions);
+            return new CityLandUseChunkExecutor.BoundaryFinalizeResult(true, true);
         }
     }
 

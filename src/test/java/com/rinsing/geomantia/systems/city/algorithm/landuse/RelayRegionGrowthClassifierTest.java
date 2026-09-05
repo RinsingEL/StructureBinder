@@ -19,6 +19,51 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RelayRegionGrowthClassifierTest {
     @Test
+    void smallRootQuotaAdjustmentKeepsEveryRoleAndRecordsOriginalTargets() {
+        List<LandUseAreaPlan.ScanlineSpan> mask = List.of(new LandUseAreaPlan.ScanlineSpan(0, 0, 624));
+        List<RelayRegionGrowthClassifier.GrowthStage> stages = List.of(
+                stage("field1", "", "FIELD", 0.41, RelayRegionGrowthClassifier.GrowthForm.PATCH),
+                stage("bank1", "", "BANK", 0.06, RelayRegionGrowthClassifier.GrowthForm.CORRIDOR),
+                stage("water", "", "WATER", 0.06, RelayRegionGrowthClassifier.GrowthForm.CORRIDOR),
+                stage("bank2", "", "BANK", 0.06, RelayRegionGrowthClassifier.GrowthForm.CORRIDOR),
+                stage("field2", "", "FIELD", 0.41, RelayRegionGrowthClassifier.GrowthForm.PATCH));
+        var result = classify(mask, List.of(), new BlockPoint(258, 0), 7L, stages);
+        assertEquals(625, result.coveredBlockCount());
+        assertEquals(5, result.regions().size());
+        assertEquals(256, result.regions().get(0).targetAreaBlocks());
+        assertEquals(259, result.regions().get(0).actualAreaBlocks());
+        assertEquals(-3, result.regions().get(4).actualAreaBlocks() - result.regions().get(4).targetAreaBlocks());
+        for (int index = 1; index < 4; index++) assertEquals(result.regions().get(index).targetAreaBlocks(),
+                result.regions().get(index).actualAreaBlocks());
+        assertGrowthProvenance(result);
+        assertEquals(result, classify(mask, List.of(), new BlockPoint(258, 0), 7L, stages));
+    }
+
+    @Test
+    void articulationSourceAbsorbsSmallBranchWithoutMovingSourceOrChangingBudgets() {
+        List<LandUseAreaPlan.ScanlineSpan> mask = List.of(new LandUseAreaPlan.ScanlineSpan(0, 0, 10));
+        BlockPoint source = new BlockPoint(2, 0);
+        List<RelayRegionGrowthClassifier.GrowthStage> stages = List.of(
+                stage("first", "", "FIELD", 0.5, RelayRegionGrowthClassifier.GrowthForm.PATCH),
+                stage("last", "", "BANK", 0.5, RelayRegionGrowthClassifier.GrowthForm.PATCH));
+        var result = classify(mask, List.of(), source, 7L, stages);
+        assertEquals(source, result.regions().get(0).expansionTrace().get(0).point());
+        assertEquals(11, result.coveredBlockCount());
+        for (var trace : result.regions()) assertEquals(trace.targetAreaBlocks(), trace.actualAreaBlocks());
+        assertGrowthProvenance(result);
+        assertEquals(result, classify(mask, List.of(), source, 7L, stages));
+    }
+
+    @Test
+    void articulationSourceStillRejectsAnImpossibleFirstRoleBudget() {
+        var error = assertThrows(IllegalArgumentException.class, () -> classify(
+                List.of(new LandUseAreaPlan.ScanlineSpan(0, 0, 10)), List.of(), new BlockPoint(5, 0), 7L,
+                List.of(stage("first", "", "FIELD", 0.2, RelayRegionGrowthClassifier.GrowthForm.PATCH),
+                        stage("last", "", "BANK", 0.8, RelayRegionGrowthClassifier.GrowthForm.PATCH))));
+        assertTrue(error.getMessage().startsWith("RELAY_GROWTH_START_DISCONNECTS_REMAINDER:"));
+    }
+
+    @Test
     void everyCellComesFromAdjacentGrowthAndRegionSpansAuditExactAreas() {
         List<LandUseAreaPlan.ScanlineSpan> members = rectangleSpans(0, 19, 0, 13);
         List<LandUseAreaPlan.ScanlineSpan> exclusions = List.of(

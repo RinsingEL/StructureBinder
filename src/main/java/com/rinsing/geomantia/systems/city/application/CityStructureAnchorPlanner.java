@@ -123,12 +123,8 @@ public final class CityStructureAnchorPlanner {
                 && structureAnchorPlan.get("arrayVisualQuality").isJsonObject()) {
             JsonObject visual = structureAnchorPlan.getAsJsonObject("arrayVisualQuality");
             quality.getAsJsonObject("metrics").add("arrayVisualGeometry", visual.deepCopy());
-            if (structureAnchorPlan.has("arrayVisualGapRecorded")
-                    && structureAnchorPlan.get("arrayVisualGapRecorded").getAsBoolean()) {
-                mergeNestedWarnings(quality, visual, "arrayVisualGeometry");
-            } else {
-                mergeNestedHardBlocks(quality, visual, "arrayVisualGeometry");
-            }
+            mergeNestedHardBlocks(quality, visual, "arrayVisualGeometry");
+            mergeNestedWarnings(quality, visual, "arrayVisualGeometry");
         }
         if (structureAnchorPlan.has("compilationAcceptance")
                 && structureAnchorPlan.get("compilationAcceptance").isJsonObject()) {
@@ -137,6 +133,9 @@ public final class CityStructureAnchorPlanner {
             mergeNestedHardBlocks(quality, acceptance, "compilationAcceptance");
             mergeNestedWarnings(quality, acceptance, "compilationAcceptance");
         }
+        quality.addProperty("qualityFullySatisfied", quality.get("passed").getAsBoolean()
+                && quality.getAsJsonArray("warnings").isEmpty()
+                && quality.getAsJsonArray("needsReview").isEmpty());
         anchorMap.add("quality", quality);
         anchorMap.add("timingMs", timing(started));
         JsonObject normalizedPlan = structureAnchorPlan.deepCopy();
@@ -449,6 +448,7 @@ public final class CityStructureAnchorPlanner {
                 if (!strings(outer).contains(block)) outer.add(block);
             }
         }
+        if (nested.has("hardBlocks") && nested.getAsJsonArray("hardBlocks").isEmpty()) return;
         if (outer.isEmpty()) outer.add(source + ": UNSATISFIED");
         quality.addProperty("passed", false);
         quality.addProperty("score", 0);
@@ -456,7 +456,7 @@ public final class CityStructureAnchorPlanner {
 
     private static void mergeNestedWarnings(JsonObject quality, JsonObject nested, String source) {
         JsonArray outer = quality.getAsJsonArray("warnings");
-        for (String key : List.of("hardBlocks", "warnings")) {
+        for (String key : List.of("warnings")) {
             if (!nested.has(key) || !nested.get(key).isJsonArray()) continue;
             for (JsonElement element : nested.getAsJsonArray(key)) {
                 String warning = source + ": " + element.getAsString();

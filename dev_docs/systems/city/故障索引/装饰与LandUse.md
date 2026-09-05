@@ -2,6 +2,8 @@
 
 | ID | 状态 | 现象与根因摘要 | 记录 |
 | --- | --- | --- | --- |
+| `CITY-DL-20260905-01` | 写入修正实机越过，新错误另记 02 | 首次偏离在实际写入：(2285,79,4808) ROAD_LAMP 栅栏身份正确但连接未求解，另有相同状态 setBlock=false 导致回滚误判。修复精确幂等写入及包含 FEATURE 的整批连接收尾；专项通过，D7 从 61/276 推进至 182/276，不代表全城完成。 | [任务记录](../active/20260905_落地底线与质量分层/任务记录.md)；正式 steps/d7/land_use_owner_completion.json |
+| `CITY-DL-20260905-02` | 待定位，用户暂停后未修改 | 灯柱修正后 D7 在 (139,308) 返回 CITY_LAND_USE_ACCESS_PLATFORM_MISSING，182/276 完成、94 缺失，rollbackComplete=true。首次偏离在该 owner 的入口台地执行检查；根因待定位，尚未修复，不擅自降级安全校验。 | [任务记录](../active/20260905_落地底线与质量分层/任务记录.md) |
 | `CITY-DL-20260903-02` | 代码与专项已修复，待新存档实机复验 | 东谷城 Post-D4 attempt 4 的独立 `common_green` 仅兑现 2226/3456；D4 容量未排除道路，而 LandUse 把最终道路作为硬障碍，真实可达量与运行时完全一致。按最新产品决定，当前整合包删除独立 `common_green` 配置，建筑周边绿化继续由 building greenery policy 承担；所有其余 Landscape 取消 90%/最小面积成败门槛，required 只保留优先级，任何非零 Parcel 都落地，接力中断只跳过零格后继并记录降量，不再中止整城。 | [任务记录](../../../workflows/Beta自动规划基础链/archive/50eb495_v0.1.0_冒险者地图揭示与LandUse容量容差/任务记录.md)；`LandscapeParcelExpanderTest` |
 | `CITY-DL-20260903-01` | 代码已删除，待重启后新区块实机验收 | 主路灯误复用早已废除的通用装饰概念，暴露生产代码仍保留独立 planning/catalog/preview/activation/worldgen/ledger 全链。现破坏性删除该子系统及无执行用途的 LandUse policy 携带字段；主路灯改由道路 owner 从冻结 segment 路面格直接派生，固定结构台基密度独立保留。 | [本次任务记录](../active/20260903_道路连续扶手与主路灯/任务记录.md) |
 | `CITY-DL-20260902-03` | 代码与全量 771 项已修复，待重启后新区块实机验收 | 新台地边缘已真实规划并应用 119 个 `stone_brick_wall`，但保存态 119/119 的 north/east/south/west 均为 `none`。根因是连接收尾只接受 `CrossCollisionBlock`；现同时识别 `WallBlock`，石墙进入与农业 Fence 相同的批量回刷、跨 owner 收口和回滚路径。 | [本次任务记录](../active/20260903_道路连续扶手与主路灯/任务记录.md)；[现场记录](../active/20260901_D4蓝图失败预算/真实游玩调用记录.md)；`CityLandUseChunkExecutor.finalizeHorizontalConnections` |

@@ -66,6 +66,40 @@ class CityBlueprintCompilerServiceTest {
     }
 
     @Test
+    void requiredContentUsesExactReferencesAndMultiplicityFromFinalGroupCounts() {
+        List<String> required = List.of("warehouse", "stable", "stable");
+        assertEquals(Map.of(), CityBlueprintCompilerService.missingStructureCounts(required,
+                Map.of("warehouse", 5, "stable", 5)));
+        assertEquals(Map.of("stable", 1), CityBlueprintCompilerService.missingStructureCounts(required,
+                Map.of("warehouse", 5, "stable", 1)));
+        assertEquals(Map.of("stable", 2), CityBlueprintCompilerService.missingStructureCounts(required,
+                Map.of("warehouse", 5, "similar_stable", 5)));
+        assertEquals(Map.of("warehouse", 1, "stable", 2),
+                CityBlueprintCompilerService.missingStructureCounts(required, Map.of()));
+    }
+
+    @Test
+    void organicEntranceGapsWarnWithoutBlockingFinalAnchorAcceptance() throws Exception {
+        Fixture fixture = acceptedFixture("run_quality_layers", "city:quality_layers", 9, 9, "SMALL",
+                blueprint -> blueprint.getAsJsonArray("groups").get(0).getAsJsonObject()
+                        .addProperty("algorithmProfileRef", "algorithm:organic_compact"));
+        var result = new CityBlueprintCompilerService().compile(temporary, fixture.runId(), fixture.cityId());
+        assertTrue(result.ok());
+        JsonObject acceptance = result.structureAnchorPlan().getAsJsonObject("compilationAcceptance");
+        assertTrue(acceptance.get("passed").getAsBoolean(), acceptance.toString());
+        assertFalse(acceptance.get("allStreetEntrancesConnected").getAsBoolean());
+        assertFalse(acceptance.get("qualityFullySatisfied").getAsBoolean());
+        assertTrue(acceptance.getAsJsonArray("warnings").toString().contains("STREET_ENTRANCE_UNRESOLVED"));
+        CityLandformReviewPackage review = CityLandformReviewPackage.fromJson(JsonParser.parseString(
+                Files.readString(fixture.runDir().resolve(
+                        "city_d3_city_quality_layers/city_landform_review_package.json"))).getAsJsonObject());
+        var finalized = new CityStructureAnchorPlanner().plan(fixture.runDir(), review,
+                result.terraSenseProfileSource(), result.structureAnchorPlan());
+        assertTrue(finalized.qualityReport().get("passed").getAsBoolean(), finalized.qualityReport().toString());
+        assertFalse(finalized.qualityReport().get("qualityFullySatisfied").getAsBoolean());
+    }
+
+    @Test
     void continuousFrontierAlignmentStaysInsideNarrowBodyGapWindow() {
         int minimumAnchor = 1249;
         int maximumAnchor = 1258;
@@ -1303,7 +1337,7 @@ class CityBlueprintCompilerServiceTest {
     }
 
     @Test
-    void relationOptOutAvoidsGraphFailureButOtherAcceptanceFailuresRemainHard() throws Exception {
+    void relationOptOutAvoidsGraphFailureAndLocalEntranceGapsOnlyWarn() throws Exception {
         Fixture fixture = acceptedFixture("run_fallback_three", "city:fallback_three", 9, 9, "SMALL",
                 d3 -> configureSeparatedPlanningPatches(d3, true), blueprint -> {
                     JsonObject civic = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
@@ -1327,11 +1361,12 @@ class CityBlueprintCompilerServiceTest {
         assertEquals("EXPLICIT_RELATIONS_ONLY_NO_UNRELATED_FALLBACK",
                 plan.get("topologyPolicy").getAsString());
         JsonObject acceptance = result.compileTrace().getAsJsonObject("compilationAcceptance");
-        assertFalse(acceptance.get("passed").getAsBoolean(), acceptance.toString());
+        assertTrue(acceptance.get("passed").getAsBoolean(), acceptance.toString());
+        assertFalse(acceptance.get("qualityFullySatisfied").getAsBoolean());
         assertEquals(2, acceptance.get("trafficGroupCount").getAsInt(), acceptance.toString());
         assertFalse(acceptance.getAsJsonArray("hardBlocks").toString()
                 .contains("STRUCTURE_RELATION_GRAPH_DISCONNECTED"), acceptance.toString());
-        assertTrue(acceptance.getAsJsonArray("hardBlocks").toString()
+        assertTrue(acceptance.getAsJsonArray("warnings").toString()
                 .contains("STREET_ENTRANCE_UNRESOLVED"), acceptance.toString());
     }
 

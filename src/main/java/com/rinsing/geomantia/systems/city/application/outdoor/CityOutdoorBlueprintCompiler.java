@@ -908,7 +908,9 @@ public final class CityOutdoorBlueprintCompiler {
         if (owner == null) throw new IllegalArgumentException("CITY_OUTDOOR_ATTACHED_OWNER_REQUIRED");
         java.util.stream.Stream<AnchorData> candidates = anchorsByGroup
                 .getOrDefault(owner.groupId(), List.of()).stream()
-                .filter(anchor -> anchor.phase() == BlueprintPlacementPhase.REQUIRED);
+                .sorted(Comparator.comparingInt((AnchorData anchor) ->
+                        anchor.phase() == BlueprintPlacementPhase.REQUIRED ? 0 : 1)
+                        .thenComparing(AnchorData::anchorId));
         if (!owner.groupOwned()) {
             candidates = candidates.filter(anchor -> owner.requiredStructureRef().equals(anchor.structureRef()));
         }

@@ -169,11 +169,23 @@ public final class LandUsePlanningService {
         CityLandUseSurfacePrintPlan surfacePrintPlan = new CityLandUseSurfacePrintPlanner().plan(
                 plan, sources.seedGroups(), terrainField, sources.roadBands(), sources.greenParcels(),
                 sources.overflowZones());
+        JsonObject quality = quality(plan, sources, resolvedExpansion, connectionOutcomes,
+                residualResult.urbanSpacePlan(), skippedLandscapes, requiredLandscapeCapacities);
+        for (var area : surfacePrintPlan.areas()) {
+            if (area.recipe() instanceof CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe relay) {
+                for (var region : relay.regionTraces()) {
+                    if (region.targetAreaBlocks() != region.actualAreaBlocks()) {
+                        quality.getAsJsonArray("warnings").add("LANDSCAPE_LOCAL_SHARE_ADJUSTED:"
+                                + area.printAreaId() + ':' + region.regionId() + ":requested="
+                                + region.targetAreaBlocks() + ":actual=" + region.actualAreaBlocks());
+                    }
+                }
+            }
+        }
         return new Result(plan, trace(sources, probe, resolvedExpansion, connectionOutcomes,
                 residualResult.urbanSpacePlan(), resolvedFoundationCloseRadius,
                  resolvedFoundationComponentCount, skippedLandscapes),
-                quality(plan, sources, resolvedExpansion, connectionOutcomes, residualResult.urbanSpacePlan(),
-                         skippedLandscapes, requiredLandscapeCapacities),
+                quality,
                 surfacePrintPlan,
                 residualResult.urbanSpacePlan());
     }

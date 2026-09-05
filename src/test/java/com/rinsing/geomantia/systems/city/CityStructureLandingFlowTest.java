@@ -682,6 +682,27 @@ final class CityStructureLandingFlowTest {
     }
 
     @Test
+    void qualityWarningsDoNotBlockLandingButSafetyCannotBeDemotedByGapFlag() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject plan = singleAnchorPlan(fixture.review());
+        plan.addProperty("arrayVisualGapRecorded", true);
+        plan.add("arrayVisualQuality", JsonParser.parseString("""
+                {"passed":false,"hardBlocks":[],"warnings":["group: ORGANIC_ONE_TO_THREE_BLOCK_GAPS_DISCONNECTED"]}
+                """));
+        var result = new CityStructureAnchorPlanner().plan(fixture.baseDir(), fixture.review(),
+                fixture.terraSenseSource(), plan);
+        assertTrue(result.qualityReport().get("passed").getAsBoolean(), result.qualityReport().toString());
+        assertFalse(result.qualityReport().get("qualityFullySatisfied").getAsBoolean());
+        assertTrue(result.qualityReport().getAsJsonArray("warnings").toString().contains("GAPS_DISCONNECTED"));
+        plan.getAsJsonObject("arrayVisualQuality").getAsJsonArray("hardBlocks")
+                .add("road: ROAD_OVERLAPS_STRUCTURE:building");
+        var unsafe = new CityStructureAnchorPlanner().plan(fixture.baseDir(), fixture.review(),
+                fixture.terraSenseSource(), plan);
+        assertFalse(unsafe.qualityReport().get("passed").getAsBoolean());
+        assertTrue(unsafe.qualityReport().getAsJsonArray("hardBlocks").toString().contains("ROAD_OVERLAPS_STRUCTURE"));
+    }
+
+    @Test
     void d5ReservationMaskCoversStructureEnvelopeWithoutFixedRoadAccess() throws Exception {
         Fixture fixture = fixture();
         JsonObject anchorMap = new CityStructureAnchorPlanner()

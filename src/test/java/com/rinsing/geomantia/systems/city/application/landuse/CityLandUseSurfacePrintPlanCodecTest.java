@@ -100,6 +100,21 @@ class CityLandUseSurfacePrintPlanCodecTest {
     }
 
     private static CityLandUseSurfacePrintPlan layeredPlan(long stableSeed) {
+        return layeredPlan(stableSeed, false);
+    }
+
+    @Test
+    void roundTripsRequestedAndActualAreasWithoutErasingShareAdjustment() {
+        var plan = codec.withComputedHash(layeredPlan(77L, true));
+        var decoded = codec.fromJson(codec.toJson(plan));
+        assertEquals(plan, decoded);
+        var recipe = (CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe) decoded.areas().get(0).recipe();
+        assertEquals(1, recipe.regionTraces().get(0).targetAreaBlocks());
+        assertEquals(2, recipe.regionTraces().get(0).actualAreaBlocks());
+        assertNotEquals(plan.planHash(), codec.withComputedHash(layeredPlan(77L)).planHash());
+    }
+
+    private static CityLandUseSurfacePrintPlan layeredPlan(long stableSeed, boolean adjusted) {
         BlockPoint source = new BlockPoint(10, 20);
         LandUseSurfaceSettings settings = LandUseSurfaceSettings.defaults(
                 com.rinsing.geomantia.systems.city.domain.landuse.SurfacePolicy.CULTIVATE)
@@ -129,7 +144,7 @@ class CityLandUseSurfacePrintPlanCodecTest {
                                         "region-004-bank", "role:bank")),
                         List.of(new CityLandUseSurfacePrintPlan.RegionTrace("region-001-field", "",
                                         "role:cultivated", LandscapeFillProgram.GrowthForm.PATCH,
-                                        source, null, 2, 2),
+                                        source, null, adjusted ? 1 : 2, 2),
                                 new CityLandUseSurfacePrintPlan.RegionTrace("region-002-bank", "region-001-field",
                                         "role:bank", LandscapeFillProgram.GrowthForm.CORRIDOR,
                                         new BlockPoint(12, 20), new BlockPoint(11, 20), 1, 1),
@@ -138,7 +153,7 @@ class CityLandUseSurfacePrintPlanCodecTest {
                                         new BlockPoint(13, 20), new BlockPoint(12, 20), 1, 1),
                                 new CityLandUseSurfacePrintPlan.RegionTrace("region-004-bank", "region-003-water",
                                         "role:bank", LandscapeFillProgram.GrowthForm.CORRIDOR,
-                                        new BlockPoint(14, 20), new BlockPoint(13, 20), 1, 1)));
+                                        new BlockPoint(14, 20), new BlockPoint(13, 20), adjusted ? 2 : 1, 1)));
         CityLandUseSurfacePrintPlan.AreaPrint area = new CityLandUseSurfacePrintPlan.AreaPrint(
                 "farm/surface/10_20", "farm", List.of("farm_group"), settings,
                 List.of(new LandUseAreaPlan.ScanlineSpan(20, 10, 14)), List.of(),

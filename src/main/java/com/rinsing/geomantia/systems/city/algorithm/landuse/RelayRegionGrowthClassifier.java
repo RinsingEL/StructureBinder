@@ -34,12 +34,13 @@ public final class RelayRegionGrowthClassifier {
         if (allowed.size() < request.stages().size()) throw fail("RELAY_GROWTH_MASK_TOO_SMALL_FOR_STAGES");
 
         int[] targets = targetAreas(allowed.size(), request.stages());
+        int[] allocatedTargets = allocateConnectedRoot(request, allowed, targets);
         IllegalArgumentException lastFailure = null;
         for (int attempt = 0; attempt < 32; attempt++) {
             long attemptSeed = attempt == 0 ? request.stableSeed()
                     : request.stableSeed() ^ mix64(0x72657472794cL * attempt);
             try {
-                return classifyAttempt(request, allowed, targets, attemptSeed);
+                return classifyAttempt(request, allowed, allocatedTargets, targets, attemptSeed);
             } catch (IllegalArgumentException failure) {
                 if (!retryable(failure)) throw failure;
                 lastFailure = failure;
@@ -52,6 +53,7 @@ public final class RelayRegionGrowthClassifier {
     private static Result classifyAttempt(Request request,
                                           Set<Long> allowed,
                                           int[] targets,
+                                          int[] requestedTargets,
                                           long attemptSeed) {
         Set<Long> unclaimed = new HashSet<>(allowed);
         Map<Long, CellClaim> claims = new HashMap<>(allowed.size() * 2);
@@ -69,7 +71,7 @@ public final class RelayRegionGrowthClassifier {
             RegionState region = growRegion(stageIndex, stage, parentRegionId, start, targets[stageIndex],
                     unclaimed, claims, attemptSeed, finalStage);
             regions.put(stage.regionId(), region);
-            traces.add(region.trace());
+            traces.add(region.trace(requestedTargets[stageIndex]));
         }
 
         if (!unclaimed.isEmpty() || claims.size() != allowed.size()) {
@@ -102,11 +104,13 @@ public final class RelayRegionGrowthClassifier {
                                           long stableSeed,
                                           boolean finalStage) {
         if (!unclaimed.contains(start.point())) throw fail("RELAY_GROWTH_START_ALREADY_CLAIMED:" + stage.regionId());
-        if (!finalStage && articulationPoints(unclaimed).contains(start.point())) {
+        boolean splitAtRoot = !finalStage && articulationPoints(unclaimed).contains(start.point());
+        if (splitAtRoot && start.kind() != ProvenanceKind.ROOT_SOURCE) {
             throw fail("RELAY_GROWTH_START_DISCONNECTS_REMAINDER:" + stage.regionId());
         }
         RegionState state = new RegionState(stage, parentRegionId, targetArea);
         claim(state, start.point(), start.from(), start.kind(), unclaimed, claims);
+        if (splitAtRoot) absorbRootBranches(state, start.point(), targetArea, unclaimed, claims);
         ArrayDeque<SearchFrame> history = new ArrayDeque<>();
         int backtracks = 0;
         while (true) {
@@ -151,6 +155,83 @@ public final class RelayRegionGrowthClassifier {
             claim(state, alternative.point(), alternative.from(), ProvenanceKind.REGION_FRONTIER,
                     unclaimed, claims);
         }
+    }
+
+    private static int[] allocateConnectedRoot(Request request, Set<Long> allowed, int[] requested) {
+        int[] result = requested.clone();
+        if (result.length < 2) return result;
+        Set<Long> remainder = new HashSet<>(allowed);
+        remainder.remove(key(request.source()));
+        int minimumRoot = allowed.size() - largestRootBranch(key(request.source()), remainder).size();
+        int additional = Math.max(0, minimumRoot - result[0]);
+        if (additional == 0) return result;
+        int limit = Math.max(1, (int) Math.ceil(allowed.size() * 0.01));
+        int available = 0;
+        for (int index = 1; index < result.length; index++) available += result[index] - 1;
+        if (additional > limit || additional > available) {
+            throw fail("RELAY_GROWTH_START_DISCONNECTS_REMAINDER:" + request.stages().get(0).regionId()
+                    + ":minimumRootArea=" + minimumRoot + ":target=" + requested[0]
+                    + ":adjustmentLimit=" + limit);
+        }
+        String rootRole = request.stages().get(0).roleRef();
+        for (int remaining = additional; remaining > 0; remaining--) {
+            int donor = -1;
+            for (int index = 1; index < result.length; index++) {
+                if (result[index] <= 1) continue;
+                boolean sameRole = rootRole.equals(request.stages().get(index).roleRef());
+                boolean donorSameRole = donor >= 0 && rootRole.equals(request.stages().get(donor).roleRef());
+                if (donor < 0 || sameRole && !donorSameRole
+                        || sameRole == donorSameRole && result[index] > result[donor]) donor = index;
+            }
+            result[donor]--;
+            result[0]++;
+        }
+        return result;
+    }
+
+    /** A frozen source can be a neck in a valid connected parcel. Keep that source and
+     * absorb its smaller branches as adjacent first-region growth before leaving one
+     * connected remainder. This does not reseed, drop cells, or change role budgets. */
+    private static void absorbRootBranches(RegionState state, long source, int targetArea,
+                                           Set<Long> unclaimed, Map<Long, CellClaim> claims) {
+        Set<Long> retained = largestRootBranch(source, unclaimed);
+        int requiredPrefixSize = 1 + unclaimed.size() - retained.size();
+        if (requiredPrefixSize > targetArea) {
+            throw fail("RELAY_GROWTH_START_DISCONNECTS_REMAINDER:" + state.stage().regionId()
+                    + ":minimumRootArea=" + requiredPrefixSize + ":target=" + targetArea);
+        }
+        ArrayDeque<Long> frontier = new ArrayDeque<>();
+        frontier.add(source);
+        while (!frontier.isEmpty()) {
+            long from = frontier.removeFirst();
+            for (long next : neighbors4(from)) {
+                if (!unclaimed.contains(next) || retained.contains(next)) continue;
+                claim(state, next, from, ProvenanceKind.REGION_FRONTIER, unclaimed, claims);
+                frontier.addLast(next);
+            }
+        }
+    }
+
+    private static Set<Long> largestRootBranch(long source, Set<Long> unclaimed) {
+        Set<Long> visited = new HashSet<>();
+        Set<Long> retained = Set.of();
+        for (long neighbor : neighbors4(source)) {
+            if (!unclaimed.contains(neighbor) || !visited.add(neighbor)) continue;
+            Set<Long> component = new HashSet<>();
+            ArrayDeque<Long> queue = new ArrayDeque<>();
+            queue.add(neighbor);
+            component.add(neighbor);
+            while (!queue.isEmpty()) {
+                for (long next : neighbors4(queue.removeFirst())) {
+                    if (unclaimed.contains(next) && visited.add(next)) {
+                        component.add(next);
+                        queue.addLast(next);
+                    }
+                }
+            }
+            if (component.size() > retained.size()) retained = component;
+        }
+        return retained;
     }
 
     private static List<FrontierEdge> relayCompletingCandidates(
@@ -703,7 +784,7 @@ public final class RelayRegionGrowthClassifier {
             Objects.requireNonNull(growthForm, "growthForm");
             Objects.requireNonNull(start, "start");
             expansionTrace = List.copyOf(Objects.requireNonNull(expansionTrace, "expansionTrace"));
-            if (targetAreaBlocks <= 0 || actualAreaBlocks != targetAreaBlocks
+            if (targetAreaBlocks <= 0 || actualAreaBlocks <= 0
                     || expansionTrace.size() != actualAreaBlocks) {
                 throw fail("RELAY_GROWTH_REGION_TRACE_AREA_INVALID:" + regionId);
             }
@@ -794,9 +875,9 @@ public final class RelayRegionGrowthClassifier {
 
         private int targetArea() { return targetArea; }
 
-        private RegionTrace trace() {
+        private RegionTrace trace(int requestedArea) {
             return new RegionTrace(stage.regionId(), parentRegionId, stage.roleRef(), stage.growthForm(),
-                    steps.get(0).point(), targetArea, cells.size(), steps);
+                    steps.get(0).point(), requestedArea, cells.size(), steps);
         }
     }
 }
