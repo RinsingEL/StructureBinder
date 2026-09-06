@@ -76,6 +76,16 @@ class CityLandUseWorldgenRegistryTest {
                 CityLandUseWorldgenRegistry.worldgenLedgerPath(serverRoot))).getAsJsonObject();
         assertFalse(persistedLedger.has("placementDatums"));
         assertFalse(persistedLedger.has("placementDecisions"));
+        JsonObject owner = persistedLedger.getAsJsonArray("appliedOwners").get(0).getAsJsonObject();
+        int total = 0;
+        for (String phase : List.of("Base", "Crop", "Boundary")) {
+            int prepared = owner.get("prepared" + phase + "OperationCount").getAsInt();
+            int applied = owner.get("applied" + phase + "OperationCount").getAsInt();
+            assertEquals(prepared, applied);
+            assertTrue(applied >= 0);
+            total += applied;
+        }
+        assertEquals(owner.get("appliedOperationCount").getAsInt(), total);
 
         CityLandUseWorldgenRegistry.resetForTests();
         CityLandUseWorldgenRegistry.setSurfaceBlockExistsForTests(ignored -> true);

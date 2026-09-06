@@ -122,6 +122,10 @@ public final class PlanningAreaAccessPolicy {
             }
             stamp = Math.max(stamp, treeStamp(run.resolve("automation").resolve("post_d4")));
             stamp = Math.max(stamp, treeStamp(run.resolve("city_test_runs")));
+            for (String name : List.of("active_planned_structure_registry.json",
+                    "active_city_land_use_area_plans.json")) {
+                stamp = Math.max(stamp, lastModified(root.getParent().resolve("geomantia_city_masks").resolve(name)));
+            }
             return stamp;
         } catch (IOException ignored) {
             return 0L;
@@ -143,6 +147,8 @@ public final class PlanningAreaAccessPolicy {
         JsonArray seedValues = registry != null && registry.has("citySeeds")
                 && registry.get("citySeeds").isJsonArray() ? registry.getAsJsonArray("citySeeds") : new JsonArray();
         Map<String, String> queueStatuses = queueStatuses(runDirectory);
+        Map<String, CityFootprint> footprints = CityFootprint.load(debugRoot.getParent(),
+                runDirectory.getFileName().toString(), dimensionId);
         List<CityArea> allCities = new ArrayList<>();
         for (var element : seedValues) {
             if (!element.isJsonObject()) continue;
@@ -156,7 +162,8 @@ public final class PlanningAreaAccessPolicy {
             int radius = Math.max(step, intValue(seed, "planningRadiusCells", 1) * step);
             boolean releaseReady = RELEASE_READY_STATUSES.contains(queueStatuses.getOrDefault(citySeedId, ""))
                     || released(runDirectory, citySeedId);
-            allCities.add(new CityArea(citySeedId, x, z, radius, releaseReady));
+            allCities.add(new CityArea(citySeedId, x, z, radius, releaseReady,
+                    releaseReady ? footprints.get(citySeedId) : null));
         }
 
         int gridClearance = (int) Math.ceil(step * SQRT_TWO);
@@ -475,9 +482,11 @@ public final class PlanningAreaAccessPolicy {
         }
     }
 
-    private record CityArea(String citySeedId, int x, int z, int radius, boolean releaseReady) {
+    private record CityArea(String citySeedId, int x, int z, int radius, boolean releaseReady,
+                            CityFootprint footprint) {
         double clearance(double blockX, double blockZ) {
-            return radius - distance(blockX, blockZ, x, z);
+            double seedClearance = radius - distance(blockX, blockZ, x, z);
+            return footprint == null ? seedClearance : Math.max(seedClearance, footprint.clearance(blockX, blockZ));
         }
     }
 

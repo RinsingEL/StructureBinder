@@ -17,6 +17,30 @@ class CityLandUseChunkExecutorTest {
     private final CityLandUseChunkExecutor executor = new CityLandUseChunkExecutor();
 
     @Test
+    void withdrawnFoundationReportsZeroBoundaryAndCropBatchesInsteadOfCountingTheDraft() {
+        List<CityLandUseChunkCompiler.GradingMaskCell> mask = new ArrayList<>();
+        for (int z = 0; z < 16; z++) for (int x = 0; x < 16; x++)
+            mask.add(new CityLandUseChunkCompiler.GradingMaskCell("area", x, z, true));
+        var fragment = new CityLandUseChunkCompiler.ChunkFragment(
+                CityLandUseChunkCompiler.RESULT_SCHEMA, "city", "hash", "palette", 0, 0,
+                1, 0, 0, 0, "minecraft:dirt", mask,
+                List.of(new CityLandUseChunkCompiler.SurfaceOperation("area", "plaza", 8, 8, "minecraft:stone_bricks")),
+                List.of(new CityLandUseChunkCompiler.BoundaryOperation("area", "FENCE", 8, 8, "minecraft:oak_fence")),
+                List.of(), List.of(), List.of(new CityLandUseChunkCompiler.PlatformPurposeAnchor("area", "remote",
+                CityLandUseChunkCompiler.PlatformPurpose.BUILDING,
+                new com.rinsing.geomantia.systems.city.domain.model.BlockBounds(100, 100, 101, 101))), List.of());
+        var result = executor.execute(fragment, new FakeWorld(),
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED, result.status());
+        assertEquals(0, result.appliedOperationCount());
+        assertEquals(new CityLandUseChunkExecutor.PhaseCounts(0, 0, 0, 0, 0, 0), result.phaseCounts());
+        assertEquals(1, result.naturalSurfaceSkippedCount());
+        assertEquals(0, result.occupiedBoundarySkippedCount());
+        // The former registry formula was 0 total - 1 planned boundary = -1 BASE (fatal).
+        assertEquals(-1, result.preparedOperationCount() - fragment.boundaryOperations().size());
+    }
+
+    @Test
     void landUseSurfaceMayReplaceCanopyButNotLogsOrConstructedBlocks() {
         assertTrue(CityLandUseChunkExecutor.WorldGenExecutionWorld.isLandUseReplaceable(
                 false, false, true));
@@ -47,6 +71,9 @@ class CityLandUseChunkExecutorTest {
                 CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
 
         assertEquals(CityLandUseChunkExecutor.Status.APPLIED, result.status());
+        assertEquals(2, result.phaseCounts().appliedBase());
+        assertEquals(1, result.phaseCounts().appliedCrop());
+        assertEquals(0, result.phaseCounts().appliedBoundary());
         assertTrue(world.featureWrites.contains("0,64,0=ROAD_SLAB:NONE"));
         assertTrue(world.featureWrites.contains("1,64,0=ROAD_STAIR:NORTH"));
         assertTrue(world.featureWrites.contains("2,65,0=GREEN_PLANT:NONE"));

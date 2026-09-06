@@ -360,14 +360,13 @@ public final class CityLandUseWorldgenRegistry {
             if (!claim(ownerKey)) {
                 continue;
             }
-            TrackingExecutionWorld trackedWorld = new TrackingExecutionWorld(world);
             try {
                 CityLandUseChunkExecutor.ExecutionResult result =
-                        EXECUTOR.execute(fragment, trackedWorld, eligibility);
+                        EXECUTOR.execute(fragment, world, eligibility);
                 naturalSkipped += result.naturalSurfaceSkippedCount();
                 boundarySkipped += result.occupiedBoundarySkippedCount();
                 if (result.status() == CityLandUseChunkExecutor.Status.APPLIED) {
-                    recordApplied(ownerKey, fragment, result, phaseCounts(fragment, result, trackedWorld));
+                    recordApplied(ownerKey, fragment, result, result.phaseCounts());
                     applied++;
                     appliedOperations += result.appliedOperationCount();
                 } else if (result.status() == CityLandUseChunkExecutor.Status.INELIGIBLE) {
@@ -670,7 +669,7 @@ public final class CityLandUseWorldgenRegistry {
     private static synchronized void recordApplied(OwnerKey key,
                                                    CityLandUseChunkCompiler.ChunkFragment fragment,
                                                    CityLandUseChunkExecutor.ExecutionResult result,
-                                                   PhaseCounts phaseCounts) {
+                                                   CityLandUseChunkExecutor.PhaseCounts phaseCounts) {
         if (isApplied(key)) return;
         JsonObject entry = new JsonObject();
         entry.addProperty("dimensionId", key.key().dimensionId());
@@ -755,32 +754,6 @@ public final class CityLandUseWorldgenRegistry {
             result.add(item);
         }
         return result;
-    }
-
-    private static PhaseCounts phaseCounts(
-            CityLandUseChunkCompiler.ChunkFragment fragment,
-            CityLandUseChunkExecutor.ExecutionResult result,
-            TrackingExecutionWorld world) {
-        int preparedCrop = (int) fragment.surfaceOperations().stream()
-                .filter(operation -> operation.stage() == CityLandUseChunkCompiler.SurfaceStage.CROP)
-                .filter(operation -> world.naturalSurface(operation.x(), operation.z()))
-                .count();
-        preparedCrop += (int) fragment.featureOperations().stream()
-                .filter(operation -> operation.surfaceOffset() > 0).count();
-        int terraceSkipped = result.foundationDiagnostics().terraceEdgeOccupiedSkippedCount();
-        int explicitBoundarySkipped = result.occupiedBoundarySkippedCount() - terraceSkipped;
-        if (explicitBoundarySkipped < 0) {
-            throw new IllegalStateException("CITY_LAND_USE_LEDGER_BOUNDARY_COUNTS_INVALID");
-        }
-        int preparedBoundary = fragment.boundaryOperations().size()
-                - explicitBoundarySkipped
-                + result.foundationDiagnostics().terraceEdgePreparedCount();
-        int preparedBase = result.preparedOperationCount() - preparedCrop - preparedBoundary;
-        if (preparedBase < 0 || result.preparedOperationCount() != result.appliedOperationCount()) {
-            throw new IllegalStateException("CITY_LAND_USE_LEDGER_PHASE_COUNTS_INVALID");
-        }
-        return new PhaseCounts(preparedBase, preparedBase, preparedCrop, preparedCrop,
-                preparedBoundary, preparedBoundary);
     }
 
     private static LoadedState readState(Path server) {
@@ -1415,92 +1388,6 @@ public final class CityLandUseWorldgenRegistry {
                             int chunkZ) {
     }
 
-    private record PhaseCounts(int preparedBase,
-                               int appliedBase,
-                               int preparedCrop,
-                               int appliedCrop,
-                               int preparedBoundary,
-                               int appliedBoundary) {
-    }
-
-    private record ColumnKey(int x, int z) {
-    }
-
-    private static final class TrackingExecutionWorld implements CityLandUseChunkExecutor.ExecutionWorld {
-        private final CityLandUseChunkExecutor.ExecutionWorld delegate;
-        private final Map<ColumnKey, CityLandUseChunkExecutor.ColumnSample> samples = new LinkedHashMap<>();
-
-        private TrackingExecutionWorld(CityLandUseChunkExecutor.ExecutionWorld delegate) {
-            this.delegate = Objects.requireNonNull(delegate, "delegate");
-        }
-
-        @Override
-        public CityLandUseChunkExecutor.ColumnSample sampleColumn(int worldX, int worldZ) {
-            CityLandUseChunkExecutor.ColumnSample sample = delegate.sampleColumn(worldX, worldZ);
-            if (sample != null) samples.put(new ColumnKey(worldX, worldZ), sample);
-            return sample;
-        }
-
-        @Override
-        public boolean isKnownBlock(String blockId) {
-            return delegate.isKnownBlock(blockId);
-        }
-
-        @Override
-        public boolean ensureCanWrite(int worldX, int y, int worldZ) {
-            return delegate.ensureCanWrite(worldX, y, worldZ);
-        }
-
-        @Override
-        public CityLandUseChunkExecutor.TargetState inspect(int worldX, int y, int worldZ) {
-            return delegate.inspect(worldX, y, worldZ);
-        }
-        @Override
-        public Object beginWrite(int worldX, int y, int worldZ, Object snapshot) {
-            return delegate.beginWrite(worldX, y, worldZ, snapshot);
-        }
-
-        @Override
-        public boolean setBlock(int worldX, int y, int worldZ, String blockId) {
-            return delegate.setBlock(worldX, y, worldZ, blockId);
-        }
-
-        @Override
-        public boolean setFeatureBlock(int worldX, int y, int worldZ, String blockId,
-                                       CityLandUseSurfacePrintPlan.FeatureKind kind,
-                                       CityLandUseSurfacePrintPlan.HorizontalFacing facing) {
-            return delegate.setFeatureBlock(worldX, y, worldZ, blockId, kind, facing);
-        }
-
-        @Override
-        public boolean setBoundaryBlockRaw(int worldX, int y, int worldZ, String blockId) {
-            return delegate.setBoundaryBlockRaw(worldX, y, worldZ, blockId);
-        }
-
-        @Override
-        public CityLandUseChunkExecutor.BoundaryFinalizeResult finalizeBoundaryConnections(
-                List<CityLandUseChunkExecutor.BlockPosition> positions) {
-            return delegate.finalizeBoundaryConnections(positions);
-        }
-
-        @Override
-        public void endWrite(Object snapshot) {
-            delegate.endWrite(snapshot);
-        }
-
-        @Override
-        public boolean restoreBlock(int worldX, int y, int worldZ, Object snapshot) {
-            return delegate.restoreBlock(worldX, y, worldZ, snapshot);
-        }
-
-        private boolean naturalSurface(int x, int z) {
-            CityLandUseChunkExecutor.ColumnSample sample = samples.get(new ColumnKey(x, z));
-            if (sample == null) {
-                throw new IllegalStateException("CITY_LAND_USE_LEDGER_TERRAIN_SAMPLE_MISSING:" + x + ',' + z);
-            }
-            return sample.naturalSurface();
-        }
-    }
 
     private record FeatureOwnerKey(String dimensionId, int chunkX, int chunkZ) {
     }

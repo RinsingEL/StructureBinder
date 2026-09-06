@@ -364,6 +364,8 @@ public final class CityLandUseChunkExecutor {
                     naturalSurfaceSkipped, occupiedBoundarySkipped, rolledBack);
         }
         return ExecutionResult.applied(fragment, preparedBlockCount,
+                new PhaseCounts(basePrepared.size(), baseApplied.size(), cropPrepared.size(),
+                        cropApplied.size(), boundaryPrepared.size(), boundaryApplied.size()),
                 naturalSurfaceSkipped, occupiedBoundarySkipped, foundationPlan,
                 terraceRailingPrepared, terraceGreeneryPrepared, terraceEdgeOccupiedSkipped);
     }
@@ -670,9 +672,11 @@ public final class CityLandUseChunkExecutor {
                                   int naturalSurfaceSkippedCount,
                                   int occupiedBoundarySkippedCount,
                                   boolean rollbackComplete,
-                                  FoundationDiagnostics foundationDiagnostics) {
+                                  FoundationDiagnostics foundationDiagnostics,
+                                  PhaseCounts phaseCounts) {
         private static ExecutionResult applied(CityLandUseChunkCompiler.ChunkFragment fragment,
                                                int applied,
+                                               PhaseCounts phaseCounts,
                                                int naturalSkipped,
                                                int boundarySkipped,
                                                CityLandUseMicroGrader.FoundationPlan foundationPlan,
@@ -685,7 +689,7 @@ public final class CityLandUseChunkExecutor {
                     naturalSkipped, boundarySkipped, true,
                     FoundationDiagnostics.from(fragment, foundationPlan,
                             terraceRailingPrepared, terraceGreeneryPrepared,
-                            terraceEdgeOccupiedSkipped));
+                            terraceEdgeOccupiedSkipped), phaseCounts);
         }
 
         private static ExecutionResult failed(CityLandUseChunkCompiler.ChunkFragment fragment,
@@ -697,7 +701,7 @@ public final class CityLandUseChunkExecutor {
                                               boolean rollbackComplete) {
             return new ExecutionResult(Status.FAILED, reason, fragment.cityId(), fragment.planHash(),
                     fragment.paletteHash(), fragment.chunkX(), fragment.chunkZ(), prepared, applied,
-                    naturalSkipped, boundarySkipped, rollbackComplete, FoundationDiagnostics.empty());
+                    naturalSkipped, boundarySkipped, rollbackComplete, FoundationDiagnostics.empty(), null);
         }
 
         private static ExecutionResult failed(CityLandUseChunkCompiler.ChunkFragment fragment,
@@ -711,16 +715,20 @@ public final class CityLandUseChunkExecutor {
             return new ExecutionResult(Status.FAILED, reason, fragment.cityId(), fragment.planHash(),
                     fragment.paletteHash(), fragment.chunkX(), fragment.chunkZ(), prepared, applied,
                     naturalSkipped, boundarySkipped, rollbackComplete,
-                    FoundationDiagnostics.from(fragment, foundationPlan));
+                    FoundationDiagnostics.from(fragment, foundationPlan), null);
         }
 
         private static ExecutionResult ineligible(CityLandUseChunkCompiler.ChunkFragment fragment,
                                                   String reason) {
             return new ExecutionResult(Status.INELIGIBLE, reason, fragment.cityId(), fragment.planHash(),
                     fragment.paletteHash(), fragment.chunkX(), fragment.chunkZ(), 0, 0, 0, 0, true,
-                    FoundationDiagnostics.empty());
+                    FoundationDiagnostics.empty(), null);
         }
     }
+
+    /** Actual executor batches, never reconstructed from the unfiltered plan after world mutation. */
+    public record PhaseCounts(int preparedBase, int appliedBase, int preparedCrop, int appliedCrop,
+                              int preparedBoundary, int appliedBoundary) { }
 
     public record FoundationDiagnostics(
             int purposeAnchorCount,

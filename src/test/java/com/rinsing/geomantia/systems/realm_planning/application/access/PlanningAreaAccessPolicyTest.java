@@ -105,6 +105,72 @@ class PlanningAreaAccessPolicyTest {
                 new PlanningAreaAccessConfig(true, 2048, 3072, Set.of("minecraft:overworld")), 160);
     }
 
+    @Test
+    void realQadirActivatedStructuresAreAllExplorable() throws Exception {
+        String configured = System.getenv("GEOMANTIA_QADIR_RUN");
+        org.junit.jupiter.api.Assumptions.assumeTrue(configured != null && !configured.isBlank());
+        Path run = Path.of(configured);
+        PlanningAreaAccessPolicy actual = new PlanningAreaAccessPolicy(run.getParent(),
+                new PlanningAreaAccessConfig(true, 2048, 3072, Set.of("minecraft:overworld")), 288);
+        JsonObject active = com.google.gson.JsonParser.parseString(Files.readString(run.getParent().getParent()
+                .resolve("geomantia_city_masks/active_planned_structure_registry.json"))).getAsJsonObject();
+        int checked = 0;
+        for (var registry : active.getAsJsonArray("registries")) {
+            if (!run.getFileName().toString().equals(registry.getAsJsonObject().get("runId").getAsString())) continue;
+            for (var structure : registry.getAsJsonObject().getAsJsonArray("plannedStructures")) {
+                JsonObject anchor = structure.getAsJsonObject().getAsJsonObject("anchorBlock");
+                assertTrue(actual.evaluate("minecraft:overworld", anchor.get("x").getAsDouble(),
+                        anchor.get("z").getAsDouble()).allowed(), structure.getAsJsonObject().get("anchorId").toString());
+                checked++;
+            }
+        }
+        assertEquals(83, checked);
+        assertTrue(actual.evaluate("minecraft:overworld", -2980, 5430).allowed());
+        assertFalse(actual.evaluate("minecraft:overworld", -7000, 7000).allowed());
+    }
+
+    @Test
+    void releasedCityIncludesActivatedFootprintButNotOtherRunsOrUnreleasedCities() throws Exception {
+        writeRun("current", 5000, -8192, 8192, -8192, 8192, List.of(
+                new Seed("ready", 4096, 0, 1, "waiting_for_generation"),
+                new Seed("pending", 6000, 0, 1, "pending")));
+        write(temporaryDirectory.resolve("geomantia_city_masks/active_planned_structure_registry.json"),
+                com.google.gson.JsonParser.parseString("""
+                {"registries":[
+                  {"runId":"current","cityId":"ready","plannedStructures":[
+                    {"maskEnvelope":{"minX":4300,"maxX":6500,"minZ":-20,"maxZ":20}}]},
+                  {"runId":"other","cityId":"ready","plannedStructures":[
+                    {"maskEnvelope":{"minX":-7000,"maxX":-6000,"minZ":-20,"maxZ":20}}]}
+                ]}
+                """).getAsJsonObject());
+        assertTrue(policy().evaluate("minecraft:overworld", 4600, 0).allowed());
+        assertEquals("UNRELEASED_CITY_RESERVED", policy().evaluate("minecraft:overworld", 6000, 0).reasonCode());
+        assertFalse(policy().evaluate("minecraft:overworld", -6500, 0).allowed());
+        assertFalse(policy().evaluate("minecraft:overworld", 4700, 500).allowed());
+    }
+
+    @Test
+    void activatedOutdoorSpansAndFeatureCellsExtendCityAndRefreshSourceStamp() throws Exception {
+        writeRun("outdoor", 5000, -8192, 8192, -8192, 8192,
+                List.of(new Seed("ready", 4096, 0, 1, "waiting_for_generation")));
+        write(temporaryDirectory.resolve("geomantia_city_masks/active_planned_structure_registry.json"),
+                com.google.gson.JsonParser.parseString("""
+                {"registries":[{"runId":"outdoor","cityId":"ready","plannedStructures":[]}]}
+                """).getAsJsonObject());
+        long before = PlanningAreaAccessPolicy.sourceStamp(temporaryDirectory.resolve("realm_debug"));
+        Path active = temporaryDirectory.resolve("geomantia_city_masks/active_city_land_use_area_plans.json");
+        write(active, com.google.gson.JsonParser.parseString("""
+                {"plans":[{"cityId":"ready","dimensionId":"minecraft:overworld",
+                  "areaPlan":{"areas":[{"memberSpans":[{"minX":4600,"maxX":4800,"z":600}]}]},
+                  "surfacePrintPlan":{"featureCells":[{"x":4900,"z":700}]}}]}
+                """).getAsJsonObject());
+        Files.setLastModifiedTime(active, FileTime.fromMillis(before + 10000));
+        assertTrue(PlanningAreaAccessPolicy.sourceStamp(temporaryDirectory.resolve("realm_debug")) > before);
+        assertTrue(policy().evaluate("minecraft:overworld", 4800, 600).allowed());
+        assertTrue(policy().evaluate("minecraft:overworld", 4900, 700).allowed());
+        assertFalse(policy().evaluate("minecraft:overworld", 5500, 700).allowed());
+    }
+
     private void writeRun(String runId, long queueTimestamp, int minX, int maxX, int minZ, int maxZ,
                           List<Seed> values) throws Exception {
         Path run = temporaryDirectory.resolve("realm_debug").resolve(runId);
