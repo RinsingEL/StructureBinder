@@ -145,18 +145,7 @@ public final class CityBlueprintValidator {
                         "DIRECTION requires a compass preference; other relation kinds require NONE.");
             }
         }
-        if (blueprint.groups().size() > 1) {
-            for (int index = 0; index < blueprint.groups().size(); index++) {
-                CityBlueprint.Group group = blueprint.groups().get(index);
-                if (group.expansionPolicy().allowRelationConnection()
-                        && !relatedGroupIds.contains(group.groupId())) {
-                    add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_FUNCTION_AREA_RELATION_UNSPECIFIED,
-                            "$.groups[" + index + "].expansionPolicy.allowRelationConnection",
-                            "A relation-enabled Group in a multi-Group city must appear in at least one relation: "
-                                    + group.groupId());
-                }
-            }
-        }
+        // Nearby relation-enabled groups may connect automatically after their initial arrays exist.
         requireRef(issues, catalog.styleProfileRefs(), blueprint.styleProfile().profileRef(),
                 CityBlueprintReasonCode.CITY_BLUEPRINT_STYLE_PROFILE_UNKNOWN, "$.styleProfile.profileRef");
         requireRef(issues, catalog.roadProfileRefs(), blueprint.roadProfile().profileRef(),

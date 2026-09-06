@@ -13,7 +13,7 @@
   "gui.geomantia.adventurer_map.current_realm": "当前国度",
   "gui.geomantia.adventurer_map.current_city": "当前城市",
   "gui.geomantia.adventurer_map.city_status": "城市状态",
-  "gui.geomantia.adventurer_map.city_counts": "已完成 %s · 剩余 %s",
+  "gui.geomantia.adventurer_map.city_counts": "规划就绪 %s · 待规划 %s",
   "gui.geomantia.adventurer_map.debug_title": "Debug 信息",
   "gui.geomantia.adventurer_map.stage.t1": "T1 国度设定",
   "gui.geomantia.adventurer_map.stage.t2": "T2 国度核心选择",

@@ -16,6 +16,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandUseMicroGraderTest {
     @Test
+    void frozenPlatformDoesNotFollowAnOwnerWhoseEntireTerrainIsPitBottom() {
+        var mask = gradingMask().stream().map(cell -> new CityLandUseChunkCompiler.GradingMaskCell(
+                cell.areaId(),cell.x(),cell.z(),true,68)).toList();
+        var decisions = CityLandUseMicroGrader.planFoundation(fragment(mask),new FakeTerrain(44));
+        assertEquals(List.of(new CityLandUseMicroGrader.FoundationDecision("area",8,8,44,68,
+                CityLandUseMicroGrader.FoundationMode.FILL)),decisions);
+        var flat = CityLandUseMicroGrader.planFoundation(fragment(mask),new FakeTerrain(68));
+        assertEquals(68,flat.get(0).targetY());
+    }
+
+    @Test
     void raisesSmallEnclosedDepressionToLocalMedian() {
         FakeTerrain terrain = new FakeTerrain(64);
         terrain.height(8, 8, 62);
@@ -327,6 +338,25 @@ class CityLandUseMicroGraderTest {
         assertTrue(split.stream().anyMatch(stair -> stair.x() == 7 && stair.z() == 11
                 && stair.targetY() == 64
                 && stair.facing() == CityLandUseSurfacePrintPlan.HorizontalFacing.NORTH));
+    }
+
+    @Test
+    void shortFrontRunKeepsAvailableSideWhenOtherFlightIsOutsideFoundation() {
+        var base = foundationFragment(platformSurfaces(), horizontalRoad(7, 12, 8));
+        var mask = base.gradingMaskCells().stream()
+                .filter(cell -> !(cell.x() == 7 && cell.z() >= 5 && cell.z() < 8)).toList();
+        var fragment = new CityLandUseChunkCompiler.ChunkFragment(base.schema(), base.cityId(),
+                base.planHash(), base.paletteHash(), base.chunkX(), base.chunkZ(), base.relevantCellCount(),
+                base.footprintExcludedCount(), base.corridorExcludedCount(), base.gateExcludedCount(),
+                base.microFillBlockId(), mask, base.surfaceOperations(), base.boundaryOperations(),
+                base.featureOperations(), base.gradingFeatureOperations(), base.platformPurposeAnchors(),
+                base.platformAccessDemands());
+        var plan = CityLandUseMicroGrader.planFoundationPlatform(fragment, splitTerrain());
+        var stairs = plan.stairs().stream().filter(stair ->
+                stair.mode() == CityLandUseMicroGrader.StairMode.SPLIT).toList();
+        assertEquals(4, stairs.size());
+        assertTrue(stairs.stream().allMatch(stair -> stair.z() >= 8));
+        assertTrue(stairs.stream().anyMatch(stair -> stair.z() == 11 && stair.targetY() == 64));
     }
 
     @Test

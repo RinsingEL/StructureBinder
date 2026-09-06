@@ -286,15 +286,20 @@ final class CityPlanningEndpointHandler {
         Path semanticSourcePath = outputDirectory.resolve("semantic_profile_source.json");
         Path qualityPath = outputDirectory.resolve("quality_report.json");
         Files.writeString(anchorPlanPath, CityJson.GSON.toJson(result.structureAnchorPlan()));
-        Files.writeString(anchorMapPath, CityJson.GSON.toJson(result.structureAnchorMap()));
+        String anchorMapRaw = CityJson.GSON.toJson(result.structureAnchorMap());
+        Files.writeString(anchorMapPath, anchorMapRaw);
         Files.writeString(semanticSourcePath, CityJson.GSON.toJson(
                 result.structureAnchorMap().getAsJsonObject("semanticProfileSource")));
-        Files.writeString(qualityPath, CityJson.GSON.toJson(result.qualityReport()));
+        // Bind acceptance to the exact finalized map, not just to the accepted design input.
+        JsonObject finalQualityReport = result.qualityReport().deepCopy();
+        finalQualityReport.addProperty("sourceAnchorMapHash", sha256(anchorMapRaw));
+        Files.writeString(qualityPath, CityJson.GSON.toJson(finalQualityReport));
         CityStructureLandingPreviewRenderer.D4PreviewArtifacts previews =
                 new CityStructureLandingPreviewRenderer().renderD4WithGroupDetails(
                         result.structureAnchorMap(), reviewPackage, landscapeCapacityPlan, groupExtentMap,
                         compileTrace, outputDirectory);
         JsonObject response = result.asJson();
+        response.add("qualityReport", finalQualityReport);
         JsonObject artifacts = new JsonObject();
         artifacts.addProperty("structureAnchorPlan", debugRef(debugRoot, anchorPlanPath));
         artifacts.addProperty("structureAnchorMap", debugRef(debugRoot, anchorMapPath));
@@ -2434,11 +2439,13 @@ final class CityPlanningEndpointHandler {
     }
 
     static boolean workflowBlueprintAnchorMapCurrent(Path anchorMapPath, Path blueprintDir) {
+        Path qualityPath = anchorMapPath.resolveSibling("quality_report.json");
         Path contextPath = blueprintDir.resolve("city_blueprint_context.json");
         Path validationPath = blueprintDir.resolve("city_blueprint_validation_report.json");
         Path submissionPath = blueprintDir.resolve("city_blueprint_submission_trace.json");
         Path blueprintPath = blueprintDir.resolve("city_blueprint.json");
         if (!Files.isRegularFile(anchorMapPath)
+                || !Files.isRegularFile(qualityPath)
                 || !Files.isRegularFile(contextPath)
                 || !Files.isRegularFile(validationPath)
                 || !Files.isRegularFile(submissionPath)
@@ -2446,7 +2453,11 @@ final class CityPlanningEndpointHandler {
             return false;
         }
         try {
-            JsonObject anchorMap = JsonParser.parseString(Files.readString(anchorMapPath)).getAsJsonObject();
+            String anchorMapRaw = Files.readString(anchorMapPath);
+            JsonObject anchorMap = JsonParser.parseString(anchorMapRaw).getAsJsonObject();
+            JsonObject quality = JsonParser.parseString(Files.readString(qualityPath)).getAsJsonObject();
+            if (!booleanValue(quality, "passed", false)
+                    || !sha256(anchorMapRaw).equals(stringValue(quality, "sourceAnchorMapHash", ""))) return false;
             JsonObject context = JsonParser.parseString(Files.readString(contextPath)).getAsJsonObject();
             JsonObject validation = JsonParser.parseString(Files.readString(validationPath)).getAsJsonObject();
             JsonObject submission = JsonParser.parseString(Files.readString(submissionPath)).getAsJsonObject();

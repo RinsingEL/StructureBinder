@@ -43,6 +43,7 @@ final class CityInternalStreetPlanner {
                     ? centerSkeleton(groupId, parameters, anchors, plannedSpanBlocks, frame) : List.of();
             default -> List.of();
         };
+        planned = CityStreetObstacleRouter.repair(planned, requiredAnchors);
         planned.forEach(CityInternalStreetPlanner::markReservedSkeleton);
         return List.copyOf(planned);
     }
@@ -674,6 +675,7 @@ final class CityInternalStreetPlanner {
         int width = 3;
         BlockPoint start = outsideBody(entrance.point(), entrance.direction(), source.body(), width);
         List<BlockBounds> searchParts = new ArrayList<>(anchors.stream().map(Anchor::body).toList());
+        if (!roadPointClear(start, width, anchors)) return null;
         network.stream().map(CityInternalStreetPlanner::bounds).forEach(searchParts::add);
         searchParts.add(new BlockBounds(start.x(), start.z(), start.x(), start.z()));
         BlockBounds search = expand(union(searchParts), 16);

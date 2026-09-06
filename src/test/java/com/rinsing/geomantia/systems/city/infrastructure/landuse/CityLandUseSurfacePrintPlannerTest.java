@@ -267,6 +267,33 @@ class CityLandUseSurfacePrintPlannerTest {
     }
 
     @Test
+    void freezesOneWholeMainRoadGradeAcrossManyOwnerChunks() {
+        var baseTerrain = terrain(new BlockBounds(0, 0, 159, 63), false);
+        var gradedTerrain = new LandUseTerrainField(baseTerrain.schema(), baseTerrain.cityId(),
+                baseTerrain.planningBounds(), baseTerrain.cellStepBlocks(), baseTerrain.cells().stream()
+                .map(cell -> new LandUseTerrainField.Cell(cell.cellX(), cell.cellZ(), cell.blockMinX(),
+                        cell.blockMinZ(), cell.cellStepBlocks(), cell.blockMinX() < 72 ? 80 : 56,
+                        0, 0, 0, false, 0, cell.waterDistance(), cell.biomeId(), "plain",
+                        cell.landformPatchId(), true)).toList());
+        var road = new LandUseSourceResolver.RoadBand("long-main", "network", "CITY_MAIN_ROAD",
+                new BlockPoint(0, 48), new BlockPoint(144, 48), new BlockBounds(0, 45, 144, 51),
+                7, "STAIR_SLAB_STAIR");
+        var plan = new CityLandUseSurfacePrintPlanner().plan(areaPlan(), List.of(
+                group("farm_group", SurfacePolicy.CULTIVATE, new BlockBounds(12, 5, 14, 7)),
+                group("market_group", SurfacePolicy.PAVE, new BlockBounds(42, 2, 43, 3))),
+                gradedTerrain, List.of(road), List.of(), List.of());
+        var center = plan.featureCells().stream().filter(cell -> cell.z() == 48)
+                .sorted(java.util.Comparator.comparingInt(CityLandUseSurfacePrintPlan.FeatureCell::x)).toList();
+        assertEquals(145, center.size());
+        assertEquals(80, center.get(0).targetSurfaceY());
+        assertEquals(56, center.get(144).targetSurfaceY());
+        assertTrue(center.get(71).targetSurfaceY() < 80);
+        for (int i=1;i<center.size();i++)
+            assertTrue(Math.abs(center.get(i).targetSurfaceY()-center.get(i-1).targetSurfaceY()) <= 1);
+        assertTrue(center.stream().anyMatch(cell -> cell.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR));
+    }
+
+    @Test
     void bridgeUsesIndependentDeckAndRailMaterials() {
         LandUseSourceResolver.RoadBand bridge = new LandUseSourceResolver.RoadBand(
                 "bridge::1", "network", "CITY_BRIDGE", new BlockPoint(20, 18),

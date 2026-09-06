@@ -30,7 +30,7 @@ final class CityDesignGuide {
         guide.add("availableArrayCapabilities", algorithms);
         guide.addProperty("composition", "Use arrayCompositions to relate complete child groups; choose a catalog composition profile for connectionPlan. Building arrays and inter-group composition profiles are different namespaces.");
         guide.addProperty("roads", "Only explicit CONNECTION relations create main roads, and they must serve real destinations. Mere adjacency or a desire to fill a gap is not a road or bridge request.");
-        guide.addProperty("recovery", "On a design rejection use the exact field or local conflict evidence, preserve unchanged choices and resubmit a complete revision. Missing author metadata or content is a host blocker, not a design exercise.");
+        guide.addProperty("recovery", "On a design rejection preserve unchanged groups. Prefer baseBlueprintHash + blueprintPatch (replace-only JSON Pointer) to change only the reported group or relation. Do not change generationSeed. The host reuses successful exact-input array checkpoints; changed terrain, placement inputs or occupied dependencies invalidate them. Shared roads and final safety are always rechecked. Missing author metadata or program geometry failures are host blockers, not a redesign request.");
         return guide;
     }
 }

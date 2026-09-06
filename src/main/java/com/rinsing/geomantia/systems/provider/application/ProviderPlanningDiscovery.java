@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.realm_planning.WorldSurveySettingsConfig;
+import com.rinsing.geomantia.systems.city.application.CityTestRunLayout;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -302,8 +303,20 @@ public final class ProviderPlanningDiscovery {
                 fileStamp(runDirectory.resolve("realm_profiles.json")),
                 fileStamp(runDirectory.resolve("realm_coordinate_selections.json")),
                 fileStamp(runDirectory.resolve("t3_report.json")),
-                fileStamp(runDirectory.resolve("city_seed_registry.json")));
+                fileStamp(runDirectory.resolve("city_seed_registry.json")),
+                stage == Stage.CITY ? cityDecisionRevision(runDirectory, cityId) : "");
         return new PlanningStep(stage, runId, realmId, cityId, nextAction, state, runDirectory, images, identity);
+    }
+
+    private static String cityDecisionRevision(Path runDirectory, String cityId) {
+        String safeCityId = cityId.replaceAll("[^A-Za-z0-9._-]", "_");
+        JsonObject job = readObject(runDirectory.resolve("automation/post_d4").resolve(safeCityId + ".json"));
+        Path blueprint = CityTestRunLayout.open(runDirectory, cityId).stepDirectory(CityTestRunLayout.BLUEPRINT);
+        JsonObject budget = readObject(blueprint.resolve("city_blueprint_failure_budget.json"));
+        // A new compile failure is a new decision even when CITY/submit/status are unchanged.
+        // Never key this on updatedAt/mtime: polling and preparing the same context refresh those.
+        return String.join(":", string(job, "attempt"), string(job, "contextId"),
+                string(budget, "contextId"), string(budget, "failureCount"));
     }
 
     private static String fileStamp(Path path) {

@@ -60,26 +60,70 @@ public final class CityLandUseChunkExecutor {
         Map<ColumnKey, ColumnSample> terrain = new HashMap<>();
         CityLandUseMicroGrader.TerrainView terrainView = (x, z) ->
                 terrain.computeIfAbsent(new ColumnKey(x, z), ignored -> requiredColumn(world, x, z));
+        Map<ColumnKey, ColumnSample> designTerrain = new HashMap<>();
+        CityLandUseMicroGrader.TerrainView designView = (x, z) -> designTerrain.computeIfAbsent(
+                new ColumnKey(x, z), ignored -> Objects.requireNonNull(world.sampleDesignColumn(x, z)));
         Map<ColumnKey, CityLandUseMicroGrader.FillDecision> fillByColumn = new HashMap<>();
         for (CityLandUseMicroGrader.FillDecision decision
-                : CityLandUseMicroGrader.plan(fragment, terrainView)) {
+                : CityLandUseMicroGrader.plan(fragment, designView)) {
             fillByColumn.put(new ColumnKey(decision.x(), decision.z()), decision);
         }
         CityLandUseMicroGrader.FoundationPlan foundationPlan =
-                CityLandUseMicroGrader.planFoundationPlatform(fragment, terrainView);
+                CityLandUseMicroGrader.planFoundationPlatform(fragment, designView);
         CityLandUseMicroGrader.AccessOutcome unresolvedAccess = foundationPlan.accessOutcomes().stream()
                 .filter(outcome -> outcome.status() == CityLandUseMicroGrader.AccessStatus.FAILED)
                 .findFirst().orElse(null);
         if (unresolvedAccess != null) {
+            captureAccessFailure(fragment, designTerrain, foundationPlan);
             return ExecutionResult.failed(fragment, unresolvedAccess.reasonCode(), 0, 0,
                     0, 0, true, foundationPlan);
         }
         Map<ColumnKey, CityLandUseMicroGrader.FoundationDecision> foundationByColumn = new HashMap<>();
         for (CityLandUseMicroGrader.FoundationDecision decision : foundationPlan.decisions()) {
-            foundationByColumn.put(new ColumnKey(decision.x(), decision.z()), decision);
+            ColumnKey key = new ColumnKey(decision.x(), decision.z());
+            ColumnSample actual = terrainView.sample(decision.x(), decision.z());
+            int delta = decision.targetY() - actual.surfaceY();
+            var mode = decision.mode();
+            if (mode != CityLandUseMicroGrader.FoundationMode.PRESERVE) {
+                if (delta > CityLandUseMicroGrader.FOUNDATION_MAX_FILL_DEPTH_BLOCKS
+                        || -delta > CityLandUseMicroGrader.FOUNDATION_MAX_CUT_DEPTH_BLOCKS) {
+                    return ExecutionResult.failed(fragment, "CITY_FOUNDATION_DESIGN_TERRAIN_CONFLICT",
+                            0, 0, 0, 0, true, foundationPlan);
+                }
+                mode = delta < 0 ? CityLandUseMicroGrader.FoundationMode.CUT
+                        : CityLandUseMicroGrader.FoundationMode.FILL;
+            }
+            foundationByColumn.put(key, new CityLandUseMicroGrader.FoundationDecision(decision.areaId(),
+                    decision.x(), decision.z(), actual.surfaceY(), decision.targetY(), mode));
+        }
+        List<CityLandUseChunkCompiler.SurfaceOperation> surfaceOperations =
+                new ArrayList<>(fragment.surfaceOperations());
+        Set<ColumnKey> surfaceColumns = new HashSet<>();
+        Set<ColumnKey> frozenRoadColumns = new HashSet<>();
+        surfaceOperations.forEach(operation -> surfaceColumns.add(new ColumnKey(operation.x(), operation.z())));
+        for (var feature : fragment.featureOperations()) {
+            if (feature.targetSurfaceY() == null) continue;
+            ColumnKey key = new ColumnKey(feature.x(), feature.z());
+            frozenRoadColumns.add(key);
+            ColumnSample column = terrainView.sample(feature.x(), feature.z());
+            int targetY = feature.targetSurfaceY();
+            int delta = targetY - column.surfaceY();
+            if (delta > CityLandUseMicroGrader.FOUNDATION_MAX_FILL_DEPTH_BLOCKS
+                    || -delta > CityLandUseMicroGrader.FOUNDATION_MAX_CUT_DEPTH_BLOCKS
+                    || delta != 0 && !column.naturalSurface()) {
+                return ExecutionResult.failed(fragment, "CITY_ROAD_FROZEN_GRADE_TERRAIN_CONFLICT",
+                        0, 0, 0, 0, true, foundationPlan);
+            }
+            foundationByColumn.put(key, new CityLandUseMicroGrader.FoundationDecision(feature.sourceId(),
+                    feature.x(), feature.z(), column.surfaceY(), targetY,
+                    delta < 0 ? CityLandUseMicroGrader.FoundationMode.CUT
+                            : CityLandUseMicroGrader.FoundationMode.FILL));
+            if (surfaceColumns.add(key)) surfaceOperations.add(new CityLandUseChunkCompiler.SurfaceOperation(
+                    feature.sourceId(), "road", feature.x(), feature.z(), "minecraft:stone_bricks"));
         }
         Map<ColumnKey, CityLandUseMicroGrader.StairDecision> platformStairByColumn = new HashMap<>();
         for (CityLandUseMicroGrader.StairDecision stair : foundationPlan.stairs()) {
+            if (frozenRoadColumns.contains(new ColumnKey(stair.x(), stair.z()))) continue;
             platformStairByColumn.put(new ColumnKey(stair.x(), stair.z()), stair);
         }
         Map<ColumnKey, Integer> plannedSurfaceY = new HashMap<>();
@@ -88,7 +132,7 @@ public final class CityLandUseChunkExecutor {
         Set<ColumnKey> preparedCutColumns = new HashSet<>();
         Set<ColumnKey> preservedFoundationColumns = new HashSet<>();
         Set<ColumnKey> openWaterColumns = new HashSet<>();
-        for (CityLandUseChunkCompiler.SurfaceOperation operation : fragment.surfaceOperations()) {
+        for (CityLandUseChunkCompiler.SurfaceOperation operation : surfaceOperations) {
             ColumnKey key = new ColumnKey(operation.x(), operation.z());
             ColumnSample column = terrainView.sample(operation.x(), operation.z());
             CityLandUseMicroGrader.FoundationDecision foundation = foundationByColumn.get(key);
@@ -113,11 +157,14 @@ public final class CityLandUseChunkExecutor {
                     : foundation != null ? foundation.targetY()
                     : fill == null ? column.surfaceY() : fill.targetY();
             boolean shouldFill = foundation != null
-                    ? foundation.mode() == CityLandUseMicroGrader.FoundationMode.FILL : fill != null;
+                    ? foundation.mode() == CityLandUseMicroGrader.FoundationMode.FILL
+                            && targetSurfaceY > column.surfaceY()
+                    : fill != null && targetSurfaceY > column.surfaceY();
             if (shouldFill && preparedFillColumns.add(key)) {
                 for (int y = column.surfaceY() + 1; y < targetSurfaceY; y++) {
                     PreparedMutation mutation = prepare(world, operation.areaId(), OperationPhase.MICRO_FILL,
-                            operation.x(), y, operation.z(), fragment.microFillBlockId(), true);
+                            operation.x(), y, operation.z(), frozenRoadColumns.contains(key)
+                                    ? "minecraft:stone_bricks" : fragment.microFillBlockId(), true);
                     if (mutation.failureReason() != null) {
                         return ExecutionResult.failed(fragment, mutation.failureReason(),
                                 preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
@@ -333,7 +380,7 @@ public final class CityLandUseChunkExecutor {
 
         for (CityLandUseMicroGrader.StairDecision stair : foundationPlan.stairs()) {
             ColumnKey key = new ColumnKey(stair.x(), stair.z());
-            if (materializedPlatformStairs.contains(key)) continue;
+            if (materializedPlatformStairs.contains(key) || frozenRoadColumns.contains(key)) continue;
             PreparedMutation mutation = prepareFeature(world, platformStairOperation(stair), stair.targetY(),
                     baseMutationClearsTarget(basePrepared, stair.x(), stair.targetY(), stair.z()));
             if (mutation.failureReason() != null) {
@@ -536,6 +583,10 @@ public final class CityLandUseChunkExecutor {
                     "CITY_LAND_USE_TARGET_STATE_UNAVAILABLE");
         }
         if (requireReplaceable && !target.replaceable()) {
+            if (!System.getProperty("geomantia.landUseFailureCaptureDir", "").isBlank()) {
+                LOGGER.warn("LandUse occupied target: area={} phase={} pos={},{},{} requested={} actual={}",
+                        areaId, phase, x, y, z, blockId, target.snapshot());
+            }
             return PreparedMutation.failed(areaId, phase, x, y, z, blockId,
                     switch (phase) {
                         case BOUNDARY -> "CITY_LAND_USE_BOUNDARY_TARGET_OCCUPIED";
@@ -619,6 +670,11 @@ public final class CityLandUseChunkExecutor {
 
     public interface ExecutionWorld {
         ColumnSample sampleColumn(int worldX, int worldZ);
+
+        /** Immutable terrain intent; the runtime implementation must not read placed blocks. */
+        default ColumnSample sampleDesignColumn(int worldX, int worldZ) {
+            return sampleColumn(worldX, worldZ);
+        }
 
         boolean isKnownBlock(String blockId);
 
@@ -750,6 +806,39 @@ public final class CityLandUseChunkExecutor {
             return new ExecutionResult(Status.INELIGIBLE, reason, fragment.cityId(), fragment.planHash(),
                     fragment.paletteHash(), fragment.chunkX(), fragment.chunkZ(), 0, 0, 0, 0, true,
                     FoundationDiagnostics.empty(), null);
+        }
+    }
+
+    /** Opt-in local reproduction capture; never changes generation or its failure result. */
+    private static void captureAccessFailure(CityLandUseChunkCompiler.ChunkFragment fragment,
+                                             Map<ColumnKey, ColumnSample> terrain,
+                                             CityLandUseMicroGrader.FoundationPlan plan) {
+        String directory = System.getProperty("geomantia.landUseFailureCaptureDir", "").trim();
+        if (directory.isEmpty()) return;
+        try {
+            var gson = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
+            var capture = new com.google.gson.JsonObject();
+            capture.add("fragment", gson.toJsonTree(fragment));
+            capture.add("foundationPlan", gson.toJsonTree(plan));
+            var samples = new com.google.gson.JsonArray();
+            terrain.forEach((key, sample) -> {
+                var item = gson.toJsonTree(sample).getAsJsonObject();
+                item.addProperty("x", key.x());
+                item.addProperty("z", key.z());
+                samples.add(item);
+            });
+            capture.add("terrain", samples);
+            var root = java.nio.file.Path.of(directory).toAbsolutePath().normalize();
+            java.nio.file.Files.createDirectories(root);
+            var target = root.resolve("owner_" + fragment.chunkX() + "_" + fragment.chunkZ() + ".json");
+            try {
+                java.nio.file.Files.writeString(target, gson.toJson(capture),
+                        java.nio.file.StandardOpenOption.CREATE_NEW);
+            } catch (java.nio.file.FileAlreadyExistsException ignored) {
+                // Keep the first actual failing input, not a later retry's partially changed terrain.
+            }
+        } catch (Exception failure) {
+            LOGGER.warn("Could not capture LandUse access failure", failure);
         }
     }
 
@@ -1009,7 +1098,21 @@ public final class CityLandUseChunkExecutor {
         }
 
         @Override
+        public ColumnSample sampleDesignColumn(int worldX, int worldZ) {
+            var server = level.getLevel();
+            var source = server.getChunkSource();
+            return com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityWorldgenStructurePlacer
+                    .sampleDesignTerrain(source.getGenerator(), server.registryAccess(), source.randomState(),
+                            server, worldX, worldZ);
+        }
+
+        @Override
         public ColumnSample sampleColumn(int worldX, int worldZ) {
+            if (level instanceof net.minecraft.server.level.ServerLevel serverLevel
+                    && serverLevel.getChunkSource().getChunkNow(worldX >> 4, worldZ >> 4) == null) {
+                throw new IllegalStateException("CITY_LAND_USE_TERRAIN_CHUNK_NOT_READY: "
+                        + (worldX >> 4) + "," + (worldZ >> 4));
+            }
             int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, worldX, worldZ) - 1;
             BlockState state = getBlockState(new BlockPos(worldX, y, worldZ));
             ResourceLocation key = BuiltInRegistries.BLOCK.getKey(state.getBlock());

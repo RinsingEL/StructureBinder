@@ -472,8 +472,30 @@ public final class CityLandUseWorldgenRegistry {
 
         CityLandUseChunkStatusPreflight.OwnerChunk owner = job.owners().get(job.cursor());
         if (job.pendingLoad() == null) {
-            job.beginLoad(owner, job.level().getChunkSource().getChunkFuture(
-                    owner.chunkX(), owner.chunkZ(), ChunkStatus.FULL, true));
+            // Execution-time grading reads a mask halo plus reference columns. Loading only the
+            // owner makes ServerLevel.getHeight return minY for unloaded neighbouring chunks.
+            // Await the read neighbourhood asynchronously; never join unfinished chunk work here.
+            int radius = (CityLandUseMicroGrader.MASK_HALO_BLOCKS
+                    + CityLandUseMicroGrader.REFERENCE_RADIUS_BLOCKS + 15) / 16;
+            List<CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>>> reads = new ArrayList<>();
+            CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> ownerLoad = null;
+            for (int dz = -radius; dz <= radius; dz++) {
+                for (int dx = -radius; dx <= radius; dx++) {
+                    var load = job.level().getChunkSource().getChunkFuture(
+                            owner.chunkX() + dx, owner.chunkZ() + dz, ChunkStatus.FULL, true);
+                    reads.add(load);
+                    if (dx == 0 && dz == 0) ownerLoad = load;
+                }
+            }
+            var loadedOwner = ownerLoad;
+            job.beginLoad(owner, CompletableFuture.allOf(reads.toArray(CompletableFuture[]::new))
+                    .thenApply(ignored -> {
+                        for (var read : reads) {
+                            var result = read.join(); // allOf completed every dependency
+                            if (result.right().isPresent()) return result;
+                        }
+                        return loadedOwner.join();
+                    }));
             return true;
         }
         if (!job.pendingLoad().isDone()) return false;

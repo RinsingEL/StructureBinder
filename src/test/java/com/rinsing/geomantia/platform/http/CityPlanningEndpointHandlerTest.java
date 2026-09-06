@@ -1997,7 +1997,7 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
-    void workflowBlueprintD4SkipsOnlyForCurrentAcceptedSourceIdentity() throws Exception {
+    void workflowBlueprintD4SkipsOnlyForCurrentAcceptedSourceAndFinalAcceptance() throws Exception {
         Path directory = Files.createTempDirectory("city-workflow-blueprint-d4-identity-test");
         Path blueprintDir = directory.resolve("blueprint");
         Files.createDirectories(blueprintDir);
@@ -2024,8 +2024,24 @@ class CityPlanningEndpointHandlerTest {
                  "contextId":"%s","sourceBlueprintHash":"%s"}}
                 """.formatted(contextId, blueprintHash));
 
+        Path qualityPath = directory.resolve("quality_report.json");
+        assertFalse(CityPlanningEndpointHandler.workflowBlueprintAnchorMapCurrent(anchorMapPath, blueprintDir));
+        Files.writeString(qualityPath, "{\"passed\":true}");
+        assertFalse(CityPlanningEndpointHandler.workflowBlueprintAnchorMapCurrent(anchorMapPath, blueprintDir));
+        JsonObject quality = new JsonObject();
+        quality.addProperty("passed", false);
+        quality.addProperty("sourceAnchorMapHash", sha256(Files.readString(anchorMapPath)));
+        Files.writeString(qualityPath, quality.toString());
+        assertFalse(CityPlanningEndpointHandler.workflowBlueprintAnchorMapCurrent(anchorMapPath, blueprintDir));
+        quality.addProperty("passed", true);
+        Files.writeString(qualityPath, quality.toString());
         assertTrue(CityPlanningEndpointHandler.workflowBlueprintAnchorMapCurrent(
                 anchorMapPath, blueprintDir));
+
+        String acceptedMap = Files.readString(anchorMapPath);
+        Files.writeString(anchorMapPath, acceptedMap + " ");
+        assertFalse(CityPlanningEndpointHandler.workflowBlueprintAnchorMapCurrent(anchorMapPath, blueprintDir));
+        Files.writeString(anchorMapPath, acceptedMap);
 
         Files.writeString(blueprintDir.resolve("city_blueprint.json"), blueprint + " ");
         assertFalse(CityPlanningEndpointHandler.workflowBlueprintAnchorMapCurrent(
@@ -2140,6 +2156,13 @@ class CityPlanningEndpointHandlerTest {
         if (!compiled.get("ok").getAsBoolean()) {
             throw new IllegalStateException("Blueprint fixture failed to compile: " + compiled);
         }
+        Path finalMapPath = debugRoot.resolve(compiled.getAsJsonObject("artifacts")
+                .get("structureAnchorMap").getAsString());
+        String finalMapRaw = Files.readString(finalMapPath);
+        assertEquals(sha256(finalMapRaw), compiled.getAsJsonObject("qualityReport")
+                .get("sourceAnchorMapHash").getAsString());
+        assertEquals(JsonParser.parseString(finalMapRaw), compiled.get("structureAnchorMap"),
+                "External acceptance hash must not mutate the embedded map quality after serialization");
         CityPlanningEndpointHandler.handlePlanD5(debugRoot, runId, citySeedId);
         writeLockedD6Artifacts(debugRoot, runId, citySeedId);
     }

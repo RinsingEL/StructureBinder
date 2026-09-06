@@ -65,6 +65,19 @@ public final class PlanningAreaAccessPolicy {
             return Decision.denied("PLANNING_AREA_NOT_RELEASED", snapshot.runId(), "");
         }
 
+        // Construction reservations are hard exclusions. View/routing margins are not allowed
+        // to cut holes into an activated, connected city's actual playable footprint.
+        for (Reservation reservation : snapshot.reservations()) {
+            if (reservation.coreRadius() - distance(blockX, blockZ, reservation.x(), reservation.z()) >= 0) {
+                return Decision.denied("UNRELEASED_CITY_RESERVED", snapshot.runId(), reservation.citySeedId());
+            }
+        }
+        for (CityArea city : snapshot.connectedCities()) {
+            if (city.footprint() != null && city.footprint().clearance(blockX, blockZ) >= 0) {
+                return Decision.allowed("RELEASED_CITY_AREA", snapshot.runId(), city.citySeedId(),
+                        city.footprint().clearance(blockX, blockZ));
+            }
+        }
         for (Reservation reservation : snapshot.reservations()) {
             if (reservation.clearance(blockX, blockZ) >= 0.0D) {
                 return Decision.denied("UNRELEASED_CITY_RESERVED", snapshot.runId(), reservation.citySeedId());
@@ -172,6 +185,10 @@ public final class PlanningAreaAccessPolicy {
                 .map(city -> new Reservation(city.citySeedId(), city.x(), city.z(),
                         city.radius() + corridorRadius + safetyBuffer + gridClearance))
                 .toList();
+        List<Reservation> protectedAreas = allCities.stream().filter(city -> !city.releaseReady())
+                .map(city -> new Reservation(city.citySeedId(), city.x(), city.z(),
+                        city.radius() + safetyBuffer, city.radius()))
+                .toList();
         Bounds bounds = scanBounds(manifest, allCities, step);
 
         List<CityArea> ready = allCities.stream().filter(CityArea::releaseReady)
@@ -189,10 +206,12 @@ public final class PlanningAreaAccessPolicy {
             for (Point source : sources.stream()
                     .sorted(Comparator.comparingDouble(point -> distance(point.x(), point.z(), target.x(), target.z())))
                     .toList()) {
-                PlannedRoute candidate = planRoute(source, new Point(target.x(), target.z()), reservations,
-                        bounds, step);
-                if (candidate != null && (best == null || candidate.lengthBlocks() < best.lengthBlocks())) {
-                    best = candidate;
+                for (Point entrance : arrivalPoints(target, protectedAreas)) {
+                    PlannedRoute candidate = planArrivalRoute(source, entrance, reservations,
+                            protectedAreas, bounds, step);
+                    if (candidate != null && (best == null || candidate.lengthBlocks() < best.lengthBlocks())) {
+                        best = candidate;
+                    }
                 }
             }
             if (best == null) {
@@ -201,11 +220,11 @@ public final class PlanningAreaAccessPolicy {
             }
             connected.add(target);
             routes.add(new TravelRoute(target.citySeedId(), best.points(), corridorRadius));
-            sources.add(new Point(target.x(), target.z()));
+            sources.add(best.points().get(best.points().size() - 1));
         }
 
         return new Snapshot(runDirectory.getFileName().toString(), dimensionId,
-                List.copyOf(connected), List.copyOf(disconnected), List.copyOf(reservations), List.copyOf(routes));
+                List.copyOf(connected), List.copyOf(disconnected), List.copyOf(protectedAreas), List.copyOf(routes));
     }
 
     private static Path resolveActiveRun(Path debugRoot) throws IOException {
@@ -272,6 +291,51 @@ public final class PlanningAreaAccessPolicy {
             maxZ = Math.max(maxZ, city.z() + margin);
         }
         return new Bounds(minX, minZ, maxX, maxZ);
+    }
+
+    private static List<Point> arrivalPoints(CityArea city, List<Reservation> protectedAreas) {
+        Point center = new Point(city.x(), city.z());
+        if (!blocked(center.x(), center.z(), protectedAreas)) return List.of(center);
+        List<Point> entries = new ArrayList<>();
+        int offset = Math.max(16, city.radius() - 32);
+        for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) {
+            Point point = new Point(city.x() + dx * offset, city.z() + dz * offset);
+            if (city.clearance(point.x(), point.z()) >= 0 && !blocked(point.x(), point.z(), protectedAreas))
+                entries.add(point);
+        }
+        return entries;
+    }
+
+    private static PlannedRoute planArrivalRoute(Point source, Point target, List<Reservation> routing,
+                                                 List<Reservation> protectedAreas, Bounds bounds, int step) {
+        if (!blocked(target.x(), target.z(), routing)) return planRoute(source, target, routing, bounds, step);
+        if (blocked(target.x(), target.z(), protectedAreas)) return null;
+        // The last approach may narrow around a neighboring reservation. Access evaluation clips its
+        // corridor to protectedAreas, so this never opens an unfinished city's protected footprint.
+        PlannedRoute best = null;
+        int maxDistance = routing.stream().mapToInt(Reservation::radius).max().orElse(step) * 2 + step;
+        for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) {
+            if (dx == 0 && dz == 0) continue;
+            for (int offset = step; offset <= maxDistance; offset += step) {
+                Point portal = new Point(target.x() + dx * offset, target.z() + dz * offset);
+                if (portal.x() < bounds.minX() || portal.x() > bounds.maxX()
+                        || portal.z() < bounds.minZ() || portal.z() > bounds.maxZ()) break;
+                if (blocked(portal.x(), portal.z(), routing)) continue;
+                if (!segmentClear(portal, target, protectedAreas)) break;
+                PlannedRoute approach = planRoute(source, portal, routing, bounds, step);
+                if (approach != null) {
+                    List<Point> points = new ArrayList<>(approach.points());
+                    points.add(target);
+                    double length = pathLength(points);
+                    if (length / Math.max(1, distance(source.x(), source.z(), target.x(), target.z()))
+                            <= PlanningAreaAccessConfig.DEFAULT_MAX_ROUTE_DETOUR_RATIO
+                            && (best == null || length < best.lengthBlocks()))
+                        best = new PlannedRoute(List.copyOf(points), length);
+                }
+                break;
+            }
+        }
+        return best;
     }
 
     private static PlannedRoute planRoute(Point source, Point target, List<Reservation> reservations,
@@ -490,7 +554,10 @@ public final class PlanningAreaAccessPolicy {
         }
     }
 
-    private record Reservation(String citySeedId, int x, int z, int radius) {
+    private record Reservation(String citySeedId, int x, int z, int radius, int coreRadius) {
+        Reservation(String citySeedId, int x, int z, int radius) {
+            this(citySeedId, x, z, radius, radius);
+        }
         double clearance(double blockX, double blockZ) {
             return radius - distance(blockX, blockZ, x, z);
         }

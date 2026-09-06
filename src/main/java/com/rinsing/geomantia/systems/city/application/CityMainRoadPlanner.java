@@ -374,7 +374,8 @@ final class CityMainRoadPlanner {
                     BlockPoint entrance = point(position);
                     group.addConnector(new Connector(entrance, "STRUCTURE_ROAD_ENTRANCE", 3,
                             string(entranceElement.getAsJsonObject(), "direction"), 1, entrance,
-                            collision.size() > 0 ? CityStructureCandidateEnvelope.bounds(collision) : null));
+                            collision.size() > 0 ? CityStructureCandidateEnvelope.bounds(collision) : null,
+                            structureBody(anchor)));
                 }
             }
         }
@@ -390,10 +391,10 @@ final class CityMainRoadPlanner {
             JsonObject end = object(band, "end");
                 if (start.size() > 0) group.addConnector(new Connector(point(start),
                     string(band, "roadKind") + "_ENDPOINT", rank,
-                    cardinal(-axisX, -axisZ), localWidth, point(start), null));
+                    cardinal(-axisX, -axisZ), localWidth, point(start), null, null));
             if (end.size() > 0) group.addConnector(new Connector(point(end),
                     string(band, "roadKind") + "_ENDPOINT", rank,
-                    cardinal(axisX, axisZ), localWidth, point(end), null));
+                    cardinal(axisX, axisZ), localWidth, point(end), null, null));
         }
         Map<String, GroupGeometry> result = new LinkedHashMap<>();
         mutable.forEach((groupId, group) -> {
@@ -434,16 +435,28 @@ final class CityMainRoadPlanner {
             int localDistance = (connector.localWidth() + 2) / 2 + 1;
             if ("STRUCTURE_ROAD_ENTRANCE".equals(connector.kind())) {
                 base = new BlockPoint(base.x() + dx * localDistance, base.z() + dz * localDistance);
+                // The template owns everything inside its footprint, including recessed doors/courtyards.
+                // Project the authored entrance outward; never pave through the template to reach it.
+                BlockBounds body = connector.originBody();
+                if (body != null) {
+                    if (dx > 0) base = new BlockPoint(Math.max(base.x(), body.maxX() + 1), base.z());
+                    if (dx < 0) base = new BlockPoint(Math.min(base.x(), body.minX() - 1), base.z());
+                    if (dz > 0) base = new BlockPoint(base.x(), Math.max(base.z(), body.maxZ() + 1));
+                    if (dz < 0) base = new BlockPoint(base.x(), Math.min(base.z(), body.minZ() - 1));
+                }
             }
             int firstDistance = "STRUCTURE_ROAD_ENTRANCE".equals(connector.kind()) ? 0 : 1;
-            List<BlockBounds> transitionObstacles = connector.originObstacle() == null ? obstacles
-                    : obstacles.stream().filter(obstacle -> !obstacle.equals(connector.originObstacle())).toList();
+            List<BlockBounds> transitionObstacles = new ArrayList<>(obstacles);
+            // Only the own clearance apron may be crossed. The body remains protected.
+            if (connector.originObstacle() != null) transitionObstacles.remove(connector.originObstacle());
+            if (connector.originBody() != null) transitionObstacles.add(connector.originBody());
             for (int distance = firstDistance; distance <= 128; distance++) {
                 BlockPoint candidate = new BlockPoint(base.x() + dx * distance, base.z() + dz * distance);
                 if (!blocked(candidate, width, obstacles)
-                        && transitionClear(base, candidate, connector.localWidth(), transitionObstacles)) {
+                        && transitionClear(base, candidate, connector.localWidth(), dx, dz, transitionObstacles)) {
                     return new Connector(candidate, connector.kind(), connector.rank(),
-                            cardinal(dx, dz), connector.localWidth(), base, connector.originObstacle());
+                            cardinal(dx, dz), connector.localWidth(), base, connector.originObstacle(),
+                            connector.originBody());
                 }
             }
         }
@@ -509,12 +522,19 @@ final class CityMainRoadPlanner {
     }
 
     private static boolean transitionClear(BlockPoint start, BlockPoint end, int width,
-                                           List<BlockBounds> obstacles) {
+                                           int dx, int dz, List<BlockBounds> obstacles) {
         int steps = Math.max(Math.abs(end.x() - start.x()), Math.abs(end.z() - start.z()));
-        int dx = Integer.compare(end.x(), start.x());
-        int dz = Integer.compare(end.z(), start.z());
-        for (int step = 1; step <= steps; step++) {
-            if (blocked(new BlockPoint(start.x() + dx * step, start.z() + dz * step), width, obstacles)) {
+        for (int step = 0; step <= steps; step++) {
+            BlockPoint point = new BlockPoint(start.x() + dx * step, start.z() + dz * step);
+            int lower = (width - 1) / 2;
+            int upper = width / 2;
+            BlockBounds surface = dx != 0
+                    ? new BlockBounds(point.x(), point.z() - lower, point.x(), point.z() + upper)
+                    : new BlockBounds(point.x() - lower, point.z(), point.x() + upper, point.z());
+            BlockBounds crossSection = dx != 0
+                    ? new BlockBounds(surface.minX(), surface.minZ() - 1, surface.maxX(), surface.maxZ() + 1)
+                    : new BlockBounds(surface.minX() - 1, surface.minZ(), surface.maxX() + 1, surface.maxZ());
+            if (obstacles.stream().anyMatch(crossSection::overlaps)) {
                 return false;
             }
         }
@@ -923,8 +943,17 @@ final class CityMainRoadPlanner {
         }
     }
 
+    private static BlockBounds structureBody(JsonObject anchor) {
+        for (String key : List.of("actualFootprint", "plannedFootprint", "bodyEnvelope", "collisionEnvelope")) {
+            JsonObject bounds = object(anchor, key);
+            if (bounds.size() > 0) return CityStructureCandidateEnvelope.bounds(bounds);
+        }
+        return null;
+    }
+
     private record Connector(BlockPoint point, String kind, int rank, String direction,
-                             int localWidth, BlockPoint transitionStart, BlockBounds originObstacle) {
+                             int localWidth, BlockPoint transitionStart, BlockBounds originObstacle,
+                             BlockBounds originBody) {
     }
 
     private record ConnectorPair(Connector from, Connector to) {

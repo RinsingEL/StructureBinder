@@ -94,6 +94,50 @@ class CityMainRoadPlannerTest {
         assertTrue(result.ok(), result.plan().toString());
         assertEquals("planned", result.plan().get("status").getAsString());
         assertFalse(result.streetBands().isEmpty());
+        assertRoadsAvoidBodies(result, anchors);
+    }
+
+    @Test
+    void recessedHorseStallEntranceDoesNotPaveThroughItsTemplate() {
+        JsonObject stall = anchorWithDirectedEntrance("a", new BlockBounds(3, 3, 33, 44),
+                new BlockPoint(16, 30), "SOUTH");
+        stall.add("actualFootprint", CityStructureCandidateEnvelope.boundsJson(new BlockBounds(8, 8, 28, 39)));
+        List<JsonObject> anchors = List.of(stall,
+                anchorWithDirectedEntrance("b", new BlockBounds(72, 8, 84, 20),
+                        new BlockPoint(78, 16), "SOUTH"));
+        CityMainRoadPlanner.Result result = planner.plan(blueprint("HIERARCHICAL"),
+                references("HIERARCHICAL"), terrain(false), anchors, List.of());
+        assertTrue(result.ok(), result.plan().toString());
+        assertFalse(result.streetBands().isEmpty(), result.plan().toString());
+        assertRoadsAvoidBodies(result, anchors);
+        assertTrue(result.streetBands().stream().filter(band -> "CITY_MAIN_ROAD_TRANSITION".equals(
+                        band.get("roadKind").getAsString()) && "a".equals(band.get("sourceGroupId").getAsString()))
+                .allMatch(band -> band.getAsJsonObject("bounds").get("minZ").getAsInt() >= 40));
+    }
+
+    private static void assertRoadsAvoidBodies(CityMainRoadPlanner.Result result, List<JsonObject> anchors) {
+        JsonArray anchorArray = new JsonArray();
+        anchors.forEach(anchorArray::add);
+        JsonArray streets = new JsonArray();
+        result.streetBands().forEach(streets::add);
+        var quality = new CityArrayVisualQualityGate().evaluate(anchorArray, streets);
+        assertTrue(quality.hardBlocks().isEmpty(), quality.json().toString());
+    }
+
+    @Test
+    void recessedEntrancesRespectTemplateBodiesInAllFourDirections() {
+        for (String direction : List.of("NORTH", "EAST", "SOUTH", "WEST")) {
+            JsonObject first = anchorWithDirectedEntrance("a", new BlockBounds(12, 12, 46, 46),
+                    new BlockPoint(29, 29), direction);
+            first.add("actualFootprint", CityStructureCandidateEnvelope.boundsJson(new BlockBounds(17, 17, 41, 41)));
+            List<JsonObject> anchors = List.of(first, anchorWithDirectedEntrance("b",
+                    new BlockBounds(72, 8, 84, 20), new BlockPoint(78, 16), "SOUTH"));
+            var result = planner.plan(blueprint("HIERARCHICAL"), references("HIERARCHICAL"),
+                    terrain(false), anchors, List.of());
+            assertTrue(result.ok(), direction + result.plan());
+            assertFalse(result.streetBands().isEmpty(), direction + result.plan());
+            assertRoadsAvoidBodies(result, anchors);
+        }
     }
 
     @Test

@@ -72,7 +72,9 @@ public final class CityLandUseSurfacePrintPlanner {
             List<LandUseAreaPlan.ScanlineSpan> exclusions = exclusions(landUsePlan, area);
             CityLandUseSurfacePrintPlan.Recipe recipe = switch (settings.surfaceAlgorithm()) {
                 case UNIFORM -> new CityLandUseSurfacePrintPlan.UniformRecipe(
-                        settings.surfaceBlockId(), settings.boundaryBlockId());
+                        settings.surfaceBlockId(), settings.boundaryBlockId(),
+                        area.sourceGroupIds().stream().anyMatch(id -> id.endsWith("::foundation"))
+                                ? CityFoundationElevationPlanner.plan(area.memberSpans(), terrainField) : List.of());
                 case CONTOUR_BANDS -> contourBands(area, settings, exclusions,
                         Objects.requireNonNull(algorithmAnchor, "algorithmAnchor"), terrainField);
                 case RELAY_REGION_GROWTH -> relayRegionGrowth(area, settings, exclusions,
@@ -101,8 +103,88 @@ public final class CityLandUseSurfacePrintPlanner {
         CityLandUseSurfacePrintPlan raw = new CityLandUseSurfacePrintPlan(
                 CityLandUseSurfacePrintPlan.SCHEMA, landUsePlan.cityId(),
                 landUsePlan.planHash(), "", prints, shared,
-                featureCells(roadBands, greenParcels, overflowZones));
+                gradeMainRoads(featureCells(roadBands, greenParcels, overflowZones),
+                        roadBands, terrainField, landUsePlan, prints));
         return new CityLandUseSurfacePrintPlanCodec().withComputedHash(raw);
+    }
+
+    private static List<CityLandUseSurfacePrintPlan.FeatureCell> gradeMainRoads(
+            List<CityLandUseSurfacePrintPlan.FeatureCell> features,
+            List<LandUseSourceResolver.RoadBand> bands, LandUseTerrainField terrain,
+            LandUseAreaPlan areaPlan, List<CityLandUseSurfacePrintPlan.AreaPrint> prints) {
+        Map<Long,Integer> foundationHeights = new HashMap<>();
+        for (var print : prints) if (print.recipe() instanceof CityLandUseSurfacePrintPlan.UniformRecipe uniform)
+            for (var span : uniform.platformSpans()) for(int x=span.minX();x<=span.maxX();x++)
+                foundationHeights.put(cellKey(x,span.z()),span.targetY());
+        Map<String, int[]> grades = new HashMap<>();
+        Map<String, LandUseSourceResolver.RoadBand> indexed = new HashMap<>();
+        Map<Long, LandUseTerrainField.Cell> terrainIndex = new HashMap<>();
+        for (var cell : terrain.cells()) terrainIndex.put(cellKey(
+                Math.floorDiv(cell.blockMinX(), terrain.cellStepBlocks()),
+                Math.floorDiv(cell.blockMinZ(), terrain.cellStepBlocks())), cell);
+        for (var band : bands) {
+            if (!"CITY_MAIN_ROAD".equals(band.roadKind()) || band.bridge()) continue;
+            boolean horizontal = band.start().z() == band.end().z();
+            int start = horizontal ? band.bounds().minX() : band.bounds().minZ();
+            int end = horizontal ? band.bounds().maxX() : band.bounds().maxZ();
+            int[] heights = new int[end - start + 1];
+            Map<Integer, Integer> pins = new HashMap<>();
+            boolean sampled = true;
+            for (int i = 0; i < heights.length; i++) {
+                int x = horizontal ? start + i : band.start().x();
+                int z = horizontal ? band.start().z() : start + i;
+                var cell = terrainIndex.get(cellKey(Math.floorDiv(x, terrain.cellStepBlocks()),
+                        Math.floorDiv(z, terrain.cellStepBlocks())));
+                Integer foundationY = foundationHeights.get(cellKey(x,z));
+                if (foundationY == null && (cell == null || !cell.sampled() || cell.water())) {
+                    sampled = false; break;
+                }
+                heights[i] = foundationY != null ? foundationY
+                        : Math.floorDiv((int) Math.round(cell.elevation()) + 2, 4) * 4;
+                boolean junction = bands.stream().anyMatch(other -> !other.streetBandId().equals(band.streetBandId())
+                        && other.bounds().contains(x, z));
+                boolean entrance = areaPlan.areas().stream().flatMap(area -> area.gateSlots().stream())
+                        .anyMatch(gate -> Math.abs(gate.block().x() - x) + Math.abs(gate.block().z() - z)
+                                <= (band.widthBlocks() + 1) / 2 + 3);
+                if (i == 0 || i == heights.length - 1 || junction || entrance) pins.put(i, heights[i]);
+            }
+            if (!sampled) continue; // Bridge/unsampled segments retain their existing treatment.
+            var grade = CityRoadGradeProfile.solve(heights, 12, 12, 3, pins);
+            if (!grade.feasible()) grade = CityRoadGradeProfile.solve(heights, 12, 12, 2, pins);
+            if (!grade.feasible()) {
+                com.mojang.logging.LogUtils.getLogger().warn(
+                        "City main road grade requires stair or reroute: city={} road={} reason={}",
+                        areaPlan.cityId(), band.streetBandId(), grade.reason());
+                continue; // Do not move pinned entrances or silently exceed earthwork limits.
+            }
+            grades.put(band.streetBandId(), grade.heights());
+            indexed.put(band.streetBandId(), band);
+        }
+        return features.stream().map(feature -> {
+            int[] grade = grades.get(feature.sourceId());
+            if (grade == null || feature.surfaceOffset() != 0) return feature;
+            var band = indexed.get(feature.sourceId());
+            boolean horizontal = band.start().z() == band.end().z();
+            int index = horizontal ? feature.x() - band.bounds().minX() : feature.z() - band.bounds().minZ();
+            if (index < 0 || index >= grade.length) return feature;
+            var kind = feature.kind();
+            var facing = feature.facing();
+            String block = feature.blockId();
+            if (kind == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB) {
+                int higher = index > 0 && grade[index-1] > grade[index] ? -1
+                        : index + 1 < grade.length && grade[index+1] > grade[index] ? 1 : 0;
+                if (higher != 0) {
+                    kind = CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR;
+                    block = band.curbBlockId();
+                    facing = horizontal ? higher > 0 ? CityLandUseSurfacePrintPlan.HorizontalFacing.EAST
+                            : CityLandUseSurfacePrintPlan.HorizontalFacing.WEST
+                            : higher > 0 ? CityLandUseSurfacePrintPlan.HorizontalFacing.SOUTH
+                            : CityLandUseSurfacePrintPlan.HorizontalFacing.NORTH;
+                }
+            }
+            return new CityLandUseSurfacePrintPlan.FeatureCell(feature.sourceId(), feature.x(), feature.z(),
+                    block, feature.surfaceOffset(), kind, facing, grade[index]);
+        }).toList();
     }
 
     private static List<CityLandUseSurfacePrintPlan.FeatureCell> featureCells(

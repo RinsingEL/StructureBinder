@@ -72,12 +72,21 @@ public record CityLandUseSurfacePrintPlan(
                               String blockId,
                               int surfaceOffset,
                               FeatureKind kind,
-                              HorizontalFacing facing) {
+                              HorizontalFacing facing,
+                              Integer targetSurfaceY) {
+        public FeatureCell(String sourceId, int x, int z, String blockId, int surfaceOffset,
+                           FeatureKind kind, HorizontalFacing facing) {
+            this(sourceId, x, z, blockId, surfaceOffset, kind, facing, null);
+        }
         public FeatureCell {
             requireText(sourceId, "CITY_LAND_USE_SURFACE_FEATURE_SOURCE_REQUIRED");
             requireBlock(blockId, "CITY_LAND_USE_SURFACE_FEATURE_BLOCK_INVALID");
             Objects.requireNonNull(kind, "kind");
             facing = facing == null ? HorizontalFacing.NONE : facing;
+            if (targetSurfaceY != null && (surfaceOffset != 0
+                    || kind != FeatureKind.ROAD_SLAB && kind != FeatureKind.ROAD_STAIR)) {
+                throw new IllegalArgumentException("CITY_LAND_USE_FROZEN_GRADE_REQUIRES_ROAD_SURFACE");
+            }
             if (surfaceOffset < 0 || kind == FeatureKind.ROAD_STAIR
                     && facing == HorizontalFacing.NONE || kind != FeatureKind.ROAD_STAIR
                     && facing != HorizontalFacing.NONE) {
@@ -216,8 +225,19 @@ public record CityLandUseSurfacePrintPlan(
         String boundaryBlockId();
     }
 
-    public record UniformRecipe(String surfaceBlockId, String boundaryBlockId) implements Recipe {
+    public record PlatformSpan(int z, int minX, int maxX, int targetY) {
+        public PlatformSpan {
+            if (minX > maxX) throw new IllegalArgumentException("CITY_FOUNDATION_SPAN_INVALID");
+        }
+    }
+
+    public record UniformRecipe(String surfaceBlockId, String boundaryBlockId,
+                                List<PlatformSpan> platformSpans) implements Recipe {
+        public UniformRecipe(String surfaceBlockId, String boundaryBlockId) {
+            this(surfaceBlockId, boundaryBlockId, List.of());
+        }
         public UniformRecipe {
+            platformSpans = List.copyOf(platformSpans);
             requireBlock(surfaceBlockId, "CITY_LAND_USE_SURFACE_PRINT_BLOCK_INVALID");
             boundaryBlockId = normalizeOptionalBlock(boundaryBlockId,
                     "CITY_LAND_USE_SURFACE_PRINT_BOUNDARY_BLOCK_INVALID");

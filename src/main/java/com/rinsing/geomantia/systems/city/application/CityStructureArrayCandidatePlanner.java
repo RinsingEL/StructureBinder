@@ -834,11 +834,11 @@ public final class CityStructureArrayCandidatePlanner {
     private static List<LandformPatchSummary> sourcePatches(JsonObject plan,
                                                             Map<String, LandformPatchSummary> patches) {
         List<LandformPatchSummary> result = new ArrayList<>();
+        java.util.Set<String> seen = new java.util.HashSet<>();
         for (JsonElement elem : requiredArray(plan, "candidatePatchRefs")) {
             String ref = elem.getAsString();
             LandformPatchSummary patch = patches.get(ref);
-            if (patch != null && result.stream().noneMatch(existing ->
-                    existing.landformPatchId().equals(patch.landformPatchId()))) {
+            if (patch != null && seen.add(patch.landformPatchId())) {
                 result.add(patch);
             }
         }

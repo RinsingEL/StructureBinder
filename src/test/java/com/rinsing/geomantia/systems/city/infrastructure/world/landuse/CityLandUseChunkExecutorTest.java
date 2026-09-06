@@ -17,6 +17,72 @@ class CityLandUseChunkExecutorTest {
     private final CityLandUseChunkExecutor executor = new CityLandUseChunkExecutor();
 
     @Test
+    void neighboringConstructionCannotChangeFoundationDesign() {
+        var mask = new ArrayList<CityLandUseChunkCompiler.GradingMaskCell>();
+        for (int z = -16; z < 32; z++) for (int x = -16; x < 32; x++)
+            mask.add(new CityLandUseChunkCompiler.GradingMaskCell("area", x, z, true));
+        var fragment = new CityLandUseChunkCompiler.ChunkFragment(
+                CityLandUseChunkCompiler.RESULT_SCHEMA, "city", "hash", "palette", 0, 0,
+                1, 0, 0, 0, "minecraft:dirt", mask,
+                List.of(new CityLandUseChunkCompiler.SurfaceOperation("area", "plaza", 15, 8,
+                        "minecraft:stone_bricks")), List.of(), List.of(), List.of(),
+                List.of(new CityLandUseChunkCompiler.PlatformPurposeAnchor("area", "building",
+                        CityLandUseChunkCompiler.PlatformPurpose.BUILDING,
+                        new com.rinsing.geomantia.systems.city.domain.model.BlockBounds(14, 7, 14, 9))), List.of());
+        FakeWorld before = new FakeWorld();
+        FakeWorld after = new FakeWorld();
+        before.frozenDesign = after.frozenDesign = true;
+        for (int z = -20; z < 36; z++) for (int x = 16; x < 36; x++)
+            after.columns.put(x + "," + z, new CityLandUseChunkExecutor.ColumnSample(88,
+                    "minecraft:stone_brick_wall", false));
+        var first = executor.execute(fragment, before,
+                CityLandUseChunkExecutor.GenerationEligibility.CONTROLLED_D7_BACKFILL);
+        var second = executor.execute(fragment, after,
+                CityLandUseChunkExecutor.GenerationEligibility.CONTROLLED_D7_BACKFILL);
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED, first.status());
+        assertEquals(first.foundationDiagnostics(), second.foundationDiagnostics());
+        assertEquals(first.status(), second.status());
+        assertEquals(before.writes, after.writes);
+    }
+
+    @Test
+    void frozenRoadGradeCutsHighGroundAndFillsLowGroundAtExactHeight() {
+        var features = List.of(
+                new CityLandUseChunkCompiler.FeatureOperation("main", 1, 1, "minecraft:stone_slab", 0,
+                        CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,
+                        CityLandUseSurfacePrintPlan.HorizontalFacing.NONE, 60),
+                new CityLandUseChunkCompiler.FeatureOperation("main", 2, 1, "minecraft:stone_slab", 0,
+                        CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,
+                        CityLandUseSurfacePrintPlan.HorizontalFacing.NONE, 68));
+        var fragment = new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,
+                "city", "hash", "palette", 0, 0, 2, 0, 0, 0, null,
+                List.of(), List.of(), List.of(), features);
+        FakeWorld world = new FakeWorld();
+        var result = executor.execute(fragment, world,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED, result.status());
+        assertTrue(world.writes.contains("1,64,1=minecraft:air"));
+        assertTrue(world.writes.contains("1,60,1=minecraft:stone_slab"));
+        assertTrue(world.writes.contains("2,65,1=minecraft:stone_bricks"));
+        assertTrue(world.writes.contains("2,68,1=minecraft:stone_slab"));
+    }
+
+    @Test
+    void roadAlreadyAtDesignHeightReplacesNaturalSurfaceWithoutDemandingAir() {
+        var fragment = new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,
+                "city", "hash", "palette", 0, 0, 1, 0, 0, 0, null,
+                List.of(), List.of(), List.of(), List.of(new CityLandUseChunkCompiler.FeatureOperation(
+                        "main", 1, 1, "minecraft:stone_slab", 0,
+                        CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,
+                        CityLandUseSurfacePrintPlan.HorizontalFacing.NONE, 64)));
+        FakeWorld world = new FakeWorld();
+        world.replaceable.put("1,64,1", false);
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED, executor.execute(fragment, world,
+                CityLandUseChunkExecutor.GenerationEligibility.CONTROLLED_D7_BACKFILL).status());
+        assertTrue(world.writes.contains("1,64,1=minecraft:stone_slab"));
+    }
+
+    @Test
     void channelUsesGroundLevelAndClosesAtDownhillEdges() {
         var fragment = new CityLandUseChunkCompiler.ChunkFragment(
                 CityLandUseChunkCompiler.RESULT_SCHEMA, "city", "hash", "palette", 0, 0,
@@ -462,6 +528,12 @@ class CityLandUseChunkExecutorTest {
     }
 
     private static final class FakeWorld implements CityLandUseChunkExecutor.ExecutionWorld {
+        private boolean frozenDesign;
+
+        @Override public CityLandUseChunkExecutor.ColumnSample sampleDesignColumn(int x, int z) {
+            return frozenDesign ? new CityLandUseChunkExecutor.ColumnSample(64, "minecraft:dirt", true)
+                    : sampleColumn(x, z);
+        }
         private final Map<String, CityLandUseChunkExecutor.ColumnSample> columns = new HashMap<>();
         private final Map<String, Boolean> known = new HashMap<>();
         private final Map<String, Boolean> replaceable = new HashMap<>();

@@ -566,7 +566,7 @@ class CityBlueprintServiceTest {
     }
 
     @Test
-    void relationEnabledGroupsMustDeclareAtLeastOneFunctionalRelation() throws Exception {
+    void relationEnabledGroupsCanUseAutomaticNearNeighborConnection() throws Exception {
         Fixture fixture = fixture("run_missing_function_area_relation", "city:missing_function_area_relation");
         CityBlueprintService service = new CityBlueprintService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
@@ -583,12 +583,8 @@ class CityBlueprintServiceTest {
         JsonObject submitted = service.submit(temporary, fixture.runId(), fixture.cityId(),
                 prepared.get("contextId").getAsString(), blueprint);
 
-        assertFalse(submitted.get("ok").getAsBoolean());
+        assertTrue(submitted.get("ok").getAsBoolean(), submitted.toString());
         assertEquals(0, submitted.get("failureCount").getAsInt());
-        assertTrue(submitted.getAsJsonObject("validationReport").getAsJsonArray("issues").asList().stream()
-                .map(JsonElement::getAsJsonObject)
-                .anyMatch(issue -> "CITY_BLUEPRINT_FUNCTION_AREA_RELATION_UNSPECIFIED"
-                        .equals(issue.get("reasonCode").getAsString())));
     }
 
     @Test

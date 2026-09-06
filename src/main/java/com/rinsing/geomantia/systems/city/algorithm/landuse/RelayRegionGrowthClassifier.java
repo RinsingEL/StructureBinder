@@ -49,10 +49,24 @@ public final class RelayRegionGrowthClassifier {
             } catch (IllegalArgumentException failure) {
                 if (!retryable(failure)) throw failure;
                 lastFailure = failure;
+                if (attempt == 0) {
+                    Result reverse = reverseTwoRegionPartition(request, allowed, allocatedTargets, targets);
+                    if (reverse != null) return reverse;
+                }
             }
         }
-        throw fail("RELAY_GROWTH_CANDIDATE_RETRIES_EXHAUSTED:"
-                + Objects.requireNonNull(lastFailure).getMessage());
+        throw new SearchExhausted(request, Objects.requireNonNull(lastFailure));
+    }
+
+    public static final class SearchExhausted extends IllegalArgumentException {
+        private final Request request;
+
+        private SearchExhausted(Request request, IllegalArgumentException cause) {
+            super("RELAY_GROWTH_CANDIDATE_RETRIES_EXHAUSTED:" + cause.getMessage(), cause);
+            this.request = request;
+        }
+
+        public Request request() { return request; }
     }
 
     private static Result classifyAttempt(Request request,
@@ -156,6 +170,76 @@ public final class RelayRegionGrowthClassifier {
         }
     }
 
+    /** A large first region can trap a greedy prefix in a narrow parcel. Search the
+     * smaller complement instead, then rebuild real adjacent growth in the authored
+     * order from the original source. Shares, roles, masks and connectivity stay exact. */
+    private static Result reverseTwoRegionPartition(Request request, Set<Long> allowed,
+                                                     int[] targets, int[] requestedTargets) {
+        if (request.stages().size() != 2 || targets[0] <= targets[1]) return null;
+        GrowthStage first = request.stages().get(0), last = request.stages().get(1);
+        long originalSource = key(request.source());
+        List<Long> starts = allowed.stream().filter(cell -> cell != originalSource)
+                .filter(cell -> neighbors4(cell).stream().anyMatch(next -> !allowed.contains(next)))
+                .sorted(Comparator.<Long>comparingLong(cell -> -(Math.abs((long) x(cell) - request.source().x())
+                                + Math.abs((long) z(cell) - request.source().z())))
+                        .thenComparingInt(RelayRegionGrowthClassifier::z)
+                        .thenComparingInt(RelayRegionGrowthClassifier::x))
+                .filter(cell -> removalKeepsComponents(allowed, cell))
+                .limit(32).toList();
+        for (long start : starts) {
+            Request reversed = new Request(request.memberSpans(), request.exclusionSpans(), point(start),
+                    request.stableSeed(), List.of(
+                    new GrowthStage(last.regionId(), "", last.roleRef(), last.targetShare(), last.growthForm()),
+                    new GrowthStage(first.regionId(), last.regionId(), first.roleRef(), first.targetShare(), first.growthForm())));
+            Result partition;
+            try {
+                partition = classifyAttempt(reversed, allowed, new int[]{targets[1], targets[0]},
+                        new int[]{requestedTargets[1], requestedTargets[0]}, request.stableSeed());
+            } catch (IllegalArgumentException failure) {
+                if (!retryable(failure)) throw failure;
+                continue;
+            }
+            if (!first.regionId().equals(partition.regionAt(request.source().x(), request.source().z()).orElse("")))
+                continue;
+            Map<Long, String> regionByCell = new Long2ObjectOpenHashMap<>();
+            for (RegionSpan span : partition.regionSpans())
+                for (int x = span.minX(); x <= span.maxX(); x++) regionByCell.put(key(x, span.z()), span.regionId());
+            List<RegionTrace> traces = new ArrayList<>();
+            Set<Long> grown = new LongOpenHashSet();
+            for (int index = 0; index < 2; index++) {
+                GrowthStage stage = request.stages().get(index);
+                long root = originalSource, parent = 0;
+                if (index == 1) {
+                    root = regionByCell.keySet().stream()
+                            .filter(cell -> stage.regionId().equals(regionByCell.get(cell)))
+                            .filter(cell -> neighbors4(cell).stream().anyMatch(grown::contains))
+                            .min(Comparator.comparingInt(RelayRegionGrowthClassifier::z)
+                                    .thenComparingInt(RelayRegionGrowthClassifier::x)).orElseThrow();
+                    parent = neighbors4(root).stream().filter(grown::contains).findFirst().orElseThrow();
+                }
+                List<ExpansionStep> steps = new ArrayList<>();
+                steps.add(new ExpansionStep(0, point(root), index == 0 ? null : point(parent),
+                        index == 0 ? ProvenanceKind.ROOT_SOURCE : ProvenanceKind.RELAY_INTERFACE));
+                ArrayDeque<Long> frontier = new ArrayDeque<>();
+                frontier.add(root); grown.add(root);
+                while (!frontier.isEmpty()) {
+                    long from = frontier.removeFirst();
+                    for (long next : neighbors4(from)) {
+                        if (stage.regionId().equals(regionByCell.get(next)) && grown.add(next)) {
+                            steps.add(new ExpansionStep(steps.size(), point(next), point(from), ProvenanceKind.REGION_FRONTIER));
+                            frontier.addLast(next);
+                        }
+                    }
+                }
+                if (steps.size() != targets[index]) throw fail("RELAY_GROWTH_REVERSE_PARTITION_INVALID");
+                traces.add(new RegionTrace(stage.regionId(), index == 0 ? "" : first.regionId(), stage.roleRef(),
+                        stage.growthForm(), point(root), requestedTargets[index], steps.size(), steps));
+            }
+            return new Result(partition.roleSpans(), partition.regionSpans(), traces, allowed.size());
+        }
+        return null;
+    }
+
     private static int[] allocateConnectedRoot(Request request, Set<Long> allowed, int[] requested) {
         int[] result = requested.clone();
         if (result.length < 2) return result;
@@ -239,6 +323,7 @@ public final class RelayRegionGrowthClassifier {
                                          int stageIndex,
                                          boolean finalStage) {
         if (finalStage) return unclaimed.isEmpty();
+        if (unclaimed.size() == 1) return true;
         if (!isConnected(unclaimed)) return false;
         return state.rankedFrontier.stream()
                 .anyMatch(edge -> hasNeighborAfterRemoval(unclaimed, edge.point())

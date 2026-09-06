@@ -18,6 +18,39 @@ class CityLandUseSurfacePrintPlanCodecTest {
     private final CityLandUseSurfacePrintPlanCodec codec = new CityLandUseSurfacePrintPlanCodec();
 
     @Test
+    void frozenFoundationHeightRoundTripsAndParticipatesInIdentity() {
+        var settings = new LandUseSurfaceSettings(true, true, "minecraft:stone_bricks", "", "PAVE");
+        var recipe = new CityLandUseSurfacePrintPlan.UniformRecipe("minecraft:stone_bricks", "",
+                List.of(new CityLandUseSurfacePrintPlan.PlatformSpan(0,-32,31,68)));
+        var area = new CityLandUseSurfacePrintPlan.AreaPrint("foundation", "foundation",
+                List.of("city::foundation"), settings,
+                List.of(new LandUseAreaPlan.ScanlineSpan(0,-32,31)), List.of(),
+                LandUseSurfaceSettings.SurfaceAlgorithm.UNIFORM, null, recipe);
+        var plan = codec.withComputedHash(new CityLandUseSurfacePrintPlan(CityLandUseSurfacePrintPlan.SCHEMA,
+                "city", "source", "", List.of(area)));
+        assertEquals(plan, codec.fromJson(codec.toJson(plan)));
+        var changed = codec.toJson(plan);
+        changed.getAsJsonArray("areas").get(0).getAsJsonObject().getAsJsonObject("recipe")
+                .getAsJsonArray("platformSpans").get(0).getAsJsonObject().addProperty("targetY",72);
+        changed.remove("planHash");
+        assertNotEquals(plan.planHash(),codec.computePlanHash(codec.fromJson(changed)));
+    }
+
+    @Test
+    void frozenRoadElevationRoundTripsAndParticipatesInPlanIdentity() {
+        var feature = new CityLandUseSurfacePrintPlan.FeatureCell("main", 15, 3, "minecraft:stone_slab", 0,
+                CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,
+                CityLandUseSurfacePrintPlan.HorizontalFacing.NONE, 70);
+        var plan = codec.withComputedHash(new CityLandUseSurfacePrintPlan(CityLandUseSurfacePrintPlan.SCHEMA,
+                "city", "source", "", List.of(), List.of(), List.of(feature)));
+        assertEquals(plan, codec.fromJson(codec.toJson(plan)));
+        var changed = codec.toJson(plan);
+        changed.getAsJsonArray("featureCells").get(0).getAsJsonObject().addProperty("targetSurfaceY",71);
+        changed.remove("planHash");
+        assertNotEquals(plan.planHash(), codec.computePlanHash(codec.fromJson(changed)));
+    }
+
+    @Test
     void roundTripsAndHashesFrozenContourBandsWithoutCatalogIdentity() {
         CityLandUseSurfacePrintPlan plan = codec.withComputedHash(contourPlan(new BlockPoint(12, 20)));
         JsonObject json = codec.toJson(plan);

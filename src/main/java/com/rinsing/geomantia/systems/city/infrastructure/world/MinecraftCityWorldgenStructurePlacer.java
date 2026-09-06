@@ -168,8 +168,8 @@ public final class MinecraftCityWorldgenStructurePlacer {
                 return;
             }
             LevelHeightAccessor heightAccessor = chunk.getHeightAccessorForGeneration();
-            TerrainSamplingChoice terrainSampling = terrainSamplingChoice(generator, registryAccess,
-                    randomState, heightAccessor, footprint);
+            TerrainSamplingChoice terrainSampling = new TerrainSamplingChoice(generator,
+                    (x, z) -> sampleDesignTerrain(generator, registryAccess, randomState, heightAccessor, x, z));
             int datumY = CityLandUseWorldgenRegistry.resolveStructureFoundationDatum(
                             item.cityId(), footprint, terrainSampling.cacheIdentity(),
                             terrainSampling.sampler())
@@ -238,6 +238,26 @@ public final class MinecraftCityWorldgenStructurePlacer {
                 : Math.floorDiv(heights.get(middle - 1) + heights.get(middle), 2);
     }
 
+    private static final Map<ChunkGenerator, Map<Long, CityLandUseChunkExecutor.ColumnSample>> DESIGN_SAMPLES
+            = new java.util.WeakHashMap<>();
+
+    public static CityLandUseChunkExecutor.ColumnSample sampleDesignTerrain(
+            ChunkGenerator generator, RegistryAccess registries, RandomState randomState,
+            LevelHeightAccessor heightAccessor, int x, int z) {
+        synchronized (DESIGN_SAMPLES) {
+            Map<Long, CityLandUseChunkExecutor.ColumnSample> samples = DESIGN_SAMPLES.computeIfAbsent(generator,
+                    ignored -> new java.util.LinkedHashMap<>(4096, 0.75f, true) {
+                        @Override protected boolean removeEldestEntry(
+                                Map.Entry<Long, CityLandUseChunkExecutor.ColumnSample> eldest) {
+                            return size() > 262144;
+                        }
+                    });
+            long key = ((long) x << 32) ^ (z & 0xffffffffL);
+            return samples.computeIfAbsent(key, ignored -> terrainSamplingChoice(generator, registries,
+                    randomState, heightAccessor, new BlockBounds(x, z, x, z)).sampler().sample(x, z));
+        }
+    }
+
     private static CityLandUseChunkExecutor.ColumnSample generatorTerrainSample(
             ChunkGenerator generator,
             LevelHeightAccessor heightAccessor,
@@ -275,8 +295,13 @@ public final class MinecraftCityWorldgenStructurePlacer {
         synchronized (RTF_FAST_PATHS) {
             calibration = fastPath.calibrations().get(regionKey);
             if (calibration == null) {
+                int controlX = Math.floorDiv(centerX, RTF_CALIBRATION_REGION_BLOCKS)
+                        * RTF_CALIBRATION_REGION_BLOCKS + RTF_CALIBRATION_REGION_BLOCKS / 2;
+                int controlZ = Math.floorDiv(centerZ, RTF_CALIBRATION_REGION_BLOCKS)
+                        * RTF_CALIBRATION_REGION_BLOCKS + RTF_CALIBRATION_REGION_BLOCKS / 2;
                 calibration = calibrateFastPath(fastPath.probe().sampler(), generator,
-                        heightAccessor, randomState, footprint);
+                        heightAccessor, randomState, new BlockBounds(controlX - 8, controlZ - 8,
+                                controlX + 8, controlZ + 8));
                 fastPath.calibrations().put(regionKey, calibration);
                 if (calibration.usable()) {
                     LOGGER.info("Enabled RTF native City terrain sampling for region {},{}: api={}, offset={}, maxResidual={}",

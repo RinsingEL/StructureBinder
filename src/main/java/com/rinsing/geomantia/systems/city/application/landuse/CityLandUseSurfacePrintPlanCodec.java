@@ -23,7 +23,7 @@ public final class CityLandUseSurfacePrintPlanCodec {
             "schema", "cityId", "sourceLandUsePlanHash", "planHash", "areas",
             "sharedBoundarySpans", "featureCells");
     private static final Set<String> FEATURE_FIELDS = Set.of(
-            "sourceId", "x", "z", "blockId", "surfaceOffset", "kind", "facing");
+            "sourceId", "x", "z", "blockId", "surfaceOffset", "kind", "facing", "targetSurfaceY");
     private static final Set<String> AREA_FIELDS = Set.of(
             "printAreaId", "landUseAreaId", "sourceGroupIds", "surfaceSettings",
             "memberSpans", "exclusionSpans", "surfaceAlgorithm", "algorithmAnchor", "recipe");
@@ -32,7 +32,7 @@ public final class CityLandUseSurfacePrintPlanCodec {
             "surfaceAlgorithm", "algorithmAnchor", "channelBankBlockId", "channelWaterBlockId",
             "channelBankOverlayBlockId", "boundaryBlockId", "fieldBeforeBlocks", "channelWidthBlocks",
             "fieldAfterBlocks");
-    private static final Set<String> UNIFORM_FIELDS = Set.of("recipeType", "surfaceBlockId", "boundaryBlockId");
+    private static final Set<String> UNIFORM_FIELDS = Set.of("recipeType", "surfaceBlockId", "boundaryBlockId", "platformSpans");
     private static final Set<String> CONTOUR_FIELDS = Set.of(
             "recipeType", "surfaceBlockId", "cropBlockId", "channelBankBlockId", "channelWaterBlockId",
             "channelBankOverlayBlockId", "repeatPeriodBlocks", "fieldBeforeBlocks", "channelWidthBlocks",
@@ -101,6 +101,7 @@ public final class CityLandUseSurfacePrintPlanCodec {
             value.addProperty("surfaceOffset", cell.surfaceOffset());
             value.addProperty("kind", cell.kind().name());
             value.addProperty("facing", cell.facing().name());
+            if (cell.targetSurfaceY() != null) value.addProperty("targetSurfaceY", cell.targetSurfaceY());
             features.add(value);
         }
         root.add("featureCells", features);
@@ -133,7 +134,8 @@ public final class CityLandUseSurfacePrintPlanCodec {
                     text(value, "blockId", false), integer(value, "surfaceOffset"),
                     enumValue(CityLandUseSurfacePrintPlan.FeatureKind.class, text(value, "kind", false)),
                     enumValue(CityLandUseSurfacePrintPlan.HorizontalFacing.class,
-                            text(value, "facing", false))));
+                            text(value, "facing", false)),
+                    value.has("targetSurfaceY") ? integer(value, "targetSurfaceY") : null));
         }
         CityLandUseSurfacePrintPlan plan = new CityLandUseSurfacePrintPlan(
                 schema, text(root, "cityId", false), text(root, "sourceLandUsePlanHash", false),
@@ -207,6 +209,16 @@ public final class CityLandUseSurfacePrintPlanCodec {
             value.addProperty("recipeType", "uniform");
             value.addProperty("surfaceBlockId", uniform.surfaceBlockId());
             value.addProperty("boundaryBlockId", uniform.boundaryBlockId());
+            if (!uniform.platformSpans().isEmpty()) {
+                JsonArray spans = new JsonArray();
+                for (var span : uniform.platformSpans()) {
+                    JsonObject item = new JsonObject();
+                    item.addProperty("z", span.z()); item.addProperty("minX", span.minX());
+                    item.addProperty("maxX", span.maxX()); item.addProperty("targetY", span.targetY());
+                    spans.add(item);
+                }
+                value.add("platformSpans", spans);
+            }
             return value;
         }
         if (recipe instanceof CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe relay) {
@@ -291,8 +303,15 @@ public final class CityLandUseSurfacePrintPlanCodec {
         String type = text(value, "recipeType", false);
         if ("uniform".equals(type)) {
             rejectUnknown(value, UNIFORM_FIELDS, "recipe");
+            List<CityLandUseSurfacePrintPlan.PlatformSpan> spans = new ArrayList<>();
+            if (value.has("platformSpans")) for (JsonElement element : array(value,"platformSpans")) {
+                JsonObject item = object(element,"platformSpan");
+                rejectUnknown(item, Set.of("z","minX","maxX","targetY"),"platformSpan");
+                spans.add(new CityLandUseSurfacePrintPlan.PlatformSpan(integer(item,"z"),
+                        integer(item,"minX"),integer(item,"maxX"),integer(item,"targetY")));
+            }
             return new CityLandUseSurfacePrintPlan.UniformRecipe(text(value, "surfaceBlockId", false),
-                    text(value, "boundaryBlockId", true));
+                    text(value, "boundaryBlockId", true), spans);
         }
         if ("relay_region_growth".equals(type)) {
             rejectUnknown(value, RELAY_FIELDS, "recipe");

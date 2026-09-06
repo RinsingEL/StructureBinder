@@ -352,16 +352,14 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
             if (step.citySeedId().equals(item.get("citySeedId").getAsString()))
                 args.add("sessionId", item.get("patchExplorerSessionId"));
         }
-        Path d3 = debugRoot.resolve(step.runId()).resolve("city_test_runs").resolve(step.citySeedId())
-                .resolve("steps/d3/city_landform_review_package.json");
-        JsonObject review = com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(d3)).getAsJsonObject();
-        java.util.Set<String> unique = new java.util.LinkedHashSet<>();
-        for (var patch : review.getAsJsonArray("landformPatches")) unique.add(patch.getAsJsonObject().get("landformType").getAsString());
-        com.google.gson.JsonArray types = new com.google.gson.JsonArray();
-        unique.forEach(types::add);
-        args.add("interestTypes", types);
-        args.addProperty("pageSize", 1);
-        return args;
+        if (!args.has("sessionId") || args.get("sessionId").isJsonNull()
+                || args.get("sessionId").getAsString().isBlank()) {
+            throw new IOException("CITY_D4_PATCH_REVIEW_SESSION_REQUIRED: " + step.citySeedId());
+        }
+        // D3's region-wide patch list can contain types with no cells inside the city scope.
+        // Use the same frozen candidate catalog as showCandidates, not an unscoped type union.
+        return new com.rinsing.geomantia.systems.realm_planning.PatchExplorerService(debugRoot)
+                .initialPageRequest(step.runId(), args.get("sessionId").getAsString());
     }
 
     private void updateIfChanged(AutomationStatus value) {

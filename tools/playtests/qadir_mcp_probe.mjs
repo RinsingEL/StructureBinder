@@ -9,7 +9,9 @@ if (!/^[a-zA-Z0-9_-]+$/.test(basename)) throw new Error('Invalid evidence basena
 const root = resolve(import.meta.dirname, '../..');
 const client = new Client({ name: 'qadir-real-playtest', version: '1.0' });
 const transport = new StdioClientTransport({ command: process.execPath,
-  args: [resolve(root, 'country_designer_mcp/dist/index.js')], cwd: root, stderr: 'pipe' });
+  args: [resolve(root, 'country_designer_mcp/dist/index.js')], cwd: root, stderr: 'pipe',
+  env: Object.fromEntries(['GEOMANTIA_MC_API_URL', 'MC_API_URL']
+    .filter(key => process.env[key] !== undefined).map(key => [key, process.env[key]])) });
 const records = [];
 try {
   await client.connect(transport);

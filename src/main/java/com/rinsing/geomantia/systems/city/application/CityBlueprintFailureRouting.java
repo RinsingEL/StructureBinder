@@ -7,6 +7,7 @@ import java.util.Set;
 /** Solver/resource failures do not establish that the designer's intent is invalid. */
 public final class CityBlueprintFailureRouting {
     private static final Set<String> PROGRAM_FAILURES = Set.of(
+            "CITY_BLUEPRINT_ARRAY_COMPOSITION_SEARCH_LIMIT_EXHAUSTED",
             "CITY_BLUEPRINT_REQUIRED_STRUCTURE_SEARCH_LIMIT_EXHAUSTED",
             "CITY_BLUEPRINT_LANDSCAPE_SEARCH_LIMIT_EXHAUSTED",
             "CITY_BLUEPRINT_INTERNAL_SAFETY_LIMIT_REACHED",

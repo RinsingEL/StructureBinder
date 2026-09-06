@@ -89,8 +89,17 @@ final class CityLandUseMicroGrader {
         Map<Cell, String> foundationAreaByCell = model.areaByCell();
         if (foundationAreaByCell.isEmpty()) return new FoundationPlan(List.of(), List.of(), List.of());
         Map<Cell, Integer> platformTargets = new HashMap<>(model.platformTargets());
-        Map<Cell, Integer> roadTargets = roadPlatformTargets(fragment, model.desiredTargets(), terrain);
+        Map<Cell, Integer> roadTargets = new HashMap<>(roadPlatformTargets(fragment, model.desiredTargets(), terrain));
+        Set<Cell> frozenCells = new HashSet<>();
+        for (var cell : fragment.gradingMaskCells()) if (cell.foundation() && cell.targetY() != null)
+            frozenCells.add(new Cell(cell.x(),cell.z()));
+        roadTargets.keySet().removeAll(frozenCells);
         platformTargets.putAll(roadTargets);
+        fragment.gradingFeatureOperations().stream().filter(operation -> operation.targetSurfaceY() != null)
+                .forEach(operation -> {
+                    Cell cell = new Cell(operation.x(), operation.z());
+                    if (foundationAreaByCell.containsKey(cell)) platformTargets.put(cell, operation.targetSurfaceY());
+                });
         List<StairDecision> roadStairs = new ArrayList<>(platformStairs(fragment,
                 foundationAreaByCell, platformTargets));
         roadStairs.addAll(junctionStairs(fragment, foundationAreaByCell, platformTargets));
@@ -144,9 +153,12 @@ final class CityLandUseMicroGrader {
             } else if (delta < 0 && -delta <= FOUNDATION_MAX_CUT_DEPTH_BLOCKS) {
                 mode = FoundationMode.CUT;
             } else if (delta != 0) {
+                if (frozenCells.contains(center)) throw new IllegalArgumentException(
+                        "CITY_FOUNDATION_FROZEN_EARTHWORK_LIMIT:" + center.x() + "," + center.z());
                 mode = FoundationMode.PRESERVE;
             } else {
-                continue;
+                if (!frozenCells.contains(center)) continue;
+                mode = FoundationMode.FILL;
             }
             decisions.add(new FoundationDecision(operation.areaId(), operation.x(), operation.z(),
                     sample.surfaceY(), mode == FoundationMode.PRESERVE ? sample.surfaceY() : targetY,
@@ -217,6 +229,16 @@ final class CityLandUseMicroGrader {
             return new PlatformModel(Map.of(), Map.of(), Map.of(), Set.of(), List.of());
         }
 
+        Map<Cell,Integer> frozen = new HashMap<>();
+        for (var cell : fragment.gradingMaskCells()) if (cell.foundation() && cell.targetY() != null)
+            frozen.put(new Cell(cell.x(),cell.z()),cell.targetY());
+        if (!frozen.isEmpty()) {
+            if (frozen.size() != foundationAreaByCell.size())
+                throw new IllegalArgumentException("CITY_FOUNDATION_FROZEN_HEIGHT_INCOMPLETE");
+            return new PlatformModel(Map.copyOf(foundationAreaByCell), Map.copyOf(frozen), Map.copyOf(frozen),
+                    Set.of(), List.of());
+        }
+
         Map<Cell, Integer> desiredTargets = new HashMap<>();
         foundationAreaByCell.forEach((cell, areaId) -> {
             CityLandUseChunkExecutor.ColumnSample sample = required(terrain, cell);
@@ -271,6 +293,7 @@ final class CityLandUseMicroGrader {
         }
         Map<Cell, Integer> result = new HashMap<>();
         roadsBySource.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(entry -> {
+            if (entry.getValue().stream().anyMatch(operation -> operation.targetSurfaceY() != null)) return;
             Axis axis = roadAxis(fragment, entry.getKey(), entry.getValue());
             Map<Integer, List<CityLandUseChunkCompiler.FeatureOperation>> ownerSections = new LinkedHashMap<>();
             entry.getValue().stream().sorted(Comparator
@@ -398,10 +421,9 @@ final class CityLandUseMicroGrader {
                 List<String> purposeIds = componentPurposes.stream()
                         .map(CityLandUseChunkCompiler.PlatformPurposeAnchor::purposeId).sorted().toList();
                 boolean hasPurpose = legacyAreaOnly || !purposeIds.isEmpty();
-                int supportedArea = component.size() + componentPurposes.stream()
-                        .mapToInt(anchor -> anchor.bounds().widthBlocks()
-                                * anchor.bounds().heightBlocks()).sum();
-                if (supportedArea >= MIN_INDEPENDENT_PLATFORM_AREA_BLOCKS && hasPurpose) {
+                // Capacity for a stair comes from actual grading cells, not excluded building
+                // footprints. Keep an isolated purposeful pad below; merge small adjacent ledges.
+                if (component.size() >= MIN_INDEPENDENT_PLATFORM_AREA_BLOCKS && hasPurpose) {
                     continue;
                 }
 
@@ -423,7 +445,7 @@ final class CityLandUseMicroGrader {
                                 .thenComparingInt(Map.Entry::getKey))
                         .map(Map.Entry::getKey).findFirst().orElse(null);
                 if (mergedY == null) {
-                    if (legacyAreaOnly) continue;
+                    if (legacyAreaOnly || hasPurpose) continue;
                     droppedCells.addAll(component);
                     adjustments.add(new PlatformAdjustment(areaId, component.size(), targetY, null,
                             PlatformAdjustmentStatus.WITHDRAWN,
@@ -839,8 +861,11 @@ final class CityLandUseMicroGrader {
                     .orElse(null);
             if (platformCell == null || manhattan(platformCell, entrance) > REFERENCE_RADIUS_BLOCKS + 1) {
                 if (insideOwnerChunk(fragment, entrance)) {
-                    outcomes.add(new AccessOutcome(demand.demandId(), AccessStatus.FAILED,
-                            "CITY_LAND_USE_ACCESS_PLATFORM_MISSING"));
+                    // Gate slots also describe buildings outside the artificial foundation mask.
+                    // No nearby platform means no platform-to-platform stair operation applies;
+                    // this is not a claim that the natural entrance has been rebuilt or verified.
+                    outcomes.add(new AccessOutcome(demand.demandId(), AccessStatus.NO_ARTIFICIAL_PLATFORM,
+                            "CITY_LAND_USE_ACCESS_NATURAL_TERRAIN_UNMODIFIED"));
                 }
                 continue;
             }
@@ -913,6 +938,9 @@ final class CityLandUseMicroGrader {
                 } else {
                     addSplitStairs(candidate, key.sourceId(), stairBlock, key,
                             List.of(boundary.low()), areaByCell, platformTargets, StairMode.ACCESS_SPLIT);
+                }
+                if (candidate.isEmpty()) {
+                    addCutThroughStairs(candidate, key, boundary.low(), stairBlock, areaByCell, platformTargets);
                 }
                 if (candidate.isEmpty()) continue;
                 Set<Cell> stairCells = candidate.keySet();
@@ -1041,31 +1069,62 @@ final class CityLandUseMicroGrader {
         if (areaId == null) return;
         int lateralX = -key.highDz();
         int lateralZ = key.highDx();
-        List<Cell> branchCells = new ArrayList<>();
-        branchCells.add(lowCenter);
-        for (int step = 1; step < delta; step++) {
-            branchCells.add(new Cell(lowCenter.x() + lateralX * step,
-                    lowCenter.z() + lateralZ * step));
-            branchCells.add(new Cell(lowCenter.x() - lateralX * step,
-                    lowCenter.z() - lateralZ * step));
+        if (!Integer.valueOf(key.lowY()).equals(platformTargets.get(lowCenter))) return;
+        List<Integer> availableSides = new ArrayList<>();
+        for (int side : new int[]{1, -1}) {
+            boolean available = true;
+            for (int step = 1; step < delta; step++) {
+                Cell cell = new Cell(lowCenter.x() + side * lateralX * step,
+                        lowCenter.z() + side * lateralZ * step);
+                if (!areaId.equals(areaByCell.get(cell))
+                        || !Integer.valueOf(key.lowY()).equals(platformTargets.get(cell))) {
+                    available = false;
+                    break;
+                }
+            }
+            if (available) availableSides.add(side);
         }
-        boolean available = branchCells.stream().allMatch(cell ->
-                areaId.equals(areaByCell.get(cell))
-                        && Integer.valueOf(key.lowY()).equals(platformTargets.get(cell)));
-        if (!available) return;
+        if (availableSides.isEmpty()) return;
 
         putStair(result, new StairDecision(sourceId, lowCenter.x(), lowCenter.z(),
                 key.highY() - 1, stairBlock, facing(key.highDx(), key.highDz()), stairMode));
         for (int step = 1; step < delta; step++) {
             int targetY = key.highY() - 1 - step;
-            Cell positive = new Cell(lowCenter.x() + lateralX * step,
-                    lowCenter.z() + lateralZ * step);
-            Cell negative = new Cell(lowCenter.x() - lateralX * step,
-                    lowCenter.z() - lateralZ * step);
-            putStair(result, new StairDecision(sourceId, positive.x(), positive.z(), targetY,
-                    stairBlock, facing(-lateralX, -lateralZ), stairMode));
-            putStair(result, new StairDecision(sourceId, negative.x(), negative.z(), targetY,
-                    stairBlock, facing(lateralX, lateralZ), stairMode));
+            for (int side : availableSides) {
+                Cell cell = new Cell(lowCenter.x() + side * lateralX * step,
+                        lowCenter.z() + side * lateralZ * step);
+                putStair(result, new StairDecision(sourceId, cell.x(), cell.z(), targetY,
+                        stairBlock, facing(-side * lateralX, -side * lateralZ), stairMode));
+            }
+        }
+    }
+
+    private static void addCutThroughStairs(Map<Cell, StairDecision> result, TransitionKey key,
+                                           Cell low, String block, Map<Cell, String> areas,
+                                           Map<Cell, Integer> targets) {
+        String area = areas.get(low);
+        int delta = key.highY() - key.lowY();
+        for (int cut = 1; cut < Math.min(delta, FOUNDATION_MAX_CUT_DEPTH_BLOCKS); cut++) {
+            Cell highMouth = new Cell(low.x() + key.highDx() * (cut + 1),
+                    low.z() + key.highDz() * (cut + 1));
+            Cell lowMouth = new Cell(low.x() - key.highDx() * (delta - cut),
+                    low.z() - key.highDz() * (delta - cut));
+            if (!area.equals(areas.get(highMouth)) || !area.equals(areas.get(lowMouth))
+                    || !Integer.valueOf(key.highY()).equals(targets.get(highMouth))
+                    || !Integer.valueOf(key.lowY()).equals(targets.get(lowMouth))) continue;
+            Map<Cell, StairDecision> candidate = new LinkedHashMap<>();
+            for (int step = 0; step < delta; step++) {
+                Cell cell = new Cell(low.x() + key.highDx() * (cut - step),
+                        low.z() + key.highDz() * (cut - step));
+                Integer existing = targets.get(cell);
+                int y = key.highY() - 1 - step;
+                if (!area.equals(areas.get(cell)) || existing == null
+                        || existing - y > FOUNDATION_MAX_CUT_DEPTH_BLOCKS
+                        || y - existing > FOUNDATION_MAX_FILL_DEPTH_BLOCKS) { candidate.clear(); break; }
+                candidate.put(cell, new StairDecision(key.sourceId(), cell.x(), cell.z(), y, block,
+                        facing(key.highDx(), key.highDz()), StairMode.ACCESS_CUT));
+            }
+            if (!candidate.isEmpty()) { result.putAll(candidate); return; }
         }
     }
 
@@ -1408,10 +1467,12 @@ final class CityLandUseMicroGrader {
         DIRECT,
         SPLIT,
         ACCESS_DIRECT,
-        ACCESS_SPLIT
+        ACCESS_SPLIT,
+        ACCESS_CUT
     }
 
     enum AccessStatus {
+        NO_ARTIFICIAL_PLATFORM,
         LEVEL_ACCESS,
         EXISTING_ROAD_STAIR,
         ACTIVE_STAIR,

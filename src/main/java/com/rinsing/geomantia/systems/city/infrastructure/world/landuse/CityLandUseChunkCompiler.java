@@ -203,6 +203,15 @@ public final class CityLandUseChunkCompiler {
                     printArea.surfaceSettings().compatibilityCategory());
             boolean foundationArea = area.sourceGroupIds().stream()
                     .anyMatch(groupId -> groupId.endsWith("::foundation"));
+            Map<BlockCell,Integer> platformHeights = new HashMap<>();
+            if (foundationArea && printArea != null
+                    && printArea.recipe() instanceof CityLandUseSurfacePrintPlan.UniformRecipe uniform) {
+                for (var span : uniform.platformSpans()) {
+                    if (span.z() < minChunkZ-halo || span.z() > maxChunkZ+halo) continue;
+                    for (int x=Math.max(span.minX(),minChunkX-halo); x<=Math.min(span.maxX(),maxChunkX+halo); x++)
+                        platformHeights.put(new BlockCell(x,span.z()),span.targetY());
+                }
+            }
             if (foundationArea) {
                 int footprintOrdinal = 0;
                 for (BlockBounds bounds : area.structureFootprintExclusions()) {
@@ -242,7 +251,8 @@ public final class CityLandUseChunkCompiler {
                         if (!gradingFootprints.contains(cell)
                                 && !gradingCorridorExclusions.contains(cell)
                                 && !gates.contains(cell)) {
-                            gradingMask.putIfAbsent(cell, new GradingMaskCell(areaId, x, z, foundationArea));
+                            gradingMask.putIfAbsent(cell, new GradingMaskCell(areaId, x, z, foundationArea,
+                                    platformHeights.get(cell)));
                         }
                     }
                 }
@@ -315,11 +325,11 @@ public final class CityLandUseChunkCompiler {
         boundaryOperations.sort(BoundaryOperation.STABLE_ORDER);
         List<FeatureOperation> featureOperations = featureCells.stream()
                 .map(cell -> new FeatureOperation(cell.sourceId(), cell.x(), cell.z(), cell.blockId(),
-                        cell.surfaceOffset(), cell.kind(), cell.facing()))
+                        cell.surfaceOffset(), cell.kind(), cell.facing(), cell.targetSurfaceY()))
                 .sorted(FeatureOperation.STABLE_ORDER).toList();
         List<FeatureOperation> gradingFeatureOperations = gradingFeatureCells.stream()
                 .map(cell -> new FeatureOperation(cell.sourceId(), cell.x(), cell.z(), cell.blockId(),
-                        cell.surfaceOffset(), cell.kind(), cell.facing()))
+                        cell.surfaceOffset(), cell.kind(), cell.facing(), cell.targetSurfaceY()))
                 .sorted(FeatureOperation.STABLE_ORDER).toList();
         relevantCellCount += featureOperations.size();
         List<GradingMaskCell> gradingMaskCells = new ArrayList<>(gradingMask.values());
@@ -716,7 +726,10 @@ public final class CityLandUseChunkCompiler {
         }
     }
 
-    public record GradingMaskCell(String areaId, int x, int z, boolean foundation) {
+    public record GradingMaskCell(String areaId, int x, int z, boolean foundation, Integer targetY) {
+        public GradingMaskCell(String areaId, int x, int z, boolean foundation) {
+            this(areaId,x,z,foundation,null);
+        }
         public static final Comparator<GradingMaskCell> STABLE_ORDER =
                 Comparator.comparingInt(GradingMaskCell::z)
                         .thenComparingInt(GradingMaskCell::x)
@@ -850,7 +863,13 @@ public final class CityLandUseChunkCompiler {
                                    String blockId,
                                    int surfaceOffset,
                                    CityLandUseSurfacePrintPlan.FeatureKind kind,
-                                   CityLandUseSurfacePrintPlan.HorizontalFacing facing) {
+                                   CityLandUseSurfacePrintPlan.HorizontalFacing facing,
+                                   Integer targetSurfaceY) {
+        public FeatureOperation(String sourceId, int x, int z, String blockId, int surfaceOffset,
+                                CityLandUseSurfacePrintPlan.FeatureKind kind,
+                                CityLandUseSurfacePrintPlan.HorizontalFacing facing) {
+            this(sourceId, x, z, blockId, surfaceOffset, kind, facing, null);
+        }
         public static final Comparator<FeatureOperation> STABLE_ORDER =
                 Comparator.comparingInt(FeatureOperation::z)
                         .thenComparingInt(FeatureOperation::x)

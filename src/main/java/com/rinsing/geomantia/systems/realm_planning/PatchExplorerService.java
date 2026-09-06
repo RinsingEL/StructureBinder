@@ -164,6 +164,23 @@ public final class PatchExplorerService {
                 booleanValue(session, "preferGeneratorNativeTerrain", true));
     }
 
+    /** Neutral host overview: only types with actual candidates in this frozen scope. */
+    public JsonObject initialPageRequest(String runId, String sessionId) throws IOException {
+        JsonObject session = loadSession(safeId(runId, "runId"), safeId(sessionId, "sessionId"));
+        Scope scope = freshScope(session);
+        JsonArray types = new JsonArray();
+        for (JsonElement entry : typeCatalog(scope)) {
+            types.add(entry.getAsJsonObject().get("patchType"));
+        }
+        if (types.isEmpty()) throw new IllegalArgumentException("PATCH_EXPLORER_SCOPE_EMPTY: " + scope.scopeId());
+        JsonObject request = new JsonObject();
+        request.addProperty("runId", runId);
+        request.addProperty("sessionId", sessionId);
+        request.add("interestTypes", types);
+        request.addProperty("pageSize", 1);
+        return request;
+    }
+
     public JsonObject showCandidates(JsonObject request) throws IOException {
         return showCandidates(request, null);
     }

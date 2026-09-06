@@ -13,7 +13,7 @@
   "gui.geomantia.adventurer_map.current_realm": "Current Realm",
   "gui.geomantia.adventurer_map.current_city": "Current City",
   "gui.geomantia.adventurer_map.city_status": "City Status",
-  "gui.geomantia.adventurer_map.city_counts": "Completed %s · Remaining %s",
+  "gui.geomantia.adventurer_map.city_counts": "Plans ready %s · Remaining plans %s",
   "gui.geomantia.adventurer_map.debug_title": "Debug Information",
   "gui.geomantia.adventurer_map.stage.t1": "T1 Realm Definition",
   "gui.geomantia.adventurer_map.stage.t2": "T2 Realm Core Selection",

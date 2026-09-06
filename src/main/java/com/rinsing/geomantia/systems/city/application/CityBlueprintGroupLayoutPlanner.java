@@ -142,6 +142,14 @@ final class CityBlueprintGroupLayoutPlanner {
         return !"ORGANIC_COMPACT".equals(algorithm);
     }
 
+    int compactFormationSpan(int structureCount, int templateSpan, CityBlueprint.DensityClass density) {
+        int rings = (Math.max(1, structureCount) - 1) / 8 + 1;
+        int radius = rings * (templateSpan + parameters("COMPACT", density).targetEdgeGapBlocks());
+        // Guides are template start anchors, not body centers. Include a full template excursion
+        // on either side, including the angular alternatives used for terrain/frontage fitting.
+        return (radius + templateSpan) * 2 + 1;
+    }
+
     Proposal propose(String algorithm,
                      CityBlueprint.DensityClass density,
                      long seed,

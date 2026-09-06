@@ -26,7 +26,7 @@ class CityFoundationPlannerTest {
         assertEquals(1, componentCount(plan.claims()));
         assertEquals(1, plan.componentCount());
         assertEquals(7, plan.minimumBridgeWidthBlocks());
-        assertEquals(24, plan.resolvedCloseRadiusBlocks());
+        assertEquals(10, plan.resolvedCloseRadiusBlocks());
         CityFoundationPlanner.Plan repeated = new CityFoundationPlanner().plan(bounds(), flatTerrain(),
                 List.of(new BlockBounds(10, 20, 14, 24), new BlockBounds(28, 20, 32, 24)),
                 new LandUseSeedGroup.FoundationSettings(3, 10, 24));
@@ -59,13 +59,15 @@ class CityFoundationPlannerTest {
     }
 
     @Test
-    void thinBridgeFallsBackToSeparateDurablePlatforms() {
+    void nearbyGroupBecomesBroadPlatformInsteadOfFallingBackToBuildingIslands() {
         CityFoundationPlanner.Plan plan = new CityFoundationPlanner().plan(bounds(), corridorTerrain(),
                 List.of(new BlockBounds(4, 4, 8, 8), new BlockBounds(28, 4, 32, 8)),
                 new LandUseSeedGroup.FoundationSettings(1, 16, 32));
 
-        assertEquals(2, plan.componentCount());
-        assertEquals(2, componentCount(plan.claims()));
+        assertEquals(1, plan.componentCount());
+        assertEquals(1, componentCount(plan.claims()));
+        assertTrue(plan.claims().contains(new BlockPoint(18,4)));
+        assertTrue(plan.claims().contains(new BlockPoint(18,8)));
     }
 
     private static int componentCount(Set<BlockPoint> points) {

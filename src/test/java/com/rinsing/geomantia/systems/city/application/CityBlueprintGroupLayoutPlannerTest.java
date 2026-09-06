@@ -16,6 +16,30 @@ class CityBlueprintGroupLayoutPlannerTest {
     private final CityBlueprintGroupLayoutPlanner planner = new CityBlueprintGroupLayoutPlanner();
 
     @Test
+    void compactDemandFollowsEightSlotRingsAndContainsAllGuidesAndTemplateExcursions() {
+        BlockPoint origin = new BlockPoint(0, 0);
+        var frame = planner.worldFrame(origin);
+        int templateSpan = 58;
+        var density = CityBlueprint.DensityClass.BALANCED;
+        assertEquals(planner.compactFormationSpan(1, templateSpan, density),
+                planner.compactFormationSpan(8, templateSpan, density));
+        assertTrue(planner.compactFormationSpan(9, templateSpan, density)
+                > planner.compactFormationSpan(8, templateSpan, density));
+        assertTrue(planner.compactFormationSpan(6, templateSpan, density) < 388);
+        for (int count : new int[]{1, 6, 8, 9, 17}) {
+            int half = planner.compactFormationSpan(count, templateSpan, density) / 2;
+            for (int index = 0; index < count; index++) {
+                var proposal = planner.propose("COMPACT", density, 1, "farm", index,
+                        frame, origin, null, false, templateSpan);
+                for (BlockPoint point : proposal.guides()) {
+                    assertTrue(Math.abs(point.x()) + templateSpan <= half);
+                    assertTrue(Math.abs(point.z()) + templateSpan <= half);
+                }
+            }
+        }
+    }
+
+    @Test
     void densityCompilesIntoAlgorithmSpacingAndClaimArea() {
         var dense = planner.parameters("COMPACT", CityBlueprint.DensityClass.DENSE);
         var sparse = planner.parameters("COMPACT", CityBlueprint.DensityClass.SPARSE);

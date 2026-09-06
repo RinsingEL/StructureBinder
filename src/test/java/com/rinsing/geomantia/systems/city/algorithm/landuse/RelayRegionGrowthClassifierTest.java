@@ -19,6 +19,36 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RelayRegionGrowthClassifierTest {
     @Test
+    void packagedPinewoodPasturePreservesExactSharesAndOriginalAdjacentGrowth() {
+        int[] minX = {-6181,-6181,-6181,-6181,-6181,-6181,-6181,-6181,-6181,-6181,-6181,-6183,-6181};
+        int[] maxX = {-6180,-6179,-6178,-6176,-6175,-6174,-6175,-6175,-6177,-6177,-6178,-6179,-6181};
+        List<LandUseAreaPlan.ScanlineSpan> mask = new ArrayList<>();
+        for (int i = 0; i < minX.length; i++) mask.add(new LandUseAreaPlan.ScanlineSpan(3721+i, minX[i], maxX[i]));
+        var stages = List.of(stage("green", "", "GREEN", .88, RelayRegionGrowthClassifier.GrowthForm.PATCH),
+                stage("ground", "green", "GROUND", .12, RelayRegionGrowthClassifier.GrowthForm.CORRIDOR));
+        var source = new BlockPoint(-6181, 3726);
+        var result = classify(mask, List.of(), source, -1606848854150663495L, stages);
+        assertEquals(64, result.coveredBlockCount());
+        assertEquals(cells(mask), expandedRoleCells(result));
+        assertEquals(source, result.regions().get(0).start());
+        assertEquals(56, result.regions().get(0).actualAreaBlocks());
+        assertEquals(8, result.regions().get(1).actualAreaBlocks());
+        for (var trace : result.regions()) assertEquals(trace.targetAreaBlocks(), trace.actualAreaBlocks());
+        assertGrowthProvenance(result);
+        assertEquals(result, classify(mask, List.of(), source, -1606848854150663495L, stages));
+    }
+
+    @Test
+    void singleCellFinalRoleNeedsNoFurtherRelayNeighbor() {
+        var result = classify(rectangleSpans(0, 4, 0, 1), List.of(), new BlockPoint(0, 0), 3L,
+                List.of(stage("green", "", "GREEN", .9, RelayRegionGrowthClassifier.GrowthForm.PATCH),
+                        stage("ground", "green", "GROUND", .1, RelayRegionGrowthClassifier.GrowthForm.CORRIDOR)));
+        assertEquals(10, result.coveredBlockCount());
+        assertEquals(1, result.regions().get(1).actualAreaBlocks());
+        assertGrowthProvenance(result);
+    }
+
+    @Test
     void smallRootQuotaAdjustmentKeepsEveryRoleAndRecordsOriginalTargets() {
         List<LandUseAreaPlan.ScanlineSpan> mask = List.of(new LandUseAreaPlan.ScanlineSpan(0, 0, 624));
         List<RelayRegionGrowthClassifier.GrowthStage> stages = List.of(

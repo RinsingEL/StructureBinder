@@ -33,6 +33,37 @@ class PatchExplorerServiceTest {
     Path tempDir;
 
     @Test
+    void hostOverviewUsesActualScopeTypesNotEveryD3PatchType() throws Exception {
+        Path root = tempDir.resolve("realm_debug");
+        Path run = root.resolve("run_a");
+        Files.createDirectories(run);
+        writeCityArtifacts(run);
+        Path reviewPath = CityTestRunLayout.open(run, "city_a").stepDirectory(CityTestRunLayout.D3)
+                .resolve("city_landform_review_package.json");
+        JsonObject review = read(reviewPath);
+        JsonObject outside = new JsonObject();
+        outside.addProperty("landformPatchId", "outside_city_unknown");
+        outside.addProperty("landformType", "unknown");
+        review.getAsJsonArray("landformPatches").add(outside);
+        Files.writeString(reviewPath, review.toString());
+        PatchExplorerService service = new PatchExplorerService(root);
+        JsonObject opened = service.open(request("run_a", "city_d4", "city_a"));
+        String sessionId = opened.get("sessionId").getAsString();
+        JsonObject first = service.initialPageRequest("run_a", sessionId);
+        assertEquals(1, first.get("pageSize").getAsInt());
+        JsonArray expected = new JsonArray();
+        for (var entry : opened.getAsJsonArray("typeCatalog"))
+            expected.add(entry.getAsJsonObject().get("patchType"));
+        assertEquals(expected, first.getAsJsonArray("interestTypes"));
+        assertFalse(expected.contains(new com.google.gson.JsonPrimitive("unknown")));
+        assertEquals(first, service.initialPageRequest("run_a", sessionId));
+        assertEquals(expected.size(), service.showCandidates(first).getAsJsonArray("typePages").size());
+        // Explicit invalid client choices still fail; this fixes host input, not the safety check.
+        first.getAsJsonArray("interestTypes").add("unknown");
+        assertThrows(IllegalArgumentException.class, () -> service.showCandidates(first));
+    }
+
+    @Test
     void exploresThreeScopesWithStablePagesSparseRelationsAndSelectionPreview() throws Exception {
         Path root = tempDir.resolve("realm_debug");
         Path run = root.resolve("run_a");

@@ -106,6 +106,25 @@ class PlanningAreaAccessPolicyTest {
     }
 
     @Test
+    void completedNeighborCanBeReachedInsideRoutingMarginButNotProtectedReservation() throws Exception {
+        writeRun("run_live_pinewood", 9_000L, -8192, 8192, -8192, 8192, List.of(
+                new Seed("capital_pending", -6864, 3568, 3, "pending"),
+                new Seed("pinewood", -6288, 3600, 1, "waiting_for_generation")));
+        var policy = policy();
+        assertTrue(policy.connectedCityIds().contains("pinewood"));
+        assertTrue(policy.evaluate("minecraft:overworld", -6288, 3600).allowed());
+        assertFalse(policy.evaluate("minecraft:overworld", -6864, 3568).allowed());
+        assertFalse(policy.evaluate("minecraft:overworld", -6400, 3568).allowed(),
+                "The narrowing arrival corridor must not open the pending city's safety buffer");
+        var wideView = new PlanningAreaAccessPolicy(temporaryDirectory.resolve("realm_debug"),
+                PlanningAreaAccessConfig.defaults(), 224);
+        assertTrue(wideView.connectedCityIds().contains("pinewood"));
+        assertTrue(wideView.evaluate("minecraft:overworld", -6192, 3600).allowed());
+        assertFalse(wideView.evaluate("minecraft:overworld", -6288, 3600).allowed(),
+                "Use a safe city arrival point, not a bypass of the view-distance protection");
+    }
+
+    @Test
     void realQadirActivatedStructuresAreAllExplorable() throws Exception {
         String configured = System.getenv("GEOMANTIA_QADIR_RUN");
         org.junit.jupiter.api.Assumptions.assumeTrue(configured != null && !configured.isBlank());
@@ -169,6 +188,26 @@ class PlanningAreaAccessPolicyTest {
         assertTrue(policy().evaluate("minecraft:overworld", 4800, 600).allowed());
         assertTrue(policy().evaluate("minecraft:overworld", 4900, 700).allowed());
         assertFalse(policy().evaluate("minecraft:overworld", 5500, 700).allowed());
+    }
+
+    @Test
+    void livePinewoodRoadRemainsOpenAcrossNeighborViewBuffer() throws Exception {
+        writeRun("pinewood_walk", 9000, -8192, 8192, -8192, 8192, List.of(
+                new Seed("capital", -6864, 3568, 3, "pending"),
+                new Seed("pinewood", -6288, 3600, 1, "waiting_for_generation")));
+        write(temporaryDirectory.resolve("geomantia_city_masks/active_planned_structure_registry.json"),
+                com.google.gson.JsonParser.parseString("""
+                {"registries":[{"runId":"pinewood_walk","cityId":"pinewood","plannedStructures":[
+                  {"maskEnvelope":{"minX":-6500,"maxX":-6100,"minZ":3400,"maxZ":3800}}]}]}
+                """).getAsJsonObject());
+        var policy = new PlanningAreaAccessPolicy(temporaryDirectory.resolve("realm_debug"),
+                PlanningAreaAccessConfig.defaults(), 224);
+        for (int x = -6192; x >= -6440; x--)
+            assertTrue(policy.evaluate("minecraft:overworld", x, 3649).allowed(), "Road x=" + x);
+        assertFalse(policy.evaluate("minecraft:overworld", -6500, 3568).allowed(),
+                "An overlapping activated envelope cannot release actual pending construction");
+        assertFalse(policy.evaluate("minecraft:overworld", -6340, 3900).allowed(),
+                "The buffer exemption is limited to the activated city footprint");
     }
 
     private void writeRun(String runId, long queueTimestamp, int minX, int maxX, int minZ, int maxZ,

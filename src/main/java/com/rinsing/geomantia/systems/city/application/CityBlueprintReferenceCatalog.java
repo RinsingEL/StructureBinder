@@ -68,15 +68,32 @@ public record CityBlueprintReferenceCatalog(
     public static CityBlueprintReferenceCatalog parse(JsonObject root, CityTemplateCatalog templateCatalog) {
         if (root == null) fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
                 "$", "blueprintReferenceCatalog object is required.");
-        exactFields(root, ROOT_FIELDS, "$", CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID);
+        Set<String> rootFields = new LinkedHashSet<>(ROOT_FIELDS);
+        if (root.has("automaticConnectionMaxDistanceBlocks")) {
+            rootFields.add("automaticConnectionMaxDistanceBlocks");
+            JsonElement distance = root.get("automaticConnectionMaxDistanceBlocks");
+            if (!distance.isJsonPrimitive() || !distance.getAsJsonPrimitive().isNumber()
+                    || !distance.getAsString().matches("[0-9]+") || distance.getAsLong() > Integer.MAX_VALUE)
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                        "$.automaticConnectionMaxDistanceBlocks", "Expected a non-negative integer; 0 disables automatic neighbor growth.");
+        }
+        exactFields(root, rootFields, "$", CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID);
         String schema = string(root, "schema", "$.schema");
         if (!SCHEMA.equals(schema)) {
             fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_SCHEMA_UNSUPPORTED,
                     "$.schema", "Unsupported blueprint reference catalog schema: " + schema);
         }
         StructureCatalog structures = structureRefs(array(root, "structureRefs"), templateCatalog);
-        Set<String> pools = refs(array(root, "fillPools"), "poolRef", Set.of("poolRef", "structureRefs"),
+        Set<String> pools = refs(array(root, "fillPools"), "poolRef", Set.of("poolRef", "structureRefs", "maxCopiesPerStructurePerGroup"),
                 "$.fillPools", item -> {
+                    if (item.has("maxCopiesPerStructurePerGroup")) {
+                        JsonElement cap = item.get("maxCopiesPerStructurePerGroup");
+                        if (!cap.isJsonPrimitive() || !cap.getAsJsonPrimitive().isNumber()
+                                || !cap.getAsString().matches("[0-9]+") || cap.getAsLong() > Integer.MAX_VALUE) {
+                            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                                    "$.fillPools[].maxCopiesPerStructurePerGroup", "Expected a non-negative integer; 0 means unlimited.");
+                        }
+                    }
                     for (JsonElement entry : array(item, "structureRefs")) {
                         String ref = stringElement(entry, "$.fillPools[].structureRefs[]");
                         if (!structures.refs().contains(ref)) {
@@ -656,7 +673,9 @@ public record CityBlueprintReferenceCatalog(
         for (int index = 0; index < array.size(); index++) {
             String itemPath = path + "[" + index + "]";
             JsonObject item = object(array.get(index), itemPath);
-            exactFields(item, fields, itemPath, CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID);
+            Set<String> requiredFields = new LinkedHashSet<>(fields);
+            if (!item.has("maxCopiesPerStructurePerGroup")) requiredFields.remove("maxCopiesPerStructurePerGroup");
+            exactFields(item, requiredFields, itemPath, CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID);
             String ref = string(item, refField, itemPath + "." + refField);
             duplicate(result, ref, itemPath);
             validator.validate(item);
