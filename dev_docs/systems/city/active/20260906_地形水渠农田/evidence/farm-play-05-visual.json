@@ -1,0 +1,60 @@
+[
+  {
+    "start": "2026-09-06T09:27:11.297Z",
+    "end": "2026-09-06T09:27:11.336Z",
+    "name": "realm_debug_command",
+    "arguments": {
+      "command": "tp @p -2680 248 5050 0 40",
+      "confirmCommandExecution": true,
+      "sourceMode": "server"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":true,\"status\":\"executed\",\"reasonCode\":\"DEBUG_COMMAND_EXECUTED\",\"command\":\"/tp @p -2680 248 5050 0 40\",\"normalizedCommand\":\"tp @p -2680 248 5050 0 40\",\"result\":1,\"sourceMode\":\"server\",\"requestedSourceMode\":\"server\",\"playerName\":\"Dev\",\"dimensionId\":\"minecraft:overworld\",\"worldSaveRequested\":false,\"presentation\":\"planning_decision_view.v0.1\"}"
+        }
+      ],
+      "isError": false
+    }
+  },
+  {
+    "start": "2026-09-06T09:27:11.336Z",
+    "end": "2026-09-06T09:27:11.356Z",
+    "name": "realm_debug_command",
+    "arguments": {
+      "command": "weather clear",
+      "confirmCommandExecution": true,
+      "sourceMode": "server"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"status\":\"completed_without_success\",\"reasonCode\":\"DEBUG_COMMAND_NO_SUCCESS\",\"command\":\"/weather clear\",\"normalizedCommand\":\"weather clear\",\"result\":-1,\"sourceMode\":\"server\",\"requestedSourceMode\":\"server\",\"playerName\":\"Dev\",\"dimensionId\":\"minecraft:overworld\",\"worldSaveRequested\":false,\"presentation\":\"planning_decision_view.v0.1\"}"
+        }
+      ],
+      "isError": true
+    }
+  },
+  {
+    "start": "2026-09-06T09:27:11.356Z",
+    "end": "2026-09-06T09:27:11.638Z",
+    "name": "realm_debug_command",
+    "arguments": {
+      "command": "time set day",
+      "confirmCommandExecution": true,
+      "sourceMode": "server",
+      "saveAfter": true
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":true,\"status\":\"executed\",\"reasonCode\":\"DEBUG_COMMAND_EXECUTED\",\"command\":\"/time set day\",\"normalizedCommand\":\"time set day\",\"result\":1000,\"sourceMode\":\"server\",\"requestedSourceMode\":\"server\",\"playerName\":\"Dev\",\"dimensionId\":\"minecraft:overworld\",\"worldSaveRequested\":true,\"presentation\":\"planning_decision_view.v0.1\"}"
+        }
+      ],
+      "isError": false
+    }
+  }
+]

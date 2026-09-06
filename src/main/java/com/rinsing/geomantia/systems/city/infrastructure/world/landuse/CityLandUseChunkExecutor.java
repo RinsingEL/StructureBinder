@@ -87,6 +87,7 @@ public final class CityLandUseChunkExecutor {
         Set<ColumnKey> preparedFillColumns = new HashSet<>();
         Set<ColumnKey> preparedCutColumns = new HashSet<>();
         Set<ColumnKey> preservedFoundationColumns = new HashSet<>();
+        Set<ColumnKey> openWaterColumns = new HashSet<>();
         for (CityLandUseChunkCompiler.SurfaceOperation operation : fragment.surfaceOperations()) {
             ColumnKey key = new ColumnKey(operation.x(), operation.z());
             ColumnSample column = terrainView.sample(operation.x(), operation.z());
@@ -144,8 +145,22 @@ public final class CityLandUseChunkExecutor {
                 case CHANNEL_OVERLAY -> OperationPhase.SURFACE_OVERLAY;
                 case CROP -> OperationPhase.CROP;
             };
+            String surfaceBlock = operation.blockId();
+            if (!operation.channelClosureBlockId().isBlank()) {
+                // Water replaces the ground block (not the air above it). A real solid bed and
+                // four closed sides are required before writing, including across owner seams.
+                // A downhill opening becomes a solid stop, so independent chunks cannot spill.
+                boolean contained = world.supportsChannel(operation.x(), targetSurfaceY - 1,
+                        operation.z(), true);
+                for (Direction direction : HORIZONTAL_DIRECTIONS) {
+                    contained &= world.supportsChannel(operation.x() + direction.getStepX(), targetSurfaceY,
+                            operation.z() + direction.getStepZ(), false);
+                }
+                if (!contained) surfaceBlock = operation.channelClosureBlockId();
+                else openWaterColumns.add(key);
+            }
             PreparedMutation mutation = prepare(world, operation.areaId(), phase,
-                    operation.x(), targetSurfaceY + operation.surfaceOffset(), operation.z(), operation.blockId(),
+                    operation.x(), targetSurfaceY + operation.surfaceOffset(), operation.z(), surfaceBlock,
                     operation.requireReplaceableTarget() || shouldFill && operation.surfaceOffset() == 0);
             if (mutation.failureReason() != null) {
                 return ExecutionResult.failed(fragment, mutation.failureReason(),
@@ -200,6 +215,11 @@ public final class CityLandUseChunkExecutor {
             if (preservedFoundationColumns.contains(key)) continue;
             ColumnSample column = terrainView.sample(operation.x(), operation.z());
             int surfaceY = plannedSurfaceY.getOrDefault(key, column.surfaceY());
+            if (openWaterColumns.contains(key) || !plannedSurfaceY.containsKey(key)
+                    && !world.supportsChannel(operation.x(), surfaceY, operation.z(), true)) {
+                occupiedBoundarySkipped++;
+                continue;
+            }
             PreparedMutation mutation = prepare(world, operation.areaId(), OperationPhase.BOUNDARY,
                     operation.x(), surfaceY + 1, operation.z(), operation.blockId(), true);
             if (mutation.failureReason() != null) {
@@ -606,6 +626,13 @@ public final class CityLandUseChunkExecutor {
 
         TargetState inspect(int worldX, int y, int worldZ);
 
+        default boolean supportsChannel(int worldX, int y, int worldZ, boolean bed) {
+            ColumnSample column = sampleColumn(worldX, worldZ);
+            return column.naturalSurface() && column.surfaceY() >= y
+                    && !"minecraft:water".equals(column.surfaceBlockId())
+                    && !"minecraft:lava".equals(column.surfaceBlockId());
+        }
+
         default Object beginWrite(int worldX, int y, int worldZ, Object snapshot) {
             return snapshot;
         }
@@ -1005,6 +1032,17 @@ public final class CityLandUseChunkExecutor {
             BlockPos pos = new BlockPos(worldX, y, worldZ);
             BlockState state = getBlockState(pos);
             return new TargetState(new WorldSnapshot(state, null), isLandUseReplaceable(state));
+        }
+
+        @Override
+        public boolean supportsChannel(int worldX, int y, int worldZ, boolean bed) {
+            BlockPos pos = new BlockPos(worldX, y, worldZ);
+            BlockState state = getBlockState(pos);
+            if (bed) return state.getFluidState().isEmpty() && state.isFaceSturdy(level, pos, Direction.UP);
+            // Previously generated same-level source water is a valid continuation, not a hole.
+            return state.is(Blocks.WATER) && state.getFluidState().isSource()
+                    || state.getFluidState().isEmpty() && (state.is(Blocks.FARMLAND)
+                    || state.is(Blocks.DIRT_PATH) || state.isCollisionShapeFullBlock(level, pos));
         }
 
         /**

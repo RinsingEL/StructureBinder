@@ -54,7 +54,7 @@ class CityLandUseSurfacePrintPlannerTest {
         assertEquals(5, contour.fieldBeforeBlocks());
         assertEquals(3, contour.channelWidthBlocks());
         assertEquals(5, contour.fieldAfterBlocks());
-        assertEquals(CityLandUseSurfacePrintPlan.ClassificationMode.RADIAL_FALLBACK,
+        assertEquals(CityLandUseSurfacePrintPlan.ClassificationMode.DIRECTIONAL_CURVES,
                 contour.classificationMode());
         assertTrue(contour.bandSpans().stream().anyMatch(span ->
                 span.role() == CityLandUseSurfacePrintPlan.BandRole.FIELD));

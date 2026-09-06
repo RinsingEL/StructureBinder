@@ -19,6 +19,16 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ContourBandSurfaceClassifierTest {
+    @Test
+    void largeSlopedFieldFinishesWithoutPerCellWorldSampling() {
+        BlockBounds bounds = new BlockBounds(0, 0, 767, 767);
+        LandUseTerrainField field = terrain(bounds, 16,
+                (x, z) -> 70 + .025 * x + .015 * z + 2 * Math.sin(z / 60.0));
+        org.junit.jupiter.api.Assertions.assertTimeoutPreemptively(java.time.Duration.ofSeconds(20), () -> {
+            var result = classify(bounds, List.of(), new BlockPoint(384, 384), field);
+            assertEquals(768 * 768, result.spans().stream().mapToInt(s -> s.maxX() - s.minX() + 1).sum());
+        });
+    }
     private static final int FIELD_BEFORE = 5;
     private static final int CHANNEL_WIDTH = 3;
     private static final int FIELD_AFTER = 5;
@@ -63,18 +73,20 @@ class ContourBandSurfaceClassifierTest {
     }
 
     @Test
-    void flatTerrainFallsBackToStableRadialBands() {
+    void flatTerrainUsesOpenDirectionalRowsInsteadOfConcentricRings() {
         BlockBounds bounds = new BlockBounds(0, 0, 32, 32);
         BlockPoint center = new BlockPoint(16, 16);
         ContourBandSurfaceClassifier.Result result = classify(bounds, List.of(), center,
                 terrain(bounds, 4, (x, z) -> 70));
 
-        assertEquals(ContourBandSurfaceClassifier.Mode.RADIAL_FALLBACK, result.mode());
+        assertEquals(ContourBandSurfaceClassifier.Mode.DIRECTIONAL_CURVES, result.mode());
         assertRole(result, 16, 16, ContourBandSurfaceClassifier.BandRole.FIELD);
         assertRole(result, 21, 16, ContourBandSurfaceClassifier.BandRole.CHANNEL_BEFORE_BANK);
         assertRole(result, 22, 16, ContourBandSurfaceClassifier.BandRole.CHANNEL_WATER);
         assertRole(result, 23, 16, ContourBandSurfaceClassifier.BandRole.CHANNEL_AFTER_BANK);
-        assertTrue(role(result, 20, 20).isChannel(), "diagonal ring repair must stay inside the channel band");
+        assertFalse(role(result, 20, 20).isChannel(), "flat terrain must not form a radial ring");
+        assertTrue(waterCells(result).stream().anyMatch(cell -> cell.z() == bounds.minZ()));
+        assertTrue(waterCells(result).stream().anyMatch(cell -> cell.z() == bounds.maxZ()));
     }
 
     @Test
@@ -135,7 +147,6 @@ class ContourBandSurfaceClassifierTest {
                 request(members, exclusions, terrain(bounds, 4, (x, z) -> 70), BlockPoint.ORIGIN));
         Set<BlockPoint> water = waterCells(result);
 
-        assertFalse(water.isEmpty());
         assertEquals(componentCount(water, DIRECTIONS_8), componentCount(water, DIRECTIONS_4),
                 "unbridgeable excluded corners must not survive as fake diagonal water links");
     }

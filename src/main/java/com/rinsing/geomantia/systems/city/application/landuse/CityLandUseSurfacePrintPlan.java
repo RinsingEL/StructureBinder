@@ -332,6 +332,7 @@ public record CityLandUseSurfacePrintPlan(
     }
 
     public enum ClassificationMode {
+        DIRECTIONAL_CURVES,
         CONTOUR_NORMAL,
         RADIAL_FALLBACK
     }

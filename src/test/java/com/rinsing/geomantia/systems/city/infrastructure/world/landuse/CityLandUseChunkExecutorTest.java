@@ -17,6 +17,36 @@ class CityLandUseChunkExecutorTest {
     private final CityLandUseChunkExecutor executor = new CityLandUseChunkExecutor();
 
     @Test
+    void channelUsesGroundLevelAndClosesAtDownhillEdges() {
+        var fragment = new CityLandUseChunkCompiler.ChunkFragment(
+                CityLandUseChunkCompiler.RESULT_SCHEMA, "city", "hash", "palette", 0, 0,
+                1, 0, 0, 0, null, List.of(), List.of(new CityLandUseChunkCompiler.SurfaceOperation(
+                "farm", "agriculture", 15, 8, "minecraft:water", 0, false,
+                CityLandUseChunkCompiler.SurfaceStage.BASE, 0, "minecraft:dirt")), List.of());
+        FakeWorld flat = new FakeWorld();
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED, executor.execute(fragment, flat,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES).status());
+        assertEquals(List.of("15,64,8=minecraft:water"), flat.writes);
+        FakeWorld slope = new FakeWorld();
+        slope.columns.put("16,8", new CityLandUseChunkExecutor.ColumnSample(63, "minecraft:dirt", true));
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED, executor.execute(fragment, slope,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES).status());
+        assertEquals(List.of("15,64,8=minecraft:dirt"), slope.writes,
+                "A lower neighbor across the owner seam must close the canal, not spill into it");
+    }
+
+    @Test
+    void boundaryIsNotPlacedOnAnUnmodifiedWaterColumn() {
+        FakeWorld world = new FakeWorld();
+        world.columns.put("1,0", new CityLandUseChunkExecutor.ColumnSample(64, "minecraft:water", false));
+        var result = executor.execute(stagedFragment(), world,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED, result.status());
+        assertEquals(1, result.occupiedBoundarySkippedCount());
+        assertTrue(world.writes.stream().noneMatch(write -> write.endsWith("minecraft:oak_fence")));
+    }
+
+    @Test
     void withdrawnFoundationReportsZeroBoundaryAndCropBatchesInsteadOfCountingTheDraft() {
         List<CityLandUseChunkCompiler.GradingMaskCell> mask = new ArrayList<>();
         for (int z = 0; z < 16; z++) for (int x = 0; x < 16; x++)

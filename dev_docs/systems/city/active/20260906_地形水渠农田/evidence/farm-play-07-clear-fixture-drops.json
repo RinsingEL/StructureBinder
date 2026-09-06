@@ -1,0 +1,22 @@
+[
+  {
+    "start": "2026-09-06T09:28:58.500Z",
+    "end": "2026-09-06T09:28:58.685Z",
+    "name": "realm_debug_command",
+    "arguments": {
+      "command": "kill @e[type=item,x=-2738,y=216,z=5070,dx=180,dy=20,dz=52]",
+      "confirmCommandExecution": true,
+      "sourceMode": "server",
+      "saveAfter": true
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":true,\"status\":\"executed\",\"reasonCode\":\"DEBUG_COMMAND_EXECUTED\",\"command\":\"/kill @e[type=item,x=-2738,y=216,z=5070,dx=180,dy=20,dz=52]\",\"normalizedCommand\":\"kill @e[type=item,x=-2738,y=216,z=5070,dx=180,dy=20,dz=52]\",\"result\":4283,\"sourceMode\":\"server\",\"requestedSourceMode\":\"server\",\"playerName\":\"Dev\",\"dimensionId\":\"minecraft:overworld\",\"worldSaveRequested\":true,\"presentation\":\"planning_decision_view.v0.1\"}"
+        }
+      ],
+      "isError": false
+    }
+  }
+]

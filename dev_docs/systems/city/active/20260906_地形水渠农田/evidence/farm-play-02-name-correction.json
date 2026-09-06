@@ -1,0 +1,22 @@
+[
+  {
+    "start": "2026-09-06T09:20:32.641Z",
+    "end": "2026-09-06T09:20:32.687Z",
+    "name": "realm_debug_command",
+    "arguments": {
+      "command": "test run irrigatedfarmlandgametests.curvedchannelssurvivefluidticks",
+      "confirmCommandExecution": true,
+      "sourceMode": "player",
+      "playerName": "Dev"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":true,\"status\":\"executed\",\"reasonCode\":\"DEBUG_COMMAND_EXECUTED\",\"command\":\"/test run irrigatedfarmlandgametests.curvedchannelssurvivefluidticks\",\"normalizedCommand\":\"test run irrigatedfarmlandgametests.curvedchannelssurvivefluidticks\",\"result\":1,\"sourceMode\":\"player\",\"requestedSourceMode\":\"player\",\"playerName\":\"Dev\",\"dimensionId\":\"minecraft:overworld\",\"worldSaveRequested\":false,\"presentation\":\"planning_decision_view.v0.1\"}"
+        }
+      ],
+      "isError": false
+    }
+  }
+]

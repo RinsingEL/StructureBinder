@@ -156,8 +156,14 @@ public final class CityOutdoorBlueprintCompiler {
                 List<BlockPoint> seeds = List.of(parcel.seed());
                 LandscapeFillProgram fillProgram = landscapeFillProgram(blueprint, landscape, profile,
                         parcel, catalog);
-                LandUseSurfaceSettings fillSurfaceSettings = surfaceSettings(parcelRule, recipe, false)
-                        .forRelayRegionGrowth();
+                LandUseSurfaceSettings fillSurfaceSettings = surfaceSettings(parcelRule, recipe, false);
+                // Only an explicitly selected water-bearing fill may use the author's channel recipe.
+                // Dry fields and other landscape programs keep their authored relay semantics.
+                boolean irrigatedBands = fillSurfaceSettings.surfaceAlgorithm()
+                        == LandUseSurfaceSettings.SurfaceAlgorithm.CONTOUR_BANDS
+                        && fillProgram.roles().stream().anyMatch(role ->
+                        role.materialRole() == LandscapeFillProgram.MaterialRole.WATER);
+                if (!irrigatedBands) fillSurfaceSettings = fillSurfaceSettings.forRelayRegionGrowth();
                 LandUseSeedGroup.GrowthRegion region = new LandUseSeedGroup.GrowthRegion(parcel.parcelId(),
                         anchorIds, seeds, parcel.budget().min(), parcel.budget().preferred(), parcel.budget().max());
                 groups.add(new LandUseSeedGroup(parcel.parcelId(), parcelRule,

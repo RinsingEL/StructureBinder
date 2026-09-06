@@ -1,0 +1,75 @@
+[
+  {
+    "start": "2026-09-06T09:20:19.570Z",
+    "end": "2026-09-06T09:20:19.604Z",
+    "name": "realm_status",
+    "arguments": {},
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":true,\"stage\":\"status\",\"runId\":\"\",\"warnings\":[],\"errors\":[],\"serviceReady\":true,\"debugRoot\":\"E:\\\\Mod_Dev\\\\StructureBinder\\\\run\\\\saves\\\\RTF_farmland_20260906\\\\realm_debug\",\"availableStages\":[\"W\",\"T1\",\"T2\",\"T3\",\"T4\",\"acceptance\"],\"gisReady\":true,\"knownRuns\":[],\"presentation\":\"planning_decision_view.v0.1\"}"
+        }
+      ],
+      "isError": false
+    }
+  },
+  {
+    "start": "2026-09-06T09:20:19.604Z",
+    "end": "2026-09-06T09:20:19.617Z",
+    "name": "realm_debug_command",
+    "arguments": {
+      "command": "gamemode creative @p",
+      "confirmCommandExecution": true,
+      "sourceMode": "server"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"status\":\"completed_without_success\",\"reasonCode\":\"DEBUG_COMMAND_NO_SUCCESS\",\"command\":\"/gamemode creative @p\",\"normalizedCommand\":\"gamemode creative @p\",\"result\":0,\"sourceMode\":\"server\",\"requestedSourceMode\":\"server\",\"playerName\":\"Dev\",\"dimensionId\":\"minecraft:overworld\",\"worldSaveRequested\":false,\"presentation\":\"planning_decision_view.v0.1\"}"
+        }
+      ],
+      "isError": true
+    }
+  },
+  {
+    "start": "2026-09-06T09:20:19.617Z",
+    "end": "2026-09-06T09:20:19.625Z",
+    "name": "realm_debug_command",
+    "arguments": {
+      "command": "tp @p -2800 218 5072 0 0",
+      "confirmCommandExecution": true,
+      "sourceMode": "server"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":true,\"status\":\"executed\",\"reasonCode\":\"DEBUG_COMMAND_EXECUTED\",\"command\":\"/tp @p -2800 218 5072 0 0\",\"normalizedCommand\":\"tp @p -2800 218 5072 0 0\",\"result\":1,\"sourceMode\":\"server\",\"requestedSourceMode\":\"server\",\"playerName\":\"Dev\",\"dimensionId\":\"minecraft:overworld\",\"worldSaveRequested\":false,\"presentation\":\"planning_decision_view.v0.1\"}"
+        }
+      ],
+      "isError": false
+    }
+  },
+  {
+    "start": "2026-09-06T09:20:19.626Z",
+    "end": "2026-09-06T09:20:19.669Z",
+    "name": "realm_debug_command",
+    "arguments": {
+      "command": "test run geomantia:irrigatedfarmlandgametests.curvedchannelssurvivefluidticks",
+      "confirmCommandExecution": true,
+      "sourceMode": "player",
+      "playerName": "Dev"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"status\":\"completed_without_success\",\"reasonCode\":\"DEBUG_COMMAND_NO_SUCCESS\",\"command\":\"/test run geomantia:irrigatedfarmlandgametests.curvedchannelssurvivefluidticks\",\"normalizedCommand\":\"test run geomantia:irrigatedfarmlandgametests.curvedchannelssurvivefluidticks\",\"result\":0,\"sourceMode\":\"player\",\"requestedSourceMode\":\"player\",\"playerName\":\"Dev\",\"dimensionId\":\"minecraft:overworld\",\"worldSaveRequested\":false,\"presentation\":\"planning_decision_view.v0.1\"}"
+        }
+      ],
+      "isError": true
+    }
+  }
+]

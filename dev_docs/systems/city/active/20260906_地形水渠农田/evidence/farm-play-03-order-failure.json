@@ -1,0 +1,117 @@
+[
+  {
+    "start": "2026-09-06T09:21:08.288Z",
+    "end": "2026-09-06T09:21:08.310Z",
+    "name": "realm_debug_command",
+    "arguments": {
+      "command": "execute if block -2656 221 5083 minecraft:water",
+      "confirmCommandExecution": true,
+      "sourceMode": "server"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":true,\"status\":\"executed\",\"reasonCode\":\"DEBUG_COMMAND_EXECUTED\",\"command\":\"/execute if block -2656 221 5083 minecraft:water\",\"normalizedCommand\":\"execute if block -2656 221 5083 minecraft:water\",\"result\":1,\"sourceMode\":\"server\",\"requestedSourceMode\":\"server\",\"playerName\":\"Dev\",\"dimensionId\":\"minecraft:overworld\",\"worldSaveRequested\":false,\"presentation\":\"planning_decision_view.v0.1\"}"
+        }
+      ],
+      "isError": false
+    }
+  },
+  {
+    "start": "2026-09-06T09:21:08.311Z",
+    "end": "2026-09-06T09:21:08.316Z",
+    "name": "realm_debug_command",
+    "arguments": {
+      "command": "execute if block -2592 221 5083 minecraft:water",
+      "confirmCommandExecution": true,
+      "sourceMode": "server"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"status\":\"completed_without_success\",\"reasonCode\":\"DEBUG_COMMAND_NO_SUCCESS\",\"command\":\"/execute if block -2592 221 5083 minecraft:water\",\"normalizedCommand\":\"execute if block -2592 221 5083 minecraft:water\",\"result\":0,\"sourceMode\":\"server\",\"requestedSourceMode\":\"server\",\"playerName\":\"Dev\",\"dimensionId\":\"minecraft:overworld\",\"worldSaveRequested\":false,\"presentation\":\"planning_decision_view.v0.1\"}"
+        }
+      ],
+      "isError": true
+    }
+  },
+  {
+    "start": "2026-09-06T09:21:08.316Z",
+    "end": "2026-09-06T09:21:08.320Z",
+    "name": "realm_debug_command",
+    "arguments": {
+      "command": "execute if block -2656 221 5083 minecraft:dirt",
+      "confirmCommandExecution": true,
+      "sourceMode": "server"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"status\":\"completed_without_success\",\"reasonCode\":\"DEBUG_COMMAND_NO_SUCCESS\",\"command\":\"/execute if block -2656 221 5083 minecraft:dirt\",\"normalizedCommand\":\"execute if block -2656 221 5083 minecraft:dirt\",\"result\":0,\"sourceMode\":\"server\",\"requestedSourceMode\":\"server\",\"playerName\":\"Dev\",\"dimensionId\":\"minecraft:overworld\",\"worldSaveRequested\":false,\"presentation\":\"planning_decision_view.v0.1\"}"
+        }
+      ],
+      "isError": true
+    }
+  },
+  {
+    "start": "2026-09-06T09:21:08.320Z",
+    "end": "2026-09-06T09:21:08.323Z",
+    "name": "realm_debug_command",
+    "arguments": {
+      "command": "execute if block -2592 221 5083 minecraft:dirt",
+      "confirmCommandExecution": true,
+      "sourceMode": "server"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":true,\"status\":\"executed\",\"reasonCode\":\"DEBUG_COMMAND_EXECUTED\",\"command\":\"/execute if block -2592 221 5083 minecraft:dirt\",\"normalizedCommand\":\"execute if block -2592 221 5083 minecraft:dirt\",\"result\":1,\"sourceMode\":\"server\",\"requestedSourceMode\":\"server\",\"playerName\":\"Dev\",\"dimensionId\":\"minecraft:overworld\",\"worldSaveRequested\":false,\"presentation\":\"planning_decision_view.v0.1\"}"
+        }
+      ],
+      "isError": false
+    }
+  },
+  {
+    "start": "2026-09-06T09:21:08.323Z",
+    "end": "2026-09-06T09:21:08.333Z",
+    "name": "realm_debug_command",
+    "arguments": {
+      "command": "tp @p -2680 248 5050 0 40",
+      "confirmCommandExecution": true,
+      "sourceMode": "server"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":true,\"status\":\"executed\",\"reasonCode\":\"DEBUG_COMMAND_EXECUTED\",\"command\":\"/tp @p -2680 248 5050 0 40\",\"normalizedCommand\":\"tp @p -2680 248 5050 0 40\",\"result\":1,\"sourceMode\":\"server\",\"requestedSourceMode\":\"server\",\"playerName\":\"Dev\",\"dimensionId\":\"minecraft:overworld\",\"worldSaveRequested\":false,\"presentation\":\"planning_decision_view.v0.1\"}"
+        }
+      ],
+      "isError": false
+    }
+  },
+  {
+    "start": "2026-09-06T09:21:08.333Z",
+    "end": "2026-09-06T09:21:08.529Z",
+    "name": "realm_debug_command",
+    "arguments": {
+      "command": "time set day",
+      "confirmCommandExecution": true,
+      "sourceMode": "server",
+      "saveAfter": true
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":true,\"status\":\"executed\",\"reasonCode\":\"DEBUG_COMMAND_EXECUTED\",\"command\":\"/time set day\",\"normalizedCommand\":\"time set day\",\"result\":1000,\"sourceMode\":\"server\",\"requestedSourceMode\":\"server\",\"playerName\":\"Dev\",\"dimensionId\":\"minecraft:overworld\",\"worldSaveRequested\":true,\"presentation\":\"planning_decision_view.v0.1\"}"
+        }
+      ],
+      "isError": false
+    }
+  }
+]

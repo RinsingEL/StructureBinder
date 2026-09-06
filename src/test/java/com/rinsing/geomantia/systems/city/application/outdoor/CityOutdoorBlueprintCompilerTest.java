@@ -196,7 +196,7 @@ class CityOutdoorBlueprintCompilerTest {
         assertTrue(parcels.stream().allMatch(group -> group.landscapeFillProgram() != null));
         assertTrue(parcels.stream().allMatch(group -> group.surfaceSettings().surfaceAlgorithm()
                 == com.rinsing.geomantia.systems.city.domain.landuse.LandUseSurfaceSettings.SurfaceAlgorithm
-                .RELAY_REGION_GROWTH));
+                .CONTOUR_BANDS));
         assertTrue(parcels.stream().allMatch(group -> group.landscapeFillProgram().fillProfileRef()
                 .equals("fill:irrigated")));
         LandUseSeedGroup rootParcel = parcels.stream()
@@ -546,7 +546,7 @@ class CityOutdoorBlueprintCompilerTest {
         assertEquals(7, planned.surfacePrintPlan().areas().stream()
                 .filter(area -> area.recipe() instanceof
                         com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan
-                                .RelayRegionGrowthRecipe)
+                                .ContourBandsRecipe)
                 .count());
         assertTrue(planned.plan().warnings().stream().noneMatch(warning -> warning.startsWith(
                 "CITY_LANDSCAPE_OPTIONAL_SKIPPED_INSUFFICIENT_SPACE:")));

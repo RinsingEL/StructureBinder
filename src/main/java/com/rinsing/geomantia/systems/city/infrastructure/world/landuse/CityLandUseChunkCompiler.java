@@ -390,7 +390,8 @@ public final class CityLandUseChunkCompiler {
                 }
                 case CHANNEL_WATER -> addSurfaceOperation(surfaces,
                         new SurfaceOperation(area.areaId(), area.landUseType(), cell.x(), cell.z(),
-                                contour.channelWaterBlockId(), 0, false, SurfaceStage.BASE, 0));
+                                contour.channelWaterBlockId(), 0, false, SurfaceStage.BASE, 0,
+                                contour.channelBankBlockId()));
                 case CHANNEL_END_CAP -> {
                     addSurfaceOperation(surfaces, new SurfaceOperation(area.areaId(), area.landUseType(),
                             cell.x(), cell.z(), contour.channelBankBlockId(), 0, false,
@@ -425,7 +426,8 @@ public final class CityLandUseChunkCompiler {
                 }
                 case WATER -> addSurfaceOperation(surfaces,
                         new SurfaceOperation(area.areaId(), area.landUseType(), cell.x(), cell.z(),
-                                relay.channelWaterBlockId(), 0, false, SurfaceStage.BASE, 0));
+                                relay.channelWaterBlockId(), 0, false, SurfaceStage.BASE, 0,
+                                relay.channelBankBlockId()));
                 case GROUND -> addSurfaceOperation(surfaces,
                         new SurfaceOperation(area.areaId(), area.landUseType(), cell.x(), cell.z(),
                                 relay.channelBankBlockId(), 0, false, SurfaceStage.BASE, 0));
@@ -768,7 +770,14 @@ public final class CityLandUseChunkCompiler {
                                    int surfaceOffset,
                                    boolean requireReplaceableTarget,
                                    SurfaceStage stage,
-                                   int layerOrder) {
+                                   int layerOrder,
+                                   String channelClosureBlockId) {
+        public SurfaceOperation(String areaId, String landUseType, int x, int z, String blockId,
+                                int surfaceOffset, boolean requireReplaceableTarget,
+                                SurfaceStage stage, int layerOrder) {
+            this(areaId, landUseType, x, z, blockId, surfaceOffset, requireReplaceableTarget,
+                    stage, layerOrder, "");
+        }
         public static final Comparator<SurfaceOperation> STABLE_ORDER =
                 Comparator.comparing(SurfaceOperation::stage)
                         .thenComparingInt(SurfaceOperation::z)
@@ -802,6 +811,7 @@ public final class CityLandUseChunkCompiler {
             Objects.requireNonNull(landUseType, "landUseType");
             Objects.requireNonNull(blockId, "blockId");
             Objects.requireNonNull(stage, "stage");
+            Objects.requireNonNull(channelClosureBlockId, "channelClosureBlockId");
             if (surfaceOffset < 0 || layerOrder < 0
                     || (surfaceOffset > 0 && !requireReplaceableTarget)
                     || stage == SurfaceStage.BASE && surfaceOffset != 0

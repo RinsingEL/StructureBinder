@@ -50,13 +50,13 @@ public final class ContourBandSurfaceClassifier {
         double meanGradient = gradientTotal / grid.memberCount;
 
         Mode mode = meanGradient < FLAT_GRADIENT_THRESHOLD
-                ? Mode.RADIAL_FALLBACK
+                ? Mode.DIRECTIONAL_CURVES
                 : Mode.CONTOUR_NORMAL;
         double[] contourDistance = null;
         if (mode == Mode.CONTOUR_NORMAL) {
             List<Integer> contour = anchorContour(elevation, grid, request.anchor(), anchorElevation);
             if (contour.isEmpty()) {
-                mode = Mode.RADIAL_FALLBACK;
+                mode = Mode.DIRECTIONAL_CURVES;
             } else {
                 contourDistance = distanceFrom(contour, grid, elevation);
             }
@@ -66,8 +66,8 @@ public final class ContourBandSurfaceClassifier {
         for (int z = grid.minZ; z <= grid.maxZ; z++) {
             for (int x = grid.minX; x <= grid.maxX; x++) {
                 if (!grid.allowed(x, z)) continue;
-                double distance = mode == Mode.RADIAL_FALLBACK
-                        ? Math.hypot(x - request.anchor().x(), z - request.anchor().z())
+                double distance = mode == Mode.DIRECTIONAL_CURVES
+                        ? directionalDistance(x - request.anchor().x(), z - request.anchor().z())
                         : signedDistance(contourDistance[grid.index(x, z)],
                         elevation.at(x, z) - anchorElevation,
                         elevation, request.anchor(), x, z);
@@ -102,6 +102,12 @@ public final class ContourBandSurfaceClassifier {
         }
         return new Result(List.copyOf(spans), mode, request.anchor(), request.repeatPeriodBlocks(),
                 fieldBlocks, channelBlocks, meanGradient, maxGradient);
+    }
+
+    private static double directionalDistance(int x, int z) {
+        // A shared phase, not a radius: long, gently bending rows also on flat ground.
+        // Low derivative keeps the banks contiguous after rasterization.
+        return x + 2.5 * (1.0 - Math.cos(z / 32.0)) + 1.25 * (1.0 - Math.cos(z / 73.0));
     }
 
     private static BandRole roleFor(int phase, int fieldBeforeBlocks, int channelWidthBlocks) {
@@ -577,6 +583,7 @@ public final class ContourBandSurfaceClassifier {
     }
 
     public enum Mode {
+        DIRECTIONAL_CURVES,
         CONTOUR_NORMAL,
         RADIAL_FALLBACK
     }
