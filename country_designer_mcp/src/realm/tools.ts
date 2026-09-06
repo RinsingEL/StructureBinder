@@ -1078,7 +1078,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_prepare_d4_blueprint_context",
-    description: "程序准备并冻结 D4 城市决策的完整只读上下文和 5 次程序编译失败预算。调用前必须完成当前 D3 sourceIdentity 对应的 city_d4 Top Patch review；review evidence 会冻结进 context。该工具不调用模型；提交参数/schema/引用校验失败不增加 failureCount。",
+    description: "程序准备并冻结 D4 城市决策的完整只读上下文和 5 次程序编译失败预算。调用前必须完成当前 D3 sourceIdentity 对应的 city_d4 Top Patch review；review evidence 会冻结进 context。该工具不调用模型。当前城市 blocked_by_program 且作者目录已修正时也可准备：保留旧方案/失败记录和计数，成功后按新 Context 完整提交；资料未变应使用程序 retry，不得靠刷新重置预算。",
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: {

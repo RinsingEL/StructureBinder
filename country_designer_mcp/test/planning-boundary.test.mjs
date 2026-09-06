@@ -67,6 +67,11 @@ test('real MCP stdio routes sidecar calls through the host bridge and preserves 
     assert.deepEqual(received, { key: 'offline-test-capability', name: 'city_prepare_d4_blueprint_context', arguments: { runId: 'run', citySeedId: 'city' } });
     assert.equal(JSON.parse(result.content[0].text).contextId, 'host-owned');
     assert.deepEqual(result.content[1], { type: 'image', mimeType: 'image/png', data: 'AQID' });
+    // Host-only decision tools need not exist in the standalone MCP handler registry.
+    const page = await client.callTool({ name: 'city_inspect_d3_patches', arguments: { page: 2 } });
+    assert.equal(page.isError, false);
+    assert.equal(received.name, 'city_inspect_d3_patches');
+    assert.deepEqual(received.arguments, { page: 2 });
   } finally {
     await client.close();
     await new Promise(resolve => bridge.close(resolve));

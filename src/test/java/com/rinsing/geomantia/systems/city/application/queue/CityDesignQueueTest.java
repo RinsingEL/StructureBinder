@@ -24,6 +24,8 @@ class CityDesignQueueTest {
         assertEquals("blocked_by_program", queue.refresh("run_program", "global_radial").get("status").getAsString());
         assertThrows(IllegalArgumentException.class, () -> queue.requireCurrentIfManaged("run_program", "city_1"));
         queue.requireProgramRetryIfManaged("run_program", "city_1");
+        queue.requireContextPreparationIfManaged("run_program", "city_1");
+        assertThrows(IllegalArgumentException.class, () -> queue.requireContextPreparationIfManaged("run_program", "another_city"));
         assertThrows(IllegalArgumentException.class, () -> queue.requireProgramRetryIfManaged("run_program", "another_city"));
     }
     @TempDir

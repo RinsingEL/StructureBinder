@@ -1368,7 +1368,7 @@ class CityBlueprintCompilerServiceTest {
     }
 
     @Test
-    void relationOptOutAvoidsGraphFailureAndLocalEntranceGapsOnlyWarn() throws Exception {
+    void relationOptOutDoesNotHideMissingRoadsBetweenParticipatingGroups() throws Exception {
         Fixture fixture = acceptedFixture("run_fallback_three", "city:fallback_three", 9, 9, "SMALL",
                 d3 -> configureSeparatedPlanningPatches(d3, true), blueprint -> {
                     JsonObject civic = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
@@ -1392,10 +1392,10 @@ class CityBlueprintCompilerServiceTest {
         assertEquals("EXPLICIT_RELATIONS_ONLY_NO_UNRELATED_FALLBACK",
                 plan.get("topologyPolicy").getAsString());
         JsonObject acceptance = result.compileTrace().getAsJsonObject("compilationAcceptance");
-        assertTrue(acceptance.get("passed").getAsBoolean(), acceptance.toString());
+        assertFalse(acceptance.get("passed").getAsBoolean(), acceptance.toString());
         assertFalse(acceptance.get("qualityFullySatisfied").getAsBoolean());
         assertEquals(2, acceptance.get("trafficGroupCount").getAsInt(), acceptance.toString());
-        assertFalse(acceptance.getAsJsonArray("hardBlocks").toString()
+        assertTrue(acceptance.getAsJsonArray("hardBlocks").toString()
                 .contains("STRUCTURE_RELATION_GRAPH_DISCONNECTED"), acceptance.toString());
         assertTrue(acceptance.getAsJsonArray("warnings").toString()
                 .contains("STREET_ENTRANCE_UNRESOLVED"), acceptance.toString());
@@ -1426,7 +1426,7 @@ class CityBlueprintCompilerServiceTest {
         assertFalse(acceptance.get("passed").getAsBoolean(), acceptance.toString());
         assertFalse(acceptance.get("structureGraphConnected").getAsBoolean());
         assertTrue(acceptance.getAsJsonArray("hardBlocks").toString()
-                .contains("CONNECTION_SKIPPED_TERRAIN_BLOCKED"));
+                .contains("CITY_MAIN_ROAD_CONNECTION_UNAVAILABLE"));
         assertTrue(acceptance.getAsJsonArray("hardBlocks").toString()
                 .contains("STRUCTURE_RELATION_GRAPH_DISCONNECTED"));
     }
@@ -1459,22 +1459,9 @@ class CityBlueprintCompilerServiceTest {
 
         CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
                 .compile(temporary, fixture.runId(), fixture.cityId());
-        assertTrue(result.ok(), result.compileTrace().toString());
-        assertEquals("compiled", result.compileTrace().get("status").getAsString());
-        JsonObject acceptance = result.compileTrace().getAsJsonObject("compilationAcceptance");
-        assertFalse(acceptance.get("passed").getAsBoolean(), acceptance.toString());
-        assertFalse(acceptance.get("allFunctionAreasFormed").getAsBoolean());
-        assertTrue(acceptance.getAsJsonArray("hardBlocks").toString().contains("FUNCTION_AREA_EMPTY"));
-        assertTrue(acceptance.getAsJsonArray("warnings").toString().contains(
-                "SELECTED_PATCH_TERRAIN_UNABLE_TO_SUPPORT_REQUIRED_STRUCTURE"));
-        JsonObject dynamicArea = result.compileTrace().getAsJsonObject("dynamicAreaPlan");
-        assertEquals(0, dynamicArea.get("frozenHighestPriorityAreaBlocks").getAsInt());
-        assertEquals(0, dynamicArea.get("referenceCityAreaBlocks").getAsInt());
-        assertEquals("ACTUAL_COMMITTED_OWNED_AND_CONNECTION_AREA",
-                dynamicArea.get("frozenAreaSource").getAsString());
-        assertEquals(0, dynamicArea.getAsJsonArray("groups").get(0).getAsJsonObject()
-                .get("targetAreaBlocks").getAsInt(),
-                "minimum/district capacity must not fabricate owned area after every structure was skipped");
+        assertFalse(result.ok());
+        assertEquals("CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT", result.reasonCode());
+        assertFalse(result.compileTrace().has("compilationAcceptance"));
         JsonObject selection = result.compileTrace().getAsJsonArray("selections").asList().stream()
                 .map(JsonElement::getAsJsonObject)
                 .filter(event -> event.has("reasonCode") && "CITY_BLUEPRINT_SELECTED_PATCH_TERRAIN_UNFIT"
@@ -1535,7 +1522,8 @@ class CityBlueprintCompilerServiceTest {
         CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
                 .compile(temporary, fixture.runId(), fixture.cityId());
 
-        assertTrue(result.ok(), result.compileTrace().toString());
+        assertFalse(result.ok());
+        assertEquals("CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT", result.reasonCode());
         JsonObject group = result.compileTrace().getAsJsonArray("groupResults").get(0).getAsJsonObject();
         assertTrue(group.get("actualStructureCount").getAsInt() > 0, group.toString());
         assertFalse(group.get("allRequiredStructuresCommitted").getAsBoolean(), group.toString());
@@ -1544,13 +1532,7 @@ class CityBlueprintCompilerServiceTest {
         JsonObject missing = group.getAsJsonArray("missingRequiredStructures").get(0).getAsJsonObject();
         assertEquals("geomantia:floating_house", missing.get("structureRef").getAsString());
         assertEquals(1, missing.get("missingCount").getAsInt());
-        JsonObject acceptance = result.compileTrace().getAsJsonObject("compilationAcceptance");
-        assertTrue(acceptance.get("allFunctionAreasFormed").getAsBoolean(), acceptance.toString());
-        assertFalse(acceptance.get("allRequiredStructuresCommitted").getAsBoolean(), acceptance.toString());
-        assertFalse(acceptance.get("passed").getAsBoolean(), acceptance.toString());
-        assertTrue(acceptance.getAsJsonArray("hardBlocks").toString().contains(
-                "civic: REQUIRED_STRUCTURE_MISSING structureRef=geomantia:floating_house missingCount=1"),
-                acceptance.toString());
+        assertFalse(result.compileTrace().has("compilationAcceptance"));
     }
 
     @Test
@@ -1648,7 +1630,8 @@ class CityBlueprintCompilerServiceTest {
         CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
                 .compile(temporary, fixture.runId(), fixture.cityId());
 
-        assertTrue(result.ok(), result.compileTrace().toString());
+        assertFalse(result.ok());
+        assertEquals("CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT", result.reasonCode());
         JsonObject required = result.compileTrace().getAsJsonArray("selections").get(0).getAsJsonObject();
         assertFalse(required.getAsJsonArray("attempts").isEmpty(), required.toString());
         assertTrue(required.getAsJsonArray("attempts").asList().stream()
@@ -1661,8 +1644,7 @@ class CityBlueprintCompilerServiceTest {
         assertFalse(group.getAsJsonArray("claimedPatchRefs").asList().stream()
                 .map(JsonElement::getAsString).anyMatch("patch:plain:2"::equals));
         assertEquals(0, group.get("actualStructureCount").getAsInt(), group.toString());
-        assertFalse(result.compileTrace().getAsJsonObject("compilationAcceptance")
-                .get("passed").getAsBoolean());
+        assertFalse(result.compileTrace().has("compilationAcceptance"));
     }
 
     @Test

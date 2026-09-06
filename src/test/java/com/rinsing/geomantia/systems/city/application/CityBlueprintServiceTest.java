@@ -25,6 +25,48 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CityBlueprintServiceTest {
     @Test
+    void authorRecoveryArchivesAcceptedDesignAndCarriesBudgetWithoutReset() throws Exception {
+        Fixture f = fixture("run_recovery", "city:test");
+        var service = new CityBlueprintService();
+        var prepared = service.prepare(temporary, f.runId(), f.cityId(), f.terraSenseSource(), f.templateSource(), f.referenceCatalog());
+        String oldId = prepared.get("contextId").getAsString();
+        JsonObject design = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+        assertTrue(service.submit(temporary, f.runId(), f.cityId(), oldId, design).get("ok").getAsBoolean());
+        var budget = new CityBlueprintFailureBudget();
+        budget.recordFailure(temporary, f.runId(), f.cityId(), "old_one", "retained");
+        budget.recordFailure(temporary, f.runId(), f.cityId(), "old_two", "retained");
+        Path directory = f.runDir().resolve("city_blueprint_city_test");
+        String oldContext = Files.readString(directory.resolve("city_blueprint_context.json"));
+        String oldBlueprint = Files.readString(directory.resolve("city_blueprint.json"));
+        assertThrows(IllegalArgumentException.class, () -> service.prepare(temporary, f.runId(), f.cityId(),
+                f.terraSenseSource(), f.templateSource(), f.referenceCatalog(), null, true));
+        assertEquals(oldContext, Files.readString(directory.resolve("city_blueprint_context.json")));
+        f.templateSource().getAsJsonObject("catalog").getAsJsonArray("templates").get(0)
+                .getAsJsonObject().addProperty("clearanceBlocks", 2);
+        var refreshed = service.prepare(temporary, f.runId(), f.cityId(), f.terraSenseSource(),
+                f.templateSource(), f.referenceCatalog(), null, true);
+        assertNotEquals(oldId, refreshed.get("contextId").getAsString());
+        assertEquals(2, refreshed.get("failureCount").getAsInt());
+        assertEquals(2, refreshed.getAsJsonObject("failureBudget").getAsJsonArray("failures").size());
+        Path archive = temporary.resolve(refreshed.getAsJsonObject("artifacts").get("previousContextArchive").getAsString());
+        assertEquals(oldContext, Files.readString(archive.resolve("city_blueprint_context.json")));
+        assertEquals(oldBlueprint, Files.readString(archive.resolve("city_blueprint.json")));
+        assertEquals(oldBlueprint, Files.readString(directory.resolve("city_blueprint.json")));
+        assertFalse(service.submit(temporary, f.runId(), f.cityId(), oldId, design).get("ok").getAsBoolean());
+        var repeat = service.prepare(temporary, f.runId(), f.cityId(), f.terraSenseSource(), f.templateSource(), f.referenceCatalog());
+        assertEquals(refreshed.get("contextId"), repeat.get("contextId"));
+        assertEquals(2, repeat.get("failureCount").getAsInt());
+        assertTrue(service.submit(temporary, f.runId(), f.cityId(), repeat.get("contextId").getAsString(),
+                blueprint(repeat.getAsJsonObject("cityBlueprintContext"))).get("ok").getAsBoolean());
+        for (int i = 0; i < 3; i++) budget.recordFailure(temporary, f.runId(), f.cityId(), "later", "retained");
+        f.templateSource().getAsJsonObject("catalog").getAsJsonArray("templates").get(0)
+                .getAsJsonObject().addProperty("clearanceBlocks", 3);
+        assertThrows(IllegalArgumentException.class, () -> service.prepare(temporary, f.runId(), f.cityId(),
+                f.terraSenseSource(), f.templateSource(), f.referenceCatalog(), null, true));
+        assertEquals(5, CityBlueprintFailureBudget.failureCount(budget.current(temporary, f.runId(), f.cityId())));
+    }
+
+    @Test
     void compactSubmissionAndHashBoundPatchKeepFullValidation() throws Exception {
         Fixture fixture = fixture("run_patch", "city:test");
         CityBlueprintService service = new CityBlueprintService();

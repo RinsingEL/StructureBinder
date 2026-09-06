@@ -46,6 +46,25 @@ public final class CityBlueprintFailureBudget {
         return initialize(debugRoot, runId, cityId, contextId);
     }
 
+    public JsonObject rebindAfterAuthorCorrection(Path debugRoot, String runId, String cityId,
+                                                 String previousContextId, String contextId) throws IOException {
+        Path path = path(debugRoot, runId, cityId);
+        synchronized (lock(path)) {
+            JsonObject state = read(path);
+            if (matches(state, cityId, contextId)) return normalize(state);
+            if (!matches(state, cityId, previousContextId))
+                throw new IllegalArgumentException("CITY_BLUEPRINT_RECOVERY_BUDGET_STALE");
+            state.addProperty("previousContextId", previousContextId);
+            state.addProperty("contextId", contextId);
+            state.addProperty("status", exhausted(state) ? "exhausted" : "open");
+            state.remove("succeededAt");
+            state.addProperty("updatedAt", Instant.now().toString());
+            normalize(state);
+            writeAtomic(path, state);
+            return state.deepCopy();
+        }
+    }
+
     public JsonObject recordFailure(Path debugRoot, String runId, String cityId,
                                     String reasonCode, String message) throws IOException {
         Path path = path(debugRoot, runId, cityId);

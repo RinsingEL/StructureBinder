@@ -52,6 +52,7 @@ public final class CityLandUseChunkCompiler {
 
     public PreparedSurfacePlan prepare(LandUseAreaPlan plan,
                                        CityLandUseSurfacePrintPlan surfacePrintPlan) {
+        checkCancelled();
         validateLandUsePlan(plan);
         Map<AreaKey, CityLandUseSurfacePrintPlan.AreaPrint> printAreas =
                 validateSurfacePrintPlan(plan, surfacePrintPlan);
@@ -88,6 +89,7 @@ public final class CityLandUseChunkCompiler {
     }
 
     public ChunkFragment compilePrepared(PreparedSurfacePlan prepared, int chunkX, int chunkZ) {
+        checkCancelled();
         Objects.requireNonNull(prepared, "prepared");
         OwnerChunk owner = new OwnerChunk(chunkX, chunkZ);
         int halo = CityLandUseMicroGrader.MASK_HALO_BLOCKS;
@@ -152,7 +154,11 @@ public final class CityLandUseChunkCompiler {
         Map<BlockCell, String> areaOwners = new HashMap<>();
         for (LandUseAreaPlan.Area area : stableAreas) {
             for (LandUseAreaPlan.ScanlineSpan span : area.memberSpans()) {
-                for (int x = span.minX(); x <= span.maxX(); x++) {
+                // Ownership is consulted only for shared contacts inside this owner.
+                // A one-cell halo retains both sides of a cross-chunk shared boundary.
+                if (span.z() < minChunkZ - 1 || span.z() > maxChunkZ + 1) continue;
+                for (int x = Math.max(span.minX(), minChunkX - 1);
+                     x <= Math.min(span.maxX(), maxChunkX + 1); x++) {
                     areaOwners.put(new BlockCell(x, span.z()), area.areaId());
                 }
             }
@@ -160,7 +166,9 @@ public final class CityLandUseChunkCompiler {
         Set<BlockCell> sharedContactCells = new HashSet<>();
         int[][] neighbors = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
         for (CityLandUseSurfacePrintPlan.SharedBoundaryPrintSpan span : sharedBoundarySpans) {
-            for (int x = span.minX(); x <= span.maxX(); x++) {
+            if (span.z() < minChunkZ - 1 || span.z() > maxChunkZ + 1) continue;
+            for (int x = Math.max(span.minX(), minChunkX - 1);
+                 x <= Math.min(span.maxX(), maxChunkX + 1); x++) {
                 BlockCell writerCell = new BlockCell(x, span.z());
                 sharedContactCells.add(writerCell);
                 for (int[] direction : neighbors) {
@@ -326,6 +334,12 @@ public final class CityLandUseChunkCompiler {
     private static boolean intersects(BlockBounds bounds, int minX, int minZ, int maxX, int maxZ) {
         return bounds.maxX() >= minX && bounds.minX() <= maxX
                 && bounds.maxZ() >= minZ && bounds.minZ() <= maxZ;
+    }
+
+    private static void checkCancelled() {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new java.util.concurrent.CancellationException("CITY_LAND_USE_COMPILATION_CANCELLED");
+        }
     }
 
     private static boolean isContourChannel(CityLandUseSurfacePrintPlan.AreaPrint printArea,

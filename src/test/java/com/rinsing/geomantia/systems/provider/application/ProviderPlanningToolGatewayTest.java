@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -99,6 +100,18 @@ class ProviderPlanningToolGatewayTest {
         JsonArray output = gateway().execute("city_plan_d3", new JsonObject()).getAsJsonArray();
         assertEquals(2, output.size());
         assertEquals("data:image/png;base64," + imageData, output.get(1).getAsJsonObject().get("image_url").getAsString());
+    }
+
+    @Test
+    void mechanicalExecutionRequestsHostReceiptWithoutModelPresentation() throws Exception {
+        server.removeContext("/realm/city/plan_d3");
+        server.createContext("/realm/city/plan_d3", exchange -> {
+            read(exchange);
+            assertEquals("true", exchange.getRequestHeaders().getFirst("X-Geomantia-Host-Result"));
+            assertNull(exchange.getRequestHeaders().getFirst("X-Geomantia-Agent-View"));
+            reply(exchange, "{\"ok\":true}");
+        });
+        gateway().executeHost("city_plan_d3", new JsonObject());
     }
 
     @Test

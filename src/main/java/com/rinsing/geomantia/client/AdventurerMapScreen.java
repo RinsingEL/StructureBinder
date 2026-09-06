@@ -40,6 +40,10 @@ public final class AdventurerMapScreen extends Screen {
     private boolean debugLayer;
     private double zoom = 1.0D;
     private Button debugButton;
+    private Button retryButton;
+    private boolean retryPending;
+    private int retryTicks;
+    private Component retryMessage;
     private DynamicTexture mapTexture;
     private ResourceLocation mapTextureLocation;
     private int automaticRefreshTicks;
@@ -73,6 +77,11 @@ public final class AdventurerMapScreen extends Screen {
         addRenderableWidget(Button.builder(Component.translatable("gui.geomantia.agent_activity.open"),
                         button -> ProviderSettingsClient.openActivity(this))
                 .bounds(Math.max(16, this.width - 108), 8, 92, 20).build());
+        retryButton = addRenderableWidget(Button.builder(Component.translatable("gui.geomantia.adventurer_map.retry"),
+                        button -> retryCurrentCity())
+                .bounds(Math.max(16, this.width - 198), 8, 84, 20).build());
+        retryButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+                Component.translatable("gui.geomantia.adventurer_map.retry.hint")));
         rebuildMapTexture();
         refresh();
     }
@@ -80,13 +89,39 @@ public final class AdventurerMapScreen extends Screen {
     void receiveSnapshot(AdventurerMapSnapshot snapshot) {
         this.snapshot = snapshot == null ? AdventurerMapSnapshot.empty() : snapshot;
         this.loading = false;
+        updateRetryButton();
         rebuildMapTexture();
     }
 
     private void refresh() {
         loading = true;
+        updateRetryButton();
         automaticRefreshTicks = 0;
         AdventurerMapClient.requestSnapshot(zoom);
+    }
+
+    private void updateRetryButton() {
+        if (retryButton == null) return;
+        retryButton.active = !loading && !retryPending
+                && com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapRetryPolicy.available(
+                        snapshot.runId(), snapshot.currentCityId(), snapshot.cityStatus());
+        retryButton.setMessage(Component.translatable(retryPending
+                ? "gui.geomantia.adventurer_map.retry.pending" : "gui.geomantia.adventurer_map.retry"));
+    }
+
+    private void retryCurrentCity() {
+        if (retryButton == null || !retryButton.active) return;
+        retryPending = true;
+        retryTicks = 0;
+        retryMessage = Component.translatable("gui.geomantia.adventurer_map.retry.pending");
+        updateRetryButton();
+        com.rinsing.geomantia.platform.network.AdventurerMapNetwork.retryCity(snapshot.runId(), snapshot.currentCityId());
+    }
+
+    void receiveRetryResult(String result) {
+        retryPending = false;
+        retryMessage = Component.translatable("gui.geomantia.adventurer_map.retry." + result);
+        refresh();
     }
 
     private void changeZoom(double value) {
@@ -98,6 +133,7 @@ public final class AdventurerMapScreen extends Screen {
     @Override
     public void tick() {
         super.tick();
+        if (retryPending && ++retryTicks >= 200) receiveRetryResult("no_response");
         if (!loading && ++automaticRefreshTicks >= 100) {
             refresh();
         }
@@ -112,7 +148,8 @@ public final class AdventurerMapScreen extends Screen {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
-        graphics.drawCenteredString(font, title, width / 2, 12, TEXT_PRIMARY);
+        if (width < 460) graphics.drawString(font, title, 16, 12, TEXT_PRIMARY, false);
+        else graphics.drawCenteredString(font, title, width / 2, 12, TEXT_PRIMARY);
 
         int mapLeft = 16;
         int mapTop = 32;
@@ -125,6 +162,14 @@ public final class AdventurerMapScreen extends Screen {
         drawMap(graphics, mapLeft + 2, mapTop + 2, mapRight - 2, contentBottom - 2, mouseX, mouseY);
         drawPanel(graphics, sidebarLeft, mapTop, width - 16, contentBottom, PANEL_BACKGROUND);
         drawStatusPanel(graphics, sidebarLeft + 10, mapTop + 10, width - 26);
+
+        if (retryMessage != null) {
+            var lines = font.split(retryMessage, Math.max(40, width - sidebarLeft - 24));
+            int feedbackY = contentBottom - 32 - Math.min(2, lines.size()) * font.lineHeight;
+            graphics.fill(sidebarLeft + 4, feedbackY - 2, width - 20, contentBottom - 30, PANEL_BACKGROUND);
+            for (int i = 0; i < Math.min(2, lines.size()); i++)
+                graphics.drawString(font, lines.get(i), sidebarLeft + 10, feedbackY + i * font.lineHeight, STATUS_WARNING, false);
+        }
 
         if (loading) {
             graphics.drawString(font, Component.translatable("gui.geomantia.adventurer_map.loading"),

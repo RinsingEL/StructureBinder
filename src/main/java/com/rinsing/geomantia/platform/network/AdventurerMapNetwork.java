@@ -31,7 +31,7 @@ import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 public final class AdventurerMapNetwork {
-    private static final String PROTOCOL = "4";
+    private static final String PROTOCOL = "5";
     private static final int VIEW_RADIUS_AT_ZOOM_ONE = 4096;
     private static final int MIN_VIEW_RADIUS = 1024;
     private static final int MAX_VIEW_RADIUS = 8192;
@@ -62,9 +62,49 @@ public final class AdventurerMapNetwork {
         CHANNEL.registerMessage(messageId++, SnapshotResponse.class,
                 SnapshotResponse::encode, SnapshotResponse::decode, SnapshotResponse::handle,
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT));
-        CHANNEL.registerMessage(messageId, OpenMap.class,
+        CHANNEL.registerMessage(messageId++, OpenMap.class,
                 OpenMap::encode, OpenMap::decode, OpenMap::handle,
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(messageId++, RetryCityRequest.class,
+                RetryCityRequest::encode, RetryCityRequest::decode, RetryCityRequest::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(messageId, RetryCityResponse.class,
+                RetryCityResponse::encode, RetryCityResponse::decode, RetryCityResponse::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+    }
+
+    public static void retryCity(String runId, String cityId) {
+        CHANNEL.sendToServer(new RetryCityRequest(runId, cityId));
+    }
+
+    private record RetryCityRequest(String runId, String cityId) {
+        static void encode(RetryCityRequest value, FriendlyByteBuf buffer) {
+            buffer.writeUtf(value.runId, 256); buffer.writeUtf(value.cityId, 256);
+        }
+        static RetryCityRequest decode(FriendlyByteBuf buffer) {
+            return new RetryCityRequest(buffer.readUtf(256), buffer.readUtf(256));
+        }
+        static void handle(RetryCityRequest request, Supplier<NetworkEvent.Context> supplier) {
+            NetworkEvent.Context context = supplier.get();
+            ServerPlayer sender = context.getSender();
+            if (sender != null) context.enqueueWork(() -> {
+                String result = com.rinsing.geomantia.platform.http.GeomantiaHttpServer.retryCityFromMap(
+                        sender, request.runId, request.cityId);
+                CHANNEL.send(PacketDistributor.PLAYER.with(() -> sender), new RetryCityResponse(result));
+            });
+            context.setPacketHandled(true);
+        }
+    }
+
+    private record RetryCityResponse(String result) {
+        static void encode(RetryCityResponse value, FriendlyByteBuf buffer) { buffer.writeUtf(value.result, 64); }
+        static RetryCityResponse decode(FriendlyByteBuf buffer) { return new RetryCityResponse(buffer.readUtf(64)); }
+        static void handle(RetryCityResponse response, Supplier<NetworkEvent.Context> supplier) {
+            NetworkEvent.Context context = supplier.get();
+            context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+                    () -> () -> AdventurerMapClient.receiveRetryResult(response.result)));
+            context.setPacketHandled(true);
+        }
     }
 
     public static void requestSnapshot(double zoom) {

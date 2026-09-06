@@ -23,20 +23,38 @@ public final class CityLandUseChunkStatusPreflight {
     public PreflightResult inspect(LandUseAreaPlan plan,
                                    CityLandUseSurfacePrintPlan surfacePrintPlan,
                                    ChunkStatusProbe probe) {
+        return inspect(plan, surfacePrintPlan, prepare(plan, surfacePrintPlan), probe);
+    }
+
+    /** Pure preparation; production callers run this on the API/automation worker. */
+    public PreparedOwners prepare(LandUseAreaPlan plan, CityLandUseSurfacePrintPlan surfacePrintPlan) {
+        return new PreparedOwners(plan.cityId(), plan.planHash(), surfacePrintPlan.planHash(),
+                ownerChunks(plan, surfacePrintPlan));
+    }
+
+    public PreflightResult inspect(LandUseAreaPlan plan,
+                                   CityLandUseSurfacePrintPlan surfacePrintPlan,
+                                   PreparedOwners prepared,
+                                   ChunkStatusProbe probe) {
         Objects.requireNonNull(plan, "plan");
         Objects.requireNonNull(surfacePrintPlan, "surfacePrintPlan");
         Objects.requireNonNull(probe, "probe");
-        CityLandUseChunkCompiler compiler = new CityLandUseChunkCompiler();
-        CityLandUseChunkCompiler.PreparedSurfacePlan prepared = compiler.prepare(plan, surfacePrintPlan);
-        List<OwnerChunk> owners = ownerChunks(plan, compiler, prepared);
+        if (!prepared.cityId.equals(plan.cityId()) || !prepared.areaHash.equals(plan.planHash())
+                || !prepared.surfaceHash.equals(surfacePrintPlan.planHash())) {
+            throw new IllegalArgumentException("CITY_LAND_USE_PREPARED_OWNERS_STALE");
+        }
+        List<OwnerChunk> owners = prepared.owners;
         List<ChunkEvidence> evidence = new ArrayList<>(owners.size());
         int blocked = 0;
         int unknown = 0;
         for (OwnerChunk owner : owners) {
+            checkCancelled();
             ChunkEvidence item;
             try {
                 item = Objects.requireNonNull(probe.inspect(owner.chunkX(), owner.chunkZ()),
                         "CITY_LAND_USE_CHUNK_STATUS_EVIDENCE_REQUIRED");
+            } catch (java.util.concurrent.CancellationException cancelled) {
+                throw cancelled;
             } catch (RuntimeException failure) {
                 item = ChunkEvidence.unknown(owner.chunkX(), owner.chunkZ(), EvidenceSource.UNKNOWN,
                         "CITY_LAND_USE_CHUNK_STATUS_READ_FAILED: " + failure.getClass().getSimpleName());
@@ -60,15 +78,17 @@ public final class CityLandUseChunkStatusPreflight {
         Objects.requireNonNull(plan, "plan");
         Objects.requireNonNull(surfacePrintPlan, "surfacePrintPlan");
         CityLandUseChunkCompiler compiler = new CityLandUseChunkCompiler();
-        return ownerChunks(plan, compiler, compiler.prepare(plan, surfacePrintPlan));
+        return ownerChunks(plan, surfacePrintPlan, compiler, compiler.prepare(plan, surfacePrintPlan));
     }
 
     private static List<OwnerChunk> ownerChunks(
             LandUseAreaPlan plan,
+            CityLandUseSurfacePrintPlan surfacePrintPlan,
             CityLandUseChunkCompiler compiler,
             CityLandUseChunkCompiler.PreparedSurfacePlan prepared) {
         Set<OwnerChunk> owners = new LinkedHashSet<>();
         for (LandUseAreaPlan.Area area : plan.areas()) {
+            checkCancelled();
             for (LandUseAreaPlan.ScanlineSpan span : area.memberSpans()) {
                 int minChunkX = Math.floorDiv(span.minX(), 16);
                 int maxChunkX = Math.floorDiv(span.maxX(), 16);
@@ -83,11 +103,38 @@ public final class CityLandUseChunkStatusPreflight {
                 }
             }
         }
+        // Feature-only owners can lie outside every Area member span. They still
+        // write blocks and must be included in the same pre-FEATURES safety check.
+        for (var feature : surfacePrintPlan.featureCells()) {
+            owners.add(new OwnerChunk(Math.floorDiv(feature.x(), 16), Math.floorDiv(feature.z(), 16)));
+        }
+        for (var span : surfacePrintPlan.sharedBoundarySpans()) {
+            if (span.boundaryBlockId().isBlank()) continue;
+            for (int x = Math.floorDiv(span.minX(), 16); x <= Math.floorDiv(span.maxX(), 16); x++) {
+                owners.add(new OwnerChunk(x, Math.floorDiv(span.z(), 16)));
+            }
+        }
         return owners.stream()
                 .filter(owner -> compiler.compilePrepared(prepared, owner.chunkX(), owner.chunkZ())
                         .hasRelevantCells())
                 .sorted(OwnerChunk.STABLE_ORDER)
                 .toList();
+    }
+
+    private static void checkCancelled() {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new java.util.concurrent.CancellationException("CITY_LAND_USE_PREFLIGHT_CANCELLED");
+        }
+    }
+
+    public static final class PreparedOwners {
+        private final String cityId, areaHash, surfaceHash;
+        private final List<OwnerChunk> owners;
+        private PreparedOwners(String cityId, String areaHash, String surfaceHash, List<OwnerChunk> owners) {
+            this.cityId = cityId; this.areaHash = areaHash; this.surfaceHash = surfaceHash;
+            this.owners = List.copyOf(owners);
+        }
+        public List<OwnerChunk> owners() { return owners; }
     }
 
     public interface ChunkStatusProbe {
@@ -177,6 +224,9 @@ public final class CityLandUseChunkStatusPreflight {
             if (level == null) {
                 return ChunkEvidence.unknown(chunkX, chunkZ, EvidenceSource.UNKNOWN,
                         "CITY_LAND_USE_SERVER_LEVEL_REQUIRED");
+            }
+            if (!level.getServer().isRunning() || level.getServer().isStopped()) {
+                throw new java.util.concurrent.CancellationException("CITY_SERVER_STOPPING");
             }
             ChunkAccess loaded = level.getChunkSource().getChunk(chunkX, chunkZ, ChunkStatus.EMPTY, false);
             if (loaded != null) {

@@ -14,6 +14,17 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityWorkflowStepRunnerTest {
+    @Test void finalHardBlocksTakePrecedenceOverOptionalFillSearchFailures() {
+        JsonObject response = com.google.gson.JsonParser.parseString("""
+            {"ok":false,"failureOwner":"program","reasonCode":"FINAL_FAILED",
+            "cityGenerationCompileTrace":{"compilationAcceptance":{"hardBlocks":["actual final failure"]},
+            "selections":[{"status":"no_legal_candidate","phase":"fill","structureRef":"unrelated"}]}}
+            """).getAsJsonObject();
+        JsonObject summary = CityWorkflowStepRunner.compactFailureSummary(response);
+        assertEquals("final_acceptance", summary.get("phase").getAsString());
+        assertEquals("actual final failure", summary.getAsJsonArray("hardBlocks").get(0).getAsString());
+        assertFalse(summary.has("structureRef"));
+    }
     @Test
     void waitingForGenerationIsSuccessfulProgramCompletion() throws Exception {
         JsonObject report = report();

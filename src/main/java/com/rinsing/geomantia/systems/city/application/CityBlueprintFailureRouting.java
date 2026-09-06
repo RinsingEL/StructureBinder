@@ -19,6 +19,35 @@ public final class CityBlueprintFailureRouting {
     }
 
     public static boolean isProgramFailure(String reason, JsonElement evidence) {
+        if ("CITY_BLUEPRINT_COMPILED_ANCHOR_FINALIZATION_FAILED".equals(reason)
+                && evidence != null && evidence.isJsonObject()) {
+            JsonObject root = evidence.getAsJsonObject();
+            JsonObject quality = root.has("qualityReport") && root.get("qualityReport").isJsonObject()
+                    ? root.getAsJsonObject("qualityReport") : null;
+            if (quality == null && root.has("failureSummary") && root.get("failureSummary").isJsonObject()
+                    && root.getAsJsonObject("failureSummary").has("phase")
+                    && "final_acceptance".equals(root.getAsJsonObject("failureSummary").get("phase").getAsString()))
+                quality = root.getAsJsonObject("failureSummary");
+            if (quality != null && quality.has("hardBlocks") && quality.get("hardBlocks").isJsonArray()
+                    && !quality.getAsJsonArray("hardBlocks").isEmpty()) {
+                // Only explicit missing design relations establish a design-owned final rejection.
+                // Missing required content after successful compilation or unknown safety errors remain host-owned.
+                boolean explicitDesignCause = quality.getAsJsonArray("hardBlocks").asList().stream().anyMatch(block -> {
+                    if (!block.isJsonPrimitive()) return false;
+                    String value = block.getAsString().replaceFirst("^compilationAcceptance: ", "");
+                    return value.startsWith("CITY_MAIN_ROAD_CONNECTION_REQUIRED")
+                            || value.endsWith(": FUNCTION_AREA_RELATION_UNSPECIFIED");
+                });
+                boolean designOnly = quality.getAsJsonArray("hardBlocks").asList().stream().allMatch(block -> {
+                    if (!block.isJsonPrimitive()) return false;
+                    String value = block.getAsString().replaceFirst("^compilationAcceptance: ", "");
+                    return value.startsWith("CITY_MAIN_ROAD_CONNECTION_REQUIRED")
+                            || value.endsWith(": FUNCTION_AREA_RELATION_UNSPECIFIED")
+                            || value.startsWith("STRUCTURE_RELATION_GRAPH_DISCONNECTED");
+                });
+                if (explicitDesignCause && designOnly && !hasMissingAuthoredFrontage(evidence)) return false;
+            }
+        }
         return isProgramFailure(reason) || hasMissingAuthoredFrontage(evidence);
     }
 

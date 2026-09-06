@@ -24,14 +24,6 @@ public final class PlanningToolPresentation {
     public static JsonObject present(JsonObject source, Path debugRoot) throws IOException {
         JsonObject result = compact(source).getAsJsonObject();
         result.addProperty("presentation", "planning_decision_view.v0.1");
-        // Hermes wraps the JSON text again. Budget that escaped envelope, not just the raw JSON.
-        JsonObject envelope = new JsonObject();
-        envelope.addProperty("result", result.toString());
-        if (envelope.toString().length() > 90_000) {
-            throw new IOException("PLANNING_PRESENTATION_TOO_LARGE: decision envelope chars=" + envelope.toString().length()
-                    + " exceeds 90000; "
-                    + "host must provide complete paged choices, never truncate author data.");
-        }
         JsonArray images = new JsonArray();
         JsonArray warnings = new JsonArray();
         Set<String> paths = new LinkedHashSet<>();
@@ -61,6 +53,19 @@ public final class PlanningToolPresentation {
         }
         if (!images.isEmpty()) result.add("imageEvidence", images);
         if (!warnings.isEmpty()) result.add("previewWarnings", warnings);
+        return result;
+    }
+
+    public static JsonObject hostResult(JsonObject source) {
+        // Mechanical work has already persisted its full artifacts. No model consumes this receipt.
+        if (!source.has("ok") || !source.get("ok").getAsBoolean()
+                || !PlanningTurnControl.failure(source).isBlank()) return source.deepCopy();
+        JsonObject result = new JsonObject();
+        for (String key : new String[]{"ok", "schema", "runId", "cityId", "citySeedId", "status", "reasonCode",
+                "message", "nextAction", "nextActions", "artifacts", "failureCount", "retryAllowed"}) {
+            if (source.has(key)) result.add(key, source.get(key).deepCopy());
+        }
+        result.addProperty("presentation", "host_execution_receipt.v0.1");
         return result;
     }
 

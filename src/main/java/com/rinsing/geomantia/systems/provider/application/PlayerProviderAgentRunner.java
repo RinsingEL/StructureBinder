@@ -155,7 +155,7 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
             DeepSeekToolLoopClient.LoopResult result;
             if (hostOnly(run)) {
                 // These transitions contain no design choice and must not cost a model turn.
-                var output = gateway.execute(run.nextAction(), hostArguments(run));
+                var output = gateway.executeHost(run.nextAction(), hostArguments(run));
                 String failure = PlanningTurnControl.failure(PlanningTurnControl.payload(output));
                 if (!failure.isBlank()) throw new IOException(failure);
                 result = new DeepSeekToolLoopClient.LoopResult(true, "completed", "", 0, "");
@@ -163,6 +163,7 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
                 com.google.gson.JsonObject designState = run.state().deepCopy();
                 List<Path> designImages = run.initialImages();
                 List<String> designTools = toolsFor(run.stage());
+                JsonObject d3Evidence = null;
                 if (PreparedCityDesignTurn.applies(run)) {
                     var prepared = PreparedCityDesignTurn.prepare(designState, gateway, debugRoot);
                     designState = prepared.state();
@@ -178,7 +179,8 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
                         Path d3 = debugRoot.resolve(run.runId()).resolve("city_test_runs").resolve(run.citySeedId())
                                 .resolve("steps/d3/city_landform_review_package.json");
                         JsonObject review = com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(d3)).getAsJsonObject();
-                        designState.add("d3ReviewPackage", PlanningToolPresentation.compact(review));
+                        d3Evidence = review;
+                        designState.add("d3ReviewPackage", CityD3ReviewDecisionView.overview(review));
                         JsonObject registry = com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(
                                 debugRoot.resolve(run.runId()).resolve("city_seed_registry.json"))).getAsJsonObject();
                         for (var seed : registry.getAsJsonArray("citySeeds"))
@@ -188,12 +190,13 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
                         PreparedCityDesignTurn.collectImages(review, debugRoot.toRealPath(), images);
                         if (images.isEmpty()) throw new IOException("PLANNING_DESIGN_PREVIEW_REQUIRED");
                         designImages = List.copyOf(images);
-                        designTools = List.of("city_review_d3_site");
+                        designTools = List.of(CityD3ReviewDecisionView.TOOL, "city_review_d3_site");
                     }
                     var sources = new ManagedCityPlanningSources(serverDirectory).resolve();
                     designState.add("authoringBrief", sources.authoringBrief().deepCopy());
                 }
                 List<String> allowed = designTools;
+                JsonObject scopedD3Evidence = d3Evidence;
                 DeepSeekToolLoopClient.ToolExecutor scoped = (tool, arguments) -> {
                     if (!allowed.contains(tool)) {
                         var denied = new com.google.gson.JsonObject();
@@ -201,6 +204,8 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
                         denied.addProperty("error", "PLANNING_TOOL_NOT_IN_CURRENT_DECISION_SCOPE: " + tool);
                         return denied;
                     }
+                    if (CityD3ReviewDecisionView.TOOL.equals(tool))
+                        return CityD3ReviewDecisionView.page(scopedD3Evidence, arguments);
                     return PreparedRealmDesignTurn.execute(run.stage(), gateway, tool, arguments);
                 };
                 result = client.run(config, credentials,

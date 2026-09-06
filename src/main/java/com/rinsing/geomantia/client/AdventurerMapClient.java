@@ -24,4 +24,11 @@ public final class AdventurerMapClient {
         AdventurerMapNetwork.requestSnapshot(zoom);
     }
 
+    public static void receiveRetryResult(String result) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.screen instanceof AdventurerMapScreen screen) screen.receiveRetryResult(result);
+        else if (minecraft.player != null) minecraft.player.displayClientMessage(
+                net.minecraft.network.chat.Component.translatable("gui.geomantia.adventurer_map.retry." + result), false);
+    }
+
 }

@@ -92,6 +92,14 @@ public final class ProviderPlanningToolGateway implements DeepSeekToolLoopClient
 
     @Override
     public JsonElement execute(String toolName, JsonObject suppliedArguments) throws Exception {
+        return execute(toolName, suppliedArguments, false);
+    }
+
+    public JsonElement executeHost(String toolName, JsonObject suppliedArguments) throws Exception {
+        return execute(toolName, suppliedArguments, true);
+    }
+
+    private JsonElement execute(String toolName, JsonObject suppliedArguments, boolean hostOnly) throws Exception {
         Endpoint endpoint = ENDPOINTS.get(toolName);
         if (endpoint == null) return error("PROVIDER_AGENT_TOOL_NOT_ALLOWED", toolName);
         JsonObject arguments = suppliedArguments == null ? new JsonObject() : suppliedArguments.deepCopy();
@@ -129,7 +137,7 @@ public final class ProviderPlanningToolGateway implements DeepSeekToolLoopClient
         HttpRequest request = HttpRequest.newBuilder(apiBase.resolve(endpoint.path()))
                 .timeout(endpoint.longRunning() ? Duration.ofMinutes(5) : Duration.ofSeconds(45))
                 .header("Content-Type", "application/json")
-                .header("X-Geomantia-Agent-View", "true")
+                .header(hostOnly ? "X-Geomantia-Host-Result" : "X-Geomantia-Agent-View", "true")
                 .POST(HttpRequest.BodyPublishers.ofString(arguments.toString()))
                 .build();
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());

@@ -230,20 +230,15 @@ public final class CityBlueprintCompilerService {
                 JsonObject event = selections.get(selections.size() - 1).getAsJsonObject();
                 limits[index] = intValue(event, "candidateCount", 0);
                 if (placement == null) {
+                    // Later limits belong to a different prefix of committed choices.
+                    java.util.Arrays.fill(limits, index + 1, limits.length, 0);
                     JsonObject terrainReasons = terrainFailureReasonCounts(event);
                     if (!terrainReasons.entrySet().isEmpty()) {
-                        event.addProperty("status", "skipped_unfit_terrain_member");
+                        event.addProperty("status", "no_legal_candidate");
                         event.addProperty("reasonCode", "CITY_BLUEPRINT_SELECTED_PATCH_TERRAIN_UNFIT");
                         event.add("terrainFailureReasonCounts", terrainReasons.deepCopy());
                         state.recordTerrainPlacementFailure(request.structureRef(), terrainReasons);
                         state.stop("SELECTED_PATCH_TERRAIN_UNABLE_TO_SUPPORT_REQUIRED_STRUCTURE");
-                        continue;
-                    }
-                    if (requiredRuntimeGap(event)) {
-                        event.addProperty("status", "skipped_runtime_gap_member");
-                        event.addProperty("reasonCode", "CITY_BLUEPRINT_RUNTIME_GAP_RECORDED");
-                        state.stop("REQUIRED_MEMBER_SKIPPED_RUNTIME_GAP");
-                        continue;
                     }
                     placed = false;
                     break;
@@ -442,7 +437,7 @@ public final class CityBlueprintCompilerService {
                 anchors, streetBands);
         anchorPlan.add("arrayVisualQuality", arrayVisualQuality.json().deepCopy());
         JsonObject compilationAcceptance = compilationAcceptance(
-                blueprint, states, connectivityPlan, arrayVisualQuality, streetFinalization.trace());
+                blueprint, states, connectivityPlan, arrayVisualQuality, streetFinalization.trace(), mainRoads.plan());
         anchorPlan.add("compilationAcceptance", compilationAcceptance.deepCopy());
         if (!arrayVisualQuality.passed()) {
             anchorPlan.addProperty("arrayVisualGapRecorded", true);
@@ -550,7 +545,7 @@ public final class CityBlueprintCompilerService {
                                                     Map<String, GroupState> states,
                                                     ConnectivityPlan connectivityPlan,
                                                     CityArrayVisualQualityGate.Result visualQuality,
-                                                    JsonObject streetFirstNetworkTrace) {
+                                                    JsonObject streetFirstNetworkTrace, JsonObject mainRoadPlan) {
         JsonArray hardBlocks = new JsonArray();
         Set<String> trafficGroupIds = states.values().stream()
                 .filter(state -> state.group().groupKind() == CityBlueprint.GroupKind.STRUCTURE)
@@ -562,9 +557,10 @@ public final class CityBlueprintCompilerService {
             relatedGroupIds.add(relation.fromGroupId());
             relatedGroupIds.add(relation.toGroupId());
         });
+        CityTrafficConnectivity traffic = new CityTrafficConnectivity(mainRoadPlan);
         boolean graphConnected = !trafficGroupIds.isEmpty()
                 && trafficGroupIds.stream().allMatch(groupId -> states.get(groupId).anchorCount() > 0)
-                && connectivityPlan.connected(trafficGroupIds);
+                && traffic.connected(trafficGroupIds);
         long trafficConnectionCount = blueprint.relations().stream()
                 .filter(relation -> relation.relationKind() == CityBlueprint.RelationKind.CONNECTION)
                 .filter(relation -> trafficGroupIds.contains(relation.fromGroupId())
@@ -580,10 +576,19 @@ public final class CityBlueprintCompilerService {
                         + ": FUNCTION_AREA_RELATION_UNSPECIFIED"));
         JsonArray warnings = new JsonArray();
         connectivityPlan.links.stream()
+                .filter(link -> !"CONNECTION".equals(link.sourceReason))
                 .filter(link -> !link.satisfied())
                 .forEach(link -> {
                     String message = link.describe() + ": CONNECTION_SKIPPED_TERRAIN_BLOCKED status=" + link.status;
                     if (link.required) hardBlocks.add(message);
+                    else warnings.add(message);
+                });
+        blueprint.relations().stream()
+                .filter(relation -> relation.relationKind() == CityBlueprint.RelationKind.CONNECTION)
+                .filter(relation -> !traffic.directlyConnected(relation.fromGroupId(), relation.toGroupId()))
+                .forEach(relation -> {
+                    String message = relation.fromGroupId() + " -> " + relation.toGroupId() + ": CITY_MAIN_ROAD_CONNECTION_UNAVAILABLE";
+                    if (relation.strength() == CityBlueprint.RelationStrength.HARD) hardBlocks.add(message);
                     else warnings.add(message);
                 });
         if (trafficGroupIds.size() > 1 && !graphConnected) {
@@ -623,9 +628,15 @@ public final class CityBlueprintCompilerService {
         acceptance.addProperty("trafficGroupCount", trafficGroupIds.size());
         acceptance.addProperty("trafficConnectionCount", trafficConnectionCount);
         acceptance.addProperty("requiredRelationCount", connectivityPlan.links.stream()
-                .filter(link -> link.required).count());
+                .filter(link -> link.required && !"CONNECTION".equals(link.sourceReason)).count()
+                + blueprint.relations().stream().filter(relation -> relation.strength() == CityBlueprint.RelationStrength.HARD
+                        && relation.relationKind() == CityBlueprint.RelationKind.CONNECTION).count());
         acceptance.addProperty("requiredRelationsSatisfied", connectivityPlan.links.stream()
-                .filter(link -> link.required).allMatch(ConnectivityLink::satisfied));
+                .filter(link -> link.required && !"CONNECTION".equals(link.sourceReason)).allMatch(ConnectivityLink::satisfied)
+                && blueprint.relations().stream()
+                .filter(relation -> relation.strength() == CityBlueprint.RelationStrength.HARD
+                        && relation.relationKind() == CityBlueprint.RelationKind.CONNECTION)
+                .allMatch(relation -> traffic.directlyConnected(relation.fromGroupId(), relation.toGroupId())));
         acceptance.addProperty("structureGraphConnected", graphConnected);
         acceptance.addProperty("allFunctionAreasFormed",
                 states.values().stream().allMatch(state -> state.anchorCount() > 0));
@@ -3451,21 +3462,6 @@ public final class CityBlueprintCompilerService {
         if (!key.isBlank()) counts.addProperty(key, intValue(counts, key, 0) + 1);
     }
 
-    private static boolean requiredRuntimeGap(JsonObject event) {
-        if (event.has("compilerFilterReasonCounts")
-                && event.getAsJsonObject("compilerFilterReasonCounts").has("D4_ARRAY_COUNT_UNSATISFIED")) {
-            return true;
-        }
-        if (!event.has("attempts") || !event.get("attempts").isJsonArray()) return false;
-        for (JsonElement attemptElement : event.getAsJsonArray("attempts")) {
-            if (!attemptElement.isJsonObject()) continue;
-            JsonObject reasons = attemptElement.getAsJsonObject().has("filterReasonCounts")
-                    ? attemptElement.getAsJsonObject().getAsJsonObject("filterReasonCounts") : null;
-            if (reasons != null && reasons.has("D4_ARRAY_COUNT_UNSATISFIED")) return true;
-        }
-        return false;
-    }
-
     private static JsonObject terrainFailureReasonCounts(JsonObject event) {
         JsonObject result = new JsonObject();
         if (event.has("compilerFilterReasonCounts")
@@ -5112,6 +5108,8 @@ public final class CityBlueprintCompilerService {
             }
             if (layoutFrame != null && anchorCount == 1
                     && !"COURTYARD".equals(layoutAlgorithm)
+                    // Their first member is offset from the layout center; recentering translates all remaining slots.
+                    && !"COMPACT".equals(layoutAlgorithm)
                     && anchor.has("anchorBlock")
                     && anchor.get("anchorBlock").isJsonObject()) {
                 JsonObject block = anchor.getAsJsonObject("anchorBlock");

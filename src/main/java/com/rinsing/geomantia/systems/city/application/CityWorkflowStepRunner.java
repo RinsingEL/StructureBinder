@@ -139,6 +139,21 @@ public final class CityWorkflowStepRunner {
             return null;
         }
         JsonObject trace = response.getAsJsonObject("cityGenerationCompileTrace");
+        JsonObject quality = object(response, "qualityReport");
+        JsonObject acceptance = object(trace, "compilationAcceptance");
+        JsonObject finalEvidence = quality != null && !array(quality, "hardBlocks").isEmpty() ? quality : acceptance;
+        if (finalEvidence != null && !array(finalEvidence, "hardBlocks").isEmpty()) {
+            JsonObject summary = new JsonObject();
+            copyString(response, summary, "reasonCode");
+            summary.addProperty("phase", "final_acceptance");
+            summary.add("hardBlocks", array(finalEvidence, "hardBlocks").deepCopy());
+            boolean host = "program".equals(stringValue(response, "failureOwner", ""));
+            summary.addProperty("recommendedActionCode", host ? "HOST_DIAGNOSIS_REQUIRED" : "REVISE_FINAL_ACCEPTANCE_FAILURES");
+            summary.addProperty("recommendedAction", host
+                    ? "Repair the final hard blocks while preserving the accepted design and required content. Earlier optional search failures are not the final cause."
+                    : "Revise the explicit design constraints identified by the final hard blocks; preserve required content.");
+            return summary;
+        }
         JsonObject failedSelection = lastFailedSelection(array(trace, "selections"));
         JsonObject summary = new JsonObject();
         copyString(response, summary, "reasonCode");

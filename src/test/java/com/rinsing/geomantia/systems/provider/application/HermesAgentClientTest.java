@@ -62,15 +62,13 @@ class HermesAgentClientTest {
     }
 
     @Test
-    void completeInitialContextAboveOld64kLimitIsPreservedAndOversizeIsRejected() throws Exception {
+    void completeInitialContextAboveFormerCharacterLimitsIsPreserved() throws Exception {
         JsonObject state = new JsonObject();
-        state.addProperty("catalog", "x".repeat(100_000));
+        state.addProperty("catalog", "x".repeat(300_000));
         state.addProperty("contextId", "sha256:tail-must-arrive");
         String actual = HermesAgentClient.promptContent(state, List.of()).get(0).getAsJsonObject().get("text").getAsString();
         assertEquals("Continue this formal planning state:\n" + state, actual);
         assertTrue(actual.contains("sha256:tail-must-arrive"));
-        state.addProperty("catalog", "x".repeat(HermesAgentClient.MAX_PLANNING_TEXT_LENGTH));
-        assertThrows(RuntimeException.class, () -> HermesAgentClient.promptContent(state, List.of()));
     }
 
     @Test

@@ -28,6 +28,21 @@ public final class GeomantiaHttpServer {
     private GeomantiaHttpServer() {
     }
 
+    public static synchronized String retryCityFromMap(net.minecraft.server.level.ServerPlayer player,
+                                                       String runId, String cityId) {
+        if (!player.hasPermissions(2) && !player.server.isSingleplayerOwner(player.getGameProfile()))
+            return "no_permission";
+        if (activeRealmController == null) return "unavailable";
+        try {
+            return activeRealmController.retryCityFromMap(player.server, runId, cityId) ? "submitted" : "state_changed";
+        } catch (IllegalArgumentException exception) {
+            return "state_changed";
+        } catch (IOException | RuntimeException exception) {
+            LOGGER.warn("Map city retry failed: {}", exception.getClass().getSimpleName());
+            return "failed";
+        }
+    }
+
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
         start(event.getServer());

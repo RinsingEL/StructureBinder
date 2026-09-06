@@ -56,10 +56,10 @@ class HermesPortableRuntimeTest {
                 installed.resolve("python/python.exe").toString(), "-c",
                 "import sys; sys.path.insert(0, sys.argv[1]); import geomantia_hermes_bootstrap as b; "
                         + "from gateway.platforms import api_server as a; b.install_input_adapter(a); "
-                        + "s='x'*100000+'contextId:tail'; "
+                        + "s='x'*300000+'contextId:tail'; "
                         + "parts=[{'type':'text','text':s},{'type':'image_url','image_url':{'url':'data:image/png;base64,AA=='}}]; "
                         + "assert a._normalize_multimodal_content(parts)==parts; assert a._normalize_chat_content(s)==s; "
-                        + "assert a.MAX_NORMALIZED_TEXT_LENGTH==" + HermesAgentClient.MAX_PLANNING_TEXT_LENGTH + "; "
+                        + "assert a.MAX_NORMALIZED_TEXT_LENGTH==sys.maxsize; "
                         + "import yaml; cfg=yaml.safe_load(open(sys.argv[2],encoding='utf-8')); "
                         + "from agent.image_routing import _lookup_supports_vision; "
                         + "assert _lookup_supports_vision('custom','glm-5.3-flash',cfg) is True; "

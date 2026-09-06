@@ -50,7 +50,7 @@ class PlanningBoundaryTest {
         assertEquals(1, result.getAsJsonObject("plannedWorldgenStructuresSummary").get("entryCount").getAsInt());
         assertTrue(source.has("plannedWorldgenStructures"));
         source.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject().addProperty("changed", true);
-        assertThrows(java.io.IOException.class, () -> PlanningToolPresentation.present(source, directory));
+        assertEquals(source.get("plannedWorldgenStructures"), PlanningToolPresentation.present(source, directory).get("plannedWorldgenStructures"));
     }
     @TempDir Path directory;
 
@@ -152,15 +152,15 @@ class PlanningBoundaryTest {
                 .get("artifactPath").getAsString());
         assertFalse(result.getAsJsonObject("cityGenerationCompileTrace").has("selections"));
         source.remove("artifacts");
-        assertThrows(java.io.IOException.class, () -> PlanningToolPresentation.present(source, directory));
+        assertEquals(source.get("cityGenerationCompileTrace"), PlanningToolPresentation.present(source, directory).get("cityGenerationCompileTrace"));
     }
 
-    @Test void oversizedViewsBecomeHostBlockersNotSuccessfulTruncatedResponses() throws Exception {
+    @Test void largeAuthorViewsRemainCompleteWithoutStoppingTheTurn() throws Exception {
         JsonObject source = new JsonObject(); source.addProperty("authorData", "a".repeat(100_000));
         var control = new PlanningTurnControl((tool, args) -> PlanningToolPresentation.present(source, directory));
-        control.execute("city_prepare_d4_blueprint_context", new JsonObject());
-        assertTrue(control.finished());
-        assertTrue(control.result(1).errorCode().contains("PLANNING_PRESENTATION_TOO_LARGE"));
+        JsonObject result = control.execute("city_prepare_d4_blueprint_context", new JsonObject()).getAsJsonObject();
+        assertFalse(control.finished());
+        assertEquals(source.get("authorData"), result.get("authorData"));
     }
 
     @Test void capturedLiveContextFitsHermesWithoutLosingAnyAuthorProfile() throws Exception {

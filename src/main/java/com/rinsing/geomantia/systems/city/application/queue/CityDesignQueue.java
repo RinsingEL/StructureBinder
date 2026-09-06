@@ -118,14 +118,19 @@ public final class CityDesignQueue {
     }
 
     public synchronized void requireCurrentIfManaged(String runId, String citySeedId) throws IOException {
-        requireCurrent(runId, citySeedId, false);
+        requireCurrent(runId, citySeedId, false, false);
+    }
+
+    public synchronized void requireContextPreparationIfManaged(String runId, String citySeedId) throws IOException {
+        requireCurrent(runId, citySeedId, false, true);
     }
 
     public synchronized void requireProgramRetryIfManaged(String runId, String citySeedId) throws IOException {
-        requireCurrent(runId, citySeedId, true);
+        requireCurrent(runId, citySeedId, true, false);
     }
 
-    private void requireCurrent(String runId, String citySeedId, boolean programRetry) throws IOException {
+    private void requireCurrent(String runId, String citySeedId, boolean programRetry,
+                                boolean contextPreparation) throws IOException {
         CityDesignQueueConfig config = CityDesignQueueConfig.loadOrCreate(configPath);
         if (!config.enabled() || !Files.isRegularFile(runDirectory(runId).resolve("city_seed_registry.json"))) return;
         JsonObject state = readState(runId);
@@ -137,6 +142,7 @@ public final class CityDesignQueue {
                     + ", requested=" + citySeedId);
         }
         String status = stringValue(state, "status", "");
+        if (contextPreparation && "blocked_by_program".equals(status)) return;
         if (programRetry) {
             if (!("blocked_by_program".equals(status) || NEEDS_AGENT.equals(status))
                     || !"city_post_d4_auto_compile_retry".equals(stringValue(state, "nextAction", "")))

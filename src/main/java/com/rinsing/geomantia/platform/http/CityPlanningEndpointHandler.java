@@ -110,8 +110,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 final class CityPlanningEndpointHandler {
     static final int DEFAULT_D3_PATCH_SCAN_PADDING_BLOCKS = 128;
@@ -138,9 +136,18 @@ final class CityPlanningEndpointHandler {
                                                        JsonObject terraSenseProfileSource,
                                                        JsonObject templateCatalogSource,
                                                        JsonObject blueprintReferenceCatalog,
-                                                       JsonObject patchReviewEvidence) throws IOException {
+                                                         JsonObject patchReviewEvidence) throws IOException {
+        return handlePrepareD4BlueprintContext(debugRoot, runId, citySeedId, terraSenseProfileSource,
+                templateCatalogSource, blueprintReferenceCatalog, patchReviewEvidence, false);
+    }
+
+    static JsonObject handlePrepareD4BlueprintContext(Path debugRoot, String runId, String citySeedId,
+                                                       JsonObject terraSenseProfileSource,
+                                                       JsonObject templateCatalogSource,
+                                                       JsonObject blueprintReferenceCatalog,
+                                                       JsonObject patchReviewEvidence, boolean recovery) throws IOException {
         JsonObject response = new CityBlueprintService().prepare(debugRoot, runId, citySeedId,
-                terraSenseProfileSource, templateCatalogSource, blueprintReferenceCatalog, patchReviewEvidence);
+                terraSenseProfileSource, templateCatalogSource, blueprintReferenceCatalog, patchReviewEvidence, recovery);
         JsonObject request = standaloneRequest("city_prepare_d4_blueprint_context", runId, citySeedId);
         request.add("terraSenseProfileSource", terraSenseProfileSource.deepCopy());
         request.add("templateCatalogSource", templateCatalogSource.deepCopy());
@@ -224,17 +231,22 @@ final class CityPlanningEndpointHandler {
                 ? "compiled" : "anchor_finalization_failed");
         finalized.add("cityGenerationCompileTrace", compiled.compileTrace().deepCopy());
         finalized.add("groupExtentMap", compiled.groupExtentMap().deepCopy());
+        boolean finalProgramFailure = !booleanValue(finalized, "ok", false)
+                && com.rinsing.geomantia.systems.city.application.CityBlueprintFailureRouting.isProgramFailure(
+                        stringValue(finalized, "reasonCode", ""), finalized);
         JsonObject budget = booleanValue(finalized, "ok", false)
                 ? failureBudget.recordSuccess(debugRoot, runId, citySeedId)
-                : currentBudget;
+                : finalProgramFailure ? currentBudget : failureBudget.recordFailure(debugRoot, runId, citySeedId,
+                        stringValue(finalized, "reasonCode", ""), "Explicit design relations failed final acceptance.");
         CityBlueprintFailureBudget.attach(finalized, budget, debugRoot, runId, citySeedId);
-        if (!booleanValue(finalized, "ok", false))
+        if (finalProgramFailure)
             com.rinsing.geomantia.systems.city.application.CityBlueprintFailureRouting.blockOnProgram(finalized);
+        else if (!booleanValue(finalized, "ok", false)) addBlueprintRetryGuidance(finalized);
         else finalized.addProperty("nextAction", "city_run_workflow");
         JsonObject request = standaloneRequest("city_compile_d4_blueprint", runId, citySeedId);
         return recordStandaloneTestRunState(debugRoot, runId, citySeedId, request,
                 booleanValue(finalized, "ok", false) ? "awaiting_workflow_resume"
-                        : "blocked_by_program",
+                        : finalProgramFailure ? "blocked_by_program" : "awaiting_city_blueprint_revision",
                 stringValue(finalized, "nextAction", booleanValue(finalized, "ok", false)
                         ? "city_run_workflow" : "stop_for_human_review"),
                 finalized);
@@ -1513,6 +1525,34 @@ final class CityPlanningEndpointHandler {
     static JsonObject handleExecuteD5(Path debugRoot, Path serverRoot, String runId, String citySeedId,
                                       boolean confirmWorldMutation, ServerLevel level,
                                       Boolean requestedLandUseLayer) throws IOException {
+        return handleExecuteD5Prepared(debugRoot, serverRoot, runId, citySeedId, confirmWorldMutation, level,
+                requestedLandUseLayer, null);
+    }
+
+    static CityLandUseChunkStatusPreflight.PreparedOwners prepareD5ChunkPreflight(
+            Path debugRoot, String runId, String citySeedId, boolean confirmWorldMutation,
+            Boolean requestedLandUseLayer) throws IOException {
+        if (!confirmWorldMutation || Boolean.FALSE.equals(requestedLandUseLayer)) return null;
+        Path runDir = debugRoot.resolve(runId);
+        Path anchors = cityStageDir(runDir, citySeedId, CityTestRunLayout.D4).resolve("structure_anchor_map.json");
+        if (Files.isRegularFile(anchors)
+                && isBlueprintAnchorMap(JsonParser.parseString(Files.readString(anchors)).getAsJsonObject())
+                && loadBlueprintOutdoorInputs(debugRoot, runDir, citySeedId).blueprint().outdoorPlan().mode()
+                == CityBlueprint.OutdoorMode.PRESERVE) return null;
+        Path directory = cityStageDir(runDir, citySeedId, CityTestRunLayout.LAND_USE);
+        Path area = directory.resolve("city_land_use_area_plan.json");
+        Path surface = directory.resolve("city_land_use_surface_print_plan.json");
+        if (!Files.isRegularFile(directory.resolve("city_land_use_planning_complete.json"))
+                || !Files.isRegularFile(area) || !Files.isRegularFile(surface)) return null;
+        return new CityLandUseChunkStatusPreflight().prepare(
+                new LandUseAreaPlanCodec().fromJson(JsonParser.parseString(Files.readString(area)).getAsJsonObject()),
+                new CityLandUseSurfacePrintPlanCodec().fromJson(JsonParser.parseString(Files.readString(surface)).getAsJsonObject()));
+    }
+
+    static JsonObject handleExecuteD5Prepared(Path debugRoot, Path serverRoot, String runId, String citySeedId,
+                                      boolean confirmWorldMutation, ServerLevel level,
+                                      Boolean requestedLandUseLayer,
+                                      CityLandUseChunkStatusPreflight.PreparedOwners preparedOwners) throws IOException {
         long started = System.nanoTime();
         if (!confirmWorldMutation) {
             throw new IllegalArgumentException("confirmWorldMutation=true is required for city_execute_d5.");
@@ -1616,9 +1656,11 @@ final class CityPlanningEndpointHandler {
         if (landUsePlan != null) {
             CityLandUseWorldgenRegistry.preflightActivate(metadata.dimensionId(), landUsePlan,
                     landUseSurfacePrintPlan, serverRoot);
-            landUseChunkPreflight = CityLandUseWorldgenRegistry.preflightChunkStatus(landUsePlan,
-                    landUseSurfacePrintPlan,
-                    new CityLandUseChunkStatusPreflight.MinecraftChunkStatusProbe(level));
+            landUseChunkPreflight = preparedOwners == null
+                    ? CityLandUseWorldgenRegistry.preflightChunkStatus(landUsePlan, landUseSurfacePrintPlan,
+                            new CityLandUseChunkStatusPreflight.MinecraftChunkStatusProbe(level))
+                    : new CityLandUseChunkStatusPreflight().inspect(landUsePlan, landUseSurfacePrintPlan,
+                            preparedOwners, new CityLandUseChunkStatusPreflight.MinecraftChunkStatusProbe(level));
             if (!landUseChunkPreflight.eligible()) {
                 throw new IllegalArgumentException(landUseChunkPreflight.reasonCode()
                         + ": LandUse only applies during first worldgen FEATURES; ownerChunks="
@@ -1631,6 +1673,9 @@ final class CityPlanningEndpointHandler {
                 JsonParser.parseString(Files.readString(operationPath)).getAsJsonObject());
         WorldMutationReport report = skippedWorldMutationReport(plan,
                 "D5 activates worldgen-time masks and City-owned structure, road, and land-use plans.");
+        if (level != null && (!level.getServer().isRunning() || level.getServer().isStopped())) {
+            throw new java.util.concurrent.CancellationException("CITY_SERVER_STOPPING");
+        }
         JsonObject activeRegistry = CityReservationMaskRegistry.activate(activeMaskPlan, null, materializationPlan,
                 runId, citySeedId, serverRoot);
         JsonObject activationProvenance = new JsonObject();
@@ -2261,9 +2306,13 @@ final class CityPlanningEndpointHandler {
                 && workflowD5RuntimeActivationCurrent(workflowD6Plan, runId, citySeedId)
                 ? activeD5Registry : null;
         if (!ctx.workflow().runStep("city_execute_d5", executeD5SkipArtifact,
-                () -> serverHolder.callOnServerThread(() -> handleExecuteD5(
+                () -> {
+                    var preparedOwners = prepareD5ChunkPreflight(debugRoot, runId, citySeedId, true,
+                            blueprintWorkflow ? null : enableLandUseLayer);
+                    return serverHolder.callOnServerThread(() -> handleExecuteD5Prepared(
                         debugRoot, serverRoot, runId, citySeedId, true, level,
-                        blueprintWorkflow ? null : enableLandUseLayer)))) {
+                        blueprintWorkflow ? null : enableLandUseLayer, preparedOwners));
+                })) {
             return ctx.workflow().finish(workflowStarted, "failed");
         }
 
@@ -4824,25 +4873,11 @@ final class CityPlanningEndpointHandler {
     record MinecraftServerHolder(net.minecraft.server.MinecraftServer server) {
         <T> T callOnServerThread(Callable<T> action) throws Exception {
             if (server.isSameThread()) {
+                if (!server.isRunning() || server.isStopped()) throw new java.util.concurrent.CancellationException("CITY_SERVER_STOPPING");
                 return action.call();
             }
-            CompletableFuture<T> future = new CompletableFuture<>();
-            server.execute(() -> {
-                try {
-                    future.complete(action.call());
-                } catch (Exception ex) {
-                    future.completeExceptionally(ex);
-                }
-            });
-            try {
-                return future.get();
-            } catch (ExecutionException ex) {
-                Throwable cause = ex.getCause();
-                if (cause instanceof Exception exception) {
-                    throw exception;
-                }
-                throw new RuntimeException(cause);
-            }
+            return ServerThreadDispatch.call(server::execute,
+                    () -> server.isRunning() && !server.isStopped(), action);
         }
     }
 }

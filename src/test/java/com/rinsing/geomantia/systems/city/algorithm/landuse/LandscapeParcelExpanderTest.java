@@ -26,6 +26,25 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class LandscapeParcelExpanderTest {
     @Test
+    void frozenSilhouetteAndPathCostsSurviveFrontierOptimization() throws Exception {
+        var digest = java.security.MessageDigest.getInstance("SHA-256");
+        long started = System.nanoTime();
+        for (int seed = 0; seed < 8; seed++) {
+            var terrain = seed % 2 == 0 ? flatTerrain() : terrainWithCliff(48);
+            var result = new LandscapeParcelExpander().expand("city_test", terrain.planningBounds(), terrain,
+                    List.of(group("a", new BlockPoint(40, 48), 64, 600, 900),
+                            group("b", new BlockPoint(25, 48), 64, 450, 600)), "compat-" + seed);
+            String snapshot = result.claims().toString() + new java.util.TreeMap<>(result.claimedBlocksByGroup())
+                    + new java.util.TreeMap<>(result.expansionOriginsByGroup())
+                    + result.contestedClaimCount() + ":" + result.blockedCandidateCount();
+            digest.update(snapshot.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
+        String hash = java.util.HexFormat.of().formatHex(digest.digest());
+        System.out.println("PARCEL_COMPAT hash=" + hash + " seconds=" + (System.nanoTime() - started) / 1e9);
+        assertEquals("572ae8196458a003eadd822d013cc23c482da22c7d73c37a1bd295cf0f1f1db2", hash);
+    }
+
+    @Test
     void openParcelStopsAtPreferredAreaInsteadOfFillingMaximum() {
         LandUseTerrainField terrain = flatTerrain();
         LandUseSeedGroup group = group("farm::parcel_01", new BlockPoint(48, 48), 64, 173, 320);

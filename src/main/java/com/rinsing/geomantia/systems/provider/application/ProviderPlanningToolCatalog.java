@@ -75,6 +75,12 @@ final class ProviderPlanningToolCatalog {
                     object(properties(
                             "runId", string(), "citySeedId", string(),
                             "preferGeneratorNativeTerrain", bool(), "patchScanPaddingBlocks", number())));
+            case "city_inspect_d3_patches" -> function(name,
+                    "Optional read-only terrain evidence for the current city only. Returns complete patch records "
+                            + "in original order, with optional landformType or exact landformPatchId filter. "
+                            + "page starts at 0; pageSize defaults to 8, maximum 16. Do not read all pages mechanically.",
+                    object(properties("page", integer(), "pageSize", integer(),
+                            "landformType", string(), "landformPatchId", string())));
             case "city_review_d3_site" -> function(name,
                     "Review the current capital site from returned D3 evidence and preview. Accept only if the "
                             + "terrain supports the intended capital; otherwise request reselection.",

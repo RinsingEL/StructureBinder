@@ -49,6 +49,24 @@ public final class CityBlueprintService {
     public JsonObject prepare(Path debugRoot, String runId, String cityId,
                                JsonObject terraSenseProfileSource, JsonObject templateCatalogSource,
                                JsonObject blueprintReferenceCatalog, JsonObject patchReviewEvidence) throws IOException {
+        return prepare(debugRoot, runId, cityId, terraSenseProfileSource, templateCatalogSource,
+                blueprintReferenceCatalog, patchReviewEvidence, false);
+    }
+
+    public JsonObject prepare(Path debugRoot, String runId, String cityId,
+                               JsonObject terraSenseProfileSource, JsonObject templateCatalogSource,
+                               JsonObject blueprintReferenceCatalog, JsonObject patchReviewEvidence,
+                               boolean authorCorrection) throws IOException {
+        synchronized (submissionArtifactLock(outputDirectory(requireRunDirectory(debugRoot, runId), cityId))) {
+            return prepareLocked(debugRoot, runId, cityId, terraSenseProfileSource, templateCatalogSource,
+                    blueprintReferenceCatalog, patchReviewEvidence, authorCorrection);
+        }
+    }
+
+    private JsonObject prepareLocked(Path debugRoot, String runId, String cityId,
+                                     JsonObject terraSenseProfileSource, JsonObject templateCatalogSource,
+                                     JsonObject blueprintReferenceCatalog, JsonObject patchReviewEvidence,
+                                     boolean authorCorrection) throws IOException {
         Path runDir = requireRunDirectory(debugRoot, runId);
         JsonObject seed = loadCitySeed(runDir, cityId);
         Path d3Path = d3Path(runDir, cityId);
@@ -96,10 +114,8 @@ public final class CityBlueprintService {
         snapshot.add("templateCatalog", templateCatalogJson.deepCopy());
         snapshot.add("referenceCatalog", references.json().deepCopy());
         snapshot.add("terrainFieldRef", artifactRefJson(terrainFieldRef));
-        writeAtomic(snapshotPath, snapshot);
-
         CityBlueprint.ArtifactRef d3Ref = artifactRef(debugRoot, d3Path, string(d3, "schema"), d3Raw);
-        String snapshotRaw = Files.readString(snapshotPath);
+        String snapshotRaw = CityJson.GSON.toJson(snapshot);
         CityBlueprint.ArtifactRef snapshotRef = artifactRef(debugRoot, snapshotPath, SNAPSHOT_SCHEMA, snapshotRaw);
 
         JsonObject contextCore = new JsonObject();
@@ -136,8 +152,39 @@ public final class CityBlueprintService {
         context.addProperty("contextId", contextId);
         context.addProperty("preparedAt", Instant.now().toString());
         Path contextPath = outputDir.resolve("city_blueprint_context.json");
+        String previousContextId = "";
+        Path recoveryArchive = null;
+        if (authorCorrection) {
+            JsonObject previous = readObject(contextPath, CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_NOT_FOUND);
+            previousContextId = string(previous, "contextId");
+            JsonObject previousSnapshot = readObject(snapshotPath, CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_STALE);
+            if (java.util.List.of("templateCatalog", "structureCatalog", "referenceCatalog").stream()
+                    .allMatch(key -> java.util.Objects.equals(previousSnapshot.get(key), snapshot.get(key)))) {
+                throw new IllegalArgumentException("CITY_BLUEPRINT_AUTHOR_SOURCES_UNCHANGED: use program retry when only code/environment changed.");
+            }
+            JsonObject previousBudget = failureBudget.current(debugRoot, runId, cityId);
+            if (CityBlueprintFailureBudget.exhausted(previousBudget))
+                throw new IllegalArgumentException("CITY_BLUEPRINT_FAILURE_BUDGET_EXHAUSTED");
+            // This archive is immutable evidence, not an alternative active planning source.
+            recoveryArchive = outputDir.resolve("context_history").resolve(sha256(previousContextId).substring(7));
+            Files.createDirectories(recoveryArchive);
+            for (String name : java.util.List.of("city_blueprint_context.json", "city_blueprint_catalog_snapshot.json",
+                    "city_blueprint.json", "city_blueprint_submission_trace.json", "city_blueprint_validation_report.json",
+                    CityBlueprintFailureBudget.FILE_NAME)) {
+                Path source = outputDir.resolve(name);
+                Path target = recoveryArchive.resolve(name);
+                if (!Files.isRegularFile(source)) continue;
+                if (Files.exists(target)) {
+                    if (Files.mismatch(source, target) != -1)
+                        throw new IOException("CITY_BLUEPRINT_RECOVERY_ARCHIVE_CONFLICT: " + name);
+                } else Files.copy(source, target);
+            }
+        }
+        writeAtomic(snapshotPath, snapshot);
         writeAtomic(contextPath, context);
-        JsonObject budget = failureBudget.initialize(debugRoot, runId, cityId, contextId);
+        JsonObject budget = authorCorrection
+                ? failureBudget.rebindAfterAuthorCorrection(debugRoot, runId, cityId, previousContextId, contextId)
+                : failureBudget.initialize(debugRoot, runId, cityId, contextId);
 
         JsonObject response = new JsonObject();
         response.addProperty("ok", true);
@@ -147,6 +194,11 @@ public final class CityBlueprintService {
         JsonObject artifacts = new JsonObject();
         artifacts.addProperty("cityBlueprintContext", ref(debugRoot, contextPath));
         artifacts.addProperty("cityBlueprintCatalogSnapshot", ref(debugRoot, snapshotPath));
+        if (recoveryArchive != null) {
+            artifacts.addProperty("previousContextArchive", ref(debugRoot, recoveryArchive));
+            response.addProperty("previousContextId", previousContextId);
+            response.addProperty("nextAction", "city_submit_d4_blueprint");
+        }
         response.add("artifacts", artifacts);
         CityBlueprintFailureBudget.attach(response, budget, debugRoot, runId, cityId);
         return response;

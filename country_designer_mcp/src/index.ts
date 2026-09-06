@@ -36,10 +36,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const call = beginMcpCall(toolName, toolArgs);
   try {
     const handler = handlers[toolName];
-    if (!handler) {
+    const bridge = process.env.GEOMANTIA_PROVIDER_TOOL_URL;
+    if (!bridge && !handler) {
       throw new Error(`Unknown tool: ${toolName}`);
     }
-    const bridge = process.env.GEOMANTIA_PROVIDER_TOOL_URL;
     const result = bridge ? (await axios.post(bridge, { name: toolName, arguments: toolArgs }, {
       timeout: 600_000, headers: { "X-Geomantia-Bridge-Key": process.env.GEOMANTIA_PROVIDER_TOOL_KEY || "" },
     })).data : await handler(toolArgs);

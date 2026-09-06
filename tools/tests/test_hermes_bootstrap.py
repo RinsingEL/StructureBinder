@@ -18,13 +18,10 @@ class InputTest(unittest.TestCase):
         api = SimpleNamespace(MAX_NORMALIZED_TEXT_LENGTH=65536, _normalize_multimodal_content=lambda value: value)
         bootstrap.install_input_adapter(api)
         bootstrap.install_input_adapter(api)
-        parts = [{"type": "text", "text": "x" * 100000 + "contextId:tail"},
+        parts = [{"type": "text", "text": "x" * 300000 + "contextId:tail"},
                  {"type": "image_url", "image_url": {"url": "data:image/png;base64,AA=="}}]
         self.assertEqual(api._normalize_multimodal_content(parts), parts)
-        self.assertEqual(api.MAX_NORMALIZED_TEXT_LENGTH, 262144)
-        parts[0]["text"] = "x" * 262145
-        with self.assertRaisesRegex(ValueError, "planning_input_too_large"):
-            api._normalize_multimodal_content(parts)
+        self.assertEqual(api.MAX_NORMALIZED_TEXT_LENGTH, sys.maxsize)
 
 
 class CancellationTest(unittest.IsolatedAsyncioTestCase):

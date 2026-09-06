@@ -16,6 +16,40 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityPostD4AutoCompileQueueTest {
     @Test
+    void refreshedContextSupersedesOldBlockAcrossRestartWithoutRunningCompiler() throws Exception {
+        Path path = temporaryDirectory.resolve("run_refresh/automation/post_d4/city_refresh.json");
+        Files.createDirectories(path.getParent());
+        JsonObject old = new JsonObject();
+        old.addProperty("runId", "run_refresh"); old.addProperty("citySeedId", "city_refresh");
+        old.addProperty("status", "blocked_by_program"); old.addProperty("attempt", 2);
+        old.addProperty("nextAction", "city_post_d4_auto_compile_retry");
+        Files.writeString(path, old.toString());
+        try (var queue = new CityPostD4AutoCompileQueue(temporaryDirectory,
+                (r, c) -> { throw new AssertionError("must wait for a new accepted design"); })) {
+            assertThrows(java.io.IOException.class, () -> queue.prepareContext("run_refresh", "city_refresh",
+                    recovery -> { assertTrue(recovery); throw new java.io.IOException("preflight rejected"); }));
+            assertEquals("blocked_by_program", queue.status("run_refresh", "city_refresh").get("status").getAsString());
+            queue.prepareContext("run_refresh", "city_refresh", recovery -> {
+                assertTrue(recovery);
+                JsonObject response = new JsonObject(); response.addProperty("ok", true);
+                response.addProperty("contextId", "new-context"); return response;
+            });
+            var state = queue.status("run_refresh", "city_refresh");
+            assertEquals("needs_agent", state.get("status").getAsString());
+            assertEquals("city_submit_d4_blueprint", state.get("nextAction").getAsString());
+            assertEquals(old, state.getAsJsonObject("previousProgramFailure"));
+            assertEquals(2, state.get("attempt").getAsInt());
+            queue.prepareContext("run_refresh", "city_refresh", recovery -> {
+                assertTrue(!recovery); return new JsonObject();
+            });
+        }
+        try (var queue = new CityPostD4AutoCompileQueue(temporaryDirectory,
+                (r, c) -> { throw new AssertionError("must not compile on restart"); })) {
+            assertEquals("needs_agent", queue.status("run_refresh", "city_refresh").get("status").getAsString());
+        }
+    }
+
+    @Test
     void contradictorySuccessStatusCannotCompleteTheCity() throws Exception {
         try (CityPostD4AutoCompileQueue queue = new CityPostD4AutoCompileQueue(temporaryDirectory,
                 (run, city) -> response("waiting_for_generation", false))) {

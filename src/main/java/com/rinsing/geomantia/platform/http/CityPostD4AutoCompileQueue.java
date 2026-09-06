@@ -46,7 +46,7 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
         recoverIncompleteJobs();
     }
 
-    JsonObject enqueue(String runId, String citySeedId) throws IOException {
+    synchronized JsonObject enqueue(String runId, String citySeedId) throws IOException {
         JobKey key = JobKey.of(runId, citySeedId);
         JsonObject existing = read(key);
         if (active.putIfAbsent(key, Boolean.TRUE) != null) {
@@ -60,6 +60,45 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
         write(key, queued);
         submit(key, attempt);
         return queued.deepCopy();
+    }
+
+    synchronized JsonObject prepareContext(String runId, String citySeedId, ContextPreparation preparation)
+            throws IOException {
+        JobKey key = JobKey.of(runId, citySeedId);
+        JsonObject previous = read(key);
+        String status = stringValue(previous, "status", "");
+        if (active.containsKey(key) || "queued".equals(status) || "running".equals(status)
+                || "waiting_for_generation".equals(status)) {
+            throw new IllegalArgumentException("CITY_CONTEXT_PREPARATION_JOB_NOT_IDLE: " + status);
+        }
+        boolean recovery = "blocked_by_program".equals(status);
+        JsonObject response = preparation.prepare(recovery);
+        if (recovery && booleanValue(response, "ok", false)) {
+            Path history = path(key).getParent().resolve("history").resolve(safe(citySeedId))
+                    .resolve(safe(response.get("contextId").getAsString()) + ".json");
+            Files.createDirectories(history.getParent());
+            if (!Files.exists(history)) Files.writeString(history, previous.toString(), java.nio.file.StandardOpenOption.CREATE_NEW);
+            else if (!JsonParser.parseString(Files.readString(history)).equals(previous))
+                throw new IOException("CITY_CONTEXT_RECOVERY_JOB_HISTORY_CONFLICT");
+            JsonObject artifacts = object(response, "artifacts");
+            if (artifacts == null) { artifacts = new JsonObject(); response.add("artifacts", artifacts); }
+            artifacts.addProperty("previousProgramFailure", debugRoot.relativize(history).toString().replace('\\', '/'));
+            // Keep the old failure as evidence; it must no longer override a newly prepared context.
+            JsonObject resumed = state(key, "needs_agent", "AUTHOR_CONTEXT_REFRESHED",
+                    intValue(previous, "attempt", 0));
+            resumed.addProperty("nextAction", "city_submit_d4_blueprint");
+            resumed.add("contextId", response.get("contextId").deepCopy());
+            resumed.add("previousProgramFailure", previous.deepCopy());
+            if (response.has("artifacts")) resumed.add("artifacts", response.get("artifacts").deepCopy());
+            write(key, resumed);
+            response.add("postD4AutoCompile", resumed.deepCopy());
+        }
+        return response;
+    }
+
+    @FunctionalInterface
+    interface ContextPreparation {
+        JsonObject prepare(boolean recovery) throws IOException;
     }
 
     JsonObject status(String runId, String citySeedId) throws IOException {

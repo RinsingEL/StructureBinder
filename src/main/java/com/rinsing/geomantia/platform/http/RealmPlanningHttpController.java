@@ -53,8 +53,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 final class RealmPlanningHttpController implements AutoCloseable {
     private final MinecraftServer server;
@@ -441,7 +439,7 @@ final class RealmPlanningHttpController implements AutoCloseable {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             new ManagedCityPlanningSources(server.getServerDirectory().toPath()).bindDesignRequest(request);
-            cityDesignQueue.requireCurrentIfManaged(requiredString(request, "runId"),
+            cityDesignQueue.requireContextPreparationIfManaged(requiredString(request, "runId"),
                     requiredString(request, "citySeedId"));
             String runId = requiredString(request, "runId");
             String citySeedId = requiredString(request, "citySeedId");
@@ -456,11 +454,12 @@ final class RealmPlanningHttpController implements AutoCloseable {
             });
             JsonObject patchReviewEvidence = new CityD4PatchReviewService(debugRoot())
                     .requireReviewed(runId, citySeedId);
-            JsonObject response = CityPlanningEndpointHandler.handlePrepareD4BlueprintContext(debugRoot(),
+            JsonObject response = postD4AutoCompileQueue.prepareContext(runId, citySeedId,
+                    recovery -> CityPlanningEndpointHandler.handlePrepareD4BlueprintContext(debugRoot(),
                     runId, citySeedId,
                     requiredObject(request, "terrasenseProfileSource"),
                     templateCatalogSource,
-                    requiredObject(request, "blueprintReferenceCatalog"), patchReviewEvidence);
+                    requiredObject(request, "blueprintReferenceCatalog"), patchReviewEvidence, recovery));
             cityDesignQueue.onAgentWorkflowState(runId, citySeedId,
                     "waiting_for_agent", "D4_CONTEXT_PREPARED", "");
             return response;
@@ -536,13 +535,27 @@ final class RealmPlanningHttpController implements AutoCloseable {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             String runId = requiredString(request, "runId");
             String citySeedId = requiredString(request, "citySeedId");
-            cityDesignQueue.requireProgramRetryIfManaged(runId, citySeedId);
-            JsonObject response = new JsonObject();
-            response.addProperty("ok", true);
-            response.addProperty("operation", "city_post_d4_auto_compile_retry");
-            response.add("postD4AutoCompile", postD4AutoCompileQueue.enqueue(runId, citySeedId));
-            return response;
+            return retryCityProgram(runId, citySeedId);
         });
+    }
+
+    private synchronized JsonObject retryCityProgram(String runId, String citySeedId) throws IOException {
+        cityDesignQueue.requireProgramRetryIfManaged(runId, citySeedId);
+        JsonObject response = new JsonObject();
+        response.addProperty("ok", true);
+        response.addProperty("operation", "city_post_d4_auto_compile_retry");
+        response.add("postD4AutoCompile", postD4AutoCompileQueue.enqueue(runId, citySeedId));
+        return response;
+    }
+
+    synchronized boolean retryCityFromMap(MinecraftServer requestingServer, String runId, String cityId) throws IOException {
+        if (requestingServer != server) return false;
+        JsonObject state = cityDesignQueue.status(runId);
+        if (!com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapRetryPolicy.matches(
+                cityId, stringValue(state, "currentCitySeedId", ""), stringValue(state, "status", ""),
+                stringValue(state, "nextAction", ""))) return false;
+        retryCityProgram(runId, cityId);
+        return true;
     }
 
     private JsonObject runPostD4AutoCompile(String runId, String citySeedId) throws Exception {
@@ -1023,23 +1036,27 @@ final class RealmPlanningHttpController implements AutoCloseable {
     }
 
     void handleCityExecuteD5(HttpExchange exchange) {
-        handle(exchange, "POST", () -> callOnServerThread(() -> {
+        handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             String runId = requiredString(request, "runId");
             String citySeedId = requiredString(request, "citySeedId");
             boolean confirmWorldMutation = booleanValue(request, "confirmWorldMutation", false);
-            ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
-            String dimensionId = stringValue(request, "dimensionId", "");
-            if (dimensionId.isBlank()) {
-                dimensionId = restoredRunDimensionId(runId);
-            }
-            ServerLevel level = resolveLevel(dimensionId, player);
-            JsonObject response = CityPlanningEndpointHandler.handleExecuteD5(debugRoot(),
-                    server.getWorldPath(LevelResource.ROOT),
-                    runId, citySeedId, confirmWorldMutation, level);
-            response.addProperty("worldSaveRequested", false);
-            return response;
-        }));
+            var preparedOwners = CityPlanningEndpointHandler.prepareD5ChunkPreflight(
+                    debugRoot(), runId, citySeedId, confirmWorldMutation, null);
+            return callOnServerThread(() -> {
+                ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
+                String dimensionId = stringValue(request, "dimensionId", "");
+                if (dimensionId.isBlank()) {
+                    dimensionId = restoredRunDimensionId(runId);
+                }
+                ServerLevel level = resolveLevel(dimensionId, player);
+                JsonObject response = CityPlanningEndpointHandler.handleExecuteD5Prepared(debugRoot(),
+                        server.getWorldPath(LevelResource.ROOT),
+                        runId, citySeedId, confirmWorldMutation, level, null, preparedOwners);
+                response.addProperty("worldSaveRequested", false);
+                return response;
+            });
+        });
     }
 
     void handleCityPlanD6(HttpExchange exchange) {
@@ -1353,7 +1370,9 @@ final class RealmPlanningHttpController implements AutoCloseable {
                 return;
             }
             JsonObject response = action.execute();
-            if ("true".equals(exchange.getRequestHeaders().getFirst("X-Geomantia-Agent-View"))) {
+            if ("true".equals(exchange.getRequestHeaders().getFirst("X-Geomantia-Host-Result"))) {
+                response = PlanningToolPresentation.hostResult(response);
+            } else if ("true".equals(exchange.getRequestHeaders().getFirst("X-Geomantia-Agent-View"))) {
                 response = PlanningToolPresentation.present(response, debugRoot());
             }
             GisHttpUtil.sendJson(exchange, 200, response);
@@ -1473,25 +1492,11 @@ final class RealmPlanningHttpController implements AutoCloseable {
 
     private <T> T callOnServerThread(Callable<T> action) throws Exception {
         if (server.isSameThread()) {
+            if (!server.isRunning() || server.isStopped()) throw new java.util.concurrent.CancellationException("CITY_SERVER_STOPPING");
             return action.call();
         }
-        CompletableFuture<T> future = new CompletableFuture<>();
-        server.execute(() -> {
-            try {
-                future.complete(action.call());
-            } catch (Exception ex) {
-                future.completeExceptionally(ex);
-            }
-        });
-        try {
-            return future.get();
-        } catch (ExecutionException ex) {
-            Throwable cause = ex.getCause();
-            if (cause instanceof Exception exception) {
-                throw exception;
-            }
-            throw new RuntimeException(cause);
-        }
+        return ServerThreadDispatch.call(server::execute,
+                () -> server.isRunning() && !server.isStopped(), action);
     }
 
     private Path debugRoot() {

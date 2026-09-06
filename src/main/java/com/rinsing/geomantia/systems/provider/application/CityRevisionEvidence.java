@@ -12,7 +12,8 @@ final class CityRevisionEvidence {
     private CityRevisionEvidence() { }
 
     static JsonObject load(Path debugRoot, JsonObject context, JsonObject budget) throws IOException {
-        if (!budget.has("failureCount") || budget.get("failureCount").getAsInt() == 0) return null;
+        if ((!budget.has("failureCount") || budget.get("failureCount").getAsInt() == 0)
+                && !budget.has("previousContextId")) return null;
         Path root = debugRoot.toRealPath();
         String run = identity(context, "runId"), city = identity(context, "cityId");
         Path steps = root.resolve(run).resolve("city_test_runs").resolve(city).resolve("steps");
@@ -20,6 +21,31 @@ final class CityRevisionEvidence {
         Path blueprintPath = checked(root, steps.resolve("blueprint/city_blueprint.json"));
         String blueprintRaw = Files.readString(blueprintPath);
         String contextId = context.get("contextId").getAsString();
+        if (!contextId.equals(string(accepted, "contextId"))
+                && string(accepted, "contextId").equals(string(budget, "previousContextId"))) {
+            Path archive = steps.resolve("blueprint/context_history")
+                    .resolve(hash(string(budget, "previousContextId")).substring(7));
+            JsonObject oldContext = read(root, archive.resolve("city_blueprint_context.json"));
+            JsonObject oldAccepted = read(root, archive.resolve("city_blueprint_submission_trace.json"));
+            JsonObject blueprint = JsonParser.parseString(blueprintRaw).getAsJsonObject();
+            if (!accepted.equals(oldAccepted) || !"accepted".equals(string(accepted, "status"))
+                    || !city.equals(string(accepted, "cityId")) || !city.equals(string(blueprint, "cityId"))
+                    || !hash(blueprintRaw).equals(string(accepted, "cityBlueprintHash"))
+                    || !string(accepted, "contextId").equals(string(oldContext, "contextId"))
+                    || !Objects.equals(blueprint.get("sourceD3Ref"), oldContext.get("sourceD3Ref"))
+                    || !Objects.equals(blueprint.get("catalogSnapshotRef"), oldContext.get("catalogSnapshotRef")))
+                throw new IOException("PLANNING_REVISION_EVIDENCE_STALE");
+            JsonObject evidence = new JsonObject();
+            evidence.addProperty("schema", "city_revision_decision_evidence.v0.1");
+            evidence.addProperty("reason", "AUTHOR_CONTEXT_REFRESHED");
+            evidence.add("previousBlueprint", blueprint);
+            evidence.add("failureBudget", budget.deepCopy());
+            evidence.addProperty("instruction", "The author corrected the catalog; the previous Blueprint is reference only, "
+                    + "not a valid patch base for this NEW context. Preserve its design choices wherever still valid. "
+                    + "Submit full cityBlueprint, omitting host-owned identity fields. Do not replace required structures "
+                    + "because of the old, superseded program failure. No baseBlueprintHash/blueprintPatch is available yet.");
+            return evidence;
+        }
         if (!contextId.equals(string(accepted, "contextId")) || !city.equals(string(accepted, "cityId"))
                 || !"accepted".equals(string(accepted, "status"))
                 || !hash(blueprintRaw).equals(string(accepted, "cityBlueprintHash"))) {

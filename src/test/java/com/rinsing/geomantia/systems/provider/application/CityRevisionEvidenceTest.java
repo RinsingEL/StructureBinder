@@ -16,6 +16,33 @@ class CityRevisionEvidenceTest {
         assertNull(CityRevisionEvidence.load(root, new JsonObject(), new JsonObject()));
     }
 
+    @Test void authorCorrectionProvidesVerifiedOldDesignButNotAnOldPatchBase() throws Exception {
+        Path directory = root.resolve("run_1/city_test_runs/city_1/steps/blueprint");
+        String oldId = "old-context";
+        String suffix = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+                .digest(oldId.getBytes(StandardCharsets.UTF_8)));
+        Path archive = directory.resolve("context_history").resolve(suffix);
+        Files.createDirectories(archive);
+        String blueprint = "{\"cityId\":\"city_1\",\"groups\":[{\"groupId\":\"civic\"}],\"catalogSnapshotRef\":{\"contentHash\":\"old\"}}";
+        JsonObject accepted = json("{\"cityId\":\"city_1\",\"contextId\":\"old-context\",\"status\":\"accepted\"}");
+        accepted.addProperty("cityBlueprintHash", "sha256:" + HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+                .digest(blueprint.getBytes(StandardCharsets.UTF_8))));
+        Files.writeString(directory.resolve("city_blueprint.json"), blueprint);
+        Files.writeString(directory.resolve("city_blueprint_submission_trace.json"), accepted.toString());
+        Files.writeString(archive.resolve("city_blueprint_submission_trace.json"), accepted.toString());
+        Files.writeString(archive.resolve("city_blueprint_context.json"),
+                "{\"contextId\":\"old-context\",\"catalogSnapshotRef\":{\"contentHash\":\"old\"}}");
+        JsonObject context = json("{\"runId\":\"run_1\",\"cityId\":\"city_1\",\"contextId\":\"new-context\",\"catalogSnapshotRef\":{\"contentHash\":\"new\"}}");
+        JsonObject budget = json("{\"failureCount\":2,\"previousContextId\":\"old-context\"}");
+        JsonObject evidence = CityRevisionEvidence.load(root, context, budget);
+        assertEquals("AUTHOR_CONTEXT_REFRESHED", evidence.get("reason").getAsString());
+        assertEquals(json(blueprint), evidence.get("previousBlueprint"));
+        assertFalse(evidence.has("baseBlueprintHash"));
+        assertFalse(evidence.has("compileOutcome"));
+        Files.writeString(directory.resolve("city_blueprint.json"), "{}");
+        assertThrows(java.io.IOException.class, () -> CityRevisionEvidence.load(root, context, budget));
+    }
+
     @Test void revisionIncludesExactBlueprintLocalConflictsAndBudgetWithoutDenseGeometry() throws Exception {
         Path steps = root.resolve("run_1/city_test_runs/city_1/steps");
         Files.createDirectories(steps.resolve("blueprint"));

@@ -18,6 +18,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Formal Blueprint-path growth for independent Landscape Parcel silhouettes.
@@ -145,7 +146,7 @@ public final class LandscapeParcelExpander {
             expansionOriginsByGroup.put(state.group.groupId(), new LandUseExpansionResult.ExpansionOrigin(
                     relaySeed.kind(), relaySeed.parentGroupId(), seed, relaySeed.sourceFrontier()));
             while (!state.exhausted && state.cells.size() < state.targetArea) {
-                Candidate candidate = bestCandidate(state, claims, counters);
+                Candidate candidate = bestCandidate(state, counters);
                 if (candidate == null) {
                     state.exhausted = true;
                     break;
@@ -263,22 +264,19 @@ public final class LandscapeParcelExpander {
         return count;
     }
 
-    private static Candidate bestCandidate(RegionState state,
-                                           Map<BlockPoint, LandUseExpansionResult.Claim> claims,
-                                           Counters counters) {
-        Candidate best = null;
-        var iterator = state.frontier.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<BlockPoint, FrontierPath> entry = iterator.next();
-            BlockPoint point = entry.getKey();
-            if (claims.containsKey(point)) {
-                iterator.remove();
-                counters.contested++;
-                continue;
-            }
-            Candidate candidate = new Candidate(point, entry.getValue().pathCost(), silhouetteScore(state, point));
-            if (best == null || CANDIDATE_ORDER.compare(candidate, best) < 0) best = candidate;
+    private static Candidate bestCandidate(RegionState state, Counters counters) {
+        // Regions grow sequentially. Occupied frontier entries are known when inserted;
+        // consume them here to preserve the original contested-count timing (not on the
+        // final claim). Scores can change only next to a newly claimed cell.
+        for (BlockPoint point : state.contestedFrontier) {
+            state.frontier.remove(point);
+            Candidate previous = state.scoredFrontier.remove(point);
+            if (previous != null) state.rankedFrontier.remove(previous);
+            counters.contested++;
         }
+        state.contestedFrontier.clear();
+        Candidate best = state.rankedFrontier.pollFirst();
+        if (best != null) state.scoredFrontier.remove(best.point());
         return best;
     }
 
@@ -316,6 +314,19 @@ public final class LandscapeParcelExpander {
             }
             state.frontier.merge(next, new FrontierPath(nextPathCost),
                     (left, right) -> left.pathCost() <= right.pathCost() ? left : right);
+            if (claims.containsKey(next)) state.contestedFrontier.add(next);
+        }
+        // Even an existing frontier cell whose new incoming path is rejected gets a
+        // different adjacency score. Refresh all four neighbors, not just inserted paths.
+        for (int[] direction : DIRECTIONS) {
+            BlockPoint next = new BlockPoint(point.x() + direction[0], point.z() + direction[1]);
+            FrontierPath path = state.frontier.get(next);
+            if (path == null) continue;
+            Candidate previous = state.scoredFrontier.remove(next);
+            if (previous != null) state.rankedFrontier.remove(previous);
+            Candidate updated = new Candidate(next, path.pathCost(), silhouetteScore(state, next));
+            state.scoredFrontier.put(next, updated);
+            state.rankedFrontier.add(updated);
         }
     }
 
@@ -475,6 +486,9 @@ public final class LandscapeParcelExpander {
         private final Set<BlockPoint> capacityDomain;
         private final Set<BlockPoint> cells = new LinkedHashSet<>();
         private final Map<BlockPoint, FrontierPath> frontier = new HashMap<>();
+        private final Map<BlockPoint, Candidate> scoredFrontier = new HashMap<>();
+        private final TreeSet<Candidate> rankedFrontier = new TreeSet<>(CANDIDATE_ORDER);
+        private final Set<BlockPoint> contestedFrontier = new HashSet<>();
         private final Set<BlockPoint> rejected = new HashSet<>();
         private boolean exhausted;
 

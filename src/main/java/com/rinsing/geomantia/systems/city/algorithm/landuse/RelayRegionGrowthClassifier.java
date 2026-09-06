@@ -2,11 +2,15 @@ package com.rinsing.geomantia.systems.city.algorithm.landuse;
 
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -14,6 +18,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Fills an exact mask through sequential, locally relayed frontier growth regions.
@@ -55,8 +60,8 @@ public final class RelayRegionGrowthClassifier {
                                           int[] targets,
                                           int[] requestedTargets,
                                           long attemptSeed) {
-        Set<Long> unclaimed = new HashSet<>(allowed);
-        Map<Long, CellClaim> claims = new HashMap<>(allowed.size() * 2);
+        Set<Long> unclaimed = new RemainingCells(allowed);
+        Map<Long, CellClaim> claims = new Long2ObjectOpenHashMap<>(allowed.size());
         Map<String, RegionState> regions = new LinkedHashMap<>();
         List<RegionTrace> traces = new ArrayList<>();
 
@@ -104,11 +109,11 @@ public final class RelayRegionGrowthClassifier {
                                           long stableSeed,
                                           boolean finalStage) {
         if (!unclaimed.contains(start.point())) throw fail("RELAY_GROWTH_START_ALREADY_CLAIMED:" + stage.regionId());
-        boolean splitAtRoot = !finalStage && articulationPoints(unclaimed).contains(start.point());
+        boolean splitAtRoot = !finalStage && !removalKeepsComponents(unclaimed, start.point());
         if (splitAtRoot && start.kind() != ProvenanceKind.ROOT_SOURCE) {
             throw fail("RELAY_GROWTH_START_DISCONNECTS_REMAINDER:" + stage.regionId());
         }
-        RegionState state = new RegionState(stage, parentRegionId, targetArea);
+        RegionState state = new RegionState(stage, parentRegionId, targetArea, stableSeed, stageIndex);
         claim(state, start.point(), start.from(), start.kind(), unclaimed, claims);
         if (splitAtRoot) absorbRootBranches(state, start.point(), targetArea, unclaimed, claims);
         ArrayDeque<SearchFrame> history = new ArrayDeque<>();
@@ -118,14 +123,8 @@ public final class RelayRegionGrowthClassifier {
                     state, unclaimed, stableSeed, stageIndex, finalStage)) return state;
 
             if (state.cells().size() < targetArea) {
-                List<FrontierEdge> candidates = safeCandidates(
-                        frontierEdges(state, unclaimed, stableSeed, stageIndex), unclaimed, finalStage);
-                if (!finalStage && state.cells().size() + 1 == targetArea) {
-                    candidates = relayCompletingCandidates(state, candidates, unclaimed, claims,
-                            stableSeed, stageIndex);
-                }
-                SearchFrame frame = new SearchFrame(candidates);
-                FrontierEdge selected = frame.next();
+                SearchFrame frame = new SearchFrame();
+                FrontierEdge selected = frame.next(state, unclaimed, claims, stableSeed, stageIndex, finalStage);
                 if (selected != null) {
                     history.addLast(frame);
                     if (history.size() > BACKTRACK_HISTORY_LIMIT) history.removeFirst();
@@ -142,7 +141,7 @@ public final class RelayRegionGrowthClassifier {
                 }
                 undoLastClaim(state, unclaimed, claims);
                 SearchFrame frame = history.removeLast();
-                alternative = frame.next();
+                alternative = frame.next(state, unclaimed, claims, stableSeed, stageIndex, finalStage);
                 if (alternative != null) {
                     history.addLast(frame);
                 }
@@ -160,7 +159,7 @@ public final class RelayRegionGrowthClassifier {
     private static int[] allocateConnectedRoot(Request request, Set<Long> allowed, int[] requested) {
         int[] result = requested.clone();
         if (result.length < 2) return result;
-        Set<Long> remainder = new HashSet<>(allowed);
+        Set<Long> remainder = new LongOpenHashSet(allowed);
         remainder.remove(key(request.source()));
         int minimumRoot = allowed.size() - largestRootBranch(key(request.source()), remainder).size();
         int additional = Math.max(0, minimumRoot - result[0]);
@@ -213,11 +212,11 @@ public final class RelayRegionGrowthClassifier {
     }
 
     private static Set<Long> largestRootBranch(long source, Set<Long> unclaimed) {
-        Set<Long> visited = new HashSet<>();
+        Set<Long> visited = new LongOpenHashSet();
         Set<Long> retained = Set.of();
         for (long neighbor : neighbors4(source)) {
             if (!unclaimed.contains(neighbor) || !visited.add(neighbor)) continue;
-            Set<Long> component = new HashSet<>();
+            Set<Long> component = new LongOpenHashSet();
             ArrayDeque<Long> queue = new ArrayDeque<>();
             queue.add(neighbor);
             component.add(neighbor);
@@ -234,42 +233,6 @@ public final class RelayRegionGrowthClassifier {
         return retained;
     }
 
-    private static List<FrontierEdge> relayCompletingCandidates(
-            RegionState state,
-            List<FrontierEdge> candidates,
-            Set<Long> unclaimed,
-            Map<Long, CellClaim> claims,
-            long stableSeed,
-            int stageIndex) {
-        List<FrontierEdge> viable = new ArrayList<>();
-        for (FrontierEdge candidate : candidates) {
-            claim(state, candidate.point(), candidate.from(), ProvenanceKind.REGION_FRONTIER,
-                    unclaimed, claims);
-            boolean canRelay = stageCanRelay(state, unclaimed, stableSeed, stageIndex, false);
-            undoLastClaim(state, unclaimed, claims);
-            if (canRelay) viable.add(candidate);
-        }
-        return List.copyOf(viable);
-    }
-
-    private static List<FrontierEdge> safeCandidates(List<FrontierEdge> candidates,
-                                                     Set<Long> unclaimed,
-                                                     boolean finalStage) {
-        List<FrontierEdge> ordered = candidates.stream().sorted(FrontierEdge.ORDER).toList();
-        if (finalStage) return ordered;
-        Set<Long> articulationPoints = null;
-        List<FrontierEdge> safe = new ArrayList<>();
-        for (FrontierEdge candidate : ordered) {
-            if (locallySafeRemoval(unclaimed, candidate.point())) {
-                safe.add(candidate);
-                continue;
-            }
-            if (articulationPoints == null) articulationPoints = articulationPoints(unclaimed);
-            if (!articulationPoints.contains(candidate.point())) safe.add(candidate);
-        }
-        return List.copyOf(safe);
-    }
-
     private static boolean stageCanRelay(RegionState state,
                                          Set<Long> unclaimed,
                                          long stableSeed,
@@ -277,10 +240,9 @@ public final class RelayRegionGrowthClassifier {
                                          boolean finalStage) {
         if (finalStage) return unclaimed.isEmpty();
         if (!isConnected(unclaimed)) return false;
-        Set<Long> articulationPoints = articulationPoints(unclaimed);
-        return frontierEdges(state, unclaimed, stableSeed, stageIndex).stream()
-                .anyMatch(edge -> !articulationPoints.contains(edge.point())
-                        && hasNeighborAfterRemoval(unclaimed, edge.point()));
+        return state.rankedFrontier.stream()
+                .anyMatch(edge -> hasNeighborAfterRemoval(unclaimed, edge.point())
+                        && removalKeepsComponents(unclaimed, edge.point()));
     }
 
     private static void undoLastClaim(RegionState state,
@@ -292,6 +254,14 @@ public final class RelayRegionGrowthClassifier {
         state.ordinals().remove(point);
         claims.remove(point);
         unclaimed.add(point);
+        // Undo can split dual faces anywhere. Previously rejected vertices must be
+        // reconsidered, including vertices far from the restored cell.
+        for (long rejected : state.unsafeFrontier) {
+            FrontierEdge edge = state.frontierByPoint.get(rejected);
+            if (edge != null) state.rankedFrontier.add(edge);
+        }
+        state.unsafeFrontier.clear();
+        refreshFrontierSources(state, point, unclaimed);
     }
 
     private static void claim(RegionState state,
@@ -313,6 +283,60 @@ public final class RelayRegionGrowthClassifier {
         state.ordinals().put(point, ordinal);
         state.steps().add(new ExpansionStep(ordinal, point(point),
                 kind == ProvenanceKind.ROOT_SOURCE ? null : point(from), kind));
+        refreshFrontierSources(state, point, unclaimed);
+    }
+
+    private static void refreshFrontierSources(RegionState state, long changed, Set<Long> unclaimed) {
+        refreshFrontierSource(state, changed, unclaimed);
+        for (long neighbor : neighbors4(changed)) refreshFrontierSource(state, neighbor, unclaimed);
+        if (state.steps().isEmpty()) {
+            state.frontierByPoint.clear();
+            state.rankedFrontier.clear();
+            return;
+        }
+        Set<Long> affected = new LongOpenHashSet();
+        affected.add(changed);
+        affected.addAll(neighbors4(changed));
+        // Under deletion, incident faces can only merge. A cut vertex cannot become
+        // safe unless its degree changes, i.e. an adjacent cell was removed.
+        for (long candidate : affected) state.unsafeFrontier.remove(candidate);
+        // Corridor spine scores depend on the newest ordinal. Rebuild while in (or
+        // crossing back into) that short phase; afterwards all score changes are local.
+        if (state.stage().growthForm() == GrowthForm.CORRIDOR
+                && state.cells().size() <= spineTarget(state, state.stableSeed, state.stageIndex) + 1) {
+            affected.addAll(state.frontierByPoint.keySet());
+            for (long from : state.frontierSources) affected.addAll(neighbors4(from));
+        }
+        for (long candidate : affected) refreshFrontierCandidate(state, candidate, unclaimed);
+    }
+
+    private static void refreshFrontierCandidate(RegionState state, long candidate, Set<Long> unclaimed) {
+        FrontierEdge previous = state.frontierByPoint.remove(candidate);
+        if (previous != null) state.rankedFrontier.remove(previous);
+        if (!unclaimed.contains(candidate)) return;
+        int sameRegionNeighbors = sameRegionNeighborCount(candidate, state.cells());
+        if (sameRegionNeighbors == 0) return;
+        int remainingNeighbors = sameRegionNeighborCount(candidate, unclaimed);
+        FrontierEdge best = null;
+        for (long from : neighbors4(candidate)) {
+            if (!state.cells().contains(from)) continue;
+            FrontierEdge edge = new FrontierEdge(candidate, from, frontierScore(state, candidate, from,
+                    sameRegionNeighbors, remainingNeighbors, state.steps().size() - 1,
+                    state.stableSeed, state.stageIndex));
+            if (best == null || FrontierEdge.ORDER.compare(edge, best) < 0) best = edge;
+        }
+        if (best != null) {
+            state.frontierByPoint.put(candidate, best);
+            if (!state.unsafeFrontier.contains(candidate)) state.rankedFrontier.add(best);
+        }
+    }
+
+    private static void refreshFrontierSource(RegionState state, long cell, Set<Long> unclaimed) {
+        if (state.cells().contains(cell) && hasNeighborAfterRemoval(unclaimed, cell)) {
+            state.frontierSources.add(cell);
+        } else {
+            state.frontierSources.remove(cell);
+        }
     }
 
     private static StartEdge relayStart(int stageIndex,
@@ -323,50 +347,37 @@ public final class RelayRegionGrowthClassifier {
                                         boolean finalStage,
                                         int targetArea) {
         if (parent == null) throw fail("RELAY_GROWTH_PARENT_REGION_UNKNOWN:" + stage.regionId());
-        Set<Long> articulationPoints = finalStage ? Set.of() : articulationPoints(unclaimed);
         return parent.cells().stream().flatMap(from -> neighbors4(from).stream()
                         .filter(unclaimed::contains)
-                        .filter(candidate -> finalStage || !articulationPoints.contains(candidate))
                         .filter(candidate -> targetArea <= 1 || hasNeighborAfterRemoval(unclaimed, candidate))
-                        .filter(candidate -> targetArea <= 1 || canStartRegion(candidate, unclaimed))
                         .map(candidate -> new StartEdge(candidate, from, ProvenanceKind.RELAY_INTERFACE)))
-                .min(Comparator.comparingDouble((StartEdge edge) -> stableUnit(stableSeed, stageIndex,
+                .sorted(Comparator.comparingDouble((StartEdge edge) -> stableUnit(stableSeed, stageIndex,
                                 edge.point(), edge.from(), 0x72656c61794cL))
                         .thenComparingInt(edge -> z(edge.point()))
                         .thenComparingInt(edge -> x(edge.point()))
                         .thenComparingInt(edge -> z(edge.from()))
                         .thenComparingInt(edge -> x(edge.from())))
+                .filter(edge -> finalStage || removalKeepsComponents(unclaimed, edge.point()))
+                .filter(edge -> targetArea <= 1 || canStartRegion(edge.point(), unclaimed))
+                .findFirst()
                 .orElseThrow(() -> fail("RELAY_GROWTH_PARENT_INTERFACE_EXHAUSTED:" + stage.regionId()));
     }
 
     private static boolean canStartRegion(long start, Set<Long> unclaimed) {
-        Set<Long> remaining = new HashSet<>(unclaimed);
-        remaining.remove(start);
-        if (remaining.isEmpty()) return false;
-        Set<Long> articulationPoints = articulationPoints(remaining);
-        return neighbors4(start).stream().anyMatch(candidate ->
-                remaining.contains(candidate) && !articulationPoints.contains(candidate));
-    }
-
-    private static List<FrontierEdge> frontierEdges(RegionState state,
-                                                    Set<Long> unclaimed,
-                                                    long stableSeed,
-                                                    int stageIndex) {
-        Map<Long, FrontierEdge> bestByPoint = new HashMap<>();
-        int newestOrdinal = state.steps().size() - 1;
-        for (long from : state.cells()) {
-            for (long candidate : neighbors4(from)) {
-                if (!unclaimed.contains(candidate)) continue;
-                int sameRegionNeighbors = sameRegionNeighborCount(candidate, state.cells());
-                int remainingNeighbors = sameRegionNeighborCount(candidate, unclaimed);
-                double score = frontierScore(state, candidate, from, sameRegionNeighbors,
-                        remainingNeighbors, newestOrdinal, stableSeed, stageIndex);
-                FrontierEdge edge = new FrontierEdge(candidate, from, score);
-                bestByPoint.merge(candidate, edge,
-                        (first, second) -> FrontierEdge.ORDER.compare(first, second) <= 0 ? first : second);
+        if (unclaimed instanceof RemainingCells) {
+            unclaimed.remove(start);
+            try {
+                return neighbors4(start).stream().anyMatch(candidate -> unclaimed.contains(candidate)
+                        && removalKeepsComponents(unclaimed, candidate));
+            } finally {
+                unclaimed.add(start);
             }
         }
-        return List.copyOf(bestByPoint.values());
+        Set<Long> remaining = new LongOpenHashSet(unclaimed);
+        remaining.remove(start);
+        if (remaining.isEmpty()) return false;
+        return neighbors4(start).stream().anyMatch(candidate ->
+                remaining.contains(candidate) && removalKeepsComponents(remaining, candidate));
     }
 
     private static double frontierScore(RegionState state,
@@ -402,10 +413,7 @@ public final class RelayRegionGrowthClassifier {
             int alignment = previousDx * nextDx + previousDz * nextDz;
             turnPenalty = alignment > 0 ? -0.58 : alignment < 0 ? 0.9 : 0.08;
         }
-        double lengthVariation = 0.85 + stableUnit(stableSeed, stageIndex, 0L, 0L,
-                0x7370696e654cL) * 0.3;
-        int spineTarget = Math.min(state.targetArea(), Math.max(2,
-                (int) Math.round(Math.sqrt(state.targetArea()) * 3.2 * lengthVariation)));
+        int spineTarget = spineTarget(state, stableSeed, stageIndex);
         if (state.cells().size() < spineTarget) {
             double agePenalty = (newestOrdinal - sourceOrdinal) * 0.28;
             return noise * 0.22 + agePenalty + turnPenalty
@@ -415,6 +423,13 @@ public final class RelayRegionGrowthClassifier {
         return noise - Math.min(3, sameRegionNeighbors) * 0.32
                 + Math.max(0, sameRegionNeighbors - 3) * 1.4
                 + sourceLayerPenalty * 0.75 + remainingNeighbors * 0.08 - projection * 0.01;
+    }
+
+    private static int spineTarget(RegionState state, long stableSeed, int stageIndex) {
+        double lengthVariation = 0.85 + stableUnit(stableSeed, stageIndex, 0L, 0L,
+                0x7370696e654cL) * 0.3;
+        return Math.min(state.targetArea(), Math.max(2,
+                (int) Math.round(Math.sqrt(state.targetArea()) * 3.2 * lengthVariation)));
     }
 
     private static int[] targetAreas(int blockCount, List<GrowthStage> stages) {
@@ -459,9 +474,9 @@ public final class RelayRegionGrowthClassifier {
 
     private static Set<Long> allowedCells(List<LandUseAreaPlan.ScanlineSpan> members,
                                           List<LandUseAreaPlan.ScanlineSpan> exclusions) {
-        Set<Long> allowed = new HashSet<>();
+        Set<Long> allowed = new LongOpenHashSet();
         addSpans(allowed, members);
-        Set<Long> excluded = new HashSet<>();
+        Set<Long> excluded = new LongOpenHashSet();
         addSpans(excluded, exclusions);
         allowed.removeAll(excluded);
         return allowed;
@@ -477,7 +492,7 @@ public final class RelayRegionGrowthClassifier {
     }
 
     private static boolean isConnected(Set<Long> cells) {
-        Set<Long> visited = new HashSet<>();
+        Set<Long> visited = new LongOpenHashSet();
         ArrayDeque<Long> queue = new ArrayDeque<>();
         long start = cells.iterator().next();
         visited.add(start);
@@ -490,55 +505,59 @@ public final class RelayRegionGrowthClassifier {
         return visited.size() == cells.size();
     }
 
-    private static Set<Long> articulationPoints(Set<Long> cells) {
-        if (cells.size() <= 2) return Set.of();
-        Map<Long, Integer> discovered = new HashMap<>();
-        Map<Long, Integer> low = new HashMap<>();
-        Set<Long> result = new HashSet<>();
-        int time = 0;
-        for (long cell : cells) {
-            if (discovered.containsKey(cell)) continue;
 
-            discovered.put(cell, ++time);
-            low.put(cell, time);
-            ArrayDeque<ArticulationFrame> stack = new ArrayDeque<>();
-            stack.addLast(new ArticulationFrame(cell, null));
-            while (!stack.isEmpty()) {
-                ArticulationFrame frame = stack.peekLast();
-                if (frame.nextDirection < DIRECTIONS_4.length) {
-                    int[] direction = DIRECTIONS_4[frame.nextDirection++];
-                    long neighborX = (long) x(frame.cell) + direction[0];
-                    long neighborZ = (long) z(frame.cell) + direction[1];
-                    if (neighborX < Integer.MIN_VALUE || neighborX > Integer.MAX_VALUE
-                            || neighborZ < Integer.MIN_VALUE || neighborZ > Integer.MAX_VALUE) continue;
-                    long neighbor = key((int) neighborX, (int) neighborZ);
-                    if (!cells.contains(neighbor)) continue;
-                    if (!discovered.containsKey(neighbor)) {
-                        frame.children++;
-                        discovered.put(neighbor, ++time);
-                        low.put(neighbor, time);
-                        stack.addLast(new ArticulationFrame(neighbor, frame.cell));
-                    } else if (frame.parent == null || neighbor != frame.parent) {
-                        low.put(frame.cell, Math.min(low.get(frame.cell), discovered.get(neighbor)));
+    /** Removing a vertex is safe exactly when all its remaining neighbors can still
+     * reach each other. Grow those (at most four) searches together: stop as soon as
+     * they join, or one component exhausts without joining the others. Unlike a full
+     * graph cut-vertex pass this does not visit unrelated/large branches needlessly.
+     * Package visibility permits exhaustive comparison with a brute-force oracle. */
+    static boolean removalKeepsComponents(Set<Long> cells, long removed) {
+        if (cells instanceof RemainingCells remaining && remaining.connectivity != null) {
+            return remaining.connectivity.canRemove(cells, removed);
+        }
+        if (locallySafeRemoval(cells, removed)) return true;
+        List<Long> attachments = neighbors4(removed).stream().filter(cells::contains).toList();
+        int count = attachments.size();
+        int[] parent = new int[count + 1];
+        int[] pending = new int[count + 1];
+        Long2IntOpenHashMap owner = new Long2IntOpenHashMap();
+        ArrayDeque<Long> queue = new ArrayDeque<>();
+        for (int index = 1; index <= count; index++) {
+            long point = attachments.get(index - 1);
+            parent[index] = index;
+            pending[index] = 1;
+            owner.put(point, index);
+            queue.addLast(point);
+        }
+        int components = count;
+        while (!queue.isEmpty()) {
+            long point = queue.removeFirst();
+            int root = componentRoot(parent, owner.get(point));
+            pending[root]--;
+            for (long neighbor : neighbors4(point)) {
+                if (neighbor == removed || !cells.contains(neighbor)) continue;
+                int previous = owner.get(neighbor);
+                if (previous == 0) {
+                    owner.put(neighbor, root);
+                    queue.addLast(neighbor);
+                    pending[root]++;
+                } else {
+                    int other = componentRoot(parent, previous);
+                    if (other != root) {
+                        parent[other] = root;
+                        pending[root] += pending[other];
+                        if (--components == 1) return true;
                     }
-                    continue;
-                }
-
-                stack.removeLast();
-                if (frame.parent == null) {
-                    if (frame.children > 1) result.add(frame.cell);
-                    continue;
-                }
-                long parent = frame.parent;
-                low.put(parent, Math.min(low.get(parent), low.get(frame.cell)));
-                ArticulationFrame parentFrame = stack.peekLast();
-                if (parentFrame != null && parentFrame.parent != null
-                        && low.get(frame.cell) >= discovered.get(parent)) {
-                    result.add(parent);
                 }
             }
+            if (pending[root] == 0) return false;
         }
-        return result;
+        return components <= 1;
+    }
+
+    private static int componentRoot(int[] parent, int node) {
+        while (parent[node] != node) node = parent[node];
+        return node;
     }
 
     private static boolean locallySafeRemoval(Set<Long> cells, long removed) {
@@ -546,7 +565,7 @@ public final class RelayRegionGrowthClassifier {
         if (attachments.size() <= 1) return true;
         int centerX = x(removed);
         int centerZ = z(removed);
-        Set<Long> local = new HashSet<>();
+        Set<Long> local = new LongOpenHashSet();
         for (int dz = -2; dz <= 2; dz++) {
             for (int dx = -2; dx <= 2; dx++) {
                 long candidateX = (long) centerX + dx;
@@ -557,7 +576,7 @@ public final class RelayRegionGrowthClassifier {
                 if (candidate != removed && cells.contains(candidate)) local.add(candidate);
             }
         }
-        Set<Long> visited = new HashSet<>();
+        Set<Long> visited = new LongOpenHashSet();
         ArrayDeque<Long> queue = new ArrayDeque<>();
         visited.add(attachments.get(0));
         queue.add(attachments.get(0));
@@ -826,28 +845,72 @@ public final class RelayRegionGrowthClassifier {
     private record ValueSpan<T>(int z, int minX, int maxX, T value) {
     }
 
-    private static final class ArticulationFrame {
-        private final long cell;
-        private final Long parent;
-        private int nextDirection;
-        private int children;
 
-        private ArticulationFrame(long cell, Long parent) {
-            this.cell = cell;
-            this.parent = parent;
+    private static final class SearchFrame {
+        private FrontierEdge lastTried;
+
+        // On backtracking the caller restores precisely this frame's mask and scores.
+        // Resume after lastTried without retaining a full frontier copy per claimed cell.
+        private FrontierEdge next(RegionState state, Set<Long> unclaimed, Map<Long, CellClaim> claims,
+                                  long stableSeed, int stageIndex, boolean finalStage) {
+            while (true) {
+                FrontierEdge candidate = lastTried == null
+                        ? (state.rankedFrontier.isEmpty() ? null : state.rankedFrontier.first())
+                        : state.rankedFrontier.higher(lastTried);
+                if (candidate == null) return null;
+                lastTried = candidate;
+                if (!finalStage && !removalKeepsComponents(unclaimed, candidate.point())) {
+                    state.unsafeFrontier.add(candidate.point());
+                    state.rankedFrontier.remove(candidate);
+                    continue;
+                }
+                if (!finalStage && state.cells().size() + 1 == state.targetArea()) {
+                    claim(state, candidate.point(), candidate.from(), ProvenanceKind.REGION_FRONTIER,
+                            unclaimed, claims);
+                    boolean canRelay;
+                    try {
+                        canRelay = stageCanRelay(state, unclaimed, stableSeed, stageIndex, false);
+                    } finally {
+                        undoLastClaim(state, unclaimed, claims);
+                    }
+                    if (!canRelay) continue;
+                }
+                return candidate;
+            }
         }
     }
 
-    private static final class SearchFrame {
-        private final List<FrontierEdge> candidates;
-        private int nextIndex;
+    /** The growth algorithm removes cells and restores them strictly in LIFO order. */
+    static final class RemainingCells extends LongOpenHashSet {
+        private final GridRemovalConnectivity connectivity;
+        private final LongArrayList removed = new LongArrayList();
+        private final IntArrayList checkpoints = new IntArrayList();
 
-        private SearchFrame(List<FrontierEdge> candidates) {
-            this.candidates = candidates;
+        RemainingCells(Set<Long> source) {
+            super(source);
+            connectivity = GridRemovalConnectivity.create(this);
         }
 
-        private FrontierEdge next() {
-            return nextIndex < candidates.size() ? candidates.get(nextIndex++) : null;
+        @Override public boolean remove(long point) {
+            if (!super.remove(point)) return false;
+            if (connectivity != null) {
+                removed.add(point);
+                checkpoints.add(connectivity.checkpoint());
+                connectivity.remove(point);
+            }
+            return true;
+        }
+
+        @Override public boolean add(long point) {
+            // The superclass also invokes add during construction, before initialization.
+            if (connectivity == null) return super.add(point);
+            if (contains(point)) return false;
+            if (removed.isEmpty() || removed.getLong(removed.size() - 1) != point) {
+                throw new IllegalStateException("RELAY_GROWTH_NON_LIFO_RESTORE");
+            }
+            connectivity.rollback(checkpoints.removeInt(checkpoints.size() - 1));
+            removed.removeLong(removed.size() - 1);
+            return super.add(point);
         }
     }
 
@@ -855,14 +918,22 @@ public final class RelayRegionGrowthClassifier {
         private final GrowthStage stage;
         private final String parentRegionId;
         private final int targetArea;
-        private final Set<Long> cells = new HashSet<>();
-        private final Map<Long, Integer> ordinals = new HashMap<>();
+        private final long stableSeed;
+        private final int stageIndex;
+        private final Set<Long> cells = new LongOpenHashSet();
+        private final Set<Long> frontierSources = new LongOpenHashSet();
+        private final Map<Long, FrontierEdge> frontierByPoint = new Long2ObjectOpenHashMap<>();
+        private final TreeSet<FrontierEdge> rankedFrontier = new TreeSet<>(FrontierEdge.ORDER);
+        private final Set<Long> unsafeFrontier = new LongOpenHashSet();
+        private final Map<Long, Integer> ordinals = new Long2IntOpenHashMap();
         private final List<ExpansionStep> steps = new ArrayList<>();
 
-        private RegionState(GrowthStage stage, String parentRegionId, int targetArea) {
+        private RegionState(GrowthStage stage, String parentRegionId, int targetArea, long stableSeed, int stageIndex) {
             this.stage = stage;
             this.parentRegionId = parentRegionId;
             this.targetArea = targetArea;
+            this.stableSeed = stableSeed;
+            this.stageIndex = stageIndex;
         }
 
         private GrowthStage stage() { return stage; }

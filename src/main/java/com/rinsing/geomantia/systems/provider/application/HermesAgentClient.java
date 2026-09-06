@@ -33,8 +33,6 @@ final class HermesAgentClient implements ProviderAgentClient {
     private static final Duration BOOT_TIMEOUT = Duration.ofSeconds(30);
     private static final Duration RUN_TIMEOUT = Duration.ofMinutes(20);
     private static final String MCP_RESOURCE = "/geomantia/sidecar/geomantia-mcp-bundle.mjs";
-    // Must match the pinned bootstrap adapter; reject locally before starting a paid turn.
-    static final int MAX_PLANNING_TEXT_LENGTH = 262_144;
     private static final String INSTRUCTIONS = """
             You are the Geomantia in-game planning agent. Work only on the current host-provided planning state.
             Use only the enabled Geomantia MCP tools and follow formal nextAction and validation evidence. Never read
@@ -431,7 +429,8 @@ final class HermesAgentClient implements ProviderAgentClient {
         content.add(text);
         // The pinned session API caps the whole request at 10 MB, including base64 and JSON escaping.
         long remainingImageChars = 8_000_000L - text.toString().getBytes(StandardCharsets.UTF_8).length;
-        if (remainingImageChars < 0) throw new IOException("HERMES_INITIAL_STATE_TOO_LARGE");
+        if (remainingImageChars < 0) throw new HermesException("HERMES_HTTP_REQUEST_BODY_TOO_LARGE",
+                "规划资料超过 Hermes HTTP 请求体传输预算（不是模型上下文上限）；资料未截断");
         JsonArray warnings = new JsonArray();
         for (Path path : images == null ? List.<Path>of() : images) {
             if (content.size() >= 5) break;
@@ -447,9 +446,6 @@ final class HermesAgentClient implements ProviderAgentClient {
             remainingImageChars -= image.toString().length();
         }
         if (!warnings.isEmpty()) text.addProperty("text", text.get("text").getAsString() + "\npreviewWarnings: " + warnings);
-        if (text.get("text").getAsString().length() > MAX_PLANNING_TEXT_LENGTH) {
-            throw new HermesException("HERMES_INITIAL_STATE_TOO_LARGE", "规划资料超过完整输入预算，已停止；不会截断资料继续调用模型");
-        }
         return content;
     }
 

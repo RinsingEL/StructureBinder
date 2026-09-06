@@ -5,32 +5,12 @@ Keep an agent reference and interrupt that worker too. No vendor files are edite
 """
 import asyncio
 import functools
-
-# Shared with HermesAgentClient: bounded host decision input, not a model token limit.
-MAX_PLANNING_TEXT_LENGTH = 262_144
-
+import sys
 
 def install_input_adapter(api_server):
-    api_server.MAX_NORMALIZED_TEXT_LENGTH = MAX_PLANNING_TEXT_LENGTH
-    original = api_server._normalize_multimodal_content
-    if getattr(original, "_geomantia_input", False):
-        return
-
-    @functools.wraps(original)
-    def normalize(content):
-        parts = content if isinstance(content, list) else [content]
-        text_length = 0
-        for part in parts:
-            if isinstance(part, str):
-                text_length += len(part)
-            elif isinstance(part, dict) and part.get("type") in ("text", "input_text", "output_text"):
-                text_length += len(str(part.get("text") or ""))
-        if text_length > MAX_PLANNING_TEXT_LENGTH:
-            raise ValueError("planning_input_too_large:Host planning text exceeds the complete-input budget.")
-        return original(content)
-
-    normalize._geomantia_input = True
-    api_server._normalize_multimodal_content = normalize
+    # Disable the vendor normalizer's character slicing as well as our former rejection.
+    # Actual HTTP body limits remain enforced by the session server; no text is silently cut.
+    api_server.MAX_NORMALIZED_TEXT_LENGTH = sys.maxsize
 
 
 class AgentLease(list):
