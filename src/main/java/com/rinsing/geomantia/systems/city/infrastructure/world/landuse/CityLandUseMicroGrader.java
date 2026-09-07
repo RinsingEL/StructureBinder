@@ -140,7 +140,7 @@ final class CityLandUseMicroGrader {
                         sample.surfaceY(), targetY != null && targetY > sample.surfaceY()
                         ? targetY : sample.surfaceY(),
                         targetY != null && targetY > sample.surfaceY()
-                                ? FoundationMode.FILL : FoundationMode.PRESERVE));
+                                ? designedRealization(sample.surfaceY(), targetY) : FoundationMode.PRESERVE));
                 continue;
             }
             if (!sample.naturalSurface()) continue;
@@ -148,13 +148,13 @@ final class CityLandUseMicroGrader {
             int targetY = platformTargets.getOrDefault(center, sample.surfaceY());
             int delta = targetY - sample.surfaceY();
             FoundationMode mode;
-            if (delta > 0 && delta <= FOUNDATION_MAX_FILL_DEPTH_BLOCKS) {
+            if (frozenCells.contains(center)) {
+                mode = designedRealization(sample.surfaceY(), targetY);
+            } else if (delta > 0 && delta <= FOUNDATION_MAX_FILL_DEPTH_BLOCKS) {
                 mode = FoundationMode.FILL;
             } else if (delta < 0 && -delta <= FOUNDATION_MAX_CUT_DEPTH_BLOCKS) {
                 mode = FoundationMode.CUT;
             } else if (delta != 0) {
-                if (frozenCells.contains(center)) throw new IllegalArgumentException(
-                        "CITY_FOUNDATION_FROZEN_EARTHWORK_LIMIT:" + center.x() + "," + center.z());
                 mode = FoundationMode.PRESERVE;
             } else {
                 if (!frozenCells.contains(center)) continue;
@@ -1457,8 +1457,16 @@ final class CityLandUseMicroGrader {
         GREENERY
     }
 
+    /** Realization of a committed surface, never a second terrain-admission decision. */
+    static FoundationMode designedRealization(int surfaceY, int targetY) {
+        if (targetY < surfaceY) return FoundationMode.CUT;
+        return (long) targetY - surfaceY > FOUNDATION_MAX_FILL_DEPTH_BLOCKS
+                ? FoundationMode.DECK : FoundationMode.FILL;
+    }
+
     enum FoundationMode {
         FILL,
+        DECK,
         CUT,
         PRESERVE
     }

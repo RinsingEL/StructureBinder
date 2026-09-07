@@ -85,13 +85,7 @@ public final class CityLandUseChunkExecutor {
             int delta = decision.targetY() - actual.surfaceY();
             var mode = decision.mode();
             if (mode != CityLandUseMicroGrader.FoundationMode.PRESERVE) {
-                if (delta > CityLandUseMicroGrader.FOUNDATION_MAX_FILL_DEPTH_BLOCKS
-                        || -delta > CityLandUseMicroGrader.FOUNDATION_MAX_CUT_DEPTH_BLOCKS) {
-                    return ExecutionResult.failed(fragment, "CITY_FOUNDATION_DESIGN_TERRAIN_CONFLICT",
-                            0, 0, 0, 0, true, foundationPlan);
-                }
-                mode = delta < 0 ? CityLandUseMicroGrader.FoundationMode.CUT
-                        : CityLandUseMicroGrader.FoundationMode.FILL;
+                mode = CityLandUseMicroGrader.designedRealization(actual.surfaceY(), decision.targetY());
             }
             foundationByColumn.put(key, new CityLandUseMicroGrader.FoundationDecision(decision.areaId(),
                     decision.x(), decision.z(), actual.surfaceY(), decision.targetY(), mode));
@@ -108,16 +102,15 @@ public final class CityLandUseChunkExecutor {
             ColumnSample column = terrainView.sample(feature.x(), feature.z());
             int targetY = feature.targetSurfaceY();
             int delta = targetY - column.surfaceY();
-            if (delta > CityLandUseMicroGrader.FOUNDATION_MAX_FILL_DEPTH_BLOCKS
-                    || -delta > CityLandUseMicroGrader.FOUNDATION_MAX_CUT_DEPTH_BLOCKS
-                    || delta != 0 && !column.naturalSurface()) {
+            if (delta != 0 && !column.naturalSurface()
+                    && !"minecraft:water".equals(column.surfaceBlockId())
+                    && !"minecraft:lava".equals(column.surfaceBlockId())) {
                 return ExecutionResult.failed(fragment, "CITY_ROAD_FROZEN_GRADE_TERRAIN_CONFLICT",
                         0, 0, 0, 0, true, foundationPlan);
             }
             foundationByColumn.put(key, new CityLandUseMicroGrader.FoundationDecision(feature.sourceId(),
                     feature.x(), feature.z(), column.surfaceY(), targetY,
-                    delta < 0 ? CityLandUseMicroGrader.FoundationMode.CUT
-                            : CityLandUseMicroGrader.FoundationMode.FILL));
+                    CityLandUseMicroGrader.designedRealization(column.surfaceY(), targetY)));
             if (surfaceColumns.add(key)) surfaceOperations.add(new CityLandUseChunkCompiler.SurfaceOperation(
                     feature.sourceId(), "road", feature.x(), feature.z(), "minecraft:stone_bricks"));
         }
@@ -142,7 +135,8 @@ public final class CityLandUseChunkExecutor {
                 continue;
             }
             boolean foundationLiquidFill = foundation != null
-                    && foundation.mode() == CityLandUseMicroGrader.FoundationMode.FILL
+                    && (foundation.mode() == CityLandUseMicroGrader.FoundationMode.FILL
+                        || foundation.mode() == CityLandUseMicroGrader.FoundationMode.DECK)
                     && ("minecraft:water".equals(column.surfaceBlockId())
                     || "minecraft:lava".equals(column.surfaceBlockId()));
             if (!column.naturalSurface() && !foundationLiquidFill) {
@@ -160,6 +154,17 @@ public final class CityLandUseChunkExecutor {
                     ? foundation.mode() == CityLandUseMicroGrader.FoundationMode.FILL
                             && targetSurfaceY > column.surfaceY()
                     : fill != null && targetSurfaceY > column.surfaceY();
+            boolean shouldDeck = foundation != null
+                    && foundation.mode() == CityLandUseMicroGrader.FoundationMode.DECK;
+            if (shouldDeck && preparedFillColumns.add(key)) {
+                // A constant-thickness slab caps the void; work does not grow with canyon depth.
+                PreparedMutation bed = prepare(world, operation.areaId(), OperationPhase.MICRO_FILL,
+                        operation.x(), targetSurfaceY - 1, operation.z(), "minecraft:stone_bricks", true);
+                if (bed.failureReason() != null) return ExecutionResult.failed(fragment, bed.failureReason(),
+                        preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
+                        naturalSurfaceSkipped, occupiedBoundarySkipped, true);
+                basePrepared.add(bed);
+            }
             if (shouldFill && preparedFillColumns.add(key)) {
                 for (int y = column.surfaceY() + 1; y < targetSurfaceY; y++) {
                     PreparedMutation mutation = prepare(world, operation.areaId(), OperationPhase.MICRO_FILL,
@@ -208,7 +213,7 @@ public final class CityLandUseChunkExecutor {
             }
             PreparedMutation mutation = prepare(world, operation.areaId(), phase,
                     operation.x(), targetSurfaceY + operation.surfaceOffset(), operation.z(), surfaceBlock,
-                    operation.requireReplaceableTarget() || shouldFill && operation.surfaceOffset() == 0);
+                    operation.requireReplaceableTarget() || (shouldFill || shouldDeck) && operation.surfaceOffset() == 0);
             if (mutation.failureReason() != null) {
                 return ExecutionResult.failed(fragment, mutation.failureReason(),
                         preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,

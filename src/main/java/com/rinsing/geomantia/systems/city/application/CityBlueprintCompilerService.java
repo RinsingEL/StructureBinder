@@ -57,20 +57,44 @@ public final class CityBlueprintCompilerService {
             new CityLandscapeCapacityReservationPlanner();
 
     public CompilationResult compile(Path debugRoot, String runId, String cityId) throws IOException {
+        return compileInternal(debugRoot, runId, cityId, null);
+    }
+
+    /** Compile a submission before publishing acceptance; never overwrites the accepted blueprint. */
+    CompilationResult compileProposal(Path debugRoot, String runId, String cityId, JsonObject proposal) throws IOException {
+        CompilationResult result = compileInternal(debugRoot, runId, cityId, proposal.deepCopy());
+        if (result.ok()) {
+            JsonObject acceptance = requiredObject(result.structureAnchorPlan(), "compilationAcceptance");
+            if (!booleanValue(acceptance, "passed", false)) {
+                JsonObject rejectedTrace = result.compileTrace().deepCopy();
+                rejectedTrace.addProperty("status", "rejected_before_acceptance");
+                return CompilationResult.failed(rejectedTrace, "CITY_BLUEPRINT_DESIGN_ACCEPTANCE_FAILED",
+                        "Design geometry failed: " + array(acceptance, "hardBlocks"));
+            }
+        }
+        return result;
+    }
+
+    private CompilationResult compileInternal(Path debugRoot, String runId, String cityId, JsonObject proposal) throws IOException {
         Path runDir = requireRunDirectory(debugRoot, runId);
         Path blueprintDir = CityTestRunLayout.open(runDir, cityId)
                 .stepDirectory(CityTestRunLayout.BLUEPRINT);
         JsonObject context = readObject(blueprintDir.resolve("city_blueprint_context.json"),
                 "CITY_BLUEPRINT_CONTEXT_NOT_FOUND");
-        JsonObject validation = readObject(blueprintDir.resolve("city_blueprint_validation_report.json"),
+        JsonObject validation = proposal != null ? new JsonObject() : readObject(blueprintDir.resolve("city_blueprint_validation_report.json"),
                 "CITY_BLUEPRINT_VALIDATION_REPORT_NOT_FOUND");
-        JsonObject submission = readObject(blueprintDir.resolve("city_blueprint_submission_trace.json"),
+        JsonObject submission = proposal != null ? new JsonObject() : readObject(blueprintDir.resolve("city_blueprint_submission_trace.json"),
                 "CITY_BLUEPRINT_SUBMISSION_TRACE_NOT_FOUND");
         Path blueprintPath = blueprintDir.resolve("city_blueprint.json");
         Path snapshotPath = blueprintDir.resolve("city_blueprint_catalog_snapshot.json");
         Path d3Path = resolveArtifact(debugRoot, requiredObject(context, "sourceD3Ref"));
 
         String contextId = string(context, "contextId");
+        if (proposal != null) {
+            validation.addProperty("contextId", contextId); validation.addProperty("valid", true);
+            submission.addProperty("contextId", contextId); submission.addProperty("status", "accepted");
+            submission.addProperty("cityBlueprintHash", sha256(CityJson.GSON.toJson(proposal)));
+        }
         if (!CityBlueprintService.CONTEXT_SCHEMA.equals(string(context, "schema"))
                 || !cityId.equals(string(context, "cityId"))
                 || !contextId.equals(contextIdentity(context))
@@ -80,7 +104,8 @@ public final class CityBlueprintCompilerService {
                 || !"accepted".equals(string(submission, "status"))) {
             throw fail("CITY_BLUEPRINT_NOT_ACCEPTED", "Blueprint validation/submission artifacts are not accepted.");
         }
-        String blueprintRaw = requireFile(blueprintPath, "CITY_BLUEPRINT_NOT_FOUND");
+        String blueprintRaw = proposal != null ? CityJson.GSON.toJson(proposal)
+                : requireFile(blueprintPath, "CITY_BLUEPRINT_NOT_FOUND");
         if (!sha256(blueprintRaw).equals(string(submission, "cityBlueprintHash"))) {
             throw fail("CITY_BLUEPRINT_STALE", "city_blueprint.json no longer matches its accepted submission trace.");
         }
@@ -118,9 +143,12 @@ public final class CityBlueprintCompilerService {
         JsonObject d3Json = normalizeLegacySchemasForRead(readObject(d3Path, "CITY_BLUEPRINT_D3_STALE"));
         CityLandformReviewPackage review = CityLandformReviewPackage.fromJson(d3Json);
         validateTerrainField(review, terrainField);
-        CityStructureTerrainGate terrainGate = new CityStructureTerrainGate(terrainField, semanticCatalogJson);
         CityBlueprint blueprint = codec.read(normalizeLegacySchemasForRead(
                 JsonParser.parseString(blueprintRaw).getAsJsonObject()));
+        Set<String> engineeredGroups = blueprint.outdoorPlan().mode() == CityBlueprint.OutdoorMode.GENERATE
+                ? blueprint.outdoorPlan().spatialGrounds().stream().map(CityBlueprint.SpatialGround::sourceGroupId)
+                    .collect(java.util.stream.Collectors.toSet()) : Set.of();
+        CityStructureTerrainGate terrainGate = new CityStructureTerrainGate(terrainField, semanticCatalogJson, engineeredGroups);
         CityBlueprint.ArtifactRef expectedD3 = artifactRef(requiredObject(context, "sourceD3Ref"));
         CityBlueprint.ArtifactRef expectedCatalog = artifactRef(requiredObject(context, "catalogSnapshotRef"));
         CityBlueprintValidator.ValidationResult revalidation = validator.validate(blueprint,
@@ -132,6 +160,23 @@ public final class CityBlueprintCompilerService {
             throw fail(reason, "Accepted Blueprint no longer passes compiler-entry validation.");
         }
 
+        if (proposal == null && booleanValue(submission, "designGeometryValidated", false)) {
+            Path committedPath = blueprintDir.resolve("city_blueprint_geometry_commit.json");
+            String committedRaw = requireFile(committedPath, "CITY_BLUEPRINT_GEOMETRY_COMMIT_MISSING");
+            if (!sha256(committedRaw).equals(string(submission, "geometryCommitHash")))
+                throw fail("CITY_BLUEPRINT_GEOMETRY_COMMIT_STALE", "Frozen design geometry changed; do not silently re-layout.");
+            JsonObject committed = JsonParser.parseString(committedRaw).getAsJsonObject();
+            if (!"city_blueprint_geometry_commit.v1".equals(string(committed, "schema"))
+                    || !sha256(blueprintRaw).equals(string(committed, "blueprintHash")))
+                throw fail("CITY_BLUEPRINT_GEOMETRY_COMMIT_STALE", "Geometry does not belong to the accepted blueprint.");
+            CompilationResult frozen = CityJson.GSON.fromJson(requiredObject(committed, "result"), CompilationResult.class);
+            if (frozen == null || !frozen.ok() || frozen.structureAnchorPlan() == null
+                    || frozen.compileTrace() == null || frozen.groupExtentMap() == null
+                    || frozen.terraSenseProfileSource() == null || frozen.templateCatalog() == null
+                    || frozen.landscapeCapacityReservationPlan() == null)
+                throw fail("CITY_BLUEPRINT_GEOMETRY_COMMIT_INVALID", "Accepted geometry is incomplete.");
+            return frozen;
+        }
         JsonObject structureSource = requiredObject(requiredObject(snapshot, "structureCatalog"), "source");
         candidateMemo = new CityCandidateMemo(blueprintPath.getParent().resolve("candidate_checkpoints_v1"), contextId);
         CatalogIndex catalog = CatalogIndex.parse(requiredObject(snapshot, "referenceCatalog"),
@@ -3302,7 +3347,9 @@ public final class CityBlueprintCompilerService {
         for (PatchMemberCell cell : sourceCells) {
             BlockBounds cellBounds = new BlockBounds(cell.blockMinX(), cell.blockMinZ(),
                     cell.blockMinX() + step - 1, cell.blockMinZ() + step - 1);
-            if (!within(cellBounds, legalBounds)) continue;
+            // GIS cells are coverage, not indivisible building lots. Keep boundary cells;
+            // candidateFootprintRejectionReason enforces the exact block-level slot bounds.
+            if (!cellBounds.overlaps(legalBounds)) continue;
             if (growthWindow != null && !cellBounds.overlaps(growthWindow)) continue;
             if (!seenCells.add(cell.cellX() + ":" + cell.cellZ())) continue;
             JsonObject value = new JsonObject();
@@ -3601,10 +3648,11 @@ public final class CityBlueprintCompilerService {
             patchPreferences.add(preference);
         }
         CityStructureTerrainGate.Evaluation evaluation = terrainGate.evaluate(
-                structureRef, footprint, state.group().terrainPolicy());
+                structureRef, footprint, state.group().terrainPolicy(), state.group().groupId());
         JsonObject trace = evaluation.trace().deepCopy();
         trace.addProperty("groupTerrainPolicy", state.group().terrainPolicy().name());
-        trace.addProperty("groupTerrainPolicyRole", "hard_footprint_gate");
+        trace.addProperty("groupTerrainPolicyRole", "DESIGN_FIRST_PLATFORM_REALIZATION".equals(
+                string(trace, "terrainAdaptationPolicy")) ? "surface_realization_requirement" : "hard_footprint_gate");
         trace.add("sourcePatchPreferences", patchPreferences);
         return evaluation.passed()
                 ? new TerrainCandidateEvaluation(true, "", evaluation.resolvedTerrainMode(), trace)
@@ -3619,7 +3667,7 @@ public final class CityBlueprintCompilerService {
                                                             BlockBounds footprint,
                                                             JsonObject layout) {
         CityStructureTerrainGate.Evaluation evaluation = terrainGate.evaluate(
-                structureRef, footprint, state.group().terrainPolicy());
+                structureRef, footprint, state.group().terrainPolicy(), state.group().groupId());
         if (!evaluation.passed()) return evaluation.reasonCode();
         if (!within(footprint, state.legalBounds(phase == PlacementPhase.CONNECTIVITY
                 || phase == PlacementPhase.PERCENTAGE))) {

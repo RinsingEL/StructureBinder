@@ -31,6 +31,21 @@ class CityBlueprintCompilerServiceTest {
     Path temporary;
 
     @Test
+    void submitFreezesRealGeometryAndSubsequentCompileUsesTheSameCommit() throws Exception {
+        Fixture fixture = acceptedFixture("run_geometry_commit", "city:geometry_commit", 9, 9, "SMALL", blueprint -> {});
+        Path dir = fixture.runDir().resolve("city_blueprint_" + safe(fixture.cityId()));
+        JsonObject blueprint = JsonParser.parseString(Files.readString(dir.resolve("city_blueprint.json"))).getAsJsonObject();
+        JsonObject context = JsonParser.parseString(Files.readString(dir.resolve("city_blueprint_context.json"))).getAsJsonObject();
+        JsonObject response = new CityBlueprintService().submit(temporary, fixture.runId(), fixture.cityId(), context.get("contextId").getAsString(), blueprint);
+        assertTrue(response.get("ok").getAsBoolean(), response.toString());
+        JsonObject frozen = JsonParser.parseString(Files.readString(dir.resolve("city_blueprint_geometry_commit.json"))).getAsJsonObject();
+        var result = new CityBlueprintCompilerService().compile(temporary, fixture.runId(), fixture.cityId());
+        assertEquals(frozen.getAsJsonObject("result").get("structureAnchorPlan"), result.structureAnchorPlan());
+        Files.writeString(dir.resolve("city_blueprint_geometry_commit.json"), "{}");
+        assertThrows(IllegalArgumentException.class, () -> new CityBlueprintCompilerService().compile(temporary, fixture.runId(), fixture.cityId()));
+    }
+
+    @Test
     void frozenCoreNeverPercentageGrowsEvenWhenLegacyStopFlagIsFalse() throws Exception {
         Fixture fixture = acceptedFixture("run_core_frozen", "city:core_frozen", 9, 9, "SMALL", blueprint -> {
             blueprint.getAsJsonArray("groups").get(0).getAsJsonObject().add("expansionPolicy",
@@ -1232,8 +1247,17 @@ class CityBlueprintCompilerServiceTest {
         assertTrue(lastFill >= 0);
         assertTrue(firstConnectivity > lastFill,
                 "relation growth must start only after each function area forms internally");
-        assertTrue(firstPercentage > firstConnectivity,
-                "percentage fill must start only after relation growth reaches handoff and freezes the baseline");
+        if (firstPercentage >= 0) {
+            assertTrue(firstPercentage > firstConnectivity,
+                    "percentage fill must start only after relation growth reaches handoff and freezes the baseline");
+        } else {
+            // Connection growth may already satisfy every area share. Do not force extra buildings
+            // merely to manufacture a percentage-growth event (especially with clearance removed).
+            assertTrue(dynamicArea.getAsJsonArray("groups").asList().stream().allMatch(value ->
+                    value.getAsJsonObject().get("areaGapBeforeExpansion").getAsInt() == 0), dynamicArea.toString());
+            assertTrue(dynamicArea.getAsJsonArray("outcomes").asList().stream().allMatch(value ->
+                    value.getAsJsonObject().get("remainingAreaGapBlocks").getAsInt() == 0), dynamicArea.toString());
+        }
         for (JsonElement element : first.compileTrace().getAsJsonArray("groupResults")) {
             JsonObject group = element.getAsJsonObject();
             assertTrue(group.get("internalStructureCount").getAsInt() > 0, group.toString());
@@ -1521,7 +1545,7 @@ class CityBlueprintCompilerServiceTest {
         assertEquals("committed", required.get("status").getAsString(), required.toString());
         JsonObject terrain = required.getAsJsonObject("terrainGateEvaluation");
         assertTrue(terrain.get("terrainAdaptationRequired").getAsBoolean(), terrain.toString());
-        assertTrue(terrain.getAsJsonArray("terrainAdaptations").toString().contains("foundation_or_skip"));
+        assertTrue(terrain.getAsJsonArray("terrainAdaptations").toString().contains("realize_designed_platform"));
         JsonObject group = result.compileTrace().getAsJsonArray("groupResults").get(0).getAsJsonObject();
         assertTrue(group.getAsJsonArray("terrainPlacementFailures").isEmpty(), group.toString());
         assertFalse(result.compileTrace().getAsJsonObject("compilationAcceptance")
@@ -1626,7 +1650,7 @@ class CityBlueprintCompilerServiceTest {
         assertTrue(result.ok(), result.compileTrace().toString());
         JsonObject required = result.compileTrace().getAsJsonArray("selections").get(0).getAsJsonObject();
         JsonObject terrain = required.getAsJsonObject("terrainGateEvaluation");
-        assertEquals("hard_footprint_gate", terrain.get("groupTerrainPolicyRole").getAsString());
+        assertEquals("surface_realization_requirement", terrain.get("groupTerrainPolicyRole").getAsString());
         assertFalse(terrain.getAsJsonArray("sourcePatchPreferences").get(0).getAsJsonObject()
                 .get("preferredByGroupTerrainPolicy").getAsBoolean());
     }
@@ -1860,15 +1884,20 @@ class CityBlueprintCompilerServiceTest {
         normalizeCaseGroups(blueprint);
         disableUnspecifiedRelationConnections(blueprint);
         syncOutdoorGrounds(blueprint);
-        JsonObject submitted = service.submit(temporary, runId, cityId,
-                prepared.get("contextId").getAsString(), blueprint);
-        assertTrue(submitted.get("ok").getAsBoolean(), submitted.toString());
+        // Compiler-unit fixtures model old accepted saves, including deliberately invalid geometry.
+        // New submit preflight is covered separately; it must reject these before acceptance.
         Path acceptedBlueprintPath = runDir.resolve("city_blueprint_" + safe(cityId) + "/city_blueprint.json");
         String compilerInput = blueprint.toString();
         Files.writeString(acceptedBlueprintPath, compilerInput);
         Path acceptedTracePath = runDir.resolve("city_blueprint_" + safe(cityId)
                 + "/city_blueprint_submission_trace.json");
-        JsonObject acceptedTrace = JsonParser.parseString(Files.readString(acceptedTracePath)).getAsJsonObject();
+        JsonObject acceptedTrace = new JsonObject();
+        acceptedTrace.addProperty("contextId", prepared.get("contextId").getAsString());
+        acceptedTrace.addProperty("status", "accepted");
+        JsonObject legacyValidation = new JsonObject();
+        legacyValidation.addProperty("contextId", prepared.get("contextId").getAsString());
+        legacyValidation.addProperty("valid", true);
+        Files.writeString(acceptedTracePath.resolveSibling("city_blueprint_validation_report.json"), legacyValidation.toString());
         acceptedTrace.addProperty("cityBlueprintHash", sha256(compilerInput));
         Files.writeString(acceptedTracePath, acceptedTrace.toString());
         return new Fixture(runId, cityId, runDir);

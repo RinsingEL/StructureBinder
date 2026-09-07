@@ -63,11 +63,11 @@ class CityStructureTerrainGateTest {
                 field(List.of(cell(0, 70, 2, 3), cell(1, 70, 7, 3))), catalog("SURFACE"));
 
         CityStructureTerrainGate.Evaluation evaluation = gate.evaluate(
-                "test:house", new BlockBounds(0, 0, 31, 15), CityBlueprint.TerrainPolicy.CONFORM);
+                "test:house", new BlockBounds(0, 0, 31, 15), CityBlueprint.TerrainPolicy.CONFORM, true);
 
         assertTrue(evaluation.passed());
         assertTrue(evaluation.trace().get("terrainAdaptationRequired").getAsBoolean());
-        assertEquals("foundation_or_skip",
+        assertEquals("realize_designed_platform",
                 evaluation.trace().getAsJsonArray("terrainAdaptations").get(0)
                         .getAsJsonObject().get("action").getAsString());
         assertEquals("CONFORM", evaluation.trace().get("terrainPolicy").getAsString());
@@ -79,7 +79,7 @@ class CityStructureTerrainGateTest {
                 field(List.of(cell(0, 64, 2, 3), cell(1, 80, 2, 3))), catalog("SURFACE"));
 
         CityStructureTerrainGate.Evaluation evaluation = gate.evaluate(
-                "test:house", new BlockBounds(0, 0, 31, 15), CityBlueprint.TerrainPolicy.BALANCED);
+                "test:house", new BlockBounds(0, 0, 31, 15), CityBlueprint.TerrainPolicy.BALANCED, true);
 
         assertTrue(evaluation.passed());
         assertTrue(evaluation.trace().get("terrainAdaptationRequired").getAsBoolean());
@@ -87,6 +87,18 @@ class CityStructureTerrainGateTest {
                 evaluation.trace().getAsJsonArray("terrainAdaptations").get(0)
                         .getAsJsonObject().get("reasonCode").getAsString());
         assertEquals(16.0, evaluation.trace().get("elevationRange").getAsDouble());
+    }
+
+    @Test
+    void extremeReliefIsAnEngineeringRequirementNotASkipInstruction() {
+        var gate = new CityStructureTerrainGate(field(List.of(cell(0, 68, 80, 120), cell(1, -40, 2, 3))), catalog("SURFACE"));
+        var result = gate.evaluate("test:house", new BlockBounds(0,0,31,15), CityBlueprint.TerrainPolicy.CONFORM, true);
+        assertTrue(result.passed());
+        assertEquals("DESIGN_FIRST_PLATFORM_REALIZATION", result.trace().get("terrainAdaptationPolicy").getAsString());
+        assertTrue(result.trace().get("terrainAdaptationRequired").getAsBoolean());
+        assertFalse(result.trace().toString().contains("skip"));
+        assertFalse(gate.evaluate("test:house", new BlockBounds(0,0,31,15), CityBlueprint.TerrainPolicy.CONFORM, false).passed(),
+                "A natural unpaved group must not pretend to own an engineered platform.");
     }
 
     private static LandUseTerrainField field(List<LandUseTerrainField.Cell> cells) {

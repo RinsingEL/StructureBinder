@@ -23,8 +23,14 @@ final class CityStructureTerrainGate {
     private final LandUseTerrainField terrainField;
     private final Map<CellKey, LandUseTerrainField.Cell> cells;
     private final Map<String, List<CityStructureTerrainMode>> modesByStructure;
+    private final Set<String> engineeredGroups;
 
     CityStructureTerrainGate(LandUseTerrainField terrainField, JsonObject semanticCatalog) {
+        this(terrainField, semanticCatalog, Set.of());
+    }
+
+    CityStructureTerrainGate(LandUseTerrainField terrainField, JsonObject semanticCatalog, Set<String> engineeredGroups) {
+        this.engineeredGroups = Set.copyOf(engineeredGroups);
         this.terrainField = terrainField;
         Map<CellKey, LandUseTerrainField.Cell> indexed = new LinkedHashMap<>();
         terrainField.cells().forEach(cell -> indexed.put(new CellKey(cell.cellX(), cell.cellZ()), cell));
@@ -48,6 +54,14 @@ final class CityStructureTerrainGate {
     }
 
     Evaluation evaluate(String structureRef, BlockBounds footprint, CityBlueprint.TerrainPolicy terrainPolicy) {
+        return evaluate(structureRef, footprint, terrainPolicy, false);
+    }
+
+    Evaluation evaluate(String structureRef, BlockBounds footprint, CityBlueprint.TerrainPolicy terrainPolicy, String groupId) {
+        return evaluate(structureRef, footprint, terrainPolicy, engineeredGroups.contains(groupId));
+    }
+
+    Evaluation evaluate(String structureRef, BlockBounds footprint, CityBlueprint.TerrainPolicy terrainPolicy, boolean engineered) {
         List<CityStructureTerrainMode> modes = modesByStructure.get(structureRef);
         if (modes == null) {
             throw new IllegalArgumentException("CITY_STRUCTURE_TERRAIN_PROFILE_UNKNOWN: " + structureRef);
@@ -92,15 +106,15 @@ final class CityStructureTerrainGate {
                     }
                 }
                 if (cell != null && cell.sampled() && !cell.water() && limits != null) {
-                    if (cell.slope() > limits.maximumSlope() * 2.0
-                            || cell.localRelief() > limits.maximumLocalRelief() * 2.0) {
+                    if (!engineered && (cell.slope() > limits.maximumSlope() * 2
+                            || cell.localRelief() > limits.maximumLocalRelief() * 2)) {
                         reason = "CITY_STRUCTURE_TERRAIN_UNFIT_SKIP_MEMBER";
                     } else if (cell.slope() > limits.maximumSlope()) {
                         adaptations.add(adaptation(cell, "CITY_STRUCTURE_SURFACE_CELL_SLOPE_EXCEEDED",
-                                "foundation_or_skip"));
+                                engineered ? "realize_designed_platform" : "foundation_or_skip"));
                     } else if (cell.localRelief() > limits.maximumLocalRelief()) {
                         adaptations.add(adaptation(cell, "CITY_STRUCTURE_SURFACE_CELL_RELIEF_EXCEEDED",
-                                "foundation_or_skip"));
+                                engineered ? "realize_designed_platform" : "foundation_or_skip"));
                     }
                 }
                 if (reason.isBlank()) continue;
@@ -140,17 +154,17 @@ final class CityStructureTerrainGate {
             trace.addProperty("maximumObservedSlope", maximumSlope);
             trace.addProperty("maximumObservedLocalRelief", maximumLocalRelief);
             if (limits != null && elevationRange > limits.maximumElevationRange()) {
+                if (!engineered && elevationRange > limits.maximumElevationRange() * 2) {
+                    rejected++;
+                    if (primaryReason.isBlank()) primaryReason = "CITY_STRUCTURE_TERRAIN_UNFIT_SKIP_MEMBER";
+                }
                 JsonObject adaptation = new JsonObject();
                 adaptation.addProperty("reasonCode", "CITY_STRUCTURE_SURFACE_ELEVATION_RANGE_EXCEEDED");
                 adaptation.addProperty("minimumElevation", minimumElevation);
                 adaptation.addProperty("maximumElevation", maximumElevation);
                 adaptation.addProperty("elevationRange", elevationRange);
-                adaptation.addProperty("action", "foundation_or_skip");
+                adaptation.addProperty("action", engineered ? "realize_designed_platform" : "foundation_or_skip");
                 adaptations.add(adaptation);
-                if (elevationRange > limits.maximumElevationRange() * 2.0) {
-                    rejected++;
-                    if (primaryReason.isBlank()) primaryReason = "CITY_STRUCTURE_TERRAIN_UNFIT_SKIP_MEMBER";
-                }
             }
         }
         trace.addProperty("rejectedCellCount", rejected);
@@ -158,7 +172,8 @@ final class CityStructureTerrainGate {
         if (!primaryReason.isBlank()) trace.addProperty("reasonCode", primaryReason);
         trace.add("failureSamples", failures);
         trace.addProperty("terrainAdaptationRequired", !adaptations.isEmpty());
-        trace.addProperty("terrainAdaptationPolicy", "PCG_FOUNDATION_OR_SKIP_MEMBER");
+        trace.addProperty("terrainAdaptationPolicy", engineered
+                ? "DESIGN_FIRST_PLATFORM_REALIZATION" : "PCG_FOUNDATION_OR_SKIP_MEMBER");
         trace.add("terrainAdaptations", adaptations);
         return new Evaluation(rejected == 0, primaryReason, CityStructureTerrainMode.SURFACE.name(), trace);
     }

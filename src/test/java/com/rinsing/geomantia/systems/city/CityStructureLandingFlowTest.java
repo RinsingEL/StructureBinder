@@ -534,6 +534,8 @@ final class CityStructureLandingFlowTest {
     void d4ArrayCandidatePlannerSpacingIgnoresMaskEnvelopeOverlap() throws Exception {
         Fixture fixture = arrayFixture();
         JsonObject plan = arrayCandidatePlan(fixture.review(), 2);
+        // Deliberately overlap the soft mask; no reliance on the retired template safety clearance.
+        plan.addProperty("maskMarginBlocks", 32);
         plan.add("patterns", JsonParser.parseString("""
                 ["compound_cluster"]
                 """).getAsJsonArray());

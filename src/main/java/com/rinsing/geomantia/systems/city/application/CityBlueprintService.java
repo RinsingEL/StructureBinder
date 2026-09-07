@@ -38,6 +38,13 @@ public final class CityBlueprintService {
     private final CityBlueprintCodec codec = new CityBlueprintCodec();
     private final CityBlueprintValidator validator = new CityBlueprintValidator();
     private final CityBlueprintFailureBudget failureBudget = new CityBlueprintFailureBudget();
+    @FunctionalInterface
+    interface GeometryCompiler {
+        CityBlueprintCompilerService.CompilationResult compile(Path root, String runId, String cityId, JsonObject proposal) throws IOException;
+    }
+    private final GeometryCompiler geometryCompiler;
+    public CityBlueprintService() { this((root, run, city, proposal) -> new CityBlueprintCompilerService().compileProposal(root, run, city, proposal)); }
+    CityBlueprintService(GeometryCompiler geometryCompiler) { this.geometryCompiler = java.util.Objects.requireNonNull(geometryCompiler); }
 
     public JsonObject prepare(Path debugRoot, String runId, String cityId,
                                JsonObject terraSenseProfileSource, JsonObject templateCatalogSource,
@@ -170,6 +177,7 @@ public final class CityBlueprintService {
             Files.createDirectories(recoveryArchive);
             for (String name : java.util.List.of("city_blueprint_context.json", "city_blueprint_catalog_snapshot.json",
                     "city_blueprint.json", "city_blueprint_submission_trace.json", "city_blueprint_validation_report.json",
+                    "city_blueprint_geometry_commit.json", "city_blueprint_blocked_proposal.json",
                     CityBlueprintFailureBudget.FILE_NAME)) {
                 Path source = outputDir.resolve(name);
                 Path target = recoveryArchive.resolve(name);
@@ -324,9 +332,51 @@ public final class CityBlueprintService {
         budget = failureBudget.reopenForRevision(debugRoot, runId, cityId);
 
         JsonObject canonical = codec.write(blueprint);
+        CityBlueprintCompilerService.CompilationResult geometry;
+        boolean compilerException = false;
+        try {
+            geometry = geometryCompiler.compile(debugRoot, runId, cityId, canonical);
+        } catch (RuntimeException exception) {
+            compilerException = true;
+            JsonObject evidence = new JsonObject();
+            evidence.addProperty("status", "compiler_exception_before_acceptance");
+            evidence.addProperty("exceptionType", exception.getClass().getName());
+            geometry = CityBlueprintCompilerService.CompilationResult.failed(evidence,
+                    "CITY_BLUEPRINT_DESIGN_COMPILER_FAILED", exception.getMessage());
+        }
+        if (!geometry.ok()) {
+            boolean programFailure = compilerException || CityBlueprintFailureRouting.isProgramFailure(
+                    geometry.reasonCode(), geometry.compileTrace());
+            JsonObject rejected = failure(debugRoot, cityId, contextId, reportPath, tracePath,
+                    programFailure ? CityBlueprintReasonCode.CITY_BLUEPRINT_DESIGN_COMPILER_FAILED
+                            : CityBlueprintReasonCode.CITY_BLUEPRINT_DESIGN_GEOMETRY_INVALID, "$.groups",
+                    geometry.reasonCode() + ": " + geometry.message(), budget, runId);
+            Path geometryRejectionPath = outputDir.resolve("city_blueprint_geometry_rejection_trace.json");
+            writeAtomic(geometryRejectionPath, geometry.compileTrace());
+            rejected.addProperty("designGeometryTraceRef", ref(debugRoot, geometryRejectionPath));
+            rejected.addProperty("designGeometryReasonCode", geometry.reasonCode());
+            if (programFailure) {
+                Path proposalPath = outputDir.resolve("city_blueprint_blocked_proposal.json");
+                writeAtomic(proposalPath, canonical);
+                rejected.addProperty("blockedProposalRef", ref(debugRoot, proposalPath));
+                rejected.addProperty("failureOwner", "program");
+                rejected.addProperty("status", "blocked_by_program");
+                // No accepted new design exists yet: post-D4 retry could execute an older revision.
+                rejected.addProperty("nextAction", "stop_for_human_review");
+            }
+            return rejected;
+        }
         JsonObject report = report(cityId, contextId, true, new JsonArray());
+        report.addProperty("designGeometryValidated", true);
         JsonObject trace = trace(cityId, contextId, "accepted", context, new JsonArray());
+        trace.addProperty("designGeometryValidated", true);
+        JsonObject geometryCommit = new JsonObject();
+        geometryCommit.addProperty("schema", "city_blueprint_geometry_commit.v1");
+        geometryCommit.addProperty("blueprintHash", sha256(CityJson.GSON.toJson(canonical)));
+        geometryCommit.add("result", CityJson.GSON.toJsonTree(geometry));
+        trace.addProperty("geometryCommitHash", sha256(CityJson.GSON.toJson(geometryCommit)));
         synchronized (submissionArtifactLock(outputDir)) {
+            writeAtomic(outputDir.resolve("city_blueprint_geometry_commit.json"), geometryCommit);
             writeAtomic(blueprintPath, canonical);
             writeAtomic(acceptedReportPath, report);
             trace.addProperty("cityBlueprintHash", sha256(Files.readString(blueprintPath)));

@@ -100,6 +100,8 @@ class CityPlanningEndpointHandlerTest {
         String runId = "run_blueprint_endpoint";
         String citySeedId = "city_test";
         prepareD5Artifacts(debugRoot, runId, citySeedId);
+        // Submit now executes the geometry solver: a patch label alone is no longer a complete fixture.
+        addPatchMemberCells(debugRoot, runId, citySeedId, "plain");
         Path runDir = debugRoot.resolve(runId);
         writeBlueprintTerrainField(runDir, citySeedId);
 
@@ -113,7 +115,7 @@ class CityPlanningEndpointHandlerTest {
         JsonObject submitted = CityPlanningEndpointHandler.handleSubmitD4Blueprint(debugRoot, runId, citySeedId,
                 prepared.get("contextId").getAsString(), blueprintForContext(
                         prepared.getAsJsonObject("cityBlueprintContext")));
-        assertTrue(submitted.get("ok").getAsBoolean());
+        assertTrue(submitted.get("ok").getAsBoolean(), submitted.toString());
         assertEquals(0, submitted.get("failureCount").getAsInt());
         assertTrue(Files.isRegularFile(runDir.resolve("city_blueprint_city_test/city_blueprint.json")));
         assertTrue(Files.isRegularFile(runDir.resolve(

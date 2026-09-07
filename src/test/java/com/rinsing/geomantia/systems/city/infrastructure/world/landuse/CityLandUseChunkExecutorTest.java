@@ -17,6 +17,26 @@ class CityLandUseChunkExecutorTest {
     private final CityLandUseChunkExecutor executor = new CityLandUseChunkExecutor();
 
     @Test
+    void frozenRoadCapsCanyonWithConstantWorkInsteadOfFillingToBottom() {
+        var fragment = new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,
+                "city", "hash", "palette", 0, 0, 1, 0, 0, 0, null,
+                List.of(), List.of(), List.of(), List.of(new CityLandUseChunkCompiler.FeatureOperation(
+                        "main", 1, 1, "minecraft:stone_slab", 0,
+                        CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,
+                        CityLandUseSurfacePrintPlan.HorizontalFacing.NONE, 68)));
+        for (int bottom : List.of(-50, -20)) {
+            FakeWorld world = new FakeWorld();
+            world.columns.put("1,1", new CityLandUseChunkExecutor.ColumnSample(bottom, "minecraft:stone", true));
+            var result = executor.execute(fragment, world,
+                    CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+            assertEquals(CityLandUseChunkExecutor.Status.APPLIED, result.status(), result.toString());
+            assertTrue(world.writes.contains("1,67,1=minecraft:stone_bricks"));
+            assertTrue(world.writes.contains("1,68,1=minecraft:stone_slab"));
+            assertTrue(world.writes.size() <= 3, world.writes.toString());
+        }
+    }
+
+    @Test
     void neighboringConstructionCannotChangeFoundationDesign() {
         var mask = new ArrayList<CityLandUseChunkCompiler.GradingMaskCell>();
         for (int z = -16; z < 32; z++) for (int x = -16; x < 32; x++)

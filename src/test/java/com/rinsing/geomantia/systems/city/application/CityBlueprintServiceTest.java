@@ -25,9 +25,42 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CityBlueprintServiceTest {
     @Test
+    void rejectedGeometryOrCompilerBugNeverReplacesAnAcceptedRevision() throws Exception {
+        Fixture f = fixture("run_design_preflight", "city:design_preflight");
+        var service = validationService();
+        var prepared = service.prepare(temporary, f.runId(), f.cityId(), f.terraSenseSource(), f.templateSource(), f.referenceCatalog());
+        String id = prepared.get("contextId").getAsString();
+        JsonObject design = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+        assertTrue(service.submit(temporary, f.runId(), f.cityId(), id, design).get("ok").getAsBoolean());
+        Path dir = f.runDir().resolve("city_blueprint_" + safe(f.cityId()));
+        java.util.Map<String,String> accepted = new java.util.HashMap<>();
+        for (String file : List.of("city_blueprint.json", "city_blueprint_geometry_commit.json",
+                "city_blueprint_validation_report.json", "city_blueprint_submission_trace.json"))
+            accepted.put(file, Files.readString(dir.resolve(file)));
+        var invalid = new CityBlueprintService((root, run, city, proposal) ->
+                CityBlueprintCompilerService.CompilationResult.failed(new JsonObject(), "CAPACITY_INSUFFICIENT", "group civic cannot fit"));
+        var rejected = invalid.submit(temporary, f.runId(), f.cityId(), id, design);
+        assertFalse(rejected.get("ok").getAsBoolean());
+        assertEquals("CAPACITY_INSUFFICIENT", rejected.get("designGeometryReasonCode").getAsString());
+        var broken = new CityBlueprintService((root, run, city, proposal) -> { throw new IllegalStateException("compiler bug"); });
+        var blocked = broken.submit(temporary, f.runId(), f.cityId(), id, design);
+        assertEquals("program", blocked.get("failureOwner").getAsString());
+        assertEquals("stop_for_human_review", blocked.get("nextAction").getAsString());
+        assertEquals(0, blocked.get("failureCount").getAsInt());
+        assertTrue(Files.exists(dir.resolve("city_blueprint_blocked_proposal.json")));
+        for(var entry : accepted.entrySet()) assertEquals(entry.getValue(), Files.readString(dir.resolve(entry.getKey())));
+    }
+
+    /** Contract-only fixtures intentionally omit full GIS; compiler integration tests use the real planner. */
+    private static CityBlueprintService validationService() {
+        return new CityBlueprintService((root, run, city, proposal) ->
+                CityBlueprintCompilerService.CompilationResult.compiled(new JsonObject(), new JsonObject(),
+                        new JsonObject(), new JsonObject(), new JsonObject(), new JsonObject()));
+    }
+    @Test
     void authorRecoveryArchivesAcceptedDesignAndCarriesBudgetWithoutReset() throws Exception {
         Fixture f = fixture("run_recovery", "city:test");
-        var service = new CityBlueprintService();
+        var service = validationService();
         var prepared = service.prepare(temporary, f.runId(), f.cityId(), f.terraSenseSource(), f.templateSource(), f.referenceCatalog());
         String oldId = prepared.get("contextId").getAsString();
         JsonObject design = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
@@ -69,7 +102,7 @@ class CityBlueprintServiceTest {
     @Test
     void compactSubmissionAndHashBoundPatchKeepFullValidation() throws Exception {
         Fixture fixture = fixture("run_patch", "city:test");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         String contextId = prepared.get("contextId").getAsString();
@@ -99,7 +132,7 @@ class CityBlueprintServiceTest {
     @Test
     void prepareCreatesFiveFailureBudgetAndValidRevisionCanBeReplacedBeforeCompile() throws Exception {
         Fixture fixture = fixture("run_valid", "city:test");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
 
@@ -170,7 +203,7 @@ class CityBlueprintServiceTest {
         evidence.add("interestTypes", JsonParser.parseString("[\"plain\",\"slope\"]"));
         evidence.addProperty("topPatchesOverview", "run_patch_review/top.png");
 
-        JsonObject prepared = new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+        JsonObject prepared = validationService().prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog(), evidence);
         JsonObject frozen = prepared.getAsJsonObject("cityBlueprintContext")
                 .getAsJsonObject("patchReviewEvidence");
@@ -181,7 +214,7 @@ class CityBlueprintServiceTest {
     @Test
     void rejectedRevisionDoesNotOverwriteCurrentAcceptedArtifacts() throws Exception {
         Fixture fixture = fixture("run_rejected_revision", "city:rejected_revision");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         String contextId = prepared.get("contextId").getAsString();
@@ -209,7 +242,7 @@ class CityBlueprintServiceTest {
     @Test
     void validationFailureInNewContextDoesNotConsumeCompileFailureBudget() throws Exception {
         Fixture fixture = fixture("run_context_retry", "city:context_retry");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject oldPrepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         JsonObject oldBlueprint = blueprint(oldPrepared.getAsJsonObject("cityBlueprintContext"));
@@ -248,7 +281,7 @@ class CityBlueprintServiceTest {
     @Test
     void concurrentValidSubmissionsAreNotRejectedByAnArtificialOneShotClaim() throws Exception {
         Fixture fixture = fixture("run_concurrent", "city:concurrent");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         String contextId = prepared.get("contextId").getAsString();
@@ -280,7 +313,7 @@ class CityBlueprintServiceTest {
     @Test
     void fiveCompilationFailuresExhaustBudgetAndBlockAnotherRevision() throws Exception {
         Fixture fixture = fixture("run_failure_budget", "city:failure_budget");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         String contextId = prepared.get("contextId").getAsString();
@@ -311,7 +344,7 @@ class CityBlueprintServiceTest {
     @Test
     void concurrentCompilationFailuresIncrementOneAtomicLedgerWithoutCompileLock() throws Exception {
         Fixture fixture = fixture("run_concurrent_failure_budget", "city:concurrent_failure_budget");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         CityBlueprintFailureBudget budget = new CityBlueprintFailureBudget();
@@ -341,7 +374,7 @@ class CityBlueprintServiceTest {
     @Test
     void invalidLandscapeSubmissionWritesReportButNoBlueprint() throws Exception {
         Fixture fixture = fixture("run_landscape", "city:landscape");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
@@ -359,7 +392,7 @@ class CityBlueprintServiceTest {
     @Test
     void centerSymmetricIgnoresAiBuildingListAndLetsPcgChooseStructures() throws Exception {
         Fixture fixture = fixture("run_center_symmetric_invalid", "city:center_symmetric_invalid");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
@@ -380,7 +413,7 @@ class CityBlueprintServiceTest {
     @Test
     void intentOnlyGroupMustProvideBuildingPoolAndComposition() throws Exception {
         Fixture fixture = fixture("run_intent_only", "city:intent_only");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
@@ -401,7 +434,7 @@ class CityBlueprintServiceTest {
     @Test
     void placementRelationRequiresTheExactEndpointShape() throws Exception {
         Fixture fixture = fixture("run_placement_relation_invalid", "city:placement_relation_invalid");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
@@ -423,7 +456,7 @@ class CityBlueprintServiceTest {
     @Test
     void arrayCompositionRejectsUnknownAndMultiplyOwnedGroups() throws Exception {
         Fixture fixture = fixture("run_array_composition_invalid", "city:array_composition_invalid");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
@@ -459,7 +492,7 @@ class CityBlueprintServiceTest {
     @Test
     void changedD3ArtifactMakesPreparedContextStale() throws Exception {
         Fixture fixture = fixture("run_stale", "city:stale");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         Files.writeString(fixture.d3Path(), Files.readString(fixture.d3Path()) + "\n");
@@ -475,7 +508,7 @@ class CityBlueprintServiceTest {
     @Test
     void previousContextSchemaIsRejectedAsStale() throws Exception {
         Fixture fixture = fixture("run_old_context", "city:old_context");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         Path contextPath = fixture.runDir().resolve("city_blueprint_" + safe(fixture.cityId()))
@@ -496,7 +529,7 @@ class CityBlueprintServiceTest {
     @Test
     void previousSnapshotSchemaIsRejectedAsStale() throws Exception {
         Fixture fixture = fixture("run_old_snapshot", "city:old_snapshot");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         Path snapshotPath = fixture.runDir().resolve("city_blueprint_" + safe(fixture.cityId()))
@@ -517,7 +550,7 @@ class CityBlueprintServiceTest {
     @Test
     void distanceRelationCarriesNearOrFarIntentForCompiler() throws Exception {
         Fixture fixture = fixture("run_distance", "city:distance");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
@@ -544,7 +577,7 @@ class CityBlueprintServiceTest {
     @Test
     void groupsMaySharePreferredPatch() throws Exception {
         Fixture fixture = fixture("run_shared_patch", "city:shared_patch");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
@@ -568,7 +601,7 @@ class CityBlueprintServiceTest {
     @Test
     void relationEnabledGroupsCanUseAutomaticNearNeighborConnection() throws Exception {
         Fixture fixture = fixture("run_missing_function_area_relation", "city:missing_function_area_relation");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
@@ -590,7 +623,7 @@ class CityBlueprintServiceTest {
     @Test
     void connectionPlanRejectsParametersFromTheWrongPlannerFamily() throws Exception {
         Fixture fixture = fixture("run_bad_connection_parameters", "city:bad_connection_parameters");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
@@ -611,7 +644,7 @@ class CityBlueprintServiceTest {
     @Test
     void generateRequiresExactlyOneSpatialGroundPerStructureGroup() throws Exception {
         Fixture fixture = fixture("run_missing_ground", "city:missing_ground");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
@@ -629,7 +662,7 @@ class CityBlueprintServiceTest {
     @Test
     void preserveRejectsGeneratedOutdoorContent() throws Exception {
         Fixture fixture = fixture("run_preserve_content", "city:preserve_content");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
@@ -647,7 +680,7 @@ class CityBlueprintServiceTest {
     @Test
     void acceptsLandscapeUsingFrozenProfileAndAttachedGroup() throws Exception {
         Fixture fixture = fixture("run_landscape_intent", "city:landscape_intent");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
@@ -672,7 +705,7 @@ class CityBlueprintServiceTest {
     @Test
     void rejectsFillProfileIncompatibleWithLandscapeType() throws Exception {
         Fixture fixture = fixture("run_incompatible_fill", "city:incompatible_fill");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
@@ -696,7 +729,7 @@ class CityBlueprintServiceTest {
     @Test
     void rejectsInvalidFillShareSumAndContentOutsideWhitelist() throws Exception {
         Fixture fixture = fixture("run_invalid_fill_values", "city:invalid_fill_values");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
@@ -720,7 +753,7 @@ class CityBlueprintServiceTest {
     @Test
     void rejectsGrowthFormOutsideRoleFrontierBiasWhitelist() throws Exception {
         Fixture fixture = fixture("run_invalid_growth_form", "city:invalid_growth_form");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
@@ -743,7 +776,7 @@ class CityBlueprintServiceTest {
     @Test
     void rejectsFillVariantThatOmitsADeclaredRoleEvenWhenSharesSumToOne() throws Exception {
         Fixture fixture = fixture("run_missing_fill_role", "city:missing_fill_role");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
@@ -773,7 +806,7 @@ class CityBlueprintServiceTest {
             catalog.getAsJsonArray("landscapeFillProfiles").get(0).getAsJsonObject()
                     .addProperty(field, field.equals("repeatLayers"));
             CityBlueprintContractException failure = assertThrows(CityBlueprintContractException.class,
-                    () -> new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+                    () -> validationService().prepare(temporary, fixture.runId(), fixture.cityId(),
                             fixture.terraSenseSource(), fixture.templateSource(), catalog));
             assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
                     failure.reasonCode(), field);
@@ -782,7 +815,7 @@ class CityBlueprintServiceTest {
         oldAlgorithmCatalog.getAsJsonArray("landscapeFillProfiles").get(0).getAsJsonObject()
                 .addProperty("algorithm", "SINGLE_SOURCE_LAYERS");
         CityBlueprintContractException oldAlgorithmFailure = assertThrows(CityBlueprintContractException.class,
-                () -> new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+                () -> validationService().prepare(temporary, fixture.runId(), fixture.cityId(),
                         fixture.terraSenseSource(), fixture.templateSource(), oldAlgorithmCatalog));
         assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
                 oldAlgorithmFailure.reasonCode());
@@ -796,7 +829,7 @@ class CityBlueprintServiceTest {
         fillProfiles.remove(fillProfiles.size() - 1);
 
         CityBlueprintContractException failure = assertThrows(CityBlueprintContractException.class,
-                () -> new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+                () -> validationService().prepare(temporary, fixture.runId(), fixture.cityId(),
                         fixture.terraSenseSource(), fixture.templateSource(), catalog));
 
         assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
@@ -812,7 +845,7 @@ class CityBlueprintServiceTest {
                 .getAsJsonArray("roles").get(0).getAsJsonObject().addProperty("maxShare", 1.1);
 
         CityBlueprintContractException failure = assertThrows(CityBlueprintContractException.class,
-                () -> new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+                () -> validationService().prepare(temporary, fixture.runId(), fixture.cityId(),
                         fixture.terraSenseSource(), fixture.templateSource(), catalog));
 
         assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
@@ -827,7 +860,7 @@ class CityBlueprintServiceTest {
                 .getAsJsonArray("roles").get(0).getAsJsonObject().addProperty("maxShare", Double.NaN);
 
         CityBlueprintContractException failure = assertThrows(CityBlueprintContractException.class,
-                () -> new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+                () -> validationService().prepare(temporary, fixture.runId(), fixture.cityId(),
                         fixture.terraSenseSource(), fixture.templateSource(), catalog));
 
         assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
@@ -843,7 +876,7 @@ class CityBlueprintServiceTest {
         farmland.addProperty("surfaceRecipeRef", "surface_recipe:civic");
 
         CityBlueprintContractException failure = assertThrows(CityBlueprintContractException.class,
-                () -> new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+                () -> validationService().prepare(temporary, fixture.runId(), fixture.cityId(),
                         fixture.terraSenseSource(), fixture.templateSource(), catalog));
 
         assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
@@ -855,7 +888,7 @@ class CityBlueprintServiceTest {
     void freezesFourStrictLandscapeProfilesWithDistinctSurfaceSemantics() throws Exception {
         Fixture fixture = fixture("run_landscape_catalog", "city:landscape_catalog");
 
-        new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+        validationService().prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
 
         JsonObject snapshot = JsonParser.parseString(Files.readString(fixture.runDir()
@@ -906,7 +939,7 @@ class CityBlueprintServiceTest {
                 .addProperty("surfaceAlgorithm", "CONTOUR_BANDS");
 
         CityBlueprintContractException failure = assertThrows(CityBlueprintContractException.class,
-                () -> new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+                () -> validationService().prepare(temporary, fixture.runId(), fixture.cityId(),
                         fixture.terraSenseSource(), fixture.templateSource(), catalog));
 
         assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
@@ -928,7 +961,7 @@ class CityBlueprintServiceTest {
         recipe.addProperty("channelWidthBlocks", 2);
         recipe.addProperty("fieldAfterBlocks", 4);
 
-        new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+        validationService().prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), catalog);
         JsonObject snapshot = JsonParser.parseString(Files.readString(fixture.runDir()
                 .resolve("city_blueprint_" + safe(fixture.cityId()))
@@ -942,7 +975,7 @@ class CityBlueprintServiceTest {
     @Test
     void oldResidualPolicyIsRejectedInsteadOfSilentlyMigrated() throws Exception {
         Fixture fixture = fixture("run_old_residual", "city:old_residual");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
@@ -957,7 +990,7 @@ class CityBlueprintServiceTest {
     @Test
     void spatialGroundRejectsRemovedMaterialAuthorityFields() throws Exception {
         Fixture fixture = fixture("run_spatial_ground_material", "city:spatial_ground_material");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
@@ -976,7 +1009,7 @@ class CityBlueprintServiceTest {
     @Test
     void rejectsUnknownFoundationProfile() throws Exception {
         Fixture fixture = fixture("run_unknown_foundation", "city:unknown_foundation");
-        CityBlueprintService service = new CityBlueprintService();
+        CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
@@ -999,7 +1032,7 @@ class CityBlueprintServiceTest {
                 .addProperty("closeRadiusBlocks", 1);
 
         CityBlueprintContractException failure = assertThrows(CityBlueprintContractException.class,
-                () -> new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+                () -> validationService().prepare(temporary, fixture.runId(), fixture.cityId(),
                         fixture.terraSenseSource(), fixture.templateSource(), catalog));
 
         assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
@@ -1014,7 +1047,7 @@ class CityBlueprintServiceTest {
                 .getAsJsonObject("parcelStyle").addProperty("minSharedBoundaryBlocks", 1000);
 
         CityBlueprintContractException failure = assertThrows(CityBlueprintContractException.class,
-                () -> new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+                () -> validationService().prepare(temporary, fixture.runId(), fixture.cityId(),
                         fixture.terraSenseSource(), fixture.templateSource(), catalog));
 
         assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
@@ -1028,7 +1061,7 @@ class CityBlueprintServiceTest {
         catalog.addProperty("schema", "obsolete_city_blueprint_reference_catalog");
 
         CityBlueprintContractException failure = assertThrows(CityBlueprintContractException.class,
-                () -> new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+                () -> validationService().prepare(temporary, fixture.runId(), fixture.cityId(),
                         fixture.terraSenseSource(), fixture.templateSource(), catalog));
 
         assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_SCHEMA_UNSUPPORTED,

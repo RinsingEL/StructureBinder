@@ -16,6 +16,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandUseMicroGraderTest {
     @Test
+    void frozenPlatformCapsDeepCanyonAndCutsPeakWithoutChangingDesignHeight() {
+        var mask = gradingMask().stream().map(cell -> new CityLandUseChunkCompiler.GradingMaskCell(
+                cell.areaId(), cell.x(), cell.z(), true, 68)).toList();
+        var deck = CityLandUseMicroGrader.planFoundation(fragment(mask), new FakeTerrain(-50));
+        assertEquals(68, deck.get(0).targetY());
+        assertEquals(CityLandUseMicroGrader.FoundationMode.DECK, deck.get(0).mode());
+        var cut = CityLandUseMicroGrader.planFoundation(fragment(mask), new FakeTerrain(130));
+        assertEquals(68, cut.get(0).targetY());
+        assertEquals(CityLandUseMicroGrader.FoundationMode.CUT, cut.get(0).mode());
+    }
+
+    @Test
     void frozenPlatformDoesNotFollowAnOwnerWhoseEntireTerrainIsPitBottom() {
         var mask = gradingMask().stream().map(cell -> new CityLandUseChunkCompiler.GradingMaskCell(
                 cell.areaId(),cell.x(),cell.z(),true,68)).toList();
