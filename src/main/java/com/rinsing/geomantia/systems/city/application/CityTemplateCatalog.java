@@ -110,10 +110,9 @@ public final class CityTemplateCatalog {
                 throw new CatalogException("CITY_TEMPLATE_CATALOG_TRANSFORM_LIST_EMPTY",
                         "allowedRotations and allowedMirrors must not be empty.");
             }
-            if (clearanceBlocks < 0) {
-                throw new CatalogException("CITY_TEMPLATE_CATALOG_CLEARANCE_INVALID",
-                        "clearanceBlocks must be non-negative.");
-            }
+            // Legacy input component retained for source/catalog compatibility only.
+            // Collision is the real template footprint; spacing belongs to the layout.
+            clearanceBlocks = 0;
         }
 
         public int width() {

@@ -238,7 +238,7 @@ public final class CityStructureAnchorPlanner {
         String mirror = firstTemplateString(source, nested, "mirror", "").toUpperCase(Locale.ROOT);
         CityTemplatePlacementGeometry.Size templateSize = firstTemplateSize(source, nested);
         BlockBounds suppliedFootprint = firstTemplateBounds(source, nested, "actualFootprint", "templateFootprint");
-        int clearance = Math.max(0, intValue(source, "clearanceBlocks", 0));
+        int clearance = 0; // Legacy inline templates also use exact footprint collision.
         int maskMargin = Math.max(0, intValue(source, "maskMarginBlocks", DEFAULT_MASK_MARGIN_BLOCKS));
         List<String> errors = new ArrayList<>();
         if (templateRef.isBlank()) errors.add("TEMPLATE_REF_MISSING");

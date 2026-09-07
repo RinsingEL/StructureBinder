@@ -17,6 +17,16 @@ class CityTemplateCatalogTest {
     private final CityTemplateCatalogLoader loader = new CityTemplateCatalogLoader();
 
     @Test
+    void legacyClearanceIsIgnoredAndNoLongerRequired() {
+        String json = catalogJson("[]");
+        assertEquals(0, loader.load(json.replace("\"clearanceBlocks\": 2", "\"clearanceBlocks\": 100"))
+                .templates().get(0).clearanceBlocks());
+        var object = com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+        object.getAsJsonArray("templates").get(0).getAsJsonObject().remove("clearanceBlocks");
+        assertEquals(0, loader.load(object).templates().get(0).clearanceBlocks());
+    }
+
+    @Test
     void parsesCatalogAndTemplateFields() {
         CityTemplateCatalog catalog = loader.load(catalogJson("""
                 {"x": 1, "z": 2, "direction": "NORTH"}
@@ -31,7 +41,7 @@ class CityTemplateCatalogTest {
         assertEquals(4, template.width());
         assertEquals(6, template.height());
         assertEquals(3, template.depth());
-        assertEquals(2, template.clearanceBlocks());
+        assertEquals(0, template.clearanceBlocks());
         assertEquals(1, template.roadEntrances().size());
         assertEquals(CityTemplateTerrainPosePolicy.STRUCTURE_START_BEARD_THIN,
                 template.terrainPosePolicy());

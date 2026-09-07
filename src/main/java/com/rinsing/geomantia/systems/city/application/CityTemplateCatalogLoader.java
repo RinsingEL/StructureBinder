@@ -95,10 +95,8 @@ public final class CityTemplateCatalogLoader {
         List<CityTemplatePlacementGeometry.RoadEntrance> entrances = parseEntrances(object, size, index);
         String terrainPosePolicy = requiredString(object, "terrainPosePolicy");
         String supportPolicy = requiredString(object, "supportPolicy");
-        int clearanceBlocks = requiredInt(object, "clearanceBlocks", "CITY_TEMPLATE_CATALOG_CLEARANCE_INVALID");
-        if (clearanceBlocks < 0) {
-            throw fail("CITY_TEMPLATE_CATALOG_CLEARANCE_INVALID", "clearanceBlocks must be non-negative.");
-        }
+        // Optional, deprecated field: old snapshots must not re-enable the removed halo.
+        int clearanceBlocks = 0;
         try {
             return new CityTemplateCatalog.Template(buildingSemantic, style, templateId, nbtFile, contentHash,
                     variantId, size, rotations, mirrors, entrances, terrainPosePolicy, supportPolicy,

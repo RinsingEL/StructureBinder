@@ -66,7 +66,7 @@ final class CityPlanningDecisionView {
                     JsonObject size = template.getAsJsonObject("rawSize");
                     JsonArray dimensions = new JsonArray();
                     for (String key : List.of("width", "height", "depth")) dimensions.add(size.get(key));
-                    dimensions.add(template.has("clearanceBlocks") ? template.get("clearanceBlocks").getAsInt() : 0);
+                    dimensions.add(0); // Legacy slot; template safety padding has been retired.
                     sizes.add(dimensions);
                 }
                 geometry.add(ref, sizes);
