@@ -209,6 +209,8 @@ public final class CityBlueprintService {
         }
         response.add("artifacts", artifacts);
         CityBlueprintFailureBudget.attach(response, budget, debugRoot, runId, cityId);
+        JsonObject draft = CityBlueprintDraft.current(outputDir, contextId, cityId);
+        if (draft != null) response.add("revisionEvidence", CityBlueprintDraft.evidence(draft));
         return response;
     }
 
@@ -231,6 +233,14 @@ public final class CityBlueprintService {
             JsonObject input;
             if (request.has("blueprintPatch")) {
                 if (!"EXACT_SHARES".equals(mode)) throw new IllegalArgumentException("CITY_BLUEPRINT_PATCH_REQUIRES_EXACT_SHARES");
+                if (request.has("baseDraftHash")) {
+                    if (request.has("baseBlueprintHash")) throw new IllegalArgumentException("CITY_BLUEPRINT_PATCH_BASE_EXACTLY_ONE_REQUIRED");
+                    JsonObject draft = CityBlueprintDraft.current(outputDir, contextId, cityId);
+                    if (draft == null || !draft.get("baseDraftHash").equals(request.get("baseDraftHash")))
+                        throw new IllegalArgumentException("CITY_BLUEPRINT_PATCH_BASE_STALE");
+                    input = CityBlueprintDesignInput.revise(draft.getAsJsonObject("previousBlueprint"), request.getAsJsonArray("blueprintPatch"));
+                    return submitLocked(debugRoot, runId, cityId, contextId, input, false);
+                }
                 Path blueprintPath = outputDir.resolve("city_blueprint.json");
                 if (!Files.isRegularFile(blueprintPath) || !request.has("baseBlueprintHash")
                         || !sha256(Files.readString(blueprintPath)).equals(request.get("baseBlueprintHash").getAsString()))
@@ -243,7 +253,7 @@ public final class CityBlueprintService {
                 input = CityBlueprintDesignInput.revise(readObject(blueprintPath,
                         CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_STALE), request.getAsJsonArray("blueprintPatch"));
             } else {
-                if (request.has("baseBlueprintHash")) throw new IllegalArgumentException("CITY_BLUEPRINT_PATCH_REQUIRED_WITH_BASE_HASH");
+                if (request.has("baseBlueprintHash") || request.has("baseDraftHash")) throw new IllegalArgumentException("CITY_BLUEPRINT_PATCH_REQUIRED_WITH_BASE_HASH");
                 input = request.getAsJsonObject("cityBlueprint");
             }
             return submitLocked(debugRoot, runId, cityId, contextId, input, "RELATIVE_WEIGHTS".equals(mode));
@@ -345,16 +355,26 @@ public final class CityBlueprintService {
                     "CITY_BLUEPRINT_DESIGN_COMPILER_FAILED", exception.getMessage());
         }
         if (!geometry.ok()) {
-            boolean programFailure = compilerException || CityBlueprintFailureRouting.isProgramFailure(
+            // Before acceptance, a finite candidate search has not established a user-adjustable constraint.
+            boolean programFailure = compilerException
+                    || "CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT".equals(geometry.reasonCode())
+                    || CityBlueprintFailureRouting.isProgramFailure(
                     geometry.reasonCode(), geometry.compileTrace());
+            JsonObject feedback = CityDesignFailureFeedback.summarize(canonical, geometry.compileTrace(), geometry.reasonCode());
+            String fieldPath = feedback.getAsJsonArray("failures").isEmpty() ? "$.groups"
+                    : feedback.getAsJsonArray("failures").get(0).getAsJsonObject().get("fieldPath").getAsString();
             JsonObject rejected = failure(debugRoot, cityId, contextId, reportPath, tracePath,
                     programFailure ? CityBlueprintReasonCode.CITY_BLUEPRINT_DESIGN_COMPILER_FAILED
-                            : CityBlueprintReasonCode.CITY_BLUEPRINT_DESIGN_GEOMETRY_INVALID, "$.groups",
+                            : CityBlueprintReasonCode.CITY_BLUEPRINT_DESIGN_GEOMETRY_INVALID, fieldPath,
                     geometry.reasonCode() + ": " + geometry.message(), budget, runId);
             Path geometryRejectionPath = outputDir.resolve("city_blueprint_geometry_rejection_trace.json");
             writeAtomic(geometryRejectionPath, geometry.compileTrace());
             rejected.addProperty("designGeometryTraceRef", ref(debugRoot, geometryRejectionPath));
             rejected.addProperty("designGeometryReasonCode", geometry.reasonCode());
+            rejected.add("designFeedback", feedback);
+            JsonObject draft = CityBlueprintDraft.create(outputDir, contextId, canonical, feedback, programFailure);
+            writeAtomic(outputDir.resolve(CityBlueprintDraft.FILE), draft);
+            rejected.add("revisionEvidence", CityBlueprintDraft.evidence(draft));
             if (programFailure) {
                 Path proposalPath = outputDir.resolve("city_blueprint_blocked_proposal.json");
                 writeAtomic(proposalPath, canonical);
@@ -381,6 +401,9 @@ public final class CityBlueprintService {
             writeAtomic(acceptedReportPath, report);
             trace.addProperty("cityBlueprintHash", sha256(Files.readString(blueprintPath)));
             writeAtomic(acceptedTracePath, trace);
+            JsonObject retiredDraft = new JsonObject();
+            retiredDraft.addProperty("status", "superseded_by_acceptance");
+            writeAtomic(outputDir.resolve(CityBlueprintDraft.FILE), retiredDraft);
         }
         JsonObject response = response(debugRoot, true, report, trace, blueprintPath,
                 acceptedReportPath, acceptedTracePath);

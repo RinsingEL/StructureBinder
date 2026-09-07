@@ -12,6 +12,20 @@ final class CityRevisionEvidence {
     private CityRevisionEvidence() { }
 
     static JsonObject load(Path debugRoot, JsonObject context, JsonObject budget) throws IOException {
+        if (!context.has("runId") || !context.has("cityId") || !context.has("contextId")) {
+            if ((!budget.has("failureCount") || budget.get("failureCount").getAsInt() == 0)
+                    && !budget.has("previousContextId")) return null;
+            throw new IOException("PLANNING_REVISION_IDENTITY_INVALID");
+        }
+        Path currentRoot = debugRoot.toRealPath();
+        Path currentDirectory = currentRoot.resolve(identity(context, "runId")).resolve("city_test_runs")
+                .resolve(identity(context, "cityId")).resolve("steps/blueprint");
+        if (Files.isDirectory(currentDirectory)) {
+            if (!currentDirectory.toRealPath().startsWith(currentRoot)) throw new IOException("PLANNING_REVISION_EVIDENCE_OUTSIDE_WORLD");
+            JsonObject draft = com.rinsing.geomantia.systems.city.application.CityBlueprintDraft.current(
+                    currentDirectory, string(context, "contextId"), identity(context, "cityId"));
+            if (draft != null) return com.rinsing.geomantia.systems.city.application.CityBlueprintDraft.evidence(draft);
+        }
         if ((!budget.has("failureCount") || budget.get("failureCount").getAsInt() == 0)
                 && !budget.has("previousContextId")) return null;
         Path root = debugRoot.toRealPath();

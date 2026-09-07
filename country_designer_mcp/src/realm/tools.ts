@@ -1090,7 +1090,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_submit_d4_blueprint",
-    description: "提交 cityBlueprint 或 blueprintPatch（二选一）。schema/cityId/sourceD3Ref/catalogSnapshotRef/generationSeed 可省略，由宿主绑定；显式冲突仍拒绝。proportionMode=RELATIVE_WEIGHTS 时，程序把功能区、内部空间、景观角色的占比字段按相对权重归一化，再执行原有作者白名单和安全校验。默认 EXACT_SHARES 不归一化。局部修订使用 baseBlueprintHash + replace-only JSON Pointer blueprintPatch，必须用 EXACT_SHARES；未知路径或过期哈希拒绝。AI 仍负责全部设计选择，不读取源码、项目文档或原始 run 文件。",
+    description: "提交 cityBlueprint 或 blueprintPatch（二选一）。schema/cityId/sourceD3Ref/catalogSnapshotRef/generationSeed 可省略，由宿主绑定；显式冲突仍拒绝。proportionMode=RELATIVE_WEIGHTS 归一化占比后执行作者白名单与安全校验；默认 EXACT_SHARES。局部修订使用返回的 baseDraftHash（拒绝草稿）或 baseBlueprintHash（已接受蓝图），二者不可同填，配合 replace-only JSON Pointer blueprintPatch，必须用 EXACT_SHARES。未知路径或过期哈希拒绝。直接读取 designFeedback 和 validationReport.issues.constraint；无可证明的参数修正时不盲改。AI 不读取源码、项目文档或原始 run 文件。",
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: {
@@ -1100,6 +1100,7 @@ export const realmTools: ToolDefinition[] = [
         cityBlueprint: cityBlueprintSchema,
         proportionMode: { type: "string", enum: ["EXACT_SHARES", "RELATIVE_WEIGHTS"] },
         baseBlueprintHash: nonEmptyString("当前接受蓝图的 submissionTrace.cityBlueprintHash。"),
+        baseDraftHash: nonEmptyString("最近拒绝草稿的 revisionEvidence.baseDraftHash；与 baseBlueprintHash 二选一，配合 blueprintPatch 局部修订。草稿不是已接受几何。程序故障不得盲重试。"),
         blueprintPatch: { type: "array", minItems: 1, maxItems: 128,
           items: strictObject({ op: { type: "string", enum: ["replace"] }, path: nonEmptyString("已有字段的 JSON Pointer，如 /groups/0/densityClass。"), value: {} }, ["op", "path", "value"]) },
         autoAdvanceAfterD4: { type: "boolean", description: "默认 true；D4 接受后自动进入程序队列，推进到 WAITING_FOR_GENERATION。false 仅提交 Blueprint。" },

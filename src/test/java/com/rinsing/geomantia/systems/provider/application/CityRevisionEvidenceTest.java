@@ -12,6 +12,23 @@ import static org.junit.jupiter.api.Assertions.*;
 class CityRevisionEvidenceTest {
     @TempDir Path root;
 
+    @Test void rejectedFirstDraftIsInjectedEvenWithZeroCompileFailures() throws Exception {
+        Path directory = root.resolve("run_1/city_test_runs/city_1/steps/blueprint");
+        Files.createDirectories(directory);
+        JsonObject blueprint = json("{cityId:'city_1',groups:[{groupId:'market'}]}");
+        JsonObject draft = com.rinsing.geomantia.systems.city.application.CityBlueprintDraft.create(directory,
+                "frozen", blueprint, json("{failures:[{groupId:'market',structureRef:'flower'}]}"), true);
+        Files.writeString(directory.resolve(com.rinsing.geomantia.systems.city.application.CityBlueprintDraft.FILE), draft.toString());
+        JsonObject result = CityRevisionEvidence.load(root,
+                json("{runId:'run_1',cityId:'city_1',contextId:'frozen'}"), json("{failureCount:0}"));
+        assertEquals(blueprint, result.get("previousBlueprint"));
+        assertTrue(result.has("baseDraftHash"));
+        assertFalse(result.has("baseBlueprintHash"));
+        assertTrue(result.toString().contains("flower"));
+        assertNull(CityRevisionEvidence.load(root,
+                json("{runId:'run_1',cityId:'city_1',contextId:'new-context'}"), json("{failureCount:0}")));
+    }
+
     @Test void firstDesignNeedsNoOldArtifacts() throws Exception {
         assertNull(CityRevisionEvidence.load(root, new JsonObject(), new JsonObject()));
     }

@@ -1,0 +1,117 @@
+{
+  "schema": "city_design_failure_feedback.v1",
+  "reasonCode": "CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT",
+  "capacityInsufficiencyProven": false,
+  "failures": [
+    {
+      "groupId": "g_market_district",
+      "structureRef": "geomantia:city/stubbs/commercial/flower_shop_01",
+      "fieldPath": "$.groups[1]",
+      "jsonPointer": "/groups/1",
+      "attemptCount": 144,
+      "filterReasonCounts": {
+        "D4_ARRAY_COUNT_UNSATISFIED": 144,
+        "OCCUPIED_ENVELOPE_OVERLAP": 1,
+        "GROUP_CONNECTIVITY_GAP_EXCEEDED": 23,
+        "ARRAY_COMPOSITION_SLOT_EXCEEDED": 19
+      },
+      "positionSamples": [
+        {
+          "itemIndex": 1,
+          "templateId": "geomantia:city/stubbs/commercial/flower_shop_01",
+          "anchorBlock": {
+            "x": 2200,
+            "z": 5064
+          },
+          "reasonCode": "OCCUPIED_ENVELOPE_OVERLAP",
+          "pattern": "organic_compact",
+          "pivotPatchId": "minecraft:overworld:step.16:city.city_realm_grainmark_capital:p.2"
+        },
+        {
+          "itemIndex": 1,
+          "templateId": "geomantia:city/stubbs/commercial/flower_shop_01",
+          "anchorBlock": {
+            "x": 2168,
+            "z": 5016
+          },
+          "reasonCode": "GROUP_CONNECTIVITY_GAP_EXCEEDED",
+          "pattern": "organic_compact",
+          "pivotPatchId": "minecraft:overworld:step.16:city.city_realm_grainmark_capital:p.2"
+        },
+        {
+          "itemIndex": 1,
+          "templateId": "geomantia:city/stubbs/commercial/flower_shop_01",
+          "anchorBlock": {
+            "x": 2165,
+            "z": 5013
+          },
+          "reasonCode": "GROUP_CONNECTIVITY_GAP_EXCEEDED",
+          "pattern": "organic_compact",
+          "pivotPatchId": "minecraft:overworld:step.16:city.city_realm_grainmark_capital:p.2"
+        },
+        {
+          "itemIndex": 1,
+          "templateId": "geomantia:city/stubbs/commercial/flower_shop_01",
+          "anchorBlock": {
+            "x": 2171,
+            "z": 5019
+          },
+          "reasonCode": "GROUP_CONNECTIVITY_GAP_EXCEEDED",
+          "pattern": "organic_compact",
+          "pivotPatchId": "minecraft:overworld:step.16:city.city_realm_grainmark_capital:p.2"
+        },
+        {
+          "itemIndex": 1,
+          "templateId": "geomantia:city/stubbs/commercial/flower_shop_01",
+          "anchorBlock": {
+            "x": 2165,
+            "z": 5019
+          },
+          "reasonCode": "GROUP_CONNECTIVITY_GAP_EXCEEDED",
+          "pattern": "organic_compact",
+          "pivotPatchId": "minecraft:overworld:step.16:city.city_realm_grainmark_capital:p.2"
+        },
+        {
+          "itemIndex": 1,
+          "templateId": "geomantia:city/stubbs/commercial/flower_shop_01",
+          "anchorBlock": {
+            "x": 2171,
+            "z": 5013
+          },
+          "reasonCode": "GROUP_CONNECTIVITY_GAP_EXCEEDED",
+          "pattern": "organic_compact",
+          "pivotPatchId": "minecraft:overworld:step.16:city.city_realm_grainmark_capital:p.2"
+        },
+        {
+          "itemIndex": 1,
+          "templateId": "geomantia:city/stubbs/commercial/flower_shop_01",
+          "anchorBlock": {
+            "x": 2248,
+            "z": 5055
+          },
+          "reasonCode": "GROUP_CONNECTIVITY_GAP_EXCEEDED",
+          "pattern": "organic_compact",
+          "pivotPatchId": "minecraft:overworld:step.16:city.city_realm_grainmark_capital:p.2"
+        },
+        {
+          "itemIndex": 1,
+          "templateId": "geomantia:city/stubbs/commercial/flower_shop_01",
+          "anchorBlock": {
+            "x": 2245,
+            "z": 5052
+          },
+          "reasonCode": "GROUP_CONNECTIVITY_GAP_EXCEEDED",
+          "pattern": "organic_compact",
+          "pivotPatchId": "minecraft:overworld:step.16:city.city_realm_grainmark_capital:p.2"
+        }
+      ],
+      "positionSamplesAreExhaustive": false,
+      "hardBlocks": [
+        "D4_ARRAY_COUNT_UNSATISFIED: g_market_district_required_002 could not place 1 non-overlapping structures in candidatePatchRefs."
+      ],
+      "instruction": "The solver found no placement for this required structure. These are rejected candidate positions, not proof that the district is too small. Preserve required content and unaffected groups. Do not guess a minimum width, enlarge the city blindly, or change unrelated parameters; host diagnosis is required."
+    }
+  ],
+  "parameterAdjustments": [],
+  "instruction": "Only measured constraints may produce numeric parameter adjustments. Empty parameterAdjustments means no proven parameter correction is available, not permission to invent one. The full trace is archival; use this inline evidence without filesystem access."
+}

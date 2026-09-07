@@ -27,6 +27,8 @@ test("publishes the program-only context tool and retryable structure plus outdo
   assert.ok(!submit.inputSchema.required.includes("cityBlueprint"));
   assert.ok(!submit.inputSchema.properties.cityBlueprint.required.includes("sourceD3Ref"));
   assert.deepEqual(submit.inputSchema.properties.blueprintPatch.items.properties.op.enum, ["replace"]);
+  assert.equal(submit.inputSchema.properties.baseDraftHash.type, "string");
+  assert.match(submit.inputSchema.properties.baseDraftHash.description, /拒绝草稿/);
   assert.match(autoStatus.description, /workflowResponse/);
   assert.match(autoStatus.description, /禁止转去读取服务端源码/);
   assert.match(designQueueStatus.description, /waiting_for_patch_review/);

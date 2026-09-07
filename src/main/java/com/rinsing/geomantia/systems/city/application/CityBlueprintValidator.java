@@ -349,8 +349,10 @@ public final class CityBlueprintValidator {
             }
             if (landscapeProfile != null && (landscape.parcelCount() < landscapeProfile.parcelStyle().parcelCountMin()
                     || landscape.parcelCount() > landscapeProfile.parcelStyle().parcelCountMax())) {
-                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
-                        path + ".parcelCount", "parcelCount is outside the selected Profile range.");
+                measured(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
+                        path + ".parcelCount", "parcelCount", landscape.parcelCount(),
+                        landscapeProfile.parcelStyle().parcelCountMin(), landscapeProfile.parcelStyle().parcelCountMax(),
+                        "Adjust this parcelCount to the author's inclusive range; preserve other landscapes.");
             }
             for (int patchIndex = 0; patchIndex < landscape.preferredPatchRefs().size(); patchIndex++) {
                 String ref = landscape.preferredPatchRefs().get(patchIndex);
@@ -426,16 +428,17 @@ public final class CityBlueprintValidator {
                         "Ordered region stages must contain every role declared by the selected fill profile.");
             }
             if (!Double.isFinite(shareSum) || Math.abs(shareSum - 1.0) > 1.0e-6) {
-                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
-                        variantPath + ".roleShares", "targetShare values must sum to 1.0.");
+                measured(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
+                        variantPath + ".roleShares", "sum(targetShare)", shareSum, 1.0, 1.0,
+                        "Adjust these stage shares together to sum to 1; preserve the authored role ranges. Sum tolerance is 0.000001.");
             }
             for (CityBlueprintReferenceCatalog.FillRole role : profile.roles().values()) {
                 double aggregate = aggregateShares.getOrDefault(role.roleRef(), 0.0);
                 if (!Double.isFinite(aggregate) || aggregate < role.minShare() || aggregate > role.maxShare()) {
-                    add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
-                            variantPath + ".roleShares",
-                            "All stages for role " + role.roleRef()
-                                    + " must aggregate within its configured share range.");
+                    measured(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
+                            variantPath + ".roleShares", "sum(targetShare where roleRef=" + role.roleRef() + ")",
+                            aggregate, role.minShare(), role.maxShare(),
+                            "Adjust only stages for this role and rebalance the local total to 1; do not change other districts.");
                 }
             }
             Set<String> contentRefs = new HashSet<>();
@@ -524,6 +527,19 @@ public final class CityBlueprintValidator {
         issues.add(new Issue(reason, path, message));
     }
 
+    private static void measured(List<Issue> issues, CityBlueprintReasonCode reason, String path,
+                                 String measurement, double actual, double minimum, double maximum, String instruction) {
+        JsonObject constraint = new JsonObject();
+        constraint.addProperty("measurement", measurement);
+        if (Double.isFinite(actual)) constraint.addProperty("actual", actual);
+        else constraint.addProperty("actualNonFinite", true);
+        constraint.addProperty("minimumInclusive", minimum);
+        constraint.addProperty("maximumInclusive", maximum);
+        constraint.addProperty("instruction", instruction);
+        issues.add(new Issue(reason, path, measurement + " is " + actual + "; required range ["
+                + minimum + ", " + maximum + "]. " + instruction, constraint));
+    }
+
     public record ExpectedContext(String cityId, CityBlueprint.ArtifactRef sourceD3Ref,
                                   CityBlueprint.ArtifactRef catalogSnapshotRef, Set<String> patchRefs) {
         public ExpectedContext {
@@ -531,12 +547,16 @@ public final class CityBlueprintValidator {
         }
     }
 
-    public record Issue(CityBlueprintReasonCode reasonCode, String fieldPath, String message) {
+    public record Issue(CityBlueprintReasonCode reasonCode, String fieldPath, String message, JsonObject constraint) {
+        public Issue(CityBlueprintReasonCode reasonCode, String fieldPath, String message) {
+            this(reasonCode, fieldPath, message, null);
+        }
         public JsonObject asJson() {
             JsonObject object = new JsonObject();
             object.addProperty("reasonCode", reasonCode.name());
             object.addProperty("fieldPath", fieldPath);
             object.addProperty("message", message);
+            if (constraint != null) object.add("constraint", constraint.deepCopy());
             return object;
         }
     }

@@ -24,6 +24,60 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CityBlueprintServiceTest {
+    @Test void authorRangeFailureReturnsActualLimitAndLocalInstruction() throws Exception {
+        Fixture f = fixture("run_numeric_feedback", "city:numeric_feedback");
+        var service = validationService();
+        var prepared = service.prepare(temporary, f.runId(), f.cityId(), f.terraSenseSource(), f.templateSource(), f.referenceCatalog());
+        var design = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+        var landscape = landscapeWithFill("landscape:farmland_fenced", "fill:relay_irrigated_farmland",
+                "[{roleRef:'CULTIVATED',growthForm:'PATCH',targetShare:0.8},{roleRef:'BANK',growthForm:'CORRIDOR',targetShare:0.1},{roleRef:'WATER',growthForm:'CORRIDOR',targetShare:0.1}]",
+                "[{contentRef:'crop:wheat',weight:1}]");
+        landscape.addProperty("parcelCount", 99);
+        design.getAsJsonObject("outdoorPlan").getAsJsonArray("landscapes").add(landscape);
+        var response = service.submit(temporary, f.runId(), f.cityId(), prepared.get("contextId").getAsString(), design);
+        var issue = response.getAsJsonObject("validationReport").getAsJsonArray("issues").asList().stream()
+                .map(JsonElement::getAsJsonObject).filter(i -> i.get("fieldPath").getAsString().endsWith(".parcelCount"))
+                .findFirst().orElseThrow();
+        var constraint = issue.getAsJsonObject("constraint");
+        assertEquals(99, constraint.get("actual").getAsInt());
+        assertEquals(1, constraint.get("minimumInclusive").getAsInt());
+        assertEquals(12, constraint.get("maximumInclusive").getAsInt());
+        assertTrue(constraint.get("instruction").getAsString().contains("parcelCount"));
+    }
+
+    @Test
+    void rejectedDraftCanBePatchedBeforeAnyAcceptanceAndSurvivesPrepare() throws Exception {
+        Fixture f = fixture("run_draft", "city:draft");
+        var service = new CityBlueprintService((root, run, city, proposal) -> {
+            if ("corrected theme".equals(proposal.getAsJsonObject("designIntent").get("theme").getAsString()))
+                return CityBlueprintCompilerService.CompilationResult.compiled(new JsonObject(), new JsonObject(),
+                        new JsonObject(), new JsonObject(), new JsonObject(), new JsonObject());
+            return CityBlueprintCompilerService.CompilationResult.failed(new JsonObject(), "CAPACITY_INSUFFICIENT", "fixture rejection");
+        });
+        var prepared = service.prepare(temporary, f.runId(), f.cityId(), f.terraSenseSource(), f.templateSource(), f.referenceCatalog());
+        String context = prepared.get("contextId").getAsString();
+        var original = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+        var rejected = service.submit(temporary, f.runId(), f.cityId(), context, original);
+        assertFalse(rejected.get("ok").getAsBoolean());
+        assertEquals(0, rejected.get("failureCount").getAsInt());
+        var evidence = rejected.getAsJsonObject("revisionEvidence");
+        assertEquals(original, evidence.get("previousBlueprint"));
+        var resumed = service.prepare(temporary, f.runId(), f.cityId(), f.terraSenseSource(), f.templateSource(), f.referenceCatalog());
+        assertEquals(evidence, resumed.get("revisionEvidence"));
+        JsonObject request = new JsonObject();
+        request.add("baseDraftHash", evidence.get("baseDraftHash"));
+        request.add("blueprintPatch", JsonParser.parseString("[{op:'replace',path:'/designIntent/theme',value:'corrected theme'}]"));
+        request.addProperty("baseBlueprintHash", "not allowed too");
+        assertThrows(IllegalArgumentException.class, () -> service.submitDesign(temporary, f.runId(), f.cityId(), context, request));
+        request.remove("baseBlueprintHash");
+        var accepted = service.submitDesign(temporary, f.runId(), f.cityId(), context, request);
+        assertTrue(accepted.get("ok").getAsBoolean());
+        JsonObject stored = JsonParser.parseString(Files.readString(f.runDir().resolve("city_blueprint_city_draft/city_blueprint.json"))).getAsJsonObject();
+        assertEquals(original.get("groups"), stored.get("groups"));
+        assertEquals(original.get("generationSeed"), stored.get("generationSeed"));
+        assertThrows(IllegalArgumentException.class, () -> service.submitDesign(temporary, f.runId(), f.cityId(), context, request));
+    }
+
     @Test
     void rejectedGeometryOrCompilerBugNeverReplacesAnAcceptedRevision() throws Exception {
         Fixture f = fixture("run_design_preflight", "city:design_preflight");
@@ -42,6 +96,14 @@ class CityBlueprintServiceTest {
         var rejected = invalid.submit(temporary, f.runId(), f.cityId(), id, design);
         assertFalse(rejected.get("ok").getAsBoolean());
         assertEquals("CAPACITY_INSUFFICIENT", rejected.get("designGeometryReasonCode").getAsString());
+        var exhausted = new CityBlueprintService((root, run, city, proposal) ->
+                CityBlueprintCompilerService.CompilationResult.failed(new JsonObject(),
+                        "CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT", "finite candidates exhausted"));
+        var noPlacement = exhausted.submit(temporary, f.runId(), f.cityId(), id, design);
+        assertEquals("program", noPlacement.get("failureOwner").getAsString());
+        assertEquals("stop_for_human_review", noPlacement.get("nextAction").getAsString());
+        assertTrue(noPlacement.has("designFeedback"));
+        assertFalse(noPlacement.getAsJsonObject("designFeedback").get("capacityInsufficiencyProven").getAsBoolean());
         var broken = new CityBlueprintService((root, run, city, proposal) -> { throw new IllegalStateException("compiler bug"); });
         var blocked = broken.submit(temporary, f.runId(), f.cityId(), id, design);
         assertEquals("program", blocked.get("failureOwner").getAsString());

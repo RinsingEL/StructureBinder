@@ -115,7 +115,7 @@ final class ProviderPlanningToolCatalog {
                     object(properties("runId", string(), "citySeedId", string())));
             case "city_submit_d4_blueprint" -> function(name,
                     "Submit a CityBlueprint, or use blueprintPatch (replace-only JSON Pointer operations) with "
-                            + "baseBlueprintHash from revisionEvidence to change only affected fields. Exactly one input is allowed. "
+                            + "baseBlueprintHash (accepted) or baseDraftHash (rejected draft) from revisionEvidence to change only affected fields. Never send both hashes. Exactly one input is allowed. "
                             + "The host fills omitted schema/cityId/sourceD3Ref/catalogSnapshotRef/generationSeed; conflicting explicit identities are rejected. "
                             + "proportionMode=RELATIVE_WEIGHTS normalizes group, spaceComposition and landscape role shares before the unchanged author validation. "
                             + "Patches use EXACT_SHARES only. Canonical root fields are "
@@ -179,7 +179,7 @@ final class ProviderPlanningToolCatalog {
                 "runId", string(), "citySeedId", string(), "contextId", string(),
                 "cityBlueprint", blueprint, "autoAdvanceAfterD4", bool(),
                 "proportionMode", enumeration("EXACT_SHARES", "RELATIVE_WEIGHTS"),
-                "baseBlueprintHash", string(),
+                "baseBlueprintHash", string(), "baseDraftHash", string(),
                 "blueprintPatch", nonEmptyArray(object(properties("op", enumeration("replace"), "path", string(),
                         "value", new JsonObject()), "op", "path", "value"))),
                 "contextId");

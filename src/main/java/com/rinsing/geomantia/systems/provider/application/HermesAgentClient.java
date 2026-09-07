@@ -42,7 +42,8 @@ final class HermesAgentClient implements ProviderAgentClient {
             when new deterministic work is available. Never poll a background compilation; the host will wake you.
             For City D4, only CONNECTION creates a terrain-routed main road. Keep non-isolated groups in one reachable
             relation network and use explicit CONNECTION edges for actual destinations. Submit a complete initial blueprint.
-            For local revision prefer blueprintPatch + baseBlueprintHash; preserve other groups and the generation seed.
+            For local revision use blueprintPatch with the returned baseDraftHash (rejected draft) or baseBlueprintHash
+            (accepted blueprint), never both; preserve other groups and the generation seed. Use inline designFeedback.
             Nearby eligible arrays can connect automatically; explicit HARD relations still require satisfaction.
             Structure functions and styles are authored by the modpack creator before play. Never infer or relabel
             them from names or images. Select from the supplied authored metadata to form functional civilizations.
