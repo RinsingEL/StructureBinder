@@ -24,7 +24,7 @@ final class CityCandidateMemo {
     CityCandidateMemo(Path directory, String context) { this.directory = directory; this.context = context; }
 
     String key(JsonObject inputs) {
-        return hash("candidate-memo-v1\n" + context + "\n" + inputs);
+        return hash("candidate-memo-v2-design-boundaries\n" + context + "\n" + inputs);
     }
 
     CityStructureArrayCandidatePlanner.Result load(String key) {

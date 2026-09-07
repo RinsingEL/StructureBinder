@@ -105,6 +105,9 @@ public final class CityLandUseChunkExecutor {
             if (delta != 0 && !column.naturalSurface()
                     && !"minecraft:water".equals(column.surfaceBlockId())
                     && !"minecraft:lava".equals(column.surfaceBlockId())) {
+                LOGGER.warn("Frozen road grade conflict: city={}, owner={},{} column={},{} surfaceY={} block={} targetY={} source={}",
+                        fragment.cityId(), fragment.chunkX(), fragment.chunkZ(),
+                        feature.x(), feature.z(), column.surfaceY(), column.surfaceBlockId(), targetY, feature.sourceId());
                 return ExecutionResult.failed(fragment, "CITY_ROAD_FROZEN_GRADE_TERRAIN_CONFLICT",
                         0, 0, 0, 0, true, foundationPlan);
             }
@@ -588,10 +591,8 @@ public final class CityLandUseChunkExecutor {
                     "CITY_LAND_USE_TARGET_STATE_UNAVAILABLE");
         }
         if (requireReplaceable && !target.replaceable()) {
-            if (!System.getProperty("geomantia.landUseFailureCaptureDir", "").isBlank()) {
-                LOGGER.warn("LandUse occupied target: area={} phase={} pos={},{},{} requested={} actual={}",
-                        areaId, phase, x, y, z, blockId, target.snapshot());
-            }
+            LOGGER.warn("LandUse occupied target: area={} phase={} pos={},{},{} requested={} actual={}",
+                    areaId, phase, x, y, z, blockId, target.snapshot());
             return PreparedMutation.failed(areaId, phase, x, y, z, blockId,
                     switch (phase) {
                         case BOUNDARY -> "CITY_LAND_USE_BOUNDARY_TARGET_OCCUPIED";
@@ -1121,7 +1122,28 @@ public final class CityLandUseChunkExecutor {
             int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, worldX, worldZ) - 1;
             BlockState state = getBlockState(new BlockPos(worldX, y, worldZ));
             ResourceLocation key = BuiltInRegistries.BLOCK.getKey(state.getBlock());
-            return new ColumnSample(y, key.toString(), isNaturalSurface(state));
+            boolean natural = isNaturalSurface(state);
+            if (!natural && state.is(BlockTags.LOGS)) {
+                boolean protectedFootprint = com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry
+                        .plannedStructuresForChunk(new net.minecraft.world.level.ChunkPos(worldX >> 4, worldZ >> 4))
+                        .stream().anyMatch(planned -> planned.lockedActualFootprint().contains(worldX, worldZ));
+                natural = NaturalTrunkColumn.canClear(y, protectedFootprint, sampleY -> {
+                    if (sampleY < level.getMinBuildHeight() || sampleY >= level.getMaxBuildHeight())
+                        return NaturalTrunkColumn.Cell.OTHER;
+                    BlockState sampled = getBlockState(new BlockPos(worldX, sampleY, worldZ));
+                    if (sampled.is(BlockTags.LOGS) && sampled.hasProperty(BlockStateProperties.AXIS)
+                            && sampled.getValue(BlockStateProperties.AXIS) == Direction.Axis.Y)
+                        return NaturalTrunkColumn.Cell.TRUNK;
+                    if (sampled.is(BlockTags.DIRT) || sampled.is(Blocks.MUD))
+                        return NaturalTrunkColumn.Cell.SOIL;
+                    if (sampled.is(BlockTags.LEAVES) && sampled.hasProperty(BlockStateProperties.PERSISTENT)
+                            && !sampled.getValue(BlockStateProperties.PERSISTENT))
+                        return NaturalTrunkColumn.Cell.NATURAL_LEAVES;
+                    if (sampled.isAir() || sampled.canBeReplaced()) return NaturalTrunkColumn.Cell.REPLACEABLE;
+                    return NaturalTrunkColumn.Cell.OTHER;
+                });
+            }
+            return new ColumnSample(y, key.toString(), natural);
         }
 
         @Override
@@ -1161,11 +1183,17 @@ public final class CityLandUseChunkExecutor {
          */
         static boolean isLandUseReplaceable(BlockState state) {
             return isLandUseReplaceable(state.isAir(), state.canBeReplaced(),
-                    state.getBlock() instanceof LeavesBlock || state.is(BlockTags.LEAVES));
+                    state.getBlock() instanceof LeavesBlock || state.is(BlockTags.LEAVES),
+                    state.getBlock() instanceof net.minecraft.world.level.block.BushBlock);
         }
 
         static boolean isLandUseReplaceable(boolean air, boolean replaceable, boolean leaves) {
-            return air || replaceable || leaves;
+            return isLandUseReplaceable(air, replaceable, leaves, false);
+        }
+
+        static boolean isLandUseReplaceable(boolean air, boolean replaceable, boolean leaves, boolean smallPlant) {
+            // Vanilla mushrooms/flowers can reject item placement despite being clearable vegetation.
+            return air || replaceable || leaves || smallPlant;
         }
 
         @Override

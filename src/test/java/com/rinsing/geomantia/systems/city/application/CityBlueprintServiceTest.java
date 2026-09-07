@@ -24,6 +24,29 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CityBlueprintServiceTest {
+    @Test void contradictoryHardDirectionsRejectBeforeSearchingButCompatibleAxesDoNot() throws Exception {
+        Fixture f = fixture("run_directions", "city:directions");
+        var service = validationService();
+        var prepared = service.prepare(temporary, f.runId(), f.cityId(), f.terraSenseSource(), f.templateSource(), f.referenceCatalog());
+        var design = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+        var first = design.getAsJsonArray("groups").get(0).getAsJsonObject();
+        first.addProperty("targetAreaShare", 0.5);
+        var second = first.deepCopy(); second.addProperty("groupId", "second"); second.addProperty("priority", "STANDARD");
+        design.getAsJsonArray("groups").add(second);
+        design.add("relations", JsonParser.parseString("""
+                [{fromGroupId:'civic',toGroupId:'second',relationKind:'DIRECTION',strength:'HARD',directionPreference:'NORTH'},
+                 {fromGroupId:'second',toGroupId:'civic',relationKind:'DIRECTION',strength:'HARD',directionPreference:'NORTH'}]
+                """));
+        var response = service.submit(temporary, f.runId(), f.cityId(), prepared.get("contextId").getAsString(), design);
+        var issues = response.getAsJsonObject("validationReport").getAsJsonArray("issues");
+        assertTrue(issues.toString().contains("CITY_BLUEPRINT_RELATION_CONTRADICTION"));
+        assertTrue(issues.toString().contains("$.relations[1].directionPreference"));
+        design.getAsJsonArray("relations").get(1).getAsJsonObject().addProperty("directionPreference", "EAST");
+        var compatible = service.submit(temporary, f.runId(), f.cityId(), prepared.get("contextId").getAsString(), design);
+        assertFalse(compatible.getAsJsonObject("validationReport").getAsJsonArray("issues").toString()
+                .contains("CITY_BLUEPRINT_RELATION_CONTRADICTION"));
+    }
+
     @Test void authorRangeFailureReturnsActualLimitAndLocalInstruction() throws Exception {
         Fixture f = fixture("run_numeric_feedback", "city:numeric_feedback");
         var service = validationService();

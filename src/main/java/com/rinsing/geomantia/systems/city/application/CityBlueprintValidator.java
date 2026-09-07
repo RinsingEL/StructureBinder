@@ -120,6 +120,25 @@ public final class CityBlueprintValidator {
         for (int index = 0; index < blueprint.relations().size(); index++) {
             CityBlueprint.Relation relation = blueprint.relations().get(index);
             String path = "$.relations[" + index + "]";
+            if (relation.strength() == CityBlueprint.RelationStrength.HARD
+                    && relation.relationKind() == CityBlueprint.RelationKind.DIRECTION) {
+                for (int earlier = 0; earlier < index; earlier++) {
+                    CityBlueprint.Relation previous = blueprint.relations().get(earlier);
+                    if (previous.strength() != CityBlueprint.RelationStrength.HARD
+                            || previous.relationKind() != CityBlueprint.RelationKind.DIRECTION) continue;
+                    boolean same = previous.fromGroupId().equals(relation.fromGroupId())
+                            && previous.toGroupId().equals(relation.toGroupId());
+                    boolean reversed = previous.fromGroupId().equals(relation.toGroupId())
+                            && previous.toGroupId().equals(relation.fromGroupId());
+                    var direction = reversed ? opposite(previous.directionPreference()) : previous.directionPreference();
+                    if ((same || reversed) && direction != CityBlueprint.DirectionPreference.NONE
+                            && opposite(direction) == relation.directionPreference())
+                        add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_RELATION_CONTRADICTION,
+                                path + ".directionPreference", "Conflicts with $.relations[" + earlier
+                                        + "].directionPreference: the same pair cannot satisfy opposite HARD directions. "
+                                        + "Revise one of these two relations; preserve the building groups.");
+                }
+            }
             relatedGroupIds.add(relation.fromGroupId());
             relatedGroupIds.add(relation.toGroupId());
             if (!groupIds.contains(relation.fromGroupId()) || !groupIds.contains(relation.toGroupId())) {
@@ -525,6 +544,16 @@ public final class CityBlueprintValidator {
 
     private static void add(List<Issue> issues, CityBlueprintReasonCode reason, String path, String message) {
         issues.add(new Issue(reason, path, message));
+    }
+
+    private static CityBlueprint.DirectionPreference opposite(CityBlueprint.DirectionPreference value) {
+        return switch (value) {
+            case NORTH -> CityBlueprint.DirectionPreference.SOUTH;
+            case SOUTH -> CityBlueprint.DirectionPreference.NORTH;
+            case EAST -> CityBlueprint.DirectionPreference.WEST;
+            case WEST -> CityBlueprint.DirectionPreference.EAST;
+            case NONE -> CityBlueprint.DirectionPreference.NONE;
+        };
     }
 
     private static void measured(List<Issue> issues, CityBlueprintReasonCode reason, String path,

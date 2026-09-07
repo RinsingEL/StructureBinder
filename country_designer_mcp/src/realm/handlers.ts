@@ -113,7 +113,9 @@ export const realmHandlers: Record<string, ToolHandler> = {
   },
 
   async city_submit_d4_blueprint(args) {
-    const res = await postJson(`${MC_API_URL}/realm/city/submit_d4_blueprint`, payload(args), TIMEOUTS.quick);
+    // Submission now solves and freezes design geometry, just like the compiler.
+    // A quick-request timeout can report failure while the server accepts the design.
+    const res = await postJson(`${MC_API_URL}/realm/city/submit_d4_blueprint`, payload(args), TIMEOUTS.refresh);
     return { ...planningResult(res.data), isError: res.data?.ok === false };
   },
 

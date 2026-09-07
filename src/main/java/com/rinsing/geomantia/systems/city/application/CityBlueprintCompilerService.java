@@ -39,7 +39,6 @@ public final class CityBlueprintCompilerService {
     public static final String TRACE_SCHEMA = "city_generation_compile_trace";
     public static final String EXTENT_SCHEMA = "group_extent_map";
     private static final int INTERNAL_MAX_ANCHORS_PER_GROUP = 256;
-    static final int MINIMUM_GROUP_SEPARATION_BLOCKS = 12;
 
     private final CityBlueprintCodec codec = new CityBlueprintCodec();
     private final CityBlueprintValidator validator = new CityBlueprintValidator();
@@ -3681,13 +3680,7 @@ public final class CityBlueprintCompilerService {
             String gridReservationFailure = state.gridStreetReservationFailure(footprint, layout);
             if (!gridReservationFailure.isBlank()) return gridReservationFailure;
         }
-        BlockBounds proposed = union(state.extent(), footprint);
-        if (phase != PlacementPhase.CONNECTIVITY && !state.areaExpansionActive()
-                && state.compositionSlot() != null
-                && (width(proposed) > state.formationBounds().widthBlocks()
-                || depth(proposed) > state.formationBounds().heightBlocks())) {
-            return "GROUP_EXTENT_LIMIT_EXCEEDED";
-        }
+        // Estimated district demand is a starting layout preference, never an author-owned boundary.
         if (state.anchorCount() > 0) {
             Nearest nearest = nearest(footprint, state.envelopes(), state.group().groupId());
             if (state.requiresInternalRoadGap()
@@ -3695,13 +3688,9 @@ public final class CityBlueprintCompilerService {
                     || nearest.gapBlocks() < state.layoutParameters().targetEdgeGapBlocks())) {
                 return "HARD_SKELETON_GAP_BELOW_TARGET";
             }
-            if (!state.hardSkeletonUsesExactGuides()
-                    && (nearest == null
-                    || nearest.gapBlocks() > state.layoutParameters().maximumEdgeGapBlocks())) {
-                return "GROUP_CONNECTIVITY_GAP_EXCEEDED";
-            }
+            // Preferred compactness affects ranking below; a gap is not a collision or a closed entrance.
             if (phase != PlacementPhase.CONNECTIVITY && "ORGANIC_COMPACT".equals(state.layoutAlgorithm())
-                    && nearest.gapBlocks() < 1.0) {
+                    && nearest != null && nearest.gapBlocks() < 1.0) {
                 return "ORGANIC_GAP_BELOW_ONE_BLOCK";
             }
         }
@@ -3715,7 +3704,7 @@ public final class CityBlueprintCompilerService {
             if (state.groupSeparationExemptGroupIds().contains(other.group().groupId())
                     || other.groupSeparationExemptGroupIds().contains(state.group().groupId())) continue;
             for (BlockBounds envelope : other.envelopes()) {
-                if (edgeGap(footprint, envelope) < MINIMUM_GROUP_SEPARATION_BLOCKS) return true;
+                if (footprint.overlaps(envelope)) return true;
             }
         }
         return false;
@@ -3778,11 +3767,6 @@ public final class CityBlueprintCompilerService {
                                                      Map<String, GroupState> states,
                                                      boolean connectivityExpansion) {
         BlockBounds bounds = bounds(requiredObject(candidate, "groupCollisionEnvelope"));
-        BlockBounds proposed = union(state.extent(), bounds);
-        int maxSpan = state.spatialDemand().formationSpanBlocks();
-        if (!connectivityExpansion && (width(proposed) > maxSpan || depth(proposed) > maxSpan)) {
-            return ConnectivityFit.rejected("GROUP_EXTENT_LIMIT_EXCEEDED");
-        }
         if (state.anchorCount() > 0) {
             Nearest nearest = nearest(bounds, state.envelopes(), state.group().groupId());
             if (state.hardSkeletonUsesExactGuides()) {
@@ -3790,9 +3774,7 @@ public final class CityBlueprintCompilerService {
                         nearest == null ? null : nearest.edge());
             }
             int maximumGap = state.layoutParameters().maximumEdgeGapBlocks();
-            if (nearest == null || nearest.gapBlocks() > maximumGap) {
-                return ConnectivityFit.rejected("GROUP_CONNECTIVITY_GAP_EXCEEDED");
-            }
+            if (nearest == null) return ConnectivityFit.allowed(0.0, 0.0, null);
             return ConnectivityFit.allowed(clamp01(1.0 - nearest.gapBlocks() / maximumGap),
                     nearest.gapBlocks(), nearest.edge());
         }
@@ -4912,7 +4894,7 @@ public final class CityBlueprintCompilerService {
         BlockBounds planningBounds() { return planningBounds; }
         BlockBounds formationBounds() { return formationBounds; }
         BlockBounds legalBounds(boolean connectivityExpansion) {
-            return connectivityExpansion || compositionSlot == null ? planningBounds : formationBounds;
+            return planningBounds;
         }
         BlockPoint preferredOrigin() { return preferredOrigin; }
         CompositionSlot compositionSlot() { return compositionSlot; }

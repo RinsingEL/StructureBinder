@@ -1309,9 +1309,8 @@ class CityBlueprintCompilerServiceTest {
                 if (entry.getKey().equals(groupId)) continue;
                 if (districtExemptions.getOrDefault(groupId, Set.of()).contains(entry.getKey())) continue;
                 for (JsonObject existing : entry.getValue()) {
-                    assertTrue(edgeGap(collision, existing)
-                                    >= CityBlueprintCompilerService.MINIMUM_GROUP_SEPARATION_BLOCKS,
-                            groupId + " entered the group separation buffer around " + entry.getKey());
+                    assertFalse(overlaps(collision, existing),
+                            groupId + " collided with a building in " + entry.getKey());
                 }
             }
             envelopesByGroup.computeIfAbsent(groupId, ignored -> new java.util.ArrayList<>()).add(collision);

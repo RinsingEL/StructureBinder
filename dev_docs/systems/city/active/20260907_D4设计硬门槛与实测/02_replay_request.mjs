@@ -1,0 +1,12 @@
+import {readFileSync,writeFileSync} from 'node:fs';
+import {dirname,join} from 'node:path';
+import {fileURLToPath} from 'node:url';
+const dir=dirname(fileURLToPath(import.meta.url));
+const read=p=>JSON.parse(readFileSync(p,'utf8'));
+const context=JSON.parse(read(join(dir,'01_prepare.result.json')).response.result.content[0].text);
+if(!context.ok)throw new Error('Context preparation failed');
+const request=read(join(dir,'02_submit.json'));
+request.recordName='02_submit';
+request.params.arguments.contextId=context.contextId;
+request.params.arguments.autoAdvanceAfterD4=false;
+writeFileSync(join(dir,'02_submit.json'),JSON.stringify(request,null,2));

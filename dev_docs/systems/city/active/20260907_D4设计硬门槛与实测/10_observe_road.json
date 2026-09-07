@@ -1,0 +1,1 @@
+{"recordName":"10_observe_road","method":"tools/call","params":{"name":"city_query_worldgen_observations","arguments":{"dimensionId":"minecraft:overworld","chunkX":130,"chunkZ":341,"limit":10,"includeBlocks":true}}}
