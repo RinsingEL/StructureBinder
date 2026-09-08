@@ -12,7 +12,7 @@
 
 *验证*：新增 mask/上下文/注册表回归通过；隔离 Forge GameTest 8/8 通过，包含实际 ConfiguredFeature→ServerLevel/WorldGenRegion 写入与 StructureStart 放置拦截。整合包 GUI 游玩未复验。
 
-*记录*：[任务记录](../active/20260908_落地生成隔离/任务记录.md)。
+*记录*：[任务记录](../archive/1d647ad_v0.1.0_落地生成隔离/任务记录.md)，提交 `1d647ad`。
 
 ## CITY-DL-20260906-04：新档首城台阶通路生成失败
 
