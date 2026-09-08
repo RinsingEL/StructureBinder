@@ -198,7 +198,7 @@ public final class AdventurerMapStatusReader {
             for (int column = 0; column < width; column++) {
                 double blockX = minBlockX + (column + 0.5D) * outputCellSize;
                 double blockZ = minBlockZ + (row + 0.5D) * outputCellSize;
-                if (accessPolicy.evaluate(dimensionId, blockX, blockZ).allowed()) {
+                if (accessPolicy.revealed(dimensionId, blockX, blockZ)) {
                     revealedCodes[row * width + column] = 1;
                 }
             }

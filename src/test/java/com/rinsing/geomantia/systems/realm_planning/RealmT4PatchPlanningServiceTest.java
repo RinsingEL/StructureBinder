@@ -49,6 +49,29 @@ class RealmT4PatchPlanningServiceTest {
     }
 
     @Test
+    void rejectsAnOverlappingReservationFromAnotherRealmBeforeConsumingSelection() throws Exception {
+        Path root = tempDir.resolve("cross_realm"); Path run = root.resolve("run_t4");
+        Files.createDirectories(run); writeArtifacts(run);
+        JsonObject registry = JsonParser.parseString(Files.readString(run.resolve("city_seed_registry.json"))).getAsJsonObject();
+        JsonObject neighbor = registrySeed("neighbor", "outpost", 30, 0, 1);
+        neighbor.addProperty("realmId", "realm_b"); neighbor.addProperty("theoreticalScale", "outpost");
+        registry.getAsJsonArray("citySeeds").add(neighbor);
+        Files.writeString(run.resolve("city_seed_registry.json"),registry.toString());
+        var explorer = new PatchExplorerService(root);
+        String selection = select(explorer,"cross_capital","plain","PLAIN-01");
+        var service = new RealmT4PatchPlanningService(root,(id,value)->null);
+        JsonObject request = new JsonObject(); request.addProperty("runId","run_t4");
+        request.addProperty("realmId","realm_a");request.addProperty("planningSessionId","cross_plan");
+        service.create(request);request.addProperty("patchSelectionRef",selection);
+        var failure = assertThrows(IllegalArgumentException.class,()->service.selectCapital(request));
+        assertTrue(failure.getMessage().contains("T4_CITY_PROTECTION_OVERLAP"));
+        assertTrue(failure.getMessage().contains("neighbor"));
+        JsonObject session=JsonParser.parseString(Files.readString(run.resolve("realm_t4_patch_planning_cross_plan/planning_session.json"))).getAsJsonObject();
+        assertTrue(session.getAsJsonArray("usedPatchSelectionRefs").isEmpty());
+        assertTrue(session.getAsJsonArray("citySeeds").isEmpty());
+    }
+
+    @Test
     void migratesLegacyCapitalCoordinatesToIntentWithoutInheritingTheSite() throws Exception {
         Path root = tempDir.resolve("legacy_realm_debug");
         Path run = root.resolve("run_t4");
@@ -257,9 +280,9 @@ class RealmT4PatchPlanningServiceTest {
         JsonArray cells = new JsonArray();
         for (int x = 0; x < 24; x++) {
             JsonObject cell = new JsonObject();
-            cell.addProperty("gridX", x);
+            cell.addProperty("gridX", x < 12 ? x : x + 256);
             cell.addProperty("gridZ", 0);
-            cell.addProperty("blockX", x * 16);
+            cell.addProperty("blockX", (x < 12 ? x : x + 256) * 16);
             cell.addProperty("blockZ", 0);
             cell.addProperty("continentId", "continent_0");
             cell.addProperty("patchId", x < 12 ? "plain_patch" : "upland_patch");
@@ -281,7 +304,7 @@ class RealmT4PatchPlanningServiceTest {
         JsonArray territoryCells = new JsonArray();
         for (int x = 0; x <= 20; x++) {
             JsonObject cell = new JsonObject();
-            cell.addProperty("gridX", x);
+            cell.addProperty("gridX", x < 12 ? x : x + 256);
             cell.addProperty("gridZ", 0);
             cell.addProperty("realmId", "realm_a");
             cell.addProperty("status", "owned");

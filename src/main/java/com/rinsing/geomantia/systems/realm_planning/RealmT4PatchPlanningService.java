@@ -7,6 +7,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.realm_planning.application.access.PlanningAreaAccessConfig;
+import com.rinsing.geomantia.systems.realm_planning.application.access.CityPlanningReservation;
+import com.rinsing.geomantia.systems.realm_planning.application.access.GeographicRegions;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -28,6 +30,11 @@ public final class RealmT4PatchPlanningService {
     private final PatchExplorerService patchExplorer;
     private final RegistryArtifactSynchronizer artifactSynchronizer;
     private final PlanningAreaAccessConfig accessConfig;
+    private final ReservationAvailabilityProbe availabilityProbe;
+    @FunctionalInterface
+    public interface ReservationAvailabilityProbe {
+        void requireUngenerated(String dimension, CityPlanningReservation reservation) throws IOException;
+    }
 
     @FunctionalInterface
     public interface RegistryArtifactSynchronizer {
@@ -45,6 +52,12 @@ public final class RealmT4PatchPlanningService {
 
     public RealmT4PatchPlanningService(Path debugRoot, RegistryArtifactSynchronizer artifactSynchronizer,
                                        PlanningAreaAccessConfig accessConfig) {
+        this(debugRoot, artifactSynchronizer, accessConfig, (dimension, reservation) -> {});
+    }
+
+    public RealmT4PatchPlanningService(Path debugRoot, RegistryArtifactSynchronizer artifactSynchronizer,
+                                      PlanningAreaAccessConfig accessConfig, ReservationAvailabilityProbe availabilityProbe) {
+        this.availabilityProbe = availabilityProbe;
         this.debugRoot = debugRoot.toAbsolutePath().normalize();
         this.patchExplorer = new PatchExplorerService(this.debugRoot);
         this.artifactSynchronizer = artifactSynchronizer;
@@ -58,6 +71,16 @@ public final class RealmT4PatchPlanningService {
         Path territoryPath = runDir.resolve("realm_territory_map.json");
         JsonObject territory = readObject(territoryPath, "T4_PATCH_TERRITORY_NOT_FOUND");
         requireOwnedTerritory(territory, realmId);
+        Path featureGrid = runDir.resolve("world_feature_grid.json");
+        if (Files.isRegularFile(featureGrid)) {
+            JsonObject partition = GeographicRegions.build(readObject(featureGrid, "T4_W_GRID_NOT_FOUND"),
+                    accessConfig.nearSeaDistanceBlocks(), accessConfig.oceanRegionSpanBlocks()).asJson();
+            partition.addProperty("runId", runId);
+            partition.addProperty("nearSeaDistanceBlocks",accessConfig.nearSeaDistanceBlocks());
+            partition.addProperty("oceanRegionSpanBlocks",accessConfig.oceanRegionSpanBlocks());
+            partition.addProperty("sourceIdentity",fileIdentity(featureGrid));
+            writeJson(runDir.resolve("geographic_regions.json"), partition);
+        }
         String sessionId = stringValue(request, "planningSessionId", "");
         if (sessionId.isBlank()) {
             sessionId = "t4ps_" + UUID.randomUUID().toString().replace("-", "");
@@ -207,9 +230,58 @@ public final class RealmT4PatchPlanningService {
         source.addProperty("selectionStage", "realm_t4");
         source.addProperty("siteSelectionMode", "ai_candidate_selection");
         seed.add("source", source);
+        CityPlanningReservation reservation = CityPlanningReservation.fromSeed(seed, worldSurveyStep);
+        requireReservationAvailable(runId, session, reservation, worldSurveyStep);
+        availabilityProbe.requireUngenerated(stringValue(readObject(runDir(runId).resolve("world_survey_context.json"),
+                "T4_W_CONTEXT_REQUIRED"),"dimensionId","minecraft:overworld"),reservation);
+        seed.add("designBounds", reservation.design().asJson());
+        seed.add("protectionBounds", reservation.protection().asJson());
         seeds.add(seed);
         session.getAsJsonArray("usedPatchSelectionRefs").add(selectionRef);
         return seed;
+    }
+
+    private void requireReservationAvailable(String runId, JsonObject session,
+                                               CityPlanningReservation requested, int step) throws IOException {
+        // Include other realms and open sessions, not only this session's current city list.
+        java.util.List<JsonObject> sources = new java.util.ArrayList<>();
+        sources.add(session);
+        Path registry = runDir(runId).resolve("city_seed_registry.json");
+        if (Files.isRegularFile(registry)) {
+            JsonObject persisted = readObject(registry, "T4_REGISTRY_INVALID");
+            JsonArray retained = new JsonArray();
+            for (JsonElement e : array(persisted,"citySeeds")) {
+                JsonObject seed = e.getAsJsonObject();
+                // T4 replaces only the old automatic suggestions for this realm; selected reservations remain owned.
+                if (stringValue(session,"realmId","").equals(stringValue(seed,"realmId",""))
+                        && !object(seed,"source").has("patchSelectionRef")) continue;
+                retained.add(seed);
+            }
+            persisted.add("citySeeds",retained); sources.add(persisted);
+        }
+        try (var paths = Files.list(runDir(runId))) {
+            for (Path path : paths.filter(p -> p.getFileName().toString().startsWith("realm_t4_patch_planning_")).toList()) {
+                JsonObject other = readObject(path.resolve("planning_session.json"), "T4_SESSION_INVALID");
+                if ("open".equals(stringValue(other, "status", ""))
+                        && !stringValue(session,"planningSessionId","").equals(stringValue(other,"planningSessionId",""))) sources.add(other);
+            }
+        }
+        for (JsonObject source : sources) for (JsonElement element : array(source,"citySeeds")) {
+            CityPlanningReservation other = CityPlanningReservation.fromSeed(element.getAsJsonObject(),step);
+            if (other.citySeedId().equals(requested.citySeedId()))
+                throw new IllegalArgumentException("T4_CITY_SEED_ID_DUPLICATE: " + requested.citySeedId());
+            requested.requireSeparate(other);
+        }
+        if (accessConfig.enabled()) {
+            var bounds = requested.protection();
+            double nearestX = Math.max(bounds.minX(), Math.min(0,bounds.maxX()));
+            double nearestZ = Math.max(bounds.minZ(), Math.min(0,bounds.maxZ()));
+            // Spawn area's view and generation dependency halo must never become future city land.
+            int initialHalo = accessConfig.initialActivityRadiusBlocks() + 1024;
+            if (Math.hypot(nearestX,nearestZ) <= initialHalo)
+                throw new IllegalArgumentException("T4_CITY_PROTECTION_INSIDE_INITIAL_AREA: protection="+bounds.asJson()
+                        +"；请把整座城市保护范围移到初始活动区及其 1024 格加载缓冲之外（半径 "+initialHalo+"），不要只移动中心点。");
+        }
     }
 
     private void requireOutsideInitialCityExclusion(String runId, int blockX, int blockZ) throws IOException {
@@ -260,7 +332,18 @@ public final class RealmT4PatchPlanningService {
         for (JsonElement element : sessionSeeds) {
             merged.add(element.deepCopy());
         }
+        // Recheck the merged canonical list before publishing: another realm may have finalized meanwhile.
+        int step = worldSurveyCellStep(runId);
+        for (int i = 0; i < merged.size(); i++) for (int j = i + 1; j < merged.size(); j++)
+            CityPlanningReservation.fromSeed(merged.get(i).getAsJsonObject(),step)
+                    .requireSeparate(CityPlanningReservation.fromSeed(merged.get(j).getAsJsonObject(),step));
         registry.add("citySeeds", merged);
+        String territoryIdentity = fileIdentity(runDir.resolve("realm_territory_map.json"));
+        JsonArray finalized = territoryIdentity.equals(stringValue(registry,"finalizedTerritoryIdentity",""))
+                ? array(registry,"finalizedRealmIds").deepCopy() : new JsonArray();
+        registry.addProperty("finalizedTerritoryIdentity",territoryIdentity);
+        if (!contains(finalized,realmId)) finalized.add(realmId);
+        registry.add("finalizedRealmIds",finalized);
         JsonObject synchronizedResult = artifactSynchronizer.synchronize(runId, registry.deepCopy());
         session.addProperty("status", "finalized");
         session.addProperty("finalizedAt", Instant.now().toString());

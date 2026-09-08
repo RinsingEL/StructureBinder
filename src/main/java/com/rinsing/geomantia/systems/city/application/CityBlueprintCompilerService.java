@@ -524,6 +524,19 @@ public final class CityBlueprintCompilerService {
         compileTrace.add("landscapeCapacityReservationPlan", landscapeCapacity.plan().deepCopy());
         compileTrace.add("dynamicAreaPlan", dynamicAreaPlan.deepCopy());
         JsonObject extentMap = extentMap(blueprint, states, connectivityPlan, functionAreaFormationPlan);
+        for (JsonObject anchor : anchorObjects) {
+            if (anchor.has("plannedFootprint") && !within(bounds(anchor.getAsJsonObject("plannedFootprint")), cityPlanningBounds))
+                return CompilationResult.failed(compileTrace, "CITY_BLUEPRINT_OUTSIDE_DESIGN_BOUNDS",
+                        "建筑 " + string(anchor,"anchorId") + " 的完整占地超出原预览范围 "
+                                + CityStructureCandidateEnvelope.boundsJson(cityPlanningBounds)
+                                + "；请将该阵列向内移动或减少边缘填充，外围 1.5 倍保护圈不能用于建筑、道路或外扩。");
+        }
+        for (JsonElement value : streetBands) {
+            JsonObject band = value.getAsJsonObject();
+            if (!within(CityStreetObstacleRouter.crossSection(band), cityPlanningBounds))
+                return CompilationResult.failed(compileTrace, "CITY_BLUEPRINT_ROAD_OUTSIDE_DESIGN_BOUNDS",
+                        "道路 " + string(band,"streetBandId") + " 的路幅越出原预览边界；请将相邻阵列或道路接口向内留出路宽，保护圈不是额外设计范围。");
+        }
         return CompilationResult.compiled(anchorPlan, compileTrace, extentMap, structureSource,
                 templateCatalogJson, landscapeCapacity.plan());
     }

@@ -26,18 +26,23 @@ public final class PlanningAreaAccessEvents {
         if (decision.allowed()) return;
         event.setCanceled(true);
         player.sendSystemMessage(Component.literal(
-                "[Geomantia] 目标区域尚未开放，无法传送。请沿已开放路线前往已联通城市。")
+                "[Geomantia] 目标区域尚未开放，无法传送。请等待该大陆的所有城市完成规划及生成准备。")
                 .withStyle(ChatFormatting.RED));
     }
 
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player)) return;
+        if (event.phase != TickEvent.Phase.START || !(event.player instanceof ServerPlayer player)) return;
         PlanningAreaAccessRuntime.handleMovement(player);
     }
 
     @SubscribeEvent
     public static void onChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) PlanningAreaAccessRuntime.handleMovement(player);
+    }
+
+    @SubscribeEvent
+    public static void onLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) PlanningAreaAccessRuntime.handleMovement(player);
     }
 
