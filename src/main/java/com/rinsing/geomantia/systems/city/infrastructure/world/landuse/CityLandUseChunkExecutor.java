@@ -41,6 +41,11 @@ public final class CityLandUseChunkExecutor {
     public ExecutionResult execute(CityLandUseChunkCompiler.ChunkFragment fragment,
                                    ExecutionWorld world,
                                    GenerationEligibility eligibility) {
+        return CityFeatureWriteGuard.city(() -> executeCity(fragment, world, eligibility));
+    }
+
+    private ExecutionResult executeCity(CityLandUseChunkCompiler.ChunkFragment fragment,
+                                       ExecutionWorld world, GenerationEligibility eligibility) {
         Objects.requireNonNull(fragment, "fragment");
         Objects.requireNonNull(world, "world");
         Objects.requireNonNull(eligibility, "eligibility");

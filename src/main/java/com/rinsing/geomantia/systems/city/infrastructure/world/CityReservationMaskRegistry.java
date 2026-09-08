@@ -11,8 +11,6 @@ import com.mojang.logging.LogUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
-import net.minecraft.world.level.levelgen.structure.Structure;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -48,6 +46,23 @@ public final class CityReservationMaskRegistry {
     private static final long LEDGER_RETRY_DELAY_NANOS = 1_000_000_000L;
 
     private static volatile Map<String, ActiveMask> activeMasks = Map.of();
+    private static volatile com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityGenerationMask generationMask =
+            com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityGenerationMask.empty();
+
+    public static com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityGenerationMask generationMask() {
+        return generationMask;
+    }
+
+    private static void rebuildGenerationMask() {
+        var builder = new com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityGenerationMask.Builder();
+        for (ActiveMask mask : activeMasks.values()) {
+            List<BlockBounds> bounds = new ArrayList<>(mask.noVegetation());
+            bounds.addAll(mask.noVanillaStructure());
+            for (BlockBounds area : bounds) for (int z = area.minZ(); z <= area.maxZ(); z++)
+                for (int x = area.minX(); x <= area.maxX(); x++) builder.terrain(mask.dimensionId(), x, z);
+        }
+        generationMask = builder.build();
+    }
     private static volatile Map<String, ActivePlannedStructures> activePlannedRegistries = Map.of();
     private static volatile List<PlannedStructure> activePlannedStructureIndex = List.of();
     private static volatile Map<Long, List<PlannedStructure>> activePlannedStructuresByChunk = Map.of();
@@ -98,6 +113,7 @@ public final class CityReservationMaskRegistry {
         Map<String, ActiveMask> masks = new LinkedHashMap<>(activeMasks);
         masks.put(registryKey(activatedMask.cityId()), activatedMask);
         activeMasks = Map.copyOf(masks);
+        rebuildGenerationMask();
         ActivePlannedStructures activatedRegistry = null;
         if (materializationPlan != null) {
             activatedRegistry = ActivePlannedStructures.fromMaterializationPlan(
@@ -187,6 +203,7 @@ public final class CityReservationMaskRegistry {
         LOGGER.info("Loaded City reservation mask registry: activeCities={}, noVegetation={}, noVanillaStructure={}, plannedStructures={}, ledgerPlacements={}, serverRoot={}",
                 activeCityCount(), noVegetationMaskCount(), noVanillaStructureMaskCount(),
                 activePlannedStructureCount(), ledgerPlacedStructures().size(), serverRoot);
+        rebuildGenerationMask();
     }
 
     public static boolean hooksAvailable() {
@@ -206,41 +223,6 @@ public final class CityReservationMaskRegistry {
         PlannedStructure planned = plannedStructures.get(0);
         LOGGER.debug("City worldgen structure hook reached planned owner chunk {},{} for {} ({})",
                 chunkPos.x, chunkPos.z, planned.anchorId(), planned.templateId());
-    }
-
-    public static boolean suppressFeature(ConfiguredFeature<?, ?> feature, BlockPos origin) {
-        recordFeatureHookCall();
-        Map<String, ActiveMask> masks = activeMasks;
-        if (masks.isEmpty() || origin == null || feature == null) {
-            return false;
-        }
-        String description = feature.toString().toLowerCase(Locale.ROOT);
-        if (!vegetationLike(description)) {
-            return false;
-        }
-        boolean suppressed = masks.values().stream()
-                .anyMatch(mask -> mask.containsNoVegetation(origin.getX(), origin.getZ()));
-        if (suppressed) {
-            recordFeatureSuppression(feature.toString(), origin);
-        }
-        return suppressed;
-    }
-
-    public static boolean suppressVanillaStructure(Structure structure, ChunkPos chunkPos) {
-        recordStructureHookCall(chunkPos);
-        Map<String, ActiveMask> masks = activeMasks;
-        if (masks.isEmpty() || chunkPos == null || structure == null) {
-            return false;
-        }
-        String structureName = structure.toString().toLowerCase(Locale.ROOT);
-        ResourceLocation typeId = net.minecraft.core.registries.BuiltInRegistries.STRUCTURE_TYPE
-                .getKey(structure.type());
-        if (structureName.contains("geomantia") || (typeId != null && typeId.getNamespace().equals("geomantia"))) {
-            return false;
-        }
-        BlockBounds chunkBounds = new BlockBounds(chunkPos.getMinBlockX(), chunkPos.getMinBlockZ(),
-                chunkPos.getMaxBlockX(), chunkPos.getMaxBlockZ());
-        return masks.values().stream().anyMatch(mask -> mask.overlapsNoVanillaStructure(chunkBounds));
     }
 
     public static synchronized List<PlannedStructure> plannedStructuresForChunk(ChunkPos chunkPos) {
@@ -1139,18 +1121,6 @@ public final class CityReservationMaskRegistry {
         return obj;
     }
 
-    private static boolean vegetationLike(String value) {
-        return value.contains("tree")
-                || value.contains("vegetation")
-                || value.contains("flower")
-                || value.contains("grass")
-                || value.contains("bamboo")
-                || value.contains("mushroom")
-                || value.contains("vine")
-                || value.contains("patch")
-                || value.contains("forest");
-    }
-
     private record TemplatePlacementKey(String anchorId, String templateRef, String templateHash,
                                         BlockPoint anchorBlock) {
     }
@@ -1267,10 +1237,10 @@ public final class CityReservationMaskRegistry {
         }
     }
 
-    private record ActiveMask(String cityId, List<BlockBounds> noVegetation, List<BlockBounds> noVanillaStructure,
+    private record ActiveMask(String cityId, String dimensionId, List<BlockBounds> noVegetation, List<BlockBounds> noVanillaStructure,
                               List<BlockBounds> gateCorridor, List<BlockBounds> noRoadsideStructure) {
         static ActiveMask empty() {
-            return new ActiveMask("", List.of(), List.of(), List.of(), List.of());
+            return new ActiveMask("", "minecraft:overworld", List.of(), List.of(), List.of(), List.of());
         }
 
         static ActiveMask from(JsonObject plan) {
@@ -1281,6 +1251,7 @@ public final class CityReservationMaskRegistry {
                     ? plan.getAsJsonObject("worldgenMaskChannels") : new JsonObject();
             return new ActiveMask(
                     stringValue(plan, "cityId", ""),
+                    stringValue(plan, "dimensionId", "minecraft:overworld"),
                     masks(plan.getAsJsonArray("noVegetationMask")),
                     masks(plan.getAsJsonArray("noVanillaStructureMask")),
                     masks(plan.getAsJsonArray("gateCorridorMask")),
@@ -1308,6 +1279,7 @@ public final class CityReservationMaskRegistry {
         JsonObject asPlanJson() {
             JsonObject obj = new JsonObject();
             obj.addProperty("cityId", cityId);
+            obj.addProperty("dimensionId", dimensionId);
             obj.add("noVegetationMask", maskJson(noVegetation));
             obj.add("noVanillaStructureMask", maskJson(noVanillaStructure));
             obj.add("gateCorridorMask", maskJson(gateCorridor));

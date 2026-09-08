@@ -1,5 +1,19 @@
 # 装饰与 LandUse 故障索引
 
+## CITY-DL-20260908-01：城市 mask 漏拦跨边界自然装饰与外部结构
+
+*现象*：施工区域可能被自然植被、城外伸入的树冠和结构侵入。
+
+*首次偏离*：ConfiguredFeature 按名称和起点筛选；结构只检查起始区块；写入保护仅覆盖冻结表面上下少量高度。
+
+*根因*：生成起点与最终写入范围不同，且名称枚举不能代表所有群系或 Mod 的装饰。
+
+*修复*：按维度、区块索引实际施工列，地表保护延伸到上方空间；ConfiguredFeature 和外部 StructureStart 执行期间拦截受保护写入；完整结构包围盒侵入则拒绝注册/放置；城市结构与 LandUse 使用显式施工上下文放行。未改变设计几何、台面标高。
+
+*验证*：新增 mask/上下文/注册表回归通过；隔离 Forge GameTest 8/8 通过，包含实际 ConfiguredFeature→ServerLevel/WorldGenRegion 写入与 StructureStart 放置拦截。整合包 GUI 游玩未复验。
+
+*记录*：[任务记录](../active/20260908_落地生成隔离/任务记录.md)。
+
 ## CITY-DL-20260906-04：新档首城台阶通路生成失败
 
 *现象*：打包新档 GLM 首城规划已结束，D7 实际生成仅完成 4/237 owners，正式失败 CITY_LAND_USE_ACCESS_STAIR_UNRESOLVED，建筑 ledger 为空。

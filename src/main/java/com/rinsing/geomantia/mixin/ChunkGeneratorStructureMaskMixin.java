@@ -25,20 +25,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ChunkGenerator.class)
 public abstract class ChunkGeneratorStructureMaskMixin {
-    @Inject(method = "tryGenerateStructure", at = @At("HEAD"), cancellable = true)
-    private void geomantia$suppressCityVanillaStructure(StructureSet.StructureSelectionEntry entry,
-                                                        StructureManager structureManager,
-                                                        RegistryAccess registryAccess,
-                                                        RandomState randomState,
-                                                        StructureTemplateManager templateManager,
-                                                        long seed,
-                                                        ChunkAccess chunk,
-                                                        ChunkPos chunkPos,
-                                                        SectionPos sectionPos,
-                                                        CallbackInfoReturnable<Boolean> cir) {
-        if (CityReservationMaskRegistry.suppressVanillaStructure(entry.structure().value(), chunkPos)) {
-            cir.setReturnValue(false);
-        }
+    @org.spongepowered.asm.mixin.injection.Redirect(method = "tryGenerateStructure", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/world/level/StructureManager;setStartForStructure(Lnet/minecraft/core/SectionPos;Lnet/minecraft/world/level/levelgen/structure/Structure;Lnet/minecraft/world/level/levelgen/structure/StructureStart;Lnet/minecraft/world/level/chunk/StructureAccess;)V"))
+    private void geomantia$checkCompleteExternalStart(StructureManager manager, SectionPos section,
+            net.minecraft.world.level.levelgen.structure.Structure structure,
+            net.minecraft.world.level.levelgen.structure.StructureStart start,
+            net.minecraft.world.level.chunk.StructureAccess chunk) {
+        var world = ((StructureManagerAccessor) manager).geomantia$getLevel();
+        if (!(structure instanceof com.rinsing.geomantia.systems.city.infrastructure.world.CityTemplateTerrainStructure)
+                && start.isValid() && world instanceof WorldGenLevel generation
+                && com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityGenerationProtection
+                .intersects(generation.getLevel(), start.getBoundingBox()))
+            start = net.minecraft.world.level.levelgen.structure.StructureStart.INVALID_START;
+        manager.setStartForStructure(section, structure, start, chunk);
     }
 
     @Inject(method = "createStructures", at = @At("TAIL"))

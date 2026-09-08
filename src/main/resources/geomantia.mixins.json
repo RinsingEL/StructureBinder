@@ -8,6 +8,8 @@
     "CityStructureFoundationBeardifierMixin",
     "ConfiguredFeatureMaskMixin",
     "CityWorldGenRegionSurfaceProtectionMixin",
+    "CityLevelGenerationProtectionMixin",
+    "CityStructureStartProtectionMixin",
     "ChunkGeneratorStructureMaskMixin",
     "StructureManagerAccessor"
   ],

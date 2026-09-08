@@ -43,6 +43,108 @@ public final class CityLandUseGameTests {
     private CityLandUseGameTests() {
     }
 
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void generationMaskGuardsForeignWritesButAllowsCityAndPlayer(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos protectedPos = helper.absolutePos(new BlockPos(2, 0, 2)).atY(level.getMaxBuildHeight() - 16);
+        BlockPos outside = protectedPos.east(3);
+        String cityId = "gametest_generation_mask_" + UUID.randomUUID();
+        String dimension = level.dimension().location().toString();
+        Path root = level.getServer().getWorldPath(LevelResource.ROOT);
+        var areas = worldgenSmokeAreaPlan(cityId, protectedPos.getX(), protectedPos.getX(),
+                protectedPos.getZ(), protectedPos.getZ() + 1);
+        CityLandUseWorldgenRegistry.activate(dimension, areas,
+                worldgenSmokeSurfacePlan(areas, protectedPos.getX(), protectedPos.getX(), protectedPos.getZ()), root);
+        try {
+            // Deliberately unnamed feature originating OUTSIDE the protected column.
+            var feature = new net.minecraft.world.level.levelgen.feature.Feature<net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration>(
+                    net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration.CODEC) {
+                @Override public boolean place(net.minecraft.world.level.levelgen.feature.FeaturePlaceContext<net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration> context) {
+                    context.level().setBlock(protectedPos, Blocks.OAK_LEAVES.defaultBlockState(), 2);
+                    context.level().setBlock(outside, Blocks.OAK_LOG.defaultBlockState(), 2);
+                    return true;
+                }
+            };
+            var configured = new net.minecraft.world.level.levelgen.feature.ConfiguredFeature<>(feature,
+                    net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration.INSTANCE);
+            var chunk = new ChunkPos(protectedPos);
+            List<net.minecraft.world.level.chunk.ChunkAccess> chunks = new ArrayList<>();
+            for (int z = chunk.z - 1; z <= chunk.z + 1; z++)
+                for (int x = chunk.x - 1; x <= chunk.x + 1; x++) chunks.add(level.getChunk(x, z));
+            var region = new net.minecraft.server.level.WorldGenRegion(level, chunks, ChunkStatus.FEATURES, 1);
+            for (net.minecraft.world.level.WorldGenLevel target : List.of(level, region)) {
+                level.setBlock(protectedPos, Blocks.AIR.defaultBlockState(), 2);
+                level.setBlock(outside, Blocks.AIR.defaultBlockState(), 2);
+                configured.place(target, level.getChunkSource().getGenerator(), level.random, outside);
+                if (!level.getBlockState(protectedPos).isAir() || !level.getBlockState(outside).is(Blocks.OAK_LOG))
+                    throw new IllegalStateException("Foreign canopy mask failed for " + target.getClass()
+                            + ", protected=" + level.getBlockState(protectedPos) + ", outside=" + level.getBlockState(outside)
+                            + ", pos=" + protectedPos + ", mask="
+                            + com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityGenerationProtection.protects(level, protectedPos));
+            }
+            boolean ownWrite = com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityFeatureWriteGuard.run(() ->
+                    com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityFeatureWriteGuard.city(() ->
+                            level.setBlock(protectedPos, Blocks.STONE_BRICKS.defaultBlockState(), 2)));
+            if (!ownWrite || !level.getBlockState(protectedPos).is(Blocks.STONE_BRICKS))
+                throw new IllegalStateException("City write was blocked");
+            if (!level.setBlock(protectedPos, Blocks.GOLD_BLOCK.defaultBlockState(), 2))
+                throw new IllegalStateException("Ordinary player/server write was blocked");
+            var box = new net.minecraft.world.level.levelgen.structure.BoundingBox(
+                    outside.getX(), protectedPos.getY(), protectedPos.getZ(),
+                    outside.getX() + 2, protectedPos.getY() + 5, protectedPos.getZ() + 2);
+            if (com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityGenerationProtection.intersects(level, box))
+                throw new IllegalStateException("Outside structure was blocked");
+            box = new net.minecraft.world.level.levelgen.structure.BoundingBox(
+                    protectedPos.getX(), protectedPos.getY(), protectedPos.getZ(),
+                    outside.getX(), protectedPos.getY() + 5, protectedPos.getZ());
+            if (!com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityGenerationProtection.intersects(level, box))
+                throw new IllegalStateException("Intruding structure was allowed");
+            var foreign = level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.STRUCTURE)
+                    .getOrThrow(net.minecraft.world.level.levelgen.structure.BuiltinStructures.IGLOO);
+            var calls = new java.util.concurrent.atomic.AtomicInteger();
+            var owner = new net.minecraft.world.level.levelgen.structure.BoundingBox(
+                    chunk.getMinBlockX() - 16, level.getMinBuildHeight(), chunk.getMinBlockZ() - 16,
+                    chunk.getMaxBlockX() + 16, level.getMaxBuildHeight() - 1, chunk.getMaxBlockZ() + 16);
+            exerciseStructureStart(foreign, box, protectedPos, calls, level, owner, chunk);
+            if (calls.get() != 0) throw new IllegalStateException("Intruding structure piece was executed");
+            var own = new com.rinsing.geomantia.systems.city.infrastructure.world.CityTemplateTerrainStructure(
+                    new net.minecraft.world.level.levelgen.structure.Structure.StructureSettings(
+                            net.minecraft.core.HolderSet.direct(), java.util.Map.of(),
+                            net.minecraft.world.level.levelgen.GenerationStep.Decoration.SURFACE_STRUCTURES,
+                            net.minecraft.world.level.levelgen.structure.TerrainAdjustment.NONE));
+            exerciseStructureStart(own, box, protectedPos, calls, level, owner, chunk);
+            if (calls.get() != 1 || !level.getBlockState(protectedPos).is(Blocks.EMERALD_BLOCK))
+                throw new IllegalStateException("City structure was blocked");
+            helper.succeed();
+        } finally {
+            CityLandUseWorldgenRegistry.deactivate(dimension, cityId, root);
+            level.setBlock(protectedPos, Blocks.AIR.defaultBlockState(), 2);
+            level.setBlock(outside, Blocks.AIR.defaultBlockState(), 2);
+        }
+    }
+
+    private static void exerciseStructureStart(net.minecraft.world.level.levelgen.structure.Structure structure,
+            net.minecraft.world.level.levelgen.structure.BoundingBox box, BlockPos write,
+            java.util.concurrent.atomic.AtomicInteger calls, ServerLevel level,
+            net.minecraft.world.level.levelgen.structure.BoundingBox owner, ChunkPos chunk) {
+        var piece = new net.minecraft.world.level.levelgen.structure.StructurePiece(
+                net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType.IGLOO, 0, box) {
+            @Override protected void addAdditionalSaveData(
+                    net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext context,
+                    net.minecraft.nbt.CompoundTag tag) {}
+            @Override public void postProcess(net.minecraft.world.level.WorldGenLevel world,
+                    net.minecraft.world.level.StructureManager manager,
+                    net.minecraft.world.level.chunk.ChunkGenerator generator, net.minecraft.util.RandomSource random,
+                    net.minecraft.world.level.levelgen.structure.BoundingBox bounds, ChunkPos position, BlockPos origin) {
+                calls.incrementAndGet(); world.setBlock(write, Blocks.EMERALD_BLOCK.defaultBlockState(), 2);
+            }
+        };
+        new net.minecraft.world.level.levelgen.structure.StructureStart(structure, chunk, 0,
+                new net.minecraft.world.level.levelgen.structure.pieces.PiecesContainer(List.of(piece)))
+                .placeInChunk(level, level.structureManager(), level.getChunkSource().getGenerator(),
+                        level.random, owner, chunk);
+    }
+
     @GameTest(template = "empty")
     public static void landUseFenceUpdatesBothConnections(GameTestHelper helper) {
         BlockPos west = helper.absolutePos(BlockPos.ZERO.above());

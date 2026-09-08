@@ -41,6 +41,7 @@ country_designer_mcp/*
 !country_designer_mcp/test/**
 
 # local acceptance artifacts
+run-mask-validation-*/
 run-data/
 run_logs/
 country_designer_mcp_log.jsonl

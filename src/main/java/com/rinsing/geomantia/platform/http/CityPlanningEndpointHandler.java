@@ -1681,6 +1681,7 @@ final class CityPlanningEndpointHandler {
         if (level != null && (!level.getServer().isRunning() || level.getServer().isStopped())) {
             throw new java.util.concurrent.CancellationException("CITY_SERVER_STOPPING");
         }
+        activeMaskPlan.addProperty("dimensionId", metadata.dimensionId());
         JsonObject activeRegistry = CityReservationMaskRegistry.activate(activeMaskPlan, null, materializationPlan,
                 runId, citySeedId, serverRoot);
         JsonObject activationProvenance = new JsonObject();

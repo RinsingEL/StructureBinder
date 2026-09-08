@@ -26,7 +26,6 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkStatus;
-import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -41,7 +40,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.OptionalInt;
@@ -106,6 +104,7 @@ public final class CityLandUseWorldgenRegistry {
             ActiveKey key = new ActiveKey(dimension, areaPlan.cityId());
             cancelD7BackfillsFor(key);
             ACTIVE.put(key, ActivePlan.create(key, areaPlan, surfacePrintPlan));
+            rebuildGenerationMask();
             PREPARED_CHUNK_CACHE.clear();
             STRUCTURE_TERRAIN_SESSIONS.clear();
             FEATURE_OWNER_APPLICATIONS.clear();
@@ -201,6 +200,7 @@ public final class CityLandUseWorldgenRegistry {
         ensureLoaded(server);
         synchronized (CityLandUseWorldgenRegistry.class) {
             ACTIVE.remove(key);
+            rebuildGenerationMask();
             PREPARED_CHUNK_CACHE.clear();
             STRUCTURE_TERRAIN_SESSIONS.clear();
             cancelD7BackfillsFor(key);
@@ -227,8 +227,8 @@ public final class CityLandUseWorldgenRegistry {
             resetObsoleteState = true;
         }
         ACTIVE.clear();
-        SURFACE_PROTECTION.clear();
         ACTIVE.putAll(state.activePlans());
+        rebuildGenerationMask();
         PREPARED_CHUNK_CACHE.clear();
         STRUCTURE_TERRAIN_SESSIONS.clear();
         cancelAllD7Backfills();
@@ -601,50 +601,33 @@ public final class CityLandUseWorldgenRegistry {
         return false;
     }
 
-    private static final Map<String, Map<Long, Integer>> SURFACE_PROTECTION = new java.util.concurrent.ConcurrentHashMap<>();
+    private static volatile CityGenerationMask generationMask = CityGenerationMask.empty();
 
-    public static boolean protectsFrozenSurface(String dimensionId, int x, int y, int z) {
-        for (ActivePlan active : activePlans(dimensionId(dimensionId))) {
-            if (!active.areaPlan().planningBounds().contains(x,z)) continue;
-            var print = active.surfacePrintPlan();
-            if (print == null) continue;
-            Map<Long,Integer> columns = SURFACE_PROTECTION.computeIfAbsent(print.cityId() + ":" + print.planHash(), ignored -> {
-                Map<Long,Integer> result = new java.util.HashMap<>();
-                for (var area : print.areas()) if (area.recipe() instanceof CityLandUseSurfacePrintPlan.UniformRecipe recipe)
-                    for (var span : recipe.platformSpans()) for (int bx=span.minX();bx<=span.maxX();bx++)
-                        result.put(surfaceColumn(bx,span.z()),span.targetY());
-                for (var feature : print.featureCells()) if (feature.targetSurfaceY() != null)
-                    result.put(surfaceColumn(feature.x(),feature.z()),feature.targetSurfaceY());
-                return Map.copyOf(result);
-            });
-            Integer target = columns.get(surfaceColumn(x,z));
-            if (target != null && y >= target - 1 && y <= target + 3) return true;
+    private static void rebuildGenerationMask() {
+        CityGenerationMask.Builder builder = new CityGenerationMask.Builder();
+        for (ActivePlan active : ACTIVE.values()) {
+            String dimension = active.key().dimensionId();
+            for (var area : active.areaPlan().areas()) if (area.vegetationPolicy() == VegetationPolicy.CLEAR)
+                for (var span : area.memberSpans()) for (int x = span.minX(); x <= span.maxX(); x++)
+                    builder.terrain(dimension, x, span.z());
+            for (var area : active.surfacePrintPlan().areas()) {
+                // Printed space and its building exclusions both belong to the City. Unclaimed natural space is absent.
+                for (var span : area.memberSpans()) for (int x = span.minX(); x <= span.maxX(); x++)
+                    builder.terrain(dimension, x, span.z());
+                if (area.recipe() instanceof CityLandUseSurfacePrintPlan.UniformRecipe recipe)
+                    for (var span : recipe.platformSpans()) for (int x = span.minX(); x <= span.maxX(); x++)
+                        builder.surface(dimension, x, span.z(), span.targetY());
+            }
+            for (var feature : active.surfacePrintPlan().featureCells()) {
+                if (feature.targetSurfaceY() != null) builder.surface(dimension, feature.x(), feature.z(), feature.targetSurfaceY());
+                else builder.terrain(dimension, feature.x(), feature.z());
+            }
         }
-        return false;
-    }
-    private static long surfaceColumn(int x, int z) { return ((long)x << 32) ^ (z & 0xffffffffL); }
-
-    public static boolean suppressFeature(String dimensionId,
-                                          ConfiguredFeature<?, ?> feature,
-                                          BlockPos origin) {
-        if (feature == null || origin == null
-                || !vegetationLike(feature.toString().toLowerCase(Locale.ROOT))) {
-            return false;
-        }
-        return suppressesVegetation(dimensionId, origin.getX(), origin.getZ());
+        generationMask = builder.build();
     }
 
-    static boolean vegetationLike(String value) {
-        return value.contains("tree")
-                || value.contains("vegetation")
-                || value.contains("flower")
-                || value.contains("grass")
-                || value.contains("bamboo")
-                || value.contains("mushroom")
-                || value.contains("vine")
-                || value.contains("patch")
-                || value.contains("forest");
-    }
+    public static CityGenerationMask generationMask() { return generationMask; }
+
 
     private static boolean excluded(LandUseAreaPlan plan, LandUseAreaPlan.Area area, int x, int z) {
         for (BlockBounds footprint : area.structureFootprintExclusions()) {
@@ -1184,7 +1167,7 @@ public final class CityLandUseWorldgenRegistry {
 
     static synchronized void resetForTests() {
         ACTIVE.clear();
-        SURFACE_PROTECTION.clear();
+        generationMask = CityGenerationMask.empty();
         cancelAllD7Backfills();
         IN_FLIGHT.clear();
         APPLIED_OWNER_KEYS.clear();

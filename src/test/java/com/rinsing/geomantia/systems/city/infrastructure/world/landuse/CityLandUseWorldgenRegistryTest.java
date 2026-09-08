@@ -221,8 +221,13 @@ class CityLandUseWorldgenRegistryTest {
                 "minecraft:overworld", 1, 0));
         assertFalse(CityLandUseWorldgenRegistry.suppressesVegetation(
                 "minecraft:overworld", 20, 0));
-        assertTrue(CityLandUseWorldgenRegistry.vegetationLike("configured_tree_oak"));
-        assertFalse(CityLandUseWorldgenRegistry.vegetationLike("ore_diamond"));
+        assertTrue(CityLandUseWorldgenRegistry.generationMask().protects(
+                "minecraft:overworld", 1, 200, 0, (x, z) -> 64));
+        assertFalse(CityLandUseWorldgenRegistry.generationMask().protects(
+                "minecraft:the_nether", 1, 200, 0, (x, z) -> 64));
+        CityLandUseWorldgenRegistry.deactivate("minecraft:overworld", areaPlan.cityId(), serverRoot);
+        assertFalse(CityLandUseWorldgenRegistry.generationMask().protects(
+                "minecraft:overworld", 1, 200, 0, (x, z) -> 64));
     }
 
     @Test
