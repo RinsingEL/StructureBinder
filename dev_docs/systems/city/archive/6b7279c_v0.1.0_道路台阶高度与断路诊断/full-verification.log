@@ -1,5 +1,5 @@
 To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.8/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
-Daemon will be stopped at the end of the build 
+Daemon will be stopped at the end of the build
 
 > Configure project :
 MixinGradle did not locate the diffplug APT plugin, skipping eclipse task configuration
@@ -8,13 +8,24 @@ MixinGradle did not locate the diffplug APT plugin, skipping eclipse task config
 > Task :extractSrg UP-TO-DATE
 > Task :createMcpToSrg UP-TO-DATE
 > Task :compileJava UP-TO-DATE
+> Task :addMixinsToJar
 > Task :bundleCountryDesignerMcp UP-TO-DATE
-> Task :processResources UP-TO-DATE
-> Task :classes UP-TO-DATE
+> Task :processResources
+> Task :classes
+> Task :jar
+> Task :configureReobfTaskForReobfJar
+> Task :reobfJar
+> Task :addMixinsToJarJar
+> Task :jarJar SKIPPED
 > Task :compileTestJava UP-TO-DATE
 > Task :processTestResources UP-TO-DATE
 > Task :testClasses UP-TO-DATE
 > Task :test
+> Task :configureReobfTaskForReobfJarJar
+> Task :reobfJarJar SKIPPED
+> Task :assemble
+> Task :check
+> Task :build
 
 Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
 
@@ -22,5 +33,5 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/8.8/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 15s
-9 actionable tasks: 2 executed, 7 up-to-date
+BUILD SUCCESSFUL in 2m 12s
+15 actionable tasks: 9 executed, 6 up-to-date
