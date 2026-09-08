@@ -81,8 +81,12 @@ public final class CityBlueprintValidator {
                             path + ".requiredStructureRefs", "Unknown structureRef: " + ref);
                 }
             }
-            requireRef(issues, catalog.fillPoolRefs(), group.fillPoolRef(),
+            if (group.fillPools().isEmpty()) requireRef(issues, catalog.fillPoolRefs(), group.fillPoolRef(),
                     CityBlueprintReasonCode.CITY_BLUEPRINT_FILL_POOL_UNKNOWN, path + ".fillPoolRef");
+            for (int poolIndex = 0; poolIndex < group.fillPools().size(); poolIndex++)
+                requireRef(issues, catalog.fillPoolRefs(), group.fillPools().get(poolIndex).poolRef(),
+                        CityBlueprintReasonCode.CITY_BLUEPRINT_FILL_POOL_UNKNOWN,
+                        path + ".fillPools[" + poolIndex + "].poolRef");
             requireRef(issues, catalog.algorithmProfileRefs(), group.algorithmProfileRef(),
                     CityBlueprintReasonCode.CITY_BLUEPRINT_ALGORITHM_PROFILE_UNKNOWN,
                     path + ".algorithmProfileRef");
@@ -504,7 +508,11 @@ public final class CityBlueprintValidator {
                                                CityBlueprintReferenceCatalog catalog, String path) {
         CityBlueprint.ConnectionPlan plan = group.connectionPlan();
         if (plan == null) return;
-        if (plan.structurePoolRef() != null) {
+        for (int poolIndex = 0; poolIndex < plan.structurePools().size(); poolIndex++)
+            requireRef(issues, catalog.fillPoolRefs(), plan.structurePools().get(poolIndex).poolRef(),
+                    CityBlueprintReasonCode.CITY_BLUEPRINT_FILL_POOL_UNKNOWN,
+                    path + ".structurePools[" + poolIndex + "].poolRef");
+        if (plan.structurePoolRef() != null && plan.structurePools().isEmpty()) {
             requireRef(issues, catalog.fillPoolRefs(), plan.structurePoolRef(),
                     CityBlueprintReasonCode.CITY_BLUEPRINT_FILL_POOL_UNKNOWN,
                     path + ".connectionPlan.structurePoolRef");

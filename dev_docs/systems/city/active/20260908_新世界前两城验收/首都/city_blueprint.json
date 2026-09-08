@@ -1,0 +1,254 @@
+{
+  "schema": "city_blueprint",
+  "cityId": "city_realm_sahra_valdoran_capital",
+  "sourceD3Ref": {
+    "path": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_realm_sahra_valdoran_capital/steps/d3/city_landform_review_package.json",
+    "schema": "city_landform_review",
+    "contentHash": "sha256:b8b954e0af6348fceebb4cbb4dd8aa723bae723b6e160cd9cf106454b8d20211"
+  },
+  "catalogSnapshotRef": {
+    "path": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_realm_sahra_valdoran_capital/steps/blueprint/city_blueprint_catalog_snapshot.json",
+    "schema": "city_blueprint_catalog_snapshot",
+    "contentHash": "sha256:5f33eece4ec2271980b9d06f6a58f590b31c71a0da258b980c7f1b740f0ea738"
+  },
+  "generationSeed": 3018111214406099,
+  "designIntent": {
+    "cityIdentity": "Sahra Valdoran capital: a large sandstone caravan capital on gentle savanna slopes, governing the realm's trade routes toward the river and the southern port",
+    "theme": "Caravan capital: civic authority and guarded commerce on flat ground at the slope edge",
+    "functionalRoles": [
+      "administration",
+      "market",
+      "defense",
+      "residential"
+    ]
+  },
+  "styleProfile": {
+    "profileRef": "style:mixed_trek_stubbs"
+  },
+  "groups": [
+    {
+      "groupId": "civic_admin_core",
+      "groupKind": "STRUCTURE",
+      "preferredPatchRefs": [
+        "minecraft:overworld:step.16:city.city_realm_sahra_valdoran_capital:p.216"
+      ],
+      "preferredPatchZone": "NORTH",
+      "role": "civic_administration",
+      "priority": "CORE",
+      "extentClass": "LARGE",
+      "densityClass": "DENSE",
+      "algorithmProfileRef": "algorithm:compact",
+      "terrainPolicy": "BALANCED",
+      "requiredStructureRefs": [
+        "geomantia:city/stubbs/civic/town_hall_01",
+        "geomantia:city/trek/landmark/plains_fountain_01",
+        "trek:village/desert/houses/desert_cartographer_1",
+        "trek:village/desert/houses/desert_library_1",
+        "geomantia:city/stubbs/civic/guard_outpost_01"
+      ],
+      "fillPoolRef": "pool:trek_desert_sandstone_fill",
+      "compositionProfileRef": "composition:round_robin",
+      "attachedFeatures": [],
+      "targetAreaShare": 0.32,
+      "spaceComposition": {
+        "buildingShare": 0.5,
+        "landscapeShare": 0.1,
+        "openSpaceShare": 0.4
+      },
+      "expansionPolicy": {
+        "allowOutwardExpansion": true,
+        "allowRelationConnection": true,
+        "stopWhenTargetReached": false
+      },
+      "buildingGreeneryPolicy": {
+        "coverage": "BALANCED",
+        "patternPreference": "TEMPLATE_DEFAULT",
+        "densityPreference": "MEDIUM"
+      }
+    },
+    {
+      "groupId": "market_quarter",
+      "groupKind": "STRUCTURE",
+      "preferredPatchRefs": [
+        "minecraft:overworld:step.16:city.city_realm_sahra_valdoran_capital:p.216"
+      ],
+      "preferredPatchZone": "SOUTH",
+      "role": "market_trade",
+      "priority": "STANDARD",
+      "extentClass": "LARGE",
+      "densityClass": "BALANCED",
+      "algorithmProfileRef": "algorithm:compact",
+      "terrainPolicy": "BALANCED",
+      "requiredStructureRefs": [
+        "geomantia:city/stubbs/commercial/tavern_01",
+        "geomantia:city/stubbs/commercial/general_store_01"
+      ],
+      "fillPoolRef": "pool:trek_desert_sandstone_commercial_fill",
+      "compositionProfileRef": "composition:round_robin",
+      "attachedFeatures": [],
+      "targetAreaShare": 0.32,
+      "spaceComposition": {
+        "buildingShare": 0.44999999999999996,
+        "landscapeShare": 0.15,
+        "openSpaceShare": 0.4
+      },
+      "expansionPolicy": {
+        "allowOutwardExpansion": true,
+        "allowRelationConnection": true,
+        "stopWhenTargetReached": false
+      },
+      "buildingGreeneryPolicy": {
+        "coverage": "SPARSE",
+        "patternPreference": "TEMPLATE_DEFAULT",
+        "densityPreference": "MEDIUM"
+      }
+    },
+    {
+      "groupId": "residential_quarter",
+      "groupKind": "STRUCTURE",
+      "preferredPatchRefs": [
+        "minecraft:overworld:step.16:city.city_realm_sahra_valdoran_capital:p.216"
+      ],
+      "preferredPatchZone": "WEST",
+      "role": "residential",
+      "priority": "STANDARD",
+      "extentClass": "LARGE",
+      "densityClass": "BALANCED",
+      "algorithmProfileRef": "algorithm:compact",
+      "terrainPolicy": "BALANCED",
+      "requiredStructureRefs": [
+        "trek:village/desert/houses/desert_big_house_1"
+      ],
+      "fillPoolRef": "pool:trek_desert_sandstone_residential_fill",
+      "compositionProfileRef": "composition:round_robin",
+      "attachedFeatures": [],
+      "targetAreaShare": 0.36,
+      "spaceComposition": {
+        "buildingShare": 0.5,
+        "landscapeShare": 0.15,
+        "openSpaceShare": 0.35
+      },
+      "expansionPolicy": {
+        "allowOutwardExpansion": true,
+        "allowRelationConnection": true,
+        "stopWhenTargetReached": false
+      },
+      "buildingGreeneryPolicy": {
+        "coverage": "BALANCED",
+        "patternPreference": "TEMPLATE_DEFAULT",
+        "densityPreference": "MEDIUM"
+      }
+    }
+  ],
+  "arrayCompositions": [],
+  "relations": [
+    {
+      "fromGroupId": "civic_admin_core",
+      "toGroupId": "market_quarter",
+      "relationKind": "CONNECTION",
+      "strength": "HARD",
+      "distancePreference": "NONE",
+      "directionPreference": "NONE"
+    },
+    {
+      "fromGroupId": "civic_admin_core",
+      "toGroupId": "residential_quarter",
+      "relationKind": "CONNECTION",
+      "strength": "HARD",
+      "distancePreference": "NONE",
+      "directionPreference": "NONE"
+    },
+    {
+      "fromGroupId": "market_quarter",
+      "toGroupId": "residential_quarter",
+      "relationKind": "CONNECTION",
+      "strength": "HARD",
+      "distancePreference": "NONE",
+      "directionPreference": "NONE"
+    }
+  ],
+  "roadProfile": {
+    "profileRef": "road:town"
+  },
+  "surfaceDetailProfile": {
+    "profileRef": "surface:working"
+  },
+  "outdoorPlan": {
+    "mode": "GENERATE",
+    "envelopeProfile": "BALANCED",
+    "foundationProfileRef": "foundation:urban",
+    "spatialGrounds": [
+      {
+        "sourceGroupId": "civic_admin_core",
+        "sharedSpaceType": "CIVIC_SQUARE",
+        "hierarchyLevel": "PRIMARY",
+        "membership": "URBAN"
+      },
+      {
+        "sourceGroupId": "market_quarter",
+        "sharedSpaceType": "MARKET_STREET",
+        "hierarchyLevel": "SECONDARY",
+        "membership": "URBAN"
+      },
+      {
+        "sourceGroupId": "residential_quarter",
+        "sharedSpaceType": "RESIDENTIAL_COURT",
+        "hierarchyLevel": "SECONDARY",
+        "membership": "URBAN"
+      }
+    ],
+    "landscapes": [
+      {
+        "landscapeId": "capital_garden_terrace",
+        "landscapeProfileRef": "landscape:farmland",
+        "purpose": "FUNCTIONAL",
+        "originMode": "ATTACHED",
+        "owner": {
+          "groupId": "residential_quarter"
+        },
+        "instanceCount": 1,
+        "parcelCount": 4,
+        "preferredPatchRefs": [
+          "minecraft:overworld:step.16:city.city_realm_sahra_valdoran_capital:p.216"
+        ],
+        "terrainPolicy": "CONFORM",
+        "required": false,
+        "fillSelection": {
+          "variants": [
+            {
+              "fillProfileRef": "fill:relay_irrigated_farmland",
+              "selectionWeight": 1.0,
+              "roleShares": [
+                {
+                  "roleRef": "CULTIVATED",
+                  "growthForm": "PATCH",
+                  "targetShare": 0.8200000000000001
+                },
+                {
+                  "roleRef": "BANK",
+                  "growthForm": "CORRIDOR",
+                  "targetShare": 0.12
+                },
+                {
+                  "roleRef": "WATER",
+                  "growthForm": "CORRIDOR",
+                  "targetShare": 0.06
+                }
+              ],
+              "contentWeights": [
+                {
+                  "contentRef": "crop:wheat",
+                  "weight": 70.0
+                },
+                {
+                  "contentRef": "crop:carrot",
+                  "weight": 30.0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

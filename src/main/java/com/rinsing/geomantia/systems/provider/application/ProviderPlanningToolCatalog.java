@@ -212,7 +212,7 @@ final class ProviderPlanningToolCatalog {
                 "densityClass", enumeration("SPARSE", "BALANCED", "DENSE"),
                 "algorithmProfileRef", string(),
                 "terrainPolicy", enumeration("CONFORM", "BALANCED", "ASSERTIVE"),
-                "requiredStructureRefs", array(string()), "fillPoolRef", string(),
+                "requiredStructureRefs", array(string()), "fillPoolRef", string(), "fillPools", weightedPoolsSchema(),
                 "connectionPlan", connectionPlanSchema(), "compositionProfileRef", string(),
                 "attachedFeatures", array(string()), "targetAreaShare", number(),
                 "spaceComposition", object(properties("buildingShare", number(), "landscapeShare", number(),
@@ -228,10 +228,12 @@ final class ProviderPlanningToolCatalog {
                         "patternPreference", enumeration("TEMPLATE_DEFAULT", "FREEFORM", "FIELD_GRID", "MIXED"),
                         "densityPreference", enumeration("TEMPLATE_DEFAULT", "LOW", "MEDIUM", "HIGH")),
                         "coverage", "patternPreference", "densityPreference"));
-        return object(values, "groupId", "groupKind", "preferredPatchRefs", "preferredPatchZone", "role",
+        JsonObject result = object(values, "groupId", "groupKind", "preferredPatchRefs", "preferredPatchZone", "role",
                 "priority", "extentClass", "densityClass", "algorithmProfileRef", "terrainPolicy",
-                "requiredStructureRefs", "fillPoolRef", "compositionProfileRef", "attachedFeatures",
+                "requiredStructureRefs", "compositionProfileRef", "attachedFeatures",
                 "targetAreaShare", "spaceComposition", "expansionPolicy", "buildingGreeneryPolicy");
+        result.add("oneOf", com.google.gson.JsonParser.parseString("[{\"required\":[\"fillPoolRef\"]},{\"required\":[\"fillPools\"]}]"));
+        return result;
     }
 
     private static JsonObject placementRelationSchema() {
@@ -241,9 +243,15 @@ final class ProviderPlanningToolCatalog {
                 "kind", "patchRefs", "groupRefs");
     }
 
+    private static JsonObject weightedPoolsSchema() {
+        JsonObject weight = number(); weight.addProperty("exclusiveMinimum", 0);
+        return described(nonEmptyArray(object(properties("poolRef", string(), "weight", weight), "poolRef", "weight")),
+                "Weighted fill pools. Use this OR the legacy single pool reference, never both. Roll once per expansion unit.");
+    }
+
     private static JsonObject connectionPlanSchema() {
         return object(properties(
-                "structurePoolRef", string(), "algorithmProfileRef", described(string(),
+                "structurePoolRef", string(), "structurePools", weightedPoolsSchema(), "algorithmProfileRef", described(string(),
                         "Resolve this catalog profile to its planner family before choosing parameters."),
                 "densityClass", enumeration("SPARSE", "BALANCED", "DENSE"),
                 "parameters", connectionParametersSchema()));

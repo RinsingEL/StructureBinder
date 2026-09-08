@@ -1,0 +1,8 @@
+Read-only probe: current compiled classes + Gson, original validation_04 realm_debug.
+Configuration checked against the test instance: enabled=true, initialActivityRadiusBlocks=2048, firstCityMinimumDistanceBlocks=3072.
+Viewport: center=(-128,128), radius=4096; corresponding to login position and default zoom, not a captured client snapshot.
+
+firstCityAccess=Decision[allowed=false, reasonCode=UNRELEASED_CITY_RESERVED, runId=provider_22d55c3faaf1fd10_r8192, citySeedId=city_realm_grainmark_ferry_cross, clearanceBlocks=-Infinity]
+completed=1 remaining=2
+node=city_realm_grainmark_millfield_village status=waiting_for_generation revealed=false
+node=city_realm_grainmark_ferry_cross status=blocked_by_program revealed=false

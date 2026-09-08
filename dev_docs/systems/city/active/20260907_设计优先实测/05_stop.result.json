@@ -1,0 +1,30 @@
+{
+  "request": {
+    "recordName": "05_stop",
+    "method": "tools/call",
+    "params": {
+      "name": "realm_debug_command",
+      "arguments": {
+        "command": "stop",
+        "confirmCommandExecution": true,
+        "sourceMode": "server",
+        "saveAfter": true,
+        "allowUnsafeCommand": true
+      }
+    }
+  },
+  "response": {
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"status\":\"completed_without_success\",\"reasonCode\":\"DEBUG_COMMAND_NO_SUCCESS\",\"command\":\"/stop\",\"normalizedCommand\":\"stop\",\"result\":0,\"sourceMode\":\"server\",\"requestedSourceMode\":\"server\",\"playerName\":\"Dev\",\"dimensionId\":\"minecraft:overworld\",\"worldSaveRequested\":true,\"presentation\":\"planning_decision_view.v0.1\"}"
+        }
+      ],
+      "isError": true
+    },
+    "jsonrpc": "2.0",
+    "id": 2
+  },
+  "stderr": ""
+}

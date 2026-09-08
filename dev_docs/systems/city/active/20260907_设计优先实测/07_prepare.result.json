@@ -1,0 +1,27 @@
+{
+  "request": {
+    "recordName": "07_prepare",
+    "method": "tools/call",
+    "params": {
+      "name": "city_prepare_d4_blueprint_context",
+      "arguments": {
+        "runId": "provider_22d55c3faaf1fd10_r8192",
+        "citySeedId": "city_realm_grainmark_ferry_cross"
+      }
+    }
+  },
+  "response": {
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Error: CITY_DESIGN_QUEUE_OUT_OF_ORDER: current=city_realm_grainmark_capital, requested=city_realm_grainmark_ferry_cross"
+        }
+      ],
+      "isError": true
+    },
+    "jsonrpc": "2.0",
+    "id": 2
+  },
+  "stderr": ""
+}

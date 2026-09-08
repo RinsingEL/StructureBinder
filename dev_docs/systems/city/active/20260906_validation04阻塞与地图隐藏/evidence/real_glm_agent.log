@@ -1,0 +1,325 @@
+2026-09-06 19:15:50,604 INFO hermes_cli.plugins: Plugin 'browser-browser-use' registered browser provider: browser-use
+2026-09-06 19:15:50,609 INFO hermes_cli.plugins: Plugin 'browser-browserbase' registered browser provider: browserbase
+2026-09-06 19:15:50,615 INFO hermes_cli.plugins: Plugin 'browser-firecrawl' registered browser provider: firecrawl
+2026-09-06 19:15:50,875 INFO hermes_cli.plugins: Plugin 'fal' registered image_gen provider: fal
+2026-09-06 19:15:50,875 INFO hermes_cli.plugins: Plugin 'krea' registered image_gen provider: krea
+2026-09-06 19:15:50,876 INFO hermes_cli.plugins: Plugin 'openai' registered image_gen provider: openai
+2026-09-06 19:15:50,876 INFO hermes_cli.plugins: Plugin 'openai-codex' registered image_gen provider: openai-codex
+2026-09-06 19:15:50,879 INFO hermes_cli.plugins: Plugin 'openrouter' registered image_gen provider: openrouter
+2026-09-06 19:15:50,879 INFO hermes_cli.plugins: Plugin 'openrouter' registered image_gen provider: nous
+2026-09-06 19:15:50,879 INFO hermes_cli.plugins: Plugin 'xai' registered image_gen provider: xai
+2026-09-06 19:15:50,887 INFO hermes_cli.plugins: Plugin 'fal' registered video_gen provider: fal
+2026-09-06 19:15:50,887 INFO hermes_cli.plugins: Plugin 'xai' registered video_gen provider: xai
+2026-09-06 19:15:50,895 INFO hermes_cli.plugins: Plugin 'web-brave-free' registered web provider: brave-free
+2026-09-06 19:15:50,900 INFO hermes_cli.plugins: Plugin 'web-ddgs' registered web provider: ddgs
+2026-09-06 19:15:50,902 INFO hermes_cli.plugins: Plugin 'web-exa' registered web provider: exa
+2026-09-06 19:15:50,906 INFO hermes_cli.plugins: Plugin 'web-firecrawl' registered web provider: firecrawl
+2026-09-06 19:15:50,910 INFO hermes_cli.plugins: Plugin 'web-parallel' registered web provider: parallel
+2026-09-06 19:15:50,913 INFO hermes_cli.plugins: Plugin 'web-searxng' registered web provider: searxng
+2026-09-06 19:15:50,916 INFO hermes_cli.plugins: Plugin 'web-tavily' registered web provider: tavily
+2026-09-06 19:15:50,919 INFO hermes_cli.plugins: Plugin 'web-xai' registered web provider: xai
+2026-09-06 19:15:50,922 INFO hermes_cli.plugins: Plugin discovery complete: 51 found, 44 enabled
+2026-09-06 19:15:54,887 INFO tools.mcp_tool: MCP server 'geomantia' (stdio): registered 2 tool(s): mcp__geomantia__patch_explorer_show_candidates, mcp__geomantia__city_submit_d4_blueprint
+2026-09-06 19:15:54,887 INFO tools.mcp_tool: MCP: registered 2 tool(s) from 1 server(s)
+2026-09-06 19:15:54,887 INFO tools.mcp_tool:   MCP: 2 tool(s) from 1 server(s)
+2026-09-06 19:15:54,887 INFO gateway.run: Starting Hermes Gateway...
+2026-09-06 19:15:54,887 INFO gateway.run: Session storage: E:\Mod_Dev\StructureBinder\run\config\geomantia\hermes\profiles\geomantia-1qdmf2j\sessions
+2026-09-06 19:15:54,888 INFO gateway.run: Agent budget: max_iterations=24 (agent.max_turns from config.yaml, or HERMES_MAX_ITERATIONS from .env, or default 90)
+2026-09-06 19:15:54,888 INFO gateway.run: Secret redaction: ENABLED (tool output, logs, and chat responses are scrubbed before delivery)
+2026-09-06 19:15:54,893 INFO gateway.run: Active profile: geomantia-1qdmf2j
+2026-09-06 19:15:55,047 WARNING gateway.run: No env user allowlists configured. Messaging platforms default to pairing/allowlist policies and will deny unknown senders unless you configure platform allowlists (e.g., TELEGRAM_ALLOWED_USERS=your_id) or explicitly opt in with GATEWAY_ALLOW_ALL_USERS=true plus dm_policy/group_policy: open on the platform.
+2026-09-06 19:15:55,611 INFO gateway.run: Connecting to api_server...
+2026-09-06 19:15:56,646 INFO gateway.platforms.api_server: [Api_Server] API server listening on http://127.0.0.1:53769 (model: geomantia-1qdmf2j)
+2026-09-06 19:15:56,660 INFO gateway.run: ✓ api_server connected
+2026-09-06 19:15:56,669 INFO gateway.run: Gateway running with 1 platform(s)
+2026-09-06 19:15:56,679 INFO gateway.run: Channel directory built: 0 target(s)
+2026-09-06 19:15:56,882 INFO aiohttp.access: 127.0.0.1 [06/Sep/2026:19:15:56 +0800] "GET /health HTTP/1.1" 200 526 "-" "Java-http-client/17.0.14"
+2026-09-06 19:15:56,889 INFO aiohttp.access: 127.0.0.1 [06/Sep/2026:19:15:56 +0800] "GET /api/sessions/geomantia-design-f5ef659f-0210-35c3-8b9a-2977640203db HTTP/1.1" 404 644 "-" "Java-http-client/17.0.14"
+2026-09-06 19:15:56,896 INFO aiohttp.access: 127.0.0.1 [06/Sep/2026:19:15:56 +0800] "POST /api/sessions HTTP/1.1" 201 1034 "-" "Java-http-client/17.0.14"
+2026-09-06 19:15:56,936 INFO run_agent: No .env file found. Using system environment variables.
+2026-09-06 19:15:57,704 INFO gateway.run: Press Ctrl+C to stop
+2026-09-06 19:15:58,024 INFO cron.scheduler_provider: In-process cron scheduler started (interval=60s)
+2026-09-06 19:15:58,108 INFO gateway.run: Gateway housekeeping started (interval=60s)
+2026-09-06 19:15:58,356 INFO gateway.run: kanban dispatcher: holding singleton dispatcher lock (E:\Mod_Dev\StructureBinder\run\config\geomantia\hermes\kanban\.dispatcher.lock)
+2026-09-06 19:16:01,788 INFO run_agent: OpenAI client created (agent_init, shared=True) thread=asyncio_0:18576 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:16:03,360 INFO gateway.run: kanban dispatcher: embedded in gateway (interval=60.0s)
+2026-09-06 19:16:10,607 INFO [geomantia-design-f5ef659f-0210-35c3-8b9a-2977640203db] agent.turn_context: conversation turn: session=geomantia-design-f5ef659f-0210-35c3-8b9a-2977640203db model=glm-5.3-flash provider=custom platform=api_server history=0 msg='[3 images] Continue this formal planning state: {"schema":"city_design_queue.v0....'
+2026-09-06 19:16:11,296 INFO run_agent: OpenAI client created (chat_completion_stream_request, shared=False) thread=Thread-8 (_call):33600 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:16:33,255 INFO run_agent: OpenAI client closed (stream_request_complete, shared=False, tcp_force_closed=0) thread=Thread-8 (_call):33600 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:16:33,255 INFO [geomantia-design-f5ef659f-0210-35c3-8b9a-2977640203db] agent.conversation_loop: API call #1: model=glm-5.3-flash provider=custom in=35053 out=703 total=35756 latency=22.6s
+2026-09-06 19:16:34,018 INFO [geomantia-design-f5ef659f-0210-35c3-8b9a-2977640203db] agent.tool_executor: tool mcp__geomantia__city_submit_d4_blueprint completed (0.10s, 4409 chars)
+2026-09-06 19:16:34,681 INFO run_agent: OpenAI client created (chat_completion_stream_request, shared=False) thread=Thread-9 (_call):34640 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:16:39,156 ERROR aiohttp.server: Error handling request from 127.0.0.1
+Traceback (most recent call last):
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\web_protocol.py", line 575, in _handle_request
+    resp = await request_handler(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\web_app.py", line 559, in _handle
+    return await handler(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\web_middlewares.py", line 117, in impl
+    return await handler(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\gateway\platforms\api_server.py", line 569, in cors_middleware
+    response = await handler(request)
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\gateway\platforms\api_server.py", line 673, in body_limit_middleware
+    return await handler(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\gateway\platforms\api_server.py", line 700, in security_headers_middleware
+    response = await handler(request)
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\gateway\platforms\api_server.py", line 2052, in _handle_session_chat_stream
+    await response.write(f"event: {name}\ndata: {data}\n\n".encode("utf-8"))
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\web_response.py", line 562, in write
+    await self._payload_writer.write(data)
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\http_writer.py", line 199, in write
+    self._write_chunked_payload(chunk)
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\http_writer.py", line 122, in _write_chunked_payload
+    self._writelines((chunk_len_pre, chunk, b"\r\n"))
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\http_writer.py", line 113, in _writelines
+    raise ClientConnectionResetError("Cannot write to closing transport")
+aiohttp.client_exceptions.ClientConnectionResetError: Cannot write to closing transport
+2026-09-06 19:16:39,216 INFO run_agent: OpenAI client closed (stream_request_complete, shared=False, tcp_force_closed=0) thread=Thread-9 (_call):34640 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:16:39,221 INFO [geomantia-design-f5ef659f-0210-35c3-8b9a-2977640203db] agent.conversation_loop: Turn ended: reason=interrupted_during_api_call model=glm-5.3-flash api_calls=2/24 budget=2/24 tool_turns=1 last_msg_role=assistant response_len=9 session=geomantia-design-f5ef659f-0210-35c3-8b9a-2977640203db
+2026-09-06 19:17:42,760 INFO hermes_cli.plugins: Plugin 'browser-browser-use' registered browser provider: browser-use
+2026-09-06 19:17:42,762 INFO hermes_cli.plugins: Plugin 'browser-browserbase' registered browser provider: browserbase
+2026-09-06 19:17:42,765 INFO hermes_cli.plugins: Plugin 'browser-firecrawl' registered browser provider: firecrawl
+2026-09-06 19:17:42,925 INFO hermes_cli.plugins: Plugin 'fal' registered image_gen provider: fal
+2026-09-06 19:17:42,926 INFO hermes_cli.plugins: Plugin 'krea' registered image_gen provider: krea
+2026-09-06 19:17:42,927 INFO hermes_cli.plugins: Plugin 'openai' registered image_gen provider: openai
+2026-09-06 19:17:42,927 INFO hermes_cli.plugins: Plugin 'openai-codex' registered image_gen provider: openai-codex
+2026-09-06 19:17:42,928 INFO hermes_cli.plugins: Plugin 'openrouter' registered image_gen provider: openrouter
+2026-09-06 19:17:42,928 INFO hermes_cli.plugins: Plugin 'openrouter' registered image_gen provider: nous
+2026-09-06 19:17:42,929 INFO hermes_cli.plugins: Plugin 'xai' registered image_gen provider: xai
+2026-09-06 19:17:42,933 INFO hermes_cli.plugins: Plugin 'fal' registered video_gen provider: fal
+2026-09-06 19:17:42,933 INFO hermes_cli.plugins: Plugin 'xai' registered video_gen provider: xai
+2026-09-06 19:17:42,936 INFO hermes_cli.plugins: Plugin 'web-brave-free' registered web provider: brave-free
+2026-09-06 19:17:42,938 INFO hermes_cli.plugins: Plugin 'web-ddgs' registered web provider: ddgs
+2026-09-06 19:17:42,939 INFO hermes_cli.plugins: Plugin 'web-exa' registered web provider: exa
+2026-09-06 19:17:42,942 INFO hermes_cli.plugins: Plugin 'web-firecrawl' registered web provider: firecrawl
+2026-09-06 19:17:42,944 INFO hermes_cli.plugins: Plugin 'web-parallel' registered web provider: parallel
+2026-09-06 19:17:42,945 INFO hermes_cli.plugins: Plugin 'web-searxng' registered web provider: searxng
+2026-09-06 19:17:42,947 INFO hermes_cli.plugins: Plugin 'web-tavily' registered web provider: tavily
+2026-09-06 19:17:42,949 INFO hermes_cli.plugins: Plugin 'web-xai' registered web provider: xai
+2026-09-06 19:17:42,951 INFO hermes_cli.plugins: Plugin discovery complete: 51 found, 44 enabled
+2026-09-06 19:17:43,817 INFO tools.mcp_tool: MCP server 'geomantia' (stdio): registered 2 tool(s): mcp__geomantia__city_inspect_d3_patches, mcp__geomantia__city_review_d3_site
+2026-09-06 19:17:43,817 INFO tools.mcp_tool: MCP: registered 2 tool(s) from 1 server(s)
+2026-09-06 19:17:43,817 INFO tools.mcp_tool:   MCP: 2 tool(s) from 1 server(s)
+2026-09-06 19:17:43,818 INFO gateway.run: Starting Hermes Gateway...
+2026-09-06 19:17:43,818 INFO gateway.run: Session storage: E:\Mod_Dev\StructureBinder\run\config\geomantia\hermes\profiles\geomantia-1qdmf2j\sessions
+2026-09-06 19:17:43,819 INFO gateway.run: Agent budget: max_iterations=24 (agent.max_turns from config.yaml, or HERMES_MAX_ITERATIONS from .env, or default 90)
+2026-09-06 19:17:43,819 INFO gateway.run: Secret redaction: ENABLED (tool output, logs, and chat responses are scrubbed before delivery)
+2026-09-06 19:17:43,823 INFO gateway.run: Active profile: geomantia-1qdmf2j
+2026-09-06 19:17:43,841 WARNING gateway.run: No env user allowlists configured. Messaging platforms default to pairing/allowlist policies and will deny unknown senders unless you configure platform allowlists (e.g., TELEGRAM_ALLOWED_USERS=your_id) or explicitly opt in with GATEWAY_ALLOW_ALL_USERS=true plus dm_policy/group_policy: open on the platform.
+2026-09-06 19:17:43,857 INFO gateway.run: Connecting to api_server...
+2026-09-06 19:17:44,884 INFO gateway.platforms.api_server: [Api_Server] API server listening on http://127.0.0.1:59110 (model: geomantia-1qdmf2j)
+2026-09-06 19:17:44,895 INFO gateway.run: ✓ api_server connected
+2026-09-06 19:17:44,902 INFO gateway.run: Gateway running with 1 platform(s)
+2026-09-06 19:17:44,909 INFO gateway.run: Channel directory built: 0 target(s)
+2026-09-06 19:17:44,959 INFO aiohttp.access: 127.0.0.1 [06/Sep/2026:19:17:44 +0800] "GET /health HTTP/1.1" 200 526 "-" "Java-http-client/17.0.14"
+2026-09-06 19:17:44,963 INFO aiohttp.access: 127.0.0.1 [06/Sep/2026:19:17:44 +0800] "GET /api/sessions/geomantia-1qdmf2j-provider_22d55c3faaf1fd10_r8192-city_realm_grainmark_capital HTTP/1.1" 404 669 "-" "Java-http-client/17.0.14"
+2026-09-06 19:17:44,967 INFO aiohttp.access: 127.0.0.1 [06/Sep/2026:19:17:44 +0800] "POST /api/sessions HTTP/1.1" 201 1059 "-" "Java-http-client/17.0.14"
+2026-09-06 19:17:44,986 INFO run_agent: No .env file found. Using system environment variables.
+2026-09-06 19:17:45,915 INFO gateway.run: Press Ctrl+C to stop
+2026-09-06 19:17:45,920 INFO cron.scheduler_provider: In-process cron scheduler started (interval=60s)
+2026-09-06 19:17:45,922 INFO gateway.run: Gateway housekeeping started (interval=60s)
+2026-09-06 19:17:45,931 INFO gateway.run: kanban dispatcher: holding singleton dispatcher lock (E:\Mod_Dev\StructureBinder\run\config\geomantia\hermes\kanban\.dispatcher.lock)
+2026-09-06 19:17:47,737 INFO run_agent: OpenAI client created (agent_init, shared=True) thread=asyncio_0:9112 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:17:47,798 INFO [geomantia-1qdmf2j-provider_22d55c3faaf1fd10_r8192-city_realm_grainmark_capital] agent.turn_context: conversation turn: session=geomantia-1qdmf2j-provider_22d55c3faaf1fd10_r8192-city_realm_grainmark_capital model=glm-5.3-flash provider=custom platform=api_server history=0 msg='[2 images] Continue this formal planning state: {"schema":"city_design_queue.v0....'
+2026-09-06 19:17:48,500 INFO run_agent: OpenAI client created (chat_completion_stream_request, shared=False) thread=Thread-8 (_call):10100 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:17:50,938 INFO gateway.run: kanban dispatcher: embedded in gateway (interval=60.0s)
+2026-09-06 19:18:06,915 INFO run_agent: OpenAI client closed (stream_request_complete, shared=False, tcp_force_closed=0) thread=Thread-8 (_call):10100 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:18:06,915 INFO [geomantia-1qdmf2j-provider_22d55c3faaf1fd10_r8192-city_realm_grainmark_capital] agent.conversation_loop: API call #1: model=glm-5.3-flash provider=custom in=16532 out=466 total=16998 latency=19.0s
+2026-09-06 19:18:08,034 INFO [geomantia-1qdmf2j-provider_22d55c3faaf1fd10_r8192-city_realm_grainmark_capital] agent.tool_executor: tool mcp__geomantia__city_review_d3_site completed (0.44s, 9667 chars)
+2026-09-06 19:18:08,629 INFO run_agent: OpenAI client created (chat_completion_stream_request, shared=False) thread=Thread-9 (_call):33780 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:18:12,890 ERROR aiohttp.server: Error handling request from 127.0.0.1
+Traceback (most recent call last):
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\web_protocol.py", line 575, in _handle_request
+    resp = await request_handler(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\web_app.py", line 559, in _handle
+    return await handler(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\web_middlewares.py", line 117, in impl
+    return await handler(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\gateway\platforms\api_server.py", line 569, in cors_middleware
+    response = await handler(request)
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\gateway\platforms\api_server.py", line 673, in body_limit_middleware
+    return await handler(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\gateway\platforms\api_server.py", line 700, in security_headers_middleware
+    response = await handler(request)
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\gateway\platforms\api_server.py", line 2052, in _handle_session_chat_stream
+    await response.write(f"event: {name}\ndata: {data}\n\n".encode("utf-8"))
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\web_response.py", line 562, in write
+    await self._payload_writer.write(data)
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\http_writer.py", line 199, in write
+    self._write_chunked_payload(chunk)
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\http_writer.py", line 122, in _write_chunked_payload
+    self._writelines((chunk_len_pre, chunk, b"\r\n"))
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\http_writer.py", line 113, in _writelines
+    raise ClientConnectionResetError("Cannot write to closing transport")
+aiohttp.client_exceptions.ClientConnectionResetError: Cannot write to closing transport
+2026-09-06 19:18:12,951 INFO run_agent: OpenAI client closed (stream_request_complete, shared=False, tcp_force_closed=0) thread=Thread-9 (_call):33780 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:18:12,965 INFO [geomantia-1qdmf2j-provider_22d55c3faaf1fd10_r8192-city_realm_grainmark_capital] agent.conversation_loop: Turn ended: reason=interrupted_during_api_call model=glm-5.3-flash api_calls=2/24 budget=2/24 tool_turns=1 last_msg_role=assistant response_len=4 session=geomantia-1qdmf2j-provider_22d55c3faaf1fd10_r8192-city_realm_grainmark_capital
+2026-09-06 19:18:20,188 INFO hermes_cli.plugins: Plugin 'browser-browser-use' registered browser provider: browser-use
+2026-09-06 19:18:20,190 INFO hermes_cli.plugins: Plugin 'browser-browserbase' registered browser provider: browserbase
+2026-09-06 19:18:20,195 INFO hermes_cli.plugins: Plugin 'browser-firecrawl' registered browser provider: firecrawl
+2026-09-06 19:18:20,353 INFO hermes_cli.plugins: Plugin 'fal' registered image_gen provider: fal
+2026-09-06 19:18:20,353 INFO hermes_cli.plugins: Plugin 'krea' registered image_gen provider: krea
+2026-09-06 19:18:20,354 INFO hermes_cli.plugins: Plugin 'openai' registered image_gen provider: openai
+2026-09-06 19:18:20,354 INFO hermes_cli.plugins: Plugin 'openai-codex' registered image_gen provider: openai-codex
+2026-09-06 19:18:20,355 INFO hermes_cli.plugins: Plugin 'openrouter' registered image_gen provider: openrouter
+2026-09-06 19:18:20,355 INFO hermes_cli.plugins: Plugin 'openrouter' registered image_gen provider: nous
+2026-09-06 19:18:20,356 INFO hermes_cli.plugins: Plugin 'xai' registered image_gen provider: xai
+2026-09-06 19:18:20,360 INFO hermes_cli.plugins: Plugin 'fal' registered video_gen provider: fal
+2026-09-06 19:18:20,360 INFO hermes_cli.plugins: Plugin 'xai' registered video_gen provider: xai
+2026-09-06 19:18:20,364 INFO hermes_cli.plugins: Plugin 'web-brave-free' registered web provider: brave-free
+2026-09-06 19:18:20,365 INFO hermes_cli.plugins: Plugin 'web-ddgs' registered web provider: ddgs
+2026-09-06 19:18:20,367 INFO hermes_cli.plugins: Plugin 'web-exa' registered web provider: exa
+2026-09-06 19:18:20,369 INFO hermes_cli.plugins: Plugin 'web-firecrawl' registered web provider: firecrawl
+2026-09-06 19:18:20,371 INFO hermes_cli.plugins: Plugin 'web-parallel' registered web provider: parallel
+2026-09-06 19:18:20,371 INFO hermes_cli.plugins: Plugin 'web-searxng' registered web provider: searxng
+2026-09-06 19:18:20,372 INFO hermes_cli.plugins: Plugin 'web-tavily' registered web provider: tavily
+2026-09-06 19:18:20,374 INFO hermes_cli.plugins: Plugin 'web-xai' registered web provider: xai
+2026-09-06 19:18:20,375 INFO hermes_cli.plugins: Plugin discovery complete: 51 found, 44 enabled
+2026-09-06 19:18:21,241 INFO tools.mcp_tool: MCP server 'geomantia' (stdio): registered 2 tool(s): mcp__geomantia__patch_explorer_show_candidates, mcp__geomantia__city_submit_d4_blueprint
+2026-09-06 19:18:21,241 INFO tools.mcp_tool: MCP: registered 2 tool(s) from 1 server(s)
+2026-09-06 19:18:21,241 INFO tools.mcp_tool:   MCP: 2 tool(s) from 1 server(s)
+2026-09-06 19:18:21,241 INFO gateway.run: Starting Hermes Gateway...
+2026-09-06 19:18:21,241 INFO gateway.run: Session storage: E:\Mod_Dev\StructureBinder\run\config\geomantia\hermes\profiles\geomantia-1qdmf2j\sessions
+2026-09-06 19:18:21,242 INFO gateway.run: Agent budget: max_iterations=24 (agent.max_turns from config.yaml, or HERMES_MAX_ITERATIONS from .env, or default 90)
+2026-09-06 19:18:21,242 INFO gateway.run: Secret redaction: ENABLED (tool output, logs, and chat responses are scrubbed before delivery)
+2026-09-06 19:18:21,247 INFO gateway.run: Active profile: geomantia-1qdmf2j
+2026-09-06 19:18:21,267 WARNING gateway.run: No env user allowlists configured. Messaging platforms default to pairing/allowlist policies and will deny unknown senders unless you configure platform allowlists (e.g., TELEGRAM_ALLOWED_USERS=your_id) or explicitly opt in with GATEWAY_ALLOW_ALL_USERS=true plus dm_policy/group_policy: open on the platform.
+2026-09-06 19:18:21,284 INFO gateway.run: Connecting to api_server...
+2026-09-06 19:18:22,312 INFO gateway.platforms.api_server: [Api_Server] API server listening on http://127.0.0.1:63947 (model: geomantia-1qdmf2j)
+2026-09-06 19:18:22,324 INFO gateway.run: ✓ api_server connected
+2026-09-06 19:18:22,330 INFO gateway.run: Gateway running with 1 platform(s)
+2026-09-06 19:18:22,338 INFO gateway.run: Channel directory built: 0 target(s)
+2026-09-06 19:18:22,387 INFO aiohttp.access: 127.0.0.1 [06/Sep/2026:19:18:22 +0800] "GET /health HTTP/1.1" 200 526 "-" "Java-http-client/17.0.14"
+2026-09-06 19:18:22,391 INFO aiohttp.access: 127.0.0.1 [06/Sep/2026:19:18:22 +0800] "GET /api/sessions/geomantia-design-0b52be72-a90e-3406-a292-99ddf906b936 HTTP/1.1" 404 644 "-" "Java-http-client/17.0.14"
+2026-09-06 19:18:22,395 INFO aiohttp.access: 127.0.0.1 [06/Sep/2026:19:18:22 +0800] "POST /api/sessions HTTP/1.1" 201 1034 "-" "Java-http-client/17.0.14"
+2026-09-06 19:18:22,419 INFO run_agent: No .env file found. Using system environment variables.
+2026-09-06 19:18:23,348 INFO gateway.run: Press Ctrl+C to stop
+2026-09-06 19:18:23,352 INFO cron.scheduler_provider: In-process cron scheduler started (interval=60s)
+2026-09-06 19:18:23,355 INFO gateway.run: Gateway housekeeping started (interval=60s)
+2026-09-06 19:18:23,374 INFO gateway.run: kanban dispatcher: holding singleton dispatcher lock (E:\Mod_Dev\StructureBinder\run\config\geomantia\hermes\kanban\.dispatcher.lock)
+2026-09-06 19:18:25,199 INFO run_agent: OpenAI client created (agent_init, shared=True) thread=asyncio_0:5396 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:18:25,263 INFO [geomantia-design-0b52be72-a90e-3406-a292-99ddf906b936] agent.turn_context: conversation turn: session=geomantia-design-0b52be72-a90e-3406-a292-99ddf906b936 model=glm-5.3-flash provider=custom platform=api_server history=0 msg='[3 images] Continue this formal planning state: {"schema":"city_design_queue.v0....'
+2026-09-06 19:18:26,011 INFO run_agent: OpenAI client created (chat_completion_stream_request, shared=False) thread=Thread-8 (_call):34400 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:18:28,366 INFO gateway.run: kanban dispatcher: embedded in gateway (interval=60.0s)
+2026-09-06 19:19:25,807 INFO run_agent: OpenAI client closed (stream_request_complete, shared=False, tcp_force_closed=0) thread=Thread-8 (_call):34400 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:19:25,807 INFO [geomantia-design-0b52be72-a90e-3406-a292-99ddf906b936] agent.conversation_loop: API call #1: model=glm-5.3-flash provider=custom in=33151 out=3562 total=36713 latency=60.4s
+2026-09-06 19:19:26,572 INFO [geomantia-design-0b52be72-a90e-3406-a292-99ddf906b936] agent.tool_executor: tool mcp__geomantia__city_submit_d4_blueprint completed (0.08s, 2935 chars)
+2026-09-06 19:19:27,160 INFO run_agent: OpenAI client created (chat_completion_stream_request, shared=False) thread=Thread-9 (_call):30096 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:20:11,474 INFO run_agent: OpenAI client closed (stream_request_complete, shared=False, tcp_force_closed=0) thread=Thread-9 (_call):30096 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:20:11,474 INFO [geomantia-design-0b52be72-a90e-3406-a292-99ddf906b936] agent.conversation_loop: API call #2: model=glm-5.3-flash provider=custom in=37227 out=3084 total=40311 latency=44.9s cache=33088/37227 (89%)
+2026-09-06 19:20:11,570 INFO [geomantia-design-0b52be72-a90e-3406-a292-99ddf906b936] agent.tool_executor: tool mcp__geomantia__city_submit_d4_blueprint completed (0.07s, 2969 chars)
+2026-09-06 19:20:12,173 INFO run_agent: OpenAI client created (chat_completion_stream_request, shared=False) thread=Thread-10 (_call):15716 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:20:57,224 INFO run_agent: OpenAI client closed (stream_request_complete, shared=False, tcp_force_closed=0) thread=Thread-10 (_call):15716 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:20:57,224 INFO [geomantia-design-0b52be72-a90e-3406-a292-99ddf906b936] agent.conversation_loop: API call #3: model=glm-5.3-flash provider=custom in=41322 out=3114 total=44436 latency=45.6s cache=37184/41322 (90%)
+2026-09-06 19:20:57,343 INFO [geomantia-design-0b52be72-a90e-3406-a292-99ddf906b936] agent.tool_executor: tool mcp__geomantia__city_submit_d4_blueprint completed (0.10s, 6613 chars)
+2026-09-06 19:20:57,934 INFO run_agent: OpenAI client created (chat_completion_stream_request, shared=False) thread=Thread-11 (_call):23460 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:22:09,152 INFO run_agent: OpenAI client closed (stream_request_complete, shared=False, tcp_force_closed=0) thread=Thread-11 (_call):23460 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:22:09,152 INFO [geomantia-design-0b52be72-a90e-3406-a292-99ddf906b936] agent.conversation_loop: API call #4: model=glm-5.3-flash provider=custom in=46374 out=3205 total=49579 latency=71.8s cache=41280/46374 (89%)
+2026-09-06 19:22:09,256 INFO [geomantia-design-0b52be72-a90e-3406-a292-99ddf906b936] agent.tool_executor: tool mcp__geomantia__city_submit_d4_blueprint completed (0.08s, 3491 chars)
+2026-09-06 19:22:09,839 INFO run_agent: OpenAI client created (chat_completion_stream_request, shared=False) thread=Thread-12 (_call):34808 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:22:18,129 INFO run_agent: OpenAI client closed (stream_request_complete, shared=False, tcp_force_closed=0) thread=Thread-12 (_call):34808 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:22:18,129 INFO [geomantia-design-0b52be72-a90e-3406-a292-99ddf906b936] agent.conversation_loop: API call #5: model=glm-5.3-flash provider=custom in=50461 out=176 total=50637 latency=8.9s cache=46336/50461 (92%)
+2026-09-06 19:22:18,156 WARNING [geomantia-design-0b52be72-a90e-3406-a292-99ddf906b936] agent.tool_executor: Tool mcp__geomantia__city_submit_d4_blueprint returned error (0.01s): {"error": "{\"ok\":false,\"httpStatus\":400,\"tool\":\"city_submit_d4_blueprint\",\"response\":{\"ok\":false,\"error\":\"CITY_BLUEPRINT_PATCH_BASE_STALE\"}}"}
+2026-09-06 19:22:18,738 INFO run_agent: OpenAI client created (chat_completion_stream_request, shared=False) thread=Thread-13 (_call):19304 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:22:59,144 INFO run_agent: OpenAI client closed (stream_request_complete, shared=False, tcp_force_closed=0) thread=Thread-13 (_call):19304 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:22:59,144 INFO [geomantia-design-0b52be72-a90e-3406-a292-99ddf906b936] agent.conversation_loop: API call #6: model=glm-5.3-flash provider=custom in=50743 out=2978 total=53721 latency=41.0s cache=50432/50743 (99%)
+2026-09-06 19:22:59,229 INFO [geomantia-design-0b52be72-a90e-3406-a292-99ddf906b936] agent.tool_executor: tool mcp__geomantia__city_submit_d4_blueprint completed (0.08s, 3164 chars)
+2026-09-06 19:22:59,846 INFO run_agent: OpenAI client created (chat_completion_stream_request, shared=False) thread=Thread-14 (_call):31988 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:23:04,386 INFO aiohttp.access: 127.0.0.1 [06/Sep/2026:19:23:04 +0800] "GET /health HTTP/1.1" 200 526 "-" "Java-http-client/17.0.14"
+2026-09-06 19:23:04,387 INFO aiohttp.access: 127.0.0.1 [06/Sep/2026:19:23:04 +0800] "GET /api/sessions/geomantia-design-4cfa8a40-fafd-3236-bf84-97deb4b19cba HTTP/1.1" 404 644 "-" "Java-http-client/17.0.14"
+2026-09-06 19:23:04,399 INFO aiohttp.access: 127.0.0.1 [06/Sep/2026:19:23:04 +0800] "POST /api/sessions HTTP/1.1" 201 1034 "-" "Java-http-client/17.0.14"
+2026-09-06 19:23:05,075 ERROR aiohttp.server: Error handling request from 127.0.0.1
+Traceback (most recent call last):
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\web_protocol.py", line 575, in _handle_request
+    resp = await request_handler(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\web_app.py", line 559, in _handle
+    return await handler(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\web_middlewares.py", line 117, in impl
+    return await handler(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\gateway\platforms\api_server.py", line 569, in cors_middleware
+    response = await handler(request)
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\gateway\platforms\api_server.py", line 673, in body_limit_middleware
+    return await handler(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\gateway\platforms\api_server.py", line 700, in security_headers_middleware
+    response = await handler(request)
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\gateway\platforms\api_server.py", line 2052, in _handle_session_chat_stream
+    await response.write(f"event: {name}\ndata: {data}\n\n".encode("utf-8"))
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\web_response.py", line 562, in write
+    await self._payload_writer.write(data)
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\http_writer.py", line 199, in write
+    self._write_chunked_payload(chunk)
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\http_writer.py", line 122, in _write_chunked_payload
+    self._writelines((chunk_len_pre, chunk, b"\r\n"))
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\http_writer.py", line 113, in _writelines
+    raise ClientConnectionResetError("Cannot write to closing transport")
+aiohttp.client_exceptions.ClientConnectionResetError: Cannot write to closing transport
+2026-09-06 19:23:05,137 INFO run_agent: OpenAI client closed (stream_request_complete, shared=False, tcp_force_closed=0) thread=Thread-14 (_call):31988 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:23:05,140 INFO [geomantia-design-0b52be72-a90e-3406-a292-99ddf906b936] agent.conversation_loop: Turn ended: reason=interrupted_during_api_call model=glm-5.3-flash api_calls=7/24 budget=7/24 tool_turns=6 last_msg_role=assistant response_len=22 session=geomantia-design-0b52be72-a90e-3406-a292-99ddf906b936
+2026-09-06 19:23:06,207 INFO run_agent: OpenAI client created (agent_init, shared=True) thread=asyncio_2:28192 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:23:06,215 INFO [geomantia-design-4cfa8a40-fafd-3236-bf84-97deb4b19cba] agent.turn_context: conversation turn: session=geomantia-design-4cfa8a40-fafd-3236-bf84-97deb4b19cba model=glm-5.3-flash provider=custom platform=api_server history=0 msg='[3 images] Continue this formal planning state: {"schema":"city_design_queue.v0....'
+2026-09-06 19:23:06,889 INFO run_agent: OpenAI client created (chat_completion_stream_request, shared=False) thread=Thread-15 (_call):11060 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:23:53,669 INFO run_agent: OpenAI client closed (stream_request_complete, shared=False, tcp_force_closed=0) thread=Thread-15 (_call):11060 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:23:53,669 INFO [geomantia-design-4cfa8a40-fafd-3236-bf84-97deb4b19cba] agent.conversation_loop: API call #1: model=glm-5.3-flash provider=custom in=37006 out=1594 total=38600 latency=47.4s
+2026-09-06 19:23:53,698 WARNING [geomantia-design-4cfa8a40-fafd-3236-bf84-97deb4b19cba] agent.tool_executor: Tool mcp__geomantia__city_submit_d4_blueprint returned error (0.01s): {"error": "{\"ok\":false,\"httpStatus\":400,\"tool\":\"city_submit_d4_blueprint\",\"response\":{\"ok\":false,\"error\":\"CITY_BLUEPRINT_PATCH_REQUIRES_EXACT_SHARES\"}}"}
+2026-09-06 19:23:54,295 INFO run_agent: OpenAI client created (chat_completion_stream_request, shared=False) thread=Thread-16 (_call):34468 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:24:08,531 INFO run_agent: OpenAI client closed (stream_request_complete, shared=False, tcp_force_closed=0) thread=Thread-16 (_call):34468 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:24:08,531 INFO [geomantia-design-4cfa8a40-fafd-3236-bf84-97deb4b19cba] agent.conversation_loop: API call #2: model=glm-5.3-flash provider=custom in=37759 out=679 total=38438 latency=14.8s cache=36992/37759 (98%)
+2026-09-06 19:24:08,629 INFO [geomantia-design-4cfa8a40-fafd-3236-bf84-97deb4b19cba] agent.tool_executor: tool mcp__geomantia__city_submit_d4_blueprint completed (0.08s, 3385 chars)
+2026-09-06 19:24:09,252 INFO run_agent: OpenAI client created (chat_completion_stream_request, shared=False) thread=Thread-17 (_call):27952 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:24:13,802 INFO aiohttp.access: 127.0.0.1 [06/Sep/2026:19:24:13 +0800] "GET /health HTTP/1.1" 200 526 "-" "Java-http-client/17.0.14"
+2026-09-06 19:24:13,803 INFO aiohttp.access: 127.0.0.1 [06/Sep/2026:19:24:13 +0800] "GET /api/sessions/geomantia-design-21942318-82be-3d71-ae1c-5fb1918a2dda HTTP/1.1" 404 644 "-" "Java-http-client/17.0.14"
+2026-09-06 19:24:13,818 INFO aiohttp.access: 127.0.0.1 [06/Sep/2026:19:24:13 +0800] "POST /api/sessions HTTP/1.1" 201 1034 "-" "Java-http-client/17.0.14"
+2026-09-06 19:24:13,818 ERROR aiohttp.server: Error handling request from 127.0.0.1
+Traceback (most recent call last):
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\web_protocol.py", line 575, in _handle_request
+    resp = await request_handler(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\web_app.py", line 559, in _handle
+    return await handler(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\web_middlewares.py", line 117, in impl
+    return await handler(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\gateway\platforms\api_server.py", line 569, in cors_middleware
+    response = await handler(request)
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\gateway\platforms\api_server.py", line 673, in body_limit_middleware
+    return await handler(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\gateway\platforms\api_server.py", line 700, in security_headers_middleware
+    response = await handler(request)
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\gateway\platforms\api_server.py", line 2052, in _handle_session_chat_stream
+    await response.write(f"event: {name}\ndata: {data}\n\n".encode("utf-8"))
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\web_response.py", line 562, in write
+    await self._payload_writer.write(data)
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\http_writer.py", line 199, in write
+    self._write_chunked_payload(chunk)
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\http_writer.py", line 122, in _write_chunked_payload
+    self._writelines((chunk_len_pre, chunk, b"\r\n"))
+  File "E:\Mod_Dev\StructureBinder\run\config\geomantia\runtime\hermes-0.18.2-win-x64\site-packages\aiohttp\http_writer.py", line 113, in _writelines
+    raise ClientConnectionResetError("Cannot write to closing transport")
+aiohttp.client_exceptions.ClientConnectionResetError: Cannot write to closing transport
+2026-09-06 19:24:13,860 INFO run_agent: OpenAI client closed (stream_request_complete, shared=False, tcp_force_closed=0) thread=Thread-17 (_call):27952 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:24:13,865 INFO [geomantia-design-4cfa8a40-fafd-3236-bf84-97deb4b19cba] agent.conversation_loop: Turn ended: reason=interrupted_during_api_call model=glm-5.3-flash api_calls=3/24 budget=3/24 tool_turns=2 last_msg_role=assistant response_len=22 session=geomantia-design-4cfa8a40-fafd-3236-bf84-97deb4b19cba
+2026-09-06 19:24:15,683 INFO run_agent: OpenAI client created (agent_init, shared=True) thread=asyncio_4:30732 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash
+2026-09-06 19:24:15,690 INFO [geomantia-design-21942318-82be-3d71-ae1c-5fb1918a2dda] agent.turn_context: conversation turn: session=geomantia-design-21942318-82be-3d71-ae1c-5fb1918a2dda model=glm-5.3-flash provider=custom platform=api_server history=0 msg='[3 images] Continue this formal planning state: {"schema":"city_design_queue.v0....'
+2026-09-06 19:24:16,331 INFO run_agent: OpenAI client created (chat_completion_stream_request, shared=False) thread=Thread-18 (_call):24048 provider=custom base_url=https://open.bigmodel.cn/api/paas/v4 model=glm-5.3-flash

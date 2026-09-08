@@ -1,0 +1,203 @@
+{
+  "schema": "city_blueprint",
+  "cityId": "city_sahra_valdoran_library_qasr_ilm",
+  "sourceD3Ref": {
+    "path": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_library_qasr_ilm/steps/d3/city_landform_review_package.json",
+    "schema": "city_landform_review",
+    "contentHash": "sha256:6cb53f8cdae5c39b4fc949c379563021a3963c67b3c90b6bdcb5a13ecd582de1"
+  },
+  "catalogSnapshotRef": {
+    "path": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_library_qasr_ilm/steps/blueprint/city_blueprint_catalog_snapshot.json",
+    "schema": "city_blueprint_catalog_snapshot",
+    "contentHash": "sha256:4bb52257527291154fc05b569d3fde90042678ef3f4d0850635d7c4a1e375f70"
+  },
+  "generationSeed": 1668316340598962,
+  "designIntent": {
+    "cityIdentity": "Sahra Valdoran scholarly oasis outpost on VALLEY-01/PLAIN-01: a sandstone enclave of learning, cartography and quiet defense guarding the realm's eastern flank",
+    "theme": "sheltered desert-sandstone oasis of scholarship at the frontier",
+    "functionalRoles": [
+      "scholarly",
+      "crafting",
+      "defense"
+    ]
+  },
+  "styleProfile": {
+    "profileRef": "style:trek_desert_sandstone"
+  },
+  "groups": [
+    {
+      "groupId": "g_scholarly_core",
+      "groupKind": "STRUCTURE",
+      "preferredPatchRefs": [
+        "minecraft:overworld:step.16:city.city_sahra_valdoran_library_qasr_ilm:p.8"
+      ],
+      "preferredPatchZone": "CENTER",
+      "role": "scholarly_core",
+      "priority": "CORE",
+      "extentClass": "MEDIUM",
+      "densityClass": "BALANCED",
+      "algorithmProfileRef": "algorithm:compact",
+      "terrainPolicy": "CONFORM",
+      "requiredStructureRefs": [
+        "trek:village/desert/houses/desert_library_1",
+        "trek:village/desert/houses/desert_cartographer_1",
+        "trek:village/desert/houses/desert_temple_1"
+      ],
+      "fillPools": [
+        {
+          "poolRef": "pool:trek_desert_sandstone_fill",
+          "weight": 1.0
+        }
+      ],
+      "compositionProfileRef": "composition:round_robin",
+      "attachedFeatures": [],
+      "targetAreaShare": 0.6470588235294118,
+      "spaceComposition": {
+        "buildingShare": 0.5499999999999999,
+        "landscapeShare": 0.19999999999999998,
+        "openSpaceShare": 0.24999999999999997
+      },
+      "expansionPolicy": {
+        "allowOutwardExpansion": true,
+        "allowRelationConnection": true,
+        "stopWhenTargetReached": true
+      },
+      "buildingGreeneryPolicy": {
+        "coverage": "SPARSE",
+        "patternPreference": "TEMPLATE_DEFAULT",
+        "densityPreference": "MEDIUM"
+      }
+    },
+    {
+      "groupId": "g_craft_defense",
+      "groupKind": "STRUCTURE",
+      "preferredPatchRefs": [
+        "minecraft:overworld:step.16:city.city_sahra_valdoran_library_qasr_ilm:p.25"
+      ],
+      "preferredPatchZone": "EAST",
+      "role": "craft_and_defense_edge",
+      "priority": "STANDARD",
+      "extentClass": "MEDIUM",
+      "densityClass": "SPARSE",
+      "algorithmProfileRef": "algorithm:compact",
+      "terrainPolicy": "BALANCED",
+      "requiredStructureRefs": [
+        "geomantia:city/trek/defense/mangrove_watchtower_2"
+      ],
+      "fillPools": [
+        {
+          "poolRef": "pool:trek_desert_sandstone_utility_fill",
+          "weight": 1.0
+        }
+      ],
+      "compositionProfileRef": "composition:round_robin",
+      "attachedFeatures": [],
+      "targetAreaShare": 0.3529411764705882,
+      "spaceComposition": {
+        "buildingShare": 0.44999999999999996,
+        "landscapeShare": 0.25,
+        "openSpaceShare": 0.3
+      },
+      "expansionPolicy": {
+        "allowOutwardExpansion": true,
+        "allowRelationConnection": true,
+        "stopWhenTargetReached": true
+      },
+      "buildingGreeneryPolicy": {
+        "coverage": "SPARSE",
+        "patternPreference": "TEMPLATE_DEFAULT",
+        "densityPreference": "LOW"
+      }
+    }
+  ],
+  "arrayCompositions": [],
+  "relations": [
+    {
+      "fromGroupId": "g_scholarly_core",
+      "toGroupId": "g_craft_defense",
+      "relationKind": "CONNECTION",
+      "strength": "HARD",
+      "distancePreference": "NONE",
+      "directionPreference": "NONE"
+    },
+    {
+      "fromGroupId": "g_scholarly_core",
+      "toGroupId": "g_craft_defense",
+      "relationKind": "ADJACENCY",
+      "strength": "SOFT",
+      "distancePreference": "NONE",
+      "directionPreference": "NONE"
+    }
+  ],
+  "roadProfile": {
+    "profileRef": "road:town"
+  },
+  "surfaceDetailProfile": {
+    "profileRef": "surface:working"
+  },
+  "outdoorPlan": {
+    "mode": "GENERATE",
+    "envelopeProfile": "BALANCED",
+    "foundationProfileRef": "foundation:urban",
+    "spatialGrounds": [
+      {
+        "sourceGroupId": "g_scholarly_core",
+        "sharedSpaceType": "RESIDENTIAL_COURT",
+        "hierarchyLevel": "SECONDARY",
+        "membership": "URBAN"
+      },
+      {
+        "sourceGroupId": "g_craft_defense",
+        "sharedSpaceType": "GENERAL_URBAN",
+        "hierarchyLevel": "LOCAL",
+        "membership": "URBAN"
+      }
+    ],
+    "landscapes": [
+      {
+        "landscapeId": "ls_outpost_fields",
+        "landscapeProfileRef": "landscape:farmland",
+        "purpose": "FUNCTIONAL",
+        "originMode": "FREE_STANDING",
+        "placementDomain": "URBAN_RESIDUAL",
+        "instanceCount": 1,
+        "parcelCount": 2,
+        "preferredPatchRefs": [
+          "minecraft:overworld:step.16:city.city_sahra_valdoran_library_qasr_ilm:p.8"
+        ],
+        "terrainPolicy": "CONFORM",
+        "required": false,
+        "fillSelection": {
+          "variants": [
+            {
+              "fillProfileRef": "fill:relay_dry_farmland",
+              "selectionWeight": 1.0,
+              "roleShares": [
+                {
+                  "roleRef": "CULTIVATED",
+                  "growthForm": "PATCH",
+                  "targetShare": 0.8800000000000001
+                },
+                {
+                  "roleRef": "DIRT_PATH",
+                  "growthForm": "CORRIDOR",
+                  "targetShare": 0.12000000000000001
+                }
+              ],
+              "contentWeights": [
+                {
+                  "contentRef": "crop:wheat",
+                  "weight": 75.0
+                },
+                {
+                  "contentRef": "crop:potato",
+                  "weight": 25.0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

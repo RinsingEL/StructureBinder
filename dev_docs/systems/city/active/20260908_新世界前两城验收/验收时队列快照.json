@@ -1,0 +1,71 @@
+{
+  "schema": "city_design_queue.v0.1",
+  "runId": "provider_7dcd2ed26663924e_r8192",
+  "enabled": true,
+  "orderingMode": "realm_grouped",
+  "createdAt": "2026-09-08T11:36:39.503858400Z",
+  "items": [
+    {
+      "ordinal": 0,
+      "citySeedId": "city_sahra_valdoran_library_qasr_ilm",
+      "realmId": "realm_sahra_valdoran",
+      "role": "scholarly_oasis_outpost",
+      "anchorBlock": {
+        "x": 784,
+        "z": 4048
+      },
+      "originDistanceBlocks": 4123.222041074189,
+      "status": "waiting_for_generation",
+      "reasonCode": "WAITING_FOR_GENERATION",
+      "updatedAt": "2026-09-08T12:17:59.288250800Z"
+    },
+    {
+      "ordinal": 1,
+      "citySeedId": "city_realm_sahra_valdoran_capital",
+      "realmId": "realm_sahra_valdoran",
+      "role": "capital",
+      "anchorBlock": {
+        "x": -1424,
+        "z": 5296
+      },
+      "originDistanceBlocks": 5484.10357305549,
+      "status": "waiting_for_generation",
+      "reasonCode": "WAITING_FOR_GENERATION",
+      "updatedAt": "2026-09-08T12:32:02.447538600Z"
+    },
+    {
+      "ordinal": 2,
+      "citySeedId": "city_sahra_valdoran_agora_miraj",
+      "realmId": "realm_sahra_valdoran",
+      "role": "agricultural_market_town",
+      "anchorBlock": {
+        "x": -2000,
+        "z": 5680
+      },
+      "originDistanceBlocks": 6021.82696529882,
+      "status": "waiting_for_agent",
+      "reasonCode": "D4_CONTEXT_PREPARED",
+      "updatedAt": "2026-09-08T12:38:55.127892500Z"
+    },
+    {
+      "ordinal": 3,
+      "citySeedId": "city_sahra_valdoran_port_zafad",
+      "realmId": "realm_sahra_valdoran",
+      "role": "port_trade_outpost",
+      "anchorBlock": {
+        "x": -400,
+        "z": 6576
+      },
+      "originDistanceBlocks": 6588.1542179885255,
+      "status": "pending",
+      "reasonCode": "WAITING_FOR_PREVIOUS_CITY",
+      "updatedAt": "2026-09-08T12:38:55.127892500Z"
+    }
+  ],
+  "completedCount": 2,
+  "remainingCount": 2,
+  "updatedAt": "2026-09-08T12:38:55.127892500Z",
+  "status": "waiting_for_agent",
+  "currentCitySeedId": "city_sahra_valdoran_agora_miraj",
+  "nextAction": "city_submit_d4_blueprint"
+}

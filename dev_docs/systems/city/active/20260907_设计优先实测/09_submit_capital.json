@@ -1,0 +1,456 @@
+{
+  "recordName": "09_submit_capital",
+  "method": "tools/call",
+  "params": {
+    "name": "city_submit_d4_blueprint",
+    "arguments": {
+      "runId": "provider_22d55c3faaf1fd10_r8192",
+      "citySeedId": "city_realm_grainmark_capital",
+      "contextId": "sha256:23cd5ef96c1f2ff2bcf653cc94176acc2d0c73c9d86129bef47881ac62f65c8a",
+      "cityBlueprint": {
+        "schema": "city_blueprint",
+        "cityId": "city_realm_grainmark_capital",
+        "generationSeed": 4286596513823227,
+        "designIntent": {
+          "cityIdentity": "Grainmark capital: a fortified medieval administrative and market hub on the snowy slope, radiating outward into residential terraces and a supporting farm band toward the valley",
+          "theme": "snow-country medieval capital in stubbs_medieval style, civic heart on the slope origin with market frontage, housing terraces on the plain, farmland in the gentle valley to the south",
+          "functionalRoles": [
+            "administration",
+            "market",
+            "defense",
+            "residential",
+            "agriculture"
+          ]
+        },
+        "styleProfile": {
+          "profileRef": "style:stubbs_medieval"
+        },
+        "groups": [
+          {
+            "groupId": "g_civic_core",
+            "groupKind": "STRUCTURE",
+            "preferredPatchRefs": [
+              "minecraft:overworld:step.16:city.city_realm_grainmark_capital:p.2"
+            ],
+            "preferredPatchZone": "CENTER",
+            "role": "capital civic and governance core",
+            "priority": "CORE",
+            "extentClass": "MEDIUM",
+            "densityClass": "DENSE",
+            "algorithmProfileRef": "algorithm:compact",
+            "terrainPolicy": "ASSERTIVE",
+            "requiredStructureRefs": [
+              "geomantia:city/stubbs/civic/town_hall_01",
+              "geomantia:city/trek/landmark/plains_fountain_01",
+              "geomantia:city/stubbs/civic/guard_outpost_01",
+              "geomantia:city/stubbs/commercial/tavern_01"
+            ],
+            "fillPoolRef": "pool:stubbs_medieval_fill",
+            "compositionProfileRef": "composition:round_robin",
+            "attachedFeatures": [],
+            "targetAreaShare": 0.18,
+            "spaceComposition": {
+              "buildingShare": 0.55,
+              "landscapeShare": 0.1,
+              "openSpaceShare": 0.3499999999999999
+            },
+            "expansionPolicy": {
+              "allowOutwardExpansion": true,
+              "allowRelationConnection": true,
+              "stopWhenTargetReached": false
+            },
+            "buildingGreeneryPolicy": {
+              "coverage": "SPARSE",
+              "patternPreference": "TEMPLATE_DEFAULT",
+              "densityPreference": "LOW"
+            }
+          },
+          {
+            "groupId": "g_market_district",
+            "groupKind": "STRUCTURE",
+            "preferredPatchRefs": [
+              "minecraft:overworld:step.16:city.city_realm_grainmark_capital:p.2"
+            ],
+            "preferredPatchZone": "CENTER",
+            "role": "capital market and craft street fronting the civic square",
+            "priority": "STANDARD",
+            "extentClass": "LARGE",
+            "densityClass": "DENSE",
+            "algorithmProfileRef": "algorithm:organic_compact",
+            "terrainPolicy": "ASSERTIVE",
+            "requiredStructureRefs": [
+              "geomantia:city/stubbs/commercial/general_store_01",
+              "geomantia:city/stubbs/commercial/flower_shop_01",
+              "geomantia:city/stubbs/commercial/motel_01",
+              "geomantia:city/stubbs/commercial/laundry_facility_01",
+              "geomantia:city/stubbs/commercial/town_workshop_01"
+            ],
+            "fillPoolRef": "pool:stubbs_medieval_commercial_fill",
+            "compositionProfileRef": "composition:round_robin",
+            "attachedFeatures": [],
+            "targetAreaShare": 0.24,
+            "spaceComposition": {
+              "buildingShare": 0.68,
+              "landscapeShare": 0.05,
+              "openSpaceShare": 0.27
+            },
+            "expansionPolicy": {
+              "allowOutwardExpansion": true,
+              "allowRelationConnection": true,
+              "stopWhenTargetReached": false
+            },
+            "buildingGreeneryPolicy": {
+              "coverage": "NONE",
+              "patternPreference": "TEMPLATE_DEFAULT",
+              "densityPreference": "MEDIUM"
+            }
+          },
+          {
+            "groupId": "g_residential_terraces",
+            "groupKind": "STRUCTURE",
+            "preferredPatchRefs": [
+              "minecraft:overworld:step.16:city.city_realm_grainmark_capital:p.435"
+            ],
+            "preferredPatchZone": "EAST",
+            "role": "capital residential quarters on the flat plain east of the core",
+            "priority": "STANDARD",
+            "extentClass": "LARGE",
+            "densityClass": "BALANCED",
+            "algorithmProfileRef": "algorithm:organic_compact",
+            "terrainPolicy": "CONFORM",
+            "requiredStructureRefs": [
+              "geomantia:city/stubbs/residential/household_01",
+              "geomantia:city/stubbs/residential/household_02",
+              "geomantia:city/stubbs/residential/civilian_house_03"
+            ],
+            "fillPoolRef": "pool:stubbs_medieval_residential_fill",
+            "compositionProfileRef": "composition:round_robin",
+            "attachedFeatures": [],
+            "targetAreaShare": 0.32,
+            "spaceComposition": {
+              "buildingShare": 0.58,
+              "landscapeShare": 0.15,
+              "openSpaceShare": 0.27
+            },
+            "expansionPolicy": {
+              "allowOutwardExpansion": true,
+              "allowRelationConnection": true,
+              "stopWhenTargetReached": false
+            },
+            "buildingGreeneryPolicy": {
+              "coverage": "BALANCED",
+              "patternPreference": "MIXED",
+              "densityPreference": "MEDIUM"
+            }
+          },
+          {
+            "groupId": "g_agriculture_band",
+            "groupKind": "STRUCTURE",
+            "preferredPatchRefs": [
+              "minecraft:overworld:step.16:city.city_realm_grainmark_capital:p.617"
+            ],
+            "preferredPatchZone": "SOUTH",
+            "role": "grain and livestock support band feeding the capital, in the gentle valley south",
+            "priority": "STANDARD",
+            "extentClass": "MEDIUM",
+            "densityClass": "SPARSE",
+            "algorithmProfileRef": "algorithm:compact",
+            "terrainPolicy": "CONFORM",
+            "requiredStructureRefs": [
+              "geomantia:city/stubbs/agriculture/barn_windmill_01",
+              "geomantia:city/stubbs/agriculture/farm_storage_house_01",
+              "geomantia:city/stubbs/agriculture/horse_stall_02"
+            ],
+            "fillPoolRef": "pool:stubbs_medieval_agriculture_fill",
+            "compositionProfileRef": "composition:round_robin",
+            "attachedFeatures": [],
+            "targetAreaShare": 0.16,
+            "spaceComposition": {
+              "buildingShare": 0.24999999999999997,
+              "landscapeShare": 0.5499999999999999,
+              "openSpaceShare": 0.19999999999999998
+            },
+            "expansionPolicy": {
+              "allowOutwardExpansion": true,
+              "allowRelationConnection": true,
+              "stopWhenTargetReached": false
+            },
+            "buildingGreeneryPolicy": {
+              "coverage": "SPARSE",
+              "patternPreference": "FIELD_GRID",
+              "densityPreference": "LOW"
+            }
+          },
+          {
+            "groupId": "g_defense_ring",
+            "groupKind": "STRUCTURE",
+            "preferredPatchRefs": [
+              "minecraft:overworld:step.16:city.city_realm_grainmark_capital:p.239"
+            ],
+            "preferredPatchZone": "WEST",
+            "role": "watchtower screen on the western shore approach guarding the capital",
+            "priority": "PERIPHERAL",
+            "extentClass": "MEDIUM",
+            "densityClass": "SPARSE",
+            "algorithmProfileRef": "algorithm:compact",
+            "terrainPolicy": "CONFORM",
+            "requiredStructureRefs": [
+              "geomantia:city/trek/defense/mangrove_watchtower_2",
+              "geomantia:city/trek/defense/mangrove_watchtower_1"
+            ],
+            "fillPoolRef": "pool:trek_defense_common_fill",
+            "compositionProfileRef": "composition:round_robin",
+            "attachedFeatures": [],
+            "targetAreaShare": 0.1,
+            "spaceComposition": {
+              "buildingShare": 0.4,
+              "landscapeShare": 0.25,
+              "openSpaceShare": 0.35
+            },
+            "expansionPolicy": {
+              "allowOutwardExpansion": false,
+              "allowRelationConnection": true,
+              "stopWhenTargetReached": true
+            },
+            "buildingGreeneryPolicy": {
+              "coverage": "NONE",
+              "patternPreference": "TEMPLATE_DEFAULT",
+              "densityPreference": "LOW"
+            }
+          }
+        ],
+        "arrayCompositions": [
+          {
+            "compositionId": "comp_capital_core",
+            "algorithmProfileRef": "algorithm:compact",
+            "centerGroupId": "g_civic_core",
+            "memberGroupIds": [
+              "g_market_district",
+              "g_residential_terraces",
+              "g_agriculture_band",
+              "g_defense_ring"
+            ]
+          }
+        ],
+        "relations": [
+          {
+            "fromGroupId": "g_civic_core",
+            "toGroupId": "g_market_district",
+            "relationKind": "CONNECTION",
+            "strength": "HARD",
+            "distancePreference": "NONE",
+            "directionPreference": "NONE"
+          },
+          {
+            "fromGroupId": "g_civic_core",
+            "toGroupId": "g_residential_terraces",
+            "relationKind": "CONNECTION",
+            "strength": "HARD",
+            "distancePreference": "NONE",
+            "directionPreference": "NONE"
+          },
+          {
+            "fromGroupId": "g_civic_core",
+            "toGroupId": "g_agriculture_band",
+            "relationKind": "CONNECTION",
+            "strength": "HARD",
+            "distancePreference": "NONE",
+            "directionPreference": "NONE"
+          },
+          {
+            "fromGroupId": "g_market_district",
+            "toGroupId": "g_residential_terraces",
+            "relationKind": "CONNECTION",
+            "strength": "SOFT",
+            "distancePreference": "NONE",
+            "directionPreference": "NONE"
+          },
+          {
+            "fromGroupId": "g_defense_ring",
+            "toGroupId": "g_civic_core",
+            "relationKind": "CONNECTION",
+            "strength": "SOFT",
+            "distancePreference": "NONE",
+            "directionPreference": "NONE"
+          },
+          {
+            "fromGroupId": "g_civic_core",
+            "toGroupId": "g_market_district",
+            "relationKind": "HIERARCHY",
+            "strength": "HARD",
+            "distancePreference": "NONE",
+            "directionPreference": "NONE"
+          },
+          {
+            "fromGroupId": "g_civic_core",
+            "toGroupId": "g_residential_terraces",
+            "relationKind": "HIERARCHY",
+            "strength": "SOFT",
+            "distancePreference": "NONE",
+            "directionPreference": "NONE"
+          },
+          {
+            "fromGroupId": "g_market_district",
+            "toGroupId": "g_residential_terraces",
+            "relationKind": "ADJACENCY",
+            "strength": "SOFT",
+            "distancePreference": "NONE",
+            "directionPreference": "NONE"
+          },
+          {
+            "fromGroupId": "g_defense_ring",
+            "toGroupId": "g_agriculture_band",
+            "relationKind": "DISTANCE",
+            "strength": "SOFT",
+            "distancePreference": "FAR",
+            "directionPreference": "NONE"
+          }
+        ],
+        "roadProfile": {
+          "profileRef": "road:town"
+        },
+        "surfaceDetailProfile": {
+          "profileRef": "surface:working"
+        },
+        "outdoorPlan": {
+          "mode": "GENERATE",
+          "envelopeProfile": "BALANCED",
+          "foundationProfileRef": "foundation:urban",
+          "spatialGrounds": [
+            {
+              "sourceGroupId": "g_civic_core",
+              "sharedSpaceType": "CIVIC_SQUARE",
+              "hierarchyLevel": "PRIMARY",
+              "membership": "URBAN"
+            },
+            {
+              "sourceGroupId": "g_market_district",
+              "sharedSpaceType": "MARKET_STREET",
+              "hierarchyLevel": "SECONDARY",
+              "membership": "URBAN"
+            },
+            {
+              "sourceGroupId": "g_residential_terraces",
+              "sharedSpaceType": "RESIDENTIAL_COURT",
+              "hierarchyLevel": "LOCAL",
+              "membership": "URBAN"
+            },
+            {
+              "sourceGroupId": "g_agriculture_band",
+              "sharedSpaceType": "FARMSTEAD",
+              "hierarchyLevel": "LOCAL",
+              "membership": "LANDSCAPE"
+            },
+            {
+              "sourceGroupId": "g_defense_ring",
+              "sharedSpaceType": "GENERAL_URBAN",
+              "hierarchyLevel": "LOCAL",
+              "membership": "URBAN"
+            }
+          ],
+          "landscapes": [
+            {
+              "landscapeId": "l_capital_fields",
+              "landscapeProfileRef": "landscape:farmland",
+              "purpose": "FUNCTIONAL",
+              "originMode": "ATTACHED",
+              "owner": {
+                "groupId": "g_agriculture_band"
+              },
+              "instanceCount": 1,
+              "parcelCount": 6,
+              "preferredPatchRefs": [
+                "minecraft:overworld:step.16:city.city_realm_grainmark_capital:p.617"
+              ],
+              "terrainPolicy": "CONFORM",
+              "required": true,
+              "fillSelection": {
+                "variants": [
+                  {
+                    "fillProfileRef": "fill:relay_dry_farmland",
+                    "selectionWeight": 1,
+                    "roleShares": [
+                      {
+                        "roleRef": "CULTIVATED",
+                        "growthForm": "PATCH",
+                        "targetShare": 0.44000000000000006
+                      },
+                      {
+                        "roleRef": "DIRT_PATH",
+                        "growthForm": "CORRIDOR",
+                        "targetShare": 0.12000000000000001
+                      },
+                      {
+                        "roleRef": "CULTIVATED",
+                        "growthForm": "PATCH",
+                        "targetShare": 0.44000000000000006
+                      }
+                    ],
+                    "contentWeights": [
+                      {
+                        "contentRef": "crop:wheat",
+                        "weight": 65
+                      },
+                      {
+                        "contentRef": "crop:potato",
+                        "weight": 35
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "landscapeId": "l_common_green",
+              "landscapeProfileRef": "landscape:pasture",
+              "purpose": "AMBIENT",
+              "originMode": "ATTACHED",
+              "owner": {
+                "groupId": "g_residential_terraces"
+              },
+              "instanceCount": 1,
+              "parcelCount": 3,
+              "preferredPatchRefs": [
+                "minecraft:overworld:step.16:city.city_realm_grainmark_capital:p.435"
+              ],
+              "terrainPolicy": "CONFORM",
+              "required": false,
+              "fillSelection": {
+                "variants": [
+                  {
+                    "fillProfileRef": "fill:relay_pasture",
+                    "selectionWeight": 1,
+                    "roleShares": [
+                      {
+                        "roleRef": "GREEN",
+                        "growthForm": "PATCH",
+                        "targetShare": 0.44000000000000006
+                      },
+                      {
+                        "roleRef": "GROUND",
+                        "growthForm": "CORRIDOR",
+                        "targetShare": 0.12000000000000001
+                      },
+                      {
+                        "roleRef": "GREEN",
+                        "growthForm": "PATCH",
+                        "targetShare": 0.44000000000000006
+                      }
+                    ],
+                    "contentWeights": [
+                      {
+                        "contentRef": "plant:grass",
+                        "weight": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "autoAdvanceAfterD4": false
+    }
+  }
+}

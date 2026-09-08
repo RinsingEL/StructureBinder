@@ -18,6 +18,24 @@ class CityBlueprintCodecTest {
     private final CityBlueprintCodec codec = new CityBlueprintCodec();
 
     @Test
+    void roundTripsWeightedFillAndConnectionPools() throws IOException {
+        JsonObject json = fixture("valid_city_blueprint.json");
+        var group = json.getAsJsonArray("groups").get(0).getAsJsonObject();
+        group.remove("fillPoolRef");
+        group.add("fillPools", JsonParser.parseString("[{\"poolRef\":\"pool:a\",\"weight\":3},{\"poolRef\":\"pool:b\",\"weight\":1}]"));
+        group.add("connectionPlan", JsonParser.parseString("{\"structurePools\":[{\"poolRef\":\"pool:c\",\"weight\":2}]}"));
+        var blueprint = codec.read(json);
+        assertEquals(2, blueprint.groups().get(0).fillPools().size());
+        assertEquals("pool:c", blueprint.groups().get(0).connectionPlan().structurePools().get(0).poolRef());
+        assertEquals(json, codec.write(blueprint));
+        group.addProperty("fillPoolRef", "pool:ambiguous");
+        assertThrows(RuntimeException.class, () -> codec.read(json));
+        group.remove("fillPoolRef");
+        group.getAsJsonArray("fillPools").get(0).getAsJsonObject().addProperty("weight", 0);
+        assertThrows(RuntimeException.class, () -> codec.read(json));
+    }
+
+    @Test
     void readsAndWritesGoldenBlueprint() throws IOException {
         JsonObject json = fixture("valid_city_blueprint.json");
         CityBlueprint blueprint = codec.read(json);

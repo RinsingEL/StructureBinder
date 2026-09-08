@@ -1,0 +1,217 @@
+{
+  "buildingCount": 327,
+  "unitCount": 35,
+  "units": {
+    "market_district_percentage_array_001": {
+      "algorithm": "GRID",
+      "pool": "pool:stubbs_medieval_commercial_fill",
+      "count": 6
+    },
+    "market_district_percentage_array_002": {
+      "algorithm": "GRID",
+      "pool": "pool:stubbs_medieval_commercial_fill",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_001": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_002": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_003": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_004": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_005": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_006": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_007": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_008": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_009": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_010": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_011": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_012": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_013": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_014": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_015": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_016": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_017": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 4
+    },
+    "residential_quarter_percentage_array_018": {
+      "algorithm": "COMPACT",
+      "pool": "pool:residential",
+      "count": 2
+    },
+    "residential_quarter_percentage_array_019": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 2
+    },
+    "residential_quarter_percentage_array_020": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_021": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_022": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_023": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_024": {
+      "algorithm": "ORGANIC_COMPACT",
+      "pool": "pool:residential",
+      "count": 4
+    },
+    "residential_quarter_percentage_array_025": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 2
+    },
+    "residential_quarter_percentage_array_026": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_027": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_028": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_029": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_030": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_031": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_032": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    },
+    "residential_quarter_percentage_array_033": {
+      "algorithm": "GRID",
+      "pool": "pool:residential",
+      "count": 6
+    }
+  },
+  "mainRoadConnections": 4,
+  "mainRoadSkippedConnections": 0,
+  "accessOutcomes": {
+    "CONNECTED_BY_SHARED_EXTENSION": 50,
+    "CONNECTED_BY_SHORT_ALLEY": 84,
+    "UNRESOLVED": 2,
+    "CONNECTED_TO_SHARED_SKELETON": 194
+  },
+  "compilationAcceptance": {
+    "passed": true,
+    "acceptancePolicy": "SAFETY_AND_REQUIRED_CONTENT_V1",
+    "qualityFullySatisfied": false,
+    "previewCompiled": true,
+    "trafficGroupCount": 5,
+    "trafficConnectionCount": 4,
+    "requiredRelationCount": 4,
+    "requiredRelationsSatisfied": true,
+    "structureGraphConnected": true,
+    "allFunctionAreasFormed": true,
+    "allRequiredStructuresCommitted": true,
+    "allRequiredContentPresent": true,
+    "arrayVisualGeometryPassed": false,
+    "allStreetEntrancesConnected": false,
+    "hardBlocks": [],
+    "warnings": [
+      "residential_quarter -> market_district: CONNECTION_SKIPPED_TERRAIN_BLOCKED status=SKIPPED_NO_LEGAL_PATH",
+      "agriculture_belt_connectivity_014::trek_v3_swamp_shepherd_1_west_01: STREET_ENTRANCE_UNRESOLVED reasonCode=CITY_INTERNAL_STREET_ENTRANCE_NETWORK_EXTENSION_UNAVAILABLE",
+      "civic_core_connectivity_030::agriculture_farm_storage_house_01_front: STREET_ENTRANCE_UNRESOLVED reasonCode=CITY_INTERNAL_STREET_ENTRANCE_NETWORK_EXTENSION_UNAVAILABLE",
+      "agriculture_belt: COMPACT_ALLEY_MISSING",
+      "agriculture_belt: COMPACT_ALLEY_DISCONNECTED",
+      "market_district: LINEAR_STREET_BAND_DISCONNECTED",
+      "residential_quarter: ORGANIC_FORMAL_ROAD_FORBIDDEN",
+      "residential_quarter: ORGANIC_ONE_TO_THREE_BLOCK_GAPS_DISCONNECTED"
+    ]
+  },
+  "outOfBoundsExpansionRoads": []
+}

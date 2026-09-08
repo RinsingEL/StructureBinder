@@ -24,10 +24,10 @@ public enum CityScale {
         for (CityScale s : values()) {
             if (s.contractName.equals(normalized)) return s;
         }
-        // T4 legacy scale labels that map to existing enum values
+        // T4 labels normalize to City size classes; the seed keeps its functional role.
         return switch (normalized) {
             case "capital", "large_city" -> CITY;
-            case "town" -> TOWN;
+            case "outpost" -> HAMLET;
             default -> null;
         };
     }

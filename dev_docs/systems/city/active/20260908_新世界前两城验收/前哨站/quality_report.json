@@ -1,0 +1,56 @@
+{
+  "passed": true,
+  "score": 100,
+  "hardBlocks": [],
+  "warnings": [],
+  "needsReview": [],
+  "metrics": {
+    "acceptedAnchorCount": 14,
+    "arrayVisualGeometry": {
+      "schema": "city_array_visual_quality",
+      "passed": true,
+      "safeToMaterialize": true,
+      "roadStructureOverlapCount": 0,
+      "hardBlocks": [],
+      "warnings": [],
+      "groups": [
+        {
+          "alleySegmentCount": 6,
+          "alleyConnected": true,
+          "frontagePassed": true,
+          "groupId": "g_scholarly_core",
+          "algorithm": "COMPACT"
+        },
+        {
+          "alleySegmentCount": 6,
+          "alleyConnected": true,
+          "frontagePassed": true,
+          "groupId": "g_craft_defense",
+          "algorithm": "COMPACT"
+        }
+      ]
+    },
+    "compilationAcceptance": {
+      "passed": true,
+      "acceptancePolicy": "SAFETY_AND_REQUIRED_CONTENT_V1",
+      "qualityFullySatisfied": true,
+      "previewCompiled": true,
+      "trafficGroupCount": 2,
+      "trafficConnectionCount": 1,
+      "requiredRelationCount": 1,
+      "requiredRelationsSatisfied": true,
+      "structureGraphConnected": true,
+      "allFunctionAreasFormed": true,
+      "allRequiredStructuresCommitted": true,
+      "allRequiredContentPresent": true,
+      "arrayVisualGeometryPassed": true,
+      "allStreetEntrancesConnected": true,
+      "hardBlocks": [],
+      "warnings": []
+    }
+  },
+  "qualityFullySatisfied": true,
+  "scoreMeaning": "SAFETY_ADMISSION_ONLY_NOT_APPEARANCE",
+  "visualAcceptance": "REQUIRES_PREVIEW_AND_WORLD_REVIEW",
+  "sourceAnchorMapHash": "sha256:2265457991a89813447f86e919070db68dd062ae07f9b69bc525d0bd7f350850"
+}

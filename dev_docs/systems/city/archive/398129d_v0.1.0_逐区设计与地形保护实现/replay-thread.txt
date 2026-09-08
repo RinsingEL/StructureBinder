@@ -1,0 +1,345 @@
+26820:
+2026-09-08 13:19:33
+Full thread dump Java HotSpot(TM) 64-Bit Server VM (17.0.14+8-LTS-191 mixed mode, sharing):
+
+Threads class SMR info:
+_java_thread_list=0x00000162998389a0, length=15, elements={
+0x0000016236938b30, 0x0000016251d53220, 0x0000016251d54cf0, 0x00000162930a3320,
+0x0000016293091e70, 0x0000016293092740, 0x0000016293093010, 0x0000016293096ce0,
+0x0000016293097790, 0x000001629309eef0, 0x000001629335eca0, 0x0000016293361190,
+0x0000016293b56580, 0x000001629827ffd0, 0x00000162982804b0
+}
+
+"Test worker" #1 prio=5 os_prio=0 cpu=104718.75ms elapsed=106.42s tid=0x0000016236938b30 nid=0x3da4 runnable  [0x0000006054ff6000]
+   java.lang.Thread.State: RUNNABLE
+	at java.util.HashMap.resize(java.base@17.0.14/HashMap.java:733)
+	at java.util.HashMap.putVal(java.base@17.0.14/HashMap.java:661)
+	at java.util.HashMap.putIfAbsent(java.base@17.0.14/HashMap.java:1144)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.lambda$memberCells$79(CityBlueprintCompilerService.java:3243)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService$$Lambda$473/0x0000016253203320.accept(Unknown Source)
+	at java.lang.Iterable.forEach(java.base@17.0.14/Iterable.java:75)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.lambda$memberCells$80(CityBlueprintCompilerService.java:3242)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService$$Lambda$472/0x00000162532030f0.accept(Unknown Source)
+	at java.lang.Iterable.forEach(java.base@17.0.14/Iterable.java:75)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.memberCells(CityBlueprintCompilerService.java:3242)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.frontierCell(CityBlueprintCompilerService.java:3233)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.candidatePlan(CityBlueprintCompilerService.java:2977)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1071)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1173)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.chooseOne(CityBlueprintCompilerService.java:1038)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.fillGroupsToDynamicTargets(CityBlueprintCompilerService.java:966)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.compileInternal(CityBlueprintCompilerService.java:442)
+	at com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService.compileProposal(CityBlueprintCompilerService.java:64)
+	at com.rinsing.geomantia.systems.city.application.CitySavedBlueprintReplayTest.savedCapitalDraftCompilesWithCurrentRoadPlanner(CitySavedBlueprintReplayTest.java:19)
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(java.base@17.0.14/Native Method)
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(java.base@17.0.14/NativeMethodAccessorImpl.java:77)
+	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(java.base@17.0.14/DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(java.base@17.0.14/Method.java:568)
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:728)
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:156)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:147)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:86)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor$$Lambda$198/0x0000016253149540.apply(Unknown Source)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:103)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall$$Lambda$199/0x0000016253149950.apply(Unknown Source)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:93)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$$Lambda$383/0x000001625317b718.apply(Unknown Source)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:92)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:86)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$7(TestMethodTestDescriptor.java:218)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor$$Lambda$400/0x000001625317d878.execute(Unknown Source)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:214)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:139)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:69)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:151)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask$$Lambda$307/0x0000016253169550.execute(Unknown Source)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask$$Lambda$306/0x0000016253169330.invoke(Unknown Source)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask$$Lambda$305/0x0000016253168f18.execute(Unknown Source)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService$$Lambda$311/0x000001625316a040.accept(Unknown Source)
+	at java.util.ArrayList.forEach(java.base@17.0.14/ArrayList.java:1511)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask$$Lambda$307/0x0000016253169550.execute(Unknown Source)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask$$Lambda$306/0x0000016253169330.invoke(Unknown Source)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask$$Lambda$305/0x0000016253168f18.execute(Unknown Source)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService$$Lambda$311/0x000001625316a040.accept(Unknown Source)
+	at java.util.ArrayList.forEach(java.base@17.0.14/ArrayList.java:1511)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask$$Lambda$307/0x0000016253169550.execute(Unknown Source)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask$$Lambda$306/0x0000016253169330.invoke(Unknown Source)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask$$Lambda$305/0x0000016253168f18.execute(Unknown Source)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:107)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:88)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:54)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator$$Lambda$261/0x0000016253156f20.accept(Unknown Source)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:67)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:52)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:114)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:86)
+	at org.junit.platform.launcher.core.DefaultLauncherSession$DelegatingLauncher.execute(DefaultLauncherSession.java:86)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.processAllTestClasses(JUnitPlatformTestClassProcessor.java:119)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.access$000(JUnitPlatformTestClassProcessor.java:94)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor.stop(JUnitPlatformTestClassProcessor.java:89)
+	at org.gradle.api.internal.tasks.testing.SuiteTestClassProcessor.stop(SuiteTestClassProcessor.java:62)
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(java.base@17.0.14/Native Method)
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(java.base@17.0.14/NativeMethodAccessorImpl.java:77)
+	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(java.base@17.0.14/DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(java.base@17.0.14/Method.java:568)
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:36)
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:24)
+	at org.gradle.internal.dispatch.ContextClassLoaderDispatch.dispatch(ContextClassLoaderDispatch.java:33)
+	at org.gradle.internal.dispatch.ProxyDispatchAdapter$DispatchingInvocationHandler.invoke(ProxyDispatchAdapter.java:94)
+	at jdk.proxy1.$Proxy2.stop(jdk.proxy1/Unknown Source)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker$3.run(TestWorker.java:193)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.executeAndMaintainThreadName(TestWorker.java:129)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:100)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:60)
+	at org.gradle.process.internal.worker.child.ActionExecutionWorker.execute(ActionExecutionWorker.java:56)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:119)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:66)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+
+"Reference Handler" #2 daemon prio=10 os_prio=2 cpu=0.00ms elapsed=106.41s tid=0x0000016251d53220 nid=0x2d7c waiting on condition  [0x00000060556ff000]
+   java.lang.Thread.State: RUNNABLE
+	at java.lang.ref.Reference.waitForReferencePendingList(java.base@17.0.14/Native Method)
+	at java.lang.ref.Reference.processPendingReferences(java.base@17.0.14/Reference.java:253)
+	at java.lang.ref.Reference$ReferenceHandler.run(java.base@17.0.14/Reference.java:215)
+
+"Finalizer" #3 daemon prio=8 os_prio=1 cpu=0.00ms elapsed=106.41s tid=0x0000016251d54cf0 nid=0x90c8 in Object.wait()  [0x00000060557ff000]
+   java.lang.Thread.State: WAITING (on object monitor)
+	at java.lang.Object.wait(java.base@17.0.14/Native Method)
+	- waiting on <0x00000000e0d3ab50> (a java.lang.ref.ReferenceQueue$Lock)
+	at java.lang.ref.ReferenceQueue.remove(java.base@17.0.14/ReferenceQueue.java:155)
+	- locked <0x00000000e0d3ab50> (a java.lang.ref.ReferenceQueue$Lock)
+	at java.lang.ref.ReferenceQueue.remove(java.base@17.0.14/ReferenceQueue.java:176)
+	at java.lang.ref.Finalizer$FinalizerThread.run(java.base@17.0.14/Finalizer.java:172)
+
+"Signal Dispatcher" #4 daemon prio=9 os_prio=2 cpu=0.00ms elapsed=106.40s tid=0x00000162930a3320 nid=0x8548 waiting on condition  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"Attach Listener" #5 daemon prio=5 os_prio=2 cpu=0.00ms elapsed=106.40s tid=0x0000016293091e70 nid=0x93e8 waiting on condition  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"Service Thread" #6 daemon prio=9 os_prio=0 cpu=0.00ms elapsed=106.40s tid=0x0000016293092740 nid=0x29a4 runnable  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"Monitor Deflation Thread" #7 daemon prio=9 os_prio=0 cpu=0.00ms elapsed=106.40s tid=0x0000016293093010 nid=0x113c runnable  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"C2 CompilerThread0" #8 daemon prio=9 os_prio=2 cpu=6078.12ms elapsed=106.40s tid=0x0000016293096ce0 nid=0x1c98 waiting on condition  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+   No compile task
+
+"C1 CompilerThread0" #16 daemon prio=9 os_prio=2 cpu=328.12ms elapsed=106.40s tid=0x0000016293097790 nid=0x3c98 waiting on condition  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+   No compile task
+
+"Sweeper thread" #20 daemon prio=9 os_prio=2 cpu=31.25ms elapsed=106.40s tid=0x000001629309eef0 nid=0xe8c runnable  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"Notification Thread" #21 daemon prio=9 os_prio=0 cpu=0.00ms elapsed=106.31s tid=0x000001629335eca0 nid=0x32b4 runnable  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"Common-Cleaner" #22 daemon prio=8 os_prio=1 cpu=0.00ms elapsed=106.31s tid=0x0000016293361190 nid=0x428c in Object.wait()  [0x00000060562ff000]
+   java.lang.Thread.State: TIMED_WAITING (on object monitor)
+	at java.lang.Object.wait(java.base@17.0.14/Native Method)
+	- waiting on <0x00000000e0d59ab0> (a java.lang.ref.ReferenceQueue$Lock)
+	at java.lang.ref.ReferenceQueue.remove(java.base@17.0.14/ReferenceQueue.java:155)
+	- locked <0x00000000e0d59ab0> (a java.lang.ref.ReferenceQueue$Lock)
+	at jdk.internal.ref.CleanerImpl.run(java.base@17.0.14/CleanerImpl.java:140)
+	at java.lang.Thread.run(java.base@17.0.14/Thread.java:842)
+	at jdk.internal.misc.InnocuousThread.run(java.base@17.0.14/InnocuousThread.java:162)
+
+"/127.0.0.1:57696 to /127.0.0.1:57695 workers" #24 prio=5 os_prio=0 cpu=0.00ms elapsed=106.08s tid=0x0000016293b56580 nid=0x5828 waiting on condition  [0x00000060567ff000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@17.0.14/Native Method)
+	- parking to wait for  <0x00000000e0d61680> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.park(java.base@17.0.14/LockSupport.java:341)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionNode.block(java.base@17.0.14/AbstractQueuedSynchronizer.java:506)
+	at java.util.concurrent.ForkJoinPool.unmanagedBlock(java.base@17.0.14/ForkJoinPool.java:3465)
+	at java.util.concurrent.ForkJoinPool.managedBlock(java.base@17.0.14/ForkJoinPool.java:3436)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(java.base@17.0.14/AbstractQueuedSynchronizer.java:1623)
+	at org.gradle.internal.remote.internal.hub.queue.EndPointQueue.take(EndPointQueue.java:49)
+	at org.gradle.internal.remote.internal.hub.MessageHub$Handler.run(MessageHub.java:403)
+	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(java.base@17.0.14/ThreadPoolExecutor.java:1136)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(java.base@17.0.14/ThreadPoolExecutor.java:635)
+	at java.lang.Thread.run(java.base@17.0.14/Thread.java:842)
+
+"/127.0.0.1:57696 to /127.0.0.1:57695 workers Thread 2" #25 prio=5 os_prio=0 cpu=0.00ms elapsed=105.95s tid=0x000001629827ffd0 nid=0x3b88 waiting on condition  [0x00000060574ff000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@17.0.14/Native Method)
+	- parking to wait for  <0x00000000e7e1e8f8> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.park(java.base@17.0.14/LockSupport.java:341)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionNode.block(java.base@17.0.14/AbstractQueuedSynchronizer.java:506)
+	at java.util.concurrent.ForkJoinPool.unmanagedBlock(java.base@17.0.14/ForkJoinPool.java:3465)
+	at java.util.concurrent.ForkJoinPool.managedBlock(java.base@17.0.14/ForkJoinPool.java:3436)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(java.base@17.0.14/AbstractQueuedSynchronizer.java:1623)
+	at org.gradle.internal.remote.internal.hub.queue.EndPointQueue.take(EndPointQueue.java:49)
+	at org.gradle.internal.remote.internal.hub.MessageHub$ConnectionDispatch.run(MessageHub.java:322)
+	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(java.base@17.0.14/ThreadPoolExecutor.java:1136)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(java.base@17.0.14/ThreadPoolExecutor.java:635)
+	at java.lang.Thread.run(java.base@17.0.14/Thread.java:842)
+
+"/127.0.0.1:57696 to /127.0.0.1:57695 workers Thread 3" #26 prio=5 os_prio=0 cpu=15.62ms elapsed=105.95s tid=0x00000162982804b0 nid=0x7d8c runnable  [0x00000060575fe000]
+   java.lang.Thread.State: RUNNABLE
+	at sun.nio.ch.WEPoll.wait(java.base@17.0.14/Native Method)
+	at sun.nio.ch.WEPollSelectorImpl.doSelect(java.base@17.0.14/WEPollSelectorImpl.java:111)
+	at sun.nio.ch.SelectorImpl.lockAndDoSelect(java.base@17.0.14/SelectorImpl.java:129)
+	- locked <0x00000000e0d78970> (a sun.nio.ch.Util$2)
+	- locked <0x00000000e0d78910> (a sun.nio.ch.WEPollSelectorImpl)
+	at sun.nio.ch.SelectorImpl.select(java.base@17.0.14/SelectorImpl.java:146)
+	at org.gradle.internal.remote.internal.inet.SocketConnection$SocketInputStream.read(SocketConnection.java:185)
+	at com.esotericsoftware.kryo.io.Input.fill(Input.java:146)
+	at com.esotericsoftware.kryo.io.Input.require(Input.java:178)
+	at com.esotericsoftware.kryo.io.Input.readByte(Input.java:295)
+	at org.gradle.internal.serialize.kryo.KryoBackedDecoder.readByte(KryoBackedDecoder.java:88)
+	at org.gradle.internal.remote.internal.hub.InterHubMessageSerializer$MessageReader.read(InterHubMessageSerializer.java:64)
+	at org.gradle.internal.remote.internal.hub.InterHubMessageSerializer$MessageReader.read(InterHubMessageSerializer.java:52)
+	at org.gradle.internal.remote.internal.inet.SocketConnection.receive(SocketConnection.java:81)
+	at org.gradle.internal.remote.internal.hub.MessageHub$ConnectionReceive.run(MessageHub.java:270)
+	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(java.base@17.0.14/ThreadPoolExecutor.java:1136)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(java.base@17.0.14/ThreadPoolExecutor.java:635)
+	at java.lang.Thread.run(java.base@17.0.14/Thread.java:842)
+
+"VM Thread" os_prio=2 cpu=281.25ms elapsed=106.41s tid=0x0000016251d4e760 nid=0x9260 runnable  
+
+"GC Thread#0" os_prio=2 cpu=281.25ms elapsed=106.42s tid=0x00000162369683f0 nid=0x1658 runnable  
+
+"GC Thread#1" os_prio=2 cpu=296.88ms elapsed=105.97s tid=0x00000162981d4480 nid=0x38f8 runnable  
+
+"GC Thread#2" os_prio=2 cpu=296.88ms elapsed=105.97s tid=0x00000162933a67b0 nid=0x504 runnable  
+
+"GC Thread#3" os_prio=2 cpu=328.12ms elapsed=105.97s tid=0x0000016293ba49d0 nid=0x4f9c runnable  
+
+"GC Thread#4" os_prio=2 cpu=343.75ms elapsed=105.97s tid=0x0000016298235800 nid=0x6098 runnable  
+
+"GC Thread#5" os_prio=2 cpu=328.12ms elapsed=105.97s tid=0x0000016298235ac0 nid=0x8bdc runnable  
+
+"GC Thread#6" os_prio=2 cpu=312.50ms elapsed=105.97s tid=0x0000016298236b40 nid=0x7b70 runnable  
+
+"GC Thread#7" os_prio=2 cpu=328.12ms elapsed=105.97s tid=0x0000016298236e00 nid=0x6218 runnable  
+
+"GC Thread#8" os_prio=2 cpu=312.50ms elapsed=105.97s tid=0x0000016298235d80 nid=0x4884 runnable  
+
+"GC Thread#9" os_prio=2 cpu=328.12ms elapsed=105.97s tid=0x0000016298236300 nid=0x2ee0 runnable  
+
+"GC Thread#10" os_prio=2 cpu=296.88ms elapsed=105.97s tid=0x0000016298236880 nid=0x8c28 runnable  
+
+"GC Thread#11" os_prio=2 cpu=296.88ms elapsed=105.97s tid=0x00000162982370c0 nid=0x2bd4 runnable  
+
+"GC Thread#12" os_prio=2 cpu=281.25ms elapsed=105.12s tid=0x0000016299714b50 nid=0x87f4 runnable  
+
+"G1 Main Marker" os_prio=2 cpu=0.00ms elapsed=106.42s tid=0x000001623696e010 nid=0x7494 runnable  
+
+"G1 Conc#0" os_prio=2 cpu=171.88ms elapsed=106.42s tid=0x000001623696f1c0 nid=0x7f3c runnable  
+
+"G1 Conc#1" os_prio=2 cpu=171.88ms elapsed=87.77s tid=0x0000016299713d90 nid=0x58a8 runnable  
+
+"G1 Conc#2" os_prio=2 cpu=156.25ms elapsed=87.77s tid=0x0000016299715650 nid=0x3104 runnable  
+
+"G1 Refine#0" os_prio=2 cpu=1640.62ms elapsed=106.42s tid=0x0000016251c80670 nid=0x6adc runnable  
+
+"G1 Refine#1" os_prio=2 cpu=171.88ms elapsed=105.96s tid=0x000001629811a7b0 nid=0x5e3c runnable  
+
+"G1 Refine#2" os_prio=2 cpu=125.00ms elapsed=105.12s tid=0x000001629935a940 nid=0x2a80 runnable  
+
+"G1 Refine#3" os_prio=2 cpu=93.75ms elapsed=105.12s tid=0x00000162993dce60 nid=0x7ec8 runnable  
+
+"G1 Refine#4" os_prio=2 cpu=78.12ms elapsed=105.12s tid=0x00000162995bedd0 nid=0x5888 runnable  
+
+"G1 Refine#5" os_prio=2 cpu=78.12ms elapsed=104.76s tid=0x000001629bf7bbf0 nid=0x27b4 runnable  
+
+"G1 Refine#6" os_prio=2 cpu=78.12ms elapsed=104.76s tid=0x000001629ac55ba0 nid=0x35a8 runnable  
+
+"G1 Refine#7" os_prio=2 cpu=62.50ms elapsed=104.76s tid=0x00000162993b5720 nid=0xd98 runnable  
+
+"G1 Refine#8" os_prio=2 cpu=62.50ms elapsed=104.25s tid=0x000001629995d820 nid=0x79a0 runnable  
+
+"G1 Refine#9" os_prio=2 cpu=62.50ms elapsed=104.25s tid=0x000001629995db10 nid=0x8c70 runnable  
+
+"G1 Refine#10" os_prio=2 cpu=46.88ms elapsed=100.72s tid=0x000001629995e6d0 nid=0x54f0 runnable  
+
+"G1 Refine#11" os_prio=2 cpu=62.50ms elapsed=100.72s tid=0x000001629995e9c0 nid=0x1a18 runnable  
+
+"G1 Refine#12" os_prio=2 cpu=62.50ms elapsed=100.72s tid=0x000001629995de00 nid=0x8d44 runnable  
+
+"G1 Service" os_prio=2 cpu=46.88ms elapsed=106.42s tid=0x0000016251c81d60 nid=0x450c runnable  
+
+"VM Periodic Task Thread" os_prio=2 cpu=78.12ms elapsed=106.31s tid=0x000001623697ebf0 nid=0x7738 waiting on condition  
+
+JNI global refs: 26, weak refs: 0
+

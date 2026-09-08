@@ -1,0 +1,14 @@
+{
+  "schema": "city_blueprint_failure_budget",
+  "cityId": "city_sahra_valdoran_library_qasr_ilm",
+  "contextId": "sha256:49a1b39261d0b336402ad5a6b6bdcbcb5272f969fe6d72c77ab64685f0fedce9",
+  "failureCount": 0,
+  "maximumFailureCount": 5,
+  "remainingFailureCount": 5,
+  "status": "succeeded",
+  "retryAllowed": false,
+  "failures": [],
+  "createdAt": "2026-09-08T12:14:11.840233700Z",
+  "updatedAt": "2026-09-08T12:17:58.311183100Z",
+  "succeededAt": "2026-09-08T12:17:58.311183100Z"
+}

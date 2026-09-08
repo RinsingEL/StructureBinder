@@ -63,7 +63,10 @@ final class CityStreetObstacleRouter {
     }
 
     private static boolean clear(BlockPoint p, int width, List<BlockBounds> bodies) {
-        int low = (width - 1) / 2 + 1, high = width / 2 + 1;
+        return clear(p, width, bodies, false);
+    }
+    private static boolean clear(BlockPoint p, int width, List<BlockBounds> bodies, boolean surfaceOnly) {
+        int low = (width - 1) / 2 + (surfaceOnly ? 0 : 1), high = width / 2 + (surfaceOnly ? 0 : 1);
         BlockBounds b = new BlockBounds(p.x() - low, p.z() - low, p.x() + high, p.z() + high);
         return bodies.stream().noneMatch(b::overlaps);
     }
@@ -84,7 +87,16 @@ final class CityStreetObstacleRouter {
     private record Node(BlockPoint point, int distance, int estimate) {}
     private static int distance(BlockPoint a, BlockPoint b) { return Math.abs(a.x() - b.x()) + Math.abs(a.z() - b.z()); }
 
+    static List<BlockPoint> narrowRoute(BlockPoint start, BlockPoint end, List<BlockBounds> bodies) {
+        if (!clear(start, 1, bodies, true) || !clear(end, 1, bodies, true)) return List.of();
+        return route(start, end, 1, bodies, true);
+    }
+
     private static List<BlockPoint> route(BlockPoint start, BlockPoint end, int width, List<BlockBounds> bodies) {
+        return route(start, end, width, bodies, false);
+    }
+    private static List<BlockPoint> route(BlockPoint start, BlockPoint end, int width, List<BlockBounds> bodies,
+                                          boolean surfaceOnly) {
         BlockBounds domain = new BlockBounds(Math.min(start.x(), end.x()) - 48, Math.min(start.z(), end.z()) - 48,
                 Math.max(start.x(), end.x()) + 48, Math.max(start.z(), end.z()) + 48);
         PriorityQueue<Node> queue = new PriorityQueue<>(Comparator.comparingInt(Node::estimate)
@@ -115,7 +127,7 @@ final class CityStreetObstacleRouter {
                 BlockPoint p = new BlockPoint(node.point().x() + d[0], node.point().z() + d[1]);
                 int cost = node.distance() + 1;
                 if (!domain.contains(p.x(), p.z()) || cost >= costs.getOrDefault(p, Integer.MAX_VALUE)
-                        || !clear(p, width, bodies)) continue;
+                        || !clear(p, width, bodies, surfaceOnly)) continue;
                 costs.put(p, cost); previous.put(p, node.point());
                 queue.add(new Node(p, cost, cost + distance(p, end)));
             }

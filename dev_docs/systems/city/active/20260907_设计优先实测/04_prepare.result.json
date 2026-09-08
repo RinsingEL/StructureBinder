@@ -1,0 +1,27 @@
+{
+  "request": {
+    "recordName": "04_prepare",
+    "method": "tools/call",
+    "params": {
+      "name": "city_prepare_d4_blueprint_context",
+      "arguments": {
+        "runId": "provider_22d55c3faaf1fd10_r8192",
+        "citySeedId": "city_realm_grainmark_ferry_cross"
+      }
+    }
+  },
+  "response": {
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Error: PROVIDER_MANAGED_CITY_SOURCES_AMBIGUOUS: pack author must set geomantia.providerPlanningSourceDir; candidates=[geomantia_trek_v3_stubbs_selected_20260804, pcl_validation_02]"
+        }
+      ],
+      "isError": true
+    },
+    "jsonrpc": "2.0",
+    "id": 2
+  },
+  "stderr": ""
+}

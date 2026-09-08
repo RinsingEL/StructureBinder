@@ -1,0 +1,19 @@
+[
+  {
+    "start": "2026-09-06T11:24:17.352Z",
+    "end": "2026-09-06T11:24:17.377Z",
+    "name": "city_design_queue_status",
+    "arguments": {
+      "runId": "provider_22d55c3faaf1fd10_r8192"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"schema\":\"city_design_queue.v0.1\",\"runId\":\"provider_22d55c3faaf1fd10_r8192\",\"enabled\":true,\"orderingMode\":\"realm_grouped\",\"createdAt\":\"2026-09-06T08:52:38.028114400Z\",\"items\":[{\"ordinal\":0,\"citySeedId\":\"city_realm_grainmark_millfield_village\",\"realmId\":\"realm_grainmark\",\"role\":\"satellite_townland\",\"anchorBlock\":{\"x\":2032,\"z\":4016},\"originDistanceBlocks\":4500.808816201817,\"status\":\"waiting_for_generation\",\"reasonCode\":\"WAITING_FOR_GENERATION\",\"updatedAt\":\"2026-09-06T11:24:17.369883200Z\"},{\"ordinal\":1,\"citySeedId\":\"city_realm_grainmark_ferry_cross\",\"realmId\":\"realm_grainmark\",\"role\":\"satellite_townland\",\"anchorBlock\":{\"x\":2160,\"z\":4144},\"originDistanceBlocks\":4673.150543263077,\"status\":\"waiting_for_generation\",\"reasonCode\":\"WAITING_FOR_GENERATION\",\"updatedAt\":\"2026-09-06T11:24:17.369883200Z\"},{\"ordinal\":2,\"citySeedId\":\"city_realm_grainmark_capital\",\"realmId\":\"realm_grainmark\",\"role\":\"capital\",\"anchorBlock\":{\"x\":2288,\"z\":5456},\"originDistanceBlocks\":5916.323182518007,\"status\":\"needs_agent\",\"reasonCode\":\"D4_BLUEPRINT_REVISION_REQUIRED\",\"updatedAt\":\"2026-09-06T11:24:17.369883200Z\",\"nextAction\":\"city_submit_d4_blueprint\"}],\"completedCount\":2,\"remainingCount\":1,\"updatedAt\":\"2026-09-06T11:24:17.369883200Z\",\"status\":\"needs_agent\",\"currentCitySeedId\":\"city_realm_grainmark_capital\",\"nextAction\":\"city_submit_d4_blueprint\",\"ok\":true,\"statePath\":\"provider_22d55c3faaf1fd10_r8192/automation/city_design_queue.json\",\"currentCity\":{\"ordinal\":2,\"citySeedId\":\"city_realm_grainmark_capital\",\"realmId\":\"realm_grainmark\",\"role\":\"capital\",\"anchorBlock\":{\"x\":2288,\"z\":5456},\"originDistanceBlocks\":5916.323182518007,\"status\":\"needs_agent\",\"reasonCode\":\"D4_BLUEPRINT_REVISION_REQUIRED\",\"updatedAt\":\"2026-09-06T11:24:17.369883200Z\",\"nextAction\":\"city_submit_d4_blueprint\"},\"presentation\":\"planning_decision_view.v0.1\"}"
+        }
+      ],
+      "isError": true
+    }
+  }
+]

@@ -1,0 +1,14 @@
+{
+  "schema": "city_blueprint_validation_report",
+  "cityId": "city_realm_sahra_valdoran_capital",
+  "contextId": "sha256:956bd36bf3b182580214e0e1679228f83c14461c535a050c9edb5ae708ea6c96",
+  "valid": false,
+  "validatedAt": "2026-09-08T12:28:21.267651300Z",
+  "issues": [
+    {
+      "reasonCode": "CITY_BLUEPRINT_DESIGN_GEOMETRY_INVALID",
+      "fieldPath": "$.groups[0]",
+      "message": "CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT: All finite required building candidate combinations were exhausted."
+    }
+  ]
+}

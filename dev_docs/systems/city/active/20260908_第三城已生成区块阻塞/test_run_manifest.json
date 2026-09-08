@@ -1,0 +1,243 @@
+{
+  "schema": "city_test_run_manifest",
+  "testRunId": "provider_7dcd2ed26663924e_r8192::city_sahra_valdoran_agora_miraj",
+  "runId": "provider_7dcd2ed26663924e_r8192",
+  "citySeedId": "city_sahra_valdoran_agora_miraj",
+  "workflowMode": "city_structure_landing_fast_loop",
+  "createdAt": "2026-09-08T12:32:05.107940100Z",
+  "attempts": [
+    {
+      "schema": "city_workflow_attempt",
+      "attemptIndex": 0,
+      "workflowMode": "city_structure_landing_fast_loop",
+      "runId": "provider_7dcd2ed26663924e_r8192",
+      "citySeedId": "city_sahra_valdoran_agora_miraj",
+      "startedAt": "2026-09-08T12:42:25.653813800Z",
+      "status": "failed",
+      "skipExisting": true,
+      "planWalls": false,
+      "executeWalls": false,
+      "steps": [
+        {
+          "name": "city_plan_d3",
+          "status": "skipped",
+          "ok": true,
+          "reasonCode": "WORKFLOW_EXISTING_ARTIFACT",
+          "message": "Existing artifact found.",
+          "startedAt": "2026-09-08T12:42:25.656814400Z",
+          "endedAt": "2026-09-08T12:42:25.656814400Z",
+          "durationMs": 0,
+          "artifact": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/land_use/land_use_terrain_field.json"
+        },
+        {
+          "name": "city_compile_d4_blueprint",
+          "startedAt": "2026-09-08T12:42:25.658322300Z",
+          "status": "success",
+          "ok": true,
+          "responseStatus": "",
+          "reasonCode": "",
+          "nextAction": "city_run_workflow",
+          "failureCount": 0,
+          "maximumFailureCount": 5,
+          "remainingFailureCount": 5,
+          "retryAllowed": false,
+          "artifacts": {
+            "structureAnchorPlan": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d4/structure_anchor_plan.json",
+            "structureAnchorMap": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d4/structure_anchor_map.json",
+            "semanticProfileSource": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d4/semantic_profile_source.json",
+            "structureAnchorPreview": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d4/structure_anchor_preview.png",
+            "groupStructurePreviews": {
+              "g_caravan_way": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d4/structure_anchor_group_g_caravan_way.png",
+              "g_market_core": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d4/structure_anchor_group_g_market_core.png",
+              "g_residential_quarter": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d4/structure_anchor_group_g_residential_quarter.png",
+              "g_farm_district": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d4/structure_anchor_group_g_farm_district.png"
+            },
+            "qualityReport": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d4/quality_report.json",
+            "sourceD3Package": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d3/city_landform_review_package.json",
+            "cityGenerationCompileTrace": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d4/city_generation_compile_trace.json",
+            "groupExtentMap": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d4/group_extent_map.json",
+            "landscapeCapacityReservationPlan": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d4/city_landscape_capacity_reservation_plan.json",
+            "cityBlueprintFailureBudget": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/blueprint/city_blueprint_failure_budget.json",
+            "testRunManifest": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/test_run_manifest.json",
+            "testRunPackage": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj"
+          },
+          "endedAt": "2026-09-08T12:42:26.872706300Z",
+          "durationMs": 1214
+        },
+        {
+          "name": "city_plan_d5",
+          "startedAt": "2026-09-08T12:42:26.875706100Z",
+          "status": "success",
+          "ok": true,
+          "responseStatus": "",
+          "reasonCode": "",
+          "artifacts": {
+            "reservationMaskPlan": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d5/reservation_mask_plan.json",
+            "wallReservationPlan": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d5/wall_reservation_plan.json",
+            "roadAccessPlan": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d5/road_access_plan.json",
+            "buildOperationPlan": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d5/build_operation_plan.json",
+            "reservationMaskPreview": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d5/reservation_mask_preview.png",
+            "wallReservationPreview": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d5/wall_reservation_preview.png",
+            "qualityReport": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d5/quality_report.json",
+            "sourceD3Package": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d3/city_landform_review_package.json",
+            "sourceStructureAnchorMap": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d4/structure_anchor_map.json"
+          },
+          "endedAt": "2026-09-08T12:42:27.017804800Z",
+          "durationMs": 142
+        },
+        {
+          "name": "city_plan_d6",
+          "startedAt": "2026-09-08T12:42:27.020834600Z",
+          "status": "success",
+          "ok": true,
+          "responseStatus": "",
+          "reasonCode": "",
+          "artifacts": {
+            "structureMaterializationPlan": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d6/structure_materialization_plan.json",
+            "placedStructureLedger": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d6/placed_structure_ledger.json",
+            "structureMaterializationTrace": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d6/structure_materialization_trace.json",
+            "inferredFunctionAreaMap": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d6/inferred_function_area_map.json",
+            "structureMaterializationPreview": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d6/structure_materialization_preview.png",
+            "qualityReport": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d6/quality_report.json",
+            "sourceStructureAnchorMap": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d4/structure_anchor_map.json",
+            "sourceReservationMaskPlan": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d5/reservation_mask_plan.json"
+          },
+          "endedAt": "2026-09-08T12:42:27.085890500Z",
+          "durationMs": 64
+        },
+        {
+          "name": "city_plan_land_use",
+          "startedAt": "2026-09-08T12:42:27.277952600Z",
+          "status": "success",
+          "ok": true,
+          "responseStatus": "",
+          "reasonCode": "",
+          "artifacts": {
+            "cityBlueprint": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/blueprint/city_blueprint.json",
+            "cityBlueprintCatalogSnapshot": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/blueprint/city_blueprint_catalog_snapshot.json",
+            "landUseTerrainField": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/land_use/land_use_terrain_field.json",
+            "cityOutdoorIntentPlan": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/land_use/city_outdoor_intent_plan.json",
+            "cityUrbanSpacePlan": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/land_use/city_urban_space_plan.json",
+            "landUseAreaPlan": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/land_use/city_land_use_area_plan.json",
+            "landUseSurfacePrintPlan": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/land_use/city_land_use_surface_print_plan.json",
+            "landUsePlanTrace": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/land_use/land_use_plan_trace.json",
+            "qualityReport": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/land_use/quality_report.json",
+            "landUsePreview": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/land_use/land_use_preview.png",
+            "planningComplete": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/land_use/city_land_use_planning_complete.json",
+            "sourceD5ReservationMaskPlan": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d5/reservation_mask_plan.json",
+            "sourceD6MaterializationPlan": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/steps/d6/structure_materialization_plan.json"
+          },
+          "endedAt": "2026-09-08T12:42:28.996377300Z",
+          "durationMs": 1719
+        },
+        {
+          "name": "city_execute_d5",
+          "startedAt": "2026-09-08T12:42:28.998377600Z",
+          "status": "failed",
+          "ok": false,
+          "error": "CITY_LAND_USE_CHUNK_ALREADY_AT_FEATURES: LandUse only applies during first worldgen FEATURES; ownerChunks=247, featuresOrLater=172, unknown=0",
+          "reasonCode": "CITY_LAND_USE_CHUNK_ALREADY_AT_FEATURES",
+          "endedAt": "2026-09-08T12:42:29.684498900Z",
+          "durationMs": 685
+        }
+      ],
+      "artifacts": {
+        "workflowReport": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/test_run_manifest.json",
+        "testRunManifest": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/test_run_manifest.json",
+        "testRunPackage": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj"
+      },
+      "landUseControlSource": "city_blueprint",
+      "landUseProfileId": "default",
+      "enableLandUseLayer": true,
+      "blueprintOutdoorMode": "GENERATE",
+      "ok": false,
+      "endedAt": "2026-09-08T12:42:29.687499Z",
+      "durationMs": 4033
+    }
+  ],
+  "worldIdentity": {
+    "runId": "provider_7dcd2ed26663924e_r8192",
+    "dimensionId": "minecraft:overworld",
+    "worldSeed": "9064953106162487886",
+    "worldBorderSizeBlocks": 5.9999968E7,
+    "centerBlockX": 0,
+    "centerBlockZ": 0,
+    "planningRadiusBlocks": 8192,
+    "cellStepBlocks": 128,
+    "microSampleStrideBlocks": 32,
+    "localSlopeRadiusBlocks": 8,
+    "microSamplingImplemented": true,
+    "microSampleBudgetPerCell": 16,
+    "adaptiveSampling": false,
+    "sampleMode": "prior",
+    "resumePolicy": "use_cache",
+    "preferGeneratorNativeTerrain": true,
+    "terrainProvider": {
+      "generatorNativeRequested": true,
+      "providerId": "rtf_heightmap_preview_inferred_climate",
+      "sourceKind": "generator_native",
+      "fastPath": true,
+      "fallbackReason": "",
+      "sourceFingerprint": "sha256:aec4ecd225c3446f0fb0d5450ea350bbe899ff489c1856c25ed17bd91347d8e7",
+      "samplingSemantics": "estimated_coarse_heightmap"
+    },
+    "worldSurveyManifest": "provider_7dcd2ed26663924e_r8192/world_survey_manifest.json"
+  },
+  "citySeedSnapshot": {
+    "citySeedId": "city_sahra_valdoran_agora_miraj",
+    "realmId": "realm_sahra_valdoran",
+    "role": "agricultural_market_town",
+    "theoreticalScale": "town",
+    "anchorGrid": {
+      "x": -16,
+      "z": 44
+    },
+    "anchorBlock": {
+      "x": -2000,
+      "z": 5680
+    },
+    "candidateRangeCells": 4,
+    "planningRadiusCells": 2,
+    "subregionId": "core",
+    "candidateId": "PLAIN-01",
+    "graphDistanceToNearestCity": 5.0,
+    "satelliteOf": "city_realm_sahra_valdoran_capital",
+    "requiredConditions": [
+      "land",
+      "inside_realm"
+    ],
+    "coreFunctions": [
+      "irrigated_farming",
+      "caravan_trade",
+      "market"
+    ],
+    "trigger": "adjacent_flatland",
+    "source": {
+      "reason": "Agricultural market town on PLAIN-01 (236,544 blocks, 231 cells, 100% plain, confidence 1.0, heights 68-75, slopeProxyP90 2), directly adjacent to the capital's SLOPE-01 patch (48 shared boundary cells, contactRatio 0.31) - the flattest ground in the realm for irrigated_farming terraces and a caravan market. WATER-01 is only 13 boundary cells away northwest for irrigation canals. Landform is neutral-safe (not ridge/valley-cliff), supporting compactness 0.6.",
+      "patchSelectionRef": "psel_512e8a27fe0e2380d5f1be422090635c7686f9dca84d9d932ee7662480356ec7",
+      "patchCandidateId": "PLAIN-01",
+      "sourcePatchRefs": [
+        "minecraft:overworld:step.32:t.sha256_7248700bad4a43cb482c8f29a70ee6008d787964e0af37c1c35e452fa0f9a938:p.467"
+      ],
+      "selectionStage": "realm_t4",
+      "siteSelectionMode": "ai_candidate_selection"
+    }
+  },
+  "latestRequest": {
+    "runId": "provider_7dcd2ed26663924e_r8192",
+    "citySeedId": "city_sahra_valdoran_agora_miraj",
+    "skipExisting": true,
+    "confirmWorldMutation": true,
+    "stopAfterActivation": true,
+    "planWalls": false,
+    "executeWalls": false
+  },
+  "updatedAt": "2026-09-08T12:42:29.687499Z",
+  "status": "failed",
+  "artifacts": {
+    "workflowReport": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/test_run_manifest.json",
+    "testRunManifest": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj/test_run_manifest.json",
+    "testRunPackage": "provider_7dcd2ed26663924e_r8192/city_test_runs/city_sahra_valdoran_agora_miraj"
+  },
+  "nextAction": "inspect_failed_attempt"
+}

@@ -1,0 +1,45 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.8/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :
+MixinGradle did not locate the diffplug APT plugin, skipping eclipse task configuration
+
+> Task :downloadMcpConfig
+> Task :extractSrg UP-TO-DATE
+> Task :createMcpToSrg UP-TO-DATE
+
+> Task :compileJava
+ע: SpongePowered MIXIN Annotation Processor Version=0.8.5 (MixinGradle Version=0.7)
+ע: Supported obfuscation types: ObfuscationServiceMCP supports [notch] ObfuscationServiceFG3 supports [searge]
+ע: Loading searge mappings from E:\Mod_Dev\StructureBinder\build\createMcpToSrg\output.tsrg
+ע: Writing refmap to E:\Mod_Dev\StructureBinder\build\tmp\compileJava\compileJava-refmap.json
+ע: Writing refmap to E:\Mod_Dev\StructureBinder\build\tmp\compileJava\compileJava-refmap.json
+ע: Writing searge composite mappings to E:\Mod_Dev\StructureBinder\build\tmp\compileJava\compileJava-mappings.tsrg
+ע: Writing refmap to E:\Mod_Dev\StructureBinder\build\tmp\compileJava\compileJava-refmap.json
+ע: Writing refmap to E:\Mod_Dev\StructureBinder\build\tmp\compileJava\compileJava-refmap.json
+ע: Writing searge composite mappings to E:\Mod_Dev\StructureBinder\build\tmp\compileJava\compileJava-mappings.tsrg
+E:\Mod_Dev\StructureBinder\src\main\java\com\rinsing\geomantia\systems\city\infrastructure\world\CityTemplateTerrainStructureRegistries.java:15: ����: [removal] ResourceLocation �е� ResourceLocation(String,String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+            new ResourceLocation(GeomantiaMod.MOD_ID, "city_template_terrain");
+            ^
+ע: ĳЩ�����ļ�ʹ�û򸲸����ѹ�ʱ�� API��
+ע: �й���ϸ��Ϣ, ��ʹ�� -Xlint:deprecation ���±��롣
+ע: E:\Mod_Dev\StructureBinder\src\main\java\com\rinsing\geomantia\mixin\ConfiguredFeatureMaskMixin.javaʹ����δ�����򲻰�ȫ�Ĳ�����
+ע: �й���ϸ��Ϣ, ��ʹ�� -Xlint:unchecked ���±��롣
+1 ������
+
+> Task :bundleCountryDesignerMcp UP-TO-DATE
+> Task :processResources UP-TO-DATE
+> Task :classes
+> Task :compileTestJava
+> Task :processTestResources UP-TO-DATE
+> Task :testClasses
+> Task :test
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.8/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 37s
+9 actionable tasks: 4 executed, 5 up-to-date

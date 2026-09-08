@@ -1,0 +1,1 @@
+{"recordName":"05_stop","method":"tools/call","params":{"name":"realm_debug_command","arguments":{"command":"stop","confirmCommandExecution":true,"sourceMode":"server","saveAfter":true,"allowUnsafeCommand":true}}}

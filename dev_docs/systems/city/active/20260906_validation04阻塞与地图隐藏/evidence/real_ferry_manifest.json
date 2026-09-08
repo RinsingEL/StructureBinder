@@ -1,0 +1,546 @@
+{
+  "schema": "city_test_run_manifest",
+  "testRunId": "provider_22d55c3faaf1fd10_r8192::city_realm_grainmark_ferry_cross",
+  "runId": "provider_22d55c3faaf1fd10_r8192",
+  "citySeedId": "city_realm_grainmark_ferry_cross",
+  "workflowMode": "city_structure_landing_fast_loop",
+  "createdAt": "2026-09-06T08:58:46.987191400Z",
+  "attempts": [
+    {
+      "schema": "city_workflow_attempt",
+      "attemptIndex": 0,
+      "workflowMode": "city_structure_landing_fast_loop",
+      "runId": "provider_22d55c3faaf1fd10_r8192",
+      "citySeedId": "city_realm_grainmark_ferry_cross",
+      "startedAt": "2026-09-06T09:01:05.489875900Z",
+      "status": "failed",
+      "skipExisting": true,
+      "planWalls": false,
+      "executeWalls": false,
+      "steps": [
+        {
+          "name": "city_plan_d3",
+          "status": "skipped",
+          "ok": true,
+          "reasonCode": "WORKFLOW_EXISTING_ARTIFACT",
+          "message": "Existing artifact found.",
+          "startedAt": "2026-09-06T09:01:05.491872200Z",
+          "endedAt": "2026-09-06T09:01:05.491872200Z",
+          "durationMs": 0,
+          "artifact": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/land_use/land_use_terrain_field.json"
+        },
+        {
+          "name": "city_compile_d4_blueprint",
+          "startedAt": "2026-09-06T09:01:05.493872400Z",
+          "status": "failed",
+          "ok": false,
+          "responseStatus": "failed",
+          "reasonCode": "CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT",
+          "message": "All finite required building candidate combinations were exhausted.",
+          "nextAction": "city_submit_d4_blueprint",
+          "failureOwner": "design",
+          "failureCount": 1,
+          "maximumFailureCount": 5,
+          "remainingFailureCount": 4,
+          "retryAllowed": true,
+          "failureSummary": {
+            "reasonCode": "CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT",
+            "message": "All finite required building candidate combinations were exhausted.",
+            "sequence": 78,
+            "phase": "required",
+            "groupId": "g_residential",
+            "structureRef": "geomantia:city/stubbs/residential/civilian_house_03",
+            "candidateCount": 0,
+            "status": "no_legal_candidate",
+            "filterReasonCounts": {
+              "D4_ARRAY_COUNT_UNSATISFIED": 1
+            },
+            "hardBlocks": [
+              "D4_ARRAY_COUNT_UNSATISFIED: g_residential_required_002 could not place 1 non-overlapping structures in candidatePatchRefs."
+            ],
+            "recommendedActionCode": "REVISE_FAILED_GROUP_FROM_FILTER_EVIDENCE",
+            "recommendedAction": "Revise the reported group's structure, Patch, layout or capacity using the returned filter reasons and hard blocks."
+          },
+          "agentRecoveryPolicy": {
+            "instruction": "Revise and resubmit the complete Blueprint using the returned failureSummary and tool evidence.",
+            "sourceCodeInspectionAllowed": false,
+            "projectDocumentationInspectionAllowed": false,
+            "rawRunArtifactInspectionAllowed": false
+          },
+          "artifacts": {
+            "cityGenerationCompileTrace": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d4/city_generation_compile_trace.json",
+            "cityBlueprintFailureBudget": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/blueprint/city_blueprint_failure_budget.json",
+            "testRunManifest": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/test_run_manifest.json",
+            "testRunPackage": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross"
+          },
+          "endedAt": "2026-09-06T09:01:05.825691200Z",
+          "durationMs": 331
+        }
+      ],
+      "artifacts": {
+        "workflowReport": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/test_run_manifest.json",
+        "testRunManifest": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/test_run_manifest.json",
+        "testRunPackage": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross"
+      },
+      "landUseControlSource": "city_blueprint",
+      "landUseProfileId": "default",
+      "ok": false,
+      "endedAt": "2026-09-06T09:01:05.826694400Z",
+      "durationMs": 336
+    },
+    {
+      "schema": "city_workflow_attempt",
+      "attemptIndex": 1,
+      "workflowMode": "city_structure_landing_fast_loop",
+      "runId": "provider_22d55c3faaf1fd10_r8192",
+      "citySeedId": "city_realm_grainmark_ferry_cross",
+      "startedAt": "2026-09-06T09:01:53.627141900Z",
+      "status": "failed",
+      "skipExisting": true,
+      "planWalls": false,
+      "executeWalls": false,
+      "steps": [
+        {
+          "name": "city_plan_d3",
+          "status": "skipped",
+          "ok": true,
+          "reasonCode": "WORKFLOW_EXISTING_ARTIFACT",
+          "message": "Existing artifact found.",
+          "startedAt": "2026-09-06T09:01:53.628645300Z",
+          "endedAt": "2026-09-06T09:01:53.628645300Z",
+          "durationMs": 0,
+          "artifact": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/land_use/land_use_terrain_field.json"
+        },
+        {
+          "name": "city_compile_d4_blueprint",
+          "startedAt": "2026-09-06T09:01:53.630650500Z",
+          "status": "failed",
+          "ok": false,
+          "error": "CITY_BLUEPRINT_ARRAY_COMPOSITION_SLOT_UNAVAILABLE: comp_ferry_core cannot reserve child Group g_farmstead.",
+          "reasonCode": "CITY_BLUEPRINT_ARRAY_COMPOSITION_SLOT_UNAVAILABLE",
+          "endedAt": "2026-09-06T09:01:53.691208700Z",
+          "durationMs": 60
+        }
+      ],
+      "artifacts": {
+        "workflowReport": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/test_run_manifest.json",
+        "testRunManifest": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/test_run_manifest.json",
+        "testRunPackage": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross"
+      },
+      "landUseControlSource": "city_blueprint",
+      "landUseProfileId": "default",
+      "ok": false,
+      "endedAt": "2026-09-06T09:01:53.693209700Z",
+      "durationMs": 67
+    },
+    {
+      "schema": "city_workflow_attempt",
+      "attemptIndex": 2,
+      "workflowMode": "city_structure_landing_fast_loop",
+      "runId": "provider_22d55c3faaf1fd10_r8192",
+      "citySeedId": "city_realm_grainmark_ferry_cross",
+      "startedAt": "2026-09-06T10:51:07.562377700Z",
+      "status": "failed",
+      "skipExisting": true,
+      "planWalls": false,
+      "executeWalls": false,
+      "steps": [
+        {
+          "name": "city_plan_d3",
+          "status": "skipped",
+          "ok": true,
+          "reasonCode": "WORKFLOW_EXISTING_ARTIFACT",
+          "message": "Existing artifact found.",
+          "startedAt": "2026-09-06T10:51:07.569926400Z",
+          "endedAt": "2026-09-06T10:51:07.569926400Z",
+          "durationMs": 0,
+          "artifact": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/land_use/land_use_terrain_field.json"
+        },
+        {
+          "name": "city_compile_d4_blueprint",
+          "startedAt": "2026-09-06T10:51:07.572943400Z",
+          "status": "failed",
+          "ok": false,
+          "responseStatus": "failed",
+          "reasonCode": "CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT",
+          "message": "All finite required building candidate combinations were exhausted.",
+          "nextAction": "city_submit_d4_blueprint",
+          "failureOwner": "design",
+          "failureCount": 2,
+          "maximumFailureCount": 5,
+          "remainingFailureCount": 3,
+          "retryAllowed": true,
+          "failureSummary": {
+            "reasonCode": "CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT",
+            "message": "All finite required building candidate combinations were exhausted.",
+            "sequence": 114,
+            "phase": "required",
+            "groupId": "g_residential",
+            "structureRef": "geomantia:city/stubbs/residential/household_02",
+            "candidateCount": 0,
+            "status": "no_legal_candidate",
+            "filterReasonCounts": {
+              "D4_ARRAY_COUNT_UNSATISFIED": 1
+            },
+            "hardBlocks": [
+              "D4_ARRAY_COUNT_UNSATISFIED: g_residential_required_002 could not place 1 non-overlapping structures in candidatePatchRefs."
+            ],
+            "recommendedActionCode": "REVISE_FAILED_GROUP_FROM_FILTER_EVIDENCE",
+            "recommendedAction": "Revise the reported group's structure, Patch, layout or capacity using the returned filter reasons and hard blocks."
+          },
+          "agentRecoveryPolicy": {
+            "instruction": "Revise and resubmit the complete Blueprint using the returned failureSummary and tool evidence.",
+            "sourceCodeInspectionAllowed": false,
+            "projectDocumentationInspectionAllowed": false,
+            "rawRunArtifactInspectionAllowed": false
+          },
+          "artifacts": {
+            "cityGenerationCompileTrace": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d4/city_generation_compile_trace.json",
+            "cityBlueprintFailureBudget": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/blueprint/city_blueprint_failure_budget.json",
+            "testRunManifest": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/test_run_manifest.json",
+            "testRunPackage": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross"
+          },
+          "endedAt": "2026-09-06T10:51:08.370582300Z",
+          "durationMs": 798
+        }
+      ],
+      "artifacts": {
+        "workflowReport": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/test_run_manifest.json",
+        "testRunManifest": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/test_run_manifest.json",
+        "testRunPackage": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross"
+      },
+      "landUseControlSource": "city_blueprint",
+      "landUseProfileId": "default",
+      "ok": false,
+      "endedAt": "2026-09-06T10:51:08.374090500Z",
+      "durationMs": 811
+    },
+    {
+      "schema": "city_workflow_attempt",
+      "attemptIndex": 3,
+      "workflowMode": "city_structure_landing_fast_loop",
+      "runId": "provider_22d55c3faaf1fd10_r8192",
+      "citySeedId": "city_realm_grainmark_ferry_cross",
+      "startedAt": "2026-09-06T10:52:02.379712600Z",
+      "status": "failed",
+      "skipExisting": true,
+      "planWalls": false,
+      "executeWalls": false,
+      "steps": [
+        {
+          "name": "city_plan_d3",
+          "status": "skipped",
+          "ok": true,
+          "reasonCode": "WORKFLOW_EXISTING_ARTIFACT",
+          "message": "Existing artifact found.",
+          "startedAt": "2026-09-06T10:52:02.382722900Z",
+          "endedAt": "2026-09-06T10:52:02.382722900Z",
+          "durationMs": 0,
+          "artifact": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/land_use/land_use_terrain_field.json"
+        },
+        {
+          "name": "city_compile_d4_blueprint",
+          "startedAt": "2026-09-06T10:52:02.384721700Z",
+          "status": "failed",
+          "ok": false,
+          "responseStatus": "failed",
+          "reasonCode": "CITY_BLUEPRINT_ARRAY_COMPOSITION_SLOT_UNAVAILABLE",
+          "message": "comp_ferry_core cannot assign non-overlapping member slots within the selected patches and planning bounds. [{\"groupId\":\"g_residential\",\"formationSpanBlocks\":157,\"candidateCount\":500,\"legalCandidateCount\":229,\"outsidePlanningBoundsCount\":94,\"reservedOverlapCount\":172,\"outsidePreferredPatchCount\":5},{\"groupId\":\"g_farmstead\",\"formationSpanBlocks\":413,\"candidateCount\":500,\"legalCandidateCount\":0,\"outsidePlanningBoundsCount\":247,\"reservedOverlapCount\":253,\"outsidePreferredPatchCount\":0}]",
+          "nextAction": "city_submit_d4_blueprint",
+          "failureOwner": "design",
+          "failureCount": 3,
+          "maximumFailureCount": 5,
+          "remainingFailureCount": 2,
+          "retryAllowed": true,
+          "failureSummary": {
+            "reasonCode": "CITY_BLUEPRINT_ARRAY_COMPOSITION_SLOT_UNAVAILABLE",
+            "message": "comp_ferry_core cannot assign non-overlapping member slots within the selected patches and planning bounds. [{\"groupId\":\"g_residential\",\"formationSpanBlocks\":157,\"candidateCount\":500,\"legalCandidateCount\":229,\"outsidePlanningBoundsCount\":94,\"reservedOverlapCount\":172,\"outsidePreferredPatchCount\":5},{\"groupId\":\"g_farmstead\",\"formationSpanBlocks\":413,\"candidateCount\":500,\"legalCandidateCount\":0,\"outsidePlanningBoundsCount\":247,\"reservedOverlapCount\":253,\"outsidePreferredPatchCount\":0}]",
+            "recommendedActionCode": "INSPECT_RETURNED_FAILURE_EVIDENCE",
+            "recommendedAction": "Revise the Blueprint from this failure summary; request human review when it has no actionable fields."
+          },
+          "agentRecoveryPolicy": {
+            "instruction": "Revise and resubmit the complete Blueprint using the returned failureSummary and tool evidence.",
+            "sourceCodeInspectionAllowed": false,
+            "projectDocumentationInspectionAllowed": false,
+            "rawRunArtifactInspectionAllowed": false
+          },
+          "artifacts": {
+            "cityGenerationCompileTrace": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d4/city_generation_compile_trace.json",
+            "cityBlueprintFailureBudget": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/blueprint/city_blueprint_failure_budget.json",
+            "testRunManifest": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/test_run_manifest.json",
+            "testRunPackage": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross"
+          },
+          "endedAt": "2026-09-06T10:52:02.480716200Z",
+          "durationMs": 96
+        }
+      ],
+      "artifacts": {
+        "workflowReport": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/test_run_manifest.json",
+        "testRunManifest": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/test_run_manifest.json",
+        "testRunPackage": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross"
+      },
+      "landUseControlSource": "city_blueprint",
+      "landUseProfileId": "default",
+      "ok": false,
+      "endedAt": "2026-09-06T10:52:02.483225700Z",
+      "durationMs": 102
+    },
+    {
+      "schema": "city_workflow_attempt",
+      "attemptIndex": 4,
+      "workflowMode": "city_structure_landing_fast_loop",
+      "runId": "provider_22d55c3faaf1fd10_r8192",
+      "citySeedId": "city_realm_grainmark_ferry_cross",
+      "startedAt": "2026-09-06T11:16:34.020126700Z",
+      "status": "waiting_for_generation",
+      "skipExisting": true,
+      "planWalls": false,
+      "executeWalls": false,
+      "steps": [
+        {
+          "name": "city_plan_d3",
+          "status": "skipped",
+          "ok": true,
+          "reasonCode": "WORKFLOW_EXISTING_ARTIFACT",
+          "message": "Existing artifact found.",
+          "startedAt": "2026-09-06T11:16:34.028712300Z",
+          "endedAt": "2026-09-06T11:16:34.028712300Z",
+          "durationMs": 0,
+          "artifact": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/land_use/land_use_terrain_field.json"
+        },
+        {
+          "name": "city_compile_d4_blueprint",
+          "startedAt": "2026-09-06T11:16:34.032221Z",
+          "status": "success",
+          "ok": true,
+          "responseStatus": "",
+          "reasonCode": "",
+          "nextAction": "city_run_workflow",
+          "failureCount": 3,
+          "maximumFailureCount": 5,
+          "remainingFailureCount": 2,
+          "retryAllowed": false,
+          "artifacts": {
+            "structureAnchorPlan": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d4/structure_anchor_plan.json",
+            "structureAnchorMap": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d4/structure_anchor_map.json",
+            "semanticProfileSource": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d4/semantic_profile_source.json",
+            "structureAnchorPreview": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d4/structure_anchor_preview.png",
+            "groupStructurePreviews": {
+              "g_farmstead": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d4/structure_anchor_group_g_farmstead.png",
+              "g_residential": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d4/structure_anchor_group_g_residential.png",
+              "g_commerce": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d4/structure_anchor_group_g_commerce.png"
+            },
+            "qualityReport": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d4/quality_report.json",
+            "sourceD3Package": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d3/city_landform_review_package.json",
+            "cityGenerationCompileTrace": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d4/city_generation_compile_trace.json",
+            "groupExtentMap": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d4/group_extent_map.json",
+            "landscapeCapacityReservationPlan": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d4/city_landscape_capacity_reservation_plan.json",
+            "cityBlueprintFailureBudget": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/blueprint/city_blueprint_failure_budget.json",
+            "testRunManifest": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/test_run_manifest.json",
+            "testRunPackage": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross"
+          },
+          "endedAt": "2026-09-06T11:17:05.703340100Z",
+          "durationMs": 31671
+        },
+        {
+          "name": "city_plan_d5",
+          "startedAt": "2026-09-06T11:17:05.706342800Z",
+          "status": "success",
+          "ok": true,
+          "responseStatus": "",
+          "reasonCode": "",
+          "artifacts": {
+            "reservationMaskPlan": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d5/reservation_mask_plan.json",
+            "wallReservationPlan": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d5/wall_reservation_plan.json",
+            "roadAccessPlan": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d5/road_access_plan.json",
+            "buildOperationPlan": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d5/build_operation_plan.json",
+            "reservationMaskPreview": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d5/reservation_mask_preview.png",
+            "wallReservationPreview": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d5/wall_reservation_preview.png",
+            "qualityReport": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d5/quality_report.json",
+            "sourceD3Package": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d3/city_landform_review_package.json",
+            "sourceStructureAnchorMap": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d4/structure_anchor_map.json"
+          },
+          "endedAt": "2026-09-06T11:17:05.842992800Z",
+          "durationMs": 137
+        },
+        {
+          "name": "city_plan_d6",
+          "startedAt": "2026-09-06T11:17:05.846994Z",
+          "status": "success",
+          "ok": true,
+          "responseStatus": "",
+          "reasonCode": "",
+          "artifacts": {
+            "structureMaterializationPlan": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d6/structure_materialization_plan.json",
+            "placedStructureLedger": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d6/placed_structure_ledger.json",
+            "structureMaterializationTrace": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d6/structure_materialization_trace.json",
+            "inferredFunctionAreaMap": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d6/inferred_function_area_map.json",
+            "structureMaterializationPreview": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d6/structure_materialization_preview.png",
+            "qualityReport": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d6/quality_report.json",
+            "sourceStructureAnchorMap": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d4/structure_anchor_map.json",
+            "sourceReservationMaskPlan": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d5/reservation_mask_plan.json"
+          },
+          "endedAt": "2026-09-06T11:17:05.897059700Z",
+          "durationMs": 50
+        },
+        {
+          "name": "city_plan_land_use",
+          "startedAt": "2026-09-06T11:17:06.001245400Z",
+          "status": "success",
+          "ok": true,
+          "responseStatus": "",
+          "reasonCode": "",
+          "artifacts": {
+            "cityBlueprint": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/blueprint/city_blueprint.json",
+            "cityBlueprintCatalogSnapshot": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/blueprint/city_blueprint_catalog_snapshot.json",
+            "landUseTerrainField": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/land_use/land_use_terrain_field.json",
+            "cityOutdoorIntentPlan": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/land_use/city_outdoor_intent_plan.json",
+            "cityUrbanSpacePlan": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/land_use/city_urban_space_plan.json",
+            "landUseAreaPlan": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/land_use/city_land_use_area_plan.json",
+            "landUseSurfacePrintPlan": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/land_use/city_land_use_surface_print_plan.json",
+            "landUsePlanTrace": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/land_use/land_use_plan_trace.json",
+            "qualityReport": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/land_use/quality_report.json",
+            "landUsePreview": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/land_use/land_use_preview.png",
+            "planningComplete": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/land_use/city_land_use_planning_complete.json",
+            "sourceD5ReservationMaskPlan": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d5/reservation_mask_plan.json",
+            "sourceD6MaterializationPlan": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d6/structure_materialization_plan.json"
+          },
+          "endedAt": "2026-09-06T11:17:26.922894600Z",
+          "durationMs": 20921
+        },
+        {
+          "name": "city_execute_d5",
+          "startedAt": "2026-09-06T11:17:26.927300300Z",
+          "status": "success",
+          "ok": true,
+          "responseStatus": "",
+          "reasonCode": "",
+          "artifacts": {
+            "reservationMaskPlan": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d5/reservation_mask_plan.json",
+            "buildOperationPlan": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d5/build_operation_plan.json",
+            "sourceStructureMaterializationPlan": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d6/structure_materialization_plan.json",
+            "worldMutationReport": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d5/world_mutation_report.json",
+            "activeMaskSummary": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d5/active_mask_summary.json",
+            "activePlannedStructureRegistry": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d5/active_planned_structure_registry.json",
+            "serverPlannedStructureRegistry": ".\\saves\\RTF_revision_loop_20260906\\.\\geomantia_city_masks\\active_planned_structure_registry.json",
+            "activeLandUseSummary": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/d5/active_city_land_use_summary.json",
+            "sourceLandUseAreaPlan": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/land_use/city_land_use_area_plan.json",
+            "sourceLandUsePlanningComplete": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/land_use/city_land_use_planning_complete.json",
+            "sourceLandUseSurfacePrintPlan": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/land_use/city_land_use_surface_print_plan.json",
+            "sourceCityOutdoorIntentPlan": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/land_use/city_outdoor_intent_plan.json",
+            "sourceCityUrbanSpacePlan": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/steps/land_use/city_urban_space_plan.json",
+            "serverActiveLandUsePlans": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_revision_loop_20260906\\geomantia_city_masks\\active_city_land_use_area_plans.json",
+            "serverLandUseWorldgenLedger": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_revision_loop_20260906\\geomantia_city_masks\\city_land_use_worldgen_ledger.json"
+          },
+          "endedAt": "2026-09-06T11:17:32.058397900Z",
+          "durationMs": 5131
+        },
+        {
+          "name": "worldgen_wait",
+          "status": "waiting_for_generation",
+          "ok": true,
+          "reasonCode": "WAITING_FOR_GENERATION",
+          "message": "D4 and all program-owned downstream stages are complete; active plans are waiting for chunk generation.",
+          "startedAt": "2026-09-06T11:17:32.060915400Z",
+          "endedAt": "2026-09-06T11:17:32.060915400Z",
+          "durationMs": 0
+        }
+      ],
+      "artifacts": {
+        "workflowReport": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/test_run_manifest.json",
+        "testRunManifest": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/test_run_manifest.json",
+        "testRunPackage": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross"
+      },
+      "landUseControlSource": "city_blueprint",
+      "landUseProfileId": "default",
+      "enableLandUseLayer": true,
+      "blueprintOutdoorMode": "GENERATE",
+      "ok": true,
+      "endedAt": "2026-09-06T11:17:32.064440100Z",
+      "durationMs": 58043
+    }
+  ],
+  "worldIdentity": {
+    "runId": "provider_22d55c3faaf1fd10_r8192",
+    "dimensionId": "minecraft:overworld",
+    "worldSeed": "2510013795849600272",
+    "worldBorderSizeBlocks": 5.9999968E7,
+    "centerBlockX": 0,
+    "centerBlockZ": 0,
+    "planningRadiusBlocks": 8192,
+    "cellStepBlocks": 128,
+    "microSampleStrideBlocks": 32,
+    "localSlopeRadiusBlocks": 8,
+    "microSamplingImplemented": true,
+    "microSampleBudgetPerCell": 16,
+    "adaptiveSampling": false,
+    "sampleMode": "prior",
+    "resumePolicy": "use_cache",
+    "preferGeneratorNativeTerrain": true,
+    "terrainProvider": {
+      "generatorNativeRequested": true,
+      "providerId": "rtf_heightmap_preview_inferred_climate",
+      "sourceKind": "generator_native",
+      "fastPath": true,
+      "fallbackReason": "",
+      "sourceFingerprint": "sha256:529bed2193d62eb7f3e5da88658e1e72ff423a31ef37ef9b8e053c5f6ac6546c",
+      "samplingSemantics": "estimated_coarse_heightmap"
+    },
+    "worldSurveyManifest": "provider_22d55c3faaf1fd10_r8192/world_survey_manifest.json"
+  },
+  "citySeedSnapshot": {
+    "citySeedId": "city_realm_grainmark_ferry_cross",
+    "realmId": "realm_grainmark",
+    "role": "satellite_townland",
+    "theoreticalScale": "town",
+    "anchorGrid": {
+      "x": 16,
+      "z": 32
+    },
+    "anchorBlock": {
+      "x": 2160,
+      "z": 4144
+    },
+    "candidateRangeCells": 4,
+    "planningRadiusCells": 2,
+    "subregionId": "realm_grainmark_patch_shore-04",
+    "candidateId": "SHORE-04",
+    "graphDistanceToNearestCity": 1.4142135623730951,
+    "satelliteOf": "city_realm_grainmark_millfield_village",
+    "requiredConditions": [
+      "land",
+      "inside_realm"
+    ],
+    "coreFunctions": [
+      "commerce",
+      "residential"
+    ],
+    "trigger": "realm_development",
+    "source": {
+      "reason": "Water-linked trade hamlet on SHORE-04 (114,688 contiguous blocks, 100% shore, hard-legal, preferred landform). Anchor (grid 67,129; block 2160,4144) sits ~1,600 blocks SE of the Millfield VALLEY-05 anchor and ~2,500 blocks NW of the capital, keeping all three cities in one reachable network. Shore is flat (P50 64, relief 2) with adjacent water, ideal for general_store/tavern/motel commerce fills and residential households serving river traffic. SHORE-04 is directly adjacent to VALLEY-05 (11 shared boundary cells) and 17 cells from SLOPE-04, giving short CONNECTION roads to both.",
+      "patchSelectionRef": "psel_5b855a03cca74426d9e8bf9bbf81dc80c4bc7211f41862ea3f1bb773b9066a36",
+      "patchCandidateId": "SHORE-04",
+      "sourcePatchRefs": [
+        "minecraft:overworld:step.32:t.sha256_a7f7d21a68b40aad3025a384bf464f8883a5ac736c02be92ba50253859f51f4f:p.2172"
+      ],
+      "selectionStage": "realm_t4",
+      "siteSelectionMode": "ai_candidate_selection"
+    }
+  },
+  "latestRequest": {
+    "runId": "provider_22d55c3faaf1fd10_r8192",
+    "citySeedId": "city_realm_grainmark_ferry_cross",
+    "skipExisting": true,
+    "confirmWorldMutation": true,
+    "stopAfterActivation": true,
+    "planWalls": false,
+    "executeWalls": false
+  },
+  "updatedAt": "2026-09-06T11:17:32.064440100Z",
+  "status": "waiting_for_generation",
+  "artifacts": {
+    "workflowReport": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/test_run_manifest.json",
+    "testRunManifest": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross/test_run_manifest.json",
+    "testRunPackage": "provider_22d55c3faaf1fd10_r8192/city_test_runs/city_realm_grainmark_ferry_cross"
+  }
+}

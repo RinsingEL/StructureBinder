@@ -300,11 +300,10 @@ public final class CityBlueprintCompilerService {
                 commit(placement, anchors, occupied, state);
                 if ("CENTER_SYMMETRIC".equals(state.layoutAlgorithm())
                         && state.requiredCount() == state.group().requiredStructureRefs().size()) {
-                    List<String> pool = catalog.pool(state.group().fillPoolRef());
+                    List<String> pool = groupFillPool(state.group(), catalog);
                     int cursor = 0;
                     while (state.internalStructureCount() < state.minimumStructureCount()) {
-                        String structureRef = CityFillSelection.choose(pool, state.structureCounts, state.blockedRefs(),
-                                catalog.poolCap(state.group().fillPoolRef()), 2, cursor++);
+                        String structureRef = chooseFillStructure(blueprint, state, catalog, 2, cursor++);
                         if (structureRef == null) {
                             state.stop("MINIMUM_FORMATION_GAP_RECORDED");
                             break;
@@ -359,7 +358,7 @@ public final class CityBlueprintCompilerService {
         // city stitching and must not substitute for the group's required/fill population.
         for (CityBlueprint.Group group : groups) {
             GroupState state = states.get(group.groupId());
-            List<String> pool = catalog.pool(group.fillPoolRef());
+            List<String> pool = groupFillPool(group, catalog);
             int cursor = 0;
             boolean centerSymmetric = "CENTER_SYMMETRIC".equals(state.layoutAlgorithm());
             if (centerSymmetric && state.internalStructureCount() == 0) {
@@ -376,8 +375,7 @@ public final class CityBlueprintCompilerService {
                             "CITY_BLUEPRINT_INTERNAL_SAFETY_LIMIT_REACHED",
                             group.groupId() + " exceeded the compiler safety guard before reaching its spatial budget.");
                 }
-                String structureRef = CityFillSelection.choose(pool, state.structureCounts, state.blockedRefs(),
-                        catalog.poolCap(group.fillPoolRef()), requestedBatchSize, cursor++);
+                String structureRef = chooseFillStructure(blueprint, state, catalog, requestedBatchSize, cursor++);
                 if (structureRef == null) {
                     state.stop("CONNECTED_SPACE_EXHAUSTED");
                     break;
@@ -440,7 +438,7 @@ public final class CityBlueprintCompilerService {
         JsonObject dynamicAreaPlan = freezeDynamicAreaTargets(
                 blueprint, states, cityPlanningBounds, connectivityPlan);
         fillGroupsToDynamicTargets(runDir, review, structureSource, templateCatalogJson, templates, blueprint,
-                groups, states, occupied, anchors, selections, catalog, terrainGate);
+                groups, states, occupied, anchors, selections, catalog, terrainGate, preFillStreetSkeleton);
 
         // Landscape parcels are the landscapeShare side of the same frozen percentage
         // budget. Replan them after buildings finish so fields/tree belts/green/paths
@@ -922,11 +920,9 @@ public final class CityBlueprintCompilerService {
                                              JsonArray anchors,
                                              JsonArray selections,
                                              CatalogIndex catalog,
-                                             CityStructureTerrainGate terrainGate) throws IOException {
+                                             CityStructureTerrainGate terrainGate, JsonArray expansionStreets) throws IOException {
         for (CityBlueprint.Group group : groups) {
             GroupState state = states.get(group.groupId());
-            List<String> pool = catalog.pool(group.fillPoolRef());
-            int cursor = 0;
             boolean centerSymmetric = "CENTER_SYMMETRIC".equals(state.layoutAlgorithm());
             if (centerSymmetric && state.internalStructureCount() == 0) {
                 state.stop("CENTER_STRUCTURE_GAP_RECORDED");
@@ -943,41 +939,18 @@ public final class CityBlueprintCompilerService {
                     state.stop("EXPANSION_DISABLED_AREA_GAP");
                     break;
                 }
-                int requestedBatchSize = centerSymmetric ? 2 : 1;
-                if (state.anchorCount() + requestedBatchSize > INTERNAL_MAX_ANCHORS_PER_GROUP) {
-                    state.stop("EXPANSION_SAFETY_LIMIT_REACHED");
-                    break;
-                }
-                if (pool.isEmpty()) {
-                    state.stop("PREVIEW_RANGE_EXHAUSTED");
-                    break;
-                }
-                List<Placement> placements;
-                if (centerSymmetric) {
-                    ConnectionBatch batch = choosePercentageExpansionBatch(runDir, review, structureSource,
-                            templateCatalogJson, templates, blueprint, state, occupied, catalog, states,
-                            selections, terrainGate, requestedBatchSize);
-                    placements = batch == null ? List.of() : batch.placements();
-                } else {
-                    String structureRef = CityFillSelection.choose(pool, state.structureCounts, state.blockedRefs(),
-                            catalog.poolCap(group.fillPoolRef()), 1, cursor++);
-                    if (structureRef == null) { state.stop("AUTHOR_POOL_OR_SPACE_EXHAUSTED"); break; }
-                    state.beginExactSlotSearch(structureRef);
-                    Placement placement = chooseOne(runDir, review, structureSource, templateCatalogJson,
-                            templates, blueprint, state, structureRef, PlacementPhase.PERCENTAGE,
-                            state.anchorCount() + 1, occupied, catalog, states, selections, null, terrainGate);
-                    placements = placement == null ? List.of() : List.of(placement);
-                }
+                int requestedBatchSize = Math.min(6, INTERNAL_MAX_ANCHORS_PER_GROUP - state.anchorCount());
+                if (requestedBatchSize < 2) { state.stop("EXPANSION_SAFETY_LIMIT_REACHED"); break; }
+                ConnectionBatch batch = chooseRegularExpansion(runDir, review, structureSource, templateCatalogJson,
+                        templates, blueprint, state, occupied, catalog, states, selections, terrainGate, requestedBatchSize);
+                List<Placement> placements = batch == null ? List.of() : batch.placements();
                 if (placements.isEmpty()) {
-                    if (!centerSymmetric) {
-                        String failedRef = selections.isEmpty() ? "" : string(selections.get(selections.size() - 1).getAsJsonObject(), "structureRef");
-                        if (!failedRef.isBlank()) state.blockRef(failedRef);
-                        if (CityFillSelection.choose(pool, state.structureCounts, state.blockedRefs(),
-                                catalog.poolCap(group.fillPoolRef()), 1, cursor) != null) continue;
-                    }
                     state.stop("PREVIEW_RANGE_EXHAUSTED");
                     break;
                 }
+                JsonArray roads = array(placements.get(0).anchor(), "expansionStreetBands");
+                roads.forEach(road -> expansionStreets.add(road.deepCopy()));
+                addRoadBandsToOccupied(roads.asList().stream().map(JsonElement::getAsJsonObject).toList(), occupied);
                 for (Placement placement : placements) commit(placement, anchors, occupied, state);
                 state.advancePercentageCursor(placements.size());
             }
@@ -1637,6 +1610,7 @@ public final class CityBlueprintCompilerService {
             envelope.add("blockBounds", bounds);
             envelope.add("bodyBounds", bounds.deepCopy());
             envelope.addProperty("ownerGroupId", "city_main_road");
+            if (!booleanValue(band, "reservationOnly", false)) envelope.add("streetBand", band.deepCopy());
             envelope.addProperty("anchorId", string(band, "streetBandId"));
             envelope.addProperty("arrayId", string(band, "roadNetworkId"));
             occupied.add(envelope);
@@ -1757,6 +1731,22 @@ public final class CityBlueprintCompilerService {
         }
     }
 
+    private static List<String> groupFillPool(CityBlueprint.Group group, CatalogIndex catalog) {
+        return CityWeightedPoolSelection.fill(group).stream().flatMap(pool -> catalog.pool(pool.poolRef()).stream())
+                .distinct().toList();
+    }
+
+    private static String chooseFillStructure(CityBlueprint blueprint, GroupState state, CatalogIndex catalog,
+                                              int copies, int ordinal) {
+        for (String pool : CityWeightedPoolSelection.order(CityWeightedPoolSelection.fill(state.group()),
+                blueprint.generationSeed(), state.group().groupId() + ":initial", ordinal)) {
+            String ref = CityFillSelection.choose(catalog.pool(pool), state.structureCounts, state.blockedRefs(),
+                    catalog.poolCap(pool), copies, ordinal);
+            if (ref != null) return ref;
+        }
+        return null;
+    }
+
     private Map<String, CityGroupSpatialDemand> planGroupSpatialDemands(
             List<CityBlueprint.Group> groups,
             CityScale cityScale,
@@ -1772,7 +1762,7 @@ public final class CityBlueprintCompilerService {
                     groupLayoutPlanner.parameters(algorithm, group.densityClass());
             int minimumCount = minimumGroupStructureCount(cityScale, group.extentClass(), algorithm);
             List<String> plannedRefs = new ArrayList<>(orderedRequiredStructureRefs(group, catalog));
-            List<String> fillPool = catalog.pool(group.fillPoolRef());
+            List<String> fillPool = groupFillPool(group, catalog);
             for (int cursor = 0; plannedRefs.size() < minimumCount && !fillPool.isEmpty(); cursor++) {
                 plannedRefs.add(fillPool.get(cursor % fillPool.size()));
             }
@@ -2419,11 +2409,11 @@ public final class CityBlueprintCompilerService {
                                                       Map<String, GroupState> states,
                                                       JsonArray selections,
                                                       CityStructureTerrainGate terrainGate,
-                                                      int requestedBatchSize) throws IOException {
+                                                      int requestedBatchSize, String selectedPool) throws IOException {
         int available = INTERNAL_MAX_ANCHORS_PER_GROUP - source.anchorCount();
         if (available < 1) return null;
-        ConnectionConfiguration configuration = source.connectionConfiguration();
-        List<String> pool = catalog.pool(configuration.structurePoolRef());
+        ConnectionConfiguration configuration = source.connectionConfiguration().withPool(selectedPool);
+        List<String> pool = catalog.pool(selectedPool);
         if (pool.isEmpty()) return null;
         CommittedArray focus = source.nearestArray(target);
         if (focus == null) return null;
@@ -2432,7 +2422,8 @@ public final class CityBlueprintCompilerService {
         int terminalWindow = configuration.layoutParameters().landUseHandoffGapBlocks()
                 + configuration.layoutParameters().maximumEdgeGapBlocks();
         boolean terminalBatch = remainingGap <= terminalWindow && requested == 1;
-        List<ConnectionItem> connectionItems = connectionItems(blueprint, source, pool, catalog, requested);
+        List<ConnectionItem> connectionItems = connectionItems(blueprint, source, pool, catalog, requested,
+                source.connectionFillCursor(), catalog.poolCap(configuration.structurePoolRef()));
         if (connectionItems.isEmpty()) return null;
         String direction = connectionDirection(focus.bodyBounds(), target.bodyEnvelopes());
         String arrayId = source.group().groupId() + "_connectivity_array_"
@@ -2521,12 +2512,33 @@ public final class CityBlueprintCompilerService {
                                                                  Map<String, GroupState> states,
                                                                  JsonArray selections,
                                                                  CityStructureTerrainGate terrainGate) throws IOException {
-        for (int batchSize : connectionBatchSizes(source, target)) {
-            ConnectionBatch batch = chooseConnectivityBatch(runDir, review, structureSource,
-                    templateCatalog, templates, blueprint, source, target, occupied, catalog,
-                    states, selections, terrainGate, batchSize);
-            if (batch != null) {
-                return batch;
+        for (String selectedPool : CityWeightedPoolSelection.order(CityWeightedPoolSelection.connection(source.group()),
+                blueprint.generationSeed(), source.group().groupId() + ":connection", source.connectionBatchCount())) {
+            for (int batchSize : connectionBatchSizes(source, target)) {
+                ConnectionBatch batch = chooseConnectivityBatch(runDir, review, structureSource,
+                        templateCatalog, templates, blueprint, source, target, occupied, catalog,
+                        states, selections, terrainGate, batchSize, selectedPool);
+                if (batch != null) return batch;
+            }
+        }
+        return null;
+    }
+
+    private ConnectionBatch chooseRegularExpansion(Path runDir, CityLandformReviewPackage review,
+            JsonObject structureSource, JsonObject templateCatalog, CityTemplateCatalog templates,
+            CityBlueprint blueprint, GroupState source, JsonArray occupied, CatalogIndex catalog,
+            Map<String, GroupState> states, JsonArray selections, CityStructureTerrainGate terrainGate,
+            int maximumBatchSize) throws IOException {
+        for (String pool : CityWeightedPoolSelection.order(CityWeightedPoolSelection.fill(source.group()),
+                blueprint.generationSeed(), source.group().groupId() + ":expansion", source.percentageBatchCount())) {
+            for (var algorithm : CityExpansionLayoutPolicy.Algorithm.values()) {
+                for (int size : new LinkedHashSet<>(List.of(maximumBatchSize, Math.min(4, maximumBatchSize), 2))) {
+                    if (algorithm == CityExpansionLayoutPolicy.Algorithm.COURTYARD && size < 5) continue;
+                    ConnectionBatch result = choosePercentageExpansionBatch(runDir, review, structureSource,
+                            templateCatalog, templates, blueprint, source, occupied, catalog, states, selections,
+                            terrainGate, size, pool, algorithm.name());
+                    if (result != null) return result;
+                }
             }
         }
         return null;
@@ -2544,15 +2556,18 @@ public final class CityBlueprintCompilerService {
                                                             Map<String, GroupState> states,
                                                             JsonArray selections,
                                                             CityStructureTerrainGate terrainGate,
-                                                            int requestedBatchSize) throws IOException {
-        ConnectionConfiguration configuration = percentageExpansionConfiguration(source);
-        List<String> pool = catalog.pool(source.group().fillPoolRef());
+                                                            int requestedBatchSize, String poolRef, String algorithm) throws IOException {
+        ConnectionConfiguration configuration = new ConnectionConfiguration(poolRef, "program:expansion:" + algorithm,
+                algorithm, "LINEAR".equals(algorithm) ? "guide_line_dual_side" : "compound_cluster",
+                source.group().densityClass(), CityBlueprint.ConnectionParameters.empty(), true, false, true,
+                groupLayoutPlanner.parameters(algorithm, source.group().densityClass()));
+        List<String> pool = catalog.pool(poolRef);
         if (pool.isEmpty()) return null;
         int requested = Math.min(INTERNAL_MAX_ANCHORS_PER_GROUP - source.anchorCount(),
                 Math.max(1, requestedBatchSize));
         if (requested < 1) return null;
         List<ConnectionItem> items = connectionItems(blueprint, source, pool, catalog, requested,
-                source.percentageFillCursor(), catalog.poolCap(source.group().fillPoolRef()));
+                source.percentageFillCursor(), catalog.poolCap(poolRef));
         if (items.size() < requested) return null;
         for (String direction : source.percentageExpansionDirections()) {
             CommittedArray focus = source.outwardArray(direction);
@@ -2561,7 +2576,16 @@ public final class CityBlueprintCompilerService {
                     + String.format("%03d", source.percentageBatchCount() + 1);
             JsonObject request = automaticConnectionRequest(source, configuration, focus, direction,
                     arrayId, items, false);
+            JsonObject item = request.getAsJsonObject("nextArrayLayoutPlanItem");
+            int span = 16;
+            for (ConnectionItem content : items) {
+                var physical = templates.requireTemplate(content.template().templateId(), content.template().variantId());
+                span = Math.max(span, Math.max(physical.width(), physical.depth()) + physical.clearanceBlocks() * 2);
+            }
+            item.addProperty("spacingBlocks", span + 7);
             JsonObject event = new JsonObject();
+            event.addProperty("selectedPoolRef", poolRef);
+            event.addProperty("expansionAlgorithm", algorithm);
             event.addProperty("sequence", selections.size() + 1);
             event.addProperty("phase", PlacementPhase.PERCENTAGE.traceName);
             event.addProperty("groupId", source.group().groupId());
@@ -2577,11 +2601,34 @@ public final class CityBlueprintCompilerService {
                 JsonArray candidates = array(result.candidateSet(), "arrayCandidates");
                 List<AutomaticCandidate> legal = new ArrayList<>();
                 JsonArray terrainGateRejections = new JsonArray();
+                JsonObject layoutRejections = new JsonObject();
+                event.add("layoutRejectionCounts", layoutRejections);
                 for (JsonElement element : candidates) {
                     if (!element.isJsonObject()) continue;
                     AutomaticCandidate accepted = automaticPercentageCandidate(element.getAsJsonObject(),
-                            source, states, items, direction, terrainGate, terrainGateRejections);
-                    if (accepted != null) legal.add(accepted);
+                            source, states, items, direction, terrainGate, terrainGateRejections,
+                            configuration.layoutParameters().maximumEdgeGapBlocks());
+                    if (accepted != null) {
+                        var roads = CityExpansionLayoutPolicy.streets(arrayId, source.group().groupId(), algorithm,
+                                accepted.placements().stream().map(Placement::anchor).toList(), occupied);
+                        if (roads.isEmpty()) { increment(layoutRejections, "UNIT_ACCESS_UNAVAILABLE"); continue; }
+                        boolean outside = roads.stream().map(CityStreetObstacleRouter::crossSection).anyMatch(bounds ->
+                                !source.planningBounds().contains(bounds.minX(), bounds.minZ())
+                                || !source.planningBounds().contains(bounds.maxX(), bounds.maxZ()));
+                        if (outside) { increment(layoutRejections, "UNIT_ROAD_OUTSIDE_PLANNING_BOUNDS"); continue; }
+                        boolean overlaps = roads.stream().anyMatch(road -> states.values().stream()
+                                .flatMap(state -> state.envelopes().stream())
+                                .anyMatch(CityStreetObstacleRouter.crossSection(road)::overlaps));
+                        if (overlaps) { increment(layoutRejections, "UNIT_ROAD_OVERLAPS_EXISTING_BUILDING"); continue; }
+                        JsonArray roadJson = new JsonArray(); roads.forEach(roadJson::add);
+                        accepted.placements().get(0).anchor().add("expansionStreetBands", roadJson);
+                        for (Placement placement : accepted.placements()) {
+                            placement.anchor().getAsJsonObject("blueprintLayout").addProperty("expansionAlgorithm", algorithm);
+                            placement.anchor().getAsJsonObject("blueprintLayout").addProperty("selectedPoolRef", poolRef);
+                            placement.anchor().getAsJsonObject("blueprintLayout").addProperty("expansionUnitId", arrayId);
+                        }
+                        legal.add(accepted);
+                    }
                 }
                 legal.sort(Comparator.comparingDouble(AutomaticCandidate::engineScore).reversed()
                         .thenComparing(candidate -> string(candidate.candidate(), "candidateId")));
@@ -2612,15 +2659,6 @@ public final class CityBlueprintCompilerService {
             }
         }
         return null;
-    }
-
-    private ConnectionConfiguration percentageExpansionConfiguration(GroupState source) {
-        String plannerType = "LINEAR".equals(source.layoutAlgorithm())
-                ? "guide_line_dual_side" : "compound_cluster";
-        return new ConnectionConfiguration(source.group().fillPoolRef(),
-                source.group().algorithmProfileRef(), source.layoutAlgorithm(), plannerType,
-                source.group().densityClass(), CityBlueprint.ConnectionParameters.empty(),
-                true, true, true, source.layoutParameters());
     }
 
     private List<Integer> connectionBatchSizes(GroupState source, GroupState target) {
@@ -2737,12 +2775,6 @@ public final class CityBlueprintCompilerService {
     }
 
     private List<ConnectionItem> connectionItems(CityBlueprint blueprint, GroupState source,
-                                                 List<String> pool, CatalogIndex catalog, int requested) {
-        return connectionItems(blueprint, source, pool, catalog, requested, source.connectionFillCursor(),
-                catalog.poolCap(source.connectionConfiguration().structurePoolRef()));
-    }
-
-    private List<ConnectionItem> connectionItems(CityBlueprint blueprint, GroupState source,
                                                  List<String> pool, CatalogIndex catalog, int requested,
                                                  int fillCursor, int maximum) {
         List<ConnectionItem> result = new ArrayList<>();
@@ -2767,7 +2799,7 @@ public final class CityBlueprintCompilerService {
                                                              List<ConnectionItem> items,
                                                              String direction,
                                                              CityStructureTerrainGate terrainGate,
-                                                             JsonArray terrainGateRejections) {
+                                                             JsonArray terrainGateRejections, int maximumUnitGap) {
         JsonArray candidateAnchors = array(candidate, "anchors");
         JsonArray candidateItems = array(candidate, "items");
         if (candidateAnchors.size() != items.size() || candidateItems.size() != items.size()) return null;
@@ -2815,7 +2847,7 @@ public final class CityBlueprintCompilerService {
                 || !extendsInDirection(candidateUnion, source.extent(), direction)) return null;
         Nearest nearestSource = nearest(candidateUnion, source.envelopes(), source.group().groupId());
         if (nearestSource == null || nearestSource.gapBlocks()
-                > source.layoutParameters().maximumEdgeGapBlocks()) return null;
+                > maximumUnitGap) return null;
         return new AutomaticCandidate(candidate.deepCopy(), List.copyOf(placements), 0.0,
                 doubleValue(candidate, "score", 0.0));
     }
@@ -4488,6 +4520,10 @@ public final class CityBlueprintCompilerService {
                                            boolean inheritedAlgorithm,
                                            boolean inheritedDensity,
                                            CityBlueprintGroupLayoutPlanner.Parameters layoutParameters) {
+        ConnectionConfiguration withPool(String pool) {
+            return new ConnectionConfiguration(pool, algorithmProfileRef, algorithm, plannerType, densityClass,
+                    parameters, inheritedStructurePool, inheritedAlgorithm, inheritedDensity, layoutParameters);
+        }
         JsonObject asJson() {
             JsonObject value = new JsonObject();
             value.addProperty("structurePoolRef", structurePoolRef);

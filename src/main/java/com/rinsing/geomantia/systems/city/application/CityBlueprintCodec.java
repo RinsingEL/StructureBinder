@@ -76,7 +76,8 @@ public final class CityBlueprintCodec {
             item.addProperty("algorithmProfileRef", group.algorithmProfileRef());
             item.addProperty("terrainPolicy", group.terrainPolicy().name());
             item.add("requiredStructureRefs", strings(group.requiredStructureRefs()));
-            item.addProperty("fillPoolRef", group.fillPoolRef());
+            if (group.fillPools().isEmpty()) item.addProperty("fillPoolRef", group.fillPoolRef());
+            else item.add("fillPools", weightedPoolsJson(group.fillPools()));
             if (group.connectionPlan() != null) {
                 item.add("connectionPlan", connectionPlanJson(group.connectionPlan()));
             }
@@ -276,13 +277,13 @@ public final class CityBlueprintCodec {
         Set<String> fields = Set.of("groupId", "groupKind", "preferredPatchRefs", "preferredPatchZone",
                 "placementRelation", "role", "priority",
                 "extentClass", "densityClass",
-                "algorithmProfileRef", "terrainPolicy", "requiredStructureRefs", "fillPoolRef",
+                "algorithmProfileRef", "terrainPolicy", "requiredStructureRefs", "fillPoolRef", "fillPools",
                 "connectionPlan", "compositionProfileRef", "attachedFeatures", "targetAreaShare",
                 "spaceComposition", "expansionPolicy", "buildingGreeneryPolicy");
         for (int index = 0; index < array.size(); index++) {
             String path = "$.groups[" + index + "]";
             JsonObject item = objectElement(array.get(index), path);
-            exactFields(item, fields, Set.of("placementRelation", "connectionPlan"), path);
+            exactFields(item, fields, Set.of("placementRelation", "connectionPlan", "fillPoolRef", "fillPools"), path);
             result.add(new CityBlueprint.Group(
                     requiredString(item, "groupId", path + ".groupId"),
                     enumValue(item, "groupKind", CityBlueprint.GroupKind.class, path),
@@ -299,7 +300,7 @@ public final class CityBlueprintCodec {
                     enumValue(item, "terrainPolicy", CityBlueprint.TerrainPolicy.class, path),
                     stringList(requiredArray(item, "requiredStructureRefs", path + ".requiredStructureRefs"),
                             path + ".requiredStructureRefs"),
-                    requiredString(item, "fillPoolRef", path + ".fillPoolRef"),
+                    poolReference(item, "fillPoolRef", "fillPools", path),
                     item.has("connectionPlan")
                             ? connectionPlan(requiredObject(item, "connectionPlan", path + ".connectionPlan"),
                             path + ".connectionPlan") : null,
@@ -312,7 +313,7 @@ public final class CityBlueprintCodec {
                     expansionPolicy(requiredObject(item, "expansionPolicy", path + ".expansionPolicy"),
                             path + ".expansionPolicy"),
                     buildingGreeneryPolicy(requiredObject(item, "buildingGreeneryPolicy",
-                            path + ".buildingGreeneryPolicy"), path + ".buildingGreeneryPolicy")));
+                            path + ".buildingGreeneryPolicy"), path + ".buildingGreeneryPolicy"), weightedPools(item, "fillPools", path)));
         }
         return List.copyOf(result);
     }
@@ -398,17 +399,56 @@ public final class CityBlueprintCodec {
         return List.copyOf(result);
     }
 
+    private static String poolReference(JsonObject item, String single, String multiple, String path) {
+        if (item.has(single) == item.has(multiple))
+            throw new IllegalArgumentException(path + ": provide exactly one of " + single + " or " + multiple);
+        return item.has(single) ? requiredString(item, single, path + "." + single)
+                : weightedPools(item, multiple, path).get(0).poolRef();
+    }
+
+    private static List<CityBlueprint.WeightedPool> weightedPools(JsonObject item, String field, String path) {
+        if (!item.has(field)) return List.of();
+        JsonArray array = item.getAsJsonArray(field);
+        if (array.isEmpty()) throw new IllegalArgumentException(path + "." + field + " must not be empty");
+        List<CityBlueprint.WeightedPool> result = new ArrayList<>();
+        Set<String> seen = new java.util.HashSet<>();
+        for (int i = 0; i < array.size(); i++) {
+            String at = path + "." + field + "[" + i + "]";
+            JsonObject value = objectElement(array.get(i), at);
+            exactFields(value, Set.of("poolRef", "weight"), at);
+            String ref = requiredString(value, "poolRef", at + ".poolRef");
+            if (!value.get("weight").isJsonPrimitive() || !value.getAsJsonPrimitive("weight").isNumber())
+                throw new IllegalArgumentException(at + ".weight must be a number");
+            double weight = value.get("weight").getAsDouble();
+            if (!Double.isFinite(weight) || weight <= 0 || !seen.add(ref))
+                throw new IllegalArgumentException(at + ": weight must be positive and finite; pools must be unique");
+            result.add(new CityBlueprint.WeightedPool(ref, weight));
+        }
+        return List.copyOf(result);
+    }
+
+    private static JsonArray weightedPoolsJson(List<CityBlueprint.WeightedPool> pools) {
+        JsonArray result = new JsonArray();
+        for (var pool : pools) {
+            JsonObject value = new JsonObject();
+            value.addProperty("poolRef", pool.poolRef()); value.addProperty("weight", pool.weight());
+            result.add(value);
+        }
+        return result;
+    }
+
     private static CityBlueprint.ConnectionPlan connectionPlan(JsonObject object, String path) {
-        Set<String> fields = Set.of("structurePoolRef", "algorithmProfileRef", "densityClass", "parameters");
+        Set<String> fields = Set.of("structurePoolRef", "structurePools", "algorithmProfileRef", "densityClass", "parameters");
         exactFields(object, fields, fields, path);
-        String pool = optionalString(object, "structurePoolRef", path + ".structurePoolRef");
+        String pool = object.has("structurePoolRef") || object.has("structurePools")
+                ? poolReference(object, "structurePoolRef", "structurePools", path) : null;
         String algorithm = optionalString(object, "algorithmProfileRef", path + ".algorithmProfileRef");
         CityBlueprint.DensityClass density = optionalEnum(object, "densityClass",
                 CityBlueprint.DensityClass.class, path);
         CityBlueprint.ConnectionParameters parameters = object.has("parameters")
                 ? connectionParameters(requiredObject(object, "parameters", path + ".parameters"),
                 path + ".parameters") : CityBlueprint.ConnectionParameters.empty();
-        return new CityBlueprint.ConnectionPlan(pool, algorithm, density, parameters);
+        return new CityBlueprint.ConnectionPlan(pool, algorithm, density, parameters, weightedPools(object, "structurePools", path));
     }
 
     private static CityBlueprint.ConnectionParameters connectionParameters(JsonObject object, String path) {
@@ -638,7 +678,8 @@ public final class CityBlueprintCodec {
 
     private static JsonObject connectionPlanJson(CityBlueprint.ConnectionPlan plan) {
         JsonObject object = new JsonObject();
-        if (plan.structurePoolRef() != null) object.addProperty("structurePoolRef", plan.structurePoolRef());
+        if (!plan.structurePools().isEmpty()) object.add("structurePools", weightedPoolsJson(plan.structurePools()));
+        else if (plan.structurePoolRef() != null) object.addProperty("structurePoolRef", plan.structurePoolRef());
         if (plan.algorithmProfileRef() != null) object.addProperty("algorithmProfileRef", plan.algorithmProfileRef());
         if (plan.densityClass() != null) object.addProperty("densityClass", plan.densityClass().name());
         if (!plan.parameters().emptyParameters()) {

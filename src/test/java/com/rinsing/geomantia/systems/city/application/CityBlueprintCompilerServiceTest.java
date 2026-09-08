@@ -31,6 +31,37 @@ class CityBlueprintCompilerServiceTest {
     Path temporary;
 
     @Test
+    void weightedPoolsCompileAtomicGridFirstExpansionUnits() throws Exception {
+        Fixture fixture = acceptedFixture("run_weighted_units", "city:weighted_units", 16, 16, "SMALL",
+                CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid, blueprint -> {
+                    JsonObject core = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    core.addProperty("targetAreaShare", 0.2);
+                    JsonObject district = core.deepCopy();
+                    district.addProperty("groupId", "housing"); district.addProperty("priority", "STANDARD");
+                    district.addProperty("algorithmProfileRef", "algorithm:organic_compact");
+                    district.addProperty("targetAreaShare", 0.8);
+                    district.remove("fillPoolRef");
+                    district.add("fillPools", JsonParser.parseString("[{\"poolRef\":\"pool:civic\",\"weight\":3},{\"poolRef\":\"pool:terrain\",\"weight\":1}]"));
+                    blueprint.getAsJsonArray("groups").add(district);
+                });
+        var result = new CityBlueprintCompilerService().compile(temporary,fixture.runId(),fixture.cityId());
+        assertTrue(result.ok(), result.message());
+        var expanded = result.structureAnchorPlan().getAsJsonArray("anchors").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .filter(a -> "percentage_growth".equals(a.get("blueprintPlacementPhase").getAsString())).toList();
+        assertFalse(expanded.isEmpty(), result.compileTrace().getAsJsonObject("dynamicAreaPlan").toString());
+        Map<String,List<JsonObject>> units = expanded.stream().collect(java.util.stream.Collectors.groupingBy(
+                a -> a.getAsJsonObject("blueprintLayout").get("expansionUnitId").getAsString()));
+        for (var unit : units.values()) {
+            assertTrue(unit.size() >= 2);
+            assertEquals(1, unit.stream().map(a -> a.getAsJsonObject("blueprintLayout").get("selectedPoolRef").getAsString()).distinct().count());
+        }
+        assertTrue(expanded.stream().anyMatch(a -> "GRID".equals(a.getAsJsonObject("blueprintLayout").get("expansionAlgorithm").getAsString())));
+        assertFalse(result.compileTrace().getAsJsonObject("compilationAcceptance").getAsJsonArray("hardBlocks")
+                .toString().contains("ROAD_OVERLAPS_STRUCTURE"));
+    }
+
+    @Test
     void submitFreezesRealGeometryAndSubsequentCompileUsesTheSameCommit() throws Exception {
         Fixture fixture = acceptedFixture("run_geometry_commit", "city:geometry_commit", 9, 9, "SMALL", blueprint -> {});
         Path dir = fixture.runDir().resolve("city_blueprint_" + safe(fixture.cityId()));
@@ -684,8 +715,11 @@ class CityBlueprintCompilerServiceTest {
         assertTrue(roadsByGroup.getOrDefault("courtyard", List.of()).stream()
                 .anyMatch(road -> "COURTYARD_GATE".equals(road.get("roadKind").getAsString())));
         assertTrue(roadsByGroup.containsKey("linear"));
-        assertFalse(roadsByGroup.containsKey("organic"));
-        assertFalse(roadsByGroup.containsKey("symmetric"));
+        // The initial organic/symmetric layouts remain intact; new expansion units own their own streets.
+        for (String owner : List.of("organic", "symmetric"))
+            assertTrue(roadsByGroup.getOrDefault(owner, List.of()).stream().allMatch(road ->
+                    Set.of("EXPANSION_UNIT_STREET", "ENTRANCE_SHORT_ALLEY", "SHARED_NETWORK_EXTENSION")
+                            .contains(road.get("roadKind").getAsString())));
     }
 
     @Test

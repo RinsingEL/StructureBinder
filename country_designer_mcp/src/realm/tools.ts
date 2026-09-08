@@ -548,7 +548,7 @@ const cityBlueprintSchema = strictObject({
   }, ["cityIdentity", "theme", "functionalRoles"]),
   styleProfile: strictObject({ profileRef: nonEmptyString("冻结 style profile 引用。") }, ["profileRef"]),
   groups: {
-    type: "array", minItems: 1, items: strictObject({
+    type: "array", minItems: 1, items: { ...strictObject({
       groupId: nonEmptyString("蓝图内唯一 ID。"),
       groupKind: { type: "string", enum: ["STRUCTURE"] },
       preferredPatchRefs: { type: "array", minItems: 1, uniqueItems: true,
@@ -571,9 +571,13 @@ const cityBlueprintSchema = strictObject({
       algorithmProfileRef: nonEmptyString("冻结算法 profile 引用。"),
       terrainPolicy: { type: "string", enum: ["CONFORM", "BALANCED", "ASSERTIVE"] },
       requiredStructureRefs: { type: "array", minItems: 1, uniqueItems: true, items: nonEmptyString("结构白名单引用。") },
-      fillPoolRef: nonEmptyString("冻结 fill pool 引用。"),
+      fillPoolRef: nonEmptyString("单池兼容写法；与 fillPools 二选一。"),
+      fillPools: { type: "array", minItems: 1, description: "多池及正权重；每个外扩小组合抽取一个池。与 fillPoolRef 二选一。",
+        items: strictObject({ poolRef: nonEmptyString("冻结 fill pool 引用。"), weight: { type: "number", exclusiveMinimum: 0 } }, ["poolRef", "weight"]) },
       connectionPlan: strictObject({
-        structurePoolRef: nonEmptyString("连接阵列使用的 fill pool；缺省时继承 fillPoolRef。"),
+        structurePoolRef: nonEmptyString("连接单池；与 structurePools 二选一。均省略则继承功能区填充池。"),
+        structurePools: { type: "array", minItems: 1, items: strictObject({
+          poolRef: nonEmptyString("连接池引用。"), weight: { type: "number", exclusiveMinimum: 0 } }, ["poolRef", "weight"]) },
         algorithmProfileRef: nonEmptyString("连接阵列算法 profile；缺省时继承 Group algorithmProfileRef。提交 parameters 前必须从 Context catalog 确认解析后的 planner family。"),
         densityClass: { type: "string", enum: ["SPARSE", "BALANCED", "DENSE"],
           description: "连接阵列疏密；缺省时继承 Group densityClass。" },
@@ -602,9 +606,9 @@ const cityBlueprintSchema = strictObject({
           description: "功能区附属绿化疏密偏好。" },
       }, ["coverage", "patternPreference", "densityPreference"]),
     }, ["groupId", "groupKind", "preferredPatchRefs", "preferredPatchZone", "role", "priority", "extentClass", "densityClass",
-      "algorithmProfileRef", "terrainPolicy", "requiredStructureRefs", "fillPoolRef",
+      "algorithmProfileRef", "terrainPolicy", "requiredStructureRefs",
       "compositionProfileRef", "attachedFeatures", "targetAreaShare", "spaceComposition", "expansionPolicy",
-      "buildingGreeneryPolicy"]),
+      "buildingGreeneryPolicy"]), oneOf: [{ required: ["fillPoolRef"] }, { required: ["fillPools"] }] },
   },
   arrayCompositions: {
     type: "array",

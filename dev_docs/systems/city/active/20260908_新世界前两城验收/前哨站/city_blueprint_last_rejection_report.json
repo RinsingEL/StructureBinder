@@ -1,0 +1,14 @@
+{
+  "schema": "city_blueprint_validation_report",
+  "cityId": "city_sahra_valdoran_library_qasr_ilm",
+  "contextId": "sha256:49a1b39261d0b336402ad5a6b6bdcbcb5272f969fe6d72c77ab64685f0fedce9",
+  "valid": false,
+  "validatedAt": "2026-09-08T12:16:12.380599900Z",
+  "issues": [
+    {
+      "reasonCode": "CITY_BLUEPRINT_OUTDOOR_LANDSCAPE_SOURCE_REQUIRED",
+      "fieldPath": "$.outdoorPlan.landscapes[0]",
+      "message": "FREE_STANDING forbids owner, requires placementDomain, and must be optional."
+    }
+  ]
+}

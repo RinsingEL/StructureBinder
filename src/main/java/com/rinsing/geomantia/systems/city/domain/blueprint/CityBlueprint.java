@@ -58,7 +58,34 @@ public record CityBlueprint(
             double targetAreaShare,
             SpaceComposition spaceComposition,
             ExpansionPolicy expansionPolicy,
-            BuildingGreeneryPolicy buildingGreeneryPolicy) {
+            BuildingGreeneryPolicy buildingGreeneryPolicy,
+            List<WeightedPool> fillPools) {
+        public Group(String groupId,
+                     GroupKind groupKind,
+                     List<String> preferredPatchRefs,
+                     PreferredPatchZone preferredPatchZone,
+                     PlacementRelation placementRelation,
+                     String role,
+                     GroupPriority priority,
+                     ExtentClass extentClass,
+                     DensityClass densityClass,
+                     String algorithmProfileRef,
+                     TerrainPolicy terrainPolicy,
+                     List<String> requiredStructureRefs,
+                     String fillPoolRef,
+                     ConnectionPlan connectionPlan,
+                     String compositionProfileRef,
+                     List<String> attachedFeatures,
+                     double targetAreaShare,
+                     SpaceComposition spaceComposition,
+                     ExpansionPolicy expansionPolicy, BuildingGreeneryPolicy buildingGreeneryPolicy) {
+            this(groupId, groupKind, preferredPatchRefs, preferredPatchZone, placementRelation, role,
+                    priority, extentClass, densityClass, algorithmProfileRef, terrainPolicy,
+                    requiredStructureRefs, fillPoolRef, connectionPlan, compositionProfileRef,
+                    attachedFeatures, targetAreaShare, spaceComposition, expansionPolicy,
+                    buildingGreeneryPolicy, List.of());
+        }
+
         public Group(String groupId,
                      GroupKind groupKind,
                      List<String> preferredPatchRefs,
@@ -109,6 +136,9 @@ public record CityBlueprint(
         }
 
         public Group {
+            fillPools = fillPools == null ? List.of() : List.copyOf(fillPools);
+            if ((fillPoolRef == null || fillPoolRef.isBlank()) && !fillPools.isEmpty())
+                fillPoolRef = fillPools.get(0).poolRef();
             preferredPatchRefs = List.copyOf(preferredPatchRefs);
             requiredStructureRefs = List.copyOf(requiredStructureRefs);
             attachedFeatures = List.copyOf(attachedFeatures);
@@ -175,13 +205,22 @@ public record CityBlueprint(
         }
     }
 
+    public record WeightedPool(String poolRef, double weight) { }
+
     /** Optional connection-only overrides. Null fields inherit the owning Group setting. */
     public record ConnectionPlan(
             String structurePoolRef,
             String algorithmProfileRef,
             DensityClass densityClass,
-            ConnectionParameters parameters) {
+            ConnectionParameters parameters,
+            List<WeightedPool> structurePools) {
+        public ConnectionPlan(String structurePoolRef, String algorithmProfileRef,
+                              DensityClass densityClass, ConnectionParameters parameters) {
+            this(structurePoolRef, algorithmProfileRef, densityClass, parameters, List.of());
+        }
         public ConnectionPlan {
+            structurePools = structurePools == null ? List.of() : List.copyOf(structurePools);
+            if (structurePoolRef == null && !structurePools.isEmpty()) structurePoolRef = structurePools.get(0).poolRef();
             parameters = parameters == null ? ConnectionParameters.empty() : parameters;
         }
     }

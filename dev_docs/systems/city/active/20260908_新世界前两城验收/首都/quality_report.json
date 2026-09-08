@@ -1,0 +1,74 @@
+{
+  "passed": true,
+  "score": 100,
+  "hardBlocks": [],
+  "warnings": [
+    "arrayVisualGeometry: residential_quarter: COMPACT_ALLEY_MISSING",
+    "arrayVisualGeometry: residential_quarter: COMPACT_ALLEY_DISCONNECTED",
+    "compilationAcceptance: residential_quarter: COMPACT_ALLEY_MISSING",
+    "compilationAcceptance: residential_quarter: COMPACT_ALLEY_DISCONNECTED"
+  ],
+  "needsReview": [],
+  "metrics": {
+    "acceptedAnchorCount": 91,
+    "arrayVisualGeometry": {
+      "schema": "city_array_visual_quality",
+      "passed": false,
+      "safeToMaterialize": true,
+      "roadStructureOverlapCount": 0,
+      "hardBlocks": [],
+      "warnings": [
+        "residential_quarter: COMPACT_ALLEY_MISSING",
+        "residential_quarter: COMPACT_ALLEY_DISCONNECTED"
+      ],
+      "groups": [
+        {
+          "alleySegmentCount": 8,
+          "alleyConnected": true,
+          "frontagePassed": true,
+          "groupId": "civic_admin_core",
+          "algorithm": "COMPACT"
+        },
+        {
+          "alleySegmentCount": 7,
+          "alleyConnected": true,
+          "frontagePassed": true,
+          "groupId": "market_quarter",
+          "algorithm": "COMPACT"
+        },
+        {
+          "alleySegmentCount": 0,
+          "alleyConnected": false,
+          "frontagePassed": true,
+          "groupId": "residential_quarter",
+          "algorithm": "COMPACT"
+        }
+      ]
+    },
+    "compilationAcceptance": {
+      "passed": true,
+      "acceptancePolicy": "SAFETY_AND_REQUIRED_CONTENT_V1",
+      "qualityFullySatisfied": false,
+      "previewCompiled": true,
+      "trafficGroupCount": 3,
+      "trafficConnectionCount": 3,
+      "requiredRelationCount": 3,
+      "requiredRelationsSatisfied": true,
+      "structureGraphConnected": true,
+      "allFunctionAreasFormed": true,
+      "allRequiredStructuresCommitted": true,
+      "allRequiredContentPresent": true,
+      "arrayVisualGeometryPassed": false,
+      "allStreetEntrancesConnected": true,
+      "hardBlocks": [],
+      "warnings": [
+        "residential_quarter: COMPACT_ALLEY_MISSING",
+        "residential_quarter: COMPACT_ALLEY_DISCONNECTED"
+      ]
+    }
+  },
+  "qualityFullySatisfied": false,
+  "scoreMeaning": "SAFETY_ADMISSION_ONLY_NOT_APPEARANCE",
+  "visualAcceptance": "REQUIRES_PREVIEW_AND_WORLD_REVIEW",
+  "sourceAnchorMapHash": "sha256:61b2b1d33f75ed13be54da77f3b24c55c77c700e390b7c43792d82a3ac952ff6"
+}

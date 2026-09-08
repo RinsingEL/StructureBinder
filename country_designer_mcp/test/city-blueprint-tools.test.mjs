@@ -58,6 +58,9 @@ test("publishes the program-only context tool and retryable structure plus outdo
   assert.deepEqual(groupProperties.densityClass.enum, ["SPARSE", "BALANCED", "DENSE"]);
   assert.deepEqual(submit.inputSchema.properties.cityBlueprint.properties.schema.enum,
     ["city_blueprint"]);
+  assert.equal(groupProperties.fillPools.minItems, 1);
+  assert.equal(groupProperties.fillPools.items.properties.weight.exclusiveMinimum, 0);
+  assert.equal(groupProperties.connectionPlan.properties.structurePools.items.properties.weight.exclusiveMinimum, 0);
   assert.equal(groupProperties.connectionPlan.additionalProperties, false);
   const connectionParameters = groupProperties.connectionPlan.properties.parameters;
   assert.match(connectionParameters.description, /严禁混填/);

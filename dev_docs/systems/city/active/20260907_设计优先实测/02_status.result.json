@@ -1,0 +1,23 @@
+{
+  "request": {
+    "recordName": "02_status",
+    "method": "tools/call",
+    "params": {
+      "name": "gis_status",
+      "arguments": {}
+    }
+  },
+  "response": {
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"ok\": true,\n  \"modId\": \"geomantia\",\n  \"api\": \"geomantia-gis-debug\",\n  \"serverDirectory\": \"E:\\\\Mod_Dev\\\\StructureBinder\\\\run\\\\.\",\n  \"debugRoot\": \"E:\\\\Mod_Dev\\\\StructureBinder\\\\run\\\\.\\\\gis_debug\",\n  \"players\": [\n    {\n      \"name\": \"Dev\",\n      \"dimensionId\": \"minecraft:overworld\",\n      \"blockX\": -160,\n      \"blockY\": 65,\n      \"blockZ\": -50\n    }\n  ]\n}"
+        }
+      ]
+    },
+    "jsonrpc": "2.0",
+    "id": 2
+  },
+  "stderr": ""
+}

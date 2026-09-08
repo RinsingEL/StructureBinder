@@ -1,0 +1,13 @@
+import {readFileSync,writeFileSync} from 'node:fs';
+import {dirname,join} from 'node:path';
+import {fileURLToPath} from 'node:url';
+const dir=dirname(fileURLToPath(import.meta.url));
+const read=p=>JSON.parse(readFileSync(join(dir,p),'utf8'));
+const request=read('09_submit_capital.json');
+const context=JSON.parse(read('08_prepare_capital.result.json').response.result.content[0].text);
+const profile=context.cityBlueprintContext.catalogSnapshot.referenceCatalog.landscapeFillProfiles.find(p=>p.fillProfileRef==='fill:relay_irrigated_farmland');
+const variant=request.params.arguments.cityBlueprint.outdoorPlan.landscapes[0].fillSelection.variants[0];
+variant.fillProfileRef=profile.fillProfileRef;
+variant.roleShares=profile.examples[0].roleShares;
+request.recordName='10_submit_capital_irrigated';
+writeFileSync(join(dir,request.recordName+'.json'),JSON.stringify(request,null,2));
