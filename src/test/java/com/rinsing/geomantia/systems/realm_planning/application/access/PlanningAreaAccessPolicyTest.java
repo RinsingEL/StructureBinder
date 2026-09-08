@@ -1,265 +1,75 @@
 package com.rinsing.geomantia.systems.realm_planning.application.access;
-
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.FileTime;
-import java.util.List;
-import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.nio.file.*;
+import java.util.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 class PlanningAreaAccessPolicyTest {
-    @TempDir
-    Path temporaryDirectory;
-
-    @Test
-    void allowsInitialAreaAndRejectsUnplannedOuterArea() {
-        PlanningAreaAccessPolicy policy = policy();
-
-        assertEquals("INITIAL_ACTIVITY_AREA",
-                policy.evaluate("minecraft:overworld", 2048, 0).reasonCode());
-        assertFalse(policy.evaluate("minecraft:overworld", 2049, 0).allowed());
-        assertTrue(policy.evaluate("minecraft:the_nether", 50000, 50000).allowed());
-    }
-
-    @Test
-    void opensTravelCorridorInsteadOfIsolatedCityCircle() throws Exception {
-        writeRun("run_connected", 2_000L, -8192, 8192, -8192, 8192,
-                List.of(new Seed("city_far", 4096, 0, 4, "waiting_for_generation")));
-
-        PlanningAreaAccessPolicy policy = policy();
-        assertEquals(Set.of("city_far"), policy.connectedCityIds());
-        assertEquals("RELEASED_TRAVEL_CORRIDOR",
-                policy.evaluate("minecraft:overworld", 3000, 0).reasonCode());
-        assertEquals("RELEASED_CITY_AREA",
-                policy.evaluate("minecraft:overworld", 4096, 0).reasonCode());
-        assertFalse(policy.evaluate("minecraft:overworld", 3000, 900).allowed());
-    }
-
-    @Test
-    void detoursAroundUnreleasedCityReservation() throws Exception {
-        writeRun("run_detour", 3_000L, -8192, 8192, -4096, 4096, List.of(
-                new Seed("city_near_unreleased", 3584, 0, 2, "pending"),
-                new Seed("city_far_ready", 7168, 0, 4, "waiting_for_generation")));
-
-        PlanningAreaAccessPolicy policy = policy();
-        assertEquals(Set.of("city_far_ready"), policy.connectedCityIds());
-        assertEquals("UNRELEASED_CITY_RESERVED",
-                policy.evaluate("minecraft:overworld", 3584, 0).reasonCode());
-        assertEquals("RELEASED_CITY_AREA",
-                policy.evaluate("minecraft:overworld", 7168, 0).reasonCode());
-    }
-
-    @Test
-    void keepsReadyFarCityLockedWhenReservationWallCannotBeBypassed() throws Exception {
-        writeRun("run_blocked", 4_000L, -1024, 8192, -2048, 2048, List.of(
-                new Seed("wall_a", 3584, -2048, 2, "pending"),
-                new Seed("wall_b", 3584, -1024, 2, "pending"),
-                new Seed("wall_c", 3584, 0, 2, "pending"),
-                new Seed("wall_d", 3584, 1024, 2, "pending"),
-                new Seed("wall_e", 3584, 2048, 2, "pending"),
-                new Seed("city_far_ready", 7168, 0, 4, "waiting_for_generation")));
-
-        PlanningAreaAccessPolicy policy = policy();
-        assertEquals(Set.of("city_far_ready"), policy.disconnectedCityIds());
-        PlanningAreaAccessPolicy.Decision decision = policy.evaluate("minecraft:overworld", 7168, 0);
-        assertFalse(decision.allowed());
-        assertEquals("RELEASED_CITY_NOT_CONNECTED", decision.reasonCode());
-    }
-
-    @Test
-    void readsOnlyMostRecentlyActiveQueuedRun() throws Exception {
-        writeRun("old_run", 1_000L, -8192, 8192, -8192, 8192,
-                List.of(new Seed("old_city", 4096, 0, 4, "waiting_for_generation")));
-        writeRun("current_run", 5_000L, -8192, 8192, -8192, 8192,
-                List.of(new Seed("current_city", -4096, 0, 4, "waiting_for_generation")));
-
-        PlanningAreaAccessPolicy policy = policy();
-        assertEquals("current_run", policy.activeRunId());
-        assertTrue(policy.evaluate("minecraft:overworld", -4096, 0).allowed());
-        assertFalse(policy.evaluate("minecraft:overworld", 4096, 0).allowed());
-    }
-
-    @Test
-    void installsConfigWithConfirmedDefaults() throws Exception {
-        Path path = temporaryDirectory.resolve("config/geomantia/planning_area_access.json");
-        PlanningAreaAccessConfig config = PlanningAreaAccessConfig.loadOrCreate(path);
-
-        assertTrue(Files.isRegularFile(path));
-        assertEquals(2048, config.initialActivityRadiusBlocks());
-        assertEquals(3072, config.firstCityMinimumDistanceBlocks());
-        assertEquals(256, PlanningAreaAccessConfig.DEFAULT_TRAVEL_CORRIDOR_RADIUS_BLOCKS);
-        assertEquals(96, PlanningAreaAccessConfig.DEFAULT_BOUNDARY_WARNING_DISTANCE_BLOCKS);
-    }
-
-    private PlanningAreaAccessPolicy policy() {
-        return new PlanningAreaAccessPolicy(temporaryDirectory.resolve("realm_debug"),
-                new PlanningAreaAccessConfig(true, 2048, 3072, Set.of("minecraft:overworld")), 160);
-    }
-
-    @Test
-    void completedNeighborCanBeReachedInsideRoutingMarginButNotProtectedReservation() throws Exception {
-        writeRun("run_live_pinewood", 9_000L, -8192, 8192, -8192, 8192, List.of(
-                new Seed("capital_pending", -6864, 3568, 3, "pending"),
-                new Seed("pinewood", -6288, 3600, 1, "waiting_for_generation")));
-        var policy = policy();
-        assertTrue(policy.connectedCityIds().contains("pinewood"));
-        assertTrue(policy.evaluate("minecraft:overworld", -6288, 3600).allowed());
-        assertFalse(policy.evaluate("minecraft:overworld", -6864, 3568).allowed());
-        assertFalse(policy.evaluate("minecraft:overworld", -6400, 3568).allowed(),
-                "The narrowing arrival corridor must not open the pending city's safety buffer");
-        var wideView = new PlanningAreaAccessPolicy(temporaryDirectory.resolve("realm_debug"),
-                PlanningAreaAccessConfig.defaults(), 224);
-        assertTrue(wideView.connectedCityIds().contains("pinewood"));
-        assertTrue(wideView.evaluate("minecraft:overworld", -6192, 3600).allowed());
-        assertFalse(wideView.evaluate("minecraft:overworld", -6288, 3600).allowed(),
-                "Use a safe city arrival point, not a bypass of the view-distance protection");
-    }
-
-    @Test
-    void realQadirActivatedStructuresAreAllExplorable() throws Exception {
-        String configured = System.getenv("GEOMANTIA_QADIR_RUN");
-        org.junit.jupiter.api.Assumptions.assumeTrue(configured != null && !configured.isBlank());
-        Path run = Path.of(configured);
-        PlanningAreaAccessPolicy actual = new PlanningAreaAccessPolicy(run.getParent(),
-                new PlanningAreaAccessConfig(true, 2048, 3072, Set.of("minecraft:overworld")), 288);
-        JsonObject active = com.google.gson.JsonParser.parseString(Files.readString(run.getParent().getParent()
-                .resolve("geomantia_city_masks/active_planned_structure_registry.json"))).getAsJsonObject();
-        int checked = 0;
-        for (var registry : active.getAsJsonArray("registries")) {
-            if (!run.getFileName().toString().equals(registry.getAsJsonObject().get("runId").getAsString())) continue;
-            for (var structure : registry.getAsJsonObject().getAsJsonArray("plannedStructures")) {
-                JsonObject anchor = structure.getAsJsonObject().getAsJsonObject("anchorBlock");
-                assertTrue(actual.evaluate("minecraft:overworld", anchor.get("x").getAsDouble(),
-                        anchor.get("z").getAsDouble()).allowed(), structure.getAsJsonObject().get("anchorId").toString());
-                checked++;
-            }
+    @TempDir Path temp;
+    Path root() { return temp.resolve("realm_debug"); }
+    Path run() { return root().resolve("run"); }
+    PlanningAreaAccessPolicy policy() { return new PlanningAreaAccessPolicy(root(),new PlanningAreaAccessConfig(true,256,512,Set.of("minecraft:overworld"),256,1024),192); }
+    void write(Path path,JsonObject json) throws Exception { Files.createDirectories(path.getParent()); Files.writeString(path,json.toString()); }
+    JsonObject read(Path path) throws Exception { return JsonParser.parseString(Files.readString(path)).getAsJsonObject(); }
+    static JsonArray strings(String...v) { JsonArray a=new JsonArray(); for(String s:v)a.add(s); return a; }
+    void fixture(boolean secondReady,boolean closed) throws Exception {
+        write(run().resolve("world_feature_grid.json"),GeographicRegionsTest.grid(24,95,-16,16,(x,z)->x<52||x>68));
+        JsonObject manifest=JsonParser.parseString("{'config':{'dimensionId':'minecraft:overworld'}}").getAsJsonObject(); manifest.addProperty("status","sealed");write(run().resolve("world_survey_manifest.json"),manifest);
+        JsonObject territory=new JsonObject(); territory.addProperty("territoryMapId","t"); JsonArray cells=new JsonArray();
+        for(int x=24;x<=95;x++) { JsonObject c=new JsonObject(); c.addProperty("gridX",x); c.addProperty("gridZ",0); c.addProperty("realmId",x<60?"a":"b"); c.addProperty("status","owned"); cells.add(c); }
+        territory.add("territoryCells",cells); write(run().resolve("realm_territory_map.json"),territory);
+        JsonObject registry=new JsonObject(); registry.addProperty("territoryMapId","t");registry.addProperty("finalizedTerritoryIdentity",GeographicAreaAccess.identity(run().resolve("realm_territory_map.json"))); registry.add("finalizedRealmIds",closed?strings("a","b"):strings("b"));
+        JsonArray seeds=new JsonArray(),items=new JsonArray(),active=new JsonArray(),land=new JsonArray();
+        for(int i=0;i<3;i++) { String id="city_"+i; int x=new int[]{4096,5632,10240}[i];
+            JsonObject s=new JsonObject(); s.addProperty("citySeedId",id);s.addProperty("realmId",i==2?"b":"a");s.addProperty("theoreticalScale","outpost");s.addProperty("planningRadiusCells",1);
+            JsonObject pos=new JsonObject();pos.addProperty("x",x);pos.addProperty("z",0);s.add("anchorBlock",pos);seeds.add(s);
+            JsonObject q=new JsonObject();q.addProperty("citySeedId",id);q.addProperty("status",i==1&&!secondReady?"pending":"waiting_for_generation");items.add(q);
+            JsonObject r=new JsonObject();r.addProperty("runId","run");r.addProperty("cityId",id);JsonArray structures=new JsonArray();JsonObject b=new JsonObject();b.add("plannedFootprint",CityPlanningReservation.centered(id,x,0,8).design().asJson());structures.add(b);r.add("plannedStructures",structures);active.add(r);
+            JsonObject l=new JsonObject();l.addProperty("cityId",id);l.addProperty("dimensionId","minecraft:overworld");JsonObject area=new JsonObject();JsonArray areas=new JsonArray();areas.add(new JsonObject());area.add("areas",areas);l.add("areaPlan",area);land.add(l);
         }
-        assertEquals(83, checked);
-        assertTrue(actual.evaluate("minecraft:overworld", -2980, 5430).allowed());
-        assertFalse(actual.evaluate("minecraft:overworld", -7000, 7000).allowed());
+        registry.add("citySeeds",seeds);write(run().resolve("city_seed_registry.json"),registry);
+        JsonObject queue=new JsonObject();queue.add("items",items);write(run().resolve("automation/city_design_queue.json"),queue);
+        JsonObject masks=new JsonObject();masks.add("registries",active);write(temp.resolve("geomantia_city_masks/active_planned_structure_registry.json"),masks);
+        JsonObject terrain=new JsonObject();terrain.add("plans",land);write(temp.resolve("geomantia_city_masks/active_city_land_use_area_plans.json"),terrain);
     }
-
-    @Test
-    void releasedCityIncludesActivatedFootprintButNotOtherRunsOrUnreleasedCities() throws Exception {
-        writeRun("current", 5000, -8192, 8192, -8192, 8192, List.of(
-                new Seed("ready", 4096, 0, 1, "waiting_for_generation"),
-                new Seed("pending", 6000, 0, 1, "pending")));
-        write(temporaryDirectory.resolve("geomantia_city_masks/active_planned_structure_registry.json"),
-                com.google.gson.JsonParser.parseString("""
-                {"registries":[
-                  {"runId":"current","cityId":"ready","plannedStructures":[
-                    {"maskEnvelope":{"minX":4300,"maxX":6500,"minZ":-20,"maxZ":20}}]},
-                  {"runId":"other","cityId":"ready","plannedStructures":[
-                    {"maskEnvelope":{"minX":-7000,"maxX":-6000,"minZ":-20,"maxZ":20}}]}
-                ]}
-                """).getAsJsonObject());
-        assertTrue(policy().evaluate("minecraft:overworld", 4600, 0).allowed());
-        assertEquals("UNRELEASED_CITY_RESERVED", policy().evaluate("minecraft:overworld", 6000, 0).reasonCode());
-        assertFalse(policy().evaluate("minecraft:overworld", -6500, 0).allowed());
-        assertFalse(policy().evaluate("minecraft:overworld", 4700, 500).allowed());
+    @Test void initialAndUnmanagedAreasRemainAvailableButUnknownTerrainDoesNotGenerate() {
+        assertTrue(policy().evaluate("minecraft:overworld",256,0).allowed()); assertFalse(policy().evaluate("minecraft:overworld",257,0).allowed());
+        assertTrue(policy().permitsChunk("minecraft:overworld",0,0)); assertFalse(policy().permitsChunk("minecraft:overworld",500,0));
+        assertTrue(policy().permitsChunk("minecraft:the_nether",500,0));
     }
-
-    @Test
-    void activatedOutdoorSpansAndFeatureCellsExtendCityAndRefreshSourceStamp() throws Exception {
-        writeRun("outdoor", 5000, -8192, 8192, -8192, 8192,
-                List.of(new Seed("ready", 4096, 0, 1, "waiting_for_generation")));
-        write(temporaryDirectory.resolve("geomantia_city_masks/active_planned_structure_registry.json"),
-                com.google.gson.JsonParser.parseString("""
-                {"registries":[{"runId":"outdoor","cityId":"ready","plannedStructures":[]}]}
-                """).getAsJsonObject());
-        long before = PlanningAreaAccessPolicy.sourceStamp(temporaryDirectory.resolve("realm_debug"));
-        Path active = temporaryDirectory.resolve("geomantia_city_masks/active_city_land_use_area_plans.json");
-        write(active, com.google.gson.JsonParser.parseString("""
-                {"plans":[{"cityId":"ready","dimensionId":"minecraft:overworld",
-                  "areaPlan":{"areas":[{"memberSpans":[{"minX":4600,"maxX":4800,"z":600}]}]},
-                  "surfacePrintPlan":{"featureCells":[{"x":4900,"z":700}]}}]}
-                """).getAsJsonObject());
-        Files.setLastModifiedTime(active, FileTime.fromMillis(before + 10000));
-        assertTrue(PlanningAreaAccessPolicy.sourceStamp(temporaryDirectory.resolve("realm_debug")) > before);
-        assertTrue(policy().evaluate("minecraft:overworld", 4800, 600).allowed());
-        assertTrue(policy().evaluate("minecraft:overworld", 4900, 700).allowed());
-        assertFalse(policy().evaluate("minecraft:overworld", 5500, 700).allowed());
+    @Test void aSinglePendingCityLocksItsWholeContinentButNotAnotherContinent() throws Exception {
+        fixture(false,true);var policy=policy();
+        assertFalse(policy.revealed("minecraft:overworld",4096,0)); assertFalse(policy.evaluate("minecraft:overworld",4096,0).allowed());
+        assertTrue(policy.revealed("minecraft:overworld",10240,0)); assertTrue(policy.evaluate("minecraft:overworld",10240,0).allowed());
+        assertFalse(policy.permitsChunk("minecraft:overworld",5632/16,0)); assertTrue(policy.permitsChunk("minecraft:overworld",10240/16,0));
     }
-
-    @Test
-    void livePinewoodRoadRemainsOpenAcrossNeighborViewBuffer() throws Exception {
-        writeRun("pinewood_walk", 9000, -8192, 8192, -8192, 8192, List.of(
-                new Seed("capital", -6864, 3568, 3, "pending"),
-                new Seed("pinewood", -6288, 3600, 1, "waiting_for_generation")));
-        write(temporaryDirectory.resolve("geomantia_city_masks/active_planned_structure_registry.json"),
-                com.google.gson.JsonParser.parseString("""
-                {"registries":[{"runId":"pinewood_walk","cityId":"pinewood","plannedStructures":[
-                  {"maskEnvelope":{"minX":-6500,"maxX":-6100,"minZ":3400,"maxZ":3800}}]}]}
-                """).getAsJsonObject());
-        var policy = new PlanningAreaAccessPolicy(temporaryDirectory.resolve("realm_debug"),
-                PlanningAreaAccessConfig.defaults(), 224);
-        for (int x = -6192; x >= -6440; x--)
-            assertTrue(policy.evaluate("minecraft:overworld", x, 3649).allowed(), "Road x=" + x);
-        assertFalse(policy.evaluate("minecraft:overworld", -6500, 3568).allowed(),
-                "An overlapping activated envelope cannot release actual pending construction");
-        assertFalse(policy.evaluate("minecraft:overworld", -6340, 3900).allowed(),
-                "The buffer exemption is limited to the activated city footprint");
+    @Test void allCitiesReadyOpensFullContinentAndAttachedSeaWithoutCorridors() throws Exception {
+        fixture(true,true);var policy=policy();
+        assertTrue(policy.evaluate("minecraft:overworld",4096,1024).allowed());
+        assertTrue(policy.revealed("minecraft:overworld",52*128,0));
+        assertTrue(policy.permitsChunk("minecraft:overworld",5632/16,0));
+        // Complete fog boundary is visible, but movement stops before view/dependency loads cross it.
+        assertTrue(policy.revealed("minecraft:overworld",24*128,0)); assertFalse(policy.evaluate("minecraft:overworld",24*128,0).allowed());
     }
-
-    private void writeRun(String runId, long queueTimestamp, int minX, int maxX, int minZ, int maxZ,
-                          List<Seed> values) throws Exception {
-        Path run = temporaryDirectory.resolve("realm_debug").resolve(runId);
-        Files.createDirectories(run);
-
-        JsonObject manifest = new JsonObject();
-        JsonObject config = new JsonObject();
-        config.addProperty("dimensionId", "minecraft:overworld");
-        config.addProperty("cellStepBlocks", 128);
-        manifest.add("config", config);
-        JsonObject scanBounds = new JsonObject();
-        scanBounds.addProperty("minBlockX", minX);
-        scanBounds.addProperty("maxBlockX", maxX);
-        scanBounds.addProperty("minBlockZ", minZ);
-        scanBounds.addProperty("maxBlockZ", maxZ);
-        manifest.add("scanBounds", scanBounds);
-        write(run.resolve("world_survey_manifest.json"), manifest);
-
-        JsonArray seeds = new JsonArray();
-        JsonArray items = new JsonArray();
-        for (Seed value : values) {
-            JsonObject seed = new JsonObject();
-            seed.addProperty("citySeedId", value.citySeedId());
-            JsonObject anchor = new JsonObject();
-            anchor.addProperty("x", value.x());
-            anchor.addProperty("z", value.z());
-            seed.add("anchorBlock", anchor);
-            seed.addProperty("planningRadiusCells", value.planningRadiusCells());
-            seeds.add(seed);
-
-            JsonObject item = new JsonObject();
-            item.addProperty("citySeedId", value.citySeedId());
-            item.addProperty("status", value.status());
-            items.add(item);
-        }
-        JsonObject registry = new JsonObject();
-        registry.add("citySeeds", seeds);
-        write(run.resolve("city_seed_registry.json"), registry);
-        JsonObject queue = new JsonObject();
-        queue.add("items", items);
-        Path queuePath = run.resolve("automation/city_design_queue.json");
-        write(queuePath, queue);
-        Files.setLastModifiedTime(queuePath, FileTime.fromMillis(queueTimestamp));
+    @Test void queueSuccessWithoutClosedRosterOrActivatedStructuresCannotRelease() throws Exception {
+        fixture(true,false); assertFalse(policy().revealed("minecraft:overworld",4096,0));
+        fixture(true,true); Files.delete(temp.resolve("geomantia_city_masks/active_planned_structure_registry.json"));
+        assertFalse(policy().revealed("minecraft:overworld",4096,0));
     }
-
-    private static void write(Path path, JsonObject value) throws Exception {
-        Files.createDirectories(path.getParent());
-        Files.writeString(path, new GsonBuilder().setPrettyPrinting().create().toJson(value));
+    @Test void reopeningAPlanningSessionRevokesItsRegionAndDeletingItChangesCacheStamp() throws Exception {
+        fixture(true,true);long before=PlanningAreaAccessPolicy.sourceStamp(root());
+        JsonObject session=JsonParser.parseString("{'status':'open','realmId':'a','territoryMapId':'t'}").getAsJsonObject();
+        session.addProperty("territoryIdentity",GeographicAreaAccess.identity(run().resolve("realm_territory_map.json")));
+        Path path=run().resolve("realm_t4_patch_planning_new/planning_session.json");write(path,session);
+        assertNotEquals(before,PlanningAreaAccessPolicy.sourceStamp(root()));assertFalse(policy().revealed("minecraft:overworld",4096,0));
+        long opened=PlanningAreaAccessPolicy.sourceStamp(root());Files.delete(path);assertNotEquals(opened,PlanningAreaAccessPolicy.sourceStamp(root()));
+        assertTrue(policy().revealed("minecraft:overworld",4096,0));
     }
-
-    private record Seed(String citySeedId, int x, int z, int planningRadiusCells, String status) {
+    @Test void corruptGridFailsClosedAndOldConfigReceivesGeographicDefaults() throws Exception {
+        fixture(true,true);Files.writeString(run().resolve("world_feature_grid.json"),"broken");assertFalse(policy().revealed("minecraft:overworld",4096,0));
+        Path path=temp.resolve("config.json");Files.writeString(path,"{'schema':'geomantia_planning_area_access.v0.1','enabled':true}");
+        var c=PlanningAreaAccessConfig.loadOrCreate(path);assertEquals(1024,c.nearSeaDistanceBlocks());assertEquals(4096,c.oceanRegionSpanBlocks());
     }
 }

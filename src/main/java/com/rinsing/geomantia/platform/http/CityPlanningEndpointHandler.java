@@ -3587,7 +3587,7 @@ final class CityPlanningEndpointHandler {
         if (candidateId.isBlank()) {
             candidateId = cityId;
         }
-        return builder.buildWithFixedGridStep(
+        CitySiteContext context = builder.buildWithFixedGridStep(
                 cityId, stringValue(seed, "realmId"), metadata.dimensionId(),
                 cityId, candidateId,
                 blockCoord(seed, "x", metadata.cellStepBlocks()),
@@ -3595,6 +3595,14 @@ final class CityPlanningEndpointHandler {
                 stringValue(seed, "role"), stringValue(seed, "theoreticalScale"),
                 intValue(seed, "planningRadiusCells", 64), metadata.cellStepBlocks(),
                 D3_CELL_STEP_BLOCKS, territoryCells);
+        if (seed.has("designBounds")) {
+            JsonObject bounds = seed.getAsJsonObject("designBounds");
+            BlockBounds expected = new BlockBounds(bounds.get("minX").getAsInt(), bounds.get("minZ").getAsInt(),
+                    bounds.get("maxX").getAsInt(), bounds.get("maxZ").getAsInt());
+            if (!expected.equals(context.bounds())) throw new IllegalArgumentException(
+                    "CITY_D3_RESERVATION_BOUNDS_CHANGED: T4 预留范围=" + bounds + "；D3 必须沿用选址时的原预览范围，不能更改中心、规模或把保护圈当成设计用地。请恢复 T4 选址参数。");
+        }
+        return context;
     }
 
     private static void requireMatchingRunWorldIdentity(Path runDir, ServerLevel level) throws IOException {

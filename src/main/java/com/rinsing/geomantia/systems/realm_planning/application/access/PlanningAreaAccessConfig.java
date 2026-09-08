@@ -15,16 +15,21 @@ import java.util.Set;
 public record PlanningAreaAccessConfig(boolean enabled,
                                        int initialActivityRadiusBlocks,
                                        int firstCityMinimumDistanceBlocks,
-                                       Set<String> managedDimensions) {
+                                       Set<String> managedDimensions,
+                                       int nearSeaDistanceBlocks, int oceanRegionSpanBlocks) {
     public static final String SCHEMA = "geomantia_planning_area_access.v0.1";
     public static final int DEFAULT_INITIAL_RADIUS_BLOCKS = 2048;
     public static final int DEFAULT_FIRST_CITY_DISTANCE_BLOCKS = 3072;
-    public static final int DEFAULT_TRAVEL_CORRIDOR_RADIUS_BLOCKS = 256;
     public static final int DEFAULT_BOUNDARY_WARNING_DISTANCE_BLOCKS = 96;
-    public static final double DEFAULT_MAX_ROUTE_DETOUR_RATIO = 2.0D;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
+    public PlanningAreaAccessConfig(boolean enabled, int initialActivityRadiusBlocks,
+                                    int firstCityMinimumDistanceBlocks, Set<String> managedDimensions) {
+        this(enabled, initialActivityRadiusBlocks, firstCityMinimumDistanceBlocks, managedDimensions, 1024, 4096);
+    }
+
     public PlanningAreaAccessConfig {
+        if (nearSeaDistanceBlocks < 0 || oceanRegionSpanBlocks < 128) throw new IllegalArgumentException("Invalid geographic region distances");
         if (initialActivityRadiusBlocks < 0) throw new IllegalArgumentException("initialActivityRadiusBlocks < 0");
         if (firstCityMinimumDistanceBlocks < initialActivityRadiusBlocks) {
             throw new IllegalArgumentException("firstCityMinimumDistanceBlocks must be >= initialActivityRadiusBlocks");
@@ -55,7 +60,8 @@ public record PlanningAreaAccessConfig(boolean enabled,
         }
         return new PlanningAreaAccessConfig(booleanValue(json, "enabled", true),
                 intValue(json, "initialActivityRadiusBlocks", DEFAULT_INITIAL_RADIUS_BLOCKS),
-                intValue(json, "firstCityMinimumDistanceBlocks", DEFAULT_FIRST_CITY_DISTANCE_BLOCKS), dimensions);
+                intValue(json, "firstCityMinimumDistanceBlocks", DEFAULT_FIRST_CITY_DISTANCE_BLOCKS), dimensions,
+                intValue(json, "nearSeaDistanceBlocks", 1024), intValue(json, "oceanRegionSpanBlocks", 4096));
     }
 
     public JsonObject asJson() {
@@ -64,6 +70,8 @@ public record PlanningAreaAccessConfig(boolean enabled,
         json.addProperty("enabled", enabled);
         json.addProperty("initialActivityRadiusBlocks", initialActivityRadiusBlocks);
         json.addProperty("firstCityMinimumDistanceBlocks", firstCityMinimumDistanceBlocks);
+        json.addProperty("nearSeaDistanceBlocks", nearSeaDistanceBlocks);
+        json.addProperty("oceanRegionSpanBlocks", oceanRegionSpanBlocks);
         JsonArray dimensions = new JsonArray();
         managedDimensions.stream().sorted().forEach(dimensions::add);
         json.add("managedDimensions", dimensions);

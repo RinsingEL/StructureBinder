@@ -832,7 +832,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "realm_t4_patch_planning_select_capital",
-    description: "消费 AI 已选的 realm_t4 patchSelectionRef，按 CapitalCityIntent 固定身份和规模建立该国唯一首都。服务端校验 owned territory、连续承载面积和重复选择。",
+    description: "消费 AI 已选的 realm_t4 patchSelectionRef，按 CapitalCityIntent 固定身份和规模建立该国唯一首都。服务端校验领土、连续承载面积、未加载地形及跨城保护范围。返回 designBounds 为原预览设计边界，protectionBounds 为宽高 1.5 倍的安全圈，不能用于建设。",
     inputSchema: {
       type: "object",
       additionalProperties: false,
@@ -852,7 +852,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "realm_t4_patch_planning_add_city",
-    description: "在首都已选定后，把 AI 已选的 realm_t4 patchSelectionRef 转为非首都城市种子。role=capital 必须使用专用 select_capital 工具。",
+    description: "在首都已选定后，把 AI 已选的 realm_t4 patchSelectionRef 转为非首都城市种子。role=capital 必须使用专用 select_capital 工具。服务端按实际预览尺寸预留 1.5 倍保护范围，跨国度及卫星城也不得重叠；冲突或地形已加载时请改选更远的未加载地块。",
     inputSchema: {
       type: "object",
       additionalProperties: false,
@@ -877,7 +877,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "realm_t4_patch_planning_finalize",
-    description: "完成单国 T4 patch 规划，并按 realm 合并写回全局 CitySeedRegistry。",
+    description: "完成单国 T4 patch 规划，并按 realm 合并写回全局 CitySeedRegistry，封存该国城市名册。大陆及附属海洋仅在相关国度名册全部封存且所有城市准备好首次生成后整体开放。",
     inputSchema: {
       type: "object",
       additionalProperties: false,

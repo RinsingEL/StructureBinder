@@ -96,7 +96,7 @@ minecraft {
         }
 
         gameTestServer {
-            property 'forge.enabledGameTestNamespaces', mod_id
+            property 'forge.enabledGameTestNamespaces', providers.gradleProperty('geomantiaGameTestNamespaces').orElse(mod_id).get()
             workingDirectory project.file(providers.gradleProperty('geomantiaGameTestDir').orElse('run').get())
         }
 

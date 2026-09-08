@@ -176,25 +176,47 @@ final class RealmPlanningHttpController implements AutoCloseable {
     }
 
     void handleT4PatchPlanningCreate(HttpExchange exchange) {
-        handle(exchange, "POST", () -> realmT4PatchPlanningService()
-                .create(GisHttpUtil.readJsonObject(exchange)));
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return callOnServerThread(() -> {
+                JsonObject response = realmT4PatchPlanningService().create(request);
+                com.rinsing.geomantia.platform.PlanningAreaAccessRuntime.invalidate(server);
+                return response;
+            });
+        });
     }
 
     void handleT4PatchPlanningSelectCapital(HttpExchange exchange) {
-        handle(exchange, "POST", () -> realmT4PatchPlanningService()
-                .selectCapital(GisHttpUtil.readJsonObject(exchange)));
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return callOnServerThread(() -> {
+                JsonObject response = realmT4PatchPlanningService().selectCapital(request);
+                com.rinsing.geomantia.platform.PlanningAreaAccessRuntime.invalidate(server);
+                return response;
+            });
+        });
     }
 
     void handleT4PatchPlanningAddCity(HttpExchange exchange) {
-        handle(exchange, "POST", () -> realmT4PatchPlanningService()
-                .add(GisHttpUtil.readJsonObject(exchange)));
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return callOnServerThread(() -> {
+                JsonObject response = realmT4PatchPlanningService().add(request);
+                com.rinsing.geomantia.platform.PlanningAreaAccessRuntime.invalidate(server);
+                return response;
+            });
+        });
     }
 
     void handleT4PatchPlanningFinalize(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             String runId = requiredString(request, "runId");
-            JsonObject response = callOnServerThread(() -> realmT4PatchPlanningService().finalizePlanning(request));
+            JsonObject response = callOnServerThread(() -> {
+                JsonObject finalized = realmT4PatchPlanningService().finalizePlanning(request);
+                com.rinsing.geomantia.platform.PlanningAreaAccessRuntime.invalidate(server);
+                return finalized;
+            });
             response.add("cityDesignQueue", cityDesignQueue.refresh(runId, "realm_grouped"));
             return response;
         });
@@ -1506,7 +1528,23 @@ final class RealmPlanningHttpController implements AutoCloseable {
 
     private RealmT4PatchPlanningService realmT4PatchPlanningService() throws IOException {
         return new RealmT4PatchPlanningService(debugRoot(),
-                realmPlanningService::synchronizeT4RegistryArtifacts, planningAreaAccessConfig());
+                realmPlanningService::synchronizeT4RegistryArtifacts, planningAreaAccessConfig(), (dimension, reservation) -> {
+                    try { callOnServerThread(() -> {
+                        ServerLevel level = resolveLevel(dimension, null);
+                        var probe = new com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseChunkStatusPreflight.MinecraftChunkStatusProbe(level);
+                        var bounds = reservation.protection();
+                        for (int z = Math.floorDiv(bounds.minZ(),16); z <= Math.floorDiv(bounds.maxZ(),16); z++)
+                            for (int x = Math.floorDiv(bounds.minX(),16); x <= Math.floorDiv(bounds.maxX(),16); x++) {
+                                var evidence = probe.inspect(x,z);
+                                if (evidence.state() != com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseChunkStatusPreflight.EvidenceState.NOT_PRESENT)
+                                    throw new IllegalArgumentException("T4_CITY_PROTECTION_ALREADY_LOADED: chunk=(" + x + "," + z
+                                            + "), status=" + evidence.statusName()
+                                            + "；此处保护范围已有加载/生成记录，不能首次生成建城。请另选未加载过的地块，不要继续修改 D4 或在已生成地形上补建。");
+                            }
+                        return true;
+                    }); } catch (RuntimeException failure) { throw failure; }
+                    catch (Exception failure) { throw new IOException("T4_CITY_PROTECTION_PROBE_FAILED", failure); }
+                });
     }
 
     private PlanningAreaAccessConfig planningAreaAccessConfig() throws IOException {

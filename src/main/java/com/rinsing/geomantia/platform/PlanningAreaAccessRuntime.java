@@ -42,6 +42,12 @@ public final class PlanningAreaAccessRuntime {
         return state.evaluate(player, blockX, blockZ);
     }
 
+    public static boolean permitsChunk(ServerLevel level, int chunkX, int chunkZ) {
+        ServerState state = state(level.getServer());
+        state.refreshIfNeeded(level.getGameTime());
+        return state.policy.permitsChunk(dimensionId(level), chunkX, chunkZ);
+    }
+
     public static void handleMovement(ServerPlayer player) {
         ServerState state = state(player.getServer());
         state.handleMovement(player);
@@ -51,6 +57,13 @@ public final class PlanningAreaAccessRuntime {
         synchronized (STATES) {
             ServerState state = STATES.get(player.getServer());
             if (state != null) state.forget(player.getUUID());
+        }
+    }
+
+    public static void invalidate(MinecraftServer server) {
+        synchronized (STATES) {
+            ServerState state = STATES.get(server);
+            if (state != null) state.policy = null;
         }
     }
 
@@ -113,7 +126,8 @@ public final class PlanningAreaAccessRuntime {
             }
 
             SafePosition destination = safePositions.get(key);
-            if (destination == null) destination = fallback(player.serverLevel(), player);
+            if (destination == null || !policy.evaluate(destination.dimensionId(), destination.x(), destination.z()).allowed())
+                destination = fallback(player.serverLevel(), player);
             returnToSafety(player, destination);
             player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 80, 0, true, false, true));
             if (readyForMessage(player.getUUID(), gameTime)) {
@@ -128,7 +142,7 @@ public final class PlanningAreaAccessRuntime {
             lastPolicyCheckTick = gameTime;
             long configStamp = lastModified(configPath);
             long sourceStamp = PlanningAreaAccessPolicy.sourceStamp(debugRoot);
-            int viewSafetyBlocks = (Math.max(2, server.getPlayerList().getViewDistance()) + 2) * 16;
+            int viewSafetyBlocks = (Math.max(2, server.getPlayerList().getViewDistance()) + 12) * 16;
             if (policy != null && configStamp == loadedConfigStamp && sourceStamp == loadedSourceStamp
                     && viewSafetyBlocks == loadedViewSafetyBlocks) return;
             try {
