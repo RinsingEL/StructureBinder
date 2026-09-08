@@ -33,7 +33,7 @@ class CityLandUseMicroGraderTest {
                 cell.areaId(),cell.x(),cell.z(),true,68)).toList();
         var decisions = CityLandUseMicroGrader.planFoundation(fragment(mask),new FakeTerrain(44));
         assertEquals(List.of(new CityLandUseMicroGrader.FoundationDecision("area",8,8,44,68,
-                CityLandUseMicroGrader.FoundationMode.FILL)),decisions);
+                CityLandUseMicroGrader.FoundationMode.DECK)),decisions);
         var flat = CityLandUseMicroGrader.planFoundation(fragment(mask),new FakeTerrain(68));
         assertEquals(68,flat.get(0).targetY());
     }

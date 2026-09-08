@@ -136,6 +136,8 @@ public final class CityStructureAnchorPlanner {
         quality.addProperty("qualityFullySatisfied", quality.get("passed").getAsBoolean()
                 && quality.getAsJsonArray("warnings").isEmpty()
                 && quality.getAsJsonArray("needsReview").isEmpty());
+        quality.addProperty("scoreMeaning", "SAFETY_ADMISSION_ONLY_NOT_APPEARANCE");
+        quality.addProperty("visualAcceptance", "REQUIRES_PREVIEW_AND_WORLD_REVIEW");
         anchorMap.add("quality", quality);
         anchorMap.add("timingMs", timing(started));
         JsonObject normalizedPlan = structureAnchorPlan.deepCopy();

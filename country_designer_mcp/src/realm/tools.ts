@@ -1099,6 +1099,7 @@ export const realmTools: ToolDefinition[] = [
         contextId: nonEmptyString("prepare-context 返回的冻结 contextId。"),
         cityBlueprint: cityBlueprintSchema,
         proportionMode: { type: "string", enum: ["EXACT_SHARES", "RELATIVE_WEIGHTS"] },
+        submissionMode: { type: "string", enum: ["DRAFT", "FINAL"], description: "逐区设计使用 DRAFT 保留预览和可修订草稿；检查完整城市后才使用 FINAL，默认 FINAL 兼容已有调用。" },
         baseBlueprintHash: nonEmptyString("当前接受蓝图的 submissionTrace.cityBlueprintHash。"),
         baseDraftHash: nonEmptyString("最近拒绝草稿的 revisionEvidence.baseDraftHash；与 baseBlueprintHash 二选一，配合 blueprintPatch 局部修订。草稿不是已接受几何。程序故障不得盲重试。"),
         blueprintPatch: { type: "array", minItems: 1, maxItems: 128,

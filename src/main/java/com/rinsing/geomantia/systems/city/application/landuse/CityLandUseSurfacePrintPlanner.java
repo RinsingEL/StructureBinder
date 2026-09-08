@@ -74,7 +74,7 @@ public final class CityLandUseSurfacePrintPlanner {
                 case UNIFORM -> new CityLandUseSurfacePrintPlan.UniformRecipe(
                         settings.surfaceBlockId(), settings.boundaryBlockId(),
                         area.sourceGroupIds().stream().anyMatch(id -> id.endsWith("::foundation"))
-                                ? CityFoundationElevationPlanner.plan(area.memberSpans(), terrainField) : List.of());
+                                ? CityFoundationElevationPlanner.plan(area.memberSpans(), terrainField, area.structureFootprintExclusions()) : List.of());
                 case CONTOUR_BANDS -> contourBands(area, settings, exclusions,
                         Objects.requireNonNull(algorithmAnchor, "algorithmAnchor"), terrainField);
                 case RELAY_REGION_GROWTH -> relayRegionGrowth(area, settings, exclusions,
@@ -103,12 +103,12 @@ public final class CityLandUseSurfacePrintPlanner {
         CityLandUseSurfacePrintPlan raw = new CityLandUseSurfacePrintPlan(
                 CityLandUseSurfacePrintPlan.SCHEMA, landUsePlan.cityId(),
                 landUsePlan.planHash(), "", prints, shared,
-                gradeMainRoads(featureCells(roadBands, greenParcels, overflowZones),
+                gradeRoads(featureCells(roadBands, greenParcels, overflowZones),
                         roadBands, terrainField, landUsePlan, prints));
         return new CityLandUseSurfacePrintPlanCodec().withComputedHash(raw);
     }
 
-    private static List<CityLandUseSurfacePrintPlan.FeatureCell> gradeMainRoads(
+    private static List<CityLandUseSurfacePrintPlan.FeatureCell> gradeRoads(
             List<CityLandUseSurfacePrintPlan.FeatureCell> features,
             List<LandUseSourceResolver.RoadBand> bands, LandUseTerrainField terrain,
             LandUseAreaPlan areaPlan, List<CityLandUseSurfacePrintPlan.AreaPrint> prints) {
@@ -123,7 +123,7 @@ public final class CityLandUseSurfacePrintPlanner {
                 Math.floorDiv(cell.blockMinX(), terrain.cellStepBlocks()),
                 Math.floorDiv(cell.blockMinZ(), terrain.cellStepBlocks())), cell);
         for (var band : bands) {
-            if (!"CITY_MAIN_ROAD".equals(band.roadKind()) || band.bridge()) continue;
+            if (band.bridge()) continue;
             boolean horizontal = band.start().z() == band.end().z();
             int start = horizontal ? band.bounds().minX() : band.bounds().minZ();
             int end = horizontal ? band.bounds().maxX() : band.bounds().maxZ();
@@ -151,9 +151,11 @@ public final class CityLandUseSurfacePrintPlanner {
             if (!sampled) continue; // Bridge/unsampled segments retain their existing treatment.
             var grade = CityRoadGradeProfile.solve(heights, 12, 12, 3, pins);
             if (!grade.feasible()) grade = CityRoadGradeProfile.solve(heights, 12, 12, 2, pins);
+            if (!grade.feasible() && !"CITY_MAIN_ROAD".equals(band.roadKind()))
+                grade = CityRoadGradeProfile.solve(heights, 12, 12, 1, pins);
             if (!grade.feasible()) {
                 com.mojang.logging.LogUtils.getLogger().warn(
-                        "City main road grade requires stair or reroute: city={} road={} reason={}",
+                        "City road grade requires stair or reroute: city={} road={} reason={}",
                         areaPlan.cityId(), band.streetBandId(), grade.reason());
                 continue; // Do not move pinned entrances or silently exceed earthwork limits.
             }
@@ -241,6 +243,7 @@ public final class CityLandUseSurfacePrintPlanner {
             addBridgeRails(cells, band, horizontal, bounds);
             return;
         }
+        if ("SURFACE_ONLY".equals(band.crossSectionProfile())) return;
         if (horizontal) {
             for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
                 addRoadCurb(cells, band.streetBandId(), band.curbBlockId(), x, bounds.minZ() - 1,

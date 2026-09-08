@@ -13,7 +13,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-/** Builds one broad city execution domain from the frozen structure footprints. */
+/** Builds local paved surfaces from actual structures, closing only configured short gaps. */
 public final class CityFoundationPlanner {
     private static final int[][] DIRECTIONS = {{0, -1}, {-1, 0}, {1, 0}, {0, 1}};
     private static final Comparator<BlockPoint> POINT_ORDER = Comparator.comparingInt(BlockPoint::z)
@@ -44,7 +44,7 @@ public final class CityFoundationPlanner {
         int resolvedRadius = 0;
         for (List<BlockBounds> local : footprintGroups(footprints, settings.maxJoinDistanceBlocks())) {
             Set<BlockPoint> localMargin = dilate(rasterize(local), settings.structureMarginBlocks(), planningBounds);
-            claims.addAll(convexConstructionEnvelope(localMargin));
+            claims.addAll(closeLocalGaps(localMargin, settings.closeRadiusBlocks(), planningBounds));
             resolvedRadius = Math.max(resolvedRadius, settings.closeRadiusBlocks());
         }
         Set<BlockPoint> stableClaims = claims.stream().sorted(POINT_ORDER)
@@ -53,43 +53,27 @@ public final class CityFoundationPlanner {
                 resolvedRadius, components(stableClaims).size());
     }
 
-    /** Fill the near-connected construction group's envelope, not a set of per-building islands. */
-    private static Set<BlockPoint> convexConstructionEnvelope(Set<BlockPoint> source) {
-        List<BlockPoint> sorted = source.stream().sorted(Comparator.comparingInt(BlockPoint::x)
-                .thenComparingInt(BlockPoint::z)).toList();
-        if (sorted.size() < 3) return source;
-        List<BlockPoint> hull = new ArrayList<>();
-        for (BlockPoint point : sorted) {
-            while (hull.size() >= 2 && cross(hull.get(hull.size()-2), hull.get(hull.size()-1), point) <= 0)
-                hull.remove(hull.size()-1);
-            hull.add(point);
+    private static Set<BlockPoint> closeLocalGaps(Set<BlockPoint> source, int radius, BlockBounds bounds) {
+        if (radius <= 0) return source;
+        // Closing repairs narrow gaps without paving the entire convex hull of a winding district.
+        Set<BlockPoint> expanded = dilate(source, radius, bounds);
+        Set<BlockPoint> closed = new HashSet<>(expanded);
+        Set<BlockPoint> frontier = new HashSet<>();
+        for (BlockPoint point : expanded) for (int[] direction : DIRECTIONS) {
+            BlockPoint neighbor = new BlockPoint(point.x()+direction[0],point.z()+direction[1]);
+            if (bounds.contains(neighbor.x(),neighbor.z()) && !expanded.contains(neighbor)) { frontier.add(point); break; }
         }
-        int lowerSize = hull.size();
-        for (int i = sorted.size()-2; i >= 0; i--) {
-            BlockPoint point = sorted.get(i);
-            while (hull.size() > lowerSize && cross(hull.get(hull.size()-2), hull.get(hull.size()-1), point) <= 0)
-                hull.remove(hull.size()-1);
-            hull.add(point);
-        }
-        hull.remove(hull.size()-1);
-        Set<BlockPoint> result = new HashSet<>(source);
-        BlockBounds extent = bounds(source);
-        for (int z = extent.minZ(); z <= extent.maxZ(); z++) {
-            double min = Double.POSITIVE_INFINITY, max = Double.NEGATIVE_INFINITY;
-            for (int i = 0; i < hull.size(); i++) {
-                BlockPoint a = hull.get(i), b = hull.get((i+1)%hull.size());
-                if (z < Math.min(a.z(), b.z()) || z > Math.max(a.z(), b.z())) continue;
-                if (a.z() == b.z()) { min = Math.min(min, Math.min(a.x(), b.x())); max = Math.max(max, Math.max(a.x(), b.x())); }
-                else { double x = a.x() + (double)(z-a.z())*(b.x()-a.x())/(b.z()-a.z()); min = Math.min(min,x); max = Math.max(max,x); }
+        for (int step=0; step<radius && !frontier.isEmpty(); step++) {
+            closed.removeAll(frontier);
+            Set<BlockPoint> next = new HashSet<>();
+            for (BlockPoint point : frontier) for (int[] direction : DIRECTIONS) {
+                BlockPoint neighbor = new BlockPoint(point.x()+direction[0],point.z()+direction[1]);
+                if (closed.contains(neighbor)) next.add(neighbor);
             }
-            if (!Double.isFinite(min)) continue;
-            for (int x = (int)Math.floor(min); x <= (int)Math.ceil(max); x++) result.add(new BlockPoint(x,z));
+            frontier = next;
         }
-        return result;
-    }
-
-    private static long cross(BlockPoint a, BlockPoint b, BlockPoint c) {
-        return (long)(b.x()-a.x())*(c.z()-a.z()) - (long)(b.z()-a.z())*(c.x()-a.x());
+        closed.addAll(source);
+        return closed;
     }
 
     private static List<List<BlockBounds>> footprintGroups(List<BlockBounds> footprints,
@@ -131,15 +115,14 @@ public final class CityFoundationPlanner {
                                           int radius,
                                           BlockBounds planningBounds) {
         Set<BlockPoint> result = new HashSet<>(source);
-        for (int step = 0; step < radius; step++) {
-            Set<BlockPoint> next = new HashSet<>(result);
-            for (BlockPoint point : result) {
-                for (int[] direction : DIRECTIONS) {
-                    BlockPoint neighbor = new BlockPoint(point.x() + direction[0], point.z() + direction[1]);
-                    if (planningBounds.contains(neighbor.x(), neighbor.z())) next.add(neighbor);
-                }
+        Set<BlockPoint> frontier = source;
+        for (int step = 0; step < radius && !frontier.isEmpty(); step++) {
+            Set<BlockPoint> next = new HashSet<>();
+            for (BlockPoint point : frontier) for (int[] direction : DIRECTIONS) {
+                BlockPoint neighbor = new BlockPoint(point.x() + direction[0], point.z() + direction[1]);
+                if (planningBounds.contains(neighbor.x(), neighbor.z()) && result.add(neighbor)) next.add(neighbor);
             }
-            result = next;
+            frontier = next;
         }
         return result;
     }

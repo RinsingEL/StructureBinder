@@ -90,6 +90,7 @@ final class CityArrayVisualQualityGate {
     }
 
     private static BlockBounds crossSectionBounds(JsonObject road, BlockBounds surface) {
+        if ("SURFACE_ONLY".equals(string(road, "crossSectionProfile"))) return surface;
         int axisX = intValue(road, "axisX");
         int axisZ = intValue(road, "axisZ");
         if (axisX != 0 && axisZ == 0) {

@@ -24,6 +24,58 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CityBlueprintServiceTest {
+    @Test void validDraftSurvivesPrepareAndRequiresExplicitFinalSubmission() throws Exception {
+        Fixture f = fixture("run_preview", "city:preview");
+        var service = validationService();
+        var prepared = service.prepare(temporary, f.runId(), f.cityId(), f.terraSenseSource(), f.templateSource(), f.referenceCatalog());
+        String context = prepared.get("contextId").getAsString();
+        JsonObject request = new JsonObject();
+        request.addProperty("submissionMode", "DRAFT");
+        request.add("cityBlueprint", blueprint(prepared.getAsJsonObject("cityBlueprintContext")));
+        var preview = service.submitDesign(temporary, f.runId(), f.cityId(), context, request);
+        assertTrue(preview.get("ok").getAsBoolean());
+        assertTrue(preview.get("designInProgress").getAsBoolean());
+        assertEquals("city_submit_d4_blueprint", preview.get("nextAction").getAsString());
+        Path dir = f.runDir().resolve("city_blueprint_" + safe(f.cityId()));
+        assertFalse(Files.exists(dir.resolve("city_blueprint.json")));
+        assertFalse(Files.exists(dir.resolve("city_blueprint_geometry_commit.json")));
+        var resumed = service.prepare(temporary, f.runId(), f.cityId(), f.terraSenseSource(), f.templateSource(), f.referenceCatalog());
+        assertEquals(preview.get("revisionEvidence"), resumed.get("revisionEvidence"));
+        request.addProperty("submissionMode", "FINAL");
+        assertTrue(service.submitDesign(temporary, f.runId(), f.cityId(), context, request).get("ok").getAsBoolean());
+        assertTrue(Files.exists(dir.resolve("city_blueprint_geometry_commit.json")));
+    }
+
+    @Test void workingPreviewEvidenceKeepsCurrentQualityWarningsForTheAgent() {
+        JsonObject draft = JsonParser.parseString("""
+                {"compiledLayout":{"compilationAcceptance":{"passed":true,"qualityFullySatisfied":false,
+                "warnings":["door inaccessible"]},"streetFirstNetworkTrace":{"accessOutcomes":[
+                {"entranceId":"a::door","status":"UNRESOLVED"},
+                {"entranceId":"b::door","status":"CONNECTED_BY_SHORT_ALLEY"}]}},"previousBlueprint":{}}
+                """).getAsJsonObject();
+        var evidence = CityBlueprintDraft.evidence(draft);
+        assertFalse(evidence.has("compiledLayout"));
+        var review = evidence.getAsJsonObject("compiledDesignReview");
+        assertFalse(review.getAsJsonObject("acceptance").get("qualityFullySatisfied").getAsBoolean());
+        assertEquals("door inaccessible", review.getAsJsonObject("acceptance").getAsJsonArray("warnings").get(0).getAsString());
+        assertEquals(1, review.getAsJsonArray("unresolvedEntrances").size());
+    }
+
+    @Test void malformedEnvelopeGetsTenCorrectionAttemptsWithoutConsumingDesignBudget() throws Exception {
+        Fixture f = fixture("run_format", "city:format");
+        var service = validationService();
+        var prepared = service.prepare(temporary, f.runId(), f.cityId(), f.terraSenseSource(), f.templateSource(), f.referenceCatalog());
+        String context = prepared.get("contextId").getAsString();
+        for (int i = 1; i <= 10; i++) {
+            var response = service.submitDesign(temporary, f.runId(), f.cityId(), context, new JsonObject());
+            var budget = response.getAsJsonObject("formatRetryBudget");
+            assertEquals(i, budget.get("failedAttempts").getAsInt());
+            assertEquals(i < 10, budget.get("retryAllowed").getAsBoolean());
+        }
+        var resumed = service.prepare(temporary, f.runId(), f.cityId(), f.terraSenseSource(), f.templateSource(), f.referenceCatalog());
+        assertEquals(0, resumed.get("failureCount").getAsInt());
+    }
+
     @Test void contradictoryHardDirectionsRejectBeforeSearchingButCompatibleAxesDoNot() throws Exception {
         Fixture f = fixture("run_directions", "city:directions");
         var service = validationService();
@@ -91,14 +143,14 @@ class CityBlueprintServiceTest {
         request.add("baseDraftHash", evidence.get("baseDraftHash"));
         request.add("blueprintPatch", JsonParser.parseString("[{op:'replace',path:'/designIntent/theme',value:'corrected theme'}]"));
         request.addProperty("baseBlueprintHash", "not allowed too");
-        assertThrows(IllegalArgumentException.class, () -> service.submitDesign(temporary, f.runId(), f.cityId(), context, request));
+        assertFalse(service.submitDesign(temporary, f.runId(), f.cityId(), context, request).get("ok").getAsBoolean());
         request.remove("baseBlueprintHash");
         var accepted = service.submitDesign(temporary, f.runId(), f.cityId(), context, request);
         assertTrue(accepted.get("ok").getAsBoolean());
         JsonObject stored = JsonParser.parseString(Files.readString(f.runDir().resolve("city_blueprint_city_draft/city_blueprint.json"))).getAsJsonObject();
         assertEquals(original.get("groups"), stored.get("groups"));
         assertEquals(original.get("generationSeed"), stored.get("generationSeed"));
-        assertThrows(IllegalArgumentException.class, () -> service.submitDesign(temporary, f.runId(), f.cityId(), context, request));
+        assertEquals("recovery", service.submitDesign(temporary, f.runId(), f.cityId(), context, request).get("rejectionKind").getAsString());
     }
 
     @Test
@@ -201,8 +253,8 @@ class CityBlueprintServiceTest {
         request.add("blueprintPatch", JsonParser.parseString("[{op:'replace',path:'/designIntent/theme',value:'local revision'}]"));
         JsonObject revised = service.submitDesign(temporary, fixture.runId(), fixture.cityId(), contextId, request);
         assertTrue(revised.get("ok").getAsBoolean());
-        assertThrows(IllegalArgumentException.class,
-                () -> service.submitDesign(temporary, fixture.runId(), fixture.cityId(), contextId, request));
+        assertEquals("recovery", service.submitDesign(temporary, fixture.runId(), fixture.cityId(), contextId, request)
+                .get("rejectionKind").getAsString());
         request.add("baseBlueprintHash", revised.getAsJsonObject("submissionTrace").get("cityBlueprintHash"));
         request.add("blueprintPatch", JsonParser.parseString("[{op:'replace',path:'/groups/0/requiredStructureRefs',value:['invented:structure']}]"));
         assertFalse(service.submitDesign(temporary, fixture.runId(), fixture.cityId(), contextId, request).get("ok").getAsBoolean());

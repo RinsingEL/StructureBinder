@@ -1460,7 +1460,7 @@ final class CityLandUseMicroGrader {
     /** Realization of a committed surface, never a second terrain-admission decision. */
     static FoundationMode designedRealization(int surfaceY, int targetY) {
         if (targetY < surfaceY) return FoundationMode.CUT;
-        return (long) targetY - surfaceY > FOUNDATION_MAX_FILL_DEPTH_BLOCKS
+        return CityFoundationSupportSettings.current().requiresDeck(surfaceY, targetY)
                 ? FoundationMode.DECK : FoundationMode.FILL;
     }
 

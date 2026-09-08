@@ -160,13 +160,23 @@ public final class CityLandUseChunkExecutor {
             boolean shouldDeck = foundation != null
                     && foundation.mode() == CityLandUseMicroGrader.FoundationMode.DECK;
             if (shouldDeck && preparedFillColumns.add(key)) {
-                // A constant-thickness slab caps the void; work does not grow with canyon depth.
+                // Cap the void with a thin deck; sparse blackstone piers express bridge support.
                 PreparedMutation bed = prepare(world, operation.areaId(), OperationPhase.MICRO_FILL,
                         operation.x(), targetSurfaceY - 1, operation.z(), "minecraft:stone_bricks", true);
                 if (bed.failureReason() != null) return ExecutionResult.failed(fragment, bed.failureReason(),
                         preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
                         naturalSurfaceSkipped, occupiedBoundarySkipped, true);
                 basePrepared.add(bed);
+                if (CityFoundationSupportSettings.current().pierAt(operation.x(), operation.z())) {
+                    for (int y = column.surfaceY() + 1; y < targetSurfaceY - 1; y++) {
+                        PreparedMutation pier = prepare(world, operation.areaId(), OperationPhase.MICRO_FILL,
+                                operation.x(), y, operation.z(), "minecraft:blackstone_wall", true);
+                        if (pier.failureReason() != null) return ExecutionResult.failed(fragment, pier.failureReason(),
+                                preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
+                                naturalSurfaceSkipped, occupiedBoundarySkipped, true);
+                        basePrepared.add(pier);
+                    }
+                }
             }
             if (shouldFill && preparedFillColumns.add(key)) {
                 for (int y = column.surfaceY() + 1; y < targetSurfaceY; y++) {

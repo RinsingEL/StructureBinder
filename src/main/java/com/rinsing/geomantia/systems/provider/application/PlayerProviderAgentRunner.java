@@ -153,6 +153,7 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
             ProviderAgentClient client = PlayerProviderConfig.HERMES.equals(config.agentRuntime())
                     ? hermesClient : legacyClient;
             DeepSeekToolLoopClient.LoopResult result;
+            PlanningTurnControl turnControl = null;
             if (hostOnly(run)) {
                 // These transitions contain no design choice and must not cost a model turn.
                 var output = gateway.executeHost(run.nextAction(), hostArguments(run));
@@ -208,11 +209,18 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
                         return CityD3ReviewDecisionView.page(scopedD3Evidence, arguments);
                     return PreparedRealmDesignTurn.execute(run.stage(), gateway, tool, arguments);
                 };
+                turnControl = new PlanningTurnControl(scoped, designState);
                 result = client.run(config, credentials,
-                        designSessionId(debugRoot, run, designState), designState, designImages, designTools, new PlanningTurnControl(scoped),
+                        designSessionId(debugRoot, run, designState), designState, designImages, designTools, turnControl,
                         this::recordLoopActivity);
             }
-            if (result.success()) {
+            if (PreparedCityDesignTurn.applies(run) && turnControl != null && turnControl.permitsDesignContinuation()
+                    && run.semanticIdentity().equals(currentDiscovery.nextStep().semanticIdentity())) {
+                resetNoProgress();
+                retryAfterEpochSecond = Instant.now().getEpochSecond() + NO_PROGRESS_BACKOFF_SECONDS;
+                update(new AutomationStatus("waiting", "", run.runId(), run.citySeedId(), run.nextAction(), Instant.now().toString()));
+                activity("progress", "D4 修订已记录；保留当前方案与格式修正机会，继续设计");
+            } else if (result.success()) {
                 acceptSuccessfulTurnOnlyAfterStateProgress(currentDiscovery, run);
             } else {
                 recordFailedTurn(run, result.errorCode());
@@ -227,7 +235,7 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
 
     void recordFailedTurn(ProviderPlanningDiscovery.PlanningStep run, String errorCode) {
         int attempts = recordNoProgress(run.semanticIdentity());
-        boolean blocked = errorCode.startsWith("PLANNING_HOST_BLOCKED") || errorCode.startsWith("PLANNING_REPEATED_REJECTION");
+        boolean blocked = errorCode.startsWith("PLANNING_HOST_BLOCKED") || errorCode.startsWith("PLANNING_REPEATED_REJECTION") || errorCode.startsWith("PLANNING_FORMAT_RETRIES_EXHAUSTED");
         boolean exhausted = attempts >= MAX_CONSECUTIVE_NO_PROGRESS || blocked;
         if (exhausted) haltedIdentity = run.semanticIdentity();
         retryAfterEpochSecond = Instant.now().getEpochSecond() + ERROR_BACKOFF_SECONDS;

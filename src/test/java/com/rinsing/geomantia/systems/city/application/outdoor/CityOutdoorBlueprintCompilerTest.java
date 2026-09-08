@@ -620,10 +620,18 @@ class CityOutdoorBlueprintCompilerTest {
                 new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.PRESERVE,
                         CityBlueprint.EnvelopeProfile.BALANCED, "foundation:test", List.of(), List.of()));
 
+        JsonObject d6 = d6Plan();
+        d6.add("sourceStructureAnchorMap", JsonParser.parseString("""
+                {streetBands:[{streetBandId:'rural_lane',roadNetworkId:'village',roadKind:'COMPACT_ALLEY',
+                 crossSectionProfile:'STAIR_SLAB_STAIR',widthBlocks:3,start:{x:10,z:10},end:{x:20,z:10},
+                 bounds:{minX:10,minZ:9,maxX:20,maxZ:11}}]}
+                """));
         CityOutdoorBlueprintCompiler.Result result = new CityOutdoorBlueprintCompiler().compile(preserve,
-                d6Plan(), terrain(), catalog());
+                d6, terrain(), catalog());
 
         assertTrue(result.resolution().seedGroups().isEmpty());
+        assertEquals(1, result.resolution().roadBands().size());
+        assertEquals("rural_lane", result.resolution().roadBands().get(0).streetBandId());
         assertEquals("city_outdoor_intent_plan", result.intentPlan().schema());
     }
 

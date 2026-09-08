@@ -91,17 +91,35 @@ final class CityMainRoadPlanner {
             GroupGeometry from = groups.get(link.fromGroupId());
             GroupGeometry to = groups.get(link.toGroupId());
             if (from == null || to == null) continue;
-            ConnectorPair connectors = connectorPair(from, to, mainWidth + 2, structureObstacles);
+            List<ConnectorPair> pairs = connectorPairs(from, to, mainWidth + 2, structureObstacles);
+            ConnectorPair connectors = pairs.isEmpty() ? null : pairs.get(0);
+            List<LandUseTerrainField.Cell> cellPath = List.of();
+            List<BlockPoint> selectedPolyline = List.of();
+            BridgeRoute selectedBridge = null;
+            int attemptedPairs = 0;
+            for (ConnectorPair candidate : pairs) {
+                attemptedPairs++;
+                var candidateCells = route(terrain, candidate.from().point(), candidate.to().point());
+                if (!candidateCells.isEmpty()) {
+                    var candidatePolyline = blockPolyline(candidate.from().point(), candidate.to().point(),
+                            candidateCells, terrain, structureObstacles, mainWidth + 2, sharedRoadPoints);
+                    if (candidatePolyline.size() >= 2) {
+                        connectors = candidate; cellPath = candidateCells; selectedPolyline = candidatePolyline; break;
+                    }
+                } else {
+                    var bridge = bridgeRoute(terrain, candidate, mainWidth + 2, structureObstacles);
+                    if (bridge != null) { connectors = candidate; selectedBridge = bridge; break; }
+                }
+            }
+            plan.addProperty("lastConnectionAttemptedInterfacePairs", attemptedPairs);
             if (connectors == null) {
                 String message = "No internal street or structure road entrance for "
                         + link.fromGroupId() + " -> " + link.toGroupId();
                 return Result.failed("CITY_BLUEPRINT_MAIN_ROAD_CONNECTOR_MISSING", message,
                         failedPlan(plan, "CITY_BLUEPRINT_MAIN_ROAD_CONNECTOR_MISSING", message));
             }
-            List<LandUseTerrainField.Cell> cellPath = route(terrain,
-                    connectors.from().point(), connectors.to().point());
             if (cellPath.isEmpty()) {
-                BridgeRoute bridge = bridgeRoute(terrain, connectors, mainWidth + 2, structureObstacles);
+                BridgeRoute bridge = selectedBridge;
                 if (bridge != null) {
                     connectionIndex++;
                     String connectionId = "city_main_road_" + String.format("%03d", connectionIndex);
@@ -138,14 +156,13 @@ final class CityMainRoadPlanner {
                     continue;
                 }
                 skippedConnections.add(skippedConnection(link,
-                        "CITY_BLUEPRINT_MAIN_ROAD_NO_LEGAL_PATH"));
+                        "CITY_BLUEPRINT_MAIN_ROAD_NO_LEGAL_PATH", connectors, attemptedPairs));
                 continue;
             }
-            List<BlockPoint> polyline = blockPolyline(connectors.from().point(), connectors.to().point(),
-                    cellPath, terrain, structureObstacles, mainWidth + 2, sharedRoadPoints);
+            List<BlockPoint> polyline = selectedPolyline;
             if (polyline.size() < 2) {
                 skippedConnections.add(skippedConnection(link,
-                        "CITY_BLUEPRINT_MAIN_ROAD_FULL_WIDTH_ROUTE_UNAVAILABLE"));
+                        "CITY_BLUEPRINT_MAIN_ROAD_FULL_WIDTH_ROUTE_UNAVAILABLE", connectors, attemptedPairs));
                 continue;
             }
             connectionIndex++;
@@ -192,10 +209,45 @@ final class CityMainRoadPlanner {
         return Result.ok(List.copyOf(bands), plan);
     }
 
-    private static JsonObject skippedConnection(Link link, String reasonCode) {
+    /** Reserve array exits before outward fill, including interfaces not selected by the current backbone. */
+    List<JsonObject> reserveInterfaces(List<JsonObject> anchors, List<JsonObject> internalBands) {
+        int width = nextOdd(Math.max(MINIMUM_MAIN_ROAD_WIDTH_BLOCKS,
+                internalBands.stream().mapToInt(b -> intValue(b, "widthBlocks", 1)).max().orElse(1) + 2)) + 2;
+        List<BlockBounds> obstacles = anchors.stream().map(a -> object(a, "collisionEnvelope"))
+                .filter(b -> b.size() > 0).map(CityStructureCandidateEnvelope::bounds).toList();
+        List<JsonObject> result = new ArrayList<>();
+        groupGeometry(anchors, internalBands).entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(entry -> {
+            GroupGeometry group = entry.getValue();
+            int index = 0;
+            // Authored street exits take precedence over individual doors when an array has streets.
+            int bestRank = group.connectors().stream().mapToInt(Connector::rank).min().orElse(3);
+            for (Connector raw : group.connectors()) {
+                if (raw.rank() > bestRank) continue;
+                Connector connector = roadConnector(raw, group.center(), width, obstacles);
+                if (connector == null) continue;
+                String id = entry.getKey() + "::interface_" + (++index);
+                JsonObject apron = new JsonObject();
+                apron.addProperty("streetBandId", id);
+                apron.addProperty("groupId", entry.getKey());
+                apron.addProperty("reservationOnly", true);
+                apron.addProperty("interfaceKind", raw.kind());
+                apron.add("connectionPoint", connector.point().asJson());
+                apron.add("bounds", CityStructureCandidateEnvelope.boundsJson(roadBounds(width, connector.point(), connector.point())));
+                result.add(apron);
+                JsonObject transition = transitionBand(id, "reserved", entry.getKey(), connector);
+                if (transition != null) { transition.addProperty("reservationOnly", true); result.add(transition); }
+            }
+        });
+        return List.copyOf(result);
+    }
+
+    private static JsonObject skippedConnection(Link link, String reasonCode, ConnectorPair connectors, int attemptedPairs) {
         JsonObject value = new JsonObject();
         value.addProperty("fromGroupId", link.fromGroupId());
         value.addProperty("toGroupId", link.toGroupId());
+        value.add("fromInterface", connectors.from().point().asJson());
+        value.add("toInterface", connectors.to().point().asJson());
+        value.addProperty("attemptedInterfacePairCount", attemptedPairs);
         value.addProperty("status", "SKIPPED_WITH_WARNING");
         value.addProperty("reasonCode", reasonCode);
         return value;
@@ -498,27 +550,19 @@ final class CityMainRoadPlanner {
         links.putIfAbsent(key, link);
     }
 
-    private static ConnectorPair connectorPair(GroupGeometry from, GroupGeometry to, int width,
-                                                List<BlockBounds> obstacles) {
-        ConnectorPair best = null;
-        long bestScore = Long.MAX_VALUE;
-        for (Connector rawFrom : from.connectors()) {
-            Connector fromConnector = roadConnector(rawFrom, from.center(), width, obstacles);
-            if (fromConnector == null) continue;
-            for (Connector rawTo : to.connectors()) {
-                Connector toConnector = roadConnector(rawTo, to.center(), width, obstacles);
-                if (toConnector == null) continue;
-                long score = (long) (fromConnector.rank() + toConnector.rank()) * CONNECTOR_RANK_WEIGHT
-                        + manhattan(fromConnector.point(), toConnector.point());
-                if (score < bestScore || score == bestScore && connectorPairKey(fromConnector, toConnector)
-                        .compareTo(connectorPairKey(best == null ? null : best.from(),
-                                best == null ? null : best.to())) < 0) {
-                    best = new ConnectorPair(fromConnector, toConnector);
-                    bestScore = score;
-                }
-            }
-        }
-        return best;
+    private static List<ConnectorPair> connectorPairs(GroupGeometry from, GroupGeometry to, int width,
+                                                       List<BlockBounds> obstacles) {
+        List<Connector> sources = from.connectors().stream()
+                .map(c -> roadConnector(c, from.center(), width, obstacles)).filter(java.util.Objects::nonNull).distinct().toList();
+        List<Connector> targets = to.connectors().stream()
+                .map(c -> roadConnector(c, to.center(), width, obstacles)).filter(java.util.Objects::nonNull).distinct().toList();
+        List<ConnectorPair> pairs = new ArrayList<>();
+        for (Connector a : sources) for (Connector b : targets) pairs.add(new ConnectorPair(a,b));
+        pairs.sort(Comparator.<ConnectorPair>comparingLong(pair ->
+                (long)(pair.from().rank() + pair.to().rank()) * CONNECTOR_RANK_WEIGHT
+                        + manhattan(pair.from().point(), pair.to().point()))
+                .thenComparing(pair -> connectorPairKey(pair.from(),pair.to())));
+        return List.copyOf(pairs);
     }
 
     private static boolean transitionClear(BlockPoint start, BlockPoint end, int width,

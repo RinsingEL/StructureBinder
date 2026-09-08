@@ -116,6 +116,25 @@ class CityArrayVisualQualityGateTest {
         assertTrue(result.hardBlocks().toString().contains("ROAD_OVERLAPS_STRUCTURE"));
     }
 
+    @Test
+    void usesActualNarrowAlleyCrossSectionWithoutInventingCurbs() {
+        JsonArray anchors = new JsonArray();
+        anchors.add(anchor("village", "COMPACT", 0, 0, 0, 0, new JsonObject()));
+        JsonObject road = new JsonObject();
+        road.addProperty("streetBandId", "alley");
+        road.addProperty("groupId", "village");
+        road.addProperty("axisX", 0); road.addProperty("axisZ", 1);
+        road.addProperty("crossSectionProfile", "SURFACE_ONLY");
+        JsonObject bounds = new JsonObject();
+        bounds.addProperty("minX", 5); bounds.addProperty("maxX", 5);
+        bounds.addProperty("minZ", 0); bounds.addProperty("maxZ", 10);
+        road.add("bounds", bounds);
+        JsonArray roads = new JsonArray(); roads.add(road);
+        assertTrue(gate.evaluate(anchors, roads).hardBlocks().isEmpty());
+        road.addProperty("crossSectionProfile", "STAIR_SLAB_STAIR");
+        assertFalse(gate.evaluate(anchors, roads).hardBlocks().isEmpty());
+    }
+
     private JsonArray roads(String groupId, String algorithm, JsonArray anchors) {
         JsonArray result = new JsonArray();
         List<JsonObject> source = anchors.asList().stream().map(value -> value.getAsJsonObject()).toList();

@@ -351,6 +351,9 @@ public final class CityBlueprintCompilerService {
         addRoadBandsToOccupied(preFillStreetSkeleton.asList().stream()
                 .map(JsonElement::getAsJsonObject).toList(), occupied);
         addRoadBandsToOccupied(mainRoads.streetBands(), occupied);
+        List<JsonObject> roadInterfaces = mainRoadPlanner.reserveInterfaces(requiredStageAnchors,
+                preFillStreetSkeleton.asList().stream().map(JsonElement::getAsJsonObject).toList());
+        addRoadBandsToOccupied(roadInterfaces, occupied);
 
         // Form each group with its own array before connection growth. Connection structures are
         // city stitching and must not substitute for the group's required/fill population.
@@ -489,6 +492,7 @@ public final class CityBlueprintCompilerService {
         anchorPlan.add("residentialOverflowPlan", residentialOverflow.plan().deepCopy());
         mainRoads.streetBands().forEach(streetBands::add);
         anchorPlan.add("cityMainRoadPlan", mainRoads.plan().deepCopy());
+        anchorPlan.add("arrayRoadInterfaces", CityJson.GSON.toJsonTree(roadInterfaces));
         anchorPlan.add("streetFirstNetworkTrace", streetFinalization.trace().deepCopy());
         CityArrayVisualQualityGate.Result arrayVisualQuality = arrayVisualQualityGate.evaluate(
                 anchors, streetBands);
@@ -1627,7 +1631,8 @@ public final class CityBlueprintCompilerService {
 
     private static void addRoadBandsToOccupied(List<JsonObject> bands, JsonArray occupied) {
         for (JsonObject band : bands) {
-            JsonObject bounds = CityStructureCandidateEnvelope.boundsJson(CityStreetObstacleRouter.crossSection(band));
+            JsonObject bounds = booleanValue(band, "reservationOnly", false) ? requiredObject(band, "bounds").deepCopy()
+                    : CityStructureCandidateEnvelope.boundsJson(CityStreetObstacleRouter.crossSection(band));
             JsonObject envelope = new JsonObject();
             envelope.add("blockBounds", bounds);
             envelope.add("bodyBounds", bounds.deepCopy());

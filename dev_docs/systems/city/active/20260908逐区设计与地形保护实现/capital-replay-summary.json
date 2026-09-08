@@ -1,0 +1,89 @@
+{
+  "cityId": "city_realm_qareth_capital",
+  "buildingCount": 316,
+  "roadBandCount": 824,
+  "mainRoadConnections": 4,
+  "mainRoadSkippedConnections": 0,
+  "accessOutcomes": {
+    "CONNECTED_BY_SHORT_ALLEY": 191,
+    "CONNECTED_BY_SHARED_EXTENSION": 116,
+    "CONNECTED_TO_SHARED_SKELETON": 5,
+    "UNRESOLVED": 7
+  },
+  "compilationAcceptance": {
+    "passed": true,
+    "acceptancePolicy": "SAFETY_AND_REQUIRED_CONTENT_V1",
+    "qualityFullySatisfied": false,
+    "previewCompiled": true,
+    "trafficGroupCount": 5,
+    "trafficConnectionCount": 4,
+    "requiredRelationCount": 4,
+    "requiredRelationsSatisfied": true,
+    "structureGraphConnected": true,
+    "allFunctionAreasFormed": true,
+    "allRequiredStructuresCommitted": true,
+    "allRequiredContentPresent": true,
+    "arrayVisualGeometryPassed": false,
+    "allStreetEntrancesConnected": false,
+    "hardBlocks": [],
+    "warnings": [
+      "residential_quarter -> market_district: CONNECTION_SKIPPED_TERRAIN_BLOCKED status=SKIPPED_NO_LEGAL_PATH",
+      "agriculture_belt_connectivity_014::trek_v3_swamp_shepherd_1_west_01: STREET_ENTRANCE_UNRESOLVED reasonCode=CITY_INTERNAL_STREET_ENTRANCE_NETWORK_EXTENSION_UNAVAILABLE",
+      "civic_core_connectivity_030::agriculture_farm_storage_house_01_front: STREET_ENTRANCE_UNRESOLVED reasonCode=CITY_INTERNAL_STREET_ENTRANCE_NETWORK_EXTENSION_UNAVAILABLE",
+      "market_district_percentage_021::commercial_flower_shop_01_front: STREET_ENTRANCE_UNRESOLVED reasonCode=CITY_INTERNAL_STREET_ENTRANCE_NETWORK_EXTENSION_UNAVAILABLE",
+      "market_district_percentage_022::commercial_motel_01_front: STREET_ENTRANCE_UNRESOLVED reasonCode=CITY_INTERNAL_STREET_ENTRANCE_NETWORK_EXTENSION_UNAVAILABLE",
+      "market_district_percentage_023::commercial_flower_shop_01_front: STREET_ENTRANCE_UNRESOLVED reasonCode=CITY_INTERNAL_STREET_ENTRANCE_NETWORK_EXTENSION_UNAVAILABLE",
+      "market_district_percentage_024::commercial_laundry_facility_01_front: STREET_ENTRANCE_UNRESOLVED reasonCode=CITY_INTERNAL_STREET_ENTRANCE_NETWORK_EXTENSION_UNAVAILABLE",
+      "market_district_percentage_025::commercial_general_store_01_front: STREET_ENTRANCE_UNRESOLVED reasonCode=CITY_INTERNAL_STREET_ENTRANCE_NETWORK_EXTENSION_UNAVAILABLE",
+      "agriculture_belt: COMPACT_ALLEY_MISSING",
+      "agriculture_belt: COMPACT_ALLEY_DISCONNECTED",
+      "market_district: LINEAR_STREET_BAND_DISCONNECTED",
+      "residential_quarter: ORGANIC_FORMAL_ROAD_FORBIDDEN",
+      "residential_quarter: ORGANIC_ONE_TO_THREE_BLOCK_GAPS_DISCONNECTED"
+    ]
+  },
+  "unresolvedEntrances": [
+    {
+      "entranceId": "agriculture_belt_connectivity_014::trek_v3_swamp_shepherd_1_west_01",
+      "groupId": "agriculture_belt",
+      "status": "UNRESOLVED",
+      "reasonCode": "CITY_INTERNAL_STREET_ENTRANCE_NETWORK_EXTENSION_UNAVAILABLE"
+    },
+    {
+      "entranceId": "civic_core_connectivity_030::agriculture_farm_storage_house_01_front",
+      "groupId": "civic_core",
+      "status": "UNRESOLVED",
+      "reasonCode": "CITY_INTERNAL_STREET_ENTRANCE_NETWORK_EXTENSION_UNAVAILABLE"
+    },
+    {
+      "entranceId": "market_district_percentage_021::commercial_flower_shop_01_front",
+      "groupId": "market_district",
+      "status": "UNRESOLVED",
+      "reasonCode": "CITY_INTERNAL_STREET_ENTRANCE_NETWORK_EXTENSION_UNAVAILABLE"
+    },
+    {
+      "entranceId": "market_district_percentage_022::commercial_motel_01_front",
+      "groupId": "market_district",
+      "status": "UNRESOLVED",
+      "reasonCode": "CITY_INTERNAL_STREET_ENTRANCE_NETWORK_EXTENSION_UNAVAILABLE"
+    },
+    {
+      "entranceId": "market_district_percentage_023::commercial_flower_shop_01_front",
+      "groupId": "market_district",
+      "status": "UNRESOLVED",
+      "reasonCode": "CITY_INTERNAL_STREET_ENTRANCE_NETWORK_EXTENSION_UNAVAILABLE"
+    },
+    {
+      "entranceId": "market_district_percentage_024::commercial_laundry_facility_01_front",
+      "groupId": "market_district",
+      "status": "UNRESOLVED",
+      "reasonCode": "CITY_INTERNAL_STREET_ENTRANCE_NETWORK_EXTENSION_UNAVAILABLE"
+    },
+    {
+      "entranceId": "market_district_percentage_025::commercial_general_store_01_front",
+      "groupId": "market_district",
+      "status": "UNRESOLVED",
+      "reasonCode": "CITY_INTERNAL_STREET_ENTRANCE_NETWORK_EXTENSION_UNAVAILABLE"
+    }
+  ]
+}

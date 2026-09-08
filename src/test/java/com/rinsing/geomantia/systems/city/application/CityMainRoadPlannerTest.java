@@ -23,6 +23,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CityMainRoadPlannerTest {
     private final CityMainRoadPlanner planner = new CityMainRoadPlanner();
 
+    @Test void arrayReservesBothStreetEndsBeforeFillWithoutMovingBuildings() {
+        List<JsonObject> anchors = List.of(anchor("a",new BlockBounds(8,8,14,14),new BlockPoint(14,15)));
+        String original = anchors.toString();
+        var reserved = planner.reserveInterfaces(anchors,List.of(street("a","LINEAR_STREET_BAND",5,
+                new BlockPoint(5,20),new BlockPoint(20,20))));
+        assertEquals(2,reserved.stream().filter(b -> b.has("connectionPoint")).count());
+        assertTrue(reserved.stream().allMatch(b -> b.get("reservationOnly").getAsBoolean()));
+        assertTrue(reserved.stream().filter(b -> b.has("interfaceKind")).allMatch(b ->
+                b.get("interfaceKind").getAsString().startsWith("LINEAR_STREET_BAND")));
+        assertEquals(original,anchors.toString());
+    }
+
     @Test
     void explicitTrafficConnectionUsesWiderOrthogonalTerrainDetourAndStreetEndpoints() {
         CityBlueprint blueprint = blueprint("HIERARCHICAL");

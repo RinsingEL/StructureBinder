@@ -179,6 +179,7 @@ final class ProviderPlanningToolCatalog {
                 "runId", string(), "citySeedId", string(), "contextId", string(),
                 "cityBlueprint", blueprint, "autoAdvanceAfterD4", bool(),
                 "proportionMode", enumeration("EXACT_SHARES", "RELATIVE_WEIGHTS"),
+                "submissionMode", enumeration("DRAFT", "FINAL"),
                 "baseBlueprintHash", string(), "baseDraftHash", string(),
                 "blueprintPatch", nonEmptyArray(object(properties("op", enumeration("replace"), "path", string(),
                         "value", new JsonObject()), "op", "path", "value"))),

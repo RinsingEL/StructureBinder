@@ -102,7 +102,7 @@ final class HermesAgentClient implements ProviderAgentClient {
             boolean hasHistory = ensureSession(sessionId, config.model());
             JsonArray prompt = hasHistory && sessionId.startsWith("geomantia-design-")
                     && initialState.has("preparedBlueprintContext")
-                    ? continuationContent(initialState) : promptContent(initialState, initialImages);
+                    ? continuationContent(initialState, initialImages) : promptContent(initialState, initialImages);
             JsonObject requestBody = new JsonObject();
             requestBody.add("message", prompt);
             requestBody.addProperty("instructions", INSTRUCTIONS);
@@ -237,12 +237,26 @@ final class HermesAgentClient implements ProviderAgentClient {
         return false;
     }
 
+    static JsonArray continuationContent(JsonObject state, List<Path> images) throws IOException {
+        if (!state.has("revisionEvidence")) return continuationContent(state);
+        JsonObject current = new JsonObject();
+        for (String key : List.of("contextId", "nextAction", "instruction", "revisionEvidence", "failureBudget"))
+            if (state.has(key)) current.add(key,state.get(key).deepCopy());
+        JsonObject revision = state.getAsJsonObject("revisionEvidence");
+        List<Path> latestPreview = revision.has("compiledPreview") && images != null
+                ? images.stream().filter(path -> path.toAbsolutePath().normalize().toString()
+                    .equals(Path.of(revision.get("compiledPreview").getAsString()).toAbsolutePath().normalize().toString())).toList()
+                : List.of();
+        return promptContent(current, latestPreview);
+    }
+
     static JsonArray continuationContent(JsonObject state) {
         JsonObject text = new JsonObject(); text.addProperty("type", "text");
         text.addProperty("text", "Continue the same frozen city context " + state.get("contextId").getAsString()
                 + " and your latest draft/tool validation feedback already in this session. The context, author catalog and "
                 + "images are unchanged and are not repeated. Use the current tool schema, preserve unaffected design choices, "
-                + "and submit the corrected design. Do not query status or prepare again. proportionMode is a TOOL ARGUMENT "
+                + "and use submissionMode=DRAFT while designing districts; FINAL only after reviewing the complete design. "
+                + "Do not query status or prepare again. proportionMode is a TOOL ARGUMENT "
                 + "beside cityBlueprint, never a field inside cityBlueprint. If no actionable correction remains, report the blocker.");
         JsonArray result = new JsonArray(); result.add(text); return result;
     }

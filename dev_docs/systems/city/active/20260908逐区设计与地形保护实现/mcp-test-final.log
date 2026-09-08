@@ -1,0 +1,73 @@
+
+> country_designer_mcp@1.0.0 test
+> npm run build && node --test test/*.test.mjs
+
+
+> country_designer_mcp@1.0.0 build
+> tsc
+
+TAP version 13
+# Subtest: design-solving submission receives compiler budget without retrying or changing its payload
+ok 1 - design-solving submission receives compiler budget without retrying or changing its payload
+  ---
+  duration_ms: 1.7433
+  ...
+# Subtest: publishes the program-only context tool and retryable structure plus outdoor Blueprint schema
+ok 2 - publishes the program-only context tool and retryable structure plus outdoor Blueprint schema
+  ---
+  duration_ms: 1.2861
+  ...
+# Subtest: does not publish superseded D4 planning tools
+ok 3 - does not publish superseded D4 planning tools
+  ---
+  duration_ms: 0.1037
+  ...
+# Subtest: publishes the programmatic compiler and defaults workflow to Blueprint
+ok 4 - publishes the programmatic compiler and defaults workflow to Blueprint
+  ---
+  duration_ms: 0.1785
+  ...
+# Subtest: publishes the current strict LandUse intent wire shape
+ok 5 - publishes the current strict LandUse intent wire shape
+  ---
+  duration_ms: 0.2181
+  ...
+# Subtest: author configuration retains greenery and Landscape profiles without asking the model to supply it
+ok 6 - author configuration retains greenery and Landscape profiles without asking the model to supply it
+  ---
+  duration_ms: 0.3892
+  ...
+# Subtest: writes linked start and completion events with timestamps
+ok 7 - writes linked start and completion events with timestamps
+  ---
+  duration_ms: 8.8454
+  ...
+# Subtest: classifies transport timeouts separately from ordinary failures
+ok 8 - classifies transport timeouts separately from ordinary failures
+  ---
+  duration_ms: 0.2544
+  ...
+# Subtest: T1 publishes exact nested design choices without draft fallbacks
+ok 9 - T1 publishes exact nested design choices without draft fallbacks
+  ---
+  duration_ms: 0.6656
+  ...
+# Subtest: real image contents are separate from compact decision text
+ok 10 - real image contents are separate from compact decision text
+  ---
+  duration_ms: 0.6139
+  ...
+# Subtest: real MCP stdio routes sidecar calls through the host bridge and preserves images
+ok 11 - real MCP stdio routes sidecar calls through the host bridge and preserves images
+  ---
+  duration_ms: 425.9379
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 833.5775

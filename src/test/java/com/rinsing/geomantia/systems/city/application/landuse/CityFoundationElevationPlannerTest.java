@@ -32,6 +32,17 @@ class CityFoundationElevationPlannerTest {
                 CityFoundationElevationPlanner.plan(spans,terrain(cells)));
     }
 
+    @Test void connectedSlopeRetainsBuildingLedTerraces() {
+        var cells = new ArrayList<LandUseTerrainField.Cell>();
+        for (int x=-32; x<=31; x++) cells.add(cell(x, x<0 ? 68 : 80));
+        var result = CityFoundationElevationPlanner.plan(
+                List.of(new LandUseAreaPlan.ScanlineSpan(0,-32,31)), terrain(cells),
+                List.of(new BlockBounds(-28,0,-20,0), new BlockBounds(20,0,28,0)));
+        assertTrue(result.stream().anyMatch(span -> span.targetY() == 68));
+        assertTrue(result.stream().anyMatch(span -> span.targetY() == 80));
+        assertEquals(64, result.stream().mapToInt(span -> span.maxX()-span.minX()+1).sum());
+    }
+
     private static LandUseTerrainField terrain(List<LandUseTerrainField.Cell> cells) {
         return new LandUseTerrainField(LandUseTerrainField.SCHEMA,"city",new BlockBounds(-32,0,31,0),1,cells);
     }

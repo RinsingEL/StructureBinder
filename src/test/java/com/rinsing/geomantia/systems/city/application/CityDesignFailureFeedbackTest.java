@@ -31,6 +31,21 @@ class CityDesignFailureFeedbackTest {
         assertTrue(result.getAsJsonArray("parameterAdjustments").isEmpty());
     }
 
+    @Test void finalRoadBlockSupersedesOldBuildingSearchFailures() {
+        var blueprint = json("{groups:[{groupId:'civic'},{groupId:'market'},{groupId:'watch'}],relations:[{relationKind:'CONNECTION',fromGroupId:'civic',toGroupId:'watch'}]}");
+        var trace = json("""
+            {selections:[{groupId:'market',structureRef:'laundry',status:'no_legal_candidate'}],
+             compilationAcceptance:{hardBlocks:['CITY_MAIN_ROAD_CONNECTION_UNAVAILABLE: civic -> watch']},
+             cityMainRoadPlan:{skippedConnections:[{fromGroupId:'civic',toGroupId:'watch',reasonCode:'NO_LEGAL_PATH'}]}}
+            """);
+        var result = CityDesignFailureFeedback.summarize(blueprint,trace,"CITY_BLUEPRINT_DESIGN_ACCEPTANCE_FAILED");
+        assertFalse(result.toString().contains("laundry"));
+        assertFalse(result.toString().contains("market"));
+        var failure = result.getAsJsonArray("failures").get(0).getAsJsonObject();
+        assertEquals("$.relations[0]",failure.get("fieldPath").getAsString());
+        assertEquals(1,failure.getAsJsonArray("connectionFailures").size());
+    }
+
     @Test void unknownFailureDoesNotInventGroupOrAdjustment() {
         var result = CityDesignFailureFeedback.summarize(json("{groups:[]}"), json("{}"), "UNKNOWN");
         assertTrue(result.getAsJsonArray("failures").isEmpty());

@@ -97,6 +97,7 @@ minecraft {
 
         gameTestServer {
             property 'forge.enabledGameTestNamespaces', mod_id
+            workingDirectory project.file(providers.gradleProperty('geomantiaGameTestDir').orElse('run').get())
         }
 
         data {
@@ -244,4 +245,14 @@ publishing {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+}
+
+// Isolated GameTest worlds must receive the same authored test structures as the default run directory.
+tasks.matching { it.name == 'prepareRunGameTestServer' }.configureEach {
+    doLast {
+        copy {
+            from 'src/main/resources/gameteststructures'
+            into project.file(providers.gradleProperty('geomantiaGameTestDir').orElse('run').get() + '/gameteststructures')
+        }
+    }
 }

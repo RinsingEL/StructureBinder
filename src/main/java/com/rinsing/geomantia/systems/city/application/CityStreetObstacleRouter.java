@@ -11,6 +11,7 @@ final class CityStreetObstacleRouter {
 
     static BlockBounds crossSection(JsonObject road) {
         BlockBounds b = CityStructureCandidateEnvelope.bounds(road.getAsJsonObject("bounds"));
+        if (road.has("crossSectionProfile") && "SURFACE_ONLY".equals(road.get("crossSectionProfile").getAsString())) return b;
         return road.get("axisX").getAsInt() != 0
                 ? new BlockBounds(b.minX(), b.minZ() - 1, b.maxX(), b.maxZ() + 1)
                 : new BlockBounds(b.minX() - 1, b.minZ(), b.maxX() + 1, b.maxZ());

@@ -12,8 +12,24 @@ final class PlanningTurnControl implements DeepSeekToolLoopClient.ToolExecutor {
     private volatile String error = "";
     private String lastFailure = "";
     private int repeats;
+    private boolean formatCorrection;
+    private boolean revisionProgress;
+    private String lastRevision = "";
+    boolean permitsDesignContinuation() { return error.isBlank() && (formatCorrection || revisionProgress); }
 
-    PlanningTurnControl(DeepSeekToolLoopClient.ToolExecutor delegate) { this.delegate = delegate; }
+
+    PlanningTurnControl(DeepSeekToolLoopClient.ToolExecutor delegate) { this(delegate, new JsonObject()); }
+    PlanningTurnControl(DeepSeekToolLoopClient.ToolExecutor delegate, JsonObject initialState) {
+        this.delegate = delegate;
+        this.lastRevision = revisionIdentity(initialState);
+    }
+    private static String revisionIdentity(JsonObject payload) {
+        if (!payload.has("revisionEvidence") || !payload.get("revisionEvidence").isJsonObject()) return "";
+        JsonObject evidence = payload.getAsJsonObject("revisionEvidence");
+        for (String key : new String[]{"baseDraftHash", "baseBlueprintHash"})
+            if (evidence.has(key)) return evidence.get(key).getAsString();
+        return "";
+    }
     boolean finished() { return finished; }
     DeepSeekToolLoopClient.LoopResult result(int calls) {
         return new DeepSeekToolLoopClient.LoopResult(error.isBlank(), error.isBlank() ? "completed" : "blocked", error, calls, "");
@@ -33,13 +49,35 @@ final class PlanningTurnControl implements DeepSeekToolLoopClient.ToolExecutor {
         JsonObject payload = payload(output);
         String failure = failure(payload);
         if (!failure.isBlank()) {
-            if (failure.equals(lastFailure)) repeats++; else { repeats = 1; lastFailure = failure; }
-            if (hostFailure(failure) || repeats >= 3) {
-                error = hostFailure(failure) ? "PLANNING_HOST_BLOCKED: " + failure : "PLANNING_REPEATED_REJECTION: " + failure;
+            if (payload.has("formatRetryBudget")) {
+                formatCorrection = true;
+                if (!payload.getAsJsonObject("formatRetryBudget").get("retryAllowed").getAsBoolean()) {
+                    error = "PLANNING_FORMAT_RETRIES_EXHAUSTED";
+                    finished = true;
+                }
+                return output;
+            }
+            String revision = revisionIdentity(payload);
+            String fingerprint = failure + "\n" + (arguments == null ? "" : arguments.toString());
+            if (!revision.isBlank() && !revision.equals(lastRevision)) {
+                revisionProgress = true;
+                lastRevision = revision;
+                repeats = 0;
+            }
+            if (fingerprint.equals(lastFailure)) repeats++; else { repeats = 1; lastFailure = fingerprint; }
+            if (hostFailure(failure) || "program".equals(payload.has("failureOwner") ? payload.get("failureOwner").getAsString() : "") || repeats >= 3) {
+                error = hostFailure(failure) || "program".equals(payload.has("failureOwner") ? payload.get("failureOwner").getAsString() : "") ? "PLANNING_HOST_BLOCKED: " + failure : "PLANNING_REPEATED_REJECTION: " + failure;
                 finished = true;
             }
         } else {
             repeats = 0; lastFailure = "";
+            if (payload.has("designInProgress") && payload.get("designInProgress").getAsBoolean()) {
+                String revision = revisionIdentity(payload);
+                revisionProgress |= !revision.isBlank() && !revision.equals(lastRevision);
+                lastRevision = revision;
+                finished = true; // Next prepared turn attaches the new rendered preview.
+                return output;
+            }
             if (Set.of("realm_t1_prepare", "realm_t2_select_coordinate", "realm_t4_patch_planning_finalize",
                     "city_submit_d4_blueprint", "city_review_d3_site").contains(tool)
                     || payload.has("hostDecisionCommitted") && payload.get("hostDecisionCommitted").getAsBoolean()) finished = true;

@@ -45,6 +45,50 @@ public final class CityStructureLandingPreviewRenderer {
     private static final Color MASK_FILL = new Color(202, 108, 62, 35);
     private static final Color MASK_STROKE = new Color(178, 84, 46, 135);
 
+    /** Revision preview keeps the last valid layout, with only current blockers marked in red. */
+    public Path renderRevision(JsonObject anchorMap, CityLandformReviewPackage reviewPackage,
+                               JsonObject landscape, JsonObject extent, JsonObject feedback,
+                               boolean hasValidBase, Path directory) throws IOException {
+        Path path = renderD4(anchorMap, reviewPackage, landscape, extent, directory);
+        BufferedImage image = ImageIO.read(path.toFile());
+        Graphics2D g = image.createGraphics();
+        try {
+            setup(g);
+            Transform t = overviewTransform(gridBounds(anchorMap));
+            Set<String> groups = new LinkedHashSet<>();
+            for (JsonElement entry : array(feedback, "failures")) {
+                JsonObject failure = entry.getAsJsonObject();
+                if (!string(failure, "groupId").isBlank()) groups.add(string(failure, "groupId"));
+                for (JsonElement id : array(failure, "affectedGroupIds")) groups.add(id.getAsString());
+                for (JsonElement edge : array(failure, "connectionFailures")) for (String key : List.of("fromInterface", "toInterface")) {
+                    JsonObject connection = edge.getAsJsonObject();
+                    if (!connection.has(key)) continue;
+                    BlockPoint p = point(connection, key);
+                    drawRect(g,t,new BlockBounds(p.x()-3,p.z()-3,p.x()+3,p.z()+3),
+                            new Color(220,30,30,30),Color.RED,3f);
+                }
+                for (JsonElement sample : array(failure, "positionSamples")) {
+                    JsonObject point = object(sample.getAsJsonObject(), "anchorBlock");
+                    if (point.size() == 0) continue;
+                    BlockPoint p = point(sample.getAsJsonObject(), "anchorBlock");
+                    drawRect(g, t, new BlockBounds(p.x()-2,p.z()-2,p.x()+2,p.z()+2),
+                            new Color(220,30,30,30), Color.RED, 3f);
+                }
+            }
+            for (JsonElement entry : array(anchorMap, "anchors")) {
+                JsonObject anchor = entry.getAsJsonObject();
+                if (groups.contains(string(anchor, "placementGroupId")))
+                    drawRect(g, t, d2BodyBounds(anchor), new Color(220,30,30,25), Color.RED, 3f);
+            }
+            title(g, "City working design", array(feedback, "failures").isEmpty()
+                    ? "Valid draft preview: inspect buildings, roads and landscape before FINAL."
+                    : hasValidBase ? "Last valid layout retained; red marks affected buildings or sampled failed positions."
+                    : "No valid previous layout; red marks known failed positions only.");
+        } finally { g.dispose(); }
+        ImageIO.write(image, "png", path.toFile());
+        return path;
+    }
+
     public Path renderD4(JsonObject anchorMap, Path outputDirectory) throws IOException {
         return renderD4(anchorMap, null, null, outputDirectory);
     }
@@ -1073,7 +1117,7 @@ public final class CityStructureLandingPreviewRenderer {
                 anchors.add(new AnchorPreview(index, anchor, d4AnchorGeometry(anchor)));
             }
         }
-        List<AnchorPreview> best = List.of();
+        List<AnchorPreview> best = new ArrayList<>();
         for (AnchorPreview seed : anchors) {
             List<AnchorPreview> component = new ArrayList<>();
             component.add(seed);

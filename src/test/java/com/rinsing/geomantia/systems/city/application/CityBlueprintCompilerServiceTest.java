@@ -1436,8 +1436,8 @@ class CityBlueprintCompilerServiceTest {
         assertTrue(acceptance.getAsJsonArray("warnings").toString()
                 .contains("STRUCTURE_RELATION_GRAPH_DISCONNECTED"), acceptance.toString());
         assertTrue(acceptance.getAsJsonArray("hardBlocks").toString().contains("CITY_MAIN_ROAD_CONNECTION_UNAVAILABLE"));
-        assertTrue(acceptance.getAsJsonArray("warnings").toString()
-                .contains("STREET_ENTRANCE_UNRESOLVED"), acceptance.toString());
+        // Secondary entrance access may succeed even when the required city main road is unavailable.
+        assertTrue(acceptance.get("allStreetEntrancesConnected").getAsBoolean(), acceptance.toString());
     }
 
     @Test

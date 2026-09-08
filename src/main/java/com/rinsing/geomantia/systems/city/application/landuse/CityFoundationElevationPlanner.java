@@ -5,12 +5,18 @@ import com.rinsing.geomantia.systems.city.domain.landuse.LandUseTerrainField;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import java.util.*;
 
-/** Freeze one elevation per complete platform before owner chunks are sliced. */
+/** Freeze local building-led terraces before owner chunks are sliced. Connectivity does not imply equal height. */
 public final class CityFoundationElevationPlanner {
     private CityFoundationElevationPlanner() {}
 
     public static List<CityLandUseSurfacePrintPlan.PlatformSpan> plan(
             List<LandUseAreaPlan.ScanlineSpan> spans, LandUseTerrainField terrain) {
+        return plan(spans, terrain, List.of());
+    }
+
+    public static List<CityLandUseSurfacePrintPlan.PlatformSpan> plan(
+            List<LandUseAreaPlan.ScanlineSpan> spans, LandUseTerrainField terrain,
+            List<com.rinsing.geomantia.systems.city.domain.model.BlockBounds> buildings) {
         Map<BlockPoint, LandUseTerrainField.Cell> samples = new HashMap<>();
         int step = terrain.cellStepBlocks();
         for (var cell : terrain.cells()) samples.put(new BlockPoint(Math.floorDiv(cell.blockMinX(),step),
@@ -41,7 +47,36 @@ public final class CityFoundationElevationPlanner {
             int target = counts.entrySet().stream().sorted(Comparator
                     .<Map.Entry<Integer,Integer>>comparingInt(Map.Entry::getValue).reversed()
                     .thenComparingInt(Map.Entry::getKey)).findFirst().orElseThrow().getKey();
-            for (BlockPoint point : component) heights.put(point,target);
+            Set<BlockPoint> sampledCells = new HashSet<>();
+            for (BlockPoint point : component) sampledCells.add(new BlockPoint(Math.floorDiv(point.x(),step),Math.floorDiv(point.z(),step)));
+            Map<BlockPoint,Integer> localTargets = new HashMap<>();
+            for (BlockPoint point : component) {
+                var nearest = buildings.stream().min(Comparator.comparingLong(b -> {
+                    long dx = Math.max(0, Math.max(b.minX()-point.x(), point.x()-b.maxX()));
+                    long dz = Math.max(0, Math.max(b.minZ()-point.z(), point.z()-b.maxZ()));
+                    return dx*dx+dz*dz;
+                })).orElse(null);
+                BlockPoint local = nearest == null
+                        ? new BlockPoint(Math.floorDiv(point.x(),step),Math.floorDiv(point.z(),step))
+                        : new BlockPoint(Math.floorDiv(Math.floorDiv(nearest.minX()+nearest.maxX(),2),step),
+                            Math.floorDiv(Math.floorDiv(nearest.minZ()+nearest.maxZ(),2),step));
+                heights.put(point, localTargets.computeIfAbsent(local, key -> {
+                    Map<Integer,Integer> localCounts = new TreeMap<>();
+                    int radius = Math.max(1, 24 / step);
+                    for (int dz=-radius;dz<=radius;dz++) for(int dx=-radius;dx<=radius;dx++) {
+                        BlockPoint cellKey = new BlockPoint(key.x()+dx,key.z()+dz);
+                        if (nearest == null && !sampledCells.contains(cellKey)) continue;
+                        var sample = samples.get(cellKey);
+                        if(sample != null && sample.sampled() && !sample.water()) {
+                            int y = Math.floorDiv((int)Math.round(sample.elevation())+2,4)*4;
+                            localCounts.merge(y,1,Integer::sum);
+                        }
+                    }
+                    return localCounts.entrySet().stream().sorted(Comparator
+                            .<Map.Entry<Integer,Integer>>comparingInt(Map.Entry::getValue).reversed()
+                            .thenComparingInt(Map.Entry::getKey)).map(Map.Entry::getKey).findFirst().orElse(target);
+                }));
+            }
         }
         List<CityLandUseSurfacePrintPlan.PlatformSpan> result = new ArrayList<>();
         List<BlockPoint> ordered = heights.keySet().stream().sorted(Comparator.comparingInt(BlockPoint::z)

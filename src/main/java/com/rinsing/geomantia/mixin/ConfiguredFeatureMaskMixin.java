@@ -14,6 +14,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ConfiguredFeature.class)
 public abstract class ConfiguredFeatureMaskMixin {
+    @org.spongepowered.asm.mixin.injection.Redirect(method = "place", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/world/level/levelgen/feature/Feature;place(Lnet/minecraft/world/level/levelgen/feature/configurations/FeatureConfiguration;Lnet/minecraft/world/level/WorldGenLevel;Lnet/minecraft/world/level/chunk/ChunkGenerator;Lnet/minecraft/util/RandomSource;Lnet/minecraft/core/BlockPos;)Z"))
+    private boolean geomantia$guardFeatureWrites(net.minecraft.world.level.levelgen.feature.Feature feature,
+            net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration config,
+            WorldGenLevel level, ChunkGenerator generator, RandomSource random, BlockPos origin) {
+        return com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityFeatureWriteGuard.run(
+                () -> feature.place(config, level, generator, random, origin));
+    }
+
     @Inject(method = "place", at = @At("HEAD"), cancellable = true)
     private void geomantia$suppressCityVegetation(WorldGenLevel level,
                                                   ChunkGenerator generator,

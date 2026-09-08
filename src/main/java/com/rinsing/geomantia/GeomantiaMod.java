@@ -55,6 +55,7 @@ public final class GeomantiaMod {
                 .resolve("geomantia").resolve("city_land_use");
         try {
             LandUseDefaultConfigBootstrap.ensureInstalled(landUseRoot);
+            com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityFoundationSupportSettings.load(landUseRoot);
         } catch (java.io.IOException ex) {
             LOGGER.error("Failed to install default City LandUse settings at {}.", landUseRoot, ex);
         }

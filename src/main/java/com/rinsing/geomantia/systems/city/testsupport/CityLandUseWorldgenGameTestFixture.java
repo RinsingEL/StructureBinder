@@ -14,8 +14,8 @@ public final class CityLandUseWorldgenGameTestFixture {
     private CityLandUseWorldgenGameTestFixture() {
     }
 
-    public static void enable(int minX, int maxX, int z) {
-        active = new Fixture(minX, maxX, z);
+    public static void enable(int minX, int maxX, int z, int fenceZ) {
+        active = new Fixture(minX, maxX, z, fenceZ);
     }
 
     public static void disable() {
@@ -32,9 +32,15 @@ public final class CityLandUseWorldgenGameTestFixture {
             int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, fixture.z()) - 1;
             level.setBlock(new BlockPos(x, y, fixture.z()), Blocks.DIRT.defaultBlockState(),
                     Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+            // The fence-seam test requires a flat substrate; random natural terrain is not that fixture.
+            int fenceSurface = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,x,fixture.fenceZ()) - 1;
+            for (int fy=fenceSurface+1;fy<=200;fy++) level.setBlock(new BlockPos(x,fy,fixture.fenceZ()),
+                    Blocks.DIRT.defaultBlockState(),Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+            for (int fy=201;fy<=Math.max(203,fenceSurface);fy++) level.setBlock(new BlockPos(x,fy,fixture.fenceZ()),
+                    Blocks.AIR.defaultBlockState(),Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
         }
     }
 
-    private record Fixture(int minX, int maxX, int z) {
+    private record Fixture(int minX, int maxX, int z, int fenceZ) {
     }
 }

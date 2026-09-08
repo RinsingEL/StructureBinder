@@ -67,7 +67,8 @@ public final class CityOutdoorBlueprintCompiler {
         if (blueprint.outdoorPlan().mode() == CityBlueprint.OutdoorMode.PRESERVE) {
             CityOutdoorIntentPlan intent = preserveIntent(blueprint, catalog, sourceHashes);
             return new Result(new LandUseSourceResolver.Resolution(List.of(), List.of(), List.of(),
-                    Long.toUnsignedString(blueprint.generationSeed())), CityUrbanResidualResolver.Config.disabled(),
+                    Long.toUnsignedString(blueprint.generationSeed()), Map.of(), Map.of(),
+                    roadBands(structureMaterializationPlan), List.of(), List.of()), CityUrbanResidualResolver.Config.disabled(),
                     intent);
         }
 
@@ -83,13 +84,15 @@ public final class CityOutdoorBlueprintCompiler {
         Map<String, Set<BlockPoint>> capacityDomains = capacityReservation.domains();
         outdoorWarnings.addAll(capacityReservation.warnings());
         List<String> spatialGroupIds = blueprint.outdoorPlan().spatialGrounds().stream()
+                .filter(ground -> ground.membership() == CityBlueprint.OutdoorMembership.URBAN)
                 .map(CityBlueprint.SpatialGround::sourceGroupId).distinct().sorted().toList();
         List<AnchorData> foundationAnchors = requiredGroups(anchorsByGroup, spatialGroupIds,
-                "CITY_OUTDOOR_STRUCTURE_GROUP_UNKNOWN");
+                "CITY_OUTDOOR_STRUCTURE_GROUP_UNKNOWN", false);
         List<BlockBounds> structureFootprints = foundationAnchors.stream()
                 .map(AnchorData::footprint).distinct().toList();
         List<BlockBounds> allFootprints = new ArrayList<>(structureFootprints);
         streetBandFootprints(structureMaterializationPlan).stream()
+                .filter(footprint -> structureFootprints.stream().anyMatch(building -> building.overlaps(footprint)))
                 .filter(footprint -> !allFootprints.contains(footprint))
                 .forEach(allFootprints::add);
         List<String> allAnchorIds = foundationAnchors.stream().map(AnchorData::anchorId).sorted().toList();
@@ -109,24 +112,24 @@ public final class CityOutdoorBlueprintCompiler {
         LandUseSeedGroup.FoundationSettings foundationSettings = new LandUseSeedGroup.FoundationSettings(
                 foundationProfile.structureMarginBlocks(), foundationProfile.closeRadiusBlocks(),
                 foundationProfile.maxJoinDistanceBlocks());
-        CityFoundationPlanner.Plan foundationPlan = new CityFoundationPlanner().plan(terrain.planningBounds(),
+        CityFoundationPlanner.Plan foundationPlan = allFootprints.isEmpty() ? null : new CityFoundationPlanner().plan(terrain.planningBounds(),
                 terrain, allFootprints, foundationSettings);
         String foundationGroupId = cityId + "::foundation";
         List<BlockPoint> foundationSeeds = foundationAnchors.stream().map(anchor -> center(anchor.footprint()))
                 .distinct().sorted(POINT_ORDER).toList();
-        int foundationArea = foundationPlan.claims().size();
+        int foundationArea = foundationPlan == null ? 0 : foundationPlan.claims().size();
         AreaBudget foundationBudget = new AreaBudget(foundationArea, foundationArea, foundationArea);
         LandUseSeedGroup.GrowthRegion foundationRegion = new LandUseSeedGroup.GrowthRegion(foundationGroupId,
                 allAnchorIds, foundationSeeds, foundationArea, foundationArea, foundationArea);
         List<LandUseSeedGroup> groups = new ArrayList<>();
-        groups.add(new LandUseSeedGroup(foundationGroupId, foundationRule,
+        if (foundationArea > 0) groups.add(new LandUseSeedGroup(foundationGroupId, foundationRule,
                 surfaceSettings(foundationRule, foundationRecipe, false), allAnchorIds, structureFootprints,
                 foundationSeeds, foundationGates, foundationArea, foundationArea, foundationArea,
                 foundationRule.actionBudget(), foundationRule.competitionWeight(), List.of(foundationRegion),
                 LandUseSeedGroup.GrowthBias.neutral(), LandUseSeedGroup.TerrainBias.BALANCED, List.of(),
                 LandUseSeedGroup.LayerRole.FOUNDATION, foundationSettings));
         List<CityOutdoorIntentPlan.SourceIntent> sourceIntents = new ArrayList<>();
-        sourceIntents.add(sourceIntent(foundationGroupId, CityOutdoorIntentPlan.SourceKind.FOUNDATION,
+        if (foundationArea > 0) sourceIntents.add(sourceIntent(foundationGroupId, CityOutdoorIntentPlan.SourceKind.FOUNDATION,
                 foundationProfile.foundationProfileRef(), foundationRule.ruleRef(),
                 foundationRecipe.surfaceRecipeRef(), CityBlueprint.OutdoorMembership.URBAN, null,
                 null, null, null, CityBlueprint.TerrainPolicy.BALANCED, spatialGroupIds, allAnchorIds,
@@ -189,9 +192,9 @@ public final class CityOutdoorBlueprintCompiler {
 
         groups.sort(Comparator.comparing(LandUseSeedGroup::groupId));
         sourceIntents.sort(Comparator.comparing(CityOutdoorIntentPlan.SourceIntent::sourceId));
-        Set<String> urbanGroupIds = Set.of(foundationGroupId);
+        Set<String> urbanGroupIds = foundationArea > 0 ? Set.of(foundationGroupId) : Set.of();
         CityOutdoorIntentPlan intent = intent(blueprint, catalog, sourceHashes, sourceIntents, urbanGroupIds,
-                foundationPlan.resolvedCloseRadiusBlocks());
+                foundationPlan == null ? 0 : foundationPlan.resolvedCloseRadiusBlocks());
         return new Result(new LandUseSourceResolver.Resolution(groups, List.of(), outdoorWarnings,
                 Long.toUnsignedString(blueprint.generationSeed()), capacityDomains,
                 resolvedParentParcelIds, roadBands, greenParcels, overflowZones),
@@ -761,7 +764,7 @@ public final class CityOutdoorBlueprintCompiler {
             JsonObject band = element.getAsJsonObject();
             String crossSection = stringValue(band, "crossSectionProfile", "");
             if (!"STAIR_SLAB_STAIR".equals(crossSection)
-                    && !"BRIDGE_DECK_RAIL".equals(crossSection)) continue;
+                    && !"BRIDGE_DECK_RAIL".equals(crossSection) && !"SURFACE_ONLY".equals(crossSection)) continue;
             JsonObject start = object(band, "start");
             JsonObject end = object(band, "end");
             JsonObject bounds = object(band, "bounds");

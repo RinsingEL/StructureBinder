@@ -90,7 +90,7 @@ public final class CityLandUseGameTests {
             CityLandUseWorldgenRegistry.activate(
                     level.dimension().location().toString(), areaPlan, surfacePlan, serverRoot);
             activated = true;
-            CityLandUseWorldgenGameTestFixture.enable(minX, maxX, cropZ);
+            CityLandUseWorldgenGameTestFixture.enable(minX, maxX, cropZ, fenceZ);
 
             int minChunkX = Math.floorDiv(minX, 16);
             int maxChunkX = Math.floorDiv(maxX, 16);
@@ -292,7 +292,9 @@ public final class CityLandUseGameTests {
                 new CityLandUseSurfacePrintPlan.ContourBandsRecipe(
                         settings.surfaceBlockId(), settings.cropBlockId(), settings.channelBankBlockId(),
                         settings.channelWaterBlockId(), settings.channelBankOverlayBlockId(),
-                        3, 1, 1, 1, CityLandUseSurfacePrintPlan.ClassificationMode.CONTOUR_NORMAL,
+                        settings.fieldBeforeBlocks() + settings.channelWidthBlocks() + settings.fieldAfterBlocks(),
+                        settings.fieldBeforeBlocks(), settings.channelWidthBlocks(), settings.fieldAfterBlocks(),
+                        CityLandUseSurfacePrintPlan.ClassificationMode.CONTOUR_NORMAL,
                         anchor, List.of(new CityLandUseSurfacePrintPlan.BandSpan(
                         cropZ, minX, maxX, CityLandUseSurfacePrintPlan.BandRole.FIELD)));
         CityLandUseSurfacePrintPlan.AreaPrint print = new CityLandUseSurfacePrintPlan.AreaPrint(

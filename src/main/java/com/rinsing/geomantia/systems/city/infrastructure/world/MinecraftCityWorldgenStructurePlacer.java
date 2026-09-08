@@ -111,9 +111,9 @@ public final class MinecraftCityWorldgenStructurePlacer {
         }
         Structure structure = holder.get().value();
         StructureStart existing = chunk.getStartForStructure(structure);
-        if (existing != null && existing.isValid()) {
-            return;
-        }
+        if (existing != null && existing.isValid() && existing.getPieces().stream().anyMatch(piece ->
+                piece instanceof CityTemplateTerrainStructurePiece cityPiece && cityPiece.matchesPlannedAnchor(
+                        item.anchorId(), item.anchorBlock().x(), item.anchorBlock().z()))) return;
 
         try {
             JsonObject plan = item.templatePlan();
@@ -193,8 +193,10 @@ public final class MinecraftCityWorldgenStructurePlacer {
             CityTemplateTerrainStructurePiece piece = new CityTemplateTerrainStructurePiece(templateRef,
                     templateHash, item.anchorId(), anchor, preparation.templateDatumY().orElseThrow(), rotation,
                     mirror, size);
-            StructureStart start = new StructureStart(structure, chunkPos, 0,
-                    new PiecesContainer(List.of(piece)));
+            var pieces = appendTemplatePiece(existing != null && existing.isValid()
+                    ? existing.getPieces() : java.util.List.of(), piece);
+            StructureStart start = new StructureStart(structure, chunkPos, existing == null ? 0 : existing.getReferences(),
+                    new PiecesContainer(pieces));
             chunk.setStartForStructure(structure, start);
             chunk.setUnsaved(true);
             LOGGER.info("Injected City template terrain StructureStart {} {} at {},{} with datum {}",
@@ -223,6 +225,15 @@ public final class MinecraftCityWorldgenStructurePlacer {
             return new BlockPoint(value.get("x").getAsInt(), value.get("z").getAsInt());
         }
         return fallback;
+    }
+
+    static java.util.List<net.minecraft.world.level.levelgen.structure.StructurePiece> appendTemplatePiece(
+            java.util.List<net.minecraft.world.level.levelgen.structure.StructurePiece> existing,
+            CityTemplateTerrainStructurePiece piece) {
+        var result = new java.util.ArrayList<>(existing);
+        if (result.stream().noneMatch(current -> current instanceof CityTemplateTerrainStructurePiece template
+                && template.samePlannedAnchor(piece))) result.add(piece);
+        return java.util.List.copyOf(result);
     }
 
     static int medianFoundationDatum(BlockBounds footprint, IntBinaryOperator heightAt) {

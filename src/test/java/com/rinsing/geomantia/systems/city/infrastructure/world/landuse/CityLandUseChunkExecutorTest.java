@@ -16,6 +16,23 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CityLandUseChunkExecutorTest {
     private final CityLandUseChunkExecutor executor = new CityLandUseChunkExecutor();
 
+    @Test void deepDeckHasSparseBlackstoneSupportAtGridColumns() {
+        var fragment = new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,
+                "city", "hash", "palette", 0, 0, 1, 0, 0, 0, null,
+                List.of(), List.of(), List.of(), List.of(new CityLandUseChunkCompiler.FeatureOperation(
+                        "main", 4, 4, "minecraft:stone_slab", 0,
+                        CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,
+                        CityLandUseSurfacePrintPlan.HorizontalFacing.NONE, 68)));
+        FakeWorld world = new FakeWorld();
+        world.columns.put("4,4", new CityLandUseChunkExecutor.ColumnSample(40,"minecraft:stone",true));
+        var result = executor.execute(fragment,world,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED,result.status());
+        assertTrue(world.writes.contains("4,41,4=minecraft:blackstone_wall"));
+        assertTrue(world.writes.contains("4,66,4=minecraft:blackstone_wall"));
+        assertTrue(world.writes.contains("4,67,4=minecraft:stone_bricks"));
+        assertTrue(world.writes.contains("4,68,4=minecraft:stone_slab"));
+    }
+
     @Test
     void frozenRoadCapsCanyonWithConstantWorkInsteadOfFillingToBottom() {
         var fragment = new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,

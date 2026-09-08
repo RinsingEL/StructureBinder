@@ -46,6 +46,14 @@ public final class CityTemplateTerrainStructurePiece extends StructurePiece {
     private final CityTemplatePlacementGeometry.Mirror cityMirror;
     private final CityTemplatePlacementGeometry.Size sourceSize;
 
+    boolean samePlannedAnchor(CityTemplateTerrainStructurePiece other) {
+        return matchesPlannedAnchor(other.anchorId, other.anchor.x(), other.anchor.z());
+    }
+
+    boolean matchesPlannedAnchor(String id, int x, int z) {
+        return anchorId.equals(id) && anchor.x() == x && anchor.z() == z;
+    }
+
     public CityTemplateTerrainStructurePiece(ResourceLocation templateRef,
                                              String templateHash,
                                              String anchorId,
@@ -166,6 +174,7 @@ public final class CityTemplateTerrainStructurePiece extends StructurePiece {
                         "StructureTemplate.placeInWorld returned false.");
                 return;
             }
+            supportBuildingFloor(level, footprint, chunkBox);
             CityWorldgenBlockObservationRegistry.watchStructureTemplate(template, templateHash,
                     transform.placementOrigin(), transform.minecraftMirror(), transform.minecraftRotation(),
                     transform.rotationPivot(), placementBox, level::getBlockState,
@@ -182,6 +191,35 @@ public final class CityTemplateTerrainStructurePiece extends StructurePiece {
         } catch (RuntimeException ex) {
             CityReservationMaskRegistry.recordWorldgenFailure(item, chunkPos,
                     "TEMPLATE_TERRAIN_START_PLACEMENT_FAILED", message(ex));
+        }
+    }
+
+    private void supportBuildingFloor(WorldGenLevel level, BlockBounds footprint, BoundingBox chunkBox) {
+        var support = com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityFoundationSupportSettings.current();
+        var cursor = new BlockPos.MutableBlockPos();
+        int minX = Math.max(footprint.minX(), chunkBox.minX());
+        int maxX = Math.min(footprint.maxX(), chunkBox.maxX());
+        int minZ = Math.max(footprint.minZ(), chunkBox.minZ());
+        int maxZ = Math.min(footprint.maxZ(), chunkBox.maxZ());
+        for (int z = minZ; z <= maxZ; z++) for (int x = minX; x <= maxX; x++) {
+            // Only solid authored floor columns need a foundation; empty courtyards keep their ground.
+            cursor.set(x, datumY, z);
+            if (!level.getBlockState(cursor).isSolidRender(level, cursor)) continue;
+            int ground = datumY - 1;
+            while (ground > level.getMinBuildHeight()) {
+                cursor.set(x, ground, z);
+                if (!level.getBlockState(cursor).isAir() && level.getFluidState(cursor).isEmpty()) break;
+                ground--;
+            }
+            if (ground >= datumY - 1) continue;
+            boolean deck = support.requiresDeck(ground, datumY - 1);
+            boolean pier = support.pierAt(x, z) || x == footprint.minX() && z == footprint.minZ();
+            for (int y = deck && !pier ? datumY - 1 : ground + 1; y < datumY; y++) {
+                cursor.set(x, y, z);
+                level.setBlock(cursor, (deck && y < datumY - 1
+                        ? net.minecraft.world.level.block.Blocks.BLACKSTONE_WALL
+                        : net.minecraft.world.level.block.Blocks.STONE_BRICKS).defaultBlockState(), 2);
+            }
         }
     }
 

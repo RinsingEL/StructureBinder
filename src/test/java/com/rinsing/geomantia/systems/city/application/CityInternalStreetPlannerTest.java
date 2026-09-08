@@ -140,6 +140,48 @@ class CityInternalStreetPlannerTest {
         assertTrue(span >= 100);
     }
 
+    @Test
+    void connectsActualDoorThroughNarrowGapToNearbyCityMainRoad() {
+        JsonObject house = anchor("compact_house", "fill", 0, 0, 4, 4, new JsonObject());
+        JsonObject transformed = new JsonObject();
+        JsonObject entrance = new JsonObject();
+        entrance.addProperty("entranceId", "door");
+        entrance.addProperty("direction", "EAST");
+        entrance.add("worldPosition", point(4, 2));
+        com.google.gson.JsonArray entrances = new com.google.gson.JsonArray();
+        entrances.add(entrance);
+        transformed.add("roadEntrances", entrances);
+        JsonObject placement = new JsonObject();
+        placement.add("transformed", transformed);
+        house.add("templatePlacementPlan", placement);
+        JsonObject oppositeHouse = anchor("compact_other", "fill", 6, -5, 10, 4, new JsonObject());
+        JsonObject main = new JsonObject();
+        main.addProperty("groupId", "city-network");
+        main.addProperty("roadHierarchy", "MAIN");
+        main.addProperty("widthBlocks", 7);
+        main.add("start", point(5, 10));
+        main.add("end", point(20, 10));
+        JsonObject bounds = new JsonObject();
+        bounds.addProperty("minX", 5); bounds.addProperty("maxX", 20);
+        bounds.addProperty("minZ", 7); bounds.addProperty("maxZ", 13);
+        main.add("bounds", bounds);
+        String original = house.toString();
+
+        var result = planner.finalizeSkeleton(List.of(), List.of(main), List.of(house, oppositeHouse));
+
+        assertEquals("CONNECTED_BY_SHARED_EXTENSION", result.trace().getAsJsonArray("accessOutcomes")
+                .get(0).getAsJsonObject().get("status").getAsString());
+        assertFalse(result.streetBands().isEmpty());
+        assertTrue(result.streetBands().stream().allMatch(band ->
+                "SURFACE_ONLY".equals(band.get("crossSectionProfile").getAsString())));
+        assertTrue(result.streetBands().stream().anyMatch(band ->
+                CityStructureCandidateEnvelope.bounds(band.getAsJsonObject("bounds")).contains(5, 2)));
+        assertTrue(result.streetBands().stream().noneMatch(band ->
+                CityStreetObstacleRouter.crossSection(band).overlaps(
+                        CityStructureCandidateEnvelope.bounds(oppositeHouse.getAsJsonObject("collisionEnvelope")))));
+        assertEquals(original, house.toString());
+    }
+
     private CityBlueprintGroupLayoutPlanner.Parameters parameters(String algorithm) {
         return layout.parameters(algorithm, CityBlueprint.DensityClass.DENSE);
     }

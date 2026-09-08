@@ -36,7 +36,7 @@ public final class CityBlueprintDraft {
         JsonObject draft;
         try { draft = JsonParser.parseString(Files.readString(file)).getAsJsonObject(); }
         catch (RuntimeException ex) { throw new IOException("CITY_BLUEPRINT_DRAFT_INVALID", ex); }
-        if (!"rejected".equals(string(draft, "status")) || !contextId.equals(string(draft, "contextId"))
+        if (!java.util.Set.of("rejected", "preview_valid").contains(string(draft, "status")) || !contextId.equals(string(draft, "contextId"))
                 || !cityId.equals(string(draft, "cityId"))
                 || !acceptedHash(directory).equals(string(draft, "acceptedRevisionAtCreation"))) return null;
         if (!draft.has("previousBlueprint") || !hash(CityJson.GSON.toJson(draft.get("previousBlueprint")))
@@ -47,7 +47,24 @@ public final class CityBlueprintDraft {
     public static JsonObject evidence(JsonObject draft) {
         JsonObject result = draft.deepCopy();
         result.remove("acceptedRevisionAtCreation");
-        result.addProperty("instruction", "This is the latest rejected draft, NOT an accepted city. "
+        if (draft.has("compiledLayout") && draft.get("compiledLayout").isJsonObject()) {
+            JsonObject layout = draft.getAsJsonObject("compiledLayout");
+            JsonObject review = new JsonObject();
+            if (layout.has("compilationAcceptance"))
+                review.add("acceptance", layout.get("compilationAcceptance").deepCopy());
+            if (layout.has("streetFirstNetworkTrace")) {
+                JsonArray unresolved = new JsonArray();
+                for (JsonElement item : layout.getAsJsonObject("streetFirstNetworkTrace").getAsJsonArray("accessOutcomes"))
+                    if ("UNRESOLVED".equals(string(item.getAsJsonObject(), "status"))) unresolved.add(item.deepCopy());
+                review.add("unresolvedEntrances", unresolved);
+            }
+            review.addProperty("instruction", "Safety admission is not appearance or complete entrance access. Review current warnings and the preview before FINAL; adjust affected groups' patch selection, extent, spacing or density where necessary. Do not move buildings merely to force a road through them.");
+            result.add("compiledDesignReview", review);
+        }
+        result.remove("compiledLayout");
+        result.remove("landscapeLayout");
+        result.remove("groupExtentMap");
+        result.addProperty("instruction", "This is the latest working draft, NOT a final accepted city. Use submissionMode=DRAFT while adding or correcting districts; use FINAL after inspecting the complete design. "
                 + "For an intentional local design change use baseDraftHash with replace-only blueprintPatch; "
                 + "do not send baseBlueprintHash too. Preserve unaffected groups and generationSeed. "
                 + "Program-owned failure requires host diagnosis before retry; no blind redesign.");

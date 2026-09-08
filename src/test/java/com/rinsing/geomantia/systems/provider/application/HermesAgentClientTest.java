@@ -14,6 +14,23 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class HermesAgentClientTest {
+    @Test void continuationIncludesLatestDraftPreviewWithoutRepeatingCatalog() throws Exception {
+        java.nio.file.Path preview = java.nio.file.Files.createTempFile("city-draft-preview", ".png");
+        try {
+            java.nio.file.Files.write(preview,new byte[]{1,2,3});
+            JsonObject state = new JsonObject(); state.addProperty("contextId","ctx");
+            JsonObject catalog = new JsonObject(); catalog.addProperty("secretMarker","do-not-repeat-catalog");
+            state.add("preparedBlueprintContext",catalog);
+            JsonObject revision = new JsonObject(); revision.addProperty("baseDraftHash","new-draft");
+            revision.addProperty("compiledPreview",preview.toString()); state.add("revisionEvidence",revision);
+            var content = HermesAgentClient.continuationContent(state,List.of(preview));
+            org.junit.jupiter.api.Assertions.assertEquals(2,content.size());
+            org.junit.jupiter.api.Assertions.assertTrue(content.toString().contains("new-draft"));
+            org.junit.jupiter.api.Assertions.assertFalse(content.toString().contains("do-not-repeat-catalog"));
+            org.junit.jupiter.api.Assertions.assertTrue(content.toString().contains("image_url"));
+        } finally { java.nio.file.Files.deleteIfExists(preview); }
+    }
+
     @Test
     void sameFrozenContextContinuationDoesNotDuplicateCatalogOrImages() {
         JsonObject state = new JsonObject(); state.addProperty("contextId", "frozen");

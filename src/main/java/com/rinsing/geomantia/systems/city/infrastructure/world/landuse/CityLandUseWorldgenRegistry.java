@@ -227,6 +227,7 @@ public final class CityLandUseWorldgenRegistry {
             resetObsoleteState = true;
         }
         ACTIVE.clear();
+        SURFACE_PROTECTION.clear();
         ACTIVE.putAll(state.activePlans());
         PREPARED_CHUNK_CACHE.clear();
         STRUCTURE_TERRAIN_SESSIONS.clear();
@@ -599,6 +600,29 @@ public final class CityLandUseWorldgenRegistry {
         }
         return false;
     }
+
+    private static final Map<String, Map<Long, Integer>> SURFACE_PROTECTION = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public static boolean protectsFrozenSurface(String dimensionId, int x, int y, int z) {
+        for (ActivePlan active : activePlans(dimensionId(dimensionId))) {
+            if (!active.areaPlan().planningBounds().contains(x,z)) continue;
+            var print = active.surfacePrintPlan();
+            if (print == null) continue;
+            Map<Long,Integer> columns = SURFACE_PROTECTION.computeIfAbsent(print.cityId() + ":" + print.planHash(), ignored -> {
+                Map<Long,Integer> result = new java.util.HashMap<>();
+                for (var area : print.areas()) if (area.recipe() instanceof CityLandUseSurfacePrintPlan.UniformRecipe recipe)
+                    for (var span : recipe.platformSpans()) for (int bx=span.minX();bx<=span.maxX();bx++)
+                        result.put(surfaceColumn(bx,span.z()),span.targetY());
+                for (var feature : print.featureCells()) if (feature.targetSurfaceY() != null)
+                    result.put(surfaceColumn(feature.x(),feature.z()),feature.targetSurfaceY());
+                return Map.copyOf(result);
+            });
+            Integer target = columns.get(surfaceColumn(x,z));
+            if (target != null && y >= target - 1 && y <= target + 3) return true;
+        }
+        return false;
+    }
+    private static long surfaceColumn(int x, int z) { return ((long)x << 32) ^ (z & 0xffffffffL); }
 
     public static boolean suppressFeature(String dimensionId,
                                           ConfiguredFeature<?, ?> feature,
@@ -1160,6 +1184,7 @@ public final class CityLandUseWorldgenRegistry {
 
     static synchronized void resetForTests() {
         ACTIVE.clear();
+        SURFACE_PROTECTION.clear();
         cancelAllD7Backfills();
         IN_FLIGHT.clear();
         APPLIED_OWNER_KEYS.clear();

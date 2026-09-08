@@ -169,9 +169,9 @@ final class CityPlanningEndpointHandler {
                 contextId, input);
         JsonObject request = standaloneRequest("city_submit_d4_blueprint", runId, citySeedId);
         request.addProperty("contextId", contextId);
-        for (String key : java.util.List.of("cityBlueprint", "blueprintPatch", "baseBlueprintHash", "baseDraftHash", "proportionMode"))
+        for (String key : java.util.List.of("cityBlueprint", "blueprintPatch", "baseBlueprintHash", "baseDraftHash", "proportionMode", "submissionMode"))
             if (input.has(key)) request.add(key, input.get(key).deepCopy());
-        boolean accepted = booleanValue(response, "ok", false);
+        boolean accepted = booleanValue(response, "ok", false) && !booleanValue(response, "designInProgress", false);
         String nextAction = stringValue(response, "nextAction",
                 accepted ? "city_compile_d4_blueprint" : "city_submit_d4_blueprint");
         return recordStandaloneTestRunState(debugRoot, runId, citySeedId, request,

@@ -267,7 +267,23 @@ class CityLandUseSurfacePrintPlannerTest {
     }
 
     @Test
-    void freezesOneWholeMainRoadGradeAcrossManyOwnerChunks() {
+    void narrowAlleyDoesNotWriteCurbsIntoAdjacentBuildings() {
+        var road = new LandUseSourceResolver.RoadBand("alley", "network", "ENTRANCE_SHORT_ALLEY",
+                new BlockPoint(20, 18), new BlockPoint(30, 18), new BlockBounds(20, 18, 30, 18),
+                1, "SURFACE_ONLY");
+        var plan = new CityLandUseSurfacePrintPlanner().plan(areaPlan(), List.of(
+                group("farm_group", SurfacePolicy.CULTIVATE, new BlockBounds(12, 5, 14, 7)),
+                group("market_group", SurfacePolicy.PAVE, new BlockBounds(42, 2, 43, 3))),
+                terrain(new BlockBounds(0, 0, 63, 31), false), List.of(road), List.of(), List.of());
+        assertEquals(11, plan.featureCells().size());
+        assertTrue(plan.featureCells().stream().allMatch(cell -> cell.z() == 18
+                && cell.x() >= 20 && cell.x() <= 30
+                && cell.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"CITY_MAIN_ROAD", "SHARED_NETWORK_EXTENSION"})
+    void freezesWholeMainAndSecondaryRoadGradesAcrossManyOwnerChunks(String roadKind) {
         var baseTerrain = terrain(new BlockBounds(0, 0, 159, 63), false);
         var gradedTerrain = new LandUseTerrainField(baseTerrain.schema(), baseTerrain.cityId(),
                 baseTerrain.planningBounds(), baseTerrain.cellStepBlocks(), baseTerrain.cells().stream()
@@ -275,7 +291,7 @@ class CityLandUseSurfacePrintPlannerTest {
                         cell.blockMinZ(), cell.cellStepBlocks(), cell.blockMinX() < 72 ? 80 : 56,
                         0, 0, 0, false, 0, cell.waterDistance(), cell.biomeId(), "plain",
                         cell.landformPatchId(), true)).toList());
-        var road = new LandUseSourceResolver.RoadBand("long-main", "network", "CITY_MAIN_ROAD",
+        var road = new LandUseSourceResolver.RoadBand("long-main", "network", roadKind,
                 new BlockPoint(0, 48), new BlockPoint(144, 48), new BlockBounds(0, 45, 144, 51),
                 7, "STAIR_SLAB_STAIR");
         var plan = new CityLandUseSurfacePrintPlanner().plan(areaPlan(), List.of(

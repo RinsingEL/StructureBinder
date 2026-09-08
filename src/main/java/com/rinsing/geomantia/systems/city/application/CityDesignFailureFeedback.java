@@ -13,13 +13,57 @@ public final class CityDesignFailureFeedback {
         result.addProperty("reasonCode", reason);
         result.addProperty("capacityInsufficiencyProven", false);
         JsonArray failures = new JsonArray();
+        if (trace.has("compilationAcceptance")) {
+            JsonObject acceptance = trace.getAsJsonObject("compilationAcceptance");
+            for (JsonElement block : array(acceptance, "hardBlocks")) {
+                String message = block.getAsString();
+                JsonObject failure = new JsonObject();
+                failure.addProperty("message", message);
+                failure.addProperty("fieldPath", "$.groups");
+                failure.addProperty("jsonPointer", "/groups");
+                JsonArray affected = new JsonArray();
+                for (JsonElement entry : array(blueprint, "groups")) {
+                    String id = string(entry.getAsJsonObject(), "groupId");
+                    if (!id.isBlank() && message.contains(id)) affected.add(id);
+                }
+                failure.add("affectedGroupIds", affected);
+                JsonArray relations = array(blueprint, "relations");
+                for (int i = 0; i < relations.size(); i++) {
+                    JsonObject relation = relations.get(i).getAsJsonObject();
+                    if ("CONNECTION".equals(string(relation,"relationKind")) && message.contains(
+                            string(relation,"fromGroupId") + " -> " + string(relation,"toGroupId"))) {
+                        failure.addProperty("fieldPath", "$.relations[" + i + "]");
+                        failure.addProperty("jsonPointer", "/relations/" + i);
+                    }
+                }
+                if (trace.has("cityMainRoadPlan")) {
+                    JsonArray routes = new JsonArray();
+                    for (JsonElement edge : array(trace.getAsJsonObject("cityMainRoadPlan"), "skippedConnections")) {
+                        JsonObject e = edge.getAsJsonObject();
+                        if (message.contains(string(e,"fromGroupId") + " -> " + string(e,"toGroupId"))) routes.add(e.deepCopy());
+                    }
+                    failure.add("connectionFailures", routes);
+                }
+                failure.addProperty("instruction", "Current final blocker. Preserve successful buildings and other groups. "
+                        + "The host selects road connectors. Review only the affected destination/patch/layout constraints; "
+                        + "candidate search exhaustion does not prove a minimum size. No exact numeric correction is established.");
+                failures.add(failure);
+            }
+            result.add("failures", failures);
+            result.add("parameterAdjustments", new JsonArray());
+            result.addProperty("instruction", "Only final acceptance blockers are listed; earlier rejected candidates are not repair targets. "
+                    + "Use affectedGroupIds and connectionFailures to make a relevant local revision; retain unaffected design.");
+            return result;
+        }
         Set<String> failedKeys = new LinkedHashSet<>();
         JsonArray selections = array(trace, "selections");
         // Intermediate rejected slots may later succeed. Only final unsatisfied selections are failures.
         for (JsonElement value : selections) {
             JsonObject selection = value.getAsJsonObject();
-            if ("no_legal_candidate".equals(string(selection, "status")))
+            if ("no_legal_candidate".equals(string(selection, "status")) && !string(selection, "structureRef").isBlank())
                 failedKeys.add(string(selection, "groupId") + "\n" + string(selection, "structureRef"));
+            if (Set.of("committed", "selected").contains(string(selection, "status")))
+                failedKeys.remove(string(selection, "groupId") + "\n" + string(selection, "structureRef"));
         }
         for (String key : failedKeys) {
             String[] ids = key.split("\n", -1);
@@ -47,6 +91,14 @@ public final class CityDesignFailureFeedback {
                     for (JsonElement block : array(attempt, "hardBlocks")) blocks.add(block.getAsString());
                 }
             }
+            JsonArray adjustable = new JsonArray();
+            for (String field : List.of("preferredPatchRefs", "preferredPatchZone", "algorithmProfileRef", "densityClass", "terrainPolicy")) {
+                JsonObject parameter = new JsonObject();
+                parameter.addProperty("jsonPointer", "/groups/" + index + "/" + field);
+                parameter.addProperty("field", field);
+                adjustable.add(parameter);
+            }
+            failure.add("adjustableParameters", adjustable);
             failure.addProperty("attemptCount", attempts);
             failure.add("filterReasonCounts", counts);
             failure.add("positionSamples", samples);
@@ -57,7 +109,7 @@ public final class CityDesignFailureFeedback {
             failure.addProperty("instruction", "The solver found no placement for this required structure. "
                     + "These are rejected candidate positions, not proof that the district is too small. "
                     + "Preserve required content and unaffected groups. Do not guess a minimum width, enlarge "
-                    + "the city blindly, or change unrelated parameters; host diagnosis is required.");
+                    + "the city blindly, or change unrelated parameters. You may try a related patch, layout or spacing revision; no exact numeric solution is proven.");
             failures.add(failure);
         }
         result.add("failures", failures);
