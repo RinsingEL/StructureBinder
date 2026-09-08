@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "E:\Mod_Dev\StructureBinder\tools\city_templates\verify_validation_02_entrances.py", line 79, in <module>
+    print(json.dumps({"verified": verify(root)}, ensure_ascii=False, indent=2))
+                                  ^^^^^^^^^^^^
+  File "E:\Mod_Dev\StructureBinder\tools\city_templates\verify_validation_02_entrances.py", line 39, in verify
+    assert fountain.get("frontagePolicy") == "ANY_AUTHORED_ENTRANCE", "Approved fountain frontage policy regressed"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Approved fountain frontage policy regressed

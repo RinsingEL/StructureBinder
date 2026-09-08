@@ -172,11 +172,14 @@ public final class CityLandUseSurfacePrintPlanner {
             var kind = feature.kind();
             var facing = feature.facing();
             String block = feature.blockId();
+            int targetY = grade[index];
             if (kind == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB) {
                 int higher = index > 0 && grade[index-1] > grade[index] ? -1
                         : index + 1 < grade.length && grade[index+1] > grade[index] ? 1 : 0;
                 if (higher != 0) {
                     kind = CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR;
+                    // Full-height road slabs stand one block above grade; the stair must reach the higher deck.
+                    targetY++;
                     block = band.curbBlockId();
                     facing = horizontal ? higher > 0 ? CityLandUseSurfacePrintPlan.HorizontalFacing.EAST
                             : CityLandUseSurfacePrintPlan.HorizontalFacing.WEST
@@ -185,7 +188,7 @@ public final class CityLandUseSurfacePrintPlanner {
                 }
             }
             return new CityLandUseSurfacePrintPlan.FeatureCell(feature.sourceId(), feature.x(), feature.z(),
-                    block, feature.surfaceOffset(), kind, facing, grade[index]);
+                    block, feature.surfaceOffset(), kind, facing, targetY);
         }).toList();
     }
 

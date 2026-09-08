@@ -254,10 +254,12 @@ class CityLandUseChunkExecutorTest {
                 CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
 
         assertEquals(CityLandUseChunkExecutor.Status.APPLIED, result.status());
-        assertTrue(world.featureWrites.contains("4,64,8=ROAD_STAIR:EAST"));
-        assertTrue(world.featureWrites.contains("5,65,8=ROAD_STAIR:EAST"));
-        assertTrue(world.featureWrites.contains("6,66,8=ROAD_STAIR:EAST"));
-        assertTrue(world.featureWrites.contains("7,67,8=ROAD_STAIR:EAST"));
+        // Low deck top=65; first stair starts at 65.5 and last stair reaches high deck top=69.
+        assertTrue(world.featureWrites.contains("3,64,8=ROAD_SLAB:NONE"));
+        assertTrue(world.featureWrites.contains("4,65,8=ROAD_STAIR:EAST"));
+        assertTrue(world.featureWrites.contains("5,66,8=ROAD_STAIR:EAST"));
+        assertTrue(world.featureWrites.contains("6,67,8=ROAD_STAIR:EAST"));
+        assertTrue(world.featureWrites.contains("7,68,8=ROAD_STAIR:EAST"));
         assertTrue(world.featureWrites.contains("8,68,8=ROAD_SLAB:NONE"));
         assertTrue(world.writes.stream().anyMatch(write ->
                 write.startsWith("8,69,") && write.endsWith("=minecraft:stone_brick_wall")));

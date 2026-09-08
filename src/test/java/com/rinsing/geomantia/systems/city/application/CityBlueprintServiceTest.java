@@ -61,6 +61,44 @@ class CityBlueprintServiceTest {
         assertEquals(1, review.getAsJsonArray("unresolvedEntrances").size());
     }
 
+    @Test void repairMessagesPreserveAlgorithmAndLeadToValidDraft() throws Exception {
+        Fixture f = fixture("run_repair_advice", "city:repair_advice");
+        var service = validationService();
+        var prepared = service.prepare(temporary, f.runId(), f.cityId(), f.terraSenseSource(), f.templateSource(), f.referenceCatalog());
+        var design = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+        var first = design.getAsJsonArray("groups").get(0).getAsJsonObject();
+        first.addProperty("targetAreaShare", 0.5);
+        first.addProperty("algorithmProfileRef", "algorithm:center_symmetric");
+        var second = first.deepCopy();
+        second.addProperty("groupId", "second");
+        design.getAsJsonArray("groups").add(second);
+        addStructureGround(design, "second");
+        first.getAsJsonArray("requiredStructureRefs").add(first.getAsJsonArray("requiredStructureRefs").get(0));
+        design.add("relations", JsonParser.parseString("""
+                [{"fromGroupId":"civic","toGroupId":"second","relationKind":"ADJACENCY","strength":"SOFT","distancePreference":"NEAR"}]
+                """));
+        var landscape = landscapeWithFill("landscape:farmland_fenced", "fill:relay_irrigated_farmland",
+                "[{roleRef:'CULTIVATED',growthForm:'PATCH',targetShare:0.8},{roleRef:'BANK',growthForm:'CORRIDOR',targetShare:0.1},{roleRef:'WATER',growthForm:'CORRIDOR',targetShare:0.1}]",
+                "[{contentRef:'crop:wheat',weight:1}]");
+        design.getAsJsonObject("outdoorPlan").getAsJsonArray("landscapes").add(landscape);
+        landscape.addProperty("originMode", "FREE_STANDING");
+        var rejected = service.submit(temporary, f.runId(), f.cityId(), prepared.get("contextId").getAsString(), design);
+        String feedback = rejected.getAsJsonObject("validationReport").getAsJsonArray("issues").toString();
+        assertTrue(feedback.contains("Current requiredStructureRefs count=2"));
+        assertTrue(feedback.contains("Keep this algorithm"));
+        assertTrue(feedback.contains("Current CORE count=2"));
+        assertTrue(feedback.contains("set distancePreference=NONE"));
+        assertTrue(feedback.contains("Keep FREE_STANDING"));
+        assertTrue(feedback.contains("owner.groupId"));
+        // Follow the supplied repairs, retaining both groups and their symmetric algorithms.
+        first.getAsJsonArray("requiredStructureRefs").remove(1);
+        second.addProperty("priority", "STANDARD");
+        design.getAsJsonArray("relations").get(0).getAsJsonObject().addProperty("distancePreference", "NONE");
+        landscape.addProperty("originMode", "ATTACHED");
+        var repaired = service.submit(temporary, f.runId(), f.cityId(), prepared.get("contextId").getAsString(), design);
+        assertTrue(repaired.get("ok").getAsBoolean(), repaired.toString());
+    }
+
     @Test void malformedEnvelopeGetsTenCorrectionAttemptsWithoutConsumingDesignBudget() throws Exception {
         Fixture f = fixture("run_format", "city:format");
         var service = validationService();
@@ -68,6 +106,9 @@ class CityBlueprintServiceTest {
         String context = prepared.get("contextId").getAsString();
         for (int i = 1; i <= 10; i++) {
             var response = service.submitDesign(temporary, f.runId(), f.cityId(), context, new JsonObject());
+            assertTrue(response.get("instruction").getAsString().contains("including for FINAL"));
+            assertTrue(com.rinsing.geomantia.systems.provider.application.PlanningToolPresentation.compact(response)
+                    .getAsJsonObject().get("instruction").getAsString().contains("including for FINAL"));
             var budget = response.getAsJsonObject("formatRetryBudget");
             assertEquals(i, budget.get("failedAttempts").getAsInt());
             assertEquals(i < 10, budget.get("retryAllowed").getAsBoolean());

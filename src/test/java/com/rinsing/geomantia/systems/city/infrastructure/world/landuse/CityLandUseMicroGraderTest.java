@@ -294,7 +294,7 @@ class CityLandUseMicroGraderTest {
                 .filter(stair -> stair.mode() == CityLandUseMicroGrader.StairMode.DIRECT
                         && stair.z() == 8 && stair.x() >= 4 && stair.x() <= 7)
                 .toList();
-        assertEquals(List.of(64, 65, 66, 67), direct.stream()
+        assertEquals(List.of(65, 66, 67, 68), direct.stream()
                 .map(CityLandUseMicroGrader.StairDecision::targetY).toList());
         assertTrue(direct.stream().allMatch(stair ->
                 stair.facing() == CityLandUseSurfacePrintPlan.HorizontalFacing.EAST));
@@ -342,13 +342,13 @@ class CityLandUseMicroGraderTest {
                 .toList();
         assertEquals(7, split.size());
         assertTrue(split.stream().anyMatch(stair -> stair.x() == 7 && stair.z() == 8
-                && stair.targetY() == 67
+                && stair.targetY() == 68
                 && stair.facing() == CityLandUseSurfacePrintPlan.HorizontalFacing.EAST));
         assertTrue(split.stream().anyMatch(stair -> stair.x() == 7 && stair.z() == 5
-                && stair.targetY() == 64
+                && stair.targetY() == 65
                 && stair.facing() == CityLandUseSurfacePrintPlan.HorizontalFacing.SOUTH));
         assertTrue(split.stream().anyMatch(stair -> stair.x() == 7 && stair.z() == 11
-                && stair.targetY() == 64
+                && stair.targetY() == 65
                 && stair.facing() == CityLandUseSurfacePrintPlan.HorizontalFacing.NORTH));
     }
 
@@ -368,7 +368,7 @@ class CityLandUseMicroGraderTest {
                 stair.mode() == CityLandUseMicroGrader.StairMode.SPLIT).toList();
         assertEquals(4, stairs.size());
         assertTrue(stairs.stream().allMatch(stair -> stair.z() >= 8));
-        assertTrue(stairs.stream().anyMatch(stair -> stair.z() == 11 && stair.targetY() == 64));
+        assertTrue(stairs.stream().anyMatch(stair -> stair.z() == 11 && stair.targetY() == 65));
     }
 
     @Test

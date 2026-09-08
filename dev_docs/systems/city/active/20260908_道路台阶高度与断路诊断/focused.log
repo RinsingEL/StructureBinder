@@ -1,0 +1,63 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.8/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :
+MixinGradle did not locate the diffplug APT plugin, skipping eclipse task configuration
+
+> Task :downloadMcpConfig
+> Task :extractSrg UP-TO-DATE
+> Task :createMcpToSrg UP-TO-DATE
+> Task :compileJava UP-TO-DATE
+
+> Task :bundleCountryDesignerMcp
+
+> country_designer_mcp@1.0.0 bundle
+> npm run build && esbuild dist/index.js --bundle --platform=node --format=esm --banner:js="import { createRequire } from 'module'; const require = createRequire(import.meta.url);" --outfile=dist/geomantia-mcp-bundle.mjs
+
+
+> country_designer_mcp@1.0.0 build
+> tsc
+
+
+  dist\geomantia-mcp-bundle.mjs  1.2mb
+
+Done in 109ms
+
+> Task :processResources
+> Task :classes
+
+> Task :compileTestJava
+C:\Users\Rinsing\.codex\worktrees\5e7a\StructureBinder\src\test\java\com\rinsing\geomantia\systems\city\infrastructure\world\CityTemplateAvailabilityPreflightTest.java:24: ����: [removal] ResourceLocation �е� ResourceLocation(String,String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+        values.put(new ResourceLocation("geomantia", "city/test/house"),
+                   ^
+1 ������
+
+> Task :processTestResources
+> Task :testClasses
+
+> Task :test
+
+CityLandUseChunkExecutorTest > replacesRoadSlabsWithAscendingPlatformStairsAtTerrainStep() FAILED
+    org.opentest4j.AssertionFailedError at CityLandUseChunkExecutorTest.java:257
+
+62 tests completed, 1 failed
+
+> Task :test FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':test'.
+> There were failing tests. See the report at: file:///C:/Users/Rinsing/.codex/worktrees/5e7a/StructureBinder/build/reports/tests/test/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.8/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 33s
+9 actionable tasks: 6 executed, 3 up-to-date

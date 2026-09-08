@@ -1,0 +1,20 @@
+[
+  {
+    "bundle": "D:\\PCL2-2.8.12\\.minecraft\\versions\\1.20.1-Forge_47.4.23\\config\\structureTemplate\\terrasense\\template_cfg",
+    "templateRef": "geomantia:city/trek_v3/village/plains/houses/plains_big_house_1",
+    "catalogSha256": "sha256:b3c46f21e8e509464c28c1247d2deffb4d78d91282c7d65d82ddcacb3151ef9f",
+    "verifiedDoorPaths": 2
+  },
+  {
+    "bundle": "run\\config\\structureTemplate\\terrasense\\geomantia_trek_v3_stubbs_selected_20260804",
+    "templateRef": "geomantia:city/trek_v3/village/plains/houses/plains_big_house_1",
+    "catalogSha256": "sha256:176b52a6bd8709bfc1a814e8bfff1b0bc421d63cfc0b6e48af36ed8490e3219d",
+    "verifiedDoorPaths": 2
+  },
+  {
+    "bundle": "run\\config\\structureTemplate\\terrasense\\pcl_validation_02",
+    "templateRef": "geomantia:city/trek_v3/village/plains/houses/plains_big_house_1",
+    "catalogSha256": "sha256:b3c46f21e8e509464c28c1247d2deffb4d78d91282c7d65d82ddcacb3151ef9f",
+    "verifiedDoorPaths": 2
+  }
+]

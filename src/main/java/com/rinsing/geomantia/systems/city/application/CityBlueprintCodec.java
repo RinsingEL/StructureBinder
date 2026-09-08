@@ -401,7 +401,7 @@ public final class CityBlueprintCodec {
 
     private static String poolReference(JsonObject item, String single, String multiple, String path) {
         if (item.has(single) == item.has(multiple))
-            throw new IllegalArgumentException(path + ": provide exactly one of " + single + " or " + multiple);
+            throw new IllegalArgumentException(path + ": provide exactly one of " + single + " or " + multiple + ". For one pool keep only the scalar reference; for weighted choices keep only the non-empty pool list. Remove the other field, not the building group.");
         return item.has(single) ? requiredString(item, single, path + "." + single)
                 : weightedPools(item, multiple, path).get(0).poolRef();
     }
@@ -409,7 +409,7 @@ public final class CityBlueprintCodec {
     private static List<CityBlueprint.WeightedPool> weightedPools(JsonObject item, String field, String path) {
         if (!item.has(field)) return List.of();
         JsonArray array = item.getAsJsonArray(field);
-        if (array.isEmpty()) throw new IllegalArgumentException(path + "." + field + " must not be empty");
+        if (array.isEmpty()) throw new IllegalArgumentException(path + "." + field + " must not be empty; add at least one {poolRef, weight} entry from the frozen fill-pool catalog with weight > 0");
         List<CityBlueprint.WeightedPool> result = new ArrayList<>();
         Set<String> seen = new java.util.HashSet<>();
         for (int i = 0; i < array.size(); i++) {
@@ -418,10 +418,10 @@ public final class CityBlueprintCodec {
             exactFields(value, Set.of("poolRef", "weight"), at);
             String ref = requiredString(value, "poolRef", at + ".poolRef");
             if (!value.get("weight").isJsonPrimitive() || !value.getAsJsonPrimitive("weight").isNumber())
-                throw new IllegalArgumentException(at + ".weight must be a number");
+                throw new IllegalArgumentException(at + ".weight must be a JSON number, not a string; use a positive relative weight such as 1");
             double weight = value.get("weight").getAsDouble();
             if (!Double.isFinite(weight) || weight <= 0 || !seen.add(ref))
-                throw new IllegalArgumentException(at + ": weight must be positive and finite; pools must be unique");
+                throw new IllegalArgumentException(at + ": weight must be positive and finite; pools must be unique. Replace invalid weights with positive numbers; merge duplicate poolRef entries by adding their weights.");
             result.add(new CityBlueprint.WeightedPool(ref, weight));
         }
         return List.copyOf(result);
@@ -503,7 +503,7 @@ public final class CityBlueprintCodec {
             return Enum.valueOf(type, value);
         } catch (IllegalArgumentException exception) {
             fail(CityBlueprintReasonCode.CITY_BLUEPRINT_ENUM_UNSUPPORTED, path + "." + key,
-                    "Unsupported enum value: " + value);
+                    "Unsupported enum value: " + value + ". Replace only this field with one of " + java.util.Arrays.toString(type.getEnumConstants()));
             return null;
         }
     }
@@ -521,14 +521,14 @@ public final class CityBlueprintCodec {
         for (String key : object.keySet()) {
             if (!expected.contains(key)) {
                 fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_UNKNOWN, path + "." + key,
-                        "Unknown field: " + key);
+                        "Unknown field: " + key + ". Remove or correct only this field; allowed fields here: " + new java.util.TreeSet<>(expected));
             }
         }
         for (String key : expected) {
             if (optional.contains(key)) continue;
             if (!object.has(key) || object.get(key).isJsonNull()) {
                 fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path + "." + key,
-                        "Required field is missing: " + key);
+                        "Required field is missing: " + key + ". Add it at this object using the current schema; copy profile/reference IDs from the frozen catalog. Keep other design choices unchanged.");
             }
         }
     }
@@ -541,7 +541,7 @@ public final class CityBlueprintCodec {
     private static Boolean optionalBoolean(JsonObject object, String key, String path) {
         if (!object.has(key)) return null;
         if (!object.get(key).isJsonPrimitive() || !object.getAsJsonPrimitive(key).isBoolean()) {
-            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path, "A boolean is required.");
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path, "Set this field to JSON true or false, without quotes; null and strings are not accepted.");
         }
         return object.get(key).getAsBoolean();
     }
@@ -549,28 +549,28 @@ public final class CityBlueprintCodec {
     private static boolean requiredBoolean(JsonObject object, String key, String path) {
         Boolean value = optionalBoolean(object, key, path);
         if (value == null) {
-            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path, "A boolean is required.");
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path, "Set this field to JSON true or false, without quotes; null and strings are not accepted.");
         }
         return value;
     }
 
     private static JsonObject requiredObject(JsonObject object, String key, String path) {
         if (!object.has(key) || !object.get(key).isJsonObject()) {
-            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path, key + " object is required.");
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path, key + " must be a JSON object. Supply its fields from the current schema, not a quoted JSON string or array.");
         }
         return object.getAsJsonObject(key);
     }
 
     private static JsonArray requiredArray(JsonObject object, String key, String path) {
         if (!object.has(key) || !object.get(key).isJsonArray()) {
-            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path, key + " array is required.");
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path, key + " must be a JSON array. Supply array entries according to the current schema, not a quoted JSON string or object.");
         }
         return object.getAsJsonArray(key);
     }
 
     private static JsonObject objectElement(JsonElement element, String path) {
         if (!element.isJsonObject()) {
-            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_JSON_INVALID, path, "Expected an object.");
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_JSON_INVALID, path, "Replace this array entry with a JSON object containing the schema fields, not a scalar or array.");
         }
         return element.getAsJsonObject();
     }
@@ -578,7 +578,7 @@ public final class CityBlueprintCodec {
     private static String requiredString(JsonObject object, String key, String path) {
         if (!object.has(key) || !object.get(key).isJsonPrimitive()
                 || !object.getAsJsonPrimitive(key).isString() || object.get(key).getAsString().isBlank()) {
-            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path, "A non-empty string is required.");
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path, "Supply a non-empty JSON string at this field; use an existing frozen reference for reference fields.");
         }
         return object.get(key).getAsString().trim();
     }
@@ -587,12 +587,12 @@ public final class CityBlueprintCodec {
         if (!object.has(key) || !object.get(key).isJsonPrimitive()
                 || !object.getAsJsonPrimitive(key).isNumber()) {
             fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path,
-                    "A positive finite number is required.");
+                    "Set this field to a finite JSON number greater than 0 (for example 1), without quotes; zero and negative values are invalid.");
         }
         double value = object.get(key).getAsDouble();
         if (!Double.isFinite(value) || value <= 0.0) {
             fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path,
-                    "A positive finite number is required.");
+                    "Set this field to a finite JSON number greater than 0 (for example 1), without quotes; zero and negative values are invalid.");
         }
         return value;
     }
@@ -646,7 +646,7 @@ public final class CityBlueprintCodec {
             if (!item.isJsonPrimitive() || !item.getAsJsonPrimitive().isString()
                     || item.getAsString().isBlank()) {
                 fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path + "[" + index + "]",
-                        "A non-empty string is required.");
+                        "Supply a non-empty JSON string at this field; use an existing frozen reference for reference fields.");
             }
             values.add(item.getAsString().trim());
         }

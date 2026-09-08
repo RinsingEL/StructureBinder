@@ -273,6 +273,7 @@ public final class CityBlueprintService {
             JsonObject response = new JsonObject();
             response.addProperty("ok", false);
             response.addProperty("error", ex.getMessage() == null ? "CITY_BLUEPRINT_JSON_INVALID" : ex.getMessage());
+            response.addProperty("instruction", CityBlueprintSubmissionGuidance.instruction(response.get("error").getAsString()));
             response.addProperty("nextAction", "city_submit_d4_blueprint");
             CitySubmissionFormatBudget.attach(outputDir, contextId, response, response.get("error").getAsString());
             if (response.get("error").getAsString().contains("STALE")) attachCurrentRevision(outputDir, contextId, cityId, response);

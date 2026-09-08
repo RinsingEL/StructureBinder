@@ -1,0 +1,264 @@
+{
+  "location": [
+    791,
+    67,
+    4062
+  ],
+  "plannedFeatures": [
+    {
+      "sourceId": "g_scholarly_core::COMPACT_BLOCK_SKELETON::segment_001::detour_4",
+      "x": 791,
+      "z": 4059,
+      "blockId": "minecraft:mud_brick_stairs",
+      "surfaceOffset": 0,
+      "kind": "ROAD_STAIR",
+      "facing": "NORTH",
+      "targetSurfaceY": 64
+    },
+    {
+      "sourceId": "g_scholarly_core::COMPACT_BLOCK_SKELETON::segment_001::detour_4",
+      "x": 791,
+      "z": 4060,
+      "blockId": "minecraft:mud_brick_slab",
+      "surfaceOffset": 0,
+      "kind": "ROAD_SLAB",
+      "facing": "NONE",
+      "targetSurfaceY": 64
+    },
+    {
+      "sourceId": "g_scholarly_core::COMPACT_BLOCK_SKELETON::segment_001::detour_4",
+      "x": 791,
+      "z": 4061,
+      "blockId": "minecraft:mud_brick_slab",
+      "surfaceOffset": 0,
+      "kind": "ROAD_SLAB",
+      "facing": "NONE",
+      "targetSurfaceY": 64
+    },
+    {
+      "sourceId": "g_scholarly_core::COMPACT_BLOCK_SKELETON::segment_001::detour_4",
+      "x": 791,
+      "z": 4062,
+      "blockId": "minecraft:mud_brick_slab",
+      "surfaceOffset": 0,
+      "kind": "ROAD_SLAB",
+      "facing": "NONE",
+      "targetSurfaceY": 64
+    },
+    {
+      "sourceId": "g_scholarly_core::COMPACT_BLOCK_SKELETON::segment_001::detour_4",
+      "x": 791,
+      "z": 4063,
+      "blockId": "minecraft:mud_brick_slab",
+      "surfaceOffset": 0,
+      "kind": "ROAD_SLAB",
+      "facing": "NONE",
+      "targetSurfaceY": 64
+    },
+    {
+      "sourceId": "g_scholarly_core::COMPACT_BLOCK_SKELETON::segment_001::detour_4",
+      "x": 791,
+      "z": 4064,
+      "blockId": "minecraft:mud_brick_slab",
+      "surfaceOffset": 0,
+      "kind": "ROAD_SLAB",
+      "facing": "NONE",
+      "targetSurfaceY": 64
+    },
+    {
+      "sourceId": "g_scholarly_core::COMPACT_BLOCK_SKELETON::segment_001::detour_3",
+      "x": 791,
+      "z": 4065,
+      "blockId": "minecraft:mud_brick_stairs",
+      "surfaceOffset": 0,
+      "kind": "ROAD_STAIR",
+      "facing": "EAST"
+    },
+    {
+      "sourceId": "g_scholarly_core::COMPACT_BLOCK_SKELETON::segment_001::detour_3",
+      "x": 791,
+      "z": 4066,
+      "blockId": "minecraft:mud_brick_stairs",
+      "surfaceOffset": 0,
+      "kind": "ROAD_STAIR",
+      "facing": "EAST"
+    }
+  ],
+  "savedColumns": [
+    {
+      "x": 791,
+      "z": 4058,
+      "blocks": {
+        "62": "minecraft:diorite",
+        "63": "minecraft:dirt",
+        "64": "minecraft:dirt",
+        "65": "minecraft:dirt",
+        "66": "minecraft:grass_block",
+        "67": "minecraft:air",
+        "68": "minecraft:air"
+      }
+    },
+    {
+      "x": 791,
+      "z": 4059,
+      "blocks": {
+        "62": "minecraft:dirt",
+        "63": "minecraft:dirt",
+        "64": "minecraft:dirt",
+        "65": "minecraft:dirt",
+        "66": "minecraft:grass_block",
+        "67": "minecraft:air",
+        "68": "minecraft:air"
+      }
+    },
+    {
+      "x": 791,
+      "z": 4060,
+      "blocks": {
+        "62": "minecraft:diorite",
+        "63": "minecraft:dirt",
+        "64": "minecraft:dirt",
+        "65": "minecraft:dirt",
+        "66": "minecraft:grass_block",
+        "67": "minecraft:air",
+        "68": "minecraft:air"
+      }
+    },
+    {
+      "x": 791,
+      "z": 4061,
+      "blocks": {
+        "62": "minecraft:diorite",
+        "63": "minecraft:dirt",
+        "64": "minecraft:dirt",
+        "65": "minecraft:dirt",
+        "66": "minecraft:grass_block",
+        "67": "minecraft:air",
+        "68": "minecraft:air"
+      }
+    },
+    {
+      "x": 791,
+      "z": 4062,
+      "blocks": {
+        "62": "minecraft:dirt",
+        "63": "minecraft:dirt",
+        "64": "minecraft:dirt",
+        "65": "minecraft:dirt",
+        "66": "minecraft:grass_block",
+        "67": "minecraft:air",
+        "68": "minecraft:tall_grass"
+      }
+    },
+    {
+      "x": 791,
+      "z": 4063,
+      "blocks": {
+        "62": "minecraft:diorite",
+        "63": "minecraft:dirt",
+        "64": "minecraft:dirt",
+        "65": "minecraft:dirt",
+        "66": "minecraft:grass_block",
+        "67": "minecraft:air",
+        "68": "minecraft:air"
+      }
+    },
+    {
+      "x": 791,
+      "z": 4064,
+      "blocks": {
+        "62": "minecraft:diorite",
+        "63": "minecraft:dirt",
+        "64": "minecraft:mud_brick_slab",
+        "65": "minecraft:air",
+        "66": "minecraft:air",
+        "67": "minecraft:air",
+        "68": "minecraft:air"
+      }
+    },
+    {
+      "x": 791,
+      "z": 4065,
+      "blocks": {
+        "62": "minecraft:diorite",
+        "63": "minecraft:dirt",
+        "64": "minecraft:dirt",
+        "65": "minecraft:dirt",
+        "66": "minecraft:mud_brick_stairs",
+        "67": "minecraft:air",
+        "68": "minecraft:air"
+      }
+    },
+    {
+      "x": 791,
+      "z": 4066,
+      "blocks": {
+        "62": "minecraft:diorite",
+        "63": "minecraft:dirt",
+        "64": "minecraft:dirt",
+        "65": "minecraft:dirt",
+        "66": "minecraft:mud_brick_stairs",
+        "67": "minecraft:air",
+        "68": "minecraft:air"
+      }
+    }
+  ],
+  "applicationLedger": [
+    {
+      "dimensionId": "minecraft:overworld",
+      "cityId": "city_sahra_valdoran_library_qasr_ilm",
+      "areaPlanHash": "8fcc2aa083f0bbe341423fb1eb6c16e81fe044067aba4f83a9ced3b03ba283d5",
+      "surfacePrintPlanHash": "d1462d38e60621d067ae6682439411c4d8828aa35188cf5eb4af95288567b429",
+      "paletteHash": "sha256:0e99259b3ab5f9a08ec6cbe3587a1a5c29885be5c90a9bd711145c6f865f2471",
+      "chunkX": 49,
+      "chunkZ": 254,
+      "surfaceOperationCount": 105,
+      "boundaryOperationCount": 14,
+      "featureOperationCount": 128,
+      "appliedOperationCount": 325,
+      "preparedBaseOperationCount": 311,
+      "appliedBaseOperationCount": 311,
+      "preparedCropOperationCount": 0,
+      "appliedCropOperationCount": 0,
+      "preparedBoundaryOperationCount": 14,
+      "appliedBoundaryOperationCount": 14,
+      "naturalSurfaceSkippedCount": 0,
+      "occupiedBoundarySkippedCount": 0,
+      "foundationDiagnostics": {
+        "purposeAnchorCount": 4,
+        "accessDemandCount": 4,
+        "accessPathCellCount": 0,
+        "stairCellCount": 0,
+        "terraceEdgePlannedCount": 14,
+        "terraceEdgePreparedCount": 14,
+        "terraceRailingPreparedCount": 14,
+        "terraceGreeneryPreparedCount": 0,
+        "terraceEdgeOccupiedSkippedCount": 0,
+        "platformAdjustments": [],
+        "accessOutcomes": [
+          {
+            "demandId": "g_scholarly_core_connectivity_004::trek_v3_desert_medium_house_2_west_01",
+            "status": "LEVEL_ACCESS",
+            "reasonCode": "CITY_LAND_USE_ACCESS_NO_LEVEL_CHANGE"
+          },
+          {
+            "demandId": "g_scholarly_core_connectivity_009::trek_v3_desert_toolsmith_1_west_01",
+            "status": "LEVEL_ACCESS",
+            "reasonCode": "CITY_LAND_USE_ACCESS_NO_LEVEL_CHANGE"
+          },
+          {
+            "demandId": "g_scholarly_core_required_001::trek_v3_desert_library_1_west_01",
+            "status": "LEVEL_ACCESS",
+            "reasonCode": "CITY_LAND_USE_ACCESS_NO_LEVEL_CHANGE"
+          },
+          {
+            "demandId": "g_scholarly_core_required_003::trek_v3_desert_temple_1_west_01",
+            "status": "LEVEL_ACCESS",
+            "reasonCode": "CITY_LAND_USE_ACCESS_NO_LEVEL_CHANGE"
+          }
+        ]
+      },
+      "appliedAt": "2026-09-08T12:19:21.923822900Z"
+    }
+  ]
+}

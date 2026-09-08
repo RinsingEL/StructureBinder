@@ -110,6 +110,13 @@ public final class CityDesignFailureFeedback {
                     + "These are rejected candidate positions, not proof that the district is too small. "
                     + "Preserve required content and unaffected groups. Do not guess a minimum width, enlarge "
                     + "the city blindly, or change unrelated parameters. You may try a related patch, layout or spacing revision; no exact numeric solution is proven.");
+            String frontage = frontageBlock(hardBlocks);
+            if (!frontage.isBlank()) {
+                failure.add("adjustableParameters", new JsonArray());
+                failure.addProperty("failureOwner", "program");
+                failure.addProperty("message", frontage);
+                failure.addProperty("instruction", frontageInstruction());
+            }
             failures.add(failure);
         }
         result.add("failures", failures);
@@ -118,6 +125,33 @@ public final class CityDesignFailureFeedback {
                 + "Empty parameterAdjustments means no proven parameter correction is available, not permission "
                 + "to invent one. The full trace is archival; use this inline evidence without filesystem access.");
         return result;
+    }
+
+    static String frontageBlock(JsonElement value) {
+        if (value == null || value.isJsonNull()) return "";
+        if (value.isJsonPrimitive()) {
+            String text = value.getAsString();
+            return text.startsWith("D4_ARRAY_LAYOUT_FRONTAGE_ENTRANCE_AMBIGUOUS:") ? text : "";
+        }
+        Iterable<JsonElement> children = value.isJsonArray() ? value.getAsJsonArray()
+                : value.getAsJsonObject().entrySet().stream().map(Map.Entry::getValue).toList();
+        for (JsonElement child : children) {
+            String block = frontageBlock(child);
+            if (!block.isBlank()) return block;
+        }
+        return "";
+    }
+
+    static String frontageInstruction() {
+        return "Template frontage metadata is ambiguous. The host/template author must specify frontageEntranceId "
+                + "from the authored entrances, or explicitly approve frontagePolicy=ANY_AUTHORED_ENTRANCE. "
+                + "Changing district area, patch, spacing or array algorithm cannot repair this metadata. "
+                + "Preserve the design and resume after metadata repair; do not retry unchanged placement.";
+    }
+
+    static boolean allAttemptsHaveAmbiguousFrontage(JsonArray attempts) {
+        return !attempts.isEmpty() && attempts.asList().stream().allMatch(attempt ->
+                !frontageBlock(array(attempt.getAsJsonObject(), "hardBlocks")).isBlank());
     }
 
     private static int groupIndex(JsonObject blueprint, String id) {

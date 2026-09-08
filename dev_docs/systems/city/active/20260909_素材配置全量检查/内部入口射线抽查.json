@@ -1,0 +1,823 @@
+[
+  {
+    "templateId": "geomantia:city/stubbs/agriculture/farm_storage_house_01",
+    "size": [
+      19,
+      17,
+      29
+    ],
+    "ray": [
+      {
+        "xz": [
+          9,
+          13
+        ],
+        "y0to4": [
+          "spruce_planks",
+          "spruce_planks",
+          "spruce_door",
+          "spruce_door",
+          "spruce_trapdoor"
+        ]
+      },
+      {
+        "xz": [
+          9,
+          14
+        ],
+        "y0to4": [
+          "spruce_planks",
+          "spruce_planks",
+          "air",
+          "air",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          9,
+          15
+        ],
+        "y0to4": [
+          "spruce_planks",
+          "spruce_planks",
+          "air",
+          "air",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          9,
+          16
+        ],
+        "y0to4": [
+          "spruce_planks",
+          "spruce_planks",
+          "air",
+          "air",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          9,
+          17
+        ],
+        "y0to4": [
+          "spruce_planks",
+          "spruce_planks",
+          "air",
+          "air",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          9,
+          18
+        ],
+        "y0to4": [
+          "spruce_planks",
+          "spruce_planks",
+          "air",
+          "air",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          9,
+          19
+        ],
+        "y0to4": [
+          "spruce_planks",
+          "spruce_planks",
+          "air",
+          "air",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          9,
+          20
+        ],
+        "y0to4": [
+          "spruce_planks",
+          "spruce_planks",
+          "air",
+          "air",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          9,
+          21
+        ],
+        "y0to4": [
+          "spruce_planks",
+          "spruce_planks",
+          "air",
+          "air",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          9,
+          22
+        ],
+        "y0to4": [
+          "spruce_planks",
+          "spruce_planks",
+          "air",
+          "air",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          9,
+          23
+        ],
+        "y0to4": [
+          "spruce_planks",
+          "spruce_planks",
+          "spruce_door",
+          "spruce_door",
+          "white_wool"
+        ]
+      },
+      {
+        "xz": [
+          9,
+          24
+        ],
+        "y0to4": [
+          "spruce_planks",
+          "spruce_planks",
+          "air",
+          "air",
+          "spruce_trapdoor"
+        ]
+      },
+      {
+        "xz": [
+          9,
+          25
+        ],
+        "y0to4": [
+          "spruce_planks",
+          "spruce_planks",
+          "air",
+          "air",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          9,
+          26
+        ],
+        "y0to4": [
+          "spruce_planks",
+          "spruce_planks",
+          "air",
+          "air",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          9,
+          27
+        ],
+        "y0to4": [
+          "spruce_planks",
+          "spruce_slab",
+          "air",
+          "air",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          9,
+          28
+        ],
+        "y0to4": [
+          "dirt_path",
+          "air",
+          "air",
+          "air",
+          "air"
+        ]
+      }
+    ]
+  },
+  {
+    "templateId": "geomantia:city/stubbs/agriculture/horse_stall_02",
+    "size": [
+      21,
+      16,
+      32
+    ],
+    "ray": [
+      {
+        "xz": [
+          8,
+          22
+        ],
+        "y0to4": [
+          "spruce_planks",
+          "hay_block",
+          "spruce_fence_gate",
+          "spruce_fence",
+          "spruce_trapdoor"
+        ]
+      },
+      {
+        "xz": [
+          8,
+          23
+        ],
+        "y0to4": [
+          "spruce_planks",
+          "spruce_planks",
+          "air",
+          "air",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          8,
+          24
+        ],
+        "y0to4": [
+          "spruce_planks",
+          "spruce_planks",
+          "air",
+          "air",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          8,
+          25
+        ],
+        "y0to4": [
+          "spruce_planks",
+          "spruce_planks",
+          "stripped_spruce_log",
+          "stripped_spruce_log",
+          "stripped_spruce_log"
+        ]
+      },
+      {
+        "xz": [
+          8,
+          26
+        ],
+        "y0to4": [
+          "spruce_planks",
+          "spruce_log",
+          "spruce_log",
+          "spruce_log",
+          "spruce_log"
+        ]
+      },
+      {
+        "xz": [
+          8,
+          27
+        ],
+        "y0to4": [
+          "spruce_planks",
+          "spruce_planks",
+          "air",
+          "air",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          8,
+          28
+        ],
+        "y0to4": [
+          "spruce_planks",
+          "spruce_planks",
+          "air",
+          "air",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          8,
+          29
+        ],
+        "y0to4": [
+          "spruce_planks",
+          "spruce_planks",
+          "air",
+          "air",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          8,
+          30
+        ],
+        "y0to4": [
+          "spruce_planks",
+          "spruce_log",
+          "spruce_log",
+          "cobblestone_wall",
+          "spruce_fence"
+        ]
+      },
+      {
+        "xz": [
+          8,
+          31
+        ],
+        "y0to4": [
+          "dirt_path",
+          "air",
+          "air",
+          "air",
+          "air"
+        ]
+      }
+    ]
+  },
+  {
+    "templateId": "geomantia:city/stubbs/civic/guard_outpost_01",
+    "size": [
+      26,
+      48,
+      31
+    ],
+    "ray": [
+      {
+        "xz": [
+          19,
+          9
+        ],
+        "y0to4": [
+          "stone_stairs",
+          "brick_slab",
+          "air",
+          "stone_bricks",
+          "stone"
+        ]
+      },
+      {
+        "xz": [
+          20,
+          9
+        ],
+        "y0to4": [
+          "air",
+          "air",
+          "air",
+          "air",
+          "stone_bricks"
+        ]
+      },
+      {
+        "xz": [
+          21,
+          9
+        ],
+        "y0to4": [
+          "air",
+          "air",
+          "air",
+          "air",
+          "smooth_stone_slab"
+        ]
+      },
+      {
+        "xz": [
+          22,
+          9
+        ],
+        "y0to4": [
+          "air",
+          "air",
+          "air",
+          "air",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          23,
+          9
+        ],
+        "y0to4": [
+          "air",
+          "air",
+          "air",
+          "air",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          24,
+          9
+        ],
+        "y0to4": [
+          "air",
+          "air",
+          "air",
+          "air",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          25,
+          9
+        ],
+        "y0to4": [
+          "air",
+          "air",
+          "air",
+          "air",
+          "air"
+        ]
+      }
+    ]
+  },
+  {
+    "templateId": "geomantia:city/stubbs/commercial/motel_01",
+    "size": [
+      30,
+      12,
+      16
+    ],
+    "ray": [
+      {
+        "xz": [
+          26,
+          8
+        ],
+        "y0to4": [
+          "dirt",
+          "dirt",
+          "stripped_spruce_log",
+          "cobblestone",
+          "spruce_door"
+        ]
+      },
+      {
+        "xz": [
+          27,
+          8
+        ],
+        "y0to4": [
+          "dirt",
+          "dirt",
+          "stripped_spruce_log",
+          "cobblestone",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          28,
+          8
+        ],
+        "y0to4": [
+          "dirt",
+          "dirt",
+          "dirt",
+          "cobblestone",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          29,
+          8
+        ],
+        "y0to4": [
+          "dirt",
+          "dirt",
+          "dirt",
+          "cobblestone_stairs",
+          "cobblestone_slab"
+        ]
+      }
+    ]
+  },
+  {
+    "templateId": "geomantia:city/stubbs/commercial/town_workshop_01",
+    "size": [
+      14,
+      12,
+      11
+    ],
+    "ray": [
+      {
+        "xz": [
+          11,
+          4
+        ],
+        "y0to4": [
+          "light_gray_terracotta",
+          "spruce_door",
+          "spruce_door",
+          "spruce_trapdoor",
+          "stripped_spruce_log"
+        ]
+      },
+      {
+        "xz": [
+          11,
+          5
+        ],
+        "y0to4": [
+          "light_gray_terracotta",
+          "air",
+          "air",
+          "spruce_trapdoor",
+          "jungle_trapdoor"
+        ]
+      },
+      {
+        "xz": [
+          11,
+          6
+        ],
+        "y0to4": [
+          "light_gray_terracotta",
+          "air",
+          "air",
+          "spruce_trapdoor",
+          "stripped_spruce_log"
+        ]
+      },
+      {
+        "xz": [
+          11,
+          7
+        ],
+        "y0to4": [
+          "light_gray_terracotta",
+          "barrel",
+          "air",
+          "spruce_trapdoor",
+          "jungle_trapdoor"
+        ]
+      },
+      {
+        "xz": [
+          11,
+          8
+        ],
+        "y0to4": [
+          "light_gray_terracotta",
+          "barrel",
+          "barrel",
+          "spruce_trapdoor",
+          "stripped_spruce_log"
+        ]
+      },
+      {
+        "xz": [
+          11,
+          9
+        ],
+        "y0to4": [
+          "stone",
+          "andesite",
+          "stone",
+          "stone",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          11,
+          10
+        ],
+        "y0to4": [
+          "cobblestone_stairs",
+          "air",
+          "air",
+          "air",
+          "air"
+        ]
+      }
+    ]
+  },
+  {
+    "templateId": "geomantia:city/trek/defense/mangrove_watchtower_1",
+    "size": [
+      12,
+      12,
+      11
+    ],
+    "ray": [
+      {
+        "xz": [
+          6,
+          4
+        ],
+        "y0to4": [
+          "grass_block",
+          "grass",
+          "omitted",
+          "mangrove_log",
+          "mangrove_door"
+        ]
+      },
+      {
+        "xz": [
+          6,
+          3
+        ],
+        "y0to4": [
+          "grass_block",
+          "omitted",
+          "omitted",
+          "packed_mud",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          6,
+          2
+        ],
+        "y0to4": [
+          "grass_block",
+          "grass",
+          "omitted",
+          "mud_bricks",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          6,
+          1
+        ],
+        "y0to4": [
+          "grass_block",
+          "omitted",
+          "omitted",
+          "mangrove_log",
+          "potted_mangrove_propagule"
+        ]
+      },
+      {
+        "xz": [
+          6,
+          0
+        ],
+        "y0to4": [
+          "grass_block",
+          "omitted",
+          "omitted",
+          "omitted",
+          "omitted"
+        ]
+      }
+    ]
+  },
+  {
+    "templateId": "geomantia:city/trek/defense/mangrove_watchtower_2",
+    "size": [
+      12,
+      23,
+      11
+    ],
+    "ray": [
+      {
+        "xz": [
+          6,
+          4
+        ],
+        "y0to4": [
+          "grass_block",
+          "grass",
+          "mangrove_log",
+          "mangrove_door",
+          "mangrove_door"
+        ]
+      },
+      {
+        "xz": [
+          6,
+          3
+        ],
+        "y0to4": [
+          "grass_block",
+          "omitted",
+          "packed_mud",
+          "air",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          6,
+          2
+        ],
+        "y0to4": [
+          "grass_block",
+          "dandelion",
+          "mud_bricks",
+          "air",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          6,
+          1
+        ],
+        "y0to4": [
+          "grass_block",
+          "omitted",
+          "mangrove_log",
+          "potted_mangrove_propagule",
+          "air"
+        ]
+      },
+      {
+        "xz": [
+          6,
+          0
+        ],
+        "y0to4": [
+          "grass_block",
+          "omitted",
+          "omitted",
+          "omitted",
+          "omitted"
+        ]
+      }
+    ]
+  },
+  {
+    "templateId": "geomantia:city/trek/industry/claw_pillager",
+    "size": [
+      15,
+      15,
+      3
+    ],
+    "ray": [
+      {
+        "xz": [
+          12,
+          1
+        ],
+        "y0to4": [
+          "grass_block",
+          "omitted",
+          "omitted",
+          "omitted",
+          "omitted"
+        ]
+      },
+      {
+        "xz": [
+          13,
+          1
+        ],
+        "y0to4": [
+          "omitted",
+          "omitted",
+          "omitted",
+          "omitted",
+          "omitted"
+        ]
+      },
+      {
+        "xz": [
+          14,
+          1
+        ],
+        "y0to4": [
+          "omitted",
+          "omitted",
+          "omitted",
+          "omitted",
+          "omitted"
+        ]
+      }
+    ]
+  }
+]

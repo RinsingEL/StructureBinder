@@ -307,6 +307,16 @@ class CityLandUseSurfacePrintPlannerTest {
         for (int i=1;i<center.size();i++)
             assertTrue(Math.abs(center.get(i).targetSurfaceY()-center.get(i-1).targetSurfaceY()) <= 1);
         assertTrue(center.stream().anyMatch(cell -> cell.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR));
+        for (int i = 1; i < center.size() - 1; i++) {
+            var stair = center.get(i);
+            if (stair.kind() != CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR) continue;
+            int uphill = stair.facing() == CityLandUseSurfacePrintPlan.HorizontalFacing.WEST ? i - 1 : i + 1;
+            var neighbor = center.get(uphill);
+            if (neighbor.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB) {
+                // The stair high half and adjacent double slab must have the same walking height.
+                assertEquals(neighbor.targetSurfaceY() + 1, stair.targetSurfaceY() + 1);
+            }
+        }
     }
 
     @Test

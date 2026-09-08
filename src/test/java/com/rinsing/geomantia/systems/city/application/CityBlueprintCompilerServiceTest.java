@@ -118,6 +118,18 @@ class CityBlueprintCompilerServiceTest {
                                 .contains(layout.get("frontageEntranceId").getAsString())));
             } else {
                 assertTrue(result.compileTrace().toString().contains("FRONTAGE_ENTRANCE_AMBIGUOUS"));
+                assertTrue(result.message().contains("Authored entrances="));
+                assertTrue(result.message().contains("north(NORTH)"));
+                assertTrue(result.message().contains("cannot repair this metadata"));
+                assertFalse(result.message().contains("enlarge"));
+                assertFalse(result.compileTrace().toString().contains("skipped_illegal_slot"));
+                Path dir = fixture.runDir().resolve("city_blueprint_" + safe(fixture.cityId()));
+                JsonObject blueprint = JsonParser.parseString(Files.readString(dir.resolve("city_blueprint.json"))).getAsJsonObject();
+                JsonObject context = JsonParser.parseString(Files.readString(dir.resolve("city_blueprint_context.json"))).getAsJsonObject();
+                JsonObject response = new CityBlueprintService().submit(temporary, fixture.runId(), fixture.cityId(),
+                        context.get("contextId").getAsString(), blueprint);
+                assertEquals("program", response.get("failureOwner").getAsString());
+                assertTrue(response.toString().contains("Authored entrances="));
             }
         }
     }

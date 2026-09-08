@@ -51,5 +51,23 @@ class CityDesignFailureFeedbackTest {
         assertTrue(result.getAsJsonArray("failures").isEmpty());
         assertTrue(result.getAsJsonArray("parameterAdjustments").isEmpty());
     }
+    @Test void ambiguousFrontageHasAuthorRepairInsteadOfLayoutSuggestions() {
+        var trace = json("""
+                {selections:[{groupId:'market',structureRef:'house',status:'no_legal_candidate',attempts:[{
+                 hardBlocks:['D4_ARRAY_LAYOUT_FRONTAGE_ENTRANCE_AMBIGUOUS: house requires frontageEntranceId.'],
+                 filterReasonCounts:{INTERNAL_FRONTAGE_UNAVAILABLE:1}}]}]}
+                """);
+        var result = CityDesignFailureFeedback.summarize(json("{groups:[{groupId:'market'}]}"), trace, "NO_LEGAL_PLACEMENT");
+        var failure = result.getAsJsonArray("failures").get(0).getAsJsonObject();
+        assertEquals("program", failure.get("failureOwner").getAsString());
+        assertTrue(failure.getAsJsonArray("adjustableParameters").isEmpty());
+        assertTrue(failure.get("instruction").getAsString().contains("frontagePolicy=ANY_AUTHORED_ENTRANCE"));
+        assertTrue(failure.get("message").getAsString().contains("house"));
+        var attempts = trace.getAsJsonArray("selections").get(0).getAsJsonObject().getAsJsonArray("attempts");
+        assertTrue(CityDesignFailureFeedback.allAttemptsHaveAmbiguousFrontage(attempts));
+        attempts.add(json("{hardBlocks:[],filterReasonCounts:{OCCUPIED_ENVELOPE_OVERLAP:1}}"));
+        assertFalse(CityDesignFailureFeedback.allAttemptsHaveAmbiguousFrontage(attempts), "Other template candidates can still succeed at a different slot");
+    }
+
     private static JsonObject json(String value) { return JsonParser.parseString(value).getAsJsonObject(); }
 }

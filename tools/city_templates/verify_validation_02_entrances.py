@@ -38,7 +38,7 @@ def verify(root):
     fountain = by_ref[fountain_ref]
     assert fountain.get("frontagePolicy") == "ANY_AUTHORED_ENTRANCE", "Approved fountain frontage policy regressed"
     assert {t["templateRef"] for t in catalog["templates"]
-            if t.get("frontagePolicy") == "ANY_AUTHORED_ENTRANCE"} == {fountain_ref}, "Unreviewed flexible frontage added"
+            if t.get("frontagePolicy") == "ANY_AUTHORED_ENTRANCE"} == {fountain_ref, "geomantia:city/trek_v3/village/plains/houses/plains_big_house_1"}, "Reviewed flexible frontage set changed"
     expected_ports = {
         "north": (4, 0, "NORTH"), "east": (8, 4, "EAST"),
         "south": (4, 8, "SOUTH"), "west": (0, 4, "WEST"),

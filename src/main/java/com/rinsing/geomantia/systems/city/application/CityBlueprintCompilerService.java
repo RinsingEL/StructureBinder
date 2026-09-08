@@ -320,12 +320,18 @@ public final class CityBlueprintCompilerService {
                 }
             }
             if (placed) break;
-            if (!incrementRanks(ranks, limits)) {
+            if (CityDesignFailureFeedback.allAttemptsHaveAmbiguousFrontage(
+                    selections.isEmpty() ? new JsonArray() : array(selections.get(selections.size() - 1).getAsJsonObject(), "attempts"))
+                    || !incrementRanks(ranks, limits)) {
                 String reason = "CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT";
                 JsonObject failureTrace = trace(blueprint, context, selections, states,
                         ConnectivityPlan.empty(), "failed", reason);
-                return CompilationResult.failed(failureTrace, reason,
-                        "All finite required building candidate combinations were exhausted.");
+                JsonObject feedback = CityDesignFailureFeedback.summarize(codec.write(blueprint), failureTrace, reason);
+                String frontage = CityDesignFailureFeedback.frontageBlock(feedback.get("failures"));
+                return CompilationResult.failed(failureTrace, reason, !frontage.isBlank()
+                        ? frontage + " " + CityDesignFailureFeedback.frontageInstruction()
+                        : "Required building placement failed. Use inline designFeedback for the rejected structure and causes. "
+                        + "Adjust only constraints supported by that evidence; search exhaustion alone does not prove insufficient space.");
             }
         }
         ConnectivityPlan connectivityPlan = ConnectivityPlan.empty();
@@ -1138,6 +1144,7 @@ public final class CityBlueprintCompilerService {
         event.add("attempts", attempts);
         event.add("compilerFilterReasonCounts", compilerFilterReasons);
         if (choices.isEmpty() && phase != PlacementPhase.CONNECTIVITY
+                && !CityDesignFailureFeedback.allAttemptsHaveAmbiguousFrontage(attempts)
                 && state.advancePastIllegalExactSlot()) {
             event.addProperty("status", "skipped_illegal_slot");
             event.addProperty("reasonCode", "EXACT_SLOT_ILLEGAL_LEFT_EMPTY");

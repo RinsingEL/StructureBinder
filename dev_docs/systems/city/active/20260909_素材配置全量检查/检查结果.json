@@ -1,0 +1,1999 @@
+{
+  "bundle": "D:\\PCL2-2.8.12\\.minecraft\\versions\\1.20.1-Forge_47.4.23\\config\\structureTemplate\\terrasense\\template_cfg",
+  "templates": 65,
+  "profiles": 65,
+  "structureRefs": 65,
+  "fillPools": 42,
+  "issueCounts": {
+    "FRONTAGE_AMBIGUOUS": 1,
+    "INTERIOR_PORT_REVIEW": 8
+  },
+  "issues": [
+    {
+      "code": "FRONTAGE_AMBIGUOUS",
+      "target": "geomantia:city/trek_v3/village/plains/houses/plains_big_house_1",
+      "detail": "[{\"entranceId\": \"trek_v3_plains_big_house_1_west_01\", \"position\": {\"x\": 0, \"z\": 4}, \"direction\": \"WEST\"}, {\"entranceId\": \"trek_v3_plains_big_house_1_west_02\", \"position\": {\"x\": 0, \"z\": 10}, \"direction\": \"WEST\"}]"
+    },
+    {
+      "code": "INTERIOR_PORT_REVIEW",
+      "target": "geomantia:city/stubbs/agriculture/farm_storage_house_01",
+      "detail": "{'entranceId': 'agriculture_farm_storage_house_01_front', 'position': {'x': 9, 'z': 13}, 'direction': 'SOUTH'}"
+    },
+    {
+      "code": "INTERIOR_PORT_REVIEW",
+      "target": "geomantia:city/stubbs/agriculture/horse_stall_02",
+      "detail": "{'entranceId': 'agriculture_horse_stall_02_front', 'position': {'x': 8, 'z': 22}, 'direction': 'SOUTH'}"
+    },
+    {
+      "code": "INTERIOR_PORT_REVIEW",
+      "target": "geomantia:city/stubbs/civic/guard_outpost_01",
+      "detail": "{'entranceId': 'civic_guard_outpost_01_front', 'position': {'x': 19, 'z': 9}, 'direction': 'EAST'}"
+    },
+    {
+      "code": "INTERIOR_PORT_REVIEW",
+      "target": "geomantia:city/stubbs/commercial/motel_01",
+      "detail": "{'entranceId': 'commercial_motel_01_front', 'position': {'x': 26, 'z': 8}, 'direction': 'EAST'}"
+    },
+    {
+      "code": "INTERIOR_PORT_REVIEW",
+      "target": "geomantia:city/stubbs/commercial/town_workshop_01",
+      "detail": "{'entranceId': 'commercial_town_workshop_01_front', 'position': {'x': 11, 'z': 4}, 'direction': 'SOUTH'}"
+    },
+    {
+      "code": "INTERIOR_PORT_REVIEW",
+      "target": "geomantia:city/trek/defense/mangrove_watchtower_1",
+      "detail": "{'entranceId': 'mangrove_watchtower_1_front', 'position': {'x': 6, 'z': 4}, 'direction': 'NORTH'}"
+    },
+    {
+      "code": "INTERIOR_PORT_REVIEW",
+      "target": "geomantia:city/trek/defense/mangrove_watchtower_2",
+      "detail": "{'entranceId': 'mangrove_watchtower_2_front', 'position': {'x': 6, 'z': 4}, 'direction': 'NORTH'}"
+    },
+    {
+      "code": "INTERIOR_PORT_REVIEW",
+      "target": "geomantia:city/trek/industry/claw_pillager",
+      "detail": "{'entranceId': 'claw_pillager_base', 'position': {'x': 12, 'z': 1}, 'direction': 'EAST'}"
+    }
+  ],
+  "templatesDetail": [
+    {
+      "templateId": "geomantia:city/trek_v3/village/swamp_vanilla/houses/swamp_small_house_7",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_swamp_small_house_7_west_01",
+          "position": {
+            "x": 0,
+            "z": 3
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        8,
+        8,
+        7
+      ],
+      "structureRefs": [
+        "trek:village/swamp_vanilla/houses/swamp_small_house_7"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:residential",
+        "pool:trek_swamp_stilt_fill",
+        "pool:trek_swamp_stilt_residential_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_medium_house_2",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_medium_house_2_west_01",
+          "position": {
+            "x": 0,
+            "z": 6
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        6,
+        8,
+        13
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_medium_house_2"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:residential",
+        "pool:trek_desert_sandstone_fill",
+        "pool:trek_desert_sandstone_residential_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/swamp_vanilla/houses/swamp_small_house_6",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_swamp_small_house_6_west_01",
+          "position": {
+            "x": 0,
+            "z": 3
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        10,
+        8,
+        7
+      ],
+      "structureRefs": [
+        "trek:village/swamp_vanilla/houses/swamp_small_house_6"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:residential",
+        "pool:trek_swamp_stilt_fill",
+        "pool:trek_swamp_stilt_residential_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_fletcher_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_fletcher_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 2
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        6,
+        11,
+        13
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_fletcher_1"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:residential",
+        "pool:utility",
+        "pool:trek_desert_sandstone_fill",
+        "pool:trek_desert_sandstone_residential_fill",
+        "pool:trek_desert_sandstone_utility_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_small_house_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_plains_small_house_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 3
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        8,
+        8,
+        7
+      ],
+      "structureRefs": [
+        "trek:village/plains/houses/plains_small_house_1"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:trek_plains_residential_fill",
+        "pool:residential",
+        "pool:trek_plains_wood_stone_fill",
+        "pool:trek_plains_wood_stone_residential_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_small_house_4",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_plains_small_house_4_west_01",
+          "position": {
+            "x": 0,
+            "z": 3
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        9,
+        9,
+        7
+      ],
+      "structureRefs": [
+        "trek:village/plains/houses/plains_small_house_4"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:trek_plains_residential_fill",
+        "pool:residential",
+        "pool:trek_plains_wood_stone_fill",
+        "pool:trek_plains_wood_stone_residential_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_medium_house_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_medium_house_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 6
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        6,
+        8,
+        13
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_medium_house_1"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:residential",
+        "pool:trek_desert_sandstone_fill",
+        "pool:trek_desert_sandstone_residential_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_big_house_1",
+      "frontage": "ambiguous",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_plains_big_house_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 4
+          },
+          "direction": "WEST"
+        },
+        {
+          "entranceId": "trek_v3_plains_big_house_1_west_02",
+          "position": {
+            "x": 0,
+            "z": 10
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        12,
+        16,
+        15
+      ],
+      "structureRefs": [
+        "trek:village/plains/houses/plains_big_house_1"
+      ],
+      "fillPools": []
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_small_house_2",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_plains_small_house_2_west_01",
+          "position": {
+            "x": 0,
+            "z": 3
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        10,
+        9,
+        7
+      ],
+      "structureRefs": [
+        "trek:village/plains/houses/plains_small_house_2"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:trek_plains_residential_fill",
+        "pool:residential",
+        "pool:trek_plains_wood_stone_fill",
+        "pool:trek_plains_wood_stone_residential_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_shepherd_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_shepherd_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 2
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        6,
+        8,
+        9
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_shepherd_1"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:agriculture",
+        "pool:rural_support",
+        "pool:residential",
+        "pool:trek_desert_sandstone_fill",
+        "pool:trek_desert_sandstone_residential_fill",
+        "pool:trek_desert_sandstone_agriculture_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/swamp/houses/swamp_shepherd_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_swamp_shepherd_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 7
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        12,
+        11,
+        14
+      ],
+      "structureRefs": [
+        "trek:village/swamp/houses/swamp_shepherd_1"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:agriculture",
+        "pool:utility",
+        "pool:trek_swamp_wood_fill",
+        "pool:trek_swamp_wood_utility_fill",
+        "pool:trek_swamp_wood_agriculture_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_fletcher_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_plains_fletcher_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 7
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        18,
+        16,
+        15
+      ],
+      "structureRefs": [
+        "trek:village/plains/houses/plains_fletcher_1"
+      ],
+      "fillPools": []
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_tannery_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_tannery_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 2
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        7,
+        8,
+        10
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_tannery_1"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:utility",
+        "pool:trek_desert_sandstone_fill",
+        "pool:trek_desert_sandstone_utility_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_cartographer_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_cartographer_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 6
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        8,
+        10,
+        9
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_cartographer_1"
+      ],
+      "fillPools": []
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_toolsmith_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_toolsmith_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 2
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        9,
+        8,
+        5
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_toolsmith_1"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:utility",
+        "pool:trek_desert_sandstone_fill",
+        "pool:trek_desert_sandstone_utility_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_weaponsmith_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_plains_weaponsmith_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 3
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        11,
+        13,
+        14
+      ],
+      "structureRefs": [
+        "trek:village/plains/houses/plains_weaponsmith_1"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:trek_plains_residential_fill",
+        "pool:residential",
+        "pool:trek_plains_wood_stone_fill",
+        "pool:trek_plains_wood_stone_residential_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_big_house_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_big_house_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 4
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        9,
+        14,
+        9
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_big_house_1"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:residential",
+        "pool:trek_desert_sandstone_fill",
+        "pool:trek_desert_sandstone_residential_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_butcher_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_butcher_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 2
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        9,
+        8,
+        8
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_butcher_1"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:agriculture",
+        "pool:commercial",
+        "pool:trek_desert_sandstone_fill",
+        "pool:trek_desert_sandstone_commercial_fill",
+        "pool:trek_desert_sandstone_agriculture_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_church_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_plains_church_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 5
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        18,
+        28,
+        11
+      ],
+      "structureRefs": [
+        "trek:village/plains/houses/plains_church_1"
+      ],
+      "fillPools": []
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_shepherd_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_plains_shepherd_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 9
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        14,
+        8,
+        19
+      ],
+      "structureRefs": [
+        "trek:village/plains/houses/plains_shepherd_1"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:commercial",
+        "pool:trek_plains_commercial_fill",
+        "pool:utility",
+        "pool:trek_plains_wood_stone_fill",
+        "pool:trek_plains_wood_stone_utility_fill",
+        "pool:trek_plains_wood_stone_commercial_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_temple_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_temple_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 2
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        10,
+        16,
+        5
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_temple_1"
+      ],
+      "fillPools": []
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_armorer_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_armorer_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 3
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        8,
+        8,
+        7
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_armorer_1"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:commercial",
+        "pool:utility",
+        "pool:trek_desert_sandstone_fill",
+        "pool:trek_desert_sandstone_utility_fill",
+        "pool:trek_desert_sandstone_commercial_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_farm_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_farm_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 6
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        10,
+        8,
+        12
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_farm_1"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:agriculture",
+        "pool:trek_desert_sandstone_fill",
+        "pool:trek_desert_sandstone_agriculture_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_farm_2",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_farm_2_west_01",
+          "position": {
+            "x": 0,
+            "z": 7
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        12,
+        8,
+        12
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_farm_2"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:agriculture",
+        "pool:trek_desert_sandstone_fill",
+        "pool:trek_desert_sandstone_agriculture_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_farm_3",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_farm_3_west_01",
+          "position": {
+            "x": 0,
+            "z": 5
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        12,
+        8,
+        12
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_farm_3"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:agriculture",
+        "pool:trek_desert_sandstone_fill",
+        "pool:trek_desert_sandstone_agriculture_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_7",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_small_house_7_west_01",
+          "position": {
+            "x": 0,
+            "z": 2
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        6,
+        8,
+        5
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_small_house_7"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:residential",
+        "pool:trek_desert_sandstone_fill",
+        "pool:trek_desert_sandstone_residential_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_6",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_small_house_6_west_01",
+          "position": {
+            "x": 0,
+            "z": 2
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        6,
+        8,
+        5
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_small_house_6"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:residential",
+        "pool:trek_desert_sandstone_fill",
+        "pool:trek_desert_sandstone_residential_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_8",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_small_house_8_west_01",
+          "position": {
+            "x": 0,
+            "z": 2
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        6,
+        8,
+        5
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_small_house_8"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:residential",
+        "pool:trek_desert_sandstone_fill",
+        "pool:trek_desert_sandstone_residential_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_library_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_library_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 4
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        6,
+        8,
+        9
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_library_1"
+      ],
+      "fillPools": []
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_small_house_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 2
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        6,
+        8,
+        5
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_small_house_1"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:residential",
+        "pool:trek_desert_sandstone_fill",
+        "pool:trek_desert_sandstone_residential_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_cartographer_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_plains_cartographer_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 4
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        11,
+        12,
+        9
+      ],
+      "structureRefs": [
+        "trek:village/plains/houses/plains_cartographer_1"
+      ],
+      "fillPools": []
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_3",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_small_house_3_west_01",
+          "position": {
+            "x": 0,
+            "z": 2
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        6,
+        8,
+        5
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_small_house_3"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:residential",
+        "pool:trek_desert_sandstone_fill",
+        "pool:trek_desert_sandstone_residential_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_2",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_small_house_2_west_01",
+          "position": {
+            "x": 0,
+            "z": 2
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        6,
+        8,
+        5
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_small_house_2"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:residential",
+        "pool:trek_desert_sandstone_fill",
+        "pool:trek_desert_sandstone_residential_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_5",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_small_house_5_west_01",
+          "position": {
+            "x": 0,
+            "z": 2
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        6,
+        8,
+        5
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_small_house_5"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:residential",
+        "pool:trek_desert_sandstone_fill",
+        "pool:trek_desert_sandstone_residential_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_4",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_small_house_4_west_01",
+          "position": {
+            "x": 0,
+            "z": 2
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        6,
+        8,
+        5
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_small_house_4"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:residential",
+        "pool:trek_desert_sandstone_fill",
+        "pool:trek_desert_sandstone_residential_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_butcher_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_plains_butcher_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 9
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        19,
+        12,
+        13
+      ],
+      "structureRefs": [
+        "trek:village/plains/houses/plains_butcher_1"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:commercial",
+        "pool:trek_plains_commercial_fill",
+        "pool:utility",
+        "pool:trek_plains_wood_stone_fill",
+        "pool:trek_plains_wood_stone_utility_fill",
+        "pool:trek_plains_wood_stone_commercial_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_toolsmith_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_plains_toolsmith_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 8
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        11,
+        12,
+        11
+      ],
+      "structureRefs": [
+        "trek:village/plains/houses/plains_toolsmith_1"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:trek_plains_residential_fill",
+        "pool:residential",
+        "pool:trek_plains_wood_stone_fill",
+        "pool:trek_plains_wood_stone_residential_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_mason_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_mason_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 3
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        7,
+        8,
+        7
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_mason_1"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:utility",
+        "pool:trek_desert_sandstone_fill",
+        "pool:trek_desert_sandstone_utility_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_library_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_plains_library_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 11
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        17,
+        17,
+        23
+      ],
+      "structureRefs": [
+        "trek:village/plains/houses/plains_library_1"
+      ],
+      "fillPools": []
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_mason_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_plains_mason_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 6
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        14,
+        14,
+        11
+      ],
+      "structureRefs": [
+        "trek:village/plains/houses/plains_mason_1"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:trek_plains_residential_fill",
+        "pool:residential",
+        "pool:trek_plains_wood_stone_fill",
+        "pool:trek_plains_wood_stone_residential_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_medium_house_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_plains_medium_house_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 3
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        15,
+        10,
+        13
+      ],
+      "structureRefs": [
+        "trek:village/plains/houses/plains_medium_house_1"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:trek_plains_residential_fill",
+        "pool:residential",
+        "pool:utility",
+        "pool:trek_plains_wood_stone_fill",
+        "pool:trek_plains_wood_stone_residential_fill",
+        "pool:trek_plains_wood_stone_utility_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_weaponsmith_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_desert_weaponsmith_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 2
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        9,
+        10,
+        10
+      ],
+      "structureRefs": [
+        "trek:village/desert/houses/desert_weaponsmith_1"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:commercial",
+        "pool:utility",
+        "pool:trek_desert_sandstone_fill",
+        "pool:trek_desert_sandstone_utility_fill",
+        "pool:trek_desert_sandstone_commercial_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_tannery_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_plains_tannery_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 3
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        11,
+        9,
+        13
+      ],
+      "structureRefs": [
+        "trek:village/plains/houses/plains_tannery_1"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:agriculture",
+        "pool:trek_plains_residential_fill",
+        "pool:trek_plains_agriculture_fill",
+        "pool:residential",
+        "pool:trek_plains_wood_stone_fill",
+        "pool:trek_plains_wood_stone_residential_fill",
+        "pool:trek_plains_wood_stone_agriculture_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_farm_2",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_plains_farm_2_west_01",
+          "position": {
+            "x": 0,
+            "z": 5
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        6,
+        8,
+        10
+      ],
+      "structureRefs": [
+        "trek:village/plains/houses/plains_farm_2"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:agriculture",
+        "pool:trek_plains_agriculture_fill",
+        "pool:utility",
+        "pool:trek_vanilla_plains_fill",
+        "pool:trek_vanilla_plains_utility_fill",
+        "pool:trek_vanilla_plains_agriculture_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_stable_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_plains_stable_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 3
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        8,
+        8,
+        12
+      ],
+      "structureRefs": [
+        "trek:village/plains/houses/plains_stable_1"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:agriculture",
+        "pool:rural_support",
+        "pool:trek_plains_agriculture_fill",
+        "pool:utility",
+        "pool:trek_vanilla_plains_fill",
+        "pool:trek_vanilla_plains_utility_fill",
+        "pool:trek_vanilla_plains_agriculture_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_farm_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "trek_v3_plains_farm_1_west_01",
+          "position": {
+            "x": 0,
+            "z": 5
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        11,
+        8,
+        11
+      ],
+      "structureRefs": [
+        "trek:village/plains/houses/plains_farm_1"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:rural_support",
+        "pool:utility",
+        "pool:trek_vanilla_plains_fill",
+        "pool:trek_vanilla_plains_utility_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/stubbs/agriculture/windmill_01",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "agriculture_windmill_01_front",
+          "position": {
+            "x": 14,
+            "z": 0
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        27,
+        47,
+        21
+      ],
+      "structureRefs": [
+        "geomantia:city/stubbs/agriculture/windmill_01"
+      ],
+      "fillPools": []
+    },
+    {
+      "templateId": "geomantia:city/stubbs/agriculture/barn_windmill_01",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "agriculture_barn_windmill_01_front",
+          "position": {
+            "x": 0,
+            "z": 15
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        25,
+        47,
+        31
+      ],
+      "structureRefs": [
+        "geomantia:city/stubbs/agriculture/barn_windmill_01"
+      ],
+      "fillPools": []
+    },
+    {
+      "templateId": "geomantia:city/stubbs/agriculture/farm_storage_house_01",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "agriculture_farm_storage_house_01_front",
+          "position": {
+            "x": 9,
+            "z": 13
+          },
+          "direction": "SOUTH"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        19,
+        17,
+        29
+      ],
+      "structureRefs": [
+        "geomantia:city/stubbs/agriculture/farm_storage_house_01"
+      ],
+      "fillPools": [
+        "pool:stubbs_fill",
+        "pool:mixed_fill",
+        "pool:agriculture",
+        "pool:utility",
+        "pool:stubbs_medieval_fill",
+        "pool:stubbs_medieval_utility_fill",
+        "pool:stubbs_medieval_agriculture_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/stubbs/agriculture/horse_stall_02",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "agriculture_horse_stall_02_front",
+          "position": {
+            "x": 8,
+            "z": 22
+          },
+          "direction": "SOUTH"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        21,
+        16,
+        32
+      ],
+      "structureRefs": [
+        "geomantia:city/stubbs/agriculture/horse_stall_02"
+      ],
+      "fillPools": [
+        "pool:stubbs_fill",
+        "pool:mixed_fill",
+        "pool:agriculture",
+        "pool:utility",
+        "pool:transport",
+        "pool:stubbs_medieval_fill",
+        "pool:stubbs_medieval_utility_fill",
+        "pool:stubbs_medieval_agriculture_fill",
+        "pool:stubbs_medieval_transport_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/stubbs/civic/town_hall_01",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "civic_town_hall_01_front",
+          "position": {
+            "x": 11,
+            "z": 0
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        48,
+        25,
+        31
+      ],
+      "structureRefs": [
+        "geomantia:city/stubbs/civic/town_hall_01"
+      ],
+      "fillPools": []
+    },
+    {
+      "templateId": "geomantia:city/stubbs/civic/guard_outpost_01",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "civic_guard_outpost_01_front",
+          "position": {
+            "x": 19,
+            "z": 9
+          },
+          "direction": "EAST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        26,
+        48,
+        31
+      ],
+      "structureRefs": [
+        "geomantia:city/stubbs/civic/guard_outpost_01"
+      ],
+      "fillPools": []
+    },
+    {
+      "templateId": "geomantia:city/stubbs/commercial/tavern_01",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "commercial_tavern_01_front",
+          "position": {
+            "x": 0,
+            "z": 18
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        23,
+        16,
+        33
+      ],
+      "structureRefs": [
+        "geomantia:city/stubbs/commercial/tavern_01"
+      ],
+      "fillPools": []
+    },
+    {
+      "templateId": "geomantia:city/stubbs/commercial/motel_01",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "commercial_motel_01_front",
+          "position": {
+            "x": 26,
+            "z": 8
+          },
+          "direction": "EAST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        30,
+        12,
+        16
+      ],
+      "structureRefs": [
+        "geomantia:city/stubbs/commercial/motel_01"
+      ],
+      "fillPools": [
+        "pool:stubbs_fill",
+        "pool:mixed_fill",
+        "pool:commercial",
+        "pool:residential",
+        "pool:stubbs_medieval_fill",
+        "pool:stubbs_medieval_residential_fill",
+        "pool:stubbs_medieval_commercial_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/stubbs/commercial/general_store_01",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "commercial_general_store_01_front",
+          "position": {
+            "x": 0,
+            "z": 12
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        16,
+        15,
+        23
+      ],
+      "structureRefs": [
+        "geomantia:city/stubbs/commercial/general_store_01"
+      ],
+      "fillPools": [
+        "pool:stubbs_fill",
+        "pool:mixed_fill",
+        "pool:commercial",
+        "pool:stubbs_medieval_fill",
+        "pool:stubbs_medieval_commercial_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/stubbs/commercial/flower_shop_01",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "commercial_flower_shop_01_front",
+          "position": {
+            "x": 13,
+            "z": 0
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        19,
+        15,
+        19
+      ],
+      "structureRefs": [
+        "geomantia:city/stubbs/commercial/flower_shop_01"
+      ],
+      "fillPools": [
+        "pool:stubbs_fill",
+        "pool:mixed_fill",
+        "pool:commercial",
+        "pool:stubbs_medieval_fill",
+        "pool:stubbs_medieval_commercial_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/stubbs/commercial/town_workshop_01",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "commercial_town_workshop_01_front",
+          "position": {
+            "x": 11,
+            "z": 4
+          },
+          "direction": "SOUTH"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        14,
+        12,
+        11
+      ],
+      "structureRefs": [
+        "geomantia:city/stubbs/commercial/town_workshop_01"
+      ],
+      "fillPools": [
+        "pool:stubbs_fill",
+        "pool:mixed_fill",
+        "pool:utility",
+        "pool:mining",
+        "pool:stubbs_medieval_fill",
+        "pool:stubbs_medieval_utility_fill",
+        "pool:stubbs_medieval_mining_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/stubbs/commercial/laundry_facility_01",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "commercial_laundry_facility_01_front",
+          "position": {
+            "x": 19,
+            "z": 27
+          },
+          "direction": "SOUTH"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        25,
+        13,
+        28
+      ],
+      "structureRefs": [
+        "geomantia:city/stubbs/commercial/laundry_facility_01"
+      ],
+      "fillPools": [
+        "pool:stubbs_fill",
+        "pool:mixed_fill",
+        "pool:commercial",
+        "pool:utility",
+        "pool:stubbs_medieval_fill",
+        "pool:stubbs_medieval_utility_fill",
+        "pool:stubbs_medieval_commercial_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/stubbs/residential/civilian_house_03",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "residential_civilian_house_03_front",
+          "position": {
+            "x": 16,
+            "z": 5
+          },
+          "direction": "EAST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        17,
+        14,
+        21
+      ],
+      "structureRefs": [
+        "geomantia:city/stubbs/residential/civilian_house_03"
+      ],
+      "fillPools": [
+        "pool:stubbs_fill",
+        "pool:mixed_fill",
+        "pool:residential",
+        "pool:stubbs_medieval_fill",
+        "pool:stubbs_medieval_residential_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/stubbs/residential/household_01",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "residential_household_01_front",
+          "position": {
+            "x": 7,
+            "z": 0
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        15,
+        17,
+        15
+      ],
+      "structureRefs": [
+        "geomantia:city/stubbs/residential/household_01"
+      ],
+      "fillPools": [
+        "pool:stubbs_fill",
+        "pool:mixed_fill",
+        "pool:residential",
+        "pool:stubbs_medieval_fill",
+        "pool:stubbs_medieval_residential_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/stubbs/residential/household_02",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "residential_household_02_front",
+          "position": {
+            "x": 0,
+            "z": 5
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        15,
+        14,
+        15
+      ],
+      "structureRefs": [
+        "geomantia:city/stubbs/residential/household_02"
+      ],
+      "fillPools": [
+        "pool:stubbs_fill",
+        "pool:mixed_fill",
+        "pool:residential",
+        "pool:stubbs_medieval_fill",
+        "pool:stubbs_medieval_residential_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek/landmark/plains_fountain_01",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "plains_fountain_01_north",
+          "position": {
+            "x": 4,
+            "z": 0
+          },
+          "direction": "NORTH"
+        },
+        {
+          "entranceId": "plains_fountain_01_east",
+          "position": {
+            "x": 8,
+            "z": 4
+          },
+          "direction": "EAST"
+        },
+        {
+          "entranceId": "plains_fountain_01_south",
+          "position": {
+            "x": 4,
+            "z": 8
+          },
+          "direction": "SOUTH"
+        },
+        {
+          "entranceId": "plains_fountain_01_west",
+          "position": {
+            "x": 0,
+            "z": 4
+          },
+          "direction": "WEST"
+        }
+      ],
+      "policy": "ANY_AUTHORED_ENTRANCE",
+      "nbtSize": [
+        9,
+        4,
+        9
+      ],
+      "structureRefs": [
+        "geomantia:city/trek/landmark/plains_fountain_01"
+      ],
+      "fillPools": []
+    },
+    {
+      "templateId": "geomantia:city/trek/defense/mangrove_watchtower_1",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "mangrove_watchtower_1_front",
+          "position": {
+            "x": 6,
+            "z": 4
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        12,
+        12,
+        11
+      ],
+      "structureRefs": [
+        "geomantia:city/trek/defense/mangrove_watchtower_1"
+      ],
+      "fillPools": [
+        "pool:trek_fill",
+        "pool:mixed_fill",
+        "pool:trek_defense_common_fill",
+        "pool:defense",
+        "pool:trek_wood_stone_fill",
+        "pool:trek_wood_stone_defense_fill"
+      ]
+    },
+    {
+      "templateId": "geomantia:city/trek/defense/mangrove_watchtower_2",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "mangrove_watchtower_2_front",
+          "position": {
+            "x": 6,
+            "z": 4
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        12,
+        23,
+        11
+      ],
+      "structureRefs": [
+        "geomantia:city/trek/defense/mangrove_watchtower_2"
+      ],
+      "fillPools": []
+    },
+    {
+      "templateId": "geomantia:city/trek/industry/claw_pillager",
+      "frontage": "ready",
+      "entrances": [
+        {
+          "entranceId": "claw_pillager_base",
+          "position": {
+            "x": 12,
+            "z": 1
+          },
+          "direction": "EAST"
+        }
+      ],
+      "policy": "FIXED_FRONT",
+      "nbtSize": [
+        15,
+        15,
+        3
+      ],
+      "structureRefs": [
+        "geomantia:city/trek/industry/claw_pillager"
+      ],
+      "fillPools": []
+    }
+  ]
+}

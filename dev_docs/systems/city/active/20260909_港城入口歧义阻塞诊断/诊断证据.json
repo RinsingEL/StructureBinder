@@ -1,0 +1,245 @@
+{
+  "city_blueprint_failure_budget.json": {
+    "schema": "city_blueprint_failure_budget",
+    "cityId": "city_realm_concord_harbor",
+    "contextId": "sha256:a1bc08cd33eedf082b778118f49c62c646abfef6b9fb26764e68801f1369b3f9",
+    "failureCount": 0,
+    "maximumFailureCount": 5,
+    "remainingFailureCount": 5,
+    "status": "open",
+    "retryAllowed": true,
+    "failures": [],
+    "createdAt": "2026-09-08T16:34:55.753637500Z",
+    "updatedAt": "2026-09-08T16:37:38.801187500Z"
+  },
+  "city_submission_format_budget.json": {
+    "contextId": "sha256:a1bc08cd33eedf082b778118f49c62c646abfef6b9fb26764e68801f1369b3f9",
+    "failedAttempts": 4,
+    "maximumAttempts": 10,
+    "remainingAttempts": 6,
+    "retryAllowed": true
+  },
+  "city_blueprint_last_rejection_report.json": {
+    "schema": "city_blueprint_validation_report",
+    "cityId": "city_realm_concord_harbor",
+    "contextId": "sha256:a1bc08cd33eedf082b778118f49c62c646abfef6b9fb26764e68801f1369b3f9",
+    "valid": false,
+    "validatedAt": "2026-09-08T16:37:39.072048600Z",
+    "issues": [
+      {
+        "reasonCode": "CITY_BLUEPRINT_DESIGN_COMPILER_FAILED",
+        "fieldPath": "$.groups[0]",
+        "message": "CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT: All finite required building candidate combinations were exhausted. Inspect the rejected building, candidate counts and rejection reasons in the trace. Preserve required buildings and the array algorithm first: if space is insufficient, enlarge the allowed extent or choose a larger compatible frozen patch; if the zone or placement relation excludes candidates, relax only that local constraint. Do not shrink the usable area or remove required content merely to pass. These are retry options, not a guarantee of placement."
+      }
+    ]
+  },
+  "failedSelections": [
+    {
+      "sequence": 2,
+      "phase": "required",
+      "groupId": "harbor_market_core",
+      "structureRef": "trek:village/plains/houses/plains_big_house_1",
+      "candidateCount": 0,
+      "attempts": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_big_house_1",
+          "variantId": "trek_v3_sanitized_v1",
+          "passed": false,
+          "candidateCount": 0,
+          "filterReasonCounts": {
+            "INTERNAL_FRONTAGE_UNAVAILABLE": 1
+          },
+          "hardBlocks": [
+            "D4_ARRAY_LAYOUT_FRONTAGE_ENTRANCE_AMBIGUOUS: geomantia:city/trek_v3/village/plains/houses/plains_big_house_1 requires frontageEntranceId."
+          ],
+          "patchSelectionScope": "continuous_growth_from_selected_patch"
+        }
+      ],
+      "compilerFilterReasonCounts": {},
+      "status": "skipped_illegal_slot",
+      "reasonCode": "EXACT_SLOT_ILLEGAL_LEFT_EMPTY",
+      "skippedLayoutSlotIndex": 0
+    },
+    {
+      "sequence": 3,
+      "phase": "required",
+      "groupId": "harbor_market_core",
+      "structureRef": "trek:village/plains/houses/plains_big_house_1",
+      "candidateCount": 0,
+      "attempts": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_big_house_1",
+          "variantId": "trek_v3_sanitized_v1",
+          "passed": false,
+          "candidateCount": 0,
+          "filterReasonCounts": {
+            "INTERNAL_FRONTAGE_UNAVAILABLE": 1
+          },
+          "hardBlocks": [
+            "D4_ARRAY_LAYOUT_FRONTAGE_ENTRANCE_AMBIGUOUS: geomantia:city/trek_v3/village/plains/houses/plains_big_house_1 requires frontageEntranceId."
+          ],
+          "patchSelectionScope": "continuous_growth_from_selected_patch"
+        }
+      ],
+      "compilerFilterReasonCounts": {},
+      "status": "skipped_illegal_slot",
+      "reasonCode": "EXACT_SLOT_ILLEGAL_LEFT_EMPTY",
+      "skippedLayoutSlotIndex": 1
+    },
+    {
+      "sequence": 4,
+      "phase": "required",
+      "groupId": "harbor_market_core",
+      "structureRef": "trek:village/plains/houses/plains_big_house_1",
+      "candidateCount": 0,
+      "attempts": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_big_house_1",
+          "variantId": "trek_v3_sanitized_v1",
+          "passed": false,
+          "candidateCount": 0,
+          "filterReasonCounts": {
+            "INTERNAL_FRONTAGE_UNAVAILABLE": 1
+          },
+          "hardBlocks": [
+            "D4_ARRAY_LAYOUT_FRONTAGE_ENTRANCE_AMBIGUOUS: geomantia:city/trek_v3/village/plains/houses/plains_big_house_1 requires frontageEntranceId."
+          ],
+          "patchSelectionScope": "continuous_growth_from_selected_patch"
+        }
+      ],
+      "compilerFilterReasonCounts": {},
+      "status": "skipped_illegal_slot",
+      "reasonCode": "EXACT_SLOT_ILLEGAL_LEFT_EMPTY",
+      "skippedLayoutSlotIndex": 2
+    },
+    {
+      "sequence": 5,
+      "phase": "required",
+      "groupId": "harbor_market_core",
+      "structureRef": "trek:village/plains/houses/plains_big_house_1",
+      "candidateCount": 0,
+      "attempts": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_big_house_1",
+          "variantId": "trek_v3_sanitized_v1",
+          "passed": false,
+          "candidateCount": 0,
+          "filterReasonCounts": {
+            "INTERNAL_FRONTAGE_UNAVAILABLE": 1
+          },
+          "hardBlocks": [
+            "D4_ARRAY_LAYOUT_FRONTAGE_ENTRANCE_AMBIGUOUS: geomantia:city/trek_v3/village/plains/houses/plains_big_house_1 requires frontageEntranceId."
+          ],
+          "patchSelectionScope": "continuous_growth_from_selected_patch"
+        }
+      ],
+      "compilerFilterReasonCounts": {},
+      "status": "skipped_illegal_slot",
+      "reasonCode": "EXACT_SLOT_ILLEGAL_LEFT_EMPTY",
+      "skippedLayoutSlotIndex": 3
+    },
+    {
+      "sequence": 6,
+      "phase": "required",
+      "groupId": "harbor_market_core",
+      "structureRef": "trek:village/plains/houses/plains_big_house_1",
+      "candidateCount": 0,
+      "attempts": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_big_house_1",
+          "variantId": "trek_v3_sanitized_v1",
+          "passed": false,
+          "candidateCount": 0,
+          "filterReasonCounts": {
+            "INTERNAL_FRONTAGE_UNAVAILABLE": 1
+          },
+          "hardBlocks": [
+            "D4_ARRAY_LAYOUT_FRONTAGE_ENTRANCE_AMBIGUOUS: geomantia:city/trek_v3/village/plains/houses/plains_big_house_1 requires frontageEntranceId."
+          ],
+          "patchSelectionScope": "continuous_growth_from_selected_patch"
+        }
+      ],
+      "compilerFilterReasonCounts": {},
+      "status": "skipped_illegal_slot",
+      "reasonCode": "EXACT_SLOT_ILLEGAL_LEFT_EMPTY",
+      "skippedLayoutSlotIndex": 4
+    },
+    {
+      "sequence": 7,
+      "phase": "required",
+      "groupId": "harbor_market_core",
+      "structureRef": "trek:village/plains/houses/plains_big_house_1",
+      "candidateCount": 0,
+      "attempts": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_big_house_1",
+          "variantId": "trek_v3_sanitized_v1",
+          "passed": false,
+          "candidateCount": 0,
+          "filterReasonCounts": {
+            "INTERNAL_FRONTAGE_UNAVAILABLE": 1
+          },
+          "hardBlocks": [
+            "D4_ARRAY_LAYOUT_FRONTAGE_ENTRANCE_AMBIGUOUS: geomantia:city/trek_v3/village/plains/houses/plains_big_house_1 requires frontageEntranceId."
+          ],
+          "patchSelectionScope": "continuous_growth_from_selected_patch"
+        }
+      ],
+      "compilerFilterReasonCounts": {},
+      "status": "skipped_illegal_slot",
+      "reasonCode": "EXACT_SLOT_ILLEGAL_LEFT_EMPTY",
+      "skippedLayoutSlotIndex": 5
+    },
+    {
+      "sequence": 8,
+      "phase": "required",
+      "groupId": "harbor_market_core",
+      "structureRef": "trek:village/plains/houses/plains_big_house_1",
+      "candidateCount": 0,
+      "attempts": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_big_house_1",
+          "variantId": "trek_v3_sanitized_v1",
+          "passed": false,
+          "candidateCount": 0,
+          "filterReasonCounts": {
+            "INTERNAL_FRONTAGE_UNAVAILABLE": 1
+          },
+          "hardBlocks": [
+            "D4_ARRAY_LAYOUT_FRONTAGE_ENTRANCE_AMBIGUOUS: geomantia:city/trek_v3/village/plains/houses/plains_big_house_1 requires frontageEntranceId."
+          ],
+          "patchSelectionScope": "continuous_growth_from_selected_patch"
+        }
+      ],
+      "compilerFilterReasonCounts": {},
+      "status": "skipped_illegal_slot",
+      "reasonCode": "EXACT_SLOT_ILLEGAL_LEFT_EMPTY",
+      "skippedLayoutSlotIndex": 6
+    },
+    {
+      "sequence": 9,
+      "phase": "required",
+      "groupId": "harbor_market_core",
+      "structureRef": "trek:village/plains/houses/plains_big_house_1",
+      "candidateCount": 0,
+      "attempts": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_big_house_1",
+          "variantId": "trek_v3_sanitized_v1",
+          "passed": false,
+          "candidateCount": 0,
+          "filterReasonCounts": {
+            "INTERNAL_FRONTAGE_UNAVAILABLE": 1
+          },
+          "hardBlocks": [
+            "D4_ARRAY_LAYOUT_FRONTAGE_ENTRANCE_AMBIGUOUS: geomantia:city/trek_v3/village/plains/houses/plains_big_house_1 requires frontageEntranceId."
+          ],
+          "patchSelectionScope": "continuous_growth_from_selected_patch"
+        }
+      ],
+      "compilerFilterReasonCounts": {},
+      "status": "no_legal_candidate",
+      "reasonCode": "CITY_BLUEPRINT_COMPACT_LOCAL_FRONTIER_EXHAUSTED"
+    }
+  ]
+}

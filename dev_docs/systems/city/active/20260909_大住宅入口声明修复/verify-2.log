@@ -1,0 +1,134 @@
+{
+  "verified": [
+    {
+      "template": "geomantia:city/stubbs/agriculture/windmill_01",
+      "door": [
+        14,
+        4
+      ],
+      "port": [
+        14,
+        0
+      ],
+      "direction": "NORTH",
+      "clear_supported_cells": 4
+    },
+    {
+      "template": "geomantia:city/stubbs/agriculture/barn_windmill_01",
+      "door": [
+        5,
+        15
+      ],
+      "port": [
+        0,
+        15
+      ],
+      "direction": "WEST",
+      "clear_supported_cells": 5
+    },
+    {
+      "template": "geomantia:city/stubbs/civic/town_hall_01",
+      "door": [
+        11,
+        5
+      ],
+      "port": [
+        11,
+        0
+      ],
+      "direction": "NORTH",
+      "clear_supported_cells": 5
+    },
+    {
+      "template": "geomantia:city/stubbs/commercial/tavern_01",
+      "door": [
+        12,
+        18
+      ],
+      "port": [
+        0,
+        18
+      ],
+      "direction": "WEST",
+      "clear_supported_cells": 12
+    },
+    {
+      "template": "geomantia:city/stubbs/commercial/general_store_01",
+      "door": [
+        7,
+        12
+      ],
+      "port": [
+        0,
+        12
+      ],
+      "direction": "WEST",
+      "clear_supported_cells": 7
+    },
+    {
+      "template": "geomantia:city/stubbs/commercial/flower_shop_01",
+      "door": [
+        13,
+        10
+      ],
+      "port": [
+        13,
+        0
+      ],
+      "direction": "NORTH",
+      "clear_supported_cells": 10
+    },
+    {
+      "template": "geomantia:city/stubbs/commercial/laundry_facility_01",
+      "door": [
+        19,
+        17
+      ],
+      "port": [
+        19,
+        27
+      ],
+      "direction": "SOUTH",
+      "clear_supported_cells": 10
+    },
+    {
+      "template": "geomantia:city/stubbs/residential/civilian_house_03",
+      "door": [
+        10,
+        5
+      ],
+      "port": [
+        16,
+        5
+      ],
+      "direction": "EAST",
+      "clear_supported_cells": 6
+    },
+    {
+      "template": "geomantia:city/stubbs/residential/household_01",
+      "door": [
+        7,
+        4
+      ],
+      "port": [
+        7,
+        0
+      ],
+      "direction": "NORTH",
+      "clear_supported_cells": 4
+    },
+    {
+      "template": "geomantia:city/stubbs/residential/household_02",
+      "door": [
+        4,
+        5
+      ],
+      "port": [
+        0,
+        5
+      ],
+      "direction": "WEST",
+      "clear_supported_cells": 4
+    }
+  ]
+}

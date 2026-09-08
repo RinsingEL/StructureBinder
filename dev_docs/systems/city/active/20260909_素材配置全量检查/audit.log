@@ -1,0 +1,58 @@
+{
+  "bundle": "D:\\PCL2-2.8.12\\.minecraft\\versions\\1.20.1-Forge_47.4.23\\config\\structureTemplate\\terrasense\\template_cfg",
+  "templates": 65,
+  "profiles": 65,
+  "structureRefs": 65,
+  "fillPools": 42,
+  "issueCounts": {
+    "FRONTAGE_AMBIGUOUS": 1,
+    "INTERIOR_PORT_REVIEW": 8
+  },
+  "issues": [
+    {
+      "code": "FRONTAGE_AMBIGUOUS",
+      "target": "geomantia:city/trek_v3/village/plains/houses/plains_big_house_1",
+      "detail": "[{\"entranceId\": \"trek_v3_plains_big_house_1_west_01\", \"position\": {\"x\": 0, \"z\": 4}, \"direction\": \"WEST\"}, {\"entranceId\": \"trek_v3_plains_big_house_1_west_02\", \"position\": {\"x\": 0, \"z\": 10}, \"direction\": \"WEST\"}]"
+    },
+    {
+      "code": "INTERIOR_PORT_REVIEW",
+      "target": "geomantia:city/stubbs/agriculture/farm_storage_house_01",
+      "detail": "{'entranceId': 'agriculture_farm_storage_house_01_front', 'position': {'x': 9, 'z': 13}, 'direction': 'SOUTH'}"
+    },
+    {
+      "code": "INTERIOR_PORT_REVIEW",
+      "target": "geomantia:city/stubbs/agriculture/horse_stall_02",
+      "detail": "{'entranceId': 'agriculture_horse_stall_02_front', 'position': {'x': 8, 'z': 22}, 'direction': 'SOUTH'}"
+    },
+    {
+      "code": "INTERIOR_PORT_REVIEW",
+      "target": "geomantia:city/stubbs/civic/guard_outpost_01",
+      "detail": "{'entranceId': 'civic_guard_outpost_01_front', 'position': {'x': 19, 'z': 9}, 'direction': 'EAST'}"
+    },
+    {
+      "code": "INTERIOR_PORT_REVIEW",
+      "target": "geomantia:city/stubbs/commercial/motel_01",
+      "detail": "{'entranceId': 'commercial_motel_01_front', 'position': {'x': 26, 'z': 8}, 'direction': 'EAST'}"
+    },
+    {
+      "code": "INTERIOR_PORT_REVIEW",
+      "target": "geomantia:city/stubbs/commercial/town_workshop_01",
+      "detail": "{'entranceId': 'commercial_town_workshop_01_front', 'position': {'x': 11, 'z': 4}, 'direction': 'SOUTH'}"
+    },
+    {
+      "code": "INTERIOR_PORT_REVIEW",
+      "target": "geomantia:city/trek/defense/mangrove_watchtower_1",
+      "detail": "{'entranceId': 'mangrove_watchtower_1_front', 'position': {'x': 6, 'z': 4}, 'direction': 'NORTH'}"
+    },
+    {
+      "code": "INTERIOR_PORT_REVIEW",
+      "target": "geomantia:city/trek/defense/mangrove_watchtower_2",
+      "detail": "{'entranceId': 'mangrove_watchtower_2_front', 'position': {'x': 6, 'z': 4}, 'direction': 'NORTH'}"
+    },
+    {
+      "code": "INTERIOR_PORT_REVIEW",
+      "target": "geomantia:city/trek/industry/claw_pillager",
+      "detail": "{'entranceId': 'claw_pillager_base', 'position': {'x': 12, 'z': 1}, 'direction': 'EAST'}"
+    }
+  ]
+}

@@ -1,0 +1,512 @@
+{
+  "schema": "city_template_content_pack.v0.1",
+  "packId": "geomantia_trek_v3_stubbs_selected_20260804_v1",
+  "catalogSha256": "sha256:ee70dc1fcb13b1ded41f85ec8e07ad943af953e39fd8134a2c5c07b12cee6f37",
+  "templates": [
+    {
+      "templateRef": "geomantia:city/trek_v3/village/swamp_vanilla/houses/swamp_small_house_7",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/swamp_vanilla/houses/swamp_small_house_7.nbt",
+      "sourceSha256": "sha256:391ed339bb5a6684094bcf47c8a95571b004fe82375f6768e87c401106a79405",
+      "sourceIdentity": "geomantia:city/trek_v3/village/swamp_vanilla/houses/swamp_small_house_7",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_medium_house_2",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_medium_house_2.nbt",
+      "sourceSha256": "sha256:692c3bed7ec1b5166547b12d38a7c305f767805446b1f22ec601b64d584a53e5",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_medium_house_2",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/swamp_vanilla/houses/swamp_small_house_6",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/swamp_vanilla/houses/swamp_small_house_6.nbt",
+      "sourceSha256": "sha256:02aa95b4321ee3d4088035037df72e905b061cfcec2843b3c93874455e39af60",
+      "sourceIdentity": "geomantia:city/trek_v3/village/swamp_vanilla/houses/swamp_small_house_6",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_fletcher_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_fletcher_1.nbt",
+      "sourceSha256": "sha256:2116d76287730ceef14fa9b556501757b4c21a866fd50d0d467ded0898b39ff6",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_fletcher_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/plains/houses/plains_small_house_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/plains/houses/plains_small_house_1.nbt",
+      "sourceSha256": "sha256:e8ea1c3359c17fdde694e6471e0094c5113c1ea1f5ed079059c92e7c0a687fc1",
+      "sourceIdentity": "geomantia:city/trek_v3/village/plains/houses/plains_small_house_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/plains/houses/plains_small_house_4",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/plains/houses/plains_small_house_4.nbt",
+      "sourceSha256": "sha256:8176d68057175f36f3c86a4e1b57e5518d12915bfae98772faf930691a83479e",
+      "sourceIdentity": "geomantia:city/trek_v3/village/plains/houses/plains_small_house_4",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_medium_house_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_medium_house_1.nbt",
+      "sourceSha256": "sha256:2ecf56d78e9b31d482304965524aba0104ce04c5b1482c6e2d030b931aaab51c",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_medium_house_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/plains/houses/plains_big_house_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/plains/houses/plains_big_house_1.nbt",
+      "sourceSha256": "sha256:7934a7fe7b240196b88e4017dfd3b0901874dab44c1cf54f5daa243bc94ddc22",
+      "sourceIdentity": "geomantia:city/trek_v3/village/plains/houses/plains_big_house_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/plains/houses/plains_small_house_2",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/plains/houses/plains_small_house_2.nbt",
+      "sourceSha256": "sha256:e0bb6467fc82a01814e35b97b825b7336ee6c46f6223e759c222fc64314a487e",
+      "sourceIdentity": "geomantia:city/trek_v3/village/plains/houses/plains_small_house_2",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_shepherd_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_shepherd_1.nbt",
+      "sourceSha256": "sha256:c7fd4ba12e26fae579664e6903ed1ddfcf58f79d07202ce31ab44d2b4b1bf2ef",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_shepherd_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/swamp/houses/swamp_shepherd_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/swamp/houses/swamp_shepherd_1.nbt",
+      "sourceSha256": "sha256:9282aa784f552f193f15ef8acf7878116499aeae53b39d441b12d459d70fe376",
+      "sourceIdentity": "geomantia:city/trek_v3/village/swamp/houses/swamp_shepherd_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/plains/houses/plains_fletcher_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/plains/houses/plains_fletcher_1.nbt",
+      "sourceSha256": "sha256:d26b829c73e20c63275de5b478aad7ce23ffdcbabb868a40de08c6c922af053b",
+      "sourceIdentity": "geomantia:city/trek_v3/village/plains/houses/plains_fletcher_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_tannery_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_tannery_1.nbt",
+      "sourceSha256": "sha256:84d4da45030dcd47a19ed62a376dfd16ff6636fb1448a74b77f46ae912b38077",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_tannery_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_cartographer_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_cartographer_1.nbt",
+      "sourceSha256": "sha256:ded517e24c46176f253f04e206b342bed2ac9488106eb1e70e7c55744f86e740",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_cartographer_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_toolsmith_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_toolsmith_1.nbt",
+      "sourceSha256": "sha256:7224dbcd30830088926b894692b09c492d1d0f522923d295d168f24954e847c6",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_toolsmith_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/plains/houses/plains_weaponsmith_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/plains/houses/plains_weaponsmith_1.nbt",
+      "sourceSha256": "sha256:c797f505eebb1541a70bd80df01d03c769c1365e68f31be6fe96620b07e06026",
+      "sourceIdentity": "geomantia:city/trek_v3/village/plains/houses/plains_weaponsmith_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_big_house_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_big_house_1.nbt",
+      "sourceSha256": "sha256:a0583f6f2f625596bebe52bd00a07de2b5a654091a500f940585fcca44e15f4f",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_big_house_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_butcher_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_butcher_1.nbt",
+      "sourceSha256": "sha256:943b7ac927f6853d2c36f77ce917503bc8bec935e98a41cf0c2723df5ebdb684",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_butcher_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/plains/houses/plains_church_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/plains/houses/plains_church_1.nbt",
+      "sourceSha256": "sha256:325450ed32a9ab38e07242f5e1f9d4028959d3cb452c48275342c85f044e92cc",
+      "sourceIdentity": "geomantia:city/trek_v3/village/plains/houses/plains_church_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/plains/houses/plains_shepherd_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/plains/houses/plains_shepherd_1.nbt",
+      "sourceSha256": "sha256:8a49bc9c0dd487fe589d4ac5368b28f6afecabc523fc13f26347b1256ac5c661",
+      "sourceIdentity": "geomantia:city/trek_v3/village/plains/houses/plains_shepherd_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_temple_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_temple_1.nbt",
+      "sourceSha256": "sha256:3c9a11c89f968fb3557f11a214155752383443ed51248be12886d4ed5a5c6d89",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_temple_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_armorer_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_armorer_1.nbt",
+      "sourceSha256": "sha256:b1a2d60371d3f1baa513a1df0b6f1556a919b8aeac97c7c465a601145a8beae3",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_armorer_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_farm_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_farm_1.nbt",
+      "sourceSha256": "sha256:5485e215a2fd5cf8bb451467ceb4fa165a453b62d4fed4d7db886d22e6d88b92",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_farm_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_farm_2",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_farm_2.nbt",
+      "sourceSha256": "sha256:29293019768601de6e12e9bc801cd9213d00199d84a907914de24dc69b8b02d7",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_farm_2",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_farm_3",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_farm_3.nbt",
+      "sourceSha256": "sha256:0065ac0714fb225a25d1c2c31482c2737fe311ad22d6de477e5dc7e04557574f",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_farm_3",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_7",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_small_house_7.nbt",
+      "sourceSha256": "sha256:fd589abb06d59e15464619eb3ee052a961b68e3133a500553f03d06b16787ea6",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_7",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_6",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_small_house_6.nbt",
+      "sourceSha256": "sha256:8748e98c4049bec4e2d75728d58928d0d9f2b37592bb50c0710228ba85fd6db2",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_6",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_8",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_small_house_8.nbt",
+      "sourceSha256": "sha256:ed74aefb31522b61918f4c87d7a3f413362d778d3234ced0876bde2d5e1ea096",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_8",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_library_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_library_1.nbt",
+      "sourceSha256": "sha256:897fe916f445b559dd039ee26ad8c59dff1da9374b9e644f4a508cb64c2477b5",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_library_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_small_house_1.nbt",
+      "sourceSha256": "sha256:e7b1efe674a0892ef194b3d8cfe183c8ead3294d81d9f39a0832e9c93a084f37",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/plains/houses/plains_cartographer_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/plains/houses/plains_cartographer_1.nbt",
+      "sourceSha256": "sha256:93d7a71fc5521202533a5c9858cb6f27ab2869ff3a0a82ecc0793b1cd0ba1158",
+      "sourceIdentity": "geomantia:city/trek_v3/village/plains/houses/plains_cartographer_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_3",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_small_house_3.nbt",
+      "sourceSha256": "sha256:e0f97a7d5bb79fa488c2d89d17d5ec18a482aa9ce7e5621c73fd3d8703a86ba8",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_3",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_2",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_small_house_2.nbt",
+      "sourceSha256": "sha256:cbf6dfbd24726e69114ac9c3a3f5103bbc448124162804d62af69b1230531879",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_2",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_5",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_small_house_5.nbt",
+      "sourceSha256": "sha256:88ebf7e282427df5528451a6b2548309f4525de81a0d89e2a1c2e932be64c4ba",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_5",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_4",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_small_house_4.nbt",
+      "sourceSha256": "sha256:dca2860104f72b51c540b267fedc536f97d9e377e352452eadb10fe711e468d3",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_4",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/plains/houses/plains_butcher_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/plains/houses/plains_butcher_1.nbt",
+      "sourceSha256": "sha256:8fc226c84e6c50fe289285773de448f7f99fafd8502cecfb64ddf791181756a0",
+      "sourceIdentity": "geomantia:city/trek_v3/village/plains/houses/plains_butcher_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/plains/houses/plains_toolsmith_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/plains/houses/plains_toolsmith_1.nbt",
+      "sourceSha256": "sha256:efa8b18db3b616a597c6482f32087139066576fb62b851b851e5f1b8490fee17",
+      "sourceIdentity": "geomantia:city/trek_v3/village/plains/houses/plains_toolsmith_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_mason_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_mason_1.nbt",
+      "sourceSha256": "sha256:745f71e62cab77aa2c0555fdec56f2c9f59f4a6409e47f7fb634a2525b59044b",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_mason_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/plains/houses/plains_library_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/plains/houses/plains_library_1.nbt",
+      "sourceSha256": "sha256:7ef5dfc77bd95734788424b50c5d76fd2eaff3baf6eec927ead413260af48ffa",
+      "sourceIdentity": "geomantia:city/trek_v3/village/plains/houses/plains_library_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/plains/houses/plains_mason_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/plains/houses/plains_mason_1.nbt",
+      "sourceSha256": "sha256:1480ebd2b5aeaa53a60156c0f49bea3d79ffe1240172e50a915e283082acb5d4",
+      "sourceIdentity": "geomantia:city/trek_v3/village/plains/houses/plains_mason_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/plains/houses/plains_medium_house_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/plains/houses/plains_medium_house_1.nbt",
+      "sourceSha256": "sha256:616792cf414be0551aad5714ac7a9a9d5f3b53491a080fc75a22faa923fedc46",
+      "sourceIdentity": "geomantia:city/trek_v3/village/plains/houses/plains_medium_house_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/desert/houses/desert_weaponsmith_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/desert/houses/desert_weaponsmith_1.nbt",
+      "sourceSha256": "sha256:b0416b51ac593a25903d126bd13d3f14cf749193aeb4807d4f660f163bec4c96",
+      "sourceIdentity": "geomantia:city/trek_v3/village/desert/houses/desert_weaponsmith_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/plains/houses/plains_tannery_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/plains/houses/plains_tannery_1.nbt",
+      "sourceSha256": "sha256:6e0c4e71c8a43b34cd7afaa1c5c786f7185a415b4d4fb9f4202e9f75bab3fe44",
+      "sourceIdentity": "geomantia:city/trek_v3/village/plains/houses/plains_tannery_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/plains/houses/plains_farm_2",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/plains/houses/plains_farm_2.nbt",
+      "sourceSha256": "sha256:ee4bbb4a5ec9098ed3184a9d7ad89e8c8d1833aa15591bd155847bea5d63b83f",
+      "sourceIdentity": "geomantia:city/trek_v3/village/plains/houses/plains_farm_2",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/plains/houses/plains_stable_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/plains/houses/plains_stable_1.nbt",
+      "sourceSha256": "sha256:97e5c9817d3b2f4d53719f0b620f6b35530915a810e952be226082857f5bc0ab",
+      "sourceIdentity": "geomantia:city/trek_v3/village/plains/houses/plains_stable_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek_v3/village/plains/houses/plains_farm_1",
+      "sourceFile": "geomantia/structures/city/trek_v3/village/plains/houses/plains_farm_1.nbt",
+      "sourceSha256": "sha256:163b8a43a0b565357a4d656a13ddf3f36c761f07c2f7839a952b24ab944f066a",
+      "sourceIdentity": "geomantia:city/trek_v3/village/plains/houses/plains_farm_1",
+      "converterId": "trek_v3_sanitized_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/agriculture/windmill_01",
+      "sourceFile": "geomantia/structures/city/stubbs/agriculture/windmill_01.nbt",
+      "sourceSha256": "sha256:e5423a5a96722803216f8ad4360133916adcd8c566f86e80a8e9947e6ed45933",
+      "sourceIdentity": "geomantia:city/stubbs/agriculture/windmill_01",
+      "converterId": "stubbs_v1"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/agriculture/barn_windmill_01",
+      "sourceFile": "geomantia/structures/city/stubbs/agriculture/barn_windmill_01.nbt",
+      "sourceSha256": "sha256:9a724946767992fb78faf58f4ad8d0ebf9788a655678acbee479b0f8ea056a0f",
+      "sourceIdentity": "geomantia:city/stubbs/agriculture/barn_windmill_01",
+      "converterId": "stubbs_v1"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/agriculture/farm_storage_house_01",
+      "sourceFile": "geomantia/structures/city/stubbs/agriculture/farm_storage_house_01.nbt",
+      "sourceSha256": "sha256:745173985c372020b2aaed2f5ac541bf1a8bbfb9daac840974a69f2fed0162f1",
+      "sourceIdentity": "geomantia:city/stubbs/agriculture/farm_storage_house_01",
+      "converterId": "stubbs_v1"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/agriculture/horse_stall_02",
+      "sourceFile": "geomantia/structures/city/stubbs/agriculture/horse_stall_02.nbt",
+      "sourceSha256": "sha256:6da43ad10514e4766dfde8362cc8695868ef15e361b1ae4b803a0311dc1212da",
+      "sourceIdentity": "geomantia:city/stubbs/agriculture/horse_stall_02",
+      "converterId": "stubbs_v1"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/civic/town_hall_01",
+      "sourceFile": "geomantia/structures/city/stubbs/civic/town_hall_01.nbt",
+      "sourceSha256": "sha256:0f37d6337a091d3096282d43591d7d141f3f3776040b20d46d6881189c6bb957",
+      "sourceIdentity": "geomantia:city/stubbs/civic/town_hall_01",
+      "converterId": "stubbs_v1"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/civic/guard_outpost_01",
+      "sourceFile": "geomantia/structures/city/stubbs/civic/guard_outpost_01.nbt",
+      "sourceSha256": "sha256:fc6e3091f7f03eac4cc93f388d79d9097a51f1c5bcd9050fb8e0b1bf06091f79",
+      "sourceIdentity": "geomantia:city/stubbs/civic/guard_outpost_01",
+      "converterId": "stubbs_v1"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/commercial/tavern_01",
+      "sourceFile": "geomantia/structures/city/stubbs/commercial/tavern_01.nbt",
+      "sourceSha256": "sha256:6dd894811cc9bfdfd85d3fa80d3e5bec5c15679847321c7a7187d69ad0f50335",
+      "sourceIdentity": "geomantia:city/stubbs/commercial/tavern_01",
+      "converterId": "stubbs_v1"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/commercial/motel_01",
+      "sourceFile": "geomantia/structures/city/stubbs/commercial/motel_01.nbt",
+      "sourceSha256": "sha256:f6ea4cdd4b4fabf1828ac9132e255c83965787dffc6d153c5ca02e1174708579",
+      "sourceIdentity": "geomantia:city/stubbs/commercial/motel_01",
+      "converterId": "stubbs_v1"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/commercial/general_store_01",
+      "sourceFile": "geomantia/structures/city/stubbs/commercial/general_store_01.nbt",
+      "sourceSha256": "sha256:e9863e5b31277b7fbb1d4ba36e0604f55326935ab6f73b690d89bc063b0b5bc3",
+      "sourceIdentity": "geomantia:city/stubbs/commercial/general_store_01",
+      "converterId": "stubbs_v1"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/commercial/flower_shop_01",
+      "sourceFile": "geomantia/structures/city/stubbs/commercial/flower_shop_01.nbt",
+      "sourceSha256": "sha256:395e682577cdbc5e0251f08c6e3acedbc2498af7afc5c0e85fbd80643ec52ab0",
+      "sourceIdentity": "geomantia:city/stubbs/commercial/flower_shop_01",
+      "converterId": "stubbs_v1"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/commercial/town_workshop_01",
+      "sourceFile": "geomantia/structures/city/stubbs/commercial/town_workshop_01.nbt",
+      "sourceSha256": "sha256:8c4cbfc30b614f358c460306c02b865c9e201fd1976a9b8e291065ffa65f1da9",
+      "sourceIdentity": "geomantia:city/stubbs/commercial/town_workshop_01",
+      "converterId": "stubbs_v1"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/commercial/laundry_facility_01",
+      "sourceFile": "geomantia/structures/city/stubbs/commercial/laundry_facility_01.nbt",
+      "sourceSha256": "sha256:f776770d8eb8aba843e3a02b117a78f7e3cf0413796b52655a2fd90e8dfe2cb6",
+      "sourceIdentity": "geomantia:city/stubbs/commercial/laundry_facility_01",
+      "converterId": "stubbs_v1"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/residential/civilian_house_03",
+      "sourceFile": "geomantia/structures/city/stubbs/residential/civilian_house_03.nbt",
+      "sourceSha256": "sha256:1c118f468bba5e77ab97cddb2012a324abe0d42f84de7e7bacb8a4b8d1ac5baf",
+      "sourceIdentity": "geomantia:city/stubbs/residential/civilian_house_03",
+      "converterId": "stubbs_v1"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/residential/household_01",
+      "sourceFile": "geomantia/structures/city/stubbs/residential/household_01.nbt",
+      "sourceSha256": "sha256:e148eb5afb1a075617f6b50b7a81448999dca10ba831843f6eb1508640c65031",
+      "sourceIdentity": "geomantia:city/stubbs/residential/household_01",
+      "converterId": "stubbs_v1"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/residential/household_02",
+      "sourceFile": "geomantia/structures/city/stubbs/residential/household_02.nbt",
+      "sourceSha256": "sha256:5d39e359f86480d9d6e464b78f51cf9183c2a75b31deef99b6ee9d10e275a75a",
+      "sourceIdentity": "geomantia:city/stubbs/residential/household_02",
+      "converterId": "stubbs_v1"
+    },
+    {
+      "templateRef": "geomantia:city/trek/landmark/plains_fountain_01",
+      "sourceFile": "geomantia/structures/city/trek/landmark/plains_fountain_01.nbt",
+      "sourceSha256": "sha256:c3c6b23262ab0ae4e340269cbde764375a3440da44532dba7af3384b781c5b94",
+      "sourceIdentity": "geomantia:city/trek/landmark/plains_fountain_01",
+      "converterId": "trek_b0_6_fixed_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek/defense/mangrove_watchtower_1",
+      "sourceFile": "geomantia/structures/city/trek/defense/mangrove_watchtower_1.nbt",
+      "sourceSha256": "sha256:9a953df2949c8bf7664bef5e009017d67b861254f57de08e712b8b23ad50baa6",
+      "sourceIdentity": "geomantia:city/trek/defense/mangrove_watchtower_1",
+      "converterId": "trek_b0_6_fixed_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek/defense/mangrove_watchtower_2",
+      "sourceFile": "geomantia/structures/city/trek/defense/mangrove_watchtower_2.nbt",
+      "sourceSha256": "sha256:9c2d6fb4a09d1bb664a027355d227de0a1ec64b1be534050ee80db3e0a1b91ef",
+      "sourceIdentity": "geomantia:city/trek/defense/mangrove_watchtower_2",
+      "converterId": "trek_b0_6_fixed_v1",
+      "sourceModId": "trek"
+    },
+    {
+      "templateRef": "geomantia:city/trek/industry/claw_pillager",
+      "sourceFile": "geomantia/structures/city/trek/industry/claw_pillager.nbt",
+      "sourceSha256": "sha256:0d1bf502ea69cd15dfdd674e68084ac45618c6090183627f90841ca8e78b8685",
+      "sourceIdentity": "geomantia:city/trek/industry/claw_pillager",
+      "converterId": "trek_b0_6_fixed_v1",
+      "sourceModId": "trek"
+    }
+  ]
+}

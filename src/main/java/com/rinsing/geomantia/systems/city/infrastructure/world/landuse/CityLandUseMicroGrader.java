@@ -725,7 +725,7 @@ final class CityLandUseMicroGrader {
                             Cell cell = new Cell(low.x() - key.highDx() * step,
                                     low.z() - key.highDz() * step);
                             putStair(result, new StairDecision(sourceId, cell.x(), cell.z(),
-                                    key.highY() - 1 - step, stairBlock,
+                                    key.highY() - step, stairBlock,
                                     facing(key.highDx(), key.highDz()), StairMode.DIRECT));
                         }
                     }
@@ -803,7 +803,7 @@ final class CityLandUseMicroGrader {
                         Cell stairCell = new Cell(low.x() - key.highDx() * step,
                                 low.z() - key.highDz() * step);
                         putStair(result, new StairDecision(key.sourceId(), stairCell.x(), stairCell.z(),
-                                key.highY() - 1 - step, stairBlock,
+                                key.highY() - step, stairBlock,
                                 facing(key.highDx(), key.highDz()), StairMode.DIRECT));
                     }
                 }
@@ -932,7 +932,7 @@ final class CityLandUseMicroGrader {
                         Cell cell = new Cell(boundary.low().x() - key.highDx() * step,
                                 boundary.low().z() - key.highDz() * step);
                         putStair(candidate, new StairDecision(key.sourceId(), cell.x(), cell.z(),
-                                key.highY() - 1 - step, stairBlock,
+                                key.highY() - step, stairBlock,
                                 facing(key.highDx(), key.highDz()), StairMode.ACCESS_DIRECT));
                     }
                 } else {
@@ -1087,9 +1087,9 @@ final class CityLandUseMicroGrader {
         if (availableSides.isEmpty()) return;
 
         putStair(result, new StairDecision(sourceId, lowCenter.x(), lowCenter.z(),
-                key.highY() - 1, stairBlock, facing(key.highDx(), key.highDz()), stairMode));
+                key.highY(), stairBlock, facing(key.highDx(), key.highDz()), stairMode));
         for (int step = 1; step < delta; step++) {
-            int targetY = key.highY() - 1 - step;
+            int targetY = key.highY() - step;
             for (int side : availableSides) {
                 Cell cell = new Cell(lowCenter.x() + side * lateralX * step,
                         lowCenter.z() + side * lateralZ * step);
@@ -1117,7 +1117,7 @@ final class CityLandUseMicroGrader {
                 Cell cell = new Cell(low.x() + key.highDx() * (cut - step),
                         low.z() + key.highDz() * (cut - step));
                 Integer existing = targets.get(cell);
-                int y = key.highY() - 1 - step;
+                int y = key.highY() - step;
                 if (!area.equals(areas.get(cell)) || existing == null
                         || existing - y > FOUNDATION_MAX_CUT_DEPTH_BLOCKS
                         || y - existing > FOUNDATION_MAX_FILL_DEPTH_BLOCKS) { candidate.clear(); break; }

@@ -71,7 +71,9 @@ public final class CityTemplateOrientationSolver {
             return List.of(entrances.get(0).entranceId());
         }
         throw new IllegalArgumentException("D4_ARRAY_LAYOUT_FRONTAGE_ENTRANCE_AMBIGUOUS: "
-                + template.templateId() + " requires frontageEntranceId.");
+                + template.templateId() + " requires frontageEntranceId. Authored entrances="
+                + entrances.stream().map(e -> e.entranceId() + "(" + e.direction() + ")").toList()
+                + "; select an authored entrance explicitly, or let the template author approve frontagePolicy=ANY_AUTHORED_ENTRANCE.");
     }
 
     private static double alignment(CityTemplatePlacementGeometry.Direction direction, int targetX, int targetZ) {

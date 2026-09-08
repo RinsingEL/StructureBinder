@@ -36,6 +36,18 @@ class CityBlueprintCodecTest {
     }
 
     @Test
+    void enumRejectionListsExecutableChoices() throws IOException {
+        var json = fixture("valid_city_blueprint.json");
+        var group = json.getAsJsonArray("groups").get(0).getAsJsonObject();
+        group.addProperty("priority", "HIGHEST");
+        var error = assertThrows(CityBlueprintContractException.class, () -> codec.read(json));
+        assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_ENUM_UNSUPPORTED, error.reasonCode());
+        org.junit.jupiter.api.Assertions.assertTrue(error.getMessage().contains("CORE, STANDARD, PERIPHERAL"));
+        group.addProperty("priority", "CORE");
+        codec.read(json);
+    }
+
+    @Test
     void readsAndWritesGoldenBlueprint() throws IOException {
         JsonObject json = fixture("valid_city_blueprint.json");
         CityBlueprint blueprint = codec.read(json);
