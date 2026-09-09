@@ -31,7 +31,7 @@ import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 public final class AdventurerMapNetwork {
-    private static final String PROTOCOL = "5";
+    private static final String PROTOCOL = "6";
     private static final int VIEW_RADIUS_AT_ZOOM_ONE = 4096;
     private static final int MIN_VIEW_RADIUS = 1024;
     private static final int MAX_VIEW_RADIUS = 8192;
@@ -107,21 +107,23 @@ public final class AdventurerMapNetwork {
         }
     }
 
-    public static void requestSnapshot(double zoom) {
-        CHANNEL.sendToServer(new SnapshotRequest(normalizeZoom(zoom)));
+    public static void requestSnapshot(double zoom, double centerX, double centerZ) {
+        CHANNEL.sendToServer(new SnapshotRequest(normalizeZoom(zoom), centerX, centerZ));
     }
 
     public static void openFor(ServerPlayer player) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new OpenMap());
     }
 
-    private record SnapshotRequest(double zoom) {
+    private record SnapshotRequest(double zoom, double centerX, double centerZ) {
         static void encode(SnapshotRequest request, FriendlyByteBuf buffer) {
             buffer.writeDouble(request.zoom);
+            buffer.writeDouble(request.centerX);
+            buffer.writeDouble(request.centerZ);
         }
 
         static SnapshotRequest decode(FriendlyByteBuf buffer) {
-            return new SnapshotRequest(normalizeZoom(buffer.readDouble()));
+            return new SnapshotRequest(normalizeZoom(buffer.readDouble()), buffer.readDouble(), buffer.readDouble());
         }
 
         static void handle(SnapshotRequest ignored, Supplier<NetworkEvent.Context> contextSupplier) {
@@ -131,12 +133,12 @@ public final class AdventurerMapNetwork {
                 context.setPacketHandled(true);
                 return;
             }
-            context.enqueueWork(() -> queueSnapshot(sender, ignored.zoom));
+            context.enqueueWork(() -> queueSnapshot(sender, ignored));
             context.setPacketHandled(true);
         }
     }
 
-    private static void queueSnapshot(ServerPlayer sender, double requestedZoom) {
+    private static void queueSnapshot(ServerPlayer sender, SnapshotRequest request) {
         final java.nio.file.Path debugRoot;
         final String preferredRunId;
         final PlanningAreaAccessConfig accessConfig;
@@ -147,11 +149,11 @@ public final class AdventurerMapNetwork {
             preferredRunId = status.has("runId") ? status.get("runId").getAsString() : "";
             accessConfig = planningService.planningAreaAccessConfig();
             debugRoot = WorldScopedPlanningPaths.realmDebugRoot(sender.server);
-            double zoom = normalizeZoom(requestedZoom);
+            double zoom = normalizeZoom(request.zoom);
             int radius = Math.max(MIN_VIEW_RADIUS, Math.min(MAX_VIEW_RADIUS,
                     (int) Math.round(VIEW_RADIUS_AT_ZOOM_ONE / zoom)));
-            viewport = new MapViewport(snapViewportCenter((int) Math.floor(sender.getX())),
-                    snapViewportCenter((int) Math.floor(sender.getZ())), radius);
+            viewport = new MapViewport(snapViewportCenter(normalizeCenter(request.centerX, sender.getX())),
+                    snapViewportCenter(normalizeCenter(request.centerZ, sender.getZ())), radius);
         } catch (RuntimeException exception) {
             CHANNEL.send(PacketDistributor.PLAYER.with(() -> sender), new SnapshotResponse(errorSnapshot()));
             return;
@@ -172,6 +174,11 @@ public final class AdventurerMapNetwork {
 
     private static double normalizeZoom(double zoom) {
         return Double.isFinite(zoom) ? Math.max(0.5D, Math.min(4.0D, zoom)) : 1.0D;
+    }
+
+    private static int normalizeCenter(double value, double fallback) {
+        return (int) Math.floor(Math.max(-30_000_000D, Math.min(30_000_000D,
+                Double.isFinite(value) ? value : fallback)));
     }
 
     private static int snapViewportCenter(int blockCoordinate) {

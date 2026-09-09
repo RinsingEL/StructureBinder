@@ -1,0 +1,2087 @@
+{
+  "schema": "city_blueprint_reference_catalog",
+  "structureRefs": [
+    {
+      "structureRef": "trek:village/swamp_vanilla/houses/swamp_small_house_7",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/swamp_vanilla/houses/swamp_small_house_7",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_medium_house_2",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_medium_house_2",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/swamp_vanilla/houses/swamp_small_house_6",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/swamp_vanilla/houses/swamp_small_house_6",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_fletcher_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_fletcher_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/plains/houses/plains_small_house_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_small_house_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/plains/houses/plains_small_house_4",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_small_house_4",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_medium_house_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_medium_house_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/plains/houses/plains_big_house_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_big_house_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/plains/houses/plains_small_house_2",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_small_house_2",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_shepherd_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_shepherd_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/swamp/houses/swamp_shepherd_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/swamp/houses/swamp_shepherd_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/plains/houses/plains_fletcher_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_fletcher_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_tannery_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_tannery_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_cartographer_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_cartographer_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_toolsmith_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_toolsmith_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/plains/houses/plains_weaponsmith_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_weaponsmith_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_big_house_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_big_house_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_butcher_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_butcher_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/plains/houses/plains_church_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_church_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/plains/houses/plains_shepherd_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_shepherd_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_temple_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_temple_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_armorer_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_armorer_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_farm_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_farm_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_farm_2",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_farm_2",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_farm_3",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_farm_3",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_small_house_7",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_7",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_small_house_6",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_6",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_small_house_8",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_8",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_library_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_library_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_small_house_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/plains/houses/plains_cartographer_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_cartographer_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_small_house_3",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_3",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_small_house_2",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_2",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_small_house_5",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_5",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_small_house_4",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_small_house_4",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/plains/houses/plains_butcher_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_butcher_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/plains/houses/plains_toolsmith_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_toolsmith_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_mason_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_mason_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/plains/houses/plains_library_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_library_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/plains/houses/plains_mason_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_mason_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/plains/houses/plains_medium_house_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_medium_house_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/desert/houses/desert_weaponsmith_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/desert/houses/desert_weaponsmith_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/plains/houses/plains_tannery_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_tannery_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/plains/houses/plains_farm_2",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_farm_2",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/plains/houses/plains_stable_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_stable_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "trek:village/plains/houses/plains_farm_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek_v3/village/plains/houses/plains_farm_1",
+          "variantId": "trek_v3_sanitized_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "geomantia:city/stubbs/commercial/town_workshop_01",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/stubbs/commercial/town_workshop_01",
+          "variantId": "stubbs_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "geomantia:city/stubbs/agriculture/farm_storage_house_01",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/stubbs/agriculture/farm_storage_house_01",
+          "variantId": "stubbs_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "geomantia:city/stubbs/commercial/general_store_01",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/stubbs/commercial/general_store_01",
+          "variantId": "stubbs_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "geomantia:city/stubbs/commercial/tavern_01",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/stubbs/commercial/tavern_01",
+          "variantId": "stubbs_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "geomantia:city/stubbs/residential/household_01",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/stubbs/residential/household_01",
+          "variantId": "stubbs_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "geomantia:city/stubbs/residential/household_02",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/stubbs/residential/household_02",
+          "variantId": "stubbs_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "geomantia:city/stubbs/residential/civilian_house_03",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/stubbs/residential/civilian_house_03",
+          "variantId": "stubbs_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "geomantia:city/stubbs/agriculture/windmill_01",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/stubbs/agriculture/windmill_01",
+          "variantId": "stubbs_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "geomantia:city/stubbs/agriculture/barn_windmill_01",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/stubbs/agriculture/barn_windmill_01",
+          "variantId": "stubbs_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "geomantia:city/stubbs/commercial/motel_01",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/stubbs/commercial/motel_01",
+          "variantId": "stubbs_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "geomantia:city/stubbs/agriculture/horse_stall_02",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/stubbs/agriculture/horse_stall_02",
+          "variantId": "stubbs_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "geomantia:city/stubbs/commercial/flower_shop_01",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/stubbs/commercial/flower_shop_01",
+          "variantId": "stubbs_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "geomantia:city/stubbs/commercial/laundry_facility_01",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/stubbs/commercial/laundry_facility_01",
+          "variantId": "stubbs_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "geomantia:city/stubbs/civic/town_hall_01",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/stubbs/civic/town_hall_01",
+          "variantId": "stubbs_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "geomantia:city/stubbs/civic/guard_outpost_01",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/stubbs/civic/guard_outpost_01",
+          "variantId": "stubbs_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "geomantia:city/trek/landmark/plains_fountain_01",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek/landmark/plains_fountain_01",
+          "variantId": "trek_b0_6_fixed_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "geomantia:city/trek/defense/mangrove_watchtower_1",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek/defense/mangrove_watchtower_1",
+          "variantId": "trek_b0_6_fixed_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "geomantia:city/trek/defense/mangrove_watchtower_2",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek/defense/mangrove_watchtower_2",
+          "variantId": "trek_b0_6_fixed_v1"
+        }
+      ]
+    },
+    {
+      "structureRef": "geomantia:city/trek/industry/claw_pillager",
+      "templateCandidates": [
+        {
+          "templateId": "geomantia:city/trek/industry/claw_pillager",
+          "variantId": "trek_b0_6_fixed_v1"
+        }
+      ]
+    }
+  ],
+  "fillPools": [
+    {
+      "poolRef": "pool:trek_fill",
+      "structureRefs": [
+        "trek:village/swamp_vanilla/houses/swamp_small_house_7",
+        "trek:village/desert/houses/desert_medium_house_2",
+        "trek:village/swamp_vanilla/houses/swamp_small_house_6",
+        "trek:village/desert/houses/desert_fletcher_1",
+        "trek:village/plains/houses/plains_small_house_1",
+        "trek:village/plains/houses/plains_small_house_4",
+        "trek:village/desert/houses/desert_medium_house_1",
+        "trek:village/plains/houses/plains_small_house_2",
+        "trek:village/desert/houses/desert_shepherd_1",
+        "trek:village/swamp/houses/swamp_shepherd_1",
+        "trek:village/desert/houses/desert_tannery_1",
+        "trek:village/desert/houses/desert_toolsmith_1",
+        "trek:village/plains/houses/plains_weaponsmith_1",
+        "trek:village/desert/houses/desert_big_house_1",
+        "trek:village/desert/houses/desert_butcher_1",
+        "trek:village/plains/houses/plains_shepherd_1",
+        "trek:village/desert/houses/desert_armorer_1",
+        "trek:village/desert/houses/desert_farm_1",
+        "trek:village/desert/houses/desert_farm_2",
+        "trek:village/desert/houses/desert_farm_3",
+        "trek:village/desert/houses/desert_small_house_7",
+        "trek:village/desert/houses/desert_small_house_6",
+        "trek:village/desert/houses/desert_small_house_8",
+        "trek:village/desert/houses/desert_small_house_1",
+        "trek:village/desert/houses/desert_small_house_3",
+        "trek:village/desert/houses/desert_small_house_2",
+        "trek:village/desert/houses/desert_small_house_5",
+        "trek:village/desert/houses/desert_small_house_4",
+        "trek:village/plains/houses/plains_butcher_1",
+        "trek:village/plains/houses/plains_toolsmith_1",
+        "trek:village/desert/houses/desert_mason_1",
+        "trek:village/plains/houses/plains_mason_1",
+        "trek:village/plains/houses/plains_medium_house_1",
+        "trek:village/desert/houses/desert_weaponsmith_1",
+        "trek:village/plains/houses/plains_tannery_1",
+        "trek:village/plains/houses/plains_farm_2",
+        "trek:village/plains/houses/plains_stable_1",
+        "trek:village/plains/houses/plains_farm_1",
+        "geomantia:city/trek/defense/mangrove_watchtower_1"
+      ]
+    },
+    {
+      "poolRef": "pool:stubbs_fill",
+      "structureRefs": [
+        "geomantia:city/stubbs/commercial/town_workshop_01",
+        "geomantia:city/stubbs/agriculture/farm_storage_house_01",
+        "geomantia:city/stubbs/commercial/general_store_01",
+        "geomantia:city/stubbs/residential/household_01",
+        "geomantia:city/stubbs/residential/household_02",
+        "geomantia:city/stubbs/residential/civilian_house_03",
+        "geomantia:city/stubbs/commercial/motel_01",
+        "geomantia:city/stubbs/agriculture/horse_stall_02",
+        "geomantia:city/stubbs/commercial/flower_shop_01",
+        "geomantia:city/stubbs/commercial/laundry_facility_01"
+      ]
+    },
+    {
+      "poolRef": "pool:mixed_fill",
+      "structureRefs": [
+        "trek:village/swamp_vanilla/houses/swamp_small_house_7",
+        "trek:village/desert/houses/desert_medium_house_2",
+        "trek:village/swamp_vanilla/houses/swamp_small_house_6",
+        "trek:village/desert/houses/desert_fletcher_1",
+        "trek:village/plains/houses/plains_small_house_1",
+        "trek:village/plains/houses/plains_small_house_4",
+        "trek:village/desert/houses/desert_medium_house_1",
+        "trek:village/plains/houses/plains_small_house_2",
+        "trek:village/desert/houses/desert_shepherd_1",
+        "trek:village/swamp/houses/swamp_shepherd_1",
+        "trek:village/desert/houses/desert_tannery_1",
+        "trek:village/desert/houses/desert_toolsmith_1",
+        "trek:village/plains/houses/plains_weaponsmith_1",
+        "trek:village/desert/houses/desert_big_house_1",
+        "trek:village/desert/houses/desert_butcher_1",
+        "trek:village/plains/houses/plains_shepherd_1",
+        "trek:village/desert/houses/desert_armorer_1",
+        "trek:village/desert/houses/desert_farm_1",
+        "trek:village/desert/houses/desert_farm_2",
+        "trek:village/desert/houses/desert_farm_3",
+        "trek:village/desert/houses/desert_small_house_7",
+        "trek:village/desert/houses/desert_small_house_6",
+        "trek:village/desert/houses/desert_small_house_8",
+        "trek:village/desert/houses/desert_small_house_1",
+        "trek:village/desert/houses/desert_small_house_3",
+        "trek:village/desert/houses/desert_small_house_2",
+        "trek:village/desert/houses/desert_small_house_5",
+        "trek:village/desert/houses/desert_small_house_4",
+        "trek:village/plains/houses/plains_butcher_1",
+        "trek:village/plains/houses/plains_toolsmith_1",
+        "trek:village/desert/houses/desert_mason_1",
+        "trek:village/plains/houses/plains_mason_1",
+        "trek:village/plains/houses/plains_medium_house_1",
+        "trek:village/desert/houses/desert_weaponsmith_1",
+        "trek:village/plains/houses/plains_tannery_1",
+        "trek:village/plains/houses/plains_farm_2",
+        "trek:village/plains/houses/plains_stable_1",
+        "trek:village/plains/houses/plains_farm_1",
+        "geomantia:city/trek/defense/mangrove_watchtower_1",
+        "geomantia:city/stubbs/commercial/town_workshop_01",
+        "geomantia:city/stubbs/agriculture/farm_storage_house_01",
+        "geomantia:city/stubbs/commercial/general_store_01",
+        "geomantia:city/stubbs/residential/household_01",
+        "geomantia:city/stubbs/residential/household_02",
+        "geomantia:city/stubbs/residential/civilian_house_03",
+        "geomantia:city/stubbs/commercial/motel_01",
+        "geomantia:city/stubbs/agriculture/horse_stall_02",
+        "geomantia:city/stubbs/commercial/flower_shop_01",
+        "geomantia:city/stubbs/commercial/laundry_facility_01"
+      ]
+    },
+    {
+      "poolRef": "pool:agriculture",
+      "structureRefs": [
+        "trek:village/desert/houses/desert_shepherd_1",
+        "trek:village/swamp/houses/swamp_shepherd_1",
+        "trek:village/desert/houses/desert_butcher_1",
+        "trek:village/desert/houses/desert_farm_1",
+        "trek:village/desert/houses/desert_farm_2",
+        "trek:village/desert/houses/desert_farm_3",
+        "trek:village/plains/houses/plains_tannery_1",
+        "trek:village/plains/houses/plains_farm_2",
+        "trek:village/plains/houses/plains_stable_1",
+        "geomantia:city/stubbs/agriculture/farm_storage_house_01",
+        "geomantia:city/stubbs/agriculture/horse_stall_02"
+      ]
+    },
+    {
+      "poolRef": "pool:rural_support",
+      "structureRefs": [
+        "trek:village/desert/houses/desert_shepherd_1",
+        "trek:village/plains/houses/plains_farm_1",
+        "trek:village/plains/houses/plains_stable_1"
+      ]
+    },
+    {
+      "poolRef": "pool:commercial",
+      "structureRefs": [
+        "trek:village/desert/houses/desert_butcher_1",
+        "trek:village/plains/houses/plains_shepherd_1",
+        "trek:village/desert/houses/desert_armorer_1",
+        "trek:village/plains/houses/plains_butcher_1",
+        "trek:village/desert/houses/desert_weaponsmith_1",
+        "geomantia:city/stubbs/commercial/general_store_01",
+        "geomantia:city/stubbs/commercial/motel_01",
+        "geomantia:city/stubbs/commercial/flower_shop_01",
+        "geomantia:city/stubbs/commercial/laundry_facility_01"
+      ]
+    },
+    {
+      "poolRef": "pool:trek_plains_residential_fill",
+      "structureRefs": [
+        "trek:village/plains/houses/plains_small_house_1",
+        "trek:village/plains/houses/plains_small_house_4",
+        "trek:village/plains/houses/plains_small_house_2",
+        "trek:village/plains/houses/plains_weaponsmith_1",
+        "trek:village/plains/houses/plains_toolsmith_1",
+        "trek:village/plains/houses/plains_mason_1",
+        "trek:village/plains/houses/plains_medium_house_1",
+        "trek:village/plains/houses/plains_tannery_1"
+      ]
+    },
+    {
+      "poolRef": "pool:trek_plains_commercial_fill",
+      "structureRefs": [
+        "trek:village/plains/houses/plains_shepherd_1",
+        "trek:village/plains/houses/plains_butcher_1"
+      ]
+    },
+    {
+      "poolRef": "pool:trek_plains_agriculture_fill",
+      "structureRefs": [
+        "trek:village/plains/houses/plains_tannery_1",
+        "trek:village/plains/houses/plains_farm_2",
+        "trek:village/plains/houses/plains_stable_1"
+      ]
+    },
+    {
+      "poolRef": "pool:trek_defense_common_fill",
+      "structureRefs": [
+        "geomantia:city/trek/defense/mangrove_watchtower_1"
+      ]
+    },
+    {
+      "poolRef": "pool:residential",
+      "structureRefs": [
+        "trek:village/swamp_vanilla/houses/swamp_small_house_7",
+        "trek:village/desert/houses/desert_medium_house_2",
+        "trek:village/swamp_vanilla/houses/swamp_small_house_6",
+        "trek:village/desert/houses/desert_fletcher_1",
+        "trek:village/plains/houses/plains_small_house_1",
+        "trek:village/plains/houses/plains_small_house_4",
+        "trek:village/desert/houses/desert_medium_house_1",
+        "trek:village/plains/houses/plains_small_house_2",
+        "trek:village/desert/houses/desert_shepherd_1",
+        "trek:village/plains/houses/plains_weaponsmith_1",
+        "trek:village/desert/houses/desert_big_house_1",
+        "trek:village/desert/houses/desert_small_house_7",
+        "trek:village/desert/houses/desert_small_house_6",
+        "trek:village/desert/houses/desert_small_house_8",
+        "trek:village/desert/houses/desert_small_house_1",
+        "trek:village/desert/houses/desert_small_house_3",
+        "trek:village/desert/houses/desert_small_house_2",
+        "trek:village/desert/houses/desert_small_house_5",
+        "trek:village/desert/houses/desert_small_house_4",
+        "trek:village/plains/houses/plains_toolsmith_1",
+        "trek:village/plains/houses/plains_mason_1",
+        "trek:village/plains/houses/plains_medium_house_1",
+        "trek:village/plains/houses/plains_tannery_1",
+        "geomantia:city/stubbs/residential/household_01",
+        "geomantia:city/stubbs/residential/household_02",
+        "geomantia:city/stubbs/residential/civilian_house_03",
+        "geomantia:city/stubbs/commercial/motel_01"
+      ]
+    },
+    {
+      "poolRef": "pool:utility",
+      "structureRefs": [
+        "trek:village/desert/houses/desert_fletcher_1",
+        "trek:village/swamp/houses/swamp_shepherd_1",
+        "trek:village/desert/houses/desert_tannery_1",
+        "trek:village/desert/houses/desert_toolsmith_1",
+        "trek:village/plains/houses/plains_shepherd_1",
+        "trek:village/desert/houses/desert_armorer_1",
+        "trek:village/plains/houses/plains_butcher_1",
+        "trek:village/desert/houses/desert_mason_1",
+        "trek:village/plains/houses/plains_medium_house_1",
+        "trek:village/desert/houses/desert_weaponsmith_1",
+        "trek:village/plains/houses/plains_farm_2",
+        "trek:village/plains/houses/plains_stable_1",
+        "trek:village/plains/houses/plains_farm_1",
+        "geomantia:city/stubbs/commercial/town_workshop_01",
+        "geomantia:city/stubbs/agriculture/farm_storage_house_01",
+        "geomantia:city/stubbs/agriculture/horse_stall_02",
+        "geomantia:city/stubbs/commercial/laundry_facility_01"
+      ]
+    },
+    {
+      "poolRef": "pool:mining",
+      "structureRefs": [
+        "geomantia:city/stubbs/commercial/town_workshop_01"
+      ]
+    },
+    {
+      "poolRef": "pool:defense",
+      "structureRefs": [
+        "geomantia:city/trek/defense/mangrove_watchtower_1"
+      ]
+    },
+    {
+      "poolRef": "pool:transport",
+      "structureRefs": [
+        "geomantia:city/stubbs/agriculture/horse_stall_02"
+      ]
+    },
+    {
+      "poolRef": "pool:stubbs_medieval_fill",
+      "structureRefs": [
+        "geomantia:city/stubbs/commercial/town_workshop_01",
+        "geomantia:city/stubbs/agriculture/farm_storage_house_01",
+        "geomantia:city/stubbs/commercial/general_store_01",
+        "geomantia:city/stubbs/residential/household_01",
+        "geomantia:city/stubbs/residential/household_02",
+        "geomantia:city/stubbs/residential/civilian_house_03",
+        "geomantia:city/stubbs/commercial/motel_01",
+        "geomantia:city/stubbs/agriculture/horse_stall_02",
+        "geomantia:city/stubbs/commercial/flower_shop_01",
+        "geomantia:city/stubbs/commercial/laundry_facility_01"
+      ]
+    },
+    {
+      "poolRef": "pool:stubbs_medieval_residential_fill",
+      "structureRefs": [
+        "geomantia:city/stubbs/residential/household_01",
+        "geomantia:city/stubbs/residential/household_02",
+        "geomantia:city/stubbs/residential/civilian_house_03",
+        "geomantia:city/stubbs/commercial/motel_01"
+      ]
+    },
+    {
+      "poolRef": "pool:stubbs_medieval_utility_fill",
+      "structureRefs": [
+        "geomantia:city/stubbs/commercial/town_workshop_01",
+        "geomantia:city/stubbs/agriculture/farm_storage_house_01",
+        "geomantia:city/stubbs/agriculture/horse_stall_02",
+        "geomantia:city/stubbs/commercial/laundry_facility_01"
+      ]
+    },
+    {
+      "poolRef": "pool:stubbs_medieval_commercial_fill",
+      "structureRefs": [
+        "geomantia:city/stubbs/commercial/general_store_01",
+        "geomantia:city/stubbs/commercial/motel_01",
+        "geomantia:city/stubbs/commercial/flower_shop_01",
+        "geomantia:city/stubbs/commercial/laundry_facility_01"
+      ]
+    },
+    {
+      "poolRef": "pool:stubbs_medieval_agriculture_fill",
+      "structureRefs": [
+        "geomantia:city/stubbs/agriculture/farm_storage_house_01",
+        "geomantia:city/stubbs/agriculture/horse_stall_02"
+      ]
+    },
+    {
+      "poolRef": "pool:stubbs_medieval_mining_fill",
+      "structureRefs": [
+        "geomantia:city/stubbs/commercial/town_workshop_01"
+      ]
+    },
+    {
+      "poolRef": "pool:stubbs_medieval_transport_fill",
+      "structureRefs": [
+        "geomantia:city/stubbs/agriculture/horse_stall_02"
+      ]
+    },
+    {
+      "poolRef": "pool:trek_desert_sandstone_fill",
+      "structureRefs": [
+        "trek:village/desert/houses/desert_medium_house_2",
+        "trek:village/desert/houses/desert_fletcher_1",
+        "trek:village/desert/houses/desert_medium_house_1",
+        "trek:village/desert/houses/desert_shepherd_1",
+        "trek:village/desert/houses/desert_tannery_1",
+        "trek:village/desert/houses/desert_toolsmith_1",
+        "trek:village/desert/houses/desert_big_house_1",
+        "trek:village/desert/houses/desert_butcher_1",
+        "trek:village/desert/houses/desert_armorer_1",
+        "trek:village/desert/houses/desert_farm_1",
+        "trek:village/desert/houses/desert_farm_2",
+        "trek:village/desert/houses/desert_farm_3",
+        "trek:village/desert/houses/desert_small_house_7",
+        "trek:village/desert/houses/desert_small_house_6",
+        "trek:village/desert/houses/desert_small_house_8",
+        "trek:village/desert/houses/desert_small_house_1",
+        "trek:village/desert/houses/desert_small_house_3",
+        "trek:village/desert/houses/desert_small_house_2",
+        "trek:village/desert/houses/desert_small_house_5",
+        "trek:village/desert/houses/desert_small_house_4",
+        "trek:village/desert/houses/desert_mason_1",
+        "trek:village/desert/houses/desert_weaponsmith_1"
+      ]
+    },
+    {
+      "poolRef": "pool:trek_desert_sandstone_residential_fill",
+      "structureRefs": [
+        "trek:village/desert/houses/desert_medium_house_2",
+        "trek:village/desert/houses/desert_fletcher_1",
+        "trek:village/desert/houses/desert_medium_house_1",
+        "trek:village/desert/houses/desert_shepherd_1",
+        "trek:village/desert/houses/desert_big_house_1",
+        "trek:village/desert/houses/desert_small_house_7",
+        "trek:village/desert/houses/desert_small_house_6",
+        "trek:village/desert/houses/desert_small_house_8",
+        "trek:village/desert/houses/desert_small_house_1",
+        "trek:village/desert/houses/desert_small_house_3",
+        "trek:village/desert/houses/desert_small_house_2",
+        "trek:village/desert/houses/desert_small_house_5",
+        "trek:village/desert/houses/desert_small_house_4"
+      ]
+    },
+    {
+      "poolRef": "pool:trek_desert_sandstone_utility_fill",
+      "structureRefs": [
+        "trek:village/desert/houses/desert_fletcher_1",
+        "trek:village/desert/houses/desert_tannery_1",
+        "trek:village/desert/houses/desert_toolsmith_1",
+        "trek:village/desert/houses/desert_armorer_1",
+        "trek:village/desert/houses/desert_mason_1",
+        "trek:village/desert/houses/desert_weaponsmith_1"
+      ]
+    },
+    {
+      "poolRef": "pool:trek_desert_sandstone_commercial_fill",
+      "structureRefs": [
+        "trek:village/desert/houses/desert_butcher_1",
+        "trek:village/desert/houses/desert_armorer_1",
+        "trek:village/desert/houses/desert_weaponsmith_1"
+      ]
+    },
+    {
+      "poolRef": "pool:trek_desert_sandstone_agriculture_fill",
+      "structureRefs": [
+        "trek:village/desert/houses/desert_shepherd_1",
+        "trek:village/desert/houses/desert_butcher_1",
+        "trek:village/desert/houses/desert_farm_1",
+        "trek:village/desert/houses/desert_farm_2",
+        "trek:village/desert/houses/desert_farm_3"
+      ]
+    },
+    {
+      "poolRef": "pool:trek_plains_wood_stone_fill",
+      "structureRefs": [
+        "trek:village/plains/houses/plains_small_house_1",
+        "trek:village/plains/houses/plains_small_house_4",
+        "trek:village/plains/houses/plains_small_house_2",
+        "trek:village/plains/houses/plains_weaponsmith_1",
+        "trek:village/plains/houses/plains_shepherd_1",
+        "trek:village/plains/houses/plains_butcher_1",
+        "trek:village/plains/houses/plains_toolsmith_1",
+        "trek:village/plains/houses/plains_mason_1",
+        "trek:village/plains/houses/plains_medium_house_1",
+        "trek:village/plains/houses/plains_tannery_1"
+      ]
+    },
+    {
+      "poolRef": "pool:trek_plains_wood_stone_residential_fill",
+      "structureRefs": [
+        "trek:village/plains/houses/plains_small_house_1",
+        "trek:village/plains/houses/plains_small_house_4",
+        "trek:village/plains/houses/plains_small_house_2",
+        "trek:village/plains/houses/plains_weaponsmith_1",
+        "trek:village/plains/houses/plains_toolsmith_1",
+        "trek:village/plains/houses/plains_mason_1",
+        "trek:village/plains/houses/plains_medium_house_1",
+        "trek:village/plains/houses/plains_tannery_1"
+      ]
+    },
+    {
+      "poolRef": "pool:trek_plains_wood_stone_utility_fill",
+      "structureRefs": [
+        "trek:village/plains/houses/plains_shepherd_1",
+        "trek:village/plains/houses/plains_butcher_1",
+        "trek:village/plains/houses/plains_medium_house_1"
+      ]
+    },
+    {
+      "poolRef": "pool:trek_plains_wood_stone_commercial_fill",
+      "structureRefs": [
+        "trek:village/plains/houses/plains_shepherd_1",
+        "trek:village/plains/houses/plains_butcher_1"
+      ]
+    },
+    {
+      "poolRef": "pool:trek_plains_wood_stone_agriculture_fill",
+      "structureRefs": [
+        "trek:village/plains/houses/plains_tannery_1"
+      ]
+    },
+    {
+      "poolRef": "pool:trek_swamp_stilt_fill",
+      "structureRefs": [
+        "trek:village/swamp_vanilla/houses/swamp_small_house_7",
+        "trek:village/swamp_vanilla/houses/swamp_small_house_6"
+      ]
+    },
+    {
+      "poolRef": "pool:trek_swamp_stilt_residential_fill",
+      "structureRefs": [
+        "trek:village/swamp_vanilla/houses/swamp_small_house_7",
+        "trek:village/swamp_vanilla/houses/swamp_small_house_6"
+      ]
+    },
+    {
+      "poolRef": "pool:trek_swamp_wood_fill",
+      "structureRefs": [
+        "trek:village/swamp/houses/swamp_shepherd_1"
+      ]
+    },
+    {
+      "poolRef": "pool:trek_swamp_wood_utility_fill",
+      "structureRefs": [
+        "trek:village/swamp/houses/swamp_shepherd_1"
+      ]
+    },
+    {
+      "poolRef": "pool:trek_swamp_wood_agriculture_fill",
+      "structureRefs": [
+        "trek:village/swamp/houses/swamp_shepherd_1"
+      ]
+    },
+    {
+      "poolRef": "pool:trek_vanilla_plains_fill",
+      "structureRefs": [
+        "trek:village/plains/houses/plains_farm_2",
+        "trek:village/plains/houses/plains_stable_1",
+        "trek:village/plains/houses/plains_farm_1"
+      ]
+    },
+    {
+      "poolRef": "pool:trek_vanilla_plains_utility_fill",
+      "structureRefs": [
+        "trek:village/plains/houses/plains_farm_2",
+        "trek:village/plains/houses/plains_stable_1",
+        "trek:village/plains/houses/plains_farm_1"
+      ]
+    },
+    {
+      "poolRef": "pool:trek_vanilla_plains_agriculture_fill",
+      "structureRefs": [
+        "trek:village/plains/houses/plains_farm_2",
+        "trek:village/plains/houses/plains_stable_1"
+      ]
+    },
+    {
+      "poolRef": "pool:trek_wood_stone_fill",
+      "structureRefs": [
+        "geomantia:city/trek/defense/mangrove_watchtower_1"
+      ]
+    },
+    {
+      "poolRef": "pool:trek_wood_stone_defense_fill",
+      "structureRefs": [
+        "geomantia:city/trek/defense/mangrove_watchtower_1"
+      ]
+    }
+  ],
+  "algorithmProfiles": [
+    {
+      "algorithmProfileRef": "algorithm:compact",
+      "algorithm": "COMPACT"
+    },
+    {
+      "algorithmProfileRef": "algorithm:organic_compact",
+      "algorithm": "ORGANIC_COMPACT"
+    },
+    {
+      "algorithmProfileRef": "algorithm:linear",
+      "algorithm": "LINEAR"
+    },
+    {
+      "algorithmProfileRef": "algorithm:courtyard",
+      "algorithm": "COURTYARD"
+    },
+    {
+      "algorithmProfileRef": "algorithm:center_symmetric",
+      "algorithm": "CENTER_SYMMETRIC"
+    }
+  ],
+  "styleProfiles": [
+    {
+      "profileRef": "style:mixed_trek_stubbs"
+    },
+    {
+      "profileRef": "style:trek_v3"
+    },
+    {
+      "profileRef": "style:stubbs_medieval"
+    },
+    {
+      "profileRef": "style:trek_desert_sandstone"
+    },
+    {
+      "profileRef": "style:trek_plains_wood_stone"
+    },
+    {
+      "profileRef": "style:trek_swamp_stilt"
+    },
+    {
+      "profileRef": "style:trek_swamp_wood"
+    },
+    {
+      "profileRef": "style:trek_vanilla_plains"
+    },
+    {
+      "profileRef": "style:trek_wood_stone"
+    }
+  ],
+  "roadProfiles": [
+    {
+      "profileRef": "road:town",
+      "hierarchy": "HIERARCHICAL",
+      "density": "BALANCED"
+    }
+  ],
+  "surfaceDetailProfiles": [
+    {
+      "profileRef": "surface:working",
+      "intensity": "MEDIUM"
+    }
+  ],
+  "compositionProfiles": [
+    {
+      "compositionProfileRef": "composition:round_robin",
+      "mode": "ROUND_ROBIN"
+    }
+  ],
+  "landUseRuleProfile": {
+    "schema": "city_land_use_rules",
+    "profileId": "default_v0_1",
+    "rules": [
+      {
+        "ruleRef": "agriculture",
+        "landUseType": "agriculture",
+        "semanticTerms": [
+          "agriculture",
+          "farm",
+          "farmland",
+          "farmstead",
+          "barn",
+          "crop",
+          "农",
+          "田"
+        ],
+        "footprintMultiplier": 6.0,
+        "extraAreaBlocks": 192,
+        "minAreaBlocks": 192,
+        "maxAreaBlocks": 4096,
+        "actionBudget": 520,
+        "baseStepCost": 1.0,
+        "slopeCost": 0.7,
+        "reliefCost": 0.8,
+        "waterCost": 5.0,
+        "forestAffinity": 0.0,
+        "competitionWeight": 1.0,
+        "mergeSameType": true,
+        "surfacePolicy": "CULTIVATE",
+        "vegetationPolicy": "CLEAR",
+        "boundaryPolicy": "FENCE"
+      },
+      {
+        "ruleRef": "plaza",
+        "landUseType": "plaza",
+        "semanticTerms": [
+          "plaza",
+          "square",
+          "market_center",
+          "fountain",
+          "courtyard",
+          "广场",
+          "喷泉",
+          "庭院"
+        ],
+        "footprintMultiplier": 2.2,
+        "extraAreaBlocks": 96,
+        "minAreaBlocks": 96,
+        "maxAreaBlocks": 2048,
+        "actionBudget": 360,
+        "baseStepCost": 1.0,
+        "slopeCost": 1.2,
+        "reliefCost": 1.3,
+        "waterCost": 8.0,
+        "forestAffinity": 0.0,
+        "competitionWeight": 1.0,
+        "mergeSameType": true,
+        "surfacePolicy": "PAVE",
+        "vegetationPolicy": "CLEAR",
+        "boundaryPolicy": "OPEN"
+      },
+      {
+        "ruleRef": "residential",
+        "landUseType": "residential",
+        "semanticTerms": [
+          "residential",
+          "residence",
+          "house",
+          "housing",
+          "home",
+          "住宅",
+          "民居"
+        ],
+        "footprintMultiplier": 1.8,
+        "extraAreaBlocks": 48,
+        "minAreaBlocks": 64,
+        "maxAreaBlocks": 2048,
+        "actionBudget": 330,
+        "baseStepCost": 1.0,
+        "slopeCost": 1.1,
+        "reliefCost": 1.0,
+        "waterCost": 7.0,
+        "forestAffinity": 0.0,
+        "competitionWeight": 1.0,
+        "mergeSameType": true,
+        "surfacePolicy": "PRESERVE",
+        "vegetationPolicy": "SELECTIVE_CLEAR",
+        "boundaryPolicy": "HEDGE"
+      },
+      {
+        "ruleRef": "commercial",
+        "landUseType": "commercial",
+        "semanticTerms": [
+          "commercial",
+          "market",
+          "shop",
+          "stall",
+          "storage",
+          "warehouse",
+          "商业",
+          "商铺",
+          "市场"
+        ],
+        "footprintMultiplier": 1.8,
+        "extraAreaBlocks": 72,
+        "minAreaBlocks": 72,
+        "maxAreaBlocks": 2048,
+        "actionBudget": 340,
+        "baseStepCost": 1.0,
+        "slopeCost": 1.0,
+        "reliefCost": 1.1,
+        "waterCost": 7.0,
+        "forestAffinity": 0.0,
+        "competitionWeight": 1.0,
+        "mergeSameType": true,
+        "surfacePolicy": "PAVE",
+        "vegetationPolicy": "CLEAR",
+        "boundaryPolicy": "OPEN"
+      },
+      {
+        "ruleRef": "industry",
+        "landUseType": "industry",
+        "semanticTerms": [
+          "industry",
+          "industrial",
+          "production",
+          "workshop",
+          "smith",
+          "forge",
+          "mine",
+          "mining",
+          "quarry",
+          "ore",
+          "coal",
+          "矿业",
+          "矿井",
+          "采矿",
+          "工坊",
+          "冶炼",
+          "function.矿业"
+        ],
+        "footprintMultiplier": 3.0,
+        "extraAreaBlocks": 128,
+        "minAreaBlocks": 128,
+        "maxAreaBlocks": 3072,
+        "actionBudget": 420,
+        "baseStepCost": 1.0,
+        "slopeCost": 0.8,
+        "reliefCost": 0.8,
+        "waterCost": 7.0,
+        "forestAffinity": 0.0,
+        "competitionWeight": 1.0,
+        "mergeSameType": true,
+        "surfacePolicy": "PAVE",
+        "vegetationPolicy": "CLEAR",
+        "boundaryPolicy": "OPEN"
+      },
+      {
+        "ruleRef": "forestry",
+        "landUseType": "forestry",
+        "semanticTerms": [
+          "forestry",
+          "forest",
+          "lumber",
+          "woodland",
+          "林场",
+          "森林"
+        ],
+        "footprintMultiplier": 5.0,
+        "extraAreaBlocks": 256,
+        "minAreaBlocks": 256,
+        "maxAreaBlocks": 4096,
+        "actionBudget": 540,
+        "baseStepCost": 1.0,
+        "slopeCost": 0.8,
+        "reliefCost": 0.7,
+        "waterCost": 6.0,
+        "forestAffinity": -1.1,
+        "competitionWeight": 1.0,
+        "mergeSameType": true,
+        "surfacePolicy": "PRESERVE",
+        "vegetationPolicy": "PRESERVE",
+        "boundaryPolicy": "FENCE"
+      },
+      {
+        "ruleRef": "pond",
+        "landUseType": "pond",
+        "semanticTerms": [
+          "pond",
+          "fish",
+          "fishery",
+          "fish_pond",
+          "鱼塘",
+          "池塘"
+        ],
+        "footprintMultiplier": 3.0,
+        "extraAreaBlocks": 128,
+        "minAreaBlocks": 128,
+        "maxAreaBlocks": 3072,
+        "actionBudget": 440,
+        "baseStepCost": 1.0,
+        "slopeCost": 1.4,
+        "reliefCost": 1.0,
+        "waterCost": -0.7,
+        "forestAffinity": 0.0,
+        "competitionWeight": 1.0,
+        "mergeSameType": true,
+        "surfacePolicy": "WATER_ADAPTIVE",
+        "vegetationPolicy": "SELECTIVE_CLEAR",
+        "boundaryPolicy": "SHORELINE"
+      },
+      {
+        "ruleRef": "civic",
+        "landUseType": "civic",
+        "semanticTerms": [
+          "civic",
+          "landmark",
+          "public_core",
+          "church",
+          "temple",
+          "hall",
+          "school",
+          "watchtower",
+          "fort",
+          "governance",
+          "administrative",
+          "公共",
+          "教堂",
+          "市政"
+        ],
+        "footprintMultiplier": 1.5,
+        "extraAreaBlocks": 80,
+        "minAreaBlocks": 80,
+        "maxAreaBlocks": 1536,
+        "actionBudget": 300,
+        "baseStepCost": 1.0,
+        "slopeCost": 1.2,
+        "reliefCost": 1.2,
+        "waterCost": 8.0,
+        "forestAffinity": 0.0,
+        "competitionWeight": 1.0,
+        "mergeSameType": true,
+        "surfacePolicy": "PAVE",
+        "vegetationPolicy": "CLEAR",
+        "boundaryPolicy": "LOW_WALL"
+      },
+      {
+        "ruleRef": "military",
+        "landUseType": "military",
+        "semanticTerms": [
+          "military",
+          "barracks",
+          "guard_tower",
+          "watch_post",
+          "军事",
+          "兵营",
+          "哨所"
+        ],
+        "footprintMultiplier": 1.5,
+        "extraAreaBlocks": 96,
+        "minAreaBlocks": 96,
+        "maxAreaBlocks": 2048,
+        "actionBudget": 360,
+        "baseStepCost": 1.0,
+        "slopeCost": 1.1,
+        "reliefCost": 1.1,
+        "waterCost": 8.0,
+        "forestAffinity": 0.0,
+        "competitionWeight": 1.0,
+        "mergeSameType": true,
+        "surfacePolicy": "PRESERVE",
+        "vegetationPolicy": "SELECTIVE_CLEAR",
+        "boundaryPolicy": "LOW_WALL"
+      },
+      {
+        "ruleRef": "general_settlement",
+        "landUseType": "general_settlement",
+        "semanticTerms": [
+          "general_settlement",
+          "settlement",
+          "generic",
+          "village",
+          "filler",
+          "聚落",
+          "通用"
+        ],
+        "footprintMultiplier": 1.5,
+        "extraAreaBlocks": 48,
+        "minAreaBlocks": 48,
+        "maxAreaBlocks": 1536,
+        "actionBudget": 300,
+        "baseStepCost": 1.0,
+        "slopeCost": 1.2,
+        "reliefCost": 1.1,
+        "waterCost": 7.0,
+        "forestAffinity": 0.0,
+        "competitionWeight": 1.0,
+        "mergeSameType": true,
+        "surfacePolicy": "PRESERVE",
+        "vegetationPolicy": "SELECTIVE_CLEAR",
+        "boundaryPolicy": "OPEN"
+      },
+      {
+        "ruleRef": "meadow",
+        "landUseType": "meadow",
+        "semanticTerms": [
+          "flower",
+          "flower_field",
+          "meadow",
+          "花田",
+          "花圃"
+        ],
+        "footprintMultiplier": 0.8,
+        "extraAreaBlocks": 192,
+        "minAreaBlocks": 48,
+        "maxAreaBlocks": 3072,
+        "actionBudget": 480,
+        "baseStepCost": 1.0,
+        "slopeCost": 1.0,
+        "reliefCost": 1.0,
+        "waterCost": 6.0,
+        "forestAffinity": 0.1,
+        "competitionWeight": 0.9,
+        "mergeSameType": false,
+        "surfacePolicy": "CULTIVATE",
+        "vegetationPolicy": "SELECTIVE_CLEAR",
+        "boundaryPolicy": "OPEN"
+      },
+      {
+        "ruleRef": "pasture",
+        "landUseType": "pasture",
+        "semanticTerms": [
+          "pasture",
+          "animal_husbandry",
+          "grazing",
+          "horse",
+          "牧场",
+          "牧业"
+        ],
+        "footprintMultiplier": 4.0,
+        "extraAreaBlocks": 192,
+        "minAreaBlocks": 64,
+        "maxAreaBlocks": 3072,
+        "actionBudget": 480,
+        "baseStepCost": 1.0,
+        "slopeCost": 0.8,
+        "reliefCost": 0.9,
+        "waterCost": 5.0,
+        "forestAffinity": 0.0,
+        "competitionWeight": 0.9,
+        "mergeSameType": false,
+        "surfacePolicy": "PRESERVE",
+        "vegetationPolicy": "SELECTIVE_CLEAR",
+        "boundaryPolicy": "FENCE"
+      }
+    ]
+  },
+  "surfaceRecipes": [
+    {
+      "surfaceRecipeRef": "surface:preserve",
+      "surfacePrintEnabled": false,
+      "autoConnectDefault": false,
+      "surfaceAlgorithm": "UNIFORM"
+    },
+    {
+      "surfaceRecipeRef": "surface:urban_foundation",
+      "surfacePrintEnabled": true,
+      "autoConnectDefault": false,
+      "surfaceAlgorithm": "UNIFORM",
+      "surfaceBlockId": "minecraft:stone_bricks"
+    },
+    {
+      "surfaceRecipeRef": "surface:farmland_contour",
+      "surfacePrintEnabled": true,
+      "autoConnectDefault": false,
+      "surfaceAlgorithm": "CONTOUR_BANDS",
+      "surfaceBlockId": "minecraft:farmland",
+      "cropBlockId": "minecraft:wheat",
+      "channelBankBlockId": "minecraft:dirt",
+      "channelWaterBlockId": "minecraft:water",
+      "channelBankOverlayBlockId": "minecraft:grass_block",
+      "boundaryBlockId": "minecraft:oak_fence",
+      "fieldBeforeBlocks": 5,
+      "channelWidthBlocks": 3,
+      "fieldAfterBlocks": 5
+    },
+    {
+      "surfaceRecipeRef": "surface:flower_field",
+      "surfacePrintEnabled": true,
+      "autoConnectDefault": false,
+      "surfaceAlgorithm": "CONTOUR_BANDS",
+      "surfaceBlockId": "minecraft:grass_block",
+      "cropBlockId": "minecraft:poppy",
+      "channelBankBlockId": "minecraft:dirt",
+      "channelWaterBlockId": "minecraft:water",
+      "channelBankOverlayBlockId": "minecraft:moss_carpet",
+      "fieldBeforeBlocks": 7,
+      "channelWidthBlocks": 1,
+      "fieldAfterBlocks": 7
+    },
+    {
+      "surfaceRecipeRef": "surface:forestry",
+      "surfacePrintEnabled": true,
+      "autoConnectDefault": false,
+      "surfaceAlgorithm": "UNIFORM",
+      "surfaceBlockId": "minecraft:podzol",
+      "channelBankBlockId": "minecraft:gravel",
+      "channelBankOverlayBlockId": "minecraft:oak_leaves",
+      "boundaryBlockId": "minecraft:spruce_fence"
+    },
+    {
+      "surfaceRecipeRef": "surface:pasture",
+      "surfacePrintEnabled": true,
+      "autoConnectDefault": false,
+      "surfaceAlgorithm": "UNIFORM",
+      "surfaceBlockId": "minecraft:grass_block",
+      "channelBankBlockId": "minecraft:coarse_dirt",
+      "boundaryBlockId": "minecraft:oak_fence"
+    }
+  ],
+  "foundationProfiles": [
+    {
+      "foundationProfileRef": "foundation:urban",
+      "landUseRuleRef": "civic",
+      "surfaceRecipeRef": "surface:urban_foundation",
+      "structureMarginBlocks": 8,
+      "closeRadiusBlocks": 24,
+      "maxJoinDistanceBlocks": 64
+    }
+  ],
+  "landscapeProfiles": [
+    {
+      "landscapeProfileRef": "landscape:farmland",
+      "landscapeType": "FARMLAND",
+      "landUseRuleRef": "agriculture",
+      "surfaceRecipeRef": "surface:farmland_contour",
+      "baseAreaSmall": 384,
+      "baseAreaMedium": 768,
+      "baseAreaLarge": 1536,
+      "membership": "LANDSCAPE",
+      "parcelStyle": {
+        "parcelCountMin": 1,
+        "parcelCountMax": 12,
+        "parcelAreaMinBlocks": 192,
+        "parcelAreaMaxBlocks": 512,
+        "minSharedBoundaryBlocks": 4
+      }
+    },
+    {
+      "landscapeProfileRef": "landscape:flower_field",
+      "landscapeType": "MEADOW",
+      "landUseRuleRef": "meadow",
+      "surfaceRecipeRef": "surface:flower_field",
+      "baseAreaSmall": 256,
+      "baseAreaMedium": 512,
+      "baseAreaLarge": 1024,
+      "membership": "LANDSCAPE",
+      "parcelStyle": {
+        "parcelCountMin": 1,
+        "parcelCountMax": 8,
+        "parcelAreaMinBlocks": 64,
+        "parcelAreaMaxBlocks": 256,
+        "minSharedBoundaryBlocks": 3
+      }
+    },
+    {
+      "landscapeProfileRef": "landscape:woodland",
+      "landscapeType": "WOODLAND",
+      "landUseRuleRef": "forestry",
+      "surfaceRecipeRef": "surface:forestry",
+      "baseAreaSmall": 512,
+      "baseAreaMedium": 1536,
+      "baseAreaLarge": 4096,
+      "membership": "LANDSCAPE",
+      "parcelStyle": {
+        "parcelCountMin": 1,
+        "parcelCountMax": 8,
+        "parcelAreaMinBlocks": 256,
+        "parcelAreaMaxBlocks": 768,
+        "minSharedBoundaryBlocks": 4
+      }
+    },
+    {
+      "landscapeProfileRef": "landscape:pasture",
+      "landscapeType": "COMMON_GREEN",
+      "landUseRuleRef": "pasture",
+      "surfaceRecipeRef": "surface:pasture",
+      "baseAreaSmall": 384,
+      "baseAreaMedium": 768,
+      "baseAreaLarge": 1536,
+      "membership": "LANDSCAPE",
+      "parcelStyle": {
+        "parcelCountMin": 1,
+        "parcelCountMax": 8,
+        "parcelAreaMinBlocks": 64,
+        "parcelAreaMaxBlocks": 256,
+        "minSharedBoundaryBlocks": 3
+      }
+    }
+  ],
+  "landscapeFillProfiles": [
+    {
+      "fillProfileRef": "fill:relay_irrigated_farmland",
+      "displayName": "接力灌溉农田",
+      "visualIntent": "耕作区、田埂和水渠从父区域局部边界逐区接力",
+      "algorithm": "SINGLE_SOURCE_REGION_RELAY",
+      "relayOrigin": "PARENT_REGION_LOCAL_BOUNDARY",
+      "compatibleLandscapeTypes": [
+        "FARMLAND"
+      ],
+      "primaryRoleRef": "CULTIVATED",
+      "roles": [
+        {
+          "roleRef": "CULTIVATED",
+          "materialRole": "PRIMARY_CONTENT",
+          "allowedGrowthForms": [
+            "PATCH"
+          ],
+          "defaultGrowthForm": "PATCH",
+          "minShare": 0.65,
+          "maxShare": 0.92,
+          "defaultShare": 0.82
+        },
+        {
+          "roleRef": "BANK",
+          "materialRole": "BANK",
+          "allowedGrowthForms": [
+            "CORRIDOR"
+          ],
+          "defaultGrowthForm": "CORRIDOR",
+          "minShare": 0.06,
+          "maxShare": 0.2,
+          "defaultShare": 0.12
+        },
+        {
+          "roleRef": "WATER",
+          "materialRole": "WATER",
+          "allowedGrowthForms": [
+            "CORRIDOR"
+          ],
+          "defaultGrowthForm": "CORRIDOR",
+          "minShare": 0.02,
+          "maxShare": 0.12,
+          "defaultShare": 0.06
+        }
+      ],
+      "allowedContentRefs": [
+        "crop:wheat",
+        "crop:carrot",
+        "crop:potato"
+      ],
+      "examples": [
+        {
+          "exampleId": "balanced_irrigation",
+          "description": "耕地为主题，田埂和水渠局部接力",
+          "roleShares": [
+            {
+              "roleRef": "CULTIVATED",
+              "growthForm": "PATCH",
+              "targetShare": 0.41
+            },
+            {
+              "roleRef": "BANK",
+              "growthForm": "CORRIDOR",
+              "targetShare": 0.06
+            },
+            {
+              "roleRef": "WATER",
+              "growthForm": "CORRIDOR",
+              "targetShare": 0.06
+            },
+            {
+              "roleRef": "BANK",
+              "growthForm": "CORRIDOR",
+              "targetShare": 0.06
+            },
+            {
+              "roleRef": "CULTIVATED",
+              "growthForm": "PATCH",
+              "targetShare": 0.41
+            }
+          ],
+          "contentWeights": [
+            {
+              "contentRef": "crop:wheat",
+              "weight": 60
+            },
+            {
+              "contentRef": "crop:carrot",
+              "weight": 25
+            },
+            {
+              "contentRef": "crop:potato",
+              "weight": 15
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "fillProfileRef": "fill:relay_dry_farmland",
+      "displayName": "接力旱地农田",
+      "visualIntent": "耕地区和土路区从父区域局部边界自然接力",
+      "algorithm": "SINGLE_SOURCE_REGION_RELAY",
+      "relayOrigin": "PARENT_REGION_LOCAL_BOUNDARY",
+      "compatibleLandscapeTypes": [
+        "FARMLAND"
+      ],
+      "primaryRoleRef": "CULTIVATED",
+      "roles": [
+        {
+          "roleRef": "CULTIVATED",
+          "materialRole": "PRIMARY_CONTENT",
+          "allowedGrowthForms": [
+            "PATCH"
+          ],
+          "defaultGrowthForm": "PATCH",
+          "minShare": 0.75,
+          "maxShare": 0.95,
+          "defaultShare": 0.88
+        },
+        {
+          "roleRef": "DIRT_PATH",
+          "materialRole": "GROUND",
+          "allowedGrowthForms": [
+            "CORRIDOR"
+          ],
+          "defaultGrowthForm": "CORRIDOR",
+          "minShare": 0.05,
+          "maxShare": 0.25,
+          "defaultShare": 0.12
+        }
+      ],
+      "allowedContentRefs": [
+        "crop:wheat",
+        "crop:potato"
+      ],
+      "examples": [
+        {
+          "exampleId": "wheat_dry_fields",
+          "description": "麦田占主导，土路只作局部间隔",
+          "roleShares": [
+            {
+              "roleRef": "CULTIVATED",
+              "growthForm": "PATCH",
+              "targetShare": 0.44
+            },
+            {
+              "roleRef": "DIRT_PATH",
+              "growthForm": "CORRIDOR",
+              "targetShare": 0.12
+            },
+            {
+              "roleRef": "CULTIVATED",
+              "growthForm": "PATCH",
+              "targetShare": 0.44
+            }
+          ],
+          "contentWeights": [
+            {
+              "contentRef": "crop:wheat",
+              "weight": 75
+            },
+            {
+              "contentRef": "crop:potato",
+              "weight": 25
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "fillProfileRef": "fill:relay_flower_meadow",
+      "displayName": "接力花田叶带",
+      "visualIntent": "花丛区和叶带区从父区域局部边界接力生长",
+      "algorithm": "SINGLE_SOURCE_REGION_RELAY",
+      "relayOrigin": "PARENT_REGION_LOCAL_BOUNDARY",
+      "compatibleLandscapeTypes": [
+        "MEADOW"
+      ],
+      "primaryRoleRef": "FLOWER",
+      "roles": [
+        {
+          "roleRef": "FLOWER",
+          "materialRole": "PRIMARY_CONTENT",
+          "allowedGrowthForms": [
+            "PATCH"
+          ],
+          "defaultGrowthForm": "PATCH",
+          "minShare": 0.7,
+          "maxShare": 0.94,
+          "defaultShare": 0.84
+        },
+        {
+          "roleRef": "LEAF_BREAK",
+          "materialRole": "BANK",
+          "allowedGrowthForms": [
+            "CORRIDOR"
+          ],
+          "defaultGrowthForm": "CORRIDOR",
+          "minShare": 0.06,
+          "maxShare": 0.3,
+          "defaultShare": 0.16
+        }
+      ],
+      "allowedContentRefs": [
+        "flower:poppy",
+        "flower:dandelion",
+        "flower:cornflower"
+      ],
+      "examples": [
+        {
+          "exampleId": "warm_wildflowers",
+          "description": "暖色花丛为主并用叶带局部过渡",
+          "roleShares": [
+            {
+              "roleRef": "FLOWER",
+              "growthForm": "PATCH",
+              "targetShare": 0.42
+            },
+            {
+              "roleRef": "LEAF_BREAK",
+              "growthForm": "CORRIDOR",
+              "targetShare": 0.16
+            },
+            {
+              "roleRef": "FLOWER",
+              "growthForm": "PATCH",
+              "targetShare": 0.42
+            }
+          ],
+          "contentWeights": [
+            {
+              "contentRef": "flower:poppy",
+              "weight": 55
+            },
+            {
+              "contentRef": "flower:dandelion",
+              "weight": 30
+            },
+            {
+              "contentRef": "flower:cornflower",
+              "weight": 15
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "fillProfileRef": "fill:relay_woodland",
+      "displayName": "接力林场",
+      "visualIntent": "树林、灌木和石子路区域从父区域局部边界接力",
+      "algorithm": "SINGLE_SOURCE_REGION_RELAY",
+      "relayOrigin": "PARENT_REGION_LOCAL_BOUNDARY",
+      "compatibleLandscapeTypes": [
+        "WOODLAND"
+      ],
+      "primaryRoleRef": "TREE_GROVE",
+      "roles": [
+        {
+          "roleRef": "TREE_GROVE",
+          "materialRole": "PRIMARY_CONTENT",
+          "allowedGrowthForms": [
+            "PATCH"
+          ],
+          "defaultGrowthForm": "PATCH",
+          "minShare": 0.58,
+          "maxShare": 0.82,
+          "defaultShare": 0.7
+        },
+        {
+          "roleRef": "SHRUB_BREAK",
+          "materialRole": "BANK",
+          "allowedGrowthForms": [
+            "PATCH",
+            "CORRIDOR"
+          ],
+          "defaultGrowthForm": "PATCH",
+          "minShare": 0.08,
+          "maxShare": 0.28,
+          "defaultShare": 0.18
+        },
+        {
+          "roleRef": "GRAVEL_PATH",
+          "materialRole": "GROUND",
+          "allowedGrowthForms": [
+            "CORRIDOR"
+          ],
+          "defaultGrowthForm": "CORRIDOR",
+          "minShare": 0.05,
+          "maxShare": 0.2,
+          "defaultShare": 0.12
+        }
+      ],
+      "allowedContentRefs": [
+        "tree:oak",
+        "tree:birch",
+        "tree:spruce"
+      ],
+      "examples": [
+        {
+          "exampleId": "mixed_working_woodland",
+          "description": "树木占主导，灌木和石子路局部接力",
+          "roleShares": [
+            {
+              "roleRef": "TREE_GROVE",
+              "growthForm": "PATCH",
+              "targetShare": 0.35
+            },
+            {
+              "roleRef": "SHRUB_BREAK",
+              "growthForm": "PATCH",
+              "targetShare": 0.09
+            },
+            {
+              "roleRef": "GRAVEL_PATH",
+              "growthForm": "CORRIDOR",
+              "targetShare": 0.12
+            },
+            {
+              "roleRef": "SHRUB_BREAK",
+              "growthForm": "PATCH",
+              "targetShare": 0.09
+            },
+            {
+              "roleRef": "TREE_GROVE",
+              "growthForm": "PATCH",
+              "targetShare": 0.35
+            }
+          ],
+          "contentWeights": [
+            {
+              "contentRef": "tree:oak",
+              "weight": 55
+            },
+            {
+              "contentRef": "tree:birch",
+              "weight": 30
+            },
+            {
+              "contentRef": "tree:spruce",
+              "weight": 15
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "fillProfileRef": "fill:relay_pasture",
+      "displayName": "接力牧场草地",
+      "visualIntent": "牧草区与土径区从马厩边界向外接力，并用木栅栏形成牧场边界",
+      "algorithm": "SINGLE_SOURCE_REGION_RELAY",
+      "relayOrigin": "PARENT_REGION_LOCAL_BOUNDARY",
+      "compatibleLandscapeTypes": [
+        "COMMON_GREEN"
+      ],
+      "primaryRoleRef": "GREEN",
+      "roles": [
+        {
+          "roleRef": "GREEN",
+          "materialRole": "PRIMARY_CONTENT",
+          "allowedGrowthForms": [
+            "PATCH"
+          ],
+          "defaultGrowthForm": "PATCH",
+          "minShare": 0.8,
+          "maxShare": 0.95,
+          "defaultShare": 0.88
+        },
+        {
+          "roleRef": "GROUND",
+          "materialRole": "GROUND",
+          "allowedGrowthForms": [
+            "PATCH",
+            "CORRIDOR"
+          ],
+          "defaultGrowthForm": "CORRIDOR",
+          "minShare": 0.05,
+          "maxShare": 0.2,
+          "defaultShare": 0.12
+        }
+      ],
+      "allowedContentRefs": [
+        "plant:grass"
+      ],
+      "examples": [
+        {
+          "exampleId": "hedged_grazing_ground",
+          "description": "牧草为主体，土径局部穿行",
+          "roleShares": [
+            {
+              "roleRef": "GREEN",
+              "growthForm": "PATCH",
+              "targetShare": 0.44
+            },
+            {
+              "roleRef": "GROUND",
+              "growthForm": "CORRIDOR",
+              "targetShare": 0.12
+            },
+            {
+              "roleRef": "GREEN",
+              "growthForm": "PATCH",
+              "targetShare": 0.44
+            }
+          ],
+          "contentWeights": [
+            {
+              "contentRef": "plant:grass",
+              "weight": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

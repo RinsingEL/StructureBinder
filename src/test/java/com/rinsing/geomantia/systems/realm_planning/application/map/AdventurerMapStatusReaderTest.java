@@ -194,5 +194,27 @@ class AdventurerMapStatusReaderTest {
         assertEquals(16, viewport.width());
         assertEquals(1, snapshot.cityNodes().size());
         assertEquals("visible", snapshot.cityNodes().get(0).citySeedId());
+
+        var panned = AdventurerMapStatusReader.read(temporaryDirectory.resolve("realm_debug"),
+                "run_viewport", accessConfig, new AdventurerMapStatusReader.MapViewport(4096, 64, 1024));
+        assertEquals(3072, panned.coarseMap().minBlockX());
+        assertEquals(16, panned.coarseMap().width());
+        assertEquals(1, panned.cityNodes().size());
+        assertEquals("offscreen", panned.cityNodes().get(0).citySeedId());
+
+        var negative = AdventurerMapStatusReader.read(temporaryDirectory.resolve("realm_debug"),
+                "run_viewport", accessConfig, new AdventurerMapStatusReader.MapViewport(-4096, 64, 1024));
+        assertEquals(-5120, negative.coarseMap().minBlockX());
+        assertTrue(negative.cityNodes().isEmpty());
+
+        var locked = AdventurerMapStatusReader.read(temporaryDirectory.resolve("realm_debug"),
+                "run_viewport", accessConfig, new AdventurerMapStatusReader.MapViewport(9216, 64, 1024));
+        assertTrue(locked.coarseMap().available());
+        assertFalse(locked.coarseMap().revealedAt(9216, 64));
+
+        var outside = AdventurerMapStatusReader.read(temporaryDirectory.resolve("realm_debug"),
+                "run_viewport", accessConfig, new AdventurerMapStatusReader.MapViewport(20000, 64, 1024));
+        assertFalse(outside.coarseMap().available());
+        assertTrue(outside.cityNodes().isEmpty());
     }
 }

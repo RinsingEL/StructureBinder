@@ -1,6 +1,7 @@
 package com.rinsing.geomantia.client;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.math.Axis;
 import com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapSnapshot;
 import com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapSnapshot.CityNode;
 import com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapSnapshot.CoarseMap;
@@ -39,6 +40,12 @@ public final class AdventurerMapScreen extends Screen {
     private boolean loading;
     private boolean debugLayer;
     private double zoom = 1.0D;
+    private double viewCenterX;
+    private double viewCenterZ;
+    private boolean viewInitialized;
+    private boolean draggingMap;
+    private boolean refreshQueued;
+    private int viewportRefreshTicks;
     private Button debugButton;
     private Button retryButton;
     private boolean retryPending;
@@ -55,6 +62,12 @@ public final class AdventurerMapScreen extends Screen {
 
     @Override
     protected void init() {
+        draggingMap = false;
+        if (!viewInitialized && minecraft != null && minecraft.player != null) {
+            viewCenterX = minecraft.player.getX();
+            viewCenterZ = minecraft.player.getZ();
+            viewInitialized = true;
+        }
         int controlsY = this.height - 28;
         addRenderableWidget(Button.builder(Component.translatable("gui.geomantia.adventurer_map.close"),
                         button -> onClose())
@@ -94,10 +107,15 @@ public final class AdventurerMapScreen extends Screen {
     }
 
     private void refresh() {
+        if (loading) {
+            refreshQueued = true;
+            return;
+        }
+        refreshQueued = false;
         loading = true;
         updateRetryButton();
         automaticRefreshTicks = 0;
-        AdventurerMapClient.requestSnapshot(zoom);
+        AdventurerMapClient.requestSnapshot(zoom, viewCenterX, viewCenterZ);
     }
 
     private void updateRetryButton() {
@@ -134,9 +152,55 @@ public final class AdventurerMapScreen extends Screen {
     public void tick() {
         super.tick();
         if (retryPending && ++retryTicks >= 200) receiveRetryResult("no_response");
-        if (!loading && ++automaticRefreshTicks >= 100) {
+        if (viewportRefreshTicks > 0) viewportRefreshTicks--;
+        if (!loading && ((refreshQueued && viewportRefreshTicks == 0) || ++automaticRefreshTicks >= 100)) {
             refresh();
         }
+    }
+
+    private int mapRight() {
+        int sidebarWidth = Math.min(248, Math.max(184, width / 3));
+        return Math.max(136, width - sidebarWidth - 24);
+    }
+
+    private int mapBottom() {
+        return Math.max(132, height - 36);
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (super.mouseClicked(mouseX, mouseY, button)) return true;
+        if (button == 0 && mouseX >= 18 && mouseX < mapRight() - 2
+                && mouseY >= 34 && mouseY < mapBottom() - 2) {
+            draggingMap = true;
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+        if (button == 0 && draggingMap) {
+            double scale = mapTransform(18, 34, mapRight() - 2, mapBottom() - 2).scale();
+            viewCenterX = Math.max(-30_000_000D, Math.min(30_000_000D, viewCenterX - deltaX / scale));
+            viewCenterZ = Math.max(-30_000_000D, Math.min(30_000_000D, viewCenterZ - deltaY / scale));
+            if (!refreshQueued) viewportRefreshTicks = 4;
+            refreshQueued = true;
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (button == 0 && draggingMap) {
+            draggingMap = false;
+            viewportRefreshTicks = 0;
+            if (refreshQueued) refresh();
+            super.mouseReleased(mouseX, mouseY, button);
+            return true;
+        }
+        return super.mouseReleased(mouseX, mouseY, button);
     }
 
     private Component debugLabel() {
@@ -153,13 +217,12 @@ public final class AdventurerMapScreen extends Screen {
 
         int mapLeft = 16;
         int mapTop = 32;
-        int sidebarWidth = Math.min(248, Math.max(184, width / 3));
-        int mapRight = Math.max(mapLeft + 120, width - sidebarWidth - 24);
-        int contentBottom = Math.max(mapTop + 100, height - 36);
+        int mapRight = mapRight();
+        int contentBottom = mapBottom();
         int sidebarLeft = mapRight + 8;
 
         drawPanel(graphics, mapLeft, mapTop, mapRight, contentBottom, MAP_BACKGROUND);
-        drawMap(graphics, mapLeft + 2, mapTop + 2, mapRight - 2, contentBottom - 2, mouseX, mouseY);
+        drawMap(graphics, mapLeft + 2, mapTop + 2, mapRight - 2, contentBottom - 2, mouseX, mouseY, partialTick);
         drawPanel(graphics, sidebarLeft, mapTop, width - 16, contentBottom, PANEL_BACKGROUND);
         drawStatusPanel(graphics, sidebarLeft + 10, mapTop + 10, width - 26);
 
@@ -178,11 +241,13 @@ public final class AdventurerMapScreen extends Screen {
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 
-    private void drawMap(GuiGraphics graphics, int left, int top, int right, int bottom, int mouseX, int mouseY) {
+    private void drawMap(GuiGraphics graphics, int left, int top, int right, int bottom,
+                         int mouseX, int mouseY, float partialTick) {
         MapTransform transform = mapTransform(left, top, right, bottom);
         int centerX = transform.screenX(0.0D);
         int centerY = transform.screenY(0.0D);
         graphics.enableScissor(left, top, right, bottom);
+        graphics.fill(left, top, right, bottom, UNREVEALED_MAP);
         CoarseMap coarseMap = snapshot.coarseMap();
         if (coarseMap.available() && mapTextureLocation != null) {
             int textureLeft = transform.screenX(coarseMap.minBlockX());
@@ -196,10 +261,10 @@ public final class AdventurerMapScreen extends Screen {
                     coarseMap.width(), coarseMap.height(), coarseMap.width(), coarseMap.height());
         }
         if (debugLayer) {
-            for (int x = centerX; x < right; x += 32) graphics.fill(x, top, x + 1, bottom, MAP_GRID);
-            for (int x = centerX; x > left; x -= 32) graphics.fill(x, top, x + 1, bottom, MAP_GRID);
-            for (int y = centerY; y < bottom; y += 32) graphics.fill(left, y, right, y + 1, MAP_GRID);
-            for (int y = centerY; y > top; y -= 32) graphics.fill(left, y, right, y + 1, MAP_GRID);
+            for (int x = left + Math.floorMod(centerX - left, 32); x < right; x += 32)
+                graphics.fill(x, top, x + 1, bottom, MAP_GRID);
+            for (int y = top + Math.floorMod(centerY - top, 32); y < bottom; y += 32)
+                graphics.fill(left, y, right, y + 1, MAP_GRID);
         }
 
         int initialRadiusBlocks = Math.max(1, snapshot.initialActivityRadiusBlocks());
@@ -230,7 +295,7 @@ public final class AdventurerMapScreen extends Screen {
             }
         }
 
-        drawPlayerMarker(graphics, transform, left, top, right, bottom);
+        drawPlayerMarker(graphics, transform, left, top, right, bottom, partialTick);
         graphics.disableScissor();
 
         graphics.drawString(font, Component.translatable("gui.geomantia.adventurer_map.initial_area"),
@@ -238,39 +303,15 @@ public final class AdventurerMapScreen extends Screen {
     }
 
     private MapTransform mapTransform(int left, int top, int right, int bottom) {
-        CoarseMap map = snapshot.coarseMap();
-        double minX;
-        double minZ;
-        double maxX;
-        double maxZ;
-        if (map.available()) {
-            minX = map.minBlockX();
-            minZ = map.minBlockZ();
-            maxX = map.maxBlockX();
-            maxZ = map.maxBlockZ();
-        } else {
-            int radius = Math.max(1, snapshot.initialActivityRadiusBlocks());
-            minX = -radius;
-            minZ = -radius;
-            maxX = radius;
-            maxZ = radius;
-            for (CityNode node : snapshot.cityNodes()) {
-                minX = Math.min(minX, node.blockX());
-                minZ = Math.min(minZ, node.blockZ());
-                maxX = Math.max(maxX, node.blockX());
-                maxZ = Math.max(maxZ, node.blockZ());
-            }
-        }
-        double worldWidth = Math.max(1.0D, maxX - minX);
-        double worldHeight = Math.max(1.0D, maxZ - minZ);
-        double scale = Math.min((right - left - 16.0D) / worldWidth,
-                (bottom - top - 16.0D) / worldHeight);
-        return new MapTransform((minX + maxX) * 0.5D, (minZ + maxZ) * 0.5D,
+        double diameter = 2.0D * Math.max(1024, Math.min(8192, Math.round(4096.0D / zoom)));
+        double scale = Math.min((right - left - 16.0D) / diameter,
+                (bottom - top - 16.0D) / diameter);
+        return new MapTransform(viewCenterX, viewCenterZ,
                 (left + right) * 0.5D, (top + bottom) * 0.5D, Math.max(0.00001D, scale));
     }
 
     private void drawPlayerMarker(GuiGraphics graphics, MapTransform transform,
-                                  int left, int top, int right, int bottom) {
+                                  int left, int top, int right, int bottom, float partialTick) {
         if (minecraft == null || minecraft.player == null) return;
         CoarseMap map = snapshot.coarseMap();
         String dimensionId = minecraft.player.level().dimension().location().toString();
@@ -278,12 +319,24 @@ public final class AdventurerMapScreen extends Screen {
         int x = transform.screenX(minecraft.player.getX());
         int y = transform.screenY(minecraft.player.getZ());
         if (x < left || x > right || y < top || y > bottom) return;
-        graphics.fill(x - 3, y - 3, x + 4, y + 4, 0xFF1A1A1A);
-        graphics.fill(x - 2, y - 2, x + 3, y + 3, PLAYER_MARKER);
-        graphics.fill(x, y - 4, x + 1, y - 2, PLAYER_MARKER);
+        graphics.pose().pushPose();
+        graphics.pose().translate(x, y, 0);
+        // Map +Z points down: Minecraft yaw 0 faces south, +90 faces west.
+        graphics.pose().mulPose(Axis.ZP.rotationDegrees(minecraft.player.getViewYRot(partialTick)));
+        graphics.fill(-2, -5, 3, 1, 0xFF1A1A1A);
+        for (int row = -1; row <= 6; row++) {
+            int halfWidth = (6 - row) / 2;
+            graphics.fill(-halfWidth - 1, row, halfWidth + 2, row + 1, 0xFF1A1A1A);
+        }
+        graphics.fill(-1, -4, 2, 1, PLAYER_MARKER);
+        for (int row = 0; row <= 5; row++) {
+            int halfWidth = (5 - row) / 2;
+            graphics.fill(-halfWidth, row, halfWidth + 1, row + 1, PLAYER_MARKER);
+        }
+        graphics.pose().popPose();
         graphics.drawString(font, Component.translatable("gui.geomantia.adventurer_map.player_position",
                         (int) Math.floor(minecraft.player.getX()), (int) Math.floor(minecraft.player.getZ())),
-                Math.min(right - 92, x + 6), Math.max(top + 2, y - 4), TEXT_PRIMARY, true);
+                Math.min(right - 92, x + 9), Math.max(top + 2, y - 4), TEXT_PRIMARY, true);
     }
 
     private void rebuildMapTexture() {
@@ -339,6 +392,9 @@ public final class AdventurerMapScreen extends Screen {
 
     @Override
     public void removed() {
+        draggingMap = false;
+        loading = false;
+        refreshQueued = false;
         releaseMapTexture();
         super.removed();
     }
