@@ -6,7 +6,8 @@ public enum CityScale {
     HAMLET("hamlet"),
     VILLAGE("village"),
     TOWN("town"),
-    CITY("city");
+    CITY("city"),
+    LARGE_CITY("large_city");
 
     private final String contractName;
 
@@ -26,7 +27,7 @@ public enum CityScale {
         }
         // T4 labels normalize to City size classes; the seed keeps its functional role.
         return switch (normalized) {
-            case "capital", "large_city" -> CITY;
+            case "capital" -> CITY;
             case "outpost" -> HAMLET;
             default -> null;
         };

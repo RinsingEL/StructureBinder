@@ -965,7 +965,19 @@ public final class CityOutdoorBlueprintCompiler {
             JsonObject warning = warningElement.getAsJsonObject();
             String reasonCode = requiredString(warning, "reasonCode");
             String landscapeId = requiredString(warning, "landscapeId");
-            int instanceOrdinal = requiredInt(warning, "instanceOrdinal");
+            int instanceOrdinal;
+            if (!warning.has("instanceOrdinal") && "LANDSCAPE_CLIPPED_BY_BUILDINGS_AND_ROADS".equals(reasonCode)) {
+                // First landscape-first drafts omitted this field. Resolve only from an existing,
+                // hash-verified instance of the same landscape; never invent or rewrite geometry.
+                String instanceId = requiredString(warning, "landscapeInstanceId");
+                boolean matches = requiredArray(plan, "instances").asList().stream()
+                        .map(JsonElement::getAsJsonObject).anyMatch(i -> instanceId.equals(requiredString(i, "landscapeInstanceId"))
+                                && landscapeId.equals(requiredString(i, "landscapeId")));
+                if (!matches) throw new IllegalArgumentException("CITY_OUTDOOR_LANDSCAPE_CAPACITY_WARNING_DRIFT");
+                instanceOrdinal = Integer.parseInt(instanceId.substring(instanceId.lastIndexOf('_') + 1)) - 1;
+            } else {
+                instanceOrdinal = requiredInt(warning, "instanceOrdinal");
+            }
             if (!required.containsKey(landscapeId) || instanceOrdinal < 0
                     || instanceOrdinal >= required.get(landscapeId).instanceCount()) {
                 throw new IllegalArgumentException("CITY_OUTDOOR_LANDSCAPE_CAPACITY_WARNING_DRIFT");

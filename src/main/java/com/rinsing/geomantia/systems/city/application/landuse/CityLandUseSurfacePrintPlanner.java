@@ -228,7 +228,15 @@ public final class CityLandUseSurfacePrintPlanner {
                                     LandUseSourceResolver.RoadBand band) {
         boolean horizontal = band.start().z() == band.end().z();
         boolean vertical = band.start().x() == band.end().x();
-        if (horizontal == vertical) {
+        // Clipping can leave a single paving cell at an entrance or junction.
+        // It needs no directional cross section; diagonal roads remain invalid.
+        boolean pointSurface = horizontal && vertical && !band.bridge()
+                && "SURFACE_ONLY".equals(band.crossSectionProfile())
+                && band.bounds().minX() == band.start().x()
+                && band.bounds().maxX() == band.start().x()
+                && band.bounds().minZ() == band.start().z()
+                && band.bounds().maxZ() == band.start().z();
+        if (horizontal == vertical && !pointSurface) {
             throw new IllegalArgumentException("CITY_LAND_USE_ROAD_BAND_AXIS_INVALID:" + band.streetBandId());
         }
         BlockBounds bounds = band.bounds();

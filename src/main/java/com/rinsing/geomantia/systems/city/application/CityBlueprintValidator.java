@@ -15,6 +15,9 @@ public final class CityBlueprintValidator {
     public ValidationResult validate(CityBlueprint blueprint, ExpectedContext context,
                                      CityBlueprintReferenceCatalog catalog) {
         List<Issue> issues = new ArrayList<>();
+        String scaleFailure = CityScaleDesignTask.violation(blueprint, context.scale());
+        if (!scaleFailure.isBlank()) add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_INVALID,
+                "$.arrayCompositions", scaleFailure);
         if (!context.cityId().equals(blueprint.cityId())) {
             add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_CITY_MISMATCH, "$.cityId",
                     "Blueprint cityId does not match the prepared context. Copy cityId from the active context; do not change the target city to bypass validation.");
@@ -234,10 +237,21 @@ public final class CityBlueprintValidator {
                                                   java.util.Map<String, CityBlueprint.Group> groupsById,
                                                   CityBlueprintReferenceCatalog catalog) {
         Set<String> compositionIds = new HashSet<>();
-        Set<String> composedGroups = new HashSet<>();
+        Set<String> ownedMembers = new HashSet<>();
+        try { CityCompositionHierarchy.ordered(compositions); }
+        catch (IllegalArgumentException failure) {
+            add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_INVALID, "$.arrayCompositions", failure.getMessage());
+        }
         for (int index = 0; index < compositions.size(); index++) {
             CityBlueprint.ArrayComposition composition = compositions.get(index);
             String path = "$.arrayCompositions[" + index + "]";
+            for (String member : composition.memberGroupIds()) {
+                if (!ownedMembers.add(member)) {
+                    add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_GROUP_REUSED,
+                            path + ".memberGroupIds", "子阵列 " + member
+                                    + " 同时归属多个父组合。请保留一个父组合关系；该组仍可作为自己子组合的中心，无需删除建筑组。");
+                }
+            }
             if (!compositionIds.add(composition.compositionId())) {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_ID_DUPLICATE,
                         path + ".compositionId", "Rename only the duplicated compositionId to a unique ID; preserve its intended member groups. Duplicate: " + composition.compositionId());
@@ -265,10 +279,7 @@ public final class CityBlueprintValidator {
                     add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_INVALID,
                             path, "Keep this group in only one slot: either centerGroupId or a single memberGroupIds entry. Preserve the building group. Repeated group: " + groupId);
                 }
-                if (!composedGroups.add(groupId)) {
-                    add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_GROUP_REUSED,
-                            path, "Choose one parent composition for this group and remove its membership from the others, preserving the group. Reused group: " + groupId);
-                }
+
             }
             CityBlueprint.Group center = groupsById.get(composition.centerGroupId());
             if (center != null && center.placementRelation() != null
@@ -580,7 +591,12 @@ public final class CityBlueprintValidator {
     }
 
     public record ExpectedContext(String cityId, CityBlueprint.ArtifactRef sourceD3Ref,
-                                  CityBlueprint.ArtifactRef catalogSnapshotRef, Set<String> patchRefs) {
+                                  CityBlueprint.ArtifactRef catalogSnapshotRef, Set<String> patchRefs,
+                                  com.rinsing.geomantia.systems.city.domain.model.CityScale scale) {
+        public ExpectedContext(String cityId, CityBlueprint.ArtifactRef sourceD3Ref,
+                               CityBlueprint.ArtifactRef catalogSnapshotRef, Set<String> patchRefs) {
+            this(cityId, sourceD3Ref, catalogSnapshotRef, patchRefs, null);
+        }
         public ExpectedContext {
             patchRefs = Set.copyOf(patchRefs);
         }

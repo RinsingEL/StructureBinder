@@ -900,6 +900,74 @@ public final class CityLandscapeCapacityReservationPlanner {
         plan.addProperty("planHash", hash(plan));
     }
 
+    /** Keep the landscape designed before fill; later buildings/streets cut it, never relocate it. */
+    static Result clipToBuiltGeometry(Result initial, JsonArray anchors, List<BlockBounds> roads) {
+        if (!initial.ok()) return initial;
+        JsonObject plan = initial.plan().deepCopy();
+        Set<BlockPoint> occupied = structureCells(anchors);
+        for (BlockBounds road : roads) occupied.addAll(cells(road));
+        JsonArray instances = new JsonArray();
+        for (JsonElement element : plan.getAsJsonArray("instances")) {
+            JsonObject instance = element.getAsJsonObject();
+            int initialArea = instance.get("actualAreaBlocks").getAsInt();
+            JsonArray parcels = new JsonArray();
+            Set<BlockPoint> all = new LinkedHashSet<>();
+            Set<String> surviving = new HashSet<>();
+            for (JsonElement parcelElement : instance.getAsJsonArray("parcelReservations")) {
+                JsonObject parcel = parcelElement.getAsJsonObject();
+                Set<BlockPoint> remaining = new LinkedHashSet<>();
+                for (JsonElement spanElement : parcel.getAsJsonArray("reservationSpans")) {
+                    JsonObject span = spanElement.getAsJsonObject();
+                    for (int x = span.get("minX").getAsInt(); x <= span.get("maxX").getAsInt(); x++) {
+                        BlockPoint p = new BlockPoint(x, span.get("z").getAsInt());
+                        if (!occupied.contains(p)) remaining.add(p);
+                    }
+                }
+                if (remaining.isEmpty()) continue;
+                JsonObject oldSeed = parcel.getAsJsonObject("seed");
+                BlockPoint seed = new BlockPoint(oldSeed.get("x").getAsInt(), oldSeed.get("z").getAsInt());
+                if (!remaining.contains(seed)) seed = remaining.iterator().next();
+                oldSeed.addProperty("x", seed.x());oldSeed.addProperty("z", seed.z());
+                parcel.add("reservationSpans", spans(remaining));
+                parcel.addProperty("actualAreaBlocks", remaining.size());
+                parcel.addProperty("buildingExclusionApplied", true);
+                parcel.remove("sharedBoundaryProof");
+                parcels.add(parcel);all.addAll(remaining);surviving.add(text(parcel,"parcelId"));
+            }
+            for (JsonElement p : parcels) if (!surviving.contains(text(p.getAsJsonObject(),"parentParcelId")))
+                p.getAsJsonObject().addProperty("parentParcelId", "");
+            if (parcels.isEmpty()) {
+                JsonObject warning = new JsonObject();
+                warning.addProperty("reasonCode", "LANDSCAPE_COVERED_BY_BUILDINGS");
+                warning.add("landscapeId", instance.get("landscapeId"));
+                String id = text(instance,"landscapeInstanceId");
+                warning.addProperty("instanceOrdinal", Integer.parseInt(id.substring(id.lastIndexOf('_')+1))-1);
+                warning.addProperty("message", "设计景观被后续建筑和通路覆盖；保留建筑，景观未迁移到其他位置。");
+                plan.getAsJsonArray("warnings").add(warning);continue;
+            }
+            instance.add("parcelReservations",parcels);instance.add("reservationSpans",spans(all));
+            instance.addProperty("parcelCount",parcels.size());instance.addProperty("actualAreaBlocks",all.size());
+            instance.addProperty("areaBeforeBuildingExclusionBlocks", initialArea);
+            instance.addProperty("areaYieldedToBuildingsAndRoadsBlocks", Math.max(0, initialArea-all.size()));
+            if (all.size() < initialArea) {
+                JsonObject warning = new JsonObject();
+                warning.addProperty("reasonCode", "LANDSCAPE_CLIPPED_BY_BUILDINGS_AND_ROADS");
+                warning.add("landscapeId", instance.get("landscapeId"));
+                warning.add("landscapeInstanceId", instance.get("landscapeInstanceId"));
+                String instanceId = text(instance, "landscapeInstanceId");
+                warning.addProperty("instanceOrdinal", Integer.parseInt(instanceId.substring(instanceId.lastIndexOf('_') + 1)) - 1);
+                warning.addProperty("initialAreaBlocks", initialArea);
+                warning.addProperty("retainedAreaBlocks", all.size());
+                warning.addProperty("message", "景观保持原选址，裁让后续建筑与道路；此为实际保留面积，不等于完整保留最初景观。");
+                plan.getAsJsonArray("warnings").add(warning);
+            }
+            instance.addProperty("capacityStatus", "landscape_first_building_excluded");instances.add(instance);
+        }
+        plan.add("instances",instances);
+        plan.addProperty("formationOrder", "LANDSCAPE_BEFORE_ARRAY_FILL_BUILDINGS_TAKE_PRECEDENCE");
+        return new Result(true,"",withRequiredAnchorHash(plan,anchors));
+    }
+
     private static JsonObject withRequiredAnchorHash(JsonObject plan, JsonArray requiredAnchors) {
         plan.addProperty("sourceD4Hash", hash(requiredAnchors));
         refreshPlanHash(plan);

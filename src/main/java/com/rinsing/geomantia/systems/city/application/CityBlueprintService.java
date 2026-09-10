@@ -150,6 +150,8 @@ public final class CityBlueprintService {
         boundary.add("agentRecoveryBoundary", recoveryBoundary);
         contextCore.add("decisionBoundary", boundary);
         contextCore.add("designGuide", CityDesignGuide.from(references));
+        contextCore.add("scaleDesignTask", CityScaleDesignTask.describe(
+                com.rinsing.geomantia.systems.city.domain.model.CityScale.fromContractName(string(seed, "theoreticalScale"))));
         contextCore.add("citySeed", seed.deepCopy());
         contextCore.add("d3ReviewPackage", d3.deepCopy());
         contextCore.add("catalogSnapshot", snapshot.deepCopy());
@@ -361,7 +363,9 @@ public final class CityBlueprintService {
         }
         Set<String> patchRefs = patchRefs(context.getAsJsonObject("d3ReviewPackage"));
         CityBlueprintValidator.ValidationResult result = validator.validate(blueprint,
-                new CityBlueprintValidator.ExpectedContext(cityId, expectedD3, expectedSnapshot, patchRefs),
+                new CityBlueprintValidator.ExpectedContext(cityId, expectedD3, expectedSnapshot, patchRefs,
+                        context.has("scaleDesignTask") ? com.rinsing.geomantia.systems.city.domain.model.CityScale.fromContractName(
+                                string(context.getAsJsonObject("citySeed"), "theoreticalScale")) : null),
                 references);
         if (!result.valid()) {
             return failure(debugRoot, cityId, contextId, reportPath, tracePath, result.issues(), budget, runId);

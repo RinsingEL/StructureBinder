@@ -375,6 +375,27 @@ class CityOutdoorBlueprintCompilerTest {
     }
 
     @Test
+    void earlyClippingWarningUsesVerifiedInstanceWithoutChangingFrozenGeometry() {
+        JsonObject d6 = d6Plan();
+        JsonObject capacity = capacity(blueprint(), d6);
+        var compiler = new CityOutdoorBlueprintCompiler();
+        var baseline = compiler.compile(blueprint(), d6, terrain(), catalog(), capacity);
+        var instance = capacity.getAsJsonArray("instances").get(0).getAsJsonObject();
+        JsonObject warning = new JsonObject();
+        warning.addProperty("reasonCode", "LANDSCAPE_CLIPPED_BY_BUILDINGS_AND_ROADS");
+        warning.add("landscapeId", instance.get("landscapeId"));
+        warning.add("landscapeInstanceId", instance.get("landscapeInstanceId"));
+        capacity.getAsJsonArray("warnings").add(warning);
+        CityLandscapeCapacityReservationPlanner.refreshPlanHash(capacity);
+        var migrated = compiler.compile(blueprint(), d6, terrain(), catalog(), capacity);
+        assertEquals(baseline.resolution().seedGroups(), migrated.resolution().seedGroups());
+        warning.addProperty("landscapeInstanceId", "unknown::instance_01");
+        CityLandscapeCapacityReservationPlanner.refreshPlanHash(capacity);
+        assertThrows(IllegalArgumentException.class,
+                () -> compiler.compile(blueprint(), d6, terrain(), catalog(), capacity));
+    }
+
+    @Test
     void landscapeOwnerCanBeTheExactAuthoredBuildingCommittedDuringLaterGrowth() {
         for (String phase : List.of("fill", "connectivity_growth", "percentage_growth")) {
             JsonObject d6 = d6Plan();

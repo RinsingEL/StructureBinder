@@ -105,6 +105,7 @@ public record CityPlanningConfig(
         map.put(CityScale.VILLAGE, new ScaleRadius(256, 384, 16, 16));
         map.put(CityScale.TOWN, new ScaleRadius(512, 640, 16, 16));
         map.put(CityScale.CITY, new ScaleRadius(768, Integer.MAX_VALUE, 32, 32));
+        map.put(CityScale.LARGE_CITY, new ScaleRadius(768, Integer.MAX_VALUE, 32, 32));
         return map;
     }
 

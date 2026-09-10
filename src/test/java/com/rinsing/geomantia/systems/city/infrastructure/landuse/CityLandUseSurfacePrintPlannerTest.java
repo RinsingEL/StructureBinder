@@ -267,6 +267,28 @@ class CityLandUseSurfacePrintPlannerTest {
     }
 
     @Test
+    void clippedSingleCellRoadRemainsPavedWithoutInventingAnAxis() {
+        var road = new LandUseSourceResolver.RoadBand("point", "network", "EXPANSION_UNIT_STREET",
+                new BlockPoint(20, 18), new BlockPoint(20, 18), new BlockBounds(20, 18, 20, 18),
+                1, "SURFACE_ONLY");
+        var planner = new CityLandUseSurfacePrintPlanner();
+        var field = terrain(new BlockBounds(0, 0, 63, 31), false);
+        var groups = List.of(
+                group("farm_group", SurfacePolicy.CULTIVATE, new BlockBounds(12, 5, 14, 7)),
+                group("market_group", SurfacePolicy.PAVE, new BlockBounds(42, 2, 43, 3)));
+        var plan = planner.plan(areaPlan(), groups, field, List.of(road), List.of(), List.of());
+        assertEquals(1, plan.featureCells().size());
+        assertEquals(20, plan.featureCells().get(0).x());
+        assertEquals(18, plan.featureCells().get(0).z());
+        assertEquals(CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB, plan.featureCells().get(0).kind());
+        var diagonal = new LandUseSourceResolver.RoadBand("diagonal", "network", "EXPANSION_UNIT_STREET",
+                new BlockPoint(20, 18), new BlockPoint(21, 19), new BlockBounds(20, 18, 21, 19),
+                1, "SURFACE_ONLY");
+        assertThrows(IllegalArgumentException.class,
+                () -> planner.plan(areaPlan(), groups, field, List.of(diagonal), List.of(), List.of()));
+    }
+
+    @Test
     void narrowAlleyDoesNotWriteCurbsIntoAdjacentBuildings() {
         var road = new LandUseSourceResolver.RoadBand("alley", "network", "ENTRANCE_SHORT_ALLEY",
                 new BlockPoint(20, 18), new BlockPoint(30, 18), new BlockBounds(20, 18, 30, 18),

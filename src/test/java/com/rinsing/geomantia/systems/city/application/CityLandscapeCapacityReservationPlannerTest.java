@@ -23,6 +23,35 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandscapeCapacityReservationPlannerTest {
     @Test
+    void landscapeFirstKeepsShapeAndExcludesLaterBuildingsWithoutMovingIt() {
+        var initial=new CityLandscapeCapacityReservationPlanner().plan(blueprint(3),catalog(1,12),
+                terrain(new BlockBounds(0,0,255,255)),anchors(120,120));
+        assertTrue(initial.ok());
+        var instance=initial.plan().getAsJsonArray("instances").get(0).getAsJsonObject();
+        var span=instance.getAsJsonArray("reservationSpans").get(0).getAsJsonObject();
+        BlockBounds occupied=new BlockBounds(span.get("minX").getAsInt(),span.get("z").getAsInt(),
+                span.get("maxX").getAsInt(),span.get("z").getAsInt());
+        var cropped=CityLandscapeCapacityReservationPlanner.clipToBuiltGeometry(initial,anchors(120,120),List.of(occupied));
+        assertTrue(cropped.ok());
+        int after=0;
+        for(var entry:cropped.plan().getAsJsonArray("instances")) {
+            var value=entry.getAsJsonObject();after+=value.get("actualAreaBlocks").getAsInt();
+            for(var row:value.getAsJsonArray("reservationSpans")) {var r=row.getAsJsonObject();
+                assertFalse(occupied.overlaps(new BlockBounds(r.get("minX").getAsInt(),r.get("z").getAsInt(),r.get("maxX").getAsInt(),r.get("z").getAsInt())));}
+        }
+        int before=initial.plan().getAsJsonArray("instances").asList().stream().mapToInt(e->e.getAsJsonObject().get("actualAreaBlocks").getAsInt()).sum();
+        assertTrue(after<before);assertTrue(after>0);
+        var clippingWarnings = cropped.plan().getAsJsonArray("warnings").asList().stream()
+                .map(e -> e.getAsJsonObject()).filter(w -> "LANDSCAPE_CLIPPED_BY_BUILDINGS_AND_ROADS"
+                        .equals(w.get("reasonCode").getAsString())).toList();
+        assertFalse(clippingWarnings.isEmpty());
+        for (var warning : clippingWarnings) {
+            assertEquals(0, warning.get("instanceOrdinal").getAsInt());
+            assertTrue(warning.get("retainedAreaBlocks").getAsInt() < warning.get("initialAreaBlocks").getAsInt());
+        }
+        assertTrue(cropped.plan().get("formationOrder").getAsString().contains("LANDSCAPE_BEFORE"));
+    }
+    @Test
     void functionalCorridorLandscapeLeavesOneBlockBetweenFieldParcels() {
         var result = new CityLandscapeCapacityReservationPlanner().plan(
                 blueprintWithFieldSeparators(4), catalog(1, 12),

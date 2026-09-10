@@ -31,6 +31,24 @@ class CityBlueprintCompilerServiceTest {
     Path temporary;
 
     @Test
+    void recursivelyComposedMemberKeepsItsOwnChildArrayGeometry() throws Exception {
+        Fixture fixture=acceptedFixture("run_recursive", "city:recursive", 12, 12, "SMALL",
+                CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid, blueprint->{
+            var groups=blueprint.getAsJsonArray("groups");var root=groups.get(0).getAsJsonObject();
+            root.addProperty("algorithmProfileRef","algorithm:compact");
+            for(String id:List.of("a","b","c")){var g=root.deepCopy();g.addProperty("groupId",id);
+                g.addProperty("priority","STANDARD");groups.add(g);}
+            blueprint.add("arrayCompositions",JsonParser.parseString("""
+                [{"compositionId":"outer","algorithmProfileRef":"algorithm:compact","centerGroupId":"civic","memberGroupIds":["a"]},
+                 {"compositionId":"inner","algorithmProfileRef":"algorithm:grid","centerGroupId":"a","memberGroupIds":["b","c"]}]
+                """));
+        });
+        var result=new CityBlueprintCompilerService().compile(temporary,fixture.runId(),fixture.cityId());
+        assertTrue(result.ok(),result.message()+" "+result.compileTrace());
+        assertEquals(4,result.groupExtentMap().getAsJsonArray("groups").size());
+    }
+
+    @Test
     void weightedPoolsCompileAtomicGridFirstExpansionUnits() throws Exception {
         Fixture fixture = acceptedFixture("run_weighted_units", "city:weighted_units", 16, 16, "SMALL",
                 CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid, blueprint -> {
