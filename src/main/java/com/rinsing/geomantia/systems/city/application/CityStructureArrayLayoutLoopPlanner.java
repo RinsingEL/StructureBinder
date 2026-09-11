@@ -200,6 +200,21 @@ public final class CityStructureArrayLayoutLoopPlanner {
                                                                 JsonObject terraSenseProfileSource,
                                                                 JsonObject currentState,
                                                                 JsonObject request) throws IOException {
+        return planExpansionCandidates(baseDirectory, reviewPackage, terraSenseProfileSource,
+                currentState, request, true);
+    }
+
+    /** Automatic compilation needs candidates, not the interactive all-patch capacity report. */
+    ExpansionCandidateSetResult planExpansionCandidatesForCompilation(Path baseDirectory,
+            CityLandformReviewPackage reviewPackage, JsonObject terraSenseProfileSource,
+            JsonObject currentState, JsonObject request) throws IOException {
+        return planExpansionCandidates(baseDirectory, reviewPackage, terraSenseProfileSource,
+                currentState, request, false);
+    }
+
+    private ExpansionCandidateSetResult planExpansionCandidates(Path baseDirectory,
+            CityLandformReviewPackage reviewPackage, JsonObject terraSenseProfileSource,
+            JsonObject currentState, JsonObject request, boolean includeExpansionSpace) throws IOException {
         long started = System.nanoTime();
         requireCurrentState(currentState);
         if (request.has("minCandidateCount")) {
@@ -227,7 +242,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         ExpansionContext context = expansionContext(reviewPackage, currentState, request);
         if (context.continuousFrontier()) {
             return planContinuousExpansionCandidates(baseDirectory, reviewPackage, terraSenseProfileSource,
-                    currentState, submittedItem, request, context, started);
+                    currentState, submittedItem, request, context, started, includeExpansionSpace);
         }
         if (context.targetPatch() == null) {
             throw new IllegalArgumentException("D4_ARRAY_LAYOUT_GLOBAL_PATCH_SELECTION_REQUIRED: "
@@ -315,7 +330,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         set.addProperty("sourceStateId", stringValue(currentState, "stateId"));
         set.addProperty("generatedAt", Instant.now().toString());
         set.add("grid", reviewPackage.grid().asJson());
-        set.add("expansionSpace", expansionSpace(reviewPackage, currentState, context));
+        if (includeExpansionSpace) set.add("expansionSpace", expansionSpace(reviewPackage, currentState, context));
         set.add("arrayCandidates", candidates);
         set.add("qualityReport", quality(List.of(), catalog.warnings(), catalog.needsReview(), 100));
         set.add("timingMs", timing(started));
@@ -334,7 +349,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
                                                                             JsonObject submittedItem,
                                                                             JsonObject request,
                                                                             ExpansionContext context,
-                                                                            long started) throws IOException {
+                                                                            long started, boolean includeExpansionSpace) throws IOException {
         CityStructureProfileCatalog.ImportedCatalog catalog =
                 CityStructureProfileCatalog.importCatalog(baseDirectory, terraSenseProfileSource);
         TemplateCatalogContext templateCatalog = templateCatalog(currentState);
@@ -528,7 +543,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         set.add("focusBodyEnvelope", CityStructureCandidateEnvelope.boundsJson(context.focusBodyBounds()));
         set.add("expansionPolicy", context.expansionPolicy().asJson());
         set.add("grid", reviewPackage.grid().asJson());
-        set.add("expansionSpace", expansionSpace(reviewPackage, currentState, context));
+        if (includeExpansionSpace) set.add("expansionSpace", expansionSpace(reviewPackage, currentState, context));
         set.add("frontierSearchTrace", frontierTrace);
         set.add("arrayCandidates", candidates);
         set.add("qualityReport", quality(List.of(), catalog.warnings(), catalog.needsReview(), 100));

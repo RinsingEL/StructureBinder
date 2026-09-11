@@ -2492,7 +2492,7 @@ public final class CityBlueprintCompilerService {
         event.addProperty("terminalBatch", terminalBatch);
         try {
             CityStructureArrayLayoutLoopPlanner.ExpansionCandidateSetResult result =
-                    continuousArrayPlanner.planExpansionCandidates(runDir, review, structureSource,
+                    continuousArrayPlanner.planExpansionCandidatesForCompilation(runDir, review, structureSource,
                             loopState, request);
             JsonArray candidates = array(result.candidateSet(), "arrayCandidates");
             List<AutomaticCandidate> legal = new ArrayList<>();
@@ -2637,7 +2637,7 @@ public final class CityBlueprintCompilerService {
             event.addProperty("requestedBatchSize", requested);
             try {
                 CityStructureArrayLayoutLoopPlanner.ExpansionCandidateSetResult result =
-                        continuousArrayPlanner.planExpansionCandidates(runDir, review, structureSource,
+                        continuousArrayPlanner.planExpansionCandidatesForCompilation(runDir, review, structureSource,
                                 automaticLoopState(blueprint, templateCatalog, occupied), request);
                 JsonArray candidates = array(result.candidateSet(), "arrayCandidates");
                 List<AutomaticCandidate> legal = new ArrayList<>();

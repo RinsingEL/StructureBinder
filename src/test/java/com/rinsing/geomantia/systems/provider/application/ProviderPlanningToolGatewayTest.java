@@ -1,6 +1,7 @@
 package com.rinsing.geomantia.systems.provider.application;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
@@ -189,6 +190,24 @@ class ProviderPlanningToolGatewayTest {
 
         assertEquals(false, result.get("ok").getAsBoolean());
         assertEquals("PATCH_SELECTION_REF_REQUIRED", result.get("errorCode").getAsString());
+    }
+
+    @Test
+    @org.junit.jupiter.api.Timeout(75)
+    void receivesCompiledDraftAfterTheFormerFortyFiveSecondDeadline() throws Exception {
+        server.createContext("/realm/city/submit_d4_blueprint", exchange -> {
+            received.set(read(exchange));
+            try {
+                Thread.sleep(46_000);
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+                throw new IOException(interrupted);
+            }
+            reply(exchange, "{\"ok\":true,\"revisionEvidence\":{\"status\":\"preview_valid\"}}");
+        });
+        JsonElement response = gateway().execute("city_submit_d4_blueprint", new JsonObject());
+        assertTrue(response.toString().contains("preview_valid"));
+        assertEquals("city_a", received.get().get("citySeedId").getAsString());
     }
 
     private ProviderPlanningToolGateway gateway() {

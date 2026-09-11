@@ -135,7 +135,10 @@ public final class ProviderPlanningToolGateway implements DeepSeekToolLoopClient
             return error("PROVIDER_AGENT_TOOL_ARGUMENTS_TOO_LARGE", toolName);
         }
         HttpRequest request = HttpRequest.newBuilder(apiBase.resolve(endpoint.path()))
-                .timeout(endpoint.longRunning() ? Duration.ofMinutes(5) : Duration.ofSeconds(45))
+                // D4 submission synchronously compiles the preview, just like direct MCP
+                // (TIMEOUTS.refresh). A short timeout leaves a valid draft hidden from the agent.
+                .timeout("city_submit_d4_blueprint".equals(toolName) ? Duration.ofMinutes(10)
+                        : endpoint.longRunning() ? Duration.ofMinutes(5) : Duration.ofSeconds(45))
                 .header("Content-Type", "application/json")
                 .header(hostOnly ? "X-Geomantia-Host-Result" : "X-Geomantia-Agent-View", "true")
                 .POST(HttpRequest.BodyPublishers.ofString(arguments.toString()))
