@@ -40,7 +40,7 @@ class CityBlueprintGroupLayoutPlannerTest {
     }
 
     @Test
-    void densityCompilesIntoAlgorithmSpacingAndClaimArea() {
+    void densityChangesLayoutSpacingButNeverBuildingArea() {
         var dense = planner.parameters("COMPACT", CityBlueprint.DensityClass.DENSE);
         var sparse = planner.parameters("COMPACT", CityBlueprint.DensityClass.SPARSE);
         BlockBounds footprint = new BlockBounds(0, 0, 14, 14);
@@ -48,7 +48,8 @@ class CityBlueprintGroupLayoutPlannerTest {
         assertTrue(dense.targetEdgeGapBlocks() < sparse.targetEdgeGapBlocks());
         assertTrue(dense.maximumEdgeGapBlocks() < sparse.maximumEdgeGapBlocks());
         assertTrue(dense.landUseHandoffGapBlocks() < sparse.landUseHandoffGapBlocks());
-        assertTrue(planner.claimedArea(footprint, dense) < planner.claimedArea(footprint, sparse));
+        assertEquals(225, planner.claimedArea(footprint, dense));
+        assertEquals(225, planner.claimedArea(footprint, sparse));
     }
 
     @Test

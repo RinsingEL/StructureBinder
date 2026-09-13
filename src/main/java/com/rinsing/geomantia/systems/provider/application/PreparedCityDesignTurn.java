@@ -23,6 +23,7 @@ final class PreparedCityDesignTurn {
         if (context == null || !context.has("contextId")) throw new IOException("PLANNING_DESIGN_CONTEXT_REQUIRED");
         JsonObject state = queue.deepCopy();
         state.add("preparedBlueprintContext", context.deepCopy());
+        if (prepared.has("designSession")) state.add("designSession", prepared.get("designSession").deepCopy());
         state.addProperty("contextId", context.get("contextId").getAsString());
         for (String key : List.of("failureCount", "maximumFailureCount", "remainingFailureCount", "retryAllowed", "failureBudget")) {
             if (prepared.has(key)) state.add(key, prepared.get(key).deepCopy());
@@ -32,7 +33,7 @@ final class PreparedCityDesignTurn {
                 + "actual terrain images. It supersedes older truncated tool results in this session. All authored "
                 + "structure functions/styles, selectable pools/profiles and design algorithms are below. Design or "
                 + "revise this city one district at a time: inspect the three terrain views, select a Top Patch, "
-                + "then submit submissionMode=DRAFT with the districts designed so far. Inspect the resulting layout "
+                + "first submit designIntent for intended groups, then batch materialSelections to search/select materials and obtain capacity estimates. Use structureCount to plan building quantities and arrayCompositions to organize the main body. Submit submissionMode=DRAFT with one complete cluster (multiple children allowed) and previously designed districts. Inspect planned/retained counts and the resulting layout "
                 + "and correct current failures before adding the next district. Preserve valid districts; use a full "
                 + "cityBlueprint when adding groups (patch supports replacement only). Use RELATIVE_WEIGHTS for partial groups. "
                 + "After inspecting buildings, roads and landscape together, submit submissionMode=FINAL. "
@@ -41,9 +42,9 @@ final class PreparedCityDesignTurn {
                 + "For local revisions, submit replace-only blueprintPatch with revisionEvidence.baseDraftHash for a rejected draft "
                 + "or revisionEvidence.baseBlueprintHash for an accepted design (never both), "
                 + "preserving unaffected choices. For full input you may explicitly choose RELATIVE_WEIGHTS to avoid summing ratios by hand. "
-                + "Choose either fillPools=[{poolRef,weight},...] or legacy fillPoolRef, never both. Each expansion unit rolls one pool; "
-                + "the host tries GRID, LINEAR, COURTYARD, COMPACT, ORGANIC_COMPACT in fixed order and reserves access. "
-                + "connectionPlan may override structurePools or structurePoolRef, otherwise it inherits all fill pools. "
+                + "Choose either fillPools=[{poolRef,weight},...] or legacy fillPoolRef, never both. Pools only populate AI-planned array slots; "
+                + "the host does not grow buildings to meet area targets or fill connection gaps. Empty terrain-filtered arrays remain reviewable. "
+                + "Express proximity through ADJACENCY and traffic needs through CONNECTION. "
                 + "proportionMode is a TOOL ARGUMENT beside cityBlueprint, NOT inside cityBlueprint. "
                 + "Do not query status or prepare again. Only use "
                 + "patch_explorer_show_candidates with the existing patchReviewEvidence.sessionId if you need additional "

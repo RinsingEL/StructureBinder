@@ -114,7 +114,7 @@ final class ProviderPlanningToolCatalog {
                             + "TerraSense profiles, template catalog and Blueprint reference catalog; never pass paths.",
                     object(properties("runId", string(), "citySeedId", string())));
             case "city_submit_d4_blueprint" -> function(name,
-                    "Submit a CityBlueprint, or use blueprintPatch (replace-only JSON Pointer operations) with "
+                    "First submit designIntent (group roles/intents/patches), then batch materialSelections to search/select authored materials and receive capacity estimates. These stages do not accept geometry. Next submit DRAFT clusters and review retained/skipped members; FINAL only after whole-city review. No automatic buildings for area fill or connections. Submit a CityBlueprint, or use blueprintPatch (replace-only JSON Pointer operations) with "
                             + "baseBlueprintHash (accepted) or baseDraftHash (rejected draft) from revisionEvidence to change only affected fields. Never send both hashes. Exactly one input is allowed. "
                             + "The host fills omitted schema/cityId/sourceD3Ref/catalogSnapshotRef/generationSeed; conflicting explicit identities are rejected. "
                             + "proportionMode=RELATIVE_WEIGHTS normalizes group, spaceComposition and landscape role shares before the unchanged author validation. "
@@ -177,6 +177,11 @@ final class ProviderPlanningToolCatalog {
                 "surfaceDetailProfile", "outdoorPlan");
         return object(properties(
                 "runId", string(), "citySeedId", string(), "contextId", string(),
+                "designIntent", object(properties("groups", nonEmptyArray(object(properties(
+                        "groupId", string(), "role", string(), "intent", string(), "preferredPatchRefs", nonEmptyArray(string())),
+                        "groupId", "role", "intent", "preferredPatchRefs"))), "groups"),
+                "materialSelections", nonEmptyArray(object(properties("groupId", string(), "query", string(),
+                        "structureRefs", array(string()), "fillPoolRefs", array(string())), "groupId")),
                 "cityBlueprint", blueprint, "autoAdvanceAfterD4", bool(),
                 "proportionMode", enumeration("EXACT_SHARES", "RELATIVE_WEIGHTS"),
                 "submissionMode", enumeration("DRAFT", "FINAL"),
@@ -208,6 +213,7 @@ final class ProviderPlanningToolCatalog {
                 "preferredPatchZone", enumeration("CENTER", "NORTH", "EAST", "SOUTH", "WEST"),
                 "placementRelation", placementRelationSchema(), "role", string(),
                 "priority", enumeration("CORE", "STANDARD", "PERIPHERAL"),
+                "structureCount", described(integer(), "Planned building count including required refs: 1..256 and >= requiredStructureRefs count. CENTER_SYMMETRIC uses an odd total. This is a design count, not a retained-count gate."),
                 "extentClass", enumeration("SMALL", "MEDIUM", "LARGE"),
                 "densityClass", enumeration("SPARSE", "BALANCED", "DENSE"),
                 "algorithmProfileRef", string(),

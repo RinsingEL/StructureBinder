@@ -74,21 +74,18 @@ final class CityBlueprintGroupLayoutPlanner {
                 targetGap += 2;
                 maximumGap += 4;
                 jitter = 0;
-                claimMultiplier = 1.08;
                 outwardBias = 0.75;
             }
             case "LINEAR" -> {
                 targetGap += 1;
                 maximumGap += 2;
                 jitter = Math.max(2, targetGap / 3);
-                claimMultiplier = 1.04;
                 outwardBias = 0.78;
             }
             case "COURTYARD" -> {
                 targetGap += 4;
                 maximumGap += 4;
                 jitter = Math.max(1, targetGap / 5);
-                claimMultiplier = 1.20;
                 outwardBias = 0.50;
             }
             case "ORGANIC_COMPACT" -> {
@@ -99,14 +96,12 @@ final class CityBlueprintGroupLayoutPlanner {
                     case BALANCED -> 8;
                     case SPARSE -> 12;
                 };
-                claimMultiplier = 1.06;
                 outwardBias = 0.58;
             }
             case "CENTER_SYMMETRIC" -> {
                 targetGap += 4;
                 maximumGap += 4;
                 jitter = 0;
-                claimMultiplier = 1.20;
                 outwardBias = 0.0;
             }
             default -> {
@@ -269,9 +264,8 @@ final class CityBlueprintGroupLayoutPlanner {
     }
 
     int claimedArea(BlockBounds bounds, Parameters parameters) {
-        int paddedWidth = bounds.widthBlocks() + parameters.targetEdgeGapBlocks();
-        int paddedDepth = bounds.heightBlocks() + parameters.targetEdgeGapBlocks();
-        return (int) Math.ceil(paddedWidth * (double) paddedDepth * parameters.claimAreaMultiplier());
+        // Layout circulation is not part of a building footprint.
+        return Math.multiplyExact(bounds.widthBlocks(), bounds.heightBlocks());
     }
 
     private static BlockPoint spiralPoint(Frame frame,

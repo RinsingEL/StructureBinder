@@ -94,7 +94,7 @@ final class CityStructureTerrainGate {
                 LandUseTerrainField.Cell cell = cells.get(new CellKey(cellX, cellZ));
                 String reason = cell == null ? "CITY_STRUCTURE_TERRAIN_CELL_COVERAGE_MISSING"
                         : !cell.sampled() ? "CITY_STRUCTURE_TERRAIN_CELL_UNSAMPLED"
-                        : cell.water() ? "CITY_STRUCTURE_SURFACE_CELL_WATER"
+                        : cell.water() && !smallEnclosedWaterPit(cell, limits) ? "CITY_STRUCTURE_SURFACE_CELL_WATER"
                         : "";
                 if (cell != null) {
                     evaluated++;
@@ -106,7 +106,7 @@ final class CityStructureTerrainGate {
                     }
                 }
                 if (cell != null && cell.sampled() && !cell.water() && limits != null) {
-                    if (!engineered && (cell.slope() > limits.maximumSlope() * 2
+                    if ((cell.slope() > limits.maximumSlope() * 2
                             || cell.localRelief() > limits.maximumLocalRelief() * 2)) {
                         reason = "CITY_STRUCTURE_TERRAIN_UNFIT_SKIP_MEMBER";
                     } else if (cell.slope() > limits.maximumSlope()) {
@@ -117,6 +117,8 @@ final class CityStructureTerrainGate {
                                 engineered ? "realize_designed_platform" : "foundation_or_skip"));
                     }
                 }
+                if (cell != null && cell.water() && reason.isBlank())
+                    adaptations.add(adaptation(cell, "CITY_STRUCTURE_SMALL_ENCLOSED_WATER_PIT", "foundation_support_required"));
                 if (reason.isBlank()) continue;
                 rejected++;
                 if (primaryReason.isBlank()) primaryReason = reason;
@@ -154,7 +156,7 @@ final class CityStructureTerrainGate {
             trace.addProperty("maximumObservedSlope", maximumSlope);
             trace.addProperty("maximumObservedLocalRelief", maximumLocalRelief);
             if (limits != null && elevationRange > limits.maximumElevationRange()) {
-                if (!engineered && elevationRange > limits.maximumElevationRange() * 2) {
+                if (elevationRange > limits.maximumElevationRange() * 2) {
                     rejected++;
                     if (primaryReason.isBlank()) primaryReason = "CITY_STRUCTURE_TERRAIN_UNFIT_SKIP_MEMBER";
                 }
@@ -176,6 +178,19 @@ final class CityStructureTerrainGate {
                 ? "DESIGN_FIRST_PLATFORM_REALIZATION" : "PCG_FOUNDATION_OR_SKIP_MEMBER");
         trace.add("terrainAdaptations", adaptations);
         return new Evaluation(rejected == 0, primaryReason, CityStructureTerrainMode.SURFACE.name(), trace);
+    }
+
+    private boolean smallEnclosedWaterPit(LandUseTerrainField.Cell cell, TerrainLimits limits) {
+        if (limits == null || cell.waterDepth() < 0 || cell.waterDepth() > limits.maximumElevationRange()) return false;
+        String form = cell.landformType().toLowerCase(java.util.Locale.ROOT);
+        if (form.contains("lake") || form.contains("ocean") || form.contains("river") || form.contains("canyon")) return false;
+        for (int dz = -1; dz <= 1; dz++) for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dz == 0) continue;
+            var neighbor = cells.get(new CellKey(cell.cellX() + dx, cell.cellZ() + dz));
+            if (neighbor == null || !neighbor.sampled() || neighbor.water()
+                    || Math.abs(neighbor.elevation() - cell.elevation()) > limits.maximumElevationRange()) return false;
+        }
+        return true;
     }
 
     private static JsonObject adaptation(LandUseTerrainField.Cell cell, String reasonCode, String action) {

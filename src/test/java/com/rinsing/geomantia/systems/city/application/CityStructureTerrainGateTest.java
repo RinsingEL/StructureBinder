@@ -15,6 +15,23 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityStructureTerrainGateTest {
     @Test
+    void onlyShallowEnclosedWaterPitsReceiveFoundationAdmission() {
+        for (String kind : List.of("pit", "lake", "river", "wide_pit", "deep_pit")) {
+            var cells = new java.util.ArrayList<LandUseTerrainField.Cell>();
+            for (int z=-1; z<=1; z++) for(int x=-1; x<=1; x++) {
+                boolean water = x==0 && z==0 || kind.equals("wide_pit") && x==1 && z==0;
+                cells.add(new LandUseTerrainField.Cell(x,z,x*16,z*16,16,70,1,1,1,water,
+                        water ? kind.equals("deep_pit") ? 30 : 2 : 0,water ? 0 : 10,
+                        "minecraft:plains",water ? kind : "plain","patch",true));
+            }
+            var field = new LandUseTerrainField(LandUseTerrainField.SCHEMA,"city_test",new BlockBounds(-16,-16,31,31),16,cells);
+            var result = new CityStructureTerrainGate(field,catalog("SURFACE")).evaluate("test:house",new BlockBounds(1,1,8,8),CityBlueprint.TerrainPolicy.BALANCED,true);
+            assertEquals(kind.equals("pit"),result.passed(),kind+result.trace());
+            if (result.passed()) assertTrue(result.trace().get("terrainAdaptationRequired").getAsBoolean());
+        }
+    }
+
+    @Test
     void surfaceRequiresEveryIntersectingCellToBeSampledAndNonWater() {
         LandUseTerrainField field = field(List.of(
                 cell(0, false, true),
@@ -90,13 +107,14 @@ class CityStructureTerrainGateTest {
     }
 
     @Test
-    void extremeReliefIsAnEngineeringRequirementNotASkipInstruction() {
+    void extremeReliefSkipsMemberEvenWithAnEngineeredPlatform() {
         var gate = new CityStructureTerrainGate(field(List.of(cell(0, 68, 80, 120), cell(1, -40, 2, 3))), catalog("SURFACE"));
         var result = gate.evaluate("test:house", new BlockBounds(0,0,31,15), CityBlueprint.TerrainPolicy.CONFORM, true);
-        assertTrue(result.passed());
+        assertFalse(result.passed());
+        assertEquals("CITY_STRUCTURE_TERRAIN_UNFIT_SKIP_MEMBER", result.reasonCode());
         assertEquals("DESIGN_FIRST_PLATFORM_REALIZATION", result.trace().get("terrainAdaptationPolicy").getAsString());
         assertTrue(result.trace().get("terrainAdaptationRequired").getAsBoolean());
-        assertFalse(result.trace().toString().contains("skip"));
+        assertTrue(result.trace().get("rejectedCellCount").getAsInt() > 0);
         assertFalse(gate.evaluate("test:house", new BlockBounds(0,0,31,15), CityBlueprint.TerrainPolicy.CONFORM, false).passed(),
                 "A natural unpaved group must not pretend to own an engineered platform.");
     }

@@ -75,6 +75,13 @@ public final class CityOutdoorBlueprintCompiler {
         Map<String, List<AnchorData>> anchorsByGroup = readAnchors(structureMaterializationPlan);
         List<LandUseSourceResolver.RoadBand> roadBands = roadBands(structureMaterializationPlan);
         List<String> outdoorWarnings = new ArrayList<>();
+        // A declared array may lose every member at the D4 terrain gate. It is known, but owns no ground.
+        for (var group : blueprint.groups()) {
+            if (!anchorsByGroup.containsKey(group.groupId())) {
+                anchorsByGroup.put(group.groupId(), List.of());
+                outdoorWarnings.add("CITY_OUTDOOR_EMPTY_ARRAY_SKIPPED:" + group.groupId());
+            }
+        }
         List<LandUseSourceResolver.GreenParcelSpec> greenParcels = greenParcels(
                 blueprint, anchorsByGroup, catalog, outdoorWarnings);
         List<LandUseSourceResolver.OverflowZoneSpec> overflowZones = overflowZones(
@@ -1069,7 +1076,7 @@ public final class CityOutdoorBlueprintCompiler {
         List<AnchorData> result = new ArrayList<>();
         for (String groupId : groupIds) {
             List<AnchorData> members = anchorsByGroup.get(groupId);
-            if (members == null || members.isEmpty()) throw new IllegalArgumentException(reason + ':' + groupId);
+            if (members == null || requireNonEmpty && members.isEmpty()) throw new IllegalArgumentException(reason + ':' + groupId);
             result.addAll(members);
         }
         if (requireNonEmpty && result.isEmpty()) throw new IllegalArgumentException(reason + ":empty");

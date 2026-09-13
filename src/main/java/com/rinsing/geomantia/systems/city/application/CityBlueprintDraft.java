@@ -50,6 +50,7 @@ public final class CityBlueprintDraft {
         if (draft.has("compiledLayout") && draft.get("compiledLayout").isJsonObject()) {
             JsonObject layout = draft.getAsJsonObject("compiledLayout");
             JsonObject review = new JsonObject();
+            if (layout.has("designReview")) review.add("plannedAndRetained", layout.get("designReview").deepCopy());
             if (layout.has("compilationAcceptance"))
                 review.add("acceptance", layout.get("compilationAcceptance").deepCopy());
             if (layout.has("streetFirstNetworkTrace")) {

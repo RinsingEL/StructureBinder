@@ -31,6 +31,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityOutdoorBlueprintCompilerTest {
     @Test
+    void declaredArrayWithNoRetainedMembersDoesNotBlockOtherOutdoorGrounds() {
+        JsonObject d6 = d6Plan();
+        d6.getAsJsonArray("plannedWorldgenStructures").remove(0);
+        var result = compile(d6);
+        assertTrue(result.resolution().warnings().contains("CITY_OUTDOOR_EMPTY_ARRAY_SKIPPED:core_group"));
+        var foundation = result.resolution().seedGroups().stream()
+                .filter(g -> g.layerRole() == LandUseSeedGroup.LayerRole.FOUNDATION).findFirst().orElseThrow();
+        assertFalse(foundation.structureFootprints().contains(new BlockBounds(20, 40, 25, 45)));
+        assertTrue(foundation.structureFootprints().contains(new BlockBounds(40, 40, 45, 45)));
+    }
+
+    @Test
     void foundationCarriesTransformedBuildingEntrancesIntoLandUse() {
         JsonObject d6 = d6Plan();
         JsonObject core = d6.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject();

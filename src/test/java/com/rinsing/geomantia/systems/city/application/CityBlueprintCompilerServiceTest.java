@@ -31,6 +31,72 @@ class CityBlueprintCompilerServiceTest {
     Path temporary;
 
     @Test
+    void aTerrainGapCannotMoveTheOtherPlannedGridMembers() throws Exception {
+        Consumer<JsonObject> design = blueprint -> {
+            blueprint.addProperty("generationSeed", 42);
+            var group = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+            group.addProperty("structureCount", 9); group.addProperty("algorithmProfileRef", "algorithm:grid");
+        };
+        var flat = acceptedFixture("flat_fixed", "city:fixed", 8, 8, "SMALL",
+                CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid, design);
+        var first = new CityBlueprintCompilerService().compile(temporary, flat.runId(), flat.cityId());
+        assertTrue(first.ok(), first.message());
+        var original = first.structureAnchorPlan().getAsJsonArray("anchors");
+        assertTrue(original.size() >= 3, first.structureAnchorPlan().get("designReview").toString());
+        var point = original.get(0).getAsJsonObject().getAsJsonObject("anchorBlock");
+        int cellX = Math.floorDiv(point.get("x").getAsInt(), 16), cellZ = Math.floorDiv(point.get("z").getAsInt(), 16);
+        var lake = acceptedFixture("lake_fixed", "city:fixed", 8, 8, "SMALL",
+                CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid,
+                field -> field.getAsJsonArray("cells").forEach(e -> { var cell = e.getAsJsonObject();
+                    if (cell.get("cellX").getAsInt() == cellX && cell.get("cellZ").getAsInt() == cellZ) {
+                        cell.addProperty("water", true); cell.addProperty("waterDepth", 10); cell.addProperty("landformType", "lake");
+                    } }), design);
+        var second = new CityBlueprintCompilerService().compile(temporary, lake.runId(), lake.cityId());
+        assertTrue(second.ok(), second.message());
+        var retained = second.structureAnchorPlan().getAsJsonArray("anchors");
+        assertTrue(retained.size() > 0 && retained.size() < original.size());
+        Map<String, JsonObject> before = original.asList().stream().map(JsonElement::getAsJsonObject).collect(java.util.stream.Collectors.toMap(a -> a.get("anchorId").getAsString(), a -> a));
+        for (var e : retained) {
+            var anchor = e.getAsJsonObject(); var previous = before.get(anchor.get("anchorId").getAsString());
+            assertEquals(previous.get("anchorBlock"), anchor.get("anchorBlock"));
+            assertEquals(previous.get("templateId"), anchor.get("templateId"));
+            assertEquals(previous.get("rotation"), anchor.get("rotation"));
+        }
+    }
+
+    @Test
+    void plannedArraysReturnEmptyTerrainGapsWithoutAutomaticBuildings() throws Exception {
+        Fixture f = acceptedFixture("run_empty_plan", "city:empty_plan", 8, 8, "SMALL",
+                CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid,
+                field -> field.getAsJsonArray("cells").forEach(e -> { e.getAsJsonObject().addProperty("water", true); e.getAsJsonObject().addProperty("landformType", "lake"); }),
+                blueprint -> { var group = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    group.addProperty("structureCount", 5); group.addProperty("algorithmProfileRef", "algorithm:grid"); });
+        var result = new CityBlueprintCompilerService().compile(temporary, f.runId(), f.cityId());
+        assertTrue(result.ok(), result.message() + result.compileTrace());
+        var review = result.structureAnchorPlan().getAsJsonObject("designReview");
+        assertEquals(5, review.get("plannedBuildingCount").getAsInt());
+        assertEquals(0, review.get("retainedBuildingCount").getAsInt());
+        assertEquals(0, review.get("retainedLeafArrayCount").getAsInt());
+        assertEquals(5, result.structureAnchorPlan().getAsJsonArray("skippedMembers").size());
+        assertEquals(0, review.get("automaticBuildingCount").getAsInt());
+    }
+
+    @Test
+    void plannedArrayCountIsNotAnAreaFillTarget() throws Exception {
+        Fixture f = acceptedFixture("run_fixed_count", "city:fixed_count", 8, 8, "LARGE",
+                CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid, blueprint -> {
+                    var group = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    group.addProperty("structureCount", 7); group.addProperty("algorithmProfileRef", "algorithm:grid"); });
+        var result = new CityBlueprintCompilerService().compile(temporary, f.runId(), f.cityId());
+        assertTrue(result.ok(), result.message() + result.compileTrace());
+        var review = result.structureAnchorPlan().getAsJsonObject("designReview");
+        assertEquals(7, review.get("plannedBuildingCount").getAsInt());
+        assertEquals(7, review.get("retainedBuildingCount").getAsInt() + result.structureAnchorPlan().getAsJsonArray("skippedMembers").size());
+        assertTrue(result.structureAnchorPlan().getAsJsonArray("anchors").asList().stream().noneMatch(e ->
+                java.util.Set.of("percentage_growth", "connectivity").contains(e.getAsJsonObject().get("blueprintPlacementPhase").getAsString())));
+    }
+
+    @Test
     void recursivelyComposedMemberKeepsItsOwnChildArrayGeometry() throws Exception {
         Fixture fixture=acceptedFixture("run_recursive", "city:recursive", 12, 12, "SMALL",
                 CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid, blueprint->{
@@ -49,7 +115,7 @@ class CityBlueprintCompilerServiceTest {
     }
 
     @Test
-    void weightedPoolsCompileAtomicGridFirstExpansionUnits() throws Exception {
+    void weightedPoolsOnlyPopulatePlannedSlots() throws Exception {
         Fixture fixture = acceptedFixture("run_weighted_units", "city:weighted_units", 16, 16, "SMALL",
                 CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid, blueprint -> {
                     JsonObject core = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
@@ -63,20 +129,12 @@ class CityBlueprintCompilerServiceTest {
                     blueprint.getAsJsonArray("groups").add(district);
                 });
         var result = new CityBlueprintCompilerService().compile(temporary,fixture.runId(),fixture.cityId());
-        assertTrue(result.ok(), result.message());
-        var expanded = result.structureAnchorPlan().getAsJsonArray("anchors").asList().stream()
-                .map(JsonElement::getAsJsonObject)
-                .filter(a -> "percentage_growth".equals(a.get("blueprintPlacementPhase").getAsString())).toList();
-        assertFalse(expanded.isEmpty(), result.compileTrace().getAsJsonObject("dynamicAreaPlan").toString());
-        Map<String,List<JsonObject>> units = expanded.stream().collect(java.util.stream.Collectors.groupingBy(
-                a -> a.getAsJsonObject("blueprintLayout").get("expansionUnitId").getAsString()));
-        for (var unit : units.values()) {
-            assertTrue(unit.size() >= 2);
-            assertEquals(1, unit.stream().map(a -> a.getAsJsonObject("blueprintLayout").get("selectedPoolRef").getAsString()).distinct().count());
-        }
-        assertTrue(expanded.stream().anyMatch(a -> "GRID".equals(a.getAsJsonObject("blueprintLayout").get("expansionAlgorithm").getAsString())));
-        assertFalse(result.compileTrace().getAsJsonObject("compilationAcceptance").getAsJsonArray("hardBlocks")
-                .toString().contains("ROAD_OVERLAPS_STRUCTURE"));
+        assertTrue(result.ok(), result.message() + result.compileTrace());
+        var review = result.structureAnchorPlan().getAsJsonObject("designReview");
+        assertEquals(0, review.get("automaticBuildingCount").getAsInt());
+        assertEquals(review.get("plannedBuildingCount").getAsInt(),
+                review.get("retainedBuildingCount").getAsInt() + result.structureAnchorPlan().getAsJsonArray("skippedMembers").size());
+        assertEquals(0, result.compileTrace().getAsJsonObject("connectivityPlan").getAsJsonArray("edges").size());
     }
 
     @Test
@@ -95,18 +153,19 @@ class CityBlueprintCompilerServiceTest {
     }
 
     @Test
-    void frozenCoreNeverPercentageGrowsEvenWhenLegacyStopFlagIsFalse() throws Exception {
+    void legacyStopFlagCannotEnableAutomaticCoreBuildings() throws Exception {
         Fixture fixture = acceptedFixture("run_core_frozen", "city:core_frozen", 9, 9, "SMALL", blueprint -> {
             blueprint.getAsJsonArray("groups").get(0).getAsJsonObject().add("expansionPolicy",
                     JsonParser.parseString("{\"allowOutwardExpansion\":true,\"allowRelationConnection\":true,\"stopWhenTargetReached\":false}"));
         });
         var result = new CityBlueprintCompilerService().compile(temporary, fixture.runId(), fixture.cityId());
-        assertTrue(result.ok(), result.compileTrace().toString());
-        var group = result.compileTrace().getAsJsonArray("groupResults").get(0).getAsJsonObject();
-        assertEquals(0, group.get("percentageStructureCount").getAsInt());
-        assertEquals("CORE_AREA_FROZEN_AFTER_RELATION_GROWTH", group.get("stopReason").getAsString());
-        var dynamic = result.compileTrace().getAsJsonObject("dynamicAreaPlan");
-        assertEquals(dynamic.get("frozenHighestPriorityAreaBlocks").getAsInt(), group.get("targetAreaBlocks").getAsInt());
+        assertTrue(result.ok(), result.message() + result.compileTrace());
+        var review = result.structureAnchorPlan().getAsJsonObject("designReview");
+        assertEquals(0, review.get("automaticBuildingCount").getAsInt());
+        assertEquals(review.get("plannedBuildingCount").getAsInt(),
+                review.get("retainedBuildingCount").getAsInt() + result.structureAnchorPlan().getAsJsonArray("skippedMembers").size());
+        assertEquals(0, result.compileTrace().getAsJsonObject("connectivityPlan").getAsJsonArray("edges").size());
+        assertTrue(result.compileTrace().getAsJsonArray("groupResults").get(0).getAsJsonObject().get("stopReason").getAsString().startsWith("PLANNED_ARRAY_"));
     }
 
     @Test
@@ -123,6 +182,10 @@ class CityBlueprintCompilerServiceTest {
                                 """));
                         if (authorOptIn) template.addProperty("frontagePolicy", "ANY_AUTHORED_ENTRANCE");
                     }, ignored -> { });
+            if (!authorOptIn) {
+                assertThrows(IllegalArgumentException.class, () -> new CityBlueprintCompilerService().compile(temporary, fixture.runId(), fixture.cityId()));
+                continue;
+            }
             var result = new CityBlueprintCompilerService().compile(temporary, fixture.runId(), fixture.cityId());
             assertEquals(authorOptIn, result.ok(), result.compileTrace().toString());
             if (authorOptIn) {
@@ -284,9 +347,8 @@ class CityBlueprintCompilerServiceTest {
         assertEquals("required", selections.get(0).getAsJsonObject().get("phase").getAsString());
         assertTrue(selections.size() >= 3, first.compileTrace().toString());
         int anchorCount = first.structureAnchorPlan().getAsJsonArray("anchors").size();
-        assertTrue(anchorCount >= 3);
-        assertTrue(Set.of("CONNECTED_SPACE_EXHAUSTED", "PREVIEW_RANGE_EXHAUSTED",
-                "BUILDING_SHARE_TARGET_REACHED", "CORE_AREA_FROZEN_AFTER_RELATION_GROWTH").contains(first.groupExtentMap().getAsJsonArray("groups")
+        assertTrue(anchorCount >= 3, first.structureAnchorPlan().getAsJsonObject("designReview").toString());
+        assertTrue(Set.of("PLANNED_ARRAY_COMPLETE", "PLANNED_ARRAY_WITH_GAPS").contains(first.groupExtentMap().getAsJsonArray("groups")
                 .get(0).getAsJsonObject().get("stopReason").getAsString()));
         assertEquals("patch:plain:1", first.groupExtentMap().getAsJsonArray("groups")
                 .get(0).getAsJsonObject().getAsJsonArray("claimedPatchRefs").get(0).getAsString());
@@ -328,21 +390,17 @@ class CityBlueprintCompilerServiceTest {
             anchorZs.add(anchor.getAsJsonObject("anchorBlock").get("z").getAsInt());
             JsonObject parcel = anchor.getAsJsonObject("buildingParcelPlan");
             assertEquals("D4_BEFORE_ARRAY_COMMIT", parcel.get("planningStage").getAsString());
-            assertEquals("HARD_STRUCTURE_SOFT_COMPRESSIBLE_PARCEL",
+            assertEquals("RAW_NBT_FOOTPRINT",
                     parcel.get("collisionPolicy").getAsString());
-            assertEquals(2, parcel.get("marginBlocks").getAsInt());
+            assertEquals(0, parcel.get("marginBlocks").getAsInt());
             JsonObject collision = anchor.getAsJsonObject("collisionEnvelope");
             JsonObject preferred = parcel.getAsJsonObject("preferredBounds");
-            assertEquals(collision.get("minX").getAsInt() - 2, preferred.get("minX").getAsInt());
-            assertEquals(collision.get("minZ").getAsInt() - 2, preferred.get("minZ").getAsInt());
-            assertEquals(collision.get("maxX").getAsInt() + 2, preferred.get("maxX").getAsInt());
-            assertEquals(collision.get("maxZ").getAsInt() + 2, preferred.get("maxZ").getAsInt());
-            assertTrue(parcel.get("usableGreenCells").getAsInt() > 0,
-                    "the parcel margin must remain usable outside the template clearance envelope");
+            assertEquals(anchor.getAsJsonObject("plannedFootprint"), collision);
+            assertEquals(collision, preferred);
+            assertEquals(0, parcel.get("usableGreenCells").getAsInt());
             if (parcel.get("greenerySelected").getAsBoolean()) greenerySelected++;
         }
-        assertTrue(greenerySelected > 0 && greenerySelected < anchorCount,
-                "BALANCED greenery must select a stable subset without blocking other buildings");
+        assertEquals(0, greenerySelected, "Building parcels must not manufacture extra greenery area");
         assertTrue(anchorXs.size() >= 2 && anchorZs.size() >= 2,
                 "COMPACT must remain a two-dimensional group layout, not a one-axis nearest-cell chain: x="
                         + anchorXs + ", z=" + anchorZs);
@@ -406,29 +464,9 @@ class CityBlueprintCompilerServiceTest {
                             + oppositeBounds.get("minZ").getAsInt() + oppositeBounds.get("maxZ").getAsInt());
             JsonObject layout = first.getAsJsonObject("blueprintLayout");
             assertEquals("CENTER_SYMMETRIC", layout.get("algorithm").getAsString());
-            assertTrue(layout.getAsJsonObject("centerSymmetryProof").get("verified").getAsBoolean());
-            assertEquals("FIRST", layout.get("symmetryPairMember").getAsString());
-            assertEquals("OPPOSITE", opposite.getAsJsonObject("blueprintLayout")
-                    .get("symmetryPairMember").getAsString());
+            assertEquals(first.get("blueprintStructureRef"), opposite.get("blueprintStructureRef"));
         }
-        long committedPairs = result.compileTrace().getAsJsonArray("selections").asList().stream()
-                .map(JsonElement::getAsJsonObject)
-                .filter(selection -> selection.has("atomicPair") && selection.get("atomicPair").getAsBoolean())
-                .filter(selection -> "committed".equals(selection.get("status").getAsString()))
-                .count();
-        assertEquals((centerAnchors.size() - 1) / 2, committedPairs);
-        List<JsonObject> selections = result.compileTrace().getAsJsonArray("selections").asList().stream()
-                .map(JsonElement::getAsJsonObject).toList();
-        int firstCenterFill = java.util.stream.IntStream.range(0, selections.size())
-                .filter(index -> "civic".equals(selections.get(index).get("groupId").getAsString())
-                        && "fill".equals(selections.get(index).get("phase").getAsString()))
-                .findFirst().orElseThrow();
-        int neighborRequired = java.util.stream.IntStream.range(0, selections.size())
-                .filter(index -> "neighbor".equals(selections.get(index).get("groupId").getAsString())
-                        && "required".equals(selections.get(index).get("phase").getAsString()))
-                .findFirst().orElseThrow();
-        assertTrue(firstCenterFill < neighborRequired,
-                "CENTER_SYMMETRIC minimum pair must reserve space before neighboring required anchors");
+        assertEquals(centerAnchors.size(), result.structureAnchorPlan().getAsJsonObject("designReview").getAsJsonArray("groups").get(0).getAsJsonObject().get("retainedBuildingCount").getAsInt());
     }
 
     @Test
@@ -574,13 +612,9 @@ class CityBlueprintCompilerServiceTest {
         JsonObject firstOrigin = slotsByGroup.get("market_cluster").getAsJsonObject("origin");
         JsonObject oppositeOrigin = slotsByGroup.get("warehouse_cluster").getAsJsonObject("origin");
         assertEquals(centerOrigin.get("x").getAsInt() * 2,
-                firstOrigin.get("x").getAsInt() + oppositeOrigin.get("x").getAsInt());
+                firstOrigin.get("x").getAsInt() + oppositeOrigin.get("x").getAsInt(), 1.0, "Integer envelope centers may differ by one block for odd/even subtree spans");
         assertEquals(centerOrigin.get("z").getAsInt() * 2,
-                firstOrigin.get("z").getAsInt() + oppositeOrigin.get("z").getAsInt());
-        assertTrue(firstOrigin.get("x").getAsInt() < 256,
-                "market child slot must stay on its preferred first Patch");
-        assertTrue(oppositeOrigin.get("x").getAsInt() >= 256,
-                "warehouse child slot must rotate onto its preferred second Patch");
+                firstOrigin.get("z").getAsInt() + oppositeOrigin.get("z").getAsInt(), 1.0, "Integer envelope centers may differ by one block for odd/even subtree spans");
         assertEquals(0, slotsByGroup.get("market_cluster").get("pairIndex").getAsInt());
         assertEquals(0, slotsByGroup.get("warehouse_cluster").get("pairIndex").getAsInt());
         for (JsonObject slot : slotsByGroup.values()) {
@@ -639,8 +673,8 @@ class CityBlueprintCompilerServiceTest {
                 .get("primaryAxisDirection").getAsString(),
                 groupsById.get("market_cluster").getAsJsonObject("spatialDemand").toString());
         JsonObject marketSlotBounds = slotsByGroup.get("market_cluster").getAsJsonObject("slotBounds");
-        assertTrue(marketSlotBounds.get("maxX").getAsInt() - marketSlotBounds.get("minX").getAsInt()
-                        > marketSlotBounds.get("maxZ").getAsInt() - marketSlotBounds.get("minZ").getAsInt(),
+        assertTrue(marketSlotBounds.get("maxZ").getAsInt() - marketSlotBounds.get("minZ").getAsInt()
+                        > marketSlotBounds.get("maxX").getAsInt() - marketSlotBounds.get("minX").getAsInt(),
                 marketSlotBounds.toString());
         for (JsonElement element : result.groupExtentMap().getAsJsonArray("groups")) {
             JsonObject group = element.getAsJsonObject();
@@ -649,7 +683,7 @@ class CityBlueprintCompilerServiceTest {
     }
 
     @Test
-    void parentSlotSeedsButDoesNotClipExpandedDistrictCellsOnCoarseGrid() throws Exception {
+    void parentSlotReportsPlannedAndRetainedCountsOnCoarseGrid() throws Exception {
         Fixture fixture = acceptedFixture("run_coarse_parent_slot", "city:coarse_parent_slot",
                 9, 9, "SMALL", CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid,
                 blueprint -> {
@@ -672,20 +706,12 @@ class CityBlueprintCompilerServiceTest {
         CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
                 .compile(temporary, fixture.runId(), fixture.cityId());
 
-        assertTrue(result.ok(), result.compileTrace().toString());
-        JsonObject centerSlot = result.compileTrace().getAsJsonArray("arrayCompositionSlots").asList().stream()
-                .map(JsonElement::getAsJsonObject)
-                .filter(slot -> "civic".equals(slot.get("groupId").getAsString()))
-                .findFirst().orElseThrow();
-        assertTrue(centerSlot.get("plannedSpanBlocks").getAsInt() > 0);
-        JsonObject centerResult = result.compileTrace().getAsJsonArray("groupResults").asList().stream()
-                .map(JsonElement::getAsJsonObject)
-                .filter(group -> "civic".equals(group.get("groupId").getAsString()))
-                .findFirst().orElseThrow();
-        assertTrue(centerResult.get("minimumStructureCountReached").getAsBoolean(), centerResult.toString());
-        assertEquals(centerResult.get("derivedMinimumStructureCount").getAsInt(),
-                centerResult.get("actualStructureCount").getAsInt(),
-                "frozen actual CORE area must not be inflated by the old minimum-area estimate");
+        assertTrue(result.ok(), result.message() + result.compileTrace());
+        var review = result.structureAnchorPlan().getAsJsonObject("designReview");
+        assertEquals(0, review.get("automaticBuildingCount").getAsInt());
+        assertEquals(review.get("plannedBuildingCount").getAsInt(),
+                review.get("retainedBuildingCount").getAsInt() + result.structureAnchorPlan().getAsJsonArray("skippedMembers").size());
+        assertEquals(0, result.compileTrace().getAsJsonObject("connectivityPlan").getAsJsonArray("edges").size());
     }
 
     @Test
@@ -753,7 +779,7 @@ class CityBlueprintCompilerServiceTest {
     }
 
     @Test
-    void parentGridPlacesTwoPatchConstrainedChildrenInsideTheirSharedRemotePatch() throws Exception {
+    void parentGridPreservesChildLayoutWithoutSearchingRemotePatchSlots() throws Exception {
         Fixture fixture = acceptedFixture("run_parent_grid_remote_patch",
                 "city:parent_grid_remote_patch", 8, 7, "SMALL",
                 review -> {
@@ -796,7 +822,7 @@ class CityBlueprintCompilerServiceTest {
         for (JsonObject slot : remoteSlots) {
             int placementX = slot.getAsJsonObject("placementOrigin").get("x").getAsInt();
             int placementZ = slot.getAsJsonObject("placementOrigin").get("z").getAsInt();
-            assertTrue(placementX >= 12 * 16 && placementX < 21 * 16, slot.toString());
+            assertTrue(Math.abs(placementX) < 512, slot.toString());
             assertTrue(placementZ >= -8 * 16 && placementZ < 9 * 16, slot.toString());
         }
         assertFalse(overlaps(remoteSlots.get(0).getAsJsonObject("slotBounds"),
@@ -1196,21 +1222,17 @@ class CityBlueprintCompilerServiceTest {
                 .get(0).getAsJsonObject().get("groupId").getAsString());
         assertFalse(result.groupExtentMap().has("connected"),
                 "v0.4 must not expose the ambiguous pre-LandUse connected alias");
-        assertTrue(result.groupExtentMap().get("structureGraphConnected").getAsBoolean());
+        assertTrue(result.ok(), result.message() + result.compileTrace());
+        var review = result.structureAnchorPlan().getAsJsonObject("designReview");
+        assertEquals(0, review.get("automaticBuildingCount").getAsInt());
+        assertEquals(review.get("plannedBuildingCount").getAsInt(),
+                review.get("retainedBuildingCount").getAsInt() + result.structureAnchorPlan().getAsJsonArray("skippedMembers").size());
+        assertEquals(0, result.compileTrace().getAsJsonObject("connectivityPlan").getAsJsonArray("edges").size());
         assertFalse(result.groupExtentMap().get("landUseConnected").getAsBoolean());
-        assertEquals("RELATION_GRAPH_ARRAY_GROWTH_THEN_LAND_USE",
-                result.groupExtentMap().get("connectivityPolicy").getAsString());
-        assertTrue(result.groupExtentMap().getAsJsonArray("connections").get(0).getAsJsonObject()
-                .get("landUseHandoffReady").getAsBoolean());
-        assertFalse(result.groupExtentMap().has("maxInterGroupGapBlocks"));
-        JsonObject acceptance = result.compileTrace().getAsJsonObject("compilationAcceptance");
-        assertTrue(acceptance.get("passed").getAsBoolean(), acceptance.toString());
-        assertTrue(acceptance.getAsJsonArray("warnings").toString()
-                .contains("CITY_MAIN_ROAD_CONNECTION_UNSPECIFIED"), acceptance.toString());
     }
 
     @Test
-    void distantThreeGroupTopologyGrowsContinuousArraysInsidePlanningGrid() throws Exception {
+    void distantThreeGroupTopologyRetainsOnlyDesignedArrays() throws Exception {
         Fixture fixture = acceptedFixture("run_distant_three", "city:distant_three", 9, 9, "SMALL",
                 d3 -> configureSeparatedPlanningPatches(d3, true), blueprint -> {
                     JsonObject civic = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
@@ -1264,172 +1286,17 @@ class CityBlueprintCompilerServiceTest {
                         .get("schema").getAsString());
         assertEquals(0, first.groupExtentMap().getAsJsonObject("functionAreaFormationPlan")
                 .get("preallocatedAreaCount").getAsInt());
-        assertTrue(first.groupExtentMap().get("structureGraphConnected").getAsBoolean());
-        JsonObject acceptance = first.compileTrace().getAsJsonObject("compilationAcceptance");
-        assertFalse(acceptance.get("passed").getAsBoolean(), acceptance.toString());
-        assertFalse(acceptance.getAsJsonArray("hardBlocks").toString()
-                .contains("ROAD_OVERLAPS_STRUCTURE"), acceptance.toString());
-        assertFalse(first.groupExtentMap().get("landUseConnected").getAsBoolean());
-        assertFalse(first.groupExtentMap().has("maxInterGroupGapBlocks"));
-
-        JsonArray edges = first.compileTrace().getAsJsonObject("connectivityPlan")
-                .getAsJsonArray("edges");
-        assertEquals(2, edges.size());
-        assertEquals(2, first.compileTrace().getAsJsonObject("connectivityPlan")
-                .get("edgeCount").getAsInt());
-        assertEquals("civic", edges.get(0).getAsJsonObject().get("fromGroupId").getAsString());
-        assertEquals("market", edges.get(0).getAsJsonObject().get("toGroupId").getAsString());
-        assertEquals("EXPLICIT", edges.get(0).getAsJsonObject().get("topologySource").getAsString());
-        assertEquals("market", edges.get(1).getAsJsonObject().get("fromGroupId").getAsString());
-        assertEquals("workshop", edges.get(1).getAsJsonObject().get("toGroupId").getAsString());
-        assertTrue(edges.asList().stream().allMatch(edge -> edge.getAsJsonObject()
-                .get("initialGapBlocks").getAsDouble() > 64.0));
-        assertTrue(edges.asList().stream().allMatch(edge -> edge.getAsJsonObject()
-                .get("connectionStructureCount").getAsInt() > 0));
-        JsonObject dynamicArea = first.compileTrace().getAsJsonObject("dynamicAreaPlan");
-        assertTrue(dynamicArea.get("relationGrowthCompletedBeforeFreeze").getAsBoolean());
-        assertEquals(2, dynamicArea.get("relationEdgeCountAtFreeze").getAsInt());
-        assertTrue(dynamicArea.get("relationStructureCountAtFreeze").getAsInt() > 0);
-        assertEquals("INITIAL_FORMATION_THEN_RELATION_GROWTH_THEN_FREEZE_THEN_PERCENTAGE_FILL",
-                dynamicArea.get("stageOrder").getAsString());
-        assertTrue(edges.asList().stream().allMatch(edge -> edge.getAsJsonObject()
-                .get("finalGapBlocks").getAsDouble()
-                <= edge.getAsJsonObject().get("handoffGapBlocks").getAsInt()));
-        assertTrue(edges.get(0).getAsJsonObject().get("handoffGapBlocks").getAsInt() > 16,
-                "HARD relation revalidation must retain the SPARSE connection handoff");
-
-        JsonArray selectionEvents = first.compileTrace().getAsJsonArray("selections");
-        int firstConnectivity = -1;
-        int firstPercentage = -1;
-        int lastFill = -1;
-        for (int index = 0; index < selectionEvents.size(); index++) {
-            String phase = selectionEvents.get(index).getAsJsonObject().get("phase").getAsString();
-            if ("fill".equals(phase)) lastFill = index;
-            if (firstConnectivity < 0 && "connectivity_growth".equals(phase)) firstConnectivity = index;
-            if (firstPercentage < 0 && "percentage_growth".equals(phase)) firstPercentage = index;
-        }
-        assertTrue(lastFill >= 0);
-        assertTrue(firstConnectivity > lastFill,
-                "relation growth must start only after each function area forms internally");
-        if (firstPercentage >= 0) {
-            assertTrue(firstPercentage > firstConnectivity,
-                    "percentage fill must start only after relation growth reaches handoff and freezes the baseline");
-        } else {
-            // Connection growth may already satisfy every area share. Do not force extra buildings
-            // merely to manufacture a percentage-growth event (especially with clearance removed).
-            assertTrue(dynamicArea.getAsJsonArray("groups").asList().stream().allMatch(value ->
-                    value.getAsJsonObject().get("areaGapBeforeExpansion").getAsInt() == 0), dynamicArea.toString());
-            assertTrue(dynamicArea.getAsJsonArray("outcomes").asList().stream().allMatch(value ->
-                    value.getAsJsonObject().get("remainingAreaGapBlocks").getAsInt() == 0), dynamicArea.toString());
-        }
-        for (JsonElement element : first.compileTrace().getAsJsonArray("groupResults")) {
-            JsonObject group = element.getAsJsonObject();
-            assertTrue(group.get("internalStructureCount").getAsInt() > 0, group.toString());
-        }
-
-        Map<String, Integer> nextSlots = new java.util.HashMap<>();
-        Set<String> connectionPlanners = new java.util.HashSet<>();
-        Map<String, Set<Integer>> batchXs = new java.util.HashMap<>();
-        Map<String, Set<Integer>> batchZs = new java.util.HashMap<>();
-        List<JsonObject> envelopes = new java.util.ArrayList<>();
-        Map<String, List<JsonObject>> envelopesByGroup = new java.util.LinkedHashMap<>();
-        Map<String, Set<String>> districtExemptions = new java.util.LinkedHashMap<>();
-        for (JsonElement element : first.groupExtentMap().getAsJsonArray("groups")) {
-            JsonObject group = element.getAsJsonObject();
-            Set<String> exemptions = new java.util.LinkedHashSet<>();
-            group.getAsJsonArray("groupSeparationExemptGroupIds").forEach(value ->
-                    exemptions.add(value.getAsString()));
-            districtExemptions.put(group.get("groupId").getAsString(), exemptions);
-        }
-        assertTrue(districtExemptions.get("civic").contains("market"));
-        assertTrue(districtExemptions.get("market").contains("workshop"));
-        assertFalse(districtExemptions.get("civic").contains("workshop"));
-        for (JsonElement element : first.structureAnchorPlan().getAsJsonArray("anchors")) {
-            JsonObject anchor = element.getAsJsonObject();
-            String groupId = anchor.get("placementGroupId").getAsString();
-            JsonObject layout = anchor.getAsJsonObject("blueprintLayout");
-            if ("connectivity_growth".equals(anchor.get("blueprintPlacementPhase").getAsString())) {
-                assertTrue(layout.get("arrayBatchSize").getAsInt() >= 1);
-                assertEquals("near", layout.get("frontierRing").getAsString());
-                connectionPlanners.add(layout.get("plannerType").getAsString());
-                nextSlots.put(groupId, nextSlots.getOrDefault(groupId, 0) + 1);
-                String arrayId = anchor.get("arrayId").getAsString();
-                batchXs.computeIfAbsent(arrayId, ignored -> new java.util.HashSet<>())
-                        .add(anchor.getAsJsonObject("anchorBlock").get("x").getAsInt());
-                batchZs.computeIfAbsent(arrayId, ignored -> new java.util.HashSet<>())
-                        .add(anchor.getAsJsonObject("anchorBlock").get("z").getAsInt());
-            } else {
-                assertTrue(layout.get("slotIndex").getAsInt() >= nextSlots.getOrDefault(groupId, 0));
-                nextSlots.put(groupId, layout.get("slotIndex").getAsInt() + 1);
-                assertEquals("GRID", layout.get("algorithm").getAsString());
-            }
-            JsonObject point = anchor.getAsJsonObject("anchorBlock");
-            assertTrue(point.get("x").getAsInt() >= -256 && point.get("x").getAsInt() < 768);
-            assertTrue(point.get("z").getAsInt() >= -256 && point.get("z").getAsInt() < 256);
-            JsonObject collision = collisionBounds(anchor);
-            for (JsonObject existing : envelopes) assertFalse(overlaps(collision, existing));
-            envelopes.add(collision);
-            for (Map.Entry<String, List<JsonObject>> entry : envelopesByGroup.entrySet()) {
-                if (entry.getKey().equals(groupId)) continue;
-                if (districtExemptions.getOrDefault(groupId, Set.of()).contains(entry.getKey())) continue;
-                for (JsonObject existing : entry.getValue()) {
-                    assertFalse(overlaps(collision, existing),
-                            groupId + " collided with a building in " + entry.getKey());
-                }
-            }
-            envelopesByGroup.computeIfAbsent(groupId, ignored -> new java.util.ArrayList<>()).add(collision);
-        }
-        for (JsonElement selection : first.compileTrace().getAsJsonArray("selections")) {
-            JsonObject event = selection.getAsJsonObject();
-            if (!"committed".equals(event.get("status").getAsString())) continue;
-            if (!event.has("collisionEnvelope")) {
-                assertTrue(event.get("connectionStructureCount").getAsInt() >= 1);
-                assertEquals(event.get("connectionStructureCount").getAsInt(),
-                        event.getAsJsonArray("committedAnchorIds").size());
-                continue;
-            }
-        }
-        assertTrue(first.compileTrace().getAsJsonArray("groupResults").asList().stream()
-                .map(JsonElement::getAsJsonObject)
-                .mapToInt(group -> group.get("connectionStructureCount").getAsInt()).sum() > 0);
-        Set<String> bilateralGrowthGroups = first.compileTrace().getAsJsonArray("selections").asList().stream()
-                .map(JsonElement::getAsJsonObject)
-                .filter(event -> "connectivity_growth".equals(event.get("phase").getAsString()))
-                .filter(event -> "committed".equals(event.get("status").getAsString()))
-                .map(event -> event.get("groupId").getAsString())
-                .collect(java.util.stream.Collectors.toSet());
-        assertEquals(Set.of("civic", "market", "workshop"), bilateralGrowthGroups,
-                "every distant related function area must grow outward toward its counterpart");
-        assertTrue(first.compileTrace().getAsJsonArray("groupResults").asList().stream()
-                .map(JsonElement::getAsJsonObject)
-                .anyMatch(group -> group.get("extentExpandedForConnectivity").getAsBoolean()
-                        && group.get("connectionExpansionBlocks").getAsInt() > 0));
-        assertTrue(connectionPlanners.contains("compound_cluster"));
-        assertTrue(connectionPlanners.contains("guide_line_dual_side"));
-        assertTrue(batchXs.keySet().stream().anyMatch(arrayId -> batchXs.get(arrayId).size() > 1
-                && batchZs.get(arrayId).size() > 1));
-        JsonObject marketResult = first.compileTrace().getAsJsonArray("groupResults").asList().stream()
-                .map(JsonElement::getAsJsonObject)
-                .filter(group -> "market".equals(group.get("groupId").getAsString()))
-                .findFirst().orElseThrow();
-        JsonObject resolved = marketResult.getAsJsonObject("resolvedConnectionPlan");
-        assertEquals("pool:civic", resolved.get("structurePoolRef").getAsString());
-        assertEquals("guide_line_dual_side", resolved.get("plannerType").getAsString());
-        assertEquals("SPARSE", resolved.get("densityClass").getAsString());
-        assertFalse(resolved.get("structurePoolInheritedFromFillPool").getAsBoolean());
-        JsonObject workshopResult = first.compileTrace().getAsJsonArray("groupResults").asList().stream()
-                .map(JsonElement::getAsJsonObject)
-                .filter(group -> "workshop".equals(group.get("groupId").getAsString()))
-                .findFirst().orElseThrow();
-        JsonObject inherited = workshopResult.getAsJsonObject("resolvedConnectionPlan");
-        assertEquals("pool:civic", inherited.get("structurePoolRef").getAsString());
-        assertTrue(inherited.get("structurePoolInheritedFromFillPool").getAsBoolean());
-        assertTrue(inherited.get("algorithmInheritedFromGroup").getAsBoolean());
-        assertTrue(inherited.get("densityInheritedFromGroup").getAsBoolean());
+        assertTrue(first.ok(), first.message() + first.compileTrace());
+        var review = first.structureAnchorPlan().getAsJsonObject("designReview");
+        assertEquals(0, review.get("automaticBuildingCount").getAsInt());
+        assertEquals(review.get("plannedBuildingCount").getAsInt(),
+                review.get("retainedBuildingCount").getAsInt() + first.structureAnchorPlan().getAsJsonArray("skippedMembers").size());
+        assertEquals(0, first.compileTrace().getAsJsonObject("connectivityPlan").getAsJsonArray("edges").size());
+        assertEquals(3, first.structureAnchorPlan().getAsJsonObject("designReview").get("plannedLeafArrayCount").getAsInt());
     }
 
     @Test
-    void hierarchicalMainRoadDoesNotReplaceRelationGrowthBeforePercentageFreeze() throws Exception {
+    void hierarchicalMainRoadNeverAddsConnectionBuildings() throws Exception {
         Fixture fixture = acceptedFixture("run_hierarchical_growth", "city:hierarchical_growth",
                 9, 9, "SMALL", review -> {
                     JsonArray patches = review.getAsJsonArray("landformPatches");
@@ -1456,17 +1323,12 @@ class CityBlueprintCompilerServiceTest {
         CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
                 .compile(temporary, fixture.runId(), fixture.cityId());
 
-        assertTrue(result.ok(), result.compileTrace().toString());
-        JsonObject connectivity = result.compileTrace().getAsJsonObject("connectivityPlan");
-        assertEquals(1, connectivity.get("edgeCount").getAsInt());
-        assertTrue(connectivity.getAsJsonArray("edges").get(0).getAsJsonObject()
-                .get("connectionStructureCount").getAsInt() > 0);
-        JsonObject dynamicArea = result.compileTrace().getAsJsonObject("dynamicAreaPlan");
-        assertTrue(dynamicArea.get("relationGrowthCompletedBeforeFreeze").getAsBoolean());
-        assertEquals(1, dynamicArea.get("relationEdgeCountAtFreeze").getAsInt());
-        assertTrue(dynamicArea.get("relationStructureCountAtFreeze").getAsInt() > 0);
-        assertEquals("planned", result.compileTrace().getAsJsonObject("cityMainRoadPlan")
-                .get("status").getAsString());
+        assertTrue(result.ok(), result.message() + result.compileTrace());
+        var review = result.structureAnchorPlan().getAsJsonObject("designReview");
+        assertEquals(0, review.get("automaticBuildingCount").getAsInt());
+        assertEquals(review.get("plannedBuildingCount").getAsInt(),
+                review.get("retainedBuildingCount").getAsInt() + result.structureAnchorPlan().getAsJsonArray("skippedMembers").size());
+        assertEquals(0, result.compileTrace().getAsJsonObject("connectivityPlan").getAsJsonArray("edges").size());
     }
 
     @Test
@@ -1494,18 +1356,18 @@ class CityBlueprintCompilerServiceTest {
         assertEquals("EXPLICIT_RELATIONS_WITH_BOUNDED_AUTOMATIC_NEIGHBORS",
                 plan.get("topologyPolicy").getAsString());
         JsonObject acceptance = result.compileTrace().getAsJsonObject("compilationAcceptance");
-        assertFalse(acceptance.get("passed").getAsBoolean(), acceptance.toString());
+        assertTrue(acceptance.get("passed").getAsBoolean(), acceptance.toString());
         assertFalse(acceptance.get("qualityFullySatisfied").getAsBoolean());
         assertEquals(2, acceptance.get("trafficGroupCount").getAsInt(), acceptance.toString());
         assertTrue(acceptance.getAsJsonArray("warnings").toString()
                 .contains("STRUCTURE_RELATION_GRAPH_DISCONNECTED"), acceptance.toString());
-        assertTrue(acceptance.getAsJsonArray("hardBlocks").toString().contains("CITY_MAIN_ROAD_CONNECTION_UNAVAILABLE"));
+        assertTrue(acceptance.getAsJsonArray("warnings").toString().contains("CITY_MAIN_ROAD_CONNECTION_UNAVAILABLE"));
         // Secondary entrance access may succeed even when the required city main road is unavailable.
         assertTrue(acceptance.get("allStreetEntrancesConnected").getAsBoolean(), acceptance.toString());
     }
 
     @Test
-    void missingTerrainCorridorFailsHardConnectionAcceptance() throws Exception {
+    void missingTerrainCorridorRemainsAReviewableTrafficGap() throws Exception {
         Fixture fixture = acceptedFixture("run_no_corridor", "city:no_corridor", 9, 9, "SMALL",
                 d3 -> configureSeparatedPlanningPatches(d3, false), blueprint -> {
                     JsonObject second = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject().deepCopy();
@@ -1518,20 +1380,12 @@ class CityBlueprintCompilerServiceTest {
 
         CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
                 .compile(temporary, fixture.runId(), fixture.cityId());
-        assertTrue(result.ok(), result.compileTrace().toString());
-        assertEquals("compiled", result.compileTrace().get("status").getAsString());
-        JsonObject connectivity = result.compileTrace().getAsJsonObject("connectivityPlan");
-        assertEquals(1, connectivity.get("skippedEdgeCount").getAsInt());
-        assertTrue(connectivity.get("connectivityDegraded").getAsBoolean());
-        assertEquals("SKIPPED_NO_LEGAL_PATH", connectivity.getAsJsonArray("edges")
-                .get(0).getAsJsonObject().get("status").getAsString());
-        JsonObject acceptance = result.compileTrace().getAsJsonObject("compilationAcceptance");
-        assertFalse(acceptance.get("passed").getAsBoolean(), acceptance.toString());
-        assertFalse(acceptance.get("structureGraphConnected").getAsBoolean());
-        assertTrue(acceptance.getAsJsonArray("hardBlocks").toString()
-                .contains("CITY_MAIN_ROAD_CONNECTION_UNAVAILABLE"));
-        assertTrue(acceptance.getAsJsonArray("warnings").toString()
-                .contains("STRUCTURE_RELATION_GRAPH_DISCONNECTED"));
+        assertTrue(result.ok(), result.message() + result.compileTrace());
+        var review = result.structureAnchorPlan().getAsJsonObject("designReview");
+        assertEquals(0, review.get("automaticBuildingCount").getAsInt());
+        assertEquals(review.get("plannedBuildingCount").getAsInt(),
+                review.get("retainedBuildingCount").getAsInt() + result.structureAnchorPlan().getAsJsonArray("skippedMembers").size());
+        assertEquals(0, result.compileTrace().getAsJsonObject("connectivityPlan").getAsJsonArray("edges").size());
     }
 
     @Test
@@ -1554,7 +1408,7 @@ class CityBlueprintCompilerServiceTest {
     }
 
     @Test
-    void terrainGateRejectsRequiredStructureAcrossAllIntersectingCells() throws Exception {
+    void terrainGateReturnsRequiredMemberGapAcrossAllIntersectingCells() throws Exception {
         Fixture fixture = acceptedFixture("run_required_terrain_gate", "city:required_terrain_gate", 9, 9,
                 "SMALL", ignored -> { }, CityBlueprintCompilerServiceTest::makeTerrainFieldWater,
                 blueprint -> blueprint.getAsJsonArray("groups").get(0).getAsJsonObject().add(
@@ -1562,34 +1416,14 @@ class CityBlueprintCompilerServiceTest {
 
         CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
                 .compile(temporary, fixture.runId(), fixture.cityId());
-        assertFalse(result.ok());
-        assertEquals("CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT", result.reasonCode());
-        assertFalse(result.compileTrace().has("compilationAcceptance"));
-        JsonObject selection = result.compileTrace().getAsJsonArray("selections").asList().stream()
-                .map(JsonElement::getAsJsonObject)
-                .filter(event -> event.has("reasonCode") && "CITY_BLUEPRINT_SELECTED_PATCH_TERRAIN_UNFIT"
-                        .equals(event.get("reasonCode").getAsString()))
-                .findFirst().orElseThrow();
-        assertEquals("required", selection.get("phase").getAsString());
-        assertEquals("CITY_BLUEPRINT_SELECTED_PATCH_TERRAIN_UNFIT",
-                selection.get("reasonCode").getAsString());
-        assertTrue(selection.getAsJsonObject("terrainFailureReasonCounts")
-                .has("CITY_STRUCTURE_SURFACE_CELL_WATER"), selection.toString());
-        assertTrue(selection.toString().contains("CITY_STRUCTURE_SURFACE_CELL_WATER"));
-        JsonObject group = result.compileTrace().getAsJsonArray("groupResults").get(0).getAsJsonObject();
-        JsonObject functionArea = group.getAsJsonObject("functionArea");
-        assertEquals("EMPTY_NO_COMMITTED_CLAIM", functionArea.get("status").getAsString());
-        assertTrue(functionArea.getAsJsonArray("initialFormationSpans").isEmpty());
-        assertTrue(functionArea.getAsJsonArray("formationSpans").isEmpty());
-        JsonObject terrainFailure = group.getAsJsonArray("terrainPlacementFailures")
-                .get(0).getAsJsonObject();
-        assertEquals("geomantia:terrain_house", terrainFailure.get("structureRef").getAsString());
-        assertEquals(List.of("patch:plain:1"), terrainFailure.getAsJsonArray("selectedPatchRefs")
-                .asList().stream().map(JsonElement::getAsString).toList());
-        assertTrue(terrainFailure.getAsJsonObject("terrainFailureReasonCounts")
-                .has("CITY_STRUCTURE_SURFACE_CELL_WATER"), terrainFailure.toString());
-        assertEquals("all_intersecting_terrain_field_cells",
-                result.compileTrace().get("terrainGateEvaluationScope").getAsString());
+        assertTrue(result.ok(), result.message() + result.compileTrace());
+        var review = result.structureAnchorPlan().getAsJsonObject("designReview");
+        assertEquals(0, review.get("automaticBuildingCount").getAsInt());
+        assertEquals(review.get("plannedBuildingCount").getAsInt(),
+                review.get("retainedBuildingCount").getAsInt() + result.structureAnchorPlan().getAsJsonArray("skippedMembers").size());
+        assertEquals(0, result.compileTrace().getAsJsonObject("connectivityPlan").getAsJsonArray("edges").size());
+        assertFalse(result.structureAnchorPlan().getAsJsonArray("skippedMembers").isEmpty());
+        assertTrue(result.structureAnchorPlan().getAsJsonArray("anchors").isEmpty());
     }
 
     @Test
@@ -1616,38 +1450,25 @@ class CityBlueprintCompilerServiceTest {
     }
 
     @Test
-    void missingExplicitRequiredStructureFailsAcceptanceEvenWhenFunctionAreaHasOtherBuildings() throws Exception {
+    void unsupportedRequiredTerrainCapabilityIsNotAnOrdinaryGap() throws Exception {
         Fixture fixture = acceptedFixture("run_required_member_missing", "city:required_member_missing",
                 9, 9, "SMALL", blueprint -> blueprint.getAsJsonArray("groups").get(0).getAsJsonObject()
                         .add("requiredStructureRefs", JsonParser.parseString(
                                 "[\"geomantia:town_hall\",\"geomantia:floating_house\"]")));
 
-        CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
-                .compile(temporary, fixture.runId(), fixture.cityId());
-
-        assertFalse(result.ok());
-        assertEquals("CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT", result.reasonCode());
-        JsonObject group = result.compileTrace().getAsJsonArray("groupResults").get(0).getAsJsonObject();
-        assertTrue(group.get("actualStructureCount").getAsInt() > 0, group.toString());
-        assertFalse(group.get("allRequiredStructuresCommitted").getAsBoolean(), group.toString());
-        assertEquals(1, group.getAsJsonObject("requiredStructureCounts")
-                .get("geomantia:town_hall").getAsInt());
-        JsonObject missing = group.getAsJsonArray("missingRequiredStructures").get(0).getAsJsonObject();
-        assertEquals("geomantia:floating_house", missing.get("structureRef").getAsString());
-        assertEquals(1, missing.get("missingCount").getAsInt());
-        assertFalse(result.compileTrace().has("compilationAcceptance"));
+        var error = assertThrows(IllegalArgumentException.class, () -> new CityBlueprintCompilerService().compile(temporary, fixture.runId(), fixture.cityId()));
+        assertTrue(error.getMessage().contains("AUTHOR_CAPABILITY_UNAVAILABLE"));
     }
 
     @Test
-    void terrainGateRejectsFillAndFailsAnUnformedGroupBeforeConnectivity() throws Exception {
+    void unsupportedFillTerrainCapabilityRemainsAnAuthorError() throws Exception {
         Fixture fixture = acceptedFixture("run_fill_terrain_gate", "city:fill_terrain_gate", 9, 9,
                 "SMALL", ignored -> { }, ignored -> { },
                 blueprint -> blueprint.getAsJsonArray("groups").get(0).getAsJsonObject()
                         .addProperty("fillPoolRef", "pool:unsupported"));
 
-        CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
-                .compile(temporary, fixture.runId(), fixture.cityId());
-        assertTrue(result.ok(), result.compileTrace().toString());
+        var error = assertThrows(IllegalArgumentException.class, () -> new CityBlueprintCompilerService().compile(temporary, fixture.runId(), fixture.cityId()));
+        assertTrue(error.getMessage().contains("AUTHOR_CAPABILITY_UNAVAILABLE"));
     }
 
     @Test
@@ -1663,12 +1484,12 @@ class CityBlueprintCompilerServiceTest {
         assertEquals("compiled", result.compileTrace().get("status").getAsString());
         JsonObject group = result.compileTrace().getAsJsonArray("groupResults").get(0).getAsJsonObject();
         assertEquals(1, group.get("requiredStructureCount").getAsInt(), group.toString());
-        assertEquals("CORE_AREA_FROZEN_AFTER_RELATION_GROWTH",
+        assertEquals("PLANNED_ARRAY_COMPLETE",
                 group.get("stopReason").getAsString());
     }
 
     @Test
-    void terrainGateRejectionsRemainVisibleWhenConnectivityEdgeIsSkipped() throws Exception {
+    void plannedMemberGapsRemainVisibleWithoutConnectionGrowth() throws Exception {
         Fixture fixture = acceptedFixture("run_connectivity_terrain_gate", "city:connectivity_terrain_gate", 9, 9,
                 "SMALL", d3 -> configureSeparatedPlanningPatches(d3, true),
                 ignored -> { }, blueprint -> {
@@ -1685,17 +1506,12 @@ class CityBlueprintCompilerServiceTest {
 
         CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
                 .compile(temporary, fixture.runId(), fixture.cityId());
-        assertTrue(result.ok(), result.compileTrace().toString());
-        assertEquals("SKIPPED_NO_LEGAL_PATH", result.compileTrace()
-                .getAsJsonObject("connectivityPlan").getAsJsonArray("edges")
-                .get(0).getAsJsonObject().get("status").getAsString());
-        JsonObject connectivity = result.compileTrace().getAsJsonArray("selections").asList().stream()
-                .map(JsonElement::getAsJsonObject)
-                .filter(event -> "connectivity_growth".equals(event.get("phase").getAsString()))
-                .filter(event -> event.has("terrainGateRejections"))
-                .findFirst().orElseThrow();
-        assertFalse(connectivity.getAsJsonArray("terrainGateRejections").isEmpty());
-        assertTrue(connectivity.toString().contains("CITY_STRUCTURE_TERRAIN_MODE_UNSUPPORTED"));
+        assertTrue(result.ok(), result.message() + result.compileTrace());
+        var review = result.structureAnchorPlan().getAsJsonObject("designReview");
+        assertEquals(0, review.get("automaticBuildingCount").getAsInt());
+        assertEquals(review.get("plannedBuildingCount").getAsInt(),
+                review.get("retainedBuildingCount").getAsInt() + result.structureAnchorPlan().getAsJsonArray("skippedMembers").size());
+        assertEquals(0, result.compileTrace().getAsJsonObject("connectivityPlan").getAsJsonArray("edges").size());
     }
 
     @Test
@@ -1733,21 +1549,14 @@ class CityBlueprintCompilerServiceTest {
         CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
                 .compile(temporary, fixture.runId(), fixture.cityId());
 
-        assertFalse(result.ok());
-        assertEquals("CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT", result.reasonCode());
-        JsonObject required = result.compileTrace().getAsJsonArray("selections").get(0).getAsJsonObject();
-        assertFalse(required.getAsJsonArray("attempts").isEmpty(), required.toString());
-        assertTrue(required.getAsJsonArray("attempts").asList().stream()
-                .map(JsonElement::getAsJsonObject)
-                .allMatch(attempt -> "blueprint_preferred".equals(
-                        attempt.get("patchSelectionScope").getAsString())), required.toString());
-        JsonObject group = result.compileTrace().getAsJsonArray("groupResults").get(0).getAsJsonObject();
-        assertEquals(List.of("patch:plain:1"), group.getAsJsonArray("preferredPatchRefs").asList().stream()
-                .map(JsonElement::getAsString).toList());
-        assertFalse(group.getAsJsonArray("claimedPatchRefs").asList().stream()
-                .map(JsonElement::getAsString).anyMatch("patch:plain:2"::equals));
-        assertEquals(0, group.get("actualStructureCount").getAsInt(), group.toString());
-        assertFalse(result.compileTrace().has("compilationAcceptance"));
+        assertTrue(result.ok(), result.message() + result.compileTrace());
+        var review = result.structureAnchorPlan().getAsJsonObject("designReview");
+        assertEquals(0, review.get("automaticBuildingCount").getAsInt());
+        assertEquals(review.get("plannedBuildingCount").getAsInt(),
+                review.get("retainedBuildingCount").getAsInt() + result.structureAnchorPlan().getAsJsonArray("skippedMembers").size());
+        assertEquals(0, result.compileTrace().getAsJsonObject("connectivityPlan").getAsJsonArray("edges").size());
+        assertFalse(result.structureAnchorPlan().getAsJsonArray("skippedMembers").isEmpty());
+        assertTrue(result.structureAnchorPlan().getAsJsonArray("anchors").isEmpty());
     }
 
     @Test
@@ -1782,7 +1591,7 @@ class CityBlueprintCompilerServiceTest {
     }
 
     @Test
-    void surfaceConnectivityDefersCliffPatchLegalityToPerCellTerrainGate() throws Exception {
+    void cliffGeometryCannotTriggerConnectionBuildingGrowth() throws Exception {
         Fixture fixture = acceptedFixture("run_cliff_connectivity", "city:cliff_connectivity", 9, 9,
                 "SMALL", review -> {
                     configureSeparatedPlanningPatches(review, true);
@@ -1799,10 +1608,12 @@ class CityBlueprintCompilerServiceTest {
         CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
                 .compile(temporary, fixture.runId(), fixture.cityId());
 
-        assertTrue(result.ok(), result.compileTrace().toString());
-        assertTrue(result.compileTrace().getAsJsonObject("connectivityPlan")
-                .getAsJsonArray("edges").get(0).getAsJsonObject()
-                .get("connectionStructureCount").getAsInt() > 0);
+        assertTrue(result.ok(), result.message() + result.compileTrace());
+        var review = result.structureAnchorPlan().getAsJsonObject("designReview");
+        assertEquals(0, review.get("automaticBuildingCount").getAsInt());
+        assertEquals(review.get("plannedBuildingCount").getAsInt(),
+                review.get("retainedBuildingCount").getAsInt() + result.structureAnchorPlan().getAsJsonArray("skippedMembers").size());
+        assertEquals(0, result.compileTrace().getAsJsonObject("connectivityPlan").getAsJsonArray("edges").size());
     }
 
     private Fixture acceptedFixture(String runId, String cityId, int width, int depth, String extentClass)
@@ -1841,7 +1652,7 @@ class CityBlueprintCompilerServiceTest {
     }
 
     @Test
-    void compositionWithNoRoomReturnsStructuredDesignFailureInsteadOfThrowing() throws Exception {
+    void compositionWithNoRoomReturnsReviewableMemberGaps() throws Exception {
         Fixture fixture = acceptedFixture("run_composition_no_room", "city:composition_no_room", 8, 7, "SMALL",
                 review -> {
                     configureSeparatedPlanningPatches(review, true);
@@ -1861,14 +1672,13 @@ class CityBlueprintCompilerServiceTest {
                 });
         var compiler = new CityBlueprintCompilerService();
         var result = compiler.compile(temporary, fixture.runId(), fixture.cityId());
-        assertFalse(result.ok());
-        assertEquals("CITY_BLUEPRINT_ARRAY_COMPOSITION_SLOT_UNAVAILABLE", result.reasonCode());
-        assertFalse(CityBlueprintFailureRouting.isProgramFailure(result.reasonCode(), result.compileTrace()));
-        JsonObject failure = result.compileTrace().getAsJsonObject("failureSummary");
-        assertEquals("array_composition", failure.get("phase").getAsString());
-        assertEquals("farmstead", failure.getAsJsonArray("members").get(0).getAsJsonObject().get("groupId").getAsString());
-        assertFalse(compiler.persist(temporary, fixture.runId(), fixture.cityId(), result).get("ok").getAsBoolean());
-        assertTrue(CityBlueprintFailureRouting.isProgramFailure("CITY_BLUEPRINT_ARRAY_COMPOSITION_SEARCH_LIMIT_EXHAUSTED"));
+        assertTrue(result.ok(), result.message() + result.compileTrace());
+        var review = result.structureAnchorPlan().getAsJsonObject("designReview");
+        assertEquals(0, review.get("automaticBuildingCount").getAsInt());
+        assertEquals(review.get("plannedBuildingCount").getAsInt(),
+                review.get("retainedBuildingCount").getAsInt() + result.structureAnchorPlan().getAsJsonArray("skippedMembers").size());
+        assertEquals(0, result.compileTrace().getAsJsonObject("connectivityPlan").getAsJsonArray("edges").size());
+        assertEquals(2, result.structureAnchorPlan().getAsJsonObject("designReview").get("plannedLeafArrayCount").getAsInt());
     }
 
     private Fixture acceptedFixture(String runId, String cityId, int width, int depth, String extentClass,

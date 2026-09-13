@@ -125,6 +125,20 @@ public final class CityStructureLandingPreviewRenderer {
                 drawD4Geometry(g, t, d4AnchorGeometry(anchor));
             }
             drawFunctionAreas(g, t, groupExtentMap, Set.of(), false, true, false);
+            int skippedIndex = 0;
+            for (JsonElement item : array(anchorMap, "skippedMembers")) {
+                JsonObject skipped = item.getAsJsonObject();
+                if (!skipped.has("plannedBounds")) continue;
+                BlockBounds box = bounds(skipped, "plannedBounds");
+                drawDashedRect(g, t, box, new Color(230, 126, 34, 20), new Color(210, 100, 25), 1.5f);
+                drawBadge(g, t, box.center(), "S" + (++skippedIndex), new Color(190, 95, 20));
+            }
+            JsonObject review = object(anchorMap, "designReview");
+            if (review.size() > 0) {
+                g.setColor(new Color(55, 55, 55)); g.setFont(new Font("SansSerif", Font.PLAIN, 14));
+                g.drawString("Planned " + intValue(review, "plannedBuildingCount", 0) + " / retained "
+                        + intValue(review, "retainedBuildingCount", 0) + "   Orange S: skipped member; see design review for reasons", 24, HEIGHT - 20);
+            }
         } finally {
             g.dispose();
         }

@@ -90,7 +90,7 @@ final class CityMainRoadPlanner {
         for (Link link : links) {
             GroupGeometry from = groups.get(link.fromGroupId());
             GroupGeometry to = groups.get(link.toGroupId());
-            if (from == null || to == null) continue;
+            if (from == null || to == null) { skippedConnections.add(skippedConnection(link, "CITY_MAIN_ROAD_ENDPOINT_GROUP_EMPTY", null, 0)); continue; }
             List<ConnectorPair> pairs = connectorPairs(from, to, mainWidth + 2, structureObstacles);
             ConnectorPair connectors = pairs.isEmpty() ? null : pairs.get(0);
             List<LandUseTerrainField.Cell> cellPath = List.of();
@@ -115,8 +115,8 @@ final class CityMainRoadPlanner {
             if (connectors == null) {
                 String message = "No internal street or structure road entrance for "
                         + link.fromGroupId() + " -> " + link.toGroupId();
-                return Result.failed("CITY_BLUEPRINT_MAIN_ROAD_CONNECTOR_MISSING", message,
-                        failedPlan(plan, "CITY_BLUEPRINT_MAIN_ROAD_CONNECTOR_MISSING", message));
+                skippedConnections.add(skippedConnection(link, "CITY_BLUEPRINT_MAIN_ROAD_CONNECTOR_MISSING", null, attemptedPairs));
+                continue;
             }
             if (cellPath.isEmpty()) {
                 BridgeRoute bridge = selectedBridge;
@@ -245,8 +245,10 @@ final class CityMainRoadPlanner {
         JsonObject value = new JsonObject();
         value.addProperty("fromGroupId", link.fromGroupId());
         value.addProperty("toGroupId", link.toGroupId());
-        value.add("fromInterface", connectors.from().point().asJson());
-        value.add("toInterface", connectors.to().point().asJson());
+        if (connectors != null) {
+            value.add("fromInterface", connectors.from().point().asJson());
+            value.add("toInterface", connectors.to().point().asJson());
+        }
         value.addProperty("attemptedInterfacePairCount", attemptedPairs);
         value.addProperty("status", "SKIPPED_WITH_WARNING");
         value.addProperty("reasonCode", reasonCode);

@@ -94,6 +94,10 @@ public final class CityBlueprintValidator {
                     CityBlueprintReasonCode.CITY_BLUEPRINT_ALGORITHM_PROFILE_UNKNOWN,
                     path + ".algorithmProfileRef");
             if ("CENTER_SYMMETRIC".equals(catalog.algorithmsByProfileRef().get(group.algorithmProfileRef()))
+                    && group.structureCount() != null && group.structureCount() % 2 == 0)
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_CENTER_SYMMETRIC_REQUIRED_COUNT_INVALID,
+                        path + ".structureCount", "Current structureCount=" + group.structureCount() + "; use an odd total: one center plus matching pairs. Increase or decrease by one according to your intended design; terrain may skip one side afterward.");
+            if ("CENTER_SYMMETRIC".equals(catalog.algorithmsByProfileRef().get(group.algorithmProfileRef()))
                     && group.requiredStructureRefs().size() != 1) {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_CENTER_SYMMETRIC_REQUIRED_COUNT_INVALID,
                         path + ".requiredStructureRefs",

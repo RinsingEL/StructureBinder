@@ -24,6 +24,46 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CityBlueprintServiceTest {
+    @Test void intentAndBatchMaterialsPersistWithoutAcceptingGeometry() throws Exception {
+        Fixture f = fixture("run_intent", "city:intent"); var service = validationService();
+        Path d3File = f.runDir().resolve("city_d3_" + safe(f.cityId())).resolve("city_landform_review_package.json");
+        JsonObject d3 = JsonParser.parseString(Files.readString(d3File)).getAsJsonObject();
+        d3.add("targetScale", JsonParser.parseString("{\"scale\":\"town\",\"radiusBlocks\":16,\"cellStepBlocks\":16}"));
+        for (String key : List.of("legend", "planningContext", "debugRefs")) d3.add(key, new JsonArray());
+        d3.addProperty("aiPromptContext", "test terrain");
+        for (var entry : d3.getAsJsonArray("landformPatches")) {
+            var patchJson = entry.getAsJsonObject(); patchJson.addProperty("mapLabel", "plain"); patchJson.addProperty("displayLandformName", "plain");
+            patchJson.add("centerBlock", JsonParser.parseString("{\"x\":8,\"z\":8}"));
+            patchJson.add("blockBounds", JsonParser.parseString("{\"minX\":0,\"minZ\":0,\"maxX\":15,\"maxZ\":15}"));
+            patchJson.add("memberCells", JsonParser.parseString("[{\"cellX\":0,\"cellZ\":0,\"blockMinX\":0,\"blockMinZ\":0}]"));
+            patchJson.addProperty("areaBlocks", 16384); patchJson.addProperty("cellCount", 1); patchJson.addProperty("areaClass", "tiny"); patchJson.addProperty("landformType", "plain");
+            patchJson.add("metricsSummary", new JsonObject()); patchJson.add("summaryFacts", new JsonArray()); patchJson.add("neighborLandformPatchIds", new JsonArray());
+        }
+        Files.writeString(d3File, d3.toString());
+
+        var prepared = service.prepare(temporary, f.runId(), f.cityId(), f.terraSenseSource(), f.templateSource(), f.referenceCatalog());
+        String id = prepared.get("contextId").getAsString();
+        var context = prepared.getAsJsonObject("cityBlueprintContext");
+        String patch = context.getAsJsonObject("d3ReviewPackage").getAsJsonArray("landformPatches").get(0).getAsJsonObject().get("landformPatchId").getAsString();
+        String ref = context.getAsJsonObject("catalogSnapshot").getAsJsonObject("referenceCatalog").getAsJsonArray("structureRefs").get(0).getAsJsonObject().get("structureRef").getAsString();
+        JsonObject request = JsonParser.parseString("{\"designIntent\":{\"groups\":[{\"groupId\":\"civic\",\"role\":\"administration\",\"intent\":\"Court with supporting offices\",\"preferredPatchRefs\":[\"" + patch + "\"]}]}}").getAsJsonObject();
+        var intent = service.submitDesign(temporary, f.runId(), f.cityId(), id, request);
+        assertTrue(intent.get("ok").getAsBoolean(), intent.toString());
+        request = JsonParser.parseString("{\"materialSelections\":[{\"groupId\":\"civic\",\"structureRefs\":[\"" + ref + "\"]}]}").getAsJsonObject();
+        var materials = service.submitDesign(temporary, f.runId(), f.cityId(), id, request);
+        assertTrue(materials.get("ok").getAsBoolean(), materials.toString());
+        assertTrue(materials.get("designInProgress").getAsBoolean());
+        assertEquals(256, materials.getAsJsonArray("materialResults").get(0).getAsJsonObject().getAsJsonObject("estimate").get("terrainAreaBlocks").getAsInt(), "Estimate must use member cells, not the old envelope area");
+        assertFalse(materials.getAsJsonArray("materialResults").get(0).getAsJsonObject().getAsJsonObject("estimate").get("hardGate").getAsBoolean());
+        assertEquals(0, materials.getAsJsonArray("materialResults").get(0).getAsJsonObject().getAsJsonObject("estimate").get("assumedGapBlocks").getAsInt());
+        assertEquals("RAW_NBT_WIDTH_DEPTH", materials.getAsJsonArray("materialResults").get(0).getAsJsonObject().getAsJsonObject("estimate").get("footprintBasis").getAsString());
+        var resumed = service.prepare(temporary, f.runId(), f.cityId(), f.terraSenseSource(), f.templateSource(), f.referenceCatalog());
+        assertEquals(materials.get("designSession"), resumed.get("designSession"));
+        assertFalse(Files.exists(f.runDir().resolve("city_blueprint_" + safe(f.cityId())).resolve("city_blueprint.json")));
+        request.getAsJsonArray("materialSelections").get(0).getAsJsonObject().addProperty("groupId", "unknown");
+        assertFalse(service.submitDesign(temporary, f.runId(), f.cityId(), id, request).get("ok").getAsBoolean());
+    }
+
     @Test void validDraftSurvivesPrepareAndRequiresExplicitFinalSubmission() throws Exception {
         Fixture f = fixture("run_preview", "city:preview");
         var service = validationService();

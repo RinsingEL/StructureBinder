@@ -41,10 +41,10 @@ final class HermesAgentClient implements ProviderAgentClient {
             becomes waiting, failed, waiting_for_generation, or requires a human. The host resumes this same session
             when new deterministic work is available. Never poll a background compilation; the host will wake you.
             For City D4, only CONNECTION creates a terrain-routed main road. Keep non-isolated groups in one reachable
-            relation network and use explicit CONNECTION edges for actual destinations. Submit a complete initial blueprint.
+            relation network and use explicit CONNECTION edges for actual destinations. Submit group designIntent first, batch materialSelections next, then complete nested clusters in DRAFT. Inspect actual previews and planned/retained counts before FINAL.
             For local revision use blueprintPatch with the returned baseDraftHash (rejected draft) or baseBlueprintHash
             (accepted blueprint), never both; preserve other groups and the generation seed. Use inline designFeedback.
-            Nearby eligible arrays can connect automatically; explicit HARD relations still require satisfaction.
+            ADJACENCY arranges whole arrays nearby. CONNECTION only requests roads. No automatic building expansion. Normal terrain skips individual members, including all-empty arrays, for your explicit review.
             Structure functions and styles are authored by the modpack creator before play. Never infer or relabel
             them from names or images. Select from the supplied authored metadata to form functional civilizations.
             Exact placement, compilation, background progression and installed catalog selection belong to the host.
@@ -240,7 +240,7 @@ final class HermesAgentClient implements ProviderAgentClient {
     static JsonArray continuationContent(JsonObject state, List<Path> images) throws IOException {
         if (!state.has("revisionEvidence")) return continuationContent(state);
         JsonObject current = new JsonObject();
-        for (String key : List.of("contextId", "nextAction", "instruction", "revisionEvidence", "failureBudget"))
+        for (String key : List.of("contextId", "nextAction", "instruction", "revisionEvidence", "failureBudget", "designSession"))
             if (state.has(key)) current.add(key,state.get(key).deepCopy());
         JsonObject revision = state.getAsJsonObject("revisionEvidence");
         List<Path> latestPreview = revision.has("compiledPreview") && images != null
@@ -255,7 +255,7 @@ final class HermesAgentClient implements ProviderAgentClient {
         text.addProperty("text", "Continue the same frozen city context " + state.get("contextId").getAsString()
                 + " and your latest draft/tool validation feedback already in this session. The context, author catalog and "
                 + "images are unchanged and are not repeated. Use the current tool schema, preserve unaffected design choices, "
-                + "and use submissionMode=DRAFT while designing districts; FINAL only after reviewing the complete design. "
+                + "first submit designIntent, then batch materialSelections to search/choose authored materials and receive capacity estimates. Use structureCount and nested arrays to design the main body. Use submissionMode=DRAFT for complete clusters; inspect planned/retained counts and skipped members. FINAL only after reviewing the complete design. Never rely on automatic building expansion; CONNECTION is road-only. "
                 + "Do not query status or prepare again. proportionMode is a TOOL ARGUMENT "
                 + "beside cityBlueprint, never a field inside cityBlueprint. If no actionable correction remains, report the blocker.");
         JsonArray result = new JsonArray(); result.add(text); return result;

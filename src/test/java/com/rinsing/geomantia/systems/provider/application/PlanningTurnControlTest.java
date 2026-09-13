@@ -5,6 +5,16 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PlanningTurnControlTest {
+    @Test void intentAndMaterialSearchContinueUntilRenderedDraftIsAvailable() throws Exception {
+        int[] calls = {0};
+        var control = new PlanningTurnControl((tool, input) -> JsonParser.parseString(++calls[0] < 3
+                ? "{ok:true,designInProgress:true,designSession:{groups:[]}}"
+                : "{ok:true,designInProgress:true,designSession:{groups:[]},revisionEvidence:{baseDraftHash:'new'}}"));
+        control.execute("city_submit_d4_blueprint", new JsonObject()); assertFalse(control.finished());
+        control.execute("city_submit_d4_blueprint", new JsonObject()); assertFalse(control.finished());
+        control.execute("city_submit_d4_blueprint", new JsonObject()); assertTrue(control.finished());
+        assertTrue(control.permitsDesignContinuation());
+    }
     @Test void formatCorrectionsReachTenDespiteRepeatedError() throws Exception {
         int[] calls = {0};
         var control = new PlanningTurnControl((tool, input) -> {

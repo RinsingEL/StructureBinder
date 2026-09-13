@@ -59,7 +59,21 @@ public record CityBlueprint(
             SpaceComposition spaceComposition,
             ExpansionPolicy expansionPolicy,
             BuildingGreeneryPolicy buildingGreeneryPolicy,
-            List<WeightedPool> fillPools) {
+            List<WeightedPool> fillPools,
+            Integer structureCount) {
+        public Group(String groupId, GroupKind groupKind, List<String> preferredPatchRefs,
+                     PreferredPatchZone preferredPatchZone, PlacementRelation placementRelation,
+                     String role, GroupPriority priority, ExtentClass extentClass, DensityClass densityClass,
+                     String algorithmProfileRef, TerrainPolicy terrainPolicy, List<String> requiredStructureRefs,
+                     String fillPoolRef, ConnectionPlan connectionPlan, String compositionProfileRef,
+                     List<String> attachedFeatures, double targetAreaShare, SpaceComposition spaceComposition,
+                     ExpansionPolicy expansionPolicy, BuildingGreeneryPolicy buildingGreeneryPolicy,
+                     List<WeightedPool> fillPools) {
+            this(groupId, groupKind, preferredPatchRefs, preferredPatchZone, placementRelation, role, priority,
+                    extentClass, densityClass, algorithmProfileRef, terrainPolicy, requiredStructureRefs,
+                    fillPoolRef, connectionPlan, compositionProfileRef, attachedFeatures, targetAreaShare,
+                    spaceComposition, expansionPolicy, buildingGreeneryPolicy, fillPools, null);
+        }
         public Group(String groupId,
                      GroupKind groupKind,
                      List<String> preferredPatchRefs,
@@ -136,6 +150,8 @@ public record CityBlueprint(
         }
 
         public Group {
+            if (structureCount != null && (structureCount < requiredStructureRefs.size() || structureCount < 1 || structureCount > 256))
+                throw new IllegalArgumentException("structureCount must be an integer from max(1, requiredStructureRefs count) to 256; current=" + structureCount);
             fillPools = fillPools == null ? List.of() : List.copyOf(fillPools);
             if ((fillPoolRef == null || fillPoolRef.isBlank()) && !fillPools.isEmpty())
                 fillPoolRef = fillPools.get(0).poolRef();

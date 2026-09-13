@@ -201,6 +201,7 @@ public final class CityBlueprintService {
         response.addProperty("contextId", contextId);
         response.addProperty("aiCityDesignCallCount", 0);
         response.add("cityBlueprintContext", context);
+        response.add("designSession", CityDesignSession.current(outputDir, contextId));
         JsonObject artifacts = new JsonObject();
         artifacts.addProperty("cityBlueprintContext", ref(debugRoot, contextPath));
         artifacts.addProperty("cityBlueprintCatalogSnapshot", ref(debugRoot, snapshotPath));
@@ -228,6 +229,15 @@ public final class CityBlueprintService {
         Path outputDir = outputDirectory(requireRunDirectory(debugRoot, runId), cityId);
         synchronized (submissionArtifactLock(outputDir)) {
           try {
+            if (request.has("designIntent") || request.has("materialSelections")) {
+                if (request.has("cityBlueprint") || request.has("blueprintPatch"))
+                    throw new IllegalArgumentException("Submit designIntent/materialSelections separately from cityBlueprint/blueprintPatch.");
+                JsonObject context = readObject(outputDir.resolve("city_blueprint_context.json"), CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_NOT_FOUND);
+                if (!contextId.equals(contextIdentity(context))) throw new IllegalArgumentException("CITY_BLUEPRINT_CONTEXT_STALE");
+                JsonObject sessionContext = context.deepCopy();
+                sessionContext.add("catalogSnapshot", readObject(outputDir.resolve("city_blueprint_catalog_snapshot.json"), CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_STALE));
+                return CityDesignSession.submit(outputDir, contextId, request, sessionContext);
+            }
             String submissionMode = request.has("submissionMode") ? request.get("submissionMode").getAsString() : "FINAL";
             if (!Set.of("DRAFT", "FINAL").contains(submissionMode)) throw new IllegalArgumentException("CITY_BLUEPRINT_SUBMISSION_MODE_INVALID");
             boolean draftOnly = "DRAFT".equals(submissionMode);
@@ -364,7 +374,7 @@ public final class CityBlueprintService {
         Set<String> patchRefs = patchRefs(context.getAsJsonObject("d3ReviewPackage"));
         CityBlueprintValidator.ValidationResult result = validator.validate(blueprint,
                 new CityBlueprintValidator.ExpectedContext(cityId, expectedD3, expectedSnapshot, patchRefs,
-                        context.has("scaleDesignTask") ? com.rinsing.geomantia.systems.city.domain.model.CityScale.fromContractName(
+                        !draftOnly && context.has("scaleDesignTask") ? com.rinsing.geomantia.systems.city.domain.model.CityScale.fromContractName(
                                 string(context.getAsJsonObject("citySeed"), "theoreticalScale")) : null),
                 references);
         if (!result.valid()) {
@@ -438,6 +448,7 @@ public final class CityBlueprintService {
             preview.addProperty("designInProgress", true);
             preview.addProperty("nextAction", "city_submit_d4_blueprint");
             preview.add("revisionEvidence", CityBlueprintDraft.evidence(draft));
+            preview.add("designSession", CityDesignSession.current(outputDir, contextId));
             CityBlueprintFailureBudget.attach(preview, budget, debugRoot, runId, cityId);
             return preview;
         }
@@ -469,6 +480,7 @@ public final class CityBlueprintService {
         JsonObject response = response(debugRoot, true, report, trace, blueprintPath,
                 acceptedReportPath, acceptedTracePath);
         response.addProperty("nextAction", "city_compile_d4_blueprint");
+        response.add("designReview", geometry.structureAnchorPlan().get("designReview"));
         CityBlueprintFailureBudget.attach(response, budget, debugRoot, runId, cityId);
         return response;
     }

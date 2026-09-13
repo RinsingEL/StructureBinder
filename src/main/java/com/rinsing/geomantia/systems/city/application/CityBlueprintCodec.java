@@ -66,6 +66,7 @@ public final class CityBlueprintCodec {
             item.addProperty("groupKind", group.groupKind().name());
             item.add("preferredPatchRefs", strings(group.preferredPatchRefs()));
             item.addProperty("preferredPatchZone", group.preferredPatchZone().name());
+            if (group.structureCount() != null) item.addProperty("structureCount", group.structureCount());
             if (group.placementRelation() != null) {
                 item.add("placementRelation", placementRelationJson(group.placementRelation()));
             }
@@ -275,7 +276,7 @@ public final class CityBlueprintCodec {
     private static List<CityBlueprint.Group> groups(JsonArray array) {
         List<CityBlueprint.Group> result = new ArrayList<>();
         Set<String> fields = Set.of("groupId", "groupKind", "preferredPatchRefs", "preferredPatchZone",
-                "placementRelation", "role", "priority",
+                "placementRelation", "structureCount", "role", "priority",
                 "extentClass", "densityClass",
                 "algorithmProfileRef", "terrainPolicy", "requiredStructureRefs", "fillPoolRef", "fillPools",
                 "connectionPlan", "compositionProfileRef", "attachedFeatures", "targetAreaShare",
@@ -283,7 +284,7 @@ public final class CityBlueprintCodec {
         for (int index = 0; index < array.size(); index++) {
             String path = "$.groups[" + index + "]";
             JsonObject item = objectElement(array.get(index), path);
-            exactFields(item, fields, Set.of("placementRelation", "connectionPlan", "fillPoolRef", "fillPools"), path);
+            exactFields(item, fields, Set.of("placementRelation", "connectionPlan", "fillPoolRef", "fillPools", "structureCount"), path);
             result.add(new CityBlueprint.Group(
                     requiredString(item, "groupId", path + ".groupId"),
                     enumValue(item, "groupKind", CityBlueprint.GroupKind.class, path),
@@ -313,7 +314,8 @@ public final class CityBlueprintCodec {
                     expansionPolicy(requiredObject(item, "expansionPolicy", path + ".expansionPolicy"),
                             path + ".expansionPolicy"),
                     buildingGreeneryPolicy(requiredObject(item, "buildingGreeneryPolicy",
-                            path + ".buildingGreeneryPolicy"), path + ".buildingGreeneryPolicy"), weightedPools(item, "fillPools", path)));
+                            path + ".buildingGreeneryPolicy"), path + ".buildingGreeneryPolicy"), weightedPools(item, "fillPools", path),
+                    item.has("structureCount") ? positiveInt(item, "structureCount", path + ".structureCount") : null));
         }
         return List.copyOf(result);
     }

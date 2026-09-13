@@ -21,7 +21,7 @@ final class CityScaleDesignTask {
         task.addProperty("scale", scale.contractName());
         task.addProperty("suggestedInitialLeafArraysMin", range[0]);
         task.addProperty("suggestedInitialLeafArraysMax", range[1]);
-        task.addProperty("counting", "Count actual building groups once, not parent containers; several arrays may share one functional purpose. Expansion is additional. Counts are advice, never an area or building-count gate.");
+        task.addProperty("counting", "Count actual building groups once, not parent containers; several arrays may share one functional purpose. Automatic building expansion is disabled. Counts are advice, never an area or building-count gate.");
         task.addProperty("designTask", switch (scale) {
             case HAMLET -> "Design one small complete cluster and optional supporting array; nesting is optional.";
             case VILLAGE -> "Design a few related terrain-aware clusters with useful gaps; nesting is optional.";
@@ -29,7 +29,7 @@ final class CityScaleDesignTask {
             case CITY -> "Organize the main body using real child arrays, including CORE and its supporting main districts. A token small composition with the rest of the main body scattered does not fulfill this design task. Peripheral arrays may remain independent. Choose algorithms and functions yourself, not a prescribed district template.";
             case LARGE_CITY -> "Design multiple complete nested clusters with main and secondary spaces. Include CORE in a composition and use at least two non-empty compositions; these may be recursively connected. A tiny nested core with the rest left for procedural road-chain expansion does not fulfill the task. Do not stretch a village into a long road.";
         });
-        task.addProperty("placementResponsibility", "Express relationships with existing arrays/compositions; exact spacing, terrain fit and road ports belong to the host. No side-by-side road-port forms. Preserve successful groups on local failure; no whole-group automatic omission.");
+        task.addProperty("placementResponsibility", "Express relationships with existing arrays/compositions; exact spacing, terrain fit and road ports belong to the host. No side-by-side road-port forms. Freeze planned layouts before terrain filtering; preserve successful members and report skipped members, including completely empty arrays. The designer decides whether to revise or accept.");
         return task;
     }
 

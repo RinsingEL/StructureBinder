@@ -564,15 +564,16 @@ const cityBlueprintSchema = strictObject({
       }, ["kind", "patchRefs", "groupRefs"]),
       role: nonEmptyString("Group 功能角色。"),
       priority: { type: "string", enum: ["CORE", "STANDARD", "PERIPHERAL"] },
+      structureCount: { type: "integer", minimum: 1, maximum: 256, description: "本阵列计划建筑总数（含 requiredStructureRefs）；不得少于必需引用数。省略按 extent 与算法给建议默认值。地形只筛选单栋，不补量。" },
       extentClass: { type: "string", enum: ["SMALL", "MEDIUM", "LARGE"],
         description: "功能区空间范围档位，不表示建筑数量。" },
       densityClass: { type: "string", enum: ["SPARSE", "BALANCED", "DENSE"],
-        description: "功能区疏密档位；建筑数量由范围、疏密和模板占地推导。" },
+        description: "功能区疏密档位，控制布局间距；计划建筑数量使用 structureCount，省略时沿用建议默认值。" },
       algorithmProfileRef: nonEmptyString("冻结算法 profile 引用。"),
       terrainPolicy: { type: "string", enum: ["CONFORM", "BALANCED", "ASSERTIVE"] },
       requiredStructureRefs: { type: "array", minItems: 1, uniqueItems: true, items: nonEmptyString("结构白名单引用。") },
       fillPoolRef: nonEmptyString("单池兼容写法；与 fillPools 二选一。"),
-      fillPools: { type: "array", minItems: 1, description: "多池及正权重；每个外扩小组合抽取一个池。与 fillPoolRef 二选一。",
+      fillPools: { type: "array", minItems: 1, description: "多池及正权重，用于 AI 指定数量的阵列成员选材；不自动补建筑。与 fillPoolRef 二选一。",
         items: strictObject({ poolRef: nonEmptyString("冻结 fill pool 引用。"), weight: { type: "number", exclusiveMinimum: 0 } }, ["poolRef", "weight"]) },
       connectionPlan: strictObject({
         structurePoolRef: nonEmptyString("连接单池；与 structurePools 二选一。均省略则继承功能区填充池。"),
@@ -1094,13 +1095,21 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_submit_d4_blueprint",
-    description: "提交 cityBlueprint 或 blueprintPatch（二选一）。schema/cityId/sourceD3Ref/catalogSnapshotRef/generationSeed 可省略，由宿主绑定；显式冲突仍拒绝。proportionMode=RELATIVE_WEIGHTS 归一化占比后执行作者白名单与安全校验；默认 EXACT_SHARES。局部修订使用返回的 baseDraftHash（拒绝草稿）或 baseBlueprintHash（已接受蓝图），二者不可同填，配合 replace-only JSON Pointer blueprintPatch，必须用 EXACT_SHARES。未知路径或过期哈希拒绝。直接读取 designFeedback 和 validationReport.issues.constraint；无可证明的参数修正时不盲改。AI 不读取源码、项目文档或原始 run 文件。",
+    description: "先提交 designIntent，再批量 materialSelections 搜索或选材并获取估算；这两项与蓝图分开提交。之后提交 cityBlueprint 或 blueprintPatch（二选一）。DRAFT 支持逐组团预览，FINAL 才确认整城。schema/cityId/sourceD3Ref/catalogSnapshotRef/generationSeed 可省略，由宿主绑定；显式冲突仍拒绝。proportionMode=RELATIVE_WEIGHTS 归一化占比后执行作者白名单与安全校验；默认 EXACT_SHARES。局部修订使用返回的 baseDraftHash（拒绝草稿）或 baseBlueprintHash（已接受蓝图），二者不可同填，配合 replace-only JSON Pointer blueprintPatch，必须用 EXACT_SHARES。未知路径或过期哈希拒绝。直接读取 designFeedback 和 validationReport.issues.constraint；无可证明的参数修正时不盲改。AI 不读取源码、项目文档或原始 run 文件。",
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: {
         runId: nonEmptyString("上下文所属 run。"),
         citySeedId: nonEmptyString("上下文所属城市。"),
         contextId: nonEmptyString("prepare-context 返回的冻结 contextId。"),
+        designIntent: strictObject({ groups: { type: "array", minItems: 1, items: strictObject({
+          groupId: nonEmptyString("功能区意图 ID，后续选材沿用。"), role: nonEmptyString("功能区用途。"),
+          intent: nonEmptyString("设计意图及组团关系。"), preferredPatchRefs: { type: "array", minItems: 1, uniqueItems: true, items: { type: "string" } }
+        }, ["groupId", "role", "intent", "preferredPatchRefs"]) } }, ["groups"]),
+        materialSelections: { type: "array", minItems: 1, items: strictObject({
+          groupId: nonEmptyString("已提交意图 ID。"), query: { type: "string", description: "搜索作者元数据；可以按多个功能区批量搜索。" },
+          structureRefs: { type: "array", items: { type: "string" } }, fillPoolRefs: { type: "array", items: { type: "string" } }
+        }, ["groupId"]) },
         cityBlueprint: cityBlueprintSchema,
         proportionMode: { type: "string", enum: ["EXACT_SHARES", "RELATIVE_WEIGHTS"] },
         submissionMode: { type: "string", enum: ["DRAFT", "FINAL"], description: "逐区设计使用 DRAFT 保留预览和可修订草稿；检查完整城市后才使用 FINAL，默认 FINAL 兼容已有调用。" },
@@ -1139,7 +1148,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_compile_d4_blueprint",
-    description: "程序化编译当前已接受的完整 CityBlueprint revision：保留 AI 指定核心/填充模板与阵列关系，按关系图、阵列和范围完成连接与 fill。明确的 D4 编译或终审失败会原子增加 failureCount，最多 5 次；retryAllowed=true 时必须仅依据本响应和返回 artifacts 修正后重提，禁止读取服务端源码、项目文档或原始 run 文件。输出标准 D4 anchor、compile trace 与 Group extent，不调用 AI、不接受 candidateId。",
+    description: "程序化编译当前已接受的完整 CityBlueprint revision：保留 AI 指定核心/填充模板与阵列关系，保留完整阵列并逐栋地形筛选；连接只生成道路，不自动补建筑。明确的 D4 编译或终审失败会原子增加 failureCount，最多 5 次；retryAllowed=true 时必须仅依据本响应和返回 artifacts 修正后重提，禁止读取服务端源码、项目文档或原始 run 文件。输出标准 D4 anchor、compile trace 与 Group extent，不调用 AI、不接受 candidateId。",
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: {
