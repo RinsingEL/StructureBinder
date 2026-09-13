@@ -2012,6 +2012,32 @@ public final class CityBlueprintCompilerService {
                 span = Math.max(span, Math.max(box.widthBlocks(), box.heightBlocks()));
             }
             List<BlockBounds> siblingBounds = new ArrayList<>(); siblingBounds.add(combined);
+            if ("CENTER_SYMMETRIC".equals(algorithm)) {
+                int gap = groupLayoutPlanner.parameters(algorithm, center.densityClass()).targetEdgeGapBlocks()
+                        + interGroupRoadReserveBlocks;
+                for (int pair = 0; pair < composition.memberGroupIds().size(); pair += 2) {
+                    String first = composition.memberGroupIds().get(pair);
+                    String second = composition.memberGroupIds().get(pair + 1);
+                    // The planner supplies topology/axis only. Actual rectangles determine distance.
+                    BlockPoint direction = groupLayoutPlanner.propose(algorithm, center.densityClass(),
+                            blueprint.generationSeed(), composition.compositionId(), pair + 1,
+                            groupLayoutPlanner.worldFrame(new BlockPoint(0, 0)), new BlockPoint(0, 0),
+                            null, false, 1).guides().get(0);
+                    var shifts = CityArrayEnvelopePlacement.symmetricPair(centerPosition, envelopes.get(first),
+                            envelopes.get(second), direction, siblingBounds, gap);
+                    for (int side = 0; side < 2; side++) {
+                        String child = side == 0 ? first : second;
+                        BlockPoint shift = shifts.get(side);
+                        childIds.add(child); parentIds.put(child, composition.compositionId());
+                        offsets.get(child).forEach((id, point) -> combinedOffsets.put(id,
+                                new BlockPoint(point.x() + shift.x(), point.z() + shift.z())));
+                        BlockBounds placed = CityArrayEnvelopePlacement.move(envelopes.get(child), shift);
+                        combined = union(combined, placed); siblingBounds.add(placed);
+                    }
+                }
+                envelopes.put(centerId, combined); offsets.put(centerId, combinedOffsets);
+                continue;
+            }
             int index = 0;
             List<BlockPoint> boundary = CityPatchBoundaryGuide.origins(center, patches, patchStepBlocks, span, new BlockPoint(0, 0));
             BlockPoint boundaryBase = boundary.isEmpty() ? null : boundary.get(0);
