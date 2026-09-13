@@ -1,0 +1,992 @@
+[
+  {
+    "ok": true,
+    "validationReport": {
+      "schema": "city_blueprint_validation_report",
+      "cityId": "city_river_metropolis",
+      "contextId": "sha256:856645a7e054cbc01a3f1bfa2360924b7fa6b130360f5fa60a14826ab3fa80b4",
+      "valid": true,
+      "validatedAt": "2026-09-13T08:48:16.384307500Z",
+      "issues": [],
+      "designGeometryValidated": true
+    },
+    "submissionTrace": {
+      "schema": "city_blueprint_submission_trace",
+      "cityId": "city_river_metropolis",
+      "contextId": "sha256:856645a7e054cbc01a3f1bfa2360924b7fa6b130360f5fa60a14826ab3fa80b4",
+      "status": "accepted",
+      "contextPreparationCountsAsAiCityDesignCall": false,
+      "recordedAt": "2026-09-13T08:48:16.384307500Z",
+      "sourceD3Ref": {
+        "path": "city_scale_20260910/city_test_runs/city_river_metropolis/steps/d3/city_landform_review_package.json",
+        "schema": "city_landform_review",
+        "contentHash": "sha256:710b141494f6c00d266ae8c3f46450e171274103026bc6e97f1b6827ff2eede0"
+      },
+      "catalogSnapshotRef": {
+        "path": "city_scale_20260910/city_test_runs/city_river_metropolis/steps/blueprint/city_blueprint_catalog_snapshot.json",
+        "schema": "city_blueprint_catalog_snapshot",
+        "contentHash": "sha256:66df2bdddde62400879e315ac894765d5e6cc82ea927ffd02321874976e95b26"
+      },
+      "failureReasons": [],
+      "designGeometryValidated": true,
+      "geometryCommitHash": "sha256:90e37c34736a689b5b3b9b5962b0bbaf9dad052c59bcf5c1e47bc2a4fdaa81f3",
+      "cityBlueprintHash": "sha256:392b301d5ce775ccd3221dc6f8ff3700f5b8efad6a07958d512a6b99eae167f7"
+    },
+    "artifacts": {
+      "cityBlueprint": "city_scale_20260910/city_test_runs/city_river_metropolis/steps/blueprint/city_blueprint.json",
+      "cityBlueprintValidationReport": "city_scale_20260910/city_test_runs/city_river_metropolis/steps/blueprint/city_blueprint_validation_report.json",
+      "cityBlueprintSubmissionTrace": "city_scale_20260910/city_test_runs/city_river_metropolis/steps/blueprint/city_blueprint_submission_trace.json",
+      "cityBlueprintFailureBudget": "city_scale_20260910/city_test_runs/city_river_metropolis/steps/blueprint/city_blueprint_failure_budget.json",
+      "testRunManifest": "city_scale_20260910/city_test_runs/city_river_metropolis/test_run_manifest.json",
+      "testRunPackage": "city_scale_20260910/city_test_runs/city_river_metropolis"
+    },
+    "nextAction": "city_compile_d4_blueprint",
+    "designReview": {
+      "policy": "AI_REVIEW_PLANNED_AND_RETAINED_ARRAYS",
+      "fixedAreaGate": false,
+      "plannedLeafArrayCount": 12,
+      "retainedLeafArrayCount": 11,
+      "nestedLeafArrayCount": 12,
+      "plannedBuildingCount": 41,
+      "retainedBuildingCount": 29,
+      "nestedPlannedBuildingCount": 41,
+      "nestedRetainedLeafArrayCount": 11,
+      "nestedRetainedBuildingCount": 29,
+      "automaticBuildingCount": 0,
+      "groups": [
+        {
+          "groupId": "civic",
+          "role": "administration",
+          "algorithm": "COMPACT",
+          "plannedBuildingCount": 1,
+          "requestedBuildingCount": 1,
+          "retainedBuildingCount": 1,
+          "nested": true,
+          "empty": false,
+          "skippedMembers": [],
+          "retainedBounds": {
+            "minX": 2076,
+            "minZ": 5944,
+            "maxX": 2106,
+            "maxZ": 5991
+          }
+        },
+        {
+          "groupId": "civic_homes",
+          "role": "residential",
+          "algorithm": "COMPACT",
+          "plannedBuildingCount": 4,
+          "requestedBuildingCount": 4,
+          "retainedBuildingCount": 3,
+          "nested": true,
+          "empty": false,
+          "skippedMembers": [
+            {
+              "groupId": "civic_homes",
+              "structureRef": "geomantia:city/stubbs/commercial/motel_01",
+              "slotIndex": 3,
+              "required": false,
+              "status": "skipped_member",
+              "plannedOrigins": [
+                {
+                  "x": 2057,
+                  "z": 6064
+                }
+              ],
+              "plannedBounds": {
+                "minX": 2057,
+                "minZ": 6064,
+                "maxX": 2086,
+                "maxZ": 6079
+              },
+              "reasons": {
+                "sequence": 15,
+                "phase": "fill",
+                "groupId": "civic_homes",
+                "structureRef": "geomantia:city/stubbs/commercial/motel_01",
+                "candidateCount": 0,
+                "attempts": [
+                  {
+                    "templateId": "geomantia:city/stubbs/commercial/motel_01",
+                    "variantId": "stubbs_v1",
+                    "passed": false,
+                    "candidateCount": 0,
+                    "filterReasonCounts": {
+                      "D4_ARRAY_COUNT_UNSATISFIED": 1,
+                      "OCCUPIED_ENVELOPE_OVERLAP": 1
+                    },
+                    "failedAttemptPositions": [
+                      {
+                        "itemIndex": 1,
+                        "templateId": "geomantia:city/stubbs/commercial/motel_01",
+                        "anchorBlock": {
+                          "x": 2057,
+                          "z": 6064
+                        },
+                        "reasonCode": "OCCUPIED_ENVELOPE_OVERLAP",
+                        "pattern": "loose_cluster",
+                        "pivotPatchId": "minecraft:overworld:step.16:city.city_river_metropolis:p.969"
+                      }
+                    ],
+                    "hardBlocks": [
+                      "D4_ARRAY_COUNT_UNSATISFIED: civic_homes_fill_004 could not place 1 non-overlapping structures in candidatePatchRefs."
+                    ],
+                    "patchSelectionScope": "continuous_growth_from_selected_patch"
+                  }
+                ],
+                "compilerFilterReasonCounts": {},
+                "status": "no_legal_candidate",
+                "reasonCode": "CITY_BLUEPRINT_FILL_CAPACITY_EXHAUSTED"
+              },
+              "reasonCode": "CITY_BLUEPRINT_FILL_CAPACITY_EXHAUSTED"
+            }
+          ],
+          "retainedBounds": {
+            "minX": 2086,
+            "minZ": 6035,
+            "maxX": 2141,
+            "maxZ": 6092
+          }
+        },
+        {
+          "groupId": "farm",
+          "role": "agriculture",
+          "algorithm": "LINEAR",
+          "plannedBuildingCount": 3,
+          "requestedBuildingCount": 3,
+          "retainedBuildingCount": 3,
+          "nested": true,
+          "empty": false,
+          "skippedMembers": [],
+          "retainedBounds": {
+            "minX": 2200,
+            "minZ": 6302,
+            "maxX": 2271,
+            "maxZ": 6383
+          }
+        },
+        {
+          "groupId": "farm_homes",
+          "role": "residential",
+          "algorithm": "COMPACT",
+          "plannedBuildingCount": 3,
+          "requestedBuildingCount": 3,
+          "retainedBuildingCount": 0,
+          "nested": true,
+          "empty": true,
+          "skippedMembers": [
+            {
+              "groupId": "farm_homes",
+              "structureRef": "geomantia:city/stubbs/residential/household_01",
+              "slotIndex": 0,
+              "required": true,
+              "status": "skipped_member",
+              "plannedOrigins": [
+                {
+                  "x": 2318,
+                  "z": 6382
+                }
+              ],
+              "plannedBounds": {
+                "minX": 2318,
+                "minZ": 6382,
+                "maxX": 2332,
+                "maxZ": 6396
+              },
+              "reasons": {
+                "sequence": 4,
+                "phase": "required",
+                "groupId": "farm_homes",
+                "structureRef": "geomantia:city/stubbs/residential/household_01",
+                "candidateCount": 0,
+                "attempts": [
+                  {
+                    "templateId": "geomantia:city/stubbs/residential/household_01",
+                    "variantId": "stubbs_v1",
+                    "passed": false,
+                    "candidateCount": 0,
+                    "filterReasonCounts": {
+                      "D4_ARRAY_COUNT_UNSATISFIED": 1,
+                      "CITY_STRUCTURE_SURFACE_CELL_WATER": 1
+                    },
+                    "failedAttemptPositions": [
+                      {
+                        "itemIndex": 1,
+                        "templateId": "geomantia:city/stubbs/residential/household_01",
+                        "anchorBlock": {
+                          "x": 2318,
+                          "z": 6382
+                        },
+                        "reasonCode": "CITY_STRUCTURE_SURFACE_CELL_WATER",
+                        "pattern": "loose_cluster",
+                        "pivotPatchId": "minecraft:overworld:step.16:city.city_river_metropolis:p.1"
+                      }
+                    ],
+                    "hardBlocks": [
+                      "D4_ARRAY_COUNT_UNSATISFIED: farm_homes_required_001 could not place 1 non-overlapping structures in candidatePatchRefs."
+                    ],
+                    "patchSelectionScope": "array_composition_slot"
+                  }
+                ],
+                "compilerFilterReasonCounts": {},
+                "status": "no_legal_candidate",
+                "reasonCode": "CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT"
+              },
+              "reasonCode": "CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT"
+            },
+            {
+              "groupId": "farm_homes",
+              "structureRef": "geomantia:city/stubbs/residential/household_02",
+              "slotIndex": 1,
+              "required": false,
+              "status": "skipped_member",
+              "plannedOrigins": [
+                {
+                  "x": 2308,
+                  "z": 6407
+                }
+              ],
+              "plannedBounds": {
+                "minX": 2308,
+                "minZ": 6407,
+                "maxX": 2322,
+                "maxZ": 6421
+              },
+              "reasons": {
+                "sequence": 18,
+                "phase": "fill",
+                "groupId": "farm_homes",
+                "structureRef": "geomantia:city/stubbs/residential/household_02",
+                "candidateCount": 0,
+                "attempts": [
+                  {
+                    "templateId": "geomantia:city/stubbs/residential/household_02",
+                    "variantId": "stubbs_v1",
+                    "passed": false,
+                    "candidateCount": 0,
+                    "filterReasonCounts": {
+                      "D4_ARRAY_COUNT_UNSATISFIED": 1,
+                      "CITY_STRUCTURE_SURFACE_CELL_WATER": 1
+                    },
+                    "failedAttemptPositions": [
+                      {
+                        "itemIndex": 1,
+                        "templateId": "geomantia:city/stubbs/residential/household_02",
+                        "anchorBlock": {
+                          "x": 2308,
+                          "z": 6407
+                        },
+                        "reasonCode": "CITY_STRUCTURE_SURFACE_CELL_WATER",
+                        "pattern": "loose_cluster",
+                        "pivotPatchId": "minecraft:overworld:step.16:city.city_river_metropolis:p.1"
+                      }
+                    ],
+                    "hardBlocks": [
+                      "D4_ARRAY_COUNT_UNSATISFIED: farm_homes_fill_002 could not place 1 non-overlapping structures in candidatePatchRefs."
+                    ],
+                    "patchSelectionScope": "array_composition_slot"
+                  }
+                ],
+                "compilerFilterReasonCounts": {},
+                "status": "no_legal_candidate",
+                "reasonCode": "CITY_BLUEPRINT_FILL_CAPACITY_EXHAUSTED"
+              },
+              "reasonCode": "CITY_BLUEPRINT_FILL_CAPACITY_EXHAUSTED"
+            },
+            {
+              "groupId": "farm_homes",
+              "structureRef": "geomantia:city/stubbs/residential/civilian_house_03",
+              "slotIndex": 2,
+              "required": false,
+              "status": "skipped_member",
+              "plannedOrigins": [
+                {
+                  "x": 2283,
+                  "z": 6417
+                }
+              ],
+              "plannedBounds": {
+                "minX": 2283,
+                "minZ": 6417,
+                "maxX": 2303,
+                "maxZ": 6433
+              },
+              "reasons": {
+                "sequence": 19,
+                "phase": "fill",
+                "groupId": "farm_homes",
+                "structureRef": "geomantia:city/stubbs/residential/civilian_house_03",
+                "candidateCount": 0,
+                "attempts": [
+                  {
+                    "templateId": "geomantia:city/stubbs/residential/civilian_house_03",
+                    "variantId": "stubbs_v1",
+                    "passed": false,
+                    "candidateCount": 0,
+                    "filterReasonCounts": {
+                      "D4_ARRAY_COUNT_UNSATISFIED": 1,
+                      "CITY_STRUCTURE_SURFACE_CELL_WATER": 1
+                    },
+                    "failedAttemptPositions": [
+                      {
+                        "itemIndex": 1,
+                        "templateId": "geomantia:city/stubbs/residential/civilian_house_03",
+                        "anchorBlock": {
+                          "x": 2283,
+                          "z": 6417
+                        },
+                        "reasonCode": "CITY_STRUCTURE_SURFACE_CELL_WATER",
+                        "pattern": "loose_cluster",
+                        "pivotPatchId": "minecraft:overworld:step.16:city.city_river_metropolis:p.1"
+                      }
+                    ],
+                    "hardBlocks": [
+                      "D4_ARRAY_COUNT_UNSATISFIED: farm_homes_fill_003 could not place 1 non-overlapping structures in candidatePatchRefs."
+                    ],
+                    "patchSelectionScope": "array_composition_slot"
+                  }
+                ],
+                "compilerFilterReasonCounts": {},
+                "status": "no_legal_candidate",
+                "reasonCode": "CITY_BLUEPRINT_FILL_CAPACITY_EXHAUSTED"
+              },
+              "reasonCode": "CITY_BLUEPRINT_FILL_CAPACITY_EXHAUSTED"
+            }
+          ]
+        },
+        {
+          "groupId": "farm_storage",
+          "role": "agriculture",
+          "algorithm": "LINEAR",
+          "plannedBuildingCount": 2,
+          "requestedBuildingCount": 2,
+          "retainedBuildingCount": 1,
+          "nested": true,
+          "empty": false,
+          "skippedMembers": [
+            {
+              "groupId": "farm_storage",
+              "structureRef": "geomantia:city/stubbs/agriculture/horse_stall_02",
+              "slotIndex": 1,
+              "required": false,
+              "status": "skipped_member",
+              "plannedOrigins": [
+                {
+                  "x": 2250,
+                  "z": 6411
+                }
+              ],
+              "plannedBounds": {
+                "minX": 2250,
+                "minZ": 6411,
+                "maxX": 2270,
+                "maxZ": 6442
+              },
+              "reasons": {
+                "sequence": 20,
+                "phase": "fill",
+                "groupId": "farm_storage",
+                "structureRef": "geomantia:city/stubbs/agriculture/horse_stall_02",
+                "candidateCount": 0,
+                "attempts": [
+                  {
+                    "templateId": "geomantia:city/stubbs/agriculture/horse_stall_02",
+                    "variantId": "stubbs_v1",
+                    "passed": false,
+                    "candidateCount": 0,
+                    "filterReasonCounts": {
+                      "D4_ARRAY_COUNT_UNSATISFIED": 1,
+                      "CITY_STRUCTURE_SURFACE_CELL_WATER": 1
+                    },
+                    "failedAttemptPositions": [
+                      {
+                        "itemIndex": 1,
+                        "templateId": "geomantia:city/stubbs/agriculture/horse_stall_02",
+                        "anchorBlock": {
+                          "x": 2250,
+                          "z": 6411
+                        },
+                        "reasonCode": "CITY_STRUCTURE_SURFACE_CELL_WATER",
+                        "pattern": "patch_axis_band",
+                        "pivotPatchId": "minecraft:overworld:step.16:city.city_river_metropolis:p.1482"
+                      }
+                    ],
+                    "hardBlocks": [
+                      "D4_ARRAY_COUNT_UNSATISFIED: farm_storage_fill_002 could not place 1 non-overlapping structures in candidatePatchRefs."
+                    ],
+                    "patchSelectionScope": "continuous_growth_from_selected_patch"
+                  }
+                ],
+                "compilerFilterReasonCounts": {},
+                "status": "no_legal_candidate",
+                "reasonCode": "CITY_BLUEPRINT_FILL_CAPACITY_EXHAUSTED"
+              },
+              "reasonCode": "CITY_BLUEPRINT_FILL_CAPACITY_EXHAUSTED"
+            }
+          ],
+          "retainedBounds": {
+            "minX": 2200,
+            "minZ": 6436,
+            "maxX": 2218,
+            "maxZ": 6464
+          }
+        },
+        {
+          "groupId": "guard",
+          "role": "defense",
+          "algorithm": "LINEAR",
+          "plannedBuildingCount": 2,
+          "requestedBuildingCount": 2,
+          "retainedBuildingCount": 2,
+          "nested": true,
+          "empty": false,
+          "skippedMembers": [],
+          "retainedBounds": {
+            "minX": 2148,
+            "minZ": 6003,
+            "maxX": 2188,
+            "maxZ": 6069
+          }
+        },
+        {
+          "groupId": "homes",
+          "role": "residential",
+          "algorithm": "COURTYARD",
+          "plannedBuildingCount": 5,
+          "requestedBuildingCount": 5,
+          "retainedBuildingCount": 4,
+          "nested": true,
+          "empty": false,
+          "skippedMembers": [
+            {
+              "groupId": "homes",
+              "structureRef": "geomantia:city/stubbs/residential/civilian_house_03",
+              "slotIndex": 2,
+              "required": false,
+              "status": "skipped_member",
+              "plannedOrigins": [
+                {
+                  "x": 2622,
+                  "z": 5758
+                }
+              ],
+              "plannedBounds": {
+                "minX": 2622,
+                "minZ": 5758,
+                "maxX": 2638,
+                "maxZ": 5778
+              },
+              "reasons": {
+                "sequence": 23,
+                "phase": "fill",
+                "groupId": "homes",
+                "structureRef": "geomantia:city/stubbs/residential/civilian_house_03",
+                "candidateCount": 0,
+                "attempts": [
+                  {
+                    "templateId": "geomantia:city/stubbs/residential/civilian_house_03",
+                    "variantId": "stubbs_v1",
+                    "passed": false,
+                    "candidateCount": 0,
+                    "filterReasonCounts": {
+                      "D4_ARRAY_COUNT_UNSATISFIED": 1,
+                      "CITY_STRUCTURE_SURFACE_CELL_WATER": 1
+                    },
+                    "failedAttemptPositions": [
+                      {
+                        "itemIndex": 1,
+                        "templateId": "geomantia:city/stubbs/residential/civilian_house_03",
+                        "anchorBlock": {
+                          "x": 2622,
+                          "z": 5758
+                        },
+                        "reasonCode": "CITY_STRUCTURE_SURFACE_CELL_WATER",
+                        "pattern": "courtyard",
+                        "pivotPatchId": "minecraft:overworld:step.16:city.city_river_metropolis:p.998"
+                      }
+                    ],
+                    "hardBlocks": [
+                      "D4_ARRAY_COUNT_UNSATISFIED: homes_fill_003 could not place 1 non-overlapping structures in candidatePatchRefs."
+                    ],
+                    "patchSelectionScope": "continuous_growth_from_selected_patch"
+                  }
+                ],
+                "compilerFilterReasonCounts": {},
+                "status": "no_legal_candidate",
+                "reasonCode": "CITY_BLUEPRINT_FILL_CAPACITY_EXHAUSTED"
+              },
+              "reasonCode": "CITY_BLUEPRINT_FILL_CAPACITY_EXHAUSTED"
+            }
+          ],
+          "retainedBounds": {
+            "minX": 2514,
+            "minZ": 5650,
+            "maxX": 2636,
+            "maxZ": 5772
+          }
+        },
+        {
+          "groupId": "homes_east",
+          "role": "residential",
+          "algorithm": "COMPACT",
+          "plannedBuildingCount": 4,
+          "requestedBuildingCount": 4,
+          "retainedBuildingCount": 2,
+          "nested": true,
+          "empty": false,
+          "skippedMembers": [
+            {
+              "groupId": "homes_east",
+              "structureRef": "geomantia:city/stubbs/commercial/motel_01",
+              "slotIndex": 2,
+              "required": false,
+              "status": "skipped_member",
+              "plannedOrigins": [
+                {
+                  "x": 2665,
+                  "z": 5820
+                }
+              ],
+              "plannedBounds": {
+                "minX": 2665,
+                "minZ": 5820,
+                "maxX": 2680,
+                "maxZ": 5849
+              },
+              "reasons": {
+                "sequence": 27,
+                "phase": "fill",
+                "groupId": "homes_east",
+                "structureRef": "geomantia:city/stubbs/commercial/motel_01",
+                "candidateCount": 0,
+                "attempts": [
+                  {
+                    "templateId": "geomantia:city/stubbs/commercial/motel_01",
+                    "variantId": "stubbs_v1",
+                    "passed": false,
+                    "candidateCount": 0,
+                    "filterReasonCounts": {
+                      "D4_ARRAY_COUNT_UNSATISFIED": 1,
+                      "CITY_STRUCTURE_SURFACE_CELL_WATER": 1
+                    },
+                    "failedAttemptPositions": [
+                      {
+                        "itemIndex": 1,
+                        "templateId": "geomantia:city/stubbs/commercial/motel_01",
+                        "anchorBlock": {
+                          "x": 2665,
+                          "z": 5820
+                        },
+                        "reasonCode": "CITY_STRUCTURE_SURFACE_CELL_WATER",
+                        "pattern": "loose_cluster",
+                        "pivotPatchId": "minecraft:overworld:step.16:city.city_river_metropolis:p.1"
+                      }
+                    ],
+                    "hardBlocks": [
+                      "D4_ARRAY_COUNT_UNSATISFIED: homes_east_fill_003 could not place 1 non-overlapping structures in candidatePatchRefs."
+                    ],
+                    "patchSelectionScope": "continuous_growth_from_selected_patch"
+                  }
+                ],
+                "compilerFilterReasonCounts": {},
+                "status": "no_legal_candidate",
+                "reasonCode": "CITY_BLUEPRINT_FILL_CAPACITY_EXHAUSTED"
+              },
+              "reasonCode": "CITY_BLUEPRINT_FILL_CAPACITY_EXHAUSTED"
+            },
+            {
+              "groupId": "homes_east",
+              "structureRef": "geomantia:city/stubbs/residential/household_01",
+              "slotIndex": 3,
+              "required": false,
+              "status": "skipped_member",
+              "plannedOrigins": [
+                {
+                  "x": 2636,
+                  "z": 5808
+                }
+              ],
+              "plannedBounds": {
+                "minX": 2636,
+                "minZ": 5808,
+                "maxX": 2650,
+                "maxZ": 5822
+              },
+              "reasons": {
+                "sequence": 28,
+                "phase": "fill",
+                "groupId": "homes_east",
+                "structureRef": "geomantia:city/stubbs/residential/household_01",
+                "candidateCount": 0,
+                "attempts": [
+                  {
+                    "templateId": "geomantia:city/stubbs/residential/household_01",
+                    "variantId": "stubbs_v1",
+                    "passed": false,
+                    "candidateCount": 0,
+                    "filterReasonCounts": {
+                      "D4_ARRAY_COUNT_UNSATISFIED": 1,
+                      "CITY_STRUCTURE_SURFACE_CELL_WATER": 1
+                    },
+                    "failedAttemptPositions": [
+                      {
+                        "itemIndex": 1,
+                        "templateId": "geomantia:city/stubbs/residential/household_01",
+                        "anchorBlock": {
+                          "x": 2636,
+                          "z": 5808
+                        },
+                        "reasonCode": "CITY_STRUCTURE_SURFACE_CELL_WATER",
+                        "pattern": "loose_cluster",
+                        "pivotPatchId": "minecraft:overworld:step.16:city.city_river_metropolis:p.1"
+                      }
+                    ],
+                    "hardBlocks": [
+                      "D4_ARRAY_COUNT_UNSATISFIED: homes_east_fill_004 could not place 1 non-overlapping structures in candidatePatchRefs."
+                    ],
+                    "patchSelectionScope": "continuous_growth_from_selected_patch"
+                  }
+                ],
+                "compilerFilterReasonCounts": {},
+                "status": "no_legal_candidate",
+                "reasonCode": "CITY_BLUEPRINT_FILL_CAPACITY_EXHAUSTED"
+              },
+              "reasonCode": "CITY_BLUEPRINT_FILL_CAPACITY_EXHAUSTED"
+            }
+          ],
+          "retainedBounds": {
+            "minX": 2694,
+            "minZ": 5779,
+            "maxX": 2720,
+            "maxZ": 5828
+          }
+        },
+        {
+          "groupId": "homes_west",
+          "role": "residential",
+          "algorithm": "LINEAR",
+          "plannedBuildingCount": 4,
+          "requestedBuildingCount": 4,
+          "retainedBuildingCount": 1,
+          "nested": true,
+          "empty": false,
+          "skippedMembers": [
+            {
+              "groupId": "homes_west",
+              "structureRef": "geomantia:city/stubbs/residential/civilian_house_03",
+              "slotIndex": 0,
+              "required": true,
+              "status": "skipped_member",
+              "plannedOrigins": [
+                {
+                  "x": 2571,
+                  "z": 5807
+                }
+              ],
+              "plannedBounds": {
+                "minX": 2571,
+                "minZ": 5807,
+                "maxX": 2587,
+                "maxZ": 5827
+              },
+              "reasons": {
+                "sequence": 9,
+                "phase": "required",
+                "groupId": "homes_west",
+                "structureRef": "geomantia:city/stubbs/residential/civilian_house_03",
+                "candidateCount": 0,
+                "attempts": [
+                  {
+                    "templateId": "geomantia:city/stubbs/residential/civilian_house_03",
+                    "variantId": "stubbs_v1",
+                    "passed": false,
+                    "candidateCount": 0,
+                    "filterReasonCounts": {
+                      "D4_ARRAY_COUNT_UNSATISFIED": 1,
+                      "CITY_STRUCTURE_SURFACE_CELL_WATER": 1
+                    },
+                    "failedAttemptPositions": [
+                      {
+                        "itemIndex": 1,
+                        "templateId": "geomantia:city/stubbs/residential/civilian_house_03",
+                        "anchorBlock": {
+                          "x": 2571,
+                          "z": 5807
+                        },
+                        "reasonCode": "CITY_STRUCTURE_SURFACE_CELL_WATER",
+                        "pattern": "patch_axis_band",
+                        "pivotPatchId": "minecraft:overworld:step.16:city.city_river_metropolis:p.1"
+                      }
+                    ],
+                    "hardBlocks": [
+                      "D4_ARRAY_COUNT_UNSATISFIED: homes_west_required_001 could not place 1 non-overlapping structures in candidatePatchRefs."
+                    ],
+                    "patchSelectionScope": "array_composition_slot"
+                  }
+                ],
+                "compilerFilterReasonCounts": {},
+                "status": "no_legal_candidate",
+                "reasonCode": "CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT"
+              },
+              "reasonCode": "CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT"
+            },
+            {
+              "groupId": "homes_west",
+              "structureRef": "geomantia:city/stubbs/residential/household_02",
+              "slotIndex": 1,
+              "required": false,
+              "status": "skipped_member",
+              "plannedOrigins": [
+                {
+                  "x": 2592,
+                  "z": 5849
+                }
+              ],
+              "plannedBounds": {
+                "minX": 2592,
+                "minZ": 5849,
+                "maxX": 2606,
+                "maxZ": 5863
+              },
+              "reasons": {
+                "sequence": 29,
+                "phase": "fill",
+                "groupId": "homes_west",
+                "structureRef": "geomantia:city/stubbs/residential/household_02",
+                "candidateCount": 0,
+                "attempts": [
+                  {
+                    "templateId": "geomantia:city/stubbs/residential/household_02",
+                    "variantId": "stubbs_v1",
+                    "passed": false,
+                    "candidateCount": 0,
+                    "filterReasonCounts": {
+                      "D4_ARRAY_COUNT_UNSATISFIED": 1,
+                      "CITY_STRUCTURE_SURFACE_CELL_WATER": 1
+                    },
+                    "failedAttemptPositions": [
+                      {
+                        "itemIndex": 1,
+                        "templateId": "geomantia:city/stubbs/residential/household_02",
+                        "anchorBlock": {
+                          "x": 2592,
+                          "z": 5849
+                        },
+                        "reasonCode": "CITY_STRUCTURE_SURFACE_CELL_WATER",
+                        "pattern": "patch_axis_band",
+                        "pivotPatchId": "minecraft:overworld:step.16:city.city_river_metropolis:p.1"
+                      }
+                    ],
+                    "hardBlocks": [
+                      "D4_ARRAY_COUNT_UNSATISFIED: homes_west_fill_002 could not place 1 non-overlapping structures in candidatePatchRefs."
+                    ],
+                    "patchSelectionScope": "array_composition_slot"
+                  }
+                ],
+                "compilerFilterReasonCounts": {},
+                "status": "no_legal_candidate",
+                "reasonCode": "CITY_BLUEPRINT_FILL_CAPACITY_EXHAUSTED"
+              },
+              "reasonCode": "CITY_BLUEPRINT_FILL_CAPACITY_EXHAUSTED"
+            },
+            {
+              "groupId": "homes_west",
+              "structureRef": "geomantia:city/stubbs/commercial/motel_01",
+              "slotIndex": 2,
+              "required": false,
+              "status": "skipped_member",
+              "plannedOrigins": [
+                {
+                  "x": 2550,
+                  "z": 5849
+                }
+              ],
+              "plannedBounds": {
+                "minX": 2550,
+                "minZ": 5849,
+                "maxX": 2579,
+                "maxZ": 5864
+              },
+              "reasons": {
+                "sequence": 30,
+                "phase": "fill",
+                "groupId": "homes_west",
+                "structureRef": "geomantia:city/stubbs/commercial/motel_01",
+                "candidateCount": 0,
+                "attempts": [
+                  {
+                    "templateId": "geomantia:city/stubbs/commercial/motel_01",
+                    "variantId": "stubbs_v1",
+                    "passed": false,
+                    "candidateCount": 0,
+                    "filterReasonCounts": {
+                      "D4_ARRAY_COUNT_UNSATISFIED": 1,
+                      "CITY_STRUCTURE_SURFACE_CELL_WATER": 1
+                    },
+                    "failedAttemptPositions": [
+                      {
+                        "itemIndex": 1,
+                        "templateId": "geomantia:city/stubbs/commercial/motel_01",
+                        "anchorBlock": {
+                          "x": 2550,
+                          "z": 5849
+                        },
+                        "reasonCode": "CITY_STRUCTURE_SURFACE_CELL_WATER",
+                        "pattern": "patch_axis_band",
+                        "pivotPatchId": "minecraft:overworld:step.16:city.city_river_metropolis:p.1"
+                      }
+                    ],
+                    "hardBlocks": [
+                      "D4_ARRAY_COUNT_UNSATISFIED: homes_west_fill_003 could not place 1 non-overlapping structures in candidatePatchRefs."
+                    ],
+                    "patchSelectionScope": "array_composition_slot"
+                  }
+                ],
+                "compilerFilterReasonCounts": {},
+                "status": "no_legal_candidate",
+                "reasonCode": "CITY_BLUEPRINT_FILL_CAPACITY_EXHAUSTED"
+              },
+              "reasonCode": "CITY_BLUEPRINT_FILL_CAPACITY_EXHAUSTED"
+            }
+          ],
+          "retainedBounds": {
+            "minX": 2592,
+            "minZ": 5891,
+            "maxX": 2606,
+            "maxZ": 5905
+          }
+        },
+        {
+          "groupId": "market",
+          "role": "commercial",
+          "algorithm": "LINEAR",
+          "plannedBuildingCount": 4,
+          "requestedBuildingCount": 4,
+          "retainedBuildingCount": 4,
+          "nested": true,
+          "empty": false,
+          "skippedMembers": [],
+          "retainedBounds": {
+            "minX": 1933,
+            "minZ": 5838,
+            "maxX": 2013,
+            "maxZ": 5964
+          }
+        },
+        {
+          "groupId": "craft_homes",
+          "role": "residential",
+          "algorithm": "COMPACT",
+          "plannedBuildingCount": 4,
+          "requestedBuildingCount": 4,
+          "retainedBuildingCount": 3,
+          "nested": true,
+          "empty": false,
+          "skippedMembers": [
+            {
+              "groupId": "craft_homes",
+              "structureRef": "geomantia:city/stubbs/commercial/motel_01",
+              "slotIndex": 2,
+              "required": false,
+              "status": "skipped_member",
+              "plannedOrigins": [
+                {
+                  "x": 1957,
+                  "z": 6173
+                }
+              ],
+              "plannedBounds": {
+                "minX": 1957,
+                "minZ": 6173,
+                "maxX": 1972,
+                "maxZ": 6202
+              },
+              "reasons": {
+                "sequence": 36,
+                "phase": "fill",
+                "groupId": "craft_homes",
+                "structureRef": "geomantia:city/stubbs/commercial/motel_01",
+                "candidateCount": 0,
+                "attempts": [
+                  {
+                    "templateId": "geomantia:city/stubbs/commercial/motel_01",
+                    "variantId": "stubbs_v1",
+                    "passed": false,
+                    "candidateCount": 0,
+                    "filterReasonCounts": {
+                      "D4_ARRAY_COUNT_UNSATISFIED": 1,
+                      "CITY_STRUCTURE_SURFACE_CELL_WATER": 1
+                    },
+                    "failedAttemptPositions": [
+                      {
+                        "itemIndex": 1,
+                        "templateId": "geomantia:city/stubbs/commercial/motel_01",
+                        "anchorBlock": {
+                          "x": 1957,
+                          "z": 6173
+                        },
+                        "reasonCode": "CITY_STRUCTURE_SURFACE_CELL_WATER",
+                        "pattern": "loose_cluster",
+                        "pivotPatchId": "minecraft:overworld:step.16:city.city_river_metropolis:p.979"
+                      }
+                    ],
+                    "hardBlocks": [
+                      "D4_ARRAY_COUNT_UNSATISFIED: craft_homes_fill_003 could not place 1 non-overlapping structures in candidatePatchRefs."
+                    ],
+                    "patchSelectionScope": "continuous_growth_from_selected_patch"
+                  }
+                ],
+                "compilerFilterReasonCounts": {},
+                "status": "no_legal_candidate",
+                "reasonCode": "CITY_BLUEPRINT_FILL_CAPACITY_EXHAUSTED"
+              },
+              "reasonCode": "CITY_BLUEPRINT_FILL_CAPACITY_EXHAUSTED"
+            }
+          ],
+          "retainedBounds": {
+            "minX": 1928,
+            "minZ": 6132,
+            "maxX": 2014,
+            "maxZ": 6175
+          }
+        },
+        {
+          "groupId": "market_homes",
+          "role": "residential",
+          "algorithm": "COURTYARD",
+          "plannedBuildingCount": 5,
+          "requestedBuildingCount": 5,
+          "retainedBuildingCount": 5,
+          "nested": true,
+          "empty": false,
+          "skippedMembers": [],
+          "retainedBounds": {
+            "minX": 1905,
+            "minZ": 5981,
+            "maxX": 2042,
+            "maxZ": 6104
+          }
+        }
+      ],
+      "instruction": "Review the actual preview and skipped members. Accept the result or revise intended groups; terrain gaps do not require replacing the whole city. No buildings are added for connection or area shares."
+    },
+    "failureCount": 0,
+    "maximumFailureCount": 5,
+    "remainingFailureCount": 5,
+    "retryAllowed": true,
+    "failureBudget": {
+      "schema": "city_blueprint_failure_budget",
+      "cityId": "city_river_metropolis",
+      "contextId": "sha256:856645a7e054cbc01a3f1bfa2360924b7fa6b130360f5fa60a14826ab3fa80b4",
+      "failureCount": 0,
+      "maximumFailureCount": 5,
+      "remainingFailureCount": 5,
+      "status": "open",
+      "retryAllowed": true,
+      "failures": [],
+      "createdAt": "2026-09-13T08:44:12.306419200Z",
+      "updatedAt": "2026-09-13T08:48:13.928394100Z"
+    },
+    "presentation": "planning_decision_view.v0.1"
+  }
+]

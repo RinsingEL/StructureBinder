@@ -1,0 +1,14 @@
+{
+  "tool": "patch_explorer_show_candidates",
+  "arguments": {
+    "runId": "city_scale_20260910",
+    "sessionId": "pex_abc8e163d29b472e9c855f57c23a0805",
+    "interestTypes": [
+      "shore",
+      "slope"
+    ],
+    "pageSize": 3
+  },
+  "reason": "复核同组TopPatch",
+  "outputChars": 1000
+}

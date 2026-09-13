@@ -1,0 +1,9 @@
+{
+  "reason": "明确LARGE_CITY进入D2",
+  "outputChars": 2000,
+  "arguments": {
+    "citySeedId": "city_river_metropolis",
+    "runId": "city_scale_20260910"
+  },
+  "tool": "city_plan_d2"
+}

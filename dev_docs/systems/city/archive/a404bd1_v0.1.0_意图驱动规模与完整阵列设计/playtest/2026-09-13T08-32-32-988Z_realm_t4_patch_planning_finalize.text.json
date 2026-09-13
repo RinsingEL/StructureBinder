@@ -1,0 +1,354 @@
+[
+  {
+    "ok": true,
+    "schema": "realm_t4_patch_planning_response",
+    "operation": "finalize",
+    "runId": "city_scale_20260910",
+    "planningSessionId": "t4ps_7d9e5ffad8734c2992ab559f1416f562",
+    "status": "finalized",
+    "planningSession": {
+      "schema": "realm_t4_patch_planning_session",
+      "planningSessionId": "t4ps_7d9e5ffad8734c2992ab559f1416f562",
+      "runId": "city_scale_20260910",
+      "realmId": "realm_scale",
+      "territoryMapId": "territory_city_scale_20260910",
+      "territoryIdentity": "sha256:2e1424be5026cff93394ec949beba43a646b15d06d794ee874698293d8df5681",
+      "status": "finalized",
+      "createdAt": "2026-09-13T08:30:20.655513500Z",
+      "updatedAt": "2026-09-13T08:32:34.899624800Z",
+      "capitalIntent": {
+        "citySeedId": "city_realm_scale_capital",
+        "realmId": "realm_scale",
+        "cityRole": "capital",
+        "theoreticalScale": "capital",
+        "mustExist": true,
+        "requiredConditions": [
+          "land",
+          "inside_realm"
+        ],
+        "coreFunctions": [
+          "administration",
+          "market",
+          "defense"
+        ],
+        "realmCoreSelectionId": "selection_realm_scale",
+        "sourceMode": "t2_realm_core_intent",
+        "migrationMode": "none"
+      },
+      "capitalSelectionStatus": "selected",
+      "citySeeds": [
+        {
+          "citySeedId": "city_realm_scale_capital",
+          "realmId": "realm_scale",
+          "role": "capital",
+          "theoreticalScale": "capital",
+          "anchorGrid": {
+            "x": -16,
+            "z": 34
+          },
+          "anchorBlock": {
+            "x": -1936,
+            "z": 4464
+          },
+          "candidateRangeCells": 4,
+          "planningRadiusCells": 4,
+          "subregionId": "realm_scale_patch_shore-01",
+          "candidateId": "SHORE-01",
+          "graphDistanceToNearestCity": -1,
+          "requiredConditions": [
+            "land",
+            "inside_realm"
+          ],
+          "coreFunctions": [
+            "administration",
+            "market",
+            "defense"
+          ],
+          "trigger": "always",
+          "source": {
+            "reason": "AI selected Patch Explorer candidate",
+            "patchSelectionRef": "psel_d74fe8b2ff66c2cc0cc82e3bc554d9b3a66e1ec5198b3c363afb8f0c1d7281e2",
+            "patchCandidateId": "SHORE-01",
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.32:t.sha256_3ebe73f809da4982f6486da91b5b13384bd89b6c5622ebeb220092deea525561:p.523"
+            ],
+            "selectionStage": "realm_t4",
+            "siteSelectionMode": "ai_candidate_selection"
+          },
+          "designBounds": {
+            "minX": -2704,
+            "minZ": 3696,
+            "maxX": -1168,
+            "maxZ": 5232
+          },
+          "protectionBounds": {
+            "minX": -3089,
+            "minZ": 3311,
+            "maxX": -783,
+            "maxZ": 5617
+          }
+        },
+        {
+          "citySeedId": "city_river_metropolis",
+          "realmId": "realm_scale",
+          "role": "trade",
+          "theoreticalScale": "large_city",
+          "anchorGrid": {
+            "x": 17,
+            "z": 44
+          },
+          "anchorBlock": {
+            "x": 2192,
+            "z": 5744
+          },
+          "candidateRangeCells": 4,
+          "planningRadiusCells": 3,
+          "subregionId": "realm_scale_patch_shore-03",
+          "candidateId": "SHORE-03",
+          "graphDistanceToNearestCity": 34.48187929913333,
+          "requiredConditions": [
+            "land",
+            "inside_realm"
+          ],
+          "coreFunctions": [
+            "market",
+            "residential",
+            "agriculture"
+          ],
+          "trigger": "realm_development",
+          "source": {
+            "reason": "AI selected Patch Explorer candidate",
+            "patchSelectionRef": "psel_ad57ed3bd7ce215153a95defff7a3efaea5f6300c2e2bae9abf295a410c17b6f",
+            "patchCandidateId": "SHORE-03",
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.32:t.sha256_3ebe73f809da4982f6486da91b5b13384bd89b6c5622ebeb220092deea525561:p.1215"
+            ],
+            "selectionStage": "realm_t4",
+            "siteSelectionMode": "ai_candidate_selection"
+          },
+          "designBounds": {
+            "minX": 1424,
+            "minZ": 4976,
+            "maxX": 2960,
+            "maxZ": 6512
+          },
+          "protectionBounds": {
+            "minX": 1039,
+            "minZ": 4591,
+            "maxX": 3345,
+            "maxZ": 6897
+          }
+        }
+      ],
+      "usedPatchSelectionRefs": [
+        "psel_d74fe8b2ff66c2cc0cc82e3bc554d9b3a66e1ec5198b3c363afb8f0c1d7281e2",
+        "psel_ad57ed3bd7ce215153a95defff7a3efaea5f6300c2e2bae9abf295a410c17b6f"
+      ],
+      "finalizedAt": "2026-09-13T08:32:34.899624800Z",
+      "citySeedRegistry": "city_scale_20260910/city_seed_registry.json"
+    },
+    "artifacts": {
+      "runDirectory": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910",
+      "worldSurveyContext": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910\\world_survey_context.json",
+      "worldPatchMap": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910\\world_patch_map.json",
+      "worldPatchPreview": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910\\world_patch_preview.png",
+      "gridOverlayPreview": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910\\grid_overlay_preview.png",
+      "worldBiomePreview": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910\\world_biome_preview.png",
+      "wManifest": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910\\w_manifest.json",
+      "worldFeatureGrid": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910\\world_feature_grid.json",
+      "worldSurveyManifest": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910\\world_survey_manifest.json",
+      "realmProfiles": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910\\realm_profiles.json",
+      "candidateMapPackages": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910\\candidate_map_packages.json",
+      "t1Manifest": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910\\t1_manifest.json",
+      "realmCoordinateSelections": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910\\realm_coordinate_selections.json",
+      "realmSeeds": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910\\realm_seeds.json",
+      "capitalCityIntents": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910\\capital_city_intents.json",
+      "t2Report": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910\\t2_report.json",
+      "realmTerritoryMap": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910\\realm_territory_map.json",
+      "territoryPreview": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910\\territory_preview.png",
+      "t3Report": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910\\t3_report.json",
+      "territoryRepairLog": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910\\territory_repair_log.json",
+      "citySeedRegistry": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910\\city_seed_registry.json",
+      "citySeedPreview": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910\\city_seed_preview.png",
+      "t4Report": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910\\t4_report.json",
+      "realmCityCandidatePackages": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910\\realm_city_candidate_packages.json",
+      "scoreManifest": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_large_20260913\\realm_debug\\city_scale_20260910\\score_manifest.json"
+    },
+    "citySeedRegistry": {
+      "registryId": "registry_city_scale_20260910",
+      "surveyId": "survey_city_scale_20260910",
+      "territoryMapId": "territory_city_scale_20260910",
+      "citySeeds": [
+        {
+          "citySeedId": "city_realm_scale_capital",
+          "realmId": "realm_scale",
+          "role": "capital",
+          "theoreticalScale": "capital",
+          "anchorGrid": {
+            "x": -16,
+            "z": 34
+          },
+          "anchorBlock": {
+            "x": -1936,
+            "z": 4464
+          },
+          "candidateRangeCells": 4,
+          "planningRadiusCells": 4,
+          "subregionId": "realm_scale_patch_shore-01",
+          "candidateId": "SHORE-01",
+          "graphDistanceToNearestCity": -1,
+          "requiredConditions": [
+            "land",
+            "inside_realm"
+          ],
+          "coreFunctions": [
+            "administration",
+            "market",
+            "defense"
+          ],
+          "trigger": "always",
+          "source": {
+            "reason": "AI selected Patch Explorer candidate",
+            "patchSelectionRef": "psel_d74fe8b2ff66c2cc0cc82e3bc554d9b3a66e1ec5198b3c363afb8f0c1d7281e2",
+            "patchCandidateId": "SHORE-01",
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.32:t.sha256_3ebe73f809da4982f6486da91b5b13384bd89b6c5622ebeb220092deea525561:p.523"
+            ],
+            "selectionStage": "realm_t4",
+            "siteSelectionMode": "ai_candidate_selection"
+          },
+          "designBounds": {
+            "minX": -2704,
+            "minZ": 3696,
+            "maxX": -1168,
+            "maxZ": 5232
+          },
+          "protectionBounds": {
+            "minX": -3089,
+            "minZ": 3311,
+            "maxX": -783,
+            "maxZ": 5617
+          }
+        },
+        {
+          "citySeedId": "city_river_metropolis",
+          "realmId": "realm_scale",
+          "role": "trade",
+          "theoreticalScale": "large_city",
+          "anchorGrid": {
+            "x": 17,
+            "z": 44
+          },
+          "anchorBlock": {
+            "x": 2192,
+            "z": 5744
+          },
+          "candidateRangeCells": 4,
+          "planningRadiusCells": 3,
+          "subregionId": "realm_scale_patch_shore-03",
+          "candidateId": "SHORE-03",
+          "graphDistanceToNearestCity": 34.48187929913333,
+          "requiredConditions": [
+            "land",
+            "inside_realm"
+          ],
+          "coreFunctions": [
+            "market",
+            "residential",
+            "agriculture"
+          ],
+          "trigger": "realm_development",
+          "source": {
+            "reason": "AI selected Patch Explorer candidate",
+            "patchSelectionRef": "psel_ad57ed3bd7ce215153a95defff7a3efaea5f6300c2e2bae9abf295a410c17b6f",
+            "patchCandidateId": "SHORE-03",
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.32:t.sha256_3ebe73f809da4982f6486da91b5b13384bd89b6c5622ebeb220092deea525561:p.1215"
+            ],
+            "selectionStage": "realm_t4",
+            "siteSelectionMode": "ai_candidate_selection"
+          },
+          "designBounds": {
+            "minX": 1424,
+            "minZ": 4976,
+            "maxX": 2960,
+            "maxZ": 6512
+          },
+          "protectionBounds": {
+            "minX": 1039,
+            "minZ": 4591,
+            "maxX": 3345,
+            "maxZ": 6897
+          }
+        }
+      ],
+      "finalizedTerritoryIdentity": "sha256:2e1424be5026cff93394ec949beba43a646b15d06d794ee874698293d8df5681",
+      "finalizedRealmIds": [
+        "realm_scale"
+      ]
+    },
+    "nextActions": [
+      "rerun_acceptance"
+    ],
+    "cityDesignQueue": {
+      "schema": "city_design_queue.v0.1",
+      "runId": "city_scale_20260910",
+      "enabled": true,
+      "orderingMode": "realm_grouped",
+      "createdAt": "2026-09-13T08:32:34.905132600Z",
+      "items": [
+        {
+          "ordinal": 0,
+          "citySeedId": "city_realm_scale_capital",
+          "realmId": "realm_scale",
+          "role": "capital",
+          "anchorBlock": {
+            "x": -1936,
+            "z": 4464
+          },
+          "originDistanceBlocks": 4865.736532119264,
+          "status": "waiting_for_agent",
+          "reasonCode": "NEXT_CITY_BY_PRIORITY",
+          "updatedAt": "2026-09-13T08:32:34.905132600Z"
+        },
+        {
+          "ordinal": 1,
+          "citySeedId": "city_river_metropolis",
+          "realmId": "realm_scale",
+          "role": "trade",
+          "anchorBlock": {
+            "x": 2192,
+            "z": 5744
+          },
+          "originDistanceBlocks": 6148.040338189072,
+          "status": "pending",
+          "reasonCode": "WAITING_FOR_PREVIOUS_CITY",
+          "updatedAt": "2026-09-13T08:32:34.905132600Z"
+        }
+      ],
+      "completedCount": 0,
+      "remainingCount": 2,
+      "updatedAt": "2026-09-13T08:32:34.905132600Z",
+      "status": "waiting_for_agent",
+      "currentCitySeedId": "city_realm_scale_capital",
+      "nextAction": "city_plan_d3",
+      "ok": true,
+      "statePath": "city_scale_20260910/automation/city_design_queue.json",
+      "currentCity": {
+        "ordinal": 0,
+        "citySeedId": "city_realm_scale_capital",
+        "realmId": "realm_scale",
+        "role": "capital",
+        "anchorBlock": {
+          "x": -1936,
+          "z": 4464
+        },
+        "originDistanceBlocks": 4865.736532119264,
+        "status": "waiting_for_agent",
+        "reasonCode": "NEXT_CITY_BY_PRIORITY",
+        "updatedAt": "2026-09-13T08:32:34.905132600Z"
+      }
+    },
+    "presentation": "planning_decision_view.v0.1"
+  }
+]

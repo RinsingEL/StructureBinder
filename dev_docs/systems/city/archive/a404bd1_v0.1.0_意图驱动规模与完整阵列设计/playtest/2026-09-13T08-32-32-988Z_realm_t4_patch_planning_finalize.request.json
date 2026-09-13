@@ -1,0 +1,9 @@
+{
+  "tool": "realm_t4_patch_planning_finalize",
+  "arguments": {
+    "runId": "city_scale_20260910",
+    "planningSessionId": "t4ps_7d9e5ffad8734c2992ab559f1416f562"
+  },
+  "reason": "封存测试名册",
+  "outputChars": 1000
+}

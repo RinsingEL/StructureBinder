@@ -1,0 +1,9 @@
+{
+  "reason": "进入大城市D2",
+  "outputChars": 2000,
+  "arguments": {
+    "citySeedId": "city_realm_scale_capital",
+    "runId": "city_scale_20260910"
+  },
+  "tool": "city_plan_d2"
+}

@@ -1,0 +1,626 @@
+[
+  {
+    "ok": true,
+    "schema": "patch_explorer_response",
+    "operation": "show_candidates",
+    "runId": "city_scale_20260910",
+    "sessionId": "pex_e0a57c0bd55f4394b8bf3b534953949b",
+    "status": "patch_review_completed",
+    "scopeType": "city_d4",
+    "scopeId": "city_river_metropolis",
+    "sourceIdentity": "sha256:64e45da9fe075593054afc45093c4bd75a0ca4bc250e15b4671dba6bfc9aa032",
+    "patchTypePalette": {
+      "schema": "landform_patch_palette",
+      "colors": {
+        "water": "#2196F3",
+        "shore": "#FFEB3B",
+        "plain": "#4CAF50",
+        "terrace": "#8BC34A",
+        "slope": "#FF9800",
+        "cliff": "#795548",
+        "ridge": "#9C27B0",
+        "valley": "#00BCD4",
+        "basin": "#607D8B",
+        "unknown": "#9E9E9E"
+      }
+    },
+    "typePages": [
+      {
+        "patchType": "shore",
+        "color": "#FFEB3B",
+        "page": 0,
+        "pageSize": 3,
+        "totalCandidates": 276,
+        "hasPrevious": false,
+        "hasNext": true,
+        "nextPageToken": "MTozOjU2MjNjMzZlMDkxZDphYmQ0ZjQyYmRhMTA",
+        "candidates": [
+          {
+            "candidateId": "SHORE-01",
+            "patchType": "shore",
+            "displayName": "Shore",
+            "candidateBasis": "d3_landform_patch",
+            "areaBlocks": 23040,
+            "largestContinuousAreaBlocks": 23040,
+            "originalAreaBlocks": 23040,
+            "cellCount": 90,
+            "hardLegal": true,
+            "hardLegalMeaning": "candidate_has_available_cells_only",
+            "structurePlacementCapacity": {
+              "evidenceResolution": "coarse_member_cells",
+              "cellStepBlocks": 16,
+              "maxSolidRectangleWidthCells": 7,
+              "maxSolidRectangleDepthCells": 3,
+              "maxSolidRectangleAreaCells": 21,
+              "maxSolidRectangleWidthBlocks": 112,
+              "maxSolidRectangleDepthBlocks": 48,
+              "maxSolidSquareSpanBlocks": 48,
+              "guaranteesTemplateFit": false,
+              "agentGuidance": "Before Blueprint submission, compare required template width/depth plus clearance and Group spatial demand against this coarse capacity and areaBlocks. hardLegal only means the patch is non-empty; it does not prove that a required structure or Group can be placed."
+            },
+            "confidence": 0.8,
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.16:city.city_river_metropolis:p.1075"
+            ],
+            "bounds": {
+              "grid": {
+                "minX": 137,
+                "minZ": 381,
+                "maxX": 160,
+                "maxZ": 397
+              },
+              "block": {
+                "minX": 2192,
+                "minZ": 6096,
+                "maxX": 2575,
+                "maxZ": 6367
+              }
+            },
+            "center": {
+              "gridX": 147.67777777777778,
+              "gridZ": 389.6666666666667,
+              "blockX": 2363,
+              "blockZ": 6235
+            },
+            "suggestedAnchor": {
+              "gridX": 153,
+              "gridZ": 389,
+              "blockX": 2456,
+              "blockZ": 6232,
+              "method": "max_boundary_clearance_within_candidate"
+            },
+            "terrainMetrics": {
+              "meanConfidence": 0.8,
+              "geometrySource": "member_cells"
+            },
+            "terrainComposition": {
+              "shore": {
+                "cellCount": 90,
+                "ratio": 1
+              }
+            },
+            "baseLandformComposition": {
+              "shore": {
+                "cellCount": 90,
+                "ratio": 1
+              }
+            }
+          },
+          {
+            "candidateId": "SHORE-02",
+            "patchType": "shore",
+            "displayName": "Shore",
+            "candidateBasis": "d3_landform_patch",
+            "areaBlocks": 23040,
+            "largestContinuousAreaBlocks": 23040,
+            "originalAreaBlocks": 23040,
+            "cellCount": 90,
+            "hardLegal": true,
+            "hardLegalMeaning": "candidate_has_available_cells_only",
+            "structurePlacementCapacity": {
+              "evidenceResolution": "coarse_member_cells",
+              "cellStepBlocks": 16,
+              "maxSolidRectangleWidthCells": 4,
+              "maxSolidRectangleDepthCells": 4,
+              "maxSolidRectangleAreaCells": 16,
+              "maxSolidRectangleWidthBlocks": 64,
+              "maxSolidRectangleDepthBlocks": 64,
+              "maxSolidSquareSpanBlocks": 64,
+              "guaranteesTemplateFit": false,
+              "agentGuidance": "Before Blueprint submission, compare required template width/depth plus clearance and Group spatial demand against this coarse capacity and areaBlocks. hardLegal only means the patch is non-empty; it does not prove that a required structure or Group can be placed."
+            },
+            "confidence": 0.8,
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.16:city.city_river_metropolis:p.998"
+            ],
+            "bounds": {
+              "grid": {
+                "minX": 150,
+                "minZ": 352,
+                "maxX": 167,
+                "maxZ": 364
+              },
+              "block": {
+                "minX": 2400,
+                "minZ": 5632,
+                "maxX": 2687,
+                "maxZ": 5839
+              }
+            },
+            "center": {
+              "gridX": 158.67777777777778,
+              "gridZ": 359.06666666666666,
+              "blockX": 2539,
+              "blockZ": 5745
+            },
+            "suggestedAnchor": {
+              "gridX": 162,
+              "gridZ": 353,
+              "blockX": 2600,
+              "blockZ": 5656,
+              "method": "max_boundary_clearance_within_candidate"
+            },
+            "terrainMetrics": {
+              "meanConfidence": 0.8,
+              "geometrySource": "member_cells"
+            },
+            "terrainComposition": {
+              "shore": {
+                "cellCount": 90,
+                "ratio": 1
+              }
+            },
+            "baseLandformComposition": {
+              "shore": {
+                "cellCount": 90,
+                "ratio": 1
+              }
+            }
+          },
+          {
+            "candidateId": "SHORE-03",
+            "patchType": "shore",
+            "displayName": "Shore",
+            "candidateBasis": "d3_landform_patch",
+            "areaBlocks": 21504,
+            "largestContinuousAreaBlocks": 21504,
+            "originalAreaBlocks": 21504,
+            "cellCount": 84,
+            "hardLegal": true,
+            "hardLegalMeaning": "candidate_has_available_cells_only",
+            "structurePlacementCapacity": {
+              "evidenceResolution": "coarse_member_cells",
+              "cellStepBlocks": 16,
+              "maxSolidRectangleWidthCells": 2,
+              "maxSolidRectangleDepthCells": 12,
+              "maxSolidRectangleAreaCells": 24,
+              "maxSolidRectangleWidthBlocks": 32,
+              "maxSolidRectangleDepthBlocks": 192,
+              "maxSolidSquareSpanBlocks": 32,
+              "guaranteesTemplateFit": false,
+              "agentGuidance": "Before Blueprint submission, compare required template width/depth plus clearance and Group spatial demand against this coarse capacity and areaBlocks. hardLegal only means the patch is non-empty; it does not prove that a required structure or Group can be placed."
+            },
+            "confidence": 0.8,
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.16:city.city_river_metropolis:p.676"
+            ],
+            "bounds": {
+              "grid": {
+                "minX": 169,
+                "minZ": 346,
+                "maxX": 181,
+                "maxZ": 365
+              },
+              "block": {
+                "minX": 2704,
+                "minZ": 5536,
+                "maxX": 2911,
+                "maxZ": 5855
+              }
+            },
+            "center": {
+              "gridX": 174.6547619047619,
+              "gridZ": 357.5952380952381,
+              "blockX": 2794,
+              "blockZ": 5722
+            },
+            "suggestedAnchor": {
+              "gridX": 175,
+              "gridZ": 348,
+              "blockX": 2808,
+              "blockZ": 5576,
+              "method": "max_boundary_clearance_within_candidate"
+            },
+            "terrainMetrics": {
+              "meanConfidence": 0.8,
+              "geometrySource": "member_cells"
+            },
+            "terrainComposition": {
+              "shore": {
+                "cellCount": 84,
+                "ratio": 1
+              }
+            },
+            "baseLandformComposition": {
+              "shore": {
+                "cellCount": 84,
+                "ratio": 1
+              }
+            }
+          }
+        ]
+      },
+      {
+        "patchType": "slope",
+        "color": "#FF9800",
+        "page": 0,
+        "pageSize": 3,
+        "totalCandidates": 293,
+        "hasPrevious": false,
+        "hasNext": true,
+        "nextPageToken": "MTozOjU2MjNjMzZlMDkxZDphYmQ0ZjQyYmRhMTA",
+        "candidates": [
+          {
+            "candidateId": "SLOPE-01",
+            "patchType": "slope",
+            "displayName": "Slope",
+            "candidateBasis": "d3_landform_patch",
+            "areaBlocks": 12544,
+            "largestContinuousAreaBlocks": 12544,
+            "originalAreaBlocks": 12544,
+            "cellCount": 49,
+            "hardLegal": true,
+            "hardLegalMeaning": "candidate_has_available_cells_only",
+            "structurePlacementCapacity": {
+              "evidenceResolution": "coarse_member_cells",
+              "cellStepBlocks": 16,
+              "maxSolidRectangleWidthCells": 7,
+              "maxSolidRectangleDepthCells": 3,
+              "maxSolidRectangleAreaCells": 21,
+              "maxSolidRectangleWidthBlocks": 112,
+              "maxSolidRectangleDepthBlocks": 48,
+              "maxSolidSquareSpanBlocks": 48,
+              "guaranteesTemplateFit": false,
+              "agentGuidance": "Before Blueprint submission, compare required template width/depth plus clearance and Group spatial demand against this coarse capacity and areaBlocks. hardLegal only means the patch is non-empty; it does not prove that a required structure or Group can be placed."
+            },
+            "confidence": 0.8,
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.16:city.city_river_metropolis:p.1462"
+            ],
+            "bounds": {
+              "grid": {
+                "minX": 133,
+                "minZ": 392,
+                "maxX": 142,
+                "maxZ": 400
+              },
+              "block": {
+                "minX": 2128,
+                "minZ": 6272,
+                "maxX": 2287,
+                "maxZ": 6415
+              }
+            },
+            "center": {
+              "gridX": 137.3265306122449,
+              "gridZ": 395.3061224489796,
+              "blockX": 2197,
+              "blockZ": 6325
+            },
+            "suggestedAnchor": {
+              "gridX": 137,
+              "gridZ": 396,
+              "blockX": 2200,
+              "blockZ": 6344,
+              "method": "max_boundary_clearance_within_candidate"
+            },
+            "terrainMetrics": {
+              "meanConfidence": 0.8,
+              "geometrySource": "member_cells"
+            },
+            "terrainComposition": {
+              "slope": {
+                "cellCount": 49,
+                "ratio": 1
+              }
+            },
+            "baseLandformComposition": {
+              "slope": {
+                "cellCount": 49,
+                "ratio": 1
+              }
+            }
+          },
+          {
+            "candidateId": "SLOPE-02",
+            "patchType": "slope",
+            "displayName": "Slope",
+            "candidateBasis": "d3_landform_patch",
+            "areaBlocks": 12032,
+            "largestContinuousAreaBlocks": 12032,
+            "originalAreaBlocks": 12032,
+            "cellCount": 47,
+            "hardLegal": true,
+            "hardLegalMeaning": "candidate_has_available_cells_only",
+            "structurePlacementCapacity": {
+              "evidenceResolution": "coarse_member_cells",
+              "cellStepBlocks": 16,
+              "maxSolidRectangleWidthCells": 4,
+              "maxSolidRectangleDepthCells": 2,
+              "maxSolidRectangleAreaCells": 8,
+              "maxSolidRectangleWidthBlocks": 64,
+              "maxSolidRectangleDepthBlocks": 32,
+              "maxSolidSquareSpanBlocks": 32,
+              "guaranteesTemplateFit": false,
+              "agentGuidance": "Before Blueprint submission, compare required template width/depth plus clearance and Group spatial demand against this coarse capacity and areaBlocks. hardLegal only means the patch is non-empty; it does not prove that a required structure or Group can be placed."
+            },
+            "confidence": 0.8,
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.16:city.city_river_metropolis:p.392"
+            ],
+            "bounds": {
+              "grid": {
+                "minX": 122,
+                "minZ": 332,
+                "maxX": 132,
+                "maxZ": 339
+              },
+              "block": {
+                "minX": 1952,
+                "minZ": 5312,
+                "maxX": 2127,
+                "maxZ": 5439
+              }
+            },
+            "center": {
+              "gridX": 126.19148936170212,
+              "gridZ": 336.27659574468083,
+              "blockX": 2019,
+              "blockZ": 5380
+            },
+            "suggestedAnchor": {
+              "gridX": 124,
+              "gridZ": 334,
+              "blockX": 1992,
+              "blockZ": 5352,
+              "method": "max_boundary_clearance_within_candidate"
+            },
+            "terrainMetrics": {
+              "meanConfidence": 0.8,
+              "geometrySource": "member_cells"
+            },
+            "terrainComposition": {
+              "slope": {
+                "cellCount": 47,
+                "ratio": 1
+              }
+            },
+            "baseLandformComposition": {
+              "slope": {
+                "cellCount": 47,
+                "ratio": 1
+              }
+            }
+          },
+          {
+            "candidateId": "SLOPE-03",
+            "patchType": "slope",
+            "displayName": "Slope",
+            "candidateBasis": "d3_landform_patch",
+            "areaBlocks": 9472,
+            "largestContinuousAreaBlocks": 9472,
+            "originalAreaBlocks": 9472,
+            "cellCount": 37,
+            "hardLegal": true,
+            "hardLegalMeaning": "candidate_has_available_cells_only",
+            "structurePlacementCapacity": {
+              "evidenceResolution": "coarse_member_cells",
+              "cellStepBlocks": 16,
+              "maxSolidRectangleWidthCells": 4,
+              "maxSolidRectangleDepthCells": 2,
+              "maxSolidRectangleAreaCells": 8,
+              "maxSolidRectangleWidthBlocks": 64,
+              "maxSolidRectangleDepthBlocks": 32,
+              "maxSolidSquareSpanBlocks": 32,
+              "guaranteesTemplateFit": false,
+              "agentGuidance": "Before Blueprint submission, compare required template width/depth plus clearance and Group spatial demand against this coarse capacity and areaBlocks. hardLegal only means the patch is non-empty; it does not prove that a required structure or Group can be placed."
+            },
+            "confidence": 0.8,
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.16:city.city_river_metropolis:p.938"
+            ],
+            "bounds": {
+              "grid": {
+                "minX": 121,
+                "minZ": 366,
+                "maxX": 131,
+                "maxZ": 375
+              },
+              "block": {
+                "minX": 1936,
+                "minZ": 5856,
+                "maxX": 2111,
+                "maxZ": 6015
+              }
+            },
+            "center": {
+              "gridX": 124.91891891891892,
+              "gridZ": 370.13513513513516,
+              "blockX": 1999,
+              "blockZ": 5922
+            },
+            "suggestedAnchor": {
+              "gridX": 124,
+              "gridZ": 367,
+              "blockX": 1992,
+              "blockZ": 5880,
+              "method": "max_boundary_clearance_within_candidate"
+            },
+            "terrainMetrics": {
+              "meanConfidence": 0.8,
+              "geometrySource": "member_cells"
+            },
+            "terrainComposition": {
+              "slope": {
+                "cellCount": 37,
+                "ratio": 1
+              }
+            },
+            "baseLandformComposition": {
+              "slope": {
+                "cellCount": 37,
+                "ratio": 1
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "relations": [
+      {
+        "candidateId": "SHORE-01",
+        "otherCandidateId": "SLOPE-01",
+        "adjacent": true,
+        "intersects": false,
+        "contains": false,
+        "containedBy": false,
+        "separated": false,
+        "boundaryDistanceCells": 0,
+        "boundaryDistanceBlocks": 0,
+        "centerDistanceCells": 11.787780936317683,
+        "centerDistanceBlocks": 188.60449498108292,
+        "direction": "southwest",
+        "sharedBoundaryCells": 6,
+        "sharedBoundaryBlocks": 96,
+        "contactRatio": 0.05454545454545454,
+        "closestContactPoint": {
+          "gridX": 141,
+          "gridZ": 391,
+          "blockX": 2256,
+          "blockZ": 6256
+        }
+      },
+      {
+        "candidateId": "SHORE-02",
+        "otherCandidateId": "SLOPE-03",
+        "adjacent": false,
+        "intersects": false,
+        "contains": false,
+        "containedBy": false,
+        "separated": true,
+        "boundaryDistanceCells": 25,
+        "boundaryDistanceBlocks": 400,
+        "centerDistanceCells": 35.527053715300326,
+        "centerDistanceBlocks": 568.4328594448052,
+        "direction": "southwest",
+        "sharedBoundaryCells": 0,
+        "sharedBoundaryBlocks": 0,
+        "contactRatio": 0,
+        "closestContactPoint": {
+          "gridX": 140,
+          "gridZ": 365,
+          "blockX": 2240,
+          "blockZ": 5840
+        }
+      },
+      {
+        "candidateId": "SHORE-03",
+        "otherCandidateId": "SLOPE-03",
+        "adjacent": false,
+        "intersects": false,
+        "contains": false,
+        "containedBy": false,
+        "separated": true,
+        "boundaryDistanceCells": 42,
+        "boundaryDistanceBlocks": 672,
+        "centerDistanceCells": 51.29232978997587,
+        "centerDistanceBlocks": 820.6772766396139,
+        "direction": "southwest",
+        "sharedBoundaryCells": 0,
+        "sharedBoundaryBlocks": 0,
+        "contactRatio": 0,
+        "closestContactPoint": {
+          "gridX": 150,
+          "gridZ": 366,
+          "blockX": 2400,
+          "blockZ": 5856
+        }
+      },
+      {
+        "candidateId": "SLOPE-02",
+        "otherCandidateId": "SHORE-02",
+        "adjacent": false,
+        "intersects": false,
+        "contains": false,
+        "containedBy": false,
+        "separated": true,
+        "boundaryDistanceCells": 39,
+        "boundaryDistanceBlocks": 624,
+        "centerDistanceCells": 39.6830728104767,
+        "centerDistanceBlocks": 634.9291649676272,
+        "direction": "southeast",
+        "sharedBoundaryCells": 0,
+        "sharedBoundaryBlocks": 0,
+        "contactRatio": 0,
+        "closestContactPoint": {
+          "gridX": 141,
+          "gridZ": 349,
+          "blockX": 2256,
+          "blockZ": 5584
+        }
+      },
+      {
+        "candidateId": "SLOPE-03",
+        "otherCandidateId": "SHORE-01",
+        "adjacent": false,
+        "intersects": false,
+        "contains": false,
+        "containedBy": false,
+        "separated": true,
+        "boundaryDistanceCells": 18,
+        "boundaryDistanceBlocks": 288,
+        "centerDistanceCells": 29.99077158935176,
+        "centerDistanceBlocks": 479.85234542962814,
+        "direction": "southeast",
+        "sharedBoundaryCells": 0,
+        "sharedBoundaryBlocks": 0,
+        "contactRatio": 0,
+        "closestContactPoint": {
+          "gridX": 134,
+          "gridZ": 375,
+          "blockX": 2144,
+          "blockZ": 6000
+        }
+      }
+    ],
+    "artifacts": {
+      "explorationSession": "city_scale_20260910/patch_explorer_pex_e0a57c0bd55f4394b8bf3b534953949b/patch_explorer_session.json",
+      "candidatePage": "city_scale_20260910/patch_explorer_pex_e0a57c0bd55f4394b8bf3b534953949b/candidate_page_600964cc3523.json",
+      "terrainOverview": "city_scale_20260910/patch_explorer_pex_e0a57c0bd55f4394b8bf3b534953949b/terrain_overview.png",
+      "allPatchesOverview": "city_scale_20260910/patch_explorer_pex_e0a57c0bd55f4394b8bf3b534953949b/all_patches_overview.png",
+      "biomeOverview": "city_scale_20260910/patch_explorer_pex_e0a57c0bd55f4394b8bf3b534953949b/biome_overview.png",
+      "topPatchesOverview": "city_scale_20260910/patch_explorer_pex_e0a57c0bd55f4394b8bf3b534953949b/top_patches_overview_600964cc3523.png"
+    },
+    "nextActions": [
+      "city_prepare_d4_blueprint_context"
+    ],
+    "patchReviewEvidence": {
+      "schema": "city_d4_patch_review",
+      "status": "reviewed",
+      "sessionId": "pex_e0a57c0bd55f4394b8bf3b534953949b",
+      "sourceIdentity": "sha256:64e45da9fe075593054afc45093c4bd75a0ca4bc250e15b4671dba6bfc9aa032",
+      "interestTypes": [
+        "shore",
+        "slope"
+      ],
+      "topPatchesOverview": "city_scale_20260910/patch_explorer_pex_e0a57c0bd55f4394b8bf3b534953949b/top_patches_overview_600964cc3523.png",
+      "reviewStateRef": "city_scale_20260910/city_test_runs/city_river_metropolis/steps/d3/patch_review_state.json"
+    },
+    "reasonCode": "PATCH_REVIEW_COMPLETED",
+    "nextAction": "city_prepare_d4_blueprint_context",
+    "nextActionDetails": {
+      "tool": "city_prepare_d4_blueprint_context"
+    },
+    "presentation": "planning_decision_view.v0.1"
+  }
+]

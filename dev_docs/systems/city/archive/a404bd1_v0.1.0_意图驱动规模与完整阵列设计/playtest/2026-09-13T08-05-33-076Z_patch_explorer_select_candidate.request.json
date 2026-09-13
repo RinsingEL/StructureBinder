@@ -1,0 +1,11 @@
+{
+  "outputChars": 2600,
+  "tool": "patch_explorer_select_candidate",
+  "arguments": {
+    "runId": "city_scale_20260910",
+    "sessionId": "pex_dd22e2c7a1394bf898a4332c7bd208ec",
+    "candidateId": "SHORE-01",
+    "selectionReason": "南部最大连续岸地作为首都，多个紧凑嵌套街区沿岸组合"
+  },
+  "reason": "选择首都候选并取得局部确认图"
+}

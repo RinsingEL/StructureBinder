@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"ok\":true,\"stage\":\"status\",\"runId\":\"\",\"warnings\":[],\"errors\":[],\"serviceReady\":true,\"debugRoot\":\"E:\\\\Mod_Dev\\\\StructureBinder\\\\run\\\\saves\\\\RTF_intent_nested_20260913\\\\realm_debug\",\"availableStages\":[\"W\",\"T1\",\"T2\",\"T3\",\"T4\",\"acceptance\"],\"gisReady\":true,\"knownRuns\":[],\"presentation\":\"planning_decision_view.v0.1\"}"
+    }
+  ],
+  "isError": false
+}

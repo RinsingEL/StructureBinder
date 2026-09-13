@@ -1,0 +1,6 @@
+{
+  "tool": "realm_status",
+  "arguments": {},
+  "reason": "确认测试端已加载的世界和可复用 run",
+  "outputChars": 10000
+}

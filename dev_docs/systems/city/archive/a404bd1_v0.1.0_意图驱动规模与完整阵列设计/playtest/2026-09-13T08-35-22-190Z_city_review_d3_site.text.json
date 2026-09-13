@@ -1,0 +1,326 @@
+[
+  {
+    "ok": true,
+    "siteReviewStatus": "accepted",
+    "siteReviewDecision": {
+      "schema": "city_d3_site_review_decision",
+      "runId": "city_scale_20260910",
+      "citySeedId": "city_realm_scale_capital",
+      "decision": "accept_selected_site",
+      "decisionReason": "相同种子同一选址地形，与已查看预览一致；复验既有嵌套方案",
+      "reviewedBy": "ai",
+      "reviewedAt": "2026-09-13T08:35:22.556062100Z",
+      "d3PackageIdentity": "sha256:2c3815a6dddd78f048acfe11930667661c07dbcdfb3db4126e7c9e35ff2bf495",
+      "citySeedIdentity": "sha256:955fa515b9a5c50924f8eb5c15c3f5b75cd8e5eab4d4a40e70ac0717bbcb6942",
+      "patchSelectionRef": "psel_d74fe8b2ff66c2cc0cc82e3bc554d9b3a66e1ec5198b3c363afb8f0c1d7281e2"
+    },
+    "artifacts": {
+      "citySiteReviewDecision": "city_scale_20260910/city_test_runs/city_realm_scale_capital/steps/d3/city_site_review_decision.json",
+      "testRunManifest": "city_scale_20260910/city_test_runs/city_realm_scale_capital/test_run_manifest.json",
+      "testRunPackage": "city_scale_20260910/city_test_runs/city_realm_scale_capital"
+    },
+    "nextActions": [
+      "patch_explorer_show_candidates"
+    ],
+    "patchExplorer": {
+      "ok": true,
+      "schema": "patch_explorer_response",
+      "operation": "open",
+      "runId": "city_scale_20260910",
+      "sessionId": "pex_abc8e163d29b472e9c855f57c23a0805",
+      "status": "completed",
+      "scopeType": "city_d4",
+      "scopeId": "city_realm_scale_capital",
+      "candidateBasis": "d3_landform_patch",
+      "sourceIdentity": "sha256:21454967b03ef448034809220979972b219000e6a5ad9fe861ee5174fec171da",
+      "typeCatalog": [
+        {
+          "patchType": "cliff",
+          "displayName": "Cliff",
+          "color": "#795548",
+          "candidateBasis": "d3_landform_patch",
+          "patchCount": 62,
+          "totalAreaBlocks": 537344,
+          "maxAreaBlocks": 72448,
+          "medianAreaBlocks": 1024,
+          "supportsCoarseAnchor": true,
+          "factSource": "CityLandformReviewPackage.landformPatches",
+          "meanConfidence": 0.7806451612903227,
+          "terrainComposition": {
+            "cliff": {
+              "cellCount": 2099,
+              "ratio": 1
+            }
+          },
+          "baseLandformComposition": {
+            "cliff": {
+              "cellCount": 2099,
+              "ratio": 1
+            }
+          },
+          "availableAreaBlocks": 537344,
+          "originalAreaBlocks": 537344
+        },
+        {
+          "patchType": "plain",
+          "displayName": "Plain",
+          "color": "#4CAF50",
+          "candidateBasis": "d3_landform_patch",
+          "patchCount": 14,
+          "totalAreaBlocks": 9216,
+          "maxAreaBlocks": 3072,
+          "medianAreaBlocks": 512,
+          "supportsCoarseAnchor": true,
+          "factSource": "CityLandformReviewPackage.landformPatches",
+          "meanConfidence": 0.7714285714285715,
+          "terrainComposition": {
+            "plain": {
+              "cellCount": 36,
+              "ratio": 1
+            }
+          },
+          "baseLandformComposition": {
+            "plain": {
+              "cellCount": 36,
+              "ratio": 1
+            }
+          },
+          "availableAreaBlocks": 9216,
+          "originalAreaBlocks": 9216
+        },
+        {
+          "patchType": "ridge",
+          "displayName": "Ridge",
+          "color": "#9C27B0",
+          "candidateBasis": "d3_landform_patch",
+          "patchCount": 29,
+          "totalAreaBlocks": 34304,
+          "maxAreaBlocks": 4352,
+          "medianAreaBlocks": 512,
+          "supportsCoarseAnchor": true,
+          "factSource": "CityLandformReviewPackage.landformPatches",
+          "meanConfidence": 0.7586206896551724,
+          "terrainComposition": {
+            "ridge": {
+              "cellCount": 134,
+              "ratio": 1
+            }
+          },
+          "baseLandformComposition": {
+            "ridge": {
+              "cellCount": 134,
+              "ratio": 1
+            }
+          },
+          "availableAreaBlocks": 34304,
+          "originalAreaBlocks": 34304
+        },
+        {
+          "patchType": "shore",
+          "displayName": "Shore",
+          "color": "#FFEB3B",
+          "candidateBasis": "d3_landform_patch",
+          "patchCount": 289,
+          "totalAreaBlocks": 529664,
+          "maxAreaBlocks": 41984,
+          "medianAreaBlocks": 256,
+          "supportsCoarseAnchor": true,
+          "factSource": "CityLandformReviewPackage.landformPatches",
+          "meanConfidence": 0.7889273356401385,
+          "terrainComposition": {
+            "shore": {
+              "cellCount": 2069,
+              "ratio": 1
+            }
+          },
+          "baseLandformComposition": {
+            "shore": {
+              "cellCount": 2069,
+              "ratio": 1
+            }
+          },
+          "availableAreaBlocks": 529664,
+          "originalAreaBlocks": 529664
+        },
+        {
+          "patchType": "slope",
+          "displayName": "Slope",
+          "color": "#FF9800",
+          "candidateBasis": "d3_landform_patch",
+          "patchCount": 260,
+          "totalAreaBlocks": 230400,
+          "maxAreaBlocks": 33536,
+          "medianAreaBlocks": 256,
+          "supportsCoarseAnchor": true,
+          "factSource": "CityLandformReviewPackage.landformPatches",
+          "meanConfidence": 0.7892307692307693,
+          "terrainComposition": {
+            "slope": {
+              "cellCount": 900,
+              "ratio": 1
+            }
+          },
+          "baseLandformComposition": {
+            "slope": {
+              "cellCount": 900,
+              "ratio": 1
+            }
+          },
+          "availableAreaBlocks": 230400,
+          "originalAreaBlocks": 230400
+        },
+        {
+          "patchType": "terrace",
+          "displayName": "Terrace",
+          "color": "#8BC34A",
+          "candidateBasis": "d3_landform_patch",
+          "patchCount": 4,
+          "totalAreaBlocks": 2816,
+          "maxAreaBlocks": 1024,
+          "medianAreaBlocks": 1024,
+          "supportsCoarseAnchor": true,
+          "factSource": "CityLandformReviewPackage.landformPatches",
+          "meanConfidence": 0.8,
+          "terrainComposition": {
+            "terrace": {
+              "cellCount": 11,
+              "ratio": 1
+            }
+          },
+          "baseLandformComposition": {
+            "terrace": {
+              "cellCount": 11,
+              "ratio": 1
+            }
+          },
+          "availableAreaBlocks": 2816,
+          "originalAreaBlocks": 2816
+        },
+        {
+          "patchType": "unknown",
+          "displayName": "Unknown",
+          "color": "#9E9E9E",
+          "candidateBasis": "d3_landform_patch",
+          "patchCount": 160,
+          "totalAreaBlocks": 104448,
+          "maxAreaBlocks": 5120,
+          "medianAreaBlocks": 512,
+          "supportsCoarseAnchor": true,
+          "factSource": "CityLandformReviewPackage.landformPatches",
+          "meanConfidence": 0.7875000000000001,
+          "terrainComposition": {
+            "unknown": {
+              "cellCount": 408,
+              "ratio": 1
+            }
+          },
+          "baseLandformComposition": {
+            "unknown": {
+              "cellCount": 408,
+              "ratio": 1
+            }
+          },
+          "availableAreaBlocks": 104448,
+          "originalAreaBlocks": 104448
+        },
+        {
+          "patchType": "valley",
+          "displayName": "Valley",
+          "color": "#00BCD4",
+          "candidateBasis": "d3_landform_patch",
+          "patchCount": 19,
+          "totalAreaBlocks": 17152,
+          "maxAreaBlocks": 5376,
+          "medianAreaBlocks": 256,
+          "supportsCoarseAnchor": true,
+          "factSource": "CityLandformReviewPackage.landformPatches",
+          "meanConfidence": 0.7789473684210527,
+          "terrainComposition": {
+            "valley": {
+              "cellCount": 67,
+              "ratio": 1
+            }
+          },
+          "baseLandformComposition": {
+            "valley": {
+              "cellCount": 67,
+              "ratio": 1
+            }
+          },
+          "availableAreaBlocks": 17152,
+          "originalAreaBlocks": 17152
+        },
+        {
+          "patchType": "water",
+          "displayName": "Water",
+          "color": "#2196F3",
+          "candidateBasis": "d3_landform_patch",
+          "patchCount": 93,
+          "totalAreaBlocks": 893952,
+          "maxAreaBlocks": 310784,
+          "medianAreaBlocks": 512,
+          "supportsCoarseAnchor": true,
+          "factSource": "CityLandformReviewPackage.landformPatches",
+          "meanConfidence": 0.7913978494623657,
+          "terrainComposition": {
+            "water": {
+              "cellCount": 3492,
+              "ratio": 1
+            }
+          },
+          "baseLandformComposition": {
+            "water": {
+              "cellCount": 3492,
+              "ratio": 1
+            }
+          },
+          "availableAreaBlocks": 893952,
+          "originalAreaBlocks": 893952
+        }
+      ],
+      "patchTypePalette": {
+        "schema": "landform_patch_palette",
+        "colors": {
+          "water": "#2196F3",
+          "shore": "#FFEB3B",
+          "plain": "#4CAF50",
+          "terrace": "#8BC34A",
+          "slope": "#FF9800",
+          "cliff": "#795548",
+          "ridge": "#9C27B0",
+          "valley": "#00BCD4",
+          "basin": "#607D8B",
+          "unknown": "#9E9E9E"
+        }
+      },
+      "artifacts": {
+        "explorationSession": "city_scale_20260910/patch_explorer_pex_abc8e163d29b472e9c855f57c23a0805/patch_explorer_session.json",
+        "terrainOverview": "city_scale_20260910/patch_explorer_pex_abc8e163d29b472e9c855f57c23a0805/terrain_overview.png",
+        "allPatchesOverview": "city_scale_20260910/patch_explorer_pex_abc8e163d29b472e9c855f57c23a0805/all_patches_overview.png",
+        "biomeOverview": "city_scale_20260910/patch_explorer_pex_abc8e163d29b472e9c855f57c23a0805/biome_overview.png"
+      },
+      "nextActions": [
+        "patch_explorer_show_candidates"
+      ]
+    },
+    "patchReviewEvidence": {
+      "schema": "city_d4_patch_review",
+      "status": "waiting_for_patch_review",
+      "sessionId": "pex_abc8e163d29b472e9c855f57c23a0805",
+      "sourceIdentity": "sha256:21454967b03ef448034809220979972b219000e6a5ad9fe861ee5174fec171da",
+      "interestTypes": [],
+      "reviewStateRef": "city_scale_20260910/city_test_runs/city_realm_scale_capital/steps/d3/patch_review_state.json"
+    },
+    "status": "waiting_for_patch_review",
+    "reasonCode": "D4_REQUIRES_TOP_PATCH_REVIEW",
+    "nextAction": "patch_explorer_show_candidates",
+    "nextActionDetails": {
+      "tool": "patch_explorer_show_candidates",
+      "sessionId": "pex_abc8e163d29b472e9c855f57c23a0805",
+      "requiredArguments": [
+        "interestTypes"
+      ]
+    },
+    "presentation": "planning_decision_view.v0.1"
+  }
+]

@@ -1,0 +1,15 @@
+{
+  "reason": "比较沿岸和缓坡候选",
+  "outputChars": 18000,
+  "arguments": {
+    "interestTypes": [
+      "shore",
+      "valley",
+      "slope"
+    ],
+    "sessionId": "pex_d88a56ebb35f41c3a5c25b733353a7c7",
+    "runId": "city_scale_20260910",
+    "pageSize": 3
+  },
+  "tool": "patch_explorer_show_candidates"
+}

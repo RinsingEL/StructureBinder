@@ -1,0 +1,934 @@
+[
+  {
+    "ok": true,
+    "schema": "patch_explorer_response",
+    "operation": "show_candidates",
+    "runId": "city_scale_20260910",
+    "sessionId": "pex_d88a56ebb35f41c3a5c25b733353a7c7",
+    "status": "completed",
+    "scopeType": "realm_t2",
+    "scopeId": "realm_scale",
+    "sourceIdentity": "sha256:e7685f7d6d5ca1ec05adddd13ba3d09038ffb264c2f2327af84385c6328ae301",
+    "patchTypePalette": {
+      "schema": "landform_patch_palette",
+      "colors": {
+        "water": "#2196F3",
+        "shore": "#FFEB3B",
+        "plain": "#4CAF50",
+        "terrace": "#8BC34A",
+        "slope": "#FF9800",
+        "cliff": "#795548",
+        "ridge": "#9C27B0",
+        "valley": "#00BCD4",
+        "basin": "#607D8B",
+        "unknown": "#9E9E9E"
+      }
+    },
+    "typePages": [
+      {
+        "patchType": "shore",
+        "color": "#FFEB3B",
+        "page": 0,
+        "pageSize": 3,
+        "totalCandidates": 3113,
+        "hasPrevious": false,
+        "hasNext": true,
+        "nextPageToken": "MTozOjAzZDg4MjE2ZDE2YzpmMGY1OTI5NTAyYzQ",
+        "candidates": [
+          {
+            "candidateId": "SHORE-01",
+            "patchType": "shore",
+            "displayName": "Shore",
+            "candidateBasis": "t_scale_landform_patch",
+            "areaBlocks": 69632,
+            "largestContinuousAreaBlocks": 69632,
+            "originalAreaBlocks": 69632,
+            "cellCount": 68,
+            "hardLegal": true,
+            "hardLegalMeaning": "candidate_has_available_cells_only",
+            "confidence": 1,
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.32:t.sha256_d54c3024dc1edbd88f5b7ee293358a0c470cf4037f2551462840990060ca20a7:p.8617"
+            ],
+            "bounds": {
+              "grid": {
+                "minX": -69,
+                "minZ": 132,
+                "maxX": -49,
+                "maxZ": 142
+              },
+              "block": {
+                "minX": -2208,
+                "minZ": 4224,
+                "maxX": -1537,
+                "maxZ": 4575
+              }
+            },
+            "center": {
+              "gridX": -57.80882352941177,
+              "gridZ": 137.60294117647058,
+              "blockX": -1850,
+              "blockZ": 4403
+            },
+            "suggestedAnchor": {
+              "gridX": -50,
+              "gridZ": 134,
+              "blockX": -1584,
+              "blockZ": 4304,
+              "method": "max_boundary_clearance_within_candidate"
+            },
+            "terrainMetrics": {
+              "meanConfidence": 1,
+              "geometrySource": "member_cells"
+            },
+            "terrainComposition": {
+              "shore": {
+                "cellCount": 68,
+                "ratio": 1
+              }
+            },
+            "baseLandformComposition": {
+              "shore": {
+                "cellCount": 68,
+                "ratio": 1
+              }
+            }
+          },
+          {
+            "candidateId": "SHORE-02",
+            "patchType": "shore",
+            "displayName": "Shore",
+            "candidateBasis": "t_scale_landform_patch",
+            "areaBlocks": 65536,
+            "largestContinuousAreaBlocks": 65536,
+            "originalAreaBlocks": 65536,
+            "cellCount": 64,
+            "hardLegal": true,
+            "hardLegalMeaning": "candidate_has_available_cells_only",
+            "confidence": 1,
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.32:t.sha256_d54c3024dc1edbd88f5b7ee293358a0c470cf4037f2551462840990060ca20a7:p.5681"
+            ],
+            "bounds": {
+              "grid": {
+                "minX": -48,
+                "minZ": 26,
+                "maxX": -37,
+                "maxZ": 38
+              },
+              "block": {
+                "minX": -1536,
+                "minZ": 832,
+                "maxX": -1153,
+                "maxZ": 1247
+              }
+            },
+            "center": {
+              "gridX": -41.328125,
+              "gridZ": 32.828125,
+              "blockX": -1322,
+              "blockZ": 1051
+            },
+            "suggestedAnchor": {
+              "gridX": -39,
+              "gridZ": 28,
+              "blockX": -1232,
+              "blockZ": 912,
+              "method": "max_boundary_clearance_within_candidate"
+            },
+            "terrainMetrics": {
+              "meanConfidence": 1,
+              "geometrySource": "member_cells"
+            },
+            "terrainComposition": {
+              "shore": {
+                "cellCount": 64,
+                "ratio": 1
+              }
+            },
+            "baseLandformComposition": {
+              "shore": {
+                "cellCount": 64,
+                "ratio": 1
+              }
+            }
+          },
+          {
+            "candidateId": "SHORE-03",
+            "patchType": "shore",
+            "displayName": "Shore",
+            "candidateBasis": "t_scale_landform_patch",
+            "areaBlocks": 54272,
+            "largestContinuousAreaBlocks": 54272,
+            "originalAreaBlocks": 54272,
+            "cellCount": 53,
+            "hardLegal": true,
+            "hardLegalMeaning": "candidate_has_available_cells_only",
+            "confidence": 1,
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.32:t.sha256_d54c3024dc1edbd88f5b7ee293358a0c470cf4037f2551462840990060ca20a7:p.10797"
+            ],
+            "bounds": {
+              "grid": {
+                "minX": -161,
+                "minZ": 221,
+                "maxX": -149,
+                "maxZ": 230
+              },
+              "block": {
+                "minX": -5152,
+                "minZ": 7072,
+                "maxX": -4737,
+                "maxZ": 7391
+              }
+            },
+            "center": {
+              "gridX": -155.96226415094338,
+              "gridZ": 225.47169811320754,
+              "blockX": -4991,
+              "blockZ": 7215
+            },
+            "suggestedAnchor": {
+              "gridX": -159,
+              "gridZ": 222,
+              "blockX": -5072,
+              "blockZ": 7120,
+              "method": "max_boundary_clearance_within_candidate"
+            },
+            "terrainMetrics": {
+              "meanConfidence": 1,
+              "geometrySource": "member_cells"
+            },
+            "terrainComposition": {
+              "shore": {
+                "cellCount": 53,
+                "ratio": 1
+              }
+            },
+            "baseLandformComposition": {
+              "shore": {
+                "cellCount": 53,
+                "ratio": 1
+              }
+            }
+          }
+        ]
+      },
+      {
+        "patchType": "valley",
+        "color": "#00BCD4",
+        "page": 0,
+        "pageSize": 3,
+        "totalCandidates": 325,
+        "hasPrevious": false,
+        "hasNext": true,
+        "nextPageToken": "MTozOjAzZDg4MjE2ZDE2YzpmMGY1OTI5NTAyYzQ",
+        "candidates": [
+          {
+            "candidateId": "VALLEY-01",
+            "patchType": "valley",
+            "displayName": "Valley",
+            "candidateBasis": "t_scale_landform_patch",
+            "areaBlocks": 23552,
+            "largestContinuousAreaBlocks": 23552,
+            "originalAreaBlocks": 23552,
+            "cellCount": 23,
+            "hardLegal": true,
+            "hardLegalMeaning": "candidate_has_available_cells_only",
+            "confidence": 1,
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.32:t.sha256_d54c3024dc1edbd88f5b7ee293358a0c470cf4037f2551462840990060ca20a7:p.4173"
+            ],
+            "bounds": {
+              "grid": {
+                "minX": 96,
+                "minZ": -36,
+                "maxX": 107,
+                "maxZ": -34
+              },
+              "block": {
+                "minX": 3072,
+                "minZ": -1152,
+                "maxX": 3455,
+                "maxZ": -1057
+              }
+            },
+            "center": {
+              "gridX": 101.69565217391305,
+              "gridZ": -34.65217391304348,
+              "blockX": 3254,
+              "blockZ": -1109
+            },
+            "suggestedAnchor": {
+              "gridX": 100,
+              "gridZ": -35,
+              "blockX": 3216,
+              "blockZ": -1104,
+              "method": "max_boundary_clearance_within_candidate"
+            },
+            "terrainMetrics": {
+              "meanConfidence": 1,
+              "geometrySource": "member_cells"
+            },
+            "terrainComposition": {
+              "valley": {
+                "cellCount": 23,
+                "ratio": 1
+              }
+            },
+            "baseLandformComposition": {
+              "valley": {
+                "cellCount": 23,
+                "ratio": 1
+              }
+            }
+          },
+          {
+            "candidateId": "VALLEY-02",
+            "patchType": "valley",
+            "displayName": "Valley",
+            "candidateBasis": "t_scale_landform_patch",
+            "areaBlocks": 18432,
+            "largestContinuousAreaBlocks": 18432,
+            "originalAreaBlocks": 18432,
+            "cellCount": 18,
+            "hardLegal": true,
+            "hardLegalMeaning": "candidate_has_available_cells_only",
+            "confidence": 1,
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.32:t.sha256_d54c3024dc1edbd88f5b7ee293358a0c470cf4037f2551462840990060ca20a7:p.4607"
+            ],
+            "bounds": {
+              "grid": {
+                "minX": 139,
+                "minZ": -30,
+                "maxX": 144,
+                "maxZ": -24
+              },
+              "block": {
+                "minX": 4448,
+                "minZ": -960,
+                "maxX": 4639,
+                "maxZ": -737
+              }
+            },
+            "center": {
+              "gridX": 141.77777777777777,
+              "gridZ": -28.166666666666668,
+              "blockX": 4537,
+              "blockZ": -901
+            },
+            "suggestedAnchor": {
+              "gridX": 140,
+              "gridZ": -29,
+              "blockX": 4496,
+              "blockZ": -912,
+              "method": "max_boundary_clearance_within_candidate"
+            },
+            "terrainMetrics": {
+              "meanConfidence": 1,
+              "geometrySource": "member_cells"
+            },
+            "terrainComposition": {
+              "valley": {
+                "cellCount": 18,
+                "ratio": 1
+              }
+            },
+            "baseLandformComposition": {
+              "valley": {
+                "cellCount": 18,
+                "ratio": 1
+              }
+            }
+          },
+          {
+            "candidateId": "VALLEY-03",
+            "patchType": "valley",
+            "displayName": "Valley",
+            "candidateBasis": "t_scale_landform_patch",
+            "areaBlocks": 16384,
+            "largestContinuousAreaBlocks": 16384,
+            "originalAreaBlocks": 16384,
+            "cellCount": 16,
+            "hardLegal": true,
+            "hardLegalMeaning": "candidate_has_available_cells_only",
+            "confidence": 1,
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.32:t.sha256_d54c3024dc1edbd88f5b7ee293358a0c470cf4037f2551462840990060ca20a7:p.4961"
+            ],
+            "bounds": {
+              "grid": {
+                "minX": 116,
+                "minZ": -2,
+                "maxX": 119,
+                "maxZ": 4
+              },
+              "block": {
+                "minX": 3712,
+                "minZ": -64,
+                "maxX": 3839,
+                "maxZ": 159
+              }
+            },
+            "center": {
+              "gridX": 117.4375,
+              "gridZ": 0.8125,
+              "blockX": 3758,
+              "blockZ": 26
+            },
+            "suggestedAnchor": {
+              "gridX": 116,
+              "gridZ": -2,
+              "blockX": 3728,
+              "blockZ": -48,
+              "method": "max_boundary_clearance_within_candidate"
+            },
+            "terrainMetrics": {
+              "meanConfidence": 1,
+              "geometrySource": "member_cells"
+            },
+            "terrainComposition": {
+              "valley": {
+                "cellCount": 16,
+                "ratio": 1
+              }
+            },
+            "baseLandformComposition": {
+              "valley": {
+                "cellCount": 16,
+                "ratio": 1
+              }
+            }
+          }
+        ]
+      },
+      {
+        "patchType": "slope",
+        "color": "#FF9800",
+        "page": 0,
+        "pageSize": 3,
+        "totalCandidates": 2298,
+        "hasPrevious": false,
+        "hasNext": true,
+        "nextPageToken": "MTozOjAzZDg4MjE2ZDE2YzpmMGY1OTI5NTAyYzQ",
+        "candidates": [
+          {
+            "candidateId": "SLOPE-01",
+            "patchType": "slope",
+            "displayName": "Slope",
+            "candidateBasis": "t_scale_landform_patch",
+            "areaBlocks": 38912,
+            "largestContinuousAreaBlocks": 38912,
+            "originalAreaBlocks": 38912,
+            "cellCount": 38,
+            "hardLegal": true,
+            "hardLegalMeaning": "candidate_has_available_cells_only",
+            "confidence": 1,
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.32:t.sha256_d54c3024dc1edbd88f5b7ee293358a0c470cf4037f2551462840990060ca20a7:p.3211"
+            ],
+            "bounds": {
+              "grid": {
+                "minX": 160,
+                "minZ": -67,
+                "maxX": 166,
+                "maxZ": -61
+              },
+              "block": {
+                "minX": 5120,
+                "minZ": -2144,
+                "maxX": 5343,
+                "maxZ": -1921
+              }
+            },
+            "center": {
+              "gridX": 163.1315789473684,
+              "gridZ": -64.05263157894737,
+              "blockX": 5220,
+              "blockZ": -2050
+            },
+            "suggestedAnchor": {
+              "gridX": 163,
+              "gridZ": -65,
+              "blockX": 5232,
+              "blockZ": -2064,
+              "method": "max_boundary_clearance_within_candidate"
+            },
+            "terrainMetrics": {
+              "meanConfidence": 1,
+              "geometrySource": "member_cells"
+            },
+            "terrainComposition": {
+              "slope": {
+                "cellCount": 38,
+                "ratio": 1
+              }
+            },
+            "baseLandformComposition": {
+              "slope": {
+                "cellCount": 38,
+                "ratio": 1
+              }
+            }
+          },
+          {
+            "candidateId": "SLOPE-02",
+            "patchType": "slope",
+            "displayName": "Slope",
+            "candidateBasis": "t_scale_landform_patch",
+            "areaBlocks": 17408,
+            "largestContinuousAreaBlocks": 17408,
+            "originalAreaBlocks": 17408,
+            "cellCount": 17,
+            "hardLegal": true,
+            "hardLegalMeaning": "candidate_has_available_cells_only",
+            "confidence": 1,
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.32:t.sha256_d54c3024dc1edbd88f5b7ee293358a0c470cf4037f2551462840990060ca20a7:p.8578"
+            ],
+            "bounds": {
+              "grid": {
+                "minX": -90,
+                "minZ": 132,
+                "maxX": -84,
+                "maxZ": 138
+              },
+              "block": {
+                "minX": -2880,
+                "minZ": 4224,
+                "maxX": -2657,
+                "maxZ": 4447
+              }
+            },
+            "center": {
+              "gridX": -87.23529411764706,
+              "gridZ": 135.1764705882353,
+              "blockX": -2792,
+              "blockZ": 4326
+            },
+            "suggestedAnchor": {
+              "gridX": -89,
+              "gridZ": 133,
+              "blockX": -2832,
+              "blockZ": 4272,
+              "method": "max_boundary_clearance_within_candidate"
+            },
+            "terrainMetrics": {
+              "meanConfidence": 1,
+              "geometrySource": "member_cells"
+            },
+            "terrainComposition": {
+              "slope": {
+                "cellCount": 17,
+                "ratio": 1
+              }
+            },
+            "baseLandformComposition": {
+              "slope": {
+                "cellCount": 17,
+                "ratio": 1
+              }
+            }
+          },
+          {
+            "candidateId": "SLOPE-03",
+            "patchType": "slope",
+            "displayName": "Slope",
+            "candidateBasis": "t_scale_landform_patch",
+            "areaBlocks": 15360,
+            "largestContinuousAreaBlocks": 15360,
+            "originalAreaBlocks": 15360,
+            "cellCount": 15,
+            "hardLegal": true,
+            "hardLegalMeaning": "candidate_has_available_cells_only",
+            "confidence": 1,
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.32:t.sha256_d54c3024dc1edbd88f5b7ee293358a0c470cf4037f2551462840990060ca20a7:p.6745"
+            ],
+            "bounds": {
+              "grid": {
+                "minX": -58,
+                "minZ": 61,
+                "maxX": -55,
+                "maxZ": 66
+              },
+              "block": {
+                "minX": -1856,
+                "minZ": 1952,
+                "maxX": -1729,
+                "maxZ": 2143
+              }
+            },
+            "center": {
+              "gridX": -56.53333333333333,
+              "gridZ": 63.333333333333336,
+              "blockX": -1809,
+              "blockZ": 2027
+            },
+            "suggestedAnchor": {
+              "gridX": -56,
+              "gridZ": 64,
+              "blockX": -1776,
+              "blockZ": 2064,
+              "method": "max_boundary_clearance_within_candidate"
+            },
+            "terrainMetrics": {
+              "meanConfidence": 1,
+              "geometrySource": "member_cells"
+            },
+            "terrainComposition": {
+              "slope": {
+                "cellCount": 15,
+                "ratio": 1
+              }
+            },
+            "baseLandformComposition": {
+              "slope": {
+                "cellCount": 15,
+                "ratio": 1
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "relations": [
+      {
+        "candidateId": "SHORE-01",
+        "otherCandidateId": "SLOPE-02",
+        "adjacent": false,
+        "intersects": false,
+        "contains": false,
+        "containedBy": false,
+        "separated": true,
+        "boundaryDistanceCells": 15,
+        "boundaryDistanceBlocks": 480,
+        "centerDistanceCells": 29.526342997327784,
+        "centerDistanceBlocks": 944.8429759144891,
+        "direction": "northwest",
+        "sharedBoundaryCells": 0,
+        "sharedBoundaryBlocks": 0,
+        "contactRatio": 0,
+        "closestContactPoint": {
+          "gridX": -76,
+          "gridZ": 137,
+          "blockX": -2432,
+          "blockZ": 4384
+        }
+      },
+      {
+        "candidateId": "SHORE-01",
+        "otherCandidateId": "VALLEY-03",
+        "adjacent": false,
+        "intersects": false,
+        "contains": false,
+        "containedBy": false,
+        "separated": true,
+        "boundaryDistanceCells": 295,
+        "boundaryDistanceBlocks": 9440,
+        "centerDistanceCells": 222.31261481937707,
+        "centerDistanceBlocks": 7114.003674220066,
+        "direction": "northeast",
+        "sharedBoundaryCells": 0,
+        "sharedBoundaryBlocks": 0,
+        "contactRatio": 0,
+        "closestContactPoint": {
+          "gridX": 33,
+          "gridZ": 67,
+          "blockX": 1056,
+          "blockZ": 2144
+        }
+      },
+      {
+        "candidateId": "SHORE-02",
+        "otherCandidateId": "SLOPE-03",
+        "adjacent": false,
+        "intersects": false,
+        "contains": false,
+        "containedBy": false,
+        "separated": true,
+        "boundaryDistanceCells": 32,
+        "boundaryDistanceBlocks": 1024,
+        "centerDistanceCells": 34.08469005169533,
+        "centerDistanceBlocks": 1090.7100816542506,
+        "direction": "southwest",
+        "sharedBoundaryCells": 0,
+        "sharedBoundaryBlocks": 0,
+        "contactRatio": 0,
+        "closestContactPoint": {
+          "gridX": -51,
+          "gridZ": 49,
+          "blockX": -1632,
+          "blockZ": 1568
+        }
+      },
+      {
+        "candidateId": "SHORE-02",
+        "otherCandidateId": "VALLEY-03",
+        "adjacent": false,
+        "intersects": false,
+        "contains": false,
+        "containedBy": false,
+        "separated": true,
+        "boundaryDistanceCells": 178,
+        "boundaryDistanceBlocks": 5696,
+        "centerDistanceCells": 161.96148902063493,
+        "centerDistanceBlocks": 5182.767648660318,
+        "direction": "northeast",
+        "sharedBoundaryCells": 0,
+        "sharedBoundaryBlocks": 0,
+        "contactRatio": 0,
+        "closestContactPoint": {
+          "gridX": 39,
+          "gridZ": 15,
+          "blockX": 1248,
+          "blockZ": 480
+        }
+      },
+      {
+        "candidateId": "SHORE-03",
+        "otherCandidateId": "SLOPE-02",
+        "adjacent": false,
+        "intersects": false,
+        "contains": false,
+        "containedBy": false,
+        "separated": true,
+        "boundaryDistanceCells": 149,
+        "boundaryDistanceBlocks": 4768,
+        "centerDistanceCells": 113.47521546022335,
+        "centerDistanceBlocks": 3631.2068947271473,
+        "direction": "northeast",
+        "sharedBoundaryCells": 0,
+        "sharedBoundaryBlocks": 0,
+        "contactRatio": 0,
+        "closestContactPoint": {
+          "gridX": -120,
+          "gridZ": 178,
+          "blockX": -3840,
+          "blockZ": 5696
+        }
+      },
+      {
+        "candidateId": "SHORE-03",
+        "otherCandidateId": "VALLEY-03",
+        "adjacent": false,
+        "intersects": false,
+        "contains": false,
+        "containedBy": false,
+        "separated": true,
+        "boundaryDistanceCells": 487,
+        "boundaryDistanceBlocks": 15584,
+        "centerDistanceCells": 353.8632311143119,
+        "centerDistanceBlocks": 11323.62339565798,
+        "direction": "northeast",
+        "sharedBoundaryCells": 0,
+        "sharedBoundaryBlocks": 0,
+        "contactRatio": 0,
+        "closestContactPoint": {
+          "gridX": -18,
+          "gridZ": 112,
+          "blockX": -576,
+          "blockZ": 3584
+        }
+      },
+      {
+        "candidateId": "SLOPE-01",
+        "otherCandidateId": "SHORE-02",
+        "adjacent": false,
+        "intersects": false,
+        "contains": false,
+        "containedBy": false,
+        "separated": true,
+        "boundaryDistanceCells": 287,
+        "boundaryDistanceBlocks": 9184,
+        "centerDistanceCells": 226.25130172786805,
+        "centerDistanceBlocks": 7240.041655291778,
+        "direction": "southwest",
+        "sharedBoundaryCells": 0,
+        "sharedBoundaryBlocks": 0,
+        "contactRatio": 0,
+        "closestContactPoint": {
+          "gridX": 61,
+          "gridZ": -17,
+          "blockX": 1952,
+          "blockZ": -544
+        }
+      },
+      {
+        "candidateId": "SLOPE-01",
+        "otherCandidateId": "VALLEY-02",
+        "adjacent": false,
+        "intersects": false,
+        "contains": false,
+        "containedBy": false,
+        "separated": true,
+        "boundaryDistanceCells": 48,
+        "boundaryDistanceBlocks": 1536,
+        "centerDistanceCells": 41.75867936220986,
+        "centerDistanceBlocks": 1336.2777395907156,
+        "direction": "southwest",
+        "sharedBoundaryCells": 0,
+        "sharedBoundaryBlocks": 0,
+        "contactRatio": 0,
+        "closestContactPoint": {
+          "gridX": 152,
+          "gridZ": -46,
+          "blockX": 4864,
+          "blockZ": -1472
+        }
+      },
+      {
+        "candidateId": "SLOPE-02",
+        "otherCandidateId": "VALLEY-03",
+        "adjacent": false,
+        "intersects": false,
+        "contains": false,
+        "containedBy": false,
+        "separated": true,
+        "boundaryDistanceCells": 333,
+        "boundaryDistanceBlocks": 10656,
+        "centerDistanceCells": 244.83592310802945,
+        "centerDistanceBlocks": 7834.749539456942,
+        "direction": "northeast",
+        "sharedBoundaryCells": 0,
+        "sharedBoundaryBlocks": 0,
+        "contactRatio": 0,
+        "closestContactPoint": {
+          "gridX": 14,
+          "gridZ": 67,
+          "blockX": 448,
+          "blockZ": 2144
+        }
+      },
+      {
+        "candidateId": "SLOPE-03",
+        "otherCandidateId": "VALLEY-03",
+        "adjacent": false,
+        "intersects": false,
+        "contains": false,
+        "containedBy": false,
+        "separated": true,
+        "boundaryDistanceCells": 230,
+        "boundaryDistanceBlocks": 7360,
+        "centerDistanceCells": 184.86401881217688,
+        "centerDistanceBlocks": 5915.64860198966,
+        "direction": "northeast",
+        "sharedBoundaryCells": 0,
+        "sharedBoundaryBlocks": 0,
+        "contactRatio": 0,
+        "closestContactPoint": {
+          "gridX": 30,
+          "gridZ": 32,
+          "blockX": 960,
+          "blockZ": 1024
+        }
+      },
+      {
+        "candidateId": "VALLEY-01",
+        "otherCandidateId": "SHORE-02",
+        "adjacent": false,
+        "intersects": false,
+        "contains": false,
+        "containedBy": false,
+        "separated": true,
+        "boundaryDistanceCells": 194,
+        "boundaryDistanceBlocks": 6208,
+        "centerDistanceCells": 158.14357899860124,
+        "centerDistanceBlocks": 5060.59452795524,
+        "direction": "southwest",
+        "sharedBoundaryCells": 0,
+        "sharedBoundaryBlocks": 0,
+        "contactRatio": 0,
+        "closestContactPoint": {
+          "gridX": 29,
+          "gridZ": -3,
+          "blockX": 928,
+          "blockZ": -96
+        }
+      },
+      {
+        "candidateId": "VALLEY-01",
+        "otherCandidateId": "SLOPE-01",
+        "adjacent": false,
+        "intersects": false,
+        "contains": false,
+        "containedBy": false,
+        "separated": true,
+        "boundaryDistanceCells": 80,
+        "boundaryDistanceBlocks": 2560,
+        "centerDistanceCells": 68.10844301169992,
+        "centerDistanceBlocks": 2179.4701763743974,
+        "direction": "northeast",
+        "sharedBoundaryCells": 0,
+        "sharedBoundaryBlocks": 0,
+        "contactRatio": 0,
+        "closestContactPoint": {
+          "gridX": 133,
+          "gridZ": -49,
+          "blockX": 4256,
+          "blockZ": -1568
+        }
+      },
+      {
+        "candidateId": "VALLEY-02",
+        "otherCandidateId": "SHORE-02",
+        "adjacent": false,
+        "intersects": false,
+        "contains": false,
+        "containedBy": false,
+        "separated": true,
+        "boundaryDistanceCells": 230,
+        "boundaryDistanceBlocks": 7360,
+        "centerDistanceCells": 192.99776227336181,
+        "centerDistanceBlocks": 6175.928392747578,
+        "direction": "southwest",
+        "sharedBoundaryCells": 0,
+        "sharedBoundaryBlocks": 0,
+        "contactRatio": 0,
+        "closestContactPoint": {
+          "gridX": 52,
+          "gridZ": 2,
+          "blockX": 1664,
+          "blockZ": 64
+        }
+      },
+      {
+        "candidateId": "VALLEY-03",
+        "otherCandidateId": "SLOPE-01",
+        "adjacent": false,
+        "intersects": false,
+        "contains": false,
+        "containedBy": false,
+        "separated": true,
+        "boundaryDistanceCells": 103,
+        "boundaryDistanceBlocks": 3296,
+        "centerDistanceCells": 79.34377193959519,
+        "centerDistanceBlocks": 2539.000702067046,
+        "direction": "northeast",
+        "sharedBoundaryCells": 0,
+        "sharedBoundaryBlocks": 0,
+        "contactRatio": 0,
+        "closestContactPoint": {
+          "gridX": 138,
+          "gridZ": -32,
+          "blockX": 4416,
+          "blockZ": -1024
+        }
+      }
+    ],
+    "artifacts": {
+      "explorationSession": "city_scale_20260910/patch_explorer_pex_d88a56ebb35f41c3a5c25b733353a7c7/patch_explorer_session.json",
+      "candidatePage": "city_scale_20260910/patch_explorer_pex_d88a56ebb35f41c3a5c25b733353a7c7/candidate_page_0a1b8c5143a4.json",
+      "terrainOverview": "city_scale_20260910/patch_explorer_pex_d88a56ebb35f41c3a5c25b733353a7c7/terrain_overview.png",
+      "allPatchesOverview": "city_scale_20260910/patch_explorer_pex_d88a56ebb35f41c3a5c25b733353a7c7/all_patches_overview.png",
+      "biomeOverview": "city_scale_20260910/patch_explorer_pex_d88a56ebb35f41c3a5c25b733353a7c7/biome_overview.png",
+      "topPatchesOverview": "city_scale_20260910/patch_explorer_pex_d88a56ebb35f41c3a5c25b733353a7c7/top_patches_overview_0a1b8c5143a4.png"
+    },
+    "nextActions": [
+      "patch_explorer_show_candidates",
+      "patch_explorer_select_candidate"
+    ],
+    "presentation": "planning_decision_view.v0.1"
+  }
+]

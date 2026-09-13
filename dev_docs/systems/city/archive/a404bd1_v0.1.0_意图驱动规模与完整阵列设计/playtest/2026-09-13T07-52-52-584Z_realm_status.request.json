@@ -1,0 +1,6 @@
+{
+  "tool": "realm_status",
+  "arguments": {},
+  "reason": "日志已确认玩家进入测试世界，重试连接就绪检查",
+  "outputChars": 11000
+}

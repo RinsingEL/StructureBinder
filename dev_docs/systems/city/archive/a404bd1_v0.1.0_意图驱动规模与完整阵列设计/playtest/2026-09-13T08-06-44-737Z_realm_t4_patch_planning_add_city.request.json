@@ -1,0 +1,19 @@
+{
+  "arguments": {
+    "runId": "city_scale_20260910",
+    "planningSessionId": "t4ps_ec18d338d9e9493a9ee43d8df46dd51e",
+    "coreFunctions": [
+      "market",
+      "residential",
+      "agriculture"
+    ],
+    "role": "trade",
+    "theoreticalScale": "city",
+    "patchSelectionRef": "psel_dbac8adb6ee8639ced21d7e67285ab9c35203a9b9dbce7b4f232dd70c39185ab",
+    "selectionReason": "北部河岸商业城，8至12个叶阵列组织紧凑街区",
+    "citySeedId": "city_river_trade"
+  },
+  "outputChars": 1800,
+  "tool": "realm_t4_patch_planning_add_city",
+  "reason": "登记CITY测试城市"
+}

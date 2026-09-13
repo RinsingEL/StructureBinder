@@ -1,0 +1,52 @@
+{
+  "outputChars": 8000,
+  "reason": "恢复既有 sealed W 和国度资料，不重跑扫描",
+  "tool": "realm_t1_prepare",
+  "arguments": {
+    "runId": "city_scale_20260910",
+    "realmProfiles": [
+      {
+        "realmId": "realm_scale",
+        "name": "河原王国",
+        "targetContinentId": "continent_23",
+        "theme": "河谷商业与农业相辅的中世纪王国",
+        "cultureTags": [
+          "medieval"
+        ],
+        "industryTags": [
+          "agriculture",
+          "trade"
+        ],
+        "materialTags": [
+          "wood",
+          "stone"
+        ],
+        "landformPreferences": [
+          "plain",
+          "terrace",
+          "shore"
+        ],
+        "avoidLandforms": [
+          "cliff"
+        ],
+        "scalePlan": {
+          "priority": "major",
+          "targetAreaRatio": 0.8,
+          "minAreaRatio": 0.6,
+          "maxAreaRatio": 1,
+          "normalizationGroup": "scale_test"
+        },
+        "expansionStyle": {
+          "waterAffinity": 0.5,
+          "mountainAffinity": -0.5,
+          "forestAffinity": 0.2,
+          "compactness": 0.7,
+          "coastalBias": 0.5,
+          "resourceSeeking": 0.4,
+          "borderPressure": 0.2,
+          "seaCrossingPolicy": "none"
+        }
+      }
+    ]
+  }
+}

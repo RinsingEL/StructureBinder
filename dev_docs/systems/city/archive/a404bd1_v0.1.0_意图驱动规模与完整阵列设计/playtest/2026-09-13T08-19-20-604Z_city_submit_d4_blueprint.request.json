@@ -1,0 +1,38 @@
+{
+  "tool": "city_submit_d4_blueprint",
+  "reason": "新链路第一阶段：仅提交功能意图",
+  "arguments": {
+    "contextId": "sha256:d0e795c6b9616aaa0e98e7df1df7cb3314747c01f23d1019549dab35eea01e43",
+    "citySeedId": "city_realm_scale_capital",
+    "runId": "city_scale_20260910",
+    "designIntent": {
+      "groups": [
+        {
+          "role": "administration",
+          "preferredPatchRefs": [
+            "minecraft:overworld:step.16:city.city_realm_scale_capital:p.750"
+          ],
+          "groupId": "civic",
+          "intent": "市政厅与办事住宅、卫所组成完整院落街区，围绕核心保留通路"
+        },
+        {
+          "role": "commercial",
+          "preferredPatchRefs": [
+            "minecraft:overworld:step.16:city.city_realm_scale_capital:p.750"
+          ],
+          "groupId": "market",
+          "intent": "商业主街与两侧居住子阵列组成完整街区，贴近行政组团，避免随机连接填建筑"
+        },
+        {
+          "role": "agriculture",
+          "preferredPatchRefs": [
+            "minecraft:overworld:step.16:city.city_realm_scale_capital:p.866"
+          ],
+          "groupId": "farm",
+          "intent": "东南岸地小型农业服务组团，与主体保持河岸空地"
+        }
+      ]
+    }
+  },
+  "outputChars": 3000
+}

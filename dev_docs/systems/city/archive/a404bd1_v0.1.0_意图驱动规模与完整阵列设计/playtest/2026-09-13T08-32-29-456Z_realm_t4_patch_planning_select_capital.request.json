@@ -1,0 +1,10 @@
+{
+  "tool": "realm_t4_patch_planning_select_capital",
+  "arguments": {
+    "runId": "city_scale_20260910",
+    "planningSessionId": "t4ps_7d9e5ffad8734c2992ab559f1416f562",
+    "patchSelectionRef": "psel_d74fe8b2ff66c2cc0cc82e3bc554d9b3a66e1ec5198b3c363afb8f0c1d7281e2"
+  },
+  "reason": "登记前置首都，不重复设计",
+  "outputChars": 1000
+}

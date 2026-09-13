@@ -1,0 +1,11 @@
+{
+  "tool": "realm_debug_command",
+  "arguments": {
+    "command": "stop",
+    "sourceMode": "server",
+    "confirmCommandExecution": true,
+    "allowUnsafeCommand": true
+  },
+  "reason": "上一请求使用玩家上下文没有成功；按工具允许的 server 上下文关闭本次测试服务端",
+  "outputChars": 1600
+}

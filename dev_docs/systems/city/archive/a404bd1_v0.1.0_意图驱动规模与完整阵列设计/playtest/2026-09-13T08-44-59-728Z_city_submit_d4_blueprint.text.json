@@ -1,0 +1,59 @@
+[
+  {
+    "ok": true,
+    "designInProgress": true,
+    "nextAction": "city_submit_d4_blueprint",
+    "designSession": {
+      "contextId": "sha256:856645a7e054cbc01a3f1bfa2360924b7fa6b130360f5fa60a14826ab3fa80b4",
+      "groups": [
+        {
+          "groupId": "civic",
+          "role": "administration",
+          "intent": "西部坡地上的行政主院与配套住宅组成核心，三个完整子阵列",
+          "preferredPatchRefs": [
+            "minecraft:overworld:step.16:city.city_river_metropolis:p.938"
+          ]
+        },
+        {
+          "groupId": "market",
+          "role": "commercial",
+          "intent": "商业主街与居民庭院两侧形成商业街区，整块贴靠行政组团",
+          "preferredPatchRefs": [
+            "minecraft:overworld:step.16:city.city_river_metropolis:p.938"
+          ]
+        },
+        {
+          "groupId": "homes",
+          "role": "residential",
+          "intent": "东岸三个邻里院落组成独立居住街区，以道路联系主体",
+          "preferredPatchRefs": [
+            "minecraft:overworld:step.16:city.city_river_metropolis:p.998"
+          ]
+        },
+        {
+          "groupId": "farm",
+          "role": "agriculture",
+          "intent": "南部岸地农庄和服务住宅组成农业街区，沿水留空",
+          "preferredPatchRefs": [
+            "minecraft:overworld:step.16:city.city_river_metropolis:p.1075"
+          ]
+        }
+      ]
+    },
+    "materialResults": [],
+    "scaleDesignTask": {
+      "scale": "large_city",
+      "suggestedInitialLeafArraysMin": 12,
+      "suggestedInitialLeafArraysMax": 18,
+      "counting": "Count actual building groups once, not parent containers; several arrays may share one functional purpose. Automatic building expansion is disabled. Counts are advice, never an area or building-count gate.",
+      "designTask": "Design multiple complete nested clusters with main and secondary spaces. Include CORE in a composition and use at least two non-empty compositions; these may be recursively connected. A tiny nested core with the rest left for procedural road-chain expansion does not fulfill the task. Do not stretch a village into a long road.",
+      "placementResponsibility": "Express relationships with existing arrays/compositions; exact spacing, terrain fit and road ports belong to the host. No side-by-side road-port forms. Freeze planned layouts before terrain filtering; preserve successful members and report skipped members, including completely empty arrays. The designer decides whether to revise or accept."
+    },
+    "instruction": "Select authored materials for intended groups, then submit one complete cluster with child arrays using DRAFT. Review actual preview and gaps. FINAL only when you accept the whole city. Use structureCount to specify each leaf array's planned population; area is never a quota.",
+    "artifacts": {
+      "testRunManifest": "city_scale_20260910/city_test_runs/city_river_metropolis/test_run_manifest.json",
+      "testRunPackage": "city_scale_20260910/city_test_runs/city_river_metropolis"
+    },
+    "presentation": "planning_decision_view.v0.1"
+  }
+]

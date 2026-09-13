@@ -1,0 +1,62 @@
+[
+  {
+    "schema": "city_design_queue.v0.1",
+    "runId": "city_scale_20260910",
+    "enabled": true,
+    "orderingMode": "realm_grouped",
+    "createdAt": "2026-09-13T08:32:34.905132600Z",
+    "items": [
+      {
+        "ordinal": 0,
+        "citySeedId": "city_realm_scale_capital",
+        "realmId": "realm_scale",
+        "role": "capital",
+        "anchorBlock": {
+          "x": -1936,
+          "z": 4464
+        },
+        "originDistanceBlocks": 4865.736532119264,
+        "status": "waiting_for_generation",
+        "reasonCode": "WAITING_FOR_GENERATION",
+        "updatedAt": "2026-09-13T08:42:38.905162800Z"
+      },
+      {
+        "ordinal": 1,
+        "citySeedId": "city_river_metropolis",
+        "realmId": "realm_scale",
+        "role": "trade",
+        "anchorBlock": {
+          "x": 2192,
+          "z": 5744
+        },
+        "originDistanceBlocks": 6148.040338189072,
+        "status": "waiting_for_agent",
+        "reasonCode": "NEXT_CITY_BY_PRIORITY",
+        "updatedAt": "2026-09-13T08:42:38.905162800Z"
+      }
+    ],
+    "completedCount": 1,
+    "remainingCount": 1,
+    "updatedAt": "2026-09-13T08:42:38.905162800Z",
+    "status": "waiting_for_agent",
+    "currentCitySeedId": "city_river_metropolis",
+    "nextAction": "city_plan_d3",
+    "ok": true,
+    "statePath": "city_scale_20260910/automation/city_design_queue.json",
+    "currentCity": {
+      "ordinal": 1,
+      "citySeedId": "city_river_metropolis",
+      "realmId": "realm_scale",
+      "role": "trade",
+      "anchorBlock": {
+        "x": 2192,
+        "z": 5744
+      },
+      "originDistanceBlocks": 6148.040338189072,
+      "status": "waiting_for_agent",
+      "reasonCode": "NEXT_CITY_BY_PRIORITY",
+      "updatedAt": "2026-09-13T08:42:38.905162800Z"
+    },
+    "presentation": "planning_decision_view.v0.1"
+  }
+]

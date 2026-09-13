@@ -1,0 +1,194 @@
+[
+  {
+    "ok": true,
+    "schema": "patch_explorer_response",
+    "operation": "select_candidate",
+    "runId": "city_scale_20260910",
+    "sessionId": "pex_9fd5d6becfcd4718bdecb969fe38e6a8",
+    "status": "completed",
+    "patchSelectionRef": "psel_ad57ed3bd7ce215153a95defff7a3efaea5f6300c2e2bae9abf295a410c17b6f",
+    "selection": {
+      "schema": "patch_selection",
+      "patchSelectionRef": "psel_ad57ed3bd7ce215153a95defff7a3efaea5f6300c2e2bae9abf295a410c17b6f",
+      "sessionId": "pex_9fd5d6becfcd4718bdecb969fe38e6a8",
+      "runId": "city_scale_20260910",
+      "scopeType": "realm_t4",
+      "scopeId": "realm_scale",
+      "candidateBasis": "t_scale_landform_patch",
+      "sourceIdentity": "sha256:68af92457755cb3972158cbc567c31b3bbbc2bdfb75dd9574c5c144a9e3e45d3",
+      "scopeSnapshotIdentity": "sha256:d723e7426080aa2f14fb938bb5157b7d9417dc7240d5c20f50a9df4300c5e022",
+      "candidateId": "SHORE-03",
+      "patchType": "shore",
+      "sourcePatchRefs": [
+        "minecraft:overworld:step.32:t.sha256_3ebe73f809da4982f6486da91b5b13384bd89b6c5622ebeb220092deea525561:p.1215"
+      ],
+      "areaBlocks": 27648,
+      "largestContinuousAreaBlocks": 27648,
+      "originalAreaBlocks": 27648,
+      "cellCount": 27,
+      "cellStepBlocks": 32,
+      "bounds": {
+        "grid": {
+          "minX": 64,
+          "minZ": 176,
+          "maxX": 77,
+          "maxZ": 182
+        },
+        "block": {
+          "minX": 2048,
+          "minZ": 5632,
+          "maxX": 2495,
+          "maxZ": 5855
+        }
+      },
+      "selectedComponent": {
+        "schema": "patch_selection_legal_region",
+        "patchSelectionRef": "psel_ad57ed3bd7ce215153a95defff7a3efaea5f6300c2e2bae9abf295a410c17b6f",
+        "cellStepBlocks": 32,
+        "bounds": {
+          "minX": 2048,
+          "minZ": 5632,
+          "maxX": 2495,
+          "maxZ": 5855
+        },
+        "memberCellsSummary": {
+          "omittedFromDecisionView": true,
+          "entryCount": 27,
+          "detailAccess": "Use the returned Patch Explorer candidate tools for local evidence; full data remains in formal artifacts."
+        }
+      },
+      "suggestedAnchor": {
+        "gridX": 68,
+        "gridZ": 179,
+        "blockX": 2192,
+        "blockZ": 5744,
+        "method": "max_boundary_clearance_within_candidate"
+      },
+      "terrainComposition": {
+        "shore": {
+          "cellCount": 27,
+          "ratio": 1
+        }
+      },
+      "baseLandformComposition": {
+        "shore": {
+          "cellCount": 27,
+          "ratio": 1
+        }
+      },
+      "coarseTerrainEvidence": {
+        "sampleCount": 27,
+        "coverage": 1,
+        "heightP10": 66,
+        "heightP50": 68,
+        "heightP90": 70,
+        "robustRelief": 4,
+        "waterFrac": 0,
+        "slopeProxyP90": 5,
+        "terrainIdHistogram": {
+          "shore": 27
+        },
+        "sourceBiomeIdHistogram": {
+          "minecraft:forest": 15,
+          "minecraft:taiga": 12
+        },
+        "provider": {
+          "providerId": "current_atlas_sampler",
+          "sourceKind": "gis_atlas_sampler",
+          "fastPath": false,
+          "fallbackReason": "rtf_heightmap_preview=generator_context_unavailable",
+          "sourceFingerprint": "minecraft_prior|minecraft:overworld|20260910|net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator",
+          "samplingSemantics": "base_height_feature_sample"
+        },
+        "artifact": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_terrain_evidence.json",
+        "heightWaterPreview": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_height_water_preview.png",
+        "advisoryOnly": true,
+        "requiredNextGate": "city_d3_site_review"
+      },
+      "terrainPreview": {
+        "schema": "patch_candidate_terrain_preview",
+        "sourceIdentity": "sha256:6dccee3d53dce9a01e7ce7d2c09f9af3d6b37ebae8c334940236512e85addffe",
+        "evidenceIdentity": "sha256:5cbfa97acbfe3723394f814062aa110182425e7704cd46bcc782f80264fa9fe0",
+        "evaluationLevel": "city_scale_confirmation",
+        "cacheHit": true,
+        "provider": {
+          "providerId": "current_atlas_sampler",
+          "sourceKind": "gis_atlas_sampler",
+          "fastPath": false,
+          "fallbackReason": "rtf_heightmap_preview=generator_context_unavailable",
+          "sourceFingerprint": "minecraft_prior|minecraft:overworld|20260910|net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator",
+          "samplingSemantics": "base_height_feature_sample"
+        },
+        "grid": {
+          "sampleStepBlocks": 16,
+          "radiusBlocks": 512,
+          "windowDiameterBlocks": 1024,
+          "framingMode": "city_scale_anchor",
+          "minBlockX": 1680,
+          "minBlockZ": 5232,
+          "samplingPattern": "bounded_square_cell_centers_with_candidate_mask",
+          "sampleCount": 4096,
+          "candidateSampleCount": 108,
+          "anchorBlockX": 2192,
+          "anchorBlockZ": 5744,
+          "coarseCandidateCellStepBlocks": 32
+        },
+        "buildabilityPolicy": {
+          "policyId": "patch_candidate_buildability_advisory",
+          "maximumSlopeDegrees": 12,
+          "maximumLocalReliefBlocks": 12,
+          "waterAllowed": false,
+          "connectivity": "cardinal",
+          "role": "advisory_patch_comparison"
+        },
+        "summary": {
+          "candidateSampleCount": 108,
+          "heightP10": 63,
+          "heightP50": 67,
+          "heightP90": 71,
+          "robustRelief": 8,
+          "waterFrac": 0.25,
+          "slopeDegreesP90": 14.036243467926479,
+          "localReliefP90": 6,
+          "buildableSampleCount": 73,
+          "buildableRatio": 0.6759259259259259,
+          "largestContinuousBuildableAreaBlocks": 9472,
+          "largestBuildableComponentAreasBlocks": [
+            9472,
+            5120,
+            2304,
+            1024,
+            256,
+            256,
+            256
+          ]
+        },
+        "advisoryOnly": true,
+        "requiredNextGate": "city_d3_site_review",
+        "artifacts": {
+          "evidence": "city_scale_20260910/patch_candidate_terrain_preview/realm_t4/realm_scale/SHORE-03/city_scale_confirmation_6dccee3d53dce9a0/terrain_preview_evidence.json",
+          "terrainPreview": "city_scale_20260910/patch_candidate_terrain_preview/realm_t4/realm_scale/SHORE-03/city_scale_confirmation_6dccee3d53dce9a0/terrain.png"
+        }
+      },
+      "selectionReason": "东部岸地与首都保护圈分离，明确使用large_city",
+      "selectedAt": "2026-09-13T08:32:31.415561600Z",
+      "confirmationPreview": "city_scale_20260910/patch_candidate_terrain_preview/realm_t4/realm_scale/SHORE-03/city_scale_confirmation_6dccee3d53dce9a0/terrain.png"
+    },
+    "artifacts": {
+      "selection": "city_scale_20260910/patch_explorer_selections/psel_ad57ed3bd7ce215153a95defff7a3efaea5f6300c2e2bae9abf295a410c17b6f.json",
+      "confirmationPreview": "city_scale_20260910/patch_candidate_terrain_preview/realm_t4/realm_scale/SHORE-03/city_scale_confirmation_6dccee3d53dce9a0/terrain.png",
+      "explorationSession": "city_scale_20260910/patch_explorer_pex_9fd5d6becfcd4718bdecb969fe38e6a8/patch_explorer_session.json",
+      "heightWaterPreview": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_height_water_preview.png",
+      "selectedTerrainPreview": {
+        "evidence": "city_scale_20260910/patch_candidate_terrain_preview/realm_t4/realm_scale/SHORE-03/city_scale_confirmation_6dccee3d53dce9a0/terrain_preview_evidence.json",
+        "terrainPreview": "city_scale_20260910/patch_candidate_terrain_preview/realm_t4/realm_scale/SHORE-03/city_scale_confirmation_6dccee3d53dce9a0/terrain.png"
+      },
+      "cityScaleTerrainPreview": "city_scale_20260910/patch_candidate_terrain_preview/realm_t4/realm_scale/SHORE-03/city_scale_confirmation_6dccee3d53dce9a0/terrain.png"
+    },
+    "nextActions": [
+      "return_to_patch_explorer_session",
+      "continue_with_patch_selection"
+    ],
+    "presentation": "planning_decision_view.v0.1"
+  }
+]

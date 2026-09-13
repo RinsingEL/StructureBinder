@@ -1,0 +1,10 @@
+{
+  "outputChars": 6000,
+  "arguments": {
+    "runId": "city_scale_20260910",
+    "qualityMode": "strict",
+    "normalizationGroup": "scale_test"
+  },
+  "reason": "沿用既有国度设计生成国境",
+  "tool": "realm_t3_expand"
+}

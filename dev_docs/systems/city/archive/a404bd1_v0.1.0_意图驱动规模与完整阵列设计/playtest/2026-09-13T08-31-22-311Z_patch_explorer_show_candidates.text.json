@@ -1,0 +1,690 @@
+[
+  {
+    "ok": true,
+    "schema": "patch_explorer_response",
+    "operation": "show_candidates",
+    "runId": "city_scale_20260910",
+    "sessionId": "pex_9fd5d6becfcd4718bdecb969fe38e6a8",
+    "status": "completed",
+    "scopeType": "realm_t4",
+    "scopeId": "realm_scale",
+    "sourceIdentity": "sha256:68af92457755cb3972158cbc567c31b3bbbc2bdfb75dd9574c5c144a9e3e45d3",
+    "patchTypePalette": {
+      "schema": "landform_patch_palette",
+      "colors": {
+        "water": "#2196F3",
+        "shore": "#FFEB3B",
+        "plain": "#4CAF50",
+        "terrace": "#8BC34A",
+        "slope": "#FF9800",
+        "cliff": "#795548",
+        "ridge": "#9C27B0",
+        "valley": "#00BCD4",
+        "basin": "#607D8B",
+        "unknown": "#9E9E9E"
+      }
+    },
+    "typePages": [
+      {
+        "patchType": "shore",
+        "color": "#FFEB3B",
+        "page": 0,
+        "pageSize": 3,
+        "totalCandidates": 429,
+        "hasPrevious": false,
+        "hasNext": true,
+        "nextPageToken": "MTozOjZhNDVhMzUyZGM2NDphYmQ0ZjQyYmRhMTA",
+        "candidates": [
+          {
+            "candidateId": "SHORE-01",
+            "patchType": "shore",
+            "displayName": "Shore",
+            "candidateBasis": "t_scale_landform_patch",
+            "areaBlocks": 50176,
+            "largestContinuousAreaBlocks": 50176,
+            "originalAreaBlocks": 50176,
+            "cellCount": 49,
+            "hardLegal": true,
+            "hardLegalMeaning": "candidate_has_available_cells_only",
+            "confidence": 1,
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.32:t.sha256_3ebe73f809da4982f6486da91b5b13384bd89b6c5622ebeb220092deea525561:p.523"
+            ],
+            "bounds": {
+              "grid": {
+                "minX": -69,
+                "minZ": 132,
+                "maxX": -53,
+                "maxZ": 142
+              },
+              "block": {
+                "minX": -2208,
+                "minZ": 4224,
+                "maxX": -1665,
+                "maxZ": 4575
+              }
+            },
+            "center": {
+              "gridX": -60.714285714285715,
+              "gridZ": 138.3877551020408,
+              "blockX": -1943,
+              "blockZ": 4428
+            },
+            "suggestedAnchor": {
+              "gridX": -61,
+              "gridZ": 139,
+              "blockX": -1936,
+              "blockZ": 4464,
+              "method": "max_boundary_clearance_within_candidate"
+            },
+            "terrainMetrics": {
+              "meanConfidence": 1,
+              "geometrySource": "member_cells"
+            },
+            "terrainComposition": {
+              "shore": {
+                "cellCount": 49,
+                "ratio": 1
+              }
+            },
+            "baseLandformComposition": {
+              "shore": {
+                "cellCount": 49,
+                "ratio": 1
+              }
+            },
+            "coarseTerrainEvidence": {
+              "sampleCount": 49,
+              "coverage": 1,
+              "heightP10": 66,
+              "heightP50": 68,
+              "heightP90": 69,
+              "robustRelief": 3,
+              "waterFrac": 0,
+              "slopeProxyP90": 5,
+              "terrainIdHistogram": {
+                "shore": 49
+              },
+              "sourceBiomeIdHistogram": {
+                "minecraft:forest": 29,
+                "minecraft:jungle": 17,
+                "minecraft:sparse_jungle": 3
+              },
+              "provider": {
+                "providerId": "current_atlas_sampler",
+                "sourceKind": "gis_atlas_sampler",
+                "fastPath": false,
+                "fallbackReason": "rtf_heightmap_preview=generator_context_unavailable",
+                "sourceFingerprint": "minecraft_prior|minecraft:overworld|20260910|net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator",
+                "samplingSemantics": "base_height_feature_sample"
+              },
+              "artifact": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_terrain_evidence.json",
+              "heightWaterPreview": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_height_water_preview.png",
+              "advisoryOnly": true,
+              "requiredNextGate": "city_d3_site_review"
+            }
+          },
+          {
+            "candidateId": "SHORE-02",
+            "patchType": "shore",
+            "displayName": "Shore",
+            "candidateBasis": "t_scale_landform_patch",
+            "areaBlocks": 41984,
+            "largestContinuousAreaBlocks": 41984,
+            "originalAreaBlocks": 41984,
+            "cellCount": 41,
+            "hardLegal": true,
+            "hardLegalMeaning": "candidate_has_available_cells_only",
+            "confidence": 1,
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.32:t.sha256_3ebe73f809da4982f6486da91b5b13384bd89b6c5622ebeb220092deea525561:p.32"
+            ],
+            "bounds": {
+              "grid": {
+                "minX": -57,
+                "minZ": 41,
+                "maxX": -48,
+                "maxZ": 49
+              },
+              "block": {
+                "minX": -1824,
+                "minZ": 1312,
+                "maxX": -1505,
+                "maxZ": 1599
+              }
+            },
+            "center": {
+              "gridX": -52.26829268292683,
+              "gridZ": 44.707317073170735,
+              "blockX": -1673,
+              "blockZ": 1431
+            },
+            "suggestedAnchor": {
+              "gridX": -50,
+              "gridZ": 43,
+              "blockX": -1584,
+              "blockZ": 1392,
+              "method": "max_boundary_clearance_within_candidate"
+            },
+            "terrainMetrics": {
+              "meanConfidence": 1,
+              "geometrySource": "member_cells"
+            },
+            "terrainComposition": {
+              "shore": {
+                "cellCount": 41,
+                "ratio": 1
+              }
+            },
+            "baseLandformComposition": {
+              "shore": {
+                "cellCount": 41,
+                "ratio": 1
+              }
+            },
+            "coarseTerrainEvidence": {
+              "sampleCount": 41,
+              "coverage": 1,
+              "heightP10": 65,
+              "heightP50": 67,
+              "heightP90": 68,
+              "robustRelief": 3,
+              "waterFrac": 0,
+              "slopeProxyP90": 5,
+              "terrainIdHistogram": {
+                "shore": 41
+              },
+              "sourceBiomeIdHistogram": {
+                "minecraft:plains": 21,
+                "minecraft:forest": 16,
+                "minecraft:flower_forest": 4
+              },
+              "provider": {
+                "providerId": "current_atlas_sampler",
+                "sourceKind": "gis_atlas_sampler",
+                "fastPath": false,
+                "fallbackReason": "rtf_heightmap_preview=generator_context_unavailable",
+                "sourceFingerprint": "minecraft_prior|minecraft:overworld|20260910|net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator",
+                "samplingSemantics": "base_height_feature_sample"
+              },
+              "artifact": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_terrain_evidence.json",
+              "heightWaterPreview": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_height_water_preview.png",
+              "advisoryOnly": true,
+              "requiredNextGate": "city_d3_site_review"
+            }
+          },
+          {
+            "candidateId": "SHORE-03",
+            "patchType": "shore",
+            "displayName": "Shore",
+            "candidateBasis": "t_scale_landform_patch",
+            "areaBlocks": 27648,
+            "largestContinuousAreaBlocks": 27648,
+            "originalAreaBlocks": 27648,
+            "cellCount": 27,
+            "hardLegal": true,
+            "hardLegalMeaning": "candidate_has_available_cells_only",
+            "confidence": 1,
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.32:t.sha256_3ebe73f809da4982f6486da91b5b13384bd89b6c5622ebeb220092deea525561:p.1215"
+            ],
+            "bounds": {
+              "grid": {
+                "minX": 64,
+                "minZ": 176,
+                "maxX": 77,
+                "maxZ": 182
+              },
+              "block": {
+                "minX": 2048,
+                "minZ": 5632,
+                "maxX": 2495,
+                "maxZ": 5855
+              }
+            },
+            "center": {
+              "gridX": 69.70370370370371,
+              "gridZ": 178.37037037037038,
+              "blockX": 2231,
+              "blockZ": 5708
+            },
+            "suggestedAnchor": {
+              "gridX": 68,
+              "gridZ": 179,
+              "blockX": 2192,
+              "blockZ": 5744,
+              "method": "max_boundary_clearance_within_candidate"
+            },
+            "terrainMetrics": {
+              "meanConfidence": 1,
+              "geometrySource": "member_cells"
+            },
+            "terrainComposition": {
+              "shore": {
+                "cellCount": 27,
+                "ratio": 1
+              }
+            },
+            "baseLandformComposition": {
+              "shore": {
+                "cellCount": 27,
+                "ratio": 1
+              }
+            },
+            "coarseTerrainEvidence": {
+              "sampleCount": 27,
+              "coverage": 1,
+              "heightP10": 66,
+              "heightP50": 68,
+              "heightP90": 70,
+              "robustRelief": 4,
+              "waterFrac": 0,
+              "slopeProxyP90": 5,
+              "terrainIdHistogram": {
+                "shore": 27
+              },
+              "sourceBiomeIdHistogram": {
+                "minecraft:forest": 15,
+                "minecraft:taiga": 12
+              },
+              "provider": {
+                "providerId": "current_atlas_sampler",
+                "sourceKind": "gis_atlas_sampler",
+                "fastPath": false,
+                "fallbackReason": "rtf_heightmap_preview=generator_context_unavailable",
+                "sourceFingerprint": "minecraft_prior|minecraft:overworld|20260910|net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator",
+                "samplingSemantics": "base_height_feature_sample"
+              },
+              "artifact": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_terrain_evidence.json",
+              "heightWaterPreview": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_height_water_preview.png",
+              "advisoryOnly": true,
+              "requiredNextGate": "city_d3_site_review"
+            }
+          }
+        ]
+      },
+      {
+        "patchType": "slope",
+        "color": "#FF9800",
+        "page": 0,
+        "pageSize": 3,
+        "totalCandidates": 315,
+        "hasPrevious": false,
+        "hasNext": true,
+        "nextPageToken": "MTozOjZhNDVhMzUyZGM2NDphYmQ0ZjQyYmRhMTA",
+        "candidates": [
+          {
+            "candidateId": "SLOPE-01",
+            "patchType": "slope",
+            "displayName": "Slope",
+            "candidateBasis": "t_scale_landform_patch",
+            "areaBlocks": 17408,
+            "largestContinuousAreaBlocks": 17408,
+            "originalAreaBlocks": 17408,
+            "cellCount": 17,
+            "hardLegal": true,
+            "hardLegalMeaning": "candidate_has_available_cells_only",
+            "confidence": 1,
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.32:t.sha256_3ebe73f809da4982f6486da91b5b13384bd89b6c5622ebeb220092deea525561:p.486"
+            ],
+            "bounds": {
+              "grid": {
+                "minX": -90,
+                "minZ": 132,
+                "maxX": -84,
+                "maxZ": 138
+              },
+              "block": {
+                "minX": -2880,
+                "minZ": 4224,
+                "maxX": -2657,
+                "maxZ": 4447
+              }
+            },
+            "center": {
+              "gridX": -87.23529411764706,
+              "gridZ": 135.1764705882353,
+              "blockX": -2792,
+              "blockZ": 4326
+            },
+            "suggestedAnchor": {
+              "gridX": -89,
+              "gridZ": 133,
+              "blockX": -2832,
+              "blockZ": 4272,
+              "method": "max_boundary_clearance_within_candidate"
+            },
+            "terrainMetrics": {
+              "meanConfidence": 1,
+              "geometrySource": "member_cells"
+            },
+            "terrainComposition": {
+              "slope": {
+                "cellCount": 17,
+                "ratio": 1
+              }
+            },
+            "baseLandformComposition": {
+              "slope": {
+                "cellCount": 17,
+                "ratio": 1
+              }
+            },
+            "coarseTerrainEvidence": {
+              "sampleCount": 17,
+              "coverage": 1,
+              "heightP10": 66,
+              "heightP50": 69,
+              "heightP90": 70,
+              "robustRelief": 4,
+              "waterFrac": 0,
+              "slopeProxyP90": 7,
+              "terrainIdHistogram": {
+                "slope": 17
+              },
+              "sourceBiomeIdHistogram": {
+                "minecraft:plains": 11,
+                "minecraft:swamp": 6
+              },
+              "provider": {
+                "providerId": "current_atlas_sampler",
+                "sourceKind": "gis_atlas_sampler",
+                "fastPath": false,
+                "fallbackReason": "rtf_heightmap_preview=generator_context_unavailable",
+                "sourceFingerprint": "minecraft_prior|minecraft:overworld|20260910|net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator",
+                "samplingSemantics": "base_height_feature_sample"
+              },
+              "artifact": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_terrain_evidence.json",
+              "heightWaterPreview": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_height_water_preview.png",
+              "advisoryOnly": true,
+              "requiredNextGate": "city_d3_site_review"
+            }
+          },
+          {
+            "candidateId": "SLOPE-02",
+            "patchType": "slope",
+            "displayName": "Slope",
+            "candidateBasis": "t_scale_landform_patch",
+            "areaBlocks": 15360,
+            "largestContinuousAreaBlocks": 15360,
+            "originalAreaBlocks": 15360,
+            "cellCount": 15,
+            "hardLegal": true,
+            "hardLegalMeaning": "candidate_has_available_cells_only",
+            "confidence": 1,
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.32:t.sha256_3ebe73f809da4982f6486da91b5b13384bd89b6c5622ebeb220092deea525561:p.91"
+            ],
+            "bounds": {
+              "grid": {
+                "minX": -58,
+                "minZ": 61,
+                "maxX": -55,
+                "maxZ": 66
+              },
+              "block": {
+                "minX": -1856,
+                "minZ": 1952,
+                "maxX": -1729,
+                "maxZ": 2143
+              }
+            },
+            "center": {
+              "gridX": -56.53333333333333,
+              "gridZ": 63.333333333333336,
+              "blockX": -1809,
+              "blockZ": 2027
+            },
+            "suggestedAnchor": {
+              "gridX": -56,
+              "gridZ": 63,
+              "blockX": -1776,
+              "blockZ": 2032,
+              "method": "max_boundary_clearance_within_candidate"
+            },
+            "terrainMetrics": {
+              "meanConfidence": 1,
+              "geometrySource": "member_cells"
+            },
+            "terrainComposition": {
+              "slope": {
+                "cellCount": 15,
+                "ratio": 1
+              }
+            },
+            "baseLandformComposition": {
+              "slope": {
+                "cellCount": 15,
+                "ratio": 1
+              }
+            },
+            "coarseTerrainEvidence": {
+              "sampleCount": 15,
+              "coverage": 1,
+              "heightP10": 71,
+              "heightP50": 72,
+              "heightP90": 72,
+              "robustRelief": 1,
+              "waterFrac": 0,
+              "slopeProxyP90": 7,
+              "terrainIdHistogram": {
+                "slope": 15
+              },
+              "sourceBiomeIdHistogram": {
+                "minecraft:forest": 15
+              },
+              "provider": {
+                "providerId": "current_atlas_sampler",
+                "sourceKind": "gis_atlas_sampler",
+                "fastPath": false,
+                "fallbackReason": "rtf_heightmap_preview=generator_context_unavailable",
+                "sourceFingerprint": "minecraft_prior|minecraft:overworld|20260910|net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator",
+                "samplingSemantics": "base_height_feature_sample"
+              },
+              "artifact": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_terrain_evidence.json",
+              "heightWaterPreview": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_height_water_preview.png",
+              "advisoryOnly": true,
+              "requiredNextGate": "city_d3_site_review"
+            }
+          },
+          {
+            "candidateId": "SLOPE-03",
+            "patchType": "slope",
+            "displayName": "Slope",
+            "candidateBasis": "t_scale_landform_patch",
+            "areaBlocks": 10240,
+            "largestContinuousAreaBlocks": 10240,
+            "originalAreaBlocks": 10240,
+            "cellCount": 10,
+            "hardLegal": true,
+            "hardLegalMeaning": "candidate_has_available_cells_only",
+            "confidence": 1,
+            "sourcePatchRefs": [
+              "minecraft:overworld:step.32:t.sha256_3ebe73f809da4982f6486da91b5b13384bd89b6c5622ebeb220092deea525561:p.366"
+            ],
+            "bounds": {
+              "grid": {
+                "minX": -89,
+                "minZ": 124,
+                "maxX": -85,
+                "maxZ": 127
+              },
+              "block": {
+                "minX": -2848,
+                "minZ": 3968,
+                "maxX": -2689,
+                "maxZ": 4095
+              }
+            },
+            "center": {
+              "gridX": -86.7,
+              "gridZ": 125.8,
+              "blockX": -2774,
+              "blockZ": 4026
+            },
+            "suggestedAnchor": {
+              "gridX": -85,
+              "gridZ": 126,
+              "blockX": -2704,
+              "blockZ": 4048,
+              "method": "max_boundary_clearance_within_candidate"
+            },
+            "terrainMetrics": {
+              "meanConfidence": 1,
+              "geometrySource": "member_cells"
+            },
+            "terrainComposition": {
+              "slope": {
+                "cellCount": 10,
+                "ratio": 1
+              }
+            },
+            "baseLandformComposition": {
+              "slope": {
+                "cellCount": 10,
+                "ratio": 1
+              }
+            },
+            "coarseTerrainEvidence": {
+              "sampleCount": 10,
+              "coverage": 1,
+              "heightP10": 67,
+              "heightP50": 70,
+              "heightP90": 73,
+              "robustRelief": 6,
+              "waterFrac": 0,
+              "slopeProxyP90": 7,
+              "terrainIdHistogram": {
+                "slope": 10
+              },
+              "sourceBiomeIdHistogram": {
+                "minecraft:swamp": 10
+              },
+              "provider": {
+                "providerId": "current_atlas_sampler",
+                "sourceKind": "gis_atlas_sampler",
+                "fastPath": false,
+                "fallbackReason": "rtf_heightmap_preview=generator_context_unavailable",
+                "sourceFingerprint": "minecraft_prior|minecraft:overworld|20260910|net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator",
+                "samplingSemantics": "base_height_feature_sample"
+              },
+              "artifact": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_terrain_evidence.json",
+              "heightWaterPreview": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_height_water_preview.png",
+              "advisoryOnly": true,
+              "requiredNextGate": "city_d3_site_review"
+            }
+          }
+        ]
+      }
+    ],
+    "relations": [
+      {
+        "candidateId": "SHORE-01",
+        "otherCandidateId": "SLOPE-01",
+        "adjacent": false,
+        "intersects": false,
+        "contains": false,
+        "containedBy": false,
+        "separated": true,
+        "boundaryDistanceCells": 15,
+        "boundaryDistanceBlocks": 480,
+        "centerDistanceCells": 26.714719443777994,
+        "centerDistanceBlocks": 854.8710222008958,
+        "direction": "northwest",
+        "sharedBoundaryCells": 0,
+        "sharedBoundaryBlocks": 0,
+        "contactRatio": 0,
+        "closestContactPoint": {
+          "gridX": -76,
+          "gridZ": 137,
+          "blockX": -2432,
+          "blockZ": 4384
+        }
+      },
+      {
+        "candidateId": "SHORE-02",
+        "otherCandidateId": "SLOPE-02",
+        "adjacent": false,
+        "intersects": false,
+        "contains": false,
+        "containedBy": false,
+        "separated": true,
+        "boundaryDistanceCells": 14,
+        "boundaryDistanceBlocks": 448,
+        "centerDistanceCells": 19.108088692317228,
+        "centerDistanceBlocks": 611.4588381541513,
+        "direction": "southwest",
+        "sharedBoundaryCells": 0,
+        "sharedBoundaryBlocks": 0,
+        "contactRatio": 0,
+        "closestContactPoint": {
+          "gridX": -57,
+          "gridZ": 53,
+          "blockX": -1824,
+          "blockZ": 1696
+        }
+      },
+      {
+        "candidateId": "SHORE-03",
+        "otherCandidateId": "SLOPE-01",
+        "adjacent": false,
+        "intersects": false,
+        "contains": false,
+        "containedBy": false,
+        "separated": true,
+        "boundaryDistanceCells": 190,
+        "boundaryDistanceBlocks": 6080,
+        "centerDistanceCells": 162.77457422938963,
+        "centerDistanceBlocks": 5208.786375340468,
+        "direction": "northwest",
+        "sharedBoundaryCells": 0,
+        "sharedBoundaryBlocks": 0,
+        "contactRatio": 0,
+        "closestContactPoint": {
+          "gridX": -9,
+          "gridZ": 157,
+          "blockX": -288,
+          "blockZ": 5024
+        }
+      },
+      {
+        "candidateId": "SLOPE-03",
+        "otherCandidateId": "SHORE-01",
+        "adjacent": false,
+        "intersects": false,
+        "contains": false,
+        "containedBy": false,
+        "separated": true,
+        "boundaryDistanceCells": 27,
+        "boundaryDistanceBlocks": 864,
+        "centerDistanceCells": 28.874018172878714,
+        "centerDistanceBlocks": 923.9685815321188,
+        "direction": "southeast",
+        "sharedBoundaryCells": 0,
+        "sharedBoundaryBlocks": 0,
+        "contactRatio": 0,
+        "closestContactPoint": {
+          "gridX": -77,
+          "gridZ": 132,
+          "blockX": -2464,
+          "blockZ": 4224
+        }
+      }
+    ],
+    "artifacts": {
+      "explorationSession": "city_scale_20260910/patch_explorer_pex_9fd5d6becfcd4718bdecb969fe38e6a8/patch_explorer_session.json",
+      "candidatePage": "city_scale_20260910/patch_explorer_pex_9fd5d6becfcd4718bdecb969fe38e6a8/candidate_page_600964cc3523.json",
+      "heightWaterPreview": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_height_water_preview.png",
+      "terrainOverview": "city_scale_20260910/patch_explorer_pex_9fd5d6becfcd4718bdecb969fe38e6a8/terrain_overview.png",
+      "allPatchesOverview": "city_scale_20260910/patch_explorer_pex_9fd5d6becfcd4718bdecb969fe38e6a8/all_patches_overview.png",
+      "biomeOverview": "city_scale_20260910/patch_explorer_pex_9fd5d6becfcd4718bdecb969fe38e6a8/biome_overview.png",
+      "topPatchesOverview": "city_scale_20260910/patch_explorer_pex_9fd5d6becfcd4718bdecb969fe38e6a8/top_patches_overview_600964cc3523.png"
+    },
+    "nextActions": [
+      "patch_explorer_show_candidates",
+      "patch_explorer_select_candidate"
+    ],
+    "presentation": "planning_decision_view.v0.1"
+  }
+]

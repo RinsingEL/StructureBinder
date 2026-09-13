@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Error: PROVIDER_MANAGED_CITY_SOURCES_AMBIGUOUS: pack author must set geomantia.providerPlanningSourceDir; candidates=[geomantia_trek_v3_stubbs_selected_20260804, pcl_validation_02]"
+    }
+  ],
+  "isError": true
+}

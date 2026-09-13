@@ -1,0 +1,9 @@
+{
+  "reason": "输出正式D4预览与标准anchor，停止后续生成",
+  "outputChars": 2000,
+  "arguments": {
+    "citySeedId": "city_river_metropolis",
+    "runId": "city_scale_20260910"
+  },
+  "tool": "city_compile_d4_blueprint"
+}

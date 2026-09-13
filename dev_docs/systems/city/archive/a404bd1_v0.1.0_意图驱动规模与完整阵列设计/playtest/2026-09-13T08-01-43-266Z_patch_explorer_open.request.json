@@ -1,0 +1,10 @@
+{
+  "reason": "查看国度候选地形",
+  "tool": "patch_explorer_open",
+  "outputChars": 10000,
+  "arguments": {
+    "runId": "city_scale_20260910",
+    "realmId": "realm_scale",
+    "scopeType": "realm_t2"
+  }
+}

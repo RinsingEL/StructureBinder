@@ -1,0 +1,622 @@
+[
+  {
+    "ok": true,
+    "schema": "patch_explorer_response",
+    "operation": "open",
+    "runId": "city_scale_20260910",
+    "sessionId": "pex_9fd5d6becfcd4718bdecb969fe38e6a8",
+    "status": "completed",
+    "scopeType": "realm_t4",
+    "scopeId": "realm_scale",
+    "candidateBasis": "t_scale_landform_patch",
+    "sourceIdentity": "sha256:68af92457755cb3972158cbc567c31b3bbbc2bdfb75dd9574c5c144a9e3e45d3",
+    "tScaleRefinementArtifact": "city_scale_20260910/patch_explorer_refinements/t_scale_3ebe73f809da4982f6486da91b5b13384bd89b6c5622ebeb220092deea525561.json",
+    "tScaleRefinementIdentity": "sha256:7390639208704aee5e611b933d51de5853c0c67af257ab5ce25b9de479ea383b",
+    "tScaleRefinementCacheHit": true,
+    "typeCatalog": [
+      {
+        "patchType": "cliff",
+        "displayName": "Cliff",
+        "color": "#795548",
+        "candidateBasis": "t_scale_landform_patch",
+        "patchCount": 133,
+        "totalAreaBlocks": 7703552,
+        "maxAreaBlocks": 1608704,
+        "medianAreaBlocks": 5120,
+        "supportsCoarseAnchor": true,
+        "factSource": "T-scale terrain resample + landform classification + patch merge",
+        "meanConfidence": 1,
+        "terrainComposition": {
+          "cliff": {
+            "cellCount": 7523,
+            "ratio": 1
+          }
+        },
+        "baseLandformComposition": {
+          "cliff": {
+            "cellCount": 7523,
+            "ratio": 1
+          }
+        },
+        "coarseTerrainEvidence": {
+          "sampleCount": 7523,
+          "coverage": 1,
+          "heightP10": 69,
+          "heightP50": 86,
+          "heightP90": 119,
+          "robustRelief": 50,
+          "waterFrac": 0,
+          "slopeProxyP90": 39,
+          "terrainIdHistogram": {
+            "cliff": 7523
+          },
+          "sourceBiomeIdHistogram": {
+            "minecraft:forest": 2301,
+            "minecraft:plains": 1713,
+            "minecraft:meadow": 447,
+            "minecraft:savanna": 341,
+            "minecraft:taiga": 336,
+            "minecraft:snowy_plains": 256,
+            "minecraft:birch_forest": 243,
+            "minecraft:jungle": 207,
+            "minecraft:sparse_jungle": 174,
+            "minecraft:old_growth_spruce_taiga": 166,
+            "minecraft:old_growth_pine_taiga": 155,
+            "minecraft:snowy_taiga": 146,
+            "minecraft:cherry_grove": 145,
+            "minecraft:old_growth_birch_forest": 141,
+            "minecraft:dark_forest": 97,
+            "minecraft:savanna_plateau": 96,
+            "minecraft:sunflower_plains": 95,
+            "minecraft:grove": 93,
+            "minecraft:flower_forest": 74,
+            "minecraft:jagged_peaks": 43,
+            "minecraft:bamboo_jungle": 40,
+            "minecraft:stony_peaks": 35,
+            "minecraft:windswept_forest": 30,
+            "minecraft:stony_shore": 24,
+            "minecraft:swamp": 24,
+            "minecraft:windswept_hills": 23,
+            "minecraft:snowy_slopes": 20,
+            "minecraft:frozen_peaks": 18,
+            "minecraft:windswept_savanna": 16,
+            "minecraft:river": 14,
+            "minecraft:dripstone_caves": 4,
+            "minecraft:mangrove_swamp": 4,
+            "minecraft:beach": 2
+          },
+          "provider": {
+            "providerId": "current_atlas_sampler",
+            "sourceKind": "gis_atlas_sampler",
+            "fastPath": false,
+            "fallbackReason": "rtf_heightmap_preview=generator_context_unavailable",
+            "sourceFingerprint": "minecraft_prior|minecraft:overworld|20260910|net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator",
+            "samplingSemantics": "base_height_feature_sample"
+          },
+          "artifact": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_terrain_evidence.json",
+          "heightWaterPreview": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_height_water_preview.png",
+          "advisoryOnly": true,
+          "requiredNextGate": "city_d3_site_review"
+        }
+      },
+      {
+        "patchType": "plain",
+        "displayName": "Plain",
+        "color": "#4CAF50",
+        "candidateBasis": "t_scale_landform_patch",
+        "patchCount": 2,
+        "totalAreaBlocks": 2048,
+        "maxAreaBlocks": 1024,
+        "medianAreaBlocks": 1024,
+        "supportsCoarseAnchor": false,
+        "factSource": "T-scale terrain resample + landform classification + patch merge",
+        "meanConfidence": 1,
+        "terrainComposition": {
+          "plain": {
+            "cellCount": 2,
+            "ratio": 1
+          }
+        },
+        "baseLandformComposition": {
+          "plain": {
+            "cellCount": 2,
+            "ratio": 1
+          }
+        },
+        "coarseTerrainEvidence": {
+          "sampleCount": 2,
+          "coverage": 1,
+          "heightP10": 71,
+          "heightP50": 71,
+          "heightP90": 71,
+          "robustRelief": 0,
+          "waterFrac": 0,
+          "slopeProxyP90": 2,
+          "terrainIdHistogram": {
+            "plain": 2
+          },
+          "sourceBiomeIdHistogram": {
+            "minecraft:forest": 2
+          },
+          "provider": {
+            "providerId": "current_atlas_sampler",
+            "sourceKind": "gis_atlas_sampler",
+            "fastPath": false,
+            "fallbackReason": "rtf_heightmap_preview=generator_context_unavailable",
+            "sourceFingerprint": "minecraft_prior|minecraft:overworld|20260910|net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator",
+            "samplingSemantics": "base_height_feature_sample"
+          },
+          "artifact": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_terrain_evidence.json",
+          "heightWaterPreview": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_height_water_preview.png",
+          "advisoryOnly": true,
+          "requiredNextGate": "city_d3_site_review"
+        }
+      },
+      {
+        "patchType": "ridge",
+        "displayName": "Ridge",
+        "color": "#9C27B0",
+        "candidateBasis": "t_scale_landform_patch",
+        "patchCount": 45,
+        "totalAreaBlocks": 71680,
+        "maxAreaBlocks": 5120,
+        "medianAreaBlocks": 1024,
+        "supportsCoarseAnchor": true,
+        "factSource": "T-scale terrain resample + landform classification + patch merge",
+        "meanConfidence": 1,
+        "terrainComposition": {
+          "ridge": {
+            "cellCount": 70,
+            "ratio": 1
+          }
+        },
+        "baseLandformComposition": {
+          "ridge": {
+            "cellCount": 70,
+            "ratio": 1
+          }
+        },
+        "coarseTerrainEvidence": {
+          "sampleCount": 70,
+          "coverage": 1,
+          "heightP10": 76,
+          "heightP50": 81,
+          "heightP90": 117,
+          "robustRelief": 41,
+          "waterFrac": 0,
+          "slopeProxyP90": 13,
+          "terrainIdHistogram": {
+            "ridge": 70
+          },
+          "sourceBiomeIdHistogram": {
+            "minecraft:forest": 31,
+            "minecraft:plains": 6,
+            "minecraft:taiga": 6,
+            "minecraft:savanna": 5,
+            "minecraft:snowy_taiga": 5,
+            "minecraft:meadow": 3,
+            "minecraft:old_growth_spruce_taiga": 3,
+            "minecraft:sunflower_plains": 3,
+            "minecraft:old_growth_birch_forest": 2,
+            "minecraft:sparse_jungle": 2,
+            "minecraft:windswept_hills": 2,
+            "minecraft:jungle": 1,
+            "minecraft:old_growth_pine_taiga": 1
+          },
+          "provider": {
+            "providerId": "current_atlas_sampler",
+            "sourceKind": "gis_atlas_sampler",
+            "fastPath": false,
+            "fallbackReason": "rtf_heightmap_preview=generator_context_unavailable",
+            "sourceFingerprint": "minecraft_prior|minecraft:overworld|20260910|net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator",
+            "samplingSemantics": "base_height_feature_sample"
+          },
+          "artifact": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_terrain_evidence.json",
+          "heightWaterPreview": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_height_water_preview.png",
+          "advisoryOnly": true,
+          "requiredNextGate": "city_d3_site_review"
+        }
+      },
+      {
+        "patchType": "shore",
+        "displayName": "Shore",
+        "color": "#FFEB3B",
+        "candidateBasis": "t_scale_landform_patch",
+        "patchCount": 429,
+        "totalAreaBlocks": 1184768,
+        "maxAreaBlocks": 50176,
+        "medianAreaBlocks": 1024,
+        "supportsCoarseAnchor": true,
+        "factSource": "T-scale terrain resample + landform classification + patch merge",
+        "meanConfidence": 1,
+        "terrainComposition": {
+          "shore": {
+            "cellCount": 1157,
+            "ratio": 1
+          }
+        },
+        "baseLandformComposition": {
+          "shore": {
+            "cellCount": 1157,
+            "ratio": 1
+          }
+        },
+        "coarseTerrainEvidence": {
+          "sampleCount": 1157,
+          "coverage": 1,
+          "heightP10": 65,
+          "heightP50": 67,
+          "heightP90": 71,
+          "robustRelief": 6,
+          "waterFrac": 0,
+          "slopeProxyP90": 5,
+          "terrainIdHistogram": {
+            "shore": 1157
+          },
+          "sourceBiomeIdHistogram": {
+            "minecraft:forest": 368,
+            "minecraft:plains": 358,
+            "minecraft:jungle": 75,
+            "minecraft:sparse_jungle": 59,
+            "minecraft:savanna": 53,
+            "minecraft:taiga": 49,
+            "minecraft:swamp": 40,
+            "minecraft:snowy_plains": 23,
+            "minecraft:birch_forest": 20,
+            "minecraft:old_growth_birch_forest": 20,
+            "minecraft:flower_forest": 15,
+            "minecraft:beach": 11,
+            "minecraft:old_growth_spruce_taiga": 11,
+            "minecraft:river": 10,
+            "minecraft:sunflower_plains": 9,
+            "minecraft:stony_shore": 8,
+            "minecraft:bamboo_jungle": 7,
+            "minecraft:dark_forest": 7,
+            "minecraft:old_growth_pine_taiga": 6,
+            "minecraft:snowy_taiga": 3,
+            "minecraft:mangrove_swamp": 2,
+            "minecraft:meadow": 2,
+            "minecraft:cherry_grove": 1
+          },
+          "provider": {
+            "providerId": "current_atlas_sampler",
+            "sourceKind": "gis_atlas_sampler",
+            "fastPath": false,
+            "fallbackReason": "rtf_heightmap_preview=generator_context_unavailable",
+            "sourceFingerprint": "minecraft_prior|minecraft:overworld|20260910|net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator",
+            "samplingSemantics": "base_height_feature_sample"
+          },
+          "artifact": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_terrain_evidence.json",
+          "heightWaterPreview": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_height_water_preview.png",
+          "advisoryOnly": true,
+          "requiredNextGate": "city_d3_site_review"
+        }
+      },
+      {
+        "patchType": "slope",
+        "displayName": "Slope",
+        "color": "#FF9800",
+        "candidateBasis": "t_scale_landform_patch",
+        "patchCount": 315,
+        "totalAreaBlocks": 588800,
+        "maxAreaBlocks": 17408,
+        "medianAreaBlocks": 1024,
+        "supportsCoarseAnchor": true,
+        "factSource": "T-scale terrain resample + landform classification + patch merge",
+        "meanConfidence": 1,
+        "terrainComposition": {
+          "slope": {
+            "cellCount": 575,
+            "ratio": 1
+          }
+        },
+        "baseLandformComposition": {
+          "slope": {
+            "cellCount": 575,
+            "ratio": 1
+          }
+        },
+        "coarseTerrainEvidence": {
+          "sampleCount": 575,
+          "coverage": 1,
+          "heightP10": 66,
+          "heightP50": 70,
+          "heightP90": 73,
+          "robustRelief": 7,
+          "waterFrac": 0,
+          "slopeProxyP90": 7,
+          "terrainIdHistogram": {
+            "slope": 575
+          },
+          "sourceBiomeIdHistogram": {
+            "minecraft:plains": 179,
+            "minecraft:forest": 176,
+            "minecraft:taiga": 35,
+            "minecraft:swamp": 33,
+            "minecraft:savanna": 27,
+            "minecraft:sparse_jungle": 22,
+            "minecraft:jungle": 21,
+            "minecraft:birch_forest": 13,
+            "minecraft:sunflower_plains": 12,
+            "minecraft:stony_shore": 10,
+            "minecraft:dark_forest": 9,
+            "minecraft:bamboo_jungle": 8,
+            "minecraft:old_growth_birch_forest": 7,
+            "minecraft:old_growth_spruce_taiga": 7,
+            "minecraft:beach": 5,
+            "minecraft:mangrove_swamp": 3,
+            "minecraft:river": 3,
+            "minecraft:snowy_plains": 2,
+            "minecraft:snowy_taiga": 2,
+            "minecraft:flower_forest": 1
+          },
+          "provider": {
+            "providerId": "current_atlas_sampler",
+            "sourceKind": "gis_atlas_sampler",
+            "fastPath": false,
+            "fallbackReason": "rtf_heightmap_preview=generator_context_unavailable",
+            "sourceFingerprint": "minecraft_prior|minecraft:overworld|20260910|net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator",
+            "samplingSemantics": "base_height_feature_sample"
+          },
+          "artifact": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_terrain_evidence.json",
+          "heightWaterPreview": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_height_water_preview.png",
+          "advisoryOnly": true,
+          "requiredNextGate": "city_d3_site_review"
+        }
+      },
+      {
+        "patchType": "unknown",
+        "displayName": "Unknown",
+        "color": "#9E9E9E",
+        "candidateBasis": "t_scale_landform_patch",
+        "patchCount": 233,
+        "totalAreaBlocks": 537600,
+        "maxAreaBlocks": 15360,
+        "medianAreaBlocks": 1024,
+        "supportsCoarseAnchor": true,
+        "factSource": "T-scale terrain resample + landform classification + patch merge",
+        "meanConfidence": 1,
+        "terrainComposition": {
+          "unknown": {
+            "cellCount": 525,
+            "ratio": 1
+          }
+        },
+        "baseLandformComposition": {
+          "unknown": {
+            "cellCount": 525,
+            "ratio": 1
+          }
+        },
+        "coarseTerrainEvidence": {
+          "sampleCount": 525,
+          "coverage": 1,
+          "heightP10": 66,
+          "heightP50": 71,
+          "heightP90": 75,
+          "robustRelief": 9,
+          "waterFrac": 0,
+          "slopeProxyP90": 12,
+          "terrainIdHistogram": {
+            "unknown": 525
+          },
+          "sourceBiomeIdHistogram": {
+            "minecraft:forest": 157,
+            "minecraft:plains": 140,
+            "minecraft:savanna": 45,
+            "minecraft:taiga": 35,
+            "minecraft:sparse_jungle": 25,
+            "minecraft:birch_forest": 18,
+            "minecraft:swamp": 17,
+            "minecraft:stony_shore": 15,
+            "minecraft:old_growth_birch_forest": 13,
+            "minecraft:dark_forest": 11,
+            "minecraft:sunflower_plains": 11,
+            "minecraft:bamboo_jungle": 8,
+            "minecraft:old_growth_spruce_taiga": 6,
+            "minecraft:beach": 5,
+            "minecraft:jungle": 5,
+            "minecraft:snowy_plains": 5,
+            "minecraft:flower_forest": 4,
+            "minecraft:river": 3,
+            "minecraft:snowy_taiga": 2
+          },
+          "provider": {
+            "providerId": "current_atlas_sampler",
+            "sourceKind": "gis_atlas_sampler",
+            "fastPath": false,
+            "fallbackReason": "rtf_heightmap_preview=generator_context_unavailable",
+            "sourceFingerprint": "minecraft_prior|minecraft:overworld|20260910|net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator",
+            "samplingSemantics": "base_height_feature_sample"
+          },
+          "artifact": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_terrain_evidence.json",
+          "heightWaterPreview": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_height_water_preview.png",
+          "advisoryOnly": true,
+          "requiredNextGate": "city_d3_site_review"
+        }
+      },
+      {
+        "patchType": "valley",
+        "displayName": "Valley",
+        "color": "#00BCD4",
+        "candidateBasis": "t_scale_landform_patch",
+        "patchCount": 60,
+        "totalAreaBlocks": 92160,
+        "maxAreaBlocks": 7168,
+        "medianAreaBlocks": 1024,
+        "supportsCoarseAnchor": true,
+        "factSource": "T-scale terrain resample + landform classification + patch merge",
+        "meanConfidence": 1,
+        "terrainComposition": {
+          "valley": {
+            "cellCount": 90,
+            "ratio": 1
+          }
+        },
+        "baseLandformComposition": {
+          "valley": {
+            "cellCount": 90,
+            "ratio": 1
+          }
+        },
+        "coarseTerrainEvidence": {
+          "sampleCount": 90,
+          "coverage": 1,
+          "heightP10": 65,
+          "heightP50": 67,
+          "heightP90": 93,
+          "robustRelief": 28,
+          "waterFrac": 0,
+          "slopeProxyP90": 11,
+          "terrainIdHistogram": {
+            "valley": 90
+          },
+          "sourceBiomeIdHistogram": {
+            "minecraft:forest": 31,
+            "minecraft:plains": 20,
+            "minecraft:sparse_jungle": 8,
+            "minecraft:snowy_plains": 6,
+            "minecraft:jungle": 4,
+            "minecraft:river": 4,
+            "minecraft:snowy_taiga": 3,
+            "minecraft:taiga": 3,
+            "minecraft:birch_forest": 2,
+            "minecraft:old_growth_birch_forest": 2,
+            "minecraft:old_growth_spruce_taiga": 2,
+            "minecraft:savanna": 2,
+            "minecraft:bamboo_jungle": 1,
+            "minecraft:stony_shore": 1,
+            "minecraft:sunflower_plains": 1
+          },
+          "provider": {
+            "providerId": "current_atlas_sampler",
+            "sourceKind": "gis_atlas_sampler",
+            "fastPath": false,
+            "fallbackReason": "rtf_heightmap_preview=generator_context_unavailable",
+            "sourceFingerprint": "minecraft_prior|minecraft:overworld|20260910|net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator",
+            "samplingSemantics": "base_height_feature_sample"
+          },
+          "artifact": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_terrain_evidence.json",
+          "heightWaterPreview": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_height_water_preview.png",
+          "advisoryOnly": true,
+          "requiredNextGate": "city_d3_site_review"
+        }
+      },
+      {
+        "patchType": "water",
+        "displayName": "Water",
+        "color": "#2196F3",
+        "candidateBasis": "t_scale_landform_patch",
+        "patchCount": 522,
+        "totalAreaBlocks": 2844672,
+        "maxAreaBlocks": 49152,
+        "medianAreaBlocks": 2048,
+        "supportsCoarseAnchor": true,
+        "factSource": "T-scale terrain resample + landform classification + patch merge",
+        "meanConfidence": 1,
+        "terrainComposition": {
+          "water": {
+            "cellCount": 2778,
+            "ratio": 1
+          }
+        },
+        "baseLandformComposition": {
+          "water": {
+            "cellCount": 2778,
+            "ratio": 1
+          }
+        },
+        "coarseTerrainEvidence": {
+          "sampleCount": 2778,
+          "coverage": 1,
+          "heightP10": 63,
+          "heightP50": 63,
+          "heightP90": 64,
+          "robustRelief": 1,
+          "waterFrac": 1,
+          "slopeProxyP90": 29,
+          "terrainIdHistogram": {
+            "water": 2778
+          },
+          "sourceBiomeIdHistogram": {
+            "minecraft:river": 789,
+            "minecraft:plains": 522,
+            "minecraft:forest": 498,
+            "minecraft:swamp": 118,
+            "minecraft:taiga": 94,
+            "minecraft:jungle": 86,
+            "minecraft:sparse_jungle": 78,
+            "minecraft:savanna": 73,
+            "minecraft:birch_forest": 67,
+            "minecraft:snowy_plains": 56,
+            "minecraft:beach": 46,
+            "minecraft:dark_forest": 39,
+            "minecraft:frozen_river": 35,
+            "minecraft:old_growth_birch_forest": 33,
+            "minecraft:mangrove_swamp": 30,
+            "minecraft:cold_ocean": 29,
+            "minecraft:ocean": 27,
+            "minecraft:old_growth_spruce_taiga": 23,
+            "minecraft:snowy_taiga": 23,
+            "minecraft:stony_shore": 23,
+            "minecraft:sunflower_plains": 21,
+            "minecraft:windswept_savanna": 18,
+            "minecraft:bamboo_jungle": 17,
+            "minecraft:flower_forest": 14,
+            "minecraft:old_growth_pine_taiga": 7,
+            "minecraft:dripstone_caves": 6,
+            "minecraft:lukewarm_ocean": 6
+          },
+          "provider": {
+            "providerId": "current_atlas_sampler",
+            "sourceKind": "gis_atlas_sampler",
+            "fastPath": false,
+            "fallbackReason": "rtf_heightmap_preview=generator_context_unavailable",
+            "sourceFingerprint": "minecraft_prior|minecraft:overworld|20260910|net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator",
+            "samplingSemantics": "base_height_feature_sample"
+          },
+          "artifact": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_terrain_evidence.json",
+          "heightWaterPreview": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_height_water_preview.png",
+          "advisoryOnly": true,
+          "requiredNextGate": "city_d3_site_review"
+        }
+      }
+    ],
+    "patchTypePalette": {
+      "schema": "landform_patch_palette",
+      "colors": {
+        "water": "#2196F3",
+        "shore": "#FFEB3B",
+        "plain": "#4CAF50",
+        "terrace": "#8BC34A",
+        "slope": "#FF9800",
+        "cliff": "#795548",
+        "ridge": "#9C27B0",
+        "valley": "#00BCD4",
+        "basin": "#607D8B",
+        "unknown": "#9E9E9E"
+      }
+    },
+    "artifacts": {
+      "explorationSession": "city_scale_20260910/patch_explorer_pex_9fd5d6becfcd4718bdecb969fe38e6a8/patch_explorer_session.json",
+      "heightWaterPreview": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_height_water_preview.png",
+      "terrainOverview": "city_scale_20260910/patch_explorer_pex_9fd5d6becfcd4718bdecb969fe38e6a8/terrain_overview.png",
+      "allPatchesOverview": "city_scale_20260910/patch_explorer_pex_9fd5d6becfcd4718bdecb969fe38e6a8/all_patches_overview.png",
+      "biomeOverview": "city_scale_20260910/patch_explorer_pex_9fd5d6becfcd4718bdecb969fe38e6a8/biome_overview.png",
+      "coarseTerrainEvidence": "city_scale_20260910/realm_t4_terrain_preview/realm_scale_coarse_terrain_evidence.json"
+    },
+    "nextActions": [
+      "patch_explorer_show_candidates"
+    ],
+    "terrainPreviewCacheHit": true,
+    "terrainPreviewProvider": {
+      "providerId": "current_atlas_sampler",
+      "sourceKind": "gis_atlas_sampler",
+      "fastPath": false,
+      "fallbackReason": "rtf_heightmap_preview=generator_context_unavailable",
+      "sourceFingerprint": "minecraft_prior|minecraft:overworld|20260910|net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator",
+      "samplingSemantics": "base_height_feature_sample"
+    },
+    "presentation": "planning_decision_view.v0.1"
+  }
+]

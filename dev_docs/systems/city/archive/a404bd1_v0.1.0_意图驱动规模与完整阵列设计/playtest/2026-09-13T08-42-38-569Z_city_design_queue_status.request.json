@@ -1,0 +1,8 @@
+{
+  "outputChars": 4500,
+  "reason": "等待首都设计后处理完成",
+  "arguments": {
+    "runId": "city_scale_20260910"
+  },
+  "tool": "city_design_queue_status"
+}

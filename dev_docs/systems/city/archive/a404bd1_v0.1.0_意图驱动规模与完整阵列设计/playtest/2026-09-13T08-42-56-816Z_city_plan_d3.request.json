@@ -1,0 +1,9 @@
+{
+  "arguments": {
+    "runId": "city_scale_20260910",
+    "citySeedId": "city_river_metropolis"
+  },
+  "reason": "LARGE_CITY首轮地形预览",
+  "outputChars": 2800,
+  "tool": "city_plan_d3"
+}

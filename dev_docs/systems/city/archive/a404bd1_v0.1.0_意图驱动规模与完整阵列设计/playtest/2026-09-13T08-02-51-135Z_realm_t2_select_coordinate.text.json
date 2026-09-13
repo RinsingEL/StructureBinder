@@ -1,0 +1,108 @@
+[
+  {
+    "ok": true,
+    "stage": "T2",
+    "runId": "city_scale_20260910",
+    "warnings": [],
+    "errors": [],
+    "status": "completed",
+    "artifacts": {
+      "runDirectory": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_nested_20260913\\realm_debug\\city_scale_20260910",
+      "worldSurveyContext": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_nested_20260913\\realm_debug\\city_scale_20260910\\world_survey_context.json",
+      "worldPatchMap": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_nested_20260913\\realm_debug\\city_scale_20260910\\world_patch_map.json",
+      "worldPatchPreview": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_nested_20260913\\realm_debug\\city_scale_20260910\\world_patch_preview.png",
+      "gridOverlayPreview": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_nested_20260913\\realm_debug\\city_scale_20260910\\grid_overlay_preview.png",
+      "worldBiomePreview": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_nested_20260913\\realm_debug\\city_scale_20260910\\world_biome_preview.png",
+      "wManifest": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_nested_20260913\\realm_debug\\city_scale_20260910\\w_manifest.json",
+      "worldFeatureGrid": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_nested_20260913\\realm_debug\\city_scale_20260910\\world_feature_grid.json",
+      "worldSurveyManifest": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_nested_20260913\\realm_debug\\city_scale_20260910\\world_survey_manifest.json",
+      "realmProfiles": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_nested_20260913\\realm_debug\\city_scale_20260910\\realm_profiles.json",
+      "candidateMapPackages": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_nested_20260913\\realm_debug\\city_scale_20260910\\candidate_map_packages.json",
+      "t1Manifest": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_nested_20260913\\realm_debug\\city_scale_20260910\\t1_manifest.json",
+      "realmCoordinateSelections": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_nested_20260913\\realm_debug\\city_scale_20260910\\realm_coordinate_selections.json",
+      "realmSeeds": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_nested_20260913\\realm_debug\\city_scale_20260910\\realm_seeds.json",
+      "capitalCityIntents": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_nested_20260913\\realm_debug\\city_scale_20260910\\capital_city_intents.json",
+      "t2Report": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\RTF_intent_nested_20260913\\realm_debug\\city_scale_20260910\\t2_report.json"
+    },
+    "selection": {
+      "selectionId": "selection_realm_scale",
+      "realmId": "realm_scale",
+      "packageId": "candidate_realm_scale",
+      "selectedBy": "ai",
+      "primaryGrid": {
+        "x": -13,
+        "z": 33
+      },
+      "finalGrid": {
+        "x": -13,
+        "z": 33
+      },
+      "primaryBlock": {
+        "x": -1664,
+        "z": 4224
+      },
+      "reason": "沿岸候选有连续可建地，国度种子不替代城市最终选址; patchSelectionRef=psel_cb6ae4a5e7d37e05ed19b5f675da7b5d6695fbd51d92b9f52ef9f0c7d96fc8ab",
+      "validation": {
+        "status": "accepted",
+        "continentId": "continent_23",
+        "patchId": "minecraft:overworld:step.128:r.-4.8:p.2",
+        "snapApplied": false,
+        "warnings": [],
+        "errors": []
+      }
+    },
+    "realmSeed": {
+      "realmId": "realm_scale",
+      "selectionId": "selection_realm_scale",
+      "seedGrid": {
+        "x": -13,
+        "z": 33
+      },
+      "seedBlock": {
+        "x": -1664,
+        "z": 4224
+      },
+      "continentId": "continent_23",
+      "patchId": "minecraft:overworld:step.128:r.-4.8:p.2",
+      "scalePlan": {
+        "priority": "major",
+        "targetAreaRatio": 0.8,
+        "minAreaRatio": 0.6,
+        "maxAreaRatio": 1,
+        "normalizationGroup": "scale_test"
+      },
+      "expansionStyle": {
+        "waterAffinity": 0.5,
+        "mountainAffinity": -0.5,
+        "forestAffinity": 0.2,
+        "compactness": 0.7,
+        "coastalBias": 0.5,
+        "resourceSeeking": 0.4,
+        "borderPressure": 0.2,
+        "seaCrossingPolicy": "none"
+      }
+    },
+    "capitalCityIntent": {
+      "citySeedId": "city_realm_scale_capital",
+      "realmId": "realm_scale",
+      "cityRole": "capital",
+      "theoreticalScale": "capital",
+      "mustExist": true,
+      "requiredConditions": [
+        "land",
+        "inside_realm"
+      ],
+      "coreFunctions": [
+        "administration",
+        "market",
+        "defense"
+      ],
+      "realmCoreSelectionId": "selection_realm_scale",
+      "sourceMode": "t2_realm_core_intent"
+    },
+    "nextActions": [
+      "realm_t3_expand"
+    ],
+    "presentation": "planning_decision_view.v0.1"
+  }
+]

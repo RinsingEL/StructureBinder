@@ -1,0 +1,11 @@
+{
+  "arguments": {
+    "sessionId": "pex_d88a56ebb35f41c3a5c25b733353a7c7",
+    "runId": "city_scale_20260910",
+    "selectionReason": "选择连续岸地最大的中南部沿岸，以河谷商业农业组织国度，后续城市单独选址",
+    "candidateId": "SHORE-01"
+  },
+  "outputChars": 7000,
+  "tool": "patch_explorer_select_candidate",
+  "reason": "依据候选图选择国度起点"
+}

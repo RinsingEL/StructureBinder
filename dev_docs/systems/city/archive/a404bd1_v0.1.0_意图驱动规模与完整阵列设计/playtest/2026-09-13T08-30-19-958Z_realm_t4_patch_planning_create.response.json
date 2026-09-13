@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"ok\":true,\"schema\":\"realm_t4_patch_planning_response\",\"operation\":\"create\",\"runId\":\"city_scale_20260910\",\"planningSessionId\":\"t4ps_7d9e5ffad8734c2992ab559f1416f562\",\"status\":\"open\",\"planningSession\":{\"schema\":\"realm_t4_patch_planning_session\",\"planningSessionId\":\"t4ps_7d9e5ffad8734c2992ab559f1416f562\",\"runId\":\"city_scale_20260910\",\"realmId\":\"realm_scale\",\"territoryMapId\":\"territory_city_scale_20260910\",\"territoryIdentity\":\"sha256:2e1424be5026cff93394ec949beba43a646b15d06d794ee874698293d8df5681\",\"status\":\"open\",\"createdAt\":\"2026-09-13T08:30:20.655513500Z\",\"updatedAt\":\"2026-09-13T08:30:20.655513500Z\",\"capitalIntent\":{\"citySeedId\":\"city_realm_scale_capital\",\"realmId\":\"realm_scale\",\"cityRole\":\"capital\",\"theoreticalScale\":\"capital\",\"mustExist\":true,\"requiredConditions\":[\"land\",\"inside_realm\"],\"coreFunctions\":[\"administration\",\"market\",\"defense\"],\"realmCoreSelectionId\":\"selection_realm_scale\",\"sourceMode\":\"t2_realm_core_intent\",\"migrationMode\":\"none\"},\"capitalSelectionStatus\":\"awaiting_selection\",\"citySeeds\":[],\"usedPatchSelectionRefs\":[]},\"artifacts\":{\"planningSession\":\"city_scale_20260910/realm_t4_patch_planning_t4ps_7d9e5ffad8734c2992ab559f1416f562/planning_session.json\"},\"presentation\":\"planning_decision_view.v0.1\"}"
+    }
+  ],
+  "isError": false
+}
