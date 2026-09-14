@@ -24,6 +24,7 @@ final class PreparedCityDesignTurn {
         JsonObject state = queue.deepCopy();
         state.add("preparedBlueprintContext", context.deepCopy());
         if (prepared.has("designSession")) state.add("designSession", prepared.get("designSession").deepCopy());
+        if (prepared.has("designReviewWorkflow")) state.add("designReviewWorkflow", prepared.get("designReviewWorkflow").deepCopy());
         state.addProperty("contextId", context.get("contextId").getAsString());
         for (String key : List.of("failureCount", "maximumFailureCount", "remainingFailureCount", "retryAllowed", "failureBudget")) {
             if (prepared.has(key)) state.add(key, prepared.get(key).deepCopy());
@@ -36,7 +37,7 @@ final class PreparedCityDesignTurn {
                 + "first submit designIntent for intended groups, then batch materialSelections to search/select materials and obtain capacity estimates. Use structureCount to plan building quantities and arrayCompositions to organize the main body. Submit submissionMode=DRAFT with one complete cluster (multiple children allowed) and previously designed districts. Inspect planned/retained counts and the resulting layout "
                 + "and correct current failures before adding the next district. Preserve valid districts; use a full "
                 + "cityBlueprint when adding groups (patch supports replacement only). Use RELATIVE_WEIGHTS for partial groups. "
-                + "After inspecting buildings, roads and landscape together, submit submissionMode=FINAL. "
+                + "Follow designGuide.designLoop and designReviewWorkflow: request local images using designReview, then record an assessment. Refine the current district before moving on. After local reviews, request the overview and record a final city assessment, making purposeful outward additions where useful. Only FINAL the unchanged reviewed draft. Assessments may preserve a good design; do not edit just to satisfy a stage. "
                 + "Format correction allows ten attempts independently of the five design-compilation failures. "
                 + "Omit host-owned schema/cityId/sourceD3Ref/catalogSnapshotRef/generationSeed. "
                 + "For local revisions, submit replace-only blueprintPatch with revisionEvidence.baseDraftHash for a rejected draft "

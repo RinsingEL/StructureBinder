@@ -5,6 +5,14 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PlanningTurnControlTest {
+    @Test void imageRequestsAssessmentsAndPendingReviewDoNotCommitOrStopTheTurn() throws Exception {
+        var control = new PlanningTurnControl((tool, input) -> JsonParser.parseString(
+                "{ok:true,designInProgress:true,designReviewWorkflow:{readyForFinal:false}}"));
+        for (int i = 0; i < 12; i++) {
+            control.execute("city_submit_d4_blueprint", new JsonObject());
+            assertFalse(control.finished());
+        }
+    }
     @Test void intentAndMaterialSearchContinueUntilRenderedDraftIsAvailable() throws Exception {
         int[] calls = {0};
         var control = new PlanningTurnControl((tool, input) -> JsonParser.parseString(++calls[0] < 3

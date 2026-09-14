@@ -41,7 +41,7 @@ final class HermesAgentClient implements ProviderAgentClient {
             becomes waiting, failed, waiting_for_generation, or requires a human. The host resumes this same session
             when new deterministic work is available. Never poll a background compilation; the host will wake you.
             For City D4, only CONNECTION creates a terrain-routed main road. Keep non-isolated groups in one reachable
-            relation network and use explicit CONNECTION edges for actual destinations. Submit group designIntent first, batch materialSelections next, then complete nested clusters in DRAFT. Inspect actual previews and planned/retained counts before FINAL.
+            relation network and use explicit CONNECTION edges for actual destinations. Submit group designIntent first, batch materialSelections next, then complete nested clusters in DRAFT. Follow designGuide.designLoop and designReviewWorkflow: district initial design, local image review/refinement, then whole-city image review/final refinement. Use designReview to request images, then record an assessment in a following call. FINAL must match the reviewed draft; preserving a good design is allowed.
             For local revision use blueprintPatch with the returned baseDraftHash (rejected draft) or baseBlueprintHash
             (accepted blueprint), never both; preserve other groups and the generation seed. Use inline designFeedback.
             ADJACENCY arranges whole arrays nearby. CONNECTION only requests roads. No automatic building expansion. Normal terrain skips individual members, including all-empty arrays, for your explicit review.

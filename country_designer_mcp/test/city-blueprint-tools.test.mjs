@@ -29,6 +29,13 @@ test("publishes the program-only context tool and retryable structure plus outdo
   assert.deepEqual(submit.inputSchema.properties.blueprintPatch.items.properties.op.enum, ["replace"]);
   assert.equal(submit.inputSchema.properties.baseDraftHash.type, "string");
   assert.deepEqual(submit.inputSchema.properties.submissionMode.enum, ["DRAFT", "FINAL"]);
+  const review = submit.inputSchema.properties.designReview;
+  assert.equal(review.additionalProperties, false);
+  assert.deepEqual(review.required, ["baseDraftHash"]);
+  assert.equal(review.properties.groupIds.maxItems, 3);
+  assert.equal(review.properties.overview.type, "boolean");
+  assert.equal(review.properties.assessment.type, "string");
+  assert.match(submit.description, /designReview/);
   assert.match(submit.inputSchema.properties.baseDraftHash.description, /拒绝草稿/);
   assert.match(autoStatus.description, /workflowResponse/);
   assert.match(autoStatus.description, /禁止转去读取服务端源码/);

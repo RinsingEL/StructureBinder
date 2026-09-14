@@ -59,6 +59,12 @@ class CityBlueprintServiceTest {
         assertEquals("RAW_NBT_WIDTH_DEPTH", materials.getAsJsonArray("materialResults").get(0).getAsJsonObject().getAsJsonObject("estimate").get("footprintBasis").getAsString());
         var resumed = service.prepare(temporary, f.runId(), f.cityId(), f.terraSenseSource(), f.templateSource(), f.referenceCatalog());
         assertEquals(materials.get("designSession"), resumed.get("designSession"));
+        JsonObject additional = JsonParser.parseString("{designIntent:{groups:[{groupId:'market',role:'trade',intent:'street frontage',preferredPatchRefs:[]}]}}").getAsJsonObject();
+        additional.getAsJsonObject("designIntent").getAsJsonArray("groups").get(0).getAsJsonObject().getAsJsonArray("preferredPatchRefs").add(patch);
+        var merged = service.submitDesign(temporary, f.runId(), f.cityId(), id, additional);
+        assertEquals(2, merged.getAsJsonObject("designSession").getAsJsonArray("groups").size());
+        assertEquals(materials.getAsJsonObject("designSession").getAsJsonArray("groups").get(0),
+                merged.getAsJsonObject("designSession").getAsJsonArray("groups").get(0));
         assertFalse(Files.exists(f.runDir().resolve("city_blueprint_" + safe(f.cityId())).resolve("city_blueprint.json")));
         request.getAsJsonArray("materialSelections").get(0).getAsJsonObject().addProperty("groupId", "unknown");
         assertFalse(service.submitDesign(temporary, f.runId(), f.cityId(), id, request).get("ok").getAsBoolean());
@@ -82,6 +88,12 @@ class CityBlueprintServiceTest {
         var resumed = service.prepare(temporary, f.runId(), f.cityId(), f.terraSenseSource(), f.templateSource(), f.referenceCatalog());
         assertEquals(preview.get("revisionEvidence"), resumed.get("revisionEvidence"));
         request.addProperty("submissionMode", "FINAL");
+        var pending = service.submitDesign(temporary, f.runId(), f.cityId(), context, request);
+        assertTrue(pending.get("designInProgress").getAsBoolean());
+        assertFalse(pending.has("formatRetryBudget"));
+        assertFalse(pending.has("failureCount"));
+        assertFalse(Files.exists(dir.resolve("city_blueprint_geometry_commit.json")));
+        reviewAll(service, f, context, preview);
         assertTrue(service.submitDesign(temporary, f.runId(), f.cityId(), context, request).get("ok").getAsBoolean());
         assertTrue(Files.exists(dir.resolve("city_blueprint_geometry_commit.json")));
     }
@@ -226,9 +238,10 @@ class CityBlueprintServiceTest {
         request.addProperty("baseBlueprintHash", "not allowed too");
         assertFalse(service.submitDesign(temporary, f.runId(), f.cityId(), context, request).get("ok").getAsBoolean());
         request.remove("baseBlueprintHash");
+        request.addProperty("submissionMode", "DRAFT");
         var accepted = service.submitDesign(temporary, f.runId(), f.cityId(), context, request);
         assertTrue(accepted.get("ok").getAsBoolean());
-        JsonObject stored = JsonParser.parseString(Files.readString(f.runDir().resolve("city_blueprint_city_draft/city_blueprint.json"))).getAsJsonObject();
+        JsonObject stored = accepted.getAsJsonObject("revisionEvidence").getAsJsonObject("previousBlueprint");
         assertEquals(original.get("groups"), stored.get("groups"));
         assertEquals(original.get("generationSeed"), stored.get("generationSeed"));
         assertEquals("recovery", service.submitDesign(temporary, f.runId(), f.cityId(), context, request).get("rejectionKind").getAsString());
@@ -327,11 +340,19 @@ class CityBlueprintServiceTest {
         JsonObject input = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
         for (String field : java.util.List.of("schema", "cityId", "sourceD3Ref", "catalogSnapshotRef", "generationSeed")) input.remove(field);
         JsonObject request = new JsonObject(); request.add("cityBlueprint", input);
+        request.addProperty("submissionMode", "DRAFT");
+        var initial = service.submitDesign(temporary, fixture.runId(), fixture.cityId(), contextId, request);
+        reviewAll(service, fixture, contextId, initial);
+        request.addProperty("submissionMode", "FINAL");
         JsonObject accepted = service.submitDesign(temporary, fixture.runId(), fixture.cityId(), contextId, request);
         assertTrue(accepted.get("ok").getAsBoolean());
         request.remove("cityBlueprint");
         request.add("baseBlueprintHash", accepted.getAsJsonObject("submissionTrace").get("cityBlueprintHash"));
         request.add("blueprintPatch", JsonParser.parseString("[{op:'replace',path:'/designIntent/theme',value:'local revision'}]"));
+        request.addProperty("submissionMode", "DRAFT");
+        var changed = service.submitDesign(temporary, fixture.runId(), fixture.cityId(), contextId, request);
+        reviewAll(service, fixture, contextId, changed);
+        request.addProperty("submissionMode", "FINAL");
         JsonObject revised = service.submitDesign(temporary, fixture.runId(), fixture.cityId(), contextId, request);
         assertTrue(revised.get("ok").getAsBoolean());
         assertEquals("recovery", service.submitDesign(temporary, fixture.runId(), fixture.cityId(), contextId, request)
@@ -343,6 +364,28 @@ class CityBlueprintServiceTest {
         assertEquals("local revision", JsonParser.parseString(Files.readString(path)).getAsJsonObject()
                 .getAsJsonObject("designIntent").get("theme").getAsString());
         assertFalse(Files.readString(path).contains("invented:structure"));
+    }
+    private void reviewAll(CityBlueprintService service, Fixture fixture, String contextId, JsonObject preview) throws Exception {
+        var evidence = preview.getAsJsonObject("revisionEvidence");
+        for (var group : evidence.getAsJsonObject("previousBlueprint").getAsJsonArray("groups")) {
+            JsonObject review = new JsonObject(); review.add("baseDraftHash", evidence.get("baseDraftHash"));
+            JsonArray ids = new JsonArray(); ids.add(group.getAsJsonObject().get("groupId")); review.add("groupIds", ids);
+            viewAndAssess(service, fixture, contextId, review);
+        }
+        JsonObject overview = new JsonObject(); overview.add("baseDraftHash", evidence.get("baseDraftHash"));
+        overview.addProperty("overview", true);
+        viewAndAssess(service, fixture, contextId, overview);
+    }
+    private void viewAndAssess(CityBlueprintService service, Fixture fixture, String contextId, JsonObject review) throws Exception {
+        JsonObject request = new JsonObject(); request.add("designReview", review);
+        var images = service.submitDesign(temporary, fixture.runId(), fixture.cityId(), contextId, request);
+        assertTrue(images.has("requestedPreviews"), images.toString());
+        var presented = com.rinsing.geomantia.systems.provider.application.PlanningToolPresentation.present(images, temporary);
+        assertEquals(1, presented.getAsJsonArray("imageEvidence").size());
+        review.addProperty("assessment", "The courtyard retains its shared center and suitable spacing; preserve this composition.");
+        var assessed = service.submitDesign(temporary, fixture.runId(), fixture.cityId(), contextId, request);
+        assertTrue(assessed.get("ok").getAsBoolean(), assessed.toString());
+        assertFalse(assessed.has("formatRetryBudget"));
     }
     @TempDir
     Path temporary;

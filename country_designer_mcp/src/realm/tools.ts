@@ -1095,7 +1095,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_submit_d4_blueprint",
-    description: "先提交 designIntent，再批量 materialSelections 搜索或选材并获取估算；这两项与蓝图分开提交。之后提交 cityBlueprint 或 blueprintPatch（二选一）。DRAFT 支持逐组团预览，FINAL 才确认整城。schema/cityId/sourceD3Ref/catalogSnapshotRef/generationSeed 可省略，由宿主绑定；显式冲突仍拒绝。proportionMode=RELATIVE_WEIGHTS 归一化占比后执行作者白名单与安全校验；默认 EXACT_SHARES。局部修订使用返回的 baseDraftHash（拒绝草稿）或 baseBlueprintHash（已接受蓝图），二者不可同填，配合 replace-only JSON Pointer blueprintPatch，必须用 EXACT_SHARES。未知路径或过期哈希拒绝。直接读取 designFeedback 和 validationReport.issues.constraint；无可证明的参数修正时不盲改。AI 不读取源码、项目文档或原始 run 文件。",
+    description: "先提交 designIntent，再批量 materialSelections 搜索或选材并获取估算；这两项与蓝图分开提交。之后提交 cityBlueprint 或 blueprintPatch（二选一）。DRAFT 逐功能区初版与修饰。designReview 独立提交：先用 baseDraftHash + groupIds（最多3个）取局部图，看图后再带 assessment 记录判断；局部复核完成后用 overview=true 取总览并记录判断。允许保留合适方案；修订后重看受影响部分。FINAL 必须与已复核草稿一致，正常复核不消耗拒绝预算。schema/cityId/sourceD3Ref/catalogSnapshotRef/generationSeed 可省略，由宿主绑定；显式冲突仍拒绝。proportionMode=RELATIVE_WEIGHTS 归一化占比后执行作者白名单与安全校验；默认 EXACT_SHARES。局部修订使用返回的 baseDraftHash（拒绝草稿）或 baseBlueprintHash（已接受蓝图），二者不可同填，配合 replace-only JSON Pointer blueprintPatch，必须用 EXACT_SHARES。未知路径或过期哈希拒绝。直接读取 designFeedback 和 validationReport.issues.constraint；无可证明的参数修正时不盲改。AI 不读取源码、项目文档或原始 run 文件。",
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: {
@@ -1110,9 +1110,15 @@ export const realmTools: ToolDefinition[] = [
           groupId: nonEmptyString("已提交意图 ID。"), query: { type: "string", description: "搜索作者元数据；可以按多个功能区批量搜索。" },
           structureRefs: { type: "array", items: { type: "string" } }, fillPoolRefs: { type: "array", items: { type: "string" } }
         }, ["groupId"]) },
+        designReview: strictObject({
+          baseDraftHash: nonEmptyString("当前有效 DRAFT 的 baseDraftHash。"),
+          groupIds: { type: "array", minItems: 1, maxItems: 3, uniqueItems: true, items: { type: "string" }, description: "本次查看的局部图，可同时看一个功能区的多个子阵列；与 overview 二选一。" },
+          overview: { type: "boolean", description: "true 请求整城总览；先完成局部复核。" },
+          assessment: nonEmptyString("先不填此字段取图；看图后再提交同一目标与此判断：空间意图、实际规模、组合及留白，保留理由或修饰计划。")
+        }, ["baseDraftHash"]),
         cityBlueprint: cityBlueprintSchema,
         proportionMode: { type: "string", enum: ["EXACT_SHARES", "RELATIVE_WEIGHTS"] },
-        submissionMode: { type: "string", enum: ["DRAFT", "FINAL"], description: "逐区设计使用 DRAFT 保留预览和可修订草稿；检查完整城市后才使用 FINAL，默认 FINAL 兼容已有调用。" },
+        submissionMode: { type: "string", enum: ["DRAFT", "FINAL"], description: "逐区设计使用 DRAFT 保留预览和可修订草稿；完成局部与整城 designReview 后才使用 FINAL，默认 FINAL 也执行复核检查。" },
         baseBlueprintHash: nonEmptyString("当前接受蓝图的 submissionTrace.cityBlueprintHash。"),
         baseDraftHash: nonEmptyString("最近拒绝草稿的 revisionEvidence.baseDraftHash；与 baseBlueprintHash 二选一，配合 blueprintPatch 局部修订。草稿不是已接受几何。程序故障不得盲重试。"),
         blueprintPatch: { type: "array", minItems: 1, maxItems: 128,

@@ -73,7 +73,8 @@ final class PlanningTurnControl implements DeepSeekToolLoopClient.ToolExecutor {
             repeats = 0; lastFailure = "";
             if (payload.has("designInProgress") && payload.get("designInProgress").getAsBoolean()) {
                 // Intent/material work needs no new rendered image and can continue in this same turn.
-                if (payload.has("designSession") && !payload.has("revisionEvidence")) return output;
+                if ((payload.has("designSession") || payload.has("designReviewWorkflow"))
+                        && !payload.has("revisionEvidence")) return output;
                 String revision = revisionIdentity(payload);
                 revisionProgress |= !revision.isBlank() && !revision.equals(lastRevision);
                 lastRevision = revision;

@@ -214,6 +214,7 @@ public final class CityBlueprintService {
         CityBlueprintFailureBudget.attach(response, budget, debugRoot, runId, cityId);
         JsonObject draft = CityBlueprintDraft.current(outputDir, contextId, cityId);
         if (draft != null) response.add("revisionEvidence", CityBlueprintDraft.evidence(draft));
+        response.add("designReviewWorkflow", CityDesignReviewWorkflow.status(outputDir, contextId, draft));
         return response;
     }
 
@@ -229,6 +230,14 @@ public final class CityBlueprintService {
         Path outputDir = outputDirectory(requireRunDirectory(debugRoot, runId), cityId);
         synchronized (submissionArtifactLock(outputDir)) {
           try {
+            if (request.has("designReview")) {
+                for (String key : java.util.List.of("designIntent", "materialSelections", "cityBlueprint", "blueprintPatch", "baseDraftHash", "baseBlueprintHash", "submissionMode"))
+                    if (request.has(key)) throw new IllegalArgumentException("Submit designReview separately from design changes; put its baseDraftHash inside designReview.");
+                JsonObject context = readObject(outputDir.resolve("city_blueprint_context.json"), CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_NOT_FOUND);
+                if (!contextId.equals(contextIdentity(context))) throw new IllegalArgumentException("CITY_BLUEPRINT_CONTEXT_STALE");
+                return CityDesignReviewWorkflow.submit(outputDir, contextId,
+                        CityBlueprintDraft.current(outputDir, contextId, cityId), request.getAsJsonObject("designReview"));
+            }
             if (request.has("designIntent") || request.has("materialSelections")) {
                 if (request.has("cityBlueprint") || request.has("blueprintPatch"))
                     throw new IllegalArgumentException("Submit designIntent/materialSelections separately from cityBlueprint/blueprintPatch.");
@@ -263,7 +272,7 @@ public final class CityBlueprintService {
                         return stale;
                     }
                     input = CityBlueprintDesignInput.revise(draft.getAsJsonObject("previousBlueprint"), request.getAsJsonArray("blueprintPatch"));
-                    return submitLocked(debugRoot, runId, cityId, contextId, input, false, draftOnly);
+                    return submitLocked(debugRoot, runId, cityId, contextId, input, false, draftOnly, true);
                 }
                 Path blueprintPath = outputDir.resolve("city_blueprint.json");
                 if (!Files.isRegularFile(blueprintPath) || !request.has("baseBlueprintHash")
@@ -280,7 +289,7 @@ public final class CityBlueprintService {
                 if (request.has("baseBlueprintHash") || request.has("baseDraftHash")) throw new IllegalArgumentException("CITY_BLUEPRINT_PATCH_REQUIRED_WITH_BASE_HASH");
                 input = request.getAsJsonObject("cityBlueprint");
             }
-            return submitLocked(debugRoot, runId, cityId, contextId, input, "RELATIVE_WEIGHTS".equals(mode), draftOnly);
+            return submitLocked(debugRoot, runId, cityId, contextId, input, "RELATIVE_WEIGHTS".equals(mode), draftOnly, true);
           } catch (IllegalArgumentException | IllegalStateException ex) {
             JsonObject response = new JsonObject();
             response.addProperty("ok", false);
@@ -301,6 +310,12 @@ public final class CityBlueprintService {
 
     private JsonObject submitLocked(Path debugRoot, String runId, String cityId, String contextId,
                                     JsonObject blueprintJson, boolean relativeWeights, boolean draftOnly) throws IOException {
+        return submitLocked(debugRoot, runId, cityId, contextId, blueprintJson, relativeWeights, draftOnly, false);
+    }
+
+    private JsonObject submitLocked(Path debugRoot, String runId, String cityId, String contextId,
+                                    JsonObject blueprintJson, boolean relativeWeights, boolean draftOnly,
+                                    boolean requireReview) throws IOException {
         Path runDir = requireRunDirectory(debugRoot, runId);
         Path outputDir = outputDirectory(runDir, cityId);
         Path contextPath = outputDir.resolve("city_blueprint_context.json");
@@ -380,9 +395,12 @@ public final class CityBlueprintService {
         if (!result.valid()) {
             return failure(debugRoot, cityId, contextId, reportPath, tracePath, result.issues(), budget, runId);
         }
-        budget = failureBudget.reopenForRevision(debugRoot, runId, cityId);
-
         JsonObject canonical = codec.write(blueprint);
+        if (requireReview && !draftOnly) {
+            JsonObject pending = CityDesignReviewWorkflow.finalGate(outputDir, contextId, canonical);
+            if (pending != null) return pending;
+        }
+        budget = failureBudget.reopenForRevision(debugRoot, runId, cityId);
         CityBlueprintCompilerService.CompilationResult geometry;
         boolean compilerException = false;
         try {
@@ -449,6 +467,7 @@ public final class CityBlueprintService {
             preview.addProperty("nextAction", "city_submit_d4_blueprint");
             preview.add("revisionEvidence", CityBlueprintDraft.evidence(draft));
             preview.add("designSession", CityDesignSession.current(outputDir, contextId));
+            preview.add("designReviewWorkflow", CityDesignReviewWorkflow.status(outputDir, contextId, draft));
             CityBlueprintFailureBudget.attach(preview, budget, debugRoot, runId, cityId);
             return preview;
         }

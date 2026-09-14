@@ -41,7 +41,8 @@ final class CityDesignSession {
             requireFields(intent, Set.of("groups"));
             JsonArray incoming = requiredArray(intent, "groups");
             if (incoming.isEmpty()) throw invalid("designIntent.groups must contain at least one intended group.");
-            Map<String, JsonObject> next = new LinkedHashMap<>();
+            Map<String, JsonObject> next = new LinkedHashMap<>(groups);
+            Set<String> incomingIds = new HashSet<>();
             for (JsonElement element : incoming) {
                 JsonObject group = element.getAsJsonObject();
                 requireFields(group, Set.of("groupId", "role", "intent", "preferredPatchRefs"));
@@ -53,7 +54,7 @@ final class CityDesignSession {
                     if (!patches.containsKey(ref.getAsString())) throw invalid(id + ": unknown patch " + ref);
                     if (!uniquePatches.add(ref.getAsString())) throw invalid(id + ": duplicate patch " + ref + "; list each patch once.");
                 }
-                if (next.containsKey(id)) throw invalid("Duplicate groupId " + id + "; use a unique ID.");
+                if (!incomingIds.add(id)) throw invalid("Duplicate groupId " + id + "; use a unique ID.");
                 JsonObject entry = group.deepCopy();
                 JsonObject old = groups.get(id);
                 if (old != null) {
