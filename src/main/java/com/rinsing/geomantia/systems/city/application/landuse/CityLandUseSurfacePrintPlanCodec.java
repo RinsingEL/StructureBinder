@@ -26,7 +26,7 @@ public final class CityLandUseSurfacePrintPlanCodec {
             "sourceId", "x", "z", "blockId", "surfaceOffset", "kind", "facing", "targetSurfaceY");
     private static final Set<String> AREA_FIELDS = Set.of(
             "printAreaId", "landUseAreaId", "sourceGroupIds", "surfaceSettings",
-            "memberSpans", "exclusionSpans", "surfaceAlgorithm", "algorithmAnchor", "recipe");
+            "memberSpans", "exclusionSpans", "surfaceAlgorithm", "algorithmAnchor", "recipe", "terrainReferenceCells");
     private static final Set<String> SETTINGS_FIELDS = Set.of(
             "surfacePrintEnabled", "autoConnect", "surfaceBlockId", "cropBlockId", "compatibilityCategory",
             "surfaceAlgorithm", "algorithmAnchor", "channelBankBlockId", "channelWaterBlockId",
@@ -157,6 +157,16 @@ public final class CityLandUseSurfacePrintPlanCodec {
         value.addProperty("surfaceAlgorithm", area.surfaceAlgorithm().name().toLowerCase());
         value.add("algorithmAnchor", nullablePointJson(area.algorithmAnchor()));
         value.add("recipe", recipeJson(area.recipe()));
+        if (!area.terrainReferenceCells().isEmpty()) {
+            JsonArray cells = new JsonArray();
+            for (var cell : area.terrainReferenceCells()) {
+                JsonObject item = new JsonObject();
+                item.addProperty("minX",cell.minX()); item.addProperty("minZ",cell.minZ());
+                item.addProperty("step",cell.step()); item.addProperty("surfaceY",cell.surfaceY());
+                item.addProperty("maxDelta",cell.maxDelta()); cells.add(item);
+            }
+            value.add("terrainReferenceCells",cells);
+        }
         return value;
     }
 
@@ -168,7 +178,18 @@ public final class CityLandUseSurfacePrintPlanCodec {
                 spans(array(value, "memberSpans")), spans(array(value, "exclusionSpans")),
                 enumValue(LandUseSurfaceSettings.SurfaceAlgorithm.class,
                         text(value, "surfaceAlgorithm", false)),
-                nullablePoint(value, "algorithmAnchor"), recipe(object(value, "recipe")));
+                nullablePoint(value, "algorithmAnchor"), recipe(object(value, "recipe")), terrainReferences(value));
+    }
+
+    private static List<CityLandUseSurfacePrintPlan.TerrainReferenceCell> terrainReferences(JsonObject value) {
+        List<CityLandUseSurfacePrintPlan.TerrainReferenceCell> result = new ArrayList<>();
+        if (value.has("terrainReferenceCells")) for (JsonElement element : array(value,"terrainReferenceCells")) {
+            JsonObject cell=element.getAsJsonObject();
+            rejectUnknown(cell,Set.of("minX","minZ","step","surfaceY","maxDelta"),"terrainReferenceCell");
+            result.add(new CityLandUseSurfacePrintPlan.TerrainReferenceCell(integer(cell,"minX"),integer(cell,"minZ"),
+                    integer(cell,"step"),integer(cell,"surfaceY"),integer(cell,"maxDelta")));
+        }
+        return result;
     }
 
     private static JsonObject settingsJson(LandUseSurfaceSettings settings) {

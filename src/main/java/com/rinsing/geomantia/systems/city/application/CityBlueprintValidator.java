@@ -185,6 +185,8 @@ public final class CityBlueprintValidator {
                 "$.surfaceDetailProfile.profileRef");
         validateOutdoorPlan(issues, blueprint.outdoorPlan(), groupIds, groupsById,
                 context.patchRefs(), catalog);
+        CityBlueprintDependencies.conflict(blueprint).ifPresent(conflict -> add(issues,
+                CityBlueprintReasonCode.CITY_BLUEPRINT_DEPENDENCY_CYCLE, conflict.fieldPath(), conflict.message()));
         return new ValidationResult(issues.isEmpty(), List.copyOf(issues));
     }
 
@@ -360,6 +362,11 @@ public final class CityBlueprintValidator {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_LANDSCAPE_PROFILE_UNKNOWN,
                         path + ".landscapeProfileRef",
                         "Choose a matching landscapeProfileRef from the frozen landscapeProfiles instead of inventing a profile. Unknown landscape profile: " + landscape.landscapeProfileRef());
+            }
+            if (landscape.growth() != null && (!landscape.required()
+                    || landscape.originMode()!=CityBlueprint.LandscapeOriginMode.ATTACHED)) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
+                        path+".growth", "Explicit cell growth belongs to its design group: use required=true, originMode=ATTACHED, owner.groupId and instanceCount=1. Target cell count is a soft demand; terrain shortage is allowed.");
             }
             if (landscape.originMode() == CityBlueprint.LandscapeOriginMode.ATTACHED) {
                 if (landscape.owner() == null || landscape.placementDomain() != null

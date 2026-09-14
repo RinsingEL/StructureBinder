@@ -151,11 +151,11 @@ public final class CityBlueprintCodec {
         List<CityBlueprint.Landscape> result = new ArrayList<>();
         Set<String> fields = Set.of("landscapeId", "landscapeProfileRef", "purpose", "originMode",
                 "owner", "placementDomain", "instanceCount", "parcelCount", "preferredPatchRefs",
-                "terrainPolicy", "required", "fillSelection");
+                "terrainPolicy", "required", "fillSelection", "growth");
         for (int index = 0; index < array.size(); index++) {
             String path = "$.outdoorPlan.landscapes[" + index + "]";
             JsonObject item = objectElement(array.get(index), path);
-            exactFields(item, fields, Set.of("owner", "placementDomain"), path);
+            exactFields(item, fields, Set.of("owner", "placementDomain", "growth"), path);
             CityBlueprint.LandscapeOwner owner = item.has("owner")
                     ? landscapeOwner(requiredObject(item, "owner", path + ".owner"), path + ".owner")
                     : null;
@@ -173,9 +173,21 @@ public final class CityBlueprintCodec {
                     enumValue(item, "terrainPolicy", CityBlueprint.TerrainPolicy.class, path),
                     requiredBoolean(item, "required", path + ".required"),
                     fillSelection(requiredObject(item, "fillSelection", path + ".fillSelection"),
-                            path + ".fillSelection")));
+                            path + ".fillSelection"), item.has("growth")
+                            ? landscapeGrowth(requiredObject(item, "growth", path + ".growth"), path + ".growth") : null));
         }
         return List.copyOf(result);
+    }
+
+    private static CityBlueprint.LandscapeGrowth landscapeGrowth(JsonObject object, String path) {
+        exactFields(object, Set.of("seed", "targetCellCount", "allowedLandformTypes"), path);
+        JsonObject seed = requiredObject(object, "seed", path + ".seed");
+        exactFields(seed, Set.of("x", "z"), path + ".seed");
+        return new CityBlueprint.LandscapeGrowth(new com.rinsing.geomantia.systems.city.domain.model.BlockPoint(
+                requiredInt(seed, "x", path + ".seed.x"), requiredInt(seed, "z", path + ".seed.z")),
+                positiveInt(object, "targetCellCount", path + ".targetCellCount"),
+                stringList(requiredArray(object, "allowedLandformTypes", path + ".allowedLandformTypes"),
+                        path + ".allowedLandformTypes"));
     }
 
     private static CityBlueprint.LandscapeOwner landscapeOwner(JsonObject object, String path) {
@@ -491,7 +503,9 @@ public final class CityBlueprintCodec {
             return;
         }
         for (var entry : value.getAsJsonObject().entrySet()) {
-            if (FORBIDDEN_FIELDS.contains(entry.getKey())) {
+            boolean landscapeSeedCoordinate = (entry.getKey().equals("x") || entry.getKey().equals("z"))
+                    && path.matches("\\$\\.outdoorPlan\\.landscapes\\[[0-9]+\\]\\.growth\\.seed");
+            if (FORBIDDEN_FIELDS.contains(entry.getKey()) && !landscapeSeedCoordinate) {
                 fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FORBIDDEN_PLACEMENT_FIELD,
                         path + "." + entry.getKey(), "Coordinate, candidate, template and free algorithm fields are forbidden.");
             }
@@ -632,6 +646,13 @@ public final class CityBlueprintCodec {
         }
     }
 
+    private static int requiredInt(JsonObject object, String key, String path) {
+        long value = requiredLong(object, key, path);
+        if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE)
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path, "A signed 32-bit integer is required.");
+        return (int) value;
+    }
+
     private static int positiveInt(JsonObject object, String key, String path) {
         long value = requiredLong(object, key, path);
         if (value <= 0 || value > Integer.MAX_VALUE) {
@@ -738,6 +759,15 @@ public final class CityBlueprintCodec {
             }
             item.addProperty("instanceCount", landscape.instanceCount());
             item.addProperty("parcelCount", landscape.parcelCount());
+            if (landscape.growth() != null) {
+                JsonObject growth = new JsonObject(), seed = new JsonObject();
+                seed.addProperty("x", landscape.growth().seed().x());
+                seed.addProperty("z", landscape.growth().seed().z());
+                growth.add("seed", seed);
+                growth.addProperty("targetCellCount", landscape.growth().targetCellCount());
+                growth.add("allowedLandformTypes", strings(landscape.growth().allowedLandformTypes()));
+                item.add("growth", growth);
+            }
             item.add("preferredPatchRefs", strings(landscape.preferredPatchRefs()));
             item.addProperty("terrainPolicy", landscape.terrainPolicy().name());
             item.addProperty("required", landscape.required());

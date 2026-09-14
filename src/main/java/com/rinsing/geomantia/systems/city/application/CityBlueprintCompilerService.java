@@ -148,6 +148,14 @@ public final class CityBlueprintCompilerService {
         validateTerrainField(review, terrainField);
         CityBlueprint blueprint = codec.read(normalizeLegacySchemasForRead(
                 JsonParser.parseString(blueprintRaw).getAsJsonObject()));
+        var dependencyConflict = CityBlueprintDependencies.conflict(blueprint);
+        if (dependencyConflict.isPresent()) {
+            var conflict = dependencyConflict.get();
+            JsonObject evidence = new JsonObject();
+            evidence.addProperty("fieldPath", conflict.fieldPath());
+            evidence.addProperty("message", conflict.message());
+            return CompilationResult.failed(evidence, CityBlueprintDependencies.CYCLE, conflict.message());
+        }
         Set<String> engineeredGroups = blueprint.outdoorPlan().mode() == CityBlueprint.OutdoorMode.GENERATE
                 ? blueprint.outdoorPlan().spatialGrounds().stream().map(CityBlueprint.SpatialGround::sourceGroupId)
                     .collect(java.util.stream.Collectors.toSet()) : Set.of();
@@ -189,7 +197,7 @@ public final class CityBlueprintCompilerService {
                 semanticCatalogJson);
         Map<String, LandformPatchSummary> patches = new LinkedHashMap<>();
         review.landformPatches().forEach(patch -> patches.put(patch.landformPatchId(), patch));
-        List<CityBlueprint.Group> groups = orderGroups(blueprint.groups(), blueprint.relations(),
+        List<CityBlueprint.Group> groups = orderGroups(blueprint.groups(),
                 blueprint.arrayCompositions(), catalog);
         Map<String, CityBlueprint.Group> groupsById = new LinkedHashMap<>();
         groups.forEach(group -> groupsById.put(group.groupId(), group));
@@ -1692,7 +1700,6 @@ public final class CityBlueprintCompilerService {
     }
 
     private static List<CityBlueprint.Group> orderGroups(List<CityBlueprint.Group> source,
-                                                         List<CityBlueprint.Relation> relations,
                                                          List<CityBlueprint.ArrayComposition> compositions,
                                                          CatalogIndex catalog) {
         Comparator<CityBlueprint.Group> stable = Comparator
@@ -1708,22 +1715,8 @@ public final class CityBlueprintCompilerService {
             incoming.put(group.groupId(), 0);
             outgoing.put(group.groupId(), new LinkedHashSet<>());
         });
-        for (CityBlueprint.Relation relation : relations) {
-            if (relation.relationKind() != CityBlueprint.RelationKind.HIERARCHY) continue;
-            addOrderingEdge(outgoing, incoming, relation.fromGroupId(), relation.toGroupId());
-        }
-        for (CityBlueprint.Group group : source) {
-            CityBlueprint.PlacementRelation placement = group.placementRelation();
-            if (placement == null
-                    || placement.kind() != CityBlueprint.PlacementRelationKind.BETWEEN_GROUPS) continue;
-            for (String dependency : placement.groupRefs()) {
-                addOrderingEdge(outgoing, incoming, dependency, group.groupId());
-            }
-        }
-        for (CityBlueprint.ArrayComposition composition : compositions) {
-            for (String member : composition.memberGroupIds()) {
-                addOrderingEdge(outgoing, incoming, composition.centerGroupId(), member);
-            }
+        for (var edge : CityBlueprintDependencies.geometry(source, compositions)) {
+            addOrderingEdge(outgoing, incoming, edge.from(), edge.to());
         }
         List<CityBlueprint.Group> ordered = new ArrayList<>();
         Set<String> remaining = new LinkedHashSet<>(byId.keySet());
@@ -1732,8 +1725,8 @@ public final class CityBlueprintCompilerService {
                     .filter(id -> incoming.getOrDefault(id, 0) == 0)
                     .map(byId::get)
                     .min(stable)
-                    .orElseThrow(() -> fail("CITY_BLUEPRINT_HIERARCHY_CYCLE",
-                            "HIERARCHY, placement, and parent-array ordering dependencies must be acyclic."));
+                    .orElseThrow(() -> fail("CITY_BLUEPRINT_DEPENDENCY_ORDER_INCONSISTENT",
+                            "Validated geometric dependencies could not be ordered."));
             ordered.add(next);
             remaining.remove(next.groupId());
             for (String child : outgoing.get(next.groupId())) {

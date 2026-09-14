@@ -238,6 +238,18 @@ public final class CityLandUseChunkCompiler {
                     }
                 }
             }
+            if (printArea != null && !printArea.terrainReferenceCells().isEmpty()) {
+                for (var reference : printArea.terrainReferenceCells()) {
+                    for (int z=Math.max(minChunkZ-1,reference.minZ()); z<=Math.min(maxChunkZ+1,reference.minZ()+reference.step()-1); z++)
+                        for (int x=Math.max(minChunkX-1,reference.minX()); x<=Math.min(maxChunkX+1,reference.minX()+reference.step()-1); x++) {
+                            final int px=x,pz=z;
+                            if (area.memberSpans().stream().noneMatch(span -> span.z()==pz && px>=span.minX() && px<=span.maxX())) continue;
+                            BlockCell cell=new BlockCell(x,z);
+                            if (!gradingFootprints.contains(cell) && !gradingCorridorExclusions.contains(cell) && !gates.contains(cell))
+                                gradingMask.putIfAbsent(cell,new GradingMaskCell(areaId,x,z,false,reference.surfaceY(),true,reference.maxDelta()));
+                        }
+                }
+            }
             if (microGradePave && microFillBlock != null) {
                 for (LandUseAreaPlan.ScanlineSpan span : area.memberSpans()) {
                     int z = span.z();
@@ -298,6 +310,9 @@ public final class CityLandUseChunkCompiler {
                         corridorExcluded++;
                     } else if (gates.contains(cell)) {
                         gateExcluded++;
+                    } else if (printArea != null && printArea.recipe() instanceof CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe relay
+                            && relay.regionAtOrNull(cell.x(),cell.z()) == null) {
+                        continue;
                     } else if (!sharedContactCells.contains(cell) && !isContourChannel(printArea, cell)) {
                         boundaries.putIfAbsent(cell,
                                 new BoundaryOperation(areaId, landUseType, cell.x(), cell.z(), boundaryBlock));
@@ -414,6 +429,7 @@ public final class CityLandUseChunkCompiler {
             return;
         }
         if (printArea.recipe() instanceof CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe relay) {
+            if (relay.regionAtOrNull(cell.x(), cell.z()) == null) return;
             CityLandUseSurfacePrintPlan.RelayRoleDefinition role = relay.roleDefinitionAt(cell.x(), cell.z());
             switch (role.materialRole()) {
                 case PRIMARY_CONTENT -> {
@@ -726,7 +742,11 @@ public final class CityLandUseChunkCompiler {
         }
     }
 
-    public record GradingMaskCell(String areaId, int x, int z, boolean foundation, Integer targetY) {
+    public record GradingMaskCell(String areaId, int x, int z, boolean foundation, Integer targetY,
+                                  boolean landscape, int maxTerrainDelta) {
+        public GradingMaskCell(String areaId, int x, int z, boolean foundation, Integer targetY) {
+            this(areaId,x,z,foundation,targetY,false,6);
+        }
         public GradingMaskCell(String areaId, int x, int z, boolean foundation) {
             this(areaId,x,z,foundation,null);
         }

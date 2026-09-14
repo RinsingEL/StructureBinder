@@ -141,6 +141,23 @@ public final class LandscapeParcelExpander {
                 continue;
             }
             state.seed = seed;
+            if (!state.capacityDomain.isEmpty()) {
+                // D4 already chose these cells. Do not search or reshape the frozen landscape again.
+                for (BlockPoint point : state.capacityDomain.stream().sorted(Comparator.comparingInt(BlockPoint::z)
+                        .thenComparingInt(BlockPoint::x)).toList()) {
+                    if (!planningBounds.contains(point.x(),point.z()) || obstacles.contains(point)) {
+                        counters.blocked++; continue;
+                    }
+                    if (claims.putIfAbsent(point,new LandUseExpansionResult.Claim(state.group.groupId(),0.0))==null)
+                        state.cells.add(point);
+                    else counters.contested++;
+                }
+                effectiveSeedsByGroup.put(state.group.groupId(),List.of(seed));
+                expansionOriginsByGroup.put(state.group.groupId(),new LandUseExpansionResult.ExpansionOrigin(
+                        relaySeed.kind(),relaySeed.parentGroupId(),seed,relaySeed.sourceFrontier()));
+                completedByGroup.put(state.group.groupId(),state);
+                continue;
+            }
             claim(state, seed, 0.0, claims, planningBounds, terrainIndex, obstacles, counters);
             effectiveSeedsByGroup.computeIfAbsent(state.group.groupId(), ignored -> new ArrayList<>()).add(seed);
             expansionOriginsByGroup.put(state.group.groupId(), new LandUseExpansionResult.ExpansionOrigin(

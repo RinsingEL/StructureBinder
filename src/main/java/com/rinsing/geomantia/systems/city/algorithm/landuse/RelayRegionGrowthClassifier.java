@@ -21,332 +21,59 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * Fills an exact mask through sequential, locally relayed frontier growth regions.
+ * Grows approximate landscape roles inside a fixed mask; unsuitable or unreachable cells may remain empty.
  */
 public final class RelayRegionGrowthClassifier {
     private static final double SHARE_EPSILON = 1.0e-6;
-    private static final int BACKTRACK_HISTORY_LIMIT = 128;
-    private static final int BACKTRACK_BUDGET = 2_048;
     private static final int[][] DIRECTIONS_4 = {{0, -1}, {-1, 0}, {1, 0}, {0, 1}};
 
+    /** Bounded, one-way growth: proportions guide appearance, never trigger backtracking. */
     public Result classify(Request request) {
         Objects.requireNonNull(request, "request");
-        Set<Long> allowed = allowedCells(request.memberSpans(), request.exclusionSpans());
-        if (allowed.isEmpty()) throw fail("RELAY_GROWTH_ALLOWED_MASK_REQUIRED");
-        long sourceKey = key(request.source());
-        if (!allowed.contains(sourceKey)) throw fail("RELAY_GROWTH_SOURCE_NOT_ALLOWED");
-        if (!isConnected(allowed)) throw fail("RELAY_GROWTH_MASK_DISCONNECTED");
-        if (allowed.size() < request.stages().size()) throw fail("RELAY_GROWTH_MASK_TOO_SMALL_FOR_STAGES");
-
-        int[] targets = targetAreas(allowed.size(), request.stages());
-        int[] allocatedTargets = allocateConnectedRoot(request, allowed, targets);
-        IllegalArgumentException lastFailure = null;
-        for (int attempt = 0; attempt < 32; attempt++) {
-            long attemptSeed = attempt == 0 ? request.stableSeed()
-                    : request.stableSeed() ^ mix64(0x72657472794cL * attempt);
-            try {
-                return classifyAttempt(request, allowed, allocatedTargets, targets, attemptSeed);
-            } catch (IllegalArgumentException failure) {
-                if (!retryable(failure)) throw failure;
-                lastFailure = failure;
-                if (attempt == 0) {
-                    Result reverse = reverseTwoRegionPartition(request, allowed, allocatedTargets, targets);
-                    if (reverse != null) return reverse;
-                }
-            }
-        }
-        throw new SearchExhausted(request, Objects.requireNonNull(lastFailure));
-    }
-
-    public static final class SearchExhausted extends IllegalArgumentException {
-        private final Request request;
-
-        private SearchExhausted(Request request, IllegalArgumentException cause) {
-            super("RELAY_GROWTH_CANDIDATE_RETRIES_EXHAUSTED:" + cause.getMessage(), cause);
-            this.request = request;
-        }
-
-        public Request request() { return request; }
-    }
-
-    private static Result classifyAttempt(Request request,
-                                          Set<Long> allowed,
-                                          int[] targets,
-                                          int[] requestedTargets,
-                                          long attemptSeed) {
-        Set<Long> unclaimed = new RemainingCells(allowed);
-        Map<Long, CellClaim> claims = new Long2ObjectOpenHashMap<>(allowed.size());
+        Set<Long> unclaimed = new LongOpenHashSet(allowedCells(request.memberSpans(), request.exclusionSpans()));
+        if (!unclaimed.contains(key(request.source()))) return new Result(List.of(),List.of(),List.of(),0);
+        int requestedArea = unclaimed.size();
+        Map<Long, CellClaim> claims = new Long2ObjectOpenHashMap<>(requestedArea);
         Map<String, RegionState> regions = new LinkedHashMap<>();
         List<RegionTrace> traces = new ArrayList<>();
-
-        for (int stageIndex = 0; stageIndex < request.stages().size(); stageIndex++) {
-            GrowthStage stage = request.stages().get(stageIndex);
-            String parentRegionId = parentRegionId(request.stages(), stageIndex);
-            boolean finalStage = stageIndex == request.stages().size() - 1;
-            StartEdge start = stageIndex == 0
-                    ? new StartEdge(key(request.source()), 0L, ProvenanceKind.ROOT_SOURCE)
-                    : relayStart(stageIndex, stage, regions.get(parentRegionId), unclaimed,
-                    attemptSeed, finalStage, targets[stageIndex]);
-            RegionState region = growRegion(stageIndex, stage, parentRegionId, start, targets[stageIndex],
-                    unclaimed, claims, attemptSeed, finalStage);
-            regions.put(stage.regionId(), region);
-            traces.add(region.trace(requestedTargets[stageIndex]));
+        for (int index = 0; index < request.stages().size() && !unclaimed.isEmpty(); index++) {
+            GrowthStage stage = request.stages().get(index);
+            int target = Math.max(1, (int) Math.round(requestedArea * stage.targetShare()));
+            String parentId = parentRegionId(request.stages(), index);
+            RegionState parent = regions.get(parentId);
+            StartEdge start = null;
+            if (index == 0 && unclaimed.contains(key(request.source()))) {
+                start = new StartEdge(key(request.source()), 0L, ProvenanceKind.ROOT_SOURCE);
+            } else if (parent != null) {
+                // Prefer a real contact, but ordinary vegetation need not form a mandatory chain.
+                start = parent.cells().stream().sorted().flatMap(from -> neighbors4(from).stream()
+                        .filter(unclaimed::contains)
+                        .map(next -> new StartEdge(next, from, ProvenanceKind.RELAY_INTERFACE)))
+                        .findFirst().orElse(null);
+            }
+            if (start == null) {
+                long closest = unclaimed.stream().min(Comparator
+                        .comparingLong((Long cell) -> Math.abs((long)x(cell) - request.source().x())
+                                + Math.abs((long)z(cell) - request.source().z()))
+                        .thenComparingLong(Long::longValue)).orElseThrow();
+                start = new StartEdge(closest, 0L, ProvenanceKind.ROOT_SOURCE);
+                parentId = "";
+            }
+            RegionState state = new RegionState(stage, parentId, target, request.stableSeed(), index);
+            claim(state, start.point(), start.from(), start.kind(), unclaimed, claims);
+            while (state.cells().size() < target && !state.rankedFrontier.isEmpty()) {
+                FrontierEdge next = state.rankedFrontier.first();
+                claim(state, next.point(), next.from(), ProvenanceKind.REGION_FRONTIER, unclaimed, claims);
+            }
+            regions.put(stage.regionId(), state);
+            traces.add(state.trace(target));
         }
-
-        if (!unclaimed.isEmpty() || claims.size() != allowed.size()) {
-            throw fail("RELAY_GROWTH_INCOMPLETE_COVERAGE");
-        }
-        List<RoleSpan> roleSpans = compress(claims, CellClaim::roleRef).stream()
+        List<RoleSpan> roles = compress(claims, CellClaim::roleRef).stream()
                 .map(span -> new RoleSpan(span.z(), span.minX(), span.maxX(), span.value())).toList();
-        List<RegionSpan> regionSpans = compress(claims, java.util.function.Function.identity()).stream()
+        List<RegionSpan> spans = compress(claims, java.util.function.Function.identity()).stream()
                 .map(span -> new RegionSpan(span.z(), span.minX(), span.maxX(),
                         span.value().regionId(), span.value().roleRef())).toList();
-        return new Result(roleSpans, regionSpans, traces, allowed.size());
-    }
-
-    private static boolean retryable(IllegalArgumentException failure) {
-        String message = failure.getMessage();
-        return message != null && (message.startsWith("RELAY_GROWTH_FRONTIER_EXHAUSTED:")
-                || message.startsWith("RELAY_GROWTH_PARENT_INTERFACE_EXHAUSTED:")
-                || message.startsWith("RELAY_GROWTH_NO_RELAY_INTERFACE:")
-                || message.startsWith("RELAY_GROWTH_REMAINDER_DISCONNECTED:")
-                || message.startsWith("RELAY_GROWTH_BACKTRACK_BUDGET_EXHAUSTED:"));
-    }
-
-    private static RegionState growRegion(int stageIndex,
-                                          GrowthStage stage,
-                                          String parentRegionId,
-                                          StartEdge start,
-                                          int targetArea,
-                                          Set<Long> unclaimed,
-                                          Map<Long, CellClaim> claims,
-                                          long stableSeed,
-                                          boolean finalStage) {
-        if (!unclaimed.contains(start.point())) throw fail("RELAY_GROWTH_START_ALREADY_CLAIMED:" + stage.regionId());
-        boolean splitAtRoot = !finalStage && !removalKeepsComponents(unclaimed, start.point());
-        if (splitAtRoot && start.kind() != ProvenanceKind.ROOT_SOURCE) {
-            throw fail("RELAY_GROWTH_START_DISCONNECTS_REMAINDER:" + stage.regionId());
-        }
-        RegionState state = new RegionState(stage, parentRegionId, targetArea, stableSeed, stageIndex);
-        claim(state, start.point(), start.from(), start.kind(), unclaimed, claims);
-        if (splitAtRoot) absorbRootBranches(state, start.point(), targetArea, unclaimed, claims);
-        ArrayDeque<SearchFrame> history = new ArrayDeque<>();
-        int backtracks = 0;
-        while (true) {
-            if (state.cells().size() == targetArea && stageCanRelay(
-                    state, unclaimed, stableSeed, stageIndex, finalStage)) return state;
-
-            if (state.cells().size() < targetArea) {
-                SearchFrame frame = new SearchFrame();
-                FrontierEdge selected = frame.next(state, unclaimed, claims, stableSeed, stageIndex, finalStage);
-                if (selected != null) {
-                    history.addLast(frame);
-                    if (history.size() > BACKTRACK_HISTORY_LIMIT) history.removeFirst();
-                    claim(state, selected.point(), selected.from(), ProvenanceKind.REGION_FRONTIER,
-                            unclaimed, claims);
-                    continue;
-                }
-            }
-
-            FrontierEdge alternative = null;
-            while (alternative == null && !history.isEmpty()) {
-                if (++backtracks > BACKTRACK_BUDGET) {
-                    throw fail("RELAY_GROWTH_BACKTRACK_BUDGET_EXHAUSTED:" + stage.regionId());
-                }
-                undoLastClaim(state, unclaimed, claims);
-                SearchFrame frame = history.removeLast();
-                alternative = frame.next(state, unclaimed, claims, stableSeed, stageIndex, finalStage);
-                if (alternative != null) {
-                    history.addLast(frame);
-                }
-            }
-            if (alternative == null) {
-                throw fail("RELAY_GROWTH_FRONTIER_EXHAUSTED:" + stage.regionId()
-                        + ":actual=" + state.cells().size() + ":target=" + targetArea
-                        + ":unclaimed=" + unclaimed.size());
-            }
-            claim(state, alternative.point(), alternative.from(), ProvenanceKind.REGION_FRONTIER,
-                    unclaimed, claims);
-        }
-    }
-
-    /** A large first region can trap a greedy prefix in a narrow parcel. Search the
-     * smaller complement instead, then rebuild real adjacent growth in the authored
-     * order from the original source. Shares, roles, masks and connectivity stay exact. */
-    private static Result reverseTwoRegionPartition(Request request, Set<Long> allowed,
-                                                     int[] targets, int[] requestedTargets) {
-        if (request.stages().size() != 2 || targets[0] <= targets[1]) return null;
-        GrowthStage first = request.stages().get(0), last = request.stages().get(1);
-        long originalSource = key(request.source());
-        List<Long> starts = allowed.stream().filter(cell -> cell != originalSource)
-                .filter(cell -> neighbors4(cell).stream().anyMatch(next -> !allowed.contains(next)))
-                .sorted(Comparator.<Long>comparingLong(cell -> -(Math.abs((long) x(cell) - request.source().x())
-                                + Math.abs((long) z(cell) - request.source().z())))
-                        .thenComparingInt(RelayRegionGrowthClassifier::z)
-                        .thenComparingInt(RelayRegionGrowthClassifier::x))
-                .filter(cell -> removalKeepsComponents(allowed, cell))
-                .limit(32).toList();
-        for (long start : starts) {
-            Request reversed = new Request(request.memberSpans(), request.exclusionSpans(), point(start),
-                    request.stableSeed(), List.of(
-                    new GrowthStage(last.regionId(), "", last.roleRef(), last.targetShare(), last.growthForm()),
-                    new GrowthStage(first.regionId(), last.regionId(), first.roleRef(), first.targetShare(), first.growthForm())));
-            Result partition;
-            try {
-                partition = classifyAttempt(reversed, allowed, new int[]{targets[1], targets[0]},
-                        new int[]{requestedTargets[1], requestedTargets[0]}, request.stableSeed());
-            } catch (IllegalArgumentException failure) {
-                if (!retryable(failure)) throw failure;
-                continue;
-            }
-            if (!first.regionId().equals(partition.regionAt(request.source().x(), request.source().z()).orElse("")))
-                continue;
-            Map<Long, String> regionByCell = new Long2ObjectOpenHashMap<>();
-            for (RegionSpan span : partition.regionSpans())
-                for (int x = span.minX(); x <= span.maxX(); x++) regionByCell.put(key(x, span.z()), span.regionId());
-            List<RegionTrace> traces = new ArrayList<>();
-            Set<Long> grown = new LongOpenHashSet();
-            for (int index = 0; index < 2; index++) {
-                GrowthStage stage = request.stages().get(index);
-                long root = originalSource, parent = 0;
-                if (index == 1) {
-                    root = regionByCell.keySet().stream()
-                            .filter(cell -> stage.regionId().equals(regionByCell.get(cell)))
-                            .filter(cell -> neighbors4(cell).stream().anyMatch(grown::contains))
-                            .min(Comparator.comparingInt(RelayRegionGrowthClassifier::z)
-                                    .thenComparingInt(RelayRegionGrowthClassifier::x)).orElseThrow();
-                    parent = neighbors4(root).stream().filter(grown::contains).findFirst().orElseThrow();
-                }
-                List<ExpansionStep> steps = new ArrayList<>();
-                steps.add(new ExpansionStep(0, point(root), index == 0 ? null : point(parent),
-                        index == 0 ? ProvenanceKind.ROOT_SOURCE : ProvenanceKind.RELAY_INTERFACE));
-                ArrayDeque<Long> frontier = new ArrayDeque<>();
-                frontier.add(root); grown.add(root);
-                while (!frontier.isEmpty()) {
-                    long from = frontier.removeFirst();
-                    for (long next : neighbors4(from)) {
-                        if (stage.regionId().equals(regionByCell.get(next)) && grown.add(next)) {
-                            steps.add(new ExpansionStep(steps.size(), point(next), point(from), ProvenanceKind.REGION_FRONTIER));
-                            frontier.addLast(next);
-                        }
-                    }
-                }
-                if (steps.size() != targets[index]) throw fail("RELAY_GROWTH_REVERSE_PARTITION_INVALID");
-                traces.add(new RegionTrace(stage.regionId(), index == 0 ? "" : first.regionId(), stage.roleRef(),
-                        stage.growthForm(), point(root), requestedTargets[index], steps.size(), steps));
-            }
-            return new Result(partition.roleSpans(), partition.regionSpans(), traces, allowed.size());
-        }
-        return null;
-    }
-
-    private static int[] allocateConnectedRoot(Request request, Set<Long> allowed, int[] requested) {
-        int[] result = requested.clone();
-        if (result.length < 2) return result;
-        Set<Long> remainder = new LongOpenHashSet(allowed);
-        remainder.remove(key(request.source()));
-        int minimumRoot = allowed.size() - largestRootBranch(key(request.source()), remainder).size();
-        int additional = Math.max(0, minimumRoot - result[0]);
-        if (additional == 0) return result;
-        int limit = Math.max(1, (int) Math.ceil(allowed.size() * 0.01));
-        int available = 0;
-        for (int index = 1; index < result.length; index++) available += result[index] - 1;
-        if (additional > limit || additional > available) {
-            throw fail("RELAY_GROWTH_START_DISCONNECTS_REMAINDER:" + request.stages().get(0).regionId()
-                    + ":minimumRootArea=" + minimumRoot + ":target=" + requested[0]
-                    + ":adjustmentLimit=" + limit);
-        }
-        String rootRole = request.stages().get(0).roleRef();
-        for (int remaining = additional; remaining > 0; remaining--) {
-            int donor = -1;
-            for (int index = 1; index < result.length; index++) {
-                if (result[index] <= 1) continue;
-                boolean sameRole = rootRole.equals(request.stages().get(index).roleRef());
-                boolean donorSameRole = donor >= 0 && rootRole.equals(request.stages().get(donor).roleRef());
-                if (donor < 0 || sameRole && !donorSameRole
-                        || sameRole == donorSameRole && result[index] > result[donor]) donor = index;
-            }
-            result[donor]--;
-            result[0]++;
-        }
-        return result;
-    }
-
-    /** A frozen source can be a neck in a valid connected parcel. Keep that source and
-     * absorb its smaller branches as adjacent first-region growth before leaving one
-     * connected remainder. This does not reseed, drop cells, or change role budgets. */
-    private static void absorbRootBranches(RegionState state, long source, int targetArea,
-                                           Set<Long> unclaimed, Map<Long, CellClaim> claims) {
-        Set<Long> retained = largestRootBranch(source, unclaimed);
-        int requiredPrefixSize = 1 + unclaimed.size() - retained.size();
-        if (requiredPrefixSize > targetArea) {
-            throw fail("RELAY_GROWTH_START_DISCONNECTS_REMAINDER:" + state.stage().regionId()
-                    + ":minimumRootArea=" + requiredPrefixSize + ":target=" + targetArea);
-        }
-        ArrayDeque<Long> frontier = new ArrayDeque<>();
-        frontier.add(source);
-        while (!frontier.isEmpty()) {
-            long from = frontier.removeFirst();
-            for (long next : neighbors4(from)) {
-                if (!unclaimed.contains(next) || retained.contains(next)) continue;
-                claim(state, next, from, ProvenanceKind.REGION_FRONTIER, unclaimed, claims);
-                frontier.addLast(next);
-            }
-        }
-    }
-
-    private static Set<Long> largestRootBranch(long source, Set<Long> unclaimed) {
-        Set<Long> visited = new LongOpenHashSet();
-        Set<Long> retained = Set.of();
-        for (long neighbor : neighbors4(source)) {
-            if (!unclaimed.contains(neighbor) || !visited.add(neighbor)) continue;
-            Set<Long> component = new LongOpenHashSet();
-            ArrayDeque<Long> queue = new ArrayDeque<>();
-            queue.add(neighbor);
-            component.add(neighbor);
-            while (!queue.isEmpty()) {
-                for (long next : neighbors4(queue.removeFirst())) {
-                    if (unclaimed.contains(next) && visited.add(next)) {
-                        component.add(next);
-                        queue.addLast(next);
-                    }
-                }
-            }
-            if (component.size() > retained.size()) retained = component;
-        }
-        return retained;
-    }
-
-    private static boolean stageCanRelay(RegionState state,
-                                         Set<Long> unclaimed,
-                                         long stableSeed,
-                                         int stageIndex,
-                                         boolean finalStage) {
-        if (finalStage) return unclaimed.isEmpty();
-        if (unclaimed.size() == 1) return true;
-        if (!isConnected(unclaimed)) return false;
-        return state.rankedFrontier.stream()
-                .anyMatch(edge -> hasNeighborAfterRemoval(unclaimed, edge.point())
-                        && removalKeepsComponents(unclaimed, edge.point()));
-    }
-
-    private static void undoLastClaim(RegionState state,
-                                      Set<Long> unclaimed,
-                                      Map<Long, CellClaim> claims) {
-        ExpansionStep removed = state.steps().remove(state.steps().size() - 1);
-        long point = key(removed.point());
-        state.cells().remove(point);
-        state.ordinals().remove(point);
-        claims.remove(point);
-        unclaimed.add(point);
-        // Undo can split dual faces anywhere. Previously rejected vertices must be
-        // reconsidered, including vertices far from the restored cell.
-        for (long rejected : state.unsafeFrontier) {
-            FrontierEdge edge = state.frontierByPoint.get(rejected);
-            if (edge != null) state.rankedFrontier.add(edge);
-        }
-        state.unsafeFrontier.clear();
-        refreshFrontierSources(state, point, unclaimed);
+        return new Result(roles, spans, traces, claims.size());
     }
 
     private static void claim(RegionState state,
@@ -424,30 +151,6 @@ public final class RelayRegionGrowthClassifier {
         }
     }
 
-    private static StartEdge relayStart(int stageIndex,
-                                        GrowthStage stage,
-                                        RegionState parent,
-                                        Set<Long> unclaimed,
-                                        long stableSeed,
-                                        boolean finalStage,
-                                        int targetArea) {
-        if (parent == null) throw fail("RELAY_GROWTH_PARENT_REGION_UNKNOWN:" + stage.regionId());
-        return parent.cells().stream().flatMap(from -> neighbors4(from).stream()
-                        .filter(unclaimed::contains)
-                        .filter(candidate -> targetArea <= 1 || hasNeighborAfterRemoval(unclaimed, candidate))
-                        .map(candidate -> new StartEdge(candidate, from, ProvenanceKind.RELAY_INTERFACE)))
-                .sorted(Comparator.comparingDouble((StartEdge edge) -> stableUnit(stableSeed, stageIndex,
-                                edge.point(), edge.from(), 0x72656c61794cL))
-                        .thenComparingInt(edge -> z(edge.point()))
-                        .thenComparingInt(edge -> x(edge.point()))
-                        .thenComparingInt(edge -> z(edge.from()))
-                        .thenComparingInt(edge -> x(edge.from())))
-                .filter(edge -> finalStage || removalKeepsComponents(unclaimed, edge.point()))
-                .filter(edge -> targetArea <= 1 || canStartRegion(edge.point(), unclaimed))
-                .findFirst()
-                .orElseThrow(() -> fail("RELAY_GROWTH_PARENT_INTERFACE_EXHAUSTED:" + stage.regionId()));
-    }
-
     private static boolean canStartRegion(long start, Set<Long> unclaimed) {
         if (unclaimed instanceof RemainingCells) {
             unclaimed.remove(start);
@@ -517,40 +220,6 @@ public final class RelayRegionGrowthClassifier {
                 (int) Math.round(Math.sqrt(state.targetArea()) * 3.2 * lengthVariation)));
     }
 
-    private static int[] targetAreas(int blockCount, List<GrowthStage> stages) {
-        int[] targets = new int[stages.size()];
-        double[] exact = new double[stages.size()];
-        int assigned = 0;
-        for (int index = 0; index < stages.size(); index++) {
-            exact[index] = stages.get(index).targetShare() * blockCount;
-            targets[index] = Math.max(1, (int) Math.floor(exact[index]));
-            assigned += targets[index];
-        }
-        while (assigned < blockCount) {
-            int selected = 0;
-            for (int index = 1; index < targets.length; index++) {
-                double deficit = exact[index] - targets[index];
-                double selectedDeficit = exact[selected] - targets[selected];
-                if (deficit > selectedDeficit + 1.0e-12) selected = index;
-            }
-            targets[selected]++;
-            assigned++;
-        }
-        while (assigned > blockCount) {
-            int selected = -1;
-            for (int index = 0; index < targets.length; index++) {
-                if (targets[index] <= 1) continue;
-                if (selected < 0 || targets[index] - exact[index] > targets[selected] - exact[selected] + 1.0e-12) {
-                    selected = index;
-                }
-            }
-            if (selected < 0) throw fail("RELAY_GROWTH_TARGET_ALLOCATION_FAILED");
-            targets[selected]--;
-            assigned--;
-        }
-        return targets;
-    }
-
     private static String parentRegionId(List<GrowthStage> stages, int stageIndex) {
         GrowthStage stage = stages.get(stageIndex);
         if (stageIndex == 0) return "";
@@ -589,7 +258,6 @@ public final class RelayRegionGrowthClassifier {
         }
         return visited.size() == cells.size();
     }
-
 
     /** Removing a vertex is safe exactly when all its remaining neighbors can still
      * reach each other. Grow those (at most four) searches together: stop as soon as
@@ -838,7 +506,7 @@ public final class RelayRegionGrowthClassifier {
             roleSpans = List.copyOf(Objects.requireNonNull(roleSpans, "roleSpans"));
             regionSpans = List.copyOf(Objects.requireNonNull(regionSpans, "regionSpans"));
             regions = List.copyOf(Objects.requireNonNull(regions, "regions"));
-            if (roleSpans.isEmpty() || regionSpans.isEmpty() || regions.isEmpty() || coveredBlockCount <= 0) {
+            if (coveredBlockCount < 0) {
                 throw fail("RELAY_GROWTH_RESULT_EMPTY");
             }
         }
@@ -928,41 +596,6 @@ public final class RelayRegionGrowthClassifier {
     }
 
     private record ValueSpan<T>(int z, int minX, int maxX, T value) {
-    }
-
-
-    private static final class SearchFrame {
-        private FrontierEdge lastTried;
-
-        // On backtracking the caller restores precisely this frame's mask and scores.
-        // Resume after lastTried without retaining a full frontier copy per claimed cell.
-        private FrontierEdge next(RegionState state, Set<Long> unclaimed, Map<Long, CellClaim> claims,
-                                  long stableSeed, int stageIndex, boolean finalStage) {
-            while (true) {
-                FrontierEdge candidate = lastTried == null
-                        ? (state.rankedFrontier.isEmpty() ? null : state.rankedFrontier.first())
-                        : state.rankedFrontier.higher(lastTried);
-                if (candidate == null) return null;
-                lastTried = candidate;
-                if (!finalStage && !removalKeepsComponents(unclaimed, candidate.point())) {
-                    state.unsafeFrontier.add(candidate.point());
-                    state.rankedFrontier.remove(candidate);
-                    continue;
-                }
-                if (!finalStage && state.cells().size() + 1 == state.targetArea()) {
-                    claim(state, candidate.point(), candidate.from(), ProvenanceKind.REGION_FRONTIER,
-                            unclaimed, claims);
-                    boolean canRelay;
-                    try {
-                        canRelay = stageCanRelay(state, unclaimed, stableSeed, stageIndex, false);
-                    } finally {
-                        undoLastClaim(state, unclaimed, claims);
-                    }
-                    if (!canRelay) continue;
-                }
-                return candidate;
-            }
-        }
     }
 
     /** The growth algorithm removes cells and restores them strictly in LIFO order. */

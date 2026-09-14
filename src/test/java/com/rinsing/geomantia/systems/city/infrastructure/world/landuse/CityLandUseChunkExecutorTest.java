@@ -17,6 +17,23 @@ class CityLandUseChunkExecutorTest {
     private final CityLandUseChunkExecutor executor = new CityLandUseChunkExecutor();
 
     @Test
+    void landscapeCanyonSkipsSoilCropAndFenceWithoutFailingOwner() {
+        var mask=List.of(new CityLandUseChunkCompiler.GradingMaskCell("field",1,1,false,64,true,6));
+        var surfaces=List.of(new CityLandUseChunkCompiler.SurfaceOperation("field","farm",1,1,"minecraft:farmland"),
+                new CityLandUseChunkCompiler.SurfaceOperation("field","farm",1,1,"minecraft:wheat",1,true,
+                        CityLandUseChunkCompiler.SurfaceStage.CROP,1));
+        var fragment=new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,
+                "city","hash","palette",0,0,1,0,0,0,"minecraft:dirt",mask,surfaces,List.of(),List.of());
+        FakeWorld world=new FakeWorld();
+        world.columns.put("1,1",new CityLandUseChunkExecutor.ColumnSample(30,"minecraft:dirt",true));
+        var result=executor.execute(fragment,world,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED,result.status());
+        assertEquals(1,result.naturalSurfaceSkippedCount());
+        assertTrue(world.writes.isEmpty());
+        assertTrue(world.sampleCount<=18);
+    }
+
+    @Test
     void platformAccessPathCannotOverwriteFrozenRoadStairOrItsFacing() {
         var mask = new ArrayList<CityLandUseChunkCompiler.GradingMaskCell>();
         var surfaces = new ArrayList<CityLandUseChunkCompiler.SurfaceOperation>();

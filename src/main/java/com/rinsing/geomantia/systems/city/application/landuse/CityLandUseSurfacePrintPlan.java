@@ -133,8 +133,16 @@ public record CityLandUseSurfacePrintPlan(
             List<LandUseAreaPlan.ScanlineSpan> exclusionSpans,
             LandUseSurfaceSettings.SurfaceAlgorithm surfaceAlgorithm,
             BlockPoint algorithmAnchor,
-            Recipe recipe) {
+            Recipe recipe,
+            List<TerrainReferenceCell> terrainReferenceCells) {
+        public AreaPrint(String printAreaId, String landUseAreaId, List<String> sourceGroupIds,
+                         LandUseSurfaceSettings settings, List<LandUseAreaPlan.ScanlineSpan> members,
+                         List<LandUseAreaPlan.ScanlineSpan> exclusions,
+                         LandUseSurfaceSettings.SurfaceAlgorithm algorithm, BlockPoint anchor, Recipe recipe) {
+            this(printAreaId, landUseAreaId, sourceGroupIds, settings, members, exclusions, algorithm, anchor, recipe, List.of());
+        }
         public AreaPrint {
+            terrainReferenceCells = List.copyOf(terrainReferenceCells);
             requireText(printAreaId, "CITY_LAND_USE_SURFACE_PRINT_AREA_ID_REQUIRED");
             requireText(landUseAreaId, "CITY_LAND_USE_SURFACE_PRINT_LAND_USE_AREA_ID_REQUIRED");
             sourceGroupIds = List.copyOf(Objects.requireNonNull(sourceGroupIds, "sourceGroupIds"));
@@ -217,6 +225,12 @@ public record CityLandUseSurfacePrintPlan(
                          Recipe recipe) {
             this(printAreaId, landUseAreaId, sourceGroupIds, surfaceSettings, memberSpans, exclusionSpans,
                     surfaceSettings.surfaceAlgorithm(), surfaceSettings.algorithmAnchor(), recipe);
+        }
+    }
+
+    public record TerrainReferenceCell(int minX, int minZ, int step, int surfaceY, int maxDelta) {
+        public TerrainReferenceCell {
+            if (step <= 0 || maxDelta < 0) throw new IllegalArgumentException("Invalid landscape terrain reference");
         }
     }
 
@@ -397,7 +411,7 @@ public record CityLandUseSurfacePrintPlan(
             contentWeights = List.copyOf(Objects.requireNonNull(contentWeights, "contentWeights"));
             regionSpans = List.copyOf(Objects.requireNonNull(regionSpans, "regionSpans"));
             regionTraces = List.copyOf(Objects.requireNonNull(regionTraces, "regionTraces"));
-            if (roleDefinitions.isEmpty() || regionSpans.isEmpty() || regionTraces.isEmpty()) {
+            if (roleDefinitions.isEmpty()) {
                 throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_RELAY_DATA_REQUIRED");
             }
             Map<String, RelayRoleDefinition> definitions = new HashMap<>();
@@ -597,7 +611,7 @@ public record CityLandUseSurfacePrintPlan(
                 }
             }
         }
-        if (!actual.equals(expected)) {
+        if (!expected.containsAll(actual)) {
             throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_LAYER_COVERAGE_MISMATCH");
         }
     }

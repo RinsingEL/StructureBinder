@@ -154,8 +154,9 @@ public final class CityOutdoorBlueprintCompiler {
             }
             LandUseRule parcelRule = independentParcelRule(requireRule(catalog, profile.landUseRuleRef()));
             CityBlueprintReferenceCatalog.SurfaceRecipe recipe = requireRecipe(catalog, profile.surfaceRecipeRef());
-            List<AnchorData> attached = landscape.originMode() == CityBlueprint.LandscapeOriginMode.ATTACHED
-                    ? List.of(requiredOwnerAnchor(anchorsByGroup, landscape)) : List.of();
+            AnchorData landscapeOwner = landscape.originMode() == CityBlueprint.LandscapeOriginMode.ATTACHED
+                    ? requiredOwnerAnchor(anchorsByGroup, landscape) : null;
+            List<AnchorData> attached = landscapeOwner == null ? List.of() : List.of(landscapeOwner);
             List<ParcelSpec> parcels = landscapeParcels(blueprint, landscape, profile, parcelRule, attached,
                     anchorsByGroup, terrain, allFootprints, occupiedLandscapeParcels, outdoorWarnings,
                     capacityDomains, capacityReservation.parentParcelIds(), capacityReservation.seeds(),
@@ -423,7 +424,8 @@ public final class CityOutdoorBlueprintCompiler {
             throw new IllegalArgumentException("CITY_OUTDOOR_PARCEL_AREA_RANGE_UNSATISFIED:"
                     + landscape.landscapeId() + ':' + minArea + '>' + maxArea);
         }
-        BlockPoint origin = attached.isEmpty() ? center(terrain.planningBounds())
+        BlockPoint origin = landscape.growth() != null ? landscape.growth().seed()
+                : attached.isEmpty() ? center(terrain.planningBounds())
                 : centroid(attached.stream().map(AnchorData::footprint).toList());
         WaterGuidance water = landscape.placementDomain() == CityBlueprint.LandscapePlacementDomain.ALONG_WATER
                 ? waterGuidance(terrain, origin, profile.landscapeType(), landscape.landscapeId()) : null;
@@ -487,7 +489,7 @@ public final class CityOutdoorBlueprintCompiler {
                 usedSeeds.add(seed);
                 String parentId = parent == null ? "" : parent.parcelId();
                 String rootSource = parent == null ? (anchor == null
-                        ? landscape.placementDomain().name() : anchor.anchorId()) : parent.parcelId();
+                        ? "DESIGN_SEED" : anchor.anchorId()) : parent.parcelId();
                 ParcelSpec parcel = new ParcelSpec(parcelId, instanceId, parentId, rootSource,
                         anchor, seed, budget, growthBias, blueprintBias, reference,
                         landscape.required() ? LandUseSeedGroup.AdmissionPolicy.REQUIRED
@@ -930,8 +932,10 @@ public final class CityOutdoorBlueprintCompiler {
         if (!owner.groupOwned()) {
             candidates = candidates.filter(anchor -> owner.requiredStructureRef().equals(anchor.structureRef()));
         }
-        return candidates.findFirst().orElseThrow(() -> new IllegalArgumentException(
-                        "CITY_OUTDOOR_REQUIRED_LANDSCAPE_OWNER_DRIFT:" + landscape.landscapeId()));
+        AnchorData anchor = candidates.findFirst().orElse(null);
+        if (anchor == null && landscape.growth() == null)
+            throw new IllegalArgumentException("CITY_OUTDOOR_REQUIRED_LANDSCAPE_OWNER_DRIFT:" + landscape.landscapeId());
+        return anchor;
     }
 
     private static CapacityReservation capacityReservation(
@@ -1008,8 +1012,9 @@ public final class CityOutdoorBlueprintCompiler {
             }
             int instanceOrdinal = Integer.parseInt(instanceId.substring(instanceId.lastIndexOf('_') + 1)) - 1;
             AnchorData owner = requiredOwnerAnchor(anchorsByGroup, landscape);
-            if (!owner.anchorId().equals(requiredString(instance, "ownerAnchorId"))
-                    || !sameBounds(owner.footprint(), object(instance, "ownerFootprint"))) {
+            if (owner != null && (!owner.anchorId().equals(requiredString(instance, "ownerAnchorId"))
+                    || !sameBounds(owner.footprint(), object(instance, "ownerFootprint")))
+                    || owner == null && !stringValue(instance, "ownerAnchorId", "").isBlank()) {
                 throw new IllegalArgumentException("CITY_OUTDOOR_REQUIRED_LANDSCAPE_OWNER_DRIFT:" + landscapeId);
             }
             JsonArray parcels = requiredArray(instance, "parcelReservations");

@@ -51,33 +51,132 @@ public final class CityLandscapeCapacityReservationPlanner {
     public Result plan(CityBlueprint blueprint, CityBlueprintReferenceCatalog catalog,
                        LandUseTerrainField terrain, JsonArray requiredAnchors, int nodeLimit,
                        Map<String, Integer> desiredParcelAreas) {
-        if (nodeLimit <= 0) {
-            return new Result(false, "CITY_BLUEPRINT_LANDSCAPE_SEARCH_LIMIT_EXHAUSTED",
-                    withRequiredAnchorHash(failurePlan(blueprint,
-                            "CITY_BLUEPRINT_LANDSCAPE_SEARCH_LIMIT_EXHAUSTED", 0), requiredAnchors));
+        List<Subject> subjects = requiredSubjects(blueprint, catalog, requiredAnchors, desiredParcelAreas, terrain.cellStepBlocks());
+        Set<BlockPoint> obstacles = structureCells(requiredAnchors);
+        List<InstanceCandidate> selected = new ArrayList<>();
+        int attempts = 0;
+        for (Subject subject : subjects) {
+            if (attempts++ >= Math.max(0, nodeLimit)) break;
+            InstanceCandidate chosen;
+            if (subject.landscape().growth() != null) {
+                chosen = growCells(subject, terrain, obstacles, blueprint.generationSeed());
+            } else {
+                chosen = candidates(subject, subject.instanceOrdinal(), terrain, obstacles,
+                        blueprint.generationSeed()).stream().min(Comparator
+                        .comparingInt((InstanceCandidate candidate) -> -candidate.cells().size())
+                        .thenComparing(candidate -> score(List.of(candidate),blueprint.generationSeed()))
+                        .thenComparingInt(InstanceCandidate::ownerSeedDistanceBlocks)).orElse(null);
+            }
+            if (chosen != null) { selected.add(chosen); obstacles.addAll(chosen.cells()); }
         }
-        List<Subject> subjects = requiredSubjects(blueprint, catalog, requiredAnchors, desiredParcelAreas);
-        if (subjects.isEmpty()) {
-            return new Result(true, "", withRequiredAnchorHash(
-                    successPlan(blueprint, 0, List.of(), List.of()), requiredAnchors));
+        JsonObject plan = successPlan(blueprint, attempts, selected, subjects);
+        plan.addProperty("selectionPolicy", "BOUNDED_GROWTH_PARTIAL_ALLOWED");
+        plan.addProperty("cellStepBlocks", terrain.cellStepBlocks());
+        for (JsonElement element : plan.getAsJsonArray("instances")) {
+            JsonObject instance = element.getAsJsonObject();
+            Subject subject = subjects.stream().filter(item -> item.landscape().landscapeId()
+                    .equals(text(instance, "landscapeId"))).findFirst().orElseThrow();
+            if (subject.landscape().growth() != null) {
+                instance.addProperty("targetCellCount", subject.landscape().growth().targetCellCount());
+                Set<CellKey> realizedCells = new HashSet<>();
+                for (JsonElement spanElement : instance.getAsJsonArray("reservationSpans")) {
+                    JsonObject span=spanElement.getAsJsonObject();
+                    for(int x=span.get("minX").getAsInt(); x<=span.get("maxX").getAsInt(); x++)
+                        realizedCells.add(new CellKey(Math.floorDiv(x,terrain.cellStepBlocks()),
+                                Math.floorDiv(span.get("z").getAsInt(),terrain.cellStepBlocks())));
+                }
+                instance.addProperty("actualCellCount",realizedCells.size());
+                instance.addProperty("actualCellEquivalent", instance.get("actualAreaBlocks").getAsDouble()
+                        / ((double)terrain.cellStepBlocks() * terrain.cellStepBlocks()));
+            }
         }
-        Set<BlockPoint> structureCells = structureCells(requiredAnchors);
-        Search search = new Search(subjects, terrain, structureCells, nodeLimit, blueprint.generationSeed());
-        search.solve(0, new LinkedHashSet<>(), new ArrayList<>());
-        if (search.limitExhausted) {
-            String reason = "CITY_BLUEPRINT_LANDSCAPE_SEARCH_LIMIT_EXHAUSTED";
-            return new Result(false, reason,
-                    withRequiredAnchorHash(failurePlan(blueprint, reason, search.nodes), requiredAnchors));
+        refreshPlanHash(plan);
+        return new Result(true, "", withRequiredAnchorHash(plan, requiredAnchors));
+    }
+
+    /** Select coarse terrain cells once, then soften only the boundary inside the selected domain. */
+    private static InstanceCandidate growCells(Subject subject, LandUseTerrainField field,
+                                                Set<BlockPoint> obstacles, long seed) {
+        CityBlueprint.LandscapeGrowth intent = subject.landscape().growth();
+        TerrainIndex terrain = new TerrainIndex(field);
+        int step = field.cellStepBlocks();
+        CellKey root = new CellKey(Math.floorDiv(intent.seed().x(), step), Math.floorDiv(intent.seed().z(), step));
+        Map<CellKey, Integer> selected = new LinkedHashMap<>();
+        Set<CellKey> visited = new HashSet<>();
+        record Node(CellKey key, double cost) { }
+        PriorityQueue<Node> frontier = new PriorityQueue<>(Comparator.comparingDouble(Node::cost)
+                .thenComparingInt(node -> node.key().z()).thenComparingInt(node -> node.key().x()));
+        frontier.add(new Node(root, 0)); visited.add(root);
+        int target = intent.targetCellCount();
+        while (!frontier.isEmpty() && selected.size() < target) {
+            Node node = frontier.remove();
+            LandUseTerrainField.Cell cell = terrain.cells.get(node.key());
+            if (!passable(cell) || !intent.allowedLandformTypes().isEmpty()
+                    && intent.allowedLandformTypes().stream().noneMatch(type -> type.equalsIgnoreCase(cell.landformType()))) continue;
+            boolean available = false;
+            for (int z = cell.blockMinZ(); z < cell.blockMinZ() + step && !available; z++)
+                for (int x = cell.blockMinX(); x < cell.blockMinX() + step; x++)
+                    if (field.planningBounds().contains(x,z) && !obstacles.contains(new BlockPoint(x,z))) { available = true; break; }
+            if (!available) continue;
+            int parcel = (int)Math.min(subject.landscape().parcelCount()-1,
+                    (long)selected.size() * subject.landscape().parcelCount() / target);
+            selected.put(node.key(), parcel);
+            for (int[] direction : DIRECTIONS) {
+                CellKey next = new CellKey(node.key().x()+direction[0], node.key().z()+direction[1]);
+                LandUseTerrainField.Cell neighbor = terrain.cells.get(next);
+                if (neighbor == null || !LandscapeTerrainContinuity.allows(subject.landscape().terrainPolicy().name(), cell, neighbor)
+                        || !visited.add(next)) continue;
+                frontier.add(new Node(next, node.cost() + terrainStepCost(subject, neighbor)
+                        + valueNoise(seed, next.x(), next.z(), 3)*0.35));
+            }
         }
-        return new Result(true, "",
-                withRequiredAnchorHash(successPlan(blueprint, search.nodes, search.solution, subjects),
-                        requiredAnchors));
+        List<ParcelCapacity> parcels = new ArrayList<>();
+        Set<BlockPoint> all = new LinkedHashSet<>();
+        Map<Integer, Set<BlockPoint>> byParcel = new java.util.TreeMap<>();
+        for (var entry : selected.entrySet()) {
+            LandUseTerrainField.Cell cell = terrain.cells.get(entry.getKey());
+            Set<BlockPoint> points = byParcel.computeIfAbsent(entry.getValue(), ignored -> new LinkedHashSet<>());
+            for (int z = cell.blockMinZ(); z < cell.blockMinZ()+step; z++) {
+                for (int x = cell.blockMinX(); x < cell.blockMinX()+step; x++) {
+                    BlockPoint point = new BlockPoint(x,z);
+                    if (!field.planningBounds().contains(x,z) || obstacles.contains(point)) continue;
+                    // Interpolate the selected cell mask rather than drawing a square per chunk.
+                    double gx = (x+0.5)/step-0.5, gz = (z+0.5)/step-0.5;
+                    int ix=(int)Math.floor(gx), iz=(int)Math.floor(gz);
+                    double fx=gx-ix, fz=gz-iz;
+                    double top=lerp(selected.containsKey(new CellKey(ix,iz))?1:0,
+                            selected.containsKey(new CellKey(ix+1,iz))?1:0,fx);
+                    double bottom=lerp(selected.containsKey(new CellKey(ix,iz+1))?1:0,
+                            selected.containsKey(new CellKey(ix+1,iz+1))?1:0,fx);
+                    if (lerp(top,bottom,fz) < 0.5 + valueNoise(seed,x,z,Math.max(2,step/2))*0.06) continue;
+                    if (usesOneBlockSeparator(subject.landscape())) {
+                        boolean separator=false;
+                        for (int[] d:DIRECTIONS) {
+                            Integer other=selected.get(new CellKey(Math.floorDiv(x+d[0],step),Math.floorDiv(z+d[1],step)));
+                            if(other!=null && other<entry.getValue()) {separator=true;break;}
+                        }
+                        if(separator) continue;
+                    }
+                    points.add(point);
+                }
+            }
+        }
+        for (Set<BlockPoint> points : byParcel.values()) {
+            if (points.isEmpty()) continue;
+            String id=subject.landscape().landscapeId()+"::instance_"+String.format(java.util.Locale.ROOT,"%02d",subject.instanceOrdinal()+1)
+                    +"::parcel_"+String.format(java.util.Locale.ROOT,"%02d",parcels.size()+1);
+            BlockPoint start=points.stream().min(Comparator.comparingLong((BlockPoint p) ->
+                    Math.abs((long)p.x()-intent.seed().x())+Math.abs((long)p.z()-intent.seed().z()))
+                    .thenComparingInt(BlockPoint::z).thenComparingInt(BlockPoint::x)).orElseThrow();
+            parcels.add(new ParcelCapacity(id,"",points,start,0,0,0));all.addAll(points);
+        }
+        return parcels.isEmpty()?null:new InstanceCandidate(subject,subject.instanceOrdinal(),0,0,parcels,all,0);
     }
 
     private static List<Subject> requiredSubjects(CityBlueprint blueprint,
                                                   CityBlueprintReferenceCatalog catalog,
                                                   JsonArray anchors,
-                                                  Map<String, Integer> desiredParcelAreas) {
+                                                  Map<String, Integer> desiredParcelAreas, int cellStep) {
         Map<String, CityBlueprint.ExtentClass> extentByGroup = new LinkedHashMap<>();
         for (CityBlueprint.Group group : blueprint.groups()) {
             extentByGroup.put(group.groupId(), group.extentClass());
@@ -110,6 +209,12 @@ public final class CityLandscapeCapacityReservationPlanner {
                     + landscape.owner().requiredStructureRef());
             // The owning building may have been skipped as an unfit terrain member;
             // its attached landscape is skipped with it, without failing the city.
+            if (owner == null && landscape.growth() != null) {
+                owner = new JsonObject();
+                owner.addProperty("minX", landscape.growth().seed().x()); owner.addProperty("maxX", landscape.growth().seed().x());
+                owner.addProperty("minZ", landscape.growth().seed().z()); owner.addProperty("maxZ", landscape.growth().seed().z());
+                owner.addProperty("anchorId", "");
+            }
             if (owner == null) continue;
             CityBlueprint.ExtentClass ownerExtent = extentByGroup.get(landscape.owner().groupId());
             if (ownerExtent == null) {
@@ -125,6 +230,8 @@ public final class CityLandscapeCapacityReservationPlanner {
                     ? Math.max(profile.parcelStyle().parcelAreaMinBlocks(), requestedArea)
                     : Math.max(profile.parcelStyle().parcelAreaMinBlocks(),
                     Math.min(profile.parcelStyle().parcelAreaMaxBlocks(), requestedArea));
+            if (landscape.growth() != null) area = (int)Math.min(Integer.MAX_VALUE,
+                    Math.max(1L, (long)landscape.growth().targetCellCount() * cellStep * cellStep / landscape.parcelCount()));
             for (int instance = 0; instance < landscape.instanceCount(); instance++) {
                 result.add(new Subject(landscape, profile, owner, area, instance,
                         desiredParcelAreas.containsKey(landscape.landscapeId())));
@@ -135,72 +242,9 @@ public final class CityLandscapeCapacityReservationPlanner {
         return List.copyOf(result);
     }
 
-    private static final class Search {
-        private final List<Subject> subjects;
-        private final LandUseTerrainField terrain;
-        private final Set<BlockPoint> structureCells;
-        private final int nodeLimit;
-        private final long generationSeed;
-        private final List<List<InstanceCandidate>> candidatesBySubject;
-        private int nodes;
-        private boolean limitExhausted;
-        private List<InstanceCandidate> solution = List.of();
-        private SolutionScore bestScore;
 
-        private Search(List<Subject> subjects, LandUseTerrainField terrain, Set<BlockPoint> structureCells,
-                       int nodeLimit, long generationSeed) {
-            this.subjects = subjects;
-            this.terrain = terrain;
-            this.structureCells = structureCells;
-            this.nodeLimit = nodeLimit;
-            this.generationSeed = generationSeed;
-            this.candidatesBySubject = new ArrayList<>(
-                    java.util.Collections.nCopies(subjects.size(), null));
-        }
 
-        private void solve(int index, Set<BlockPoint> claimed, List<InstanceCandidate> selected) {
-            if (nodes >= nodeLimit) {
-                limitExhausted = true;
-                return;
-            }
-            nodes++;
-            if (index == subjects.size()) {
-                SolutionScore score = solutionScore(selected, generationSeed);
-                if (bestScore == null || score.compareTo(bestScore) < 0) {
-                    bestScore = score;
-                    solution = List.copyOf(selected);
-                }
-                return;
-            }
-            Subject subject = subjects.get(index);
-            if (subject.owner() == null) return;
-            List<InstanceCandidate> subjectCandidates = candidatesBySubject.get(index);
-            if (subjectCandidates == null) {
-                subjectCandidates = candidates(subject, subject.instanceOrdinal(), terrain, structureCells,
-                        generationSeed);
-                candidatesBySubject.set(index, subjectCandidates);
-            }
-            for (InstanceCandidate candidate : subjectCandidates) {
-                if (!java.util.Collections.disjoint(claimed, candidate.cells())) continue;
-                claimed.addAll(candidate.cells());
-                selected.add(candidate);
-                solve(index + 1, claimed, selected);
-                selected.remove(selected.size() - 1);
-                claimed.removeAll(candidate.cells());
-                if (limitExhausted) return;
-            }
-            // A required Landscape expresses desired function, not city-wide atomic placement.
-            // Terrain may reduce an instance to zero; preserve that outcome as a warning.
-            solve(index + 1, claimed, selected);
-        }
-    }
 
-    private static SolutionScore solutionScore(List<InstanceCandidate> instances, long generationSeed) {
-        int claimedArea = instances.stream().mapToInt(instance -> instance.cells().size()).sum();
-        int sourceDistance = instances.stream().mapToInt(InstanceCandidate::ownerSeedDistanceBlocks).sum();
-        return new SolutionScore(-instances.size(), -claimedArea, sourceDistance,
-                score(instances, generationSeed));
-    }
 
     private static LayoutScore score(List<InstanceCandidate> instances, long generationSeed) {
         long aspectRatioPenalty = 0;
@@ -1089,20 +1133,7 @@ public final class CityLandscapeCapacityReservationPlanner {
                                      int ownerSeedDistanceBlocks) {
     }
 
-    private record SolutionScore(int negativeInstanceCount, int negativeClaimedArea,
-                                 int ownerSeedDistanceBlocks,
-                                 LayoutScore layoutScore) implements Comparable<SolutionScore> {
-        @Override
-        public int compareTo(SolutionScore other) {
-            int comparison = Integer.compare(negativeInstanceCount, other.negativeInstanceCount);
-            if (comparison != 0) return comparison;
-            comparison = Integer.compare(negativeClaimedArea, other.negativeClaimedArea);
-            if (comparison != 0) return comparison;
-            comparison = Integer.compare(ownerSeedDistanceBlocks, other.ownerSeedDistanceBlocks);
-            if (comparison != 0) return comparison;
-            return layoutScore.compareTo(other.layoutScore);
-        }
-    }
+
 
     private record LayoutScore(long aspectRatioPenalty, int maximumTreeDepth,
                                int negativeDirectionCoverage, int negativeBranchPointCount,

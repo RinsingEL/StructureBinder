@@ -86,7 +86,7 @@ public final class CityLandUseSurfacePrintPlanner {
             }
             prints.add(new CityLandUseSurfacePrintPlan.AreaPrint(printAreaId, area.areaId(),
                     area.sourceGroupIds(), settings, area.memberSpans(), exclusions,
-                    settings.surfaceAlgorithm(), algorithmAnchor, recipe));
+                    settings.surfaceAlgorithm(), algorithmAnchor, recipe, terrainReferences(area, groups, terrainField)));
         }
         prints.sort(Comparator.comparing(CityLandUseSurfacePrintPlan.AreaPrint::printAreaId));
         Map<String, CityLandUseSurfacePrintPlan.AreaPrint> printsByArea = prints.stream().collect(
@@ -430,6 +430,21 @@ public final class CityLandUseSurfacePrintPlanner {
         }
     }
 
+    private static List<CityLandUseSurfacePrintPlan.TerrainReferenceCell> terrainReferences(
+            LandUseAreaPlan.Area area, Map<String, LandUseSeedGroup> groups, LandUseTerrainField terrain) {
+        LandUseSeedGroup group = area.sourceGroupIds().stream().map(groups::get).filter(Objects::nonNull)
+                .filter(item -> item.layerRole() == LandUseSeedGroup.LayerRole.LANDSCAPE).findFirst().orElse(null);
+        if (group == null) return List.of();
+        int maxDelta = com.rinsing.geomantia.systems.city.domain.landuse.LandscapeTerrainContinuity
+                .maximumAdjacentElevationDelta(group.terrainBias().name());
+        return terrain.cells().stream().filter(cell -> cell.sampled() && !cell.water())
+                .filter(cell -> area.memberSpans().stream().anyMatch(span -> span.z() >= cell.blockMinZ()
+                        && span.z() < cell.blockMinZ() + cell.cellStepBlocks()
+                        && span.maxX() >= cell.blockMinX() && span.minX() < cell.blockMinX()+cell.cellStepBlocks()))
+                .map(cell -> new CityLandUseSurfacePrintPlan.TerrainReferenceCell(cell.blockMinX(),cell.blockMinZ(),
+                        cell.cellStepBlocks(),(int)Math.round(cell.elevation()),maxDelta)).toList();
+    }
+
     private record FeatureKey(int x, int z, int surfaceOffset) {
     }
 
@@ -477,7 +492,7 @@ public final class CityLandUseSurfacePrintPlanner {
         return new CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe(settings.surfaceBlockId(),
                 settings.cropBlockId(), settings.channelBankBlockId(), settings.channelWaterBlockId(),
                 settings.channelBankOverlayBlockId(), settings.boundaryBlockId(), program.fillProfileRef(),
-                program.primaryRoleRef(), program.stableSeed(), source, definitions, content, spans, traces);
+                program.primaryRoleRef(), program.stableSeed(), traces.isEmpty() ? source : traces.get(0).start(), definitions, content, spans, traces);
     }
 
     private static CityLandUseSurfacePrintPlan.ContourBandsRecipe contourBands(
@@ -644,9 +659,9 @@ public final class CityLandUseSurfacePrintPlanner {
                 && configured.x() >= span.minX() && configured.x() <= span.maxX());
         if (member) return configured;
         if (landscape) {
-            throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_LANDSCAPE_SEED_NOT_IN_AREA:"
-                    + area.areaId() + ':' + String.join(",", area.sourceGroupIds()) + ':'
-                    + configured.x() + ':' + configured.z());
+            // Preserve design intent when later reservations clip the source. The classifier
+            // returns an empty realization and the planning report records the shortfall.
+            return configured;
         }
         LandUseAreaPlan.ScanlineSpan first = area.memberSpans().stream()
                 .min(Comparator.comparingInt(LandUseAreaPlan.ScanlineSpan::z)

@@ -2,7 +2,7 @@ package com.rinsing.geomantia.systems.city.domain.blueprint;
 
 import java.util.List;
 
-/** The complete, coordinate-free result of the single D4 city-design decision. */
+/** D4 design intent: referenced building layouts and optional world-coordinate landscape seeds. */
 public record CityBlueprint(
         String schema,
         String cityId,
@@ -297,9 +297,28 @@ public record CityBlueprint(
             List<String> preferredPatchRefs,
             TerrainPolicy terrainPolicy,
             boolean required,
-            FillSelection fillSelection) {
+            FillSelection fillSelection,
+            LandscapeGrowth growth) {
+        public Landscape(String landscapeId, String landscapeProfileRef, LandscapePurpose purpose,
+                         LandscapeOriginMode originMode, LandscapeOwner owner,
+                         LandscapePlacementDomain placementDomain, int instanceCount, int parcelCount,
+                         List<String> preferredPatchRefs, TerrainPolicy terrainPolicy, boolean required,
+                         FillSelection fillSelection) {
+            this(landscapeId, landscapeProfileRef, purpose, originMode, owner, placementDomain,
+                    instanceCount, parcelCount, preferredPatchRefs, terrainPolicy, required, fillSelection, null);
+        }
         public Landscape {
             preferredPatchRefs = List.copyOf(preferredPatchRefs);
+        }
+    }
+
+    /** Independent coarse-cell design demand; actual capacity is allowed to be smaller. */
+    public record LandscapeGrowth(com.rinsing.geomantia.systems.city.domain.model.BlockPoint seed,
+                                  int targetCellCount, List<String> allowedLandformTypes) {
+        public LandscapeGrowth {
+            java.util.Objects.requireNonNull(seed, "seed");
+            if (targetCellCount <= 0) throw new IllegalArgumentException("Landscape targetCellCount must be positive");
+            allowedLandformTypes = List.copyOf(allowedLandformTypes);
         }
     }
 

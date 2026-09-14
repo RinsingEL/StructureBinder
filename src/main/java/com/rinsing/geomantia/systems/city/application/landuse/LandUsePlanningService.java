@@ -173,6 +173,15 @@ public final class LandUsePlanningService {
                 residualResult.urbanSpacePlan(), skippedLandscapes, requiredLandscapeCapacities);
         for (var area : surfacePrintPlan.areas()) {
             if (area.recipe() instanceof CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe relay) {
+                Set<String> realizedRoles=relay.regionTraces().stream().map(
+                        CityLandUseSurfacePrintPlan.RegionTrace::roleRef).collect(java.util.stream.Collectors.toSet());
+                for(var role:relay.roleDefinitions()) if(!realizedRoles.contains(role.roleRef()))
+                    quality.getAsJsonArray("warnings").add("LANDSCAPE_ROLE_NOT_REALIZED:"+area.printAreaId()+":"+role.roleRef());
+                long planned=area.memberSpans().stream().mapToLong(span->(long)span.maxX()-span.minX()+1).sum();
+                long realized=relay.regionSpans().stream().mapToLong(span->(long)span.maxX()-span.minX()+1).sum();
+                if(realized<planned) quality.getAsJsonArray("warnings").add("LANDSCAPE_PARTIAL_SURFACE:"+
+                        area.printAreaId()+":planned="+planned+":actual="+realized);
+
                 for (var region : relay.regionTraces()) {
                     if (region.targetAreaBlocks() != region.actualAreaBlocks()) {
                         quality.getAsJsonArray("warnings").add("LANDSCAPE_LOCAL_SHARE_ADJUSTED:"

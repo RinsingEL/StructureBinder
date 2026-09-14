@@ -177,7 +177,7 @@ class CityLandUseSurfacePrintPlannerTest {
     }
 
     @Test
-    void refusesToDeleteFunctionalRolesWhenBranchedMaskCannotBePartitioned() {
+    void branchedLandscapeKeepsDefinitionsAndReturnsApproximateGrowth() {
         String groupId = "branched_woodland";
         List<LandUseAreaPlan.ScanlineSpan> members = List.of(
                 new LandUseAreaPlan.ScanlineSpan(0, 2, 2),
@@ -207,10 +207,12 @@ class CityLandUseSurfacePrintPlannerTest {
         LandUseSeedGroup landscape = landscapeGroup(groupId, new BlockBounds(3, 0, 3, 0),
                 LandUseSurfaceSettings.defaults(SurfacePolicy.CULTIVATE).forRelayRegionGrowth(), fill);
 
-        IllegalArgumentException failure = org.junit.jupiter.api.Assertions.assertThrows(
-                IllegalArgumentException.class, () -> new CityLandUseSurfacePrintPlanner().plan(plan,
-                        List.of(landscape), terrain(new BlockBounds(0, 0, 7, 7), false)));
-        assertTrue(failure.getMessage().startsWith("RELAY_GROWTH_CANDIDATE_RETRIES_EXHAUSTED:"));
+        var result = new CityLandUseSurfacePrintPlanner().plan(plan,List.of(landscape),
+                terrain(new BlockBounds(0,0,7,7),false));
+        var recipe=(CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe)result.areas().get(0).recipe();
+        assertEquals(3,recipe.roleDefinitions().size());
+        assertTrue(!recipe.regionSpans().isEmpty());
+        assertTrue(recipe.regionTraces().stream().allMatch(trace -> trace.actualAreaBlocks()<=trace.targetAreaBlocks()));
     }
 
     @Test
@@ -366,7 +368,7 @@ class CityLandUseSurfacePrintPlannerTest {
     }
 
     @Test
-    void formalLandscapeRejectsAnAreaSeedOutsideItsFinalMask() {
+    void clippedLandscapeSourceReturnsEmptyRealizationWithoutMovingDesignSeed() {
         LandUseSurfaceSettings settings = LandUseSurfaceSettings.defaults(SurfacePolicy.CULTIVATE)
                 .forRelayRegionGrowth();
         LandscapeFillProgram fill = new LandscapeFillProgram("fill:green", "GREEN", List.of(
@@ -385,12 +387,17 @@ class CityLandUseSurfacePrintPlannerTest {
                 "city_land_use_rules", "city_test", "land-use-hash", new BlockBounds(0, 0, 31, 31),
                 List.of(area), List.of(), List.of(), List.of());
 
-        IllegalArgumentException failure = assertThrows(IllegalArgumentException.class, () ->
-                new CityLandUseSurfacePrintPlanner().plan(plan, List.of(landscape),
-                        terrain(new BlockBounds(0, 0, 31, 31), false)));
-
-        assertEquals("CITY_LAND_USE_SURFACE_PRINT_LANDSCAPE_SEED_NOT_IN_AREA:green:"
-                + groupId + ":19:20", failure.getMessage());
+        var result = new CityLandUseSurfacePrintPlanner().plan(plan, List.of(landscape),
+                terrain(new BlockBounds(0, 0, 31, 31), false));
+        var print = result.areas().get(0);
+        var recipe = assertInstanceOf(CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe.class,
+                print.recipe());
+        assertEquals(new BlockPoint(19, 20), print.algorithmAnchor());
+        assertTrue(recipe.regionSpans().isEmpty());
+        assertEquals(2, recipe.roleDefinitions().size());
+        assertFalse(print.terrainReferenceCells().isEmpty());
+        var codec = new com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlanCodec();
+        assertEquals(result, codec.fromJson(codec.toJson(result)));
     }
 
     private static LandUseAreaPlan areaPlan() {

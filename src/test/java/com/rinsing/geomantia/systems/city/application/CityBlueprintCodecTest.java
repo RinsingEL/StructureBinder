@@ -11,11 +11,25 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 class CityBlueprintCodecTest {
     private final CityBlueprintCodec codec = new CityBlueprintCodec();
+
+    @Test
+    void independentLandscapeCellDemandRoundTripsWithoutLosingCoordinates() throws IOException {
+        JsonObject json=fixture("valid_city_blueprint.json");
+        var landscapes=json.getAsJsonObject("outdoorPlan").getAsJsonArray("landscapes");
+        assertFalse(landscapes.isEmpty());
+        landscapes.get(0).getAsJsonObject().add("growth",JsonParser.parseString(
+                "{\"seed\":{\"x\":-100,\"z\":32},\"targetCellCount\":80,\"allowedLandformTypes\":[\"plain\"]}"));
+        var blueprint=codec.read(json);
+        var growth=blueprint.outdoorPlan().landscapes().get(0).growth();
+        assertEquals(-100,growth.seed().x()); assertEquals(80,growth.targetCellCount());
+        assertEquals(growth,codec.read(codec.write(blueprint)).outdoorPlan().landscapes().get(0).growth());
+    }
 
     @Test
     void roundTripsWeightedFillAndConnectionPools() throws IOException {

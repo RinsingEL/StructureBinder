@@ -23,6 +23,36 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandscapeCapacityReservationPlannerTest {
     @Test
+    void explicitCellsUseTerrainScaleAndStayInsidePreviewWithoutBuildingAreaQuota() {
+        CityBlueprint source=blueprint(1);
+        var old=source.outdoorPlan().landscapes().get(0);
+        var landscape=new CityBlueprint.Landscape(old.landscapeId(),old.landscapeProfileRef(),old.purpose(),
+                old.originMode(),old.owner(),old.placementDomain(),1,1,old.preferredPatchRefs(),old.terrainPolicy(),true,
+                old.fillSelection(),new CityBlueprint.LandscapeGrowth(new BlockPoint(32,32),64,List.of("plain")));
+        var blueprint=new CityBlueprint(source.schema(),source.cityId(),source.sourceD3Ref(),source.catalogSnapshotRef(),
+                source.generationSeed(),source.designIntent(),source.styleProfile(),source.groups(),source.arrayCompositions(),
+                source.relations(),source.roadProfile(),source.surfaceDetailProfile(),new CityBlueprint.OutdoorPlan(
+                source.outdoorPlan().mode(),source.outdoorPlan().envelopeProfile(),source.outdoorPlan().foundationProfileRef(),
+                source.outdoorPlan().spatialGrounds(),List.of(landscape)));
+        var terrain=terrain(new BlockBounds(0,0,63,63));
+        var planner=new CityLandscapeCapacityReservationPlanner();
+        var result=planner.plan(blueprint,catalog(1,12),terrain,new JsonArray());
+        assertTrue(result.ok());
+        var instance=result.plan().getAsJsonArray("instances").get(0).getAsJsonObject();
+        int actual=instance.get("actualAreaBlocks").getAsInt();
+        assertTrue(actual>600 && actual<=64*4*4,instance.toString());
+        assertEquals(4,result.plan().get("cellStepBlocks").getAsInt());
+        assertEquals(64,instance.get("targetCellCount").getAsInt());
+        assertTrue(cells(instance.getAsJsonArray("reservationSpans")).stream()
+                .allMatch(point -> terrain.planningBounds().contains(point.x(),point.z())));
+        assertEquals(result.plan(),planner.plan(blueprint,catalog(1,12),terrain,new JsonArray()).plan());
+        var blocked=terrain(new BlockBounds(0,0,63,63),(x,z)->true);
+        var empty=planner.plan(blueprint,catalog(1,12),blocked,new JsonArray());
+        assertTrue(empty.ok()); assertTrue(empty.plan().getAsJsonArray("instances").isEmpty());
+        assertFalse(empty.plan().getAsJsonArray("warnings").isEmpty());
+    }
+
+    @Test
     void landscapeFirstKeepsShapeAndExcludesLaterBuildingsWithoutMovingIt() {
         var initial=new CityLandscapeCapacityReservationPlanner().plan(blueprint(3),catalog(1,12),
                 terrain(new BlockBounds(0,0,255,255)),anchors(120,120));
@@ -100,7 +130,7 @@ class CityLandscapeCapacityReservationPlannerTest {
                 blueprint(10), catalog(1, 12), terrain(new BlockBounds(0, 0, 255, 255)), anchors(120, 120));
 
         assertTrue(result.ok(), result.plan().toString());
-        assertEquals("MAXIMIZE_TERRAIN_FIT_THEN_BEST_LAYOUT",
+        assertEquals("BOUNDED_GROWTH_PARTIAL_ALLOWED",
                 result.plan().get("selectionPolicy").getAsString());
         JsonObject score = result.plan().getAsJsonObject("layoutScore");
         assertTrue(score.get("directionCoverage").getAsInt() >= 3, score.toString());
@@ -245,13 +275,14 @@ class CityLandscapeCapacityReservationPlannerTest {
     }
 
     @Test
-    void reportsSearchLimitSeparatelyFromExhaustiveUnsatisfiedResult() {
+    void zeroWorkBudgetReportsShortageWithoutFailingCity() {
         var result = new CityLandscapeCapacityReservationPlanner().plan(
                 blueprint(10), catalog(1, 12), terrain(new BlockBounds(0, 0, 255, 255)),
-                anchors(120, 120), 1);
+                anchors(120, 120), 0);
 
-        assertFalse(result.ok());
-        assertEquals("CITY_BLUEPRINT_LANDSCAPE_SEARCH_LIMIT_EXHAUSTED", result.reasonCode());
+        assertTrue(result.ok());
+        assertEquals("", result.reasonCode());
+        assertFalse(result.plan().getAsJsonArray("warnings").isEmpty());
         assertTrue(result.plan().getAsJsonArray("instances").isEmpty());
     }
 

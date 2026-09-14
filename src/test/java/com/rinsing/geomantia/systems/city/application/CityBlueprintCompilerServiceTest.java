@@ -1224,7 +1224,7 @@ class CityBlueprintCompilerServiceTest {
     }
 
     @Test
-    void hierarchyOrdersParentBeforeHigherPriorityChild() throws Exception {
+    void hierarchyDoesNotOverrideGeometricPriority() throws Exception {
         Fixture fixture = acceptedFixture("run_hierarchy", "city:hierarchy", 9, 9, "SMALL", blueprint -> {
             JsonObject child = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
             child.addProperty("algorithmProfileRef", "algorithm:grid");
@@ -1248,7 +1248,7 @@ class CityBlueprintCompilerServiceTest {
         assertTrue(result.ok(), result.compileTrace().toString());
         assertFalse(result.compileTrace().toString().contains("POINT_OUTSIDE_PATCH"),
                 "connection frontier must ignore D3 scan-padding cells outside the planning grid");
-        assertEquals("parent", result.compileTrace().getAsJsonArray("selections")
+        assertEquals("civic", result.compileTrace().getAsJsonArray("selections")
                 .get(0).getAsJsonObject().get("groupId").getAsString());
         assertFalse(result.groupExtentMap().has("connected"),
                 "v0.4 must not expose the ambiguous pre-LandUse connected alias");
@@ -1419,6 +1419,23 @@ class CityBlueprintCompilerServiceTest {
     }
 
     @Test
+    void functionalParentMayBeMemberOfItsChildsSpatialComposition() throws Exception {
+        Fixture fixture = acceptedFixture("run_functional_spatial", "city:functional_spatial", 9, 9, "SMALL",
+                blueprint -> {
+                    var first = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    var second = first.deepCopy(); second.addProperty("groupId", "square");
+                    blueprint.getAsJsonArray("groups").add(second);
+                    blueprint.getAsJsonArray("relations").add(hierarchy("civic", "square"));
+                    blueprint.add("arrayCompositions", JsonParser.parseString("""
+                            [{"compositionId":"capital","centerGroupId":"square",
+                              "memberGroupIds":["civic"],"algorithmProfileRef":"algorithm:compact"}]
+                            """));
+                });
+        var result = new CityBlueprintCompilerService().compile(temporary, fixture.runId(), fixture.cityId());
+        assertTrue(result.ok(), result.reasonCode() + ": " + result.message());
+    }
+
+    @Test
     void hierarchyCycleFailsBeforeCandidateGeneration() throws Exception {
         Fixture fixture = acceptedFixture("run_hierarchy_cycle", "city:hierarchy_cycle", 9, 9, "SMALL",
                 blueprint -> {
@@ -1431,10 +1448,12 @@ class CityBlueprintCompilerServiceTest {
                     blueprint.getAsJsonArray("relations").add(hierarchy("second", "civic"));
                 });
 
-        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
-                () -> new CityBlueprintCompilerService().compile(
-                        temporary, fixture.runId(), fixture.cityId()));
-        assertTrue(error.getMessage().startsWith("CITY_BLUEPRINT_HIERARCHY_CYCLE"));
+        var result = new CityBlueprintCompilerService().compile(temporary, fixture.runId(), fixture.cityId());
+        assertFalse(result.ok());
+        assertEquals("CITY_BLUEPRINT_DEPENDENCY_CYCLE", result.reasonCode());
+        assertTrue(result.message().contains("civic -> second"));
+        assertTrue(result.message().contains("second -> civic"));
+        assertFalse(CityBlueprintFailureRouting.isProgramFailure(result.reasonCode(), result.compileTrace()));
     }
 
     @Test

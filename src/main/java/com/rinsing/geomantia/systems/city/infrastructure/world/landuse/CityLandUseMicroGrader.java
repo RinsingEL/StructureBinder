@@ -40,7 +40,7 @@ final class CityLandUseMicroGrader {
         }
         Map<Cell, String> areaByCell = new HashMap<>();
         for (CityLandUseChunkCompiler.GradingMaskCell cell : fragment.gradingMaskCells()) {
-            if (!cell.foundation()) {
+            if (!cell.foundation() && !cell.landscape()) {
                 areaByCell.putIfAbsent(new Cell(cell.x(), cell.z()), cell.areaId());
             }
         }

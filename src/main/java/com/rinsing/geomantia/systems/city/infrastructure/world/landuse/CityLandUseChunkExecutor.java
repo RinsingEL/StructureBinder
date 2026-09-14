@@ -68,11 +68,36 @@ public final class CityLandUseChunkExecutor {
         Map<ColumnKey, ColumnSample> designTerrain = new HashMap<>();
         CityLandUseMicroGrader.TerrainView designView = (x, z) -> designTerrain.computeIfAbsent(
                 new ColumnKey(x, z), ignored -> Objects.requireNonNull(world.sampleDesignColumn(x, z)));
+        Map<ColumnKey, ColumnSample> localSurface = new HashMap<>();
+        CityLandUseMicroGrader.TerrainView availableTerrain = (x,z) -> {
+            ColumnKey key = new ColumnKey(x,z);
+            if (!localSurface.containsKey(key)) {
+                ColumnSample sample=world.sampleAvailableColumn(x,z);
+                localSurface.put(key,sample);
+                if(sample!=null) terrain.putIfAbsent(key,sample);
+            }
+            return localSurface.get(key);
+        };
+        Set<ColumnKey> rejectedLandscapeColumns = new HashSet<>();
+        Map<ColumnKey, Integer> landscapeTargets = new HashMap<>();
+        for (var mask : fragment.gradingMaskCells()) {
+            if (!mask.landscape() || Math.floorDiv(mask.x(),16)!=fragment.chunkX()
+                    || Math.floorDiv(mask.z(),16)!=fragment.chunkZ()) continue;
+            ColumnKey key = new ColumnKey(mask.x(),mask.z());
+            Integer target = CityLandscapeSurfaceGate.target(mask,availableTerrain);
+            if (target == null) rejectedLandscapeColumns.add(key);
+            else landscapeTargets.put(key,target);
+        }
         Map<ColumnKey, CityLandUseMicroGrader.FillDecision> fillByColumn = new HashMap<>();
         for (CityLandUseMicroGrader.FillDecision decision
                 : CityLandUseMicroGrader.plan(fragment, designView)) {
             fillByColumn.put(new ColumnKey(decision.x(), decision.z()), decision);
         }
+        landscapeTargets.forEach((key,target) -> {
+            ColumnSample sample=availableTerrain.sample(key.x(),key.z());
+            if(target>sample.surfaceY()) fillByColumn.put(key,new CityLandUseMicroGrader.FillDecision(
+                    "landscape",key.x(),key.z(),sample.surfaceY(),target));
+        });
         CityLandUseMicroGrader.FoundationPlan foundationPlan =
                 CityLandUseMicroGrader.planFoundationPlatform(fragment, designView);
         CityLandUseMicroGrader.AccessOutcome unresolvedAccess = foundationPlan.accessOutcomes().stream()
@@ -158,6 +183,10 @@ public final class CityLandUseChunkExecutor {
         Set<ColumnKey> openWaterColumns = new HashSet<>();
         for (CityLandUseChunkCompiler.SurfaceOperation operation : surfaceOperations) {
             ColumnKey key = new ColumnKey(operation.x(), operation.z());
+            if (rejectedLandscapeColumns.contains(key)) {
+                if(countedNaturalSkips.add(key)) naturalSurfaceSkipped++;
+                continue;
+            }
             ColumnSample column = terrainView.sample(operation.x(), operation.z());
             CityLandUseMicroGrader.FoundationDecision foundation = foundationByColumn.get(key);
             if (foundation != null && foundation.mode() == CityLandUseMicroGrader.FoundationMode.PRESERVE) {
@@ -305,6 +334,7 @@ public final class CityLandUseChunkExecutor {
 
         for (CityLandUseChunkCompiler.BoundaryOperation operation : fragment.boundaryOperations()) {
             ColumnKey key = new ColumnKey(operation.x(), operation.z());
+            if (rejectedLandscapeColumns.contains(key)) { occupiedBoundarySkipped++; continue; }
             if (preservedFoundationColumns.contains(key) || circulationColumns.contains(key)) continue;
             ColumnSample column = terrainView.sample(operation.x(), operation.z());
             int surfaceY = plannedSurfaceY.getOrDefault(key, column.surfaceY());
@@ -714,6 +744,11 @@ public final class CityLandUseChunkExecutor {
 
     public interface ExecutionWorld {
         ColumnSample sampleColumn(int worldX, int worldZ);
+
+        /** Local terrain only: null means unavailable, never request another chunk's generation. */
+        default ColumnSample sampleAvailableColumn(int worldX,int worldZ) {
+            return sampleColumn(worldX,worldZ);
+        }
 
         /** Immutable terrain intent; the runtime implementation must not read placed blocks. */
         default ColumnSample sampleDesignColumn(int worldX, int worldZ) {
@@ -1148,6 +1183,14 @@ public final class CityLandUseChunkExecutor {
             return com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityWorldgenStructurePlacer
                     .sampleDesignTerrain(source.getGenerator(), server.registryAccess(), source.randomState(),
                             server, worldX, worldZ);
+        }
+
+        @Override
+        public ColumnSample sampleAvailableColumn(int worldX,int worldZ) {
+            var chunk = level.getChunk(worldX >> 4,worldZ >> 4,
+                    net.minecraft.world.level.chunk.ChunkStatus.EMPTY,false);
+            if (chunk == null) return null;
+            return sampleColumn(worldX,worldZ);
         }
 
         @Override

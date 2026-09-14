@@ -334,7 +334,10 @@ final class ProviderPlanningToolCatalog {
                 "placementDomain", enumeration("URBAN_RESIDUAL", "FOUNDATION_EDGE", "BETWEEN_GROUPS", "ALONG_WATER"),
                 "instanceCount", integer(), "parcelCount", integer(), "preferredPatchRefs", array(string()),
                 "terrainPolicy", enumeration("CONFORM", "BALANCED", "ASSERTIVE"), "required", bool(),
-                "fillSelection", fillSelectionSchema());
+                "fillSelection", fillSelectionSchema(),
+                "growth", object(properties("seed",object(properties("x",integer(),"z",integer()),"x","z"),
+                        "targetCellCount",integer(),"allowedLandformTypes",array(string())),
+                        "seed","targetCellCount","allowedLandformTypes"));
         return object(values, "landscapeId", "landscapeProfileRef", "purpose", "originMode",
                 "instanceCount", "parcelCount", "preferredPatchRefs", "terrainPolicy", "required",
                 "fillSelection");

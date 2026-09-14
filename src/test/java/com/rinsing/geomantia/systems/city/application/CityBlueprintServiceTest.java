@@ -24,6 +24,46 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CityBlueprintServiceTest {
+    @Test void geometricCycleReturnsActionableValidationBeforeCompilerAndCanBeCorrected() throws Exception {
+        var f = fixture("run_dependency_cycle", "city:dependency_cycle");
+        var calls = new java.util.concurrent.atomic.AtomicInteger();
+        var service = new CityBlueprintService((root, run, city, proposal, draftOnly) -> {
+            calls.incrementAndGet();
+            return CityBlueprintCompilerService.CompilationResult.compiled(new JsonObject(), new JsonObject(),
+                    new JsonObject(), new JsonObject(), new JsonObject(), new JsonObject());
+        });
+        var prepared = service.prepare(temporary,f.runId(),f.cityId(),f.terraSenseSource(),f.templateSource(),f.referenceCatalog());
+        var b = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+        var groups = b.getAsJsonArray("groups"); var first = groups.get(0).getAsJsonObject();
+        String center = first.get("groupId").getAsString();
+        first.addProperty("targetAreaShare", 1.0 / 3);
+        for (String id : List.of("other", "third")) {
+            var next = first.deepCopy(); next.addProperty("groupId",id); next.addProperty("priority","STANDARD");
+            groups.add(next); addStructureGround(b,id);
+        }
+        var comp = new JsonObject(); comp.addProperty("compositionId","capital");
+        comp.addProperty("centerGroupId",center); comp.add("memberGroupIds",JsonParser.parseString("[\"other\"]"));
+        comp.add("algorithmProfileRef",first.get("algorithmProfileRef"));
+        var comps = new JsonArray(); comps.add(comp); b.add("arrayCompositions",comps);
+        first.add("placementRelation",JsonParser.parseString("""
+                {"kind":"BETWEEN_GROUPS","patchRefs":[],"groupRefs":["other","third"]}
+                """));
+        var rejected = service.submit(temporary,f.runId(),f.cityId(),prepared.get("contextId").getAsString(),b);
+        assertEquals(0,calls.get());
+        var issues = rejected.getAsJsonObject("validationReport").getAsJsonArray("issues");
+        var cycle = issues.asList().stream().map(JsonElement::getAsJsonObject)
+                .filter(issue -> "CITY_BLUEPRINT_DEPENDENCY_CYCLE".equals(issue.get("reasonCode").getAsString()))
+                .findFirst().orElseThrow();
+        assertTrue(cycle.get("message").getAsString().contains("BETWEEN_GROUPS"));
+        assertTrue(cycle.get("message").getAsString().contains("capital"));
+        assertTrue(cycle.get("message").getAsString().contains("$.groups[0].placementRelation.groupRefs"));
+        assertFalse(rejected.has("failureOwner") && "program".equals(rejected.get("failureOwner").getAsString()));
+        first.remove("placementRelation");
+        var corrected = service.submit(temporary,f.runId(),f.cityId(),prepared.get("contextId").getAsString(),b);
+        assertTrue(corrected.get("ok").getAsBoolean(),corrected.toString());
+        assertEquals(1,calls.get());
+    }
+
     @Test void intentAndBatchMaterialsPersistWithoutAcceptingGeometry() throws Exception {
         Fixture f = fixture("run_intent", "city:intent"); var service = validationService();
         Path d3File = f.runDir().resolve("city_d3_" + safe(f.cityId())).resolve("city_landform_review_package.json");
