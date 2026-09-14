@@ -13,6 +13,17 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PlayerProviderAgentRunnerTest {
+    @Test void blockedStatusShowsTheCurrentCityStepAndActualError() {
+        JsonObject queue = com.google.gson.JsonParser.parseString("""
+                {"currentCitySeedId":"b","items":[
+                  {"citySeedId":"a","reasonCode":"unrelated"},
+                  {"citySeedId":"b","failedStep":"city_execute_d5","reasonCode":"CITY_CHUNKS_ALREADY_GENERATED",
+                   "message":"172 chunks reached FEATURES"}]}
+                """).getAsJsonObject();
+        assertEquals("PLANNING_HOST_BLOCKED: city_execute_d5 · CITY_CHUNKS_ALREADY_GENERATED · 172 chunks reached FEATURES",
+                PlayerProviderAgentRunner.programBlockMessage(queue));
+        assertEquals("PLANNING_HOST_BLOCKED: POST_D4_PROGRAM_FAILURE", PlayerProviderAgentRunner.programBlockMessage(new JsonObject()));
+    }
     @Test
     void mechanicalStepsNeedNoModelButSiteReviewRemainsADecision() {
         for (String action : List.of("city_plan_d3", "patch_explorer_show_candidates", "city_review_d3_site", "city_submit_d4_blueprint")) {

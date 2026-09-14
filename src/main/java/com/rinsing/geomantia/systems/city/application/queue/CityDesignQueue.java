@@ -208,6 +208,11 @@ public final class CityDesignQueue {
     private static void applyPostD4Status(JsonObject item, JsonObject post) {
         String status = stringValue(post, "status", "");
         String reasonCode = stringValue(post, "reasonCode", "");
+        for (String key : new String[]{"failedStep", "failureReasonCode", "queueReasonCode", "message", "error", "failureSummary"}) {
+            item.remove(key);
+            if ((NEEDS_AGENT.equals(status) || "blocked_by_program".equals(status)) && post.has(key))
+                item.add(key, post.get(key).deepCopy());
+        }
         switch (status) {
             case "queued", "running" -> setItemStatus(item, POST_D4_RUNNING,
                     reasonCode.isBlank() ? "POST_D4_RUNNING" : reasonCode);

@@ -24,18 +24,21 @@ class ApprovedEntranceCatalogTest {
         source.addProperty("entrancePolicy", "guess");
         assertThrows(IllegalArgumentException.class, () -> ManagedCityPlanningSources.entranceTemplates(source, catalog(), null));
     }
-    @Test void installedDevelopmentBundleResolvesWithoutRequiringFabricatedReview(@org.junit.jupiter.api.io.TempDir java.nio.file.Path temporaryWorld) throws Exception {
+    @Test void installedDevelopmentBundleResolvesWithItsAuthoredEntrances(@org.junit.jupiter.api.io.TempDir java.nio.file.Path temporaryWorld) throws Exception {
         var directory = java.nio.file.Path.of("run/config/structureTemplate/terrasense/pcl_validation_02").toAbsolutePath();
         org.junit.jupiter.api.Assumptions.assumeTrue(java.nio.file.Files.isRegularFile(directory.resolve("template_catalog.json")));
         String previous = System.getProperty("geomantia.providerPlanningSourceDir");
         System.setProperty("geomantia.providerPlanningSourceDir", directory.toString());
         try {
             var result = new ManagedCityPlanningSources(java.nio.file.Path.of("run")).resolve();
-            assertEquals("legacy_catalog_unreviewed", result.authoringBrief().get("entranceAuthority").getAsString());
-            assertEquals(65, result.templateCatalogSource().getAsJsonObject("catalog").getAsJsonArray("templates").size());
+            // This is an optional integration check against the installed development pack, not a fixed 65-template fixture.
+            assertTrue(java.util.Set.of("legacy_catalog_unreviewed", "author_reviewed_sidecar")
+                    .contains(result.authoringBrief().get("entranceAuthority").getAsString()));
+            int templateCount = result.templateCatalogSource().getAsJsonObject("catalog").getAsJsonArray("templates").size();
+            assertTrue(templateCount > 0);
             var install = new com.rinsing.geomantia.systems.city.infrastructure.world.CityTemplateContentPackInstaller().install(directory, temporaryWorld);
             assertTrue(install.configured());
-            assertEquals(65, install.templateCount());
+            assertEquals(templateCount, install.templateCount());
         } finally {
             if (previous == null) System.clearProperty("geomantia.providerPlanningSourceDir");
             else System.setProperty("geomantia.providerPlanningSourceDir", previous);

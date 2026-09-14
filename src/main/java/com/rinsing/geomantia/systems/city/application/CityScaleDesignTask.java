@@ -21,7 +21,7 @@ final class CityScaleDesignTask {
         task.addProperty("scale", scale.contractName());
         task.addProperty("suggestedInitialLeafArraysMin", range[0]);
         task.addProperty("suggestedInitialLeafArraysMax", range[1]);
-        task.addProperty("counting", "Count actual building groups once, not parent containers; several arrays may share one functional purpose. Automatic building expansion is disabled. Counts are advice, never an area or building-count gate.");
+        task.addProperty("counting", "Count actual building groups once, not parent containers; several arrays may share one functional purpose. Automatic building expansion is disabled. The min/max describe an INITIAL suggestion, not a final upper limit or completion criterion. Exceed the suggested range when additional designed arrays serve the city; never use reaching it to reject refinement. Counts are advice, never an area or building-count gate.");
         task.addProperty("designTask", switch (scale) {
             case HAMLET -> "Design one small complete cluster and optional supporting array; nesting is optional.";
             case VILLAGE -> "Design a few related terrain-aware clusters with useful gaps; nesting is optional.";

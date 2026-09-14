@@ -40,7 +40,7 @@ public final class ProviderConnectionTester {
                     HttpResponse.BodyHandlers.ofString());
             if (modelsResponse.statusCode() / 100 != 2) {
                 return new TestResult("error", false, false,
-                        "PROVIDER_HTTP_" + modelsResponse.statusCode());
+                        httpFailure("PROVIDER_HTTP_", modelsResponse, credentials));
             }
             if (!containsModel(modelsResponse.body(), value.model())) {
                 return new TestResult("model_missing", true, false, "PROVIDER_MODEL_NOT_AVAILABLE");
@@ -57,14 +57,38 @@ public final class ProviderConnectionTester {
             if (visionResponse.statusCode() / 100 == 2) {
                 return new TestResult("connected_multimodal", true, true, "PROVIDER_MULTIMODAL_READY");
             }
-            return new TestResult("connected_text_only", true, false,
-                    "PROVIDER_VISION_HTTP_" + visionResponse.statusCode());
+            // Reaching /models does not establish text-only capability. A rejected image request
+            // can mean authentication, quota, protocol or parameter failure instead.
+            return new TestResult("error", true, false,
+                    httpFailure("PROVIDER_VISION_HTTP_", visionResponse, credentials));
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
             return new TestResult("error", false, false, "PROVIDER_TEST_INTERRUPTED");
         } catch (IOException | RuntimeException exception) {
-            return new TestResult("error", false, false, "PROVIDER_CONNECTION_FAILED");
+            return new TestResult("error", false, false, "PROVIDER_CONNECTION_FAILED: " + exception.getClass().getSimpleName());
         }
+    }
+
+    private static String httpFailure(String prefix, HttpResponse<String> response, Credentials credentials) {
+        String detail = response.body() == null ? "" : response.body();
+        try {
+            JsonObject root = JsonParser.parseString(detail).getAsJsonObject();
+            JsonElement error = root.has("error") ? root.get("error") : root;
+            if (error.isJsonObject()) {
+                JsonObject fields = error.getAsJsonObject();
+                StringBuilder summary = new StringBuilder();
+                for (String key : new String[]{"code", "type", "message", "detail"}) {
+                    if (fields.has(key) && fields.get(key).isJsonPrimitive()) {
+                        if (!summary.isEmpty()) summary.append("; ");
+                        summary.append(key).append("=").append(fields.get(key).getAsString());
+                    }
+                }
+                if (!summary.isEmpty()) detail = summary.toString();
+            } else if (error.isJsonPrimitive()) detail = error.getAsString();
+        } catch (RuntimeException ignored) { /* Plain-text and gateway errors are useful too. */ }
+        detail = detail.replace(credentials.apiKey(), "[redacted]").replaceAll("[\\p{Cntrl}§]+", " ").trim();
+        if (detail.length() > 1000) detail = detail.substring(0, 1000) + "…";
+        return prefix + response.statusCode() + (detail.isBlank() ? "" : ": " + detail);
     }
 
     private static boolean containsModel(String body, String model) {

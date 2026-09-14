@@ -15,6 +15,7 @@ final class PlanningTurnControl implements DeepSeekToolLoopClient.ToolExecutor {
     private boolean formatCorrection;
     private boolean revisionProgress;
     private String lastRevision = "";
+    private JsonElement lastReviewState;
     boolean permitsDesignContinuation() { return error.isBlank() && (formatCorrection || revisionProgress); }
 
 
@@ -22,6 +23,7 @@ final class PlanningTurnControl implements DeepSeekToolLoopClient.ToolExecutor {
     PlanningTurnControl(DeepSeekToolLoopClient.ToolExecutor delegate, JsonObject initialState) {
         this.delegate = delegate;
         this.lastRevision = revisionIdentity(initialState);
+        this.lastReviewState = initialState.get("designReviewWorkflow");
     }
     private static String revisionIdentity(JsonObject payload) {
         if (!payload.has("revisionEvidence") || !payload.get("revisionEvidence").isJsonObject()) return "";
@@ -72,6 +74,13 @@ final class PlanningTurnControl implements DeepSeekToolLoopClient.ToolExecutor {
         } else {
             repeats = 0; lastFailure = "";
             if (payload.has("designInProgress") && payload.get("designInProgress").getAsBoolean()) {
+                if (payload.has("designReviewWorkflow")) {
+                    JsonObject review = payload.getAsJsonObject("designReviewWorkflow");
+                    boolean hasAssessment = review.has("groupAssessments")
+                            && review.getAsJsonObject("groupAssessments").size() > 0;
+                    if (hasAssessment && !review.equals(lastReviewState)) revisionProgress = true;
+                    lastReviewState = review.deepCopy();
+                }
                 // Intent/material work needs no new rendered image and can continue in this same turn.
                 if ((payload.has("designSession") || payload.has("designReviewWorkflow"))
                         && !payload.has("revisionEvidence")) return output;

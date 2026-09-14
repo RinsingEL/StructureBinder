@@ -40,10 +40,10 @@ final class CityDesignReviewWorkflow {
         result.addProperty("readyForFinal", overall);
         result.addProperty("instruction", "Design one functional district at a time, including its nested child arrays. "
                 + "Use designReview={baseDraftHash,groupIds:[...]} (up to 3) to receive actual local images; "
-                + "then repeat with assessment explaining spatial intent, retained scale, composition and gaps. "
+                + "then repeat with assessment comparing original intent to visible shared spaces, frontage, spacing, hierarchy and retained scale. Design quality comes first: all buildings surviving or all districts being non-empty is not sufficient. After deletions or count/nesting reductions, check lost design substance and repair it if needed. "
                 + "Revise with DRAFT if needed, or explain why it should remain. After local reviews use "
                 + "designReview={baseDraftHash,overview:true}, then repeat with assessment of district relationships, "
-                + "roads, open space and any purposeful outward additions. Review changed areas again. "
+                + "roads, open space and any purposeful outward additions. Be bold about adjusting valid but weak layouts. Suggested initial array counts are not caps or stopping criteria; unexplained gaps are not automatically deliberate open space. Review changed areas again. "
                 + "FINAL must match the reviewed draft. Reviews do not consume rejection budgets; no forced edits.");
         return result;
     }

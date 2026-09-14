@@ -15,6 +15,47 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityPostD4AutoCompileQueueTest {
+    @Test void publishesConcreteProgramFailureToStatusListenerAndRestart() throws Exception {
+        JsonObject failure = failedWorkflowResponse();
+        JsonObject step = failure.getAsJsonObject("workflowReport").getAsJsonArray("steps").get(0).getAsJsonObject();
+        step.addProperty("name", "city_execute_d5");
+        step.addProperty("reasonCode", "CITY_CHUNKS_ALREADY_GENERATED");
+        step.addProperty("message", "172 of 247 chunks reached FEATURES; activation refused.");
+        step.addProperty("nextAction", "city_post_d4_auto_compile_retry");
+        AtomicReference<JsonObject> notified = new AtomicReference<>();
+        try (var queue = new CityPostD4AutoCompileQueue(temporaryDirectory, (r, c) -> failure, notified::set)) {
+            queue.enqueue("run_detail", "city_detail");
+            var state = awaitStatus(queue, "run_detail", "city_detail", "blocked_by_program");
+            assertEquals("CITY_CHUNKS_ALREADY_GENERATED", state.get("reasonCode").getAsString());
+            assertEquals("POST_D4_WORKFLOW_UNEXPECTED_STATUS", state.get("queueReasonCode").getAsString());
+            assertEquals("city_execute_d5", state.get("failedStep").getAsString());
+            assertEquals(step.get("message"), state.get("message"));
+            assertEquals("city_post_d4_auto_compile_retry", state.get("nextAction").getAsString());
+        }
+        try (var queue = new CityPostD4AutoCompileQueue(temporaryDirectory,
+                (r, c) -> { throw new AssertionError("must not retry"); }, notified::set)) {
+            assertEquals("CITY_CHUNKS_ALREADY_GENERATED", notified.get().get("reasonCode").getAsString());
+            assertEquals(step.get("message"), queue.status("run_detail", "city_detail").get("message"));
+        }
+    }
+
+    @Test void legacyPersistedBlockGetsDetailsWithoutChangingItsRecoveryAction() throws Exception {
+        Path file = temporaryDirectory.resolve("run_legacy/automation/post_d4/city_legacy.json");
+        Files.createDirectories(file.getParent());
+        JsonObject state = new JsonObject();
+        state.addProperty("runId", "run_legacy"); state.addProperty("citySeedId", "city_legacy");
+        state.addProperty("status", "blocked_by_program"); state.addProperty("reasonCode", "POST_D4_WORKFLOW_UNEXPECTED_STATUS");
+        state.addProperty("nextAction", "city_post_d4_auto_compile_retry");
+        JsonObject response = response("failed", false);
+        response.addProperty("reasonCode", "STORAGE_UNAVAILABLE"); response.addProperty("error", "Disk unavailable");
+        state.add("workflowResponse", response); Files.writeString(file, state.toString());
+        try (var queue = new CityPostD4AutoCompileQueue(temporaryDirectory, (r, c) -> { throw new AssertionError(); })) {
+            var restored = queue.status("run_legacy", "city_legacy");
+            assertEquals("STORAGE_UNAVAILABLE", restored.get("reasonCode").getAsString());
+            assertEquals("Disk unavailable", restored.get("error").getAsString());
+            assertEquals("city_post_d4_auto_compile_retry", restored.get("nextAction").getAsString());
+        }
+    }
     @Test
     void refreshedContextSupersedesOldBlockAcrossRestartWithoutRunningCompiler() throws Exception {
         Path path = temporaryDirectory.resolve("run_refresh/automation/post_d4/city_refresh.json");

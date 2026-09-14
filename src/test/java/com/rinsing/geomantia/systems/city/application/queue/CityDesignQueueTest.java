@@ -14,6 +14,21 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityDesignQueueTest {
+    @Test void failureDetailsReachCurrentCityAndAreClearedOnRetry() throws Exception {
+        CityDesignQueue queue = queue();
+        writeRegistry("run_details", seed("city_1", "realm_a", "capital", 4000, 0));
+        queue.refresh("run_details", "global_radial");
+        JsonObject post = postState("run_details", "city_1", "blocked_by_program");
+        post.addProperty("failedStep", "city_execute_d5");
+        post.addProperty("reasonCode", "CITY_CHUNKS_ALREADY_GENERATED");
+        post.addProperty("message", "172 chunks reached FEATURES");
+        queue.onPostD4State(post);
+        var current = queue.status("run_details").getAsJsonObject("currentCity");
+        assertEquals("city_execute_d5", current.get("failedStep").getAsString());
+        assertEquals(post.get("message"), current.get("message"));
+        queue.onPostD4State(postState("run_details", "city_1", "running"));
+        assertFalse(queue.status("run_details").getAsJsonObject("currentCity").has("message"));
+    }
     @Test
     void programBlockSurvivesRefreshAndCannotAcceptAutomaticRedesign() throws Exception {
         CityDesignQueue queue = queue();

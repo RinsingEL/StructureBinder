@@ -5,6 +5,18 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PlanningTurnControlTest {
+    @Test void completedReviewAllowsResumeButRepeatedEvidenceIsNotNewProgress() throws Exception {
+        JsonObject initial = JsonParser.parseString("{designReviewWorkflow:{groupAssessments:{}}}").getAsJsonObject();
+        JsonObject completed = JsonParser.parseString("{ok:true,designInProgress:true,designReviewWorkflow:{groupAssessments:{court:'retain'}}}").getAsJsonObject();
+        var changed = new PlanningTurnControl((tool, input) -> completed, initial);
+        changed.execute("city_submit_d4_blueprint", new JsonObject());
+        assertTrue(changed.permitsDesignContinuation());
+        assertFalse(changed.finished());
+        var repeated = new PlanningTurnControl((tool, input) -> completed, completed);
+        repeated.execute("city_submit_d4_blueprint", new JsonObject());
+        assertFalse(repeated.permitsDesignContinuation());
+        assertFalse(repeated.finished());
+    }
     @Test void imageRequestsAssessmentsAndPendingReviewDoNotCommitOrStopTheTurn() throws Exception {
         var control = new PlanningTurnControl((tool, input) -> JsonParser.parseString(
                 "{ok:true,designInProgress:true,designReviewWorkflow:{readyForFinal:false}}"));

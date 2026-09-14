@@ -108,6 +108,7 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
             state = state(key, "not_queued", "D4_AUTO_COMPILE_JOB_NOT_FOUND", 0);
         }
         attachPersistedFailureSummary(key, state);
+        exposeWorkflowFailure(state);
         state.addProperty("active", active.containsKey(key));
         state.addProperty("statePath", debugRoot.relativize(path(key)).toString().replace('\\', '/'));
         return state;
@@ -216,6 +217,39 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
         return "city_post_d4_auto_compile_retry";
     }
 
+    /** Keep queue routing separate from the actual failed step so callers need not dig through reports. */
+    private static void exposeWorkflowFailure(JsonObject state) {
+        if (!java.util.Set.of("blocked_by_program", "needs_agent").contains(stringValue(state, "status", ""))) return;
+        JsonObject response = object(state, "workflowResponse");
+        if (response == null) return;
+        JsonObject source = response;
+        JsonObject report = object(response, "workflowReport");
+        if (report != null && report.has("steps") && report.get("steps").isJsonArray()) {
+            var steps = report.getAsJsonArray("steps");
+            for (int i = steps.size() - 1; i >= 0; i--) {
+                if (!steps.get(i).isJsonObject()) continue;
+                JsonObject step = steps.get(i).getAsJsonObject();
+                if (!booleanValue(step, "ok", true) || java.util.Set.of("failed", "blocked_by_program")
+                        .contains(stringValue(step, "status", ""))) {
+                    source = step;
+                    state.addProperty("failedStep", stringValue(step, "name", ""));
+                    break;
+                }
+            }
+        }
+        String reason = stringValue(source, "reasonCode", "");
+        if (!reason.isBlank()) {
+            state.addProperty("failureReasonCode", reason);
+            if ("blocked_by_program".equals(stringValue(state, "status", ""))) {
+                if (!state.has("queueReasonCode")) state.addProperty("queueReasonCode", stringValue(state, "reasonCode", ""));
+                state.addProperty("reasonCode", reason);
+            }
+        }
+        for (String key : new String[]{"message", "error", "failureSummary"}) {
+            if (source.has(key)) state.add(key, source.get(key).deepCopy());
+        }
+    }
+
     private void recoverIncompleteJobs() {
         if (!Files.isDirectory(debugRoot)) return;
         try (var runs = Files.list(debugRoot)) {
@@ -248,6 +282,7 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
                                         break;
                                     }
                                 }
+                                exposeWorkflowFailure(state);
                                 stateListener.onState(state.deepCopy());
                                 return;
                             }
@@ -280,6 +315,7 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
     }
 
     private void write(JobKey key, JsonObject state) throws IOException {
+        exposeWorkflowFailure(state);
         Path target = path(key);
         Files.createDirectories(target.getParent());
         Path temporary = Files.createTempFile(target.getParent(), "." + target.getFileName(), ".tmp");

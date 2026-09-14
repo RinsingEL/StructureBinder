@@ -136,7 +136,7 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
             boolean programBlocked = run.state().has("cityDesignQueue") && "blocked_by_program".equals(
                     run.state().getAsJsonObject("cityDesignQueue").get("status").getAsString());
             String state = programBlocked ? "error" : run.stage() == ProviderPlanningDiscovery.Stage.COMPLETE ? "completed" : "waiting";
-            updateIfChanged(new AutomationStatus(state, programBlocked ? "PLANNING_HOST_BLOCKED: POST_D4_PROGRAM_FAILURE" : "", run.runId(), run.citySeedId(),
+            updateIfChanged(new AutomationStatus(state, programBlocked ? programBlockMessage(run.state().getAsJsonObject("cityDesignQueue")) : "", run.runId(), run.citySeedId(),
                     run.nextAction(), Instant.now().toString()));
             return;
         }
@@ -231,6 +231,23 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
         } finally {
             turnRunning.set(false);
         }
+    }
+
+    static String programBlockMessage(JsonObject queue) {
+        JsonObject current = queue.has("currentCity") ? queue.getAsJsonObject("currentCity") : queue;
+        if (queue.has("items") && queue.has("currentCitySeedId")) {
+            for (var value : queue.getAsJsonArray("items")) {
+                JsonObject item = value.getAsJsonObject();
+                if (queue.get("currentCitySeedId").equals(item.get("citySeedId"))) { current = item; break; }
+            }
+        }
+        String reason = current.has("failureReasonCode") ? current.get("failureReasonCode").getAsString()
+                : current.has("reasonCode") ? current.get("reasonCode").getAsString() : "POST_D4_PROGRAM_FAILURE";
+        String step = current.has("failedStep") ? current.get("failedStep").getAsString() : "";
+        String detail = current.has("message") ? current.get("message").getAsString()
+                : current.has("error") ? current.get("error").getAsString() : "";
+        return "PLANNING_HOST_BLOCKED: " + (step.isBlank() ? "" : step + " · ") + reason
+                + (detail.isBlank() ? "" : " · " + detail);
     }
 
     void recordFailedTurn(ProviderPlanningDiscovery.PlanningStep run, String errorCode) {

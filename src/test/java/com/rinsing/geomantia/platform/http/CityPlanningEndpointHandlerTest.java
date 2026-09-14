@@ -112,7 +112,7 @@ class CityPlanningEndpointHandlerTest {
         assertEquals(0, prepared.get("failureCount").getAsInt());
         assertEquals(5, prepared.get("maximumFailureCount").getAsInt());
 
-        JsonObject submitted = CityPlanningEndpointHandler.handleSubmitD4Blueprint(debugRoot, runId, citySeedId,
+        JsonObject submitted = submitReviewedBlueprint(debugRoot, runId, citySeedId,
                 prepared.get("contextId").getAsString(), blueprintForContext(
                         prepared.getAsJsonObject("cityBlueprintContext")));
         assertTrue(submitted.get("ok").getAsBoolean(), submitted.toString());
@@ -2130,6 +2130,34 @@ class CityPlanningEndpointHandlerTest {
         writeLockedD6Artifacts(debugRoot, runId, citySeedId);
     }
 
+    private static JsonObject submitReviewedBlueprint(Path root, String run, String city, String context,
+                                                       JsonObject blueprint) throws Exception {
+        JsonObject request = new JsonObject(); request.add("cityBlueprint", blueprint);
+        request.addProperty("submissionMode", "DRAFT");
+        JsonObject draft = CityPlanningEndpointHandler.handleSubmitD4Design(root, run, city, context, request);
+        assertTrue(draft.get("ok").getAsBoolean(), draft.toString());
+        assertTrue(draft.get("designInProgress").getAsBoolean());
+        JsonObject evidence = draft.getAsJsonObject("revisionEvidence");
+        List<JsonObject> reviews = new java.util.ArrayList<>();
+        for (var item : evidence.getAsJsonObject("previousBlueprint").getAsJsonArray("groups")) {
+            JsonObject review = new JsonObject(); review.add("baseDraftHash", evidence.get("baseDraftHash"));
+            JsonArray ids = new JsonArray(); ids.add(item.getAsJsonObject().get("groupId")); review.add("groupIds", ids);
+            reviews.add(review);
+        }
+        JsonObject overview = new JsonObject(); overview.add("baseDraftHash", evidence.get("baseDraftHash"));
+        overview.addProperty("overview", true); reviews.add(overview);
+        for (JsonObject review : reviews) {
+            JsonObject input = new JsonObject(); input.add("designReview", review);
+            var view = CityPlanningEndpointHandler.handleSubmitD4Design(root, run, city, context, input);
+            assertTrue(view.has("requestedPreviews"), view.toString());
+            assertTrue(view.get("designInProgress").getAsBoolean());
+            review.addProperty("assessment", "Fixture composition reviewed; preserve the current arrangement.");
+            var assessed = CityPlanningEndpointHandler.handleSubmitD4Design(root, run, city, context, input);
+            assertTrue(assessed.get("designInProgress").getAsBoolean());
+        }
+        return CityPlanningEndpointHandler.handleSubmitD4Blueprint(root, run, city, context, blueprint);
+    }
+
     private static void prepareAcceptedBlueprintD6(Path debugRoot,
                                                     String runId,
                                                     String citySeedId,
@@ -2148,7 +2176,7 @@ class CityPlanningEndpointHandlerTest {
             outdoorPlan.add("spatialGrounds", new JsonArray());
             outdoorPlan.add("landscapes", new JsonArray());
         }
-        JsonObject submitted = CityPlanningEndpointHandler.handleSubmitD4Blueprint(debugRoot, runId, citySeedId,
+        JsonObject submitted = submitReviewedBlueprint(debugRoot, runId, citySeedId,
                 prepared.get("contextId").getAsString(), blueprint);
         if (!submitted.get("ok").getAsBoolean()) {
             throw new IllegalStateException("Blueprint fixture was rejected: " + submitted);

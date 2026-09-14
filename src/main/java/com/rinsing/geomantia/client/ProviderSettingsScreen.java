@@ -305,20 +305,20 @@ public final class ProviderSettingsScreen extends Screen {
         drawLabel(graphics, "gui.geomantia.provider_settings.api_key", labelX, y);
         y += 32;
         drawLabel(graphics, "gui.geomantia.provider_settings.timeout", labelX, y);
-        drawTestStatus(graphics);
         graphics.drawString(font, automationComponent(), labelX, automationY, automationColor(), false);
         if (!editable && !"loading".equals(connectionState)) {
             graphics.drawString(font, Component.translatable("gui.geomantia.provider_settings.admin_only"),
                     labelX, automationY + 12, WARN, false);
         }
         super.render(graphics, mouseX, mouseY, partialTick);
+        drawTestStatus(graphics, mouseX, mouseY);
     }
 
     private void drawLabel(GuiGraphics graphics, String key, int x, int y) {
         graphics.drawString(font, Component.translatable(key), x, y, MUTED, false);
     }
 
-    private void drawTestStatus(GuiGraphics graphics) {
+    private void drawTestStatus(GuiGraphics graphics, int mouseX, int mouseY) {
         int maxWidth = Math.max(120, Math.min(300, width / 2 - 24));
         var lines = font.split(statusComponent(), maxWidth);
         int right = width - 12;
@@ -327,6 +327,9 @@ public final class ProviderSettingsScreen extends Screen {
             FormattedCharSequence line = lines.get(index);
             graphics.drawString(font, line, right - font.width(line), y, statusColor(), false);
             y += 10;
+        }
+        if (lines.size() > 2 && mouseX >= right - maxWidth && mouseX <= right && mouseY >= 10 && mouseY <= y) {
+            graphics.renderTooltip(font, statusComponent(), mouseX, mouseY);
         }
     }
 
@@ -398,6 +401,7 @@ public final class ProviderSettingsScreen extends Screen {
         if (message.startsWith("PROVIDER_VISION_HTTP_")) {
             return Component.literal("Vision HTTP " + message.substring("PROVIDER_VISION_HTTP_".length()));
         }
+        if (message.startsWith("PROVIDER_CONNECTION_FAILED: ")) return Component.literal(message);
         return Component.translatable("gui.geomantia.provider_settings.message." + message.toLowerCase(java.util.Locale.ROOT));
     }
 

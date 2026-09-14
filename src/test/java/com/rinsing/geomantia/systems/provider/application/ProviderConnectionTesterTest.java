@@ -18,14 +18,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ProviderConnectionTesterTest {
     private HttpServer server;
     private int visionStatus;
+    private String visionErrorBody;
+    private int modelStatus;
     private volatile String visionRequestBody;
 
     @BeforeEach
     void startServer() throws Exception {
         visionStatus = 200;
+        modelStatus = 200;
+        visionErrorBody = "{\"error\":{\"message\":\"max_tokens must be at least 16\",\"code\":\"invalid_parameter\"}}";
         visionRequestBody = "";
         server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
-        server.createContext("/models", exchange -> reply(exchange, 200,
+        server.createContext("/models", exchange -> reply(exchange, modelStatus,
                 "{\"data\":[{\"id\":\"vision-model\"},{\"id\":\"glm-5.3-flash\"}]}"));
         server.createContext("/responses", exchange -> {
             String authorization = exchange.getRequestHeaders().getFirst("Authorization");
@@ -39,7 +43,7 @@ class ProviderConnectionTesterTest {
                 reply(exchange, 400, "{}");
                 return;
             }
-            reply(exchange, visionStatus, "{\"output_text\":\"OK\"}");
+            reply(exchange, visionStatus, visionStatus == 200 ? "{\"output_text\":\"OK\"}" : visionErrorBody);
         });
         server.createContext("/chat/completions", exchange -> {
             String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
@@ -72,14 +76,35 @@ class ProviderConnectionTesterTest {
     }
 
     @Test
-    void distinguishesReachableTextOnlyEndpoint() {
+    void rejectedVisionProbeDoesNotClaimTextOnlyCapability() {
         visionStatus = 400;
 
         var result = new ProviderConnectionTester().test(customConfig(), new Credentials("test-key", "stored"));
 
-        assertEquals("connected_text_only", result.state());
+        assertEquals("error", result.state());
+        assertTrue(result.message().contains("PROVIDER_VISION_HTTP_400"));
+        assertTrue(result.message().contains("max_tokens must be at least 16"));
         assertTrue(result.connected());
         assertFalse(result.multimodal());
+    }
+
+    @Test
+    void preservesHttpFailuresAndPlainTextButRedactsCredentialsAndBoundsDetails() {
+        for (int status : new int[]{401, 403, 429, 500}) {
+            visionStatus = status;
+            visionErrorBody = "gateway failure test-key " + "x".repeat(2000);
+            var result = new ProviderConnectionTester().test(customConfig(), new Credentials("test-key", "stored"));
+            assertEquals("error", result.state());
+            assertTrue(result.message().contains("HTTP_" + status));
+            assertTrue(result.message().contains("gateway failure [redacted]"));
+            assertFalse(result.message().contains("test-key"));
+            assertTrue(result.message().length() < 1100);
+        }
+        modelStatus = 401;
+        var result = new ProviderConnectionTester().test(customConfig(), new Credentials("test-key", "stored"));
+        assertEquals("error", result.state());
+        assertFalse(result.connected());
+        assertTrue(result.message().startsWith("PROVIDER_HTTP_401:"));
     }
 
     @Test
