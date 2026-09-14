@@ -97,6 +97,29 @@ public final class CityLandUseChunkExecutor {
         }
         List<CityLandUseChunkCompiler.SurfaceOperation> surfaceOperations =
                 new ArrayList<>(fragment.surfaceOperations());
+        // Final road geometry owns its entire column, including the crop/overlay layer.
+        // Exclusion spans can predate later road grading and access compilation.
+        Set<ColumnKey> roadColumns = fragment.featureOperations().stream()
+                .filter(operation -> operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
+                        || operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR)
+                .map(operation -> new ColumnKey(operation.x(), operation.z()))
+                .collect(java.util.stream.Collectors.toSet());
+        Set<ColumnKey> circulationColumns = new HashSet<>(roadColumns);
+        foundationPlan.accessPaths().forEach(path -> circulationColumns.add(new ColumnKey(path.x(), path.z())));
+        foundationPlan.stairs().forEach(stair -> circulationColumns.add(new ColumnKey(stair.x(), stair.z())));
+        Set<ColumnKey> existingSurfaceColumns = surfaceOperations.stream()
+                .filter(operation -> operation.surfaceOffset() == 0)
+                .map(operation -> new ColumnKey(operation.x(), operation.z()))
+                .collect(java.util.stream.Collectors.toSet());
+        surfaceOperations.removeIf(operation -> roadColumns.contains(new ColumnKey(operation.x(), operation.z()))
+                || operation.surfaceOffset() > 0
+                && circulationColumns.contains(new ColumnKey(operation.x(), operation.z())));
+        // Keep the foundation pass under roads, even when their grade is resolved locally.
+        roadColumns.stream().filter(key -> existingSurfaceColumns.contains(key)
+                        || foundationByColumn.containsKey(key) || fillByColumn.containsKey(key))
+                .sorted(java.util.Comparator.comparingInt(ColumnKey::z).thenComparingInt(ColumnKey::x))
+                .forEach(key -> surfaceOperations.add(new CityLandUseChunkCompiler.SurfaceOperation(
+                        "road", "road", key.x(), key.z(), "minecraft:stone_bricks")));
         Set<ColumnKey> surfaceColumns = new HashSet<>();
         Set<ColumnKey> frozenRoadColumns = new HashSet<>();
         surfaceOperations.forEach(operation -> surfaceColumns.add(new ColumnKey(operation.x(), operation.z())));
@@ -282,7 +305,7 @@ public final class CityLandUseChunkExecutor {
 
         for (CityLandUseChunkCompiler.BoundaryOperation operation : fragment.boundaryOperations()) {
             ColumnKey key = new ColumnKey(operation.x(), operation.z());
-            if (preservedFoundationColumns.contains(key)) continue;
+            if (preservedFoundationColumns.contains(key) || circulationColumns.contains(key)) continue;
             ColumnSample column = terrainView.sample(operation.x(), operation.z());
             int surfaceY = plannedSurfaceY.getOrDefault(key, column.surfaceY());
             if (openWaterColumns.contains(key) || !plannedSurfaceY.containsKey(key)
@@ -380,7 +403,7 @@ public final class CityLandUseChunkExecutor {
                 .collect(java.util.stream.Collectors.toSet());
         for (CityLandUseMicroGrader.AccessPathDecision path : foundationPlan.accessPaths()) {
             ColumnKey key = new ColumnKey(path.x(), path.z());
-            if (platformStairColumns.contains(key)) continue;
+            if (platformStairColumns.contains(key) || roadColumns.contains(key)) continue;
             ColumnSample column = terrainView.sample(path.x(), path.z());
             CityLandUseMicroGrader.FoundationDecision foundation = foundationByColumn.get(key);
             int surfaceY = plannedSurfaceY.getOrDefault(key,

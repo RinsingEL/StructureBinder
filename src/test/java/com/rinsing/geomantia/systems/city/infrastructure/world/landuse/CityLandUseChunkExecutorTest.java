@@ -16,6 +16,67 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CityLandUseChunkExecutorTest {
     private final CityLandUseChunkExecutor executor = new CityLandUseChunkExecutor();
 
+    @Test
+    void platformAccessPathCannotOverwriteFrozenRoadStairOrItsFacing() {
+        var mask = new ArrayList<CityLandUseChunkCompiler.GradingMaskCell>();
+        var surfaces = new ArrayList<CityLandUseChunkCompiler.SurfaceOperation>();
+        for (int z = 0; z < 16; z++) for (int x = 0; x < 16; x++) {
+            mask.add(new CityLandUseChunkCompiler.GradingMaskCell("area", x, z, true, 64));
+            surfaces.add(new CityLandUseChunkCompiler.SurfaceOperation("area", "plaza", x,z,"minecraft:stone_bricks"));
+        }
+        var demands = List.of(new CityLandUseChunkCompiler.PlatformAccessDemand("area", "entrance",
+                new com.rinsing.geomantia.systems.city.domain.model.BlockPoint(8,8),
+                com.rinsing.geomantia.systems.city.domain.landuse.CardinalDirection.WEST));
+        var initial = new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,
+                "city", "hash", "palette", 0,0,256,0,0,0,"minecraft:dirt",mask,surfaces,List.of(),
+                List.of(),List.of(),List.of(),demands);
+        var plan = CityLandUseMicroGrader.planFoundationPlatform(initial,
+                (x,z) -> new CityLandUseChunkExecutor.ColumnSample(64,"minecraft:dirt",true));
+        assertFalse(plan.accessPaths().isEmpty());
+        var path = plan.accessPaths().get(0);
+        var road = new CityLandUseChunkCompiler.FeatureOperation("road",path.x(),path.z(),
+                "minecraft:stone_brick_stairs",0,CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR,
+                CityLandUseSurfacePrintPlan.HorizontalFacing.EAST,64);
+        var fragment = new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,
+                "city", "hash", "palette", 0,0,256,0,0,0,"minecraft:dirt",mask,surfaces,List.of(),
+                List.of(road),List.of(road),List.of(),demands);
+        FakeWorld world = new FakeWorld();
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED, executor.execute(fragment,world,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES).status());
+        String prefix = path.x()+",64,"+path.z()+"=";
+        assertEquals(List.of(prefix+"ROAD_STAIR:EAST"),world.featureWrites.stream()
+                .filter(write -> write.startsWith(prefix)).toList());
+    }
+
+    @Test
+    void finalRoadColumnsExcludeFarmBaseCropsAndBoundaryEvenWithoutExclusionSpans() {
+        for (Integer roadY : new Integer[]{null, 64}) {
+            var surfaces = new ArrayList<CityLandUseChunkCompiler.SurfaceOperation>();
+            for (int x = 1; x <= 2; x++) {
+                surfaces.add(new CityLandUseChunkCompiler.SurfaceOperation("farm", "agriculture", x, 1,
+                        "minecraft:farmland", 0, false, CityLandUseChunkCompiler.SurfaceStage.BASE, 0));
+                surfaces.add(new CityLandUseChunkCompiler.SurfaceOperation("farm", "agriculture", x, 1,
+                        "minecraft:wheat", 1, true, CityLandUseChunkCompiler.SurfaceStage.CROP, 1));
+            }
+            var road = new CityLandUseChunkCompiler.FeatureOperation("road", 1, 1,
+                    "minecraft:stone_brick_stairs", 0, CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR,
+                    CityLandUseSurfacePrintPlan.HorizontalFacing.EAST, roadY);
+            var fragment = new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,
+                    "city", "hash", "palette", 0, 0, 2, 0, 0, 0, null,
+                    List.of(), surfaces, List.of(new CityLandUseChunkCompiler.BoundaryOperation(
+                    "farm", "agriculture", 1, 1, "minecraft:oak_fence")), List.of(road));
+            FakeWorld world = new FakeWorld();
+            var result = executor.execute(fragment, world,
+                    CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+            assertEquals(CityLandUseChunkExecutor.Status.APPLIED, result.status());
+            assertFalse(world.writes.contains("1,64,1=minecraft:farmland"));
+            assertFalse(world.writes.contains("1,65,1=minecraft:wheat"));
+            assertFalse(world.writes.contains("1,65,1=minecraft:oak_fence"));
+            assertTrue(world.writes.contains("2,65,1=minecraft:wheat"));
+            assertTrue(world.featureWrites.contains("1,64,1=ROAD_STAIR:EAST"));
+        }
+    }
+
     @Test void deepDeckHasSparseBlackstoneSupportAtGridColumns() {
         var fragment = new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,
                 "city", "hash", "palette", 0, 0, 1, 0, 0, 0, null,

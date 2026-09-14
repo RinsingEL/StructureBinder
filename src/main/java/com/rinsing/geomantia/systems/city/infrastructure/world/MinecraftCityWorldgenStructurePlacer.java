@@ -177,6 +177,10 @@ public final class MinecraftCityWorldgenStructurePlacer {
                             (x, z) -> generator.getBaseHeight(x, z,
                                     Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                                     heightAccessor, randomState)));
+            // A persisted datum belongs to an existing StructureStart: never move its remaining pieces.
+            var persistedDatum = CityReservationMaskRegistry.resolvedTemplateDatum(item);
+            datumY = persistedDatum.isPresent() ? persistedDatum.getAsInt()
+                    : datumY - read.template().map(CityTemplateGroundLevel::offset).orElse(0);
             if (datumY <= chunk.getMinBuildHeight()) {
                 CityReservationMaskRegistry.recordWorldgenFailure(item, chunkPos,
                         "TEMPLATE_DATUM_SURFACE_UNAVAILABLE",

@@ -16,6 +16,44 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandUseMicroGraderTest {
     @Test
+    void lShapedRimRemainsContinuousBesideLevelAccessPath() {
+        var cells = new java.util.HashSet<CityLandUseMicroGrader.Cell>();
+        var owners = new HashMap<CityLandUseMicroGrader.Cell, String>();
+        var heights = new HashMap<CityLandUseMicroGrader.Cell, Integer>();
+        var paths = new ArrayList<CityLandUseMicroGrader.AccessPathDecision>();
+        for (int z = 0; z < 12; z++) for (int x = 0; x < 12; x++) {
+            if (x >= 4 && z >= 4) continue;
+            var cell = new CityLandUseMicroGrader.Cell(x, z);
+            cells.add(cell); owners.put(cell, "area"); heights.put(cell, 68);
+        }
+        for (int z = 1; z < 11; z++) paths.add(new CityLandUseMicroGrader.AccessPathDecision(
+                "entry", 1, z, "minecraft:stone_bricks"));
+        for (int x = 1; x < 11; x++) paths.add(new CityLandUseMicroGrader.AccessPathDecision(
+                "entry", x, 1, "minecraft:stone_bricks"));
+        var edges = CityLandUseMicroGrader.terraceEdges(fragment(List.of(), List.of()), cells,
+                owners, heights, new FakeTerrain(64), List.of(), paths);
+        var actual = edges.stream().map(e -> new CityLandUseMicroGrader.Cell(e.x(), e.z()))
+                .collect(java.util.stream.Collectors.toSet());
+        for (int i = 0; i < 12; i++) {
+            assertTrue(actual.contains(new CityLandUseMicroGrader.Cell(0, i)), "vertical rim " + i);
+            assertTrue(actual.contains(new CityLandUseMicroGrader.Cell(i, 0)), "horizontal rim " + i);
+        }
+    }
+
+    @Test
+    void equalHeightPlatformsDoNotGrowAnInternalWallAtDifferentAreaIds() {
+        var cell = new CityLandUseMicroGrader.Cell(1, 1);
+        var owners = new HashMap<CityLandUseMicroGrader.Cell, String>();
+        var heights = new HashMap<CityLandUseMicroGrader.Cell, Integer>();
+        for (int z = 0; z <= 2; z++) for (int x = 0; x <= 2; x++) {
+            var key = new CityLandUseMicroGrader.Cell(x, z);
+            owners.put(key, x == 1 && z == 1 ? "house" : "plaza"); heights.put(key, 68);
+        }
+        assertTrue(CityLandUseMicroGrader.terraceEdges(fragment(List.of(), List.of()), java.util.Set.of(cell),
+                owners, heights, new FakeTerrain(64), List.of(), List.of()).isEmpty());
+    }
+
+    @Test
     void frozenPlatformCapsDeepCanyonAndCutsPeakWithoutChangingDesignHeight() {
         var mask = gradingMask().stream().map(cell -> new CityLandUseChunkCompiler.GradingMaskCell(
                 cell.areaId(), cell.x(), cell.z(), true, 68)).toList();

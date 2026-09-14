@@ -1172,7 +1172,7 @@ final class CityLandUseMicroGrader {
                 .thenComparingInt(RetainingWallDecision::y)).toList();
     }
 
-    private static List<TerraceEdgeDecision> terraceEdges(
+    static List<TerraceEdgeDecision> terraceEdges(
             CityLandUseChunkCompiler.ChunkFragment fragment,
             Set<Cell> outputCells,
             Map<Cell, String> areaByCell,
@@ -1182,7 +1182,20 @@ final class CityLandUseMicroGrader {
             List<AccessPathDecision> accessPaths) {
         Set<Cell> protectedCells = new HashSet<>();
         stairs.forEach(stair -> protectEdgeOpening(protectedCells, new Cell(stair.x(), stair.z())));
-        accessPaths.forEach(path -> protectEdgeOpening(protectedCells, new Cell(path.x(), path.z())));
+        Set<Cell> accessCells = accessPaths.stream().map(path -> new Cell(path.x(), path.z()))
+                .collect(java.util.stream.Collectors.toSet());
+        for (Cell cell : accessCells) {
+            Integer height = platformTargets.get(cell);
+            if (height == null) continue;
+            for (int[] direction : CARDINAL_OFFSETS) {
+                Cell neighbour = offset(cell, direction);
+                if (accessCells.contains(neighbour)
+                        && Math.abs(height - platformTargets.getOrDefault(neighbour,
+                                required(terrain, neighbour).surfaceY())) >= 2) {
+                    protectEdgeOpening(protectedCells, cell);
+                }
+            }
+        }
         fragment.platformAccessDemands().forEach(demand -> protectEdgeOpening(protectedCells,
                 new Cell(demand.entrance().x(), demand.entrance().z())));
 
@@ -1224,9 +1237,9 @@ final class CityLandUseMicroGrader {
                     int lowerNeighbourCount = 0;
                     for (int[] direction : CARDINAL_OFFSETS) {
                         Cell neighbour = offset(cell, direction);
-                        int neighbourY = areaId.equals(areaByCell.get(neighbour))
-                                ? platformTargets.getOrDefault(neighbour, required(terrain, neighbour).surfaceY())
-                                : required(terrain, neighbour).surfaceY();
+                        // Adjacent built platforms share a real edge regardless of owner area id.
+                        int neighbourY = platformTargets.getOrDefault(neighbour,
+                                required(terrain, neighbour).surfaceY());
                         int drop = targetY - neighbourY;
                         if (drop < 2) continue;
                         lowerNeighbourCount++;
@@ -1553,6 +1566,6 @@ final class CityLandUseMicroGrader {
         }
     }
 
-    private record Cell(int x, int z) {
+    record Cell(int x, int z) {
     }
 }
