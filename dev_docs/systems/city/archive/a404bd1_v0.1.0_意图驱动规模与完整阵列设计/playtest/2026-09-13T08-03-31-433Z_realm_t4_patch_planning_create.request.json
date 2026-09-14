@@ -1,9 +1,0 @@
-{
-  "reason": "仅规划城市与大城市两档测试",
-  "tool": "realm_t4_patch_planning_create",
-  "outputChars": 6500,
-  "arguments": {
-    "realmId": "realm_scale",
-    "runId": "city_scale_20260910"
-  }
-}

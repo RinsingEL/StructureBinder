@@ -1,9 +1,0 @@
-{
-  "content": [
-    {
-      "type": "text",
-      "text": "{\"ok\":false,\"status\":\"completed_without_success\",\"reasonCode\":\"DEBUG_COMMAND_NO_SUCCESS\",\"command\":\"/stop\",\"normalizedCommand\":\"stop\",\"result\":0,\"sourceMode\":\"server\",\"requestedSourceMode\":\"server\",\"playerName\":\"Dev\",\"dimensionId\":\"minecraft:overworld\",\"worldSaveRequested\":false,\"presentation\":\"planning_decision_view.v0.1\"}"
-    }
-  ],
-  "isError": true
-}

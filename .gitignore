@@ -45,3 +45,6 @@ run-mask-validation-*/
 run-data/
 run_logs/
 country_designer_mcp_log.jsonl
+
+# Local development notes, previews and playtest evidence
+/dev_docs/

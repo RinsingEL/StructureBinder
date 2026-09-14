@@ -56,12 +56,16 @@ public final class CityBlueprintCompilerService {
             new CityLandscapeCapacityReservationPlanner();
 
     public CompilationResult compile(Path debugRoot, String runId, String cityId) throws IOException {
-        return compileInternal(debugRoot, runId, cityId, null);
+        return compileInternal(debugRoot, runId, cityId, null, false);
+    }
+
+    CompilationResult compileProposal(Path debugRoot, String runId, String cityId, JsonObject proposal) throws IOException {
+        return compileProposal(debugRoot, runId, cityId, proposal, false);
     }
 
     /** Compile a submission before publishing acceptance; never overwrites the accepted blueprint. */
-    CompilationResult compileProposal(Path debugRoot, String runId, String cityId, JsonObject proposal) throws IOException {
-        CompilationResult result = compileInternal(debugRoot, runId, cityId, proposal.deepCopy());
+    CompilationResult compileProposal(Path debugRoot, String runId, String cityId, JsonObject proposal, boolean draftOnly) throws IOException {
+        CompilationResult result = compileInternal(debugRoot, runId, cityId, proposal.deepCopy(), draftOnly);
         if (result.ok()) {
             JsonObject acceptance = requiredObject(result.structureAnchorPlan(), "compilationAcceptance");
             if (!booleanValue(acceptance, "passed", false)) {
@@ -74,7 +78,7 @@ public final class CityBlueprintCompilerService {
         return result;
     }
 
-    private CompilationResult compileInternal(Path debugRoot, String runId, String cityId, JsonObject proposal) throws IOException {
+    private CompilationResult compileInternal(Path debugRoot, String runId, String cityId, JsonObject proposal, boolean draftOnly) throws IOException {
         Path runDir = requireRunDirectory(debugRoot, runId);
         Path blueprintDir = CityTestRunLayout.open(runDir, cityId)
                 .stepDirectory(CityTestRunLayout.BLUEPRINT);
@@ -152,12 +156,14 @@ public final class CityBlueprintCompilerService {
         CityBlueprint.ArtifactRef expectedCatalog = artifactRef(requiredObject(context, "catalogSnapshotRef"));
         CityBlueprintValidator.ValidationResult revalidation = validator.validate(blueprint,
                 new CityBlueprintValidator.ExpectedContext(cityId, expectedD3, expectedCatalog,
-                        patchRefs(review), context.has("scaleDesignTask") ? CityScale.fromContractName(
+                        patchRefs(review), !draftOnly && context.has("scaleDesignTask") ? CityScale.fromContractName(
                                 string(requiredObject(context, "citySeed"), "theoreticalScale")) : null), references);
         if (!revalidation.valid()) {
             String reason = revalidation.issues().isEmpty() ? "CITY_BLUEPRINT_REVALIDATION_FAILED"
                     : revalidation.issues().get(0).reasonCode().name();
-            throw fail(reason, "Accepted Blueprint no longer passes compiler-entry validation.");
+            throw fail(reason, "Blueprint failed compiler-entry validation: " + revalidation.issues().stream()
+                    .map(issue -> issue.fieldPath() + ": " + issue.message())
+                    .collect(java.util.stream.Collectors.joining("; ")));
         }
 
         if (proposal == null && booleanValue(submission, "designGeometryValidated", false)) {

@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 public final class CityStructureLandingPreviewRenderer {
+    public static final String GROUP_PREVIEW_DIRECTORY = "group_previews";
     private static final int WIDTH = 1280;
     private static final int HEIGHT = 900;
     private static final int PAD = 64;
@@ -106,6 +107,13 @@ public final class CityStructureLandingPreviewRenderer {
     public Path renderD4(JsonObject anchorMap, CityLandformReviewPackage reviewPackage,
                          JsonObject landscapeCapacityPlan, JsonObject groupExtentMap,
                          Path outputDirectory) throws IOException {
+        return renderD4WithGroupDetails(anchorMap, reviewPackage, landscapeCapacityPlan,
+                groupExtentMap, null, outputDirectory).overview();
+    }
+
+    private Path renderD4Overview(JsonObject anchorMap, CityLandformReviewPackage reviewPackage,
+                         JsonObject landscapeCapacityPlan, JsonObject groupExtentMap,
+                         Path outputDirectory) throws IOException {
         Files.createDirectories(outputDirectory);
         Path path = outputDirectory.resolve("structure_anchor_preview.png");
         BufferedImage image = baseImage();
@@ -154,7 +162,7 @@ public final class CityStructureLandingPreviewRenderer {
                                                        JsonObject groupExtentMap,
                                                        JsonObject compileTrace,
                                                        Path outputDirectory) throws IOException {
-        Path overview = renderD4(anchorMap, reviewPackage, landscapeCapacityPlan, groupExtentMap,
+        Path overview = renderD4Overview(anchorMap, reviewPackage, landscapeCapacityPlan, groupExtentMap,
                 outputDirectory);
         Map<String, Path> groupPreviews = renderD4GroupDetails(anchorMap, reviewPackage,
                 landscapeCapacityPlan, groupExtentMap, compileTrace, outputDirectory);
@@ -474,6 +482,17 @@ public final class CityStructureLandingPreviewRenderer {
                                                           JsonObject compileTrace,
                                                           Path outputDirectory) throws IOException {
         Set<String> groupIds = new LinkedHashSet<>();
+        Path groupDirectory = outputDirectory.resolve(GROUP_PREVIEW_DIRECTORY);
+        Files.createDirectories(groupDirectory);
+        for (JsonElement element : array(anchorMap, "previewGroups")) {
+            if (element.isJsonObject()) addNonBlank(groupIds, string(element.getAsJsonObject(), "groupId"));
+        }
+        for (JsonElement element : array(object(anchorMap, "designReview"), "groups")) {
+            if (element.isJsonObject()) addNonBlank(groupIds, string(element.getAsJsonObject(), "groupId"));
+        }
+        for (JsonElement element : array(anchorMap, "skippedMembers")) {
+            if (element.isJsonObject()) addNonBlank(groupIds, string(element.getAsJsonObject(), "groupId"));
+        }
         for (JsonElement element : array(groupExtentMap, "groups")) {
             if (element.isJsonObject()) addNonBlank(groupIds, string(element.getAsJsonObject(), "groupId"));
         }
@@ -486,22 +505,25 @@ public final class CityStructureLandingPreviewRenderer {
         }
 
         Map<String, Path> result = new LinkedHashMap<>();
+        JsonObject index = new JsonObject();
+        int fileIndex = 0;
         for (String groupId : groupIds) {
             List<AnchorPreview> anchors = groupAnchors(anchorMap, groupId);
             List<FailurePreview> failures = groupFailures(compileTrace, groupId);
             BlockBounds viewport = groupViewport(anchorMap, groupExtentMap, landscapeCapacityPlan,
                     groupId, anchors, failures);
-            Path path = outputDirectory.resolve("structure_anchor_group_" + safeFilePart(groupId) + ".png");
+            Path path = groupDirectory.resolve(String.format("structure_anchor_group_%03d_", ++fileIndex)
+                    + safeFilePart(groupId) + ".png");
             BufferedImage image = baseImage();
             Graphics2D g = image.createGraphics();
             try {
                 setup(g);
                 Transform t = transform(viewport);
                 Set<String> visibleGroups = Set.of(groupId);
-                drawPatchBackdrop(g, t, viewport, reviewPackage);
+                drawPatchBackdrop(g, t, viewport, reviewPackage, false);
                 drawGrid(g, t, viewport);
                 drawFunctionAreas(g, t, groupExtentMap, visibleGroups);
-                drawStreetBands(g, t, anchorMap, visibleGroups);
+                drawStreetBands(g, t, anchorMap, visibleGroups, false);
                 drawResidentialOverflowZones(g, t, anchorMap, visibleGroups);
                 drawLandscapeCapacities(g, t, landscapeCapacityPlan, visibleGroups);
                 for (AnchorPreview anchor : anchors) {
@@ -513,16 +535,31 @@ public final class CityStructureLandingPreviewRenderer {
                 for (FailurePreview failure : failures) {
                     drawFailureAttempt(g, t, failure);
                 }
+                int skippedCount = 0;
+                for (JsonElement element : array(anchorMap, "skippedMembers")) {
+                    JsonObject skipped = element.getAsJsonObject();
+                    if (!groupId.equals(string(skipped, "groupId")) || !skipped.has("plannedBounds")) continue;
+                    BlockBounds box = bounds(skipped, "plannedBounds");
+                    drawDashedRect(g, t, box, new Color(230, 126, 34, 20), new Color(210, 100, 25), 1.5f);
+                    drawBadge(g, t, box.center(), "S" + (++skippedCount), new Color(190, 95, 20));
+                }
                 title(g, "City D4 group detail: " + groupId,
-                        "blue=A committed structure; X=failed attempt; tinted dashed area=function area; failures="
-                                + failures.size());
+                        "A=retained member; S=skipped member; X=failed attempt; retained="
+                                + anchors.size() + "; skipped=" + skippedCount);
                 drawGroupFailureSummary(g, groupId, anchors, failures);
             } finally {
                 g.dispose();
             }
             ImageIO.write(image, "png", path.toFile());
             result.put(groupId, path);
+            index.addProperty(groupId, path.toAbsolutePath().toString());
         }
+        // This folder is owned by this renderer; remove only obsolete generated PNGs, never recursively.
+        try (var files = Files.newDirectoryStream(groupDirectory, "structure_anchor_group_*.png")) {
+            for (Path old : files) if (!result.containsValue(old)) Files.deleteIfExists(old);
+        }
+        Files.writeString(groupDirectory.resolve("index.json"),
+                new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(index));
         return result;
     }
 
@@ -599,6 +636,13 @@ public final class CityStructureLandingPreviewRenderer {
                     ? new BlockBounds(failure.point().x(), failure.point().z(), failure.point().x(), failure.point().z())
                     : failure.geometry().mask();
             viewport = viewport == null ? bounds : union(viewport, bounds);
+        }
+        for (JsonElement element : array(anchorMap, "skippedMembers")) {
+            JsonObject skipped = element.getAsJsonObject();
+            if (groupId.equals(string(skipped, "groupId")) && skipped.has("plannedBounds")) {
+                BlockBounds box = bounds(skipped, "plannedBounds");
+                viewport = viewport == null ? box : union(viewport, box);
+            }
         }
         return expand(viewport == null ? gridBounds(anchorMap) : viewport, 24);
     }

@@ -31,6 +31,36 @@ class CityBlueprintCompilerServiceTest {
     Path temporary;
 
     @Test
+    void singleCoreDraftUsesRealCompilerButFinalStillRequiresNesting() throws Exception {
+        for (String scale : List.of("city", "large_city")) {
+            Fixture f = acceptedFixture("partial_" + scale, "city:partial", 8, 8, "SMALL",
+                    CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid,
+                    blueprint -> { blueprint.getAsJsonArray("groups").get(0).getAsJsonObject().addProperty("structureCount", 9); });
+            Path dir = f.runDir().resolve("city_blueprint_" + safe(f.cityId()));
+            JsonObject context = JsonParser.parseString(Files.readString(dir.resolve("city_blueprint_context.json"))).getAsJsonObject();
+            context.getAsJsonObject("citySeed").addProperty("theoreticalScale", scale);
+            context.add("scaleDesignTask", CityScaleDesignTask.describe(com.rinsing.geomantia.systems.city.domain.model.CityScale.fromContractName(scale)));
+            JsonObject identity = context.deepCopy(); identity.remove("contextId"); identity.remove("preparedAt");
+            String contextId = sha256(com.rinsing.geomantia.systems.city.infrastructure.json.CityJson.GSON.toJson(identity));
+            context.addProperty("contextId", contextId);
+            Files.writeString(dir.resolve("city_blueprint_context.json"), context.toString());
+            JsonObject blueprint = JsonParser.parseString(Files.readString(dir.resolve("city_blueprint.json"))).getAsJsonObject();
+            JsonObject request = new JsonObject(); request.add("cityBlueprint", blueprint); request.addProperty("submissionMode", "DRAFT");
+            var service = new CityBlueprintService();
+            var draft = service.submitDesign(temporary, f.runId(), f.cityId(), contextId, request);
+            assertTrue(draft.get("ok").getAsBoolean(), draft.toString());
+            assertTrue(draft.get("designInProgress").getAsBoolean(), draft.toString());
+            request.addProperty("submissionMode", "FINAL");
+            var finished = service.submitDesign(temporary, f.runId(), f.cityId(), contextId, request);
+            assertFalse(finished.get("ok").getAsBoolean(), finished.toString());
+            assertTrue(finished.toString().contains("CITY_BLUEPRINT_ARRAY_COMPOSITION_INVALID"), finished.toString());
+            var exception = assertThrows(IllegalArgumentException.class, () ->
+                    new CityBlueprintCompilerService().compileProposal(temporary, f.runId(), f.cityId(), blueprint));
+            assertTrue(exception.getMessage().contains("$.arrayCompositions"), exception.getMessage());
+        }
+    }
+
+    @Test
     void aTerrainGapCannotMoveTheOtherPlannedGridMembers() throws Exception {
         Consumer<JsonObject> design = blueprint -> {
             blueprint.addProperty("generationSeed", 42);

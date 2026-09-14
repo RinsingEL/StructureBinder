@@ -1,6 +1,0 @@
-{
-  "tool": "list_tools",
-  "arguments": {},
-  "reason": "读取本次真实游玩可用工具与 schema",
-  "outputChars": 18000
-}

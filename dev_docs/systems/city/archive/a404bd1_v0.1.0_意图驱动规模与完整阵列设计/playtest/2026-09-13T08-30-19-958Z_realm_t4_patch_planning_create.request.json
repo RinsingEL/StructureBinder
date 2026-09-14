@@ -1,9 +1,0 @@
-{
-  "outputChars": 1800,
-  "reason": "D2确认capital映射为CITY，重建同一国度名册保留首都，将未设计的第二座改为LARGE_CITY以覆盖两档",
-  "arguments": {
-    "runId": "city_scale_20260910",
-    "realmId": "realm_scale"
-  },
-  "tool": "realm_t4_patch_planning_create"
-}

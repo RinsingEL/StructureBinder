@@ -1,9 +1,0 @@
-{
-  "arguments": {
-    "runId": "city_scale_20260910",
-    "citySeedId": "city_realm_scale_capital"
-  },
-  "reason": "取得首都16格地形与TopPatch前置",
-  "outputChars": 2800,
-  "tool": "city_plan_d3"
-}

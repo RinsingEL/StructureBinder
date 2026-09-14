@@ -1,9 +1,0 @@
-{
-  "content": [
-    {
-      "type": "text",
-      "text": "{\"ok\":true,\"operation\":\"city_post_d4_auto_compile_retry\",\"postD4AutoCompile\":{\"schema\":\"city_post_d4_auto_compile_job.v0.1\",\"runId\":\"city_scale_20260910\",\"citySeedId\":\"city_realm_scale_capital\",\"status\":\"queued\",\"reasonCode\":\"D4_ACCEPTED\",\"attempt\":2,\"updatedAt\":\"2026-09-13T08:42:21.500905100Z\",\"createdAt\":\"2026-09-13T08:36:15.272920900Z\"},\"presentation\":\"planning_decision_view.v0.1\"}"
-    }
-  ],
-  "isError": false
-}

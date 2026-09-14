@@ -40,10 +40,10 @@ public final class CityBlueprintService {
     private final CityBlueprintFailureBudget failureBudget = new CityBlueprintFailureBudget();
     @FunctionalInterface
     interface GeometryCompiler {
-        CityBlueprintCompilerService.CompilationResult compile(Path root, String runId, String cityId, JsonObject proposal) throws IOException;
+        CityBlueprintCompilerService.CompilationResult compile(Path root, String runId, String cityId, JsonObject proposal, boolean draftOnly) throws IOException;
     }
     private final GeometryCompiler geometryCompiler;
-    public CityBlueprintService() { this((root, run, city, proposal) -> new CityBlueprintCompilerService().compileProposal(root, run, city, proposal)); }
+    public CityBlueprintService() { this((root, run, city, proposal, draftOnly) -> new CityBlueprintCompilerService().compileProposal(root, run, city, proposal, draftOnly)); }
     CityBlueprintService(GeometryCompiler geometryCompiler) { this.geometryCompiler = java.util.Objects.requireNonNull(geometryCompiler); }
 
     public JsonObject prepare(Path debugRoot, String runId, String cityId,
@@ -386,7 +386,7 @@ public final class CityBlueprintService {
         CityBlueprintCompilerService.CompilationResult geometry;
         boolean compilerException = false;
         try {
-            geometry = geometryCompiler.compile(debugRoot, runId, cityId, canonical);
+            geometry = geometryCompiler.compile(debugRoot, runId, cityId, canonical, draftOnly);
         } catch (RuntimeException exception) {
             compilerException = true;
             JsonObject evidence = new JsonObject();
@@ -508,12 +508,18 @@ public final class CityBlueprintService {
         if (d3 == null || !d3.has("grid")) return;
         JsonObject map = valid.has("compiledLayout") ? valid.getAsJsonObject("compiledLayout").deepCopy() : new JsonObject();
         map.add("grid", d3.get("grid").deepCopy());
+        if (draft.has("previousBlueprint"))
+            map.add("previewGroups", draft.getAsJsonObject("previousBlueprint").getAsJsonArray("groups").deepCopy());
         Path preview = new com.rinsing.geomantia.systems.city.infrastructure.preview.CityStructureLandingPreviewRenderer()
                 .renderRevision(map, d3.has("targetScale") ? com.rinsing.geomantia.systems.city.domain.model.CityLandformReviewPackage.fromJson(d3) : null,
                         valid.has("landscapeLayout") ? valid.getAsJsonObject("landscapeLayout") : new JsonObject(),
                         valid.has("groupExtentMap") ? valid.getAsJsonObject("groupExtentMap") : new JsonObject(),
                         feedback, hasValidBase, outputDir.resolve("working_preview"));
         draft.addProperty("compiledPreview", preview.toAbsolutePath().toString());
+        Path groupDirectory = preview.getParent().resolve(
+                com.rinsing.geomantia.systems.city.infrastructure.preview.CityStructureLandingPreviewRenderer.GROUP_PREVIEW_DIRECTORY);
+        draft.addProperty("compiledGroupPreviewDirectory", groupDirectory.toAbsolutePath().toString());
+        draft.add("compiledGroupPreviews", JsonParser.parseString(Files.readString(groupDirectory.resolve("index.json"))));
         draft.addProperty("hasValidPreviewBase", hasValidBase);
     }
 

@@ -1,9 +1,0 @@
-{
-  "outputChars": 7500,
-  "reason": "读取后处理阻塞的正式失败原因，不盲重试",
-  "tool": "city_post_d4_auto_compile_status",
-  "arguments": {
-    "citySeedId": "city_realm_scale_capital",
-    "runId": "city_scale_20260910"
-  }
-}

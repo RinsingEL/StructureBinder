@@ -1,9 +1,0 @@
-{
-  "content": [
-    {
-      "type": "text",
-      "text": "Error: CITY_DESIGN_QUEUE_OUT_OF_ORDER: current=city_realm_scale_capital, requested=city_river_metropolis"
-    }
-  ],
-  "isError": true
-}

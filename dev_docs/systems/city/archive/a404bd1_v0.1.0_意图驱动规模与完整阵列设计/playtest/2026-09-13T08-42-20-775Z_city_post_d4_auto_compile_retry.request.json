@@ -1,9 +1,0 @@
-{
-  "tool": "city_post_d4_auto_compile_retry",
-  "reason": "真实游玩续测：空组户外阶段程序错误已修复且回归通过，保持Blueprint不变重试后半段",
-  "outputChars": 1300,
-  "arguments": {
-    "citySeedId": "city_realm_scale_capital",
-    "runId": "city_scale_20260910"
-  }
-}

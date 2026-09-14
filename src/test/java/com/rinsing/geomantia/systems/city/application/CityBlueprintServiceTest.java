@@ -204,7 +204,7 @@ class CityBlueprintServiceTest {
     @Test
     void rejectedDraftCanBePatchedBeforeAnyAcceptanceAndSurvivesPrepare() throws Exception {
         Fixture f = fixture("run_draft", "city:draft");
-        var service = new CityBlueprintService((root, run, city, proposal) -> {
+        var service = new CityBlueprintService((root, run, city, proposal, draftOnly) -> {
             if ("corrected theme".equals(proposal.getAsJsonObject("designIntent").get("theme").getAsString()))
                 return CityBlueprintCompilerService.CompilationResult.compiled(new JsonObject(), new JsonObject(),
                         new JsonObject(), new JsonObject(), new JsonObject(), new JsonObject());
@@ -247,12 +247,12 @@ class CityBlueprintServiceTest {
         for (String file : List.of("city_blueprint.json", "city_blueprint_geometry_commit.json",
                 "city_blueprint_validation_report.json", "city_blueprint_submission_trace.json"))
             accepted.put(file, Files.readString(dir.resolve(file)));
-        var invalid = new CityBlueprintService((root, run, city, proposal) ->
+        var invalid = new CityBlueprintService((root, run, city, proposal, draftOnly) ->
                 CityBlueprintCompilerService.CompilationResult.failed(new JsonObject(), "CAPACITY_INSUFFICIENT", "group civic cannot fit"));
         var rejected = invalid.submit(temporary, f.runId(), f.cityId(), id, design);
         assertFalse(rejected.get("ok").getAsBoolean());
         assertEquals("CAPACITY_INSUFFICIENT", rejected.get("designGeometryReasonCode").getAsString());
-        var exhausted = new CityBlueprintService((root, run, city, proposal) ->
+        var exhausted = new CityBlueprintService((root, run, city, proposal, draftOnly) ->
                 CityBlueprintCompilerService.CompilationResult.failed(new JsonObject(),
                         "CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT", "finite candidates exhausted"));
         var noPlacement = exhausted.submit(temporary, f.runId(), f.cityId(), id, design);
@@ -260,7 +260,7 @@ class CityBlueprintServiceTest {
         assertEquals("stop_for_human_review", noPlacement.get("nextAction").getAsString());
         assertTrue(noPlacement.has("designFeedback"));
         assertFalse(noPlacement.getAsJsonObject("designFeedback").get("capacityInsufficiencyProven").getAsBoolean());
-        var broken = new CityBlueprintService((root, run, city, proposal) -> { throw new IllegalStateException("compiler bug"); });
+        var broken = new CityBlueprintService((root, run, city, proposal, draftOnly) -> { throw new IllegalStateException("compiler bug"); });
         var blocked = broken.submit(temporary, f.runId(), f.cityId(), id, design);
         assertEquals("program", blocked.get("failureOwner").getAsString());
         assertEquals("stop_for_human_review", blocked.get("nextAction").getAsString());
@@ -271,7 +271,7 @@ class CityBlueprintServiceTest {
 
     /** Contract-only fixtures intentionally omit full GIS; compiler integration tests use the real planner. */
     private static CityBlueprintService validationService() {
-        return new CityBlueprintService((root, run, city, proposal) ->
+        return new CityBlueprintService((root, run, city, proposal, draftOnly) ->
                 CityBlueprintCompilerService.CompilationResult.compiled(new JsonObject(), new JsonObject(),
                         new JsonObject(), new JsonObject(), new JsonObject(), new JsonObject()));
     }

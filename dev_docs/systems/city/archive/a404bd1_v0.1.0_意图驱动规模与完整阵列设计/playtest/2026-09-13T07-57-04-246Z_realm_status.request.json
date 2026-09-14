@@ -1,6 +1,0 @@
-{
-  "tool": "realm_status",
-  "arguments": {},
-  "reason": "明确 Base64 启动后确认正确的 RTF 副本和可复用上游",
-  "outputChars": 4000
-}

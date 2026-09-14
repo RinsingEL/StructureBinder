@@ -21,6 +21,36 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class CityStructureLandingPreviewRendererTest {
     @Test
+    void revisionAlwaysPublishesLocalGroupsIncludingEmptySkippedGroupsAndRemovesStaleImages(@TempDir Path dir)
+            throws Exception {
+        JsonObject map = JsonParser.parseString("""
+                {"grid":{"blockBounds":{"minX":0,"minZ":0,"maxX":1024,"maxZ":1024}},
+                 "anchors":[], "skippedMembers":[
+                  {"groupId":"a/b","plannedBounds":{"minX":100,"minZ":100,"maxX":120,"maxZ":120}},
+                  {"groupId":"a_b","plannedBounds":{"minX":500,"minZ":500,"maxX":520,"maxZ":520}}]}
+                """).getAsJsonObject();
+        var renderer = new CityStructureLandingPreviewRenderer();
+        renderer.renderRevision(map, null, null, null, new JsonObject(), false, dir);
+        Path folder = dir.resolve("group_previews");
+        JsonObject index = JsonParser.parseString(Files.readString(folder.resolve("index.json"))).getAsJsonObject();
+        assertEquals(2, index.size());
+        assertNotEquals(index.get("a/b"), index.get("a_b"), "sanitized group IDs must not overwrite each other");
+        for (var entry : index.entrySet()) {
+            Path png = Path.of(entry.getValue().getAsString());
+            assertEquals(folder.toAbsolutePath(), png.getParent());
+            assertNotNull(ImageIO.read(png.toFile()));
+        }
+        Files.writeString(folder.resolve("user-note.txt"), "keep");
+        map.getAsJsonArray("skippedMembers").remove(1);
+        renderer.renderD4(map, dir);
+        assertEquals(1, JsonParser.parseString(Files.readString(folder.resolve("index.json"))).getAsJsonObject().size());
+        try (var pngs = Files.list(folder)) {
+            assertEquals(1, pngs.filter(p -> p.toString().endsWith(".png")).count());
+        }
+        assertEquals("keep", Files.readString(folder.resolve("user-note.txt")));
+    }
+
+    @Test
     void groupFailurePreviewAggregatesTemplateAndReasonVariantsAtOneWorldPosition() throws Exception {
         JsonObject trace = JsonParser.parseString("""
                 {"selections":[
