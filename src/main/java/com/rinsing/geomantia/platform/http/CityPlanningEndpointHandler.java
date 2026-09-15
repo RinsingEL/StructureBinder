@@ -167,9 +167,11 @@ final class CityPlanningEndpointHandler {
                                           String contextId, JsonObject input) throws IOException {
         JsonObject response = new CityBlueprintService().submitDesign(debugRoot, runId, citySeedId,
                 contextId, input);
+        // Reference reading must not replace the city's workflow status or enqueue compilation.
+        if (input.has("designExample")) return response;
         JsonObject request = standaloneRequest("city_submit_d4_blueprint", runId, citySeedId);
         request.addProperty("contextId", contextId);
-        for (String key : java.util.List.of("cityBlueprint", "blueprintPatch", "baseBlueprintHash", "baseDraftHash", "proportionMode", "submissionMode", "designIntent", "materialSelections", "designReview"))
+        for (String key : java.util.List.of("cityBlueprint", "blueprintPatch", "baseBlueprintHash", "baseDraftHash", "proportionMode", "submissionMode", "designIntent", "materialSelections", "designReview", "designExample"))
             if (input.has(key)) request.add(key, input.get(key).deepCopy());
         boolean accepted = booleanValue(response, "ok", false) && !booleanValue(response, "designInProgress", false);
         String nextAction = stringValue(response, "nextAction",

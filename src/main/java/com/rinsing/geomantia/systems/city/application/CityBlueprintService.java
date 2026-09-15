@@ -230,6 +230,13 @@ public final class CityBlueprintService {
         Path outputDir = outputDirectory(requireRunDirectory(debugRoot, runId), cityId);
         synchronized (submissionArtifactLock(outputDir)) {
           try {
+            if (request.has("designExample")) {
+                for (String key : java.util.List.of("designReview", "designIntent", "materialSelections", "cityBlueprint", "blueprintPatch", "submissionMode"))
+                    if (request.has(key)) throw new IllegalArgumentException("Request designExample separately from design changes and reviews.");
+                JsonObject context = readObject(outputDir.resolve("city_blueprint_context.json"), CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_NOT_FOUND);
+                if (!contextId.equals(contextIdentity(context))) throw new IllegalArgumentException("CITY_BLUEPRINT_CONTEXT_STALE");
+                return CityDesignExamples.read(outputDir, contextId, request.getAsJsonObject("designExample"));
+            }
             if (request.has("designReview")) {
                 for (String key : java.util.List.of("designIntent", "materialSelections", "cityBlueprint", "blueprintPatch", "baseDraftHash", "baseBlueprintHash", "submissionMode"))
                     if (request.has(key)) throw new IllegalArgumentException("Submit designReview separately from design changes; put its baseDraftHash inside designReview.");

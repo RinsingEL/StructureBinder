@@ -1,0 +1,61 @@
+{
+  "cases": [
+    {
+      "id": "deepen_blocks",
+      "title": "街坊太薄：增加纵深",
+      "when": "商业主体缺乏纵深。",
+      "process": "保留主街，增大子格网建设量，从16尝试到36；比较水面裁减与实际保留。",
+      "result": "这一阶段两个格网实际在主街同侧，不能宣传两侧布局已经成功。",
+      "source": "北湾新城0914；13_商街两侧格网避开内湖 → 14_加深商业居住街坊而非延长主街",
+      "limits": "历史案例只学习设计推理；坐标、数量、素材和旧农田参数不可直接照搬。",
+      "images": [
+        {
+          "label": "before",
+          "file": "deepen_blocks_before.png"
+        },
+        {
+          "label": "after",
+          "file": "deepen_blocks_after.png"
+        }
+      ]
+    },
+    {
+      "id": "internal_nesting",
+      "title": "功能区缺少内部组织",
+      "when": "让住宅区拥有共享内院和自己的接入空间，而非照搬商业格网。",
+      "process": "住宅功能区内部组合院落、排屋与入口短街；先检查子阵列局部，再看总览。",
+      "result": "前后图使用相同像素范围裁剪原总览，展示住宅内部院落、排屋及短街的变化；未重绘。仍有道路警告，不能仅凭连线宣称实体通行。",
+      "source": "北湾新城0914；20_居住区改为共享内院区别商业格网 → 21_住宅功能区内部院落排屋入口街嵌套",
+      "limits": "历史案例只学习设计推理；坐标、数量、素材和旧农田参数不可直接照搬。",
+      "images": [
+        {
+          "label": "before",
+          "file": "internal_nesting_before.png"
+        },
+        {
+          "label": "after",
+          "file": "internal_nesting_after.png"
+        }
+      ]
+    },
+    {
+      "id": "purposeful_adjacency",
+      "title": "两区缺少过渡：靠接生活街坊",
+      "when": "商业和公共区之间需要有用途的过渡。",
+      "process": "第27轮公共区东侧靠接GRID6服务商铺；第28轮其北侧靠接COURTYARD9生活院落。用ADJACENCY/DIRECTION定位，CONNECTION表达通行。",
+      "result": "已有结构位置保留；131计划130保留，仍是有效DRAFT，有道路警告，未证明实体通行。没有独立OUTWARD枚举。",
+      "source": "北湾新城0914；26_紧凑嵌套街坊增加内部建设量 → 28_向北接出生活院落衔接商业与公共区",
+      "limits": "历史案例只学习设计推理；坐标、数量、素材和旧农田参数不可直接照搬。",
+      "images": [
+        {
+          "label": "before",
+          "file": "purposeful_adjacency_before.png"
+        },
+        {
+          "label": "after",
+          "file": "purposeful_adjacency_after.png"
+        }
+      ]
+    }
+  ]
+}

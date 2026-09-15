@@ -5,7 +5,16 @@ import com.google.gson.JsonObject;
 
 /** Designer-facing explanation of capabilities actually present in this frozen catalog. */
 final class CityDesignGuide {
+    private static final String HANDBOOK = loadHandbook();
     private CityDesignGuide() { }
+    private static String loadHandbook() {
+        try (var input = CityDesignGuide.class.getResourceAsStream("/geomantia/city_design_handbook.md")) {
+            if (input == null) throw new IllegalStateException("City design handbook resource is missing");
+            return new String(input.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        } catch (java.io.IOException failure) {
+            throw new IllegalStateException("Cannot read city design handbook", failure);
+        }
+    }
     static JsonObject from(CityBlueprintReferenceCatalog catalog) {
         JsonObject guide = new JsonObject();
         guide.addProperty("semanticAuthority", "pack_author_annotations_only");
@@ -18,6 +27,8 @@ final class CityDesignGuide {
         loop.addProperty("cityRefinement", "After districts have been reviewed, request designReview overview=true. Read the whole city's hierarchy, separations, routes and purposeful open spaces. Where a transition is missing, explicitly design an outward array with a stated function and appropriate templates, using existing ADJACENCY/DIRECTION and CONNECTION capabilities. Adjust existing compositions when that is better. Do not fill every gap or connect districts by random buildings. Judge separation from the actual overview: adjust overly distant groups or add designed transitions when needed. Empty space is acceptable when its location and purpose are visible; do not justify unexplained gaps with generic breathing-room claims. Preserve useful landscape. Review changed local results and the final overview before FINAL.");
         loop.addProperty("judgement", "The host tracks which current previews have a model assessment, not whether a city is beautiful. Assess the original intent against visible evidence: shared-space form, frontage continuity, relative distances, hierarchy and retained scale. Full retention, non-empty districts, enough array containers or completed reviews alone do not establish quality. Identify shortcomings and act on them before FINAL where the available tools can address them; distinguish host blockers from design choices. Preserving valid groups means avoiding unrelated damage during error recovery, not freezing a successful but weak layout. If keeping a design, explain concretely why its spatial relationships work. Unsupported decorations, walls, bridges or shopfront features must not be claimed as built. Work with available authored assets and tools. There is no compulsory number of cosmetic edits or extra rejection budget for these review stages.");
         guide.add("designLoop", loop);
+        guide.addProperty("behaviorHandbook", HANDBOOK);
+        guide.add("behaviorExamples", CityDesignExamples.index());
         guide.addProperty("placementBoundary", "A chosen Patch locates the planned array within the preview boundary. Specify structureCount per leaf array; default uses extent and algorithm. The host freezes the array, then filters individual buildings for terrain/collisions without moving survivors or filling holes. Empty arrays remain visible in the review. No automatic buildings for area targets or connections. ADJACENCY places complete array envelopes nearby; CONNECTION only requests roads.");
         JsonArray algorithms = new JsonArray();
         catalog.algorithmsByProfileRef().entrySet().stream().sorted(java.util.Map.Entry.comparingByKey()).forEach(entry -> {

@@ -187,6 +187,7 @@ final class ProviderPlanningToolCatalog {
                         "structureRefs", array(string()), "fillPoolRefs", array(string())), "groupId")),
                 "designReview", object(properties("baseDraftHash", string(), "groupIds", reviewGroups,
                         "overview", bool(), "assessment", string()), "baseDraftHash"),
+                "designExample", object(properties("caseId", string(), "reloadImages", bool()), "caseId"),
                 "cityBlueprint", blueprint, "autoAdvanceAfterD4", bool(),
                 "proportionMode", enumeration("EXACT_SHARES", "RELATIVE_WEIGHTS"),
                 "submissionMode", enumeration("DRAFT", "FINAL"),

@@ -20,6 +20,7 @@ import java.util.concurrent.Executors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -439,6 +440,24 @@ class CityBlueprintServiceTest {
 
         assertEquals(0, prepared.get("aiCityDesignCallCount").getAsInt());
         JsonObject context = prepared.getAsJsonObject("cityBlueprintContext");
+        try (var handbook = CityBlueprintServiceTest.class.getResourceAsStream(
+                "/geomantia/city_design_handbook.md")) {
+            assertNotNull(handbook);
+            String expected = new String(handbook.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            assertFalse(expected.isBlank());
+            assertEquals(expected, context.getAsJsonObject("designGuide").get("behaviorHandbook").getAsString());
+        }
+        JsonObject exampleRequest = new JsonObject();
+        JsonObject example = new JsonObject();
+        example.addProperty("caseId", "deepen_blocks");
+        exampleRequest.add("designExample", example);
+        JsonObject exampleResult = service.submitDesign(temporary, fixture.runId(), fixture.cityId(),
+                prepared.get("contextId").getAsString(), exampleRequest);
+        assertTrue(exampleResult.get("designInProgress").getAsBoolean());
+        assertEquals("city_submit_d4_blueprint", exampleResult.get("nextAction").getAsString());
+        assertEquals(2, exampleResult.getAsJsonArray("imageEvidence").size());
+        assertFalse(service.submitDesign(temporary, fixture.runId(), fixture.cityId(),
+                prepared.get("contextId").getAsString(), exampleRequest).has("imageEvidence"));
         assertEquals("city_blueprint_context", context.get("schema").getAsString());
         assertEquals("city_blueprint_catalog_snapshot",
                 context.getAsJsonObject("catalogSnapshotRef").get("schema").getAsString());
