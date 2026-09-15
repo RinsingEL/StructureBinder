@@ -25,6 +25,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CityBlueprintServiceTest {
+    @Test void materialSearchErrorsDoNotConsumeDraftFormatBudget() throws Exception {
+        var f=fixture("run_material_query","city:material_query");var service=new CityBlueprintService();
+        var prepared=service.prepare(temporary,f.runId(),f.cityId(),f.terraSenseSource(),f.templateSource(),f.referenceCatalog());
+        String contextId=prepared.get("contextId").getAsString();
+        for(int i=0;i<12;i++) {
+            var request=JsonParser.parseString("{\"blockMaterials\":{\"slot\":\"wrong_slot\"}}").getAsJsonObject();
+            var reply=service.submitDesign(temporary,f.runId(),f.cityId(),contextId,request);
+            assertFalse(reply.get("ok").getAsBoolean());assertTrue(reply.get("designInProgress").getAsBoolean());
+            assertTrue(reply.get("error").getAsString().contains("Unknown material slot"));
+            assertFalse(reply.has("formatRetryExhausted"));
+        }
+        Path output=temporary.resolve(prepared.getAsJsonObject("artifacts").get("cityBlueprintContext").getAsString()).getParent();
+        assertFalse(Files.exists(output.resolve("city_blueprint.json")));
+        assertFalse(Files.exists(output.resolve("city_submission_format_budget.json")));
+    }
+
     @Test void geometricCycleReturnsActionableValidationBeforeCompilerAndCanBeCorrected() throws Exception {
         var f = fixture("run_dependency_cycle", "city:dependency_cycle");
         var calls = new java.util.concurrent.atomic.AtomicInteger();

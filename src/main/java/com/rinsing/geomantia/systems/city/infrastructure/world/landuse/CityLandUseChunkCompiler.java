@@ -113,7 +113,7 @@ public final class CityLandUseChunkCompiler {
                 prepared.surfacePrintPlan().sharedBoundarySpans(),
                 prepared.featureCellsByOwner().getOrDefault(owner, List.of()),
                 gradingFeatures,
-                chunkX, chunkZ);
+                chunkX, chunkZ, prepared.surfacePrintPlan().materialField());
     }
 
     private ChunkFragment compileInternal(
@@ -123,7 +123,7 @@ public final class CityLandUseChunkCompiler {
             List<CityLandUseSurfacePrintPlan.FeatureCell> featureCells,
             List<CityLandUseSurfacePrintPlan.FeatureCell> gradingFeatureCells,
             int chunkX,
-            int chunkZ) {
+            int chunkZ, com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField materialField) {
         Objects.requireNonNull(plan, "plan");
         int minChunkX = chunkX * 16;
         int minChunkZ = chunkZ * 16;
@@ -353,7 +353,8 @@ public final class CityLandUseChunkCompiler {
                 relevantCellCount, footprintExcluded, corridorExcluded, gateExcluded,
                 microFillBlock, List.copyOf(gradingMaskCells),
                 List.copyOf(surfaceOperations), List.copyOf(boundaryOperations), featureOperations,
-                gradingFeatureOperations, platformPurposeAnchors, platformAccessDemands);
+                gradingFeatureOperations, platformPurposeAnchors, platformAccessDemands,
+                materialField);
     }
 
     private static boolean intersects(BlockBounds bounds, int minX, int minZ, int maxX, int maxZ) {
@@ -676,8 +677,21 @@ public final class CityLandUseChunkCompiler {
                                 List<FeatureOperation> featureOperations,
                                 List<FeatureOperation> gradingFeatureOperations,
                                 List<PlatformPurposeAnchor> platformPurposeAnchors,
-                                List<PlatformAccessDemand> platformAccessDemands) {
+                                List<PlatformAccessDemand> platformAccessDemands,
+                                com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField materialField) {
+        public ChunkFragment(String schema,String cityId,String planHash,String paletteHash,int chunkX,int chunkZ,
+                int relevantCellCount,int footprintExcludedCount,int corridorExcludedCount,int gateExcludedCount,
+                String microFillBlockId,List<GradingMaskCell> gradingMaskCells,List<SurfaceOperation> surfaceOperations,
+                List<BoundaryOperation> boundaryOperations,List<FeatureOperation> featureOperations,
+                List<FeatureOperation> gradingFeatureOperations,List<PlatformPurposeAnchor> platformPurposeAnchors,
+                List<PlatformAccessDemand> platformAccessDemands){
+            this(schema,cityId,planHash,paletteHash,chunkX,chunkZ,relevantCellCount,footprintExcludedCount,corridorExcludedCount,
+                    gateExcludedCount,microFillBlockId,gradingMaskCells,surfaceOperations,boundaryOperations,featureOperations,
+                    gradingFeatureOperations,platformPurposeAnchors,platformAccessDemands,
+                    com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField.empty());
+        }
         public ChunkFragment {
+            materialField = materialField == null ? com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField.empty() : materialField;
             if (!RESULT_SCHEMA.equals(schema)) {
                 throw new IllegalArgumentException("CITY_LAND_USE_FRAGMENT_SCHEMA_UNSUPPORTED");
             }

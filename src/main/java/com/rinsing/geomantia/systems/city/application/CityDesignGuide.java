@@ -29,6 +29,7 @@ final class CityDesignGuide {
         guide.add("designLoop", loop);
         guide.addProperty("behaviorHandbook", HANDBOOK);
         guide.add("behaviorExamples", CityDesignExamples.index());
+        guide.add("surfaceMaterials",CityMaterialSupport.guide(catalog));
         guide.addProperty("placementBoundary", "A chosen Patch locates the planned array within the preview boundary. Specify structureCount per leaf array; default uses extent and algorithm. The host freezes the array, then filters individual buildings for terrain/collisions without moving survivors or filling holes. Empty arrays remain visible in the review. No automatic buildings for area targets or connections. ADJACENCY places complete array envelopes nearby; CONNECTION only requests roads.");
         JsonArray algorithms = new JsonArray();
         catalog.algorithmsByProfileRef().entrySet().stream().sorted(java.util.Map.Entry.comparingByKey()).forEach(entry -> {

@@ -30,6 +30,35 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityOutdoorBlueprintCompilerTest {
+    @Test void changingLandscapeContentsKeepsFrozenFootprintAndGrowth() {
+        var codec=new com.rinsing.geomantia.systems.city.application.CityBlueprintCodec();
+        var original=blueprint();var json=codec.write(original);
+        json.add("surfaceMaterials",JsonParser.parseString("""
+                {"defaults":{"ground":"minecraft:bricks"},"groups":{"core_group":{"ground":"minecraft:polished_andesite"}},
+                 "landscapes":{"outer_fields":{"cropBlockId":"minecraft:carrots","boundaryBlockId":"minecraft:birch_fence"}}}
+                """));
+        var changed=new CityBlueprint(original.schema(),original.cityId(),original.sourceD3Ref(),original.catalogSnapshotRef(),
+                original.generationSeed(),original.designIntent(),original.styleProfile(),original.groups(),original.arrayCompositions(),
+                original.relations(),original.roadProfile(),original.surfaceDetailProfile(),original.outdoorPlan(),
+                com.rinsing.geomantia.systems.city.domain.blueprint.CitySurfaceMaterials.read(json.getAsJsonObject("surfaceMaterials")));
+        var compiler=new CityOutdoorBlueprintCompiler();var d6=d6Plan();var reservation=capacity(original,d6);
+        var a=compiler.compile(original,d6,terrain(),catalog(),reservation);
+        var b=compiler.compile(changed,d6,terrain(),catalog(),capacity(changed,d6));
+        assertEquals(a.resolution().landscapeCapacityDomains(),b.resolution().landscapeCapacityDomains());
+        assertEquals(a.resolution().roadBands(),b.resolution().roadBands());
+        for(int i=0;i<a.resolution().seedGroups().size();i++) {
+            var first=a.resolution().seedGroups().get(i);var next=b.resolution().seedGroups().get(i);
+            assertEquals(first.growthRegions(),next.growthRegions());
+            assertEquals(first.structureFootprints(),next.structureFootprints());
+            assertEquals(first.landscapeFillProgram(),next.landscapeFillProgram());
+            if(next.layerRole()==LandUseSeedGroup.LayerRole.LANDSCAPE) {
+                assertEquals("minecraft:carrots",next.surfaceSettings().cropBlockId());
+                assertEquals("minecraft:birch_fence",next.surfaceSettings().boundaryBlockId());
+            }
+        }
+        assertFalse(b.resolution().materialField().isEmpty());
+    }
+
     @Test
     void declaredArrayWithNoRetainedMembersDoesNotBlockOtherOutdoorGrounds() {
         JsonObject d6 = d6Plan();

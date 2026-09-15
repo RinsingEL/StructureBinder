@@ -632,6 +632,12 @@ const cityBlueprintSchema = strictObject({
     }, ["fromGroupId", "toGroupId", "relationKind", "strength"]),
   },
   roadProfile: strictObject({ profileRef: nonEmptyString("冻结 road profile 引用。") }, ["profileRef"]),
+  surfaceMaterials: strictObject({
+    defaults: strictObject({ground: nonEmptyString("已安装的 namespace:block，不包含 block state。"),roadSurface: nonEmptyString("已安装的 namespace:block，不包含 block state。"),roadStair: nonEmptyString("已安装的 namespace:block，不包含 block state。"),roadCurb: nonEmptyString("已安装的 namespace:block，不包含 block state。"),roadBase: nonEmptyString("已安装的 namespace:block，不包含 block state。"),retainingWall: nonEmptyString("已安装的 namespace:block，不包含 block state。"),deck: nonEmptyString("已安装的 namespace:block，不包含 block state。"),fill: nonEmptyString("已安装的 namespace:block，不包含 block state。"),pier: nonEmptyString("已安装的 namespace:block，不包含 block state。"),railing: nonEmptyString("已安装的 namespace:block，不包含 block state。"),lowWall: nonEmptyString("已安装的 namespace:block，不包含 block state。"),hedge: nonEmptyString("已安装的 namespace:block，不包含 block state。"),accessSurface: nonEmptyString("已安装的 namespace:block，不包含 block state。"),accessStair: nonEmptyString("已安装的 namespace:block，不包含 block state。"),bridgeSurface: nonEmptyString("已安装的 namespace:block，不包含 block state。"),bridgeRail: nonEmptyString("已安装的 namespace:block，不包含 block state。")}, []),
+    groups: {type:"object", additionalProperties:strictObject({ground: nonEmptyString("已安装的 namespace:block，不包含 block state。"),roadSurface: nonEmptyString("已安装的 namespace:block，不包含 block state。"),roadStair: nonEmptyString("已安装的 namespace:block，不包含 block state。"),roadCurb: nonEmptyString("已安装的 namespace:block，不包含 block state。"),roadBase: nonEmptyString("已安装的 namespace:block，不包含 block state。"),retainingWall: nonEmptyString("已安装的 namespace:block，不包含 block state。"),deck: nonEmptyString("已安装的 namespace:block，不包含 block state。"),fill: nonEmptyString("已安装的 namespace:block，不包含 block state。"),pier: nonEmptyString("已安装的 namespace:block，不包含 block state。"),railing: nonEmptyString("已安装的 namespace:block，不包含 block state。"),lowWall: nonEmptyString("已安装的 namespace:block，不包含 block state。"),hedge: nonEmptyString("已安装的 namespace:block，不包含 block state。"),accessSurface: nonEmptyString("已安装的 namespace:block，不包含 block state。"),accessStair: nonEmptyString("已安装的 namespace:block，不包含 block state。"),bridgeSurface: nonEmptyString("已安装的 namespace:block，不包含 block state。"),bridgeRail: nonEmptyString("已安装的 namespace:block，不包含 block state。")}, [])},
+    roads: {type:"object", additionalProperties:strictObject({roadSurface: nonEmptyString("已安装的 namespace:block，不包含 block state。"),roadStair: nonEmptyString("已安装的 namespace:block，不包含 block state。"),roadCurb: nonEmptyString("已安装的 namespace:block，不包含 block state。"),roadBase: nonEmptyString("已安装的 namespace:block，不包含 block state。"),bridgeSurface: nonEmptyString("已安装的 namespace:block，不包含 block state。"),bridgeRail: nonEmptyString("已安装的 namespace:block，不包含 block state。"),pier: nonEmptyString("已安装的 namespace:block，不包含 block state。")}, [])},
+    landscapes: {type:"object", additionalProperties:strictObject({surfaceBlockId: nonEmptyString("已安装的 namespace:block，不包含 block state。"),cropBlockId: nonEmptyString("已安装的 namespace:block，不包含 block state。"),channelBankBlockId: nonEmptyString("已安装的 namespace:block，不包含 block state。"),channelWaterBlockId: nonEmptyString("已安装的 namespace:block，不包含 block state。"),channelBankOverlayBlockId: nonEmptyString("已安装的 namespace:block，不包含 block state。"),boundaryBlockId: nonEmptyString("已安装的 namespace:block，不包含 block state。")}, [])}
+  }, []),
   surfaceDetailProfile: strictObject({ profileRef: nonEmptyString("冻结 surface profile 引用。") }, ["profileRef"]),
   outdoorPlan: strictObject({
     mode: { type: "string", enum: ["GENERATE", "PRESERVE"] },
@@ -1095,7 +1101,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_submit_d4_blueprint",
-    description: "先提交 designIntent，再批量 materialSelections 搜索或选材并获取估算；这两项与蓝图分开提交。之后提交 cityBlueprint 或 blueprintPatch（二选一）。DRAFT 逐功能区初版与修饰。designReview 独立提交：先用 baseDraftHash + groupIds（最多3个）取局部图，看图后再带 assessment 记录判断；局部复核完成后用 overview=true 取总览并记录判断。允许保留合适方案；修订后重看受影响部分。FINAL 必须与已复核草稿一致，正常复核不消耗拒绝预算。schema/cityId/sourceD3Ref/catalogSnapshotRef/generationSeed 可省略，由宿主绑定；显式冲突仍拒绝。proportionMode=RELATIVE_WEIGHTS 归一化占比后执行作者白名单与安全校验；默认 EXACT_SHARES。局部修订使用返回的 baseDraftHash（拒绝草稿）或 baseBlueprintHash（已接受蓝图），二者不可同填，配合 replace-only JSON Pointer blueprintPatch，必须用 EXACT_SHARES。未知路径或过期哈希拒绝。直接读取 designFeedback 和 validationReport.issues.constraint；无可证明的参数修正时不盲改。AI 不读取源码、项目文档或原始 run 文件。",
+    description: "城市地面/道路/台地选材见 designGuide.surfaceMaterials；blockMaterials 独立按需分页查询或查看单块材质图，选择保存在 cityBlueprint.surfaceMaterials，不消耗重试预算。先提交 designIntent，再批量 materialSelections 搜索或选材并获取估算；这两项与蓝图分开提交。之后提交 cityBlueprint 或 blueprintPatch（二选一）。DRAFT 逐功能区初版与修饰。designReview 独立提交：先用 baseDraftHash + groupIds（最多3个）取局部图，看图后再带 assessment 记录判断；局部复核完成后用 overview=true 取总览并记录判断。允许保留合适方案；修订后重看受影响部分。FINAL 必须与已复核草稿一致，正常复核不消耗拒绝预算。schema/cityId/sourceD3Ref/catalogSnapshotRef/generationSeed 可省略，由宿主绑定；显式冲突仍拒绝。proportionMode=RELATIVE_WEIGHTS 归一化占比后执行作者白名单与安全校验；默认 EXACT_SHARES。局部修订使用返回的 baseDraftHash（拒绝草稿）或 baseBlueprintHash（已接受蓝图），二者不可同填，配合 replace-only JSON Pointer blueprintPatch，必须用 EXACT_SHARES。未知路径或过期哈希拒绝。直接读取 designFeedback 和 validationReport.issues.constraint；无可证明的参数修正时不盲改。AI 不读取源码、项目文档或原始 run 文件。",
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: {
@@ -1116,6 +1122,13 @@ export const realmTools: ToolDefinition[] = [
           overview: { type: "boolean", description: "true 请求整城总览；先完成局部复核。" },
           assessment: nonEmptyString("先不填此字段取图；看图后再提交同一目标与此判断：空间意图、实际规模、组合及留白，保留理由或修饰计划。")
         }, ["baseDraftHash"]),
+        blockMaterials: strictObject({
+          slot: nonEmptyString("designGuide.surfaceMaterials 中的实际材质部位。"),
+          query: { type: "string", maxLength: 128, description: "名称/命名空间/标签关键词；省略则只返回少量默认候选。" },
+          page: { type: "integer", minimum: 0, maximum: 100000 },
+          landscapeProfileRef: nonEmptyString("查询景观参数时必须填写，并仅允许该景观暴露的部位。"),
+          previewBlockId: nonEmptyString("只查看这一个方块的材质样片；不提交设计或触发编译。")
+        }, ["slot"]),
         cityBlueprint: cityBlueprintSchema,
         proportionMode: { type: "string", enum: ["EXACT_SHARES", "RELATIVE_WEIGHTS"] },
         submissionMode: { type: "string", enum: ["DRAFT", "FINAL"], description: "逐区设计使用 DRAFT 保留预览和可修订草稿；完成局部与整城 designReview 后才使用 FINAL，默认 FINAL 也执行复核检查。" },

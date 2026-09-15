@@ -423,7 +423,15 @@ public final class LandUseSourceResolver {
                              Map<String, String> landscapeParentParcelIds,
                              List<RoadBand> roadBands,
                              List<GreenParcelSpec> greenParcels,
-                             List<OverflowZoneSpec> overflowZones) {
+                             List<OverflowZoneSpec> overflowZones,
+                             com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField materialField) {
+        public Resolution(List<LandUseSeedGroup> seedGroups, List<LandUseAreaPlan.CorridorExclusion> corridorExclusions,
+                List<String> warnings, String seedSalt, Map<String,Set<BlockPoint>> landscapeCapacityDomains,
+                Map<String,String> landscapeParentParcelIds, List<RoadBand> roadBands,
+                List<GreenParcelSpec> greenParcels, List<OverflowZoneSpec> overflowZones) {
+            this(seedGroups,corridorExclusions,warnings,seedSalt,landscapeCapacityDomains,landscapeParentParcelIds,
+                    roadBands,greenParcels,overflowZones,com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField.empty());
+        }
         public Resolution(List<LandUseSeedGroup> seedGroups,
                           List<LandUseAreaPlan.CorridorExclusion> corridorExclusions,
                           List<String> warnings,
@@ -450,6 +458,7 @@ public final class LandUseSourceResolver {
         }
 
         public Resolution {
+            materialField = materialField == null ? com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField.empty() : materialField;
             landscapeCapacityDomains = Map.copyOf(landscapeCapacityDomains == null
                     ? Map.of() : landscapeCapacityDomains);
             landscapeParentParcelIds = Map.copyOf(landscapeParentParcelIds == null

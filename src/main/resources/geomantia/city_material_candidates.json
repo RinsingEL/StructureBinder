@@ -1,0 +1,92 @@
+{
+  "ground": [
+    "minecraft:stone_bricks",
+    "minecraft:gravel",
+    "minecraft:coarse_dirt"
+  ],
+  "roadSurface": [
+    "minecraft:polished_andesite_slab",
+    "minecraft:stone_brick_slab"
+  ],
+  "roadStair": [
+    "minecraft:polished_andesite_stairs",
+    "minecraft:stone_brick_stairs"
+  ],
+  "roadCurb": [
+    "minecraft:polished_andesite_stairs",
+    "minecraft:stone_brick_stairs"
+  ],
+  "roadBase": [
+    "minecraft:stone_bricks",
+    "minecraft:cobblestone"
+  ],
+  "retainingWall": [
+    "minecraft:stone_bricks",
+    "minecraft:cobblestone"
+  ],
+  "deck": [
+    "minecraft:stone_bricks",
+    "minecraft:spruce_planks"
+  ],
+  "fill": [
+    "minecraft:dirt",
+    "minecraft:stone"
+  ],
+  "pier": [
+    "minecraft:blackstone_wall",
+    "minecraft:stone_bricks"
+  ],
+  "railing": [
+    "minecraft:stone_brick_wall",
+    "minecraft:spruce_fence"
+  ],
+  "lowWall": [
+    "minecraft:stone_brick_wall",
+    "minecraft:cobblestone_wall"
+  ],
+  "hedge": [
+    "minecraft:oak_leaves",
+    "minecraft:flowering_azalea_leaves"
+  ],
+  "accessSurface": [
+    "minecraft:polished_andesite_slab",
+    "minecraft:stone_brick_slab"
+  ],
+  "accessStair": [
+    "minecraft:polished_andesite_stairs",
+    "minecraft:stone_brick_stairs"
+  ],
+  "bridgeSurface": [
+    "minecraft:spruce_slab",
+    "minecraft:stone_brick_slab"
+  ],
+  "bridgeRail": [
+    "minecraft:spruce_fence",
+    "minecraft:stone_brick_wall"
+  ],
+  "surfaceBlockId": [
+    "minecraft:farmland",
+    "minecraft:grass_block",
+    "minecraft:podzol"
+  ],
+  "cropBlockId": [
+    "minecraft:wheat",
+    "minecraft:carrots",
+    "minecraft:poppy"
+  ],
+  "channelBankBlockId": [
+    "minecraft:dirt",
+    "minecraft:coarse_dirt"
+  ],
+  "channelWaterBlockId": [
+    "minecraft:water"
+  ],
+  "channelBankOverlayBlockId": [
+    "minecraft:stone_brick_slab",
+    "minecraft:moss_carpet"
+  ],
+  "boundaryBlockId": [
+    "minecraft:oak_fence",
+    "minecraft:cobblestone_wall"
+  ]
+}

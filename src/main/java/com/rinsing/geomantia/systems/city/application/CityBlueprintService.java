@@ -230,6 +230,15 @@ public final class CityBlueprintService {
         Path outputDir = outputDirectory(requireRunDirectory(debugRoot, runId), cityId);
         synchronized (submissionArtifactLock(outputDir)) {
           try {
+            if (request.has("blockMaterials")) {
+                for(String key:java.util.List.of("cityBlueprint","blueprintPatch","designIntent","materialSelections","designReview","designExample","submissionMode","baseDraftHash","baseBlueprintHash"))
+                    if(request.has(key))throw new IllegalArgumentException("Request blockMaterials separately from design changes and reviews");
+                JsonObject context=readObject(outputDir.resolve("city_blueprint_context.json"),CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_NOT_FOUND);
+                if(!contextId.equals(contextIdentity(context)))throw new IllegalArgumentException("CITY_BLUEPRINT_CONTEXT_STALE");
+                JsonObject frozen=readObject(outputDir.resolve("city_blueprint_catalog_snapshot.json"),CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_STALE);
+                CityTemplateCatalog templates=new CityTemplateCatalogLoader().load(frozen.getAsJsonObject("templateCatalog"));
+                return CityBlockMaterials.query(request.getAsJsonObject("blockMaterials"),CityBlueprintReferenceCatalog.parse(frozen.getAsJsonObject("referenceCatalog"),templates));
+            }
             if (request.has("designExample")) {
                 for (String key : java.util.List.of("designReview", "designIntent", "materialSelections", "cityBlueprint", "blueprintPatch", "submissionMode"))
                     if (request.has(key)) throw new IllegalArgumentException("Request designExample separately from design changes and reviews.");
@@ -303,7 +312,8 @@ public final class CityBlueprintService {
             response.addProperty("error", ex.getMessage() == null ? "CITY_BLUEPRINT_JSON_INVALID" : ex.getMessage());
             response.addProperty("instruction", CityBlueprintSubmissionGuidance.instruction(response.get("error").getAsString()));
             response.addProperty("nextAction", "city_submit_d4_blueprint");
-            CitySubmissionFormatBudget.attach(outputDir, contextId, response, response.get("error").getAsString());
+            if (!request.has("blockMaterials")) CitySubmissionFormatBudget.attach(outputDir, contextId, response, response.get("error").getAsString());
+            else response.addProperty("designInProgress",true);
             if (response.get("error").getAsString().contains("STALE")) attachCurrentRevision(outputDir, contextId, cityId, response);
             return response;
           }
@@ -386,6 +396,7 @@ public final class CityBlueprintService {
         CityBlueprint blueprint;
         try {
                 blueprint = codec.read(CityBlueprintDesignInput.bind(blueprintJson, context, relativeWeights));
+                CityMaterialSupport.validate(blueprint,references);
         } catch (CityBlueprintContractException exception) {
             return failure(debugRoot, cityId, contextId, reportPath, tracePath, exception.reasonCode(),
                     exception.fieldPath(), exception.getMessage(), budget, runId);

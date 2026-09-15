@@ -68,7 +68,7 @@ public final class CityOutdoorBlueprintCompiler {
             CityOutdoorIntentPlan intent = preserveIntent(blueprint, catalog, sourceHashes);
             return new Result(new LandUseSourceResolver.Resolution(List.of(), List.of(), List.of(),
                     Long.toUnsignedString(blueprint.generationSeed()), Map.of(), Map.of(),
-                    roadBands(structureMaterializationPlan), List.of(), List.of()), CityUrbanResidualResolver.Config.disabled(),
+                    roadBands(structureMaterializationPlan), List.of(), List.of(), materialField(blueprint,structureMaterializationPlan)), CityUrbanResidualResolver.Config.disabled(),
                     intent);
         }
 
@@ -167,7 +167,8 @@ public final class CityOutdoorBlueprintCompiler {
                 List<BlockPoint> seeds = List.of(parcel.seed());
                 LandscapeFillProgram fillProgram = landscapeFillProgram(blueprint, landscape, profile,
                         parcel, catalog);
-                LandUseSurfaceSettings fillSurfaceSettings = surfaceSettings(parcelRule, recipe, false);
+                LandUseSurfaceSettings fillSurfaceSettings = com.rinsing.geomantia.systems.city.application.CityMaterialSupport.landscapeSettings(
+                        surfaceSettings(parcelRule, recipe, false), blueprint.surfaceMaterials().landscapes().get(landscape.landscapeId()));
                 // Only an explicitly selected water-bearing fill may use the author's channel recipe.
                 // Dry fields and other landscape programs keep their authored relay semantics.
                 boolean irrigatedBands = fillSurfaceSettings.surfaceAlgorithm()
@@ -205,7 +206,7 @@ public final class CityOutdoorBlueprintCompiler {
                 foundationPlan == null ? 0 : foundationPlan.resolvedCloseRadiusBlocks());
         return new Result(new LandUseSourceResolver.Resolution(groups, List.of(), outdoorWarnings,
                 Long.toUnsignedString(blueprint.generationSeed()), capacityDomains,
-                resolvedParentParcelIds, roadBands, greenParcels, overflowZones),
+                resolvedParentParcelIds, roadBands, greenParcels, overflowZones, materialField(blueprint,structureMaterializationPlan)),
                 CityUrbanResidualResolver.Config.disabled(),
                 intent);
     }
@@ -763,6 +764,18 @@ public final class CityOutdoorBlueprintCompiler {
             if (bounds.size() > 0) result.add(bounds(bounds));
         }
         return List.copyOf(result);
+    }
+
+    private static com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField materialField(
+            CityBlueprint blueprint, JsonObject plan) {
+        var owners = new ArrayList<com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField.Owner>();
+        readAnchors(plan).forEach((group,anchors)->anchors.forEach(anchor->owners.add(
+                new com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField.Owner(group,anchor.footprint()))));
+        owners.sort(Comparator.comparing(com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField.Owner::groupId)
+                .thenComparingInt(o->o.bounds().minX()).thenComparingInt(o->o.bounds().minZ()));
+        var roads=roadBands(plan).stream().map(road->new com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField.Road(
+                road.streetBandId(),road.roadKind(),road.bounds())).toList();
+        return new com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField(blueprint.surfaceMaterials(),owners,roads);
     }
 
     private static List<LandUseSourceResolver.RoadBand> roadBands(JsonObject materializationPlan) {

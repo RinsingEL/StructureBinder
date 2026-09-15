@@ -170,7 +170,7 @@ final class ProviderPlanningToolCatalog {
                 "styleProfile", profileRefSchema(), "groups", nonEmptyArray(groupSchema()),
                 "arrayCompositions", array(arrayCompositionSchema()), "relations", array(relationSchema()),
                 "roadProfile", profileRefSchema(), "surfaceDetailProfile", profileRefSchema(),
-                "outdoorPlan", outdoorPlanSchema());
+                "outdoorPlan", outdoorPlanSchema(), "surfaceMaterials", surfaceMaterialsSchema());
         JsonObject blueprint = object(blueprintProperties,
                 "designIntent",
                 "styleProfile", "groups", "arrayCompositions", "relations", "roadProfile",
@@ -188,6 +188,7 @@ final class ProviderPlanningToolCatalog {
                 "designReview", object(properties("baseDraftHash", string(), "groupIds", reviewGroups,
                         "overview", bool(), "assessment", string()), "baseDraftHash"),
                 "designExample", object(properties("caseId", string(), "reloadImages", bool()), "caseId"),
+                "blockMaterials", object(properties("slot",string(),"query",string(),"page",integer(),"landscapeProfileRef",string(),"previewBlockId",string()),"slot"),
                 "cityBlueprint", blueprint, "autoAdvanceAfterD4", bool(),
                 "proportionMode", enumeration("EXACT_SHARES", "RELATIVE_WEIGHTS"),
                 "submissionMode", enumeration("DRAFT", "FINAL"),
@@ -195,6 +196,20 @@ final class ProviderPlanningToolCatalog {
                 "blueprintPatch", nonEmptyArray(object(properties("op", enumeration("replace"), "path", string(),
                         "value", new JsonObject()), "op", "path", "value"))),
                 "contextId");
+    }
+
+    private static JsonObject surfaceMaterialsSchema() {
+        JsonObject slots=new JsonObject();
+        for(String slot:new java.util.TreeSet<>(com.rinsing.geomantia.systems.city.domain.blueprint.CitySurfaceMaterials.CITY_SLOTS))slots.add(slot,string());
+        JsonObject roadSlots=new JsonObject();
+        for(String slot:new java.util.TreeSet<>(com.rinsing.geomantia.systems.city.domain.blueprint.CitySurfaceMaterials.ROAD_SLOTS))roadSlots.add(slot,string());
+        JsonObject landscapeSlots=new JsonObject();
+        for(String slot:new java.util.TreeSet<>(com.rinsing.geomantia.systems.city.domain.blueprint.CitySurfaceMaterials.LANDSCAPE_SLOTS))landscapeSlots.add(slot,string());
+        return object(properties("defaults",object(slots),"groups",mapSchema(object(slots)),
+                "roads",mapSchema(object(roadSlots)),"landscapes",mapSchema(object(landscapeSlots))));
+    }
+    private static JsonObject mapSchema(JsonObject values){
+        JsonObject schema=new JsonObject();schema.addProperty("type","object");schema.add("additionalProperties",values);return schema;
     }
 
     private static JsonObject artifactRefSchema() {

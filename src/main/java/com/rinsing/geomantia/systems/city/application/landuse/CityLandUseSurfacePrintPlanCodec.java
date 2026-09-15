@@ -21,7 +21,7 @@ import java.util.Set;
 public final class CityLandUseSurfacePrintPlanCodec {
     private static final Set<String> ROOT_FIELDS = Set.of(
             "schema", "cityId", "sourceLandUsePlanHash", "planHash", "areas",
-            "sharedBoundarySpans", "featureCells");
+            "sharedBoundarySpans", "featureCells", "materialField");
     private static final Set<String> FEATURE_FIELDS = Set.of(
             "sourceId", "x", "z", "blockId", "surfaceOffset", "kind", "facing", "targetSurfaceY");
     private static final Set<String> AREA_FIELDS = Set.of(
@@ -72,6 +72,7 @@ public final class CityLandUseSurfacePrintPlanCodec {
     public JsonObject toJson(CityLandUseSurfacePrintPlan plan) {
         JsonObject root = new JsonObject();
         root.addProperty("schema", plan.schema());
+        if (!plan.materialField().isEmpty()) root.add("materialField",plan.materialField().toJson());
         root.addProperty("cityId", plan.cityId());
         root.addProperty("sourceLandUsePlanHash", plan.sourceLandUsePlanHash());
         if (!plan.planHash().isBlank()) root.addProperty("planHash", plan.planHash());
@@ -139,7 +140,8 @@ public final class CityLandUseSurfacePrintPlanCodec {
         }
         CityLandUseSurfacePrintPlan plan = new CityLandUseSurfacePrintPlan(
                 schema, text(root, "cityId", false), text(root, "sourceLandUsePlanHash", false),
-                optionalText(root, "planHash"), areas, shared, features);
+                optionalText(root, "planHash"), areas, shared, features,
+                com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField.read(root.getAsJsonObject("materialField")));
         if (!plan.planHash().isBlank() && !plan.planHash().equals(computePlanHash(plan))) {
             throw fail("CITY_LAND_USE_SURFACE_PRINT_PLAN_HASH_MISMATCH", "planHash does not match payload");
         }

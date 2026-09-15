@@ -20,11 +20,33 @@ public record CityLandUseSurfacePrintPlan(
         String planHash,
         List<AreaPrint> areas,
         List<SharedBoundaryPrintSpan> sharedBoundarySpans,
-        List<FeatureCell> featureCells) {
+        List<FeatureCell> featureCells,
+        com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField materialField) {
 
+    public CityLandUseSurfacePrintPlan(String schema,String cityId,String sourceLandUsePlanHash,String planHash,
+            List<AreaPrint> areas,List<SharedBoundaryPrintSpan> sharedBoundarySpans,List<FeatureCell> featureCells){
+        this(schema,cityId,sourceLandUsePlanHash,planHash,areas,sharedBoundarySpans,featureCells,
+                com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField.empty());
+    }
+    public CityLandUseSurfacePrintPlan withMaterials(com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField field){
+        var features=featureCells.stream().map(f->{
+            String slot=switch(f.kind()) {
+                case ROAD_SLAB -> "roadSurface";
+                case ROAD_STAIR -> field.isCurb(f.sourceId(),f.x(),f.z()) ? "roadCurb" : "roadStair";
+                case BRIDGE_DECK -> "bridgeSurface";
+                case BRIDGE_RAIL -> "bridgeRail";
+                case OVERFLOW_BOUNDARY -> "lowWall";
+                default -> "";
+            };
+            return new FeatureCell(f.sourceId(),f.x(),f.z(),slot.isEmpty()?f.blockId():field.at(slot,f.x(),f.z(),f.sourceId(),f.blockId()),
+                    f.surfaceOffset(),f.kind(),f.facing(),f.targetSurfaceY());
+        }).toList();
+        return new CityLandUseSurfacePrintPlan(schema,cityId,sourceLandUsePlanHash,"",areas,sharedBoundarySpans,features,field);
+    }
     public static final String SCHEMA = "city_land_use_surface_print_plan";
 
     public CityLandUseSurfacePrintPlan {
+        materialField = materialField == null ? com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField.empty() : materialField;
         if (!SCHEMA.equals(schema)) {
             throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_SCHEMA_UNSUPPORTED:" + schema);
         }
@@ -52,7 +74,7 @@ public record CityLandUseSurfacePrintPlan(
 
     public CityLandUseSurfacePrintPlan withPlanHash(String hash) {
         return new CityLandUseSurfacePrintPlan(schema, cityId, sourceLandUsePlanHash, hash, areas,
-                sharedBoundarySpans, featureCells);
+                sharedBoundarySpans, featureCells, materialField);
     }
 
     public CityLandUseSurfacePrintPlan(String schema, String cityId, String sourceLandUsePlanHash,

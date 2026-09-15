@@ -16,6 +16,53 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CityLandUseChunkExecutorTest {
     private final CityLandUseChunkExecutor executor = new CityLandUseChunkExecutor();
 
+    @Test void roadBaseOverrideSurvivesExistingFoundationSurface() {
+        var mask=List.of(new CityLandUseChunkCompiler.GradingMaskCell("foundation",1,1,true,64));
+        var surfaces=List.of(new CityLandUseChunkCompiler.SurfaceOperation("foundation","plaza",1,1,"minecraft:stone_bricks"));
+        var road=new CityLandUseChunkCompiler.FeatureOperation("main",1,1,"minecraft:stone_slab",0,
+                CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,64);
+        var materials=new com.rinsing.geomantia.systems.city.domain.blueprint.CitySurfaceMaterials(
+                Map.of("roadBase","minecraft:cobblestone"),Map.of(),Map.of("CITY_MAIN_ROAD",Map.of("roadBase","minecraft:bricks")),Map.of());
+        var field=new com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField(materials,List.of(),List.of(
+                new com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField.Road("main","CITY_MAIN_ROAD",
+                        new com.rinsing.geomantia.systems.city.domain.model.BlockBounds(1,1,1,1))));
+        var fragment=new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,
+                "city","hash","palette",0,0,1,0,0,0,"minecraft:dirt",mask,surfaces,List.of(),List.of(road),List.of(road),List.of(),List.of(),field);
+        FakeWorld world=new FakeWorld();var result=executor.execute(fragment,world,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED,result.status());
+        assertTrue(world.writes.contains("1,64,1=minecraft:bricks"),world.writes.toString());
+    }
+
+    @Test void materialFailureIdentifiesBlockOwnerAndPositionAndRollsBackWrites() {
+        var mask=List.of(new CityLandUseChunkCompiler.GradingMaskCell("field",1,1));
+        var surfaces=List.of(new CityLandUseChunkCompiler.SurfaceOperation("field","farm",1,1,"pack:soil"));
+        var fragment=new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,
+                "city","hash","palette",0,0,1,0,0,0,"minecraft:dirt",mask,surfaces,List.of(),List.of());
+        FakeWorld missing=new FakeWorld();missing.known.put("pack:soil",false);
+        var preflight=executor.execute(fragment,missing,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+        assertEquals("pack:soil",preflight.materialFailure().blockId());assertEquals("field",preflight.materialFailure().sourceId());
+        assertEquals(1,preflight.materialFailure().x());assertEquals("CITY_LAND_USE_BLOCK_ID_UNKNOWN",preflight.materialFailure().reason());
+        FakeWorld rejected=new FakeWorld();rejected.mutateThenFailWriteIndex=1;
+        var write=executor.execute(fragment,rejected,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+        assertEquals("pack:soil",write.materialFailure().blockId());assertTrue(write.rollbackComplete());assertFalse(rejected.restores.isEmpty());
+    }
+
+    @Test void chosenGroundAndDeckMaterialsReachActualWrites() {
+        var mask=List.of(new CityLandUseChunkCompiler.GradingMaskCell("foundation",1,1,true,90));
+        var surfaces=List.of(new CityLandUseChunkCompiler.SurfaceOperation("foundation","plaza",1,1,"minecraft:stone_bricks"));
+        var materials=new com.rinsing.geomantia.systems.city.domain.blueprint.CitySurfaceMaterials(
+                Map.of("ground","minecraft:bricks","deck","minecraft:spruce_planks","pier","minecraft:birch_fence","retainingWall","minecraft:cobblestone"),Map.of(),Map.of(),Map.of());
+        var field=new com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField(materials,List.of(),List.of());
+        var fragment=new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,
+                "city","hash","palette",0,0,1,0,0,0,"minecraft:dirt",mask,surfaces,List.of(),List.of(),List.of(),List.of(),List.of(),field);
+        FakeWorld world=new FakeWorld();
+        var result=executor.execute(fragment,world,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED,result.status());
+        assertTrue(world.writes.contains("1,90,1=minecraft:bricks"),world.writes.toString());
+        assertTrue(world.writes.contains("1,89,1=minecraft:spruce_planks"),world.writes.toString());
+        assertFalse(world.writes.stream().anyMatch(w->w.endsWith("=minecraft:stone_bricks")));
+    }
+
     @Test
     void landscapeCanyonSkipsSoilCropAndFenceWithoutFailingOwner() {
         var mask=List.of(new CityLandUseChunkCompiler.GradingMaskCell("field",1,1,false,64,true,6));

@@ -15,14 +15,14 @@ public final class CityBlueprintCodec {
     public static final long MAX_SAFE_GENERATION_SEED = 9_007_199_254_740_991L;
     private static final Set<String> ROOT_FIELDS = Set.of("schema", "cityId", "sourceD3Ref",
             "catalogSnapshotRef", "generationSeed", "designIntent", "styleProfile", "groups",
-            "arrayCompositions", "relations", "roadProfile", "surfaceDetailProfile", "outdoorPlan");
+            "arrayCompositions", "relations", "roadProfile", "surfaceDetailProfile", "outdoorPlan", "surfaceMaterials");
     private static final Set<String> FORBIDDEN_FIELDS = Set.of("x", "y", "z", "blockX", "blockY", "blockZ",
             "worldX", "worldY", "worldZ", "anchor", "anchorBlock", "rotation", "mirror", "candidateId",
             "algorithm", "algorithmName", "templateId", "templateRef", "nbtFile");
 
     public CityBlueprint read(JsonObject root) {
         rejectForbidden(root, "$");
-        exactFields(root, ROOT_FIELDS, "$");
+        exactFields(root, ROOT_FIELDS, Set.of("surfaceMaterials"), "$");
         String schema = requiredString(root, "schema", "$.schema");
         if (!CityBlueprint.SCHEMA.equals(schema)) {
             fail(CityBlueprintReasonCode.CITY_BLUEPRINT_SCHEMA_UNSUPPORTED, "$.schema",
@@ -43,7 +43,9 @@ public final class CityBlueprintCodec {
                 profileRef(requiredObject(root, "roadProfile", "$.roadProfile"), "$.roadProfile"),
                 profileRef(requiredObject(root, "surfaceDetailProfile", "$.surfaceDetailProfile"),
                         "$.surfaceDetailProfile"),
-                outdoorPlan(requiredObject(root, "outdoorPlan", "$.outdoorPlan")));
+                outdoorPlan(requiredObject(root, "outdoorPlan", "$.outdoorPlan")),
+                com.rinsing.geomantia.systems.city.domain.blueprint.CitySurfaceMaterials.read(root.has("surfaceMaterials")
+                        ? requiredObject(root,"surfaceMaterials","$.surfaceMaterials") : null));
     }
 
     public JsonObject write(CityBlueprint blueprint) {
@@ -116,6 +118,7 @@ public final class CityBlueprintCodec {
         root.add("roadProfile", profileRefJson(blueprint.roadProfile()));
         root.add("surfaceDetailProfile", profileRefJson(blueprint.surfaceDetailProfile()));
         root.add("outdoorPlan", outdoorPlanJson(blueprint.outdoorPlan()));
+        if (!blueprint.surfaceMaterials().isEmpty()) root.add("surfaceMaterials",blueprint.surfaceMaterials().toJson());
         return root;
     }
 

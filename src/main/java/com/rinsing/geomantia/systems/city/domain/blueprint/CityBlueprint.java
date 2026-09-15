@@ -16,11 +16,21 @@ public record CityBlueprint(
         List<Relation> relations,
         ProfileRef roadProfile,
         ProfileRef surfaceDetailProfile,
-        OutdoorPlan outdoorPlan) {
+        OutdoorPlan outdoorPlan,
+        CitySurfaceMaterials surfaceMaterials) {
+
+    public CityBlueprint(String schema, String cityId, ArtifactRef sourceD3Ref, ArtifactRef catalogSnapshotRef,
+            long generationSeed, DesignIntent designIntent, ProfileRef styleProfile, List<Group> groups,
+            List<ArrayComposition> arrayCompositions, List<Relation> relations, ProfileRef roadProfile,
+            ProfileRef surfaceDetailProfile, OutdoorPlan outdoorPlan) {
+        this(schema,cityId,sourceD3Ref,catalogSnapshotRef,generationSeed,designIntent,styleProfile,groups,
+                arrayCompositions,relations,roadProfile,surfaceDetailProfile,outdoorPlan,CitySurfaceMaterials.empty());
+    }
 
     public static final String SCHEMA = "city_blueprint";
 
     public CityBlueprint {
+        surfaceMaterials = surfaceMaterials == null ? CitySurfaceMaterials.empty() : surfaceMaterials;
         groups = List.copyOf(groups);
         arrayCompositions = List.copyOf(arrayCompositions);
         relations = List.copyOf(relations);

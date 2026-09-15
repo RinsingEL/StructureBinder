@@ -328,3 +328,14 @@ test("author configuration retains greenery and Landscape profiles without askin
   assert.equal(parcel.properties.parcelCountMin.minimum, 1);
   assert.equal(parcel.properties.minSharedBoundaryBlocks.minimum, 1);
 });
+
+
+test("block material discovery is separate and blueprint materials remain optional", () => {
+  const submit=realmTools.find(t=>t.name==="city_submit_d4_blueprint").inputSchema;
+  assert.deepEqual(submit.properties.blockMaterials.required,["slot"]);
+  assert.equal(submit.properties.blockMaterials.properties.page.minimum,0);
+  const b=submit.properties.cityBlueprint;
+  assert.ok(b.properties.surfaceMaterials.properties.landscapes.additionalProperties.properties.cropBlockId);
+  assert.ok(!b.required.includes("surfaceMaterials"));
+  assert.equal(b.properties.surfaceMaterials.properties.defaults.additionalProperties,false);
+});

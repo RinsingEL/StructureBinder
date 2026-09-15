@@ -376,7 +376,7 @@ public final class CityLandUseWorldgenRegistry {
                     failed++;
                     failures.add(new OwnerFailure(active.key().cityId(), active.areaPlan().planHash(),
                             active.surfacePrintPlan().planHash(), chunkX, chunkZ, result.reasonCode(),
-                            result.rollbackComplete()));
+                            result.rollbackComplete(),result.materialFailure()));
                     LOGGER.warn("City LandUse owner apply failed: cityId={}, chunk={},{} reason={} rollbackComplete={}",
                             active.key().cityId(), chunkX, chunkZ, result.reasonCode(),
                             result.rollbackComplete());
@@ -1227,7 +1227,11 @@ public final class CityLandUseWorldgenRegistry {
                                int chunkX,
                                int chunkZ,
                                String reasonCode,
-                               boolean rollbackComplete) {
+                               boolean rollbackComplete, CityLandUseChunkExecutor.MaterialFailure materialFailure) {
+        public OwnerFailure(String cityId,String planHash,String surfacePrintPlanHash,int chunkX,int chunkZ,
+                String reasonCode,boolean rollbackComplete){
+            this(cityId,planHash,surfacePrintPlanHash,chunkX,chunkZ,reasonCode,rollbackComplete,null);
+        }
     }
 
     public record BackfillSummary(String cityId,

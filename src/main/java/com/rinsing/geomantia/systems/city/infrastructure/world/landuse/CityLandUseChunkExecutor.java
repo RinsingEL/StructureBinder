@@ -129,6 +129,11 @@ public final class CityLandUseChunkExecutor {
                         || operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR)
                 .map(operation -> new ColumnKey(operation.x(), operation.z()))
                 .collect(java.util.stream.Collectors.toSet());
+        Map<ColumnKey,String> roadSources = new HashMap<>();
+        for (var road : fragment.featureOperations()) {
+            if (roadColumns.contains(new ColumnKey(road.x(),road.z())))
+                roadSources.put(new ColumnKey(road.x(),road.z()),road.sourceId());
+        }
         Set<ColumnKey> circulationColumns = new HashSet<>(roadColumns);
         foundationPlan.accessPaths().forEach(path -> circulationColumns.add(new ColumnKey(path.x(), path.z())));
         foundationPlan.stairs().forEach(stair -> circulationColumns.add(new ColumnKey(stair.x(), stair.z())));
@@ -144,7 +149,7 @@ public final class CityLandUseChunkExecutor {
                         || foundationByColumn.containsKey(key) || fillByColumn.containsKey(key))
                 .sorted(java.util.Comparator.comparingInt(ColumnKey::z).thenComparingInt(ColumnKey::x))
                 .forEach(key -> surfaceOperations.add(new CityLandUseChunkCompiler.SurfaceOperation(
-                        "road", "road", key.x(), key.z(), "minecraft:stone_bricks")));
+                        "road", "road", key.x(), key.z(), fragment.materialField().at("roadBase",key.x(),key.z(),roadSources.getOrDefault(key,""),"minecraft:stone_bricks"))));
         Set<ColumnKey> surfaceColumns = new HashSet<>();
         Set<ColumnKey> frozenRoadColumns = new HashSet<>();
         surfaceOperations.forEach(operation -> surfaceColumns.add(new ColumnKey(operation.x(), operation.z())));
@@ -168,7 +173,7 @@ public final class CityLandUseChunkExecutor {
                     feature.x(), feature.z(), column.surfaceY(), targetY,
                     CityLandUseMicroGrader.designedRealization(column.surfaceY(), targetY)));
             if (surfaceColumns.add(key)) surfaceOperations.add(new CityLandUseChunkCompiler.SurfaceOperation(
-                    feature.sourceId(), "road", feature.x(), feature.z(), "minecraft:stone_bricks"));
+                    feature.sourceId(), "road", feature.x(), feature.z(), fragment.materialField().at("roadBase",feature.x(),feature.z(),feature.sourceId(),"minecraft:stone_bricks")));
         }
         Map<ColumnKey, CityLandUseMicroGrader.StairDecision> platformStairByColumn = new HashMap<>();
         for (CityLandUseMicroGrader.StairDecision stair : foundationPlan.stairs()) {
@@ -219,16 +224,16 @@ public final class CityLandUseChunkExecutor {
             if (shouldDeck && preparedFillColumns.add(key)) {
                 // Cap the void with a thin deck; sparse blackstone piers express bridge support.
                 PreparedMutation bed = prepare(world, operation.areaId(), OperationPhase.MICRO_FILL,
-                        operation.x(), targetSurfaceY - 1, operation.z(), "minecraft:stone_bricks", true);
-                if (bed.failureReason() != null) return ExecutionResult.failed(fragment, bed.failureReason(),
+                        operation.x(), targetSurfaceY - 1, operation.z(), fragment.materialField().at("deck",operation.x(),operation.z(),"minecraft:stone_bricks"), true);
+                if (bed.failureReason() != null) return ExecutionResult.failed(fragment, bed,
                         preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
                         naturalSurfaceSkipped, occupiedBoundarySkipped, true);
                 basePrepared.add(bed);
                 if (CityFoundationSupportSettings.current().pierAt(operation.x(), operation.z())) {
                     for (int y = column.surfaceY() + 1; y < targetSurfaceY - 1; y++) {
                         PreparedMutation pier = prepare(world, operation.areaId(), OperationPhase.MICRO_FILL,
-                                operation.x(), y, operation.z(), "minecraft:blackstone_wall", true);
-                        if (pier.failureReason() != null) return ExecutionResult.failed(fragment, pier.failureReason(),
+                                operation.x(), y, operation.z(), fragment.materialField().at("pier",operation.x(),operation.z(),operation.areaId(),"minecraft:blackstone_wall"), true);
+                        if (pier.failureReason() != null) return ExecutionResult.failed(fragment, pier,
                                 preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
                                 naturalSurfaceSkipped, occupiedBoundarySkipped, true);
                         basePrepared.add(pier);
@@ -239,9 +244,10 @@ public final class CityLandUseChunkExecutor {
                 for (int y = column.surfaceY() + 1; y < targetSurfaceY; y++) {
                     PreparedMutation mutation = prepare(world, operation.areaId(), OperationPhase.MICRO_FILL,
                             operation.x(), y, operation.z(), frozenRoadColumns.contains(key)
-                                    ? "minecraft:stone_bricks" : fragment.microFillBlockId(), true);
+                                    ? fragment.materialField().at("roadBase",operation.x(),operation.z(),roadSources.getOrDefault(key,operation.areaId()),"minecraft:stone_bricks")
+                                    : fragment.materialField().at("fill",operation.x(),operation.z(),fragment.microFillBlockId()), true);
                     if (mutation.failureReason() != null) {
-                        return ExecutionResult.failed(fragment, mutation.failureReason(),
+                        return ExecutionResult.failed(fragment, mutation,
                                 preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
                                 naturalSurfaceSkipped, occupiedBoundarySkipped, true);
                     }
@@ -255,7 +261,7 @@ public final class CityLandUseChunkExecutor {
                     PreparedMutation mutation = prepare(world, operation.areaId(), OperationPhase.MICRO_CUT,
                             operation.x(), y, operation.z(), "minecraft:air", false);
                     if (mutation.failureReason() != null) {
-                        return ExecutionResult.failed(fragment, mutation.failureReason(),
+                        return ExecutionResult.failed(fragment, mutation,
                                 preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
                                 naturalSurfaceSkipped, occupiedBoundarySkipped, true);
                     }
@@ -268,6 +274,8 @@ public final class CityLandUseChunkExecutor {
                 case CROP -> OperationPhase.CROP;
             };
             String surfaceBlock = operation.blockId();
+            if(operation.surfaceOffset()==0 && foundation != null && !"road".equals(operation.landUseType()))
+                surfaceBlock = fragment.materialField().at("ground",operation.x(),operation.z(),surfaceBlock);
             if (!operation.channelClosureBlockId().isBlank()) {
                 // Water replaces the ground block (not the air above it). A real solid bed and
                 // four closed sides are required before writing, including across owner seams.
@@ -285,7 +293,7 @@ public final class CityLandUseChunkExecutor {
                     operation.x(), targetSurfaceY + operation.surfaceOffset(), operation.z(), surfaceBlock,
                     operation.requireReplaceableTarget() || (shouldFill || shouldDeck) && operation.surfaceOffset() == 0);
             if (mutation.failureReason() != null) {
-                return ExecutionResult.failed(fragment, mutation.failureReason(),
+                return ExecutionResult.failed(fragment, mutation,
                         preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
                         naturalSurfaceSkipped, occupiedBoundarySkipped, true);
             }
@@ -296,9 +304,9 @@ public final class CityLandUseChunkExecutor {
 
         for (CityLandUseMicroGrader.RetainingWallDecision wall : foundationPlan.retainingWalls()) {
             PreparedMutation mutation = prepare(world, wall.areaId(), OperationPhase.RETAINING_WALL,
-                    wall.x(), wall.y(), wall.z(), wall.blockId(), false);
+                    wall.x(), wall.y(), wall.z(), fragment.materialField().at("retainingWall",wall.x(),wall.z(),wall.blockId()), false);
             if (mutation.failureReason() != null) {
-                return ExecutionResult.failed(fragment, mutation.failureReason(),
+                return ExecutionResult.failed(fragment, mutation,
                         preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
                         naturalSurfaceSkipped, occupiedBoundarySkipped, true);
             }
@@ -313,14 +321,14 @@ public final class CityLandUseChunkExecutor {
             boolean clearedByBaseMutation = baseMutationClearsTarget(basePrepared,
                     edge.x(), edge.y(), edge.z());
             PreparedMutation mutation = prepare(world, edge.areaId(), OperationPhase.BOUNDARY,
-                    edge.x(), edge.y(), edge.z(), edge.blockId(), !clearedByBaseMutation);
+                    edge.x(), edge.y(), edge.z(), fragment.materialField().at(edge.kind() == CityLandUseMicroGrader.TerraceEdgeKind.GREENERY ? "hedge" : edge.kind() == CityLandUseMicroGrader.TerraceEdgeKind.RAILING ? "railing" : "lowWall",edge.x(),edge.z(),edge.blockId()), !clearedByBaseMutation);
             if (mutation.failureReason() != null) {
                 if ("CITY_LAND_USE_BOUNDARY_TARGET_OCCUPIED".equals(mutation.failureReason())) {
                     occupiedBoundarySkipped++;
                     terraceEdgeOccupiedSkipped++;
                     continue;
                 }
-                return ExecutionResult.failed(fragment, mutation.failureReason(),
+                return ExecutionResult.failed(fragment, mutation,
                         preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
                         naturalSurfaceSkipped, occupiedBoundarySkipped, true);
             }
@@ -350,7 +358,7 @@ public final class CityLandUseChunkExecutor {
                     occupiedBoundarySkipped++;
                     continue;
                 }
-                return ExecutionResult.failed(fragment, mutation.failureReason(),
+                return ExecutionResult.failed(fragment, mutation,
                         preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
                         naturalSurfaceSkipped, occupiedBoundarySkipped, true);
             }
@@ -373,9 +381,9 @@ public final class CityLandUseChunkExecutor {
                 for (int y = surfaceY - 1, depth = 0; depth < 64; y--, depth++) {
                     if (!world.inspect(operation.x(), y, operation.z()).replaceable()) break;
                     PreparedMutation pier = prepare(world, operation.sourceId(), OperationPhase.FEATURE,
-                            operation.x(), y, operation.z(), "minecraft:stone_bricks", true);
+                            operation.x(), y, operation.z(), fragment.materialField().at("pier",operation.x(),operation.z(),operation.sourceId(),"minecraft:stone_bricks"), true);
                     if (pier.failureReason() != null) {
-                        return ExecutionResult.failed(fragment, pier.failureReason(),
+                        return ExecutionResult.failed(fragment, pier,
                                 preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
                                 naturalSurfaceSkipped, occupiedBoundarySkipped, true);
                     }
@@ -385,14 +393,14 @@ public final class CityLandUseChunkExecutor {
             CityLandUseChunkCompiler.FeatureOperation effectiveOperation = platformStair != null
                     && (operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
                     || operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR)
-                    ? platformStairOperation(platformStair) : operation;
+                    ? platformStairOperation(platformStair, fragment) : operation;
             if (effectiveOperation != operation) materializedPlatformStairs.add(key);
             int featureY = surfaceY + effectiveOperation.surfaceOffset();
             PreparedMutation mutation = prepareFeature(world, effectiveOperation, featureY,
                     baseMutationClearsTarget(basePrepared,
                             effectiveOperation.x(), featureY, effectiveOperation.z()));
             if (mutation.failureReason() != null) {
-                return ExecutionResult.failed(fragment, mutation.failureReason(),
+                return ExecutionResult.failed(fragment, mutation,
                         preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
                         naturalSurfaceSkipped, occupiedBoundarySkipped, true);
             }
@@ -440,13 +448,13 @@ public final class CityLandUseChunkExecutor {
                     foundation == null ? column.surfaceY() : foundation.targetY());
             CityLandUseChunkCompiler.FeatureOperation operation =
                     new CityLandUseChunkCompiler.FeatureOperation("access::" + path.demandId(),
-                            path.x(), path.z(), path.blockId(), 0,
+                            path.x(), path.z(), fragment.materialField().at("accessSurface",path.x(),path.z(),path.blockId()), 0,
                             CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,
                             CityLandUseSurfacePrintPlan.HorizontalFacing.NONE);
             PreparedMutation mutation = prepareFeature(world, operation, surfaceY,
                     baseMutationClearsTarget(basePrepared, path.x(), surfaceY, path.z()));
             if (mutation.failureReason() != null) {
-                return ExecutionResult.failed(fragment, mutation.failureReason(),
+                return ExecutionResult.failed(fragment, mutation,
                         preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
                         naturalSurfaceSkipped, occupiedBoundarySkipped, true);
             }
@@ -457,10 +465,10 @@ public final class CityLandUseChunkExecutor {
         for (CityLandUseMicroGrader.StairDecision stair : foundationPlan.stairs()) {
             ColumnKey key = new ColumnKey(stair.x(), stair.z());
             if (materializedPlatformStairs.contains(key) || frozenRoadColumns.contains(key)) continue;
-            PreparedMutation mutation = prepareFeature(world, platformStairOperation(stair), stair.targetY(),
+            PreparedMutation mutation = prepareFeature(world, platformStairOperation(stair, fragment), stair.targetY(),
                     baseMutationClearsTarget(basePrepared, stair.x(), stair.targetY(), stair.z()));
             if (mutation.failureReason() != null) {
-                return ExecutionResult.failed(fragment, mutation.failureReason(),
+                return ExecutionResult.failed(fragment, mutation,
                         preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
                         naturalSurfaceSkipped, occupiedBoundarySkipped, true);
             }
@@ -471,20 +479,22 @@ public final class CityLandUseChunkExecutor {
         int preparedBlockCount = preparedCount(basePrepared, cropPrepared, boundaryPrepared);
 
         List<PreparedMutation> baseApplied = new ArrayList<>();
-        if (!apply(world, basePrepared, baseApplied)) {
+        PreparedMutation baseFailure=apply(world, basePrepared, baseApplied);
+        if (baseFailure != null) {
             boolean rolledBack = rollback(world, baseApplied);
             return ExecutionResult.failed(fragment, "CITY_LAND_USE_BLOCK_WRITE_FAILED",
                     preparedBlockCount, baseApplied.size(), naturalSurfaceSkipped,
-                    occupiedBoundarySkipped, rolledBack);
+                    occupiedBoundarySkipped, rolledBack).withMaterialFailure(baseFailure);
         }
 
         List<PreparedMutation> cropApplied = new ArrayList<>();
-        if (!apply(world, cropPrepared, cropApplied)) {
+        PreparedMutation cropFailure=apply(world, cropPrepared, cropApplied);
+        if (cropFailure != null) {
             boolean rolledBack = rollback(world, cropApplied);
             rolledBack &= rollback(world, baseApplied);
             return ExecutionResult.failed(fragment, "CITY_LAND_USE_BLOCK_WRITE_FAILED",
                     preparedBlockCount, baseApplied.size() + cropApplied.size(), naturalSurfaceSkipped,
-                    occupiedBoundarySkipped, rolledBack);
+                    occupiedBoundarySkipped, rolledBack).withMaterialFailure(cropFailure);
         }
 
         List<PreparedMutation> boundaryApplied = new ArrayList<>();
@@ -504,7 +514,7 @@ public final class CityLandUseChunkExecutor {
             return ExecutionResult.failed(fragment, boundaryResult.reasonCode(),
                     preparedBlockCount,
                     baseApplied.size() + cropApplied.size() + boundaryApplied.size(),
-                    naturalSurfaceSkipped, occupiedBoundarySkipped, rolledBack);
+                    naturalSurfaceSkipped, occupiedBoundarySkipped, rolledBack).withMaterialFailure(boundaryResult.failedMutation());
         }
         return ExecutionResult.applied(fragment, preparedBlockCount,
                 new PhaseCounts(basePrepared.size(), baseApplied.size(), cropPrepared.size(),
@@ -545,7 +555,7 @@ public final class CityLandUseChunkExecutor {
         return Set.copyOf(selected);
     }
 
-    private static boolean apply(ExecutionWorld world,
+    private static PreparedMutation apply(ExecutionWorld world,
                                  List<PreparedMutation> prepared,
                                  List<PreparedMutation> applied) {
         for (PreparedMutation mutation : prepared) {
@@ -555,7 +565,7 @@ public final class CityLandUseChunkExecutor {
                         mutation.x(), mutation.y(), mutation.z(), mutation.snapshot()));
             } catch (RuntimeException ex) {
                 LOGGER.warn("City LandUse begin write failed: mutation={}", mutation, ex);
-                return false;
+                return mutation;
             }
             // A failed writer may already have mutated the target before reporting failure.
             applied.add(mutation.withSnapshot(writeSnapshot));
@@ -579,10 +589,10 @@ public final class CityLandUseChunkExecutor {
                 LOGGER.warn("City LandUse write rejected: phase={}, area={}, pos={},{},{}, block={}, feature={}",
                         mutation.phase(), mutation.areaId(), mutation.x(), mutation.y(), mutation.z(),
                         mutation.blockId(), mutation.featureKind());
-                return false;
+                return mutation;
             }
         }
-        return true;
+        return null;
     }
 
     private static BoundaryApplyResult applyBoundary(ExecutionWorld world,
@@ -595,7 +605,7 @@ public final class CityLandUseChunkExecutor {
                 writeSnapshot = Objects.requireNonNull(world.beginWrite(
                         mutation.x(), mutation.y(), mutation.z(), mutation.snapshot()));
             } catch (RuntimeException ex) {
-                return BoundaryApplyResult.writeFailed();
+                return BoundaryApplyResult.writeFailed(mutation);
             }
             applied.add(mutation.withSnapshot(writeSnapshot));
             boolean written;
@@ -610,7 +620,7 @@ public final class CityLandUseChunkExecutor {
             } catch (RuntimeException ex) {
                 written = false;
             }
-            if (!written) return BoundaryApplyResult.writeFailed();
+            if (!written) return BoundaryApplyResult.writeFailed(mutation);
         }
         try {
             // Lamp poles, terrace rails and their neighbours need the same batch reconciliation as boundaries.
@@ -706,9 +716,9 @@ public final class CityLandUseChunkExecutor {
     }
 
     private static CityLandUseChunkCompiler.FeatureOperation platformStairOperation(
-            CityLandUseMicroGrader.StairDecision stair) {
+            CityLandUseMicroGrader.StairDecision stair, CityLandUseChunkCompiler.ChunkFragment fragment) {
         return new CityLandUseChunkCompiler.FeatureOperation(stair.sourceId(), stair.x(), stair.z(),
-                stair.blockId(), 0, CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR, stair.facing());
+                fragment.materialField().at("accessStair",stair.x(),stair.z(),stair.blockId()), 0, CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR, stair.facing());
     }
 
     private static boolean rollback(ExecutionWorld world, List<PreparedMutation> applied) {
@@ -822,6 +832,8 @@ public final class CityLandUseChunkExecutor {
         }
     }
 
+    public record MaterialFailure(String sourceId,String placementPhase,String blockId,int x,int y,int z,String reason) { }
+
     public record ExecutionResult(Status status,
                                   String reasonCode,
                                   String cityId,
@@ -835,7 +847,24 @@ public final class CityLandUseChunkExecutor {
                                   int occupiedBoundarySkippedCount,
                                   boolean rollbackComplete,
                                   FoundationDiagnostics foundationDiagnostics,
-                                  PhaseCounts phaseCounts) {
+                                  PhaseCounts phaseCounts,
+                                  MaterialFailure materialFailure) {
+        public ExecutionResult(Status status,String reasonCode,String cityId,String planHash,String paletteHash,
+                int chunkX,int chunkZ,int preparedOperationCount,int appliedOperationCount,int naturalSurfaceSkippedCount,
+                int occupiedBoundarySkippedCount,boolean rollbackComplete,FoundationDiagnostics foundationDiagnostics,PhaseCounts phaseCounts) {
+            this(status,reasonCode,cityId,planHash,paletteHash,chunkX,chunkZ,preparedOperationCount,appliedOperationCount,
+                    naturalSurfaceSkippedCount,occupiedBoundarySkippedCount,rollbackComplete,foundationDiagnostics,phaseCounts,null);
+        }
+        private ExecutionResult withMaterialFailure(PreparedMutation mutation) {
+            if(mutation==null)return this;
+            return new ExecutionResult(status,reasonCode,cityId,planHash,paletteHash,chunkX,chunkZ,preparedOperationCount,
+                    appliedOperationCount,naturalSurfaceSkippedCount,occupiedBoundarySkippedCount,rollbackComplete,foundationDiagnostics,
+                    phaseCounts,new MaterialFailure(mutation.areaId(),mutation.phase().name(),mutation.blockId(),mutation.x(),mutation.y(),mutation.z(),reasonCode));
+        }
+        private static ExecutionResult failed(CityLandUseChunkCompiler.ChunkFragment fragment,PreparedMutation mutation,
+                int prepared,int applied,int naturalSkipped,int boundarySkipped,boolean rollbackComplete) {
+            return failed(fragment,mutation.failureReason(),prepared,applied,naturalSkipped,boundarySkipped,rollbackComplete).withMaterialFailure(mutation);
+        }
         private static ExecutionResult applied(CityLandUseChunkCompiler.ChunkFragment fragment,
                                                int applied,
                                                PhaseCounts phaseCounts,
@@ -1011,17 +1040,17 @@ public final class CityLandUseChunkExecutor {
     private record ColumnKey(int x, int z) {
     }
 
-    private record BoundaryApplyResult(boolean success, String reasonCode, boolean rollbackComplete) {
+    private record BoundaryApplyResult(boolean success, String reasonCode, boolean rollbackComplete, PreparedMutation failedMutation) {
         private static BoundaryApplyResult applied() {
-            return new BoundaryApplyResult(true, "CITY_LAND_USE_OWNER_APPLIED", true);
+            return new BoundaryApplyResult(true, "CITY_LAND_USE_OWNER_APPLIED", true, null);
         }
 
-        private static BoundaryApplyResult writeFailed() {
-            return new BoundaryApplyResult(false, "CITY_LAND_USE_BLOCK_WRITE_FAILED", true);
+        private static BoundaryApplyResult writeFailed(PreparedMutation mutation) {
+            return new BoundaryApplyResult(false, "CITY_LAND_USE_BLOCK_WRITE_FAILED", true, mutation);
         }
 
         private static BoundaryApplyResult finalizeFailed(boolean rollbackComplete) {
-            return new BoundaryApplyResult(false, "CITY_LAND_USE_BOUNDARY_FINALIZE_FAILED", rollbackComplete);
+            return new BoundaryApplyResult(false, "CITY_LAND_USE_BOUNDARY_FINALIZE_FAILED", rollbackComplete, null);
         }
     }
 
