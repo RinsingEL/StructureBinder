@@ -27,10 +27,11 @@ public final class ProviderPlanningDiscovery {
     private final Path debugRoot;
     private final Path surveySettingsPath;
     private final String worldSeed;
-    private final int realmCount;
+    private int realmCount;
+    private final int realmCountOverride;
 
     public ProviderPlanningDiscovery(Path debugRoot, long worldSeed) {
-        this(debugRoot, worldSeed, 3);
+        this(debugRoot, worldSeed, 0);
     }
 
     ProviderPlanningDiscovery(Path debugRoot, long worldSeed, int realmCount) {
@@ -38,10 +39,13 @@ public final class ProviderPlanningDiscovery {
         this.surveySettingsPath = this.debugRoot.getParent().resolve("config").resolve("geomantia")
                 .resolve("world_survey.json");
         this.worldSeed = Long.toString(worldSeed);
-        this.realmCount = Math.max(1, Math.min(12, realmCount));
+        this.realmCountOverride = realmCount;
+        this.realmCount = realmCount > 0 ? Math.max(1, Math.min(12, realmCount)) : 3;
     }
 
     public PlanningStep nextStep() throws IOException {
+        var quantities = com.rinsing.geomantia.systems.realm_planning.RealmPopulationConfig.load(debugRoot);
+        this.realmCount = realmCountOverride > 0 ? realmCountOverride : quantities.realmCount();
         WorldSurveySettingsConfig surveySettings = WorldSurveySettingsConfig.loadOrCreate(surveySettingsPath);
         Optional<Path> newest = newestCurrentWorldRun(surveySettings);
         if (newest.isEmpty()) {
@@ -132,15 +136,17 @@ public final class ProviderPlanningDiscovery {
             if (registeredRealms.contains(realmId)) continue;
             JsonObject state = baseState(Stage.T4, runId, "realm_t4_patch_planning_create");
             state.addProperty("realmId", realmId);
+            state.add("cityCountRequirements", quantities.asJson());
             state.add("realmProfile", profile.deepCopy());
             JsonObject session = newestOpenT4Session(runDirectory, realmId);
             if (session != null) {
                 state.add("openPlanningSession", session.deepCopy());
+                if (session.has("cityCountRequirements")) state.add("cityCountRequirements", session.get("cityCountRequirements").deepCopy());
                 state.addProperty("nextAction", t4NextAction(session));
             }
             state.addProperty("instruction", "Continue the existing T4 contract for this realm: create or resume its "
                     + "planning session, review Patch Explorer evidence, select the required capital and any justified "
-                    + "non-capital city seeds, then finalize. Do not start or refresh the City queue.");
+                    + "non-capital city seeds within the session cityCountRequirements (including the capital), then finalize. Do not omit configured minimum cities or exceed the maximum. Do not start or refresh the City queue.");
             return step(Stage.T4, runId, realmId, "", string(state, "nextAction"), state,
                     runDirectory, List.of());
         }

@@ -102,6 +102,7 @@ public final class RealmT4PatchPlanningService {
         session.addProperty("updatedAt", Instant.now().toString());
         session.add("capitalIntent", loadCapitalIntent(runDir, realmId));
         session.addProperty("capitalSelectionStatus", "awaiting_selection");
+        session.add("cityCountRequirements", RealmPopulationConfig.load(debugRoot).asJson());
         session.add("citySeeds", new JsonArray());
         session.add("usedPatchSelectionRefs", new JsonArray());
         writeSession(runId, sessionId, session);
@@ -151,6 +152,8 @@ public final class RealmT4PatchPlanningService {
                 || countCapitals(array(session, "citySeeds")) != 1) {
             throw new IllegalArgumentException("T4_PATCH_CAPITAL_SELECTION_REQUIRED");
         }
+        if (session.has("cityCountRequirements")) RealmPopulationConfig.fromJson(session.getAsJsonObject("cityCountRequirements"))
+                .requireCityCount(array(session, "citySeeds").size() + 1, false);
         JsonObject seed = addSelectedSeed(request, session);
         session.addProperty("updatedAt", Instant.now().toString());
         writeSession(runId, sessionId, session);
@@ -310,6 +313,8 @@ public final class RealmT4PatchPlanningService {
         JsonObject session = loadOpenSession(runId, sessionId);
         requireCurrentTerritory(runId, session);
         JsonArray sessionSeeds = array(session, "citySeeds");
+        if (session.has("cityCountRequirements")) RealmPopulationConfig.fromJson(session.getAsJsonObject("cityCountRequirements"))
+                .requireCityCount(sessionSeeds.size(), true);
         if (!"selected".equals(stringValue(session, "capitalSelectionStatus", ""))
                 || countCapitals(sessionSeeds) != 1
                 || !hasTraceableCapital(sessionSeeds)) {

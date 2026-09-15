@@ -9,6 +9,13 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ProviderPlanningDiscoveryTest {
+    @Test void readsConfiguredRealmCountInsteadOfHardcodedThree() throws Exception {
+        Path root = debugRoot.resolve("world/realm_debug");
+        Path config = root.getParent().resolve("config/geomantia/realm_planning.json");
+        Files.createDirectories(config.getParent());
+        Files.writeString(config,"{\"realmCount\":5,\"minCitiesPerRealm\":2,\"maxCitiesPerRealm\":3}");
+        assertEquals(5,new ProviderPlanningDiscovery(root,42L).nextStep().state().get("realmCount").getAsInt());
+    }
     @TempDir
     Path debugRoot;
 

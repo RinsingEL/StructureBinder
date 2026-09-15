@@ -130,7 +130,13 @@ class RealmT4PatchPlanningServiceTest {
         createRequest.addProperty("runId", "run_t4");
         createRequest.addProperty("realmId", "realm_a");
         createRequest.addProperty("planningSessionId", "plan_a");
+        Path quantityConfig = root.getParent().resolve("config/geomantia/realm_planning.json");
+        Files.createDirectories(quantityConfig.getParent());
+        Files.writeString(quantityConfig, new RealmPopulationConfig(3,2,2).asJson().toString());
         JsonObject created = service.create(createRequest);
+        assertEquals(2,created.getAsJsonObject("planningSession").getAsJsonObject("cityCountRequirements").get("minCitiesPerRealm").getAsInt());
+        // An active session keeps its frozen contract when the player changes future defaults.
+        Files.writeString(quantityConfig, new RealmPopulationConfig(3,1,1).asJson().toString());
         JsonArray initialSeeds = created.getAsJsonObject("planningSession").getAsJsonArray("citySeeds");
         assertEquals(0, initialSeeds.size());
         assertEquals("awaiting_selection", created.getAsJsonObject("planningSession")
@@ -150,6 +156,8 @@ class RealmT4PatchPlanningServiceTest {
         capitalRequest.addProperty("patchSelectionRef", capitalSelectionRef);
         capitalRequest.addProperty("selectionReason", "AI chose the largest continuous plain");
         JsonObject selectedCapital = service.selectCapital(capitalRequest);
+        assertTrue(assertThrows(IllegalArgumentException.class, () -> service.finalizePlanning(finalizeRequest))
+                .getMessage().contains("CITY_COUNT_CONFIG"));
         JsonObject capital = selectedCapital.getAsJsonObject("selectedCapital");
         assertEquals("capital", capital.get("role").getAsString());
         assertEquals(capitalSelectionRef, capital.getAsJsonObject("source")

@@ -106,7 +106,8 @@ public final class ProviderPlanningToolGateway implements DeepSeekToolLoopClient
         injectIdentity(arguments, "runId", runId);
         if (endpoint.cityScoped()) injectIdentity(arguments, "citySeedId", requiredScope(citySeedId, "citySeedId"));
         if ("realm_t1_prepare".equals(toolName) && !arguments.has("realmCount")) {
-            arguments.addProperty("realmCount", 3);
+            if (arguments.has("realmProfiles") && arguments.get("realmProfiles").isJsonArray())
+                arguments.addProperty("realmCount", arguments.getAsJsonArray("realmProfiles").size());
         }
         if ("realm_t2_select_coordinate".equals(toolName)
                 || "realm_t4_patch_planning_create".equals(toolName)) {

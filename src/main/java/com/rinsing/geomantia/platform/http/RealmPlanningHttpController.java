@@ -105,6 +105,7 @@ final class RealmPlanningHttpController implements AutoCloseable {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             JsonArray profiles = RealmProfileInput.requireProfiles(request);
+            com.rinsing.geomantia.systems.realm_planning.RealmPopulationConfig.load(debugRoot()).requireRealmCount(profiles.size());
             return callOnServerThread(() -> realmPlanningService.prepareT1(
                     requiredString(request, "runId"),
                     profiles, profiles.size(),

@@ -30,11 +30,21 @@ final class PreparedRealmDesignTurn {
                 ? "patch_explorer_select_candidate"
                 : "selected".equals(state.getAsJsonObject("openPlanningSession").get("capitalSelectionStatus").getAsString())
                 ? "realm_t4_patch_planning_finalize" : "realm_t4_patch_planning_select_capital");
+        if (step.stage() == ProviderPlanningDiscovery.Stage.T4) {
+            JsonObject session = state.getAsJsonObject("openPlanningSession");
+            if (session.has("cityCountRequirements")) {
+                JsonObject quantities = session.getAsJsonObject("cityCountRequirements");
+                state.add("cityCountRequirements", quantities.deepCopy());
+                if ("selected".equals(session.get("capitalSelectionStatus").getAsString())
+                        && session.getAsJsonArray("citySeeds").size() < quantities.get("minCitiesPerRealm").getAsInt())
+                    state.addProperty("nextAction", "realm_t4_patch_planning_add_city");
+            }
+        }
         state.addProperty("instruction", "The host has prepared the scope, planning session and one candidate per terrain type. "
                 + "This is an overview, not a preferred design. Inspect the images and author brief; request more candidates "
                 + "with patch_explorer_show_candidates when useful. T2: choose a displayed candidate with a reason; the host commits it. "
                 + "T4: select_capital/add_city accept sessionId + candidateId directly and the host freezes the selection. "
-                + "Resume existing citySeeds; never choose a second capital. Finalize only after your city decisions are complete.");
+                + "Resume existing citySeeds; never choose a second capital. Follow the frozen cityCountRequirements: min/max include the capital, choose useful sites within that range, and finalize only after the minimum is present. Do not invent unsafe sites to meet the count; report lack of suitable candidates for review.");
         Set<Path> images = new LinkedHashSet<>();
         PreparedCityDesignTurn.collectImages(candidates, root.toRealPath(), images);
         PreparedCityDesignTurn.collectImages(explorer, root.toRealPath(), images);
