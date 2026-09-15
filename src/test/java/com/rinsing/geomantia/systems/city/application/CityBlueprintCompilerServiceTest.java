@@ -47,11 +47,11 @@ class CityBlueprintCompilerServiceTest {
             JsonObject blueprint = JsonParser.parseString(Files.readString(dir.resolve("city_blueprint.json"))).getAsJsonObject();
             JsonObject request = new JsonObject(); request.add("cityBlueprint", blueprint); request.addProperty("submissionMode", "DRAFT");
             var service = new CityBlueprintService();
-            var draft = service.submitDesign(temporary, f.runId(), f.cityId(), contextId, request);
+            var draft = service.submitDesignInternal(temporary, f.runId(), f.cityId(), contextId, request);
             assertTrue(draft.get("ok").getAsBoolean(), draft.toString());
             assertTrue(draft.get("designInProgress").getAsBoolean(), draft.toString());
             request.addProperty("submissionMode", "FINAL");
-            var finished = service.submitDesign(temporary, f.runId(), f.cityId(), contextId, request);
+            var finished = service.submitDesignInternal(temporary, f.runId(), f.cityId(), contextId, request);
             assertFalse(finished.get("ok").getAsBoolean(), finished.toString());
             assertTrue(finished.toString().contains("CITY_BLUEPRINT_ARRAY_COMPOSITION_INVALID"), finished.toString());
             var exception = assertThrows(IllegalArgumentException.class, () ->

@@ -67,7 +67,7 @@ public final class CityBlueprintDraft {
         result.remove("groupExtentMap");
         result.addProperty("instruction", "This is the latest working draft, NOT a final accepted city. Use submissionMode=DRAFT while adding or correcting districts; use FINAL after inspecting the complete design. "
                 + "For an intentional local design change use baseDraftHash with replace-only blueprintPatch; "
-                + "do not send baseBlueprintHash too. Preserve unaffected groups and generationSeed. "
+                + "the host preserves other districts and generationSeed. "
                 + "Program-owned failure requires host diagnosis before retry; no blind redesign.");
         return result;
     }

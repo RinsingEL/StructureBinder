@@ -357,7 +357,7 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
             case QUEUE_REFRESH -> List.of("city_design_queue_refresh");
             case CITY -> List.of("city_design_queue_status", "city_plan_d3", "city_review_d3_site",
                     "patch_explorer_open", "patch_explorer_show_candidates",
-                    "city_prepare_d4_blueprint_context", "city_submit_d4_blueprint");
+                    "city_prepare_d4_blueprint_context", "city_d4_overview", "city_d4_district", "city_d4_integrate", "city_d4_finalize");
             case WAITING, COMPLETE -> List.of();
         };
     }

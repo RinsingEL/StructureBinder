@@ -24,6 +24,7 @@ final class PlanningTurnControl implements DeepSeekToolLoopClient.ToolExecutor {
         this.delegate = delegate;
         this.lastRevision = revisionIdentity(initialState);
         this.lastReviewState = initialState.get("designReviewWorkflow");
+        this.lastD4State = initialState.has("d4Workflow") ? initialState.get("d4Workflow").toString() : "";
     }
     private static String revisionIdentity(JsonObject payload) {
         if (!payload.has("revisionEvidence") || !payload.get("revisionEvidence").isJsonObject()) return "";
@@ -81,6 +82,12 @@ final class PlanningTurnControl implements DeepSeekToolLoopClient.ToolExecutor {
                     if (hasAssessment && !review.equals(lastReviewState)) revisionProgress = true;
                     lastReviewState = review.deepCopy();
                 }
+                if (payload.has("d4Workflow")) {
+                    String current = payload.getAsJsonObject("d4Workflow").toString();
+                    revisionProgress |= !current.equals(lastD4State);
+                    lastD4State = current;
+                    if (!payload.has("revisionEvidence")) return output;
+                }
                 // Intent/material work needs no new rendered image and can continue in this same turn.
                 if ((payload.has("designSession") || payload.has("designReviewWorkflow"))
                         && !payload.has("revisionEvidence")) return output;
@@ -96,6 +103,8 @@ final class PlanningTurnControl implements DeepSeekToolLoopClient.ToolExecutor {
         }
         return output;
     }
+
+    private String lastD4State = "";
 
     static JsonObject payload(JsonElement output) {
         try {

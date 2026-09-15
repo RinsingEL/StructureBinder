@@ -7,12 +7,12 @@ import java.util.*;
 
 /** Program-owned preparation before waking the designer, including restart/revision turns. */
 final class PreparedCityDesignTurn {
-    static final List<String> TOOLS = List.of("patch_explorer_show_candidates", "city_submit_d4_blueprint");
+    static final List<String> TOOLS = com.rinsing.geomantia.systems.city.application.CityD4Workflow.TOOLS;
     private PreparedCityDesignTurn() { }
 
     static boolean applies(ProviderPlanningDiscovery.PlanningStep step) {
         return step.stage() == ProviderPlanningDiscovery.Stage.CITY
-                && Set.of("city_prepare_d4_blueprint_context", "city_submit_d4_blueprint").contains(step.nextAction());
+                && (Set.of("city_prepare_d4_blueprint_context", "city_submit_d4_blueprint").contains(step.nextAction()) || TOOLS.contains(step.nextAction()));
     }
 
     static Input prepare(JsonObject queue, DeepSeekToolLoopClient.ToolExecutor gateway, Path debugRoot) throws Exception {
@@ -29,27 +29,9 @@ final class PreparedCityDesignTurn {
         for (String key : List.of("failureCount", "maximumFailureCount", "remainingFailureCount", "retryAllowed", "failureBudget")) {
             if (prepared.has(key)) state.add(key, prepared.get(key).deepCopy());
         }
-        state.addProperty("nextAction", "city_submit_d4_blueprint");
-        state.addProperty("instruction", "The host has already prepared this COMPLETE current frozen design view and its "
-                + "actual terrain images. It supersedes older truncated tool results in this session. All authored "
-                + "structure functions/styles, selectable pools/profiles and design algorithms are below. Design or "
-                + "revise this city one district at a time: inspect the three terrain views, select a Top Patch, "
-                + "first submit designIntent for intended groups, then batch materialSelections to search/select materials and obtain capacity estimates. Use structureCount to plan building quantities and arrayCompositions to organize the main body. Submit submissionMode=DRAFT with one complete cluster (multiple children allowed) and previously designed districts. Inspect planned/retained counts and the resulting layout "
-                + "and refine its design before adding the next district. Preserve unrelated work during error recovery, but revise valid layouts when the design is weak; use a full "
-                + "cityBlueprint when adding groups (patch supports replacement only). Use RELATIVE_WEIGHTS for partial groups. "
-                + "For ground/road/platform materials, read designGuide.surfaceMaterials; query blockMaterials separately as needed and store choices in cityBlueprint.surfaceMaterials. Read the short designGuide.behaviorHandbook and behaviorExamples index. Only when relevant, request one designExample={caseId} separately through city_submit_d4_blueprint for before/after images and process. Do not fetch all examples or repeatedly reload images. Transfer the reasoning, not the counts or layout. Follow designGuide.designLoop and designReviewWorkflow: request local images using designReview, then record an assessment. Refine the current district before moving on. After local reviews, request the overview and record a final city assessment, making purposeful outward additions where useful. Only FINAL the unchanged reviewed draft. Design comes first: use counts, nesting and purposeful adjacent arrays boldly to realize the terrain-aware intent. Initial array ranges are not caps or stopping criteria. Judge visible spatial relationships, not just successful placement. After reductions or removed nesting, restore missing design substance where needed. Preserve a good design with concrete visual reasons; do not edit just to satisfy a stage. "
-                + "Format correction allows ten attempts independently of the five design-compilation failures. "
-                + "Omit host-owned schema/cityId/sourceD3Ref/catalogSnapshotRef/generationSeed. "
-                + "For local revisions, submit replace-only blueprintPatch with revisionEvidence.baseDraftHash for a rejected draft "
-                + "or revisionEvidence.baseBlueprintHash for an accepted design (never both), "
-                + "preserving unaffected choices. For full input you may explicitly choose RELATIVE_WEIGHTS to avoid summing ratios by hand. "
-                + "Choose either fillPools=[{poolRef,weight},...] or legacy fillPoolRef, never both. Pools only populate AI-planned array slots; "
-                + "the host does not grow buildings to meet area targets or fill connection gaps. Empty terrain-filtered arrays remain reviewable. "
-                + "Express proximity through ADJACENCY and traffic needs through CONNECTION. "
-                + "proportionMode is a TOOL ARGUMENT beside cityBlueprint, NOT inside cityBlueprint. "
-                + "Do not query status or prepare again. Only use "
-                + "patch_explorer_show_candidates with the existing patchReviewEvidence.sessionId if you need additional "
-                + "terrain candidates. Keep prior validation feedback and the existing failure budget; do not restart the design.");
+        state.add("d4Workflow", prepared.get("d4Workflow").deepCopy());
+        state.addProperty("nextAction", prepared.getAsJsonObject("d4Workflow").get("nextAction").getAsString());
+        state.addProperty("instruction", "按 d4Workflow 的当前阶段、当前功能区和 nextAction 继续。阶段产物由宿主保存，不能整城一次交完。功能区设计按 scaleDesignTask 建议选择规模和嵌套；先看图评价再确认。整体修饰必须实际提交向外阵列并重新验收。工具仅接受当前阶段的输入；选材与案例按需读取，设计优先。使用简体中文思考与说明。");
         Path root = debugRoot.toRealPath();
         Set<Path> images = new LinkedHashSet<>();
         JsonObject revision = CityRevisionEvidence.load(root, context,

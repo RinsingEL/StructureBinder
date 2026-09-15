@@ -17,11 +17,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public final class LandUseAreaPlanCodec {
-    private static final Map<String, String> VERIFIED_LEGACY_HASHES = new ConcurrentHashMap<>();
 
     public LandUseAreaPlan withComputedHash(LandUseAreaPlan plan) {
         return plan.withPlanHash(computePlanHash(plan));
@@ -36,8 +33,7 @@ public final class LandUseAreaPlanCodec {
     public boolean isValidPlanHash(LandUseAreaPlan plan) {
         if (plan == null || plan.planHash().isBlank()) return false;
         String currentHash = computePlanHash(plan);
-        return plan.planHash().equals(currentHash)
-                || currentHash.equals(VERIFIED_LEGACY_HASHES.get(plan.planHash()));
+        return plan.planHash().equals(currentHash);
     }
 
     private static String computeJsonHash(JsonObject json) {
@@ -110,35 +106,10 @@ public final class LandUseAreaPlanCodec {
                 shared, spans(requiredArray(obj, "unclaimedSpans")), corridors,
                 strings(requiredArray(obj, "warnings")));
         boolean currentHashMatches = plan.planHash().isBlank() || plan.planHash().equals(computePlanHash(plan));
-        boolean legacyDecorationHashMatches = !plan.planHash().isBlank()
-                && hasLegacyDecorationPolicy(obj)
-                && plan.planHash().equals(computeSerializedPlanHash(obj));
-        if (!currentHashMatches && !legacyDecorationHashMatches) {
+        if (!currentHashMatches) {
             throw new IllegalArgumentException("LAND_USE_PLAN_HASH_MISMATCH");
         }
-        if (legacyDecorationHashMatches) {
-            VERIFIED_LEGACY_HASHES.put(plan.planHash(), computePlanHash(plan));
-        }
         return plan;
-    }
-
-    private static boolean hasLegacyDecorationPolicy(JsonObject obj) {
-        JsonArray areas = obj.getAsJsonArray("areas");
-        if (areas == null || areas.isEmpty()) {
-            return false;
-        }
-        for (JsonElement element : areas) {
-            if (!element.isJsonObject() || !element.getAsJsonObject().has("decorationPolicy")) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private static String computeSerializedPlanHash(JsonObject obj) {
-        JsonObject serialized = obj.deepCopy();
-        serialized.remove("planHash");
-        return computeJsonHash(serialized);
     }
 
     private JsonObject areaJson(LandUseAreaPlan.Area area) {

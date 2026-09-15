@@ -158,10 +158,17 @@ public final class PlayerProviderService {
     }
 
     private void recordActivity(AgentActivityEvent event) {
-        if (event == null || event.message().isBlank()) return;
+        if (event == null || event.message().isEmpty()) return;
         AgentActivityEvent value = event.occurredAt().isBlank()
                 ? new AgentActivityEvent(Instant.now().toString(), event.kind(), event.message()) : event;
         synchronized (activityEvents) {
+            AgentActivityEvent last = activityEvents.peekLast();
+            if ((value.kind().equals("reasoning") || value.kind().equals("model_delta"))
+                    && last != null && last.kind().equals(value.kind())
+                    && last.message().length() + value.message().length() <= 600) {
+                activityEvents.removeLast();
+                value = new AgentActivityEvent(last.occurredAt(), value.kind(), last.message() + value.message());
+            }
             activityEvents.addLast(value);
             while (activityEvents.size() > MAX_ACTIVITY_EVENTS) activityEvents.removeFirst();
         }

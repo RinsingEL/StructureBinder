@@ -300,3 +300,10 @@ function rejectForbiddenDecorationFields(value: unknown, path: string) {
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
+
+for (const name of ["city_d4_overview", "city_d4_district", "city_d4_integrate", "city_d4_finalize"]) {
+  realmHandlers[name] = async args => {
+    const res = await postJson(`${MC_API_URL}/realm/city/submit_d4_blueprint`, { ...payload(args), d4Tool: name }, TIMEOUTS.refresh);
+    return { ...planningResult(res.data), isError: res.data?.ok === false };
+  };
+}

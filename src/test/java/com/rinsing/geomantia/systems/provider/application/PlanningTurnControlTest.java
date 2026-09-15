@@ -5,6 +5,17 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PlanningTurnControlTest {
+    @Test void savedStageProgressSurvivesAProviderTurnWithoutNewGeometry() throws Exception {
+        var initial=com.google.gson.JsonParser.parseString("{d4Workflow:{stage:'DISTRICTS',revision:1}}").getAsJsonObject();
+        var control=new PlanningTurnControl((tool,args)->com.google.gson.JsonParser.parseString("{ok:true,designInProgress:true,d4Workflow:{stage:'DISTRICTS',revision:2}}"),initial);
+        control.execute("city_d4_district",new JsonObject());
+        assertTrue(control.permitsDesignContinuation());
+        assertFalse(control.finished());
+        var unchanged=new PlanningTurnControl((tool,args)->com.google.gson.JsonParser.parseString("{ok:true,designInProgress:true,d4Workflow:{stage:'DISTRICTS',revision:1}}"),initial);
+        unchanged.execute("city_d4_district",new JsonObject());
+        assertFalse(unchanged.permitsDesignContinuation());
+    }
+
     @Test void completedReviewAllowsResumeButRepeatedEvidenceIsNotNewProgress() throws Exception {
         JsonObject initial = JsonParser.parseString("{designReviewWorkflow:{groupAssessments:{}}}").getAsJsonObject();
         JsonObject completed = JsonParser.parseString("{ok:true,designInProgress:true,designReviewWorkflow:{groupAssessments:{court:'retain'}}}").getAsJsonObject();

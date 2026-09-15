@@ -64,5 +64,23 @@ class CancellationTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await Adapter()._run_agent(), "completed")
 
 
+class ReasoningTest(unittest.TestCase):
+    def test_provider_reasoning_is_forwarded_without_truncation_or_duplicate_install(self):
+        class Agent:
+            def __init__(self):
+                self.original = []
+                self.events = []
+                self.tool_progress_callback = lambda *args: self.events.append(args)
+            def _fire_reasoning_delta(self, text):
+                self.original.append(text)
+        bootstrap.install_reasoning_adapter(Agent)
+        bootstrap.install_reasoning_adapter(Agent)
+        agent = Agent()
+        text = " leading\n" + "推理" * 1000
+        agent._fire_reasoning_delta(text)
+        self.assertEqual(agent.original, [text])
+        self.assertEqual(agent.events, [("reasoning.available", "_geomantia_reasoning", text, None)])
+
+
 if __name__ == "__main__":
     unittest.main()

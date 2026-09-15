@@ -17,6 +17,8 @@ final class ProviderPlanningToolCatalog {
     }
 
     private static JsonObject definition(String name) {
+        if (com.rinsing.geomantia.systems.city.application.CityD4Workflow.TOOLS.contains(name))
+            return function(name, "D4 四阶段存档协议。遵循 d4Workflow.nextAction。总览只定意图；逐个功能区设计、看图评价、complete；整体修饰必须实际向外阵列连接不同区并重看图；最终只确认 hash。一次仅提交一个操作。", stageSchema(name));
         return switch (name) {
             case "realm_w_refresh" -> function(name,
                     "Run or resume the one sealed W survey for this world. The host locks runId and the complete "
@@ -114,7 +116,7 @@ final class ProviderPlanningToolCatalog {
                             + "TerraSense profiles, template catalog and Blueprint reference catalog; never pass paths.",
                     object(properties("runId", string(), "citySeedId", string())));
             case "city_submit_d4_blueprint" -> function(name,
-                    "First submit designIntent (group roles/intents/patches), then batch materialSelections to search/select authored materials and receive capacity estimates. These stages do not accept geometry. Design a district in DRAFT, refine it after local preview review, then review/refine the whole city. Submit designReview separately: baseDraftHash + groupIds (1..3) requests images; repeat with assessment after viewing. Use overview=true instead of groupIds for the final city review. Design quality comes first: refine weak layouts boldly, assess visible spatial relationships rather than retention alone, and repair lost design substance after reductions. Suggested initial array ranges are not final caps or stopping criteria. FINAL must match the reviewed draft. Normal review stages do not consume rejection budgets. No automatic buildings for area fill or connections. Submit a CityBlueprint, or use blueprintPatch (replace-only JSON Pointer operations) with "
+                    "First submit designIntent (group roles/intents/patches), then batch materialSelections to search/select authored materials and receive capacity estimates. These stages do not accept geometry. Design a district in DRAFT, refine it after local preview review, then review/refine the whole city. Submit designReview separately: baseDraftHash + groupIds (1..3) requests images; repeat the COMPLETE designReview object after viewing, retaining baseDraftHash and groupIds (or overview) INSIDE it and adding assessment. Never submit assessment alone or move review fields to the request root. Use overview=true instead of groupIds for the final city review. Whole-city refinement must address missing urban transitions with purposeful outward/adjacent arrays and verify their direction and gap reduction in the new overview; road connectivity alone is insufficient. Follow the handbook action/check/repair requirements and matching case triggers. Design quality comes first: refine weak layouts boldly, assess visible spatial relationships rather than retention alone, and repair lost design substance after reductions. Suggested initial array ranges are not final caps or stopping criteria. FINAL must match the reviewed draft. Normal review stages do not consume rejection budgets. No automatic buildings for area fill or connections. Submit a CityBlueprint, or use blueprintPatch (replace-only JSON Pointer operations) with "
                             + "baseBlueprintHash (accepted) or baseDraftHash (rejected draft) from revisionEvidence to change only affected fields. Never send both hashes. Exactly one input is allowed. "
                             + "The host fills omitted schema/cityId/sourceD3Ref/catalogSnapshotRef/generationSeed; conflicting explicit identities are rejected. "
                             + "proportionMode=RELATIVE_WEIGHTS normalizes group, spaceComposition and landscape role shares before the unchanged author validation. "
@@ -160,6 +162,32 @@ final class ProviderPlanningToolCatalog {
                     "selectionReason");
         }
         return object(values, "planningSessionId", "selectionReason");
+    }
+
+    private static JsonObject stageSchema(String name) {
+        JsonObject source = submitSchema().getAsJsonObject("properties");
+        JsonObject blueprint = source.getAsJsonObject("cityBlueprint").getAsJsonObject("properties");
+        JsonObject p = properties("runId",string(),"citySeedId",string(),"contextId",string(),"workflowRevision",integer());
+        if (name.equals("city_d4_overview")) {
+            JsonObject settings = new JsonObject();
+            for(String key:List.of("designIntent","styleProfile","roadProfile","surfaceDetailProfile","surfaceMaterials","outdoorPlan")) settings.add(key,blueprint.get(key).deepCopy());
+            p.add("overview",object(properties("citySettings",object(settings,"designIntent","styleProfile","roadProfile","surfaceDetailProfile","outdoorPlan"),
+                    "districts",source.getAsJsonObject("designIntent").getAsJsonObject("properties").get("groups").deepCopy()),"citySettings","districts"));
+            p.add("reopenDistrictId",string());
+            for(String key:List.of("blockMaterials","designExample")) p.add(key,source.get(key).deepCopy());
+        } else if(name.equals("city_d4_finalize")) {
+            p.add("baseDraftHash",string()); p.add("autoAdvanceAfterD4",bool());
+        } else {
+            JsonObject fragment = new JsonObject();
+            for(String key:List.of("groups","arrayCompositions","relations")) fragment.add(key,blueprint.get(key).deepCopy());
+            JsonObject outdoor=blueprint.getAsJsonObject("outdoorPlan").getAsJsonObject("properties");
+            for(String key:List.of("spatialGrounds","landscapes")) fragment.add(key,outdoor.get(key).deepCopy());
+            p.add(name.equals("city_d4_district")?"districtDesign":"integrationDesign",object(fragment,"groups"));
+            for(String key:List.of("materialSelections","designReview","designExample","blockMaterials")) p.add(key,source.get(key).deepCopy());
+            p.add("complete",bool());
+            if(name.equals("city_d4_integrate")) p.add("integrationIntent",string());
+        }
+        return object(p,"contextId","workflowRevision");
     }
 
     private static JsonObject submitSchema() {

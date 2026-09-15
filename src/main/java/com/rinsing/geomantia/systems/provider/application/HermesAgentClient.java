@@ -34,17 +34,22 @@ final class HermesAgentClient implements ProviderAgentClient {
     private static final Duration RUN_TIMEOUT = Duration.ofMinutes(20);
     private static final String MCP_RESOURCE = "/geomantia/sidecar/geomantia-mcp-bundle.mjs";
     private static final String INSTRUCTIONS = """
+            语言要求：必须使用简体中文输出向接口提供的思考过程、进度说明、设计理由、预览评价和最终回复。
+            即使上下文、工具说明或历史回复是英文，也继续使用简体中文。工具名、JSON 字段名、枚举值、
+            素材 ID、路径和错误码保持原文，不翻译或改写协议标识。
             You are the Geomantia in-game planning agent. Work only on the current host-provided planning state.
             Use only the enabled Geomantia MCP tools and follow formal nextAction and validation evidence. Never read
             source code or project documents, invent artifact contents, bypass a failure budget, or start another
             run/realm/city. A completed tool call is not proof of progress: stop after the formal state advances or
             becomes waiting, failed, waiting_for_generation, or requires a human. The host resumes this same session
             when new deterministic work is available. Never poll a background compilation; the host will wake you.
-            For City D4, only CONNECTION creates a terrain-routed main road. Keep non-isolated groups in one reachable
-            relation network and use explicit CONNECTION edges for actual destinations. Submit group designIntent first, batch materialSelections next, then complete nested clusters in DRAFT. Read the short designGuide.behaviorHandbook and behaviorExamples index. Only when relevant, request one designExample={caseId} separately through city_submit_d4_blueprint for before/after images and process. Do not fetch all examples or repeatedly reload images. Transfer the reasoning, not the counts or layout. Follow designGuide.designLoop and designReviewWorkflow: district initial design, local image review/refinement, then whole-city image review/final refinement. Use designReview to request images, then record an assessment in a following call. Design comes first: boldly use counts, nesting and purposeful adjacent arrays to realize the terrain-aware intent. Suggested initial array ranges are not caps or stopping criteria. Successful placement alone is not design acceptance. After deletions or reductions, reassess and repair lost design substance. FINAL must match the reviewed draft; preserve a good design only with concrete spatial evidence.
-            For local revision use blueprintPatch with the returned baseDraftHash (rejected draft) or baseBlueprintHash
-            (accepted blueprint), never both; preserve other groups and the generation seed. Use inline designFeedback.
-            ADJACENCY arranges whole arrays nearby. CONNECTION only requests roads. No automatic building expansion. Normal terrain skips individual members, including all-empty arrays, for your explicit review.
+            For City D4, use the four stage tools from d4Workflow: city_d4_overview, city_d4_district,
+            city_d4_integrate, city_d4_finalize. The host persists each stage and merges district designs.
+            Design only the current district; request its images, assess them, refine if needed, then complete.
+            Follow the city scale suggestions boldly. Integration requires actual outward/adjacent arrays
+            joining districts, followed by new local and overview assessments. Never replace this with one
+            full-city submission or skip a stage for efficiency. Use nextAction and the saved stage state.
+            CONNECTION requests roads; ADJACENCY arranges arrays. Read handbook/examples only as needed.
             Structure functions and styles are authored by the modpack creator before play. Never infer or relabel
             them from names or images. Select from the supplied authored metadata to form functional civilizations.
             Exact placement, compilation, background progression and installed catalog selection belong to the host.
@@ -120,7 +125,7 @@ final class HermesAgentClient implements ProviderAgentClient {
             if (toolExecutor instanceof PlanningTurnControl control && control.finished()) return control.result(terminal.toolCalls());
             String status = terminal.status();
             String output = terminal.output();
-            if (!output.isBlank()) emit(activity, "model", compact(output));
+
             if ("completed".equals(status)) {
                 return new DeepSeekToolLoopClient.LoopResult(true, status, "", terminal.toolCalls(), output);
             }
@@ -240,7 +245,7 @@ final class HermesAgentClient implements ProviderAgentClient {
     static JsonArray continuationContent(JsonObject state, List<Path> images) throws IOException {
         if (!state.has("revisionEvidence")) return continuationContent(state);
         JsonObject current = new JsonObject();
-        for (String key : List.of("contextId", "nextAction", "instruction", "revisionEvidence", "failureBudget", "designSession"))
+        for (String key : List.of("contextId", "nextAction", "instruction", "revisionEvidence", "failureBudget", "designSession", "d4Workflow", "designReviewWorkflow"))
             if (state.has(key)) current.add(key,state.get(key).deepCopy());
         JsonObject revision = state.getAsJsonObject("revisionEvidence");
         List<Path> latestPreview = revision.has("compiledPreview") && images != null
@@ -252,19 +257,16 @@ final class HermesAgentClient implements ProviderAgentClient {
 
     static JsonArray continuationContent(JsonObject state) {
         JsonObject text = new JsonObject(); text.addProperty("type", "text");
-        text.addProperty("text", "Continue the same frozen city context " + state.get("contextId").getAsString()
-                + " and your latest draft/tool validation feedback already in this session. The context, author catalog and "
-                + "images are unchanged and are not repeated. Use the current tool schema, preserve unaffected design choices, "
-                + "first submit designIntent, then batch materialSelections to search/choose authored materials and receive capacity estimates. Use structureCount and nested arrays to design the main body. Use submissionMode=DRAFT for complete clusters; inspect planned/retained counts and skipped members. FINAL only after reviewing the complete design. Never rely on automatic building expansion; CONNECTION is road-only. "
-                + "Do not query status or prepare again. proportionMode is a TOOL ARGUMENT "
-                + "beside cityBlueprint, never a field inside cityBlueprint. If no actionable correction remains, report the blocker.");
+        text.addProperty("text", "继续当前冻结城市 " + state.get("contextId") + " 的四阶段任务。遵循当前存档，不重交整城。\nd4Workflow: "
+                + state.get("d4Workflow") + "\nnextAction: " + state.get("nextAction"));
         JsonArray result = new JsonArray(); result.add(text); return result;
     }
 
-    private SessionStreamResult streamSession(Stream<String> responseLines,
+    static SessionStreamResult streamSession(Stream<String> responseLines,
                                               Consumer<AgentActivityEvent> activity,
                                               DeepSeekToolLoopClient.ToolExecutor executor) {
         int toolCalls = 0;
+        boolean textStreamed = false;
         String event = "";
         String output = "";
         String status = "failed";
@@ -274,7 +276,13 @@ final class HermesAgentClient implements ProviderAgentClient {
                     event = line.substring(6).trim();
                 } else if (line.startsWith("data:")) {
                     JsonObject data = object(line.substring(5).trim());
-                    if ("tool.started".equals(event)) {
+                    if ("assistant.delta".equals(event)) {
+                        textStreamed = true;
+                        AgentActivityEvent.emitText(activity, "model_delta", string(data, "delta"));
+                    } else if ("tool.progress".equals(event)
+                            && "_geomantia_reasoning".equals(string(data, "tool_name"))) {
+                        AgentActivityEvent.emitText(activity, "reasoning", string(data, "delta"));
+                    } else if ("tool.started".equals(event)) {
                         toolCalls++;
                         emit(activity, "tool", "Hermes 调用 " + first(data, "tool_name", "name", "tool"));
                     } else if ("tool.completed".equals(event)) {
@@ -287,6 +295,7 @@ final class HermesAgentClient implements ProviderAgentClient {
                         emit(activity, "error", "Hermes：" + compact(first(data, "error", "message", "detail")));
                     } else if ("assistant.completed".equals(event)) {
                         output = string(data, "content");
+                        if (!textStreamed) AgentActivityEvent.emitText(activity, "model", output);
                     } else if ("run.completed".equals(event)) {
                         status = "completed";
                     }
@@ -512,7 +521,7 @@ final class HermesAgentClient implements ProviderAgentClient {
         return new DeepSeekToolLoopClient.LoopResult(false, "error", code, 0, "");
     }
 
-    private record SessionStreamResult(String status, String output, int toolCalls) { }
+    record SessionStreamResult(String status, String output, int toolCalls) { }
 
     @Override
     public synchronized void close() {

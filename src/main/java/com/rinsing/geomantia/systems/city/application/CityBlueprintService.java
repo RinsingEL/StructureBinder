@@ -180,6 +180,7 @@ public final class CityBlueprintService {
             for (String name : java.util.List.of("city_blueprint_context.json", "city_blueprint_catalog_snapshot.json",
                     "city_blueprint.json", "city_blueprint_submission_trace.json", "city_blueprint_validation_report.json",
                     "city_blueprint_geometry_commit.json", "city_blueprint_blocked_proposal.json",
+                    "city_d4_workflow.json", "city_design_session.json", "city_design_review.json",
                     CityBlueprintFailureBudget.FILE_NAME)) {
                 Path source = outputDir.resolve(name);
                 Path target = recoveryArchive.resolve(name);
@@ -202,6 +203,8 @@ public final class CityBlueprintService {
         response.addProperty("aiCityDesignCallCount", 0);
         response.add("cityBlueprintContext", context);
         response.add("designSession", CityDesignSession.current(outputDir, contextId));
+        response.add("d4Workflow", CityD4Workflow.status(outputDir, contextId));
+        response.addProperty("nextAction", response.getAsJsonObject("d4Workflow").get("nextAction").getAsString());
         JsonObject artifacts = new JsonObject();
         artifacts.addProperty("cityBlueprintContext", ref(debugRoot, contextPath));
         artifacts.addProperty("cityBlueprintCatalogSnapshot", ref(debugRoot, snapshotPath));
@@ -227,6 +230,17 @@ public final class CityBlueprintService {
 
     public JsonObject submitDesign(Path debugRoot, String runId, String cityId, String contextId,
                                    JsonObject request) throws IOException {
+        Path dir = outputDirectory(requireRunDirectory(debugRoot, runId), cityId);
+        synchronized (submissionArtifactLock(dir)) {
+            JsonObject context = readObject(dir.resolve("city_blueprint_context.json"), CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_NOT_FOUND);
+            if (!contextId.equals(contextIdentity(context))) throw new IllegalArgumentException("CITY_BLUEPRINT_CONTEXT_STALE");
+            return CityD4Workflow.submit(dir, contextId, cityId, request,
+                    input -> submitDesignInternal(debugRoot, runId, cityId, contextId, input));
+        }
+    }
+
+    JsonObject submitDesignInternal(Path debugRoot, String runId, String cityId, String contextId,
+                                   JsonObject request) throws IOException {
         Path outputDir = outputDirectory(requireRunDirectory(debugRoot, runId), cityId);
         synchronized (submissionArtifactLock(outputDir)) {
           try {
@@ -247,12 +261,12 @@ public final class CityBlueprintService {
                 return CityDesignExamples.read(outputDir, contextId, request.getAsJsonObject("designExample"));
             }
             if (request.has("designReview")) {
-                for (String key : java.util.List.of("designIntent", "materialSelections", "cityBlueprint", "blueprintPatch", "baseDraftHash", "baseBlueprintHash", "submissionMode"))
+                for (String key : java.util.List.of("designIntent", "materialSelections", "cityBlueprint", "blueprintPatch", "baseBlueprintHash", "submissionMode"))
                     if (request.has(key)) throw new IllegalArgumentException("Submit designReview separately from design changes; put its baseDraftHash inside designReview.");
                 JsonObject context = readObject(outputDir.resolve("city_blueprint_context.json"), CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_NOT_FOUND);
                 if (!contextId.equals(contextIdentity(context))) throw new IllegalArgumentException("CITY_BLUEPRINT_CONTEXT_STALE");
-                return CityDesignReviewWorkflow.submit(outputDir, contextId,
-                        CityBlueprintDraft.current(outputDir, contextId, cityId), request.getAsJsonObject("designReview"));
+                return CityDesignReviewWorkflow.submitRequest(outputDir, contextId,
+                        CityBlueprintDraft.current(outputDir, contextId, cityId), request);
             }
             if (request.has("designIntent") || request.has("materialSelections")) {
                 if (request.has("cityBlueprint") || request.has("blueprintPatch"))

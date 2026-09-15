@@ -29,6 +29,10 @@ public final class AgentActivityScreen extends Screen {
     private List<AgentActivityEvent> events = List.of();
     private int refreshTicks;
     private int scrollFromBottom;
+    private boolean reasoningOnly;
+    private List<DisplayLine> cachedLines = List.of();
+    private int cachedWidth = -1;
+    private boolean cachedReasoningOnly;
 
     AgentActivityScreen(Screen parent) {
         super(Component.translatable("gui.geomantia.agent_activity.title"));
@@ -38,6 +42,12 @@ public final class AgentActivityScreen extends Screen {
     @Override
     protected void init() {
         int controlsY = height - 28;
+        addRenderableWidget(Button.builder(Component.literal("总日志"), button -> {
+            reasoningOnly = false; scrollFromBottom = 0;
+        }).bounds(16, 27, 85, 20).build());
+        addRenderableWidget(Button.builder(Component.literal("模型思考"), button -> {
+            reasoningOnly = true; scrollFromBottom = 0;
+        }).bounds(106, 27, 85, 20).build());
         addRenderableWidget(Button.builder(Component.translatable("gui.geomantia.agent_activity.refresh"),
                         button -> ProviderSettingsClient.requestActivity())
                 .bounds(16, controlsY, 72, 20).build());
@@ -48,7 +58,14 @@ public final class AgentActivityScreen extends Screen {
     }
 
     void receive(List<AgentActivityEvent> values) {
-        events = values == null ? List.of() : List.copyOf(values);
+        List<AgentActivityEvent> incoming = values == null ? List.of() : List.copyOf(values);
+        if (!events.equals(incoming)) {
+            int previousLines = displayLines(Math.max(80, width - 52)).size();
+            events = incoming;
+            cachedWidth = -1;
+            int addedLines = displayLines(Math.max(80, width - 52)).size() - previousLines;
+            if (scrollFromBottom > 0) scrollFromBottom = Math.max(0, scrollFromBottom + addedLines);
+        }
         refreshTicks = 0;
     }
 
@@ -64,9 +81,9 @@ public final class AgentActivityScreen extends Screen {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
-        graphics.drawCenteredString(font, title, width / 2, 10, TEXT);
+        graphics.drawCenteredString(font, Component.literal(reasoningOnly ? "Agent 过程 · 模型思考" : "Agent 过程 · 总日志"), width / 2, 10, TEXT);
         int left = 16;
-        int top = 28;
+        int top = 52;
         int right = width - 16;
         int bottom = height - 36;
         graphics.fill(left, top, right, bottom, BORDER);
@@ -80,7 +97,8 @@ public final class AgentActivityScreen extends Screen {
         int end = Math.min(lines.size(), start + visible);
         int y = top + 8;
         if (lines.isEmpty()) {
-            graphics.drawString(font, Component.translatable("gui.geomantia.agent_activity.empty"),
+            graphics.drawString(font, (reasoningOnly ? Component.literal("尚未收到模型思考；仅显示接口实际返回的内容")
+                            : Component.translatable("gui.geomantia.agent_activity.empty")),
                     left + 8, y, MUTED, false);
         } else {
             for (int index = start; index < end; index++) {
@@ -95,14 +113,19 @@ public final class AgentActivityScreen extends Screen {
     }
 
     private List<DisplayLine> displayLines(int lineWidth) {
+        if (cachedWidth == lineWidth && cachedReasoningOnly == reasoningOnly) return cachedLines;
         List<DisplayLine> result = new ArrayList<>();
         for (AgentActivityEvent event : events) {
+            if (reasoningOnly && !event.kind().equals("reasoning")) continue;
             int color = color(event.kind());
             String prefix = "[" + time(event.occurredAt()) + "] " + label(event.kind()) + " ";
             List<FormattedCharSequence> wrapped = font.split(Component.literal(prefix + event.message()), lineWidth);
             for (FormattedCharSequence line : wrapped) result.add(new DisplayLine(line, color));
         }
-        return result;
+        cachedWidth = lineWidth;
+        cachedReasoningOnly = reasoningOnly;
+        cachedLines = List.copyOf(result);
+        return cachedLines;
     }
 
     private static String time(String value) {
@@ -115,7 +138,8 @@ public final class AgentActivityScreen extends Screen {
 
     private static String label(String kind) {
         return switch (kind) {
-            case "model" -> "思路";
+            case "model", "model_delta" -> "模型输出";
+            case "reasoning" -> "模型思考";
             case "tool" -> "调用";
             case "result" -> "结果";
             case "progress" -> "推进";

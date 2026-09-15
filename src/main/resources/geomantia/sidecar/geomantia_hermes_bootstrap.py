@@ -53,10 +53,29 @@ def install_cancellation_adapter(adapter_type):
     adapter_type._run_agent = managed
 
 
+def install_reasoning_adapter(agent_type):
+    """Forward provider-visible reasoning via the pinned session SSE progress channel."""
+    original = agent_type._fire_reasoning_delta
+    if getattr(original, "_geomantia_reasoning", False):
+        return
+
+    @functools.wraps(original)
+    def forward(self, text):
+        original(self, text)
+        callback = getattr(self, "tool_progress_callback", None)
+        if callback and isinstance(text, str) and text:
+            callback("reasoning.available", "_geomantia_reasoning", text, None)
+
+    forward._geomantia_reasoning = True
+    agent_type._fire_reasoning_delta = forward
+
+
 def main():
     from gateway.platforms import api_server
     install_input_adapter(api_server)
     install_cancellation_adapter(api_server.APIServerAdapter)
+    from run_agent import AIAgent
+    install_reasoning_adapter(AIAgent)
     from hermes_cli.main import main as hermes_main
     hermes_main()
 

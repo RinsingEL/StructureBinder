@@ -4,7 +4,7 @@ import com.google.gson.*;
 import java.io.IOException;
 import java.nio.file.*;
 
-/** World-owned planning quantities; city counts include the capital. */
+/** Global defaults copied once into each world; city counts include the capital. */
 public record RealmPopulationConfig(int realmCount, int minCitiesPerRealm, int maxCitiesPerRealm) {
     public RealmPopulationConfig {
         if (realmCount < 1 || realmCount > 12)
@@ -13,14 +13,40 @@ public record RealmPopulationConfig(int realmCount, int minCitiesPerRealm, int m
             throw new IllegalArgumentException("CITY_COUNT_CONFIG: require 1 <= minCitiesPerRealm <= maxCitiesPerRealm; counts include the capital.");
     }
     public static RealmPopulationConfig defaults() { return new RealmPopulationConfig(3, 1, 4); }
+    /** Called during mod setup, before the player creates or opens a world. Never overwrites user edits. */
+    public static Path ensureGlobalConfig(Path configDirectory) throws IOException {
+        Path path = configDirectory.resolve("geomantia/realm_planning.json");
+        writeIfAbsent(path, defaults());
+        return path;
+    }
     public static RealmPopulationConfig load(Path debugRoot) throws IOException {
-        Path path = debugRoot.toAbsolutePath().normalize().getParent().resolve("config/geomantia/realm_planning.json");
-        if (!Files.exists(path)) {
-            Files.createDirectories(path.getParent());
-            Files.writeString(path, new GsonBuilder().setPrettyPrinting().create().toJson(defaults().asJson()));
-            return defaults();
+        return load(debugRoot, net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get());
+    }
+    static synchronized RealmPopulationConfig load(Path debugRoot, Path configDirectory) throws IOException {
+        Path snapshot = debugRoot.toAbsolutePath().normalize().getParent()
+                .resolve("config/geomantia/realm_planning.json");
+        // Includes files created by the previous world-local implementation.
+        if (Files.exists(snapshot)) return read(snapshot);
+        RealmPopulationConfig selected = configDirectory == null ? defaults() : read(ensureGlobalConfig(configDirectory));
+        writeIfAbsent(snapshot, selected);
+        return read(snapshot);
+    }
+    private static RealmPopulationConfig read(Path path) throws IOException {
+        try {
+            return fromJson(JsonParser.parseString(Files.readString(path)).getAsJsonObject());
+        } catch (RuntimeException failure) {
+            throw new IllegalArgumentException("REALM_PLANNING_CONFIG: invalid configuration at " + path
+                    + "; " + failure.getMessage(), failure);
         }
-        return fromJson(JsonParser.parseString(Files.readString(path)).getAsJsonObject());
+    }
+    private static void writeIfAbsent(Path path, RealmPopulationConfig config) throws IOException {
+        Files.createDirectories(path.getParent());
+        try {
+            Files.writeString(path, new GsonBuilder().setPrettyPrinting().create().toJson(config.asJson()) + "\n",
+                    StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+        } catch (FileAlreadyExistsException existing) {
+            // Startup or another caller already supplied the file; its values remain authoritative.
+        }
     }
     public static RealmPopulationConfig fromJson(JsonObject json) {
         var d = defaults();

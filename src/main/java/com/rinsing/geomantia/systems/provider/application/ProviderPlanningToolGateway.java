@@ -103,6 +103,7 @@ public final class ProviderPlanningToolGateway implements DeepSeekToolLoopClient
         Endpoint endpoint = ENDPOINTS.get(toolName);
         if (endpoint == null) return error("PROVIDER_AGENT_TOOL_NOT_ALLOWED", toolName);
         JsonObject arguments = suppliedArguments == null ? new JsonObject() : suppliedArguments.deepCopy();
+        if (com.rinsing.geomantia.systems.city.application.CityD4Workflow.TOOLS.contains(toolName)) arguments.addProperty("d4Tool", toolName);
         injectIdentity(arguments, "runId", runId);
         if (endpoint.cityScoped()) injectIdentity(arguments, "citySeedId", requiredScope(citySeedId, "citySeedId"));
         if ("realm_t1_prepare".equals(toolName) && !arguments.has("realmCount")) {
@@ -138,7 +139,7 @@ public final class ProviderPlanningToolGateway implements DeepSeekToolLoopClient
         HttpRequest request = HttpRequest.newBuilder(apiBase.resolve(endpoint.path()))
                 // D4 submission synchronously compiles the preview, just like direct MCP
                 // (TIMEOUTS.refresh). A short timeout leaves a valid draft hidden from the agent.
-                .timeout("city_submit_d4_blueprint".equals(toolName) ? Duration.ofMinutes(10)
+                .timeout(("city_submit_d4_blueprint".equals(toolName) || com.rinsing.geomantia.systems.city.application.CityD4Workflow.TOOLS.contains(toolName)) ? Duration.ofMinutes(10)
                         : endpoint.longRunning() ? Duration.ofMinutes(5) : Duration.ofSeconds(45))
                 .header("Content-Type", "application/json")
                 .header(hostOnly ? "X-Geomantia-Host-Result" : "X-Geomantia-Agent-View", "true")
@@ -357,6 +358,8 @@ public final class ProviderPlanningToolGateway implements DeepSeekToolLoopClient
                 new Endpoint("/realm/patch_explorer/select_candidate", false, true));
         endpoints.put("city_prepare_d4_blueprint_context",
                 new Endpoint("/realm/city/prepare_d4_blueprint_context", true, false));
+        for (String tool : com.rinsing.geomantia.systems.city.application.CityD4Workflow.TOOLS)
+            endpoints.put(tool, new Endpoint("/realm/city/submit_d4_blueprint", true, true));
         endpoints.put("city_submit_d4_blueprint",
                 new Endpoint("/realm/city/submit_d4_blueprint", true, false));
         endpoints.put("city_post_d4_auto_compile_status",

@@ -132,7 +132,7 @@ final class CityDesignSession {
         result.addProperty("nextAction", "city_submit_d4_blueprint");
         result.add("designSession", state); result.add("materialResults", materialResults);
         if (context.has("scaleDesignTask")) result.add("scaleDesignTask", context.get("scaleDesignTask").deepCopy());
-        result.addProperty("instruction", "Select authored materials for intended groups, then submit one complete cluster with child arrays using DRAFT. Review actual preview and gaps. FINAL only when you accept the whole city. Use structureCount to specify each leaf array's planned population; area is never a quota.");
+        result.addProperty("instruction", "Follow d4Workflow: select materials for the current district, submit districtDesign, inspect images and assess before complete. Use structureCount and nested arrays to realize the city scale recommendations.");
         return result;
     }
 

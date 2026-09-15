@@ -153,7 +153,7 @@ final class CityPlanningEndpointHandler {
         request.add("templateCatalogSource", templateCatalogSource.deepCopy());
         request.add("blueprintReferenceCatalog", blueprintReferenceCatalog.deepCopy());
         return recordStandaloneTestRunState(debugRoot, runId, citySeedId, request,
-                "awaiting_city_blueprint", "city_submit_d4_blueprint", response);
+                "awaiting_city_blueprint", stringValue(response, "nextAction", "city_d4_overview"), response);
     }
 
     static JsonObject handleSubmitD4Blueprint(Path debugRoot, String runId, String citySeedId,
@@ -169,9 +169,9 @@ final class CityPlanningEndpointHandler {
                 contextId, input);
         // Reference reading must not replace the city's workflow status or enqueue compilation.
         if (input.has("designExample") || input.has("blockMaterials")) return response;
-        JsonObject request = standaloneRequest("city_submit_d4_blueprint", runId, citySeedId);
+        JsonObject request = standaloneRequest(stringValue(input, "d4Tool", "city_submit_d4_blueprint"), runId, citySeedId);
         request.addProperty("contextId", contextId);
-        for (String key : java.util.List.of("cityBlueprint", "blueprintPatch", "baseBlueprintHash", "baseDraftHash", "proportionMode", "submissionMode", "designIntent", "materialSelections", "designReview", "designExample", "blockMaterials"))
+        for (String key : java.util.List.of("cityBlueprint", "blueprintPatch", "baseBlueprintHash", "baseDraftHash", "proportionMode", "submissionMode", "designIntent", "materialSelections", "designReview", "designExample", "blockMaterials", "d4Tool", "overview", "districtDesign", "integrationDesign", "integrationIntent", "complete", "workflowRevision", "reopenDistrictId"))
             if (input.has(key)) request.add(key, input.get(key).deepCopy());
         boolean accepted = booleanValue(response, "ok", false) && !booleanValue(response, "designInProgress", false);
         String nextAction = stringValue(response, "nextAction",

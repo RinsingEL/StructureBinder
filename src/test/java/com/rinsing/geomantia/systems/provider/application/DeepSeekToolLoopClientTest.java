@@ -37,9 +37,9 @@ class DeepSeekToolLoopClientTest {
                     StandardCharsets.UTF_8)).getAsJsonObject();
             if (requests.incrementAndGet() == 1) {
                 assertTrue(body.get("instructions").getAsString().contains(
-                        "CONNECTION is the only relation kind that creates a terrain-routed main road"));
+                        "follow d4Workflow and its four stage tools"));
                 assertTrue(body.get("instructions").getAsString().contains(
-                        "Never combine fields from these two families"));
+                        "Never submit the whole city at once"));
                 assertEquals("required", body.get("tool_choice").getAsString());
                 assertEquals("none", body.getAsJsonObject("reasoning").get("effort").getAsString());
                 assertEquals("city_design_queue_status",

@@ -534,7 +534,7 @@ const connectionPlanParametersSchema: Record<string, unknown> = {
   ],
 };
 
-const cityBlueprintSchema = strictObject({
+export const cityBlueprintSchema = strictObject({
   schema: { type: "string", enum: ["city_blueprint"] },
   cityId: nonEmptyString("必须与冻结上下文一致。"),
   sourceD3Ref: artifactRefSchema,
@@ -727,7 +727,7 @@ const cityBlueprintSchema = strictObject({
 }, ["designIntent",
   "styleProfile", "groups", "arrayCompositions", "relations", "roadProfile", "surfaceDetailProfile", "outdoorPlan"]);
 
-export const realmTools: ToolDefinition[] = [
+const originalRealmTools: ToolDefinition[] = [
   {
     name: "realm_status",
     description: "读取 Geomantia 国度规划 W/T 调试接口状态、最近 run 和产物目录。",
@@ -1101,7 +1101,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_submit_d4_blueprint",
-    description: "城市地面/道路/台地选材见 designGuide.surfaceMaterials；blockMaterials 独立按需分页查询或查看单块材质图，选择保存在 cityBlueprint.surfaceMaterials，不消耗重试预算。先提交 designIntent，再批量 materialSelections 搜索或选材并获取估算；这两项与蓝图分开提交。之后提交 cityBlueprint 或 blueprintPatch（二选一）。DRAFT 逐功能区初版与修饰。designReview 独立提交：先用 baseDraftHash + groupIds（最多3个）取局部图，看图后再带 assessment 记录判断；局部复核完成后用 overview=true 取总览并记录判断。允许保留合适方案；修订后重看受影响部分。FINAL 必须与已复核草稿一致，正常复核不消耗拒绝预算。schema/cityId/sourceD3Ref/catalogSnapshotRef/generationSeed 可省略，由宿主绑定；显式冲突仍拒绝。proportionMode=RELATIVE_WEIGHTS 归一化占比后执行作者白名单与安全校验；默认 EXACT_SHARES。局部修订使用返回的 baseDraftHash（拒绝草稿）或 baseBlueprintHash（已接受蓝图），二者不可同填，配合 replace-only JSON Pointer blueprintPatch，必须用 EXACT_SHARES。未知路径或过期哈希拒绝。直接读取 designFeedback 和 validationReport.issues.constraint；无可证明的参数修正时不盲改。AI 不读取源码、项目文档或原始 run 文件。",
+    description: "城市地面/道路/台地选材见 designGuide.surfaceMaterials；blockMaterials 独立按需分页查询或查看单块材质图，选择保存在 cityBlueprint.surfaceMaterials，不消耗重试预算。先提交 designIntent，再批量 materialSelections 搜索或选材并获取估算；这两项与蓝图分开提交。之后提交 cityBlueprint 或 blueprintPatch（二选一）。DRAFT 逐功能区初版与修饰。designReview 独立提交：先用 baseDraftHash + groupIds（最多3个）取局部图，看图后再次提交完整 designReview 对象，保留内部 baseDraftHash 和 groupIds（或 overview），再加 assessment 记录判断；不能仅提交 assessment，不能把这些字段放在根层；局部复核完成后用 overview=true 取总览；主动用向外/靠接阵列修饰缺失的城区过渡，再看图确认朝目标延伸且缩短空段，不能只写考虑过外扩或道路已连通。按手册执行目标、动作、验收与修正，未解决问题按触发条件读取对应案例。允许保留合适方案；修订后重看受影响部分。FINAL 必须与已复核草稿一致，正常复核不消耗拒绝预算。schema/cityId/sourceD3Ref/catalogSnapshotRef/generationSeed 可省略，由宿主绑定；显式冲突仍拒绝。proportionMode=RELATIVE_WEIGHTS 归一化占比后执行作者白名单与安全校验；默认 EXACT_SHARES。局部修订使用返回的 baseDraftHash（拒绝草稿）或 baseBlueprintHash（已接受蓝图），二者不可同填，配合 replace-only JSON Pointer blueprintPatch，必须用 EXACT_SHARES。未知路径或过期哈希拒绝。直接读取 designFeedback 和 validationReport.issues.constraint；无可证明的参数修正时不盲改。AI 不读取源码、项目文档或原始 run 文件。",
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: {
@@ -1447,6 +1447,42 @@ export const realmTools: ToolDefinition[] = [
     },
   },
 ];
+
+const oldD4 = originalRealmTools.find(t => t.name === "city_submit_d4_blueprint")!;
+const oldProperties = (oldD4.inputSchema as any).properties;
+export const d4StageNames = ["city_d4_overview", "city_d4_district", "city_d4_integrate", "city_d4_finalize"];
+export const realmTools: ToolDefinition[] = [
+  ...originalRealmTools.filter(t => t.name !== "city_submit_d4_blueprint"),
+  ...d4StageNames.map(name => {
+    const bp: any = cityBlueprintSchema.properties;
+    const properties: any = { runId: oldProperties.runId, citySeedId: oldProperties.citySeedId, contextId: oldProperties.contextId,
+      workflowRevision: { type: "integer", description: "当前 d4Workflow.revision，防止重复提交。" } };
+    if (name === "city_d4_overview") {
+      const settings: any = {};
+      for (const key of ["designIntent", "styleProfile", "roadProfile", "surfaceDetailProfile", "surfaceMaterials", "outdoorPlan"]) settings[key] = bp[key];
+      properties.overview = strictObject({ citySettings: strictObject(settings, ["designIntent", "styleProfile", "roadProfile", "surfaceDetailProfile", "outdoorPlan"]),
+        districts: oldProperties.designIntent.properties.groups }, ["citySettings", "districts"]);
+      properties.blockMaterials = oldProperties.blockMaterials;
+      properties.designExample = strictObject({ caseId: nonEmptyString("案例 ID。") },["caseId"]);
+      properties.reopenDistrictId = nonEmptyString("重新打开已有功能区，后续区与整体修饰重新验收。");
+    } else if (name === "city_d4_finalize") {
+      properties.baseDraftHash = nonEmptyString("已完成整体修饰和验收的当前草稿 hash。");
+      properties.autoAdvanceAfterD4 = oldProperties.autoAdvanceAfterD4;
+    } else {
+      const fragment: any = {};
+      for (const key of ["groups", "arrayCompositions", "relations"]) fragment[key] = bp[key];
+      for (const key of ["spatialGrounds", "landscapes"]) fragment[key] = bp.outdoorPlan.properties[key];
+      properties[name === "city_d4_district" ? "districtDesign" : "integrationDesign"] = strictObject(fragment, ["groups"]);
+      for (const key of ["materialSelections", "designReview", "blockMaterials"]) properties[key] = oldProperties[key];
+      properties.designExample = strictObject({ caseId: nonEmptyString("案例 ID。"), reloadImages: {type:"boolean"} }, ["caseId"]);
+      properties.complete = { type: "boolean", description: "已看图并评价后确认本阶段/当前区完成。" };
+      if (name === "city_d4_integrate") properties.integrationIntent = nonEmptyString("向外阵列联系哪些区、用途与期望改善；和 integrationDesign 一起提交。");
+    }
+    return { name, description: "D4 独立阶段协议。遵循 d4Workflow 的阶段、当前功能区与 nextAction。总览→逐区初版/看图/修饰/确认→实际向外阵列整体修饰并重看总览→提交。宿主保存并合并各区，不能一次交整城；每次仅一个操作。",
+      inputSchema: { type: "object", additionalProperties: false, properties, required: ["runId", "citySeedId", "contextId", "workflowRevision"] } } as ToolDefinition;
+  })
+];
+
 
 function decorationVariant(type: string, params: Record<string, unknown>, required: string[] = []) {
   return strictObject({

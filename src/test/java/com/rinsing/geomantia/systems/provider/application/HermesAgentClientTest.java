@@ -35,9 +35,11 @@ class HermesAgentClientTest {
     void sameFrozenContextContinuationDoesNotDuplicateCatalogOrImages() {
         JsonObject state = new JsonObject(); state.addProperty("contextId", "frozen");
         state.addProperty("catalog", "unchanged-author-data".repeat(10000));
+        state.add("d4Workflow", com.google.gson.JsonParser.parseString("{stage:'DISTRICTS',revision:3,currentDistrict:{groupId:'market'}}"));
         var result = HermesAgentClient.continuationContent(state);
         assertEquals(1, result.size());
         assertTrue(result.toString().contains("frozen"));
+        assertTrue(result.toString().contains("market"));
         assertFalse(result.toString().contains("unchanged-author-data"));
         assertTrue(result.toString().length() < 1000);
     }
@@ -107,7 +109,8 @@ class HermesAgentClientTest {
     void cityToolsDoNotExposeBackgroundCompilePolling() {
         List<String> tools = PlayerProviderAgentRunner.toolsFor(ProviderPlanningDiscovery.Stage.CITY);
 
-        assertTrue(tools.contains("city_submit_d4_blueprint"));
+        assertTrue(tools.containsAll(com.rinsing.geomantia.systems.city.application.CityD4Workflow.TOOLS));
+        assertFalse(tools.contains("city_submit_d4_blueprint"));
         assertFalse(tools.contains("city_post_d4_auto_compile_status"));
         assertFalse(tools.contains("city_post_d4_auto_compile_retry"));
     }

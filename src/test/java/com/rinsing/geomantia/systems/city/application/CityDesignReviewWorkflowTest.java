@@ -86,6 +86,39 @@ class CityDesignReviewWorkflowTest {
         assertThrows(java.io.IOException.class, () -> submit(draft, review("one", false)));
     }
 
+    @Test void misplacedFieldsReturnRepairExampleAndRepairPersistsAssessment() throws Exception {
+        JsonObject draft = draft("one");
+        submit(draft, review("one", false));
+        String before = Files.readString(dir.resolve("city_design_review.json"));
+        JsonObject request = JsonParser.parseString("{runId:'run',contextId:'context',groupIds:['a','b'],designReview:{assessment:'Keep courtyard'}}").getAsJsonObject();
+        JsonObject error = CityDesignReviewWorkflow.submitRequest(dir, "context", draft, request);
+        assertEquals("CITY_DESIGN_REVIEW_FIELD_LOCATION", error.get("reasonCode").getAsString());
+        assertFalse(error.get("assessmentRecorded").getAsBoolean());
+        assertEquals(before, Files.readString(dir.resolve("city_design_review.json")));
+        JsonObject fixed = error.getAsJsonObject("correctedRequestExample");
+        assertEquals("run", fixed.get("runId").getAsString());
+        assertFalse(fixed.has("groupIds"));
+        assertEquals("one", fixed.getAsJsonObject("designReview").get("baseDraftHash").getAsString());
+        JsonObject result = CityDesignReviewWorkflow.submitRequest(dir, "context", draft, fixed);
+        assertEquals(2, result.getAsJsonObject("designReviewWorkflow").getAsJsonObject("groupAssessments").size());
+        assertFalse(result.getAsJsonObject("designReviewWorkflow").get("readyForFinal").getAsBoolean());
+    }
+
+    @Test void absentBlankNullAndWrongTypeHashAreNotReportedAsStale() throws Exception {
+        JsonObject draft = draft("one");
+        for (String value : new String[]{"null", "''", "' '", "{}", "123"}) {
+            JsonObject review = review("one", false);
+            review.add("baseDraftHash", JsonParser.parseString(value));
+            assertEquals("CITY_DESIGN_REVIEW_BASE_REQUIRED", submit(draft, review).get("reasonCode").getAsString());
+        }
+        JsonObject missing = review("one", false); missing.remove("baseDraftHash");
+        assertEquals("CITY_DESIGN_REVIEW_BASE_REQUIRED", submit(draft, missing).get("reasonCode").getAsString());
+        JsonObject stale = submit(draft, review("old", false));
+        assertEquals("CITY_DESIGN_REVIEW_BASE_STALE", stale.get("reasonCode").getAsString());
+        assertTrue(stale.get("instruction").getAsString().contains("old"));
+        assertFalse(Files.exists(dir.resolve("city_design_review.json")));
+    }
+
     private JsonObject draft(String hash) throws Exception {
         var draft = JsonParser.parseString("{status:'preview_valid',previousBlueprint:{cityId:'city',groups:[{groupId:'a'},{groupId:'b'}]}}").getAsJsonObject();
         draft.addProperty("baseDraftHash", hash);

@@ -71,6 +71,7 @@ public final class CityDesignQueue {
                 if (previousItem.has("updatedAt")) item.add("updatedAt", previousItem.get("updatedAt").deepCopy());
             }
             applyPostD4State(runDirectory, item);
+            applyD4Stage(runDirectory,item);
             items.add(item);
         }
         JsonObject state = baseState(safeRunId, mode, config.enabled(), items);
@@ -86,6 +87,7 @@ public final class CityDesignQueue {
         Path runDirectory = runDirectory(safeRunId);
         for (var element : state.getAsJsonArray("items")) {
             applyPostD4State(runDirectory, element.getAsJsonObject());
+            applyD4Stage(runDirectory,element.getAsJsonObject());
         }
         normalize(state);
         writeState(safeRunId, state);
@@ -196,6 +198,21 @@ public final class CityDesignQueue {
         }
     }
 
+    private void applyD4Stage(Path runDirectory,JsonObject item) throws IOException {
+        if (!WAITING_FOR_AGENT.equals(stringValue(item,"status",""))) return;
+        Path file=com.rinsing.geomantia.systems.city.application.CityTestRunLayout.open(runDirectory,stringValue(item,"citySeedId","")).stepDirectory(com.rinsing.geomantia.systems.city.application.CityTestRunLayout.BLUEPRINT).resolve("city_d4_workflow.json");
+        if (!Files.isRegularFile(file)) return;
+        JsonObject stage=readObject(file);
+        String tool=switch(stringValue(stage,"stage","")) {
+            case "OVERVIEW" -> "city_d4_overview";
+            case "DISTRICTS" -> "city_d4_district";
+            case "INTEGRATION" -> "city_d4_integrate";
+            case "FINAL" -> "city_d4_finalize";
+            default -> "";
+        };
+        if (!tool.isBlank()) { item.addProperty("nextAction",tool); item.add("d4Stage",stage.get("stage")); }
+    }
+
     private void applyPostD4State(Path runDirectory, JsonObject item) throws IOException {
         String citySeedId = stringValue(item, "citySeedId", "");
         Path path = runDirectory.resolve("automation").resolve("post_d4")
@@ -233,7 +250,8 @@ public final class CityDesignQueue {
     private static String postD4RecoveryAction(JsonObject post) {
         String explicit = stringValue(post, "nextAction", "");
         if ("stop_for_human_review".equals(explicit)) return explicit;
-        if ("city_submit_d4_blueprint".equals(explicit)) return explicit;
+        if ("city_submit_d4_blueprint".equals(explicit)) return "city_d4_overview";
+        if (com.rinsing.geomantia.systems.city.application.CityD4Workflow.TOOLS.contains(explicit)) return explicit;
         JsonObject workflowResponse = object(post, "workflowResponse");
         JsonObject workflowReport = object(workflowResponse, "workflowReport");
         if (workflowReport.has("steps") && workflowReport.get("steps").isJsonArray()) {
@@ -243,7 +261,7 @@ public final class CityDesignQueue {
                 JsonObject step = steps.get(index).getAsJsonObject();
                 if (booleanValue(step, "ok", true)) continue;
                 if ("city_submit_d4_blueprint".equals(stringValue(step, "nextAction", ""))) {
-                    return "city_submit_d4_blueprint";
+                    return "city_d4_overview";
                 }
                 break;
             }
@@ -293,7 +311,7 @@ public final class CityDesignQueue {
             case WAITING_FOR_AGENT -> switch (stringValue(current, "reasonCode", "")) {
                 case "D3_SITE_REVIEW_REQUIRED" -> "city_review_d3_site";
                 case "PATCH_REVIEW_COMPLETED" -> "city_prepare_d4_blueprint_context";
-                case "D4_CONTEXT_PREPARED" -> "city_submit_d4_blueprint";
+                case "D4_CONTEXT_PREPARED" -> stringValue(current,"nextAction","city_d4_overview");
                 default -> "city_plan_d3";
             };
             case WAITING_FOR_PATCH_REVIEW -> "patch_explorer_show_candidates";

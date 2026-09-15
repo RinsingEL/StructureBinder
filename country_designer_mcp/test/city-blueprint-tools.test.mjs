@@ -1,16 +1,23 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { realmTools, blueprintReferenceCatalogSchema } from "../dist/src/realm/tools.js";
+import { realmTools, blueprintReferenceCatalogSchema, cityBlueprintSchema } from "../dist/src/realm/tools.js";
 
 test("publishes the program-only context tool and retryable structure plus outdoor Blueprint schema", () => {
   const prepare = realmTools.find((tool) => tool.name === "city_prepare_d4_blueprint_context");
-  const submit = realmTools.find((tool) => tool.name === "city_submit_d4_blueprint");
+  const submit = realmTools.find((tool) => tool.name === "city_d4_district");
   const autoStatus = realmTools.find((tool) => tool.name === "city_post_d4_auto_compile_status");
   const designQueueRefresh = realmTools.find((tool) => tool.name === "city_design_queue_refresh");
   const designQueueStatus = realmTools.find((tool) => tool.name === "city_design_queue_status");
   assert.ok(prepare);
   assert.ok(submit);
+  assert.ok(!realmTools.some(t => t.name === "city_submit_d4_blueprint"));
+  assert.ok(!submit.inputSchema.properties.cityBlueprint);
+  assert.ok(submit.inputSchema.properties.districtDesign);
+  assert.ok(submit.inputSchema.required.includes("workflowRevision"));
+  const finalize = realmTools.find(t => t.name === "city_d4_finalize");
+  assert.ok(finalize.inputSchema.properties.baseDraftHash);
+  assert.ok(!finalize.inputSchema.properties.districtDesign);
   assert.ok(autoStatus);
   assert.ok(designQueueRefresh);
   assert.ok(designQueueStatus);
@@ -22,25 +29,17 @@ test("publishes the program-only context tool and retryable structure plus outdo
   assert.match(showCandidates.description, /hardLegal 只表示地块非空/);
   assert.match(prepare.description, /Top Patch review/);
   assert.match(prepare.description, /5 次程序编译失败预算/);
-  assert.match(submit.description, /RELATIVE_WEIGHTS/);
-  assert.match(submit.description, /不读取源码/);
   assert.ok(!submit.inputSchema.required.includes("cityBlueprint"));
-  assert.ok(!submit.inputSchema.properties.cityBlueprint.required.includes("sourceD3Ref"));
-  assert.deepEqual(submit.inputSchema.properties.blueprintPatch.items.properties.op.enum, ["replace"]);
-  assert.equal(submit.inputSchema.properties.baseDraftHash.type, "string");
-  assert.deepEqual(submit.inputSchema.properties.submissionMode.enum, ["DRAFT", "FINAL"]);
+  assert.ok(!cityBlueprintSchema.required.includes("sourceD3Ref"));
   const review = submit.inputSchema.properties.designReview;
   assert.equal(review.additionalProperties, false);
   assert.deepEqual(review.required, ["baseDraftHash"]);
   assert.equal(review.properties.groupIds.maxItems, 3);
   assert.equal(review.properties.overview.type, "boolean");
   assert.equal(review.properties.assessment.type, "string");
-  assert.match(submit.description, /designReview/);
-  assert.match(submit.inputSchema.properties.baseDraftHash.description, /拒绝草稿/);
   assert.match(autoStatus.description, /workflowResponse/);
   assert.match(autoStatus.description, /禁止转去读取服务端源码/);
   assert.match(designQueueStatus.description, /waiting_for_patch_review/);
-  assert.equal(submit.inputSchema.properties.autoAdvanceAfterD4.type, "boolean");
   assert.deepEqual(autoStatus.inputSchema.required, ["runId", "citySeedId"]);
   assert.deepEqual(designQueueRefresh.inputSchema.properties.orderingMode.enum,
     ["global_radial", "realm_grouped"]);
@@ -48,10 +47,10 @@ test("publishes the program-only context tool and retryable structure plus outdo
   assert.deepEqual(prepare.inputSchema.required, [
     "runId", "citySeedId",
   ]);
-  assert.equal(submit.inputSchema.properties.cityBlueprint.additionalProperties, false);
-  assert.deepEqual(submit.inputSchema.properties.cityBlueprint.properties.groups.items
+  assert.equal(cityBlueprintSchema.additionalProperties, false);
+  assert.deepEqual(cityBlueprintSchema.properties.groups.items
     .properties.groupKind.enum, ["STRUCTURE"]);
-  const groupProperties = submit.inputSchema.properties.cityBlueprint.properties.groups.items.properties;
+  const groupProperties = cityBlueprintSchema.properties.groups.items.properties;
   assert.equal(groupProperties.primaryPatchRef, undefined);
   assert.equal(groupProperties.selectionPolicyRef, undefined);
   assert.equal(groupProperties.preferredPatchRefs.minItems, 1);
@@ -63,7 +62,7 @@ test("publishes the program-only context tool and retryable structure plus outdo
     ["kind", "patchRefs", "groupRefs"]);
   assert.deepEqual(groupProperties.extentClass.enum, ["SMALL", "MEDIUM", "LARGE"]);
   assert.deepEqual(groupProperties.densityClass.enum, ["SPARSE", "BALANCED", "DENSE"]);
-  assert.deepEqual(submit.inputSchema.properties.cityBlueprint.properties.schema.enum,
+  assert.deepEqual(cityBlueprintSchema.properties.schema.enum,
     ["city_blueprint"]);
   assert.equal(groupProperties.fillPools.minItems, 1);
   assert.equal(groupProperties.fillPools.items.properties.weight.exclusiveMinimum, 0);
@@ -82,10 +81,10 @@ test("publishes the program-only context tool and retryable structure plus outdo
     ["NARROW", "MEDIUM", "WIDE"]);
   assert.equal(connectionParameters.anyOf[0].properties.sideMode, undefined);
   assert.equal(connectionParameters.anyOf[1].properties.clusterShape, undefined);
-  assert.equal(submit.inputSchema.properties.cityBlueprint.properties.groups.items
+  assert.equal(cityBlueprintSchema.properties.groups.items
     .properties.attachedFeatures.maxItems, 0);
 
-  const blueprint = submit.inputSchema.properties.cityBlueprint;
+  const blueprint = cityBlueprintSchema;
   assert.ok(blueprint.required.includes("arrayCompositions"));
   const composition = blueprint.properties.arrayCompositions.items;
   assert.equal(composition.additionalProperties, false);
@@ -331,10 +330,10 @@ test("author configuration retains greenery and Landscape profiles without askin
 
 
 test("block material discovery is separate and blueprint materials remain optional", () => {
-  const submit=realmTools.find(t=>t.name==="city_submit_d4_blueprint").inputSchema;
+  const submit=realmTools.find(t=>t.name==="city_d4_district").inputSchema;
   assert.deepEqual(submit.properties.blockMaterials.required,["slot"]);
   assert.equal(submit.properties.blockMaterials.properties.page.minimum,0);
-  const b=submit.properties.cityBlueprint;
+  const b=cityBlueprintSchema;
   assert.ok(b.properties.surfaceMaterials.properties.landscapes.additionalProperties.properties.cropBlockId);
   assert.ok(!b.required.includes("surfaceMaterials"));
   assert.equal(b.properties.surfaceMaterials.properties.defaults.additionalProperties,false);

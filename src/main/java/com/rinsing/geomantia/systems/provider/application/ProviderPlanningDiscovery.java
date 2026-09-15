@@ -118,7 +118,7 @@ public final class ProviderPlanningDiscovery {
             String cityId = string(queue, "currentCitySeedId");
             String nextAction = string(queue, "nextAction");
             boolean blueprintRevision = "needs_agent".equals(status)
-                    && "city_submit_d4_blueprint".equals(nextAction);
+                    && ("city_submit_d4_blueprint".equals(nextAction) || com.rinsing.geomantia.systems.city.application.CityD4Workflow.TOOLS.contains(nextAction));
             if ((CITY_ACTIONABLE.contains(status) || blueprintRevision)
                     && !cityId.isBlank() && !nextAction.isBlank()) {
                 return step(Stage.CITY, runId, string(queueCurrent(queue), "realmId"), cityId,

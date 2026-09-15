@@ -38,21 +38,61 @@ final class CityDesignReviewWorkflow {
         result.addProperty("overviewReviewed", overall);
         if (overall) result.addProperty("overviewAssessment", text(object(state, "overview"), "assessment"));
         result.addProperty("readyForFinal", overall);
-        result.addProperty("instruction", "Design one functional district at a time, including its nested child arrays. "
-                + "Use designReview={baseDraftHash,groupIds:[...]} (up to 3) to receive actual local images; "
-                + "then repeat with assessment comparing original intent to visible shared spaces, frontage, spacing, hierarchy and retained scale. Design quality comes first: all buildings surviving or all districts being non-empty is not sufficient. After deletions or count/nesting reductions, check lost design substance and repair it if needed. "
-                + "Revise with DRAFT if needed, or explain why it should remain. After local reviews use "
-                + "designReview={baseDraftHash,overview:true}, then repeat with assessment of district relationships, "
-                + "roads, open space and any purposeful outward additions. Be bold about adjusting valid but weak layouts. Suggested initial array counts are not caps or stopping criteria; unexplained gaps are not automatically deliberate open space. Review changed areas again. "
-                + "FINAL must match the reviewed draft. Reviews do not consume rejection budgets; no forced edits.");
+        result.addProperty("instruction", "按 d4Workflow 当前阶段使用 designReview={baseDraftHash,groupIds:[...]} 取1至3张局部图；看图后重复完整对象并增加 assessment。阶段3可用 overview=true 取总览。修改后重看受影响部分；评价通过后还需当前阶段 complete=true。设计评价应说明空间关系、规模与留白是否符合意图，不以编译成功替代质量。阶段4只提交当前 hash。");
+        return result;
+    }
+
+    static JsonObject submitRequest(Path dir, String contextId, JsonObject draft, JsonObject request) throws IOException {
+        JsonObject review = object(request, "designReview");
+        List<String> misplaced = new ArrayList<>();
+        for (String key : List.of("baseDraftHash", "groupIds", "overview", "assessment"))
+            if (request.has(key)) misplaced.add(key);
+        if (!misplaced.isEmpty())
+            return reviewError(dir, contextId, draft, request, review, "CITY_DESIGN_REVIEW_FIELD_LOCATION",
+                    "Move root fields " + misplaced + " inside designReview. Repeat the COMPLETE designReview object on every call; assessment is not a patch. No assessment was saved.");
+        JsonObject result = submit(dir, contextId, draft, review);
+        if (result.has("correctedRequestExample"))
+            for (String key : List.of("runId", "citySeedId"))
+                if (request.has(key)) result.getAsJsonObject("correctedRequestExample").add(key, request.get(key).deepCopy());
+        return result;
+    }
+
+    private static JsonObject reviewError(Path dir, String contextId, JsonObject draft, JsonObject request,
+                                         JsonObject review, String code, String message) throws IOException {
+        JsonObject result = pending(dir, contextId, draft, message);
+        result.addProperty("reasonCode", code);
+        result.addProperty("assessmentRecorded", false);
+        JsonObject example = new JsonObject();
+        for (String key : List.of("runId", "citySeedId"))
+            if (request.has(key)) example.add(key, request.get(key).deepCopy());
+        example.addProperty("contextId", contextId);
+        JsonObject body = new JsonObject();
+        body.addProperty("baseDraftHash", draft == null ? "<current baseDraftHash>" : text(draft, "baseDraftHash"));
+        for (String key : List.of("groupIds", "overview", "assessment")) {
+            if (review.has(key)) body.add(key, review.get(key).deepCopy());
+            else if (request.has(key)) body.add(key, request.get(key).deepCopy());
+        }
+        if (!body.has("groupIds") && !body.has("overview")) {
+            JsonArray ids = new JsonArray(); ids.add("<groupId from pendingGroupIds>"); body.add("groupIds", ids);
+        }
+        if ("CITY_DESIGN_REVIEW_BASE_STALE".equals(code)) body.remove("assessment");
+        example.add("designReview", body);
+        result.add("correctedRequestExample", example);
         return result;
     }
 
     static JsonObject submit(Path dir, String contextId, JsonObject draft, JsonObject review) throws IOException {
         if (draft == null || !"preview_valid".equals(text(draft, "status")))
             return pending(dir, contextId, draft, "Submit a valid DRAFT before reviewing its preview.");
-        if (!text(draft, "baseDraftHash").equals(text(review, "baseDraftHash")))
-            return pending(dir, contextId, draft, "Review base is stale. Use the current baseDraftHash and request its images again.");
+        JsonElement hash = review.get("baseDraftHash");
+        if (hash == null || hash.isJsonNull() || !hash.isJsonPrimitive()
+                || !hash.getAsJsonPrimitive().isString() || hash.getAsString().isBlank())
+            return reviewError(dir, contextId, draft, new JsonObject(), review, "CITY_DESIGN_REVIEW_BASE_REQUIRED",
+                    "Missing or invalid designReview.baseDraftHash. Include the current hash INSIDE designReview together with groupIds OR overview=true and assessment. Repeat the complete object, not only assessment. No assessment was saved.");
+        if (!text(draft, "baseDraftHash").equals(hash.getAsString()))
+            return reviewError(dir, contextId, draft, new JsonObject(), review, "CITY_DESIGN_REVIEW_BASE_STALE",
+                    "Review base is stale. Submitted " + hash.getAsString() + "; current " + text(draft, "baseDraftHash")
+                            + ". Request current images without assessment, inspect them, then submit the complete designReview with assessment. No assessment was saved.");
         if (!Set.of("baseDraftHash", "groupIds", "overview", "assessment").containsAll(review.keySet()))
             throw new IllegalArgumentException("CITY_DESIGN_REVIEW_FIELDS: use baseDraftHash, groupIds OR overview=true, and optional assessment.");
         boolean overview = review.has("overview") && review.get("overview").getAsBoolean();

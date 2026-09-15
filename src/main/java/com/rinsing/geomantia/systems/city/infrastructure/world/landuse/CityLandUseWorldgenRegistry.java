@@ -805,8 +805,6 @@ public final class CityLandUseWorldgenRegistry {
                 CityLandUseChunkCompiler.MaterialPalette palette =
                         CityLandUseChunkCompiler.MaterialPalette.fromJson(
                                 requiredObject(entry, "materialPalette"));
-                // Keep the persisted legacy hash so linked surface plans and existing ledger
-                // owner keys remain stable across the migration.
                 validatePlanHash(areaPlan);
                 validateSurfacePrintLink(areaPlan, surfacePlan);
                 if (!cityId.equals(areaPlan.cityId())) {

@@ -142,7 +142,7 @@ class CityDesignQueueTest {
         queue.onPostD4State(post);
         JsonObject state = queue.status("run_revision");
         assertEquals("needs_agent", state.get("status").getAsString());
-        assertEquals("city_submit_d4_blueprint", state.get("nextAction").getAsString());
+        assertEquals("city_d4_overview", state.get("nextAction").getAsString());
         assertThrows(IllegalArgumentException.class, () -> queue.requireProgramRetryIfManaged("run_revision", "city_1"));
     }
 
@@ -166,7 +166,7 @@ class CityDesignQueueTest {
                 queue.status("run_review").get("nextAction").getAsString());
         queue.onAgentWorkflowState("run_review", "city_1", "waiting_for_agent",
                 "D4_CONTEXT_PREPARED", "");
-        assertEquals("city_submit_d4_blueprint",
+        assertEquals("city_d4_overview",
                 queue.status("run_review").get("nextAction").getAsString());
     }
 

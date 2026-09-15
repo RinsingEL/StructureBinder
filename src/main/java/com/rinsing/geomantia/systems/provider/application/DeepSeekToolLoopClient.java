@@ -30,6 +30,9 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
     private static final int MAX_RESPONSE_CHARS = 8 * 1024 * 1024;
     private static final long MAX_INITIAL_IMAGE_BYTES = 8L * 1024 * 1024;
     private static final String INSTRUCTIONS = """
+            语言要求：必须使用简体中文输出向接口提供的思考过程、进度说明、设计理由、预览评价和最终回复。
+            即使上下文、工具说明或历史回复是英文，也继续使用简体中文。工具名、JSON 字段名、枚举值、
+            素材 ID、路径和错误码保持原文，不翻译或改写协议标识。
             You are the Geomantia in-game planning agent. Continue only the current host-locked run, realm and city.
             Use the available Geomantia tools and follow the returned nextAction and validation evidence. Never skip a
             required review, never invent artifact contents, never inspect source code or project documents,
@@ -40,15 +43,10 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
             selecting a site, use Patch Explorer open, show and select in order and rely on the attached preview.
             When resuming without prior tool history, reopen the active Patch Explorer or prepare the same D4 context
             again to obtain formal evidence; do not read raw run files.
-            For City D4, CONNECTION is the only relation kind that creates a terrain-routed main road; ADJACENCY,
-            DISTANCE, HIERARCHY, BUFFER and DIRECTION never create one. Keep normal urban districts compact and put
-            every non-isolated structure group into one reachable relation network. Use explicit CONNECTION edges for
-            the main traffic backbone, especially for distant districts. Only an intentionally isolated peripheral
-            outpost may set expansionPolicy.allowRelationConnection=false. The host chooses exact road geometry and
-            local Foundation surfaces; never invent block coordinates or use Foundation as a long-distance road.
-            For every connectionPlan, resolve its algorithm profile to the planner family exposed by the context.
-            A compound_cluster parameters object may contain only clusterShape. A guide_line_dual_side parameters
-            object may contain only sideMode, stagger and widthClass. Never combine fields from these two families.
+            For City D4, follow d4Workflow and its four stage tools: overview, current district design/review,
+            mandatory outward-array integration/review, then finalize the reviewed hash. The host saves and
+            merges districts. Never submit the whole city at once or skip stages for efficiency. Use city-scale
+            design suggestions boldly, inspect actual images and revise weak designs before completing a district.
             Stop without calling another tool when the queue is completed, waiting for generation, requires a
             human, or the returned error cannot be corrected from tool evidence.
             You are a scene designer, not an environment operator. Structure functions and styles are authored
@@ -134,10 +132,10 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
                     if ("function_call".equals(type)) calls.add(item);
                     if ("message".equals(type)) {
                         finalText = outputText(item);
-                        emit(activityListener, "model", compactVisibleText(finalText));
+                        AgentActivityEvent.emitText(activityListener, "model", finalText);
                     }
                     if ("reasoning".equals(type)) {
-                        emit(activityListener, "model", compactVisibleText(reasoningSummary(item)));
+                        AgentActivityEvent.emitText(activityListener, "reasoning", reasoningSummary(item));
                     }
                 }
                 if (calls.isEmpty()) {
@@ -246,8 +244,8 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
             if (message == null) throw new IOException("Provider response missing message");
             messages.add(message.deepCopy());
             finalText = string(message, "content").trim();
-            emit(activityListener, "model", compactVisibleText(finalText));
-            emit(activityListener, "model", compactVisibleText(string(message, "reasoning_content")));
+            AgentActivityEvent.emitText(activityListener, "model", finalText);
+            AgentActivityEvent.emitText(activityListener, "reasoning", string(message, "reasoning_content"));
             JsonArray calls = message.has("tool_calls") && message.get("tool_calls").isJsonArray()
                     ? message.getAsJsonArray("tool_calls") : new JsonArray();
             if (calls.isEmpty()) {
@@ -302,13 +300,6 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
     private static void emit(Consumer<AgentActivityEvent> listener, String kind, String message) {
         if (listener == null || message == null || message.isBlank()) return;
         listener.accept(new AgentActivityEvent(Instant.now().toString(), kind, message));
-    }
-
-    private static String compactVisibleText(String value) {
-        if (value == null) return "";
-        String compact = value.replaceAll("\\s+", " ").strip();
-        if (compact.startsWith("{") || compact.startsWith("[")) return "模型返回了结构化内容（已省略）";
-        return compact.length() <= 600 ? compact : compact.substring(0, 599) + "…";
     }
 
     private static String reasoningSummary(JsonObject item) {
