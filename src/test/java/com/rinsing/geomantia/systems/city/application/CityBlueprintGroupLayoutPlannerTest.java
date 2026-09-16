@@ -16,6 +16,20 @@ class CityBlueprintGroupLayoutPlannerTest {
     private final CityBlueprintGroupLayoutPlanner planner = new CityBlueprintGroupLayoutPlanner();
 
     @Test
+    void boundaryGuidedCompactTraceDoesNotInventAFrontageTarget() {
+        BlockPoint boundaryOrigin = new BlockPoint(32, 64);
+        var proposal = new CityBlueprintGroupLayoutPlanner.Proposal(0, "COMPACT",
+                planner.parameters("COMPACT", CityBlueprint.DensityClass.BALANCED),
+                12, false, null, java.util.List.of(boundaryOrigin), null);
+
+        var trace = proposal.traceJson();
+        assertFalse(trace.has("frontageTarget"));
+        assertFalse(trace.has("compactLaneTarget"));
+        assertEquals(boundaryOrigin.asJson(), trace.getAsJsonObject("theoreticalAnchor"));
+        assertEquals(boundaryOrigin.asJson(), trace.getAsJsonArray("compactCandidateGuides").get(0));
+    }
+
+    @Test
     void compactDemandFollowsEightSlotRingsAndContainsAllGuidesAndTemplateExcursions() {
         BlockPoint origin = new BlockPoint(0, 0);
         var frame = planner.worldFrame(origin);
@@ -186,6 +200,8 @@ class CityBlueprintGroupLayoutPlannerTest {
                     47L, "compact", slot, frame, center, null, false, 18);
             assertEquals(5, proposal.guides().size());
             assertTrue(proposal.frontageTarget() != null);
+            assertEquals(proposal.frontageTarget().asJson(),
+                    proposal.traceJson().getAsJsonObject("compactLaneTarget"));
             spacing = proposal.spacingBlocks();
             BlockPoint guide = proposal.guides().get(0);
             guides.add(guide);

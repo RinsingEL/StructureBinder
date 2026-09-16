@@ -157,7 +157,7 @@ public final class CityBlueprintCompilerService {
             return CompilationResult.failed(evidence, CityBlueprintDependencies.CYCLE, conflict.message());
         }
         Set<String> engineeredGroups = blueprint.outdoorPlan().mode() == CityBlueprint.OutdoorMode.GENERATE
-                ? blueprint.outdoorPlan().spatialGrounds().stream().map(CityBlueprint.SpatialGround::sourceGroupId)
+                ? blueprint.outdoorPlan().foundationGroupIds().stream()
                     .collect(java.util.stream.Collectors.toSet()) : Set.of();
         CityStructureTerrainGate terrainGate = new CityStructureTerrainGate(terrainField, semanticCatalogJson, engineeredGroups);
         CityBlueprint.ArtifactRef expectedD3 = artifactRef(requiredObject(context, "sourceD3Ref"));
@@ -709,6 +709,7 @@ public final class CityBlueprintCompilerService {
         JsonObject acceptance = new JsonObject();
         acceptance.addProperty("passed", hardBlocks.isEmpty());
         acceptance.addProperty("acceptancePolicy", "SAFE_MEMBERS_WITH_EXPLICIT_GAPS_V2");
+        acceptance.addProperty("instruction", CityD4SubmissionGuidance.acceptanceInstruction());
         acceptance.addProperty("qualityFullySatisfied", hardBlocks.isEmpty() && warnings.isEmpty());
         acceptance.addProperty("previewCompiled", true);
         acceptance.addProperty("trafficGroupCount", trafficGroupIds.size());
@@ -4308,10 +4309,7 @@ public final class CityBlueprintCompilerService {
     }
 
     private static String contextIdentity(JsonObject context) {
-        JsonObject core = context.deepCopy();
-        core.remove("contextId");
-        core.remove("preparedAt");
-        return sha256(CityJson.GSON.toJson(core));
+        return CityBlueprintService.contextIdentity(context);
     }
 
     private static void requireArtifactCurrent(Path debugRoot, JsonObject artifact, String reason)

@@ -158,6 +158,9 @@ public final class CityBlueprintService {
         String contextId = sha256(CityJson.GSON.toJson(contextCore));
 
         JsonObject context = contextCore.deepCopy();
+        // Editable prose must not change the frozen terrain/catalog identity or reset district progress.
+        context.getAsJsonObject("designGuide").addProperty("behaviorHandbook",
+                com.rinsing.geomantia.systems.provider.application.AgentPromptConfig.read("city/handbook.md"));
         context.addProperty("contextId", contextId);
         context.addProperty("preparedAt", Instant.now().toString());
         Path contextPath = outputDir.resolve("city_blueprint_context.json");
@@ -872,10 +875,11 @@ public final class CityBlueprintService {
         return Long.parseUnsignedLong(hex, 16);
     }
 
-    private static String contextIdentity(JsonObject context) {
+    static String contextIdentity(JsonObject context) {
         JsonObject core = context.deepCopy();
         core.remove("contextId");
         core.remove("preparedAt");
+        if (core.has("designGuide")) core.getAsJsonObject("designGuide").remove("behaviorHandbook");
         return sha256(CityJson.GSON.toJson(core));
     }
 

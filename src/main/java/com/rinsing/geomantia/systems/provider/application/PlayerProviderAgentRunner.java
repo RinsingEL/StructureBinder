@@ -355,9 +355,9 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
                     "realm_t4_patch_planning_select_capital", "realm_t4_patch_planning_add_city",
                     "realm_t4_patch_planning_finalize");
             case QUEUE_REFRESH -> List.of("city_design_queue_refresh");
-            case CITY -> List.of("city_design_queue_status", "city_plan_d3", "city_review_d3_site",
+            case CITY -> java.util.stream.Stream.concat(List.of("city_design_queue_status", "city_plan_d3", "city_review_d3_site",
                     "patch_explorer_open", "patch_explorer_show_candidates",
-                    "city_prepare_d4_blueprint_context", "city_d4_overview", "city_d4_district", "city_d4_integrate", "city_d4_finalize");
+                    "city_prepare_d4_blueprint_context").stream(), com.rinsing.geomantia.systems.city.application.CityD4Workflow.TOOLS.stream()).toList();
             case WAITING, COMPLETE -> List.of();
         };
     }

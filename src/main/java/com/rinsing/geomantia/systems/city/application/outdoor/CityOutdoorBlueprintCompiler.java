@@ -90,9 +90,7 @@ public final class CityOutdoorBlueprintCompiler {
                 landscapeCapacityReservationPlan);
         Map<String, Set<BlockPoint>> capacityDomains = capacityReservation.domains();
         outdoorWarnings.addAll(capacityReservation.warnings());
-        List<String> spatialGroupIds = blueprint.outdoorPlan().spatialGrounds().stream()
-                .filter(ground -> ground.membership() == CityBlueprint.OutdoorMembership.URBAN)
-                .map(CityBlueprint.SpatialGround::sourceGroupId).distinct().sorted().toList();
+        List<String> spatialGroupIds = blueprint.outdoorPlan().foundationGroupIds().stream().distinct().sorted().toList();
         List<AnchorData> foundationAnchors = requiredGroups(anchorsByGroup, spatialGroupIds,
                 "CITY_OUTDOOR_STRUCTURE_GROUP_UNKNOWN", false);
         List<BlockBounds> structureFootprints = foundationAnchors.stream()

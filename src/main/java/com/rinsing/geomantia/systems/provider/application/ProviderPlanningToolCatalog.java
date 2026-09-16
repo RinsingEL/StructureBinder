@@ -18,7 +18,7 @@ final class ProviderPlanningToolCatalog {
 
     private static JsonObject definition(String name) {
         if (com.rinsing.geomantia.systems.city.application.CityD4Workflow.TOOLS.contains(name))
-            return function(name, "D4 四阶段存档协议。遵循 d4Workflow.nextAction。总览只定意图；逐个功能区设计、看图评价、complete；整体修饰必须实际向外阵列连接不同区并重看图；最终只确认 hash。一次仅提交一个操作。", stageSchema(name));
+            return function(name, "D4 阶段专用操作；按工具字段提交，不能混合设计、查询、评价和完成。遵循 d4Workflow.availableActions；整城修饰用于连接空当或扩大目标功能区。", stageSchema(name));
         return switch (name) {
             case "realm_w_refresh" -> function(name,
                     "Run or resume the one sealed W survey for this world. The host locks runId and the complete "
@@ -165,29 +165,61 @@ final class ProviderPlanningToolCatalog {
     }
 
     private static JsonObject stageSchema(String name) {
-        JsonObject source = submitSchema().getAsJsonObject("properties");
-        JsonObject blueprint = source.getAsJsonObject("cityBlueprint").getAsJsonObject("properties");
-        JsonObject p = properties("runId",string(),"citySeedId",string(),"contextId",string(),"workflowRevision",integer());
-        if (name.equals("city_d4_overview")) {
-            JsonObject settings = new JsonObject();
-            for(String key:List.of("designIntent","styleProfile","roadProfile","surfaceDetailProfile","surfaceMaterials","outdoorPlan")) settings.add(key,blueprint.get(key).deepCopy());
-            p.add("overview",object(properties("citySettings",object(settings,"designIntent","styleProfile","roadProfile","surfaceDetailProfile","outdoorPlan"),
-                    "districts",source.getAsJsonObject("designIntent").getAsJsonObject("properties").get("groups").deepCopy()),"citySettings","districts"));
-            p.add("reopenDistrictId",string());
-            for(String key:List.of("blockMaterials","designExample")) p.add(key,source.get(key).deepCopy());
-        } else if(name.equals("city_d4_finalize")) {
-            p.add("baseDraftHash",string()); p.add("autoAdvanceAfterD4",bool());
-        } else {
-            JsonObject fragment = new JsonObject();
-            for(String key:List.of("groups","arrayCompositions","relations")) fragment.add(key,blueprint.get(key).deepCopy());
-            JsonObject outdoor=blueprint.getAsJsonObject("outdoorPlan").getAsJsonObject("properties");
-            for(String key:List.of("spatialGrounds","landscapes")) fragment.add(key,outdoor.get(key).deepCopy());
-            p.add(name.equals("city_d4_district")?"districtDesign":"integrationDesign",object(fragment,"groups"));
-            for(String key:List.of("materialSelections","designReview","designExample","blockMaterials")) p.add(key,source.get(key).deepCopy());
-            p.add("complete",bool());
-            if(name.equals("city_d4_integrate")) p.add("integrationIntent",string());
+        JsonObject source=submitSchema().getAsJsonObject("properties");
+        JsonObject blueprint=source.getAsJsonObject("cityBlueprint").getAsJsonObject("properties");
+        JsonObject p=properties("runId",string(),"citySeedId",string(),"contextId",string(),"workflowRevision",integer());
+        List<String> required=new java.util.ArrayList<>(List.of("contextId","workflowRevision"));
+        switch(name) {
+            case "city_d4_overview" -> {
+                JsonObject settings=new JsonObject();
+                for(String key:List.of("designIntent","styleProfile","roadProfile","surfaceDetailProfile","surfaceMaterials")) settings.add(key,blueprint.get(key).deepCopy());
+                settings.add("outdoorPlan",object(properties("mode",enumeration("GENERATE","PRESERVE"),"envelopeProfile",enumeration("COMPACT","BALANCED","LOOSE"),"foundationProfileRef",string()),"mode","envelopeProfile","foundationProfileRef"));
+                p.add("overview",object(properties("citySettings",object(settings,"designIntent","styleProfile","roadProfile","surfaceDetailProfile","outdoorPlan"),"districts",source.getAsJsonObject("designIntent").getAsJsonObject("properties").get("groups").deepCopy()),"citySettings","districts")); required.add("overview");
+            }
+            case "city_d4_district" -> {p.add("districtDesign",districtSchema(blueprint,false));required.add("districtDesign");}
+            case "city_d4_district_refine","city_d4_integrate" -> {
+                p.add("changes",districtSchema(blueprint,true));required.add("changes");
+                if(name.equals("city_d4_integrate")) {p.add("targetDistrictId",described(string(),"扩大已有功能区时指定其 ID；省略时修改区际连接阵列。"));p.add("integrationIntent",string());required.add("integrationIntent");}
+            }
+            case "city_d4_preview","city_d4_assess" -> {
+                p.add("baseDraftHash",string());p.add("overview",bool());JsonObject ids=nonEmptyArray(string());ids.addProperty("maxItems",3);p.add("groupIds",ids);required.add("baseDraftHash");
+                if(name.equals("city_d4_assess")){p.add("assessment",string());required.add("assessment");}
+            }
+            case "city_d4_finalize" -> {p.add("baseDraftHash",string());required.add("baseDraftHash");p.add("autoAdvanceAfterD4",bool());}
+            case "city_d4_reopen" -> {p.add("districtId",string());required.add("districtId");}
+            case "city_d4_materials","city_d4_example","city_d4_blocks" -> {
+                String key=switch(name){case "city_d4_materials" -> "materialSelections";case "city_d4_example" -> "designExample";default -> "blockMaterials";};p.add(key,source.get(key).deepCopy());required.add(key);
+            }
+            case "city_d4_complete","city_d4_handbook" -> { }
+            default -> throw new IllegalArgumentException("Unknown D4 tool: "+name);
         }
-        return object(p,"contextId","workflowRevision");
+        return object(p,required.toArray(String[]::new));
+    }
+    private static JsonObject districtSchema(JsonObject blueprint,boolean update) {
+        JsonObject fields=new JsonObject();
+        for(String key:List.of("groups","arrayCompositions","relations","surfaceMaterials")) fields.add(key,blueprint.get(key).deepCopy());
+        fields.getAsJsonObject("surfaceMaterials").getAsJsonObject("properties").remove("defaults");
+        JsonObject outdoor=blueprint.getAsJsonObject("outdoorPlan").getAsJsonObject("properties");
+        for(String key:List.of("foundationGroupIds","landscapes"))fields.add(key,outdoor.get(key).deepCopy());
+        if(update) {
+            for(String key:List.of("groups","arrayCompositions","landscapes")) {
+                JsonObject item=fields.getAsJsonObject(key).getAsJsonObject("items"); relaxUpdateRequired(item);
+                JsonArray required=new JsonArray();required.add(key.equals("groups")?"groupId":key.equals("landscapes")?"landscapeId":"compositionId");item.add("required",required);
+                item.getAsJsonObject("properties").add("clearFields",described(array(string()),"明确清除该对象可省略字段，例如 placementRelation；不能清除 ID，不使用 JSON Pointer。"));
+                fields.getAsJsonObject(key).remove("minItems");
+            }
+            for(String key:List.of("removeGroupIds","removeCompositionIds","removeLandscapeIds"))fields.add(key,array(string()));
+        }
+        JsonObject schema=update?object(fields):object(fields,"groups");
+        if(update) schema.addProperty("description","按 ID 合并，未提供的字段保留；删除用 remove*Ids。relations 和 foundationGroupIds 如提供则替换本设计内清单。新对象仍须完整配置。");
+        return schema;
+    }
+
+    private static void relaxUpdateRequired(com.google.gson.JsonElement node) {
+        if(node.isJsonObject()) {
+            JsonObject object=node.getAsJsonObject();object.remove("required");object.remove("oneOf");
+            for(var entry:object.entrySet())relaxUpdateRequired(entry.getValue());
+        } else if(node.isJsonArray()) for(var child:node.getAsJsonArray())relaxUpdateRequired(child);
     }
 
     private static JsonObject submitSchema() {
@@ -261,13 +293,13 @@ final class ProviderPlanningToolCatalog {
                 "preferredPatchRefs", nonEmptyArray(string()),
                 "preferredPatchZone", enumeration("CENTER", "NORTH", "EAST", "SOUTH", "WEST"),
                 "placementRelation", placementRelationSchema(), "role", string(),
-                "priority", enumeration("CORE", "STANDARD", "PERIPHERAL"),
+                "priority", described(enumeration("CORE", "STANDARD", "PERIPHERAL"), "全城合并后仅一个 CORE，不是每区一个。先看 d4Workflow.submissionRules.savedCoreOwners；其他区已占用则本区使用 STANDARD/PERIPHERAL。嵌套构图中心由 centerGroupId 决定。"),
                 "structureCount", described(integer(), "Planned building count including required refs: 1..256 and >= requiredStructureRefs count. CENTER_SYMMETRIC uses an odd total. This is a design count, not a retained-count gate."),
                 "extentClass", enumeration("SMALL", "MEDIUM", "LARGE"),
                 "densityClass", enumeration("SPARSE", "BALANCED", "DENSE"),
                 "algorithmProfileRef", string(),
                 "terrainPolicy", enumeration("CONFORM", "BALANCED", "ASSERTIVE"),
-                "requiredStructureRefs", array(string()), "fillPoolRef", string(), "fillPools", weightedPoolsSchema(),
+                "requiredStructureRefs", described(nonEmptyArray(string()), "每组至少一个必需结构；fillPools 不能替代。"), "fillPoolRef", string(), "fillPools", weightedPoolsSchema(),
                 "connectionPlan", connectionPlanSchema(), "compositionProfileRef", string(),
                 "attachedFeatures", array(string()), "targetAreaShare", number(),
                 "spaceComposition", object(properties("buildingShare", number(), "landscapeShare", number(),
@@ -354,19 +386,9 @@ final class ProviderPlanningToolCatalog {
         return object(properties(
                 "mode", enumeration("GENERATE", "PRESERVE"),
                 "envelopeProfile", enumeration("COMPACT", "BALANCED", "LOOSE"),
-                "foundationProfileRef", string(), "spatialGrounds", array(spatialGroundSchema()),
+                "foundationProfileRef", string(), "foundationGroupIds", described(array(string()),"明确需要台地/铺地的本区建筑组 ID；未列出的组保留原地面。"),
                 "landscapes", array(landscapeSchema())),
-                "mode", "envelopeProfile", "foundationProfileRef", "spatialGrounds", "landscapes");
-    }
-
-    private static JsonObject spatialGroundSchema() {
-        return object(properties(
-                "sourceGroupId", string(),
-                "sharedSpaceType", enumeration("CIVIC_SQUARE", "MARKET_STREET", "RESIDENTIAL_COURT",
-                        "FARMSTEAD", "GENERAL_URBAN"),
-                "hierarchyLevel", enumeration("PRIMARY", "SECONDARY", "LOCAL"),
-                "membership", enumeration("URBAN", "LANDSCAPE")),
-                "sourceGroupId", "sharedSpaceType", "hierarchyLevel", "membership");
+                "mode", "envelopeProfile", "foundationProfileRef", "foundationGroupIds", "landscapes");
     }
 
     private static JsonObject landscapeSchema() {

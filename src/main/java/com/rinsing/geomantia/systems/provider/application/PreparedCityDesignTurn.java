@@ -31,7 +31,7 @@ final class PreparedCityDesignTurn {
         }
         state.add("d4Workflow", prepared.get("d4Workflow").deepCopy());
         state.addProperty("nextAction", prepared.getAsJsonObject("d4Workflow").get("nextAction").getAsString());
-        state.addProperty("instruction", "按 d4Workflow 的当前阶段、当前功能区和 nextAction 继续。阶段产物由宿主保存，不能整城一次交完。功能区设计按 scaleDesignTask 建议选择规模和嵌套；先看图评价再确认。整体修饰必须实际提交向外阵列并重新验收。工具仅接受当前阶段的输入；选材与案例按需读取，设计优先。使用简体中文思考与说明。");
+        state.add("instruction", prepared.getAsJsonObject("d4Workflow").get("instruction").deepCopy());
         Path root = debugRoot.toRealPath();
         Set<Path> images = new LinkedHashSet<>();
         JsonObject revision = CityRevisionEvidence.load(root, context,

@@ -574,7 +574,7 @@ final class CityBlueprintGroupLayoutPlanner {
                 value.addProperty("courtyardRing", ring);
                 value.addProperty("courtyardRow", offset.row() * ring);
                 value.addProperty("courtyardColumn", offset.column() * ring);
-                value.add("courtyardCenter", frontageTarget.asJson());
+                if (frontageTarget != null) value.add("courtyardCenter", frontageTarget.asJson());
                 value.addProperty("courtyardGateSide", "SOUTH");
                 value.addProperty("worldAxisLocked", true);
             }
@@ -582,7 +582,8 @@ final class CityBlueprintGroupLayoutPlanner {
                 value.addProperty("compactLaneRank", slotIndex / 8 + 1);
                 value.addProperty("compactLaneSide", compactDirection(slotIndex));
                 value.addProperty("compactDirectionIndex", Math.floorMod(slotIndex, 8));
-                value.add("compactLaneTarget", frontageTarget.asJson());
+                // Boundary-guided proposals have real candidate origins but no internal lane target.
+                if (frontageTarget != null) value.add("compactLaneTarget", frontageTarget.asJson());
                 value.addProperty("compactMicroAdjustmentEnabled", guides.size() > 1);
                 value.add("compactCandidateGuides", guidesJson());
             }

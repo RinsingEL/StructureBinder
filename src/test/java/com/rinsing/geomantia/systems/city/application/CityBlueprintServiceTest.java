@@ -25,6 +25,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CityBlueprintServiceTest {
+    @Test void editableHandbookDoesNotInvalidateFrozenDesignIdentity() {
+        JsonObject context = JsonParser.parseString("{cityId:'test',designGuide:{behaviorHandbook:'before',roads:'capability'}}").getAsJsonObject();
+        String initial = CityBlueprintService.contextIdentity(context);
+        context.getAsJsonObject("designGuide").addProperty("behaviorHandbook", "after");
+        assertEquals(initial, CityBlueprintService.contextIdentity(context));
+        context.addProperty("cityId", "another");
+        assertNotEquals(initial, CityBlueprintService.contextIdentity(context));
+    }
     @Test void stagedPublicEntryCompilesOneDistrictAndRejectsWholeCityShortcut() throws Exception {
         var f=fixture("run_staged","city:staged"); var service=validationService();
         Path d3File = f.runDir().resolve("city_d3_" + safe(f.cityId())).resolve("city_landform_review_package.json");
@@ -48,7 +56,7 @@ class CityBlueprintServiceTest {
         assertFalse(service.submitDesign(temporary,f.runId(),f.cityId(),contextId,old).get("ok").getAsBoolean());
         JsonObject settings=new JsonObject();
         for(String key:List.of("designIntent","styleProfile","roadProfile","surfaceDetailProfile","outdoorPlan","surfaceMaterials")) if(b.has(key)) settings.add(key,b.get(key).deepCopy());
-        settings.getAsJsonObject("outdoorPlan").add("spatialGrounds",new JsonArray());settings.getAsJsonObject("outdoorPlan").add("landscapes",new JsonArray());
+        settings.getAsJsonObject("outdoorPlan").remove("foundationGroupIds");settings.getAsJsonObject("outdoorPlan").remove("landscapes");
         JsonObject district=JsonParser.parseString("{groupId:'district',role:'civic',intent:'shared courtyard'}").getAsJsonObject();
         district.add("preferredPatchRefs",b.getAsJsonArray("groups").get(0).getAsJsonObject().get("preferredPatchRefs").deepCopy());
         JsonArray districts=new JsonArray();districts.add(district);
@@ -57,7 +65,7 @@ class CityBlueprintServiceTest {
         var response=service.submitDesign(temporary,f.runId(),f.cityId(),contextId,q);
         assertTrue(response.get("ok").getAsBoolean(),response.toString());
         JsonObject body=new JsonObject();for(String key:List.of("groups","arrayCompositions","relations")) body.add(key,b.get(key).deepCopy());
-        for(String key:List.of("spatialGrounds","landscapes")) body.add(key,b.getAsJsonObject("outdoorPlan").get(key).deepCopy());
+        for(String key:List.of("foundationGroupIds","landscapes")) body.add(key,b.getAsJsonObject("outdoorPlan").get(key).deepCopy());
         q=new JsonObject();q.addProperty("d4Tool","city_d4_district");q.add("workflowRevision",response.getAsJsonObject("d4Workflow").get("revision"));q.add("districtDesign",body);
         var preview=service.submitDesign(temporary,f.runId(),f.cityId(),contextId,q);
         assertTrue(preview.get("ok").getAsBoolean(),preview.toString());assertTrue(preview.has("revisionEvidence"),preview.toString());
@@ -499,11 +507,11 @@ class CityBlueprintServiceTest {
         assertEquals(0, prepared.get("aiCityDesignCallCount").getAsInt());
         JsonObject context = prepared.getAsJsonObject("cityBlueprintContext");
         try (var handbook = CityBlueprintServiceTest.class.getResourceAsStream(
-                "/geomantia/city_design_handbook.md")) {
+                "/geomantia/prompts/city/handbook.md")) {
             assertNotNull(handbook);
             String expected = new String(handbook.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
             assertFalse(expected.isBlank());
-            assertEquals(expected, context.getAsJsonObject("designGuide").get("behaviorHandbook").getAsString());
+            assertEquals(expected.strip(), context.getAsJsonObject("designGuide").get("behaviorHandbook").getAsString());
         }
         JsonObject exampleRequest = new JsonObject();
         JsonObject example = new JsonObject();
@@ -1020,21 +1028,18 @@ class CityBlueprintServiceTest {
     }
 
     @Test
-    void generateRequiresExactlyOneSpatialGroundPerStructureGroup() throws Exception {
+    void generateAllowsUnpavedGroupsWithoutSpatialDeclarations() throws Exception {
         Fixture fixture = fixture("run_missing_ground", "city:missing_ground");
         CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
-        blueprint.getAsJsonObject("outdoorPlan").add("spatialGrounds", new JsonArray());
+        blueprint.getAsJsonObject("outdoorPlan").add("foundationGroupIds", new JsonArray());
 
         JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
                 prepared.get("contextId").getAsString(), blueprint);
 
-        assertFalse(result.get("ok").getAsBoolean());
-        assertEquals("CITY_BLUEPRINT_OUTDOOR_GROUND_COVERAGE_INVALID",
-                result.getAsJsonObject("validationReport").getAsJsonArray("issues")
-                        .get(0).getAsJsonObject().get("reasonCode").getAsString());
+        assertTrue(result.get("ok").getAsBoolean(), result.toString());
     }
 
     @Test
@@ -1366,14 +1371,13 @@ class CityBlueprintServiceTest {
     }
 
     @Test
-    void spatialGroundRejectsRemovedMaterialAuthorityFields() throws Exception {
+    void rejectsRemovedSpatialGroundDeclarations() throws Exception {
         Fixture fixture = fixture("run_spatial_ground_material", "city:spatial_ground_material");
         CityBlueprintService service = validationService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
-        blueprint.getAsJsonObject("outdoorPlan").getAsJsonArray("spatialGrounds")
-                .get(0).getAsJsonObject().addProperty("surfaceRecipeRef", "surface_recipe:civic");
+        blueprint.getAsJsonObject("outdoorPlan").add("spatialGrounds",new JsonArray());
 
         JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
                 prepared.get("contextId").getAsString(), blueprint);
@@ -1712,8 +1716,7 @@ class CityBlueprintServiceTest {
                 {
                   "mode":"GENERATE","envelopeProfile":"BALANCED",
                   "foundationProfileRef":"foundation:urban",
-                  "spatialGrounds":[{"sourceGroupId":"civic","sharedSpaceType":"CIVIC_SQUARE",
-                    "hierarchyLevel":"PRIMARY","membership":"URBAN"}],
+                  "foundationGroupIds":["civic"],
                   "landscapes":[]
                 }
                 """).getAsJsonObject());
@@ -1738,10 +1741,7 @@ class CityBlueprintServiceTest {
     }
 
     private static void addStructureGround(JsonObject blueprint, String groupId) {
-        JsonObject ground = blueprint.getAsJsonObject("outdoorPlan").getAsJsonArray("spatialGrounds")
-                .get(0).getAsJsonObject().deepCopy();
-        ground.addProperty("sourceGroupId", groupId);
-        blueprint.getAsJsonObject("outdoorPlan").getAsJsonArray("spatialGrounds").add(ground);
+        blueprint.getAsJsonObject("outdoorPlan").getAsJsonArray("foundationGroupIds").add(groupId);
     }
 
     private record Fixture(String runId, String cityId, Path runDir, Path d3Path,

@@ -40,8 +40,7 @@ class CityBlueprintCompilerServiceTest {
             JsonObject context = JsonParser.parseString(Files.readString(dir.resolve("city_blueprint_context.json"))).getAsJsonObject();
             context.getAsJsonObject("citySeed").addProperty("theoreticalScale", scale);
             context.add("scaleDesignTask", CityScaleDesignTask.describe(com.rinsing.geomantia.systems.city.domain.model.CityScale.fromContractName(scale)));
-            JsonObject identity = context.deepCopy(); identity.remove("contextId"); identity.remove("preparedAt");
-            String contextId = sha256(com.rinsing.geomantia.systems.city.infrastructure.json.CityJson.GSON.toJson(identity));
+            String contextId = CityBlueprintService.contextIdentity(context);
             context.addProperty("contextId", contextId);
             Files.writeString(dir.resolve("city_blueprint_context.json"), context.toString());
             JsonObject blueprint = JsonParser.parseString(Files.readString(dir.resolve("city_blueprint.json"))).getAsJsonObject();
@@ -2261,7 +2260,7 @@ class CityBlueprintCompilerServiceTest {
                   "relations":[],"roadProfile":{"profileRef":"road:town"},
                   "surfaceDetailProfile":{"profileRef":"surface:working"},
                   "outdoorPlan":{"mode":"GENERATE","envelopeProfile":"BALANCED",
-                    "foundationProfileRef":"foundation:urban","spatialGrounds":[],
+                    "foundationProfileRef":"foundation:urban","foundationGroupIds":[],
                     "landscapes":[]}
                 }
                 """).getAsJsonObject();
@@ -2277,15 +2276,9 @@ class CityBlueprintCompilerServiceTest {
         JsonArray grounds = new JsonArray();
         for (JsonElement element : blueprint.getAsJsonArray("groups")) {
             JsonObject group = element.getAsJsonObject();
-            JsonObject ground = new JsonObject();
-            ground.addProperty("sourceGroupId", group.get("groupId").getAsString());
-            ground.addProperty("sharedSpaceType", "GENERAL_URBAN");
-            ground.addProperty("hierarchyLevel", group.get("priority").getAsString().equals("CORE")
-                    ? "PRIMARY" : "SECONDARY");
-            ground.addProperty("membership", "URBAN");
-            grounds.add(ground);
+            grounds.add(group.get("groupId").getAsString());
         }
-        blueprint.getAsJsonObject("outdoorPlan").add("spatialGrounds", grounds);
+        blueprint.getAsJsonObject("outdoorPlan").add("foundationGroupIds", grounds);
     }
 
     private static String safe(String value) {

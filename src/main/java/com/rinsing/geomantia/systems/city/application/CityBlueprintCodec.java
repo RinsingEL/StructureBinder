@@ -125,29 +125,13 @@ public final class CityBlueprintCodec {
     private static CityBlueprint.OutdoorPlan outdoorPlan(JsonObject object) {
         String path = "$.outdoorPlan";
         exactFields(object, Set.of("mode", "envelopeProfile", "foundationProfileRef",
-                "spatialGrounds", "landscapes"), path);
+                "foundationGroupIds", "landscapes"), path);
         return new CityBlueprint.OutdoorPlan(
                 enumValue(object, "mode", CityBlueprint.OutdoorMode.class, path),
                 enumValue(object, "envelopeProfile", CityBlueprint.EnvelopeProfile.class, path),
                 requiredString(object, "foundationProfileRef", path + ".foundationProfileRef"),
-                spatialGrounds(requiredArray(object, "spatialGrounds", path + ".spatialGrounds")),
+                stringList(requiredArray(object, "foundationGroupIds", path + ".foundationGroupIds"), path + ".foundationGroupIds"),
                 landscapes(requiredArray(object, "landscapes", path + ".landscapes")));
-    }
-
-    private static List<CityBlueprint.SpatialGround> spatialGrounds(JsonArray array) {
-        List<CityBlueprint.SpatialGround> result = new ArrayList<>();
-        Set<String> fields = Set.of("sourceGroupId", "sharedSpaceType", "hierarchyLevel", "membership");
-        for (int index = 0; index < array.size(); index++) {
-            String path = "$.outdoorPlan.spatialGrounds[" + index + "]";
-            JsonObject item = objectElement(array.get(index), path);
-            exactFields(item, fields, path);
-            result.add(new CityBlueprint.SpatialGround(
-                    requiredString(item, "sourceGroupId", path + ".sourceGroupId"),
-                    enumValue(item, "sharedSpaceType", CityBlueprint.SharedSpaceType.class, path),
-                    enumValue(item, "hierarchyLevel", CityBlueprint.SpatialHierarchy.class, path),
-                    enumValue(item, "membership", CityBlueprint.OutdoorMembership.class, path)));
-        }
-        return List.copyOf(result);
     }
 
     private static List<CityBlueprint.Landscape> landscapes(JsonArray array) {
@@ -733,15 +717,8 @@ public final class CityBlueprintCodec {
         object.addProperty("envelopeProfile", plan.envelopeProfile().name());
         object.addProperty("foundationProfileRef", plan.foundationProfileRef());
         JsonArray grounds = new JsonArray();
-        for (CityBlueprint.SpatialGround ground : plan.spatialGrounds()) {
-            JsonObject item = new JsonObject();
-            item.addProperty("sourceGroupId", ground.sourceGroupId());
-            item.addProperty("sharedSpaceType", ground.sharedSpaceType().name());
-            item.addProperty("hierarchyLevel", ground.hierarchyLevel().name());
-            item.addProperty("membership", ground.membership().name());
-            grounds.add(item);
-        }
-        object.add("spatialGrounds", grounds);
+        for (String groupId : plan.foundationGroupIds()) grounds.add(groupId);
+        object.add("foundationGroupIds", grounds);
         JsonArray landscapes = new JsonArray();
         for (CityBlueprint.Landscape landscape : plan.landscapes()) {
             JsonObject item = new JsonObject();

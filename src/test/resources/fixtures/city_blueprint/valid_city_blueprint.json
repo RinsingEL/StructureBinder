@@ -52,13 +52,8 @@
     "mode": "GENERATE",
     "envelopeProfile": "BALANCED",
     "foundationProfileRef": "foundation:urban",
-    "spatialGrounds": [
-      {
-        "sourceGroupId": "civic_core",
-        "sharedSpaceType": "CIVIC_SQUARE",
-        "hierarchyLevel": "PRIMARY",
-        "membership": "URBAN"
-      }
+    "foundationGroupIds": [
+      "civic_core"
     ],
     "landscapes": [
       {

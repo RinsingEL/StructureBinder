@@ -41,6 +41,11 @@ public final class GeomantiaMod {
     private void onCommonSetup(final FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
             try {
+                com.rinsing.geomantia.systems.provider.application.AgentPromptConfig.ensureDefaults(FMLPaths.CONFIGDIR.get());
+            } catch (java.io.IOException ex) {
+                LOGGER.error("Failed to initialize Agent prompt configuration in {}.", FMLPaths.CONFIGDIR.get(), ex);
+            }
+            try {
                 com.rinsing.geomantia.systems.realm_planning.RealmPopulationConfig.ensureGlobalConfig(FMLPaths.CONFIGDIR.get());
             } catch (java.io.IOException ex) {
                 LOGGER.error("Failed to create global realm planning defaults in {}.", FMLPaths.CONFIGDIR.get(), ex);

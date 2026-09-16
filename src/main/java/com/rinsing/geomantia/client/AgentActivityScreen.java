@@ -30,6 +30,8 @@ public final class AgentActivityScreen extends Screen {
     private int refreshTicks;
     private int scrollFromBottom;
     private boolean reasoningOnly;
+    private boolean draggingScrollbar;
+    private double scrollbarGrabOffset;
     private List<DisplayLine> cachedLines = List.of();
     private int cachedWidth = -1;
     private boolean cachedReasoningOnly;
@@ -43,10 +45,10 @@ public final class AgentActivityScreen extends Screen {
     protected void init() {
         int controlsY = height - 28;
         addRenderableWidget(Button.builder(Component.literal("总日志"), button -> {
-            reasoningOnly = false; scrollFromBottom = 0;
+            reasoningOnly = false; scrollFromBottom = 0; draggingScrollbar = false;
         }).bounds(16, 27, 85, 20).build());
         addRenderableWidget(Button.builder(Component.literal("模型思考"), button -> {
-            reasoningOnly = true; scrollFromBottom = 0;
+            reasoningOnly = true; scrollFromBottom = 0; draggingScrollbar = false;
         }).bounds(106, 27, 85, 20).build());
         addRenderableWidget(Button.builder(Component.translatable("gui.geomantia.agent_activity.refresh"),
                         button -> ProviderSettingsClient.requestActivity())
@@ -60,10 +62,10 @@ public final class AgentActivityScreen extends Screen {
     void receive(List<AgentActivityEvent> values) {
         List<AgentActivityEvent> incoming = values == null ? List.of() : List.copyOf(values);
         if (!events.equals(incoming)) {
-            int previousLines = displayLines(Math.max(80, width - 52)).size();
+            int previousLines = displayLines(lineWidth()).size();
             events = incoming;
             cachedWidth = -1;
-            int addedLines = displayLines(Math.max(80, width - 52)).size() - previousLines;
+            int addedLines = displayLines(lineWidth()).size() - previousLines;
             if (scrollFromBottom > 0) scrollFromBottom = Math.max(0, scrollFromBottom + addedLines);
         }
         refreshTicks = 0;
@@ -89,24 +91,39 @@ public final class AgentActivityScreen extends Screen {
         graphics.fill(left, top, right, bottom, BORDER);
         graphics.fill(left + 1, top + 1, right - 1, bottom - 1, PANEL);
 
-        List<DisplayLine> lines = displayLines(Math.max(80, right - left - 20));
-        int visible = Math.max(1, (bottom - top - 18) / 11);
+        List<DisplayLine> lines = displayLines(lineWidth());
+        int visible = visibleLines();
         int maximumScroll = Math.max(0, lines.size() - visible);
         scrollFromBottom = Math.min(scrollFromBottom, maximumScroll);
         int start = Math.max(0, lines.size() - visible - scrollFromBottom);
         int end = Math.min(lines.size(), start + visible);
-        int y = top + 8;
+        int y = 0;
+        graphics.enableScissor(left + 2, top + 2, right - 12, bottom - 2);
+        graphics.pose().pushPose();
+        graphics.pose().translate(left + 8, top + 8, 0);
+        graphics.pose().scale(textScale(), textScale(), 1);
         if (lines.isEmpty()) {
             graphics.drawString(font, (reasoningOnly ? Component.literal("尚未收到模型思考；仅显示接口实际返回的内容")
                             : Component.translatable("gui.geomantia.agent_activity.empty")),
-                    left + 8, y, MUTED, false);
+                    0, y, MUTED, false);
         } else {
             for (int index = start; index < end; index++) {
                 DisplayLine line = lines.get(index);
-                graphics.drawString(font, line.text(), left + 8, y, line.color(), false);
+                graphics.drawString(font, line.text(), 0, y, line.color(), false);
                 y += 11;
             }
         }
+        graphics.pose().popPose();
+        graphics.disableScissor();
+        int trackTop = 56;
+        int trackBottom = height - 40;
+        int trackHeight = Math.max(1, trackBottom - trackTop);
+        int thumbHeight = thumbHeight(lines.size(), visible, trackHeight);
+        int thumbTop = trackTop + (maximumScroll == 0 ? 0
+                : (int) Math.round((trackHeight - thumbHeight) * (1.0 - (double) scrollFromBottom / maximumScroll)));
+        graphics.fill(right - 10, trackTop, right - 3, trackBottom, 0xFF303840);
+        graphics.fill(right - 10, thumbTop, right - 3, thumbTop + thumbHeight,
+                draggingScrollbar ? TEXT : BORDER);
         graphics.drawString(font, Component.translatable("gui.geomantia.agent_activity.hint"),
                 96, height - 23, MUTED, false);
         super.render(graphics, mouseX, mouseY, partialTick);
@@ -116,7 +133,7 @@ public final class AgentActivityScreen extends Screen {
         if (cachedWidth == lineWidth && cachedReasoningOnly == reasoningOnly) return cachedLines;
         List<DisplayLine> result = new ArrayList<>();
         for (AgentActivityEvent event : events) {
-            if (reasoningOnly && !event.kind().equals("reasoning")) continue;
+            if (reasoningOnly != event.kind().equals("reasoning")) continue;
             int color = color(event.kind());
             String prefix = "[" + time(event.occurredAt()) + "] " + label(event.kind()) + " ";
             List<FormattedCharSequence> wrapped = font.split(Component.literal(prefix + event.message()), lineWidth);
@@ -159,9 +176,75 @@ public final class AgentActivityScreen extends Screen {
         };
     }
 
+    private float textScale() {
+        return reasoningOnly ? 0.8F : 1.0F;
+    }
+
+    private int lineWidth() {
+        return Math.max(1, (int) ((width - 56) / textScale()));
+    }
+
+    private int visibleLines() {
+        return Math.max(1, (int) ((height - 106) / (11 * textScale())));
+    }
+
+    private int maximumScroll() {
+        return Math.max(0, displayLines(lineWidth()).size() - visibleLines());
+    }
+
+    private static int thumbHeight(int total, int visible, int trackHeight) {
+        return Math.min(trackHeight, Math.max(16, trackHeight * visible / Math.max(1, total)));
+    }
+
+    private void dragScrollbar(double mouseY) {
+        int trackHeight = Math.max(1, height - 96);
+        int thumb = thumbHeight(displayLines(lineWidth()).size(), visibleLines(), trackHeight);
+        double fraction = Math.max(0, Math.min(1,
+                (mouseY - 56 - scrollbarGrabOffset) / Math.max(1, trackHeight - thumb)));
+        scrollFromBottom = (int) Math.round(maximumScroll() * (1 - fraction));
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 0 && mouseX >= width - 26 && mouseX < width - 19
+                && mouseY >= 56 && mouseY < height - 40) {
+            int maximum = maximumScroll();
+            if (maximum == 0) return true;
+            scrollFromBottom = Math.min(scrollFromBottom, maximum);
+            int trackHeight = Math.max(1, height - 96);
+            int thumb = thumbHeight(displayLines(lineWidth()).size(), visibleLines(), trackHeight);
+            double thumbTop = 56 + (trackHeight - thumb) * (1.0 - (double) scrollFromBottom / maximum);
+            scrollbarGrabOffset = mouseY >= thumbTop && mouseY < thumbTop + thumb
+                    ? mouseY - thumbTop : thumb / 2.0;
+            draggingScrollbar = true;
+            dragScrollbar(mouseY);
+            return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        if (draggingScrollbar && button == 0) {
+            dragScrollbar(mouseY);
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (button == 0 && draggingScrollbar) {
+            draggingScrollbar = false;
+            return true;
+        }
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        scrollFromBottom = Math.max(0, scrollFromBottom + (delta > 0.0D ? 3 : -3));
+        scrollFromBottom = Math.max(0, Math.min(maximumScroll(),
+                scrollFromBottom + (delta > 0.0D ? 3 : delta < 0.0D ? -3 : 0)));
         return true;
     }
 

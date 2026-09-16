@@ -72,7 +72,7 @@ class CityBlueprintCodecTest {
         assertNull(blueprint.groups().get(0).connectionPlan());
         assertEquals(CityBlueprint.OutdoorMode.GENERATE, blueprint.outdoorPlan().mode());
         assertEquals("foundation:urban", blueprint.outdoorPlan().foundationProfileRef());
-        assertEquals("civic_core", blueprint.outdoorPlan().spatialGrounds().get(0).sourceGroupId());
+        assertEquals("civic_core", blueprint.outdoorPlan().foundationGroupIds().get(0));
         assertEquals("fill:relay_irrigated_farmland", blueprint.outdoorPlan().landscapes().get(0)
                 .fillSelection().variants().get(0).fillProfileRef());
         assertEquals(5, blueprint.outdoorPlan().landscapes().get(0)

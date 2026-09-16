@@ -33,7 +33,7 @@ class CityLandscapeCapacityReservationPlannerTest {
                 source.generationSeed(),source.designIntent(),source.styleProfile(),source.groups(),source.arrayCompositions(),
                 source.relations(),source.roadProfile(),source.surfaceDetailProfile(),new CityBlueprint.OutdoorPlan(
                 source.outdoorPlan().mode(),source.outdoorPlan().envelopeProfile(),source.outdoorPlan().foundationProfileRef(),
-                source.outdoorPlan().spatialGrounds(),List.of(landscape)));
+                source.outdoorPlan().foundationGroupIds(),List.of(landscape)));
         var terrain=terrain(new BlockBounds(0,0,63,63));
         var planner=new CityLandscapeCapacityReservationPlanner();
         var result=planner.plan(blueprint,catalog(1,12),terrain,new JsonArray());
@@ -375,7 +375,7 @@ class CityLandscapeCapacityReservationPlannerTest {
                     source.arrayCompositions(), source.relations(),
                     source.roadProfile(), source.surfaceDetailProfile(), new CityBlueprint.OutdoorPlan(
                     outdoor.mode(), outdoor.envelopeProfile(), outdoor.foundationProfileRef(),
-                    outdoor.spatialGrounds(), landscapes));
+                    outdoor.foundationGroupIds(), landscapes));
 
             var result = new CityLandscapeCapacityReservationPlanner().plan(blueprint,
                     catalog(1, 12), terrain(new BlockBounds(0, 0, 255, 255)), anchors);
@@ -428,7 +428,7 @@ class CityLandscapeCapacityReservationPlannerTest {
                 source.catalogSnapshotRef(), source.generationSeed(), source.designIntent(), source.styleProfile(),
                 source.groups(), source.arrayCompositions(), source.relations(), source.roadProfile(),
                 source.surfaceDetailProfile(), new CityBlueprint.OutdoorPlan(outdoor.mode(),
-                outdoor.envelopeProfile(), outdoor.foundationProfileRef(), outdoor.spatialGrounds(),
+                outdoor.envelopeProfile(), outdoor.foundationProfileRef(), outdoor.foundationGroupIds(),
                 List.of(landscape)));
     }
 

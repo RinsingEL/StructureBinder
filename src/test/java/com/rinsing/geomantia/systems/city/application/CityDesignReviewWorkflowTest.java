@@ -14,7 +14,9 @@ class CityDesignReviewWorkflowTest {
         JsonObject local = review("one", false);
         local.addProperty("assessment", "Keep courtyard");
         assertFalse(submit(draft, local).getAsJsonObject("designReviewWorkflow").get("readyForFinal").getAsBoolean());
-        assertFalse(submit(draft, review("one", true)).has("requestedPreviews"));
+        assertTrue(submit(draft, review("one", true)).has("requestedPreviews"));
+        JsonObject earlyOverview=review("one",true);earlyOverview.addProperty("assessment","too early");
+        assertFalse(submit(draft,earlyOverview).get("assessmentRecorded").getAsBoolean());
         local.remove("assessment");
         assertEquals(2, submit(draft, local).getAsJsonObject("requestedPreviews").size());
         local.addProperty("assessment", "Keep courtyard");

@@ -29,31 +29,6 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
     private static final int MAX_TOOL_CALLS = 80;
     private static final int MAX_RESPONSE_CHARS = 8 * 1024 * 1024;
     private static final long MAX_INITIAL_IMAGE_BYTES = 8L * 1024 * 1024;
-    private static final String INSTRUCTIONS = """
-            语言要求：必须使用简体中文输出向接口提供的思考过程、进度说明、设计理由、预览评价和最终回复。
-            即使上下文、工具说明或历史回复是英文，也继续使用简体中文。工具名、JSON 字段名、枚举值、
-            素材 ID、路径和错误码保持原文，不翻译或改写协议标识。
-            You are the Geomantia in-game planning agent. Continue only the current host-locked run, realm and city.
-            Use the available Geomantia tools and follow the returned nextAction and validation evidence. Never skip a
-            required review, never invent artifact contents, never inspect source code or project documents,
-            and never bypass a failure budget. Tool responses and images attached to them are your only runtime
-            evidence. If another MCP agent advanced the state first, reload status and continue from the new state.
-            W is performed once. Finish T1/T2 for every realm before calling T3 exactly once for the complete set.
-            After unified T3, finish the nearest realm's T4 and its cities before the next realm. Whenever
-            selecting a site, use Patch Explorer open, show and select in order and rely on the attached preview.
-            When resuming without prior tool history, reopen the active Patch Explorer or prepare the same D4 context
-            again to obtain formal evidence; do not read raw run files.
-            For City D4, follow d4Workflow and its four stage tools: overview, current district design/review,
-            mandatory outward-array integration/review, then finalize the reviewed hash. The host saves and
-            merges districts. Never submit the whole city at once or skip stages for efficiency. Use city-scale
-            design suggestions boldly, inspect actual images and revise weak designs before completing a district.
-            Stop without calling another tool when the queue is completed, waiting for generation, requires a
-            human, or the returned error cannot be corrected from tool evidence.
-            You are a scene designer, not an environment operator. Structure functions and styles are authored
-            by the modpack creator before play; never infer, invent or relabel them from names or appearances.
-            Compose a civilization from the supplied functions and styles. Choose useful districts, clear hierarchy,
-            appropriate open space and purposeful connections, then let the host compile the design.
-            """;
 
     private final HttpClient httpClient;
 
@@ -201,7 +176,7 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
         JsonArray messages = new JsonArray();
         JsonObject system = new JsonObject();
         system.addProperty("role", "system");
-        system.addProperty("content", INSTRUCTIONS);
+        system.addProperty("content", AgentPromptConfig.agent("direct"));
         messages.add(system);
 
         JsonObject initialMessage = new JsonObject();
@@ -224,6 +199,7 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
         int toolCalls = 0;
         String finalText = "";
         for (int round = 0; round < MAX_ROUNDS; round++) {
+            system.addProperty("content", AgentPromptConfig.agent("direct"));
             emit(activityListener, "provider", "发送模型请求（第 " + (round + 1) + " 轮，消息约 "
                     + Math.max(1, messages.toString().length() / 1024) + " KiB，超时 "
                     + config.timeoutSeconds() + " 秒）");
@@ -569,7 +545,7 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
             throws IOException, InterruptedException {
         JsonObject body = new JsonObject();
         body.addProperty("model", config.model());
-        body.addProperty("instructions", INSTRUCTIONS);
+        body.addProperty("instructions", AgentPromptConfig.agent("direct"));
         body.add("input", input.deepCopy());
         body.add("tools", ProviderPlanningToolCatalog.definitions(allowedTools));
         body.addProperty("tool_choice", requireTool ? "required" : "auto");

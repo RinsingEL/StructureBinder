@@ -323,29 +323,19 @@ public final class CityBlueprintValidator {
                     "Select foundationProfileRef from the current frozen foundationProfiles; preserve the intended terrain treatment. Unknown foundation profile: " + plan.foundationProfileRef());
         }
         if (plan.mode() == CityBlueprint.OutdoorMode.PRESERVE) {
-            if (!plan.spatialGrounds().isEmpty() || !plan.landscapes().isEmpty()) {
+            if (!plan.foundationGroupIds().isEmpty() || !plan.landscapes().isEmpty()) {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_MODE_INVALID,
-                        "$.outdoorPlan", "Keep PRESERVE by setting spatialGrounds=[] and landscapes=[]; only choose GENERATE if you intend new outdoor surfaces or landscapes.");
+                        "$.outdoorPlan", "Keep PRESERVE by setting foundationGroupIds=[] and landscapes=[]; only choose GENERATE if you intend new outdoor surfaces or landscapes.");
             }
             return;
         }
 
         Set<String> coveredGroups = new HashSet<>();
-        for (int index = 0; index < plan.spatialGrounds().size(); index++) {
-            CityBlueprint.SpatialGround ground = plan.spatialGrounds().get(index);
-            String path = "$.outdoorPlan.spatialGrounds[" + index + "]";
-            if (!groupIds.contains(ground.sourceGroupId())) {
+        for (String id : plan.foundationGroupIds()) {
+            if (!groupIds.contains(id) || !coveredGroups.add(id)) {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_GROUP_REF_UNKNOWN,
-                        path + ".sourceGroupId", "Correct this ID to an existing STRUCTURE groupId, preserving the intended ownership. Unknown group: " + ground.sourceGroupId());
-            } else if (!coveredGroups.add(ground.sourceGroupId())) {
-                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_GROUND_COVERAGE_INVALID,
-                        path + ".sourceGroupId", "Duplicate SpatialGround for sourceGroupId=" + ground.sourceGroupId() + ". Keep exactly one ground entry for this group, preserving the group itself.");
+                        "$.outdoorPlan.foundationGroupIds", "台地对象必须引用存在且不重复的建筑组：" + id);
             }
-        }
-        if (!coveredGroups.equals(groupIds)) {
-            add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_GROUND_COVERAGE_INVALID,
-                    "$.outdoorPlan.spatialGrounds",
-                    "Expected sourceGroupIds=" + groupIds + "; covered=" + coveredGroups + ". Add missing spatialGrounds and remove duplicate entries so each structure group has exactly one; keep building groups intact.");
         }
 
         Set<String> landscapeIds = new HashSet<>();

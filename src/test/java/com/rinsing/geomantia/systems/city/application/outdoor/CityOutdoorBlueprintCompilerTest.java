@@ -307,7 +307,7 @@ class CityOutdoorBlueprintCompilerTest {
                 first.fillSelection());
         CityBlueprint.OutdoorPlan outdoor = new CityBlueprint.OutdoorPlan(source.outdoorPlan().mode(),
                 source.outdoorPlan().envelopeProfile(), source.outdoorPlan().foundationProfileRef(),
-                source.outdoorPlan().spatialGrounds(), List.of(first, second));
+                source.outdoorPlan().foundationGroupIds(), List.of(first, second));
         CityBlueprint expanded = new CityBlueprint(source.schema(), source.cityId(), source.sourceD3Ref(),
                 source.catalogSnapshotRef(), source.generationSeed(), source.designIntent(), source.styleProfile(),
                 source.groups(), source.arrayCompositions(), source.relations(), source.roadProfile(),
@@ -334,7 +334,7 @@ class CityOutdoorBlueprintCompilerTest {
                 first.fillSelection());
         CityBlueprint.OutdoorPlan outdoor = new CityBlueprint.OutdoorPlan(source.outdoorPlan().mode(),
                 source.outdoorPlan().envelopeProfile(), source.outdoorPlan().foundationProfileRef(),
-                source.outdoorPlan().spatialGrounds(), List.of(first, optional));
+                source.outdoorPlan().foundationGroupIds(), List.of(first, optional));
         CityBlueprint expanded = new CityBlueprint(source.schema(), source.cityId(), source.sourceD3Ref(),
                 source.catalogSnapshotRef(), source.generationSeed(), source.designIntent(), source.styleProfile(),
                 source.groups(), source.arrayCompositions(), source.relations(), source.roadProfile(),
@@ -729,10 +729,8 @@ class CityOutdoorBlueprintCompilerTest {
                         List.of(new CityBlueprint.ContentWeight("crop:wheat", 1.0))))));
         CityBlueprint.OutdoorPlan outdoor = new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.GENERATE,
                 CityBlueprint.EnvelopeProfile.BALANCED, "foundation:test",
-                List.of(new CityBlueprint.SpatialGround("core_group", CityBlueprint.SharedSpaceType.CIVIC_SQUARE,
-                                CityBlueprint.SpatialHierarchy.PRIMARY, CityBlueprint.OutdoorMembership.URBAN),
-                        new CityBlueprint.SpatialGround("farm_group", CityBlueprint.SharedSpaceType.FARMSTEAD,
-                                CityBlueprint.SpatialHierarchy.SECONDARY, CityBlueprint.OutdoorMembership.URBAN)),
+                List.of("core_group",
+                        "farm_group"),
                 List.of(landscape));
         return new CityBlueprint(CityBlueprint.SCHEMA, "city",
                 new CityBlueprint.ArtifactRef("d3.json", "d3", "sha256:" + "1".repeat(64)),

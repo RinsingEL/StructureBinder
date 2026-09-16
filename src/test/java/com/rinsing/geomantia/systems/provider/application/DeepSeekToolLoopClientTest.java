@@ -36,10 +36,7 @@ class DeepSeekToolLoopClientTest {
             JsonObject body = JsonParser.parseString(new String(exchange.getRequestBody().readAllBytes(),
                     StandardCharsets.UTF_8)).getAsJsonObject();
             if (requests.incrementAndGet() == 1) {
-                assertTrue(body.get("instructions").getAsString().contains(
-                        "follow d4Workflow and its four stage tools"));
-                assertTrue(body.get("instructions").getAsString().contains(
-                        "Never submit the whole city at once"));
+                assertEquals(AgentPromptConfig.agent("direct"), body.get("instructions").getAsString());
                 assertEquals("required", body.get("tool_choice").getAsString());
                 assertEquals("none", body.getAsJsonObject("reasoning").get("effort").getAsString());
                 assertEquals("city_design_queue_status",

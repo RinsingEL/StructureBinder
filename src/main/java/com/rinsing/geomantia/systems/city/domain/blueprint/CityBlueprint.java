@@ -279,20 +279,12 @@ public record CityBlueprint(
             OutdoorMode mode,
             EnvelopeProfile envelopeProfile,
             String foundationProfileRef,
-            List<SpatialGround> spatialGrounds,
+            List<String> foundationGroupIds,
             List<Landscape> landscapes) {
         public OutdoorPlan {
-            spatialGrounds = List.copyOf(spatialGrounds);
+            foundationGroupIds = List.copyOf(foundationGroupIds);
             landscapes = List.copyOf(landscapes);
         }
-    }
-
-    /** One shared outdoor-space system owned by a whole structure group, never by one building. */
-    public record SpatialGround(
-            String sourceGroupId,
-            SharedSpaceType sharedSpaceType,
-            SpatialHierarchy hierarchyLevel,
-            OutdoorMembership membership) {
     }
 
     public record Landscape(
@@ -405,9 +397,7 @@ public record CityBlueprint(
 
     public enum EnvelopeProfile { COMPACT, BALANCED, LOOSE }
 
-    public enum SharedSpaceType { CIVIC_SQUARE, MARKET_STREET, RESIDENTIAL_COURT, FARMSTEAD, GENERAL_URBAN }
 
-    public enum SpatialHierarchy { PRIMARY, SECONDARY, LOCAL }
 
     public enum GrowthBias { BALANCED, AWAY_FROM_REFERENCE, TOWARD_REFERENCE }
 

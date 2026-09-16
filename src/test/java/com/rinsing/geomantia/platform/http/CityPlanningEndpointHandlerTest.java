@@ -2132,30 +2132,50 @@ class CityPlanningEndpointHandlerTest {
 
     private static JsonObject submitReviewedBlueprint(Path root, String run, String city, String context,
                                                        JsonObject blueprint) throws Exception {
-        JsonObject request = new JsonObject(); request.add("cityBlueprint", blueprint);
-        request.addProperty("submissionMode", "DRAFT");
-        JsonObject draft = CityPlanningEndpointHandler.handleSubmitD4Design(root, run, city, context, request);
-        assertTrue(draft.get("ok").getAsBoolean(), draft.toString());
-        assertTrue(draft.get("designInProgress").getAsBoolean());
-        JsonObject evidence = draft.getAsJsonObject("revisionEvidence");
-        List<JsonObject> reviews = new java.util.ArrayList<>();
-        for (var item : evidence.getAsJsonObject("previousBlueprint").getAsJsonArray("groups")) {
-            JsonObject review = new JsonObject(); review.add("baseDraftHash", evidence.get("baseDraftHash"));
-            JsonArray ids = new JsonArray(); ids.add(item.getAsJsonObject().get("groupId")); review.add("groupIds", ids);
-            reviews.add(review);
+        class StageClient {
+            int revision;
+            JsonObject call(String tool,JsonObject input) throws Exception {
+                input.addProperty("d4Tool",tool);input.addProperty("workflowRevision",revision);
+                JsonObject result=CityPlanningEndpointHandler.handleSubmitD4Design(root,run,city,context,input);
+                assertTrue(result.get("ok").getAsBoolean(),result.toString());
+                if(result.has("d4Workflow"))revision=result.getAsJsonObject("d4Workflow").get("revision").getAsInt();
+                return result;
+            }
+            void review(JsonObject evidence,boolean overall) throws Exception {
+                List<JsonObject> targets=new java.util.ArrayList<>();
+                if(overall) {JsonObject r=new JsonObject();r.addProperty("overview",true);targets.add(r);}
+                else for(var group:evidence.getAsJsonObject("previousBlueprint").getAsJsonArray("groups")) {
+                    JsonObject r=new JsonObject();JsonArray ids=new JsonArray();ids.add(group.getAsJsonObject().get("groupId"));r.add("groupIds",ids);targets.add(r);
+                }
+                for(JsonObject r:targets) {
+                    r.add("baseDraftHash",evidence.get("baseDraftHash"));
+                    assertTrue(call("city_d4_preview",r.deepCopy()).has("requestedPreviews"));
+                    r.addProperty("assessment","Fixture arrangement inspected.");
+                    assertTrue(call("city_d4_assess",r).get("assessmentRecorded").getAsBoolean());
+                }
+            }
         }
-        JsonObject overview = new JsonObject(); overview.add("baseDraftHash", evidence.get("baseDraftHash"));
-        overview.addProperty("overview", true); reviews.add(overview);
-        for (JsonObject review : reviews) {
-            JsonObject input = new JsonObject(); input.add("designReview", review);
-            var view = CityPlanningEndpointHandler.handleSubmitD4Design(root, run, city, context, input);
-            assertTrue(view.has("requestedPreviews"), view.toString());
-            assertTrue(view.get("designInProgress").getAsBoolean());
-            review.addProperty("assessment", "Fixture composition reviewed; preserve the current arrangement.");
-            var assessed = CityPlanningEndpointHandler.handleSubmitD4Design(root, run, city, context, input);
-            assertTrue(assessed.get("designInProgress").getAsBoolean());
-        }
-        return CityPlanningEndpointHandler.handleSubmitD4Blueprint(root, run, city, context, blueprint);
+        StageClient client=new StageClient();
+        JsonObject settings=new JsonObject();
+        for(String key:List.of("designIntent","styleProfile","roadProfile","surfaceDetailProfile","outdoorPlan"))settings.add(key,blueprint.get(key).deepCopy());
+        settings.getAsJsonObject("outdoorPlan").remove("foundationGroupIds");settings.getAsJsonObject("outdoorPlan").remove("landscapes");
+        JsonObject district=new JsonObject();district.addProperty("groupId","fixture");district.addProperty("role","landmark");district.addProperty("intent","landmark cluster");
+        district.add("preferredPatchRefs",blueprint.getAsJsonArray("groups").get(0).getAsJsonObject().get("preferredPatchRefs").deepCopy());
+        JsonArray districts=new JsonArray();districts.add(district);JsonObject overview=new JsonObject();overview.add("citySettings",settings);overview.add("districts",districts);
+        JsonObject request=new JsonObject();request.add("overview",overview);client.call("city_d4_overview",request);
+        JsonObject body=new JsonObject();for(String key:List.of("groups","arrayCompositions","relations"))body.add(key,blueprint.get(key).deepCopy());
+        body.getAsJsonArray("groups").get(0).getAsJsonObject().addProperty("structureCount",1);
+        for(String key:List.of("foundationGroupIds","landscapes"))body.add(key,blueprint.getAsJsonObject("outdoorPlan").get(key).deepCopy());
+        request=new JsonObject();request.add("districtDesign",body);
+        JsonObject evidence=client.call("city_d4_district",request).getAsJsonObject("revisionEvidence");
+        client.review(evidence,false);client.call("city_d4_complete",new JsonObject());client.review(evidence,true);
+        JsonObject update=new JsonObject();update.add("groupId",body.getAsJsonArray("groups").get(0).getAsJsonObject().get("groupId"));update.addProperty("structureCount",3);
+        JsonArray updates=new JsonArray();updates.add(update);JsonObject changes=new JsonObject();changes.add("groups",updates);
+        request=new JsonObject();request.addProperty("targetDistrictId","fixture");request.addProperty("integrationIntent","扩大主体组");request.add("changes",changes);
+        evidence=client.call("city_d4_integrate",request).getAsJsonObject("revisionEvidence");
+        client.review(evidence,false);client.review(evidence,true);client.call("city_d4_complete",new JsonObject());
+        request=new JsonObject();request.add("baseDraftHash",evidence.get("baseDraftHash"));
+        return client.call("city_d4_finalize",request);
     }
 
     private static void prepareAcceptedBlueprintD6(Path debugRoot,
@@ -2173,7 +2193,7 @@ class CityPlanningEndpointHandlerTest {
         JsonObject outdoorPlan = blueprint.getAsJsonObject("outdoorPlan");
         outdoorPlan.addProperty("mode", outdoorMode);
         if ("PRESERVE".equals(outdoorMode)) {
-            outdoorPlan.add("spatialGrounds", new JsonArray());
+            outdoorPlan.add("foundationGroupIds", new JsonArray());
             outdoorPlan.add("landscapes", new JsonArray());
         }
         JsonObject submitted = submitReviewedBlueprint(debugRoot, runId, citySeedId,
@@ -2877,8 +2897,7 @@ class CityPlanningEndpointHandlerTest {
                   "surfaceDetailProfile":{"profileRef":"surface:test"},
                   "outdoorPlan":{"mode":"GENERATE","envelopeProfile":"BALANCED",
                     "foundationProfileRef":"foundation:urban",
-                    "spatialGrounds":[{"sourceGroupId":"core","sharedSpaceType":"CIVIC_SQUARE",
-                    "hierarchyLevel":"PRIMARY","membership":"URBAN"}],"landscapes":[]}
+                    "foundationGroupIds":["core"],"landscapes":[]}
                 }
                 """.replace("PATCH_REF", patchRef)).getAsJsonObject();
         blueprint.add("sourceD3Ref", context.getAsJsonObject("sourceD3Ref").deepCopy());

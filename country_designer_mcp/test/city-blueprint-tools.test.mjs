@@ -31,9 +31,11 @@ test("publishes the program-only context tool and retryable structure plus outdo
   assert.match(prepare.description, /5 次程序编译失败预算/);
   assert.ok(!submit.inputSchema.required.includes("cityBlueprint"));
   assert.ok(!cityBlueprintSchema.required.includes("sourceD3Ref"));
-  const review = submit.inputSchema.properties.designReview;
+  const review = realmTools.find(t=>t.name==="city_d4_assess").inputSchema;
+  assert.equal(submit.inputSchema.properties.designReview,undefined);
   assert.equal(review.additionalProperties, false);
-  assert.deepEqual(review.required, ["baseDraftHash"]);
+  assert.ok(review.required.includes("baseDraftHash"));
+  assert.ok(review.required.includes("assessment"));
   assert.equal(review.properties.groupIds.maxItems, 3);
   assert.equal(review.properties.overview.type, "boolean");
   assert.equal(review.properties.assessment.type, "string");
@@ -95,19 +97,13 @@ test("publishes the program-only context tool and retryable structure plus outdo
   const outdoor = blueprint.properties.outdoorPlan;
   assert.equal(outdoor.additionalProperties, false);
   assert.deepEqual(outdoor.required,
-    ["mode", "envelopeProfile", "foundationProfileRef", "spatialGrounds", "landscapes"]);
+    ["mode", "envelopeProfile", "foundationProfileRef", "foundationGroupIds", "landscapes"]);
   assert.deepEqual(outdoor.properties.mode.enum, ["GENERATE", "PRESERVE"]);
   assert.deepEqual(outdoor.properties.envelopeProfile.enum, ["COMPACT", "BALANCED", "LOOSE"]);
 
   assert.ok(outdoor.properties.foundationProfileRef);
-  const ground = outdoor.properties.spatialGrounds.items;
-  assert.equal(ground.additionalProperties, false);
-  assert.deepEqual(ground.required,
-    ["sourceGroupId", "sharedSpaceType", "hierarchyLevel", "membership"]);
-  assert.deepEqual(ground.properties.sharedSpaceType.enum,
-    ["CIVIC_SQUARE", "MARKET_STREET", "RESIDENTIAL_COURT", "FARMSTEAD", "GENERAL_URBAN"]);
-  assert.deepEqual(ground.properties.hierarchyLevel.enum, ["PRIMARY", "SECONDARY", "LOCAL"]);
-  assert.deepEqual(ground.properties.membership.enum, ["URBAN", "LANDSCAPE"]);
+  assert.equal(outdoor.properties.foundationGroupIds.items.type,"string");
+  assert.equal(outdoor.properties.spatialGrounds,undefined);
 
   const landscape = outdoor.properties.landscapes.items;
   assert.equal(landscape.additionalProperties, false);
@@ -330,11 +326,28 @@ test("author configuration retains greenery and Landscape profiles without askin
 
 
 test("block material discovery is separate and blueprint materials remain optional", () => {
-  const submit=realmTools.find(t=>t.name==="city_d4_district").inputSchema;
+  const submit=realmTools.find(t=>t.name==="city_d4_blocks").inputSchema;
   assert.deepEqual(submit.properties.blockMaterials.required,["slot"]);
   assert.equal(submit.properties.blockMaterials.properties.page.minimum,0);
   const b=cityBlueprintSchema;
   assert.ok(b.properties.surfaceMaterials.properties.landscapes.additionalProperties.properties.cropBlockId);
   assert.ok(!b.required.includes("surfaceMaterials"));
   assert.equal(b.properties.surfaceMaterials.properties.defaults.additionalProperties,false);
+});
+
+test("D4 separates actions and supports partial district enlargement",()=>{
+  const get=name=>realmTools.find(t=>t.name===name).inputSchema;
+  const district=get("city_d4_district");
+  for(const field of ["designReview","complete","materialSelections","designExample","blockMaterials"]) assert.equal(district.properties[field],undefined);
+  assert.equal(get("city_d4_preview").properties.assessment,undefined);
+  assert.ok(get("city_d4_assess").required.includes("assessment"));
+  assert.ok(get("city_d4_integrate").properties.targetDistrictId);
+  const updates=get("city_d4_district_refine").properties.changes.properties;
+  assert.deepEqual(updates.groups.items.required,["groupId"]);
+  assert.equal(updates.groups.items.properties.spaceComposition.required,undefined);
+  assert.ok(updates.removeGroupIds);
+  assert.equal(updates.surfaceMaterials.properties.defaults,undefined);
+  const settings=get("city_d4_overview").properties.overview.properties.citySettings.properties;
+  assert.equal(settings.outdoorPlan.properties.landscapes,undefined);
+  assert.equal(district.properties.districtDesign.properties.spatialGrounds,undefined);
 });

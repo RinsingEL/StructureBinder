@@ -38,7 +38,7 @@ final class CityDesignReviewWorkflow {
         result.addProperty("overviewReviewed", overall);
         if (overall) result.addProperty("overviewAssessment", text(object(state, "overview"), "assessment"));
         result.addProperty("readyForFinal", overall);
-        result.addProperty("instruction", "按 d4Workflow 当前阶段使用 designReview={baseDraftHash,groupIds:[...]} 取1至3张局部图；看图后重复完整对象并增加 assessment。阶段3可用 overview=true 取总览。修改后重看受影响部分；评价通过后还需当前阶段 complete=true。设计评价应说明空间关系、规模与留白是否符合意图，不以编译成功替代质量。阶段4只提交当前 hash。");
+        result.addProperty("instruction", "使用 city_d4_preview 查看当前 hash 的局部图（1至3组）或总览；看图后用 city_d4_assess 记录评价，核对 assessmentRecorded。用 city_d4_complete 完成当前阶段；修改用对应设计/修饰工具。");
         return result;
     }
 
@@ -88,11 +88,11 @@ final class CityDesignReviewWorkflow {
         if (hash == null || hash.isJsonNull() || !hash.isJsonPrimitive()
                 || !hash.getAsJsonPrimitive().isString() || hash.getAsString().isBlank())
             return reviewError(dir, contextId, draft, new JsonObject(), review, "CITY_DESIGN_REVIEW_BASE_REQUIRED",
-                    "Missing or invalid designReview.baseDraftHash. Include the current hash INSIDE designReview together with groupIds OR overview=true and assessment. Repeat the complete object, not only assessment. No assessment was saved.");
+                    "Missing or invalid baseDraftHash. Use city_d4_preview with the current hash and groupIds OR overview=true, then city_d4_assess with the same target and assessment. No assessment was saved.");
         if (!text(draft, "baseDraftHash").equals(hash.getAsString()))
             return reviewError(dir, contextId, draft, new JsonObject(), review, "CITY_DESIGN_REVIEW_BASE_STALE",
                     "Review base is stale. Submitted " + hash.getAsString() + "; current " + text(draft, "baseDraftHash")
-                            + ". Request current images without assessment, inspect them, then submit the complete designReview with assessment. No assessment was saved.");
+                            + ". Use city_d4_preview for current images, then city_d4_assess for the same version. No assessment was saved.");
         if (!Set.of("baseDraftHash", "groupIds", "overview", "assessment").containsAll(review.keySet()))
             throw new IllegalArgumentException("CITY_DESIGN_REVIEW_FIELDS: use baseDraftHash, groupIds OR overview=true, and optional assessment.");
         boolean overview = review.has("overview") && review.get("overview").getAsBoolean();
@@ -101,7 +101,7 @@ final class CityDesignReviewWorkflow {
         JsonObject state = load(dir, contextId);
         JsonObject targets = new JsonObject();
         if (overview) {
-            if (!status(dir, contextId, draft).getAsJsonArray("pendingGroupIds").isEmpty())
+            if (review.has("assessment") && !status(dir, contextId, draft).getAsJsonArray("pendingGroupIds").isEmpty())
                 return pending(dir, contextId, draft, "Finish current local reviews before the final city overview review.");
             targets.addProperty("overview", previewPath(dir, text(draft, "compiledPreview")).toString());
         } else {
@@ -134,6 +134,7 @@ final class CityDesignReviewWorkflow {
         JsonObject result = receipt();
         // Put only requested images before workflow text; the shared presentation embeds them into tool image content.
         if (!assessing) result.add("requestedPreviews", targets);
+        result.addProperty("assessmentRecorded", assessing);
         result.add("designReviewWorkflow", status(dir, contextId, draft));
         return result;
     }
@@ -150,6 +151,7 @@ final class CityDesignReviewWorkflow {
     private static JsonObject pending(Path dir, String contextId, JsonObject draft, String instruction) throws IOException {
         JsonObject result = receipt();
         result.addProperty("instruction", instruction);
+        result.addProperty("assessmentRecorded", false);
         result.add("designReviewWorkflow", status(dir, contextId, draft));
         return result;
     }

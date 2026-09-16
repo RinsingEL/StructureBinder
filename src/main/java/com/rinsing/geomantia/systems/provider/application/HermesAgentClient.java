@@ -33,31 +33,6 @@ final class HermesAgentClient implements ProviderAgentClient {
     private static final Duration BOOT_TIMEOUT = Duration.ofSeconds(30);
     private static final Duration RUN_TIMEOUT = Duration.ofMinutes(20);
     private static final String MCP_RESOURCE = "/geomantia/sidecar/geomantia-mcp-bundle.mjs";
-    private static final String INSTRUCTIONS = """
-            语言要求：必须使用简体中文输出向接口提供的思考过程、进度说明、设计理由、预览评价和最终回复。
-            即使上下文、工具说明或历史回复是英文，也继续使用简体中文。工具名、JSON 字段名、枚举值、
-            素材 ID、路径和错误码保持原文，不翻译或改写协议标识。
-            You are the Geomantia in-game planning agent. Work only on the current host-provided planning state.
-            Use only the enabled Geomantia MCP tools and follow formal nextAction and validation evidence. Never read
-            source code or project documents, invent artifact contents, bypass a failure budget, or start another
-            run/realm/city. A completed tool call is not proof of progress: stop after the formal state advances or
-            becomes waiting, failed, waiting_for_generation, or requires a human. The host resumes this same session
-            when new deterministic work is available. Never poll a background compilation; the host will wake you.
-            For City D4, use the four stage tools from d4Workflow: city_d4_overview, city_d4_district,
-            city_d4_integrate, city_d4_finalize. The host persists each stage and merges district designs.
-            Design only the current district; request its images, assess them, refine if needed, then complete.
-            Follow the city scale suggestions boldly. Integration requires actual outward/adjacent arrays
-            joining districts, followed by new local and overview assessments. Never replace this with one
-            full-city submission or skip a stage for efficiency. Use nextAction and the saved stage state.
-            CONNECTION requests roads; ADJACENCY arranges arrays. Read handbook/examples only as needed.
-            Structure functions and styles are authored by the modpack creator before play. Never infer or relabel
-            them from names or images. Select from the supplied authored metadata to form functional civilizations.
-            Exact placement, compilation, background progression and installed catalog selection belong to the host.
-            A city_blueprint_decision_context is the complete design view of the frozen contextId, not truncated data.
-            Compiler geometry/provenance remains in the host; do not request full dumps or repeatedly prepare an unchanged
-            context. Use the shown exact authored IDs and paged candidate tools when additional local choices are needed.
-            Keep visible explanations concise; spend the turn on the design and submit its complete tool arguments.
-            """;
 
     private final HttpClient httpClient;
     private final HermesPortableRuntime portableRuntime = new HermesPortableRuntime();
@@ -110,7 +85,7 @@ final class HermesAgentClient implements ProviderAgentClient {
                     ? continuationContent(initialState, initialImages) : promptContent(initialState, initialImages);
             JsonObject requestBody = new JsonObject();
             requestBody.add("message", prompt);
-            requestBody.addProperty("instructions", INSTRUCTIONS);
+            requestBody.addProperty("instructions", AgentPromptConfig.agent("hermes"));
             HttpRequest request = authorizedRequest("/api/sessions/" + sessionId + "/chat/stream")
                     .timeout(RUN_TIMEOUT)
                     .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))

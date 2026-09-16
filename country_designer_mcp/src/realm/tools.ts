@@ -563,7 +563,7 @@ export const cityBlueprintSchema = strictObject({
           items: nonEmptyString("关系位置引用的同一 Blueprint groupId。") },
       }, ["kind", "patchRefs", "groupRefs"]),
       role: nonEmptyString("Group 功能角色。"),
-      priority: { type: "string", enum: ["CORE", "STANDARD", "PERIPHERAL"] },
+      priority: { type: "string", enum: ["CORE", "STANDARD", "PERIPHERAL"], description: "全城合并后仅一个 CORE，不是每区一个；先看 d4Workflow.submissionRules.savedCoreOwners。其他区占用时本区用 STANDARD/PERIPHERAL，构图中心用 centerGroupId。" },
       structureCount: { type: "integer", minimum: 1, maximum: 256, description: "本阵列计划建筑总数（含 requiredStructureRefs）；不得少于必需引用数。省略按 extent 与算法给建议默认值。地形只筛选单栋，不补量。" },
       extentClass: { type: "string", enum: ["SMALL", "MEDIUM", "LARGE"],
         description: "功能区空间范围档位，不表示建筑数量。" },
@@ -643,16 +643,7 @@ export const cityBlueprintSchema = strictObject({
     mode: { type: "string", enum: ["GENERATE", "PRESERVE"] },
     envelopeProfile: { type: "string", enum: ["COMPACT", "BALANCED", "LOOSE"] },
     foundationProfileRef: nonEmptyString("统一城市基座使用的冻结 foundation profile 引用。"),
-    spatialGrounds: {
-      type: "array",
-      items: strictObject({
-        sourceGroupId: nonEmptyString("同一 Blueprint 中的 STRUCTURE groupId。"),
-        sharedSpaceType: { type: "string", enum: ["CIVIC_SQUARE", "MARKET_STREET",
-          "RESIDENTIAL_COURT", "FARMSTEAD", "GENERAL_URBAN"] },
-        hierarchyLevel: { type: "string", enum: ["PRIMARY", "SECONDARY", "LOCAL"] },
-        membership: { type: "string", enum: ["URBAN", "LANDSCAPE"] },
-      }, ["sourceGroupId", "sharedSpaceType", "hierarchyLevel", "membership"]),
-    },
+    foundationGroupIds: { type: "array", items: nonEmptyString("需要台地/铺地的建筑组 ID；未列出的组保留原地面。") },
     landscapes: {
       type: "array",
       items: {
@@ -723,7 +714,7 @@ export const cityBlueprintSchema = strictObject({
         ],
       },
     },
-  }, ["mode", "envelopeProfile", "foundationProfileRef", "spatialGrounds", "landscapes"]),
+  }, ["mode", "envelopeProfile", "foundationProfileRef", "foundationGroupIds", "landscapes"]),
 }, ["designIntent",
   "styleProfile", "groups", "arrayCompositions", "relations", "roadProfile", "surfaceDetailProfile", "outdoorPlan"]);
 
@@ -1450,36 +1441,57 @@ const originalRealmTools: ToolDefinition[] = [
 
 const oldD4 = originalRealmTools.find(t => t.name === "city_submit_d4_blueprint")!;
 const oldProperties = (oldD4.inputSchema as any).properties;
-export const d4StageNames = ["city_d4_overview", "city_d4_district", "city_d4_integrate", "city_d4_finalize"];
+function relaxUpdateRequired(node: any): void {
+  if(!node || typeof node!=="object") return;
+  delete node.required; delete node.oneOf;
+  for(const child of Object.values(node)) relaxUpdateRequired(child);
+}
+export const d4StageNames = ["city_d4_overview", "city_d4_district", "city_d4_integrate", "city_d4_finalize",
+  "city_d4_district_refine", "city_d4_preview", "city_d4_assess", "city_d4_complete", "city_d4_reopen",
+  "city_d4_materials", "city_d4_example", "city_d4_blocks", "city_d4_handbook"];
 export const realmTools: ToolDefinition[] = [
   ...originalRealmTools.filter(t => t.name !== "city_submit_d4_blueprint"),
   ...d4StageNames.map(name => {
     const bp: any = cityBlueprintSchema.properties;
     const properties: any = { runId: oldProperties.runId, citySeedId: oldProperties.citySeedId, contextId: oldProperties.contextId,
-      workflowRevision: { type: "integer", description: "当前 d4Workflow.revision，防止重复提交。" } };
+      workflowRevision: { type: "integer", description: "当前 d4Workflow.revision。" } };
+    const required = ["runId", "citySeedId", "contextId", "workflowRevision"];
     if (name === "city_d4_overview") {
       const settings: any = {};
-      for (const key of ["designIntent", "styleProfile", "roadProfile", "surfaceDetailProfile", "surfaceMaterials", "outdoorPlan"]) settings[key] = bp[key];
+      for (const key of ["designIntent", "styleProfile", "roadProfile", "surfaceDetailProfile", "surfaceMaterials"]) settings[key] = bp[key];
+      const outdoor: any = {}; for(const key of ["mode","envelopeProfile","foundationProfileRef"]) outdoor[key]=bp.outdoorPlan.properties[key];
+      settings.outdoorPlan=strictObject(outdoor,["mode","envelopeProfile","foundationProfileRef"]);
       properties.overview = strictObject({ citySettings: strictObject(settings, ["designIntent", "styleProfile", "roadProfile", "surfaceDetailProfile", "outdoorPlan"]),
-        districts: oldProperties.designIntent.properties.groups }, ["citySettings", "districts"]);
-      properties.blockMaterials = oldProperties.blockMaterials;
-      properties.designExample = strictObject({ caseId: nonEmptyString("案例 ID。") },["caseId"]);
-      properties.reopenDistrictId = nonEmptyString("重新打开已有功能区，后续区与整体修饰重新验收。");
-    } else if (name === "city_d4_finalize") {
-      properties.baseDraftHash = nonEmptyString("已完成整体修饰和验收的当前草稿 hash。");
-      properties.autoAdvanceAfterD4 = oldProperties.autoAdvanceAfterD4;
-    } else {
+        districts: oldProperties.designIntent.properties.groups }, ["citySettings", "districts"]); required.push("overview");
+    } else if (["city_d4_district","city_d4_district_refine","city_d4_integrate"].includes(name)) {
       const fragment: any = {};
-      for (const key of ["groups", "arrayCompositions", "relations"]) fragment[key] = bp[key];
-      for (const key of ["spatialGrounds", "landscapes"]) fragment[key] = bp.outdoorPlan.properties[key];
-      properties[name === "city_d4_district" ? "districtDesign" : "integrationDesign"] = strictObject(fragment, ["groups"]);
-      for (const key of ["materialSelections", "designReview", "blockMaterials"]) properties[key] = oldProperties[key];
-      properties.designExample = strictObject({ caseId: nonEmptyString("案例 ID。"), reloadImages: {type:"boolean"} }, ["caseId"]);
-      properties.complete = { type: "boolean", description: "已看图并评价后确认本阶段/当前区完成。" };
-      if (name === "city_d4_integrate") properties.integrationIntent = nonEmptyString("向外阵列联系哪些区、用途与期望改善；和 integrationDesign 一起提交。");
+      for (const key of ["groups", "arrayCompositions", "relations", "surfaceMaterials"]) fragment[key] = structuredClone(bp[key]);
+      for (const key of ["foundationGroupIds", "landscapes"]) fragment[key] = structuredClone(bp.outdoorPlan.properties[key]);
+      delete fragment.surfaceMaterials.properties.defaults;
+      const update=name!=="city_d4_district";
+      if(update) {
+        for(const [key,id] of [["groups","groupId"],["arrayCompositions","compositionId"],["landscapes","landscapeId"]]) {
+          delete fragment[key].minItems;delete fragment[key].oneOf;
+          relaxUpdateRequired(fragment[key].items);fragment[key].items.required=[id];
+          fragment[key].items.properties.clearFields={type:"array",items:nonEmptyString("明确清除可省略字段，如 placementRelation；不能清除 ID，不使用 JSON Pointer。")};
+        }
+        for(const key of ["removeGroupIds","removeCompositionIds","removeLandscapeIds"]) fragment[key]={type:"array",items:nonEmptyString("明确删除的 ID。")};
+      }
+      const key=update?"changes":"districtDesign";properties[key]=strictObject(fragment,update?[]:["groups"]);required.push(key);
+      if(update) properties[key].description="按 ID 合并，未提供字段保留；删除用 remove*Ids。relations 与 foundationGroupIds 提供时替换本设计内清单；新增对象需完整配置。";
+      if(name==="city_d4_integrate") { properties.integrationIntent=nonEmptyString("连接空当或扩大目标区的用途与预期。"); properties.targetDistrictId=nonEmptyString("扩大已有区时填写；省略则修改区际连接阵列。");required.push("integrationIntent"); }
+    } else if(name==="city_d4_preview" || name==="city_d4_assess") {
+      properties.baseDraftHash=nonEmptyString("当前草稿 hash。");properties.groupIds={type:"array",minItems:1,maxItems:3,items:nonEmptyString("组 ID。")};properties.overview={type:"boolean"};required.push("baseDraftHash");
+      if(name==="city_d4_assess"){properties.assessment=nonEmptyString("已查看对应版本预览后的评价。");required.push("assessment");}
+    } else if(name==="city_d4_finalize") {
+      properties.baseDraftHash=nonEmptyString("当前已验收 hash。");properties.autoAdvanceAfterD4=oldProperties.autoAdvanceAfterD4;required.push("baseDraftHash");
+    } else if(name==="city_d4_reopen") {
+      properties.districtId=nonEmptyString("返回修改的功能区 ID。");required.push("districtId");
+    } else if(["city_d4_materials","city_d4_example","city_d4_blocks"].includes(name)) {
+      const key=name==="city_d4_materials"?"materialSelections":name==="city_d4_example"?"designExample":"blockMaterials";
+      properties[key]=key==="designExample"?strictObject({caseId:nonEmptyString("案例 ID。"),reloadImages:{type:"boolean"}},["caseId"]):oldProperties[key];required.push(key);
     }
-    return { name, description: "D4 独立阶段协议。遵循 d4Workflow 的阶段、当前功能区与 nextAction。总览→逐区初版/看图/修饰/确认→实际向外阵列整体修饰并重看总览→提交。宿主保存并合并各区，不能一次交整城；每次仅一个操作。",
-      inputSchema: { type: "object", additionalProperties: false, properties, required: ["runId", "citySeedId", "contextId", "workflowRevision"] } } as ToolDefinition;
+    return {name,description:"D4 单职责操作；遵循 availableActions。设计、修改、看图、评价、完成分别调用。整城修饰用于连接空当或扩大功能区。",inputSchema:{type:"object",additionalProperties:false,properties,required}} as ToolDefinition;
   })
 ];
 
