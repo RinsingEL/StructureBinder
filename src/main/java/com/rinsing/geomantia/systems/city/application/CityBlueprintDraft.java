@@ -47,6 +47,7 @@ public final class CityBlueprintDraft {
     public static JsonObject evidence(JsonObject draft) {
         JsonObject result = draft.deepCopy();
         result.remove("acceptedRevisionAtCreation");
+        result.remove("compiledResult");
         if (draft.has("compiledLayout") && draft.get("compiledLayout").isJsonObject()) {
             JsonObject layout = draft.getAsJsonObject("compiledLayout");
             JsonObject review = new JsonObject();
@@ -59,16 +60,13 @@ public final class CityBlueprintDraft {
                     if ("UNRESOLVED".equals(string(item.getAsJsonObject(), "status"))) unresolved.add(item.deepCopy());
                 review.add("unresolvedEntrances", unresolved);
             }
-            review.addProperty("instruction", "Safety admission is not appearance or complete entrance access. Review current warnings and the preview before FINAL; adjust affected groups' patch selection, extent, spacing or density where necessary. Do not move buildings merely to force a road through them.");
+            review.addProperty("instruction", "Inspect the current overview for visual coherence and retained district functions. Terrain skips are program-owned; do not retry a nonempty initial district. Roads and entrance access are separate from visual coherence.");
             result.add("compiledDesignReview", review);
         }
         result.remove("compiledLayout");
         result.remove("landscapeLayout");
         result.remove("groupExtentMap");
-        result.addProperty("instruction", "This is the latest working draft, NOT a final accepted city. Use submissionMode=DRAFT while adding or correcting districts; use FINAL after inspecting the complete design. "
-                + "For an intentional local design change use baseDraftHash with replace-only blueprintPatch; "
-                + "the host preserves other districts and generationSeed. "
-                + "Program-owned failure requires host diagnosis before retry; no blind redesign.");
+        result.addProperty("instruction", "Use d4Workflow.availableActions and its current revision. Each district receives one valid initial design; only a wholly empty district can retry. After initial designs, mark district roles, then expand one chosen district using city_d4_integrate with current baseDraftHash, protectedDistrictIds and ADJUST_ARRAY or OUTWARD_ARRAY. Judge visual coherence from each returned overview; rivers or open space need not be bridged. Preserve every district's effective function and use city_d4_finalize when satisfied, even if no expansion was needed.");
         return result;
     }
 

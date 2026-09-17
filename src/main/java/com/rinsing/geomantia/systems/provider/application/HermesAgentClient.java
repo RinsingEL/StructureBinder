@@ -232,7 +232,7 @@ final class HermesAgentClient implements ProviderAgentClient {
 
     static JsonArray continuationContent(JsonObject state) {
         JsonObject text = new JsonObject(); text.addProperty("type", "text");
-        text.addProperty("text", "继续当前冻结城市 " + state.get("contextId") + " 的四阶段任务。遵循当前存档，不重交整城。\nd4Workflow: "
+        text.addProperty("text", "继续当前冻结城市 " + state.get("contextId") + " 的一次初版与整体性扩张任务。遵循当前存档，不重交整城。\nd4Workflow: "
                 + state.get("d4Workflow") + "\nnextAction: " + state.get("nextAction"));
         JsonArray result = new JsonArray(); result.add(text); return result;
     }
@@ -288,7 +288,7 @@ final class HermesAgentClient implements ProviderAgentClient {
                 .append("  base_url: ").append(yaml(config.baseUrl())).append('\n')
                 .append("  api_key: ${GEOMANTIA_PROVIDER_API_KEY}\n")
                 .append("  api_mode: ").append(yaml(apiMode(config.apiProtocol()))).append('\n');
-        // Verified native multimodal model absent from Hermes 0.18.2's capability registry.
+        // Verified native multimodal model absent from the original bundled Hermes capability registry.
         // Source: https://huggingface.co/zai-org/GLM-5.3-Flash (2026-09-05).
         // Do not infer capabilities for other GLM versions or arbitrary custom model names.
         if (List.of("glm-5.3-flash", "zai-org/glm-5.3-flash").contains(config.model().toLowerCase(Locale.ROOT))) {
@@ -368,6 +368,7 @@ final class HermesAgentClient implements ProviderAgentClient {
     static String pythonPath(Path runtime) {
         Path sitePackages = runtime.resolve("site-packages");
         return String.join(File.pathSeparator,
+                runtime.resolve("hermes").toString(),
                 sitePackages.toString(),
                 sitePackages.resolve("win32").toString(),
                 sitePackages.resolve("win32").resolve("lib").toString(),

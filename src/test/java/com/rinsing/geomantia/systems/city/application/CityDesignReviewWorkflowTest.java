@@ -9,18 +9,18 @@ import static org.junit.jupiter.api.Assertions.*;
 class CityDesignReviewWorkflowTest {
     @TempDir Path dir;
 
-    @Test void currentImagesMustBeRequestedBeforeAssessmentAndLocalsBeforeOverview() throws Exception {
+    @Test void currentOverviewNeedsViewingButDoesNotRequireLocalAssessments() throws Exception {
         JsonObject draft = draft("one");
         JsonObject local = review("one", false);
         local.addProperty("assessment", "Keep courtyard");
         assertFalse(submit(draft, local).getAsJsonObject("designReviewWorkflow").get("readyForFinal").getAsBoolean());
         assertTrue(submit(draft, review("one", true)).has("requestedPreviews"));
         JsonObject earlyOverview=review("one",true);earlyOverview.addProperty("assessment","too early");
-        assertFalse(submit(draft,earlyOverview).get("assessmentRecorded").getAsBoolean());
+        assertTrue(submit(draft,earlyOverview).get("assessmentRecorded").getAsBoolean());
         local.remove("assessment");
         assertEquals(2, submit(draft, local).getAsJsonObject("requestedPreviews").size());
         local.addProperty("assessment", "Keep courtyard");
-        assertEquals("city_refinement", submit(draft, local).getAsJsonObject("designReviewWorkflow").get("stage").getAsString());
+        assertEquals("ready_for_final", submit(draft, local).getAsJsonObject("designReviewWorkflow").get("stage").getAsString());
         assess(draft, review("one", true));
         assertTrue(CityDesignReviewWorkflow.status(dir, "context", draft).get("readyForFinal").getAsBoolean());
         assertFalse(CityDesignReviewWorkflow.status(dir, "new-context", draft).get("readyForFinal").getAsBoolean());
@@ -32,11 +32,11 @@ class CityDesignReviewWorkflowTest {
         // New instance/read after persisted state; different draft but exactly the same local pictures.
         draft.addProperty("baseDraftHash", "two");
         JsonObject status = CityDesignReviewWorkflow.status(dir, "context", draft);
-        assertTrue(status.getAsJsonArray("pendingGroupIds").isEmpty());
+        assertTrue(status.getAsJsonArray("optionalUnreviewedGroupIds").isEmpty());
         assertFalse(status.get("overviewReviewed").getAsBoolean());
         Files.writeString(dir.resolve("a.png"), "changed retained buildings");
         status = CityDesignReviewWorkflow.status(dir, "context", draft);
-        assertEquals(JsonParser.parseString("['a']"), status.get("pendingGroupIds"));
+        assertEquals(JsonParser.parseString("['a']"), status.get("optionalUnreviewedGroupIds"));
         assertTrue(status.getAsJsonObject("groupAssessments").has("b"));
         JsonObject stale = submit(draft, review("one", false));
         assertFalse(stale.has("requestedPreviews"));
@@ -50,7 +50,7 @@ class CityDesignReviewWorkflowTest {
         Files.writeString(dir.resolve("b.png"), "changed");
         review.addProperty("assessment", "retain");
         submit(draft, review);
-        assertEquals(2, CityDesignReviewWorkflow.status(dir, "context", draft).getAsJsonArray("pendingGroupIds").size());
+        assertEquals(2, CityDesignReviewWorkflow.status(dir, "context", draft).getAsJsonArray("optionalUnreviewedGroupIds").size());
     }
 
     @Test void noReviewCanFinalizeDifferentBlueprintOrRejectedGeometry() throws Exception {

@@ -33,7 +33,7 @@ class CityBlueprintServiceTest {
         context.addProperty("cityId", "another");
         assertNotEquals(initial, CityBlueprintService.contextIdentity(context));
     }
-    @Test void stagedPublicEntryCompilesOneDistrictAndRejectsWholeCityShortcut() throws Exception {
+    @Test void stagedPublicEntryKeepsWhollyEmptyDistrictRetryableAndRejectsWholeCityShortcut() throws Exception {
         var f=fixture("run_staged","city:staged"); var service=validationService();
         Path d3File = f.runDir().resolve("city_d3_" + safe(f.cityId())).resolve("city_landform_review_package.json");
         JsonObject d3 = JsonParser.parseString(Files.readString(d3File)).getAsJsonObject();
@@ -69,8 +69,9 @@ class CityBlueprintServiceTest {
         q=new JsonObject();q.addProperty("d4Tool","city_d4_district");q.add("workflowRevision",response.getAsJsonObject("d4Workflow").get("revision"));q.add("districtDesign",body);
         var preview=service.submitDesign(temporary,f.runId(),f.cityId(),contextId,q);
         assertTrue(preview.get("ok").getAsBoolean(),preview.toString());assertTrue(preview.has("revisionEvidence"),preview.toString());
+        assertTrue(preview.get("initialDistrictEmpty").getAsBoolean());
         assertEquals("DISTRICTS",preview.getAsJsonObject("d4Workflow").get("stage").getAsString());
-        assertEquals(1,preview.getAsJsonObject("d4Workflow").getAsJsonArray("savedDistricts").size());
+        assertEquals(0,preview.getAsJsonObject("d4Workflow").getAsJsonArray("savedDistricts").size());
         var resumed=service.prepare(temporary,f.runId(),f.cityId(),f.terraSenseSource(),f.templateSource(),f.referenceCatalog());
         assertEquals(preview.get("d4Workflow"),resumed.get("d4Workflow"));
     }
@@ -507,7 +508,7 @@ class CityBlueprintServiceTest {
         assertEquals(0, prepared.get("aiCityDesignCallCount").getAsInt());
         JsonObject context = prepared.getAsJsonObject("cityBlueprintContext");
         try (var handbook = CityBlueprintServiceTest.class.getResourceAsStream(
-                "/geomantia/prompts/city/handbook.md")) {
+                "/geomantia/prompts/city/d4_v2/handbook.md")) {
             assertNotNull(handbook);
             String expected = new String(handbook.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
             assertFalse(expected.isBlank());

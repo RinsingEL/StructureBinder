@@ -150,6 +150,8 @@ class ProviderConnectionTesterTest {
     }
 
     private static void reply(HttpExchange exchange, int status, String body) throws IOException {
+        assertEquals("Geomantia/0.1.0", exchange.getRequestHeaders().getFirst("User-Agent"));
+        assertEquals(null, exchange.getRequestHeaders().getFirst("x-opencode-session"));
         byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
         exchange.sendResponseHeaders(status, bytes.length);
         exchange.getResponseBody().write(bytes);

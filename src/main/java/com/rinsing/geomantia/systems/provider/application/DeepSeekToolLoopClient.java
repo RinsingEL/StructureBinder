@@ -56,6 +56,12 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
     public LoopResult run(PlayerProviderConfig config, Credentials credentials,
                           JsonObject initialState, List<Path> initialImages, List<String> allowedTools,
                           ToolExecutor toolExecutor, Consumer<AgentActivityEvent> activityListener) {
+        return runSession(config, credentials, ProviderRequestHeaders.session(null), initialState, initialImages, allowedTools, toolExecutor, activityListener);
+    }
+
+    private LoopResult runSession(PlayerProviderConfig config, Credentials credentials, String sessionId,
+                          JsonObject initialState, List<Path> initialImages, List<String> allowedTools,
+                          ToolExecutor toolExecutor, Consumer<AgentActivityEvent> activityListener) {
         if (!config.enabled()) return LoopResult.failure("PROVIDER_DISABLED", 0, "");
         if (!credentials.present()) return LoopResult.failure("PROVIDER_API_KEY_MISSING", 0, "");
         if (initialState == null || allowedTools == null || allowedTools.isEmpty() || toolExecutor == null) {
@@ -64,7 +70,7 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
         try {
             PlayerProviderConfig value = config.validated();
             if (PlayerProviderConfig.CHAT_COMPLETIONS.equals(value.apiProtocol())) {
-                return runChatCompletions(value, credentials, initialState, initialImages,
+                return runChatCompletions(value, credentials, sessionId, initialState, initialImages,
                         allowedTools, toolExecutor, activityListener);
             }
             JsonArray input = new JsonArray();
@@ -92,7 +98,7 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
             int toolCalls = 0;
             String finalText = "";
             for (int round = 0; round < MAX_ROUNDS; round++) {
-                JsonObject response = request(value, credentials, input, allowedTools, toolCalls == 0);
+                JsonObject response = request(value, credentials, input, allowedTools, toolCalls == 0, sessionId);
                 JsonArray output = response.has("output") && response.get("output").isJsonArray()
                         ? response.getAsJsonArray("output") : new JsonArray();
                 JsonArray calls = new JsonArray();
@@ -165,10 +171,10 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
     public LoopResult run(PlayerProviderConfig config, Credentials credentials, String sessionId,
                           JsonObject initialState, List<Path> initialImages, List<String> allowedTools,
                           ToolExecutor toolExecutor, Consumer<AgentActivityEvent> activityListener) {
-        return run(config, credentials, initialState, initialImages, allowedTools, toolExecutor, activityListener);
+        return runSession(config, credentials, ProviderRequestHeaders.session(sessionId), initialState, initialImages, allowedTools, toolExecutor, activityListener);
     }
 
-    private LoopResult runChatCompletions(PlayerProviderConfig config, Credentials credentials,
+    private LoopResult runChatCompletions(PlayerProviderConfig config, Credentials credentials, String sessionId,
                                           JsonObject initialState, List<Path> initialImages,
                                           List<String> allowedTools, ToolExecutor toolExecutor,
                                           Consumer<AgentActivityEvent> activityListener)
@@ -206,7 +212,7 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
             long requestStarted = System.nanoTime();
             JsonObject response;
             try {
-                response = requestChatCompletions(config, credentials, messages, allowedTools);
+                response = requestChatCompletions(config, credentials, messages, allowedTools, sessionId);
             } catch (IOException exception) {
                 long elapsedSeconds = Math.max(1L, (System.nanoTime() - requestStarted) / 1_000_000_000L);
                 emit(activityListener, "error", "模型请求失败（第 " + (round + 1) + " 轮，耗时 "
@@ -346,7 +352,7 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
     }
 
     private JsonObject requestChatCompletions(PlayerProviderConfig config, Credentials credentials,
-                                              JsonArray messages, List<String> allowedTools)
+                                              JsonArray messages, List<String> allowedTools, String sessionId)
             throws IOException, InterruptedException {
         JsonObject body = new JsonObject();
         body.addProperty("model", config.model());
@@ -361,7 +367,7 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
             body.add("thinking", thinking);
             body.addProperty("reasoning_effort", "high");
         }
-        HttpRequest request = HttpRequest.newBuilder(endpoint(config))
+        HttpRequest request = ProviderRequestHeaders.request(endpoint(config), sessionId)
                 .timeout(Duration.ofSeconds(config.timeoutSeconds()))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + credentials.apiKey())
@@ -541,7 +547,7 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
     }
 
     private JsonObject request(PlayerProviderConfig config, Credentials credentials, JsonArray input,
-                               List<String> allowedTools, boolean requireTool)
+                               List<String> allowedTools, boolean requireTool, String sessionId)
             throws IOException, InterruptedException {
         JsonObject body = new JsonObject();
         body.addProperty("model", config.model());
@@ -553,7 +559,7 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
         reasoning.addProperty("effort", requireTool ? "none" : "high");
         body.add("reasoning", reasoning);
         body.addProperty("max_output_tokens", 32768);
-        HttpRequest request = HttpRequest.newBuilder(endpoint(config))
+        HttpRequest request = ProviderRequestHeaders.request(endpoint(config), sessionId)
                 .timeout(Duration.ofSeconds(config.timeoutSeconds()))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + credentials.apiKey())

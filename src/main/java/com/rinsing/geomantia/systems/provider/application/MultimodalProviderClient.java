@@ -44,7 +44,7 @@ public final class MultimodalProviderClient {
         }
         try {
             PlayerProviderConfig value = config.validated();
-            HttpRequest request = HttpRequest.newBuilder(endpoint(value))
+            HttpRequest request = ProviderRequestHeaders.request(endpoint(value), ProviderRequestHeaders.session(null))
                     .timeout(Duration.ofSeconds(value.timeoutSeconds()))
                     .header("Content-Type", "application/json")
                     .header("Authorization", "Bearer " + credentials.apiKey())

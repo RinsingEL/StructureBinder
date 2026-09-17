@@ -1,0 +1,1 @@
+看当前总览，认为非独立区具有城市整体性且所有功能区有效主体仍成立，调用 city_d4_finalize，携带当前 baseDraftHash、assessment、functionsPreserved=true。允许隔河与合理空隙，不要求接触、固定距离或至少一次修改。

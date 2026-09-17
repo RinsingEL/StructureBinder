@@ -22,6 +22,21 @@ import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandscapeCapacityReservationPlannerTest {
+    @Test void incrementalLandscapeKeepsFrozenParcelsAndAvoidsTheirCells() {
+        var planner=new CityLandscapeCapacityReservationPlanner();var terrain=terrain(new BlockBounds(0,0,255,255));
+        var bp=blueprint(3);var anchors=anchors(120,120);var baseline=planner.plan(bp,catalog(1,12),terrain,anchors);assertTrue(baseline.ok());
+        JsonObject spec=com.google.gson.JsonParser.parseString("{editedGroups:[],protectedGroups:[],districtByGroup:{},expansion:true,frozenLandscapeIds:[]}").getAsJsonObject();
+        JsonObject previous=baseline.plan().deepCopy();String originalId=bp.outdoorPlan().landscapes().get(0).landscapeId();
+        for(var entry:previous.getAsJsonArray("instances"))entry.getAsJsonObject().addProperty("landscapeId","frozen-fields");
+        spec.getAsJsonArray("frozenLandscapeIds").add("frozen-fields");spec.add("previousLandscapes",previous);
+        var policy=new CityD4LayoutPolicy(spec);var fresh=planner.plan(bp,catalog(1,12),terrain,anchors,100000,Map.of(),policy);assertTrue(fresh.ok());
+        Set<BlockPoint> frozenCells=new HashSet<>();for(var entry:previous.getAsJsonArray("instances"))frozenCells.addAll(cells(entry.getAsJsonObject().getAsJsonArray("reservationSpans")));
+        assertFalse(frozenCells.isEmpty());for(var entry:fresh.plan().getAsJsonArray("instances"))assertTrue(cells(entry.getAsJsonObject().getAsJsonArray("reservationSpans")).stream().noneMatch(frozenCells::contains));
+        var combined=policy.preserveLandscapes(fresh);assertTrue(combined.plan().getAsJsonArray("instances").asList().containsAll(previous.getAsJsonArray("instances").asList()));
+        spec.getAsJsonArray("frozenLandscapeIds").add(originalId);
+        assertTrue(planner.plan(bp,catalog(1,12),terrain,anchors,100000,Map.of(),new CityD4LayoutPolicy(spec)).plan().getAsJsonArray("instances").isEmpty());
+    }
+
     @Test
     void explicitCellsUseTerrainScaleAndStayInsidePreviewWithoutBuildingAreaQuota() {
         CityBlueprint source=blueprint(1);

@@ -32,7 +32,8 @@ public final class ProviderConnectionTester {
         if (!credentials.present()) return new TestResult("missing_key", false, false, "PROVIDER_API_KEY_MISSING");
         try {
             PlayerProviderConfig value = config.validated();
-            HttpResponse<String> modelsResponse = httpClient.send(HttpRequest.newBuilder(endpoint(value, "models"))
+            String probeSession = ProviderRequestHeaders.session(null);
+            HttpResponse<String> modelsResponse = httpClient.send(ProviderRequestHeaders.request(endpoint(value, "models"), probeSession)
                             .timeout(Duration.ofSeconds(value.timeoutSeconds()))
                             .header("Accept", "application/json")
                             .header("Authorization", "Bearer " + credentials.apiKey())
@@ -48,7 +49,7 @@ public final class ProviderConnectionTester {
 
             String completionPath = PlayerProviderConfig.CHAT_COMPLETIONS.equals(value.apiProtocol())
                     ? "chat/completions" : "responses";
-            HttpResponse<String> visionResponse = httpClient.send(HttpRequest.newBuilder(endpoint(value, completionPath))
+            HttpResponse<String> visionResponse = httpClient.send(ProviderRequestHeaders.request(endpoint(value, completionPath), probeSession)
                             .timeout(Duration.ofSeconds(value.timeoutSeconds()))
                             .header("Content-Type", "application/json")
                             .header("Authorization", "Bearer " + credentials.apiKey())

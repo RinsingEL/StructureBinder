@@ -65,7 +65,11 @@ public final class CityBlueprintCompilerService {
 
     /** Compile a submission before publishing acceptance; never overwrites the accepted blueprint. */
     CompilationResult compileProposal(Path debugRoot, String runId, String cityId, JsonObject proposal, boolean draftOnly) throws IOException {
-        CompilationResult result = compileInternal(debugRoot, runId, cityId, proposal.deepCopy(), draftOnly);
+        return compileProposal(debugRoot, runId, cityId, proposal, draftOnly, null);
+    }
+
+    CompilationResult compileProposal(Path debugRoot, String runId, String cityId, JsonObject proposal, boolean draftOnly, CityD4LayoutPolicy policy) throws IOException {
+        CompilationResult result = compileInternal(debugRoot, runId, cityId, proposal.deepCopy(), draftOnly, policy);
         if (result.ok()) {
             JsonObject acceptance = requiredObject(result.structureAnchorPlan(), "compilationAcceptance");
             if (!booleanValue(acceptance, "passed", false)) {
@@ -79,6 +83,10 @@ public final class CityBlueprintCompilerService {
     }
 
     private CompilationResult compileInternal(Path debugRoot, String runId, String cityId, JsonObject proposal, boolean draftOnly) throws IOException {
+        return compileInternal(debugRoot, runId, cityId, proposal, draftOnly, null);
+    }
+
+    private CompilationResult compileInternal(Path debugRoot, String runId, String cityId, JsonObject proposal, boolean draftOnly, CityD4LayoutPolicy editPolicy) throws IOException {
         Path runDir = requireRunDirectory(debugRoot, runId);
         Path blueprintDir = CityTestRunLayout.open(runDir, cityId)
                 .stepDirectory(CityTestRunLayout.BLUEPRINT);
@@ -221,7 +229,7 @@ public final class CityBlueprintCompilerService {
             }
             compositionSlots = planArrayCompositions(blueprint,
                     groupsById, patches, review.grid().cellStepBlocks(), cityPlanningBounds, catalog,
-                    spatialDemands, interGroupRoadReserveBlocks, templates);
+                    spatialDemands, interGroupRoadReserveBlocks, templates, editPolicy);
         } catch (CompositionPlacementFailure failure) {
             JsonObject failureTrace = trace(blueprint, context, new JsonArray(), Map.of(),
                     ConnectivityPlan.empty(), "failed", failure.reasonCode);
@@ -229,6 +237,13 @@ public final class CityBlueprintCompilerService {
             return CompilationResult.failed(failureTrace, failure.reasonCode, failure.getMessage());
         }
         Map<String, Set<String>> groupSeparationExemptions = groupSeparationExemptions(blueprint);
+        if(editPolicy!=null) {
+            Map<String,Set<String>> scoped=new LinkedHashMap<>();
+            groupSeparationExemptions.forEach((id,values)->scoped.put(id,new LinkedHashSet<>(values)));
+            for(String id:editPolicy.editedGroups) for(String other:editPolicy.frozenGroups)
+                if(editPolicy.displaceable(other)) scoped.get(id).add(other);
+            groupSeparationExemptions=scoped;
+        }
         JsonArray anchors;
         JsonArray occupied;
         JsonArray selections;
@@ -275,9 +290,31 @@ public final class CityBlueprintCompilerService {
         anchors = new JsonArray();
         occupied = new JsonArray();
         selections = new JsonArray();
+        if (editPolicy != null) {
+            // Frozen groups may have no surviving anchors (or no initial design yet).
+            // Their frame must exist even when there is nothing to restore.
+            for (String id : editPolicy.frozenGroups) {
+                GroupState frozen = states.get(id);
+                if (frozen != null) frozen.freezePlannedLayout(frozen.preferredOrigin());
+            }
+            for (JsonElement e : editPolicy.previousAnchors()) {
+                JsonObject anchor=e.getAsJsonObject();
+                GroupState state=states.get(string(anchor,"placementGroupId"));
+                if(state!=null && editPolicy.frozen(state.group().groupId())) {
+                    restoreAnchor(anchor.deepCopy(),anchors,occupied,state);
+                }
+            }
+            editPolicy.addLandscapeObstacles(occupied);
+            for(String id:editPolicy.frozenGroups) {
+                GroupState frozen=states.get(id);if(frozen==null)continue;
+                frozen.plannedRefs=plannedStructureRefs(frozen.group(),frozen.minimumStructureCount(),catalog,blueprint.generationSeed());
+                for(var e:array(editPolicy.data,"previousSkippedMembers"))if(id.equals(string(e.getAsJsonObject(),"groupId")))frozen.skippedMembers.add(e.deepCopy());
+            }
+        }
         int buildingSearchNodes = 0;
         for (CityBlueprint.Group group : groups) {
             GroupState state = states.get(group.groupId());
+            if (editPolicy != null && editPolicy.frozen(group.groupId())) continue;
             state.freezePlannedLayout(initialPlacementOrigin(state, states));
             List<String> refs = plannedStructureRefs(group, state.minimumStructureCount(), catalog, blueprint.generationSeed());
             state.plannedRefs = refs;
@@ -287,7 +324,7 @@ public final class CityBlueprintCompilerService {
                 state.plannedSlot = index;
                 placePlannedMember(runDir, review, structureSource, templateCatalogJson, templates, blueprint,
                         state, refs.get(index), PlacementPhase.REQUIRED, index + 1, occupied, anchors,
-                        catalog, states, selections, terrainGate);
+                        catalog, states, selections, terrainGate, editPolicy);
                 buildingSearchNodes++;
             }
         }
@@ -319,7 +356,7 @@ public final class CityBlueprintCompilerService {
         }
         CityLandscapeCapacityReservationPlanner.Result landscapeCapacity = landscapeCapacityPlanner.plan(
                 blueprint, references, terrainField, anchors, CityLandscapeCapacityReservationPlanner.SEARCH_NODE_LIMIT,
-                initialLandscapeAreas);
+                initialLandscapeAreas, editPolicy);
         if (!landscapeCapacity.ok()) {
             return CompilationResult.failed(trace(blueprint, context, selections, states, connectivityPlan,
                     "failed", landscapeCapacity.reasonCode()), landscapeCapacity.reasonCode(),
@@ -329,16 +366,31 @@ public final class CityBlueprintCompilerService {
         // Complete only the AI's planned array, never search extra slots to replace skipped members.
         for (CityBlueprint.Group group : groups) {
             GroupState state = states.get(group.groupId());
+            if (editPolicy != null && editPolicy.frozen(group.groupId())) continue;
             for (int index = group.requiredStructureRefs().size(); index < state.plannedRefs.size(); index++) {
                 state.plannedSlot = index;
                 placePlannedMember(runDir, review, structureSource, templateCatalogJson, templates, blueprint,
                         state, state.plannedRefs.get(index), PlacementPhase.FILL, index + 1, occupied, anchors,
-                        catalog, states, selections, terrainGate);
+                        catalog, states, selections, terrainGate, editPolicy);
                 buildingSearchNodes++;
             }
             state.stop(state.anchorCount() == state.plannedRefs.size() ? "PLANNED_ARRAY_COMPLETE" : "PLANNED_ARRAY_WITH_GAPS");
         }
 
+        if(editPolicy != null) {
+            // Rebuild derived bounds/counts/streets from survivors after displacement.
+            for(String id : editPolicy.frozenGroups) {
+                GroupState old=states.get(id);if(old==null)continue;
+                GroupState fresh=old.fresh();fresh.freezePlannedLayout(old.layoutFrame().center());
+                fresh.plannedRefs=old.plannedRefs;fresh.skippedMembers.addAll(old.skippedMembers);states.put(id,fresh);
+                for(var e:editPolicy.evicted)if(id.equals(string(e.getAsJsonObject(),"placementGroupId"))){
+                    JsonObject gap=new JsonObject();gap.addProperty("groupId",id);gap.add("anchorId",e.getAsJsonObject().get("anchorId"));gap.addProperty("reasonCode","DISPLACED_BY_DISTRICT_EXPANSION");fresh.skippedMembers.add(gap);
+                }
+                for(JsonElement e:anchors)if(id.equals(string(e.getAsJsonObject(),"placementGroupId")))
+                    restoreAnchor(e.getAsJsonObject(),new JsonArray(),new JsonArray(),fresh);
+            }
+            landscapeCapacity=editPolicy.preserveLandscapes(landscapeCapacity);
+        }
         // Buildings form the first real footprint. Landscape starts are solved only after every
         // group has attempted its required and first fill batch, and never send those buildings
         // back through candidate ranking.
@@ -378,6 +430,7 @@ public final class CityBlueprintCompilerService {
         anchorPlan.addProperty("schema", CityStructureAnchorPlanner.PLAN_SCHEMA);
         anchorPlan.addProperty("cityId", cityId);
         anchorPlan.add("anchors", anchors);
+        if(editPolicy!=null) anchorPlan.add("displacedBuildings",editPolicy.evicted.deepCopy());
         List<JsonObject> anchorObjects = anchors.asList().stream()
                 .map(JsonElement::getAsJsonObject).toList();
         CityInternalStreetPlanner.Finalization streetFinalization = internalStreetPlanner.finalizeSkeleton(
@@ -533,7 +586,7 @@ public final class CityBlueprintCompilerService {
                                     JsonObject templateCatalog, CityTemplateCatalog templates, CityBlueprint blueprint,
                                     GroupState state, String structureRef, PlacementPhase phase, int ordinal,
                                     JsonArray occupied, JsonArray anchors, CatalogIndex catalog, Map<String, GroupState> states,
-                                    JsonArray selections, CityStructureTerrainGate terrainGate) throws IOException {
+                                    JsonArray selections, CityStructureTerrainGate terrainGate, CityD4LayoutPolicy editPolicy) throws IOException {
         // Capture the nominal location even if no terrain-safe candidate survives.
         TemplateCandidate template = catalog.templates(structureRef).stream().min(Comparator.comparingLong(
                 candidate -> tieKey(blueprint.generationSeed(), state.group().groupId(), structureRef,
@@ -541,7 +594,12 @@ public final class CityBlueprintCompilerService {
         JsonObject nominal = candidatePlan(blueprint, state, structureRef, phase, ordinal, template,
                 templateCatalog, templates, states, null);
         Placement placement = chooseOne(runDir, review, structureSource, templateCatalog, templates, blueprint,
-                state, structureRef, phase, ordinal, occupied, catalog, states, selections, null, terrainGate);
+                state, structureRef, phase, ordinal, editPolicy==null?occupied:editPolicy.obstacles(occupied), catalog, states, selections, null, terrainGate);
+        if (placement != null && editPolicy!=null && !editPolicy.displace(bounds(placement.collisionEnvelope()),anchors,occupied)) {
+            JsonObject skipped=new JsonObject();skipped.addProperty("groupId",state.group().groupId());
+            skipped.addProperty("structureRef",structureRef);skipped.addProperty("slotIndex",state.plannedSlot);
+            skipped.addProperty("reasonCode","DISTRICT_WOULD_BE_EMPTIED");state.skippedMembers.add(skipped);return;
+        }
         if (placement != null) {
             commit(placement, anchors, occupied, state);
             return;
@@ -1563,6 +1621,13 @@ public final class CityBlueprintCompilerService {
         return value;
     }
 
+    private void restoreAnchor(JsonObject anchor,JsonArray anchors,JsonArray occupied,GroupState state) {
+        String ref=string(anchor,"blueprintStructureRef");
+        boolean required=state.group().requiredStructureRefs().contains(ref);
+        commit(new Placement(anchor,requiredObject(anchor,"collisionEnvelope"),ref,required,
+                required?PlacementPhase.REQUIRED:PlacementPhase.FILL,null),anchors,occupied,state);
+    }
+
     private void commit(Placement placement, JsonArray anchors, JsonArray occupied, GroupState state) {
         if (state.landscapeGapCirculation() && placement.anchor().has("blueprintLayout")) {
             placement.anchor().getAsJsonObject("blueprintLayout")
@@ -1956,7 +2021,7 @@ public final class CityBlueprintCompilerService {
             BlockBounds fullPlanningBounds,
             CatalogIndex catalog,
             Map<String, CityGroupSpatialDemand> spatialDemands,
-            int interGroupRoadReserveBlocks, CityTemplateCatalog templates) {
+            int interGroupRoadReserveBlocks, CityTemplateCatalog templates, CityD4LayoutPolicy editPolicy) {
         // Compose local envelopes first. Terrain filters members later and never moves siblings.
         Map<String, BlockBounds> envelopes = new LinkedHashMap<>();
         Map<String, Map<String, BlockPoint>> offsets = new LinkedHashMap<>();
@@ -2072,6 +2137,12 @@ public final class CityBlueprintCompilerService {
         }
         Map<String, CompositionSlot> result = new LinkedHashMap<>();
         Map<String, BlockBounds> placedRoots = new LinkedHashMap<>();
+        // Resolve outward direction from every frozen group's actual footprint, regardless of declaration order or nesting.
+        if(editPolicy!=null) for(var entry:editPolicy.previousAnchors()) {
+            JsonObject anchor=entry.getAsJsonObject();String id=string(anchor,"placementGroupId");
+            if(editPolicy.frozen(id)) placedRoots.put(id,union(placedRoots.get(id),bounds(requiredObject(anchor,"collisionEnvelope"))));
+        }
+
         for (var root : groupsById.values()) {
             if (childIds.contains(root.groupId())) continue;
             BlockPoint chosen = patchPlacementOrigin(root, patches, patchStepBlocks, fullPlanningBounds);
@@ -2108,7 +2179,24 @@ public final class CityBlueprintCompilerService {
                                 + interGroupRoadReserveBlocks);
                 break;
             }
-            placedRoots.put(root.groupId(), CityArrayEnvelopePlacement.move(local, origin));
+            if(editPolicy!=null && "OUTWARD_ARRAY".equals(string(editPolicy.data,"expansionMode"))
+                    && editPolicy.editedGroups.contains(root.groupId()) && root.placementRelation()!=null) {
+                String owner=editPolicy.districtByGroup.get(root.groupId());
+                var refs=root.placementRelation().groupRefs();
+                String source=refs.stream().filter(id->owner.equals(editPolicy.districtByGroup.get(id))).findFirst().orElse("");
+                String target=refs.stream().filter(id->!owner.equals(editPolicy.districtByGroup.get(id))).findFirst().orElse("");
+                BlockBounds from=placedRoots.get(source),to=placedRoots.get(target);
+                if(from!=null&&to!=null) {
+                    int dx=to.center().x()-from.center().x(),dz=to.center().z()-from.center().z();
+                    String direction=Math.abs(dx)>=Math.abs(dz)?dx>=0?"east":"west":dz>=0?"south":"north";
+                    origin=CityArrayEnvelopePlacement.beside(from,local,direction,
+                            groupLayoutPlanner.parameters(catalog.algorithm(root.algorithmProfileRef()),root.densityClass()).targetEdgeGapBlocks());
+                }
+            }
+            BlockBounds frozenRoot=null;
+            if(editPolicy!=null&&editPolicy.frozen(root.groupId()))for(var a:editPolicy.previousAnchors())
+                if(root.groupId().equals(string(a.getAsJsonObject(),"placementGroupId")))frozenRoot=union(frozenRoot,bounds(requiredObject(a.getAsJsonObject(),"collisionEnvelope")));
+            placedRoots.put(root.groupId(), frozenRoot==null?CityArrayEnvelopePlacement.move(local, origin):frozenRoot);
             BlockPoint shift = origin;
             for (var entry : offsets.get(root.groupId()).entrySet()) {
                 BlockPoint point = new BlockPoint(entry.getValue().x() + shift.x(), entry.getValue().z() + shift.z());

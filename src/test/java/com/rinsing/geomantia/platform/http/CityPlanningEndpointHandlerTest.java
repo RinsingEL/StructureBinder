@@ -2141,19 +2141,6 @@ class CityPlanningEndpointHandlerTest {
                 if(result.has("d4Workflow"))revision=result.getAsJsonObject("d4Workflow").get("revision").getAsInt();
                 return result;
             }
-            void review(JsonObject evidence,boolean overall) throws Exception {
-                List<JsonObject> targets=new java.util.ArrayList<>();
-                if(overall) {JsonObject r=new JsonObject();r.addProperty("overview",true);targets.add(r);}
-                else for(var group:evidence.getAsJsonObject("previousBlueprint").getAsJsonArray("groups")) {
-                    JsonObject r=new JsonObject();JsonArray ids=new JsonArray();ids.add(group.getAsJsonObject().get("groupId"));r.add("groupIds",ids);targets.add(r);
-                }
-                for(JsonObject r:targets) {
-                    r.add("baseDraftHash",evidence.get("baseDraftHash"));
-                    assertTrue(call("city_d4_preview",r.deepCopy()).has("requestedPreviews"));
-                    r.addProperty("assessment","Fixture arrangement inspected.");
-                    assertTrue(call("city_d4_assess",r).get("assessmentRecorded").getAsBoolean());
-                }
-            }
         }
         StageClient client=new StageClient();
         JsonObject settings=new JsonObject();
@@ -2164,17 +2151,15 @@ class CityPlanningEndpointHandlerTest {
         JsonArray districts=new JsonArray();districts.add(district);JsonObject overview=new JsonObject();overview.add("citySettings",settings);overview.add("districts",districts);
         JsonObject request=new JsonObject();request.add("overview",overview);client.call("city_d4_overview",request);
         JsonObject body=new JsonObject();for(String key:List.of("groups","arrayCompositions","relations"))body.add(key,blueprint.get(key).deepCopy());
-        body.getAsJsonArray("groups").get(0).getAsJsonObject().addProperty("structureCount",1);
+        body.getAsJsonArray("groups").get(0).getAsJsonObject().addProperty("structureCount",3);
         for(String key:List.of("foundationGroupIds","landscapes"))body.add(key,blueprint.getAsJsonObject("outdoorPlan").get(key).deepCopy());
         request=new JsonObject();request.add("districtDesign",body);
         JsonObject evidence=client.call("city_d4_district",request).getAsJsonObject("revisionEvidence");
-        client.review(evidence,false);client.call("city_d4_complete",new JsonObject());client.review(evidence,true);
-        JsonObject update=new JsonObject();update.add("groupId",body.getAsJsonArray("groups").get(0).getAsJsonObject().get("groupId"));update.addProperty("structureCount",3);
-        JsonArray updates=new JsonArray();updates.add(update);JsonObject changes=new JsonObject();changes.add("groups",updates);
-        request=new JsonObject();request.addProperty("targetDistrictId","fixture");request.addProperty("integrationIntent","扩大主体组");request.add("changes",changes);
-        evidence=client.call("city_d4_integrate",request).getAsJsonObject("revisionEvidence");
-        client.review(evidence,false);client.review(evidence,true);client.call("city_d4_complete",new JsonObject());
-        request=new JsonObject();request.add("baseDraftHash",evidence.get("baseDraftHash"));
+        JsonObject marking=new JsonObject();marking.addProperty("districtId","fixture");marking.addProperty("independent",false);
+        JsonArray disposition=new JsonArray();disposition.add(marking);
+        request=new JsonObject();request.add("baseDraftHash",evidence.get("baseDraftHash"));request.addProperty("assessment","Fixture overview is coherent.");request.add("districtDisposition",disposition);
+        client.call("city_d4_mark",request);
+        request=new JsonObject();request.add("baseDraftHash",evidence.get("baseDraftHash"));request.addProperty("assessment","All effective district functions remain intact.");request.addProperty("functionsPreserved",true);
         return client.call("city_d4_finalize",request);
     }
 

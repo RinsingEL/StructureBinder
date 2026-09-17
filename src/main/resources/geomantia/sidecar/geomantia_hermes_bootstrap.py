@@ -1,6 +1,7 @@
 """Geomantia's cancellation adapter for the pinned Hermes session-stream API.
 
-Hermes 0.18.2 cancels the SSE coroutine but its worker runs in an executor.
+The session SSE coroutine and its executor worker have separate lifetimes.
+This adapter is verified against Hermes 0.21.3.
 Keep an agent reference and interrupt that worker too. No vendor files are edited.
 """
 import asyncio

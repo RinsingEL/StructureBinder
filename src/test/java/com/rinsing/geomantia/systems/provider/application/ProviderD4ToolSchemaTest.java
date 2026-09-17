@@ -18,15 +18,15 @@ class ProviderD4ToolSchemaTest {
         JsonObject settings=schema("city_d4_overview").getAsJsonObject("properties").getAsJsonObject("overview").getAsJsonObject("properties").getAsJsonObject("citySettings").getAsJsonObject("properties");
         assertFalse(settings.getAsJsonObject("outdoorPlan").getAsJsonObject("properties").has("landscapes"));
         assertFalse(schema("city_d4_preview").getAsJsonObject("properties").has("assessment"));
-        assertTrue(schema("city_d4_assess").getAsJsonArray("required").toString().contains("assessment"));
+        assertTrue(schema("city_d4_finalize").getAsJsonArray("required").toString().contains("assessment"));
         assertTrue(schema("city_d4_integrate").getAsJsonObject("properties").has("targetDistrictId"));
     }
     @Test void partialUpdatesDoNotRequireCompleteSiblingParameters() {
-        JsonObject update=schema("city_d4_district_refine").getAsJsonObject("properties").getAsJsonObject("changes").getAsJsonObject("properties");
+        JsonObject update=schema("city_d4_integrate").getAsJsonObject("properties").getAsJsonObject("changes").getAsJsonObject("properties");
         JsonObject group=update.getAsJsonObject("groups").getAsJsonObject("items");
         assertEquals("[\"groupId\"]",group.getAsJsonArray("required").toString());
         assertFalse(group.getAsJsonObject("properties").getAsJsonObject("spaceComposition").has("required"));
-        assertFalse(update.getAsJsonObject("surfaceMaterials").getAsJsonObject("properties").has("defaults"));
-        assertTrue(update.has("removeGroupIds"));
+        assertFalse(update.has("surfaceMaterials"));
+        assertFalse(update.has("removeGroupIds"));
     }
 }

@@ -17,10 +17,10 @@ import java.util.zip.ZipInputStream;
 
 /** Installs the bundled, dependency-free Hermes runtime inside the Minecraft instance. */
 final class HermesPortableRuntime {
-    static final String VERSION = "0.18.2-win-x64";
+    static final String VERSION = "0.21.3-win-x64";
     static final String DIRECTORY_NAME = "hermes-" + VERSION;
-    static final String ARCHIVE_SHA256 = "806B3392A6D222CFB0EC3484406962C74A040953A5C612E0BBEC4EFCDE245937";
-    private static final String RESOURCE = "/geomantia/sidecar/hermes-runtime-0.18.2-win-x64.zip";
+    static final String ARCHIVE_SHA256 = "D08235769B51B6CEDFF02DA6CBA32EAF178BAE3AD62FFE19D7221B5CDE38E0DE";
+    private static final String RESOURCE = "/geomantia/sidecar/hermes-runtime-0.21.3-win-x64.zip";
     private static final String MARKER = ".geomantia-runtime.sha256";
 
     Path ensureInstalled(Path serverDirectory, Consumer<String> progress) throws IOException {
@@ -31,7 +31,7 @@ final class HermesPortableRuntime {
         if (ready(target)) return target;
 
         Consumer<String> listener = progress == null ? ignored -> { } : progress;
-        listener.accept("首次解压 Hermes 内置运行时（约 267 MB）…");
+        listener.accept("首次解压 Hermes 内置运行时…");
         Files.createDirectories(root);
         Path staging = root.resolve("." + DIRECTORY_NAME + "-install-" + UUID.randomUUID());
         try {
@@ -77,7 +77,7 @@ final class HermesPortableRuntime {
         try {
             return ARCHIVE_SHA256.equals(Files.readString(target.resolve(MARKER), StandardCharsets.US_ASCII).trim())
                     && Files.isRegularFile(target.resolve("python/python.exe"))
-                    && Files.isRegularFile(target.resolve("site-packages/hermes_cli/main.py"))
+                    && Files.isRegularFile(target.resolve("hermes/hermes_cli/main.py"))
                     && Files.isRegularFile(target.resolve("node/node.exe"));
         } catch (IOException ignored) {
             return false;
@@ -86,7 +86,7 @@ final class HermesPortableRuntime {
 
     private static void validate(Path extracted) throws IOException {
         if (!Files.isRegularFile(extracted.resolve("python/python.exe"))
-                || !Files.isRegularFile(extracted.resolve("site-packages/hermes_cli/main.py"))
+                || !Files.isRegularFile(extracted.resolve("hermes/hermes_cli/main.py"))
                 || !Files.isRegularFile(extracted.resolve("node/node.exe"))) {
             throw new IOException("Hermes 运行时压缩包不完整");
         }

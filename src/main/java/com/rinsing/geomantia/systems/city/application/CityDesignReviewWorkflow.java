@@ -28,17 +28,17 @@ final class CityDesignReviewWorkflow {
             }
             result.add("baseDraftHash", draft.get("baseDraftHash"));
         }
-        boolean overall = valid && pending.isEmpty()
+        boolean overall = valid
                 && overviewFingerprint(dir, draft).equals(text(object(state, "overview"), "reviewed"))
                 && !text(object(state, "overview"), "reviewed").isEmpty();
-        result.addProperty("stage", !valid ? "district_initial" : !pending.isEmpty() ? "district_refinement"
-                : !overall ? "city_refinement" : "ready_for_final");
-        result.add("pendingGroupIds", pending);
+        result.addProperty("stage", !valid ? "district_initial" : !overall ? "overview_review" : "ready_for_final");
+        result.add("pendingGroupIds", new JsonArray());
+        result.add("optionalUnreviewedGroupIds", pending);
         result.add("groupAssessments", assessments);
         result.addProperty("overviewReviewed", overall);
         if (overall) result.addProperty("overviewAssessment", text(object(state, "overview"), "assessment"));
         result.addProperty("readyForFinal", overall);
-        result.addProperty("instruction", "使用 city_d4_preview 查看当前 hash 的局部图（1至3组）或总览；看图后用 city_d4_assess 记录评价，核对 assessmentRecorded。用 city_d4_complete 完成当前阶段；修改用对应设计/修饰工具。");
+        result.addProperty("instruction", "局部图可按需查看，不要求逐区评价。根据当前总览标记独立区、调整阵列或向外阵列；整体性与各区功能成立时直接 city_d4_finalize。");
         return result;
     }
 
@@ -88,11 +88,11 @@ final class CityDesignReviewWorkflow {
         if (hash == null || hash.isJsonNull() || !hash.isJsonPrimitive()
                 || !hash.getAsJsonPrimitive().isString() || hash.getAsString().isBlank())
             return reviewError(dir, contextId, draft, new JsonObject(), review, "CITY_DESIGN_REVIEW_BASE_REQUIRED",
-                    "Missing or invalid baseDraftHash. Use city_d4_preview with the current hash and groupIds OR overview=true, then city_d4_assess with the same target and assessment. No assessment was saved.");
+                    "Missing or invalid baseDraftHash. Use city_d4_preview with the current hash and groupIds OR overview=true, then submit the current overview assessment through city_d4_mark, city_d4_integrate or city_d4_finalize. No assessment was saved.");
         if (!text(draft, "baseDraftHash").equals(hash.getAsString()))
             return reviewError(dir, contextId, draft, new JsonObject(), review, "CITY_DESIGN_REVIEW_BASE_STALE",
                     "Review base is stale. Submitted " + hash.getAsString() + "; current " + text(draft, "baseDraftHash")
-                            + ". Use city_d4_preview for current images, then city_d4_assess for the same version. No assessment was saved.");
+                            + ". Use city_d4_preview for current images, then submit your overview assessment for the same version. No assessment was saved.");
         if (!Set.of("baseDraftHash", "groupIds", "overview", "assessment").containsAll(review.keySet()))
             throw new IllegalArgumentException("CITY_DESIGN_REVIEW_FIELDS: use baseDraftHash, groupIds OR overview=true, and optional assessment.");
         boolean overview = review.has("overview") && review.get("overview").getAsBoolean();
@@ -101,8 +101,6 @@ final class CityDesignReviewWorkflow {
         JsonObject state = load(dir, contextId);
         JsonObject targets = new JsonObject();
         if (overview) {
-            if (review.has("assessment") && !status(dir, contextId, draft).getAsJsonArray("pendingGroupIds").isEmpty())
-                return pending(dir, contextId, draft, "Finish current local reviews before the final city overview review.");
             targets.addProperty("overview", previewPath(dir, text(draft, "compiledPreview")).toString());
         } else {
             JsonArray ids = review.getAsJsonArray("groupIds");
@@ -139,13 +137,18 @@ final class CityDesignReviewWorkflow {
         return result;
     }
 
+    static boolean overviewViewed(Path dir,String contextId,JsonObject draft)throws IOException {
+        return draft!=null && "preview_valid".equals(text(draft,"status"))
+                && overviewFingerprint(dir,draft).equals(text(object(load(dir,contextId),"overview"),"viewed"));
+    }
+
     static JsonObject finalGate(Path dir, String contextId, JsonObject canonical) throws IOException {
         JsonObject draft = CityBlueprintDraft.current(dir, contextId, text(canonical, "cityId"));
         if (draft == null || !canonical.equals(draft.get("previousBlueprint")))
             return pending(dir, contextId, draft, "Submit these changes as DRAFT first. FINAL cannot introduce geometry that was not previewed and reviewed.");
         JsonObject workflow = status(dir, contextId, draft);
         return workflow.get("readyForFinal").getAsBoolean() ? null
-                : pending(dir, contextId, draft, "The design is still in review. Complete the pending local and city overview assessments before FINAL.");
+                : pending(dir, contextId, draft, "The design is still in review. Inspect the current overview and include your assessment in city_d4_finalize.");
     }
 
     private static JsonObject pending(Path dir, String contextId, JsonObject draft, String instruction) throws IOException {

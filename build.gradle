@@ -188,7 +188,7 @@ tasks.named('processResources', ProcessResources).configure {
     from('country_designer_mcp/dist/geomantia-mcp-bundle.mjs') {
         into 'geomantia/sidecar'
     }
-    from('runtime/hermes/hermes-runtime-0.18.2-win-x64.zip') {
+    from('runtime/hermes/hermes-runtime-0.21.3-win-x64.zip') {
         into 'geomantia/sidecar'
     }
     var replaceProperties = [

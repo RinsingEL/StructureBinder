@@ -23,7 +23,7 @@ class ProviderRevisionLoopTest {
         AtomicInteger attempt = new AtomicInteger(3);
         HttpServer http = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         http.createContext("/realm/city/prepare_d4_blueprint_context", exchange -> {
-            byte[] response = ("{\"ok\":true,\"cityBlueprintContext\":{\"contextId\":\"ctx\","
+            byte[] response = ("{\"ok\":true,\"d4Workflow\":{\"nextAction\":\"city_d4_overview\",\"instruction\":\"submit overview\"},\"cityBlueprintContext\":{\"contextId\":\"ctx\","
                     + "\"d3ReviewPackage\":{\"preview\":\"map.png\"}}}").getBytes(StandardCharsets.UTF_8);
             exchange.getRequestBody().readAllBytes();
             exchange.sendResponseHeaders(200, response.length);

@@ -98,6 +98,7 @@ class PlayerProviderAgentRunnerTest {
         context.add("d3ReviewPackage", d3);
         JsonObject output = new JsonObject(); output.addProperty("ok", true); output.add("cityBlueprintContext", context);
         output.addProperty("remainingFailureCount", 2);
+        output.add("d4Workflow", com.google.gson.JsonParser.parseString("{\"nextAction\":\"city_d4_overview\",\"instruction\":\"submit overview\"}"));
         JsonObject queue = new JsonObject(); queue.addProperty("remainingFailureCount", 3);
         List<String> calls = new ArrayList<>();
         var input = PreparedCityDesignTurn.prepare(queue, (tool, args) -> { calls.add(tool); return output; }, temporaryDirectory);
@@ -108,7 +109,8 @@ class PlayerProviderAgentRunnerTest {
         assertFalse(queue.has("preparedBlueprintContext"));
         assertFalse(PreparedCityDesignTurn.TOOLS.contains("city_design_queue_status"));
         assertFalse(PreparedCityDesignTurn.TOOLS.contains("city_prepare_d4_blueprint_context"));
-        assertTrue(PreparedCityDesignTurn.TOOLS.contains("city_submit_d4_blueprint"));
+        assertTrue(PreparedCityDesignTurn.TOOLS.contains("city_d4_overview"));
+        assertFalse(PreparedCityDesignTurn.TOOLS.contains("city_submit_d4_blueprint"));
     }
 
     @Test

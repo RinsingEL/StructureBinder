@@ -41,9 +41,19 @@ public final class CityBlueprintService {
     @FunctionalInterface
     interface GeometryCompiler {
         CityBlueprintCompilerService.CompilationResult compile(Path root, String runId, String cityId, JsonObject proposal, boolean draftOnly) throws IOException;
+        default CityBlueprintCompilerService.CompilationResult compile(Path root,String runId,String cityId,JsonObject proposal,boolean draftOnly,CityD4LayoutPolicy policy)throws IOException {
+            return compile(root,runId,cityId,proposal,draftOnly);
+        }
     }
     private final GeometryCompiler geometryCompiler;
-    public CityBlueprintService() { this((root, run, city, proposal, draftOnly) -> new CityBlueprintCompilerService().compileProposal(root, run, city, proposal, draftOnly)); }
+    public CityBlueprintService() { this(new GeometryCompiler() {
+        public CityBlueprintCompilerService.CompilationResult compile(Path root,String run,String city,JsonObject proposal,boolean draftOnly)throws IOException {
+            return compile(root,run,city,proposal,draftOnly,null);
+        }
+        public CityBlueprintCompilerService.CompilationResult compile(Path root,String run,String city,JsonObject proposal,boolean draftOnly,CityD4LayoutPolicy policy)throws IOException {
+            return new CityBlueprintCompilerService().compileProposal(root,run,city,proposal,draftOnly,policy);
+        }
+    }); }
     CityBlueprintService(GeometryCompiler geometryCompiler) { this.geometryCompiler = java.util.Objects.requireNonNull(geometryCompiler); }
 
     public JsonObject prepare(Path debugRoot, String runId, String cityId,
@@ -160,7 +170,7 @@ public final class CityBlueprintService {
         JsonObject context = contextCore.deepCopy();
         // Editable prose must not change the frozen terrain/catalog identity or reset district progress.
         context.getAsJsonObject("designGuide").addProperty("behaviorHandbook",
-                com.rinsing.geomantia.systems.provider.application.AgentPromptConfig.read("city/handbook.md"));
+                com.rinsing.geomantia.systems.provider.application.AgentPromptConfig.read("city/d4_v2/handbook.md"));
         context.addProperty("contextId", contextId);
         context.addProperty("preparedAt", Instant.now().toString());
         Path contextPath = outputDir.resolve("city_blueprint_context.json");
@@ -322,7 +332,8 @@ public final class CityBlueprintService {
                 if (request.has("baseBlueprintHash") || request.has("baseDraftHash")) throw new IllegalArgumentException("CITY_BLUEPRINT_PATCH_REQUIRED_WITH_BASE_HASH");
                 input = request.getAsJsonObject("cityBlueprint");
             }
-            return submitLocked(debugRoot, runId, cityId, contextId, input, "RELATIVE_WEIGHTS".equals(mode), draftOnly, true);
+            return submitLocked(debugRoot, runId, cityId, contextId, input, "RELATIVE_WEIGHTS".equals(mode), draftOnly, true,
+                    request.has("hostLayoutPolicy")?new CityD4LayoutPolicy(request.getAsJsonObject("hostLayoutPolicy")):null);
           } catch (IllegalArgumentException | IllegalStateException ex) {
             JsonObject response = new JsonObject();
             response.addProperty("ok", false);
@@ -350,6 +361,10 @@ public final class CityBlueprintService {
     private JsonObject submitLocked(Path debugRoot, String runId, String cityId, String contextId,
                                     JsonObject blueprintJson, boolean relativeWeights, boolean draftOnly,
                                     boolean requireReview) throws IOException {
+        return submitLocked(debugRoot,runId,cityId,contextId,blueprintJson,relativeWeights,draftOnly,requireReview,null);
+    }
+    private JsonObject submitLocked(Path debugRoot,String runId,String cityId,String contextId,JsonObject blueprintJson,
+                                    boolean relativeWeights,boolean draftOnly,boolean requireReview,CityD4LayoutPolicy editPolicy)throws IOException {
         Path runDir = requireRunDirectory(debugRoot, runId);
         Path outputDir = outputDirectory(runDir, cityId);
         Path contextPath = outputDir.resolve("city_blueprint_context.json");
@@ -439,7 +454,10 @@ public final class CityBlueprintService {
         CityBlueprintCompilerService.CompilationResult geometry;
         boolean compilerException = false;
         try {
-            geometry = geometryCompiler.compile(debugRoot, runId, cityId, canonical, draftOnly);
+            JsonObject reviewedDraft=CityBlueprintDraft.current(outputDir,contextId,cityId);
+            if(!draftOnly && requireReview && reviewedDraft!=null && canonical.equals(reviewedDraft.get("previousBlueprint")) && reviewedDraft.has("compiledResult"))
+                geometry=CityJson.GSON.fromJson(reviewedDraft.get("compiledResult"),CityBlueprintCompilerService.CompilationResult.class);
+            else geometry = geometryCompiler.compile(debugRoot, runId, cityId, canonical, draftOnly, editPolicy);
         } catch (RuntimeException exception) {
             compilerException = true;
             JsonObject evidence = new JsonObject();
@@ -451,7 +469,7 @@ public final class CityBlueprintService {
         if (!geometry.ok()) {
             // Before acceptance, a finite candidate search has not established a user-adjustable constraint.
             JsonObject feedback = CityDesignFailureFeedback.summarize(canonical, geometry.compileTrace(), geometry.reasonCode());
-            boolean programFailure = compilerException
+            boolean programFailure = editPolicy != null || compilerException
                     || "CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT".equals(geometry.reasonCode())
                         && feedback.getAsJsonArray("failures").isEmpty()
                     || CityBlueprintFailureRouting.isProgramFailure(
@@ -490,6 +508,7 @@ public final class CityBlueprintService {
         if (draftOnly) {
             JsonObject draft = CityBlueprintDraft.create(outputDir, contextId, canonical, new JsonObject(), false);
             draft.addProperty("status", "preview_valid");
+            draft.add("compiledResult",CityJson.GSON.toJsonTree(geometry));
             draft.add("compiledLayout", geometry.structureAnchorPlan().deepCopy());
             draft.add("landscapeLayout", geometry.landscapeCapacityReservationPlan().deepCopy());
             draft.add("groupExtentMap", geometry.groupExtentMap().deepCopy());

@@ -1134,7 +1134,7 @@ const originalRealmTools: ToolDefinition[] = [
   },
   {
     name: "city_post_d4_auto_compile_status",
-    description: "查询 D4 后自动编译队列状态。waiting_for_generation 表示正常完成；needs_agent 时只读取响应内 workflowResponse、failureCount、retryAllowed、nextAction 与返回 artifacts；禁止转去读取服务端源码、项目文档或原始 run 文件。retryAllowed=true 时修正完整 Blueprint 并调用 city_submit_d4_blueprint。",
+    description: "查询 D4 后自动编译队列状态。waiting_for_generation 表示正常完成；needs_agent 时只读取响应内 workflowResponse、failureCount、retryAllowed、nextAction 与返回 artifacts；禁止转去读取服务端源码、项目文档或原始 run 文件。按当前 d4Workflow.availableActions 和 revision 继续；有效初版不得重做，程序问题交宿主诊断。",
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: {
@@ -1146,7 +1146,7 @@ const originalRealmTools: ToolDefinition[] = [
   },
   {
     name: "city_post_d4_auto_compile_retry",
-    description: "仅用于 Blueprint 本身不变、程序或环境原因已经修复后的后半段重跑。若响应 retryAllowed=true 且要求修改城市设计，应改用 city_submit_d4_blueprint 提交修订版；不得用本工具绕过 Blueprint 失败预算。",
+    description: "仅用于 Blueprint 本身不变、程序或环境原因已经修复后的后半段重跑。设计阶段按当前 d4Workflow.availableActions 继续；不得重做有效初版或绕过预算。",
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: {
@@ -1446,8 +1446,11 @@ function relaxUpdateRequired(node: any): void {
   delete node.required; delete node.oneOf;
   for(const child of Object.values(node)) relaxUpdateRequired(child);
 }
+const d4Disposition = {type:"array",minItems:1,items:strictObject({districtId:nonEmptyString("功能区 ID。"),independent:{type:"boolean"},
+  reason:nonEmptyString("说明职责为何适合独立；不能因难连接而标独立。"),
+  peripheralRole:{type:"string",enum:["BORDER_OUTPOST","PERIPHERAL_RESOURCE","SUBURBAN_INDUSTRY","OTHER_PERIPHERAL"]}},["districtId","independent"])};
 export const d4StageNames = ["city_d4_overview", "city_d4_district", "city_d4_integrate", "city_d4_finalize",
-  "city_d4_district_refine", "city_d4_preview", "city_d4_assess", "city_d4_complete", "city_d4_reopen",
+  "city_d4_mark", "city_d4_preview",
   "city_d4_materials", "city_d4_example", "city_d4_blocks", "city_d4_handbook"];
 export const realmTools: ToolDefinition[] = [
   ...originalRealmTools.filter(t => t.name !== "city_submit_d4_blueprint"),
@@ -1462,8 +1465,8 @@ export const realmTools: ToolDefinition[] = [
       const outdoor: any = {}; for(const key of ["mode","envelopeProfile","foundationProfileRef"]) outdoor[key]=bp.outdoorPlan.properties[key];
       settings.outdoorPlan=strictObject(outdoor,["mode","envelopeProfile","foundationProfileRef"]);
       properties.overview = strictObject({ citySettings: strictObject(settings, ["designIntent", "styleProfile", "roadProfile", "surfaceDetailProfile", "outdoorPlan"]),
-        districts: oldProperties.designIntent.properties.groups }, ["citySettings", "districts"]); required.push("overview");
-    } else if (["city_d4_district","city_d4_district_refine","city_d4_integrate"].includes(name)) {
+        districts: oldProperties.designIntent.properties.groups, districtDisposition:d4Disposition }, ["citySettings", "districts"]); required.push("overview");
+    } else if (["city_d4_district","city_d4_integrate"].includes(name)) {
       const fragment: any = {};
       for (const key of ["groups", "arrayCompositions", "relations", "surfaceMaterials"]) fragment[key] = structuredClone(bp[key]);
       for (const key of ["foundationGroupIds", "landscapes"]) fragment[key] = structuredClone(bp.outdoorPlan.properties[key]);
@@ -1478,20 +1481,30 @@ export const realmTools: ToolDefinition[] = [
         for(const key of ["removeGroupIds","removeCompositionIds","removeLandscapeIds"]) fragment[key]={type:"array",items:nonEmptyString("明确删除的 ID。")};
       }
       const key=update?"changes":"districtDesign";properties[key]=strictObject(fragment,update?[]:["groups"]);required.push(key);
-      if(update) properties[key].description="按 ID 合并，未提供字段保留；删除用 remove*Ids。relations 与 foundationGroupIds 提供时替换本设计内清单；新增对象需完整配置。";
-      if(name==="city_d4_integrate") { properties.integrationIntent=nonEmptyString("连接空当或扩大目标区的用途与预期。"); properties.targetDistrictId=nonEmptyString("扩大已有区时填写；省略则修改区际连接阵列。");required.push("integrationIntent"); }
-    } else if(name==="city_d4_preview" || name==="city_d4_assess") {
+      if(update) properties[key].description="按 ID 合并，未提供字段保留；扩张不允许删除设计对象。relations 与 foundationGroupIds 提供时替换本设计内清单；新增对象需完整配置；已有组只允许 groupId、structureCount、densityClass、algorithmProfileRef、connectionPlan，改嵌套时可用 clearFields 清除 placementRelation。";
+      if(name==="city_d4_integrate") {
+        for(const field of ["landscapes","surfaceMaterials","removeGroupIds","removeCompositionIds","removeLandscapeIds"])delete fragment[field];
+        properties.integrationIntent=nonEmptyString("面向整体性的扩张用途与目标方向。");properties.targetDistrictId=nonEmptyString("本次扩大哪个非独立功能区。");
+        properties.protectedDistrictIds={type:"array",items:nonEmptyString("禁止挤占的其他区 ID。")};
+        properties.expansionMode={type:"string",enum:["ADJUST_ARRAY","OUTWARD_ARRAY"]};
+        properties.baseDraftHash=nonEmptyString("当前总览 hash。");properties.assessment=nonEmptyString("当前整体性与其他区功能保留情况；允许隔河。 ");
+        properties.previousExpansionComplete={type:"boolean",description:"切换扩张区前确认上一区已形成整体性。"};
+        required.push("integrationIntent","targetDistrictId","protectedDistrictIds","expansionMode","baseDraftHash","assessment");
+      }
+    } else if(name==="city_d4_mark") {
+      properties.baseDraftHash=nonEmptyString("当前总览 hash。");properties.assessment=nonEmptyString("总览关系判断。");properties.districtDisposition=d4Disposition;
+      required.push("baseDraftHash","assessment","districtDisposition");
+    } else if(name==="city_d4_preview") {
       properties.baseDraftHash=nonEmptyString("当前草稿 hash。");properties.groupIds={type:"array",minItems:1,maxItems:3,items:nonEmptyString("组 ID。")};properties.overview={type:"boolean"};required.push("baseDraftHash");
-      if(name==="city_d4_assess"){properties.assessment=nonEmptyString("已查看对应版本预览后的评价。");required.push("assessment");}
     } else if(name==="city_d4_finalize") {
-      properties.baseDraftHash=nonEmptyString("当前已验收 hash。");properties.autoAdvanceAfterD4=oldProperties.autoAdvanceAfterD4;required.push("baseDraftHash");
-    } else if(name==="city_d4_reopen") {
-      properties.districtId=nonEmptyString("返回修改的功能区 ID。");required.push("districtId");
+      properties.baseDraftHash=nonEmptyString("当前总览 hash。");properties.autoAdvanceAfterD4=oldProperties.autoAdvanceAfterD4;
+      properties.assessment=nonEmptyString("整体性与每个功能区有效主体的最终判断。");properties.functionsPreserved={type:"boolean",description:"全部功能区仍有有效主体，不能只剩无关配套。"};
+      required.push("baseDraftHash","assessment","functionsPreserved");
     } else if(["city_d4_materials","city_d4_example","city_d4_blocks"].includes(name)) {
       const key=name==="city_d4_materials"?"materialSelections":name==="city_d4_example"?"designExample":"blockMaterials";
       properties[key]=key==="designExample"?strictObject({caseId:nonEmptyString("案例 ID。"),reloadImages:{type:"boolean"}},["caseId"]):oldProperties[key];required.push(key);
     }
-    return {name,description:"D4 单职责操作；遵循 availableActions。设计、修改、看图、评价、完成分别调用。整城修饰用于连接空当或扩大功能区。",inputSchema:{type:"object",additionalProperties:false,properties,required}} as ToolDefinition;
+    return {name,description:"D4 一次初版后自动推进；总览标记、受控扩张、最终提交。AI 判断整体性，允许隔河，不要求相连或固定距离；挤占不能破坏其他区功能。",inputSchema:{type:"object",additionalProperties:false,properties,required}} as ToolDefinition;
   })
 ];
 

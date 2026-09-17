@@ -30,6 +30,113 @@ class CityBlueprintCompilerServiceTest {
     @TempDir
     Path temporary;
 
+    @Test void incrementalCompilePreservesEmptyFrozenGroupWithoutRegrowingIt() throws Exception {
+        var fixture = acceptedFixture("d4_empty_frozen", "city:empty_frozen", 8, 8, "SMALL",
+                CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid,
+                bp -> bp.getAsJsonArray("groups").get(0).getAsJsonObject().addProperty("structureCount", 9));
+        JsonObject bp = JsonParser.parseString(Files.readString(fixture.runDir()
+                .resolve("city_blueprint_" + safe(fixture.cityId())).resolve("city_blueprint.json"))).getAsJsonObject();
+        JsonObject active = bp.getAsJsonArray("groups").get(0).getAsJsonObject();
+        active.addProperty("targetAreaShare", 0.5);
+        JsonObject empty = active.deepCopy();
+        empty.addProperty("groupId", "empty_frozen");
+        empty.addProperty("priority", "STANDARD");
+        bp.getAsJsonArray("groups").add(empty);
+        JsonObject policy = JsonParser.parseString("{editedGroups:[],protectedGroups:[],districtByGroup:{empty_frozen:'pending'},expansion:false,frozenLandscapeIds:[],previousAnchors:[]}").getAsJsonObject();
+        policy.getAsJsonArray("editedGroups").add(active.get("groupId").getAsString());
+        policy.getAsJsonObject("districtByGroup").addProperty(active.get("groupId").getAsString(), "active");
+        var result = new CityBlueprintCompilerService().compileProposal(temporary, fixture.runId(),
+                fixture.cityId(), bp, true, new CityD4LayoutPolicy(policy));
+        assertTrue(result.ok(), result.message());
+        JsonArray anchors = result.structureAnchorPlan().getAsJsonArray("anchors");
+        assertFalse(anchors.isEmpty());
+        assertTrue(anchors.asList().stream().allMatch(e -> e.getAsJsonObject()
+                .get("placementGroupId").getAsString().equals(active.get("groupId").getAsString())));
+    }
+
+    @Test void incrementalCompileKeepsPriorSurvivorsAndDoesNotRegrowDisplacedBuildings() throws Exception {
+        var fixture=acceptedFixture("d4_persistent", "city:persistent",8,8,"SMALL",
+                CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid,
+                bp->bp.getAsJsonArray("groups").get(0).getAsJsonObject().addProperty("structureCount",9));
+        var compiler=new CityBlueprintCompilerService();var first=compiler.compile(temporary,fixture.runId(),fixture.cityId());
+        assertTrue(first.ok(),first.message());
+        JsonArray survivors=first.structureAnchorPlan().getAsJsonArray("anchors").deepCopy();assertTrue(survivors.size()>1);
+        String removed=survivors.remove(0).getAsJsonObject().get("anchorId").getAsString();
+        JsonObject bp=JsonParser.parseString(Files.readString(fixture.runDir().resolve("city_blueprint_"+safe(fixture.cityId())).resolve("city_blueprint.json"))).getAsJsonObject();
+        JsonObject policyJson=JsonParser.parseString("{editedGroups:[],protectedGroups:[],districtByGroup:{},expansion:true,frozenLandscapeIds:[]}").getAsJsonObject();
+        for(var g:bp.getAsJsonArray("groups"))policyJson.getAsJsonObject("districtByGroup").addProperty(g.getAsJsonObject().get("groupId").getAsString(),"saved");
+        policyJson.add("previousAnchors",survivors);policyJson.add("previousLandscapes",first.landscapeCapacityReservationPlan());
+        var next=compiler.compileProposal(temporary,fixture.runId(),fixture.cityId(),bp,true,new CityD4LayoutPolicy(policyJson));
+        assertTrue(next.ok(),next.message());JsonArray actual=next.structureAnchorPlan().getAsJsonArray("anchors");assertEquals(survivors.size(),actual.size());
+        assertFalse(actual.asList().stream().anyMatch(a->a.getAsJsonObject().get("anchorId").getAsString().equals(removed)));
+        for(int i=0;i<actual.size();i++)assertEquals(survivors.get(i).getAsJsonObject().get("anchorBlock"),actual.get(i).getAsJsonObject().get("anchorBlock"));
+
+        // FINAL must freeze this reviewed result, not recompile the original nine-building intent.
+        Path dir=fixture.runDir().resolve("city_blueprint_"+safe(fixture.cityId()));
+        String contextId=JsonParser.parseString(Files.readString(dir.resolve("city_blueprint_context.json"))).getAsJsonObject().get("contextId").getAsString();
+        JsonObject canonical=new CityBlueprintCodec().write(new CityBlueprintCodec().read(bp));
+        JsonObject draft=CityBlueprintDraft.create(dir,contextId,canonical,new JsonObject(),false);
+        draft.addProperty("status","preview_valid");draft.add("compiledResult",com.rinsing.geomantia.systems.city.infrastructure.json.CityJson.GSON.toJsonTree(next));
+        draft.add("compiledLayout",next.structureAnchorPlan());draft.add("compiledGroupPreviews",new JsonObject());
+        Path image=dir.resolve("reviewed-overview.png");Files.writeString(image,"reviewed survivors");draft.addProperty("compiledPreview",image.toString());
+        for(var g:canonical.getAsJsonArray("groups"))draft.getAsJsonObject("compiledGroupPreviews").addProperty(g.getAsJsonObject().get("groupId").getAsString(),image.toString());
+        Files.writeString(dir.resolve(CityBlueprintDraft.FILE),draft.toString());
+        JsonObject review=new JsonObject();review.add("baseDraftHash",draft.get("baseDraftHash"));review.addProperty("overview",true);
+        CityDesignReviewWorkflow.submit(dir,contextId,draft,review);review.addProperty("assessment","各区功能保留，隔河具有整体性");CityDesignReviewWorkflow.submit(dir,contextId,draft,review);
+        JsonObject request=new JsonObject();request.add("cityBlueprint",canonical);request.addProperty("submissionMode","FINAL");
+        JsonObject accepted=new CityBlueprintService().submitDesignInternal(temporary,fixture.runId(),fixture.cityId(),contextId,request);
+        assertTrue(accepted.get("ok").getAsBoolean(),accepted.toString());
+        JsonObject frozen=JsonParser.parseString(Files.readString(dir.resolve("city_blueprint_geometry_commit.json"))).getAsJsonObject();
+        assertEquals(actual,frozen.getAsJsonObject("result").getAsJsonObject("structureAnchorPlan").getAsJsonArray("anchors"));
+    }
+
+    @Test void realExpansionReplacesUnprotectedBuildingsButKeepsProtectedDistrictFixed() throws Exception {
+        var fixture=acceptedFixture("d4_displacement", "city:displacement",8,8,"SMALL",
+                CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid,
+                bp->{var g=bp.getAsJsonArray("groups").get(0).getAsJsonObject();g.addProperty("structureCount",9);g.addProperty("algorithmProfileRef","algorithm:grid");});
+        var compiler=new CityBlueprintCompilerService();var baseline=compiler.compile(temporary,fixture.runId(),fixture.cityId());assertTrue(baseline.ok(),baseline.message());
+        JsonArray original=baseline.structureAnchorPlan().getAsJsonArray("anchors");assertTrue(original.size()>1);
+        JsonObject bp=JsonParser.parseString(Files.readString(fixture.runDir().resolve("city_blueprint_"+safe(fixture.cityId())).resolve("city_blueprint.json"))).getAsJsonObject();
+        JsonObject old=bp.getAsJsonArray("groups").get(0).getAsJsonObject();String oldId=old.get("groupId").getAsString();old.addProperty("targetAreaShare",0.5);
+        JsonObject growing=old.deepCopy();growing.addProperty("groupId","growing");growing.addProperty("priority","STANDARD");bp.getAsJsonArray("groups").add(growing);
+        JsonObject spec=JsonParser.parseString("{editedGroups:['growing'],protectedGroups:[],districtByGroup:{growing:'grow'},expansion:true,frozenLandscapeIds:[]}").getAsJsonObject();
+        spec.getAsJsonObject("districtByGroup").addProperty(oldId,"market");spec.add("previousAnchors",original);spec.add("previousLandscapes",baseline.landscapeCapacityReservationPlan());
+        var open=compiler.compileProposal(temporary,fixture.runId(),fixture.cityId(),bp,true,new CityD4LayoutPolicy(spec));assertTrue(open.ok(),open.message());
+        assertFalse(open.structureAnchorPlan().getAsJsonArray("displacedBuildings").isEmpty(),open.structureAnchorPlan().toString());
+        assertTrue(open.structureAnchorPlan().getAsJsonArray("anchors").asList().stream().anyMatch(a->oldId.equals(a.getAsJsonObject().get("placementGroupId").getAsString())));
+        spec.getAsJsonArray("protectedGroups").add(oldId);
+        var protectedResult=compiler.compileProposal(temporary,fixture.runId(),fixture.cityId(),bp,true,new CityD4LayoutPolicy(spec));assertTrue(protectedResult.ok(),protectedResult.message());
+        assertTrue(protectedResult.structureAnchorPlan().getAsJsonArray("displacedBuildings").isEmpty());
+        var retained=protectedResult.structureAnchorPlan().getAsJsonArray("anchors").asList().stream().filter(a->oldId.equals(a.getAsJsonObject().get("placementGroupId").getAsString())).toList();
+        assertEquals(original.size(),retained.size());for(int i=0;i<retained.size();i++)assertEquals(original.get(i).getAsJsonObject().get("anchorBlock"),retained.get(i).getAsJsonObject().get("anchorBlock"));
+    }
+
+    @Test void outwardArrayUsesFrozenTargetEvenWhenDeclaredAfterExpansion() throws Exception {
+        var fixture=acceptedFixture("d4_outward", "city:outward",8,8,"SMALL",
+                CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid,
+                bp->bp.getAsJsonArray("groups").get(0).getAsJsonObject().addProperty("structureCount",1));
+        var compiler=new CityBlueprintCompilerService();var baseline=compiler.compile(temporary,fixture.runId(),fixture.cityId());assertTrue(baseline.ok(),baseline.message());
+        JsonObject bp=JsonParser.parseString(Files.readString(fixture.runDir().resolve("city_blueprint_"+safe(fixture.cityId())).resolve("city_blueprint.json"))).getAsJsonObject();
+        JsonObject source=bp.getAsJsonArray("groups").get(0).getAsJsonObject();String sourceId=source.get("groupId").getAsString();source.addProperty("targetAreaShare",0.34);
+        JsonObject extension=source.deepCopy();extension.addProperty("groupId","extension");extension.addProperty("priority","STANDARD");extension.addProperty("targetAreaShare",0.33);
+        JsonObject placement=new JsonObject();placement.addProperty("kind","BETWEEN_GROUPS");placement.add("patchRefs",new JsonArray());JsonArray refs=new JsonArray();refs.add(sourceId);refs.add("target");placement.add("groupRefs",refs);extension.add("placementRelation",placement);
+        JsonObject target=source.deepCopy();target.addProperty("groupId","target");target.addProperty("priority","STANDARD");target.addProperty("targetAreaShare",0.33);
+        bp.getAsJsonArray("groups").add(extension);bp.getAsJsonArray("groups").add(target);
+        JsonArray prior=baseline.structureAnchorPlan().getAsJsonArray("anchors").deepCopy();assertEquals(1,prior.size());
+        JsonObject targetAnchor=prior.get(0).getAsJsonObject().deepCopy();targetAnchor.addProperty("anchorId","target-anchor");targetAnchor.addProperty("placementGroupId","target");
+        targetAnchor.getAsJsonObject("anchorBlock").addProperty("x",targetAnchor.getAsJsonObject("anchorBlock").get("x").getAsInt()+80);
+        for(String key:List.of("collisionEnvelope","actualFootprint","plannedFootprint","maskEnvelope")) if(targetAnchor.has(key)) for(String coord:List.of("minX","maxX")) if(targetAnchor.getAsJsonObject(key).has(coord)) targetAnchor.getAsJsonObject(key).addProperty(coord,targetAnchor.getAsJsonObject(key).get(coord).getAsInt()+80);
+        prior.add(targetAnchor);
+        JsonObject spec=JsonParser.parseString("{editedGroups:['extension'],protectedGroups:['target'],districtByGroup:{extension:'owner',target:'destination'},expansion:true,expansionMode:'OUTWARD_ARRAY',frozenLandscapeIds:[]}").getAsJsonObject();
+        spec.getAsJsonObject("districtByGroup").addProperty(sourceId,"owner");spec.getAsJsonArray("protectedGroups").add(sourceId);spec.add("previousAnchors",prior);spec.add("previousLandscapes",baseline.landscapeCapacityReservationPlan());
+        var result=compiler.compileProposal(temporary,fixture.runId(),fixture.cityId(),bp,true,new CityD4LayoutPolicy(spec));assertTrue(result.ok(),result.message());
+        var anchors=result.structureAnchorPlan().getAsJsonArray("anchors");
+        JsonObject added=anchors.asList().stream().map(JsonElement::getAsJsonObject).filter(a->"extension".equals(a.get("placementGroupId").getAsString())).findFirst().orElseThrow();
+        assertTrue(added.getAsJsonObject("anchorBlock").get("x").getAsInt()>prior.get(0).getAsJsonObject().getAsJsonObject("anchorBlock").get("x").getAsInt());
+        for(var old:prior)assertTrue(anchors.asList().stream().anyMatch(a->a.getAsJsonObject().get("placementGroupId").equals(old.getAsJsonObject().get("placementGroupId"))&&a.getAsJsonObject().get("anchorBlock").equals(old.getAsJsonObject().get("anchorBlock"))));
+        assertTrue(result.structureAnchorPlan().getAsJsonArray("displacedBuildings").isEmpty());
+    }
+
     @Test
     void singleCoreDraftUsesRealCompilerButFinalStillRequiresNesting() throws Exception {
         for (String scale : List.of("city", "large_city")) {

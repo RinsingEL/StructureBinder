@@ -8,11 +8,9 @@ import java.util.regex.*;
 final class CityD4SubmissionGuidance {
     private CityD4SubmissionGuidance() { }
     static String acceptanceInstruction() {
-        return "MUST 区分编译阻断与设计诊断：passed/hardBlocks 表示本次编译是否通过，阶段看图评价等协议要求仍须完成。"
-                + "qualityFullySatisfied、allFunctionAreasFormed、allRequiredStructuresCommitted、allRequiredContentPresent、"
-                + "requiredRelationsSatisfied、structureGraphConnected、arrayVisualGeometryPassed、allStreetEntrancesConnected 是诊断指标，"
-                + "MUST NOT 要求它们全部变为 true 或把 warnings 清零。有效预览中少量建筑缺失而空间意图仍成立时，"
-                + "可保留推进；整组消失或关键空间受损时先看图，再按设计理由局部修饰。输入 requiredStructureRefs 必填不等于要求所有建筑实际落下。";
+        return "格式、参数、引用错误需修正；正常地形与碰撞逐栋跳过。本区有有效落位即自动推进，只有整区全空允许重做初版。"
+                + "qualityFullySatisfied、allFunctionAreasFormed、allRequiredContentPresent、structureGraphConnected 等均为诊断，不要求清零警告或补齐建筑。"
+                + "整城只通过调整阵列/嵌套或向外阵列形成整体性，允许隔河，不要求接触或固定距离。挤占不得清空或破坏其他区功能主体。";
     }
 
     static JsonObject describe(JsonObject state) {
@@ -37,7 +35,7 @@ final class CityD4SubmissionGuidance {
                 "foundationGroupIds 只列需要台地/铺地的本区建筑组 ID，不要求覆盖全部组，总览不填。",
                 "嵌套成员不能同时有独立 placementRelation；保留嵌套时删除该成员的 placementRelation。不要为了修参数删掉建筑组或换算法。",
                 "ATTACHED 景观：提供 owner.groupId，instanceCount=1，省略 placementDomain；多块景观用所选 profile 允许范围内的 parcelCount。",
-                "提交前核对上述参数规则；地形、碰撞和实际保留结果由提交解算反馈，再看图调整。")) rules.add(rule);
+                "提交前核对上述参数规则；地形与碰撞由程序处理；有效初版自动推进，不局部重试。")) rules.add(rule);
         result.add("beforeSubmit",rules);
         result.addProperty("acceptanceInstruction", acceptanceInstruction()); return result;
     }
@@ -70,7 +68,7 @@ final class CityD4SubmissionGuidance {
                             }
                         }
                     }
-                    if(!active) issue.addProperty("repairAction","重新打开此 districtId 修正；不要改当前区同编号的组。");
+                    if(!active) issue.addProperty("repairAction","这是已保存区的错误，保留该区并报告宿主；不要重做有效初版。");
                     break;
                 }
             } else if(path.equals("$.outdoorPlan.foundationGroupIds")) {

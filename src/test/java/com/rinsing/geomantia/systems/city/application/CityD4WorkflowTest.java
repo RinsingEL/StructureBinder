@@ -11,6 +11,7 @@ class CityD4WorkflowTest {
     @TempDir Path dir;
     private int compiled;
     private boolean retainIntegration=true;
+    private boolean empty=false;
     private JsonObject lastCity;
     private static JsonObject json(String text) { return JsonParser.parseString(text).getAsJsonObject(); }
     private JsonObject state() throws Exception { return CityD4Workflow.status(dir,"ctx"); }
@@ -33,7 +34,7 @@ class CityD4WorkflowTest {
         for(var group:city.getAsJsonArray("groups")) {
             String id=group.getAsJsonObject().get("groupId").getAsString();
             Path path=dir.resolve(id+".png"); Files.writeString(path,group.toString()); previews.addProperty(id,path.toString());
-            if(retainIntegration || !id.equals("link")) { JsonObject a=new JsonObject();a.addProperty("placementGroupId",id);a.add("design",group.deepCopy());anchors.add(a); }
+            if(!empty && (retainIntegration || !id.equals("link"))) { JsonObject a=new JsonObject();a.addProperty("placementGroupId",id);a.add("design",group.deepCopy());anchors.add(a); }
         }
         Path overview=dir.resolve("overview.png");Files.writeString(overview,city.toString());
         draft.addProperty("compiledPreview",overview.toString());draft.add("compiledGroupPreviews",previews);
@@ -47,119 +48,79 @@ class CityD4WorkflowTest {
     private void design(String id) throws Exception {
         assertTrue(call("city_d4_district",json("{districtDesign:{groups:[{groupId:'"+id+"'}]}}")).get("ok").getAsBoolean());
     }
-    private void review(String tool,String... ids) throws Exception {
-        JsonObject r=new JsonObject(); r.add("baseDraftHash",CityBlueprintDraft.current(dir,"ctx","city").get("baseDraftHash"));
-        if(ids.length==0) r.addProperty("overview",true); else {JsonArray a=new JsonArray();Arrays.stream(ids).forEach(a::add);r.add("groupIds",a);}
-        JsonObject q=r;
-        assertTrue(call("city_d4_preview",q.deepCopy()).has("requestedPreviews"));
-        r.addProperty("assessment","该空间符合意图，向外街区衔接两区，空段缩短。");
-        assertTrue(call("city_d4_assess",q).get("ok").getAsBoolean());
+    private JsonObject currentRequest() throws Exception {
+        JsonObject r=json("{assessment:'隔河两区尺度与朝向协调，具有整体性；各区功能主体保留。'}");
+        r.add("baseDraftHash",CityBlueprintDraft.current(dir,"ctx","city").get("baseDraftHash"));return r;
     }
-    private void districts() throws Exception {
-        overview(); design("a");review("city_d4_district","a"); assertTrue(call("city_d4_complete",json("{}")).get("ok").getAsBoolean());
-        design("b");review("city_d4_district","b"); assertTrue(call("city_d4_complete",json("{}")).get("ok").getAsBoolean());
+    private void districts() throws Exception { overview();design("a");design("b"); }
+    private void mark() throws Exception {
+        JsonObject r=currentRequest();r.add("districtDisposition",JsonParser.parseString("[{districtId:'civic',independent:false},{districtId:'market',independent:false}]"));
+        JsonObject response=call("city_d4_mark",r);assertTrue(response.get("ok").getAsBoolean(),response.toString());
     }
-    private JsonObject integration() { return json("{integrationIntent:'连接行政区和市场',changes:{groups:[{groupId:'link',placementRelation:{kind:'BETWEEN_GROUPS',groupRefs:['a','b']}}]}}"); }
-
-    @Test void refinementMergesNestedParametersAndRequiresExplicitDeletion() throws Exception {
-        overview();
-        call("city_d4_district",json("{districtDesign:{groups:[{groupId:'a',structureCount:3,terrainPolicy:'BALANCED',spaceComposition:{buildingShare:0.5,landscapeShare:0.3,openSpaceShare:0.2}},{groupId:'wing'}],foundationGroupIds:['a']}}"));
-        JsonObject result=call("city_d4_district_refine",json("{changes:{groups:[{groupId:'a',structureCount:9,spaceComposition:{buildingShare:0.6}}]}}"));
-        assertTrue(result.get("ok").getAsBoolean(),result.toString());
-        assertEquals(2,lastCity.getAsJsonArray("groups").size());
-        JsonObject group=lastCity.getAsJsonArray("groups").get(0).getAsJsonObject();
-        assertEquals(9,group.get("structureCount").getAsInt());
-        assertEquals("BALANCED",group.get("terrainPolicy").getAsString());
-        assertEquals(0.3,group.getAsJsonObject("spaceComposition").get("landscapeShare").getAsDouble());
-        assertTrue(result.has("requestedPreviews"));
-        assertFalse(call("city_d4_district_refine",json("{changes:{removeGroupIds:['unknown']}}")).get("ok").getAsBoolean());
-        assertTrue(call("city_d4_district_refine",json("{changes:{removeGroupIds:['wing']}}")).get("ok").getAsBoolean());
-        assertEquals(1,lastCity.getAsJsonArray("groups").size());
+    private JsonObject expansion(String district,String group) throws Exception {
+        JsonObject r=currentRequest();r.addProperty("targetDistrictId",district);r.addProperty("expansionMode","ADJUST_ARRAY");
+        r.addProperty("integrationIntent","向对岸市场扩大主体，保留河流与市场用途");r.add("protectedDistrictIds",new JsonArray());
+        r.add("changes",json("{groups:[{groupId:'"+group+"',structureCount:9}]}"));return r;
     }
-
-    @Test void integrationCanEnlargeOneExistingDistrictWithoutConnectingAnother() throws Exception {
-        districts(); review("unused");
-        JsonObject result=call("city_d4_integrate",json("{targetDistrictId:'civic',integrationIntent:'扩大行政区主体',changes:{groups:[{groupId:'a',structureCount:9}]}}"));
-        assertTrue(result.get("ok").getAsBoolean(),result.toString());
-        assertEquals(2,lastCity.getAsJsonArray("groups").size());
-        assertEquals("b",lastCity.getAsJsonArray("groups").get(1).getAsJsonObject().get("groupId").getAsString());
-        assertTrue(result.has("requestedPreviews"));
-        review("unused","a");review("unused");
-        assertTrue(call("city_d4_complete",json("{}")).get("ok").getAsBoolean());
-        assertEquals("FINAL",state().get("stage").getAsString());
+    @Test void successfulInitialAutomaticallyAdvancesWithoutReviewsAndSurvivesReload() throws Exception {
+        overview();design("a");assertEquals("market",state().getAsJsonObject("currentDistrict").get("groupId").getAsString());
+        assertFalse(call("city_d4_reopen",json("{districtId:'civic'}")).get("ok").getAsBoolean());
+        assertFalse(call("city_d4_district_refine",json("{changes:{groups:[]}}")).get("ok").getAsBoolean());
+        assertFalse(call("city_d4_overview",json("{overview:{}}")).get("ok").getAsBoolean());
+        design("b");assertEquals("INTEGRATION",state().get("stage").getAsString());assertEquals(2,compiled);
+        assertEquals("city_d4_mark",state().get("nextAction").getAsString());
     }
-
-    @Test void designToolsRejectMixedOperationsAndRemovedGroundDeclarations() throws Exception {
-        overview();
-        assertFalse(call("city_d4_district",json("{districtDesign:{groups:[{groupId:'a'}]},complete:true}")).get("ok").getAsBoolean());
-        assertFalse(call("city_d4_district",json("{districtDesign:{groups:[{groupId:'a'}],spatialGrounds:[]}}")).get("ok").getAsBoolean());
-        assertEquals(0,compiled);
-        design("a");
-        JsonObject assessment=json("{overview:true,assessment:'guess'}");assessment.add("baseDraftHash",CityBlueprintDraft.current(dir,"ctx","city").get("baseDraftHash"));
-        assertFalse(call("city_d4_preview",assessment).get("ok").getAsBoolean());
+    @Test void whollyEmptyInitialCanRetryButValidInitialCannotBeReopened() throws Exception {
+        overview();empty=true;JsonObject r=call("city_d4_district",json("{districtDesign:{groups:[{groupId:'a'}]}}"));
+        assertTrue(r.get("initialDistrictEmpty").getAsBoolean());assertEquals("civic",state().getAsJsonObject("currentDistrict").get("groupId").getAsString());
+        empty=false;design("a");assertEquals("market",state().getAsJsonObject("currentDistrict").get("groupId").getAsString());
     }
-
-    @Test void refinementCanExplicitlyClearIndependentPlacementBeforeNesting() {
-        JsonObject before=json("{groups:[{groupId:'a',structureCount:9,placementRelation:{kind:'BETWEEN_GROUPS',groupRefs:['x','y']}}]}");
-        JsonObject changed=CityD4Workflow.mergeChanges(before,json("{groups:[{groupId:'a',clearFields:['placementRelation']}] }"));
-        JsonObject group=changed.getAsJsonArray("groups").get(0).getAsJsonObject();
-        assertFalse(group.has("placementRelation"));assertFalse(group.has("clearFields"));
-        assertEquals(9,group.get("structureCount").getAsInt());
-        assertTrue(before.getAsJsonArray("groups").get(0).getAsJsonObject().has("placementRelation"));
+    @Test void initialMayContainEmptySubarraysWithoutRequiringTheirRepair() throws Exception {
+        overview();retainIntegration=false;
+        JsonObject r=call("city_d4_district",json("{districtDesign:{groups:[{groupId:'a'},{groupId:'link'}]}}"));
+        assertTrue(r.get("ok").getAsBoolean());assertEquals("market",state().getAsJsonObject("currentDistrict").get("groupId").getAsString());
+    }
+    @Test void canFinalizeCoherentInitialAcrossRiverWithoutAnyExpansionOrLocalAssessment() throws Exception {
+        districts();mark();JsonObject confirm=currentRequest();confirm.addProperty("functionsPreserved",true);
+        JsonObject r=call("city_d4_finalize",confirm);assertTrue(r.get("ok").getAsBoolean(),r.toString());
+        assertEquals("COMPLETE",state().get("stage").getAsString());assertEquals(2,compiled);
+    }
+    @Test void cannotFinalizeWithoutFunctionPreservationOrCurrentOverview() throws Exception {
+        districts();mark();JsonObject r=currentRequest();r.addProperty("functionsPreserved",false);
+        assertFalse(call("city_d4_finalize",r).get("ok").getAsBoolean());
+        r.addProperty("functionsPreserved",true);r.addProperty("baseDraftHash","stale");assertFalse(call("city_d4_finalize",r).get("ok").getAsBoolean());
+    }
+    @Test void mustKeepWorkingOnSameDistrictUntilItsCoherenceIsConfirmed() throws Exception {
+        districts();mark();assertTrue(call("city_d4_integrate",expansion("civic","a")).get("ok").getAsBoolean());
+        assertFalse(call("city_d4_integrate",expansion("market","b")).get("ok").getAsBoolean());
+        JsonObject next=expansion("market","b");next.addProperty("previousExpansionComplete",true);
+        assertTrue(call("city_d4_integrate",next).get("ok").getAsBoolean());assertEquals("market",state().get("activeExpansionDistrictId").getAsString());
+    }
+    @Test void isolatedDistrictRequiresExplicitPeripheralRoleAndCannotBeExpansionTarget() throws Exception {
+        districts();JsonObject r=currentRequest();r.add("districtDisposition",JsonParser.parseString("[{districtId:'civic',independent:false},{districtId:'market',independent:true}]"));
+        assertFalse(call("city_d4_mark",r).get("ok").getAsBoolean());
+        JsonObject m=r.getAsJsonArray("districtDisposition").get(1).getAsJsonObject();m.addProperty("peripheralRole","SUBURBAN_INDUSTRY");m.addProperty("reason","郊区工业区应与居住主体分开");
+        assertTrue(call("city_d4_mark",r).get("ok").getAsBoolean());assertFalse(call("city_d4_integrate",expansion("market","b")).get("ok").getAsBoolean());
+    }
+    @Test void rejectsUnscopedChangesBadProtectionAndRetiredActions() throws Exception {
+        districts();mark();JsonObject r=expansion("civic","a");r.getAsJsonArray("protectedDistrictIds").add("unknown");
+        assertFalse(call("city_d4_integrate",r).get("ok").getAsBoolean());
+        r=expansion("civic","a");r.getAsJsonObject("changes").add("removeGroupIds",JsonParser.parseString("['a']"));
+        assertFalse(call("city_d4_integrate",r).get("ok").getAsBoolean());
+        r=expansion("civic","a");r.getAsJsonObject("changes").getAsJsonArray("groups").get(0).getAsJsonObject().addProperty("role","other");
+        assertFalse(call("city_d4_integrate",r).get("ok").getAsBoolean());
+        assertFalse(call("city_d4_complete",json("{}")).get("ok").getAsBoolean());
+    }
+    @Test void noDistrictCanOverwriteOtherGroupIdsOrReplayStaleRevision() throws Exception {
+        overview();design("a");assertFalse(call("city_d4_district",json("{districtDesign:{groups:[{groupId:'a'}]}}")).get("ok").getAsBoolean());
+        JsonObject r=json("{d4Tool:'city_d4_district',workflowRevision:0,districtDesign:{groups:[]}}");
+        assertEquals("CITY_D4_REVISION_STALE",CityD4Workflow.submit(dir,"ctx","city",r,this::compile).get("reasonCode").getAsString());assertEquals(1,compiled);
+    }
+    @Test void nestedPartialUpdatesPreserveOmittedFieldsAndRejectDeletionOfIds() {
+        JsonObject before=json("{groups:[{groupId:'a',structureCount:5,placementRelation:{kind:'BETWEEN_GROUPS',groupRefs:['x','y']}}]}");
+        JsonObject after=CityD4Workflow.mergeChanges(before,json("{groups:[{groupId:'a',clearFields:['placementRelation']}] }"));
+        assertFalse(after.getAsJsonArray("groups").get(0).getAsJsonObject().has("placementRelation"));
+        assertEquals(5,after.getAsJsonArray("groups").get(0).getAsJsonObject().get("structureCount").getAsInt());
         assertThrows(IllegalArgumentException.class,()->CityD4Workflow.mergeChanges(before,json("{groups:[{groupId:'a',clearFields:['groupId']}]}")));
-    }
-
-    @Test void reopeningEarlierDistrictDoesNotSkipUndesignedDistricts() throws Exception {
-        overview();design("a");review("unused","a");call("city_d4_complete",json("{}"));
-        assertFalse(call("city_d4_reopen",json("{districtId:'market'}")).get("ok").getAsBoolean());
-        assertTrue(call("city_d4_reopen",json("{districtId:'civic'}")).get("ok").getAsBoolean());
-        call("city_d4_district_refine",json("{changes:{groups:[{groupId:'a',structureCount:7}]}}"));
-        review("unused","a");call("city_d4_complete",json("{}"));
-        assertEquals("DISTRICTS",state().get("stage").getAsString());
-        assertEquals("market",state().getAsJsonObject("currentDistrict").get("groupId").getAsString());
-    }
-
-    @Test void persistedFourStagesMergeDistrictsAndFinalizeOnlyReviewedIntegration() throws Exception {
-        districts(); assertEquals("INTEGRATION",state().get("stage").getAsString());
-        assertEquals(2,lastCity.getAsJsonArray("groups").size());
-        assertFalse(call("city_d4_integrate",integration()).get("ok").getAsBoolean());
-        review("city_d4_integrate");assertTrue(call("city_d4_integrate",integration()).get("ok").getAsBoolean());
-        assertEquals(3,lastCity.getAsJsonArray("groups").size());
-        assertFalse(call("city_d4_complete",json("{}")).get("ok").getAsBoolean());
-        review("city_d4_integrate","link");review("city_d4_integrate");
-        assertTrue(call("city_d4_complete",json("{}")).get("ok").getAsBoolean());
-        assertEquals("FINAL",state().get("stage").getAsString());
-        JsonObject confirm=new JsonObject();confirm.add("baseDraftHash",CityBlueprintDraft.current(dir,"ctx","city").get("baseDraftHash"));
-        assertTrue(call("city_d4_finalize",confirm).get("ok").getAsBoolean());
-        assertEquals("COMPLETE",state().get("stage").getAsString());assertEquals(3,compiled);
-    }
-    @Test void rejectsWholeCitySkippingDistrictReviewAndStaleReplay() throws Exception {
-        JsonObject old=json("{cityBlueprint:{groups:[]}}");
-        assertFalse(CityD4Workflow.submit(dir,"ctx","city",old,this::compile).get("ok").getAsBoolean());
-        overview();design("a");
-        assertFalse(call("city_d4_finalize",json("{baseDraftHash:'fake'}")).get("ok").getAsBoolean());
-        assertFalse(call("city_d4_complete",json("{}")).get("ok").getAsBoolean());
-        assertEquals("civic",state().getAsJsonObject("currentDistrict").get("groupId").getAsString());
-        JsonObject stale=json("{d4Tool:'city_d4_district',workflowRevision:0,complete:true}");
-        assertEquals("CITY_D4_REVISION_STALE",CityD4Workflow.submit(dir,"ctx","city",stale,this::compile).get("reasonCode").getAsString());
-        assertEquals(1,compiled);
-    }
-    @Test void unrelatedOrAllSkippedAdditionCannotSatisfyIntegration() throws Exception {
-        districts();review("city_d4_integrate");
-        assertFalse(call("city_d4_integrate",json("{integrationIntent:'random',changes:{groups:[{groupId:'other'}]}}")).get("ok").getAsBoolean());
-        retainIntegration=false;call("city_d4_integrate",integration());review("city_d4_integrate","link");review("city_d4_integrate");
-        assertFalse(call("city_d4_complete",json("{}")).get("ok").getAsBoolean());assertEquals("INTEGRATION",state().get("stage").getAsString());
-    }
-    @Test void reopeningPreservesOtherDistrictsAndInvalidatesFinalReadiness() throws Exception {
-        districts();
-        assertTrue(call("city_d4_reopen",json("{districtId:'civic'}")).get("ok").getAsBoolean());
-        assertEquals(2,state().getAsJsonArray("savedDistricts").size());
-        assertFalse(call("city_d4_complete",json("{}")).get("ok").getAsBoolean());
-        assertTrue(call("city_d4_district_refine",json("{changes:{removeGroupIds:['a'],groups:[{groupId:'a2'}]}}")).get("ok").getAsBoolean());assertEquals(2,lastCity.getAsJsonArray("groups").size());
-        assertEquals("b",lastCity.getAsJsonArray("groups").get(1).getAsJsonObject().get("groupId").getAsString());
-    }
-    @Test void districtsCannotOverwriteOtherDistrictGroupIds() throws Exception {
-        overview();design("a");review("city_d4_district","a");call("city_d4_complete",json("{}"));
-        assertFalse(call("city_d4_district",json("{districtDesign:{groups:[{groupId:'a'}]}}")).get("ok").getAsBoolean());assertEquals(1,compiled);
     }
 }

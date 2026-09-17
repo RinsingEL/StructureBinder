@@ -1,0 +1,9 @@
+{
+  "version": "0.21.3",
+  "tag": "v2026.9.14",
+  "commit": "345cd2b057a452236de401d3534b8502a7465e8d",
+  "sourceArchiveSha256": "de0ed9cab25a3e2d3f4e769b68e77c32c2a14a2c33f18f7e33dd1d943b221d0d",
+  "sourceFilesVerified": 3110,
+  "layout": "source checkout plus isolated site-packages",
+  "pythonNodeSource": "hermes-runtime-0.18.2-win-x64.zip"
+}

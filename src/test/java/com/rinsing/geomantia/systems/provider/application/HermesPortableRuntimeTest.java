@@ -22,7 +22,7 @@ class HermesPortableRuntimeTest {
         Path installed = runtime.ensureInstalled(temporaryDirectory, ignored -> { });
 
         assertTrue(Files.isRegularFile(installed.resolve("python/python.exe")));
-        assertTrue(Files.isRegularFile(installed.resolve("site-packages/hermes_cli/main.py")));
+        assertTrue(Files.isRegularFile(installed.resolve("hermes/hermes_cli/main.py")));
         assertTrue(Files.isRegularFile(installed.resolve("site-packages/win32/lib/pywintypes.py")));
         assertTrue(Files.isRegularFile(installed.resolve("site-packages/pywin32_system32/pywintypes312.dll")));
         assertTrue(Files.isRegularFile(installed.resolve("node/node.exe")));
@@ -45,7 +45,7 @@ class HermesPortableRuntimeTest {
         assertTrue(process.waitFor(Duration.ofSeconds(20).toMillis(), java.util.concurrent.TimeUnit.MILLISECONDS));
         String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         assertEquals(0, process.exitValue(), output);
-        assertTrue(output.contains("Hermes Agent v0.18.2"), output);
+        assertTrue(output.contains("Hermes Agent v0.21.3"), output);
 
         Path configPath = temporaryDirectory.resolve("test-config.yaml");
         Files.writeString(configPath, new HermesAgentClient().profileConfig(
@@ -72,6 +72,7 @@ class HermesPortableRuntimeTest {
         mcpImport.environment().put("PYTHONHOME", installed.resolve("python").toString());
         mcpImport.environment().put("PYTHONPATH", HermesAgentClient.pythonPath(installed));
         mcpImport.environment().put("PYTHONNOUSERSITE", "1");
+        mcpImport.environment().put("HERMES_HOME", temporaryDirectory.resolve("isolated-profile").toString());
         mcpImport.environment().put("PATH", installed.resolve("node") + File.pathSeparator);
         mcpImport.redirectErrorStream(true);
         Process mcpProcess = mcpImport.start();
@@ -79,5 +80,18 @@ class HermesPortableRuntimeTest {
         String mcpOutput = new String(mcpProcess.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         assertEquals(0, mcpProcess.exitValue(), mcpOutput);
         assertTrue(mcpOutput.contains("MCP_READY"), mcpOutput);
+
+        Path smoke = temporaryDirectory.resolve("hermes_runtime_smoke.py");
+        try (var input = getClass().getResourceAsStream("/geomantia/provider/hermes_runtime_smoke.py")) {
+            Files.copy(java.util.Objects.requireNonNull(input), smoke);
+        }
+        mcpImport.command(installed.resolve("python/python.exe").toString(), smoke.toString());
+        Process smokeProcess = mcpImport.start();
+        assertTrue(smokeProcess.waitFor(75, java.util.concurrent.TimeUnit.SECONDS));
+        String smokeOutput = new String(smokeProcess.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        assertEquals(0, smokeProcess.exitValue(), smokeOutput);
+        assertTrue(smokeOutput.contains("HERMES_AFFINITY_AND_ADAPTERS_READY"), smokeOutput);
+        assertTrue(smokeOutput.contains("HERMES_GATEWAY_HEALTH_AND_SESSION_READY"), smokeOutput);
+
     }
 }

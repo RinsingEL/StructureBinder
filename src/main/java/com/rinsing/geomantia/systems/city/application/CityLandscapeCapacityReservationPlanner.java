@@ -51,8 +51,23 @@ public final class CityLandscapeCapacityReservationPlanner {
     public Result plan(CityBlueprint blueprint, CityBlueprintReferenceCatalog catalog,
                        LandUseTerrainField terrain, JsonArray requiredAnchors, int nodeLimit,
                        Map<String, Integer> desiredParcelAreas) {
+        return plan(blueprint,catalog,terrain,requiredAnchors,nodeLimit,desiredParcelAreas,null);
+    }
+
+    Result plan(CityBlueprint blueprint, CityBlueprintReferenceCatalog catalog,
+                LandUseTerrainField terrain, JsonArray requiredAnchors, int nodeLimit,
+                Map<String,Integer> desiredParcelAreas, CityD4LayoutPolicy editPolicy) {
         List<Subject> subjects = requiredSubjects(blueprint, catalog, requiredAnchors, desiredParcelAreas, terrain.cellStepBlocks());
         Set<BlockPoint> obstacles = structureCells(requiredAnchors);
+        if(editPolicy!=null) {
+            subjects=subjects.stream().filter(s->!editPolicy.isFrozenLandscape(s.landscape().landscapeId())).toList();
+            JsonArray preserved=new JsonArray();editPolicy.addLandscapeObstacles(preserved);
+            for(var entry:preserved) {
+                JsonObject box=entry.getAsJsonObject().getAsJsonObject("blockBounds");
+                for(int x=box.get("minX").getAsInt();x<=box.get("maxX").getAsInt();x++)
+                    obstacles.add(new BlockPoint(x,box.get("minZ").getAsInt()));
+            }
+        }
         List<InstanceCandidate> selected = new ArrayList<>();
         int attempts = 0;
         for (Subject subject : subjects) {

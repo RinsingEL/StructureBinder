@@ -13,12 +13,12 @@ class AgentPromptConfigTest {
         AgentPromptConfig.ensureDefaults(config);
         for (String name : AgentPromptConfig.FILES)
             assertFalse(AgentPromptConfig.read(config, name).isBlank(), name);
-        Path file = config.resolve("geomantia/prompts/city/integration.md");
+        Path file = config.resolve("geomantia/prompts/city/d4_v2/integration.md");
         Files.writeString(file, "先看图，再做有用途的区际连接。");
         AgentPromptConfig.ensureDefaults(config);
-        assertEquals("先看图，再做有用途的区际连接。", AgentPromptConfig.read(config, "city/integration.md"));
+        assertEquals("先看图，再做有用途的区际连接。", AgentPromptConfig.read(config, "city/d4_v2/integration.md"));
         Files.writeString(file, "\uFEFF新的阶段任务");
-        assertEquals("新的阶段任务", AgentPromptConfig.read(config, "city/integration.md"));
+        assertEquals("新的阶段任务", AgentPromptConfig.read(config, "city/d4_v2/integration.md"));
     }
 
     @Test void invalidFileDoesNotSilentlyRestoreDefaults() throws Exception {

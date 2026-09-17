@@ -1,12 +1,4 @@
 # Agent 提示词
 
-修改本目录 UTF-8 文本即可，无需重新打包。首次启动补齐缺失文件，不覆盖已有文件。agent.md 与 providers/ 下的对应补充在模型请求时读取；city/ 阶段提示在返回阶段状态时读取，手册在准备城市上下文时读取。正在执行的请求不会中途更换提示词，既有会话历史也不会被改写。
-
-- agent.md：共同原则。
-- providers/：Hermes 与直连的运行方式差异。
-- city/overview.md、district.md、integration.md、finalize.md、complete.md：各阶段当前任务。
-- city/handbook.md：城市设计手册。
-
-参数 schema、算法能力说明、规模数据、状态流转与验收硬门槛仍由代码管理。修改提示词不会取消代码校验。空文件、无法读取的文件会明确报错，不静默使用旧提示词。删除某个文件后下次读取会重建默认文件。
-
-发布包内默认文本位于 src/main/resources/geomantia/prompts；游戏使用 config/geomantia/prompts。升级不覆盖个人修改，需要新默认时先备份再删除对应配置文件。
+启动时缺失文件从资源初始化，已有文件保留，每次读取生效。全局 agent.md 与 providers/ 文件继续通用。
+D4 一次初版协议使用 city/d4_v2/ 下的阶段与手册文件，避免旧 city/ 指令恢复已取消的逐区评价、完成、重开门槛。旧文件不删除或覆盖；需要定制新流程时修改 d4_v2 文件。
