@@ -653,9 +653,12 @@ export const cityBlueprintSchema = strictObject({
         purpose: { type: "string", enum: ["FUNCTIONAL", "COMPOSITIONAL", "AMBIENT"] },
         originMode: { type: "string", enum: ["ATTACHED", "FREE_STANDING"] },
         owner: strictObject({
-          groupId: nonEmptyString("主体所在 STRUCTURE groupId。"),
-          requiredStructureRef: nonEmptyString("该 Group 内唯一 required structureRef。"),
-        }, ["groupId", "requiredStructureRef"]),
+          groupId: nonEmptyString("景观所属功能组 ID；归属不依赖该组建筑成功落位。"),
+          requiredStructureRef: nonEmptyString("旧方案可选的位置参考模板，不是景观存续依赖；新方案省略。"),
+        }, ["groupId"]),
+        growth: strictObject({seed: strictObject({x: {type:"integer"}, z: {type:"integer"}}, ["x","z"]),
+          targetCellCount: positiveInteger("景观独立目标 cell 数。"), allowedLandformTypes: {type:"array",items:{type:"string"}}
+        }, ["seed","targetCellCount","allowedLandformTypes"]),
         placementDomain: { type: "string",
           enum: ["URBAN_RESIDUAL", "FOUNDATION_EDGE", "BETWEEN_GROUPS", "ALONG_WATER"] },
         instanceCount: positiveInteger("精确实例数；ATTACHED 必须为 1。"),

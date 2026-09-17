@@ -57,7 +57,7 @@ public final class CityLandscapeCapacityReservationPlanner {
     Result plan(CityBlueprint blueprint, CityBlueprintReferenceCatalog catalog,
                 LandUseTerrainField terrain, JsonArray requiredAnchors, int nodeLimit,
                 Map<String,Integer> desiredParcelAreas, CityD4LayoutPolicy editPolicy) {
-        List<Subject> subjects = requiredSubjects(blueprint, catalog, requiredAnchors, desiredParcelAreas, terrain.cellStepBlocks());
+        List<Subject> subjects = requiredSubjects(blueprint, catalog, requiredAnchors, desiredParcelAreas, terrain);
         Set<BlockPoint> obstacles = structureCells(requiredAnchors);
         if(editPolicy!=null) {
             subjects=subjects.stream().filter(s->!editPolicy.isFrozenLandscape(s.landscape().landscapeId())).toList();
@@ -85,6 +85,7 @@ public final class CityLandscapeCapacityReservationPlanner {
             if (chosen != null) { selected.add(chosen); obstacles.addAll(chosen.cells()); }
         }
         JsonObject plan = successPlan(blueprint, attempts, selected, subjects);
+        plan.addProperty("ownershipPolicy", "FUNCTION_AREA_INDEPENDENT_GEOMETRY");
         plan.addProperty("selectionPolicy", "BOUNDED_GROWTH_PARTIAL_ALLOWED");
         plan.addProperty("cellStepBlocks", terrain.cellStepBlocks());
         for (JsonElement element : plan.getAsJsonArray("instances")) {
@@ -188,10 +189,34 @@ public final class CityLandscapeCapacityReservationPlanner {
         return parcels.isEmpty()?null:new InstanceCandidate(subject,subject.instanceOrdinal(),0,0,parcels,all,0);
     }
 
+    /** Stable terrain reference when no explicit seed or usable building reference exists. */
+    public static BlockPoint independentSeed(CityBlueprint blueprint, CityBlueprint.Landscape landscape,
+                                              LandUseTerrainField terrain) {
+        List<String> patches = landscape.preferredPatchRefs();
+        if (patches.isEmpty() && landscape.owner() != null) {
+            patches = blueprint.groups().stream().filter(g -> g.groupId().equals(landscape.owner().groupId()))
+                    .findFirst().map(CityBlueprint.Group::preferredPatchRefs).orElse(List.of());
+        }
+        Set<String> preferred = Set.copyOf(patches);
+        List<LandUseTerrainField.Cell> cells = terrain.cells().stream().filter(LandUseTerrainField.Cell::sampled)
+                .filter(c -> preferred.isEmpty() || preferred.contains(c.landformPatchId())).toList();
+        if (cells.isEmpty()) return new BlockPoint((int) centerX(terrain.planningBounds()),
+                (int) centerZ(terrain.planningBounds()));
+        double x = cells.stream().mapToDouble(c -> c.blockMinX() + c.cellStepBlocks() / 2.0).average().orElseThrow();
+        double z = cells.stream().mapToDouble(c -> c.blockMinZ() + c.cellStepBlocks() / 2.0).average().orElseThrow();
+        var cell = cells.stream().min(Comparator.comparingDouble((LandUseTerrainField.Cell c) ->
+                Math.pow(c.blockMinX() + c.cellStepBlocks() / 2.0 - x, 2)
+                        + Math.pow(c.blockMinZ() + c.cellStepBlocks() / 2.0 - z, 2))
+                .thenComparingInt(LandUseTerrainField.Cell::cellZ).thenComparingInt(LandUseTerrainField.Cell::cellX)).orElseThrow();
+        return new BlockPoint(cell.blockMinX() + cell.cellStepBlocks() / 2,
+                cell.blockMinZ() + cell.cellStepBlocks() / 2);
+    }
+
     private static List<Subject> requiredSubjects(CityBlueprint blueprint,
                                                   CityBlueprintReferenceCatalog catalog,
                                                   JsonArray anchors,
-                                                  Map<String, Integer> desiredParcelAreas, int cellStep) {
+                                                  Map<String, Integer> desiredParcelAreas, LandUseTerrainField terrain) {
+        int cellStep = terrain.cellStepBlocks();
         Map<String, CityBlueprint.ExtentClass> extentByGroup = new LinkedHashMap<>();
         for (CityBlueprint.Group group : blueprint.groups()) {
             extentByGroup.put(group.groupId(), group.extentClass());
@@ -222,15 +247,15 @@ public final class CityLandscapeCapacityReservationPlanner {
                     ? groupOwners.get(landscape.owner().groupId())
                     : owners.get(landscape.owner().groupId() + '\u0000'
                     + landscape.owner().requiredStructureRef());
-            // The owning building may have been skipped as an unfit terrain member;
-            // its attached landscape is skipped with it, without failing the city.
-            if (owner == null && landscape.growth() != null) {
+            // Buildings are optional placement references, never landscape lifetime owners.
+            if (landscape.growth() != null || owner == null) {
+                BlockPoint seed = landscape.growth() != null ? landscape.growth().seed()
+                        : independentSeed(blueprint, landscape, terrain);
                 owner = new JsonObject();
-                owner.addProperty("minX", landscape.growth().seed().x()); owner.addProperty("maxX", landscape.growth().seed().x());
-                owner.addProperty("minZ", landscape.growth().seed().z()); owner.addProperty("maxZ", landscape.growth().seed().z());
+                owner.addProperty("minX", seed.x()); owner.addProperty("maxX", seed.x());
+                owner.addProperty("minZ", seed.z()); owner.addProperty("maxZ", seed.z());
                 owner.addProperty("anchorId", "");
             }
-            if (owner == null) continue;
             CityBlueprint.ExtentClass ownerExtent = extentByGroup.get(landscape.owner().groupId());
             if (ownerExtent == null) {
                 throw new IllegalArgumentException("CITY_BLUEPRINT_REQUIRED_LANDSCAPE_OWNER_INVALID:"
@@ -844,8 +869,8 @@ public final class CityLandscapeCapacityReservationPlanner {
             value.addProperty("ownerGroupId", instance.subject().landscape().owner().groupId());
             value.addProperty("ownerRequiredStructureRef",
                     instance.subject().landscape().owner().requiredStructureRef());
-            value.addProperty("ownershipScope", instance.subject().landscape().owner().groupOwned()
-                    ? "FUNCTION_AREA" : "STRUCTURE_SEEDED");
+            value.addProperty("ownershipScope", "FUNCTION_AREA");
+            value.addProperty("ownerAnchorRole", "PLACEMENT_REFERENCE_ONLY");
             value.addProperty("ownerAnchorId", text(instance.subject().owner(), "anchorId"));
             value.add("ownerFootprint", footprintJson(bounds(instance.subject().owner())));
             value.addProperty("capacityCandidateId", instanceId + "::d" + instance.direction()

@@ -22,6 +22,18 @@ import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandscapeCapacityReservationPlannerTest {
+    @Test void landscapeCanStartWithoutAnySurvivingBuildingOrExplicitSeed() {
+        var planner = new CityLandscapeCapacityReservationPlanner();
+        var first = planner.plan(blueprint(3), catalog(1, 12), terrain(new BlockBounds(0, 0, 255, 255)), new JsonArray());
+        assertTrue(first.ok());
+        assertFalse(first.plan().getAsJsonArray("instances").isEmpty());
+        var instance = first.plan().getAsJsonArray("instances").get(0).getAsJsonObject();
+        assertEquals("FUNCTION_AREA", instance.get("ownershipScope").getAsString());
+        assertEquals("", instance.get("ownerAnchorId").getAsString());
+        assertEquals(first.plan(), planner.plan(blueprint(3), catalog(1, 12),
+                terrain(new BlockBounds(0, 0, 255, 255)), new JsonArray()).plan());
+    }
+
     @Test void incrementalLandscapeKeepsFrozenParcelsAndAvoidsTheirCells() {
         var planner=new CityLandscapeCapacityReservationPlanner();var terrain=terrain(new BlockBounds(0,0,255,255));
         var bp=blueprint(3);var anchors=anchors(120,120);var baseline=planner.plan(bp,catalog(1,12),terrain,anchors);assertTrue(baseline.ok());

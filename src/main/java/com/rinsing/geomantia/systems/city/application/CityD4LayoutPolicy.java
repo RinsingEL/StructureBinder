@@ -78,7 +78,10 @@ final class CityD4LayoutPolicy {
         JsonObject plan=proposed.plan().deepCopy();JsonArray instances=new JsonArray();
         for(var e:array(plan,"instances"))if(!isFrozenLandscape(text(e.getAsJsonObject(),"landscapeId")))instances.add(e.deepCopy());
         for(var e:array(object(data,"previousLandscapes"),"instances"))if(isFrozenLandscape(text(e.getAsJsonObject(),"landscapeId")))instances.add(e.deepCopy());
-        plan.add("instances",instances);CityLandscapeCapacityReservationPlanner.refreshPlanHash(plan);
+        JsonArray warnings=new JsonArray();
+        for(var e:array(plan,"warnings"))if(!isFrozenLandscape(text(e.getAsJsonObject(),"landscapeId")))warnings.add(e.deepCopy());
+        for(var e:array(object(data,"previousLandscapes"),"warnings"))if(isFrozenLandscape(text(e.getAsJsonObject(),"landscapeId")))warnings.add(e.deepCopy());
+        plan.add("instances",instances);plan.add("warnings",warnings);CityLandscapeCapacityReservationPlanner.refreshPlanHash(plan);
         return new CityLandscapeCapacityReservationPlanner.Result(proposed.ok(),proposed.reasonCode(),plan);
     }
     boolean isFrozenLandscape(String id){return array(data,"frozenLandscapeIds").asList().stream().anyMatch(e->e.getAsString().equals(id));}

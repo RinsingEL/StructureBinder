@@ -351,3 +351,9 @@ test("D4 separates actions and supports partial district enlargement",()=>{
   assert.equal(settings.outdoorPlan.properties.landscapes,undefined);
   assert.equal(district.properties.districtDesign.properties.spatialGrounds,undefined);
 });
+
+test("landscapes expose function ownership and independent growth",()=>{
+ const item=realmTools.find(t=>t.name==="city_d4_district").inputSchema.properties.districtDesign.properties.landscapes.items;
+ assert.deepEqual(item.properties.owner.required,["groupId"]);
+ assert.deepEqual(item.properties.growth.required,["seed","targetCellCount","allowedLandformTypes"]);
+});

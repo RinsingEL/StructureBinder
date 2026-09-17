@@ -6,6 +6,13 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CityD4LayoutPolicyTest {
+    @Test void frozenEmptyLandscapeKeepsItsWarningDuringAnotherDistrictEdit(){
+        JsonObject data=json("{editedGroups:[],districtByGroup:{},protectedGroups:[],expansion:false,frozenLandscapeIds:['empty_field'],previousLandscapes:{instances:[],warnings:[{landscapeId:'empty_field',instanceOrdinal:0,reasonCode:'REQUIRED_LANDSCAPE_NO_TERRAIN_FIT_WARNING'}]}}");
+        JsonObject next=json("{instances:[],warnings:[]}");
+        var result=new CityD4LayoutPolicy(data).preserveLandscapes(new CityLandscapeCapacityReservationPlanner.Result(true,"",next));
+        assertTrue(result.plan().getAsJsonArray("instances").isEmpty());
+        assertEquals(data.getAsJsonObject("previousLandscapes").getAsJsonArray("warnings"),result.plan().getAsJsonArray("warnings"));
+    }
     private static JsonObject json(String s){return JsonParser.parseString(s).getAsJsonObject();}
     private static JsonObject anchor(String id,String group,int x){
         return json("{anchorId:'"+id+"',placementGroupId:'"+group+"',collisionEnvelope:{minX:"+x+",minZ:0,maxX:"+(x+4)+",maxZ:4}}");

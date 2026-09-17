@@ -30,6 +30,38 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityOutdoorBlueprintCompilerTest {
+    @Test void explicitSeedReservationSurvivesLaterOwnerBuildingsWithoutRebinding() {
+        CityBlueprint original = blueprint();
+        var landscape = original.outdoorPlan().landscapes().get(0);
+        var seeded = new CityBlueprint.Landscape(landscape.landscapeId(), landscape.landscapeProfileRef(),
+                landscape.purpose(), landscape.originMode(), new CityBlueprint.LandscapeOwner("farm_group", ""),
+                null, 1, 1, landscape.preferredPatchRefs(), landscape.terrainPolicy(), true,
+                landscape.fillSelection(), new CityBlueprint.LandscapeGrowth(new BlockPoint(80, 80), 8, List.of("plain")));
+        CityBlueprint blueprint = new CityBlueprint(original.schema(), original.cityId(), original.sourceD3Ref(),
+                original.catalogSnapshotRef(), original.generationSeed(), original.designIntent(), original.styleProfile(),
+                original.groups(), original.arrayCompositions(), original.relations(), original.roadProfile(),
+                original.surfaceDetailProfile(), new CityBlueprint.OutdoorPlan(original.outdoorPlan().mode(),
+                original.outdoorPlan().envelopeProfile(), original.outdoorPlan().foundationProfileRef(),
+                original.outdoorPlan().foundationGroupIds(), List.of(seeded)));
+        JsonObject beforeFill = d6Plan();
+        beforeFill.getAsJsonArray("plannedWorldgenStructures").asList().removeIf(e ->
+                e.getAsJsonObject().get("placementGroupId").getAsString().equals("farm_group"));
+        JsonObject frozen = capacity(blueprint, beforeFill);
+        assertEquals("", frozen.getAsJsonArray("instances").get(0).getAsJsonObject().get("ownerAnchorId").getAsString());
+        String unchanged = frozen.toString();
+        var compiler = new CityOutdoorBlueprintCompiler();
+        assertDoesNotThrow(() -> compiler.compile(blueprint, beforeFill, terrain(), catalog(), frozen));
+        assertDoesNotThrow(() -> compiler.compile(blueprint, d6Plan(), terrain(), catalog(), frozen));
+        assertEquals(unchanged, frozen.toString());
+        JsonObject tampered = frozen.deepCopy();
+        tampered.getAsJsonArray("instances").get(0).getAsJsonObject()
+                .addProperty("ownerGroupId", "unrelated_group");
+        CityLandscapeCapacityReservationPlanner.refreshPlanHash(tampered);
+        assertTrue(assertThrows(IllegalArgumentException.class, () ->
+                compiler.compile(blueprint, d6Plan(), terrain(), catalog(), tampered))
+                .getMessage().contains("OWNER_DRIFT"));
+    }
+
     @Test void changingLandscapeContentsKeepsFrozenFootprintAndGrowth() {
         var codec=new com.rinsing.geomantia.systems.city.application.CityBlueprintCodec();
         var original=blueprint();var json=codec.write(original);
@@ -229,7 +261,7 @@ class CityOutdoorBlueprintCompilerTest {
                 == LandUseSeedGroup.AdmissionPolicy.REQUIRED).count());
         assertEquals(0, parcels.stream().filter(group -> group.admissionPolicy()
                 == LandUseSeedGroup.AdmissionPolicy.OPTIONAL).count());
-        assertTrue(parcels.stream().allMatch(group -> group.anchorIds().equals(List.of("farm_a"))));
+        assertTrue(parcels.stream().allMatch(group -> group.anchorIds().isEmpty()));
         assertTrue(parcels.stream().allMatch(group -> group.groupId().contains("::instance_01::parcel_")));
         assertTrue(parcels.stream().allMatch(group -> group.seedPoints().size() == 1));
         assertTrue(parcels.stream().allMatch(group -> group.growthRegions().size() == 1));
@@ -450,9 +482,14 @@ class CityOutdoorBlueprintCompilerTest {
             JsonObject moved = d6.deepCopy();
             moved.getAsJsonArray("plannedWorldgenStructures").get(1).getAsJsonObject()
                     .getAsJsonObject("lockedActualFootprint").addProperty("minX", 39);
-            assertTrue(assertThrows(IllegalArgumentException.class, () -> new CityOutdoorBlueprintCompiler()
-                    .compile(blueprint(), moved, terrain(), catalog(), frozen))
-                    .getMessage().contains("OWNER_DRIFT"));
+            var result = new CityOutdoorBlueprintCompiler().compile(blueprint(), moved, terrain(), catalog(), frozen);
+            assertTrue(result.resolution().seedGroups().stream()
+                    .filter(g -> g.layerRole() == LandUseSeedGroup.LayerRole.LANDSCAPE)
+                    .allMatch(g -> g.anchorIds().isEmpty()));
+            moved.getAsJsonArray("plannedWorldgenStructures").asList().removeIf(e ->
+                    e.getAsJsonObject().get("placementGroupId").getAsString().equals("farm_group"));
+            var missing = new CityOutdoorBlueprintCompiler().compile(blueprint(), moved, terrain(), catalog(), frozen);
+            assertEquals(result.resolution().landscapeCapacityDomains(), missing.resolution().landscapeCapacityDomains());
         }
     }
 
@@ -509,13 +546,14 @@ class CityOutdoorBlueprintCompilerTest {
         assertEquals("CITY_OUTDOOR_LANDSCAPE_CAPACITY_HASH_MISMATCH", drift.getMessage());
     }
 
-    @Test
-    void requiredLandscapeNoTerrainFitRemainsWarningThroughOutdoorCompile() {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"REQUIRED_LANDSCAPE_NO_TERRAIN_FIT_WARNING", "LANDSCAPE_COVERED_BY_BUILDINGS"})
+    void requiredLandscapeNoTerrainFitRemainsWarningThroughOutdoorCompile(String reason) {
         JsonObject d6 = d6Plan();
         JsonObject capacity = capacity(blueprint(), d6);
         capacity.add("instances", new JsonArray());
         JsonObject warning = new JsonObject();
-        warning.addProperty("reasonCode", "REQUIRED_LANDSCAPE_NO_TERRAIN_FIT_WARNING");
+        warning.addProperty("reasonCode", reason);
         warning.addProperty("landscapeId", "outer_fields");
         warning.addProperty("instanceOrdinal", 0);
         warning.addProperty("message", "No terrain-gated cell was available.");
@@ -530,7 +568,7 @@ class CityOutdoorBlueprintCompilerTest {
         assertTrue(result.resolution().seedGroups().stream().noneMatch(group ->
                 group.layerRole() == LandUseSeedGroup.LayerRole.LANDSCAPE));
         assertTrue(result.resolution().warnings().contains(
-                "REQUIRED_LANDSCAPE_NO_TERRAIN_FIT_WARNING:outer_fields:0"));
+                reason + ":outer_fields:0"));
     }
 
     @Test
