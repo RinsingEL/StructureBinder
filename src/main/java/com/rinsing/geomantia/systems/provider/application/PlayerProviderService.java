@@ -35,7 +35,7 @@ public final class PlayerProviderService {
         this.tester = tester;
         this.client = client;
         this.agentRunner = new PlayerProviderAgentRunner(store, new DeepSeekToolLoopClient(),
-                new HermesAgentClient(),
+                new HarnessAgentClient(),
                 ignored -> { }, this::recordActivity);
         this.executor = Executors.newSingleThreadExecutor(runnable -> {
             Thread thread = new Thread(runnable, "Geomantia-Player-Provider");

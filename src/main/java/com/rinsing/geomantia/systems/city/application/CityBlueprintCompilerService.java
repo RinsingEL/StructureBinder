@@ -334,7 +334,7 @@ public final class CityBlueprintCompilerService {
         // the shared main-road and internal street skeletons reserve the city blocks before any fill
         // building is allowed to occupy them.
         JsonArray streetWarnings = new JsonArray();
-        JsonArray preFillStreetSkeleton = streetSkeletonBands(states, anchors, catalog, streetWarnings);
+        JsonArray preFillStreetSkeleton = streetSkeletonBands(states, anchors, catalog, streetWarnings, cityPlanningBounds);
         List<JsonObject> requiredStageAnchors = anchors.asList().stream()
                 .map(JsonElement::getAsJsonObject).toList();
         CityMainRoadPlanner.Result mainRoads;
@@ -404,7 +404,7 @@ public final class CityBlueprintCompilerService {
         dynamicAreaPlan.addProperty("policy", "AI_DESIGNED_ARRAYS_ONLY_NO_AUTOMATIC_BUILDINGS");
         dynamicAreaPlan.addProperty("automaticBuildingCount", 0);
 
-        preFillStreetSkeleton = streetSkeletonBands(states, anchors, catalog, streetWarnings);
+        preFillStreetSkeleton = streetSkeletonBands(states, anchors, catalog, streetWarnings, cityPlanningBounds);
         mainRoads = mainRoadPlanner.plan(blueprint, references, terrainField,
                 anchors.asList().stream().map(JsonElement::getAsJsonObject).toList(),
                 preFillStreetSkeleton.asList().stream().map(JsonElement::getAsJsonObject).toList(), Set.of());
@@ -1659,7 +1659,7 @@ public final class CityBlueprintCompilerService {
 
     private JsonArray streetSkeletonBands(Map<String, GroupState> states,
                                           JsonArray anchors,
-                                          CatalogIndex catalog, JsonArray warnings) {
+                                          CatalogIndex catalog, JsonArray warnings, BlockBounds designBounds) {
         JsonArray streetBands = new JsonArray();
         List<JsonObject> anchorObjects = anchors.asList().stream()
                 .map(JsonElement::getAsJsonObject).toList();
@@ -1673,7 +1673,7 @@ public final class CityBlueprintCompilerService {
                                 "LINEAR".equals(state.layoutAlgorithm())
                                         ? state.spatialDemand().formationLengthBlocks()
                                         : state.spatialDemand().formationSpanBlocks(),
-                                state.layoutFrame())
+                                state.layoutFrame(), designBounds)
                         .forEach(streetBands::add);
                 } catch (IllegalStateException failure) {
                     if (failure.getMessage() == null || !failure.getMessage().startsWith("CITY_INTERNAL_STREET_REROUTE_UNAVAILABLE:")) throw failure;

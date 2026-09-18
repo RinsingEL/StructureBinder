@@ -163,7 +163,7 @@ class PlanningBoundaryTest {
         assertEquals(source.get("authorData"), result.get("authorData"));
     }
 
-    @Test void capturedLiveContextFitsHermesWithoutLosingAnyAuthorProfile() throws Exception {
+    @Test void capturedLiveContextFitsHarnessWithoutLosingAnyAuthorProfile() throws Exception {
         String fixture = System.getenv("GEOMANTIA_PRESENTATION_FIXTURE");
         org.junit.jupiter.api.Assumptions.assumeTrue(fixture != null && !fixture.isBlank());
         JsonObject context = JsonParser.parseString(Files.readString(Path.of(fixture))).getAsJsonObject();
@@ -216,18 +216,15 @@ class PlanningBoundaryTest {
         assertTrue(control.result(3).errorCode().startsWith("PLANNING_REPEATED_REJECTION"));
     }
 
-    @Test void hermesInitialMessageContainsActualImages() throws Exception {
+    @Test void harnessInitialMessageContainsActualImages() throws Exception {
         Path image = directory.resolve("preview.png"); Files.write(image, new byte[]{1,2,3});
-        JsonArray content = HermesAgentClient.promptContent(new JsonObject(), List.of(image));
-        assertEquals("data:image/png;base64,AQID", content.get(1).getAsJsonObject().getAsJsonObject("image_url").get("url").getAsString());
+        JsonArray content = HarnessAgentClient.promptContent(new JsonObject(), List.of(image));
+        assertEquals("data:image/png;base64,AQID", content.asList().stream().map(JsonElement::getAsJsonObject)
+                .filter(p -> p.has("image_url")).findFirst().orElseThrow().get("image_url").getAsString());
     }
 
-    @Test void hermesInitialImagesRespectSessionBodyLimitAndExplainMissingEvidence() throws Exception {
-        Path preview = directory.resolve("large-preview.png"); Files.write(preview, new byte[6_000_001]);
-        JsonArray content = HermesAgentClient.promptContent(new JsonObject(), List.of(preview));
-        assertEquals(1, content.size());
-        assertTrue(content.get(0).getAsJsonObject().get("text").getAsString().contains("previewWarnings"));
-        assertTrue(content.toString().length() < 10_000_000);
+    @Test void harnessMissingImageFailsRatherThanSilentlyLosingEvidence() {
+        assertThrows(java.io.IOException.class, () -> HarnessAgentClient.promptContent(new JsonObject(), List.of(directory.resolve("missing.png"))));
     }
 
     @Test void sidecarBridgeUsesHostExecutorAndChecksCapabilityAndWhitelist() throws Exception {

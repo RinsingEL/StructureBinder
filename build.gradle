@@ -185,10 +185,21 @@ tasks.named('test', Test).configure {
 
 tasks.named('processResources', ProcessResources).configure {
     dependsOn tasks.named('bundleCountryDesignerMcp')
+    doFirst {
+        def archive = file('runtime/harness/harness-runtime-0.1.5-rc.2-win-x64.zip')
+        if (!archive.isFile()) throw new GradleException('Missing Harness runtime; see runtime/harness/README.md')
+        def manifest = new groovy.json.JsonSlurper().parse(file('runtime/harness/manifest.json'))
+        manifest.inputs.each { name, expected ->
+            def actual = java.security.MessageDigest.getInstance('SHA-256').digest(file("geomantia_harness/${name}").bytes).encodeHex().toString()
+            if (actual != expected) throw new GradleException("Stale Harness runtime (${name}); see runtime/harness/README.md")
+        }
+    }
+    inputs.files(fileTree('geomantia_harness/src'), 'geomantia_harness/build.mjs', 'geomantia_harness/package.json',
+            'geomantia_harness/package-lock.json', 'runtime/harness/manifest.json')
     from('country_designer_mcp/dist/geomantia-mcp-bundle.mjs') {
         into 'geomantia/sidecar'
     }
-    from('runtime/hermes/hermes-runtime-0.21.3-win-x64.zip') {
+    from('runtime/harness/harness-runtime-0.1.5-rc.2-win-x64.zip') {
         into 'geomantia/sidecar'
     }
     var replaceProperties = [
@@ -214,6 +225,7 @@ tasks.named('processResources', ProcessResources).configure {
 }
 
 tasks.named('jar', Jar).configure {
+    exclude '**/__pycache__/**'
     manifest {
         attributes([
                 'Specification-Title'     : mod_id,

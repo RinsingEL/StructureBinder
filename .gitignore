@@ -48,3 +48,6 @@ country_designer_mcp_log.jsonl
 
 # Local development notes, previews and playtest evidence
 /dev_docs/
+
+/geomantia_harness/node_modules/
+/geomantia_harness/dist/

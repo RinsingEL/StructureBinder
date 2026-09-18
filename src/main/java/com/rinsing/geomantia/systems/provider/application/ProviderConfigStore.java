@@ -38,7 +38,7 @@ public final class ProviderConfigStore {
                 string(json, "model", PlayerProviderConfig.DEEPSEEK_VISION_MODEL),
                 string(json, "apiProtocol", PlayerProviderConfig.RESPONSES),
                 integer(json, "timeoutSeconds", 20),
-                string(json, "agentRuntime", PlayerProviderConfig.HERMES)).validated();
+                string(json, "agentRuntime", PlayerProviderConfig.HARNESS)).validated();
     }
 
     public synchronized Credentials credentials(PlayerProviderConfig config) throws IOException {

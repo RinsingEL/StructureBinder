@@ -149,7 +149,8 @@ public final class CityD4Workflow {
             }
             object(candidate,"bodies").add(owner,body);
             JsonObject proposal=new JsonObject();proposal.add("cityBlueprint",assemble(candidate));proposal.addProperty("proportionMode","RELATIVE_WEIGHTS");proposal.addProperty("submissionMode","DRAFT");
-            proposal.add("hostLayoutPolicy",CityD4LayoutPolicy.request(state,candidate,draft,owner,integrating));
+            proposal.add("hostLayoutPolicy",CityD4LayoutPolicy.request(state,candidate,
+                    geometryBase(dir,contextId,cityId,state,draft),owner,integrating));
             JsonObject response=compiler.call(proposal);CityD4SubmissionGuidance.annotate(response,candidate,owner,integrating?"changes":"districtDesign");
             if(ok(response)&&"preview_valid".equals(text(object(response,"revisionEvidence"),"status"))) {
                 JsonObject current=CityBlueprintDraft.current(dir,contextId,cityId);
@@ -337,6 +338,21 @@ public final class CityD4Workflow {
         Files.createDirectories(dir); state.addProperty("revision",state.get("revision").getAsInt()+1);
         Path temp=Files.createTempFile(dir,"d4-workflow-",".tmp");
         try { Files.writeString(temp,state.toString()); try { Files.move(temp,dir.resolve(FILE),StandardCopyOption.ATOMIC_MOVE,StandardCopyOption.REPLACE_EXISTING); } catch(AtomicMoveNotSupportedException ex) { Files.move(temp,dir.resolve(FILE),StandardCopyOption.REPLACE_EXISTING); } } finally { Files.deleteIfExists(temp); }
+    }
+    /** Rejected proposal text is a revision base, never the geometry of the retained districts. */
+    static JsonObject geometryBase(Path dir,String contextId,String cityId,JsonObject state,JsonObject draft) throws IOException {
+        if (object(state,"bodies").size()==0 || "preview_valid".equals(text(draft,"status"))) return draft;
+        Path file=dir.resolve("city_blueprint_last_valid_preview.json");
+        if (!Files.isRegularFile(file) || !file.toRealPath().startsWith(dir.toRealPath()))
+            throw new IOException("CITY_D4_FROZEN_GEOMETRY_BASE_MISSING");
+        JsonObject valid=JsonParser.parseString(Files.readString(file)).getAsJsonObject();
+        if (!contextId.equals(text(valid,"contextId")) || !cityId.equals(text(valid,"cityId"))
+                || !"preview_valid".equals(text(valid,"status"))
+                || text(state,"activeDraftHash").isBlank()
+                || !text(state,"activeDraftHash").equals(text(valid,"baseDraftHash"))
+                || !valid.has("compiledLayout") || !valid.has("landscapeLayout"))
+            throw new IOException("CITY_D4_FROZEN_GEOMETRY_BASE_MISMATCH");
+        return valid;
     }
     private static void require(boolean condition,String message) { if(!condition) throw new IllegalArgumentException(message); }
     private static JsonObject object(JsonObject o,String k) { return o!=null && o.has(k) && o.get(k).isJsonObject()?o.getAsJsonObject(k):new JsonObject(); }

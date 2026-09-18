@@ -186,6 +186,11 @@ public final class ProviderPlanningToolGateway implements DeepSeekToolLoopClient
             text.addProperty("text", textResult.toString());
             output.add(text);
             for (JsonElement entry : images) {
+                if (entry.getAsJsonObject().has("path")) {
+                    JsonObject label = new JsonObject(); label.addProperty("type", "input_text");
+                    label.addProperty("text", "Preview: " + entry.getAsJsonObject().get("path").getAsString());
+                    output.add(label);
+                }
                 JsonObject image = new JsonObject();
                 image.addProperty("type", "input_image");
                 image.addProperty("image_url", "data:image/png;base64," + entry.getAsJsonObject().get("data").getAsString());

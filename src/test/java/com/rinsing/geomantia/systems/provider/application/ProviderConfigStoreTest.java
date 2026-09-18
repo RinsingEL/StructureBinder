@@ -24,8 +24,8 @@ class ProviderConfigStoreTest {
         assertEquals(PlayerProviderConfig.DEEPSEEK, config.providerKind());
         assertEquals(PlayerProviderConfig.DEEPSEEK_BASE_URL, config.baseUrl());
         assertEquals(PlayerProviderConfig.DEEPSEEK_VISION_MODEL, config.model());
-        assertEquals(PlayerProviderConfig.RESPONSES, config.apiProtocol());
-        assertEquals(PlayerProviderConfig.HERMES, config.agentRuntime());
+        assertEquals(PlayerProviderConfig.CHAT_COMPLETIONS, config.apiProtocol());
+        assertEquals(PlayerProviderConfig.HARNESS, config.agentRuntime());
         assertFalse(config.enabled());
     }
 
@@ -45,7 +45,24 @@ class ProviderConfigStoreTest {
         assertFalse(Files.readString(root.resolve("provider.json")).contains("secret-test-key"));
         assertTrue(Files.readString(root.resolve("provider-secret.txt")).contains("secret-test-key"));
         assertTrue(Files.readString(root.resolve("provider.json")).contains("chat_completions"));
-        assertTrue(Files.readString(root.resolve("provider.json")).contains("hermes"));
+        assertTrue(Files.readString(root.resolve("provider.json")).contains("harness"));
+    }
+
+    @Test
+    void migratesHermesRuntimeWithoutChangingCustomEndpointOrSecret() throws Exception {
+        Path root = temporaryDirectory.resolve("migrated");
+        Files.createDirectories(root);
+        Files.writeString(root.resolve("provider.json"), """
+                {"providerKind":"custom","enabled":true,"baseUrl":"https://opencode.ai/zen/go/v1",
+                 "model":"deepseek-v4.1-flash","apiProtocol":"responses","agentRuntime":"hermes"}
+                """);
+        Files.writeString(root.resolve("provider-secret.txt"), "migration-test-key");
+        ProviderConfigStore store = new ProviderConfigStore(root);
+        var config = store.load();
+        assertEquals(PlayerProviderConfig.HARNESS, config.agentRuntime());
+        assertEquals("https://opencode.ai/zen/go/v1", config.baseUrl());
+        assertEquals("deepseek-v4.1-flash", config.model());
+        assertEquals("migration-test-key", store.credentials(config).apiKey());
     }
 
     @Test

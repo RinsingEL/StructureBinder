@@ -27,7 +27,7 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
 
     private final ProviderConfigStore store;
     private final ProviderAgentClient legacyClient;
-    private final ProviderAgentClient hermesClient;
+    private final ProviderAgentClient harnessClient;
     private final Consumer<AutomationStatus> statusListener;
     private final Consumer<AgentActivityEvent> activityListener;
     private final AtomicBoolean turnRunning = new AtomicBoolean();
@@ -55,12 +55,12 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
     }
 
     PlayerProviderAgentRunner(ProviderConfigStore store, ProviderAgentClient legacyClient,
-                              ProviderAgentClient hermesClient,
+                              ProviderAgentClient harnessClient,
                               Consumer<AutomationStatus> statusListener,
                               Consumer<AgentActivityEvent> activityListener) {
         this.store = Objects.requireNonNull(store, "store");
         this.legacyClient = Objects.requireNonNull(legacyClient, "legacyClient");
-        this.hermesClient = Objects.requireNonNull(hermesClient, "hermesClient");
+        this.harnessClient = Objects.requireNonNull(harnessClient, "harnessClient");
         this.statusListener = Objects.requireNonNull(statusListener, "statusListener");
         this.activityListener = Objects.requireNonNull(activityListener, "activityListener");
     }
@@ -76,7 +76,7 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
         this.apiPort = apiPort;
         this.discovery = new ProviderPlanningDiscovery(this.debugRoot, worldSeed);
         legacyClient.start(this.serverDirectory, this.debugRoot, apiPort);
-        if (hermesClient != legacyClient) hermesClient.start(this.serverDirectory, this.debugRoot, apiPort);
+        if (harnessClient != legacyClient) harnessClient.start(this.serverDirectory, this.debugRoot, apiPort);
         this.lastCompletedIdentity = "";
         this.haltedIdentity = "";
         resetNoProgress();
@@ -150,8 +150,8 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
         try {
             ProviderPlanningToolGateway gateway = ProviderPlanningToolGateway.forStep(
                     apiPort, serverDirectory, debugRoot, run);
-            ProviderAgentClient client = PlayerProviderConfig.HERMES.equals(config.agentRuntime())
-                    ? hermesClient : legacyClient;
+            ProviderAgentClient client = PlayerProviderConfig.HARNESS.equals(config.agentRuntime())
+                    ? harnessClient : legacyClient;
             DeepSeekToolLoopClient.LoopResult result;
             PlanningTurnControl turnControl = null;
             if (hostOnly(run)) {
@@ -409,7 +409,7 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
         turnRunning.set(false);
         if (current != null) current.shutdownNow();
         legacyClient.close();
-        if (hermesClient != legacyClient) hermesClient.close();
+        if (harnessClient != legacyClient) harnessClient.close();
     }
 
     public record AutomationStatus(String state, String message, String runId, String citySeedId,

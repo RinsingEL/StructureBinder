@@ -27,7 +27,10 @@ public final class PlanningToolPresentation {
         JsonArray images = new JsonArray();
         JsonArray warnings = new JsonArray();
         Set<String> paths = new LinkedHashSet<>();
-        collectPreviews(result, paths);
+        JsonObject revision = result.has("revisionEvidence") && result.get("revisionEvidence").isJsonObject()
+                ? result.getAsJsonObject("revisionEvidence") : new JsonObject();
+        if (revision.has("compiledPreview")) collectPreviews(revision.get("compiledPreview"), paths);
+        else collectPreviews(result, paths);
         Path root = Files.exists(debugRoot) ? debugRoot.toRealPath() : debugRoot.toAbsolutePath().normalize();
         for (String value : paths) {
             if (images.size() >= 4) break;
@@ -45,6 +48,7 @@ public final class PlanningToolPresentation {
                 JsonObject image = new JsonObject();
                 image.addProperty("type", "image");
                 image.addProperty("mimeType", "image/png");
+                image.addProperty("path", path.toString());
                 image.addProperty("data", Base64.getEncoder().encodeToString(Files.readAllBytes(path)));
                 images.add(image);
             } catch (IOException | RuntimeException exception) {

@@ -23,7 +23,7 @@ public final class ProviderSettingsScreen extends Screen {
     private final Screen parent;
     private String providerKind = PlayerProviderConfig.DEEPSEEK;
     private String apiProtocol = PlayerProviderConfig.RESPONSES;
-    private String agentRuntime = PlayerProviderConfig.HERMES;
+    private String agentRuntime = PlayerProviderConfig.HARNESS;
     private boolean enabled;
     private boolean editable;
     private boolean hasApiKey;
@@ -109,8 +109,8 @@ public final class ProviderSettingsScreen extends Screen {
                     markDirty();
                 }).bounds(fieldLeft + 178, y, fieldWidth - 178, 20).build());
         runtimeButton = addRenderableWidget(Button.builder(runtimeLabel(), button -> {
-                    agentRuntime = PlayerProviderConfig.HERMES.equals(agentRuntime)
-                            ? PlayerProviderConfig.LEGACY : PlayerProviderConfig.HERMES;
+                    agentRuntime = PlayerProviderConfig.HARNESS.equals(agentRuntime)
+                            ? PlayerProviderConfig.LEGACY : PlayerProviderConfig.HARNESS;
                     button.setMessage(runtimeLabel());
                     markDirty();
                 }).bounds(fieldLeft + 80, y, 94, 20).build());

@@ -26,6 +26,15 @@ final class CityInternalStreetPlanner {
                                   int plannedStructureCount,
                                   int plannedSpanBlocks,
                                   CityBlueprintGroupLayoutPlanner.Frame frame) {
+        return planSkeleton(groupId, algorithm, parameters, requiredAnchors, centerAxisStreetEnabled,
+                plannedStructureCount, plannedSpanBlocks, frame, null);
+    }
+
+    List<JsonObject> planSkeleton(String groupId, String algorithm,
+                                  CityBlueprintGroupLayoutPlanner.Parameters parameters,
+                                  List<JsonObject> requiredAnchors, boolean centerAxisStreetEnabled,
+                                  int plannedStructureCount, int plannedSpanBlocks,
+                                  CityBlueprintGroupLayoutPlanner.Frame frame, BlockBounds designBounds) {
         List<Anchor> anchors = requiredAnchors.stream()
                 .filter(anchor -> groupId.equals(string(anchor, "placementGroupId")))
                 .map(Anchor::parse)
@@ -43,7 +52,7 @@ final class CityInternalStreetPlanner {
                     ? centerSkeleton(groupId, parameters, anchors, plannedSpanBlocks, frame) : List.of();
             default -> List.of();
         };
-        planned = CityStreetObstacleRouter.repair(planned, requiredAnchors);
+        planned = CityStreetObstacleRouter.repair(planned, requiredAnchors, designBounds);
         planned.forEach(CityInternalStreetPlanner::markReservedSkeleton);
         return List.copyOf(planned);
     }

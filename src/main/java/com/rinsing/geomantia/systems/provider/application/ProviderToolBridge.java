@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
-/** Loopback capability bridge: Hermes must call the same host-scoped executor as the embedded loop. */
+/** Loopback capability bridge: External agents must call the same host-scoped executor as the embedded loop. */
 final class ProviderToolBridge implements AutoCloseable {
     private final HttpServer server;
     private final String token = UUID.randomUUID().toString();

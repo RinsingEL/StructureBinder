@@ -5,7 +5,7 @@ import java.net.http.HttpRequest;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
-/** Host-side requests follow the same OpenCode affinity contract as Hermes. */
+/** Host-side probes and Harness requests share the OpenCode session affinity contract. */
 final class ProviderRequestHeaders {
     private ProviderRequestHeaders() { }
 

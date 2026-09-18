@@ -11,10 +11,10 @@ public record PlayerProviderConfig(String providerKind, boolean enabled, String 
     public static final String CUSTOM = "custom";
     public static final String RESPONSES = "responses";
     public static final String CHAT_COMPLETIONS = "chat_completions";
-    public static final String HERMES = "hermes";
+    public static final String HARNESS = "harness";
     public static final String LEGACY = "legacy";
     public static final String DEEPSEEK_BASE_URL = "https://api.deepseek.com";
-    public static final String DEEPSEEK_VISION_MODEL = "deepseek-v4-flash-vision-exp";
+    public static final String DEEPSEEK_VISION_MODEL = "deepseek-flash";
 
     public PlayerProviderConfig {
         providerKind = normalizeKind(providerKind);
@@ -26,23 +26,23 @@ public record PlayerProviderConfig(String providerKind, boolean enabled, String 
         if (DEEPSEEK.equals(providerKind)) {
             baseUrl = DEEPSEEK_BASE_URL;
             model = DEEPSEEK_VISION_MODEL;
-            apiProtocol = RESPONSES;
+            apiProtocol = CHAT_COMPLETIONS;
         }
     }
 
     public PlayerProviderConfig(String providerKind, boolean enabled, String baseUrl,
                                 String model, String apiProtocol, int timeoutSeconds) {
-        this(providerKind, enabled, baseUrl, model, apiProtocol, timeoutSeconds, HERMES);
+        this(providerKind, enabled, baseUrl, model, apiProtocol, timeoutSeconds, HARNESS);
     }
 
     public PlayerProviderConfig(String providerKind, boolean enabled, String baseUrl,
                                 String model, int timeoutSeconds) {
-        this(providerKind, enabled, baseUrl, model, RESPONSES, timeoutSeconds, HERMES);
+        this(providerKind, enabled, baseUrl, model, RESPONSES, timeoutSeconds, HARNESS);
     }
 
     public static PlayerProviderConfig defaults() {
         return new PlayerProviderConfig(DEEPSEEK, false, DEEPSEEK_BASE_URL,
-                DEEPSEEK_VISION_MODEL, RESPONSES, 20, HERMES);
+                DEEPSEEK_VISION_MODEL, RESPONSES, 20, HARNESS);
     }
 
     public PlayerProviderConfig validated() {
@@ -76,7 +76,7 @@ public record PlayerProviderConfig(String providerKind, boolean enabled, String 
     }
 
     private static String normalizeRuntime(String value) {
-        return LEGACY.equalsIgnoreCase(safe(value)) ? LEGACY : HERMES;
+        return LEGACY.equalsIgnoreCase(safe(value)) ? LEGACY : HARNESS;
     }
 
     private static String safe(String value) {

@@ -41,8 +41,10 @@ final class PreparedCityDesignTurn {
             // Show the actual failed layout first, followed by terrain, not three unchanged terrain views.
             if (revision.has("compiledPreview")) collectImages(revision.get("compiledPreview"), root, images);
         }
-        collectImages(context.get("patchReviewEvidence"), root, images);
-        collectImages(context.get("d3ReviewPackage"), root, images);
+        if (images.isEmpty()) {
+            collectImages(context.get("patchReviewEvidence"), root, images);
+            collectImages(context.get("d3ReviewPackage"), root, images);
+        }
         if (images.isEmpty()) throw new IOException("PLANNING_DESIGN_PREVIEW_REQUIRED");
         return new Input(state, List.copyOf(images));
     }
