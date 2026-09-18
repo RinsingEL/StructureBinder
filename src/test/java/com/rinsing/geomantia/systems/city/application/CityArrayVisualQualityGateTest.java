@@ -15,6 +15,16 @@ class CityArrayVisualQualityGateTest {
     private final CityInternalStreetPlanner streets = new CityInternalStreetPlanner();
     private final CityBlueprintGroupLayoutPlanner layout = new CityBlueprintGroupLayoutPlanner();
 
+    @Test void contiguousDiagnosticsDistinguishEdgeAndCornerContact() {
+        JsonArray anchors = new JsonArray();
+        anchors.add(anchor("field", "CONTIGUOUS", 0, 0, 3, 3, new JsonObject()));
+        anchors.add(anchor("field", "CONTIGUOUS", 9, 0, 9, 0, new JsonObject()));
+        assertTrue(gate.evaluate(anchors, new JsonArray()).passed());
+        anchors.add(anchor("field", "CONTIGUOUS", 18, 9, 18, 9, new JsonObject()));
+        var result = gate.evaluate(anchors, new JsonArray());
+        assertTrue(result.warnings().contains("field: CONTIGUOUS_DISCONNECTED_COMPONENTS:2"));
+    }
+
     @Test
     void rejectsGridAnchorMoreThanOneBlockFromItsTheoreticalPoint() {
         JsonArray anchors = new JsonArray();

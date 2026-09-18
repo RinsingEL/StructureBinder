@@ -38,7 +38,7 @@ public final class CityBlueprintCompilerService {
     private CityCandidateMemo candidateMemo;
     public static final String TRACE_SCHEMA = "city_generation_compile_trace";
     public static final String EXTENT_SCHEMA = "group_extent_map";
-    private static final int INTERNAL_MAX_ANCHORS_PER_GROUP = 256;
+    private static final int INTERNAL_MAX_ANCHORS_PER_GROUP = 1024;
 
     private final CityBlueprintCodec codec = new CityBlueprintCodec();
     private final CityBlueprintValidator validator = new CityBlueprintValidator();
@@ -318,6 +318,8 @@ public final class CityBlueprintCompilerService {
             state.freezePlannedLayout(initialPlacementOrigin(state, states));
             List<String> refs = plannedStructureRefs(group, state.minimumStructureCount(), catalog, blueprint.generationSeed());
             state.plannedRefs = refs;
+            if ("CONTIGUOUS".equals(state.layoutAlgorithm()))
+                state.contiguousOrigins = contiguousOrigins(blueprint, group, refs, catalog, templates);
             state.layoutFrame = plannedFrame(state.layoutAlgorithm(), state.layoutFrame().center(),
                     plannedTemplate(blueprint, group, refs.get(0), catalog, templates));
             for (int index = 0; index < group.requiredStructureRefs().size(); index++) {
@@ -555,6 +557,15 @@ public final class CityBlueprintCompilerService {
         }
         plan.add("groups", groupPlans);
         return plan;
+    }
+
+    private static List<BlockPoint> contiguousOrigins(CityBlueprint blueprint, CityBlueprint.Group group,
+            List<String> refs, CatalogIndex catalog, CityTemplateCatalog templates) {
+        return CityContiguousLayoutPlanner.plan(refs.stream().map(ref -> {
+            var t = plannedTemplate(blueprint, group, ref, catalog, templates);
+            boolean turn = Set.of("CLOCKWISE_90", "COUNTERCLOCKWISE_90").contains(t.allowedRotations().get(0).name());
+            return new CityContiguousLayoutPlanner.Size(turn ? t.depth() : t.width(), turn ? t.width() : t.depth());
+        }).toList(), blueprint.generationSeed() ^ group.groupId().hashCode());
     }
 
     private static int plannedStructureCount(CityBlueprint.Group group, CityScale scale, String algorithm) {
@@ -2032,6 +2043,8 @@ public final class CityBlueprintCompilerService {
             int span = demand.maximumTemplateSpanBlocks();
             List<String> memberRefs = plannedStructureRefs(group, demand.plannedStructureCount(), catalog, blueprint.generationSeed());
             var localFrame = plannedFrame(algorithm, new BlockPoint(0, 0), plannedTemplate(blueprint, group, memberRefs.get(0), catalog, templates));
+            List<BlockPoint> contiguous = "CONTIGUOUS".equals(algorithm)
+                    ? contiguousOrigins(blueprint, group, memberRefs, catalog, templates) : List.of();
             for (int i = 0; i < memberRefs.size(); i++) {
                 var proposal = groupLayoutPlanner.propose(algorithm, group.densityClass(), blueprint.generationSeed(),
                         group.groupId(), i, localFrame,
@@ -2040,7 +2053,7 @@ public final class CityBlueprintCompilerService {
                 if ("COMPACT".equals(algorithm) || "COURTYARD".equals(algorithm))
                     proposal = layoutWithLegalCardinalFrontage(blueprint, group, algorithm, i, localFrame, physical,
                             new BlockPoint(0, 0), OutwardTarget.none(), span, proposal);
-                BlockPoint point = proposal.guides().get(0);
+                BlockPoint point = contiguous.isEmpty() ? proposal.guides().get(0) : contiguous.get(i);
                 JsonObject orientation = new JsonObject();
                 if ("LINEAR".equals(algorithm) && i > 0) {
                     applyFrontage(orientation, new JsonObject(), physical, point,
@@ -2077,6 +2090,22 @@ public final class CityBlueprintCompilerService {
                 span = Math.max(span, Math.max(box.widthBlocks(), box.heightBlocks()));
             }
             List<BlockBounds> siblingBounds = new ArrayList<>(); siblingBounds.add(combined);
+            if ("CONTIGUOUS".equals(algorithm)) {
+                List<String> members = new ArrayList<>(); members.add(centerId); members.addAll(composition.memberGroupIds());
+                var points = CityContiguousLayoutPlanner.plan(members.stream().map(id -> {
+                    var b = envelopes.get(id); return new CityContiguousLayoutPlanner.Size(b.widthBlocks(), b.heightBlocks());
+                }).toList(), blueprint.generationSeed() ^ composition.compositionId().hashCode());
+                for (int i = 1; i < members.size(); i++) {
+                    String child = members.get(i); var box = envelopes.get(child); var point = points.get(i);
+                    BlockPoint shift = new BlockPoint(point.x() + envelopes.get(centerId).minX() - box.minX(),
+                            point.z() + envelopes.get(centerId).minZ() - box.minZ());
+                    childIds.add(child); parentIds.put(child, composition.compositionId());
+                    offsets.get(child).forEach((id, p) -> combinedOffsets.put(id, new BlockPoint(p.x() + shift.x(), p.z() + shift.z())));
+                    combined = union(combined, CityArrayEnvelopePlacement.move(box, shift));
+                }
+                envelopes.put(centerId, combined); offsets.put(centerId, combinedOffsets);
+                continue;
+            }
             if ("CENTER_SYMMETRIC".equals(algorithm)) {
                 int gap = groupLayoutPlanner.parameters(algorithm, center.densityClass()).targetEdgeGapBlocks()
                         + interGroupRoadReserveBlocks;
@@ -3146,6 +3175,15 @@ public final class CityBlueprintCompilerService {
                 plan.addProperty("exactCandidateOriginsOnly", true);
             }
         }
+        if ("CONTIGUOUS".equals(state.layoutAlgorithm())) {
+            BlockPoint local = state.contiguousOrigins.get(state.layoutSlotIndex());
+            BlockPoint origin = new BlockPoint(state.layoutFrame().center().x() + local.x(),
+                    state.layoutFrame().center().z() + local.z());
+            layout = new CityBlueprintGroupLayoutPlanner.Proposal(layout.slotIndex(), layout.algorithm(),
+                    layout.parameters(), 0, false, null, List.of(origin), null);
+            plan.addProperty("rotation", physicalTemplate.allowedRotations().get(0).name());
+            plan.addProperty("mirror", physicalTemplate.allowedMirrors().get(0).name());
+        }
         plan.addProperty("spacingBlocks", layout.spacingBlocks());
         JsonArray guides = layout.guidesJson();
         if (state.fixedPlannedLayout && guides.size() > 1) {
@@ -3836,6 +3874,13 @@ public final class CityBlueprintCompilerService {
             String gridReservationFailure = state.gridStreetReservationFailure(footprint, layout);
             if (!gridReservationFailure.isBlank()) return gridReservationFailure;
         }
+        if ("CONTIGUOUS".equals(state.layoutAlgorithm())) {
+            if (state.anchorCount() == 0 && state.layoutSlotIndex() != 0)
+                return "CONTIGUOUS_ROOT_UNAVAILABLE";
+            if (state.anchorCount() > 0 && state.envelopes().stream()
+                    .noneMatch(b -> CityContiguousLayoutPlanner.contact(footprint, b) > 0))
+                return "CONTIGUOUS_EDGE_CONTACT_REQUIRED";
+        }
         // Estimated district demand is a starting layout preference, never an author-owned boundary.
         if (state.anchorCount() > 0) {
             Nearest nearest = nearest(footprint, state.envelopes(), state.group().groupId());
@@ -4374,6 +4419,7 @@ public final class CityBlueprintCompilerService {
 
     private static String pattern(String algorithm) {
         return switch (algorithm) {
+            case "CONTIGUOUS" -> "contiguous";
             case "GRID" -> "grid";
             case "LINEAR" -> "patch_axis_band";
             case "COURTYARD" -> "courtyard";
@@ -4982,6 +5028,7 @@ public final class CityBlueprintCompilerService {
         private boolean fixedPlannedLayout;
         private int plannedSlot;
         private List<String> plannedRefs = List.of();
+        private List<BlockPoint> contiguousOrigins;
         private final JsonArray skippedMembers = new JsonArray();
         void freezePlannedLayout(BlockPoint origin) {
             fixedPlannedLayout = true;

@@ -30,6 +30,72 @@ class CityBlueprintCompilerServiceTest {
     @TempDir
     Path temporary;
 
+    @Test void contiguousTemplatesTouchAndDoNotCreateInternalStreets() throws Exception {
+        var fixture = acceptedFixture("contiguous", "city:contiguous", 8, 8, "SMALL",
+                CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid, bp -> {
+                    var group = bp.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    group.addProperty("algorithmProfileRef", "algorithm:contiguous");
+                    group.addProperty("structureCount", 300);
+                });
+        var result = new CityBlueprintCompilerService().compile(temporary, fixture.runId(), fixture.cityId());
+        assertTrue(result.ok(), result.message());
+        var anchors = result.structureAnchorPlan().getAsJsonArray("anchors");
+        assertEquals(300, anchors.size(), result.structureAnchorPlan().get("designReview").toString());
+        var bodies = anchors.asList().stream().map(JsonElement::getAsJsonObject)
+                .sorted(java.util.Comparator.comparingInt(a -> a.getAsJsonObject("blueprintLayout").get("slotIndex").getAsInt()))
+                .map(a -> CityStructureCandidateEnvelope.bounds(a.getAsJsonObject("plannedFootprint"))).toList();
+        for (int i = 1; i < bodies.size(); i++) {
+            var body = bodies.get(i);
+            assertTrue(bodies.subList(0, i).stream().anyMatch(b -> CityContiguousLayoutPlanner.contact(body, b) > 0), "slot=" + i + " bodies=" + bodies + "");
+            assertTrue(bodies.subList(0, i).stream().noneMatch(body::overlaps));
+        }
+        var planner = new CityInternalStreetPlanner();
+        assertTrue(planner.planSkeleton("group", "CONTIGUOUS", new CityBlueprintGroupLayoutPlanner()
+                .parameters("CONTIGUOUS", CityBlueprint.DensityClass.DENSE),
+                anchors.asList().stream().map(JsonElement::getAsJsonObject).toList(), false, 300, 100,
+                new CityBlueprintGroupLayoutPlanner().worldFrame(new BlockPoint(0, 0))).isEmpty());
+    }
+
+    @Test void contiguousParentPacksWholeChildArrays() throws Exception {
+        var fixture = acceptedFixture("contiguous_parent", "city:contiguous_parent", 8, 12, "SMALL",
+                CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid, bp -> {
+                    var group = bp.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    group.addProperty("algorithmProfileRef", "algorithm:contiguous");
+                    group.addProperty("structureCount", 8); group.addProperty("targetAreaShare", 0.5);
+                    var child = group.deepCopy(); child.addProperty("groupId", "child"); child.addProperty("priority", "STANDARD");
+                    bp.getAsJsonArray("groups").add(child);
+                    bp.add("arrayCompositions", JsonParser.parseString("[{compositionId:'terraces',algorithmProfileRef:'algorithm:contiguous',centerGroupId:'civic',memberGroupIds:['child']}]").getAsJsonArray());
+                });
+        var result = new CityBlueprintCompilerService().compile(temporary, fixture.runId(), fixture.cityId());
+        assertTrue(result.ok(), result.message());
+        assertEquals(16, result.structureAnchorPlan().getAsJsonArray("anchors").size(), result.structureAnchorPlan().get("designReview").toString());
+    }
+
+    @Test void contiguousLostRootDoesNotCreateDetachedIslands() throws Exception {
+        Consumer<JsonObject> design = bp -> {
+            var group = bp.getAsJsonArray("groups").get(0).getAsJsonObject();
+            group.addProperty("algorithmProfileRef", "algorithm:contiguous"); group.addProperty("structureCount", 24);
+        };
+        var flat = acceptedFixture("contiguous_flat", "city:contiguous_root", 8, 8, "SMALL",
+                CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid, design);
+        var first = new CityBlueprintCompilerService().compile(temporary, flat.runId(), flat.cityId());
+        assertTrue(first.ok(), first.message());
+        var point = first.structureAnchorPlan().getAsJsonArray("anchors").get(0).getAsJsonObject().getAsJsonObject("anchorBlock");
+        int cellX = Math.floorDiv(point.get("x").getAsInt(), 16), cellZ = Math.floorDiv(point.get("z").getAsInt(), 16);
+        var lake = acceptedFixture("contiguous_lake", "city:contiguous_root", 8, 8, "SMALL",
+                CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid,
+                field -> field.getAsJsonArray("cells").forEach(e -> {
+                    var cell = e.getAsJsonObject();
+                    if (cell.get("cellX").getAsInt() == cellX && cell.get("cellZ").getAsInt() == cellZ) {
+                        cell.addProperty("water", true); cell.addProperty("waterDepth", 10); cell.addProperty("landformType", "lake");
+                    }
+                }), design);
+        var second = new CityBlueprintCompilerService().compile(temporary, lake.runId(), lake.cityId());
+        assertTrue(second.ok(), second.message());
+        assertTrue(second.structureAnchorPlan().getAsJsonArray("anchors").isEmpty());
+        assertTrue(second.structureAnchorPlan().toString().contains("CONTIGUOUS_ROOT_UNAVAILABLE"));
+    }
+
     @Test void incrementalCompilePreservesEmptyFrozenGroupWithoutRegrowingIt() throws Exception {
         var fixture = acceptedFixture("d4_empty_frozen", "city:empty_frozen", 8, 8, "SMALL",
                 CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid,
@@ -2302,6 +2368,7 @@ class CityBlueprintCompilerServiceTest {
                     {"poolRef":"pool:west_locked","structureRefs":["geomantia:west_locked_house"]}
                   ],
                   "algorithmProfiles":[
+                    {"algorithmProfileRef":"algorithm:contiguous","algorithm":"CONTIGUOUS"},
                     {"algorithmProfileRef":"algorithm:compact","algorithm":"COMPACT"},
                     {"algorithmProfileRef":"algorithm:grid","algorithm":"GRID"},
                     {"algorithmProfileRef":"algorithm:street_band","algorithm":"LINEAR"},

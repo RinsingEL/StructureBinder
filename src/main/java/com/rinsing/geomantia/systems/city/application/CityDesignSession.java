@@ -109,7 +109,7 @@ final class CityDesignSession {
                     group.add("materials", selection.deepCopy()); group.add("estimate", estimate);
                     JsonArray countGuide = new JsonArray();
                     var scale = com.rinsing.geomantia.systems.city.domain.model.CityScale.fromContractName(text(context.getAsJsonObject("citySeed"), "theoreticalScale"));
-                    if (scale != null) for (String algorithm : List.of("GRID", "LINEAR", "COURTYARD", "CENTER_SYMMETRIC", "COMPACT", "ORGANIC_COMPACT")) {
+                    if (scale != null) for (String algorithm : List.of("GRID", "LINEAR", "COURTYARD", "CENTER_SYMMETRIC", "COMPACT", "ORGANIC_COMPACT", "CONTIGUOUS")) {
                         JsonObject suggestion = new JsonObject(); suggestion.addProperty("algorithm", algorithm);
                         for (var extent : com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprint.ExtentClass.values())
                             suggestion.addProperty(extent.name(), CityBlueprintCompilerService.minimumGroupStructureCount(scale, extent, algorithm));

@@ -311,7 +311,7 @@ final class ProviderPlanningToolCatalog {
                 "preferredPatchZone", enumeration("CENTER", "NORTH", "EAST", "SOUTH", "WEST"),
                 "placementRelation", placementRelationSchema(), "role", string(),
                 "priority", described(enumeration("CORE", "STANDARD", "PERIPHERAL"), "全城合并后仅一个 CORE，不是每区一个。先看 d4Workflow.submissionRules.savedCoreOwners；其他区已占用则本区使用 STANDARD/PERIPHERAL。嵌套构图中心由 centerGroupId 决定。"),
-                "structureCount", described(integer(), "Planned building count including required refs: 1..256 and >= requiredStructureRefs count. CENTER_SYMMETRIC uses an odd total. This is a design count, not a retained-count gate."),
+                "structureCount", described(integer(), "Planned building count including required refs: 1..1024 and >= requiredStructureRefs count. CONTIGUOUS template landscapes may use hundreds of repeated tiles; raise scale, not jitter or gaps. CENTER_SYMMETRIC uses an odd total. This is a design count, not a retained-count gate."),
                 "extentClass", enumeration("SMALL", "MEDIUM", "LARGE"),
                 "densityClass", enumeration("SPARSE", "BALANCED", "DENSE"),
                 "algorithmProfileRef", string(),

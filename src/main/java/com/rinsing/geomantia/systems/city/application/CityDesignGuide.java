@@ -11,13 +11,14 @@ final class CityDesignGuide {
         guide.addProperty("semanticAuthority", "pack_author_annotations_only");
         guide.add("behaviorExamples", CityDesignExamples.index());
         guide.add("surfaceMaterials",CityMaterialSupport.guide(catalog));
-        guide.addProperty("placementBoundary", "A chosen Patch locates the planned array within the preview boundary. Specify structureCount per leaf array; default uses extent and algorithm. The host freezes the array, then filters individual buildings for terrain/collisions without moving survivors or filling holes. Empty arrays remain visible in the review. No automatic buildings for area targets or connections. ADJACENCY places complete array envelopes nearby; CONNECTION only requests roads.");
+        guide.addProperty("placementBoundary", "A chosen Patch locates the planned array within the preview boundary. Specify structureCount per leaf array; default uses extent and algorithm. CONTIGUOUS freezes touching template footprints and keeps survivors connected to their seed. The host freezes the array, then filters individual buildings for terrain/collisions without moving survivors or filling holes. Empty arrays remain visible in the review. No automatic buildings for area targets or connections. ADJACENCY places complete array envelopes nearby; CONNECTION only requests roads.");
         JsonArray algorithms = new JsonArray();
         catalog.algorithmsByProfileRef().entrySet().stream().sorted(java.util.Map.Entry.comparingByKey()).forEach(entry -> {
             JsonObject algorithm = new JsonObject();
             algorithm.addProperty("algorithmProfileRef", entry.getKey());
             algorithm.addProperty("algorithm", entry.getValue());
             algorithm.addProperty("designUse", switch (entry.getValue()) {
+                case "CONTIGUOUS" -> "Edge-connected template landscapes with zero internal street gap and an irregular compact outline. Use generous structureCount (hundreds when space permits, up to 1024); repetition is desirable. Use authored landscape templates and pools that permit repetition. Scale coverage boldly, not random offsets or rotations. Terrain/collision losses are reported; inspect actual retained connectivity and seams. Natural landscapes remain available separately.";
                 case "GRID" -> "Ordered rows of buildings with internal street clearance; suitable when regular blocks serve the design.";
                 case "LINEAR" -> "Arrange buildings along a shared direction; consider a narrow terrain corridor or frontage.";
                 case "COURTYARD" -> "Arrange around shared inner space; reserve enough room for the court and surrounding buildings.";

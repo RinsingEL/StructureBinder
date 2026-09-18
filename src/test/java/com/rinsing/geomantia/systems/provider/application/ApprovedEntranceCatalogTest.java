@@ -31,6 +31,8 @@ class ApprovedEntranceCatalogTest {
         System.setProperty("geomantia.providerPlanningSourceDir", directory.toString());
         try {
             var result = new ManagedCityPlanningSources(java.nio.file.Path.of("run")).resolve();
+            assertTrue(result.blueprintReferenceCatalog().getAsJsonArray("algorithmProfiles").asList().stream()
+                    .anyMatch(e -> "CONTIGUOUS".equals(e.getAsJsonObject().get("algorithm").getAsString())));
             // This is an optional integration check against the installed development pack, not a fixed 65-template fixture.
             assertTrue(java.util.Set.of("legacy_catalog_unreviewed", "author_reviewed_sidecar")
                     .contains(result.authoringBrief().get("entranceAuthority").getAsString()));

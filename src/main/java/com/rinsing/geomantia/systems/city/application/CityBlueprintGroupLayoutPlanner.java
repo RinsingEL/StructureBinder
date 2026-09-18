@@ -70,6 +70,9 @@ final class CityBlueprintGroupLayoutPlanner {
             case SPARSE -> 7;
         };
         switch (algorithm) {
+            case "CONTIGUOUS" -> {
+                targetGap = 0; maximumGap = 0; jitter = 0; streetBandWidth = 0;
+            }
             case "GRID" -> {
                 targetGap += 2;
                 maximumGap += 4;

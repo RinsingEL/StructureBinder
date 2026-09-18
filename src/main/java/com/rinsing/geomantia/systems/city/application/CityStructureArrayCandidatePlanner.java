@@ -32,7 +32,7 @@ public final class CityStructureArrayCandidatePlanner {
             List.of("loose_cluster", "patch_axis_band", "scattered");
     private static final List<String> SUPPORTED_PATTERNS =
             List.of("loose_cluster", "patch_axis_band", "scattered", "compound_cluster",
-                    "grid", "courtyard", "l_shape", "u_shape", "organic_compact");
+                    "grid", "courtyard", "l_shape", "u_shape", "organic_compact", "contiguous");
 
     public Result plan(Path baseDirectory,
                        CityLandformReviewPackage reviewPackage,

@@ -117,7 +117,7 @@ public record CityBlueprintReferenceCatalog(
             duplicate(algorithms, ref, path);
             String algorithm = string(item, "algorithm", path + ".algorithm");
             if (!Set.of("COMPACT", "GRID", "LINEAR", "COURTYARD", "ORGANIC_COMPACT",
-                    "CENTER_SYMMETRIC").contains(algorithm)) {
+                    "CENTER_SYMMETRIC", "CONTIGUOUS").contains(algorithm)) {
                 fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
                         path + ".algorithm", "Unsupported value: " + algorithm);
             }

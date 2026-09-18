@@ -61,6 +61,7 @@ final class CityArrayVisualQualityGate {
             String algorithm = group.get(0).algorithm();
             List<JsonObject> roads = roadsByGroup.getOrDefault(groupId, List.of());
             JsonObject metrics = switch (algorithm) {
+                case "CONTIGUOUS" -> contiguous(groupId, group, warnings);
                 case "GRID" -> grid(groupId, group, roads, warnings);
                 case "COURTYARD" -> courtyard(groupId, group, roads, warnings);
                 case "LINEAR" -> linear(groupId, roads, warnings);
@@ -87,6 +88,29 @@ final class CityArrayVisualQualityGate {
         value.add("warnings", notices);
         value.add("groups", groups);
         return new Result(passed, List.copyOf(hardBlocks), List.copyOf(warnings), value);
+    }
+
+    private static JsonObject contiguous(String groupId, List<Anchor> group, List<String> warnings) {
+        Set<Integer> visited = new HashSet<>();
+        int components = 0;
+        for (int i = 0; i < group.size(); i++) {
+            if (!visited.add(i)) continue;
+            components++;
+            ArrayDeque<Integer> queue = new ArrayDeque<>(); queue.add(i);
+            while (!queue.isEmpty()) {
+                var body = group.get(queue.remove()).body();
+                for (int j = 0; j < group.size(); j++)
+                    if (!visited.contains(j) && CityContiguousLayoutPlanner.contact(body, group.get(j).body()) > 0) {
+                        visited.add(j); queue.add(j);
+                    }
+            }
+        }
+        if (components > 1) warnings.add(groupId + ": CONTIGUOUS_DISCONNECTED_COMPONENTS:" + components);
+        JsonObject metrics = new JsonObject();
+        metrics.addProperty("connectedComponents", components);
+        metrics.addProperty("retainedMemberCount", group.size());
+        metrics.addProperty("contactBasis", "TEMPLATE_XZ_FOOTPRINT_EDGE");
+        return metrics;
     }
 
     private static BlockBounds crossSectionBounds(JsonObject road, BlockBounds surface) {

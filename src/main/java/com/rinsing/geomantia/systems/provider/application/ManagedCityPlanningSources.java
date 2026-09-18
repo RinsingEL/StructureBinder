@@ -53,6 +53,13 @@ public final class ManagedCityPlanningSources {
         }
         templateSource.add("catalog", effectiveTemplates);
         JsonObject references = readObject(directory.resolve(REFERENCE_CATALOG));
+        if (references.getAsJsonArray("algorithmProfiles").asList().stream()
+                .noneMatch(e -> "CONTIGUOUS".equals(e.getAsJsonObject().get("algorithm").getAsString()))) {
+            JsonObject contiguous = new JsonObject();
+            contiguous.addProperty("algorithmProfileRef", "algorithm:contiguous");
+            contiguous.addProperty("algorithm", "CONTIGUOUS");
+            references.getAsJsonArray("algorithmProfiles").add(contiguous);
+        }
         // Validate author-owned semantics and every reference before a model sees this bundle.
         var templates = new CityTemplateCatalogLoader().load(effectiveTemplates);
         var referenceCatalog = CityBlueprintReferenceCatalog.parse(references, templates);

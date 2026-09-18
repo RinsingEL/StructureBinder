@@ -160,8 +160,8 @@ public record CityBlueprint(
         }
 
         public Group {
-            if (structureCount != null && (structureCount < requiredStructureRefs.size() || structureCount < 1 || structureCount > 256))
-                throw new IllegalArgumentException("structureCount must be an integer from max(1, requiredStructureRefs count) to 256; current=" + structureCount);
+            if (structureCount != null && (structureCount < requiredStructureRefs.size() || structureCount < 1 || structureCount > 1024))
+                throw new IllegalArgumentException("structureCount must be an integer from max(1, requiredStructureRefs count) to 1024; current=" + structureCount);
             fillPools = fillPools == null ? List.of() : List.copyOf(fillPools);
             if ((fillPoolRef == null || fillPoolRef.isBlank()) && !fillPools.isEmpty())
                 fillPoolRef = fillPools.get(0).poolRef();
