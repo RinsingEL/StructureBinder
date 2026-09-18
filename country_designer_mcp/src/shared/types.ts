@@ -22,7 +22,8 @@ export function planningResult(data: Record<string, unknown>): ToolResult {
   const result = textResult(JSON.stringify(text));
   if (Array.isArray(imageEvidence)) {
     for (const image of imageEvidence) {
-      if (image?.type === "image" && image.mimeType === "image/png" && typeof image.data === "string") {
+      if (image?.type === "image" && ["image/png", "image/jpeg", "image/webp"].includes(image.mimeType) && typeof image.data === "string") {
+        if (typeof image.path === "string") result.content.push({ type: "text", text: `Preview: ${image.path}` });
         result.content.push({ type: "image", data: image.data, mimeType: image.mimeType });
       }
     }

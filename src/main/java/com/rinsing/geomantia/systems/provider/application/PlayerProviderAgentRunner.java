@@ -33,6 +33,8 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
     private final AtomicBoolean turnRunning = new AtomicBoolean();
     private volatile ScheduledExecutorService scheduler;
     private volatile ProviderPlanningDiscovery discovery;
+    private volatile PlanningSessionService planning;
+    public PlanningSessionService planning() { return planning; }
     private volatile Path serverDirectory;
     private volatile Path debugRoot;
     private volatile int apiPort;
@@ -74,7 +76,8 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
         this.serverDirectory = serverDirectory.toAbsolutePath().normalize();
         this.debugRoot = debugRoot.toAbsolutePath().normalize();
         this.apiPort = apiPort;
-        this.discovery = new ProviderPlanningDiscovery(this.debugRoot, worldSeed);
+        this.planning = new PlanningSessionService(this.serverDirectory, this.debugRoot, apiPort, worldSeed);
+        this.discovery = planning.discovery();
         legacyClient.start(this.serverDirectory, this.debugRoot, apiPort);
         if (harnessClient != legacyClient) harnessClient.start(this.serverDirectory, this.debugRoot, apiPort);
         this.lastCompletedIdentity = "";
@@ -142,74 +145,35 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
         }
         if (run.semanticIdentity().equals(lastCompletedIdentity)
                 || run.semanticIdentity().equals(haltedIdentity)) return;
-        if (!turnRunning.compareAndSet(false, true)) return;
+        PlanningSessionService sessions = planning;
+        String token;
+        try { token = sessions.acquireEmbedded(); }
+        catch (IllegalStateException occupied) { return; }
+        if (!turnRunning.compareAndSet(false, true)) { sessions.release(token); return; }
         update(new AutomationStatus("running", "", run.runId(), run.citySeedId(), run.nextAction(),
                 Instant.now().toString()));
         activity("stage", "开始 " + run.stage().name() + formatScope(run)
                 + "，下一步 " + run.nextAction());
-        try {
-            ProviderPlanningToolGateway gateway = ProviderPlanningToolGateway.forStep(
-                    apiPort, serverDirectory, debugRoot, run);
+        try (var ownership = sessions.enter(token)) {
+            // Another executor may have advanced while this tick was acquiring ownership.
+            if (!run.semanticIdentity().equals(currentDiscovery.nextStep().semanticIdentity())) return;
+            ProviderPlanningToolGateway gateway = sessions.gateway(run, token);
             ProviderAgentClient client = PlayerProviderConfig.HARNESS.equals(config.agentRuntime())
                     ? harnessClient : legacyClient;
             DeepSeekToolLoopClient.LoopResult result;
             PlanningTurnControl turnControl = null;
             if (hostOnly(run)) {
                 // These transitions contain no design choice and must not cost a model turn.
-                var output = gateway.executeHost(run.nextAction(), hostArguments(run));
+                var output = gateway.executeHost(run.nextAction(), PlanningStepPolicy.hostArguments(run, debugRoot));
                 String failure = PlanningTurnControl.failure(PlanningTurnControl.payload(output));
                 if (!failure.isBlank()) throw new IOException(failure);
                 result = new DeepSeekToolLoopClient.LoopResult(true, "completed", "", 0, "");
             } else {
-                com.google.gson.JsonObject designState = run.state().deepCopy();
-                List<Path> designImages = run.initialImages();
-                List<String> designTools = toolsFor(run.stage());
-                JsonObject d3Evidence = null;
-                if (PreparedCityDesignTurn.applies(run)) {
-                    var prepared = PreparedCityDesignTurn.prepare(designState, gateway, debugRoot);
-                    designState = prepared.state();
-                    designImages = prepared.images();
-                    designTools = PreparedCityDesignTurn.TOOLS;
-                    activity("system", "宿主已备齐冻结城市设计资料与地形图，AI 直接设计/提交");
-                } else {
-                    if (run.stage() == ProviderPlanningDiscovery.Stage.T2 || run.stage() == ProviderPlanningDiscovery.Stage.T4) {
-                        var prepared = PreparedRealmDesignTurn.prepare(run, gateway, debugRoot);
-                        designState = prepared.state();
-                        designImages = prepared.images();
-                    } else if (run.stage() == ProviderPlanningDiscovery.Stage.CITY) {
-                        Path d3 = debugRoot.resolve(run.runId()).resolve("city_test_runs").resolve(run.citySeedId())
-                                .resolve("steps/d3/city_landform_review_package.json");
-                        JsonObject review = com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(d3)).getAsJsonObject();
-                        d3Evidence = review;
-                        designState.add("d3ReviewPackage", CityD3ReviewDecisionView.overview(review));
-                        JsonObject registry = com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(
-                                debugRoot.resolve(run.runId()).resolve("city_seed_registry.json"))).getAsJsonObject();
-                        for (var seed : registry.getAsJsonArray("citySeeds"))
-                            if (run.citySeedId().equals(seed.getAsJsonObject().get("citySeedId").getAsString()))
-                                designState.add("citySeed", seed.deepCopy());
-                        java.util.Set<Path> images = new java.util.LinkedHashSet<>();
-                        PreparedCityDesignTurn.collectImages(review, debugRoot.toRealPath(), images);
-                        if (images.isEmpty()) throw new IOException("PLANNING_DESIGN_PREVIEW_REQUIRED");
-                        designImages = List.copyOf(images);
-                        designTools = List.of(CityD3ReviewDecisionView.TOOL, "city_review_d3_site");
-                    }
-                    var sources = new ManagedCityPlanningSources(serverDirectory).resolve();
-                    designState.add("authoringBrief", sources.authoringBrief().deepCopy());
-                }
-                List<String> allowed = designTools;
-                JsonObject scopedD3Evidence = d3Evidence;
-                DeepSeekToolLoopClient.ToolExecutor scoped = (tool, arguments) -> {
-                    if (!allowed.contains(tool)) {
-                        var denied = new com.google.gson.JsonObject();
-                        denied.addProperty("ok", false);
-                        denied.addProperty("error", "PLANNING_TOOL_NOT_IN_CURRENT_DECISION_SCOPE: " + tool);
-                        return denied;
-                    }
-                    if (CityD3ReviewDecisionView.TOOL.equals(tool))
-                        return CityD3ReviewDecisionView.page(scopedD3Evidence, arguments);
-                    return PreparedRealmDesignTurn.execute(run.stage(), gateway, tool, arguments);
-                };
-                turnControl = new PlanningTurnControl(scoped, designState);
+                var prepared = PreparedPlanningTurn.prepare(run, gateway, serverDirectory, debugRoot);
+                var designState = prepared.state();
+                var designImages = prepared.images();
+                var designTools = prepared.tools();
+                turnControl = prepared.control();
                 result = client.run(config, credentials,
                         designSessionId(debugRoot, run, designState), designState, designImages, designTools, turnControl,
                         this::recordLoopActivity);
@@ -229,6 +193,7 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
             recordFailedTurn(run, "PLANNING_HOST_BLOCKED: " + (exception.getMessage() == null
                     ? "PROVIDER_HOST_STEP_FAILED" : exception.getMessage()));
         } finally {
+            sessions.release(token);
             turnRunning.set(false);
         }
     }
@@ -345,47 +310,8 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
         consecutiveNoProgress = 0;
     }
 
-    static List<String> toolsFor(ProviderPlanningDiscovery.Stage stage) {
-        return switch (stage) {
-            case W -> List.of("realm_w_refresh");
-            case T1 -> List.of("realm_t1_prepare");
-            case T2 -> List.of("patch_explorer_show_candidates", "patch_explorer_select_candidate");
-            case T3 -> List.of("realm_t3_expand");
-            case T4 -> List.of("patch_explorer_show_candidates",
-                    "realm_t4_patch_planning_select_capital", "realm_t4_patch_planning_add_city",
-                    "realm_t4_patch_planning_finalize");
-            case QUEUE_REFRESH -> List.of("city_design_queue_refresh");
-            case CITY -> java.util.stream.Stream.concat(List.of("city_design_queue_status", "city_plan_d3", "city_review_d3_site",
-                    "patch_explorer_open", "patch_explorer_show_candidates",
-                    "city_prepare_d4_blueprint_context").stream(), com.rinsing.geomantia.systems.city.application.CityD4Workflow.TOOLS.stream()).toList();
-            case WAITING, COMPLETE -> List.of();
-        };
-    }
-
-    static boolean hostOnly(ProviderPlanningDiscovery.PlanningStep step) {
-        return step.stage() == ProviderPlanningDiscovery.Stage.W || step.stage() == ProviderPlanningDiscovery.Stage.T3
-                || step.stage() == ProviderPlanningDiscovery.Stage.QUEUE_REFRESH
-                || step.stage() == ProviderPlanningDiscovery.Stage.CITY
-                && List.of("city_plan_d3", "patch_explorer_show_candidates").contains(step.nextAction());
-    }
-
-    private JsonObject hostArguments(ProviderPlanningDiscovery.PlanningStep step) throws IOException {
-        JsonObject args = new JsonObject();
-        if (!"patch_explorer_show_candidates".equals(step.nextAction())) return args;
-        for (var entry : step.state().getAsJsonArray("items")) {
-            JsonObject item = entry.getAsJsonObject();
-            if (step.citySeedId().equals(item.get("citySeedId").getAsString()))
-                args.add("sessionId", item.get("patchExplorerSessionId"));
-        }
-        if (!args.has("sessionId") || args.get("sessionId").isJsonNull()
-                || args.get("sessionId").getAsString().isBlank()) {
-            throw new IOException("CITY_D4_PATCH_REVIEW_SESSION_REQUIRED: " + step.citySeedId());
-        }
-        // D3's region-wide patch list can contain types with no cells inside the city scope.
-        // Use the same frozen candidate catalog as showCandidates, not an unscoped type union.
-        return new com.rinsing.geomantia.systems.realm_planning.PatchExplorerService(debugRoot)
-                .initialPageRequest(step.runId(), args.get("sessionId").getAsString());
-    }
+    static List<String> toolsFor(ProviderPlanningDiscovery.Stage stage) { return PlanningStepPolicy.toolsFor(stage); }
+    static boolean hostOnly(ProviderPlanningDiscovery.PlanningStep step) { return PlanningStepPolicy.hostOnly(step); }
 
     private void updateIfChanged(AutomationStatus value) {
         AutomationStatus current = status;
@@ -404,6 +330,9 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
         ScheduledExecutorService current = scheduler;
         scheduler = null;
         discovery = null;
+        PlanningSessionService previousPlanning = planning;
+        planning = null;
+        if (previousPlanning != null) previousPlanning.close();
         serverDirectory = null;
         debugRoot = null;
         turnRunning.set(false);

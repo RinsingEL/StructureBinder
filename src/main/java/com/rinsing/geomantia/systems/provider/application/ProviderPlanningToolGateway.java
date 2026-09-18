@@ -40,6 +40,9 @@ public final class ProviderPlanningToolGateway implements DeepSeekToolLoopClient
     private final String citySeedId;
     private final String realmId;
     private final String patchScopeType;
+    private String planningToken = "";
+
+    public ProviderPlanningToolGateway withPlanningToken(String token) { this.planningToken = token; return this; }
 
     public ProviderPlanningToolGateway(int apiPort, Path serverDirectory, String runId, String citySeedId) {
         this(HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build(), apiPort,
@@ -142,6 +145,7 @@ public final class ProviderPlanningToolGateway implements DeepSeekToolLoopClient
                 .timeout(("city_submit_d4_blueprint".equals(toolName) || com.rinsing.geomantia.systems.city.application.CityD4Workflow.TOOLS.contains(toolName)) ? Duration.ofMinutes(10)
                         : endpoint.longRunning() ? Duration.ofMinutes(5) : Duration.ofSeconds(45))
                 .header("Content-Type", "application/json")
+                .header("X-Geomantia-Planning-Token", planningToken)
                 .header(hostOnly ? "X-Geomantia-Host-Result" : "X-Geomantia-Agent-View", "true")
                 .POST(HttpRequest.BodyPublishers.ofString(arguments.toString()))
                 .build();

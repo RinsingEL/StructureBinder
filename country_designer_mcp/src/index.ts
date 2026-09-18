@@ -9,16 +9,21 @@ import { formatAxiosError, isTimeoutError } from "./shared/http.js";
 import { beginMcpCall, completeMcpCall } from "./shared/logging.js";
 import type { ToolDefinition, ToolHandler } from "./shared/types.js";
 import axios from "axios";
+import { lobbyInstructions, planningTools, createPlanningHandlers } from "./planning.js";
+
+const embeddedBridge = Boolean(process.env.GEOMANTIA_PROVIDER_TOOL_URL);
+const planning = embeddedBridge ? undefined : createPlanningHandlers();
 
 const server = new Server(
   { name: "geomantia-gis-debug", version: "0.1.0" },
-  { capabilities: { tools: {} } }
+  { capabilities: { tools: {} }, ...(embeddedBridge ? {} : { instructions: lobbyInstructions }) }
 );
 
-const tools: ToolDefinition[] = [...gisTools, ...realmTools];
+const tools: ToolDefinition[] = [...(embeddedBridge ? [] : planningTools), ...gisTools, ...realmTools];
 const handlers: Record<string, ToolHandler> = {
   ...gisHandlers,
   ...realmHandlers,
+  ...planning?.handlers,
 };
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -55,3 +60,5 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 const transport = new StdioServerTransport();
 await server.connect(transport);
+server.onclose = () => { void planning?.close(); };
+process.once("SIGTERM", () => { void planning?.close().finally(() => process.exit(0)); });

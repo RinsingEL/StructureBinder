@@ -59,6 +59,8 @@ public final class PlayerProviderService {
         agentRunner.start(serverDirectory, debugRoot, apiPort, worldSeed);
     }
 
+    public PlanningSessionService planning() { return agentRunner.planning(); }
+
     public void stopAutomation() {
         agentRunner.close();
     }

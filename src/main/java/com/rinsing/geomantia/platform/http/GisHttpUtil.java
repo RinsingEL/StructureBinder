@@ -90,7 +90,9 @@ final class GisHttpUtil {
             Object body = exchange.getAttribute("mcp_request_body");
             entry.add("request", tryParseJson(body == null ? "" : body.toString()));
             entry.addProperty("status", code);
-            entry.add("response", tryParseJson(response));
+            JsonElement auditResponse = tryParseJson(response);
+            if (auditResponse.isJsonObject()) auditResponse.getAsJsonObject().remove("leaseToken");
+            entry.add("response", auditResponse);
             if (exchange.getRemoteAddress() != null) {
                 entry.addProperty("remote", exchange.getRemoteAddress().toString());
             }

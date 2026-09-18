@@ -43,7 +43,7 @@ public final class ProviderPlanningDiscovery {
         this.realmCount = realmCount > 0 ? Math.max(1, Math.min(12, realmCount)) : 3;
     }
 
-    public PlanningStep nextStep() throws IOException {
+    public synchronized PlanningStep nextStep() throws IOException {
         var quantities = com.rinsing.geomantia.systems.realm_planning.RealmPopulationConfig.load(debugRoot);
         this.realmCount = realmCountOverride > 0 ? realmCountOverride : quantities.realmCount();
         WorldSurveySettingsConfig surveySettings = WorldSurveySettingsConfig.loadOrCreate(surveySettingsPath);

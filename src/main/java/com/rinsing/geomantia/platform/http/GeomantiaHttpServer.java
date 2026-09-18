@@ -63,82 +63,84 @@ public final class GeomantiaHttpServer {
         RealmPlanningHttpController createdRealmController = null;
         try {
             createdServer = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
+            PlanningSessionHttpController planningController = new PlanningSessionHttpController(minecraftServer);
+            createdServer.createContext("/planning/", planningController::handle);
             GisHttpController controller = new GisHttpController(minecraftServer);
             createdRealmController = new RealmPlanningHttpController(minecraftServer);
             RealmPlanningHttpController realmController = createdRealmController;
-            createdServer.createContext("/gis/status", controller::handleStatus);
-            createdServer.createContext("/gis/refresh", controller::handleRefresh);
-            createdServer.createContext("/gis/test_run", controller::handleTestRun);
+            createdServer.createContext("/gis/status", controller::handleStatus).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/gis/refresh", controller::handleRefresh).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/gis/test_run", controller::handleTestRun).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/gis/chunk_generation_benchmark/start",
-                    controller::handleChunkGenerationBenchmarkStart);
+                    controller::handleChunkGenerationBenchmarkStart).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/gis/chunk_generation_benchmark/status",
-                    controller::handleChunkGenerationBenchmarkStatus);
-            createdServer.createContext("/realm/status", realmController::handleStatus);
-            createdServer.createContext("/realm/w/refresh", realmController::handleWRefresh);
-            createdServer.createContext("/realm/t1/prepare", realmController::handleT1Prepare);
-            createdServer.createContext("/realm/t2/select_coordinate", realmController::handleT2SelectCoordinate);
-            createdServer.createContext("/realm/t3/expand", realmController::handleT3Expand);
-            createdServer.createContext("/realm/t4/build_registry", realmController::handleT4BuildRegistry);
-            createdServer.createContext("/realm/t4/patch_planning/create", realmController::handleT4PatchPlanningCreate);
-            createdServer.createContext("/realm/t4/patch_planning/select_capital", realmController::handleT4PatchPlanningSelectCapital);
-            createdServer.createContext("/realm/t4/patch_planning/add_city", realmController::handleT4PatchPlanningAddCity);
-            createdServer.createContext("/realm/t4/patch_planning/finalize", realmController::handleT4PatchPlanningFinalize);
-            createdServer.createContext("/realm/patch_explorer/open", realmController::handlePatchExplorerOpen);
-            createdServer.createContext("/realm/patch_explorer/show_candidates", realmController::handlePatchExplorerShowCandidates);
-            createdServer.createContext("/realm/patch_explorer/select_candidate", realmController::handlePatchExplorerSelectCandidate);
-            createdServer.createContext("/realm/acceptance/run", realmController::handleAcceptance);
-            createdServer.createContext("/realm/tag_audit", realmController::handleTagAudit);
-            createdServer.createContext("/realm/debug/command", realmController::handleDebugCommand);
-            createdServer.createContext("/realm/city/plan_d2", realmController::handleCityPlanD2);
+                    controller::handleChunkGenerationBenchmarkStatus).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/status", realmController::handleStatus).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/w/refresh", realmController::handleWRefresh).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/t1/prepare", realmController::handleT1Prepare).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/t2/select_coordinate", realmController::handleT2SelectCoordinate).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/t3/expand", realmController::handleT3Expand).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/t4/build_registry", realmController::handleT4BuildRegistry).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/t4/patch_planning/create", realmController::handleT4PatchPlanningCreate).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/t4/patch_planning/select_capital", realmController::handleT4PatchPlanningSelectCapital).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/t4/patch_planning/add_city", realmController::handleT4PatchPlanningAddCity).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/t4/patch_planning/finalize", realmController::handleT4PatchPlanningFinalize).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/patch_explorer/open", realmController::handlePatchExplorerOpen).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/patch_explorer/show_candidates", realmController::handlePatchExplorerShowCandidates).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/patch_explorer/select_candidate", realmController::handlePatchExplorerSelectCandidate).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/acceptance/run", realmController::handleAcceptance).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/tag_audit", realmController::handleTagAudit).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/debug/command", realmController::handleDebugCommand).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/plan_d2", realmController::handleCityPlanD2).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/realm/city/design_queue/refresh",
-                    realmController::handleCityDesignQueueRefresh);
+                    realmController::handleCityDesignQueueRefresh).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/realm/city/design_queue/status",
-                    realmController::handleCityDesignQueueStatus);
-            createdServer.createContext("/realm/city/plan_d3", realmController::handleCityPlanD3);
-            createdServer.createContext("/realm/city/review_d3_site", realmController::handleCityReviewD3Site);
+                    realmController::handleCityDesignQueueStatus).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/plan_d3", realmController::handleCityPlanD3).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/review_d3_site", realmController::handleCityReviewD3Site).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/realm/city/prepare_d4_blueprint_context",
-                    realmController::handleCityPrepareD4BlueprintContext);
+                    realmController::handleCityPrepareD4BlueprintContext).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/realm/city/submit_d4_blueprint",
-                    realmController::handleCitySubmitD4Blueprint);
+                    realmController::handleCitySubmitD4Blueprint).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/realm/city/post_d4_auto_compile_status",
-                    realmController::handleCityPostD4AutoCompileStatus);
+                    realmController::handleCityPostD4AutoCompileStatus).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/realm/city/post_d4_auto_compile_retry",
-                    realmController::handleCityPostD4AutoCompileRetry);
+                    realmController::handleCityPostD4AutoCompileRetry).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/realm/city/compile_d4_blueprint",
-                    realmController::handleCityCompileD4Blueprint);
-            createdServer.createContext("/realm/city/plan_d4_candidates", realmController::handleCityPlanD4Candidates);
-            createdServer.createContext("/realm/city/plan_d4_array_candidates", realmController::handleCityPlanD4ArrayCandidates);
-            createdServer.createContext("/realm/city/create_d4_design_loop_state", realmController::handleCityCreateD4DesignLoopState);
-            createdServer.createContext("/realm/city/read_d4_design_loop_state", realmController::handleCityReadD4DesignLoopState);
-            createdServer.createContext("/realm/city/append_d4_design_loop_round", realmController::handleCityAppendD4DesignLoopRound);
-            createdServer.createContext("/realm/city/write_d4_design_loop_state", realmController::handleCityWriteD4DesignLoopState);
-            createdServer.createContext("/realm/city/create_d4_array_layout_loop", realmController::handleCityCreateD4ArrayLayoutLoop);
-            createdServer.createContext("/realm/city/execute_d4_array_layout_item", realmController::handleCityExecuteD4ArrayLayoutItem);
-            createdServer.createContext("/realm/city/query_d4_array_expansion_space", realmController::handleCityQueryD4ArrayExpansionSpace);
-            createdServer.createContext("/realm/city/plan_d4_array_expansion_candidates", realmController::handleCityPlanD4ArrayExpansionCandidates);
-            createdServer.createContext("/realm/city/select_d4_array_expansion_candidate", realmController::handleCitySelectD4ArrayExpansionCandidate);
-            createdServer.createContext("/realm/city/finalize_d4_array_layout_loop", realmController::handleCityFinalizeD4ArrayLayoutLoop);
-            createdServer.createContext("/realm/city/query_structure_catalog", realmController::handleCityQueryStructureCatalog);
-            createdServer.createContext("/realm/city/query_template_metadata", realmController::handleCityQueryTemplateMetadata);
-            createdServer.createContext("/realm/city/plan_d4_structure_cluster_groups", realmController::handleCityPlanD4StructureClusterGroups);
-            createdServer.createContext("/realm/city/select_d4_candidates", realmController::handleCitySelectD4Candidates);
-            createdServer.createContext("/realm/city/select_d4_structure_cluster_group", realmController::handleCitySelectD4StructureClusterGroup);
-            createdServer.createContext("/realm/city/create_d4_candidate_session", realmController::handleCityCreateD4CandidateSession);
-            createdServer.createContext("/realm/city/plan_d4_next_candidates", realmController::handleCityPlanD4NextCandidates);
-            createdServer.createContext("/realm/city/select_d4_candidate", realmController::handleCitySelectD4Candidate);
-            createdServer.createContext("/realm/city/finalize_d4_candidate_session", realmController::handleCityFinalizeD4CandidateSession);
-            createdServer.createContext("/realm/city/plan_d4", realmController::handleCityPlanD4);
-            createdServer.createContext("/realm/city/plan_d5", realmController::handleCityPlanD5);
-            createdServer.createContext("/realm/city/execute_d5", realmController::handleCityExecuteD5);
-            createdServer.createContext("/realm/city/plan_d6", realmController::handleCityPlanD6);
-            createdServer.createContext("/realm/city/plan_land_use", realmController::handleCityPlanLandUse);
-            createdServer.createContext("/realm/city/execute_d7", realmController::handleCityExecuteD7);
+                    realmController::handleCityCompileD4Blueprint).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/plan_d4_candidates", realmController::handleCityPlanD4Candidates).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/plan_d4_array_candidates", realmController::handleCityPlanD4ArrayCandidates).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/create_d4_design_loop_state", realmController::handleCityCreateD4DesignLoopState).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/read_d4_design_loop_state", realmController::handleCityReadD4DesignLoopState).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/append_d4_design_loop_round", realmController::handleCityAppendD4DesignLoopRound).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/write_d4_design_loop_state", realmController::handleCityWriteD4DesignLoopState).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/create_d4_array_layout_loop", realmController::handleCityCreateD4ArrayLayoutLoop).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/execute_d4_array_layout_item", realmController::handleCityExecuteD4ArrayLayoutItem).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/query_d4_array_expansion_space", realmController::handleCityQueryD4ArrayExpansionSpace).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/plan_d4_array_expansion_candidates", realmController::handleCityPlanD4ArrayExpansionCandidates).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/select_d4_array_expansion_candidate", realmController::handleCitySelectD4ArrayExpansionCandidate).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/finalize_d4_array_layout_loop", realmController::handleCityFinalizeD4ArrayLayoutLoop).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/query_structure_catalog", realmController::handleCityQueryStructureCatalog).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/query_template_metadata", realmController::handleCityQueryTemplateMetadata).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/plan_d4_structure_cluster_groups", realmController::handleCityPlanD4StructureClusterGroups).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/select_d4_candidates", realmController::handleCitySelectD4Candidates).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/select_d4_structure_cluster_group", realmController::handleCitySelectD4StructureClusterGroup).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/create_d4_candidate_session", realmController::handleCityCreateD4CandidateSession).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/plan_d4_next_candidates", realmController::handleCityPlanD4NextCandidates).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/select_d4_candidate", realmController::handleCitySelectD4Candidate).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/finalize_d4_candidate_session", realmController::handleCityFinalizeD4CandidateSession).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/plan_d4", realmController::handleCityPlanD4).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/plan_d5", realmController::handleCityPlanD5).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/execute_d5", realmController::handleCityExecuteD5).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/plan_d6", realmController::handleCityPlanD6).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/plan_land_use", realmController::handleCityPlanLandUse).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/execute_d7", realmController::handleCityExecuteD7).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/realm/city/query_worldgen_observations",
-                    realmController::handleCityQueryWorldgenObservations);
-            createdServer.createContext("/realm/city/plan_city_walls", realmController::handleCityPlanCityWalls);
-            createdServer.createContext("/realm/city/execute_city_walls", realmController::handleCityExecuteCityWalls);
-            createdServer.createContext("/realm/city/run_workflow", realmController::handleCityRunWorkflow);
-            createdExecutor = Executors.newFixedThreadPool(3, runnable -> {
+                    realmController::handleCityQueryWorldgenObservations).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/plan_city_walls", realmController::handleCityPlanCityWalls).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/execute_city_walls", realmController::handleCityExecuteCityWalls).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/run_workflow", realmController::handleCityRunWorkflow).getFilters().add(planningController.ownershipFilter());
+            createdExecutor = Executors.newFixedThreadPool(8, runnable -> {
                 Thread thread = new Thread(runnable);
                 thread.setDaemon(true);
                 thread.setName("Geomantia-API");
