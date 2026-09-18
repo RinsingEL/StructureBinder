@@ -52,6 +52,7 @@ public final class GeomantiaMod {
             }
             AdventurerMapNetwork.register();
             ProviderNetwork.register();
+            com.rinsing.geomantia.platform.mcp.McpServerService.instance().start(FMLPaths.GAMEDIR.get());
         });
         LOGGER.info("Geomantia initialized.");
     }

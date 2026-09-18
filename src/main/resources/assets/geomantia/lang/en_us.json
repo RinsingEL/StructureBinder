@@ -100,5 +100,16 @@
   "gui.geomantia.agent_activity.refresh": "Refresh",
   "gui.geomantia.agent_activity.back": "Back",
   "gui.geomantia.agent_activity.empty": "No agent activity yet. Enable automation to begin.",
-  "gui.geomantia.agent_activity.hint": "Refreshes every second · Scroll for history · Full JSON and secrets are omitted"
+  "gui.geomantia.agent_activity.hint": "Refreshes every second · Scroll for history · Full JSON and secrets are omitted",
+  "gui.geomantia.mcp.title": "Local MCP Server",
+  "gui.geomantia.mcp.port": "MCP Port",
+  "gui.geomantia.mcp.copy": "Copy MCP URL",
+  "gui.geomantia.mcp.copied": "URL copied",
+  "gui.geomantia.mcp.save": "Save and Restart",
+  "gui.geomantia.mcp.enabled": "Start with game: ON",
+  "gui.geomantia.mcp.disabled": "Start with game: OFF",
+  "gui.geomantia.mcp.invalid_port": "Use port 1024–65535, different from the internal game API port",
+  "gui.geomantia.mcp.failed": "Save failed; check the log",
+  "gui.geomantia.mcp.hint": "Connect your AI using the copied URL. Enter a world to plan. Reconnect after changing the port.",
+  "gui.geomantia.mcp.open": "MCP"
 }

@@ -16,14 +16,14 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 /** Installs the bundled, dependency-free DeepSeek Harness runtime inside the Minecraft instance. */
-final class HarnessPortableRuntime {
+public final class HarnessPortableRuntime {
     static final String VERSION = "0.1.5-rc.2-win-x64";
     static final String DIRECTORY_NAME = "harness-" + VERSION;
     static final String ARCHIVE_SHA256 = "734853979E508951E8F9C056E854C34429EC54F48F88E3AF7FB7D7C34F3E6793";
     private static final String RESOURCE = "/geomantia/sidecar/harness-runtime-0.1.5-rc.2-win-x64.zip";
     private static final String MARKER = ".geomantia-runtime.sha256";
 
-    Path ensureInstalled(Path serverDirectory, Consumer<String> progress) throws IOException {
+    public static synchronized Path ensureInstalled(Path serverDirectory, Consumer<String> progress) throws IOException {
         requireWindowsX64();
         Path root = serverDirectory.toAbsolutePath().normalize()
                 .resolve("config").resolve("geomantia").resolve("runtime");

@@ -66,6 +66,9 @@ public final class ProviderSettingsScreen extends Screen {
         int fieldLeft = left + 132;
         int fieldWidth = panelWidth - 152;
         int y = 58;
+        addRenderableWidget(Button.builder(Component.translatable("gui.geomantia.mcp.open"),
+                button -> minecraft.setScreen(new McpSettingsScreen(this)))
+                .bounds(left + panelWidth - 82, 30, 62, 20).build());
 
         int providerWidth = (fieldWidth - 4) / 2;
         providerButton = addRenderableWidget(Button.builder(providerLabel(), button -> toggleProvider())

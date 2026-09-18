@@ -100,5 +100,16 @@
   "gui.geomantia.agent_activity.refresh": "刷新",
   "gui.geomantia.agent_activity.back": "返回",
   "gui.geomantia.agent_activity.empty": "暂无 Agent 活动；启用自动规划后会在这里显示。",
-  "gui.geomantia.agent_activity.hint": "每秒刷新 · 滚轮查看历史 · 完整 JSON 与敏感字段已省略"
+  "gui.geomantia.agent_activity.hint": "每秒刷新 · 滚轮查看历史 · 完整 JSON 与敏感字段已省略",
+  "gui.geomantia.mcp.title": "本机 MCP 服务",
+  "gui.geomantia.mcp.port": "MCP 端口",
+  "gui.geomantia.mcp.copy": "复制 MCP 连接地址",
+  "gui.geomantia.mcp.copied": "连接地址已复制",
+  "gui.geomantia.mcp.save": "保存并重启服务",
+  "gui.geomantia.mcp.enabled": "随游戏启动：开启",
+  "gui.geomantia.mcp.disabled": "随游戏启动：关闭",
+  "gui.geomantia.mcp.invalid_port": "请输入 1024–65535 的端口，且不能与游戏内部服务端口重复",
+  "gui.geomantia.mcp.failed": "保存失败，请查看日志",
+  "gui.geomantia.mcp.hint": "AI 使用复制的 URL 连接。进入存档后可开始规划；修改端口后请重新连接。",
+  "gui.geomantia.mcp.open": "MCP 设置"
 }
