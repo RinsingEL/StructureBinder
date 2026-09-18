@@ -15,6 +15,96 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityStructureTerrainGateTest {
     @Test
+    void adjacentShallowPondCellsAreAdmittedBelowAreaBudget() {
+        var result = evaluateGrid((x, z) -> x >= 5 && x < 10 && z >= 5 && z < 13 ? "pond" : "plain",
+                new BlockBounds(0, 0, 319, 319));
+        assertTrue(result.passed(), result.trace().toString());
+        assertEquals(0.10, result.trace().get("anomalyAreaRatio").getAsDouble(), 1e-9);
+        assertTrue(result.trace().get("terrainAdaptationRequired").getAsBoolean());
+        assertEquals(0, result.trace().get("rejectedCellCount").getAsInt());
+    }
+
+    @Test
+    void pondAboveAreaBudgetIsRejected() {
+        var result = evaluateGrid((x, z) -> x >= 5 && x < 11 && z >= 5 && z < 13 ? "pond" : "plain",
+                new BlockBounds(0, 0, 319, 319));
+        assertFalse(result.passed());
+        assertEquals(0.12, result.trace().get("anomalyAreaRatio").getAsDouble(), 1e-9);
+    }
+
+    @Test
+    void localizedGullyDoesNotLetElevationExtremesVetoLargeBuilding() {
+        var result = evaluateGrid((x, z) -> x == 8 && z == 8 ? "gully" : "plain",
+                new BlockBounds(0, 0, 319, 319));
+        assertTrue(result.passed(), result.trace().toString());
+        assertEquals(30, result.trace().get("elevationRange").getAsDouble());
+        assertEquals(0.0025, result.trace().get("anomalyAreaRatio").getAsDouble(), 1e-9);
+    }
+
+    @Test
+    void broadElevationSpreadCannotHideOnBothSidesOfMedian() {
+        var cells = new java.util.ArrayList<LandUseTerrainField.Cell>();
+        for (int z = 0; z < 20; z++) for (int x = 0; x < 20; x++) {
+            cells.add(new LandUseTerrainField.Cell(x, z, x * 16, z * 16, 16,
+                    x < 5 ? 50 : x >= 15 ? 90 : 70, 1, 1, 1, false, 0, 10,
+                    "minecraft:plains", "plain", "patch", true));
+        }
+        var bounds = new BlockBounds(0, 0, 319, 319);
+        var field = new LandUseTerrainField(LandUseTerrainField.SCHEMA, "city_test", bounds, 16, cells);
+        var result = new CityStructureTerrainGate(field, catalog("SURFACE"))
+                .evaluate("test:house", bounds, CityBlueprint.TerrainPolicy.BALANCED, true);
+        assertFalse(result.passed());
+        assertEquals(0.5, result.trace().get("anomalyAreaRatio").getAsDouble(), 1e-9);
+    }
+
+    @Test
+    void deepOrUnknownTerrainCannotBeDilutedByBuildingSize() {
+        for (String kind : List.of("deep", "unsampled", "missing", "cliff")) {
+            var result = evaluateGrid((x, z) -> x == 8 && z == 8 ? kind : "plain",
+                    new BlockBounds(0, 0, 319, 319));
+            assertFalse(result.passed(), kind);
+            assertTrue(result.trace().get("hardTerrainFailure").getAsBoolean(), kind);
+        }
+    }
+
+    @Test
+    void narrowContinuousGullyCrossingBuildingIsRejectedDespiteLowRatio() {
+        var result = evaluateGrid((x, z) -> x == 8 ? "gully" : "plain",
+                new BlockBounds(0, 0, 319, 319));
+        assertFalse(result.passed());
+        assertEquals(0.05, result.trace().get("anomalyAreaRatio").getAsDouble(), 1e-9);
+        assertTrue(result.trace().get("crossingAnomaly").getAsBoolean());
+    }
+
+    @Test
+    void edgeCellsUseActualOverlapArea() {
+        var result = evaluateGrid((x, z) -> x == 0 && z == 8 ? "pond" : "plain",
+                new BlockBounds(15, 0, 319, 319));
+        assertTrue(result.passed());
+        assertEquals(16, result.trace().get("anomalyAreaBlocks").getAsLong());
+        assertEquals(16.0 / (305 * 320), result.trace().get("anomalyAreaRatio").getAsDouble(), 1e-9);
+    }
+
+    private static CityStructureTerrainGate.Evaluation evaluateGrid(
+            java.util.function.BiFunction<Integer, Integer, String> terrain, BlockBounds footprint) {
+        var cells = new java.util.ArrayList<LandUseTerrainField.Cell>();
+        for (int z = 0; z < 20; z++) for (int x = 0; x < 20; x++) {
+            String kind = terrain.apply(x, z);
+            if (kind.equals("missing")) continue;
+            boolean water = kind.equals("pond") || kind.equals("deep");
+            cells.add(new LandUseTerrainField.Cell(x, z, x * 16, z * 16, 16,
+                    kind.equals("gully") ? 40 : 70, kind.equals("cliff") ? 60 : 1,
+                    kind.equals("gully") ? 30 : 1, 1, water,
+                    kind.equals("deep") ? 30 : water ? 2 : 0, 10,
+                    "minecraft:plains", water ? "lake" : "plain", "patch", !kind.equals("unsampled")));
+        }
+        var field = new LandUseTerrainField(LandUseTerrainField.SCHEMA, "city_test",
+                new BlockBounds(0, 0, 319, 319), 16, cells);
+        return new CityStructureTerrainGate(field, catalog("SURFACE")).evaluate(
+                "test:house", footprint, CityBlueprint.TerrainPolicy.BALANCED, true);
+    }
+
+    @Test
     void onlyShallowEnclosedWaterPitsReceiveFoundationAdmission() {
         for (String kind : List.of("pit", "lake", "river", "wide_pit", "deep_pit")) {
             var cells = new java.util.ArrayList<LandUseTerrainField.Cell>();

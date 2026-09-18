@@ -19,6 +19,7 @@ import java.util.Set;
 final class CityStructureTerrainGate {
     static final String TRACE_SCHEMA = "city_structure_terrain_gate_trace";
     private static final int MAX_FAILURE_SAMPLES = 8;
+    private static final double MAX_ANOMALY_AREA_RATIO = 0.10;
 
     private final LandUseTerrainField terrainField;
     private final Map<CellKey, LandUseTerrainField.Cell> cells;
@@ -87,6 +88,13 @@ final class CityStructureTerrainGate {
         double maximumSlope = 0.0;
         double maximumLocalRelief = 0.0;
         TerrainLimits limits = terrainPolicy == null ? null : limits(terrainPolicy);
+        ElevationSummary elevations = referenceElevation(footprint, step);
+        double referenceElevation = elevations.median();
+        long footprintArea = ((long) footprint.maxX() - footprint.minX() + 1)
+                * ((long) footprint.maxZ() - footprint.minZ() + 1);
+        long anomalyArea = 0;
+        Set<CellKey> anomalies = new LinkedHashSet<>();
+        boolean hardFailure = false;
         JsonArray failures = new JsonArray();
         JsonArray adaptations = new JsonArray();
         for (int cellZ = minCellZ; cellZ <= maxCellZ; cellZ++) {
@@ -119,7 +127,20 @@ final class CityStructureTerrainGate {
                 }
                 if (cell != null && cell.water() && reason.isBlank())
                     adaptations.add(adaptation(cell, "CITY_STRUCTURE_SMALL_ENCLOSED_WATER_PIT", "foundation_support_required"));
+                if (cell != null && cell.sampled() && limits != null
+                        && elevations.range() > limits.maximumElevationRange() * 2
+                        && Math.abs(cell.elevation() - referenceElevation) > limits.maximumElevationRange()) {
+                    reason = "CITY_STRUCTURE_TERRAIN_UNFIT_SKIP_MEMBER";
+                }
                 if (reason.isBlank()) continue;
+                anomalies.add(new CellKey(cellX, cellZ));
+                anomalyArea += overlapArea(footprint, cellX, cellZ, step);
+                hardFailure |= cell == null || !cell.sampled() || limits == null
+                        || cell.water() && (cell.waterDepth() < 0
+                            || cell.waterDepth() > limits.maximumElevationRange())
+                        || cell != null && (cell.slope() > limits.maximumSlope() * 4
+                            || cell.localRelief() > limits.maximumLocalRelief() * 4
+                            || Math.abs(cell.elevation() - referenceElevation) > limits.maximumElevationRange() * 4);
                 rejected++;
                 if (primaryReason.isBlank()) primaryReason = reason;
                 if (failures.size() < MAX_FAILURE_SAMPLES) {
@@ -156,10 +177,6 @@ final class CityStructureTerrainGate {
             trace.addProperty("maximumObservedSlope", maximumSlope);
             trace.addProperty("maximumObservedLocalRelief", maximumLocalRelief);
             if (limits != null && elevationRange > limits.maximumElevationRange()) {
-                if (elevationRange > limits.maximumElevationRange() * 2) {
-                    rejected++;
-                    if (primaryReason.isBlank()) primaryReason = "CITY_STRUCTURE_TERRAIN_UNFIT_SKIP_MEMBER";
-                }
                 JsonObject adaptation = new JsonObject();
                 adaptation.addProperty("reasonCode", "CITY_STRUCTURE_SURFACE_ELEVATION_RANGE_EXCEEDED");
                 adaptation.addProperty("minimumElevation", minimumElevation);
@@ -168,6 +185,25 @@ final class CityStructureTerrainGate {
                 adaptation.addProperty("action", engineered ? "realize_designed_platform" : "foundation_or_skip");
                 adaptations.add(adaptation);
             }
+        }
+        double anomalyRatio = (double) anomalyArea / footprintArea;
+        boolean crossingAnomaly = crossesFootprint(anomalies, minCellX, maxCellX, minCellZ, maxCellZ);
+        trace.addProperty("anomalyAreaBlocks", anomalyArea);
+        trace.addProperty("footprintAreaBlocks", footprintArea);
+        trace.addProperty("anomalyAreaRatio", anomalyRatio);
+        trace.addProperty("maximumAnomalyAreaRatio", MAX_ANOMALY_AREA_RATIO);
+        trace.addProperty("anomalyCellCount", anomalies.size());
+        trace.addProperty("hardTerrainFailure", hardFailure);
+        trace.addProperty("crossingAnomaly", crossingAnomaly);
+        trace.addProperty("referenceElevation", referenceElevation);
+        if (rejected > 0 && !hardFailure && !crossingAnomaly && anomalyRatio <= MAX_ANOMALY_AREA_RATIO) {
+            JsonObject adaptation = new JsonObject();
+            adaptation.addProperty("reasonCode", "CITY_STRUCTURE_LOCAL_TERRAIN_ANOMALY_TOLERATED");
+            adaptation.addProperty("action", "foundation_support_required");
+            adaptation.addProperty("anomalyAreaRatio", anomalyRatio);
+            adaptations.add(adaptation);
+            rejected = 0;
+            primaryReason = "";
         }
         trace.addProperty("rejectedCellCount", rejected);
         trace.addProperty("status", rejected == 0 ? "passed" : "rejected");
@@ -178,6 +214,62 @@ final class CityStructureTerrainGate {
                 ? "DESIGN_FIRST_PLATFORM_REALIZATION" : "PCG_FOUNDATION_OR_SKIP_MEMBER");
         trace.add("terrainAdaptations", adaptations);
         return new Evaluation(rejected == 0, primaryReason, CityStructureTerrainMode.SURFACE.name(), trace);
+    }
+
+    private static long overlapArea(BlockBounds footprint, int x, int z, int step) {
+        long minX = Math.max(footprint.minX(), (long) x * step);
+        long minZ = Math.max(footprint.minZ(), (long) z * step);
+        long maxX = Math.min(footprint.maxX(), (long) (x + 1) * step - 1);
+        long maxZ = Math.min(footprint.maxZ(), (long) (z + 1) * step - 1);
+        return (maxX - minX + 1) * (maxZ - minZ + 1);
+    }
+
+    // Area-weighted median prevents a small pit from becoming the building's height datum.
+    private ElevationSummary referenceElevation(BlockBounds footprint, int step) {
+        List<LandUseTerrainField.Cell> covered = new ArrayList<>();
+        long total = 0;
+        for (int z = Math.floorDiv(footprint.minZ(), step); z <= Math.floorDiv(footprint.maxZ(), step); z++) {
+            for (int x = Math.floorDiv(footprint.minX(), step); x <= Math.floorDiv(footprint.maxX(), step); x++) {
+                var cell = cells.get(new CellKey(x, z));
+                if (cell == null || !cell.sampled()) continue;
+                covered.add(cell);
+                total += overlapArea(footprint, x, z, step);
+            }
+        }
+        covered.sort(java.util.Comparator.comparingDouble(LandUseTerrainField.Cell::elevation));
+        long cumulative = 0;
+        for (var cell : covered) {
+            cumulative += overlapArea(footprint, cell.cellX(), cell.cellZ(), step);
+            if (cumulative * 2 >= total) return new ElevationSummary(cell.elevation(),
+                    covered.get(covered.size() - 1).elevation() - covered.get(0).elevation());
+        }
+        return new ElevationSummary(0, 0);
+    }
+
+    private record ElevationSummary(double median, double range) { }
+
+    private static boolean crossesFootprint(Set<CellKey> anomalies, int minX, int maxX, int minZ, int maxZ) {
+        Set<CellKey> remaining = new LinkedHashSet<>(anomalies);
+        while (!remaining.isEmpty()) {
+            var queue = new java.util.ArrayDeque<CellKey>();
+            CellKey start = remaining.iterator().next();
+            remaining.remove(start);
+            queue.add(start);
+            boolean west = false, east = false, north = false, south = false;
+            while (!queue.isEmpty()) {
+                CellKey cell = queue.removeFirst();
+                west |= cell.x() == minX;
+                east |= cell.x() == maxX;
+                north |= cell.z() == minZ;
+                south |= cell.z() == maxZ;
+                for (int dz = -1; dz <= 1; dz++) for (int dx = -1; dx <= 1; dx++) {
+                    CellKey neighbor = new CellKey(cell.x() + dx, cell.z() + dz);
+                    if (remaining.remove(neighbor)) queue.add(neighbor);
+                }
+            }
+            if (west && east || north && south) return true;
+        }
+        return false;
     }
 
     private boolean smallEnclosedWaterPit(LandUseTerrainField.Cell cell, TerrainLimits limits) {
