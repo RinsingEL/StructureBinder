@@ -151,12 +151,29 @@ final class HarnessAgentClient implements ProviderAgentClient {
     private static DeepSeekToolLoopClient.LoopResult failure(String code) {
         return new DeepSeekToolLoopClient.LoopResult(false, "failed", code, 0, "");
     }
-    @Override public void close() {
+    @Override public synchronized void close() {
         Process child = process; process = null;
-        if (child != null && child.isAlive()) {
+        if (child != null) stopProcess(child);
+    }
+
+    static void stopProcess(Process child) {
+        boolean interrupted = Thread.interrupted();
+        try {
+            if (!child.isAlive()) return;
             child.destroy();
-            try { if (!child.waitFor(2, TimeUnit.SECONDS)) child.destroyForcibly(); }
-            catch (InterruptedException ignored) { child.destroyForcibly(); Thread.currentThread().interrupt(); }
+            try { if (child.waitFor(2, TimeUnit.SECONDS)) return; }
+            catch (InterruptedException ignored) { interrupted = true; }
+            child.destroyForcibly();
+            // Termination is asynchronous, including on Windows where the executable stays locked.
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+            while (child.isAlive()) {
+                long remaining = deadline - System.nanoTime();
+                if (remaining <= 0) throw new IllegalStateException("HARNESS_PROCESS_STOP_TIMEOUT");
+                try { child.waitFor(remaining, TimeUnit.NANOSECONDS); }
+                catch (InterruptedException ignored) { interrupted = true; }
+            }
+        } finally {
+            if (interrupted) Thread.currentThread().interrupt();
         }
     }
 }

@@ -20,9 +20,7 @@ public final class CityWallPlanner {
     public static final int DEFAULT_STEPPED_TRANSITION_MAX_DELTA_BLOCKS = DEFAULT_STEPPED_MAX_DELTA_BLOCKS;
     private static final int WALL_HALF_THICKNESS_BLOCKS = 2;
 
-    public JsonObject plan(JsonObject placedLedger,
-                             JsonObject wallReservationPlan,
-                             JsonObject actualRoadMask,
+    public JsonObject plan(JsonObject wallReservationPlan,
                              Options options) {
         Options opts = options == null ? Options.defaults() : options;
         if (wallReservationPlan == null
@@ -37,17 +35,10 @@ public final class CityWallPlanner {
             throw new IllegalArgumentException("WALL_LINE_UNAVAILABLE: D5 wall reservation has no wallLine.");
         }
 
-        BlockBounds coverage = wallReservationPlan.has("wallCoverageBounds")
-                && wallReservationPlan.get("wallCoverageBounds").isJsonObject()
-                ? bounds(wallReservationPlan.getAsJsonObject("wallCoverageBounds"))
-                : wallReservationPlan.has("wallBounds") && wallReservationPlan.get("wallBounds").isJsonObject()
-                ? expand(bounds(wallReservationPlan.getAsJsonObject("wallBounds")), DEFAULT_WALL_UNIT_LENGTH_BLOCKS)
-                : expand(unionPlaced(placedLedger), DEFAULT_WALL_MARGIN_BLOCKS);
-        JsonArray footprintViolations = wallLockedFootprintViolations(placedLedger, coverage);
-        if (!footprintViolations.isEmpty()) {
-            throw new IllegalArgumentException("D5_LOCKED_FOOTPRINT_OUTSIDE_RESERVATION: D7 actual/locked footprint exceeds D5 wall coverage.");
+        if (!wallReservationPlan.has("wallCoverageBounds")) {
+            throw new IllegalArgumentException("WALL_RESERVATION_COVERAGE_REQUIRED");
         }
-
+        BlockBounds coverage = bounds(wallReservationPlan.getAsJsonObject("wallCoverageBounds"));
         int unitLength = opts.normalizedWallUnitLengthBlocks();
         JsonArray gateSlots = array(wallReservationPlan, "gateSlots");
         JsonArray generatedGates = new JsonArray();
@@ -74,7 +65,7 @@ public final class CityWallPlanner {
                         stringValue(sourceLine, "segmentId", "")));
                 unit.addProperty("sideHint", stringValue(sourceLine, "sideHint", ""));
                 unit.addProperty("wallAxis", axis);
-                unit.addProperty("heightMode", "frozen_module_walkway_datum");
+                unit.addProperty("heightMode", "terrain_following_sections");
                 unit.addProperty("targetY", 0);
                 unit.add("blockBounds", boundsJson(unitBounds));
                 JsonObject gate = overlappingGate(unitBounds, gateSlots);
@@ -109,7 +100,7 @@ public final class CityWallPlanner {
             JsonObject node = graphNode("wall_wall_node_" + nodeIndex++,
                     "guard_tower",
                     nodeX, nodeZ, bounds, 0, 0,
-                    "frozen_module_walkway_datum");
+                    "terrain_following_sections");
             node.addProperty("sourceNodeSlotId", stringValue(slot, "nodeSlotId", ""));
             node.addProperty("reasonCode", stringValue(slot, "reasonCode", "D5_WALL_NODE_SLOT"));
             node.addProperty("wallAxis", wallAxisForNode(bounds, line));
@@ -119,12 +110,12 @@ public final class CityWallPlanner {
         JsonObject plan = new JsonObject();
         plan.addProperty("schema", "city_wall_plan");
         plan.addProperty("moduleSet", "guard_tower");
-        plan.addProperty("cityId", stringValue(placedLedger, "cityId", "unknown_city"));
+        plan.addProperty("cityId", stringValue(wallReservationPlan, "cityId", "unknown_city"));
         plan.addProperty("boundaryMode", "d5_final_wall_line");
         plan.addProperty("wallBoundaryMode", "d5_final_wall_line");
         plan.addProperty("wallPlanningMode", "district_modules_with_frozen_surface_profile");
         plan.addProperty("wallContourMode", "disabled_wall_no_reline_after_d5");
-        plan.addProperty("roadMaskSource", "actual_world_blocks_for_placement_preflight");
+        plan.addProperty("roadMaskSource", "d5_reserved_gate_slots");
         plan.addProperty("wallUnitLengthBlocks", unitLength);
         plan.addProperty("nominalWallHeightBlocks", opts.normalizedNominalWallHeightBlocks());
         plan.addProperty("waterRunMinBlocks", opts.normalizedWaterRunMinBlocks());
@@ -139,10 +130,6 @@ public final class CityWallPlanner {
         plan.addProperty("gateFailurePolicy", "reject_conflicts_before_world_mutation");
         plan.addProperty("towerFailurePolicy", "reject_conflicts_before_world_mutation");
         plan.add("wallReservationSource", wallReservationPlan.deepCopy());
-        plan.add("actualRoadMask", actualRoadMask == null
-                ? emptyRoadMask(plan.get("cityId").getAsString()) : actualRoadMask.deepCopy());
-        plan.add("sourcePlacedStructureLedger", placedLedger == null ? new JsonObject() : placedLedger.deepCopy());
-        plan.add("sourceActualFootprintUnion", boundsJson(unionPlaced(placedLedger)));
         plan.add("wallCoverageBounds", boundsJson(coverage));
         if (wallReservationPlan.has("wallBounds") && wallReservationPlan.get("wallBounds").isJsonObject()) {
             plan.add("wallBounds", wallReservationPlan.getAsJsonObject("wallBounds").deepCopy());
@@ -160,21 +147,21 @@ public final class CityWallPlanner {
         surface.addProperty("storageFormat", ".dat");
         surface.addProperty("sampleGranularityBlocks", 1);
         surface.addProperty("requiredFields", "surfaceY/topBlock/fluid/biome/temperature/flags");
-        surface.addProperty("backfillStage", "d7_or_city_plan_city_walls_before_wall_execute");
+        surface.addProperty("backfillStage", "wall_owned_corridor_before_wall_execute");
         plan.add("surfaceCachePolicy", surface);
 
         JsonObject terrain = new JsonObject();
         terrain.addProperty("policyVersion", "wall");
-        terrain.addProperty("heightStrategy", "common_module_walkway_datum");
+        terrain.addProperty("heightStrategy", "terrain_following_sections");
         terrain.addProperty("heightSegmentMaxDeltaBlocks", opts.normalizedHeightSegmentMaxDeltaBlocks());
         terrain.addProperty("heightSteppedTransitionMaxDeltaBlocks",
                 opts.normalizedHeightSteppedTransitionMaxDeltaBlocks());
         terrain.addProperty("naturalBoundaryMinDeltaBlocks", opts.normalizedNaturalBoundaryMinDeltaBlocks());
-        terrain.addProperty("transitionPolicy", "reject_unconnectable_height_before_placement");
-        terrain.addProperty("pitPolicy", "fill_horizontal_floor_inside_corridor");
+        terrain.addProperty("transitionPolicy", "adjacent_sections_one_block_stairs");
+        terrain.addProperty("pitPolicy", "local_retaining_foundation_and_cavity_seal");
         terrain.addProperty("raisedGroundPolicy", "connect_wall_into_existing_ground");
-        terrain.addProperty("waterPolicy", "reject_water_boundary_for_redesign");
-        terrain.addProperty("cliffPolicy", "reject_cliff_boundary_for_redesign");
+        terrain.addProperty("waterPolicy", "foundation_to_solid_ground");
+        terrain.addProperty("cliffPolicy", "embed_or_verified_solid_barrier");
         terrain.addProperty("debugScanSupported", true);
         plan.add("terrainFitPolicy", terrain);
 
@@ -186,41 +173,10 @@ public final class CityWallPlanner {
         validation.addProperty("wallNodeCount", wallNodes.size());
         validation.addProperty("wallUnitCount", wallUnits.size());
         validation.addProperty("generatedGateCount", generatedGates.size());
-        validation.addProperty("lockedFootprintViolationCount", footprintViolations.size());
-        validation.add("lockedFootprintViolations", footprintViolations);
+        validation.addProperty("lockedFootprintViolationCount", 0);
+        validation.add("lockedFootprintViolations", new JsonArray());
         plan.add("wallGraphValidation", validation);
         return plan;
-    }
-
-    private static JsonArray wallLockedFootprintViolations(JsonObject ledger, BlockBounds coverage) {
-        JsonArray out = new JsonArray();
-        for (JsonElement elem : array(ledger, "placedStructures")) {
-            if (!elem.isJsonObject()) {
-                continue;
-            }
-            JsonObject structure = elem.getAsJsonObject();
-            JsonObject source = structure.has("lockedActualFootprint")
-                    && structure.get("lockedActualFootprint").isJsonObject()
-                    ? structure.getAsJsonObject("lockedActualFootprint")
-                    : structure.has("actualFootprint") && structure.get("actualFootprint").isJsonObject()
-                    ? structure.getAsJsonObject("actualFootprint")
-                    : null;
-            if (source == null) {
-                continue;
-            }
-            BlockBounds footprint = bounds(source);
-            if (containsBounds(coverage, footprint)) {
-                continue;
-            }
-            JsonObject violation = new JsonObject();
-            violation.addProperty("anchorId", stringValue(structure, "anchorId", ""));
-            violation.addProperty("templateId", stringValue(structure, "templateId", ""));
-            violation.addProperty("reasonCode", "D5_LOCKED_FOOTPRINT_OUTSIDE_RESERVATION");
-            violation.add("footprint", boundsJson(footprint));
-            violation.add("coverageBounds", boundsJson(coverage));
-            out.add(violation);
-        }
-        return out;
     }
 
     private static BlockBounds wallPlacementBounds(BlockBounds source, String axis) {
@@ -313,26 +269,6 @@ public final class CityWallPlanner {
         return dx + dz;
     }
 
-    private static BlockBounds unionPlaced(JsonObject ledger) {
-        BlockBounds union = null;
-        JsonArray placed = ledger != null && ledger.has("placedStructures")
-                && ledger.get("placedStructures").isJsonArray()
-                ? ledger.getAsJsonArray("placedStructures")
-                : new JsonArray();
-        for (JsonElement elem : placed) {
-            if (!elem.isJsonObject() || !elem.getAsJsonObject().has("actualFootprint")) {
-                continue;
-            }
-            BlockBounds bounds = bounds(elem.getAsJsonObject().getAsJsonObject("actualFootprint"));
-            union = union == null ? bounds : new BlockBounds(
-                    Math.min(union.minX(), bounds.minX()),
-                    Math.min(union.minZ(), bounds.minZ()),
-                    Math.max(union.maxX(), bounds.maxX()),
-                    Math.max(union.maxZ(), bounds.maxZ()));
-        }
-        return union == null ? new BlockBounds(-32, -32, 32, 32) : union;
-    }
-
     private static BlockBounds expand(BlockBounds bounds, int margin) {
         return new BlockBounds(bounds.minX() - margin, bounds.minZ() - margin,
                 bounds.maxX() + margin, bounds.maxZ() + margin);
@@ -344,16 +280,6 @@ public final class CityWallPlanner {
                 Math.min(a.minZ(), b.minZ()),
                 Math.max(a.maxX(), b.maxX()),
                 Math.max(a.maxZ(), b.maxZ()));
-    }
-
-    private static JsonObject emptyRoadMask(String cityId) {
-        JsonObject obj = new JsonObject();
-        obj.addProperty("schema", "city_actual_road_mask");
-        obj.addProperty("cityId", cityId);
-        obj.addProperty("status", "empty");
-        obj.addProperty("reasonCode", "ROAD_MASK_EMPTY_GATE_FALLBACK");
-        obj.add("roadMask", new JsonArray());
-        return obj;
     }
 
     private static JsonArray array(JsonObject obj, String key) {

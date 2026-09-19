@@ -49,7 +49,9 @@ class ProviderRevisionLoopTest {
             set(runner, "serverDirectory", root);
             set(runner, "debugRoot", root);
             set(runner, "apiPort", http.getAddress().getPort());
-            set(runner, "discovery", new ProviderPlanningDiscovery(root, 42));
+            var planning = new PlanningSessionService(root, root, http.getAddress().getPort(), 42);
+            set(runner, "planning", planning);
+            set(runner, "discovery", planning.discovery());
             var tick = PlayerProviderAgentRunner.class.getDeclaredMethod("tick");
             tick.setAccessible(true);
             for (int round = 1; round <= 3; round++) {

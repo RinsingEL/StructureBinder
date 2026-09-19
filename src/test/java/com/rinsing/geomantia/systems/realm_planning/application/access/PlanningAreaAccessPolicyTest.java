@@ -34,6 +34,19 @@ class PlanningAreaAccessPolicyTest {
         JsonObject masks=new JsonObject();masks.add("registries",active);write(temp.resolve("geomantia_city_masks/active_planned_structure_registry.json"),masks);
         JsonObject terrain=new JsonObject();terrain.add("plans",land);write(temp.resolve("geomantia_city_masks/active_city_land_use_area_plans.json"),terrain);
     }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"queued", "running", "post_d4_running", "blocked_by_program", "completed_with_errors"})
+    void activatedCityKeepsChunksAvailableDuringConstructionAndRetry(String status) throws Exception {
+        fixture(true,true);
+        Path queuePath=run().resolve("automation/city_design_queue.json");
+        JsonObject queue=read(queuePath);
+        queue.getAsJsonArray("items").get(0).getAsJsonObject().addProperty("status",status);
+        write(queuePath,queue);
+        assertTrue(policy().permitsChunk("minecraft:overworld",4096/16,0));
+        Files.delete(temp.resolve("geomantia_city_masks/active_planned_structure_registry.json"));
+        assertFalse(policy().permitsChunk("minecraft:overworld",4096/16,0));
+    }
+
     @Test void initialAndUnmanagedAreasRemainAvailableButUnknownTerrainDoesNotGenerate() {
         assertTrue(policy().evaluate("minecraft:overworld",256,0).allowed()); assertFalse(policy().evaluate("minecraft:overworld",257,0).allowed());
         assertTrue(policy().permitsChunk("minecraft:overworld",0,0)); assertFalse(policy().permitsChunk("minecraft:overworld",500,0));

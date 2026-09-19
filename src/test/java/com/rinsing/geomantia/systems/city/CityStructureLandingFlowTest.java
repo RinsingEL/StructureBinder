@@ -747,10 +747,53 @@ final class CityStructureLandingFlowTest {
     }
 
     @Test
+    void cornerTowerMovesAlongWallWithoutChangingRoadOrBoundary() throws Exception {
+        JsonObject anchors = JsonParser.parseString("""
+                {"anchors":[{"plannedFootprint":{"minX":0,"minZ":0,"maxX":15,"maxZ":15}}],
+                 "streetBands":[]}
+                """).getAsJsonObject();
+        var planner = new CityWallReservationPlanner();
+        var review = fixture().review();
+        var coverage = new BlockBounds(-10000,-10000,10000,10000);
+        var baseline = planner.plan(review, anchors, 24, 4, coverage);
+        anchors.getAsJsonArray("streetBands").add(JsonParser.parseString("""
+                {"streetBandId":"exit","bounds":{"minX":20,"minZ":-33,"maxX":100,"maxZ":-29}}
+                """));
+        var original = anchors.deepCopy();
+        var result = planner.plan(review, anchors, 24, 4, coverage);
+        assertEquals(original, anchors);
+        assertEquals(baseline.get("wallLine"), result.get("wallLine"));
+        assertEquals(baseline.getAsJsonArray("wallNodeSlots").size(), result.getAsJsonArray("wallNodeSlots").size());
+        assertTrue(result.getAsJsonArray("wallNodeSlots").asList().stream().anyMatch(e ->
+                e.getAsJsonObject().get("reasonCode").getAsString().equals("DISTRICT_CORNER_GATE_AVOIDANCE")));
+        for (var node : result.getAsJsonArray("wallNodeSlots")) {
+            var a = node.getAsJsonObject().getAsJsonObject("blockBounds");
+            for (var gate : result.getAsJsonArray("gateSlots")) {
+                var b = gate.getAsJsonObject().getAsJsonObject("blockBounds");
+                assertTrue(a.get("maxX").getAsInt() < b.get("minX").getAsInt()
+                        || a.get("minX").getAsInt() > b.get("maxX").getAsInt()
+                        || a.get("maxZ").getAsInt() < b.get("minZ").getAsInt()
+                        || a.get("minZ").getAsInt() > b.get("maxZ").getAsInt());
+            }
+        }
+        assertEquals(result, planner.plan(review, anchors, 24, 4, coverage));
+    }
+
+    @Test
+    void blockedAdjacentWallsStillRejectCornerTower() throws Exception {
+        JsonObject anchors = JsonParser.parseString("""
+                {"anchors":[{"plannedFootprint":{"minX":0,"minZ":0,"maxX":15,"maxZ":15}}],
+                 "streetBands":[{"streetBandId":"blocked","bounds":{"minX":-100,"minZ":-100,"maxX":100,"maxZ":100}}]}
+                """).getAsJsonObject();
+        var error = assertThrows(IllegalArgumentException.class, () -> new CityWallReservationPlanner()
+                .plan(fixture().review(), anchors, 24, 4, new BlockBounds(-10000,-10000,10000,10000)));
+        assertTrue(error.getMessage().startsWith("WALL_GATE_CORNER_CONFLICT"));
+    }
+
+    @Test
     void wallPlannerKeepsD5WallLineAndDeclaresNoRelineDowngradePolicies() {
         JsonObject reservation = syntheticWallReservation();
-        JsonObject wallPlan = new CityWallPlanner().plan(syntheticWallLedger(), reservation,
-                roadMaskFromBlocks("city_test", new int[][]{}), CityWallPlanner.Options.defaults());
+        JsonObject wallPlan = new CityWallPlanner().plan(reservation, CityWallPlanner.Options.defaults());
 
         assertEquals("city_wall_plan", wallPlan.get("schema").getAsString());
         assertEquals("d5_final_wall_line", wallPlan.get("wallBoundaryMode").getAsString());
@@ -768,12 +811,12 @@ final class CityStructureLandingFlowTest {
         assertEquals(16, wallPlan.get("heightSteppedTransitionMaxDeltaBlocks").getAsInt());
         assertEquals(17, wallPlan.get("naturalBoundaryMinDeltaBlocks").getAsInt());
         JsonObject terrain = wallPlan.getAsJsonObject("terrainFitPolicy");
-        assertEquals("common_module_walkway_datum", terrain.get("heightStrategy").getAsString());
-        assertEquals("reject_cliff_boundary_for_redesign", terrain.get("cliffPolicy").getAsString());
+        assertEquals("terrain_following_sections", terrain.get("heightStrategy").getAsString());
+        assertEquals("embed_or_verified_solid_barrier", terrain.get("cliffPolicy").getAsString());
         assertEquals("surfaceY/topBlock/fluid/biome/temperature/flags",
                 wallPlan.getAsJsonObject("surfaceCachePolicy").get("requiredFields").getAsString());
         assertTrue(wallPlan.getAsJsonArray("wallUnits").toString()
-                .contains("frozen_module_walkway_datum"));
+                .contains("terrain_following_sections"));
         assertTrue(wallPlan.getAsJsonArray("wallUnits").toString().contains("D5_GATE_SLOT_OPENING"));
         assertTrue(wallPlan.getAsJsonArray("wallNodes").toString().contains("guard_tower"));
         assertEquals("X", wallNodeAxis(wallPlan, "node_0"));
@@ -782,23 +825,15 @@ final class CityStructureLandingFlowTest {
     }
 
     @Test
-    void wallPlannerHardStopsWhenD7ActualFootprintExceedsD5Coverage() {
+    void wallPlannerRequiresOwnedReservationInsteadOfD7Ledger() {
         JsonObject reservation = syntheticWallReservation();
-        JsonObject ledger = JsonParser.parseString("""
-                {
-                  "schema": "city_placed_structure_ledger",
-                  "cityId": "city_test",
-                  "placedStructures": [
-                    {"anchorId": "outside", "actualFootprint": {"minX": 120, "minZ": 0, "maxX": 140, "maxZ": 20}}
-                  ]
-                }
-                """).getAsJsonObject();
-
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> new CityWallPlanner().plan(ledger, reservation,
-                        roadMaskFromBlocks("city_test", new int[][]{}), CityWallPlanner.Options.defaults()));
-
-        assertTrue(ex.getMessage().contains("D5_LOCKED_FOOTPRINT_OUTSIDE_RESERVATION"));
+        JsonObject plan = new CityWallPlanner().plan(reservation, CityWallPlanner.Options.defaults());
+        assertFalse(plan.has("sourcePlacedStructureLedger"));
+        assertFalse(plan.has("actualRoadMask"));
+        assertEquals("d5_reserved_gate_slots", plan.get("roadMaskSource").getAsString());
+        reservation.remove("wallCoverageBounds");
+        assertThrows(IllegalArgumentException.class,
+                () -> new CityWallPlanner().plan(reservation, CityWallPlanner.Options.defaults()));
     }
 
     @Test

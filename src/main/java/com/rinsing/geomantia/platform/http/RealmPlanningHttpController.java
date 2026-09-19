@@ -586,9 +586,16 @@ final class RealmPlanningHttpController implements AutoCloseable {
         String dimensionId = restoredRunDimensionId(runId);
         ServerLevel level = callOnServerThread(() -> resolveLevel(dimensionId, null));
         JsonObject request = postD4AutoCompileWorkflowRequest(runId, citySeedId);
-        return CityPlanningEndpointHandler.handleRunWorkflow(debugRoot(),
+        JsonObject response = CityPlanningEndpointHandler.handleRunWorkflow(debugRoot(),
                 server.getWorldPath(LevelResource.ROOT), runId, citySeedId, request,
                 new CityPlanningEndpointHandler.MinecraftServerHolder(server), level);
+        if (booleanValue(response, "ok", false) && java.util.Set.of("completed", "completed_with_errors").contains(stringValue(response, "status", ""))) {
+            callOnServerThread(() -> {
+                server.saveAllChunks(true, true, true);
+                return null;
+            });
+        }
+        return response;
     }
 
     static JsonObject postD4AutoCompileWorkflowRequest(String runId, String citySeedId) {
@@ -597,9 +604,9 @@ final class RealmPlanningHttpController implements AutoCloseable {
         request.addProperty("citySeedId", citySeedId);
         request.addProperty("skipExisting", true);
         request.addProperty("confirmWorldMutation", true);
-        request.addProperty("stopAfterActivation", true);
-        request.addProperty("planWalls", false);
-        request.addProperty("executeWalls", false);
+        request.addProperty("stopAfterActivation", false);
+        request.addProperty("planWalls", true);
+        request.addProperty("executeWalls", true);
         return request;
     }
 
@@ -1298,7 +1305,7 @@ final class RealmPlanningHttpController implements AutoCloseable {
             boolean saveAfter = booleanValue(request, "executeWalls", false)
                     && response.has("ok")
                     && response.get("ok").getAsBoolean()
-                    && "completed".equals(stringValue(response, "status", ""));
+                    && java.util.Set.of("completed", "completed_with_errors").contains(stringValue(response, "status", ""));
             if (saveAfter) {
                 server.saveAllChunks(true, true, true);
             }

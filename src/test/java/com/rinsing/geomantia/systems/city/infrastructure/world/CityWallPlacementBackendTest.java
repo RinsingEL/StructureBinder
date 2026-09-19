@@ -1,41 +1,31 @@
 package com.rinsing.geomantia.systems.city.infrastructure.world;
 
 import com.google.gson.JsonObject;
-import java.util.List;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CityWallPlacementBackendTest {
-    @Test void commonDatumAbsorbsSmallPitsWithoutChangingWalkwayHeight() {
-        JsonObject result=CityWallPlacementBackend.heightProfile(List.of(61,65,65,66,67),17,64);
-        assertTrue(result.get("ok").getAsBoolean());
-        assertEquals(65,result.get("baseY").getAsInt());
-        assertEquals(74,result.get("walkwayFloorY").getAsInt());
+    @Test void mountainRequiresUnbrokenSolidSurveyInsteadOfOnlyHighSurface() {
+        assertTrue(CityWallPlacementBackend.verifiedBarrier(110,64,61,y->true));
+        assertFalse(CityWallPlacementBackend.verifiedBarrier(110,64,61,y->y!=65),"cave at the wall base");
+        assertFalse(CityWallPlacementBackend.verifiedBarrier(110,64,61,y->y!=61),"hole at survey bottom");
+        assertFalse(CityWallPlacementBackend.verifiedBarrier(110,64,61,y->y!=76),"hole at barrier top");
+        assertFalse(CityWallPlacementBackend.verifiedBarrier(75,64,61,y->true),"terrain is too low to replace wall");
     }
-    @Test void incompatibleCliffRequiresRedesignInsteadOfDisconnectedTops() {
-        JsonObject result=CityWallPlacementBackend.heightProfile(List.of(64,64,65,89),17,64);
-        assertFalse(result.get("ok").getAsBoolean());
-        assertEquals("WALL_TERRAIN_REQUIRES_REDESIGN",result.get("reasonCode").getAsString());
+    @Test void underwaterAndVoidFootingsReachSupportInsideTheWorld() {
+        assertEquals(41,CityWallPlacementBackend.foundationStart(63,63,-64,y->y<=40));
+        assertEquals(63,CityWallPlacementBackend.foundationStart(63,70,-64,y->y<=62));
+        assertEquals(64,CityWallPlacementBackend.foundationStart(99,64,-64,y->true));
+        assertEquals(-64,CityWallPlacementBackend.foundationStart(63,63,-64,y->false));
     }
-    @Test void excessiveFootingAndEmptySurfaceAreRejected() {
-        assertFalse(CityWallPlacementBackend.heightProfile(List.of(60,70,70),17,3).get("ok").getAsBoolean());
-        assertFalse(CityWallPlacementBackend.heightProfile(List.of(),17,64).get("ok").getAsBoolean());
-    }
-    @Test void gateMayCrossRoadButNeverClipBuilding() {
+    @Test void modulesMustStayInsideTheirOwnReservation() {
         JsonObject plan=com.google.gson.JsonParser.parseString("""
                 {"wallUnits":[{"unitType":"gate_gap","blockBounds":{"minX":0,"minZ":0,"maxX":8,"maxZ":4}}],
-                 "actualRoadMask":{"roadMask":[{"blockBounds":{"minX":3,"minZ":-8,"maxX":5,"maxZ":12}}]},
-                 "sourcePlacedStructureLedger":{"placedStructures":[]}}
+                 "wallReservationSource":{"wallCorridorMask":[{"blockBounds":{"minX":0,"minZ":0,"maxX":8,"maxZ":4}}]}}
                 """).getAsJsonObject();
         assertEquals("",CityWallPlacementBackend.geometryConflict(plan));
-        plan.getAsJsonArray("wallUnits").get(0).getAsJsonObject().addProperty("unitType","wall_segment");
-        assertEquals("WALL_UNRESERVED_ROAD_CONFLICT",CityWallPlacementBackend.geometryConflict(plan));
-        plan.getAsJsonArray("wallUnits").get(0).getAsJsonObject().addProperty("unitType","gate_gap");
-        plan.getAsJsonObject("sourcePlacedStructureLedger").getAsJsonArray("placedStructures").add(
-                com.google.gson.JsonParser.parseString("""
-                {"lockedActualFootprint":{"minX":4,"minZ":2,"maxX":10,"maxZ":10}}
-                """));
-        assertEquals("WALL_STRUCTURE_CONFLICT",CityWallPlacementBackend.geometryConflict(plan));
+        plan.getAsJsonArray("wallUnits").get(0).getAsJsonObject().getAsJsonObject("blockBounds").addProperty("maxX",9);
+        assertEquals("WALL_OUTSIDE_OWNED_RESERVATION",CityWallPlacementBackend.geometryConflict(plan));
     }
     @Test void unavailableWorldDoesNotReportSuccessfulPlacement() {
         var report=new CityWallPlacementBackend().execute(null,new JsonObject());

@@ -20,7 +20,9 @@ class RealmPlanningHttpControllerPathTest {
         assertEquals("city_test", request.get("citySeedId").getAsString());
         assertTrue(request.get("skipExisting").getAsBoolean());
         assertTrue(request.get("confirmWorldMutation").getAsBoolean());
-        assertTrue(request.get("stopAfterActivation").getAsBoolean());
+        assertFalse(request.get("stopAfterActivation").getAsBoolean());
+        assertTrue(request.get("planWalls").getAsBoolean());
+        assertTrue(request.get("executeWalls").getAsBoolean());
     }
 
     @Test

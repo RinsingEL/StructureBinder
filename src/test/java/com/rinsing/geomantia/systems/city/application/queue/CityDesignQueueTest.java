@@ -14,6 +14,19 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityDesignQueueTest {
+    @Test void completedAutomaticWallsDoNotReturnCityToTheDesignQueue() throws Exception {
+        CityDesignQueue queue = queue();
+        writeRegistry("run_walls", seed("city_1", "realm_a", "capital", 4000, 0));
+        queue.refresh("run_walls", "global_radial");
+        JsonObject post = postState("run_walls", "city_1", "completed");
+        post.addProperty("reasonCode", "CITY_GENERATION_COMPLETED");
+        queue.onPostD4State(post);
+        var state = queue.status("run_walls");
+        assertEquals("completed", state.get("status").getAsString());
+        assertEquals(1, state.get("completedCount").getAsInt());
+        assertEquals("", state.get("nextAction").getAsString());
+    }
+
     @Test void failureDetailsReachCurrentCityAndAreClearedOnRetry() throws Exception {
         CityDesignQueue queue = queue();
         writeRegistry("run_details", seed("city_1", "realm_a", "capital", 4000, 0));

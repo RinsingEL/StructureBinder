@@ -79,6 +79,7 @@ public final class CityWorkflowStepRunner {
     public JsonObject finish(long workflowStarted, String status) throws IOException {
         report.addProperty("status", status);
         report.addProperty("ok", "completed".equals(status)
+                || "completed_with_errors".equals(status)
                 || "waiting_for_generation".equals(status)
                 || "waiting_for_worldgen".equals(status)
                 || "waiting_for_confirmation".equals(status)

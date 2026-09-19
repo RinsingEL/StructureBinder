@@ -233,7 +233,7 @@ public final class CityDesignQueue {
         switch (status) {
             case "queued", "running" -> setItemStatus(item, POST_D4_RUNNING,
                     reasonCode.isBlank() ? "POST_D4_RUNNING" : reasonCode);
-            case WAITING_FOR_GENERATION -> {
+            case WAITING_FOR_GENERATION, "completed", "completed_with_errors" -> {
                 setItemStatus(item, WAITING_FOR_GENERATION,
                         reasonCode.isBlank() ? "WAITING_FOR_GENERATION" : reasonCode);
                 item.remove("nextAction");

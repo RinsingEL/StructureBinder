@@ -7,7 +7,8 @@ import java.util.*;
 
 /** Immutable regional release snapshot; no chunk IO and no mutation of the save. */
 final class GeographicAreaAccess {
-    private static final Set<String> READY = Set.of("waiting_for_generation","waiting_for_worldgen","completed");
+    private static final Set<String> READY = Set.of("waiting_for_generation", "waiting_for_worldgen", "completed", "completed_with_errors",
+            "queued", "running", "post_d4_running", "blocked_by_program");
     final String runId, dimension;
     final GeographicRegions geography;
     final Set<String> openRegions, readyCities, blockedCities;
@@ -76,7 +77,9 @@ final class GeographicAreaAccess {
             String status=statuses.get(id);
             if(status==null) status=str(read(run.resolve("automation/post_d4/"+safe(id)+".json")),"status","");
             if(status.isBlank()) status=str(read(run.resolve("city_test_runs/"+safe(id)+"/test_run_manifest.json")),"status","");
-            // Queue success alone is insufficient: construction must have an activated worldgen footprint.
+            // Activation is the generation barrier. A retry/running/partial construction state must
+            // not revoke an activated footprint and deadlock the worker that needs its chunks.
+            // Pending design and reopened rosters still remain closed; status alone never releases.
             boolean complete=READY.contains(status) && activated.contains(id);
             if(complete) ready.add(id); else { blocked.add(id); reservations.add(reservation); }
             var b=reservation.protection();

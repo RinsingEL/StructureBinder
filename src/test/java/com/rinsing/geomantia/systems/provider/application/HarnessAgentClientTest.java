@@ -3,6 +3,7 @@ package com.rinsing.geomantia.systems.provider.application;
 import com.google.gson.*;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.io.TempDir;
 import java.net.InetSocketAddress;
@@ -14,6 +15,21 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class HarnessAgentClientTest {
     @TempDir Path root;
+
+    @AfterEach void releaseTemporaryExecutable() throws Exception {
+        Path executable = root.resolve("config/geomantia/runtime")
+                .resolve(HarnessPortableRuntime.DIRECTORY_NAME).resolve("node.exe");
+        long deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(5);
+        // Windows can retain the image mapping briefly after the process has exited.
+        // Keep TempDir cleanup enabled and fail if the executable remains locked.
+        while (true) {
+            try { Files.deleteIfExists(executable); return; }
+            catch (FileSystemException locked) {
+                if (System.nanoTime() >= deadline) throw locked;
+                Thread.sleep(25);
+            }
+        }
+    }
 
     @Test @Timeout(60)
     void bundledRuntimeExecutesHostToolAndSendsNativeImagesWithoutSystemDependencies() throws Exception {

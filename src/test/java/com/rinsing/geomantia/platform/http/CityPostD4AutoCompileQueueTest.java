@@ -15,6 +15,79 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityPostD4AutoCompileQueueTest {
+    @Test void localFailuresFinishWithVisiblePartialOutcomeWithoutRetrying() throws Exception {
+        var calls = new java.util.concurrent.atomic.AtomicInteger();
+        try (var queue = new CityPostD4AutoCompileQueue(temporaryDirectory,
+                (r,c) -> { calls.incrementAndGet(); return response("completed_with_errors", true); }, ignored -> {}, 10L)) {
+            queue.enqueue("run_partial", "city_partial");
+            var state = awaitStatus(queue, "run_partial", "city_partial", "completed_with_errors");
+            assertEquals("CITY_GENERATION_PARTIAL_FAILURE", state.get("reasonCode").getAsString());
+            assertTrue(state.has("workflowResponse"));
+            Thread.sleep(60);
+            assertEquals(1, calls.get());
+        }
+    }
+
+    @Test void waitingGenerationContinuesAutomaticallyAndStopsAfterCompletion() throws Exception {
+        var calls = new java.util.concurrent.atomic.AtomicInteger();
+        var entered = new java.util.concurrent.CountDownLatch(1);
+        var release = new java.util.concurrent.CountDownLatch(1);
+        try (var queue = new CityPostD4AutoCompileQueue(temporaryDirectory, (r, c) -> {
+            int call = calls.incrementAndGet();
+            if (call == 1) return response("waiting_for_worldgen", true);
+            entered.countDown();
+            assertTrue(release.await(3, java.util.concurrent.TimeUnit.SECONDS));
+            return response("completed", true);
+        }, state -> {}, 10L)) {
+            queue.enqueue("run_auto", "city_auto");
+            assertTrue(entered.await(3, java.util.concurrent.TimeUnit.SECONDS));
+            assertEquals("waiting_for_generation", queue.status("run_auto", "city_auto").get("status").getAsString());
+            queue.enqueue("run_auto", "city_auto"); // Must not duplicate an active continuation.
+            release.countDown();
+            var state = awaitStatus(queue, "run_auto", "city_auto", "completed");
+            assertEquals("CITY_GENERATION_COMPLETED", state.get("reasonCode").getAsString());
+            assertEquals(1, state.get("attempt").getAsInt());
+            Thread.sleep(60);
+            assertEquals(2, calls.get());
+        } finally { release.countDown(); }
+    }
+
+    @Test void resumesLegacyWaitingJobAfterRestartButNeverRepeatsCompletedWalls() throws Exception {
+        Path file = temporaryDirectory.resolve("run_resume/automation/post_d4/city_resume.json");
+        Files.createDirectories(file.getParent());
+        JsonObject state = new JsonObject();
+        state.addProperty("runId", "run_resume"); state.addProperty("citySeedId", "city_resume");
+        state.addProperty("status", "waiting_for_generation"); state.addProperty("attempt", 4);
+        Files.writeString(file, state.toString());
+        try (var queue = new CityPostD4AutoCompileQueue(temporaryDirectory,
+                (r, c) -> response("completed", true), ignored -> {}, 10L)) {
+            assertEquals(5, awaitStatus(queue, "run_resume", "city_resume", "completed").get("attempt").getAsInt());
+        }
+        try (var queue = new CityPostD4AutoCompileQueue(temporaryDirectory,
+                (r, c) -> { throw new AssertionError("completed walls must not run again"); })) {
+            assertEquals("completed", queue.status("run_resume", "city_resume").get("status").getAsString());
+        }
+    }
+
+    @Test void wallFailureAfterWaitingRemainsBlockedWithoutAutomaticRetries() throws Exception {
+        var calls = new java.util.concurrent.atomic.AtomicInteger();
+        JsonObject failure = failedWorkflowResponse();
+        var step = failure.getAsJsonObject("workflowReport").getAsJsonArray("steps").get(0).getAsJsonObject();
+        step.addProperty("name", "city_execute_city_walls");
+        step.addProperty("reasonCode", "WALL_TERRAIN_REQUIRES_REDESIGN");
+        step.addProperty("nextAction", "city_post_d4_auto_compile_retry");
+        try (var queue = new CityPostD4AutoCompileQueue(temporaryDirectory,
+                (r, c) -> calls.incrementAndGet() == 1 ? response("waiting_for_worldgen", true) : failure,
+                ignored -> {}, 10L)) {
+            queue.enqueue("run_wall_failure", "city_wall_failure");
+            var state = awaitStatus(queue, "run_wall_failure", "city_wall_failure", "blocked_by_program");
+            assertEquals("city_execute_city_walls", state.get("failedStep").getAsString());
+            assertEquals("WALL_TERRAIN_REQUIRES_REDESIGN", state.get("reasonCode").getAsString());
+            Thread.sleep(60);
+            assertEquals(2, calls.get());
+        }
+    }
+
     @Test void publishesConcreteProgramFailureToStatusListenerAndRestart() throws Exception {
         JsonObject failure = failedWorkflowResponse();
         JsonObject step = failure.getAsJsonObject("workflowReport").getAsJsonArray("steps").get(0).getAsJsonObject();

@@ -477,8 +477,10 @@ class CityPlanningEndpointHandlerTest {
     }
 
 
-    @Test
-    void lockedTemplatePlanUsesBeardThinWithoutStructureStartSignature() {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {
+            "structure_start_beard_thin", "structure_start_decoration"})
+    void lockedTemplatePlanAcceptsSupportedStructureStartPolicies(String terrainPolicy) {
         JsonObject plan = JsonParser.parseString("""
                 {
                   "schema": "city_template_placement_plan",
@@ -509,8 +511,13 @@ class CityPlanningEndpointHandlerTest {
                 }
                 """).getAsJsonObject();
 
-        assertDoesNotThrow(() -> CityPlanningEndpointHandler.validateLockedMaterializationPlan(plan));
         JsonObject templateItem = plan.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject();
+        templateItem.addProperty("terrainPosePolicy", terrainPolicy);
+        assertDoesNotThrow(() -> CityPlanningEndpointHandler.validateLockedMaterializationPlan(plan));
+        templateItem.addProperty("terrainPosePolicy", "unsupported_terrain_policy");
+        assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.validateLockedMaterializationPlan(plan));
+        templateItem.addProperty("terrainPosePolicy", terrainPolicy);
         templateItem.addProperty("templateDatumPolicy", "worldgen_surface_motion_blocking_no_leaves");
         assertThrows(IllegalArgumentException.class,
                 () -> CityPlanningEndpointHandler.validateLockedMaterializationPlan(plan));
@@ -526,6 +533,66 @@ class CityPlanningEndpointHandlerTest {
         plan.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject().remove("materializationSource");
         assertThrows(IllegalArgumentException.class,
                 () -> CityPlanningEndpointHandler.validateLockedMaterializationPlan(plan));
+    }
+
+    @Test
+    void oldFailedUniformWallPlanIsRecomputedButSuccessfulWallsSurviveUpgrade() throws Exception {
+        Path plan=temporaryDirectory.resolve("city_wall_plan.json");
+        Path reservation=temporaryDirectory.resolve("reservation.json");
+        Files.writeString(reservation,"{}");
+        String hash="sha256:"+java.util.HexFormat.of().formatHex(
+                java.security.MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(reservation)));
+        JsonObject old=JsonParser.parseString("""
+                {"schema":"city_wall_plan","roadMaskSource":"d5_reserved_gate_slots",
+                 "terrainFitPolicy":{"heightStrategy":"common_module_walkway_datum"},
+                 "wallPlacementProfile":{"ok":false,"reasonCode":"WALL_TERRAIN_REQUIRES_REDESIGN"}}
+                """).getAsJsonObject();
+        old.addProperty("sourceReservationHash",hash);Files.writeString(plan,old.toString());
+        assertFalse(CityPlanningEndpointHandler.workflowWallPlanMatchesRequest(plan,new JsonObject(),reservation));
+        JsonObject success=new JsonObject();success.addProperty("ok",true);
+        success.addProperty("sourceWallPlanHash","sha256:"+java.util.HexFormat.of().formatHex(
+                java.security.MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(plan))));
+        Files.writeString(plan.resolveSibling("city_wall_placement_report.json"),success.toString());
+        assertTrue(CityPlanningEndpointHandler.workflowWallPlanMatchesRequest(plan,new JsonObject(),reservation));
+        success.addProperty("ok",false);
+        Files.writeString(plan.resolveSibling("city_wall_placement_report.json"),success.toString());
+        old.getAsJsonObject("terrainFitPolicy").addProperty("heightStrategy","terrain_following_sections");
+        old.remove("wallPlacementProfile");Files.writeString(plan,old.toString());
+        assertTrue(CityPlanningEndpointHandler.workflowWallPlanMatchesRequest(plan,new JsonObject(),reservation));
+        Files.writeString(reservation,"{\"changed\":true}");
+        assertFalse(CityPlanningEndpointHandler.workflowWallPlanMatchesRequest(plan,new JsonObject(),reservation));
+    }
+
+    @Test
+    void savedWallPlacementIsReusedOnlyForTheSamePlan() throws Exception {
+        Path plan = temporaryDirectory.resolve("wall.json");
+        Path report = temporaryDirectory.resolve("wall-report.json");
+        Files.writeString(plan, "{\"wall\":1}");
+        String hash = "sha256:" + java.util.HexFormat.of().formatHex(
+                java.security.MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(plan)));
+        JsonObject result = new JsonObject(); result.addProperty("ok", true);
+        result.addProperty("sourceWallPlanHash", hash);
+        Files.writeString(report, result.toString());
+        assertTrue(CityPlanningEndpointHandler.wallPlacementCurrent(plan, report));
+        Files.writeString(plan, "{\"wall\":2}");
+        assertFalse(CityPlanningEndpointHandler.wallPlacementCurrent(plan, report));
+    }
+
+    @Test
+    void derivedRoadsideTreesDoNotInvalidateAcceptedD4DuringAutomaticContinuation() {
+        JsonObject current = JsonParser.parseString("""
+                {"cityId":"city_test","anchors":[{"anchorId":"house","templateRef":"test:house"}]}
+                """).getAsJsonObject();
+        JsonObject legacy = current.deepCopy();
+        legacy.add("roadsideTreeReport", new JsonObject());
+        legacy.getAsJsonArray("anchors").add(JsonParser.parseString("""
+                {"anchorId":"roadside::road::1::0","placementRole":"roadside_tree",
+                 "templateRef":"geomantia:roadside/small_oak"}
+                """));
+        assertTrue(CityPlanningEndpointHandler.d6SourceMatchesAnchorMap(legacy, current));
+        assertTrue(CityPlanningEndpointHandler.d6SourceMatchesAnchorMap(current, current));
+        legacy.getAsJsonArray("anchors").get(0).getAsJsonObject().addProperty("templateRef", "test:changed");
+        assertFalse(CityPlanningEndpointHandler.d6SourceMatchesAnchorMap(legacy, current));
     }
 
     @Test
@@ -1747,6 +1814,37 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
+    void pavingMembershipDoesNotExcludeNaturalGroundBuildingsFromWalls() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-wall-paving-membership");
+        String runId = "run_paving", citySeedId = "city_test";
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+        Path d4 = debugRoot.resolve(runId).resolve("city_d4_" + citySeedId).resolve("structure_anchor_map.json");
+        JsonObject anchors = JsonParser.parseString(Files.readString(d4)).getAsJsonObject();
+        for (var anchor : anchors.getAsJsonArray("anchors"))
+            anchor.getAsJsonObject().addProperty("placementGroupId", "natural_ground");
+        Files.writeString(d4, anchors.toString());
+        var before = CityPlanningEndpointHandler.handlePlanD5(debugRoot, runId, citySeedId)
+                .getAsJsonObject("wallReservationPlan");
+        Path blueprint = debugRoot.resolve(runId).resolve("city_test_runs").resolve(citySeedId)
+                .resolve("steps/blueprint/city_blueprint.json");
+        Files.createDirectories(blueprint.getParent());
+        Path steps = blueprint.getParent().getParent();
+        Files.createDirectories(steps.resolve("d3"));
+        Files.createDirectories(steps.resolve("d4"));
+        Files.copy(debugRoot.resolve(runId).resolve("city_d3_" + citySeedId)
+                .resolve("city_landform_review_package.json"), steps.resolve("d3/city_landform_review_package.json"));
+        Files.copy(d4, steps.resolve("d4/structure_anchor_map.json"));
+        Files.writeString(blueprint, """
+                {"outdoorPlan":{"mode":"GENERATE","foundationGroupIds":["paved_group"]}}
+                """);
+        var after = CityPlanningEndpointHandler.handlePlanD5(debugRoot, runId, citySeedId)
+                .getAsJsonObject("wallReservationPlan");
+        assertEquals(before.get("wallLine"), after.get("wallLine"));
+        assertEquals(before.get("wallNodeSlots"), after.get("wallNodeSlots"));
+        assertEquals(anchors, JsonParser.parseString(Files.readString(d4)));
+    }
+
+    @Test
     void handlePlanD5RequiresPatchRescanWhenReservationTouchesD3Boundary() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-wall-v5-rescan-test");
         String runId = "run_wall_v5_rescan";
@@ -1834,22 +1932,7 @@ class CityPlanningEndpointHandlerTest {
                 .resolve("wall_reservation_plan.json");
         JsonObject reservation = JsonParser.parseString(Files.readString(reservationPath)).getAsJsonObject();
 
-        Path d7Dir = debugRoot.resolve(runId).resolve("city_d7_" + citySeedId);
-        Files.createDirectories(d7Dir);
-        Files.writeString(d7Dir.resolve("placed_structure_ledger.json"), """
-                {
-                  "schema": "city_placed_structure_ledger",
-                  "cityId": "city_test",
-                  "placedStructures": [
-                    {
-                      "anchorId": "admin_core",
-                      "structureId": "minecraft:desert_pyramid",
-                      "actualFootprint": {"minX": -10, "minZ": -12, "maxX": 18, "maxZ": 20}
-                    }
-                  ]
-                }
-                """);
-
+        // No D7 directory or actual road scan: D5 owns the entire wall footprint.
         JsonObject response = CityPlanningEndpointHandler.handlePlanCityWalls(
                 debugRoot, runId, citySeedId, null, 8, CityWallPlanner.Options.defaults());
 
@@ -1861,7 +1944,7 @@ class CityPlanningEndpointHandlerTest {
         assertEquals(8, wallPlan.get("wallUnitLengthBlocks").getAsInt());
         assertEquals(10, wallPlan.get("nominalWallHeightBlocks").getAsInt());
         assertTrue(wallPlan.getAsJsonObject("wallGraphValidation").get("noRelineAfterD5").getAsBoolean());
-        assertTrue(wallPlan.getAsJsonArray("wallUnits").toString().contains("frozen_module_walkway_datum"));
+        assertTrue(wallPlan.getAsJsonArray("wallUnits").toString().contains("terrain_following_sections"));
         assertEquals("skipped", wallPlan.getAsJsonObject("surfaceCacheBackfill").get("status").getAsString());
         assertTrue(response.getAsJsonObject("artifacts").has("surfaceCacheBackfill"));
     }

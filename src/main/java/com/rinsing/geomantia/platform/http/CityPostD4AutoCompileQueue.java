@@ -15,7 +15,8 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 
@@ -27,7 +28,8 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
     private final Path debugRoot;
     private final WorkflowRunner runner;
     private final StateListener stateListener;
-    private final ExecutorService executor;
+    private final ScheduledExecutorService executor;
+    private final long pollDelayMillis;
     private final Map<JobKey, Boolean> active = new ConcurrentHashMap<>();
 
     CityPostD4AutoCompileQueue(Path debugRoot, WorkflowRunner runner) {
@@ -35,10 +37,16 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
     }
 
     CityPostD4AutoCompileQueue(Path debugRoot, WorkflowRunner runner, StateListener stateListener) {
+        this(debugRoot, runner, stateListener, 15000L);
+    }
+
+    CityPostD4AutoCompileQueue(Path debugRoot, WorkflowRunner runner, StateListener stateListener,
+                              long pollDelayMillis) {
+        this.pollDelayMillis = Math.max(1L, pollDelayMillis);
         this.debugRoot = Objects.requireNonNull(debugRoot, "debugRoot").toAbsolutePath().normalize();
         this.runner = Objects.requireNonNull(runner, "runner");
         this.stateListener = Objects.requireNonNull(stateListener, "stateListener");
-        this.executor = Executors.newSingleThreadExecutor(runnable -> {
+        this.executor = Executors.newSingleThreadScheduledExecutor(runnable -> {
             Thread thread = new Thread(runnable, "Geomantia-City-Post-D4");
             thread.setDaemon(true);
             return thread;
@@ -156,17 +164,26 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
     }
 
     private void run(JobKey key, int attempt) {
+        boolean continueGeneration = false;
         try {
-            write(key, state(key, "running", "POST_D4_WORKFLOW_RUNNING", attempt));
+            JsonObject previous = read(key);
+            if (!"waiting_for_generation".equals(stringValue(previous, "status", ""))) {
+                write(key, state(key, "running", "POST_D4_WORKFLOW_RUNNING", attempt));
+            }
             JsonObject response = runner.run(key.runId, key.citySeedId);
             String workflowStatus = stringValue(response, "status", "");
-            boolean ready = "waiting_for_generation".equals(workflowStatus) && booleanValue(response, "ok", false);
+            boolean completed = ("completed".equals(workflowStatus) || "completed_with_errors".equals(workflowStatus)) && booleanValue(response, "ok", false);
+            boolean waiting = ("waiting_for_generation".equals(workflowStatus)
+                    || "waiting_for_worldgen".equals(workflowStatus)) && booleanValue(response, "ok", false);
+            boolean ready = completed || waiting;
+            continueGeneration = waiting;
             String recoveryAction = ready ? "" : recoveryAction(response);
             boolean blueprintRevisionRequired = "city_submit_d4_blueprint".equals(recoveryAction);
             boolean humanReviewRequired = "stop_for_human_review".equals(recoveryAction);
-            JsonObject finished = state(key, ready ? "waiting_for_generation"
+            JsonObject finished = state(key, completed ? workflowStatus : waiting ? "waiting_for_generation"
                     : blueprintRevisionRequired || humanReviewRequired ? "needs_agent" : "blocked_by_program",
-                    ready ? "WAITING_FOR_GENERATION" : blueprintRevisionRequired
+                    completed ? ("completed_with_errors".equals(workflowStatus)
+                            ? "CITY_GENERATION_PARTIAL_FAILURE" : "CITY_GENERATION_COMPLETED") : waiting ? "WAITING_FOR_GENERATION" : blueprintRevisionRequired
                             ? "D4_BLUEPRINT_REVISION_REQUIRED" : humanReviewRequired
                             ? "D4_HUMAN_REVIEW_REQUIRED" : "POST_D4_WORKFLOW_UNEXPECTED_STATUS", attempt);
             finished.addProperty("workflowStatus", workflowStatus);
@@ -176,11 +193,13 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
             if (response.has("artifacts")) {
                 finished.add("artifacts", response.get("artifacts").deepCopy());
             }
-            if (!ready) {
+            if (!ready || "completed_with_errors".equals(workflowStatus)) {
                 finished.add("workflowResponse", response.deepCopy());
             }
             write(key, finished);
         } catch (Exception ex) {
+            continueGeneration = false;
+            if (executor.isShutdown()) return; // Persisted running/waiting work resumes after restart.
             LOGGER.error("Post-D4 auto compile failed for {}/{}", key.runId, key.citySeedId, ex);
             JsonObject failed = state(key, "blocked_by_program", "POST_D4_WORKFLOW_FAILED", attempt);
             failed.addProperty("failureOwner", "program");
@@ -194,7 +213,13 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
                         writeFailure);
             }
         } finally {
-            active.remove(key);
+            if (continueGeneration && !executor.isShutdown()) {
+                try {
+                    executor.schedule(() -> run(key, attempt), pollDelayMillis, TimeUnit.MILLISECONDS);
+                } catch (RejectedExecutionException stopped) {
+                    active.remove(key);
+                }
+            } else active.remove(key);
         }
     }
 
@@ -261,7 +286,8 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
                         try {
                             JsonObject state = JsonParser.parseString(Files.readString(path)).getAsJsonObject();
                             String status = stringValue(state, "status", "");
-                            if (!"queued".equals(status) && !"running".equals(status)) {
+                            if (!"queued".equals(status) && !"running".equals(status)
+                                    && !"waiting_for_generation".equals(status)) {
                                 JsonObject workflow = object(object(state, "workflowResponse"), "workflowReport");
                                 if ("needs_agent".equals(status) && workflow != null && workflow.has("steps")) {
                                     var steps = workflow.getAsJsonArray("steps");
@@ -290,10 +316,14 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
                                     stringValue(state, "citySeedId", ""));
                             if (active.putIfAbsent(key, Boolean.TRUE) == null) {
                                 int attempt = intValue(state, "attempt", 0) + 1;
-                                JsonObject recovered = state(key, "queued", "RECOVERED_AFTER_RESTART", attempt);
+                                boolean waiting = "waiting_for_generation".equals(status);
+                                JsonObject recovered = state(key, waiting ? "waiting_for_generation" : "queued",
+                                        "RECOVERED_AFTER_RESTART", attempt);
                                 if (state.has("createdAt")) recovered.add("createdAt", state.get("createdAt").deepCopy());
                                 write(key, recovered);
-                                submit(key, attempt);
+                                if (waiting) {
+                                    executor.schedule(() -> run(key, attempt), pollDelayMillis, TimeUnit.MILLISECONDS);
+                                } else submit(key, attempt);
                             }
                         } catch (Exception ex) {
                             LOGGER.warn("Could not recover post-D4 job {}: {}", path, ex.getMessage());

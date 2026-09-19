@@ -84,7 +84,7 @@ public final class CityWallReservationPlanner {
         JsonArray wallLine = wallLine(segments);
         JsonArray wallCorridorMask = corridorMasks(segments);
         JsonArray gateSlots = gateSlots(segments, halfWidth, anchorMap);
-        JsonArray wallNodeSlots = wallNodeSlots(segments, gateSlots);
+        JsonArray wallNodeSlots = wallNodeSlots(segments, gateSlots, anchorMap);
 
         JsonObject plan = new JsonObject();
         plan.addProperty("schema", SCHEMA);
@@ -319,23 +319,69 @@ public final class CityWallReservationPlanner {
         return out;
     }
 
-    private static JsonArray wallNodeSlots(List<Segment> segments, JsonArray gateSlots) {
+    private static JsonArray wallNodeSlots(List<Segment> segments, JsonArray gateSlots, JsonObject anchorMap) {
         JsonArray out = new JsonArray(); Set<String> corners = new LinkedHashSet<>();
+        List<BlockPoint> displaced = new ArrayList<>();
         for (Segment segment : segments) {
-            BlockBounds node = new BlockBounds(segment.from.x()-3, segment.from.z()-6,
-                    segment.from.x()+3, segment.from.z()+3);
-            if (overlapsAny(node, gateSlots))
-                throw new IllegalArgumentException("WALL_GATE_CORNER_CONFLICT: move the exit road away from the corner");
-            addNodeSlot(out, corners, segment.from, "guard_tower", "DISTRICT_CORNER");
+            if (overlapsAny(towerBounds(segment.from), gateSlots)) {
+                if (!displaced.contains(segment.from)) displaced.add(segment.from);
+            } else addNodeSlot(out, corners, segment.from, "guard_tower", "DISTRICT_CORNER");
+        }
+        // Reserve unaffected corners first, so moving one tower cannot consume another corner.
+        for (BlockPoint corner : displaced) {
+            BlockPoint replacement = relocateCorner(corner, segments, gateSlots, out, anchorMap);
+            if (replacement == null)
+                throw new IllegalArgumentException("WALL_GATE_CORNER_CONFLICT: no safe tower position within 64 blocks along adjacent walls at "
+                        + corner.x() + "," + corner.z());
+            addNodeSlot(out, corners, replacement, "guard_tower", "DISTRICT_CORNER_GATE_AVOIDANCE");
+        }
+        for (Segment segment : segments) {
             int length = Math.abs(segment.to.x()-segment.from.x())+Math.abs(segment.to.z()-segment.from.z());
             if (length > 160) {
                 BlockPoint middle = new BlockPoint((segment.from.x()+segment.to.x())/2,
                         (segment.from.z()+segment.to.z())/2);
-                if (!overlapsAny(new BlockBounds(middle.x()-3,middle.z()-6,middle.x()+3,middle.z()+3),gateSlots))
+                if (safeTowerPosition(middle, gateSlots, out, anchorMap))
                     addNodeSlot(out,corners,middle,"guard_tower","LONG_WALL_SUPPORT");
             }
         }
         return out;
+    }
+
+    private static BlockPoint relocateCorner(BlockPoint corner, List<Segment> segments,
+                                              JsonArray gates, JsonArray nodes, JsonObject anchors) {
+        for (int distance = 1; distance <= 64; distance++) {
+            for (Segment segment : segments) {
+                BlockPoint other = segment.from.equals(corner) ? segment.to
+                        : segment.to.equals(corner) ? segment.from : null;
+                if (other == null) continue;
+                int length = Math.abs(other.x()-corner.x()) + Math.abs(other.z()-corner.z());
+                if (distance > length - 8) continue;
+                BlockPoint candidate = new BlockPoint(corner.x() + Integer.signum(other.x()-corner.x())*distance,
+                        corner.z() + Integer.signum(other.z()-corner.z())*distance);
+                if (safeTowerPosition(candidate, gates, nodes, anchors)) return candidate;
+            }
+        }
+        return null;
+    }
+
+    private static BlockBounds towerBounds(BlockPoint point) {
+        return new BlockBounds(point.x()-3, point.z()-6, point.x()+3, point.z()+3);
+    }
+
+    private static boolean safeTowerPosition(BlockPoint point, JsonArray gates, JsonArray nodes, JsonObject anchorMap) {
+        BlockBounds tower = towerBounds(point);
+        if (overlapsAny(tower, gates) || overlapsAny(tower, nodes)) return false;
+        for (JsonElement element : array(anchorMap, "streetBands")) {
+            JsonObject road = element.getAsJsonObject();
+            if (road.has("bounds") && tower.overlaps(bounds(road.getAsJsonObject("bounds")))) return false;
+        }
+        for (JsonElement element : array(anchorMap, "anchors")) {
+            JsonObject anchor = element.getAsJsonObject();
+            for (String key : List.of("reservedEnvelope", "collisionEnvelope", "maskEnvelope", "plannedFootprint"))
+                if (anchor.has(key) && anchor.get(key).isJsonObject()
+                        && tower.overlaps(bounds(anchor.getAsJsonObject(key)))) return false;
+        }
+        return true;
     }
 
     private static void addNodeSlot(JsonArray out, Set<String> seen, BlockPoint point,

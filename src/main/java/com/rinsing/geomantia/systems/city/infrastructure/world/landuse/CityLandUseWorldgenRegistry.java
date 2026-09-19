@@ -553,7 +553,7 @@ public final class CityLandUseWorldgenRegistry {
         List<CityLandUseChunkStatusPreflight.OwnerChunk> missing = job.owners().stream()
                 .filter(owner -> !isApplied(job.ownerKey(owner)))
                 .toList();
-        String status = job.failed() ? "failed"
+        String status = job.completed && !job.failures().isEmpty() ? "completed_with_errors"
                 : missing.isEmpty() ? "completed"
                 : job.pendingLoad() != null ? "loading_chunk" : "queued";
         return new BackfillSummary(job.areaPlan().cityId(), job.areaPlan().planHash(),
@@ -1274,7 +1274,6 @@ public final class CityLandUseWorldgenRegistry {
         private final List<OwnerFailure> failures = new ArrayList<>();
         private int cursor;
         private boolean completed;
-        private boolean failed;
         private boolean cancelled;
         private CityLandUseChunkStatusPreflight.OwnerChunk pendingOwner;
         private CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> pendingLoad;
@@ -1300,8 +1299,7 @@ public final class CityLandUseWorldgenRegistry {
         private List<CityLandUseChunkStatusPreflight.OwnerChunk> owners() { return owners; }
         private int appliedBeforeCount() { return appliedBeforeCount; }
         private int cursor() { return cursor; }
-        private boolean failed() { return failed; }
-        private boolean terminal() { return completed || failed || cancelled; }
+        private boolean terminal() { return completed || cancelled; }
         private CityLandUseChunkStatusPreflight.OwnerChunk pendingOwner() { return pendingOwner; }
         private CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> pendingLoad() {
             return pendingLoad;
@@ -1332,19 +1330,13 @@ public final class CityLandUseWorldgenRegistry {
 
         private void record(CityLandUseChunkStatusPreflight.OwnerChunk owner, ApplySummary result) {
             failures.addAll(result.failures());
-            if (result.failedOwnerCount() > 0) {
-                failed = true;
-                clearPendingLoad();
-                return;
-            }
             advanceCursor();
         }
 
         private void fail(CityLandUseChunkStatusPreflight.OwnerChunk owner, String reasonCode) {
             failures.add(new OwnerFailure(areaPlan.cityId(), areaPlan.planHash(), surfacePrintPlan.planHash(),
                     owner.chunkX(), owner.chunkZ(), reasonCode, false));
-            failed = true;
-            clearPendingLoad();
+            advanceCursor();
         }
 
         private void complete() {
