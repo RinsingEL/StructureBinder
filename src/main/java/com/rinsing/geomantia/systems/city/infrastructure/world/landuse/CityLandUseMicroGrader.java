@@ -837,6 +837,10 @@ final class CityLandUseMicroGrader {
                 .filter(operation -> operation.surfaceOffset() == 0)
                 .map(operation -> new Cell(operation.x(), operation.z()))
                 .collect(java.util.stream.Collectors.toSet());
+        Set<Cell> roads = roadCells(fragment);
+        Map<Cell, String> stairAreaByCell = new HashMap<>(areaByCell);
+        roads.forEach(stairAreaByCell::remove);
+        ownedSurfaceCells.removeAll(roads);
         String pathBlock = fragment.gradingFeatureOperations().stream()
                 .filter(operation -> operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB)
                 .map(CityLandUseChunkCompiler.FeatureOperation::blockId)
@@ -922,12 +926,13 @@ final class CityLandUseMicroGrader {
 
             boolean built = false;
             for (AccessBoundary boundary : boundaries) {
+                if (!stairAreaByCell.containsKey(boundary.low())) continue;
                 int delta = boundary.highY() - boundary.lowY();
                 TransitionKey key = new TransitionKey("access::" + demand.demandId(),
                         boundary.highDx() != 0 ? Axis.HORIZONTAL : Axis.VERTICAL, 0,
                         boundary.lowY(), boundary.highY(), boundary.highDx(), boundary.highDz());
                 Map<Cell, StairDecision> candidate = new LinkedHashMap<>();
-                if (directRunAvailable(boundary.low(), key, delta, areaByCell, platformTargets)) {
+                if (directRunAvailable(boundary.low(), key, delta, stairAreaByCell, platformTargets)) {
                     for (int step = 0; step < delta; step++) {
                         Cell cell = new Cell(boundary.low().x() - key.highDx() * step,
                                 boundary.low().z() - key.highDz() * step);
@@ -937,12 +942,13 @@ final class CityLandUseMicroGrader {
                     }
                 } else {
                     addSplitStairs(candidate, key.sourceId(), stairBlock, key,
-                            List.of(boundary.low()), areaByCell, platformTargets, StairMode.ACCESS_SPLIT);
+                            List.of(boundary.low()), stairAreaByCell, platformTargets, StairMode.ACCESS_SPLIT);
                 }
                 if (candidate.isEmpty()) {
-                    addCutThroughStairs(candidate, key, boundary.low(), stairBlock, areaByCell, platformTargets);
+                    addCutThroughStairs(candidate, key, boundary.low(), stairBlock, stairAreaByCell, platformTargets);
                 }
-                if (candidate.isEmpty()) continue;
+                // Reject a whole flight, never clip road cells out of a partially built staircase.
+                if (candidate.isEmpty() || candidate.keySet().stream().anyMatch(roads::contains)) continue;
                 Set<Cell> stairCells = candidate.keySet();
                 List<Cell> path = shortestPath(platformCell, boundary.occupiedSide(), component);
                 if (path.isEmpty()) continue;
@@ -1221,12 +1227,7 @@ final class CityLandUseMicroGrader {
                 .map(operation -> new Cell(operation.x(), operation.z()))
                 .forEach(occupiedCells::add);
 
-        Set<Cell> roadCells = java.util.stream.Stream.concat(fragment.gradingFeatureOperations().stream(),
-                        fragment.featureOperations().stream())
-                .filter(operation -> operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
-                        || operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR)
-                .map(operation -> new Cell(operation.x(), operation.z()))
-                .collect(java.util.stream.Collectors.toSet());
+        Set<Cell> roadCells = roadCells(fragment);
         protectedCells.addAll(roadCells);
         protectedCells.addAll(accessCells);
         List<TerraceEdgeDecision> result = new ArrayList<>();
@@ -1265,6 +1266,15 @@ final class CityLandUseMicroGrader {
                             blockId, kind));
                 });
         return List.copyOf(result);
+    }
+
+    private static Set<Cell> roadCells(CityLandUseChunkCompiler.ChunkFragment fragment) {
+        return java.util.stream.Stream.concat(fragment.gradingFeatureOperations().stream(),
+                        fragment.featureOperations().stream())
+                .filter(operation -> operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
+                        || operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR)
+                .map(operation -> new Cell(operation.x(), operation.z()))
+                .collect(java.util.stream.Collectors.toSet());
     }
 
     private static boolean needsTerraceCornerLink(Cell cell, int targetY,
@@ -1459,6 +1469,10 @@ final class CityLandUseMicroGrader {
                          String blockId,
                          CityLandUseSurfacePrintPlan.HorizontalFacing facing,
                          StairMode mode) {
+        boolean platformAccess() {
+            return mode == StairMode.ACCESS_DIRECT || mode == StairMode.ACCESS_SPLIT || mode == StairMode.ACCESS_CUT;
+        }
+
         StairDecision {
             Objects.requireNonNull(sourceId, "sourceId");
             Objects.requireNonNull(blockId, "blockId");

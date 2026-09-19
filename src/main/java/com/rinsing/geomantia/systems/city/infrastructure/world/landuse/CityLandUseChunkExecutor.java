@@ -177,7 +177,8 @@ public final class CityLandUseChunkExecutor {
         }
         Map<ColumnKey, CityLandUseMicroGrader.StairDecision> platformStairByColumn = new HashMap<>();
         for (CityLandUseMicroGrader.StairDecision stair : foundationPlan.stairs()) {
-            if (frozenRoadColumns.contains(new ColumnKey(stair.x(), stair.z()))) continue;
+            if (frozenRoadColumns.contains(new ColumnKey(stair.x(), stair.z()))
+                    || stair.platformAccess() && roadColumns.contains(new ColumnKey(stair.x(), stair.z()))) continue;
             platformStairByColumn.put(new ColumnKey(stair.x(), stair.z()), stair);
         }
         Map<ColumnKey, Integer> plannedSurfaceY = new HashMap<>();
@@ -465,7 +466,8 @@ public final class CityLandUseChunkExecutor {
 
         for (CityLandUseMicroGrader.StairDecision stair : foundationPlan.stairs()) {
             ColumnKey key = new ColumnKey(stair.x(), stair.z());
-            if (materializedPlatformStairs.contains(key) || frozenRoadColumns.contains(key)) continue;
+            if (materializedPlatformStairs.contains(key) || frozenRoadColumns.contains(key)
+                    || stair.platformAccess() && roadColumns.contains(key)) continue;
             PreparedMutation mutation = prepareFeature(world, platformStairOperation(stair, fragment), stair.targetY(),
                     baseMutationClearsTarget(basePrepared, stair.x(), stair.targetY(), stair.z()));
             if (mutation.failureReason() != null) {

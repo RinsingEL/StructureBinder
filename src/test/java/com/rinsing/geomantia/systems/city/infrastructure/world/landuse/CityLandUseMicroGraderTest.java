@@ -16,6 +16,37 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandUseMicroGraderTest {
     @Test
+    void platformAccessChoosesAnotherWholeFlightWhenItsOriginalRunIsARoad() {
+        var purposes=List.of(
+                new CityLandUseChunkCompiler.PlatformPurposeAnchor("area","low",
+                        CityLandUseChunkCompiler.PlatformPurpose.BUILDING,new BlockBounds(2,7,3,9)),
+                new CityLandUseChunkCompiler.PlatformPurposeAnchor("area","high",
+                        CityLandUseChunkCompiler.PlatformPurpose.BUILDING,new BlockBounds(12,7,13,9)));
+        var demands=List.of(new CityLandUseChunkCompiler.PlatformAccessDemand("area","entry",
+                new BlockPoint(12,8),CardinalDirection.WEST));
+        var original=foundationFragmentWithPlatformFacts(platformSurfaces(),purposes,demands);
+        var baseline=CityLandUseMicroGrader.planFoundationPlatform(original,splitTerrain());
+        var originalStairs=baseline.stairs().stream().filter(CityLandUseMicroGrader.StairDecision::platformAccess).toList();
+        assertTrue(!originalStairs.isEmpty());
+        for(var kind:List.of(CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,
+                CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR)) {
+            var roads=originalStairs.stream().map(s->new CityLandUseChunkCompiler.FeatureOperation("road",
+                    s.x(),s.z(),"minecraft:stone_brick_stairs",0,kind,
+                    CityLandUseSurfacePrintPlan.HorizontalFacing.EAST)).toList();
+            var fragment=new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,
+                    "city","hash","palette",0,0,256,0,0,0,"minecraft:dirt",
+                    original.gradingMaskCells(),original.surfaceOperations(),List.of(),roads,List.of(),purposes,demands);
+            var result=CityLandUseMicroGrader.planFoundationPlatform(fragment,splitTerrain());
+            assertTrue(result.stairs().stream().anyMatch(CityLandUseMicroGrader.StairDecision::platformAccess),
+                    "use another available flight instead of removing the only access");
+            assertTrue(result.stairs().stream().filter(CityLandUseMicroGrader.StairDecision::platformAccess)
+                    .noneMatch(s->roads.stream().anyMatch(r->r.x()==s.x()&&r.z()==s.z())));
+            assertTrue(result.accessPaths().stream().noneMatch(p->roads.stream().anyMatch(r->r.x()==p.x()&&r.z()==p.z())));
+            assertTrue(result.accessOutcomes().stream().anyMatch(o->o.status()==CityLandUseMicroGrader.AccessStatus.ACTIVE_STAIR));
+        }
+    }
+
+    @Test
     void roadDeckStairsAndLevelAccessPathsCannotReceiveRailingOrCornerLinks() {
         var heights = new HashMap<CityLandUseMicroGrader.Cell,Integer>();
         var owners = new HashMap<CityLandUseMicroGrader.Cell,String>();
