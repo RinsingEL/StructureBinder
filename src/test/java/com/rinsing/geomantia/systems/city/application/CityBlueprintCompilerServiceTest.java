@@ -599,7 +599,7 @@ class CityBlueprintCompilerServiceTest {
             JsonObject preferred = parcel.getAsJsonObject("preferredBounds");
             assertEquals(anchor.getAsJsonObject("plannedFootprint"), collision);
             assertEquals(collision, preferred);
-            assertEquals(0, parcel.get("usableGreenCells").getAsInt());
+            assertEquals("BUILDING_DECORATION_OWNED_BY_TEMPLATE", parcel.get("greeneryStatus").getAsString());
             if (parcel.get("greenerySelected").getAsBoolean()) greenerySelected++;
         }
         assertEquals(0, greenerySelected, "Building parcels must not manufacture extra greenery area");

@@ -109,7 +109,7 @@ public final class CityReservationMaskRegistry {
             load(normalizedRoot);
         }
         activeServerRoot = normalizedRoot;
-        ActiveMask activatedMask = ActiveMask.from(reservationMaskPlan);
+        ActiveMask activatedMask = ActiveMask.from(withRoadsideMasks(reservationMaskPlan, materializationPlan));
         Map<String, ActiveMask> masks = new LinkedHashMap<>(activeMasks);
         masks.put(registryKey(activatedMask.cityId()), activatedMask);
         activeMasks = Map.copyOf(masks);
@@ -151,6 +151,23 @@ public final class CityReservationMaskRegistry {
                 activeCityCount(), noVegetationMaskCount(), noVanillaStructureMaskCount(),
                 activePlannedStructureCount(), serverRoot);
         return activatedRegistry == null ? ActivePlannedStructures.empty().asJson() : activatedRegistry.asJson();
+    }
+
+    private static JsonObject withRoadsideMasks(JsonObject reservation, JsonObject materialization) {
+        if (reservation == null || materialization == null) return reservation;
+        JsonObject result = reservation.deepCopy();
+        JsonArray planned = materialization.getAsJsonArray("plannedWorldgenStructures");
+        if (planned == null) return result;
+        for (JsonElement element : planned) {
+            JsonObject item = element.getAsJsonObject();
+            if (!com.rinsing.geomantia.systems.city.application.CityRoadsideTreePlanner.isTree(item)) continue;
+            if (!"planned_worldgen".equals(stringValue(item, "status", ""))) continue;
+            for (String channel : List.of("noVegetationMask", "noVanillaStructureMask")) {
+                if (!result.has(channel)) result.add(channel, new JsonArray());
+                result.getAsJsonArray(channel).add(requiredObject(item, "maskEnvelope").deepCopy());
+            }
+        }
+        return result;
     }
 
     public static synchronized void load(Path serverRoot) {
@@ -1509,7 +1526,8 @@ public final class CityReservationMaskRegistry {
             obj.add("qualityTerms", qualityTerms.deepCopy());
             if (isTemplatePlacement()) {
                 for (String key : List.of("templateId", "templateRef", "templateHash", "variantId", "mirror",
-                        "terrainPosePolicy",
+                        "terrainPosePolicy", "placementRole", "treeRootBlock", "sourceRoadId",
+                        "placementGroupId", "blueprintPlacementPhase",
                         "materializationSource", "templateDatumPolicy", "rawSize", "lockedActualFootprint",
                         "transformed", "transformedRoadEntrances", "structureTemplate")) {
                     if (sourcePlan.has(key)) {

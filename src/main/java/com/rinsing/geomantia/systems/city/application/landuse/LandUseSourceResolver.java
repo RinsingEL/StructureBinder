@@ -424,7 +424,16 @@ public final class LandUseSourceResolver {
                              List<RoadBand> roadBands,
                              List<GreenParcelSpec> greenParcels,
                              List<OverflowZoneSpec> overflowZones,
-                             com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField materialField) {
+                             com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField materialField,
+                             com.rinsing.geomantia.systems.city.algorithm.landuse.CityDistrictPlanner.Result district) {
+        public Resolution(List<LandUseSeedGroup> seedGroups, List<LandUseAreaPlan.CorridorExclusion> corridorExclusions,
+                List<String> warnings, String seedSalt, Map<String,Set<BlockPoint>> landscapeCapacityDomains,
+                Map<String,String> landscapeParentParcelIds, List<RoadBand> roadBands,
+                List<GreenParcelSpec> greenParcels, List<OverflowZoneSpec> overflowZones,
+                com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField materialField) {
+            this(seedGroups,corridorExclusions,warnings,seedSalt,landscapeCapacityDomains,landscapeParentParcelIds,
+                    roadBands,greenParcels,overflowZones,materialField,null);
+        }
         public Resolution(List<LandUseSeedGroup> seedGroups, List<LandUseAreaPlan.CorridorExclusion> corridorExclusions,
                 List<String> warnings, String seedSalt, Map<String,Set<BlockPoint>> landscapeCapacityDomains,
                 Map<String,String> landscapeParentParcelIds, List<RoadBand> roadBands,

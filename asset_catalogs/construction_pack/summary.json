@@ -1,0 +1,42 @@
+{
+  "sourceRoot": "D:\\BaiduNetdiskDownload\\2026.9.5投影文件完整版(9010文件)\\g构建包",
+  "totalAssets": 318,
+  "scannedAssets": 6301,
+  "excludedAssets": 5983,
+  "selectionPolicy": "retain_named_core_complete_style_pools_and_city_support_assets",
+  "classificationBasis": "folder_and_filename_only",
+  "countsByKind": {
+    "建筑与城市配套": 318
+  },
+  "countsByStyle": {
+    "中世纪": 318
+  },
+  "countsByFunction": {
+    "仓储": 5,
+    "住宅": 13,
+    "住宿": 5,
+    "公会": 2,
+    "公共空间": 10,
+    "军事防御": 25,
+    "农业": 18,
+    "办公": 1,
+    "商业": 12,
+    "塔楼（用途未细分）": 15,
+    "宗教": 5,
+    "工坊生产": 5,
+    "建筑（用途未细分）": 3,
+    "房屋（用途未细分）": 127,
+    "教育文化": 5,
+    "桥梁": 6,
+    "水利供水": 6,
+    "港航": 8,
+    "照明": 4,
+    "纪念装饰": 7,
+    "绿化素材": 20,
+    "行政": 3,
+    "采矿": 1,
+    "餐饮": 14
+  },
+  "sourceSeriesCount": 16,
+  "bundleHints": 0
+}

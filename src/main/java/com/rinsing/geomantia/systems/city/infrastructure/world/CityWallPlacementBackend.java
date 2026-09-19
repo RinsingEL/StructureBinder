@@ -1,1768 +1,219 @@
 package com.rinsing.geomantia.systems.city.infrastructure.world;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
+import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.*;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.LadderBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.Heightmap;
+import java.io.IOException;
+import java.util.*;
 
+/** Executes one fixed module set. All geometry and conflicts are checked before the first write. */
 public final class CityWallPlacementBackend {
-    private static final int MAX_SEGMENT_HEIGHT_DELTA = 5;
-    private static final String POLICY_Terrain1 = "terrain.1";
-
-    public JsonObject execute(ServerLevel level, JsonObject wallPlan) {
-        return execute(level, wallPlan, false, 1);
+    public static void prepare(ServerLevel level, JsonObject plan) {
+        if (level == null) return;
+        try { CityWallModuleConfig.loadCurrent().freeze(plan); }
+        catch (IOException ex) { throw new IllegalArgumentException(ex.getMessage(), ex); }
+        Map<BlockPoint,Integer> surfaces = new LinkedHashMap<>();
+        JsonArray samples = new JsonArray();
+        for (String key : List.of("wallUnits", "wallNodes")) for (JsonElement element : array(plan,key)) {
+            BlockBounds bounds = bounds(element.getAsJsonObject().getAsJsonObject("blockBounds"));
+            for (int z=bounds.minZ();z<=bounds.maxZ();z++) for(int x=bounds.minX();x<=bounds.maxX();x++) {
+                BlockPoint point=new BlockPoint(x,z);
+                if(surfaces.containsKey(point)) continue;
+                CitySurfaceCache.Sample sample=CitySurfaceCache.sample(level,x,z);
+                surfaces.put(point,sample.surfaceY());
+                JsonObject cell=new JsonObject(); cell.addProperty("x",x); cell.addProperty("z",z);
+                cell.addProperty("surfaceY",sample.surfaceY()); cell.addProperty("fluid",sample.fluid()); samples.add(cell);
+            }
+        }
+        JsonObject profile=heightProfile(new ArrayList<>(surfaces.values()), integer(plan,"naturalBoundaryMinDeltaBlocks",17),
+                integer(plan,"maxFoundationDepthBlocks",64));
+        profile.add("surfaceColumns",samples);
+        plan.add("wallPlacementProfile",profile);
     }
 
-    public JsonObject execute(ServerLevel level, JsonObject wallPlan, boolean debugScan, int debugScanStepBlocks) {
-        JsonObject report = new JsonObject();
-        boolean wall = "city_wall_plan".equals(stringValue(wallPlan, "schema", ""));
-        report.addProperty("schema", "city_wall_placement_report");
-        report.addProperty("cityId", stringValue(wallPlan, "cityId", "unknown_city"));
-        report.addProperty("backend", "vanilla_setblock");
-        report.addProperty("debugScan", debugScan);
-        report.addProperty("debugScanStepBlocks", Math.max(1, debugScanStepBlocks));
-        JsonArray results = new JsonArray();
-        JsonArray unitResults = new JsonArray();
-        JsonArray nodeResults = new JsonArray();
-        JsonArray connectorResults = new JsonArray();
-        JsonObject terrainDebug = debugReport("city_wall_terrain_debug_scan", report.get("cityId").getAsString());
-        JsonObject maskDebug = debugReport("city_wall_mask_conflict_report", report.get("cityId").getAsString());
-        JsonObject gapDebug = debugReport("city_wall_gap_debug_report", report.get("cityId").getAsString());
-        int executed = 0;
-        int skipped = 0;
-        int changed = 0;
-        if (level == null) {
-            report.addProperty("ok", false);
-            report.addProperty("reasonCode", "CITY_WALL_LEVEL_UNAVAILABLE");
-            report.addProperty("message", "ServerLevel is required for city_execute_city_walls.");
-            report.add("segmentResults", results);
-            return report;
-        }
-        PlacementContext context = PlacementContext.from(wallPlan);
-        report.addProperty("terrainPolicyVersion", context.wallTerrainPolicy());
-        if (wall) {
-            for (JsonElement elem : array(wallPlan, "wallNodes")) {
-                if (!elem.isJsonObject()) {
-                    continue;
-                }
-                JsonObject node = elem.getAsJsonObject();
-                JsonObject segment = pseudoSegment(node, "nodeId", graphNodeSegmentType(node));
-                SegmentResult result = placeWallNodeGraph(level, segment, context, debugScan, terrainDebug, gapDebug);
-                if ("executed".equals(result.status())) {
-                    executed++;
-                    changed += result.changedBlocks();
-                } else {
-                    skipped++;
-                }
-                nodeResults.add(result.asJson(segment));
-            }
-            java.util.List<JsonObject> graphUnits = jsonObjects(array(wallPlan, "wallUnits"));
-            java.util.Map<String, WallSurfaceSample> wallSamples = wallSurfaceSamples(level, graphUnits, true);
-            java.util.Set<String> wallWaterBoundaryUnits = wallWaterBoundaryUnits(graphUnits, wallSamples, context);
-            WallHeightPlan wallHeightPlan = wallHeightPlan(graphUnits, wallSamples, wallWaterBoundaryUnits, context);
-            report.add("wallHeightSegmentation", wallHeightPlan.asJson());
-            for (JsonObject unit : graphUnits) {
-                String unitId = stringValue(unit, "unitId", "");
-                UnitResult result = placeGraphUnitWall(level, unit, context, debugScan, terrainDebug, maskDebug, gapDebug,
-                        wallSamples.get(unitId),
-                        wallWaterBoundaryUnits.contains(unitId),
-                        wallHeightPlan.decision(unitId));
-                JsonObject unitJson = result.asJson(unitId);
-                unitJson.addProperty("unitId", unitId);
-                unitJson.addProperty("unitType", stringValue(unit, "unitType", ""));
-                unitJson.addProperty("plannedTargetY", intValue(unit, "targetY", 0));
-                unitJson.addProperty("plannedHeightMode", stringValue(unit, "heightMode", ""));
-                unitJson.addProperty("wallAxis", stringValue(unit, "wallAxis", ""));
-                unitResults.add(unitJson);
-                if ("executed".equals(result.status())) {
-                    executed++;
-                    changed += result.changedBlocks();
-                } else {
-                    skipped++;
-                }
-            }
-            for (JsonElement elem : array(wallPlan, "nodeConnectorUnits")) {
-                if (!elem.isJsonObject()) {
-                    continue;
-                }
-                JsonObject connector = elem.getAsJsonObject();
-                UnitResult result = placeConnectorUnitGraph(level, connector, context, debugScan,
-                        terrainDebug, maskDebug, gapDebug);
-                JsonObject connectorJson = result.asJson(stringValue(connector, "connectorId", ""));
-                connectorJson.addProperty("connectorId", stringValue(connector, "connectorId", ""));
-                connectorJson.addProperty("nodeId", stringValue(connector, "nodeId", ""));
-                connectorJson.addProperty("connectorStatus", stringValue(connector, "connectorStatus", ""));
-                connectorJson.addProperty("connectorMode", stringValue(connector, "connectorMode", ""));
-                connectorResults.add(connectorJson);
-                if ("executed".equals(result.status())) {
-                    executed++;
-                    changed += result.changedBlocks();
-                } else {
-                    skipped++;
-                }
-            }
-        } else {
-            for (JsonElement elem : array(wallPlan, "wallSegments")) {
-                if (!elem.isJsonObject()) {
-                    continue;
-                }
-                JsonObject segment = elem.getAsJsonObject();
-                SegmentResult result = placeSegment(level, segment, context);
-                if ("executed".equals(result.status())) {
-                    executed++;
-                    changed += result.changedBlocks();
-                } else {
-                    skipped++;
-                }
-                results.add(result.asJson(segment));
-            }
-        }
-        report.addProperty("ok", true);
-        report.addProperty("executedSegments", executed);
-        report.addProperty("skippedSegments", skipped);
-        report.addProperty("changedBlocks", changed);
-        report.addProperty("roadProtectedBlockCount", context.roadMasks().size());
-        report.add("segmentResults", results);
-        report.add("placementUnitResults", unitResults);
-        if (wall) {
-            report.add("wallNodeResults", nodeResults);
-            report.add("wallUnitResults", unitResults.deepCopy());
-            report.add("connectorResults", connectorResults);
-        }
-        if (debugScan) {
-            report.add("wallTerrainDebugScan", terrainDebug);
-            report.add("wallMaskConflictReport", maskDebug);
-            report.add("wallGapDebugReport", gapDebug);
-        }
-        return report;
-    }
-
-    private SegmentResult placeWallNodeGraph(ServerLevel level, JsonObject segment, PlacementContext context,
-                                          boolean debugScan, JsonObject terrainDebug, JsonObject gapDebug) {
-        String type = stringValue(segment, "segmentType", "");
-        if ("natural_boundary_endpoint".equals(type)) {
-            addGap(gapDebug, segment, "NATURAL_BOUNDARY_ENDPOINT",
-                    "Natural boundary endpoint node is informational.");
-            return new SegmentResult("skipped", "NATURAL_BOUNDARY_ENDPOINT", 0,
-                    "Natural boundary endpoint node is informational.");
-        }
-        if ("junction".equals(type)) {
-            addGap(gapDebug, segment, "Graph_GRAPH_NODE_NO_INDEPENDENT_PLACEMENT",
-                    "Graph graph connector node is represented by adjacent wall and connector units.");
-            return new SegmentResult("skipped", "Graph_GRAPH_NODE_NO_INDEPENDENT_PLACEMENT", 0,
-                    "Graph graph connector node is represented by adjacent wall and connector units.");
-        }
-        if ("gatehouse".equals(type)) {
-            SegmentResult result = placeGatehouseSegment(level, segment, context, debugScan, terrainDebug);
-            if ("skipped".equals(result.status())) {
-                addGap(gapDebug, segment, result.reasonCode(), result.message());
-            }
-            return result;
-        }
-        return placeSegment(level, segment, context);
-    }
-
-    private UnitResult placeGraphUnitGraph(ServerLevel level, JsonObject unit, PlacementContext context,
-                                       boolean debugScan, JsonObject terrainDebug,
-                                       JsonObject maskDebug, JsonObject gapDebug) {
-        String unitType = stringValue(unit, "unitType", "");
-        String reason = stringValue(unit, "reasonCode", "Graph_WALL_UNIT");
-        BlockBounds bounds = bounds(unit.getAsJsonObject("blockBounds"));
-        if (!booleanValue(unit, "placementAllowed", true)
-                || "natural_boundary_gap".equals(unitType)
-                || "skipped_wall_unit".equals(unitType)) {
-            addGap(gapDebug, pseudoSegment(unit, "unitId", unitType), reason,
-                    "Graph unit intentionally skipped by graph planner.", bounds);
-            return new UnitResult("skipped", reason, unitType, 0,
-                    "Graph unit intentionally skipped by graph planner.", bounds, 0, 0, 0,
-                    context.wallTerrainPolicy(), "LOW", new JsonArray(), new JsonObject());
-        }
-        JsonObject segment = pseudoSegment(unit, "unitId", "wall_segment");
-        Axis axis = axisForSegment(segment, bounds);
-        return placeUnit(level, segment, bounds, axis, context, debugScan, terrainDebug, maskDebug);
-    }
-
-    private UnitResult placeGraphUnitWall(ServerLevel level, JsonObject unit, PlacementContext context,
-                                        boolean debugScan, JsonObject terrainDebug,
-                                        JsonObject maskDebug, JsonObject gapDebug,
-                                        WallSurfaceSample surfaceSample,
-                                        boolean naturalWaterBoundary,
-                                        WallHeightDecision heightDecision) {
-        String unitType = stringValue(unit, "unitType", "");
-        String reason = stringValue(unit, "reasonCode", "D5_Wall_WALL_UNIT");
-        BlockBounds bounds = bounds(unit.getAsJsonObject("blockBounds"));
-        if (!booleanValue(unit, "placementAllowed", true) || "gate_gap".equals(unitType)) {
-            addGap(gapDebug, pseudoSegment(unit, "unitId", unitType), reason,
-                    "D5 wall gate/corridor unit intentionally left open.", bounds);
-            return new UnitResult("skipped", reason, unitType, 0,
-                    "D5 wall gate/corridor unit intentionally left open.", bounds, 0, 0, 0,
-                    "wall", "LOW", new JsonArray(), new JsonObject());
-        }
-        int protectedCells = protectedCellCount(bounds, context);
-        if (protectedCells > 0 && protectedCells >= bounds.widthBlocks() * bounds.heightBlocks()) {
-            addMaskConflict(maskDebug, pseudoSegment(unit, "unitId", unitType), bounds,
-                    "WALL_UNIT_SKIPPED_MASK", protectedCells);
-            return new UnitResult("skipped", "WALL_UNIT_SKIPPED_MASK", "SKIPPED_PROTECTED_MASK", 0,
-                    "All unit cells are protected by road/structure mask.", bounds, 0, 0, protectedCells,
-                    "wall", "LOW", new JsonArray(), new JsonObject());
-        }
-        WallSurfaceSample sample = surfaceSample == null ? sampleSurfaceWall(level, bounds, debugScan) : surfaceSample;
-        if (naturalWaterBoundary) {
-            addGap(gapDebug, pseudoSegment(unit, "unitId", unitType), "NATURAL_WATER_BOUNDARY_NO_WALL",
-                    "Continuous water boundary detected by wall surface cache; wall not placed.", bounds);
-            if (debugScan) {
-                addTerrainSamples(terrainDebug, pseudoSegment(unit, "unitId", unitType), bounds, context,
-                        sample.surfaceSamples(), -1, "NATURAL_WATER_BOUNDARY_NO_WALL");
-            }
-            JsonObject water = new JsonObject();
-            water.addProperty("fluidCoverageRatio", sample.fluidRatio());
-            water.addProperty("waterRunMinBlocks", context.wallWaterRunMinBlocks());
-            return new UnitResult("skipped", "NATURAL_WATER_BOUNDARY_NO_WALL",
-                    "NATURAL_WATER_BOUNDARY_NO_WALL", 0,
-                    "Continuous water boundary detected by wall surface cache.",
-                    bounds, sample.minY(), sample.maxY(), protectedCells, "wall",
-                    terrainDeltaBand(sample.delta(), context), new JsonArray(), water);
-        }
-        if (heightDecision != null && heightDecision.naturalBoundary()) {
-            addGap(gapDebug, pseudoSegment(unit, "unitId", unitType), heightDecision.reasonCode(),
-                    heightDecision.message(), bounds);
-            if (debugScan) {
-                addTerrainSamples(terrainDebug, pseudoSegment(unit, "unitId", unitType), bounds, context,
-                        sample.surfaceSamples(), -1, heightDecision.reasonCode());
-            }
-            return new UnitResult("skipped", heightDecision.reasonCode(), heightDecision.terrainFitMode(), 0,
-                    heightDecision.message(), bounds, sample.minY(), sample.maxY(), protectedCells, "wall",
-                    terrainDeltaBand(sample.delta(), context), new JsonArray(), heightDecision.asJson(sample));
-        }
-        int baseY = heightDecision == null ? sample.medianY() + 1 : heightDecision.baseY();
-        if (debugScan) {
-            addTerrainSamples(terrainDebug, pseudoSegment(unit, "unitId", unitType), bounds, context,
-                    sample.surfaceSamples(), baseY,
-                    heightDecision == null ? "Wall_SURFACE_MEDIAN_PLACED" : heightDecision.reasonCode());
-        }
-        JsonObject segment = pseudoSegment(unit, "unitId", "wall_segment");
-        Axis axis = axisForSegment(segment, bounds);
-        int changed = placePitFloor(level, bounds, baseY - 1, context, sample);
-        changed += placeWallWall(level, bounds, baseY, context, axis, sample);
-        String mode = sample.minY() < sample.medianY() - 1
-                ? "Wall_MEDIAN_WALL_WITH_HORIZONTAL_PIT_FLOOR"
-                : sample.maxY() > sample.medianY() + 1
-                ? "Wall_MEDIAN_WALL_CONNECTED_TO_RAISED_GROUND"
-                : "Wall_MEDIAN_WALL_PLACED";
-        if (heightDecision != null) {
-            mode = heightDecision.terrainFitMode();
-        }
-        return new UnitResult("executed", "WALL_UNIT_PLACED", mode, changed,
-                heightDecision == null
-                        ? "Placed wall wall unit using 1-block surface median."
-                        : heightDecision.message(),
-                bounds, sample.minY(), sample.maxY(), protectedCells, "wall",
-                terrainDeltaBand(sample.delta(), context), new JsonArray(),
-                heightDecision == null ? new JsonObject() : heightDecision.asJson(sample));
-    }
-
-    private UnitResult placeConnectorUnitGraph(ServerLevel level, JsonObject connector, PlacementContext context,
-                                           boolean debugScan, JsonObject terrainDebug,
-                                           JsonObject maskDebug, JsonObject gapDebug) {
-        String status = stringValue(connector, "connectorStatus", "");
-        BlockBounds bounds = bounds(connector.getAsJsonObject("blockBounds"));
-        if ("skipped".equals(status) || "blocked".equals(status)) {
-            String reason = "blocked".equals(status) ? "NODE_CONNECTOR_BLOCKED" : "NODE_CONNECTOR_SKIPPED";
-            addGap(gapDebug, pseudoSegment(connector, "connectorId", "node_connector"), reason,
-                    "Node connector intentionally skipped by graph graph.", bounds);
-            return new UnitResult("skipped", reason, status, 0,
-                    "Node connector intentionally skipped by graph graph.", bounds, 0, 0, 0,
-                    context.wallTerrainPolicy(), "LOW", new JsonArray(), new JsonObject());
-        }
-        JsonObject segment = pseudoSegment(connector, "connectorId", "wall_segment");
-        Axis axis = axisForSegment(segment, bounds);
-        UnitResult result = placeUnit(level, segment, bounds, axis, context, debugScan, terrainDebug, maskDebug);
-        if ("executed".equals(result.status()) && "stepped".equals(status)) {
-            int baseY = Math.max(result.maxSurfaceY() + 1, intValue(connector, "targetY", result.maxSurfaceY() + 1));
-            int changed = placeConnectorCap(level, bounds, baseY, context);
-            return new UnitResult("executed", result.reasonCode(), "STAIR_CONNECTOR_PLACED",
-                    result.changedBlocks() + changed, "Placed stepped node connector.",
-                    bounds, result.minSurfaceY(), result.maxSurfaceY(), result.protectedCellCount(),
-                    result.terrainPolicyVersion(), result.terrainDeltaBand(), result.stepSlices(),
-                    result.mountainProbe());
-        }
+    static JsonObject heightProfile(List<Integer> surfaces, int maximumRelief, int maximumFoundation) {
+        JsonObject result=new JsonObject();
+        if(surfaces.isEmpty()) { result.addProperty("ok",false); result.addProperty("reasonCode","WALL_SURFACE_REQUIRED"); return result; }
+        List<Integer> sorted=surfaces.stream().sorted().toList();
+        int min=sorted.get(0), max=sorted.get(sorted.size()-1);
+        int base=Math.max(sorted.get(sorted.size()/2), max-6);
+        boolean valid=max-min<maximumRelief && base-min<=maximumFoundation;
+        result.addProperty("ok",valid); result.addProperty("baseY",base);
+        result.addProperty("minSurfaceY",min); result.addProperty("maxSurfaceY",max);
+        result.addProperty("walkwayFloorY",base+9);
+        result.addProperty("reasonCode",valid?"WALL_COMMON_WALKWAY_DATUM":"WALL_TERRAIN_REQUIRES_REDESIGN");
         return result;
     }
 
-    private SegmentResult placeSegment(ServerLevel level, JsonObject segment, PlacementContext context) {
-        if ("gate_gap".equals(stringValue(segment, "segmentType", ""))) {
-            return new SegmentResult("skipped", "WALL_GATE_GAP", 0,
-                    "Temporary gate gap is intentionally left empty.");
-        }
-        if ("skipped_wall_segment".equals(stringValue(segment, "segmentType", ""))) {
-            return new SegmentResult("skipped", stringValue(segment, "reasonCode", "WALL_SEGMENT_SKIPPED"), 0,
-                    "Wall segment intentionally skipped by planner.");
-        }
-        BlockBounds bounds = bounds(segment.getAsJsonObject("blockBounds"));
-        if (context.overlapsRoad(bounds)) {
-            return new SegmentResult("skipped", "WALL_ROAD_PROTECTED", 0,
-                    "Wall segment overlaps protected actual road mask.");
-        }
-        if (context.overlapsFootprint(bounds)) {
-            return new SegmentResult("skipped", "WALL_STRUCTURE_FOOTPRINT_PROTECTED", 0,
-                    "Wall segment overlaps placed structure actual footprint.");
-        }
-        int minY = Integer.MAX_VALUE;
-        int maxY = Integer.MIN_VALUE;
-        for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
-            for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
-                int y = surfaceY(level, x, z);
-                minY = Math.min(minY, y);
-                maxY = Math.max(maxY, y);
-            }
-        }
-        int maxDelta = context.maxSegmentHeightDeltaBlocks() <= 0
-                ? MAX_SEGMENT_HEIGHT_DELTA : context.maxSegmentHeightDeltaBlocks();
-        if (maxY - minY > maxDelta) {
-            return new SegmentResult("skipped", "WALL_TERRAIN_TOO_STEEP", 0,
-                    "Segment terrain delta " + (maxY - minY) + " exceeds " + maxDelta + ".");
-        }
-        int baseY = maxY + 1;
-        Axis axis = axisForSegment(segment, bounds);
-        int changed = "beacon_tower".equals(stringValue(segment, "segmentType", ""))
-                ? placeBeaconTower(level, bounds, baseY, context, axis)
-                : "tower".equals(stringValue(segment, "segmentType", ""))
-                ? placeTower(level, bounds, baseY, context)
-                : placeWall(level, bounds, baseY, context, axis);
-        return new SegmentResult("executed", "WALL_SEGMENT_PLACED", changed,
-                "Placed temporary stone wall segment.");
-    }
+    public JsonObject execute(ServerLevel level, JsonObject plan) { return execute(level,plan,false,1); }
 
-    private SegmentResult placeSegmentTerrain(ServerLevel level, JsonObject segment, PlacementContext context,
-                                         boolean debugScan, JsonObject terrainDebug, JsonObject maskDebug,
-                                         JsonObject gapDebug, JsonArray unitResults) {
-        String type = stringValue(segment, "segmentType", "");
-        if ("gate_gap".equals(type)) {
-            addGap(gapDebug, segment, "WALL_GATE_GAP", "Gate gap is intentionally empty.");
-            return new SegmentResult("skipped", "WALL_GATE_GAP", 0,
-                    "Temporary gate gap is intentionally left empty.");
+    public JsonObject execute(ServerLevel level, JsonObject plan, boolean debugScan, int debugScanStepBlocks) {
+        JsonObject report=new JsonObject(); report.addProperty("schema","city_wall_placement_report");
+        report.addProperty("cityId",string(plan,"cityId","")); report.addProperty("backend","fixed_structure_modules");
+        report.addProperty("ok",false); report.addProperty("changedBlocks",0);
+        if(level==null) return failure(report,"CITY_WALL_LEVEL_UNAVAILABLE");
+        CityWallModuleConfig.Loaded modules;
+        BlockState foundationState;
+        BlockState[][][] wallStates;
+        List<BlockState> towerStates;
+        try {
+            modules = CityWallModuleConfig.loadCurrent();
+            modules.requireMatches(plan);
+            foundationState = configuredBlock(modules.foundationBlock());
+            if (foundationState.isAir() || !foundationState.getFluidState().isEmpty() || foundationState.hasBlockEntity())
+                throw new IOException("WALL_FOUNDATION_BLOCK_INVALID");
+            wallStates = wallGrid(modules.straightWall());
+            towerStates = decodePalette(modules.guardTower());
+        } catch (IOException | RuntimeException ex) { return failure(report, "WALL_MODULE_LOAD_FAILED:" + ex.getMessage()); }
+        if(!"city_wall_plan".equals(string(plan,"schema","")) || !"guard_tower".equals(string(plan,"moduleSet","")))
+            return failure(report,"WALL_MODULE_PLAN_REQUIRED");
+        if(integer(plan,"nominalWallHeightBlocks",10)!=10) return failure(report,"WALL_FIXED_MODULE_HEIGHT_REQUIRED");
+        if(array(plan,"generatedGates").isEmpty()) return failure(report,"WALL_EXIT_ROAD_REQUIRED");
+        JsonObject profile=object(plan,"wallPlacementProfile");
+        if(!bool(profile,"ok",false)) return failure(report,string(profile,"reasonCode","WALL_SURFACE_PROFILE_REQUIRED"));
+        int base=integer(profile,"baseY",0);
+        if(base<level.getMinBuildHeight() || base+15>=level.getMaxBuildHeight()) return failure(report,"WALL_WORLD_HEIGHT_LIMIT");
+        String conflict=geometryConflict(plan);
+        if(!conflict.isEmpty()) return failure(report,conflict);
+        List<BlockBounds> nodes=new ArrayList<>();
+        for(JsonElement element:array(plan,"wallNodes")) nodes.add(bounds(element.getAsJsonObject().getAsJsonObject("blockBounds")));
+        Map<BlockPoint,Integer> surfaces=new HashMap<>(); Set<BlockPoint> fluids=new HashSet<>();
+        for(JsonElement element:array(profile,"surfaceColumns")) {
+            JsonObject cell=element.getAsJsonObject(); BlockPoint point=new BlockPoint(integer(cell,"x",0),integer(cell,"z",0));
+            surfaces.put(point,integer(cell,"surfaceY",base)); if(bool(cell,"fluid",false)) fluids.add(point);
         }
-        if ("gatehouse".equals(type)) {
-            SegmentResult result = placeGatehouseSegment(level, segment, context, debugScan, terrainDebug);
-            if ("skipped".equals(result.status())) {
-                addGap(gapDebug, segment, result.reasonCode(), result.message());
-            }
-            return result;
-        }
-        if ("natural_boundary".equals(type)) {
-            addGap(gapDebug, segment, stringValue(segment, "reasonCode", "NATURAL_BOUNDARY_NO_WALL"),
-                    "Natural boundary intentionally skips continuous wall.");
-            return new SegmentResult("skipped", stringValue(segment, "reasonCode", "NATURAL_BOUNDARY_NO_WALL"), 0,
-                    "Natural boundary intentionally skips continuous wall.");
-        }
-        if ("skipped_wall_segment".equals(type)) {
-            String reason = stringValue(segment, "reasonCode", "WALL_SEGMENT_SKIPPED");
-            addGap(gapDebug, segment, reason, "Wall segment intentionally skipped by planner.");
-            return new SegmentResult("skipped", reason, 0, "Wall segment intentionally skipped by planner.");
-        }
-        BlockBounds bounds = bounds(segment.getAsJsonObject("blockBounds"));
-        Axis axis = axisForSegment(segment, bounds);
-        int changed = 0;
-        int placedUnits = 0;
-        int skippedUnits = 0;
-        for (BlockBounds unit : splitUnits(bounds, context.terrainFitUnitLengthBlocks(), axis)) {
-            UnitResult unitResult = placeUnit(level, segment, unit, axis, context, debugScan, terrainDebug, maskDebug);
-            JsonObject unitJson = unitResult.asJson(stringValue(segment, "segmentId", ""));
-            unitJson.addProperty("wallAxis", axis.name());
-            unitResults.add(unitJson);
-            if ("executed".equals(unitResult.status())) {
-                placedUnits++;
-                changed += unitResult.changedBlocks();
-            } else {
-                skippedUnits++;
-                addGap(gapDebug, segment, unitResult.reasonCode(), unitResult.message(), unit);
-            }
-        }
-        if (placedUnits > 0) {
-            return new SegmentResult("executed", skippedUnits > 0 ? "WALL_SEGMENT_PARTIALLY_PLACED" : "WALL_SEGMENT_PLACED",
-                    changed, "Placed " + placedUnits + " terrain-fit wall units; skipped " + skippedUnits + ".");
-        }
-        return new SegmentResult("skipped", "WALL_UNIT_SKIPPED_TERRAIN", 0,
-                "All terrain-fit wall units were skipped.");
-    }
-
-    private UnitResult placeUnit(ServerLevel level, JsonObject segment, BlockBounds unit, Axis axis,
-                                 PlacementContext context, boolean debugScan,
-                                 JsonObject terrainDebug, JsonObject maskDebug) {
-        int protectedCells = protectedCellCount(unit, context);
-        if (protectedCells > 0 && protectedCells >= unit.widthBlocks() * unit.heightBlocks()) {
-            addMaskConflict(maskDebug, segment, unit, "WALL_UNIT_SKIPPED_MASK", protectedCells);
-            return new UnitResult("skipped", "WALL_UNIT_SKIPPED_MASK", "SKIPPED_PROTECTED_MASK", 0,
-                    "All unit cells are protected by road/structure mask.", unit, 0, 0, protectedCells,
-                    context.wallTerrainPolicy(), "LOW", new JsonArray(), new JsonObject());
-        }
-        TerrainSample terrain = sampleTerrain(level, unit, debugScan);
-        int minY = terrain.minY();
-        int maxY = terrain.maxY();
-        int delta = Math.max(0, maxY - minY);
-        int maxDelta = context.maxSegmentHeightDeltaBlocks() <= 0
-                ? MAX_SEGMENT_HEIGHT_DELTA : context.maxSegmentHeightDeltaBlocks();
-        if (!context.isTerrain1Policy() && delta > maxDelta) {
-            if (debugScan) {
-                addTerrainSamples(terrainDebug, segment, unit, context, terrain.surfaceSamples(), -1,
-                        "SKIPPED_TOO_STEEP");
-            }
-            return new UnitResult("skipped", "WALL_UNIT_SKIPPED_TERRAIN", "SKIPPED_TOO_STEEP", 0,
-                    "Unit terrain delta " + delta + " exceeds " + maxDelta + ".",
-                    unit, minY, maxY, protectedCells, context.wallTerrainPolicy(),
-                    terrainDeltaBand(delta, context), new JsonArray(), new JsonObject());
-        }
-        if (context.isTerrain1Policy() && delta > context.flatMaxDeltaBlocks()) {
-            if (delta <= context.steppedMaxDeltaBlocks()) {
-                return placeSteppedWallUnit(level, segment, unit, context, debugScan, terrainDebug,
-                        protectedCells, terrain, axis);
-            }
-            MountainProbe probe = probeMountain(level, unit, axis, context, terrain);
-            if (probe.embeddable()) {
-                return placeEmbeddedSlopeUnit(level, segment, unit, context, debugScan, terrainDebug,
-                        protectedCells, terrain, probe, axis);
-            }
-            return markNaturalCliffBoundary(level, segment, unit, context, debugScan, terrainDebug,
-                    protectedCells, terrain, probe);
-        }
-        int baseY = maxY + 1;
-        if (debugScan) {
-            addTerrainSamples(terrainDebug, segment, unit, context, terrain.surfaceSamples(), baseY,
-                    "FLAT_OR_FOUNDATION");
-        }
-        int changed = "tower".equals(stringValue(segment, "segmentType", ""))
-                ? placeTower(level, unit, baseY, context)
-                : placeWall(level, unit, baseY, context, axis);
-        String mode = maxY == minY ? "FLAT_PLACED"
-                : (baseY - minY > 1 ? "FOUNDATION_FILLED" : "STEPPED_PLACED");
-        return new UnitResult("executed", "WALL_UNIT_PLACED", mode, changed,
-                "Placed terrain-fit wall unit.", unit, minY, maxY, protectedCells, context.wallTerrainPolicy(),
-                terrainDeltaBand(delta, context), new JsonArray(), new JsonObject());
-    }
-
-    private UnitResult placeSteppedWallUnit(ServerLevel level, JsonObject segment, BlockBounds unit,
-                                            PlacementContext context, boolean debugScan,
-                                            JsonObject terrainDebug, int protectedCells,
-                                            TerrainSample terrain, Axis axis) {
-        JsonArray stepSlices = new JsonArray();
-        int changed = 0;
-        int sliceLength = Math.max(2, Math.min(5, Math.max(1, context.terrainFitUnitLengthBlocks() / 2)));
-        for (BlockBounds slice : splitUnits(unit, sliceLength, axis)) {
-            TerrainSample sliceTerrain = sampleTerrain(level, slice, false);
-            int baseY = sliceTerrain.maxY() + 1;
-            changed += "tower".equals(stringValue(segment, "segmentType", ""))
-                    ? placeTower(level, slice, baseY, context)
-                    : placeWall(level, slice, baseY, context, axis);
-            JsonObject sliceObj = new JsonObject();
-            sliceObj.add("bounds", boundsJson(slice));
-            sliceObj.addProperty("baseY", baseY);
-            sliceObj.addProperty("minSurfaceY", sliceTerrain.minY());
-            sliceObj.addProperty("maxSurfaceY", sliceTerrain.maxY());
-            sliceObj.addProperty("terrainDelta", Math.max(0, sliceTerrain.maxY() - sliceTerrain.minY()));
-            stepSlices.add(sliceObj);
-        }
-        if (debugScan) {
-            addTerrainSamples(terrainDebug, segment, unit, context, terrain.surfaceSamples(),
-                    terrain.maxY() + 1, "STEPPED_WALL_PLACED");
-        }
-        return new UnitResult("executed", "WALL_UNIT_PLACED", "STEPPED_WALL_PLACED", changed,
-                "Placed stepped wall unit for mid-delta terrain.", unit, terrain.minY(), terrain.maxY(),
-                protectedCells, context.wallTerrainPolicy(), terrainDeltaBand(terrain.delta(), context),
-                stepSlices, new JsonObject());
-    }
-
-    private UnitResult placeEmbeddedSlopeUnit(ServerLevel level, JsonObject segment, BlockBounds unit,
-                                              PlacementContext context, boolean debugScan,
-                                              JsonObject terrainDebug, int protectedCells,
-                                              TerrainSample terrain, MountainProbe probe, Axis axis) {
-        int changed = 0;
-        BlockBounds cap = towerBounds(unit.center().x(), unit.center().z(), 5);
-        int capBaseY = surfaceY(level, cap.center().x(), cap.center().z()) + 1;
-        if (context.embeddedSlopeTower()) {
-            changed += placeTower(level, cap, capBaseY, context);
-        } else {
-            changed += placeStoneCap(level, cap, capBaseY, context);
-        }
-        changed += placeEmbeddedStoneCap(level, unit, probe, capBaseY, context, axis);
-        if (debugScan) {
-            addTerrainSamples(terrainDebug, segment, unit, context, terrain.surfaceSamples(), capBaseY,
-                    "EMBEDDED_IN_SLOPE");
-        }
-        return new UnitResult("executed", "WALL_EMBEDDED_IN_SLOPE", "EMBEDDED_IN_SLOPE", changed,
-                "High-delta wall unit embedded into adjacent mountain slope.", unit, terrain.minY(), terrain.maxY(),
-                protectedCells, context.wallTerrainPolicy(), terrainDeltaBand(terrain.delta(), context),
-                new JsonArray(), probe.asJson());
-    }
-
-    private UnitResult markNaturalCliffBoundary(ServerLevel level, JsonObject segment, BlockBounds unit,
-                                                PlacementContext context, boolean debugScan,
-                                                JsonObject terrainDebug, int protectedCells,
-                                                TerrainSample terrain, MountainProbe probe) {
-        BlockBounds marker = towerBounds(unit.center().x(), unit.center().z(), 5);
-        int baseY = surfaceY(level, marker.center().x(), marker.center().z()) + 1;
-        int changed = context.embeddedSlopeTower() ? placeStoneCap(level, marker, baseY, context) : 0;
-        if (debugScan) {
-            addTerrainSamples(terrainDebug, segment, unit, context, terrain.surfaceSamples(), baseY,
-                    "NATURAL_CLIFF_BOUNDARY");
-        }
-        return new UnitResult(changed > 0 ? "executed" : "skipped",
-                changed > 0 ? "NATURAL_CLIFF_BOUNDARY" : "WALL_UNIT_SKIPPED_UNSUITABLE",
-                changed > 0 ? "NATURAL_CLIFF_BOUNDARY" : "SKIPPED_UNSUITABLE",
-                changed,
-                changed > 0
-                        ? "Marked high-delta terrain as natural cliff boundary with a stone marker."
-                        : "High-delta terrain was unsuitable for wall or natural boundary marker.",
-                unit, terrain.minY(), terrain.maxY(), protectedCells, context.wallTerrainPolicy(),
-                terrainDeltaBand(terrain.delta(), context), new JsonArray(), probe.asJson());
-    }
-
-    private SegmentResult placeGatehouseSegment(ServerLevel level, JsonObject segment, PlacementContext context,
-                                                boolean debugScan, JsonObject terrainDebug) {
-        BlockBounds bounds = bounds(segment.getAsJsonObject("blockBounds"));
-        Axis axis = axisForSegment(segment, bounds);
-        TerrainSample terrain = sampleTerrain(level, bounds, debugScan);
-        int baseY = terrain.maxY() + 1;
-        if (debugScan) {
-            addTerrainSamples(terrainDebug, segment, bounds, context, terrain.surfaceSamples(), baseY,
-                    "GATEHOUSE_PLACED");
-        }
-        int changed = placeGatehouse(level, bounds, baseY, context, axis);
-        return new SegmentResult("executed", "GATEHOUSE_PLACED", changed,
-                "Placed independent gatehouse template with full inner/outer road opening.");
-    }
-
-    private int placeGatehouse(ServerLevel level, BlockBounds bounds, int baseY, PlacementContext context, Axis axis) {
-        int changed = 0;
-        int minAlong = axis == Axis.X ? bounds.minX() : bounds.minZ();
-        int maxAlong = axis == Axis.X ? bounds.maxX() : bounds.maxZ();
-        int minAcross = axis == Axis.X ? bounds.minZ() : bounds.minX();
-        int maxAcross = axis == Axis.X ? bounds.maxZ() : bounds.maxX();
-        int centerAlong = (minAlong + maxAlong) / 2;
-        int openingWidth = gatehouseOpeningWidth(maxAlong - minAlong + 1);
-        int openingMin = centerAlong - openingWidth / 2;
-        int openingMax = openingMin + openingWidth - 1;
-        for (int along = minAlong; along <= maxAlong; along++) {
-            for (int across = minAcross; across <= maxAcross; across++) {
-                int x = axis == Axis.X ? along : across;
-                int z = axis == Axis.X ? across : along;
-                boolean opening = along >= openingMin && along <= openingMax;
-                boolean openingFence = opening && (along == openingMin || along == openingMax);
-                boolean openingAir = opening && !openingFence;
-                boolean sidePier = !opening && (along <= minAlong + 2 || along >= maxAlong - 2);
-                boolean sideWall = !opening;
-                if (openingAir) {
-                    clearGateColumn(level, x, z, baseY, 4);
-                } else {
-                    changed += placeFoundation(level, x, z, baseY, context);
-                }
-                for (int y = 0; y < 9; y++) {
-                    BlockState state = openingAir
-                            ? (y == 5 || y == 6 ? Blocks.STONE_BRICKS.defaultBlockState() : null)
-                            : openingFence
-                            ? (y <= 4 ? Blocks.OAK_FENCE.defaultBlockState()
-                            : y <= 6 ? Blocks.STONE_BRICKS.defaultBlockState()
-                            : null)
-                            : sidePier
-                            ? (y >= 7 ? Blocks.STONE_BRICK_WALL.defaultBlockState() : Blocks.STONE_BRICKS.defaultBlockState())
-                            : sideWall && (y <= 5 || y >= 7)
-                            ? Blocks.STONE_BRICKS.defaultBlockState()
-                            : null;
-                    if (state != null && set(level, x, baseY + y, z, state)) {
-                        changed++;
-                    }
+        Map<BlockPos,BlockState> changes=new LinkedHashMap<>();
+        for(JsonElement element:array(plan,"wallUnits")) {
+            JsonObject unit=element.getAsJsonObject(); BlockBounds area=bounds(unit.getAsJsonObject("blockBounds"));
+            boolean horizontal="X".equals(string(unit,"wallAxis",""));
+            boolean gate="gate_gap".equals(string(unit,"unitType",""));
+            int water=0;
+            for(int z=area.minZ();z<=area.maxZ();z++) for(int x=area.minX();x<=area.maxX();x++) {
+                BlockPoint point=new BlockPoint(x,z);
+                if(!surfaces.containsKey(point)) return failure(report,"WALL_SURFACE_PROFILE_INCOMPLETE");
+                int surface=surfaces.get(point); if(fluids.contains(point)) water++;
+                if(contains(nodes,x,z)) continue;
+                if(gate && base+9-surface<4) return failure(report,"WALL_GATE_HEADROOM_CONFLICT");
+                if(!gate) foundation(changes,x,z,surface,base,foundationState);
+                int across=horizontal?z-area.minZ():x-area.minX();
+                int along=horizontal?x:z;
+                for(int y=gate?9:0;y<12;y++) {
+                    BlockState state = wallStates[Math.floorMod(along,16)][y][horizontal ? across : 4-across];
+                    if (!horizontal) state = state.rotate(net.minecraft.world.level.block.Rotation.CLOCKWISE_90);
+                    changes.put(new BlockPos(x,base+y,z),state);
                 }
             }
+            if(!gate && water>=area.widthBlocks()*area.heightBlocks()*0.8)
+                return failure(report,"WALL_WATER_BOUNDARY_REQUIRES_REDESIGN");
         }
-        return changed;
-    }
-
-    private void clearGateColumn(ServerLevel level, int x, int z, int baseY, int height) {
-        for (int y = 0; y <= height; y++) {
-            level.setBlock(new BlockPos(x, baseY + y, z), Blocks.AIR.defaultBlockState(), 3);
-        }
-    }
-
-    private int placeConnectorCap(ServerLevel level, BlockBounds bounds, int baseY, PlacementContext context) {
-        int changed = 0;
-        for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
-            for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
-                if (context.protectsAny(x, z)) {
-                    continue;
+        try {
+            CompoundTag template=modules.guardTower();
+            ListTag blocks=template.getList("blocks",Tag.TAG_COMPOUND);
+            for(JsonElement element:array(plan,"wallNodes")) {
+                BlockBounds area=bounds(element.getAsJsonObject().getAsJsonObject("blockBounds"));
+                for(int z=area.minZ();z<=area.maxZ();z++) for(int x=area.minX();x<=area.maxX();x++) {
+                    Integer surface=surfaces.get(new BlockPoint(x,z));
+                    if(surface==null) return failure(report,"WALL_SURFACE_PROFILE_INCOMPLETE");
+                    foundation(changes,x,z,surface,base,foundationState);
                 }
-                changed += placeFoundation(level, x, z, baseY, context);
-                if (set(level, x, baseY, z, Blocks.STONE_BRICKS.defaultBlockState())) {
-                    changed++;
-                }
-                if (set(level, x, baseY + 1, z, Blocks.STONE_BRICK_STAIRS.defaultBlockState())) {
-                    changed++;
-                }
-                boolean edge = x == bounds.minX() || x == bounds.maxX()
-                        || z == bounds.minZ() || z == bounds.maxZ();
-                if (edge && set(level, x, baseY + 2, z, Blocks.STONE_BRICK_WALL.defaultBlockState())) {
-                    changed++;
+                for(int i=0;i<blocks.size();i++) {
+                    CompoundTag block=blocks.getCompound(i); ListTag pos=block.getList("pos",Tag.TAG_INT);
+                    changes.put(new BlockPos(area.minX()+pos.getInt(0),base+pos.getInt(1),area.minZ()+pos.getInt(2)),towerStates.get(block.getInt("state")));
                 }
             }
-        }
-        return changed;
-    }
-
-    private int placeWall(ServerLevel level, BlockBounds bounds, int baseY, PlacementContext context, Axis axis) {
-        int changed = 0;
-        for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
-            for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
-                if (context.protectsAny(x, z)) {
-                    continue;
-                }
-                int across = axis == Axis.X ? z - bounds.minZ() : x - bounds.minX();
-                if (across < 0 || across > 4) {
-                    continue;
-                }
-                changed += placeFoundation(level, x, z, baseY, context);
-                for (int y = 0; y < 9; y++) {
-                    BlockState state = wallState(y, across);
-                    if (state != null && set(level, x, baseY + y, z, state)) {
-                        changed++;
-                    }
-                }
-                if ((axis == Axis.X ? x : z) % 2 == 0 && (across == 0 || across == 4)
-                        && set(level, x, baseY + 9, z, Blocks.STONE_BRICK_WALL.defaultBlockState())) {
-                    changed++;
-                }
-            }
-        }
-        return changed;
-    }
-
-    private int placeWallWall(ServerLevel level, BlockBounds bounds, int baseY, PlacementContext context, Axis axis,
-                            WallSurfaceSample sample) {
-        int changed = 0;
-        int wallHeight = Math.max(3, context.wallNominalWallHeightBlocks());
-        for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
-            for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
-                if (context.protectsAny(x, z)) {
-                    continue;
-                }
-                int across = axis == Axis.X ? z - bounds.minZ() : x - bounds.minX();
-                if (across < 0 || across > 4) {
-                    continue;
-                }
-                changed += placeFoundation(level, x, z, baseY, context, sample.surfaceYAt(x, z, surfaceY(level, x, z)));
-                for (int y = 0; y < wallHeight; y++) {
-                    BlockState state = wallState(Math.min(y, 8), across);
-                    if (state != null && set(level, x, baseY + y, z, state)) {
-                        changed++;
-                    }
-                }
-                if ((axis == Axis.X ? x : z) % 2 == 0 && (across == 0 || across == 4)
-                        && set(level, x, baseY + wallHeight, z, Blocks.STONE_BRICK_WALL.defaultBlockState())) {
-                    changed++;
-                }
-            }
-        }
-        return changed;
-    }
-
-    private int placePitFloor(ServerLevel level, BlockBounds bounds, int floorY, PlacementContext context,
-                              WallSurfaceSample sample) {
-        if (sample.minY() >= sample.medianY() - 1) {
-            return 0;
-        }
-        int changed = 0;
-        for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
-            for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
-                if (context.protectsAny(x, z)) {
-                    continue;
-                }
-                int surface = sample.surfaceYAt(x, z, surfaceY(level, x, z));
-                for (int y = surface + 1; y <= floorY; y++) {
-                    if (set(level, x, y, z, Blocks.DEEPSLATE_BRICKS.defaultBlockState())) {
-                        changed++;
-                    }
-                }
-            }
-        }
-        return changed;
-    }
-
-    private int placeTower(ServerLevel level, BlockBounds bounds, int baseY, PlacementContext context) {
-        int changed = 0;
-        for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
-            for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
-                if (context.protectsAny(x, z)) {
-                    continue;
-                }
-                boolean edge = x == bounds.minX() || x == bounds.maxX() || z == bounds.minZ() || z == bounds.maxZ();
-                boolean doorway = z == bounds.minZ() && x == bounds.center().x();
-                changed += placeFoundation(level, x, z, baseY, context);
-                for (int y = 0; y < 12; y++) {
-                    BlockState state = null;
-                    if (doorway && y >= 1 && y <= 3) {
-                        state = Blocks.AIR.defaultBlockState();
-                    } else if (edge) {
-                        state = y == 0 ? Blocks.DEEPSLATE_BRICKS.defaultBlockState()
-                                : y >= 10 ? Blocks.STONE_BRICK_WALL.defaultBlockState()
-                                : Blocks.STONE_BRICKS.defaultBlockState();
-                    } else if (y == 0 || y == 9) {
-                        state = Blocks.STONE_BRICKS.defaultBlockState();
-                    }
-                    if (state != null && set(level, x, baseY + y, z, state)) {
-                        changed++;
-                    }
-                }
-            }
-        }
-        return changed;
-    }
-
-    private int placeBeaconTower(ServerLevel level, BlockBounds bounds, int baseY, PlacementContext context, Axis axis) {
-        int changed = 0;
-        int centerX = bounds.center().x();
-        int centerZ = bounds.center().z();
-        int ladderX = axis == Axis.X ? centerX : bounds.maxX() - 1;
-        int ladderZ = axis == Axis.X ? bounds.maxZ() - 1 : centerZ;
-        int topFloorY = 13;
-        int wallPassageFloorY = 7;
-        BlockState ladder = Blocks.LADDER.defaultBlockState()
-                .setValue(LadderBlock.FACING, axis == Axis.X ? Direction.NORTH : Direction.WEST);
-        for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
-            for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
-                if (context.protectsAny(x, z)) {
-                    continue;
-                }
-                boolean edge = x == bounds.minX() || x == bounds.maxX()
-                        || z == bounds.minZ() || z == bounds.maxZ();
-                boolean doorway = isBeaconDoorway(bounds, x, z, centerX, centerZ);
-                boolean wallPassage = axis == Axis.X ? z == centerZ : x == centerX;
-                boolean ladderColumn = x == ladderX && z == ladderZ;
-                boolean topOpening = ladderColumn;
-                changed += placeFoundation(level, x, z, baseY, context);
-                for (int y = 0; y < 16; y++) {
-                    BlockState state = null;
-                    if (wallPassage && y == wallPassageFloorY) {
-                        state = Blocks.STONE_BRICKS.defaultBlockState();
-                    } else if ((doorway && y >= 1 && y <= 3)
-                            || (wallPassage && y >= wallPassageFloorY + 1 && y <= wallPassageFloorY + 4)) {
-                        state = Blocks.AIR.defaultBlockState();
-                    } else if (ladderColumn && y >= 1 && y <= topFloorY) {
-                        state = ladder;
-                    } else if (edge) {
-                        if (y == 0) {
-                            state = Blocks.DEEPSLATE_BRICKS.defaultBlockState();
-                        } else if (y == topFloorY + 1 || (y == topFloorY + 2 && ((x + z) & 1) == 0)) {
-                            state = Blocks.STONE_BRICK_WALL.defaultBlockState();
-                        } else if (y <= topFloorY) {
-                            state = Blocks.STONE_BRICKS.defaultBlockState();
-                        }
-                    } else if (y == 0 || (y == topFloorY && !topOpening)) {
-                        state = Blocks.STONE_BRICKS.defaultBlockState();
-                    }
-                    if (state != null && set(level, x, baseY + y, z, state)) {
-                        changed++;
-                    }
-                }
-            }
-        }
-        return changed;
-    }
-
-    private static boolean isBeaconDoorway(BlockBounds bounds, int x, int z, int centerX, int centerZ) {
-        return (x == centerX && (z == bounds.minZ() || z == bounds.maxZ()))
-                || (z == centerZ && (x == bounds.minX() || x == bounds.maxX()));
-    }
-
-    private int placeStoneCap(ServerLevel level, BlockBounds bounds, int baseY, PlacementContext context) {
-        int changed = 0;
-        for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
-            for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
-                if (context.protectsAny(x, z)) {
-                    continue;
-                }
-                changed += placeFoundation(level, x, z, baseY, context);
-                boolean edge = x == bounds.minX() || x == bounds.maxX() || z == bounds.minZ() || z == bounds.maxZ();
-                for (int y = 0; y < 5; y++) {
-                    BlockState state = y >= 4 && edge
-                            ? Blocks.STONE_BRICK_WALL.defaultBlockState()
-                            : Blocks.STONE_BRICKS.defaultBlockState();
-                    if (set(level, x, baseY + y, z, state)) {
-                        changed++;
-                    }
-                }
-            }
-        }
-        return changed;
-    }
-
-    private int placeEmbeddedStoneCap(ServerLevel level, BlockBounds unit, MountainProbe probe,
-                                      int baseY, PlacementContext context, Axis axis) {
-        int changed = 0;
-        int side = probe.highSide();
-        int maxEmbed = Math.min(4, context.mountainProbeDistanceBlocks());
-        if (axis == Axis.X) {
-            for (int x = unit.minX(); x <= unit.maxX(); x++) {
-                for (int d = 0; d < maxEmbed; d++) {
-                    int z = side < 0 ? unit.minZ() - d : unit.maxZ() + d;
-                    changed += placeEmbeddedColumn(level, x, z, baseY, context);
-                }
-            }
-        } else {
-            for (int z = unit.minZ(); z <= unit.maxZ(); z++) {
-                for (int d = 0; d < maxEmbed; d++) {
-                    int x = side < 0 ? unit.minX() - d : unit.maxX() + d;
-                    changed += placeEmbeddedColumn(level, x, z, baseY, context);
-                }
-            }
-        }
-        return changed;
-    }
-
-    private int placeEmbeddedColumn(ServerLevel level, int x, int z, int baseY, PlacementContext context) {
-        if (context.protectsAny(x, z)) {
-            return 0;
-        }
-        int changed = 0;
-        int surface = surfaceY(level, x, z);
-        int fromY = Math.min(surface, baseY);
-        int toY = Math.min(Math.max(surface + 3, baseY + 3), baseY + 8);
-        for (int y = fromY; y <= toY; y++) {
-            if (set(level, x, y, z, Blocks.STONE_BRICKS.defaultBlockState())) {
+        } catch(RuntimeException error) { return failure(report,"WALL_MODULE_LOAD_FAILED:"+error.getMessage()); }
+        // Whole-plan preflight prevents partial towers, clipped buildings and silent gaps.
+        for(BlockPos pos:changes.keySet()) if(level.getBlockEntity(pos)!=null) return failure(report,"WALL_BLOCK_ENTITY_CONFLICT");
+        Map<BlockPos,BlockState> original=new LinkedHashMap<>(); int changed=0;
+        try {
+            for(var entry:changes.entrySet()) {
+                BlockState before=level.getBlockState(entry.getKey()); if(before.equals(entry.getValue())) continue;
+                original.put(entry.getKey(),before);
+                if(!level.setBlock(entry.getKey(),entry.getValue(),2) && !level.getBlockState(entry.getKey()).equals(entry.getValue()))
+                    throw new IllegalStateException("WALL_BLOCK_WRITE_FAILED");
                 changed++;
             }
+            for(BlockPos pos:original.keySet()) level.updateNeighborsAt(pos,level.getBlockState(pos).getBlock());
+        } catch(RuntimeException error) {
+            List<Map.Entry<BlockPos,BlockState>> reverse=new ArrayList<>(original.entrySet()); Collections.reverse(reverse);
+            for(var entry:reverse) level.setBlock(entry.getKey(),entry.getValue(),2);
+            return failure(report,"WALL_PLACEMENT_ROLLED_BACK:"+error.getMessage());
         }
-        return changed;
-    }
-
-    private int placeFoundation(ServerLevel level, int x, int z, int baseY, PlacementContext context) {
-        return placeFoundation(level, x, z, baseY, context, surfaceY(level, x, z));
-    }
-
-    private int placeFoundation(ServerLevel level, int x, int z, int baseY, PlacementContext context,
-                                int originalSurfaceY) {
-        if (context.protectsAny(x, z)) {
-            return 0;
-        }
-        int changed = 0;
-        int depth = foundationDepth(baseY, originalSurfaceY, context.effectiveFoundationDepthBlocks());
-        for (int y = 1; y <= depth; y++) {
-            if (set(level, x, baseY - y, z, Blocks.DEEPSLATE_BRICKS.defaultBlockState())) {
-                changed++;
+        for(var entry:changes.entrySet()) {
+            if(!level.getBlockState(entry.getKey()).equals(entry.getValue())) {
+                for(var previous:original.entrySet()) level.setBlock(previous.getKey(),previous.getValue(),2);
+                return failure(report,"WALL_MODULE_POST_UPDATE_MISMATCH_ROLLED_BACK");
             }
         }
-        return changed;
+        report.addProperty("ok",true); report.addProperty("reasonCode","WALL_MODULES_PLACED");
+        report.addProperty("changedBlocks",changed); report.addProperty("baseY",base);
+        report.addProperty("executedSegments",array(plan,"wallUnits").size()+nodes.size()); report.addProperty("skippedSegments",0);
+        report.addProperty("walkwayFloorY",base+9);
+        report.add("wallModuleSnapshot", modules.snapshot().deepCopy());
+        if(debugScan) report.add("wallTerrainDebugScan",profile.deepCopy());
+        return report;
     }
 
-    static int foundationDepth(int baseY, int surfaceY, int maxDepth) {
-        return Math.min(Math.max(0, maxDepth), Math.max(0, baseY - surfaceY));
+    static String geometryConflict(JsonObject plan) {
+        List<BlockBounds> structures=new ArrayList<>(), roads=new ArrayList<>();
+        for(JsonElement element:array(object(plan,"sourcePlacedStructureLedger"),"placedStructures")) {
+            JsonObject placed=element.getAsJsonObject();
+            JsonObject footprint=object(placed,"lockedActualFootprint");
+            if(footprint.size()==0) footprint=object(placed,"actualFootprint");
+            if(footprint.size()>0) structures.add(bounds(footprint));
+        }
+        for(JsonElement element:array(object(plan,"actualRoadMask"),"roadMask"))
+            if(element.isJsonObject() && element.getAsJsonObject().has("blockBounds")) roads.add(bounds(element.getAsJsonObject().getAsJsonObject("blockBounds")));
+        for(String key:List.of("wallUnits","wallNodes")) for(JsonElement element:array(plan,key)) {
+            JsonObject module=element.getAsJsonObject(); BlockBounds area=bounds(module.getAsJsonObject("blockBounds"));
+            if(structures.stream().anyMatch(area::overlaps)) return "WALL_STRUCTURE_CONFLICT";
+            if(!"gate_gap".equals(string(module,"unitType","")) && roads.stream().anyMatch(area::overlaps))
+                return "WALL_UNRESERVED_ROAD_CONFLICT";
+        }
+        return "";
     }
 
-    static int gatehouseOpeningWidth(int alongLength) {
-        int length = Math.max(3, alongLength);
-        int width = Math.max(3, (length + 1) / 3);
-        if (width % 2 == 0) {
-            width++;
-        }
-        int maxWidth = Math.max(3, length - 2);
-        return Math.min(width, maxWidth);
+    static BlockState configuredBlock(String name) throws IOException {
+        var id = net.minecraft.resources.ResourceLocation.tryParse(name);
+        if (id == null || !BuiltInRegistries.BLOCK.containsKey(id)) throw new IOException("WALL_BLOCK_UNKNOWN:" + name);
+        return BuiltInRegistries.BLOCK.get(id).defaultBlockState();
     }
-
-    private BlockState wallState(int y, int across) {
-        if (y == 0) {
-            return Blocks.DEEPSLATE_BRICKS.defaultBlockState();
+    static List<BlockState> decodePalette(CompoundTag template) throws IOException {
+        List<BlockState> states = new ArrayList<>();
+        ListTag palette = template.getList("palette", Tag.TAG_COMPOUND);
+        for (int i = 0; i < palette.size(); i++) {
+            CompoundTag entry = palette.getCompound(i);
+            configuredBlock(entry.getString("Name"));
+            BlockState state = NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), entry);
+            if (state.hasBlockEntity()) throw new IOException("WALL_BLOCK_ENTITY_TEMPLATE_UNSUPPORTED");
+            states.add(state);
         }
-        if (y <= 2 && (across == 0 || across == 4)) {
-            return Blocks.COBBLESTONE.defaultBlockState();
-        }
-        if (y >= 8 && (across == 0 || across == 4)) {
-            return Blocks.STONE_BRICK_WALL.defaultBlockState();
-        }
-        if (y >= 7 && (across == 1 || across == 3)) {
-            return Blocks.STONE_BRICK_SLAB.defaultBlockState();
-        }
-        if (across == 2 || y <= 6) {
-            return Blocks.STONE_BRICKS.defaultBlockState();
-        }
-        return null;
+        return states;
     }
-
-    private boolean set(ServerLevel level, int x, int y, int z, BlockState state) {
-        return level.setBlock(new BlockPos(x, y, z), state, 3);
+    static BlockState[][][] wallGrid(CompoundTag template) throws IOException {
+        var states = decodePalette(template);
+        BlockState[][][] grid = new BlockState[16][12][5];
+        for (var entry : template.getList("blocks", Tag.TAG_COMPOUND)) {
+            CompoundTag block = (CompoundTag) entry;
+            ListTag pos = block.getList("pos", Tag.TAG_INT);
+            grid[pos.getInt(0)][pos.getInt(1)][pos.getInt(2)] = states.get(block.getInt("state"));
+        }
+        return grid;
     }
-
-    private int surfaceY(ServerLevel level, int x, int z) {
-        int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
-        int minY = level.getMinBuildHeight();
-        int skipped = 0;
-        while (y > minY && skipped < 32
-                && isTemporaryWallBlock(level.getBlockState(new BlockPos(x, y - 1, z)))) {
-            y--;
-            skipped++;
-        }
-        return y;
+    private static void foundation(Map<BlockPos,BlockState> changes,int x,int z,int surface,int base,BlockState state) {
+        for(int y=surface;y<base;y++) changes.put(new BlockPos(x,y,z),state);
     }
-
-    private boolean isTemporaryWallBlock(BlockState state) {
-        return state.is(Blocks.STONE_BRICKS)
-                || state.is(Blocks.DEEPSLATE_BRICKS)
-                || state.is(Blocks.COBBLESTONE)
-                || state.is(Blocks.STONE_BRICK_WALL)
-                || state.is(Blocks.STONE_BRICK_SLAB)
-                || state.is(Blocks.STONE_BRICK_STAIRS)
-                || state.is(Blocks.OAK_FENCE)
-                || state.is(Blocks.LADDER)
-                || state.is(Blocks.OAK_LOG)
-                || state.is(Blocks.OAK_PLANKS);
-    }
-
-    private TerrainSample sampleTerrain(ServerLevel level, BlockBounds bounds, boolean keepSamples) {
-        int minY = Integer.MAX_VALUE;
-        int maxY = Integer.MIN_VALUE;
-        java.util.Map<String, Integer> samples = keepSamples ? new java.util.LinkedHashMap<>() : java.util.Map.of();
-        for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
-            for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
-                int y = surfaceY(level, x, z);
-                minY = Math.min(minY, y);
-                maxY = Math.max(maxY, y);
-                if (keepSamples) {
-                    samples.put(x + "," + z, y);
-                }
-            }
-        }
-        if (minY == Integer.MAX_VALUE) {
-            minY = 0;
-            maxY = 0;
-        }
-        return new TerrainSample(minY, maxY, samples);
-    }
-
-    private WallSurfaceSample sampleSurfaceWall(ServerLevel level, BlockBounds bounds, boolean keepSamples) {
-        int minY = Integer.MAX_VALUE;
-        int maxY = Integer.MIN_VALUE;
-        java.util.List<Integer> values = new java.util.ArrayList<>();
-        java.util.Map<String, Integer> samples = keepSamples ? new java.util.LinkedHashMap<>() : java.util.Map.of();
-        int fluidCells = 0;
-        int totalCells = 0;
-        for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
-            for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
-                int y = surfaceY(level, x, z);
-                minY = Math.min(minY, y);
-                maxY = Math.max(maxY, y);
-                values.add(y);
-                if (isFluidSurface(level, x, y, z)) {
-                    fluidCells++;
-                }
-                totalCells++;
-                if (keepSamples) {
-                    samples.put(x + "," + z, y);
-                }
-            }
-        }
-        if (values.isEmpty()) {
-            minY = 0;
-            maxY = 0;
-        }
-        values.sort(Integer::compareTo);
-        int medianY = values.isEmpty() ? 0 : values.get(values.size() / 2);
-        return new WallSurfaceSample(minY, maxY, medianY, fluidCells, Math.max(1, totalCells), samples);
-    }
-
-    private java.util.Map<String, WallSurfaceSample> wallSurfaceSamples(ServerLevel level,
-                                                                    java.util.List<JsonObject> units,
-                                                                    boolean keepSamples) {
-        java.util.Map<String, WallSurfaceSample> out = new java.util.LinkedHashMap<>();
-        for (JsonObject unit : units) {
-            if (!unit.has("blockBounds") || !unit.get("blockBounds").isJsonObject()) {
-                continue;
-            }
-            out.put(stringValue(unit, "unitId", ""), sampleSurfaceWall(level,
-                    bounds(unit.getAsJsonObject("blockBounds")), keepSamples));
-        }
-        return out;
-    }
-
-    private java.util.Set<String> wallWaterBoundaryUnits(java.util.List<JsonObject> units,
-                                                       java.util.Map<String, WallSurfaceSample> samples,
-                                                       PlacementContext context) {
-        java.util.Set<String> out = new java.util.LinkedHashSet<>();
-        int runStart = -1;
-        int runLength = 0;
-        String runLineId = "";
-        for (int i = 0; i <= units.size(); i++) {
-            JsonObject unit = i < units.size() ? units.get(i) : null;
-            String unitId = unit == null ? "" : stringValue(unit, "unitId", "");
-            String lineId = unit == null ? "" : stringValue(unit, "sourceLineId", "");
-            WallSurfaceSample sample = unit == null ? null : samples.get(unitId);
-            boolean water = unit != null
-                    && booleanValue(unit, "placementAllowed", true)
-                    && !"gate_gap".equals(stringValue(unit, "unitType", ""))
-                    && sample != null
-                    && sample.fluidRatio() >= context.wallWaterFluidRatioMin();
-            if (water && (runStart < 0 || lineId.equals(runLineId))) {
-                if (runStart < 0) {
-                    runStart = i;
-                    runLineId = lineId;
-                }
-                runLength += majorLength(bounds(unit.getAsJsonObject("blockBounds")));
-                continue;
-            }
-            if (runStart >= 0 && runLength >= context.wallWaterRunMinBlocks()) {
-                for (int j = runStart; j < i; j++) {
-                    out.add(stringValue(units.get(j), "unitId", ""));
-                }
-            }
-            runStart = -1;
-            runLength = 0;
-            runLineId = "";
-            if (water) {
-                runStart = i;
-                runLineId = lineId;
-                runLength = majorLength(bounds(unit.getAsJsonObject("blockBounds")));
-            }
-        }
-        return out;
-    }
-
-    static JsonObject debugWallHeightPlan(JsonArray unitsJson, JsonObject medianByUnitId,
-                                        int segmentMaxDeltaBlocks,
-                                        int steppedTransitionMaxDeltaBlocks,
-                                        int naturalBoundaryMinDeltaBlocks) {
-        java.util.List<JsonObject> units = jsonObjects(unitsJson);
-        java.util.Map<String, WallSurfaceSample> samples = new java.util.LinkedHashMap<>();
-        for (String key : medianByUnitId.keySet()) {
-            int median = medianByUnitId.get(key).getAsInt();
-            samples.put(key, new WallSurfaceSample(median, median, median, 0, 1,
-                    java.util.Map.of("0,0", median)));
-        }
-        int segmentMax = segmentMaxDeltaBlocks <= 0 ? 7 : segmentMaxDeltaBlocks;
-        int steppedMax = Math.max(segmentMax,
-                steppedTransitionMaxDeltaBlocks <= 0 ? 16 : steppedTransitionMaxDeltaBlocks);
-        int naturalMin = Math.max(steppedMax + 1,
-                naturalBoundaryMinDeltaBlocks <= 0 ? 17 : naturalBoundaryMinDeltaBlocks);
-        PlacementContext context = new PlacementContext(java.util.List.of(), java.util.List.of(),
-                64, naturalMin - 1, 8, "wall", segmentMax, steppedMax, 6, naturalMin,
-                true, 9, 32, 0.8D, segmentMax, steppedMax, naturalMin);
-        return wallHeightPlan(units, samples, java.util.Set.of(), context).asJson();
-    }
-
-    private static WallHeightPlan wallHeightPlan(java.util.List<JsonObject> units,
-                                             java.util.Map<String, WallSurfaceSample> samples,
-                                             java.util.Set<String> waterBoundaryUnits,
-                                             PlacementContext context) {
-        java.util.List<Integer> eligibleMedians = new java.util.ArrayList<>();
-        for (JsonObject unit : units) {
-            String unitId = stringValue(unit, "unitId", "");
-            WallSurfaceSample sample = samples.get(unitId);
-            if (wallHeightEligible(unit, unitId, sample, waterBoundaryUnits)) {
-                eligibleMedians.add(sample.medianY());
-            }
-        }
-        int baselineY = highTrimmedMedian(eligibleMedians, 0);
-        java.util.List<WallHeightGroup> groups = new java.util.ArrayList<>();
-        WallHeightGroup current = null;
-        for (JsonObject unit : units) {
-            String unitId = stringValue(unit, "unitId", "");
-            WallSurfaceSample sample = samples.get(unitId);
-            if (!wallHeightEligible(unit, unitId, sample, waterBoundaryUnits)) {
-                current = null;
-                continue;
-            }
-            String lineId = stringValue(unit, "sourceLineId", "");
-            boolean forceNatural = sample.delta() >= context.wallNaturalBoundaryMinDeltaBlocks();
-            boolean exceedsSegmentDelta = current != null
-                    && current.deltaIfAdded(sample) > context.wallHeightSegmentMaxDeltaBlocks();
-            if (current == null
-                    || !current.lineId.equals(lineId)
-                    || forceNatural
-                    || exceedsSegmentDelta) {
-                current = new WallHeightGroup("wall_height_segment_" + groups.size(), lineId);
-                groups.add(current);
-            }
-            current.add(unitId, sample);
-            if (forceNatural) {
-                current.forceNatural = true;
-                current.forceNaturalReason = "unit_terrain_delta";
-                current = null;
-            }
-        }
-
-        for (WallHeightGroup group : groups) {
-            if (group.medianY() - baselineY >= context.wallNaturalBoundaryMinDeltaBlocks()) {
-                group.forceNatural = true;
-                group.forceNaturalReason = "high_segment_above_baseline";
-            }
-        }
-        for (int i = 1; i < groups.size(); i++) {
-            WallHeightGroup previous = groups.get(i - 1);
-            WallHeightGroup currentGroup = groups.get(i);
-            if (!previous.lineId.equals(currentGroup.lineId)) {
-                continue;
-            }
-            int delta = Math.abs(currentGroup.medianY() - previous.medianY());
-            if (delta >= context.wallNaturalBoundaryMinDeltaBlocks()) {
-                WallHeightGroup high = currentGroup.medianY() >= previous.medianY() ? currentGroup : previous;
-                high.forceNatural = true;
-                high.forceNaturalReason = "adjacent_segment_cliff";
-                continue;
-            }
-            if (previous.forceNatural || currentGroup.forceNatural) {
-                continue;
-            } else if (delta > context.wallHeightSegmentMaxDeltaBlocks()
-                    && delta <= context.wallHeightSteppedTransitionMaxDeltaBlocks()) {
-                currentGroup.transitionMode = currentGroup.medianY() > previous.medianY()
-                        ? "stepped_transition_up" : "stepped_transition_down";
-                previous.transitionMode = "uniform_segment".equals(previous.transitionMode)
-                        ? "stepped_transition_peer" : previous.transitionMode;
-            }
-        }
-
-        java.util.Map<String, WallHeightDecision> decisions = new java.util.LinkedHashMap<>();
-        for (WallHeightGroup group : groups) {
-            int segmentMedianY = group.medianY();
-            int baseY = segmentMedianY + 1;
-            for (String unitId : group.unitIds) {
-                WallSurfaceSample sample = samples.get(unitId);
-                boolean natural = group.forceNatural;
-                String reason = natural ? "NATURAL_CLIFF_BOUNDARY_NO_WALL" : "Wall_SEGMENTED_WALL_PLACED";
-                String fitMode = natural ? "NATURAL_CLIFF_BOUNDARY_NO_WALL"
-                        : group.transitionMode.startsWith("stepped")
-                        ? "Wall_SEGMENTED_WALL_WITH_STEPPED_TRANSITION"
-                        : "Wall_SEGMENTED_WALL_PLACED";
-                String message = natural
-                        ? "Large wall height segment treated as natural cliff boundary; wall not placed."
-                        : "Placed wall wall unit using segmented uniform wall-top datum.";
-                decisions.put(unitId, new WallHeightDecision(group.groupId, baseY, segmentMedianY,
-                        sample == null ? segmentMedianY : sample.medianY(), baselineY,
-                        group.transitionMode, group.forceNaturalReason, natural, reason, fitMode, message));
-            }
-        }
-        return new WallHeightPlan(decisions, groups, baselineY,
-                context.wallHeightSegmentMaxDeltaBlocks(),
-                context.wallHeightSteppedTransitionMaxDeltaBlocks(),
-                context.wallNaturalBoundaryMinDeltaBlocks());
-    }
-
-    private static boolean wallHeightEligible(JsonObject unit, String unitId, WallSurfaceSample sample,
-                                            java.util.Set<String> waterBoundaryUnits) {
-        return unit != null
-                && sample != null
-                && !unitId.isBlank()
-                && booleanValue(unit, "placementAllowed", true)
-                && !"gate_gap".equals(stringValue(unit, "unitType", ""))
-                && !waterBoundaryUnits.contains(unitId);
-    }
-
-    private static int highTrimmedMedian(java.util.List<Integer> values, int fallback) {
-        if (values.isEmpty()) {
-            return fallback;
-        }
-        java.util.List<Integer> sorted = new java.util.ArrayList<>(values);
-        sorted.sort(Integer::compareTo);
-        int end = sorted.size();
-        if (sorted.size() >= 4) {
-            end = Math.max(1, sorted.size() - Math.max(1, sorted.size() / 10));
-        }
-        return median(sorted.subList(0, end), fallback);
-    }
-
-    private static int median(java.util.List<Integer> values, int fallback) {
-        if (values.isEmpty()) {
-            return fallback;
-        }
-        java.util.List<Integer> sorted = new java.util.ArrayList<>(values);
-        sorted.sort(Integer::compareTo);
-        return sorted.get(sorted.size() / 2);
-    }
-
-    private boolean isFluidSurface(ServerLevel level, int x, int surfaceY, int z) {
-        int topY = Math.max(level.getMinBuildHeight(), surfaceY - 1);
-        return !level.getFluidState(new BlockPos(x, topY, z)).isEmpty()
-                || !level.getFluidState(new BlockPos(x, surfaceY, z)).isEmpty();
-    }
-
-    private static int majorLength(BlockBounds bounds) {
-        return Math.max(bounds.widthBlocks(), bounds.heightBlocks());
-    }
-
-    private MountainProbe probeMountain(ServerLevel level, BlockBounds unit, Axis axis, PlacementContext context,
-                                        TerrainSample terrain) {
-        SideProbe negative = probeSide(level, unit, axis, context, -1);
-        SideProbe positive = probeSide(level, unit, axis, context, 1);
-        SideProbe high = negative.averageY() >= positive.averageY() ? negative : positive;
-        SideProbe low = high == negative ? positive : negative;
-        double heightDiff = high.averageY() - low.averageY();
-        boolean embeddable = terrain.delta() >= context.naturalBoundaryMinDeltaBlocks()
-                && heightDiff >= Math.max(6, context.flatMaxDeltaBlocks())
-                && high.solidRatio() >= 0.65D;
-        return new MountainProbe(high.side(), negative.averageY(), positive.averageY(),
-                negative.solidRatio(), positive.solidRatio(), heightDiff, embeddable,
-                embeddable ? "adjacent_solid_high_slope" : "no_continuous_mountain_side");
-    }
-
-    private SideProbe probeSide(ServerLevel level, BlockBounds unit, Axis axis, PlacementContext context, int side) {
-        int samples = 0;
-        int solid = 0;
-        long sumY = 0;
-        if (axis == Axis.X) {
-            for (int x = unit.minX(); x <= unit.maxX(); x++) {
-                for (int d = 1; d <= context.mountainProbeDistanceBlocks(); d++) {
-                    int z = side < 0 ? unit.minZ() - d : unit.maxZ() + d;
-                    int y = surfaceY(level, x, z);
-                    samples++;
-                    sumY += y;
-                    if (isSolidSurface(level, x, y, z)) {
-                        solid++;
-                    }
-                }
-            }
-        } else {
-            for (int z = unit.minZ(); z <= unit.maxZ(); z++) {
-                for (int d = 1; d <= context.mountainProbeDistanceBlocks(); d++) {
-                    int x = side < 0 ? unit.minX() - d : unit.maxX() + d;
-                    int y = surfaceY(level, x, z);
-                    samples++;
-                    sumY += y;
-                    if (isSolidSurface(level, x, y, z)) {
-                        solid++;
-                    }
-                }
-            }
-        }
-        return new SideProbe(side,
-                samples == 0 ? 0.0D : (double) sumY / samples,
-                samples == 0 ? 0.0D : (double) solid / samples,
-                samples);
-    }
-
-    private boolean isSolidSurface(ServerLevel level, int x, int surfaceY, int z) {
-        int y = Math.max(level.getMinBuildHeight(), surfaceY - 1);
-        return !level.getBlockState(new BlockPos(x, y, z)).isAir();
-    }
-
-    private static BlockBounds towerBounds(int centerX, int centerZ, int size) {
-        int radius = Math.max(1, size / 2);
-        return new BlockBounds(centerX - radius, centerZ - radius, centerX + radius, centerZ + radius);
-    }
-
-    private static String terrainDeltaBand(int delta, PlacementContext context) {
-        if (delta <= context.flatMaxDeltaBlocks()) {
-            return "LOW";
-        }
-        return delta <= context.steppedMaxDeltaBlocks() ? "MID" : "HIGH";
-    }
-
-    private static java.util.List<BlockBounds> splitUnits(BlockBounds bounds, int unitLength, Axis axis) {
-        int length = Math.max(1, unitLength);
-        java.util.List<BlockBounds> out = new java.util.ArrayList<>();
-        if (axis == Axis.X) {
-            for (int x = bounds.minX(); x <= bounds.maxX(); x += length) {
-                out.add(new BlockBounds(x, bounds.minZ(), Math.min(bounds.maxX(), x + length - 1), bounds.maxZ()));
-            }
-        } else {
-            for (int z = bounds.minZ(); z <= bounds.maxZ(); z += length) {
-                out.add(new BlockBounds(bounds.minX(), z, bounds.maxX(), Math.min(bounds.maxZ(), z + length - 1)));
-            }
-        }
-        return out;
-    }
-
-    private static Axis axisForSegment(JsonObject segment, BlockBounds bounds) {
-        String axis = stringValue(segment, "wallAxis", "");
-        if ("X".equalsIgnoreCase(axis)) {
-            return Axis.X;
-        }
-        if ("Z".equalsIgnoreCase(axis)) {
-            return Axis.Z;
-        }
-        return bounds.widthBlocks() >= bounds.heightBlocks() ? Axis.X : Axis.Z;
-    }
-
-    private static String graphNodeSegmentType(JsonObject node) {
-        String nodeType = stringValue(node, "nodeType", "");
-        if ("gatehouse".equals(nodeType)) {
-            return "gatehouse";
-        }
-        if ("natural_boundary_endpoint".equals(nodeType)) {
-            return "natural_boundary_endpoint";
-        }
-        if ("junction".equals(nodeType)) {
-            return "junction";
-        }
-        if ("beacon_tower".equals(nodeType)) {
-            return "beacon_tower";
-        }
-        return "tower";
-    }
-
-    private static JsonObject pseudoSegment(JsonObject source, String idKey, String segmentType) {
-        JsonObject segment = new JsonObject();
-        segment.addProperty("segmentId", stringValue(source, idKey, stringValue(source, "segmentId", "")));
-        segment.addProperty("segmentType", segmentType);
-        segment.addProperty("templateId", stringValue(source, "templateId", ""));
-        if (source.has("wallAxis") && !source.get("wallAxis").isJsonNull()) {
-            segment.addProperty("wallAxis", source.get("wallAxis").getAsString());
-        }
-        if (source.has("blockBounds") && source.get("blockBounds").isJsonObject()) {
-            segment.add("blockBounds", source.getAsJsonObject("blockBounds").deepCopy());
-        }
-        return segment;
-    }
-
-    enum Axis {
-        X,
-        Z
-    }
-
-    private static int protectedCellCount(BlockBounds bounds, PlacementContext context) {
-        int count = 0;
-        for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
-            for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
-                if (context.protects(x, z) || context.protectsFootprint(x, z)) {
-                    count++;
-                }
-            }
-        }
-        return count;
-    }
-
-    private static JsonObject debugReport(String schema, String cityId) {
-        JsonObject obj = new JsonObject();
-        obj.addProperty("schema", schema);
-        obj.addProperty("cityId", cityId);
-        obj.add("samples", new JsonArray());
-        obj.add("conflicts", new JsonArray());
-        obj.add("gaps", new JsonArray());
-        return obj;
-    }
-
-    private static void addTerrainSample(JsonObject terrainDebug, int x, int z, int surfaceY, int baseY,
-                                         JsonObject segment, BlockBounds unit, PlacementContext context,
-                                         String policyDecision) {
-        JsonObject sample = new JsonObject();
-        sample.addProperty("segmentId", stringValue(segment, "segmentId", ""));
-        sample.addProperty("x", x);
-        sample.addProperty("z", z);
-        sample.addProperty("surfaceY", surfaceY);
-        sample.addProperty("baseY", baseY);
-        sample.addProperty("foundationDepthRequired", baseY < 0 ? -1 : Math.max(0, baseY - surfaceY));
-        sample.addProperty("maxFoundationDepthBlocks", context.effectiveFoundationDepthBlocks());
-        sample.addProperty("terrainPolicyVersion", context.wallTerrainPolicy());
-        sample.addProperty("policyDecision", policyDecision);
-        sample.addProperty("protectedByRoad", context.protects(x, z));
-        sample.addProperty("protectedByStructure", context.protectsFootprint(x, z));
-        sample.add("unitBounds", boundsJson(unit));
-        terrainDebug.getAsJsonArray("samples").add(sample);
-    }
-
-    private static void addTerrainSamples(JsonObject terrainDebug, JsonObject segment, BlockBounds unit,
-                                          PlacementContext context, java.util.Map<String, Integer> surfaceSamples,
-                                          int baseY, String policyDecision) {
-        for (java.util.Map.Entry<String, Integer> entry : surfaceSamples.entrySet()) {
-            String[] parts = entry.getKey().split(",", 2);
-            addTerrainSample(terrainDebug, Integer.parseInt(parts[0]), Integer.parseInt(parts[1]),
-                    entry.getValue(), baseY, segment, unit, context, policyDecision);
-        }
-    }
-
-    private static void addMaskConflict(JsonObject maskDebug, JsonObject segment, BlockBounds unit,
-                                        String reasonCode, int protectedCells) {
-        JsonObject conflict = new JsonObject();
-        conflict.addProperty("segmentId", stringValue(segment, "segmentId", ""));
-        conflict.addProperty("reasonCode", reasonCode);
-        conflict.addProperty("protectedCellCount", protectedCells);
-        conflict.add("blockBounds", boundsJson(unit));
-        conflict.add("manualInspectTp", manualInspectTp(unit));
-        maskDebug.getAsJsonArray("conflicts").add(conflict);
-    }
-
-    private static void addGap(JsonObject gapDebug, JsonObject segment, String reasonCode, String message) {
-        addGap(gapDebug, segment, reasonCode, message, bounds(segment.getAsJsonObject("blockBounds")));
-    }
-
-    private static void addGap(JsonObject gapDebug, JsonObject segment, String reasonCode,
-                               String message, BlockBounds bounds) {
-        JsonObject gap = new JsonObject();
-        gap.addProperty("gapId", "wall_gap_" + gapDebug.getAsJsonArray("gaps").size());
-        gap.addProperty("segmentId", stringValue(segment, "segmentId", ""));
-        gap.addProperty("primaryReason", reasonCode);
-        gap.addProperty("message", message);
-        gap.add("gapBounds", boundsJson(bounds));
-        gap.add("manualInspectTp", manualInspectTp(bounds));
-        gapDebug.getAsJsonArray("gaps").add(gap);
-    }
-
-    private static JsonObject manualInspectTp(BlockBounds bounds) {
-        JsonObject obj = new JsonObject();
-        obj.addProperty("x", bounds.center().x());
-        obj.addProperty("y", 140);
-        obj.addProperty("z", bounds.center().z());
-        obj.addProperty("command", "/tp " + bounds.center().x() + " 140 " + bounds.center().z());
-        return obj;
-    }
-
-    private static JsonArray array(JsonObject obj, String key) {
-        return obj != null && obj.has(key) && obj.get(key).isJsonArray()
-                ? obj.getAsJsonArray(key)
-                : new JsonArray();
-    }
-
-    private static java.util.List<JsonObject> jsonObjects(JsonArray array) {
-        java.util.List<JsonObject> out = new java.util.ArrayList<>();
-        for (JsonElement elem : array) {
-            if (elem.isJsonObject()) {
-                out.add(elem.getAsJsonObject());
-            }
-        }
-        return out;
-    }
-
-    private static BlockBounds bounds(JsonObject obj) {
-        return new BlockBounds(intValue(obj, "minX", 0), intValue(obj, "minZ", 0),
-                intValue(obj, "maxX", 0), intValue(obj, "maxZ", 0));
-    }
-
-    private static JsonObject boundsJson(BlockBounds bounds) {
-        JsonObject obj = new JsonObject();
-        obj.addProperty("minX", bounds.minX());
-        obj.addProperty("minZ", bounds.minZ());
-        obj.addProperty("maxX", bounds.maxX());
-        obj.addProperty("maxZ", bounds.maxZ());
-        return obj;
-    }
-
-    private static String stringValue(JsonObject obj, String key, String fallback) {
-        return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsString() : fallback;
-    }
-
-    private static int intValue(JsonObject obj, String key, int fallback) {
-        return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsInt() : fallback;
-    }
-
-    private static double doubleValue(JsonObject obj, String key, double fallback) {
-        return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsDouble() : fallback;
-    }
-
-    private static boolean booleanValue(JsonObject obj, String key, boolean fallback) {
-        return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsBoolean() : fallback;
-    }
-
-    private record SegmentResult(String status, String reasonCode, int changedBlocks, String message) {
-        JsonObject asJson(JsonObject segment) {
-            JsonObject obj = new JsonObject();
-            obj.addProperty("segmentId", stringValue(segment, "segmentId", ""));
-            obj.addProperty("segmentType", stringValue(segment, "segmentType", ""));
-            obj.addProperty("status", status);
-            obj.addProperty("reasonCode", reasonCode);
-            obj.addProperty("changedBlocks", changedBlocks);
-            obj.addProperty("message", message);
-            obj.add("blockBounds", segment.getAsJsonObject("blockBounds").deepCopy());
-            return obj;
-        }
-    }
-
-    private record UnitResult(String status, String reasonCode, String terrainFitMode, int changedBlocks,
-                              String message, BlockBounds bounds, int minSurfaceY, int maxSurfaceY,
-                              int protectedCellCount, String terrainPolicyVersion, String terrainDeltaBand,
-                              JsonArray stepSlices, JsonObject mountainProbe) {
-        JsonObject asJson(String segmentId) {
-            JsonObject obj = new JsonObject();
-            obj.addProperty("segmentId", segmentId);
-            obj.addProperty("status", status);
-            obj.addProperty("reasonCode", reasonCode);
-            obj.addProperty("terrainPolicyVersion", terrainPolicyVersion);
-            obj.addProperty("terrainDeltaBand", terrainDeltaBand);
-            obj.addProperty("terrainFitMode", terrainFitMode);
-            obj.addProperty("changedBlocks", changedBlocks);
-            obj.addProperty("message", message);
-            obj.addProperty("minSurfaceY", minSurfaceY);
-            obj.addProperty("maxSurfaceY", maxSurfaceY);
-            obj.addProperty("terrainDelta", maxSurfaceY - minSurfaceY);
-            obj.addProperty("protectedCellCount", protectedCellCount);
-            obj.add("blockBounds", boundsJson(bounds));
-            obj.add("manualInspectTp", manualInspectTp(bounds));
-            obj.add("stepSlices", stepSlices == null ? new JsonArray() : stepSlices.deepCopy());
-            if (mountainProbe != null && !mountainProbe.entrySet().isEmpty()) {
-                if (mountainProbe.has("heightSegmentId")) {
-                    obj.add("heightDecision", mountainProbe.deepCopy());
-                } else if (mountainProbe.has("fluidCoverageRatio")) {
-                    obj.add("waterBoundary", mountainProbe.deepCopy());
-                } else {
-                    obj.add("mountainProbe", mountainProbe.deepCopy());
-                }
-            }
-            return obj;
-        }
-    }
-
-    private record PlacementContext(java.util.List<BlockBounds> roadMasks,
-                                    java.util.List<BlockBounds> footprints,
-                                    int maxFoundationDepthBlocks,
-                                    int maxSegmentHeightDeltaBlocks,
-                                    int terrainFitUnitLengthBlocks,
-                                    String wallTerrainPolicy,
-                                    int flatMaxDeltaBlocks,
-                                    int steppedMaxDeltaBlocks,
-                                    int mountainProbeDistanceBlocks,
-                                    int naturalBoundaryMinDeltaBlocks,
-                                    boolean embeddedSlopeTower,
-                                    int wallNominalWallHeightBlocks,
-                                    int wallWaterRunMinBlocks,
-                                    double wallWaterFluidRatioMin,
-                                    int wallHeightSegmentMaxDeltaBlocks,
-                                    int wallHeightSteppedTransitionMaxDeltaBlocks,
-                                    int wallNaturalBoundaryMinDeltaBlocks) {
-        static PlacementContext from(JsonObject wallPlan) {
-            java.util.List<BlockBounds> roads = new java.util.ArrayList<>();
-            JsonObject roadMask = wallPlan != null && wallPlan.has("actualRoadMask")
-                    && wallPlan.get("actualRoadMask").isJsonObject()
-                    ? wallPlan.getAsJsonObject("actualRoadMask") : new JsonObject();
-            for (JsonElement elem : array(roadMask, "roadMask")) {
-                if (elem.isJsonObject()) {
-                    roads.add(bounds(elem.getAsJsonObject().getAsJsonObject("blockBounds")));
-                }
-            }
-            java.util.List<BlockBounds> footprints = new java.util.ArrayList<>();
-            JsonObject reservation = wallPlan != null && wallPlan.has("wallReservationSource")
-                    && wallPlan.get("wallReservationSource").isJsonObject()
-                    ? wallPlan.getAsJsonObject("wallReservationSource") : new JsonObject();
-            JsonObject ledger = wallPlan != null && wallPlan.has("sourcePlacedStructureLedger")
-                    && wallPlan.get("sourcePlacedStructureLedger").isJsonObject()
-                    ? wallPlan.getAsJsonObject("sourcePlacedStructureLedger") : new JsonObject();
-            for (JsonElement elem : array(ledger, "placedStructures")) {
-                if (elem.isJsonObject() && elem.getAsJsonObject().has("actualFootprint")) {
-                    footprints.add(bounds(elem.getAsJsonObject().getAsJsonObject("actualFootprint")));
-                }
-            }
-            if (footprints.isEmpty() && wallPlan != null && wallPlan.has("sourceActualFootprintUnion")
-                    && wallPlan.get("sourceActualFootprintUnion").isJsonObject()) {
-                footprints.add(bounds(wallPlan.getAsJsonObject("sourceActualFootprintUnion")));
-            }
-            JsonObject terrainPolicy = wallPlan != null && wallPlan.has("terrainFitPolicy")
-                    && wallPlan.get("terrainFitPolicy").isJsonObject()
-                    ? wallPlan.getAsJsonObject("terrainFitPolicy") : new JsonObject();
-            String policy = stringValue(terrainPolicy, "policyVersion",
-                    stringValue(wallPlan, "wallTerrainPolicy", "terrain"));
-            String normalizedPolicy = "wall".equalsIgnoreCase(policy == null ? "" : policy.trim())
-                    ? "wall" : POLICY_Terrain1.equalsIgnoreCase(policy == null ? "" : policy.trim()) ? POLICY_Terrain1 : "terrain";
-            int flatMax = intValue(terrainPolicy, "flatMaxDeltaBlocks", 7);
-            int steppedMax = Math.max(flatMax, intValue(terrainPolicy, "steppedMaxDeltaBlocks", 16));
-            int wallSegmentMax = intValue(terrainPolicy, "heightSegmentMaxDeltaBlocks",
-                    intValue(wallPlan, "heightSegmentMaxDeltaBlocks", flatMax));
-            int wallSteppedMax = Math.max(wallSegmentMax,
-                    intValue(terrainPolicy, "heightSteppedTransitionMaxDeltaBlocks",
-                            intValue(wallPlan, "heightSteppedTransitionMaxDeltaBlocks", steppedMax)));
-            int wallNaturalMin = Math.max(wallSteppedMax + 1,
-                    intValue(terrainPolicy, "naturalBoundaryMinDeltaBlocks",
-                            intValue(wallPlan, "naturalBoundaryMinDeltaBlocks", steppedMax + 1)));
-            return new PlacementContext(roads, footprints,
-                    intValue(wallPlan, "maxFoundationDepthBlocks", 8),
-                    intValue(wallPlan, "maxSegmentHeightDeltaBlocks", MAX_SEGMENT_HEIGHT_DELTA),
-                    Math.max(1, intValue(wallPlan, "terrainFitUnitLengthBlocks",
-                            intValue(wallPlan, "wallUnitLengthBlocks", 5))),
-                    normalizedPolicy,
-                    flatMax,
-                    steppedMax,
-                    Math.max(1, intValue(terrainPolicy, "mountainProbeDistanceBlocks", 6)),
-                    Math.max(steppedMax + 1, intValue(terrainPolicy, "naturalBoundaryMinDeltaBlocks", 17)),
-                    booleanValue(terrainPolicy, "embeddedSlopeTower", true),
-                    Math.max(3, intValue(wallPlan, "nominalWallHeightBlocks", 9)),
-                    Math.max(1, intValue(wallPlan, "waterRunMinBlocks", 32)),
-                    Math.max(0.0D, doubleValue(wallPlan, "waterFluidRatioMin", 0.8D)),
-                    Math.max(1, wallSegmentMax),
-                    Math.max(wallSegmentMax, wallSteppedMax),
-                    wallNaturalMin);
-        }
-
-        boolean isTerrain1Policy() {
-            return POLICY_Terrain1.equals(wallTerrainPolicy);
-        }
-
-        int effectiveFoundationDepthBlocks() {
-            return isTerrain1Policy()
-                    ? Math.max(maxFoundationDepthBlocks, steppedMaxDeltaBlocks)
-                    : maxFoundationDepthBlocks;
-        }
-
-        boolean protects(int x, int z) {
-            return roadMasks.stream().anyMatch(bounds -> bounds.contains(x, z));
-        }
-
-        boolean protectsFootprint(int x, int z) {
-            return footprints.stream().anyMatch(bounds -> bounds.contains(x, z));
-        }
-
-        boolean protectsAny(int x, int z) {
-            return protects(x, z) || protectsFootprint(x, z);
-        }
-
-        boolean overlapsRoad(BlockBounds bounds) {
-            return roadMasks.stream().anyMatch(road -> road.overlaps(bounds));
-        }
-
-        boolean overlapsFootprint(BlockBounds bounds) {
-            return footprints.stream().anyMatch(footprint -> footprint.overlaps(bounds));
-        }
-
-    }
-
-    private record TerrainSample(int minY, int maxY, java.util.Map<String, Integer> surfaceSamples) {
-        int delta() {
-            return Math.max(0, maxY - minY);
-        }
-    }
-
-    private record WallSurfaceSample(int minY, int maxY, int medianY, int fluidCells, int totalCells,
-                                   java.util.Map<String, Integer> surfaceSamples) {
-        int delta() {
-            return Math.max(0, maxY - minY);
-        }
-
-        double fluidRatio() {
-            return totalCells <= 0 ? 0.0D : (double) fluidCells / totalCells;
-        }
-
-        int surfaceYAt(int x, int z, int fallback) {
-            if (surfaceSamples == null || surfaceSamples.isEmpty()) {
-                return fallback;
-            }
-            return surfaceSamples.getOrDefault(x + "," + z, fallback);
-        }
-    }
-
-    private record WallHeightDecision(String heightSegmentId, int baseY, int segmentMedianY, int unitMedianY,
-                                    int baselineSurfaceY, String transitionMode, String naturalReason,
-                                    boolean naturalBoundary, String reasonCode, String terrainFitMode,
-                                    String message) {
-        JsonObject asJson(WallSurfaceSample sample) {
-            JsonObject obj = new JsonObject();
-            obj.addProperty("heightSegmentId", heightSegmentId);
-            obj.addProperty("executedBaseY", baseY);
-            obj.addProperty("segmentMedianSurfaceY", segmentMedianY);
-            obj.addProperty("unitMedianSurfaceY", unitMedianY);
-            obj.addProperty("baselineSurfaceY", baselineSurfaceY);
-            obj.addProperty("transitionMode", transitionMode);
-            obj.addProperty("naturalBoundary", naturalBoundary);
-            obj.addProperty("naturalReason", naturalReason);
-            obj.addProperty("heightDeltaFromSegment", sample == null ? 0 : sample.medianY() - segmentMedianY);
-            return obj;
-        }
-    }
-
-    private record WallHeightPlan(java.util.Map<String, WallHeightDecision> decisions,
-                                java.util.List<WallHeightGroup> groups,
-                                int baselineSurfaceY,
-                                int segmentMaxDeltaBlocks,
-                                int steppedTransitionMaxDeltaBlocks,
-                                int naturalBoundaryMinDeltaBlocks) {
-        static WallHeightPlan empty() {
-            return new WallHeightPlan(java.util.Map.of(), java.util.List.of(), 0, 0, 0, 0);
-        }
-
-        WallHeightDecision decision(String unitId) {
-            return decisions.get(unitId);
-        }
-
-        JsonObject asJson() {
-            JsonObject obj = new JsonObject();
-            obj.addProperty("schema", "city_wall_wall_height_segmentation");
-            obj.addProperty("baselineSurfaceY", baselineSurfaceY);
-            obj.addProperty("heightSegmentMaxDeltaBlocks", segmentMaxDeltaBlocks);
-            obj.addProperty("heightSteppedTransitionMaxDeltaBlocks", steppedTransitionMaxDeltaBlocks);
-            obj.addProperty("naturalBoundaryMinDeltaBlocks", naturalBoundaryMinDeltaBlocks);
-            obj.addProperty("heightSegmentCount", groups.size());
-            int naturalCount = 0;
-            JsonArray arr = new JsonArray();
-            for (WallHeightGroup group : groups) {
-                if (group.forceNatural) {
-                    naturalCount++;
-                }
-                arr.add(group.asJson());
-            }
-            obj.addProperty("naturalBoundarySegmentCount", naturalCount);
-            obj.add("heightSegments", arr);
-            return obj;
-        }
-    }
-
-    private static final class WallHeightGroup {
-        private final String groupId;
-        private final String lineId;
-        private final java.util.List<String> unitIds = new java.util.ArrayList<>();
-        private final java.util.List<Integer> medians = new java.util.ArrayList<>();
-        private boolean forceNatural;
-        private String forceNaturalReason = "";
-        private String transitionMode = "uniform_segment";
-
-        private WallHeightGroup(String groupId, String lineId) {
-            this.groupId = groupId;
-            this.lineId = lineId;
-        }
-
-        private void add(String unitId, WallSurfaceSample sample) {
-            unitIds.add(unitId);
-            medians.add(sample.medianY());
-        }
-
-        private int medianY() {
-            return median(medians, 0);
-        }
-
-        private int deltaIfAdded(WallSurfaceSample sample) {
-            int min = sample.medianY();
-            int max = sample.medianY();
-            for (Integer median : medians) {
-                min = Math.min(min, median);
-                max = Math.max(max, median);
-            }
-            return Math.max(0, max - min);
-        }
-
-        private JsonObject asJson() {
-            JsonObject obj = new JsonObject();
-            obj.addProperty("heightSegmentId", groupId);
-            obj.addProperty("sourceLineId", lineId);
-            obj.addProperty("segmentMedianSurfaceY", medianY());
-            obj.addProperty("baseY", medianY() + 1);
-            obj.addProperty("unitCount", unitIds.size());
-            obj.addProperty("transitionMode", transitionMode);
-            obj.addProperty("naturalBoundary", forceNatural);
-            obj.addProperty("naturalReason", forceNaturalReason);
-            if (forceNatural) {
-                obj.addProperty("reasonCode", "NATURAL_CLIFF_BOUNDARY_NO_WALL");
-            }
-            JsonArray units = new JsonArray();
-            unitIds.forEach(units::add);
-            obj.add("unitIds", units);
-            return obj;
-        }
-    }
-
-    private record SideProbe(int side, double averageY, double solidRatio, int sampleCount) {
-    }
-
-    private record MountainProbe(int highSide,
-                                 double negativeAverageY,
-                                 double positiveAverageY,
-                                 double negativeSolidRatio,
-                                 double positiveSolidRatio,
-                                 double heightDiff,
-                                 boolean embeddable,
-                                 String decisionReason) {
-        JsonObject asJson() {
-            JsonObject obj = new JsonObject();
-            obj.addProperty("highSide", highSide < 0 ? "negative" : "positive");
-            obj.addProperty("negativeAverageY", negativeAverageY);
-            obj.addProperty("positiveAverageY", positiveAverageY);
-            obj.addProperty("negativeSolidRatio", negativeSolidRatio);
-            obj.addProperty("positiveSolidRatio", positiveSolidRatio);
-            obj.addProperty("heightDiff", heightDiff);
-            obj.addProperty("embeddable", embeddable);
-            obj.addProperty("decisionReason", decisionReason);
-            return obj;
-        }
-    }
+    private static boolean contains(List<BlockBounds> areas,int x,int z) { return areas.stream().anyMatch(b->b.contains(x,z)); }
+    private static JsonObject failure(JsonObject report,String reason) {report.addProperty("reasonCode",reason);return report;}
+    private static JsonArray array(JsonObject object,String key) {return object.has(key)&&object.get(key).isJsonArray()?object.getAsJsonArray(key):new JsonArray();}
+    private static JsonObject object(JsonObject object,String key) {return object.has(key)&&object.get(key).isJsonObject()?object.getAsJsonObject(key):new JsonObject();}
+    private static String string(JsonObject object,String key,String fallback) {return object.has(key)?object.get(key).getAsString():fallback;}
+    private static int integer(JsonObject object,String key,int fallback) {return object.has(key)?object.get(key).getAsInt():fallback;}
+    private static boolean bool(JsonObject object,String key,boolean fallback) {return object.has(key)?object.get(key).getAsBoolean():fallback;}
+    private static BlockBounds bounds(JsonObject object) {return new BlockBounds(integer(object,"minX",0),integer(object,"minZ",0),integer(object,"maxX",0),integer(object,"maxZ",0));}
 }

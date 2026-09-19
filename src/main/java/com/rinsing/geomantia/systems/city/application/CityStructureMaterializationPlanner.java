@@ -37,8 +37,13 @@ public final class CityStructureMaterializationPlanner {
         JsonArray attempts = new JsonArray();
         JsonArray failures = new JsonArray();
         JsonArray waiting = new JsonArray();
+        int optionalSkipped = 0;
 
-        for (JsonElement element : anchors) {
+        // Even a reordered input cannot let an optional tree claim space before a building.
+        List<JsonElement> orderedAnchors = new ArrayList<>(anchors.asList());
+        orderedAnchors.sort(java.util.Comparator.comparing(element ->
+                CityRoadsideTreePlanner.isTree(element.getAsJsonObject())));
+        for (JsonElement element : orderedAnchors) {
             TemplateTask task = TemplateTask.from(element);
             JsonObject attempt = baseAttempt(task, "template_metadata_check");
             String failure = task.validationFailure();
@@ -60,19 +65,21 @@ public final class CityStructureMaterializationPlanner {
                 attempt.addProperty("message", "Template collision overlaps a previous or planned placement.");
             }
             if (failure != null) {
-                attempt.addProperty("status", "failed");
+                boolean optional = CityRoadsideTreePlanner.isTree(task.source());
+                attempt.addProperty("status", optional ? "skipped_optional" : "failed");
                 attempt.addProperty("reasonCode", failure);
-                failures.add(failure);
+                if (optional) optionalSkipped++; else failures.add(failure);
                 attempts.add(attempt);
                 continue;
             }
 
             ChunkStatusResult status = statusInspector.inspect(task.asStatusTask());
             if (status.failure()) {
-                attempt.addProperty("status", "failed");
+                boolean optional = CityRoadsideTreePlanner.isTree(task.source());
+                attempt.addProperty("status", optional ? "skipped_optional" : "failed");
                 attempt.addProperty("reasonCode", status.reasonCode());
                 attempt.addProperty("message", status.message());
-                failures.add(status.reasonCode());
+                if (optional) optionalSkipped++; else failures.add(status.reasonCode());
                 attempts.add(attempt);
                 continue;
             }
@@ -94,7 +101,8 @@ public final class CityStructureMaterializationPlanner {
         plan.addProperty("materializationSource", TEMPLATE_MATERIALIZATION_SOURCE);
         plan.addProperty("preflightMode", "current_world_template_nbt");
         plan.addProperty("worldgenPlacementMode", true);
-        plan.addProperty("locked", failures.isEmpty() && planned.size() == anchors.size() && !planned.isEmpty());
+        plan.addProperty("locked", failures.isEmpty() && planned.size() + optionalSkipped == anchors.size() && !planned.isEmpty());
+        plan.addProperty("optionalSkippedCount", optionalSkipped);
         plan.add("plannedWorldgenStructures", planned);
         plan.add("sourceStructureAnchorMap", anchorMap.deepCopy());
         plan.add("timingMs", timing(started));
@@ -183,6 +191,7 @@ public final class CityStructureMaterializationPlanner {
         for (JsonElement element : geometrySource) {
             if (!element.isJsonObject()) continue;
             JsonObject item = element.getAsJsonObject();
+            if (CityRoadsideTreePlanner.isTree(item)) continue;
             JsonObject footprint = objectValue(item, "actualFootprint");
             if (footprint == null) continue;
             JsonObject area = new JsonObject();

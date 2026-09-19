@@ -1358,7 +1358,7 @@ const originalRealmTools: ToolDefinition[] = [
         roadScanMarginBlocks: { type: "number", description: "扫描 City 实际路面的墙带外扩距离，默认 8。" },
         naturalBoundaryMinDeltaBlocks: { type: "number", description: "高差天然屏障断墙阈值，默认 17。" },
         wallUnitLengthBlocks: { type: "number", description: "城墙 placement unit 长度，默认 8。" },
-        nominalWallHeightBlocks: { type: "number", description: "名义墙高，默认 9。" },
+        nominalWallHeightBlocks: { type: "number", description: "守卫塔配套墙面高度，固定 10。" },
         heightSegmentMaxDeltaBlocks: { type: "number", description: "分段统一墙顶高度的并段高差阈值，默认 7。" },
         heightSteppedTransitionMaxDeltaBlocks: { type: "number", description: "段间阶梯过渡最大高差，默认 16。" },
         waterRunMinBlocks: { type: "number", description: "连续水体边界判定最小长度，默认 32 blocks。" },

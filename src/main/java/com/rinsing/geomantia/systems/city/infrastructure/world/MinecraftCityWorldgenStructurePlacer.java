@@ -100,9 +100,12 @@ public final class MinecraftCityWorldgenStructurePlacer {
         if (chunkPos.x != item.anchorChunkX() || chunkPos.z != item.anchorChunkZ()) {
             return;
         }
+        boolean decoration = CityTemplateTerrainPosePolicy.STRUCTURE_START_DECORATION.equals(
+                text(item.templatePlan(), "terrainPosePolicy", ""));
         Optional<Holder.Reference<Structure>> holder = registryAccess.registryOrThrow(Registries.STRUCTURE)
                 .getHolder(ResourceKey.create(Registries.STRUCTURE,
-                        CityTemplateTerrainStructureRegistries.CITY_TEMPLATE_TERRAIN_STRUCTURE_ID));
+                        decoration ? CityTemplateTerrainStructureRegistries.CITY_ROADSIDE_DECORATION_STRUCTURE_ID
+                                : CityTemplateTerrainStructureRegistries.CITY_TEMPLATE_TERRAIN_STRUCTURE_ID));
         if (holder.isEmpty()) {
             CityReservationMaskRegistry.recordWorldgenFailure(item, chunkPos,
                     "CITY_TEMPLATE_TERRAIN_STRUCTURE_UNAVAILABLE",
@@ -170,7 +173,10 @@ public final class MinecraftCityWorldgenStructurePlacer {
             LevelHeightAccessor heightAccessor = chunk.getHeightAccessorForGeneration();
             TerrainSamplingChoice terrainSampling = new TerrainSamplingChoice(generator,
                     (x, z) -> sampleDesignTerrain(generator, registryAccess, randomState, heightAccessor, x, z));
-            int datumY = CityLandUseWorldgenRegistry.resolveStructureFoundationDatum(
+            BlockPoint root = point(plan, "treeRootBlock", footprint.center());
+            int datumY = decoration ? generator.getBaseHeight(root.x(), root.z(),
+                    Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, heightAccessor, randomState)
+                    : CityLandUseWorldgenRegistry.resolveStructureFoundationDatum(
                             item.cityId(), footprint, terrainSampling.cacheIdentity(),
                             terrainSampling.sampler())
                     .orElseGet(() -> medianFoundationDatum(footprint,

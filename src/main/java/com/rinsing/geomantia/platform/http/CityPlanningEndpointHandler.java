@@ -1264,6 +1264,12 @@ final class CityPlanningEndpointHandler {
                 && reviewPackageJson.get("patchContextBounds").isJsonObject()
                 ? bounds(reviewPackageJson.getAsJsonObject("patchContextBounds"))
                 : null;
+        Path districtBlueprintPath = cityStageDir(runDir, citySeedId, CityTestRunLayout.BLUEPRINT).resolve("city_blueprint.json");
+        if (Files.isRegularFile(districtBlueprintPath)) {
+            JsonObject districtBlueprint = JsonParser.parseString(Files.readString(districtBlueprintPath)).getAsJsonObject();
+            if (districtBlueprint.has("outdoorPlan") && districtBlueprint.getAsJsonObject("outdoorPlan").has("foundationGroupIds"))
+                anchorMap.add("districtGroupIds", districtBlueprint.getAsJsonObject("outdoorPlan").get("foundationGroupIds").deepCopy());
+        }
         JsonObject wallReservationPlan = new CityWallReservationPlanner().plan(
                 reviewPackage, anchorMap, wallMarginBlocks, wallCorridorHalfWidthBlocks, patchContextBounds);
         CityReservationMaskPlanner.Result result = new CityReservationMaskPlanner().plan(ctx, anchorMap,
@@ -1864,6 +1870,20 @@ final class CityPlanningEndpointHandler {
                     read.contentHash(), new CityTemplatePlacementGeometry.Size(
                             read.size().getX(), read.size().getY(), read.size().getZ()));
         };
+        Path treeTerrainPath = cityStageDir(runDir, citySeedId, CityTestRunLayout.LAND_USE)
+                .resolve("land_use_terrain_field.json");
+        Path landscapeReservationPath = d4Dir.resolve("city_landscape_capacity_reservation_plan.json");
+        if (level != null && Files.exists(treeTerrainPath) && Files.exists(wallReservationPath)) {
+            var trees = com.rinsing.geomantia.systems.city.application.CityRoadsideTreePlanner
+                    .readCatalog(templateMetadataInspector);
+            anchorMap = new com.rinsing.geomantia.systems.city.application.CityRoadsideTreePlanner().append(
+                    anchorMap, JsonParser.parseString(Files.readString(wallReservationPath)).getAsJsonObject(),
+                    Files.exists(landscapeReservationPath)
+                            ? JsonParser.parseString(Files.readString(landscapeReservationPath)).getAsJsonObject()
+                            : new JsonObject(),
+                    new LandUseTerrainFieldCodec().fromJson(
+                            JsonParser.parseString(Files.readString(treeTerrainPath)).getAsJsonObject()), trees);
+        }
         CityStructureMaterializationPlanner.Result result = new CityStructureMaterializationPlanner()
                 .planWorldgen(anchorMap, inspector, null, templateMetadataInspector);
         validateFootprintsWithinWallReservation(wallReservationPath, result.structureMaterializationPlan(),
@@ -2047,6 +2067,7 @@ final class CityPlanningEndpointHandler {
         JsonObject wallPlan = new CityWallPlanner().plan(ledger, wallReservationForPlan, actualRoadMask,
                 wallOptions);
         wallPlan.add("surfaceCacheBackfill", surfaceCacheBackfill.deepCopy());
+        CityWallPlacementBackend.prepare(level, wallPlan);
         Path planPath = new MinecraftCityWallArtifactWriter().writeArtifacts(wallPlan, outputDirectory);
         if (actualRoadMask != null) {
             Files.writeString(roadMaskPath, CityJson.GSON.toJson(actualRoadMask));

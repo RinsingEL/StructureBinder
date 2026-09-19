@@ -1,0 +1,1090 @@
+{
+  "basis": "name_based_function_coverage",
+  "comparisonAxes": [
+    "居住",
+    "商业餐饮",
+    "生产工坊",
+    "仓储",
+    "治理",
+    "农业",
+    "宗教文化",
+    "军事防御",
+    "住宿",
+    "交通供水"
+  ],
+  "coreComparisonAxes": [
+    "居住",
+    "商业餐饮",
+    "生产工坊",
+    "仓储",
+    "治理"
+  ],
+  "interpretation": "审阅排序用的功能对照，不是新增游戏准入规则；城市设计仍决定实际必需功能。",
+  "styles": {
+    "中世纪": {
+      "totalAssets": 318,
+      "cityFolderCandidates": 318,
+      "status": "核心功能名称齐备，待外观与落地审核",
+      "independentCityApproved": false,
+      "coverageByFunction": {
+        "居住": [
+          "asset_be02b0e9980cf17a",
+          "asset_a150add22c6515ae",
+          "asset_d23726c41b1bb37c",
+          "asset_d390be5fd9e01f18",
+          "asset_76328fb26e69d036",
+          "asset_a8a1057200377c9c",
+          "asset_c4462b5264b73abf",
+          "asset_3218e508c8062a99",
+          "asset_57813d29c343f799",
+          "asset_4bcb0c5d42e3c384",
+          "asset_05ac95c786fbb564",
+          "asset_892e2856239d7013",
+          "asset_6b2d4d8059045556"
+        ],
+        "商业餐饮": [
+          "asset_6d05547310e41704",
+          "asset_22256bc635c0a5ee",
+          "asset_f5c6256057ec93f3",
+          "asset_5212f48a9c6d10f0",
+          "asset_0c300737efd8be87",
+          "asset_b8845106c814bc49",
+          "asset_86aba3acc1280332",
+          "asset_8e10d3ff8fa1a0e9",
+          "asset_81dbca6c9368146d",
+          "asset_1d0465426f5a86c2",
+          "asset_2e89e71887264b4a",
+          "asset_cf7e01a8e1ee6e18",
+          "asset_73804eae2bfc1ea3",
+          "asset_82d56dc98cfd2aa4",
+          "asset_623781e08330453c",
+          "asset_495f62883a8eba6b",
+          "asset_ae08da8e81742a76",
+          "asset_96657425512dc579",
+          "asset_e6413871261969bd",
+          "asset_0221a7fb542fadef",
+          "asset_eb10973513fa95a1",
+          "asset_fd2db4e44e881620",
+          "asset_58ad6e4ff37725ad",
+          "asset_9e0611aadd98817d",
+          "asset_e756e515929dc9f7",
+          "asset_c2f7514df6405997"
+        ],
+        "生产工坊": [
+          "asset_ff24c5c4ab12fe4f",
+          "asset_381dbb038328743b",
+          "asset_f00c28eb38645c64",
+          "asset_1902fb49802ca2ca",
+          "asset_e762eebb362864ca",
+          "asset_0303c9c3d5b595e4"
+        ],
+        "仓储": [
+          "asset_ab1d46f4a75a4ef5",
+          "asset_3147b23b9e19da38",
+          "asset_37dbd8d22f7f4e2a",
+          "asset_f5d1da69bfd222b0",
+          "asset_c437c4e86ad6bad7"
+        ],
+        "治理": [
+          "asset_41636bfb6df71ca5",
+          "asset_7ef6f4d309335547",
+          "asset_2526a831498925bc"
+        ],
+        "农业": [
+          "asset_0bb1ae9b3292d615",
+          "asset_29a405e9a220324d",
+          "asset_b5d1204ca06ab8a1",
+          "asset_82a735574ea321d7",
+          "asset_c37ad7152da420eb",
+          "asset_25113c8ad84f9b6c",
+          "asset_6e577ed7d461bb58",
+          "asset_4d2846ae20cfbf80",
+          "asset_f2c0241373105c30",
+          "asset_7d3e21d3f19b9d40",
+          "asset_c526f946b642f114",
+          "asset_cd156bbb99e246a6",
+          "asset_312b65411ed77ce2",
+          "asset_fc47624a951ba1ae",
+          "asset_daf1ee8710e0443f",
+          "asset_bfef27a6d7dd3703",
+          "asset_4eceb042a0c7274f",
+          "asset_d3d1f64ad38850ee"
+        ],
+        "宗教文化": [
+          "asset_f4d55e22929c9dae",
+          "asset_48440fbcefb09562",
+          "asset_7d7a1ba8fa56e0d6",
+          "asset_53ad292053a2bc43",
+          "asset_49d2e676f91f682e",
+          "asset_cc70acfb8e7a1229",
+          "asset_85406d6c09f8d924",
+          "asset_71c3ed0be1ce90aa",
+          "asset_28b8964a4baf4324",
+          "asset_7b7c11cc709e59b1"
+        ],
+        "军事防御": [
+          "asset_84cd2ce201da6657",
+          "asset_dde3483a3752d0a6",
+          "asset_d3ef8f37105f8b85",
+          "asset_d4d02a9c1e314a38",
+          "asset_560f44af130b813b",
+          "asset_2e5ae5f814eac248",
+          "asset_d1465636bac94d6e",
+          "asset_dfa5805986da274a",
+          "asset_62cdcc2527b58c0d",
+          "asset_17c5d81afcb4b005",
+          "asset_ede25276c7b53eb9",
+          "asset_438aa7f15c00a9b2",
+          "asset_3c39b4e38928ee0c",
+          "asset_5102559aa729a603",
+          "asset_935fb140fba63f24",
+          "asset_1b85c48fdd0bcee8",
+          "asset_24827a14467f2821",
+          "asset_4a6418949587c467",
+          "asset_14f982cb117f06f8",
+          "asset_9e7ad80b66cddf30",
+          "asset_4283447237b8f84f",
+          "asset_6f87a722aaf12ac1",
+          "asset_78e3e204be57d481",
+          "asset_8dd7f4eee888eaea",
+          "asset_f05e8d983222d2a1"
+        ],
+        "住宿": [
+          "asset_0b12be750464e501",
+          "asset_0221a7fb542fadef",
+          "asset_30e8850700572b6f",
+          "asset_a9af61efdddb0923",
+          "asset_b8de2fa4a96b6f2e"
+        ],
+        "交通供水": [
+          "asset_95ecb7fda4af7d79",
+          "asset_d6d07874ff435f06",
+          "asset_b5053871f055fe7a",
+          "asset_d5e53ed6382c99ab",
+          "asset_d11b415b3df70d76",
+          "asset_cbabb70007008cf8",
+          "asset_f460c21c37fa8dbc",
+          "asset_68510db957283fdf",
+          "asset_cd0e089c6e94ece6",
+          "asset_79f89459766ed27f",
+          "asset_896a517e77f0d22a",
+          "asset_a32c1a0cabbc423e",
+          "asset_cbbd55f063e5cba1",
+          "asset_c664b94d7b6a7d88",
+          "asset_b4ebe34fc40241c4",
+          "asset_2de7e353da96d15c",
+          "asset_7465b0705496a487",
+          "asset_4ded4843fd59fbd2",
+          "asset_dd36e5c1bfb18579",
+          "asset_796a7d184610e064"
+        ]
+      },
+      "missingNamedCoreFunctions": [],
+      "unassignedBuildingCandidates": [
+        "asset_47525ce981865642",
+        "asset_b93ef757d8a0a6e9",
+        "asset_6b5e9c8aebb334a3",
+        "asset_3b60cbd3261ff3f2",
+        "asset_8c8d8a771a7617d8",
+        "asset_69f838c2f6da341a",
+        "asset_3d6974be3e36ca43",
+        "asset_a5ecb0004f5cd27f",
+        "asset_572c438bbeaf8a48",
+        "asset_79f25d7ceb71bb0a",
+        "asset_0a726b9e1fa35855",
+        "asset_8c7a3bb93166087b",
+        "asset_57c5214f984ea580",
+        "asset_ce970cc0203942c8",
+        "asset_1e1401b50f3d0b95",
+        "asset_cc07457cfef0ed9a",
+        "asset_1fcc65cf5c228d52",
+        "asset_3458bf0183430e8d",
+        "asset_6170d40781b47fb4",
+        "asset_50efddd13fc1d65c",
+        "asset_b3441ae5c9b1b06b",
+        "asset_626de858b64ccbe2",
+        "asset_d40013133a5a5985",
+        "asset_c7d2bdfe96195087",
+        "asset_3c5e6b3a891ac68b",
+        "asset_b694e61ab1a151ee",
+        "asset_cf2924832689fb7b",
+        "asset_937fc8a7d183d40d",
+        "asset_9eea27a0970859ff",
+        "asset_3590d7271dc14218",
+        "asset_eb70229599907017",
+        "asset_1d5ed01e82f69245",
+        "asset_a266dc0be348aacc",
+        "asset_93f2cc5a503fb33f",
+        "asset_7084674db1af2bf8",
+        "asset_283c6c947ad63dae",
+        "asset_00313b6b173b6a19",
+        "asset_dac2f72090f45cb4",
+        "asset_cbb6d0aa41d3c11b",
+        "asset_69581b40b952c5aa",
+        "asset_585ec3e7a059c0f6",
+        "asset_8f7955dd995ed243",
+        "asset_01284a280402398d",
+        "asset_c7fbccdc4f65ba60",
+        "asset_60fecf293e6ce9e6",
+        "asset_f3bbcf2f51a705fe",
+        "asset_2ae30e7a6357d73f",
+        "asset_acf59a48e4b89356",
+        "asset_a3502c1f251a8eb3",
+        "asset_f7eea751bac5bddf",
+        "asset_5b92bf251d01b966",
+        "asset_0a3750249c060e46",
+        "asset_5457c2dd8222203a",
+        "asset_b1f01c96385c61d2",
+        "asset_fcfb4711305ee9ca",
+        "asset_0adb2b84a52b8737",
+        "asset_60646988840aaa43",
+        "asset_792e50069daf4745",
+        "asset_459018735f31a925",
+        "asset_6e4aab4de467e159",
+        "asset_93c2f43b6c5cdf37",
+        "asset_f22769fcac5a9b08",
+        "asset_1aa05d2b619dd53c",
+        "asset_df861c5d73f15a45",
+        "asset_ac15b54fd15cc196",
+        "asset_111c28b885dd4b9e",
+        "asset_ef630aa74f7ff68c",
+        "asset_680dcf473790c245",
+        "asset_ce5ad240ce624bd9",
+        "asset_010f6d0e339f266b",
+        "asset_fd413fba513e793b",
+        "asset_428e5f0a1d324547",
+        "asset_a1984072b4d4ae8f",
+        "asset_c43ad09f3e21ec62",
+        "asset_f73af91d5182758b",
+        "asset_3a0eb27aba30c2e3",
+        "asset_bf2608d81cf2ab81",
+        "asset_1682ab6a304e8ba3",
+        "asset_c3367cac22bebf81",
+        "asset_9cfc1fdb17e65fb9",
+        "asset_b1ad91dee52b7a8e",
+        "asset_c0a876d8b7b7c41c",
+        "asset_ffc530d65bdbe791",
+        "asset_3ebe6ca127f06478",
+        "asset_c7efe46d58b67ef5",
+        "asset_62896cfa8b2b80b3",
+        "asset_98ab94b51d73b2b4",
+        "asset_198d646a02b92593",
+        "asset_04e97a47f5f7a331",
+        "asset_c3d95c70fc03b406",
+        "asset_3097353d2ae5ca05",
+        "asset_e56275400d42a31d",
+        "asset_8c0fd9b6e19f56bf",
+        "asset_719197f6cdde4218",
+        "asset_dd16085dd7116062",
+        "asset_09a4381b61dea1e1",
+        "asset_2e1483f29c274603",
+        "asset_f1c06f1aad2df881",
+        "asset_823f16918d8789f9",
+        "asset_aba6cac510311886",
+        "asset_5c34503694c4a49b",
+        "asset_23084e21c95fdf40",
+        "asset_ecf8bb0fe137f067",
+        "asset_23b5ef19b8c7adee",
+        "asset_3bf63856307024dd",
+        "asset_67a0b78fe123a1b3",
+        "asset_0c7a626b14b7f7cf",
+        "asset_68d8175b1264a9e5",
+        "asset_d64083713c539526",
+        "asset_0c5fe35f84af2cbc",
+        "asset_b8f7ee796edee49f",
+        "asset_116906626d3947d9",
+        "asset_b43534f5bbe8053b",
+        "asset_4ab7af7227c1bef3",
+        "asset_7961f4d9b108b864",
+        "asset_29154e46aae44a57",
+        "asset_b14f686e79fab1d7",
+        "asset_ef7d2d2262f309fa",
+        "asset_1ceb51e5576e79a8",
+        "asset_ae4824cb2ff07681",
+        "asset_aa123dc510e09707",
+        "asset_9a8bf6d9b3e38e39",
+        "asset_c65cf93aed8d8848",
+        "asset_72bbc101b3fdc898",
+        "asset_06fe27348412566c",
+        "asset_c1a2b6ab804f9ce1",
+        "asset_d5c71495177bc5bf",
+        "asset_fdd88147b24b2f60",
+        "asset_389b38ee0facef0b",
+        "asset_3c91de9106c552d0",
+        "asset_706dd9407584d980",
+        "asset_33acff30d9e9ac32",
+        "asset_32fae57d1a6a2ddd",
+        "asset_58d6faea6cdbc560",
+        "asset_535f83c50d05c2e5",
+        "asset_9a5e79e221b0ba67",
+        "asset_6c482f99deba9385",
+        "asset_53b00d861d662af5",
+        "asset_7fa0e224699c4b11",
+        "asset_df1494758e71afd3",
+        "asset_87bcfb886577bdbd",
+        "asset_3039535119c7930c",
+        "asset_a093ced140756023",
+        "asset_76b6e0932f0f08db",
+        "asset_30cfc4b244bc94b4"
+      ],
+      "note": "缺口表示未从名称找到明确对应，不表示结构内部一定没有该用途；一般房屋不自动填补缺口。"
+    }
+  },
+  "sourceSeries": {
+    "中世纪小镇构建": {
+      "totalAssets": 42,
+      "cityFolderCandidates": 42,
+      "status": "功能覆盖不足，暂作专项或待定素材",
+      "independentCityApproved": false,
+      "coverageByFunction": {
+        "居住": [],
+        "商业餐饮": [
+          "asset_6d05547310e41704",
+          "asset_22256bc635c0a5ee",
+          "asset_f5c6256057ec93f3",
+          "asset_5212f48a9c6d10f0",
+          "asset_0c300737efd8be87"
+        ],
+        "生产工坊": [
+          "asset_ff24c5c4ab12fe4f",
+          "asset_381dbb038328743b"
+        ],
+        "仓储": [],
+        "治理": [],
+        "农业": [
+          "asset_0bb1ae9b3292d615",
+          "asset_29a405e9a220324d",
+          "asset_b5d1204ca06ab8a1",
+          "asset_82a735574ea321d7",
+          "asset_c37ad7152da420eb"
+        ],
+        "宗教文化": [
+          "asset_f4d55e22929c9dae"
+        ],
+        "军事防御": [
+          "asset_84cd2ce201da6657",
+          "asset_dde3483a3752d0a6",
+          "asset_d3ef8f37105f8b85"
+        ],
+        "住宿": [
+          "asset_0b12be750464e501"
+        ],
+        "交通供水": [
+          "asset_95ecb7fda4af7d79",
+          "asset_d6d07874ff435f06",
+          "asset_b5053871f055fe7a",
+          "asset_d5e53ed6382c99ab",
+          "asset_d11b415b3df70d76",
+          "asset_cbabb70007008cf8",
+          "asset_f460c21c37fa8dbc",
+          "asset_68510db957283fdf",
+          "asset_cd0e089c6e94ece6",
+          "asset_79f89459766ed27f",
+          "asset_896a517e77f0d22a"
+        ]
+      },
+      "missingNamedCoreFunctions": [
+        "居住",
+        "仓储",
+        "治理"
+      ],
+      "unassignedBuildingCandidates": [
+        "asset_47525ce981865642",
+        "asset_b93ef757d8a0a6e9",
+        "asset_6b5e9c8aebb334a3",
+        "asset_3b60cbd3261ff3f2",
+        "asset_8c8d8a771a7617d8"
+      ],
+      "note": "缺口表示未从名称找到明确对应，不表示结构内部一定没有该用途；一般房屋不自动填补缺口。"
+    },
+    "中世纪建筑包": {
+      "totalAssets": 17,
+      "cityFolderCandidates": 17,
+      "status": "核心功能名称齐备，待外观与落地审核",
+      "independentCityApproved": false,
+      "coverageByFunction": {
+        "居住": [
+          "asset_be02b0e9980cf17a"
+        ],
+        "商业餐饮": [
+          "asset_b8845106c814bc49",
+          "asset_86aba3acc1280332",
+          "asset_8e10d3ff8fa1a0e9",
+          "asset_81dbca6c9368146d"
+        ],
+        "生产工坊": [
+          "asset_f00c28eb38645c64"
+        ],
+        "仓储": [
+          "asset_ab1d46f4a75a4ef5"
+        ],
+        "治理": [
+          "asset_41636bfb6df71ca5"
+        ],
+        "农业": [
+          "asset_25113c8ad84f9b6c"
+        ],
+        "宗教文化": [
+          "asset_48440fbcefb09562"
+        ],
+        "军事防御": [
+          "asset_d4d02a9c1e314a38",
+          "asset_560f44af130b813b",
+          "asset_2e5ae5f814eac248"
+        ],
+        "住宿": [],
+        "交通供水": [
+          "asset_a32c1a0cabbc423e"
+        ]
+      },
+      "missingNamedCoreFunctions": [],
+      "unassignedBuildingCandidates": [
+        "asset_69f838c2f6da341a",
+        "asset_3d6974be3e36ca43",
+        "asset_a5ecb0004f5cd27f"
+      ],
+      "note": "缺口表示未从名称找到明确对应，不表示结构内部一定没有该用途；一般房屋不自动填补缺口。"
+    },
+    "中世纪房屋素材 构建/中世纪奇幻构建包1": {
+      "totalAssets": 52,
+      "cityFolderCandidates": 52,
+      "status": "功能覆盖不足，暂作专项或待定素材",
+      "independentCityApproved": false,
+      "coverageByFunction": {
+        "居住": [],
+        "商业餐饮": [
+          "asset_1d0465426f5a86c2",
+          "asset_2e89e71887264b4a",
+          "asset_cf7e01a8e1ee6e18",
+          "asset_73804eae2bfc1ea3",
+          "asset_82d56dc98cfd2aa4"
+        ],
+        "生产工坊": [],
+        "仓储": [],
+        "治理": [],
+        "农业": [
+          "asset_6e577ed7d461bb58",
+          "asset_4d2846ae20cfbf80"
+        ],
+        "宗教文化": [],
+        "军事防御": [],
+        "住宿": [],
+        "交通供水": [
+          "asset_cbbd55f063e5cba1",
+          "asset_c664b94d7b6a7d88",
+          "asset_b4ebe34fc40241c4"
+        ]
+      },
+      "missingNamedCoreFunctions": [
+        "居住",
+        "生产工坊",
+        "仓储",
+        "治理"
+      ],
+      "unassignedBuildingCandidates": [
+        "asset_572c438bbeaf8a48",
+        "asset_79f25d7ceb71bb0a",
+        "asset_0a726b9e1fa35855",
+        "asset_8c7a3bb93166087b",
+        "asset_57c5214f984ea580",
+        "asset_ce970cc0203942c8",
+        "asset_1e1401b50f3d0b95",
+        "asset_cc07457cfef0ed9a",
+        "asset_1fcc65cf5c228d52",
+        "asset_3458bf0183430e8d",
+        "asset_6170d40781b47fb4",
+        "asset_50efddd13fc1d65c",
+        "asset_b3441ae5c9b1b06b",
+        "asset_626de858b64ccbe2",
+        "asset_d40013133a5a5985",
+        "asset_c7d2bdfe96195087",
+        "asset_3c5e6b3a891ac68b",
+        "asset_b694e61ab1a151ee",
+        "asset_cf2924832689fb7b",
+        "asset_937fc8a7d183d40d",
+        "asset_9eea27a0970859ff"
+      ],
+      "note": "缺口表示未从名称找到明确对应，不表示结构内部一定没有该用途；一般房屋不自动填补缺口。"
+    },
+    "中世纪房屋素材 构建/中世纪奇幻构建包2": {
+      "totalAssets": 16,
+      "cityFolderCandidates": 16,
+      "status": "功能覆盖不足，暂作专项或待定素材",
+      "independentCityApproved": false,
+      "coverageByFunction": {
+        "居住": [],
+        "商业餐饮": [],
+        "生产工坊": [],
+        "仓储": [],
+        "治理": [],
+        "农业": [],
+        "宗教文化": [],
+        "军事防御": [],
+        "住宿": [],
+        "交通供水": []
+      },
+      "missingNamedCoreFunctions": [
+        "居住",
+        "商业餐饮",
+        "生产工坊",
+        "仓储",
+        "治理"
+      ],
+      "unassignedBuildingCandidates": [
+        "asset_3590d7271dc14218",
+        "asset_eb70229599907017",
+        "asset_1d5ed01e82f69245",
+        "asset_a266dc0be348aacc",
+        "asset_93f2cc5a503fb33f",
+        "asset_7084674db1af2bf8",
+        "asset_283c6c947ad63dae",
+        "asset_00313b6b173b6a19",
+        "asset_dac2f72090f45cb4",
+        "asset_cbb6d0aa41d3c11b",
+        "asset_69581b40b952c5aa",
+        "asset_585ec3e7a059c0f6"
+      ],
+      "note": "缺口表示未从名称找到明确对应，不表示结构内部一定没有该用途；一般房屋不自动填补缺口。"
+    },
+    "中世纪房屋素材 构建/中世纪构建包1": {
+      "totalAssets": 18,
+      "cityFolderCandidates": 18,
+      "status": "已有城镇骨架，需补齐功能",
+      "independentCityApproved": false,
+      "coverageByFunction": {
+        "居住": [],
+        "商业餐饮": [
+          "asset_623781e08330453c",
+          "asset_495f62883a8eba6b",
+          "asset_ae08da8e81742a76"
+        ],
+        "生产工坊": [
+          "asset_1902fb49802ca2ca"
+        ],
+        "仓储": [
+          "asset_3147b23b9e19da38"
+        ],
+        "治理": [],
+        "农业": [
+          "asset_f2c0241373105c30",
+          "asset_7d3e21d3f19b9d40"
+        ],
+        "宗教文化": [
+          "asset_7d7a1ba8fa56e0d6",
+          "asset_53ad292053a2bc43",
+          "asset_49d2e676f91f682e",
+          "asset_cc70acfb8e7a1229"
+        ],
+        "军事防御": [
+          "asset_d1465636bac94d6e"
+        ],
+        "住宿": [],
+        "交通供水": []
+      },
+      "missingNamedCoreFunctions": [
+        "居住",
+        "治理"
+      ],
+      "unassignedBuildingCandidates": [
+        "asset_8f7955dd995ed243",
+        "asset_01284a280402398d",
+        "asset_c7fbccdc4f65ba60",
+        "asset_60fecf293e6ce9e6",
+        "asset_f3bbcf2f51a705fe"
+      ],
+      "note": "缺口表示未从名称找到明确对应，不表示结构内部一定没有该用途；一般房屋不自动填补缺口。"
+    },
+    "中世纪房屋素材 构建/中世纪构建包2": {
+      "totalAssets": 40,
+      "cityFolderCandidates": 40,
+      "status": "功能覆盖不足，暂作专项或待定素材",
+      "independentCityApproved": false,
+      "coverageByFunction": {
+        "居住": [
+          "asset_a150add22c6515ae",
+          "asset_d23726c41b1bb37c"
+        ],
+        "商业餐饮": [
+          "asset_96657425512dc579"
+        ],
+        "生产工坊": [],
+        "仓储": [],
+        "治理": [],
+        "农业": [
+          "asset_c526f946b642f114"
+        ],
+        "宗教文化": [
+          "asset_85406d6c09f8d924"
+        ],
+        "军事防御": [],
+        "住宿": [],
+        "交通供水": [
+          "asset_2de7e353da96d15c",
+          "asset_7465b0705496a487"
+        ]
+      },
+      "missingNamedCoreFunctions": [
+        "生产工坊",
+        "仓储",
+        "治理"
+      ],
+      "unassignedBuildingCandidates": [
+        "asset_2ae30e7a6357d73f",
+        "asset_acf59a48e4b89356",
+        "asset_a3502c1f251a8eb3",
+        "asset_f7eea751bac5bddf",
+        "asset_5b92bf251d01b966",
+        "asset_0a3750249c060e46",
+        "asset_5457c2dd8222203a",
+        "asset_b1f01c96385c61d2",
+        "asset_fcfb4711305ee9ca",
+        "asset_0adb2b84a52b8737",
+        "asset_60646988840aaa43",
+        "asset_792e50069daf4745",
+        "asset_459018735f31a925",
+        "asset_6e4aab4de467e159",
+        "asset_93c2f43b6c5cdf37",
+        "asset_f22769fcac5a9b08",
+        "asset_1aa05d2b619dd53c",
+        "asset_df861c5d73f15a45",
+        "asset_ac15b54fd15cc196",
+        "asset_111c28b885dd4b9e",
+        "asset_ef630aa74f7ff68c",
+        "asset_680dcf473790c245",
+        "asset_ce5ad240ce624bd9",
+        "asset_010f6d0e339f266b",
+        "asset_fd413fba513e793b",
+        "asset_428e5f0a1d324547",
+        "asset_a1984072b4d4ae8f",
+        "asset_c43ad09f3e21ec62",
+        "asset_f73af91d5182758b",
+        "asset_3a0eb27aba30c2e3",
+        "asset_bf2608d81cf2ab81",
+        "asset_1682ab6a304e8ba3",
+        "asset_c3367cac22bebf81"
+      ],
+      "note": "缺口表示未从名称找到明确对应，不表示结构内部一定没有该用途；一般房屋不自动填补缺口。"
+    },
+    "中世纪房屋素材 构建/中世纪构建包3": {
+      "totalAssets": 24,
+      "cityFolderCandidates": 24,
+      "status": "已有城镇骨架，需补齐功能",
+      "independentCityApproved": false,
+      "coverageByFunction": {
+        "居住": [
+          "asset_d390be5fd9e01f18",
+          "asset_76328fb26e69d036",
+          "asset_a8a1057200377c9c"
+        ],
+        "商业餐饮": [
+          "asset_e6413871261969bd",
+          "asset_0221a7fb542fadef"
+        ],
+        "生产工坊": [],
+        "仓储": [],
+        "治理": [
+          "asset_7ef6f4d309335547"
+        ],
+        "农业": [
+          "asset_cd156bbb99e246a6",
+          "asset_312b65411ed77ce2"
+        ],
+        "宗教文化": [
+          "asset_71c3ed0be1ce90aa"
+        ],
+        "军事防御": [
+          "asset_dfa5805986da274a"
+        ],
+        "住宿": [
+          "asset_0221a7fb542fadef"
+        ],
+        "交通供水": [
+          "asset_4ded4843fd59fbd2"
+        ]
+      },
+      "missingNamedCoreFunctions": [
+        "生产工坊",
+        "仓储"
+      ],
+      "unassignedBuildingCandidates": [
+        "asset_9cfc1fdb17e65fb9",
+        "asset_b1ad91dee52b7a8e",
+        "asset_c0a876d8b7b7c41c",
+        "asset_ffc530d65bdbe791",
+        "asset_3ebe6ca127f06478",
+        "asset_c7efe46d58b67ef5",
+        "asset_62896cfa8b2b80b3",
+        "asset_98ab94b51d73b2b4",
+        "asset_198d646a02b92593",
+        "asset_04e97a47f5f7a331"
+      ],
+      "note": "缺口表示未从名称找到明确对应，不表示结构内部一定没有该用途；一般房屋不自动填补缺口。"
+    },
+    "中世纪房屋素材 构建/简易中世纪村庄包": {
+      "totalAssets": 5,
+      "cityFolderCandidates": 5,
+      "status": "功能覆盖不足，暂作专项或待定素材",
+      "independentCityApproved": false,
+      "coverageByFunction": {
+        "居住": [
+          "asset_c4462b5264b73abf"
+        ],
+        "商业餐饮": [],
+        "生产工坊": [],
+        "仓储": [
+          "asset_37dbd8d22f7f4e2a",
+          "asset_f5d1da69bfd222b0"
+        ],
+        "治理": [],
+        "农业": [],
+        "宗教文化": [
+          "asset_28b8964a4baf4324"
+        ],
+        "军事防御": [],
+        "住宿": [
+          "asset_30e8850700572b6f"
+        ],
+        "交通供水": []
+      },
+      "missingNamedCoreFunctions": [
+        "商业餐饮",
+        "生产工坊",
+        "治理"
+      ],
+      "unassignedBuildingCandidates": [],
+      "note": "缺口表示未从名称找到明确对应，不表示结构内部一定没有该用途；一般房屋不自动填补缺口。"
+    },
+    "各式各样的房屋1/中世纪小屋": {
+      "totalAssets": 18,
+      "cityFolderCandidates": 18,
+      "status": "功能覆盖不足，暂作专项或待定素材",
+      "independentCityApproved": false,
+      "coverageByFunction": {
+        "居住": [],
+        "商业餐饮": [],
+        "生产工坊": [],
+        "仓储": [],
+        "治理": [],
+        "农业": [],
+        "宗教文化": [],
+        "军事防御": [],
+        "住宿": [],
+        "交通供水": []
+      },
+      "missingNamedCoreFunctions": [
+        "居住",
+        "商业餐饮",
+        "生产工坊",
+        "仓储",
+        "治理"
+      ],
+      "unassignedBuildingCandidates": [
+        "asset_c3d95c70fc03b406",
+        "asset_3097353d2ae5ca05",
+        "asset_e56275400d42a31d",
+        "asset_8c0fd9b6e19f56bf",
+        "asset_719197f6cdde4218",
+        "asset_dd16085dd7116062",
+        "asset_09a4381b61dea1e1",
+        "asset_2e1483f29c274603",
+        "asset_f1c06f1aad2df881",
+        "asset_823f16918d8789f9",
+        "asset_aba6cac510311886",
+        "asset_5c34503694c4a49b",
+        "asset_23084e21c95fdf40",
+        "asset_ecf8bb0fe137f067",
+        "asset_23b5ef19b8c7adee",
+        "asset_3bf63856307024dd",
+        "asset_67a0b78fe123a1b3",
+        "asset_0c7a626b14b7f7cf"
+      ],
+      "note": "缺口表示未从名称找到明确对应，不表示结构内部一定没有该用途；一般房屋不自动填补缺口。"
+    },
+    "各式各样的房屋2/中世纪": {
+      "totalAssets": 41,
+      "cityFolderCandidates": 41,
+      "status": "已有城镇骨架，需补齐功能",
+      "independentCityApproved": false,
+      "coverageByFunction": {
+        "居住": [
+          "asset_3218e508c8062a99",
+          "asset_57813d29c343f799",
+          "asset_4bcb0c5d42e3c384",
+          "asset_05ac95c786fbb564",
+          "asset_892e2856239d7013"
+        ],
+        "商业餐饮": [
+          "asset_eb10973513fa95a1",
+          "asset_fd2db4e44e881620",
+          "asset_58ad6e4ff37725ad",
+          "asset_9e0611aadd98817d",
+          "asset_e756e515929dc9f7"
+        ],
+        "生产工坊": [],
+        "仓储": [
+          "asset_c437c4e86ad6bad7"
+        ],
+        "治理": [
+          "asset_2526a831498925bc"
+        ],
+        "农业": [
+          "asset_fc47624a951ba1ae",
+          "asset_daf1ee8710e0443f"
+        ],
+        "宗教文化": [],
+        "军事防御": [
+          "asset_62cdcc2527b58c0d",
+          "asset_17c5d81afcb4b005",
+          "asset_ede25276c7b53eb9",
+          "asset_438aa7f15c00a9b2",
+          "asset_3c39b4e38928ee0c",
+          "asset_5102559aa729a603",
+          "asset_935fb140fba63f24",
+          "asset_1b85c48fdd0bcee8"
+        ],
+        "住宿": [
+          "asset_a9af61efdddb0923",
+          "asset_b8de2fa4a96b6f2e"
+        ],
+        "交通供水": [
+          "asset_dd36e5c1bfb18579"
+        ]
+      },
+      "missingNamedCoreFunctions": [
+        "生产工坊"
+      ],
+      "unassignedBuildingCandidates": [
+        "asset_68d8175b1264a9e5",
+        "asset_d64083713c539526",
+        "asset_0c5fe35f84af2cbc",
+        "asset_b8f7ee796edee49f",
+        "asset_116906626d3947d9",
+        "asset_b43534f5bbe8053b",
+        "asset_4ab7af7227c1bef3",
+        "asset_7961f4d9b108b864",
+        "asset_29154e46aae44a57",
+        "asset_b14f686e79fab1d7",
+        "asset_ef7d2d2262f309fa",
+        "asset_1ceb51e5576e79a8",
+        "asset_ae4824cb2ff07681",
+        "asset_aa123dc510e09707"
+      ],
+      "note": "缺口表示未从名称找到明确对应，不表示结构内部一定没有该用途；一般房屋不自动填补缺口。"
+    },
+    "各式风格建筑构建包/中世纪": {
+      "totalAssets": 18,
+      "cityFolderCandidates": 18,
+      "status": "已有城镇骨架，需补齐功能",
+      "independentCityApproved": false,
+      "coverageByFunction": {
+        "居住": [
+          "asset_6b2d4d8059045556"
+        ],
+        "商业餐饮": [
+          "asset_c2f7514df6405997"
+        ],
+        "生产工坊": [
+          "asset_e762eebb362864ca",
+          "asset_0303c9c3d5b595e4"
+        ],
+        "仓储": [],
+        "治理": [],
+        "农业": [
+          "asset_bfef27a6d7dd3703",
+          "asset_4eceb042a0c7274f",
+          "asset_d3d1f64ad38850ee"
+        ],
+        "宗教文化": [
+          "asset_7b7c11cc709e59b1"
+        ],
+        "军事防御": [
+          "asset_24827a14467f2821",
+          "asset_4a6418949587c467"
+        ],
+        "住宿": [],
+        "交通供水": []
+      },
+      "missingNamedCoreFunctions": [
+        "仓储",
+        "治理"
+      ],
+      "unassignedBuildingCandidates": [
+        "asset_9a8bf6d9b3e38e39",
+        "asset_c65cf93aed8d8848",
+        "asset_72bbc101b3fdc898",
+        "asset_06fe27348412566c",
+        "asset_c1a2b6ab804f9ce1",
+        "asset_d5c71495177bc5bf"
+      ],
+      "note": "缺口表示未从名称找到明确对应，不表示结构内部一定没有该用途；一般房屋不自动填补缺口。"
+    },
+    "各种塔 构建包": {
+      "totalAssets": 9,
+      "cityFolderCandidates": 9,
+      "status": "功能覆盖不足，暂作专项或待定素材",
+      "independentCityApproved": false,
+      "coverageByFunction": {
+        "居住": [],
+        "商业餐饮": [],
+        "生产工坊": [],
+        "仓储": [],
+        "治理": [],
+        "农业": [],
+        "宗教文化": [],
+        "军事防御": [
+          "asset_14f982cb117f06f8"
+        ],
+        "住宿": [],
+        "交通供水": []
+      },
+      "missingNamedCoreFunctions": [
+        "居住",
+        "商业餐饮",
+        "生产工坊",
+        "仓储",
+        "治理"
+      ],
+      "unassignedBuildingCandidates": [
+        "asset_fdd88147b24b2f60",
+        "asset_389b38ee0facef0b",
+        "asset_3c91de9106c552d0",
+        "asset_706dd9407584d980",
+        "asset_33acff30d9e9ac32",
+        "asset_32fae57d1a6a2ddd",
+        "asset_58d6faea6cdbc560"
+      ],
+      "note": "缺口表示未从名称找到明确对应，不表示结构内部一定没有该用途；一般房屋不自动填补缺口。"
+    },
+    "城堡 防御工事等": {
+      "totalAssets": 5,
+      "cityFolderCandidates": 5,
+      "status": "功能覆盖不足，暂作专项或待定素材",
+      "independentCityApproved": false,
+      "coverageByFunction": {
+        "居住": [],
+        "商业餐饮": [],
+        "生产工坊": [],
+        "仓储": [],
+        "治理": [],
+        "农业": [],
+        "宗教文化": [],
+        "军事防御": [
+          "asset_9e7ad80b66cddf30",
+          "asset_4283447237b8f84f",
+          "asset_6f87a722aaf12ac1",
+          "asset_78e3e204be57d481",
+          "asset_8dd7f4eee888eaea"
+        ],
+        "住宿": [],
+        "交通供水": []
+      },
+      "missingNamedCoreFunctions": [
+        "居住",
+        "商业餐饮",
+        "生产工坊",
+        "仓储",
+        "治理"
+      ],
+      "unassignedBuildingCandidates": [],
+      "note": "缺口表示未从名称找到明确对应，不表示结构内部一定没有该用途；一般房屋不自动填补缺口。"
+    },
+    "小型建筑构建": {
+      "totalAssets": 2,
+      "cityFolderCandidates": 2,
+      "status": "功能覆盖不足，暂作专项或待定素材",
+      "independentCityApproved": false,
+      "coverageByFunction": {
+        "居住": [],
+        "商业餐饮": [],
+        "生产工坊": [],
+        "仓储": [],
+        "治理": [],
+        "农业": [],
+        "宗教文化": [],
+        "军事防御": [
+          "asset_f05e8d983222d2a1"
+        ],
+        "住宿": [],
+        "交通供水": []
+      },
+      "missingNamedCoreFunctions": [
+        "居住",
+        "商业餐饮",
+        "生产工坊",
+        "仓储",
+        "治理"
+      ],
+      "unassignedBuildingCandidates": [
+        "asset_535f83c50d05c2e5"
+      ],
+      "note": "缺口表示未从名称找到明确对应，不表示结构内部一定没有该用途；一般房屋不自动填补缺口。"
+    },
+    "灯塔 构建包": {
+      "totalAssets": 1,
+      "cityFolderCandidates": 1,
+      "status": "功能覆盖不足，暂作专项或待定素材",
+      "independentCityApproved": false,
+      "coverageByFunction": {
+        "居住": [],
+        "商业餐饮": [],
+        "生产工坊": [],
+        "仓储": [],
+        "治理": [],
+        "农业": [],
+        "宗教文化": [],
+        "军事防御": [],
+        "住宿": [],
+        "交通供水": [
+          "asset_796a7d184610e064"
+        ]
+      },
+      "missingNamedCoreFunctions": [
+        "居住",
+        "商业餐饮",
+        "生产工坊",
+        "仓储",
+        "治理"
+      ],
+      "unassignedBuildingCandidates": [],
+      "note": "缺口表示未从名称找到明确对应，不表示结构内部一定没有该用途；一般房屋不自动填补缺口。"
+    },
+    "铜顶中世纪房屋包": {
+      "totalAssets": 10,
+      "cityFolderCandidates": 10,
+      "status": "功能覆盖不足，暂作专项或待定素材",
+      "independentCityApproved": false,
+      "coverageByFunction": {
+        "居住": [],
+        "商业餐饮": [],
+        "生产工坊": [],
+        "仓储": [],
+        "治理": [],
+        "农业": [],
+        "宗教文化": [],
+        "军事防御": [],
+        "住宿": [],
+        "交通供水": []
+      },
+      "missingNamedCoreFunctions": [
+        "居住",
+        "商业餐饮",
+        "生产工坊",
+        "仓储",
+        "治理"
+      ],
+      "unassignedBuildingCandidates": [
+        "asset_9a5e79e221b0ba67",
+        "asset_6c482f99deba9385",
+        "asset_53b00d861d662af5",
+        "asset_7fa0e224699c4b11",
+        "asset_df1494758e71afd3",
+        "asset_87bcfb886577bdbd",
+        "asset_3039535119c7930c",
+        "asset_a093ced140756023",
+        "asset_76b6e0932f0f08db",
+        "asset_30cfc4b244bc94b4"
+      ],
+      "note": "缺口表示未从名称找到明确对应，不表示结构内部一定没有该用途；一般房屋不自动填补缺口。"
+    }
+  }
+}

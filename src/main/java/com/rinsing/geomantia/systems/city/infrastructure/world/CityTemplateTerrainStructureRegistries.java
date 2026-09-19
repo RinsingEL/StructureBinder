@@ -13,6 +13,8 @@ import net.minecraftforge.registries.RegistryObject;
 public final class CityTemplateTerrainStructureRegistries {
     public static final ResourceLocation CITY_TEMPLATE_TERRAIN_STRUCTURE_ID =
             new ResourceLocation(GeomantiaMod.MOD_ID, "city_template_terrain");
+    public static final ResourceLocation CITY_ROADSIDE_DECORATION_STRUCTURE_ID =
+            new ResourceLocation(GeomantiaMod.MOD_ID, "city_roadside_decoration");
 
     public static final DeferredRegister<StructureType<?>> STRUCTURE_TYPES =
             DeferredRegister.create(Registries.STRUCTURE_TYPE, GeomantiaMod.MOD_ID);

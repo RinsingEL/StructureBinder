@@ -1,0 +1,613 @@
+[
+  {
+    "assetKind": "建筑与城市配套",
+    "sourceSeries": "中世纪小镇构建",
+    "count": 42,
+    "styles": [
+      "中世纪"
+    ],
+    "functions": {
+      "住宿": 1,
+      "公共空间": 6,
+      "军事防御": 3,
+      "农业": 5,
+      "商业": 2,
+      "宗教": 1,
+      "工坊生产": 1,
+      "房屋（用途未细分）": 5,
+      "桥梁": 6,
+      "水利供水": 1,
+      "港航": 4,
+      "纪念装饰": 4,
+      "采矿": 1,
+      "餐饮": 3
+    },
+    "assetIds": [
+      "asset_ff24c5c4ab12fe4f",
+      "asset_6d05547310e41704",
+      "asset_22256bc635c0a5ee",
+      "asset_0bb1ae9b3292d615",
+      "asset_f5c6256057ec93f3",
+      "asset_5212f48a9c6d10f0",
+      "asset_84cd2ce201da6657",
+      "asset_47525ce981865642",
+      "asset_d956f4b4b13ad705",
+      "asset_b93ef757d8a0a6e9",
+      "asset_29a405e9a220324d",
+      "asset_b5d1204ca06ab8a1",
+      "asset_c7528295947557d2",
+      "asset_f4d55e22929c9dae",
+      "asset_82a735574ea321d7",
+      "asset_95ecb7fda4af7d79",
+      "asset_d6d07874ff435f06",
+      "asset_6b5e9c8aebb334a3",
+      "asset_3b60cbd3261ff3f2",
+      "asset_381dbb038328743b",
+      "asset_dde3483a3752d0a6",
+      "asset_d3ef8f37105f8b85",
+      "asset_8c8d8a771a7617d8",
+      "asset_c37ad7152da420eb",
+      "asset_0c300737efd8be87",
+      "asset_b5053871f055fe7a",
+      "asset_d5e53ed6382c99ab",
+      "asset_d11b415b3df70d76",
+      "asset_4eb346d811a5df39",
+      "asset_0b12be750464e501",
+      "asset_cbabb70007008cf8",
+      "asset_f460c21c37fa8dbc",
+      "asset_68510db957283fdf",
+      "asset_cd0e089c6e94ece6",
+      "asset_79f89459766ed27f",
+      "asset_896a517e77f0d22a",
+      "asset_945bc345a1fbd5eb",
+      "asset_9ce87b5d31234933",
+      "asset_c6be2ed8ad78158d",
+      "asset_e184955245747a9d",
+      "asset_cf44cbde819caabd",
+      "asset_3ec7b9fdb9268526"
+    ]
+  },
+  {
+    "assetKind": "建筑与城市配套",
+    "sourceSeries": "中世纪建筑包",
+    "count": 17,
+    "styles": [
+      "中世纪"
+    ],
+    "functions": {
+      "仓储": 1,
+      "住宅": 1,
+      "军事防御": 3,
+      "农业": 1,
+      "商业": 2,
+      "塔楼（用途未细分）": 1,
+      "工坊生产": 1,
+      "房屋（用途未细分）": 2,
+      "教育文化": 1,
+      "港航": 1,
+      "行政": 1,
+      "餐饮": 2
+    },
+    "assetIds": [
+      "asset_69f838c2f6da341a",
+      "asset_b8845106c814bc49",
+      "asset_ab1d46f4a75a4ef5",
+      "asset_d4d02a9c1e314a38",
+      "asset_f00c28eb38645c64",
+      "asset_560f44af130b813b",
+      "asset_3d6974be3e36ca43",
+      "asset_2e5ae5f814eac248",
+      "asset_be02b0e9980cf17a",
+      "asset_a5ecb0004f5cd27f",
+      "asset_48440fbcefb09562",
+      "asset_a32c1a0cabbc423e",
+      "asset_86aba3acc1280332",
+      "asset_8e10d3ff8fa1a0e9",
+      "asset_81dbca6c9368146d",
+      "asset_41636bfb6df71ca5",
+      "asset_25113c8ad84f9b6c"
+    ]
+  },
+  {
+    "assetKind": "建筑与城市配套",
+    "sourceSeries": "中世纪房屋素材 构建/中世纪奇幻构建包1",
+    "count": 52,
+    "styles": [
+      "中世纪"
+    ],
+    "functions": {
+      "公共空间": 1,
+      "农业": 2,
+      "商业": 5,
+      "房屋（用途未细分）": 21,
+      "水利供水": 3,
+      "照明": 4,
+      "绿化素材": 16
+    },
+    "assetIds": [
+      "asset_6e577ed7d461bb58",
+      "asset_4d2846ae20cfbf80",
+      "asset_572c438bbeaf8a48",
+      "asset_79f25d7ceb71bb0a",
+      "asset_0a726b9e1fa35855",
+      "asset_8c7a3bb93166087b",
+      "asset_57c5214f984ea580",
+      "asset_ce970cc0203942c8",
+      "asset_1e1401b50f3d0b95",
+      "asset_cc07457cfef0ed9a",
+      "asset_1fcc65cf5c228d52",
+      "asset_3458bf0183430e8d",
+      "asset_6170d40781b47fb4",
+      "asset_50efddd13fc1d65c",
+      "asset_b3441ae5c9b1b06b",
+      "asset_626de858b64ccbe2",
+      "asset_d40013133a5a5985",
+      "asset_c7d2bdfe96195087",
+      "asset_3c5e6b3a891ac68b",
+      "asset_b694e61ab1a151ee",
+      "asset_cf2924832689fb7b",
+      "asset_937fc8a7d183d40d",
+      "asset_9eea27a0970859ff",
+      "asset_1d0465426f5a86c2",
+      "asset_2e89e71887264b4a",
+      "asset_cf7e01a8e1ee6e18",
+      "asset_73804eae2bfc1ea3",
+      "asset_82d56dc98cfd2aa4",
+      "asset_4b6762197836388a",
+      "asset_0b487d3729b9128b",
+      "asset_cb80f732b3895316",
+      "asset_ae43b9be67f64bcc",
+      "asset_ac8d6789a1ec7a13",
+      "asset_18841e56ad218831",
+      "asset_ee196535146b248a",
+      "asset_eafbc10ca3bf1fb8",
+      "asset_971a241cbab9ca97",
+      "asset_93eb99c7eebcb2af",
+      "asset_00a98a2729b4b2cc",
+      "asset_586d8812ede28927",
+      "asset_ead5a87375970095",
+      "asset_90f84f883db215f6",
+      "asset_99cde42ed3899aa3",
+      "asset_2e0ccd388d19e563",
+      "asset_cbbd55f063e5cba1",
+      "asset_c664b94d7b6a7d88",
+      "asset_b4ebe34fc40241c4",
+      "asset_daae9a18c3438f7b",
+      "asset_f4cf9bfdc7064f0b",
+      "asset_2bcdb176e40b9d89",
+      "asset_9d1b5b53b058592b",
+      "asset_832f456f8edc5748"
+    ]
+  },
+  {
+    "assetKind": "建筑与城市配套",
+    "sourceSeries": "中世纪房屋素材 构建/中世纪奇幻构建包2",
+    "count": 16,
+    "styles": [
+      "中世纪"
+    ],
+    "functions": {
+      "房屋（用途未细分）": 12,
+      "绿化素材": 4
+    },
+    "assetIds": [
+      "asset_3590d7271dc14218",
+      "asset_eb70229599907017",
+      "asset_1d5ed01e82f69245",
+      "asset_a266dc0be348aacc",
+      "asset_93f2cc5a503fb33f",
+      "asset_7084674db1af2bf8",
+      "asset_283c6c947ad63dae",
+      "asset_00313b6b173b6a19",
+      "asset_dac2f72090f45cb4",
+      "asset_cbb6d0aa41d3c11b",
+      "asset_69581b40b952c5aa",
+      "asset_585ec3e7a059c0f6",
+      "asset_b3e2a4a2e5fe60fa",
+      "asset_9ef8cc7589082f83",
+      "asset_3d613f7da94d246f",
+      "asset_caae9bc5575c8c71"
+    ]
+  },
+  {
+    "assetKind": "建筑与城市配套",
+    "sourceSeries": "中世纪房屋素材 构建/中世纪构建包1",
+    "count": 18,
+    "styles": [
+      "中世纪"
+    ],
+    "functions": {
+      "仓储": 1,
+      "军事防御": 1,
+      "农业": 2,
+      "商业": 1,
+      "宗教": 2,
+      "工坊生产": 1,
+      "房屋（用途未细分）": 5,
+      "教育文化": 2,
+      "纪念装饰": 1,
+      "餐饮": 2
+    },
+    "assetIds": [
+      "asset_8f7955dd995ed243",
+      "asset_623781e08330453c",
+      "asset_495f62883a8eba6b",
+      "asset_7d7a1ba8fa56e0d6",
+      "asset_d1465636bac94d6e",
+      "asset_53ad292053a2bc43",
+      "asset_f2c0241373105c30",
+      "asset_01284a280402398d",
+      "asset_49d2e676f91f682e",
+      "asset_83d562387be71004",
+      "asset_c7fbccdc4f65ba60",
+      "asset_1902fb49802ca2ca",
+      "asset_ae08da8e81742a76",
+      "asset_7d3e21d3f19b9d40",
+      "asset_3147b23b9e19da38",
+      "asset_60fecf293e6ce9e6",
+      "asset_f3bbcf2f51a705fe",
+      "asset_cc70acfb8e7a1229"
+    ]
+  },
+  {
+    "assetKind": "建筑与城市配套",
+    "sourceSeries": "中世纪房屋素材 构建/中世纪构建包2",
+    "count": 40,
+    "styles": [
+      "中世纪"
+    ],
+    "functions": {
+      "住宅": 2,
+      "农业": 1,
+      "商业": 1,
+      "塔楼（用途未细分）": 5,
+      "宗教": 1,
+      "房屋（用途未细分）": 28,
+      "水利供水": 1,
+      "港航": 1
+    },
+    "assetIds": [
+      "asset_2ae30e7a6357d73f",
+      "asset_acf59a48e4b89356",
+      "asset_a3502c1f251a8eb3",
+      "asset_f7eea751bac5bddf",
+      "asset_5b92bf251d01b966",
+      "asset_0a3750249c060e46",
+      "asset_5457c2dd8222203a",
+      "asset_b1f01c96385c61d2",
+      "asset_fcfb4711305ee9ca",
+      "asset_85406d6c09f8d924",
+      "asset_a150add22c6515ae",
+      "asset_0adb2b84a52b8737",
+      "asset_2de7e353da96d15c",
+      "asset_d23726c41b1bb37c",
+      "asset_96657425512dc579",
+      "asset_60646988840aaa43",
+      "asset_792e50069daf4745",
+      "asset_459018735f31a925",
+      "asset_6e4aab4de467e159",
+      "asset_93c2f43b6c5cdf37",
+      "asset_f22769fcac5a9b08",
+      "asset_1aa05d2b619dd53c",
+      "asset_df861c5d73f15a45",
+      "asset_ac15b54fd15cc196",
+      "asset_111c28b885dd4b9e",
+      "asset_ef630aa74f7ff68c",
+      "asset_680dcf473790c245",
+      "asset_ce5ad240ce624bd9",
+      "asset_010f6d0e339f266b",
+      "asset_fd413fba513e793b",
+      "asset_428e5f0a1d324547",
+      "asset_a1984072b4d4ae8f",
+      "asset_c43ad09f3e21ec62",
+      "asset_f73af91d5182758b",
+      "asset_3a0eb27aba30c2e3",
+      "asset_7465b0705496a487",
+      "asset_c526f946b642f114",
+      "asset_bf2608d81cf2ab81",
+      "asset_1682ab6a304e8ba3",
+      "asset_c3367cac22bebf81"
+    ]
+  },
+  {
+    "assetKind": "建筑与城市配套",
+    "sourceSeries": "中世纪房屋素材 构建/中世纪构建包3",
+    "count": 24,
+    "styles": [
+      "中世纪"
+    ],
+    "functions": {
+      "住宅": 3,
+      "住宿": 1,
+      "公会": 1,
+      "公共空间": 1,
+      "军事防御": 1,
+      "农业": 2,
+      "房屋（用途未细分）": 10,
+      "教育文化": 1,
+      "水利供水": 1,
+      "纪念装饰": 1,
+      "行政": 1,
+      "餐饮": 2
+    },
+    "assetIds": [
+      "asset_e6413871261969bd",
+      "asset_bee0cbb2063e388d",
+      "asset_71c3ed0be1ce90aa",
+      "asset_9cfc1fdb17e65fb9",
+      "asset_b1ad91dee52b7a8e",
+      "asset_c0a876d8b7b7c41c",
+      "asset_ffc530d65bdbe791",
+      "asset_0221a7fb542fadef",
+      "asset_3ebe6ca127f06478",
+      "asset_16668f9a9c047460",
+      "asset_7ef6f4d309335547",
+      "asset_cd156bbb99e246a6",
+      "asset_c7efe46d58b67ef5",
+      "asset_62896cfa8b2b80b3",
+      "asset_98ab94b51d73b2b4",
+      "asset_dfa5805986da274a",
+      "asset_198d646a02b92593",
+      "asset_7f1ac28481eae5cb",
+      "asset_d390be5fd9e01f18",
+      "asset_76328fb26e69d036",
+      "asset_4ded4843fd59fbd2",
+      "asset_a8a1057200377c9c",
+      "asset_04e97a47f5f7a331",
+      "asset_312b65411ed77ce2"
+    ]
+  },
+  {
+    "assetKind": "建筑与城市配套",
+    "sourceSeries": "中世纪房屋素材 构建/简易中世纪村庄包",
+    "count": 5,
+    "styles": [
+      "中世纪"
+    ],
+    "functions": {
+      "仓储": 2,
+      "住宅": 1,
+      "住宿": 1,
+      "教育文化": 1
+    },
+    "assetIds": [
+      "asset_c4462b5264b73abf",
+      "asset_28b8964a4baf4324",
+      "asset_30e8850700572b6f",
+      "asset_37dbd8d22f7f4e2a",
+      "asset_f5d1da69bfd222b0"
+    ]
+  },
+  {
+    "assetKind": "建筑与城市配套",
+    "sourceSeries": "各式各样的房屋1/中世纪小屋",
+    "count": 18,
+    "styles": [
+      "中世纪"
+    ],
+    "functions": {
+      "房屋（用途未细分）": 18
+    },
+    "assetIds": [
+      "asset_c3d95c70fc03b406",
+      "asset_3097353d2ae5ca05",
+      "asset_e56275400d42a31d",
+      "asset_8c0fd9b6e19f56bf",
+      "asset_719197f6cdde4218",
+      "asset_dd16085dd7116062",
+      "asset_09a4381b61dea1e1",
+      "asset_2e1483f29c274603",
+      "asset_f1c06f1aad2df881",
+      "asset_823f16918d8789f9",
+      "asset_aba6cac510311886",
+      "asset_5c34503694c4a49b",
+      "asset_23084e21c95fdf40",
+      "asset_ecf8bb0fe137f067",
+      "asset_23b5ef19b8c7adee",
+      "asset_3bf63856307024dd",
+      "asset_67a0b78fe123a1b3",
+      "asset_0c7a626b14b7f7cf"
+    ]
+  },
+  {
+    "assetKind": "建筑与城市配套",
+    "sourceSeries": "各式各样的房屋2/中世纪",
+    "count": 41,
+    "styles": [
+      "中世纪"
+    ],
+    "functions": {
+      "仓储": 1,
+      "住宅": 5,
+      "住宿": 2,
+      "公共空间": 1,
+      "军事防御": 8,
+      "农业": 2,
+      "办公": 1,
+      "塔楼（用途未细分）": 1,
+      "建筑（用途未细分）": 1,
+      "房屋（用途未细分）": 12,
+      "港航": 1,
+      "行政": 1,
+      "餐饮": 5
+    },
+    "assetIds": [
+      "asset_68d8175b1264a9e5",
+      "asset_62cdcc2527b58c0d",
+      "asset_17c5d81afcb4b005",
+      "asset_3218e508c8062a99",
+      "asset_57813d29c343f799",
+      "asset_eb10973513fa95a1",
+      "asset_ede25276c7b53eb9",
+      "asset_d64083713c539526",
+      "asset_c437c4e86ad6bad7",
+      "asset_fd2db4e44e881620",
+      "asset_d26acd811e22eb22",
+      "asset_438aa7f15c00a9b2",
+      "asset_dd36e5c1bfb18579",
+      "asset_fc47624a951ba1ae",
+      "asset_58ad6e4ff37725ad",
+      "asset_9e0611aadd98817d",
+      "asset_4bcb0c5d42e3c384",
+      "asset_0c5fe35f84af2cbc",
+      "asset_a9af61efdddb0923",
+      "asset_b8f7ee796edee49f",
+      "asset_116906626d3947d9",
+      "asset_b43534f5bbe8053b",
+      "asset_4ab7af7227c1bef3",
+      "asset_e756e515929dc9f7",
+      "asset_b8de2fa4a96b6f2e",
+      "asset_7961f4d9b108b864",
+      "asset_3c39b4e38928ee0c",
+      "asset_5102559aa729a603",
+      "asset_05ac95c786fbb564",
+      "asset_935fb140fba63f24",
+      "asset_892e2856239d7013",
+      "asset_2526a831498925bc",
+      "asset_daf1ee8710e0443f",
+      "asset_29154e46aae44a57",
+      "asset_b14f686e79fab1d7",
+      "asset_ef7d2d2262f309fa",
+      "asset_1ceb51e5576e79a8",
+      "asset_ae4824cb2ff07681",
+      "asset_aa123dc510e09707",
+      "asset_1b85c48fdd0bcee8",
+      "asset_491fe430c05c1b89"
+    ]
+  },
+  {
+    "assetKind": "建筑与城市配套",
+    "sourceSeries": "各式风格建筑构建包/中世纪",
+    "count": 18,
+    "styles": [
+      "中世纪"
+    ],
+    "functions": {
+      "住宅": 1,
+      "公会": 1,
+      "公共空间": 1,
+      "军事防御": 2,
+      "农业": 3,
+      "商业": 1,
+      "宗教": 1,
+      "工坊生产": 2,
+      "建筑（用途未细分）": 2,
+      "房屋（用途未细分）": 4
+    },
+    "assetIds": [
+      "asset_bfef27a6d7dd3703",
+      "asset_c2f7514df6405997",
+      "asset_24827a14467f2821",
+      "asset_9a8bf6d9b3e38e39",
+      "asset_c65cf93aed8d8848",
+      "asset_72bbc101b3fdc898",
+      "asset_06fe27348412566c",
+      "asset_c1a2b6ab804f9ce1",
+      "asset_85be4265dffce146",
+      "asset_e762eebb362864ca",
+      "asset_4a6418949587c467",
+      "asset_7b7c11cc709e59b1",
+      "asset_6b2d4d8059045556",
+      "asset_d5c71495177bc5bf",
+      "asset_0a20c95d40360898",
+      "asset_0303c9c3d5b595e4",
+      "asset_4eceb042a0c7274f",
+      "asset_d3d1f64ad38850ee"
+    ]
+  },
+  {
+    "assetKind": "建筑与城市配套",
+    "sourceSeries": "各种塔 构建包",
+    "count": 9,
+    "styles": [
+      "中世纪"
+    ],
+    "functions": {
+      "军事防御": 1,
+      "塔楼（用途未细分）": 7,
+      "纪念装饰": 1
+    },
+    "assetIds": [
+      "asset_fdd88147b24b2f60",
+      "asset_389b38ee0facef0b",
+      "asset_3c91de9106c552d0",
+      "asset_706dd9407584d980",
+      "asset_33acff30d9e9ac32",
+      "asset_b5c042425dfbe2ad",
+      "asset_32fae57d1a6a2ddd",
+      "asset_58d6faea6cdbc560",
+      "asset_14f982cb117f06f8"
+    ]
+  },
+  {
+    "assetKind": "建筑与城市配套",
+    "sourceSeries": "城堡 防御工事等",
+    "count": 5,
+    "styles": [
+      "中世纪"
+    ],
+    "functions": {
+      "军事防御": 5
+    },
+    "assetIds": [
+      "asset_9e7ad80b66cddf30",
+      "asset_4283447237b8f84f",
+      "asset_6f87a722aaf12ac1",
+      "asset_78e3e204be57d481",
+      "asset_8dd7f4eee888eaea"
+    ]
+  },
+  {
+    "assetKind": "建筑与城市配套",
+    "sourceSeries": "小型建筑构建",
+    "count": 2,
+    "styles": [
+      "中世纪"
+    ],
+    "functions": {
+      "军事防御": 1,
+      "塔楼（用途未细分）": 1
+    },
+    "assetIds": [
+      "asset_f05e8d983222d2a1",
+      "asset_535f83c50d05c2e5"
+    ]
+  },
+  {
+    "assetKind": "建筑与城市配套",
+    "sourceSeries": "灯塔 构建包",
+    "count": 1,
+    "styles": [
+      "中世纪"
+    ],
+    "functions": {
+      "港航": 1
+    },
+    "assetIds": [
+      "asset_796a7d184610e064"
+    ]
+  },
+  {
+    "assetKind": "建筑与城市配套",
+    "sourceSeries": "铜顶中世纪房屋包",
+    "count": 10,
+    "styles": [
+      "中世纪"
+    ],
+    "functions": {
+      "房屋（用途未细分）": 10
+    },
+    "assetIds": [
+      "asset_9a5e79e221b0ba67",
+      "asset_6c482f99deba9385",
+      "asset_53b00d861d662af5",
+      "asset_7fa0e224699c4b11",
+      "asset_df1494758e71afd3",
+      "asset_87bcfb886577bdbd",
+      "asset_3039535119c7930c",
+      "asset_a093ced140756023",
+      "asset_76b6e0932f0f08db",
+      "asset_30cfc4b244bc94b4"
+    ]
+  }
+]

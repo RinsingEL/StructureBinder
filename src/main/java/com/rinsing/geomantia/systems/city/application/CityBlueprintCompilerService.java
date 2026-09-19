@@ -820,7 +820,6 @@ public final class CityBlueprintCompilerService {
                 .map(anchor -> bounds(requiredObject(anchor, "collisionEnvelope")))
                 .toList();
         List<BlockBounds> claimedParcels = new ArrayList<>();
-        Map<String, Integer> groupOrdinals = new HashMap<>();
         int margin = 0; // Building parcels use the raw NBT footprint; foundation paving owns its own margin.
         for (int index = 0; index < anchors.size(); index++) {
             JsonObject anchor = anchors.get(index).getAsJsonObject();
@@ -847,21 +846,6 @@ public final class CityBlueprintCompilerService {
             }
             claimedParcels.add(resolved);
 
-            int ordinal = groupOrdinals.merge(groupId, 1, Integer::sum) - 1;
-            int slotIndex = anchor.has("blueprintLayout")
-                    ? intValue(requiredObject(anchor, "blueprintLayout"), "slotIndex", ordinal) : ordinal;
-            GreenCapability capability = catalog.greenCapability(string(anchor, "blueprintStructureRef"));
-            CityBlueprint.BuildingGreeneryPolicy policy = group.buildingGreeneryPolicy();
-            boolean coverageSelected = capability != null && coverageSelected(policy.coverage(),
-                    blueprint.generationSeed(), groupId, slotIndex);
-            int usableGreenCells = Math.max(0, area(resolved) - intersectionArea(resolved, collision));
-            boolean greenerySelected = coverageSelected && usableGreenCells >= 6;
-            String greeneryStatus = capability == null ? "TEMPLATE_UNSUPPORTED"
-                    : policy.coverage() == CityBlueprint.GreeneryCoverage.NONE ? "POLICY_NONE"
-                    : !coverageSelected ? "COVERAGE_NOT_SELECTED"
-                    : usableGreenCells < 6 ? "INSUFFICIENT_SPACE_SKIPPED"
-                    : "SELECTED";
-
             JsonObject plan = new JsonObject();
             plan.addProperty("schema", "city_building_parcel_plan");
             plan.addProperty("planningStage", "D4_BEFORE_ARRAY_COMMIT");
@@ -871,56 +855,14 @@ public final class CityBlueprintCompilerService {
             plan.add("resolvedBounds", CityStructureCandidateEnvelope.boundsJson(resolved));
             plan.add("hardCollisionEnvelope", CityStructureCandidateEnvelope.boundsJson(collision));
             plan.addProperty("parcelStatus", compressed ? "COMPRESSED" : "FULL");
-            plan.addProperty("greenerySelected", greenerySelected);
-            plan.addProperty("greeneryStatus", greeneryStatus);
-            plan.addProperty("usableGreenCells", usableGreenCells);
-            if (greenerySelected) {
-                plan.addProperty("greeneryPattern", resolvedPattern(policy.patternPreference(),
-                        capability.pattern(), blueprint.generationSeed(), groupId, slotIndex).name());
-                plan.addProperty("greeneryDensity", resolvedDensity(policy.densityPreference(),
-                        capability.density()).name());
-            }
+            plan.addProperty("greenerySelected", false);
+            plan.addProperty("greeneryStatus", "BUILDING_DECORATION_OWNED_BY_TEMPLATE");
             anchor.add("buildingParcelPlan", plan);
         }
     }
 
-    private static boolean coverageSelected(CityBlueprint.GreeneryCoverage coverage, long seed,
-                                            String groupId, int slotIndex) {
-        if (coverage == CityBlueprint.GreeneryCoverage.NONE) return false;
-        int phase = Math.floorMod(groupId.hashCode() ^ (int) seed, 4);
-        int bucket = Math.floorMod(slotIndex + phase, 4);
-        return switch (coverage) {
-            case NONE -> false;
-            case SPARSE -> bucket == 0;
-            case BALANCED -> (bucket & 1) == 0;
-            case LUSH -> bucket != 3;
-        };
-    }
 
-    private static CityBlueprintReferenceCatalog.GreenParcelPattern resolvedPattern(
-            CityBlueprint.GreeneryPatternPreference preference,
-            CityBlueprintReferenceCatalog.GreenParcelPattern fallback,
-            long seed, String groupId, int slotIndex) {
-        return switch (preference) {
-            case TEMPLATE_DEFAULT -> fallback;
-            case FREEFORM -> CityBlueprintReferenceCatalog.GreenParcelPattern.FREEFORM;
-            case FIELD_GRID -> CityBlueprintReferenceCatalog.GreenParcelPattern.FIELD_GRID;
-            case MIXED -> ((slotIndex + Math.floorMod(groupId.hashCode() ^ (int) seed, 2)) & 1) == 0
-                    ? CityBlueprintReferenceCatalog.GreenParcelPattern.FREEFORM
-                    : CityBlueprintReferenceCatalog.GreenParcelPattern.FIELD_GRID;
-        };
-    }
 
-    private static CityBlueprintReferenceCatalog.GreenParcelDensity resolvedDensity(
-            CityBlueprint.GreeneryDensityPreference preference,
-            CityBlueprintReferenceCatalog.GreenParcelDensity fallback) {
-        return switch (preference) {
-            case TEMPLATE_DEFAULT -> fallback;
-            case LOW -> CityBlueprintReferenceCatalog.GreenParcelDensity.LOW;
-            case MEDIUM -> CityBlueprintReferenceCatalog.GreenParcelDensity.MEDIUM;
-            case HIGH -> CityBlueprintReferenceCatalog.GreenParcelDensity.HIGH;
-        };
-    }
 
     private static BlockBounds intersect(BlockBounds left, BlockBounds right) {
         return new BlockBounds(Math.max(left.minX(), right.minX()), Math.max(left.minZ(), right.minZ()),

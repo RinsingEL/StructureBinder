@@ -26,6 +26,33 @@ class CityReservationMaskRegistryTemplateFragmentTest {
     Path tempDir;
 
     @Test
+    void roadsideRootAndDecorationPolicySurviveRegistryReload() throws Exception {
+        var footprint = new BlockBounds(8, 8, 20, 26);
+        var plan = materializationPlan("city_fragment_test", footprint, CityTemplatePlacementGeometry.Rotation.CLOCKWISE_90);
+        var item = plan.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject();
+        item.addProperty("placementRole", "roadside_tree");
+        item.addProperty("templateRef", "geomantia:roadside/small_oak");
+        item.add("maskEnvelope", bounds(footprint));
+        item.addProperty("terrainPosePolicy", "structure_start_decoration");
+        item.add("treeRootBlock", new BlockPoint(10, 17).asJson());
+        var mask = maskPlan("city_fragment_test", footprint);
+        mask.add("noVegetationMask", new JsonArray());
+        mask.add("noVanillaStructureMask", new JsonArray());
+        CityReservationMaskRegistry.activate(mask, null, plan,
+                "run_fragment_test", "seed_fragment_test", tempDir);
+        CityReservationMaskRegistry.load(tempDir);
+        var reloaded = CityReservationMaskRegistry.plannedStructuresForChunk(new ChunkPos(0, 0)).get(0);
+        assertEquals(item.get("treeRootBlock"), reloaded.templatePlan().get("treeRootBlock"));
+        assertEquals("roadside_tree", reloaded.templatePlan().get("placementRole").getAsString());
+        assertTrue(CityTemplateTerrainStartPolicy.usesStructureStart(reloaded));
+        assertTrue(CityReservationMaskRegistry.generationMask().protects("minecraft:overworld", 10, 80, 17,
+                (x, z) -> 64));
+        assertTrue(mask.getAsJsonArray("noVegetationMask").isEmpty());
+        assertTrue(CityReservationMaskRegistry.prepareTemplateTerrainStart(reloaded, 74).ready());
+        assertEquals(74, CityReservationMaskRegistry.resolvedTemplateDatum(reloaded).orElseThrow());
+    }
+
+    @Test
     void nonAnchorOwnersCanArriveFirstThenAllReuseOneFrozenDatum() throws Exception {
         CityReservationMaskRegistry.PlannedStructure planned = activate(THREE_BY_THREE_FOOTPRINT);
         List<ChunkPos> owners = owners(THREE_BY_THREE_FOOTPRINT);

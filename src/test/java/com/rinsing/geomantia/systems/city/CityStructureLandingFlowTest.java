@@ -36,7 +36,6 @@ import net.minecraft.nbt.NbtIo;
 import net.minecraft.world.level.ChunkPos;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -727,6 +726,27 @@ final class CityStructureLandingFlowTest {
     }
 
     @Test
+    void districtGatesRequireRealRoadCrossingsAndExcludePeripheralGroups() throws Exception {
+        JsonObject anchors=JsonParser.parseString("""
+                {"anchors":[
+                  {"placementGroupId":"core","plannedFootprint":{"minX":0,"minZ":0,"maxX":15,"maxZ":15}},
+                  {"placementGroupId":"outer","plannedFootprint":{"minX":400,"minZ":400,"maxX":415,"maxZ":415}}],
+                 "districtGroupIds":["core"],
+                 "streetBands":[{"streetBandId":"exit","bounds":{"minX":20,"minZ":4,"maxX":100,"maxZ":8}}]}
+                """).getAsJsonObject();
+        var planner=new CityWallReservationPlanner();
+        JsonObject result=planner.plan(fixture().review(),anchors,24,4,new BlockBounds(-10000,-10000,10000,10000));
+        assertEquals(1,result.getAsJsonArray("gateSlots").size());
+        assertEquals("exit",result.getAsJsonArray("gateSlots").get(0).getAsJsonObject().get("sourceRoadId").getAsString());
+        assertTrue(result.getAsJsonObject("wallBounds").get("maxX").getAsInt()<100);
+        assertTrue(result.getAsJsonObject("wallCoverageBounds").get("maxX").getAsInt()>415);
+        anchors.getAsJsonArray("streetBands").get(0).getAsJsonObject().getAsJsonObject("bounds").addProperty("maxX",60);
+        result=planner.plan(fixture().review(),anchors,24,4,new BlockBounds(-10000,-10000,10000,10000));
+        assertTrue(result.getAsJsonArray("gateSlots").isEmpty());
+        assertEquals("EXIT_ROAD_REQUIRED",result.get("exitRoadStatus").getAsString());
+    }
+
+    @Test
     void wallPlannerKeepsD5WallLineAndDeclaresNoRelineDowngradePolicies() {
         JsonObject reservation = syntheticWallReservation();
         JsonObject wallPlan = new CityWallPlanner().plan(syntheticWallLedger(), reservation,
@@ -737,25 +757,25 @@ final class CityStructureLandingFlowTest {
         assertEquals(reservation.getAsJsonArray("wallLine").toString(),
                 wallPlan.getAsJsonArray("wallLine").toString());
         assertEquals("disabled_wall_no_reline_after_d5", wallPlan.get("wallContourMode").getAsString());
-        assertEquals("keep_gate_opening_or_downgrade_without_reline",
+        assertEquals("reject_conflicts_before_world_mutation",
                 wallPlan.get("gateFailurePolicy").getAsString());
-        assertEquals("downgrade_to_wall_or_skip_without_reline",
-                wallPlan.get("beaconFailurePolicy").getAsString());
+        assertEquals("reject_conflicts_before_world_mutation",
+                wallPlan.get("towerFailurePolicy").getAsString());
         assertEquals(8, wallPlan.get("wallUnitLengthBlocks").getAsInt());
-        assertEquals(9, wallPlan.get("nominalWallHeightBlocks").getAsInt());
+        assertEquals(10, wallPlan.get("nominalWallHeightBlocks").getAsInt());
         assertEquals(32, wallPlan.get("waterRunMinBlocks").getAsInt());
         assertEquals(7, wallPlan.get("heightSegmentMaxDeltaBlocks").getAsInt());
         assertEquals(16, wallPlan.get("heightSteppedTransitionMaxDeltaBlocks").getAsInt());
         assertEquals(17, wallPlan.get("naturalBoundaryMinDeltaBlocks").getAsInt());
         JsonObject terrain = wallPlan.getAsJsonObject("terrainFitPolicy");
-        assertEquals("segmented_surface_datum", terrain.get("heightStrategy").getAsString());
-        assertEquals("natural_cliff_boundary_no_wall", terrain.get("cliffPolicy").getAsString());
+        assertEquals("common_module_walkway_datum", terrain.get("heightStrategy").getAsString());
+        assertEquals("reject_cliff_boundary_for_redesign", terrain.get("cliffPolicy").getAsString());
         assertEquals("surfaceY/topBlock/fluid/biome/temperature/flags",
                 wallPlan.getAsJsonObject("surfaceCachePolicy").get("requiredFields").getAsString());
         assertTrue(wallPlan.getAsJsonArray("wallUnits").toString()
-                .contains("surface_cache_1_block_median_at_execute"));
+                .contains("frozen_module_walkway_datum"));
         assertTrue(wallPlan.getAsJsonArray("wallUnits").toString().contains("D5_GATE_SLOT_OPENING"));
-        assertTrue(wallPlan.getAsJsonArray("wallNodes").toString().contains("beacon_5x5"));
+        assertTrue(wallPlan.getAsJsonArray("wallNodes").toString().contains("guard_tower"));
         assertEquals("X", wallNodeAxis(wallPlan, "node_0"));
         assertEquals("Z", wallNodeAxis(wallPlan, "node_2"));
         assertTrue(wallPlan.getAsJsonObject("wallGraphValidation").get("noRelineAfterD5").getAsBoolean());
@@ -810,118 +830,32 @@ final class CityStructureLandingFlowTest {
     }
 
     @Test
-    void wallTemplateLibraryIncludesGatehousesAndUsableTowers() {
+    void wallModulesUseSelectedTowerWithFourWalkableConnections() throws Exception {
         String library = CityWallTemplateCatalog.libraryJson().toString();
-
-        assertTrue(library.contains("gatehouse_9"));
-        assertTrue(library.contains("gatehouse_13"));
-        assertTrue(library.contains("watchtower_5x5"));
-        assertTrue(library.contains("beacon_5x5"));
+        assertTrue(library.contains("guard_tower"));
+        assertTrue(library.contains("wall_straight"));
+        assertFalse(library.contains("beacon_5x5"));
+        Path directory = Files.createTempDirectory("city-wall-modules");
+        new MinecraftCityWallArtifactWriter().writeTemplates(directory);
+        CompoundTag tower = NbtIo.readCompressed(directory.resolve("guard_tower.nbt").toFile());
+        assertEquals(7,tower.getList("size",3).getInt(0));
+        assertEquals(15,tower.getList("size",3).getInt(1));
+        assertEquals(10,tower.getList("size",3).getInt(2));
+        ListTag blocks=tower.getList("blocks",10);
+        for(int[] point:new int[][]{{0,6},{6,6},{3,0},{3,9},{3,6}}) {
+            assertEquals("minecraft:stone_bricks", tower.getList("palette",10)
+                    .getCompound(templateStateAt(blocks,point[0],9,point[1])).getString("Name"));
+            for(int y=10;y<=11;y++) assertEquals("minecraft:air", tower.getList("palette",10)
+                    .getCompound(templateStateAt(blocks,point[0],y,point[1])).getString("Name"));
+        }
+        assertTrue(Files.isRegularFile(directory.resolve("manifest.json")));
+        CompoundTag wall=NbtIo.readCompressed(directory.resolve("wall_straight.nbt").toFile());
+        assertEquals("minecraft:stone_bricks",wall.getList("palette",10)
+                .getCompound(templateStateAt(wall.getList("blocks",10),8,9,2)).getString("Name"));
+        assertEquals("minecraft:air",wall.getList("palette",10)
+                .getCompound(templateStateAt(wall.getList("blocks",10),8,10,2)).getString("Name"));
     }
 
-    @Test
-    void beaconTemplateKeepsWalkableCenterAndStraightClimbAccess() throws Exception {
-        Path dir = Files.createTempDirectory("city-wall-beacon-template-test");
-        new MinecraftCityWallArtifactWriter().writeTemplates(dir);
-
-        CompoundTag beacon = NbtIo.readCompressed(dir.resolve("beacon_5x5.nbt").toFile());
-        assertEquals(5, beacon.getList("size", 3).getInt(0));
-        assertEquals(16, beacon.getList("size", 3).getInt(1));
-        assertEquals(5, beacon.getList("size", 3).getInt(2));
-
-        ListTag palette = beacon.getList("palette", 10);
-        int ladderState = -1;
-        int stoneBricks = paletteState(beacon, "minecraft:stone_bricks");
-        for (int i = 0; i < palette.size(); i++) {
-            if ("minecraft:ladder".equals(palette.getCompound(i).getString("Name"))) {
-                ladderState = i;
-                break;
-            }
-        }
-        assertTrue(ladderState >= 0, beacon.toString());
-
-        ListTag blocks = beacon.getList("blocks", 10);
-        for (int y = 1; y <= 6; y++) {
-            assertFalse(hasTemplateBlockAt(blocks, 2, y, 2),
-                    "center walkway must stay open at y=" + y);
-        }
-        assertEquals(stoneBricks, templateStateAt(blocks, 2, 7, 2),
-                "wall-top passage floor must be walkable");
-        for (int y = 8; y <= 12; y++) {
-            assertFalse(hasTemplateBlockAt(blocks, 2, y, 2),
-                    "wall-top passage headroom must stay open at y=" + y);
-        }
-        for (int y = 8; y <= 11; y++) {
-            assertFalse(hasTemplateBlockAt(blocks, 0, y, 2),
-                    "left wall-top connection must stay open at y=" + y);
-            assertFalse(hasTemplateBlockAt(blocks, 4, y, 2),
-                    "right wall-top connection must stay open at y=" + y);
-        }
-        for (int y = 1; y <= 3; y++) {
-            assertFalse(hasTemplateBlockAt(blocks, 2, y, 0),
-                    "front doorway must stay open at y=" + y);
-            assertFalse(hasTemplateBlockAt(blocks, 2, y, 4),
-                    "back doorway must stay open at y=" + y);
-            assertFalse(hasTemplateBlockAt(blocks, 0, y, 2),
-                    "left wall connection doorway must stay open at y=" + y);
-            assertFalse(hasTemplateBlockAt(blocks, 4, y, 2),
-                    "right wall connection doorway must stay open at y=" + y);
-        }
-        for (int y = 1; y <= 13; y++) {
-            assertEquals(ladderState, templateStateAt(blocks, 2, y, 3),
-                    "straight climb access must be continuous at y=" + y);
-        }
-    }
-
-    @Test
-    void gatehouseTemplateUsesCompactStoneCappedOpening() throws Exception {
-        Path dir = Files.createTempDirectory("city-wall-gatehouse-template-test");
-        new MinecraftCityWallArtifactWriter().writeTemplates(dir);
-
-        CompoundTag gatehouse = NbtIo.readCompressed(dir.resolve("gatehouse_9.nbt").toFile());
-        int stoneBricks = paletteState(gatehouse, "minecraft:stone_bricks");
-        int oakFence = paletteState(gatehouse, "minecraft:oak_fence");
-        ListTag blocks = gatehouse.getList("blocks", 10);
-
-        assertEquals(oakFence, templateStateAt(blocks, 3, 1, 3));
-        assertFalse(hasTemplateBlockAt(blocks, 4, 1, 3));
-        assertEquals(oakFence, templateStateAt(blocks, 5, 1, 3));
-        assertEquals(stoneBricks, templateStateAt(blocks, 4, 5, 3));
-        assertEquals(stoneBricks, templateStateAt(blocks, 4, 6, 3));
-    }
-
-    @Test
-    void wallBackendFoundationDepthUsesOriginalSurfaceSurfaceHeight() throws Exception {
-        Method depth = Class.forName("com.rinsing.geomantia.systems.city.infrastructure.world.CityWallPlacementBackend")
-                .getDeclaredMethod("foundationDepth", int.class, int.class, int.class);
-        depth.setAccessible(true);
-
-        assertEquals(3, ((Number) depth.invoke(null, 70, 67, 64)).intValue());
-        assertEquals(0, ((Number) depth.invoke(null, 70, 71, 64)).intValue());
-        assertEquals(2, ((Number) depth.invoke(null, 70, 60, 2)).intValue());
-    }
-
-    @Test
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    void wallBackendSplitsTerrainUnitsAlongWallAxis() throws Exception {
-        Class<?> axisClass = Class.forName("com.rinsing.geomantia.systems.city.infrastructure.world.CityWallPlacementBackend$Axis");
-        Object zAxis = Enum.valueOf((Class<Enum>) axisClass, "Z");
-        Method split = Class.forName("com.rinsing.geomantia.systems.city.infrastructure.world.CityWallPlacementBackend")
-                .getDeclaredMethod("splitUnits", BlockBounds.class, int.class, axisClass);
-        split.setAccessible(true);
-
-        List<BlockBounds> units = (List<BlockBounds>) split.invoke(null, new BlockBounds(-4, 0, 4, 31), 8, zAxis);
-
-        assertEquals(4, units.size());
-        for (BlockBounds unit : units) {
-            assertEquals(-4, unit.minX());
-            assertEquals(4, unit.maxX());
-        }
-        assertEquals(0, units.get(0).minZ());
-        assertEquals(7, units.get(0).maxZ());
-        assertEquals(24, units.get(3).minZ());
-        assertEquals(31, units.get(3).maxZ());
-    }
 
     private static Fixture fixture() throws Exception {
         Path baseDir = Files.createTempDirectory("city-structure-landing");
@@ -1436,112 +1370,9 @@ final class CityStructureLandingFlowTest {
                 """).getAsJsonObject();
     }
 
-    private static JsonObject syntheticV4Reservation() {
-        return JsonParser.parseString("""
-                {
-                  "schema": "city_wall_reservation_plan",
-                  "cityId": "city_test",
-                  "boundarySource": "actual_footprint_land_ring_deferred_to_d7",
-                  "wallBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": 32},
-                  "seedPatches": [
-                    {"landformPatchId": "plain_0", "landformType": "plain",
-                     "blockBounds": {"minX": -64, "minZ": -64, "maxX": 64, "maxZ": 64}}
-                  ],
-                  "cityDomainMask": [
-                    {"blockBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": 32}}
-                  ],
-                  "wallCenterline": [],
-                  "gateCandidateZones": []
-                }
-                """).getAsJsonObject();
-    }
 
-    private static JsonObject syntheticV4WaterReservation() {
-        return JsonParser.parseString("""
-                {
-                  "schema": "city_wall_reservation_plan",
-                  "cityId": "city_test",
-                  "boundarySource": "actual_footprint_land_ring_deferred_to_d7",
-                  "wallBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": 32},
-                  "seedPatches": [
-                    {"landformPatchId": "lake_big", "landformType": "water",
-                     "blockBounds": {"minX": -80, "minZ": -72, "maxX": 80, "maxZ": -40}},
-                    {"landformPatchId": "plain_0", "landformType": "plain",
-                     "blockBounds": {"minX": -80, "minZ": -32, "maxX": 80, "maxZ": 80}}
-                  ],
-                  "cityDomainMask": [
-                    {"blockBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": 32}}
-                  ],
-                  "wallCenterline": [],
-                  "gateCandidateZones": []
-                }
-                """).getAsJsonObject();
-    }
 
-    private static JsonObject syntheticV4PreciseWaterReservation() {
-        return JsonParser.parseString("""
-                {
-                  "schema": "city_wall_reservation_plan",
-                  "cityId": "city_test",
-                  "boundarySource": "actual_footprint_land_ring_deferred_to_d7",
-                  "wallBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": 32},
-                  "seedPatches": [
-                    {
-                      "landformPatchId": "lake_big",
-                      "landformType": "water",
-                      "geometryMode": "patch_member_cells",
-                      "cellStepBlocks": 16,
-                      "blockBounds": {"minX": -80, "minZ": -80, "maxX": 80, "maxZ": 80},
-                      "memberCells": [
-                        {"cellX": -2, "cellZ": -3, "blockMinX": -32, "blockMinZ": -48},
-                        {"cellX": -1, "cellZ": -3, "blockMinX": -16, "blockMinZ": -48},
-                        {"cellX": 0, "cellZ": -3, "blockMinX": 0, "blockMinZ": -48},
-                        {"cellX": 1, "cellZ": -3, "blockMinX": 16, "blockMinZ": -48},
-                        {"cellX": 2, "cellZ": -3, "blockMinX": 32, "blockMinZ": -48}
-                      ]
-                    },
-                    {"landformPatchId": "plain_0", "landformType": "plain",
-                     "blockBounds": {"minX": -80, "minZ": -32, "maxX": 80, "maxZ": 80}}
-                  ],
-                  "cityDomainMask": [
-                    {"blockBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": 32}}
-                  ],
-                  "wallCenterline": [],
-                  "gateCandidateZones": []
-                }
-                """).getAsJsonObject();
-    }
 
-    private static JsonObject syntheticV4TerrainContourReservation() {
-        return JsonParser.parseString("""
-                {
-                  "schema": "city_wall_reservation_plan",
-                  "cityId": "city_test",
-                  "boundarySource": "actual_footprint_land_ring_deferred_to_d7",
-                  "wallBounds": {"minX": -64, "minZ": -64, "maxX": 64, "maxZ": 64},
-                  "seedPatches": [
-                    {"landformPatchId": "plain_0", "landformType": "plain",
-                     "blockBounds": {"minX": -96, "minZ": -96, "maxX": 96, "maxZ": 96}}
-                  ],
-                  "cityDomainMask": [
-                    {"maskId": "city_domain_cell_0", "maskType": "city_domain_cell", "blockBounds": {"minX": -32, "minZ": -32, "maxX": -17, "maxZ": -17}},
-                    {"maskId": "city_domain_cell_1", "maskType": "city_domain_cell", "blockBounds": {"minX": -16, "minZ": -32, "maxX": -1, "maxZ": -17}},
-                    {"maskId": "city_domain_cell_2", "maskType": "city_domain_cell", "blockBounds": {"minX": 0, "minZ": -32, "maxX": 15, "maxZ": -17}},
-                    {"maskId": "city_domain_cell_3", "maskType": "city_domain_cell", "blockBounds": {"minX": 16, "minZ": -16, "maxX": 31, "maxZ": -1}},
-                    {"maskId": "city_domain_cell_4", "maskType": "city_domain_cell", "blockBounds": {"minX": -32, "minZ": -16, "maxX": -17, "maxZ": -1}},
-                    {"maskId": "city_domain_cell_5", "maskType": "city_domain_cell", "blockBounds": {"minX": -16, "minZ": -16, "maxX": -1, "maxZ": -1}},
-                    {"maskId": "city_domain_cell_6", "maskType": "city_domain_cell", "blockBounds": {"minX": 0, "minZ": -16, "maxX": 15, "maxZ": -1}},
-                    {"maskId": "city_domain_cell_7", "maskType": "city_domain_cell", "blockBounds": {"minX": 16, "minZ": 0, "maxX": 31, "maxZ": 15}},
-                    {"maskId": "city_domain_cell_8", "maskType": "city_domain_cell", "blockBounds": {"minX": -32, "minZ": 0, "maxX": -17, "maxZ": 15}},
-                    {"maskId": "city_domain_cell_9", "maskType": "city_domain_cell", "blockBounds": {"minX": -16, "minZ": 0, "maxX": -1, "maxZ": 15}},
-                    {"maskId": "city_domain_cell_10", "maskType": "city_domain_cell", "blockBounds": {"minX": 0, "minZ": 0, "maxX": 15, "maxZ": 15}},
-                    {"maskId": "city_domain_cell_11", "maskType": "city_domain_cell", "blockBounds": {"minX": 16, "minZ": 16, "maxX": 31, "maxZ": 31}}
-                  ],
-                  "wallCenterline": [],
-                  "gateCandidateZones": []
-                }
-                """).getAsJsonObject();
-    }
 
     private static JsonObject syntheticEastWallReservation() {
         return JsonParser.parseString("""
@@ -1586,11 +1417,6 @@ final class CityStructureLandingFlowTest {
         return obj;
     }
 
-    private static CityWallPlanner.TerrainOptions terrainOptions() {
-        return new CityWallPlanner.TerrainOptions(
-                24, 5, "v3.1", 7, 16, 6, 17, true,
-                "v3.3", 48, 24, 4096, 32);
-    }
 
     private static BlockBounds bounds(JsonObject obj) {
         return new BlockBounds(

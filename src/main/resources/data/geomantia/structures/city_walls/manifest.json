@@ -1,0 +1,21 @@
+{
+  "sourceFile": "ac3 城墙守卫塔.litematic",
+  "sourceSha256": "fccb575146ced449d0c664554b4848cea8659970366bb439e243ff9027835ccb",
+  "sourceSize": [
+    7,
+    15,
+    10
+  ],
+  "towerAnchor": [
+    3,
+    0,
+    6
+  ],
+  "walkwayFloorY": 9,
+  "passageHeadroom": 2,
+  "changes": "Four-way lookout passages; stairwell and roof retained",
+  "files": {
+    "guard_tower.nbt": "3e802cbb455b62be40edae12e1578f9b051cc9037473d81bda78c2cc58944d1d",
+    "wall_straight.nbt": "c2088ba4872a1a322fe9fdff63e2625aaaa8dab61c982b3aa472c8b8d64a5bad"
+  }
+}

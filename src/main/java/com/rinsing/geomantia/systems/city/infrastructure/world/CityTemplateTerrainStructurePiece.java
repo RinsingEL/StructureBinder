@@ -174,14 +174,16 @@ public final class CityTemplateTerrainStructurePiece extends StructurePiece {
                         "StructureTemplate.placeInWorld returned false.");
                 return;
             }
-            supportBuildingFloor(level, footprint, chunkBox);
+            boolean decoration = com.rinsing.geomantia.systems.city.application.CityTemplateTerrainPosePolicy
+                    .STRUCTURE_START_DECORATION.equals(item.templatePlan().get("terrainPosePolicy").getAsString());
+            if (!decoration) supportBuildingFloor(level, footprint, chunkBox);
             CityWorldgenBlockObservationRegistry.watchStructureTemplate(template, templateHash,
                     transform.placementOrigin(), transform.minecraftMirror(), transform.minecraftRotation(),
                     transform.rotationPivot(), placementBox, level::getBlockState,
                     "city_structure_template");
             CityReservationMaskRegistry.TemplateFragmentRecordResult result =
                     CityReservationMaskRegistry.recordTemplateWorldgenFragment(item, footprint,
-                            chunkPos, datumY, "beard_thin",
+                            chunkPos, datumY, decoration ? "none" : "beard_thin",
                             "TEMPLATE_TERRAIN_START_PIECE_PLACED",
                             "Fixed template piece placed through StructureStart before biome features.");
             if (!result.recorded()) {

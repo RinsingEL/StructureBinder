@@ -13,6 +13,44 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityStructureTemplateMaterializationPlannerTest {
     @Test
+    void buildingWinsCollisionEvenWhenOptionalTreeAppearsFirst() {
+        JsonObject input = anchorMap();
+        JsonObject building = input.getAsJsonArray("anchors").get(0).getAsJsonObject();
+        JsonObject tree = building.deepCopy();
+        tree.addProperty("anchorId", "optional-tree");
+        tree.addProperty("placementRole", "roadside_tree");
+        tree.addProperty("templateRef", "geomantia:roadside/small_oak");
+        var reordered = new com.google.gson.JsonArray();
+        reordered.add(tree); reordered.add(building);
+        input.add("anchors", reordered);
+        var result = new CityStructureMaterializationPlanner().planWorldgen(input, null, null, metadata());
+        var plan = result.structureMaterializationPlan();
+        assertTrue(plan.get("locked").getAsBoolean());
+        assertEquals(1, plan.getAsJsonArray("plannedWorldgenStructures").size());
+        assertEquals(building.get("anchorId"), plan.getAsJsonArray("plannedWorldgenStructures").get(0)
+                .getAsJsonObject().get("anchorId"));
+        assertEquals(1, plan.get("optionalSkippedCount").getAsInt());
+    }
+
+    @Test
+    void optionalTreeFailureDoesNotUnlockRequiredBuildings() {
+        JsonObject input = anchorMap();
+        JsonObject tree = input.getAsJsonArray("anchors").get(0).getAsJsonObject().deepCopy();
+        tree.addProperty("anchorId", "optional-tree");
+        tree.addProperty("placementRole", "roadside_tree");
+        tree.addProperty("templateRef", "geomantia:roadside/missing");
+        input.getAsJsonArray("anchors").add(tree);
+        var result = new CityStructureMaterializationPlanner().planWorldgen(input, null, null,
+                ref -> ref.contains("missing") ? CityStructureMaterializationPlanner.TemplateMetadata.unreadable(
+                        "MISSING", "optional asset unavailable") : metadata().inspect(ref));
+        assertTrue(result.structureMaterializationPlan().get("locked").getAsBoolean());
+        assertEquals(1, result.structureMaterializationPlan().getAsJsonArray("plannedWorldgenStructures").size());
+        assertEquals(1, result.structureMaterializationPlan().get("optionalSkippedCount").getAsInt());
+        assertTrue(result.qualityReport().get("passed").getAsBoolean());
+        assertTrue(result.structureMaterializationTrace().toString().contains("skipped_optional"));
+    }
+
+    @Test
     void templatePlanDerivesAndLocksNbtFootprintWithoutStructureStartFields() {
         JsonObject result = new CityStructureMaterializationPlanner()
                 .planWorldgen(anchorMap(), CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),

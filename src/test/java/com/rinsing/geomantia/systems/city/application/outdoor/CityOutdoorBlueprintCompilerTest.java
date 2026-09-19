@@ -30,6 +30,26 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityOutdoorBlueprintCompilerTest {
+    @Test void roadsideTreeSpaceRemainsUnpavedAndDoesNotSeedAnUrbanDistrict() {
+        var compiler = new CityOutdoorBlueprintCompiler();
+        var capacity = capacity(blueprint(), d6Plan());
+        var baseline = compiler.compile(blueprint(), d6Plan(), terrain(), catalog(), capacity);
+        var candidates = baseline.resolution().district().construction().stream()
+                .filter(p -> !(p.x() >= 20 && p.x() <= 25 && p.z() >= 40 && p.z() <= 45))
+                .filter(p -> !(p.x() >= 40 && p.x() <= 57 && p.z() >= 40 && p.z() <= 57))
+                .toList();
+        assertFalse(candidates.isEmpty());
+        var point = candidates.get(0);
+        var plan = d6Plan();
+        var tree = structure("tree", "__roadside", "fill", point.x(), point.z(), point.x(), point.z());
+        tree.addProperty("placementRole", "roadside_tree");
+        plan.getAsJsonArray("plannedWorldgenStructures").add(tree);
+        var result = compiler.compile(blueprint(), plan, terrain(), catalog(), capacity);
+        assertFalse(result.resolution().district().construction().contains(point));
+        assertFalse(result.resolution().district().structures().contains(point));
+        assertTrue(baseline.resolution().district().construction().containsAll(result.resolution().district().construction()));
+    }
+
     @Test void explicitSeedReservationSurvivesLaterOwnerBuildingsWithoutRebinding() {
         CityBlueprint original = blueprint();
         var landscape = original.outdoorPlan().landscapes().get(0);
@@ -166,7 +186,7 @@ class CityOutdoorBlueprintCompilerTest {
     }
 
     @Test
-    void buildingMarkerAndCityStylePaletteFreezeGreenParcelSpec() {
+    void buildingGreeneryMetadataDoesNotCreateAutomaticDecoration() {
         JsonObject d6 = d6Plan();
         JsonObject farmhouse = d6.getAsJsonArray("plannedWorldgenStructures").get(1).getAsJsonObject();
         farmhouse.add("lockedCollisionEnvelope", bounds(38, 38, 47, 47));
@@ -205,12 +225,8 @@ class CityOutdoorBlueprintCompilerTest {
         CityOutdoorBlueprintCompiler.Result result = new CityOutdoorBlueprintCompiler().compile(
                 blueprint(), d6, terrain(), greenCatalog, capacity(blueprint(), d6));
 
-        assertEquals(1, result.resolution().greenParcels().size());
-        LandUseSourceResolver.GreenParcelSpec parcel = result.resolution().greenParcels().get(0);
-        assertEquals(new BlockBounds(36, 36, 49, 49), parcel.parcelBounds());
-        assertEquals(new BlockBounds(38, 38, 47, 47), parcel.hardExclusionBounds());
-        assertEquals(new BlockPoint(39, 42), parcel.entrance());
-        assertEquals("minecraft:poppy", parcel.plantPalette().get(0).blockId());
+        assertTrue(result.resolution().greenParcels().isEmpty());
+        assertFalse(result.resolution().district().structures().isEmpty());
     }
 
     @Test
@@ -685,7 +701,7 @@ class CityOutdoorBlueprintCompilerTest {
                 }
             }
         }
-        assertFalse(planned.urbanSpacePlan().enabled());
+        assertTrue(planned.urbanSpacePlan().enabled());
         assertTrue(planned.plan().warnings().stream().noneMatch(warning -> warning.contains("foundation")));
     }
 
@@ -707,7 +723,15 @@ class CityOutdoorBlueprintCompilerTest {
         assertEquals(visibleFoundation, foundationTrace.get("foundationVisibleAreaBlocks").getAsInt());
         assertEquals(foundationTrace.get("preferredAreaBlocks").getAsInt(),
                 foundationTrace.get("foundationBaseAreaBlocks").getAsInt());
-        assertTrue(visibleFoundation < foundationTrace.get("foundationBaseAreaBlocks").getAsInt());
+        assertEquals(compiled.resolution().district().construction().size(),
+                foundationTrace.get("foundationBaseAreaBlocks").getAsInt());
+        assertTrue(visibleFoundation <= foundationTrace.get("foundationBaseAreaBlocks").getAsInt());
+        Set<BlockPoint> natural = compiled.resolution().district().natural();
+        planned.plan().areas().stream().filter(area -> area.sourceGroupIds().contains("city::foundation"))
+                .flatMap(area -> area.memberSpans().stream()).forEach(span -> {
+                    for (int x = span.minX(); x <= span.maxX(); x++)
+                        assertFalse(natural.contains(new BlockPoint(x, span.z())));
+                });
     }
 
     @Test

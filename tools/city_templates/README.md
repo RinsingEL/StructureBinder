@@ -1,5 +1,30 @@
 # Trek fixed-template importer
 
+## Construction pack discovery catalog
+
+`asset_catalogs/construction_pack/README.md` is a name-based discovery index, separate from the
+approved runtime catalog. It retains source series, style/function/theme evidence and original paths.
+It does not inspect NBT or authorize world placement.
+
+```powershell
+python tools/city_templates/index_construction_assets.py --source '<g构建包 directory>' --output asset_catalogs/construction_pack
+python tools/city_templates/query_construction_assets.py --style 中世纪 --function 行政 --kind 建筑与城市配套
+python tools/city_templates/query_construction_assets.py --style 中世纪 --series 铜顶
+```
+
+Browse `styles/` and `functions/` for human-readable lists, or query `assets.jsonl` to give an AI only
+the relevant candidates. `series.json` preserves original pack groupings; equal style tags do not
+assert visual compatibility. Rebuilding the catalog derives tags solely from names, not manual approvals.
+
+Read `COVERAGE.md` / `coverage.json` before treating a style as a city palette. The coverage audit
+separates explicit building functions from decoration and unknown-purpose houses, at both style
+and original-series level. These are review axes, not new runtime admission rules. The query CLI
+includes style coverage and matched-series coverage alongside candidates. Rebuild coverage alone:
+
+```powershell
+python tools/city_templates/audit_construction_coverage.py
+```
+
 ## Deployable City content pack
 
 `build_city_content_pack.py` takes an already reviewed `city_template_catalog` plus a source world's

@@ -51,6 +51,12 @@ public final class GeomantiaMod {
                 LOGGER.error("Failed to create global realm planning defaults in {}.", FMLPaths.CONFIGDIR.get(), ex);
             }
             AdventurerMapNetwork.register();
+            try {
+                com.rinsing.geomantia.systems.city.infrastructure.world.CityWallModuleConfig.ensureDefaults(
+                        com.rinsing.geomantia.systems.city.infrastructure.world.CityWallModuleConfig.directory());
+            } catch (java.io.IOException ex) {
+                LOGGER.error("Failed to install independent City wall configuration.", ex);
+            }
             ProviderNetwork.register();
             com.rinsing.geomantia.platform.mcp.McpServerService.instance().start(FMLPaths.GAMEDIR.get());
         });

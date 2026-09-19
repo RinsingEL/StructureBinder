@@ -1,0 +1,53 @@
+[
+  {
+    "templateRef": "geomantia:roadside/small_oak",
+    "sourceFile": "aq17 小橡树.litematic",
+    "sourceSha256": "71664d4c997b6ab5e645c0ba37b0777c58c8f56b95c6851bf78ceb6b8d73b0c2",
+    "sha256": "7d3ad4360bf7c8a3ee18d6fa8212fd72d0b92e83bf7106a8a528325a7cf6d719",
+    "size": [
+      10,
+      11,
+      8
+    ],
+    "root": [
+      5,
+      0,
+      4
+    ],
+    "blockCount": 200
+  },
+  {
+    "templateRef": "geomantia:roadside/small_conifer",
+    "sourceFile": "bh34 小深色橡树.litematic",
+    "sourceSha256": "35a1157e97c02074e7dbf00a94435184e8911b37527cbd0e093061093848cc1c",
+    "sha256": "5c2f45b85b1b62df4bfa6db251cc48c71a9bfe6e9507846ebf2ba8589ab2e8da",
+    "size": [
+      12,
+      10,
+      11
+    ],
+    "root": [
+      5,
+      0,
+      7
+    ],
+    "blockCount": 321
+  },
+  {
+    "templateRef": "geomantia:roadside/park_oak",
+    "sourceFile": "by51 小公园橡树.litematic",
+    "sourceSha256": "d28b6e516a8789f0ef713b210f86ec9bd7736d99c8f3bf74e417351c29416efe",
+    "sha256": "4e230b320000f798788913063d2ea4a84f10464a3716f9c46272216040d3d1db",
+    "size": [
+      10,
+      16,
+      9
+    ],
+    "root": [
+      6,
+      0,
+      2
+    ],
+    "blockCount": 296
+  }
+]

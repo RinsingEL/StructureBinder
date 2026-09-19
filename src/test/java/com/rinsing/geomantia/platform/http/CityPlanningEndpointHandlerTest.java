@@ -1730,13 +1730,13 @@ class CityPlanningEndpointHandlerTest {
         JsonObject reservation = response.getAsJsonObject("wallReservationPlan");
         assertEquals("city_wall_reservation_plan", reservation.get("schema").getAsString());
         assertFalse(reservation.has("wallVersion"));
-        assertEquals("d4_planned_footprint_envelope_rectilinear_hull",
+        assertEquals("district_coarse_exterior",
                 reservation.get("boundarySource").getAsString());
         assertEquals("semantic_and_coverage_check_only", reservation.get("patchUsage").getAsString());
         assertFalse(reservation.get("finalBoundaryDeferredToD7").getAsBoolean());
         assertFalse(reservation.getAsJsonArray("wallLine").isEmpty());
         assertFalse(reservation.getAsJsonArray("wallCorridorMask").isEmpty());
-        assertFalse(reservation.getAsJsonArray("gateSlots").isEmpty());
+        assertEquals("EXIT_ROAD_REQUIRED", reservation.get("exitRoadStatus").getAsString());
         assertFalse(reservation.getAsJsonArray("wallNodeSlots").isEmpty());
         assertFalse(reservation.getAsJsonObject("coverageCheck")
                 .get("patchBoundaryIsFinalWallLine").getAsBoolean());
@@ -1859,9 +1859,9 @@ class CityPlanningEndpointHandlerTest {
         assertEquals(reservation.getAsJsonArray("wallLine").toString(),
                 wallPlan.getAsJsonArray("wallLine").toString());
         assertEquals(8, wallPlan.get("wallUnitLengthBlocks").getAsInt());
-        assertEquals(9, wallPlan.get("nominalWallHeightBlocks").getAsInt());
+        assertEquals(10, wallPlan.get("nominalWallHeightBlocks").getAsInt());
         assertTrue(wallPlan.getAsJsonObject("wallGraphValidation").get("noRelineAfterD5").getAsBoolean());
-        assertTrue(wallPlan.getAsJsonArray("wallUnits").toString().contains("surface_cache_1_block_median_at_execute"));
+        assertTrue(wallPlan.getAsJsonArray("wallUnits").toString().contains("frozen_module_walkway_datum"));
         assertEquals("skipped", wallPlan.getAsJsonObject("surfaceCacheBackfill").get("status").getAsString());
         assertTrue(response.getAsJsonObject("artifacts").has("surfaceCacheBackfill"));
     }

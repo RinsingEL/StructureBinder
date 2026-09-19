@@ -1,0 +1,13 @@
+{
+  "schema": "city_wall_modules",
+  "moduleSet": "guard_tower",
+  "connections": {
+    "walkwayFloorY": 9,
+    "passageHeadroom": 2
+  },
+  "foundationBlock": "minecraft:stone_bricks",
+  "modules": {
+    "guardTower": "modules/guard_tower.nbt",
+    "straightWall": "modules/wall_straight.nbt"
+  }
+}

@@ -92,9 +92,9 @@ public final class LandUsePlanningService {
             }
             corridors = List.of();
             LandUseSeedGroup foundation = foundations.get(0);
-            CityFoundationPlanner.Plan foundationPlan = new CityFoundationPlanner().plan(
-                    terrainField.planningBounds(), terrainField, foundation.structureFootprints(),
-                    foundation.foundationSettings());
+            CityFoundationPlanner.Plan foundationPlan = sources.district() != null ? sources.district().foundation()
+                    : new CityFoundationPlanner().plan(terrainField.planningBounds(), terrainField,
+                    foundation.structureFootprints(), foundation.foundationSettings());
             List<LandUseSeedGroup> landscapes = sources.seedGroups().stream()
                     .filter(group -> group.layerRole() == LandUseSeedGroup.LayerRole.LANDSCAPE).toList();
             LandscapeExpansion landscapeResult = expandPrioritizedLandscapes(landscapeExpander, cityId, terrainField,
@@ -107,7 +107,8 @@ public final class LandUsePlanningService {
             probe = expansion;
             connectionOutcomes = List.of();
             residualResult = new CityUrbanResidualResolver.Result(expansion,
-                    CityUrbanSpacePlan.disabled(cityId), List.of());
+                    sources.district() == null ? CityUrbanSpacePlan.disabled(cityId)
+                            : sources.district().urbanSpacePlan(cityId, expansion), List.of());
             resolvedFoundationCloseRadius = foundationPlan.resolvedCloseRadiusBlocks();
             resolvedFoundationComponentCount = foundationPlan.componentCount();
         } else {
