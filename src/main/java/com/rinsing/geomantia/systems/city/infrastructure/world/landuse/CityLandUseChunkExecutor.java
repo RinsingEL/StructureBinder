@@ -317,6 +317,7 @@ public final class CityLandUseChunkExecutor {
                 .map(operation -> new ColumnKey(operation.x(), operation.z()))
                 .collect(java.util.stream.Collectors.toSet());
         for (CityLandUseMicroGrader.TerraceEdgeDecision edge : foundationPlan.terraceEdges()) {
+            if (circulationColumns.contains(new ColumnKey(edge.x(), edge.z()))) continue;
             if (explicitBoundaryColumns.contains(new ColumnKey(edge.x(), edge.z()))) continue;
             boolean clearedByBaseMutation = baseMutationClearsTarget(basePrepared,
                     edge.x(), edge.y(), edge.z());

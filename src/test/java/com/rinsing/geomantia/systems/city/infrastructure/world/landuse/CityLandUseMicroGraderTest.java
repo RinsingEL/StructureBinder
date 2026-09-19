@@ -16,6 +16,87 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandUseMicroGraderTest {
     @Test
+    void roadDeckStairsAndLevelAccessPathsCannotReceiveRailingOrCornerLinks() {
+        var heights = new HashMap<CityLandUseMicroGrader.Cell,Integer>();
+        var owners = new HashMap<CityLandUseMicroGrader.Cell,String>();
+        for(int z=-3;z<=3;z++)for(int x=-3;x<=3;x++) {
+            if(x+z>1)continue;
+            var cell=new CityLandUseMicroGrader.Cell(x,z);heights.put(cell,68);owners.put(cell,"area");
+        }
+        for(var kind:List.of(CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,
+                CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR)) {
+            var road=new CityLandUseChunkCompiler.FeatureOperation("road",0,0,"minecraft:stone_bricks",0,
+                    kind,CityLandUseSurfacePrintPlan.HorizontalFacing.EAST);
+            var rimRoad=new CityLandUseChunkCompiler.FeatureOperation("road",1,0,"minecraft:stone_bricks",0,
+                    kind,CityLandUseSurfacePrintPlan.HorizontalFacing.EAST);
+            var roads=List.of(road,rimRoad);
+            // Check final road geometry even when the grading context has no road operations.
+            var f=new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,
+                    "city","hash","palette",0,0,1,0,0,0,"minecraft:dirt",
+                    List.of(),List.of(),List.of(),roads,List.of());
+            var edges=CityLandUseMicroGrader.terraceEdges(f,heights.keySet(),owners,heights,
+                    new FakeTerrain(64),List.of(),List.of());
+            assertTrue(edges.stream().noneMatch(e->e.z()==0&&(e.x()==0||e.x()==1)));
+            assertTrue(edges.stream().anyMatch(e->e.x()==0&&e.z()==1),"keep railing beside the road");
+        }
+        var access=List.of(new CityLandUseMicroGrader.AccessPathDecision("entry",0,0,"minecraft:stone_bricks"),
+                new CityLandUseMicroGrader.AccessPathDecision("entry",1,0,"minecraft:stone_bricks"));
+        var edges=CityLandUseMicroGrader.terraceEdges(fragment(List.of(),List.of()),heights.keySet(),owners,heights,
+                new FakeTerrain(64),List.of(),access);
+        assertTrue(edges.stream().noneMatch(e->e.z()==0&&(e.x()==0||e.x()==1)),"level paths are protected too");
+    }
+
+    @Test
+    void diagonalRimHasAnInsideLConnectorInEveryDirectionAndAcrossChunkSeams() {
+        for (int sx : new int[]{-1, 1}) for (int sz : new int[]{-1, 1}) {
+            var heights = new HashMap<CityLandUseMicroGrader.Cell, Integer>();
+            var owners = new HashMap<CityLandUseMicroGrader.Cell, String>();
+            for (int z = -4; z <= 4; z++) for (int x = -4; x <= 4; x++) {
+                if (x + z > 1) continue;
+                var cell = new CityLandUseMicroGrader.Cell(15 + sx * x, 15 + sz * z);
+                heights.put(cell, 68); owners.put(cell, "area");
+            }
+            var corner = new CityLandUseMicroGrader.Cell(15, 15);
+            var whole = CityLandUseMicroGrader.terraceEdges(fragment(List.of(), List.of()), heights.keySet(),
+                    owners, heights, new FakeTerrain(64), List.of(), List.of());
+            var positions = whole.stream().map(e -> new CityLandUseMicroGrader.Cell(e.x(), e.z()))
+                    .collect(java.util.stream.Collectors.toSet());
+            for (int x = -2; x <= 2; x++) {
+                assertTrue(positions.contains(new CityLandUseMicroGrader.Cell(15 + sx*x, 15 - sz*x)), "inner connector");
+                assertTrue(positions.contains(new CityLandUseMicroGrader.Cell(15 + sx*x, 15 + sz*(1-x))), "original rim");
+            }
+            assertTrue(whole.stream().allMatch(e -> heights.containsKey(new CityLandUseMicroGrader.Cell(e.x(),e.z()))),
+                    "never extend unsupported railing into low ground");
+            var single = CityLandUseMicroGrader.terraceEdges(fragment(List.of(), List.of()), java.util.Set.of(corner),
+                    owners, heights, new FakeTerrain(64), List.of(), List.of());
+            assertEquals(whole.stream().filter(e -> e.x()==15 && e.z()==15).toList(), single);
+            assertEquals(1, single.size());
+            assertEquals(CityLandUseMicroGrader.TerraceEdgeKind.RAILING, single.get(0).kind());
+            assertEquals(whole, CityLandUseMicroGrader.terraceEdges(fragment(List.of(), List.of()), heights.keySet(),
+                    owners, heights, new FakeTerrain(64), List.of(), List.of()));
+        }
+    }
+
+    @Test
+    void cornerLinkDoesNotCloseProtectedStairOpening() {
+        var heights = new HashMap<CityLandUseMicroGrader.Cell, Integer>();
+        var owners = new HashMap<CityLandUseMicroGrader.Cell, String>();
+        for (int z=-3; z<=3; z++) for(int x=-3; x<=3; x++) {
+            if(x+z>1)continue;
+            var cell=new CityLandUseMicroGrader.Cell(x,z);heights.put(cell,68);owners.put(cell,"area");
+        }
+        var corner=new CityLandUseMicroGrader.Cell(0,0);
+        // Stair protection reaches the neighbouring edge at (1,0), but not the connector itself.
+        var stair=new CityLandUseMicroGrader.StairDecision("entry",2,0,68,"minecraft:stone_brick_stairs",
+                CityLandUseSurfacePrintPlan.HorizontalFacing.EAST,CityLandUseMicroGrader.StairMode.values()[0]);
+        assertTrue(CityLandUseMicroGrader.terraceEdges(fragment(List.of(),List.of()),java.util.Set.of(corner),
+                owners,heights,new FakeTerrain(64),List.of(stair),List.of()).isEmpty());
+        heights.put(new CityLandUseMicroGrader.Cell(1,1),68);
+        assertTrue(CityLandUseMicroGrader.terraceEdges(fragment(List.of(),List.of()),java.util.Set.of(corner),
+                owners,heights,new FakeTerrain(64),List.of(),List.of()).isEmpty(),"no corner on level ground");
+    }
+
+    @Test
     void lShapedRimRemainsContinuousBesideLevelAccessPath() {
         var cells = new java.util.HashSet<CityLandUseMicroGrader.Cell>();
         var owners = new HashMap<CityLandUseMicroGrader.Cell, String>();

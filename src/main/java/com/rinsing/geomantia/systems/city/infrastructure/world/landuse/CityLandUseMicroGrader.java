@@ -1221,10 +1221,14 @@ final class CityLandUseMicroGrader {
                 .map(operation -> new Cell(operation.x(), operation.z()))
                 .forEach(occupiedCells::add);
 
-        Set<Cell> roadCells = fragment.gradingFeatureOperations().stream()
-                .filter(operation -> operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB)
+        Set<Cell> roadCells = java.util.stream.Stream.concat(fragment.gradingFeatureOperations().stream(),
+                        fragment.featureOperations().stream())
+                .filter(operation -> operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
+                        || operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR)
                 .map(operation -> new Cell(operation.x(), operation.z()))
                 .collect(java.util.stream.Collectors.toSet());
+        protectedCells.addAll(roadCells);
+        protectedCells.addAll(accessCells);
         List<TerraceEdgeDecision> result = new ArrayList<>();
         outputCells.stream().sorted(Comparator.comparingInt(Cell::z).thenComparingInt(Cell::x))
                 .forEach(cell -> {
@@ -1248,8 +1252,10 @@ final class CityLandUseMicroGrader {
                             greatestDrop = drop;
                         }
                     }
-                    if (outward == null) return;
-                    TerraceEdgeKind kind = roadCells.contains(cell) || lowerNeighbourCount > 1
+                    boolean cornerLink = outward == null && needsTerraceCornerLink(cell, targetY,
+                            platformTargets, terrain, protectedCells, occupiedCells);
+                    if (outward == null && !cornerLink) return;
+                    TerraceEdgeKind kind = cornerLink || lowerNeighbourCount > 1
                             ? TerraceEdgeKind.RAILING
                             : terraceEdgeKind(areaId, targetY, cell, outward);
                     String blockId = kind == TerraceEdgeKind.GREENERY
@@ -1259,6 +1265,25 @@ final class CityLandUseMicroGrader {
                             blockId, kind));
                 });
         return List.copyOf(result);
+    }
+
+    private static boolean needsTerraceCornerLink(Cell cell, int targetY,
+            Map<Cell, Integer> platformTargets, TerrainView terrain,
+            Set<Cell> protectedCells, Set<Cell> occupiedCells) {
+        // At a diagonal rim, join the two high-side edge blocks through the inner corner.
+        // Use the full platform context, not just this chunk's output, so chunk seams agree.
+        for (int dx : new int[]{-1, 1}) for (int dz : new int[]{-1, 1}) {
+            Cell alongX = new Cell(cell.x() + dx, cell.z());
+            Cell alongZ = new Cell(cell.x(), cell.z() + dz);
+            if (!Objects.equals(platformTargets.get(alongX), targetY)
+                    || !Objects.equals(platformTargets.get(alongZ), targetY)
+                    || protectedCells.contains(alongX) || protectedCells.contains(alongZ)
+                    || occupiedCells.contains(alongX) || occupiedCells.contains(alongZ)) continue;
+            Cell outside = new Cell(cell.x() + dx, cell.z() + dz);
+            int outsideY = platformTargets.getOrDefault(outside, required(terrain, outside).surfaceY());
+            if (targetY - outsideY >= 2) return true;
+        }
+        return false;
     }
 
     private static void protectEdgeOpening(Set<Cell> protectedCells, Cell center) {
