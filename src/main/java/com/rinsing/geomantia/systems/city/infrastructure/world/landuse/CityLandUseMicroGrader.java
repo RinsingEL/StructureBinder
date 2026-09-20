@@ -1160,17 +1160,19 @@ final class CityLandUseMicroGrader {
             Integer targetY = platformTargets.get(cell);
             if (targetY == null) continue;
             String areaId = areaByCell.get(cell);
+            int bottom=targetY;
+            boolean facesX=false,facesZ=false;
             for (int[] offset : CARDINAL_OFFSETS) {
                 Cell neighbour = new Cell(cell.x() + offset[0], cell.z() + offset[1]);
-                int neighbourY = areaId.equals(areaByCell.get(neighbour))
-                        ? platformTargets.getOrDefault(neighbour, required(terrain, neighbour).surfaceY())
-                        : required(terrain, neighbour).surfaceY();
-                if (targetY - neighbourY < 2) continue;
-                for (int y = neighbourY + 1; y < targetY; y++) {
-                    RetainingWallDecision wall = new RetainingWallDecision(areaId, cell.x(), y, cell.z(),
-                            "minecraft:stone_bricks");
-                    result.put(cell.x() + ":" + y + ":" + cell.z(), wall);
-                }
+                int neighbourY = platformTargets.getOrDefault(neighbour, required(terrain, neighbour).surfaceY());
+                if(targetY-neighbourY<2)continue;
+                bottom=Math.min(bottom,neighbourY);
+                facesX |= offset[0]!=0;facesZ |= offset[1]!=0;
+            }
+            for(int y=bottom+1;y<targetY;y++) {
+                String slot=CityRetainingFacadePlanner.slot(areaId,cell.x(),cell.z(),y,targetY,bottom,facesX,facesZ);
+                var wall=new RetainingWallDecision(areaId,cell.x(),y,cell.z(),"minecraft:stone_bricks",slot);
+                result.put(cell.x()+":"+y+":"+cell.z(),wall);
             }
         }
         return result.values().stream().sorted(Comparator.comparingInt(RetainingWallDecision::z)
@@ -1272,7 +1274,8 @@ final class CityLandUseMicroGrader {
         return java.util.stream.Stream.concat(fragment.gradingFeatureOperations().stream(),
                         fragment.featureOperations().stream())
                 .filter(operation -> operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
-                        || operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR)
+                        || operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR
+                        || operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK)
                 .map(operation -> new Cell(operation.x(), operation.z()))
                 .collect(java.util.stream.Collectors.toSet());
     }
@@ -1484,7 +1487,10 @@ final class CityLandUseMicroGrader {
         }
     }
 
-    record RetainingWallDecision(String areaId, int x, int y, int z, String blockId) {
+    record RetainingWallDecision(String areaId, int x, int y, int z, String blockId, String materialSlot) {
+        RetainingWallDecision(String areaId,int x,int y,int z,String blockId) {
+            this(areaId,x,y,z,blockId,"retainingWall");
+        }
         RetainingWallDecision {
             Objects.requireNonNull(areaId, "areaId");
             Objects.requireNonNull(blockId, "blockId");

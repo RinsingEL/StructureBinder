@@ -16,6 +16,57 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CityLandUseChunkExecutorTest {
     private final CityLandUseChunkExecutor executor = new CityLandUseChunkExecutor();
 
+    @Test void retainingFacadeMaterialsReachWritesWithinExistingPlatformFootprint() {
+        var materials=com.rinsing.geomantia.systems.city.domain.blueprint.CitySurfaceMaterials.read(
+                com.google.gson.JsonParser.parseString("{defaults:{terrace:{preset:'timber_stone'}}}").getAsJsonObject());
+        var field=new com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField(materials,List.of(),List.of());
+        List<CityLandUseChunkCompiler.GradingMaskCell> mask=new ArrayList<>();
+        List<CityLandUseChunkCompiler.SurfaceOperation> surfaces=new ArrayList<>();
+        for(int x=0;x<=15;x++)for(int z=0;z<=4;z++) {
+            mask.add(new CityLandUseChunkCompiler.GradingMaskCell("area",x,z,true,78));
+            surfaces.add(new CityLandUseChunkCompiler.SurfaceOperation("area","plaza",x,z,"minecraft:stone_bricks"));
+        }
+        var fragment=new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,
+                "city","hash","palette",0,0,surfaces.size(),0,0,0,"minecraft:dirt",mask,surfaces,List.of(),
+                List.of(),List.of(),List.of(),List.of(),field);
+        FakeWorld world=new FakeWorld();
+        var result=executor.execute(fragment,world,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED,result.status());
+        assertTrue(world.writes.stream().anyMatch(w->w.endsWith("=minecraft:oak_log")));
+        assertTrue(world.writes.stream().anyMatch(w->w.endsWith("=minecraft:cobblestone")));
+        assertTrue(world.writes.stream().anyMatch(w->w.contains(",77,")&&w.endsWith("=minecraft:stone_bricks")));
+        assertTrue(world.writes.stream().anyMatch(w->w.contains(",71,")&&w.endsWith("=minecraft:stone_bricks")));
+        assertTrue(world.writes.stream().allMatch(w->{var xyz=w.split("=")[0].split(",");
+            return Integer.parseInt(xyz[0])>=0&&Integer.parseInt(xyz[0])<=15&&Integer.parseInt(xyz[2])>=0&&Integer.parseInt(xyz[2])<=4;}));
+    }
+
+    @Test void timberBridgePlacesConfiguredBeamPostAndPierWithoutFillingTheWaterway() {
+        var materials=com.rinsing.geomantia.systems.city.domain.blueprint.CitySurfaceMaterials.read(
+                com.google.gson.JsonParser.parseString("{defaults:{bridge:{preset:'timber'}}}").getAsJsonObject());
+        var field=new com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField(materials,List.of(),List.of());
+        List<CityLandUseChunkCompiler.FeatureOperation> features=new ArrayList<>();
+        for(int x=0;x<=15;x++)for(int z=0;z<=4;z++) {
+            features.add(new CityLandUseChunkCompiler.FeatureOperation("bridge-a",x,z,"minecraft:spruce_slab",0,
+                    CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,68));
+            if(z==0||z==4)features.add(new CityLandUseChunkCompiler.FeatureOperation("bridge-a",x,z,"minecraft:spruce_fence",1,
+                    CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_RAIL,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,68));
+        }
+        var fragment=new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,
+                "city","hash","palette",0,0,features.size(),0,0,0,"minecraft:dirt",List.of(),List.of(),List.of(),
+                features,features,List.of(),List.of(),field);
+        FakeWorld world=new FakeWorld();
+        for(int x=0;x<=15;x++)for(int z=0;z<=4;z++) {
+            world.columns.put(x+","+z,new CityLandUseChunkExecutor.ColumnSample(64,"minecraft:water",true));
+            world.replaceable.put(x+",60,"+z,false);
+        }
+        var result=executor.execute(fragment,world,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED,result.status());
+        assertTrue(world.writes.contains("0,67,0=minecraft:spruce_planks"));
+        assertTrue(world.writes.contains("0,69,0=minecraft:stripped_spruce_log"));
+        assertTrue(world.writes.contains("0,61,0=minecraft:stripped_spruce_log"));
+        assertTrue(world.writes.stream().noneMatch(w->w.matches("[0-9]+,6[0-6],2=.*")),"waterway beneath center deck stays open");
+    }
+
     @Test void roadBaseOverrideSurvivesExistingFoundationSurface() {
         var mask=List.of(new CityLandUseChunkCompiler.GradingMaskCell("foundation",1,1,true,64));
         var surfaces=List.of(new CityLandUseChunkCompiler.SurfaceOperation("foundation","plaza",1,1,"minecraft:stone_bricks"));

@@ -1,0 +1,120 @@
+{
+  "groundAndRoad": {
+    "label": "地面与道路",
+    "slots": [
+      "ground",
+      "roadSurface",
+      "roadStair",
+      "roadCurb",
+      "roadBase",
+      "accessSurface",
+      "accessStair"
+    ],
+    "presets": {
+      "stone": {
+        "ground": "minecraft:stone_bricks",
+        "roadBase": "minecraft:stone_bricks",
+        "roadSurface": "minecraft:stone_brick_slab",
+        "roadStair": "minecraft:stone_brick_stairs",
+        "roadCurb": "minecraft:stone_brick_stairs",
+        "accessSurface": "minecraft:stone_brick_slab",
+        "accessStair": "minecraft:stone_brick_stairs"
+      },
+      "sandstone": {
+        "ground": "minecraft:cut_sandstone",
+        "roadBase": "minecraft:cut_sandstone",
+        "roadSurface": "minecraft:sandstone_slab",
+        "roadStair": "minecraft:sandstone_stairs",
+        "roadCurb": "minecraft:sandstone_stairs",
+        "accessSurface": "minecraft:sandstone_slab",
+        "accessStair": "minecraft:sandstone_stairs"
+      }
+    }
+  },
+  "terrace": {
+    "label": "台面与挡土墙",
+    "slots": [
+      "retainingWall",
+      "wallColumn",
+      "wallCap",
+      "wallBand",
+      "deck",
+      "fill",
+      "pier",
+      "railing",
+      "lowWall",
+      "hedge"
+    ],
+    "presets": {
+      "stone": {
+        "retainingWall": "minecraft:cobblestone",
+        "wallColumn": "minecraft:stone_bricks",
+        "wallCap": "minecraft:stone_bricks",
+        "wallBand": "minecraft:stone_bricks",
+        "deck": "minecraft:cobblestone",
+        "fill": "minecraft:dirt",
+        "pier": "minecraft:stone_bricks",
+        "railing": "minecraft:stone_brick_wall",
+        "lowWall": "minecraft:stone_brick_wall",
+        "hedge": "minecraft:oak_leaves"
+      },
+      "timber_stone": {
+        "retainingWall": "minecraft:cobblestone",
+        "wallColumn": "minecraft:oak_log",
+        "wallCap": "minecraft:stone_bricks",
+        "wallBand": "minecraft:stone_bricks",
+        "deck": "minecraft:cobblestone",
+        "fill": "minecraft:dirt",
+        "pier": "minecraft:oak_log",
+        "railing": "minecraft:oak_fence",
+        "lowWall": "minecraft:oak_fence",
+        "hedge": "minecraft:oak_leaves"
+      },
+      "sandstone": {
+        "retainingWall": "minecraft:sandstone",
+        "wallColumn": "minecraft:chiseled_sandstone",
+        "wallCap": "minecraft:cut_sandstone",
+        "wallBand": "minecraft:cut_sandstone",
+        "deck": "minecraft:sandstone",
+        "fill": "minecraft:dirt",
+        "pier": "minecraft:chiseled_sandstone",
+        "railing": "minecraft:sandstone_wall",
+        "lowWall": "minecraft:sandstone_wall",
+        "hedge": "minecraft:oak_leaves"
+      }
+    }
+  },
+  "bridge": {
+    "label": "桥梁与栈道",
+    "slots": [
+      "bridgeSurface",
+      "bridgeRail",
+      "bridgeBeam",
+      "bridgePost",
+      "bridgePier"
+    ],
+    "presets": {
+      "timber": {
+        "bridgeSurface": "minecraft:spruce_slab",
+        "bridgeRail": "minecraft:spruce_fence",
+        "bridgeBeam": "minecraft:spruce_planks",
+        "bridgePost": "minecraft:stripped_spruce_log",
+        "bridgePier": "minecraft:stripped_spruce_log"
+      },
+      "stone": {
+        "bridgeSurface": "minecraft:stone_brick_slab",
+        "bridgeRail": "minecraft:stone_brick_wall",
+        "bridgeBeam": "minecraft:stone_bricks",
+        "bridgePost": "minecraft:chiseled_stone_bricks",
+        "bridgePier": "minecraft:stone_bricks"
+      },
+      "sandstone": {
+        "bridgeSurface": "minecraft:sandstone_slab",
+        "bridgeRail": "minecraft:sandstone_wall",
+        "bridgeBeam": "minecraft:cut_sandstone",
+        "bridgePost": "minecraft:chiseled_sandstone",
+        "bridgePier": "minecraft:sandstone"
+      }
+    }
+  }
+}

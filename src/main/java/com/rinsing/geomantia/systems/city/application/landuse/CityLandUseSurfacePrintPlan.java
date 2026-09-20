@@ -105,8 +105,10 @@ public record CityLandUseSurfacePrintPlan(
             requireBlock(blockId, "CITY_LAND_USE_SURFACE_FEATURE_BLOCK_INVALID");
             Objects.requireNonNull(kind, "kind");
             facing = facing == null ? HorizontalFacing.NONE : facing;
-            if (targetSurfaceY != null && (surfaceOffset != 0
-                    || kind != FeatureKind.ROAD_SLAB && kind != FeatureKind.ROAD_STAIR)) {
+            boolean frozenSurface = surfaceOffset == 0 && (kind == FeatureKind.ROAD_SLAB
+                    || kind == FeatureKind.ROAD_STAIR || kind == FeatureKind.BRIDGE_DECK);
+            boolean frozenBridgeRail = surfaceOffset == 1 && kind == FeatureKind.BRIDGE_RAIL;
+            if (targetSurfaceY != null && !frozenSurface && !frozenBridgeRail) {
                 throw new IllegalArgumentException("CITY_LAND_USE_FROZEN_GRADE_REQUIRES_ROAD_SURFACE");
             }
             if (surfaceOffset < 0 || kind == FeatureKind.ROAD_STAIR

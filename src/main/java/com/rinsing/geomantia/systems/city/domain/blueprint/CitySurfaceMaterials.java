@@ -7,16 +7,14 @@ import java.util.*;
 public record CitySurfaceMaterials(Map<String,String> defaults,
         Map<String,Map<String,String>> groups, Map<String,Map<String,String>> roads,
         Map<String,Map<String,String>> landscapes) {
-    public static final Set<String> CITY_SLOTS = Set.of("ground", "roadSurface", "roadStair", "roadCurb",
-            "roadBase", "retainingWall", "deck", "fill", "pier", "railing", "lowWall", "hedge",
-            "accessSurface", "accessStair", "bridgeSurface", "bridgeRail");
+    public static final Set<String> CITY_SLOTS = CitySurfaceAppearanceCatalog.allSlots();
     public static final Set<String> ROAD_KINDS = Set.of("CITY_MAIN_ROAD","COMPACT_ALLEY","CITY_BRIDGE",
             "LINEAR_STREET_BAND","GRID_MAIN_STREET","GRID_ROW_LANE","GRID_COLUMN_LANE",
             "CENTER_AXIS_PRIMARY","CENTER_AXIS_NORTH","CENTER_AXIS_SOUTH","CENTER_AXIS_EAST","CENTER_AXIS_WEST",
             "COURTYARD_RING_NORTH","COURTYARD_RING_EAST","COURTYARD_RING_WEST","COURTYARD_RING_SOUTH_WEST",
             "COURTYARD_RING_SOUTH_EAST","COURTYARD_GATE","EXPANSION_UNIT_STREET","ENTRANCE_SHORT_ALLEY");
     public static final Set<String> ROAD_SLOTS = Set.of("roadSurface", "roadStair", "roadCurb", "roadBase",
-            "bridgeSurface", "bridgeRail", "pier");
+            "bridgeSurface", "bridgeRail", "pier", "bridgeBeam", "bridgePost", "bridgePier");
     public static final Set<String> LANDSCAPE_SLOTS = Set.of("surfaceBlockId", "cropBlockId", "channelBankBlockId",
             "channelWaterBlockId", "channelBankOverlayBlockId", "boundaryBlockId");
     public CitySurfaceMaterials {
@@ -25,8 +23,11 @@ public record CitySurfaceMaterials(Map<String,String> defaults,
     public static CitySurfaceMaterials empty() { return new CitySurfaceMaterials(Map.of(),Map.of(),Map.of(),Map.of()); }
     public boolean isEmpty() { return defaults.isEmpty() && groups.isEmpty() && roads.isEmpty() && landscapes.isEmpty(); }
     public String resolve(String slot, String group, String roadKind, String fallback) {
+        String inherited = groups.getOrDefault(group,Map.of()).getOrDefault(slot, defaults.getOrDefault(slot,fallback));
+        if(slot.startsWith("bridge") && !roadKind.isEmpty())
+            inherited=roads.getOrDefault("CITY_BRIDGE",Map.of()).getOrDefault(slot,inherited);
         return roads.getOrDefault(roadKind, Map.of()).getOrDefault(slot,
-                groups.getOrDefault(group,Map.of()).getOrDefault(slot, defaults.getOrDefault(slot,fallback)));
+                inherited);
     }
     private static Map<String,String> sorted(Map<String,String> map) {
         return Collections.unmodifiableMap(new TreeMap<>(map == null ? Map.of() : map));
@@ -56,12 +57,46 @@ public record CitySurfaceMaterials(Map<String,String> defaults,
         if(value==null) return result;
         if(!value.isJsonObject()) throw new IllegalArgumentException("surfaceMaterials."+path+": expected slot-to-block-id object");
         value.getAsJsonObject().entrySet().forEach(e->{
+            if (CitySurfaceAppearanceCatalog.isGroup(e.getKey()) && allowed != LANDSCAPE_SLOTS) {
+                String sectionPath="surfaceMaterials."+path+"."+e.getKey();
+                if(allowed.equals(ROAD_SLOTS) && e.getKey().equals("terrace"))
+                    throw new IllegalArgumentException(sectionPath+": road scope accepts groundAndRoad and bridge only");
+                if(!e.getValue().isJsonObject())throw new IllegalArgumentException(sectionPath+": expected preset/materials object");
+                var section=e.getValue().getAsJsonObject();
+                if(!Set.of("preset","materials").containsAll(section.keySet()))throw new IllegalArgumentException(sectionPath+": only preset and materials are supported; geometry is automatic");
+                Set<String> sectionSlots=new TreeSet<>(CitySurfaceAppearanceCatalog.slots(e.getKey()));
+                sectionSlots.retainAll(allowed);
+                if(sectionSlots.isEmpty())throw new IllegalArgumentException(sectionPath+": this appearance group is not allowed in this scope");
+                Map<String,String> resolved=new TreeMap<>();
+                if(section.has("preset")) {
+                    if(!section.get("preset").isJsonPrimitive() || !section.getAsJsonPrimitive("preset").isString())
+                        throw new IllegalArgumentException(sectionPath+".preset: expected preset name");
+                    resolved.putAll(CitySurfaceAppearanceCatalog.preset(e.getKey(),section.get("preset").getAsString(),sectionPath));
+                    resolved.keySet().retainAll(sectionSlots);
+                }
+                var overrides=section.get("materials");
+                if(overrides!=null && overrides.isJsonObject() && overrides.getAsJsonObject().keySet().stream().anyMatch(CitySurfaceAppearanceCatalog::isGroup))
+                    throw new IllegalArgumentException(sectionPath+".materials: nested appearance groups are not supported");
+                resolved.putAll(readSlots(overrides,sectionSlots,path+"."+e.getKey()+".materials"));
+                resolved.forEach((slot,id)->{
+                    if(result.putIfAbsent(slot,id)!=null)throw new IllegalArgumentException(sectionPath+": duplicate material slot "+slot);
+                });
+                return;
+            }
             if(!allowed.contains(e.getKey())) throw new IllegalArgumentException("surfaceMaterials."+path+"."+e.getKey()+": unknown slot; allowed="+new TreeSet<>(allowed));
             if(!e.getValue().isJsonPrimitive() || !e.getValue().getAsJsonPrimitive().isString()
                     || !e.getValue().getAsString().matches("[a-z0-9_.-]+:[a-z0-9/._-]+"))
                 throw new IllegalArgumentException("surfaceMaterials."+path+"."+e.getKey()+": use a registered namespace:block id, without block states");
-            result.put(e.getKey(),e.getValue().getAsString());
+            if(result.putIfAbsent(e.getKey(),e.getValue().getAsString())!=null)throw new IllegalArgumentException("surfaceMaterials."+path+": duplicate slot "+e.getKey());
         }); return result;
     }
-    public JsonObject toJson() { return new Gson().toJsonTree(this).getAsJsonObject(); }
+    public JsonObject toJson() {
+        JsonObject result=new JsonObject();result.add("defaults",CitySurfaceAppearanceCatalog.grouped(defaults));
+        for(String section:List.of("groups","roads")) {
+            var scopes=section.equals("groups")?groups:roads;
+            JsonObject values=new JsonObject();scopes.forEach((id,slots)->values.add(id,CitySurfaceAppearanceCatalog.grouped(slots)));
+            result.add(section,values);
+        }
+        result.add("landscapes",new Gson().toJsonTree(landscapes));return result;
+    }
 }

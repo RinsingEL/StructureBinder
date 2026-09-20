@@ -126,9 +126,13 @@ public final class CityLandUseChunkExecutor {
         // Exclusion spans can predate later road grading and access compilation.
         Set<ColumnKey> roadColumns = fragment.featureOperations().stream()
                 .filter(operation -> operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
-                        || operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR)
+                        || operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR
+                        || operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK)
                 .map(operation -> new ColumnKey(operation.x(), operation.z()))
                 .collect(java.util.stream.Collectors.toSet());
+        Set<ColumnKey> bridgeColumns=fragment.featureOperations().stream()
+                .filter(operation->operation.kind()==CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK)
+                .map(operation->new ColumnKey(operation.x(),operation.z())).collect(java.util.stream.Collectors.toSet());
         Map<ColumnKey,String> roadSources = new HashMap<>();
         for (var road : fragment.featureOperations()) {
             if (roadColumns.contains(new ColumnKey(road.x(),road.z())))
@@ -171,7 +175,9 @@ public final class CityLandUseChunkExecutor {
             }
             foundationByColumn.put(key, new CityLandUseMicroGrader.FoundationDecision(feature.sourceId(),
                     feature.x(), feature.z(), column.surfaceY(), targetY,
-                    CityLandUseMicroGrader.designedRealization(column.surfaceY(), targetY)));
+                    bridgeColumns.contains(key) && targetY>=column.surfaceY()
+                            ? CityLandUseMicroGrader.FoundationMode.DECK
+                            : CityLandUseMicroGrader.designedRealization(column.surfaceY(), targetY)));
             if (surfaceColumns.add(key)) surfaceOperations.add(new CityLandUseChunkCompiler.SurfaceOperation(
                     feature.sourceId(), "road", feature.x(), feature.z(), fragment.materialField().at("roadBase",feature.x(),feature.z(),feature.sourceId(),"minecraft:stone_bricks")));
         }
@@ -225,12 +231,12 @@ public final class CityLandUseChunkExecutor {
             if (shouldDeck && preparedFillColumns.add(key)) {
                 // Cap the void with a thin deck; sparse blackstone piers express bridge support.
                 PreparedMutation bed = prepare(world, operation.areaId(), OperationPhase.MICRO_FILL,
-                        operation.x(), targetSurfaceY - 1, operation.z(), fragment.materialField().at("deck",operation.x(),operation.z(),"minecraft:stone_bricks"), true);
+                        operation.x(), targetSurfaceY - 1, operation.z(), fragment.materialField().at(bridgeColumns.contains(key)?"bridgeBeam":"deck",operation.x(),operation.z(),roadSources.getOrDefault(key,operation.areaId()),"minecraft:stone_bricks"), true);
                 if (bed.failureReason() != null) return ExecutionResult.failed(fragment, bed,
                         preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
                         naturalSurfaceSkipped, occupiedBoundarySkipped, true);
                 basePrepared.add(bed);
-                if (CityFoundationSupportSettings.current().pierAt(operation.x(), operation.z())) {
+                if (!bridgeColumns.contains(key) && CityFoundationSupportSettings.current().pierAt(operation.x(), operation.z())) {
                     for (int y = column.surfaceY() + 1; y < targetSurfaceY - 1; y++) {
                         PreparedMutation pier = prepare(world, operation.areaId(), OperationPhase.MICRO_FILL,
                                 operation.x(), y, operation.z(), fragment.materialField().at("pier",operation.x(),operation.z(),operation.areaId(),"minecraft:blackstone_wall"), true);
@@ -305,7 +311,7 @@ public final class CityLandUseChunkExecutor {
 
         for (CityLandUseMicroGrader.RetainingWallDecision wall : foundationPlan.retainingWalls()) {
             PreparedMutation mutation = prepare(world, wall.areaId(), OperationPhase.RETAINING_WALL,
-                    wall.x(), wall.y(), wall.z(), fragment.materialField().at("retainingWall",wall.x(),wall.z(),wall.blockId()), false);
+                    wall.x(), wall.y(), wall.z(), fragment.materialField().at(wall.materialSlot(),wall.x(),wall.z(),fragment.materialField().at("retainingWall",wall.x(),wall.z(),wall.blockId())), false);
             if (mutation.failureReason() != null) {
                 return ExecutionResult.failed(fragment, mutation,
                         preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
@@ -368,7 +374,7 @@ public final class CityLandUseChunkExecutor {
         }
 
         Set<CityLandUseChunkCompiler.FeatureOperation> bridgePierRails =
-                bridgePierRails(fragment.featureOperations());
+                CityBridgeStructurePlanner.posts(fragment);
         Set<ColumnKey> materializedPlatformStairs = new HashSet<>();
         for (CityLandUseChunkCompiler.FeatureOperation operation : fragment.featureOperations()) {
             ColumnKey key = new ColumnKey(operation.x(), operation.z());
@@ -379,11 +385,23 @@ public final class CityLandUseChunkExecutor {
             int surfaceY = plannedSurfaceY.getOrDefault(key, platformStair != null ? platformStair.targetY()
                     : foundation != null ? foundation.targetY()
                     : fill == null ? column.surfaceY() : fill.targetY());
-            if (bridgePierRails.contains(operation)) {
-                for (int y = surfaceY - 1, depth = 0; depth < 64; y--, depth++) {
+            boolean bridgePost=bridgePierRails.contains(operation);
+            if(operation.targetSurfaceY()!=null && (operation.kind()==CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK
+                    || operation.kind()==CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_RAIL)) surfaceY=operation.targetSurfaceY();
+            if(operation.kind()==CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_RAIL) {
+                String beam=fragment.materialField().at("bridgeBeam",operation.x(),operation.z(),operation.sourceId(),"minecraft:stone_bricks");
+                PreparedMutation edgeBeam=prepare(world,operation.sourceId(),OperationPhase.FEATURE,
+                        operation.x(),surfaceY-1,operation.z(),beam,true);
+                if(edgeBeam.failureReason()!=null)return ExecutionResult.failed(fragment,edgeBeam,
+                        preparedCount(basePrepared,cropPrepared,boundaryPrepared),0,naturalSurfaceSkipped,occupiedBoundarySkipped,true);
+                basePrepared.add(edgeBeam);
+            }
+            if (bridgePost) {
+                for (int y = surfaceY - 2, depth = 0; depth < 64; y--, depth++) {
                     if (!world.inspect(operation.x(), y, operation.z()).replaceable()) break;
+                    String fallback=fragment.materialField().at("pier",operation.x(),operation.z(),operation.sourceId(),"minecraft:stone_bricks");
                     PreparedMutation pier = prepare(world, operation.sourceId(), OperationPhase.FEATURE,
-                            operation.x(), y, operation.z(), fragment.materialField().at("pier",operation.x(),operation.z(),operation.sourceId(),"minecraft:stone_bricks"), true);
+                            operation.x(), y, operation.z(), fragment.materialField().at("bridgePier",operation.x(),operation.z(),operation.sourceId(),fallback), true);
                     if (pier.failureReason() != null) {
                         return ExecutionResult.failed(fragment, pier,
                                 preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
@@ -397,6 +415,9 @@ public final class CityLandUseChunkExecutor {
                     || operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR)
                     ? platformStairOperation(platformStair, fragment) : operation;
             if (effectiveOperation != operation) materializedPlatformStairs.add(key);
+            if(bridgePost) effectiveOperation=new CityLandUseChunkCompiler.FeatureOperation(operation.sourceId(),
+                    operation.x(),operation.z(),fragment.materialField().at("bridgePost",operation.x(),operation.z(),operation.sourceId(),operation.blockId()),
+                    operation.surfaceOffset(),operation.kind(),operation.facing(),operation.targetSurfaceY());
             int featureY = surfaceY + effectiveOperation.surfaceOffset();
             PreparedMutation mutation = prepareFeature(world, effectiveOperation, featureY,
                     baseMutationClearsTarget(basePrepared,
@@ -524,38 +545,6 @@ public final class CityLandUseChunkExecutor {
                         cropApplied.size(), boundaryPrepared.size(), boundaryApplied.size()),
                 naturalSurfaceSkipped, occupiedBoundarySkipped, foundationPlan,
                 terraceRailingPrepared, terraceGreeneryPrepared, terraceEdgeOccupiedSkipped);
-    }
-
-    /** Selects paired rail columns at a stable seven-block cadence as in-water bridge piers. */
-    private static Set<CityLandUseChunkCompiler.FeatureOperation> bridgePierRails(
-            List<CityLandUseChunkCompiler.FeatureOperation> operations) {
-        Map<String, List<CityLandUseChunkCompiler.FeatureOperation>> railsByBridge = new LinkedHashMap<>();
-        for (CityLandUseChunkCompiler.FeatureOperation operation : operations) {
-            if (operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_RAIL) {
-                railsByBridge.computeIfAbsent(operation.sourceId(), ignored -> new ArrayList<>()).add(operation);
-            }
-        }
-        Set<CityLandUseChunkCompiler.FeatureOperation> selected = new HashSet<>();
-        for (Map.Entry<String, List<CityLandUseChunkCompiler.FeatureOperation>> entry : railsByBridge.entrySet()) {
-            List<CityLandUseChunkCompiler.FeatureOperation> rails = entry.getValue();
-            int minX = rails.stream().mapToInt(CityLandUseChunkCompiler.FeatureOperation::x).min().orElse(0);
-            int maxX = rails.stream().mapToInt(CityLandUseChunkCompiler.FeatureOperation::x).max().orElse(0);
-            int minZ = rails.stream().mapToInt(CityLandUseChunkCompiler.FeatureOperation::z).min().orElse(0);
-            int maxZ = rails.stream().mapToInt(CityLandUseChunkCompiler.FeatureOperation::z).max().orElse(0);
-            boolean horizontal = maxX - minX >= maxZ - minZ;
-            int phase = Math.floorMod(entry.getKey().hashCode(), 7);
-            int selectedBefore = selected.size();
-            for (CityLandUseChunkCompiler.FeatureOperation rail : rails) {
-                int coordinate = horizontal ? rail.x() : rail.z();
-                if (Math.floorMod(coordinate, 7) == phase) selected.add(rail);
-            }
-            if (selected.size() == selectedBefore) {
-                int middle = horizontal ? (minX + maxX) / 2 : (minZ + maxZ) / 2;
-                rails.stream().filter(rail -> (horizontal ? rail.x() : rail.z()) == middle)
-                        .forEach(selected::add);
-            }
-        }
-        return Set.copyOf(selected);
     }
 
     private static PreparedMutation apply(ExecutionWorld world,
@@ -1084,7 +1073,7 @@ public final class CityLandUseChunkExecutor {
         }
         if (kind == CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK
                 && requested.hasProperty(BlockStateProperties.SLAB_TYPE)) {
-            requested = requested.setValue(BlockStateProperties.SLAB_TYPE, SlabType.BOTTOM);
+            requested = requested.setValue(BlockStateProperties.SLAB_TYPE, SlabType.DOUBLE);
         }
         if (kind == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR) {
             if (requested.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {

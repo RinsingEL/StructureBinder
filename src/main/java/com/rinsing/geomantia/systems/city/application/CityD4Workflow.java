@@ -294,6 +294,11 @@ public final class CityD4Workflow {
         JsonObject result=before.deepCopy();
         for(var entry:update.entrySet()) {
             require(!entry.getValue().isJsonNull(),"不能用 null 隐式删除字段。");
+            if(com.rinsing.geomantia.systems.city.domain.blueprint.CitySurfaceAppearanceCatalog.isGroup(entry.getKey())
+                    && entry.getValue().isJsonObject() && entry.getValue().getAsJsonObject().has("preset")) {
+                result.add(entry.getKey(),entry.getValue().deepCopy());
+                continue; // Changing a recipe must not retain all materials from the previous recipe.
+            }
             if(entry.getValue().isJsonObject() && result.has(entry.getKey()) && result.get(entry.getKey()).isJsonObject())
                 result.add(entry.getKey(),mergeObject(result.getAsJsonObject(entry.getKey()),entry.getValue().getAsJsonObject()));
             else result.add(entry.getKey(),entry.getValue().deepCopy());

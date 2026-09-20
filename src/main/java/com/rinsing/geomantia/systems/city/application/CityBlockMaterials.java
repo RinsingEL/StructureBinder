@@ -19,7 +19,11 @@ public final class CityBlockMaterials {
             Path config=configRoot==null?null:configRoot.resolve("geomantia/city_material_candidates.json");
             try(var input=CityBlockMaterials.class.getResourceAsStream("/geomantia/city_material_candidates.json")) {
                 if(input==null)throw new IllegalStateException("Missing city_material_candidates.json");
-                JsonObject values=JsonParser.parseString(config!=null && Files.exists(config)?Files.readString(config):new String(input.readAllBytes(),java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
+                JsonObject values=JsonParser.parseString(new String(input.readAllBytes(),java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
+                if(config!=null && Files.exists(config)) {
+                    var overrides=JsonParser.parseString(Files.readString(config)).getAsJsonObject();
+                    overrides.entrySet().forEach(entry->values.add(entry.getKey(),entry.getValue()));
+                }
                 JsonObject result=new JsonObject();
                 for(var entry:values.entrySet()) {
                     requireSlot(entry.getKey());JsonArray bounded=new JsonArray();
@@ -72,7 +76,7 @@ public final class CityBlockMaterials {
         if(block.shape()==Shape.LIQUID&&!"channelWaterBlockId".equals(slot))return "fluid is not a solid surface or decoration";
         if(block.shape()==Shape.BLOCK_ENTITY)return "block-entity initialization is not supported by this surface placement path";
         if(block.shape()==Shape.MULTIBLOCK)return "two-block plants need paired placement, which this content slot does not provide";
-        if(Set.of("ground","roadBase","retainingWall","deck","fill","surfaceBlockId","channelBankBlockId").contains(slot)
+        if(Set.of("ground","roadBase","retainingWall","wallColumn","wallCap","wallBand","bridgeBeam","bridgePost","bridgePier","deck","fill","surfaceBlockId","channelBankBlockId").contains(slot)
                 && Boolean.FALSE.equals(block.supportsGround()))return "this slot needs a supporting ground block";
         return null;
     }

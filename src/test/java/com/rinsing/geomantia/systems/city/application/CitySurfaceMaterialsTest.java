@@ -10,6 +10,34 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CitySurfaceMaterialsTest {
+    @Test void groupedRecipesExpandAndFreezeWithLocalOverrides() {
+        var m=CitySurfaceMaterials.read(JsonParser.parseString("""
+                {"defaults":{"groundAndRoad":{"preset":"stone"},"terrace":{"preset":"timber_stone",
+                  "materials":{"wallColumn":"minecraft:birch_log"}},"bridge":{"preset":"timber"}},
+                 "groups":{"west":{"terrace":{"materials":{"wallCap":"minecraft:bricks"}}}},
+                 "roads":{"CITY_MAIN_ROAD":{"bridge":{"preset":"sandstone"}}}}
+                """).getAsJsonObject());
+        assertEquals("minecraft:birch_log",m.resolve("wallColumn","west","","fallback"));
+        assertEquals("minecraft:bricks",m.resolve("wallCap","west","","fallback"));
+        assertEquals("minecraft:sandstone",m.resolve("bridgePier","west","CITY_MAIN_ROAD","fallback"));
+        assertEquals("minecraft:stone_brick_stairs",m.defaults().get("roadStair"));
+        assertEquals(m,CitySurfaceMaterials.read(m.toJson()));
+        assertEquals(new CityMaterialField(m,List.of(),List.of()),CityMaterialField.read(new CityMaterialField(m,List.of(),List.of()).toJson()));
+    }
+    @Test void appearanceRecipesCannotSmuggleGeometryOrWrongSlots() {
+        for(String body:List.of("{terrace:{preset:'missing'}}","{terrace:{preset:'stone',spacing:5}}",
+                "{bridge:{materials:{wallColumn:'minecraft:stone'}}}","{terrace:{preset:'stone'},wallCap:'minecraft:stone'}"))
+            assertThrows(IllegalArgumentException.class,()->CitySurfaceMaterials.read(JsonParser.parseString("{defaults:"+body+"}").getAsJsonObject()));
+        assertThrows(IllegalArgumentException.class,()->CitySurfaceMaterials.read(JsonParser.parseString(
+                "{roads:{CITY_MAIN_ROAD:{terrace:{preset:'stone'}}}}").getAsJsonObject()));
+    }
+    @Test void changingPresetReplacesPreviousMaterialsInsteadOfSilentlyKeepingThem() {
+        var before=JsonParser.parseString("{groups:[{groupId:'a'}],surfaceMaterials:{groups:{a:{terrace:{materials:{wallColumn:'minecraft:birch_log'}}}}}}").getAsJsonObject();
+        var patch=JsonParser.parseString("{surfaceMaterials:{groups:{a:{terrace:{preset:'stone'}}}}}").getAsJsonObject();
+        var merged=CityD4Workflow.mergeChanges(before,patch);
+        var result=CitySurfaceMaterials.read(merged.getAsJsonObject("surfaceMaterials"));
+        assertEquals("minecraft:stone_bricks",result.groups().get("a").get("wallColumn"));
+    }
     @Test void overridesUseNearestRetainedDistrictAndRoadTypeWithoutLeakingAcrossCities(){
         var m=CitySurfaceMaterials.read(JsonParser.parseString("""
                 {"defaults":{"ground":"minecraft:stone","roadSurface":"minecraft:stone_slab"},

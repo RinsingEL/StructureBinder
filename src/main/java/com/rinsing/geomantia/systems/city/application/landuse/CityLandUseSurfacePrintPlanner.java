@@ -103,7 +103,7 @@ public final class CityLandUseSurfacePrintPlanner {
         CityLandUseSurfacePrintPlan raw = new CityLandUseSurfacePrintPlan(
                 CityLandUseSurfacePrintPlan.SCHEMA, landUsePlan.cityId(),
                 landUsePlan.planHash(), "", prints, shared,
-                gradeRoads(featureCells(roadBands, greenParcels, overflowZones),
+                gradeRoads(CityBridgeSpanPlanner.plan(featureCells(roadBands, greenParcels, overflowZones),roadBands,terrainField),
                         roadBands, terrainField, landUsePlan, prints));
         return new CityLandUseSurfacePrintPlanCodec().withComputedHash(raw);
     }
@@ -116,6 +116,9 @@ public final class CityLandUseSurfacePrintPlanner {
         for (var print : prints) if (print.recipe() instanceof CityLandUseSurfacePrintPlan.UniformRecipe uniform)
             for (var span : uniform.platformSpans()) for(int x=span.minX();x<=span.maxX();x++)
                 foundationHeights.put(cellKey(x,span.z()),span.targetY());
+        Map<Long,Integer> bridgeHeights=new HashMap<>();
+        for(var f:features)if(f.kind()==CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK && f.targetSurfaceY()!=null)
+            bridgeHeights.put(cellKey(f.x(),f.z()),f.targetSurfaceY());
         Map<String, int[]> grades = new HashMap<>();
         Map<String, LandUseSourceResolver.RoadBand> indexed = new HashMap<>();
         Map<Long, LandUseTerrainField.Cell> terrainIndex = new HashMap<>();
@@ -135,7 +138,8 @@ public final class CityLandUseSurfacePrintPlanner {
                 int z = horizontal ? band.start().z() : start + i;
                 var cell = terrainIndex.get(cellKey(Math.floorDiv(x, terrain.cellStepBlocks()),
                         Math.floorDiv(z, terrain.cellStepBlocks())));
-                Integer foundationY = foundationHeights.get(cellKey(x,z));
+                Integer bridgeY=bridgeHeights.get(cellKey(x,z));
+                Integer foundationY = bridgeY!=null?bridgeY:foundationHeights.get(cellKey(x,z));
                 if (foundationY == null && (cell == null || !cell.sampled() || cell.water())) {
                     sampled = false; break;
                 }
@@ -146,7 +150,7 @@ public final class CityLandUseSurfacePrintPlanner {
                 boolean entrance = areaPlan.areas().stream().flatMap(area -> area.gateSlots().stream())
                         .anyMatch(gate -> Math.abs(gate.block().x() - x) + Math.abs(gate.block().z() - z)
                                 <= (band.widthBlocks() + 1) / 2 + 3);
-                if (i == 0 || i == heights.length - 1 || junction || entrance) pins.put(i, heights[i]);
+                if (bridgeY!=null || i == 0 || i == heights.length - 1 || junction || entrance) pins.put(i, heights[i]);
             }
             if (!sampled) continue; // Bridge/unsampled segments retain their existing treatment.
             var grade = CityRoadGradeProfile.solve(heights, 12, 12, 3, pins);

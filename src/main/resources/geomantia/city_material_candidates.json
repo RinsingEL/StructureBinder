@@ -88,5 +88,30 @@
   "boundaryBlockId": [
     "minecraft:oak_fence",
     "minecraft:cobblestone_wall"
+  ],
+  "wallColumn": [
+    "minecraft:stone_bricks",
+    "minecraft:oak_log",
+    "minecraft:chiseled_sandstone"
+  ],
+  "wallCap": [
+    "minecraft:stone_bricks",
+    "minecraft:cut_sandstone"
+  ],
+  "wallBand": [
+    "minecraft:stone_bricks",
+    "minecraft:cut_sandstone"
+  ],
+  "bridgeBeam": [
+    "minecraft:spruce_planks",
+    "minecraft:stone_bricks"
+  ],
+  "bridgePost": [
+    "minecraft:stripped_spruce_log",
+    "minecraft:chiseled_stone_bricks"
+  ],
+  "bridgePier": [
+    "minecraft:stripped_spruce_log",
+    "minecraft:stone_bricks"
   ]
 }
