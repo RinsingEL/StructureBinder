@@ -47,7 +47,7 @@ public final class CityD4Workflow {
         String next=switch(stage) {
             case "DISTRICTS" -> "city_d4_district";
             case "INTEGRATION", "FINAL" -> state.has("markingsConfirmed") ? "city_d4_integrate" : "city_d4_mark";
-            case "COMPLETE" -> "city_d4_finalize";
+            case "COMPLETE" -> "city_post_d4_auto_compile_status";
             default -> "city_d4_overview";
         };
         JsonArray actions=new JsonArray();

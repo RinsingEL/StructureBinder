@@ -68,6 +68,7 @@ public final class GeomantiaMod {
         java.nio.file.Path serverRoot = event.getServer().getWorldPath(LevelResource.ROOT);
         CityReservationMaskRegistry.load(serverRoot);
         CityLandUseWorldgenRegistry.load(serverRoot);
+        com.rinsing.geomantia.systems.city.infrastructure.world.CityWallWorldgenRegistry.load(serverRoot);
         java.nio.file.Path landUseRoot = FMLPaths.CONFIGDIR.get()
                 .resolve("geomantia").resolve("city_land_use");
         try {

@@ -23,16 +23,28 @@ class RealmT4PatchPlanningServiceTest {
     @TempDir
     Path tempDir;
 
-    @Test
-    void rejectsSelectedCityInsideConfiguredOriginExclusion() throws Exception {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = {false, true})
+    void rejectsSelectedCityInsideConfiguredOriginExclusion(boolean geographic) throws Exception {
         Path root = tempDir.resolve("gated_realm_debug");
         Path run = root.resolve("run_t4");
         Files.createDirectories(run);
         writeArtifacts(run);
+        if (geographic) {
+            JsonObject grid = new JsonObject(); grid.addProperty("cellStepBlocks",16);
+            JsonArray cells = new JsonArray();
+            for (int x = -4; x <= 32; x++) {
+                JsonObject cell = new JsonObject(); cell.addProperty("gridX",x); cell.addProperty("gridZ",0);
+                cell.addProperty("waterFrac",0); cells.add(cell);
+            }
+            grid.add("cells",cells);
+            Files.writeString(run.resolve("world_feature_grid.json"),grid.toString());
+            Files.writeString(run.resolve("world_survey_manifest.json"),"{\"status\":\"sealed\"}");
+        }
         PatchExplorerService explorer = new PatchExplorerService(root);
         String selectionRef = select(explorer, "gated_capital", "plain", "PLAIN-01");
         RealmT4PatchPlanningService service = new RealmT4PatchPlanningService(root, (runId, registry) -> null,
-                new PlanningAreaAccessConfig(true, 64, 512, Set.of("minecraft:overworld")));
+                new PlanningAreaAccessConfig(true, geographic ? 0 : 64, geographic ? 0 : 512, Set.of("minecraft:overworld")));
         JsonObject createRequest = new JsonObject();
         createRequest.addProperty("runId", "run_t4");
         createRequest.addProperty("realmId", "realm_a");

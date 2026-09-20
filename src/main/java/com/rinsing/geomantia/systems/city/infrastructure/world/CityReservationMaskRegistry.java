@@ -431,6 +431,11 @@ public final class CityReservationMaskRegistry {
         return templatePendingRecorded(planned, ownerChunk);
     }
 
+    /** Exact completed owner evidence; authorization alone is not placement proof. */
+    public static synchronized boolean hasTemplateFragmentProof(PlannedStructure planned, ChunkPos ownerChunk) {
+        return templateFragmentRecorded(planned, ownerChunk);
+    }
+
     public static synchronized Optional<PlannedStructure> findTemplatePlacement(
             String anchorId, String templateRef, String templateHash, BlockPoint anchorBlock) {
         return Optional.ofNullable(activeTemplatePlacementIndex.get(new TemplatePlacementKey(

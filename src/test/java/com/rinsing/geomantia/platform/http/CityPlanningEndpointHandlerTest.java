@@ -558,6 +558,8 @@ class CityPlanningEndpointHandlerTest {
         Files.writeString(plan.resolveSibling("city_wall_placement_report.json"),success.toString());
         old.getAsJsonObject("terrainFitPolicy").addProperty("heightStrategy","terrain_following_sections");
         old.remove("wallPlacementProfile");Files.writeString(plan,old.toString());
+        assertFalse(CityPlanningEndpointHandler.workflowWallPlanMatchesRequest(plan,new JsonObject(),reservation));
+        old.addProperty("placementMode","chunk_worldgen");Files.writeString(plan,old.toString());
         assertTrue(CityPlanningEndpointHandler.workflowWallPlanMatchesRequest(plan,new JsonObject(),reservation));
         Files.writeString(reservation,"{\"changed\":true}");
         assertFalse(CityPlanningEndpointHandler.workflowWallPlanMatchesRequest(plan,new JsonObject(),reservation));
@@ -574,6 +576,8 @@ class CityPlanningEndpointHandlerTest {
         result.addProperty("sourceWallPlanHash", hash);
         Files.writeString(report, result.toString());
         assertTrue(CityPlanningEndpointHandler.wallPlacementCurrent(plan, report));
+        result.addProperty("placementMode","chunk_worldgen");Files.writeString(report,result.toString());
+        assertFalse(CityPlanningEndpointHandler.wallPlacementCurrent(plan,report),"Activation must be polled, never mistaken for a completed wall");
         Files.writeString(plan, "{\"wall\":2}");
         assertFalse(CityPlanningEndpointHandler.wallPlacementCurrent(plan, report));
     }

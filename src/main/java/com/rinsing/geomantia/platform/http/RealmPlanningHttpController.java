@@ -541,6 +541,12 @@ final class RealmPlanningHttpController implements AutoCloseable {
                     && !booleanValue(response, "designInProgress", false)
                     && booleanValue(request, "autoAdvanceAfterD4", true)) {
                 response.add("postD4AutoCompile", postD4AutoCompileQueue.enqueue(runId, citySeedId));
+            } else if (booleanValue(response, "ok", false)
+                    && !booleanValue(response, "designInProgress", false)) {
+                response.addProperty("status", "design_saved");
+                response.addProperty("nextAction", "city_post_d4_auto_compile_status");
+                if (java.nio.file.Files.isRegularFile(debugRoot().resolve(runId).resolve("city_seed_registry.json")))
+                    cityDesignQueue.status(runId);
             }
             return response;
         });
@@ -549,8 +555,19 @@ final class RealmPlanningHttpController implements AutoCloseable {
     void handleCityPostD4AutoCompileStatus(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
-            return postD4AutoCompileQueue.status(requiredString(request, "runId"),
-                    requiredString(request, "citySeedId"));
+            String runId = requiredString(request, "runId");
+            String cityId = requiredString(request, "citySeedId");
+            JsonObject response = postD4AutoCompileQueue.status(runId, cityId);
+            if ("not_queued".equals(stringValue(response, "status", ""))
+                    && java.nio.file.Files.isRegularFile(debugRoot().resolve(runId).resolve("city_seed_registry.json"))) {
+                JsonObject design = cityDesignQueue.status(runId);
+                if (cityId.equals(stringValue(design, "currentCitySeedId", ""))
+                        && "design_saved".equals(stringValue(design, "status", ""))) {
+                    response.addProperty("nextAction", "city_post_d4_auto_compile_retry");
+                    response.addProperty("message", "设计已保存；用户授权继续后可使用保存的蓝图启动编译，无需重新定稿。");
+                }
+            }
+            return response;
         });
     }
 
@@ -1225,16 +1242,16 @@ final class RealmPlanningHttpController implements AutoCloseable {
     }
 
     void handleCityPlanCityWalls(HttpExchange exchange) {
-        handle(exchange, "POST", () -> callOnServerThread(() -> {
+        handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             String runId = requiredString(request, "runId");
             String citySeedId = requiredString(request, "citySeedId");
-            ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
-            String dimensionId = stringValue(request, "dimensionId", "");
-            if (dimensionId.isBlank()) {
-                dimensionId = restoredRunDimensionId(runId);
-            }
-            ServerLevel level = resolveLevel(dimensionId, player);
+            ServerLevel level = callOnServerThread(() -> {
+                ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
+                String dimensionId = stringValue(request, "dimensionId", "");
+                if (dimensionId.isBlank()) dimensionId = restoredRunDimensionId(runId);
+                return resolveLevel(dimensionId, player);
+            });
             return CityPlanningEndpointHandler.handlePlanCityWalls(debugRoot(), runId, citySeedId,
                     level,
                     intValue(request, "roadScanMarginBlocks", 8),
@@ -1253,7 +1270,7 @@ final class RealmPlanningHttpController implements AutoCloseable {
                                     CityWallPlanner.DEFAULT_STEPPED_TRANSITION_MAX_DELTA_BLOCKS),
                             intValue(request, "naturalBoundaryMinDeltaBlocks",
                                     CityWallPlanner.DEFAULT_NATURAL_BOUNDARY_MIN_DELTA_BLOCKS)));
-        }));
+        });
     }
 
     void handleCityExecuteCityWalls(HttpExchange exchange) {
@@ -1590,6 +1607,12 @@ final class RealmPlanningHttpController implements AutoCloseable {
         int step = restoredRunCellStepBlocks(runId);
         long blockX = (long) gridX * step;
         long blockZ = (long) gridZ * step;
+        var initial = com.rinsing.geomantia.systems.realm_planning.application.access.InitialExplorationArea.load(debugRoot().resolve(runId), config);
+        if (initial != null && initial.available()) {
+            if (initial.generationContains(blockX, blockZ))
+                throw new IllegalArgumentException("T2_REALM_CORE_INSIDE_INITIAL_ACTIVITY_AREA: 出生大陆与近海属于初始探索区，请选择其他大陆。");
+            return;
+        }
         long radius = config.firstCityMinimumDistanceBlocks();
         if (blockX * blockX + blockZ * blockZ < radius * radius) {
             throw new IllegalArgumentException("T2_REALM_CORE_INSIDE_INITIAL_ACTIVITY_AREA: minimumDistanceBlocks="

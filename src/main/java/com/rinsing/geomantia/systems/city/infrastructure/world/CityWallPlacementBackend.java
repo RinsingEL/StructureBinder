@@ -14,77 +14,35 @@ import java.util.*;
 
 /** Executes one fixed module set. All geometry and conflicts are checked before the first write. */
 public final class CityWallPlacementBackend {
-    public static boolean regionAvailable(ServerLevel level, JsonObject plan) {
-        if (level == null) return true;
-        Set<Long> checked = new HashSet<>();
-        for (String key : List.of("wallUnits", "wallNodes")) for (JsonElement element : array(plan,key)) {
-            BlockBounds area = bounds(element.getAsJsonObject().getAsJsonObject("blockBounds"));
-            // FULL generation can depend on neighbouring chunks. Respect unopened regions;
-            // report a wait before requesting any chunks rather than interpreting UNLOADED as corruption.
-            for (int z=Math.floorDiv(area.minZ(),16)-8; z<=Math.floorDiv(area.maxZ(),16)+8; z++)
-                for (int x=Math.floorDiv(area.minX(),16)-8; x<=Math.floorDiv(area.maxX(),16)+8; x++)
-                    if (checked.add(net.minecraft.world.level.ChunkPos.asLong(x,z))
-                            && !com.rinsing.geomantia.platform.PlanningAreaAccessRuntime.permitsChunk(level,x,z))
-                        return false;
-        }
-        return true;
-    }
-
+    /** Samples the generator only. Never obtains or generates a world chunk. */
     public static void prepare(ServerLevel level, JsonObject plan) {
         if (level == null) return;
         try { CityWallModuleConfig.loadCurrent().freeze(plan); }
         catch (IOException ex) { throw new IllegalArgumentException(ex.getMessage(), ex); }
+        var nativeTerrain = com.rinsing.geomantia.systems.realm_planning.adapter.minecraft.RtfTerrainPreviewProvider.probe(level);
+        var generator = level.getChunkSource().getGenerator();
+        var random = level.getChunkSource().randomState();
+        Map<BlockPoint,Integer> sampled = new HashMap<>();
         Map<BlockPoint,Integer> surfaces = new LinkedHashMap<>();
         JsonArray samples = new JsonArray();
-        Set<Long> loadedChunks = new HashSet<>();
         for (String key : List.of("wallUnits", "wallNodes")) for (JsonElement element : array(plan,key)) {
-            BlockBounds bounds = bounds(element.getAsJsonObject().getAsJsonObject("blockBounds"));
-            for (int z=bounds.minZ();z<=bounds.maxZ();z++) for(int x=bounds.minX();x<=bounds.maxX();x++) {
-                BlockPoint point=new BlockPoint(x,z);
-                if(surfaces.containsKey(point)) continue;
-                long chunkKey = net.minecraft.world.level.ChunkPos.asLong(Math.floorDiv(x,16),Math.floorDiv(z,16));
-                if (loadedChunks.add(chunkKey)) level.getChunk(Math.floorDiv(x,16),Math.floorDiv(z,16));
-                CitySurfaceCache.Sample sample=CitySurfaceCache.sample(level,x,z);
-                surfaces.put(point,sample.surfaceY());
-                JsonObject cell=new JsonObject(); cell.addProperty("x",x); cell.addProperty("z",z);
-                cell.addProperty("surfaceY",sample.surfaceY()); cell.addProperty("fluid",sample.fluid()); samples.add(cell);
+            BlockBounds area = bounds(element.getAsJsonObject().getAsJsonObject("blockBounds"));
+            for (int z=area.minZ();z<=area.maxZ();z++) for(int x=area.minX();x<=area.maxX();x++) {
+                BlockPoint point = new BlockPoint(x,z);
+                if (surfaces.containsKey(point)) continue;
+                BlockPoint sample = new BlockPoint(Math.floorDiv(x,4)*4,Math.floorDiv(z,4)*4);
+                int y = sampled.computeIfAbsent(sample, p -> nativeTerrain.availability().available()
+                        ? (int)Math.floor(nativeTerrain.sample(p.x(),p.z()).elevation())+1
+                        : generator.getBaseHeight(p.x(),p.z(),net.minecraft.world.level.levelgen.Heightmap.Types.OCEAN_FLOOR_WG,level,random));
+                surfaces.put(point,y);
+                JsonObject c=new JsonObject();c.addProperty("x",x);c.addProperty("z",z);c.addProperty("surfaceY",y);
+                c.addProperty("fluid",y<=level.getSeaLevel());samples.add(c);
             }
         }
-        JsonObject profile = new CityWallTerrainPlanner().plan(plan, samples);
-        int scanBottom = Math.max(level.getMinBuildHeight(), integer(profile,"minSurfaceY",0)-2);
-        Map<BlockPoint,JsonObject> columns = new HashMap<>();
-        for (var e:array(profile,"surfaceColumns")) {
-            JsonObject c=e.getAsJsonObject(); BlockPoint p=new BlockPoint(integer(c,"x",0),integer(c,"z",0));
-            columns.put(p,c);
-            int base=integer(c,"baseY",0);
-            boolean solid=verifiedBarrier(integer(c,"surfaceY",0),base,scanBottom,y -> {
-                var at=new BlockPos(p.x(),y,p.z());var state=level.getBlockState(at);
-                return naturalSolid(state) && state.isCollisionShapeFullBlock(level,at);
-            });
-            c.addProperty("solidBarrierVerified",solid);
-        }
-        List<BlockBounds> towers=new ArrayList<>();
-        for(var e:array(plan,"wallNodes")) towers.add(bounds(e.getAsJsonObject().getAsJsonObject("blockBounds")));
-        int natural=0;
-        for(var e:array(plan,"wallUnits")) {
-            var unit=e.getAsJsonObject();if("gate_gap".equals(string(unit,"unitType","")))continue;
-            var area=bounds(unit.getAsJsonObject("blockBounds"));boolean horizontal="X".equals(string(unit,"wallAxis",""));
-            int from=horizontal?area.minX():area.minZ(),to=horizontal?area.maxX():area.maxZ();
-            int verified=0;
-            for(int along=from;along<=to;along++) {
-                List<JsonObject> slice=new ArrayList<>();boolean safe=true;
-                for(int across=0;across<5;across++) {
-                    int x=horizontal?along:area.minX()+across,z=horizontal?area.minZ()+across:along;
-                    var c=columns.get(new BlockPoint(x,z));slice.add(c);
-                    if(contains(towers,x,z)||!bool(c,"solidBarrierVerified",false))safe=false;
-                }
-                if(safe) {verified++;natural++;for(var c:slice)c.addProperty("terrainMode","natural_barrier");}
-            }
-            if(verified>0)unit.addProperty("terrainMode",verified==to-from+1?"natural_barrier":"mountain_embed");
-        }
-        profile.addProperty("naturalBarrierSectionCount",natural);
-        profile.addProperty("barrierScanBottomY",scanBottom);
+        JsonObject profile = new CityWallTerrainPlanner().plan(plan,samples);
+        profile.addProperty("barrierScanBottomY",Math.max(level.getMinBuildHeight(),integer(profile,"minSurfaceY",0)-2));
         plan.add("wallPlacementProfile",profile);
+        plan.addProperty("placementMode","chunk_worldgen");
     }
 
     private static boolean naturalSolid(BlockState state) {
@@ -106,19 +64,21 @@ public final class CityWallPlacementBackend {
         return y==worldBottom && !solidAtY.test(y)?worldBottom:y+1;
     }
 
-    public JsonObject execute(ServerLevel level, JsonObject plan) { return execute(level,plan,false,1); }
+    public JsonObject execute(ServerLevel level, JsonObject plan) {
+        JsonObject report=new JsonObject(); report.addProperty("ok",false); report.addProperty("changedBlocks",0);
+        return failure(report,level==null?"CITY_WALL_LEVEL_UNAVAILABLE":"WALL_FIRST_WORLDGEN_REQUIRED");
+    }
 
-    public JsonObject execute(ServerLevel level, JsonObject plan, boolean debugScan, int debugScanStepBlocks) {
+    public JsonObject executeFragment(net.minecraft.world.level.WorldGenLevel level, JsonObject plan,
+                                      BlockBounds owner, CityWallModuleConfig.Loaded modules) {
         JsonObject report=new JsonObject(); report.addProperty("schema","city_wall_placement_report");
         report.addProperty("cityId",string(plan,"cityId","")); report.addProperty("backend","fixed_structure_modules");
         report.addProperty("ok",false); report.addProperty("changedBlocks",0);
         if(level==null) return failure(report,"CITY_WALL_LEVEL_UNAVAILABLE");
-        CityWallModuleConfig.Loaded modules;
         BlockState foundationState;
         BlockState[][][] wallStates;
         List<BlockState> towerStates;
         try {
-            modules = CityWallModuleConfig.loadCurrent();
             modules.requireMatches(plan);
             foundationState = configuredBlock(modules.foundationBlock());
             if (foundationState.isAir() || !foundationState.getFluidState().isEmpty() || foundationState.hasBlockEntity())
@@ -129,7 +89,8 @@ public final class CityWallPlacementBackend {
         if(!"city_wall_plan".equals(string(plan,"schema","")) || !"guard_tower".equals(string(plan,"moduleSet","")))
             return failure(report,"WALL_MODULE_PLAN_REQUIRED");
         if(integer(plan,"nominalWallHeightBlocks",10)!=10) return failure(report,"WALL_FIXED_MODULE_HEIGHT_REQUIRED");
-        if(array(plan,"generatedGates").isEmpty()) return failure(report,"WALL_EXIT_ROAD_REQUIRED");
+        // A pending intercity link is not authority to deny construction of the reserved wall belt.
+        report.addProperty("exitRoadStatus", array(plan,"generatedGates").isEmpty() ? "NO_PLANNED_EXIT" : "planned");
         JsonObject profile=object(plan,"wallPlacementProfile");
         if(!bool(profile,"ok",false)) return failure(report,string(profile,"reasonCode","WALL_SURFACE_PROFILE_REQUIRED"));
         if(!CityWallTerrainPlanner.POLICY.equals(string(profile,"policy",""))) return failure(report,"WALL_TERRAIN_PROFILE_REPLAN_REQUIRED");
@@ -139,24 +100,44 @@ public final class CityWallPlacementBackend {
         if(!conflict.isEmpty()) return failure(report,conflict);
         List<BlockBounds> nodes=new ArrayList<>();
         for(JsonElement element:array(plan,"wallNodes")) nodes.add(bounds(element.getAsJsonObject().getAsJsonObject("blockBounds")));
+        List<BlockBounds> gates=new ArrayList<>();
+        for(var e:array(plan,"wallUnits")) if("gate_gap".equals(string(e.getAsJsonObject(),"unitType","")))
+            gates.add(bounds(e.getAsJsonObject().getAsJsonObject("blockBounds")));
         Map<BlockPoint,Integer> surfaces=new HashMap<>(), bases=new HashMap<>(); Set<BlockPoint> natural=new HashSet<>();
         for(JsonElement element:array(profile,"surfaceColumns")) {
             JsonObject cell=element.getAsJsonObject(); BlockPoint point=new BlockPoint(integer(cell,"x",0),integer(cell,"z",0));
             surfaces.put(point,integer(cell,"surfaceY",0));bases.put(point,integer(cell,"baseY",0));
             if("natural_barrier".equals(string(cell,"terrainMode","")))natural.add(point);
         }
-        // A frozen classification cannot authorize skipping a mountain changed since planning.
         int surveyBottom=integer(profile,"barrierScanBottomY",integer(profile,"minSurfaceY",0)-2);
-        boolean barrierChanged=false;
-        for(var p:natural) {
-            if(!verifiedBarrier(surfaces.get(p),bases.get(p),surveyBottom,y -> {
-                var at=new BlockPos(p.x(),y,p.z());var state=level.getBlockState(at);
-                return naturalSolid(state) && state.isCollisionShapeFullBlock(level,at);
-            })) {barrierChanged=true;break;}
+        natural.clear();
+        for (var p : bases.keySet()) {
+            if (!owner.contains(p.x(),p.z())) continue;
+            int surface=level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.OCEAN_FLOOR_WG,p.x(),p.z());
+            surfaces.put(p,surface);
         }
-        if(barrierChanged)natural.clear(); // Fall back to masonry and cave seals in the same reserved strip.
+        for (var e : array(plan,"wallUnits")) {
+            var unit=e.getAsJsonObject();
+            if("gate_gap".equals(string(unit,"unitType","")))continue;
+            var area=bounds(unit.getAsJsonObject("blockBounds"));
+            boolean horizontal="X".equals(string(unit,"wallAxis",""));
+            for(int along=horizontal?area.minX():area.minZ();along<=(horizontal?area.maxX():area.maxZ());along++) {
+                List<BlockPoint> slice=new ArrayList<>();boolean verified=true;
+                for(int across=0;across<5;across++) {
+                    var p=new BlockPoint(horizontal?along:area.minX()+across,horizontal?area.minZ()+across:along);
+                    if(!owner.contains(p.x(),p.z()) || contains(nodes,p.x(),p.z()) || contains(gates,p.x(),p.z())) {verified=false;break;}
+                    if(!verifiedBarrier(surfaces.get(p),bases.get(p),surveyBottom,y -> {
+                        var at=new BlockPos(p.x(),y,p.z());var state=level.getBlockState(at);
+                        return naturalSolid(state) && state.isCollisionShapeFullBlock(level,at);
+                    })) {verified=false;break;}
+                    slice.add(p);
+                }
+                if(verified)natural.addAll(slice);
+            }
+        }
         Map<BlockPoint,Integer> supports=new HashMap<>();
         for(var p:bases.keySet()) {
+            if(!owner.contains(p.x(),p.z()))continue;
             int start=foundationStart(surfaces.get(p),bases.get(p),level.getMinBuildHeight(),y -> {
                 var at=new BlockPos(p.x(),y,p.z());var state=level.getBlockState(at);
                 return state.getFluidState().isEmpty() && state.isCollisionShapeFullBlock(level,at);
@@ -169,6 +150,7 @@ public final class CityWallPlacementBackend {
             boolean horizontal="X".equals(string(unit,"wallAxis",""));
             boolean gate="gate_gap".equals(string(unit,"unitType",""));
             for(int z=area.minZ();z<=area.maxZ();z++) for(int x=area.minX();x<=area.maxX();x++) {
+                if(!owner.contains(x,z))continue;
                 BlockPoint point=new BlockPoint(x,z);
                 if(!surfaces.containsKey(point)) return failure(report,"WALL_SURFACE_PROFILE_INCOMPLETE");
                 int surface=surfaces.get(point), base=bases.get(point);
@@ -194,6 +176,7 @@ public final class CityWallPlacementBackend {
                 BlockBounds area=bounds(element.getAsJsonObject().getAsJsonObject("blockBounds"));
                 int base=integer(element.getAsJsonObject(),"baseY",0);
                 for(int z=area.minZ();z<=area.maxZ();z++) for(int x=area.minX();x<=area.maxX();x++) {
+                    if(!owner.contains(x,z))continue;
                     Integer surface=surfaces.get(new BlockPoint(x,z));
                     if(surface==null) return failure(report,"WALL_SURFACE_PROFILE_INCOMPLETE");
                     foundation(changes,x,z,supports.get(new BlockPoint(x,z)),base,foundationState);
@@ -201,6 +184,7 @@ public final class CityWallPlacementBackend {
                 for(int i=0;i<blocks.size();i++) {
                     CompoundTag block=blocks.getCompound(i); ListTag pos=block.getList("pos",Tag.TAG_INT);
                     BlockPos at=new BlockPos(area.minX()+pos.getInt(0),base+pos.getInt(1),area.minZ()+pos.getInt(2));
+                    if(!owner.contains(at.getX(),at.getZ()))continue;
                     BlockState state=towerStates.get(block.getInt("state"));
                     if(!state.isAir() || pos.getInt(1)>=9)changes.put(at,state);
                 }
@@ -211,6 +195,7 @@ public final class CityWallPlacementBackend {
         // Seal cross-boundary holes only within the reserved strip and the frozen vertical survey band.
         for(var entry:bases.entrySet()) {
             var p=entry.getKey();int base=entry.getValue();
+            if(!owner.contains(p.x(),p.z()))continue;
             if(natural.contains(p))continue;
             boolean gate=false;
             for(var e:array(plan,"wallUnits")) {
@@ -228,6 +213,7 @@ public final class CityWallPlacementBackend {
             var u=e.getAsJsonObject();var area=bounds(u.getAsJsonObject("blockBounds"));
             boolean horizontal="X".equals(string(u,"wallAxis",""));
             for(int z=area.minZ();z<=area.maxZ();z++)for(int x=area.minX();x<=area.maxX();x++) {
+                if(!owner.contains(x,z))continue;
                 var p=new BlockPoint(x,z);if(natural.contains(p)||contains(nodes,x,z))continue;
                 int across=horizontal?z-area.minZ():x-area.minX();if(across==0||across==4)continue;
                 int base=bases.get(p);net.minecraft.core.Direction up=null;int count=0;
@@ -245,8 +231,11 @@ public final class CityWallPlacementBackend {
                 changes.put(new BlockPos(x,base+12,z),net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());stairCount++;
             }
         }
-        // Whole-plan preflight prevents partial towers, clipped buildings and silent gaps.
-        for(BlockPos pos:changes.keySet()) if(level.getBlockEntity(pos)!=null) return failure(report,"WALL_BLOCK_ENTITY_CONFLICT");
+        // Each owner is atomic, and may never write a neighbour even when a module spans the boundary.
+        for(BlockPos pos:changes.keySet()) {
+            if(!owner.contains(pos.getX(),pos.getZ()))return failure(report,"WALL_OWNER_WRITE_OUTSIDE_CHUNK");
+            if(level.getBlockEntity(pos)!=null)return failure(report,"WALL_BLOCK_ENTITY_CONFLICT");
+        }
         Map<BlockPos,BlockState> original=new LinkedHashMap<>(); int changed=0;
         try {
             for(var entry:changes.entrySet()) {
@@ -256,20 +245,11 @@ public final class CityWallPlacementBackend {
                     throw new IllegalStateException("WALL_BLOCK_WRITE_FAILED");
                 changed++;
             }
-            for(BlockPos pos:original.keySet()) level.updateNeighborsAt(pos,level.getBlockState(pos).getBlock());
+            // FEATURES writes stay within this owner; do not send cross-chunk neighbour updates.
         } catch(RuntimeException error) {
             List<Map.Entry<BlockPos,BlockState>> reverse=new ArrayList<>(original.entrySet()); Collections.reverse(reverse);
             for(var entry:reverse) level.setBlock(entry.getKey(),entry.getValue(),2);
             return failure(report,"WALL_PLACEMENT_ROLLED_BACK:"+error.getMessage());
-        }
-        for(var entry:changes.entrySet()) {
-            BlockState expected=entry.getValue();
-            if(expected.is(net.minecraft.world.level.block.Blocks.STONE_BRICK_STAIRS))
-                expected=net.minecraft.world.level.block.Block.updateFromNeighbourShapes(expected,level,entry.getKey());
-            if(!level.getBlockState(entry.getKey()).equals(expected)) {
-                for(var previous:original.entrySet()) level.setBlock(previous.getKey(),previous.getValue(),2);
-                return failure(report,"WALL_MODULE_POST_UPDATE_MISMATCH_ROLLED_BACK");
-            }
         }
         report.addProperty("ok",true); report.addProperty("reasonCode","WALL_MODULES_PLACED");
         report.addProperty("changedBlocks",changed);report.addProperty("heightPolicy",CityWallTerrainPlanner.POLICY);
@@ -278,7 +258,6 @@ public final class CityWallPlacementBackend {
         report.addProperty("naturalBarrierSectionCount",natural.size()/5);
         report.addProperty("executedSegments",array(plan,"wallUnits").size()+nodes.size()); report.addProperty("skippedSegments",0);
         report.add("wallModuleSnapshot", modules.snapshot().deepCopy());
-        if(debugScan) report.add("wallTerrainDebugScan",profile.deepCopy());
         return report;
     }
 

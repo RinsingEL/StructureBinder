@@ -125,6 +125,22 @@ public final class CityLandUseWorldgenRegistry {
         readState(normalized(serverRoot));
     }
 
+    /** Idempotent activation for immutable intercity plans: polling must not cancel a live backfill. */
+    public static void ensureFrozenActive(String dimensionId, LandUseAreaPlan area,
+                                          CityLandUseSurfacePrintPlan surface, Path serverRoot) {
+        ensureLoaded(normalized(serverRoot));
+        synchronized (CityLandUseWorldgenRegistry.class) {
+            ActivePlan existing = ACTIVE.get(new ActiveKey(dimensionId(dimensionId), area.cityId()));
+            if (existing != null) {
+                if (!existing.areaPlan().planHash().equals(area.planHash())
+                        || !existing.surfacePrintPlan().planHash().equals(surface.planHash()))
+                    throw new IllegalArgumentException("INTERCITY_ACTIVE_PLAN_FROZEN");
+                return;
+            }
+            activate(dimensionId, area, surface, serverRoot);
+        }
+    }
+
     public static CityLandUseChunkStatusPreflight.PreflightResult preflightChunkStatus(
             LandUseAreaPlan plan,
             CityLandUseSurfacePrintPlan surfacePrintPlan,
@@ -441,6 +457,18 @@ public final class CityLandUseWorldgenRegistry {
         if (!server.isSameThread()) {
             throw new IllegalStateException("CITY_LAND_USE_D7_QUEUE_TICK_REQUIRES_SERVER_THREAD");
         }
+        // Resume only explicitly persisted intercity work after restart; never discover new destinations.
+        synchronized (CityLandUseWorldgenRegistry.class) {
+            for (ActivePlan active : ACTIVE.values()) {
+                if (!"intercity".equals(active.areaPlan().ruleVersion())) continue;
+                if (D7_BACKFILL_JOBS.keySet().stream().anyMatch(key -> key.activeKey().equals(active.key()))) continue;
+                var dimension = net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION,
+                        new ResourceLocation(active.key().dimensionId()));
+                ServerLevel level = server.getLevel(dimension);
+                if (level != null) enqueueD7Backfill(active.key().dimensionId(), active.areaPlan(), active.surfacePrintPlan(), level);
+                break;
+            }
+        }
         List<D7BackfillJob> jobs;
         synchronized (CityLandUseWorldgenRegistry.class) {
             jobs = D7_BACKFILL_JOBS.values().stream()
@@ -478,6 +506,18 @@ public final class CityLandUseWorldgenRegistry {
             // Await the read neighbourhood asynchronously; never join unfinished chunk work here.
             int radius = (CityLandUseMicroGrader.MASK_HALO_BLOCKS
                     + CityLandUseMicroGrader.REFERENCE_RADIUS_BLOCKS + 15) / 16;
+            if ("intercity".equals(job.areaPlan().ruleVersion())) {
+                if (job.level().getGameTime() < job.nextAccessCheckTick) return false;
+                for (int dz=-radius;dz<=radius;dz++) for(int dx=-radius;dx<=radius;dx++) {
+                    if (!com.rinsing.geomantia.platform.PlanningAreaAccessRuntime.permitsChunk(
+                            job.level(), owner.chunkX()+dx, owner.chunkZ()+dz)) {
+                        job.waitingForRegion = true;
+                        job.nextAccessCheckTick = job.level().getGameTime()+100;
+                        return false;
+                    }
+                }
+                job.waitingForRegion = false;
+            }
             List<CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>>> reads = new ArrayList<>();
             CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> ownerLoad = null;
             for (int dz = -radius; dz <= radius; dz++) {
@@ -555,6 +595,7 @@ public final class CityLandUseWorldgenRegistry {
                 .toList();
         String status = job.completed && !job.failures().isEmpty() ? "completed_with_errors"
                 : missing.isEmpty() ? "completed"
+                : job.waitingForRegion ? "waiting_for_region"
                 : job.pendingLoad() != null ? "loading_chunk" : "queued";
         return new BackfillSummary(job.areaPlan().cityId(), job.areaPlan().planHash(),
                 job.surfacePrintPlan().planHash(), job.owners().size(), job.appliedBeforeCount(),
@@ -1275,6 +1316,8 @@ public final class CityLandUseWorldgenRegistry {
         private int cursor;
         private boolean completed;
         private boolean cancelled;
+        private boolean waitingForRegion;
+        private long nextAccessCheckTick;
         private CityLandUseChunkStatusPreflight.OwnerChunk pendingOwner;
         private CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> pendingLoad;
 

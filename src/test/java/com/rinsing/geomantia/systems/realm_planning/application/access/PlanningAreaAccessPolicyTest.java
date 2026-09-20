@@ -47,6 +47,28 @@ class PlanningAreaAccessPolicyTest {
         assertFalse(policy().permitsChunk("minecraft:overworld",4096/16,0));
     }
 
+    @Test void originContinentOpensBeyondRadiusWhileLegacyPendingCityRemainsProtected() throws Exception {
+        fixture(false,false);
+        write(run().resolve("world_feature_grid.json"), GeographicRegionsTest.grid(-8,95,-16,16,(x,z)->x<52||x>68));
+        var access = policy();
+        assertTrue(access.revealed("minecraft:overworld",1052,1726));
+        assertTrue(access.evaluate("minecraft:overworld",1052,1726).allowed());
+        assertTrue(access.evaluate("minecraft:overworld",4096,0).allowed());
+        assertTrue(access.permitsChunk("minecraft:overworld",4096/16,0));
+        assertFalse(access.evaluate("minecraft:overworld",5632,0).allowed());
+        assertFalse(access.revealed("minecraft:overworld",5632,0));
+        assertFalse(access.permitsChunk("minecraft:overworld",5632/16,0));
+        assertFalse(access.revealed("minecraft:overworld",60*128,0)); // No automatic distant-ocean release.
+    }
+
+    @Test void sealedOriginRegionOpensBeforeAnyRealmOrCityHasBeenPlanned() throws Exception {
+        write(run().resolve("world_feature_grid.json"), GeographicRegionsTest.grid(-8,40,-16,16,(x,z)->x<30));
+        write(run().resolve("world_survey_manifest.json"), JsonParser.parseString("{\"status\":\"sealed\"}").getAsJsonObject());
+        assertTrue(policy().evaluate("minecraft:overworld",3000,0).allowed());
+        assertTrue(policy().revealed("minecraft:overworld",3900,0)); // Near sea.
+        assertFalse(policy().revealed("minecraft:overworld",4600,0));
+    }
+
     @Test void initialAndUnmanagedAreasRemainAvailableButUnknownTerrainDoesNotGenerate() {
         assertTrue(policy().evaluate("minecraft:overworld",256,0).allowed()); assertFalse(policy().evaluate("minecraft:overworld",257,0).allowed());
         assertTrue(policy().permitsChunk("minecraft:overworld",0,0)); assertFalse(policy().permitsChunk("minecraft:overworld",500,0));

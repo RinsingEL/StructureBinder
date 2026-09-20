@@ -11,12 +11,14 @@ final class GeographicAreaAccess {
             "queued", "running", "post_d4_running", "blocked_by_program");
     final String runId, dimension;
     final GeographicRegions geography;
+    final InitialExplorationArea initial;
     final Set<String> openRegions, readyCities, blockedCities;
     final List<CityPlanningReservation> protectedCities;
     final int safety;
     private GeographicAreaAccess(String runId, String dimension, GeographicRegions geography, Set<String> open,
                                  Set<String> ready, Set<String> blocked, List<CityPlanningReservation> reservations, int safety) {
         this.runId=runId; this.dimension=dimension; this.geography=geography; this.openRegions=Set.copyOf(open);
+        this.initial = new InitialExplorationArea(geography);
         this.readyCities=Set.copyOf(ready); this.blockedCities=Set.copyOf(blocked); this.protectedCities=List.copyOf(reservations); this.safety=safety;
     }
     static GeographicAreaAccess load(Path root, PlanningAreaAccessConfig config, int safety) throws IOException {
@@ -115,12 +117,16 @@ final class GeographicAreaAccess {
             if(!dependencies.isEmpty() && open.containsAll(dependencies) && !blockedRegions.contains(r.id())
                     && closedRealms.containsAll(regionRealms.getOrDefault(r.id(),Set.of()))) open.add(r.id());
         }
+        // Initial exploration does not itself authorize the adjacent distant oceans.
+        var initial = new InitialExplorationArea(geo);
+        if (initial.available()) open.add(initial.regionId());
         return new GeographicAreaAccess(run.getFileName().toString(),dimension,geo,open,ready,blocked,reservations,safety);
     }
     PlanningAreaAccessPolicy.Decision evaluate(String dim,double x,double z) {
         if(!dimension.equals(dim)) return PlanningAreaAccessPolicy.Decision.denied("PLANNING_AREA_NOT_RELEASED",runId,"");
         for(var city:protectedCities) if(city.protection().expand(safety).contains(x,z))
             return PlanningAreaAccessPolicy.Decision.denied("UNRELEASED_CITY_RESERVED",runId,city.citySeedId());
+        if (initial.contains(x,z)) return PlanningAreaAccessPolicy.Decision.allowed("INITIAL_GEOGRAPHIC_AREA",runId,"",Double.POSITIVE_INFINITY);
         String region=geography.at(x,z);
         if(!openRegions.contains(region)) return PlanningAreaAccessPolicy.Decision.denied("CONTINENT_NOT_READY",runId,"");
         double clearance=Double.POSITIVE_INFINITY;
@@ -142,7 +148,7 @@ final class GeographicAreaAccess {
         var bounds=new CityPlanningReservation.Bounds(cx*16,cz*16,cx*16+15,cz*16+15);
         for(var city:protectedCities) if(city.protection().overlaps(bounds)) return false;
         double x=cx*16+8.0,z=cz*16+8.0;
-        if(Math.hypot(x,z)<=initialRadius+1024) return true;
+        if(initial.available() ? initial.generationContains(x,z) : Math.hypot(x,z)<=initialRadius+1024) return true;
         return openRegions.contains(geography.at(bounds.minX(),bounds.minZ()))
                 && openRegions.contains(geography.at(bounds.maxX(),bounds.maxZ()));
     }

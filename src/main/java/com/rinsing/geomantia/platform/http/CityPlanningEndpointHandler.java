@@ -1266,12 +1266,20 @@ final class CityPlanningEndpointHandler {
         // Keep natural-ground building groups in the boundary; only an explicit wall filter may exclude them.
         JsonObject wallReservationPlan = new CityWallReservationPlanner().plan(
                 reviewPackage, anchorMap, wallMarginBlocks, wallCorridorHalfWidthBlocks, patchContextBounds);
+        JsonObject interCityExits = new com.rinsing.geomantia.systems.city.application.intercity.CityExitRoadPlanner().plan(
+                citySeedId, anchorMap, wallReservationPlan,
+                bounds(wallReservationPlan.getAsJsonObject("sourceD3CoverageBounds")),
+                interCityNetwork(runDir, metadata.cellStepBlocks()));
+        anchorMap = com.rinsing.geomantia.systems.city.application.intercity.CityExitRoadPlanner.append(anchorMap, interCityExits);
+        wallReservationPlan = new CityWallReservationPlanner().plan(
+                reviewPackage, anchorMap, wallMarginBlocks, wallCorridorHalfWidthBlocks, patchContextBounds);
         CityReservationMaskPlanner.Result result = new CityReservationMaskPlanner().plan(ctx, anchorMap,
                 wallReservationPlan);
 
         Path outputDirectory = cityStageDir(runDir, citySeedId, CityTestRunLayout.D5);
         Files.createDirectories(outputDirectory);
         Path maskPath = outputDirectory.resolve("reservation_mask_plan.json");
+        Files.writeString(outputDirectory.resolve("inter_city_exit_plan.json"), CityJson.GSON.toJson(interCityExits));
         Path wallReservationPath = outputDirectory.resolve("wall_reservation_plan.json");
         Path roadPath = outputDirectory.resolve("road_access_plan.json");
         Path operationPath = outputDirectory.resolve("build_operation_plan.json");
@@ -1292,6 +1300,7 @@ final class CityPlanningEndpointHandler {
         JsonObject artifacts = new JsonObject();
         artifacts.addProperty("reservationMaskPlan", debugRef(debugRoot, maskPath));
         artifacts.addProperty("wallReservationPlan", debugRef(debugRoot, wallReservationPath));
+        artifacts.addProperty("interCityExitPlan", debugRef(debugRoot, outputDirectory.resolve("inter_city_exit_plan.json")));
         artifacts.addProperty("roadAccessPlan", debugRef(debugRoot, roadPath));
         artifacts.addProperty("buildOperationPlan", debugRef(debugRoot, operationPath));
         artifacts.addProperty("reservationMaskPreview", debugRef(debugRoot, previewPath));
@@ -1868,6 +1877,12 @@ final class CityPlanningEndpointHandler {
                 .resolve("land_use_terrain_field.json");
         Path landscapeReservationPath = d4Dir.resolve("city_landscape_capacity_reservation_plan.json");
         JsonObject sourceAnchorMap = anchorMap.deepCopy();
+        Path exitPath = d5Dir.resolve("inter_city_exit_plan.json");
+        if (Files.isRegularFile(exitPath)) {
+            anchorMap = com.rinsing.geomantia.systems.city.application.intercity.CityExitRoadPlanner.append(
+                    anchorMap, JsonParser.parseString(Files.readString(exitPath)).getAsJsonObject());
+            sourceAnchorMap = anchorMap.deepCopy();
+        }
         if (level != null && Files.exists(treeTerrainPath) && Files.exists(wallReservationPath)) {
             var trees = com.rinsing.geomantia.systems.city.application.CityRoadsideTreePlanner
                     .readCatalog(templateMetadataInspector);
@@ -2053,7 +2068,6 @@ final class CityPlanningEndpointHandler {
                 wallOptions);
         wallPlan.addProperty("sourceReservationHash", sha256(Files.readString(wallReservationPath)));
         wallPlan.add("surfaceCacheBackfill", surfaceCacheBackfill.deepCopy());
-        if (!CityWallPlacementBackend.regionAvailable(level, wallPlan)) return wallRegionWaiting();
         CityWallPlacementBackend.prepare(level, wallPlan);
         Path planPath = new MinecraftCityWallArtifactWriter().writeArtifacts(wallPlan, outputDirectory);
         Path surfaceCachePath = outputDirectory.resolve("surface_cache_backfill_report.json");
@@ -2082,15 +2096,6 @@ final class CityPlanningEndpointHandler {
         return response;
     }
 
-    private static JsonObject wallRegionWaiting() {
-        JsonObject response = new JsonObject();
-        response.addProperty("ok", true);
-        response.addProperty("status", "waiting_for_worldgen");
-        response.addProperty("reasonCode", "CITY_WALL_REGION_NOT_RELEASED");
-        response.addProperty("message", "Waiting for the activated wall region and its generation dependencies to be available.");
-        return response;
-    }
-
     static JsonObject handleExecuteCityWalls(Path debugRoot, String runId, String citySeedId,
                                               boolean confirmWorldMutation, ServerLevel level) throws IOException {
         return handleExecuteCityWalls(debugRoot, runId, citySeedId, confirmWorldMutation, level, false, 1);
@@ -2112,17 +2117,16 @@ final class CityPlanningEndpointHandler {
                     + debugRef(debugRoot, planPath));
         }
         JsonObject wallPlan = JsonParser.parseString(Files.readString(planPath)).getAsJsonObject();
-        if (!CityWallPlacementBackend.regionAvailable(level, wallPlan)) return wallRegionWaiting();
-        JsonObject report = new CityWallPlacementBackend().execute(level, wallPlan, debugScan, debugScanStepBlocks);
-        if (booleanValue(report, "ok", false)) {
-            level.getServer().saveAllChunks(true, true, true);
-            report.addProperty("sourceWallPlanHash", sha256(Files.readString(planPath)));
-        }
+        JsonObject report = com.rinsing.geomantia.systems.city.infrastructure.world.CityWallWorldgenRegistry.activate(
+                level.getServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT),
+                level.dimension().location().toString(), runId, citySeedId, wallPlan);
+        report.addProperty("sourceWallPlanHash", sha256(Files.readString(planPath)));
         Path reportPath = outputDirectory.resolve("city_wall_placement_report.json");
         Files.writeString(reportPath, CityJson.GSON.toJson(report));
         JsonObject response = new JsonObject();
         response.addProperty("ok", booleanValue(report, "ok", false));
         response.add("cityWallPlacementReport", report);
+        response.addProperty("status", "activated");
         response.addProperty("reasonCode", stringValue(report, "reasonCode", ""));
         JsonObject artifacts = new JsonObject();
         artifacts.addProperty("cityWallPlan", debugRef(debugRoot, planPath));
@@ -2318,41 +2322,16 @@ final class CityPlanningEndpointHandler {
             return ctx.workflow().finish(workflowStarted, "waiting_for_confirmation");
         }
 
-        Path activeD5Registry = cityStageDir(runDir, citySeedId, CityTestRunLayout.D5)
-                .resolve("active_planned_structure_registry.json");
-        Path executeD5SkipArtifact = workflowD5ActivationCurrent(activeD5Registry,
-                workflowD5Plan, workflowD6Plan,
-                cityStageDir(runDir, citySeedId, CityTestRunLayout.LAND_USE)
-                        .resolve("city_land_use_planning_complete.json"))
-                && workflowD5RuntimeActivationCurrent(workflowD6Plan, runId, citySeedId)
-                ? activeD5Registry : null;
-        if (!ctx.workflow().runStep("city_execute_d5", executeD5SkipArtifact,
-                () -> {
-                    var preparedOwners = prepareD5ChunkPreflight(debugRoot, runId, citySeedId, true,
-                            blueprintWorkflow ? null : enableLandUseLayer);
-                    return serverHolder.callOnServerThread(() -> handleExecuteD5Prepared(
-                        debugRoot, serverRoot, runId, citySeedId, true, level,
-                        blueprintWorkflow ? null : enableLandUseLayer, preparedOwners));
-                })) {
-            return ctx.workflow().finish(workflowStarted, "failed");
-        }
-
-        if (booleanValue(request, "stopAfterActivation", false)) {
-            ctx.workflow().addStop("worldgen_wait", "waiting_for_generation", "WAITING_FOR_GENERATION",
-                    "D4 and all program-owned downstream stages are complete; active plans are waiting for chunk generation.");
-            return ctx.workflow().finish(workflowStarted, "waiting_for_generation");
-        }
-
         if (booleanValue(request, "planWalls", false)) {
             Path wallPlanPath = cityStageDir(runDir, citySeedId, CityTestRunLayout.WALLS)
                     .resolve("city_wall_plan.json");
             Path wallSkipArtifact = workflowWallPlanMatchesRequest(wallPlanPath, request,
                     cityStageDir(runDir, citySeedId, CityTestRunLayout.D5).resolve("wall_reservation_plan.json")) ? wallPlanPath : null;
             if (!ctx.workflow().runStep("city_plan_city_walls", wallSkipArtifact,
-                    () -> serverHolder.callOnServerThread(() -> handlePlanCityWalls(
+                    () -> handlePlanCityWalls(
                             debugRoot, runId, citySeedId, level,
                             intValue(request, "roadScanMarginBlocks", 8),
-                            workflowWallOptions(request))))) {
+                            workflowWallOptions(request)))) {
                 return ctx.workflow().finish(workflowStarted, "failed");
             }
             if ("waiting_for_worldgen".equals(stringValue(
@@ -2376,6 +2355,74 @@ final class CityPlanningEndpointHandler {
                     steps.get(steps.size()-1).getAsJsonObject(), "responseStatus", ""))) {
                 return ctx.workflow().finish(workflowStarted, "waiting_for_worldgen");
             }
+        }
+
+
+        Path activeD5Registry = cityStageDir(runDir, citySeedId, CityTestRunLayout.D5)
+                .resolve("active_planned_structure_registry.json");
+        Path executeD5SkipArtifact = workflowD5ActivationCurrent(activeD5Registry,
+                workflowD5Plan, workflowD6Plan,
+                cityStageDir(runDir, citySeedId, CityTestRunLayout.LAND_USE)
+                        .resolve("city_land_use_planning_complete.json"))
+                && workflowD5RuntimeActivationCurrent(workflowD6Plan, runId, citySeedId)
+                ? activeD5Registry : null;
+        if (!ctx.workflow().runStep("city_execute_d5", executeD5SkipArtifact,
+                () -> {
+                    var preparedOwners = prepareD5ChunkPreflight(debugRoot, runId, citySeedId, true,
+                            blueprintWorkflow ? null : enableLandUseLayer);
+                    return serverHolder.callOnServerThread(() -> handleExecuteD5Prepared(
+                        debugRoot, serverRoot, runId, citySeedId, true, level,
+                        blueprintWorkflow ? null : enableLandUseLayer, preparedOwners));
+                })) {
+            return ctx.workflow().finish(workflowStarted, "failed");
+        }
+
+        // Independent roads must never turn a waiting partner or failed route into a city failure.
+        JsonObject interCityStep = new JsonObject();
+        interCityStep.addProperty("name", "inter_city_roads");
+        interCityStep.addProperty("startedAt", Instant.now().toString());
+        interCityStep.addProperty("ok", true);
+        JsonArray interCityLinks = new JsonArray();
+        try {
+            var preparedRoads = com.rinsing.geomantia.systems.city.infrastructure.world.InterCityRoadService.prepare(
+                    runDir, citySeedId, interCityNetwork(runDir, loadRunMetadata(runDir, null, "").cellStepBlocks()), level);
+            for (var road : preparedRoads) {
+                JsonObject roadReport = road.report().deepCopy();
+                if (road.area() != null) {
+                    try {
+                    var progress = serverHolder.callOnServerThread(() -> {
+                        CityLandUseWorldgenRegistry.ensureFrozenActive(level.dimension().location().toString(),
+                                road.area(), road.surface(), serverRoot);
+                        return CityLandUseWorldgenRegistry.enqueueD7Backfill(level.dimension().location().toString(),
+                                road.area(), road.surface(), level);
+                    });
+                    roadReport.addProperty("constructionStatus", progress.status());
+                    roadReport.addProperty("plannedOwnerChunks", progress.plannedOwnerCount());
+                    roadReport.addProperty("appliedOwnerChunks", progress.appliedAfterCount());
+                    } catch (Exception failure) {
+                        roadReport.addProperty("constructionStatus", "road_unresolved");
+                        roadReport.addProperty("constructionReason", failure.getMessage());
+                    }
+                    com.rinsing.geomantia.systems.city.infrastructure.world.InterCityRoadService.write(
+                            road.directory().resolve("status.json"), roadReport);
+                }
+                interCityLinks.add(roadReport);
+            }
+            interCityStep.addProperty("responseStatus", "observed");
+        } catch (Exception failure) {
+            interCityStep.addProperty("responseStatus", "road_unresolved");
+            interCityStep.addProperty("reason", failure.getMessage());
+        }
+        interCityStep.addProperty("status", "success");
+        interCityStep.addProperty("endedAt", Instant.now().toString());
+        interCityStep.add("links", interCityLinks);
+        steps.add(interCityStep);
+        ctx.workflow().writeReport();
+
+        if (booleanValue(request, "stopAfterActivation", false)) {
+            ctx.workflow().addStop("worldgen_wait", "waiting_for_generation", "WAITING_FOR_GENERATION",
+                    "D4 and all program-owned downstream stages are complete; active plans are waiting for chunk generation.");
+            return ctx.workflow().finish(workflowStarted, "waiting_for_generation");
         }
 
         if (!ctx.workflow().runStep("city_execute_d7", null,
@@ -2408,7 +2455,8 @@ final class CityPlanningEndpointHandler {
             JsonObject current = JsonParser.parseString(Files.readString(anchorMapPath)).getAsJsonObject();
             return artifact.has("sourceStructureAnchorMap")
                     && artifact.get("sourceStructureAnchorMap").isJsonObject()
-                    && artifact.getAsJsonObject("sourceStructureAnchorMap").equals(current);
+                    && com.rinsing.geomantia.systems.city.application.intercity.CityExitRoadPlanner.withoutDerived(
+                            artifact.getAsJsonObject("sourceStructureAnchorMap")).equals(current);
         } catch (RuntimeException | IOException ignored) {
             return false;
         }
@@ -2454,6 +2502,7 @@ final class CityPlanningEndpointHandler {
 
     static boolean d6SourceMatchesAnchorMap(JsonObject source, JsonObject current) {
         if (source == null) return false;
+        source = com.rinsing.geomantia.systems.city.application.intercity.CityExitRoadPlanner.withoutDerived(source);
         if (source.equals(current)) return true;
         // Older D6 plans embedded derived trees in their source snapshot. Keep their frozen
         // placements when resuming an activated city rather than recompiling generated chunks.
@@ -3365,6 +3414,34 @@ final class CityPlanningEndpointHandler {
         return CityTestRunLayout.open(runDir, citySeedId).stepDirectory(stage);
     }
 
+    private static synchronized java.util.List<com.rinsing.geomantia.systems.city.application.intercity.InterCityNetwork.Link>
+            interCityNetwork(Path runDir, int cellStep) throws IOException {
+        Path networkPath = runDir.resolve("inter_city_roads").resolve("network.json");
+        if (Files.isRegularFile(networkPath)) {
+            var saved = JsonParser.parseString(Files.readString(networkPath)).getAsJsonObject();
+            var links = CityJson.GSON.fromJson(saved.get("links"),
+                    com.rinsing.geomantia.systems.city.application.intercity.InterCityNetwork.Link[].class);
+            return java.util.List.of(links);
+        }
+        Path path = runDir.resolve("city_seed_registry.json");
+        if (!Files.isRegularFile(path)) return java.util.List.of();
+        var cities = new java.util.ArrayList<com.rinsing.geomantia.systems.city.application.intercity.InterCityNetwork.City>();
+        JsonObject registry = JsonParser.parseString(Files.readString(path)).getAsJsonObject();
+        for (JsonElement element : registry.getAsJsonArray("citySeeds")) {
+            JsonObject seed = element.getAsJsonObject();
+            cities.add(new com.rinsing.geomantia.systems.city.application.intercity.InterCityNetwork.City(
+                    stringValue(seed,"citySeedId"), stringValue(seed,"realmId"),
+                    new BlockPoint(blockCoord(seed,"x",cellStep),blockCoord(seed,"z",cellStep))));
+        }
+        var network = new com.rinsing.geomantia.systems.city.application.intercity.InterCityNetwork().plan(cities);
+        JsonObject persisted = new JsonObject();
+        persisted.addProperty("schema", "realm_intercity_network");
+        persisted.add("links", CityJson.GSON.toJsonTree(network));
+        Files.createDirectories(networkPath.getParent());
+        com.rinsing.geomantia.systems.city.infrastructure.world.InterCityRoadService.write(networkPath,persisted);
+        return network;
+    }
+
     private static JsonObject writeD4ArrayLayoutLoopArtifacts(Path debugRoot,
                                                               Path runDir,
                                                               String citySeedId,
@@ -3563,6 +3640,7 @@ final class CityPlanningEndpointHandler {
         if (!Files.isRegularFile(planPath) || !Files.isRegularFile(reportPath)) return false;
         JsonObject report = JsonParser.parseString(Files.readString(reportPath)).getAsJsonObject();
         return booleanValue(report, "ok", false)
+                && !"chunk_worldgen".equals(stringValue(report, "placementMode", ""))
                 && sha256(Files.readString(planPath)).equals(stringValue(report, "sourceWallPlanHash", ""));
     }
 
@@ -3573,7 +3651,7 @@ final class CityPlanningEndpointHandler {
         JsonObject existing = JsonParser.parseString(Files.readString(wallPlanPath)).getAsJsonObject();
         return "city_wall_plan".equals(stringValue(existing, "schema", ""))
                 && "d5_reserved_gate_slots".equals(stringValue(existing, "roadMaskSource", ""))
-                && ((existing.has("terrainFitPolicy")
+                && (("chunk_worldgen".equals(stringValue(existing,"placementMode","")) && existing.has("terrainFitPolicy")
                     && "terrain_following_sections".equals(stringValue(existing.getAsJsonObject("terrainFitPolicy"), "heightStrategy", "")))
                     || wallPlacementCurrent(wallPlanPath, wallPlanPath.resolveSibling("city_wall_placement_report.json")))
                 && Files.isRegularFile(reservationPath)

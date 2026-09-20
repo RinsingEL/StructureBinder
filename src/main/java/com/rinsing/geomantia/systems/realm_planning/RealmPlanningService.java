@@ -971,7 +971,7 @@ public final class RealmPlanningService {
             return false;
         }
         if (!outsideOriginRadius(cell, run, accessConfig.firstCityMinimumDistanceBlocks())) {
-            errors.add("Selected grid coordinate is inside the initial city exclusion radius.");
+            errors.add("Selected grid coordinate is inside the initial exploration area or its generation buffer.");
             return false;
         }
         for (RealmSeed seed : run.seeds.values()) {
@@ -1852,6 +1852,14 @@ public final class RealmPlanningService {
         if (cell == null) {
             return false;
         }
+        if (!run.initialAreaLoaded) {
+            try {
+                run.initialArea = com.rinsing.geomantia.systems.realm_planning.application.access.InitialExplorationArea.load(run.runDirectory, accessConfig);
+                run.initialAreaLoaded = true;
+            } catch (IOException ex) { throw new java.io.UncheckedIOException(ex); }
+        }
+        if (run.initialArea != null && run.initialArea.available())
+            return !run.initialArea.generationContains(cell.blockX, cell.blockZ);
         long step = run.surveyResult.cellStepBlocks();
         long blockX = (long) cell.gridX * step;
         long blockZ = (long) cell.gridZ * step;
@@ -4659,6 +4667,8 @@ public final class RealmPlanningService {
         final String runId;
         final Path runDirectory;
         final WorldSurveyResult surveyResult;
+        com.rinsing.geomantia.systems.realm_planning.application.access.InitialExplorationArea initialArea;
+        boolean initialAreaLoaded;
         final List<WorldCell> worldCells = new ArrayList<>();
         final Map<String, WorldCell> worldCellsByKey = new LinkedHashMap<>();
         final List<RealmProfile> profiles = new ArrayList<>();

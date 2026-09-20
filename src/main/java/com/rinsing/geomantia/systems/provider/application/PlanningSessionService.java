@@ -71,10 +71,15 @@ public final class PlanningSessionService implements AutoCloseable {
         if (queue.has("status") && ("blocked_by_program".equals(queue.get("status").getAsString())
                 || step.stage() == ProviderPlanningDiscovery.Stage.WAITING && "needs_agent".equals(queue.get("status").getAsString())))
             error = PlayerProviderAgentRunner.programBlockMessage(queue);
-        result.addProperty("status", !error.isBlank() ? "blocked" : running ? "running" : status);
+        result.addProperty("status", running ? "running" : !error.isBlank() ? "blocked" : status);
         result.addProperty("error", error);
         result.addProperty("cursor", step.semanticIdentity() + ":" + taskId + ":" + running + ":" + error + ":" + result.get("owner"));
         result.addProperty("hasSavedProgress", Files.isDirectory(step.runDirectory()));
+        if (savedDesign(step)) {
+            result.addProperty("instruction", "设计已保存，尚未施工。用户授权继续后调用 planning_resume(retry=true)，直接使用保存蓝图入队；不要再次提交 D4。");
+        } else if (retryableProgramBlock(step)) {
+            result.addProperty("instruction", "当前城市因程序错误暂停。确认修复并获用户授权后，调用 planning_resume(retry=true)，通过当前规划会话重试已有城市；不要改写设计或绕过会话调用旧接口。");
+        }
         result.addProperty("artifactRoot", step.runDirectory().toString());
         return result;
     }
@@ -95,7 +100,7 @@ public final class PlanningSessionService implements AutoCloseable {
                 running = true;
                 AutoCloseable pin = lease.enter(acquired);
                 worker.submit(() -> {
-                    try (pin) { advance(acquired); }
+                    try (pin) { advance(acquired, retry); }
                     catch (Exception ex) { failure = message(ex); }
                     finally { running = false; }
                 });
@@ -105,7 +110,14 @@ public final class PlanningSessionService implements AutoCloseable {
         result.addProperty("leaseToken", acquired);
         return result;
     }
-    private void advance(String token) throws Exception {
+    private void advance(String token, boolean retry) throws Exception {
+        var initial = discovery.nextStep();
+        if (retry && (savedDesign(initial) || retryableProgramBlock(initial))) {
+            var result = gateway(initial, token).executeHost("city_post_d4_auto_compile_retry", new JsonObject());
+            String error = PlanningTurnControl.failure(PlanningTurnControl.payload(result));
+            if (!error.isBlank()) throw new IllegalStateException(error);
+            return;
+        }
         // Bounded program work per request; no model invocation and no Provider credentials.
         for (int count = 0; count < 8; count++) {
             var step = discovery.nextStep();
@@ -122,6 +134,20 @@ public final class PlanningSessionService implements AutoCloseable {
             if (step.semanticIdentity().equals(discovery.nextStep().semanticIdentity()))
                 throw new IllegalStateException("PLANNING_HOST_NO_PROGRESS: " + step.nextAction());
         }
+    }
+    private static boolean retryableProgramBlock(ProviderPlanningDiscovery.PlanningStep step) {
+        JsonObject queue = step.state().has("cityDesignQueue")
+                ? step.state().getAsJsonObject("cityDesignQueue") : step.state();
+        return step.stage() == ProviderPlanningDiscovery.Stage.WAITING && queue.has("status")
+                && "blocked_by_program".equals(queue.get("status").getAsString())
+                && "city_post_d4_auto_compile_retry".equals(step.nextAction());
+    }
+    private static boolean savedDesign(ProviderPlanningDiscovery.PlanningStep step) {
+        JsonObject queue = step.state().has("cityDesignQueue")
+                ? step.state().getAsJsonObject("cityDesignQueue") : step.state();
+        return step.stage() == ProviderPlanningDiscovery.Stage.WAITING && queue.has("status")
+                && "design_saved".equals(queue.get("status").getAsString())
+                && "city_post_d4_auto_compile_retry".equals(step.nextAction());
     }
     public JsonObject view(String token) throws Exception {
         lease.touch(token);
@@ -191,7 +217,7 @@ public final class PlanningSessionService implements AutoCloseable {
             Thread.sleep(250);
         } while (true);
         // Polls contain no image payload; resume retrieves the next full decision package.
-        result.addProperty("instruction", "状态改变或任务准备完成后调用 planning_resume；waiting/running 时继续 planning_wait；blocked 时说明错误并停止。");
+        if (!result.has("instruction")) result.addProperty("instruction", "状态改变或任务准备完成后调用 planning_resume；waiting/running 时继续 planning_wait；blocked 时说明错误并停止。");
         return result;
     }
     private static String message(Exception ex) { return ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage(); }

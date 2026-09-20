@@ -286,6 +286,61 @@ class CityPostD4AutoCompileQueueTest {
         }
     }
 
+    @Test
+    void shutdownCancellationWaitsForRestartAndThenResumes() throws Exception {
+        try (CityPostD4AutoCompileQueue queue = new CityPostD4AutoCompileQueue(temporaryDirectory,
+                (runId, citySeedId) -> {
+                    throw new java.util.concurrent.CancellationException("CITY_SERVER_STOPPING");
+                })) {
+            queue.enqueue("shutdown", "city");
+            awaitRestart(queue, "shutdown", "city");
+        }
+        try (CityPostD4AutoCompileQueue queue = new CityPostD4AutoCompileQueue(temporaryDirectory,
+                (runId, citySeedId) -> response("completed", true))) {
+            assertEquals(2, awaitStatus(queue, "shutdown", "city", "completed").get("attempt").getAsInt());
+        }
+    }
+
+    @Test
+    void shutdownReportedByWorkflowAlsoWaitsForRestart() throws Exception {
+        JsonObject failure = failedWorkflowResponse();
+        failure.getAsJsonObject("workflowReport").getAsJsonArray("steps").get(0).getAsJsonObject()
+                .addProperty("reasonCode", "CITY_SERVER_STOPPING");
+        try (CityPostD4AutoCompileQueue queue = new CityPostD4AutoCompileQueue(temporaryDirectory,
+                (runId, citySeedId) -> failure)) {
+            queue.enqueue("shutdown", "city");
+            awaitRestart(queue, "shutdown", "city");
+        }
+    }
+
+    @Test
+    void restartRecoversLegacyShutdownBlock() throws Exception {
+        Path path = temporaryDirectory.resolve("shutdown/automation/post_d4/city.json");
+        Files.createDirectories(path.getParent());
+        Files.writeString(path, """
+                {"runId":"shutdown","citySeedId":"city","status":"blocked_by_program",
+                 "reasonCode":"POST_D4_WORKFLOW_FAILED","error":"CITY_SERVER_STOPPING","attempt":2}
+                """);
+        try (CityPostD4AutoCompileQueue queue = new CityPostD4AutoCompileQueue(temporaryDirectory,
+                (runId, citySeedId) -> response("completed", true))) {
+            assertEquals(3, awaitStatus(queue, "shutdown", "city", "completed").get("attempt").getAsInt());
+        }
+    }
+
+    private static void awaitRestart(CityPostD4AutoCompileQueue queue, String run, String city) throws Exception {
+        long deadline = System.nanoTime() + Duration.ofSeconds(5).toNanos();
+        do {
+            JsonObject state = queue.status(run, city);
+            if ("WAITING_FOR_SERVER_RESTART".equals(state.get("reasonCode").getAsString())) {
+                assertEquals("queued", state.get("status").getAsString());
+                assertEquals(1, state.get("attempt").getAsInt());
+                return;
+            }
+            Thread.sleep(10L);
+        } while (System.nanoTime() < deadline);
+        throw new AssertionError("Shutdown interruption was not queued for restart");
+    }
+
     private static JsonObject awaitStatus(CityPostD4AutoCompileQueue queue, String runId, String citySeedId,
                                           String expected) throws Exception {
         long deadline = System.nanoTime() + Duration.ofSeconds(5).toNanos();

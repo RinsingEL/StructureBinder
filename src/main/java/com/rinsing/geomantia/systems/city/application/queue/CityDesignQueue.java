@@ -33,6 +33,7 @@ public final class CityDesignQueue {
     private static final String POST_D4_RUNNING = "post_d4_running";
     private static final String WAITING_FOR_GENERATION = "waiting_for_generation";
     private static final String NEEDS_AGENT = "needs_agent";
+    private static final String DESIGN_SAVED = "design_saved";
 
     private final Path debugRoot;
     private final Path configPath;
@@ -135,9 +136,7 @@ public final class CityDesignQueue {
                                 boolean contextPreparation) throws IOException {
         CityDesignQueueConfig config = CityDesignQueueConfig.loadOrCreate(configPath);
         if (!config.enabled() || !Files.isRegularFile(runDirectory(runId).resolve("city_seed_registry.json"))) return;
-        JsonObject state = readState(runId);
-        if (state == null) state = refresh(runId, "");
-        normalize(state);
+        JsonObject state = status(runId);
         String current = stringValue(state, "currentCitySeedId", "");
         if (!citySeedId.equals(current)) {
             throw new IllegalArgumentException("CITY_DESIGN_QUEUE_OUT_OF_ORDER: current=" + current
@@ -146,7 +145,7 @@ public final class CityDesignQueue {
         String status = stringValue(state, "status", "");
         if (contextPreparation && "blocked_by_program".equals(status)) return;
         if (programRetry) {
-            if (!("blocked_by_program".equals(status) || NEEDS_AGENT.equals(status))
+            if (!("blocked_by_program".equals(status) || NEEDS_AGENT.equals(status) || DESIGN_SAVED.equals(status))
                     || !"city_post_d4_auto_compile_retry".equals(stringValue(state, "nextAction", "")))
                 throw new IllegalArgumentException("CITY_DESIGN_QUEUE_PROGRAM_RETRY_NOT_ALLOWED: status=" + status);
             return;
@@ -199,10 +198,21 @@ public final class CityDesignQueue {
     }
 
     private void applyD4Stage(Path runDirectory,JsonObject item) throws IOException {
-        if (!WAITING_FOR_AGENT.equals(stringValue(item,"status",""))) return;
+        if (!WAITING_FOR_AGENT.equals(stringValue(item,"status",""))
+                && !DESIGN_SAVED.equals(stringValue(item,"status",""))) return;
         Path file=com.rinsing.geomantia.systems.city.application.CityTestRunLayout.open(runDirectory,stringValue(item,"citySeedId","")).stepDirectory(com.rinsing.geomantia.systems.city.application.CityTestRunLayout.BLUEPRINT).resolve("city_d4_workflow.json");
         if (!Files.isRegularFile(file)) return;
         JsonObject stage=readObject(file);
+        if (hasSavedDesign(runDirectory, stringValue(item,"citySeedId",""))) {
+            setItemStatus(item, DESIGN_SAVED, "D4_DESIGN_SAVED");
+            item.addProperty("nextAction", "city_post_d4_auto_compile_retry");
+            item.addProperty("d4Stage", "COMPLETE");
+            return;
+        }
+        if (DESIGN_SAVED.equals(stringValue(item,"status",""))) {
+            setItemStatus(item, WAITING_FOR_AGENT, "D4_CONTEXT_PREPARED");
+            item.remove("nextAction");
+        }
         String tool=switch(stringValue(stage,"stage","")) {
             case "OVERVIEW" -> "city_d4_overview";
             case "DISTRICTS" -> "city_d4_district";
@@ -211,6 +221,27 @@ public final class CityDesignQueue {
             default -> "";
         };
         if (!tool.isBlank()) { item.addProperty("nextAction",tool); item.add("d4Stage",stage.get("stage")); }
+    }
+
+    /** Read-only evidence shared by queue reconciliation and planning-session discovery. */
+    public static boolean hasSavedDesign(Path runDirectory, String cityId) throws IOException {
+        Path file = runDirectory.resolve("city_test_runs").resolve(requireId(cityId, "citySeedId"))
+                .resolve("steps/blueprint/city_d4_workflow.json");
+        if (!Files.isRegularFile(file)) return false;
+        JsonObject stage = readObject(file);
+        if ("COMPLETE".equals(stringValue(stage,"stage",""))) {
+            Path trace = file.resolveSibling("city_blueprint_submission_trace.json");
+            Path blueprint = file.resolveSibling("city_blueprint.json");
+            if (Files.isRegularFile(trace) && Files.isRegularFile(blueprint)) {
+                JsonObject accepted = readObject(trace);
+                String context = stringValue(stage,"contextId","");
+                if (!context.isBlank() && context.equals(stringValue(accepted,"contextId",""))
+                        && "accepted".equals(stringValue(accepted,"status",""))) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void applyPostD4State(Path runDirectory, JsonObject item) throws IOException {
@@ -284,7 +315,7 @@ public final class CityDesignQueue {
                         || "PATCH_REVIEW_COMPLETED".equals(reasonCode)
                         || "D4_CONTEXT_PREPARED".equals(reasonCode));
                 if (!POST_D4_RUNNING.equals(status) && !NEEDS_AGENT.equals(status)
-                        && !"blocked_by_program".equals(status) && !agentPhase) {
+                        && !"blocked_by_program".equals(status) && !DESIGN_SAVED.equals(status) && !agentPhase) {
                     setItemStatus(item, WAITING_FOR_AGENT, "NEXT_CITY_BY_PRIORITY");
                 }
             } else if (!WAITING_FOR_GENERATION.equals(status)) {
@@ -316,7 +347,7 @@ public final class CityDesignQueue {
             };
             case WAITING_FOR_PATCH_REVIEW -> "patch_explorer_show_candidates";
             case POST_D4_RUNNING -> "city_post_d4_auto_compile_status";
-            case NEEDS_AGENT, "blocked_by_program" -> stringValue(current, "nextAction", "city_post_d4_auto_compile_retry");
+            case NEEDS_AGENT, "blocked_by_program", DESIGN_SAVED -> stringValue(current, "nextAction", "city_post_d4_auto_compile_retry");
             default -> "";
         });
     }

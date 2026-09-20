@@ -70,6 +70,7 @@ public abstract class ChunkGeneratorStructureMaskMixin {
                     chunk.getPos().z,
                     CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES,
                     new CityLandUseChunkExecutor.WorldGenExecutionWorld(level));
+            com.rinsing.geomantia.systems.city.infrastructure.world.CityWallWorldgenRegistry.apply(level, chunk);
         } catch (RuntimeException | Error ex) {
             CityWorldgenBlockObservationRegistry.abort();
             throw ex;

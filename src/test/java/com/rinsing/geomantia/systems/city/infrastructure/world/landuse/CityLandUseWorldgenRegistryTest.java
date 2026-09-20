@@ -275,6 +275,34 @@ class CityLandUseWorldgenRegistryTest {
     }
 
     @Test
+    void featureOnlyIntercityPlanPersistsAndFrozenActivationCannotReplaceIt() throws IOException {
+        var area = new LandUseAreaPlanCodec().withComputedHash(new LandUseAreaPlan(
+                LandUseAreaPlan.SCHEMA, "intercity", "intercity_test", "",new BlockBounds(0,0,15,15),
+                List.of(),List.of(),List.of(),List.of()));
+        var surfaceCodec = new com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlanCodec();
+        var surface = surfaceCodec.withComputedHash(new CityLandUseSurfacePrintPlan(
+                CityLandUseSurfacePrintPlan.SCHEMA,area.cityId(),area.planHash(),"",List.of(),List.of(),
+                List.of(new CityLandUseSurfacePrintPlan.FeatureCell("road",8,8,"minecraft:stone_slab",0,
+                        CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,64))));
+        CityLandUseWorldgenRegistry.ensureFrozenActive("minecraft:overworld",area,surface,serverRoot);
+        CityLandUseWorldgenRegistry.ensureFrozenActive("minecraft:overworld",area,surface,serverRoot);
+        assertEquals(1,CityLandUseChunkStatusPreflight.ownerChunks(area,surface).size());
+        FakeWorld world=new FakeWorld();
+        var first=CityLandUseWorldgenRegistry.applyForChunk("minecraft:overworld",0,0,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES,world);
+        assertEquals(1,first.appliedOwnerCount());
+        assertEquals(0,first.failedOwnerCount());
+        CityLandUseWorldgenRegistry.flushPendingLedgerNow();
+        CityLandUseWorldgenRegistry.load(serverRoot);
+        assertEquals(1,CityLandUseWorldgenRegistry.applyForChunk("minecraft:overworld",0,0,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES,world).alreadyAppliedOwnerCount());
+        var changed=surfaceCodec.withComputedHash(new CityLandUseSurfacePrintPlan(surface.schema(),surface.cityId(),
+                surface.sourceLandUsePlanHash(),"",List.of(),List.of(),List.of()));
+        assertThrows(IllegalArgumentException.class,()->CityLandUseWorldgenRegistry.ensureFrozenActive(
+                "minecraft:overworld",area,changed,serverRoot));
+    }
+
+    @Test
     void structureDatumReusesPreparedTerrainAcrossNearbyBuildings() {
         List<LandUseAreaPlan.ScanlineSpan> spans = new ArrayList<>();
         for (int z = 0; z <= 15; z++) spans.add(new LandUseAreaPlan.ScanlineSpan(z, 0, 15));

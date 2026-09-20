@@ -84,6 +84,9 @@ class CityReservationMaskRegistryTemplateFragmentTest {
         CityReservationMaskRegistry.TemplateFragmentRecordResult first = record(planned, anchorOwner, 105);
         assertTrue(first.recorded());
         assertFalse(first.templateCompleted());
+        assertTrue(CityReservationMaskRegistry.hasTemplateFragmentProof(planned,anchorOwner));
+        assertFalse(CityReservationMaskRegistry.hasTemplateFragmentProof(planned,owners.get(owners.size()-1)),
+                "Pending authorization must not be accepted as a completed fragment");
 
         for (ChunkPos owner : owners) {
             if (owner.equals(anchorOwner)) {

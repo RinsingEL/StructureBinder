@@ -277,6 +277,12 @@ public final class RealmT4PatchPlanningService {
         }
         if (accessConfig.enabled()) {
             var bounds = requested.protection();
+            var initial = com.rinsing.geomantia.systems.realm_planning.application.access.InitialExplorationArea.load(runDir(runId), accessConfig);
+            if (initial != null && initial.available()) {
+                if (initial.overlapsGenerationArea(bounds))
+                    throw new IllegalArgumentException("T4_CITY_PROTECTION_INSIDE_INITIAL_AREA: 出生大陆与近海属于初始探索区，请把整座城市保护范围移到该区域及其加载缓冲之外。");
+                return;
+            }
             double nearestX = Math.max(bounds.minX(), Math.min(0,bounds.maxX()));
             double nearestZ = Math.max(bounds.minZ(), Math.min(0,bounds.maxZ()));
             // Spawn area's view and generation dependency halo must never become future city land.
@@ -292,6 +298,12 @@ public final class RealmT4PatchPlanningService {
                 "T4_PATCH_W_CONTEXT_NOT_FOUND");
         String dimensionId = stringValue(context, "dimensionId", "minecraft:overworld");
         if (!accessConfig.enabled() || !accessConfig.managedDimensions().contains(dimensionId)) return;
+        var initial = com.rinsing.geomantia.systems.realm_planning.application.access.InitialExplorationArea.load(runDir(runId), accessConfig);
+        if (initial != null && initial.available()) {
+            if (initial.generationContains(blockX, blockZ))
+                throw new IllegalArgumentException("T4_CITY_INSIDE_INITIAL_ACTIVITY_EXCLUSION: 出生大陆与近海不安排新城市，请选择其他大陆。");
+            return;
+        }
         long distanceSquared = (long) blockX * blockX + (long) blockZ * blockZ;
         long minimum = accessConfig.firstCityMinimumDistanceBlocks();
         if (distanceSquared < minimum * minimum) {

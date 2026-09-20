@@ -27,6 +27,16 @@ class CityWallModuleConfigTest {
         Files.writeString(directory.resolve("modules.json"), config.toString());
     }
 
+    @Test void frozenModulePayloadSurvivesAuthorConfigChangesAndRejectsTampering() throws Exception {
+        var loaded=defaults();var plan=new JsonObject();loaded.freeze(plan);
+        var restored=CityWallModuleConfig.fromFrozen(plan);
+        assertEquals(loaded.guardTower(),restored.guardTower());
+        JsonObject changed=config();changed.addProperty("foundationBlock","minecraft:bricks");save(changed);
+        assertEquals(loaded.foundationBlock(),CityWallModuleConfig.fromFrozen(plan).foundationBlock());
+        plan.getAsJsonObject("wallModulePayload").addProperty("guardTower","AA==");
+        assertThrows(IOException.class,()->CityWallModuleConfig.fromFrozen(plan));
+    }
+
     @Test void standaloneConfigurationNeedsNoBuildingCatalog() throws Exception {
         var loaded = defaults();
         assertEquals(1050, loaded.guardTower().getList("blocks", Tag.TAG_COMPOUND).size());

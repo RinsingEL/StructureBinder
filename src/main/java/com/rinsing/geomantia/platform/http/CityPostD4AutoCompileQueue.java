@@ -171,6 +171,10 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
                 write(key, state(key, "running", "POST_D4_WORKFLOW_RUNNING", attempt));
             }
             JsonObject response = runner.run(key.runId, key.citySeedId);
+            if (serverStopping(response)) {
+                awaitServerRestart(key, attempt);
+                return;
+            }
             String workflowStatus = stringValue(response, "status", "");
             boolean completed = ("completed".equals(workflowStatus) || "completed_with_errors".equals(workflowStatus)) && booleanValue(response, "ok", false);
             boolean waiting = ("waiting_for_generation".equals(workflowStatus)
@@ -200,6 +204,12 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
         } catch (Exception ex) {
             continueGeneration = false;
             if (executor.isShutdown()) return; // Persisted running/waiting work resumes after restart.
+            for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
+                if ("CITY_SERVER_STOPPING".equals(cause.getMessage())) {
+                    awaitServerRestart(key, attempt);
+                    return;
+                }
+            }
             LOGGER.error("Post-D4 auto compile failed for {}/{}", key.runId, key.citySeedId, ex);
             JsonObject failed = state(key, "blocked_by_program", "POST_D4_WORKFLOW_FAILED", attempt);
             failed.addProperty("failureOwner", "program");
@@ -275,6 +285,30 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
         }
     }
 
+    private void awaitServerRestart(JobKey key, int attempt) {
+        try {
+            write(key, state(key, "queued", "WAITING_FOR_SERVER_RESTART", attempt));
+        } catch (IOException failure) {
+            LOGGER.error("Could not persist interrupted post-D4 job for {}/{}", key.runId, key.citySeedId, failure);
+        }
+    }
+
+    private static boolean serverStopping(JsonObject response) {
+        if (response == null) return false;
+        if ("CITY_SERVER_STOPPING".equals(stringValue(response, "error", ""))
+                || "CITY_SERVER_STOPPING".equals(stringValue(response, "reasonCode", ""))) return true;
+        JsonObject workflow = object(response, "workflowReport");
+        if (workflow == null) workflow = object(object(response, "workflowResponse"), "workflowReport");
+        if (workflow == null || !workflow.has("steps") || !workflow.get("steps").isJsonArray()) return false;
+        var steps = workflow.getAsJsonArray("steps");
+        for (int i = steps.size() - 1; i >= 0; i--) {
+            if (!steps.get(i).isJsonObject()) continue;
+            JsonObject step = steps.get(i).getAsJsonObject();
+            if (!booleanValue(step, "ok", true)) return serverStopping(step);
+        }
+        return false;
+    }
+
     private void recoverIncompleteJobs() {
         if (!Files.isDirectory(debugRoot)) return;
         try (var runs = Files.list(debugRoot)) {
@@ -286,7 +320,8 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
                         try {
                             JsonObject state = JsonParser.parseString(Files.readString(path)).getAsJsonObject();
                             String status = stringValue(state, "status", "");
-                            if (!"queued".equals(status) && !"running".equals(status)
+                            boolean stoppedServer = "blocked_by_program".equals(status) && serverStopping(state);
+                            if (!stoppedServer && !"queued".equals(status) && !"running".equals(status)
                                     && !"waiting_for_generation".equals(status)) {
                                 JsonObject workflow = object(object(state, "workflowResponse"), "workflowReport");
                                 if ("needs_agent".equals(status) && workflow != null && workflow.has("steps")) {

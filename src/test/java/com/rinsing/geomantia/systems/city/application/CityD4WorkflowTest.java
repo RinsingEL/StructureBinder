@@ -84,6 +84,8 @@ class CityD4WorkflowTest {
         districts();mark();JsonObject confirm=currentRequest();confirm.addProperty("functionsPreserved",true);
         JsonObject r=call("city_d4_finalize",confirm);assertTrue(r.get("ok").getAsBoolean(),r.toString());
         assertEquals("COMPLETE",state().get("stage").getAsString());assertEquals(2,compiled);
+        assertEquals("city_post_d4_auto_compile_status", state().get("nextAction").getAsString());
+        assertTrue(state().getAsJsonArray("availableActions").isEmpty());
     }
     @Test void cannotFinalizeWithoutFunctionPreservationOrCurrentOverview() throws Exception {
         districts();mark();JsonObject r=currentRequest();r.addProperty("functionsPreserved",false);

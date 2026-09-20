@@ -13,6 +13,75 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class PlanningSessionServiceTest {
     @TempDir Path root;
+    @Test void explicitResumeEnqueuesSavedBlueprintThroughHttpWithoutPreparingD4() throws Exception {
+        Path run = root.resolve("provider_2a_r8192"); sealed(run);
+        Files.writeString(run.resolve("realm_profiles.json"), "[{\"realmId\":\"a\"}]");
+        Files.writeString(run.resolve("realm_coordinate_selections.json"), "[{\"realmId\":\"a\"}]");
+        Files.writeString(run.resolve("t3_report.json"), "{}");
+        Files.writeString(run.resolve("realm_territory_map.json"), "{}");
+        Files.writeString(run.resolve("city_seed_registry.json"), "{\"citySeeds\":[{\"realmId\":\"a\",\"citySeedId\":\"city_a\",\"role\":\"capital\"}]}");
+        Path bp = Files.createDirectories(run.resolve("city_test_runs/city_a/steps/blueprint"));
+        Files.writeString(bp.resolve("city_d4_workflow.json"), "{\"stage\":\"COMPLETE\",\"contextId\":\"ctx\"}");
+        Files.writeString(bp.resolve("city_blueprint.json"), "{\"cityId\":\"city_a\"}");
+        Files.writeString(bp.resolve("city_blueprint_submission_trace.json"), "{\"status\":\"accepted\",\"contextId\":\"ctx\"}");
+        var cityQueue = new com.rinsing.geomantia.systems.city.application.queue.CityDesignQueue(root, root.resolve("queue_config.json"));
+        Files.createDirectories(run.resolve("automation"));
+        AtomicInteger enqueues = new AtomicInteger(), unexpected = new AtomicInteger();
+        HttpServer http = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        http.createContext("/", exchange -> {
+            JsonObject result = new JsonObject();
+            try {
+                assertEquals("/realm/city/post_d4_auto_compile_retry", exchange.getRequestURI().getPath());
+                JsonObject args = JsonParser.parseString(new String(exchange.getRequestBody().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
+                assertEquals("provider_2a_r8192", args.get("runId").getAsString());
+                assertEquals("city_a", args.get("citySeedId").getAsString());
+                assertNotNull(exchange.getRequestHeaders().getFirst("X-Geomantia-Planning-Token"));
+                cityQueue.requireProgramRetryIfManaged("provider_2a_r8192", "city_a");
+                JsonObject post = new JsonObject(); post.addProperty("runId", "provider_2a_r8192");
+                post.addProperty("citySeedId", "city_a"); post.addProperty("status", "running");
+                cityQueue.onPostD4State(post); enqueues.incrementAndGet(); result.addProperty("ok", true);
+            } catch (Throwable ex) { unexpected.incrementAndGet(); result.addProperty("ok", false); result.addProperty("error", ex.toString()); }
+            byte[] bytes = result.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, bytes.length); exchange.getResponseBody().write(bytes); exchange.close();
+        }); http.start();
+        try {
+            for (String savedStatus : List.of("waiting_for_agent", "design_saved", "blocked_by_program")) {
+                int before = enqueues.get();
+                JsonObject stale = JsonParser.parseString(queue(savedStatus)).getAsJsonObject();
+                stale.addProperty("runId", "provider_2a_r8192");
+                if (!"blocked_by_program".equals(savedStatus)) stale.addProperty("nextAction", "city_d4_overview");
+                Files.writeString(run.resolve("automation/city_design_queue.json"), stale.toString());
+                try (var service = new PlanningSessionService(root, root, http.getAddress().getPort(), 42,
+                        (step, gateway) -> { throw new AssertionError("Saved city must never prepare design"); })) {
+                    if ("blocked_by_program".equals(savedStatus)) {
+                        assertEquals("blocked", service.snapshot().get("status").getAsString());
+                    } else {
+                        assertEquals("waiting", service.snapshot().get("status").getAsString());
+                        assertTrue(service.snapshot().get("instruction").getAsString().contains("retry=true"));
+                    }
+                    String token = service.resume("saved-resume-test", "", false).get("leaseToken").getAsString();
+                    waitForIdle(service);
+                    assertEquals(before, enqueues.get()); // Reopening a session does not authorize construction.
+                    service.resume("saved-resume-test", token, true);
+                    waitForIdle(service);
+                    assertEquals(before + 1, enqueues.get());
+                    assertEquals("waiting", service.snapshot().get("status").getAsString());
+                    service.resume("saved-resume-test", token, true);
+                    waitForIdle(service);
+                    assertEquals(before + 1, enqueues.get()); // No duplicate while compiling.
+                    service.release(token);
+                }
+            }
+            assertEquals(0, unexpected.get());
+        } finally { http.stop(0); }
+    }
+    private static void waitForIdle(PlanningSessionService service) throws Exception {
+        for (int i=0; i<200; i++) {
+            if (!"running".equals(service.snapshot().get("status").getAsString())) return;
+            Thread.sleep(20);
+        }
+        fail("Planning session did not settle");
+    }
     @Test void leaseCannotBeStolenDuringLongOperationAndExpiredTokenCannotResume() throws Exception {
         class MutableClock extends Clock {
             long millis;

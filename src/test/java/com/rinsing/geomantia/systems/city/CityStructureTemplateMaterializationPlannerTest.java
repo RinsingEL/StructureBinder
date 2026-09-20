@@ -171,6 +171,23 @@ class CityStructureTemplateMaterializationPlannerTest {
     }
 
     @Test
+    void mixedFailureAndWorldgenWaitingPreservesTheRealFailure() {
+        var plan=new CityStructureMaterializationPlanner().planWorldgen(anchorMap(),
+                CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),emptyLedger(),metadata())
+                .structureMaterializationPlan();
+        JsonObject other=plan.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject().deepCopy();
+        other.addProperty("anchorId","waiting_anchor");plan.getAsJsonArray("plannedWorldgenStructures").add(other);
+        var response=new CityStructureMaterializationPlanner().executeWorldgen(plan,emptyLedger(),task ->
+                task.anchorId().equals("waiting_anchor")
+                        ? CityStructureMaterializationPlanner.ChunkStatusResult.plannedWorldgen("waiting")
+                        : CityStructureMaterializationPlanner.ChunkStatusResult.alreadyGenerated("missing fragment"),true).asJson();
+        assertFalse(response.get("ok").getAsBoolean());
+        assertEquals("failed",response.get("status").getAsString());
+        assertEquals("STRUCTURE_CHUNK_ALREADY_GENERATED",response.get("reasonCode").getAsString());
+        assertEquals(1,response.getAsJsonObject("qualityReport").get("waitingCount").getAsInt());
+    }
+
+    @Test
     void d6ResponsePropagatesSinglePreflightFailureReason() {
         JsonObject response = new CityStructureMaterializationPlanner()
                 .planWorldgen(anchorMap(), task ->

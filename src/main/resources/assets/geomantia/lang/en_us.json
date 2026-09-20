@@ -25,6 +25,7 @@
   "gui.geomantia.adventurer_map.status.pending": "Queued",
   "gui.geomantia.adventurer_map.status.planned": "Planned",
   "gui.geomantia.adventurer_map.status.waiting_for_agent": "Waiting for Agent",
+  "gui.geomantia.adventurer_map.status.design_saved": "Design saved, awaiting continuation",
   "gui.geomantia.adventurer_map.status.post_d4_running": "Post-D4 Compile Running",
   "gui.geomantia.adventurer_map.status.waiting_for_generation": "Waiting for Generation",
   "gui.geomantia.adventurer_map.status.needs_agent": "Needs Agent",

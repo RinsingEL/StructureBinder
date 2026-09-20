@@ -124,10 +124,29 @@ public final class CityWallModuleConfig {
         catch (NoSuchAlgorithmException ex) { throw new IllegalStateException(ex); }
     }
 
+    public static Loaded fromFrozen(JsonObject plan) throws IOException {
+        try {
+            JsonObject snapshot = plan.getAsJsonObject("wallModuleSnapshot");
+            JsonObject payload = plan.getAsJsonObject("wallModulePayload");
+            byte[] tower = java.util.Base64.getDecoder().decode(payload.get("guardTower").getAsString());
+            byte[] wall = java.util.Base64.getDecoder().decode(payload.get("straightWall").getAsString());
+            if (!hash(tower).equals(snapshot.get("guardTowerSha256").getAsString())
+                    || !hash(wall).equals(snapshot.get("straightWallSha256").getAsString()))
+                throw new IOException("WALL_FROZEN_MODULE_HASH_MISMATCH");
+            JsonObject config = snapshot.getAsJsonObject("configuration");
+            return new Loaded(config, snapshot, readTemplate(tower,7,15,10), readTemplate(wall,16,12,5),
+                    tower, wall, config.get("foundationBlock").getAsString());
+        } catch (RuntimeException ex) { throw new IOException("WALL_FROZEN_MODULE_INVALID",ex); }
+    }
+
     public record Loaded(JsonObject configuration, JsonObject snapshot, CompoundTag guardTower,
                          CompoundTag straightWall, byte[] towerBytes, byte[] wallBytes, String foundationBlock) {
         public void freeze(JsonObject plan) {
             plan.add("wallModuleSnapshot", snapshot.deepCopy());
+            JsonObject payload = new JsonObject();
+            payload.addProperty("guardTower", java.util.Base64.getEncoder().encodeToString(towerBytes));
+            payload.addProperty("straightWall", java.util.Base64.getEncoder().encodeToString(wallBytes));
+            plan.add("wallModulePayload", payload);
             JsonObject library = com.rinsing.geomantia.systems.city.application.CityWallTemplateCatalog.libraryJson();
             library.addProperty("templateSource", "config/geomantia/city_walls/modules.json");
             library.add("configuration", configuration.deepCopy());

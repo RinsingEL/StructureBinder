@@ -14,6 +14,45 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityDesignQueueTest {
+    @Test void savedDesignResumesAfterRestartWithoutRedesignOrAutomaticConstruction() throws Exception {
+        writeRegistry("saved", seed("city_1", "realm_a", "capital", 4000, 0),
+                seed("city_2", "realm_a", "town", 5000, 0));
+        CityDesignQueue queue = queue();
+        queue.refresh("saved", "global_radial");
+        Path blueprint = temporaryDirectory.resolve("realm_debug/saved/city_test_runs/city_1/steps/blueprint");
+        Files.createDirectories(blueprint);
+        Files.writeString(blueprint.resolve("city_d4_workflow.json"), "{\"stage\":\"COMPLETE\",\"contextId\":\"ctx\"}");
+        Files.writeString(blueprint.resolve("city_blueprint.json"), "{\"cityId\":\"city_1\"}");
+        Files.writeString(blueprint.resolve("city_blueprint_submission_trace.json"), "{\"status\":\"accepted\",\"contextId\":\"ctx\"}");
+        CityDesignQueue restarted = queue();
+        // The retry itself must reconcile a stale waiting_for_agent record, without a prior status call.
+        restarted.requireProgramRetryIfManaged("saved", "city_1");
+        var state = restarted.status("saved");
+        assertEquals("design_saved", state.get("status").getAsString());
+        assertEquals("city_post_d4_auto_compile_retry", state.get("nextAction").getAsString());
+        assertEquals("design_saved", restarted.refresh("saved", "").get("status").getAsString());
+        assertFalse(Files.exists(temporaryDirectory.resolve("realm_debug/saved/automation/post_d4")));
+        assertThrows(IllegalArgumentException.class, () -> restarted.requireCurrentIfManaged("saved", "city_1"));
+        assertThrows(IllegalArgumentException.class, () -> restarted.requireProgramRetryIfManaged("saved", "city_2"));
+        restarted.onPostD4State(postState("saved", "city_1", "running"));
+        assertEquals("post_d4_running", restarted.status("saved").get("status").getAsString());
+        restarted.onPostD4State(postState("saved", "city_1", "completed"));
+        assertEquals("city_2", restarted.status("saved").get("currentCitySeedId").getAsString());
+        assertThrows(IllegalArgumentException.class, () -> restarted.requireProgramRetryIfManaged("saved", "city_1"));
+    }
+
+    @Test void incompleteOrStaleAcceptedDesignCannotStartCompilation() throws Exception {
+        writeRegistry("invalid", seed("city_1", "realm_a", "capital", 4000, 0));
+        CityDesignQueue queue = queue();
+        queue.refresh("invalid", "global_radial");
+        Path blueprint = temporaryDirectory.resolve("realm_debug/invalid/city_test_runs/city_1/steps/blueprint");
+        Files.createDirectories(blueprint);
+        Files.writeString(blueprint.resolve("city_d4_workflow.json"), "{\"stage\":\"COMPLETE\",\"contextId\":\"new\"}");
+        assertThrows(IllegalArgumentException.class, () -> queue.requireProgramRetryIfManaged("invalid", "city_1"));
+        Files.writeString(blueprint.resolve("city_blueprint.json"), "{}");
+        Files.writeString(blueprint.resolve("city_blueprint_submission_trace.json"), "{\"status\":\"accepted\",\"contextId\":\"old\"}");
+        assertThrows(IllegalArgumentException.class, () -> queue.requireProgramRetryIfManaged("invalid", "city_1"));
+    }
     @Test void completedAutomaticWallsDoNotReturnCityToTheDesignQueue() throws Exception {
         CityDesignQueue queue = queue();
         writeRegistry("run_walls", seed("city_1", "realm_a", "capital", 4000, 0));

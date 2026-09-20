@@ -747,6 +747,27 @@ final class CityStructureLandingFlowTest {
     }
 
     @Test
+    void interCityExitProducesRealD5GateWithoutChangingDistrictBoundary() throws Exception {
+        JsonObject anchors=JsonParser.parseString("""
+                {"anchors":[{"plannedFootprint":{"minX":0,"minZ":0,"maxX":15,"maxZ":15}}],"streetBands":[]}
+                """).getAsJsonObject();
+        anchors.getAsJsonArray("streetBands").add(com.rinsing.geomantia.systems.city.application.intercity.CityExitRoadPlanner.road(
+                "main","local",new BlockPoint(20,10),new BlockPoint(50,10)));
+        var walls=new CityWallReservationPlanner();var review=fixture().review();var coverage=new BlockBounds(-256,-256,512,512);
+        var initial=walls.plan(review,anchors,24,4,coverage);
+        var network=new com.rinsing.geomantia.systems.city.application.intercity.InterCityNetwork().plan(List.of(
+                new com.rinsing.geomantia.systems.city.application.intercity.InterCityNetwork.City("a","r",new BlockPoint(0,0)),
+                new com.rinsing.geomantia.systems.city.application.intercity.InterCityNetwork.City("b","r",new BlockPoint(400,0))));
+        var exits=new com.rinsing.geomantia.systems.city.application.intercity.CityExitRoadPlanner().plan("a",anchors,initial,coverage,network);
+        assertEquals(1,exits.getAsJsonArray("portals").size(),exits.toString());
+        var derived=com.rinsing.geomantia.systems.city.application.intercity.CityExitRoadPlanner.append(anchors,exits);
+        var withExit=walls.plan(review,derived,24,4,coverage);
+        assertEquals(initial.get("wallLine"),withExit.get("wallLine"));
+        assertFalse(withExit.getAsJsonArray("gateSlots").isEmpty());
+        assertEquals(anchors,com.rinsing.geomantia.systems.city.application.intercity.CityExitRoadPlanner.withoutDerived(derived));
+    }
+
+    @Test
     void cornerTowerMovesAlongWallWithoutChangingRoadOrBoundary() throws Exception {
         JsonObject anchors = JsonParser.parseString("""
                 {"anchors":[{"plannedFootprint":{"minX":0,"minZ":0,"maxX":15,"maxZ":15}}],

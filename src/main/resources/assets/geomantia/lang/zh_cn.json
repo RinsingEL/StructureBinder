@@ -25,6 +25,7 @@
   "gui.geomantia.adventurer_map.status.pending": "排队中",
   "gui.geomantia.adventurer_map.status.planned": "已规划",
   "gui.geomantia.adventurer_map.status.waiting_for_agent": "等待 Agent",
+  "gui.geomantia.adventurer_map.status.design_saved": "设计已保存，等待继续",
   "gui.geomantia.adventurer_map.status.post_d4_running": "D4 后自动编译中",
   "gui.geomantia.adventurer_map.status.waiting_for_generation": "等待生成",
   "gui.geomantia.adventurer_map.status.needs_agent": "需要 Agent 处理",

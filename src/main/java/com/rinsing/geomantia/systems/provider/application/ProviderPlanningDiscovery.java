@@ -117,6 +117,18 @@ public final class ProviderPlanningDiscovery {
             String status = string(queue, "status");
             String cityId = string(queue, "currentCitySeedId");
             String nextAction = string(queue, "nextAction");
+            // A saved FINAL may precede the queue's persisted status update. Never prepare D4 again.
+            if (Set.of("waiting_for_agent", "design_saved").contains(status) && !cityId.isBlank()
+                    && com.rinsing.geomantia.systems.city.application.queue.CityDesignQueue.hasSavedDesign(runDirectory, cityId)) {
+                if (Files.isRegularFile(runDirectory.resolve("automation/post_d4").resolve(cityId + ".json"))) {
+                    return step(Stage.QUEUE_REFRESH, runId, "", cityId, "city_design_queue_refresh",
+                            queue.deepCopy(), runDirectory, List.of());
+                }
+                status = "design_saved";
+                nextAction = "city_post_d4_auto_compile_retry";
+                queue.addProperty("status", status);
+                queue.addProperty("nextAction", nextAction);
+            }
             boolean blueprintRevision = "needs_agent".equals(status)
                     && ("city_submit_d4_blueprint".equals(nextAction) || com.rinsing.geomantia.systems.city.application.CityD4Workflow.TOOLS.contains(nextAction));
             if ((CITY_ACTIONABLE.contains(status) || blueprintRevision)

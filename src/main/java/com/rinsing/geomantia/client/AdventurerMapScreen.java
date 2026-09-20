@@ -267,12 +267,14 @@ public final class AdventurerMapScreen extends Screen {
                 graphics.fill(left, y, right, y + 1, MAP_GRID);
         }
 
+        if (!coarseMap.available()) {
         int initialRadiusBlocks = Math.max(1, snapshot.initialActivityRadiusBlocks());
         int initialLeft = transform.screenX(-initialRadiusBlocks);
         int initialTop = transform.screenY(-initialRadiusBlocks);
         int initialRight = transform.screenX(initialRadiusBlocks);
         int initialBottom = transform.screenY(initialRadiusBlocks);
         drawOutline(graphics, initialLeft, initialTop, initialRight, initialBottom, 0xFF5A8F69);
+        }
         graphics.fill(centerX - 2, centerY, centerX + 3, centerY + 1, 0xFFD7D7D7);
         graphics.fill(centerX, centerY - 2, centerX + 1, centerY + 3, 0xFFD7D7D7);
         graphics.drawString(font, Component.literal("0,0"), centerX + 4, centerY + 4, TEXT_MUTED, false);
@@ -478,7 +480,7 @@ public final class AdventurerMapScreen extends Screen {
             case "waiting_for_generation" -> 0xFF71A8E0;
             case "needs_agent", "blocked_by_program" -> STATUS_ERROR;
             case "post_d4_running" -> 0xFFB78BE2;
-            case "waiting_for_agent" -> STATUS_WARNING;
+            case "waiting_for_agent", "design_saved" -> STATUS_WARNING;
             default -> "capital".equals(node.role()) ? 0xFFD89A52 : 0xFFB7B7B7;
         };
     }
@@ -487,7 +489,7 @@ public final class AdventurerMapScreen extends Screen {
         return switch (status) {
             case "completed", "waiting_for_generation" -> STATUS_GOOD;
             case "error", "needs_agent", "failed", "blocked_by_program" -> STATUS_ERROR;
-            case "running", "pending", "waiting_for_agent", "post_d4_running" -> STATUS_WARNING;
+            case "running", "pending", "waiting_for_agent", "design_saved", "post_d4_running" -> STATUS_WARNING;
             default -> TEXT_MUTED;
         };
     }

@@ -471,7 +471,12 @@ public final class CityStructureMaterializationPlanner {
         }
     }
 
-    public record StructureTask(String anchorId, BlockPoint anchorBlock) {
+    public record StructureTask(String anchorId, BlockPoint anchorBlock, String templateRef,
+                                String templateHash, BlockBounds footprint, String rotation, String mirror) {
+        public StructureTask(String anchorId, BlockPoint anchorBlock) {
+            this(anchorId, anchorBlock, "", "", new BlockBounds(anchorBlock.x(), anchorBlock.z(),
+                    anchorBlock.x(), anchorBlock.z()), "NONE", "NONE");
+        }
     }
 
     private record TemplateTask(String anchorId, String templateId, String templateRef, String templateHash,
@@ -546,7 +551,7 @@ public final class CityStructureMaterializationPlanner {
         }
 
         StructureTask asStatusTask() {
-            return new StructureTask(anchorId, anchorBlock);
+            return new StructureTask(anchorId, anchorBlock, templateRef, templateHash, footprint, rotation, mirror);
         }
 
         JsonObject asPlanJson(ChunkStatusResult status) {
@@ -616,11 +621,12 @@ public final class CityStructureMaterializationPlanner {
             JsonObject waitingSummary = structureMaterializationTrace.has("waitingSummary")
                     && structureMaterializationTrace.get("waitingSummary").isJsonObject()
                     ? structureMaterializationTrace.getAsJsonObject("waitingSummary") : null;
-            if (waitingSummary != null && waitingSummary.has("WAITING_FOR_WORLDGEN")
+            if (passed && waitingSummary != null && waitingSummary.has("WAITING_FOR_WORLDGEN")
                     && waitingSummary.get("WAITING_FOR_WORLDGEN").getAsInt() > 0) {
                 result.addProperty("status", "waiting_for_worldgen");
                 result.addProperty("reasonCode", "WAITING_FOR_WORLDGEN");
             }
+            if (!passed) result.addProperty("status", "failed");
             if (structureMaterializationPlan.has("plannedWorldgenStructures")) {
                 result.add("plannedWorldgenStructures",
                         structureMaterializationPlan.getAsJsonArray("plannedWorldgenStructures").deepCopy());
