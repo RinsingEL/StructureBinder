@@ -80,13 +80,26 @@ def validate(directory: Path, registry=None, *, save=True):
     visible = Counter(b["name"] for b in grid.values() if b["name"] not in AIR)
     if not visible:
         errors.append("Empty structure")
+    agriculture=None
+    if "agriculture" in meta:
+        dry=[];unsupported=[];plant_count=0
+        for (x,y,z),b in grid.items():
+            if b["name"] not in {"minecraft:wheat","minecraft:carrots","minecraft:potatoes","minecraft:beetroots"}:continue
+            plant_count+=1
+            if grid.get((x,y-1,z),{}).get("name")!="minecraft:farmland":unsupported.append([x,y,z])
+            if not any(grid.get((wx,wy,wz),{}).get("name")=="minecraft:water"
+                       for wx in range(x-4,x+5) for wy in (y-1,y) for wz in range(z-4,z+5)):dry.append([x,y,z])
+        if unsupported:errors.append(f"Crops without farmland: {unsupported[:12]}")
+        if dry:errors.append(f"Irrigated farm has dry crop cells: {dry[:12]}")
+        agriculture=dict(planted_cells=plant_count,missing_soil=unsupported,dry_cells=dry,
+                         scope="最终 NBT 的四类原版作物、耕地和同层/高一层 4 格水源核对；不模拟光照或生长 tick")
     navigation = audit(data,meta,registry) if registry is not None else {"passed":False,"unsupported":"registry missing"}
     if not navigation["passed"]:
         warnings.append(f"Offline walking needs review: {navigation}")
     report = dict(schema="structure-studio.validation.v1", nbt_sha256=data["sha256"], navigation=navigation,
                   passed=not errors, errors=errors, warnings=warnings, size=size,
                   visible_blocks=sum(visible.values()), explicit_air=sum(1 for b in grid.values() if b["name"] in AIR),
-                  palette=len(data["palette"]), block_entities=sum("nbt" in b for b in data["blocks"]),
+                  palette=len(data["palette"]), block_entities=sum("nbt" in b for b in data["blocks"]),agriculture=agriculture,
                   materials=dict(visible.most_common()),
                   scope="NBT、方块状态、门床配对、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。")
     if save:

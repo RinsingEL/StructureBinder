@@ -1,0 +1,259 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "WT-01-v01",
+  "name": "蓝帆水门 · 客运码头",
+  "family": "WT-01",
+  "civilization": "水网商邦",
+  "planning_role": "planning_role.key",
+  "size": [
+    45,
+    23,
+    43
+  ],
+  "terrain": {
+    "选址": "平缓河岸或避风内港，岸线沿 X，水域位于 +Z；仅用于足够深、宽的可停靠水面",
+    "高程": "陆侧与木码头脚底 Y=4；参考水面 Y=3；桩脚到 Y=0，需要浅岸河床继续承接",
+    "功能": "陆侧售票候船，侧翼站务与行李；中央登船廊通往两条栈桥；右岸小吊机处理行包",
+    "支撑": "石砌岸台只到 Z=20；水侧保持桩架、横梁和码头开口，不填平河道",
+    "保留空间": "两条栈桥之间及 +Z 端为航行与靠泊空间，不能塞入沿街填充池"
+  },
+  "rooms": [
+    {
+      "id": "waiting",
+      "name": "拱廊候船厅",
+      "min": [
+        6,
+        4,
+        6
+      ],
+      "max": [
+        24,
+        10,
+        16
+      ],
+      "purpose": "售票、行李寄存、双向候船座位和面水拱廊"
+    },
+    {
+      "id": "baggage",
+      "name": "行李间",
+      "min": [
+        29,
+        4,
+        6
+      ],
+      "max": [
+        33,
+        9,
+        15
+      ],
+      "purpose": "暂存、搬运与遮雨交接"
+    },
+    {
+      "id": "harbormaster",
+      "name": "站务室",
+      "min": [
+        35,
+        4,
+        6
+      ],
+      "max": [
+        38,
+        9,
+        15
+      ],
+      "purpose": "班次记录、档案与值守"
+    },
+    {
+      "id": "promenade",
+      "name": "登船遮雨廊",
+      "min": [
+        6,
+        4,
+        21
+      ],
+      "max": [
+        35,
+        7,
+        25
+      ],
+      "purpose": "陆水衔接与两条栈桥分流"
+    }
+  ],
+  "points": [
+    {
+      "id": "land",
+      "kind": "entrance",
+      "pos": [
+        15,
+        4,
+        4
+      ],
+      "name": "陆侧入口",
+      "facing": "north"
+    },
+    {
+      "id": "ticket",
+      "kind": "work",
+      "pos": [
+        7,
+        4,
+        11
+      ],
+      "name": "水路售票",
+      "approach": [
+        7,
+        4,
+        10
+      ]
+    },
+    {
+      "id": "register",
+      "kind": "work",
+      "pos": [
+        36,
+        4,
+        7
+      ],
+      "name": "船班登记",
+      "approach": [
+        36,
+        4,
+        8
+      ]
+    },
+    {
+      "id": "luggage",
+      "kind": "storage",
+      "pos": [
+        31,
+        4,
+        13
+      ],
+      "name": "行李架",
+      "approach": [
+        31,
+        4,
+        12
+      ]
+    },
+    {
+      "id": "crane",
+      "kind": "work",
+      "pos": [
+        40,
+        4,
+        18
+      ],
+      "name": "行包小吊机",
+      "approach": [
+        39,
+        4,
+        18
+      ]
+    },
+    {
+      "id": "west_pier",
+      "kind": "circulation",
+      "pos": [
+        9,
+        4,
+        37
+      ],
+      "name": "西栈桥",
+      "look_at": [
+        9,
+        4,
+        27
+      ]
+    },
+    {
+      "id": "east_pier",
+      "kind": "circulation",
+      "pos": [
+        32,
+        4,
+        37
+      ],
+      "name": "东栈桥",
+      "look_at": [
+        32,
+        4,
+        27
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        15,
+        4,
+        2
+      ],
+      "direction": "north",
+      "clearance": [
+        5,
+        4
+      ],
+      "note": "岸侧街面需同高程"
+    },
+    {
+      "kind": "boat",
+      "pos": [
+        13,
+        3,
+        31
+      ],
+      "direction": "east",
+      "clearance": [
+        12,
+        5
+      ],
+      "note": "参考水面 Y=3；泊位在双栈桥之间，外部交通另行接入"
+    },
+    {
+      "kind": "boat",
+      "pos": [
+        28,
+        3,
+        31
+      ],
+      "direction": "west",
+      "clearance": [
+        12,
+        5
+      ],
+      "note": "只标记靠泊开口与水侧净空，不创建运输逻辑"
+    }
+  ],
+  "design_notes": [
+    "浅色拱廊、蓝绿檐口与橙陶屋面围合面向水面的候船庭院。",
+    "两条桩架栈桥之间留出水道，蓝白帆布廊遮雨；岸侧石基与水侧木桩有明确分界。"
+  ],
+  "differences": [
+    "双栈桥浅岸客运码头；中部候船，东翼行李站务，临水遮雨连廊。"
+  ],
+  "floors": [
+    {
+      "name": "候船厅与临水栈桥",
+      "y": 3,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 11,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "preview_context": {
+    "kind": "shore",
+    "shore_z": 21,
+    "land_surface_y": 4,
+    "water_surface_y": 3,
+    "bed_y": -1,
+    "padding": 5
+  },
+  "source": "tools/structure_studio/studio/transport.py:passenger_quay",
+  "nbt_sha256": "42610c292fd451287cc5d99d0512334e4d98213fa0cf6612f4a953224a1ff99b"
+}

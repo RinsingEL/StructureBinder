@@ -1,0 +1,30 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "WT-01-v01",
+  "nbt_sha256": "42610c292fd451287cc5d99d0512334e4d98213fa0cf6612f4a953224a1ff99b",
+  "author_sha256": "a8abda5feb6e117b8469b0f6745ca958c86d0e62d9a585595100740c460c15c9",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-waiting",
+    "room-baggage",
+    "room-harbormaster",
+    "room-promenade",
+    "point-ticket",
+    "point-register",
+    "point-luggage",
+    "point-crane",
+    "point-west_pier",
+    "point-east_pier",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

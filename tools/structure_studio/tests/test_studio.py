@@ -90,5 +90,19 @@ class StudioTest(unittest.TestCase):
         data=m.export(self.path,self.registry)
         self.assertIn("work",audit(data,m.meta,self.registry)["unreachable"])
 
+    def test_irrigation_uses_final_nbt_not_author_claim(self):
+        m=Model("T","crop",(12,4,12))
+        m.meta["agriculture"]={"hydration":"author claims irrigated"}
+        m.set(6,0,6,"farmland[moisture=7]").set(6,1,6,"wheat[age=7]")
+        m.set(2,0,2,"water[level=0]")
+        m.export(self.path,self.registry)
+        self.assertTrue(validate(self.path,self.registry)["passed"])
+        m.set(2,0,2,"dirt")
+        m.export(self.path,self.registry)
+        self.assertFalse(validate(self.path,self.registry)["passed"])
+        m.set(2,0,2,"water[level=0]").set(6,0,6,"dirt")
+        m.export(self.path,self.registry)
+        self.assertTrue(validate(self.path,self.registry)["agriculture"]["missing_soil"])
+
 
 if __name__=="__main__":unittest.main()

@@ -1,6 +1,7 @@
 import {BlockDefinition, BlockModel, BlockState, NbtTag, Structure, StructureRenderer, TextureAtlas} from 'deepslate';
 import {mat4, vec4} from 'gl-matrix';
 import './style.css';
+import {createSite} from './site.js';
 
 const $ = id => document.getElementById(id);
 const canvas = $('scene');
@@ -8,6 +9,7 @@ const gl = canvas.getContext('webgl', {antialias: true, preserveDrawingBuffer: t
 let renderer, resources, current, rows = [], visible, loadingGeneration = 0;
 let yaw = .66, pitch = .5, distance = 40, target = [0, 0, 0], eye = [0, 0, 0], walk = false;
 let markers = false, roof = false, floorMin = 0, clip = [1, 1, 1], selectedPreset = 'front';
+let terrainRenderer,site,context=false;
 const telemetry = {ready: false, renderErrors: [], missingTextures: [], source: 'serialized NBT'};
 const view = mat4.create();
 const projection = mat4.create();
@@ -84,7 +86,9 @@ async function load(id) {
   $('title').textContent = data.author.name;
   $('eyebrow').textContent = `${data.author.id} / ${data.author.civilization}`;
   const count = data.blocks.filter(b => !['minecraft:air','minecraft:cave_air','minecraft:void_air'].includes(data.palette[b.state].name)).length;
-  $('subtitle').textContent = `${data.size.join(' × ')} 格 · ${count.toLocaleString()} 个方块 · ${data.author.planning_role.replace('planning_role.', '') === 'fill' ? '填充结构' : '明确选用结构'}`;
+  const role=data.author.planning_role.replace('planning_role.','');
+  $('subtitle').textContent = `${data.size.join(' × ')} 格 · ${count.toLocaleString()} 个方块 · ${role==='fill'?'填充结构':['key','anchor'].includes(role)?'核心结构':'明确选用结构'}`;
+  context=false;site=null;$('context').classList.remove('selected');$('context').disabled=!data.author.preview_context;$('axis').textContent='X 东 · Y 上 · Z 南';
   $('floor').replaceChildren(new Option('全部楼层',''));
   for (const [i, floor] of (data.author.floors ?? []).entries()) $('floor').append(new Option(floor.name,String(i)));
   $('rooms').replaceChildren();
@@ -172,6 +176,10 @@ function draw() {
   }
   gl.clearColor(.105,.15,.19,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
   renderer.drawStructure(view);
+  if(context&&terrainRenderer&&site) {
+    const siteView=mat4.clone(view);mat4.translate(siteView,siteView,site.origin);
+    terrainRenderer.setViewport(0,0,canvas.width,canvas.height);terrainRenderer.drawStructure(siteView);
+  }
   mat4.copy(projection,renderer.projection());
   $('labels').replaceChildren();
   if(markers) for(const point of current.author.points) {
@@ -182,6 +190,16 @@ function draw() {
     el.style.left=`${(p[0]/p[3]+1)*.5*canvas.clientWidth}px`;el.style.top=`${(1-p[1]/p[3])*.5*canvas.clientHeight}px`;
     el.onclick=()=>enterWalk(point);$('labels').append(el);
   }
+}
+function showContext(value) {
+  if(value&&!current.author.preview_context)return;
+  context=value;$('context').classList.toggle('selected',value);
+  if(value&&!site) {
+    site=createSite(current);
+    if(!terrainRenderer)terrainRenderer=new StudioRenderer(gl,site.structure,resources,{useInvisibleBlockBuffer:false});
+    else terrainRenderer.setStructure(site.structure);
+  }
+  $('axis').textContent=value?'地形为适用条件示意 · 不写入 NBT':'X 东 · Y 上 · Z 南';draw();
 }
 function enterWalk(point) {
   reset(false);updateGeometry();walk=true;$('walk').classList.add('selected');
@@ -215,6 +233,7 @@ window.addEventListener('keydown',e=>{
 for(const button of document.querySelectorAll('[data-preset]'))button.onclick=()=>preset(button.dataset.preset);
 for(const [i,a] of ['x','y','z'].entries())$(`clip-${a}`).oninput=e=>{clip[i]=Number(e.target.value);$(`value-${a}`).textContent=clip[i];updateGeometry();};
 $('roof').onclick=()=>{roof=!roof;$('roof').classList.toggle('selected',roof);updateGeometry();};
+$('context').onclick=()=>showContext(!context);
 $('floor').onchange=()=>{const value=$('floor').value;reset(false);$('floor').value=value;if(value!==''){const f=current.author.floors[Number(value)];floorMin=f.y;clip[1]=f.max_y;$('clip-y').value=clip[1];$('value-y').textContent=clip[1];}updateGeometry();};
 $('markers').onclick=()=>{markers=!markers;$('markers').classList.toggle('selected',markers);draw();};
 $('walk').onclick=()=>walk?preset('front'):enterWalk();
@@ -224,7 +243,7 @@ $('save').onclick=()=>{draw();const a=document.createElement('a');a.download=`${
 new ResizeObserver(resize).observe(canvas);
 
 // Read-only automation surface, also used by the screenshot acceptance runner.
-window.studio={telemetry,load,preset,reset,draw,focusRoom,enterWalk,
+window.studio={telemetry,load,preset,reset,draw,focusRoom,enterWalk,showContext,
   get model(){return current;},setMarkers(value){markers=value;draw();},
   slice(axis,value){clip[['x','y','z'].indexOf(axis)]=value;updateGeometry();},
   hideRoof(){roof=true;updateGeometry();},floor(index){$('floor').value=String(index);$('floor').onchange();},

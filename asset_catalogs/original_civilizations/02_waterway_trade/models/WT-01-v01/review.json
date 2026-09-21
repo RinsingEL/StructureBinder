@@ -1,0 +1,36 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "WT-01-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "42610c292fd451287cc5d99d0512334e4d98213fa0cf6612f4a953224a1ff99b",
+  "author_sha256": "a8abda5feb6e117b8469b0f6745ca958c86d0e62d9a585595100740c460c15c9",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/floor-1.png",
+    "previews/room-waiting.png",
+    "previews/room-baggage.png",
+    "previews/room-harbormaster.png",
+    "previews/room-promenade.png",
+    "previews/point-register.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "外观": "浅色拱廊、红绿分体坡屋顶、蓝白遮阳棚与双木栈桥形成水网码头身份。",
+    "内饰": "候船座椅、售票台、分隔行李房与站务室完成；滨水长廊贯通两处登船栈桥。",
+    "标记与通路": "陆侧入口、售票、登记、行李、吊机与两个泊位均已标记；最终 NBT 的通路初筛通过。",
+    "环境": "岸上石台与水侧木桩分开建模，在作者定义的岸线、水面和浅水床条件示意中检查。"
+  },
+  "revisions": [
+    "调整陆侧立柱，避开主入口。",
+    "系缆外观改为低矮石按钮，保持泊位开口。",
+    "登记讲台降到正常操作高度。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "手动吊机与泊位仅表达功能空间，未接入运输或吊运机制。"
+  ]
+}

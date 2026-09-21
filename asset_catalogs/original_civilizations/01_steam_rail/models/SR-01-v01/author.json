@@ -1,0 +1,307 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "SR-01-v01",
+  "name": "铜钟总站 · 客货终到站",
+  "family": "SR-01",
+  "civilization": "蒸汽铁路文明",
+  "planning_role": "planning_role.key",
+  "size": [
+    55,
+    29,
+    49
+  ],
+  "terrain": {
+    "选址": "有实际铁路终到需求的平缓交通节点；线路仅从 +Z 侧接入",
+    "入口高程": "站前地面脚底 Y=1，站房与站台 Y=2；站前宽阶衔接",
+    "运输": "双股道终到线；左侧售票候车，右侧行包和货运院，旅客不穿越运行股道",
+    "接地": "实体站房石基与站台承台；整平范围限所建站坪",
+    "保留空间": "+Z 两条线路净空、-Z 站前步行、东侧货运院；不放入无线路支撑的普通住宅地块"
+  },
+  "rooms": [
+    {
+      "id": "hall",
+      "name": "主候车大厅",
+      "min": [
+        20,
+        2,
+        6
+      ],
+      "max": [
+        28,
+        10,
+        20
+      ],
+      "purpose": "站前入口、候车、两翼分流与站台横向联系"
+    },
+    {
+      "id": "ticket",
+      "name": "售票与票务间",
+      "min": [
+        5,
+        2,
+        6
+      ],
+      "max": [
+        17,
+        7,
+        19
+      ],
+      "purpose": "售票柜台、账务、票据储存与等候"
+    },
+    {
+      "id": "baggage",
+      "name": "行李寄存与理货",
+      "min": [
+        31,
+        2,
+        6
+      ],
+      "max": [
+        37,
+        7,
+        19
+      ],
+      "purpose": "称量、行李存放、理货桌"
+    },
+    {
+      "id": "office",
+      "name": "站务办公室",
+      "min": [
+        39,
+        2,
+        6
+      ],
+      "max": [
+        42,
+        7,
+        19
+      ],
+      "purpose": "值班、调度记录、档案"
+    },
+    {
+      "id": "freight",
+      "name": "东侧货运雨棚",
+      "min": [
+        46,
+        2,
+        7
+      ],
+      "max": [
+        51,
+        6,
+        20
+      ],
+      "purpose": "陆侧运货、短时堆放与装卸"
+    },
+    {
+      "id": "platforms",
+      "name": "玻璃棚站台",
+      "min": [
+        4,
+        2,
+        23
+      ],
+      "max": [
+        44,
+        8,
+        46
+      ],
+      "purpose": "三座连续站台与双股道终到端；连接点单独标记"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        24,
+        2,
+        4
+      ],
+      "name": "站前主入口",
+      "facing": "north"
+    },
+    {
+      "id": "cargo",
+      "kind": "entrance",
+      "pos": [
+        50,
+        2,
+        15
+      ],
+      "name": "陆侧货运入口",
+      "facing": "east"
+    },
+    {
+      "id": "ticket_1",
+      "kind": "work",
+      "pos": [
+        14,
+        2,
+        9
+      ],
+      "name": "售票柜台",
+      "approach": [
+        15,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "ticket_staff",
+      "kind": "work",
+      "pos": [
+        14,
+        2,
+        12
+      ],
+      "name": "票务工作人员",
+      "approach": [
+        13,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "scale",
+      "kind": "work",
+      "pos": [
+        36,
+        2,
+        12
+      ],
+      "name": "行包称量",
+      "approach": [
+        37,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "dispatcher",
+      "kind": "work",
+      "pos": [
+        41,
+        2,
+        8
+      ],
+      "name": "站务桌",
+      "approach": [
+        41,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "platform_1",
+      "kind": "circulation",
+      "pos": [
+        12,
+        2,
+        38
+      ],
+      "name": "一站台",
+      "look_at": [
+        17,
+        2,
+        38
+      ]
+    },
+    {
+      "id": "platform_2",
+      "kind": "circulation",
+      "pos": [
+        22,
+        2,
+        38
+      ],
+      "name": "二站台",
+      "look_at": [
+        17,
+        2,
+        38
+      ]
+    },
+    {
+      "id": "platform_3",
+      "kind": "circulation",
+      "pos": [
+        39,
+        2,
+        38
+      ],
+      "name": "三站台",
+      "look_at": [
+        35,
+        2,
+        38
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "rail",
+      "pos": [
+        17,
+        1,
+        48
+      ],
+      "direction": "south",
+      "clearance": [
+        3,
+        6
+      ],
+      "note": "本体股道止于 Z=23；外接线路需同高程与轴线"
+    },
+    {
+      "kind": "rail",
+      "pos": [
+        35,
+        1,
+        48
+      ],
+      "direction": "south",
+      "clearance": [
+        3,
+        6
+      ],
+      "note": "本体股道止于 Z=23；外接线路需同高程与轴线"
+    },
+    {
+      "kind": "pedestrian",
+      "pos": [
+        24,
+        1,
+        1
+      ],
+      "direction": "north",
+      "clearance": [
+        5,
+        4
+      ],
+      "note": "站前台阶衔接街面"
+    }
+  ],
+  "design_notes": [
+    "砖石侧翼围合挑高售票大厅，铜钟塔标示主入口；铆接感深色拱肋托起玻璃列车棚。",
+    "股道在站房后端终止；旅客沿站台与横向前厅活动，货物经东侧独立装卸院。"
+  ],
+  "differences": [
+    "终到站：两条直线股道、三个连续站台、前端横向连廊、独立货运院。"
+  ],
+  "floors": [
+    {
+      "name": "站房 · 站台与货运院",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 9,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/transport.py:steam_station",
+  "nbt_sha256": "67fc2df3f72f5acd0058084acaed880ed723da0b8534f0e2e642211f472a7a26"
+}

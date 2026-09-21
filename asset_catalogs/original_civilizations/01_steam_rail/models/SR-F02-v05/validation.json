@@ -1,0 +1,48 @@
+{
+  "schema": "structure-studio.validation.v1",
+  "nbt_sha256": "89e9fce28c8d8d23c3bd13047fd08fdd01c979fcb6563647d762dd2c899776f0",
+  "navigation": {
+    "passed": true,
+    "unreachable": [],
+    "nodes": 2833,
+    "highest_standing_y": 2,
+    "truncated": false,
+    "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "size": [
+    27,
+    10,
+    31
+  ],
+  "visible_blocks": 1952,
+  "explicit_air": 3133,
+  "palette": 20,
+  "block_entities": 0,
+  "agriculture": {
+    "planted_cells": 416,
+    "missing_soil": [],
+    "dry_cells": [],
+    "scope": "最终 NBT 的四类原版作物、耕地和同层/高一层 4 格水源核对；不模拟光照或生长 tick"
+  },
+  "materials": {
+    "minecraft:dirt": 725,
+    "minecraft:farmland": 416,
+    "minecraft:gravel": 207,
+    "minecraft:carrots": 144,
+    "minecraft:potatoes": 140,
+    "minecraft:wheat": 132,
+    "minecraft:water": 68,
+    "minecraft:spruce_slab": 63,
+    "minecraft:mossy_cobblestone": 34,
+    "minecraft:spruce_planks": 8,
+    "minecraft:spruce_log": 8,
+    "minecraft:cobblestone_stairs": 3,
+    "minecraft:lantern": 2,
+    "minecraft:composter": 1,
+    "minecraft:barrel": 1
+  },
+  "scope": "NBT、方块状态、门床配对、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+}

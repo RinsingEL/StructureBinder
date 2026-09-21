@@ -34,6 +34,7 @@ try {
   const points=await page.evaluate(()=>window.studio.model.author.points.filter(p=>p.approach||p.kind==='circulation'));
   for(const point of points)await shot(`point-${point.id}`,p=>window.studio.enterWalk(p),point);
   await shot('annotations',()=>{window.studio.reset();window.studio.setMarkers(true);});
+  if(await page.evaluate(()=>Boolean(window.studio.model.author.preview_context)))await shot('site-context',()=>{window.studio.reset();window.studio.setMarkers(false);window.studio.showContext(true);});
   const final=await page.evaluate(()=>window.studio.telemetry);
   if(final.renderErrors.length||final.missingTextures.length||errors.length)throw new Error(JSON.stringify({final,errors}));
   await writeFile(path.join(out,'capture.json'),JSON.stringify({schema:'structure-studio.capture.v1',id,nbt_sha256:state.sha256,author_sha256:state.authorSha256,shots,render_errors:errors,missing_textures:final.missingTextures,visual_review:'pending'},null,2)+'\n');

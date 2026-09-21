@@ -1,0 +1,28 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "SR-F02-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "fcf91bfa406e70501a2c06cc123231ec0f6fa0bedf03ab676bbebcc00546d1e1",
+  "author_sha256": "bb121f92356b324e5b477ae831fceaf752d7348f7318e24f77ead6e2073f0e1f",
+  "evidence": [
+    "previews/front.png",
+    "previews/top.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "布局差异": "四块短矩形菜畦围绕十字作业道；每畦独立取水点与不同作物",
+    "生产细节": "作物、开放灌溉沟、田埂、田头台阶、堆肥与工具点完成；有空间使用差异。",
+    "标记与通路": "入口和作业点位置对应实际田埂；已标站位的最终 NBT 通路初筛通过。",
+    "农业": "最终 NBT 中每株作物都有耕地，并覆盖在同层或上方一层的 4 格范围水源内。",
+    "环境": "已观察适用地形示意；仅写入田块实际轮廓，形状外空间保留给周围地形。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "固定独立模板田块；未代替 Landscape 大田生成，未模拟作物光照与随机刻。"
+  ]
+}

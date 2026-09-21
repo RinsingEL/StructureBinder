@@ -1,0 +1,39 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "SR-01-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "67fc2df3f72f5acd0058084acaed880ed723da0b8534f0e2e642211f472a7a26",
+  "author_sha256": "e95327cc8617d0c5159fc61bd6661ee81a9f312f640938520ba47c0bd94905d0",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/floor-1.png",
+    "previews/room-hall.png",
+    "previews/room-ticket.png",
+    "previews/room-baggage.png",
+    "previews/room-office.png",
+    "previews/room-freight.png",
+    "previews/room-platforms.png",
+    "previews/point-ticket_1.png",
+    "previews/point-dispatcher.png",
+    "previews/point-platform_1.png"
+  ],
+  "checks": {
+    "外观": "砖石双翼、钟楼与蓝玻璃拱棚形成终到站轮廓，结构支撑清楚。",
+    "内饰": "候车座椅、售票台、行李柜台、独立站务间与货物堆放完成；站台保留通行宽度。",
+    "标记与通路": "入口、售票、行李、调度和三座站台都有作者点位；最终 NBT 的碰撞初筛通过。",
+    "环境": "适用于可整备的平缓铁路终到用地；线路与站前步行接口独立记录。"
+  },
+  "revisions": [
+    "增设售票翼后门，接通西侧站台。",
+    "讲台降到正常操作高度；悬灯链条接至实际屋顶。",
+    "终端灯改用无需红石供电的发光方块。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "轨道为可辨认的终到站几何；未实现列车、调度或跨结构线路连接。"
+  ]
+}

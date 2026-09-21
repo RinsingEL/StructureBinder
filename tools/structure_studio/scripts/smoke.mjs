@@ -29,5 +29,16 @@ try{
   assert.deepEqual(result.renderErrors,[]);assert.deepEqual(result.missingTextures,[]);assert.deepEqual(errors,[]);
   assert.equal((await fetch(`${base}/api/model?id=../../.git/config`)).status,404);
   assert.equal((await fetch(`${base}/resources/%2e%2e%2f%2e%2e%2fpackage.json`)).status,404);
-  console.log('PASS: search, floor/roof, markers, walk, PNG download, render telemetry, confined paths');
+  await page.evaluate(()=>window.studio.load('WT-01-v01'));
+  const before=await page.evaluate(()=>({model:JSON.stringify(window.studio.model),image:document.querySelector('canvas').toDataURL()}));
+  await page.getByRole('button',{name:'地形示意',exact:true}).click();
+  const after=await page.evaluate(()=>({model:JSON.stringify(window.studio.model),image:document.querySelector('canvas').toDataURL()}));
+  assert.equal(before.model,after.model);assert.notEqual(before.image,after.image);
+  assert.match(await page.locator('#axis').innerText(),/不写入 NBT/);
+  await page.evaluate(()=>window.studio.load('SR-F01-v01'));
+  assert.ok(await page.locator('#context').isDisabled());
+  assert.match(await page.locator('#axis').innerText(),/X 东/);
+  const end=await page.evaluate(()=>window.studio.telemetry);
+  assert.deepEqual(end.renderErrors,[]);assert.deepEqual(end.missingTextures,[]);assert.deepEqual(errors,[]);
+  console.log('PASS: search, floor/roof, markers, walk, PNG download, render telemetry, confined paths, non-mutating terrain context');
 }finally{await browser.close();}

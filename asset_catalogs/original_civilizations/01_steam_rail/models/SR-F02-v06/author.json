@@ -1,0 +1,169 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "SR-F02-v06",
+  "name": "三台微坡梯田",
+  "family": "SR-F02",
+  "civilization": "蒸汽铁路文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    25,
+    10,
+    24
+  ],
+  "terrain": {
+    "选址": "铁路聚落郊区；需要土壤、足够光照与可维护的水源",
+    "地块": "三级一格高差，横向等高灌溉沟；田埂阶梯贯通三个作业面",
+    "地坪": "主要田埂脚底 Y=2；坡地版沿 +Z 每 7 格升高 1 格",
+    "落地方式": "固定模板田块；独立成品，非 Landscape 自然生长大田",
+    "边界": "仅填入实际田块与田埂范围；形状外空格不参与清地，凹口和收窄边界留给地形或邻地"
+  },
+  "rooms": [
+    {
+      "id": "field",
+      "name": "种植与作业面",
+      "min": [
+        1,
+        2,
+        1
+      ],
+      "max": [
+        23,
+        6,
+        22
+      ],
+      "purpose": "三级一格高差，横向等高灌溉沟；田埂阶梯贯通三个作业面"
+    }
+  ],
+  "points": [
+    {
+      "id": "gate",
+      "kind": "entrance",
+      "pos": [
+        20,
+        2,
+        1
+      ],
+      "name": "田头入口",
+      "facing": "north"
+    },
+    {
+      "id": "compost",
+      "kind": "work",
+      "pos": [
+        22,
+        4,
+        18
+      ],
+      "name": "堆肥与工具点",
+      "approach": [
+        21,
+        4,
+        18
+      ]
+    },
+    {
+      "id": "terrace_1",
+      "kind": "circulation",
+      "pos": [
+        19,
+        2,
+        5
+      ],
+      "name": "第 1 台田埂",
+      "look_at": [
+        12,
+        2,
+        5
+      ]
+    },
+    {
+      "id": "terrace_2",
+      "kind": "circulation",
+      "pos": [
+        19,
+        3,
+        12
+      ],
+      "name": "第 2 台田埂",
+      "look_at": [
+        12,
+        3,
+        12
+      ]
+    },
+    {
+      "id": "terrace_3",
+      "kind": "circulation",
+      "pos": [
+        19,
+        4,
+        19
+      ],
+      "name": "第 3 台田埂",
+      "look_at": [
+        12,
+        4,
+        19
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        20,
+        1,
+        0
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "田头台阶；外部道路需要衔接入口高程"
+    }
+  ],
+  "design_notes": [
+    "三级一格高差，横向等高灌溉沟；田埂阶梯贯通三个作业面",
+    "成熟作物与少量待收行表现连续生产；水沟保持开放维护，工具位置避开主要通行。"
+  ],
+  "differences": [
+    "三级一格高差，横向等高灌溉沟；田埂阶梯贯通三个作业面"
+  ],
+  "floors": [
+    {
+      "name": "作物与作业通路",
+      "y": 0,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": null,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/agriculture.py:farm(6)",
+  "preview_context": {
+    "kind": "slope",
+    "land_surface_y": 2,
+    "padding": 3,
+    "bed_y": -1,
+    "run": 7,
+    "rise": 1,
+    "slope_origin_z": 0
+  },
+  "agriculture": {
+    "crops": [
+      "wheat",
+      "carrots",
+      "beetroots"
+    ],
+    "planted_cells": 176,
+    "irrigation_sources": 48,
+    "layout": "三级一格高差，横向等高灌溉沟；田埂阶梯贯通三个作业面",
+    "hydration": "每个种植格已核对同高程或高一格、水平 4 格范围水源",
+    "template_mode": "independent_fixed_plot"
+  },
+  "nbt_sha256": "5f360563bc58832e00cb32f4f01d8756e141dba1e00aeb57b6b72139c10e6620"
+}
