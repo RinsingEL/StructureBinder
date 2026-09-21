@@ -1,0 +1,33 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "SR-F01-v05",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "65b8444c1ad13a030372a239debcbc924ab057946a3a43e91c38cb7126c1dc28",
+  "author_sha256": "88dc7bae36628eb0471b62f6b810db65b203c74ac48df8dadaa8711d257eea42",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/floor-1.png",
+    "previews/room-sales.png",
+    "previews/room-work.png",
+    "previews/annotations.png",
+    "previews/site-context.png",
+    "previews/point-repair.png"
+  ],
+  "checks": {
+    "形体与平面": "十一格宽的深铺面，前部接件、后部修补清洗及小休息角；屋顶天窗照向工作区。",
+    "内饰": "逐项查看 接件前店、修补后场，行业设备、陈列或生活家具对应实际用途。",
+    "标记与尺度": "已查看入口/工作标记、切层和代表性第一人称站位；最终 NBT 的已标工作站位全部通过碰撞通路初筛。",
+    "环境": "窄长街巷平地；单面进出，内部直达后场；已查看条件地形示意，模板外空间与未写入格保留。"
+  },
+  "revisions": [
+    "增添候坐与待取储物，将天窗对准后场。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "行业为原版方块表达和作者用途记录；不宣称已有商人交易或整合包生产配方。"
+  ]
+}

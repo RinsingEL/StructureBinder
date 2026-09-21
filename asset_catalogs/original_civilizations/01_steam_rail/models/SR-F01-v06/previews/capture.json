@@ -1,0 +1,28 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "SR-F01-v06",
+  "nbt_sha256": "77e2f5f59b4e1cc088440c5e206a4685f7f464dabe4a36bc7b69d2b18ddc88b5",
+  "author_sha256": "36d03fa0f02b1355c54a00ba38efa41d2b14e5dc97f15ef9777aa96f4ee7c362",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-sales",
+    "room-fitting",
+    "room-sewing",
+    "point-counter",
+    "point-fitting",
+    "point-loom_4",
+    "point-loom_7",
+    "point-cutting",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

@@ -7,10 +7,12 @@ from .server import CATALOG,TOOL
 from .transport import steam_station,passenger_quay
 from .agriculture import farm
 from .samples import bakery
+from .shops import shop
 from .validate import validate
 
 BUILDERS={"SR-01-v01":("01_steam_rail",steam_station),"WT-01-v01":("02_waterway_trade",passenger_quay)}
 BUILDERS["SR-F01-v01"]=("01_steam_rail",bakery)
+BUILDERS.update({f"SR-F01-v{i:02d}":("01_steam_rail",partial(shop,i)) for i in range(2,9)})
 BUILDERS.update({f"SR-F02-v{i:02d}":("01_steam_rail",partial(farm,i)) for i in range(1,7)})
 
 

@@ -1,0 +1,164 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "SR-F01-v02",
+  "name": "红罐杂货铺与后仓",
+  "family": "SR-F01",
+  "civilization": "蒸汽铁路文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    26,
+    21,
+    28
+  ],
+  "terrain": {
+    "选址": "铁路聚落步行商业街；需要对应行业的客源和补给",
+    "地块": "中等纵深临街平地，东侧保留进货窄道",
+    "地坪": "石基地坪 Y=1，室内脚底 Y=2；北侧台阶连接街面",
+    "保留空间": "保留门前步行与后勤开口；模板外和未写入的空格不参与清地"
+  },
+  "rooms": [
+    {
+      "id": "sales",
+      "name": "杂货店面",
+      "min": [
+        4,
+        2,
+        7
+      ],
+      "max": [
+        20,
+        6,
+        16
+      ],
+      "purpose": "分区陈列、柜台与顾客动线"
+    },
+    {
+      "id": "stock",
+      "name": "独立后仓",
+      "min": [
+        4,
+        2,
+        18
+      ],
+      "max": [
+        20,
+        6,
+        23
+      ],
+      "purpose": "粮食杂货储藏、包装与侧门进货"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        15,
+        2,
+        5
+      ],
+      "name": "店面入口",
+      "facing": "north"
+    },
+    {
+      "id": "counter",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        13
+      ],
+      "name": "收银与接待",
+      "approach": [
+        7,
+        2,
+        14
+      ]
+    },
+    {
+      "id": "delivery",
+      "kind": "entrance",
+      "pos": [
+        22,
+        2,
+        20
+      ],
+      "name": "后仓进货门",
+      "facing": "east"
+    },
+    {
+      "id": "packing",
+      "kind": "work",
+      "pos": [
+        5,
+        2,
+        19
+      ],
+      "name": "分拣包装台",
+      "approach": [
+        6,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "stove",
+      "kind": "work",
+      "pos": [
+        5,
+        2,
+        21
+      ],
+      "name": "后仓小炉",
+      "approach": [
+        5,
+        2,
+        20
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        15,
+        1,
+        4
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "前廊台阶需衔接街面"
+    }
+  ],
+  "design_notes": [
+    "宽店面、独立后仓与侧门进货；货架和粮袋岛台之间保留顾客通路。",
+    "与铁路街区共同使用砖石、木作、金属屋面和有支撑的店招。"
+  ],
+  "differences": [
+    "宽店面、独立后仓与侧门进货；货架和粮袋岛台之间保留顾客通路。"
+  ],
+  "floors": [
+    {
+      "name": "店面与工作区",
+      "y": 1,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/shops.py:shop(2)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 1,
+    "bed_y": -1,
+    "padding": 3
+  },
+  "nbt_sha256": "e5899109bbfba8dfbef2b48e7a338790d45bfafdbab13a9697e721d67af0b1a8"
+}

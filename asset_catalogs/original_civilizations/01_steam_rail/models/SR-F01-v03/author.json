@@ -1,0 +1,209 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "SR-F01-v03",
+  "name": "铁砧工具铺与维修小院",
+  "family": "SR-F01",
+  "civilization": "蒸汽铁路文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    34,
+    20,
+    29
+  ],
+  "terrain": {
+    "选址": "铁路聚落步行商业街；需要对应行业的客源和补给",
+    "地块": "宽地块；东侧开放维修与装卸院落",
+    "地坪": "石基地坪 Y=1，室内脚底 Y=2；北侧台阶连接街面",
+    "保留空间": "保留门前步行与后勤开口；模板外和未写入的空格不参与清地"
+  },
+  "rooms": [
+    {
+      "id": "sales",
+      "name": "工具店面",
+      "min": [
+        4,
+        2,
+        7
+      ],
+      "max": [
+        14,
+        6,
+        18
+      ],
+      "purpose": "展示、接待和修理订单"
+    },
+    {
+      "id": "parts",
+      "name": "零件后仓",
+      "min": [
+        4,
+        2,
+        20
+      ],
+      "max": [
+        14,
+        6,
+        24
+      ],
+      "purpose": "工具备件与待取物品"
+    },
+    {
+      "id": "repair",
+      "name": "有顶维修院",
+      "min": [
+        18,
+        2,
+        15
+      ],
+      "max": [
+        29,
+        5,
+        25
+      ],
+      "purpose": "铁砧、磨轮和工匠台，开放作业通路"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        10,
+        2,
+        5
+      ],
+      "name": "店面入口",
+      "facing": "north"
+    },
+    {
+      "id": "yard_gate",
+      "kind": "entrance",
+      "pos": [
+        24,
+        2,
+        5
+      ],
+      "name": "维修小院入口",
+      "facing": "north"
+    },
+    {
+      "id": "counter",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        12
+      ],
+      "name": "工具售卖与维修接单",
+      "approach": [
+        6,
+        2,
+        13
+      ]
+    },
+    {
+      "id": "stock_cutting",
+      "kind": "work",
+      "pos": [
+        19,
+        3,
+        11
+      ],
+      "name": "材料修整台",
+      "approach": [
+        21,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "anvil",
+      "kind": "work",
+      "pos": [
+        20,
+        2,
+        19
+      ],
+      "name": "铁砧修整",
+      "approach": [
+        20,
+        2,
+        18
+      ]
+    },
+    {
+      "id": "grinder",
+      "kind": "work",
+      "pos": [
+        24,
+        2,
+        19
+      ],
+      "name": "刃具磨轮",
+      "approach": [
+        24,
+        2,
+        18
+      ]
+    },
+    {
+      "id": "smithing",
+      "kind": "work",
+      "pos": [
+        28,
+        2,
+        21
+      ],
+      "name": "工具装配",
+      "approach": [
+        27,
+        2,
+        21
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        10,
+        1,
+        4
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "前廊台阶需衔接街面"
+    }
+  ],
+  "design_notes": [
+    "窄长店屋连接半露天维修院，室内零件后仓和独立工具工位分开。",
+    "与铁路街区共同使用砖石、木作、金属屋面和有支撑的店招。"
+  ],
+  "differences": [
+    "窄长店屋连接半露天维修院，室内零件后仓和独立工具工位分开。"
+  ],
+  "floors": [
+    {
+      "name": "店面与工作区",
+      "y": 1,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/shops.py:shop(3)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 1,
+    "bed_y": -1,
+    "padding": 3
+  },
+  "nbt_sha256": "7708976ce0c45c6741b4436e958c52c0c630417c3860670a3e620fede75cccbc"
+}

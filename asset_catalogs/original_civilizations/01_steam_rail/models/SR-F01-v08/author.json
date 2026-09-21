@@ -1,0 +1,263 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "SR-F01-v08",
+  "name": "药草铺与书房小宅",
+  "family": "SR-F01",
+  "civilization": "蒸汽铁路文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    24,
+    25,
+    28
+  ],
+  "terrain": {
+    "选址": "铁路聚落步行商业街；需要对应行业的客源和补给",
+    "地块": "纵深商住地块；上层住宅由室内楼梯连接",
+    "地坪": "石基地坪 Y=1，室内脚底 Y=2；北侧台阶连接街面",
+    "保留空间": "保留门前步行与后勤开口；模板外和未写入的空格不参与清地"
+  },
+  "rooms": [
+    {
+      "id": "sales",
+      "name": "药草前店",
+      "min": [
+        4,
+        2,
+        7
+      ],
+      "max": [
+        15,
+        6,
+        13
+      ],
+      "purpose": "药草与配方售卖"
+    },
+    {
+      "id": "mixing",
+      "name": "调配后场",
+      "min": [
+        4,
+        2,
+        15
+      ],
+      "max": [
+        15,
+        6,
+        22
+      ],
+      "purpose": "调配、水与原料存储"
+    },
+    {
+      "id": "living",
+      "name": "上层起居",
+      "min": [
+        4,
+        8,
+        7
+      ],
+      "max": [
+        15,
+        11,
+        13
+      ],
+      "purpose": "阅读与起居桌"
+    },
+    {
+      "id": "bedroom",
+      "name": "店主卧室",
+      "min": [
+        4,
+        8,
+        15
+      ],
+      "max": [
+        10,
+        11,
+        22
+      ],
+      "purpose": "床位与衣物存放"
+    },
+    {
+      "id": "study",
+      "name": "配方书房",
+      "min": [
+        12,
+        8,
+        15
+      ],
+      "max": [
+        15,
+        11,
+        22
+      ],
+      "purpose": "书架与配方台"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        12,
+        2,
+        5
+      ],
+      "name": "店面入口",
+      "facing": "north"
+    },
+    {
+      "id": "counter",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        11
+      ],
+      "name": "药草售卖",
+      "approach": [
+        7,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "brewing",
+      "kind": "work",
+      "pos": [
+        6,
+        3,
+        21
+      ],
+      "name": "药草调配台",
+      "approach": [
+        6,
+        2,
+        20
+      ]
+    },
+    {
+      "id": "stair_bottom",
+      "kind": "circulation",
+      "pos": [
+        17,
+        2,
+        20
+      ],
+      "name": "楼梯下口",
+      "look_at": [
+        17,
+        6,
+        15
+      ]
+    },
+    {
+      "id": "stair_top",
+      "kind": "circulation",
+      "pos": [
+        17,
+        8,
+        13
+      ],
+      "name": "楼梯上口",
+      "look_at": [
+        17,
+        4,
+        18
+      ]
+    },
+    {
+      "id": "cooking",
+      "kind": "work",
+      "pos": [
+        14,
+        8,
+        8
+      ],
+      "name": "家用炉与洗漱",
+      "approach": [
+        14,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "bed",
+      "kind": "bed",
+      "pos": [
+        5,
+        8,
+        20
+      ],
+      "name": "店主床位",
+      "approach": [
+        6,
+        8,
+        20
+      ]
+    },
+    {
+      "id": "study",
+      "kind": "work",
+      "pos": [
+        13,
+        8,
+        20
+      ],
+      "name": "配方阅读桌",
+      "approach": [
+        13,
+        8,
+        19
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        12,
+        1,
+        4
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "前廊台阶需衔接街面"
+    }
+  ],
+  "design_notes": [
+    "前部售卖、后部调配、侧墙内部楼梯；二层起居、独立卧室与配方书房。",
+    "与铁路街区共同使用砖石、木作、金属屋面和有支撑的店招。"
+  ],
+  "differences": [
+    "前部售卖、后部调配、侧墙内部楼梯；二层起居、独立卧室与配方书房。"
+  ],
+  "floors": [
+    {
+      "name": "药草售卖与调配",
+      "y": 1,
+      "max_y": 6
+    },
+    {
+      "name": "住宅与配方书房",
+      "y": 7,
+      "max_y": 11
+    }
+  ],
+  "roof_min_y": 13,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/shops.py:shop(8)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 1,
+    "bed_y": -1,
+    "padding": 3
+  },
+  "nbt_sha256": "2acb72391dabebcba30d91dfe8058654e6a4656dc3b2600e8fdff97400ff69e2"
+}

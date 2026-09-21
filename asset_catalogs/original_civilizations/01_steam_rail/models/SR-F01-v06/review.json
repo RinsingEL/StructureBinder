@@ -1,0 +1,34 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "SR-F01-v06",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "77e2f5f59b4e1cc088440c5e206a4685f7f464dabe4a36bc7b69d2b18ddc88b5",
+  "author_sha256": "36d03fa0f02b1355c54a00ba38efa41d2b14e5dc97f15ef9777aa96f4ee7c362",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/floor-1.png",
+    "previews/room-sales.png",
+    "previews/room-fitting.png",
+    "previews/room-sewing.png",
+    "previews/annotations.png",
+    "previews/site-context.png",
+    "previews/point-loom_4.png"
+  ],
+  "checks": {
+    "形体与平面": "横向陈列店面连接后伸裁剪坊；试衣角、布料堆架和三处织作台各有空间。",
+    "内饰": "逐项查看 布料与接待、试衣角、裁剪织作坊，行业设备、陈列或生活家具对应实际用途。",
+    "标记与尺度": "已查看入口/工作标记、切层和代表性第一人称站位；最终 NBT 的已标工作站位全部通过碰撞通路初筛。",
+    "环境": "L 形平地；内凹院角保留给邻地或后勤；已查看条件地形示意，模板外空间与未写入格保留。"
+  },
+  "revisions": [
+    "补足布料台、织作储物和有遮挡的试衣角。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "行业为原版方块表达和作者用途记录；不宣称已有商人交易或整合包生产配方。"
+  ]
+}

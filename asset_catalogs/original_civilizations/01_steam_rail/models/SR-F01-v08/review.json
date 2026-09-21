@@ -1,0 +1,41 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "SR-F01-v08",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "2acb72391dabebcba30d91dfe8058654e6a4656dc3b2600e8fdff97400ff69e2",
+  "author_sha256": "787ca66b9ec920e174029b51a540e6a38b5d3bbd09d994e87b064bd7d63637b5",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-sales.png",
+    "previews/room-mixing.png",
+    "previews/room-living.png",
+    "previews/room-bedroom.png",
+    "previews/room-study.png",
+    "previews/annotations.png",
+    "previews/site-context.png",
+    "previews/point-stair_bottom.png",
+    "previews/point-stair_top.png",
+    "previews/point-bed.png",
+    "previews/point-cooking.png",
+    "previews/point-brewing.png"
+  ],
+  "checks": {
+    "形体与平面": "前部售卖、后部调配、侧墙内部楼梯；二层起居、独立卧室与配方书房。",
+    "内饰": "逐项查看 药草前店、调配后场、上层起居、店主卧室、配方书房，行业设备、陈列或生活家具对应实际用途。",
+    "标记与尺度": "已查看入口/工作标记、切层和代表性第一人称站位；最终 NBT 的已标工作站位全部通过碰撞通路初筛。",
+    "环境": "纵深商住地块；上层住宅由室内楼梯连接；已查看条件地形示意，模板外空间与未写入格保留。"
+  },
+  "revisions": [
+    "上层补齐料理取水点，细化木骨山墙；酿造台可见水瓶与方块实体物品一致。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "行业为原版方块表达和作者用途记录；不宣称已有商人交易或整合包生产配方。"
+  ]
+}

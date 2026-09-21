@@ -47,7 +47,7 @@ def hip_roof(m,x0,x1,z0,z1,y,material="waxed_cut_copper",tiers=None):
         for z in range(za+1,zb):
             m.set(xa,y+i,z,f"{material}_stairs[facing=east,half=bottom,shape=straight,waterlogged=false]")
             m.set(xb,y+i,z,f"{material}_stairs[facing=west,half=bottom,shape=straight,waterlogged=false]")
-        if i==tiers-1 and xa<xb and za<zb:
+        if i==tiers-1 and xa+1<=xb-1 and za+1<=zb-1:
             block={"brick":"bricks","stone_brick":"stone_bricks","polished_blackstone_brick":"polished_blackstone_bricks"}.get(material,material)
             m.box((xa+1,y+i,za+1),(xb-1,y+i,zb-1),block)
 

@@ -21,7 +21,8 @@ for i,p in enumerate(args.images):
     thumb=ImageOps.contain(img,(w-8,h-8))
     x=(i%args.columns)*w;y=(i//args.columns)*(h+32)
     sheet.paste(thumb,(x+(w-thumb.width)//2,y+(h-thumb.height)//2))
-    draw.text((x+12,y+h+2),f"{p.parent.name} / {p.stem}",font=font,fill="#d5e2e5")
+    asset=p.parent.parent.name if p.parent.name=="previews" else p.parent.name
+    draw.text((x+12,y+h+2),f"{asset} / {p.stem}",font=font,fill="#d5e2e5")
 args.output.parent.mkdir(parents=True,exist_ok=True)
 sheet.save(args.output)
 print(args.output)

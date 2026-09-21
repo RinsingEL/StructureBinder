@@ -1,0 +1,33 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "SR-F01-v07",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "2c570492acfe037b9aa8788318b62af32f1268e01cf7968d8dd521170604419e",
+  "author_sha256": "60636599d49abf3fad9cf850d9b3504d70cdfe7ec1c40b7e81e9ff6a13e006cc",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/floor-1.png",
+    "previews/room-greenhouse.png",
+    "previews/room-potting.png",
+    "previews/annotations.png",
+    "previews/site-context.png",
+    "previews/point-potting.png"
+  ],
+  "checks": {
+    "形体与平面": "透明人字顶花房、砖砌换盆附房和室外花畦；种植展示与工作通路分离。",
+    "内饰": "逐项查看 玻璃花房、换盆附房，行业设备、陈列或生活家具对应实际用途。",
+    "标记与尺度": "已查看入口/工作标记、切层和代表性第一人称站位；最终 NBT 的已标工作站位全部通过碰撞通路初筛。",
+    "环境": "较浅宽地块；温室需要采光，街前保留种植展示角；已查看条件地形示意，模板外空间与未写入格保留。"
+  },
+  "revisions": [
+    "增加明色陈列长台、盆栽与矮灌木，使采光区用途清晰。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "行业为原版方块表达和作者用途记录；不宣称已有商人交易或整合包生产配方。"
+  ]
+}

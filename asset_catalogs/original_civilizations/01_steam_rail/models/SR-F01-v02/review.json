@@ -1,0 +1,33 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "SR-F01-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "e5899109bbfba8dfbef2b48e7a338790d45bfafdbab13a9697e721d67af0b1a8",
+  "author_sha256": "6e1ff689a837aa9281701b652cb179faeb43eb3d874dac77af882d9b46a9fb0e",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/floor-1.png",
+    "previews/room-sales.png",
+    "previews/room-stock.png",
+    "previews/annotations.png",
+    "previews/site-context.png",
+    "previews/point-stove.png"
+  ],
+  "checks": {
+    "形体与平面": "宽店面、独立后仓与侧门进货；货架和粮袋岛台之间保留顾客通路。",
+    "内饰": "逐项查看 杂货店面、独立后仓，行业设备、陈列或生活家具对应实际用途。",
+    "标记与尺度": "已查看入口/工作标记、切层和代表性第一人称站位；最终 NBT 的已标工作站位全部通过碰撞通路初筛。",
+    "环境": "中等纵深临街平地，东侧保留进货窄道；已查看条件地形示意，模板外空间与未写入格保留。"
+  },
+  "revisions": [
+    "补足食品陈列与后仓小炉，烟道接到实际炉体。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "行业为原版方块表达和作者用途记录；不宣称已有商人交易或整合包生产配方。"
+  ]
+}

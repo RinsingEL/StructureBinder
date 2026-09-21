@@ -1,0 +1,34 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "SR-F01-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "7708976ce0c45c6741b4436e958c52c0c630417c3860670a3e620fede75cccbc",
+  "author_sha256": "4b4561e447d5829c20c566a87c71abd003df26def3ff9a64acdfa6761b1b8e08",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/floor-1.png",
+    "previews/room-sales.png",
+    "previews/room-parts.png",
+    "previews/room-repair.png",
+    "previews/annotations.png",
+    "previews/site-context.png",
+    "previews/point-anvil.png"
+  ],
+  "checks": {
+    "形体与平面": "窄长店屋连接半露天维修院，室内零件后仓和独立工具工位分开。",
+    "内饰": "逐项查看 工具店面、零件后仓、有顶维修院，行业设备、陈列或生活家具对应实际用途。",
+    "标记与尺度": "已查看入口/工作标记、切层和代表性第一人称站位；最终 NBT 的已标工作站位全部通过碰撞通路初筛。",
+    "环境": "宽地块；东侧开放维修与装卸院落；已查看条件地形示意，模板外空间与未写入格保留。"
+  },
+  "revisions": [
+    "梁柱随坡屋面高程结束，修正露顶和跨层衔接；补足材料修整台。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "行业为原版方块表达和作者用途记录；不宣称已有商人交易或整合包生产配方。"
+  ]
+}

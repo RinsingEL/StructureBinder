@@ -1,0 +1,28 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "SR-F01-v03",
+  "nbt_sha256": "7708976ce0c45c6741b4436e958c52c0c630417c3860670a3e620fede75cccbc",
+  "author_sha256": "4b4561e447d5829c20c566a87c71abd003df26def3ff9a64acdfa6761b1b8e08",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-sales",
+    "room-parts",
+    "room-repair",
+    "point-counter",
+    "point-stock_cutting",
+    "point-anvil",
+    "point-grinder",
+    "point-smithing",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

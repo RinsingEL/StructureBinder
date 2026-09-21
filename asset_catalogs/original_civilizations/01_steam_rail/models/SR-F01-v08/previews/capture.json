@@ -1,0 +1,33 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "SR-F01-v08",
+  "nbt_sha256": "2acb72391dabebcba30d91dfe8058654e6a4656dc3b2600e8fdff97400ff69e2",
+  "author_sha256": "787ca66b9ec920e174029b51a540e6a38b5d3bbd09d994e87b064bd7d63637b5",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "floor-2",
+    "room-sales",
+    "room-mixing",
+    "room-living",
+    "room-bedroom",
+    "room-study",
+    "point-counter",
+    "point-brewing",
+    "point-stair_bottom",
+    "point-stair_top",
+    "point-cooking",
+    "point-bed",
+    "point-study",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}
