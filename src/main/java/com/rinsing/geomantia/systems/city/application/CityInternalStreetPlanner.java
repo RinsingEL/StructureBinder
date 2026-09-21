@@ -330,6 +330,21 @@ final class CityInternalStreetPlanner {
                                                     int plannedStructureCount,
                                                     int plannedSpanBlocks,
                                                     CityBlueprintGroupLayoutPlanner.Frame frame) {
+        for (Anchor anchor : anchors) {
+            if (!anchor.layout().has("compactRoadGuide")) continue;
+            var guide = anchor.layout().getAsJsonArray("compactRoadGuide");
+            List<JsonObject> roads = new ArrayList<>();
+            for (int i = 1; i < guide.size(); i++) {
+                BlockPoint from = point(guide.get(i - 1).getAsJsonObject());
+                BlockPoint to = point(guide.get(i).getAsJsonObject());
+                if (!from.equals(to)) roads.add(segment(groupId, "COMPACT_MEANDERING_SPINE", "COMPACT_ALLEY",
+                        roads.size(), parameters.streetBandWidthBlocks(), from, to));
+            }
+            if (!roads.isEmpty()) return List.copyOf(roads);
+        }
+        if (anchors.size() > 1) {
+            return compactBlockStreets(groupId, parameters, anchors);
+        }
         Anchor core = anchors.stream().filter(anchor -> "required".equals(anchor.phase()))
                 .findFirst().orElse(anchors.get(0));
         BlockPoint lane = compactRoadPoint(core, parameters.streetBandWidthBlocks(),
@@ -369,6 +384,32 @@ final class CityInternalStreetPlanner {
         roads.add(segment(groupId, "COMPACT_BLOCK_SKELETON", "COMPACT_ALLEY", 2,
                 parameters.streetBandWidthBlocks(), middle, oppositeEnd));
         return List.copyOf(roads);
+    }
+
+    private static List<JsonObject> compactBlockStreets(String groupId,
+                                                        CityBlueprintGroupLayoutPlanner.Parameters parameters,
+                                                        List<Anchor> anchors) {
+        BlockBounds extent = union(anchors.stream().map(Anchor::body).toList());
+        List<JsonObject> roads = new ArrayList<>();
+        int width = parameters.streetBandWidthBlocks();
+        for (boolean xAxis : List.of(true, false)) {
+            List<BlockBounds> ordered = anchors.stream().map(Anchor::body)
+                    .sorted(Comparator.comparingInt(b -> xAxis ? b.minX() : b.minZ())).toList();
+            int edge = xAxis ? ordered.get(0).maxX() : ordered.get(0).maxZ();
+            for (int i = 1; i < ordered.size(); i++) {
+                BlockBounds body = ordered.get(i);
+                int start = xAxis ? body.minX() : body.minZ();
+                if (start - edge - 1 >= width + 2) {
+                    int middle = Math.floorDiv(edge + start, 2);
+                    BlockPoint from = xAxis ? new BlockPoint(middle, extent.minZ()) : new BlockPoint(extent.minX(), middle);
+                    BlockPoint to = xAxis ? new BlockPoint(middle, extent.maxZ()) : new BlockPoint(extent.maxX(), middle);
+                    roads.add(segment(groupId, "COMPACT_BLOCK_SKELETON", "COMPACT_ALLEY", roads.size(), width, from, to));
+                }
+                edge = Math.max(edge, xAxis ? body.maxX() : body.maxZ());
+            }
+        }
+        // Irregular or entrance-locked groups can still use the existing local path solver.
+        return roads.isEmpty() ? compact(groupId, parameters, anchors, anchors) : List.copyOf(roads);
     }
 
     private static List<JsonObject> centerSkeleton(String groupId,

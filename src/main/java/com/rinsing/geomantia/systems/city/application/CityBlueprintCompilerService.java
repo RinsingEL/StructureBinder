@@ -213,7 +213,7 @@ public final class CityBlueprintCompilerService {
                 review.grid().blockMaxX() - 1, review.grid().blockMaxZ() - 1);
         Map<String, CityGroupSpatialDemand> spatialDemands =
                 planGroupSpatialDemands(groups, review.targetScale().scale(), review.grid().cellStepBlocks(),
-                        catalog, templates, cityPlanningBounds);
+                        catalog, templates, cityPlanningBounds, blueprint.generationSeed());
         boolean hierarchicalRoadProfile = hierarchicalRoadProfile(blueprint, references);
         int interGroupRoadReserveBlocks = hierarchicalRoadProfile
                 ? derivedMainRoadWidth(groups, catalog) + 2 : 0;
@@ -318,6 +318,9 @@ public final class CityBlueprintCompilerService {
             state.freezePlannedLayout(initialPlacementOrigin(state, states));
             List<String> refs = plannedStructureRefs(group, state.minimumStructureCount(), catalog, blueprint.generationSeed());
             state.plannedRefs = refs;
+            if ("COMPACT".equals(state.layoutAlgorithm()))
+                state.compactClusterLayout = meanderingLayout(refs, catalog, templates,
+                        state.layoutParameters(), blueprint.generationSeed() ^ group.groupId().hashCode());
             if ("GRID".equals(state.layoutAlgorithm()))
                 state.gridFootprintLayout = gridFootprintLayout(refs, catalog, templates,
                         state.layoutParameters().targetEdgeGapBlocks());
@@ -1813,7 +1816,7 @@ public final class CityBlueprintCompilerService {
             int cellStepBlocks,
             CatalogIndex catalog,
             CityTemplateCatalog templates,
-            BlockBounds planningBounds) {
+            BlockBounds planningBounds, long generationSeed) {
         Map<String, CityGroupSpatialDemand> result = new LinkedHashMap<>();
         for (CityBlueprint.Group group : groups) {
             String algorithm = catalog.algorithm(group.algorithmProfileRef());
@@ -1875,20 +1878,17 @@ public final class CityBlueprintCompilerService {
             } else if ("COURTYARD".equals(algorithm)) {
                 int maximumTemplateSpan = Math.max(maximumWidth, maximumDepth);
                 int pitch = maximumTemplateSpan + parameters.targetEdgeGapBlocks();
-                int rings = (plannedRefs.size() - 1) / 7 + 1;
+                int rings = CityPerimeterSlots.courtyard(plannedRefs.size() - 1).ring();
                 algorithmicSpan = Math.max(maximumTemplateSpan, rings * pitch * 2 + maximumTemplateSpan);
                 int ringSide = rings * pitch * 2;
                 streetArea = ringSide * parameters.streetBandWidthBlocks() * 4;
             } else if ("COMPACT".equals(algorithm)) {
-                int maximumTemplateSpan = Math.max(maximumWidth, maximumDepth);
-                algorithmicSpan = groupLayoutPlanner.compactFormationSpan(plannedRefs.size(),
-                        maximumTemplateSpan, group.densityClass());
-                formationWidth = algorithmicSpan;
-                formationLength = algorithmicSpan;
-                int alleyHalfLength = Math.max(6, Math.min(algorithmicSpan / 4,
-                        Math.max(60, parameters.maximumEdgeGapBlocks() * 3)));
-                streetArea = (alleyHalfLength * 2 + Math.max(3, parameters.streetBandWidthBlocks() + 1))
-                        * parameters.streetBandWidthBlocks();
+                var clusterLayout = meanderingLayout(plannedRefs, catalog, templates, parameters,
+                        generationSeed ^ group.groupId().hashCode());
+                formationWidth = clusterLayout.width();
+                formationLength = clusterLayout.depth();
+                algorithmicSpan = Math.max(formationWidth, formationLength);
+                streetArea = formationWidth * parameters.streetBandWidthBlocks();
             } else if ("CENTER_SYMMETRIC".equals(algorithm)) {
                 TemplateDemand centerTemplate = templateDemand(plannedRefs.get(0), catalog, templates);
                 int centerSpan = Math.max(centerTemplate.widthBlocks(), centerTemplate.depthBlocks());
@@ -1898,7 +1898,7 @@ public final class CityBlueprintCompilerService {
                         .max().orElse(1);
                 int pairCount = Math.max(1, (plannedRefs.size() - 1) / 2);
                 int outerPairIndex = pairCount - 1;
-                int ring = outerPairIndex / 2;
+                int ring = CityPerimeterSlots.symmetricPair(outerPairIndex).ring() - 1;
                 int firstRadius = Math.max(1, (centerSpan + memberSpan + 1) / 2
                         + parameters.targetEdgeGapBlocks());
                 int outerRadius = firstRadius
@@ -1928,6 +1928,14 @@ public final class CityBlueprintCompilerService {
                     plannedRefs.size(), templateArea, streetArea));
         }
         return Map.copyOf(result);
+    }
+
+    private static CityMeanderingClusterLayout meanderingLayout(List<String> refs, CatalogIndex catalog,
+            CityTemplateCatalog templates, CityBlueprintGroupLayoutPlanner.Parameters parameters, long seed) {
+        var spans = refs.stream().map(ref -> templateDemand(ref, catalog, templates))
+                .map(size -> Math.max(size.widthBlocks(), size.depthBlocks())).toList();
+        return new CityMeanderingClusterLayout(spans, parameters.targetEdgeGapBlocks(),
+                parameters.streetBandWidthBlocks(), seed);
     }
 
     private static CityGridFootprintLayout gridFootprintLayout(List<String> refs, CatalogIndex catalog,
@@ -2010,6 +2018,7 @@ public final class CityBlueprintCompilerService {
             int interGroupRoadReserveBlocks, CityTemplateCatalog templates, CityD4LayoutPolicy editPolicy) {
         // Compose local envelopes first. Terrain filters members later and never moves siblings.
         Map<String, BlockBounds> envelopes = new LinkedHashMap<>();
+        Map<String, BlockPoint> firstOrigins = new LinkedHashMap<>();
         Map<String, Map<String, BlockPoint>> offsets = new LinkedHashMap<>();
         for (var group : groupsById.values()) {
             CityGroupSpatialDemand demand = spatialDemands.get(group.groupId());
@@ -2023,6 +2032,9 @@ public final class CityBlueprintCompilerService {
             CityGridFootprintLayout grid = "GRID".equals(algorithm)
                     ? gridFootprintLayout(memberRefs, catalog, templates,
                             groupLayoutPlanner.parameters(algorithm, group.densityClass()).targetEdgeGapBlocks()) : null;
+            var clusterLayout = "COMPACT".equals(algorithm) ? meanderingLayout(memberRefs, catalog, templates,
+                    groupLayoutPlanner.parameters(algorithm, group.densityClass()),
+                    blueprint.generationSeed() ^ group.groupId().hashCode()) : null;
             for (int i = 0; i < memberRefs.size(); i++) {
                 var proposal = groupLayoutPlanner.propose(algorithm, group.densityClass(), blueprint.generationSeed(),
                         group.groupId(), i, localFrame,
@@ -2033,10 +2045,13 @@ public final class CityBlueprintCompilerService {
                             i == 0 ? null : grid.frontage(localFrame.center(), i));
                 }
                 var physical = plannedTemplate(blueprint, group, memberRefs.get(i), catalog, templates);
-                if ("COMPACT".equals(algorithm) || "COURTYARD".equals(algorithm))
+                if (clusterLayout != null) proposal = clusterProposal(proposal, clusterLayout,
+                        localFrame.center(), i, physical);
+                if ("COURTYARD".equals(algorithm))
                     proposal = layoutWithLegalCardinalFrontage(blueprint, group, algorithm, i, localFrame, physical,
                             new BlockPoint(0, 0), OutwardTarget.none(), span, proposal);
                 BlockPoint point = contiguous.isEmpty() ? proposal.guides().get(0) : contiguous.get(i);
+                if (i == 0) firstOrigins.put(group.groupId(), point);
                 JsonObject orientation = new JsonObject();
                 if ("LINEAR".equals(algorithm) && i > 0) {
                     applyFrontage(orientation, new JsonObject(), physical, point,
@@ -2116,6 +2131,11 @@ public final class CityBlueprintCompilerService {
                 continue;
             }
             int index = 0;
+            var compositionCluster = "COMPACT".equals(algorithm)
+                    ? new CityMeanderingClusterLayout(java.util.Collections.nCopies(composition.memberGroupIds().size() + 1,
+                            span + interGroupRoadReserveBlocks),
+                            groupLayoutPlanner.parameters(algorithm, center.densityClass()).targetEdgeGapBlocks(),
+                            interGroupRoadReserveBlocks, blueprint.generationSeed() ^ composition.compositionId().hashCode()) : null;
             List<BlockPoint> boundary = CityPatchBoundaryGuide.origins(center, patches, patchStepBlocks, span, new BlockPoint(0, 0));
             BlockPoint boundaryBase = boundary.isEmpty() ? null : boundary.get(0);
             for (String child : composition.memberGroupIds()) {
@@ -2125,6 +2145,11 @@ public final class CityBlueprintCompilerService {
                         composition.compositionId(), ++index, groupLayoutPlanner.worldFrame(new BlockPoint(0, 0)),
                         new BlockPoint(0, 0), null, false, span + interGroupRoadReserveBlocks);
                 BlockPoint guide = proposal.guides().get(0);
+                if (compositionCluster != null) {
+                    BlockPoint first = compositionCluster.origin(new BlockPoint(0, 0), 0);
+                    BlockPoint next = compositionCluster.origin(new BlockPoint(0, 0), index);
+                    guide = new BlockPoint(next.x() - first.x(), next.z() - first.z());
+                }
                 BlockPoint target = new BlockPoint(guide.x() + centerPosition.x(), guide.z() + centerPosition.z());
                 if (!boundary.isEmpty() && !"CENTER_SYMMETRIC".equals(algorithm)) {
                     BlockPoint b = boundary.get(Math.min(index, boundary.size() - 1));
@@ -2169,6 +2194,19 @@ public final class CityBlueprintCompilerService {
             }
             BlockBounds local = envelopes.get(root.groupId());
             BlockPoint origin = chosen;
+            if ("COMPACT".equals(catalog.algorithm(root.algorithmProfileRef())) && root.placementRelation() == null) {
+                BlockPoint first = firstOrigins.get(root.groupId());
+                origin = new BlockPoint(chosen.x() - first.x(), chosen.z() - first.z());
+            }
+            if ("COMPACT".equals(catalog.algorithm(root.algorithmProfileRef()))
+                    && local.widthBlocks() <= fullPlanningBounds.widthBlocks()
+                    && local.heightBlocks() <= fullPlanningBounds.heightBlocks()) {
+                origin = new BlockPoint(
+                        Math.max(fullPlanningBounds.minX() - local.minX(),
+                                Math.min(origin.x(), fullPlanningBounds.maxX() - local.maxX())),
+                        Math.max(fullPlanningBounds.minZ() - local.minZ(),
+                                Math.min(origin.z(), fullPlanningBounds.maxZ() - local.maxZ())));
+            }
             // An explicit ADJACENCY expresses whole-group proximity; CONNECTION never relocates a group.
             for (var relation : blueprint.relations()) {
                 if (relation.relationKind() != CityBlueprint.RelationKind.ADJACENCY) continue;
@@ -3141,6 +3179,9 @@ public final class CityBlueprintCompilerService {
                 state.layoutAlgorithm(), state.group().densityClass(), blueprint.generationSeed(),
                 state.group().groupId(), state.layoutSlotIndex(), state.layoutFrame(), seedPoint,
                 outward.point(), outward.pending(), footprintSpan);
+        if (state.compactClusterLayout != null && phase != PlacementPhase.CONNECTIVITY)
+            layout = clusterProposal(layout, state.compactClusterLayout, state.layoutFrame().center(),
+                    state.layoutSlotIndex(), physicalTemplate);
         if (state.gridFootprintLayout != null && phase != PlacementPhase.CONNECTIVITY) {
             var grid = state.gridFootprintLayout;
             BlockPoint origin = grid.origin(state.layoutFrame().center(), state.layoutSlotIndex());
@@ -3148,7 +3189,7 @@ public final class CityBlueprintCompilerService {
                     layout.parameters(), layout.spacingBlocks(), false, null, List.of(origin),
                     state.layoutSlotIndex() == 0 ? null : grid.frontage(state.layoutFrame().center(), state.layoutSlotIndex()));
         }
-        if (("COMPACT".equals(state.layoutAlgorithm()) || "COURTYARD".equals(state.layoutAlgorithm()))
+        if ((("COMPACT".equals(state.layoutAlgorithm()) && state.compactClusterLayout == null) || "COURTYARD".equals(state.layoutAlgorithm()))
                 && phase != PlacementPhase.CONNECTIVITY) {
             layout = layoutWithLegalCardinalFrontage(blueprint, state, physicalTemplate, seedPoint,
                     outward, footprintSpan, layout);
@@ -3181,6 +3222,15 @@ public final class CityBlueprintCompilerService {
         }
         plan.add("candidateOrigins", guides);
         JsonObject layoutTrace = layout.traceJson();
+        if (state.compactClusterLayout != null && phase != PlacementPhase.CONNECTIVITY
+                && !plan.has("placementGuide")) {
+            layoutTrace.addProperty("compactLayoutMode", "MEANDERING_CLUSTERS");
+            layoutTrace.addProperty("compactClusterIndex", state.compactClusterLayout.cluster(state.layoutSlotIndex()));
+            layoutTrace.add("compactRoadGuide", state.compactClusterLayout.roadJson(state.layoutFrame().center()));
+            layoutTrace.remove("compactLaneRank");
+            layoutTrace.remove("compactDirectionIndex");
+            layoutTrace.remove("compactLaneSide");
+        }
         if (state.gridFootprintLayout != null && phase != PlacementPhase.CONNECTIVITY) {
             layoutTrace.addProperty("gridSpacingMode", "FOOTPRINT_TRACKS");
             layoutTrace.add("gridTracks", state.gridFootprintLayout.asJson(state.layoutFrame().center()));
@@ -3233,6 +3283,31 @@ public final class CityBlueprintCompilerService {
         plan.add("candidateLegalRegion", legalRegion(state, candidatePatches, legalRegionGuide,
                 phase == PlacementPhase.CONNECTIVITY || phase == PlacementPhase.PERCENTAGE));
         return plan;
+    }
+
+    private CityBlueprintGroupLayoutPlanner.Proposal clusterProposal(
+            CityBlueprintGroupLayoutPlanner.Proposal initial, CityMeanderingClusterLayout cluster,
+            BlockPoint center, int slot, CityTemplateCatalog.Template template) {
+        BlockPoint origin = cluster.origin(center, slot), target = cluster.frontage(center, slot);
+        // A locked entrance may face a short local access path instead of the spine itself.
+        try {
+            var best = orientationSolver.rank(template, template.allowedMirrors().get(0), "", origin,
+                    CityTemplateOrientationSolver.FacingTarget.point("compact_cluster", target)).get(0);
+            if (best.alignmentScore() < 0.70) {
+                String direction = best.frontageDirection().name();
+                int distance = Math.max(template.width(), template.depth()) + 8;
+                target = switch (direction) {
+                    case "WEST" -> new BlockPoint(origin.x() - distance, origin.z());
+                    case "EAST" -> new BlockPoint(origin.x() + distance, origin.z());
+                    case "NORTH" -> new BlockPoint(origin.x(), origin.z() - distance);
+                    default -> new BlockPoint(origin.x(), origin.z() + distance);
+                };
+            }
+        } catch (IllegalArgumentException ignored) {
+            // Keep existing authored entrance validation for templates without a usable entrance.
+        }
+        return new CityBlueprintGroupLayoutPlanner.Proposal(slot, "COMPACT", initial.parameters(),
+                initial.spacingBlocks(), false, null, List.of(origin), target);
     }
 
     private CityBlueprintGroupLayoutPlanner.Proposal layoutWithLegalCardinalFrontage(
@@ -5023,6 +5098,7 @@ public final class CityBlueprintCompilerService {
         private int plannedSlot;
         private List<String> plannedRefs = List.of();
         private CityGridFootprintLayout gridFootprintLayout;
+        private CityMeanderingClusterLayout compactClusterLayout;
         private List<BlockPoint> contiguousOrigins;
         private final JsonArray skippedMembers = new JsonArray();
         void freezePlannedLayout(BlockPoint origin) {

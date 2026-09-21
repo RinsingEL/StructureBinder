@@ -30,7 +30,7 @@ class CityBlueprintGroupLayoutPlannerTest {
     }
 
     @Test
-    void compactDemandFollowsEightSlotRingsAndContainsAllGuidesAndTemplateExcursions() {
+    void compactDemandFollowsCompleteLayersAndContainsAllGuidesAndTemplateExcursions() {
         BlockPoint origin = new BlockPoint(0, 0);
         var frame = planner.worldFrame(origin);
         int templateSpan = 58;
@@ -102,8 +102,10 @@ class CityBlueprintGroupLayoutPlannerTest {
             assertEquals(slot, proposal.slotIndex());
         }
 
-        assertTrue(xs.size() >= 5, "compact layout must spread across x");
-        assertTrue(zs.size() >= 5, "compact layout must spread across z");
+        assertTrue(xs.size() >= 3 && xs.stream().anyMatch(x -> x < 0) && xs.stream().anyMatch(x -> x > 0),
+                "compact layout must have depth on both sides of x");
+        assertTrue(zs.size() >= 3 && zs.stream().anyMatch(z -> z < 0) && zs.stream().anyMatch(z -> z > 0),
+                "compact layout must have depth on both sides of z");
     }
 
     @Test
@@ -198,7 +200,7 @@ class CityBlueprintGroupLayoutPlannerTest {
         for (int slot = 0; slot < 8; slot++) {
             var proposal = planner.propose("COMPACT", CityBlueprint.DensityClass.DENSE,
                     47L, "compact", slot, frame, center, null, false, 18);
-            assertEquals(5, proposal.guides().size());
+            assertTrue(proposal.guides().size() >= 3 && proposal.guides().size() <= 5);
             assertTrue(proposal.frontageTarget() != null);
             assertEquals(proposal.frontageTarget().asJson(),
                     proposal.traceJson().getAsJsonObject("compactLaneTarget"));
@@ -207,9 +209,9 @@ class CityBlueprintGroupLayoutPlannerTest {
             guides.add(guide);
             directions.add(proposal.traceJson().get("compactLaneSide").getAsString());
             assertEquals(1, proposal.traceJson().get("compactLaneRank").getAsInt());
-            assertTrue(Math.abs(Math.hypot(guide.x(), guide.z()) - spacing) <= 1.0);
+            assertEquals(spacing, Math.max(Math.abs(guide.x()), Math.abs(guide.z())));
             assertTrue(proposal.traceJson().get("compactMicroAdjustmentEnabled").getAsBoolean());
-            assertEquals(5, proposal.traceJson().getAsJsonArray("compactCandidateGuides").size());
+            assertEquals(proposal.guides().size(), proposal.traceJson().getAsJsonArray("compactCandidateGuides").size());
             assertTrue(Math.hypot(proposal.frontageTarget().x(), proposal.frontageTarget().z())
                     < Math.hypot(guide.x(), guide.z()));
         }
@@ -224,17 +226,17 @@ class CityBlueprintGroupLayoutPlannerTest {
     }
 
     @Test
-    void compactMicroAdjustmentsStayTangentialToTheSameLocalRing() {
+    void compactMicroAdjustmentsStayOnTheSameLayerSide() {
         BlockPoint center = new BlockPoint(100, 200);
         var proposal = planner.propose("COMPACT", CityBlueprint.DensityClass.DENSE,
                 49L, "compact", 0, planner.worldFrame(center), center, null, false, 18);
 
-        assertEquals(new BlockPoint(122, 200), proposal.guides().get(0));
+        assertEquals(new BlockPoint(123, 200), proposal.guides().get(0));
         assertEquals(5, proposal.guides().size());
         assertEquals(2, proposal.guides().stream().filter(point -> point.z() < center.z()).count());
         assertEquals(2, proposal.guides().stream().filter(point -> point.z() > center.z()).count());
-        assertTrue(proposal.guides().stream().allMatch(point -> Math.abs(
-                Math.hypot(point.x() - center.x(), point.z() - center.z()) - 22.0) <= 1.0));
+        assertTrue(proposal.guides().stream().allMatch(point ->
+                Math.max(Math.abs(point.x() - center.x()), Math.abs(point.z() - center.z())) == 23));
     }
 
     @Test
@@ -297,7 +299,7 @@ class CityBlueprintGroupLayoutPlannerTest {
     }
 
     @Test
-    void centerSymmetricKeepsOrthogonalAxesAcrossOuterRings() {
+    void centerSymmetricFillsCompleteLayersAfterCardinalPairs() {
         BlockPoint center = new BlockPoint(120, -80);
         var frame = planner.frame(center, new BlockPoint(220, -80), 37L, "administration");
         var first = planner.symmetricPairOptions(CityBlueprint.DensityClass.DENSE,
@@ -309,17 +311,22 @@ class CityBlueprintGroupLayoutPlannerTest {
 
         assertEquals(0, first.ringIndex());
         assertEquals(0, second.ringIndex());
-        assertEquals(1, third.ringIndex());
+        assertEquals(0, third.ringIndex());
         assertEquals(0, first.axisVariant());
         assertEquals(2, second.axisVariant());
         assertEquals(0, third.axisVariant());
-        assertTrue(third.radiusBlocks() > second.radiusBlocks());
+        assertEquals(second.radiusBlocks(), third.radiusBlocks());
+        Set<BlockPoint> members = new LinkedHashSet<>();
         for (int pairIndex = 0; pairIndex < 12; pairIndex++) {
-            for (var pair : planner.symmetricPairOptions(CityBlueprint.DensityClass.DENSE,
-                    frame, pairIndex, 60, 39)) {
-                assertTrue(pair.first().x() == center.x() || pair.first().z() == center.z(),
-                        "Outer members must not grow diagonal spokes");
-            }
+            var pair = planner.symmetricPairOptions(CityBlueprint.DensityClass.DENSE,
+                    frame, pairIndex, 60, 39).get(0);
+            assertTrue(members.add(pair.first()));
+            assertTrue(members.add(pair.opposite()));
+            assertEquals(center.x() * 2, pair.first().x() + pair.opposite().x());
+            assertEquals(center.z() * 2, pair.first().z() + pair.opposite().z());
+            assertTrue(pair.ringIndex() <= 1, "24 followers fit in two complete layers");
         }
+        assertEquals(5, members.stream().map(BlockPoint::x).distinct().count());
+        assertEquals(5, members.stream().map(BlockPoint::z).distinct().count());
     }
 }

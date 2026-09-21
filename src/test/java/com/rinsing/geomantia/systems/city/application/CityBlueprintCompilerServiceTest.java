@@ -31,6 +31,69 @@ class CityBlueprintCompilerServiceTest {
     Path temporary;
 
     @Test
+    void denseSymmetricLayersWithAxisStreetKeepEntrancesConnected() throws Exception {
+        var fixture = acceptedFixture("symmetric_axis_depth", "city:symmetric_axis_depth", 18, 18, "MEDIUM",
+                CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid, field -> {}, catalog -> {
+                    catalog.getAsJsonArray("algorithmProfiles").forEach(e -> {
+                        var profile = e.getAsJsonObject();
+                        if ("CENTER_SYMMETRIC".equals(profile.get("algorithm").getAsString()))
+                            profile.addProperty("centerAxisStreetEnabled", true);
+                    });
+                }, templates -> {}, bp -> {
+                    bp.addProperty("generationSeed", 20260921L);
+                    var group = bp.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    group.addProperty("algorithmProfileRef", "algorithm:center_symmetric");
+                    group.addProperty("densityClass", "DENSE");
+                    group.addProperty("structureCount", 25);
+                });
+        var result = new CityBlueprintCompilerService().compile(temporary, fixture.runId(), fixture.cityId());
+        assertTrue(result.ok(), result.message());
+        assertEquals(25, result.structureAnchorPlan().getAsJsonArray("anchors").size());
+        assertTrue(result.structureAnchorPlan().getAsJsonObject("compilationAcceptance")
+                .get("allStreetEntrancesConnected").getAsBoolean(),
+                result.structureAnchorPlan().get("compilationAcceptance").toString());
+    }
+
+    @Test
+    void compareOtherArrayAlgorithmsAtTwentyFiveMembers() throws Exception {
+        var evidence = Path.of("build/reports/city-array-depth");
+        Files.createDirectories(evidence);
+        for (String algorithm : List.of("linear", "courtyard", "compact", "organic_compact", "center_symmetric")) {
+            for (boolean mixed : List.of(false, true)) {
+                String id = algorithm + (mixed ? "_mixed" : "_uniform");
+                var fixture = acceptedFixture(id, "city:" + id, mixed ? 36 : 18, mixed ? 27 : 18, "MEDIUM",
+                        CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid, field -> {}, catalog -> {
+                            if (mixed) catalog.getAsJsonArray("structureRefs").get(1).getAsJsonObject()
+                                    .getAsJsonArray("templateCandidates").get(0).getAsJsonObject()
+                                    .addProperty("templateId", "geomantia:terrain_house");
+                        }, templates -> {}, bp -> {
+                            bp.addProperty("generationSeed", 20260921L);
+                            var group = bp.getAsJsonArray("groups").get(0).getAsJsonObject();
+                            group.addProperty("algorithmProfileRef", "algorithm:" +
+                                    ("linear".equals(algorithm) ? "street_band" : algorithm));
+                            group.addProperty("densityClass", "DENSE");
+                            group.addProperty("structureCount", 25);
+                        });
+                var result = new CityBlueprintCompilerService().compile(temporary, fixture.runId(), fixture.cityId());
+                assertTrue(result.ok(), id + ": " + result.message());
+                Files.writeString(evidence.resolve(id + ".json"), result.structureAnchorPlan().toString());
+                var bodies = result.structureAnchorPlan().getAsJsonArray("anchors").asList().stream()
+                        .map(JsonElement::getAsJsonObject)
+                        .map(a -> CityStructureCandidateEnvelope.bounds(a.getAsJsonObject("plannedFootprint"))).toList();
+                assertFalse(bodies.isEmpty(), id);
+                if (!"organic_compact".equals(algorithm)) assertEquals(25, bodies.size(), id);
+                if (List.of("linear", "courtyard", "compact").contains(algorithm)) {
+                    assertTrue(result.structureAnchorPlan().getAsJsonObject("compilationAcceptance")
+                            .get("allStreetEntrancesConnected").getAsBoolean(), id);
+                }
+                for (int i = 0; i < bodies.size(); i++) {
+                    for (int j = i + 1; j < bodies.size(); j++) assertFalse(bodies.get(i).overlaps(bodies.get(j)), id);
+                }
+            }
+        }
+    }
+
+    @Test
     void denseGridBuildsADeepBlockWithConnectedEntrances() throws Exception {
         var fixture = acceptedFixture("dense_block", "city:dense_block", 18, 18, "MEDIUM",
                 CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid, bp -> {
@@ -1876,7 +1939,7 @@ class CityBlueprintCompilerServiceTest {
         JsonArray anchors = result.structureAnchorPlan().getAsJsonArray("anchors");
         assertEquals(2, anchors.size(), result.compileTrace().toString());
         assertTrue(anchors.get(0).getAsJsonObject().getAsJsonArray("sourcePatchIds").asList().stream()
-                .map(JsonElement::getAsString).anyMatch("patch:plain:1"::equals));
+                .map(JsonElement::getAsString).anyMatch("patch:plain:1"::equals), anchors.toString());
         assertTrue(anchors.get(1).getAsJsonObject().getAsJsonArray("sourcePatchIds").asList().stream()
                 .map(JsonElement::getAsString).anyMatch("patch:plain:2"::equals),
                 "The second required structure must be allowed to continue across the adjacent Patch label");

@@ -107,6 +107,7 @@ final class CityBlueprintGroupLayoutPlanner {
                 jitter = 0;
                 outwardBias = 0.0;
             }
+            case "COMPACT" -> targetGap = Math.max(targetGap, streetBandWidth + 2);
             default -> {
                 // COMPACT uses the baseline parameters.
             }
@@ -141,10 +142,9 @@ final class CityBlueprintGroupLayoutPlanner {
     }
 
     int compactFormationSpan(int structureCount, int templateSpan, CityBlueprint.DensityClass density) {
-        int rings = (Math.max(1, structureCount) - 1) / 8 + 1;
+        int rings = CityPerimeterSlots.compact(Math.max(1, structureCount) - 1).ring();
         int radius = rings * (templateSpan + parameters("COMPACT", density).targetEdgeGapBlocks());
-        // Guides are template start anchors, not body centers. Include a full template excursion
-        // on either side, including the angular alternatives used for terrain/frontage fitting.
+        // Guides are template start anchors, not body centers. Include a full template excursion.
         return (radius + templateSpan) * 2 + 1;
     }
 
@@ -215,18 +215,20 @@ final class CityBlueprintGroupLayoutPlanner {
         Parameters parameters = parameters("CENTER_SYMMETRIC", density);
         int firstRadius = Math.max(1, (centerFootprintSpan + memberFootprintSpan + 1) / 2
                 + parameters.targetEdgeGapBlocks());
-        int ring = pairIndex / 2;
+        var slot = CityPerimeterSlots.symmetricPair(pairIndex);
+        int ring = slot.ring() - 1;
         int radius = firstRadius + ring * (memberFootprintSpan + parameters.targetEdgeGapBlocks());
-        // Grow opposite pairs on the two orthogonal sides of the core. Outer
-        // rings keep the same axes instead of rotating into diagonal spokes.
-        int preferredAxis = (pairIndex % 2) * 2;
+        int preferredAxis = slot.x() == 0 ? 2 : 0;
         double phase = Math.atan2(frame.axisZ(), frame.axisX());
         List<SymmetricPair> result = new ArrayList<>();
         for (int rotation = 0; rotation < 2; rotation++) {
             int axis = (preferredAxis + rotation * 2) % 4;
-            double angle = phase + axis * Math.PI / 4.0;
-            double dx = Math.cos(angle) * radius;
-            double dz = Math.sin(angle) * radius;
+            double angle = phase + rotation * Math.PI / 2.0;
+            int pitch = memberFootprintSpan + parameters.targetEdgeGapBlocks();
+            int along = slot.x() == 0 ? 0 : Integer.signum(slot.x()) * (firstRadius + (Math.abs(slot.x()) - 1) * pitch);
+            int lateral = slot.z() == 0 ? 0 : Integer.signum(slot.z()) * (firstRadius + (Math.abs(slot.z()) - 1) * pitch);
+            double dx = Math.cos(angle) * along - Math.sin(angle) * lateral;
+            double dz = Math.sin(angle) * along + Math.cos(angle) * lateral;
             BlockPoint approximateCenter = new BlockPoint(Math.floorDiv(anchorCenterTwiceX, 2),
                     Math.floorDiv(anchorCenterTwiceZ, 2));
             BlockPoint first = point(approximateCenter, dx, dz);
@@ -338,37 +340,39 @@ final class CityBlueprintGroupLayoutPlanner {
 
     private static BlockPoint courtyardPoint(Frame frame, int slotIndex, int spacing,
                                              boolean outwardPending) {
-        int ring = slotIndex / COURTYARD_RING.size() + 1;
-        GridOffset offset = COURTYARD_RING.get(slotIndex % COURTYARD_RING.size());
-        double along = offset.row() * (double) spacing * ring;
-        double lateral = offset.column() * (double) spacing * ring;
+        GridOffset offset = courtyardOffset(slotIndex);
+        double along = offset.row() * (double) spacing;
+        double lateral = offset.column() * (double) spacing;
         return point(frame.center(), frame.axisX() * lateral - frame.axisZ() * along,
                 frame.axisZ() * lateral + frame.axisX() * along);
     }
 
     BlockPoint compactLaneTarget(Frame frame, int slotIndex, int spacing, Parameters parameters) {
-        int ring = slotIndex / 8 + 1;
-        double buildingRadius = ring * (double) spacing;
-        double laneRadius = Math.max(2.0, buildingRadius - Math.max(2.0, spacing / 2.0));
-        return compactRadialPoint(frame, slotIndex, laneRadius);
-    }
-
-    private BlockPoint compactBuildingPoint(Frame frame, int slotIndex, int spacing,
-                                            int footprintSpan, Parameters parameters) {
-        int ring = slotIndex / 8 + 1;
-        return compactRadialPoint(frame, slotIndex, ring * (double) spacing);
-    }
-
-    private static BlockPoint compactRadialPoint(Frame frame, int slotIndex, double radius) {
-        double angle = Math.floorMod(slotIndex, 8) * Math.PI / 4.0;
-        double along = Math.cos(angle) * radius;
-        double lateral = Math.sin(angle) * radius;
+        var slot = CityPerimeterSlots.compact(slotIndex);
+        double along = slot.x() * (double) spacing, lateral = slot.z() * (double) spacing;
+        if (Math.abs(slot.x()) >= Math.abs(slot.z())) along -= Math.signum(slot.x()) * spacing / 2.0;
+        else lateral -= Math.signum(slot.z()) * spacing / 2.0;
         return point(frame.center(), frame.axisX() * along - frame.axisZ() * lateral,
                 frame.axisZ() * along + frame.axisX() * lateral);
     }
 
+    private BlockPoint compactBuildingPoint(Frame frame, int slotIndex, int spacing,
+                                            int footprintSpan, Parameters parameters) {
+        var slot = CityPerimeterSlots.compact(slotIndex);
+        return point(frame.center(), frame.axisX() * slot.x() * spacing - frame.axisZ() * slot.z() * spacing,
+                frame.axisZ() * slot.x() * spacing + frame.axisX() * slot.z() * spacing);
+    }
+
+    private static GridOffset courtyardOffset(int slotIndex) {
+        if (slotIndex < COURTYARD_RING.size()) return COURTYARD_RING.get(slotIndex);
+        var slot = CityPerimeterSlots.courtyard(slotIndex);
+        return new GridOffset(slot.z(), slot.x());
+    }
+
     private static String compactDirection(int slotIndex) {
-        return switch (Math.floorMod(slotIndex, 8)) {
+        var slot = CityPerimeterSlots.compact(slotIndex);
+        int direction = Math.floorMod((int) Math.round(Math.atan2(slot.z(), slot.x()) / (Math.PI / 4)), 8);
+        return switch (direction) {
             case 0 -> "FORWARD";
             case 1 -> "FORWARD_RIGHT";
             case 2 -> "RIGHT";
@@ -400,16 +404,16 @@ final class CityBlueprintGroupLayoutPlanner {
         if ("COMPACT".equals(algorithm)) {
             double radialX = desired.x() - frame.center().x();
             double radialZ = desired.z() - frame.center().z();
-            double length = Math.max(0.0001, Math.hypot(radialX, radialZ));
-            double angle = Math.atan2(radialZ, radialX);
+            double radius = Math.max(Math.abs(radialX), Math.abs(radialZ));
             int nearOffset = Math.max(2, Math.min(spacing / 4,
                     parameters.maximumEdgeGapBlocks() / 2));
             int farOffset = Math.max(nearOffset, Math.min(spacing / 3,
                     parameters.maximumEdgeGapBlocks()));
             for (int offset : List.of(nearOffset, -nearOffset, farOffset, -farOffset)) {
-                double adjustedAngle = angle + offset / length;
-                guides.add(point(frame.center(), Math.cos(adjustedAngle) * length,
-                        Math.sin(adjustedAngle) * length));
+                double x = radialX, z = radialZ;
+                if (Math.abs(radialX) >= Math.abs(radialZ)) z = Math.max(-radius, Math.min(radius, z + offset));
+                else x = Math.max(-radius, Math.min(radius, x + offset));
+                guides.add(point(frame.center(), x, z));
             }
             return List.copyOf(guides);
         }
@@ -574,19 +578,21 @@ final class CityBlueprintGroupLayoutPlanner {
                 value.addProperty("worldAxisLocked", true);
             }
             if ("COURTYARD".equals(algorithm)) {
-                int ring = slotIndex / COURTYARD_RING.size() + 1;
-                GridOffset offset = COURTYARD_RING.get(slotIndex % COURTYARD_RING.size());
+                int ring = CityPerimeterSlots.courtyard(slotIndex).ring();
+                GridOffset offset = courtyardOffset(slotIndex);
                 value.addProperty("courtyardRing", ring);
-                value.addProperty("courtyardRow", offset.row() * ring);
-                value.addProperty("courtyardColumn", offset.column() * ring);
+                value.addProperty("courtyardRow", offset.row());
+                value.addProperty("courtyardColumn", offset.column());
                 if (frontageTarget != null) value.add("courtyardCenter", frontageTarget.asJson());
                 value.addProperty("courtyardGateSide", "SOUTH");
                 value.addProperty("worldAxisLocked", true);
             }
             if ("COMPACT".equals(algorithm)) {
-                value.addProperty("compactLaneRank", slotIndex / 8 + 1);
+                value.addProperty("compactLaneRank", CityPerimeterSlots.compact(slotIndex).ring());
                 value.addProperty("compactLaneSide", compactDirection(slotIndex));
-                value.addProperty("compactDirectionIndex", Math.floorMod(slotIndex, 8));
+                var compactSlot = CityPerimeterSlots.compact(slotIndex);
+                value.addProperty("compactDirectionIndex", Math.floorMod((int) Math.round(
+                        Math.atan2(compactSlot.z(), compactSlot.x()) / (Math.PI / 4)), 8));
                 // Boundary-guided proposals have real candidate origins but no internal lane target.
                 if (frontageTarget != null) value.add("compactLaneTarget", frontageTarget.asJson());
                 value.addProperty("compactMicroAdjustmentEnabled", guides.size() > 1);
