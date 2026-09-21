@@ -318,6 +318,9 @@ public final class CityBlueprintCompilerService {
             state.freezePlannedLayout(initialPlacementOrigin(state, states));
             List<String> refs = plannedStructureRefs(group, state.minimumStructureCount(), catalog, blueprint.generationSeed());
             state.plannedRefs = refs;
+            if ("GRID".equals(state.layoutAlgorithm()))
+                state.gridFootprintLayout = gridFootprintLayout(refs, catalog, templates,
+                        state.layoutParameters().targetEdgeGapBlocks());
             if ("CONTIGUOUS".equals(state.layoutAlgorithm()))
                 state.contiguousOrigins = contiguousOrigins(blueprint, group, refs, catalog, templates);
             state.layoutFrame = plannedFrame(state.layoutAlgorithm(), state.layoutFrame().center(),
@@ -1927,6 +1930,13 @@ public final class CityBlueprintCompilerService {
         return Map.copyOf(result);
     }
 
+    private static CityGridFootprintLayout gridFootprintLayout(List<String> refs, CatalogIndex catalog,
+                                                               CityTemplateCatalog templates, int gap) {
+        List<Integer> spans = refs.stream().map(ref -> templateDemand(ref, catalog, templates))
+                .map(size -> Math.max(size.widthBlocks(), size.depthBlocks())).toList();
+        return spans.stream().distinct().count() > 1 ? new CityGridFootprintLayout(spans, gap) : null;
+    }
+
     private static TemplateDemand templateDemand(String structureRef,
                                                    CatalogIndex catalog,
                                                    CityTemplateCatalog templates) {
@@ -2010,10 +2020,18 @@ public final class CityBlueprintCompilerService {
             var localFrame = plannedFrame(algorithm, new BlockPoint(0, 0), plannedTemplate(blueprint, group, memberRefs.get(0), catalog, templates));
             List<BlockPoint> contiguous = "CONTIGUOUS".equals(algorithm)
                     ? contiguousOrigins(blueprint, group, memberRefs, catalog, templates) : List.of();
+            CityGridFootprintLayout grid = "GRID".equals(algorithm)
+                    ? gridFootprintLayout(memberRefs, catalog, templates,
+                            groupLayoutPlanner.parameters(algorithm, group.densityClass()).targetEdgeGapBlocks()) : null;
             for (int i = 0; i < memberRefs.size(); i++) {
                 var proposal = groupLayoutPlanner.propose(algorithm, group.densityClass(), blueprint.generationSeed(),
                         group.groupId(), i, localFrame,
                         new BlockPoint(0, 0), null, false, span);
+                if (grid != null) {
+                    proposal = new CityBlueprintGroupLayoutPlanner.Proposal(i, algorithm, proposal.parameters(),
+                            proposal.spacingBlocks(), false, null, List.of(grid.origin(localFrame.center(), i)),
+                            i == 0 ? null : grid.frontage(localFrame.center(), i));
+                }
                 var physical = plannedTemplate(blueprint, group, memberRefs.get(i), catalog, templates);
                 if ("COMPACT".equals(algorithm) || "COURTYARD".equals(algorithm))
                     proposal = layoutWithLegalCardinalFrontage(blueprint, group, algorithm, i, localFrame, physical,
@@ -3123,6 +3141,13 @@ public final class CityBlueprintCompilerService {
                 state.layoutAlgorithm(), state.group().densityClass(), blueprint.generationSeed(),
                 state.group().groupId(), state.layoutSlotIndex(), state.layoutFrame(), seedPoint,
                 outward.point(), outward.pending(), footprintSpan);
+        if (state.gridFootprintLayout != null && phase != PlacementPhase.CONNECTIVITY) {
+            var grid = state.gridFootprintLayout;
+            BlockPoint origin = grid.origin(state.layoutFrame().center(), state.layoutSlotIndex());
+            layout = new CityBlueprintGroupLayoutPlanner.Proposal(layout.slotIndex(), layout.algorithm(),
+                    layout.parameters(), layout.spacingBlocks(), false, null, List.of(origin),
+                    state.layoutSlotIndex() == 0 ? null : grid.frontage(state.layoutFrame().center(), state.layoutSlotIndex()));
+        }
         if (("COMPACT".equals(state.layoutAlgorithm()) || "COURTYARD".equals(state.layoutAlgorithm()))
                 && phase != PlacementPhase.CONNECTIVITY) {
             layout = layoutWithLegalCardinalFrontage(blueprint, state, physicalTemplate, seedPoint,
@@ -3156,6 +3181,10 @@ public final class CityBlueprintCompilerService {
         }
         plan.add("candidateOrigins", guides);
         JsonObject layoutTrace = layout.traceJson();
+        if (state.gridFootprintLayout != null && phase != PlacementPhase.CONNECTIVITY) {
+            layoutTrace.addProperty("gridSpacingMode", "FOOTPRINT_TRACKS");
+            layoutTrace.add("gridTracks", state.gridFootprintLayout.asJson(state.layoutFrame().center()));
+        }
         if ((state.fixedPlannedLayout || state.exactInternalGuides()) && phase != PlacementPhase.CONNECTIVITY) {
             plan.addProperty("exactCandidateOriginsOnly", true);
         }
@@ -4993,6 +5022,7 @@ public final class CityBlueprintCompilerService {
         private boolean fixedPlannedLayout;
         private int plannedSlot;
         private List<String> plannedRefs = List.of();
+        private CityGridFootprintLayout gridFootprintLayout;
         private List<BlockPoint> contiguousOrigins;
         private final JsonArray skippedMembers = new JsonArray();
         void freezePlannedLayout(BlockPoint origin) {

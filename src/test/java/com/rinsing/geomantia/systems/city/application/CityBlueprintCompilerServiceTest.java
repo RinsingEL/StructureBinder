@@ -30,6 +30,65 @@ class CityBlueprintCompilerServiceTest {
     @TempDir
     Path temporary;
 
+    @Test
+    void denseGridBuildsADeepBlockWithConnectedEntrances() throws Exception {
+        var fixture = acceptedFixture("dense_block", "city:dense_block", 18, 18, "MEDIUM",
+                CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid, bp -> {
+                    var group = bp.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    group.addProperty("algorithmProfileRef", "algorithm:grid");
+                    group.addProperty("densityClass", "DENSE");
+                    group.addProperty("structureCount", 25);
+                });
+        var result = new CityBlueprintCompilerService().compile(temporary, fixture.runId(), fixture.cityId());
+        assertTrue(result.ok(), result.message());
+        var anchors = result.structureAnchorPlan().getAsJsonArray("anchors");
+        assertEquals(25, anchors.size(), result.structureAnchorPlan().get("designReview").toString());
+        var layouts = anchors.asList().stream().map(JsonElement::getAsJsonObject)
+                .map(a -> a.getAsJsonObject("blueprintLayout")).toList();
+        assertEquals(5, layouts.stream().map(a -> a.get("gridRow").getAsInt()).distinct().count());
+        assertEquals(5, layouts.stream().map(a -> a.get("gridColumn").getAsInt()).distinct().count());
+        assertTrue(result.structureAnchorPlan().getAsJsonObject("compilationAcceptance")
+                .get("allStreetEntrancesConnected").getAsBoolean());
+        var evidence = Path.of("build/reports/city-layout-depth");
+        Files.createDirectories(evidence);
+        Files.writeString(evidence.resolve("dense-grid.json"), result.structureAnchorPlan().toString());
+    }
+
+    @Test
+    void denseGridConnectsSmallFollowersAroundALargerRectangularCore() throws Exception {
+        var fixture = acceptedFixture("mixed_dense_block", "city:mixed_dense_block", 36, 27, "MEDIUM",
+                CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid, field -> {}, catalog -> {
+                    var support = catalog.getAsJsonArray("structureRefs").get(1).getAsJsonObject();
+                    support.getAsJsonArray("templateCandidates").get(0).getAsJsonObject()
+                            .addProperty("templateId", "geomantia:terrain_house");
+                }, templates -> {}, bp -> {
+                    var group = bp.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    group.addProperty("algorithmProfileRef", "algorithm:grid");
+                    group.addProperty("densityClass", "DENSE");
+                    group.addProperty("structureCount", 25);
+                });
+        var result = new CityBlueprintCompilerService().compile(temporary, fixture.runId(), fixture.cityId());
+        assertTrue(result.ok(), result.message());
+        var evidence = Path.of("build/reports/city-layout-depth");
+        Files.createDirectories(evidence);
+        Files.writeString(evidence.resolve("mixed-dense-grid.json"), result.structureAnchorPlan().toString());
+        assertEquals(25, result.structureAnchorPlan().getAsJsonArray("anchors").size(),
+                result.structureAnchorPlan().get("designReview").toString());
+        var bodies = result.structureAnchorPlan().getAsJsonArray("anchors").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .map(a -> CityStructureCandidateEnvelope.bounds(a.getAsJsonObject("plannedFootprint"))).toList();
+        int width = bodies.stream().mapToInt(b -> b.maxX()).max().orElseThrow()
+                - bodies.stream().mapToInt(b -> b.minX()).min().orElseThrow() + 1;
+        int depth = bodies.stream().mapToInt(b -> b.maxZ()).max().orElseThrow()
+                - bodies.stream().mapToInt(b -> b.minZ()).min().orElseThrow() + 1;
+        assertTrue(width <= 100 && depth <= 100, "One large core must not inflate every lot: " + width + "x" + depth);
+        for (int i = 0; i < bodies.size(); i++) {
+            for (int j = i + 1; j < bodies.size(); j++) assertFalse(bodies.get(i).overlaps(bodies.get(j)));
+        }
+        assertTrue(result.structureAnchorPlan().getAsJsonObject("compilationAcceptance")
+                .get("allStreetEntrancesConnected").getAsBoolean());
+    }
+
     @Test void coreTemplatesInAnOldFillPoolAreNotRepeatedAndAnIsolatedCoreIsReported() throws Exception {
         var fixture = acceptedFixture("roles", "city:roles", 8, 8, "SMALL", bp -> {
             var group=bp.getAsJsonArray("groups").get(0).getAsJsonObject();

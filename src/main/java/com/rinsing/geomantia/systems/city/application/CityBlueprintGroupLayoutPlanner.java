@@ -454,7 +454,7 @@ final class CityBlueprintGroupLayoutPlanner {
         return nextSlotIndex < 8 || committedStructureCount != 1;
     }
 
-    private static GridOffset squareSpiral(int index) {
+    static GridOffset squareSpiral(int index) {
         if (index <= 0) return new GridOffset(0, 0);
         int x = 0;
         int z = 0;
@@ -649,6 +649,6 @@ final class CityBlueprintGroupLayoutPlanner {
         }
     }
 
-    private record GridOffset(int row, int column) {
+    record GridOffset(int row, int column) {
     }
 }

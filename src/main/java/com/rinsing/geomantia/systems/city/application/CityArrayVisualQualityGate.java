@@ -158,7 +158,9 @@ final class CityArrayVisualQualityGate {
         }
         JsonObject value = new JsonObject();
         value.addProperty("maximumRowColumnErrorBlocks", maximumError);
-        value.addProperty("fixedPitch", pitches.size() == 1);
+        boolean footprintTracks = anchors.stream().anyMatch(anchor -> anchor.layout().has("gridTracks"));
+        value.addProperty("fixedPitch", !footprintTracks && pitches.size() == 1);
+        value.addProperty("spacingMode", footprintTracks ? "FOOTPRINT_TRACKS" : "UNIFORM_PITCH");
         value.addProperty("internalCirculationMode", landscapeGaps ? "LANDSCAPE_GAPS" : "FORMAL_STREETS");
         value.addProperty("formalStreetRequired", !landscapeGaps);
         value.addProperty("mainStreetPresent", mainStreet);

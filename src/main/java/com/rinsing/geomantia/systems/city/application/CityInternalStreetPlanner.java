@@ -236,6 +236,9 @@ final class CityInternalStreetPlanner {
         Anchor core = anchors.stream().filter(anchor -> "required".equals(anchor.phase()))
                 .findFirst().orElse(anchors.get(0));
         JsonObject layout = core.layout();
+        if (layout.has("gridTracks")) {
+            return footprintGridSkeleton(groupId, parameters, layout.getAsJsonObject("gridTracks"));
+        }
         BlockPoint origin = layout.has("theoreticalAnchor")
                 ? point(layout.getAsJsonObject("theoreticalAnchor")) : center(core.collision());
         int pitch = Math.max(1, intValue(layout, "gridPitchBlocks",
@@ -264,6 +267,37 @@ final class CityInternalStreetPlanner {
         }
         for (int column = minColumn; column < maxColumn; column++) {
             int z = origin.z() + column * pitch + pitch / 2;
+            roads.add(segment(groupId, "GRID_BLOCK_SKELETON", "GRID_COLUMN_LANE", roads.size(), narrow,
+                    new BlockPoint(minX, z), new BlockPoint(maxX, z)));
+        }
+        return List.copyOf(roads);
+    }
+
+    private static List<JsonObject> footprintGridSkeleton(String groupId,
+                                                          CityBlueprintGroupLayoutPlanner.Parameters parameters,
+                                                          JsonObject tracks) {
+        BlockPoint origin = point(tracks.getAsJsonObject("origin"));
+        var rows = tracks.getAsJsonArray("rows").asList().stream().map(e -> e.getAsJsonObject()).toList();
+        var columns = tracks.getAsJsonArray("columns").asList().stream().map(e -> e.getAsJsonObject()).toList();
+        int gap = tracks.get("gapBlocks").getAsInt();
+        int minX = origin.x() + intValue(rows.get(0), "offset", 0);
+        int minZ = origin.z() + intValue(columns.get(0), "offset", 0);
+        JsonObject lastRow = rows.get(rows.size() - 1), lastColumn = columns.get(columns.size() - 1);
+        int maxX = origin.x() + intValue(lastRow, "offset", 0) + intValue(lastRow, "span", 1) - 1;
+        int maxZ = origin.z() + intValue(lastColumn, "offset", 0) + intValue(lastColumn, "span", 1) - 1;
+        int narrow = Math.max(1, parameters.streetBandWidthBlocks() / 2);
+        List<JsonObject> roads = new ArrayList<>();
+        for (int i = 0; i + 1 < rows.size(); i++) {
+            JsonObject row = rows.get(i);
+            int x = origin.x() + intValue(row, "offset", 0) + intValue(row, "span", 1) + (gap - 1) / 2;
+            int width = i % 2 == 0 ? parameters.streetBandWidthBlocks() : narrow;
+            roads.add(segment(groupId, "GRID_BLOCK_SKELETON",
+                    width == parameters.streetBandWidthBlocks() ? "GRID_MAIN_STREET" : "GRID_ROW_LANE",
+                    roads.size(), width, new BlockPoint(x, minZ), new BlockPoint(x, maxZ)));
+        }
+        for (int i = 0; i + 1 < columns.size(); i++) {
+            JsonObject column = columns.get(i);
+            int z = origin.z() + intValue(column, "offset", 0) + intValue(column, "span", 1) + (gap - 1) / 2;
             roads.add(segment(groupId, "GRID_BLOCK_SKELETON", "GRID_COLUMN_LANE", roads.size(), narrow,
                     new BlockPoint(minX, z), new BlockPoint(maxX, z)));
         }
