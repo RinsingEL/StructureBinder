@@ -15,6 +15,33 @@ public final class CityRoadsideTreePlanner {
 
     public record Tree(String ref, CityTemplatePlacementGeometry.Size size, BlockPoint root, String hash) {}
 
+    /** Optional authored list for independent trees, beds and planters; complete gardens remain D4 structures. */
+    public static List<Tree> readPublicCatalog(CityStructureMaterializationPlanner.TemplateMetadataInspector inspector,
+                                              List<Tree> sharedRoadsideTrees) {
+        var path = java.nio.file.Path.of("config", "geomantia", "city_public_greenery_structures.json");
+        if (!java.nio.file.Files.isRegularFile(path)) return sharedRoadsideTrees;
+        try {
+            List<Tree> result = new ArrayList<>();
+            Set<String> refs = new HashSet<>();
+            for (var value : JsonParser.parseString(java.nio.file.Files.readString(path)).getAsJsonArray()) {
+                JsonObject row = value.getAsJsonObject();
+                if (!"SMALL_INDEPENDENT".equals(text(row,"usage")) || !"SURFACE_ROOT".equals(text(row,"groundMode")))
+                    throw new IllegalArgumentException("PUBLIC_GREENERY_REQUIRES_INDEPENDENT_SURFACE_TEMPLATE");
+                String ref = text(row,"templateRef");
+                if (!refs.add(ref)) throw new IllegalArgumentException("PUBLIC_GREENERY_DUPLICATE_TEMPLATE:"+ref);
+                var size = row.getAsJsonArray("size"); var root = row.getAsJsonArray("root");
+                var dimensions = new CityTemplatePlacementGeometry.Size(size.get(0).getAsInt(),size.get(1).getAsInt(),size.get(2).getAsInt());
+                int x=root.get(0).getAsInt(), y=root.get(1).getAsInt(), z=root.get(2).getAsInt();
+                if (y!=0 || x<0 || z<0 || x>=dimensions.width() || z>=dimensions.depth())
+                    throw new IllegalArgumentException("PUBLIC_GREENERY_SURFACE_ROOT_INVALID:"+ref);
+                var metadata=inspector.inspect(ref);
+                if (!metadata.readable() || !dimensions.equals(metadata.rawSize())) continue;
+                result.add(new Tree(ref,dimensions,new BlockPoint(x,z),metadata.templateHash()));
+            }
+            return List.copyOf(result);
+        } catch (java.io.IOException ex) { throw new IllegalStateException("PUBLIC_GREENERY_CATALOG_UNREADABLE", ex); }
+    }
+
     public static List<Tree> readCatalog(CityStructureMaterializationPlanner.TemplateMetadataInspector inspector) {
         var stream = CityRoadsideTreePlanner.class.getResourceAsStream(
                 "/data/geomantia/structures/roadside/manifest.json");
@@ -144,7 +171,68 @@ public final class CityRoadsideTreePlanner {
         return result;
     }
 
-    public static boolean isTree(JsonObject item) { return ROLE.equals(text(item, "placementRole")); }
+    /** Admit small authored structures into shared gaps, never around each individual building. */
+    public JsonObject appendPublic(JsonObject source, JsonObject walls, JsonObject landscapes,
+                                   LandUseTerrainField terrain, List<Tree> catalog) {
+        JsonObject result = source.deepCopy();
+        JsonArray anchors = result.getAsJsonArray("anchors");
+        List<BlockBounds> buildings = new ArrayList<>(), forbidden = new ArrayList<>();
+        for (var element : anchors) {
+            JsonObject item = element.getAsJsonObject();
+            for (String key : List.of("collisionEnvelope", "reservedEnvelope", "plannedFootprint"))
+                if (item.has(key)) forbidden.add(expand(bounds(item.getAsJsonObject(key)), CLEARANCE));
+            if (!isTree(item) && item.has("plannedFootprint")) buildings.add(bounds(item.getAsJsonObject("plannedFootprint")));
+            collectEntrances(item, forbidden);
+        }
+        for (String channel : List.of("wallCorridorMask", "gateCorridorMask", "wallNodeSlots"))
+            for (var element : array(walls, channel)) forbidden.add(expand(bounds(
+                    element.getAsJsonObject().getAsJsonObject("blockBounds")), CLEARANCE));
+        collectLandscapeSpans(landscapes, forbidden);
+        for (var element : array(source, "streetBands")) if (element.getAsJsonObject().has("bounds"))
+            forbidden.add(expand(bounds(element.getAsJsonObject().getAsJsonObject("bounds")), CLEARANCE));
+        Set<BlockPoint> envelope = new com.rinsing.geomantia.systems.city.algorithm.landuse.CityDistrictBoundary()
+                .envelope(buildings, 32, terrain.planningBounds());
+        List<Tree> templates = catalog.stream().sorted(Comparator.comparing(Tree::ref)).toList();
+        TerrainIndex terrainIndex = new TerrainIndex(terrain);
+        int placed = 0;
+        if (!templates.isEmpty()) for (BlockPoint point : envelope.stream().sorted(
+                Comparator.comparingInt(BlockPoint::z).thenComparingInt(BlockPoint::x)).toList()) {
+            // Stable sparse candidate sampling; actual templates determine spacing and clearance.
+            Random random = new Random(31L * text(source,"cityId").hashCode()
+                    + point.x() * 73856093L + point.z() * 19349663L);
+            if (random.nextInt(160) != 0) continue;
+            Tree tree = templates.get(random.nextInt(templates.size()));
+            var rotation = CityTemplatePlacementGeometry.Rotation.values()[random.nextInt(4)];
+            var geometry = CityTemplatePlacementGeometry.of(tree.size(), rotation,
+                    CityTemplatePlacementGeometry.Mirror.NONE, List.of());
+            BlockBounds footprint = geometry.worldBounds(point);
+            if (forbidden.stream().anyMatch(footprint::overlaps) || !suitableTerrain(terrainIndex, footprint)) continue;
+            boolean inside = true;
+            for (int z=footprint.minZ();z<=footprint.maxZ() && inside;z++)
+                for (int x=footprint.minX();x<=footprint.maxX();x++)
+                    if (!envelope.contains(new BlockPoint(x,z))) { inside=false; break; }
+            if (!inside) continue;
+            JsonObject item = new JsonObject();
+            item.addProperty("anchorId", "public_greenery::" + placed++);
+            item.addProperty("placementRole", "public_greenery");
+            item.addProperty("placementGroupId", "__public_greenery");
+            item.addProperty("blueprintPlacementPhase", "FILL");
+            item.addProperty("templateId",tree.ref()); item.addProperty("templateRef",tree.ref());
+            item.addProperty("templateHash",tree.hash()); item.addProperty("variantId","public_greenery");
+            item.addProperty("rotation",rotation.name()); item.addProperty("mirror","NONE");
+            item.addProperty("maskMarginBlocks",0); item.add("rawSize",sizeJson(tree.size()));
+            item.add("anchorBlock",point.asJson()); item.add("treeRootBlock",geometry.worldPosition(point,tree.root()).asJson());
+            for (String key : List.of("plannedFootprint","collisionEnvelope","maskEnvelope")) item.add(key,boundsJson(footprint));
+            anchors.add(item); forbidden.add(expand(footprint,CLEARANCE));
+        }
+        JsonObject report = new JsonObject(); report.addProperty("plannedCount",placed);
+        report.addProperty("candidateTemplateCount",templates.size()); result.add("publicGreeneryReport",report);
+        return result;
+    }
+
+    public static boolean isTree(JsonObject item) {
+        return Set.of(ROLE, "public_greenery").contains(text(item, "placementRole"));
+    }
 
     private static boolean suitableTerrain(TerrainIndex terrain, BlockBounds bounds) {
         double min = Double.POSITIVE_INFINITY, max = Double.NEGATIVE_INFINITY;

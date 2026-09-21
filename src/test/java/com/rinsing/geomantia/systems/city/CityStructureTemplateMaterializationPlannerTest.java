@@ -12,6 +12,16 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityStructureTemplateMaterializationPlannerTest {
+    @Test void publicPlanterUsesDecorationLifecycleEvenOutsideRoadsideNamespace() {
+        JsonObject input=anchorMap();
+        input.getAsJsonArray("anchors").get(0).getAsJsonObject().addProperty("placementRole","public_greenery");
+        JsonObject report=new JsonObject();report.addProperty("plannedCount",1);input.add("publicGreeneryReport",report);
+        var plan=new CityStructureMaterializationPlanner().planWorldgen(input,null,null,metadata()).structureMaterializationPlan();
+        assertTrue(plan.get("locked").getAsBoolean());
+        assertEquals("structure_start_decoration",plan.getAsJsonArray("plannedWorldgenStructures").get(0)
+                .getAsJsonObject().get("terrainPosePolicy").getAsString());
+        assertEquals(report,plan.get("publicGreeneryReport"));
+    }
     @Test
     void buildingWinsCollisionEvenWhenOptionalTreeAppearsFirst() {
         JsonObject input = anchorMap();

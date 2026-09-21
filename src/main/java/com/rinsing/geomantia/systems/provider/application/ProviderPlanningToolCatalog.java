@@ -188,7 +188,7 @@ final class ProviderPlanningToolCatalog {
                 JsonObject cp=changes.getAsJsonObject("properties");
                 for(String key:List.of("landscapes","surfaceMaterials","removeGroupIds","removeCompositionIds","removeLandscapeIds"))cp.remove(key);
                 p.add("changes",changes);p.add("targetDistrictId",string());p.add("protectedDistrictIds",array(string()));
-                p.add("expansionMode",enumeration("ADJUST_ARRAY","OUTWARD_ARRAY"));p.add("integrationIntent",string());
+                p.add("expansionMode",enumeration("ADJUST_ARRAY","OUTWARD_ARRAY","REPAIR_CORE"));p.add("integrationIntent",string());
                 p.add("baseDraftHash",string());p.add("assessment",described(string(),"看当前总览判断整体性及各区功能是否保留；允许隔河，不要求接触。"));
                 p.add("previousExpansionComplete",described(bool(),"切换扩张区前，确认上一区已形成整体性。"));
                 required.addAll(List.of("changes","targetDistrictId","protectedDistrictIds","expansionMode","integrationIntent","baseDraftHash","assessment"));

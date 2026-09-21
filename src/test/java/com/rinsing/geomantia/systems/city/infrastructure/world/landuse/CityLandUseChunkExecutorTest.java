@@ -16,6 +16,52 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CityLandUseChunkExecutorTest {
     private final CityLandUseChunkExecutor executor = new CityLandUseChunkExecutor();
 
+    @Test void villageRoadReplacesEachActualGroundColumnWithoutFillOrQuantization() {
+        FakeWorld world=new FakeWorld();
+        world.columns.put("0,0",new CityLandUseChunkExecutor.ColumnSample(65,"minecraft:dirt",true));
+        world.columns.put("1,0",new CityLandUseChunkExecutor.ColumnSample(66,"minecraft:dirt",true));
+        var features=List.of(new CityLandUseChunkCompiler.FeatureOperation("road",0,0,"minecraft:dirt_path",0,
+                CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE),
+                new CityLandUseChunkCompiler.FeatureOperation("road",1,0,"minecraft:dirt_path",0,
+                CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE));
+        var fragment=new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,"city","hash","palette",
+                0,0,2,0,0,0,"minecraft:dirt",List.of(),List.of(),List.of(),features,features,List.of(),List.of());
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED,executor.execute(fragment,world,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES).status());
+        assertEquals(List.of("0,65,0=minecraft:dirt_path","1,66,0=minecraft:dirt_path"),world.writes);
+    }
+
+    @Test void publicGroundClearsOldPlantsAtActualHeightAndSkipsConstructedColumns() {
+        FakeWorld world=new FakeWorld();
+        world.columns.put("0,0",new CityLandUseChunkExecutor.ColumnSample(65,"minecraft:grass_block",true));
+        world.columns.put("1,0",new CityLandUseChunkExecutor.ColumnSample(68,"minecraft:stone_bricks",false));
+        world.vegetation.addAll(List.of("0,66,0","0,67,0"));
+        world.replaceable.put("0,66,0",false);
+        var result=executor.execute(publicFragment(),world,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED,result.status());
+        assertEquals(List.of("0,66,0=minecraft:air","0,67,0=minecraft:air",
+                "0,65,0=minecraft:grass_block","0,66,0=minecraft:poppy"),world.writes);
+    }
+
+    @Test void failedPublicPlantWriteRollsBackGroundAndVegetationClearing() {
+        FakeWorld world=new FakeWorld();world.vegetation.add("0,65,0");world.mutateThenFailWriteIndex=2;
+        var result=executor.execute(publicFragment(),world,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+        assertEquals(CityLandUseChunkExecutor.Status.FAILED,result.status());
+        assertTrue(result.rollbackComplete());assertEquals(2,world.restores.size());
+    }
+
+    private static CityLandUseChunkCompiler.ChunkFragment publicFragment() {
+        List<CityLandUseChunkCompiler.FeatureOperation> features=new ArrayList<>();
+        for(int x=0;x<2;x++) {
+            features.add(new CityLandUseChunkCompiler.FeatureOperation("public_greenery::city",x,0,
+                    "minecraft:grass_block",0,CityLandUseSurfacePrintPlan.FeatureKind.GREEN_GROUND,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE));
+            features.add(new CityLandUseChunkCompiler.FeatureOperation("public_greenery::city",x,0,
+                    "minecraft:poppy",1,CityLandUseSurfacePrintPlan.FeatureKind.GREEN_PLANT,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE));
+        }
+        return new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,"city","hash","palette",
+                0,0,4,0,0,0,"minecraft:dirt",List.of(),List.of(),List.of(),features,features,List.of(),List.of());
+    }
+
     @Test void retainingFacadeMaterialsReachWritesWithinExistingPlatformFootprint() {
         var materials=com.rinsing.geomantia.systems.city.domain.blueprint.CitySurfaceMaterials.read(
                 com.google.gson.JsonParser.parseString("{defaults:{terrace:{preset:'timber_stone'}}}").getAsJsonObject());
@@ -743,6 +789,8 @@ class CityLandUseChunkExecutorTest {
     }
 
     private static final class FakeWorld implements CityLandUseChunkExecutor.ExecutionWorld {
+        private final java.util.Set<String> vegetation=new java.util.HashSet<>();
+        @Override public boolean isPublicVegetation(int x,int y,int z) { return vegetation.contains(x+","+y+","+z); }
         private boolean frozenDesign;
 
         @Override public CityLandUseChunkExecutor.ColumnSample sampleDesignColumn(int x, int z) {

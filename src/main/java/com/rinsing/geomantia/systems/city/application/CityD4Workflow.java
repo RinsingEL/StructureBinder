@@ -128,13 +128,24 @@ public final class CityD4Workflow {
             JsonObject body;
             if(integrating) {
                 requireCurrentOverview(dir,contextId,draft,request);
+                if (CityDesignReviewWorkflow.status(dir,contextId,draft).get("coreReworkExhausted").getAsBoolean()) {
+                    JsonObject exhausted = error(state,"CITY_BLUEPRINT_FAILURE_BUDGET_EXHAUSTED","孤立核心返工达到既有五次边界，停止并保留当前预览供检查。");
+                    exhausted.addProperty("nextAction","stop_for_human_review");
+                    return exhausted;
+                }
                 require(object(state,"bodies").has(owner),"targetDistrictId 必须是已有功能区。");
-                require(!independent(state,owner),"独立外围功能区不参与城市主体融合扩张。");
+                require(!independent(state,owner)||"REPAIR_CORE".equals(text(request,"expansionMode")),"独立外围功能区不参与城市主体融合扩张，仅可修复自身孤立核心。");
                 String active=text(state,"activeExpansionDistrictId");
                 require(active.isBlank()||active.equals(owner)||(request.has("previousExpansionComplete")&&request.get("previousExpansionComplete").getAsBoolean()),"尚未完成当前功能区的整体性处理；继续该区，或看图确认 previousExpansionComplete 后换区。");
                 validateProtection(state,owner,array(request,"protectedDistrictIds"));
                 JsonObject before=object(object(state,"bodies"),owner),changes=object(request,"changes");
                 validateExpansion(before,changes,text(request,"expansionMode"));
+                if ("REPAIR_CORE".equals(text(request,"expansionMode"))) {
+                    JsonArray isolated = object(object(draft,"compiledLayout"),"designReview").has("isolatedCoreGroupIds")
+                            ? object(object(draft,"compiledLayout"),"designReview").getAsJsonArray("isolatedCoreGroupIds") : new JsonArray();
+                    Set<String> repairable = new HashSet<>(); isolated.forEach(id -> repairable.add(id.getAsString()));
+                    require(groupIds(before).stream().anyMatch(repairable::contains),"REPAIR_CORE 只用于当前预览中存在孤立核心的功能区。");
+                }
                 body=mergeChanges(before,changes);
                 require(!body.equals(before),"阵列参数没有变化；当前总览已经满意可直接提交，不要原样重试。");
                 validateExpansionOwnership(state,owner,before,body,text(request,"expansionMode"));
@@ -151,6 +162,10 @@ public final class CityD4Workflow {
             JsonObject proposal=new JsonObject();proposal.add("cityBlueprint",assemble(candidate));proposal.addProperty("proportionMode","RELATIVE_WEIGHTS");proposal.addProperty("submissionMode","DRAFT");
             proposal.add("hostLayoutPolicy",CityD4LayoutPolicy.request(state,candidate,
                     geometryBase(dir,contextId,cityId,state,draft),owner,integrating));
+            if (integrating && array(object(object(draft,"compiledLayout"),"designReview"),"isolatedCoreGroupIds")
+                    .asList().stream().anyMatch(id -> groupIds(body).contains(id.getAsString()))) {
+                CityDesignReviewWorkflow.recordCoreRework(dir,contextId,draft);
+            }
             JsonObject response=compiler.call(proposal);CityD4SubmissionGuidance.annotate(response,candidate,owner,integrating?"changes":"districtDesign");
             if(ok(response)&&"preview_valid".equals(text(object(response,"revisionEvidence"),"status"))) {
                 JsonObject current=CityBlueprintDraft.current(dir,contextId,cityId);
@@ -196,20 +211,22 @@ public final class CityD4Workflow {
         object(state,"bodies").entrySet().forEach(e->groupIds(e.getValue().getAsJsonObject()).forEach(id->owners.put(id,e.getKey())));
         for(var e:array(body,"arrayCompositions")){JsonObject c=e.getAsJsonObject();String center=text(c,"centerGroupId");require(own.contains(center),"嵌套中心必须属于当前功能区。");nested.add(center);for(var id:array(c,"memberGroupIds")){require(own.contains(id.getAsString()),"不能把其他功能区纳入当前区嵌套或移动其布局。");nested.add(id.getAsString());}}
         for(var e:array(body,"groups")){JsonObject g=e.getAsJsonObject();String id=text(g,"groupId");if(old.contains(id))continue;
-            if(mode.equals("ADJUST_ARRAY"))require(nested.contains(id),"调整阵列时新增组必须参与本区嵌套；向目标方向追加独立完整阵列使用 OUTWARD_ARRAY。");
+            if(!mode.equals("OUTWARD_ARRAY"))require(nested.contains(id),"调整阵列时新增组必须参与本区嵌套；向目标方向追加独立完整阵列使用 OUTWARD_ARRAY。");
             else {var refs=array(object(g,"placementRelation"),"groupRefs");require(refs.size()==2,"向外阵列需要本区与目标区两个引用。");
                 require(refs.asList().stream().anyMatch(r->owner.equals(owners.get(r.getAsString())))&&refs.asList().stream().anyMatch(r->{String d=owners.get(r.getAsString());return d!=null&&!d.equals(owner)&&!independent(state,d);}),"向外阵列必须从本区朝另一个非独立主体区扩张。");}
         }
     }
     private static void validateExpansion(JsonObject before,JsonObject changes,String mode){
-        require(Set.of("ADJUST_ARRAY","OUTWARD_ARRAY").contains(mode),"仅支持调整阵列/嵌套，或向外阵列。");
+        require(Set.of("ADJUST_ARRAY","OUTWARD_ARRAY","REPAIR_CORE").contains(mode),"使用调整阵列、向外阵列或孤立核心修复。");
         require(Set.of("groups","arrayCompositions","relations","foundationGroupIds").containsAll(changes.keySet()),"扩张只修改阵列与嵌套，不重做景观、素材、用途或删除其他设计。");
         require(!array(changes,"groups").isEmpty()||!array(changes,"arrayCompositions").isEmpty(),"需要实际阵列或嵌套修改。");
         Set<String> old=groupIds(before);boolean added=false;
         for(var e:array(changes,"groups")){JsonObject g=e.getAsJsonObject();String id=text(g,"groupId");
             if(old.contains(id)) {
                 require(!mode.equals("OUTWARD_ARRAY"),"向外阵列保留已有阵列，只追加有方向的阵列。");
-                require(Set.of("groupId","structureCount","densityClass","algorithmProfileRef","connectionPlan","clearFields").containsAll(g.keySet()),"已有阵列仅调整阵列参数；不能改用途、素材、选址或删除主体。");
+                Set<String> allowed = new HashSet<>(Set.of("groupId","structureCount","densityClass","algorithmProfileRef","connectionPlan","clearFields"));
+                if (mode.equals("REPAIR_CORE")) allowed.addAll(Set.of("requiredStructureRefs","fillPools"));
+                require(allowed.containsAll(g.keySet()),"已有阵列仅调整阵列参数；孤立核心修复可调整选材，但不能改用途、选址或删除主体。");
                 if(g.has("clearFields"))for(var f:array(g,"clearFields"))require(f.getAsString().equals("placementRelation"),"仅在改嵌套时清除独立定位。");
             } else {added=true;if(mode.equals("OUTWARD_ARRAY"))require("BETWEEN_GROUPS".equals(text(object(g,"placementRelation"),"kind")),"向外阵列通过 BETWEEN_GROUPS 指向已有本区与目标区，使用完整阵列扩张。");}
         }

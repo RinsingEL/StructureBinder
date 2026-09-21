@@ -1893,6 +1893,15 @@ final class CityPlanningEndpointHandler {
                             : new JsonObject(),
                     new LandUseTerrainFieldCodec().fromJson(
                             JsonParser.parseString(Files.readString(treeTerrainPath)).getAsJsonObject()), trees);
+            Path publicBlueprint = d4Dir.resolve("city_blueprint.json");
+            if (Files.isRegularFile(publicBlueprint) && "GENERATE".equals(JsonParser.parseString(
+                    Files.readString(publicBlueprint)).getAsJsonObject().getAsJsonObject("outdoorPlan").get("mode").getAsString())) {
+                anchorMap = new com.rinsing.geomantia.systems.city.application.CityRoadsideTreePlanner().appendPublic(
+                        anchorMap, JsonParser.parseString(Files.readString(wallReservationPath)).getAsJsonObject(),
+                        Files.exists(landscapeReservationPath) ? JsonParser.parseString(Files.readString(landscapeReservationPath)).getAsJsonObject() : new JsonObject(),
+                        new LandUseTerrainFieldCodec().fromJson(JsonParser.parseString(Files.readString(treeTerrainPath)).getAsJsonObject()),
+                        com.rinsing.geomantia.systems.city.application.CityRoadsideTreePlanner.readPublicCatalog(templateMetadataInspector, trees));
+            }
         }
         CityStructureMaterializationPlanner.Result result = new CityStructureMaterializationPlanner()
                 .planWorldgen(anchorMap, inspector, null, templateMetadataInspector);

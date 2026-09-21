@@ -1,0 +1,8548 @@
+{
+  "schema": "city_planning_role_audit.v1",
+  "policy": "conservative_function_and_footprint_v1",
+  "visualReviewComplete": false,
+  "assignments": [
+    {
+      "templateRef": "city_assets:selected_20260912/asset_001",
+      "displayName": "aa农场小镇 房屋1",
+      "rawSize": {
+        "width": 20,
+        "height": 15,
+        "depth": 15
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_002",
+      "displayName": "ac农场小镇 房屋3",
+      "rawSize": {
+        "width": 13,
+        "height": 10,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_003",
+      "displayName": "ad农场小镇 房屋4",
+      "rawSize": {
+        "width": 17,
+        "height": 10,
+        "depth": 12
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_004",
+      "displayName": "ae农场小镇 房屋5",
+      "rawSize": {
+        "width": 14,
+        "height": 16,
+        "depth": 14
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_005",
+      "displayName": "ag农场小镇 房屋7",
+      "rawSize": {
+        "width": 8,
+        "height": 9,
+        "depth": 8
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_006",
+      "displayName": "ah农场小镇 房屋8",
+      "rawSize": {
+        "width": 10,
+        "height": 15,
+        "depth": 10
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_007",
+      "displayName": "ai农场小镇 房屋9 L形-1",
+      "rawSize": {
+        "width": 13,
+        "height": 9,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_008",
+      "displayName": "ak农场小镇 房屋11 L形-3",
+      "rawSize": {
+        "width": 14,
+        "height": 15,
+        "depth": 15
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_009",
+      "displayName": "an农场小镇 房屋14 宽体房屋1",
+      "rawSize": {
+        "width": 13,
+        "height": 9,
+        "depth": 8
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_010",
+      "displayName": "中世纪小木屋1",
+      "rawSize": {
+        "width": 13,
+        "height": 24,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_011",
+      "displayName": "中世纪小木屋2",
+      "rawSize": {
+        "width": 15,
+        "height": 18,
+        "depth": 19
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_012",
+      "displayName": "中世纪小木屋3",
+      "rawSize": {
+        "width": 17,
+        "height": 10,
+        "depth": 20
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_013",
+      "displayName": "简易小住宅",
+      "rawSize": {
+        "width": 15,
+        "height": 14,
+        "depth": 9
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_014",
+      "displayName": "简约的中世纪小屋",
+      "rawSize": {
+        "width": 17,
+        "height": 15,
+        "depth": 16
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_015",
+      "displayName": "乡间炊烟小屋1",
+      "rawSize": {
+        "width": 20,
+        "height": 39,
+        "depth": 19
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_016",
+      "displayName": "木屋1",
+      "rawSize": {
+        "width": 26,
+        "height": 23,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_017",
+      "displayName": "木屋3",
+      "rawSize": {
+        "width": 19,
+        "height": 16,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_018",
+      "displayName": "田园木屋",
+      "rawSize": {
+        "width": 18,
+        "height": 15,
+        "depth": 15
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_023",
+      "displayName": "中世纪小屋7",
+      "rawSize": {
+        "width": 15,
+        "height": 13,
+        "depth": 19
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_024",
+      "displayName": "ap农场小镇 房屋16 宽体房屋3",
+      "rawSize": {
+        "width": 15,
+        "height": 15,
+        "depth": 10
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_033",
+      "displayName": "农场小镇 木匠铺",
+      "rawSize": {
+        "width": 15,
+        "height": 17,
+        "depth": 12
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_034",
+      "displayName": "农场小镇 铁匠铺",
+      "rawSize": {
+        "width": 15,
+        "height": 20,
+        "depth": 15
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_035",
+      "displayName": "农场小镇 面包店",
+      "rawSize": {
+        "width": 17,
+        "height": 22,
+        "depth": 11
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_036",
+      "displayName": "中世纪商铺",
+      "rawSize": {
+        "width": 16,
+        "height": 16,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_037",
+      "displayName": "铁匠铺",
+      "rawSize": {
+        "width": 9,
+        "height": 12,
+        "depth": 9
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_038",
+      "displayName": "冶炼场地",
+      "rawSize": {
+        "width": 10,
+        "height": 9,
+        "depth": 10
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_039",
+      "displayName": "中世纪小屋3 冶矿小屋",
+      "rawSize": {
+        "width": 14,
+        "height": 12,
+        "depth": 15
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_040",
+      "displayName": "中世纪小屋4 面包店",
+      "rawSize": {
+        "width": 14,
+        "height": 16,
+        "depth": 21
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_041",
+      "displayName": "中世纪小屋10 商店",
+      "rawSize": {
+        "width": 19,
+        "height": 19,
+        "depth": 20
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_052",
+      "displayName": "农场小镇 仓库1",
+      "rawSize": {
+        "width": 18,
+        "height": 12,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_053",
+      "displayName": "农场小镇 仓库2",
+      "rawSize": {
+        "width": 8,
+        "height": 9,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_054",
+      "displayName": "农场小镇 风车1",
+      "rawSize": {
+        "width": 17,
+        "height": 19,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_055",
+      "displayName": "农场小镇 风车2",
+      "rawSize": {
+        "width": 11,
+        "height": 24,
+        "depth": 15
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_056",
+      "displayName": "小型农舍1",
+      "rawSize": {
+        "width": 11,
+        "height": 12,
+        "depth": 20
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_060",
+      "displayName": "马厩1",
+      "rawSize": {
+        "width": 10,
+        "height": 11,
+        "depth": 10
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_061",
+      "displayName": "马厩2",
+      "rawSize": {
+        "width": 13,
+        "height": 14,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_062",
+      "displayName": "中世纪农舍",
+      "rawSize": {
+        "width": 15,
+        "height": 14,
+        "depth": 19
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_063",
+      "displayName": "中世纪小屋6 小谷仓",
+      "rawSize": {
+        "width": 19,
+        "height": 12,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_064",
+      "displayName": "草料小棚",
+      "rawSize": {
+        "width": 5,
+        "height": 5,
+        "depth": 7
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_069",
+      "displayName": "冒险家公会",
+      "rawSize": {
+        "width": 27,
+        "height": 18,
+        "depth": 18
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_070",
+      "displayName": "中世纪小型城堡",
+      "rawSize": {
+        "width": 23,
+        "height": 25,
+        "depth": 18
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_073",
+      "displayName": "中世纪小屋9 学校",
+      "rawSize": {
+        "width": 18,
+        "height": 15,
+        "depth": 27
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_074",
+      "displayName": "中世纪小屋18 钟楼",
+      "rawSize": {
+        "width": 13,
+        "height": 34,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_075",
+      "displayName": "守卫1",
+      "rawSize": {
+        "width": 10,
+        "height": 12,
+        "depth": 9
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_076",
+      "displayName": "守卫4",
+      "rawSize": {
+        "width": 7,
+        "height": 16,
+        "depth": 5
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_077",
+      "displayName": "狮子1",
+      "rawSize": {
+        "width": 3,
+        "height": 9,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_078",
+      "displayName": "猎犬2",
+      "rawSize": {
+        "width": 6,
+        "height": 10,
+        "depth": 12
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_079",
+      "displayName": "aj10 奇美拉",
+      "rawSize": {
+        "width": 35,
+        "height": 52,
+        "depth": 49
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_080",
+      "displayName": "al12 狮鹫2",
+      "rawSize": {
+        "width": 68,
+        "height": 28,
+        "depth": 54
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_081",
+      "displayName": "ab橡树2",
+      "rawSize": {
+        "width": 8,
+        "height": 10,
+        "depth": 7
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_082",
+      "displayName": "ac橡树3",
+      "rawSize": {
+        "width": 9,
+        "height": 13,
+        "depth": 8
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_083",
+      "displayName": "ae橡树5",
+      "rawSize": {
+        "width": 13,
+        "height": 18,
+        "depth": 14
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_084",
+      "displayName": "ag橡树7",
+      "rawSize": {
+        "width": 15,
+        "height": 22,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_085",
+      "displayName": "ab白桦2",
+      "rawSize": {
+        "width": 5,
+        "height": 14,
+        "depth": 5
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_086",
+      "displayName": "ac白桦3",
+      "rawSize": {
+        "width": 7,
+        "height": 14,
+        "depth": 7
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_087",
+      "displayName": "af白桦6",
+      "rawSize": {
+        "width": 5,
+        "height": 19,
+        "depth": 6
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_088",
+      "displayName": "ai白桦9",
+      "rawSize": {
+        "width": 5,
+        "height": 25,
+        "depth": 6
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_089",
+      "displayName": "ab云杉2",
+      "rawSize": {
+        "width": 7,
+        "height": 11,
+        "depth": 7
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_090",
+      "displayName": "ac云杉3",
+      "rawSize": {
+        "width": 7,
+        "height": 13,
+        "depth": 7
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_091",
+      "displayName": "ae云杉5",
+      "rawSize": {
+        "width": 7,
+        "height": 17,
+        "depth": 7
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_092",
+      "displayName": "ag云杉7",
+      "rawSize": {
+        "width": 9,
+        "height": 23,
+        "depth": 9
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_093",
+      "displayName": "ab深色橡树2",
+      "rawSize": {
+        "width": 7,
+        "height": 10,
+        "depth": 6
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_094",
+      "displayName": "ac深色橡树3",
+      "rawSize": {
+        "width": 6,
+        "height": 12,
+        "depth": 6
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_095",
+      "displayName": "ae深色橡树5",
+      "rawSize": {
+        "width": 9,
+        "height": 16,
+        "depth": 9
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_096",
+      "displayName": "ag深色橡树7",
+      "rawSize": {
+        "width": 15,
+        "height": 23,
+        "depth": 14
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_097",
+      "displayName": "a1树木",
+      "rawSize": {
+        "width": 8,
+        "height": 13,
+        "depth": 8
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_098",
+      "displayName": "a4树木",
+      "rawSize": {
+        "width": 5,
+        "height": 8,
+        "depth": 5
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_099",
+      "displayName": "a5树木",
+      "rawSize": {
+        "width": 6,
+        "height": 12,
+        "depth": 8
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_100",
+      "displayName": "a8树木",
+      "rawSize": {
+        "width": 12,
+        "height": 11,
+        "depth": 11
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_101",
+      "displayName": "b11树木",
+      "rawSize": {
+        "width": 4,
+        "height": 4,
+        "depth": 5
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_102",
+      "displayName": "b12树木",
+      "rawSize": {
+        "width": 6,
+        "height": 6,
+        "depth": 7
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_103",
+      "displayName": "b13树木",
+      "rawSize": {
+        "width": 7,
+        "height": 3,
+        "depth": 7
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_104",
+      "displayName": "b15树木",
+      "rawSize": {
+        "width": 7,
+        "height": 10,
+        "depth": 8
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_105",
+      "displayName": "摊位1",
+      "rawSize": {
+        "width": 5,
+        "height": 5,
+        "depth": 5
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_106",
+      "displayName": "摊位2",
+      "rawSize": {
+        "width": 5,
+        "height": 5,
+        "depth": 8
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_107",
+      "displayName": "摊位4",
+      "rawSize": {
+        "width": 6,
+        "height": 5,
+        "depth": 9
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_108",
+      "displayName": "水井1",
+      "rawSize": {
+        "width": 9,
+        "height": 13,
+        "depth": 9
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_109",
+      "displayName": "水井2",
+      "rawSize": {
+        "width": 10,
+        "height": 12,
+        "depth": 9
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_110",
+      "displayName": "水井3",
+      "rawSize": {
+        "width": 9,
+        "height": 5,
+        "depth": 9
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_111",
+      "displayName": "花园",
+      "rawSize": {
+        "width": 22,
+        "height": 9,
+        "depth": 22
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure",
+        "planning_role.self_contained"
+      ],
+      "evidence": "NBT尺寸22x9x22；检查方块调色板与等距投影：已有围合边界、内部步道、花草和灌木，为完整花园组合；不作为零碎空地填充。"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_112",
+      "displayName": "路灯1",
+      "rawSize": {
+        "width": 3,
+        "height": 5,
+        "depth": 3
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_113",
+      "displayName": "路灯2",
+      "rawSize": {
+        "width": 3,
+        "height": 5,
+        "depth": 3
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_114",
+      "displayName": "路灯3",
+      "rawSize": {
+        "width": 3,
+        "height": 6,
+        "depth": 3
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_115",
+      "displayName": "演讲台",
+      "rawSize": {
+        "width": 9,
+        "height": 6,
+        "depth": 10
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "专项结构；保留明确选材，避免重复填充"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_116",
+      "displayName": "神龛",
+      "rawSize": {
+        "width": 9,
+        "height": 9,
+        "depth": 9
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "专项结构；保留明确选材，避免重复填充"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_117",
+      "displayName": "钓鱼池",
+      "rawSize": {
+        "width": 10,
+        "height": 5,
+        "depth": 10
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:selected_20260912/asset_118",
+      "displayName": "白桦木水车",
+      "rawSize": {
+        "width": 28,
+        "height": 18,
+        "depth": 19
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "专项结构；保留明确选材，避免重复填充"
+    },
+    {
+      "templateRef": "city_assets:selected_20260919/asset_121",
+      "displayName": "bg33 城镇市政厅",
+      "rawSize": {
+        "width": 26,
+        "height": 18,
+        "depth": 42
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:selected_20260919/asset_122",
+      "displayName": "中世纪小屋12 图书馆",
+      "rawSize": {
+        "width": 19,
+        "height": 17,
+        "depth": 31
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:selected_20260919/asset_123",
+      "displayName": "中世纪小屋11 酒馆",
+      "rawSize": {
+        "width": 17,
+        "height": 17,
+        "depth": 21
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:selected_20260919/asset_124",
+      "displayName": "a8餐馆+旅店",
+      "rawSize": {
+        "width": 17,
+        "height": 17,
+        "depth": 27
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:selected_20260919/asset_125",
+      "displayName": "中世纪小屋14 教堂",
+      "rawSize": {
+        "width": 30,
+        "height": 28,
+        "depth": 20
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:selected_20260919/asset_126",
+      "displayName": "中世纪小屋13 瞭望塔",
+      "rawSize": {
+        "width": 13,
+        "height": 32,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l002",
+      "displayName": "下界疣梯田1",
+      "rawSize": {
+        "width": 12,
+        "height": 7,
+        "depth": 12
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l003",
+      "displayName": "下界疣梯田2",
+      "rawSize": {
+        "width": 11,
+        "height": 5,
+        "depth": 11
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l004",
+      "displayName": "下界疣梯田3",
+      "rawSize": {
+        "width": 15,
+        "height": 4,
+        "depth": 15
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l005",
+      "displayName": "下界疣梯田4",
+      "rawSize": {
+        "width": 18,
+        "height": 7,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l006",
+      "displayName": "下界疣梯田5",
+      "rawSize": {
+        "width": 17,
+        "height": 5,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l007",
+      "displayName": "土豆梯田1",
+      "rawSize": {
+        "width": 12,
+        "height": 7,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l008",
+      "displayName": "土豆梯田2",
+      "rawSize": {
+        "width": 11,
+        "height": 5,
+        "depth": 11
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l009",
+      "displayName": "土豆梯田3",
+      "rawSize": {
+        "width": 15,
+        "height": 4,
+        "depth": 15
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l010",
+      "displayName": "土豆梯田4",
+      "rawSize": {
+        "width": 18,
+        "height": 7,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l011",
+      "displayName": "土豆梯田5",
+      "rawSize": {
+        "width": 17,
+        "height": 5,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l012",
+      "displayName": "小麦梯田1",
+      "rawSize": {
+        "width": 12,
+        "height": 7,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l013",
+      "displayName": "小麦梯田2",
+      "rawSize": {
+        "width": 11,
+        "height": 5,
+        "depth": 11
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l014",
+      "displayName": "小麦梯田3",
+      "rawSize": {
+        "width": 15,
+        "height": 4,
+        "depth": 15
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l015",
+      "displayName": "小麦梯田4",
+      "rawSize": {
+        "width": 18,
+        "height": 7,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l016",
+      "displayName": "小麦梯田5",
+      "rawSize": {
+        "width": 17,
+        "height": 5,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l017",
+      "displayName": "甜浆果梯田1",
+      "rawSize": {
+        "width": 12,
+        "height": 7,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l018",
+      "displayName": "甜浆果梯田2",
+      "rawSize": {
+        "width": 11,
+        "height": 5,
+        "depth": 11
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l019",
+      "displayName": "甜浆果梯田3",
+      "rawSize": {
+        "width": 15,
+        "height": 4,
+        "depth": 15
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l020",
+      "displayName": "甜浆果梯田4",
+      "rawSize": {
+        "width": 18,
+        "height": 7,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l021",
+      "displayName": "甜浆果梯田5",
+      "rawSize": {
+        "width": 17,
+        "height": 5,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l022",
+      "displayName": "甜菜根梯田1",
+      "rawSize": {
+        "width": 12,
+        "height": 7,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l023",
+      "displayName": "甜菜根梯田2",
+      "rawSize": {
+        "width": 11,
+        "height": 5,
+        "depth": 11
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l024",
+      "displayName": "甜菜根梯田3",
+      "rawSize": {
+        "width": 15,
+        "height": 4,
+        "depth": 15
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l025",
+      "displayName": "甜菜根梯田4",
+      "rawSize": {
+        "width": 18,
+        "height": 7,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l026",
+      "displayName": "甜菜根梯田5",
+      "rawSize": {
+        "width": 17,
+        "height": 5,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l027",
+      "displayName": "胡萝卜梯田1",
+      "rawSize": {
+        "width": 12,
+        "height": 7,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l028",
+      "displayName": "胡萝卜梯田2",
+      "rawSize": {
+        "width": 11,
+        "height": 5,
+        "depth": 11
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l029",
+      "displayName": "胡萝卜梯田3",
+      "rawSize": {
+        "width": 15,
+        "height": 4,
+        "depth": 15
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l030",
+      "displayName": "胡萝卜梯田4",
+      "rawSize": {
+        "width": 18,
+        "height": 7,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l031",
+      "displayName": "胡萝卜梯田5",
+      "rawSize": {
+        "width": 17,
+        "height": 5,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l032",
+      "displayName": "蓝花美尔草梯田1",
+      "rawSize": {
+        "width": 12,
+        "height": 7,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l033",
+      "displayName": "蓝花美尔草梯田2",
+      "rawSize": {
+        "width": 11,
+        "height": 5,
+        "depth": 11
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l034",
+      "displayName": "蓝花美尔草梯田3",
+      "rawSize": {
+        "width": 15,
+        "height": 4,
+        "depth": 15
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l035",
+      "displayName": "蓝花美尔草梯田4",
+      "rawSize": {
+        "width": 18,
+        "height": 7,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l036",
+      "displayName": "蓝花美尔草梯田5",
+      "rawSize": {
+        "width": 17,
+        "height": 5,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l157",
+      "displayName": "橙色红砂岩游泳池1",
+      "rawSize": {
+        "width": 23,
+        "height": 9,
+        "depth": 35
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l158",
+      "displayName": "橙色红砂岩游泳池2",
+      "rawSize": {
+        "width": 21,
+        "height": 7,
+        "depth": 35
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l159",
+      "displayName": "橙色红砂岩游泳池3",
+      "rawSize": {
+        "width": 21,
+        "height": 8,
+        "depth": 35
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l160",
+      "displayName": "橙色红砂岩游泳池4",
+      "rawSize": {
+        "width": 28,
+        "height": 27,
+        "depth": 23
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l161",
+      "displayName": "橙色红砂岩游泳池5",
+      "rawSize": {
+        "width": 37,
+        "height": 27,
+        "depth": 31
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l162",
+      "displayName": "橙色红砂岩游泳池6",
+      "rawSize": {
+        "width": 20,
+        "height": 6,
+        "depth": 35
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l163",
+      "displayName": "a 深板岩游泳池1",
+      "rawSize": {
+        "width": 15,
+        "height": 10,
+        "depth": 19
+      },
+      "styleTerms": [
+        "中世纪",
+        "哥特"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l164",
+      "displayName": "b 深板岩游泳池2",
+      "rawSize": {
+        "width": 18,
+        "height": 8,
+        "depth": 19
+      },
+      "styleTerms": [
+        "中世纪",
+        "哥特"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l165",
+      "displayName": "c 深板岩游泳池3",
+      "rawSize": {
+        "width": 19,
+        "height": 26,
+        "depth": 19
+      },
+      "styleTerms": [
+        "中世纪",
+        "哥特"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l166",
+      "displayName": "d 深板岩游泳池4",
+      "rawSize": {
+        "width": 17,
+        "height": 14,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪",
+        "哥特"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l167",
+      "displayName": "e 深板岩游泳池5",
+      "rawSize": {
+        "width": 17,
+        "height": 11,
+        "depth": 18
+      },
+      "styleTerms": [
+        "中世纪",
+        "哥特"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l168",
+      "displayName": "f 深板岩游泳池6",
+      "rawSize": {
+        "width": 16,
+        "height": 11,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪",
+        "哥特"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l169",
+      "displayName": "g 深板岩游泳池7",
+      "rawSize": {
+        "width": 19,
+        "height": 10,
+        "depth": 19
+      },
+      "styleTerms": [
+        "中世纪",
+        "哥特"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l170",
+      "displayName": "h 深板岩游泳池8",
+      "rawSize": {
+        "width": 15,
+        "height": 18,
+        "depth": 15
+      },
+      "styleTerms": [
+        "中世纪",
+        "哥特"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l171",
+      "displayName": "i 深板岩游泳池9",
+      "rawSize": {
+        "width": 15,
+        "height": 12,
+        "depth": 16
+      },
+      "styleTerms": [
+        "中世纪",
+        "哥特"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l172",
+      "displayName": "j 深板岩游泳池10",
+      "rawSize": {
+        "width": 14,
+        "height": 9,
+        "depth": 15
+      },
+      "styleTerms": [
+        "中世纪",
+        "哥特"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l173",
+      "displayName": "k 深板岩游泳池11",
+      "rawSize": {
+        "width": 16,
+        "height": 22,
+        "depth": 16
+      },
+      "styleTerms": [
+        "中世纪",
+        "哥特"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l174",
+      "displayName": "l 深板岩游泳池12",
+      "rawSize": {
+        "width": 14,
+        "height": 8,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪",
+        "哥特"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l175",
+      "displayName": "m 深板岩游泳池13",
+      "rawSize": {
+        "width": 16,
+        "height": 9,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪",
+        "哥特"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l176",
+      "displayName": "n 深板岩游泳池14",
+      "rawSize": {
+        "width": 18,
+        "height": 25,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪",
+        "哥特"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l177",
+      "displayName": "深绿色诡异木游泳池1",
+      "rawSize": {
+        "width": 23,
+        "height": 9,
+        "depth": 35
+      },
+      "styleTerms": [
+        "奇幻"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l178",
+      "displayName": "深绿色诡异木游泳池2",
+      "rawSize": {
+        "width": 21,
+        "height": 7,
+        "depth": 35
+      },
+      "styleTerms": [
+        "奇幻"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l179",
+      "displayName": "深绿色诡异木游泳池3",
+      "rawSize": {
+        "width": 21,
+        "height": 8,
+        "depth": 35
+      },
+      "styleTerms": [
+        "奇幻"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l180",
+      "displayName": "深绿色诡异木游泳池4",
+      "rawSize": {
+        "width": 28,
+        "height": 27,
+        "depth": 23
+      },
+      "styleTerms": [
+        "奇幻"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l181",
+      "displayName": "深绿色诡异木游泳池5",
+      "rawSize": {
+        "width": 37,
+        "height": 27,
+        "depth": 31
+      },
+      "styleTerms": [
+        "奇幻"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l182",
+      "displayName": "深绿色诡异木游泳池6",
+      "rawSize": {
+        "width": 20,
+        "height": 6,
+        "depth": 35
+      },
+      "styleTerms": [
+        "奇幻"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l183",
+      "displayName": "白色石英游泳池1",
+      "rawSize": {
+        "width": 23,
+        "height": 9,
+        "depth": 35
+      },
+      "styleTerms": [
+        "古典",
+        "宫廷",
+        "现代"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l184",
+      "displayName": "白色石英游泳池2",
+      "rawSize": {
+        "width": 21,
+        "height": 7,
+        "depth": 35
+      },
+      "styleTerms": [
+        "古典",
+        "宫廷",
+        "现代"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l185",
+      "displayName": "白色石英游泳池3",
+      "rawSize": {
+        "width": 21,
+        "height": 8,
+        "depth": 35
+      },
+      "styleTerms": [
+        "古典",
+        "宫廷",
+        "现代"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l186",
+      "displayName": "白色石英游泳池4",
+      "rawSize": {
+        "width": 28,
+        "height": 26,
+        "depth": 23
+      },
+      "styleTerms": [
+        "古典",
+        "宫廷",
+        "现代"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l187",
+      "displayName": "白色石英游泳池5",
+      "rawSize": {
+        "width": 37,
+        "height": 27,
+        "depth": 31
+      },
+      "styleTerms": [
+        "古典",
+        "宫廷",
+        "现代"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l188",
+      "displayName": "白色石英游泳池6",
+      "rawSize": {
+        "width": 20,
+        "height": 6,
+        "depth": 35
+      },
+      "styleTerms": [
+        "古典",
+        "宫廷",
+        "现代"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l189",
+      "displayName": "a 石英游泳池1",
+      "rawSize": {
+        "width": 15,
+        "height": 10,
+        "depth": 19
+      },
+      "styleTerms": [
+        "古典",
+        "宫廷",
+        "现代"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l190",
+      "displayName": "b 石英游泳池2",
+      "rawSize": {
+        "width": 18,
+        "height": 8,
+        "depth": 19
+      },
+      "styleTerms": [
+        "古典",
+        "宫廷",
+        "现代"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l191",
+      "displayName": "c 石英游泳池3",
+      "rawSize": {
+        "width": 20,
+        "height": 26,
+        "depth": 19
+      },
+      "styleTerms": [
+        "古典",
+        "宫廷",
+        "现代"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l192",
+      "displayName": "d 石英游泳池4",
+      "rawSize": {
+        "width": 17,
+        "height": 14,
+        "depth": 17
+      },
+      "styleTerms": [
+        "古典",
+        "宫廷",
+        "现代"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l193",
+      "displayName": "e 石英游泳池5",
+      "rawSize": {
+        "width": 17,
+        "height": 11,
+        "depth": 18
+      },
+      "styleTerms": [
+        "古典",
+        "宫廷",
+        "现代"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l194",
+      "displayName": "f 石英游泳池6",
+      "rawSize": {
+        "width": 16,
+        "height": 11,
+        "depth": 17
+      },
+      "styleTerms": [
+        "古典",
+        "宫廷",
+        "现代"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l195",
+      "displayName": "g 石英游泳池7",
+      "rawSize": {
+        "width": 19,
+        "height": 10,
+        "depth": 19
+      },
+      "styleTerms": [
+        "古典",
+        "宫廷",
+        "现代"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l196",
+      "displayName": "h 石英游泳池8",
+      "rawSize": {
+        "width": 15,
+        "height": 18,
+        "depth": 15
+      },
+      "styleTerms": [
+        "古典",
+        "宫廷",
+        "现代"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l197",
+      "displayName": "i 石英游泳池9",
+      "rawSize": {
+        "width": 15,
+        "height": 12,
+        "depth": 16
+      },
+      "styleTerms": [
+        "古典",
+        "宫廷",
+        "现代"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l198",
+      "displayName": "j 石英游泳池10",
+      "rawSize": {
+        "width": 14,
+        "height": 9,
+        "depth": 15
+      },
+      "styleTerms": [
+        "古典",
+        "宫廷",
+        "现代"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l199",
+      "displayName": "k 石英游泳池11",
+      "rawSize": {
+        "width": 16,
+        "height": 22,
+        "depth": 16
+      },
+      "styleTerms": [
+        "古典",
+        "宫廷",
+        "现代"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l200",
+      "displayName": "l 石英游泳池12",
+      "rawSize": {
+        "width": 14,
+        "height": 8,
+        "depth": 17
+      },
+      "styleTerms": [
+        "古典",
+        "宫廷",
+        "现代"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l201",
+      "displayName": "m 石英游泳池13",
+      "rawSize": {
+        "width": 16,
+        "height": 9,
+        "depth": 17
+      },
+      "styleTerms": [
+        "古典",
+        "宫廷",
+        "现代"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l202",
+      "displayName": "n 石英游泳池14",
+      "rawSize": {
+        "width": 18,
+        "height": 25,
+        "depth": 17
+      },
+      "styleTerms": [
+        "古典",
+        "宫廷",
+        "现代"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l203",
+      "displayName": "a 砂岩游泳池1",
+      "rawSize": {
+        "width": 15,
+        "height": 10,
+        "depth": 19
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l204",
+      "displayName": "b 砂岩游泳池2",
+      "rawSize": {
+        "width": 18,
+        "height": 8,
+        "depth": 19
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l205",
+      "displayName": "c 砂岩游泳池3",
+      "rawSize": {
+        "width": 20,
+        "height": 26,
+        "depth": 19
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l206",
+      "displayName": "d 砂岩游泳池4",
+      "rawSize": {
+        "width": 17,
+        "height": 14,
+        "depth": 17
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l207",
+      "displayName": "e 砂岩游泳池5",
+      "rawSize": {
+        "width": 17,
+        "height": 11,
+        "depth": 18
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l208",
+      "displayName": "f 砂岩游泳池6",
+      "rawSize": {
+        "width": 16,
+        "height": 11,
+        "depth": 17
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l209",
+      "displayName": "g 砂岩游泳池7",
+      "rawSize": {
+        "width": 19,
+        "height": 10,
+        "depth": 19
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l210",
+      "displayName": "h 砂岩游泳池8",
+      "rawSize": {
+        "width": 15,
+        "height": 18,
+        "depth": 15
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l211",
+      "displayName": "i 砂岩游泳池9",
+      "rawSize": {
+        "width": 15,
+        "height": 12,
+        "depth": 16
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l212",
+      "displayName": "j 砂岩游泳池10",
+      "rawSize": {
+        "width": 14,
+        "height": 9,
+        "depth": 15
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l213",
+      "displayName": "k 砂岩游泳池11",
+      "rawSize": {
+        "width": 16,
+        "height": 22,
+        "depth": 16
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l214",
+      "displayName": "l 砂岩游泳池12",
+      "rawSize": {
+        "width": 14,
+        "height": 8,
+        "depth": 17
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l215",
+      "displayName": "m 砂岩游泳池13",
+      "rawSize": {
+        "width": 16,
+        "height": 9,
+        "depth": 17
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l216",
+      "displayName": "n 砂岩游泳池14",
+      "rawSize": {
+        "width": 18,
+        "height": 25,
+        "depth": 17
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l217",
+      "displayName": "a 红砂岩游泳池1",
+      "rawSize": {
+        "width": 15,
+        "height": 10,
+        "depth": 19
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l218",
+      "displayName": "b 红砂岩游泳池2",
+      "rawSize": {
+        "width": 18,
+        "height": 8,
+        "depth": 19
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l219",
+      "displayName": "c 红砂岩游泳池3",
+      "rawSize": {
+        "width": 20,
+        "height": 26,
+        "depth": 18
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l220",
+      "displayName": "d 红砂岩游泳池4",
+      "rawSize": {
+        "width": 17,
+        "height": 14,
+        "depth": 17
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l221",
+      "displayName": "e 红砂岩游泳池5",
+      "rawSize": {
+        "width": 17,
+        "height": 11,
+        "depth": 18
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l222",
+      "displayName": "f 红砂岩游泳池6",
+      "rawSize": {
+        "width": 16,
+        "height": 11,
+        "depth": 17
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l223",
+      "displayName": "g 红砂岩游泳池7",
+      "rawSize": {
+        "width": 19,
+        "height": 10,
+        "depth": 19
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l224",
+      "displayName": "h 红砂岩游泳池8",
+      "rawSize": {
+        "width": 15,
+        "height": 18,
+        "depth": 15
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l225",
+      "displayName": "i 红砂岩游泳池9",
+      "rawSize": {
+        "width": 15,
+        "height": 12,
+        "depth": 16
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l226",
+      "displayName": "j 红砂岩游泳池10",
+      "rawSize": {
+        "width": 14,
+        "height": 9,
+        "depth": 15
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l227",
+      "displayName": "k 红砂岩游泳池11",
+      "rawSize": {
+        "width": 16,
+        "height": 22,
+        "depth": 16
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l228",
+      "displayName": "l 红砂岩游泳池12",
+      "rawSize": {
+        "width": 14,
+        "height": 8,
+        "depth": 17
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l229",
+      "displayName": "m 红砂岩游泳池13",
+      "rawSize": {
+        "width": 16,
+        "height": 9,
+        "depth": 17
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l230",
+      "displayName": "n 红砂岩游泳池14",
+      "rawSize": {
+        "width": 18,
+        "height": 25,
+        "depth": 17
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l231",
+      "displayName": "红色红木游泳池1",
+      "rawSize": {
+        "width": 23,
+        "height": 9,
+        "depth": 35
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l232",
+      "displayName": "红色红木游泳池2",
+      "rawSize": {
+        "width": 21,
+        "height": 8,
+        "depth": 35
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l233",
+      "displayName": "红色红木游泳池3",
+      "rawSize": {
+        "width": 21,
+        "height": 8,
+        "depth": 35
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l234",
+      "displayName": "红色红木游泳池4",
+      "rawSize": {
+        "width": 28,
+        "height": 27,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l235",
+      "displayName": "红色红木游泳池5",
+      "rawSize": {
+        "width": 37,
+        "height": 27,
+        "depth": 31
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l236",
+      "displayName": "红色红木游泳池6",
+      "rawSize": {
+        "width": 20,
+        "height": 6,
+        "depth": 35
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l237",
+      "displayName": "褐色花岗岩游泳池1",
+      "rawSize": {
+        "width": 23,
+        "height": 9,
+        "depth": 35
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l238",
+      "displayName": "褐色花岗岩游泳池2",
+      "rawSize": {
+        "width": 21,
+        "height": 8,
+        "depth": 35
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l239",
+      "displayName": "褐色花岗岩游泳池3",
+      "rawSize": {
+        "width": 21,
+        "height": 8,
+        "depth": 35
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l240",
+      "displayName": "褐色花岗岩游泳池4",
+      "rawSize": {
+        "width": 28,
+        "height": 27,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l241",
+      "displayName": "褐色花岗岩游泳池5",
+      "rawSize": {
+        "width": 37,
+        "height": 27,
+        "depth": 31
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l242",
+      "displayName": "褐色花岗岩游泳池6",
+      "rawSize": {
+        "width": 20,
+        "height": 6,
+        "depth": 35
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l243",
+      "displayName": "青色海晶石游泳池1",
+      "rawSize": {
+        "width": 23,
+        "height": 9,
+        "depth": 35
+      },
+      "styleTerms": [
+        "海洋",
+        "奇幻"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l244",
+      "displayName": "青色海晶石游泳池2",
+      "rawSize": {
+        "width": 21,
+        "height": 7,
+        "depth": 35
+      },
+      "styleTerms": [
+        "海洋",
+        "奇幻"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l245",
+      "displayName": "青色海晶石游泳池3",
+      "rawSize": {
+        "width": 21,
+        "height": 8,
+        "depth": 35
+      },
+      "styleTerms": [
+        "海洋",
+        "奇幻"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l246",
+      "displayName": "青色海晶石游泳池4",
+      "rawSize": {
+        "width": 28,
+        "height": 27,
+        "depth": 23
+      },
+      "styleTerms": [
+        "海洋",
+        "奇幻"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l247",
+      "displayName": "青色海晶石游泳池5",
+      "rawSize": {
+        "width": 37,
+        "height": 27,
+        "depth": 31
+      },
+      "styleTerms": [
+        "海洋",
+        "奇幻"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l248",
+      "displayName": "青色海晶石游泳池6",
+      "rawSize": {
+        "width": 20,
+        "height": 6,
+        "depth": 35
+      },
+      "styleTerms": [
+        "海洋",
+        "奇幻"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l249",
+      "displayName": "aa1 红色码头灯塔1",
+      "rawSize": {
+        "width": 11,
+        "height": 40,
+        "depth": 11
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l250",
+      "displayName": "ab2 红色码头灯塔2",
+      "rawSize": {
+        "width": 13,
+        "height": 50,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l251",
+      "displayName": "ac3 红色码头灯塔3",
+      "rawSize": {
+        "width": 21,
+        "height": 71,
+        "depth": 21
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l252",
+      "displayName": "ad4 红色码头灯塔1 爬满藤蔓",
+      "rawSize": {
+        "width": 11,
+        "height": 41,
+        "depth": 11
+      },
+      "styleTerms": [
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l253",
+      "displayName": "ae5 红色码头灯塔2 爬满藤蔓",
+      "rawSize": {
+        "width": 13,
+        "height": 50,
+        "depth": 13
+      },
+      "styleTerms": [
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l254",
+      "displayName": "af6 红色码头灯塔3 爬满藤蔓",
+      "rawSize": {
+        "width": 21,
+        "height": 71,
+        "depth": 21
+      },
+      "styleTerms": [
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l255",
+      "displayName": "ag7 灰白色码头灯塔1",
+      "rawSize": {
+        "width": 11,
+        "height": 40,
+        "depth": 11
+      },
+      "styleTerms": [
+        "中世纪",
+        "古典"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l256",
+      "displayName": "ah8 灰白色码头灯塔2",
+      "rawSize": {
+        "width": 13,
+        "height": 50,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中世纪",
+        "古典"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l257",
+      "displayName": "ai9 灰白色码头灯塔3",
+      "rawSize": {
+        "width": 21,
+        "height": 71,
+        "depth": 21
+      },
+      "styleTerms": [
+        "中世纪",
+        "古典"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l258",
+      "displayName": "aj10 灰白色码头灯塔1 爬满藤蔓",
+      "rawSize": {
+        "width": 11,
+        "height": 40,
+        "depth": 11
+      },
+      "styleTerms": [
+        "中世纪",
+        "古典",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l259",
+      "displayName": "ak11 灰白色码头灯塔2 爬满藤蔓",
+      "rawSize": {
+        "width": 13,
+        "height": 50,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中世纪",
+        "古典",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l260",
+      "displayName": "al12 灰白色码头灯塔3 爬满藤蔓",
+      "rawSize": {
+        "width": 21,
+        "height": 71,
+        "depth": 21
+      },
+      "styleTerms": [
+        "中世纪",
+        "古典",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l261",
+      "displayName": "am13 铜质码头灯塔1",
+      "rawSize": {
+        "width": 11,
+        "height": 40,
+        "depth": 11
+      },
+      "styleTerms": [
+        "蒸汽朋克"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l262",
+      "displayName": "an14 铜质码头灯塔2",
+      "rawSize": {
+        "width": 13,
+        "height": 50,
+        "depth": 13
+      },
+      "styleTerms": [
+        "蒸汽朋克"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l263",
+      "displayName": "ao15 铜质码头灯塔3",
+      "rawSize": {
+        "width": 21,
+        "height": 71,
+        "depth": 21
+      },
+      "styleTerms": [
+        "蒸汽朋克"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l264",
+      "displayName": "ap16 铜质码头灯塔1 爬满藤蔓",
+      "rawSize": {
+        "width": 11,
+        "height": 40,
+        "depth": 11
+      },
+      "styleTerms": [
+        "蒸汽朋克",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l265",
+      "displayName": "aq17 铜质码头灯塔2 爬满藤蔓",
+      "rawSize": {
+        "width": 13,
+        "height": 50,
+        "depth": 13
+      },
+      "styleTerms": [
+        "蒸汽朋克",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l266",
+      "displayName": "ar18 铜质码头灯塔3 爬满藤蔓",
+      "rawSize": {
+        "width": 21,
+        "height": 71,
+        "depth": 21
+      },
+      "styleTerms": [
+        "蒸汽朋克",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l267",
+      "displayName": "as19 石砖码头灯塔1",
+      "rawSize": {
+        "width": 11,
+        "height": 40,
+        "depth": 11
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l268",
+      "displayName": "at20 石砖码头灯塔2",
+      "rawSize": {
+        "width": 13,
+        "height": 50,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l269",
+      "displayName": "au21 石砖码头灯塔3",
+      "rawSize": {
+        "width": 21,
+        "height": 71,
+        "depth": 21
+      },
+      "styleTerms": [
+        "中世纪"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l270",
+      "displayName": "av22 石砖码头灯塔1 爬满藤蔓",
+      "rawSize": {
+        "width": 11,
+        "height": 40,
+        "depth": 11
+      },
+      "styleTerms": [
+        "中世纪",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l271",
+      "displayName": "aw23 石砖码头灯塔2 爬满藤蔓",
+      "rawSize": {
+        "width": 13,
+        "height": 50,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中世纪",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l272",
+      "displayName": "ax24 石砖码头灯塔3 爬满藤蔓",
+      "rawSize": {
+        "width": 21,
+        "height": 71,
+        "depth": 21
+      },
+      "styleTerms": [
+        "中世纪",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l273",
+      "displayName": "ay25 蓝绿色海晶石码头灯塔1",
+      "rawSize": {
+        "width": 11,
+        "height": 40,
+        "depth": 11
+      },
+      "styleTerms": [
+        "海洋",
+        "奇幻"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l274",
+      "displayName": "az26 蓝绿色海晶石码头灯塔2",
+      "rawSize": {
+        "width": 13,
+        "height": 50,
+        "depth": 13
+      },
+      "styleTerms": [
+        "海洋",
+        "奇幻"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l275",
+      "displayName": "ba27 蓝绿色海晶石码头灯塔3",
+      "rawSize": {
+        "width": 21,
+        "height": 71,
+        "depth": 21
+      },
+      "styleTerms": [
+        "海洋",
+        "奇幻"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l276",
+      "displayName": "bb28 蓝绿色海晶石码头灯塔1 爬满藤蔓",
+      "rawSize": {
+        "width": 11,
+        "height": 40,
+        "depth": 11
+      },
+      "styleTerms": [
+        "海洋",
+        "奇幻",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l277",
+      "displayName": "bc29 蓝绿色海晶石码头灯塔2 爬满藤蔓",
+      "rawSize": {
+        "width": 13,
+        "height": 50,
+        "depth": 13
+      },
+      "styleTerms": [
+        "海洋",
+        "奇幻",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l278",
+      "displayName": "bd30 蓝绿色海晶石码头灯塔3 爬满藤蔓",
+      "rawSize": {
+        "width": 21,
+        "height": 71,
+        "depth": 21
+      },
+      "styleTerms": [
+        "海洋",
+        "奇幻",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l279",
+      "displayName": "be31 深板岩码头灯塔1",
+      "rawSize": {
+        "width": 11,
+        "height": 40,
+        "depth": 11
+      },
+      "styleTerms": [
+        "中世纪",
+        "哥特"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l280",
+      "displayName": "bf32 深板岩码头灯塔2",
+      "rawSize": {
+        "width": 13,
+        "height": 50,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中世纪",
+        "哥特"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l281",
+      "displayName": "bg33 深板岩码头灯塔3",
+      "rawSize": {
+        "width": 21,
+        "height": 71,
+        "depth": 21
+      },
+      "styleTerms": [
+        "中世纪",
+        "哥特"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l282",
+      "displayName": "bh34 深板岩码头灯塔1 爬满藤蔓",
+      "rawSize": {
+        "width": 11,
+        "height": 40,
+        "depth": 11
+      },
+      "styleTerms": [
+        "中世纪",
+        "哥特",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l283",
+      "displayName": "bi35 深板岩码头灯塔2 爬满藤蔓",
+      "rawSize": {
+        "width": 13,
+        "height": 50,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中世纪",
+        "哥特",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l284",
+      "displayName": "bj36 深板岩码头灯塔3 爬满藤蔓",
+      "rawSize": {
+        "width": 21,
+        "height": 71,
+        "depth": 21
+      },
+      "styleTerms": [
+        "中世纪",
+        "哥特",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l285",
+      "displayName": "bk37 海晶石红白色码头灯塔1",
+      "rawSize": {
+        "width": 11,
+        "height": 40,
+        "depth": 11
+      },
+      "styleTerms": [
+        "海洋",
+        "奇幻"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l286",
+      "displayName": "bl38 海晶石红白色码头灯塔2",
+      "rawSize": {
+        "width": 13,
+        "height": 50,
+        "depth": 13
+      },
+      "styleTerms": [
+        "海洋",
+        "奇幻"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l287",
+      "displayName": "bm39 海晶石红白色码头灯塔3",
+      "rawSize": {
+        "width": 21,
+        "height": 71,
+        "depth": 21
+      },
+      "styleTerms": [
+        "海洋",
+        "奇幻"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l288",
+      "displayName": "bn40 海晶石红白色码头灯塔1 爬满藤蔓",
+      "rawSize": {
+        "width": 11,
+        "height": 40,
+        "depth": 11
+      },
+      "styleTerms": [
+        "海洋",
+        "奇幻",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l289",
+      "displayName": "bo41 海晶石红白色码头灯塔2 爬满藤蔓",
+      "rawSize": {
+        "width": 13,
+        "height": 50,
+        "depth": 13
+      },
+      "styleTerms": [
+        "海洋",
+        "奇幻",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l290",
+      "displayName": "bp42 海晶石红白色码头灯塔3 爬满藤蔓",
+      "rawSize": {
+        "width": 21,
+        "height": 71,
+        "depth": 21
+      },
+      "styleTerms": [
+        "海洋",
+        "奇幻",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l291",
+      "displayName": "bq43 闪长岩红白色码头灯塔1",
+      "rawSize": {
+        "width": 11,
+        "height": 40,
+        "depth": 11
+      },
+      "styleTerms": [
+        "中世纪",
+        "古典"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l292",
+      "displayName": "br44 闪长岩红白色码头灯塔2",
+      "rawSize": {
+        "width": 13,
+        "height": 50,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中世纪",
+        "古典"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l293",
+      "displayName": "bs45 闪长岩红白色码头灯塔3",
+      "rawSize": {
+        "width": 21,
+        "height": 71,
+        "depth": 21
+      },
+      "styleTerms": [
+        "中世纪",
+        "古典"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l294",
+      "displayName": "bt46 闪长岩红白色码头灯塔1 爬满藤蔓",
+      "rawSize": {
+        "width": 11,
+        "height": 40,
+        "depth": 11
+      },
+      "styleTerms": [
+        "中世纪",
+        "古典",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l295",
+      "displayName": "bu47 闪长岩红白色码头灯塔2 爬满藤蔓",
+      "rawSize": {
+        "width": 13,
+        "height": 50,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中世纪",
+        "古典",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l296",
+      "displayName": "bv48 闪长岩红白色码头灯塔3 爬满藤蔓",
+      "rawSize": {
+        "width": 21,
+        "height": 71,
+        "depth": 21
+      },
+      "styleTerms": [
+        "中世纪",
+        "古典",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l297",
+      "displayName": "bw49 棕色码头灯塔1",
+      "rawSize": {
+        "width": 11,
+        "height": 40,
+        "depth": 11
+      },
+      "styleTerms": [
+        "中世纪",
+        "北欧"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l298",
+      "displayName": "bx50 棕色码头灯塔2",
+      "rawSize": {
+        "width": 13,
+        "height": 50,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中世纪",
+        "北欧"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l299",
+      "displayName": "by51 棕色码头灯塔3",
+      "rawSize": {
+        "width": 21,
+        "height": 71,
+        "depth": 21
+      },
+      "styleTerms": [
+        "中世纪",
+        "北欧"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l300",
+      "displayName": "bz52 棕色码头灯塔1 爬满藤蔓",
+      "rawSize": {
+        "width": 11,
+        "height": 40,
+        "depth": 11
+      },
+      "styleTerms": [
+        "中世纪",
+        "北欧",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l301",
+      "displayName": "ca53 棕色码头灯塔2 爬满藤蔓",
+      "rawSize": {
+        "width": 13,
+        "height": 50,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中世纪",
+        "北欧",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l302",
+      "displayName": "cb54 棕色码头灯塔3 爬满藤蔓",
+      "rawSize": {
+        "width": 21,
+        "height": 71,
+        "depth": 21
+      },
+      "styleTerms": [
+        "中世纪",
+        "北欧",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l303",
+      "displayName": "cc55 砂岩灯塔1",
+      "rawSize": {
+        "width": 11,
+        "height": 40,
+        "depth": 11
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l304",
+      "displayName": "cd56 砂岩灯塔2",
+      "rawSize": {
+        "width": 13,
+        "height": 50,
+        "depth": 13
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l305",
+      "displayName": "ce57 砂岩灯塔3",
+      "rawSize": {
+        "width": 21,
+        "height": 71,
+        "depth": 21
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l306",
+      "displayName": "cf58 砂岩灯塔1 爬满藤蔓",
+      "rawSize": {
+        "width": 11,
+        "height": 40,
+        "depth": 11
+      },
+      "styleTerms": [
+        "沙漠",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l307",
+      "displayName": "cg59 砂岩灯塔2 爬满藤蔓",
+      "rawSize": {
+        "width": 13,
+        "height": 50,
+        "depth": 13
+      },
+      "styleTerms": [
+        "沙漠",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l308",
+      "displayName": "ch60 砂岩灯塔3 爬满藤蔓",
+      "rawSize": {
+        "width": 21,
+        "height": 71,
+        "depth": 21
+      },
+      "styleTerms": [
+        "沙漠",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l309",
+      "displayName": "ci61 绿色码头灯塔1",
+      "rawSize": {
+        "width": 11,
+        "height": 40,
+        "depth": 11
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l310",
+      "displayName": "cj62 绿色码头灯塔2",
+      "rawSize": {
+        "width": 13,
+        "height": 50,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l311",
+      "displayName": "ck63 绿色码头灯塔3",
+      "rawSize": {
+        "width": 21,
+        "height": 71,
+        "depth": 21
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l312",
+      "displayName": "cl64 绿色码头灯塔1 爬满藤蔓",
+      "rawSize": {
+        "width": 11,
+        "height": 40,
+        "depth": 11
+      },
+      "styleTerms": [
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l313",
+      "displayName": "cm65 绿色码头灯塔2 爬满藤蔓",
+      "rawSize": {
+        "width": 13,
+        "height": 50,
+        "depth": 13
+      },
+      "styleTerms": [
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l314",
+      "displayName": "cn66 绿色码头灯塔3 爬满藤蔓",
+      "rawSize": {
+        "width": 21,
+        "height": 71,
+        "depth": 21
+      },
+      "styleTerms": [
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l315",
+      "displayName": "co67 海晶石淡蓝色灯塔1",
+      "rawSize": {
+        "width": 11,
+        "height": 40,
+        "depth": 11
+      },
+      "styleTerms": [
+        "海洋",
+        "奇幻"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l316",
+      "displayName": "cp68 海晶石淡蓝色灯塔2",
+      "rawSize": {
+        "width": 13,
+        "height": 50,
+        "depth": 13
+      },
+      "styleTerms": [
+        "海洋",
+        "奇幻"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l317",
+      "displayName": "cq69 海晶石淡蓝色灯塔3",
+      "rawSize": {
+        "width": 21,
+        "height": 71,
+        "depth": 21
+      },
+      "styleTerms": [
+        "海洋",
+        "奇幻"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l318",
+      "displayName": "cr70 海晶石淡蓝色灯塔1 爬满藤蔓",
+      "rawSize": {
+        "width": 11,
+        "height": 40,
+        "depth": 11
+      },
+      "styleTerms": [
+        "海洋",
+        "奇幻",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l319",
+      "displayName": "cs71 海晶石淡蓝色灯塔2 爬满藤蔓",
+      "rawSize": {
+        "width": 13,
+        "height": 50,
+        "depth": 13
+      },
+      "styleTerms": [
+        "海洋",
+        "奇幻",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l320",
+      "displayName": "ct72 海晶石淡蓝色灯塔3 爬满藤蔓",
+      "rawSize": {
+        "width": 21,
+        "height": 71,
+        "depth": 21
+      },
+      "styleTerms": [
+        "海洋",
+        "奇幻",
+        "遗迹"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l322",
+      "displayName": "自然喷泉1",
+      "rawSize": {
+        "width": 15,
+        "height": 26,
+        "depth": 16
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l323",
+      "displayName": "自然喷泉2",
+      "rawSize": {
+        "width": 15,
+        "height": 26,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l324",
+      "displayName": "自然喷泉3",
+      "rawSize": {
+        "width": 15,
+        "height": 26,
+        "depth": 16
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l325",
+      "displayName": "自然喷泉4",
+      "rawSize": {
+        "width": 15,
+        "height": 28,
+        "depth": 16
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l326",
+      "displayName": "自然喷泉5",
+      "rawSize": {
+        "width": 15,
+        "height": 26,
+        "depth": 15
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:landscape_20260919/l327",
+      "displayName": "自然喷泉6",
+      "rawSize": {
+        "width": 15,
+        "height": 25,
+        "depth": 16
+      },
+      "styleTerms": [
+        "中世纪",
+        "东方",
+        "北欧",
+        "古典",
+        "哥特",
+        "奇幻",
+        "宫廷",
+        "日式",
+        "沙漠",
+        "海洋",
+        "现代",
+        "蒸汽朋克",
+        "遗迹",
+        "中式",
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0043",
+      "displayName": "a木屋1",
+      "rawSize": {
+        "width": 23,
+        "height": 17,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0044",
+      "displayName": "a木屋2",
+      "rawSize": {
+        "width": 23,
+        "height": 18,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0045",
+      "displayName": "a木屋3",
+      "rawSize": {
+        "width": 23,
+        "height": 20,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0046",
+      "displayName": "a木屋4",
+      "rawSize": {
+        "width": 23,
+        "height": 10,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0047",
+      "displayName": "a木屋5",
+      "rawSize": {
+        "width": 23,
+        "height": 12,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0048",
+      "displayName": "a木屋6",
+      "rawSize": {
+        "width": 23,
+        "height": 18,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0049",
+      "displayName": "a木屋7",
+      "rawSize": {
+        "width": 23,
+        "height": 12,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0050",
+      "displayName": "a木屋8",
+      "rawSize": {
+        "width": 23,
+        "height": 16,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0051",
+      "displayName": "a木屋9",
+      "rawSize": {
+        "width": 23,
+        "height": 31,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0052",
+      "displayName": "b木屋10",
+      "rawSize": {
+        "width": 23,
+        "height": 17,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0053",
+      "displayName": "b木屋11",
+      "rawSize": {
+        "width": 23,
+        "height": 15,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0054",
+      "displayName": "b木屋12",
+      "rawSize": {
+        "width": 23,
+        "height": 16,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0055",
+      "displayName": "b木屋13",
+      "rawSize": {
+        "width": 23,
+        "height": 31,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0056",
+      "displayName": "b木屋14",
+      "rawSize": {
+        "width": 23,
+        "height": 20,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0057",
+      "displayName": "b木屋15",
+      "rawSize": {
+        "width": 23,
+        "height": 38,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0058",
+      "displayName": "b木屋16",
+      "rawSize": {
+        "width": 23,
+        "height": 32,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0059",
+      "displayName": "b木屋17",
+      "rawSize": {
+        "width": 23,
+        "height": 19,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0060",
+      "displayName": "b木屋18",
+      "rawSize": {
+        "width": 23,
+        "height": 20,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0061",
+      "displayName": "b木屋19",
+      "rawSize": {
+        "width": 47,
+        "height": 26,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0062",
+      "displayName": "c木屋20",
+      "rawSize": {
+        "width": 47,
+        "height": 31,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0063",
+      "displayName": "c木屋21",
+      "rawSize": {
+        "width": 50,
+        "height": 22,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0064",
+      "displayName": "c木屋22",
+      "rawSize": {
+        "width": 31,
+        "height": 66,
+        "depth": 32
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0089",
+      "displayName": "a石塔1",
+      "rawSize": {
+        "width": 23,
+        "height": 45,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0090",
+      "displayName": "a石塔2",
+      "rawSize": {
+        "width": 17,
+        "height": 31,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0091",
+      "displayName": "a石塔3",
+      "rawSize": {
+        "width": 15,
+        "height": 33,
+        "depth": 15
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0092",
+      "displayName": "a石塔4",
+      "rawSize": {
+        "width": 13,
+        "height": 29,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0093",
+      "displayName": "a石塔5",
+      "rawSize": {
+        "width": 15,
+        "height": 23,
+        "depth": 15
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0094",
+      "displayName": "a石塔6",
+      "rawSize": {
+        "width": 13,
+        "height": 29,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0095",
+      "displayName": "a石塔7(带灯)",
+      "rawSize": {
+        "width": 11,
+        "height": 29,
+        "depth": 11
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0096",
+      "displayName": "a石塔8(带灯)",
+      "rawSize": {
+        "width": 15,
+        "height": 22,
+        "depth": 15
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0097",
+      "displayName": "a石塔9(带灯)",
+      "rawSize": {
+        "width": 9,
+        "height": 24,
+        "depth": 9
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0098",
+      "displayName": "b石塔10(带灯)",
+      "rawSize": {
+        "width": 7,
+        "height": 22,
+        "depth": 8
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0099",
+      "displayName": "b石塔11(带灯)",
+      "rawSize": {
+        "width": 11,
+        "height": 21,
+        "depth": 11
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0100",
+      "displayName": "b石塔12(带灯)",
+      "rawSize": {
+        "width": 9,
+        "height": 20,
+        "depth": 9
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0598",
+      "displayName": "aa1 戏院",
+      "rawSize": {
+        "width": 94,
+        "height": 39,
+        "depth": 56
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0599",
+      "displayName": "ab2 东方别墅1",
+      "rawSize": {
+        "width": 50,
+        "height": 22,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0600",
+      "displayName": "ac3 东方别墅2",
+      "rawSize": {
+        "width": 48,
+        "height": 30,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0601",
+      "displayName": "ad4 东方别墅3",
+      "rawSize": {
+        "width": 47,
+        "height": 24,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0602",
+      "displayName": "ae5 东方民居1",
+      "rawSize": {
+        "width": 23,
+        "height": 16,
+        "depth": 17
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0603",
+      "displayName": "af6 东方民居2",
+      "rawSize": {
+        "width": 23,
+        "height": 18,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0604",
+      "displayName": "ag7 东方民居3",
+      "rawSize": {
+        "width": 24,
+        "height": 29,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0605",
+      "displayName": "ah8 东方民居4",
+      "rawSize": {
+        "width": 23,
+        "height": 35,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0606",
+      "displayName": "ai9 东方民居5",
+      "rawSize": {
+        "width": 25,
+        "height": 17,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0607",
+      "displayName": "aj10 东方民居6",
+      "rawSize": {
+        "width": 23,
+        "height": 29,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0608",
+      "displayName": "ak11 东方民居7",
+      "rawSize": {
+        "width": 23,
+        "height": 11,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0609",
+      "displayName": "al12 东方民居8",
+      "rawSize": {
+        "width": 23,
+        "height": 14,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0610",
+      "displayName": "am13 东方民居9",
+      "rawSize": {
+        "width": 23,
+        "height": 30,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0611",
+      "displayName": "an14 东方民居10",
+      "rawSize": {
+        "width": 23,
+        "height": 16,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0612",
+      "displayName": "ao15 东方民居11",
+      "rawSize": {
+        "width": 23,
+        "height": 14,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0613",
+      "displayName": "ap16 东方民居12",
+      "rawSize": {
+        "width": 23,
+        "height": 14,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0614",
+      "displayName": "aq17 东方民居13",
+      "rawSize": {
+        "width": 23,
+        "height": 16,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0615",
+      "displayName": "ar18 东方民居14",
+      "rawSize": {
+        "width": 23,
+        "height": 10,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0616",
+      "displayName": "as19 东方民居15",
+      "rawSize": {
+        "width": 23,
+        "height": 9,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0617",
+      "displayName": "at20 东方民居16",
+      "rawSize": {
+        "width": 23,
+        "height": 18,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0618",
+      "displayName": "au21 东方民居17",
+      "rawSize": {
+        "width": 23,
+        "height": 17,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0619",
+      "displayName": "av22 东方民居18",
+      "rawSize": {
+        "width": 23,
+        "height": 17,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0620",
+      "displayName": "aw23 东方小屋1",
+      "rawSize": {
+        "width": 24,
+        "height": 11,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0621",
+      "displayName": "ax24 东方小屋2",
+      "rawSize": {
+        "width": 23,
+        "height": 13,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0622",
+      "displayName": "ay25 东方小屋3",
+      "rawSize": {
+        "width": 25,
+        "height": 12,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0623",
+      "displayName": "az26 东方小屋4",
+      "rawSize": {
+        "width": 23,
+        "height": 9,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0624",
+      "displayName": "ba27 东方小屋5",
+      "rawSize": {
+        "width": 23,
+        "height": 12,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0625",
+      "displayName": "bb28 东方小屋6",
+      "rawSize": {
+        "width": 25,
+        "height": 16,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0626",
+      "displayName": "bc29 东方小屋7",
+      "rawSize": {
+        "width": 23,
+        "height": 11,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0627",
+      "displayName": "bd30 东方小屋8",
+      "rawSize": {
+        "width": 23,
+        "height": 12,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0628",
+      "displayName": "be31 东方小屋9",
+      "rawSize": {
+        "width": 23,
+        "height": 10,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0629",
+      "displayName": "bf32 东方小屋10",
+      "rawSize": {
+        "width": 23,
+        "height": 12,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0630",
+      "displayName": "bg33 东方小屋11",
+      "rawSize": {
+        "width": 23,
+        "height": 13,
+        "depth": 25
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0631",
+      "displayName": "bh34 东方小屋12",
+      "rawSize": {
+        "width": 23,
+        "height": 10,
+        "depth": 23
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0633",
+      "displayName": "bj36 东方风格建筑",
+      "rawSize": {
+        "width": 51,
+        "height": 35,
+        "depth": 30
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0634",
+      "displayName": "bk37 道场",
+      "rawSize": {
+        "width": 28,
+        "height": 28,
+        "depth": 28
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0655",
+      "displayName": "aa1 道场1",
+      "rawSize": {
+        "width": 28,
+        "height": 17,
+        "depth": 27
+      },
+      "styleTerms": [
+        "日式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0656",
+      "displayName": "ab2 道场2",
+      "rawSize": {
+        "width": 44,
+        "height": 17,
+        "depth": 50
+      },
+      "styleTerms": [
+        "日式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0657",
+      "displayName": "ac3 宅邸1",
+      "rawSize": {
+        "width": 23,
+        "height": 21,
+        "depth": 23
+      },
+      "styleTerms": [
+        "日式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0658",
+      "displayName": "ad4 宅邸2",
+      "rawSize": {
+        "width": 22,
+        "height": 10,
+        "depth": 15
+      },
+      "styleTerms": [
+        "日式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0659",
+      "displayName": "ae5 宅邸3",
+      "rawSize": {
+        "width": 20,
+        "height": 15,
+        "depth": 29
+      },
+      "styleTerms": [
+        "日式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0660",
+      "displayName": "af6 酒馆",
+      "rawSize": {
+        "width": 43,
+        "height": 27,
+        "depth": 44
+      },
+      "styleTerms": [
+        "日式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0661",
+      "displayName": "ag7 道场3",
+      "rawSize": {
+        "width": 47,
+        "height": 27,
+        "depth": 48
+      },
+      "styleTerms": [
+        "日式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0662",
+      "displayName": "ah8 塔",
+      "rawSize": {
+        "width": 34,
+        "height": 36,
+        "depth": 34
+      },
+      "styleTerms": [
+        "日式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0792",
+      "displayName": "东方风格小屋",
+      "rawSize": {
+        "width": 29,
+        "height": 14,
+        "depth": 13
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0793",
+      "displayName": "修道院",
+      "rawSize": {
+        "width": 24,
+        "height": 16,
+        "depth": 29
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0794",
+      "displayName": "商人小屋",
+      "rawSize": {
+        "width": 19,
+        "height": 27,
+        "depth": 19
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0795",
+      "displayName": "塔楼1",
+      "rawSize": {
+        "width": 11,
+        "height": 24,
+        "depth": 9
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0796",
+      "displayName": "塔楼2",
+      "rawSize": {
+        "width": 9,
+        "height": 20,
+        "depth": 9
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0797",
+      "displayName": "雪地上的小屋",
+      "rawSize": {
+        "width": 28,
+        "height": 16,
+        "depth": 32
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0857",
+      "displayName": "a日式小屋1",
+      "rawSize": {
+        "width": 13,
+        "height": 11,
+        "depth": 17
+      },
+      "styleTerms": [
+        "日式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0858",
+      "displayName": "b日式小屋2",
+      "rawSize": {
+        "width": 18,
+        "height": 14,
+        "depth": 25
+      },
+      "styleTerms": [
+        "日式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0859",
+      "displayName": "c日式小屋3",
+      "rawSize": {
+        "width": 18,
+        "height": 14,
+        "depth": 19
+      },
+      "styleTerms": [
+        "日式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0860",
+      "displayName": "d日式小屋4",
+      "rawSize": {
+        "width": 15,
+        "height": 17,
+        "depth": 20
+      },
+      "styleTerms": [
+        "日式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0861",
+      "displayName": "e日式小屋5",
+      "rawSize": {
+        "width": 18,
+        "height": 17,
+        "depth": 27
+      },
+      "styleTerms": [
+        "日式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0862",
+      "displayName": "f日式小屋6",
+      "rawSize": {
+        "width": 18,
+        "height": 17,
+        "depth": 25
+      },
+      "styleTerms": [
+        "日式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0863",
+      "displayName": "g日式小屋7",
+      "rawSize": {
+        "width": 24,
+        "height": 39,
+        "depth": 33
+      },
+      "styleTerms": [
+        "日式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0864",
+      "displayName": "h日式小屋8",
+      "rawSize": {
+        "width": 26,
+        "height": 23,
+        "depth": 31
+      },
+      "styleTerms": [
+        "日式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0865",
+      "displayName": "i日式小屋9",
+      "rawSize": {
+        "width": 26,
+        "height": 23,
+        "depth": 31
+      },
+      "styleTerms": [
+        "日式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0866",
+      "displayName": "j日式小屋10",
+      "rawSize": {
+        "width": 19,
+        "height": 14,
+        "depth": 33
+      },
+      "styleTerms": [
+        "日式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0867",
+      "displayName": "k日式小屋11",
+      "rawSize": {
+        "width": 17,
+        "height": 11,
+        "depth": 17
+      },
+      "styleTerms": [
+        "日式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0869",
+      "displayName": "小屋1",
+      "rawSize": {
+        "width": 10,
+        "height": 9,
+        "depth": 18
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0870",
+      "displayName": "小屋2",
+      "rawSize": {
+        "width": 24,
+        "height": 9,
+        "depth": 11
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0871",
+      "displayName": "小屋3",
+      "rawSize": {
+        "width": 10,
+        "height": 7,
+        "depth": 7
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0872",
+      "displayName": "小屋4",
+      "rawSize": {
+        "width": 12,
+        "height": 9,
+        "depth": 14
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0873",
+      "displayName": "小屋5",
+      "rawSize": {
+        "width": 14,
+        "height": 9,
+        "depth": 10
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0874",
+      "displayName": "小屋6",
+      "rawSize": {
+        "width": 29,
+        "height": 15,
+        "depth": 29
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0875",
+      "displayName": "营地1",
+      "rawSize": {
+        "width": 27,
+        "height": 18,
+        "depth": 25
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0876",
+      "displayName": "营地2",
+      "rawSize": {
+        "width": 22,
+        "height": 13,
+        "depth": 26
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0956",
+      "displayName": "ap16 日式小塔",
+      "rawSize": {
+        "width": 20,
+        "height": 30,
+        "depth": 20
+      },
+      "styleTerms": [
+        "日式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b0975",
+      "displayName": "bi35 东方瞭望塔",
+      "rawSize": {
+        "width": 17,
+        "height": 75,
+        "depth": 18
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1028",
+      "displayName": "dj88 波斯风格塔楼",
+      "rawSize": {
+        "width": 43,
+        "height": 111,
+        "depth": 38
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1212",
+      "displayName": "aa1 东方风格宫殿",
+      "rawSize": {
+        "width": 73,
+        "height": 101,
+        "depth": 60
+      },
+      "styleTerms": [
+        "东南亚"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1221",
+      "displayName": "aj10 日式宫殿",
+      "rawSize": {
+        "width": 68,
+        "height": 48,
+        "depth": 72
+      },
+      "styleTerms": [
+        "日式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1232",
+      "displayName": "au21 东方神庙",
+      "rawSize": {
+        "width": 29,
+        "height": 64,
+        "depth": 29
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1236",
+      "displayName": "ay25 东方浮空神庙",
+      "rawSize": {
+        "width": 25,
+        "height": 62,
+        "depth": 30
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1242",
+      "displayName": "be31 小型中式寺庙",
+      "rawSize": {
+        "width": 38,
+        "height": 23,
+        "depth": 22
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1253",
+      "displayName": "bp42 东方神殿",
+      "rawSize": {
+        "width": 30,
+        "height": 40,
+        "depth": 27
+      },
+      "styleTerms": [
+        "中式"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1260",
+      "displayName": "bw49 沙漠小教堂",
+      "rawSize": {
+        "width": 42,
+        "height": 34,
+        "depth": 45
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1661",
+      "displayName": "沙漠小屋1",
+      "rawSize": {
+        "width": 13,
+        "height": 17,
+        "depth": 19
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1662",
+      "displayName": "沙漠小屋2",
+      "rawSize": {
+        "width": 19,
+        "height": 22,
+        "depth": 30
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1663",
+      "displayName": "沙漠小屋3",
+      "rawSize": {
+        "width": 19,
+        "height": 22,
+        "depth": 19
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1664",
+      "displayName": "沙漠小屋4",
+      "rawSize": {
+        "width": 19,
+        "height": 22,
+        "depth": 30
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1665",
+      "displayName": "沙漠小屋5",
+      "rawSize": {
+        "width": 13,
+        "height": 17,
+        "depth": 19
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1666",
+      "displayName": "沙漠小屋6",
+      "rawSize": {
+        "width": 19,
+        "height": 22,
+        "depth": 19
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1675",
+      "displayName": "aa1 村庄小屋1",
+      "rawSize": {
+        "width": 7,
+        "height": 7,
+        "depth": 16
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1676",
+      "displayName": "ab2 村庄小屋2",
+      "rawSize": {
+        "width": 20,
+        "height": 13,
+        "depth": 15
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1677",
+      "displayName": "ac3 村庄小屋3",
+      "rawSize": {
+        "width": 9,
+        "height": 11,
+        "depth": 9
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1678",
+      "displayName": "ad4 村庄小屋4",
+      "rawSize": {
+        "width": 13,
+        "height": 10,
+        "depth": 9
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1679",
+      "displayName": "ae5 村庄小屋5",
+      "rawSize": {
+        "width": 7,
+        "height": 7,
+        "depth": 6
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1680",
+      "displayName": "af6 村庄小屋6",
+      "rawSize": {
+        "width": 7,
+        "height": 11,
+        "depth": 7
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1681",
+      "displayName": "ag7 村庄小屋7",
+      "rawSize": {
+        "width": 7,
+        "height": 15,
+        "depth": 7
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1682",
+      "displayName": "ah8 村庄小屋8",
+      "rawSize": {
+        "width": 7,
+        "height": 19,
+        "depth": 7
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1683",
+      "displayName": "ai9 村庄小屋9",
+      "rawSize": {
+        "width": 5,
+        "height": 7,
+        "depth": 9
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1684",
+      "displayName": "aj10 村庄小屋10",
+      "rawSize": {
+        "width": 10,
+        "height": 10,
+        "depth": 8
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1685",
+      "displayName": "ak11 村庄小屋11",
+      "rawSize": {
+        "width": 9,
+        "height": 7,
+        "depth": 11
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1686",
+      "displayName": "al12 村庄小屋12",
+      "rawSize": {
+        "width": 11,
+        "height": 7,
+        "depth": 12
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1687",
+      "displayName": "am13 村庄小屋13",
+      "rawSize": {
+        "width": 10,
+        "height": 33,
+        "depth": 9
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1688",
+      "displayName": "an14 村庄小屋14",
+      "rawSize": {
+        "width": 11,
+        "height": 8,
+        "depth": 7
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1689",
+      "displayName": "ao15 村庄小屋15",
+      "rawSize": {
+        "width": 7,
+        "height": 8,
+        "depth": 7
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1690",
+      "displayName": "ap16 村庄小屋16",
+      "rawSize": {
+        "width": 11,
+        "height": 7,
+        "depth": 13
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1691",
+      "displayName": "aq17 村庄小屋17",
+      "rawSize": {
+        "width": 19,
+        "height": 11,
+        "depth": 8
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1692",
+      "displayName": "ar18 村庄小屋18",
+      "rawSize": {
+        "width": 13,
+        "height": 9,
+        "depth": 9
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1693",
+      "displayName": "as19 村庄小屋19",
+      "rawSize": {
+        "width": 8,
+        "height": 8,
+        "depth": 12
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1694",
+      "displayName": "at20 村庄小屋20",
+      "rawSize": {
+        "width": 8,
+        "height": 19,
+        "depth": 10
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1695",
+      "displayName": "au21 村庄小屋21",
+      "rawSize": {
+        "width": 10,
+        "height": 7,
+        "depth": 6
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1696",
+      "displayName": "av22 村庄小屋22",
+      "rawSize": {
+        "width": 7,
+        "height": 6,
+        "depth": 7
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1697",
+      "displayName": "aw23 村庄小屋23",
+      "rawSize": {
+        "width": 5,
+        "height": 7,
+        "depth": 5
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1698",
+      "displayName": "ax24 村庄小屋24",
+      "rawSize": {
+        "width": 8,
+        "height": 6,
+        "depth": 7
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1699",
+      "displayName": "ay25 村庄小屋25",
+      "rawSize": {
+        "width": 10,
+        "height": 8,
+        "depth": 13
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1700",
+      "displayName": "az26 村庄小屋26",
+      "rawSize": {
+        "width": 7,
+        "height": 8,
+        "depth": 12
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1701",
+      "displayName": "ba27 村庄小屋27",
+      "rawSize": {
+        "width": 6,
+        "height": 8,
+        "depth": 9
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1702",
+      "displayName": "bb28 村庄小屋28",
+      "rawSize": {
+        "width": 6,
+        "height": 6,
+        "depth": 6
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1703",
+      "displayName": "bc29 村庄小屋29",
+      "rawSize": {
+        "width": 7,
+        "height": 6,
+        "depth": 8
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1704",
+      "displayName": "bd30 村庄小屋30",
+      "rawSize": {
+        "width": 8,
+        "height": 6,
+        "depth": 11
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1705",
+      "displayName": "be31 村庄小屋31",
+      "rawSize": {
+        "width": 7,
+        "height": 9,
+        "depth": 6
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1706",
+      "displayName": "bf32 村庄小屋32",
+      "rawSize": {
+        "width": 6,
+        "height": 7,
+        "depth": 7
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1707",
+      "displayName": "冶炼室",
+      "rawSize": {
+        "width": 13,
+        "height": 8,
+        "depth": 9
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1708",
+      "displayName": "凉亭",
+      "rawSize": {
+        "width": 11,
+        "height": 7,
+        "depth": 11
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1709",
+      "displayName": "图书馆+附魔室",
+      "rawSize": {
+        "width": 24,
+        "height": 15,
+        "depth": 19
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1710",
+      "displayName": "小农田",
+      "rawSize": {
+        "width": 9,
+        "height": 3,
+        "depth": 13
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1711",
+      "displayName": "小塔1",
+      "rawSize": {
+        "width": 8,
+        "height": 17,
+        "depth": 7
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1712",
+      "displayName": "小塔2",
+      "rawSize": {
+        "width": 8,
+        "height": 27,
+        "depth": 7
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1713",
+      "displayName": "小塔3",
+      "rawSize": {
+        "width": 7,
+        "height": 14,
+        "depth": 7
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1714",
+      "displayName": "小塔4",
+      "rawSize": {
+        "width": 7,
+        "height": 21,
+        "depth": 7
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1715",
+      "displayName": "小塔5",
+      "rawSize": {
+        "width": 7,
+        "height": 18,
+        "depth": 7
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1716",
+      "displayName": "店铺1",
+      "rawSize": {
+        "width": 4,
+        "height": 5,
+        "depth": 4
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1717",
+      "displayName": "店铺2",
+      "rawSize": {
+        "width": 5,
+        "height": 5,
+        "depth": 4
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1718",
+      "displayName": "教堂",
+      "rawSize": {
+        "width": 12,
+        "height": 10,
+        "depth": 17
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1719",
+      "displayName": "渔港",
+      "rawSize": {
+        "width": 27,
+        "height": 14,
+        "depth": 38
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1720",
+      "displayName": "烘焙房",
+      "rawSize": {
+        "width": 15,
+        "height": 11,
+        "depth": 12
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1721",
+      "displayName": "畜栏1",
+      "rawSize": {
+        "width": 10,
+        "height": 7,
+        "depth": 19
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1722",
+      "displayName": "畜栏2",
+      "rawSize": {
+        "width": 16,
+        "height": 6,
+        "depth": 17
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1723",
+      "displayName": "祭坛",
+      "rawSize": {
+        "width": 9,
+        "height": 10,
+        "depth": 9
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.key"
+      ],
+      "evidence": "功能主体；按阵列明确选择，不进入随机填充"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1724",
+      "displayName": "祭祀金字塔",
+      "rawSize": {
+        "width": 21,
+        "height": 20,
+        "depth": 20
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1726",
+      "displayName": "草料棚",
+      "rawSize": {
+        "width": 10,
+        "height": 7,
+        "depth": 7
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.structure"
+      ],
+      "evidence": "用途或重复适用性不足；保留明确选材，不自动推断核心"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1727",
+      "displayName": "铁匠铺1",
+      "rawSize": {
+        "width": 19,
+        "height": 13,
+        "depth": 14
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1728",
+      "displayName": "铁匠铺2",
+      "rawSize": {
+        "width": 9,
+        "height": 9,
+        "depth": 12
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    },
+    {
+      "templateRef": "city_assets:buildings_20260919/asset_b1729",
+      "displayName": "鸡舍",
+      "rawSize": {
+        "width": 21,
+        "height": 6,
+        "depth": 12
+      },
+      "styleTerms": [
+        "沙漠"
+      ],
+      "planningRoleTerms": [
+        "planning_role.fill"
+      ],
+      "evidence": "可重复用途且实际占地适合配套；大小仍由阵列选择"
+    }
+  ],
+  "counts": {
+    "planning_role.fill": 220,
+    "planning_role.key": 95,
+    "planning_role.structure": 156,
+    "planning_role.self_contained": 1
+  },
+  "repeatableCount": 220,
+  "total": 471,
+  "supportPools": [
+    {
+      "poolRef": "pool:public_small_support",
+      "style": "中世纪",
+      "maximumFootprintArea": 144,
+      "candidateCount": 19
+    },
+    {
+      "poolRef": "pool:public_small_support_desert",
+      "style": "沙漠",
+      "maximumFootprintArea": 144,
+      "candidateCount": 36
+    },
+    {
+      "poolRef": "pool:public_medium_support",
+      "style": "中世纪",
+      "maximumFootprintArea": 400,
+      "candidateCount": 48
+    },
+    {
+      "poolRef": "pool:public_medium_support_chinese",
+      "style": "中式",
+      "maximumFootprintArea": 400,
+      "candidateCount": 3
+    },
+    {
+      "poolRef": "pool:public_medium_support_japanese",
+      "style": "日式",
+      "maximumFootprintArea": 400,
+      "candidateCount": 5
+    },
+    {
+      "poolRef": "pool:public_medium_support_desert",
+      "style": "沙漠",
+      "maximumFootprintArea": 400,
+      "candidateCount": 46
+    }
+  ]
+}

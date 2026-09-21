@@ -7,6 +7,7 @@ import hashlib
 import json
 import shutil
 from pathlib import Path
+from curate_planning_roles import classify, FILL, KEY, STRUCTURE, COMPLETE
 
 
 def read(path):
@@ -68,18 +69,21 @@ def build(source, metadata, baseline, output):
             intent='no_connection' if row['noRoadEntrance'] else 'connect',
             note=row['entranceReview'].get('note') or ('用户在入口标注工具中明确标记无道路入口' if row['noRoadEntrance'] else '用户手工标记'),
             roadEntrances=[dict(entranceId=p['entranceId'], x=p['position']['x'], z=p['position']['z'], direction=p['direction']) for p in row['roadEntrances']]))
+        roles = row.get('planningRoleTerms') or classify(row['displayName'], row['functionTerms'], row['rawSize'])[0]
         profiles.append(dict(structureId=ref, sourceProfileRef='selected-assets://20260912/' + row['id'],
-            reviewState='approved', functionTerms=row['functionTerms'], planningRoleTerms=[],
+            reviewState='approved', functionTerms=row['functionTerms'], planningRoleTerms=roles,
             terrainModes=['SURFACE'], styleTerms=row['styleTerms']))
         refs.append(dict(structureRef=ref, templateCandidates=[dict(templateId=ref, variantId='selected_20260912')]))
         for term in row['functionTerms']:
-            pools[term].append(ref)
+            if FILL in roles and not {KEY, COMPLETE, 'planning_role.anchor'} & set(roles):
+                pools[term].append(ref)
     write(output / 'template_catalog.json', dict(schema='city_template_catalog', templates=catalog))
     write(output / 'city_template_content_pack.json', dict(schema='city_template_content_pack.v0.1',
         packId='city_assets_selected_20260912_reviewed', catalogSha256=digest(output / 'template_catalog.json'), templates=manifest))
     write(output / 'StructureEntrances.approved.json', dict(schema='terrasense_approved_entrances.v1', structures=entrances))
     (output / 'StructureProfile.jsonl').write_text(''.join(json.dumps(p, ensure_ascii=False) + '\n' for p in profiles), encoding='utf-8')
     vocab = [dict(term_id=t, vocab_type=kind, label=t, aliases=[], status='approved') for kind, values in [('function', terms), ('style', ['中世纪'])] for t in values]
+    vocab.extend(dict(term_id=t, vocab_type='planning_role', label=t, aliases=[], status='approved') for t in (FILL, KEY, STRUCTURE, COMPLETE))
     write(output / 'StructureVocabulary.snapshot.json', dict(schemaVersion='terrasense_structure_vocabulary_snapshot.v0.1', snapshotId='selected_20260912_reviewed', terms=vocab))
     write(output / 'TerraSenseStructureProfileSource.official.json', dict(schema='terrasense_structure_profile_source',
         sourceType='structure_profile_jsonl', catalogMode='official', profilePath='StructureProfile.jsonl',

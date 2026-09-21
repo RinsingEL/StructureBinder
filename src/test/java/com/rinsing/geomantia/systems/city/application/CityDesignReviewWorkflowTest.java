@@ -9,6 +9,27 @@ import static org.junit.jupiter.api.Assertions.*;
 class CityDesignReviewWorkflowTest {
     @TempDir Path dir;
 
+    @Test void isolatedCoreBlocksFinalAndCountsDistinctReviewedDraftsOnly() throws Exception {
+        JsonObject draft = draft("one");
+        draft.add("compiledLayout",JsonParser.parseString("{designReview:{isolatedCoreGroupIds:['a']}}"));
+        assess(draft,review("one",true));
+        assess(draft,review("one",true));
+        assertEquals(0,CityDesignReviewWorkflow.status(dir,"context",draft).get("coreReworkCount").getAsInt());
+        CityDesignReviewWorkflow.recordCoreRework(dir,"context",draft);
+        CityDesignReviewWorkflow.recordCoreRework(dir,"context",draft);
+        var status = CityDesignReviewWorkflow.status(dir,"context",draft);
+        assertFalse(status.get("readyForFinal").getAsBoolean());
+        assertEquals(1,status.get("coreReworkCount").getAsInt());
+        for (int i=2;i<=5;i++) {
+            draft.addProperty("baseDraftHash","revision"+i);
+            assess(draft,review("revision"+i,true));
+            CityDesignReviewWorkflow.recordCoreRework(dir,"context",draft);
+        }
+        assertTrue(CityDesignReviewWorkflow.status(dir,"context",draft).get("coreReworkExhausted").getAsBoolean());
+        draft.getAsJsonObject("compiledLayout").getAsJsonObject("designReview").add("isolatedCoreGroupIds",new JsonArray());
+        assertTrue(CityDesignReviewWorkflow.status(dir,"context",draft).get("readyForFinal").getAsBoolean());
+    }
+
     @Test void currentOverviewNeedsViewingButDoesNotRequireLocalAssessments() throws Exception {
         JsonObject draft = draft("one");
         JsonObject local = review("one", false);

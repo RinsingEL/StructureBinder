@@ -94,7 +94,10 @@ public final class CityOutdoorBlueprintCompiler {
                 "CITY_OUTDOOR_STRUCTURE_GROUP_UNKNOWN", false);
         List<BlockBounds> structureFootprints = foundationAnchors.stream()
                 .map(AnchorData::footprint).distinct().toList();
-        List<BlockBounds> allFootprints = new ArrayList<>(structureFootprints);
+        List<BlockBounds> allStructureFootprints = blueprint.groups().stream()
+                .flatMap(group -> anchorsByGroup.getOrDefault(group.groupId(), List.of()).stream())
+                .map(AnchorData::footprint).distinct().toList();
+        List<BlockBounds> allFootprints = new ArrayList<>(allStructureFootprints);
         streetBandFootprints(structureMaterializationPlan).stream()
                 .filter(footprint -> structureFootprints.stream().anyMatch(building -> building.overlaps(footprint)))
                 .filter(footprint -> !allFootprints.contains(footprint))
@@ -117,6 +120,9 @@ public final class CityOutdoorBlueprintCompiler {
                 foundationProfile.structureMarginBlocks(), foundationProfile.closeRadiusBlocks(),
                 foundationProfile.maxJoinDistanceBlocks());
         Map<String, List<BlockBounds>> districtGroups = new LinkedHashMap<>();
+        Map<String, List<BlockBounds>> allBuildingGroups = new LinkedHashMap<>();
+        for (var group : blueprint.groups()) allBuildingGroups.put(group.groupId(),
+                anchorsByGroup.getOrDefault(group.groupId(), List.of()).stream().map(AnchorData::footprint).toList());
         for (String groupId : spatialGroupIds) districtGroups.put(groupId,
                 anchorsByGroup.getOrDefault(groupId, List.of()).stream().map(AnchorData::footprint).toList());
         Set<BlockPoint> landscapeCells = new java.util.HashSet<>();
@@ -130,7 +136,7 @@ public final class CityOutdoorBlueprintCompiler {
                 for (int x = tree.minX(); x <= tree.maxX(); x++) landscapeCells.add(new BlockPoint(x, z));
         }
         var district = new com.rinsing.geomantia.systems.city.algorithm.landuse.CityDistrictPlanner().plan(
-                terrain.planningBounds(), terrain, districtGroups,
+                terrain.planningBounds(), terrain, allBuildingGroups, districtGroups,
                 roadBands.stream().map(LandUseSourceResolver.RoadBand::bounds).toList(), landscapeCells, foundationSettings);
         CityFoundationPlanner.Plan foundationPlan = district.construction().isEmpty() ? null : district.foundation();
         String foundationGroupId = cityId + "::foundation";

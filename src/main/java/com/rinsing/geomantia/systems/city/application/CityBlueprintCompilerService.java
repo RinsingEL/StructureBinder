@@ -454,7 +454,7 @@ public final class CityBlueprintCompilerService {
         JsonObject compilationAcceptance = compilationAcceptance(
                 blueprint, states, connectivityPlan, arrayVisualQuality, streetFinalization.trace(), mainRoads.plan());
         anchorPlan.add("compilationAcceptance", compilationAcceptance.deepCopy());
-        JsonObject designReview = designReview(blueprint, states);
+        JsonObject designReview = designReview(blueprint, states, catalog);
         anchorPlan.add("designReview", designReview);
         anchorPlan.add("skippedMembers", states.values().stream().collect(JsonArray::new,
                 (items, state) -> state.skippedMembers.forEach(items::add), JsonArray::addAll));
@@ -640,7 +640,7 @@ public final class CityBlueprintCompilerService {
         state.skippedMembers.add(skipped);
     }
 
-    private static JsonObject designReview(CityBlueprint blueprint, Map<String, GroupState> states) {
+    private static JsonObject designReview(CityBlueprint blueprint, Map<String, GroupState> states, CatalogIndex catalog) {
         Set<String> nested = new LinkedHashSet<>();
         for (var composition : blueprint.arrayCompositions()) {
             nested.add(composition.centerGroupId()); nested.addAll(composition.memberGroupIds());
@@ -659,6 +659,7 @@ public final class CityBlueprintCompilerService {
                 .mapToInt(GroupState::anchorCount).sum());
         review.addProperty("automaticBuildingCount", 0);
         JsonArray groups = new JsonArray();
+        JsonArray isolatedCores = new JsonArray();
         for (GroupState state : states.values()) {
             JsonObject group = new JsonObject();
             group.addProperty("groupId", state.group().groupId());
@@ -669,13 +670,35 @@ public final class CityBlueprintCompilerService {
             group.addProperty("retainedBuildingCount", state.anchorCount());
             group.addProperty("nested", nested.contains(state.group().groupId()));
             group.addProperty("empty", state.anchorCount() == 0);
+            boolean core = state.group().priority().name().equals("CORE")
+                    || state.structureCounts.keySet().stream().anyMatch(catalog::primaryStructure);
+            Set<String> related = new LinkedHashSet<>();
+            related.add(state.group().groupId());
+            boolean changed;
+            do {
+                changed = false;
+                for (var composition : blueprint.arrayCompositions()) {
+                    Set<String> members = new LinkedHashSet<>(composition.memberGroupIds());
+                    members.add(composition.centerGroupId());
+                    if (members.stream().anyMatch(related::contains)) changed |= related.addAll(members);
+                }
+            } while (changed);
+            int retainedComposition = related.stream().map(states::get).filter(java.util.Objects::nonNull)
+                    .mapToInt(GroupState::anchorCount).sum();
+            boolean selfContained = state.structureCounts.keySet().stream().anyMatch(catalog.completeStructures()::contains);
+            boolean isolated = core && state.anchorCount() > 0 && retainedComposition < 2 && !selfContained;
+            group.addProperty("core", core);
+            group.addProperty("retainedCompositionCount", retainedComposition);
+            group.addProperty("selfContainedComposition", selfContained);
+            group.addProperty("isolatedCore", isolated);
+            if (isolated) isolatedCores.add(state.group().groupId());
             group.add("skippedMembers", state.skippedMembers.deepCopy());
             if (state.extent() != null) group.add("retainedBounds", CityStructureCandidateEnvelope.boundsJson(state.extent()));
             groups.add(group);
         }
         review.add("groups", groups);
-        review.addProperty("instruction", "Compare planned and retained arrays/buildings and nested coverage with the scale task. No fixed-area or retained-count rejection. Empty groups and skipped members are real gaps: accept deliberately or revise/add purposeful arrays. Automatic buildings are disabled.");
-        review.addProperty("instruction", "Review the actual preview and skipped members. Accept the result or revise intended groups; terrain gaps do not require replacing the whole city. No buildings are added for connection or area shares.");
+        review.add("isolatedCoreGroupIds", isolatedCores);
+        review.addProperty("instruction", "Review actual core/support composition. Isolated cores must be repaired before FINAL; authored self-contained courts count as composition. Also judge visual scale and support quality; a numerical companion alone does not establish the intended effect. Use existing bounded failure handling and record rework counts.");
         return review;
     }
 
@@ -5666,6 +5689,7 @@ public final class CityBlueprintCompilerService {
                                 Map<String, Boolean> centerAxisStreets,
                                 Set<String> compositions,
                                 Set<String> primaryStructures,
+                                Set<String> completeStructures,
                                 Map<String, GreenCapability> greenCapabilities,
                                 Map<String, Integer> foundationMargins) {
         static CatalogIndex parse(JsonObject root, JsonObject semanticCatalog) {
@@ -5710,15 +5734,20 @@ public final class CityBlueprintCompilerService {
                 compositions.add(string(item, "compositionProfileRef"));
             }
             Set<String> primaryStructures = new LinkedHashSet<>();
+            Set<String> completeStructures = new LinkedHashSet<>();
+            Set<String> explicitOnlyStructures = new LinkedHashSet<>();
             for (JsonElement element : array(semanticCatalog, "semanticProfiles")) {
                 JsonObject profile = element.getAsJsonObject();
                 boolean primary = false;
                 for (JsonElement term : array(profile, "planningRoleTerms")) {
                     String value = term.getAsString().toLowerCase(java.util.Locale.ROOT);
                     primary |= value.equals("planning_role.anchor") || value.equals("planning_role.key");
+                    if (value.equals("planning_role.self_contained")) completeStructures.add(string(profile, "semanticProfileId"));
+                    if (value.equals("planning_role.structure")) explicitOnlyStructures.add(string(profile, "semanticProfileId"));
                 }
                 if (primary) primaryStructures.add(string(profile, "semanticProfileId"));
             }
+            pools.replaceAll((ref, values) -> values.stream().filter(candidate -> !explicitOnlyStructures.contains(candidate)).toList());
             Map<String, Integer> foundationMargins = new LinkedHashMap<>();
             for (JsonElement element : array(root, "foundationProfiles")) {
                 JsonObject item = element.getAsJsonObject();
@@ -5727,7 +5756,7 @@ public final class CityBlueprintCompilerService {
             }
             return new CatalogIndex(Map.copyOf(structures), Map.copyOf(pools), Map.copyOf(poolCaps), Map.copyOf(algorithms),
                     Map.copyOf(centerAxisStreets), Set.copyOf(compositions),
-                    Set.copyOf(primaryStructures), Map.copyOf(greenCapabilities),
+                    Set.copyOf(primaryStructures), Set.copyOf(completeStructures), Map.copyOf(greenCapabilities),
                     Map.copyOf(foundationMargins));
         }
         int poolCap(String ref) { return poolCaps.getOrDefault(ref, 0); }
@@ -5739,7 +5768,8 @@ public final class CityBlueprintCompilerService {
         List<String> pool(String ref) {
             List<String> value = pools.get(ref);
             if (value == null) throw fail("CITY_BLUEPRINT_FILL_POOL_UNKNOWN", ref);
-            return value;
+            return value.stream().filter(candidate -> !primaryStructures.contains(candidate)
+                    && !completeStructures.contains(candidate)).toList();
         }
         String algorithm(String ref) {
             String value = algorithms.get(ref);

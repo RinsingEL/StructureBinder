@@ -103,6 +103,8 @@ public final class CityStructureMaterializationPlanner {
         plan.addProperty("worldgenPlacementMode", true);
         plan.addProperty("locked", failures.isEmpty() && planned.size() + optionalSkipped == anchors.size() && !planned.isEmpty());
         plan.addProperty("optionalSkippedCount", optionalSkipped);
+        for (String report : List.of("roadsideTreeReport", "publicGreeneryReport"))
+            if (anchorMap.has(report)) plan.add(report, anchorMap.get(report).deepCopy());
         plan.add("plannedWorldgenStructures", planned);
         plan.add("sourceStructureAnchorMap", anchorMap.deepCopy());
         plan.add("timingMs", timing(started));
@@ -524,7 +526,8 @@ public final class CityStructureMaterializationPlanner {
                     ? source.get("maskMarginBlocks").getAsInt() : CityStructureAnchorPlanner.DEFAULT_MASK_MARGIN_BLOCKS);
             JsonObject mask = objectValue(source, "maskEnvelope");
             BlockBounds maskEnvelope = mask == null ? expand(collisionEnvelope, maskMargin) : bounds(mask);
-            String terrain = CityTemplateTerrainPosePolicy.freezeForTemplate(templateId, templateRef,
+            String terrain = CityRoadsideTreePlanner.isTree(source) ? CityTemplateTerrainPosePolicy.STRUCTURE_START_DECORATION
+                    : CityTemplateTerrainPosePolicy.freezeForTemplate(templateId, templateRef,
                     stringValue(source, "terrainPosePolicy", ""));
             return new TemplateTask(requiredString(source, "anchorId"), templateId, templateRef, templateHash,
                     variantId, rotation, mirror, templateSize, anchorBlock, footprint, collisionEnvelope,

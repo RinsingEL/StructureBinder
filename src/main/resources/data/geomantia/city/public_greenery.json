@@ -1,0 +1,6 @@
+{
+  "ground": "minecraft:grass_block",
+  "plants": ["minecraft:azure_bluet", "minecraft:oxeye_daisy", "minecraft:fern", "minecraft:oak_leaves"],
+  "density": 0.16,
+  "edgeClearance": 1
+}

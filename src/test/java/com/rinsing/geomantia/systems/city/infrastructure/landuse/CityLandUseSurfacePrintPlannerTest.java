@@ -32,6 +32,20 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandUseSurfacePrintPlannerTest {
+    @Test void unplatformedRoadUsesGroundElevationInsteadOfFourBlockQuantization() {
+        var original = terrain(new BlockBounds(0,0,63,31),false);
+        var field = new LandUseTerrainField(original.schema(),original.cityId(),original.planningBounds(),
+                original.cellStepBlocks(),original.cells().stream().map(c -> new LandUseTerrainField.Cell(
+                c.cellX(),c.cellZ(),c.blockMinX(),c.blockMinZ(),c.cellStepBlocks(),65,0,0,0,false,0,100,
+                c.biomeId(),c.landformType(),c.landformPatchId(),true)).toList());
+        var road = new LandUseSourceResolver.RoadBand("village","network","ENTRANCE_SHORT_ALLEY",
+                new BlockPoint(20,18),new BlockPoint(30,18),new BlockBounds(20,18,30,18),1,"SURFACE_ONLY");
+        var result = new CityLandUseSurfacePrintPlanner().plan(areaPlan(),List.of(
+                group("farm_group",SurfacePolicy.CULTIVATE,new BlockBounds(12,5,14,7)),
+                group("market_group",SurfacePolicy.PAVE,new BlockBounds(42,2,43,3))),field,List.of(road),List.of(),List.of());
+        assertTrue(result.featureCells().stream().allMatch(cell -> cell.targetSurfaceY()==null),
+                "coarse D3 elevations must not replace the actual ground of an unplatformed road");
+    }
     @Test
     void freezesUniformAndContourRecipesWithoutCatalogDependency() {
         LandUseAreaPlan areaPlan = areaPlan();
@@ -318,9 +332,16 @@ class CityLandUseSurfacePrintPlannerTest {
         var road = new LandUseSourceResolver.RoadBand("long-main", "network", roadKind,
                 new BlockPoint(0, 48), new BlockPoint(144, 48), new BlockBounds(0, 45, 144, 51),
                 7, "STAIR_SLAB_STAIR");
-        var plan = new CityLandUseSurfacePrintPlanner().plan(areaPlan(), List.of(
-                group("farm_group", SurfacePolicy.CULTIVATE, new BlockBounds(12, 5, 14, 7)),
-                group("market_group", SurfacePolicy.PAVE, new BlockBounds(42, 2, 43, 3))),
+        var platformSpans = new ArrayList<>(spans(45,51,0,7));
+        platformSpans.addAll(spans(45,51,144,151));
+        var footprint = new BlockBounds(144,58,151,62);
+        var platform = new LandUseAreaPlan.Area("platform","platform","plaza",List.of("city::foundation"),
+                List.of(),List.of(),platformSpans,List.of(new BlockBounds(0,58,7,62),footprint),List.of(),List.of(),
+                1,SurfacePolicy.PAVE,VegetationPolicy.CLEAR,BoundaryPolicy.OPEN);
+        var platformPlan = new LandUseAreaPlan(LandUseAreaPlan.SCHEMA,"city_land_use_rules","city_test","hash",
+                gradedTerrain.planningBounds(),List.of(platform),List.of(),List.of(),List.of());
+        var plan = new CityLandUseSurfacePrintPlanner().plan(platformPlan,
+                List.of(group("city::foundation",SurfacePolicy.PAVE,footprint)),
                 gradedTerrain, List.of(road), List.of(), List.of());
         var center = plan.featureCells().stream().filter(cell -> cell.z() == 48)
                 .sorted(java.util.Comparator.comparingInt(CityLandUseSurfacePrintPlan.FeatureCell::x)).toList();

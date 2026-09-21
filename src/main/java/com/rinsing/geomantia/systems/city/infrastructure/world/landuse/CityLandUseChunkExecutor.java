@@ -376,9 +376,40 @@ public final class CityLandUseChunkExecutor {
         Set<CityLandUseChunkCompiler.FeatureOperation> bridgePierRails =
                 CityBridgeStructurePlanner.posts(fragment);
         Set<ColumnKey> materializedPlatformStairs = new HashSet<>();
+        Set<ColumnKey> skippedPublicGround = new HashSet<>();
         for (CityLandUseChunkCompiler.FeatureOperation operation : fragment.featureOperations()) {
             ColumnKey key = new ColumnKey(operation.x(), operation.z());
             ColumnSample column = terrainView.sample(operation.x(), operation.z());
+            boolean publicGreenery = operation.sourceId().startsWith(
+                    com.rinsing.geomantia.systems.city.application.landuse.CityPublicGreeneryPlanner.SOURCE);
+            boolean terrainRoad = operation.targetSurfaceY() == null && operation.surfaceOffset() == 0
+                    && (operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
+                    || operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR)
+                    && !foundationByColumn.containsKey(key) && !plannedSurfaceY.containsKey(key);
+            if (publicGreenery || terrainRoad) {
+                column = world.samplePublicGround(operation.x(), operation.z());
+                if (!column.naturalSurface() || "minecraft:water".equals(column.surfaceBlockId())
+                        || "minecraft:lava".equals(column.surfaceBlockId()) || publicGreenery && circulationColumns.contains(key)) {
+                    if (skippedPublicGround.add(key)) naturalSurfaceSkipped++;
+                    continue;
+                }
+                if (skippedPublicGround.contains(key)) continue;
+                if (operation.surfaceOffset() == 0) {
+                    List<PreparedMutation> clearing = new ArrayList<>();
+                    for (int y = column.surfaceY() + 1; y <= column.surfaceY() + 32; y++) {
+                        if (!world.isPublicVegetation(operation.x(), y, operation.z())) continue;
+                        PreparedMutation clear = prepare(world, operation.sourceId(), OperationPhase.MICRO_CUT,
+                                operation.x(), y, operation.z(), "minecraft:air", false);
+                        if (clear.failureReason() != null) {
+                            return ExecutionResult.failed(fragment, clear,
+                                    preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
+                                    naturalSurfaceSkipped, occupiedBoundarySkipped, true);
+                        }
+                        clearing.add(clear);
+                    }
+                    basePrepared.addAll(clearing);
+                }
+            }
             CityLandUseMicroGrader.FoundationDecision foundation = foundationByColumn.get(key);
             CityLandUseMicroGrader.FillDecision fill = fillByColumn.get(key);
             CityLandUseMicroGrader.StairDecision platformStair = platformStairByColumn.get(key);
@@ -763,6 +794,10 @@ public final class CityLandUseChunkExecutor {
 
         TargetState inspect(int worldX, int y, int worldZ);
 
+        /** Optional public ground never grades terrain or overwrites a constructed surface. */
+        default ColumnSample samplePublicGround(int x, int z) { return sampleColumn(x, z); }
+        default boolean isPublicVegetation(int x, int y, int z) { return false; }
+
         default boolean supportsChannel(int worldX, int y, int worldZ, boolean bed) {
             ColumnSample column = sampleColumn(worldX, worldZ);
             return column.naturalSurface() && column.surfaceY() >= y
@@ -1067,6 +1102,9 @@ public final class CityLandUseChunkExecutor {
     static BlockState featureBlockState(BlockState requested,
                                          CityLandUseSurfacePrintPlan.FeatureKind kind,
                                          CityLandUseSurfacePrintPlan.HorizontalFacing facing) {
+        if (kind == CityLandUseSurfacePrintPlan.FeatureKind.GREEN_PLANT
+                && requested.hasProperty(BlockStateProperties.PERSISTENT))
+            requested = requested.setValue(BlockStateProperties.PERSISTENT, true);
         if (kind == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
                 && requested.hasProperty(BlockStateProperties.SLAB_TYPE)) {
             requested = requested.setValue(BlockStateProperties.SLAB_TYPE, SlabType.DOUBLE);
@@ -1255,6 +1293,31 @@ public final class CityLandUseChunkExecutor {
         }
 
         @Override
+        public ColumnSample samplePublicGround(int x, int z) {
+            ColumnSample top = sampleColumn(x, z);
+            if (!top.naturalSurface()) return top;
+            for (int y = top.surfaceY(); y >= Math.max(level.getMinBuildHeight(), top.surfaceY() - 32); y--) {
+                BlockState state = getBlockState(new BlockPos(x, y, z));
+                if (isNaturalSurface(state)) return new ColumnSample(y,
+                        BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString(), true);
+                if (!isPublicVegetation(x, y, z) && !state.isAir()) break;
+            }
+            return new ColumnSample(top.surfaceY(), top.surfaceBlockId(), false);
+        }
+
+        @Override
+        public boolean isPublicVegetation(int x, int y, int z) {
+            if (y < level.getMinBuildHeight() || y >= level.getMaxBuildHeight()) return false;
+            BlockState state = getBlockState(new BlockPos(x, y, z));
+            if (state.is(BlockTags.LEAVES)) return !state.hasProperty(BlockStateProperties.PERSISTENT)
+                    || !state.getValue(BlockStateProperties.PERSISTENT);
+            if (state.is(BlockTags.LOGS)) return state.hasProperty(BlockStateProperties.AXIS)
+                    && state.getValue(BlockStateProperties.AXIS) == Direction.Axis.Y;
+            return state.getBlock() instanceof net.minecraft.world.level.block.BushBlock
+                    || state.is(Blocks.VINE) || state.is(Blocks.SNOW);
+        }
+
+        @Override
         public boolean ensureCanWrite(int worldX, int y, int worldZ) {
             return ensureCanWrite(new BlockPos(worldX, y, worldZ));
         }
@@ -1334,7 +1397,8 @@ public final class CityLandUseChunkExecutor {
             if (kind != CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
                     && kind != CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK
                     && kind != CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR
-                    && kind != CityLandUseSurfacePrintPlan.FeatureKind.ROAD_LAMP) {
+                    && kind != CityLandUseSurfacePrintPlan.FeatureKind.ROAD_LAMP
+                    && kind != CityLandUseSurfacePrintPlan.FeatureKind.GREEN_PLANT) {
                 return setBlock(worldX, y, worldZ, blockId);
             }
             ResourceLocation key = ResourceLocation.tryParse(blockId);

@@ -133,6 +133,7 @@ public final class CityLandUseSurfacePrintPlanner {
             int[] heights = new int[end - start + 1];
             Map<Integer, Integer> pins = new HashMap<>();
             boolean sampled = true;
+            boolean hasDesignedDatum = false;
             for (int i = 0; i < heights.length; i++) {
                 int x = horizontal ? start + i : band.start().x();
                 int z = horizontal ? band.start().z() : start + i;
@@ -140,11 +141,12 @@ public final class CityLandUseSurfacePrintPlanner {
                         Math.floorDiv(z, terrain.cellStepBlocks())));
                 Integer bridgeY=bridgeHeights.get(cellKey(x,z));
                 Integer foundationY = bridgeY!=null?bridgeY:foundationHeights.get(cellKey(x,z));
+                hasDesignedDatum |= foundationY != null;
                 if (foundationY == null && (cell == null || !cell.sampled() || cell.water())) {
                     sampled = false; break;
                 }
                 heights[i] = foundationY != null ? foundationY
-                        : Math.floorDiv((int) Math.round(cell.elevation()) + 2, 4) * 4;
+                        : (int) Math.round(cell.elevation());
                 boolean junction = bands.stream().anyMatch(other -> !other.streetBandId().equals(band.streetBandId())
                         && other.bounds().contains(x, z));
                 boolean entrance = areaPlan.areas().stream().flatMap(area -> area.gateSlots().stream())
@@ -153,6 +155,9 @@ public final class CityLandUseSurfacePrintPlanner {
                 if (bridgeY!=null || i == 0 || i == heights.length - 1 || junction || entrance) pins.put(i, heights[i]);
             }
             if (!sampled) continue; // Bridge/unsampled segments retain their existing treatment.
+            // D3 samples may be coarse. Ordinary village roads replace the actual world surface,
+            // rather than imposing a sampled platform elevation on every column.
+            if (!hasDesignedDatum) continue;
             var grade = CityRoadGradeProfile.solve(heights, 12, 12, 3, pins);
             if (!grade.feasible()) grade = CityRoadGradeProfile.solve(heights, 12, 12, 2, pins);
             if (!grade.feasible() && !"CITY_MAIN_ROAD".equals(band.roadKind()))

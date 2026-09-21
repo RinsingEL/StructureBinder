@@ -15,6 +15,21 @@ import java.util.Map;
 import java.util.Set;
 
 public final class LandUseCorridorExclusionResolver {
+    public List<LandUseAreaPlan.CorridorExclusion> publicSpaceReservations(JsonObject plan) {
+        List<LandUseAreaPlan.CorridorExclusion> result = new ArrayList<>(fromD5ReservationMask(plan));
+        if (plan == null) return result;
+        for (String channel : List.of("wallCorridorMask", "wallNodeSlots")) {
+            if (!plan.has(channel)) continue;
+            int index = 0;
+            for (var value : plan.getAsJsonArray(channel)) {
+                JsonObject bounds = requiredObject(value.getAsJsonObject(), "blockBounds");
+                result.add(new LandUseAreaPlan.CorridorExclusion("public_reserved::"+channel+"::"+index++,
+                        new BlockBounds(requiredInt(bounds,"minX"),requiredInt(bounds,"minZ"),
+                                requiredInt(bounds,"maxX"),requiredInt(bounds,"maxZ")),channel));
+            }
+        }
+        return stableMerge(List.of(), result);
+    }
     public List<LandUseAreaPlan.CorridorExclusion> fromD5ReservationMask(JsonObject reservationMaskPlan) {
         if (reservationMaskPlan == null || !reservationMaskPlan.has("gateCorridorMask")) return List.of();
         if (!reservationMaskPlan.get("gateCorridorMask").isJsonArray()) {

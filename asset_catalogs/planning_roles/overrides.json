@@ -1,0 +1,10 @@
+{
+  "city_assets:selected_20260912/asset_111": {
+    "contentHash": "sha256:362f5ef1aef32c2ad9c0252c0cceff2f8b4a6e2c4065b1d0297bcb043f91ee30",
+    "planningRoleTerms": [
+      "planning_role.structure",
+      "planning_role.self_contained"
+    ],
+    "evidence": "NBT尺寸22x9x22；检查方块调色板与等距投影：已有围合边界、内部步道、花草和灌木，为完整花园组合；不作为零碎空地填充。"
+  }
+}

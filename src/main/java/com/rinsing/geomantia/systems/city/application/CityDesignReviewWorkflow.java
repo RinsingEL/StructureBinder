@@ -31,14 +31,22 @@ final class CityDesignReviewWorkflow {
         boolean overall = valid
                 && overviewFingerprint(dir, draft).equals(text(object(state, "overview"), "reviewed"))
                 && !text(object(state, "overview"), "reviewed").isEmpty();
-        result.addProperty("stage", !valid ? "district_initial" : !overall ? "overview_review" : "ready_for_final");
+        JsonArray isolated = isolatedCores(draft);
+        boolean overviewReviewed = overall;
+        overall &= isolated.isEmpty();
+        result.add("isolatedCoreGroupIds", isolated);
+        result.addProperty("coreReworkCount", object(state, "coreReworkDrafts").size());
+        result.addProperty("coreReworkExhausted", !isolated.isEmpty()
+                && object(state, "coreReworkDrafts").size() >= CityBlueprintFailureBudget.MAX_FAILURE_COUNT);
+        result.addProperty("stage", !valid ? "district_initial" : !isolated.isEmpty() ? "core_rework"
+                : !overall ? "overview_review" : "ready_for_final");
         result.add("pendingGroupIds", new JsonArray());
         result.add("optionalUnreviewedGroupIds", pending);
         result.add("groupAssessments", assessments);
-        result.addProperty("overviewReviewed", overall);
-        if (overall) result.addProperty("overviewAssessment", text(object(state, "overview"), "assessment"));
+        result.addProperty("overviewReviewed", overviewReviewed);
+        if (overviewReviewed) result.addProperty("overviewAssessment", text(object(state, "overview"), "assessment"));
         result.addProperty("readyForFinal", overall);
-        result.addProperty("instruction", "局部图可按需查看，不要求逐区评价。根据当前总览标记独立区、调整阵列或向外阵列；整体性与各区功能成立时直接 city_d4_finalize。");
+        result.addProperty("instruction", "检查实际核心与配套的大小关系和组合效果。isolatedCoreGroupIds 非空时必须调整选材或阵列；完整素材自带装饰计入效果。coreReworkCount 按不同返工草稿计数，沿用原有失败边界，不无限重试。局部图按需查看。");
         return result;
     }
 
@@ -142,11 +150,34 @@ final class CityDesignReviewWorkflow {
                 && overviewFingerprint(dir,draft).equals(text(object(load(dir,contextId),"overview"),"viewed"));
     }
 
+    private static JsonArray isolatedCores(JsonObject draft) {
+        if (draft == null) return new JsonArray();
+        JsonObject review = object(object(draft, "compiledLayout"), "designReview");
+        return review.has("isolatedCoreGroupIds") ? review.getAsJsonArray("isolatedCoreGroupIds").deepCopy() : new JsonArray();
+    }
+
+    static void recordCoreRework(Path dir, String contextId, JsonObject draft) throws IOException {
+        JsonArray isolated = isolatedCores(draft);
+        if (isolated.isEmpty()) return;
+        JsonObject state = load(dir, contextId);
+        JsonObject attempts = object(state, "coreReworkDrafts");
+        attempts.add(text(draft, "baseDraftHash"), isolated);
+        state.add("coreReworkDrafts", attempts);
+        save(dir, state);
+    }
+
     static JsonObject finalGate(Path dir, String contextId, JsonObject canonical) throws IOException {
         JsonObject draft = CityBlueprintDraft.current(dir, contextId, text(canonical, "cityId"));
         if (draft == null || !canonical.equals(draft.get("previousBlueprint")))
             return pending(dir, contextId, draft, "Submit these changes as DRAFT first. FINAL cannot introduce geometry that was not previewed and reviewed.");
         JsonObject workflow = status(dir, contextId, draft);
+        if (workflow.get("coreReworkExhausted").getAsBoolean()) {
+            JsonObject exhausted = pending(dir,contextId,draft,"孤立核心返工达到五次边界，保留当前证据并停止。");
+            exhausted.addProperty("ok",false);
+            exhausted.addProperty("reasonCode","CITY_BLUEPRINT_FAILURE_BUDGET_EXHAUSTED");
+            exhausted.addProperty("nextAction","stop_for_human_review");
+            return exhausted;
+        }
         return workflow.get("readyForFinal").getAsBoolean() ? null
                 : pending(dir, contextId, draft, "The design is still in review. Inspect the current overview and include your assessment in city_d4_finalize.");
     }

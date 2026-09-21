@@ -1489,7 +1489,7 @@ export const realmTools: ToolDefinition[] = [
         for(const field of ["landscapes","surfaceMaterials","removeGroupIds","removeCompositionIds","removeLandscapeIds"])delete fragment[field];
         properties.integrationIntent=nonEmptyString("面向整体性的扩张用途与目标方向。");properties.targetDistrictId=nonEmptyString("本次扩大哪个非独立功能区。");
         properties.protectedDistrictIds={type:"array",items:nonEmptyString("禁止挤占的其他区 ID。")};
-        properties.expansionMode={type:"string",enum:["ADJUST_ARRAY","OUTWARD_ARRAY"]};
+        properties.expansionMode={type:"string",enum:["ADJUST_ARRAY","OUTWARD_ARRAY","REPAIR_CORE"]};
         properties.baseDraftHash=nonEmptyString("当前总览 hash。");properties.assessment=nonEmptyString("当前整体性与其他区功能保留情况；允许隔河。 ");
         properties.previousExpansionComplete={type:"boolean",description:"切换扩张区前确认上一区已形成整体性。"};
         required.push("integrationIntent","targetDistrictId","protectedDistrictIds","expansionMode","baseDraftHash","assessment");

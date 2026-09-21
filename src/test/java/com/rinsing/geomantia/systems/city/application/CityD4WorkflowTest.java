@@ -10,6 +10,32 @@ import static org.junit.jupiter.api.Assertions.*;
 class CityD4WorkflowTest {
     @TempDir Path dir;
     private int compiled;
+
+    @Test void unrelatedDistrictAdjustmentDoesNotConsumeCoreReworkBudget() throws Exception {
+        districts();mark();
+        JsonObject draft=CityBlueprintDraft.current(dir,"ctx","city");
+        draft.getAsJsonObject("compiledLayout").add("designReview",json("{isolatedCoreGroupIds:['a']}"));
+        Files.writeString(dir.resolve(CityBlueprintDraft.FILE),draft.toString());
+        assertTrue(call("city_d4_integrate",expansion("market","b")).get("ok").getAsBoolean());
+        assertEquals(0,CityDesignReviewWorkflow.status(dir,"ctx",CityBlueprintDraft.current(dir,"ctx","city"))
+                .get("coreReworkCount").getAsInt());
+    }
+
+    @Test void coreRepairChangesSelectionOnlyForADistrictWithAnActualIsolatedCore() throws Exception {
+        districts();mark();
+        JsonObject repair=expansion("civic","a");repair.addProperty("expansionMode","REPAIR_CORE");
+        repair.getAsJsonObject("changes").getAsJsonArray("groups").get(0).getAsJsonObject()
+                .add("requiredStructureRefs",JsonParser.parseString("['core','small_shop']"));
+        assertFalse(call("city_d4_integrate",repair).get("ok").getAsBoolean());
+        JsonObject draft=CityBlueprintDraft.current(dir,"ctx","city");
+        draft.getAsJsonObject("compiledLayout").add("designReview",json("{isolatedCoreGroupIds:['a']}"));
+        Files.writeString(dir.resolve(CityBlueprintDraft.FILE),draft.toString());
+        assertTrue(call("city_d4_integrate",repair).get("ok").getAsBoolean());
+        assertEquals(JsonParser.parseString("['core','small_shop']"),lastCity.getAsJsonArray("groups").get(0)
+                .getAsJsonObject().get("requiredStructureRefs"));
+        assertEquals(1,CityDesignReviewWorkflow.status(dir,"ctx",CityBlueprintDraft.current(dir,"ctx","city"))
+                .get("coreReworkCount").getAsInt());
+    }
     private boolean retainIntegration=true;
     private boolean empty=false;
     private JsonObject lastCity;

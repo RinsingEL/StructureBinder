@@ -155,3 +155,13 @@ formal `template_catalog.json` output.
 After the server has reloaded the generated NBT, pass `--query-url` to query
 `city_query_template_metadata` and write the formal catalog. A catalog is never emitted from offline
 hashes or unconfirmed entrance data.
+
+## 聚落素材角色初筛
+
+运行 `curate_planning_roles.py --bundle <配置目录> --report <报告路径>` 查看保守角色整理；加 `--apply` 写入角色、词表和填充池。完整组合采用 `--overrides asset_catalogs/planning_roles/overrides.json`，每项绑定模板内容哈希与核对证据。
+
+已有功能与实际占地共同决定是否进入重复候选；尺寸不会自动赋予核心身份。不确定用途保留明确选用，名字包含“花园”不等于已经通过自动绿化或完整组合审查。报告的 `visualReviewComplete=false` 表示没有冒充全量视觉验收。
+
+`public_small_support` / `public_medium_support` 分别提供144/400格以内的配套，并按原有风格分池；无后缀为中世纪，其余使用 `_desert`、`_japanese` 等后缀，避免随机混入不同风格。每种模板每组最多2份。原类别池保留ID，但只留下重复候选；空池不会自动补入主体。
+
+公共绿化地表和独立结构清单分别由 `config/geomantia/city_public_greenery.json`、`city_public_greenery_structures.json` 配置；未设置独立结构清单时复用现有道路树。完整花园、喷泉庭院通过D4明确选材，不自动填入残余空隙。

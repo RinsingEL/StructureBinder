@@ -5,6 +5,7 @@ import json
 import re
 import shutil
 from pathlib import Path
+from curate_planning_roles import classify, FILL, KEY, STRUCTURE, COMPLETE
 from build_selected_asset_bundle import read, write, digest
 
 
@@ -84,7 +85,7 @@ def main():
             note=row['entranceReview']['note'] or '用户手工标记', roadEntrances=[dict(entranceId=p['entranceId'],
                 x=p['position']['x'], z=p['position']['z'], direction=p['direction']) for p in row['roadEntrances']]))
         profiles.append(dict(structureId=ref, sourceProfileRef='selected-assets://20260919/' + row['id'],
-            reviewState='approved', functionTerms=row['functionTerms'], planningRoleTerms=[], terrainModes=['SURFACE'], styleTerms=row['styleTerms']))
+            reviewState='approved', functionTerms=row['functionTerms'], planningRoleTerms=row.get('planningRoleTerms') or classify(row['displayName'], row['functionTerms'], row['rawSize'])[0], terrainModes=['SURFACE'], styleTerms=row['styleTerms']))
         references['structureRefs'].append(dict(structureRef=ref, templateCandidates=[dict(templateId=ref, variantId=variant)]))
         names.append(dict(templateRef=ref, displayName=row['displayName'], functionTerms=row['functionTerms']))
     terms = sorted({term for row in rows for term in row['functionTerms']})
@@ -94,7 +95,11 @@ def main():
             vocab['terms'].append(dict(term_id=term, vocab_type='function', label=term, aliases=[], status='approved'))
         pool_ref = f'pool:{a.pool_prefix}_{index:02}'
         assert all(p['poolRef'] != pool_ref for p in references['fillPools'])
-        references['fillPools'].append(dict(poolRef=pool_ref, structureRefs=[r['templateRef'] for r in rows if term in r['functionTerms']]))
+        fill_refs = {p['structureId'] for p in profiles if FILL in p['planningRoleTerms'] and not {KEY, COMPLETE, 'planning_role.anchor'} & set(p['planningRoleTerms'])}
+        references['fillPools'].append(dict(poolRef=pool_ref, structureRefs=[r['templateRef'] for r in rows if term in r['functionTerms'] and r['templateRef'] in fill_refs]))
+    for role in (FILL, KEY, STRUCTURE, COMPLETE):
+        if ('planning_role', role) not in existing_terms:
+            vocab['terms'].append(dict(term_id=role, vocab_type='planning_role', label=role, aliases=[], status='approved'))
     for term in sorted({term for row in rows for term in row['styleTerms']}):
         if ('style', term) not in existing_terms:
             vocab['terms'].append(dict(term_id=term, vocab_type='style', label=term, aliases=[], status='approved'))

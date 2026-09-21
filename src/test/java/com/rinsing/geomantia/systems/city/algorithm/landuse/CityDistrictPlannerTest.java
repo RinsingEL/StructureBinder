@@ -7,6 +7,18 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CityDistrictPlannerTest {
+    @Test void aVillageHasPublicGapsWithoutAutomaticallyAcquiringPlatforms() {
+        var village = Map.of("village", List.of(new BlockBounds(0,0,8,12), new BlockBounds(18,0,26,12)));
+        var result = new CityDistrictPlanner().plan(BOUNDS,terrain(true),village,Map.of(),
+                List.of(new BlockBounds(0,14,26,16)),Set.of(new BlockPoint(12,6)),SETTINGS);
+        assertTrue(result.construction().isEmpty());
+        assertFalse(result.envelope().isEmpty());
+        assertTrue(result.natural().contains(new BlockPoint(12,5)));
+        assertFalse(result.natural().contains(new BlockPoint(13,5)),"water remains protected");
+        assertFalse(result.natural().contains(new BlockPoint(12,6)),"authored landscape remains protected");
+        assertTrue(Collections.disjoint(result.structures(),result.natural()));
+    }
+
     private static final BlockBounds BOUNDS = new BlockBounds(-64,-64,255,127);
     private static final LandUseSeedGroup.FoundationSettings SETTINGS =
             new LandUseSeedGroup.FoundationSettings(2,4,16);

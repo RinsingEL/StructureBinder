@@ -16,17 +16,26 @@ public final class CityDistrictPlanner {
     public Result plan(BlockBounds bounds, LandUseTerrainField terrain,
                        Map<String, List<BlockBounds>> buildingGroups, List<BlockBounds> roads,
                        Set<BlockPoint> landscape, LandUseSeedGroup.FoundationSettings settings) {
+        return plan(bounds, terrain, buildingGroups, buildingGroups, roads, landscape, settings);
+    }
+
+    /** Public space follows all buildings; only explicitly selected groups acquire a platform. */
+    public Result plan(BlockBounds bounds, LandUseTerrainField terrain,
+                       Map<String, List<BlockBounds>> buildingGroups,
+                       Map<String, List<BlockBounds>> platformGroups, List<BlockBounds> roads,
+                       Set<BlockPoint> landscape, LandUseSeedGroup.FoundationSettings settings) {
         Objects.requireNonNull(bounds);
         Objects.requireNonNull(terrain);
         Objects.requireNonNull(settings);
         Map<String, Set<BlockPoint>> districts = new TreeMap<>();
-        Set<BlockPoint> structures = new HashSet<>();
+        Set<BlockPoint> structures = rasterize(buildingGroups.values().stream().flatMap(List::stream).toList(), bounds);
+        Set<BlockPoint> platformStructures = new HashSet<>();
         Set<BlockPoint> construction = new HashSet<>();
         TerrainIndex index = new TerrainIndex(terrain);
-        for (var entry : new TreeMap<>(buildingGroups).entrySet()) {
+        for (var entry : new TreeMap<>(platformGroups).entrySet()) {
             if (entry.getValue().isEmpty()) continue;
             Set<BlockPoint> core = rasterize(entry.getValue(), bounds);
-            structures.addAll(core);
+            platformStructures.addAll(core);
             Set<BlockPoint> local = new HashSet<>(new CityFoundationPlanner().plan(bounds, terrain,
                     entry.getValue(), settings).claims());
             // Fill only short facing gaps within the authored group, never its entire bounding box.
@@ -37,7 +46,7 @@ public final class CityDistrictPlanner {
         }
         Set<BlockPoint> roadCells = rasterize(roads, bounds);
         // Roads retain their own surface projection. Only their near-town portions support district land.
-        Set<BlockPoint> nearBuildings = dilate(structures,
+        Set<BlockPoint> nearBuildings = dilate(platformStructures,
                 Math.max(settings.structureMarginBlocks(), settings.maxJoinDistanceBlocks()), bounds);
         roadCells.retainAll(nearBuildings);
         construction.addAll(roadCells);
@@ -46,14 +55,21 @@ public final class CityDistrictPlanner {
         construction.addAll(gapSupport);
         construction.removeAll(landscape);
         construction.removeIf(point -> !structures.contains(point) && !roadCells.contains(point) && index.blocked(point));
+        Set<BlockPoint> directGroundStructures = new HashSet<>(structures);
+        directGroundStructures.removeAll(platformStructures);
+        construction.removeAll(directGroundStructures);
 
         // The coarser envelope includes natural residuals but is never reused as the pavement mask.
-        List<BlockBounds> constructionSpans = spans(construction).stream()
+        Set<BlockPoint> envelopeSupport = new HashSet<>(construction);
+        envelopeSupport.addAll(structures);
+        List<BlockBounds> constructionSpans = spans(envelopeSupport).stream()
                 .map(span -> new BlockBounds(span.minX(),span.z(),span.maxX(),span.z())).toList();
         Set<BlockPoint> envelope = new CityDistrictBoundary().envelope(constructionSpans,32,bounds);
         Set<BlockPoint> natural = new HashSet<>(envelope);
         natural.removeAll(construction);
         natural.removeAll(structures);
+        natural.removeAll(landscape);
+        natural.removeIf(index::blocked);
         return new Result(stable(construction), stable(envelope), stable(natural), stable(structures),
                 Collections.unmodifiableMap(districts), settings.closeRadiusBlocks(),
                 dilate(structures,settings.structureMarginBlocks(),bounds).size());
@@ -120,12 +136,19 @@ public final class CityDistrictPlanner {
         }
 
         public CityUrbanSpacePlan urbanSpacePlan(String cityId, LandUseExpansionResult expansion) {
+            return urbanSpacePlan(cityId, expansion, Set.of());
+        }
+        public CityUrbanSpacePlan urbanSpacePlan(String cityId, LandUseExpansionResult expansion, Set<BlockPoint> managedGround) {
             if (envelope.isEmpty()) return CityUrbanSpacePlan.disabled(cityId);
             Set<BlockPoint> owned = new HashSet<>(expansion.claims().keySet()); owned.retainAll(envelope);
             Set<BlockPoint> buildings = new HashSet<>(structures); buildings.retainAll(envelope); buildings.removeAll(owned);
             Set<BlockPoint> residual = new HashSet<>(envelope); residual.removeAll(owned); residual.removeAll(buildings);
             List<CityUrbanSpacePlan.ResidualRegion> regions = new ArrayList<>();
-            for(Set<BlockPoint> region : components(residual)) {
+            Set<BlockPoint> managed = new HashSet<>(residual); managed.retainAll(managedGround);
+            Set<BlockPoint> reserve = new HashSet<>(residual); reserve.removeAll(managed);
+            List<Set<BlockPoint>> classified = new ArrayList<>(components(managed));
+            classified.addAll(components(reserve));
+            for(Set<BlockPoint> region : classified) {
                 boolean edge=region.stream().anyMatch(p -> Arrays.stream(DIRECTIONS)
                         .anyMatch(d -> !envelope.contains(new BlockPoint(p.x()+d[0],p.z()+d[1]))));
                 List<String> adjacent=groups.entrySet().stream().filter(entry -> region.stream().anyMatch(p ->
@@ -133,7 +156,8 @@ public final class CityDistrictPlanner {
                         .map(Map.Entry::getKey).sorted().toList();
                 regions.add(new CityUrbanSpacePlan.ResidualRegion("district_reserve_"+regions.size(),
                         edge ? CityUrbanSpacePlan.ResidualClass.EXTERIOR_CONNECTED : CityUrbanSpacePlan.ResidualClass.LARGE_ENCLOSED,
-                        CityUrbanSpacePlan.ResidualDisposition.NATURAL_RESERVE,spans(region),adjacent,"",region.size(),false,edge));
+                        managed.containsAll(region) ? CityUrbanSpacePlan.ResidualDisposition.COMMON_GREEN
+                                : CityUrbanSpacePlan.ResidualDisposition.NATURAL_RESERVE,spans(region),adjacent,"",region.size(),false,edge));
             }
             BlockBounds bounds = new BlockBounds(envelope.stream().mapToInt(BlockPoint::x).min().orElseThrow(),
                     envelope.stream().mapToInt(BlockPoint::z).min().orElseThrow(),

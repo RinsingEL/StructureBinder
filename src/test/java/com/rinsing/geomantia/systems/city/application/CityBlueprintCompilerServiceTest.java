@@ -30,6 +30,18 @@ class CityBlueprintCompilerServiceTest {
     @TempDir
     Path temporary;
 
+    @Test void coreTemplatesInAnOldFillPoolAreNotRepeatedAndAnIsolatedCoreIsReported() throws Exception {
+        var fixture = acceptedFixture("roles", "city:roles", 8, 8, "SMALL", bp -> {
+            var group=bp.getAsJsonArray("groups").get(0).getAsJsonObject();
+            group.addProperty("fillPoolRef","pool:mixed"); group.addProperty("structureCount",5);
+        });
+        var result=new CityBlueprintCompilerService().compile(temporary,fixture.runId(),fixture.cityId());
+        assertTrue(result.ok(),result.message());
+        assertEquals(1,result.structureAnchorPlan().getAsJsonArray("anchors").size());
+        assertEquals(JsonParser.parseString("['civic']"),result.structureAnchorPlan()
+                .getAsJsonObject("designReview").get("isolatedCoreGroupIds"));
+    }
+
     @Test void contiguousTemplatesTouchAndDoNotCreateInternalStreets() throws Exception {
         var fixture = acceptedFixture("contiguous", "city:contiguous", 8, 8, "SMALL",
                 CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid, bp -> {
@@ -1942,6 +1954,11 @@ class CityBlueprintCompilerServiceTest {
                     "planningRoleTerms":["planning_role.key"],"terrainModes":["SURFACE"],
                     "styleTerms":["style.test"]
                   },{
+                    "semanticProfileId":"geomantia:civic_support",
+                    "reviewState":"approved","functionTerms":["residential"],
+                    "planningRoleTerms":["planning_role.fill"],"terrainModes":["SURFACE"],
+                    "styleTerms":["style.test"]
+                  },{
                     "semanticProfileId":"geomantia:oversized_hall",
                     "reviewState":"approved","functionTerms":["administration"],
                     "planningRoleTerms":["planning_role.key"],"terrainModes":["SURFACE"],
@@ -2359,13 +2376,14 @@ class CityBlueprintCompilerServiceTest {
                   "structureRefs":[
                     {"structureRef":"geomantia:town_hall","templateCandidates":[{"templateId":"geomantia:town_hall","variantId":"default"}],
                      "greenParcel":{"pattern":"FREEFORM","density":"MEDIUM","groundBlockId":"minecraft:grass_block","pathBlockId":"minecraft:gravel"}},
+                    {"structureRef":"geomantia:civic_support","templateCandidates":[{"templateId":"geomantia:town_hall","variantId":"default"}]},
                     {"structureRef":"geomantia:oversized_hall","templateCandidates":[{"templateId":"geomantia:oversized_hall","variantId":"default"}]},
                     {"structureRef":"geomantia:terrain_house","templateCandidates":[{"templateId":"geomantia:terrain_house","variantId":"default"}]},
                     {"structureRef":"geomantia:floating_house","templateCandidates":[{"templateId":"geomantia:floating_house","variantId":"default"}]},
                     {"structureRef":"geomantia:west_locked_house","templateCandidates":[{"templateId":"geomantia:west_locked_house","variantId":"default"}]}
                   ],
                   "fillPools":[
-                    {"poolRef":"pool:civic","structureRefs":["geomantia:town_hall"]},
+                    {"poolRef":"pool:civic","structureRefs":["geomantia:town_hall","geomantia:civic_support"]},
                     {"poolRef":"pool:empty","structureRefs":[]},
                     {"poolRef":"pool:mixed","structureRefs":["geomantia:town_hall","geomantia:oversized_hall"]},
                     {"poolRef":"pool:terrain","structureRefs":["geomantia:terrain_house"]},

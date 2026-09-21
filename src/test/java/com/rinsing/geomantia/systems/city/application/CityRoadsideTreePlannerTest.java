@@ -10,6 +10,27 @@ import static org.junit.jupiter.api.Assertions.*;
 class CityRoadsideTreePlannerTest {
     private final CityRoadsideTreePlanner planner = new CityRoadsideTreePlanner();
 
+    @Test void publicStructuresOccupySharedGapsWithoutTouchingBuildingsOrRoads() {
+        JsonObject input = source();
+        for(int x : new int[]{-60,50}) for(int z : new int[]{-36,24}) {
+            JsonObject building=new JsonObject();
+            building.add("plannedFootprint",json("{minX:"+x+",minZ:"+z+",maxX:"+(x+10)+",maxZ:"+(z+10)+"}"));
+            input.getAsJsonArray("anchors").add(building);
+        }
+        var result=planner.appendPublic(input,new JsonObject(),new JsonObject(),terrain(false),trees());
+        assertEquals(result,planner.appendPublic(input,new JsonObject(),new JsonObject(),terrain(false),trees()));
+        assertTrue(result.getAsJsonObject("publicGreeneryReport").get("plannedCount").getAsInt()>0);
+        var buildings=input.getAsJsonArray("anchors").asList().stream()
+                .map(e -> CityRoadsideTreePlanner.bounds(e.getAsJsonObject().getAsJsonObject("plannedFootprint"))).toList();
+        for(var e:result.getAsJsonArray("anchors")) {
+            var a=e.getAsJsonObject(); if(!CityRoadsideTreePlanner.isTree(a))continue;
+            var footprint=CityRoadsideTreePlanner.bounds(a.getAsJsonObject("plannedFootprint"));
+            assertTrue(buildings.stream().noneMatch(footprint::overlaps));
+            assertTrue(input.getAsJsonArray("streetBands").asList().stream().noneMatch(r -> footprint.overlaps(
+                    CityRoadsideTreePlanner.bounds(r.getAsJsonObject().getAsJsonObject("bounds")))));
+        }
+    }
+
     @Test void sizesAndRotationsControlFullCanopySpacingAndRootTransform() {
         JsonObject original = source();
         JsonObject result = plan(original, new JsonObject(), terrain(false));

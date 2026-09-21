@@ -62,8 +62,29 @@ public final class CityStructureCatalogQueryService {
         response.addProperty("returnedCount", Math.min(matches.size(), limit));
         response.addProperty("limit", limit);
         JsonArray candidates = new JsonArray();
-        matches.stream().limit(limit).forEach(profile -> candidates.add(candidateSummary(profile,
-                allOfTerms, anyOfTerms)));
+        Map<String, JsonObject> geometry = new LinkedHashMap<>();
+        Map<String, String> names = new LinkedHashMap<>();
+        Path bundle = Path.of(catalog.source().get("resolvedPath").getAsString()).getParent();
+        Path templates = bundle.resolve("template_catalog.json"), nameFile = bundle.resolve("asset_names.json");
+        if (Files.isRegularFile(templates)) for (var item : JsonParser.parseString(Files.readString(templates)).getAsJsonObject().getAsJsonArray("templates")) {
+            JsonObject entry = item.getAsJsonObject();
+            if (entry.has("templateRef") && entry.has("rawSize")) geometry.put(entry.get("templateRef").getAsString(), entry.getAsJsonObject("rawSize"));
+        }
+        if (Files.isRegularFile(nameFile)) for (var item : JsonParser.parseString(Files.readString(nameFile)).getAsJsonArray()) {
+            JsonObject entry = item.getAsJsonObject();
+            names.put(entry.get("templateRef").getAsString(), entry.get("displayName").getAsString());
+        }
+        matches.stream().limit(limit).forEach(profile -> {
+            JsonObject candidate = candidateSummary(profile, allOfTerms, anyOfTerms);
+            String id = profile.semanticProfileId();
+            if (geometry.containsKey(id)) {
+                JsonObject size = geometry.get(id);
+                candidate.add("rawSize", size.deepCopy());
+                candidate.addProperty("footprintAreaBlocks", (long) size.get("width").getAsInt() * size.get("depth").getAsInt());
+            }
+            if (names.containsKey(id)) candidate.addProperty("displayName", names.get(id));
+            candidates.add(candidate);
+        });
         response.add("candidates", candidates);
         response.add("warnings", stringArray(catalog.warnings()));
         response.add("needsReview", stringArray(catalog.needsReview()));

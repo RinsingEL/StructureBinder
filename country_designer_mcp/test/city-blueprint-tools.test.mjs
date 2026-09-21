@@ -3,6 +3,13 @@ import test from "node:test";
 
 import { realmTools, blueprintReferenceCatalogSchema, cityBlueprintSchema } from "../dist/src/realm/tools.js";
 
+test("core repair can change selection through the existing integration protocol", () => {
+  const tool = realmTools.find(t => t.name === "city_d4_integrate");
+  assert.ok(tool.inputSchema.properties.expansionMode.enum.includes("REPAIR_CORE"));
+  assert.ok(tool.inputSchema.properties.changes.properties.groups.items.properties.requiredStructureRefs);
+  assert.ok(tool.inputSchema.properties.changes.properties.groups.items.properties.fillPools);
+});
+
 test("publishes the program-only context tool and retryable structure plus outdoor Blueprint schema", () => {
   const prepare = realmTools.find((tool) => tool.name === "city_prepare_d4_blueprint_context");
   const submit = realmTools.find((tool) => tool.name === "city_d4_district");

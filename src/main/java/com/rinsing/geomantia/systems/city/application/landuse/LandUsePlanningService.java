@@ -72,7 +72,7 @@ public final class LandUsePlanningService {
         LandscapeParcelExpander landscapeExpander = new LandscapeParcelExpander();
         List<LandUseSeedGroup> foundations = sources.seedGroups().stream()
                 .filter(group -> group.layerRole() == LandUseSeedGroup.LayerRole.FOUNDATION).toList();
-        boolean layered = !foundations.isEmpty();
+        boolean layered = !foundations.isEmpty() || sources.district() != null;
         List<LandUseAreaPlan.CorridorExclusion> corridors;
         LandUseExpansionResult probe;
         LandUseExpansionResult expansion;
@@ -83,7 +83,7 @@ public final class LandUsePlanningService {
         Set<String> skippedLandscapes = Set.of();
         List<RequiredLandscapeCapacity> requiredLandscapeCapacities = List.of();
         if (layered) {
-            if (foundations.size() != 1) {
+            if (foundations.size() > 1) {
                 throw new IllegalArgumentException("CITY_FOUNDATION_GROUP_COUNT_INVALID:" + foundations.size());
             }
             if (sources.seedGroups().stream().anyMatch(group -> group.layerRole()
@@ -91,8 +91,8 @@ public final class LandUsePlanningService {
                 throw new IllegalArgumentException("CITY_LAYERED_LAND_USE_ROLE_INVALID:STANDARD");
             }
             corridors = List.of();
-            LandUseSeedGroup foundation = foundations.get(0);
-            CityFoundationPlanner.Plan foundationPlan = sources.district() != null ? sources.district().foundation()
+            LandUseSeedGroup foundation = foundations.isEmpty() ? null : foundations.get(0);
+            CityFoundationPlanner.Plan foundationPlan = foundation == null ? null : sources.district() != null ? sources.district().foundation()
                     : new CityFoundationPlanner().plan(terrainField.planningBounds(), terrainField,
                     foundation.structureFootprints(), foundation.foundationSettings());
             List<LandUseSeedGroup> landscapes = sources.seedGroups().stream()
@@ -103,14 +103,14 @@ public final class LandUsePlanningService {
             LandUseExpansionResult landscapeExpansion = landscapeResult.expansion();
             skippedLandscapes = landscapeResult.skippedGroupIds();
             requiredLandscapeCapacities = landscapeResult.requiredCapacities();
-            expansion = overlay(foundation, foundationPlan, landscapeExpansion);
+            expansion = foundation == null ? landscapeExpansion : overlay(foundation, foundationPlan, landscapeExpansion);
             probe = expansion;
             connectionOutcomes = List.of();
             residualResult = new CityUrbanResidualResolver.Result(expansion,
                     sources.district() == null ? CityUrbanSpacePlan.disabled(cityId)
                             : sources.district().urbanSpacePlan(cityId, expansion), List.of());
-            resolvedFoundationCloseRadius = foundationPlan.resolvedCloseRadiusBlocks();
-            resolvedFoundationComponentCount = foundationPlan.componentCount();
+            resolvedFoundationCloseRadius = foundationPlan == null ? 0 : foundationPlan.resolvedCloseRadiusBlocks();
+            resolvedFoundationComponentCount = foundationPlan == null ? 0 : foundationPlan.componentCount();
         } else {
             LandUseCorridorExclusionResolver corridorResolver = new LandUseCorridorExclusionResolver();
             corridors = corridorResolver.stableMerge(sources.corridorExclusions(),
@@ -125,6 +125,8 @@ public final class LandUsePlanningService {
             connectionOutcomes = connectionPlanner.evaluate(connectionPlan, sources.seedGroups(), expansion);
             residualResult = new CityUrbanResidualResolver().resolve(cityId, terrainField.planningBounds(),
                     terrainField, sources.seedGroups(), corridors, expansion, residualConfig);
+            if (sources.district() != null) residualResult = new CityUrbanResidualResolver.Result(expansion,
+                    sources.district().urbanSpacePlan(cityId, expansion), residualResult.warnings());
         }
         LandUseExpansionResult resolvedExpansion = residualResult.expansion();
         LandUseGeometryCompiler.CompiledGeometry geometry = new LandUseGeometryCompiler().compile(
@@ -170,9 +172,23 @@ public final class LandUsePlanningService {
         CityLandUseSurfacePrintPlan surfacePrintPlan = new CityLandUseSurfacePrintPlanner().plan(
                 plan, sources.seedGroups(), terrainField, sources.roadBands(), sources.greenParcels(),
                 sources.overflowZones());
+        if (sources.district() != null) surfacePrintPlan = new CityPublicGreeneryPlanner().append(
+                surfacePrintPlan, sources.district(), plan, CityPublicGreeneryPlanner.Preset.load(),
+                new LandUseCorridorExclusionResolver().publicSpaceReservations(d5ReservationMaskPlan));
+        if (sources.district() != null) {
+            Set<BlockPoint> managed = surfacePrintPlan.featureCells().stream()
+                    .filter(f -> f.sourceId().startsWith(CityPublicGreeneryPlanner.SOURCE) && f.surfaceOffset() == 0)
+                    .map(f -> new BlockPoint(f.x(), f.z())).collect(java.util.stream.Collectors.toSet());
+            residualResult = new CityUrbanResidualResolver.Result(resolvedExpansion,
+                    sources.district().urbanSpacePlan(cityId, resolvedExpansion, managed), residualResult.warnings());
+        }
         if (!sources.materialField().isEmpty()) surfacePrintPlan = new CityLandUseSurfacePrintPlanCodec().withComputedHash(surfacePrintPlan.withMaterials(sources.materialField()));
         JsonObject quality = quality(plan, sources, resolvedExpansion, connectionOutcomes,
                 residualResult.urbanSpacePlan(), skippedLandscapes, requiredLandscapeCapacities);
+        quality.addProperty("publicGreenGroundBlocks", surfacePrintPlan.featureCells().stream()
+                .filter(f -> f.sourceId().startsWith(CityPublicGreeneryPlanner.SOURCE) && f.surfaceOffset() == 0).count());
+        quality.addProperty("publicGreenPlantBlocks", surfacePrintPlan.featureCells().stream()
+                .filter(f -> f.sourceId().startsWith(CityPublicGreeneryPlanner.SOURCE) && f.surfaceOffset() == 1).count());
         for (var area : surfacePrintPlan.areas()) {
             if (area.recipe() instanceof CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe relay) {
                 Set<String> realizedRoles=relay.regionTraces().stream().map(

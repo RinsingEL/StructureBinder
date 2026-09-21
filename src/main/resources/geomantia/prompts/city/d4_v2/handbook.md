@@ -13,7 +13,7 @@
 看返回的当前整城总览。第一次用 city_d4_mark 确认每个功能区的 districtDisposition：普通区组成同一城市主体；仅边防哨塔、边缘资源区、郊区工业区或同类外围职责可独立，填写 peripheralRole 和 reason，严禁以难融合为由标独立。独立是空间组织，不代表道路必须断开。
 AI 判断整体性，不设固定距离，不要求边界接触、地理连通、道路连通或填满空地。隔河、街道、广场、绿带仍可具有整体性。
 需要融合时选一个非独立功能区，用 city_d4_integrate：assessment 说明当前总览与其他区功能，integrationIntent 说明目标方向和希望融合的区域，protectedDistrictIds 标记绝不能挤占的其他区。其余区允许局部退让，但不能挤空或破坏功能主体；市场不能只剩装饰，矿区不能只剩宿舍。程序阻止整区建筑被挤空，功能是否仍成立必须看图判断。
-只允许 ADJUST_ARRAY 调整该区阵列参数、增加嵌套，或 OUTWARD_ARRAY 追加朝目标方向的完整阵列；后者通过 BETWEEN_GROUPS 引用本区和目标区。不得重做其他区、随意搬迁、减量换小素材补落位率或用道路冒充城市主体融合。返回总览后继续处理同一区；认为本处已有整体性时结束本次处理，切换区域携带 previousExpansionComplete=true，并在 assessment 说明依据。已经有整体性时不再强制扩张。
+使用 ADJUST_ARRAY 调整该区阵列参数、增加嵌套，或 OUTWARD_ARRAY 追加朝目标方向的完整阵列；后者通过 BETWEEN_GROUPS 引用本区和目标区。不得重做其他区、随意搬迁、减量换小素材补落位率或用道路冒充城市主体融合。返回总览后继续处理同一区；认为本处已有整体性时结束本次处理，切换区域携带 previousExpansionComplete=true，并在 assessment 说明依据。已经有整体性时不再强制扩张。
 全城满意且所有区的功能主体仍成立，直接 city_d4_finalize，提供当前 baseDraftHash、assessment、functionsPreserved=true；无需逐区评价或完成调用，不要求至少发生一次修改。若局部挤占损害了功能，继续调整当前扩张区或保护名单恢复合适布局后再提交。
 
 景观归属于功能区，建筑只可作为位置参考；建筑未落位、后续填充或被挤占，不影响已冻结景观的存在。新设计 owner 只填 groupId，优先用 growth 明确景观自己的起点、范围和地形偏好。不得把景观当作远处随意撒下的斑块：在功能区 intent 中说明服务对象、选址理由和可达方式。农田/牧场考虑生产通道及邻近聚落，林场考虑作业入口和运输关系，公共花园融入公共建筑与步行空间。无需每块地强制造路；确需道路时表达真实目的地之间的 CONNECTION，不能声称没有设计的道路已经存在。
@@ -26,3 +26,7 @@ assessment 必须指出图中具体位置和可见空间关系：主体核心在
 
 
 模板景观可用 CONTIGUOUS（连片阵列）：使用 Context 中对应 algorithmProfileRef，按模板完整占地紧贴成片，内部不留城市街网；与天然 Landscape 独立共存。允许大胆使用数百块重复田块，structureCount 最大 1024，依据可用空间决定规模，不必为了避免重复而缩成零星点缀。大规模不意味着随机旋转、随机偏移或扩大间距；边缘轮廓由编排形成，落地复用普通 structure 的自适应。只能使用作者已批准的对应功能模板及填充池，不用住宅冒充农田，不绕过作者设置的重复数量限制。查看实际保留数量、连通性和接缝；空间或地形不足会反馈跳过成员，不能把目标数量当成实际数量。天然景观继续使用原有 Landscape 生长参数。
+
+孤立核心是必须处理的组合缺口。检查 compiledDesignReview / designReviewWorkflow 的 isolatedCoreGroupIds，并结合当前图判断大小搭配。使用 city_d4_integrate 的 REPAIR_CORE 可调整该区 requiredStructureRefs、fillPools 和阵列参数；保留主体用途与其他区设计。完整素材自带院落装饰可计入组合，不再叠一圈。按 coreReworkCount 观察实际返工，达到五次边界停止并保留证据。
+
+选材先看 planningRoleTerms 与实际 rawSize：核心明确选入阵列，fill 候选用于可重复配套，小店铺与摊位可从小型配套池选择。核心不必最大，COMPACT 可全用小模板。普通村庄默认直接地形兼容落地；foundationGroupIds 仅用于确有需要的共同台地，公共地表与绿化不需要为每栋建筑垫台。小型独立绿化由程序处理公共间隙，完整花园或喷泉庭院由 AI 作为结构设计。

@@ -2821,7 +2821,7 @@ class CityPlanningEndpointHandlerTest {
                       "footprintMode": "fixed_footprint",
                       "reviewState": "approved",
                       "functionTerms": ["function.landmark"],
-                      "planningRoleTerms": ["planning_role.key"],
+                      "planningRoleTerms": ["planning_role.key", "planning_role.self_contained"],
                       "terrainModes": ["SURFACE"],
                       "fixedFootprint": {"widthBlocks": 12, "depthBlocks": 12, "heightBlocks": 10},
                       "visibleAreaCost": 256,
