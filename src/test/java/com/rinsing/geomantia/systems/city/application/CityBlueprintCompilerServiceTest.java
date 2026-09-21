@@ -658,6 +658,11 @@ class CityBlueprintCompilerServiceTest {
             JsonObject opposite = centerAnchors.get(index + 1);
             JsonObject firstBounds = collisionBounds(first);
             JsonObject oppositeBounds = collisionBounds(opposite);
+            int firstCenterTwiceX = firstBounds.get("minX").getAsInt() + firstBounds.get("maxX").getAsInt();
+            int firstCenterTwiceZ = firstBounds.get("minZ").getAsInt() + firstBounds.get("maxZ").getAsInt();
+            assertTrue(Math.abs(firstCenterTwiceX - centerTwiceX) <= 1
+                            || Math.abs(firstCenterTwiceZ - centerTwiceZ) <= 1,
+                    "Paired fill should surround the core on cardinal axes, allowing half-block center rounding");
             assertEquals(centerTwiceX * 2,
                     firstBounds.get("minX").getAsInt() + firstBounds.get("maxX").getAsInt()
                             + oppositeBounds.get("minX").getAsInt() + oppositeBounds.get("maxX").getAsInt());

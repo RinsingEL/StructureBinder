@@ -285,7 +285,7 @@ class CityBlueprintGroupLayoutPlannerTest {
         var options = planner.symmetricPairOptions(CityBlueprint.DensityClass.DENSE,
                 frame, 0, 60, 18);
 
-        assertEquals(4, options.size());
+        assertEquals(2, options.size());
         Set<Integer> axes = new LinkedHashSet<>();
         for (var pair : options) {
             axes.add(pair.axisVariant());
@@ -293,11 +293,11 @@ class CityBlueprintGroupLayoutPlannerTest {
             assertEquals(center.z() * 2, pair.first().z() + pair.opposite().z());
             assertTrue(pair.traceJson(1).get("atomicPair").getAsBoolean());
         }
-        assertEquals(Set.of(0, 1, 2, 3), axes);
+        assertEquals(Set.of(0, 2), axes);
     }
 
     @Test
-    void centerSymmetricUsesTwoOrthogonalPairsPerRingThenRotatesTheOuterRing() {
+    void centerSymmetricKeepsOrthogonalAxesAcrossOuterRings() {
         BlockPoint center = new BlockPoint(120, -80);
         var frame = planner.frame(center, new BlockPoint(220, -80), 37L, "administration");
         var first = planner.symmetricPairOptions(CityBlueprint.DensityClass.DENSE,
@@ -312,7 +312,14 @@ class CityBlueprintGroupLayoutPlannerTest {
         assertEquals(1, third.ringIndex());
         assertEquals(0, first.axisVariant());
         assertEquals(2, second.axisVariant());
-        assertEquals(1, third.axisVariant());
+        assertEquals(0, third.axisVariant());
         assertTrue(third.radiusBlocks() > second.radiusBlocks());
+        for (int pairIndex = 0; pairIndex < 12; pairIndex++) {
+            for (var pair : planner.symmetricPairOptions(CityBlueprint.DensityClass.DENSE,
+                    frame, pairIndex, 60, 39)) {
+                assertTrue(pair.first().x() == center.x() || pair.first().z() == center.z(),
+                        "Outer members must not grow diagonal spokes");
+            }
+        }
     }
 }

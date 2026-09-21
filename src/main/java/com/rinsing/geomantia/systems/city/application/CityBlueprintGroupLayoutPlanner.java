@@ -217,11 +217,13 @@ final class CityBlueprintGroupLayoutPlanner {
                 + parameters.targetEdgeGapBlocks());
         int ring = pairIndex / 2;
         int radius = firstRadius + ring * (memberFootprintSpan + parameters.targetEdgeGapBlocks());
-        int preferredAxis = ((pairIndex % 2) * 2 + (ring % 2)) % 4;
+        // Grow opposite pairs on the two orthogonal sides of the core. Outer
+        // rings keep the same axes instead of rotating into diagonal spokes.
+        int preferredAxis = (pairIndex % 2) * 2;
         double phase = Math.atan2(frame.axisZ(), frame.axisX());
         List<SymmetricPair> result = new ArrayList<>();
-        for (int rotation = 0; rotation < 4; rotation++) {
-            int axis = (preferredAxis + rotation) % 4;
+        for (int rotation = 0; rotation < 2; rotation++) {
+            int axis = (preferredAxis + rotation * 2) % 4;
             double angle = phase + axis * Math.PI / 4.0;
             double dx = Math.cos(angle) * radius;
             double dz = Math.sin(angle) * radius;
