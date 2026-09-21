@@ -1,0 +1,29 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "FIXTURE-01",
+  "name": "方块兼容性样板",
+  "family": "FIXTURE-01",
+  "civilization": "fixture",
+  "planning_role": "planning_role.structure",
+  "size": [
+    22,
+    9,
+    15
+  ],
+  "terrain": {},
+  "rooms": [],
+  "points": [],
+  "connections": [],
+  "design_notes": [
+    "用于核对楼梯旋转、半砖、双层门、床、箱子、栅栏、玻璃、作物与灯具。"
+  ],
+  "differences": [],
+  "floors": [],
+  "roof_min_y": null,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "nbt_sha256": "16543747b03104c04607e049a5f7d2568aea090deda574daa38713f1d09491c6"
+}

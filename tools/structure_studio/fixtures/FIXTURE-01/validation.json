@@ -1,0 +1,46 @@
+{
+  "schema": "structure-studio.validation.v1",
+  "nbt_sha256": "16543747b03104c04607e049a5f7d2568aea090deda574daa38713f1d09491c6",
+  "navigation": {
+    "passed": true,
+    "unreachable": [],
+    "nodes": 0,
+    "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "size": [
+    22,
+    9,
+    15
+  ],
+  "visible_blocks": 385,
+  "explicit_air": 0,
+  "palette": 46,
+  "block_entities": 4,
+  "materials": {
+    "minecraft:polished_andesite": 330,
+    "minecraft:spruce_fence": 6,
+    "minecraft:glass_pane": 6,
+    "minecraft:oak_stairs": 4,
+    "minecraft:spruce_stairs": 4,
+    "minecraft:brick_stairs": 4,
+    "minecraft:quartz_stairs": 4,
+    "minecraft:oak_slab": 3,
+    "minecraft:spruce_slab": 3,
+    "minecraft:brick_slab": 3,
+    "minecraft:quartz_slab": 3,
+    "minecraft:red_bed": 2,
+    "minecraft:oak_door": 2,
+    "minecraft:spruce_door": 2,
+    "minecraft:dark_oak_door": 2,
+    "minecraft:blue_bed": 2,
+    "minecraft:chest": 1,
+    "minecraft:farmland": 1,
+    "minecraft:flower_pot": 1,
+    "minecraft:lantern": 1,
+    "minecraft:wheat": 1
+  },
+  "scope": "NBT、方块状态、门床配对、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+}

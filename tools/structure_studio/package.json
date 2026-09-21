@@ -1,0 +1,19 @@
+{
+  "name": "geomantia-structure-studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "capture": "node scripts/capture.mjs"
+  },
+  "dependencies": {
+    "deepslate": "0.27.1",
+    "gl-matrix": "3.4.4"
+  },
+  "devDependencies": {
+    "vite": "6.4.1",
+    "playwright": "1.58.2",
+    "minecraft-data": "3.105.0"
+  }
+}

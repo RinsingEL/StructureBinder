@@ -1,0 +1,33 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+const base=process.env.STUDIO_URL??'http://127.0.0.1:8765';
+const browser=await chromium.launch({headless:true,executablePath:process.env.STUDIO_CHROMIUM,args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+try{
+  const page=await browser.newPage({viewport:{width:1440,height:1000},acceptDownloads:true});
+  const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+  await page.goto(`${base}/?asset=SR-F01-v01`);
+  await page.waitForFunction(()=>window.studio?.telemetry.ready);
+  await page.getByRole('searchbox').fill('不存在的结构');
+  assert.equal(await page.locator('#assets button').count(),0);
+  await page.getByRole('searchbox').fill('面包');
+  assert.equal(await page.locator('#assets button').count(),1);
+  await page.getByRole('button',{name:'去屋顶',exact:true}).click();
+  assert.equal(await page.locator('#roof').getAttribute('class'),'selected');
+  await page.getByRole('combobox',{name:'楼层',exact:true}).selectOption('1');
+  assert.equal(await page.locator('#clip-y').inputValue(),'11');
+  await page.getByRole('button',{name:'标记',exact:true}).click();
+  assert.ok(await page.locator('.pin').count()>0);
+  await page.getByRole('button',{name:'还原',exact:true}).click();
+  await page.getByRole('button',{name:'室内漫游',exact:true}).click();
+  assert.match(await page.locator('#view-note').innerText(),/W A S D/);
+  await page.keyboard.press('w');
+  await page.getByRole('button',{name:'前侧',exact:true}).click();
+  const download=page.waitForEvent('download');
+  await page.getByRole('button',{name:'保存当前视图',exact:true}).click();
+  assert.match((await download).suggestedFilename(),/^SR-F01-v01-front\.png$/);
+  const result=await page.evaluate(()=>window.studio.telemetry);
+  assert.deepEqual(result.renderErrors,[]);assert.deepEqual(result.missingTextures,[]);assert.deepEqual(errors,[]);
+  assert.equal((await fetch(`${base}/api/model?id=../../.git/config`)).status,404);
+  assert.equal((await fetch(`${base}/resources/%2e%2e%2f%2e%2e%2fpackage.json`)).status,404);
+  console.log('PASS: search, floor/roof, markers, walk, PNG download, render telemetry, confined paths');
+}finally{await browser.close();}

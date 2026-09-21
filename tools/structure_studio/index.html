@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>国度 · 结构工坊</title></head>
+<body>
+  <aside>
+    <div class="brand"><span class="mark">▧</span><div><strong>国度 · 结构工坊</strong><small>离线建模与验收</small></div></div>
+    <div class="library-head"><span>结构库</span><span id="count">—</span></div>
+    <input id="search" type="search" placeholder="查找编号、名称或文明" aria-label="查找结构">
+    <select id="civilization" aria-label="文明"><option value="">全部文明</option></select>
+    <nav id="assets" aria-label="结构列表"></nav>
+    <footer><span class="dot"></span> 本地工作台 · Minecraft 1.20.1</footer>
+  </aside>
+  <main>
+    <header><div><div id="eyebrow">STRUCTURE STUDIO</div><h1 id="title">正在打开结构库…</h1><p id="subtitle">读取最终导出的结构文件</p></div><button id="save">保存当前视图</button></header>
+    <div class="toolbar">
+      <div class="group"><button data-preset="front" class="selected">前侧</button><button data-preset="back">后侧</button><button data-preset="left">左侧</button><button data-preset="right">右侧</button><button data-preset="top">俯视</button></div>
+      <div class="group"><button id="roof">去屋顶</button><select id="floor" aria-label="楼层"><option value="">全部楼层</option></select><button id="markers">标记</button><button id="walk">室内漫游</button></div>
+    </div>
+    <section id="viewport">
+      <canvas id="scene" aria-label="结构三维预览"></canvas><div id="labels"></div>
+      <div id="loading">准备方块模型与材质…</div>
+      <div id="view-note">拖动旋转 · 滚轮缩放 · 右键平移</div>
+      <div id="axis">X 东 · Y 上 · Z 南</div>
+      <div id="error" hidden></div>
+    </section>
+    <div class="section-controls"><span>剖切</span><label>X <input type="range" id="clip-x" min="0" max="1" value="1"><output id="value-x">—</output></label><label>Y <input type="range" id="clip-y" min="0" max="1" value="1"><output id="value-y">—</output></label><label>Z <input type="range" id="clip-z" min="0" max="1" value="1"><output id="value-z">—</output></label><button id="reset">还原</button></div>
+    <div class="details"><section><h2>空间与使用点</h2><div id="rooms"></div></section><section><h2>因地制宜</h2><div id="terrain"></div></section><section><h2>验收进度</h2><div id="checks"></div></section></div>
+  </main>
+  <script type="module" src="/web/main.js"></script>
+</body></html>
