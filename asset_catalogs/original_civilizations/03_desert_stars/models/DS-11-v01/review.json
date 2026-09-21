@@ -1,0 +1,39 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-11-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "ae423def45ce2230e4fc5a0e99edde22b3cb63a4c4197ad837072d7f0f9b173d",
+  "author_sha256": "4f98623deb4e668792b769270c5feb86834bf2bbdb9b78afacddf3c4e591e265",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-guest.png",
+    "previews/room-store.png",
+    "previews/room-ledger.png",
+    "previews/room-court.png",
+    "previews/point-old_room_bed1.png",
+    "previews/point-records.png",
+    "previews/point-stores.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与布局": "西侧不规则砂脊与残墙改变院落边界，东侧房屋保存，坍顶、断腰线和室内积沙表达废弃状态。",
+    "内饰与使用": "残存客房、货仓、旧账册夹室和中部通路可探索；并非只对新驿站换色。",
+    "标记与通路": "已查看所有房间、楼层、作者标记与已标使用点的第一人称截图；最终 NBT 的入口至标记站位通过碰撞初筛。",
+    "因地制宜": "曾有商路的干旱积沙地段，历史线路转移具有解释力；旧院落沿西侧半埋，东侧房间和中部通道仍可探索；北侧缺口进入；积沙封闭旧西翼，不声称任意埋藏仍可通行。已查看沙地条件示意；地下设施按所标地表高程埋置。"
+  },
+  "revisions": [
+    "用实体基底托住表层沙，砂堆避开床和站位。",
+    "增加断墙、屋顶缺口、残余家具与枯盆栽。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "取水、医疗、交易、观测等为建筑用途与方块装置表达，未接入对应玩法机制。"
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-01-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "1f323f80f4f91786c1a64c1bd66cf93b8e7b763349836334a44bf9a56b3a4e84",
+  "author_sha256": "3a24f30e479b1d8143c1aafe73c7de8089550c13fdb2a046a38afdf05d26e4fe",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-west_a.png",
+    "previews/room-west_b.png",
+    "previews/room-east_a.png",
+    "previews/room-east_b.png",
+    "previews/room-reception.png",
+    "previews/room-dining.png",
+    "previews/room-washroom.png",
+    "previews/room-kitchen.png",
+    "previews/room-storage.png",
+    "previews/room-court.png",
+    "previews/point-west_a_bed1.png",
+    "previews/point-west_a_bed2.png",
+    "previews/point-west_b_bed1.png",
+    "previews/point-west_b_bed2.png",
+    "previews/point-east_a_bed1.png",
+    "previews/point-east_a_bed2.png",
+    "previews/point-east_b_bed1.png",
+    "previews/point-east_b_bed2.png",
+    "previews/point-register.png",
+    "previews/point-water.png",
+    "previews/point-kitchen.png",
+    "previews/point-wash.png",
+    "previews/point-freight.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与布局": "四边房间围合月井庭院；蓝顶门楼、双风塔与遮阳柱廊形成商路驿站轮廓。",
+    "内饰与使用": "四间双床客房、寄物登记、公共餐厅、厨房、洗漱和后仓分别有相应家具；旅人与货物可在院内分流。",
+    "标记与通路": "已查看所有房间、楼层、作者标记与已标使用点的第一人称截图；最终 NBT 的入口至标记站位通过碰撞初筛。",
+    "因地制宜": "有可靠水源的商路补给节点，不因沙地外观自动成立；约 47×43 格可整备平缓地块，北侧保留旅人与货运动线；地坪 Y=1、室内与院内脚底 Y=2；自身含客房、饮食、存货与庭院；动物换乘仍由外部兽栏承担。已查看沙地条件示意；地下设施按所标地表高程埋置。"
+  },
+  "revisions": [
+    "将侧门旁家具移到前墙内角，恢复八张床的可达站位。",
+    "补充房内柜、地面色带与庭院灌木，灌木采用合法苔藓底座。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "取水、医疗、交易、观测等为建筑用途与方块装置表达，未接入对应玩法机制。"
+  ]
+}

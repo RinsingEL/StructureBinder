@@ -1,0 +1,44 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-10-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "b5d4dee0c975fd265d5c9585fe82e47f0645e5f478c230aab43f2d57265b484c",
+  "author_sha256": "c8f409f8d29cc232716523f81e2a3f49ed80377fbb163829b205cbdadf0a869a",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/floor-3.png",
+    "previews/room-calculation.png",
+    "previews/room-library.png",
+    "previews/room-gallery.png",
+    "previews/room-deck.png",
+    "previews/point-survey.png",
+    "previews/point-records.png",
+    "previews/point-keeper_bed.png",
+    "previews/point-first_landing.png",
+    "previews/point-deck_landing.png",
+    "previews/point-instrument.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与布局": "三层顺序为计算、藏书值守和露天观测，交叉铜环星仪形成醒目轮廓。",
+    "内饰与使用": "两段楼梯分别布置，楼梯口及露台有护栏；计算桌、书架、床、记录台可用。",
+    "标记与通路": "已查看所有房间、楼层、作者标记与已标使用点的第一人称截图；最终 NBT 的入口至标记站位通过碰撞初筛。",
+    "因地制宜": "视野开阔且可安全登临的台地，避免树冠与高崖遮挡观测方向；平缓台地上的独立观测塔，入口脚底 Y=2，二层 Y=9，观测露台 Y=16；两段内部楼梯，保留入口步行和露台四周净空。已查看沙地条件示意；地下设施按所标地表高程埋置。"
+  },
+  "revisions": [
+    "扩大星仪并添加中心支撑；房间视图纳入完整星仪。",
+    "记录台朝向与东侧站位对齐；工作视图面向记录台，登台视图展示星仪全貌。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "取水、医疗、交易、观测等为建筑用途与方块装置表达，未接入对应玩法机制。"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "DS-12-v01",
+  "nbt_sha256": "7b1e89c5c3e1db75b04c32cdf178a90c5ad053703257bd13e7a058858fa878b0",
+  "author_sha256": "7935c8e869f8c59a173288672a5e461331368b2e1812efa0c17cf2c76b4d7f8e",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "floor-2",
+    "room-wellcourt",
+    "room-archive",
+    "room-old_room",
+    "room-service",
+    "point-well",
+    "point-winch",
+    "point-ledger",
+    "point-keeper_bed",
+    "point-service",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

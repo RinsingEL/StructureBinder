@@ -1,0 +1,40 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-03-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "c56a22710b453787e763f6b141d87790863e579bd8aaf071b9f2502f69779408",
+  "author_sha256": "495a3e905f04e927830f8c70a17427dc401b195ac447dfea2f52ab8b3e5fc2fc",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-vault.png",
+    "previews/room-records.png",
+    "previews/room-gate.png",
+    "previews/point-down.png",
+    "previews/point-gauge.png",
+    "previews/point-register.png",
+    "previews/point-maintenance.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与布局": "地上门廊与地下储水大厅具有明确高差，长楼梯沿干侧下降；柱梁、水池与环形检修面可辨认。",
+    "内饰与使用": "取水基座、记录台、检修工具与干侧货桶分开；已查看下楼站位、水池深度与柱脚。",
+    "标记与通路": "已查看所有房间、楼层、作者标记与已标使用点的第一人称截图；最终 NBT 的入口至标记站位通过碰撞初筛。",
+    "因地制宜": "可靠集水或引水系统的地下储水节点，需足够岩土覆深与防渗条件；模型 Y=14 对应地表脚底；主体底部 Y=0，预留约 14 格地下空间；北侧值守门廊接下行楼梯，检修平台脚底 Y=3；蓄水池为封闭原版水体，补水、排水与容量逻辑尚未接入。已查看沙地条件示意；地下设施按所标地表高程埋置。"
+  },
+  "revisions": [
+    "加深水池并将柱脚延伸至底座。",
+    "拉杆所在栏沿改为完整砂岩，消除半格悬空。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "取水、医疗、交易、观测等为建筑用途与方块装置表达，未接入对应玩法机制。"
+  ]
+}

@@ -28,10 +28,11 @@ python cli.py serve
 - `studio/samples.py`：兼容性样板与第一间面包铺的可重建源码。
 - `studio/build.py`：按编号、结构族或 `all` 重建已实现的作者资产；`transport.py` 制作交通核心，`agriculture.py` 制作六种独立农田布局，`components.py` 只提供部件。
 - `studio/shops.py`：七种不同业态的铁路街区商铺，独立设计占地、房间、行业设备与生活空间；与面包铺一起构成首组八种商铺。
+- `studio/desert.py`：沙海文明的围院驿站、地下蓄水厅、市集、医馆、星象台及两种历史设施，分别记录水源、埋置、商路和观测条件。
 - `studio/validate.py`：重新读取 NBT，检查边界、调色板、状态、门床配对、标记与哈希。
 - `studio/navigation.py`：使用 1.20.1 碰撞盒的离线步行初筛，检查入口到标记站位；0.6×1.8 玩家体积、0.6 台阶高度。木门按玩家可打开处理，铁门保持原状。不模拟跳跃、游泳、爬梯和游戏逻辑。
 - `scripts/capture.mjs`：真实浏览器自动拍摄外观、分层、房间和标记，遇到渲染错误或缺纹理则失败。**拍图不自动批准审美**。
-- `web/site.js`：按作者条件显示独立的平地、岸线或微坡示意，地形不写入 NBT。
+- `web/site.js`：按作者条件显示独立的平地、岸线或微坡示意，可选草地、沙地、红沙、雪地或灰化土表层，地形不写入 NBT。
 - `studio/publish.py`：在实际看图并写下审查结论后归档证据；拒绝过期截图、缺失图像和未解决的数据/通路问题。
 
 ```powershell
@@ -46,6 +47,8 @@ node scripts/smoke.mjs
 
 农田检查基于重新读取的 NBT 核对四类原版作物的耕地支撑和 4 格范围水源，避免只相信作者声明。显示的地形是理想条件示意，截图会注明“不写入 NBT”。
 
+杜鹃与开花杜鹃的底座另按原版 1.20.1 的 dirt 标签、黏土或耕地检查。这不是对所有植物或所有邻居更新规则的模拟。按编号构建遇到数据错误、通路失败或警告时返回非零退出码。
+
 已有 Chromium 可通过 `STUDIO_CHROMIUM` 指定可执行文件，省去下载。`STUDIO_URL` 可覆盖本地服务地址。截图默认到 `runtime/captures/<编号>/`；也可传入第二个输出目录参数。截图清单携带 NBT 和作者 JSON 的 SHA-256，模型或标记变更后必须重拍、重审。
 
 实际查看截图后，编写 JSON 数组记录 `id`、`reviewer`、`checks` 和 `reviewed_views`，可附 `revisions` 与 `limitations`。执行 `python -m studio.publish runtime/reviews.json` 会复核当前哈希及数据结果，再将截图归档到资产 `previews/` 并写入独立的 `review.json`。截图清单中的 `visual_review: pending` 仅表示拍摄工具自身未作视觉批准，最终结论以匹配当前哈希的 `review.json` 为准。
@@ -54,4 +57,4 @@ node scripts/smoke.mjs
 
 支持本库的原版 1.20.1 方块与实体方块外形。灯光为统一查看光照，纹理动画使用首帧，颜色使用预览器默认色；不替代 Minecraft 的光照、流体、邻居更新、红石或模组机器测试。漫游允许穿墙，通路证据来自独立碰撞初筛和剖面检查。标记是作者记录，不会自动修改国度 Mod 的运行时模板目录。
 
-已经制作商住与多业态商铺、客货车站、客运码头与六种农田，并支持环境示意和同族对照，**整份文明清单仍在制作中**。唯一进度源位于 `asset_catalogs/original_civilizations/` 对应核心与填充清单。
+已经制作商住与多业态商铺、客货车站、客运码头、六种农田和沙海公共设施，并支持环境示意和同族对照，**整份文明清单仍在制作中**。唯一进度源位于 `asset_catalogs/original_civilizations/` 对应核心与填充清单。

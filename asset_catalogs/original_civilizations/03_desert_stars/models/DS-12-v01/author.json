@@ -1,0 +1,217 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DS-12-v01",
+  "name": "旧星井管理所",
+  "family": "DS-12",
+  "civilization": "沙海星象文明",
+  "planning_role": "planning_role.structure",
+  "size": [
+    28,
+    25,
+    29
+  ],
+  "terrain": {
+    "选址": "具有持续水源解释的旧井节点，附近地层允许维护井壁",
+    "埋置": "地表脚底对应模型 Y=6；井底水面在 Y=2，需保留井壁深度",
+    "用途": "取水、记水档案和值守；后室保留早期管理设施"
+  },
+  "rooms": [
+    {
+      "id": "wellcourt",
+      "name": "半开放井院",
+      "min": [
+        4,
+        6,
+        4
+      ],
+      "max": [
+        14,
+        11,
+        17
+      ],
+      "purpose": "井口、吊桶、维护与歇脚"
+    },
+    {
+      "id": "archive",
+      "name": "记水档案房",
+      "min": [
+        16,
+        6,
+        5
+      ],
+      "max": [
+        22,
+        10,
+        14
+      ],
+      "purpose": "水量记录与档案架"
+    },
+    {
+      "id": "old_room",
+      "name": "旧值守室",
+      "min": [
+        5,
+        6,
+        19
+      ],
+      "max": [
+        11,
+        10,
+        23
+      ],
+      "purpose": "保留旧床与早期室内布局"
+    },
+    {
+      "id": "service",
+      "name": "现用生活间",
+      "min": [
+        13,
+        6,
+        19
+      ],
+      "max": [
+        22,
+        10,
+        23
+      ],
+      "purpose": "炊事、存水与用品"
+    }
+  ],
+  "points": [
+    {
+      "id": "well",
+      "kind": "work",
+      "pos": [
+        11,
+        6,
+        10
+      ],
+      "name": "井口取水",
+      "approach": [
+        12,
+        6,
+        10
+      ]
+    },
+    {
+      "id": "winch",
+      "kind": "work",
+      "pos": [
+        13,
+        6,
+        9
+      ],
+      "name": "井架维护",
+      "approach": [
+        13,
+        6,
+        10
+      ]
+    },
+    {
+      "id": "ledger",
+      "kind": "work",
+      "pos": [
+        20,
+        6,
+        7
+      ],
+      "name": "记水档案",
+      "approach": [
+        20,
+        6,
+        8
+      ]
+    },
+    {
+      "id": "keeper_bed",
+      "kind": "bed",
+      "pos": [
+        7,
+        6,
+        22
+      ],
+      "name": "旧值守床",
+      "approach": [
+        8,
+        6,
+        22
+      ]
+    },
+    {
+      "id": "service",
+      "kind": "work",
+      "pos": [
+        19,
+        6,
+        22
+      ],
+      "name": "值守生活台",
+      "approach": [
+        19,
+        6,
+        21
+      ]
+    },
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        10,
+        6,
+        3
+      ],
+      "name": "主入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        10,
+        5,
+        2
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "外部街面衔接台阶，不自动随地形移动入口"
+    }
+  ],
+  "design_notes": [
+    "石砌井圈位于半开放内院，横梁吊桶直对井口；档案与旧值守室围绕水源组织。"
+  ],
+  "differences": [
+    "石砌井圈位于半开放内院，横梁吊桶直对井口；档案与旧值守室围绕水源组织。"
+  ],
+  "floors": [
+    {
+      "name": "井口与管理",
+      "y": 5,
+      "max_y": 10
+    },
+    {
+      "name": "井壁剖面",
+      "y": 0,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 12,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/desert.py:desert(12)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 6,
+    "bed_y": 3,
+    "padding": 4,
+    "surface": "sand"
+  },
+  "nbt_sha256": "7b1e89c5c3e1db75b04c32cdf178a90c5ad053703257bd13e7a058858fa878b0"
+}

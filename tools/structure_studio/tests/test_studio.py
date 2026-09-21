@@ -66,6 +66,15 @@ class StudioTest(unittest.TestCase):
         write_json(self.path/"author.json",meta)
         self.assertFalse(validate(self.path,self.registry)["passed"])
 
+    def test_azalea_support_uses_exported_substrate(self):
+        m=Model("T","azalea",(4,4,4))
+        m.set(1,0,1,"composter[level=8]").set(1,1,1,"flowering_azalea")
+        m.export(self.path,self.registry)
+        self.assertTrue(any("Azalea without valid substrate" in e for e in validate(self.path,self.registry)["errors"]))
+        for soil in ("moss_block","clay","farmland"):
+            m.set(1,0,1,soil).export(self.path,self.registry)
+            self.assertTrue(validate(self.path,self.registry)["passed"])
+
     def test_stairway_reachable_but_low_ceiling_rejected(self):
         m=Model("T","stairs",(6,10,12))
         m.box((0,0,0),(5,0,11),"stone")

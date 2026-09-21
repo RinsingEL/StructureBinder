@@ -1,6 +1,6 @@
 {
   "schema": "structure-studio.validation.v1",
-  "nbt_sha256": "2c570492acfe037b9aa8788318b62af32f1268e01cf7968d8dd521170604419e",
+  "nbt_sha256": "3ec2c935a30bda5108bf045ae490b4d17c6c4356e571f4e98c47c852f45a44bf",
   "navigation": {
     "passed": true,
     "unreachable": [],
@@ -19,7 +19,7 @@
   ],
   "visible_blocks": 1777,
   "explicit_air": 1084,
-  "palette": 47,
+  "palette": 46,
   "block_entities": 0,
   "agriculture": null,
   "materials": {
@@ -44,13 +44,13 @@
     "minecraft:cornflower": 4,
     "minecraft:azalea": 4,
     "minecraft:stone_brick_stairs": 3,
+    "minecraft:moss_block": 3,
     "minecraft:potted_dandelion": 3,
     "minecraft:potted_fern": 3,
     "minecraft:dark_oak_fence": 3,
     "minecraft:spruce_door": 2,
-    "minecraft:composter": 2,
-    "minecraft:moss_block": 2,
     "minecraft:lantern": 2,
+    "minecraft:composter": 1,
     "minecraft:water_cauldron": 1,
     "minecraft:crafting_table": 1,
     "minecraft:flowering_azalea": 1,
@@ -62,5 +62,5 @@
     "minecraft:potted_lily_of_the_valley": 1,
     "minecraft:light_weighted_pressure_plate": 1
   },
-  "scope": "NBT、方块状态、门床配对、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+  "scope": "NBT、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
 }

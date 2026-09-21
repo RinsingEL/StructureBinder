@@ -1,0 +1,32 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "DS-10-v01",
+  "nbt_sha256": "b5d4dee0c975fd265d5c9585fe82e47f0645e5f478c230aab43f2d57265b484c",
+  "author_sha256": "c8f409f8d29cc232716523f81e2a3f49ed80377fbb163829b205cbdadf0a869a",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "floor-2",
+    "floor-3",
+    "room-calculation",
+    "room-library",
+    "room-gallery",
+    "room-deck",
+    "point-survey",
+    "point-records",
+    "point-keeper_bed",
+    "point-first_landing",
+    "point-deck_landing",
+    "point-instrument",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

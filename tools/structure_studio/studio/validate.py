@@ -8,6 +8,10 @@ from .navigation import audit
 
 AIR = {"minecraft:air", "minecraft:cave_air", "minecraft:void_air"}
 DIRECTIONS = dict(north=(0, -1), south=(0, 1), east=(1, 0), west=(-1, 0))
+# Vanilla 1.20.1 dirt tag plus AzaleaBlock/BushBlock's additional substrates.
+AZALEA_SOIL = {"minecraft:" + name for name in (
+    "dirt", "grass_block", "podzol", "coarse_dirt", "mycelium", "rooted_dirt",
+    "moss_block", "mud", "muddy_mangrove_roots", "clay", "farmland")}
 
 
 def validate(directory: Path, registry=None, *, save=True):
@@ -42,6 +46,10 @@ def validate(directory: Path, registry=None, *, save=True):
         warnings.append("Block registry unavailable; block properties were not verified")
     for (x, y, z), block in grid.items():
         name, props = block["name"], block["properties"]
+        if name in {"minecraft:azalea", "minecraft:flowering_azalea"}:
+            soil = grid.get((x, y-1, z), {}).get("name")
+            if soil not in AZALEA_SOIL:
+                errors.append(f"Azalea without valid substrate at {(x,y,z)}: {soil}")
         if name.endswith("_door"):
             half = props.get("half")
             other = grid.get((x, y + (1 if half == "lower" else -1), z), {})
@@ -101,7 +109,7 @@ def validate(directory: Path, registry=None, *, save=True):
                   visible_blocks=sum(visible.values()), explicit_air=sum(1 for b in grid.values() if b["name"] in AIR),
                   palette=len(data["palette"]), block_entities=sum("nbt" in b for b in data["blocks"]),agriculture=agriculture,
                   materials=dict(visible.most_common()),
-                  scope="NBT、方块状态、门床配对、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。")
+                  scope="NBT、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。")
     if save:
         write_json(directory / "validation.json", report)
     return report

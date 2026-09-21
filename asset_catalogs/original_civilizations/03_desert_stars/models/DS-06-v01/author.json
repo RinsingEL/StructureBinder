@@ -1,0 +1,302 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DS-06-v01",
+  "name": "六帆香料市集厅",
+  "family": "DS-06",
+  "civilization": "沙海星象文明",
+  "planning_role": "planning_role.key",
+  "size": [
+    48,
+    23,
+    39
+  ],
+  "terrain": {
+    "选址": "绿洲贸易节点与实际商路，能容纳人流和后侧进货",
+    "地形": "宽阔平缓商业地块；北侧入口与南侧补货口保持通行",
+    "配套": "内含六类铺位、称量与货仓，外部小摊按空地另选"
+  },
+  "rooms": [
+    {
+      "id": "market",
+      "name": "遮阳交易街",
+      "min": [
+        5,
+        2,
+        14
+      ],
+      "max": [
+        42,
+        8,
+        23
+      ],
+      "purpose": "六类摊铺的公共通行与停留"
+    },
+    {
+      "id": "west_store",
+      "name": "西货仓与称量",
+      "min": [
+        5,
+        2,
+        25
+      ],
+      "max": [
+        21,
+        6,
+        33
+      ],
+      "purpose": "寄存、称量与结算"
+    },
+    {
+      "id": "east_store",
+      "name": "东货仓与账房",
+      "min": [
+        26,
+        2,
+        25
+      ],
+      "max": [
+        42,
+        6,
+        33
+      ],
+      "purpose": "补货与交易账目"
+    },
+    {
+      "id": "rest",
+      "name": "候行拱室",
+      "min": [
+        5,
+        2,
+        6
+      ],
+      "max": [
+        11,
+        6,
+        12
+      ],
+      "purpose": "歇脚等候"
+    },
+    {
+      "id": "water",
+      "name": "饮水拱室",
+      "min": [
+        36,
+        2,
+        6
+      ],
+      "max": [
+        42,
+        6,
+        12
+      ],
+      "purpose": "公共饮水与看守"
+    }
+  ],
+  "points": [
+    {
+      "id": "stall_1",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        15
+      ],
+      "name": "香料铺位",
+      "approach": [
+        7,
+        2,
+        16
+      ]
+    },
+    {
+      "id": "stall_2",
+      "kind": "work",
+      "pos": [
+        14,
+        2,
+        21
+      ],
+      "name": "粮食铺位",
+      "approach": [
+        14,
+        2,
+        20
+      ]
+    },
+    {
+      "id": "stall_3",
+      "kind": "work",
+      "pos": [
+        21,
+        2,
+        15
+      ],
+      "name": "布匹铺位",
+      "approach": [
+        21,
+        2,
+        16
+      ]
+    },
+    {
+      "id": "stall_4",
+      "kind": "work",
+      "pos": [
+        28,
+        2,
+        21
+      ],
+      "name": "饮水铺位",
+      "approach": [
+        28,
+        2,
+        20
+      ]
+    },
+    {
+      "id": "stall_5",
+      "kind": "work",
+      "pos": [
+        35,
+        2,
+        15
+      ],
+      "name": "染料铺位",
+      "approach": [
+        35,
+        2,
+        16
+      ]
+    },
+    {
+      "id": "stall_6",
+      "kind": "work",
+      "pos": [
+        41,
+        2,
+        21
+      ],
+      "name": "果蔬铺位",
+      "approach": [
+        41,
+        2,
+        20
+      ]
+    },
+    {
+      "id": "weighing",
+      "kind": "work",
+      "pos": [
+        20,
+        3,
+        28
+      ],
+      "name": "称量与结算",
+      "approach": [
+        20,
+        2,
+        27
+      ]
+    },
+    {
+      "id": "ledger",
+      "kind": "work",
+      "pos": [
+        28,
+        2,
+        27
+      ],
+      "name": "交易账目",
+      "approach": [
+        29,
+        2,
+        27
+      ]
+    },
+    {
+      "id": "rest",
+      "kind": "circulation",
+      "pos": [
+        9,
+        2,
+        11
+      ],
+      "name": "候行拱室",
+      "look_at": [
+        8,
+        3,
+        8
+      ]
+    },
+    {
+      "id": "water",
+      "kind": "work",
+      "pos": [
+        40,
+        2,
+        8
+      ],
+      "name": "公共取水",
+      "approach": [
+        40,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        23,
+        2,
+        4
+      ],
+      "name": "主入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        23,
+        1,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        5,
+        4
+      ],
+      "note": "外部街面衔接台阶，不自动随地形移动入口"
+    }
+  ],
+  "design_notes": [
+    "中央遮阳商街连通两翼交易铺位，后侧双货仓；布棚高差、半开放拱廊与蓝穹顶形成市集轮廓。"
+  ],
+  "differences": [
+    "中央遮阳商街连通两翼交易铺位，后侧双货仓；布棚高差、半开放拱廊与蓝穹顶形成市集轮廓。"
+  ],
+  "floors": [
+    {
+      "name": "使用空间",
+      "y": 1,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/desert.py:desert(6)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 1,
+    "bed_y": -2,
+    "padding": 4,
+    "surface": "sand"
+  },
+  "nbt_sha256": "02b4a3d23fd05e9bea503c00c4e668392c9328cdb9e6a98569afb729fbc704d7"
+}

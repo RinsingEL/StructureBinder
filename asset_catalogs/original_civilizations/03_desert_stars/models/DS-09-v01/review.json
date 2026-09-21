@@ -1,0 +1,44 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-09-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "bd3b2d819c8cd00e896915e800e0f745aa2f90dc1e27cbe0abf1d438eb18f128",
+  "author_sha256": "a2d65309bb5f4d25a220f80f044471942d5b2290c9aada51a14025701577f765",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-exam.png",
+    "previews/room-pharmacy.png",
+    "previews/room-ward.png",
+    "previews/room-staff.png",
+    "previews/room-waiting.png",
+    "previews/point-exam_7.png",
+    "previews/point-exam_11.png",
+    "previews/point-pharmacy.png",
+    "previews/point-ward_24.png",
+    "previews/point-ward_29.png",
+    "previews/point-ward_wash.png",
+    "previews/point-staff_bed.png",
+    "previews/point-records.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与布局": "四翼医馆围绕遮阳候诊庭院，青色圆顶与淡色墙面使其区别于贸易设施。",
+    "内饰与使用": "诊察床与病床有遮挡，另有药材房、盥洗角、记录和值守生活间。",
+    "标记与通路": "已查看所有房间、楼层、作者标记与已标使用点的第一人称截图；最终 NBT 的入口至标记站位通过碰撞初筛。",
+    "因地制宜": "安静可达的居民或旅人服务地块，有可靠洁净用水与药材补给；平缓地块，北入口到候诊院落，病床避开主通道；诊疗、休养与药材空间；不附加治疗机制或药效。已查看沙地条件示意；地下设施按所标地表高程埋置。"
+  },
+  "revisions": [
+    "补充诊床与病床间隔、病房盥洗标记、值守桌柜。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "取水、医疗、交易、观测等为建筑用途与方块装置表达，未接入对应玩法机制。"
+  ]
+}

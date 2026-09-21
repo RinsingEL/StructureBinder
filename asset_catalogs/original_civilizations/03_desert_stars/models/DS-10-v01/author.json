@@ -1,0 +1,239 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DS-10-v01",
+  "name": "黄铜星仪台",
+  "family": "DS-10",
+  "civilization": "沙海星象文明",
+  "planning_role": "planning_role.key",
+  "size": [
+    35,
+    32,
+    35
+  ],
+  "terrain": {
+    "选址": "视野开阔且可安全登临的台地，避免树冠与高崖遮挡观测方向",
+    "地形": "平缓台地上的独立观测塔，入口脚底 Y=2，二层 Y=9，观测露台 Y=16",
+    "连接": "两段内部楼梯，保留入口步行和露台四周净空"
+  },
+  "rooms": [
+    {
+      "id": "calculation",
+      "name": "接待与星图计算",
+      "min": [
+        7,
+        2,
+        7
+      ],
+      "max": [
+        27,
+        6,
+        27
+      ],
+      "purpose": "计算桌、记录与上楼"
+    },
+    {
+      "id": "library",
+      "name": "藏书和值守",
+      "min": [
+        14,
+        9,
+        7
+      ],
+      "max": [
+        27,
+        13,
+        27
+      ],
+      "purpose": "观测藏书、起居与床位"
+    },
+    {
+      "id": "gallery",
+      "name": "二层登临廊",
+      "min": [
+        7,
+        9,
+        7
+      ],
+      "max": [
+        12,
+        14,
+        26
+      ],
+      "purpose": "通向露台的另一段楼梯"
+    },
+    {
+      "id": "deck",
+      "name": "露天观测层",
+      "min": [
+        7,
+        16,
+        7
+      ],
+      "max": [
+        27,
+        28,
+        27
+      ],
+      "purpose": "星仪、刻度与开阔观测面"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        17,
+        2,
+        5
+      ],
+      "name": "主入口",
+      "facing": "north"
+    },
+    {
+      "id": "survey",
+      "kind": "work",
+      "pos": [
+        15,
+        3,
+        12
+      ],
+      "name": "星图计算台",
+      "approach": [
+        15,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "records",
+      "kind": "work",
+      "pos": [
+        19,
+        2,
+        25
+      ],
+      "name": "历法与观测记录",
+      "approach": [
+        19,
+        2,
+        24
+      ]
+    },
+    {
+      "id": "keeper_bed",
+      "kind": "bed",
+      "pos": [
+        19,
+        9,
+        19
+      ],
+      "name": "观测者床位",
+      "approach": [
+        20,
+        9,
+        19
+      ]
+    },
+    {
+      "id": "first_landing",
+      "kind": "circulation",
+      "pos": [
+        24,
+        9,
+        12
+      ],
+      "name": "藏书层楼梯口",
+      "look_at": [
+        20,
+        10,
+        15
+      ]
+    },
+    {
+      "id": "deck_landing",
+      "kind": "circulation",
+      "pos": [
+        8,
+        16,
+        21
+      ],
+      "name": "观测露台楼梯口",
+      "look_at": [
+        17,
+        20,
+        18
+      ]
+    },
+    {
+      "id": "instrument",
+      "kind": "work",
+      "pos": [
+        20,
+        16,
+        18
+      ],
+      "name": "星仪观测与记录",
+      "approach": [
+        21,
+        16,
+        18
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        17,
+        1,
+        4
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "外部街面衔接台阶，不自动随地形移动入口"
+    }
+  ],
+  "design_notes": [
+    "三层登临次序为接待计算、藏书值守、露天观测；砂岩塔身、蓝色腰线与黄铜星仪形成垂直轮廓。",
+    "星仪是原版方块构成的空间装置，不代表天文或望远镜机制已接入。"
+  ],
+  "differences": [
+    "三层登临次序为接待计算、藏书值守、露天观测；砂岩塔身、蓝色腰线与黄铜星仪形成垂直轮廓。",
+    "星仪是原版方块构成的空间装置，不代表天文或望远镜机制已接入。"
+  ],
+  "floors": [
+    {
+      "name": "接待计算",
+      "y": 1,
+      "max_y": 6
+    },
+    {
+      "name": "藏书值守",
+      "y": 8,
+      "max_y": 13
+    },
+    {
+      "name": "观测露台",
+      "y": 15,
+      "max_y": 27
+    }
+  ],
+  "roof_min_y": 16,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/desert.py:desert(10)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 1,
+    "bed_y": -2,
+    "padding": 4,
+    "surface": "sand"
+  },
+  "nbt_sha256": "b5d4dee0c975fd265d5c9585fe82e47f0645e5f478c230aab43f2d57265b484c"
+}

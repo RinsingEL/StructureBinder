@@ -1,0 +1,182 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DS-11-v01",
+  "name": "沙脊旧驿站",
+  "family": "DS-11",
+  "civilization": "沙海星象文明",
+  "planning_role": "planning_role.structure",
+  "size": [
+    40,
+    19,
+    37
+  ],
+  "terrain": {
+    "选址": "曾有商路的干旱积沙地段，历史线路转移具有解释力",
+    "地形": "旧院落沿西侧半埋，东侧房间和中部通道仍可探索",
+    "入口": "北侧缺口进入；积沙封闭旧西翼，不声称任意埋藏仍可通行"
+  },
+  "rooms": [
+    {
+      "id": "guest",
+      "name": "残存客房",
+      "min": [
+        23,
+        2,
+        7
+      ],
+      "max": [
+        34,
+        6,
+        16
+      ],
+      "purpose": "旧床、行李与屋顶缺口"
+    },
+    {
+      "id": "store",
+      "name": "废弃货仓",
+      "min": [
+        23,
+        2,
+        21
+      ],
+      "max": [
+        34,
+        6,
+        31
+      ],
+      "purpose": "旧包装台和遗货"
+    },
+    {
+      "id": "ledger",
+      "name": "后墙账册夹室",
+      "min": [
+        5,
+        2,
+        24
+      ],
+      "max": [
+        11,
+        6,
+        31
+      ],
+      "purpose": "局部坍顶和仍可进入的记录室"
+    },
+    {
+      "id": "court",
+      "name": "积沙内院",
+      "min": [
+        14,
+        2,
+        6
+      ],
+      "max": [
+        21,
+        6,
+        31
+      ],
+      "purpose": "积沙改变通路，但保留中部探索路线"
+    }
+  ],
+  "points": [
+    {
+      "id": "old_room_bed1",
+      "kind": "bed",
+      "pos": [
+        24,
+        2,
+        15
+      ],
+      "name": "old_room床位",
+      "approach": [
+        25,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "records",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        29
+      ],
+      "name": "旧商路账册",
+      "approach": [
+        7,
+        2,
+        29
+      ]
+    },
+    {
+      "id": "stores",
+      "kind": "work",
+      "pos": [
+        30,
+        2,
+        28
+      ],
+      "name": "遗留货物",
+      "approach": [
+        30,
+        2,
+        27
+      ]
+    },
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        18,
+        2,
+        4
+      ],
+      "name": "旧门楼缺口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        18,
+        1,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "外部街面衔接台阶，不自动随地形移动入口"
+    }
+  ],
+  "design_notes": [
+    "损毁驿院以砂堆改变西翼边界，东侧旧客房和货仓保留生活遗物，后墙夹室留下旧账册。"
+  ],
+  "differences": [
+    "损毁驿院以砂堆改变西翼边界，东侧旧客房和货仓保留生活遗物，后墙夹室留下旧账册。"
+  ],
+  "floors": [
+    {
+      "name": "使用空间",
+      "y": 1,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/desert.py:desert(11)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 1,
+    "bed_y": -2,
+    "padding": 4,
+    "surface": "sand"
+  },
+  "nbt_sha256": "ae423def45ce2230e4fc5a0e99edde22b3cb63a4c4197ad837072d7f0f9b173d"
+}

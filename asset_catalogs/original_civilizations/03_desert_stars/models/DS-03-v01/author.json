@@ -1,0 +1,188 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DS-03-v01",
+  "name": "蓝柱地下蓄水厅",
+  "family": "DS-03",
+  "civilization": "沙海星象文明",
+  "planning_role": "planning_role.key",
+  "size": [
+    36,
+    25,
+    40
+  ],
+  "terrain": {
+    "选址": "可靠集水或引水系统的地下储水节点，需足够岩土覆深与防渗条件",
+    "埋置": "模型 Y=14 对应地表脚底；主体底部 Y=0，预留约 14 格地下空间",
+    "入口": "北侧值守门廊接下行楼梯，检修平台脚底 Y=3",
+    "水": "蓄水池为封闭原版水体，补水、排水与容量逻辑尚未接入"
+  },
+  "rooms": [
+    {
+      "id": "vault",
+      "name": "地下柱廊与蓄水池",
+      "min": [
+        4,
+        3,
+        10
+      ],
+      "max": [
+        31,
+        11,
+        35
+      ],
+      "purpose": "有支撑顶板、封闭蓄水和周边干侧检修"
+    },
+    {
+      "id": "records",
+      "name": "管理与检修角",
+      "min": [
+        24,
+        3,
+        24
+      ],
+      "max": [
+        31,
+        7,
+        35
+      ],
+      "purpose": "水位记录和维修工具"
+    },
+    {
+      "id": "gate",
+      "name": "地上门房",
+      "min": [
+        23,
+        14,
+        3
+      ],
+      "max": [
+        30,
+        18,
+        8
+      ],
+      "purpose": "遮阳入口与地下登临"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        26,
+        14,
+        1
+      ],
+      "name": "主入口",
+      "facing": "north"
+    },
+    {
+      "id": "down",
+      "kind": "circulation",
+      "pos": [
+        26,
+        3,
+        22
+      ],
+      "name": "地下楼梯出口",
+      "look_at": [
+        15,
+        5,
+        25
+      ]
+    },
+    {
+      "id": "gauge",
+      "kind": "work",
+      "pos": [
+        22,
+        4,
+        20
+      ],
+      "name": "取水与水位记录位置",
+      "approach": [
+        23,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "register",
+      "kind": "work",
+      "pos": [
+        29,
+        3,
+        29
+      ],
+      "name": "蓄水管理记录",
+      "approach": [
+        28,
+        3,
+        29
+      ]
+    },
+    {
+      "id": "maintenance",
+      "kind": "work",
+      "pos": [
+        30,
+        3,
+        25
+      ],
+      "name": "检修工具",
+      "approach": [
+        29,
+        3,
+        25
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        26,
+        13,
+        0
+      ],
+      "direction": "north",
+      "clearance": [
+        5,
+        4
+      ],
+      "note": "外部街面衔接台阶，不自动随地形移动入口"
+    }
+  ],
+  "design_notes": [
+    "地上小门房连接十一格下降楼梯；地下柱廊围绕蓄水池，检修通道和记录区在干侧。"
+  ],
+  "differences": [
+    "地上小门房连接十一格下降楼梯；地下柱廊围绕蓄水池，检修通道和记录区在干侧。"
+  ],
+  "floors": [
+    {
+      "name": "地上入口",
+      "y": 13,
+      "max_y": 19
+    },
+    {
+      "name": "地下蓄水与检修",
+      "y": 2,
+      "max_y": 10
+    }
+  ],
+  "roof_min_y": 13,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/desert.py:desert(3)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 14,
+    "bed_y": 11,
+    "padding": 4,
+    "surface": "sand"
+  },
+  "nbt_sha256": "c56a22710b453787e763f6b141d87790863e579bd8aaf071b9f2502f69779408"
+}

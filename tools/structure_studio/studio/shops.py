@@ -285,7 +285,7 @@ def florist():
     for x in (6,7):
         for z in (14,16):m.set(x,2,z,"azalea")
     m.box((6,1,8),(9,1,12),"oak_planks")
-    m.set(14,2,8,"composter[level=8]");m.set(14,3,8,"flowering_azalea")
+    m.set(14,2,8,"moss_block");m.set(14,3,8,"flowering_azalea")
     counter(m,9,17,4,name="花草售卖与订单")
     shelf(m,18,2,18,5,contents="flower_pot")
     m.set(24,2,16,"crafting_table");m.set(23,2,12,"water_cauldron[level=3]")

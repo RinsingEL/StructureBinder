@@ -1,0 +1,47 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-06-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "02b4a3d23fd05e9bea503c00c4e668392c9328cdb9e6a98569afb729fbc704d7",
+  "author_sha256": "079745d6e7e87b4a81c41371aea559eed11e5a2b11092b20ce83a505f3b89e11",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-market.png",
+    "previews/room-west_store.png",
+    "previews/room-east_store.png",
+    "previews/room-rest.png",
+    "previews/room-water.png",
+    "previews/point-stall_1.png",
+    "previews/point-stall_2.png",
+    "previews/point-stall_3.png",
+    "previews/point-stall_4.png",
+    "previews/point-stall_5.png",
+    "previews/point-stall_6.png",
+    "previews/point-weighing.png",
+    "previews/point-ledger.png",
+    "previews/point-rest.png",
+    "previews/point-water.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与布局": "橙白高差布棚覆盖交易街，双穹顶休息拱室和后侧双货仓构成开放市集。",
+    "内饰与使用": "六摊陈列不同货物，货仓、称量、账簿、歇脚与饮水位置都可辨认。",
+    "标记与通路": "已查看所有房间、楼层、作者标记与已标使用点的第一人称截图；最终 NBT 的入口至标记站位通过碰撞初筛。",
+    "因地制宜": "绿洲贸易节点与实际商路，能容纳人流和后侧进货；宽阔平缓商业地块；北侧入口与南侧补货口保持通行；内含六类铺位、称量与货仓，外部小摊按空地另选。已查看沙地条件示意；地下设施按所标地表高程埋置。"
+  },
+  "revisions": [
+    "摊位移离前侧拱室，避免后建房间覆盖货台。",
+    "补齐布棚横梁、宽货台、存货和灯具。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "取水、医疗、交易、观测等为建筑用途与方块装置表达，未接入对应玩法机制。"
+  ]
+}
