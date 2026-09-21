@@ -5,7 +5,7 @@ import json
 import re
 import shutil
 from pathlib import Path
-from curate_planning_roles import classify, FILL, KEY, STRUCTURE, COMPLETE
+from curate_planning_roles import classify, curate, FILL, KEY, STRUCTURE, COMPLETE
 from build_selected_asset_bundle import read, write, digest
 
 
@@ -109,6 +109,7 @@ def main():
                         ('blueprint_reference_catalog.json', references), ('StructureVocabulary.snapshot.json', vocab), ('asset_names.json', names)]:
         write(a.output / file, value)
     (a.output / 'StructureProfile.jsonl').write_text(''.join(json.dumps(p, ensure_ascii=False) + '\n' for p in profiles), encoding='utf8')
+    curate(a.output, a.output / 'planning_role_audit.json', apply=True)
     meta = read(a.baseline / 'runtime_metadata.json')
     meta['templates'].extend(metadata)
     write(a.output / 'runtime_metadata.json', meta)

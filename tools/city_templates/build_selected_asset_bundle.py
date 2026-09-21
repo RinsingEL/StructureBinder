@@ -7,7 +7,7 @@ import hashlib
 import json
 import shutil
 from pathlib import Path
-from curate_planning_roles import classify, FILL, KEY, STRUCTURE, COMPLETE
+from curate_planning_roles import classify, curate, FILL, KEY, STRUCTURE, COMPLETE
 
 
 def read(path):
@@ -96,6 +96,7 @@ def build(source, metadata, baseline, output):
     write(output / 'blueprint_reference_catalog.json', references)
     # Names and source provenance stay available to humans without unrecognized runtime fields.
     write(output / 'asset_names.json', [dict(templateRef=r['templateRef'], displayName=r['displayName'], functionTerms=r['functionTerms']) for r in rows])
+    curate(output, output / 'planning_role_audit.json', apply=True)
     write(output / 'integration_verification.json', dict(status='built_pending_java_bundle_validation', templates=len(rows),
         withEntrance=sum(bool(r['roadEntrances']) for r in rows), noRoadEntrance=sum(r['noRoadEntrance'] for r in rows),
         metadataSource=str(metadata), rawNbtUnmodified=True, transforms='preserved_from_source', gameplayValidated=False))

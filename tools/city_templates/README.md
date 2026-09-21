@@ -160,8 +160,13 @@ hashes or unconfirmed entrance data.
 
 运行 `curate_planning_roles.py --bundle <配置目录> --report <报告路径>` 查看保守角色整理；加 `--apply` 写入角色、词表和填充池。完整组合采用 `--overrides asset_catalogs/planning_roles/overrides.json`，每项绑定模板内容哈希与核对证据。
 
-已有功能与实际占地共同决定是否进入重复候选；尺寸不会自动赋予核心身份。不确定用途保留明确选用，名字包含“花园”不等于已经通过自动绿化或完整组合审查。报告的 `visualReviewComplete=false` 表示没有冒充全量视觉验收。
+角色按名字和功能判定，尺寸另行分组；大型住宅、别墅仍可重复填充，不因尺寸变大失去填充资格或自动成为核心。不确定用途保留明确选用，名字包含“花园”不等于已经通过自动绿化或完整组合审查。报告的 `visualReviewComplete=false` 表示没有冒充全量视觉验收。
 
-`public_small_support` / `public_medium_support` 分别提供144/400格以内的配套，并按原有风格分池；无后缀为中世纪，其余使用 `_desert`、`_japanese` 等后缀，避免随机混入不同风格。每种模板每组最多2份。原类别池保留ID，但只留下重复候选；空池不会自动补入主体。
+`public_small_support` / `public_medium_support` 分别提供144/400格以内且高度不超过24的配套，并按原有风格分池；无后缀为中世纪，其余使用 `_desert`、`_japanese` 等后缀，避免随机混入不同风格。每种模板每组最多2份。原类别池保留ID，但只留下重复候选；空池不会自动补入主体。
 
 公共绿化地表和独立结构清单分别由 `config/geomantia/city_public_greenery.json`、`city_public_greenery_structures.json` 配置；未设置独立结构清单时复用现有道路树。完整花园、喷泉庭院通过D4明确选材，不自动填入残余空隙。
+
+
+尺寸展示名保留 originalDisplayName，格式为【占地档·占地宽×深·高H】原名，重复执行不叠加前缀。按用途、风格、占地和高度生成 pool:scaled_*；占地档 small≤144且边≤16、medium≤400且边≤24、large≤900且边≤36、其余extra_large；高度档low≤12、medium≤24、tall≤40、very_tall>40。配套池不包含超高小占地住宅。
+
+迁移时使用原 --report 的受支持策略记录识别旧自动角色；保留记录外的显式修改，--overrides优先。请使用同一报告路径迭代；同时生成同名Markdown分组清单。打包/增量脚本会为新输出运行整理并生成 planning_role_audit.json；现有包升级使用原审计报告单独运行整理。

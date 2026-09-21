@@ -30,3 +30,5 @@ assessment 必须指出图中具体位置和可见空间关系：主体核心在
 孤立核心是必须处理的组合缺口。检查 compiledDesignReview / designReviewWorkflow 的 isolatedCoreGroupIds，并结合当前图判断大小搭配。使用 city_d4_integrate 的 REPAIR_CORE 可调整该区 requiredStructureRefs、fillPools 和阵列参数；保留主体用途与其他区设计。完整素材自带院落装饰可计入组合，不再叠一圈。按 coreReworkCount 观察实际返工，达到五次边界停止并保留证据。
 
 选材先看 planningRoleTerms 与实际 rawSize：核心明确选入阵列，fill 候选用于可重复配套，小店铺与摊位可从小型配套池选择。核心不必最大，COMPACT 可全用小模板。普通村庄默认直接地形兼容落地；foundationGroupIds 仅用于确有需要的共同台地，公共地表与绿化不需要为每栋建筑垫台。小型独立绿化由程序处理公共间隙，完整花园或喷泉庭院由 AI 作为结构设计。
+
+角色与体量分开判断：大型住宅、别墅可以是 fill，不因体积大就充当核心。展示名的“占地宽×深·高”与 rawSize 是模板包围盒，含自带装饰和留白；不可仅凭原名“小屋”判断大小。优先选用 pool:scaled_<用途>_<风格>_<占地档>_<高度档>；占地档 small/medium/large/extra_large，高度档 low≤12、medium≤24、tall≤40、very_tall>40。大住宅选对应填充池，低矮配套不要混入高耸住宅。

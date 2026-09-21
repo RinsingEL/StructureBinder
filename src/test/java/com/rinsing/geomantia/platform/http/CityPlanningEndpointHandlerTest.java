@@ -1364,6 +1364,12 @@ class CityPlanningEndpointHandlerTest {
     @Test
     void structureCatalogQueryResolvesVocabularyTagsFiltersAndStaysReadOnly() throws Exception {
         Path baseDirectory = Files.createTempDirectory("city-structure-catalog-query-test");
+        Files.writeString(baseDirectory.resolve("template_catalog.json"), """
+                {"templates":[{"templateRef":"test:windmill","rawSize":{"width":50,"depth":23,"height":22}}]}
+                """);
+        Files.writeString(baseDirectory.resolve("asset_names.json"), """
+                [{"templateRef":"test:windmill","displayName":"【超大型·占地50×23·高22】风车"}]
+                """);
         Path catalogPath = baseDirectory.resolve("debug_structure_profile_catalog.json");
         Path vocabularyPath = baseDirectory.resolve("StructureVocabulary.snapshot.json");
         Files.writeString(catalogPath, """
@@ -1424,6 +1430,11 @@ class CityPlanningEndpointHandlerTest {
         JsonObject windmill = response.getAsJsonArray("candidates").get(0).getAsJsonObject();
         assertEquals("city_structure_catalog_query", response.get("schema").getAsString());
         assertEquals("test:windmill", windmill.get("semanticProfileId").getAsString());
+        assertEquals("【超大型·占地50×23·高22】风车", windmill.get("displayName").getAsString());
+        assertEquals(50, windmill.getAsJsonObject("rawSize").get("width").getAsInt());
+        assertEquals(23, windmill.getAsJsonObject("rawSize").get("depth").getAsInt());
+        assertEquals(22, windmill.getAsJsonObject("rawSize").get("height").getAsInt());
+        assertEquals(1150, windmill.get("footprintAreaBlocks").getAsInt());
         assertEquals("planning_role.fill", windmill.getAsJsonArray("matchedCanonicalTerms").get(0).getAsString());
         assertEquals("function.agriculture", windmill.getAsJsonArray("matchedCanonicalTerms").get(1).getAsString());
         JsonObject terms = windmill.getAsJsonObject("terms");
