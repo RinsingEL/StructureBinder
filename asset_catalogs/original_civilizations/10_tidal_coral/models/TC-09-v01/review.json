@@ -1,0 +1,49 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "TC-09-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "root：海洋核心全图复核",
+  "nbt_sha256": "f9bfc253c2ba88684c0f51b15040f028188199d3ee0cc61b352efae93f07b4b5",
+  "author_sha256": "2ee67555b749ff46d53e57dc9b128d889e80a0573a8600758323b8232512e337",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-class.png",
+    "previews/room-samples.png",
+    "previews/room-reading.png",
+    "previews/room-lookout.png",
+    "previews/point-teach.png",
+    "previews/point-maps.png",
+    "previews/point-sample_sort.png",
+    "previews/point-samples.png",
+    "previews/point-specimen.png",
+    "previews/point-atlas.png",
+    "previews/point-plot.png",
+    "previews/point-voyage_logs.png",
+    "previews/point-observe24.png",
+    "previews/point-observe38.png",
+    "previews/point-field_notes.png",
+    "previews/point-coral_collection.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "高低三翼拱厅区分课堂、标本、图志；海图板与珊瑚骨架展台齐；花盆已避开酿造台落在完整木台。",
+    "已实际查看当前导出NBT的全部外观、剖层、房间、功能点、标记与场地截图；结合数据及导航检查。",
+    "风格标签与地形适用条件分开，柱脚、干湿层、岸线接驳和参考潮位单列。"
+  ],
+  "revisions": [
+    "以拱形壳顶、浅色肋架与海洋专业陈设替换旧版低坡屋顶和浅色台柜。",
+    "修正酿造台上方花盆无完整支撑的问题。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

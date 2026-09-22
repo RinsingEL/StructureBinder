@@ -1,0 +1,47 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "TC-12-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "root：海洋核心全图复核",
+  "nbt_sha256": "392dae3a122123620881e8bf1a816f294ec0b4cf3c64f59711096522392f4c70",
+  "author_sha256": "3ea9b0d2570c0c24b1c78b85dc59a58655280e0152041fcc859e16f96eab2cd9",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-keeper.png",
+    "previews/room-sleep.png",
+    "previews/room-tower.png",
+    "previews/room-lookout.png",
+    "previews/point-keeper_cook.png",
+    "previews/point-keeper_books.png",
+    "previews/point-keeper_bed.png",
+    "previews/point-log.png",
+    "previews/point-clothes.png",
+    "previews/point-repair.png",
+    "previews/point-spares.png",
+    "previews/point-assembly.png",
+    "previews/point-observation.png",
+    "previews/point-historic_gauge.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "阶梯塔身与透光灯冠形成航标轮廓；守塔人厨房餐厅、独立卧室、维修厅和上层观察台均有实际陈设。",
+    "已实际查看当前导出NBT的全部外观、剖层、房间、功能点、标记与场地截图；结合数据及导航检查。",
+    "风格标签与地形适用条件分开，柱脚、干湿层、岸线接驳和参考潮位单列。"
+  ],
+  "revisions": [
+    "以拱形壳顶、浅色肋架与海洋专业陈设替换旧版低坡屋顶和浅色台柜。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

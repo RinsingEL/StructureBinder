@@ -1,0 +1,51 @@
+{
+  "schema": "structure-studio.validation.v1",
+  "nbt_sha256": "8942cdb32e4ddb7237b4d858433661c29a6943580eebb9d384023206609931a3",
+  "navigation": {
+    "passed": true,
+    "unreachable": [],
+    "nodes": 7538,
+    "highest_standing_y": 9,
+    "truncated": false,
+    "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "size": [
+    55,
+    34,
+    49
+  ],
+  "visible_blocks": 7537,
+  "explicit_air": 55901,
+  "palette": 33,
+  "block_entities": 0,
+  "agriculture": null,
+  "materials": {
+    "minecraft:prismarine_bricks": 3374,
+    "minecraft:smooth_quartz": 1130,
+    "minecraft:waxed_oxidized_cut_copper": 804,
+    "minecraft:dark_prismarine": 696,
+    "minecraft:birch_planks": 504,
+    "minecraft:quartz_block": 396,
+    "minecraft:cyan_stained_glass": 288,
+    "minecraft:birch_fence": 119,
+    "minecraft:quartz_pillar": 64,
+    "minecraft:dark_oak_stairs": 49,
+    "minecraft:stripped_dark_oak_log": 25,
+    "minecraft:water": 18,
+    "minecraft:birch_trapdoor": 18,
+    "minecraft:dark_oak_slab": 17,
+    "minecraft:bookshelf": 8,
+    "minecraft:sea_lantern": 8,
+    "minecraft:barrel": 5,
+    "minecraft:lantern": 5,
+    "minecraft:birch_door": 4,
+    "minecraft:lectern": 2,
+    "minecraft:smoker": 1,
+    "minecraft:crafting_table": 1,
+    "minecraft:water_cauldron": 1
+  },
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+}

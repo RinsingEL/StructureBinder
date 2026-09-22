@@ -1,0 +1,50 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "TC-08-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "root：海洋核心全图复核",
+  "nbt_sha256": "7345cfc093a537281413ce2a1feb664b092950a458e75d532ef83c28491725c8",
+  "author_sha256": "07fc39577eeac0597be954868a478a4fd9459ff0cb48546e691e6fab3069986f",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-lab.png",
+    "previews/room-equipment.png",
+    "previews/room-stay.png",
+    "previews/room-entry_shaft.png",
+    "previews/point-intake.png",
+    "previews/point-samples.png",
+    "previews/point-sample_store.png",
+    "previews/point-lab28.png",
+    "previews/point-lab33.png",
+    "previews/point-galley.png",
+    "previews/point-food.png",
+    "previews/point-reading_books.png",
+    "previews/point-diving_gear.png",
+    "previews/point-equipment_log.png",
+    "previews/point-bunk1.png",
+    "previews/point-bunk2.png",
+    "previews/point-linen.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "低矮玻璃拱舱与高位封闭入口分层；样本、装备、食宿独立，床柜齐全；海床承重和高低潮条件明确。",
+    "已实际查看当前导出NBT的全部外观、剖层、房间、功能点、标记与场地截图；结合数据及导航检查。",
+    "风格标签与地形适用条件分开，柱脚、干湿层、岸线接驳和参考潮位单列。"
+  ],
+  "revisions": [
+    "以拱形壳顶、浅色肋架与海洋专业陈设替换旧版低坡屋顶和浅色台柜。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

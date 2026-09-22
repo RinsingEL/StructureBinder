@@ -1,0 +1,30 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "TC-10-v01",
+  "nbt_sha256": "8942cdb32e4ddb7237b4d858433661c29a6943580eebb9d384023206609931a3",
+  "author_sha256": "d823c26248bfcb65818aeec2bdc760763f1b974ebbd4614f725c2f8fa900d0f6",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-court",
+    "room-archives",
+    "room-rest",
+    "point-chair",
+    "point-ritual",
+    "point-records",
+    "point-old_records",
+    "point-scribe",
+    "point-public_water",
+    "point-public_goods",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

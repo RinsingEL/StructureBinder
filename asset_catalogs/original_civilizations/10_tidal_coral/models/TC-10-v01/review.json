@@ -1,0 +1,42 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "TC-10-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "root：海洋核心全图复核",
+  "nbt_sha256": "8942cdb32e4ddb7237b4d858433661c29a6943580eebb9d384023206609931a3",
+  "author_sha256": "d823c26248bfcb65818aeec2bdc760763f1b974ebbd4614f725c2f8fa900d0f6",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-court.png",
+    "previews/room-archives.png",
+    "previews/room-rest.png",
+    "previews/point-chair.png",
+    "previews/point-ritual.png",
+    "previews/point-records.png",
+    "previews/point-old_records.png",
+    "previews/point-scribe.png",
+    "previews/point-public_water.png",
+    "previews/point-public_goods.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "四组拱架围合八角露天议庭，中央水槽有护栏；两侧记录与公共休息廊保留独立内饰与步行通道。",
+    "已实际查看当前导出NBT的全部外观、剖层、房间、功能点、标记与场地截图；结合数据及导航检查。",
+    "风格标签与地形适用条件分开，柱脚、干湿层、岸线接驳和参考潮位单列。"
+  ],
+  "revisions": [
+    "以拱形壳顶、浅色肋架与海洋专业陈设替换旧版低坡屋顶和浅色台柜。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}
