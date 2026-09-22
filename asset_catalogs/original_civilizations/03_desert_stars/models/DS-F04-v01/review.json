@@ -1,0 +1,38 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-F04-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "e8224818b2445176cfed6acf8d498e21d40cc9afe425a1e9db89e8e228c596e0",
+  "author_sha256": "1f5828442687c5f3b7eca3a8f8f51c7391f1cab249f20a4b4462939f61a91741",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-stall.png",
+    "previews/point-sell.png",
+    "previews/point-buy.png",
+    "previews/point-ledger.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "四柱单摊有前交易、后储物的清楚边界，遮棚适合路边小地块。",
+    "内饰与使用": "彩色香料柜台与小容器、备货箱和账台完成；摊主和顾客站在柜台两侧。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、平面、房间、使用点、标记及环境图；最终 NBT 数据与入口至已标站位的碰撞检查全部通过，无警告。",
+    "因地制宜": "依托商路与聚落交易需求，货物需能从街道搬入，棚周保留通风和行走；小幅遮棚包住一条香料柜台，顾客在前、摊主与收纳在后。；使用地坪 Y=1，脚底 Y=2；不自动削坡或补齐外部通路；模板包含内部地坪和封边，未写入的凹角与外部格保持原环境。环境示意符合作者所写平地沙地条件。"
+  },
+  "revisions": [
+    "柜台两端补小容器，增加交易布置细节。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "商品、登记和寄货是原版方块的空间表达，未接入交易、物流或库存玩法。"
+  ]
+}

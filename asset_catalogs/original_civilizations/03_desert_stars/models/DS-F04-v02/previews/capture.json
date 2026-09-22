@@ -1,0 +1,27 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "DS-F04-v02",
+  "nbt_sha256": "00b46dfbf9c4a613ca30487a9e0dcc4e675a37f3a5a3e7c2073c42b0c0eb8c0c",
+  "author_sha256": "8e9b8cf5ef7de5a1f2afa23a2408fc680c7956713d4e7f17ac3dd8a749d3dd9d",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-spice",
+    "room-cloth",
+    "room-lane",
+    "point-spice",
+    "point-cloth",
+    "point-spice_buy",
+    "point-cloth_buy",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

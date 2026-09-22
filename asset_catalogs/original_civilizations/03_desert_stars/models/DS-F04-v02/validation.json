@@ -1,0 +1,42 @@
+{
+  "schema": "structure-studio.validation.v1",
+  "nbt_sha256": "00b46dfbf9c4a613ca30487a9e0dcc4e675a37f3a5a3e7c2073c42b0c0eb8c0c",
+  "navigation": {
+    "passed": true,
+    "unreachable": [],
+    "nodes": 1491,
+    "highest_standing_y": 2,
+    "truncated": false,
+    "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "size": [
+    28,
+    14,
+    22
+  ],
+  "visible_blocks": 1156,
+  "explicit_air": 4556,
+  "palette": 16,
+  "block_entities": 0,
+  "agriculture": null,
+  "materials": {
+    "minecraft:cut_sandstone": 408,
+    "minecraft:smooth_sandstone": 357,
+    "minecraft:white_wool": 104,
+    "minecraft:stripped_acacia_log": 88,
+    "minecraft:cyan_wool": 54,
+    "minecraft:orange_wool": 52,
+    "minecraft:sandstone": 51,
+    "minecraft:barrel": 16,
+    "minecraft:acacia_planks": 8,
+    "minecraft:spruce_planks": 4,
+    "minecraft:orange_carpet": 4,
+    "minecraft:yellow_carpet": 4,
+    "minecraft:blue_wool": 3,
+    "minecraft:purple_wool": 3
+  },
+  "scope": "NBT、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+}

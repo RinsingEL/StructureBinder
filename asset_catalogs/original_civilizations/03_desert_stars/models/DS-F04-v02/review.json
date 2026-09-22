@@ -1,0 +1,39 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-F04-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "00b46dfbf9c4a613ca30487a9e0dcc4e675a37f3a5a3e7c2073c42b0c0eb8c0c",
+  "author_sha256": "8e9b8cf5ef7de5a1f2afa23a2408fc680c7956713d4e7f17ac3dd8a749d3dd9d",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-spice.png",
+    "previews/room-cloth.png",
+    "previews/room-lane.png",
+    "previews/point-spice.png",
+    "previews/point-cloth.png",
+    "previews/point-spice_buy.png",
+    "previews/point-cloth_buy.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "香料和布匹双摊隔巷相对，两片高低错开的遮棚与中央开放巷道构成独立平面。",
+    "内饰与使用": "两种商品陈列和后备货区不同，两个摊主、两个顾客站位均可达。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、平面、房间、使用点、标记及环境图；最终 NBT 数据与入口至已标站位的碰撞检查全部通过，无警告。",
+    "因地制宜": "依托商路与聚落交易需求，货物需能从街道搬入，棚周保留通风和行走；香料与布料两摊朝中央小巷开口，背后各有备货位，遮棚高低错开。；使用地坪 Y=1，脚底 Y=2；不自动削坡或补齐外部通路；模板包含内部地坪和封边，未写入的凹角与外部格保持原环境。环境示意符合作者所写平地沙地条件。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "商品、登记和寄货是原版方块的空间表达，未接入交易、物流或库存玩法。"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-F03-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "2d3c12cb582c734d6cad41a75f831d27c7c7f9e9a4f050bcd041b89839a9b1e9",
+  "author_sha256": "e4c7e3e44b5a1ed371267a7a32721ec9cee99c8ef17f3da7b8456beb8163f492",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-纵棚.png",
+    "previews/room-横棚.png",
+    "previews/room-corner.png",
+    "previews/point-纵棚_harvest.png",
+    "previews/point-横棚_harvest.png",
+    "previews/point-sort.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "纵横两段藤棚顺 L 形街角展开，内转角连接采收台和周转筐；外侧凹口没有模板清地。",
+    "内饰与使用": "两段采收站位分别标记，北、东两入口衔接内部作业道。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、平面、房间、使用点、标记及环境图；最终 NBT 数据与入口至已标站位的碰撞检查全部通过，无警告。",
+    "因地制宜": "只用于整合包设定允许种植葡萄、具可靠灌溉和适宜土壤的绿洲；两段棚架沿 L 形地块展开，转角设采收台，外侧凹角保留街巷。；使用地坪 Y=1，脚底 Y=2；不自动削坡或补齐外部通路；模板包含内部地坪和封边，未写入的凹角与外部格保持原环境；原版木架、常驻树叶和倒挂紫晶簇作为葡萄果串外观；非可收获作物，不声明生长或产量。环境示意符合作者所写平地沙地条件。"
+  },
+  "revisions": [
+    "采用细小倒挂果串外观并补棚缘叶片，减少棚下突兀体块。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "倒挂紫晶簇仅作葡萄果串外观，未接入作物生长、采收和产量机制；使用前须满足整合包种植条件。"
+  ]
+}

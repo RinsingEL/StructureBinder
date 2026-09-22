@@ -1,0 +1,49 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-02-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "42abca12b311a05bf90ecf434e952b34bd8794d10c3fba8aa023c9872b3cb370",
+  "author_sha256": "dd44a2cf627eb844232b9691808ca96a99b439b57d42c4b26546b6d864ded83e",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-前栏.png",
+    "previews/room-后栏.png",
+    "previews/room-keeper.png",
+    "previews/room-feed_store.png",
+    "previews/room-court.png",
+    "previews/point-前栏_feed.png",
+    "previews/point-前栏_water.png",
+    "previews/point-前栏_gate.png",
+    "previews/point-后栏_feed.png",
+    "previews/point-后栏_water.png",
+    "previews/point-后栏_gate.png",
+    "previews/point-keeper_bed.png",
+    "previews/point-register.png",
+    "previews/point-feed_store.png",
+    "previews/point-care.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "西侧两栏、东侧两个房间与中央护理棚分别承担动物、存货和人员用途，庭院主通道保持宽敞。",
+    "内饰与使用": "两栏各有饲料和饮水，另有集中饲料库、护理点及带卧床的登记值守室。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、平面、房间、使用点、标记及环境图；最终 NBT 数据与入口至已标站位的碰撞检查全部通过，无警告。",
+    "因地制宜": "依托商路补给点和可靠饮水，保持动物活动与人货搬运空间；两座兽栏沿西侧排列，东侧分别设置值守室和饲料库，中央留宽护理院。；使用地坪 Y=1，脚底 Y=2；不自动削坡或补齐外部通路；模板包含内部地坪和封边，未写入的凹角与外部格保持原环境。环境示意符合作者所写平地沙地条件。"
+  },
+  "revisions": [
+    "两栏补默认打开的栅门，减少地面规则条纹。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "未放置活体动物；已标站位的玩家通路检查不能证明动物牵引、回转或围栏行为。"
+  ]
+}

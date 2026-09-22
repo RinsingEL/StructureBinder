@@ -1,0 +1,43 @@
+{
+  "schema": "structure-studio.validation.v1",
+  "nbt_sha256": "110429017212e97b89351c25b512307dda381999d9202a096931add2d669fef7",
+  "navigation": {
+    "passed": true,
+    "unreachable": [],
+    "nodes": 1681,
+    "highest_standing_y": 3,
+    "truncated": false,
+    "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "size": [
+    29,
+    13,
+    27
+  ],
+  "visible_blocks": 1493,
+  "explicit_air": 5657,
+  "palette": 18,
+  "block_entities": 0,
+  "agriculture": null,
+  "materials": {
+    "minecraft:cut_sandstone": 596,
+    "minecraft:smooth_sandstone": 579,
+    "minecraft:oak_leaves": 95,
+    "minecraft:sandstone": 61,
+    "minecraft:stripped_acacia_log": 43,
+    "minecraft:water": 34,
+    "minecraft:rooted_dirt": 34,
+    "minecraft:acacia_fence": 24,
+    "minecraft:birch_slab": 6,
+    "minecraft:purple_carpet": 6,
+    "minecraft:amethyst_cluster": 6,
+    "minecraft:acacia_stairs": 5,
+    "minecraft:acacia_trapdoor": 2,
+    "minecraft:barrel": 1,
+    "minecraft:water_cauldron": 1
+  },
+  "scope": "NBT、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+}

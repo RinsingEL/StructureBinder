@@ -1,0 +1,27 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "DS-F03-v04",
+  "nbt_sha256": "9ce4380ae809922b37771357c97b0f73c64bd4cb51188ecc833d43045ef6501a",
+  "author_sha256": "a1fd9cde9545dee21f8925db5c59b65f7ef61b4fd4ed04511222e6e1e46945fd",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-西棚",
+    "room-东棚",
+    "room-packing",
+    "point-西棚_harvest",
+    "point-东棚_harvest",
+    "point-sort",
+    "point-water",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

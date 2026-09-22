@@ -1,0 +1,33 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "DS-02-v03",
+  "nbt_sha256": "a35e3970c896cd63ea4211dc29e7fb743453d9033f531b0ba2ddc4238eb22c61",
+  "author_sha256": "98e7d922e5fbdd3408b94e4afd6b3851fd4d607c57e71c2efbc5da8bde70c9c0",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-前厩",
+    "room-后厩",
+    "room-tack",
+    "room-aisle",
+    "room-wait",
+    "point-前厩_feed",
+    "point-前厩_water",
+    "point-前厩_gate",
+    "point-后厩_feed",
+    "point-后厩_water",
+    "point-后厩_gate",
+    "point-tack",
+    "point-care",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

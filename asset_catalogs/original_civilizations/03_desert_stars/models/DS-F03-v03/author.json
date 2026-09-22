@@ -1,0 +1,205 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DS-F03-v03",
+  "name": "折巷转角葡萄棚",
+  "family": "DS-F03",
+  "civilization": "沙海星象文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    37,
+    13,
+    32
+  ],
+  "terrain": {
+    "选址": "只用于整合包设定允许种植葡萄、具可靠灌溉和适宜土壤的绿洲",
+    "地块": "两段棚架沿 L 形地块展开，转角设采收台，外侧凹角保留街巷。",
+    "接地": "使用地坪 Y=1，脚底 Y=2；不自动削坡或补齐外部通路",
+    "边界": "模板包含内部地坪和封边，未写入的凹角与外部格保持原环境",
+    "作物表达": "原版木架、常驻树叶和倒挂紫晶簇作为葡萄果串外观；非可收获作物，不声明生长或产量"
+  },
+  "rooms": [
+    {
+      "id": "纵棚",
+      "name": "葡萄棚 · 纵棚",
+      "min": [
+        4,
+        2,
+        5
+      ],
+      "max": [
+        10,
+        6,
+        25
+      ],
+      "purpose": "土床、备水渠、棚架与采收道；原版方块视觉表达"
+    },
+    {
+      "id": "横棚",
+      "name": "葡萄棚 · 横棚",
+      "min": [
+        15,
+        2,
+        19
+      ],
+      "max": [
+        30,
+        6,
+        25
+      ],
+      "purpose": "土床、备水渠、棚架与采收道；原版方块视觉表达"
+    },
+    {
+      "id": "corner",
+      "name": "转角作业位",
+      "min": [
+        10,
+        2,
+        25
+      ],
+      "max": [
+        30,
+        6,
+        28
+      ],
+      "purpose": "连接两段棚架的转运与分拣"
+    }
+  ],
+  "points": [
+    {
+      "id": "纵棚_harvest",
+      "kind": "work",
+      "pos": [
+        5,
+        4,
+        9
+      ],
+      "name": "棚下采收 · 纵棚",
+      "look_at": [
+        5.5,
+        4,
+        9.5
+      ],
+      "approach": [
+        7,
+        2,
+        8
+      ]
+    },
+    {
+      "id": "横棚_harvest",
+      "kind": "work",
+      "pos": [
+        19,
+        4,
+        20
+      ],
+      "name": "棚下采收 · 横棚",
+      "look_at": [
+        19.5,
+        4,
+        20.5
+      ],
+      "approach": [
+        18,
+        2,
+        22
+      ]
+    },
+    {
+      "id": "sort",
+      "kind": "work",
+      "pos": [
+        12,
+        2,
+        27
+      ],
+      "name": "转角采收台",
+      "approach": [
+        12,
+        2,
+        26
+      ]
+    },
+    {
+      "id": "north_entry",
+      "kind": "entrance",
+      "pos": [
+        7,
+        2,
+        3
+      ],
+      "name": "人员与货物入口",
+      "facing": "north"
+    },
+    {
+      "id": "east_entry",
+      "kind": "entrance",
+      "pos": [
+        33,
+        2,
+        22
+      ],
+      "name": "人员与货物入口",
+      "facing": "east"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        7,
+        1,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "作者预留几何接口；需另外核对外部地面及具体实体尺寸"
+    },
+    {
+      "kind": "pedestrian",
+      "pos": [
+        33,
+        1,
+        22
+      ],
+      "direction": "east",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "作者预留几何接口；需另外核对外部地面及具体实体尺寸"
+    }
+  ],
+  "design_notes": [
+    "两段棚架沿 L 形地块展开，转角设采收台，外侧凹角保留街巷。"
+  ],
+  "differences": [
+    "两段棚架沿 L 形地块展开，转角设采收台，外侧凹角保留街巷。"
+  ],
+  "floors": [
+    {
+      "name": "地坪、布置与通路",
+      "y": 1,
+      "max_y": 4
+    }
+  ],
+  "roof_min_y": 6,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。",
+    "紫色方块果串是视觉表达；原版藤架不会自动长葡萄，须按整合包作物另行替换或接入。"
+  ],
+  "source": "tools/structure_studio/studio/oasis_yards.py:vineyard(3)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "sand"
+  },
+  "nbt_sha256": "2d3c12cb582c734d6cad41a75f831d27c7c7f9e9a4f050bcd041b89839a9b1e9"
+}

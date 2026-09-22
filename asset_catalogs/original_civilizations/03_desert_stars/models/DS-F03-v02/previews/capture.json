@@ -1,0 +1,24 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "DS-F03-v02",
+  "nbt_sha256": "110429017212e97b89351c25b512307dda381999d9202a096931add2d669fef7",
+  "author_sha256": "76c72b22f1b7148d4fde567719938a61ae57a05a271eae5f22a4ee259fd589a4",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-墙棚",
+    "room-court",
+    "point-墙棚_harvest",
+    "point-sort",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

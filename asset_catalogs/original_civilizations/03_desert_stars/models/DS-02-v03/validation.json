@@ -1,0 +1,53 @@
+{
+  "schema": "structure-studio.validation.v1",
+  "nbt_sha256": "a35e3970c896cd63ea4211dc29e7fb743453d9033f531b0ba2ddc4238eb22c61",
+  "navigation": {
+    "passed": true,
+    "unreachable": [],
+    "nodes": 3296,
+    "highest_standing_y": 3,
+    "truncated": false,
+    "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "size": [
+    34,
+    24,
+    37
+  ],
+  "visible_blocks": 3172,
+  "explicit_air": 19868,
+  "palette": 33,
+  "block_entities": 0,
+  "agriculture": null,
+  "materials": {
+    "minecraft:smooth_sandstone": 1114,
+    "minecraft:cut_sandstone": 980,
+    "minecraft:acacia_planks": 406,
+    "minecraft:acacia_stairs": 177,
+    "minecraft:sandstone": 96,
+    "minecraft:stripped_acacia_log": 92,
+    "minecraft:coarse_dirt": 77,
+    "minecraft:acacia_fence": 46,
+    "minecraft:sandstone_wall": 38,
+    "minecraft:orange_wool": 36,
+    "minecraft:white_wool": 27,
+    "minecraft:blue_terracotta": 18,
+    "minecraft:hay_block": 16,
+    "minecraft:podzol": 13,
+    "minecraft:acacia_fence_gate": 6,
+    "minecraft:water_cauldron": 5,
+    "minecraft:birch_slab": 5,
+    "minecraft:brown_carpet": 5,
+    "minecraft:cyan_stained_glass_pane": 4,
+    "minecraft:acacia_trapdoor": 2,
+    "minecraft:grindstone": 2,
+    "minecraft:spruce_door": 2,
+    "minecraft:barrel": 2,
+    "minecraft:tripwire_hook": 2,
+    "minecraft:crafting_table": 1
+  },
+  "scope": "NBT、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+}

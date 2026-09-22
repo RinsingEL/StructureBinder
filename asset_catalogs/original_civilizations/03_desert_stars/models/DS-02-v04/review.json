@@ -1,0 +1,43 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-02-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "b0b96965ed185d172b6ca16401864ebbd2ab9a120e7f7d6e6138a6bc710bece2",
+  "author_sha256": "7513d5e00242a9a193e6c87131493f82702d32bcede01208acfd96de2c1d639b",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-转角栏.png",
+    "previews/room-keeper.png",
+    "previews/room-transfer.png",
+    "previews/point-转角栏_feed.png",
+    "previews/point-转角栏_water.png",
+    "previews/point-转角栏_gate.png",
+    "previews/point-keeper_bed.png",
+    "previews/point-register.png",
+    "previews/point-care.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "L 形地块围绕街角展开，北侧宽口接纵向牵引路，后段转向东侧出口，凹角不写入。",
+    "内饰与使用": "兽栏、遮阳、取水、值守房和出发前护理点完整，转角通路未被后房家具占用。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、平面、房间、使用点、标记及环境图；最终 NBT 数据与入口至已标站位的碰撞检查全部通过，无警告。",
+    "因地制宜": "依托商路补给点和可靠饮水，保持动物活动与人货搬运空间；L 形地块避开外部街角，兽栏接南北通道与后部横向换乘通道，提供北、东两个宽口。；使用地坪 Y=1，脚底 Y=2；不自动削坡或补齐外部通路；模板包含内部地坪和封边，未写入的凹角与外部格保持原环境。环境示意符合作者所写平地沙地条件。"
+  },
+  "revisions": [
+    "兽栏补栅门，值守室增设挂具，泥色改成疏散斑块。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "未放置活体动物；已标站位的玩家通路检查不能证明动物牵引、回转或围栏行为。"
+  ]
+}

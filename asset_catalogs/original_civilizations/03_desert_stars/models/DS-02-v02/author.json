@@ -1,0 +1,304 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DS-02-v02",
+  "name": "双栏护理内院",
+  "family": "DS-02",
+  "civilization": "沙海星象文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    39,
+    18,
+    37
+  ],
+  "terrain": {
+    "选址": "依托商路补给点和可靠饮水，保持动物活动与人货搬运空间",
+    "地块": "两座兽栏沿西侧排列，东侧分别设置值守室和饲料库，中央留宽护理院。",
+    "接地": "使用地坪 Y=1，脚底 Y=2；不自动削坡或补齐外部通路",
+    "边界": "模板包含内部地坪和封边，未写入的凹角与外部格保持原环境"
+  },
+  "rooms": [
+    {
+      "id": "前栏",
+      "name": "遮阳兽栏 · 前栏",
+      "min": [
+        5,
+        2,
+        7
+      ],
+      "max": [
+        14,
+        6,
+        17
+      ],
+      "purpose": "兽栏、饲料、饮水与牵引通道"
+    },
+    {
+      "id": "后栏",
+      "name": "遮阳兽栏 · 后栏",
+      "min": [
+        5,
+        2,
+        21
+      ],
+      "max": [
+        14,
+        6,
+        31
+      ],
+      "purpose": "兽栏、饲料、饮水与牵引通道"
+    },
+    {
+      "id": "keeper",
+      "name": "换乘值守室",
+      "min": [
+        27,
+        2,
+        7
+      ],
+      "max": [
+        33,
+        6,
+        15
+      ],
+      "purpose": "登记、夜间值守、个人物品与取水"
+    },
+    {
+      "id": "feed_store",
+      "name": "干燥饲料库",
+      "min": [
+        27,
+        2,
+        23
+      ],
+      "max": [
+        33,
+        6,
+        31
+      ],
+      "purpose": "草料、精饲料与搬运空地"
+    },
+    {
+      "id": "court",
+      "name": "护理内院",
+      "min": [
+        16,
+        2,
+        5
+      ],
+      "max": [
+        24,
+        7,
+        32
+      ],
+      "purpose": "牵引、饮水与遮阳护理"
+    }
+  ],
+  "points": [
+    {
+      "id": "前栏_feed",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        15
+      ],
+      "name": "前栏饲料",
+      "approach": [
+        8,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "前栏_water",
+      "kind": "work",
+      "pos": [
+        12,
+        2,
+        9
+      ],
+      "name": "前栏饮水",
+      "approach": [
+        11,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "前栏_gate",
+      "kind": "circulation",
+      "pos": [
+        14,
+        2,
+        14
+      ],
+      "name": "前栏牵引宽口",
+      "look_at": [
+        7,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "后栏_feed",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        29
+      ],
+      "name": "后栏饲料",
+      "approach": [
+        8,
+        2,
+        29
+      ]
+    },
+    {
+      "id": "后栏_water",
+      "kind": "work",
+      "pos": [
+        12,
+        2,
+        23
+      ],
+      "name": "后栏饮水",
+      "approach": [
+        11,
+        2,
+        23
+      ]
+    },
+    {
+      "id": "后栏_gate",
+      "kind": "circulation",
+      "pos": [
+        14,
+        2,
+        28
+      ],
+      "name": "后栏牵引宽口",
+      "look_at": [
+        7,
+        3,
+        28
+      ]
+    },
+    {
+      "id": "keeper_bed",
+      "kind": "bed",
+      "pos": [
+        32,
+        2,
+        14
+      ],
+      "name": "值守卧床",
+      "approach": [
+        31,
+        2,
+        14
+      ]
+    },
+    {
+      "id": "register",
+      "kind": "work",
+      "pos": [
+        28,
+        2,
+        8
+      ],
+      "name": "换乘登记",
+      "approach": [
+        28,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "feed_store",
+      "kind": "work",
+      "pos": [
+        28,
+        2,
+        25
+      ],
+      "name": "集中饲料库",
+      "approach": [
+        28,
+        2,
+        26
+      ]
+    },
+    {
+      "id": "care",
+      "kind": "work",
+      "pos": [
+        22,
+        2,
+        29
+      ],
+      "name": "内院护理",
+      "approach": [
+        21,
+        2,
+        29
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        20,
+        2,
+        4
+      ],
+      "name": "动物与人员宽口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "animal",
+      "pos": [
+        20,
+        1,
+        4
+      ],
+      "direction": "north",
+      "clearance": [
+        5,
+        5
+      ],
+      "note": "作者预留几何接口；需另外核对外部地面及具体实体尺寸"
+    }
+  ],
+  "design_notes": [
+    "两座兽栏沿西侧排列，东侧分别设置值守室和饲料库，中央留宽护理院。"
+  ],
+  "differences": [
+    "两座兽栏沿西侧排列，东侧分别设置值守室和饲料库，中央留宽护理院。"
+  ],
+  "floors": [
+    {
+      "name": "地坪、布置与通路",
+      "y": 1,
+      "max_y": 4
+    }
+  ],
+  "roof_min_y": 6,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。",
+    "兽栏不含活体动物；入口为宽口，动物高度、回转、牵引和围栏行为须另行验证。"
+  ],
+  "source": "tools/structure_studio/studio/oasis_yards.py:beast_yard(2)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "sand"
+  },
+  "nbt_sha256": "42abca12b311a05bf90ecf434e952b34bd8794d10c3fba8aa023c9872b3cb370"
+}

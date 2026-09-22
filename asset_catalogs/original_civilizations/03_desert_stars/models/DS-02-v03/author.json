@@ -1,0 +1,274 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DS-02-v03",
+  "name": "长廊鞍具兽舍",
+  "family": "DS-02",
+  "civilization": "沙海星象文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    34,
+    24,
+    37
+  ],
+  "terrain": {
+    "选址": "依托商路补给点和可靠饮水，保持动物活动与人货搬运空间",
+    "地块": "长屋顶覆盖分栏与中央通道，侧接鞍具房，前端另留卸载等候区。",
+    "接地": "使用地坪 Y=1，脚底 Y=2；不自动削坡或补齐外部通路",
+    "边界": "模板包含内部地坪和封边，未写入的凹角与外部格保持原环境"
+  },
+  "rooms": [
+    {
+      "id": "前厩",
+      "name": "遮阳兽栏 · 前厩",
+      "min": [
+        5,
+        2,
+        8
+      ],
+      "max": [
+        10,
+        6,
+        16
+      ],
+      "purpose": "兽栏、饲料、饮水与牵引通道"
+    },
+    {
+      "id": "后厩",
+      "name": "遮阳兽栏 · 后厩",
+      "min": [
+        5,
+        2,
+        20
+      ],
+      "max": [
+        10,
+        6,
+        28
+      ],
+      "purpose": "兽栏、饲料、饮水与牵引通道"
+    },
+    {
+      "id": "tack",
+      "name": "鞍具储藏与护理房",
+      "min": [
+        23,
+        2,
+        22
+      ],
+      "max": [
+        29,
+        6,
+        31
+      ],
+      "purpose": "挂具、储物、维修工作台与整理桌"
+    },
+    {
+      "id": "aisle",
+      "name": "兽舍中央通廊",
+      "min": [
+        11,
+        2,
+        5
+      ],
+      "max": [
+        19,
+        6,
+        31
+      ],
+      "purpose": "牵引、喂养、护理与后房出入"
+    },
+    {
+      "id": "wait",
+      "name": "遮阳等候区",
+      "min": [
+        23,
+        2,
+        6
+      ],
+      "max": [
+        29,
+        6,
+        14
+      ],
+      "purpose": "卸鞍后临时等候与人员歇脚"
+    }
+  ],
+  "points": [
+    {
+      "id": "前厩_feed",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        14
+      ],
+      "name": "前厩饲料",
+      "approach": [
+        8,
+        2,
+        14
+      ]
+    },
+    {
+      "id": "前厩_water",
+      "kind": "work",
+      "pos": [
+        8,
+        2,
+        10
+      ],
+      "name": "前厩饮水",
+      "approach": [
+        7,
+        2,
+        10
+      ]
+    },
+    {
+      "id": "前厩_gate",
+      "kind": "circulation",
+      "pos": [
+        10,
+        2,
+        12
+      ],
+      "name": "前厩牵引宽口",
+      "look_at": [
+        7,
+        3,
+        12
+      ]
+    },
+    {
+      "id": "后厩_feed",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        26
+      ],
+      "name": "后厩饲料",
+      "approach": [
+        8,
+        2,
+        26
+      ]
+    },
+    {
+      "id": "后厩_water",
+      "kind": "work",
+      "pos": [
+        8,
+        2,
+        22
+      ],
+      "name": "后厩饮水",
+      "approach": [
+        7,
+        2,
+        22
+      ]
+    },
+    {
+      "id": "后厩_gate",
+      "kind": "circulation",
+      "pos": [
+        10,
+        2,
+        24
+      ],
+      "name": "后厩牵引宽口",
+      "look_at": [
+        7,
+        3,
+        24
+      ]
+    },
+    {
+      "id": "tack",
+      "kind": "work",
+      "pos": [
+        24,
+        2,
+        30
+      ],
+      "name": "鞍具整理与维修",
+      "approach": [
+        24,
+        2,
+        29
+      ]
+    },
+    {
+      "id": "care",
+      "kind": "work",
+      "pos": [
+        18,
+        2,
+        16
+      ],
+      "name": "廊内护理架",
+      "approach": [
+        17,
+        2,
+        16
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        14,
+        2,
+        4
+      ],
+      "name": "动物与人员宽口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "animal",
+      "pos": [
+        14,
+        1,
+        4
+      ],
+      "direction": "north",
+      "clearance": [
+        5,
+        5
+      ],
+      "note": "作者预留几何接口；需另外核对外部地面及具体实体尺寸"
+    }
+  ],
+  "design_notes": [
+    "长屋顶覆盖分栏与中央通道，侧接鞍具房，前端另留卸载等候区。"
+  ],
+  "differences": [
+    "长屋顶覆盖分栏与中央通道，侧接鞍具房，前端另留卸载等候区。"
+  ],
+  "floors": [
+    {
+      "name": "地坪、布置与通路",
+      "y": 1,
+      "max_y": 4
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。",
+    "兽栏不含活体动物；入口为宽口，动物高度、回转、牵引和围栏行为须另行验证。"
+  ],
+  "source": "tools/structure_studio/studio/oasis_yards.py:beast_yard(3)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "sand"
+  },
+  "nbt_sha256": "a35e3970c896cd63ea4211dc29e7fb743453d9033f531b0ba2ddc4238eb22c61"
+}

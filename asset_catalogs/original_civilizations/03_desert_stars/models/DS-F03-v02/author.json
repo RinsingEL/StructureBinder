@@ -1,0 +1,145 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DS-F03-v02",
+  "name": "院墙短藤棚",
+  "family": "DS-F03",
+  "civilization": "沙海星象文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    29,
+    13,
+    27
+  ],
+  "terrain": {
+    "选址": "只用于整合包设定允许种植葡萄、具可靠灌溉和适宜土壤的绿洲",
+    "地块": "短横棚依北侧院墙布置，南侧保留分拣、歇凉和家用采收庭院，从西侧进出。",
+    "接地": "使用地坪 Y=1，脚底 Y=2；不自动削坡或补齐外部通路",
+    "边界": "模板包含内部地坪和封边，未写入的凹角与外部格保持原环境",
+    "作物表达": "原版木架、常驻树叶和倒挂紫晶簇作为葡萄果串外观；非可收获作物，不声明生长或产量"
+  },
+  "rooms": [
+    {
+      "id": "墙棚",
+      "name": "葡萄棚 · 墙棚",
+      "min": [
+        5,
+        2,
+        6
+      ],
+      "max": [
+        23,
+        6,
+        12
+      ],
+      "purpose": "土床、备水渠、棚架与采收道；原版方块视觉表达"
+    },
+    {
+      "id": "court",
+      "name": "采收小院",
+      "min": [
+        4,
+        2,
+        13
+      ],
+      "max": [
+        24,
+        6,
+        22
+      ],
+      "purpose": "分拣、歇凉与采收筐"
+    }
+  ],
+  "points": [
+    {
+      "id": "墙棚_harvest",
+      "kind": "work",
+      "pos": [
+        9,
+        4,
+        7
+      ],
+      "name": "棚下采收 · 墙棚",
+      "look_at": [
+        9.5,
+        4,
+        7.5
+      ],
+      "approach": [
+        8,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "sort",
+      "kind": "work",
+      "pos": [
+        17,
+        2,
+        19
+      ],
+      "name": "家用分拣桌",
+      "approach": [
+        17,
+        2,
+        18
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        3,
+        2,
+        15
+      ],
+      "name": "人员与货物入口",
+      "facing": "west"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        3,
+        1,
+        15
+      ],
+      "direction": "west",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "作者预留几何接口；需另外核对外部地面及具体实体尺寸"
+    }
+  ],
+  "design_notes": [
+    "短横棚依北侧院墙布置，南侧保留分拣、歇凉和家用采收庭院，从西侧进出。"
+  ],
+  "differences": [
+    "短横棚依北侧院墙布置，南侧保留分拣、歇凉和家用采收庭院，从西侧进出。"
+  ],
+  "floors": [
+    {
+      "name": "地坪、布置与通路",
+      "y": 1,
+      "max_y": 4
+    }
+  ],
+  "roof_min_y": 6,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。",
+    "紫色方块果串是视觉表达；原版藤架不会自动长葡萄，须按整合包作物另行替换或接入。"
+  ],
+  "source": "tools/structure_studio/studio/oasis_yards.py:vineyard(2)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "sand"
+  },
+  "nbt_sha256": "110429017212e97b89351c25b512307dda381999d9202a096931add2d669fef7"
+}

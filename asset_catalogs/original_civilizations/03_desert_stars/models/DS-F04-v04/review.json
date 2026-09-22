@@ -1,0 +1,41 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-F04-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "afc5b45b0bd6d071bde92961b663e079bdb542b39c13c9dca58053faeef0a857",
+  "author_sha256": "28e9052f311f5a0c814991cc86920f75415f45b48a2162e1be8c9eb272100ce8",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-stock.png",
+    "previews/room-service.png",
+    "previews/room-aisle.png",
+    "previews/point-register.png",
+    "previews/point-cargo.png",
+    "previews/point-water.png",
+    "previews/point-through.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "分段帐顶下保留中央南北穿行道，货堆分置左右，登记和饮水歇脚集中在右侧。",
+    "内饰与使用": "货箱、登记讲台、休息长凳和饮水点都有使用站位；梁柱支承可在通道视角核对。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、平面、房间、使用点、标记及环境图；最终 NBT 数据与入口至已标站位的碰撞检查全部通过，无警告。",
+    "因地制宜": "依托商路与聚落交易需求，货物需能从街道搬入，棚周保留通风和行走；大跨度分段帐顶覆盖左右货堆，中央穿行，角部设登记和饮水歇脚。；使用地坪 Y=1，脚底 Y=2；不自动削坡或补齐外部通路；模板包含内部地坪和封边，未写入的凹角与外部格保持原环境。环境示意符合作者所写平地沙地条件。"
+  },
+  "revisions": [
+    "清除登记讲台上方残留桌布；抬高中柱和纵梁，补齐横梁至高处帐顶的支承。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "商品、登记和寄货是原版方块的空间表达，未接入交易、物流或库存玩法。"
+  ]
+}

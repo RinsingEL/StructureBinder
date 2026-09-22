@@ -1,0 +1,38 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-F04-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "f4bc25c81bd9219a39a5770ed80a468be878d2e45309e19193266da0542a28db",
+  "author_sha256": "da38422f9be57f34f1d23d18de157fdea57878f7cfd4bb62c3969148a36c08e8",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-counter.png",
+    "previews/room-stores.png",
+    "previews/point-trade.png",
+    "previews/point-stock.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "一侧厚墙与低坡铜顶形成寄货棚，前端登记、后端货箱布包，东侧保持开放。",
+    "内饰与使用": "登记讲台、捆扎挂具、货箱和棚外歇脚长凳完整，寄存点可从侧面抵达。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、平面、房间、使用点、标记及环境图；最终 NBT 数据与入口至已标站位的碰撞检查全部通过，无警告。",
+    "因地制宜": "依托商路与聚落交易需求，货物需能从街道搬入，棚周保留通风和行走；单边厚墙承托斜顶，前端交易、后段寄货，东侧保留手推货物的侧向开口。；使用地坪 Y=1，脚底 Y=2；不自动削坡或补齐外部通路；模板包含内部地坪和封边，未写入的凹角与外部格保持原环境。环境示意符合作者所写平地沙地条件。"
+  },
+  "revisions": [
+    "登记桌补讲台，同时清除其上方桌布。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "商品、登记和寄货是原版方块的空间表达，未接入交易、物流或库存玩法。"
+  ]
+}

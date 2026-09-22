@@ -1,0 +1,40 @@
+{
+  "schema": "structure-studio.validation.v1",
+  "nbt_sha256": "2d3c12cb582c734d6cad41a75f831d27c7c7f9e9a4f050bcd041b89839a9b1e9",
+  "navigation": {
+    "passed": true,
+    "unreachable": [],
+    "nodes": 2329,
+    "highest_standing_y": 2,
+    "truncated": false,
+    "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "size": [
+    37,
+    13,
+    32
+  ],
+  "visible_blocks": 1534,
+  "explicit_air": 6227,
+  "palette": 14,
+  "block_entities": 0,
+  "agriculture": null,
+  "materials": {
+    "minecraft:cut_sandstone": 597,
+    "minecraft:smooth_sandstone": 407,
+    "minecraft:oak_leaves": 186,
+    "minecraft:stripped_acacia_log": 87,
+    "minecraft:water": 66,
+    "minecraft:rooted_dirt": 66,
+    "minecraft:sandstone": 58,
+    "minecraft:acacia_fence": 48,
+    "minecraft:amethyst_cluster": 10,
+    "minecraft:birch_slab": 4,
+    "minecraft:purple_carpet": 4,
+    "minecraft:barrel": 1
+  },
+  "scope": "NBT、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+}
