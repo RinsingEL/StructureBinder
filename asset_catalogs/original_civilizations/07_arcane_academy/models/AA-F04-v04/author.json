@@ -1,0 +1,140 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "AA-F04-v04",
+  "name": "离地样本取样亭",
+  "family": "AA-F04",
+  "civilization": "魔法学院",
+  "planning_role": "planning_role.fill",
+  "size": [
+    25,
+    26,
+    28
+  ],
+  "terrain": {
+    "选址": "稳定干燥的学院生活街区；整块人工石基，外部道路接普通步行入口",
+    "高程": "主地板Y=3，普通道路脚底接Y=4；基础底Y=0须落在连续承载地层",
+    "地形处理": "模板是人工整平石基，不适用于未经处理的峡谷、水域或陡坡。观测馆上台阶为模板内实体台地。",
+    "接驳": "南北朝向以作者入口标记为准；外部道路、服务范围和供能管线另行核对。",
+    "魔法边界": "紫晶、终界烛、传送环、隔离屏与供能接口仅为静态原版陈设，不代表传送、供能、治疗或异常模拟。",
+    "模板落地": "基础Y=0..2落在连续承载层；不是自然坡地自适应，不用于未经整平的岸边与水面。",
+    "农业落地": "固定模板内人工土床与边框，需稳定平地、采光、可用灌溉水和常规气候；自然连片田仍交Landscape，不宣称药效。",
+    "作物边界": "仅使用原版作物或观赏花草；不是葡萄种植或整合包药材机制。实际生长条件与整合包种类另行接入。"
+  },
+  "rooms": [
+    {
+      "id": "sample",
+      "name": "独立取样亭",
+      "min": [
+        5,
+        4,
+        6
+      ],
+      "max": [
+        19,
+        8,
+        21
+      ],
+      "purpose": "记录台、清洗桶、三座离地样本和封箱架"
+    }
+  ],
+  "points": [
+    {
+      "id": "sample",
+      "kind": "work",
+      "pos": [
+        7,
+        4,
+        8
+      ],
+      "name": "取样、清洗与分装记录",
+      "approach": [
+        7,
+        4,
+        9
+      ]
+    },
+    {
+      "id": "sealed",
+      "kind": "storage",
+      "pos": [
+        7,
+        5,
+        20
+      ],
+      "name": "分类用品和档案",
+      "approach": [
+        7,
+        4,
+        19
+      ]
+    },
+    {
+      "id": "specimens",
+      "kind": "work",
+      "pos": [
+        12,
+        5,
+        15
+      ],
+      "name": "台座上隔离的静态样本",
+      "approach": [
+        12,
+        4,
+        16
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        12,
+        4,
+        3
+      ],
+      "name": "普通步行入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        12,
+        3,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "外接连续普通街道；魔法设施不替代步行"
+    }
+  ],
+  "design_notes": [],
+  "differences": [
+    "离地样本取样亭",
+    "封闭储存、通风晾晒、开侧检校与独立取样各有不同结构和工位，不含住宿"
+  ],
+  "floors": [
+    {
+      "name": "城台主层",
+      "y": 3,
+      "max_y": 9
+    }
+  ],
+  "roof_min_y": 10,
+  "lifecycle": "authored",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/arcane_gardens.py",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 4,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "nbt_sha256": "12cf59a86f06dc42e0f8d322362555a8f15f0e1fce451e3d864edd900a8d4cbe"
+}

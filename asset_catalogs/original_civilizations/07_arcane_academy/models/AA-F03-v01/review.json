@@ -1,0 +1,58 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "AA-F03-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors / 魔导填充作者实看",
+  "nbt_sha256": "914ce23f3c29abc7d9c7f35b646eef96dc9ba3f3a7ee7a3c10bd5d9fad43a4a4",
+  "author_sha256": "35890c6c64762d1f4dd2430318d7e7475baced47e6e4d8029b75900c887f85ee",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-shade0.png",
+    "previews/point-table0.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "逐图核对田畦水渠、工具记录棚、廊架坐读、材料储藏、晾晒及标本操作；各行业空间明确，未见门口阻挡与缺失纹理。",
+    "实际看过全部外观、去顶、分层、房间、功能点、标注与地形视图；结合零警告数据与导航核对。",
+    "直列共读藤架",
+    "纯遮蔽休憩型：叶冠仅为固定装饰，坐读交流",
+    "架形和组数不同；无葡萄或自动生长声明"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ],
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "魔导学城",
+      "after": "秘仪城邦",
+      "previous_author_sha256": "34568eb497ea2fcc650d1a75cc9e9630985509fe4b0c1b497d18d47ac5b816b6",
+      "current_author_sha256": "7f27eab09979585a258570e6a00110986be87070c4f611359edfddb13f42b06b",
+      "nbt_sha256": "914ce23f3c29abc7d9c7f35b646eef96dc9ba3f3a7ee7a3c10bd5d9fad43a4a4",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "秘仪城邦",
+      "after": "魔法学院",
+      "previous_author_sha256": "7f27eab09979585a258570e6a00110986be87070c4f611359edfddb13f42b06b",
+      "current_author_sha256": "35890c6c64762d1f4dd2430318d7e7475baced47e6e4d8029b75900c887f85ee",
+      "nbt_sha256": "914ce23f3c29abc7d9c7f35b646eef96dc9ba3f3a7ee7a3c10bd5d9fad43a4a4",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
+  ]
+}

@@ -28,6 +28,7 @@ from .cloud_living import BUILDERS as CLOUD_LIVING
 from .cloud_food import BUILDERS as CLOUD_FOOD
 from .cloud_market import BUILDERS as CLOUD_MARKET
 from .arcane_academy import BUILDERS as ARCANE_CORES
+from .arcane_gardens import BUILDERS as ARCANE_GARDENS
 from .steppe_caravans import BUILDERS as STEPPE_CORES
 from .northern_seafarers import BUILDERS as NORTHERN_CORES
 from .validate import validate
@@ -57,6 +58,8 @@ for civilization,groups in (
 
 for civilization,builders in (("07_arcane_academy",ARCANE_CORES),("08_steppe_caravans",STEPPE_CORES),("09_northern_seafarers",NORTHERN_CORES)):
     BUILDERS.update({key:(civilization,builder) for key,builder in builders.items()})
+
+BUILDERS.update({key:("07_arcane_academy",builder) for key,builder in ARCANE_GARDENS.items()})
 
 
 def main():

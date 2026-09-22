@@ -1,0 +1,64 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "AA-F02-v06",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors / 魔导填充作者实看",
+  "nbt_sha256": "f858868830a136d113eccac81ae906ac4d100e8d7470b6380c078cd1671820d4",
+  "author_sha256": "55870a1d6b6dd8ca7de60f9588f28823e19ae8f4b308c511582b8cdc205ffebb",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-plot1.png",
+    "previews/room-plot2.png",
+    "previews/room-plot3.png",
+    "previews/room-records.png",
+    "previews/point-plot1.png",
+    "previews/point-plot2.png",
+    "previews/point-plot3.png",
+    "previews/point-record.png",
+    "previews/point-tools.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "逐图核对田畦水渠、工具记录棚、廊架坐读、材料储藏、晾晒及标本操作；各行业空间明确，未见门口阻挡与缺失纹理。",
+    "实际看过全部外观、去顶、分层、房间、功能点、标注与地形视图；结合零警告数据与导航核对。",
+    "长院轮作记录田",
+    "田块形状、分段和工具间位置共同变化；有灌溉水槽和完整边路，不依赖拼接补齐"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ],
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "魔导学城",
+      "after": "秘仪城邦",
+      "previous_author_sha256": "ddbdf5e4bf264b84e4e3f96904db9d3f1a76def19208d37ac7f099f745187bba",
+      "current_author_sha256": "3f5822c024321fe692cbeda2039025315b7c153c5147b7f6be9d082a10757292",
+      "nbt_sha256": "f858868830a136d113eccac81ae906ac4d100e8d7470b6380c078cd1671820d4",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "秘仪城邦",
+      "after": "魔法学院",
+      "previous_author_sha256": "3f5822c024321fe692cbeda2039025315b7c153c5147b7f6be9d082a10757292",
+      "current_author_sha256": "55870a1d6b6dd8ca7de60f9588f28823e19ae8f4b308c511582b8cdc205ffebb",
+      "nbt_sha256": "f858868830a136d113eccac81ae906ac4d100e8d7470b6380c078cd1671820d4",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
+  ]
+}

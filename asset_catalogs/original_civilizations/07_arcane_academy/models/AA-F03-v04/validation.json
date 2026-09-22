@@ -1,0 +1,43 @@
+{
+  "schema": "structure-studio.validation.v1",
+  "nbt_sha256": "1d7f584167ab717880d23c5c8134a47248690f17e831a840c6e39114d6a6b84c",
+  "navigation": {
+    "passed": true,
+    "unreachable": [],
+    "nodes": 2169,
+    "highest_standing_y": 5,
+    "truncated": false,
+    "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "size": [
+    33,
+    26,
+    23
+  ],
+  "visible_blocks": 2611,
+  "explicit_air": 11715,
+  "palette": 19,
+  "block_entities": 0,
+  "agriculture": null,
+  "materials": {
+    "minecraft:stone_bricks": 1653,
+    "minecraft:dirt_path": 409,
+    "minecraft:dark_oak_slab": 120,
+    "minecraft:azalea_leaves": 120,
+    "minecraft:polished_andesite": 92,
+    "minecraft:dark_oak_log": 78,
+    "minecraft:dirt": 50,
+    "minecraft:calcite": 50,
+    "minecraft:allium": 13,
+    "minecraft:azure_bluet": 13,
+    "minecraft:dark_oak_stairs": 5,
+    "minecraft:dark_oak_planks": 4,
+    "minecraft:dark_oak_trapdoor": 2,
+    "minecraft:crafting_table": 1,
+    "minecraft:lantern": 1
+  },
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+}

@@ -1,0 +1,50 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "AA-F04-v02",
+  "nbt_sha256": "9151ba3919df44ad49ab1db791cb1d731aa8a25c26bdc71dc39471ee4f3083d3",
+  "author_sha256": "f85309422c5edd939b4f8ca61b849ef99f0cbfd5bdd6b7e364d224c6683229bf",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-dry",
+    "point-dry4",
+    "point-tray4",
+    "point-dry17",
+    "point-tray17",
+    "point-record",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending",
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "魔导学城",
+      "after": "秘仪城邦",
+      "previous_author_sha256": "7111ef737bf9aa2d39b44101a237cc57388e60853259d8510b06c2b4d1a2d468",
+      "current_author_sha256": "4685101911938b521e79556f1425efa153ca9466d8afd3c65d4c35e26e055cf1",
+      "nbt_sha256": "9151ba3919df44ad49ab1db791cb1d731aa8a25c26bdc71dc39471ee4f3083d3",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "秘仪城邦",
+      "after": "魔法学院",
+      "previous_author_sha256": "4685101911938b521e79556f1425efa153ca9466d8afd3c65d4c35e26e055cf1",
+      "current_author_sha256": "f85309422c5edd939b4f8ca61b849ef99f0cbfd5bdd6b7e364d224c6683229bf",
+      "nbt_sha256": "9151ba3919df44ad49ab1db791cb1d731aa8a25c26bdc71dc39471ee4f3083d3",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
+  ]
+}

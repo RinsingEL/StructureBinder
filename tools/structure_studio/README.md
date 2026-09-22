@@ -48,6 +48,7 @@ python cli.py serve
 - `studio/cloud_food.py`：四种温室、六种台地田及四种棚亭；种植、灌溉、收获和避风休憩按台地条件标记。
 - `studio/cloud_market.py`：四种航运仓与八种商铺； 货运通道、行业操作台、陈列交易与商住后勤分开布置。
 - `studio/arcane_academy.py`：传送驿站、检疫、晶核配给、学院、卷藏与两处专项；隔离、教学、研究与驻守空间分别标记，传送及供能为静态表达。
+- `studio/arcane_gardens.py`：六种灌溉试验田、四种藤架与四种研究配套棚；独立构建，不依赖正在返工的学院住宅和商铺模块。
 - `studio/steppe_caravans.py`：大帐集市、议事家帐、祖灵石阵、旧营遗存及山口营；圆帐、货车侧带、仪式场和通路视野分别设计。
 - `studio/northern_seafarers.py`：船屋、浴屋、史诗会堂与补给、回收、海防专项；岸线、风雪遮蔽、高差及维修生活分别设计。
 - `studio/validate.py`：重新读取 NBT，检查边界、调色板、状态、门床配对、作者角色取值、标记与哈希；专项使用 structure，重复填充使用 fill。
