@@ -6,9 +6,8 @@ or reviewing agent writes this only after actually viewing the captured images.
 import argparse
 import json
 from pathlib import Path
-import shutil
 
-from .model import sha256,write_json
+from .model import sha256,write_json,write_bytes
 from .server import TOOL,asset_paths
 from .validate import validate
 
@@ -28,8 +27,8 @@ def publish(record,paths,registry):
         if name not in capture["shots"] or not (source/f"{name}.png").is_file():
             raise ValueError(f"{key}: missing reviewed evidence {name}")
     target=dest/"previews";target.mkdir(exist_ok=True)
-    for name in capture["shots"]:shutil.copyfile(source/f"{name}.png",target/f"{name}.png")
-    shutil.copyfile(source/"capture.json",target/"capture.json")
+    for name in capture["shots"]:write_bytes(target/f"{name}.png",(source/f"{name}.png").read_bytes())
+    write_bytes(target/"capture.json",(source/"capture.json").read_bytes())
     write_json(dest/"review.json",dict(schema="structure-studio.review.v1",id=key,status="accepted",scope="offline_asset_review",
         reviewer=record["reviewer"],nbt_sha256=capture["nbt_sha256"],author_sha256=capture["author_sha256"],
         evidence=[f"previews/{name}.png" for name in record["reviewed_views"]],checks=record["checks"],revisions=record.get("revisions",[]),

@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import nbtlib
 from nbtlib import Int, List
@@ -23,6 +24,19 @@ class StudioTest(unittest.TestCase):
 
     def tearDown(self):
         self.tmp.cleanup()
+
+    def test_json_replacement_failure_preserves_previous_report(self):
+        report=self.path/"validation.json"
+        write_json(report,{"version":"old"})
+        original=report.read_bytes()
+        with patch.object(Path,"replace",side_effect=PermissionError("in use")):
+            with self.assertRaises(PermissionError):
+                write_json(report,{"version":"new","label":"住宅"})
+        self.assertEqual(original,report.read_bytes())
+        self.assertEqual([report],list(self.path.iterdir()))
+        write_json(report,{"version":"new","label":"住宅"})
+        self.assertEqual({"version":"new","label":"住宅"},json.loads(report.read_text(encoding="utf-8")))
+        self.assertEqual([report],list(self.path.iterdir()))
 
     def test_deterministic_roundtrip_preserves_air_and_block_entities(self):
         m=Model("T","test",(4,4,4))

@@ -11,6 +11,7 @@ import hashlib
 import io
 import json
 from pathlib import Path
+import tempfile
 
 import nbtlib
 from nbtlib import Compound, Int, List, String
@@ -35,9 +36,23 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def write_json(path: Path, data):
+def write_bytes(path: Path, data: bytes):
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+    pending = None
+    try:
+        # Readers keep seeing the previous complete artifact until replacement.
+        with tempfile.NamedTemporaryFile(mode="wb",
+                dir=path.parent, prefix=f".{path.name}.", suffix=".tmp", delete=False) as stream:
+            pending = Path(stream.name)
+            stream.write(data)
+        pending.replace(path)
+    finally:
+        if pending is not None:
+            pending.unlink(missing_ok=True)
+
+
+def write_json(path: Path, data):
+    write_bytes(path, (json.dumps(data, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
 
 
 class Model:
@@ -145,7 +160,7 @@ class Model:
         nbt_path = directory / "structure.nbt"
         compressed=bytearray(gzip.compress(stream.getvalue(), mtime=0))
         compressed[9]=255  # Do not encode the build host's OS in the gzip header.
-        nbt_path.write_bytes(compressed)
+        write_bytes(nbt_path, compressed)
         self.meta["nbt_sha256"] = sha256(nbt_path)
         write_json(directory / "author.json", self.meta)
         return read_structure(nbt_path)
