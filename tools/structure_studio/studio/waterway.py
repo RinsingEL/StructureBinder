@@ -5,7 +5,7 @@ from .samples import railing
 
 
 def base(number,name,size,description,*,shore=None,f=3,role='key'):
-    m=Model(f'WT-{number:02d}-v01',name,size,family=f'WT-{number:02d}',civilization='水网商邦',role=role,terrain={
+    m=Model(f'WT-{number:02d}-v01',name,size,family=f'WT-{number:02d}',civilization='蓝帆商邦',role=role,terrain={
         '选址':description,'高程':f'主体地坪方块 Y={f}，脚底 Y={f+1}；局部高差另在房间与接驳标记记录',
         '落地':'只整备本体院落与岸台；水侧桩脚和实体岸基分别承接，不填满外部水道',
         '运行边界':'作者资产表达空间与设备外形，交通、船只、液体和机器行为需要另行接入'})

@@ -5,7 +5,7 @@
   "scope": "offline_asset_review",
   "reviewer": "Codex 离线视觉复审",
   "nbt_sha256": "245a47e00dbe1724f5d478b564e76dc0287bf88f8530d4254eceb6aa721ae42a",
-  "author_sha256": "846b0015f858b6009ceddf6e5be3be263ee7ed2b83b600c38f65f99211ea7dc9",
+  "author_sha256": "a4213689bb27747d7680fac8324706540f8de897bcde6af3f134a3a5645f706d",
   "evidence": [
     "previews/front.png",
     "previews/back.png",
@@ -57,5 +57,18 @@
     "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
     "取水、医疗、交易、观测等为建筑用途与方块装置表达，未接入对应玩法机制。",
     "风塔通风几何不等于气流或温度模拟。"
+  ],
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "沙海星象文明",
+      "after": "星仪王国",
+      "previous_author_sha256": "846b0015f858b6009ceddf6e5be3be263ee7ed2b83b600c38f65f99211ea7dc9",
+      "current_author_sha256": "a4213689bb27747d7680fac8324706540f8de897bcde6af3f134a3a5645f706d",
+      "nbt_sha256": "245a47e00dbe1724f5d478b564e76dc0287bf88f8530d4254eceb6aa721ae42a",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
   ]
 }

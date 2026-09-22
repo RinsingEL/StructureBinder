@@ -2,7 +2,7 @@
   "schema": "structure-studio.capture.v1",
   "id": "WT-02-v03",
   "nbt_sha256": "e4e62939875051d44dbaa1fc526c996bb4ef5ac3d2890cea51dd01830c1655a5",
-  "author_sha256": "d238ead0d268c27e91d702d3b2d28476b3d991f5529687c1133a8af1e378d25a",
+  "author_sha256": "e9629155b07ef702544c646779b2dcb8ed48d9cd87a0f443ed4db2ff153d0e4b",
   "shots": [
     "front",
     "back",
@@ -27,5 +27,18 @@
   ],
   "render_errors": [],
   "missing_textures": [],
-  "visual_review": "pending"
+  "visual_review": "pending",
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "水网商邦",
+      "after": "蓝帆商邦",
+      "previous_author_sha256": "d238ead0d268c27e91d702d3b2d28476b3d991f5529687c1133a8af1e378d25a",
+      "current_author_sha256": "e9629155b07ef702544c646779b2dcb8ed48d9cd87a0f443ed4db2ff153d0e4b",
+      "nbt_sha256": "e4e62939875051d44dbaa1fc526c996bb4ef5ac3d2890cea51dd01830c1655a5",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
+  ]
 }

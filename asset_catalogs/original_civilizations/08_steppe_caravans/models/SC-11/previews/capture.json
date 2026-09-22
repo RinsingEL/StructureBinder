@@ -2,7 +2,7 @@
   "schema": "structure-studio.capture.v1",
   "id": "SC-11",
   "nbt_sha256": "c1306ac051734a9f6516ed2e6bbded72dde8b14d67056f17267e2cbe11e0d146",
-  "author_sha256": "c5c17c800dc0be25b7fabbee18b987260aa6c7d15a6c4e28dff7c0f83a6468c2",
+  "author_sha256": "2a1b1a6377fe8ac77154c911b2ed491a471a3b96d7682887abe1b9406edc8194",
   "shots": [
     "front",
     "back",
@@ -23,5 +23,18 @@
   ],
   "render_errors": [],
   "missing_textures": [],
-  "visual_review": "pending"
+  "visual_review": "pending",
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "草原行旅文明",
+      "after": "逐风诸部",
+      "previous_author_sha256": "c5c17c800dc0be25b7fabbee18b987260aa6c7d15a6c4e28dff7c0f83a6468c2",
+      "current_author_sha256": "2a1b1a6377fe8ac77154c911b2ed491a471a3b96d7682887abe1b9406edc8194",
+      "nbt_sha256": "c1306ac051734a9f6516ed2e6bbded72dde8b14d67056f17267e2cbe11e0d146",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
+  ]
 }

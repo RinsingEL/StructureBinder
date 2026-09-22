@@ -5,7 +5,7 @@
   "scope": "offline_asset_review",
   "reviewer": "Codex 主智能体离线视觉复核",
   "nbt_sha256": "fa8b3a0ebc27ab34575760bfffc16453bdfa7830308556e9b1b2e4c2d84e3b98",
-  "author_sha256": "cb26ba9c89c47c3d7c79892102c871b25aa6572522ed1c44ebb7598a2eb9b4ab",
+  "author_sha256": "ba10fff4e4b7a7078105719efab6fca42fbfed90f558e3bab35e07bd754ef3e9",
   "evidence": [
     "previews/front.png",
     "previews/back.png",
@@ -43,5 +43,18 @@
     "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
     "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
     "仓储、营业、住宿和水运由原版方块与作者标记表达，实际货运、经济与居民机制另行接入。"
+  ],
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "水网商邦",
+      "after": "蓝帆商邦",
+      "previous_author_sha256": "cb26ba9c89c47c3d7c79892102c871b25aa6572522ed1c44ebb7598a2eb9b4ab",
+      "current_author_sha256": "ba10fff4e4b7a7078105719efab6fca42fbfed90f558e3bab35e07bd754ef3e9",
+      "nbt_sha256": "fa8b3a0ebc27ab34575760bfffc16453bdfa7830308556e9b1b2e4c2d84e3b98",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
   ]
 }

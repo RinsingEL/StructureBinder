@@ -5,7 +5,7 @@
   "scope": "offline_asset_review",
   "reviewer": "Codex 山腹锻炉离线作者图审",
   "nbt_sha256": "e80208cf0c25aa4458c02ef4a6ae46a3ce28eaa66551bc2d48a099622516d4d0",
-  "author_sha256": "21953303b6f3e1417f33fc58eb9288cbd16df8be30fc56140854d5cefd13e257",
+  "author_sha256": "67d26da5b4b6a5c4239fb6e7b8b908fb0813a8627bee675e23438d71590fdc2c",
   "evidence": [
     "previews/front.png",
     "previews/back.png",
@@ -40,5 +40,18 @@
     "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
     "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
     "原版设备仅表达手工生产和生活用途；未接入机器、经济、运输或真实生成。"
+  ],
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "山腹锻炉",
+      "after": "赤砧王国",
+      "previous_author_sha256": "21953303b6f3e1417f33fc58eb9288cbd16df8be30fc56140854d5cefd13e257",
+      "current_author_sha256": "67d26da5b4b6a5c4239fb6e7b8b908fb0813a8627bee675e23438d71590fdc2c",
+      "nbt_sha256": "e80208cf0c25aa4458c02ef4a6ae46a3ce28eaa66551bc2d48a099622516d4d0",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
   ]
 }

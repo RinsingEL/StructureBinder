@@ -23,7 +23,7 @@ GLASS_PLANS=[
 
 def base(family,variant,plans,*,grade=False,corner=None):
     name,size,description=plans[variant-1]
-    m=Model(f'{family}-v{variant:02d}',name,size,family=family,civilization='沙海星象文明',role='fill',terrain={
+    m=Model(f'{family}-v{variant:02d}',name,size,family=family,civilization='星仪王国',role='fill',terrain={
         '选址':'可靠供水的贸易聚落，有顾客步行、货物卸载与家居生活需求' if family=='DS-05' else '具砂料、燃料、供水与外运条件的生产地块，热作业区和烟道周围保持净空',
         '地块':description,'接地':'下台脚底 Y=2，上台脚底 Y=3，沿 +Z 抬升一格' if grade else '主入口与地面层脚底 Y=2；上层版二层脚底 Y=9',
         '落地':'独立完整建筑与内部院落，不依靠运行时补齐；模板外与凹角未写入格保持原环境'})

@@ -2,7 +2,7 @@
   "schema": "structure-studio.capture.v1",
   "id": "CN-F02-v04",
   "nbt_sha256": "89f5c03588aeed2ab712b29580c87899ead0e414c3d26e2b884585d8d3de78c6",
-  "author_sha256": "03697564823240ca3734e0609cff4c732529d389d388de59fa5587bc7a441966",
+  "author_sha256": "680b42ea80f8d5e554de5bb09dee111523bc454cefec2e074b2cd52e3d7779a8",
   "shots": [
     "front",
     "back",
@@ -21,5 +21,18 @@
   ],
   "render_errors": [],
   "missing_textures": [],
-  "visual_review": "pending"
+  "visual_review": "pending",
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "云海航行文明",
+      "after": "翼帆联邦",
+      "previous_author_sha256": "03697564823240ca3734e0609cff4c732529d389d388de59fa5587bc7a441966",
+      "current_author_sha256": "680b42ea80f8d5e554de5bb09dee111523bc454cefec2e074b2cd52e3d7779a8",
+      "nbt_sha256": "89f5c03588aeed2ab712b29580c87899ead0e414c3d26e2b884585d8d3de78c6",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
+  ]
 }

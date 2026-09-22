@@ -5,7 +5,7 @@
   "scope": "offline_asset_review",
   "reviewer": "Codex 森林内饰返修逐图审查",
   "nbt_sha256": "e4e036dd59a35c6218995d68a14921e1714ee56ce5e9e2847151a7564caf6ade",
-  "author_sha256": "5e2c1f47b2c105f62535740569f660414c70ac2a4d9c6eeaf29e705683e03c8d",
+  "author_sha256": "1daf7d1297345965f75f4d7db43897bc2639a335d382ac39fb8c2f0aecebdf4f",
   "evidence": [
     "previews/front.png",
     "previews/back.png",
@@ -35,5 +35,18 @@
   "limitations": [
     "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
     "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ],
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "森林共生文明",
+      "after": "翠枝族",
+      "previous_author_sha256": "5e2c1f47b2c105f62535740569f660414c70ac2a4d9c6eeaf29e705683e03c8d",
+      "current_author_sha256": "1daf7d1297345965f75f4d7db43897bc2639a335d382ac39fb8c2f0aecebdf4f",
+      "nbt_sha256": "e4e036dd59a35c6218995d68a14921e1714ee56ce5e9e2847151a7564caf6ade",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
   ]
 }

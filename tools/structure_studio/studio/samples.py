@@ -32,7 +32,7 @@ def gable(m, x0, x1, z0, z1, y0, material="dark_oak", wall="white_terracotta"):
 
 def bakery():
     m=Model("SR-F01-v01", "站前面包铺与店主住宅", (23,23,25), family="SR-F01",
-            civilization="蒸汽铁路文明", role="fill", terrain={
+            civilization="铜钟公国", role="fill", terrain={
                 "地块":"临街平地，主体地坪 Y=1，入口站位 Y=2", "资源":"服务车站步行街；烘焙需要粮食与供水",
                 "接地":"主体石基覆盖 X=3..17、Z=6..20；右侧后勤小院", "保留空间":"正面 Z=0..5 为门廊与步行；不沿边界穿过房屋"})
     m.meta.update(roof_min_y=13, floors=[dict(name="一层 · 面包铺与厨房",y=1,max_y=5),dict(name="二层 · 店主住宅",y=7,max_y=11)],

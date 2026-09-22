@@ -2,7 +2,7 @@
   "schema": "structure-studio.capture.v1",
   "id": "NS-02-v01",
   "nbt_sha256": "9c62f472242ceadfb5e0e4da67d073e6aee78db8b4a0375abfb890d634e24d17",
-  "author_sha256": "d4ff87e059f6bccfe1f6fd7800335df34ed044ec5eccb9eef41cf5b65aa1747c",
+  "author_sha256": "269591b085d7e4793bad991657e0da2219911cac9247b4f1ab778ca50ea69e88",
   "shots": [
     "front",
     "back",
@@ -33,5 +33,18 @@
   ],
   "render_errors": [],
   "missing_textures": [],
-  "visual_review": "pending"
+  "visual_review": "pending",
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "寒海航民",
+      "after": "霜帆王国",
+      "previous_author_sha256": "d4ff87e059f6bccfe1f6fd7800335df34ed044ec5eccb9eef41cf5b65aa1747c",
+      "current_author_sha256": "269591b085d7e4793bad991657e0da2219911cac9247b4f1ab778ca50ea69e88",
+      "nbt_sha256": "9c62f472242ceadfb5e0e4da67d073e6aee78db8b4a0375abfb890d634e24d17",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
+  ]
 }

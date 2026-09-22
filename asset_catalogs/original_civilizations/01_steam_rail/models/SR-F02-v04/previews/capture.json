@@ -2,7 +2,7 @@
   "schema": "structure-studio.capture.v1",
   "id": "SR-F02-v04",
   "nbt_sha256": "ca486e5c6a10de3f4ee4ec6ed338f1788bdba6413d0c579a6b903fece79cef42",
-  "author_sha256": "42f09613d66f423fc6e8a84d6ae633150a19d5c9cfe078649f03dcb9d19b64e8",
+  "author_sha256": "98e523d9628fc4ccbe0007742a3442b2748dc6597b3739254969251a12334130",
   "shots": [
     "front",
     "back",
@@ -18,5 +18,18 @@
   ],
   "render_errors": [],
   "missing_textures": [],
-  "visual_review": "pending"
+  "visual_review": "pending",
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "蒸汽铁路文明",
+      "after": "铜钟公国",
+      "previous_author_sha256": "42f09613d66f423fc6e8a84d6ae633150a19d5c9cfe078649f03dcb9d19b64e8",
+      "current_author_sha256": "98e523d9628fc4ccbe0007742a3442b2748dc6597b3739254969251a12334130",
+      "nbt_sha256": "ca486e5c6a10de3f4ee4ec6ed338f1788bdba6413d0c579a6b903fece79cef42",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
+  ]
 }

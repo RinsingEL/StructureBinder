@@ -5,7 +5,7 @@ from .samples import railing
 
 
 def base(code,name,w,d,h=30,site='城镇稳定干燥台地，连接学院和普通街道',role='key'):
-    m=Model(code+'-v01',name,(w,h,d),family=code,civilization='魔导学城',role=role,terrain={
+    m=Model(code+'-v01',name,(w,h,d),family=code,civilization='秘仪城邦',role=role,terrain={
         '选址':site,'高程':'主地板Y=3，普通道路脚底接Y=4；基础底Y=0须落在连续承载地层',
         '地形处理':'模板是人工整平石基，不适用于未经处理的峡谷、水域或陡坡。观测馆上台阶为模板内实体台地。',
         '接驳':'南北朝向以作者入口标记为准；外部道路、服务范围和供能管线另行核对。',

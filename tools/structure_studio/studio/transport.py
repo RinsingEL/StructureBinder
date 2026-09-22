@@ -6,7 +6,7 @@ from .components import arch_front,bench,column,crate_stack,hip_roof,pendant,she
 
 
 def steam_station():
-    m=Model("SR-01-v01","铜钟总站 · 客货终到站",(55,29,49),family="SR-01",civilization="蒸汽铁路文明",role="key",terrain={
+    m=Model("SR-01-v01","铜钟总站 · 客货终到站",(55,29,49),family="SR-01",civilization="铜钟公国",role="key",terrain={
         "选址":"有实际铁路终到需求的平缓交通节点；线路仅从 +Z 侧接入", "入口高程":"站前地面脚底 Y=1，站房与站台 Y=2；站前宽阶衔接",
         "运输":"双股道终到线；左侧售票候车，右侧行包和货运院，旅客不穿越运行股道", "接地":"实体站房石基与站台承台；整平范围限所建站坪",
         "保留空间":"+Z 两条线路净空、-Z 站前步行、东侧货运院；不放入无线路支撑的普通住宅地块"})
@@ -137,7 +137,7 @@ def steam_station():
 
 
 def passenger_quay():
-    m=Model("WT-01-v01","蓝帆水门 · 客运码头",(45,23,43),family="WT-01",civilization="水网商邦",role="key",terrain={
+    m=Model("WT-01-v01","蓝帆水门 · 客运码头",(45,23,43),family="WT-01",civilization="蓝帆商邦",role="key",terrain={
         "选址":"平缓河岸或避风内港，岸线沿 X，水域位于 +Z；仅用于足够深、宽的可停靠水面",
         "高程":"陆侧与木码头脚底 Y=4；参考水面 Y=3；桩脚到 Y=0，需要浅岸河床继续承接",
         "功能":"陆侧售票候船，侧翼站务与行李；中央登船廊通往两条栈桥；右岸小吊机处理行包",

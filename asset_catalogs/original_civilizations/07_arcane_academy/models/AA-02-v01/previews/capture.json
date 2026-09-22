@@ -2,7 +2,7 @@
   "schema": "structure-studio.capture.v1",
   "id": "AA-02-v01",
   "nbt_sha256": "6e856ecc7ffa61bb9e6fa5a5f9c0f2fe5f7f2d43bb209ab8eb3fd5c370537c18",
-  "author_sha256": "15379b2f17ecb736be9840cd05017cd15de583520cabf4a031ad1c6df0d09157",
+  "author_sha256": "21f4bcad866e86483fb3ebd84397464babb6cb38a05d5e4bca5c03477c83a0fa",
   "shots": [
     "front",
     "back",
@@ -35,5 +35,18 @@
   ],
   "render_errors": [],
   "missing_textures": [],
-  "visual_review": "pending"
+  "visual_review": "pending",
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "魔导学城",
+      "after": "秘仪城邦",
+      "previous_author_sha256": "15379b2f17ecb736be9840cd05017cd15de583520cabf4a031ad1c6df0d09157",
+      "current_author_sha256": "21f4bcad866e86483fb3ebd84397464babb6cb38a05d5e4bca5c03477c83a0fa",
+      "nbt_sha256": "6e856ecc7ffa61bb9e6fa5a5f9c0f2fe5f7f2d43bb209ab8eb3fd5c370537c18",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
+  ]
 }

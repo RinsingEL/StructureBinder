@@ -5,7 +5,7 @@
   "scope": "offline_asset_review",
   "reviewer": "Codex 寒海航民作者离线全图审查",
   "nbt_sha256": "e6dbfeb359bfe2c8fd7512f9900f794f6fca90ce769c6c83d3b3e375a60de8e3",
-  "author_sha256": "becb141ba474626f7120ee3da8940ab577765cf72e328a6ee78c77e1c6c8bcf9",
+  "author_sha256": "3c28ef7a1dba58c9538c60d4db91c80339d503c6f672f1db6b1f41c0d551a562",
   "evidence": [
     "previews/front.png",
     "previews/back.png",
@@ -41,5 +41,18 @@
     "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
     "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
     "船舶、起吊、供热、浴池和信号设备仅原版静态表达；真实交通、水文、温度及玩法未接入。"
+  ],
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "寒海航民",
+      "after": "霜帆王国",
+      "previous_author_sha256": "becb141ba474626f7120ee3da8940ab577765cf72e328a6ee78c77e1c6c8bcf9",
+      "current_author_sha256": "3c28ef7a1dba58c9538c60d4db91c80339d503c6f672f1db6b1f41c0d551a562",
+      "nbt_sha256": "e6dbfeb359bfe2c8fd7512f9900f794f6fca90ce769c6c83d3b3e375a60de8e3",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
   ]
 }

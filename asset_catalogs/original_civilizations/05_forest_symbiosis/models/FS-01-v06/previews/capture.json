@@ -2,7 +2,7 @@
   "schema": "structure-studio.capture.v1",
   "id": "FS-01-v06",
   "nbt_sha256": "aa3f87414ba91236b9e95657b790e6916f94efe80c8aecc24d924adeb458b74d",
-  "author_sha256": "4f0e713c6c96b10ace96f04fdcd0dbdb3aba99332a1b9f7800cf67b3e1834519",
+  "author_sha256": "daf783ae6ceb886d9907ba602c5c49e663120f37a855a039d45da69799830adc",
   "shots": [
     "front",
     "back",
@@ -35,5 +35,18 @@
   ],
   "render_errors": [],
   "missing_textures": [],
-  "visual_review": "pending"
+  "visual_review": "pending",
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "森林共生文明",
+      "after": "翠枝族",
+      "previous_author_sha256": "4f0e713c6c96b10ace96f04fdcd0dbdb3aba99332a1b9f7800cf67b3e1834519",
+      "current_author_sha256": "daf783ae6ceb886d9907ba602c5c49e663120f37a855a039d45da69799830adc",
+      "nbt_sha256": "aa3f87414ba91236b9e95657b790e6916f94efe80c8aecc24d924adeb458b74d",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
+  ]
 }

@@ -2,7 +2,7 @@
   "schema": "structure-studio.capture.v1",
   "id": "MF-11-v01",
   "nbt_sha256": "01fe47d0c42da7023521bdf063306286bed7bffcf48916f0349b56b1685d32fe",
-  "author_sha256": "a942fe69957d4193cc455ddf2dbf57e52eb461307a4c91009fef9109a791fe44",
+  "author_sha256": "6e0251440f75ab9c62ae892db02054b6afd71ecd325fd5bf24d302364f09ac0a",
   "shots": [
     "front",
     "back",
@@ -21,5 +21,18 @@
   ],
   "render_errors": [],
   "missing_textures": [],
-  "visual_review": "pending"
+  "visual_review": "pending",
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "山腹锻炉",
+      "after": "赤砧王国",
+      "previous_author_sha256": "a942fe69957d4193cc455ddf2dbf57e52eb461307a4c91009fef9109a791fe44",
+      "current_author_sha256": "6e0251440f75ab9c62ae892db02054b6afd71ecd325fd5bf24d302364f09ac0a",
+      "nbt_sha256": "01fe47d0c42da7023521bdf063306286bed7bffcf48916f0349b56b1685d32fe",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
+  ]
 }

@@ -6,7 +6,7 @@ from .samples import railing
 
 
 def base(key, name, size, condition, role='fill', f=2):
-    m = Model(key, name, size, family=key.rsplit('-v', 1)[0], civilization='森林共生文明', role=role,
+    m = Model(key, name, size, family=key.rsplit('-v', 1)[0], civilization='翠枝族', role=role,
         terrain={'选址':condition,'落地':'只整理建筑本体与步道；保留未写入的林地。附树版本包含独立柱脚和树根占地，不能套入任意现存树体。',
                  '高程':f'主入口脚底 Y={f+1}；高位层和坡地接驳另见楼层与使用点',
                  '运行边界':'种植、蜂具、藤果、兽栏与遗留物均为原版静态空间表达；实际生产、动物和生态行为须另行接入。'})

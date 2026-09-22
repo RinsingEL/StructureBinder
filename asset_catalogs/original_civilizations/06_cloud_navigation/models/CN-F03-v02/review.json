@@ -5,7 +5,7 @@
   "scope": "offline_asset_review",
   "reviewer": "Codex 云海建模代理（实际看图）",
   "nbt_sha256": "6dfd9d10efe7ae0831b44f95e7d635b886ca1071ee9dc6ac17e4f0c7567a62e7",
-  "author_sha256": "8262df06a263b959eedf964591f9eeab8a7956f9cc4765c73a0be198a558037d",
+  "author_sha256": "a236a780afd4f4ffbcd68a37c465b39205d1597fa899808ce23376b07db4034e",
   "evidence": [
     "previews/front.png",
     "previews/back.png",
@@ -34,5 +34,18 @@
     "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
     "静态模型与离线步行验收；未启动 Minecraft，未验证游戏内作物生长、低温冻结或居民行为。",
     "玻璃温室不提供恒温、供暖或自动灌溉机制；露天农田需选择无冻害地段，岩台承载和外部补水需要场地另行核对。"
+  ],
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "云海航行文明",
+      "after": "翼帆联邦",
+      "previous_author_sha256": "8262df06a263b959eedf964591f9eeab8a7956f9cc4765c73a0be198a558037d",
+      "current_author_sha256": "a236a780afd4f4ffbcd68a37c465b39205d1597fa899808ce23376b07db4034e",
+      "nbt_sha256": "6dfd9d10efe7ae0831b44f95e7d635b886ca1071ee9dc6ac17e4f0c7567a62e7",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
   ]
 }

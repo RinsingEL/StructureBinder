@@ -5,7 +5,7 @@
   "scope": "offline_asset_review",
   "reviewer": "Codex 云海建模代理（实际看图）",
   "nbt_sha256": "48e4cad43c0c9354718a1acc761979d7447e5dd462dfe674c1fef8aa360bf31e",
-  "author_sha256": "2c72e25c1344040248ca5e71443ef2fec48603e681258bfcf8d8c0b8ec3d6994",
+  "author_sha256": "4472a5c0c0dc656f33a3ccb94eebf10268f705fc75ea799092110c9746904754",
   "evidence": [
     "previews/front.png",
     "previews/back.png",
@@ -44,5 +44,18 @@
     "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
     "模型只表达落在岩台或石墩的承重路径，不提供浮空或飞行机制。",
     "环境图为理想下降坡示意，实际峡谷宽度、岩层承载和空中接驳需另行核对。"
+  ],
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "云海航行文明",
+      "after": "翼帆联邦",
+      "previous_author_sha256": "2c72e25c1344040248ca5e71443ef2fec48603e681258bfcf8d8c0b8ec3d6994",
+      "current_author_sha256": "4472a5c0c0dc656f33a3ccb94eebf10268f705fc75ea799092110c9746904754",
+      "nbt_sha256": "48e4cad43c0c9354718a1acc761979d7447e5dd462dfe674c1fef8aa360bf31e",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
   ]
 }

@@ -2,7 +2,7 @@
   "schema": "structure-studio.capture.v1",
   "id": "DS-04-v02",
   "nbt_sha256": "ac4f124743de74a3a874f52255c1c88e5ae6116b0ee2f4db13e1b69fab910332",
-  "author_sha256": "b50fa69c1ba53118d8a5e7575387cf284bed09810cea2b1a9275282144e683f2",
+  "author_sha256": "4d9868d7aa14b2c86101a543b18f0922787ec843966f51f72cff7a778769f1cc",
   "shots": [
     "front",
     "back",
@@ -26,5 +26,18 @@
   ],
   "render_errors": [],
   "missing_textures": [],
-  "visual_review": "pending"
+  "visual_review": "pending",
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "沙海星象文明",
+      "after": "星仪王国",
+      "previous_author_sha256": "b50fa69c1ba53118d8a5e7575387cf284bed09810cea2b1a9275282144e683f2",
+      "current_author_sha256": "4d9868d7aa14b2c86101a543b18f0922787ec843966f51f72cff7a778769f1cc",
+      "nbt_sha256": "ac4f124743de74a3a874f52255c1c88e5ae6116b0ee2f4db13e1b69fab910332",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
+  ]
 }

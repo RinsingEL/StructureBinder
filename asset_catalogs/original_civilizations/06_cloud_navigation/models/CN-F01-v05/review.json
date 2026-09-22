@@ -5,7 +5,7 @@
   "scope": "offline_asset_review",
   "reviewer": "cloud_interiors author visual review",
   "nbt_sha256": "88bd197d382768a599421b65fa4c0ea360fe04a2e4ebacd8da348983c8b18672",
-  "author_sha256": "47fc57b6bee62cb8c48e45a163335eaf0b345b741670d86226e730aebe47379a",
+  "author_sha256": "a217b3c87c72414cfc5103d3d2ec3872c6733595b1bd4629bd9f83f2cdce1793",
   "evidence": [
     "previews/front.png",
     "previews/back.png",
@@ -39,5 +39,18 @@
   "limitations": [
     "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
     "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ],
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "云海航行文明",
+      "after": "翼帆联邦",
+      "previous_author_sha256": "47fc57b6bee62cb8c48e45a163335eaf0b345b741670d86226e730aebe47379a",
+      "current_author_sha256": "a217b3c87c72414cfc5103d3d2ec3872c6733595b1bd4629bd9f83f2cdce1793",
+      "nbt_sha256": "88bd197d382768a599421b65fa4c0ea360fe04a2e4ebacd8da348983c8b18672",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
   ]
 }

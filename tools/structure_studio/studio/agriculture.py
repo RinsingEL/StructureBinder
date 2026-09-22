@@ -15,7 +15,7 @@ PLANS=[
 
 def farm(variant):
     name,w,d,description=PLANS[variant-1]
-    m=Model(f"SR-F02-v{variant:02d}",name,(w,10,d),family="SR-F02",civilization="蒸汽铁路文明",role="fill",terrain={
+    m=Model(f"SR-F02-v{variant:02d}",name,(w,10,d),family="SR-F02",civilization="铜钟公国",role="fill",terrain={
         "选址":"铁路聚落郊区；需要土壤、足够光照与可维护的水源", "地块":description,
         "地坪":"主要田埂脚底 Y=2；坡地版沿 +Z 每 7 格升高 1 格" if variant==6 else "田埂脚底 Y=2；平地版本",
         "落地方式":"固定模板田块；独立成品，非 Landscape 自然生长大田",
