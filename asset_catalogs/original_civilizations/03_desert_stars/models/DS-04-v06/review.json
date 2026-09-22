@@ -1,0 +1,45 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-04-v06",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "96ca586900c92a00064ce66443e04fa9215fbc2bf0a276e8bdd5fb6792c2545b",
+  "author_sha256": "4c7639d970e972a3c1c41b0fe51058d7ce03121cde722cfe4cc505abba754155",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-living.png",
+    "previews/room-bedroom.png",
+    "previews/room-housework.png",
+    "previews/room-court.png",
+    "previews/point-living_cook.png",
+    "previews/point-bedroom_bed1.png",
+    "previews/point-bedroom_bed2.png",
+    "previews/point-housework.png",
+    "previews/point-upper.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与布局": "三个房间分布于高低两台，低院遮棚与中段短阶组织公共通路；整体保持真实一格高差。",
+    "内饰与使用": "下台厨房起居，上台双床房及家务凉室；两床、家务桌和上台通道全部有标记。",
+    "标记与通路": "已查看四向外观、俯视、去屋顶、楼层、房间、使用点和标记图；最终 NBT 的入口至已标站位通过碰撞初筛。",
+    "因地制宜": "有稳定生活用水的干热聚落，通风方向与遮阳不被邻屋完全堵塞；前低后高两台住宅，低院炊事、上台睡眠与家务，用内院短阶衔接一格高差。；独立住宅模板，庭院及其硬地属于实际占地；未写入格保留原环境；主入口脚底 Y=2；上台脚底 Y=3。已查看匹配条件的沙地或微坡示意。",
+    "风塔接口": "最终 NBT 的四格塔内空腔穿过屋顶接入房间；与三处旧模型一起复核 11 条连续空腔，几何未被顶板封堵。"
+  },
+  "revisions": [
+    "主入口移到前院开口 X=23，上台交通点朝向中央通道；补充房间外窗。",
+    "共用风塔部件打通塔底四格屋顶，保留侧向风口。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "风塔表达连续通风空间，不是气流、温度或降温效果模拟。"
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-F02-v06",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "aea773fa2784af63186cd6153fb53b6361e0a12271b38e7f37d2bc6e8e1ddcb1",
+  "author_sha256": "3707a0a24ae69568a67a0f1b87c049550e7583bd3d22f5770b8a718522ae5625",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-field.png",
+    "previews/point-compost.png",
+    "previews/point-terrace_1.png",
+    "previews/point-terrace_2.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与布局": "前低后高两台，沿各台等高方向布渠；凹角避让外部道路，中央三格短阶连接高差。",
+    "内饰与使用": "上下台维护点分别标记，作物与水源高程随台面改变，工具位在上台边缘。",
+    "标记与通路": "已查看四向外观、俯视、去屋顶、楼层、房间、使用点和标记图；最终 NBT 的入口至已标站位通过碰撞初筛。",
+    "因地制宜": "有可靠引水与适宜土壤的绿洲；不在无水沙海仅凭文明标签放置；前低后高一格的两台菜田，沿等高方向布渠，中央短阶贯通作业。；下台脚底 Y=2，上台 Y=3，沿 +Z 方向抬升；独立固定模板田块，包含封边与作业道；不替代 Landscape 自然生成大田。已查看匹配条件的沙地或微坡示意。",
+    "种植与灌溉": "最终 NBT 共 264 格作物，支撑土壤与 4 格内水源全部通过检查；田埂和使用站位保持通行。"
+  },
+  "revisions": [
+    "给前部凹角后的局部田畦补水，保持所有种植格满足水源检查。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "需要实际可靠供水和适宜土壤；离线检查不证明游戏内生长、照度或流体更新。"
+  ]
+}

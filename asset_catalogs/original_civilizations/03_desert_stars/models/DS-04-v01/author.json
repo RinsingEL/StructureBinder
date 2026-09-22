@@ -1,0 +1,184 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DS-04-v01",
+  "name": "单户凉廊宅",
+  "family": "DS-04",
+  "civilization": "沙海星象文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    23,
+    23,
+    25
+  ],
+  "terrain": {
+    "选址": "有稳定生活用水的干热聚落，通风方向与遮阳不被邻屋完全堵塞",
+    "地块": "前院凉廊接后排起居与卧室，小家庭独立生活，沿北侧街巷进入。",
+    "落地": "独立住宅模板，庭院及其硬地属于实际占地；未写入格保留原环境",
+    "高程": "主入口与生活空间脚底 Y=2"
+  },
+  "rooms": [
+    {
+      "id": "living",
+      "name": "炊事与起居",
+      "min": [
+        4,
+        2,
+        12
+      ],
+      "max": [
+        10,
+        6,
+        20
+      ],
+      "purpose": "炊事、备水、进餐与用品"
+    },
+    {
+      "id": "bedroom",
+      "name": "单户卧室",
+      "min": [
+        12,
+        2,
+        12
+      ],
+      "max": [
+        18,
+        6,
+        20
+      ],
+      "purpose": "睡眠、衣物与室内盥洗"
+    },
+    {
+      "id": "court",
+      "name": "前院凉廊",
+      "min": [
+        3,
+        2,
+        4
+      ],
+      "max": [
+        19,
+        6,
+        10
+      ],
+      "purpose": "歇凉、取水与家务"
+    }
+  ],
+  "points": [
+    {
+      "id": "living_cook",
+      "kind": "work",
+      "pos": [
+        4,
+        2,
+        20
+      ],
+      "name": "炊事与起居炉灶",
+      "approach": [
+        4,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "bedroom_bed1",
+      "kind": "bed",
+      "pos": [
+        13,
+        2,
+        19
+      ],
+      "name": "单户卧室床位 1",
+      "approach": [
+        14,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "cool",
+      "kind": "circulation",
+      "pos": [
+        7,
+        2,
+        9
+      ],
+      "name": "凉廊活动位",
+      "look_at": [
+        6,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        13,
+        2,
+        3
+      ],
+      "name": "主入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        13,
+        1,
+        2
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "外部街面衔接台阶，不自动随地形移动入口"
+    }
+  ],
+  "design_notes": [
+    "前院凉廊接后排起居与卧室，小家庭独立生活，沿北侧街巷进入。"
+  ],
+  "differences": [
+    "前院凉廊接后排起居与卧室，小家庭独立生活，沿北侧街巷进入。"
+  ],
+  "floors": [
+    {
+      "name": "起居与内庭",
+      "y": 1,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "sand"
+  },
+  "source": "tools/structure_studio/studio/oasis_life.py:home(1)",
+  "ventilation": [
+    {
+      "roof_y": 8,
+      "min": [
+        16,
+        8,
+        18
+      ],
+      "max": [
+        17,
+        13,
+        19
+      ],
+      "note": "连续通风孔的几何表达，不模拟气流或温度"
+    }
+  ],
+  "nbt_sha256": "663296e2d01df4f0f2e9f2965b9444cbe1e1622c3b6e7aca9d5e7bddb2619ac8"
+}

@@ -1,0 +1,41 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-04-v05",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "1f8917a3458a503631588a0d0eec95ff3b55866dd72e4ee92edc3ab551a6503b",
+  "author_sha256": "5485b9bbd6d27cd965381c3172fa0a23b72cf8d364a53ebbffda11bb6bfc6c5e",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-living.png",
+    "previews/room-bedroom.png",
+    "previews/room-guest.png",
+    "previews/point-living_cook.png",
+    "previews/point-bedroom_bed1.png",
+    "previews/point-guest_bed.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与布局": "L 形住宅留下街角凹口；北入口与东侧客宿入口不同，未写入的凹角不清除外部地形。",
+    "内饰与使用": "临街起居、后卧室与转角客宿储藏串接；常住和客宿均有床位、生活用品及可达站位。",
+    "标记与通路": "已查看四向外观、俯视、去屋顶、楼层、房间、使用点和标记图；最终 NBT 的入口至已标站位通过碰撞初筛。",
+    "因地制宜": "有稳定生活用水的干热聚落，通风方向与遮阳不被邻屋完全堵塞；L 形住宅有北侧和东侧两个入口，前凹角留给外部街巷，后翼兼作客宿与储藏。；独立住宅模板，庭院及其硬地属于实际占地；未写入格保留原环境；主入口与生活空间脚底 Y=2。已查看匹配条件的沙地或微坡示意。",
+    "风塔接口": "最终 NBT 的四格塔内空腔穿过屋顶接入房间；与三处旧模型一起复核 11 条连续空腔，几何未被顶板封堵。"
+  },
+  "revisions": [
+    "共用风塔部件打通塔底四格屋顶，保留侧向风口。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "风塔表达连续通风空间，不是气流、温度或降温效果模拟。"
+  ]
+}

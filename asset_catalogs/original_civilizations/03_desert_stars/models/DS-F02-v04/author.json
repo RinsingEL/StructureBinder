@@ -1,0 +1,104 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DS-F02-v04",
+  "name": "斜巷阶边田",
+  "family": "DS-F02",
+  "civilization": "沙海星象文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    25,
+    12,
+    30
+  ],
+  "terrain": {
+    "选址": "有可靠引水与适宜土壤的绿洲；不在无水沙海仅凭文明标签放置",
+    "形状": "随道路边角逐段展开的非矩形田，纵渠随宽度增减，凹边不清地。",
+    "地面": "作业道脚底 Y=2，有限地块内备土与灌溉",
+    "落地方式": "独立固定模板田块，包含封边与作业道；不替代 Landscape 自然生成大田"
+  },
+  "rooms": [
+    {
+      "id": "field",
+      "name": "灌渠种植与维护",
+      "min": [
+        2,
+        2,
+        3
+      ],
+      "max": [
+        18,
+        6,
+        26
+      ],
+      "purpose": "随道路边角逐段展开的非矩形田，纵渠随宽度增减，凹边不清地。"
+    }
+  ],
+  "points": [
+    {
+      "id": "compost",
+      "kind": "work",
+      "pos": [
+        3,
+        2,
+        24
+      ],
+      "name": "堆肥与田务",
+      "approach": [
+        2,
+        2,
+        24
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        3,
+        2,
+        3
+      ],
+      "name": "田头入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "随道路边角逐段展开的非矩形田，纵渠随宽度增减，凹边不清地。"
+  ],
+  "differences": [
+    "随道路边角逐段展开的非矩形田，纵渠随宽度增减，凹边不清地。"
+  ],
+  "floors": [
+    {
+      "name": "灌渠与田埂",
+      "y": 0,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": null,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "sand"
+  },
+  "source": "tools/structure_studio/studio/oasis_life.py:garden(4)",
+  "agriculture": {
+    "crops": [
+      "wheat",
+      "carrots"
+    ],
+    "layout": "随道路边角逐段展开的非矩形田，纵渠随宽度增减，凹边不清地。",
+    "planted_cells": 151,
+    "irrigation_sources": 28,
+    "template_mode": "independent_fixed_plot",
+    "hydration": "以最终 NBT 校核支撑与同高程或高一格、水平 4 格水源"
+  },
+  "nbt_sha256": "5ebba736be978e6227ddd8a9e6ee4c2a9b33978db3e6f15d082af323cb1a8a4b"
+}

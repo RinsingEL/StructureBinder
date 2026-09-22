@@ -1,0 +1,44 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-04-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "083b49a150884a5fe8a8fa8587b5cf58d661873d4fd670282bf16ac67e6d3a30",
+  "author_sha256": "c46e23c7b71b5e1abe1b7e40f7dce9c67a9da1b85710a74c6e1b912503af2ba4",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-living.png",
+    "previews/room-bedroom.png",
+    "previews/room-coolroom.png",
+    "previews/room-stores.png",
+    "previews/room-court.png",
+    "previews/point-living_cook.png",
+    "previews/point-bedroom_bed1.png",
+    "previews/point-stores.png",
+    "previews/point-cool.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与布局": "前凉室、后起居、东卧室与储藏翼围合水庭，转折通道与独立后翼区别于方正小宅。",
+    "内饰与使用": "凉室可会客，厨房连接用餐；独立卧室、后仓箱垛与账台均有相应家具和使用位置。",
+    "标记与通路": "已查看四向外观、俯视、去屋顶、楼层、房间、使用点和标记图；最终 NBT 的入口至已标站位通过碰撞初筛。",
+    "因地制宜": "有稳定生活用水的干热聚落，通风方向与遮阳不被邻屋完全堵塞；厚墙围合内庭，凉室、起居、卧室与后储藏翼分开，通路绕院曲折展开。；独立住宅模板，庭院及其硬地属于实际占地；未写入格保留原环境；主入口与生活空间脚底 Y=2。已查看匹配条件的沙地或微坡示意。",
+    "风塔接口": "最终 NBT 的四格塔内空腔穿过屋顶接入房间；与三处旧模型一起复核 11 条连续空腔，几何未被顶板封堵。"
+  },
+  "revisions": [
+    "共用风塔部件打通塔底四格屋顶，保留侧向风口。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "风塔表达连续通风空间，不是气流、温度或降温效果模拟。"
+  ]
+}

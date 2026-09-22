@@ -1,0 +1,229 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DS-04-v03",
+  "name": "曲折内庭宅",
+  "family": "DS-04",
+  "civilization": "沙海星象文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    31,
+    23,
+    31
+  ],
+  "terrain": {
+    "选址": "有稳定生活用水的干热聚落，通风方向与遮阳不被邻屋完全堵塞",
+    "地块": "厚墙围合内庭，凉室、起居、卧室与后储藏翼分开，通路绕院曲折展开。",
+    "落地": "独立住宅模板，庭院及其硬地属于实际占地；未写入格保留原环境",
+    "高程": "主入口与生活空间脚底 Y=2"
+  },
+  "rooms": [
+    {
+      "id": "living",
+      "name": "家庭起居",
+      "min": [
+        4,
+        2,
+        16
+      ],
+      "max": [
+        11,
+        6,
+        26
+      ],
+      "purpose": "炊事、备水、进餐与用品"
+    },
+    {
+      "id": "bedroom",
+      "name": "内庭卧室",
+      "min": [
+        21,
+        2,
+        6
+      ],
+      "max": [
+        26,
+        6,
+        18
+      ],
+      "purpose": "睡眠、衣物与室内盥洗"
+    },
+    {
+      "id": "coolroom",
+      "name": "前翼凉室",
+      "min": [
+        4,
+        2,
+        6
+      ],
+      "max": [
+        11,
+        6,
+        14
+      ],
+      "purpose": "凉室、候坐与家人会客"
+    },
+    {
+      "id": "stores",
+      "name": "后翼储物间",
+      "min": [
+        14,
+        2,
+        23
+      ],
+      "max": [
+        26,
+        6,
+        26
+      ],
+      "purpose": "家用储藏和账记"
+    },
+    {
+      "id": "court",
+      "name": "曲折水庭",
+      "min": [
+        13,
+        2,
+        5
+      ],
+      "max": [
+        19,
+        6,
+        21
+      ],
+      "purpose": "水盆与连接各翼的内庭"
+    }
+  ],
+  "points": [
+    {
+      "id": "living_cook",
+      "kind": "work",
+      "pos": [
+        4,
+        2,
+        26
+      ],
+      "name": "家庭起居炉灶",
+      "approach": [
+        4,
+        2,
+        25
+      ]
+    },
+    {
+      "id": "bedroom_bed1",
+      "kind": "bed",
+      "pos": [
+        22,
+        2,
+        17
+      ],
+      "name": "内庭卧室床位 1",
+      "approach": [
+        23,
+        2,
+        17
+      ]
+    },
+    {
+      "id": "stores",
+      "kind": "work",
+      "pos": [
+        15,
+        2,
+        25
+      ],
+      "name": "家用物资记录",
+      "approach": [
+        15,
+        2,
+        24
+      ]
+    },
+    {
+      "id": "cool",
+      "kind": "circulation",
+      "pos": [
+        8,
+        2,
+        9
+      ],
+      "name": "凉室候坐",
+      "look_at": [
+        7,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        16,
+        2,
+        4
+      ],
+      "name": "主入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        16,
+        1,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "外部街面衔接台阶，不自动随地形移动入口"
+    }
+  ],
+  "design_notes": [
+    "厚墙围合内庭，凉室、起居、卧室与后储藏翼分开，通路绕院曲折展开。"
+  ],
+  "differences": [
+    "厚墙围合内庭，凉室、起居、卧室与后储藏翼分开，通路绕院曲折展开。"
+  ],
+  "floors": [
+    {
+      "name": "起居与内庭",
+      "y": 1,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "sand"
+  },
+  "source": "tools/structure_studio/studio/oasis_life.py:home(3)",
+  "ventilation": [
+    {
+      "roof_y": 8,
+      "min": [
+        5,
+        8,
+        7
+      ],
+      "max": [
+        6,
+        13,
+        8
+      ],
+      "note": "连续通风孔的几何表达，不模拟气流或温度"
+    }
+  ],
+  "nbt_sha256": "083b49a150884a5fe8a8fa8587b5cf58d661873d4fd670282bf16ac67e6d3a30"
+}

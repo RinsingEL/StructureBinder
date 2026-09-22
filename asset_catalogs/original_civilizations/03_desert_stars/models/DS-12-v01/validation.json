@@ -1,6 +1,6 @@
 {
   "schema": "structure-studio.validation.v1",
-  "nbt_sha256": "7b1e89c5c3e1db75b04c32cdf178a90c5ad053703257bd13e7a058858fa878b0",
+  "nbt_sha256": "52f3bc49894f8dc5b2b6962a85f9bb15cb2eaab424512cfba688c62640f5b9f8",
   "navigation": {
     "passed": true,
     "unreachable": [],
@@ -17,14 +17,14 @@
     25,
     29
   ],
-  "visible_blocks": 4081,
-  "explicit_air": 8066,
+  "visible_blocks": 4077,
+  "explicit_air": 8070,
   "palette": 38,
   "block_entities": 2,
   "agriculture": null,
   "materials": {
     "minecraft:cut_sandstone": 2594,
-    "minecraft:smooth_sandstone": 1127,
+    "minecraft:smooth_sandstone": 1123,
     "minecraft:sandstone_wall": 88,
     "minecraft:blue_terracotta": 58,
     "minecraft:sandstone": 54,

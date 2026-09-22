@@ -1,0 +1,30 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "DS-04-v02",
+  "nbt_sha256": "ac4f124743de74a3a874f52255c1c88e5ae6116b0ee2f4db13e1b69fab910332",
+  "author_sha256": "b50fa69c1ba53118d8a5e7575387cf284bed09810cea2b1a9275282144e683f2",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-west_living",
+    "room-west_bedroom",
+    "room-east_living",
+    "room-east_bedroom",
+    "room-common",
+    "point-west_living_cook",
+    "point-west_bedroom_bed1",
+    "point-east_living_cook",
+    "point-east_bedroom_bed1",
+    "point-well",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

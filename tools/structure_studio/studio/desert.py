@@ -47,6 +47,7 @@ def dome(m,cx,cz,y,r=5,material="blue_terracotta"):
 def windtower(m,x,z,y=9):
     m.box((x,y,z),(x+3,y+5,z+3),"cut_sandstone")
     m.box((x+1,y,z+1),(x+2,y+4,z+2),"air")
+    m.box((x+1,y-1,z+1),(x+2,y-1,z+2),"air")
     for zz in (z,z+3):m.box((x+1,y+3,zz),(x+2,y+4,zz),"air")
     for xx in (x,x+3):m.box((xx,y+3,z+1),(xx,y+4,z+2),"air")
     m.box((x-1,y+6,z-1),(x+4,y+6,z+4),"smooth_sandstone_slab[type=bottom]")

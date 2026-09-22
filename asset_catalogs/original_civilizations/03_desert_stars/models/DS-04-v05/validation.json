@@ -1,0 +1,53 @@
+{
+  "schema": "structure-studio.validation.v1",
+  "nbt_sha256": "1f8917a3458a503631588a0d0eec95ff3b55866dd72e4ee92edc3ab551a6503b",
+  "navigation": {
+    "passed": true,
+    "unreachable": [],
+    "nodes": 1096,
+    "highest_standing_y": 3,
+    "truncated": false,
+    "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "size": [
+    29,
+    23,
+    27
+  ],
+  "visible_blocks": 1974,
+  "explicit_air": 7640,
+  "palette": 38,
+  "block_entities": 4,
+  "agriculture": null,
+  "materials": {
+    "minecraft:smooth_sandstone": 1145,
+    "minecraft:cut_sandstone": 520,
+    "minecraft:sandstone_wall": 96,
+    "minecraft:blue_terracotta": 59,
+    "minecraft:smooth_sandstone_slab": 36,
+    "minecraft:sandstone": 23,
+    "minecraft:cyan_stained_glass_pane": 22,
+    "minecraft:brown_terracotta": 12,
+    "minecraft:birch_slab": 9,
+    "minecraft:spruce_door": 8,
+    "minecraft:birch_planks": 8,
+    "minecraft:barrel": 4,
+    "minecraft:spruce_planks": 4,
+    "minecraft:sandstone_stairs": 3,
+    "minecraft:birch_stairs": 3,
+    "minecraft:orange_carpet": 3,
+    "minecraft:lantern": 3,
+    "minecraft:white_carpet": 3,
+    "minecraft:birch_trapdoor": 2,
+    "minecraft:water_cauldron": 2,
+    "minecraft:cyan_bed": 2,
+    "minecraft:orange_bed": 2,
+    "minecraft:flower_pot": 2,
+    "minecraft:chain": 2,
+    "minecraft:smoker": 1
+  },
+  "scope": "NBT、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+}

@@ -1,0 +1,258 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DS-04-v02",
+  "name": "双户共水宅",
+  "family": "DS-04",
+  "civilization": "沙海星象文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    33,
+    23,
+    28
+  ],
+  "terrain": {
+    "选址": "有稳定生活用水的干热聚落，通风方向与遮阳不被邻屋完全堵塞",
+    "地块": "两户各有炊事和卧室，共享中央储水庭与遮阳入口，不通过另一户进入。",
+    "落地": "独立住宅模板，庭院及其硬地属于实际占地；未写入格保留原环境",
+    "高程": "主入口与生活空间脚底 Y=2"
+  },
+  "rooms": [
+    {
+      "id": "west_living",
+      "name": "西户起居",
+      "min": [
+        4,
+        2,
+        6
+      ],
+      "max": [
+        12,
+        6,
+        12
+      ],
+      "purpose": "炊事、备水、进餐与用品"
+    },
+    {
+      "id": "west_bedroom",
+      "name": "西户卧室",
+      "min": [
+        4,
+        2,
+        14
+      ],
+      "max": [
+        12,
+        6,
+        22
+      ],
+      "purpose": "睡眠、衣物与室内盥洗"
+    },
+    {
+      "id": "east_living",
+      "name": "东户起居",
+      "min": [
+        20,
+        2,
+        6
+      ],
+      "max": [
+        28,
+        6,
+        12
+      ],
+      "purpose": "炊事、备水、进餐与用品"
+    },
+    {
+      "id": "east_bedroom",
+      "name": "东户卧室",
+      "min": [
+        20,
+        2,
+        14
+      ],
+      "max": [
+        28,
+        6,
+        22
+      ],
+      "purpose": "睡眠、衣物与室内盥洗"
+    },
+    {
+      "id": "common",
+      "name": "共水窄庭",
+      "min": [
+        14,
+        2,
+        4
+      ],
+      "max": [
+        18,
+        6,
+        24
+      ],
+      "purpose": "两户独立入口与共享储水"
+    }
+  ],
+  "points": [
+    {
+      "id": "west_living_cook",
+      "kind": "work",
+      "pos": [
+        4,
+        2,
+        12
+      ],
+      "name": "西户起居炉灶",
+      "approach": [
+        4,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "west_bedroom_bed1",
+      "kind": "bed",
+      "pos": [
+        5,
+        2,
+        21
+      ],
+      "name": "西户卧室床位 1",
+      "approach": [
+        6,
+        2,
+        21
+      ]
+    },
+    {
+      "id": "east_living_cook",
+      "kind": "work",
+      "pos": [
+        20,
+        2,
+        12
+      ],
+      "name": "东户起居炉灶",
+      "approach": [
+        20,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "east_bedroom_bed1",
+      "kind": "bed",
+      "pos": [
+        21,
+        2,
+        21
+      ],
+      "name": "东户卧室床位 1",
+      "approach": [
+        22,
+        2,
+        21
+      ]
+    },
+    {
+      "id": "well",
+      "kind": "work",
+      "pos": [
+        16,
+        2,
+        22
+      ],
+      "name": "两户共用取水点",
+      "approach": [
+        16,
+        2,
+        21
+      ]
+    },
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        16,
+        2,
+        4
+      ],
+      "name": "主入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        16,
+        1,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "外部街面衔接台阶，不自动随地形移动入口"
+    }
+  ],
+  "design_notes": [
+    "两户各有炊事和卧室，共享中央储水庭与遮阳入口，不通过另一户进入。"
+  ],
+  "differences": [
+    "两户各有炊事和卧室，共享中央储水庭与遮阳入口，不通过另一户进入。"
+  ],
+  "floors": [
+    {
+      "name": "起居与内庭",
+      "y": 1,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "sand"
+  },
+  "source": "tools/structure_studio/studio/oasis_life.py:home(2)",
+  "ventilation": [
+    {
+      "roof_y": 8,
+      "min": [
+        5,
+        8,
+        7
+      ],
+      "max": [
+        6,
+        13,
+        8
+      ],
+      "note": "连续通风孔的几何表达，不模拟气流或温度"
+    },
+    {
+      "roof_y": 8,
+      "min": [
+        26,
+        8,
+        18
+      ],
+      "max": [
+        27,
+        13,
+        19
+      ],
+      "note": "连续通风孔的几何表达，不模拟气流或温度"
+    }
+  ],
+  "nbt_sha256": "ac4f124743de74a3a874f52255c1c88e5ae6116b0ee2f4db13e1b69fab910332"
+}

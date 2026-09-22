@@ -1,0 +1,46 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-04-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "ac4f124743de74a3a874f52255c1c88e5ae6116b0ee2f4db13e1b69fab910332",
+  "author_sha256": "b50fa69c1ba53118d8a5e7575387cf284bed09810cea2b1a9275282144e683f2",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-west_living.png",
+    "previews/room-west_bedroom.png",
+    "previews/room-east_living.png",
+    "previews/room-east_bedroom.png",
+    "previews/room-common.png",
+    "previews/point-west_living_cook.png",
+    "previews/point-west_bedroom_bed1.png",
+    "previews/point-east_living_cook.png",
+    "previews/point-east_bedroom_bed1.png",
+    "previews/point-well.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与布局": "两侧独立住宅夹住窄庭，共享入口遮棚与后端取水处；两座风塔位置错开。",
+    "内饰与使用": "两户各自具有炊事、用餐、睡眠与用品，不依靠穿越另一户出入；中央取水点可达。",
+    "标记与通路": "已查看四向外观、俯视、去屋顶、楼层、房间、使用点和标记图；最终 NBT 的入口至已标站位通过碰撞初筛。",
+    "因地制宜": "有稳定生活用水的干热聚落，通风方向与遮阳不被邻屋完全堵塞；两户各有炊事和卧室，共享中央储水庭与遮阳入口，不通过另一户进入。；独立住宅模板，庭院及其硬地属于实际占地；未写入格保留原环境；主入口与生活空间脚底 Y=2。已查看匹配条件的沙地或微坡示意。",
+    "风塔接口": "最终 NBT 的四格塔内空腔穿过屋顶接入房间；与三处旧模型一起复核 11 条连续空腔，几何未被顶板封堵。"
+  },
+  "revisions": [
+    "采用共水宅名称，准确对应共享储水装置。",
+    "共用风塔部件打通塔底四格屋顶，保留侧向风口。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "风塔表达连续通风空间，不是气流、温度或降温效果模拟。"
+  ]
+}

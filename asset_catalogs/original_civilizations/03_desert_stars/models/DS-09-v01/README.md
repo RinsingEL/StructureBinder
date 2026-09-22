@@ -1,6 +1,6 @@
 # DS-09-v01 · 清泉内庭医馆
 
-39×23×38 格，4493 个可见方块；5 个房间或作业区、9 个使用与交通标记。前庭候诊、侧翼诊室和药房、后部静养与值守；围合院落兼顾遮阳和互不穿行。
+39×23×38 格，4489 个可见方块；5 个房间或作业区、9 个使用与交通标记。前庭候诊、侧翼诊室和药房、后部静养与值守；围合院落兼顾遮阳和互不穿行。
 
 - [结构 NBT](structure.nbt) · [作者标记](author.json) · [数据与通路检查](validation.json) · [离线验收](review.json)
 - [外观](previews/front.png) · [剖面](previews/roof-off.png) · [标记](previews/annotations.png) · [环境示意](previews/site-context.png)

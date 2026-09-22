@@ -1,6 +1,6 @@
 # DS-12-v01 · 旧星井管理所
 
-28×25×29 格，4081 个可见方块；4 个房间或作业区、6 个使用与交通标记。石砌井圈位于半开放内院，横梁吊桶直对井口；档案与旧值守室围绕水源组织。
+28×25×29 格，4077 个可见方块；4 个房间或作业区、6 个使用与交通标记。石砌井圈位于半开放内院，横梁吊桶直对井口；档案与旧值守室围绕水源组织。
 
 - [结构 NBT](structure.nbt) · [作者标记](author.json) · [数据与通路检查](validation.json) · [离线验收](review.json)
 - [外观](previews/front.png) · [剖面](previews/roof-off.png) · [标记](previews/annotations.png) · [环境示意](previews/site-context.png)
