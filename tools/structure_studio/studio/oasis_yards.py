@@ -57,9 +57,9 @@ def entry(m,key,x,z,*,facing='north',width=3,animals=False):
         clearance=[width,5 if animals else 3],note='作者预留几何接口；需另外核对外部地面及具体实体尺寸'))
 
 
-def canvas(m,x0,z0,x1,z1,*,y=7,colors=('orange','white')):
+def canvas(m,x0,z0,x1,z1,*,y=7,colors=('orange','white'),base_y=2):
     for x in (x0,x1):
-        for z in (z0,z1):m.box((x,2,z),(x,y-1,z),'stripped_acacia_log[axis=y]')
+        for z in (z0,z1):m.box((x,base_y,z),(x,y-1,z),'stripped_acacia_log[axis=y]')
         m.box((x,y-1,z0),(x,y-1,z1),'stripped_acacia_log[axis=z]')
     for x in range(x0,x1+1):
         m.box((x,y,z0),(x,y,z1),colors[(x-x0)//2%len(colors)]+'_wool')

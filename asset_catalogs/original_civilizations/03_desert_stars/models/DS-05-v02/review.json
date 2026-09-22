@@ -1,0 +1,46 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-05-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "b285710193f8580d92c49cc91506d8873f05cd72c3e116a72da9a0d5a7a8b30a",
+  "author_sha256": "77df38cb65dd8d3ce77a4d28a88e591bba1516b6941bb2816d2b627175e4b9c1",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-showroom.png",
+    "previews/room-living.png",
+    "previews/room-accounts.png",
+    "previews/room-bedroom.png",
+    "previews/room-court.png",
+    "previews/point-showroom.png",
+    "previews/point-living_cook.png",
+    "previews/point-accounts.png",
+    "previews/point-bedroom_bed1.png",
+    "previews/point-bedroom_bed2.png",
+    "previews/point-stock.png",
+    "previews/point-tea.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "L 形地块顺北巷与东侧卸货口展开，内部窄庭连接铺面和住宅，前凹角保持不写入。",
+    "内饰与使用": "临街展示、侧门账记、小货箱、家庭茶座、厨房和双床卧室完整，两入口可抵达所有已标站位。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、全部楼层、各房间和使用点、标记与环境图；最终 NBT 数据与入口至标记站位的碰撞检查通过，无警告。",
+    "因地制宜": "可靠供水的贸易聚落，有顾客步行、货物卸载与家居生活需求；L 形沿街地块，前铺面向北巷，账房从东侧接货，家居沿内部窄庭相连。；主入口与地面层脚底 Y=2；上层版二层脚底 Y=9；独立完整建筑与内部院落，不依靠运行时补齐；模板外与凹角未写入格保持原环境。实际查看了相应平地或微坡环境示意。"
+  },
+  "revisions": [
+    "补充会客坐席、织物陈列、照明和门前遮阳；会客织物改为嵌入地坪，避免精确站位净空警告。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "交易、账记和库存仅作空间与标记表达，尚未接入经济玩法。"
+  ]
+}

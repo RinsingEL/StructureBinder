@@ -1,0 +1,49 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-07-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "46742367b0920e648949ddd7515b5b8557f59256c63771e9981453b54dff520d",
+  "author_sha256": "a02634c3f73050c834744efe41f3d0437146d8dacd541f68925d68ef527b785e",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-raw.png",
+    "previews/room-sales.png",
+    "previews/room-finishing.png",
+    "previews/room-kiln.png",
+    "previews/point-sand.png",
+    "previews/point-fuel.png",
+    "previews/point-sales.png",
+    "previews/point-mould.png",
+    "previews/point-cooling.png",
+    "previews/point-rest.png",
+    "previews/point-kiln.png",
+    "previews/point-kiln_service.png",
+    "previews/point-account.png",
+    "previews/point-tools.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "入口先进入下台原料与成品区，五格宽短阶升一格进入露窑和加工间，顺缓坡分置顾客与生产。",
+    "内饰与使用": "下台原砂、燃料和登记交付，上台窑前操作、窑后维护、器具、模具、冷却、饮水坐席均已标记。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、全部楼层、各房间和使用点、标记与环境图；最终 NBT 数据与入口至标记站位的碰撞检查通过，无警告。",
+    "因地制宜": "具砂料、燃料、供水与外运条件的生产地块，热作业区和烟道周围保持净空；下台收料与成品，上台窑炉和加工，短阶连接一格高差，生产与顾客空间分开。；下台脚底 Y=2，上台脚底 Y=3，沿 +Z 抬升一格；独立完整建筑与内部院落，不依靠运行时补齐；模板外与凹角未写入格保持原环境。实际查看了相应平地或微坡环境示意。"
+  },
+  "revisions": [
+    "补充材料架、工具、水盆、照明和接待设施，使生产及顾客用途可从室内辨认。",
+    "去屋顶截面改为最早出现的下台屋面高度，已核对两台室内同时可见。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "砖窑用原版熔炉表达，设备与玻璃陈列不表示自定义配方、热工、机器或自动生产已接入。"
+  ]
+}

@@ -1,0 +1,294 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DS-05-v04",
+  "name": "楼院账房商宅",
+  "family": "DS-05",
+  "civilization": "沙海星象文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    32,
+    31,
+    38
+  ],
+  "terrain": {
+    "选址": "可靠供水的贸易聚落，有顾客步行、货物卸载与家居生活需求",
+    "地块": "下层铺面与货仓，上层家居、账房和露台；内部楼梯连接商业与生活。",
+    "接地": "主入口与地面层脚底 Y=2；上层版二层脚底 Y=9",
+    "落地": "独立完整建筑与内部院落，不依靠运行时补齐；模板外与凹角未写入格保持原环境"
+  },
+  "rooms": [
+    {
+      "id": "sales",
+      "name": "楼下接待铺",
+      "min": [
+        5,
+        2,
+        7
+      ],
+      "max": [
+        25,
+        6,
+        15
+      ],
+      "purpose": "展示、议价与顾客等候"
+    },
+    {
+      "id": "stock",
+      "name": "后仓与楼梯",
+      "min": [
+        5,
+        2,
+        17
+      ],
+      "max": [
+        25,
+        6,
+        29
+      ],
+      "purpose": "货物搬运、暂存与内部上楼"
+    },
+    {
+      "id": "living",
+      "name": "楼上起居",
+      "min": [
+        5,
+        9,
+        7
+      ],
+      "max": [
+        13,
+        13,
+        17
+      ],
+      "purpose": "炊事、备水、进餐与用品"
+    },
+    {
+      "id": "accounts",
+      "name": "会客账房",
+      "min": [
+        15,
+        9,
+        7
+      ],
+      "max": [
+        25,
+        13,
+        17
+      ],
+      "purpose": "接待、账册、贵重小货与交易记录"
+    },
+    {
+      "id": "bedroom",
+      "name": "露台卧室",
+      "min": [
+        5,
+        9,
+        21
+      ],
+      "max": [
+        13,
+        13,
+        29
+      ],
+      "purpose": "睡眠、衣物与室内盥洗"
+    },
+    {
+      "id": "terrace",
+      "name": "楼上家用露台",
+      "min": [
+        15,
+        9,
+        19
+      ],
+      "max": [
+        25,
+        13,
+        29
+      ],
+      "purpose": "歇凉、取水和卧室出入"
+    }
+  ],
+  "points": [
+    {
+      "id": "sales",
+      "kind": "work",
+      "pos": [
+        11,
+        2,
+        11
+      ],
+      "name": "楼下商品接待",
+      "approach": [
+        11,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "stock",
+      "kind": "work",
+      "pos": [
+        9,
+        2,
+        25
+      ],
+      "name": "后仓周转货",
+      "approach": [
+        10,
+        2,
+        25
+      ]
+    },
+    {
+      "id": "living_cook",
+      "kind": "work",
+      "pos": [
+        5,
+        9,
+        17
+      ],
+      "name": "楼上起居炉灶",
+      "approach": [
+        5,
+        9,
+        16
+      ]
+    },
+    {
+      "id": "accounts",
+      "kind": "work",
+      "pos": [
+        17,
+        9,
+        10
+      ],
+      "name": "会商与账记",
+      "approach": [
+        17,
+        9,
+        11
+      ]
+    },
+    {
+      "id": "bedroom_bed1",
+      "kind": "bed",
+      "pos": [
+        6,
+        9,
+        28
+      ],
+      "name": "露台卧室床位 1",
+      "approach": [
+        7,
+        9,
+        28
+      ]
+    },
+    {
+      "id": "terrace",
+      "kind": "circulation",
+      "pos": [
+        18,
+        9,
+        20
+      ],
+      "name": "上层露台",
+      "look_at": [
+        18,
+        10,
+        25
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        16,
+        2,
+        4
+      ],
+      "name": "主入口",
+      "facing": "north"
+    },
+    {
+      "id": "pack",
+      "kind": "work",
+      "pos": [
+        14,
+        2,
+        27
+      ],
+      "name": "周转货打包位",
+      "approach": [
+        14,
+        2,
+        26
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        16,
+        1,
+        4
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "外部步行或卸货面需接脚底 Y=2"
+    }
+  ],
+  "design_notes": [
+    "下层铺面与货仓，上层家居、账房和露台；内部楼梯连接商业与生活。"
+  ],
+  "differences": [
+    "下层铺面与货仓，上层家居、账房和露台；内部楼梯连接商业与生活。"
+  ],
+  "floors": [
+    {
+      "name": "下层接待与存货",
+      "y": 1,
+      "max_y": 6
+    },
+    {
+      "name": "上层家居与露台",
+      "y": 8,
+      "max_y": 13
+    }
+  ],
+  "roof_min_y": 15,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/oasis_crafts.py:merchant(4)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "sand"
+  },
+  "ventilation": [
+    {
+      "roof_y": 15,
+      "min": [
+        6,
+        15,
+        8
+      ],
+      "max": [
+        7,
+        20,
+        9
+      ],
+      "note": "连续通风孔的几何表达，不模拟气流或温度"
+    }
+  ],
+  "nbt_sha256": "5d8a1f15e5648c34f37dc7b0d4a58f9a2ed3961648ba53c32fb0b85b604a3ce8"
+}

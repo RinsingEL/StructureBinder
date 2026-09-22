@@ -1,0 +1,46 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-05-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "40d794194d558804250baa202478aca9539400369f25b7c5a4f860d026ab1b98",
+  "author_sha256": "c4f4a9e175aa480f1c699acdf5f08c2b0eb66931a9e73cb3d347aac46fcae5d2",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-showroom.png",
+    "previews/room-accounts.png",
+    "previews/room-living.png",
+    "previews/room-bedroom.png",
+    "previews/room-court.png",
+    "previews/point-showroom.png",
+    "previews/point-accounts.png",
+    "previews/point-living_cook.png",
+    "previews/point-bedroom_bed1.png",
+    "previews/point-bedroom_bed2.png",
+    "previews/point-stock.png",
+    "previews/point-tea.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "临街双前房接横向水庭，后排厨房起居与双床卧室分开；圆顶、风塔和入口短篷形成不同高度。",
+    "内饰与使用": "展示柜台、织物架、账台、候坐、家庭茶座、炊事、卧床和庭侧周转货都有布置与站位。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、全部楼层、各房间和使用点、标记与环境图；最终 NBT 数据与入口至标记站位的碰撞检查通过，无警告。",
+    "因地制宜": "可靠供水的贸易聚落，有顾客步行、货物卸载与家居生活需求；前排展示与账房接公共水庭，后排家居卧室分开，侧廊只存少量周转货物。；主入口与地面层脚底 Y=2；上层版二层脚底 Y=9；独立完整建筑与内部院落，不依靠运行时补齐；模板外与凹角未写入格保持原环境。实际查看了相应平地或微坡环境示意。"
+  },
+  "revisions": [
+    "补充会客坐席、织物陈列、照明和门前遮阳；会客织物改为嵌入地坪，避免精确站位净空警告。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "交易、账记和库存仅作空间与标记表达，尚未接入经济玩法。"
+  ]
+}

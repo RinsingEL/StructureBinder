@@ -1,0 +1,51 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-07-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "3a03964f58c3da748ed8930475667c7cf2e1ce939718cfd2840f9e187c017889",
+  "author_sha256": "9866723ba5bb873b99b9d8e8c111e1c2cb6c8800d7cde83f6d344c4df5621db9",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-sales.png",
+    "previews/room-workshop.png",
+    "previews/room-gallery.png",
+    "previews/room-rest.png",
+    "previews/room-terrace.png",
+    "previews/point-sales.png",
+    "previews/point-sand.png",
+    "previews/point-mould.png",
+    "previews/point-kiln.png",
+    "previews/point-kiln_service.png",
+    "previews/point-gallery.png",
+    "previews/point-sleep.png",
+    "previews/point-terrace.png",
+    "previews/point-account.png",
+    "previews/point-tools.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "下层前售后作，上层精品展厅和独立值班室，内梯接屋面遮阳连廊，烟道避开上层房间。",
+    "内饰与使用": "接待讲台、玻璃样品、原砂、窑炉、工具、楼上陈列长凳、床位衣柜和屋面歇凉设施完整。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、全部楼层、各房间和使用点、标记与环境图；最终 NBT 数据与入口至标记站位的碰撞检查通过，无警告。",
+    "因地制宜": "具砂料、燃料、供水与外运条件的生产地块，热作业区和烟道周围保持净空；下层前售后作，上层展示和职工休息；内部楼梯通向屋面连廊，避开窑炉烟道。；主入口与地面层脚底 Y=2；上层版二层脚底 Y=9；独立完整建筑与内部院落，不依靠运行时补齐；模板外与凹角未写入格保持原环境。实际查看了相应平地或微坡环境示意。"
+  },
+  "revisions": [
+    "补充材料架、工具、水盆、照明和接待设施，使生产及顾客用途可从室内辨认。",
+    "屋面遮棚柱从二层地坪开始，保留下层设备和地坪；新增凉棚坐席。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "砖窑用原版熔炉表达，设备与玻璃陈列不表示自定义配方、热工、机器或自动生产已接入。"
+  ]
+}

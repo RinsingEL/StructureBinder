@@ -1,0 +1,48 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-05-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "5d8a1f15e5648c34f37dc7b0d4a58f9a2ed3961648ba53c32fb0b85b604a3ce8",
+  "author_sha256": "7e0d7dab7d565ab081ba6a9d57369d0628b384ed341e3df0703d9babd291fec0",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-sales.png",
+    "previews/room-stock.png",
+    "previews/room-living.png",
+    "previews/room-accounts.png",
+    "previews/room-bedroom.png",
+    "previews/room-terrace.png",
+    "previews/point-sales.png",
+    "previews/point-stock.png",
+    "previews/point-living_cook.png",
+    "previews/point-accounts.png",
+    "previews/point-bedroom_bed1.png",
+    "previews/point-terrace.png",
+    "previews/point-pack.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "紧凑两层商宅下层接待与货仓、上层起居账房卧室，七级双宽内梯通向有护栏的家用露台。",
+    "内饰与使用": "下层展示、候坐、织物架与打包货箱，上层阅读柜、账台、厨房、床位、露台坐席与饮水都有布置。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、全部楼层、各房间和使用点、标记与环境图；最终 NBT 数据与入口至标记站位的碰撞检查通过，无警告。",
+    "因地制宜": "可靠供水的贸易聚落，有顾客步行、货物卸载与家居生活需求；下层铺面与货仓，上层家居、账房和露台；内部楼梯连接商业与生活。；主入口与地面层脚底 Y=2；上层版二层脚底 Y=9；独立完整建筑与内部院落，不依靠运行时补齐；模板外与凹角未写入格保持原环境。实际查看了相应平地或微坡环境示意。"
+  },
+  "revisions": [
+    "补充会客坐席、织物陈列、照明和门前遮阳；会客织物改为嵌入地坪，避免精确站位净空警告。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "交易、账记和库存仅作空间与标记表达，尚未接入经济玩法。"
+  ]
+}

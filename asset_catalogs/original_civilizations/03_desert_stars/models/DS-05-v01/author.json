@@ -1,0 +1,274 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DS-05-v01",
+  "name": "前铺水庭商宅",
+  "family": "DS-05",
+  "civilization": "沙海星象文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    41,
+    24,
+    39
+  ],
+  "terrain": {
+    "选址": "可靠供水的贸易聚落，有顾客步行、货物卸载与家居生活需求",
+    "地块": "前排展示与账房接公共水庭，后排家居卧室分开，侧廊只存少量周转货物。",
+    "接地": "主入口与地面层脚底 Y=2；上层版二层脚底 Y=9",
+    "落地": "独立完整建筑与内部院落，不依靠运行时补齐；模板外与凹角未写入格保持原环境"
+  },
+  "rooms": [
+    {
+      "id": "showroom",
+      "name": "临街接待铺面",
+      "min": [
+        5,
+        2,
+        7
+      ],
+      "max": [
+        19,
+        6,
+        15
+      ],
+      "purpose": "商品、接待柜台和备货"
+    },
+    {
+      "id": "accounts",
+      "name": "会客账房",
+      "min": [
+        23,
+        2,
+        7
+      ],
+      "max": [
+        35,
+        6,
+        15
+      ],
+      "purpose": "接待、账册、贵重小货与交易记录"
+    },
+    {
+      "id": "living",
+      "name": "家庭炊事与起居",
+      "min": [
+        5,
+        2,
+        23
+      ],
+      "max": [
+        17,
+        6,
+        33
+      ],
+      "purpose": "炊事、备水、进餐与用品"
+    },
+    {
+      "id": "bedroom",
+      "name": "家庭双床房",
+      "min": [
+        23,
+        2,
+        25
+      ],
+      "max": [
+        35,
+        6,
+        33
+      ],
+      "purpose": "睡眠、衣物与室内盥洗"
+    },
+    {
+      "id": "court",
+      "name": "公共水庭",
+      "min": [
+        4,
+        2,
+        17
+      ],
+      "max": [
+        36,
+        6,
+        23
+      ],
+      "purpose": "客货分流、遮阳和少量周转存货"
+    }
+  ],
+  "points": [
+    {
+      "id": "showroom",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        10
+      ],
+      "name": "接待与商品展示",
+      "approach": [
+        7,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "accounts",
+      "kind": "work",
+      "pos": [
+        25,
+        2,
+        10
+      ],
+      "name": "会商与账记",
+      "approach": [
+        25,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "living_cook",
+      "kind": "work",
+      "pos": [
+        5,
+        2,
+        33
+      ],
+      "name": "家庭炊事与起居炉灶",
+      "approach": [
+        5,
+        2,
+        32
+      ]
+    },
+    {
+      "id": "bedroom_bed1",
+      "kind": "bed",
+      "pos": [
+        24,
+        2,
+        32
+      ],
+      "name": "家庭双床房床位 1",
+      "approach": [
+        25,
+        2,
+        32
+      ]
+    },
+    {
+      "id": "bedroom_bed2",
+      "kind": "bed",
+      "pos": [
+        34,
+        2,
+        32
+      ],
+      "name": "家庭双床房床位 2",
+      "approach": [
+        33,
+        2,
+        32
+      ]
+    },
+    {
+      "id": "stock",
+      "kind": "work",
+      "pos": [
+        34,
+        2,
+        20
+      ],
+      "name": "庭侧周转货",
+      "approach": [
+        33,
+        2,
+        20
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        11,
+        2,
+        4
+      ],
+      "name": "主入口",
+      "facing": "north"
+    },
+    {
+      "id": "tea",
+      "kind": "work",
+      "pos": [
+        14,
+        2,
+        29
+      ],
+      "name": "家庭待客茶桌",
+      "approach": [
+        14,
+        2,
+        28
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        11,
+        1,
+        4
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "外部步行或卸货面需接脚底 Y=2"
+    }
+  ],
+  "design_notes": [
+    "前排展示与账房接公共水庭，后排家居卧室分开，侧廊只存少量周转货物。"
+  ],
+  "differences": [
+    "前排展示与账房接公共水庭，后排家居卧室分开，侧廊只存少量周转货物。"
+  ],
+  "floors": [
+    {
+      "name": "室内与院落",
+      "y": 1,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/oasis_crafts.py:merchant(1)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "sand"
+  },
+  "ventilation": [
+    {
+      "roof_y": 8,
+      "min": [
+        25,
+        8,
+        28
+      ],
+      "max": [
+        26,
+        13,
+        29
+      ],
+      "note": "连续通风孔的几何表达，不模拟气流或温度"
+    }
+  ],
+  "nbt_sha256": "40d794194d558804250baa202478aca9539400369f25b7c5a4f860d026ab1b98"
+}

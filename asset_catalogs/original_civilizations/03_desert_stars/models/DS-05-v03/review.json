@@ -1,0 +1,49 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-05-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "d171ca31f5ce81a51e1efcecf3584ad4792c29b6ced8621b624cac915346979d",
+  "author_sha256": "3612bb682704d88c7fdfc507084be30770e737146fff6b3b0b02f7c06f0878e4",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-showroom.png",
+    "previews/room-living.png",
+    "previews/room-bedroom.png",
+    "previews/room-accounts.png",
+    "previews/room-stock.png",
+    "previews/room-front_court.png",
+    "previews/room-rear_court.png",
+    "previews/point-showroom.png",
+    "previews/point-living_cook.png",
+    "previews/point-bedroom_bed1.png",
+    "previews/point-bedroom_bed2.png",
+    "previews/point-accounts.png",
+    "previews/point-stock.png",
+    "previews/point-family_table.png",
+    "previews/point-tea.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "中央圆顶账房分开两庭，前庭水池会客、后庭遮棚家宴，两侧分别为铺面货仓及家庭生活。",
+    "内饰与使用": "会商席、织物陈列、小货仓、独立厨房起居、双床卧室、后庭长桌长凳和盆栽完整。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、全部楼层、各房间和使用点、标记与环境图；最终 NBT 数据与入口至标记站位的碰撞检查通过，无警告。",
+    "因地制宜": "可靠供水的贸易聚落，有顾客步行、货物卸载与家居生活需求；中央账房分隔前后两庭，前庭会商与存货，后庭家宴与起居，侧廊连接两者。；主入口与地面层脚底 Y=2；上层版二层脚底 Y=9；独立完整建筑与内部院落，不依靠运行时补齐；模板外与凹角未写入格保持原环境。实际查看了相应平地或微坡环境示意。"
+  },
+  "revisions": [
+    "补充会客坐席、织物陈列、照明和门前遮阳；会客织物改为嵌入地坪，避免精确站位净空警告。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "交易、账记和库存仅作空间与标记表达，尚未接入经济玩法。"
+  ]
+}

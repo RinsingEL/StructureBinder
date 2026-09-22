@@ -1,0 +1,45 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-07-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "5b8ac9ab983bd2c76de3b8f2e54008484cd39c1dc37ef168b0340ea475170b8b",
+  "author_sha256": "374230ed56748e50f944387f82ac5eacfa2fdd89652fa374a723f23271c7d146",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-hall.png",
+    "previews/room-rest.png",
+    "previews/room-fuel.png",
+    "previews/point-kiln.png",
+    "previews/point-kiln_service.png",
+    "previews/point-sand.png",
+    "previews/point-mould.png",
+    "previews/point-cooling.png",
+    "previews/point-rest.png",
+    "previews/point-fuel.png",
+    "previews/point-tools.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "单厅工作坊设一座独立贯通烟道砖窑，后院另设休息间和燃料棚，入口短篷与侧窗区分前厅。",
+    "内饰与使用": "前部原砂与材料架、窑前装料、窑后维护、模具台、器具、水盆和冷却架组成完整使用顺序。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、全部楼层、各房间和使用点、标记与环境图；最终 NBT 数据与入口至标记站位的碰撞检查通过，无警告。",
+    "因地制宜": "具砂料、燃料、供水与外运条件的生产地块，热作业区和烟道周围保持净空；单窑设于工作厅后部，原料近前口、加工与冷却靠侧墙，后院另有休息与燃料棚。；主入口与地面层脚底 Y=2；上层版二层脚底 Y=9；独立完整建筑与内部院落，不依靠运行时补齐；模板外与凹角未写入格保持原环境。实际查看了相应平地或微坡环境示意。"
+  },
+  "revisions": [
+    "补充材料架、工具、水盆、照明和接待设施，使生产及顾客用途可从室内辨认。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "砖窑用原版熔炉表达，设备与玻璃陈列不表示自定义配方、热工、机器或自动生产已接入。"
+  ]
+}

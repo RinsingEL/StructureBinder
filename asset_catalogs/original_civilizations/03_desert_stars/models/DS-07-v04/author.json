@@ -1,0 +1,292 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DS-07-v04",
+  "name": "分台玻璃院坊",
+  "family": "DS-07",
+  "civilization": "沙海星象文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    39,
+    24,
+    39
+  ],
+  "terrain": {
+    "选址": "具砂料、燃料、供水与外运条件的生产地块，热作业区和烟道周围保持净空",
+    "地块": "下台收料与成品，上台窑炉和加工，短阶连接一格高差，生产与顾客空间分开。",
+    "接地": "下台脚底 Y=2，上台脚底 Y=3，沿 +Z 抬升一格",
+    "落地": "独立完整建筑与内部院落，不依靠运行时补齐；模板外与凹角未写入格保持原环境"
+  },
+  "rooms": [
+    {
+      "id": "raw",
+      "name": "下台原料库",
+      "min": [
+        5,
+        2,
+        7
+      ],
+      "max": [
+        13,
+        6,
+        15
+      ],
+      "purpose": "由下台卸货面送入原砂和燃料"
+    },
+    {
+      "id": "sales",
+      "name": "下台成品间",
+      "min": [
+        24,
+        2,
+        7
+      ],
+      "max": [
+        33,
+        6,
+        15
+      ],
+      "purpose": "顾客观样、成品打包与交付"
+    },
+    {
+      "id": "finishing",
+      "name": "上台加工间",
+      "min": [
+        19,
+        3,
+        24
+      ],
+      "max": [
+        32,
+        7,
+        33
+      ],
+      "purpose": "模具与冷加工、冷却架、饮水与歇坐"
+    },
+    {
+      "id": "kiln",
+      "name": "上台露窑与遮阳",
+      "min": [
+        4,
+        3,
+        20
+      ],
+      "max": [
+        15,
+        7,
+        32
+      ],
+      "purpose": "窑前候作，后方保留维护通道"
+    }
+  ],
+  "points": [
+    {
+      "id": "sand",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        8
+      ],
+      "name": "原砂备料",
+      "approach": [
+        7,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "fuel",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        13
+      ],
+      "name": "原料库燃料",
+      "approach": [
+        5,
+        2,
+        13
+      ]
+    },
+    {
+      "id": "sales",
+      "kind": "work",
+      "pos": [
+        28,
+        3,
+        10
+      ],
+      "name": "玻璃冷却陈列架",
+      "approach": [
+        28,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "mould",
+      "kind": "work",
+      "pos": [
+        21,
+        3,
+        28
+      ],
+      "name": "模具与冷加工台",
+      "approach": [
+        21,
+        3,
+        27
+      ]
+    },
+    {
+      "id": "cooling",
+      "kind": "work",
+      "pos": [
+        29,
+        4,
+        32
+      ],
+      "name": "玻璃冷却陈列架",
+      "approach": [
+        29,
+        3,
+        31
+      ]
+    },
+    {
+      "id": "rest",
+      "kind": "work",
+      "pos": [
+        19,
+        3,
+        25
+      ],
+      "name": "歇工饮水",
+      "approach": [
+        20,
+        3,
+        25
+      ]
+    },
+    {
+      "id": "kiln",
+      "kind": "work",
+      "pos": [
+        7,
+        3,
+        24
+      ],
+      "name": "窑炉装料与出料",
+      "approach": [
+        7,
+        3,
+        23
+      ]
+    },
+    {
+      "id": "kiln_service",
+      "kind": "work",
+      "pos": [
+        7,
+        4,
+        29
+      ],
+      "name": "窑后检查与维护",
+      "approach": [
+        7,
+        3,
+        30
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        19,
+        2,
+        4
+      ],
+      "name": "主入口",
+      "facing": "north"
+    },
+    {
+      "id": "account",
+      "kind": "work",
+      "pos": [
+        27,
+        2,
+        14
+      ],
+      "name": "下台成品登记",
+      "approach": [
+        27,
+        2,
+        13
+      ]
+    },
+    {
+      "id": "tools",
+      "kind": "work",
+      "pos": [
+        15,
+        3,
+        29
+      ],
+      "name": "窑侧加工器具",
+      "approach": [
+        15,
+        3,
+        28
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        19,
+        1,
+        4
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "外部步行或卸货面需接脚底 Y=2"
+    }
+  ],
+  "design_notes": [
+    "下台收料与成品，上台窑炉和加工，短阶连接一格高差，生产与顾客空间分开。",
+    "砖窑和贯通烟道为原版熔炉的建筑表达；标记操作与维护位置，不声明配方、热工或自动化生产。"
+  ],
+  "differences": [
+    "下台收料与成品，上台窑炉和加工，短阶连接一格高差，生产与顾客空间分开。"
+  ],
+  "floors": [
+    {
+      "name": "上下台工作地坪",
+      "y": 1,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/oasis_crafts.py:glassworks(4)",
+  "preview_context": {
+    "kind": "slope",
+    "land_surface_y": 2,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "sand",
+    "run": 20,
+    "rise": 1,
+    "slope_origin_z": 0
+  },
+  "nbt_sha256": "46742367b0920e648949ddd7515b5b8557f59256c63771e9981453b54dff520d"
+}

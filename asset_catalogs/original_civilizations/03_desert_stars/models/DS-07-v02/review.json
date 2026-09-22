@@ -1,0 +1,49 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-07-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "c4fd1ebfb7dcc6974fde052a98e0852139fa54db58fe2be72ffee8c1eb9f1a6a",
+  "author_sha256": "77455d336d50b00d6a8f5a2c352063964ca87393df00dce60ab935cf3f1dbe1a",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-raw.png",
+    "previews/room-kilns.png",
+    "previews/room-finishing.png",
+    "previews/room-rest.png",
+    "previews/point-sand.png",
+    "previews/point-fuel.png",
+    "previews/point-west_kiln.png",
+    "previews/point-west_kiln_service.png",
+    "previews/point-east_kiln.png",
+    "previews/point-east_kiln_service.png",
+    "previews/point-mould.png",
+    "previews/point-cooling.png",
+    "previews/point-rest.png",
+    "previews/point-west_tools.png",
+    "previews/point-east_tools.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "双窑立于开放院落，前端各有工具遮棚，东北原料库、南加工厅与东侧休息室围合工作院。",
+    "内饰与使用": "双操作台、双维护位、原砂、燃料、模具和冷却陈列分区，宽院落保留横向搬运和歇工取水。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、全部楼层、各房间和使用点、标记与环境图；最终 NBT 数据与入口至标记站位的碰撞检查通过，无警告。",
+    "因地制宜": "具砂料、燃料、供水与外运条件的生产地块，热作业区和烟道周围保持净空；露天双窑与遮阳操作区并列，东北原料库、南侧加工冷却厅和独立休息室围院展开。；主入口与地面层脚底 Y=2；上层版二层脚底 Y=9；独立完整建筑与内部院落，不依靠运行时补齐；模板外与凹角未写入格保持原环境。实际查看了相应平地或微坡环境示意。"
+  },
+  "revisions": [
+    "补充材料架、工具、水盆、照明和接待设施，使生产及顾客用途可从室内辨认。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "砖窑用原版熔炉表达，设备与玻璃陈列不表示自定义配方、热工、机器或自动生产已接入。"
+  ]
+}
