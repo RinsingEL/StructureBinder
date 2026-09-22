@@ -1,0 +1,96 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-F02-v01",
+  "name": "顺坡窄条薯田",
+  "family": "MF-F02",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    17,
+    16,
+    29
+  ],
+  "terrain": {
+    "选址": "仅限具备足够土壤、光照、温度和稳定水分的地表地块，不放入无光山腹或永久冻土。",
+    "高程": "默认田埂脚底 Y=2；MF-F02-v02 后半单阶脚底 Y=3。",
+    "生产": "作物为原版外观与几何表达；未模拟生长tick、光照、温度或整合包产量。",
+    "边界": "独立模板田块有田埂和封边，不代表Landscape自然生成的大田。"
+  },
+  "rooms": [
+    {
+      "id": "bed",
+      "name": "沿等高线窄条田",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        12,
+        6,
+        24
+      ],
+      "purpose": "一条分水沟、两条薯畦与四周田埂"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        8,
+        2,
+        2
+      ],
+      "name": "耕作通路入口",
+      "facing": "north"
+    },
+    {
+      "id": "crop",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        10
+      ],
+      "name": "田侧采收",
+      "approach": [
+        4,
+        2,
+        10
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "窄长等高线地块，中央水沟将薯畦分成两带，侧边通路连续；单层地坪不假装追随任意坡。"
+  ],
+  "differences": [
+    "窄长等高线地块，中央水沟将薯畦分成两带，侧边通路连续；单层地坪不假装追随任意坡。"
+  ],
+  "floors": [
+    {
+      "name": "生活与作业层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_outside.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "agriculture": {
+    "crops": "原版马铃薯、胡萝卜、甜菜和小麦依变体设置",
+    "layout": "窄长等高线地块，中央水沟将薯畦分成两带，侧边通路连续；单层地坪不假装追随任意坡。",
+    "irrigation": "每畦固定水源，最终NBT另核对4格水源距离和耕地支撑。"
+  },
+  "nbt_sha256": "fa26ded27c9dd3597bea473b2bd111a90c5e3d4f148b4c6c75ded7b9a9b3ab1d"
+}

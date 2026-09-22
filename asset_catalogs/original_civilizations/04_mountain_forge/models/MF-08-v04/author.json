@@ -1,0 +1,269 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-08-v04",
+  "name": "坡院换班食宿所",
+  "family": "MF-08",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    31,
+    26,
+    31
+  ],
+  "terrain": {
+    "选址": "矿业居住组团或访客路线旁，有稳定干地及足够的日常给水与食物补给。",
+    "高程": "低台公共用餐脚底 Y=2；后高台客房 Y=3；向 +Z 升一格。",
+    "保留空间": "完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "rooms": [
+    {
+      "id": "kitchen",
+      "name": "低台厨房登记",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        11,
+        6,
+        11
+      ],
+      "purpose": "炊事、饮水、储物与登记；具体工位：炊事与洗涤、换班食宿登记、粮食与清洁餐具"
+    },
+    {
+      "id": "dining",
+      "name": "低台棚下长桌",
+      "min": [
+        17,
+        2,
+        5
+      ],
+      "max": [
+        26,
+        6,
+        11
+      ],
+      "purpose": "面向街面的公共用餐"
+    },
+    {
+      "id": "sleep",
+      "name": "后高台四床屋",
+      "min": [
+        4,
+        3,
+        20
+      ],
+      "max": [
+        26,
+        7,
+        26
+      ],
+      "purpose": "四床、行李柜、洗漱水盆和储物架；具体工位：床位与个人柜、床位与个人柜、床位与个人柜、床位与个人柜、换班衣物与行李寄存、高台客房洗漱"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        8,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "kitchen",
+      "kind": "work",
+      "pos": [
+        4,
+        2,
+        5
+      ],
+      "name": "炊事与洗涤",
+      "approach": [
+        4,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "register",
+      "kind": "work",
+      "pos": [
+        9,
+        2,
+        10
+      ],
+      "name": "换班食宿登记",
+      "approach": [
+        9,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "entry_14_19",
+      "kind": "entrance",
+      "pos": [
+        14,
+        3,
+        18
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "west_0",
+      "kind": "bed",
+      "pos": [
+        5,
+        3,
+        22
+      ],
+      "name": "床位与个人柜",
+      "approach": [
+        6,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "west_1",
+      "kind": "bed",
+      "pos": [
+        8,
+        3,
+        22
+      ],
+      "name": "床位与个人柜",
+      "approach": [
+        9,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "east_0",
+      "kind": "bed",
+      "pos": [
+        18,
+        3,
+        22
+      ],
+      "name": "床位与个人柜",
+      "approach": [
+        19,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "east_1",
+      "kind": "bed",
+      "pos": [
+        21,
+        3,
+        22
+      ],
+      "name": "床位与个人柜",
+      "approach": [
+        22,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "food",
+      "kind": "storage",
+      "pos": [
+        4,
+        3,
+        11
+      ],
+      "name": "粮食与清洁餐具",
+      "approach": [
+        4,
+        2,
+        10
+      ]
+    },
+    {
+      "id": "service",
+      "kind": "work",
+      "pos": [
+        21,
+        2,
+        4
+      ],
+      "name": "食棚分餐与收盘长台",
+      "approach": [
+        21,
+        2,
+        5
+      ]
+    },
+    {
+      "id": "linen",
+      "kind": "storage",
+      "pos": [
+        20,
+        4,
+        20
+      ],
+      "name": "换班衣物与行李寄存",
+      "approach": [
+        20,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "wash",
+      "kind": "work",
+      "pos": [
+        14,
+        3,
+        24
+      ],
+      "name": "高台客房洗漱",
+      "approach": [
+        14,
+        3,
+        23
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "低台封闭厨房配开放大食棚，后高台四床屋经中央短阶进入；换班食客和住宿动线分开。"
+  ],
+  "differences": [
+    "低台封闭厨房配开放大食棚，后高台四床屋经中央短阶进入；换班食客和住宿动线分开。"
+  ],
+  "floors": [
+    {
+      "name": "低餐饮与高客房",
+      "y": 1,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_trade.py:BUILDERS",
+  "preview_context": {
+    "kind": "slope",
+    "land_surface_y": 2,
+    "padding": 5,
+    "run": 16,
+    "rise": 1,
+    "slope_origin_z": 16
+  },
+  "nbt_sha256": "9279a90b4335f2104c4d6f27f6fce9f11376af7f0e7e9aecf1352d1fbfcbc438"
+}

@@ -1,0 +1,27 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "MF-07-v01",
+  "nbt_sha256": "ba7589ac2384d5eaeffad3a115f4e7a39fc857e83a182cb625f2b1d914dc3a07",
+  "author_sha256": "009e6e2437f9f631a190d3e6e7af8e8d5a7d258f028e62377cf476a9b122054c",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-warehouse",
+    "point-ledger",
+    "point-iron",
+    "point-coal",
+    "point-receiving",
+    "point-dispatch",
+    "point-haul",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

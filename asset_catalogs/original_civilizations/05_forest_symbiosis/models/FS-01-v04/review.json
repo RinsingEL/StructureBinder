@@ -1,0 +1,47 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "FS-01-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 森林内饰返修逐图审查",
+  "nbt_sha256": "13df4aef879e5929b420a679b411a654d7c6ab8a2ea714a9d85aa60cb10529e4",
+  "author_sha256": "bffc0fc6117ed0751caaad5af6b04181c155bde1434ed0262962469a3e4ad126",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-unit0day.png",
+    "previews/room-unit0night.png",
+    "previews/room-unit1day.png",
+    "previews/room-unit1night.png",
+    "previews/point-unit0cook.png",
+    "previews/point-unit0dining.png",
+    "previews/point-unit0bed0.png",
+    "previews/point-unit0clothes.png",
+    "previews/point-unit0read.png",
+    "previews/point-unit1cook.png",
+    "previews/point-unit1dining.png",
+    "previews/point-unit1bed0.png",
+    "previews/point-unit1clothes.png",
+    "previews/point-unit1read.png",
+    "previews/point-housework.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "本次内饰返修后的24张最终视图已逐张实看；外观、去顶、分层、房间和工作点均对应当前NBT与author。",
+    "按房间尺度布置完整L形厨房、双边餐叙桌椅、有门睡眠屏风、衣物柜和读写座席；长进深增加缝补家务位，中央与床侧通路连贯。",
+    "屋檐与柱梁连续，床与柜台没有重叠；全部作者使用点通过最终NBT离线步行且零警告。"
+  ],
+  "revisions": [
+    "撤回旧版内饰接受结论，本版重新制作家具分区并完成全部视图重拍重审。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

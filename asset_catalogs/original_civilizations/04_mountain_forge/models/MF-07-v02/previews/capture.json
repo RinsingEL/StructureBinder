@@ -1,0 +1,31 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "MF-07-v02",
+  "nbt_sha256": "ceb12cc0584727eed65f1879e9180f6776e929e15485f4dd4d4551227acb5e94",
+  "author_sha256": "df7c3ad9057c7672311856b464e587402db14f48fb6493a11a15db3d7e72c9af",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-bays",
+    "room-cross",
+    "point-pile5_5",
+    "point-pile21_5",
+    "point-pile5_21",
+    "point-pile21_21",
+    "point-ledger",
+    "point-coal_check",
+    "point-iron_check",
+    "point-copper_dispatch",
+    "point-gold_dispatch",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

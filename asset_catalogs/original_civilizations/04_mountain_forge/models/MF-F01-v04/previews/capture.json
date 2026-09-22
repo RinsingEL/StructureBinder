@@ -1,0 +1,28 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "MF-F01-v04",
+  "nbt_sha256": "b6d5cc6e96f8381034aa49a091f58ea57f7c9368e21e2fb2caab5eba252f93ab",
+  "author_sha256": "b4cd944de7fd8029d888c2734251a5d3f12e5fb3e20584833645c406e06ed4d7",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-store",
+    "room-home",
+    "point-sale",
+    "point-owner_0",
+    "point-kitchen",
+    "point-packing",
+    "point-orders",
+    "point-homeware",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

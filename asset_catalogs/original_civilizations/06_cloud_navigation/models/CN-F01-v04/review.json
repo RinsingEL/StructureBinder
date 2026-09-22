@@ -1,0 +1,44 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CN-F01-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors author visual review",
+  "nbt_sha256": "823a74fcd56f4200a4cf7256256d348dfaa1c73b92580ad6348dc18d2bc05b12",
+  "author_sha256": "0e4eefd5478447b93911a5d9e1119316b1123a1b9f6b63926b586869731e5193",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-maps.png",
+    "previews/room-home.png",
+    "previews/room-home_sleep.png",
+    "previews/point-map.png",
+    "previews/point-home_1.png",
+    "previews/point-home_2.png",
+    "previews/point-home_3.png",
+    "previews/point-cook.png",
+    "previews/point-charts.png",
+    "previews/point-archive.png",
+    "previews/point-reference.png",
+    "previews/point-home_read.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "已实际查看当前最终全视角、分层、每个房间及使用点全部截图，无缺纹理与渲染错误。",
+    "航图阅览与绘制柜、参考资料架；生活翼厨房餐席、坐读与隔门三床寝间配个人灯柜。",
+    "新旧柜台使用深木构件，家具组与浅地板清楚区分。数据及全部标记通路通过，无警告；原轮廓、承檐、实体支撑与平台连续栏杆保留。"
+  ],
+  "revisions": [
+    "主审撤回稀疏内饰后，仅修改cloud_market.py商铺局部helper；CN08货仓与其它冻结模块未改。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

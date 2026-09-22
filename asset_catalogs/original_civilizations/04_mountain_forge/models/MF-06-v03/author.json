@@ -1,0 +1,195 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-06-v03",
+  "name": "窄巷宝石鉴定店",
+  "family": "MF-06",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    19,
+    23,
+    27
+  ],
+  "terrain": {
+    "选址": "邻近矿料路线且具有干燥安全保管条件；切磨声与扬尘需和生活门面分开。",
+    "高程": "基础上边界及室内脚底 Y=2；入口街面需同高程。",
+    "保留空间": "完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "rooms": [
+    {
+      "id": "assess",
+      "name": "鉴定陈列室",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        14,
+        6,
+        15
+      ],
+      "purpose": "估价书写、三种样品与候客；具体工位：鉴定与报价、成品陈列与检视、独立铺毡精检与当面复核、估价档案与对照图册"
+    },
+    {
+      "id": "secure",
+      "name": "后部样品小库",
+      "min": [
+        4,
+        2,
+        17
+      ],
+      "max": [
+        14,
+        6,
+        22
+      ],
+      "purpose": "成品保管、少量复磨和材料架；具体工位：少量复磨、样品保管、样品编号封装台"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        9,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "assess",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        6
+      ],
+      "name": "鉴定与报价",
+      "approach": [
+        6,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "display",
+      "kind": "work",
+      "pos": [
+        7,
+        3,
+        11
+      ],
+      "name": "成品陈列与检视",
+      "approach": [
+        7,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "polish",
+      "kind": "work",
+      "pos": [
+        5,
+        2,
+        19
+      ],
+      "name": "少量复磨",
+      "approach": [
+        6,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "safe",
+      "kind": "storage",
+      "pos": [
+        13,
+        2,
+        18
+      ],
+      "name": "样品保管",
+      "approach": [
+        12,
+        2,
+        18
+      ]
+    },
+    {
+      "id": "inspection",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        14
+      ],
+      "name": "独立铺毡精检与当面复核",
+      "approach": [
+        7,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "records",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        4
+      ],
+      "name": "估价档案与对照图册",
+      "approach": [
+        5,
+        2,
+        5
+      ]
+    },
+    {
+      "id": "packing",
+      "kind": "work",
+      "pos": [
+        9,
+        2,
+        18
+      ],
+      "name": "样品编号封装台",
+      "approach": [
+        9,
+        2,
+        19
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "狭长一对一鉴定店，前部书写陈列，后小库隔门储存；仅一处复磨台，区别于批量切磨坊。"
+  ],
+  "differences": [
+    "狭长一对一鉴定店，前部书写陈列，后小库隔门储存；仅一处复磨台，区别于批量切磨坊。"
+  ],
+  "floors": [
+    {
+      "name": "生活与作业层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_trade.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "nbt_sha256": "c5b5c86442d2d45de45ceff22f4832ed848f551461ec9199af23ab5f0df53b51"
+}

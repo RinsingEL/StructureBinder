@@ -1,0 +1,55 @@
+{
+  "schema": "structure-studio.validation.v1",
+  "nbt_sha256": "7e21a3e86f411432f37d314ee163d294a67c597086e0e9172d35b9a0fe7bf625",
+  "navigation": {
+    "passed": true,
+    "unreachable": [],
+    "nodes": 2504,
+    "highest_standing_y": 2,
+    "truncated": false,
+    "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "size": [
+    29,
+    16,
+    27
+  ],
+  "visible_blocks": 1955,
+  "explicit_air": 8845,
+  "palette": 28,
+  "block_entities": 0,
+  "agriculture": {
+    "planted_cells": 126,
+    "missing_soil": [],
+    "dry_cells": [],
+    "scope": "最终 NBT 的四类原版作物、耕地和同层/高一层 4 格水源核对；不模拟光照或生长 tick"
+  },
+  "materials": {
+    "minecraft:dirt": 675,
+    "minecraft:coarse_dirt": 350,
+    "minecraft:spruce_planks": 141,
+    "minecraft:deepslate_bricks": 130,
+    "minecraft:farmland": 126,
+    "minecraft:waxed_cut_copper_stairs": 108,
+    "minecraft:polished_andesite": 100,
+    "minecraft:potatoes": 96,
+    "minecraft:spruce_log": 78,
+    "minecraft:waxed_cut_copper": 56,
+    "minecraft:carrots": 30,
+    "minecraft:water": 21,
+    "minecraft:polished_basalt": 12,
+    "minecraft:gray_stained_glass_pane": 12,
+    "minecraft:barrel": 5,
+    "minecraft:spruce_slab": 5,
+    "minecraft:chiseled_deepslate": 4,
+    "minecraft:spruce_door": 2,
+    "minecraft:crafting_table": 1,
+    "minecraft:composter": 1,
+    "minecraft:lantern": 1,
+    "minecraft:chain": 1
+  },
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+}

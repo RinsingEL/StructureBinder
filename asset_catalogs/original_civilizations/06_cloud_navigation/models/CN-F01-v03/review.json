@@ -1,0 +1,43 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CN-F01-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors author visual review",
+  "nbt_sha256": "65a4626d7da2e7ad02b99465cf3f24138645e1ce8717371e1e8b3804634ed01b",
+  "author_sha256": "926ea31cf9f8cb55cf0e149baa2556207ddf19570b5c3a083a07f696f3049351",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-tool.png",
+    "previews/room-sales.png",
+    "previews/room-repair.png",
+    "previews/point-sale.png",
+    "previews/point-tool_11.png",
+    "previews/point-tool_17.png",
+    "previews/point-tool_23.png",
+    "previews/point-stock.png",
+    "previews/point-sample_tools.png",
+    "previews/point-repair_bench.png",
+    "previews/point-parts.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "已实际查看当前最终全视角、分层、每个房间及使用点全部截图，无缺纹理与渲染错误。",
+    "器具登记及双组样品前厅，三组拆检工作台、铁砧/磨轮/石切设备和后墙零件柜；双侧门横向通路完整。",
+    "新旧柜台使用深木构件，家具组与浅地板清楚区分。数据及全部标记通路通过，无警告；原轮廓、承檐、实体支撑与平台连续栏杆保留。"
+  ],
+  "revisions": [
+    "主审撤回稀疏内饰后，仅修改cloud_market.py商铺局部helper；CN08货仓与其它冻结模块未改。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "CN-F01-v08",
+  "nbt_sha256": "d125b94fce9899644cb8d60f846ed71bb7b17f419438fece7fae78eb89102117",
+  "author_sha256": "c4860a88b7e10068afd6517a4ed3c476c1eba9aaaf5b57625cda83c7ce558241",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-herbs",
+    "room-records",
+    "room-sorting",
+    "point-herbs",
+    "point-consult",
+    "point-samples",
+    "point-dried",
+    "point-ingredients",
+    "point-sort",
+    "point-records_store",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

@@ -1,0 +1,48 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MF-08-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 山腹锻炉离线作者图审",
+  "nbt_sha256": "9279a90b4335f2104c4d6f27f6fce9f11376af7f0e7e9aecf1352d1fbfcbc438",
+  "author_sha256": "003c35d4825b91b8dea5fce9efbee2afe8ce81125582234fce61111402da9110",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-kitchen.png",
+    "previews/room-dining.png",
+    "previews/room-sleep.png",
+    "previews/point-kitchen.png",
+    "previews/point-register.png",
+    "previews/point-west_0.png",
+    "previews/point-west_1.png",
+    "previews/point-east_0.png",
+    "previews/point-east_1.png",
+    "previews/point-food.png",
+    "previews/point-service.png",
+    "previews/point-linen.png",
+    "previews/point-wash.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "低厨房食棚与后高台四床屋由中央短阶联系。",
+    "内饰与使用": "前厨粮食架、登记与炊事，食棚分餐台和长桌完整；后寝有四床个人箱、换班行李架、公共储架与洗漱，门前净空保留。",
+    "完整证据": "实际查看当前 NBT 四向外观、俯视、去屋顶、全部楼层、全部房间、全部已标站位、作者标记和地形示意；未以自动截图代替图审。",
+    "标记与通路": "原版状态、门床、作者标记及入口至全部站位碰撞检查通过，无警告。",
+    "地块条件": "矿业居住组团或访客路线旁，有稳定干地及足够的日常给水与食物补给。；低台公共用餐脚底 Y=2；后高台客房 Y=3；向 +Z 升一格。；完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "revisions": [
+    "重审出檐屋面承托：坡屋墙线补连续承檐梁；独立棚顶按型号改下半砖与柱顶接触。最终 NBT 重拍后实际检查全部视图。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "原版设备仅表达手工生产和生活用途；未接入机器、经济、运输或真实生成。"
+  ]
+}

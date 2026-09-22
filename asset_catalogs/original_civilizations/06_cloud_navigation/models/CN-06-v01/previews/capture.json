@@ -1,0 +1,33 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "CN-06-v01",
+  "nbt_sha256": "b6eeb1fba8dcaddcf16aa55c9f44f48b4d806030f4119d2a096cb256c5f7ef12",
+  "author_sha256": "96d9f5f2d9cc40a7b272c8148359b202ddef45099ca2778504b4fe2c73010d37",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-sleep_read",
+    "room-sleep",
+    "room-mess",
+    "point-sleep_1",
+    "point-sleep_2",
+    "point-sleep_3",
+    "point-sleep_4",
+    "point-sleep_5",
+    "point-sleep_6",
+    "point-sleep_table",
+    "point-sleep_read",
+    "point-mess_cook",
+    "point-mess_meal",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

@@ -1,0 +1,24 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "MF-F03-v04",
+  "nbt_sha256": "ad3acae49a350d8da1b8d24aee09794616dafe41cacb9f8bb84afa348001f04c",
+  "author_sha256": "23e859da03aa2305b79acc9d2a127645d355d4dcecec16abeb283135356b79bc",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-tools",
+    "room-shed",
+    "point-repair",
+    "point-anvil",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

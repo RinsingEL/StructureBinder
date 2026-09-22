@@ -1,0 +1,44 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MF-F01-v05",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 山腹锻炉离线作者图审",
+  "nbt_sha256": "a102d278d83a628a702bb920651db4c3f8096a00309ed88ac197d193680dfab7",
+  "author_sha256": "3427ff698813ce555396f8501ae58dc669d2832e389c54d803bc47fc843e2464",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-store.png",
+    "previews/room-copy.png",
+    "previews/point-sale.png",
+    "previews/point-maps.png",
+    "previews/point-copy.png",
+    "previews/point-browse.png",
+    "previews/point-layout.png",
+    "previews/point-paper.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "两层书铺由内梯联系上层安静抄图室，梯井三边护栏连接。",
+    "内饰与使用": "楼下借售、翻阅长台和书架；楼上制图、展开校核长台、誊写桌、纸墨储架及文书架分区，梯口和各桌前站位清楚。",
+    "完整证据": "实际查看当前 NBT 四向外观、俯视、去屋顶、全部楼层、全部房间、全部已标站位、作者标记和地形示意；未以自动截图代替图审。",
+    "标记与通路": "原版状态、门床、作者标记及入口至全部站位碰撞检查通过，无警告。",
+    "地块条件": "服务工人与居民日常生活；依照门面、转角、坡差或院落要求落位，保持完整独立模板。；基础上边界及室内脚底 Y=2；入口街面需同高程。；完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "revisions": [
+    "重审出檐屋面承托：坡屋墙线补连续承檐梁；独立棚顶按型号改下半砖与柱顶接触。最终 NBT 重拍后实际检查全部视图。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "原版设备仅表达手工生产和生活用途；未接入机器、经济、运输或真实生成。"
+  ]
+}

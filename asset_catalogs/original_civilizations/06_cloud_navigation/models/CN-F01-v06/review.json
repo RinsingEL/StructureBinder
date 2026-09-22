@@ -1,0 +1,46 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CN-F01-v06",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors author visual review",
+  "nbt_sha256": "bc42b165863e14dcd89dbe91743a847ed84207004fd299a5b047749c8adb69ce",
+  "author_sha256": "11ba73163c5870e5d5f5064734e22efb6a20719186158b84f7180e225d25c6eb",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-office.png",
+    "previews/room-yard.png",
+    "previews/room-living.png",
+    "previews/point-order.png",
+    "previews/point-rest_1.png",
+    "previews/point-rest_2.png",
+    "previews/point-splice.png",
+    "previews/point-rope.png",
+    "previews/point-rope_samples.png",
+    "previews/point-cook.png",
+    "previews/point-rest_read.png",
+    "previews/point-raw_15.png",
+    "previews/point-raw_29.png",
+    "previews/point-rope_bins.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "已实际查看当前最终全视角、分层、每个房间及使用点全部截图，无缺纹理与渲染错误。",
+    "接单柜及样品架与轮值生活隔门；厨房、四座餐桌、双床灯柜短屏和坐读；长棚原料、成品、拉索与接头编结。",
+    "新旧柜台使用深木构件，家具组与浅地板清楚区分。数据及全部标记通路通过，无警告；原轮廓、承檐、实体支撑与平台连续栏杆保留。"
+  ],
+  "revisions": [
+    "主审撤回稀疏内饰后，仅修改cloud_market.py商铺局部helper；CN08货仓与其它冻结模块未改。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "FS-F01-v03",
+  "nbt_sha256": "88530f78c27cf220892821517ea02462d5ca431964c3cc0c134a9ab546a3f470",
+  "author_sha256": "7f7ed47003058c2edab74a3a8bf8a6417d4719a954734d638f7fbf71075cd9c6",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-sales",
+    "room-back",
+    "room-annex",
+    "point-trade",
+    "point-stock",
+    "point-rest",
+    "point-keepercook",
+    "point-keepermeal",
+    "point-service",
+    "point-cloth",
+    "point-annex",
+    "point-outside",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

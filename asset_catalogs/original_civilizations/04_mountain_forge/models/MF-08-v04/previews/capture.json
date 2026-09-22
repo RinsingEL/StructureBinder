@@ -1,0 +1,33 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "MF-08-v04",
+  "nbt_sha256": "9279a90b4335f2104c4d6f27f6fce9f11376af7f0e7e9aecf1352d1fbfcbc438",
+  "author_sha256": "003c35d4825b91b8dea5fce9efbee2afe8ce81125582234fce61111402da9110",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-kitchen",
+    "room-dining",
+    "room-sleep",
+    "point-kitchen",
+    "point-register",
+    "point-west_0",
+    "point-west_1",
+    "point-east_0",
+    "point-east_1",
+    "point-food",
+    "point-service",
+    "point-linen",
+    "point-wash",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

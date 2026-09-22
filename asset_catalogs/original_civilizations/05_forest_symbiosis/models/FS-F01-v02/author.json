@@ -1,0 +1,229 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "FS-F01-v02",
+  "name": "药叶小铺",
+  "family": "FS-F01",
+  "civilization": "森林共生文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    29,
+    25,
+    38
+  ],
+  "terrain": {
+    "选址": "窄长临路铺，前接待、后干药和店主歇班",
+    "落地": "只整理建筑本体与步道；保留未写入的林地。附树版本包含独立柱脚和树根占地，不能套入任意现存树体。",
+    "高程": "主入口脚底 Y=3；高位层和坡地接驳另见楼层与使用点",
+    "运行边界": "种植、蜂具、藤果、兽栏与遗留物均为原版静态空间表达；实际生产、动物和生态行为须另行接入。"
+  },
+  "rooms": [
+    {
+      "id": "sales",
+      "name": "接待与行业作业",
+      "min": [
+        5,
+        3,
+        7
+      ],
+      "max": [
+        22,
+        7,
+        25
+      ],
+      "purpose": "行业柜台、客户站位、物品展示与服务通道"
+    },
+    {
+      "id": "back",
+      "name": "储藏与歇班",
+      "min": [
+        5,
+        3,
+        27
+      ],
+      "max": [
+        22,
+        7,
+        32
+      ],
+      "purpose": "分类商品柜、店主床位与私人用品"
+    }
+  ],
+  "points": [
+    {
+      "id": "trade",
+      "kind": "work",
+      "pos": [
+        8,
+        3,
+        11
+      ],
+      "name": "药材挑选与配制",
+      "approach": [
+        8,
+        3,
+        12
+      ]
+    },
+    {
+      "id": "stock",
+      "kind": "storage",
+      "pos": [
+        7,
+        4,
+        32
+      ],
+      "name": "后场分类商品与工具",
+      "approach": [
+        7,
+        3,
+        31
+      ]
+    },
+    {
+      "id": "rest",
+      "kind": "sleep",
+      "pos": [
+        20,
+        3,
+        31
+      ],
+      "name": "店主歇班床",
+      "approach": [
+        19,
+        3,
+        31
+      ]
+    },
+    {
+      "id": "keepercook",
+      "kind": "work",
+      "pos": [
+        6,
+        3,
+        28
+      ],
+      "name": "店主厨房炉灶与备餐台",
+      "approach": [
+        6,
+        3,
+        29
+      ]
+    },
+    {
+      "id": "keepermeal",
+      "kind": "work",
+      "pos": [
+        13,
+        3,
+        29
+      ],
+      "name": "后场用餐与账本桌",
+      "approach": [
+        13,
+        3,
+        28
+      ]
+    },
+    {
+      "id": "service",
+      "kind": "work",
+      "pos": [
+        7,
+        4,
+        14
+      ],
+      "name": "按方配药与称分台",
+      "approach": [
+        7,
+        3,
+        13
+      ]
+    },
+    {
+      "id": "herbs0",
+      "kind": "storage",
+      "pos": [
+        17,
+        4,
+        16
+      ],
+      "name": "前店分格药材展示与挑选",
+      "approach": [
+        17,
+        3,
+        15
+      ]
+    },
+    {
+      "id": "herbs1",
+      "kind": "storage",
+      "pos": [
+        17,
+        4,
+        21
+      ],
+      "name": "前店分格药材展示与挑选",
+      "approach": [
+        17,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        13,
+        3,
+        2
+      ],
+      "name": "林间步道入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        13,
+        2,
+        2
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "外接步道脚底 Y=3，须保留树根与基础占地"
+    }
+  ],
+  "design_notes": [
+    "成品包含行业柜台、后场储物、店主歇班与通路；物品交易、药剂、修理与生产行为未接入。"
+  ],
+  "differences": [
+    "窄长临路铺，前接待、后干药和店主歇班",
+    "行业设备及柜台、后室、附棚采用独立位置与作业用途。"
+  ],
+  "floors": [
+    {
+      "name": "林下使用层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/forest_crafts.py:shop",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "podzol"
+  },
+  "nbt_sha256": "1a89d89ec606e85aa39f66a032cca75b867b6852b8abd7c4dbe9d4478c685d8e"
+}

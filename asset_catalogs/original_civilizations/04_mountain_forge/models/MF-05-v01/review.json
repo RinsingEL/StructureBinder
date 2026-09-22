@@ -1,0 +1,42 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MF-05-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 山腹锻炉离线作者图审",
+  "nbt_sha256": "3c4c194d8e9a56ce6eb57e5546c50aa291ff0b230a15e70175bba5fa68d9ac36",
+  "author_sha256": "b867c53475aa4c96d41753ce315dc101c2381404d093fe58aef8a5a428633b2b",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-home.png",
+    "previews/room-work.png",
+    "previews/point-work.png",
+    "previews/point-write.png",
+    "previews/point-backbed_0.png",
+    "previews/point-backbed_1.png",
+    "previews/point-cook2.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "前低工房、后高家屋之间有真实一格高差和三宽短阶，侧院连接两门。 出檐承托修复后已实际复查外观连接。",
+    "内饰与使用": "前部修造台、记账和材料架，后部双床衣柜、餐桌、完整炊事饮水齐备。",
+    "完整证据": "实际查看当前 NBT 四向外观、俯视、去屋顶、全部楼层、全部房间、全部已标站位、作者标记和地形示意；未以自动截图代替图审。",
+    "标记与通路": "原版状态、门床、作者标记及入口至全部站位碰撞检查通过，无警告。",
+    "地块条件": "仅用于明确向 +Z 升高一格的山地地块；宽阶与后方高台均须承托，不可任意镜像后沿用高程。；低位工作与街门 Y=2，高台家庭脚底 Y=3；+Z 从 Z=14 起抬高一格，三宽短阶位置固定。；完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "revisions": [
+    "重审出檐屋面承托：坡屋墙线补连续承檐梁；独立棚顶按型号改下半砖与柱顶接触。最终 NBT 重拍后实际检查全部视图。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "原版设备仅表达手工生产和生活用途；未接入机器、经济、运输或真实生成。"
+  ]
+}

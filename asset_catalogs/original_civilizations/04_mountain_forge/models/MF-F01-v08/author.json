@@ -1,0 +1,195 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-F01-v08",
+  "name": "石器陶器小作坊",
+  "family": "MF-F01",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    31,
+    25,
+    27
+  ],
+  "terrain": {
+    "选址": "服务工人与居民日常生活；依照门面、转角、坡差或院落要求落位，保持完整独立模板。",
+    "高程": "基础上边界及室内脚底 Y=2；入口街面需同高程。",
+    "保留空间": "完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "rooms": [
+    {
+      "id": "store",
+      "name": "封闭石陶器铺",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        12,
+        6,
+        21
+      ],
+      "purpose": "交易和样品器具陈列；具体工位：石陶器交易、石陶器检视与包扎、分级成品器具陈列"
+    },
+    {
+      "id": "work",
+      "name": "侧院石陶作业棚",
+      "min": [
+        19,
+        2,
+        5
+      ],
+      "max": [
+        26,
+        6,
+        20
+      ],
+      "purpose": "切石、水洗、黏土与炉台；具体工位：石器切磨、小窑炉前、湿泥成型与石坯划线、入窑前素坯晾干架"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        8,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "sale",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        6
+      ],
+      "name": "石陶器交易",
+      "approach": [
+        6,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "cut",
+      "kind": "work",
+      "pos": [
+        20,
+        2,
+        7
+      ],
+      "name": "石器切磨",
+      "approach": [
+        20,
+        2,
+        8
+      ]
+    },
+    {
+      "id": "kiln",
+      "kind": "work",
+      "pos": [
+        25,
+        2,
+        18
+      ],
+      "name": "小窑炉前",
+      "approach": [
+        24,
+        2,
+        18
+      ]
+    },
+    {
+      "id": "inspect",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        11
+      ],
+      "name": "石陶器检视与包扎",
+      "approach": [
+        7,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "display",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        15
+      ],
+      "name": "分级成品器具陈列",
+      "approach": [
+        5,
+        2,
+        14
+      ]
+    },
+    {
+      "id": "forming",
+      "kind": "work",
+      "pos": [
+        22,
+        2,
+        11
+      ],
+      "name": "湿泥成型与石坯划线",
+      "approach": [
+        22,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "drying",
+      "kind": "storage",
+      "pos": [
+        19,
+        3,
+        20
+      ],
+      "name": "入窑前素坯晾干架",
+      "approach": [
+        19,
+        2,
+        19
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "纵向石陶器铺旁是宽作业棚，切磨、湿泥和炉台分列；可从侧门运料。"
+  ],
+  "differences": [
+    "纵向石陶器铺旁是宽作业棚，切磨、湿泥和炉台分列；可从侧门运料。"
+  ],
+  "floors": [
+    {
+      "name": "生活与作业层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_trade.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "nbt_sha256": "45765f935e98c92e6e22500abcd01a8d2b8ff9d3f6a1c6e03470a7db1abcbfb9"
+}

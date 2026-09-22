@@ -1,0 +1,44 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MF-07-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 山腹锻炉离线作者图审",
+  "nbt_sha256": "34191bc8d595160df236aaca11a5d94ed953880a920c1ee53b52bc5707ec8d84",
+  "author_sha256": "4efcfe161bd1169100a382f576ffa00d999bf8e1aa8bf0a2f77a51b3bc0f8239",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-ledger.png",
+    "previews/room-dock.png",
+    "previews/room-store.png",
+    "previews/point-ledger.png",
+    "previews/point-ore5.png",
+    "previews/point-ore19.png",
+    "previews/point-records.png",
+    "previews/point-receiving.png",
+    "previews/point-dispatch.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "低账房、低卸货棚及后高仓三体围阶院。",
+    "内饰与使用": "账房含登记文书，卸货棚含抽验长台和周转货箱，高仓两类矿料与中央出库分装台分开，短阶与仓门均可达。",
+    "完整证据": "实际查看当前 NBT 四向外观、俯视、去屋顶、全部楼层、全部房间、全部已标站位、作者标记和地形示意；未以自动截图代替图审。",
+    "标记与通路": "原版状态、门床、作者标记及入口至全部站位碰撞检查通过，无警告。",
+    "地块条件": "山前矿业聚落的稳定石质台地，正面朝 -Z；须避开落石、塌陷和洪水通道。；低街脚底 Y=2、高仓 Y=3；+Z 单格坡差，四宽短阶供人员，不代表矿车能过台阶。；依托实际货运面，保留宽门、搬运道及棚下空区；不得用矿堆填满人行主路。"
+  },
+  "revisions": [
+    "重审出檐屋面承托：坡屋墙线补连续承檐梁；独立棚顶按型号改下半砖与柱顶接触。最终 NBT 重拍后实际检查全部视图。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "原版设备仅表达手工生产和生活用途；未接入机器、经济、运输或真实生成。"
+  ]
+}

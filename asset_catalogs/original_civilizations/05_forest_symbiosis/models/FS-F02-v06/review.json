@@ -1,0 +1,38 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "FS-F02-v06",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 森林建模作者离线实看",
+  "nbt_sha256": "3ab78e31d9c41dc9d57f13aba1cd863b2044822fbac6ae854ebda0555ad6d1ee",
+  "author_sha256": "97a501b73cfcd8afc277d7bd339dee14ede26f89fa322706968e52280045a39e",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-plot0.png",
+    "previews/room-plot1.png",
+    "previews/point-plot0.png",
+    "previews/point-plot1.png",
+    "previews/point-herb.png",
+    "previews/point-tools.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "已实际逐张查看15张最终截图，外观、剖切、使用点和地形示意与当前双哈希匹配。",
+    "蔬菜耕地与分格示范药花保持不同种植基底和通路。",
+    "最终NBT数据和离线步行审计无错误或警告，全部作者标记可达。",
+    "最终NBT农业检查通过：耕地和作物有正确实体支撑，每块耕地四格内有水源；田埂、封边与作业站位已实看。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "农田是完整固定模板；自然地形延展、真实作物光照和生长未运行验收。药花和紫晶芽果串为静态外观示意，葡萄品种、季节及生产机制尚需整合包接入。"
+  ]
+}

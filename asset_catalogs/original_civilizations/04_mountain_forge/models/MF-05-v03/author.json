@@ -1,0 +1,194 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-05-v03",
+  "name": "高院折角工匠宅",
+  "family": "MF-05",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    31,
+    23,
+    29
+  ],
+  "terrain": {
+    "选址": "仅用于明确向 +Z 升高一格的山地地块；宽阶与后方高台均须承托，不可任意镜像后沿用高程。",
+    "高程": "低位工作与街门 Y=2，高台家庭脚底 Y=3；+Z 从 Z=13 起抬高一格，三宽短阶位置固定。",
+    "保留空间": "完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "rooms": [
+    {
+      "id": "home",
+      "name": "东后高宅",
+      "min": [
+        18,
+        3,
+        16
+      ],
+      "max": [
+        26,
+        7,
+        24
+      ],
+      "purpose": "二床、个人柜、餐厨"
+    },
+    {
+      "id": "work",
+      "name": "长条工房",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        10,
+        6,
+        22
+      ],
+      "purpose": "前接单、后修造与材料"
+    },
+    {
+      "id": "court",
+      "name": "折角高院",
+      "min": [
+        12,
+        3,
+        14
+      ],
+      "max": [
+        16,
+        7,
+        26
+      ],
+      "purpose": "一阶高院联系独立家庭翼"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        7,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "write",
+      "kind": "work",
+      "pos": [
+        5,
+        2,
+        6
+      ],
+      "name": "匠人记账",
+      "approach": [
+        5,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "work",
+      "kind": "work",
+      "pos": [
+        5,
+        2,
+        16
+      ],
+      "name": "纵向小工间",
+      "approach": [
+        6,
+        2,
+        16
+      ]
+    },
+    {
+      "id": "entry_22_15",
+      "kind": "entrance",
+      "pos": [
+        22,
+        3,
+        14
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "backbed_0",
+      "kind": "bed",
+      "pos": [
+        18,
+        3,
+        20
+      ],
+      "name": "床位与个人柜",
+      "approach": [
+        19,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "backbed_1",
+      "kind": "bed",
+      "pos": [
+        21,
+        3,
+        20
+      ],
+      "name": "床位与个人柜",
+      "approach": [
+        22,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "cook2",
+      "kind": "work",
+      "pos": [
+        23,
+        3,
+        17
+      ],
+      "name": "炊事与洗涤",
+      "approach": [
+        23,
+        3,
+        18
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "西侧窄工房与东后高宅形成折角双屋，高院分流工作门与家庭门。"
+  ],
+  "differences": [
+    "西侧窄工房与东后高宅形成折角双屋，高院分流工作门与家庭门。"
+  ],
+  "floors": [
+    {
+      "name": "低位工房与高台家庭",
+      "y": 1,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_life.py:BUILDERS",
+  "preview_context": {
+    "kind": "slope",
+    "land_surface_y": 2,
+    "padding": 5,
+    "run": 14,
+    "rise": 1,
+    "slope_origin_z": 13
+  },
+  "nbt_sha256": "70dd81b43f3ff972ed49876555b4a45e1b489d2e3c39346ac0e17cfd8f4716e8"
+}

@@ -1,0 +1,221 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-F01-v03",
+  "name": "双翼衣物缝补店",
+  "family": "MF-F01",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    29,
+    25,
+    25
+  ],
+  "terrain": {
+    "选址": "服务工人与居民日常生活；依照门面、转角、坡差或院落要求落位，保持完整独立模板。",
+    "高程": "基础上边界及室内脚底 Y=2；入口街面需同高程。",
+    "保留空间": "完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "rooms": [
+    {
+      "id": "sale",
+      "name": "衣物展售长翼",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        12,
+        6,
+        20
+      ],
+      "purpose": "登记、布匹和成衣架；具体工位：衣物交付、量衣检修与成衣叠放、分类染色布匹"
+    },
+    {
+      "id": "tailor",
+      "name": "独立双机缝补间",
+      "min": [
+        18,
+        2,
+        4
+      ],
+      "max": [
+        24,
+        6,
+        12
+      ],
+      "purpose": "两处织补台及裁衣工位；具体工位：裁缝织补工位、裁缝织补工位、织补线料与小工具"
+    },
+    {
+      "id": "yard",
+      "name": "试衣候取院",
+      "min": [
+        14,
+        2,
+        14
+      ],
+      "max": [
+        24,
+        6,
+        21
+      ],
+      "purpose": "长凳候取、裁衣桌与洗涤；具体工位：院内长裁衣台"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        8,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "entry_21_3",
+      "kind": "entrance",
+      "pos": [
+        21,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "sale",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        6
+      ],
+      "name": "衣物交付",
+      "approach": [
+        6,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "loom7",
+      "kind": "work",
+      "pos": [
+        19,
+        2,
+        7
+      ],
+      "name": "裁缝织补工位",
+      "approach": [
+        20,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "loom10",
+      "kind": "work",
+      "pos": [
+        19,
+        2,
+        10
+      ],
+      "name": "裁缝织补工位",
+      "approach": [
+        20,
+        2,
+        10
+      ]
+    },
+    {
+      "id": "measure",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        12
+      ],
+      "name": "量衣检修与成衣叠放",
+      "approach": [
+        7,
+        2,
+        13
+      ]
+    },
+    {
+      "id": "dyed",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        16
+      ],
+      "name": "分类染色布匹",
+      "approach": [
+        5,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "thread",
+      "kind": "storage",
+      "pos": [
+        20,
+        3,
+        12
+      ],
+      "name": "织补线料与小工具",
+      "approach": [
+        20,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "cutting",
+      "kind": "work",
+      "pos": [
+        21,
+        2,
+        16
+      ],
+      "name": "院内长裁衣台",
+      "approach": [
+        21,
+        2,
+        17
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "双翼衣铺将布匹展售和双织机缝补分屋，院内候取与裁衣桌服务不同工作流。"
+  ],
+  "differences": [
+    "双翼衣铺将布匹展售和双织机缝补分屋，院内候取与裁衣桌服务不同工作流。"
+  ],
+  "floors": [
+    {
+      "name": "生活与作业层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_trade.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "nbt_sha256": "511dad978d38dafb32be13226b14293fbc817754db257b4071193871121d9671"
+}

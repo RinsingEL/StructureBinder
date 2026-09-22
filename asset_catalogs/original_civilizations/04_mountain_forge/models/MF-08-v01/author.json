@@ -1,0 +1,195 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-08-v01",
+  "name": "两床炉边小食堂",
+  "family": "MF-08",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    27,
+    26,
+    29
+  ],
+  "terrain": {
+    "选址": "矿业居住组团或访客路线旁，有稳定干地及足够的日常给水与食物补给。",
+    "高程": "基础上边界及室内脚底 Y=2；入口街面需同高程。",
+    "保留空间": "完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "rooms": [
+    {
+      "id": "dining",
+      "name": "共餐与厨房",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        22,
+        6,
+        16
+      ],
+      "purpose": "两排长餐桌、登记、炊事与储粮；具体工位：炊事与洗涤、登记与寄存、厨房切配与餐盘回收、登记后的行李寄存"
+    },
+    {
+      "id": "sleep",
+      "name": "后部两床客房",
+      "min": [
+        4,
+        2,
+        18
+      ],
+      "max": [
+        22,
+        6,
+        24
+      ],
+      "purpose": "二床、衣柜、饮水与行李架；具体工位：床位与个人柜、床位与个人柜、客房洗漱与洁布"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        13,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "kitchen",
+      "kind": "work",
+      "pos": [
+        4,
+        2,
+        5
+      ],
+      "name": "炊事与洗涤",
+      "approach": [
+        4,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "innkeeper",
+      "kind": "work",
+      "pos": [
+        18,
+        2,
+        5
+      ],
+      "name": "登记与寄存",
+      "approach": [
+        18,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "guest_0",
+      "kind": "bed",
+      "pos": [
+        5,
+        2,
+        20
+      ],
+      "name": "床位与个人柜",
+      "approach": [
+        6,
+        2,
+        20
+      ]
+    },
+    {
+      "id": "guest_1",
+      "kind": "bed",
+      "pos": [
+        8,
+        2,
+        20
+      ],
+      "name": "床位与个人柜",
+      "approach": [
+        9,
+        2,
+        20
+      ]
+    },
+    {
+      "id": "prep",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        9
+      ],
+      "name": "厨房切配与餐盘回收",
+      "approach": [
+        7,
+        2,
+        10
+      ]
+    },
+    {
+      "id": "luggage",
+      "kind": "storage",
+      "pos": [
+        16,
+        3,
+        4
+      ],
+      "name": "登记后的行李寄存",
+      "approach": [
+        16,
+        2,
+        5
+      ]
+    },
+    {
+      "id": "wash",
+      "kind": "work",
+      "pos": [
+        20,
+        2,
+        22
+      ],
+      "name": "客房洗漱与洁布",
+      "approach": [
+        20,
+        2,
+        21
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "一层小食堂前厅两排长桌，后隔门两床客房；前部登记靠街，储粮与灶台同侧。"
+  ],
+  "differences": [
+    "一层小食堂前厅两排长桌，后隔门两床客房；前部登记靠街，储粮与灶台同侧。"
+  ],
+  "floors": [
+    {
+      "name": "生活与作业层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_trade.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "nbt_sha256": "e80208cf0c25aa4458c02ef4a6ae46a3ce28eaa66551bc2d48a099622516d4d0"
+}

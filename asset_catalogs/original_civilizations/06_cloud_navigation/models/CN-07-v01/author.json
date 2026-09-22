@@ -1,0 +1,198 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CN-07-v01",
+  "name": "短脊麦苗室 · 高原温室",
+  "family": "CN-07",
+  "civilization": "云海航行文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    33,
+    31,
+    37
+  ],
+  "terrain": {
+    "选址": "高原岩台边缘，北侧接稳定地面，南侧朝开阔谷地",
+    "高程": "主平台地板 Y=7，入口脚底 Y=8；外接同高岩台道路",
+    "固定与承重": "北侧石砌锚座压在实体岩台，南侧木梁和斜撑回接石墩；石墩底必须落在连续承载岩层。不可当作无支撑浮空结构。",
+    "接驳边界": "模板内支撑与边栏完整；外侧山体、接驳道路、峡谷宽度及航行净空必须按实际场地核对。",
+    "运行边界": "泊位、缆索、风向仪、船体与吊装均为静态空间表达；未实现飞行、气象、物流或受力模拟。"
+  },
+  "rooms": [
+    {
+      "id": "glass_0",
+      "name": "有支撑灌溉种植床",
+      "min": [
+        9,
+        7,
+        12
+      ],
+      "max": [
+        14,
+        9,
+        26
+      ],
+      "purpose": "土层、原版作物、同高水源与外侧维护路径"
+    },
+    {
+      "id": "glass_1",
+      "name": "有支撑灌溉种植床",
+      "min": [
+        18,
+        7,
+        12
+      ],
+      "max": [
+        23,
+        9,
+        26
+      ],
+      "purpose": "土层、原版作物、同高水源与外侧维护路径"
+    },
+    {
+      "id": "glass",
+      "name": "高原玻璃种植室",
+      "min": [
+        8,
+        8,
+        9
+      ],
+      "max": [
+        24,
+        12,
+        28
+      ],
+      "purpose": "完整玻璃屋盖、铜木框架、中间通道、种植床及种子工具"
+    }
+  ],
+  "points": [
+    {
+      "id": "glass_0",
+      "kind": "work",
+      "pos": [
+        9,
+        8,
+        12
+      ],
+      "name": "种植维护与采收",
+      "approach": [
+        9,
+        8,
+        11
+      ]
+    },
+    {
+      "id": "glass_1",
+      "kind": "work",
+      "pos": [
+        18,
+        8,
+        12
+      ],
+      "name": "种植维护与采收",
+      "approach": [
+        18,
+        8,
+        11
+      ]
+    },
+    {
+      "id": "glass_seed",
+      "kind": "storage",
+      "pos": [
+        24,
+        8,
+        28
+      ],
+      "name": "种子与工具箱",
+      "approach": [
+        23,
+        8,
+        28
+      ]
+    },
+    {
+      "id": "packing",
+      "kind": "work",
+      "pos": [
+        9,
+        8,
+        31
+      ],
+      "name": "育苗与装筐",
+      "approach": [
+        9,
+        8,
+        32
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        16,
+        8,
+        3
+      ],
+      "name": "岩台地面入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        16,
+        7,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "岩台地面入口，外接脚底 Y=8 的连续道路"
+    }
+  ],
+  "design_notes": [
+    "短宽温室采用双侧麦苗床与三格中央通道，后部在支撑台上整理种苗。",
+    "温室种植床的土层由梁板与石墩承接；水体封在床槽内，真实灌溉/防冻/生产不属于离线验收。"
+  ],
+  "differences": [
+    "短宽温室采用双侧麦苗床与三格中央通道，后部在支撑台上整理种苗。"
+  ],
+  "floors": [
+    {
+      "name": "岩台主层",
+      "y": 7,
+      "max_y": 12
+    }
+  ],
+  "roof_min_y": 13,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/cloud_food.py:CN-07(1)",
+  "preview_context": {
+    "kind": "slope",
+    "land_surface_y": 8,
+    "bed_y": -3,
+    "padding": 4,
+    "run": 8,
+    "rise": -1,
+    "slope_origin_z": 0,
+    "surface": "snow"
+  },
+  "agriculture": {
+    "crops": [
+      "wheat",
+      "carrots",
+      "potatoes",
+      "beetroots"
+    ],
+    "irrigation": "种植床同高水渠，最终NBT另核对4格水源范围",
+    "climate": "玻璃屋盖表达防风保温；未模拟实际温度、结冰和生长，寒冷地图须另做环境适用性核对"
+  },
+  "nbt_sha256": "1613b6acdb22f94881170d97b278553f7438473562d090b5e4fa851612875a3d"
+}

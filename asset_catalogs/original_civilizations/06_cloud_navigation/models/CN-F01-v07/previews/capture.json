@@ -1,0 +1,30 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "CN-F01-v07",
+  "nbt_sha256": "0ffcef9cbda496c286faca91dede00a1cc9cb26af58619ccdabf4dc63ca9f221",
+  "author_sha256": "82871f1d979b5dcb2272d3c98cd67617d4604a0b905fbc696711d1306867eec2",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "floor-2",
+    "room-tea",
+    "room-terrace",
+    "room-tea_prep",
+    "point-cook",
+    "point-tea",
+    "point-terrace",
+    "point-tea_stock",
+    "point-wash",
+    "point-terrace_service",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

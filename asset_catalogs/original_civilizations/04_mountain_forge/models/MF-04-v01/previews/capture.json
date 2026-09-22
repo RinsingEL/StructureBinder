@@ -1,0 +1,28 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "MF-04-v01",
+  "nbt_sha256": "15111faee93a678b7e8a54f27bed4383b5835afc524b5044c13037b6df7b7e2c",
+  "author_sha256": "49ee3f58ea73659dc8d996ae243756bc1aded3f5e1215c735f0ba173bf4cf88c",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-short_living",
+    "room-short_sleep",
+    "point-short_cook",
+    "point-short_bed_0",
+    "point-short_bed_1",
+    "point-short_bed_2",
+    "point-short_bed_3",
+    "point-gear",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

@@ -1,0 +1,150 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-F01-v01",
+  "name": "炉饼窄面食品铺",
+  "family": "MF-F01",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    19,
+    25,
+    23
+  ],
+  "terrain": {
+    "选址": "服务工人与居民日常生活；依照门面、转角、坡差或院落要求落位，保持完整独立模板。",
+    "高程": "基础上边界及室内脚底 Y=2；入口街面需同高程。",
+    "保留空间": "完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "rooms": [
+    {
+      "id": "shop",
+      "name": "前售后烤食品铺",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        14,
+        6,
+        18
+      ],
+      "purpose": "前台交付、后烘烤洗涤、储粮和器具；具体工位：食品交付、炊事与洗涤、炉饼成品与包装交付、揉面整形与配料、面粉原料与烤具"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        9,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "sale",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        6
+      ],
+      "name": "食品交付",
+      "approach": [
+        6,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "kitchen",
+      "kind": "work",
+      "pos": [
+        5,
+        2,
+        13
+      ],
+      "name": "炊事与洗涤",
+      "approach": [
+        5,
+        2,
+        14
+      ]
+    },
+    {
+      "id": "display",
+      "kind": "work",
+      "pos": [
+        12,
+        2,
+        6
+      ],
+      "name": "炉饼成品与包装交付",
+      "approach": [
+        12,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "knead",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        10
+      ],
+      "name": "揉面整形与配料",
+      "approach": [
+        7,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "flour",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        18
+      ],
+      "name": "面粉原料与烤具",
+      "approach": [
+        5,
+        2,
+        17
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "窄深食品铺以前台、后烤炉和侧储粮组织单向备餐；适合狭窄生活街。"
+  ],
+  "differences": [
+    "窄深食品铺以前台、后烤炉和侧储粮组织单向备餐；适合狭窄生活街。"
+  ],
+  "floors": [
+    {
+      "name": "生活与作业层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_trade.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "nbt_sha256": "8692c3758fa4e76fa0dd7ac19602d33f522add387e47aa3b704f311d36346a59"
+}

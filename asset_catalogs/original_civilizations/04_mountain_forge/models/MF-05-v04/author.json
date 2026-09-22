@@ -1,0 +1,190 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-05-v04",
+  "name": "双门错层宅",
+  "family": "MF-05",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    29,
+    23,
+    27
+  ],
+  "terrain": {
+    "选址": "仅用于明确向 +Z 升高一格的山地地块；宽阶与后方高台均须承托，不可任意镜像后沿用高程。",
+    "高程": "低位工作与街门 Y=2，高台家庭脚底 Y=3；+Z 从 Z=12 起抬高一格，三宽短阶位置固定。",
+    "保留空间": "完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "rooms": [
+    {
+      "id": "work",
+      "name": "低街接单厅",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        23,
+        6,
+        9
+      ],
+      "purpose": "客户接待与纺织修补"
+    },
+    {
+      "id": "home",
+      "name": "高街家庭厅",
+      "min": [
+        4,
+        3,
+        15
+      ],
+      "max": [
+        23,
+        7,
+        22
+      ],
+      "purpose": "二床、餐厨、独立高街门"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        10,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "write",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        5
+      ],
+      "name": "前厅接单",
+      "approach": [
+        6,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "work",
+      "kind": "work",
+      "pos": [
+        21,
+        2,
+        6
+      ],
+      "name": "织修台",
+      "approach": [
+        20,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "entry_13_14",
+      "kind": "entrance",
+      "pos": [
+        13,
+        3,
+        13
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "home_0",
+      "kind": "bed",
+      "pos": [
+        5,
+        3,
+        17
+      ],
+      "name": "床位与个人柜",
+      "approach": [
+        6,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "home_1",
+      "kind": "bed",
+      "pos": [
+        8,
+        3,
+        17
+      ],
+      "name": "床位与个人柜",
+      "approach": [
+        9,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "kitchen",
+      "kind": "work",
+      "pos": [
+        19,
+        3,
+        16
+      ],
+      "name": "炊事与洗涤",
+      "approach": [
+        19,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "upper_entry",
+      "kind": "entrance",
+      "pos": [
+        25,
+        3,
+        19
+      ],
+      "name": "高街家门",
+      "facing": "east"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "低街接单与高街家庭厅分成两条横向屋，中央一阶内院连通，东西高街另开家门。"
+  ],
+  "differences": [
+    "低街接单与高街家庭厅分成两条横向屋，中央一阶内院连通，东西高街另开家门。"
+  ],
+  "floors": [
+    {
+      "name": "低位工房与高台家庭",
+      "y": 1,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_life.py:BUILDERS",
+  "preview_context": {
+    "kind": "slope",
+    "land_surface_y": 2,
+    "padding": 5,
+    "run": 14,
+    "rise": 1,
+    "slope_origin_z": 12
+  },
+  "nbt_sha256": "f13de414a007b66fc16094caff1ac5e0d5c83c6a670277897719854f7989feb1"
+}

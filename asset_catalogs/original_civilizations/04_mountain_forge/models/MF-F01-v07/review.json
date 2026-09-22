@@ -1,0 +1,42 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MF-F01-v07",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 山腹锻炉离线作者图审",
+  "nbt_sha256": "8021d7ccc1f2d58961f15247d793f496a48651b3dbe142698517846d01c18ef4",
+  "author_sha256": "bc9412f4755fb9afe793c7911d892ac717c9e3beb6dedfa87d7fc3ff101f6b34",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-sale.png",
+    "previews/room-work.png",
+    "previews/point-sale.png",
+    "previews/point-stitch.png",
+    "previews/point-measure.png",
+    "previews/point-cutting.png",
+    "previews/point-raw_hide.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "低街皮具收件铺和高台湿作间隔阶院。",
+    "内饰与使用": "前厅收件、验损量取、成品展示与候取凳完整；后作间织补、水洗、裁片打孔、皮料工具架分布两边，高差站位可达。",
+    "完整证据": "实际查看当前 NBT 四向外观、俯视、去屋顶、全部楼层、全部房间、全部已标站位、作者标记和地形示意；未以自动截图代替图审。",
+    "标记与通路": "原版状态、门床、作者标记及入口至全部站位碰撞检查通过，无警告。",
+    "地块条件": "服务工人与居民日常生活；依照门面、转角、坡差或院落要求落位，保持完整独立模板。；向 +Z 升一格；前铺 Y=2，后作 Y=3。；完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "revisions": [
+    "重审出檐屋面承托：坡屋墙线补连续承檐梁；独立棚顶按型号改下半砖与柱顶接触。最终 NBT 重拍后实际检查全部视图。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "原版设备仅表达手工生产和生活用途；未接入机器、经济、运输或真实生成。"
+  ]
+}

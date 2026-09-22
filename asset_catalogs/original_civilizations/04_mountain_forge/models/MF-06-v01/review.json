@@ -1,0 +1,45 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MF-06-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 山腹锻炉离线作者图审",
+  "nbt_sha256": "e36093b3e46297ac1245d9476e47a81c1e8267f7ea17d8da9f9d0c16ba7aa4a6",
+  "author_sha256": "36d92db64ca6611aa187f0f485ec51a68d2a45b514ace031ed2652a8be95d285",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-store.png",
+    "previews/room-work.png",
+    "previews/point-sale.png",
+    "previews/point-display.png",
+    "previews/point-cut.png",
+    "previews/point-inspection.png",
+    "previews/point-sales_samples.png",
+    "previews/point-sort.png",
+    "previews/point-setting.png",
+    "previews/point-secure.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "宽面前店经隔门进入后坊，长脊厚石屋有连续承檐。",
+    "内饰与使用": "交易文书、柜台、铺毡验货台、候客长凳与三组样品陈列组成顾客区；后坊完整切磨水洗、原石分级、装配包装、成品储架与贵重成品柜分侧，中央搬料通畅。",
+    "完整证据": "实际查看当前 NBT 四向外观、俯视、去屋顶、全部楼层、全部房间、全部已标站位、作者标记和地形示意；未以自动截图代替图审。",
+    "标记与通路": "原版状态、门床、作者标记及入口至全部站位碰撞检查通过，无警告。",
+    "地块条件": "邻近矿料路线且具有干燥安全保管条件；切磨声与扬尘需和生活门面分开。；基础上边界及室内脚底 Y=2；入口街面需同高程。；完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "revisions": [
+    "重审出檐屋面承托：坡屋墙线补连续承檐梁；独立棚顶按型号改下半砖与柱顶接触。最终 NBT 重拍后实际检查全部视图。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "原版设备仅表达手工生产和生活用途；未接入机器、经济、运输或真实生成。"
+  ]
+}

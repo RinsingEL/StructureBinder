@@ -1,0 +1,31 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "CN-F01-v03",
+  "nbt_sha256": "65a4626d7da2e7ad02b99465cf3f24138645e1ce8717371e1e8b3804634ed01b",
+  "author_sha256": "926ea31cf9f8cb55cf0e149baa2556207ddf19570b5c3a083a07f696f3049351",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-tool",
+    "room-sales",
+    "room-repair",
+    "point-sale",
+    "point-tool_11",
+    "point-tool_17",
+    "point-tool_23",
+    "point-stock",
+    "point-sample_tools",
+    "point-repair_bench",
+    "point-parts",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

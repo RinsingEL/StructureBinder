@@ -1,0 +1,27 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "MF-F01-v07",
+  "nbt_sha256": "8021d7ccc1f2d58961f15247d793f496a48651b3dbe142698517846d01c18ef4",
+  "author_sha256": "bc9412f4755fb9afe793c7911d892ac717c9e3beb6dedfa87d7fc3ff101f6b34",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-sale",
+    "room-work",
+    "point-sale",
+    "point-stitch",
+    "point-measure",
+    "point-cutting",
+    "point-raw_hide",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

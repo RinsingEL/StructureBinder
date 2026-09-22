@@ -1,0 +1,259 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "FS-F04-v04",
+  "name": "修枝储物院",
+  "family": "FS-F04",
+  "civilization": "森林共生文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    39,
+    24,
+    35
+  ],
+  "terrain": {
+    "选址": "开放维修棚与封闭干燥储物屋组成L形生产院，适合较大林务组团",
+    "落地": "只整理建筑本体与步道；保留未写入的林地。附树版本包含独立柱脚和树根占地，不能套入任意现存树体。",
+    "高程": "主入口脚底 Y=3；高位层和坡地接驳另见楼层与使用点",
+    "运行边界": "种植、蜂具、藤果、兽栏与遗留物均为原版静态空间表达；实际生产、动物和生态行为须另行接入。"
+  },
+  "rooms": [
+    {
+      "id": "shed",
+      "name": "开放操作与晾晒棚",
+      "min": [
+        6,
+        3,
+        7
+      ],
+      "max": [
+        20,
+        7,
+        27
+      ],
+      "purpose": "维修台、磨具、悬挂晾架、干料架与独立柱脚"
+    },
+    {
+      "id": "room",
+      "name": "封闭干料间",
+      "min": [
+        26,
+        3,
+        14
+      ],
+      "max": [
+        33,
+        7,
+        28
+      ],
+      "purpose": "侧柜和后架分别保存配件与干料，前段登记发料，中央通道联系门口与取料位"
+    },
+    {
+      "id": "repairbay",
+      "name": "前段维修与后段备料",
+      "min": [
+        6,
+        3,
+        9
+      ],
+      "max": [
+        19,
+        6,
+        25
+      ],
+      "purpose": "长台维修、晾架与后端回收料分区，院内步道通向独立干料屋"
+    }
+  ],
+  "points": [
+    {
+      "id": "tools",
+      "kind": "work",
+      "pos": [
+        8,
+        3,
+        9
+      ],
+      "name": "工具修整与配件整理",
+      "approach": [
+        8,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "stock",
+      "kind": "storage",
+      "pos": [
+        8,
+        4,
+        27
+      ],
+      "name": "工具、绳索与干燥物资",
+      "approach": [
+        8,
+        3,
+        26
+      ]
+    },
+    {
+      "id": "dry",
+      "kind": "work",
+      "pos": [
+        8,
+        5,
+        13
+      ],
+      "name": "悬挂晾晒与检视",
+      "approach": [
+        8,
+        3,
+        12
+      ]
+    },
+    {
+      "id": "drygoods",
+      "kind": "storage",
+      "pos": [
+        28,
+        4,
+        27
+      ],
+      "name": "干燥敏感物料",
+      "approach": [
+        28,
+        3,
+        26
+      ]
+    },
+    {
+      "id": "sidegoods",
+      "kind": "storage",
+      "pos": [
+        27,
+        4,
+        20
+      ],
+      "name": "绳索、金属配件与防潮分格柜",
+      "approach": [
+        28,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "issue",
+      "kind": "work",
+      "pos": [
+        31,
+        4,
+        17
+      ],
+      "name": "室内配料发放与维修登记台",
+      "approach": [
+        31,
+        3,
+        16
+      ]
+    },
+    {
+      "id": "repair",
+      "kind": "work",
+      "pos": [
+        15,
+        4,
+        10
+      ],
+      "name": "较长枝具与背架维修台",
+      "approach": [
+        15,
+        3,
+        9
+      ]
+    },
+    {
+      "id": "incoming",
+      "kind": "storage",
+      "pos": [
+        7,
+        3,
+        22
+      ],
+      "name": "院内待修工具与回收配件",
+      "approach": [
+        7,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "longstock",
+      "kind": "storage",
+      "pos": [
+        15,
+        3,
+        22
+      ],
+      "name": "长柄与架材待用区",
+      "approach": [
+        15,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        13,
+        3,
+        2
+      ],
+      "name": "林间步道入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        13,
+        2,
+        2
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "外接步道脚底 Y=3，须保留树根与基础占地"
+    }
+  ],
+  "design_notes": [
+    "悬挂晾架由链条接屋顶；工具、晾晒与材料存取均有可达站位。",
+    "按工具组装、晾材切整、晾药扎包、维修发料四种用途配置工作台、材料和周转设施；保持从入口到各工作面的连续通路。"
+  ],
+  "differences": [
+    "开放维修棚与封闭干燥储物屋组成L形生产院，适合较大林务组团"
+  ],
+  "floors": [
+    {
+      "name": "林下使用层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/forest_gardens.py:shed",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "podzol"
+  },
+  "nbt_sha256": "08ae508459d41fe816e4daf05f83a260d841ee0aa2ca5bc9f4c8330be5febd89"
+}

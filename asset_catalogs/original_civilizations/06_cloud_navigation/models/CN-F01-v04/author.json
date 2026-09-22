@@ -1,0 +1,263 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CN-F01-v04",
+  "name": "航图商住院 · 空港日常小商铺",
+  "family": "CN-F01",
+  "civilization": "云海航行文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    47,
+    35,
+    43
+  ],
+  "terrain": {
+    "选址": "高原岩台边缘，北侧接稳定地面，南侧朝开阔谷地",
+    "高程": "主平台地板 Y=7，入口脚底 Y=8；外接同高岩台道路",
+    "固定与承重": "北侧石砌锚座压在实体岩台，南侧木梁和斜撑回接石墩；石墩底必须落在连续承载岩层。不可当作无支撑浮空结构。",
+    "接驳边界": "模板内支撑与边栏完整；外侧山体、接驳道路、峡谷宽度及航行净空必须按实际场地核对。",
+    "运行边界": "泊位、缆索、风向仪、船体与吊装均为静态空间表达；未实现飞行、气象、物流或受力模拟。"
+  },
+  "rooms": [
+    {
+      "id": "maps",
+      "name": "航图阅览与绘制",
+      "min": [
+        7,
+        8,
+        8
+      ],
+      "max": [
+        22,
+        13,
+        32
+      ],
+      "purpose": "绘图柜台、查阅桌和地图书柜"
+    },
+    {
+      "id": "home",
+      "name": "店主生活翼",
+      "min": [
+        31,
+        8,
+        13
+      ],
+      "max": [
+        40,
+        13,
+        32
+      ],
+      "purpose": "三床、备餐、饮水及小桌"
+    },
+    {
+      "id": "home_sleep",
+      "name": "店主独立寝间",
+      "min": [
+        31,
+        8,
+        27
+      ],
+      "max": [
+        40,
+        13,
+        32
+      ],
+      "purpose": "三床、个人灯柜与隔门，业务访客无需穿寝间"
+    }
+  ],
+  "points": [
+    {
+      "id": "map",
+      "kind": "work",
+      "pos": [
+        9,
+        8,
+        12
+      ],
+      "name": "航图绘制与售卖",
+      "approach": [
+        9,
+        8,
+        13
+      ]
+    },
+    {
+      "id": "home_1",
+      "kind": "sleep",
+      "pos": [
+        32,
+        8,
+        31
+      ],
+      "name": "值守/船员床位",
+      "approach": [
+        33,
+        8,
+        31
+      ]
+    },
+    {
+      "id": "home_2",
+      "kind": "sleep",
+      "pos": [
+        35,
+        8,
+        31
+      ],
+      "name": "值守/船员床位",
+      "approach": [
+        36,
+        8,
+        31
+      ]
+    },
+    {
+      "id": "home_3",
+      "kind": "sleep",
+      "pos": [
+        38,
+        8,
+        31
+      ],
+      "name": "值守/船员床位",
+      "approach": [
+        39,
+        8,
+        31
+      ]
+    },
+    {
+      "id": "cook",
+      "kind": "work",
+      "pos": [
+        32,
+        8,
+        13
+      ],
+      "name": "备餐炉灶与饮水",
+      "approach": [
+        32,
+        8,
+        14
+      ]
+    },
+    {
+      "id": "charts",
+      "kind": "storage",
+      "pos": [
+        9,
+        9,
+        8
+      ],
+      "name": "分类商品与成品陈列",
+      "approach": [
+        9,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "archive",
+      "kind": "storage",
+      "pos": [
+        17,
+        9,
+        17
+      ],
+      "name": "分类商品与成品陈列",
+      "approach": [
+        17,
+        8,
+        18
+      ]
+    },
+    {
+      "id": "reference",
+      "kind": "work",
+      "pos": [
+        21,
+        9,
+        27
+      ],
+      "name": "航线索引及订图记录",
+      "approach": [
+        20,
+        8,
+        27
+      ]
+    },
+    {
+      "id": "home_read",
+      "kind": "work",
+      "pos": [
+        40,
+        9,
+        24
+      ],
+      "name": "店主坐读与生活书柜",
+      "approach": [
+        39,
+        8,
+        24
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        23,
+        8,
+        3
+      ],
+      "name": "岩台地面入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        23,
+        7,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "岩台地面入口，外接脚底 Y=8 的连续道路"
+    }
+  ],
+  "design_notes": [
+    "西侧航图店与东侧店主生活房围成安静小院，业务与睡眠分门，后部共用短廊。",
+    "店铺按居民与空港服务需求选用，门前平台必须接连续步道；陈设不自动产生交易、生产或治疗功能。"
+  ],
+  "differences": [
+    "西侧航图店与东侧店主生活房围成安静小院，业务与睡眠分门，后部共用短廊。"
+  ],
+  "floors": [
+    {
+      "name": "岩台主层",
+      "y": 7,
+      "max_y": 13
+    }
+  ],
+  "roof_min_y": 14,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/cloud_market.py:CN-F01(4)",
+  "preview_context": {
+    "kind": "slope",
+    "land_surface_y": 8,
+    "bed_y": -3,
+    "padding": 4,
+    "run": 8,
+    "rise": -1,
+    "slope_origin_z": 0,
+    "surface": "snow"
+  },
+  "nbt_sha256": "823a74fcd56f4200a4cf7256256d348dfaa1c73b92580ad6348dc18d2bc05b12"
+}

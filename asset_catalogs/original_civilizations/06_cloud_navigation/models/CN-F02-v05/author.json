@@ -1,0 +1,198 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CN-F02-v05",
+  "name": "种粮小庭院 · 高原田槽",
+  "family": "CN-F02",
+  "civilization": "云海航行文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    43,
+    29,
+    43
+  ],
+  "terrain": {
+    "选址": "高原岩台边缘，北侧接稳定地面，南侧朝开阔谷地",
+    "高程": "主平台地板 Y=4，入口脚底 Y=5；外接同高岩台道路",
+    "固定与承重": "北侧石砌锚座压在实体岩台，南侧木梁和斜撑回接石墩；石墩底必须落在连续承载岩层。不可当作无支撑浮空结构。",
+    "接驳边界": "模板内支撑与边栏完整；外侧山体、接驳道路、峡谷宽度及航行净空必须按实际场地核对。",
+    "运行边界": "泊位、缆索、风向仪、船体与吊装均为静态空间表达；未实现飞行、气象、物流或受力模拟。",
+    "气候": "仅在无持续霜冻、有适宜光照与灌溉的高原生长季使用；严寒条件应改选温室。"
+  },
+  "rooms": [
+    {
+      "id": "west",
+      "name": "有支撑灌溉种植床",
+      "min": [
+        6,
+        4,
+        9
+      ],
+      "max": [
+        14,
+        6,
+        31
+      ],
+      "purpose": "土层、原版作物、同高水源与外侧维护路径"
+    },
+    {
+      "id": "east",
+      "name": "有支撑灌溉种植床",
+      "min": [
+        26,
+        4,
+        9
+      ],
+      "max": [
+        34,
+        6,
+        31
+      ],
+      "purpose": "土层、原版作物、同高水源与外侧维护路径"
+    },
+    {
+      "id": "tool",
+      "name": "田边工具与留种间",
+      "min": [
+        16,
+        5,
+        28
+      ],
+      "max": [
+        24,
+        9,
+        36
+      ],
+      "purpose": "小型农具、留种记录与防雨收纳"
+    }
+  ],
+  "points": [
+    {
+      "id": "west",
+      "kind": "work",
+      "pos": [
+        6,
+        5,
+        9
+      ],
+      "name": "种植维护与采收",
+      "approach": [
+        6,
+        5,
+        8
+      ]
+    },
+    {
+      "id": "east",
+      "kind": "work",
+      "pos": [
+        26,
+        5,
+        9
+      ],
+      "name": "种植维护与采收",
+      "approach": [
+        26,
+        5,
+        8
+      ]
+    },
+    {
+      "id": "seeds",
+      "kind": "work",
+      "pos": [
+        18,
+        5,
+        31
+      ],
+      "name": "种粮留样和农具",
+      "approach": [
+        18,
+        5,
+        32
+      ]
+    },
+    {
+      "id": "compost",
+      "kind": "work",
+      "pos": [
+        37,
+        5,
+        5
+      ],
+      "name": "堆肥与维护工具",
+      "approach": [
+        36,
+        5,
+        5
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        21,
+        5,
+        3
+      ],
+      "name": "岩台地面入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        21,
+        4,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "岩台地面入口，外接脚底 Y=5 的连续道路"
+    }
+  ],
+  "design_notes": [
+    "中央通路把马铃薯和麦田分开，后端带一间独立农具留种房，形成可独立使用的小庭院。",
+    "固定模板田槽，农业区土层、挡土和水渠均在模板中；不代替Landscape自然大田。露天田只用于适宜生长季。"
+  ],
+  "differences": [
+    "中央通路把马铃薯和麦田分开，后端带一间独立农具留种房，形成可独立使用的小庭院。"
+  ],
+  "floors": [
+    {
+      "name": "岩台主层",
+      "y": 4,
+      "max_y": 9
+    }
+  ],
+  "roof_min_y": 10,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/cloud_food.py:CN-F02(5)",
+  "preview_context": {
+    "kind": "slope",
+    "land_surface_y": 5,
+    "bed_y": -3,
+    "padding": 4,
+    "run": 8,
+    "rise": -1,
+    "slope_origin_z": 0,
+    "surface": "grass"
+  },
+  "agriculture": {
+    "crops": [
+      "wheat",
+      "carrots",
+      "potatoes",
+      "beetroots"
+    ],
+    "irrigation": "每个独立槽有同高封闭水渠；最终NBT重新核对支撑和四格范围水源"
+  },
+  "nbt_sha256": "643fa00c0f5417fab3db7ba4ef297e2d62a9bbaef5a87adaa24405e9fb6c2cf0"
+}

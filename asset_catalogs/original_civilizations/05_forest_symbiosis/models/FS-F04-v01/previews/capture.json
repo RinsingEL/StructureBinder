@@ -1,0 +1,28 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "FS-F04-v01",
+  "nbt_sha256": "c56a3e296ffa21e4e4e12eea978ed0c172dca47b40fbccfde9d78b58196cd650",
+  "author_sha256": "660586114836b0c16a40fdc98a9db2989e6bf56d2e84d5b4211597ba0727bde3",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-shed",
+    "room-assembly",
+    "point-tools",
+    "point-stock",
+    "point-dry",
+    "point-assembly",
+    "point-parts",
+    "point-weave",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

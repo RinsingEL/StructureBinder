@@ -1,0 +1,37 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "FS-F03-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 森林建模作者离线实看",
+  "nbt_sha256": "a80ab185d39c34e88771efd93b70c22b9784134ff94fe880b3aed6fe61bf8c81",
+  "author_sha256": "b306d0254558d1e926a268d2d374901043daf1b5a04098b9f0d5cebd9a6d59be",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-long.png",
+    "previews/room-short.png",
+    "previews/point-long.png",
+    "previews/point-short.png",
+    "previews/point-sort.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "已实际逐张查看14张最终截图，外观、剖切、使用点和地形示意与当前双哈希匹配。",
+    "L形两组棚架绕开中央小院，转角可通行。",
+    "最终NBT数据和离线步行审计无错误或警告，全部作者标记可达。",
+    "修订后的根土、攀附藤蔓、实木柱、纵横梁、叶蔓及向下果串已逐图核对；采收点不被柱体或墙体阻挡。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "农田是完整固定模板；自然地形延展、真实作物光照和生长未运行验收。药花和紫晶芽果串为静态外观示意，葡萄品种、季节及生产机制尚需整合包接入。"
+  ]
+}

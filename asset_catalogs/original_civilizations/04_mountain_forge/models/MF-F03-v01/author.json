@@ -1,0 +1,89 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-F03-v01",
+  "name": "贴山矿具靠壁棚",
+  "family": "MF-F03",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    23,
+    16,
+    19
+  ],
+  "terrain": {
+    "选址": "仅用于稳定山脚石坎，+Z 背墙需有真实山体或挡土依托；不得让背墙悬空。",
+    "高程": "干地与基础顶脚底 Y=2，四角支柱落在完整石基上。",
+    "用途": "少量材料周转与手工修缮造型；不代表自动仓储、搬运或矿业系统接入。"
+  },
+  "rooms": [
+    {
+      "id": "shed",
+      "name": "背墙矿具棚",
+      "min": [
+        5,
+        2,
+        5
+      ],
+      "max": [
+        17,
+        6,
+        13
+      ],
+      "purpose": "背墙挂具、前货堆和单侧检修台"
+    }
+  ],
+  "points": [
+    {
+      "id": "work",
+      "kind": "work",
+      "pos": [
+        16,
+        2,
+        11
+      ],
+      "name": "矿具检修",
+      "approach": [
+        16,
+        2,
+        10
+      ]
+    },
+    {
+      "id": "shed_entry",
+      "kind": "entrance",
+      "pos": [
+        11,
+        2,
+        2
+      ],
+      "name": "棚前搬运入口"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "高背墙贴山挡土、前面开放，材料堆在左侧，右側矿具检修留完整站位。"
+  ],
+  "differences": [
+    "高背墙贴山挡土、前面开放，材料堆在左侧，右側矿具检修留完整站位。"
+  ],
+  "floors": [
+    {
+      "name": "生活与作业层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_outside.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "nbt_sha256": "58233985d77f576d3f2ad872de7c82aa1fa95f516683c2358c980e347a256e24"
+}

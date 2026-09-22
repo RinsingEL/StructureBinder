@@ -1,0 +1,44 @@
+{
+  "schema": "structure-studio.validation.v1",
+  "nbt_sha256": "e89a7df7aee51e552c2b07f88c4610da2025a24911ae6fe3ba319c24facb78fa",
+  "navigation": {
+    "passed": true,
+    "unreachable": [],
+    "nodes": 2535,
+    "highest_standing_y": 3,
+    "truncated": false,
+    "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "size": [
+    27,
+    16,
+    27
+  ],
+  "visible_blocks": 1390,
+  "explicit_air": 8610,
+  "palette": 14,
+  "block_entities": 0,
+  "agriculture": {
+    "planted_cells": 132,
+    "missing_soil": [],
+    "dry_cells": [],
+    "scope": "最终 NBT 的四类原版作物、耕地和同层/高一层 4 格水源核对；不模拟光照或生长 tick"
+  },
+  "materials": {
+    "minecraft:dirt": 625,
+    "minecraft:coarse_dirt": 391,
+    "minecraft:farmland": 132,
+    "minecraft:beetroots": 96,
+    "minecraft:spruce_log": 80,
+    "minecraft:carrots": 36,
+    "minecraft:water": 22,
+    "minecraft:spruce_stairs": 4,
+    "minecraft:spruce_trapdoor": 2,
+    "minecraft:composter": 1,
+    "minecraft:barrel": 1
+  },
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+}

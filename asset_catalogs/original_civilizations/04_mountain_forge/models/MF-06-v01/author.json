@@ -1,0 +1,210 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-06-v01",
+  "name": "临街筛磨宝石铺",
+  "family": "MF-06",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    25,
+    23,
+    27
+  ],
+  "terrain": {
+    "选址": "邻近矿料路线且具有干燥安全保管条件；切磨声与扬尘需和生活门面分开。",
+    "高程": "基础上边界及室内脚底 Y=2；入口街面需同高程。",
+    "保留空间": "完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "rooms": [
+    {
+      "id": "store",
+      "name": "前店交易与陈列",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        20,
+        6,
+        12
+      ],
+      "purpose": "顾客接待、成品检视和交易；具体工位：接待与成品交付、成品陈列与检视、铺毡验货台与当面交割、分级样品与交易文书"
+    },
+    {
+      "id": "work",
+      "name": "后场筛磨保管",
+      "min": [
+        4,
+        2,
+        14
+      ],
+      "max": [
+        20,
+        6,
+        22
+      ],
+      "purpose": "原石分拣、切磨、水洗和成品保管；具体工位：宝石切磨与水洗、原石分级与称检、成品镶配与包装、待交付贵重成品柜"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        12,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "sale",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        6
+      ],
+      "name": "接待与成品交付",
+      "approach": [
+        6,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "display",
+      "kind": "work",
+      "pos": [
+        15,
+        3,
+        7
+      ],
+      "name": "成品陈列与检视",
+      "approach": [
+        15,
+        2,
+        8
+      ]
+    },
+    {
+      "id": "cut",
+      "kind": "work",
+      "pos": [
+        5,
+        2,
+        17
+      ],
+      "name": "宝石切磨与水洗",
+      "approach": [
+        5,
+        2,
+        18
+      ]
+    },
+    {
+      "id": "inspection",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        10
+      ],
+      "name": "铺毡验货台与当面交割",
+      "approach": [
+        7,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "sales_samples",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        4
+      ],
+      "name": "分级样品与交易文书",
+      "approach": [
+        5,
+        2,
+        5
+      ]
+    },
+    {
+      "id": "sort",
+      "kind": "work",
+      "pos": [
+        14,
+        2,
+        16
+      ],
+      "name": "原石分级与称检",
+      "approach": [
+        14,
+        2,
+        17
+      ]
+    },
+    {
+      "id": "setting",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        21
+      ],
+      "name": "成品镶配与包装",
+      "approach": [
+        7,
+        2,
+        22
+      ]
+    },
+    {
+      "id": "secure",
+      "kind": "storage",
+      "pos": [
+        20,
+        2,
+        21
+      ],
+      "name": "待交付贵重成品柜",
+      "approach": [
+        20,
+        2,
+        20
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "宽面前店经中门进入后场；成品交易与切磨噪声分开，后场原石堆与成品架分边。"
+  ],
+  "differences": [
+    "宽面前店经中门进入后场；成品交易与切磨噪声分开，后场原石堆与成品架分边。"
+  ],
+  "floors": [
+    {
+      "name": "生活与作业层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_trade.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "nbt_sha256": "e36093b3e46297ac1245d9476e47a81c1e8267f7ea17d8da9f9d0c16ba7aa4a6"
+}

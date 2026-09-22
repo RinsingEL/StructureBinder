@@ -1,0 +1,41 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "FS-F02-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 森林建模作者离线实看",
+  "nbt_sha256": "fc9e4ef00057d8d9e1f2722e7950ee818adead1674ea791277671fea92d9a0ba",
+  "author_sha256": "3d54c1ef23d600826f10826223c541a7d6789b061d69e4db6087e7811d10b95a",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-plot0.png",
+    "previews/room-plot1.png",
+    "previews/room-plot2.png",
+    "previews/room-plot3.png",
+    "previews/point-plot0.png",
+    "previews/point-plot1.png",
+    "previews/point-plot2.png",
+    "previews/point-plot3.png",
+    "previews/point-tools.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "已实际逐张查看18张最终截图，外观、剖切、使用点和地形示意与当前双哈希匹配。",
+    "高低台地经实基木阶连接，两级耕作站位均可达。",
+    "最终NBT数据和离线步行审计无错误或警告，全部作者标记可达。",
+    "最终NBT农业检查通过：耕地和作物有正确实体支撑，每块耕地四格内有水源；田埂、封边与作业站位已实看。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "农田是完整固定模板；自然地形延展、真实作物光照和生长未运行验收。药花和紫晶芽果串为静态外观示意，葡萄品种、季节及生产机制尚需整合包接入。"
+  ]
+}

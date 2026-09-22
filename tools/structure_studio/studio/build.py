@@ -18,6 +18,15 @@ from .waterway_trade import warehouse,merchant as waterway_merchant
 from .mountain_forge import BUILDERS as MOUNTAIN_CORES
 from .forest_symbiosis import BUILDERS as FOREST_CORES
 from .cloud_navigation import BUILDERS as CLOUD_CORES
+from .mountain_life import BUILDERS as MOUNTAIN_LIFE
+from .mountain_trade import BUILDERS as MOUNTAIN_TRADE
+from .mountain_outside import BUILDERS as MOUNTAIN_OUTSIDE
+from .forest_life import BUILDERS as FOREST_LIFE
+from .forest_crafts import BUILDERS as FOREST_CRAFTS
+from .forest_gardens import BUILDERS as FOREST_GARDENS
+from .cloud_living import BUILDERS as CLOUD_LIVING
+from .cloud_food import BUILDERS as CLOUD_FOOD
+from .cloud_market import BUILDERS as CLOUD_MARKET
 from .validate import validate
 
 BUILDERS={"SR-01-v01":("01_steam_rail",steam_station),"WT-01-v01":("02_waterway_trade",passenger_quay)}
@@ -35,6 +44,13 @@ for family,builder in (("WT-02",warehouse),("WT-05",waterway_merchant)):
     BUILDERS.update({f"{family}-v{i:02d}":("02_waterway_trade",partial(builder,i)) for i in range(1,5)})
 for civilization,builders in (("04_mountain_forge",MOUNTAIN_CORES),("05_forest_symbiosis",FOREST_CORES),("06_cloud_navigation",CLOUD_CORES)):
     BUILDERS.update({key:(civilization,builder) for key,builder in builders.items()})
+for civilization,groups in (
+    ("04_mountain_forge",(MOUNTAIN_LIFE,MOUNTAIN_TRADE,MOUNTAIN_OUTSIDE)),
+    ("05_forest_symbiosis",(FOREST_LIFE,FOREST_CRAFTS,FOREST_GARDENS)),
+    ("06_cloud_navigation",(CLOUD_LIVING,CLOUD_FOOD,CLOUD_MARKET)),
+):
+    for builders in groups:
+        BUILDERS.update({key:(civilization,builder) for key,builder in builders.items()})
 
 
 def main():

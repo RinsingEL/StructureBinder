@@ -1,0 +1,41 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CN-F01-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors author visual review",
+  "nbt_sha256": "972b484b3881626891260337d068694d41578c0e30f530513aae59815658e420",
+  "author_sha256": "4b672041a2939bb4ad07f0910bd3878591e355093aaf5d053640bfb6888c8bfc",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-cut.png",
+    "previews/room-sew.png",
+    "previews/room-materials.png",
+    "previews/point-counter.png",
+    "previews/point-cutting.png",
+    "previews/point-sew.png",
+    "previews/point-cloth.png",
+    "previews/point-finished_sail.png",
+    "previews/point-fit.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "已实际查看当前最终全视角、分层、每个房间及使用点全部截图，无缺纹理与渲染错误。",
+    "量裁接单长翼与独立织補短翼，色样布卷、裁剪长台、成品帆陈列清楚，院内等候。",
+    "新旧柜台使用深木构件，家具组与浅地板清楚区分。数据及全部标记通路通过，无警告；原轮廓、承檐、实体支撑与平台连续栏杆保留。"
+  ],
+  "revisions": [
+    "主审撤回稀疏内饰后，仅修改cloud_market.py商铺局部helper；CN08货仓与其它冻结模块未改。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

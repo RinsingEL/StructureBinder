@@ -1,0 +1,32 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "FS-F04-v04",
+  "nbt_sha256": "08ae508459d41fe816e4daf05f83a260d841ee0aa2ca5bc9f4c8330be5febd89",
+  "author_sha256": "0f14854bce2fbedf827aa01091454184d17f6b97dbc024b90acffbeb234e9374",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-shed",
+    "room-room",
+    "room-repairbay",
+    "point-tools",
+    "point-stock",
+    "point-dry",
+    "point-drygoods",
+    "point-sidegoods",
+    "point-issue",
+    "point-repair",
+    "point-incoming",
+    "point-longstock",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

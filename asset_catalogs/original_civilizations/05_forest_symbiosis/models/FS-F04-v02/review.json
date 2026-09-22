@@ -1,0 +1,40 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "FS-F04-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 主审（实际查看全部最终截图）",
+  "nbt_sha256": "ac7157f7277f4a71cab17707ffe0e60cf76ce662dfb8c32b3cdeb2834ac21f62",
+  "author_sha256": "0c24a72d1d553a94fe692a2452fd1f057cb6283e3063dcee0954b308983c051f",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-shed.png",
+    "previews/room-timberyard.png",
+    "previews/point-tools.png",
+    "previews/point-stock.png",
+    "previews/point-dry.png",
+    "previews/point-timber.png",
+    "previews/point-measure.png",
+    "previews/point-cut.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "树旁晾材棚保留根盘；量尺台、分堆短材和固定切整台各自可见，后架取料位已避开料堆。",
+    "全部外观、剖面、房间、使用点、标记与地形示意已实际查看；屋顶支承和家具落地可辨。",
+    "当前最终NBT与作者标记通过数据、边界、状态及离线步行复核，零错误与警告。"
+  ],
+  "revisions": [
+    "补齐原本稀疏的工具间/作业棚内饰，新增用途同步记录房间与站位；FS-F04-v02后排料堆避开既有stock取料点。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "FS-06-v02",
+  "nbt_sha256": "00834bc6bf3730ed627effdf594bb20ebf2ea229a5ceb2a93bb4c9fbe50b6609",
+  "author_sha256": "1ee2d9ee096141692c36912a6af28234f7a0a4e10420d3e4dd93385919b5d79b",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-unit0day",
+    "room-unit0night",
+    "room-yard",
+    "point-unit0cook",
+    "point-unit0dining",
+    "point-unit0bed0",
+    "point-unit0bed1",
+    "point-unit0clothes",
+    "point-unit0read",
+    "point-repair",
+    "point-field",
+    "point-survey",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

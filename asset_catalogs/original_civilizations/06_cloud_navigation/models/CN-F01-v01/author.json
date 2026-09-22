@@ -1,0 +1,203 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CN-F01-v01",
+  "name": "窄巷烘焙铺 · 空港日常小商铺",
+  "family": "CN-F01",
+  "civilization": "云海航行文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    27,
+    31,
+    37
+  ],
+  "terrain": {
+    "选址": "高原岩台边缘，北侧接稳定地面，南侧朝开阔谷地",
+    "高程": "主平台地板 Y=7，入口脚底 Y=8；外接同高岩台道路",
+    "固定与承重": "北侧石砌锚座压在实体岩台，南侧木梁和斜撑回接石墩；石墩底必须落在连续承载岩层。不可当作无支撑浮空结构。",
+    "接驳边界": "模板内支撑与边栏完整；外侧山体、接驳道路、峡谷宽度及航行净空必须按实际场地核对。",
+    "运行边界": "泊位、缆索、风向仪、船体与吊装均为静态空间表达；未实现飞行、气象、物流或受力模拟。"
+  },
+  "rooms": [
+    {
+      "id": "bakery",
+      "name": "前店后炉的窄铺",
+      "min": [
+        8,
+        8,
+        8
+      ],
+      "max": [
+        18,
+        13,
+        28
+      ],
+      "purpose": "前柜销售、中段揉面、后段炉灶与饮水、外侧短候座"
+    },
+    {
+      "id": "bake_work",
+      "name": "揉面—烘烤—冷却后场",
+      "min": [
+        8,
+        8,
+        18
+      ],
+      "max": [
+        18,
+        13,
+        28
+      ],
+      "purpose": "面粉备料、湿操作台、炉灶、冷却架和装袋，东侧门留净"
+    }
+  ],
+  "points": [
+    {
+      "id": "sale",
+      "kind": "work",
+      "pos": [
+        10,
+        8,
+        12
+      ],
+      "name": "面包售卖与称量",
+      "approach": [
+        10,
+        8,
+        13
+      ]
+    },
+    {
+      "id": "oven",
+      "kind": "work",
+      "pos": [
+        9,
+        8,
+        27
+      ],
+      "name": "备餐炉灶与饮水",
+      "approach": [
+        9,
+        8,
+        28
+      ]
+    },
+    {
+      "id": "dough",
+      "kind": "work",
+      "pos": [
+        10,
+        8,
+        20
+      ],
+      "name": "整形与备料",
+      "approach": [
+        10,
+        8,
+        21
+      ]
+    },
+    {
+      "id": "bread",
+      "kind": "storage",
+      "pos": [
+        10,
+        9,
+        8
+      ],
+      "name": "分类商品与成品陈列",
+      "approach": [
+        10,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "flour",
+      "kind": "storage",
+      "pos": [
+        16,
+        9,
+        17
+      ],
+      "name": "分类商品与成品陈列",
+      "approach": [
+        16,
+        8,
+        18
+      ]
+    },
+    {
+      "id": "cooling",
+      "kind": "work",
+      "pos": [
+        18,
+        9,
+        23
+      ],
+      "name": "出炉冷却、装袋与食品周转",
+      "approach": [
+        16,
+        8,
+        23
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        13,
+        8,
+        3
+      ],
+      "name": "岩台地面入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        13,
+        7,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "岩台地面入口，外接脚底 Y=8 的连续道路"
+    }
+  ],
+  "design_notes": [
+    "狭长烘焙铺依次分成售卖、备料、炉灶三段，厨房另有后侧出入口。",
+    "店铺按居民与空港服务需求选用，门前平台必须接连续步道；陈设不自动产生交易、生产或治疗功能。"
+  ],
+  "differences": [
+    "狭长烘焙铺依次分成售卖、备料、炉灶三段，厨房另有后侧出入口。"
+  ],
+  "floors": [
+    {
+      "name": "岩台主层",
+      "y": 7,
+      "max_y": 13
+    }
+  ],
+  "roof_min_y": 14,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/cloud_market.py:CN-F01(1)",
+  "preview_context": {
+    "kind": "slope",
+    "land_surface_y": 8,
+    "bed_y": -3,
+    "padding": 4,
+    "run": 8,
+    "rise": -1,
+    "slope_origin_z": 0,
+    "surface": "snow"
+  },
+  "nbt_sha256": "bc48c39dc896bdefde598b10ca5297599550a3ddc04de894b25763dbf7eca0bb"
+}

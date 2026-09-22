@@ -1,0 +1,52 @@
+{
+  "schema": "structure-studio.validation.v1",
+  "nbt_sha256": "6e79181194995fae350c998b89c776fb607193d4f9e008721cd8e694f81ff503",
+  "navigation": {
+    "passed": true,
+    "unreachable": [],
+    "nodes": 3356,
+    "highest_standing_y": 3,
+    "truncated": false,
+    "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "size": [
+    37,
+    22,
+    34
+  ],
+  "visible_blocks": 3972,
+  "explicit_air": 17808,
+  "palette": 35,
+  "block_entities": 0,
+  "agriculture": null,
+  "materials": {
+    "minecraft:mossy_cobblestone": 1980,
+    "minecraft:moss_block": 576,
+    "minecraft:spruce_planks": 425,
+    "minecraft:stripped_spruce_log": 179,
+    "minecraft:mud_bricks": 175,
+    "minecraft:dark_oak_planks": 152,
+    "minecraft:stripped_dark_oak_log": 132,
+    "minecraft:dark_oak_slab": 80,
+    "minecraft:dark_oak_log": 74,
+    "minecraft:vine": 48,
+    "minecraft:oak_leaves": 42,
+    "minecraft:lime_stained_glass_pane": 24,
+    "minecraft:moss_carpet": 19,
+    "minecraft:small_amethyst_bud": 18,
+    "minecraft:rooted_dirt": 12,
+    "minecraft:barrel": 12,
+    "minecraft:spruce_slab": 11,
+    "minecraft:chain": 3,
+    "minecraft:spruce_door": 2,
+    "minecraft:tripwire_hook": 2,
+    "minecraft:flower_pot": 2,
+    "minecraft:lantern": 2,
+    "minecraft:composter": 1,
+    "minecraft:water_cauldron": 1
+  },
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+}

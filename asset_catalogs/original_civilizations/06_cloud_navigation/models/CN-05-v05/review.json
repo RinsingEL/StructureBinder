@@ -1,0 +1,50 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CN-05-v05",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors author visual review",
+  "nbt_sha256": "c0956f2d713f58bcd0ba1c821dce12003154b59c27f1e6de6647480798594a01",
+  "author_sha256": "8e5899e64a17673973c6f0e0c4956a3033cb1250301fa4b9b149543559f24fa5",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-low_read.png",
+    "previews/room-low_living.png",
+    "previews/room-low_sleep.png",
+    "previews/room-high_read.png",
+    "previews/room-high.png",
+    "previews/point-low_cook.png",
+    "previews/point-low_read.png",
+    "previews/point-low_1.png",
+    "previews/point-low_2.png",
+    "previews/point-low_dress.png",
+    "previews/point-high_1.png",
+    "previews/point-high_2.png",
+    "previews/point-high_table.png",
+    "previews/point-high_read.png",
+    "previews/point-bridge.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "实际查看本次最终全部截图：外观、分层、房间与每个工作/床位视角；无渲染错误和缺纹理。",
+    "厨房改为连续炉灶、洗涤与备餐操作台及上架，双側用餐椅与餐桌成组；居住/公共房有坐读与书物柜。",
+    "每床配置床头灯、个人储物双箱与床头短屏；房门和床侧保持通路，独立房间保留隐私分隔。",
+    "住宅卧室增加梳写整理台，宿舍/客房前部写字与坐读；旅舍接待外补等候和寄存箱。",
+    "原有实体固定端、支撑外廓、坡顶承檐和连续平台/外阶栏杆保留；数据及全标记离线通路通过且无警告。"
+  ],
+  "revisions": [
+    "主审撤回稀疏内饰后，仅在cloud_living.py补局部家具组织，不修改冻结核心与共享helper。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

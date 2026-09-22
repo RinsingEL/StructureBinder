@@ -1,0 +1,137 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-F02-v04",
+  "name": "院旁工具菜园",
+  "family": "MF-F02",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    29,
+    16,
+    27
+  ],
+  "terrain": {
+    "选址": "仅限具备足够土壤、光照、温度和稳定水分的地表地块，不放入无光山腹或永久冻土。",
+    "高程": "默认田埂脚底 Y=2；MF-F02-v02 后半单阶脚底 Y=3。",
+    "生产": "作物为原版外观与几何表达；未模拟生长tick、光照、温度或整合包产量。",
+    "边界": "独立模板田块有田埂和封边，不代表Landscape自然生成的大田。"
+  },
+  "rooms": [
+    {
+      "id": "shed",
+      "name": "农具种子屋",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        11,
+        6,
+        11
+      ],
+      "purpose": "农具、种子和整理工作台"
+    },
+    {
+      "id": "beds",
+      "name": "院旁两块菜畦",
+      "min": [
+        4,
+        2,
+        14
+      ],
+      "max": [
+        24,
+        6,
+        22
+      ],
+      "purpose": "较长薯畦与短胡萝卜畦，院路可达"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        14,
+        2,
+        2
+      ],
+      "name": "耕作通路入口",
+      "facing": "north"
+    },
+    {
+      "id": "entry_8_3",
+      "kind": "entrance",
+      "pos": [
+        8,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "tools",
+      "kind": "work",
+      "pos": [
+        10,
+        2,
+        6
+      ],
+      "name": "农具整理",
+      "approach": [
+        9,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "crop",
+      "kind": "work",
+      "pos": [
+        18,
+        2,
+        12
+      ],
+      "name": "菜畦采收",
+      "approach": [
+        16,
+        2,
+        12
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "小农具屋旁配长薯畦，屋后再置短胡萝卜畦；院路联系种子储存、堆肥和采收。"
+  ],
+  "differences": [
+    "小农具屋旁配长薯畦，屋后再置短胡萝卜畦；院路联系种子储存、堆肥和采收。"
+  ],
+  "floors": [
+    {
+      "name": "生活与作业层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_outside.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "agriculture": {
+    "crops": "原版马铃薯、胡萝卜、甜菜和小麦依变体设置",
+    "layout": "小农具屋旁配长薯畦，屋后再置短胡萝卜畦；院路联系种子储存、堆肥和采收。",
+    "irrigation": "每畦固定水源，最终NBT另核对4格水源距离和耕地支撑。"
+  },
+  "nbt_sha256": "7e21a3e86f411432f37d314ee163d294a67c597086e0e9172d35b9a0fe7bf625"
+}

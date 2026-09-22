@@ -1,0 +1,170 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-05-v02",
+  "name": "窄面双层匠宅",
+  "family": "MF-05",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    21,
+    23,
+    27
+  ],
+  "terrain": {
+    "选址": "稳定狭长台地；本款靠楼层节约地块，双层本体街门脚底 Y=2。",
+    "高程": "基础上边界及室内脚底 Y=2；入口街面需同高程。",
+    "保留空间": "完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "rooms": [
+    {
+      "id": "work",
+      "name": "接单与小工作室",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        16,
+        6,
+        22
+      ],
+      "purpose": "工作台、书写和材料，上层生活经侧内梯进入"
+    },
+    {
+      "id": "home",
+      "name": "楼上家庭起居",
+      "min": [
+        4,
+        8,
+        4
+      ],
+      "max": [
+        16,
+        12,
+        22
+      ],
+      "purpose": "餐厨、二床、衣柜和梯井"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        10,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "trade",
+      "kind": "work",
+      "pos": [
+        5,
+        2,
+        5
+      ],
+      "name": "接单书写",
+      "approach": [
+        5,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "work",
+      "kind": "work",
+      "pos": [
+        14,
+        2,
+        12
+      ],
+      "name": "小型修造台",
+      "approach": [
+        13,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "kitchen",
+      "kind": "work",
+      "pos": [
+        11,
+        8,
+        5
+      ],
+      "name": "炊事与洗涤",
+      "approach": [
+        11,
+        8,
+        6
+      ]
+    },
+    {
+      "id": "home_0",
+      "kind": "bed",
+      "pos": [
+        10,
+        8,
+        17
+      ],
+      "name": "床位与个人柜",
+      "approach": [
+        11,
+        8,
+        17
+      ]
+    },
+    {
+      "id": "home_1",
+      "kind": "bed",
+      "pos": [
+        13,
+        8,
+        17
+      ],
+      "name": "床位与个人柜",
+      "approach": [
+        14,
+        8,
+        17
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "窄面两层：下层接单工作与材料，上层二床餐厨；六级双宽内梯把工作与生活分开。"
+  ],
+  "differences": [
+    "窄面两层：下层接单工作与材料，上层二床餐厨；六级双宽内梯把工作与生活分开。"
+  ],
+  "floors": [
+    {
+      "name": "工作层",
+      "y": 1,
+      "max_y": 5
+    },
+    {
+      "name": "家庭层",
+      "y": 7,
+      "max_y": 11
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_life.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "nbt_sha256": "fdcb9c9453c2339ac4fb07c32e01581f6d083296a35fd561cd3a6a8fe343efc2"
+}

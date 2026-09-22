@@ -1,0 +1,153 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "FS-F03-v02",
+  "name": "双列果廊",
+  "family": "FS-F03",
+  "civilization": "森林共生文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    37,
+    18,
+    34
+  ],
+  "terrain": {
+    "选址": "双列棚之间留宽转运路，适合有充分日照的开敞林缘",
+    "落地": "只整理建筑本体与步道；保留未写入的林地。附树版本包含独立柱脚和树根占地，不能套入任意现存树体。",
+    "高程": "主入口脚底 Y=3；高位层和坡地接驳另见楼层与使用点",
+    "运行边界": "种植、蜂具、藤果、兽栏与遗留物均为原版静态空间表达；实际生产、动物和生态行为须另行接入。"
+  },
+  "rooms": [
+    {
+      "id": "west",
+      "name": "完整独立藤架",
+      "min": [
+        5,
+        3,
+        7
+      ],
+      "max": [
+        13,
+        7,
+        27
+      ],
+      "purpose": "落地棚柱、纵横梁、叶蔓与采收走道"
+    },
+    {
+      "id": "east",
+      "name": "完整独立藤架",
+      "min": [
+        23,
+        3,
+        7
+      ],
+      "max": [
+        31,
+        7,
+        27
+      ],
+      "purpose": "落地棚柱、纵横梁、叶蔓与采收走道"
+    }
+  ],
+  "points": [
+    {
+      "id": "west",
+      "kind": "work",
+      "pos": [
+        6,
+        6,
+        11
+      ],
+      "name": "藤果采收",
+      "approach": [
+        9,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "east",
+      "kind": "work",
+      "pos": [
+        24,
+        6,
+        11
+      ],
+      "name": "藤果采收",
+      "approach": [
+        27,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "sort",
+      "kind": "work",
+      "pos": [
+        30,
+        3,
+        5
+      ],
+      "name": "采收整理",
+      "approach": [
+        29,
+        3,
+        5
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        18,
+        3,
+        2
+      ],
+      "name": "林间步道入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        18,
+        2,
+        2
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "外接步道脚底 Y=3，须保留树根与基础占地"
+    }
+  ],
+  "design_notes": [
+    "叶蔓依托落地梁架；果串采用原版紫晶芽外观，仅作藤果示意。实际葡萄品种、温度、季节和生产按整合包配置。"
+  ],
+  "differences": [
+    "双列棚之间留宽转运路，适合有充分日照的开敞林缘"
+  ],
+  "floors": [
+    {
+      "name": "采收与工具使用层",
+      "y": 2,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/forest_gardens.py:vineyard",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "podzol"
+  },
+  "nbt_sha256": "49b40b5528b6dbdefe70908b4338db4fe5503970ae0b86e76f7f00aa8487a37b"
+}

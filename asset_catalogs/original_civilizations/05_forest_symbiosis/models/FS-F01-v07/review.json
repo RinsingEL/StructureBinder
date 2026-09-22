@@ -1,0 +1,44 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "FS-F01-v07",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 森林内饰返修逐图审查",
+  "nbt_sha256": "2ff2d58db2a9550cdeef83a0681b6e19506a6a141ff36690b25674ffd1d8ea21",
+  "author_sha256": "455df7683c2bf1da23cdf8ca80443c303b18063a1a4a5bf4c7b82ae25eefc613",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-sales.png",
+    "previews/room-back.png",
+    "previews/room-annex.png",
+    "previews/point-trade.png",
+    "previews/point-stock.png",
+    "previews/point-rest.png",
+    "previews/point-keepercook.png",
+    "previews/point-keepermeal.png",
+    "previews/point-service.png",
+    "previews/point-lights.png",
+    "previews/point-annex.png",
+    "previews/point-outside.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "已逐张实际查看本次最终全部21张截图，包括外观、去顶、楼层、房间、全部使用点及环境。",
+    "八类行业分别有食品座席、草药调配柜、织品样台、工具维修台、种子果实台、木工料架、蜡灯展台及阅图席；后区补有门睡眠分隔和厨房餐台。",
+    "生活后勤增加带门睡眠分隔、衣物与储物、连续厨房和餐叙座席；家具与主要行走路径无碰撞，最终NBT数据和通路零警告。"
+  ],
+  "revisions": [
+    "撤回旧版内饰验收，完成本次房间尺度与作业流程返修后重新导出、拍摄、全图实看。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

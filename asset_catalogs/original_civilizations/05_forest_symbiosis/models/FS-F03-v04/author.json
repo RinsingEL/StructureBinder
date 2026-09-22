@@ -1,0 +1,198 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "FS-F03-v04",
+  "name": "背墙暖棚",
+  "family": "FS-F03",
+  "civilization": "森林共生文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    37,
+    22,
+    34
+  ],
+  "terrain": {
+    "选址": "靠独立背墙的棚架与封闭工具间组合，适合院边暖向地块",
+    "落地": "只整理建筑本体与步道；保留未写入的林地。附树版本包含独立柱脚和树根占地，不能套入任意现存树体。",
+    "高程": "主入口脚底 Y=3；高位层和坡地接驳另见楼层与使用点",
+    "运行边界": "种植、蜂具、藤果、兽栏与遗留物均为原版静态空间表达；实际生产、动物和生态行为须另行接入。"
+  },
+  "rooms": [
+    {
+      "id": "wall",
+      "name": "完整独立藤架",
+      "min": [
+        5,
+        3,
+        8
+      ],
+      "max": [
+        13,
+        7,
+        28
+      ],
+      "purpose": "落地棚柱、纵横梁、叶蔓与采收走道"
+    },
+    {
+      "id": "store",
+      "name": "采收工具间",
+      "min": [
+        21,
+        3,
+        11
+      ],
+      "max": [
+        30,
+        7,
+        25
+      ],
+      "purpose": "清洗台、分拣包装、采收剪具、空篮与果箱；从前门沿中央通道进入"
+    }
+  ],
+  "points": [
+    {
+      "id": "wall",
+      "kind": "work",
+      "pos": [
+        6,
+        6,
+        12
+      ],
+      "name": "藤果采收",
+      "approach": [
+        9,
+        3,
+        11
+      ]
+    },
+    {
+      "id": "toolstore",
+      "kind": "storage",
+      "pos": [
+        23,
+        4,
+        24
+      ],
+      "name": "采收剪具、绳索与包装",
+      "approach": [
+        23,
+        3,
+        23
+      ]
+    },
+    {
+      "id": "wash",
+      "kind": "work",
+      "pos": [
+        23,
+        3,
+        14
+      ],
+      "name": "院内清洗面",
+      "approach": [
+        23,
+        3,
+        15
+      ]
+    },
+    {
+      "id": "pack",
+      "kind": "work",
+      "pos": [
+        27,
+        4,
+        16
+      ],
+      "name": "清洗后的藤果挑选与包装台",
+      "approach": [
+        27,
+        3,
+        15
+      ]
+    },
+    {
+      "id": "baskets",
+      "kind": "storage",
+      "pos": [
+        22,
+        3,
+        20
+      ],
+      "name": "采收空篮与待发果箱",
+      "approach": [
+        22,
+        3,
+        19
+      ]
+    },
+    {
+      "id": "sort",
+      "kind": "work",
+      "pos": [
+        30,
+        3,
+        5
+      ],
+      "name": "采收整理",
+      "approach": [
+        29,
+        3,
+        5
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        18,
+        3,
+        2
+      ],
+      "name": "林间步道入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        18,
+        2,
+        2
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "外接步道脚底 Y=3，须保留树根与基础占地"
+    }
+  ],
+  "design_notes": [
+    "叶蔓依托落地梁架；果串采用原版紫晶芽外观，仅作藤果示意。实际葡萄品种、温度、季节和生产按整合包配置。"
+  ],
+  "differences": [
+    "靠独立背墙的棚架与封闭工具间组合，适合院边暖向地块"
+  ],
+  "floors": [
+    {
+      "name": "采收与工具使用层",
+      "y": 2,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/forest_gardens.py:vineyard",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "podzol"
+  },
+  "nbt_sha256": "6e79181194995fae350c998b89c776fb607193d4f9e008721cd8e694f81ff503"
+}

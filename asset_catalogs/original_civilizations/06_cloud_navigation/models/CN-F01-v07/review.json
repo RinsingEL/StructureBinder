@@ -1,0 +1,42 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CN-F01-v07",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors author visual review",
+  "nbt_sha256": "0ffcef9cbda496c286faca91dede00a1cc9cb26af58619ccdabf4dc63ca9f221",
+  "author_sha256": "82871f1d979b5dcb2272d3c98cd67617d4604a0b905fbc696711d1306867eec2",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-tea.png",
+    "previews/room-terrace.png",
+    "previews/room-tea_prep.png",
+    "previews/point-cook.png",
+    "previews/point-tea.png",
+    "previews/point-terrace.png",
+    "previews/point-tea_stock.png",
+    "previews/point-wash.png",
+    "previews/point-terrace_service.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "已实际查看当前最终全视角、分层、每个房间及使用点全部截图，无缺纹理与渲染错误。",
+    "低台备茶清洗、原料与点单、高台用餐和服务柜分组；阶道栏杆连续、观景席可达。",
+    "新旧柜台使用深木构件，家具组与浅地板清楚区分。数据及全部标记通路通过，无警告；原轮廓、承檐、实体支撑与平台连续栏杆保留。"
+  ],
+  "revisions": [
+    "主审撤回稀疏内饰后，仅修改cloud_market.py商铺局部helper；CN08货仓与其它冻结模块未改。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

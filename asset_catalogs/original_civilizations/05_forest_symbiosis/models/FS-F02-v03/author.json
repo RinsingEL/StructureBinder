@@ -1,0 +1,224 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "FS-F02-v03",
+  "name": "四季分畦 · 林缘农田与药圃",
+  "family": "FS-F02",
+  "civilization": "森林共生文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    37,
+    18,
+    37
+  ],
+  "terrain": {
+    "选址": "四个独立短畦由十字作业路分开，适合开阔林缘日照地",
+    "落地": "只整理建筑本体与步道；保留未写入的林地。附树版本包含独立柱脚和树根占地，不能套入任意现存树体。",
+    "高程": "主入口脚底 Y=3；高位层和坡地接驳另见楼层与使用点",
+    "运行边界": "种植、蜂具、藤果、兽栏与遗留物均为原版静态空间表达；实际生产、动物和生态行为须另行接入。"
+  },
+  "rooms": [
+    {
+      "id": "plot0",
+      "name": "林隙作物畦",
+      "min": [
+        4,
+        3,
+        8
+      ],
+      "max": [
+        13,
+        5,
+        16
+      ],
+      "purpose": "实体耕地、水眼、边缘木质作业路；需实际足够日照"
+    },
+    {
+      "id": "plot1",
+      "name": "林隙作物畦",
+      "min": [
+        23,
+        3,
+        8
+      ],
+      "max": [
+        32,
+        5,
+        16
+      ],
+      "purpose": "实体耕地、水眼、边缘木质作业路；需实际足够日照"
+    },
+    {
+      "id": "plot2",
+      "name": "林隙作物畦",
+      "min": [
+        4,
+        3,
+        23
+      ],
+      "max": [
+        13,
+        5,
+        31
+      ],
+      "purpose": "实体耕地、水眼、边缘木质作业路；需实际足够日照"
+    },
+    {
+      "id": "plot3",
+      "name": "林隙作物畦",
+      "min": [
+        23,
+        3,
+        23
+      ],
+      "max": [
+        32,
+        5,
+        31
+      ],
+      "purpose": "实体耕地、水眼、边缘木质作业路；需实际足够日照"
+    }
+  ],
+  "points": [
+    {
+      "id": "plot0",
+      "kind": "work",
+      "pos": [
+        4,
+        3,
+        8
+      ],
+      "name": "wheat种植与采收畦",
+      "approach": [
+        3,
+        3,
+        8
+      ]
+    },
+    {
+      "id": "plot1",
+      "kind": "work",
+      "pos": [
+        23,
+        3,
+        8
+      ],
+      "name": "carrots种植与采收畦",
+      "approach": [
+        22,
+        3,
+        8
+      ]
+    },
+    {
+      "id": "plot2",
+      "kind": "work",
+      "pos": [
+        4,
+        3,
+        23
+      ],
+      "name": "potatoes种植与采收畦",
+      "approach": [
+        3,
+        3,
+        23
+      ]
+    },
+    {
+      "id": "plot3",
+      "kind": "work",
+      "pos": [
+        23,
+        3,
+        23
+      ],
+      "name": "beetroots种植与采收畦",
+      "approach": [
+        22,
+        3,
+        23
+      ]
+    },
+    {
+      "id": "tools",
+      "kind": "work",
+      "pos": [
+        4,
+        3,
+        4
+      ],
+      "name": "整地与植物残余收集",
+      "approach": [
+        4,
+        3,
+        5
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        18,
+        3,
+        2
+      ],
+      "name": "林间步道入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        18,
+        2,
+        2
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "外接步道脚底 Y=3，须保留树根与基础占地"
+    }
+  ],
+  "design_notes": [
+    "完整封边的独立田块，可直接读出田埂、种植、水眼与工作区；不代表沿自然地形自动延展的大田。"
+  ],
+  "differences": [
+    "四个独立短畦由十字作业路分开，适合开阔林缘日照地"
+  ],
+  "floors": [
+    {
+      "name": "林下使用层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/forest_gardens.py:farm",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "podzol"
+  },
+  "agriculture": {
+    "type": "fixed_template",
+    "crops": [
+      "beetroots",
+      "carrots",
+      "potatoes",
+      "wheat"
+    ],
+    "layout": "四个独立短畦由十字作业路分开，适合开阔林缘日照地",
+    "water": "每个田块独立水眼，与最终NBT四格水源核对；实际生长、光照与季节另验"
+  },
+  "nbt_sha256": "ee738f68c2742a42a8af7db9a9489eec3786d02e00e631a22c4722eaff84983f"
+}

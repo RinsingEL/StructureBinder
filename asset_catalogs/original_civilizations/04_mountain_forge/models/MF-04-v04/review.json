@@ -1,0 +1,44 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MF-04-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 山腹锻炉离线作者图审",
+  "nbt_sha256": "366f1183c8b9caa64bc198ee0076c3373275abead89848fde57999dc4c7ae5be",
+  "author_sha256": "23dfa064028fa4d25da30199001b77fda83db2d0c834ade2c1744967846d7772",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-living.png",
+    "previews/room-beds.png",
+    "previews/room-yard.png",
+    "previews/point-kitchen.png",
+    "previews/point-wing15_0.png",
+    "previews/point-wing15_1.png",
+    "previews/point-wing21_0.png",
+    "previews/point-wing21_1.png",
+    "previews/point-repair.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "宽面共餐厅接转角窄寝翼，L形围出独立修补院。 出檐承托修复后已实际复查外观连接。",
+    "内饰与使用": "四床与个人柜、宽长餐桌、厨房、储粮架、院中修补台和水盆完整。",
+    "完整证据": "实际查看当前 NBT 四向外观、俯视、去屋顶、全部楼层、全部房间、全部已标站位、作者标记和地形示意；未以自动截图代替图审。",
+    "标记与通路": "原版状态、门床、作者标记及入口至全部站位碰撞检查通过，无警告。",
+    "地块条件": "紧凑平整生活台地，室内与街面脚底 Y=2。；基础上边界及室内脚底 Y=2；入口街面需同高程。；完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "revisions": [
+    "重审出檐屋面承托：坡屋墙线补连续承檐梁；独立棚顶按型号改下半砖与柱顶接触。最终 NBT 重拍后实际检查全部视图。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "原版设备仅表达手工生产和生活用途；未接入机器、经济、运输或真实生成。"
+  ]
+}

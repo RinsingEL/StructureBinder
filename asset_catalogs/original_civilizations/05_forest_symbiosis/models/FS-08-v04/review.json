@@ -1,0 +1,55 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "FS-08-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 森林内饰返修逐图审查",
+  "nbt_sha256": "30fd4094dd0e091d709dc9706f78d5abf1d2431102eb4faccb3026e651c01d09",
+  "author_sha256": "a2562ffb801b0c09e9c45798c639d905667120cf0a6f8a9c3ce6097ca38f15ed",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-rest.png",
+    "previews/room-honeyline.png",
+    "previews/room-production.png",
+    "previews/point-restbed0.png",
+    "previews/point-restbed1.png",
+    "previews/point-restlinen.png",
+    "previews/point-restcook.png",
+    "previews/point-restmeal.png",
+    "previews/point-restpantry.png",
+    "previews/point-restoffice.png",
+    "previews/point-restlaundry.png",
+    "previews/point-record.png",
+    "previews/point-press.png",
+    "previews/point-pack.png",
+    "previews/point-honey.png",
+    "previews/point-seal0.png",
+    "previews/point-gearcase0.png",
+    "previews/point-seal1.png",
+    "previews/point-gearcase1.png",
+    "previews/point-dispatch.png",
+    "previews/point-filter0.png",
+    "previews/point-filter1.png",
+    "previews/point-filter2.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "已逐张实际查看本次最终全部32张截图，包括外观、去顶、楼层、房间、全部使用点及环境。",
+    "原料桶、分段过滤操作岛、处理炉烟道、封装长台与成品发运柜依次布置，中央通路连续。",
+    "生活后勤增加带门睡眠分隔、衣物与储物、连续厨房和餐叙座席；家具与主要行走路径无碰撞，最终NBT数据和通路零警告。"
+  ],
+  "revisions": [
+    "撤回旧版内饰验收，完成本次房间尺度与作业流程返修后重新导出、拍摄、全图实看。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

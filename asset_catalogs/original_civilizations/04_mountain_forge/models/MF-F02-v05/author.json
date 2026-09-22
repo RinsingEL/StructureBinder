@@ -1,0 +1,96 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-F02-v05",
+  "name": "碎石分区混作田",
+  "family": "MF-F02",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    29,
+    16,
+    29
+  ],
+  "terrain": {
+    "选址": "仅限具备足够土壤、光照、温度和稳定水分的地表地块，不放入无光山腹或永久冻土。",
+    "高程": "默认田埂脚底 Y=2；MF-F02-v02 后半单阶脚底 Y=3。",
+    "生产": "作物为原版外观与几何表达；未模拟生长tick、光照、温度或整合包产量。",
+    "边界": "独立模板田块有田埂和封边，不代表Landscape自然生成的大田。"
+  },
+  "rooms": [
+    {
+      "id": "beds",
+      "name": "四块碎石间小田",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        24,
+        6,
+        24
+      ],
+      "purpose": "四种原版作物独立小畦，十字碎石通道分区"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        14,
+        2,
+        2
+      ],
+      "name": "耕作通路入口",
+      "facing": "north"
+    },
+    {
+      "id": "water",
+      "kind": "work",
+      "pos": [
+        14,
+        2,
+        14
+      ],
+      "name": "中央洗菜水盆",
+      "approach": [
+        14,
+        2,
+        12
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "碎石台地留十字硬路，四块独立窄畦混作；每畦自有水沟，中央水盆供洗菜。"
+  ],
+  "differences": [
+    "碎石台地留十字硬路，四块独立窄畦混作；每畦自有水沟，中央水盆供洗菜。"
+  ],
+  "floors": [
+    {
+      "name": "生活与作业层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_outside.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "agriculture": {
+    "crops": "原版马铃薯、胡萝卜、甜菜和小麦依变体设置",
+    "layout": "碎石台地留十字硬路，四块独立窄畦混作；每畦自有水沟，中央水盆供洗菜。",
+    "irrigation": "每畦固定水源，最终NBT另核对4格水源距离和耕地支撑。"
+  },
+  "nbt_sha256": "dee10b801ee1f0c9fbd79277b60ef1a2a7a8fce5db65b2e7b846f0bb39df36cf"
+}

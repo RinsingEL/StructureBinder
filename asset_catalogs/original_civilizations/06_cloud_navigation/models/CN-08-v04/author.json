@@ -1,0 +1,178 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CN-08-v04",
+  "name": "分台装卸仓 · 空港货仓",
+  "family": "CN-08",
+  "civilization": "云海航行文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    53,
+    38,
+    45
+  ],
+  "terrain": {
+    "选址": "高原岩台边缘，北侧接稳定地面，南侧朝开阔谷地",
+    "高程": "主平台地板 Y=7，入口脚底 Y=8；外接同高岩台道路",
+    "固定与承重": "北侧石砌锚座压在实体岩台，南侧木梁和斜撑回接石墩；石墩底必须落在连续承载岩层。不可当作无支撑浮空结构。",
+    "接驳边界": "模板内支撑与边栏完整；外侧山体、接驳道路、峡谷宽度及航行净空必须按实际场地核对。",
+    "运行边界": "泊位、缆索、风向仪、船体与吊装均为静态空间表达；未实现飞行、气象、物流或受力模拟。"
+  },
+  "rooms": [
+    {
+      "id": "low",
+      "name": "低台补给大仓",
+      "min": [
+        7,
+        8,
+        9
+      ],
+      "max": [
+        21,
+        14,
+        34
+      ],
+      "purpose": "大宗存货与账房"
+    },
+    {
+      "id": "high",
+      "name": "高台轻货发运间",
+      "min": [
+        36,
+        12,
+        12
+      ],
+      "max": [
+        45,
+        17,
+        32
+      ],
+      "purpose": "小件暂存与分单"
+    }
+  ],
+  "points": [
+    {
+      "id": "bulk",
+      "kind": "storage",
+      "pos": [
+        9,
+        8,
+        15
+      ],
+      "name": "分区仓储货物",
+      "approach": [
+        9,
+        8,
+        14
+      ]
+    },
+    {
+      "id": "ledger",
+      "kind": "work",
+      "pos": [
+        9,
+        8,
+        29
+      ],
+      "name": "地面补给账房",
+      "approach": [
+        9,
+        8,
+        30
+      ]
+    },
+    {
+      "id": "staged",
+      "kind": "storage",
+      "pos": [
+        38,
+        12,
+        15
+      ],
+      "name": "分区仓储货物",
+      "approach": [
+        38,
+        12,
+        14
+      ]
+    },
+    {
+      "id": "dispatch",
+      "kind": "work",
+      "pos": [
+        38,
+        12,
+        28
+      ],
+      "name": "高台小件发运",
+      "approach": [
+        38,
+        12,
+        29
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        26,
+        8,
+        3
+      ],
+      "name": "岩台地面入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        26,
+        7,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "岩台地面入口，外接脚底 Y=8 的连续道路"
+    }
+  ],
+  "design_notes": [
+    "低台大宗补给与高四格小件发运仓独立落墩，中间带栏短廊连接，适用于相邻双台地。",
+    "本体只提供理货空间、静态货箱与步行通路；空中运输接口必须由泊塔另行衔接，未实现物流或升降。"
+  ],
+  "differences": [
+    "低台大宗补给与高四格小件发运仓独立落墩，中间带栏短廊连接，适用于相邻双台地。"
+  ],
+  "floors": [
+    {
+      "name": "地面补给仓",
+      "y": 7,
+      "max_y": 14
+    },
+    {
+      "name": "高台轻货仓",
+      "y": 11,
+      "max_y": 17
+    }
+  ],
+  "roof_min_y": 14,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/cloud_market.py:CN-08(4)",
+  "preview_context": {
+    "kind": "slope",
+    "land_surface_y": 8,
+    "bed_y": -3,
+    "padding": 4,
+    "run": 8,
+    "rise": -1,
+    "slope_origin_z": 0,
+    "surface": "snow"
+  },
+  "nbt_sha256": "b59bfed6c03dc7055c1a0cd9d85046b2e93d4f518bdb92649ed11a0c329b0160"
+}

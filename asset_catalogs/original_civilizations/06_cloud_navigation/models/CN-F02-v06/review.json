@@ -1,0 +1,43 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CN-F02-v06",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 云海建模代理（实际看图）",
+  "nbt_sha256": "6525e0572ef646981edc6c818813821a648a2236e03f6daddab3bdb5be317015",
+  "author_sha256": "fa13825df0c6bb6dc72f7df820c52b1142d2de070ad0fab741f3eb337caeda91",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-tier0.png",
+    "previews/room-tier1.png",
+    "previews/room-tier2.png",
+    "previews/point-tier0.png",
+    "previews/point-tier1.png",
+    "previews/point-tier2.png",
+    "previews/point-compost.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "三级石台分别布置小麦、胡萝卜和甜菜，侧边两段短阶连续连接；石台挡土、浇灌水槽及平台留步道完整。",
+    "最终外观、去屋顶、分层、全部房间与使用点、标注及环境图均已实际查看。",
+    "最终数据与离线步行验证无错误、无警告，全部标记可达；各层水土边界、梁柱和连接路径已核对。"
+  ],
+  "revisions": [
+    "按实际屋盖高度修正亭盖柱顶和吊灯锚点，补房屋承檐及山墙。",
+    "调整玻璃房剖切、农田水覆盖和候行棚贯通出口，有外阶者补连续栏杆与实体侧托。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "静态模型与离线步行验收；未启动 Minecraft，未验证游戏内作物生长、低温冻结或居民行为。",
+    "玻璃温室不提供恒温、供暖或自动灌溉机制；露天农田需选择无冻害地段，岩台承载和外部补水需要场地另行核对。"
+  ]
+}

@@ -1,0 +1,195 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-04-v04",
+  "name": "折角共餐长屋",
+  "family": "MF-04",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    27,
+    25,
+    30
+  ],
+  "terrain": {
+    "选址": "紧凑平整生活台地，室内与街面脚底 Y=2。",
+    "高程": "基础上边界及室内脚底 Y=2；入口街面需同高程。",
+    "保留空间": "完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "rooms": [
+    {
+      "id": "living",
+      "name": "宽面共餐厅",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        22,
+        6,
+        12
+      ],
+      "purpose": "公共厨房、大餐桌与储粮"
+    },
+    {
+      "id": "beds",
+      "name": "折角四床寝翼",
+      "min": [
+        4,
+        2,
+        14
+      ],
+      "max": [
+        11,
+        6,
+        25
+      ],
+      "purpose": "两组双床、个人柜与巷侧窗"
+    },
+    {
+      "id": "yard",
+      "name": "院侧修补坪",
+      "min": [
+        13,
+        2,
+        15
+      ],
+      "max": [
+        24,
+        6,
+        26
+      ],
+      "purpose": "工具修补、清洗与晾晒缓冲"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        16,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "kitchen",
+      "kind": "work",
+      "pos": [
+        4,
+        2,
+        5
+      ],
+      "name": "炊事与洗涤",
+      "approach": [
+        4,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "wing15_0",
+      "kind": "bed",
+      "pos": [
+        5,
+        2,
+        15
+      ],
+      "name": "床位与个人柜",
+      "approach": [
+        6,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "wing15_1",
+      "kind": "bed",
+      "pos": [
+        8,
+        2,
+        15
+      ],
+      "name": "床位与个人柜",
+      "approach": [
+        9,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "wing21_0",
+      "kind": "bed",
+      "pos": [
+        5,
+        2,
+        21
+      ],
+      "name": "床位与个人柜",
+      "approach": [
+        6,
+        2,
+        21
+      ]
+    },
+    {
+      "id": "wing21_1",
+      "kind": "bed",
+      "pos": [
+        8,
+        2,
+        21
+      ],
+      "name": "床位与个人柜",
+      "approach": [
+        9,
+        2,
+        21
+      ]
+    },
+    {
+      "id": "repair",
+      "kind": "work",
+      "pos": [
+        20,
+        2,
+        18
+      ],
+      "name": "露天衣具修补",
+      "approach": [
+        20,
+        2,
+        17
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "L形共餐厅与四床窄寝翼围出维修小院，餐厨与就寝有转折门厅。"
+  ],
+  "differences": [
+    "L形共餐厅与四床窄寝翼围出维修小院，餐厨与就寝有转折门厅。"
+  ],
+  "floors": [
+    {
+      "name": "生活与作业层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_life.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "nbt_sha256": "366f1183c8b9caa64bc198ee0076c3373275abead89848fde57999dc4c7ae5be"
+}

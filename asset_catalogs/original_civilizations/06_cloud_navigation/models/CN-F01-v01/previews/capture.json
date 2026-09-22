@@ -1,0 +1,28 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "CN-F01-v01",
+  "nbt_sha256": "bc48c39dc896bdefde598b10ca5297599550a3ddc04de894b25763dbf7eca0bb",
+  "author_sha256": "c857979404fc6dbfd856428aca3be02cdc447a751f4b1cb345ffad6872179179",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-bakery",
+    "room-bake_work",
+    "point-sale",
+    "point-oven",
+    "point-dough",
+    "point-bread",
+    "point-flour",
+    "point-cooling",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

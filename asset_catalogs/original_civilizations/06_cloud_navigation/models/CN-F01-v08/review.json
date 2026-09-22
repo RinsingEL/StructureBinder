@@ -1,0 +1,42 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CN-F01-v08",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors author visual review",
+  "nbt_sha256": "d125b94fce9899644cb8d60f846ed71bb7b17f419438fece7fae78eb89102117",
+  "author_sha256": "c4860a88b7e10068afd6517a4ed3c476c1eba9aaaf5b57625cda83c7ce558241",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-herbs.png",
+    "previews/room-records.png",
+    "previews/room-sorting.png",
+    "previews/point-herbs.png",
+    "previews/point-consult.png",
+    "previews/point-samples.png",
+    "previews/point-dried.png",
+    "previews/point-ingredients.png",
+    "previews/point-sort.png",
+    "previews/point-records_store.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "已实际查看当前最终全视角、分层、每个房间及使用点全部截图，无缺纹理与渲染错误。",
+    "配料与咨询两翼，干药和批次柜、筛选台、清洗和配料桌、咨询坐席及记录存柜；庭院四盆留样。",
+    "新旧柜台使用深木构件，家具组与浅地板清楚区分。数据及全部标记通路通过，无警告；原轮廓、承檐、实体支撑与平台连续栏杆保留。"
+  ],
+  "revisions": [
+    "主审撤回稀疏内饰后，仅修改cloud_market.py商铺局部helper；CN08货仓与其它冻结模块未改。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

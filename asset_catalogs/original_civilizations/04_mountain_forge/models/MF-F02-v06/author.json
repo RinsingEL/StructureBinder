@@ -1,0 +1,96 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-F02-v06",
+  "name": "背风采光小菜棚",
+  "family": "MF-F02",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    23,
+    16,
+    27
+  ],
+  "terrain": {
+    "选址": "仅限具备足够土壤、光照、温度和稳定水分的地表地块，不放入无光山腹或永久冻土。",
+    "高程": "默认田埂脚底 Y=2；MF-F02-v02 后半单阶脚底 Y=3。",
+    "生产": "作物为原版外观与几何表达；未模拟生长tick、光照、温度或整合包产量。",
+    "边界": "独立模板田块有田埂和封边，不代表Landscape自然生成的大田。"
+  },
+  "rooms": [
+    {
+      "id": "shelter",
+      "name": "采光背风菜棚",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        18,
+        6,
+        23
+      ],
+      "purpose": "玻璃采光盖、三侧矮挡风墙及可绕行田埂"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        11,
+        2,
+        2
+      ],
+      "name": "耕作通路入口",
+      "facing": "north"
+    },
+    {
+      "id": "crop",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        12
+      ],
+      "name": "棚内采收",
+      "approach": [
+        5,
+        2,
+        12
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "玻璃弧折盖与三面低石墙挡风，正面开放；棚内集中薯畦及四周通路用于受控的小型菜园。"
+  ],
+  "differences": [
+    "玻璃弧折盖与三面低石墙挡风，正面开放；棚内集中薯畦及四周通路用于受控的小型菜园。"
+  ],
+  "floors": [
+    {
+      "name": "生活与作业层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 6,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_outside.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "agriculture": {
+    "crops": "原版马铃薯、胡萝卜、甜菜和小麦依变体设置",
+    "layout": "玻璃弧折盖与三面低石墙挡风，正面开放；棚内集中薯畦及四周通路用于受控的小型菜园。",
+    "irrigation": "每畦固定水源，最终NBT另核对4格水源距离和耕地支撑。"
+  },
+  "nbt_sha256": "032c092b621860559685838ce4fa96c8c24dfe3dc12dad5caf3b1ca45ffcc5e3"
+}

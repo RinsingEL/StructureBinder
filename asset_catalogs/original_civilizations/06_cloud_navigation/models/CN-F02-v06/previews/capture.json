@@ -1,0 +1,28 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "CN-F02-v06",
+  "nbt_sha256": "6525e0572ef646981edc6c818813821a648a2236e03f6daddab3bdb5be317015",
+  "author_sha256": "fa13825df0c6bb6dc72f7df820c52b1142d2de070ad0fab741f3eb337caeda91",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "floor-2",
+    "room-tier0",
+    "room-tier1",
+    "room-tier2",
+    "point-tier0",
+    "point-tier1",
+    "point-tier2",
+    "point-compost",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

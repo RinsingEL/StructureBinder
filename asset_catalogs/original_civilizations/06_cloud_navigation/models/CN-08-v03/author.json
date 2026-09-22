@@ -1,0 +1,188 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CN-08-v03",
+  "name": "双面转运院 · 空港货仓",
+  "family": "CN-08",
+  "civilization": "云海航行文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    53,
+    35,
+    45
+  ],
+  "terrain": {
+    "选址": "高原岩台边缘，北侧接稳定地面，南侧朝开阔谷地",
+    "高程": "主平台地板 Y=7，入口脚底 Y=8；外接同高岩台道路",
+    "固定与承重": "北侧石砌锚座压在实体岩台，南侧木梁和斜撑回接石墩；石墩底必须落在连续承载岩层。不可当作无支撑浮空结构。",
+    "接驳边界": "模板内支撑与边栏完整；外侧山体、接驳道路、峡谷宽度及航行净空必须按实际场地核对。",
+    "运行边界": "泊位、缆索、风向仪、船体与吊装均为静态空间表达；未实现飞行、气象、物流或受力模拟。"
+  },
+  "rooms": [
+    {
+      "id": "in",
+      "name": "到港仓",
+      "min": [
+        7,
+        8,
+        9
+      ],
+      "max": [
+        19,
+        14,
+        34
+      ],
+      "purpose": "仓储、验货或封箱以及面向中廊的双门"
+    },
+    {
+      "id": "out",
+      "name": "发运仓",
+      "min": [
+        33,
+        8,
+        9
+      ],
+      "max": [
+        45,
+        14,
+        34
+      ],
+      "purpose": "仓储、验货或封箱以及面向中廊的双门"
+    }
+  ],
+  "points": [
+    {
+      "id": "west",
+      "kind": "storage",
+      "pos": [
+        9,
+        8,
+        12
+      ],
+      "name": "分区仓储货物",
+      "approach": [
+        9,
+        8,
+        11
+      ]
+    },
+    {
+      "id": "east",
+      "kind": "storage",
+      "pos": [
+        39,
+        8,
+        12
+      ],
+      "name": "分区仓储货物",
+      "approach": [
+        39,
+        8,
+        11
+      ]
+    },
+    {
+      "id": "westdesk",
+      "kind": "work",
+      "pos": [
+        9,
+        8,
+        29
+      ],
+      "name": "到港验货与回单",
+      "approach": [
+        9,
+        8,
+        30
+      ]
+    },
+    {
+      "id": "eastdesk",
+      "kind": "work",
+      "pos": [
+        35,
+        8,
+        29
+      ],
+      "name": "发运分单与封箱",
+      "approach": [
+        35,
+        8,
+        30
+      ]
+    },
+    {
+      "id": "transfer",
+      "kind": "circulation",
+      "pos": [
+        26,
+        8,
+        23
+      ],
+      "name": "中央贯通转运廊",
+      "look_at": [
+        26,
+        10,
+        34
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        26,
+        8,
+        3
+      ],
+      "name": "岩台地面入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        26,
+        7,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "岩台地面入口，外接脚底 Y=8 的连续道路"
+    }
+  ],
+  "design_notes": [
+    "东西双仓以带顶转运中廊相对，一边接收清点、一边封箱发货，四道侧门缩短搬运路线。",
+    "本体只提供理货空间、静态货箱与步行通路；空中运输接口必须由泊塔另行衔接，未实现物流或升降。"
+  ],
+  "differences": [
+    "东西双仓以带顶转运中廊相对，一边接收清点、一边封箱发货，四道侧门缩短搬运路线。"
+  ],
+  "floors": [
+    {
+      "name": "岩台主层",
+      "y": 7,
+      "max_y": 13
+    }
+  ],
+  "roof_min_y": 14,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/cloud_market.py:CN-08(3)",
+  "preview_context": {
+    "kind": "slope",
+    "land_surface_y": 8,
+    "bed_y": -3,
+    "padding": 4,
+    "run": 8,
+    "rise": -1,
+    "slope_origin_z": 0,
+    "surface": "snow"
+  },
+  "nbt_sha256": "495503ea305642d92085475207ae8aa262727d0d9f9544034e185391f2bf677c"
+}

@@ -1,0 +1,259 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "FS-06-v02",
+  "name": "长叶宅 · 林务住宅",
+  "family": "FS-06",
+  "civilization": "森林共生文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    43,
+    28,
+    36
+  ],
+  "terrain": {
+    "选址": "横向长屋面向开阔林缘，后院承担户外家务；适合宽而浅的住宅地块",
+    "落地": "只整理建筑本体与步道；保留未写入的林地。附树版本包含独立柱脚和树根占地，不能套入任意现存树体。",
+    "高程": "主入口脚底 Y=3；高位层和坡地接驳另见楼层与使用点",
+    "运行边界": "种植、蜂具、藤果、兽栏与遗留物均为原版静态空间表达；实际生产、动物和生态行为须另行接入。"
+  },
+  "rooms": [
+    {
+      "id": "unit0day",
+      "name": "厨房餐叙与家务",
+      "min": [
+        6,
+        3,
+        8
+      ],
+      "max": [
+        26,
+        7,
+        13
+      ],
+      "purpose": "连续厨房操作台、水盆、食品柜和成组餐桌椅；入口中轴连接后部起居"
+    },
+    {
+      "id": "unit0night",
+      "name": "睡眠与起居分区",
+      "min": [
+        6,
+        3,
+        14
+      ],
+      "max": [
+        26,
+        7,
+        18
+      ],
+      "purpose": "有门屏风保护床位；衣物柜、读写桌和座椅组成后部家庭空间"
+    },
+    {
+      "id": "yard",
+      "name": "独立林务工作棚",
+      "min": [
+        7,
+        3,
+        26
+      ],
+      "max": [
+        22,
+        7,
+        31
+      ],
+      "purpose": "工具保养、调查记录和物资储藏；与家庭床灶分开"
+    }
+  ],
+  "points": [
+    {
+      "id": "unit0cook",
+      "kind": "work",
+      "pos": [
+        25,
+        3,
+        10
+      ],
+      "name": "厨房炉灶与连续备餐台",
+      "approach": [
+        24,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "unit0dining",
+      "kind": "work",
+      "pos": [
+        9,
+        3,
+        10
+      ],
+      "name": "家庭用餐与共桌家务",
+      "approach": [
+        7,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "unit0bed0",
+      "kind": "sleep",
+      "pos": [
+        7,
+        3,
+        17
+      ],
+      "name": "屏风后独立床位",
+      "approach": [
+        8,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "unit0bed1",
+      "kind": "sleep",
+      "pos": [
+        10,
+        3,
+        17
+      ],
+      "name": "屏风后独立床位",
+      "approach": [
+        11,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "unit0clothes",
+      "kind": "storage",
+      "pos": [
+        17,
+        4,
+        18
+      ],
+      "name": "分格衣物与家庭布品柜",
+      "approach": [
+        16,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "unit0read",
+      "kind": "work",
+      "pos": [
+        24,
+        3,
+        15
+      ],
+      "name": "起居读写与缝补长桌",
+      "approach": [
+        25,
+        3,
+        15
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        13,
+        3,
+        2
+      ],
+      "name": "林间步道入口",
+      "facing": "north"
+    },
+    {
+      "id": "repair",
+      "kind": "work",
+      "pos": [
+        8,
+        3,
+        27
+      ],
+      "name": "林务工具保养台",
+      "approach": [
+        8,
+        3,
+        28
+      ]
+    },
+    {
+      "id": "field",
+      "kind": "storage",
+      "pos": [
+        9,
+        4,
+        31
+      ],
+      "name": "林务绳索、界标与调查物资",
+      "approach": [
+        9,
+        3,
+        30
+      ]
+    },
+    {
+      "id": "survey",
+      "kind": "work",
+      "pos": [
+        21,
+        3,
+        28
+      ],
+      "name": "林区与采伐边界记录",
+      "approach": [
+        20,
+        3,
+        28
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        13,
+        2,
+        2
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "外接步道脚底 Y=3，须保留树根与基础占地"
+    }
+  ],
+  "design_notes": [
+    "床、炉灶、水盆、储物和家用桌椅随每户实际布置；树体与根盘作为完整静态构图交付。"
+  ],
+  "differences": [
+    "横向长屋面向开阔林缘，后院承担户外家务；适合宽而浅的住宅地块",
+    "林务型额外具备独立工具棚和林区记录作业区。"
+  ],
+  "floors": [
+    {
+      "name": "林下使用层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/forest_life.py:home",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "podzol"
+  },
+  "nbt_sha256": "00834bc6bf3730ed627effdf594bb20ebf2ea229a5ceb2a93bb4c9fbe50b6609"
+}

@@ -1,0 +1,89 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-F03-v02",
+  "name": "独立四柱材料棚",
+  "family": "MF-F03",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    25,
+    16,
+    23
+  ],
+  "terrain": {
+    "选址": "开阔稳定维修地块，至少保留两侧材料搬运面。",
+    "高程": "干地与基础顶脚底 Y=2，四角支柱落在完整石基上。",
+    "用途": "少量材料周转与手工修缮造型；不代表自动仓储、搬运或矿业系统接入。"
+  },
+  "rooms": [
+    {
+      "id": "shed",
+      "name": "四面独立材料棚",
+      "min": [
+        5,
+        2,
+        5
+      ],
+      "max": [
+        19,
+        6,
+        17
+      ],
+      "purpose": "木料货箱、少量原矿、整理台和矿具架"
+    }
+  ],
+  "points": [
+    {
+      "id": "tools",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        16
+      ],
+      "name": "材料整理",
+      "approach": [
+        8,
+        2,
+        16
+      ]
+    },
+    {
+      "id": "shed_entry",
+      "kind": "entrance",
+      "pos": [
+        12,
+        2,
+        2
+      ],
+      "name": "棚前搬运入口"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "四面可接近的独立高棚，木料货箱与原矿分角，中间周转净空用于住宅维修。"
+  ],
+  "differences": [
+    "四面可接近的独立高棚，木料货箱与原矿分角，中间周转净空用于住宅维修。"
+  ],
+  "floors": [
+    {
+      "name": "生活与作业层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_outside.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "nbt_sha256": "0ca9741f2162a3745282b31a2960682e2eaf2dd4d57fcca0e47bf2efed456de5"
+}

@@ -1,0 +1,289 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "FS-02-v01",
+  "name": "紧凑分区坊 · 菌菇育房",
+  "family": "FS-02",
+  "civilization": "森林共生文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    33,
+    26,
+    30
+  ],
+  "terrain": {
+    "选址": "单栋林下小型生产屋，后段独立歇班与生活空间",
+    "落地": "只整理建筑本体与步道；保留未写入的林地。附树版本包含独立柱脚和树根占地，不能套入任意现存树体。",
+    "高程": "主入口脚底 Y=3；高位层和坡地接驳另见楼层与使用点",
+    "运行边界": "种植、蜂具、藤果、兽栏与遗留物均为原版静态空间表达；实际生产、动物和生态行为须另行接入。"
+  },
+  "rooms": [
+    {
+      "id": "rest",
+      "name": "员工起居与管理",
+      "min": [
+        5,
+        3,
+        17
+      ],
+      "max": [
+        26,
+        7,
+        24
+      ],
+      "purpose": "屏风门后床位、衣物柜、厨房操作台、餐叙桌椅与家庭后勤；深院含管理和洗缝区"
+    },
+    {
+      "id": "culture",
+      "name": "分批培养与采收",
+      "min": [
+        6,
+        3,
+        11
+      ],
+      "max": [
+        25,
+        6,
+        14
+      ],
+      "purpose": "外侧小菌床与内侧大培养床并用；中轴和横道分隔批次，前端清洗与包装"
+    },
+    {
+      "id": "production",
+      "name": "菌菇育房作业间",
+      "min": [
+        5,
+        3,
+        7
+      ],
+      "max": [
+        26,
+        7,
+        15
+      ],
+      "purpose": "接待记录、行业作业、原料成品与中央穿行走道"
+    }
+  ],
+  "points": [
+    {
+      "id": "restbed0",
+      "kind": "sleep",
+      "pos": [
+        6,
+        3,
+        23
+      ],
+      "name": "员工隐私床位",
+      "approach": [
+        7,
+        3,
+        23
+      ]
+    },
+    {
+      "id": "restlinen",
+      "kind": "storage",
+      "pos": [
+        7,
+        4,
+        17
+      ],
+      "name": "员工衣物与换洗布品",
+      "approach": [
+        7,
+        3,
+        18
+      ]
+    },
+    {
+      "id": "restcook",
+      "kind": "work",
+      "pos": [
+        25,
+        3,
+        18
+      ],
+      "name": "员工厨房炉灶与备餐台",
+      "approach": [
+        24,
+        3,
+        18
+      ]
+    },
+    {
+      "id": "restmeal",
+      "kind": "work",
+      "pos": [
+        14,
+        3,
+        19
+      ],
+      "name": "员工餐叙与休息桌",
+      "approach": [
+        14,
+        3,
+        18
+      ]
+    },
+    {
+      "id": "restpantry",
+      "kind": "storage",
+      "pos": [
+        14,
+        4,
+        24
+      ],
+      "name": "食品与个人用品分柜",
+      "approach": [
+        13,
+        3,
+        23
+      ]
+    },
+    {
+      "id": "record",
+      "kind": "work",
+      "pos": [
+        13,
+        3,
+        9
+      ],
+      "name": "批次与来访登记",
+      "approach": [
+        13,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "harvest",
+      "kind": "work",
+      "pos": [
+        17,
+        3,
+        12
+      ],
+      "name": "培养基与采收分拣",
+      "approach": [
+        16,
+        3,
+        12
+      ]
+    },
+    {
+      "id": "stock",
+      "kind": "storage",
+      "pos": [
+        7,
+        4,
+        7
+      ],
+      "name": "培养器皿与包装物",
+      "approach": [
+        7,
+        3,
+        8
+      ]
+    },
+    {
+      "id": "culture00",
+      "kind": "work",
+      "pos": [
+        10,
+        3,
+        11
+      ],
+      "name": "分批培养床与侧向采收道",
+      "approach": [
+        10,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "culture01",
+      "kind": "work",
+      "pos": [
+        19,
+        3,
+        11
+      ],
+      "name": "分批培养床与侧向采收道",
+      "approach": [
+        19,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "package",
+      "kind": "work",
+      "pos": [
+        22,
+        3,
+        7
+      ],
+      "name": "菌菇成品称分与包装",
+      "approach": [
+        22,
+        3,
+        8
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        15,
+        3,
+        2
+      ],
+      "name": "林间步道入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        15,
+        2,
+        2
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "外接步道脚底 Y=3，须保留树根与基础占地"
+    }
+  ],
+  "design_notes": [
+    "菌床使用菌丝体支撑，培养和采收站位位于干燥木质走道；窗与棚屋表达遮蔽，未模拟真实光照或菌菇增殖。"
+  ],
+  "differences": [
+    "单栋林下小型生产屋，后段独立歇班与生活空间",
+    "菌菇育房的设备、储物、处理站位与管理生活空间已按本平面独立安排。"
+  ],
+  "floors": [
+    {
+      "name": "林下使用层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/forest_crafts.py:craft",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "podzol"
+  },
+  "nbt_sha256": "36a4b9be36583c8e67a3c8048883f36e6410b0ce13431c7964948cd767fe62b0"
+}

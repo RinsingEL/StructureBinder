@@ -1,0 +1,96 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-F02-v03",
+  "name": "折角L形菜畦",
+  "family": "MF-F02",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    27,
+    16,
+    27
+  ],
+  "terrain": {
+    "选址": "仅限具备足够土壤、光照、温度和稳定水分的地表地块，不放入无光山腹或永久冻土。",
+    "高程": "默认田埂脚底 Y=2；MF-F02-v02 后半单阶脚底 Y=3。",
+    "生产": "作物为原版外观与几何表达；未模拟生长tick、光照、温度或整合包产量。",
+    "边界": "独立模板田块有田埂和封边，不代表Landscape自然生成的大田。"
+  },
+  "rooms": [
+    {
+      "id": "garden",
+      "name": "L形两畦",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        22,
+        6,
+        21
+      ],
+      "purpose": "长甜菜畦与短胡萝卜畦围出空角，空角作工具和歇脚"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        13,
+        2,
+        2
+      ],
+      "name": "耕作通路入口",
+      "facing": "north"
+    },
+    {
+      "id": "crop",
+      "kind": "work",
+      "pos": [
+        16,
+        2,
+        17
+      ],
+      "name": "折角采收",
+      "approach": [
+        14,
+        2,
+        17
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "两块不同长宽的田畦组成 L 形，内角保留取水、堆肥与歇脚，不用作物填满转角。"
+  ],
+  "differences": [
+    "两块不同长宽的田畦组成 L 形，内角保留取水、堆肥与歇脚，不用作物填满转角。"
+  ],
+  "floors": [
+    {
+      "name": "生活与作业层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_outside.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "agriculture": {
+    "crops": "原版马铃薯、胡萝卜、甜菜和小麦依变体设置",
+    "layout": "两块不同长宽的田畦组成 L 形，内角保留取水、堆肥与歇脚，不用作物填满转角。",
+    "irrigation": "每畦固定水源，最终NBT另核对4格水源距离和耕地支撑。"
+  },
+  "nbt_sha256": "e89a7df7aee51e552c2b07f88c4610da2025a24911ae6fe3ba319c24facb78fa"
+}

@@ -1,0 +1,175 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-F01-v02",
+  "name": "转角矿具修理铺",
+  "family": "MF-F01",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    25,
+    25,
+    23
+  ],
+  "terrain": {
+    "选址": "服务工人与居民日常生活；依照门面、转角、坡差或院落要求落位，保持完整独立模板。",
+    "高程": "基础上边界及室内脚底 Y=2；入口街面需同高程。",
+    "保留空间": "完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "rooms": [
+    {
+      "id": "shop",
+      "name": "双门修理铺",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        20,
+        6,
+        18
+      ],
+      "purpose": "收件、修造、锻打、磨刃和备件储存；具体工位：收件与报价、矿具修理、来件拆检与修后验收、已修工具及分件待取、铁砧整形工位、磨刃与刀口复核"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        12,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "corner",
+      "kind": "entrance",
+      "pos": [
+        22,
+        2,
+        10
+      ],
+      "name": "侧街取修门"
+    },
+    {
+      "id": "sale",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        6
+      ],
+      "name": "收件与报价",
+      "approach": [
+        6,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "repair",
+      "kind": "work",
+      "pos": [
+        16,
+        2,
+        6
+      ],
+      "name": "矿具修理",
+      "approach": [
+        15,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "inspect",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        11
+      ],
+      "name": "来件拆检与修后验收",
+      "approach": [
+        7,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "finished",
+      "kind": "storage",
+      "pos": [
+        13,
+        3,
+        18
+      ],
+      "name": "已修工具及分件待取",
+      "approach": [
+        13,
+        2,
+        17
+      ]
+    },
+    {
+      "id": "forge",
+      "kind": "work",
+      "pos": [
+        17,
+        2,
+        13
+      ],
+      "name": "铁砧整形工位",
+      "approach": [
+        16,
+        2,
+        13
+      ]
+    },
+    {
+      "id": "edge",
+      "kind": "work",
+      "pos": [
+        12,
+        2,
+        15
+      ],
+      "name": "磨刃与刀口复核",
+      "approach": [
+        12,
+        2,
+        14
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "转角双门铺，接单柜台与侧街取修面分开，室内环绕锻造台、铁砧和磨刃台。"
+  ],
+  "differences": [
+    "转角双门铺，接单柜台与侧街取修面分开，室内环绕锻造台、铁砧和磨刃台。"
+  ],
+  "floors": [
+    {
+      "name": "生活与作业层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_trade.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "nbt_sha256": "2330153b085af4f8ad4ccb6f6c949ffed8e361464db38a112300f3f027e0da79"
+}

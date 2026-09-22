@@ -1,0 +1,194 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-05-v05",
+  "name": "工场上居连廊宅",
+  "family": "MF-05",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    29,
+    23,
+    30
+  ],
+  "terrain": {
+    "选址": "仅用于明确向 +Z 升高一格的山地地块；宽阶与后方高台均须承托，不可任意镜像后沿用高程。",
+    "高程": "低位工作与街门 Y=2，高台家庭脚底 Y=3；+Z 从 Z=17 起抬高一格，三宽短阶位置固定。",
+    "保留空间": "完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "rooms": [
+    {
+      "id": "work",
+      "name": "低位工场与记账",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        12,
+        6,
+        13
+      ],
+      "purpose": "小工场、书写"
+    },
+    {
+      "id": "store",
+      "name": "低位材料连棚",
+      "min": [
+        17,
+        2,
+        5
+      ],
+      "max": [
+        24,
+        6,
+        14
+      ],
+      "purpose": "材料暂放与从街到高宅的周转"
+    },
+    {
+      "id": "home",
+      "name": "后部高台家庭屋",
+      "min": [
+        4,
+        3,
+        20
+      ],
+      "max": [
+        23,
+        7,
+        25
+      ],
+      "purpose": "二床、公共餐厨与前阶院"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        8,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "work",
+      "kind": "work",
+      "pos": [
+        5,
+        2,
+        6
+      ],
+      "name": "前工场",
+      "approach": [
+        6,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "write",
+      "kind": "work",
+      "pos": [
+        9,
+        2,
+        11
+      ],
+      "name": "书写台",
+      "approach": [
+        9,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "entry_13_19",
+      "kind": "entrance",
+      "pos": [
+        13,
+        3,
+        18
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "home_0",
+      "kind": "bed",
+      "pos": [
+        5,
+        3,
+        21
+      ],
+      "name": "床位与个人柜",
+      "approach": [
+        6,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "home_1",
+      "kind": "bed",
+      "pos": [
+        8,
+        3,
+        21
+      ],
+      "name": "床位与个人柜",
+      "approach": [
+        9,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "kitchen",
+      "kind": "work",
+      "pos": [
+        19,
+        3,
+        21
+      ],
+      "name": "炊事与洗涤",
+      "approach": [
+        19,
+        3,
+        22
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "前低工场并置开放材料连棚，后高家庭屋横向收尾；搬料路线和生活入口分开。"
+  ],
+  "differences": [
+    "前低工场并置开放材料连棚，后高家庭屋横向收尾；搬料路线和生活入口分开。"
+  ],
+  "floors": [
+    {
+      "name": "低位工房与高台家庭",
+      "y": 1,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_life.py:BUILDERS",
+  "preview_context": {
+    "kind": "slope",
+    "land_surface_y": 2,
+    "padding": 5,
+    "run": 14,
+    "rise": 1,
+    "slope_origin_z": 17
+  },
+  "nbt_sha256": "0dfb7ad9d5465bd4fbed21c466c9602e5c9e2cf85fadae33bc298ae6626c8866"
+}

@@ -1,0 +1,209 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-06-v04",
+  "name": "阶台原石工坊",
+  "family": "MF-06",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    29,
+    23,
+    29
+  ],
+  "terrain": {
+    "选址": "邻近矿料路线且具有干燥安全保管条件；切磨声与扬尘需和生活门面分开。",
+    "高程": "前店脚底 Y=2，后坊脚底 Y=3；一格向 +Z 上升，三宽短阶联系。",
+    "保留空间": "完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "rooms": [
+    {
+      "id": "sale",
+      "name": "低街展售厅",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        24,
+        6,
+        10
+      ],
+      "purpose": "样品接待与成品交付；具体工位：低街样品登记、成品陈列与检视、街面验货与交付长台、原石批次与交易账簿"
+    },
+    {
+      "id": "work",
+      "name": "高台切磨室",
+      "min": [
+        4,
+        3,
+        18
+      ],
+      "max": [
+        24,
+        7,
+        24
+      ],
+      "purpose": "原石、水洗切磨、成品储架；具体工位：宝石切磨与水洗、高台原石分拣与编号、干燥镶配与成品包装"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        14,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "sale",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        5
+      ],
+      "name": "低街样品登记",
+      "approach": [
+        6,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "display",
+      "kind": "work",
+      "pos": [
+        19,
+        3,
+        6
+      ],
+      "name": "成品陈列与检视",
+      "approach": [
+        19,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "entry_14_17",
+      "kind": "entrance",
+      "pos": [
+        14,
+        3,
+        16
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "cut",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        20
+      ],
+      "name": "宝石切磨与水洗",
+      "approach": [
+        5,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "inspection",
+      "kind": "work",
+      "pos": [
+        8,
+        2,
+        9
+      ],
+      "name": "街面验货与交付长台",
+      "approach": [
+        8,
+        2,
+        10
+      ]
+    },
+    {
+      "id": "records",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        7
+      ],
+      "name": "原石批次与交易账簿",
+      "approach": [
+        5,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "sort",
+      "kind": "work",
+      "pos": [
+        19,
+        3,
+        19
+      ],
+      "name": "高台原石分拣与编号",
+      "approach": [
+        19,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "packing",
+      "kind": "work",
+      "pos": [
+        8,
+        3,
+        23
+      ],
+      "name": "干燥镶配与成品包装",
+      "approach": [
+        8,
+        3,
+        24
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "前低展售、后高切磨两屋夹阶院，顺坡分开顾客与原石加工；高台基础闭合。"
+  ],
+  "differences": [
+    "前低展售、后高切磨两屋夹阶院，顺坡分开顾客与原石加工；高台基础闭合。"
+  ],
+  "floors": [
+    {
+      "name": "低展售与高作坊",
+      "y": 1,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_trade.py:BUILDERS",
+  "preview_context": {
+    "kind": "slope",
+    "land_surface_y": 2,
+    "padding": 5,
+    "run": 14,
+    "rise": 1,
+    "slope_origin_z": 14
+  },
+  "nbt_sha256": "bf7712936962307df932dd7a7f6bd549c76db1e2a77049a348bf3bffb9709fa7"
+}

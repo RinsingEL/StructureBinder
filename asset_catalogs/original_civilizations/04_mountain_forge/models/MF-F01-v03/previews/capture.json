@@ -1,0 +1,30 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "MF-F01-v03",
+  "nbt_sha256": "511dad978d38dafb32be13226b14293fbc817754db257b4071193871121d9671",
+  "author_sha256": "ce957970362e95012153d5ef3e692e601990dcc5a7b7b5f3ffc5dd87251414c9",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-sale",
+    "room-tailor",
+    "room-yard",
+    "point-sale",
+    "point-loom7",
+    "point-loom10",
+    "point-measure",
+    "point-dyed",
+    "point-thread",
+    "point-cutting",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

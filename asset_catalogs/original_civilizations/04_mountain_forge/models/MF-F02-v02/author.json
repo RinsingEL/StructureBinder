@@ -1,0 +1,129 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-F02-v02",
+  "name": "单阶双层小梯田",
+  "family": "MF-F02",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    27,
+    16,
+    29
+  ],
+  "terrain": {
+    "选址": "仅限具备足够土壤、光照、温度和稳定水分的地表地块，不放入无光山腹或永久冻土。",
+    "高程": "默认田埂脚底 Y=2；MF-F02-v02 后半单阶脚底 Y=3。",
+    "生产": "作物为原版外观与几何表达；未模拟生长tick、光照、温度或整合包产量。",
+    "边界": "独立模板田块有田埂和封边，不代表Landscape自然生成的大田。"
+  },
+  "rooms": [
+    {
+      "id": "lower",
+      "name": "低层胡萝卜畦",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        22,
+        6,
+        12
+      ],
+      "purpose": "三条灌水沟与种植带"
+    },
+    {
+      "id": "upper",
+      "name": "上层薯畦",
+      "min": [
+        4,
+        3,
+        17
+      ],
+      "max": [
+        22,
+        6,
+        24
+      ],
+      "purpose": "高一格的独立灌水田"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        13,
+        2,
+        2
+      ],
+      "name": "耕作通路入口",
+      "facing": "north"
+    },
+    {
+      "id": "upper",
+      "kind": "circulation",
+      "pos": [
+        13,
+        3,
+        16
+      ],
+      "name": "上层田埂",
+      "look_at": [
+        13,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "water",
+      "kind": "work",
+      "pos": [
+        13,
+        2,
+        20
+      ],
+      "name": "上层取水沟",
+      "approach": [
+        13,
+        3,
+        17
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "单阶小梯田，前胡萝卜后薯畦各有独立水沟，中部宽阶及田埂连接一格坡差。"
+  ],
+  "differences": [
+    "单阶小梯田，前胡萝卜后薯畦各有独立水沟，中部宽阶及田埂连接一格坡差。"
+  ],
+  "floors": [
+    {
+      "name": "双层田畦",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_outside.py:BUILDERS",
+  "preview_context": {
+    "kind": "slope",
+    "land_surface_y": 2,
+    "padding": 5,
+    "run": 15,
+    "rise": 1,
+    "slope_origin_z": 15
+  },
+  "agriculture": {
+    "crops": "原版马铃薯、胡萝卜、甜菜和小麦依变体设置",
+    "layout": "单阶小梯田，前胡萝卜后薯畦各有独立水沟，中部宽阶及田埂连接一格坡差。",
+    "irrigation": "每畦固定水源，最终NBT另核对4格水源距离和耕地支撑。"
+  },
+  "nbt_sha256": "eedda7281c27dac02562a31fb42929ac890b1f925b36bc18192a9bb6452cf78d"
+}

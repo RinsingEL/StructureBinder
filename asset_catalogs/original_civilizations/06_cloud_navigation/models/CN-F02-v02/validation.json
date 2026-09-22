@@ -1,0 +1,47 @@
+{
+  "schema": "structure-studio.validation.v1",
+  "nbt_sha256": "713914d32e20bf26ed6fddba8c9182b49cf9c3b983ec5c24f80f01daf241e247",
+  "navigation": {
+    "passed": true,
+    "unreachable": [],
+    "nodes": 5189,
+    "highest_standing_y": 9,
+    "truncated": false,
+    "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "size": [
+    43,
+    28,
+    39
+  ],
+  "visible_blocks": 5063,
+  "explicit_air": 27275,
+  "palette": 17,
+  "block_entities": 0,
+  "agriculture": {
+    "planted_cells": 328,
+    "missing_soil": [],
+    "dry_cells": [],
+    "scope": "最终 NBT 的四类原版作物、耕地和同层/高一层 4 格水源核对；不模拟光照或生长 tick"
+  },
+  "materials": {
+    "minecraft:stone": 1132,
+    "minecraft:birch_planks": 963,
+    "minecraft:dirt": 738,
+    "minecraft:dark_oak_log": 465,
+    "minecraft:andesite": 436,
+    "minecraft:stone_bricks": 347,
+    "minecraft:farmland": 328,
+    "minecraft:carrots": 328,
+    "minecraft:dark_oak_fence": 184,
+    "minecraft:dark_oak_planks": 58,
+    "minecraft:water": 41,
+    "minecraft:stripped_dark_oak_log": 30,
+    "minecraft:birch_stairs": 12,
+    "minecraft:composter": 1
+  },
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+}

@@ -1,0 +1,37 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MF-F03-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 山腹锻炉离线作者图审",
+  "nbt_sha256": "0ca9741f2162a3745282b31a2960682e2eaf2dd4d57fcca0e47bf2efed456de5",
+  "author_sha256": "e9a8556dd321dccb2c55946b134681487857072432b1b78c4988c77316025920",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-shed.png",
+    "previews/point-tools.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "四柱独立高棚四侧可接近，柱脚均落完整石台。",
+    "内饰与使用": "木料箱、原铁料、整理台和工具架分别放置，中间周转空间不被堆料封堵。",
+    "完整证据": "实际查看当前 NBT 四向外观、俯视、去屋顶、全部楼层、全部房间、全部已标站位、作者标记和地形示意；未以自动截图代替图审。",
+    "标记与通路": "原版状态、门床、作者标记及入口至全部站位碰撞检查通过，无警告。",
+    "地块条件": "开阔稳定维修地块，至少保留两侧材料搬运面。；干地与基础顶脚底 Y=2，四角支柱落在完整石基上。；少量材料周转与手工修缮造型；不代表自动仓储、搬运或矿业系统接入。"
+  },
+  "revisions": [
+    "重审出檐屋面承托：坡屋墙线补连续承檐梁；独立棚顶按型号改下半砖与柱顶接触。最终 NBT 重拍后实际检查全部视图。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "原版设备仅表达手工生产和生活用途；未接入机器、经济、运输或真实生成。"
+  ]
+}

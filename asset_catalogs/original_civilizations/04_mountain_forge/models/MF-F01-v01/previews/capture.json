@@ -1,0 +1,26 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "MF-F01-v01",
+  "nbt_sha256": "8692c3758fa4e76fa0dd7ac19602d33f522add387e47aa3b704f311d36346a59",
+  "author_sha256": "a6c83f25a7e6a53a7c15f1047eb8dd96c21b58a6367728fd1ebf95b0df622a30",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-shop",
+    "point-sale",
+    "point-kitchen",
+    "point-display",
+    "point-knead",
+    "point-flour",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

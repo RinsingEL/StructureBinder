@@ -1,0 +1,165 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-07-v01",
+  "name": "小车紧凑矿仓",
+  "family": "MF-07",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    23,
+    23,
+    26
+  ],
+  "terrain": {
+    "选址": "山前矿业聚落的稳定石质台地，正面朝 -Z；须避开落石、塌陷和洪水通道。",
+    "高程": "基础上边界及室内脚底 Y=2；入口街面需同高程。",
+    "保留空间": "依托实际货运面，保留宽门、搬运道及棚下空区；不得用矿堆填满人行主路。"
+  },
+  "rooms": [
+    {
+      "id": "warehouse",
+      "name": "双列紧凑仓",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        18,
+        6,
+        21
+      ],
+      "purpose": "双边分类矿料、中央车道、后账台；具体工位：后端库存账台、铁料货格、燃料货格、门侧到货抽检与称记、已核验出库器材"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        11,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "ledger",
+      "kind": "work",
+      "pos": [
+        9,
+        2,
+        20
+      ],
+      "name": "后端库存账台",
+      "approach": [
+        9,
+        2,
+        21
+      ]
+    },
+    {
+      "id": "iron",
+      "kind": "storage",
+      "pos": [
+        5,
+        2,
+        7
+      ],
+      "name": "铁料货格",
+      "approach": [
+        8,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "coal",
+      "kind": "storage",
+      "pos": [
+        15,
+        2,
+        14
+      ],
+      "name": "燃料货格",
+      "approach": [
+        14,
+        2,
+        14
+      ]
+    },
+    {
+      "id": "receiving",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        4
+      ],
+      "name": "门侧到货抽检与称记",
+      "approach": [
+        7,
+        2,
+        5
+      ]
+    },
+    {
+      "id": "dispatch",
+      "kind": "storage",
+      "pos": [
+        14,
+        3,
+        20
+      ],
+      "name": "已核验出库器材",
+      "approach": [
+        14,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "haul",
+      "kind": "circulation",
+      "pos": [
+        11,
+        2,
+        17
+      ],
+      "name": "中央小车回转及出库道",
+      "look_at": [
+        11,
+        2,
+        4
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "窄门面双列堆料围绕贯通中道，后端账台与空桶架；两类矿料保持分堆。"
+  ],
+  "differences": [
+    "窄门面双列堆料围绕贯通中道，后端账台与空桶架；两类矿料保持分堆。"
+  ],
+  "floors": [
+    {
+      "name": "生活与作业层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_trade.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "nbt_sha256": "ba7589ac2384d5eaeffad3a115f4e7a39fc857e83a182cb625f2b1d914dc3a07"
+}

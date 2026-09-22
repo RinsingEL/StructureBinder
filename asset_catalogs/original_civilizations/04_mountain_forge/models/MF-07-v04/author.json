@@ -1,0 +1,210 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-07-v04",
+  "name": "长棚周转与账房",
+  "family": "MF-07",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    35,
+    23,
+    25
+  ],
+  "terrain": {
+    "选址": "山前矿业聚落的稳定石质台地，正面朝 -Z；须避开落石、塌陷和洪水通道。",
+    "高程": "基础上边界及室内脚底 Y=2；入口街面需同高程。",
+    "保留空间": "依托实际货运面，保留宽门、搬运道及棚下空区；不得用矿堆填满人行主路。"
+  },
+  "rooms": [
+    {
+      "id": "shed",
+      "name": "开放周转长棚",
+      "min": [
+        5,
+        2,
+        5
+      ],
+      "max": [
+        20,
+        6,
+        19
+      ],
+      "purpose": "两排临时矿料堆、中央贯通卸货面；具体工位：棚下周转矿料、棚下周转矿料、棚下周转矿料、棚下周转矿料、长棚入库抽验台、出库分装封签台"
+    },
+    {
+      "id": "office",
+      "name": "侧边账房",
+      "min": [
+        26,
+        2,
+        4
+      ],
+      "max": [
+        30,
+        6,
+        20
+      ],
+      "purpose": "账台、档案与沿棚侧门；具体工位：库存账房、当日运单与封签器具"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        28,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "ledger",
+      "kind": "work",
+      "pos": [
+        27,
+        2,
+        6
+      ],
+      "name": "库存账房",
+      "approach": [
+        27,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "ore5_5",
+      "kind": "storage",
+      "pos": [
+        5,
+        2,
+        5
+      ],
+      "name": "棚下周转矿料",
+      "approach": [
+        5,
+        2,
+        8
+      ]
+    },
+    {
+      "id": "ore15_5",
+      "kind": "storage",
+      "pos": [
+        15,
+        2,
+        5
+      ],
+      "name": "棚下周转矿料",
+      "approach": [
+        15,
+        2,
+        8
+      ]
+    },
+    {
+      "id": "ore5_16",
+      "kind": "storage",
+      "pos": [
+        5,
+        2,
+        16
+      ],
+      "name": "棚下周转矿料",
+      "approach": [
+        5,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "ore15_16",
+      "kind": "storage",
+      "pos": [
+        15,
+        2,
+        16
+      ],
+      "name": "棚下周转矿料",
+      "approach": [
+        15,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "receiving",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        11
+      ],
+      "name": "长棚入库抽验台",
+      "approach": [
+        7,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "packing",
+      "kind": "work",
+      "pos": [
+        17,
+        2,
+        11
+      ],
+      "name": "出库分装封签台",
+      "approach": [
+        17,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "records",
+      "kind": "storage",
+      "pos": [
+        26,
+        3,
+        16
+      ],
+      "name": "当日运单与封签器具",
+      "approach": [
+        26,
+        2,
+        15
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "无封墙的两排矿料长棚容纳横向装卸，狭长账房贴在东侧，不占中央周转通道。"
+  ],
+  "differences": [
+    "无封墙的两排矿料长棚容纳横向装卸，狭长账房贴在东侧，不占中央周转通道。"
+  ],
+  "floors": [
+    {
+      "name": "生活与作业层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_trade.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "nbt_sha256": "506bd932db07464c037fed34ff370d9ca4d46741571394b1cf640877bbc75c58"
+}

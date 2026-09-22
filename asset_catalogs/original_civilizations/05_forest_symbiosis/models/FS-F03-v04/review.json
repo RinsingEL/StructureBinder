@@ -1,0 +1,40 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "FS-F03-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 主审（实际查看全部最终截图）",
+  "nbt_sha256": "6e79181194995fae350c998b89c776fb607193d4f9e008721cd8e694f81ff503",
+  "author_sha256": "84672ed752b5de14b42e1ea0143e4be33d4ca640715b7dcc600f493387b580e9",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-wall.png",
+    "previews/room-store.png",
+    "previews/point-wall.png",
+    "previews/point-toolstore.png",
+    "previews/point-wash.png",
+    "previews/point-pack.png",
+    "previews/point-baskets.png",
+    "previews/point-sort.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "背墙藤架接独立工具间，清洗、挑选包装、空篮与后架各有明确作业面，中央通路连到前门。",
+    "全部外观、剖面、房间、使用点、标记与地形示意已实际查看；屋顶支承和家具落地可辨。",
+    "当前最终NBT与作者标记通过数据、边界、状态及离线步行复核，零错误与警告。"
+  ],
+  "revisions": [
+    "补齐原本稀疏的工具间/作业棚内饰，新增用途同步记录房间与站位；FS-F04-v02后排料堆避开既有stock取料点。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

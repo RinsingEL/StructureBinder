@@ -1,0 +1,28 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "FS-F04-v02",
+  "nbt_sha256": "ac7157f7277f4a71cab17707ffe0e60cf76ce662dfb8c32b3cdeb2834ac21f62",
+  "author_sha256": "0c24a72d1d553a94fe692a2452fd1f057cb6283e3063dcee0954b308983c051f",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-shed",
+    "room-timberyard",
+    "point-tools",
+    "point-stock",
+    "point-dry",
+    "point-timber",
+    "point-measure",
+    "point-cut",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

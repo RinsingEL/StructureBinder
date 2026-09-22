@@ -1,0 +1,29 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "MF-07-v03",
+  "nbt_sha256": "34191bc8d595160df236aaca11a5d94ed953880a920c1ee53b52bc5707ec8d84",
+  "author_sha256": "4efcfe161bd1169100a382f576ffa00d999bf8e1aa8bf0a2f77a51b3bc0f8239",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-ledger",
+    "room-dock",
+    "room-store",
+    "point-ledger",
+    "point-ore5",
+    "point-ore19",
+    "point-records",
+    "point-receiving",
+    "point-dispatch",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

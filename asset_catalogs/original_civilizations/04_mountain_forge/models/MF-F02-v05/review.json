@@ -1,0 +1,35 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MF-F02-v05",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 山腹锻炉离线作者图审",
+  "nbt_sha256": "dee10b801ee1f0c9fbd79277b60ef1a2a7a8fce5db65b2e7b846f0bb39df36cf",
+  "author_sha256": "16ed7699760df0016d8842f5f80fc45b36e60f4753d4d48e1a75af97081563ef",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-beds.png",
+    "previews/point-water.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "十字碎石主路分出四块独立作物田，便于分作物管理。",
+    "内饰与使用": "四类作物各有水沟，中心用水盆和路端堆肥点可达；宽十字通路与完整灌溉覆盖均已确认。",
+    "完整证据": "实际查看当前 NBT 四向外观、俯视、去屋顶、全部楼层、全部房间、全部已标站位、作者标记和地形示意；未以自动截图代替图审。",
+    "标记与通路": "原版状态、门床、作者标记及入口至全部站位碰撞检查通过，无警告。",
+    "地块条件": "仅限具备足够土壤、光照、温度和稳定水分的地表地块，不放入无光山腹或永久冻土。；默认田埂脚底 Y=2；MF-F02-v02 后半单阶脚底 Y=3。；作物为原版外观与几何表达；未模拟生长tick、光照、温度或整合包产量。；独立模板田块有田埂和封边，不代表Landscape自然生成的大田。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "原版设备仅表达手工生产和生活用途；未接入机器、经济、运输或真实生成。"
+  ]
+}

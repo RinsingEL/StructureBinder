@@ -1,0 +1,45 @@
+{
+  "schema": "structure-studio.validation.v1",
+  "nbt_sha256": "dee10b801ee1f0c9fbd79277b60ef1a2a7a8fce5db65b2e7b846f0bb39df36cf",
+  "navigation": {
+    "passed": true,
+    "unreachable": [],
+    "nodes": 2963,
+    "highest_standing_y": 2,
+    "truncated": false,
+    "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "size": [
+    29,
+    16,
+    29
+  ],
+  "visible_blocks": 1604,
+  "explicit_air": 10060,
+  "palette": 14,
+  "block_entities": 0,
+  "agriculture": {
+    "planted_cells": 144,
+    "missing_soil": [],
+    "dry_cells": [],
+    "scope": "最终 NBT 的四类原版作物、耕地和同层/高一层 4 格水源核对；不模拟光照或生长 tick"
+  },
+  "materials": {
+    "minecraft:dirt": 729,
+    "minecraft:coarse_dirt": 312,
+    "minecraft:farmland": 144,
+    "minecraft:gravel": 129,
+    "minecraft:spruce_log": 120,
+    "minecraft:potatoes": 36,
+    "minecraft:beetroots": 36,
+    "minecraft:carrots": 36,
+    "minecraft:wheat": 36,
+    "minecraft:water": 24,
+    "minecraft:water_cauldron": 1,
+    "minecraft:composter": 1
+  },
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+}

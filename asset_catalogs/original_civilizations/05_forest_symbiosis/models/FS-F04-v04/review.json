@@ -1,0 +1,44 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "FS-F04-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 主审（实际查看全部最终截图）",
+  "nbt_sha256": "08ae508459d41fe816e4daf05f83a260d841ee0aa2ca5bc9f4c8330be5febd89",
+  "author_sha256": "0f14854bce2fbedf827aa01091454184d17f6b97dbc024b90acffbeb234e9374",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-shed.png",
+    "previews/room-room.png",
+    "previews/room-repairbay.png",
+    "previews/point-tools.png",
+    "previews/point-stock.png",
+    "previews/point-dry.png",
+    "previews/point-drygoods.png",
+    "previews/point-sidegoods.png",
+    "previews/point-issue.png",
+    "previews/point-repair.png",
+    "previews/point-incoming.png",
+    "previews/point-longstock.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "维修院的长台、回收配件与架材分区，独立干料屋侧柜、后架和发料登记台围绕中央通路布置。",
+    "全部外观、剖面、房间、使用点、标记与地形示意已实际查看；屋顶支承和家具落地可辨。",
+    "当前最终NBT与作者标记通过数据、边界、状态及离线步行复核，零错误与警告。"
+  ],
+  "revisions": [
+    "补齐原本稀疏的工具间/作业棚内饰，新增用途同步记录房间与站位；FS-F04-v02后排料堆避开既有stock取料点。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

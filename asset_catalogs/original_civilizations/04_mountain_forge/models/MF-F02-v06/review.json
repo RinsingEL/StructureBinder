@@ -1,0 +1,35 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MF-F02-v06",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 山腹锻炉离线作者图审",
+  "nbt_sha256": "032c092b621860559685838ce4fa96c8c24dfe3dc12dad5caf3b1ca45ffcc5e3",
+  "author_sha256": "8111b48759051c4ec7f543fe5220f2d809cff2be17bb087dd4279dacec3ebe43",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-shelter.png",
+    "previews/point-crop.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "三面挡风矮墙和透光顶棚围合薯田，正面保持开口。",
+    "内饰与使用": "种植行、三条水沟、木柱和玻璃顶清晰分层，田埂与入口留空；透光棚仅表达环境防护，不宣称额外生长机制。",
+    "完整证据": "实际查看当前 NBT 四向外观、俯视、去屋顶、全部楼层、全部房间、全部已标站位、作者标记和地形示意；未以自动截图代替图审。",
+    "标记与通路": "原版状态、门床、作者标记及入口至全部站位碰撞检查通过，无警告。",
+    "地块条件": "仅限具备足够土壤、光照、温度和稳定水分的地表地块，不放入无光山腹或永久冻土。；默认田埂脚底 Y=2；MF-F02-v02 后半单阶脚底 Y=3。；作物为原版外观与几何表达；未模拟生长tick、光照、温度或整合包产量。；独立模板田块有田埂和封边，不代表Landscape自然生成的大田。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "原版设备仅表达手工生产和生活用途；未接入机器、经济、运输或真实生成。"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "FS-F04-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 主审（实际查看全部最终截图）",
+  "nbt_sha256": "9ba56d10874f5cd8d23766492517d5a0d0078f8131e92693d8d1ef9c32287f0c",
+  "author_sha256": "842d274983e299d9e41f891ca3a9b315638366b133a6903388140c210e338a21",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-shed.png",
+    "previews/room-sorting.png",
+    "previews/point-tools.png",
+    "previews/point-stock.png",
+    "previews/point-dry.png",
+    "previews/point-select.png",
+    "previews/point-bundle.png",
+    "previews/point-samples.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "挡风长棚两端分为选药编号和扎包整理，中间吊晒与分类干料容器保留贯通作业道。",
+    "全部外观、剖面、房间、使用点、标记与地形示意已实际查看；屋顶支承和家具落地可辨。",
+    "当前最终NBT与作者标记通过数据、边界、状态及离线步行复核，零错误与警告。"
+  ],
+  "revisions": [
+    "补齐原本稀疏的工具间/作业棚内饰，新增用途同步记录房间与站位；FS-F04-v02后排料堆避开既有stock取料点。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

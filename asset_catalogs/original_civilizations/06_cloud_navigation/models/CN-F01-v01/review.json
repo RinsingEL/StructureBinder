@@ -1,0 +1,42 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CN-F01-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors author visual review",
+  "nbt_sha256": "bc48c39dc896bdefde598b10ca5297599550a3ddc04de894b25763dbf7eca0bb",
+  "author_sha256": "c857979404fc6dbfd856428aca3be02cdc447a751f4b1cb345ffad6872179179",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-bakery.png",
+    "previews/room-bake_work.png",
+    "previews/point-sale.png",
+    "previews/point-oven.png",
+    "previews/point-dough.png",
+    "previews/point-bread.png",
+    "previews/point-flour.png",
+    "previews/point-cooling.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "已实际查看当前最终全视角、分层、每个房间及使用点全部截图，无缺纹理与渲染错误。",
+    "前店售卖与后场揉面、烘炉和冷却装袋分组，面粉柜与洗涤操作台完整。",
+    "新旧柜台使用深木构件，家具组与浅地板清楚区分。数据及全部标记通路通过，无警告；原轮廓、承檐、实体支撑与平台连续栏杆保留。",
+    "冷却柜在东侧门前留一格贯通门道，修订后重新实际查看全部17图。"
+  ],
+  "revisions": [
+    "主审撤回稀疏内饰后，仅修改cloud_market.py商铺局部helper；CN08货仓与其它冻结模块未改。",
+    "收尾复核修正冷却柜阻挡东侧门，重拍重看当前17图。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

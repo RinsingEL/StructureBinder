@@ -1,0 +1,313 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CN-05-v04",
+  "name": "叠层望谷宅 · 悬臂住宅",
+  "family": "CN-05",
+  "civilization": "云海航行文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    35,
+    39,
+    37
+  ],
+  "terrain": {
+    "选址": "高原岩台边缘，北侧接稳定地面，南侧朝开阔谷地",
+    "高程": "主平台地板 Y=7，入口脚底 Y=8；外接同高岩台道路",
+    "固定与承重": "北侧石砌锚座压在实体岩台，南侧木梁和斜撑回接石墩；石墩底必须落在连续承载岩层。不可当作无支撑浮空结构。",
+    "接驳边界": "模板内支撑与边栏完整；外侧山体、接驳道路、峡谷宽度及航行净空必须按实际场地核对。",
+    "运行边界": "泊位、缆索、风向仪、船体与吊装均为静态空间表达；未实现飞行、气象、物流或受力模拟。"
+  },
+  "rooms": [
+    {
+      "id": "living",
+      "name": "公共厨房与餐厅",
+      "min": [
+        7,
+        8,
+        8
+      ],
+      "max": [
+        21,
+        13,
+        26
+      ],
+      "purpose": "炉灶、饮水、食品柜、共餐和回收餐具"
+    },
+    {
+      "id": "upper_read",
+      "name": "寝室前部书写坐读",
+      "min": [
+        7,
+        15,
+        9
+      ],
+      "max": [
+        21,
+        19,
+        13
+      ],
+      "purpose": "写字台、双坐席、书柜与个人行李分区"
+    },
+    {
+      "id": "upper",
+      "name": "独立住宿房",
+      "min": [
+        7,
+        15,
+        8
+      ],
+      "max": [
+        21,
+        20,
+        26
+      ],
+      "purpose": "每床配床头灯、个人储物箱与短隐私屏；前部书写、坐读和饮水，保留侧面通道"
+    },
+    {
+      "id": "balcony",
+      "name": "观景阳台",
+      "min": [
+        5,
+        8,
+        29
+      ],
+      "max": [
+        28,
+        12,
+        32
+      ],
+      "purpose": "完整栏杆、坐席及回到地面入口的连续路线"
+    }
+  ],
+  "points": [
+    {
+      "id": "living_cook",
+      "kind": "work",
+      "pos": [
+        9,
+        8,
+        8
+      ],
+      "name": "炉灶—洗涤—切配连续操作台",
+      "approach": [
+        9,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "living_read",
+      "kind": "work",
+      "pos": [
+        21,
+        9,
+        22
+      ],
+      "name": "共用坐读区与书物柜",
+      "approach": [
+        20,
+        8,
+        22
+      ]
+    },
+    {
+      "id": "living_meal",
+      "kind": "work",
+      "pos": [
+        9,
+        8,
+        13
+      ],
+      "name": "公共餐桌",
+      "approach": [
+        9,
+        8,
+        12
+      ]
+    },
+    {
+      "id": "upper_1",
+      "kind": "sleep",
+      "pos": [
+        8,
+        15,
+        25
+      ],
+      "name": "独立床位、床头灯与个人衣物箱",
+      "approach": [
+        9,
+        15,
+        25
+      ]
+    },
+    {
+      "id": "upper_2",
+      "kind": "sleep",
+      "pos": [
+        11,
+        15,
+        25
+      ],
+      "name": "独立床位、床头灯与个人衣物箱",
+      "approach": [
+        12,
+        15,
+        25
+      ]
+    },
+    {
+      "id": "upper_3",
+      "kind": "sleep",
+      "pos": [
+        14,
+        15,
+        25
+      ],
+      "name": "独立床位、床头灯与个人衣物箱",
+      "approach": [
+        15,
+        15,
+        25
+      ]
+    },
+    {
+      "id": "upper_4",
+      "kind": "sleep",
+      "pos": [
+        17,
+        15,
+        25
+      ],
+      "name": "独立床位、床头灯与个人衣物箱",
+      "approach": [
+        18,
+        15,
+        25
+      ]
+    },
+    {
+      "id": "upper_table",
+      "kind": "work",
+      "pos": [
+        9,
+        15,
+        11
+      ],
+      "name": "住客书写与行李整理",
+      "approach": [
+        9,
+        15,
+        12
+      ]
+    },
+    {
+      "id": "upper_read",
+      "kind": "work",
+      "pos": [
+        21,
+        16,
+        10
+      ],
+      "name": "共用坐读区与书物柜",
+      "approach": [
+        20,
+        15,
+        10
+      ]
+    },
+    {
+      "id": "landing",
+      "kind": "circulation",
+      "pos": [
+        25,
+        15,
+        18
+      ],
+      "name": "二层外廊入口",
+      "look_at": [
+        22,
+        16,
+        17
+      ]
+    },
+    {
+      "id": "balcony",
+      "kind": "circulation",
+      "pos": [
+        16,
+        8,
+        30
+      ],
+      "name": "观景阳台",
+      "look_at": [
+        16,
+        9,
+        34
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        17,
+        8,
+        3
+      ],
+      "name": "岩台地面入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        17,
+        7,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "岩台地面入口，外接脚底 Y=8 的连续道路"
+    }
+  ],
+  "design_notes": [
+    "两层紧凑住宅以外置七级楼梯到达四床睡眠层；地面厨房和共餐空间完整，后部留观景短廊。",
+    "所有悬挑构件都回接北岩台、石墩或对岸固定端；本体不提供浮空能力。"
+  ],
+  "differences": [
+    "两层紧凑住宅以外置七级楼梯到达四床睡眠层；地面厨房和共餐空间完整，后部留观景短廊。"
+  ],
+  "floors": [
+    {
+      "name": "地面起居",
+      "y": 7,
+      "max_y": 13
+    },
+    {
+      "name": "二层卧室",
+      "y": 14,
+      "max_y": 20
+    }
+  ],
+  "roof_min_y": 14,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/cloud_living.py:CN-05(4)",
+  "preview_context": {
+    "kind": "slope",
+    "land_surface_y": 8,
+    "bed_y": -3,
+    "padding": 4,
+    "run": 8,
+    "rise": -1,
+    "slope_origin_z": 0,
+    "surface": "snow"
+  },
+  "nbt_sha256": "c21b98ef17c5cc8f4d21be663802c69fbec7691163fac119b1aa6ed60dde7be0"
+}

@@ -1,0 +1,209 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-07-v03",
+  "name": "顺坡双面装卸仓",
+  "family": "MF-07",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    29,
+    23,
+    31
+  ],
+  "terrain": {
+    "选址": "山前矿业聚落的稳定石质台地，正面朝 -Z；须避开落石、塌陷和洪水通道。",
+    "高程": "低街脚底 Y=2、高仓 Y=3；+Z 单格坡差，四宽短阶供人员，不代表矿车能过台阶。",
+    "保留空间": "依托实际货运面，保留宽门、搬运道及棚下空区；不得用矿堆填满人行主路。"
+  },
+  "rooms": [
+    {
+      "id": "ledger",
+      "name": "低位收货账房",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        10,
+        6,
+        10
+      ],
+      "purpose": "登记验收；具体工位：低街收货账房、收货账簿与封签"
+    },
+    {
+      "id": "dock",
+      "name": "前部低街卸货棚",
+      "min": [
+        16,
+        2,
+        5
+      ],
+      "max": [
+        24,
+        6,
+        10
+      ],
+      "purpose": "散货短时周转；具体工位：棚下到货抽检与登记"
+    },
+    {
+      "id": "store",
+      "name": "高街保管仓",
+      "min": [
+        4,
+        3,
+        19
+      ],
+      "max": [
+        24,
+        7,
+        26
+      ],
+      "purpose": "高台分堆与中间宽车道；具体工位：高台矿料堆、高台矿料堆、高仓出库分装检验台"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        7,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "ledger",
+      "kind": "work",
+      "pos": [
+        5,
+        2,
+        6
+      ],
+      "name": "低街收货账房",
+      "approach": [
+        5,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "entry_14_18",
+      "kind": "entrance",
+      "pos": [
+        14,
+        3,
+        17
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "ore5",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        21
+      ],
+      "name": "高台矿料堆",
+      "approach": [
+        9,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "ore19",
+      "kind": "storage",
+      "pos": [
+        19,
+        3,
+        21
+      ],
+      "name": "高台矿料堆",
+      "approach": [
+        23,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "records",
+      "kind": "storage",
+      "pos": [
+        4,
+        3,
+        10
+      ],
+      "name": "收货账簿与封签",
+      "approach": [
+        4,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "receiving",
+      "kind": "work",
+      "pos": [
+        20,
+        2,
+        10
+      ],
+      "name": "棚下到货抽检与登记",
+      "approach": [
+        20,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "dispatch",
+      "kind": "work",
+      "pos": [
+        13,
+        3,
+        25
+      ],
+      "name": "高仓出库分装检验台",
+      "approach": [
+        13,
+        3,
+        26
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "低位收货账房与开放周转棚并置，后高台独立保管仓；明确低街卸货和高街存放两面。"
+  ],
+  "differences": [
+    "低位收货账房与开放周转棚并置，后高台独立保管仓；明确低街卸货和高街存放两面。"
+  ],
+  "floors": [
+    {
+      "name": "低街与高仓",
+      "y": 1,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_trade.py:BUILDERS",
+  "preview_context": {
+    "kind": "slope",
+    "land_surface_y": 2,
+    "padding": 5,
+    "run": 14,
+    "rise": 1,
+    "slope_origin_z": 14
+  },
+  "nbt_sha256": "34191bc8d595160df236aaca11a5d94ed953880a920c1ee53b52bc5707ec8d84"
+}

@@ -1,0 +1,29 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "MF-04-v04",
+  "nbt_sha256": "366f1183c8b9caa64bc198ee0076c3373275abead89848fde57999dc4c7ae5be",
+  "author_sha256": "23dfa064028fa4d25da30199001b77fda83db2d0c834ade2c1744967846d7772",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-living",
+    "room-beds",
+    "room-yard",
+    "point-kitchen",
+    "point-wing15_0",
+    "point-wing15_1",
+    "point-wing21_0",
+    "point-wing21_1",
+    "point-repair",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

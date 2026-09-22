@@ -1,0 +1,263 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CN-05-v06",
+  "name": "长脊峡口宅 · 悬臂住宅",
+  "family": "CN-05",
+  "civilization": "云海航行文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    31,
+    35,
+    47
+  ],
+  "terrain": {
+    "选址": "高原岩台边缘，北侧接稳定地面，南侧朝开阔谷地",
+    "高程": "主平台地板 Y=7，入口脚底 Y=8；外接同高岩台道路",
+    "固定与承重": "北侧石砌锚座压在实体岩台，南侧木梁和斜撑回接石墩；石墩底必须落在连续承载岩层。不可当作无支撑浮空结构。",
+    "接驳边界": "模板内支撑与边栏完整；外侧山体、接驳道路、峡谷宽度及航行净空必须按实际场地核对。",
+    "运行边界": "泊位、缆索、风向仪、船体与吊装均为静态空间表达；未实现飞行、气象、物流或受力模拟。"
+  },
+  "rooms": [
+    {
+      "id": "home_read",
+      "name": "窗边坐读与家用书柜",
+      "min": [
+        18,
+        8,
+        14
+      ],
+      "max": [
+        22,
+        12,
+        18
+      ],
+      "purpose": "双坐席、茶几、照明与书物柜"
+    },
+    {
+      "id": "home_living",
+      "name": "家庭共餐起居",
+      "min": [
+        8,
+        8,
+        8
+      ],
+      "max": [
+        22,
+        13,
+        27
+      ],
+      "purpose": "连续厨房操作台、食品与餐具柜、双侧用餐坐席、窗边坐读和连续入户通道"
+    },
+    {
+      "id": "home_sleep",
+      "name": "家庭独立卧室",
+      "min": [
+        8,
+        8,
+        29
+      ],
+      "max": [
+        22,
+        13,
+        34
+      ],
+      "purpose": "分隔卧室、每床床头灯、隐私短屏与个人衣物收纳"
+    },
+    {
+      "id": "balcony",
+      "name": "峡口长屋南廊",
+      "min": [
+        5,
+        8,
+        37
+      ],
+      "max": [
+        25,
+        12,
+        42
+      ],
+      "purpose": "完整栏杆、坐席及回到地面入口的连续路线"
+    }
+  ],
+  "points": [
+    {
+      "id": "home_cook",
+      "kind": "work",
+      "pos": [
+        10,
+        8,
+        8
+      ],
+      "name": "炉灶—洗涤—切配连续操作台",
+      "approach": [
+        10,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "home_read",
+      "kind": "work",
+      "pos": [
+        22,
+        9,
+        16
+      ],
+      "name": "共用坐读区与书物柜",
+      "approach": [
+        21,
+        8,
+        16
+      ]
+    },
+    {
+      "id": "home_1",
+      "kind": "sleep",
+      "pos": [
+        9,
+        8,
+        33
+      ],
+      "name": "独立床位、床头灯与个人衣物箱",
+      "approach": [
+        10,
+        8,
+        33
+      ]
+    },
+    {
+      "id": "home_2",
+      "kind": "sleep",
+      "pos": [
+        12,
+        8,
+        33
+      ],
+      "name": "独立床位、床头灯与个人衣物箱",
+      "approach": [
+        13,
+        8,
+        33
+      ]
+    },
+    {
+      "id": "home_3",
+      "kind": "sleep",
+      "pos": [
+        15,
+        8,
+        33
+      ],
+      "name": "独立床位、床头灯与个人衣物箱",
+      "approach": [
+        16,
+        8,
+        33
+      ]
+    },
+    {
+      "id": "home_4",
+      "kind": "sleep",
+      "pos": [
+        18,
+        8,
+        33
+      ],
+      "name": "独立床位、床头灯与个人衣物箱",
+      "approach": [
+        19,
+        8,
+        33
+      ]
+    },
+    {
+      "id": "home_dress",
+      "kind": "work",
+      "pos": [
+        20,
+        8,
+        30
+      ],
+      "name": "卧室梳写台与衣物整理",
+      "approach": [
+        20,
+        8,
+        31
+      ]
+    },
+    {
+      "id": "balcony",
+      "kind": "circulation",
+      "pos": [
+        15,
+        8,
+        38
+      ],
+      "name": "峡口长屋南廊",
+      "look_at": [
+        15,
+        9,
+        44
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        15,
+        8,
+        3
+      ],
+      "name": "岩台地面入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        15,
+        7,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "岩台地面入口，外接脚底 Y=8 的连续道路"
+    }
+  ],
+  "design_notes": [
+    "狭长峡口地块上的四床长屋，北锚座与南石台共同承托中段木梁；前段起居面积较大，南端集中卧室与观景。",
+    "所有悬挑构件都回接北岩台、石墩或对岸固定端；本体不提供浮空能力。"
+  ],
+  "differences": [
+    "狭长峡口地块上的四床长屋，北锚座与南石台共同承托中段木梁；前段起居面积较大，南端集中卧室与观景。"
+  ],
+  "floors": [
+    {
+      "name": "岩台主层",
+      "y": 7,
+      "max_y": 13
+    }
+  ],
+  "roof_min_y": 14,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/cloud_living.py:CN-05(6)",
+  "preview_context": {
+    "kind": "slope",
+    "land_surface_y": 8,
+    "bed_y": -3,
+    "padding": 4,
+    "run": 8,
+    "rise": -1,
+    "slope_origin_z": 0,
+    "surface": "snow"
+  },
+  "nbt_sha256": "84ac0de87fa21544a41ce366876aeec5ddd6068939fa2c4131f2331f03e4a66c"
+}

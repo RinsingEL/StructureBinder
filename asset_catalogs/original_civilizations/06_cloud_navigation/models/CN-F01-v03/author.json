@@ -1,0 +1,248 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CN-F01-v03",
+  "name": "双面修具铺 · 空港日常小商铺",
+  "family": "CN-F01",
+  "civilization": "云海航行文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    37,
+    33,
+    37
+  ],
+  "terrain": {
+    "选址": "高原岩台边缘，北侧接稳定地面，南侧朝开阔谷地",
+    "高程": "主平台地板 Y=7，入口脚底 Y=8；外接同高岩台道路",
+    "固定与承重": "北侧石砌锚座压在实体岩台，南侧木梁和斜撑回接石墩；石墩底必须落在连续承载岩层。不可当作无支撑浮空结构。",
+    "接驳边界": "模板内支撑与边栏完整；外侧山体、接驳道路、峡谷宽度及航行净空必须按实际场地核对。",
+    "运行边界": "泊位、缆索、风向仪、船体与吊装均为静态空间表达；未实现飞行、气象、物流或受力模拟。"
+  },
+  "rooms": [
+    {
+      "id": "tool",
+      "name": "双面修具厅",
+      "min": [
+        9,
+        8,
+        8
+      ],
+      "max": [
+        27,
+        14,
+        28
+      ],
+      "purpose": "北侧销售、南侧三类维修，中段横向双门通路"
+    },
+    {
+      "id": "sales",
+      "name": "工具样品与交易前厅",
+      "min": [
+        9,
+        8,
+        8
+      ],
+      "max": [
+        27,
+        14,
+        16
+      ],
+      "purpose": "北墙分类器具架、双组样品与维修登记柜台"
+    },
+    {
+      "id": "repair",
+      "name": "拆检—磨修—装配作业区",
+      "min": [
+        9,
+        8,
+        20
+      ],
+      "max": [
+        27,
+        14,
+        28
+      ],
+      "purpose": "修理台、铁砧磨轮石切设备、零件和待交付柜"
+    }
+  ],
+  "points": [
+    {
+      "id": "sale",
+      "kind": "work",
+      "pos": [
+        11,
+        8,
+        12
+      ],
+      "name": "工具销售与维修登记",
+      "approach": [
+        11,
+        8,
+        13
+      ]
+    },
+    {
+      "id": "tool_11",
+      "kind": "work",
+      "pos": [
+        11,
+        8,
+        24
+      ],
+      "name": "修整工具位",
+      "approach": [
+        11,
+        8,
+        23
+      ]
+    },
+    {
+      "id": "tool_17",
+      "kind": "work",
+      "pos": [
+        17,
+        8,
+        24
+      ],
+      "name": "修整工具位",
+      "approach": [
+        17,
+        8,
+        23
+      ]
+    },
+    {
+      "id": "tool_23",
+      "kind": "work",
+      "pos": [
+        23,
+        8,
+        24
+      ],
+      "name": "修整工具位",
+      "approach": [
+        23,
+        8,
+        23
+      ]
+    },
+    {
+      "id": "stock",
+      "kind": "storage",
+      "pos": [
+        21,
+        9,
+        10
+      ],
+      "name": "分类商品与成品陈列",
+      "approach": [
+        21,
+        8,
+        11
+      ]
+    },
+    {
+      "id": "sample_tools",
+      "kind": "work",
+      "pos": [
+        21,
+        9,
+        12
+      ],
+      "name": "成套器具陈列与规格核对",
+      "approach": [
+        21,
+        8,
+        13
+      ]
+    },
+    {
+      "id": "repair_bench",
+      "kind": "work",
+      "pos": [
+        17,
+        8,
+        21
+      ],
+      "name": "拆件、检量与装配工作台",
+      "approach": [
+        17,
+        8,
+        20
+      ]
+    },
+    {
+      "id": "parts",
+      "kind": "storage",
+      "pos": [
+        11,
+        9,
+        28
+      ],
+      "name": "分类商品与成品陈列",
+      "approach": [
+        11,
+        8,
+        27
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        18,
+        8,
+        3
+      ],
+      "name": "岩台地面入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        18,
+        7,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "岩台地面入口，外接脚底 Y=8 的连续道路"
+    }
+  ],
+  "design_notes": [
+    "宽厅双侧入口保持中部横向通路，北侧工具销售和南侧铁砧磨轮石切台相对。",
+    "店铺按居民与空港服务需求选用，门前平台必须接连续步道；陈设不自动产生交易、生产或治疗功能。"
+  ],
+  "differences": [
+    "宽厅双侧入口保持中部横向通路，北侧工具销售和南侧铁砧磨轮石切台相对。"
+  ],
+  "floors": [
+    {
+      "name": "岩台主层",
+      "y": 7,
+      "max_y": 13
+    }
+  ],
+  "roof_min_y": 14,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/cloud_market.py:CN-F01(3)",
+  "preview_context": {
+    "kind": "slope",
+    "land_surface_y": 8,
+    "bed_y": -3,
+    "padding": 4,
+    "run": 8,
+    "rise": -1,
+    "slope_origin_z": 0,
+    "surface": "snow"
+  },
+  "nbt_sha256": "65a4626d7da2e7ad02b99465cf3f24138645e1ce8717371e1e8b3804634ed01b"
+}

@@ -1,0 +1,225 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-07-v02",
+  "name": "四格分类矿仓",
+  "family": "MF-07",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    31,
+    23,
+    31
+  ],
+  "terrain": {
+    "选址": "山前矿业聚落的稳定石质台地，正面朝 -Z；须避开落石、塌陷和洪水通道。",
+    "高程": "基础上边界及室内脚底 Y=2；入口街面需同高程。",
+    "保留空间": "依托实际货运面，保留宽门、搬运道及棚下空区；不得用矿堆填满人行主路。"
+  },
+  "rooms": [
+    {
+      "id": "bays",
+      "name": "四格矿料间",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        26,
+        6,
+        26
+      ],
+      "purpose": "四类矿料各有防混隔墙和宽口；具体工位：分类矿料、分类矿料、分类矿料、分类矿料、横向验收账台、燃料批次取样与检验、铁料验级工作台、铜料已封签小批出库、金料保管与封签器具"
+    },
+    {
+      "id": "cross",
+      "name": "十字验收与搬运道",
+      "min": [
+        13,
+        2,
+        4
+      ],
+      "max": [
+        17,
+        6,
+        26
+      ],
+      "purpose": "纵向主道与横向验收分流"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        15,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "pile5_5",
+      "kind": "storage",
+      "pos": [
+        5,
+        2,
+        5
+      ],
+      "name": "分类矿料",
+      "approach": [
+        5,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "pile21_5",
+      "kind": "storage",
+      "pos": [
+        21,
+        2,
+        5
+      ],
+      "name": "分类矿料",
+      "approach": [
+        21,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "pile5_21",
+      "kind": "storage",
+      "pos": [
+        5,
+        2,
+        21
+      ],
+      "name": "分类矿料",
+      "approach": [
+        5,
+        2,
+        25
+      ]
+    },
+    {
+      "id": "pile21_21",
+      "kind": "storage",
+      "pos": [
+        21,
+        2,
+        21
+      ],
+      "name": "分类矿料",
+      "approach": [
+        21,
+        2,
+        25
+      ]
+    },
+    {
+      "id": "ledger",
+      "kind": "work",
+      "pos": [
+        5,
+        2,
+        15
+      ],
+      "name": "横向验收账台",
+      "approach": [
+        5,
+        2,
+        16
+      ]
+    },
+    {
+      "id": "coal_check",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        10
+      ],
+      "name": "燃料批次取样与检验",
+      "approach": [
+        6,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "iron_check",
+      "kind": "work",
+      "pos": [
+        22,
+        2,
+        10
+      ],
+      "name": "铁料验级工作台",
+      "approach": [
+        22,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "copper_dispatch",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        26
+      ],
+      "name": "铜料已封签小批出库",
+      "approach": [
+        5,
+        2,
+        25
+      ]
+    },
+    {
+      "id": "gold_dispatch",
+      "kind": "storage",
+      "pos": [
+        21,
+        3,
+        26
+      ],
+      "name": "金料保管与封签器具",
+      "approach": [
+        21,
+        2,
+        25
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "四座防混料仓围出十字车道，煤铁铜金四类分区；横向账台不占纵向主运道。"
+  ],
+  "differences": [
+    "四座防混料仓围出十字车道，煤铁铜金四类分区；横向账台不占纵向主运道。"
+  ],
+  "floors": [
+    {
+      "name": "生活与作业层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_trade.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "nbt_sha256": "ceb12cc0584727eed65f1879e9180f6776e929e15485f4dd4d4551227acb5e94"
+}

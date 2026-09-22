@@ -1,0 +1,185 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-F01-v05",
+  "name": "楼上抄图书铺",
+  "family": "MF-F01",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    21,
+    25,
+    27
+  ],
+  "terrain": {
+    "选址": "服务工人与居民日常生活；依照门面、转角、坡差或院落要求落位，保持完整独立模板。",
+    "高程": "基础上边界及室内脚底 Y=2；入口街面需同高程。",
+    "保留空间": "完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "rooms": [
+    {
+      "id": "store",
+      "name": "楼下书册铺",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        16,
+        6,
+        22
+      ],
+      "purpose": "借售登记、书架及侧梯；具体工位：书册借售、顾客翻阅与装订检查"
+    },
+    {
+      "id": "copy",
+      "name": "楼上抄图室",
+      "min": [
+        4,
+        8,
+        4
+      ],
+      "max": [
+        16,
+        12,
+        22
+      ],
+      "purpose": "制图台、誊写、文书架与梯井；具体工位：矿路抄图、文书誊写、矿路图纸展开与测绘校核、纸卷、墨具与待抄文书"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        10,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "sale",
+      "kind": "work",
+      "pos": [
+        5,
+        2,
+        5
+      ],
+      "name": "书册借售",
+      "approach": [
+        5,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "maps",
+      "kind": "work",
+      "pos": [
+        11,
+        8,
+        6
+      ],
+      "name": "矿路抄图",
+      "approach": [
+        12,
+        8,
+        6
+      ]
+    },
+    {
+      "id": "copy",
+      "kind": "work",
+      "pos": [
+        12,
+        8,
+        14
+      ],
+      "name": "文书誊写",
+      "approach": [
+        12,
+        8,
+        15
+      ]
+    },
+    {
+      "id": "browse",
+      "kind": "work",
+      "pos": [
+        13,
+        2,
+        6
+      ],
+      "name": "顾客翻阅与装订检查",
+      "approach": [
+        13,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "layout",
+      "kind": "work",
+      "pos": [
+        13,
+        8,
+        10
+      ],
+      "name": "矿路图纸展开与测绘校核",
+      "approach": [
+        13,
+        8,
+        11
+      ]
+    },
+    {
+      "id": "paper",
+      "kind": "storage",
+      "pos": [
+        10,
+        9,
+        18
+      ],
+      "name": "纸卷、墨具与待抄文书",
+      "approach": [
+        10,
+        8,
+        17
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "窄街书铺向上叠置安静抄图室，六级内梯联系借售与矿路文书作业，楼上非住宿。"
+  ],
+  "differences": [
+    "窄街书铺向上叠置安静抄图室，六级内梯联系借售与矿路文书作业，楼上非住宿。"
+  ],
+  "floors": [
+    {
+      "name": "书册铺",
+      "y": 1,
+      "max_y": 5
+    },
+    {
+      "name": "抄图室",
+      "y": 7,
+      "max_y": 11
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_trade.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "nbt_sha256": "a102d278d83a628a702bb920651db4c3f8096a00309ed88ac197d193680dfab7"
+}

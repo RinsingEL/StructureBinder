@@ -1,0 +1,52 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CN-05-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors author visual review",
+  "nbt_sha256": "8e4e6e1194c0009ed701540ce4590fa259a442dec9901df0e13a8a456db285a2",
+  "author_sha256": "cddeb4c9c75ae8842d233e32bf4c7758c6fdad51f88200acec145bcf0c434f2e",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-west_read.png",
+    "previews/room-west_living.png",
+    "previews/room-west_sleep.png",
+    "previews/room-east_read.png",
+    "previews/room-east_living.png",
+    "previews/room-east_sleep.png",
+    "previews/room-balcony.png",
+    "previews/point-west_cook.png",
+    "previews/point-west_read.png",
+    "previews/point-west_1.png",
+    "previews/point-west_2.png",
+    "previews/point-west_dress.png",
+    "previews/point-east_cook.png",
+    "previews/point-east_read.png",
+    "previews/point-east_1.png",
+    "previews/point-east_2.png",
+    "previews/point-east_dress.png",
+    "previews/point-balcony.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "实际查看本次最终全部截图：外观、分层、房间与每个工作/床位视角；无渲染错误和缺纹理。",
+    "厨房改为连续炉灶、洗涤与备餐操作台及上架，双側用餐椅与餐桌成组；居住/公共房有坐读与书物柜。",
+    "每床配置床头灯、个人储物双箱与床头短屏；房门和床侧保持通路，独立房间保留隐私分隔。",
+    "住宅卧室增加梳写整理台，宿舍/客房前部写字与坐读；旅舍接待外补等候和寄存箱。",
+    "原有实体固定端、支撑外廓、坡顶承檐和连续平台/外阶栏杆保留；数据及全标记离线通路通过且无警告。"
+  ],
+  "revisions": [
+    "主审撤回稀疏内饰后，仅在cloud_living.py补局部家具组织，不修改冻结核心与共享helper。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

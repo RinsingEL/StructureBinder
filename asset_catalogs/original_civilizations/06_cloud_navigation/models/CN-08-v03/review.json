@@ -1,0 +1,42 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CN-08-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 云海建模代理（实际看图）",
+  "nbt_sha256": "495503ea305642d92085475207ae8aa262727d0d9f9544034e185391f2bf677c",
+  "author_sha256": "437ed6fbe5417e4ca8afc25e5faf76e856ea69445bb7342052c8dcdb3f947f0e",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-in.png",
+    "previews/room-out.png",
+    "previews/point-west.png",
+    "previews/point-east.png",
+    "previews/point-westdesk.png",
+    "previews/point-eastdesk.png",
+    "previews/point-transfer.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "两翼分别入库与出库，中央铜顶转运廊、四扇侧门及分装记录区保持清楚通路。",
+    "最终外观、去屋顶、分层、每个房间及使用点、标注与环境图均已实际查看。",
+    "最终数据和离线步行验证无错误、无警告，所有标记可达；房屋承檐、山墙和独立廊亭柱顶实际连接。"
+  ],
+  "revisions": [
+    "按经营功能设计不同平面、工作设备及高低运输关系；逐处标记后离线验证。",
+    "外阶栏杆使用显式连接属性和上下重叠栏段，连续侧托避开踏步净宽；先清空通路再安置设备。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "仅静态结构和离线步行验收；未启动 Minecraft，未实现经济交易、自动物流、制索或飞行。",
+    "台地和柱梁表达几何承重边界；实际岩层、货物荷载、峡谷外部连接及设施游戏逻辑需另行核对。"
+  ]
+}

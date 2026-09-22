@@ -1,0 +1,59 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CN-04-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors author visual review",
+  "nbt_sha256": "3df748a4e30bca1a3f706e8bb8c86a2a7c6c152cf4df31aac5cd84c8b449f588",
+  "author_sha256": "efd0af338c5ea0d4822a85bb396707d6d1dff8a06c2c137424f1c0d5186b980b",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-guest0_read.png",
+    "previews/room-guest0.png",
+    "previews/room-guest1_read.png",
+    "previews/room-guest1.png",
+    "previews/room-guest2_read.png",
+    "previews/room-guest2.png",
+    "previews/room-mess.png",
+    "previews/room-gallery.png",
+    "previews/point-guest0_1.png",
+    "previews/point-guest0_2.png",
+    "previews/point-guest0_table.png",
+    "previews/point-guest0_read.png",
+    "previews/point-guest1_1.png",
+    "previews/point-guest1_2.png",
+    "previews/point-guest1_table.png",
+    "previews/point-guest1_read.png",
+    "previews/point-guest2_1.png",
+    "previews/point-guest2_2.png",
+    "previews/point-guest2_table.png",
+    "previews/point-guest2_read.png",
+    "previews/point-mess_cook.png",
+    "previews/point-mess_read.png",
+    "previews/point-mess_meal.png",
+    "previews/point-reception.png",
+    "previews/point-luggage_0.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "实际查看本次最终全部截图：外观、分层、房间与每个工作/床位视角；无渲染错误和缺纹理。",
+    "厨房改为连续炉灶、洗涤与备餐操作台及上架，双側用餐椅与餐桌成组；居住/公共房有坐读与书物柜。",
+    "每床配置床头灯、个人储物双箱与床头短屏；房门和床侧保持通路，独立房间保留隐私分隔。",
+    "住宅卧室增加梳写整理台，宿舍/客房前部写字与坐读；旅舍接待外补等候和寄存箱。",
+    "原有实体固定端、支撑外廓、坡顶承檐和连续平台/外阶栏杆保留；数据及全标记离线通路通过且无警告。"
+  ],
+  "revisions": [
+    "主审撤回稀疏内饰后，仅在cloud_living.py补局部家具组织，不修改冻结核心与共享helper。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MF-08-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 山腹锻炉离线作者图审",
+  "nbt_sha256": "485eff6ddcd7075f2e3be918b96910ad2e4b2193d96d588b188f25fe778b7a1a",
+  "author_sha256": "8b9f99be6734dca84c98d3dafd8e8135284f930df065e615b28247afad6653ba",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-dining.png",
+    "previews/room-rooms.png",
+    "previews/point-kitchen.png",
+    "previews/point-register.png",
+    "previews/point-room5_0.png",
+    "previews/point-room5_1.png",
+    "previews/point-room20_0.png",
+    "previews/point-room20_1.png",
+    "previews/point-service.png",
+    "previews/point-luggage.png",
+    "previews/point-wash.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "双层窄街客栈有连续六级内梯及上层U形护栏。",
+    "内饰与使用": "楼下登记寄存、炊事、餐桌、备餐回收与储架齐备；楼上四床分两端，中间长凳与洗漱位，梯井两角连接臂已在最终切片确认。",
+    "完整证据": "实际查看当前 NBT 四向外观、俯视、去屋顶、全部楼层、全部房间、全部已标站位、作者标记和地形示意；未以自动截图代替图审。",
+    "标记与通路": "原版状态、门床、作者标记及入口至全部站位碰撞检查通过，无警告。",
+    "地块条件": "矿业居住组团或访客路线旁，有稳定干地及足够的日常给水与食物补给。；基础上边界及室内脚底 Y=2；入口街面需同高程。；完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "revisions": [
+    "重审出檐屋面承托：坡屋墙线补连续承檐梁；独立棚顶按型号改下半砖与柱顶接触。最终 NBT 重拍后实际检查全部视图。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "原版设备仅表达手工生产和生活用途；未接入机器、经济、运输或真实生成。"
+  ]
+}

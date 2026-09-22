@@ -1,0 +1,259 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "FS-F01-v07",
+  "name": "蜂蜡灯具铺",
+  "family": "FS-F01",
+  "civilization": "森林共生文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    40,
+    26,
+    35
+  ],
+  "terrain": {
+    "选址": "灯具主店与独立包装棚组成折角院落，成品与加工作业分开",
+    "落地": "只整理建筑本体与步道；保留未写入的林地。附树版本包含独立柱脚和树根占地，不能套入任意现存树体。",
+    "高程": "主入口脚底 Y=3；高位层和坡地接驳另见楼层与使用点",
+    "运行边界": "种植、蜂具、藤果、兽栏与遗留物均为原版静态空间表达；实际生产、动物和生态行为须另行接入。"
+  },
+  "rooms": [
+    {
+      "id": "sales",
+      "name": "接待与行业作业",
+      "min": [
+        5,
+        3,
+        7
+      ],
+      "max": [
+        21,
+        7,
+        21
+      ],
+      "purpose": "行业柜台、客户站位、物品展示与服务通道"
+    },
+    {
+      "id": "back",
+      "name": "储藏与歇班",
+      "min": [
+        5,
+        3,
+        23
+      ],
+      "max": [
+        21,
+        7,
+        28
+      ],
+      "purpose": "分类商品柜、店主床位与私人用品"
+    },
+    {
+      "id": "annex",
+      "name": "院落配套棚",
+      "min": [
+        28,
+        3,
+        11
+      ],
+      "max": [
+        34,
+        7,
+        24
+      ],
+      "purpose": "有独立柱脚与遮雨顶的行业配套空间"
+    }
+  ],
+  "points": [
+    {
+      "id": "trade",
+      "kind": "work",
+      "pos": [
+        8,
+        3,
+        11
+      ],
+      "name": "蜡烛与灯具装配",
+      "approach": [
+        8,
+        3,
+        12
+      ]
+    },
+    {
+      "id": "stock",
+      "kind": "storage",
+      "pos": [
+        7,
+        4,
+        28
+      ],
+      "name": "后场分类商品与工具",
+      "approach": [
+        7,
+        3,
+        27
+      ]
+    },
+    {
+      "id": "rest",
+      "kind": "sleep",
+      "pos": [
+        19,
+        3,
+        27
+      ],
+      "name": "店主歇班床",
+      "approach": [
+        18,
+        3,
+        27
+      ]
+    },
+    {
+      "id": "keepercook",
+      "kind": "work",
+      "pos": [
+        6,
+        3,
+        24
+      ],
+      "name": "店主厨房炉灶与备餐台",
+      "approach": [
+        6,
+        3,
+        25
+      ]
+    },
+    {
+      "id": "keepermeal",
+      "kind": "work",
+      "pos": [
+        13,
+        3,
+        25
+      ],
+      "name": "后场用餐与账本桌",
+      "approach": [
+        13,
+        3,
+        24
+      ]
+    },
+    {
+      "id": "service",
+      "kind": "work",
+      "pos": [
+        7,
+        4,
+        14
+      ],
+      "name": "烛芯裁切与蜡件装配台",
+      "approach": [
+        7,
+        3,
+        13
+      ]
+    },
+    {
+      "id": "lights",
+      "kind": "work",
+      "pos": [
+        17,
+        3,
+        17
+      ],
+      "name": "蜡灯成品陈列",
+      "approach": [
+        17,
+        3,
+        16
+      ]
+    },
+    {
+      "id": "annex",
+      "kind": "work",
+      "pos": [
+        29,
+        3,
+        13
+      ],
+      "name": "院棚行业作业与包装",
+      "approach": [
+        29,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "outside",
+      "kind": "storage",
+      "pos": [
+        29,
+        4,
+        24
+      ],
+      "name": "短时周转物资",
+      "approach": [
+        29,
+        3,
+        23
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        13,
+        3,
+        2
+      ],
+      "name": "林间步道入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        13,
+        2,
+        2
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "外接步道脚底 Y=3，须保留树根与基础占地"
+    }
+  ],
+  "design_notes": [
+    "成品包含行业柜台、后场储物、店主歇班与通路；物品交易、药剂、修理与生产行为未接入。"
+  ],
+  "differences": [
+    "灯具主店与独立包装棚组成折角院落，成品与加工作业分开",
+    "行业设备及柜台、后室、附棚采用独立位置与作业用途。"
+  ],
+  "floors": [
+    {
+      "name": "林下使用层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/forest_crafts.py:shop",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "podzol"
+  },
+  "nbt_sha256": "2ff2d58db2a9550cdeef83a0681b6e19506a6a141ff36690b25674ffd1d8ea21"
+}

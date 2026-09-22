@@ -1,0 +1,44 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MF-F01-v08",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 山腹锻炉离线作者图审",
+  "nbt_sha256": "45765f935e98c92e6e22500abcd01a8d2b8ff9d3f6a1c6e03470a7db1abcbfb9",
+  "author_sha256": "ce04fb46341b7a5bcd172c36800796d033d81e6baa44f5bfc0943d5ebb75baa3",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-store.png",
+    "previews/room-work.png",
+    "previews/point-sale.png",
+    "previews/point-cut.png",
+    "previews/point-kiln.png",
+    "previews/point-inspect.png",
+    "previews/point-display.png",
+    "previews/point-forming.png",
+    "previews/point-drying.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "石陶器长铺旁接完整湿作雨棚，封闭销售与开放加工分开。",
+    "内饰与使用": "前铺交易、检视包扎和分级器具架，棚下切石、水洗、湿泥成型长台、黏土、素坯架及小窑炉齐全，中央作业净空完整。",
+    "完整证据": "实际查看当前 NBT 四向外观、俯视、去屋顶、全部楼层、全部房间、全部已标站位、作者标记和地形示意；未以自动截图代替图审。",
+    "标记与通路": "原版状态、门床、作者标记及入口至全部站位碰撞检查通过，无警告。",
+    "地块条件": "服务工人与居民日常生活；依照门面、转角、坡差或院落要求落位，保持完整独立模板。；基础上边界及室内脚底 Y=2；入口街面需同高程。；完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "revisions": [
+    "重审出檐屋面承托：坡屋墙线补连续承檐梁；独立棚顶按型号改下半砖与柱顶接触。最终 NBT 重拍后实际检查全部视图。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "原版设备仅表达手工生产和生活用途；未接入机器、经济、运输或真实生成。"
+  ]
+}

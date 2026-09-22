@@ -1,0 +1,179 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-F01-v07",
+  "name": "顺坡皮具修补铺",
+  "family": "MF-F01",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    27,
+    25,
+    27
+  ],
+  "terrain": {
+    "选址": "服务工人与居民日常生活；依照门面、转角、坡差或院落要求落位，保持完整独立模板。",
+    "高程": "向 +Z 升一格；前铺 Y=2，后作 Y=3。",
+    "保留空间": "完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "rooms": [
+    {
+      "id": "sale",
+      "name": "低街收件陈列",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        22,
+        6,
+        9
+      ],
+      "purpose": "前台与皮具展示；具体工位：皮具收件、皮具验损量取与估价"
+    },
+    {
+      "id": "work",
+      "name": "后高台皮作间",
+      "min": [
+        4,
+        3,
+        17
+      ],
+      "max": [
+        22,
+        7,
+        22
+      ],
+      "purpose": "清洗、缝补与材料保管；具体工位：皮具缝补、皮革裁片与打孔、皮料与缝补工具"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        13,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "sale",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        5
+      ],
+      "name": "皮具收件",
+      "approach": [
+        6,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "entry_13_16",
+      "kind": "entrance",
+      "pos": [
+        13,
+        3,
+        15
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "stitch",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        19
+      ],
+      "name": "皮具缝补",
+      "approach": [
+        6,
+        3,
+        19
+      ]
+    },
+    {
+      "id": "measure",
+      "kind": "work",
+      "pos": [
+        8,
+        2,
+        8
+      ],
+      "name": "皮具验损量取与估价",
+      "approach": [
+        8,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "cutting",
+      "kind": "work",
+      "pos": [
+        13,
+        3,
+        19
+      ],
+      "name": "皮革裁片与打孔",
+      "approach": [
+        13,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "raw_hide",
+      "kind": "storage",
+      "pos": [
+        5,
+        4,
+        22
+      ],
+      "name": "皮料与缝补工具",
+      "approach": [
+        5,
+        3,
+        21
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "低街收件陈列、后高台清洗缝补，阶院将湿作业和顾客面隔开。"
+  ],
+  "differences": [
+    "低街收件陈列、后高台清洗缝补，阶院将湿作业和顾客面隔开。"
+  ],
+  "floors": [
+    {
+      "name": "低前店与高后作",
+      "y": 1,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_trade.py:BUILDERS",
+  "preview_context": {
+    "kind": "slope",
+    "land_surface_y": 2,
+    "padding": 5,
+    "run": 13,
+    "rise": 1,
+    "slope_origin_z": 13
+  },
+  "nbt_sha256": "8021d7ccc1f2d58961f15247d793f496a48651b3dbe142698517846d01c18ef4"
+}

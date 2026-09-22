@@ -1,0 +1,59 @@
+{
+  "schema": "structure-studio.validation.v1",
+  "nbt_sha256": "dad8ba064106050048b6546e4b6b60c5b0a1a85ce2734846f7b979ff7a0cc47d",
+  "navigation": {
+    "passed": true,
+    "unreachable": [],
+    "nodes": 5327,
+    "highest_standing_y": 8,
+    "truncated": false,
+    "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "size": [
+    49,
+    33,
+    45
+  ],
+  "visible_blocks": 7652,
+  "explicit_air": 38614,
+  "palette": 36,
+  "block_entities": 0,
+  "agriculture": {
+    "planted_cells": 240,
+    "missing_soil": [],
+    "dry_cells": [],
+    "scope": "最终 NBT 的四类原版作物、耕地和同层/高一层 4 格水源核对；不模拟光照或生长 tick"
+  },
+  "materials": {
+    "minecraft:stone": 1382,
+    "minecraft:glass": 1166,
+    "minecraft:birch_planks": 987,
+    "minecraft:stone_bricks": 895,
+    "minecraft:andesite": 650,
+    "minecraft:dirt": 600,
+    "minecraft:dark_oak_log": 547,
+    "minecraft:farmland": 240,
+    "minecraft:waxed_weathered_cut_copper": 220,
+    "minecraft:waxed_weathered_cut_copper_stairs": 200,
+    "minecraft:potatoes": 160,
+    "minecraft:dark_oak_fence": 119,
+    "minecraft:white_terracotta": 103,
+    "minecraft:stripped_dark_oak_log": 92,
+    "minecraft:beetroots": 80,
+    "minecraft:water": 60,
+    "minecraft:dark_oak_planks": 48,
+    "minecraft:light_blue_stained_glass_pane": 44,
+    "minecraft:cyan_terracotta": 27,
+    "minecraft:barrel": 11,
+    "minecraft:birch_slab": 9,
+    "minecraft:birch_door": 6,
+    "minecraft:composter": 2,
+    "minecraft:lantern": 2,
+    "minecraft:cartography_table": 1,
+    "minecraft:chain": 1
+  },
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+}

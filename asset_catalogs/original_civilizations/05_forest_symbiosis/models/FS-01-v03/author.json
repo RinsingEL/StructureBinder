@@ -1,0 +1,334 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "FS-01-v03",
+  "name": "双生根院 · 树根住宅",
+  "family": "FS-01",
+  "civilization": "森林共生文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    47,
+    28,
+    38
+  ],
+  "terrain": {
+    "选址": "两户独立门户与生活设施，共用中央通路；树根位于通路末端而非门口",
+    "落地": "只整理建筑本体与步道；保留未写入的林地。附树版本包含独立柱脚和树根占地，不能套入任意现存树体。",
+    "高程": "主入口脚底 Y=3；高位层和坡地接驳另见楼层与使用点",
+    "运行边界": "种植、蜂具、藤果、兽栏与遗留物均为原版静态空间表达；实际生产、动物和生态行为须另行接入。"
+  },
+  "rooms": [
+    {
+      "id": "unit0day",
+      "name": "厨房餐叙与家务",
+      "min": [
+        5,
+        3,
+        8
+      ],
+      "max": [
+        19,
+        7,
+        18
+      ],
+      "purpose": "连续厨房操作台、水盆、食品柜和成组餐桌椅；入口中轴连接后部起居"
+    },
+    {
+      "id": "unit0night",
+      "name": "睡眠与起居分区",
+      "min": [
+        5,
+        3,
+        19
+      ],
+      "max": [
+        19,
+        7,
+        23
+      ],
+      "purpose": "有门屏风保护床位；衣物柜、读写桌和座椅组成后部家庭空间"
+    },
+    {
+      "id": "unit1day",
+      "name": "厨房餐叙与家务",
+      "min": [
+        27,
+        3,
+        8
+      ],
+      "max": [
+        41,
+        7,
+        18
+      ],
+      "purpose": "连续厨房操作台、水盆、食品柜和成组餐桌椅；入口中轴连接后部起居"
+    },
+    {
+      "id": "unit1night",
+      "name": "睡眠与起居分区",
+      "min": [
+        27,
+        3,
+        19
+      ],
+      "max": [
+        41,
+        7,
+        23
+      ],
+      "purpose": "有门屏风保护床位；衣物柜、读写桌和座椅组成后部家庭空间"
+    }
+  ],
+  "points": [
+    {
+      "id": "unit0cook",
+      "kind": "work",
+      "pos": [
+        18,
+        3,
+        10
+      ],
+      "name": "厨房炉灶与连续备餐台",
+      "approach": [
+        17,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "unit0dining",
+      "kind": "work",
+      "pos": [
+        8,
+        3,
+        11
+      ],
+      "name": "家庭用餐与共桌家务",
+      "approach": [
+        6,
+        3,
+        11
+      ]
+    },
+    {
+      "id": "unit0bed0",
+      "kind": "sleep",
+      "pos": [
+        6,
+        3,
+        22
+      ],
+      "name": "屏风后独立床位",
+      "approach": [
+        7,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "unit0clothes",
+      "kind": "storage",
+      "pos": [
+        13,
+        4,
+        23
+      ],
+      "name": "分格衣物与家庭布品柜",
+      "approach": [
+        12,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "unit0read",
+      "kind": "work",
+      "pos": [
+        17,
+        3,
+        20
+      ],
+      "name": "起居读写与缝补长桌",
+      "approach": [
+        18,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "unit0mend",
+      "kind": "work",
+      "pos": [
+        6,
+        3,
+        17
+      ],
+      "name": "日常衣物修补",
+      "approach": [
+        7,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "unit1cook",
+      "kind": "work",
+      "pos": [
+        40,
+        3,
+        10
+      ],
+      "name": "厨房炉灶与连续备餐台",
+      "approach": [
+        39,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "unit1dining",
+      "kind": "work",
+      "pos": [
+        30,
+        3,
+        11
+      ],
+      "name": "家庭用餐与共桌家务",
+      "approach": [
+        28,
+        3,
+        11
+      ]
+    },
+    {
+      "id": "unit1bed0",
+      "kind": "sleep",
+      "pos": [
+        28,
+        3,
+        22
+      ],
+      "name": "屏风后独立床位",
+      "approach": [
+        29,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "unit1clothes",
+      "kind": "storage",
+      "pos": [
+        35,
+        4,
+        23
+      ],
+      "name": "分格衣物与家庭布品柜",
+      "approach": [
+        34,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "unit1read",
+      "kind": "work",
+      "pos": [
+        39,
+        3,
+        20
+      ],
+      "name": "起居读写与缝补长桌",
+      "approach": [
+        40,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "unit1mend",
+      "kind": "work",
+      "pos": [
+        28,
+        3,
+        17
+      ],
+      "name": "日常衣物修补",
+      "approach": [
+        29,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        23,
+        3,
+        2
+      ],
+      "name": "林间步道入口",
+      "facing": "north"
+    },
+    {
+      "id": "housework",
+      "kind": "work",
+      "pos": [
+        7,
+        3,
+        31
+      ],
+      "name": "户外缝补与编织家务台",
+      "approach": [
+        7,
+        3,
+        32
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        23,
+        2,
+        2
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "外接步道脚底 Y=3，须保留树根与基础占地"
+    }
+  ],
+  "design_notes": [
+    "床、炉灶、水盆、储物和家用桌椅随每户实际布置；树体与根盘作为完整静态构图交付。"
+  ],
+  "differences": [
+    "两户独立门户与生活设施，共用中央通路；树根位于通路末端而非门口",
+    "生活型外院用于饮水、家务和休息。"
+  ],
+  "floors": [
+    {
+      "name": "林下使用层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/forest_life.py:home",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "podzol"
+  },
+  "nbt_sha256": "4a7de3aced05f9de3e4925dda6fbf4a8602f2a452688a29c9ce3ba8d3388d6df"
+}

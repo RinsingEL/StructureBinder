@@ -1,0 +1,40 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "FS-F04-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 主审（实际查看全部最终截图）",
+  "nbt_sha256": "c56a3e296ffa21e4e4e12eea978ed0c172dca47b40fbccfde9d78b58196cd650",
+  "author_sha256": "660586114836b0c16a40fdc98a9db2989e6bf56d2e84d5b4211597ba0727bde3",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-shed.png",
+    "previews/room-assembly.png",
+    "previews/point-tools.png",
+    "previews/point-stock.png",
+    "previews/point-dry.png",
+    "previews/point-assembly.png",
+    "previews/point-parts.png",
+    "previews/point-weave.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "开敞工具棚前段组装、后段编补和配件周转形成三组，工作台、坐席与编织器具比例适合棚内空间。",
+    "全部外观、剖面、房间、使用点、标记与地形示意已实际查看；屋顶支承和家具落地可辨。",
+    "当前最终NBT与作者标记通过数据、边界、状态及离线步行复核，零错误与警告。"
+  ],
+  "revisions": [
+    "补齐原本稀疏的工具间/作业棚内饰，新增用途同步记录房间与站位；FS-F04-v02后排料堆避开既有stock取料点。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

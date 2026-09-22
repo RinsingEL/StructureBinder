@@ -1,0 +1,27 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "CN-08-v03",
+  "nbt_sha256": "495503ea305642d92085475207ae8aa262727d0d9f9544034e185391f2bf677c",
+  "author_sha256": "437ed6fbe5417e4ca8afc25e5faf76e856ea69445bb7342052c8dcdb3f947f0e",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-in",
+    "room-out",
+    "point-west",
+    "point-east",
+    "point-westdesk",
+    "point-eastdesk",
+    "point-transfer",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

@@ -1,0 +1,221 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-04-v02",
+  "name": "双户连脊长屋",
+  "family": "MF-04",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    33,
+    25,
+    24
+  ],
+  "terrain": {
+    "选址": "紧凑平整生活台地，室内与街面脚底 Y=2。",
+    "高程": "基础上边界及室内脚底 Y=2；入口街面需同高程。",
+    "保留空间": "完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "rooms": [
+    {
+      "id": "west_living",
+      "name": "起居餐厨",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        13,
+        6,
+        12
+      ],
+      "purpose": "厨房、共用餐桌与进门缓冲"
+    },
+    {
+      "id": "west_sleep",
+      "name": "就寝与装备",
+      "min": [
+        4,
+        2,
+        14
+      ],
+      "max": [
+        13,
+        6,
+        19
+      ],
+      "purpose": "床位、个人储物和饮水"
+    },
+    {
+      "id": "east_living",
+      "name": "起居餐厨",
+      "min": [
+        19,
+        2,
+        4
+      ],
+      "max": [
+        28,
+        6,
+        12
+      ],
+      "purpose": "厨房、共用餐桌与进门缓冲"
+    },
+    {
+      "id": "east_sleep",
+      "name": "就寝与装备",
+      "min": [
+        19,
+        2,
+        14
+      ],
+      "max": [
+        28,
+        6,
+        19
+      ],
+      "purpose": "床位、个人储物和饮水"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        8,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "west_cook",
+      "kind": "work",
+      "pos": [
+        4,
+        2,
+        5
+      ],
+      "name": "炊事与洗涤",
+      "approach": [
+        4,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "west_bed_0",
+      "kind": "bed",
+      "pos": [
+        5,
+        2,
+        15
+      ],
+      "name": "床位与个人柜",
+      "approach": [
+        6,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "west_bed_1",
+      "kind": "bed",
+      "pos": [
+        8,
+        2,
+        15
+      ],
+      "name": "床位与个人柜",
+      "approach": [
+        9,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "entry_23_3",
+      "kind": "entrance",
+      "pos": [
+        23,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "east_cook",
+      "kind": "work",
+      "pos": [
+        19,
+        2,
+        5
+      ],
+      "name": "炊事与洗涤",
+      "approach": [
+        19,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "east_bed_0",
+      "kind": "bed",
+      "pos": [
+        20,
+        2,
+        15
+      ],
+      "name": "床位与个人柜",
+      "approach": [
+        21,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "east_bed_1",
+      "kind": "bed",
+      "pos": [
+        23,
+        2,
+        15
+      ],
+      "name": "床位与个人柜",
+      "approach": [
+        24,
+        2,
+        15
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "两户各有街门、餐厨和双床后寝，三格巷道分开作息；双铜顶与共享院侧水盆。"
+  ],
+  "differences": [
+    "两户各有街门、餐厨和双床后寝，三格巷道分开作息；双铜顶与共享院侧水盆。"
+  ],
+  "floors": [
+    {
+      "name": "生活与作业层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_life.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "nbt_sha256": "c50bd96a71d9b7a541e512a41b060d7eb63b65c66a8b7427c647c1c4ffe7ea1f"
+}

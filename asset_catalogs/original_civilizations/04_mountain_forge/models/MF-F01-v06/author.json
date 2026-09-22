@@ -1,0 +1,165 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-F01-v06",
+  "name": "院边暖茶小铺",
+  "family": "MF-F01",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.fill",
+  "size": [
+    29,
+    25,
+    23
+  ],
+  "terrain": {
+    "选址": "服务工人与居民日常生活；依照门面、转角、坡差或院落要求落位，保持完整独立模板。",
+    "高程": "基础上边界及室内脚底 Y=2；入口街面需同高程。",
+    "保留空间": "完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "rooms": [
+    {
+      "id": "tea",
+      "name": "烧水与茶饮服务间",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        13,
+        6,
+        18
+      ],
+      "purpose": "备茶、储水、器具和收银；具体工位：炊事与洗涤、暖茶柜台、茶料配制与温杯长台、干茶与杯盏分类架"
+    },
+    {
+      "id": "yard",
+      "name": "院边两组茶座",
+      "min": [
+        19,
+        2,
+        6
+      ],
+      "max": [
+        24,
+        6,
+        16
+      ],
+      "purpose": "小组歇脚与用茶"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        9,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "kitchen",
+      "kind": "work",
+      "pos": [
+        4,
+        2,
+        6
+      ],
+      "name": "炊事与洗涤",
+      "approach": [
+        4,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "tea",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        14
+      ],
+      "name": "暖茶柜台",
+      "approach": [
+        6,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "blend",
+      "kind": "work",
+      "pos": [
+        8,
+        2,
+        10
+      ],
+      "name": "茶料配制与温杯长台",
+      "approach": [
+        8,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "tea_stock",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        4
+      ],
+      "name": "干茶与杯盏分类架",
+      "approach": [
+        5,
+        2,
+        5
+      ]
+    },
+    {
+      "id": "return",
+      "kind": "work",
+      "pos": [
+        21,
+        2,
+        17
+      ],
+      "name": "茶院归还杯具与擦拭台",
+      "approach": [
+        21,
+        2,
+        18
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "侧门茶铺面向两组院边茶桌，封闭烧水间与开放歇脚座分离，保留入院通道。"
+  ],
+  "differences": [
+    "侧门茶铺面向两组院边茶桌，封闭烧水间与开放歇脚座分离，保留入院通道。"
+  ],
+  "floors": [
+    {
+      "name": "生活与作业层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_trade.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "nbt_sha256": "dbd747e0c591f161e8702d910dbf52eb642cb4b9602a98aad062a854025b1f77"
+}
