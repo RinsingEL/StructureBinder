@@ -37,7 +37,8 @@ final class GeographicAreaAccess {
         String dimension=str(obj(manifest,"config"),"dimensionId","minecraft:overworld");
         JsonObject registry=read(run.resolve("city_seed_registry.json"));
         JsonObject territory=read(run.resolve("realm_territory_map.json"));
-        boolean currentTerritory=!str(territory,"territoryMapId","").isBlank()
+        boolean territoryPlanned = !str(territory,"territoryMapId","").isBlank();
+        boolean currentTerritory=territoryPlanned
                 && str(territory,"territoryMapId","").equals(str(registry,"territoryMapId",""));
         Set<String> closedRealms=new HashSet<>();
         String territoryIdentity=identity(run.resolve("realm_territory_map.json"));
@@ -68,6 +69,18 @@ final class GeographicAreaAccess {
             JsonObject item=e.getAsJsonObject(); statuses.put(str(item,"citySeedId",""),str(item,"status",""));
         }
         Set<String> ready=new HashSet<>(), blocked=new HashSet<>(), blockedRegions=new HashSet<>();
+        Set<String> addonRegions = new HashSet<>();
+        var addons = com.rinsing.geomantia.systems.realm_planning.application.reservation.RegionReservationStore.read(run);
+        if (!addons.regions().isEmpty() && !dimension.equals(addons.dimensionId()))
+            throw new IOException("ADDON_REGION_DIMENSION_MISMATCH");
+        for (var addon : addons.regions()) for (var bounds : addon.mask())
+            for (int z = Math.floorDiv(bounds.minZ(), geo.step()); z <= Math.floorDiv(bounds.maxZ(), geo.step()); z++)
+                for (int x = Math.floorDiv(bounds.minX(), geo.step()); x <= Math.floorDiv(bounds.maxX(), geo.step()); x++) {
+                    String region = geo.at(new GeographicRegions.Cell(x, z));
+                    if (region.isEmpty()) throw new IOException("ADDON_REGION_OUTSIDE_GEOGRAPHY");
+                    addonRegions.add(region);
+                    if (!addons.readyIds().contains(addon.id())) blockedRegions.add(region);
+                }
         List<CityPlanningReservation> reservations=new ArrayList<>();
         Set<String> activated=activatedCities(root.getParent(),run.getFileName().toString(),dimension);
         Map<String,JsonObject> seeds=new LinkedHashMap<>();
@@ -93,9 +106,12 @@ final class GeographicAreaAccess {
                 }
         }
         Set<String> open=new HashSet<>();
-        if(currentTerritory && !allRealms.isEmpty()) for(var r:geo.regions().values()) {
+        // A ready addon cannot prove the absence of future cities until T3 has allocated the world.
+        if(territoryPlanned) for(var r:geo.regions().values()) {
             if(r.ocean()) continue;
-            Set<String> realms=regionRealms.getOrDefault(r.id(),allRealms);
+            if (!addonRegions.contains(r.id()) && (!currentTerritory || allRealms.isEmpty())) continue;
+            Set<String> realms=regionRealms.getOrDefault(r.id(),addonRegions.contains(r.id()) ? Set.of() : allRealms);
+            if (!realms.isEmpty() && !currentTerritory) continue;
             if(closedRealms.containsAll(realms) && !blockedRegions.contains(r.id())) open.add(r.id());
         }
         // Every ocean area has its own nearest-continent dependencies (ties retain all dependencies).

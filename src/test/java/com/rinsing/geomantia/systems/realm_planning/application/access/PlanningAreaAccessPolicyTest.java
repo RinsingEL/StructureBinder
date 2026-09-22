@@ -7,6 +7,37 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PlanningAreaAccessPolicyTest {
+    @Test void addonReadinessGatesItsWholeContinentAndInvalidatesAccessStamp() throws Exception {
+        fixture(true,true);
+        Files.writeString(run().resolve("world_survey_context.json"), "{}");
+        var region = new com.rinsing.geomantia.api.regions.ReservedRegion("boss:keep", List.of(
+                new com.rinsing.geomantia.api.regions.RegionBounds(3800, 512, 3900, 700)));
+        com.rinsing.geomantia.systems.realm_planning.application.reservation.RegionReservationStore.create(run(), "minecraft:overworld", List.of(region));
+        long stamp = PlanningAreaAccessPolicy.sourceStamp(root());
+        assertFalse(policy().revealed("minecraft:overworld",4096,0));
+        assertFalse(policy().permitsChunk("minecraft:overworld",4096/16,0));
+        assertTrue(policy().permitsChunk("minecraft:overworld",10240/16,0));
+        com.rinsing.geomantia.systems.realm_planning.application.reservation.RegionReservationStore.markReady(run(), "boss:keep");
+        assertNotEquals(stamp, PlanningAreaAccessPolicy.sourceStamp(root()));
+        assertTrue(policy().revealed("minecraft:overworld",4096,0));
+        assertTrue(policy().permitsChunk("minecraft:overworld",4096/16,0));
+    }
+
+    @Test void addonOnlyContinentDoesNotRequireAFakeRealmOrCity() throws Exception {
+        write(run().resolve("world_feature_grid.json"), GeographicRegionsTest.grid(24, 50, -16, 16, (x,z)->true));
+        write(run().resolve("world_survey_manifest.json"), JsonParser.parseString("{\"status\":\"sealed\"}").getAsJsonObject());
+        Files.writeString(run().resolve("world_survey_context.json"), "{}");
+        var region = new com.rinsing.geomantia.api.regions.ReservedRegion("boss:island", List.of(
+                new com.rinsing.geomantia.api.regions.RegionBounds(4096, 0, 4223, 127)));
+        com.rinsing.geomantia.systems.realm_planning.application.reservation.RegionReservationStore.create(run(), "minecraft:overworld", List.of(region));
+        assertFalse(policy().permitsChunk("minecraft:overworld",4096/16,0));
+        com.rinsing.geomantia.systems.realm_planning.application.reservation.RegionReservationStore.markReady(run(), "boss:island");
+        assertFalse(policy().permitsChunk("minecraft:overworld",4096/16,0), "T3 must establish that this continent has no pending ordinary realm");
+        write(run().resolve("realm_territory_map.json"), JsonParser.parseString("{\"territoryMapId\":\"allocated\",\"territoryCells\":[]}").getAsJsonObject());
+        assertTrue(policy().evaluate("minecraft:overworld",4096,0).allowed());
+        assertTrue(policy().permitsChunk("minecraft:overworld",4096/16,0));
+    }
+
     @TempDir Path temp;
     Path root() { return temp.resolve("realm_debug"); }
     Path run() { return root().resolve("run"); }

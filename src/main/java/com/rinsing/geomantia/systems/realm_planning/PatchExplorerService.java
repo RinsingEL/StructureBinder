@@ -815,11 +815,16 @@ public final class PatchExplorerService {
                 sources.add(packagesPath);
             }
         }
+        var reserved = com.rinsing.geomantia.systems.realm_planning.application.reservation.RegionReservationStore.read(runDir);
+        Path reservationPath = runDir.resolve(com.rinsing.geomantia.systems.realm_planning.application.reservation.RegionReservationStore.PLAN_FILE);
+        if (Files.exists(reservationPath)) sources.add(reservationPath);
         List<Cell> sourceCells = new ArrayList<>();
         for (JsonElement element : array(patchMap, "cells")) {
             JsonObject cell = element.getAsJsonObject();
             int x = intValue(cell, "gridX", 0);
             int z = intValue(cell, "gridZ", 0);
+            int blockX = intValue(cell, "blockX", x * step), blockZ = intValue(cell, "blockZ", z * step);
+            if (reserved.overlaps(new com.rinsing.geomantia.api.regions.RegionBounds(blockX, blockZ, blockX + step - 1, blockZ + step - 1))) continue;
             if (owned != null && !owned.contains(key(x, z))) {
                 continue;
             }

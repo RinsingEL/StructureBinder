@@ -20,6 +20,27 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RealmT4PatchPlanningServiceTest {
+    @Test
+    void addonMaskRejectsTheFullCityEnvelopeWithoutConsumingSelection() throws Exception {
+        Path root = tempDir.resolve("addon_boundary"); Path run = root.resolve("run_t4");
+        Files.createDirectories(run); writeArtifacts(run);
+        // Outside all candidate cells; still inside the proposed capital's full protection envelope.
+        com.rinsing.geomantia.systems.realm_planning.application.reservation.RegionReservationStore.create(run, "minecraft:overworld",
+                List.of(new com.rinsing.geomantia.api.regions.ReservedRegion("boss:border", List.of(
+                        new com.rinsing.geomantia.api.regions.RegionBounds(400, 40, 420, 60)))));
+        var explorer = new PatchExplorerService(root);
+        String selection = select(explorer, "addon_capital", "plain", "PLAIN-01");
+        var service = new RealmT4PatchPlanningService(root, (id, value) -> null);
+        JsonObject request = new JsonObject(); request.addProperty("runId", "run_t4");
+        request.addProperty("realmId", "realm_a"); request.addProperty("planningSessionId", "addon_plan");
+        service.create(request); request.addProperty("patchSelectionRef", selection);
+        var failure = assertThrows(IllegalArgumentException.class, () -> service.selectCapital(request));
+        assertTrue(failure.getMessage().contains("ADDON_REGION_RESERVED"), failure.toString());
+        JsonObject session = JsonParser.parseString(Files.readString(run.resolve("realm_t4_patch_planning_addon_plan/planning_session.json"))).getAsJsonObject();
+        assertTrue(session.getAsJsonArray("usedPatchSelectionRefs").isEmpty());
+        assertTrue(session.getAsJsonArray("citySeeds").isEmpty());
+    }
+
     @TempDir
     Path tempDir;
 

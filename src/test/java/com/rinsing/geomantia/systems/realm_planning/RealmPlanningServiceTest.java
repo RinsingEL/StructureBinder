@@ -34,6 +34,38 @@ import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RealmPlanningServiceTest {
+    @Test
+    void addonReservationRunsOnceAndExcludesT2AndBothT3Models() throws Exception {
+        var config = new com.rinsing.geomantia.systems.realm_planning.application.access.PlanningAreaAccessConfig(false, 0, 0, Set.of("minecraft:overworld"));
+        var chosen = new java.util.concurrent.atomic.AtomicReference<com.rinsing.geomantia.api.regions.RegionPlanningContext.Cell>();
+        int[] calls = {0};
+        Path root = tempDir.resolve("addon_debug");
+        var service = new RealmPlanningService(root, config, (context, reserve) -> {
+            calls[0]++;
+            var cell = context.cells().stream().filter(c -> c.waterFraction() < 0.4 && !c.continentId().isBlank()).findFirst().orElseThrow();
+            chosen.set(cell);
+            reserve.accept(new com.rinsing.geomantia.api.regions.ReservedRegion("boss:keep", List.of(cell.bounds())));
+        });
+        service.runW(refreshSynthetic("plain", 64), "addon_run", null);
+        service.prepareT1("addon_run", null, 1, "", true);
+        service.prepareT1("addon_run", null, 1, "", true);
+        assertEquals(1, calls[0]);
+        var cell = chosen.get();
+        var refused = service.selectT2("addon_run", "realm_salt_kingdom_0", cell.gridX(), cell.gridZ(), null, "reserved", "test", false);
+        assertEquals("failed", refused.get("status").getAsString());
+        assertTrue(refused.toString().contains("ADDON_REGION_RESERVED"));
+        var point = service.suggestedPoint("addon_run", "realm_salt_kingdom_0");
+        assertEquals("completed", service.selectT2("addon_run", "realm_salt_kingdom_0", point.x(), point.z(), null, "free", "test", false).get("status").getAsString());
+        for (String model : List.of("quota_frontier", "action_budget")) {
+            var territory = service.expandT3("addon_run", "", false, "smoke", model).getAsJsonObject("territoryMap");
+            for (JsonElement e : territory.getAsJsonArray("territoryCells")) {
+                JsonObject owned = e.getAsJsonObject();
+                assertFalse(owned.get("gridX").getAsInt() == cell.gridX() && owned.get("gridZ").getAsInt() == cell.gridZ());
+            }
+        }
+        assertEquals(1, com.rinsing.geomantia.systems.realm_planning.application.reservation.RegionReservationStore.read(root.resolve("addon_run")).regions().size());
+    }
+
     @TempDir
     Path tempDir;
 

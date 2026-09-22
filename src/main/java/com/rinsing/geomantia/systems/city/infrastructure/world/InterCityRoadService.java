@@ -103,6 +103,8 @@ public final class InterCityRoadService {
     }
     private static List<BlockBounds> obstacles(Path run,InterCityNetwork.Link link)throws IOException {
         List<BlockBounds> result=new ArrayList<>();
+        for (var region : com.rinsing.geomantia.systems.realm_planning.application.reservation.RegionReservationStore.read(run).regions())
+            for (var bounds : region.mask()) result.add(new BlockBounds(bounds.minX(), bounds.minZ(), bounds.maxX(), bounds.maxZ()));
         for(JsonElement e:array(read(run.resolve("city_seed_registry.json")),"citySeeds")) {
             JsonObject seed=e.getAsJsonObject();String city=seed.get("citySeedId").getAsString();
             if(!link.touches(city)) {if(seed.has("designBounds"))result.add(bounds(seed.getAsJsonObject("designBounds")));continue;}

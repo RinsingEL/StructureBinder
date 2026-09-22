@@ -16,6 +16,8 @@ import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegion;
 import com.rinsing.geomantia.systems.gis.preview.AtlasJson;
 import com.rinsing.geomantia.systems.gis.preview.BiomeOverviewRenderer;
 import com.rinsing.geomantia.systems.realm_planning.application.access.PlanningAreaAccessConfig;
+import com.rinsing.geomantia.api.regions.*;
+import com.rinsing.geomantia.systems.realm_planning.application.reservation.RegionReservationStore;
 
 import javax.imageio.ImageIO;
 import java.awt.BasicStroke;
@@ -90,7 +92,13 @@ public final class RealmPlanningService {
     private static final double MIXED_CELL_SUPPORT_THRESHOLD = 0.65;
     private final Path debugRoot;
     private final PlanningAreaAccessConfig accessConfig;
+    private final ReservationPlanner reservationPlanner;
     private final Map<String, RealmRun> runs = new LinkedHashMap<>();
+
+    @FunctionalInterface
+    public interface ReservationPlanner {
+        void plan(RegionPlanningContext context, java.util.function.Consumer<ReservedRegion> registrar) throws IOException;
+    }
 
     public RealmPlanningService(Path debugRoot) {
         this(debugRoot, new PlanningAreaAccessConfig(false,
@@ -100,8 +108,13 @@ public final class RealmPlanningService {
     }
 
     public RealmPlanningService(Path debugRoot, PlanningAreaAccessConfig accessConfig) {
+        this(debugRoot, accessConfig, (context, registrar) -> {});
+    }
+
+    public RealmPlanningService(Path debugRoot, PlanningAreaAccessConfig accessConfig, ReservationPlanner reservationPlanner) {
         this.debugRoot = Objects.requireNonNull(debugRoot, "debugRoot");
         this.accessConfig = Objects.requireNonNull(accessConfig, "accessConfig");
+        this.reservationPlanner = Objects.requireNonNull(reservationPlanner, "reservationPlanner");
     }
 
     public JsonObject status() {
@@ -157,6 +170,7 @@ public final class RealmPlanningService {
         if (run.worldCells.isEmpty()) {
             throw new IllegalArgumentException("W must be completed before T1.");
         }
+        prepareRegionReservations(run);
         String continentId = resolveTargetContinent(run, targetContinentId);
         List<RealmProfile> proposedProfiles = new ArrayList<>();
         if (realmProfiles != null && !realmProfiles.isEmpty()) {
@@ -315,6 +329,11 @@ public final class RealmPlanningService {
     /** Rebuilds every T4-derived artifact after an external planner replaces the registry. */
     public JsonObject synchronizeT4RegistryArtifacts(String runId, JsonObject registryJson) throws IOException {
         RealmRun run = requireRun(runId);
+        if (registryJson.has("citySeeds")) for (JsonElement element : registryJson.getAsJsonArray("citySeeds")) {
+            var bounds = com.rinsing.geomantia.systems.realm_planning.application.access.CityPlanningReservation
+                    .fromSeed(element.getAsJsonObject(), run.surveyResult.cellStepBlocks()).protection();
+            reservations(run).requireFree(new RegionBounds(bounds.minX(), bounds.minZ(), bounds.maxX(), bounds.maxZ()));
+        }
         if (run.territory == null) {
             throw new IllegalArgumentException("T3 must be completed before synchronizing T4.");
         }
@@ -389,6 +408,7 @@ public final class RealmPlanningService {
         RealmRun run = requireRun(runId);
         run.qualityMode = normalizeQualityMode(qualityMode);
         run.expansionModel = normalizeExpansionModel(expansionModel, run.qualityMode);
+        prepareRegionReservations(run);
         String continent = resolveTargetContinent(run, "");
         prepareT1(runId, realmProfiles, realmCount <= 0 ? 3 : realmCount, continent, true);
         if (autoSelectCoordinates) {
@@ -903,6 +923,61 @@ public final class RealmPlanningService {
         return summaries;
     }
 
+    private RegionReservationStore.Snapshot reservations(RealmRun run) {
+        if (run.reservations == null) {
+            try { run.reservations = RegionReservationStore.read(run.runDirectory); }
+            catch (IOException e) { throw new java.io.UncheckedIOException(e); }
+        }
+        return run.reservations;
+    }
+
+    private boolean reservedCell(RealmRun run, WorldCell cell) {
+        int step = run.surveyResult.cellStepBlocks();
+        return reservations(run).overlaps(new RegionBounds(cell.blockX, cell.blockZ,
+                cell.blockX + step - 1, cell.blockZ + step - 1));
+    }
+
+    private void prepareRegionReservations(RealmRun run) throws IOException {
+        if (Files.exists(run.runDirectory.resolve(RegionReservationStore.PLAN_FILE))) {
+            run.reservations = RegionReservationStore.read(run.runDirectory);
+            return;
+        }
+        List<ReservedRegion> proposed = new ArrayList<>();
+        // Never retrofit claims into an existing T plan.
+        if (!Files.exists(run.runDirectory.resolve("realm_profiles.json"))) {
+            int step = run.surveyResult.cellStepBlocks();
+            List<RegionPlanningContext.Cell> cells = run.worldCells.stream().map(cell ->
+                    new RegionPlanningContext.Cell(cell.gridX, cell.gridZ,
+                            new RegionBounds(cell.blockX, cell.blockZ, cell.blockX + step - 1, cell.blockZ + step - 1),
+                            cell.continentId, cell.baseLandform(), cell.heightP50(), cell.waterFrac(),
+                            outsideOriginRadius(cell, run, accessConfig.initialActivityRadiusBlocks()))).toList();
+            Map<String, RegionPlanningContext.Cell> byKey = new HashMap<>();
+            for (var cell : cells) byKey.put(key(cell.gridX(), cell.gridZ()), cell);
+            boolean[] accepting = {true};
+            try {
+                reservationPlanner.plan(new RegionPlanningContext(run.runId, run.surveyResult.dimensionId(), step, cells), region -> {
+                    if (!accepting[0]) throw new IllegalStateException("ADDON_REGION_REGISTRATION_CLOSED");
+                    for (var bounds : region.mask()) {
+                        long count = (long)(Math.floorDiv(bounds.maxX(), step) - Math.floorDiv(bounds.minX(), step) + 1)
+                                * (Math.floorDiv(bounds.maxZ(), step) - Math.floorDiv(bounds.minZ(), step) + 1);
+                        if (count > cells.size()) throw new IllegalArgumentException("ADDON_REGION_OUTSIDE_SURVEY");
+                        for (int z = Math.floorDiv(bounds.minZ(), step); z <= Math.floorDiv(bounds.maxZ(), step); z++)
+                            for (int x = Math.floorDiv(bounds.minX(), step); x <= Math.floorDiv(bounds.maxX(), step); x++) {
+                                var cell = byKey.get(key(x, z));
+                                if (cell == null || !cell.reserveAllowed())
+                                    throw new IllegalArgumentException("ADDON_REGION_UNAVAILABLE: " + region.id() + " at " + x + "," + z);
+                            }
+                    }
+                    List<ReservedRegion> next = new ArrayList<>(proposed);
+                    next.add(region);
+                    RegionReservationStore.validate(next);
+                    proposed.add(region);
+                });
+            } finally { accepting[0] = false; }
+        }
+        run.reservations = RegionReservationStore.create(run.runDirectory, run.surveyResult.dimensionId(), proposed);
+    }
+
     private CandidatePackage buildCandidatePackage(RealmRun run, RealmProfile profile) {
         Set<String> allowed = new LinkedHashSet<>();
         List<WorldCell> candidates = new ArrayList<>();
@@ -913,7 +988,7 @@ public final class RealmPlanningService {
         }
         for (WorldCell cell : run.worldCells) {
             if (cell.assignableLand() && profile.targetContinentId.equals(cell.continentId)
-                    && allowed.contains(cell.patchId)) {
+                    && allowed.contains(cell.patchId) && !reservedCell(run, cell)) {
                 candidates.add(cell);
             }
         }
@@ -926,7 +1001,9 @@ public final class RealmPlanningService {
                         .thenComparingInt(cell -> cell.gridX))
                 .orElse(candidates.get(0));
         String packageId = "candidate_" + profile.realmId;
-        return new CandidatePackage(packageId, profile.realmId, "survey_" + run.runId, allowed, List.of(), List.of(),
+        List<GridPoint> blocked = run.worldCells.stream().filter(cell -> reservedCell(run, cell))
+                .map(cell -> new GridPoint(cell.gridX, cell.gridZ)).toList();
+        return new CandidatePackage(packageId, profile.realmId, "survey_" + run.runId, allowed, blocked, List.of(),
                 new GridPoint(run.surveyResult.gridOriginBlockX(), run.surveyResult.gridOriginBlockZ()),
                 run.surveyResult.cellStepBlocks(),
                 new GridPoint(suggested.gridX, suggested.gridZ), "candidates/" + profile.realmId + "_candidate_map.png");
@@ -968,6 +1045,10 @@ public final class RealmPlanningService {
         }
         if (!pack.allowedPatches.contains(cell.patchId)) {
             errors.add("Selected grid coordinate is outside allowed patches.");
+            return false;
+        }
+        if (reservedCell(run, cell)) {
+            errors.add("ADDON_REGION_RESERVED: selected cell intersects an addon reservation.");
             return false;
         }
         if (!outsideOriginRadius(cell, run, accessConfig.firstCityMinimumDistanceBlocks())) {
@@ -1749,6 +1830,9 @@ public final class RealmPlanningService {
             RealmSeed realmSeed = run.seeds.get(profile.realmId);
             RealmStats stats = run.territory.stats.get(profile.realmId);
             if (capitalIntent != null && realmSeed != null && stats != null) {
+                if (!cityFootprintAvailable(run, capitalIntent.theoreticalScale, realmSeed.seedBlock.x, realmSeed.seedBlock.z,
+                        planningRadiusCells("capital", capitalIntent.theoreticalScale)))
+                    throw new IllegalArgumentException("ADDON_REGION_RESERVED: fixture capital protection overlaps; use formal T4 selection.");
                 seeds.add(CitySeed.fixtureCapital(capitalIntent, realmSeed).withCandidateMetadata(
                         "capital_core", "capital_" + profile.realmId, nearestCityDistance(run, profile.realmId,
                                 realmSeed.seedGrid, seeds), ""));
@@ -1827,6 +1911,7 @@ public final class RealmPlanningService {
                 .filter(Objects::nonNull)
                 .filter(cell -> outsideOriginRadius(cell, run, accessConfig.firstCityMinimumDistanceBlocks()))
                 .filter(predicate::test)
+                .filter(cell -> cityFootprintAvailable(run, scale, cell.blockX, cell.blockZ, planningRadius))
                 .filter(cell -> citySpacingOk(run, realmId, new GridPoint(cell.gridX, cell.gridZ), planningRadius,
                         role, selectedSeeds))
                 .min(Comparator.comparingDouble(scorer)
@@ -1836,6 +1921,8 @@ public final class RealmPlanningService {
     }
 
     private void addCitySeed(RealmRun run, List<CitySeed> seeds, CitySeed candidate) {
+        if (!cityFootprintAvailable(run, candidate.theoreticalScale, candidate.anchorBlock.x, candidate.anchorBlock.z,
+                candidate.planningRadiusCells)) return;
         WorldCell cell = run.worldCellsByKey.get(key(candidate.anchorGrid.x, candidate.anchorGrid.z));
         if (outsideOriginRadius(cell, run, accessConfig.firstCityMinimumDistanceBlocks())
                 && citySpacingOk(run, candidate.realmId, candidate.anchorGrid, candidate.planningRadiusCells,
@@ -1844,7 +1931,17 @@ public final class RealmPlanningService {
         }
     }
 
+    private boolean cityFootprintAvailable(RealmRun run, String scale, int x, int z, int radiusCells) {
+        if (reservations(run).regions().isEmpty()) return true;
+        var cityScale = com.rinsing.geomantia.systems.city.domain.model.CityScale.fromContractName(scale);
+        int radius = com.rinsing.geomantia.systems.city.domain.config.CityPlanningConfig.defaults().radiusFor(cityScale)
+                .clampRadius(radiusCells * run.surveyResult.cellStepBlocks());
+        var bounds = com.rinsing.geomantia.systems.realm_planning.application.access.CityPlanningReservation.centered("probe", x, z, radius).protection();
+        return !reservations(run).overlaps(new RegionBounds(bounds.minX(), bounds.minZ(), bounds.maxX(), bounds.maxZ()));
+    }
+
     private boolean outsideOriginRadius(WorldCell cell, RealmRun run, int radiusBlocks) {
+        if (cell == null || reservedCell(run, cell)) return false;
         if (!accessConfig.enabled()
                 || !accessConfig.managedDimensions().contains(run.surveyResult.dimensionId())) {
             return true;
@@ -3787,6 +3884,8 @@ public final class RealmPlanningService {
             return id;
         }
         return run.continentSummaries.values().stream()
+                .filter(continent -> run.worldCells.stream().anyMatch(cell -> cell.assignableLand()
+                        && continent.continentId.equals(cell.continentId) && !reservedCell(run, cell)))
                 .max(Comparator.comparingInt(continent -> continent.areaCells))
                 .map(continent -> continent.continentId)
                 .orElseThrow(() -> new IllegalArgumentException("No land continent available."));
@@ -4669,6 +4768,7 @@ public final class RealmPlanningService {
         final WorldSurveyResult surveyResult;
         com.rinsing.geomantia.systems.realm_planning.application.access.InitialExplorationArea initialArea;
         boolean initialAreaLoaded;
+        RegionReservationStore.Snapshot reservations;
         final List<WorldCell> worldCells = new ArrayList<>();
         final Map<String, WorldCell> worldCellsByKey = new LinkedHashMap<>();
         final List<RealmProfile> profiles = new ArrayList<>();

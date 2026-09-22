@@ -246,6 +246,7 @@ public final class RealmT4PatchPlanningService {
 
     private void requireReservationAvailable(String runId, JsonObject session,
                                                CityPlanningReservation requested, int step) throws IOException {
+        requireOutsideAddonRegions(runId, requested);
         // Include other realms and open sessions, not only this session's current city list.
         java.util.List<JsonObject> sources = new java.util.ArrayList<>();
         sources.add(session);
@@ -291,6 +292,12 @@ public final class RealmT4PatchPlanningService {
                 throw new IllegalArgumentException("T4_CITY_PROTECTION_INSIDE_INITIAL_AREA: protection="+bounds.asJson()
                         +"；请把整座城市保护范围移到初始活动区及其 1024 格加载缓冲之外（半径 "+initialHalo+"），不要只移动中心点。");
         }
+    }
+
+    private void requireOutsideAddonRegions(String runId, CityPlanningReservation requested) throws IOException {
+        var bounds = requested.protection();
+        com.rinsing.geomantia.systems.realm_planning.application.reservation.RegionReservationStore.read(runDir(runId))
+                .requireFree(new com.rinsing.geomantia.api.regions.RegionBounds(bounds.minX(), bounds.minZ(), bounds.maxX(), bounds.maxZ()));
     }
 
     private void requireOutsideInitialCityExclusion(String runId, int blockX, int blockZ) throws IOException {
@@ -351,6 +358,8 @@ public final class RealmT4PatchPlanningService {
         }
         // Recheck the merged canonical list before publishing: another realm may have finalized meanwhile.
         int step = worldSurveyCellStep(runId);
+        for (JsonElement element : merged)
+            requireOutsideAddonRegions(runId, CityPlanningReservation.fromSeed(element.getAsJsonObject(), step));
         for (int i = 0; i < merged.size(); i++) for (int j = i + 1; j < merged.size(); j++)
             CityPlanningReservation.fromSeed(merged.get(i).getAsJsonObject(),step)
                     .requireSeparate(CityPlanningReservation.fromSeed(merged.get(j).getAsJsonObject(),step));

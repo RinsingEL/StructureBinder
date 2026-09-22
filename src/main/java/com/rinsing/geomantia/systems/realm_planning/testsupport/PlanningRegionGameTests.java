@@ -28,7 +28,17 @@ public final class PlanningRegionGameTests {
             JsonObject territory=new JsonObject();territory.addProperty("territoryMapId","test_territory");JsonArray owned=new JsonArray();
             JsonObject cell=new JsonObject();cell.addProperty("gridX",75);cell.addProperty("gridZ",0);cell.addProperty("status","owned");cell.addProperty("realmId","test_realm");owned.add(cell);territory.add("territoryCells",owned);write(run.resolve("realm_territory_map.json"),territory);
             JsonObject registry=new JsonObject();registry.addProperty("territoryMapId","test_territory");registry.addProperty("finalizedTerritoryIdentity","sha256:"+java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(run.resolve("realm_territory_map.json")))));JsonArray closed=new JsonArray();closed.add("test_realm");registry.add("finalizedRealmIds",closed);registry.add("citySeeds",new JsonArray());write(run.resolve("city_seed_registry.json"),registry);
+            write(run.resolve("world_survey_context.json"), new JsonObject());
+            var mask = new com.rinsing.geomantia.api.regions.RegionBounds(chunkX*16,chunkZ*16,chunkX*16+15,chunkZ*16+15);
+            com.rinsing.geomantia.systems.realm_planning.application.reservation.RegionReservationStore.create(run,
+                    level.dimension().location().toString(), java.util.List.of(
+                            new com.rinsing.geomantia.api.regions.ReservedRegion("test:boss", java.util.List.of(mask))));
             PlanningAreaAccessRuntime.clear(server);
+            helper.assertTrue(!PlanningAreaAccessRuntime.permitsChunk(level,chunkX,chunkZ), "Addon worldgen plan must be ready before release");
+            helper.assertTrue(com.rinsing.geomantia.api.regions.RegionReservationApi.isReserved(server,"region_gate_test",level.dimension().location().toString(),mask), "Public API must expose the persisted mask");
+            helper.assertTrue(!com.rinsing.geomantia.api.regions.RegionReservationApi.isReserved(server,"region_gate_test","minecraft:the_nether",mask), "Reservation must not leak between dimensions");
+            com.rinsing.geomantia.api.regions.RegionReservationApi.markGenerationReady(server,"region_gate_test","test:boss");
+            helper.assertTrue(com.rinsing.geomantia.api.regions.RegionReservationApi.isGenerationReady(server,"region_gate_test","test:boss"), "Readiness must persist independently of gameplay");
             helper.assertTrue(PlanningAreaAccessRuntime.permitsChunk(level,chunkX,chunkZ),"Completed geographic region should permit retry");
             var retry=level.getChunkSource().getChunkFuture(chunkX,chunkZ,ChunkStatus.FULL,true);
             helper.succeedWhen(()->helper.assertTrue(retry.isDone() && retry.join().left().isPresent(),"Previously denied holder must retry after release"));
