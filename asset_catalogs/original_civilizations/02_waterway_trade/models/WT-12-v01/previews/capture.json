@@ -1,0 +1,30 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "WT-12-v01",
+  "nbt_sha256": "e6833fddd4baa0733a1ddd98bce86094017c9716c2e31922739974363db281f9",
+  "author_sha256": "7ac382d0cbd364b8fe1856f957873702a00837708e9772637d03505983a655d8",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-sanctuary",
+    "room-gate",
+    "room-keeper",
+    "room-ruins",
+    "point-offering",
+    "point-ritual",
+    "point-keeper_bed",
+    "point-keeper",
+    "point-history",
+    "point-water",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

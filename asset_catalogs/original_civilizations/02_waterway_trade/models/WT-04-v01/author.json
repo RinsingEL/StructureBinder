@@ -1,0 +1,356 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "WT-04-v01",
+  "name": "双水尺闸院 · 船闸管理所",
+  "family": "WT-04",
+  "civilization": "水网商邦",
+  "planning_role": "planning_role.key",
+  "size": [
+    61,
+    30,
+    59
+  ],
+  "terrain": {
+    "选址": "确有航道高差的人工运河节点；两岸有可步行检修面，上下游为同轴水路",
+    "高程": "主体地坪方块 Y=5，脚底 Y=6；局部高差另在房间与接驳标记记录",
+    "落地": "只整备本体院落与岸台；水侧桩脚和实体岸基分别承接，不填满外部水道",
+    "运行边界": "作者资产表达空间与设备外形，交通、船只、液体和机器行为需要另行接入",
+    "水位": "上游在 -Z，参考水面 Y=5；闸室与 +Z 下游水面 Y=3；两岸脚底 Y=6，高桥脚底 Y=11",
+    "净空": "河道 X=24～36，保留 13 格宽水路；高桥底 Y=10，上游水面至桥底 5 格"
+  },
+  "rooms": [
+    {
+      "id": "duty",
+      "name": "值班观察室",
+      "min": [
+        5,
+        6,
+        15
+      ],
+      "max": [
+        12,
+        11,
+        28
+      ],
+      "purpose": "值班、通航次序和候坐"
+    },
+    {
+      "id": "records",
+      "name": "过闸记录室",
+      "min": [
+        14,
+        6,
+        15
+      ],
+      "max": [
+        19,
+        11,
+        28
+      ],
+      "purpose": "账册、档案与记录桌"
+    },
+    {
+      "id": "maintenance",
+      "name": "闸务设备间",
+      "min": [
+        5,
+        6,
+        35
+      ],
+      "max": [
+        17,
+        11,
+        49
+      ],
+      "purpose": "工具、备件、水盆和修理"
+    },
+    {
+      "id": "mess",
+      "name": "东岸歇班食堂",
+      "min": [
+        43,
+        6,
+        31
+      ],
+      "max": [
+        54,
+        11,
+        39
+      ],
+      "purpose": "餐桌、炉灶与饮水"
+    },
+    {
+      "id": "rest",
+      "name": "东岸双床间",
+      "min": [
+        43,
+        6,
+        41
+      ],
+      "max": [
+        54,
+        11,
+        46
+      ],
+      "purpose": "轮值人员歇班"
+    },
+    {
+      "id": "channel",
+      "name": "闸室与双岸巡检",
+      "min": [
+        21,
+        1,
+        10
+      ],
+      "max": [
+        39,
+        10,
+        49
+      ],
+      "purpose": "闭合木闸叶、门顶通道、上下游水位与双岸维护"
+    }
+  ],
+  "points": [
+    {
+      "id": "gate_11",
+      "kind": "work",
+      "pos": [
+        21,
+        6,
+        11
+      ],
+      "name": "上闸绞盘",
+      "approach": [
+        20,
+        6,
+        11
+      ]
+    },
+    {
+      "id": "gate_47",
+      "kind": "work",
+      "pos": [
+        21,
+        6,
+        47
+      ],
+      "name": "下闸绞盘",
+      "approach": [
+        20,
+        6,
+        47
+      ]
+    },
+    {
+      "id": "bridge",
+      "kind": "circulation",
+      "pos": [
+        30,
+        11,
+        5
+      ],
+      "name": "跨渠高桥",
+      "look_at": [
+        30,
+        5,
+        20
+      ]
+    },
+    {
+      "id": "duty",
+      "kind": "work",
+      "pos": [
+        7,
+        6,
+        19
+      ],
+      "name": "船闸值班台",
+      "approach": [
+        7,
+        6,
+        20
+      ]
+    },
+    {
+      "id": "log",
+      "kind": "work",
+      "pos": [
+        16,
+        6,
+        19
+      ],
+      "name": "过闸记录",
+      "approach": [
+        16,
+        6,
+        20
+      ]
+    },
+    {
+      "id": "repair",
+      "kind": "work",
+      "pos": [
+        7,
+        6,
+        39
+      ],
+      "name": "修理工作台",
+      "approach": [
+        7,
+        6,
+        38
+      ]
+    },
+    {
+      "id": "bed_45",
+      "kind": "sleep",
+      "pos": [
+        45,
+        6,
+        45
+      ],
+      "name": "歇班床",
+      "approach": [
+        46,
+        6,
+        45
+      ]
+    },
+    {
+      "id": "bed_52",
+      "kind": "sleep",
+      "pos": [
+        52,
+        6,
+        45
+      ],
+      "name": "歇班床",
+      "approach": [
+        53,
+        6,
+        45
+      ]
+    },
+    {
+      "id": "meal",
+      "kind": "work",
+      "pos": [
+        47,
+        6,
+        35
+      ],
+      "name": "歇班餐桌",
+      "approach": [
+        47,
+        6,
+        34
+      ]
+    },
+    {
+      "id": "inspect",
+      "kind": "circulation",
+      "pos": [
+        39,
+        6,
+        24
+      ],
+      "name": "东岸巡检廊",
+      "look_at": [
+        30,
+        3,
+        25
+      ]
+    },
+    {
+      "id": "land",
+      "kind": "entrance",
+      "pos": [
+        10,
+        6,
+        5
+      ],
+      "name": "陆侧入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        10,
+        5,
+        5
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "陆侧入口，脚底 Y=6；外部交通另接"
+    },
+    {
+      "kind": "boat",
+      "pos": [
+        30,
+        5,
+        0
+      ],
+      "direction": "north",
+      "clearance": [
+        13,
+        5
+      ],
+      "note": "闭合闸门为静态表达；外接同轴运河与匹配水面，需另做开闸机制"
+    },
+    {
+      "kind": "boat",
+      "pos": [
+        30,
+        3,
+        58
+      ],
+      "direction": "south",
+      "clearance": [
+        13,
+        5
+      ],
+      "note": "闭合闸门为静态表达；外接同轴运河与匹配水面，需另做开闸机制"
+    }
+  ],
+  "design_notes": [
+    "西岸值班档案与设备间，东岸检修廊与歇班屋；两道闭合闸门及门顶巡检通道分开上下游水位，北侧高桥连接两岸。",
+    "上游参考水面 Y=5、闸室与下游 Y=3；木闸叶、绞盘、齿轮和示意水体是静态建筑，不表示已实现放水、开闸或通船。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "两岸管理与闸室",
+      "y": 1,
+      "max_y": 9
+    },
+    {
+      "name": "高桥与屋面以下",
+      "y": 10,
+      "max_y": 12
+    }
+  ],
+  "roof_min_y": 13,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/waterway.py:waterway(4)",
+  "preview_context": {
+    "kind": "canal",
+    "land_surface_y": 6,
+    "bed_y": -1,
+    "padding": 4,
+    "canal_x0": 24,
+    "canal_x1": 36,
+    "upper_end_z": 11,
+    "upstream_surface_y": 5,
+    "downstream_surface_y": 3
+  },
+  "nbt_sha256": "9dc93e64aa45253f59faab59f9f4794bfd41fe9f42415380b967b21ad7109b5e"
+}

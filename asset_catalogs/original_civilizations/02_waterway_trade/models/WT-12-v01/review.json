@@ -1,0 +1,45 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "WT-12-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "e6833fddd4baa0733a1ddd98bce86094017c9716c2e31922739974363db281f9",
+  "author_sha256": "7ac382d0cbd364b8fe1856f957873702a00837708e9772637d03505983a655d8",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-sanctuary.png",
+    "previews/room-gate.png",
+    "previews/room-keeper.png",
+    "previews/room-ruins.png",
+    "previews/point-offering.png",
+    "previews/point-ritual.png",
+    "previews/point-keeper_bed.png",
+    "previews/point-keeper.png",
+    "previews/point-history.png",
+    "previews/point-water.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "高台正殿由前后双级石阶连接下院，前部门亭、西侧看守间、东侧残廊和后部观水台分别布置。",
+    "内饰与使用": "祭台、抽象水神像、供物与侧座形成仪式空间；看守房含床、桌、书架、炉灶和饮水，残廊保留历史陈设。",
+    "标记与通路": "已查看当前全部四向外观、俯视、去屋顶、楼层、房间、使用点、标记与环境截图；当前 NBT 数据与入口至已标站位的碰撞检查通过，无警告。",
+    "因地制宜": "位于洪水安全线以上、能解释当地水文化的岸上高台；保留朝水祭庭与看守通路；主体地坪方块 Y=3，脚底 Y=4；局部高差另在房间与接驳标记记录；只整备本体院落与岸台；水侧桩脚和实体岸基分别承接，不填满外部水道；作者资产表达空间与设备外形，交通、船只、液体和机器行为需要另行接入；岸线沿 X，参考水面 Y=3，Z≥40 为水侧；需核对实际水深、岸床与航行宽度。已核对对应岸线、两级航道或岸上平地示意。"
+  },
+  "revisions": [
+    "前后高台踏步提高一格并补实体支撑，使仪式站位可达。",
+    "去屋顶切面降为 Y=9，露出门亭；增加正殿后窗。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "贸易、议事、造船、住宿或仪式由空间和作者标记表达，尚未自动接入国度 Mod 对应玩法。"
+  ]
+}

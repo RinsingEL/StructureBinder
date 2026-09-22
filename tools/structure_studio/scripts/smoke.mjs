@@ -35,10 +35,15 @@ try{
   const after=await page.evaluate(()=>({model:JSON.stringify(window.studio.model),image:document.querySelector('canvas').toDataURL()}));
   assert.equal(before.model,after.model);assert.notEqual(before.image,after.image);
   assert.match(await page.locator('#axis').innerText(),/不写入 NBT/);
+  await page.evaluate(()=>window.studio.load('WT-04-v01'));
+  const canalBefore=await page.evaluate(()=>({model:JSON.stringify(window.studio.model),image:document.querySelector('canvas').toDataURL()}));
+  await page.getByRole('button',{name:'地形示意',exact:true}).click();
+  const canalAfter=await page.evaluate(()=>({model:JSON.stringify(window.studio.model),image:document.querySelector('canvas').toDataURL()}));
+  assert.equal(canalBefore.model,canalAfter.model);assert.notEqual(canalBefore.image,canalAfter.image);
   await page.evaluate(()=>window.studio.load('SR-F01-v01'));
   assert.ok(await page.locator('#context').isDisabled());
   assert.match(await page.locator('#axis').innerText(),/X 东/);
   const end=await page.evaluate(()=>window.studio.telemetry);
   assert.deepEqual(end.renderErrors,[]);assert.deepEqual(end.missingTextures,[]);assert.deepEqual(errors,[]);
-  console.log('PASS: search, floor/roof, markers, walk, PNG download, render telemetry, confined paths, non-mutating terrain context');
+  console.log('PASS: search, floor/roof, markers, walk, PNG download, render telemetry, confined paths, non-mutating shore/canal context');
 }finally{await browser.close();}

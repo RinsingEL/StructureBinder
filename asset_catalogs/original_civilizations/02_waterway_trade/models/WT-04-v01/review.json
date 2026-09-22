@@ -1,0 +1,52 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "WT-04-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "9dc93e64aa45253f59faab59f9f4794bfd41fe9f42415380b967b21ad7109b5e",
+  "author_sha256": "afaa957d6de23658d4129a34e74961b9d6a798bd2a197423295cfce0464e1666",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-duty.png",
+    "previews/room-records.png",
+    "previews/room-maintenance.png",
+    "previews/room-mess.png",
+    "previews/room-rest.png",
+    "previews/room-channel.png",
+    "previews/point-gate_11.png",
+    "previews/point-gate_47.png",
+    "previews/point-bridge.png",
+    "previews/point-duty.png",
+    "previews/point-log.png",
+    "previews/point-repair.png",
+    "previews/point-bed_45.png",
+    "previews/point-bed_52.png",
+    "previews/point-meal.png",
+    "previews/point-inspect.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "两岸分别安排值班档案、检修和船闸生活用房；上下游水面相差两格，闸顶巡检路和高架人行桥联系两岸。",
+    "内饰与使用": "双闸控制台、黑白水尺、记录柜、检修台、餐桌、炉灶、床位和储物完整；桥栏下方桥面已补齐。",
+    "标记与通路": "已查看当前全部四向外观、俯视、去屋顶、楼层、房间、使用点、标记与环境截图；当前 NBT 数据与入口至已标站位的碰撞检查通过，无警告。",
+    "因地制宜": "确有航道高差的人工运河节点；两岸有可步行检修面，上下游为同轴水路；主体地坪方块 Y=5，脚底 Y=6；局部高差另在房间与接驳标记记录；只整备本体院落与岸台；水侧桩脚和实体岸基分别承接，不填满外部水道；作者资产表达空间与设备外形，交通、船只、液体和机器行为需要另行接入；上游在 -Z，参考水面 Y=5；闸室与 +Z 下游水面 Y=3；两岸脚底 Y=6，高桥脚底 Y=11；河道 X=24～36，保留 13 格宽水路；高桥底 Y=10，上游水面至桥底 5 格。已核对对应岸线、两级航道或岸上平地示意。"
+  },
+  "revisions": [
+    "扩大高桥与闸顶桥面至护栏外缘，下方连续承托；补床边储物和两岸水尺。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "贸易、议事、造船、住宿或仪式由空间和作者标记表达，尚未自动接入国度 Mod 对应玩法。",
+    "船闸保持静态闭闸、低位闸室；上下游示意仅核对高程与几何，不模拟闸门、流体或船舶通行。"
+  ]
+}

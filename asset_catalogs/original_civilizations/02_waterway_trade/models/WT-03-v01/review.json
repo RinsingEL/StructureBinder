@@ -1,0 +1,50 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "WT-03-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "20bd77d6c623190f233b5b698625631208adb7f17b006de0c6b6701b3552ec69",
+  "author_sha256": "02a190fee73eead94aa0dd1f68fdde931dba2088b4a7c512df3ab0bff9a3e17e",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-timber.png",
+    "previews/room-tools.png",
+    "previews/room-mess.png",
+    "previews/room-rest.png",
+    "previews/room-plans.png",
+    "previews/room-hall.png",
+    "previews/point-timber.png",
+    "previews/point-tools.png",
+    "previews/point-bed_45.png",
+    "previews/point-bed_53.png",
+    "previews/point-meal.png",
+    "previews/point-cook.png",
+    "previews/point-plans.png",
+    "previews/point-hoist.png",
+    "previews/point-hull.png",
+    "previews/point-slip_19.png",
+    "previews/point-slip_37.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "高跨修造棚位于中央，木料、工具、船工餐宿与图纸房分居两翼，龙骨船架与下水坡道通向双栈桥。",
+    "内饰与使用": "木料架、工具台、铁砧、绞盘、悬吊钩、绘图台、长桌、炉灶、饮水与两床均可见，船肋旁保留操作空间。",
+    "标记与通路": "已查看当前全部四向外观、俯视、去屋顶、楼层、房间、使用点、标记与环境截图；当前 NBT 数据与入口至已标站位的碰撞检查通过，无警告。",
+    "因地制宜": "有宽阔陆侧修造坪与连续入水坡道的避风岸段；整座船台须落在岸上，水侧保留拖船进出净空；主体地坪方块 Y=3，脚底 Y=4；局部高差另在房间与接驳标记记录；只整备本体院落与岸台；水侧桩脚和实体岸基分别承接，不填满外部水道；作者资产表达空间与设备外形，交通、船只、液体和机器行为需要另行接入；岸线沿 X，参考水面 Y=3，Z≥44 为水侧；需核对实际水深、岸床与航行宽度。已核对对应岸线、两级航道或岸上平地示意。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "贸易、议事、造船、住宿或仪式由空间和作者标记表达，尚未自动接入国度 Mod 对应玩法。",
+    "船体、吊钩和绞盘为静态方块造型，未实现造船或吊运机械。"
+  ]
+}

@@ -1,0 +1,343 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "WT-09-v01",
+  "name": "三檐验货院 · 港口海关",
+  "family": "WT-09",
+  "civilization": "水网商邦",
+  "planning_role": "planning_role.key",
+  "size": [
+    53,
+    29,
+    47
+  ],
+  "terrain": {
+    "选址": "水陆货运实际交汇的港口岸台，申报人员走北门，货物沿西侧进入验货庭，再转水侧吊装",
+    "高程": "主体地坪方块 Y=3，脚底 Y=4；局部高差另在房间与接驳标记记录",
+    "落地": "只整备本体院落与岸台；水侧桩脚和实体岸基分别承接，不填满外部水道",
+    "运行边界": "作者资产表达空间与设备外形，交通、船只、液体和机器行为需要另行接入",
+    "水岸": "岸线沿 X，参考水面 Y=3，Z≥36 为水侧；需核对实际水深、岸床与航行宽度"
+  },
+  "rooms": [
+    {
+      "id": "declare",
+      "name": "挑高申报厅",
+      "min": [
+        21,
+        4,
+        7
+      ],
+      "max": [
+        31,
+        10,
+        21
+      ],
+      "purpose": "申报、候坐与向后庭分流"
+    },
+    {
+      "id": "clerks",
+      "name": "查验工单间",
+      "min": [
+        7,
+        4,
+        7
+      ],
+      "max": [
+        18,
+        9,
+        16
+      ],
+      "purpose": "工单、值班记录与书架"
+    },
+    {
+      "id": "rest",
+      "name": "夜班生活角",
+      "min": [
+        7,
+        4,
+        18
+      ],
+      "max": [
+        18,
+        9,
+        21
+      ],
+      "purpose": "歇床、炉灶和饮水"
+    },
+    {
+      "id": "archive",
+      "name": "关务档案翼",
+      "min": [
+        34,
+        4,
+        7
+      ],
+      "max": [
+        44,
+        9,
+        21
+      ],
+      "purpose": "分类档案、凭证与查阅"
+    },
+    {
+      "id": "inspect",
+      "name": "后庭验货棚",
+      "min": [
+        7,
+        4,
+        26
+      ],
+      "max": [
+        25,
+        9,
+        34
+      ],
+      "purpose": "开箱、称量和周转货物"
+    },
+    {
+      "id": "hold",
+      "name": "独立扣货房",
+      "min": [
+        32,
+        4,
+        27
+      ],
+      "max": [
+        44,
+        8,
+        33
+      ],
+      "purpose": "扣留货物与门禁入口"
+    },
+    {
+      "id": "quay",
+      "name": "水侧装卸台",
+      "min": [
+        6,
+        4,
+        36
+      ],
+      "max": [
+        46,
+        9,
+        42
+      ],
+      "purpose": "卸货、起吊与泊位净空"
+    }
+  ],
+  "points": [
+    {
+      "id": "declare",
+      "kind": "work",
+      "pos": [
+        24,
+        4,
+        13
+      ],
+      "name": "入港货物申报",
+      "approach": [
+        24,
+        4,
+        12
+      ]
+    },
+    {
+      "id": "clerk",
+      "kind": "work",
+      "pos": [
+        10,
+        4,
+        12
+      ],
+      "name": "查验工单与值班记录",
+      "approach": [
+        10,
+        4,
+        13
+      ]
+    },
+    {
+      "id": "sleep",
+      "kind": "sleep",
+      "pos": [
+        9,
+        4,
+        21
+      ],
+      "name": "夜班歇床",
+      "approach": [
+        10,
+        4,
+        21
+      ]
+    },
+    {
+      "id": "archive",
+      "kind": "work",
+      "pos": [
+        37,
+        4,
+        14
+      ],
+      "name": "关务档案桌",
+      "approach": [
+        37,
+        4,
+        15
+      ]
+    },
+    {
+      "id": "inspect",
+      "kind": "work",
+      "pos": [
+        18,
+        4,
+        29
+      ],
+      "name": "验货称量台",
+      "approach": [
+        18,
+        4,
+        28
+      ]
+    },
+    {
+      "id": "hold",
+      "kind": "storage",
+      "pos": [
+        34,
+        4,
+        28
+      ],
+      "name": "扣留货物",
+      "approach": [
+        34,
+        4,
+        27
+      ]
+    },
+    {
+      "id": "crane",
+      "kind": "work",
+      "pos": [
+        44,
+        4,
+        40
+      ],
+      "name": "码头起货绞盘",
+      "approach": [
+        43,
+        4,
+        40
+      ]
+    },
+    {
+      "id": "quay",
+      "kind": "circulation",
+      "pos": [
+        20,
+        4,
+        40
+      ],
+      "name": "货船靠泊面",
+      "look_at": [
+        20,
+        3,
+        46
+      ]
+    },
+    {
+      "id": "land",
+      "kind": "entrance",
+      "pos": [
+        26,
+        4,
+        4
+      ],
+      "name": "陆侧入口",
+      "facing": "north"
+    },
+    {
+      "id": "cargo",
+      "kind": "entrance",
+      "pos": [
+        4,
+        4,
+        29
+      ],
+      "name": "陆侧货运口",
+      "facing": "west"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        26,
+        3,
+        4
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "陆侧入口，脚底 Y=4；外部交通另接"
+    },
+    {
+      "kind": "pedestrian",
+      "pos": [
+        4,
+        3,
+        29
+      ],
+      "direction": "west",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "陆侧货运口，脚底 Y=4；外部交通另接"
+    },
+    {
+      "kind": "boat",
+      "pos": [
+        20,
+        3,
+        43
+      ],
+      "direction": "south",
+      "clearance": [
+        9,
+        8
+      ],
+      "note": "参考水面 Y=3，泊位开口 X=16～23；外部航路另接"
+    }
+  ],
+  "design_notes": [
+    "挑高申报厅夹在低檐值班与档案翼之间，后部验货雨棚、独立扣货房和水侧装卸台相连。",
+    "扣留空间用于货物；建筑与作者标记不实现税务、贸易、查验或吊运机制。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "地面使用空间",
+      "y": 3,
+      "max_y": 8
+    }
+  ],
+  "roof_min_y": 10,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/waterway.py:waterway(9)",
+  "preview_context": {
+    "kind": "shore",
+    "land_surface_y": 4,
+    "bed_y": -1,
+    "padding": 4,
+    "shore_z": 36,
+    "water_surface_y": 3
+  },
+  "nbt_sha256": "ec83eac81a0e4a4c7b65150e25063f8a8f053fca6e865dabd6c315f511fe6393"
+}

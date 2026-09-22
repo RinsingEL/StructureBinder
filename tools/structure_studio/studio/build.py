@@ -13,6 +13,7 @@ from .oasis_life import home,garden
 from .oasis_yards import beast_yard,vineyard,trade_shelter
 from .oasis_crafts import merchant,glassworks
 from .oasis_hospitality import inn,shop as oasis_shop
+from .waterway import waterway
 from .validate import validate
 
 BUILDERS={"SR-01-v01":("01_steam_rail",steam_station),"WT-01-v01":("02_waterway_trade",passenger_quay)}
@@ -25,6 +26,7 @@ BUILDERS.update({f"DS-F02-v{i:02d}":("03_desert_stars",partial(garden,i)) for i 
 for family,builder in (("DS-02",beast_yard),("DS-F03",vineyard),("DS-F04",trade_shelter),("DS-05",merchant),("DS-07",glassworks),("DS-08",inn)):
     BUILDERS.update({f"{family}-v{i:02d}":("03_desert_stars",partial(builder,i)) for i in range(1,5)})
 BUILDERS.update({f"DS-F01-v{i:02d}":("03_desert_stars",partial(oasis_shop,i)) for i in range(1,9)})
+BUILDERS.update({f"WT-{i:02d}-v01":("02_waterway_trade",partial(waterway,i)) for i in (3,4,9,10,11,12)})
 
 
 def main():
