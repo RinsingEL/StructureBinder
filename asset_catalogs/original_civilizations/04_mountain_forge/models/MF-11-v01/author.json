@@ -1,0 +1,136 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-11-v01",
+  "name": "封册旧矿口",
+  "family": "MF-11",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.structure",
+  "size": [
+    31,
+    19,
+    29
+  ],
+  "terrain": {
+    "选址": "仅用于山体前缘，+Z 旧巷尽端须接实山；岩体外壳是局部入口表达，不能悬放平原。",
+    "高程": "基础上边界及室内脚底 Y=2；入口街面需同高程。",
+    "保留空间": "完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。",
+    "边界": "铁栅与塌方封住 Z=21 后段；本体没有可继续探索或矿车通行的出口。"
+  },
+  "rooms": [
+    {
+      "id": "register",
+      "name": "登记与装备间",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        11,
+        6,
+        18
+      ],
+      "purpose": "旧矿巡查登记、装备、封矿记录"
+    },
+    {
+      "id": "adit",
+      "name": "封闭旧巷",
+      "min": [
+        19,
+        2,
+        8
+      ],
+      "max": [
+        22,
+        6,
+        20
+      ],
+      "purpose": "保留轨道、坑木与巡视通路，末端栏栅和塌方为明确边界"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        7,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "register",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        6
+      ],
+      "name": "封矿登记",
+      "approach": [
+        6,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "gear",
+      "kind": "work",
+      "pos": [
+        10,
+        2,
+        12
+      ],
+      "name": "旧矿装备检查",
+      "approach": [
+        9,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "boundary",
+      "kind": "circulation",
+      "pos": [
+        21,
+        2,
+        19
+      ],
+      "name": "封闭界线前检查位",
+      "look_at": [
+        21,
+        3,
+        22
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "不规则岩壳包住坑木旧轨巷；侧边铜顶登记装备房与矿口共用检修坪。"
+  ],
+  "differences": [
+    "明确选用的封矿遗存，封闭边界而非重复生产矿井。"
+  ],
+  "floors": [
+    {
+      "name": "生活与作业层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_forge.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "nbt_sha256": "01fe47d0c42da7023521bdf063306286bed7bffcf48916f0349b56b1685d32fe"
+}

@@ -1,0 +1,27 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "FS-10-v01",
+  "nbt_sha256": "fb0dd83ed4f6ae1ac253f0b64d36dc8edcd55f9ebb7e5a88c045a9fdd02d1808",
+  "author_sha256": "d81ff7438593018f0edd84d174ba6273e705851ce019e6b45ab38ea959ca3088",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-class",
+    "room-specimen",
+    "room-deck",
+    "point-teach",
+    "point-specimen",
+    "point-observe",
+    "point-deck",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

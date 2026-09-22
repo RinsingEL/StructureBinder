@@ -1,0 +1,165 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-10-v01",
+  "name": "千锤祖先纪念厅",
+  "family": "MF-10",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.key",
+  "size": [
+    31,
+    23,
+    31
+  ],
+  "terrain": {
+    "选址": "安静山前台地或山体外缘，采光面朝 -Z；本版本为独立地表纪念厅，不是地下挖掘模板。",
+    "高程": "基础上边界及室内脚底 Y=2；入口街面需同高程。",
+    "保留空间": "完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "rooms": [
+    {
+      "id": "memory",
+      "name": "柱列纪念大厅",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        26,
+        10,
+        20
+      ],
+      "purpose": "祖先锻砧、族名碑、公共座位与仪式通道"
+    },
+    {
+      "id": "records",
+      "name": "族谱档案室",
+      "min": [
+        4,
+        2,
+        22
+      ],
+      "max": [
+        13,
+        6,
+        26
+      ],
+      "purpose": "书册架与抄录"
+    },
+    {
+      "id": "keeper",
+      "name": "守护者住所",
+      "min": [
+        17,
+        2,
+        22
+      ],
+      "max": [
+        26,
+        6,
+        26
+      ],
+      "purpose": "一人床位、衣柜、炊事与饮水"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        15,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "tribute",
+      "kind": "work",
+      "pos": [
+        15,
+        3,
+        18
+      ],
+      "name": "族谱与祭仪台",
+      "approach": [
+        15,
+        2,
+        16
+      ]
+    },
+    {
+      "id": "genealogy",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        23
+      ],
+      "name": "族谱抄录",
+      "approach": [
+        6,
+        2,
+        24
+      ]
+    },
+    {
+      "id": "keeper_0",
+      "kind": "bed",
+      "pos": [
+        18,
+        2,
+        23
+      ],
+      "name": "床位与个人柜",
+      "approach": [
+        19,
+        2,
+        23
+      ]
+    },
+    {
+      "id": "kitchen",
+      "kind": "work",
+      "pos": [
+        23,
+        2,
+        25
+      ],
+      "name": "炊事与洗涤",
+      "approach": [
+        23,
+        2,
+        26
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "六柱仪式厅正对铜色族谱台；两间后房分别存放族谱并供守护者完整生活。"
+  ],
+  "differences": [
+    "安静公共纪念空间与后侧档案生活独立分区。"
+  ],
+  "floors": [
+    {
+      "name": "纪念与守护层",
+      "y": 1,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_forge.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "nbt_sha256": "a5137a47be47be81aabcf7d670f2258afefcf912ec374f255bf9f4039421f4b1"
+}

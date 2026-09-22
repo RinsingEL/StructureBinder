@@ -1,0 +1,41 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "FS-04-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 森林建模作者离线实看",
+  "nbt_sha256": "0831bcfedaa49d7a498a89962a35df140fc5185fa95bbcd86c257d49b68fc4a5",
+  "author_sha256": "fa2b668efa39825eab63ad8da02b4d0af3e8d15fe048a89ec2b19e3c2331a865",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-guest.png",
+    "previews/room-arrival.png",
+    "previews/room-stable.png",
+    "previews/point-guestbed0.png",
+    "previews/point-guestbed1.png",
+    "previews/point-guestcook.png",
+    "previews/point-gueststore.png",
+    "previews/point-welcome.png",
+    "previews/point-care11.png",
+    "previews/point-care20.png",
+    "previews/point-gear.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "已逐张查看20张最终截图：客房与接待分隔，双床、炉水、旅具货架齐备；动物照护棚侧向开口连接主通道。",
+    "屋面、烟道和棚柱完整，全部标记数据与离线通路无警告。",
+    "承檐修复后已重拍并逐张重看全部最终视角：实际墙线上连续整块木梁闭合屋面接缝；有苔毯的棚顶位置改为实心木板承托。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

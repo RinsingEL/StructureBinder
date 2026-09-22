@@ -1,0 +1,32 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "CN-02-v01",
+  "nbt_sha256": "48e4cad43c0c9354718a1acc761979d7447e5dd462dfe674c1fef8aa360bf31e",
+  "author_sha256": "2c72e25c1344040248ca5e71443ef2fec48603e681258bfcf8d8c0b8ec3d6994",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-plans",
+    "room-rest",
+    "room-hull",
+    "point-plans",
+    "point-cook",
+    "point-rest_1",
+    "point-rest_2",
+    "point-rest_3",
+    "point-repair",
+    "point-rib",
+    "point-hoist",
+    "point-spares",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

@@ -1,0 +1,44 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CN-11-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 云海建模代理（实际看图）",
+  "nbt_sha256": "e57407cf977acc1ccbc2703c422ed3edb82a99ee84d197f8a83c59688a0917ba",
+  "author_sha256": "81baeba1b172e8a4a854aafc1799a0c9cde52d7ea97dcb170a929470debd102e",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-shelter.png",
+    "previews/room-ruin.png",
+    "previews/point-oldlog.png",
+    "previews/point-camp_1.png",
+    "previews/point-inspect.png",
+    "previews/point-salvage.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "旧泊位保留断缆、破板和连续封边，仍可进入的站务房保持屋面完整。",
+    "旧记录、临时单床、缆索箱及安全侧检视点均可达，破损区不列为通行目标。",
+    "最终NBT数据与全部标记离线步行初筛通过，无错误或警告；所有capture.json列出的最终图片均已实际查看。",
+    "承檐层、山墙坡顶、亭盖柱与楼梯侧栏底板修订后，133张核心最终图重新实际查看；可见柱顶接屋面、墙顶连续承檐。"
+  ],
+  "revisions": [
+    "组合建筑采用最低天花板去屋顶阈值；降低主层切片上界。",
+    "按实际截图补齐高台护栏与支承、调整操作点和观测旗杆。",
+    "专项角色纠正为planning_role.structure，重拍重审对应作者哈希。",
+    "撤回此前遗漏支承间隙的验收；补普通房屋承檐梁和山墙至坡顶，修复导航塔/议事后廊/回收棚柱顶以及泊塔阶梯护栏底板。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "模型只表达落在岩台或石墩的承重路径，不提供浮空或飞行机制。",
+    "环境图为理想下降坡示意，实际峡谷宽度、岩层承载和空中接驳需另行核对。"
+  ]
+}

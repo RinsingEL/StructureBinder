@@ -1,0 +1,35 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "FS-11-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 森林建模作者离线实看",
+  "nbt_sha256": "65225bcf774a5e81c6d423ac39cf70e768412751958d9a26a2a90813950f1d40",
+  "author_sha256": "9afaf94fb4561577dc9d4cc0145167bb0f8486ce546bd4fa3ee76ef075b01b48",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-archive.png",
+    "previews/room-beds.png",
+    "previews/point-remnant.png",
+    "previews/point-records.png",
+    "previews/point-bench.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "已逐张查看14张最终截图：管理屋西南屋面损坏、东棚末段断梁与回生苗床构成明确历史状态；账册和换土台有可达取用面。",
+    "破损未切断探索主路；生态恢复为静态构图。",
+    "承檐修复后已重拍并逐张重看全部最终视角：实际墙线上连续整块木梁闭合屋面接缝；有苔毯的棚顶位置改为实心木板承托。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

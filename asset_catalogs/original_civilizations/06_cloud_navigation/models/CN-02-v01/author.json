@@ -1,0 +1,261 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CN-02-v01",
+  "name": "双脊风帆库 · 船体修造库",
+  "family": "CN-02",
+  "civilization": "云海航行文明",
+  "planning_role": "planning_role.key",
+  "size": [
+    57,
+    38,
+    53
+  ],
+  "terrain": {
+    "选址": "高原岩台边缘，北侧接稳定地面，南侧朝开阔谷地",
+    "高程": "主平台地板 Y=7，入口脚底 Y=8；外接同高岩台道路",
+    "固定与承重": "北侧石砌锚座压在实体岩台，南侧木梁和斜撑回接石墩；石墩底必须落在连续承载岩层。不可当作无支撑浮空结构。",
+    "接驳边界": "模板内支撑与边栏完整；外侧山体、接驳道路、峡谷宽度及航行净空必须按实际场地核对。",
+    "运行边界": "泊位、缆索、风向仪、船体与吊装均为静态空间表达；未实现飞行、气象、物流或受力模拟。"
+  },
+  "rooms": [
+    {
+      "id": "plans",
+      "name": "放样与工具翼",
+      "min": [
+        6,
+        8,
+        8
+      ],
+      "max": [
+        16,
+        13,
+        22
+      ],
+      "purpose": "尺度图、工单、工具和档案"
+    },
+    {
+      "id": "rest",
+      "name": "工匠歇班房",
+      "min": [
+        6,
+        8,
+        30
+      ],
+      "max": [
+        16,
+        13,
+        43
+      ],
+      "purpose": "炉灶、饮水、三床与休息"
+    },
+    {
+      "id": "hull",
+      "name": "长跨船体修造厅",
+      "min": [
+        22,
+        8,
+        8
+      ],
+      "max": [
+        48,
+        20,
+        46
+      ],
+      "purpose": "龙骨、船肋、吊具、双侧检修道与周转备件"
+    }
+  ],
+  "points": [
+    {
+      "id": "plans",
+      "kind": "work",
+      "pos": [
+        8,
+        8,
+        12
+      ],
+      "name": "船架放样与维修工单",
+      "approach": [
+        8,
+        8,
+        13
+      ]
+    },
+    {
+      "id": "cook",
+      "kind": "work",
+      "pos": [
+        7,
+        8,
+        30
+      ],
+      "name": "备餐炉灶与饮水",
+      "approach": [
+        7,
+        8,
+        31
+      ]
+    },
+    {
+      "id": "rest_1",
+      "kind": "sleep",
+      "pos": [
+        7,
+        8,
+        42
+      ],
+      "name": "值守/船员床位",
+      "approach": [
+        8,
+        8,
+        42
+      ]
+    },
+    {
+      "id": "rest_2",
+      "kind": "sleep",
+      "pos": [
+        10,
+        8,
+        42
+      ],
+      "name": "值守/船员床位",
+      "approach": [
+        11,
+        8,
+        42
+      ]
+    },
+    {
+      "id": "rest_3",
+      "kind": "sleep",
+      "pos": [
+        13,
+        8,
+        42
+      ],
+      "name": "值守/船员床位",
+      "approach": [
+        14,
+        8,
+        42
+      ]
+    },
+    {
+      "id": "repair",
+      "kind": "work",
+      "pos": [
+        24,
+        8,
+        30
+      ],
+      "name": "侧廊船材修整",
+      "approach": [
+        24,
+        8,
+        31
+      ]
+    },
+    {
+      "id": "rib",
+      "kind": "work",
+      "pos": [
+        29,
+        11,
+        27
+      ],
+      "name": "船体肋架检修面",
+      "approach": [
+        27,
+        8,
+        27
+      ]
+    },
+    {
+      "id": "hoist",
+      "kind": "work",
+      "pos": [
+        45,
+        8,
+        27
+      ],
+      "name": "吊具侧廊绞盘",
+      "approach": [
+        45,
+        8,
+        26
+      ]
+    },
+    {
+      "id": "spares",
+      "kind": "storage",
+      "pos": [
+        45,
+        8,
+        10
+      ],
+      "name": "船材与备件",
+      "approach": [
+        45,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        25,
+        8,
+        3
+      ],
+      "name": "岩台地面入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        25,
+        7,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "岩台地面入口，外接脚底 Y=8 的连续道路"
+    }
+  ],
+  "design_notes": [
+    "开放端的长跨双脊屋盖与西侧两间低檐工作生活房形成体量层次。",
+    "船体为开放龙骨修造阶段；高原地面工厂，不假定整栋悬空或船坯可驾驶。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "岩台主层",
+      "y": 7,
+      "max_y": 13
+    }
+  ],
+  "roof_min_y": 14,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/cloud_navigation.py",
+  "preview_context": {
+    "kind": "slope",
+    "land_surface_y": 8,
+    "bed_y": -3,
+    "padding": 4,
+    "run": 8,
+    "rise": -1,
+    "slope_origin_z": 0,
+    "surface": "snow"
+  },
+  "nbt_sha256": "48e4cad43c0c9354718a1acc761979d7447e5dd462dfe674c1fef8aa360bf31e"
+}

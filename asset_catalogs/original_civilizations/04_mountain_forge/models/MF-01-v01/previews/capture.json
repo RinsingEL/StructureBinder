@@ -1,0 +1,28 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "MF-01-v01",
+  "nbt_sha256": "fc758d378f2c00fe1ae3def0e7c5c4a5c7c6dd0e3623e505d21d475c63a1c8bd",
+  "author_sha256": "d67b1a0b6611d19d9d6c3ca53643dfb223283764180939dc8a2b49770da7bb63",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-dispatch",
+    "room-ore",
+    "room-tracks",
+    "point-desk",
+    "point-watch",
+    "point-weigh",
+    "point-crane",
+    "point-platform",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

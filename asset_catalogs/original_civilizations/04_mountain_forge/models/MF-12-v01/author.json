@@ -1,0 +1,196 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-12-v01",
+  "name": "岩底双泵排水站",
+  "family": "MF-12",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.key",
+  "size": [
+    31,
+    20,
+    29
+  ],
+  "terrain": {
+    "选址": "山前矿业聚落的稳定石质台地，正面朝 -Z；须避开落石、塌陷和洪水通道。",
+    "高程": "基础上边界及室内脚底 Y=2；入口街面需同高程。",
+    "保留空间": "完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。",
+    "服务": "仅用于存在地下水或汇水需求的低位矿业设施；尾部排水口必须连接有坡降的安全受水去向。"
+  },
+  "rooms": [
+    {
+      "id": "pumps",
+      "name": "双泵巡检厅",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        26,
+        6,
+        17
+      ],
+      "purpose": "两座封护集水池、铜管泵组和四边巡检通道"
+    },
+    {
+      "id": "duty",
+      "name": "隔墙值班应急间",
+      "min": [
+        4,
+        2,
+        19
+      ],
+      "max": [
+        11,
+        6,
+        23
+      ],
+      "purpose": "值守床、登记与应急物资"
+    },
+    {
+      "id": "repair",
+      "name": "备件与维护间",
+      "min": [
+        13,
+        2,
+        18
+      ],
+      "max": [
+        26,
+        6,
+        23
+      ],
+      "purpose": "工具台、备用件和管线后部检修"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        15,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "duty",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        21
+      ],
+      "name": "排水值守记录",
+      "approach": [
+        6,
+        2,
+        22
+      ]
+    },
+    {
+      "id": "watch",
+      "kind": "bed",
+      "pos": [
+        10,
+        2,
+        21
+      ],
+      "name": "应急值守床",
+      "approach": [
+        11,
+        2,
+        21
+      ]
+    },
+    {
+      "id": "pump8",
+      "kind": "work",
+      "pos": [
+        6,
+        3,
+        11
+      ],
+      "name": "泵组检修操作",
+      "approach": [
+        5,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "pump21",
+      "kind": "work",
+      "pos": [
+        19,
+        3,
+        11
+      ],
+      "name": "泵组检修操作",
+      "approach": [
+        18,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "repair",
+      "kind": "work",
+      "pos": [
+        23,
+        2,
+        18
+      ],
+      "name": "备件维护",
+      "approach": [
+        23,
+        2,
+        17
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "drain",
+      "pos": [
+        15,
+        1,
+        27
+      ],
+      "direction": "south",
+      "clearance": [
+        4,
+        2
+      ],
+      "note": "示意水槽终点；泵送、流量及外部排水均未模拟。"
+    }
+  ],
+  "design_notes": [
+    "两组铜管泵架各有独立围护池与巡检环路，后角值守卧位和应急物资隔墙，尾部低位出水槽。"
+  ],
+  "differences": [
+    "低位排水服务节点，水槽和人员地坪分层。"
+  ],
+  "floors": [
+    {
+      "name": "泵组巡检层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 10,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_forge.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "nbt_sha256": "d886b74759aac6159a171813918f56c50a7a33af7c81bef85ed11ef2dad33162"
+}

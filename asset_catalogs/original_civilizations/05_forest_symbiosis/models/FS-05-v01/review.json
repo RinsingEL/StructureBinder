@@ -1,0 +1,35 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "FS-05-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 森林建模作者离线实看",
+  "nbt_sha256": "7c8ed8b016987641aa796fde1f5ef4010ae1001be80a1875a13dc6f48f662351",
+  "author_sha256": "3a8d6e40086bf4dcff82dab265469271f6bc2afb3e2c5eb99822613c3cdf6740",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-council.png",
+    "previews/point-speak.png",
+    "previews/point-archive.png",
+    "previews/point-landing.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "已逐张查看14张最终重拍截图：阶梯出口已敞开，侧护栏落在阶状实体侧基上；架空层下地面已恢复，所有梁柱有落地支承。",
+    "双层切片分别显示林下到达与议事内饰；围桌、座位、档案和三处高位标记均通过最终 NBT 离线可达检查。",
+    "承檐修复后已重拍并逐张重看全部最终视角：实际墙线上连续整块木梁闭合屋面接缝；有苔毯的棚顶位置改为实心木板承托。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

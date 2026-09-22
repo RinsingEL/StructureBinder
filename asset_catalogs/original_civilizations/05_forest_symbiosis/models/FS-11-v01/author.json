@@ -1,0 +1,152 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "FS-11-v01",
+  "name": "返绿育苗所 · 废弃设施",
+  "family": "FS-11",
+  "civilization": "森林共生文明",
+  "planning_role": "planning_role.structure",
+  "size": [
+    43,
+    25,
+    37
+  ],
+  "terrain": {
+    "选址": "已经退出生产且林地回生的旧育苗场；保留干燥访客路径，不作为正常生产填充",
+    "落地": "只整理建筑本体与步道；保留未写入的林地。附树版本包含独立柱脚和树根占地，不能套入任意现存树体。",
+    "高程": "主入口脚底 Y=3；高位层和坡地接驳另见楼层与使用点",
+    "运行边界": "种植、蜂具、藤果、兽栏与遗留物均为原版静态空间表达；实际生产、动物和生态行为须另行接入。"
+  },
+  "rooms": [
+    {
+      "id": "archive",
+      "name": "残存管理房",
+      "min": [
+        5,
+        3,
+        7
+      ],
+      "max": [
+        15,
+        7,
+        19
+      ],
+      "purpose": "留存旧账册，西南侧屋顶局部失落并长入苔藓"
+    },
+    {
+      "id": "beds",
+      "name": "回生苗床",
+      "min": [
+        27,
+        3,
+        7
+      ],
+      "max": [
+        36,
+        7,
+        26
+      ],
+      "purpose": "废弃棚架、残存换土台和已经复生的林下植被"
+    }
+  ],
+  "points": [
+    {
+      "id": "remnant",
+      "kind": "storage",
+      "pos": [
+        7,
+        4,
+        18
+      ],
+      "name": "残留育苗盘与旧账册",
+      "approach": [
+        7,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "records",
+      "kind": "work",
+      "pos": [
+        7,
+        3,
+        9
+      ],
+      "name": "旧种植日志",
+      "approach": [
+        7,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "bench",
+      "kind": "work",
+      "pos": [
+        28,
+        3,
+        25
+      ],
+      "name": "旧换土台",
+      "approach": [
+        28,
+        3,
+        24
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        20,
+        3,
+        2
+      ],
+      "name": "林间步道入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        20,
+        2,
+        2
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "外接步道脚底 Y=3，须保留树根与基础占地"
+    }
+  ],
+  "design_notes": [
+    "破损有明确位置：管理屋西南屋面、东棚末段梁架；保留可探索的安全通路。",
+    "生态恢复是手工构图，未模拟随时间变化。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "林下使用层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/forest_symbiosis.py:FS-11-v01",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "podzol"
+  },
+  "nbt_sha256": "65225bcf774a5e81c6d423ac39cf70e768412751958d9a26a2a90813950f1d40"
+}

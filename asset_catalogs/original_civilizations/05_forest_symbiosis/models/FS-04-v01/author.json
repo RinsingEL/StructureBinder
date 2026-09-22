@@ -1,0 +1,241 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "FS-04-v01",
+  "name": "蹄铃驿 · 林间兽驿",
+  "family": "FS-04",
+  "civilization": "森林共生文明",
+  "planning_role": "planning_role.key",
+  "size": [
+    43,
+    24,
+    35
+  ],
+  "terrain": {
+    "选址": "宽度足够的林路停歇处；兽栏与旅客门口分开，南侧须有真实动物到达路径",
+    "落地": "只整理建筑本体与步道；保留未写入的林地。附树版本包含独立柱脚和树根占地，不能套入任意现存树体。",
+    "高程": "主入口脚底 Y=3；高位层和坡地接驳另见楼层与使用点",
+    "运行边界": "种植、蜂具、藤果、兽栏与遗留物均为原版静态空间表达；实际生产、动物和生态行为须另行接入。"
+  },
+  "rooms": [
+    {
+      "id": "guest",
+      "name": "家庭生活空间",
+      "min": [
+        5,
+        3,
+        19
+      ],
+      "max": [
+        19,
+        7,
+        26
+      ],
+      "purpose": "烹饪、饮水、餐桌、床位与储藏齐备；中央保留穿行"
+    },
+    {
+      "id": "arrival",
+      "name": "驿站接待厅",
+      "min": [
+        5,
+        3,
+        7
+      ],
+      "max": [
+        19,
+        7,
+        17
+      ],
+      "purpose": "旅人登记、公共座位和餐桌"
+    },
+    {
+      "id": "stable",
+      "name": "双间照护棚",
+      "min": [
+        29,
+        3,
+        9
+      ],
+      "max": [
+        37,
+        7,
+        23
+      ],
+      "purpose": "独立照护隔间，宽侧开口接南北赶畜通路"
+    }
+  ],
+  "points": [
+    {
+      "id": "guestbed0",
+      "kind": "sleep",
+      "pos": [
+        6,
+        3,
+        25
+      ],
+      "name": "林居床位",
+      "approach": [
+        7,
+        3,
+        25
+      ]
+    },
+    {
+      "id": "guestbed1",
+      "kind": "sleep",
+      "pos": [
+        9,
+        3,
+        25
+      ],
+      "name": "林居床位",
+      "approach": [
+        10,
+        3,
+        25
+      ]
+    },
+    {
+      "id": "guestcook",
+      "kind": "work",
+      "pos": [
+        18,
+        3,
+        20
+      ],
+      "name": "烹饪炉",
+      "approach": [
+        17,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "gueststore",
+      "kind": "storage",
+      "pos": [
+        16,
+        4,
+        26
+      ],
+      "name": "衣物、食物与随身物品",
+      "approach": [
+        16,
+        3,
+        25
+      ]
+    },
+    {
+      "id": "welcome",
+      "kind": "work",
+      "pos": [
+        7,
+        3,
+        9
+      ],
+      "name": "住宿与旅具登记",
+      "approach": [
+        7,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "care11",
+      "kind": "work",
+      "pos": [
+        36,
+        3,
+        11
+      ],
+      "name": "饲喂与饮水",
+      "approach": [
+        35,
+        3,
+        11
+      ]
+    },
+    {
+      "id": "care20",
+      "kind": "work",
+      "pos": [
+        36,
+        3,
+        20
+      ],
+      "name": "饲喂与饮水",
+      "approach": [
+        35,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "gear",
+      "kind": "storage",
+      "pos": [
+        29,
+        4,
+        29
+      ],
+      "name": "饲料、鞍具和维修物资",
+      "approach": [
+        29,
+        3,
+        28
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        23,
+        3,
+        2
+      ],
+      "name": "林间步道入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        23,
+        2,
+        2
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "外接步道脚底 Y=3，须保留树根与基础占地"
+    }
+  ],
+  "design_notes": [
+    "客房位于主屋后段，栏棚与主屋之间是宽阔的照护与卸具通道；动物行为未实现。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "林下使用层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/forest_symbiosis.py:FS-04-v01",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "podzol"
+  },
+  "nbt_sha256": "0831bcfedaa49d7a498a89962a35df140fc5185fa95bbcd86c257d49b68fc4a5"
+}

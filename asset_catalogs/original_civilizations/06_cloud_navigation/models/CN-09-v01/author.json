@@ -1,0 +1,231 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CN-09-v01",
+  "name": "三庭观云馆 · 气象学馆",
+  "family": "CN-09",
+  "civilization": "云海航行文明",
+  "planning_role": "planning_role.key",
+  "size": [
+    53,
+    36,
+    51
+  ],
+  "terrain": {
+    "选址": "高原岩台边缘，北侧接稳定地面，南侧朝开阔谷地",
+    "高程": "主平台地板 Y=7，入口脚底 Y=8；外接同高岩台道路",
+    "固定与承重": "北侧石砌锚座压在实体岩台，南侧木梁和斜撑回接石墩；石墩底必须落在连续承载岩层。不可当作无支撑浮空结构。",
+    "接驳边界": "模板内支撑与边栏完整；外侧山体、接驳道路、峡谷宽度及航行净空必须按实际场地核对。",
+    "运行边界": "泊位、缆索、风向仪、船体与吊装均为静态空间表达；未实现飞行、气象、物流或受力模拟。"
+  },
+  "rooms": [
+    {
+      "id": "teaching",
+      "name": "西翼气象教室",
+      "min": [
+        7,
+        8,
+        8
+      ],
+      "max": [
+        20,
+        13,
+        24
+      ],
+      "purpose": "讲台、双排学习桌与书架"
+    },
+    {
+      "id": "lab",
+      "name": "东翼样本实验间",
+      "min": [
+        31,
+        8,
+        8
+      ],
+      "max": [
+        44,
+        13,
+        24
+      ],
+      "purpose": "水样、样本器材、记录与分类柜"
+    },
+    {
+      "id": "archive",
+      "name": "南翼档案与轮值",
+      "min": [
+        14,
+        8,
+        32
+      ],
+      "max": [
+        38,
+        14,
+        42
+      ],
+      "purpose": "长时观测档案、查阅桌和轮值床位"
+    },
+    {
+      "id": "court",
+      "name": "仪器观测庭",
+      "min": [
+        23,
+        8,
+        12
+      ],
+      "max": [
+        28,
+        19,
+        29
+      ],
+      "purpose": "无遮蔽的雨量与温度仪器示意，实测环境另核对"
+    }
+  ],
+  "points": [
+    {
+      "id": "lecture",
+      "kind": "work",
+      "pos": [
+        9,
+        8,
+        11
+      ],
+      "name": "教学讲台",
+      "approach": [
+        9,
+        8,
+        12
+      ]
+    },
+    {
+      "id": "lab",
+      "kind": "work",
+      "pos": [
+        33,
+        8,
+        12
+      ],
+      "name": "观测样本整理",
+      "approach": [
+        33,
+        8,
+        13
+      ]
+    },
+    {
+      "id": "archive",
+      "kind": "work",
+      "pos": [
+        17,
+        8,
+        35
+      ],
+      "name": "气候档案查阅",
+      "approach": [
+        17,
+        8,
+        36
+      ]
+    },
+    {
+      "id": "duty_1",
+      "kind": "sleep",
+      "pos": [
+        32,
+        8,
+        41
+      ],
+      "name": "值守/船员床位",
+      "approach": [
+        33,
+        8,
+        41
+      ]
+    },
+    {
+      "id": "duty_2",
+      "kind": "sleep",
+      "pos": [
+        35,
+        8,
+        41
+      ],
+      "name": "值守/船员床位",
+      "approach": [
+        36,
+        8,
+        41
+      ]
+    },
+    {
+      "id": "gauge",
+      "kind": "work",
+      "pos": [
+        25,
+        8,
+        27
+      ],
+      "name": "雨量计与观测庭",
+      "approach": [
+        25,
+        8,
+        26
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        25,
+        8,
+        3
+      ],
+      "name": "岩台地面入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        25,
+        7,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "岩台地面入口，外接脚底 Y=8 的连续道路"
+    }
+  ],
+  "design_notes": [
+    "教学与实验分列两翼，后部档案形成三面围庭；中庭仪器与高旗杆成为公共辨识点。",
+    "庭院不是已实现气象采样系统；选址应避开实际风雨遮蔽，书馆样本和观测机制另接。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "岩台主层",
+      "y": 7,
+      "max_y": 13
+    }
+  ],
+  "roof_min_y": 14,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/cloud_navigation.py",
+  "preview_context": {
+    "kind": "slope",
+    "land_surface_y": 8,
+    "bed_y": -3,
+    "padding": 4,
+    "run": 8,
+    "rise": -1,
+    "slope_origin_z": 0,
+    "surface": "snow"
+  },
+  "nbt_sha256": "c6a64bb3e905642f42cb070ac17bc5385e2ba99077fbd16f833e0b5f7f9b8658"
+}

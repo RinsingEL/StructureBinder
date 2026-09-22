@@ -1,0 +1,216 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CN-10-v01",
+  "name": "双翼航图厅 · 航路议事所",
+  "family": "CN-10",
+  "civilization": "云海航行文明",
+  "planning_role": "planning_role.key",
+  "size": [
+    53,
+    37,
+    49
+  ],
+  "terrain": {
+    "选址": "高原岩台边缘，北侧接稳定地面，南侧朝开阔谷地",
+    "高程": "主平台地板 Y=7，入口脚底 Y=8；外接同高岩台道路",
+    "固定与承重": "北侧石砌锚座压在实体岩台，南侧木梁和斜撑回接石墩；石墩底必须落在连续承载岩层。不可当作无支撑浮空结构。",
+    "接驳边界": "模板内支撑与边栏完整；外侧山体、接驳道路、峡谷宽度及航行净空必须按实际场地核对。",
+    "运行边界": "泊位、缆索、风向仪、船体与吊装均为静态空间表达；未实现飞行、气象、物流或受力模拟。"
+  },
+  "rooms": [
+    {
+      "id": "hall",
+      "name": "高脊议事大厅",
+      "min": [
+        15,
+        8,
+        8
+      ],
+      "max": [
+        37,
+        16,
+        26
+      ],
+      "purpose": "航图长桌、代表长椅、主席台和后庭双门"
+    },
+    {
+      "id": "records",
+      "name": "西侧航路档案翼",
+      "min": [
+        6,
+        8,
+        16
+      ],
+      "max": [
+        11,
+        13,
+        35
+      ],
+      "purpose": "分类档案和管理记录"
+    },
+    {
+      "id": "guest",
+      "name": "东侧会客翼",
+      "min": [
+        42,
+        8,
+        16
+      ],
+      "max": [
+        46,
+        13,
+        35
+      ],
+      "purpose": "来访登记、座席与小型会客空间"
+    },
+    {
+      "id": "forum",
+      "name": "后庭讨论廊",
+      "min": [
+        19,
+        8,
+        34
+      ],
+      "max": [
+        33,
+        14,
+        41
+      ],
+      "purpose": "有顶室外讨论、观景和会后交流"
+    }
+  ],
+  "points": [
+    {
+      "id": "chair",
+      "kind": "work",
+      "pos": [
+        23,
+        8,
+        11
+      ],
+      "name": "航路议事主席台",
+      "approach": [
+        23,
+        8,
+        12
+      ]
+    },
+    {
+      "id": "council",
+      "kind": "work",
+      "pos": [
+        25,
+        8,
+        18
+      ],
+      "name": "公共航图议事桌",
+      "approach": [
+        25,
+        8,
+        16
+      ]
+    },
+    {
+      "id": "records",
+      "kind": "work",
+      "pos": [
+        7,
+        8,
+        20
+      ],
+      "name": "航路管理档案",
+      "approach": [
+        7,
+        8,
+        21
+      ]
+    },
+    {
+      "id": "guest",
+      "kind": "work",
+      "pos": [
+        43,
+        8,
+        19
+      ],
+      "name": "会客与预约",
+      "approach": [
+        43,
+        8,
+        20
+      ]
+    },
+    {
+      "id": "forum",
+      "kind": "circulation",
+      "pos": [
+        26,
+        8,
+        40
+      ],
+      "name": "后庭公共讨论廊",
+      "look_at": [
+        26,
+        11,
+        36
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        26,
+        8,
+        3
+      ],
+      "name": "岩台地面入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        26,
+        7,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "岩台地面入口，外接脚底 Y=8 的连续道路"
+    }
+  ],
+  "design_notes": [
+    "高脊中厅、狭长档案与会客双翼、后庭凉廊构成公共院落。",
+    "桌面航图为静态陈设；本体不承诺航线管理或议事机制。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "岩台主层",
+      "y": 7,
+      "max_y": 13
+    }
+  ],
+  "roof_min_y": 14,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/cloud_navigation.py",
+  "preview_context": {
+    "kind": "slope",
+    "land_surface_y": 8,
+    "bed_y": -3,
+    "padding": 4,
+    "run": 8,
+    "rise": -1,
+    "slope_origin_z": 0,
+    "surface": "snow"
+  },
+  "nbt_sha256": "177fbb65bf3fb1448775d02094ff36f177fc1c1a666a80819ccd54eb01e12ace"
+}

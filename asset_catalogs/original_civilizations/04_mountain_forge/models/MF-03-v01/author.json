@@ -1,0 +1,206 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-03-v01",
+  "name": "赤脉地热炉厅",
+  "family": "MF-03",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.key",
+  "size": [
+    35,
+    23,
+    31
+  ],
+  "terrain": {
+    "选址": "山前矿业聚落的稳定石质台地，正面朝 -Z；须避开落石、塌陷和洪水通道。",
+    "高程": "基础上边界及室内脚底 Y=2；入口街面需同高程。",
+    "保留空间": "完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。",
+    "前提": "仅适用于设定具有可利用地热且可隔离危险区域的场地；本体热井由岩浆块视觉表达，无熔岩流体。"
+  },
+  "rooms": [
+    {
+      "id": "hearths",
+      "name": "双热井炉组",
+      "min": [
+        7,
+        2,
+        10
+      ],
+      "max": [
+        26,
+        10,
+        16
+      ],
+      "purpose": "两组封护热井、四侧炉门及独立检修环道"
+    },
+    {
+      "id": "forge",
+      "name": "后部锻打与冷却",
+      "min": [
+        4,
+        2,
+        19
+      ],
+      "max": [
+        30,
+        6,
+        25
+      ],
+      "purpose": "三处铁砧、淬冷水盆、成品和工具储存"
+    },
+    {
+      "id": "control",
+      "name": "炉前调度与工具带",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        30,
+        6,
+        8
+      ],
+      "purpose": "工序登记、工具与材料转运"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        17,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "hearth10",
+      "kind": "work",
+      "pos": [
+        8,
+        2,
+        12
+      ],
+      "name": "炉前检修与投料",
+      "approach": [
+        7,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "hearth23",
+      "kind": "work",
+      "pos": [
+        21,
+        2,
+        12
+      ],
+      "name": "炉前检修与投料",
+      "approach": [
+        20,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "anvil5",
+      "kind": "work",
+      "pos": [
+        5,
+        2,
+        21
+      ],
+      "name": "锻打工位",
+      "approach": [
+        5,
+        2,
+        20
+      ]
+    },
+    {
+      "id": "anvil15",
+      "kind": "work",
+      "pos": [
+        15,
+        2,
+        21
+      ],
+      "name": "锻打工位",
+      "approach": [
+        15,
+        2,
+        20
+      ]
+    },
+    {
+      "id": "anvil28",
+      "kind": "work",
+      "pos": [
+        28,
+        2,
+        21
+      ],
+      "name": "锻打工位",
+      "approach": [
+        28,
+        2,
+        20
+      ]
+    },
+    {
+      "id": "foreman",
+      "kind": "work",
+      "pos": [
+        5,
+        2,
+        5
+      ],
+      "name": "炉班记录",
+      "approach": [
+        5,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "rear",
+      "kind": "entrance",
+      "pos": [
+        17,
+        2,
+        27
+      ],
+      "name": "后部矿料卸货面"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "两组高烟罩热井平行放置，中央宽材料通路和外缘检修环道相通；后排锻打冷却、前排登记工具。"
+  ],
+  "differences": [
+    "宽跨工业厅、双热井、三锻台与前后分别装卸。"
+  ],
+  "floors": [
+    {
+      "name": "炉厅作业层",
+      "y": 1,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 11,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_forge.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "nbt_sha256": "f5182cad37e302b3604166367afa74d81d5efec90625f8e456b9093271e87f9f"
+}

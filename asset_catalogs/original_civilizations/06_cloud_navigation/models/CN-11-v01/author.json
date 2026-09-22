@@ -1,0 +1,171 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CN-11-v01",
+  "name": "断缆旧站 · 废弃泊塔",
+  "family": "CN-11",
+  "civilization": "云海航行文明",
+  "planning_role": "planning_role.structure",
+  "size": [
+    41,
+    36,
+    43
+  ],
+  "terrain": {
+    "选址": "已停用航路上的旧岩台泊位，主体地基仍稳定；南侧破损设施封边，保留北侧探索通路",
+    "高程": "主平台地板 Y=7，入口脚底 Y=8；外接同高岩台道路",
+    "固定与承重": "北侧石砌锚座压在实体岩台，南侧木梁和斜撑回接石墩；石墩底必须落在连续承载岩层。不可当作无支撑浮空结构。",
+    "接驳边界": "模板内支撑与边栏完整；外侧山体、接驳道路、峡谷宽度及航行净空必须按实际场地核对。",
+    "运行边界": "泊位、缆索、风向仪、船体与吊装均为静态空间表达；未实现飞行、气象、物流或受力模拟。"
+  },
+  "rooms": [
+    {
+      "id": "shelter",
+      "name": "旧站务避风房",
+      "min": [
+        7,
+        8,
+        9
+      ],
+      "max": [
+        20,
+        13,
+        24
+      ],
+      "purpose": "可读旧档案、临时勘察桌和单床；保留完整的避雨屋面"
+    },
+    {
+      "id": "ruin",
+      "name": "封闭的断缆泊位",
+      "min": [
+        24,
+        8,
+        27
+      ],
+      "max": [
+        36,
+        22,
+        38
+      ],
+      "purpose": "断链、破板与持续封边；标记只位于安全侧"
+    }
+  ],
+  "points": [
+    {
+      "id": "oldlog",
+      "kind": "work",
+      "pos": [
+        9,
+        8,
+        13
+      ],
+      "name": "旧航路日志与临时勘察记录",
+      "approach": [
+        9,
+        8,
+        14
+      ]
+    },
+    {
+      "id": "camp_1",
+      "kind": "sleep",
+      "pos": [
+        15,
+        8,
+        23
+      ],
+      "name": "值守/船员床位",
+      "approach": [
+        16,
+        8,
+        23
+      ]
+    },
+    {
+      "id": "inspect",
+      "kind": "circulation",
+      "pos": [
+        29,
+        8,
+        30
+      ],
+      "name": "旧泊位封闭线",
+      "look_at": [
+        30,
+        8,
+        37
+      ]
+    },
+    {
+      "id": "salvage",
+      "kind": "storage",
+      "pos": [
+        30,
+        8,
+        27
+      ],
+      "name": "回收缆索箱",
+      "approach": [
+        30,
+        8,
+        26
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        25,
+        8,
+        3
+      ],
+      "name": "岩台地面入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        25,
+        7,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "岩台地面入口，外接脚底 Y=8 的连续道路"
+    }
+  ],
+  "design_notes": [
+    "废弃状态来自断链、拆除的登船端、后部破板和封边，不牺牲仍可探索的旧站务室。",
+    "只在航路改变的历史节点明确选用；破损区不可作为运行中的泊位。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "岩台主层",
+      "y": 7,
+      "max_y": 13
+    }
+  ],
+  "roof_min_y": 14,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/cloud_navigation.py",
+  "preview_context": {
+    "kind": "slope",
+    "land_surface_y": 8,
+    "bed_y": -3,
+    "padding": 4,
+    "run": 8,
+    "rise": -1,
+    "slope_origin_z": 0,
+    "surface": "snow"
+  },
+  "nbt_sha256": "e57407cf977acc1ccbc2703c422ed3edb82a99ee84d197f8a83c59688a0917ba"
+}

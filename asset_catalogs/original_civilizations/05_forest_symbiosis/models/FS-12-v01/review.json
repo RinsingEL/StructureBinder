@@ -1,0 +1,34 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "FS-12-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 森林建模作者离线实看",
+  "nbt_sha256": "1bafa22f716cb54b43f59e758e779558ddd4f576dd4122b3ec9a37342981dc13",
+  "author_sha256": "3dd526d359268ef09c49c70fe07ccebfeb7b84af194a583ac720f55c8dd51b42",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-study.png",
+    "previews/room-court.png",
+    "previews/point-trace.png",
+    "previews/point-relic.png",
+    "previews/point-court.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "已逐张查看14张最终截图：石砌拱顶残段、旧庭断墙与完整落地根盘可辨；西侧探索线贯通。",
+    "剖切可见档案、刻石和遗留物，全部作者标记可达；专项遗址不作为普通重复填充。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

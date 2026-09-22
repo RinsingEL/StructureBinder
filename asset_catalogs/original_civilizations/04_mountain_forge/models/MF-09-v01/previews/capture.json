@@ -1,0 +1,30 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "MF-09-v01",
+  "nbt_sha256": "6eeb5dfad74955ace10daeafb5898c37ffdeec6785410a32dd9d49ba2f119577",
+  "author_sha256": "d078527ceb04080676001e74bf09a221d9e8a736424458a6d27ae2598a56394b",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-school",
+    "room-museum",
+    "room-council",
+    "room-court",
+    "point-clerk",
+    "point-teacher12",
+    "point-teacher17",
+    "point-display",
+    "point-archive",
+    "point-council",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

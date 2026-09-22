@@ -1,0 +1,137 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "FS-05-v01",
+  "name": "枝议台 · 树冠议事堂",
+  "family": "FS-05",
+  "civilization": "森林共生文明",
+  "planning_role": "planning_role.key",
+  "size": [
+    43,
+    35,
+    42
+  ],
+  "terrain": {
+    "选址": "可容纳完整根盘的大林隙；议事层由落地木柱和树旁梁架共同支承，北侧长阶连接林路",
+    "落地": "只整理建筑本体与步道；保留未写入的林地。附树版本包含独立柱脚和树根占地，不能套入任意现存树体。",
+    "高程": "主入口脚底 Y=3；高位层和坡地接驳另见楼层与使用点",
+    "运行边界": "种植、蜂具、藤果、兽栏与遗留物均为原版静态空间表达；实际生产、动物和生态行为须另行接入。"
+  },
+  "rooms": [
+    {
+      "id": "council",
+      "name": "树冠议事厅",
+      "min": [
+        15,
+        11,
+        15
+      ],
+      "max": [
+        28,
+        15,
+        32
+      ],
+      "purpose": "围桌议事、发言、档案与有遮蔽等候"
+    }
+  ],
+  "points": [
+    {
+      "id": "speak",
+      "kind": "work",
+      "pos": [
+        22,
+        11,
+        21
+      ],
+      "name": "议事发言与记录",
+      "approach": [
+        22,
+        11,
+        20
+      ]
+    },
+    {
+      "id": "archive",
+      "kind": "storage",
+      "pos": [
+        18,
+        12,
+        32
+      ],
+      "name": "议决档案与公共物品",
+      "approach": [
+        18,
+        11,
+        31
+      ]
+    },
+    {
+      "id": "landing",
+      "kind": "circulation",
+      "pos": [
+        10,
+        11,
+        15
+      ],
+      "name": "树冠层落脚平台"
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        7,
+        3,
+        2
+      ],
+      "name": "林间步道入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        7,
+        2,
+        2
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "外接步道脚底 Y=3，须保留树根与基础占地"
+    }
+  ],
+  "design_notes": [
+    "实际可步行的宽长阶上升八格；高位桥台连接完整室内，根部和柱脚分别可见。",
+    "树冠只是建筑适配环境，不表达活树自动生长或跨树网络。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "林下到达与柱脚",
+      "y": 2,
+      "max_y": 9
+    },
+    {
+      "name": "树冠议事层",
+      "y": 10,
+      "max_y": 15
+    }
+  ],
+  "roof_min_y": 16,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/forest_symbiosis.py:FS-05-v01",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "podzol"
+  },
+  "nbt_sha256": "7c8ed8b016987641aa796fde1f5ef4010ae1001be80a1875a13dc6f48f662351"
+}

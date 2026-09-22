@@ -1,0 +1,28 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "MF-12-v01",
+  "nbt_sha256": "d886b74759aac6159a171813918f56c50a7a33af7c81bef85ed11ef2dad33162",
+  "author_sha256": "97c46e484c720cc2c730f7b0a59080ae891a6e2be9d071775c669960177e6fa6",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-pumps",
+    "room-duty",
+    "room-repair",
+    "point-duty",
+    "point-watch",
+    "point-pump8",
+    "point-pump21",
+    "point-repair",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

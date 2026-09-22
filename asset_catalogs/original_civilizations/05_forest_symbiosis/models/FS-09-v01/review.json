@@ -1,0 +1,40 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "FS-09-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 森林建模作者离线实看",
+  "nbt_sha256": "6c654aa01313aa90229163837f770ef49c1e467a729f086388e464f4973fc459",
+  "author_sha256": "7a5eb267a3b6423a5421105d8362cc772d1ef77b223371d978dcc7a2785d0519",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-food.png",
+    "previews/room-weave.png",
+    "previews/room-tools.png",
+    "previews/point-food.png",
+    "previews/point-foodstock.png",
+    "previews/point-weave.png",
+    "previews/point-weavestock.png",
+    "previews/point-tools.png",
+    "previews/point-toolsstock.png",
+    "previews/point-ledger.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "已逐张查看19张最终截图：三种行业柜台、后货架及公共座位与中央主路分开；树根不占交易站位。",
+    "棚顶与梁柱连续，切片可看到行业作业与周转储物；原版静态外形不代表自动交易。",
+    "承檐修复后已重拍并逐张重看全部最终视角：实际墙线上连续整块木梁闭合屋面接缝；有苔毯的棚顶位置改为实心木板承托。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

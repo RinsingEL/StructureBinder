@@ -15,6 +15,9 @@ from .oasis_crafts import merchant,glassworks
 from .oasis_hospitality import inn,shop as oasis_shop
 from .waterway import waterway
 from .waterway_trade import warehouse,merchant as waterway_merchant
+from .mountain_forge import BUILDERS as MOUNTAIN_CORES
+from .forest_symbiosis import BUILDERS as FOREST_CORES
+from .cloud_navigation import BUILDERS as CLOUD_CORES
 from .validate import validate
 
 BUILDERS={"SR-01-v01":("01_steam_rail",steam_station),"WT-01-v01":("02_waterway_trade",passenger_quay)}
@@ -30,6 +33,8 @@ BUILDERS.update({f"DS-F01-v{i:02d}":("03_desert_stars",partial(oasis_shop,i)) fo
 BUILDERS.update({f"WT-{i:02d}-v01":("02_waterway_trade",partial(waterway,i)) for i in (3,4,9,10,11,12)})
 for family,builder in (("WT-02",warehouse),("WT-05",waterway_merchant)):
     BUILDERS.update({f"{family}-v{i:02d}":("02_waterway_trade",partial(builder,i)) for i in range(1,5)})
+for civilization,builders in (("04_mountain_forge",MOUNTAIN_CORES),("05_forest_symbiosis",FOREST_CORES),("06_cloud_navigation",CLOUD_CORES)):
+    BUILDERS.update({key:(civilization,builder) for key,builder in builders.items()})
 
 
 def main():

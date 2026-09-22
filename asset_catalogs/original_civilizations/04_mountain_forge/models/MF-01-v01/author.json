@@ -1,0 +1,220 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-01-v01",
+  "name": "岩脉转运站",
+  "family": "MF-01",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.key",
+  "size": [
+    37,
+    22,
+    33
+  ],
+  "terrain": {
+    "选址": "山前矿业聚落的稳定石质台地，正面朝 -Z；须避开落石、塌陷和洪水通道。",
+    "高程": "基础上边界及室内脚底 Y=2；入口街面需同高程。",
+    "保留空间": "完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "rooms": [
+    {
+      "id": "dispatch",
+      "name": "调度值班所",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        12,
+        6,
+        17
+      ],
+      "purpose": "登记、运单、值守与更班"
+    },
+    {
+      "id": "ore",
+      "name": "分类理货库",
+      "min": [
+        24,
+        2,
+        4
+      ],
+      "max": [
+        32,
+        6,
+        19
+      ],
+      "purpose": "矿料分类、称量和手车周转"
+    },
+    {
+      "id": "tracks",
+      "name": "矿车装卸雨棚",
+      "min": [
+        4,
+        2,
+        22
+      ],
+      "max": [
+        34,
+        6,
+        30
+      ],
+      "purpose": "两条横向矿车线与中部三格装卸通路"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        8,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "entry_28_3",
+      "kind": "entrance",
+      "pos": [
+        28,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "desk",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        6
+      ],
+      "name": "登记书写台",
+      "approach": [
+        6,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "watch",
+      "kind": "bed",
+      "pos": [
+        10,
+        2,
+        15
+      ],
+      "name": "值守床",
+      "approach": [
+        9,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "weigh",
+      "kind": "work",
+      "pos": [
+        31,
+        2,
+        11
+      ],
+      "name": "理货秤台",
+      "approach": [
+        30,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "crane",
+      "kind": "work",
+      "pos": [
+        16,
+        2,
+        9
+      ],
+      "name": "手动吊架绞盘",
+      "approach": [
+        17,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "platform",
+      "kind": "circulation",
+      "pos": [
+        18,
+        2,
+        26
+      ],
+      "name": "双线间装卸廊",
+      "look_at": [
+        26,
+        2,
+        26
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "rail",
+      "pos": [
+        2,
+        2,
+        24
+      ],
+      "direction": "west",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "东西向水平矿车轨；外部线路与运输逻辑另行接入。"
+    },
+    {
+      "kind": "rail",
+      "pos": [
+        2,
+        2,
+        28
+      ],
+      "direction": "west",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "东西向水平矿车轨；外部线路与运输逻辑另行接入。"
+    }
+  ],
+  "design_notes": [
+    "双矿车线雨棚与前场分离；西翼运单值班，东翼分类仓，中央手吊与矿料周转。"
+  ],
+  "differences": [
+    "横向贯通双轨，三格中岛与前侧货场；生活值守不占装卸廊。"
+  ],
+  "floors": [
+    {
+      "name": "生活与作业层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_forge.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "nbt_sha256": "fc758d378f2c00fe1ae3def0e7c5c4a5c7c6dd0e3623e505d21d475c63a1c8bd"
+}

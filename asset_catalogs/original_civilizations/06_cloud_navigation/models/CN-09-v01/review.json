@@ -1,0 +1,46 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CN-09-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 云海建模代理（实际看图）",
+  "nbt_sha256": "c6a64bb3e905642f42cb070ac17bc5385e2ba99077fbd16f833e0b5f7f9b8658",
+  "author_sha256": "e5b40ef6a75c1af836bf4d50cf762a5b07d5dc2962c0094a21b0d48751d61095",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-teaching.png",
+    "previews/room-lab.png",
+    "previews/room-archive.png",
+    "previews/room-court.png",
+    "previews/point-lecture.png",
+    "previews/point-lab.png",
+    "previews/point-archive.png",
+    "previews/point-duty_1.png",
+    "previews/point-duty_2.png",
+    "previews/point-gauge.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "三翼围合观测庭，旗杆已移出档案房，雨量与仪器保持露天。",
+    "教学双排桌、样本实验、档案轮值和观测点完整；所有最终外观与室内截图已查看。",
+    "最终NBT数据与全部标记离线步行初筛通过，无错误或警告；所有capture.json列出的最终图片均已实际查看。",
+    "承檐层、山墙坡顶、亭盖柱与楼梯侧栏底板修订后，133张核心最终图重新实际查看；可见柱顶接屋面、墙顶连续承檐。"
+  ],
+  "revisions": [
+    "组合建筑采用最低天花板剖切与完整护栏，最终全部视角已实际查看。",
+    "撤回此前遗漏支承间隙的验收；补普通房屋承檐梁和山墙至坡顶，修复导航塔/议事后廊/回收棚柱顶以及泊塔阶梯护栏底板。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "模型只表达落在岩台或石墩的承重路径，不提供浮空或飞行机制。",
+    "环境图为理想下降坡示意，实际峡谷宽度、岩层承载和空中接驳需另行核对。"
+  ]
+}

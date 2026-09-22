@@ -1,0 +1,29 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "MF-03-v01",
+  "nbt_sha256": "f5182cad37e302b3604166367afa74d81d5efec90625f8e456b9093271e87f9f",
+  "author_sha256": "66c262a35bfada32c35d8fd5f2432e6c339e527ec757942046326d7e15a3e378",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-hearths",
+    "room-forge",
+    "room-control",
+    "point-hearth10",
+    "point-hearth23",
+    "point-anvil5",
+    "point-anvil15",
+    "point-anvil28",
+    "point-foreman",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

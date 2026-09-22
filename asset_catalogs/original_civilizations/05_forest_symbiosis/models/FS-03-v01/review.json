@@ -1,0 +1,38 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "FS-03-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 森林建模作者离线实看",
+  "nbt_sha256": "9bbd9a9d220760bf6a3c43b640f0a06828f5b715243cff717c40a2e581f1c569",
+  "author_sha256": "2bf2f02e5968c8a5b2c019f59709d89e1845a74e8ec5c11832193f4e6b875cc0",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-records.png",
+    "previews/room-reserve.png",
+    "previews/room-nursery.png",
+    "previews/point-seed.png",
+    "previews/point-register.png",
+    "previews/point-reserve.png",
+    "previews/point-sort.png",
+    "previews/point-nursery.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "已逐张查看17张最终截图：双馆与育苗廊屋面完整，根盘和绕行关系明确；记录与种子架均有实际取用站位。",
+    "扩展树冠及增加馆内分类架后重新拍图；林隙采光与种子库生产仅为作者空间设计。",
+    "承檐修复后已重拍并逐张重看全部最终视角：实际墙线上连续整块木梁闭合屋面接缝；有苔毯的棚顶位置改为实心木板承托。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

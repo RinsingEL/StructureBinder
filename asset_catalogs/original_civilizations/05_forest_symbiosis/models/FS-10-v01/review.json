@@ -1,0 +1,37 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "FS-10-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 森林建模作者离线实看",
+  "nbt_sha256": "fb0dd83ed4f6ae1ac253f0b64d36dc8edcd55f9ebb7e5a88c045a9fdd02d1808",
+  "author_sha256": "d81ff7438593018f0edd84d174ba6273e705851ce019e6b45ab38ea959ca3088",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-class.png",
+    "previews/room-specimen.png",
+    "previews/room-deck.png",
+    "previews/point-teach.png",
+    "previews/point-specimen.png",
+    "previews/point-observe.png",
+    "previews/point-deck.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "已逐张查看16张最终截图：教室桌椅、讲台、标本记录间和独立观察台可读；室内门与侧门贯通。",
+    "低棚梁架保留、切片移除屋顶，树体边界与观察面明确；观察台仅说明适用林缘方向。",
+    "承檐修复后已重拍并逐张重看全部最终视角：实际墙线上连续整块木梁闭合屋面接缝；有苔毯的棚顶位置改为实心木板承托。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

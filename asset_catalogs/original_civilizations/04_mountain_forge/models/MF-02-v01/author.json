@@ -1,0 +1,200 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MF-02-v01",
+  "name": "九阶提升塔",
+  "family": "MF-02",
+  "civilization": "山腹锻炉",
+  "planning_role": "planning_role.key",
+  "size": [
+    29,
+    23,
+    29
+  ],
+  "terrain": {
+    "选址": "山前矿业聚落的稳定石质台地，正面朝 -Z；须避开落石、塌陷和洪水通道。",
+    "高程": "下部脚底 Y=2，上部脚底 Y=11；九级三宽楼梯构成本体步行联系，上侧需匹配山地巷道。",
+    "保留空间": "完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。"
+  },
+  "rooms": [
+    {
+      "id": "register",
+      "name": "下部登记装备室",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        12,
+        6,
+        12
+      ],
+      "purpose": "矿井出入登记、装备与值守"
+    },
+    {
+      "id": "shaft",
+      "name": "提升井架",
+      "min": [
+        5,
+        2,
+        17
+      ],
+      "max": [
+        14,
+        19,
+        25
+      ],
+      "purpose": "围栏内吊台与导链，不能当作玩家电梯"
+    },
+    {
+      "id": "upper",
+      "name": "上部候运检修室",
+      "min": [
+        18,
+        11,
+        17
+      ],
+      "max": [
+        24,
+        15,
+        23
+      ],
+      "purpose": "上部等候、卷扬维护和桥头登记"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        8,
+        2,
+        2
+      ],
+      "name": "街面入口",
+      "facing": "north"
+    },
+    {
+      "id": "desk",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        6
+      ],
+      "name": "登记书写台",
+      "approach": [
+        6,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "upper",
+      "kind": "work",
+      "pos": [
+        20,
+        11,
+        22
+      ],
+      "name": "上层候运登记",
+      "approach": [
+        20,
+        11,
+        23
+      ]
+    },
+    {
+      "id": "service",
+      "kind": "work",
+      "pos": [
+        24,
+        11,
+        18
+      ],
+      "name": "卷扬维护",
+      "approach": [
+        23,
+        11,
+        18
+      ]
+    },
+    {
+      "id": "landing",
+      "kind": "circulation",
+      "pos": [
+        15,
+        11,
+        21
+      ],
+      "name": "上部接驳桥",
+      "look_at": [
+        10,
+        13,
+        21
+      ]
+    },
+    {
+      "id": "lower",
+      "kind": "circulation",
+      "pos": [
+        10,
+        2,
+        15
+      ],
+      "name": "下部候运",
+      "look_at": [
+        10,
+        4,
+        21
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        27,
+        11,
+        21
+      ],
+      "direction": "east",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "上层东门外接平台；外部山道须与脚底 Y=11 齐平，本体已可由楼梯抵达。"
+    }
+  ],
+  "design_notes": [
+    "石台托起上层候运室，外侧九级宽阶连上下接驳；独立四柱井架围住不可步行吊台。"
+  ],
+  "differences": [
+    "真实双高程步行联系；提升装置仅原版方块造型。"
+  ],
+  "floors": [
+    {
+      "name": "下部接驳",
+      "y": 1,
+      "max_y": 5
+    },
+    {
+      "name": "上部接驳",
+      "y": 10,
+      "max_y": 14
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mountain_forge.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 5
+  },
+  "nbt_sha256": "f886a779a193f1c34f50430cf832fbe0e673fc2cd6af40afd026772ed32af95a"
+}

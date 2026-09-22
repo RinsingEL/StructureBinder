@@ -1,0 +1,28 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "FS-03-v01",
+  "nbt_sha256": "9bbd9a9d220760bf6a3c43b640f0a06828f5b715243cff717c40a2e581f1c569",
+  "author_sha256": "2bf2f02e5968c8a5b2c019f59709d89e1845a74e8ec5c11832193f4e6b875cc0",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-records",
+    "room-reserve",
+    "room-nursery",
+    "point-seed",
+    "point-register",
+    "point-reserve",
+    "point-sort",
+    "point-nursery",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

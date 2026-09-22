@@ -1,0 +1,52 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CN-01-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 云海建模代理（实际看图）",
+  "nbt_sha256": "38e719a2334778d8c13b073cdd0d183771de13b0f09271a915133c617f7c02bf",
+  "author_sha256": "716bc29ebac1b30e17e4625d5dd1cea8ebcc67e0ae74287565dfe485219a7799",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-waiting.png",
+    "previews/room-station.png",
+    "previews/room-deck.png",
+    "previews/room-cargo.png",
+    "previews/point-ticket.png",
+    "previews/point-duty.png",
+    "previews/point-rest_1.png",
+    "previews/point-rest_2.png",
+    "previews/point-winch_12.png",
+    "previews/point-winch_38.png",
+    "previews/point-boarding.png",
+    "previews/point-cargo.png",
+    "previews/point-freight.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "双翼低房与高架泊台体量清楚，岩台锚座、柱梁与短登船廊可辨。",
+    "低层候船、站务、理货均有内饰；12级步梯连接高台，系留绞盘与登船标记逐点核对。",
+    "最终NBT数据与全部标记离线步行初筛通过，无错误或警告；所有capture.json列出的最终图片均已实际查看。",
+    "承檐层、山墙坡顶、亭盖柱与楼梯侧栏底板修订后，133张核心最终图重新实际查看；可见柱顶接屋面、墙顶连续承檐。",
+    "长外阶两侧栏杆补显式连接属性与上下重叠栏段，侧托从甲板连续上升；更新后的全部40张图片实际查看。"
+  ],
+  "revisions": [
+    "组合建筑采用最低天花板剖切与完整护栏，最终全部视角已实际查看。",
+    "撤回此前遗漏支承间隙的验收；补普通房屋承檐梁和山墙至坡顶，修复导航塔/议事后廊/回收棚柱顶以及泊塔阶梯护栏底板。",
+    "修复直接设置栅栏缺省连接属性导致只显示孤立立柱的问题；泊塔、导航塔阶梯均补连续栏段。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "模型只表达落在岩台或石墩的承重路径，不提供浮空或飞行机制。",
+    "环境图为理想下降坡示意，实际峡谷宽度、岩层承载和空中接驳需另行核对。"
+  ]
+}

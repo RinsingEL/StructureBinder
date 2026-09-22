@@ -1,0 +1,31 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "FS-04-v01",
+  "nbt_sha256": "0831bcfedaa49d7a498a89962a35df140fc5185fa95bbcd86c257d49b68fc4a5",
+  "author_sha256": "fa2b668efa39825eab63ad8da02b4d0af3e8d15fe048a89ec2b19e3c2331a865",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-guest",
+    "room-arrival",
+    "room-stable",
+    "point-guestbed0",
+    "point-guestbed1",
+    "point-guestcook",
+    "point-gueststore",
+    "point-welcome",
+    "point-care11",
+    "point-care20",
+    "point-gear",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

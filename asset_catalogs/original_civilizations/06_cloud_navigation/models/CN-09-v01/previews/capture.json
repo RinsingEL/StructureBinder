@@ -1,0 +1,30 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "CN-09-v01",
+  "nbt_sha256": "c6a64bb3e905642f42cb070ac17bc5385e2ba99077fbd16f833e0b5f7f9b8658",
+  "author_sha256": "e5b40ef6a75c1af836bf4d50cf762a5b07d5dc2962c0094a21b0d48751d61095",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-teaching",
+    "room-lab",
+    "room-archive",
+    "room-court",
+    "point-lecture",
+    "point-lab",
+    "point-archive",
+    "point-duty_1",
+    "point-duty_2",
+    "point-gauge",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}
