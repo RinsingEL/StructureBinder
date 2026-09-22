@@ -1,0 +1,47 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "WT-05-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 主智能体离线视觉复核",
+  "nbt_sha256": "fa8b3a0ebc27ab34575760bfffc16453bdfa7830308556e9b1b2e4c2d84e3b98",
+  "author_sha256": "cb26ba9c89c47c3d7c79892102c871b25aa6572522ed1c44ebb7598a2eb9b4ab",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-home.png",
+    "previews/room-shop.png",
+    "previews/room-court.png",
+    "previews/room-quay.png",
+    "previews/point-counter.png",
+    "previews/point-home_cook.png",
+    "previews/point-home_bed0.png",
+    "previews/point-home_bed1.png",
+    "previews/point-home_meal.png",
+    "previews/point-tea.png",
+    "previews/point-quay.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "前低台杂货铺与后高两格家庭院宅错开，中间石阶接生活院，后阶降至水岸栈道。",
+    "内饰与使用": "前低铺与后高宅以两级实体石阶相连，侧院有遮雨歇脚棚，后宅厨餐、双床与储物完整。",
+    "因地制宜": "具有实际街巷与家庭生活用水的岸上商住地块；前低台杂货铺与后高两格家庭院宅错开，中间石阶接生活院，后阶降至水岸栈道。；前铺与栈道脚底 Y=4，后家庭院宅脚底 Y=6；前后实体双级石阶联系岸上高台；保留明确岸壁与桩脚；模板外航行宽度、水深、洪水线及道路另按实际环境核对，不填平外部水道",
+    "支撑与最终图审": "实际复核本版全部外观、去屋顶、楼层、房间、站位、标记和环境 PNG；坡顶墙线补连续承檐梁，实体基座与岸桩承接主体。",
+    "标记与通路": "最终 NBT 与作者标记重新读取检查通过，入口到各已标站位可达，无错误或警告。"
+  },
+  "revisions": [
+    "修正外挑坡屋顶在实际墙线缺一格承檐梁的问题，重建并重新拍摄、查看全部证据。",
+    "侧院棚补齐柱顶与承檐梁。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "仓储、营业、住宿和水运由原版方块与作者标记表达，实际货运、经济与居民机制另行接入。"
+  ]
+}

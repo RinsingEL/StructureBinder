@@ -34,6 +34,7 @@ python cli.py serve
 - `studio/oasis_crafts.py`：商人庭院宅与玻璃工坊各四种；家居、会商、货物、窑前操作和窑后维护分别标记，覆盖转角、双庭、两层和分台布局。
 - `studio/oasis_hospitality.py`：四种旅人客栈与八种日常商铺；客房、餐饮、盥洗、维修及行业内饰分别布置，覆盖围院、窄街楼铺、转角院和微坡分台。
 - `studio/waterway.py`：造船坞、船闸管理所、港口海关、水利会馆、旧泵房与旧水神庙；分别布置生产、记录、货运、教学、维护和生活空间，记录岸线或上下游高程条件。
+- `studio/waterway_trade.py`：临水货栈与沿河商住楼各四种；窄岸、双层、贯通巷、验货院、街角裁帆、前低后高和阶岸院宅分别设计内饰、搬运路线、家庭空间及岸线接驳。
 - `studio/validate.py`：重新读取 NBT，检查边界、调色板、状态、门床配对、作者角色取值、标记与哈希；专项使用 structure，重复填充使用 fill。
 - `studio/navigation.py`：使用 1.20.1 碰撞盒的离线步行初筛，检查入口到标记站位；0.6×1.8 玩家体积、0.6 台阶高度。木门按玩家可打开处理，铁门保持原状。不模拟跳跃、游泳、爬梯和游戏逻辑。
 - `scripts/capture.mjs`：真实浏览器自动拍摄外观、分层、房间和标记，遇到渲染错误或缺纹理则失败。**拍图不自动批准审美**。
@@ -58,6 +59,8 @@ node scripts/smoke.mjs
 杜鹃与开花杜鹃的底座另按原版 1.20.1 的 dirt 标签、黏土或耕地检查。这不是对所有植物或所有邻居更新规则的模拟。按编号构建遇到数据错误、通路失败或警告时返回非零退出码。
 
 已有 Chromium 可通过 `STUDIO_CHROMIUM` 指定可执行文件，省去下载。`STUDIO_URL` 可覆盖本地服务地址。截图默认到 `runtime/captures/<编号>/`；也可传入第二个输出目录参数。截图清单携带 NBT 和作者 JSON 的 SHA-256，模型或标记变更后必须重拍、重审。
+
+屋顶复核按实际墙线、柱线检查支撑高程：外挑坡顶在内缩后的高度与檐口不同，必须有连续承檐梁；半砖要按上下半位置检查接触。远景外观与通路通过不能代替这项剖面检查。
 
 实际查看截图后，编写 JSON 数组记录 `id`、`reviewer`、`checks` 和 `reviewed_views`，可附 `revisions` 与 `limitations`。执行 `python -m studio.publish runtime/reviews.json` 会复核当前哈希及数据结果，再将截图归档到资产 `previews/` 并写入独立的 `review.json`。截图清单中的 `visual_review: pending` 仅表示拍摄工具自身未作视觉批准，最终结论以匹配当前哈希的 `review.json` 为准。
 

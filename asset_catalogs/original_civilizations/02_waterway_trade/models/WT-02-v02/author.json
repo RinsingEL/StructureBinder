@@ -1,0 +1,353 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "WT-02-v02",
+  "name": "双层分货栈",
+  "family": "WT-02",
+  "civilization": "水网商邦",
+  "planning_role": "planning_role.fill",
+  "size": [
+    35,
+    31,
+    41
+  ],
+  "terrain": {
+    "选址": "有实际水陆转运需求、避风且可以支撑固定木桩的岸段",
+    "地块": "下层大宗货与过秤，上层干货分拣及独立值守账房，七级内梯接两层，后岸留整条装卸栈桥。",
+    "高程": "主地坪方块 Y=3、脚底 Y=4；参考水面 Y=3，水岸在 Z=32；两层版本上层脚底 Y=11",
+    "落地": "保留明确岸壁与桩脚；模板外航行宽度、水深、洪水线及道路另按实际环境核对，不填平外部水道"
+  },
+  "rooms": [
+    {
+      "id": "bulk",
+      "name": "底层大宗货仓",
+      "min": [
+        6,
+        4,
+        6
+      ],
+      "max": [
+        24,
+        8,
+        28
+      ],
+      "purpose": "大宗货物、地面过秤与南北装卸"
+    },
+    {
+      "id": "loft",
+      "name": "上层干货分拣",
+      "min": [
+        6,
+        11,
+        6
+      ],
+      "max": [
+        24,
+        16,
+        21
+      ],
+      "purpose": "干燥货物与内部搬运"
+    },
+    {
+      "id": "keeper",
+      "name": "上层账务值守",
+      "min": [
+        6,
+        11,
+        23
+      ],
+      "max": [
+        18,
+        16,
+        28
+      ],
+      "purpose": "账台、票据、歇床与饮水"
+    },
+    {
+      "id": "packing",
+      "name": "上层封箱",
+      "min": [
+        19,
+        11,
+        20
+      ],
+      "max": [
+        28,
+        16,
+        28
+      ],
+      "purpose": "分货工作台与周转箱"
+    },
+    {
+      "id": "quay",
+      "name": "水侧装卸栈桥",
+      "min": [
+        4,
+        4,
+        32
+      ],
+      "max": [
+        30,
+        8,
+        37
+      ],
+      "purpose": "水陆货物周转、桩基与登船净空"
+    }
+  ],
+  "points": [
+    {
+      "id": "stair_low",
+      "kind": "circulation",
+      "pos": [
+        26,
+        4,
+        11
+      ],
+      "name": "楼梯下口",
+      "look_at": [
+        26,
+        8,
+        17
+      ]
+    },
+    {
+      "id": "stair_high",
+      "kind": "circulation",
+      "pos": [
+        26,
+        11,
+        19
+      ],
+      "name": "楼梯上口",
+      "look_at": [
+        26,
+        8,
+        14
+      ]
+    },
+    {
+      "id": "bulk0",
+      "kind": "storage",
+      "pos": [
+        8,
+        4,
+        8
+      ],
+      "name": "周转货物",
+      "approach": [
+        7,
+        4,
+        8
+      ]
+    },
+    {
+      "id": "bulk1",
+      "kind": "storage",
+      "pos": [
+        8,
+        4,
+        17
+      ],
+      "name": "周转货物",
+      "approach": [
+        7,
+        4,
+        17
+      ]
+    },
+    {
+      "id": "bulk2",
+      "kind": "storage",
+      "pos": [
+        8,
+        4,
+        24
+      ],
+      "name": "周转货物",
+      "approach": [
+        7,
+        4,
+        24
+      ]
+    },
+    {
+      "id": "scale",
+      "kind": "work",
+      "pos": [
+        19,
+        4,
+        22
+      ],
+      "name": "地面货物过秤",
+      "approach": [
+        19,
+        4,
+        21
+      ]
+    },
+    {
+      "id": "ledger",
+      "kind": "work",
+      "pos": [
+        8,
+        11,
+        25
+      ],
+      "name": "上层账务与看守",
+      "approach": [
+        8,
+        11,
+        26
+      ]
+    },
+    {
+      "id": "bed",
+      "kind": "sleep",
+      "pos": [
+        16,
+        11,
+        27
+      ],
+      "name": "值守床位",
+      "approach": [
+        15,
+        11,
+        27
+      ]
+    },
+    {
+      "id": "dry0",
+      "kind": "storage",
+      "pos": [
+        8,
+        11,
+        8
+      ],
+      "name": "帆布分区",
+      "approach": [
+        7,
+        11,
+        8
+      ]
+    },
+    {
+      "id": "dry1",
+      "kind": "storage",
+      "pos": [
+        17,
+        11,
+        8
+      ],
+      "name": "帆布分区",
+      "approach": [
+        16,
+        11,
+        8
+      ]
+    },
+    {
+      "id": "pack",
+      "kind": "work",
+      "pos": [
+        20,
+        11,
+        24
+      ],
+      "name": "上层分货与封箱",
+      "approach": [
+        20,
+        11,
+        23
+      ]
+    },
+    {
+      "id": "quay",
+      "kind": "circulation",
+      "pos": [
+        17,
+        4,
+        36
+      ],
+      "name": "水侧装卸站位",
+      "look_at": [
+        17,
+        3,
+        39
+      ]
+    },
+    {
+      "id": "land",
+      "kind": "entrance",
+      "pos": [
+        17,
+        4,
+        4
+      ],
+      "name": "陆侧入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "boat",
+      "pos": [
+        17,
+        3,
+        38
+      ],
+      "direction": "south",
+      "clearance": [
+        7,
+        6
+      ],
+      "note": "停靠与装卸面；需匹配实际船只及岸线"
+    },
+    {
+      "kind": "pedestrian",
+      "pos": [
+        17,
+        3,
+        4
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "陆侧入口，脚底 Y=4；外部交通另接"
+    }
+  ],
+  "design_notes": [
+    "下层大宗货与过秤，上层干货分拣及独立值守账房，七级内梯接两层，后岸留整条装卸栈桥。"
+  ],
+  "differences": [
+    "下层大宗货与过秤，上层干货分拣及独立值守账房，七级内梯接两层，后岸留整条装卸栈桥。"
+  ],
+  "floors": [
+    {
+      "name": "底层营业与货运",
+      "y": 3,
+      "max_y": 8
+    },
+    {
+      "name": "上层生活与干货",
+      "y": 10,
+      "max_y": 16
+    }
+  ],
+  "roof_min_y": 18,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/waterway_trade.py:warehouse(2)",
+  "preview_context": {
+    "kind": "shore",
+    "shore_z": 32,
+    "land_surface_y": 4,
+    "water_surface_y": 3,
+    "bed_y": -1,
+    "padding": 4
+  },
+  "nbt_sha256": "418242f6a05e331f5507b21e97d9e626aedf7a8e9b01e21834ff9050c2dd2dc2"
+}

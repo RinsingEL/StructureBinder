@@ -1,6 +1,6 @@
 {
   "schema": "structure-studio.validation.v1",
-  "nbt_sha256": "09c768a2e40a71d3d5c68a6e0eadec1521c1a35a329c78bd43cb8a2e475a3aa8",
+  "nbt_sha256": "416534a0089322ccf91aa63e45645d2d1e95f043643e06f64356f90d5d0fb221",
   "navigation": {
     "passed": true,
     "unreachable": [],
@@ -17,14 +17,14 @@
     30,
     45
   ],
-  "visible_blocks": 9111,
-  "explicit_air": 46239,
+  "visible_blocks": 9353,
+  "explicit_air": 45997,
   "palette": 43,
   "block_entities": 0,
   "agriculture": null,
   "materials": {
     "minecraft:stone_bricks": 3700,
-    "minecraft:birch_planks": 1600,
+    "minecraft:birch_planks": 1826,
     "minecraft:white_terracotta": 990,
     "minecraft:smooth_sandstone": 978,
     "minecraft:brick_stairs": 506,
@@ -35,13 +35,13 @@
     "minecraft:cut_sandstone": 90,
     "minecraft:water": 66,
     "minecraft:birch_slab": 64,
+    "minecraft:stripped_birch_log": 40,
     "minecraft:birch_stairs": 36,
     "minecraft:glass_pane": 36,
     "minecraft:light_blue_stained_glass_pane": 32,
     "minecraft:blue_carpet": 30,
     "minecraft:chiseled_sandstone": 24,
     "minecraft:bookshelf": 24,
-    "minecraft:stripped_birch_log": 24,
     "minecraft:birch_trapdoor": 16,
     "minecraft:cyan_carpet": 10,
     "minecraft:birch_door": 8,
@@ -53,5 +53,5 @@
     "minecraft:cartography_table": 1,
     "minecraft:water_cauldron": 1
   },
-  "scope": "NBT、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
 }

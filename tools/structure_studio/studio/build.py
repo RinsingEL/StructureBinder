@@ -14,6 +14,7 @@ from .oasis_yards import beast_yard,vineyard,trade_shelter
 from .oasis_crafts import merchant,glassworks
 from .oasis_hospitality import inn,shop as oasis_shop
 from .waterway import waterway
+from .waterway_trade import warehouse,merchant as waterway_merchant
 from .validate import validate
 
 BUILDERS={"SR-01-v01":("01_steam_rail",steam_station),"WT-01-v01":("02_waterway_trade",passenger_quay)}
@@ -27,6 +28,8 @@ for family,builder in (("DS-02",beast_yard),("DS-F03",vineyard),("DS-F04",trade_
     BUILDERS.update({f"{family}-v{i:02d}":("03_desert_stars",partial(builder,i)) for i in range(1,5)})
 BUILDERS.update({f"DS-F01-v{i:02d}":("03_desert_stars",partial(oasis_shop,i)) for i in range(1,9)})
 BUILDERS.update({f"WT-{i:02d}-v01":("02_waterway_trade",partial(waterway,i)) for i in (3,4,9,10,11,12)})
+for family,builder in (("WT-02",warehouse),("WT-05",waterway_merchant)):
+    BUILDERS.update({f"{family}-v{i:02d}":("02_waterway_trade",partial(builder,i)) for i in range(1,5)})
 
 
 def main():

@@ -1,0 +1,30 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "WT-02-v04",
+  "nbt_sha256": "29c4568e2d2c9ba7942039235b2b77d782e9b993b516698655fa17494f88978e",
+  "author_sha256": "f2f17a05eac771c5b1ad1ee5e490a54c9856d478a4ab9f70697fbeb70d7a6614",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-ledger",
+    "room-inspect",
+    "room-main",
+    "room-quay",
+    "point-ledger",
+    "point-inspect",
+    "point-grain",
+    "point-cloth",
+    "point-pack",
+    "point-quay",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

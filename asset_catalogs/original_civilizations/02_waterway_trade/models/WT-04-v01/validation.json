@@ -1,6 +1,6 @@
 {
   "schema": "structure-studio.validation.v1",
-  "nbt_sha256": "9dc93e64aa45253f59faab59f9f4794bfd41fe9f42415380b967b21ad7109b5e",
+  "nbt_sha256": "4af97768a946537c1663555aee01436a0d3fd8ad03eee33cc1e1e63cf6e4c40a",
   "navigation": {
     "passed": true,
     "unreachable": [],
@@ -17,15 +17,15 @@
     30,
     59
   ],
-  "visible_blocks": 20377,
-  "explicit_air": 71981,
+  "visible_blocks": 20559,
+  "explicit_air": 71799,
   "palette": 59,
   "block_entities": 4,
   "agriculture": null,
   "materials": {
     "minecraft:stone_bricks": 12612,
+    "minecraft:birch_planks": 1760,
     "minecraft:water": 1729,
-    "minecraft:birch_planks": 1578,
     "minecraft:smooth_sandstone": 1401,
     "minecraft:white_terracotta": 1130,
     "minecraft:brick_stairs": 587,
@@ -64,5 +64,5 @@
     "minecraft:crafting_table": 1,
     "minecraft:anvil": 1
   },
-  "scope": "NBT、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
 }

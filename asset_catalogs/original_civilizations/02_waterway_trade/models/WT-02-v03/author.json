@@ -1,0 +1,258 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "WT-02-v03",
+  "name": "街水贯通双仓",
+  "family": "WT-02",
+  "civilization": "水网商邦",
+  "planning_role": "planning_role.fill",
+  "size": [
+    43,
+    25,
+    39
+  ],
+  "terrain": {
+    "选址": "有实际水陆转运需求、避风且可以支撑固定木桩的岸段",
+    "地块": "两条货仓夹三格贯通搬运巷，街侧小账房独立开门，分别存船材与绳帆，后端合流到长栈桥。",
+    "高程": "主地坪方块 Y=3、脚底 Y=4；参考水面 Y=3，水岸在 Z=30；两层版本上层脚底 Y=11",
+    "落地": "保留明确岸壁与桩脚；模板外航行宽度、水深、洪水线及道路另按实际环境核对，不填平外部水道"
+  },
+  "rooms": [
+    {
+      "id": "ledger",
+      "name": "独立街侧账房",
+      "min": [
+        5,
+        4,
+        6
+      ],
+      "max": [
+        15,
+        8,
+        13
+      ],
+      "purpose": "货单核对和档案"
+    },
+    {
+      "id": "timber",
+      "name": "西侧船材仓",
+      "min": [
+        5,
+        4,
+        18
+      ],
+      "max": [
+        15,
+        10,
+        27
+      ],
+      "purpose": "长木料与搬运侧道"
+    },
+    {
+      "id": "sail",
+      "name": "东侧绳帆仓",
+      "min": [
+        25,
+        4,
+        6
+      ],
+      "max": [
+        37,
+        9,
+        27
+      ],
+      "purpose": "帆布、绳具与打包作业"
+    },
+    {
+      "id": "lane",
+      "name": "街水贯通巷",
+      "min": [
+        17,
+        4,
+        5
+      ],
+      "max": [
+        23,
+        8,
+        29
+      ],
+      "purpose": "不进入仓内也可直通水岸的搬运通道"
+    },
+    {
+      "id": "quay",
+      "name": "水侧装卸栈桥",
+      "min": [
+        4,
+        4,
+        30
+      ],
+      "max": [
+        38,
+        8,
+        35
+      ],
+      "purpose": "水陆货物周转、桩基与登船净空"
+    }
+  ],
+  "points": [
+    {
+      "id": "ledger",
+      "kind": "work",
+      "pos": [
+        7,
+        4,
+        10
+      ],
+      "name": "街水货单核对",
+      "approach": [
+        7,
+        4,
+        11
+      ]
+    },
+    {
+      "id": "timber",
+      "kind": "storage",
+      "pos": [
+        6,
+        4,
+        20
+      ],
+      "name": "船材分区",
+      "approach": [
+        5,
+        4,
+        20
+      ]
+    },
+    {
+      "id": "cloth",
+      "kind": "storage",
+      "pos": [
+        29,
+        4,
+        7
+      ],
+      "name": "帆布分区",
+      "approach": [
+        28,
+        4,
+        7
+      ]
+    },
+    {
+      "id": "rope",
+      "kind": "storage",
+      "pos": [
+        29,
+        4,
+        19
+      ],
+      "name": "周转货物",
+      "approach": [
+        28,
+        4,
+        19
+      ]
+    },
+    {
+      "id": "bind",
+      "kind": "work",
+      "pos": [
+        27,
+        4,
+        16
+      ],
+      "name": "绳帆打包与修整",
+      "approach": [
+        27,
+        4,
+        15
+      ]
+    },
+    {
+      "id": "quay",
+      "kind": "circulation",
+      "pos": [
+        20,
+        4,
+        34
+      ],
+      "name": "水侧装卸站位",
+      "look_at": [
+        20,
+        3,
+        37
+      ]
+    },
+    {
+      "id": "land",
+      "kind": "entrance",
+      "pos": [
+        20,
+        4,
+        3
+      ],
+      "name": "陆侧入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "boat",
+      "pos": [
+        20,
+        3,
+        36
+      ],
+      "direction": "south",
+      "clearance": [
+        7,
+        6
+      ],
+      "note": "停靠与装卸面；需匹配实际船只及岸线"
+    },
+    {
+      "kind": "pedestrian",
+      "pos": [
+        20,
+        3,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "陆侧入口，脚底 Y=4；外部交通另接"
+    }
+  ],
+  "design_notes": [
+    "两条货仓夹三格贯通搬运巷，街侧小账房独立开门，分别存船材与绳帆，后端合流到长栈桥。"
+  ],
+  "differences": [
+    "两条货仓夹三格贯通搬运巷，街侧小账房独立开门，分别存船材与绳帆，后端合流到长栈桥。"
+  ],
+  "floors": [
+    {
+      "name": "岸台与地面空间",
+      "y": 3,
+      "max_y": 8
+    }
+  ],
+  "roof_min_y": 10,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/waterway_trade.py:warehouse(3)",
+  "preview_context": {
+    "kind": "shore",
+    "shore_z": 30,
+    "land_surface_y": 4,
+    "water_surface_y": 3,
+    "bed_y": -1,
+    "padding": 4
+  },
+  "nbt_sha256": "e4e62939875051d44dbaa1fc526c996bb4ef5ac3d2890cea51dd01830c1655a5"
+}

@@ -1,0 +1,46 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "WT-02-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 主智能体离线视觉复核",
+  "nbt_sha256": "e4e62939875051d44dbaa1fc526c996bb4ef5ac3d2890cea51dd01830c1655a5",
+  "author_sha256": "d238ead0d268c27e91d702d3b2d28476b3d991f5529687c1133a8af1e378d25a",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-ledger.png",
+    "previews/room-timber.png",
+    "previews/room-sail.png",
+    "previews/room-lane.png",
+    "previews/room-quay.png",
+    "previews/point-ledger.png",
+    "previews/point-timber.png",
+    "previews/point-cloth.png",
+    "previews/point-rope.png",
+    "previews/point-bind.png",
+    "previews/point-quay.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "两条货仓夹三格贯通搬运巷，街侧小账房独立开门，分别存船材与绳帆，后端合流到长栈桥。",
+    "内饰与使用": "小账房、船材仓、绳帆仓各自开门，中间通巷不穿过货架；木材、帆布、货箱和封包台清楚可辨。",
+    "因地制宜": "有实际水陆转运需求、避风且可以支撑固定木桩的岸段；两条货仓夹三格贯通搬运巷，街侧小账房独立开门，分别存船材与绳帆，后端合流到长栈桥。；主地坪方块 Y=3、脚底 Y=4；参考水面 Y=3，水岸在 Z=30；两层版本上层脚底 Y=11；保留明确岸壁与桩脚；模板外航行宽度、水深、洪水线及道路另按实际环境核对，不填平外部水道",
+    "支撑与最终图审": "实际复核本版全部外观、去屋顶、楼层、房间、站位、标记和环境 PNG；坡顶墙线补连续承檐梁，实体基座与岸桩承接主体。",
+    "标记与通路": "最终 NBT 与作者标记重新读取检查通过，入口到各已标站位可达，无错误或警告。"
+  },
+  "revisions": [
+    "修正外挑坡屋顶在实际墙线缺一格承檐梁的问题，重建并重新拍摄、查看全部证据。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "仓储、营业、住宿和水运由原版方块与作者标记表达，实际货运、经济与居民机制另行接入。"
+  ]
+}

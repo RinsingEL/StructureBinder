@@ -1,0 +1,333 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "WT-05-v02",
+  "name": "转角帆布店宅",
+  "family": "WT-05",
+  "civilization": "水网商邦",
+  "planning_role": "planning_role.fill",
+  "size": [
+    37,
+    31,
+    38
+  ],
+  "terrain": {
+    "选址": "具有实际街巷与家庭生活用水的岸上商住地块",
+    "地块": "L 形店宅西翼两层，北街陈列与楼上家庭生活，后侧低檐裁帆间向东巷开门，内角保留院落。",
+    "高程": "主地坪方块 Y=3、脚底 Y=4；参考水面 Y=3，水岸在 Z=31；两层版本上层脚底 Y=11",
+    "落地": "保留明确岸壁与桩脚；模板外航行宽度、水深、洪水线及道路另按实际环境核对，不填平外部水道"
+  },
+  "rooms": [
+    {
+      "id": "home",
+      "name": "家庭起居与睡眠",
+      "min": [
+        6,
+        11,
+        8
+      ],
+      "max": [
+        14,
+        16,
+        26
+      ],
+      "purpose": "完整餐食、清洗饮水、睡床与衣物储存"
+    },
+    {
+      "id": "shop",
+      "name": "北街帆布铺",
+      "min": [
+        5,
+        4,
+        7
+      ],
+      "max": [
+        15,
+        8,
+        27
+      ],
+      "purpose": "陈列、销售与后仓"
+    },
+    {
+      "id": "workshop",
+      "name": "东巷裁帆间",
+      "min": [
+        21,
+        4,
+        19
+      ],
+      "max": [
+        31,
+        8,
+        27
+      ],
+      "purpose": "织机、裁帆台与独立取货门"
+    },
+    {
+      "id": "quay",
+      "name": "水侧装卸栈桥",
+      "min": [
+        4,
+        4,
+        31
+      ],
+      "max": [
+        32,
+        8,
+        34
+      ],
+      "purpose": "水陆货物周转、桩基与登船净空"
+    }
+  ],
+  "points": [
+    {
+      "id": "stair_low",
+      "kind": "circulation",
+      "pos": [
+        17,
+        4,
+        10
+      ],
+      "name": "楼梯下口",
+      "look_at": [
+        17,
+        8,
+        16
+      ]
+    },
+    {
+      "id": "stair_high",
+      "kind": "circulation",
+      "pos": [
+        17,
+        11,
+        18
+      ],
+      "name": "楼梯上口",
+      "look_at": [
+        17,
+        8,
+        13
+      ]
+    },
+    {
+      "id": "counter",
+      "kind": "work",
+      "pos": [
+        7,
+        4,
+        12
+      ],
+      "name": "帆布柜台",
+      "approach": [
+        7,
+        4,
+        13
+      ]
+    },
+    {
+      "id": "sew",
+      "kind": "work",
+      "pos": [
+        25,
+        4,
+        23
+      ],
+      "name": "裁帆长桌",
+      "approach": [
+        25,
+        4,
+        24
+      ]
+    },
+    {
+      "id": "loom",
+      "kind": "work",
+      "pos": [
+        23,
+        4,
+        20
+      ],
+      "name": "帆布织机",
+      "approach": [
+        23,
+        4,
+        21
+      ]
+    },
+    {
+      "id": "home_cook",
+      "kind": "work",
+      "pos": [
+        6,
+        11,
+        26
+      ],
+      "name": "家庭炉灶",
+      "approach": [
+        6,
+        11,
+        25
+      ]
+    },
+    {
+      "id": "home_bed0",
+      "kind": "sleep",
+      "pos": [
+        14,
+        11,
+        26
+      ],
+      "name": "家庭床位",
+      "approach": [
+        13,
+        11,
+        26
+      ]
+    },
+    {
+      "id": "home_bed1",
+      "kind": "sleep",
+      "pos": [
+        11,
+        11,
+        26
+      ],
+      "name": "家庭床位",
+      "approach": [
+        10,
+        11,
+        26
+      ]
+    },
+    {
+      "id": "home_meal",
+      "kind": "work",
+      "pos": [
+        9,
+        11,
+        11
+      ],
+      "name": "家庭用餐",
+      "approach": [
+        9,
+        11,
+        10
+      ]
+    },
+    {
+      "id": "quay",
+      "kind": "circulation",
+      "pos": [
+        24,
+        4,
+        33
+      ],
+      "name": "水侧装卸站位",
+      "look_at": [
+        24,
+        3,
+        36
+      ]
+    },
+    {
+      "id": "land",
+      "kind": "entrance",
+      "pos": [
+        10,
+        4,
+        4
+      ],
+      "name": "陆侧入口",
+      "facing": "north"
+    },
+    {
+      "id": "east",
+      "kind": "entrance",
+      "pos": [
+        33,
+        4,
+        23
+      ],
+      "name": "东巷取货入口",
+      "facing": "east"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "boat",
+      "pos": [
+        24,
+        3,
+        35
+      ],
+      "direction": "south",
+      "clearance": [
+        7,
+        6
+      ],
+      "note": "停靠与装卸面；需匹配实际船只及岸线"
+    },
+    {
+      "kind": "pedestrian",
+      "pos": [
+        10,
+        3,
+        4
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "陆侧入口，脚底 Y=4；外部交通另接"
+    },
+    {
+      "kind": "pedestrian",
+      "pos": [
+        33,
+        3,
+        23
+      ],
+      "direction": "east",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "东巷取货入口，脚底 Y=4；外部交通另接"
+    }
+  ],
+  "design_notes": [
+    "L 形店宅西翼两层，北街陈列与楼上家庭生活，后侧低檐裁帆间向东巷开门，内角保留院落。"
+  ],
+  "differences": [
+    "L 形店宅西翼两层，北街陈列与楼上家庭生活，后侧低檐裁帆间向东巷开门，内角保留院落。"
+  ],
+  "floors": [
+    {
+      "name": "底层营业与货运",
+      "y": 3,
+      "max_y": 8
+    },
+    {
+      "name": "上层生活与干货",
+      "y": 10,
+      "max_y": 16
+    }
+  ],
+  "roof_min_y": 18,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/waterway_trade.py:merchant(2)",
+  "preview_context": {
+    "kind": "shore",
+    "shore_z": 31,
+    "land_surface_y": 4,
+    "water_surface_y": 3,
+    "bed_y": -1,
+    "padding": 4
+  },
+  "nbt_sha256": "2bbeeb19f2b5fa80c90a17147527b2a316707c4d3f53f55a138e6ff9485c1f90"
+}

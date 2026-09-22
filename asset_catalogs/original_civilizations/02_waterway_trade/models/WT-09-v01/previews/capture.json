@@ -1,8 +1,8 @@
 {
   "schema": "structure-studio.capture.v1",
   "id": "WT-09-v01",
-  "nbt_sha256": "ec83eac81a0e4a4c7b65150e25063f8a8f053fca6e865dabd6c315f511fe6393",
-  "author_sha256": "14107dd1f99a6ea9ea71906a9648cd66b07e1e6bdef5c09b7f3270279e73a131",
+  "nbt_sha256": "b703448bea230a70f0a75dc505cbcfa812868a557f372292d4a27bade5f440cf",
+  "author_sha256": "54653f567ad8028385af6098f190b5a238b21c1eb743d46ffb9afe3358c01ad7",
   "shots": [
     "front",
     "back",

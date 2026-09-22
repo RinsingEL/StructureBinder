@@ -1,0 +1,243 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "WT-02-v04",
+  "name": "验货围院栈",
+  "family": "WT-02",
+  "civilization": "水网商邦",
+  "planning_role": "planning_role.fill",
+  "size": [
+    43,
+    26,
+    42
+  ],
+  "terrain": {
+    "选址": "有实际水陆转运需求、避风且可以支撑固定木桩的岸段",
+    "地块": "低檐账房与验货凉棚在前，后部横向大仓承接粮包及布货；前院短驳、后岸水运分开。",
+    "高程": "主地坪方块 Y=3、脚底 Y=4；参考水面 Y=3，水岸在 Z=34；两层版本上层脚底 Y=11",
+    "落地": "保留明确岸壁与桩脚；模板外航行宽度、水深、洪水线及道路另按实际环境核对，不填平外部水道"
+  },
+  "rooms": [
+    {
+      "id": "ledger",
+      "name": "临街账房",
+      "min": [
+        6,
+        4,
+        6
+      ],
+      "max": [
+        15,
+        8,
+        14
+      ],
+      "purpose": "登记与签收"
+    },
+    {
+      "id": "inspect",
+      "name": "前院验货棚",
+      "min": [
+        23,
+        4,
+        6
+      ],
+      "max": [
+        36,
+        8,
+        14
+      ],
+      "purpose": "雨下验货、分类与临时存货"
+    },
+    {
+      "id": "main",
+      "name": "后排横向货仓",
+      "min": [
+        6,
+        4,
+        20
+      ],
+      "max": [
+        36,
+        10,
+        31
+      ],
+      "purpose": "粮包与帆布分区、中央水运过道和封包工作位"
+    },
+    {
+      "id": "quay",
+      "name": "水侧装卸栈桥",
+      "min": [
+        5,
+        4,
+        34
+      ],
+      "max": [
+        37,
+        8,
+        38
+      ],
+      "purpose": "水陆货物周转、桩基与登船净空"
+    }
+  ],
+  "points": [
+    {
+      "id": "ledger",
+      "kind": "work",
+      "pos": [
+        8,
+        4,
+        10
+      ],
+      "name": "货院账务",
+      "approach": [
+        8,
+        4,
+        11
+      ]
+    },
+    {
+      "id": "inspect",
+      "kind": "work",
+      "pos": [
+        28,
+        4,
+        10
+      ],
+      "name": "院内验货台",
+      "approach": [
+        28,
+        4,
+        9
+      ]
+    },
+    {
+      "id": "grain",
+      "kind": "storage",
+      "pos": [
+        8,
+        4,
+        23
+      ],
+      "name": "粮包分区",
+      "approach": [
+        7,
+        4,
+        23
+      ]
+    },
+    {
+      "id": "cloth",
+      "kind": "storage",
+      "pos": [
+        29,
+        4,
+        23
+      ],
+      "name": "帆布分区",
+      "approach": [
+        28,
+        4,
+        23
+      ]
+    },
+    {
+      "id": "pack",
+      "kind": "work",
+      "pos": [
+        24,
+        4,
+        27
+      ],
+      "name": "仓内封包台",
+      "approach": [
+        24,
+        4,
+        26
+      ]
+    },
+    {
+      "id": "quay",
+      "kind": "circulation",
+      "pos": [
+        21,
+        4,
+        37
+      ],
+      "name": "水侧装卸站位",
+      "look_at": [
+        21,
+        3,
+        40
+      ]
+    },
+    {
+      "id": "land",
+      "kind": "entrance",
+      "pos": [
+        20,
+        4,
+        4
+      ],
+      "name": "陆侧入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "boat",
+      "pos": [
+        21,
+        3,
+        39
+      ],
+      "direction": "south",
+      "clearance": [
+        7,
+        6
+      ],
+      "note": "停靠与装卸面；需匹配实际船只及岸线"
+    },
+    {
+      "kind": "pedestrian",
+      "pos": [
+        20,
+        3,
+        4
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "陆侧入口，脚底 Y=4；外部交通另接"
+    }
+  ],
+  "design_notes": [
+    "低檐账房与验货凉棚在前，后部横向大仓承接粮包及布货；前院短驳、后岸水运分开。"
+  ],
+  "differences": [
+    "低檐账房与验货凉棚在前，后部横向大仓承接粮包及布货；前院短驳、后岸水运分开。"
+  ],
+  "floors": [
+    {
+      "name": "岸台与地面空间",
+      "y": 3,
+      "max_y": 8
+    }
+  ],
+  "roof_min_y": 10,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/waterway_trade.py:warehouse(4)",
+  "preview_context": {
+    "kind": "shore",
+    "shore_z": 34,
+    "land_surface_y": 4,
+    "water_surface_y": 3,
+    "bed_y": -1,
+    "padding": 4
+  },
+  "nbt_sha256": "29c4568e2d2c9ba7942039235b2b77d782e9b993b516698655fa17494f88978e"
+}

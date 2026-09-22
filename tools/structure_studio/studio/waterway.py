@@ -26,6 +26,12 @@ def pad(m,x0,z0,x1,z1,f=3):
         for z in (z0,z1):m.set(x,f,z,'cut_sandstone')
 
 
+def eave_beam(m,x0,z0,x1,z1,y,wood='birch'):
+    """Support the first inset roof course continuously along the wall/post line."""
+    for z in (z0,z1):m.box((x0,y,z),(x1,y,z),f'{wood}_planks')
+    for x in (x0,x1):m.box((x,y,z0),(x,y,z1),f'{wood}_planks')
+
+
 def pavilion(m,x0,z0,x1,z1,*,f=3,wall_height=7,roof='brick'):
     top=f+wall_height
     shell(m,(x0,f,z0),(x1,top,z1),'white_terracotta',floor='birch_planks',ceiling='birch_planks')
@@ -34,6 +40,7 @@ def pavilion(m,x0,z0,x1,z1,*,f=3,wall_height=7,roof='brick'):
         m.box((x0,top,z),(x1,top,z),'cyan_terracotta')
     for x in (x0,x1):
         for z in (z0,z1):column(m,x,z,f+1,top,'smooth_sandstone','chiseled_sandstone')
+    eave_beam(m,x0,z0,x1,z1,top+2)
     hip_roof(m,x0-1,x1+1,z0-1,z1+1,top+2,material=roof,tiers=min(6,(x1-x0)//2+2,(z1-z0)//2+2))
 
 
@@ -95,6 +102,7 @@ def shipyard():
         for x in (21,39):
             column(m,x,z,4,17,'stripped_dark_oak_log','dark_oak_planks')
             m.box((x,14,z),(x,17,z),'dark_oak_fence')
+            m.set(x,18,z,'dark_oak_planks')
         for x in range(20,41):m.set(x,18+min(x-20,40-x),z,'dark_oak_log[axis=z]')
     for x in range(20,41):
         y=18+min(x-20,40-x)
@@ -202,7 +210,8 @@ def customs():
     desk(m,'archive',36,4,14,7,'关务档案桌')
     for x,z in ((12,12),(26,17),(39,12)):pendant(m,x,9,z,11)
     for x in (7,25):
-        for z in (26,34):column(m,x,z,4,9,'stripped_birch_log','birch_planks')
+        for z in (26,34):column(m,x,z,4,11,'stripped_birch_log','birch_planks')
+    eave_beam(m,7,26,25,34,11)
     hip_roof(m,6,26,25,35,11,material='dark_prismarine',tiers=4)
     table(m,11,4,29,10,'blue');m.set(13,4,29,'crafting_table');m.set(13,5,29,'air');m.set(18,5,29,'stone_pressure_plate')
     m.point('inspect','work',(18,4,29),'验货称量台',approach=(18,4,28));crate_stack(m,8,4,32,3,2,2)
@@ -258,7 +267,8 @@ def guild():
     for x in (21,27):m.set(x,4,28,'lever[face=floor,facing=north]')
     m.point('model','work',(24,4,29),'分水教学模型',approach=(24,3,27))
     for x in (14,21,28,35):
-        for z in (38,40):column(m,x,z,3,7,'stripped_birch_log','birch_planks')
+        for z in (38,40):column(m,x,z,3,9,'stripped_birch_log','birch_planks')
+    eave_beam(m,14,38,35,40,9)
     hip_roof(m,13,36,37,41,9,material='dark_prismarine',tiers=3)
     bench(m,16,3,39,5,'north','birch');bench(m,28,3,39,5,'north','birch')
     m.set(37,3,33,'water_cauldron[level=3]');m.point('wash','work',(37,3,33),'教学取水盆',approach=(36,3,33))
@@ -330,7 +340,7 @@ def water_temple():
         m.set(x,4,12,'stone_bricks');m.set(x,4,35,'stone_bricks')
         m.set(x,4,11,'stone_brick_stairs[facing=south]');m.set(x,5,12,'stone_brick_stairs[facing=south]')
         m.set(x,5,35,'stone_brick_stairs[facing=north]');m.set(x,4,36,'stone_brick_stairs[facing=north]')
-    for x in (12,17,29,34):column(m,x,14,6,14,'smooth_sandstone','chiseled_sandstone')
+    for x in (12,17,29,34):column(m,x,14,6,15,'smooth_sandstone','chiseled_sandstone')
     for x in (12,34):
         for z in (19,27):window(m,(x,9,z),(x,12,z+3),axis='z',color='light_blue_stained_glass')
     for x in range(23,26):m.box((x,5,17),(x,5,26),'cyan_terracotta')
@@ -352,7 +362,7 @@ def water_temple():
     for x in (37,43):
         for z,height in ((19,9),(25,6),(32,8)):
             column(m,x,z,4,height,'mossy_stone_bricks','chiseled_stone_bricks')
-    m.box((37,10,18),(43,10,20),'dark_prismarine_slab[type=top]')
+    m.box((37,10,18),(43,10,20),'dark_prismarine_slab[type=bottom]')
     desk(m,'history',38,4,23,5,'旧水约与祭仪记录',facing='north');shelf(m,38,4,33,4,'spruce',contents='flower_pot')
     for x,z in ((38,29),(42,27)):
         m.set(x,3,z,'moss_block');m.set(x,4,z,'azalea')

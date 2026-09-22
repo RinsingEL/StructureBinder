@@ -1,0 +1,48 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "WT-05-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 主智能体离线视觉复核",
+  "nbt_sha256": "1787ec76f02f139b9a4e772eac8a1808ea02a0a32f184c6c371065b55af7a5fc",
+  "author_sha256": "06fd1ab947913dfc5a0e7ecea54637e890e19633e488535181d03b2fb45e21b5",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-shop.png",
+    "previews/room-living.png",
+    "previews/room-bedroom.png",
+    "previews/room-quay.png",
+    "previews/point-stair_low.png",
+    "previews/point-stair_high.png",
+    "previews/point-counter.png",
+    "previews/point-repair.png",
+    "previews/point-cook.png",
+    "previews/point-bed0.png",
+    "previews/point-bed1.png",
+    "previews/point-quay.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "狭长两层店宅，底层前售绳具后修补，上层起居与双床卧室；沿东墙内梯通家居，后门接岸。",
+    "内饰与使用": "底层前售绳具后修补，东侧内梯通楼上起居厨房与独立双床卧室，后门接卸货栈道。",
+    "因地制宜": "具有实际街巷与家庭生活用水的岸上商住地块；狭长两层店宅，底层前售绳具后修补，上层起居与双床卧室；沿东墙内梯通家居，后门接岸。；主地坪方块 Y=3、脚底 Y=4；参考水面 Y=3，水岸在 Z=28；两层版本上层脚底 Y=11；保留明确岸壁与桩脚；模板外航行宽度、水深、洪水线及道路另按实际环境核对，不填平外部水道",
+    "支撑与最终图审": "实际复核本版全部外观、去屋顶、楼层、房间、站位、标记和环境 PNG；坡顶墙线补连续承檐梁，实体基座与岸桩承接主体。",
+    "标记与通路": "最终 NBT 与作者标记重新读取检查通过，入口到各已标站位可达，无错误或警告。"
+  },
+  "revisions": [
+    "修正外挑坡屋顶在实际墙线缺一格承檐梁的问题，重建并重新拍摄、查看全部证据。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "仓储、营业、住宿和水运由原版方块与作者标记表达，实际货运、经济与居民机制另行接入。"
+  ]
+}
