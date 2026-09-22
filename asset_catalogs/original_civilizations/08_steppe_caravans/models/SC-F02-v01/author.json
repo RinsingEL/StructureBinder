@@ -1,0 +1,206 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "SC-F02-v01",
+  "name": "双短畦菜圃",
+  "family": "SC-F02",
+  "civilization": "游牧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    31,
+    19,
+    29
+  ],
+  "terrain": {
+    "选址": "只用于具有耕土、可靠运水和足够生长季的固定或长驻营地；双短畦菜圃沿既有补给小路布置。",
+    "资源与季节": "须接已有水草与补给路线，储槽为外部运水；按当地风向使入口背风，长季定居与短期停驻明确区分。",
+    "高程": "默认入口脚底Y=3；坡台住宅Y=5由实体台阶接入，见点位。",
+    "落地限制": "仅整理模板营地占地，不推平外部草坡；留出畜群、货车或来客外接通路。",
+    "运行边界": "原版静态空间与作者点位，未接入动物、交易、季节迁徙或运行时生成。"
+  },
+  "rooms": [
+    {
+      "id": "plot0",
+      "name": "短期营地种植畦",
+      "min": [
+        4,
+        3,
+        5
+      ],
+      "max": [
+        10,
+        5,
+        16
+      ],
+      "purpose": "四格内独立水眼与完整田埂；限足够生长季和日照"
+    },
+    {
+      "id": "plot1",
+      "name": "短期营地种植畦",
+      "min": [
+        17,
+        3,
+        5
+      ],
+      "max": [
+        23,
+        5,
+        16
+      ],
+      "purpose": "四格内独立水眼与完整田埂；限足够生长季和日照"
+    }
+  ],
+  "points": [
+    {
+      "id": "plot0",
+      "kind": "work",
+      "pos": [
+        4,
+        3,
+        5
+      ],
+      "name": "季节短畦采收",
+      "approach": [
+        3,
+        3,
+        5
+      ]
+    },
+    {
+      "id": "plot1",
+      "kind": "work",
+      "pos": [
+        17,
+        3,
+        5
+      ],
+      "name": "季节短畦采收",
+      "approach": [
+        16,
+        3,
+        5
+      ]
+    },
+    {
+      "id": "seed",
+      "kind": "storage",
+      "pos": [
+        6,
+        4,
+        21
+      ],
+      "name": "种子与轮作记号",
+      "approach": [
+        6,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "sort",
+      "kind": "work",
+      "pos": [
+        13,
+        3,
+        22
+      ],
+      "name": "采收分拣与扎束",
+      "approach": [
+        13,
+        3,
+        23
+      ]
+    },
+    {
+      "id": "wash",
+      "kind": "work",
+      "pos": [
+        20,
+        3,
+        22
+      ],
+      "name": "洗菜与器具储水",
+      "approach": [
+        20,
+        3,
+        23
+      ]
+    },
+    {
+      "id": "compost",
+      "kind": "work",
+      "pos": [
+        26,
+        3,
+        25
+      ],
+      "name": "植物余料集中堆肥",
+      "approach": [
+        25,
+        3,
+        25
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        15,
+        3,
+        27
+      ],
+      "name": "背风营路入口",
+      "facing": "south"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        15,
+        2,
+        27
+      ],
+      "direction": "south",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "接已有营路；人畜与车辆另留净空"
+    }
+  ],
+  "design_notes": [],
+  "differences": [
+    "双短畦菜圃；面积、田埂组织、工作棚与值守帐分别不同。"
+  ],
+  "floors": [
+    {
+      "name": "营地生活层",
+      "y": 2,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/steppe_gardens.py:SC-F02-v01",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "agriculture": {
+    "type": "fixed_template",
+    "crops": [
+      "carrots",
+      "potatoes"
+    ],
+    "water": "全部耕地与同高水眼四格距离核验；实际光照、生长季及供水另验",
+    "layout": "双短畦菜圃"
+  },
+  "nbt_sha256": "e15eca7d7934f129a7654757d3450f9e6b034a52c51f36e042951c33d31a4c5d"
+}

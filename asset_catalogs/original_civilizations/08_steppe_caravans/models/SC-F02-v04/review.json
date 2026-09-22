@@ -1,0 +1,64 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "SC-F02-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 游牧填充作者全视图实看",
+  "nbt_sha256": "f592943a7884afa84bdd06a977d01091c6586bd94a204b3cd97d940bec9db444",
+  "author_sha256": "8ba34abf1770fce6de9950ddeb158aac4a2855d392f8233f04466ea8ef50d8f6",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-plot0.png",
+    "previews/room-plot1.png",
+    "previews/room-plot2.png",
+    "previews/room-gardenkeeper.png",
+    "previews/point-plot0.png",
+    "previews/point-plot1.png",
+    "previews/point-plot2.png",
+    "previews/point-gardenkeeperbed.png",
+    "previews/point-gardenkeepercloth.png",
+    "previews/point-gardenkeepercook.png",
+    "previews/point-gardenkeeperwater.png",
+    "previews/point-gardenkeeperrecord.png",
+    "previews/point-seed.png",
+    "previews/point-sort.png",
+    "previews/point-wash.png",
+    "previews/point-compost.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "最终25张全视图逐图实看；田埂、棚架、围栏、帐内生活分区与所有使用点复核。",
+    "四类菜圃按短畦、狭地、围合与帐边组织；全部856格耕地均有同高四格内水源。四类草料设施区分开敞、半围合、储料双棚和值守帐，保留畜群活动空间。",
+    "当前NBT和作者标记双哈希绑定；离线数据与导航零警告。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ],
+  "cross_review": {
+    "reviewer": "root",
+    "status": "accepted",
+    "nbt_sha256": "f592943a7884afa84bdd06a977d01091c6586bd94a204b3cd97d940bec9db444",
+    "author_sha256": "8ba34abf1770fce6de9950ddeb158aac4a2855d392f8233f04466ea8ef50d8f6",
+    "reviewed_views": [
+      "front",
+      "roof-off",
+      "floor-1",
+      "site-context"
+    ],
+    "checks": [
+      "实际查看外观、去顶、楼层和场地四视图，结合作者完整图审证据。",
+      "换乘、单/并/串列维修、加工洁污分区、装卸、行业摊棚或农牧功能随具体模型标记核对。",
+      "帐棚语言统一；生产与服务结构采用圆帐、长棚、双帐、转角及车旁/围栏组合，通道和作业接口可辨。",
+      "独立确定性重建、数据及nav零警告、截图及评审双哈希一致；作者更名历史单独保留。"
+    ]
+  }
+}

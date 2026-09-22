@@ -1,0 +1,286 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "SC-03-v04",
+  "name": "配件帐联修车棚",
+  "family": "SC-03",
+  "civilization": "游牧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    48,
+    19,
+    37
+  ],
+  "terrain": {
+    "选址": "已有车队路线的长期配件与修车节点；南端留车辆进出，内棚为静态车体。",
+    "资源与季节": "须接已有水草与补给路线，储槽为外部运水；按当地风向使入口背风，长季定居与短期停驻明确区分。",
+    "高程": "默认入口脚底Y=3；坡台住宅Y=5由实体台阶接入，见点位。",
+    "落地限制": "仅整理模板营地占地，不推平外部草坡；留出畜群、货车或来客外接通路。",
+    "运行边界": "原版静态空间与作者点位，未接入动物、交易、季节迁徙或运行时生成。"
+  },
+  "rooms": [
+    {
+      "id": "keeper",
+      "name": "值守生活帐",
+      "min": [
+        32,
+        3,
+        6
+      ],
+      "max": [
+        42,
+        6,
+        18
+      ],
+      "purpose": "睡眠隔断、衣物、热食储水与记账用餐"
+    },
+    {
+      "id": "repair",
+      "name": "车辆维修区",
+      "min": [
+        3,
+        3,
+        3
+      ],
+      "max": [
+        25,
+        7,
+        27
+      ],
+      "purpose": "车体、轮轴、修整、备件与进出通路"
+    }
+  ],
+  "points": [
+    {
+      "id": "parts",
+      "kind": "storage",
+      "pos": [
+        6,
+        4,
+        4
+      ],
+      "name": "按轮轴规格分格备件",
+      "approach": [
+        6,
+        3,
+        5
+      ]
+    },
+    {
+      "id": "fit",
+      "kind": "work",
+      "pos": [
+        19,
+        3,
+        8
+      ],
+      "name": "轮轴装配台",
+      "approach": [
+        19,
+        3,
+        9
+      ]
+    },
+    {
+      "id": "grind",
+      "kind": "work",
+      "pos": [
+        19,
+        3,
+        12
+      ],
+      "name": "轮缘修整",
+      "approach": [
+        18,
+        3,
+        12
+      ]
+    },
+    {
+      "id": "iron",
+      "kind": "work",
+      "pos": [
+        19,
+        3,
+        16
+      ],
+      "name": "轴箍维修",
+      "approach": [
+        18,
+        3,
+        16
+      ]
+    },
+    {
+      "id": "timber",
+      "kind": "storage",
+      "pos": [
+        20,
+        3,
+        21
+      ],
+      "name": "备用轴木",
+      "approach": [
+        18,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "keeperbed",
+      "kind": "sleep",
+      "pos": [
+        34,
+        3,
+        10
+      ],
+      "name": "值宿床铺与行李",
+      "approach": [
+        35,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "keepercloth",
+      "kind": "storage",
+      "pos": [
+        39,
+        4,
+        8
+      ],
+      "name": "值守衣物与干粮",
+      "approach": [
+        39,
+        3,
+        9
+      ]
+    },
+    {
+      "id": "keepercook",
+      "kind": "work",
+      "pos": [
+        40,
+        3,
+        12
+      ],
+      "name": "值宿热食",
+      "approach": [
+        39,
+        3,
+        12
+      ]
+    },
+    {
+      "id": "keeperwater",
+      "kind": "work",
+      "pos": [
+        40,
+        3,
+        14
+      ],
+      "name": "值守储水",
+      "approach": [
+        39,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "keeperrecord",
+      "kind": "work",
+      "pos": [
+        34,
+        3,
+        14
+      ],
+      "name": "值守记录与用餐",
+      "approach": [
+        33,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "longparts",
+      "kind": "storage",
+      "pos": [
+        32,
+        4,
+        27
+      ],
+      "name": "封装备件与返修件",
+      "approach": [
+        32,
+        3,
+        28
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        14,
+        3,
+        34
+      ],
+      "name": "背风营路入口",
+      "facing": "south"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        14,
+        2,
+        34
+      ],
+      "direction": "south",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "接已有营路；人畜与车辆另留净空"
+    },
+    {
+      "kind": "vehicle",
+      "pos": [
+        14,
+        2,
+        35
+      ],
+      "direction": "south",
+      "clearance": [
+        7,
+        6
+      ],
+      "note": "静态外接车道，不声明车辆运行"
+    }
+  ],
+  "design_notes": [],
+  "differences": [
+    "配件帐联修车棚；单车、并列、串列与配件值宿布局分别建模。"
+  ],
+  "floors": [
+    {
+      "name": "营地生活层",
+      "y": 2,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/steppe_crafts.py:SC-03-v04",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "nbt_sha256": "3a18900b06a2dcd71833eab323bef3f6518f17cab249ed303b60fa4d56466d84"
+}

@@ -1,0 +1,60 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "SC-02-v03",
+  "nbt_sha256": "3082e7e38bc23c06079b5b2b9aa0fc95d2e3c8cae276e2b3f377d74cea3f382f",
+  "author_sha256": "d977e242182c48b827071db60071e1847228d7b488873ec7d1ffac4da22865d4",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-keeper",
+    "room-pen",
+    "room-quarantine",
+    "point-keeperbed",
+    "point-keepercloth",
+    "point-keepercook",
+    "point-keeperwater",
+    "point-keeperrecord",
+    "point-penwater0",
+    "point-pencare",
+    "point-penhandle",
+    "point-quarantinewater0",
+    "point-quarantinecare",
+    "point-quarantinehandle",
+    "point-tack",
+    "point-repair",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending",
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "草原行旅文明",
+      "after": "逐风诸部",
+      "previous_author_sha256": "8515f94039190cfbbdba8e0fae0516090da5d5786d39ea6fb72c07e21cfec861",
+      "current_author_sha256": "4375754650feace4440bbb842e8fb7073cc9375ccea1077c61b39955e34f0365",
+      "nbt_sha256": "3082e7e38bc23c06079b5b2b9aa0fc95d2e3c8cae276e2b3f377d74cea3f382f",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "逐风诸部",
+      "after": "游牧",
+      "previous_author_sha256": "4375754650feace4440bbb842e8fb7073cc9375ccea1077c61b39955e34f0365",
+      "current_author_sha256": "d977e242182c48b827071db60071e1847228d7b488873ec7d1ffac4da22865d4",
+      "nbt_sha256": "3082e7e38bc23c06079b5b2b9aa0fc95d2e3c8cae276e2b3f377d74cea3f382f",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
+  ]
+}

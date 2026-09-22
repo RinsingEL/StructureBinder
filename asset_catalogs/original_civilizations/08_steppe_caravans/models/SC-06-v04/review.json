@@ -1,0 +1,63 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "SC-06-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 游牧填充作者全视图实看",
+  "nbt_sha256": "abbed60884b533185683e529ed6de91beab23d1c1d268e11652a5d73e03d4af1",
+  "author_sha256": "4a68c24d7cfc39ca1e76d51ab2bf283ce72a6855ea22561c4d50d3f3a6903fb3",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-annex.png",
+    "previews/room-flow.png",
+    "previews/point-raw.png",
+    "previews/point-wash.png",
+    "previews/point-process.png",
+    "previews/point-seal.png",
+    "previews/point-culture.png",
+    "previews/point-vessels.png",
+    "previews/point-finished.png",
+    "previews/point-record.png",
+    "previews/point-clean.png",
+    "previews/point-break.png",
+    "previews/point-tool.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "最终22张全视图逐图实看；外形、去顶平面、房间、全部使用点与场地条件复核。",
+    "驿站畜栏与值守分开，车辆棚保留维修净空；乳品和鞍具具有独立原料、处理、封装、成品与记录点；八行业摊位陈列与后勤各异。",
+    "当前NBT和作者标记双哈希绑定；离线数据与导航零警告。"
+  ],
+  "revisions": [
+    "双帐型增加包装耗材、复核台和出货柜；主操作岛使用点移至空余侧。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ],
+  "cross_review": {
+    "reviewer": "root",
+    "status": "accepted",
+    "nbt_sha256": "abbed60884b533185683e529ed6de91beab23d1c1d268e11652a5d73e03d4af1",
+    "author_sha256": "4a68c24d7cfc39ca1e76d51ab2bf283ce72a6855ea22561c4d50d3f3a6903fb3",
+    "reviewed_views": [
+      "front",
+      "roof-off",
+      "floor-1",
+      "site-context"
+    ],
+    "checks": [
+      "实际查看外观、去顶、楼层和场地四视图，结合作者完整图审证据。",
+      "换乘、单/并/串列维修、加工洁污分区、装卸、行业摊棚或农牧功能随具体模型标记核对。",
+      "帐棚语言统一；生产与服务结构采用圆帐、长棚、双帐、转角及车旁/围栏组合，通道和作业接口可辨。",
+      "独立确定性重建、数据及nav零警告、截图及评审双哈希一致；作者更名历史单独保留。"
+    ]
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "schema": "structure-studio.validation.v1",
+  "nbt_sha256": "f592943a7884afa84bdd06a977d01091c6586bd94a204b3cd97d940bec9db444",
+  "navigation": {
+    "passed": true,
+    "unreachable": [],
+    "nodes": 5431,
+    "highest_standing_y": 4,
+    "truncated": false,
+    "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "size": [
+    43,
+    19,
+    37
+  ],
+  "visible_blocks": 4985,
+  "explicit_air": 22280,
+  "palette": 31,
+  "block_entities": 2,
+  "agriculture": {
+    "planted_cells": 270,
+    "missing_soil": [],
+    "dry_cells": [],
+    "scope": "最终 NBT 的四类原版作物、耕地和同层/高一层 4 格水源核对；不模拟光照或生长 tick"
+  },
+  "materials": {
+    "minecraft:dirt": 2870,
+    "minecraft:grass_block": 836,
+    "minecraft:farmland": 270,
+    "minecraft:white_wool": 270,
+    "minecraft:dark_oak_planks": 182,
+    "minecraft:coarse_dirt": 136,
+    "minecraft:carrots": 90,
+    "minecraft:potatoes": 90,
+    "minecraft:beetroots": 90,
+    "minecraft:brown_wool": 62,
+    "minecraft:dark_oak_log": 27,
+    "minecraft:water": 18,
+    "minecraft:dark_oak_slab": 12,
+    "minecraft:barrel": 8,
+    "minecraft:cobblestone_wall": 8,
+    "minecraft:dark_oak_stairs": 3,
+    "minecraft:brown_bed": 2,
+    "minecraft:dark_oak_door": 2,
+    "minecraft:water_cauldron": 2,
+    "minecraft:dark_oak_trapdoor": 2,
+    "minecraft:smoker": 1,
+    "minecraft:lectern": 1,
+    "minecraft:crafting_table": 1,
+    "minecraft:composter": 1,
+    "minecraft:lantern": 1
+  },
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+}

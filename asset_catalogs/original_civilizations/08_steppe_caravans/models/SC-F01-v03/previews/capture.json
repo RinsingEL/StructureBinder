@@ -1,0 +1,49 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "SC-F01-v03",
+  "nbt_sha256": "34b80b154e6d2fe0534d7724f82858a1239df1e42afdaf877a5a87656362bf08",
+  "author_sha256": "4cfb8f74a6430b5b0b6ad87f73246e87270197c60ceb6ece8c2abadd33eb2a7e",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-sales",
+    "point-stock",
+    "point-trade",
+    "point-cash",
+    "point-measure",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending",
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "草原行旅文明",
+      "after": "逐风诸部",
+      "previous_author_sha256": "2ce96c5abf46c150755c41e8600e5dedd2805aafd712e599d908b7e913194b13",
+      "current_author_sha256": "c9820a5d61c9c214ab26944ad8931462af78c67c73a55d552246fac65f7acc56",
+      "nbt_sha256": "34b80b154e6d2fe0534d7724f82858a1239df1e42afdaf877a5a87656362bf08",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "逐风诸部",
+      "after": "游牧",
+      "previous_author_sha256": "c9820a5d61c9c214ab26944ad8931462af78c67c73a55d552246fac65f7acc56",
+      "current_author_sha256": "4cfb8f74a6430b5b0b6ad87f73246e87270197c60ceb6ece8c2abadd33eb2a7e",
+      "nbt_sha256": "34b80b154e6d2fe0534d7724f82858a1239df1e42afdaf877a5a87656362bf08",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
+  ]
+}

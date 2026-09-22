@@ -1,0 +1,28 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "SC-F03-v03",
+  "nbt_sha256": "61e391a825a6a8b2a9c566ea61f81a7b0a96170358322657a088cbafc16e31df",
+  "author_sha256": "df9b6cd9c43454735ad99316f44617ff24f4a0c32c7fcd1237c7e863f387f6df",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-pen",
+    "room-dry",
+    "point-penwater0",
+    "point-pencare",
+    "point-penhandle",
+    "point-bags",
+    "point-mix",
+    "point-dry",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

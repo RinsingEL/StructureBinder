@@ -1,0 +1,33 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "SC-F03-v04",
+  "nbt_sha256": "06b05d491bbd9fba43c68561b9ad9f212c8db454b597d8b89b1b75205bfba7fb",
+  "author_sha256": "2d332c7071be728f1df66e02c5087370c4e79961c6c5bb3a1fa5c8cc02920727",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-carer",
+    "room-pen",
+    "point-carerbed",
+    "point-carercloth",
+    "point-carercook",
+    "point-carerwater",
+    "point-carerrecord",
+    "point-penwater0",
+    "point-penwater1",
+    "point-pencare",
+    "point-penhandle",
+    "point-medicine",
+    "point-check",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

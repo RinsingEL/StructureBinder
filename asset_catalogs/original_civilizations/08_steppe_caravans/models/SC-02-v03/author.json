@@ -1,0 +1,317 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "SC-02-v03",
+  "name": "前后分栏驿",
+  "family": "SC-02",
+  "civilization": "游牧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    39,
+    19,
+    45
+  ],
+  "terrain": {
+    "选址": "狭长路侧场地，检畜与歇畜前后错开",
+    "资源与季节": "须接已有水草与补给路线，储槽为外部运水；按当地风向使入口背风，长季定居与短期停驻明确区分。",
+    "高程": "默认入口脚底Y=3；坡台住宅Y=5由实体台阶接入，见点位。",
+    "落地限制": "仅整理模板营地占地，不推平外部草坡；留出畜群、货车或来客外接通路。",
+    "运行边界": "原版静态空间与作者点位，未接入动物、交易、季节迁徙或运行时生成。"
+  },
+  "rooms": [
+    {
+      "id": "keeper",
+      "name": "值守生活帐",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        15,
+        6,
+        17
+      ],
+      "purpose": "睡眠隔断、衣物、热食储水与记账用餐"
+    },
+    {
+      "id": "pen",
+      "name": "饮水休畜栏",
+      "min": [
+        23,
+        3,
+        5
+      ],
+      "max": [
+        34,
+        6,
+        20
+      ],
+      "purpose": "休畜、运水、饲料与检畜通路"
+    },
+    {
+      "id": "quarantine",
+      "name": "饮水休畜栏",
+      "min": [
+        23,
+        3,
+        25
+      ],
+      "max": [
+        34,
+        6,
+        37
+      ],
+      "purpose": "休畜、运水、饲料与检畜通路"
+    }
+  ],
+  "points": [
+    {
+      "id": "keeperbed",
+      "kind": "sleep",
+      "pos": [
+        7,
+        3,
+        9
+      ],
+      "name": "值宿床铺与行李",
+      "approach": [
+        8,
+        3,
+        9
+      ]
+    },
+    {
+      "id": "keepercloth",
+      "kind": "storage",
+      "pos": [
+        12,
+        4,
+        7
+      ],
+      "name": "值守衣物与干粮",
+      "approach": [
+        12,
+        3,
+        8
+      ]
+    },
+    {
+      "id": "keepercook",
+      "kind": "work",
+      "pos": [
+        13,
+        3,
+        11
+      ],
+      "name": "值宿热食",
+      "approach": [
+        12,
+        3,
+        11
+      ]
+    },
+    {
+      "id": "keeperwater",
+      "kind": "work",
+      "pos": [
+        13,
+        3,
+        13
+      ],
+      "name": "值守储水",
+      "approach": [
+        12,
+        3,
+        13
+      ]
+    },
+    {
+      "id": "keeperrecord",
+      "kind": "work",
+      "pos": [
+        7,
+        3,
+        13
+      ],
+      "name": "值守记录与用餐",
+      "approach": [
+        6,
+        3,
+        13
+      ]
+    },
+    {
+      "id": "penwater0",
+      "kind": "work",
+      "pos": [
+        32,
+        3,
+        8
+      ],
+      "name": "运水饮畜槽",
+      "approach": [
+        32,
+        3,
+        9
+      ]
+    },
+    {
+      "id": "pencare",
+      "kind": "storage",
+      "pos": [
+        25,
+        4,
+        17
+      ],
+      "name": "照护与清栏器具",
+      "approach": [
+        25,
+        3,
+        18
+      ]
+    },
+    {
+      "id": "penhandle",
+      "kind": "work",
+      "pos": [
+        29,
+        3,
+        19
+      ],
+      "name": "检畜与交接净空",
+      "approach": [
+        29,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "quarantinewater0",
+      "kind": "work",
+      "pos": [
+        32,
+        3,
+        28
+      ],
+      "name": "运水饮畜槽",
+      "approach": [
+        32,
+        3,
+        29
+      ]
+    },
+    {
+      "id": "quarantinecare",
+      "kind": "storage",
+      "pos": [
+        25,
+        4,
+        34
+      ],
+      "name": "照护与清栏器具",
+      "approach": [
+        25,
+        3,
+        35
+      ]
+    },
+    {
+      "id": "quarantinehandle",
+      "kind": "work",
+      "pos": [
+        29,
+        3,
+        36
+      ],
+      "name": "检畜与交接净空",
+      "approach": [
+        29,
+        3,
+        37
+      ]
+    },
+    {
+      "id": "tack",
+      "kind": "storage",
+      "pos": [
+        6,
+        4,
+        27
+      ],
+      "name": "鞍具维修储备",
+      "approach": [
+        6,
+        3,
+        28
+      ]
+    },
+    {
+      "id": "repair",
+      "kind": "work",
+      "pos": [
+        11,
+        3,
+        27
+      ],
+      "name": "快修鞍具",
+      "approach": [
+        11,
+        3,
+        28
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        19,
+        3,
+        42
+      ],
+      "name": "背风营路入口",
+      "facing": "south"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        19,
+        2,
+        42
+      ],
+      "direction": "south",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "接已有营路；人畜与车辆另留净空"
+    }
+  ],
+  "design_notes": [],
+  "differences": [
+    "前后分栏驿；水槽数、栏位组织、维修与回转空间不同。"
+  ],
+  "floors": [
+    {
+      "name": "营地生活层",
+      "y": 2,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/steppe_crafts.py:SC-02-v03",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "nbt_sha256": "3082e7e38bc23c06079b5b2b9aa0fc95d2e3c8cae276e2b3f377d74cea3f382f"
+}

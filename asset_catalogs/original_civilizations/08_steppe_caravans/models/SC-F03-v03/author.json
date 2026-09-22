@@ -1,0 +1,197 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "SC-F03-v03",
+  "name": "储草与分料双棚",
+  "family": "SC-F03",
+  "civilization": "游牧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    39,
+    19,
+    37
+  ],
+  "terrain": {
+    "选址": "依托已有畜群、水草及运水路线；储草与分料双棚储草架离开低洼积水，入口背风，不占商队车道。",
+    "资源与季节": "须接已有水草与补给路线，储槽为外部运水；按当地风向使入口背风，长季定居与短期停驻明确区分。",
+    "高程": "默认入口脚底Y=3；坡台住宅Y=5由实体台阶接入，见点位。",
+    "落地限制": "仅整理模板营地占地，不推平外部草坡；留出畜群、货车或来客外接通路。",
+    "运行边界": "原版静态空间与作者点位，未接入动物、交易、季节迁徙或运行时生成。"
+  },
+  "rooms": [
+    {
+      "id": "pen",
+      "name": "饮水休畜栏",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        18,
+        6,
+        27
+      ],
+      "purpose": "休畜、运水、饲料与检畜通路"
+    },
+    {
+      "id": "dry",
+      "name": "储草分料棚",
+      "min": [
+        23,
+        3,
+        4
+      ],
+      "max": [
+        34,
+        7,
+        25
+      ],
+      "purpose": "干草、袋料、分切打包与发放分区"
+    }
+  ],
+  "points": [
+    {
+      "id": "penwater0",
+      "kind": "work",
+      "pos": [
+        16,
+        3,
+        8
+      ],
+      "name": "运水饮畜槽",
+      "approach": [
+        16,
+        3,
+        9
+      ]
+    },
+    {
+      "id": "pencare",
+      "kind": "storage",
+      "pos": [
+        7,
+        4,
+        24
+      ],
+      "name": "照护与清栏器具",
+      "approach": [
+        7,
+        3,
+        25
+      ]
+    },
+    {
+      "id": "penhandle",
+      "kind": "work",
+      "pos": [
+        12,
+        3,
+        26
+      ],
+      "name": "检畜与交接净空",
+      "approach": [
+        12,
+        3,
+        27
+      ]
+    },
+    {
+      "id": "bags",
+      "kind": "storage",
+      "pos": [
+        26,
+        4,
+        14
+      ],
+      "name": "草料袋与储运工具",
+      "approach": [
+        26,
+        3,
+        15
+      ]
+    },
+    {
+      "id": "mix",
+      "kind": "work",
+      "pos": [
+        28,
+        3,
+        20
+      ],
+      "name": "草料分切与打包",
+      "approach": [
+        28,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "dry",
+      "kind": "storage",
+      "pos": [
+        28,
+        4,
+        10
+      ],
+      "name": "高位干草储备",
+      "approach": [
+        28,
+        3,
+        11
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        19,
+        3,
+        34
+      ],
+      "name": "背风营路入口",
+      "facing": "south"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        19,
+        2,
+        34
+      ],
+      "direction": "south",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "接已有营路；人畜与车辆另留净空"
+    }
+  ],
+  "design_notes": [],
+  "differences": [
+    "储草与分料双棚；开放照护、半围合、分料储草和完整值守生活组合分别建立。"
+  ],
+  "floors": [
+    {
+      "name": "营地生活层",
+      "y": 2,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/steppe_gardens.py:SC-F03-v03",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "nbt_sha256": "61e391a825a6a8b2a9c566ea61f81a7b0a96170358322657a088cbafc16e31df"
+}

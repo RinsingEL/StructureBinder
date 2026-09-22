@@ -1,0 +1,24 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "SC-F03-v01",
+  "nbt_sha256": "e2a70372ab840edf6128af0e50160c5f7a5d2f0e9d87a7b34216680acdf99003",
+  "author_sha256": "893c9245f3acf0e3767eb747dd119e6ec569db9a69650d33b9b43dd9353a416c",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-open",
+    "point-water",
+    "point-care",
+    "point-hay",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

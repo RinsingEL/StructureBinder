@@ -1,0 +1,227 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "SC-08-v04",
+  "name": "前后转运长棚",
+  "family": "SC-08",
+  "civilization": "游牧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    33,
+    19,
+    47
+  ],
+  "terrain": {
+    "选址": "季节停驻贸易点的长条前后转运地块；货棚保持干燥，南端接既有车道。",
+    "资源与季节": "须接已有水草与补给路线，储槽为外部运水；按当地风向使入口背风，长季定居与短期停驻明确区分。",
+    "高程": "默认入口脚底Y=3；坡台住宅Y=5由实体台阶接入，见点位。",
+    "落地限制": "仅整理模板营地占地，不推平外部草坡；留出畜群、货车或来客外接通路。",
+    "运行边界": "原版静态空间与作者点位，未接入动物、交易、季节迁徙或运行时生成。"
+  },
+  "rooms": [
+    {
+      "id": "cargo",
+      "name": "分类干货与装卸",
+      "min": [
+        4,
+        3,
+        3
+      ],
+      "max": [
+        20,
+        7,
+        36
+      ],
+      "purpose": "中央卸货通道，两侧分类柜与货垛"
+    }
+  ],
+  "points": [
+    {
+      "id": "goods0",
+      "kind": "storage",
+      "pos": [
+        7,
+        4,
+        6
+      ],
+      "name": "粮袋干货",
+      "approach": [
+        7,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "load0",
+      "kind": "storage",
+      "pos": [
+        15,
+        4,
+        6
+      ],
+      "name": "分组封装货垛",
+      "approach": [
+        14,
+        3,
+        6
+      ]
+    },
+    {
+      "id": "goods1",
+      "kind": "storage",
+      "pos": [
+        7,
+        4,
+        13
+      ],
+      "name": "织品皮料",
+      "approach": [
+        7,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "load1",
+      "kind": "storage",
+      "pos": [
+        15,
+        4,
+        13
+      ],
+      "name": "分组封装货垛",
+      "approach": [
+        14,
+        3,
+        13
+      ]
+    },
+    {
+      "id": "goods2",
+      "kind": "storage",
+      "pos": [
+        7,
+        4,
+        20
+      ],
+      "name": "陶器工具",
+      "approach": [
+        7,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "load2",
+      "kind": "storage",
+      "pos": [
+        15,
+        4,
+        20
+      ],
+      "name": "分组封装货垛",
+      "approach": [
+        14,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "goods3",
+      "kind": "storage",
+      "pos": [
+        7,
+        4,
+        27
+      ],
+      "name": "备用车料",
+      "approach": [
+        7,
+        3,
+        28
+      ]
+    },
+    {
+      "id": "load3",
+      "kind": "storage",
+      "pos": [
+        15,
+        4,
+        27
+      ],
+      "name": "分组封装货垛",
+      "approach": [
+        14,
+        3,
+        27
+      ]
+    },
+    {
+      "id": "ledger",
+      "kind": "work",
+      "pos": [
+        6,
+        3,
+        34
+      ],
+      "name": "收发货登记",
+      "approach": [
+        6,
+        3,
+        35
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        12,
+        3,
+        44
+      ],
+      "name": "背风营路入口",
+      "facing": "south"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        12,
+        2,
+        44
+      ],
+      "direction": "south",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "接已有营路；人畜与车辆另留净空"
+    }
+  ],
+  "design_notes": [],
+  "differences": [
+    "前后转运长棚；分类规模、装卸侧、看管配套与货车排列不同。"
+  ],
+  "floors": [
+    {
+      "name": "营地生活层",
+      "y": 2,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/steppe_crafts.py:SC-08-v04",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "nbt_sha256": "1d594b11e3dd8f0b1dd475f2c843d1bf217151e6aa6ebfec6634a64d75296f87"
+}

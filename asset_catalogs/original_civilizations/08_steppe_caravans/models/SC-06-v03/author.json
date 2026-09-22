@@ -1,0 +1,317 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "SC-06-v03",
+  "name": "乳品双帐洁污分区",
+  "family": "SC-06",
+  "civilization": "游牧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    51,
+    19,
+    34
+  ],
+  "terrain": {
+    "选址": "依托稳定畜乳与洁净运水，凉藏为静态柜不模拟温控；两帐分别容纳加工与洁净封装储物",
+    "资源与季节": "须接已有水草与补给路线，储槽为外部运水；按当地风向使入口背风，长季定居与短期停驻明确区分。",
+    "高程": "默认入口脚底Y=3；坡台住宅Y=5由实体台阶接入，见点位。",
+    "落地限制": "仅整理模板营地占地，不推平外部草坡；留出畜群、货车或来客外接通路。",
+    "运行边界": "原版静态空间与作者点位，未接入动物、交易、季节迁徙或运行时生成。"
+  },
+  "rooms": [
+    {
+      "id": "clean",
+      "name": "独立洁净储藏帐",
+      "min": [
+        32,
+        3,
+        7
+      ],
+      "max": [
+        44,
+        6,
+        21
+      ],
+      "purpose": "成品与包装分离原料"
+    },
+    {
+      "id": "flow",
+      "name": "原料处理与封装",
+      "min": [
+        6,
+        3,
+        6
+      ],
+      "max": [
+        23,
+        7,
+        24
+      ],
+      "purpose": "原料柜、洗槽、主处理、封装、成品与管理"
+    }
+  ],
+  "points": [
+    {
+      "id": "raw",
+      "kind": "storage",
+      "pos": [
+        9,
+        4,
+        8
+      ],
+      "name": "生乳洁净桶与批次",
+      "approach": [
+        9,
+        3,
+        9
+      ]
+    },
+    {
+      "id": "wash",
+      "kind": "work",
+      "pos": [
+        20,
+        3,
+        9
+      ],
+      "name": "器具清洗",
+      "approach": [
+        19,
+        3,
+        9
+      ]
+    },
+    {
+      "id": "process",
+      "kind": "work",
+      "pos": [
+        9,
+        3,
+        13
+      ],
+      "name": "加热处理与乳脂分离",
+      "approach": [
+        9,
+        3,
+        12
+      ]
+    },
+    {
+      "id": "seal",
+      "kind": "work",
+      "pos": [
+        20,
+        3,
+        16
+      ],
+      "name": "分装封口",
+      "approach": [
+        20,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "culture",
+      "kind": "work",
+      "pos": [
+        15,
+        3,
+        10
+      ],
+      "name": "乳桶静置与分批处理",
+      "approach": [
+        14,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "vessels",
+      "kind": "storage",
+      "pos": [
+        9,
+        4,
+        18
+      ],
+      "name": "洗净器皿与滤布分柜",
+      "approach": [
+        9,
+        3,
+        19
+      ]
+    },
+    {
+      "id": "finished",
+      "kind": "storage",
+      "pos": [
+        10,
+        4,
+        21
+      ],
+      "name": "封装乳品与批次暂存",
+      "approach": [
+        10,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "record",
+      "kind": "work",
+      "pos": [
+        18,
+        3,
+        21
+      ],
+      "name": "批次交接与卫生记录",
+      "approach": [
+        18,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "clean",
+      "kind": "storage",
+      "pos": [
+        36,
+        4,
+        9
+      ],
+      "name": "洁净成品与包装柜",
+      "approach": [
+        36,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "pack",
+      "kind": "work",
+      "pos": [
+        38,
+        3,
+        15
+      ],
+      "name": "独立成品包装",
+      "approach": [
+        38,
+        3,
+        16
+      ]
+    },
+    {
+      "id": "packstock",
+      "kind": "storage",
+      "pos": [
+        41,
+        4,
+        11
+      ],
+      "name": "封口器材与空容器",
+      "approach": [
+        41,
+        3,
+        12
+      ]
+    },
+    {
+      "id": "checkpack",
+      "kind": "work",
+      "pos": [
+        35,
+        3,
+        17
+      ],
+      "name": "洁净复核与整箱扎包",
+      "approach": [
+        35,
+        3,
+        18
+      ]
+    },
+    {
+      "id": "dispatch",
+      "kind": "storage",
+      "pos": [
+        40,
+        4,
+        19
+      ],
+      "name": "已验封箱待发货",
+      "approach": [
+        40,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "break",
+      "kind": "work",
+      "pos": [
+        29,
+        3,
+        27
+      ],
+      "name": "休息交接桌",
+      "approach": [
+        28,
+        3,
+        27
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        15,
+        3,
+        31
+      ],
+      "name": "背风营路入口",
+      "facing": "south"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        15,
+        2,
+        31
+      ],
+      "direction": "south",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "接已有营路；人畜与车辆另留净空"
+    }
+  ],
+  "design_notes": [],
+  "differences": [
+    "双帐洁污分区；结合行业分别组织收料、加工、成品和管理。"
+  ],
+  "floors": [
+    {
+      "name": "营地生活层",
+      "y": 2,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/steppe_crafts.py:SC-06-v03",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "nbt_sha256": "cd612ff2914481653272608c979365f14050f24090ea6ddf21d59a0b4bc0c51f"
+}

@@ -1,0 +1,52 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "SC-08-v02",
+  "nbt_sha256": "def240ef854348f0ed0ec5e00d84706c04ce2af5b4ac41f820831ba740fb35fe",
+  "author_sha256": "c2c9acc9f1a8b91b773ed517b6ad3d2fcdc7a7a0ee9d3343250facb809fc8a65",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-cargo",
+    "point-goods0",
+    "point-load0",
+    "point-goods1",
+    "point-load1",
+    "point-goods2",
+    "point-load2",
+    "point-ledger",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending",
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "草原行旅文明",
+      "after": "逐风诸部",
+      "previous_author_sha256": "585e9cd8a7188a5c9a117d395e66bc07031edb361193d4aea80a6448dabfc2ae",
+      "current_author_sha256": "5a9f9a820791beee20413fcee46b124c1c43f7f7a5c26cde2069bfad0e2d092a",
+      "nbt_sha256": "def240ef854348f0ed0ec5e00d84706c04ce2af5b4ac41f820831ba740fb35fe",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "逐风诸部",
+      "after": "游牧",
+      "previous_author_sha256": "5a9f9a820791beee20413fcee46b124c1c43f7f7a5c26cde2069bfad0e2d092a",
+      "current_author_sha256": "c2c9acc9f1a8b91b773ed517b6ad3d2fcdc7a7a0ee9d3343250facb809fc8a65",
+      "nbt_sha256": "def240ef854348f0ed0ec5e00d84706c04ce2af5b4ac41f820831ba740fb35fe",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
+  ]
+}
