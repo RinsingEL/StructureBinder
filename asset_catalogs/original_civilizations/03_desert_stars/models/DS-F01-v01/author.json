@@ -1,0 +1,138 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DS-F01-v01",
+  "name": "街口薄饼干粮铺",
+  "family": "DS-F01",
+  "civilization": "沙海星象文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    17,
+    23,
+    25
+  ],
+  "terrain": {
+    "选址": "有实际居民、旅人和相应行业供需的绿洲生活街区",
+    "地块": "小矩形店铺前售后烤，备料与烤炉相邻，短遮阳檐面对聚落街口。",
+    "高程": "主入口脚底 Y=2；两层版上层脚底 Y=9",
+    "落地": "结构连同内院及铺面完整落地；外部交通、供水与库存另行接入，未写入的凹角保持原环境"
+  },
+  "rooms": [
+    {
+      "id": "shop",
+      "name": "干粮与烘烤间",
+      "min": [
+        4,
+        2,
+        7
+      ],
+      "max": [
+        12,
+        6,
+        19
+      ],
+      "purpose": "展示、备料、饮水和烘烤"
+    }
+  ],
+  "points": [
+    {
+      "id": "sales",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        11
+      ],
+      "name": "薄饼与干粮柜台",
+      "approach": [
+        7,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "bake",
+      "kind": "work",
+      "pos": [
+        4,
+        2,
+        17
+      ],
+      "name": "烘烤炉",
+      "approach": [
+        5,
+        2,
+        17
+      ]
+    },
+    {
+      "id": "prep",
+      "kind": "work",
+      "pos": [
+        8,
+        2,
+        17
+      ],
+      "name": "和面备餐台",
+      "approach": [
+        8,
+        2,
+        16
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        11,
+        2,
+        4
+      ],
+      "name": "主入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        11,
+        1,
+        4
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "接外部步行街或商旅停驻面，脚底 Y=2"
+    }
+  ],
+  "design_notes": [
+    "小矩形店铺前售后烤，备料与烤炉相邻，短遮阳檐面对聚落街口。"
+  ],
+  "differences": [
+    "小矩形店铺前售后烤，备料与烤炉相邻，短遮阳檐面对聚落街口。"
+  ],
+  "floors": [
+    {
+      "name": "地面空间与院落",
+      "y": 1,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/oasis_hospitality.py:shop(1)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "sand"
+  },
+  "nbt_sha256": "988969a04492bf4a75e84563ed96539d289b1675d0ccee9e6c68f59fc4d5b55e"
+}

@@ -1,0 +1,49 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-08-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "1d8bcc78fab23ac519a31be494266bc1dc60e11c2ea4c1a6996cc86fcd623ee4",
+  "author_sha256": "25eb2ab343c5d839cd476cdd28f2cc3c8040e1196f716e77d801b5e6546ce49c",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-common.png",
+    "previews/room-wash.png",
+    "previews/room-repair.png",
+    "previews/room-west.png",
+    "previews/room-east.png",
+    "previews/room-veranda.png",
+    "previews/point-register.png",
+    "previews/point-meal.png",
+    "previews/point-cook.png",
+    "previews/point-repair.png",
+    "previews/point-wash.png",
+    "previews/point-large_repair.png",
+    "previews/point-west_bed1.png",
+    "previews/point-west_bed2.png",
+    "previews/point-east_bed1.png",
+    "previews/point-east_bed2.png",
+    "previews/point-upper.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "前低台接待餐饮和独立洗漱维修间，后三格宽短阶升一格，进入两侧客房的遮阳廊。",
+    "内饰与使用": "登记、餐食、四床、衣柜、水盆隔屏、维修台和备件有独立位置，高台篷柱从高地坪起立。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、全部楼层、房间、使用点、标记与环境图；当前 NBT 数据与入口至已标站位的碰撞检查通过，无警告。",
+    "因地制宜": "有可靠生活用水与补给条件的聚落入口或商路停驻点；前低台接待、餐饮和洗漱维修，后高台双客房接遮阳廊，中间短阶适应一格缓坡。；主入口脚底 Y=2；后高台脚底 Y=3；结构连同内院及铺面完整落地；外部交通、供水与库存另行接入，未写入的凹角保持原环境。已查看相应平地或微坡示意。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "住宿、交易、服务、存货及生产用途由空间和作者标记表达，尚未接入对应国度 Mod 玩法。"
+  ]
+}

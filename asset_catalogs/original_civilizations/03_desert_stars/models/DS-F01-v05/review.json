@@ -1,0 +1,39 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-F01-v05",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "a456fb46b0a1ac3a32c0e21874d3758fc900a67493cb6ba4f63ad13b0eef0847",
+  "author_sha256": "ddc478ba02a8032ae442c9bc4444467c81e942c025c917c7c864b5243f77c1e8",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-tea.png",
+    "previews/room-canopy.png",
+    "previews/point-water.png",
+    "previews/point-serve.png",
+    "previews/point-west.png",
+    "previews/point-east.png",
+    "previews/point-boil.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "临街青白长篷作等候区，室内前部储水服务、后部两组茶座，风塔与炉灶分开。",
+    "内饰与使用": "三口储水盆、茶饮柜台、两组茶桌长凳、烧水炉和器具架清晰，主门不被柜台挡住。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、全部楼层、房间、使用点、标记与环境图；当前 NBT 数据与入口至已标站位的碰撞检查通过，无警告。",
+    "因地制宜": "有实际居民、旅人和相应行业供需的绿洲生活街区；前篷等候与取水，后厅分开服务柜台、两组茶座及烧水备料，依赖可靠的生活供水。；主入口脚底 Y=2；两层版上层脚底 Y=9；结构连同内院及铺面完整落地；外部交通、供水与库存另行接入，未写入的凹角保持原环境；仅用于能稳定取得生活用水的位置；锅盆为储水与服务空间，不会凭模板产生水源或经济服务。已查看相应平地或微坡示意。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "住宿、交易、服务、存货及生产用途由空间和作者标记表达，尚未接入对应国度 Mod 玩法。"
+  ]
+}

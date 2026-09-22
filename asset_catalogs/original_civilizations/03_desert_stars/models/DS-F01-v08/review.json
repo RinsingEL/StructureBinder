@@ -1,0 +1,40 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-F01-v08",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "11192daa701bf199e51874289c34f097b4b46988cb01bea6458178c11b34c3a0",
+  "author_sha256": "0644cc56a51557be031ba09cda1f6dc641316ebc7af86beeb36b43d0abbdf9de",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-staff.png",
+    "previews/room-stock.png",
+    "previews/room-stall.png",
+    "previews/point-sales.png",
+    "previews/point-staff_bed1.png",
+    "previews/point-stock.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "低台绿色凉棚售卖，高台仓房与值守间各自开门，中间三格宽短阶接一格坡差。",
+    "内饰与使用": "瓜果粮食柜台、周转货筐、值守床位衣柜和饮水完整；修正切片后全平面可同时看到摊面和高台内饰。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、全部楼层、房间、使用点、标记与环境图；当前 NBT 数据与入口至已标站位的碰撞检查通过，无警告。",
+    "因地制宜": "有实际居民、旅人和相应行业供需的绿洲生活街区；低台遮棚售卖，高台仓房与值守间分开，短阶接一格地坪差，适合绿洲坡缘生活街。；主入口脚底 Y=2；后高台脚底 Y=3；结构连同内院及铺面完整落地；外部交通、供水与库存另行接入，未写入的凹角保持原环境。已查看相应平地或微坡示意。"
+  },
+  "revisions": [
+    "将楼层切片上限从棚顶 Y=7 降至 Y=6，露出低台果蔬柜台。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "住宿、交易、服务、存货及生产用途由空间和作者标记表达，尚未接入对应国度 Mod 玩法。"
+  ]
+}

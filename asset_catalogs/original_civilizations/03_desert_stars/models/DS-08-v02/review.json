@@ -1,0 +1,54 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-08-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "ea01ef65f0c64ad2f4f1f4dcb09647a721daff379bdf8e513eae2d5315442b88",
+  "author_sha256": "d9212106536e848adb1ab6c2a17e2432a42f4cc4bf2f453f715a4a123d260ae0",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-nw.png",
+    "previews/room-sw.png",
+    "previews/room-ne.png",
+    "previews/room-se.png",
+    "previews/room-reception.png",
+    "previews/room-kitchen.png",
+    "previews/room-court.png",
+    "previews/point-nw_bed1.png",
+    "previews/point-nw_bed2.png",
+    "previews/point-sw_bed1.png",
+    "previews/point-sw_bed2.png",
+    "previews/point-ne_bed1.png",
+    "previews/point-ne_bed2.png",
+    "previews/point-se_bed1.png",
+    "previews/point-se_bed2.png",
+    "previews/point-register.png",
+    "previews/point-repair.png",
+    "previews/point-kitchen_cook.png",
+    "previews/point-meal.png",
+    "previews/point-wash.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "四间双人客房分列两翼，独立门厅接中央遮阳水庭，后端共用食堂，客房门朝院各自进入。",
+    "内饰与使用": "八床与房内衣柜、储物、饮水完整，庭侧公用水盆和候坐连接登记、修补与七格长桌食堂。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、全部楼层、房间、使用点、标记与环境图；当前 NBT 数据与入口至已标站位的碰撞检查通过，无警告。",
+    "因地制宜": "有可靠生活用水与补给条件的聚落入口或商路停驻点；四间客房分列两翼，中央水庭、前门登记小屋与后排食堂形成围院，房门各自朝院。；主入口脚底 Y=2；两层版上层脚底 Y=9；结构连同内院及铺面完整落地；外部交通、供水与库存另行接入，未写入的凹角保持原环境。已查看相应平地或微坡示意。"
+  },
+  "revisions": [
+    "将公用食堂餐桌与座席加长至七格，保留桌边和厨灶通路。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "住宿、交易、服务、存货及生产用途由空间和作者标记表达，尚未接入对应国度 Mod 玩法。"
+  ]
+}

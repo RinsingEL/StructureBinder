@@ -1,0 +1,274 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DS-08-v01",
+  "name": "路旁双间客栈",
+  "family": "DS-08",
+  "civilization": "沙海星象文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    29,
+    24,
+    37
+  ],
+  "terrain": {
+    "选址": "有可靠生活用水与补给条件的聚落入口或商路停驻点",
+    "地块": "前厅接待与进餐，后排两间客房分开，侧道通后院；适合商路旁的小补给点。",
+    "高程": "主入口脚底 Y=2；两层版上层脚底 Y=9",
+    "落地": "结构连同内院及铺面完整落地；外部交通、供水与库存另行接入，未写入的凹角保持原环境"
+  },
+  "rooms": [
+    {
+      "id": "common",
+      "name": "登记餐饮与补给前厅",
+      "min": [
+        5,
+        2,
+        7
+      ],
+      "max": [
+        23,
+        6,
+        17
+      ],
+      "purpose": "登记、用餐、炊事和旅具修补"
+    },
+    {
+      "id": "west",
+      "name": "单人客房",
+      "min": [
+        5,
+        2,
+        22
+      ],
+      "max": [
+        12,
+        6,
+        31
+      ],
+      "purpose": "睡眠、衣物与室内盥洗"
+    },
+    {
+      "id": "east",
+      "name": "双人客房",
+      "min": [
+        16,
+        2,
+        22
+      ],
+      "max": [
+        23,
+        6,
+        31
+      ],
+      "purpose": "睡眠、衣物与室内盥洗"
+    },
+    {
+      "id": "rear",
+      "name": "后院歇脚",
+      "min": [
+        4,
+        2,
+        33
+      ],
+      "max": [
+        24,
+        6,
+        34
+      ],
+      "purpose": "客房后歇坐与旅人通路"
+    }
+  ],
+  "points": [
+    {
+      "id": "register",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        9
+      ],
+      "name": "接待登记",
+      "approach": [
+        7,
+        2,
+        10
+      ]
+    },
+    {
+      "id": "meal",
+      "kind": "work",
+      "pos": [
+        12,
+        2,
+        13
+      ],
+      "name": "旅人用餐桌",
+      "approach": [
+        12,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "cook",
+      "kind": "work",
+      "pos": [
+        5,
+        2,
+        17
+      ],
+      "name": "餐食炉灶",
+      "approach": [
+        5,
+        2,
+        16
+      ]
+    },
+    {
+      "id": "repair",
+      "kind": "work",
+      "pos": [
+        20,
+        2,
+        9
+      ],
+      "name": "旅具检查与修补",
+      "approach": [
+        20,
+        2,
+        8
+      ]
+    },
+    {
+      "id": "west_bed1",
+      "kind": "bed",
+      "pos": [
+        6,
+        2,
+        30
+      ],
+      "name": "单人客房床位 1",
+      "approach": [
+        7,
+        2,
+        30
+      ]
+    },
+    {
+      "id": "east_bed1",
+      "kind": "bed",
+      "pos": [
+        17,
+        2,
+        30
+      ],
+      "name": "双人客房床位 1",
+      "approach": [
+        18,
+        2,
+        30
+      ]
+    },
+    {
+      "id": "east_bed2",
+      "kind": "bed",
+      "pos": [
+        22,
+        2,
+        30
+      ],
+      "name": "双人客房床位 2",
+      "approach": [
+        21,
+        2,
+        30
+      ]
+    },
+    {
+      "id": "wash",
+      "kind": "work",
+      "pos": [
+        26,
+        2,
+        27
+      ],
+      "name": "院侧洗漱",
+      "approach": [
+        26,
+        2,
+        26
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        13,
+        2,
+        4
+      ],
+      "name": "主入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        13,
+        1,
+        4
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "接外部步行街或商旅停驻面，脚底 Y=2"
+    }
+  ],
+  "design_notes": [
+    "前厅接待与进餐，后排两间客房分开，侧道通后院；适合商路旁的小补给点。"
+  ],
+  "differences": [
+    "前厅接待与进餐，后排两间客房分开，侧道通后院；适合商路旁的小补给点。"
+  ],
+  "floors": [
+    {
+      "name": "地面空间与院落",
+      "y": 1,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/oasis_hospitality.py:inn(1)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "sand"
+  },
+  "ventilation": [
+    {
+      "roof_y": 8,
+      "min": [
+        7,
+        8,
+        24
+      ],
+      "max": [
+        8,
+        13,
+        25
+      ],
+      "note": "连续通风孔的几何表达，不模拟气流或温度"
+    }
+  ],
+  "nbt_sha256": "b0bbaa5ab8a4c0dbe6dd9677050a17068bba9ea396e6318434865fb7cc781a27"
+}

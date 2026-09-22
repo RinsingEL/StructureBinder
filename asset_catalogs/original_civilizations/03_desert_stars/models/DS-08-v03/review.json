@@ -1,0 +1,49 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-08-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "529a14b0ddefd8b00a64865ed1ea9b99ac6ad031679b646a7a8e299a0e91da6c",
+  "author_sha256": "8e60f50578240bfdeee06c9a4d08061b0d007bec049231f78e70a5e9bcbcede4",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-reception.png",
+    "previews/room-dining.png",
+    "previews/room-front.png",
+    "previews/room-rear.png",
+    "previews/room-wash.png",
+    "previews/room-upper.png",
+    "previews/point-register.png",
+    "previews/point-meal.png",
+    "previews/point-cook.png",
+    "previews/point-repair.png",
+    "previews/point-front_bed1.png",
+    "previews/point-front_bed2.png",
+    "previews/point-rear_bed1.png",
+    "previews/point-rear_bed2.png",
+    "previews/point-wash.png",
+    "previews/point-upper.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "窄街两层客栈下层登记与餐饮，上层双客房及盥洗间，侧廊和七级双宽内梯保持连通。",
+    "内饰与使用": "下层寄存、候坐、餐桌、炉灶与修补角，上层四床、衣柜和独立盥洗坐席齐备，梯井设护栏。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、全部楼层、房间、使用点、标记与环境图；当前 NBT 数据与入口至已标站位的碰撞检查通过，无警告。",
+    "因地制宜": "有可靠生活用水与补给条件的聚落入口或商路停驻点；底层前登记后餐饮，上层双客房与盥洗间接单侧走廊，七级内梯适应窄街占地。；主入口脚底 Y=2；两层版上层脚底 Y=9；结构连同内院及铺面完整落地；外部交通、供水与库存另行接入，未写入的凹角保持原环境。已查看相应平地或微坡示意。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "住宿、交易、服务、存货及生产用途由空间和作者标记表达，尚未接入对应国度 Mod 玩法。"
+  ]
+}

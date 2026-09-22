@@ -1,0 +1,37 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-F01-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "528449f48de8859bdd54d077d7323766338919ea89286831a01a3df2c9544da4",
+  "author_sha256": "3bc73fb2bb3d0f3f2ef4f39846b3174df35070eb31320604bcb0e94c94787dea",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-shop.png",
+    "previews/room-yard.png",
+    "previews/point-sales.png",
+    "previews/point-repair.png",
+    "previews/point-forge.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "封闭前铺接灰白篷维修院，室外硬地、室内柜台与储物分别布置。",
+    "内饰与使用": "锻造台、磨石、工作台、铁砧、备件货箱与水盆齐备，维修院保留操作和搬运空间。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、全部楼层、房间、使用点、标记与环境图；当前 NBT 数据与入口至已标站位的碰撞检查通过，无警告。",
+    "因地制宜": "有实际居民、旅人和相应行业供需的绿洲生活街区；封闭前铺卖小工具，院内开放凉棚承担修补、打磨和备件存放，适合有侧院的商路街段。；主入口脚底 Y=2；两层版上层脚底 Y=9；结构连同内院及铺面完整落地；外部交通、供水与库存另行接入，未写入的凹角保持原环境。已查看相应平地或微坡示意。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "住宿、交易、服务、存货及生产用途由空间和作者标记表达，尚未接入对应国度 Mod 玩法。"
+  ]
+}

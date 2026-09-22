@@ -1,0 +1,200 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DS-F01-v06",
+  "name": "露窑日用陶器铺",
+  "family": "DS-F01",
+  "civilization": "沙海星象文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    27,
+    23,
+    29
+  ],
+  "terrain": {
+    "选址": "有实际居民、旅人和相应行业供需的绿洲生活街区",
+    "地块": "西侧制坯工作厅，东侧遮棚陈列与露天小窑，原泥、器皿、烧制和维护顺序明确。",
+    "高程": "主入口脚底 Y=2；两层版上层脚底 Y=9",
+    "落地": "结构连同内院及铺面完整落地；外部交通、供水与库存另行接入，未写入的凹角保持原环境"
+  },
+  "rooms": [
+    {
+      "id": "mould",
+      "name": "制坯与晾干厅",
+      "min": [
+        4,
+        2,
+        8
+      ],
+      "max": [
+        14,
+        6,
+        23
+      ],
+      "purpose": "原泥、水盆、制坯与室内晾干架"
+    },
+    {
+      "id": "sales",
+      "name": "遮棚陶器陈列",
+      "min": [
+        18,
+        2,
+        8
+      ],
+      "max": [
+        23,
+        6,
+        17
+      ],
+      "purpose": "样品与出售柜台"
+    },
+    {
+      "id": "kiln",
+      "name": "独立露窑",
+      "min": [
+        18,
+        2,
+        19
+      ],
+      "max": [
+        24,
+        6,
+        26
+      ],
+      "purpose": "装窑、出窑和后方维护"
+    }
+  ],
+  "points": [
+    {
+      "id": "clay",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        10
+      ],
+      "name": "原泥备料",
+      "approach": [
+        6,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "mould",
+      "kind": "work",
+      "pos": [
+        5,
+        2,
+        17
+      ],
+      "name": "制坯台",
+      "approach": [
+        5,
+        2,
+        16
+      ]
+    },
+    {
+      "id": "sales",
+      "kind": "work",
+      "pos": [
+        20,
+        2,
+        15
+      ],
+      "name": "日用陶器陈列",
+      "approach": [
+        20,
+        2,
+        14
+      ]
+    },
+    {
+      "id": "kiln",
+      "kind": "work",
+      "pos": [
+        21,
+        2,
+        20
+      ],
+      "name": "窑炉装料与出料",
+      "approach": [
+        21,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "kiln_service",
+      "kind": "work",
+      "pos": [
+        21,
+        3,
+        25
+      ],
+      "name": "窑后检查与维护",
+      "approach": [
+        21,
+        2,
+        26
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        9,
+        2,
+        4
+      ],
+      "name": "主入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        9,
+        1,
+        4
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "接外部步行街或商旅停驻面，脚底 Y=2"
+    }
+  ],
+  "design_notes": [
+    "西侧制坯工作厅，东侧遮棚陈列与露天小窑，原泥、器皿、烧制和维护顺序明确。",
+    "砖窑和贯通烟道为原版熔炉的建筑表达；标记操作与维护位置，不声明配方、热工或自动化生产。",
+    "陶器窑炉借用原版熔炉表达建筑用途，未接入制陶配方、晾干或烧成机制。"
+  ],
+  "differences": [
+    "西侧制坯工作厅，东侧遮棚陈列与露天小窑，原泥、器皿、烧制和维护顺序明确。"
+  ],
+  "floors": [
+    {
+      "name": "地面空间与院落",
+      "y": 1,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/oasis_hospitality.py:shop(6)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "sand"
+  },
+  "nbt_sha256": "0a28b33dae15c188d3f6afc52df4e81d5e3ad63e688bfe8e872f2e55af9ffa01"
+}

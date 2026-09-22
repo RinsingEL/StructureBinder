@@ -1,0 +1,36 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-F01-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "988969a04492bf4a75e84563ed96539d289b1675d0ccee9e6c68f59fc4d5b55e",
+  "author_sha256": "3f519287067b59168c18f0f0797c1f24587882d3f75e53544d17a8478d211e81",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-shop.png",
+    "previews/point-sales.png",
+    "previews/point-bake.png",
+    "previews/point-prep.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "街口小矩形铺面配短篷、黄窗和小圆顶，前售后作，烟道沿后角贯穿屋顶。",
+    "内饰与使用": "食品柜台、备餐工作台、烘烤炉、储物桶与清洗水盆均有布置，柜台与烤炉站位通畅。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、全部楼层、房间、使用点、标记与环境图；当前 NBT 数据与入口至已标站位的碰撞检查通过，无警告。",
+    "因地制宜": "有实际居民、旅人和相应行业供需的绿洲生活街区；小矩形店铺前售后烤，备料与烤炉相邻，短遮阳檐面对聚落街口。；主入口脚底 Y=2；两层版上层脚底 Y=9；结构连同内院及铺面完整落地；外部交通、供水与库存另行接入，未写入的凹角保持原环境。已查看相应平地或微坡示意。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "住宿、交易、服务、存货及生产用途由空间和作者标记表达，尚未接入对应国度 Mod 玩法。"
+  ]
+}

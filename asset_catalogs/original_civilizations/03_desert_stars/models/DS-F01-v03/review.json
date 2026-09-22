@@ -1,0 +1,40 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-F01-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "256daed1c5b178bd325e331cc5c1ea72ca3dacd2abd63a023a8debe38cc28956",
+  "author_sha256": "77d33e96e67e574f42d5396b0c0a2bad4aa6fd9be0887825ea21eb24bc10b35c",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-sales.png",
+    "previews/room-work.png",
+    "previews/room-court.png",
+    "previews/point-sales.png",
+    "previews/point-sew.png",
+    "previews/point-fit.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "L 形北侧陈列店与东侧裁缝间相通，院边凉棚供候衣歇坐，北门与东侧取衣口分开。",
+    "内饰与使用": "布匹架、接待台、双织机、裁布台、试衣隔帘和院内长凳完整，试衣站位能看见出入通道。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、全部楼层、房间、使用点、标记与环境图；当前 NBT 数据与入口至已标站位的碰撞检查通过，无警告。",
+    "因地制宜": "有实际居民、旅人和相应行业供需的绿洲生活街区；L 形铺面围住歇脚小院，北门陈列、东侧裁缝作业，织机与试衣空间分别布置。；主入口脚底 Y=2；两层版上层脚底 Y=9；结构连同内院及铺面完整落地；外部交通、供水与库存另行接入，未写入的凹角保持原环境。已查看相应平地或微坡示意。"
+  },
+  "revisions": [
+    "将试衣间视角改为沿隔帘看向通道，避免画面只显示帘面。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "住宿、交易、服务、存货及生产用途由空间和作者标记表达，尚未接入对应国度 Mod 玩法。"
+  ]
+}

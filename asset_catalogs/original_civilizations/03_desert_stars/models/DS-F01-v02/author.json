@@ -1,0 +1,154 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DS-F01-v02",
+  "name": "窄巷香料铺",
+  "family": "DS-F01",
+  "civilization": "沙海星象文明",
+  "planning_role": "planning_role.fill",
+  "size": [
+    13,
+    23,
+    29
+  ],
+  "terrain": {
+    "选址": "有实际居民、旅人和相应行业供需的绿洲生活街区",
+    "地块": "狭长铺面前部分类香料，后间配料与存货，用小门分隔日常销售和备货。",
+    "高程": "主入口脚底 Y=2；两层版上层脚底 Y=9",
+    "落地": "结构连同内院及铺面完整落地；外部交通、供水与库存另行接入，未写入的凹角保持原环境"
+  },
+  "rooms": [
+    {
+      "id": "sales",
+      "name": "窄巷香料前铺",
+      "min": [
+        4,
+        2,
+        6
+      ],
+      "max": [
+        8,
+        6,
+        16
+      ],
+      "purpose": "香料陈列、干燥香草与分类容器"
+    },
+    {
+      "id": "mixing",
+      "name": "后间配料与储藏",
+      "min": [
+        4,
+        2,
+        18
+      ],
+      "max": [
+        8,
+        6,
+        23
+      ],
+      "purpose": "小批配料与备货"
+    }
+  ],
+  "points": [
+    {
+      "id": "sales",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        11
+      ],
+      "name": "分类香料台",
+      "approach": [
+        6,
+        2,
+        10
+      ]
+    },
+    {
+      "id": "blend",
+      "kind": "work",
+      "pos": [
+        4,
+        2,
+        22
+      ],
+      "name": "香料配料台",
+      "approach": [
+        5,
+        2,
+        22
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        6,
+        2,
+        3
+      ],
+      "name": "主入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        6,
+        1,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "接外部步行街或商旅停驻面，脚底 Y=2"
+    }
+  ],
+  "design_notes": [
+    "狭长铺面前部分类香料，后间配料与存货，用小门分隔日常销售和备货。"
+  ],
+  "differences": [
+    "狭长铺面前部分类香料，后间配料与存货，用小门分隔日常销售和备货。"
+  ],
+  "floors": [
+    {
+      "name": "地面空间与院落",
+      "y": 1,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/oasis_hospitality.py:shop(2)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "sand"
+  },
+  "ventilation": [
+    {
+      "roof_y": 8,
+      "min": [
+        6,
+        8,
+        20
+      ],
+      "max": [
+        7,
+        13,
+        21
+      ],
+      "note": "连续通风孔的几何表达，不模拟气流或温度"
+    }
+  ],
+  "nbt_sha256": "42a4c04d3b8ecfe4b2d29f332a276fd287bef602b480757f0faf447b83fb16d6"
+}

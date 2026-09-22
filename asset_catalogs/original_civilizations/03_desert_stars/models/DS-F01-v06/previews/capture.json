@@ -1,0 +1,28 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "DS-F01-v06",
+  "nbt_sha256": "0a28b33dae15c188d3f6afc52df4e81d5e3ad63e688bfe8e872f2e55af9ffa01",
+  "author_sha256": "411060401555a7060a11978b2a6b512d0d713ab5798a2ef8246932c5e6de34e9",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-mould",
+    "room-sales",
+    "room-kiln",
+    "point-clay",
+    "point-mould",
+    "point-sales",
+    "point-kiln",
+    "point-kiln_service",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

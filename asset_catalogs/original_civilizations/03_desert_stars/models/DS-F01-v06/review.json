@@ -1,0 +1,41 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-F01-v06",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "0a28b33dae15c188d3f6afc52df4e81d5e3ad63e688bfe8e872f2e55af9ffa01",
+  "author_sha256": "411060401555a7060a11978b2a6b512d0d713ab5798a2ef8246932c5e6de34e9",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-mould.png",
+    "previews/room-sales.png",
+    "previews/room-kiln.png",
+    "previews/point-clay.png",
+    "previews/point-mould.png",
+    "previews/point-sales.png",
+    "previews/point-kiln.png",
+    "previews/point-kiln_service.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "西侧制坯厅与东侧陶器陈列棚并置，露天砖窑位于棚后，窑前和窑后均可接近。",
+    "内饰与使用": "原泥、水盆、制坯台、晾干架、陶器样品、交易台及窑炉维护点完整。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、全部楼层、房间、使用点、标记与环境图；当前 NBT 数据与入口至已标站位的碰撞检查通过，无警告。",
+    "因地制宜": "有实际居民、旅人和相应行业供需的绿洲生活街区；西侧制坯工作厅，东侧遮棚陈列与露天小窑，原泥、器皿、烧制和维护顺序明确。；主入口脚底 Y=2；两层版上层脚底 Y=9；结构连同内院及铺面完整落地；外部交通、供水与库存另行接入，未写入的凹角保持原环境。已查看相应平地或微坡示意。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "住宿、交易、服务、存货及生产用途由空间和作者标记表达，尚未接入对应国度 Mod 玩法。",
+    "陶器窑炉借用原版熔炉表达，未实现制陶配方、晾干、烧成或自动化。"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DS-F01-v07",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 离线视觉审查",
+  "nbt_sha256": "4c978f84a6513bdb27da97ab1d4834a35413845c97976954901fb764f78af974",
+  "author_sha256": "1426142fb69483af3fc966f9aa57d5b1c1b72d1d954995c353611cb6d5896290",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-shop.png",
+    "previews/room-maps.png",
+    "previews/room-sleep.png",
+    "previews/point-sales.png",
+    "previews/point-read.png",
+    "previews/point-maps.png",
+    "previews/point-sleep.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与平面": "两层书铺用七级双宽内梯联系，上层前部抄图、后部隔屏值守，楼梯口设连续护栏。",
+    "内饰与使用": "下层账台、阅读席和书架，上层制图台、卷册架、床位、衣柜与饮水形成工作生活组合。",
+    "标记与通路": "已查看当前四向外观、俯视、去屋顶、全部楼层、房间、使用点、标记与环境图；当前 NBT 数据与入口至已标站位的碰撞检查通过，无警告。",
+    "因地制宜": "有实际居民、旅人和相应行业供需的绿洲生活街区；下层售书与阅读，上层抄图工作间兼值守睡眠，内部楼梯联系紧凑两层。；主入口脚底 Y=2；两层版上层脚底 Y=9；结构连同内院及铺面完整落地；外部交通、供水与库存另行接入，未写入的凹角保持原环境。已查看相应平地或微坡示意。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "住宿、交易、服务、存货及生产用途由空间和作者标记表达，尚未接入对应国度 Mod 玩法。"
+  ]
+}
