@@ -1,0 +1,329 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "SC-01",
+  "name": "行旅大帐集市",
+  "family": "SC-01",
+  "civilization": "草原行旅文明",
+  "planning_role": "planning_role.key",
+  "size": [
+    49,
+    20,
+    43
+  ],
+  "terrain": {
+    "选址": "季节商路与集会交汇处的缓坡台地；集市西侧外留牲畜绕行线，南面6格净宽车道，不占饮水点。",
+    "高程": "入口与营地脚底Y=3；局部巡路台脚底Y=6，见标记与台阶。",
+    "资源与季节": "依赖外部季节水草及商路补给；水槽为运水储备，不凭空生成水源。严寒风暴季撤帐或转入冬营。",
+    "适配边界": "朝南开口按当地背风方向旋转；保留营地外人畜廊道，禁止直接压平山体或河滩。",
+    "运行边界": "帐篷、马具、货车与遗存均为原版静态表达，动物、交易及迁徙尚未接入。"
+  },
+  "rooms": [
+    {
+      "id": "trade",
+      "name": "四行业交易大帐",
+      "min": [
+        8,
+        3,
+        7
+      ],
+      "max": [
+        34,
+        7,
+        32
+      ],
+      "purpose": "摊位、中央人行街、寄存与公共休息"
+    },
+    {
+      "id": "cargo",
+      "name": "车队卸货带",
+      "min": [
+        37,
+        3,
+        7
+      ],
+      "max": [
+        46,
+        7,
+        37
+      ],
+      "purpose": "货车靠边装卸；不穿越中央顾客街"
+    }
+  ],
+  "points": [
+    {
+      "id": "trade11_0",
+      "kind": "work",
+      "pos": [
+        13,
+        3,
+        11
+      ],
+      "name": "织毡与皮货交易",
+      "approach": [
+        13,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "stock11_0",
+      "kind": "storage",
+      "pos": [
+        12,
+        4,
+        16
+      ],
+      "name": "摊主分类周转货柜",
+      "approach": [
+        12,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "trade11_1",
+      "kind": "work",
+      "pos": [
+        13,
+        3,
+        20
+      ],
+      "name": "工具修配交易",
+      "approach": [
+        13,
+        3,
+        19
+      ]
+    },
+    {
+      "id": "stock11_1",
+      "kind": "storage",
+      "pos": [
+        12,
+        4,
+        25
+      ],
+      "name": "摊主分类周转货柜",
+      "approach": [
+        12,
+        3,
+        26
+      ]
+    },
+    {
+      "id": "trade26_0",
+      "kind": "work",
+      "pos": [
+        28,
+        3,
+        11
+      ],
+      "name": "粮料称量",
+      "approach": [
+        28,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "stock26_0",
+      "kind": "storage",
+      "pos": [
+        27,
+        4,
+        16
+      ],
+      "name": "摊主分类周转货柜",
+      "approach": [
+        27,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "trade26_1",
+      "kind": "work",
+      "pos": [
+        28,
+        3,
+        20
+      ],
+      "name": "草药补给",
+      "approach": [
+        28,
+        3,
+        19
+      ]
+    },
+    {
+      "id": "stock26_1",
+      "kind": "storage",
+      "pos": [
+        27,
+        4,
+        25
+      ],
+      "name": "摊主分类周转货柜",
+      "approach": [
+        27,
+        3,
+        26
+      ]
+    },
+    {
+      "id": "rest",
+      "kind": "work",
+      "pos": [
+        16,
+        3,
+        28
+      ],
+      "name": "旅人遮蔽休息与议价桌",
+      "approach": [
+        14,
+        3,
+        28
+      ]
+    },
+    {
+      "id": "escrow",
+      "kind": "storage",
+      "pos": [
+        11,
+        4,
+        8
+      ],
+      "name": "登记寄存物资",
+      "approach": [
+        11,
+        3,
+        9
+      ]
+    },
+    {
+      "id": "ledger",
+      "kind": "work",
+      "pos": [
+        18,
+        3,
+        8
+      ],
+      "name": "寄存与交易登记",
+      "approach": [
+        18,
+        3,
+        9
+      ]
+    },
+    {
+      "id": "unload",
+      "kind": "work",
+      "pos": [
+        39,
+        4,
+        10
+      ],
+      "name": "车队卸货侧",
+      "approach": [
+        37,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "water",
+      "kind": "work",
+      "pos": [
+        4,
+        3,
+        14
+      ],
+      "name": "临时饮水补给",
+      "approach": [
+        5,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        21,
+        3,
+        39
+      ],
+      "name": "营路接驳入口",
+      "facing": "south"
+    },
+    {
+      "id": "rear",
+      "kind": "entrance",
+      "pos": [
+        21,
+        3,
+        3
+      ],
+      "name": "营路接驳入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        21,
+        2,
+        39
+      ],
+      "direction": "south",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "须接同高程营路，另留牲畜及车队空间"
+    },
+    {
+      "kind": "pedestrian",
+      "pos": [
+        21,
+        2,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "须接同高程营路，另留牲畜及车队空间"
+    }
+  ],
+  "design_notes": [
+    "暖白毡面、橙赭织带、深木框与粗石形成共同材料语言；不同用途分别安排开敞大帐、圆形家帐、露天石阵和路线营地。"
+  ],
+  "differences": [
+    "纵向大帐与独立装卸侧带；四种行业摊位和公共桌，不把车队混入人行走廊。"
+  ],
+  "floors": [
+    {
+      "name": "营地使用层",
+      "y": 2,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/steppe_caravans.py:SC-01",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 5,
+    "surface": "grass"
+  },
+  "nbt_sha256": "0ed7ecc2eb3d922b6a4395418582aa880efb58897f7a492daaeb73c305110016"
+}

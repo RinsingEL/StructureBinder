@@ -1,0 +1,44 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "NS-10-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 寒海航民作者离线全图审查",
+  "nbt_sha256": "b4ccf427fcefc0ae8b5ad8df5b1a6f2c266c33dffa8f19c331e4cc111fb65335",
+  "author_sha256": "24c19b9b5e8657618eef1b1635fda550b043ca23ba362635905a2e20e2bfd7d3",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-vestibule.png",
+    "previews/room-feast.png",
+    "previews/room-kitchen.png",
+    "previews/room-archive.png",
+    "previews/point-speaker.png",
+    "previews/point-banquet.png",
+    "previews/point-kitchen.png",
+    "previews/point-prepare.png",
+    "previews/point-food.png",
+    "previews/point-archive.png",
+    "previews/point-books.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与用途": "高跨宴席长厅与前风斗、侧炊事和档案形成不同尺度四个体量，短廊连接服务翼；端木构架与通长承檐可辨。",
+    "内饰与空间": "已查看完整20图：四组对坐宴席围中央通道，后端演述席面向听众，低炭盆留出绕行；炊洗切配与餐具分组，谱系誊写与档案独立干燥保存。",
+    "完整证据": "实际查看当前版本全部四向外观、顶视、去顶、楼层、房间、站位、标记与地形图；不以拍摄自动代替审美检查。",
+    "数据与通路": "最终 NBT 重读、状态、门床、标记与碰撞导航检查通过，零警告。",
+    "环境条件": "稳定的寒地海湾背风岸台；避开潮涌、雪崩、海冰推挤和行洪通道。；干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。；完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。；厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "船舶、起吊、供热、浴池和信号设备仅原版静态表达；真实交通、水文、温度及玩法未接入。"
+  ]
+}

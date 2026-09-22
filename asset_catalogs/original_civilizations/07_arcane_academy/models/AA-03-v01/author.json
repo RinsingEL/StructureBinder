@@ -1,0 +1,274 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "AA-03-v01",
+  "name": "四柱晶核庭 · 魔力配给所",
+  "family": "AA-03",
+  "civilization": "魔导学城",
+  "planning_role": "planning_role.key",
+  "size": [
+    51,
+    33,
+    47
+  ],
+  "terrain": {
+    "选址": "靠近学城设施的维护街区，基础避开地下水，预留普通装卸路和地下接口",
+    "高程": "主地板Y=3，普通道路脚底接Y=4；基础底Y=0须落在连续承载地层",
+    "地形处理": "模板是人工整平石基，不适用于未经处理的峡谷、水域或陡坡。观测馆上台阶为模板内实体台地。",
+    "接驳": "南北朝向以作者入口标记为准；外部道路、服务范围和供能管线另行核对。",
+    "魔法边界": "紫晶、终界烛、传送环、隔离屏与供能接口仅为静态原版陈设，不代表传送、供能、治疗或异常模拟。"
+  },
+  "rooms": [
+    {
+      "id": "control",
+      "name": "管理与维修长翼",
+      "min": [
+        6,
+        4,
+        9
+      ],
+      "max": [
+        16,
+        9,
+        34
+      ],
+      "purpose": "配额管理、账本、维修长台与备件"
+    },
+    {
+      "id": "stock",
+      "name": "晶石分类仓",
+      "min": [
+        34,
+        4,
+        9
+      ],
+      "max": [
+        44,
+        9,
+        24
+      ],
+      "purpose": "两排封存晶石架，搬运间距清楚"
+    },
+    {
+      "id": "interface",
+      "name": "配给接口工间",
+      "min": [
+        31,
+        4,
+        31
+      ],
+      "max": [
+        44,
+        9,
+        39
+      ],
+      "purpose": "计量外形、检修台、工具与接口预留"
+    }
+  ],
+  "points": [
+    {
+      "id": "distribution",
+      "kind": "work",
+      "pos": [
+        8,
+        4,
+        11
+      ],
+      "name": "晶核配额和设施台账",
+      "approach": [
+        8,
+        4,
+        12
+      ]
+    },
+    {
+      "id": "accounts",
+      "kind": "storage",
+      "pos": [
+        8,
+        5,
+        9
+      ],
+      "name": "分类用品和档案",
+      "approach": [
+        8,
+        4,
+        10
+      ]
+    },
+    {
+      "id": "maintenance",
+      "kind": "work",
+      "pos": [
+        8,
+        4,
+        24
+      ],
+      "name": "配给组件维修",
+      "approach": [
+        8,
+        4,
+        25
+      ]
+    },
+    {
+      "id": "parts",
+      "kind": "storage",
+      "pos": [
+        8,
+        5,
+        32
+      ],
+      "name": "分类用品和档案",
+      "approach": [
+        8,
+        4,
+        31
+      ]
+    },
+    {
+      "id": "crystal_11",
+      "kind": "storage",
+      "pos": [
+        36,
+        5,
+        11
+      ],
+      "name": "分类用品和档案",
+      "approach": [
+        36,
+        4,
+        12
+      ]
+    },
+    {
+      "id": "crystal_18",
+      "kind": "storage",
+      "pos": [
+        36,
+        5,
+        18
+      ],
+      "name": "分类用品和档案",
+      "approach": [
+        36,
+        4,
+        19
+      ]
+    },
+    {
+      "id": "meter",
+      "kind": "work",
+      "pos": [
+        33,
+        4,
+        33
+      ],
+      "name": "供能接口检查与停机挂牌",
+      "approach": [
+        33,
+        4,
+        34
+      ]
+    },
+    {
+      "id": "tools",
+      "kind": "storage",
+      "pos": [
+        33,
+        5,
+        38
+      ],
+      "name": "分类用品和档案",
+      "approach": [
+        33,
+        4,
+        37
+      ]
+    },
+    {
+      "id": "core",
+      "kind": "work",
+      "pos": [
+        25,
+        8,
+        19
+      ],
+      "name": "隔距观察晶核",
+      "approach": [
+        25,
+        4,
+        24
+      ]
+    },
+    {
+      "id": "interface",
+      "kind": "work",
+      "pos": [
+        43,
+        4,
+        35
+      ],
+      "name": "外部供能接口制作预留",
+      "approach": [
+        42,
+        4,
+        35
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        25,
+        4,
+        3
+      ],
+      "name": "普通步行入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        25,
+        3,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "外接连续普通街道；魔法设施不替代步行"
+    }
+  ],
+  "design_notes": [
+    "四柱高晶核架立于开放检修庭，西侧管理长翼、东北晶仓和东南接口工间分开，设备周围可绕行。",
+    "房间与真实操作点逐项标记。魔法设备只作静态表达；本次未启动Minecraft。"
+  ],
+  "differences": [
+    "四柱高晶核架立于开放检修庭，西侧管理长翼、东北晶仓和东南接口工间分开，设备周围可绕行。"
+  ],
+  "floors": [
+    {
+      "name": "城台主层",
+      "y": 3,
+      "max_y": 9
+    }
+  ],
+  "roof_min_y": 10,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/arcane_academy.py",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 4,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "nbt_sha256": "739b769cea3900ae5db401e8d2fea917880ecde67dc3e0ec377ec2255ea514b6"
+}

@@ -1,0 +1,319 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "SC-05",
+  "name": "议事家帐与炊事副帐",
+  "family": "SC-05",
+  "civilization": "草原行旅文明",
+  "planning_role": "planning_role.key",
+  "size": [
+    43,
+    19,
+    39
+  ],
+  "terrain": {
+    "选址": "家族常住或长季驻扎台地；主帐南向背风、炊事副帐在下风侧，与主帐之间留防火间距。",
+    "高程": "入口与营地脚底Y=3；局部巡路台脚底Y=6，见标记与台阶。",
+    "资源与季节": "依赖外部季节水草及商路补给；水槽为运水储备，不凭空生成水源。严寒风暴季撤帐或转入冬营。",
+    "适配边界": "朝南开口按当地背风方向旋转；保留营地外人畜廊道，禁止直接压平山体或河滩。",
+    "运行边界": "帐篷、马具、货车与遗存均为原版静态表达，动物、交易及迁徙尚未接入。"
+  },
+  "rooms": [
+    {
+      "id": "home",
+      "name": "带隐私门的寝区",
+      "min": [
+        7,
+        3,
+        5
+      ],
+      "max": [
+        23,
+        6,
+        12
+      ],
+      "purpose": "床铺、家族衣物及床侧通路"
+    },
+    {
+      "id": "council",
+      "name": "会客与家庭起居",
+      "min": [
+        5,
+        3,
+        13
+      ],
+      "max": [
+        25,
+        6,
+        26
+      ],
+      "purpose": "议事长桌、读写讲述、缝补与中央炉"
+    },
+    {
+      "id": "cook",
+      "name": "下风炊事副帐",
+      "min": [
+        29,
+        3,
+        6
+      ],
+      "max": [
+        39,
+        6,
+        16
+      ],
+      "purpose": "备餐、水槽、炊炉及原料储藏"
+    }
+  ],
+  "points": [
+    {
+      "id": "bed1",
+      "kind": "sleep",
+      "pos": [
+        9,
+        3,
+        9
+      ],
+      "name": "铺毡床位",
+      "approach": [
+        10,
+        3,
+        9
+      ]
+    },
+    {
+      "id": "bed2",
+      "kind": "sleep",
+      "pos": [
+        12,
+        3,
+        9
+      ],
+      "name": "铺毡床位",
+      "approach": [
+        13,
+        3,
+        9
+      ]
+    },
+    {
+      "id": "bed3",
+      "kind": "sleep",
+      "pos": [
+        19,
+        3,
+        9
+      ],
+      "name": "铺毡床位",
+      "approach": [
+        20,
+        3,
+        9
+      ]
+    },
+    {
+      "id": "linen",
+      "kind": "storage",
+      "pos": [
+        19,
+        4,
+        6
+      ],
+      "name": "家族衣物与冬毡",
+      "approach": [
+        19,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "council",
+      "kind": "work",
+      "pos": [
+        9,
+        3,
+        17
+      ],
+      "name": "会客与家族议事长桌",
+      "approach": [
+        7,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "history",
+      "kind": "work",
+      "pos": [
+        21,
+        3,
+        16
+      ],
+      "name": "家谱与路线讲述",
+      "approach": [
+        21,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "reserve",
+      "kind": "storage",
+      "pos": [
+        21,
+        4,
+        14
+      ],
+      "name": "公共备用物资",
+      "approach": [
+        21,
+        3,
+        15
+      ]
+    },
+    {
+      "id": "mending",
+      "kind": "work",
+      "pos": [
+        7,
+        3,
+        23
+      ],
+      "name": "家庭缝补",
+      "approach": [
+        8,
+        3,
+        23
+      ]
+    },
+    {
+      "id": "hearth",
+      "kind": "work",
+      "pos": [
+        15,
+        3,
+        16
+      ],
+      "name": "中央保温炉与上方通风口",
+      "approach": [
+        16,
+        3,
+        16
+      ]
+    },
+    {
+      "id": "cookcook",
+      "kind": "work",
+      "pos": [
+        31,
+        3,
+        10
+      ],
+      "name": "烹饪与热食",
+      "approach": [
+        31,
+        3,
+        11
+      ]
+    },
+    {
+      "id": "cookwater",
+      "kind": "work",
+      "pos": [
+        33,
+        3,
+        10
+      ],
+      "name": "运水储槽",
+      "approach": [
+        33,
+        3,
+        11
+      ]
+    },
+    {
+      "id": "food",
+      "kind": "storage",
+      "pos": [
+        32,
+        4,
+        8
+      ],
+      "name": "炊事原料",
+      "approach": [
+        32,
+        3,
+        9
+      ]
+    },
+    {
+      "id": "meal",
+      "kind": "work",
+      "pos": [
+        30,
+        3,
+        24
+      ],
+      "name": "帐外共享餐叙与备餐",
+      "approach": [
+        28,
+        3,
+        24
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        15,
+        3,
+        35
+      ],
+      "name": "营路接驳入口",
+      "facing": "south"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        15,
+        2,
+        35
+      ],
+      "direction": "south",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "须接同高程营路，另留牲畜及车队空间"
+    }
+  ],
+  "design_notes": [
+    "暖白毡面、橙赭织带、深木框与粗石形成共同材料语言；不同用途分别安排开敞大帐、圆形家帐、露天石阵和路线营地。"
+  ],
+  "differences": [
+    "圆形主帐与较小炊帐组成非对称家族生活场；公众前区与带门寝区明确分开。"
+  ],
+  "floors": [
+    {
+      "name": "营地使用层",
+      "y": 2,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/steppe_caravans.py:SC-05",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 5,
+    "surface": "grass"
+  },
+  "nbt_sha256": "20639857e0a744c486db29eda68b1ff012ea04451caa9d58769c8fd1569c3347"
+}

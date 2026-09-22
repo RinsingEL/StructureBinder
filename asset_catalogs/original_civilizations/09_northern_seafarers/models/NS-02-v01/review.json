@@ -1,0 +1,50 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "NS-02-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 寒海航民作者离线全图审查",
+  "nbt_sha256": "9c62f472242ceadfb5e0e4da67d073e6aee78db8b4a0375abfb890d634e24d17",
+  "author_sha256": "d4ff87e059f6bccfe1f6fd7800335df34ed044ec5eccb9eef41cf5b65aa1747c",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-sleep.png",
+    "previews/room-equipment.png",
+    "previews/room-stores.png",
+    "previews/point-traveler0.png",
+    "previews/point-traveler1.png",
+    "previews/point-traveler2.png",
+    "previews/point-meal.png",
+    "previews/point-dryclothes.png",
+    "previews/point-equip.png",
+    "previews/point-rope.png",
+    "previews/point-dispatch.png",
+    "previews/point-rations.png",
+    "previews/point-fuel.png",
+    "previews/point-packed.png",
+    "previews/point-bulkfuel.png",
+    "previews/point-court.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与用途": "三翼背风阶院中，生活和装备置于低台，独立物资库抬高三格；三宽三级台阶与梯口相接，外沿护边未再穿库。",
+    "内饰与空间": "已查看完整26图：三人床位、热食共桌和干衣储备齐全；装备台与雪橇备件独立，后库有发放登记、粮食、燃料、煤料与待装橇物资，院内保留转向。",
+    "完整证据": "实际查看当前版本全部四向外观、顶视、去顶、楼层、房间、站位、标记与地形图；不以拍摄自动代替审美检查。",
+    "数据与通路": "最终 NBT 重读、状态、门床、标记与碰撞导航检查通过，零警告。",
+    "环境条件": "稳定的寒地海湾背风岸台；避开潮涌、雪崩、海冰推挤和行洪通道。；前院与生活脚底 Y=3，后库脚底 Y=6；三宽三级实体台阶相连。坡地需匹配前低后高并保留转向院。；完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。；厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。；仅选用于有实际寒地路线的背风停歇点；不作为普通住宅重复投放。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "船舶、起吊、供热、浴池和信号设备仅原版静态表达；真实交通、水文、温度及玩法未接入。"
+  ]
+}

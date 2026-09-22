@@ -1,0 +1,49 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "SC-12",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 草原行旅作者全视图审查",
+  "nbt_sha256": "34d1bfed6091c8b49d1445d9b030eed7ad11c471600d7e6953c70882c0e9c577",
+  "author_sha256": "fa7bf345cd3e04e37a1e38a9f5d37f9ed5d7f29bf030812c068660379eb46796",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-sleep.png",
+    "previews/room-tack.png",
+    "previews/room-watch.png",
+    "previews/point-guard1.png",
+    "previews/point-guard2.png",
+    "previews/point-winter.png",
+    "previews/point-briefing.png",
+    "previews/point-routes.png",
+    "previews/point-guardcook.png",
+    "previews/point-guardwater.png",
+    "previews/point-tack.png",
+    "previews/point-repair.png",
+    "previews/point-water.png",
+    "previews/point-hitch.png",
+    "previews/point-lookout.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "最终25张外观、去顶、楼层、房间、使用点及环境图逐张实际查看。",
+    "南北7格路槽保持贯通，东侧岩脊对应山口选址；圆帐具带门床区、交班餐桌、路线与厨房，马具棚有修理、货柜、饲料与水槽，三级台阶可到北口岗台。",
+    "NBT及作者标记匹配，门床成对、工作站位净空及离线步行均通过且零警告；季节水草、背风与真实商路或山口约束明确记录。"
+  ],
+  "revisions": [
+    "初检调整备物桌、车轴外站位与巡路厨房。",
+    "图审补寝区连续隔墙、帐棚照明、集市样品和中段承梁；守护水槽移离帐柱，旗帜改有支撑的彩釉纹石。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

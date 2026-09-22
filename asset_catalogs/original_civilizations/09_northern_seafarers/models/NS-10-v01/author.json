@@ -1,0 +1,262 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "NS-10-v01",
+  "name": "三翼炉席史诗会堂",
+  "family": "NS-10",
+  "civilization": "寒海航民",
+  "planning_role": "planning_role.key",
+  "size": [
+    39,
+    28,
+    37
+  ],
+  "terrain": {
+    "选址": "稳定的寒地海湾背风岸台；避开潮涌、雪崩、海冰推挤和行洪通道。",
+    "高程": "干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。",
+    "保留空间": "完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。",
+    "风雪": "厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。"
+  },
+  "rooms": [
+    {
+      "id": "vestibule",
+      "name": "雪靴与披风风斗",
+      "min": [
+        11,
+        3,
+        4
+      ],
+      "max": [
+        16,
+        6,
+        9
+      ],
+      "purpose": "短门廊、换靴凳和个人物品暂存"
+    },
+    {
+      "id": "feast",
+      "name": "四组宴席与演述长厅",
+      "min": [
+        5,
+        3,
+        11
+      ],
+      "max": [
+        22,
+        9,
+        31
+      ],
+      "purpose": "分组餐桌、中央听众通道、双封护炭盆与后端演述席；具体设施：史诗演述与卷册讲席、公共宴席及主通道"
+    },
+    {
+      "id": "kitchen",
+      "name": "独立炊事与出餐翼",
+      "min": [
+        28,
+        3,
+        11
+      ],
+      "max": [
+        34,
+        7,
+        18
+      ],
+      "purpose": "炊事、清洗、切配、餐具与干粮，侧廊供餐；具体设施：备餐、热食与洗涤、切配与出餐台、冬季干粮与餐具"
+    },
+    {
+      "id": "archive",
+      "name": "干燥谱系档案翼",
+      "min": [
+        28,
+        3,
+        24
+      ],
+      "max": [
+        34,
+        7,
+        31
+      ],
+      "purpose": "誊写工作台、分柜档案，远离炊事和火盆；具体设施：航海谱系和史诗誊录、分柜保管谱系与誊本"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        13,
+        3,
+        2
+      ],
+      "name": "背风步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "speaker",
+      "kind": "work",
+      "pos": [
+        11,
+        3,
+        30
+      ],
+      "name": "史诗演述与卷册讲席",
+      "look_at": [
+        11,
+        4,
+        30
+      ],
+      "approach": [
+        11,
+        3,
+        31
+      ]
+    },
+    {
+      "id": "banquet",
+      "kind": "work",
+      "pos": [
+        9,
+        3,
+        23
+      ],
+      "name": "公共宴席及主通道",
+      "look_at": [
+        9,
+        4,
+        23
+      ],
+      "approach": [
+        12,
+        3,
+        23
+      ]
+    },
+    {
+      "id": "kitchen",
+      "kind": "work",
+      "pos": [
+        28,
+        3,
+        12
+      ],
+      "name": "备餐、热食与洗涤",
+      "look_at": [
+        28,
+        4,
+        12
+      ],
+      "approach": [
+        28,
+        3,
+        13
+      ]
+    },
+    {
+      "id": "prepare",
+      "kind": "work",
+      "pos": [
+        28,
+        3,
+        17
+      ],
+      "name": "切配与出餐台",
+      "look_at": [
+        28,
+        4,
+        17
+      ],
+      "approach": [
+        28,
+        3,
+        18
+      ]
+    },
+    {
+      "id": "food",
+      "kind": "storage",
+      "pos": [
+        33,
+        3,
+        12
+      ],
+      "name": "冬季干粮与餐具",
+      "look_at": [
+        33,
+        4,
+        12
+      ],
+      "approach": [
+        33,
+        3,
+        13
+      ]
+    },
+    {
+      "id": "archive",
+      "kind": "work",
+      "pos": [
+        28,
+        3,
+        25
+      ],
+      "name": "航海谱系和史诗誊录",
+      "look_at": [
+        28,
+        4,
+        25
+      ],
+      "approach": [
+        28,
+        3,
+        26
+      ]
+    },
+    {
+      "id": "books",
+      "kind": "storage",
+      "pos": [
+        29,
+        3,
+        30
+      ],
+      "name": "分柜保管谱系与誊本",
+      "look_at": [
+        29,
+        4,
+        30
+      ],
+      "approach": [
+        29,
+        3,
+        29
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "高跨宴席长厅以四组对坐桌和中央演述通路组织；前风斗收纳雪靴，东侧分开的炊事翼与档案翼通过短廊接入，避免餐饮与文献混杂。"
+  ],
+  "differences": [
+    "高跨宴席长厅以四组对坐桌和中央演述通路组织；前风斗收纳雪靴，东侧分开的炊事翼与档案翼通过短廊接入，避免餐饮与文献混杂。"
+  ],
+  "floors": [
+    {
+      "name": "岸台生活作业层",
+      "y": 2,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/northern_seafarers.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 5,
+    "surface": "snow"
+  },
+  "nbt_sha256": "b4ccf427fcefc0ae8b5ad8df5b1a6f2c266c33dffa8f19c331e4cc111fb65335"
+}

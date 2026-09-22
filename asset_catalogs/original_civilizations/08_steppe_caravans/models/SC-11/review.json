@@ -1,0 +1,40 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "SC-11",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 草原行旅作者全视图审查",
+  "nbt_sha256": "c1306ac051734a9f6516ed2e6bbded72dde8b14d67056f17267e2cbe11e0d146",
+  "author_sha256": "c5c17c800dc0be25b7fabbee18b987260aa6c7d15a6c4e28dff7c0f83a6468c2",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-remains.png",
+    "previews/room-ruinedcart.png",
+    "previews/point-hearth.png",
+    "previews/point-cache.png",
+    "previews/point-drywater.png",
+    "previews/point-cart.png",
+    "previews/point-marker.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "最终16张外观、去顶、楼层、房间、使用点及环境图逐张实际查看。",
+    "旧路穿过两处拆帐基圈，残柱毡片、冷灶、干水槽和断裂货车形成迁离痕迹；保留可探索储物点，没有现住床铺与虚构水源。",
+    "NBT及作者标记匹配，门床成对、工作站位净空及离线步行均通过且零警告；季节水草、背风与真实商路或山口约束明确记录。"
+  ],
+  "revisions": [
+    "初检调整备物桌、车轴外站位与巡路厨房。",
+    "图审补寝区连续隔墙、帐棚照明、集市样品和中段承梁；守护水槽移离帐柱，旗帜改有支撑的彩釉纹石。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

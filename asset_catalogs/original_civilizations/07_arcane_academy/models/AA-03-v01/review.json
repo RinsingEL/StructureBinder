@@ -1,0 +1,43 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "AA-03-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors / 魔导学城作者离线实看",
+  "nbt_sha256": "739b769cea3900ae5db401e8d2fea917880ecde67dc3e0ec377ec2255ea514b6",
+  "author_sha256": "0f956aa483462d89dd9cadffe067c253c6af354b9c31708881a0199d76c06347",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-control.png",
+    "previews/room-stock.png",
+    "previews/room-interface.png",
+    "previews/point-distribution.png",
+    "previews/point-accounts.png",
+    "previews/point-maintenance.png",
+    "previews/point-parts.png",
+    "previews/point-crystal_11.png",
+    "previews/point-crystal_18.png",
+    "previews/point-meter.png",
+    "previews/point-tools.png",
+    "previews/point-core.png",
+    "previews/point-interface.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "四柱晶核在庭院中形成独立轮廓；分配、维护、晶石储备、计量与铜制预留接口各有工作面。",
+    "已逐图检查外观五向、去顶、分层、房间、全部功能点、标注及地形示意；NBT与作者标记对应。",
+    "导航零警告；魔法构件是静态原版陈设，实际接驳与选址条件见作者标记。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

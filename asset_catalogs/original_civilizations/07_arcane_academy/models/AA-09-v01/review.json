@@ -1,0 +1,44 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "AA-09-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors / 魔导学城作者离线实看",
+  "nbt_sha256": "ab710f866878f2ebb44aee5763f1cb51fe081bb17b930dcd09b75934ec08b2dd",
+  "author_sha256": "b743a2f54c66b10ad73936f300782926a8b36797173cac48134608a5b4b665e2",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-reading.png",
+    "previews/room-west.png",
+    "previews/room-east.png",
+    "previews/room-research.png",
+    "previews/point-borrow.png",
+    "previews/point-catalogue.png",
+    "previews/point-west_20.png",
+    "previews/point-west_27.png",
+    "previews/point-east_20.png",
+    "previews/point-east_27.png",
+    "previews/point-research_a.png",
+    "previews/point-research_b.png",
+    "previews/point-archive_a.png",
+    "previews/point-archive_b.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "高阅览脊与低双书库形成十字轮廓；两组共读席、借阅台、双研究间及分类书架独立。",
+    "已逐图检查外观五向、去顶、分层、房间、全部功能点、标注及地形示意；NBT与作者标记对应。",
+    "导航零警告；魔法构件是静态原版陈设，实际接驳与选址条件见作者标记。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

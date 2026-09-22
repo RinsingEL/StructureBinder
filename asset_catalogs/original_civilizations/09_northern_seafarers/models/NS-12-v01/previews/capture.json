@@ -1,0 +1,32 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "NS-12-v01",
+  "nbt_sha256": "e6dbfeb359bfe2c8fd7512f9900f794f6fca90ce769c6c83d3b3e375a60de8e3",
+  "author_sha256": "becb141ba474626f7120ee3da8940ab577765cf72e328a6ee78c77e1c6c8bcf9",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "floor-2",
+    "room-guard",
+    "room-bastion",
+    "point-oldbunk0",
+    "point-oldbunk1",
+    "point-log",
+    "point-gear",
+    "point-oldstove",
+    "point-mess",
+    "point-signal",
+    "point-chart",
+    "point-watch",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

@@ -27,6 +27,9 @@ from .forest_gardens import BUILDERS as FOREST_GARDENS
 from .cloud_living import BUILDERS as CLOUD_LIVING
 from .cloud_food import BUILDERS as CLOUD_FOOD
 from .cloud_market import BUILDERS as CLOUD_MARKET
+from .arcane_academy import BUILDERS as ARCANE_CORES
+from .steppe_caravans import BUILDERS as STEPPE_CORES
+from .northern_seafarers import BUILDERS as NORTHERN_CORES
 from .validate import validate
 
 BUILDERS={"SR-01-v01":("01_steam_rail",steam_station),"WT-01-v01":("02_waterway_trade",passenger_quay)}
@@ -51,6 +54,9 @@ for civilization,groups in (
 ):
     for builders in groups:
         BUILDERS.update({key:(civilization,builder) for key,builder in builders.items()})
+
+for civilization,builders in (("07_arcane_academy",ARCANE_CORES),("08_steppe_caravans",STEPPE_CORES),("09_northern_seafarers",NORTHERN_CORES)):
+    BUILDERS.update({key:(civilization,builder) for key,builder in builders.items()})
 
 
 def main():

@@ -1,0 +1,45 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "AA-12-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors / 魔导学城作者离线实看",
+  "nbt_sha256": "b5b0443c2c70b5ecb359b54ef48778e1457c4543d0b70e91b512c88d6cd00906",
+  "author_sha256": "1101c3e9777fd0fd93234d1e42c40a27b42a791b876bf6fe8394d91584c58801",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-sleep.png",
+    "previews/room-staff.png",
+    "previews/room-sample.png",
+    "previews/room-observe.png",
+    "previews/point-log.png",
+    "previews/point-records.png",
+    "previews/point-cook.png",
+    "previews/point-guard.png",
+    "previews/point-guard_locker.png",
+    "previews/point-sample.png",
+    "previews/point-sealed_stock.png",
+    "previews/point-observe.png",
+    "previews/point-instruments.png",
+    "previews/point-instrument.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "独立样本翼和高台观测翼高低错落，实体七级台阶连续护栏；驻守有厨房共餐及隔门寝间。",
+    "已逐图检查外观五向、去顶、分层、房间、全部功能点、标注及地形示意；NBT与作者标记对应。",
+    "导航零警告；魔法构件是静态原版陈设，实际接驳与选址条件见作者标记。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

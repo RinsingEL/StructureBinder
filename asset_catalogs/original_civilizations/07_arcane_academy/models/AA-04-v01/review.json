@@ -1,0 +1,47 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "AA-04-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors / 魔导学城作者离线实看",
+  "nbt_sha256": "7d7063db3bfc1d7472d378e729fb186c58dd7893231c135caf94f50d193dd108",
+  "author_sha256": "acd5c8bd727cdb4304bf74f6ac0c195282017a4c4ae08b0dbd988cc771b6e043",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-class.png",
+    "previews/room-lab.png",
+    "previews/room-reading.png",
+    "previews/room-faculty.png",
+    "previews/room-seminar.png",
+    "previews/point-lesson.png",
+    "previews/point-teaching.png",
+    "previews/point-lab_29.png",
+    "previews/point-lab_36.png",
+    "previews/point-samples.png",
+    "previews/point-reading_11.png",
+    "previews/point-reading_17.png",
+    "previews/point-faculty.png",
+    "previews/point-faculty_files.png",
+    "previews/point-equipment.png",
+    "previews/point-seminar.png",
+    "previews/point-hall_books.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "四课庭院分课堂、实验、阅览和教师工作；侧门已避开后厅墙体，课桌座椅和操作台通路连续。",
+    "已逐图检查外观五向、去顶、分层、房间、全部功能点、标注及地形示意；NBT与作者标记对应。",
+    "导航零警告；魔法构件是静态原版陈设，实际接驳与选址条件见作者标记。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

@@ -1,0 +1,334 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "SC-12",
+  "name": "山口巡路营与换具棚",
+  "family": "SC-12",
+  "civilization": "草原行旅文明",
+  "planning_role": "planning_role.structure",
+  "size": [
+    47,
+    21,
+    43
+  ],
+  "terrain": {
+    "选址": "真实山口西侧背风缓台：东缘示意岩脊、南北贯通7格路槽；营帐避开风口，岗台面向上坡北口，不能部署在任意平地充当关口。",
+    "高程": "入口与营地脚底Y=3；局部巡路台脚底Y=6，见标记与台阶。",
+    "资源与季节": "依赖外部季节水草及商路补给；水槽为运水储备，不凭空生成水源。严寒风暴季撤帐或转入冬营。",
+    "适配边界": "朝南开口按当地背风方向旋转；保留营地外人畜廊道，禁止直接压平山体或河滩。",
+    "运行边界": "帐篷、马具、货车与遗存均为原版静态表达，动物、交易及迁徙尚未接入。"
+  },
+  "rooms": [
+    {
+      "id": "sleep",
+      "name": "巡路员帐",
+      "min": [
+        5,
+        3,
+        4
+      ],
+      "max": [
+        21,
+        6,
+        20
+      ],
+      "purpose": "睡眠、交班、路线登记、厨房及冬毡"
+    },
+    {
+      "id": "tack",
+      "name": "换具饮马棚",
+      "min": [
+        5,
+        3,
+        27
+      ],
+      "max": [
+        23,
+        6,
+        37
+      ],
+      "purpose": "马具维修、饲料、运水与检具通路"
+    },
+    {
+      "id": "watch",
+      "name": "北口岗台",
+      "min": [
+        23,
+        6,
+        5
+      ],
+      "max": [
+        28,
+        9,
+        12
+      ],
+      "purpose": "面向山口观察，梯道避开主交通"
+    }
+  ],
+  "points": [
+    {
+      "id": "guard1",
+      "kind": "sleep",
+      "pos": [
+        9,
+        3,
+        8
+      ],
+      "name": "铺毡床位",
+      "approach": [
+        10,
+        3,
+        8
+      ]
+    },
+    {
+      "id": "guard2",
+      "kind": "sleep",
+      "pos": [
+        16,
+        3,
+        8
+      ],
+      "name": "铺毡床位",
+      "approach": [
+        17,
+        3,
+        8
+      ]
+    },
+    {
+      "id": "winter",
+      "kind": "storage",
+      "pos": [
+        12,
+        4,
+        5
+      ],
+      "name": "冬毡与巡路补给",
+      "approach": [
+        12,
+        3,
+        6
+      ]
+    },
+    {
+      "id": "briefing",
+      "kind": "work",
+      "pos": [
+        8,
+        3,
+        16
+      ],
+      "name": "巡路交班与路线议事",
+      "approach": [
+        6,
+        3,
+        16
+      ]
+    },
+    {
+      "id": "routes",
+      "kind": "work",
+      "pos": [
+        18,
+        3,
+        12
+      ],
+      "name": "山口路线记录",
+      "approach": [
+        19,
+        3,
+        12
+      ]
+    },
+    {
+      "id": "guardcook",
+      "kind": "work",
+      "pos": [
+        15,
+        3,
+        14
+      ],
+      "name": "烹饪与热食",
+      "approach": [
+        15,
+        3,
+        15
+      ]
+    },
+    {
+      "id": "guardwater",
+      "kind": "work",
+      "pos": [
+        17,
+        3,
+        14
+      ],
+      "name": "运水储槽",
+      "approach": [
+        17,
+        3,
+        15
+      ]
+    },
+    {
+      "id": "tack",
+      "kind": "storage",
+      "pos": [
+        8,
+        4,
+        28
+      ],
+      "name": "鞍具与修理皮料",
+      "approach": [
+        8,
+        3,
+        29
+      ]
+    },
+    {
+      "id": "repair",
+      "kind": "work",
+      "pos": [
+        14,
+        3,
+        28
+      ],
+      "name": "马具维修",
+      "approach": [
+        14,
+        3,
+        29
+      ]
+    },
+    {
+      "id": "water",
+      "kind": "work",
+      "pos": [
+        20,
+        3,
+        29
+      ],
+      "name": "运水饮马槽",
+      "approach": [
+        20,
+        3,
+        30
+      ]
+    },
+    {
+      "id": "hitch",
+      "kind": "work",
+      "pos": [
+        8,
+        4,
+        35
+      ],
+      "name": "有顶拴马与检具区",
+      "approach": [
+        8,
+        3,
+        33
+      ]
+    },
+    {
+      "id": "lookout",
+      "kind": "work",
+      "pos": [
+        25,
+        6,
+        7
+      ],
+      "name": "北口视野与值守记录",
+      "approach": [
+        25,
+        6,
+        8
+      ]
+    },
+    {
+      "id": "south",
+      "kind": "entrance",
+      "pos": [
+        33,
+        3,
+        39
+      ],
+      "name": "营路接驳入口",
+      "facing": "south"
+    },
+    {
+      "id": "north",
+      "kind": "entrance",
+      "pos": [
+        33,
+        3,
+        3
+      ],
+      "name": "营路接驳入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        33,
+        2,
+        39
+      ],
+      "direction": "south",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "须接同高程营路，另留牲畜及车队空间"
+    },
+    {
+      "kind": "pedestrian",
+      "pos": [
+        33,
+        2,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "须接同高程营路，另留牲畜及车队空间"
+    }
+  ],
+  "design_notes": [
+    "暖白毡面、橙赭织带、深木框与粗石形成共同材料语言；不同用途分别安排开敞大帐、圆形家帐、露天石阵和路线营地。"
+  ],
+  "differences": [
+    "主路南北贯通，侧帐与换具棚退让车道；东侧岩脊及独立台阶岗台表达实际山口关系。"
+  ],
+  "floors": [
+    {
+      "name": "营地使用层",
+      "y": 2,
+      "max_y": 6
+    },
+    {
+      "name": "巡路岗台",
+      "y": 5,
+      "max_y": 9
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/steppe_caravans.py:SC-12",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 5,
+    "surface": "grass"
+  },
+  "nbt_sha256": "34d1bfed6091c8b49d1445d9b030eed7ad11c471600d7e6953c70882c0e9c577"
+}

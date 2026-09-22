@@ -1,0 +1,53 @@
+{
+  "schema": "structure-studio.validation.v1",
+  "nbt_sha256": "0ed7ecc2eb3d922b6a4395418582aa880efb58897f7a492daaeb73c305110016",
+  "navigation": {
+    "passed": true,
+    "unreachable": [],
+    "nodes": 6098,
+    "highest_standing_y": 4,
+    "truncated": false,
+    "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "size": [
+    49,
+    20,
+    43
+  ],
+  "visible_blocks": 6582,
+  "explicit_air": 28518,
+  "palette": 31,
+  "block_entities": 0,
+  "agriculture": null,
+  "materials": {
+    "minecraft:dirt": 3510,
+    "minecraft:coarse_dirt": 1045,
+    "minecraft:dark_oak_planks": 839,
+    "minecraft:white_wool": 649,
+    "minecraft:dark_oak_log": 179,
+    "minecraft:orange_wool": 160,
+    "minecraft:dark_oak_fence": 42,
+    "minecraft:barrel": 34,
+    "minecraft:dark_oak_slab": 29,
+    "minecraft:dark_oak_trapdoor": 24,
+    "minecraft:red_wool": 10,
+    "minecraft:grindstone": 9,
+    "minecraft:dark_oak_stairs": 8,
+    "minecraft:spruce_planks": 8,
+    "minecraft:orange_carpet": 8,
+    "minecraft:red_carpet": 8,
+    "minecraft:flower_pot": 6,
+    "minecraft:lantern": 4,
+    "minecraft:hay_block": 3,
+    "minecraft:chain": 2,
+    "minecraft:lectern": 1,
+    "minecraft:loom": 1,
+    "minecraft:water_cauldron": 1,
+    "minecraft:crafting_table": 1,
+    "minecraft:brewing_stand": 1
+  },
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+}

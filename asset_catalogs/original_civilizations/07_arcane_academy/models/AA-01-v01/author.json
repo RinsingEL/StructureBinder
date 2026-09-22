@@ -1,0 +1,259 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "AA-01-v01",
+  "name": "三门环庭 · 传送驿站",
+  "family": "AA-01",
+  "civilization": "魔导学城",
+  "planning_role": "planning_role.key",
+  "size": [
+    49,
+    30,
+    45
+  ],
+  "terrain": {
+    "选址": "城镇稳定干燥台地，连接学院和普通街道",
+    "高程": "主地板Y=3，普通道路脚底接Y=4；基础底Y=0须落在连续承载地层",
+    "地形处理": "模板是人工整平石基，不适用于未经处理的峡谷、水域或陡坡。观测馆上台阶为模板内实体台地。",
+    "接驳": "南北朝向以作者入口标记为准；外部道路、服务范围和供能管线另行核对。",
+    "魔法边界": "紫晶、终界烛、传送环、隔离屏与供能接口仅为静态原版陈设，不代表传送、供能、治疗或异常模拟。"
+  },
+  "rooms": [
+    {
+      "id": "waiting",
+      "name": "登记候行与行李翼",
+      "min": [
+        6,
+        4,
+        8
+      ],
+      "max": [
+        15,
+        9,
+        31
+      ],
+      "purpose": "登记、双侧坐席、目的地档案、行李存柜"
+    },
+    {
+      "id": "prepare",
+      "name": "准备与普通交通翼",
+      "min": [
+        33,
+        4,
+        8
+      ],
+      "max": [
+        42,
+        9,
+        31
+      ],
+      "purpose": "检验台、材料柜、等候长凳和普通道路说明"
+    },
+    {
+      "id": "dispatch",
+      "name": "后部高站务厅",
+      "min": [
+        18,
+        4,
+        30
+      ],
+      "max": [
+        30,
+        11,
+        38
+      ],
+      "purpose": "站务控制与档案，面向庭院传送环"
+    }
+  ],
+  "points": [
+    {
+      "id": "register",
+      "kind": "work",
+      "pos": [
+        8,
+        4,
+        10
+      ],
+      "name": "目的地登记与票据核对",
+      "approach": [
+        8,
+        4,
+        11
+      ]
+    },
+    {
+      "id": "destinations",
+      "kind": "storage",
+      "pos": [
+        8,
+        5,
+        8
+      ],
+      "name": "分类用品和档案",
+      "approach": [
+        8,
+        4,
+        9
+      ]
+    },
+    {
+      "id": "luggage",
+      "kind": "storage",
+      "pos": [
+        8,
+        5,
+        29
+      ],
+      "name": "分类用品和档案",
+      "approach": [
+        8,
+        4,
+        28
+      ]
+    },
+    {
+      "id": "prepare",
+      "kind": "work",
+      "pos": [
+        35,
+        4,
+        11
+      ],
+      "name": "行前材料与行李检查",
+      "approach": [
+        35,
+        4,
+        12
+      ]
+    },
+    {
+      "id": "supplies",
+      "kind": "storage",
+      "pos": [
+        35,
+        5,
+        8
+      ],
+      "name": "分类用品和档案",
+      "approach": [
+        35,
+        4,
+        9
+      ]
+    },
+    {
+      "id": "dispatch",
+      "kind": "work",
+      "pos": [
+        35,
+        4,
+        27
+      ],
+      "name": "普通道路与换乘说明",
+      "approach": [
+        35,
+        4,
+        28
+      ]
+    },
+    {
+      "id": "control",
+      "kind": "work",
+      "pos": [
+        20,
+        4,
+        32
+      ],
+      "name": "站务观察及静态环控制",
+      "approach": [
+        20,
+        4,
+        33
+      ]
+    },
+    {
+      "id": "records",
+      "kind": "storage",
+      "pos": [
+        20,
+        5,
+        37
+      ],
+      "name": "分类用品和档案",
+      "approach": [
+        20,
+        4,
+        36
+      ]
+    },
+    {
+      "id": "ring",
+      "kind": "work",
+      "pos": [
+        24,
+        5,
+        22
+      ],
+      "name": "失能时仍可绕行的静态传送环",
+      "approach": [
+        24,
+        4,
+        20
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        24,
+        4,
+        3
+      ],
+      "name": "普通步行入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        24,
+        3,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "外接连续普通街道；魔法设施不替代步行"
+    }
+  ],
+  "design_notes": [
+    "双窄翼围出通行庭院，后部高站务厅与露天传送环形成轴线；公共候行、准备和控制独立。",
+    "房间与真实操作点逐项标记。魔法设备只作静态表达；本次未启动Minecraft。"
+  ],
+  "differences": [
+    "双窄翼围出通行庭院，后部高站务厅与露天传送环形成轴线；公共候行、准备和控制独立。"
+  ],
+  "floors": [
+    {
+      "name": "城台主层",
+      "y": 3,
+      "max_y": 9
+    }
+  ],
+  "roof_min_y": 10,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/arcane_academy.py",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 4,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "nbt_sha256": "8f5e3e5940d07cac5d2db21fbe3cbcaeddbcf0cee11d88528d336d3a036186ef"
+}

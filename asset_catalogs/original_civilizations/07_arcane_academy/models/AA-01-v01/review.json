@@ -1,0 +1,42 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "AA-01-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors / 魔导学城作者离线实看",
+  "nbt_sha256": "8f5e3e5940d07cac5d2db21fbe3cbcaeddbcf0cee11d88528d336d3a036186ef",
+  "author_sha256": "6a4732739783ad0c81dab10ce6f85047e49fb9f9774a572e9c3f00e41c73c417",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-waiting.png",
+    "previews/room-prepare.png",
+    "previews/room-dispatch.png",
+    "previews/point-register.png",
+    "previews/point-destinations.png",
+    "previews/point-luggage.png",
+    "previews/point-prepare.png",
+    "previews/point-supplies.png",
+    "previews/point-dispatch.png",
+    "previews/point-control.png",
+    "previews/point-records.png",
+    "previews/point-ring.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "两翼分别登记候行和出行准备，后部站务厅对着开敞环庭；坐席、行李柜和台账齐全。",
+    "已逐图检查外观五向、去顶、分层、房间、全部功能点、标注及地形示意；NBT与作者标记对应。",
+    "导航零警告；魔法构件是静态原版陈设，实际接驳与选址条件见作者标记。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

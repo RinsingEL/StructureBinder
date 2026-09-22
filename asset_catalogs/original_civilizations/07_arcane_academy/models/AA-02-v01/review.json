@@ -1,0 +1,49 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "AA-02-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors / 魔导学城作者离线实看",
+  "nbt_sha256": "6e856ecc7ffa61bb9e6fa5a5f9c0f2fe5f7f2d43bb209ab8eb3fd5c370537c18",
+  "author_sha256": "15379b2f17ecb736be9840cd05017cd15de583520cabf4a031ad1c6df0d09157",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-isolate_1.png",
+    "previews/room-isolate_2.png",
+    "previews/room-intake.png",
+    "previews/room-clean.png",
+    "previews/room-staff.png",
+    "previews/point-intake.png",
+    "previews/point-intake_records.png",
+    "previews/point-clean.png",
+    "previews/point-linen.png",
+    "previews/point-patient_1.png",
+    "previews/point-patient_store_1.png",
+    "previews/point-observe_1.png",
+    "previews/point-patient_2.png",
+    "previews/point-patient_store_2.png",
+    "previews/point-observe_2.png",
+    "previews/point-staff_cook.png",
+    "previews/point-staff_bed.png",
+    "previews/point-staff_books.png",
+    "previews/point-handover.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "梳齿式分栋清检，双隔离室都有床柜和观察操作；工作人员另有厨房、共餐与床位。",
+    "已逐图检查外观五向、去顶、分层、房间、全部功能点、标注及地形示意；NBT与作者标记对应。",
+    "导航零警告；魔法构件是静态原版陈设，实际接驳与选址条件见作者标记。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

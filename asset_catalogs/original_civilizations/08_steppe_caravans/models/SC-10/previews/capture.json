@@ -1,0 +1,31 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "SC-10",
+  "nbt_sha256": "75e7cde88a3805ba768778081d3de22d18f9a578610feceb5adcb73e3d061d61",
+  "author_sha256": "1adb954fcccc8b6ddd81969474a160c1e434daf959219677a9a18343bfc1a8f1",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-ritual",
+    "room-guardian",
+    "room-prepare",
+    "point-offering",
+    "point-keeper",
+    "point-record",
+    "point-water",
+    "point-offerings",
+    "point-keepercook",
+    "point-keeperwater",
+    "point-prepare",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

@@ -1,0 +1,38 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "AA-11-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors / 魔导学城作者离线实看",
+  "nbt_sha256": "45281ee859e2fd6a73a4a8b7d6f8f60bf36ec153ade3de900ad5049042a29db7",
+  "author_sha256": "5d9a5a16bd3749b385d53176f2f39dbb6c966ee195ac77dc9b3fdca19a875a5c",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-old_wait.png",
+    "previews/room-control.png",
+    "previews/point-old_register.png",
+    "previews/point-old_archive.png",
+    "previews/point-recovered.png",
+    "previews/point-old_control.png",
+    "previews/point-relics.png",
+    "previews/point-sealed.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "旧环明确封堵，坍塌屋盖与天花贯通，碎块所在后段全宽围栏封边；控制间和遗物可普通步行接近。",
+    "已逐图检查外观五向、去顶、分层、房间、全部功能点、标注及地形示意；NBT与作者标记对应。",
+    "导航零警告；魔法构件是静态原版陈设，实际接驳与选址条件见作者标记。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "AA-03-v01",
+  "nbt_sha256": "739b769cea3900ae5db401e8d2fea917880ecde67dc3e0ec377ec2255ea514b6",
+  "author_sha256": "0f956aa483462d89dd9cadffe067c253c6af354b9c31708881a0199d76c06347",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-control",
+    "room-stock",
+    "room-interface",
+    "point-distribution",
+    "point-accounts",
+    "point-maintenance",
+    "point-parts",
+    "point-crystal_11",
+    "point-crystal_18",
+    "point-meter",
+    "point-tools",
+    "point-core",
+    "point-interface",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

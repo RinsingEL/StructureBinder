@@ -1,0 +1,49 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "NS-01-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 寒海航民作者离线全图审查",
+  "nbt_sha256": "d6975d663e2864e5adf982928ba6a0ca22b5d3916d5d352991397b9e355d577f",
+  "author_sha256": "46fac1c490a035b5357e2fafa166c58ddb5799b529fe921c7e03d2c81ed29f30",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-slip.png",
+    "previews/room-joinery.png",
+    "previews/room-watch.png",
+    "previews/point-caulk.png",
+    "previews/point-fasten.png",
+    "previews/point-sail.png",
+    "previews/point-timber.png",
+    "previews/point-hull.png",
+    "previews/point-right_aisle.png",
+    "previews/point-joiner.png",
+    "previews/point-parts.png",
+    "previews/point-assembly.png",
+    "previews/point-sharpen.png",
+    "previews/point-watch0.png",
+    "previews/point-watch1.png",
+    "previews/point-watch_food.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与用途": "高跨深色船屋与低矮两间侧屋形成修造院，端部木构架、侧柱与承檐连续；海向大开口对准长船滑道。",
+    "内饰与空间": "已查看完整25图：长船托架、双舷搬运检修道、捻缝铆接、船板储备与帆索各有空间；干燥木工间含刃具、拼装中台与零件架，两人值守屋含床柜、桌凳与炊洗。",
+    "完整证据": "实际查看当前版本全部四向外观、顶视、去顶、楼层、房间、站位、标记与地形图；不以拍摄自动代替审美检查。",
+    "数据与通路": "最终 NBT 重读、状态、门床、标记与碰撞导航检查通过，零警告。",
+    "环境条件": "稳定的寒地海湾背风岸台；避开潮涌、雪崩、海冰推挤和行洪通道。；干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。；完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。；厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。；海在 +Z，示意岸线 Z=33、水面 Y=2；需校对潮差与实际船舶吃水。；船屋后端开口 7 格宽、6 格高，滑道朝 +Z；本体展示长船不对应可驾驶实体，实际船宽和潮汐拖曳另行核对。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "船舶、起吊、供热、浴池和信号设备仅原版静态表达；真实交通、水文、温度及玩法未接入。"
+  ]
+}

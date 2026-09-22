@@ -1,0 +1,44 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "SC-10",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 草原行旅作者全视图审查",
+  "nbt_sha256": "75e7cde88a3805ba768778081d3de22d18f9a578610feceb5adcb73e3d061d61",
+  "author_sha256": "1adb954fcccc8b6ddd81969474a160c1e434daf959219677a9a18343bfc1a8f1",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-ritual.png",
+    "previews/room-guardian.png",
+    "previews/room-prepare.png",
+    "previews/point-offering.png",
+    "previews/point-keeper.png",
+    "previews/point-record.png",
+    "previews/point-water.png",
+    "previews/point-offerings.png",
+    "previews/point-keepercook.png",
+    "previews/point-keeperwater.png",
+    "previews/point-prepare.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "最终20张外观、去顶、楼层、房间、使用点及环境图逐张实际查看。",
+    "错落纪念石、彩釉纹石与环行步道围合露天供物区；守护小帐具床铺、衣柜、记录和避开支柱的水槽，备物棚有厨房和桌椅。",
+    "NBT及作者标记匹配，门床成对、工作站位净空及离线步行均通过且零警告；季节水草、背风与真实商路或山口约束明确记录。"
+  ],
+  "revisions": [
+    "初检调整备物桌、车轴外站位与巡路厨房。",
+    "图审补寝区连续隔墙、帐棚照明、集市样品和中段承梁；守护水槽移离帐柱，旗帜改有支撑的彩釉纹石。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

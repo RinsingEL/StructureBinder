@@ -1,0 +1,32 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "AA-01-v01",
+  "nbt_sha256": "8f5e3e5940d07cac5d2db21fbe3cbcaeddbcf0cee11d88528d336d3a036186ef",
+  "author_sha256": "6a4732739783ad0c81dab10ce6f85047e49fb9f9774a572e9c3f00e41c73c417",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-waiting",
+    "room-prepare",
+    "room-dispatch",
+    "point-register",
+    "point-destinations",
+    "point-luggage",
+    "point-prepare",
+    "point-supplies",
+    "point-dispatch",
+    "point-control",
+    "point-records",
+    "point-ring",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}
