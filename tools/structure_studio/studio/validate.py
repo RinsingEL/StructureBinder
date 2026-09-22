@@ -8,6 +8,7 @@ from .navigation import audit
 
 AIR = {"minecraft:air", "minecraft:cave_air", "minecraft:void_air"}
 DIRECTIONS = dict(north=(0, -1), south=(0, 1), east=(1, 0), west=(-1, 0))
+PLANNING_ROLES = {f"planning_role.{role}" for role in ("key", "anchor", "fill", "structure", "self_contained")}
 # Vanilla 1.20.1 dirt tag plus AzaleaBlock/BushBlock's additional substrates.
 AZALEA_SOIL = {"minecraft:" + name for name in (
     "dirt", "grass_block", "podzol", "coarse_dirt", "mycelium", "rooted_dirt",
@@ -28,6 +29,9 @@ def validate(directory: Path, registry=None, *, save=True):
         errors.append("Author annotations refer to a different NBT hash")
     if meta.get("size") != size:
         errors.append("Author/NBT size mismatch")
+    role = meta.get("planning_role")
+    if not isinstance(role, str) or role not in PLANNING_ROLES:
+        errors.append(f"Invalid author planning_role: {role!r}")
     grid = {tuple(b["pos"]): data["palette"][b["state"]] for b in data["blocks"]}
     for value in data["palette"]:
         name, props = value["name"], value["properties"]
@@ -109,7 +113,7 @@ def validate(directory: Path, registry=None, *, save=True):
                   visible_blocks=sum(visible.values()), explicit_air=sum(1 for b in grid.values() if b["name"] in AIR),
                   palette=len(data["palette"]), block_entities=sum("nbt" in b for b in data["blocks"]),agriculture=agriculture,
                   materials=dict(visible.most_common()),
-                  scope="NBT、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。")
+                  scope="NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。")
     if save:
         write_json(directory / "validation.json", report)
     return report

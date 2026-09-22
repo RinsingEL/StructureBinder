@@ -80,6 +80,25 @@ class StudioTest(unittest.TestCase):
         write_json(self.path/"author.json",meta)
         self.assertFalse(validate(self.path,self.registry)["passed"])
 
+    def test_final_author_role_rejects_invented_names_and_missing_value(self):
+        m=Model("T","role audit",(3,4,3)).box((0,0,0),(2,0,2),"stone")
+        m.point("entry","entrance",(1,1,1),"entry")
+        m.export(self.path,self.registry)
+        meta=json.loads((self.path/"author.json").read_text(encoding="utf-8"))
+        for role in ("key","anchor","fill","structure","self_contained"):
+            with self.subTest(valid=role):
+                meta["planning_role"]="planning_role."+role
+                write_json(self.path/"author.json",meta)
+                self.assertTrue(validate(self.path,self.registry)["passed"])
+        for role in ("planning_role.special","planning_role.landmark","planning_role.filler","fill",None,{}):
+            with self.subTest(invalid=role):
+                if role is None:meta.pop("planning_role",None)
+                else:meta["planning_role"]=role
+                write_json(self.path/"author.json",meta)
+                report=validate(self.path,self.registry)
+                self.assertFalse(report["passed"])
+                self.assertTrue(any("Invalid author planning_role" in e for e in report["errors"]))
+
     def test_azalea_support_uses_exported_substrate(self):
         m=Model("T","azalea",(4,4,4))
         m.set(1,0,1,"composter[level=8]").set(1,1,1,"flowering_azalea")
