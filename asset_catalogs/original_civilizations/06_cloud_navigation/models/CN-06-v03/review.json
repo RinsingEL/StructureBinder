@@ -5,7 +5,7 @@
   "scope": "offline_asset_review",
   "reviewer": "cloud_interiors author visual review",
   "nbt_sha256": "6ed098b4ad5b2a7b4b418f6142b845cfbc78f676533b8e31eac3b124d624be5d",
-  "author_sha256": "4478ef72f9408609b478efc1b9717476a16372dbdd6fdbf0ca84752bba520ec7",
+  "author_sha256": "2d65191663965d4b349d77171b553ac91e9ad7b8d0c0ec11cbeb45650cefba3a",
   "evidence": [
     "previews/front.png",
     "previews/back.png",
@@ -59,6 +59,17 @@
       "after": "翼帆联邦",
       "previous_author_sha256": "ccb5f70c1de0591942872896f4d798ef1660219768f657c79b3b829a2a420c5a",
       "current_author_sha256": "4478ef72f9408609b478efc1b9717476a16372dbdd6fdbf0ca84752bba520ec7",
+      "nbt_sha256": "6ed098b4ad5b2a7b4b418f6142b845cfbc78f676533b8e31eac3b124d624be5d",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "翼帆联邦",
+      "after": "空艇幻想",
+      "previous_author_sha256": "4478ef72f9408609b478efc1b9717476a16372dbdd6fdbf0ca84752bba520ec7",
+      "current_author_sha256": "2d65191663965d4b349d77171b553ac91e9ad7b8d0c0ec11cbeb45650cefba3a",
       "nbt_sha256": "6ed098b4ad5b2a7b4b418f6142b845cfbc78f676533b8e31eac3b124d624be5d",
       "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
     }

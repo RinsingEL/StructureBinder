@@ -5,7 +5,7 @@
   "scope": "offline_asset_review",
   "reviewer": "Codex 离线视觉审查",
   "nbt_sha256": "afc5b45b0bd6d071bde92961b663e079bdb542b39c13c9dca58053faeef0a857",
-  "author_sha256": "01874bc184cb18c7d53d88380e647e87617949cff29c62f756f11b110473c90d",
+  "author_sha256": "f949eb940198461db49fe3f93c57d6d89a9c9cac98986ccebcb810dceac63eef",
   "evidence": [
     "previews/front.png",
     "previews/back.png",
@@ -47,6 +47,17 @@
       "after": "星仪王国",
       "previous_author_sha256": "28e9052f311f5a0c814991cc86920f75415f45b48a2162e1be8c9eb272100ce8",
       "current_author_sha256": "01874bc184cb18c7d53d88380e647e87617949cff29c62f756f11b110473c90d",
+      "nbt_sha256": "afc5b45b0bd6d071bde92961b663e079bdb542b39c13c9dca58053faeef0a857",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "星仪王国",
+      "after": "沙漠",
+      "previous_author_sha256": "01874bc184cb18c7d53d88380e647e87617949cff29c62f756f11b110473c90d",
+      "current_author_sha256": "f949eb940198461db49fe3f93c57d6d89a9c9cac98986ccebcb810dceac63eef",
       "nbt_sha256": "afc5b45b0bd6d071bde92961b663e079bdb542b39c13c9dca58053faeef0a857",
       "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
     }

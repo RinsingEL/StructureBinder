@@ -5,7 +5,7 @@
   "scope": "offline_asset_review",
   "reviewer": "cloud_interiors / 魔导学城作者离线实看",
   "nbt_sha256": "8f5e3e5940d07cac5d2db21fbe3cbcaeddbcf0cee11d88528d336d3a036186ef",
-  "author_sha256": "92ae1051b81f9f844eecd44fadd6ec0d714332fbe103a1be3858fe661b1fb6b2",
+  "author_sha256": "2ec8359e40e309426827ea070ff34357cff2cff3cec7ae4f03c85a656ac545ac",
   "evidence": [
     "previews/front.png",
     "previews/back.png",
@@ -48,6 +48,17 @@
       "after": "秘仪城邦",
       "previous_author_sha256": "6a4732739783ad0c81dab10ce6f85047e49fb9f9774a572e9c3f00e41c73c417",
       "current_author_sha256": "92ae1051b81f9f844eecd44fadd6ec0d714332fbe103a1be3858fe661b1fb6b2",
+      "nbt_sha256": "8f5e3e5940d07cac5d2db21fbe3cbcaeddbcf0cee11d88528d336d3a036186ef",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "秘仪城邦",
+      "after": "魔法学院",
+      "previous_author_sha256": "92ae1051b81f9f844eecd44fadd6ec0d714332fbe103a1be3858fe661b1fb6b2",
+      "current_author_sha256": "2ec8359e40e309426827ea070ff34357cff2cff3cec7ae4f03c85a656ac545ac",
       "nbt_sha256": "8f5e3e5940d07cac5d2db21fbe3cbcaeddbcf0cee11d88528d336d3a036186ef",
       "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
     }

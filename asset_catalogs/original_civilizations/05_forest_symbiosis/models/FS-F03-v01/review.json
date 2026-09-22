@@ -5,7 +5,7 @@
   "scope": "offline_asset_review",
   "reviewer": "Codex 森林建模作者离线实看",
   "nbt_sha256": "3d6535ca53e2759b943de32162ad8b4c8e0346604d1b582077d94d3588f1ab48",
-  "author_sha256": "ff0f62bdcdafa2ab640975f2235d47abfb29179faeae8e151bd6f3299068643b",
+  "author_sha256": "fc758f9e2c2bade4a7d5813a5969e3cf553e10cf9ed5fe2d273ab0242582abed",
   "evidence": [
     "previews/front.png",
     "previews/back.png",
@@ -41,6 +41,17 @@
       "after": "翠枝族",
       "previous_author_sha256": "535a20c4359ab21cd751073b0e58673c1dc569aa8abeaf90f5a710ab402952e2",
       "current_author_sha256": "ff0f62bdcdafa2ab640975f2235d47abfb29179faeae8e151bd6f3299068643b",
+      "nbt_sha256": "3d6535ca53e2759b943de32162ad8b4c8e0346604d1b582077d94d3588f1ab48",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "翠枝族",
+      "after": "精灵",
+      "previous_author_sha256": "ff0f62bdcdafa2ab640975f2235d47abfb29179faeae8e151bd6f3299068643b",
+      "current_author_sha256": "fc758f9e2c2bade4a7d5813a5969e3cf553e10cf9ed5fe2d273ab0242582abed",
       "nbt_sha256": "3d6535ca53e2759b943de32162ad8b4c8e0346604d1b582077d94d3588f1ab48",
       "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
     }

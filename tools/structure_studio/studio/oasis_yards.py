@@ -32,7 +32,7 @@ STALL_PLANS=[
 
 def base(family,variant,plans,usage):
     name,size,description=plans[variant-1]
-    m=Model(f'{family}-v{variant:02d}',name,size,family=family,civilization='星仪王国',role='fill',terrain={
+    m=Model(f'{family}-v{variant:02d}',name,size,family=family,civilization='沙漠',role='fill',terrain={
         '选址':usage,'地块':description,'接地':'使用地坪 Y=1，脚底 Y=2；不自动削坡或补齐外部通路',
         '边界':'模板包含内部地坪和封边，未写入的凹角与外部格保持原环境'})
     source={'DS-02':'beast_yard','DS-F03':'vineyard','DS-F04':'trade_shelter'}[family]

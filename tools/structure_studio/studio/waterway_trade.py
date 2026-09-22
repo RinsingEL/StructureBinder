@@ -21,7 +21,7 @@ MERCHANT_PLANS=[
 
 def base(family,variant,plans):
     name,size,shore,note=plans[variant-1]
-    m=Model(f'{family}-v{variant:02d}',name,size,family=family,civilization='蓝帆商邦',role='fill',terrain={
+    m=Model(f'{family}-v{variant:02d}',name,size,family=family,civilization='地中海',role='fill',terrain={
         '选址':'有实际水陆转运需求、避风且可以支撑固定木桩的岸段' if family=='WT-02' else '具有实际街巷与家庭生活用水的岸上商住地块',
         '地块':note,'高程':f'主地坪方块 Y=3、脚底 Y=4；参考水面 Y=3，水岸在 Z={shore}；两层版本上层脚底 Y=11',
         '落地':'保留明确岸壁与桩脚；模板外航行宽度、水深、洪水线及道路另按实际环境核对，不填平外部水道'})

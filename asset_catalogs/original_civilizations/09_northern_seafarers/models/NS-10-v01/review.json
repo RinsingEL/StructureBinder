@@ -5,7 +5,7 @@
   "scope": "offline_asset_review",
   "reviewer": "Codex 寒海航民作者离线全图审查",
   "nbt_sha256": "b4ccf427fcefc0ae8b5ad8df5b1a6f2c266c33dffa8f19c331e4cc111fb65335",
-  "author_sha256": "0e552bed6c74580e5b71bafffbea75a6a59c41144b43160a5348ff4f2528baa1",
+  "author_sha256": "7597b05c45437fcdc842a79390dd4515c04cdafffe3e17e743187dacec3c2d26",
   "evidence": [
     "previews/front.png",
     "previews/back.png",
@@ -50,6 +50,17 @@
       "after": "霜帆王国",
       "previous_author_sha256": "24c19b9b5e8657618eef1b1635fda550b043ca23ba362635905a2e20e2bfd7d3",
       "current_author_sha256": "0e552bed6c74580e5b71bafffbea75a6a59c41144b43160a5348ff4f2528baa1",
+      "nbt_sha256": "b4ccf427fcefc0ae8b5ad8df5b1a6f2c266c33dffa8f19c331e4cc111fb65335",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "霜帆王国",
+      "after": "北欧",
+      "previous_author_sha256": "0e552bed6c74580e5b71bafffbea75a6a59c41144b43160a5348ff4f2528baa1",
+      "current_author_sha256": "7597b05c45437fcdc842a79390dd4515c04cdafffe3e17e743187dacec3c2d26",
       "nbt_sha256": "b4ccf427fcefc0ae8b5ad8df5b1a6f2c266c33dffa8f19c331e4cc111fb65335",
       "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
     }

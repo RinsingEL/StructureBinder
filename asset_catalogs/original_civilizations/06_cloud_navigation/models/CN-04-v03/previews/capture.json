@@ -2,7 +2,7 @@
   "schema": "structure-studio.capture.v1",
   "id": "CN-04-v03",
   "nbt_sha256": "41140c44685e8aedad257b65803f2b875ee9c4499a1e3149d26fedf4cb4adc72",
-  "author_sha256": "848912096f3cc7c2a3bd59f641307f0176db8601d5a1694563d4b21e12357102",
+  "author_sha256": "798a5f447b6667f84b52d78536ec90e620bd5e82e78de76d417a70fdd25bbd3c",
   "shots": [
     "front",
     "back",
@@ -53,6 +53,17 @@
       "after": "翼帆联邦",
       "previous_author_sha256": "3804db7f55abc4733ed31e2cea93b02ebe5d9842e8d4eed0df4071fdd6bd9155",
       "current_author_sha256": "848912096f3cc7c2a3bd59f641307f0176db8601d5a1694563d4b21e12357102",
+      "nbt_sha256": "41140c44685e8aedad257b65803f2b875ee9c4499a1e3149d26fedf4cb4adc72",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "翼帆联邦",
+      "after": "空艇幻想",
+      "previous_author_sha256": "848912096f3cc7c2a3bd59f641307f0176db8601d5a1694563d4b21e12357102",
+      "current_author_sha256": "798a5f447b6667f84b52d78536ec90e620bd5e82e78de76d417a70fdd25bbd3c",
       "nbt_sha256": "41140c44685e8aedad257b65803f2b875ee9c4499a1e3149d26fedf4cb4adc72",
       "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
     }

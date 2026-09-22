@@ -2,7 +2,7 @@
   "schema": "structure-studio.capture.v1",
   "id": "MF-03-v01",
   "nbt_sha256": "f5182cad37e302b3604166367afa74d81d5efec90625f8e456b9093271e87f9f",
-  "author_sha256": "675f48029549f0f8255658859ae025f9ffa451553417c3ae71623ba62453b25e",
+  "author_sha256": "f44aeeaee3d8fe5c8eb7c74f684db728f36c2a0852ce317edaa2253d5095d1e4",
   "shots": [
     "front",
     "back",
@@ -35,6 +35,17 @@
       "after": "赤砧王国",
       "previous_author_sha256": "66c262a35bfada32c35d8fd5f2432e6c339e527ec757942046326d7e15a3e378",
       "current_author_sha256": "675f48029549f0f8255658859ae025f9ffa451553417c3ae71623ba62453b25e",
+      "nbt_sha256": "f5182cad37e302b3604166367afa74d81d5efec90625f8e456b9093271e87f9f",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "赤砧王国",
+      "after": "矮人",
+      "previous_author_sha256": "675f48029549f0f8255658859ae025f9ffa451553417c3ae71623ba62453b25e",
+      "current_author_sha256": "f44aeeaee3d8fe5c8eb7c74f684db728f36c2a0852ce317edaa2253d5095d1e4",
       "nbt_sha256": "f5182cad37e302b3604166367afa74d81d5efec90625f8e456b9093271e87f9f",
       "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
     }

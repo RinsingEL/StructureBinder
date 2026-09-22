@@ -11,7 +11,7 @@ from .components import shell, window, bench, pendant, hip_roof, shelf, crate_st
 
 
 def base(number,name,size,plot,notes):
-    m=Model(f"SR-F01-v{number:02d}",name,size,family="SR-F01",civilization="铜钟公国",role="fill",
+    m=Model(f"SR-F01-v{number:02d}",name,size,family="SR-F01",civilization="蒸汽朋克",role="fill",
             terrain={"选址":"铁路聚落步行商业街；需要对应行业的客源和补给",
                      "地块":plot,"地坪":"石基地坪 Y=1，室内脚底 Y=2；北侧台阶连接街面",
                      "保留空间":"保留门前步行与后勤开口；模板外和未写入的空格不参与清地"})

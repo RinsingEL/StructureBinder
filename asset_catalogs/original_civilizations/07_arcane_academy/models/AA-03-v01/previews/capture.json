@@ -2,7 +2,7 @@
   "schema": "structure-studio.capture.v1",
   "id": "AA-03-v01",
   "nbt_sha256": "739b769cea3900ae5db401e8d2fea917880ecde67dc3e0ec377ec2255ea514b6",
-  "author_sha256": "e73b69ccfe7c6a79a11f86df142bb0973b35f5d2d317f94aae97b2e521118357",
+  "author_sha256": "bdb7537e652726b7fd58c62e96207fe7328f0c9952c7436e91b7471ba81cb078",
   "shots": [
     "front",
     "back",
@@ -39,6 +39,17 @@
       "after": "秘仪城邦",
       "previous_author_sha256": "0f956aa483462d89dd9cadffe067c253c6af354b9c31708881a0199d76c06347",
       "current_author_sha256": "e73b69ccfe7c6a79a11f86df142bb0973b35f5d2d317f94aae97b2e521118357",
+      "nbt_sha256": "739b769cea3900ae5db401e8d2fea917880ecde67dc3e0ec377ec2255ea514b6",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "秘仪城邦",
+      "after": "魔法学院",
+      "previous_author_sha256": "e73b69ccfe7c6a79a11f86df142bb0973b35f5d2d317f94aae97b2e521118357",
+      "current_author_sha256": "bdb7537e652726b7fd58c62e96207fe7328f0c9952c7436e91b7471ba81cb078",
       "nbt_sha256": "739b769cea3900ae5db401e8d2fea917880ecde67dc3e0ec377ec2255ea514b6",
       "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
     }

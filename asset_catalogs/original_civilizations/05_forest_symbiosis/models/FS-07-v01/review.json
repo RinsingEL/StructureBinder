@@ -5,7 +5,7 @@
   "scope": "offline_asset_review",
   "reviewer": "Codex 森林内饰返修逐图审查",
   "nbt_sha256": "4586584d0a0d97c09ce658a155e8625026f7e3e1b06b8681fc855d031bdcc92a",
-  "author_sha256": "8fa3c6b33b8192fca842546dc80b01787ae351e22eb57baf53cd24f00e36786d",
+  "author_sha256": "750917941e35151dd9271db4152b3dab5d785e6a98b32b7d24e6f3c68ab1f96e",
   "evidence": [
     "previews/front.png",
     "previews/back.png",
@@ -51,6 +51,17 @@
       "after": "翠枝族",
       "previous_author_sha256": "72907b77e70fc8a5b02ec8a5396c38010a1391bf9a33b4daae4e06f31f963bb9",
       "current_author_sha256": "8fa3c6b33b8192fca842546dc80b01787ae351e22eb57baf53cd24f00e36786d",
+      "nbt_sha256": "4586584d0a0d97c09ce658a155e8625026f7e3e1b06b8681fc855d031bdcc92a",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "翠枝族",
+      "after": "精灵",
+      "previous_author_sha256": "8fa3c6b33b8192fca842546dc80b01787ae351e22eb57baf53cd24f00e36786d",
+      "current_author_sha256": "750917941e35151dd9271db4152b3dab5d785e6a98b32b7d24e6f3c68ab1f96e",
       "nbt_sha256": "4586584d0a0d97c09ce658a155e8625026f7e3e1b06b8681fc855d031bdcc92a",
       "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
     }

@@ -7,7 +7,7 @@ WALL='deepslate_bricks'
 FLOOR='polished_andesite'
 
 def base(key,name,w,d,h=18,role='key',terrain=None):
-    m=Model(key,name,(w,h,d),family=key.split('-v')[0],civilization='赤砧王国',role=role,terrain=terrain or {
+    m=Model(key,name,(w,h,d),family=key.split('-v')[0],civilization='矮人',role=role,terrain=terrain or {
         '选址':'山前矿业聚落的稳定石质台地，正面朝 -Z；须避开落石、塌陷和洪水通道。',
         '高程':'基础上边界及室内脚底 Y=2；入口街面需同高程。',
         '保留空间':'完整独立建筑及院落，保留入口和装卸面，不依赖其他模板补墙。'})

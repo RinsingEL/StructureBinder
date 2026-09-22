@@ -2,7 +2,7 @@
   "schema": "structure-studio.capture.v1",
   "id": "SR-F02-v01",
   "nbt_sha256": "0c8dd672fe85e23903ee2a85d2e180a8bfcd7aeda8d49e4cc74ad4f7d0f3d1d9",
-  "author_sha256": "ecce1ead28966997632b13ee2c596a19272ee70803145f3a52e8b48b00b2ac66",
+  "author_sha256": "0a5bc1e057cad90b137bd1d88e5f0fcfc6e4ed984601aa897fba433a9b34efb0",
   "shots": [
     "front",
     "back",
@@ -28,6 +28,17 @@
       "after": "铜钟公国",
       "previous_author_sha256": "fbd2794a23cce84887a0b61d0be144b0c16f11aac5b846899f3ef75235b27106",
       "current_author_sha256": "ecce1ead28966997632b13ee2c596a19272ee70803145f3a52e8b48b00b2ac66",
+      "nbt_sha256": "0c8dd672fe85e23903ee2a85d2e180a8bfcd7aeda8d49e4cc74ad4f7d0f3d1d9",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "铜钟公国",
+      "after": "蒸汽朋克",
+      "previous_author_sha256": "ecce1ead28966997632b13ee2c596a19272ee70803145f3a52e8b48b00b2ac66",
+      "current_author_sha256": "0a5bc1e057cad90b137bd1d88e5f0fcfc6e4ed984601aa897fba433a9b34efb0",
       "nbt_sha256": "0c8dd672fe85e23903ee2a85d2e180a8bfcd7aeda8d49e4cc74ad4f7d0f3d1d9",
       "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
     }

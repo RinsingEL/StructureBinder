@@ -5,7 +5,7 @@
   "scope": "offline_asset_review",
   "reviewer": "Codex 草原行旅作者全视图审查",
   "nbt_sha256": "75e7cde88a3805ba768778081d3de22d18f9a578610feceb5adcb73e3d061d61",
-  "author_sha256": "900b1109c1cdb59cad0698edf2ceee29f445cb501dd391363507a40d2d3bca37",
+  "author_sha256": "ccde9ce0c057d9136b7eed949632bc21f4ebb5b333b48520b404d6149ebf93ea",
   "evidence": [
     "previews/front.png",
     "previews/back.png",
@@ -50,6 +50,17 @@
       "after": "逐风诸部",
       "previous_author_sha256": "1adb954fcccc8b6ddd81969474a160c1e434daf959219677a9a18343bfc1a8f1",
       "current_author_sha256": "900b1109c1cdb59cad0698edf2ceee29f445cb501dd391363507a40d2d3bca37",
+      "nbt_sha256": "75e7cde88a3805ba768778081d3de22d18f9a578610feceb5adcb73e3d061d61",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "逐风诸部",
+      "after": "游牧",
+      "previous_author_sha256": "900b1109c1cdb59cad0698edf2ceee29f445cb501dd391363507a40d2d3bca37",
+      "current_author_sha256": "ccde9ce0c057d9136b7eed949632bc21f4ebb5b333b48520b404d6149ebf93ea",
       "nbt_sha256": "75e7cde88a3805ba768778081d3de22d18f9a578610feceb5adcb73e3d061d61",
       "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
     }

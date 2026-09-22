@@ -2,7 +2,7 @@
   "schema": "structure-studio.capture.v1",
   "id": "WT-10-v01",
   "nbt_sha256": "416534a0089322ccf91aa63e45645d2d1e95f043643e06f64356f90d5d0fb221",
-  "author_sha256": "ca0f5c89196742b808920da5aadf2fd4e0491f29abf603db03ccabf515c13d63",
+  "author_sha256": "d29c1f0dc6b19a26a356e83315b4084d6e583e695355b969305e5fbd93eec154",
   "shots": [
     "front",
     "back",
@@ -39,6 +39,17 @@
       "after": "蓝帆商邦",
       "previous_author_sha256": "b4f2b7594743beec680228e9540c556339b35293f5a42ed0df44124d8f66f48a",
       "current_author_sha256": "ca0f5c89196742b808920da5aadf2fd4e0491f29abf603db03ccabf515c13d63",
+      "nbt_sha256": "416534a0089322ccf91aa63e45645d2d1e95f043643e06f64356f90d5d0fb221",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "蓝帆商邦",
+      "after": "地中海",
+      "previous_author_sha256": "ca0f5c89196742b808920da5aadf2fd4e0491f29abf603db03ccabf515c13d63",
+      "current_author_sha256": "d29c1f0dc6b19a26a356e83315b4084d6e583e695355b969305e5fbd93eec154",
       "nbt_sha256": "416534a0089322ccf91aa63e45645d2d1e95f043643e06f64356f90d5d0fb221",
       "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
     }

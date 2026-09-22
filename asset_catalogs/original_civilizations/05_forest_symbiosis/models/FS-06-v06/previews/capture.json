@@ -2,7 +2,7 @@
   "schema": "structure-studio.capture.v1",
   "id": "FS-06-v06",
   "nbt_sha256": "4c0bdfa92feb914e284c5b2ba64cede3b5f18a2350352058123643d58e456235",
-  "author_sha256": "f16b99f666c5c16ab980b267e4d04219a965bf4028f22680bc669deae8720172",
+  "author_sha256": "e9721317b75e30fb0271f9fe8e8680d57c60cc192457daa4319adceee899b1df",
   "shots": [
     "front",
     "back",
@@ -48,6 +48,17 @@
       "after": "翠枝族",
       "previous_author_sha256": "09f1bfcc33a7e067a3c683bf99c31e13a5b4d9af86215c39b47e3604ed499db7",
       "current_author_sha256": "f16b99f666c5c16ab980b267e4d04219a965bf4028f22680bc669deae8720172",
+      "nbt_sha256": "4c0bdfa92feb914e284c5b2ba64cede3b5f18a2350352058123643d58e456235",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "翠枝族",
+      "after": "精灵",
+      "previous_author_sha256": "f16b99f666c5c16ab980b267e4d04219a965bf4028f22680bc669deae8720172",
+      "current_author_sha256": "e9721317b75e30fb0271f9fe8e8680d57c60cc192457daa4319adceee899b1df",
       "nbt_sha256": "4c0bdfa92feb914e284c5b2ba64cede3b5f18a2350352058123643d58e456235",
       "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
     }

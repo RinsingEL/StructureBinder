@@ -5,7 +5,7 @@
   "scope": "offline_asset_review",
   "reviewer": "Codex 主智能体离线视觉复核",
   "nbt_sha256": "4af97768a946537c1663555aee01436a0d3fd8ad03eee33cc1e1e63cf6e4c40a",
-  "author_sha256": "90bd62b74618aa9dac002e63847d95955f0416f866af68b7a431ae96be20d102",
+  "author_sha256": "98922c0f81449a66b493f3aac495a1c8c1a40d93d59b60c12641fd4b0993c4d2",
   "evidence": [
     "previews/front.png",
     "previews/back.png",
@@ -60,6 +60,17 @@
       "after": "蓝帆商邦",
       "previous_author_sha256": "b5bd2f09aafe83ea116e9bcb5f8b1e435a891b5eff84656f86969426e8347c6d",
       "current_author_sha256": "90bd62b74618aa9dac002e63847d95955f0416f866af68b7a431ae96be20d102",
+      "nbt_sha256": "4af97768a946537c1663555aee01436a0d3fd8ad03eee33cc1e1e63cf6e4c40a",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "蓝帆商邦",
+      "after": "地中海",
+      "previous_author_sha256": "90bd62b74618aa9dac002e63847d95955f0416f866af68b7a431ae96be20d102",
+      "current_author_sha256": "98922c0f81449a66b493f3aac495a1c8c1a40d93d59b60c12641fd4b0993c4d2",
       "nbt_sha256": "4af97768a946537c1663555aee01436a0d3fd8ad03eee33cc1e1e63cf6e4c40a",
       "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
     }

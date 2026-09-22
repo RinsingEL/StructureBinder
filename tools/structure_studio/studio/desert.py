@@ -7,7 +7,7 @@ from .samples import railing
 
 
 def base(number,name,size,terrain,notes,*,ground=1,roof=8,role="key"):
-    m=Model(f"DS-{number:02d}-v01",name,size,family=f"DS-{number:02d}",civilization="星仪王国",role=role,terrain=terrain)
+    m=Model(f"DS-{number:02d}-v01",name,size,family=f"DS-{number:02d}",civilization="沙漠",role=role,terrain=terrain)
     m.meta.update(source=f"tools/structure_studio/studio/desert.py:desert({number})",roof_min_y=roof,
                   floors=[dict(name="使用空间",y=ground,max_y=ground+5)],design_notes=notes,differences=notes,
                   preview_context=dict(kind="flat",land_surface_y=ground,bed_y=ground-3,padding=4,surface="sand"))

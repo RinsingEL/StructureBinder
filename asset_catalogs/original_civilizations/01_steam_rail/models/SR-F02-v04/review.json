@@ -5,7 +5,7 @@
   "scope": "offline_asset_review",
   "reviewer": "Codex 离线视觉审查",
   "nbt_sha256": "ca486e5c6a10de3f4ee4ec6ed338f1788bdba6413d0c579a6b903fece79cef42",
-  "author_sha256": "98e523d9628fc4ccbe0007742a3442b2748dc6597b3739254969251a12334130",
+  "author_sha256": "27252e77cc0054f3d4dc95624a480185f31445d6e4781a638056b9d3212c6a04",
   "evidence": [
     "previews/front.png",
     "previews/top.png",
@@ -34,6 +34,17 @@
       "after": "铜钟公国",
       "previous_author_sha256": "42f09613d66f423fc6e8a84d6ae633150a19d5c9cfe078649f03dcb9d19b64e8",
       "current_author_sha256": "98e523d9628fc4ccbe0007742a3442b2748dc6597b3739254969251a12334130",
+      "nbt_sha256": "ca486e5c6a10de3f4ee4ec6ed338f1788bdba6413d0c579a6b903fece79cef42",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "铜钟公国",
+      "after": "蒸汽朋克",
+      "previous_author_sha256": "98e523d9628fc4ccbe0007742a3442b2748dc6597b3739254969251a12334130",
+      "current_author_sha256": "27252e77cc0054f3d4dc95624a480185f31445d6e4781a638056b9d3212c6a04",
       "nbt_sha256": "ca486e5c6a10de3f4ee4ec6ed338f1788bdba6413d0c579a6b903fece79cef42",
       "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
     }

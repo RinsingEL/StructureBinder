@@ -4,7 +4,7 @@
 
 本目录按文明组织素材，每个文明使用 **核心结构.md＋填充结构.md** 两份制作文档。文明主题与条目是讨论形成的候选，数量表示制作范围；实际生成仍由地理条件、文明需求和项目当前能力决定。
 
-风格以族群或国度命名；名称与环境适应条件分开解释。当前名称及旧名对照见[文明命名](文明命名.md)。目录与结构 ID 保持稳定，不能根据路径中的旧地形词推断文明的选址限制。
+风格采用能够联想到具体建筑传统的常见类别，例如矮人、精灵、北欧、沙漠与蒸汽朋克；不编造国名代替风格定义，也不机械禁止地域词。各类的形体、材料与装饰基准见[建筑风格分类](文明命名.md)。目录与结构 ID 保持稳定，具体落地仍以模型条件为准。
 
 ## 用户确认的方向
 
@@ -43,23 +43,23 @@
 
 | 文明 | 建议批次 | 核心清单 | 填充清单 |
 | --- | --- | --- | --- |
-| [铜钟公国](01_steam_rail/README.md) | 首批 | [5 个核心＋3 个专项](01_steam_rail/核心结构.md) | [8 个结构族](01_steam_rail/填充结构.md) |
-| [蓝帆商邦](02_waterway_trade/README.md) | 首批 | [5 个核心＋2 个专项](02_waterway_trade/核心结构.md) | [9 个结构族](02_waterway_trade/填充结构.md) |
-| [星仪王国](03_desert_stars/README.md) | 首批 | [5 个核心＋2 个专项](03_desert_stars/核心结构.md) | [9 个结构族](03_desert_stars/填充结构.md) |
-| [赤砧王国](04_mountain_forge/README.md) | 首批 | [6 个核心＋1 个专项](04_mountain_forge/核心结构.md) | [8 个结构族](04_mountain_forge/填充结构.md) |
-| [翠枝族](05_forest_symbiosis/README.md) | 首批 | [5 个核心＋2 个专项](05_forest_symbiosis/核心结构.md) | [9 个结构族](05_forest_symbiosis/填充结构.md) |
-| [翼帆联邦](06_cloud_navigation/README.md) | 首批 | [5 个核心＋2 个专项](06_cloud_navigation/核心结构.md) | [8 个结构族](06_cloud_navigation/填充结构.md) |
-| [秘仪城邦](07_arcane_academy/README.md) | 扩展 | [5 个核心＋2 个专项](07_arcane_academy/核心结构.md) | [9 个结构族](07_arcane_academy/填充结构.md) |
-| [逐风诸部](08_steppe_caravans/README.md) | 扩展 | [3 个核心＋2 个专项](08_steppe_caravans/核心结构.md) | [10 个结构族](08_steppe_caravans/填充结构.md) |
-| [霜帆王国](09_northern_seafarers/README.md) | 扩展 | [3 个核心＋3 个专项](09_northern_seafarers/核心结构.md) | [9 个结构族](09_northern_seafarers/填充结构.md) |
-| [珊瑚族](10_tidal_coral/README.md) | 扩展 | [4 个核心＋2 个专项](10_tidal_coral/核心结构.md) | [9 个结构族](10_tidal_coral/填充结构.md) |
-| [冥灯教国](11_memorial_lanterns/README.md) | 扩展 | [4 个核心＋2 个专项](11_memorial_lanterns/核心结构.md) | [10 个结构族](11_memorial_lanterns/填充结构.md) |
-| [遗铸联盟](12_relic_salvagers/README.md) | 扩展 | [3 个核心＋3 个专项](12_relic_salvagers/核心结构.md) | [9 个结构族](12_relic_salvagers/填充结构.md) |
+| [蒸汽朋克](01_steam_rail/README.md) | 首批 | [5 个核心＋3 个专项](01_steam_rail/核心结构.md) | [8 个结构族](01_steam_rail/填充结构.md) |
+| [地中海](02_waterway_trade/README.md) | 首批 | [5 个核心＋2 个专项](02_waterway_trade/核心结构.md) | [9 个结构族](02_waterway_trade/填充结构.md) |
+| [沙漠](03_desert_stars/README.md) | 首批 | [5 个核心＋2 个专项](03_desert_stars/核心结构.md) | [9 个结构族](03_desert_stars/填充结构.md) |
+| [矮人](04_mountain_forge/README.md) | 首批 | [6 个核心＋1 个专项](04_mountain_forge/核心结构.md) | [8 个结构族](04_mountain_forge/填充结构.md) |
+| [精灵](05_forest_symbiosis/README.md) | 首批 | [5 个核心＋2 个专项](05_forest_symbiosis/核心结构.md) | [9 个结构族](05_forest_symbiosis/填充结构.md) |
+| [空艇幻想](06_cloud_navigation/README.md) | 首批 | [5 个核心＋2 个专项](06_cloud_navigation/核心结构.md) | [8 个结构族](06_cloud_navigation/填充结构.md) |
+| [魔法学院](07_arcane_academy/README.md) | 扩展 | [5 个核心＋2 个专项](07_arcane_academy/核心结构.md) | [9 个结构族](07_arcane_academy/填充结构.md) |
+| [游牧](08_steppe_caravans/README.md) | 扩展 | [3 个核心＋2 个专项](08_steppe_caravans/核心结构.md) | [10 个结构族](08_steppe_caravans/填充结构.md) |
+| [北欧](09_northern_seafarers/README.md) | 扩展 | [3 个核心＋3 个专项](09_northern_seafarers/核心结构.md) | [9 个结构族](09_northern_seafarers/填充结构.md) |
+| [海洋幻想](10_tidal_coral/README.md) | 扩展 | [4 个核心＋2 个专项](10_tidal_coral/核心结构.md) | [9 个结构族](10_tidal_coral/填充结构.md) |
+| [哥特](11_memorial_lanterns/README.md) | 扩展 | [4 个核心＋2 个专项](11_memorial_lanterns/核心结构.md) | [10 个结构族](11_memorial_lanterns/填充结构.md) |
+| [废土拾荒](12_relic_salvagers/README.md) | 扩展 | [3 个核心＋3 个专项](12_relic_salvagers/核心结构.md) | [9 个结构族](12_relic_salvagers/填充结构.md) |
 | [跨文明结构](13_cross_civilization/README.md) | 与相邻文明配套 | [6 个核心](13_cross_civilization/核心结构.md) | [5 个结构族](13_cross_civilization/填充结构.md) |
 
 本版保留原 **152 个编号条目**，按角色拆分，并新增 **45 个填充结构族**。当前为 **59 个核心候选、26 个专项候选、112 个填充结构族**。结构族数量不等于实际模型数量，填充族还需制作多个变体。
 
-首批仍优先六个文明：铜钟公国、蓝帆商邦、星仪王国、赤砧王国、翠枝族、翼帆联邦。按“功能主体＋足够丰富的配套变体”形成可体验的样板，避免只完成核心而缺少日常生活。
+首批仍优先六个文明：蒸汽朋克、地中海、沙漠、矮人、精灵、空艇幻想。按“功能主体＋足够丰富的配套变体”形成可体验的样板，避免只完成核心而缺少日常生活。
 
 每套清单为起步素材池，根据实际功能缺口补充；不要求各文明拥有相同建筑编制。中式、日式、哥特等视觉语言可在具体套系内确定。
 
@@ -96,12 +96,12 @@
 
 | 类别 | 所属清单与编号 |
 | --- | --- |
-| 铁路与矿运 | [铜钟公国 SR-01、SR-02、SR-03、SR-11](01_steam_rail/核心结构.md)；[赤砧王国 MF-01、MF-02](04_mountain_forge/核心结构.md) |
-| 码头、船坞与船闸 | [蓝帆商邦 WT-01、WT-03、WT-04、WT-09](02_waterway_trade/核心结构.md)；[蓝帆商邦 WT-02](02_waterway_trade/填充结构.md)；[霜帆王国 NS-01](09_northern_seafarers/核心结构.md)；[珊瑚族 TC-01](10_tidal_coral/核心结构.md)；[珊瑚族 TC-06](10_tidal_coral/填充结构.md) |
-| 商队与陆路补给 | [星仪王国 DS-01](03_desert_stars/核心结构.md)；[星仪王国 DS-02、DS-08](03_desert_stars/填充结构.md)；[翠枝族 FS-04](05_forest_symbiosis/核心结构.md)；[逐风诸部 SC-12](08_steppe_caravans/核心结构.md)；[逐风诸部 SC-02、SC-03](08_steppe_caravans/填充结构.md) |
-| 高差与飞行交通 | [赤砧王国 MF-02](04_mountain_forge/核心结构.md)；[翼帆联邦 CN-01、CN-02、CN-03](06_cloud_navigation/核心结构.md)；[翼帆联邦 CN-04、CN-08](06_cloud_navigation/填充结构.md)；[跨文明结构 XC-07](13_cross_civilization/核心结构.md) |
-| 魔法与仪式交通 | [秘仪城邦 AA-01、AA-02、AA-11](07_arcane_academy/核心结构.md)；[冥灯教国 ML-02](11_memorial_lanterns/核心结构.md) |
-| 供水、供能与补给 | [星仪王国 DS-03、DS-12](03_desert_stars/核心结构.md)；[赤砧王国 MF-12](04_mountain_forge/核心结构.md)；[秘仪城邦 AA-03](07_arcane_academy/核心结构.md) |
+| 铁路与矿运 | [蒸汽朋克 SR-01、SR-02、SR-03、SR-11](01_steam_rail/核心结构.md)；[矮人 MF-01、MF-02](04_mountain_forge/核心结构.md) |
+| 码头、船坞与船闸 | [地中海 WT-01、WT-03、WT-04、WT-09](02_waterway_trade/核心结构.md)；[地中海 WT-02](02_waterway_trade/填充结构.md)；[北欧 NS-01](09_northern_seafarers/核心结构.md)；[海洋幻想 TC-01](10_tidal_coral/核心结构.md)；[海洋幻想 TC-06](10_tidal_coral/填充结构.md) |
+| 商队与陆路补给 | [沙漠 DS-01](03_desert_stars/核心结构.md)；[沙漠 DS-02、DS-08](03_desert_stars/填充结构.md)；[精灵 FS-04](05_forest_symbiosis/核心结构.md)；[游牧 SC-12](08_steppe_caravans/核心结构.md)；[游牧 SC-02、SC-03](08_steppe_caravans/填充结构.md) |
+| 高差与飞行交通 | [矮人 MF-02](04_mountain_forge/核心结构.md)；[空艇幻想 CN-01、CN-02、CN-03](06_cloud_navigation/核心结构.md)；[空艇幻想 CN-04、CN-08](06_cloud_navigation/填充结构.md)；[跨文明结构 XC-07](13_cross_civilization/核心结构.md) |
+| 魔法与仪式交通 | [魔法学院 AA-01、AA-02、AA-11](07_arcane_academy/核心结构.md)；[哥特 ML-02](11_memorial_lanterns/核心结构.md) |
+| 供水、供能与补给 | [沙漠 DS-03、DS-12](03_desert_stars/核心结构.md)；[矮人 MF-12](04_mountain_forge/核心结构.md)；[魔法学院 AA-03](07_arcane_academy/核心结构.md) |
 
 后续交通扩充候选包括乡间小站、山地终点站、渔码头、小渡口、索道两端站、峡谷桥头堡、道路养护屋。先判断用途与重复适用性，再归入对应核心或填充文档。
 

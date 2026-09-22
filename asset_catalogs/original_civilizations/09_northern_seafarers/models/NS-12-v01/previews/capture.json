@@ -2,7 +2,7 @@
   "schema": "structure-studio.capture.v1",
   "id": "NS-12-v01",
   "nbt_sha256": "e6dbfeb359bfe2c8fd7512f9900f794f6fca90ce769c6c83d3b3e375a60de8e3",
-  "author_sha256": "3c28ef7a1dba58c9538c60d4db91c80339d503c6f672f1db6b1f41c0d551a562",
+  "author_sha256": "4b39fa781baea4cdbd4fa8e19d0e7ad74c78634b468726a8e5cc8137bf5e74c8",
   "shots": [
     "front",
     "back",
@@ -38,6 +38,17 @@
       "after": "霜帆王国",
       "previous_author_sha256": "becb141ba474626f7120ee3da8940ab577765cf72e328a6ee78c77e1c6c8bcf9",
       "current_author_sha256": "3c28ef7a1dba58c9538c60d4db91c80339d503c6f672f1db6b1f41c0d551a562",
+      "nbt_sha256": "e6dbfeb359bfe2c8fd7512f9900f794f6fca90ce769c6c83d3b3e375a60de8e3",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "霜帆王国",
+      "after": "北欧",
+      "previous_author_sha256": "3c28ef7a1dba58c9538c60d4db91c80339d503c6f672f1db6b1f41c0d551a562",
+      "current_author_sha256": "4b39fa781baea4cdbd4fa8e19d0e7ad74c78634b468726a8e5cc8137bf5e74c8",
       "nbt_sha256": "e6dbfeb359bfe2c8fd7512f9900f794f6fca90ce769c6c83d3b3e375a60de8e3",
       "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
     }

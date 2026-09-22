@@ -2,7 +2,7 @@
   "schema": "structure-studio.capture.v1",
   "id": "DS-08-v02",
   "nbt_sha256": "ea01ef65f0c64ad2f4f1f4dcb09647a721daff379bdf8e513eae2d5315442b88",
-  "author_sha256": "4f83b2eab265fb5f8a503418d6e7e41e70acc15d9cc7e95847cb317577ae2579",
+  "author_sha256": "7fc82ce01a633dc549383d9ffd7524420923370ffec367f299e31bafefb8c61b",
   "shots": [
     "front",
     "back",
@@ -46,6 +46,17 @@
       "after": "星仪王国",
       "previous_author_sha256": "d9212106536e848adb1ab6c2a17e2432a42f4cc4bf2f453f715a4a123d260ae0",
       "current_author_sha256": "4f83b2eab265fb5f8a503418d6e7e41e70acc15d9cc7e95847cb317577ae2579",
+      "nbt_sha256": "ea01ef65f0c64ad2f4f1f4dcb09647a721daff379bdf8e513eae2d5315442b88",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "星仪王国",
+      "after": "沙漠",
+      "previous_author_sha256": "4f83b2eab265fb5f8a503418d6e7e41e70acc15d9cc7e95847cb317577ae2579",
+      "current_author_sha256": "7fc82ce01a633dc549383d9ffd7524420923370ffec367f299e31bafefb8c61b",
       "nbt_sha256": "ea01ef65f0c64ad2f4f1f4dcb09647a721daff379bdf8e513eae2d5315442b88",
       "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
     }

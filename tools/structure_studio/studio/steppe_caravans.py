@@ -4,7 +4,7 @@ from .components import bench, shelf, crate_stack, pendant
 
 
 def base(key,name,size,condition,role='key'):
-    m=Model(key,name,size,civilization='逐风诸部',role=role,terrain={
+    m=Model(key,name,size,civilization='游牧',role=role,terrain={
         '选址':condition,'高程':'入口与营地脚底Y=3；局部巡路台脚底Y=6，见标记与台阶。',
         '资源与季节':'依赖外部季节水草及商路补给；水槽为运水储备，不凭空生成水源。严寒风暴季撤帐或转入冬营。',
         '适配边界':'朝南开口按当地背风方向旋转；保留营地外人畜廊道，禁止直接压平山体或河滩。',

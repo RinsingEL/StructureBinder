@@ -29,7 +29,7 @@ SHOP_PLANS=[
 def base(family,variant,plans,*,corner=None,grade_at=None):
     name,size,description=plans[variant-1]
     is_inn=family=='DS-08'
-    m=Model(f'{family}-v{variant:02d}',name,size,family=family,civilization='星仪王国',role='fill',terrain={
+    m=Model(f'{family}-v{variant:02d}',name,size,family=family,civilization='沙漠',role='fill',terrain={
         '选址':'有可靠生活用水与补给条件的聚落入口或商路停驻点' if is_inn else '有实际居民、旅人和相应行业供需的绿洲生活街区',
         '地块':description,'高程':'主入口脚底 Y=2；后高台脚底 Y=3' if grade_at else '主入口脚底 Y=2；两层版上层脚底 Y=9',
         '落地':'结构连同内院及铺面完整落地；外部交通、供水与库存另行接入，未写入的凹角保持原环境'})

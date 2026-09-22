@@ -10,7 +10,7 @@ from .samples import railing
 
 
 def base(key, name, size, *, f=7, role='key', description='高原岩台边缘，北侧接稳定地面，南侧朝开阔谷地'):
-    m=Model(key,name,size,family=key.rsplit('-v',1)[0],civilization='翼帆联邦',role=role,terrain={
+    m=Model(key,name,size,family=key.rsplit('-v',1)[0],civilization='空艇幻想',role=role,terrain={
         '选址':description,'高程':f'主平台地板 Y={f}，入口脚底 Y={f+1}；外接同高岩台道路',
         '固定与承重':'北侧石砌锚座压在实体岩台，南侧木梁和斜撑回接石墩；石墩底必须落在连续承载岩层。不可当作无支撑浮空结构。',
         '接驳边界':'模板内支撑与边栏完整；外侧山体、接驳道路、峡谷宽度及航行净空必须按实际场地核对。',

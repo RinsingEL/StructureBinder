@@ -2,7 +2,7 @@
   "schema": "structure-studio.capture.v1",
   "id": "SC-01",
   "nbt_sha256": "0ed7ecc2eb3d922b6a4395418582aa880efb58897f7a492daaeb73c305110016",
-  "author_sha256": "867101ca4648c92b570de5a2300ed0d7838445c7208c281bf78dc4402233db8e",
+  "author_sha256": "84cde395575f6083a79efc3bb8247d379e25b74576525c4f55094dc0cedbe344",
   "shots": [
     "front",
     "back",
@@ -41,6 +41,17 @@
       "after": "逐风诸部",
       "previous_author_sha256": "bcc122583ec4dfbfa65dafda0a63ff0d19a2ef183003aec40caaa832c3a5e138",
       "current_author_sha256": "867101ca4648c92b570de5a2300ed0d7838445c7208c281bf78dc4402233db8e",
+      "nbt_sha256": "0ed7ecc2eb3d922b6a4395418582aa880efb58897f7a492daaeb73c305110016",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "逐风诸部",
+      "after": "游牧",
+      "previous_author_sha256": "867101ca4648c92b570de5a2300ed0d7838445c7208c281bf78dc4402233db8e",
+      "current_author_sha256": "84cde395575f6083a79efc3bb8247d379e25b74576525c4f55094dc0cedbe344",
       "nbt_sha256": "0ed7ecc2eb3d922b6a4395418582aa880efb58897f7a492daaeb73c305110016",
       "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
     }

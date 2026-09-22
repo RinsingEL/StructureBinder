@@ -5,7 +5,7 @@
   "scope": "offline_asset_review",
   "reviewer": "Codex 山腹锻炉离线作者图审",
   "nbt_sha256": "7e21a3e86f411432f37d314ee163d294a67c597086e0e9172d35b9a0fe7bf625",
-  "author_sha256": "ebd4095b7f9b6b8bfdea72d7bfdb9bae00241799a531021a8301fa5f2db4b24d",
+  "author_sha256": "2ed3b47639410b77e2f16a4b73f9e9e189941f96e7ad2c90e7944d76b48c84ec",
   "evidence": [
     "previews/front.png",
     "previews/back.png",
@@ -45,6 +45,17 @@
       "after": "赤砧王国",
       "previous_author_sha256": "88adde8cd4119f8615a5a234b09a6a37d2dc2be04d7ec4f27546a5f9becad1e0",
       "current_author_sha256": "ebd4095b7f9b6b8bfdea72d7bfdb9bae00241799a531021a8301fa5f2db4b24d",
+      "nbt_sha256": "7e21a3e86f411432f37d314ee163d294a67c597086e0e9172d35b9a0fe7bf625",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "赤砧王国",
+      "after": "矮人",
+      "previous_author_sha256": "ebd4095b7f9b6b8bfdea72d7bfdb9bae00241799a531021a8301fa5f2db4b24d",
+      "current_author_sha256": "2ed3b47639410b77e2f16a4b73f9e9e189941f96e7ad2c90e7944d76b48c84ec",
       "nbt_sha256": "7e21a3e86f411432f37d314ee163d294a67c597086e0e9172d35b9a0fe7bf625",
       "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
     }

@@ -16,7 +16,7 @@ HOME_PLANS=[
 
 
 def base(key,name,size,description,terrain):
-    m=Model(key,name,size,family=key.rsplit('-v',1)[0],civilization="星仪王国",role="fill",terrain=terrain)
+    m=Model(key,name,size,family=key.rsplit('-v',1)[0],civilization="沙漠",role="fill",terrain=terrain)
     m.meta.update(design_notes=[description],differences=[description],floors=[dict(name="起居与内庭",y=1,max_y=6)],roof_min_y=8,
                   preview_context=dict(kind="flat",land_surface_y=2,bed_y=-1,padding=3,surface="sand"))
     return m

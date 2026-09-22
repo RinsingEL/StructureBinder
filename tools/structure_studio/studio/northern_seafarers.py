@@ -4,7 +4,7 @@ from .components import shell, window, bench, pendant, shelf, crate_stack
 
 
 def base(key,name,w,d,h=27,role='key',shore=None):
-    m=Model(key,name,(w,h,d),family=key.split('-v')[0],civilization='霜帆王国',role=role,terrain={
+    m=Model(key,name,(w,h,d),family=key.split('-v')[0],civilization='北欧',role=role,terrain={
         '选址':'稳定的寒地海湾背风岸台；避开潮涌、雪崩、海冰推挤和行洪通道。',
         '高程':'干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。',
         '保留空间':'完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。',
