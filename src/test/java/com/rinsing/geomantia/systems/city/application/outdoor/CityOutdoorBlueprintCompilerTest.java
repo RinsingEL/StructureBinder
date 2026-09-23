@@ -30,6 +30,21 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityOutdoorBlueprintCompilerTest {
+    @Test void compactEntranceApproachSharesVillageAppearanceButMainRoadKeepsItsGrade() {
+        var d6=d6Plan();
+        d6.add("sourceStructureAnchorMap",JsonParser.parseString("""
+                {streetBands:[
+                 {streetBandId:'lane',roadNetworkId:'core_group::spine',groupId:'core_group',roadKind:'COMPACT_ALLEY',
+                  crossSectionProfile:'STAIR_SLAB_STAIR',widthBlocks:3,start:{x:10,z:10},end:{x:20,z:10},bounds:{minX:10,minZ:9,maxX:20,maxZ:11}},
+                 {streetBandId:'approach',roadNetworkId:'core_group::approach',groupId:'core_group',roadKind:'ENTRANCE_APPROACH',
+                  crossSectionProfile:'SURFACE_ONLY',widthBlocks:1,start:{x:15,z:11},end:{x:15,z:14},bounds:{minX:15,minZ:11,maxX:15,maxZ:14}},
+                 {streetBandId:'main',roadNetworkId:'city',groupId:'core_group',roadKind:'CITY_MAIN_ROAD',
+                  crossSectionProfile:'STAIR_SLAB_STAIR',widthBlocks:5,start:{x:20,z:10},end:{x:30,z:10},bounds:{minX:20,minZ:8,maxX:30,maxZ:12}}]}
+                """));
+        var roads=compile(d6).resolution().roadBands();
+        assertEquals("COMPACT_ALLEY",roads.stream().filter(r->r.streetBandId().equals("approach")).findFirst().orElseThrow().roadKind());
+        assertEquals("CITY_MAIN_ROAD",roads.stream().filter(r->r.streetBandId().equals("main")).findFirst().orElseThrow().roadKind());
+    }
     @Test void urbanArraysOwnCommonGroundWithoutRequiringAnExplicitLandmarkSelection() {
         for (String algorithm : List.of("GRID", "COURTYARD", "CENTER_SYMMETRIC")) {
             var blueprint = automaticGroundBlueprint("BALANCED", "BALANCED");

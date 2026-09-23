@@ -59,12 +59,14 @@ final class CityRoadTransitionGrader {
             var facing=CityLandUseSurfacePrintPlan.HorizontalFacing.NONE;
             String block=f.blockId().endsWith("_stairs")
                     ? f.blockId().substring(0,f.blockId().length()-7)+"_slab" : f.blockId();
+            String stairBlock=fragment.materialField().at("roadStair",f.x(),f.z(),f.sourceId(),
+                    block.endsWith("_slab")?block.substring(0,block.length()-5)+"_stairs":"");
             int target=y;
             for(int i=0;i<DIRECTIONS.length;i++) {
                 Integer neighbour=targets.get(cell.offset(DIRECTIONS[i]));
-                if (neighbour!=null && neighbour==y+1 && block.endsWith("_slab")) {
+                if (neighbour!=null && neighbour==y+1 && stairBlock.endsWith("_stairs")) {
                     kind=CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR;
-                    block=block.substring(0,block.length()-5)+"_stairs";
+                    block=stairBlock;
                     facing= switch(i) {case 0->CityLandUseSurfacePrintPlan.HorizontalFacing.NORTH;
                         case 1->CityLandUseSurfacePrintPlan.HorizontalFacing.EAST;
                         case 2->CityLandUseSurfacePrintPlan.HorizontalFacing.SOUTH;

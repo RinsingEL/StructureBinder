@@ -1,0 +1,33 @@
+{
+  "enabled": true,
+  "roadKinds": ["COMPACT_ALLEY"],
+  "seed": 7391,
+  "surfacePalette": [
+    {"blockId": "minecraft:dirt_path", "weight": 6},
+    {"blockId": "minecraft:coarse_dirt", "weight": 3},
+    {"blockId": "minecraft:rooted_dirt", "weight": 1}
+  ],
+  "stairBlockId": "minecraft:oak_stairs",
+  "baseBlockId": "minecraft:dirt",
+  "decorationsEnabled": true,
+  "structureTreesEnabled": false,
+  "spacingBlocks": 12,
+  "chance": 0.55,
+  "edgeOffsetBlocks": 2,
+  "endClearanceBlocks": 2,
+  "variants": [
+    {"id": "fence_lantern", "weight": 2, "blocks": [
+      {"along": -1, "outward": 0, "height": 1, "blockId": "minecraft:oak_fence"},
+      {"along": 0, "outward": 0, "height": 1, "blockId": "minecraft:oak_fence"},
+      {"along": 1, "outward": 0, "height": 1, "blockId": "minecraft:oak_fence"},
+      {"along": 0, "outward": 0, "height": 2, "blockId": "minecraft:lantern"}
+    ]},
+    {"id": "azalea", "weight": 3, "blocks": [
+      {"along": 0, "outward": 0, "height": 1, "blockId": "minecraft:flowering_azalea_leaves"},
+      {"along": 1, "outward": 0, "height": 1, "blockId": "minecraft:azalea_leaves"}
+    ]},
+    {"id": "berries", "weight": 2, "blocks": [
+      {"along": 0, "outward": 0, "height": 1, "blockId": "minecraft:sweet_berry_bush"}
+    ]}
+  ]
+}

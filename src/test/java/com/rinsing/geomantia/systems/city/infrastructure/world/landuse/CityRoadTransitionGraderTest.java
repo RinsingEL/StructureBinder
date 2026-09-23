@@ -6,6 +6,21 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CityRoadTransitionGraderTest {
+    @Test void fullBlockVillagePaletteUsesFrozenConfiguredStairsAtThePlatformTransition() {
+        var original=fragment(0,true);
+        var all=original.gradingFeatureOperations().stream().map(f->new CityLandUseChunkCompiler.FeatureOperation(
+                f.sourceId(),f.x(),f.z(),"minecraft:coarse_dirt",f.surfaceOffset(),f.kind(),f.facing(),f.targetSurfaceY())).toList();
+        var field=new com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField(
+                new com.rinsing.geomantia.systems.city.domain.blueprint.CitySurfaceMaterials(Map.of(),Map.of(),
+                        Map.of("COMPACT_ALLEY",Map.of("roadStair","minecraft:oak_stairs")),Map.of()),List.of(),
+                List.of(new com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField.Road("lane","COMPACT_ALLEY",
+                        new com.rinsing.geomantia.systems.city.domain.model.BlockBounds(-16,8,31,8))));
+        var fragment=new CityLandUseChunkCompiler.ChunkFragment(original.schema(),original.cityId(),original.planHash(),original.paletteHash(),
+                0,0,16,0,0,0,null,List.of(),List.of(),List.of(),all.stream().filter(f->f.x()>=0&&f.x()<16).toList(),all,List.of(),List.of(),field);
+        var result=CityRoadTransitionGrader.grade(fragment,terrain());
+        assertTrue(result.stream().anyMatch(f->f.x()==14 && f.targetSurfaceY()==89 && f.blockId().equals("minecraft:oak_stairs")));
+        assertTrue(result.stream().anyMatch(f->f.x()==0 && f.blockId().equals("minecraft:coarse_dirt")));
+    }
     @Test void sevenBlockDropAtNaturalRoadPlatformBoundaryBecomesAContinuousStairRun() {
         var fragment=fragment(0,true);
         var roads=CityRoadTransitionGrader.grade(fragment,terrain());

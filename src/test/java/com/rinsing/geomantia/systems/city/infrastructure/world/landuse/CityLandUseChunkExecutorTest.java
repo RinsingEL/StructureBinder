@@ -16,6 +16,27 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CityLandUseChunkExecutorTest {
     private final CityLandUseChunkExecutor executor = new CityLandUseChunkExecutor();
 
+    @Test void optionalVillageLanternSkipsItsWholeColumnWhenThePostIsObstructed() {
+        var features=List.of(new CityLandUseChunkCompiler.FeatureOperation("village_road_decoration::lamp",2,2,
+                "minecraft:oak_fence",1,CityLandUseSurfacePrintPlan.FeatureKind.GREEN_PLANT,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE),
+                new CityLandUseChunkCompiler.FeatureOperation("village_road_decoration::lamp",2,2,
+                "minecraft:lantern",2,CityLandUseSurfacePrintPlan.FeatureKind.GREEN_PLANT,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE));
+        var fragment=new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,"city","hash","palette",
+                0,0,2,0,0,0,"minecraft:dirt",List.of(),List.of(),List.of(),features,features,List.of(),List.of());
+        FakeWorld blocked=new FakeWorld();blocked.replaceable.put("2,65,2",false);
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED,executor.execute(fragment,blocked,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES).status());
+        assertTrue(blocked.writes.isEmpty());
+        FakeWorld clear=new FakeWorld();
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED,executor.execute(fragment,clear,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES).status());
+        assertEquals(List.of("2,65,2=minecraft:oak_fence","2,66,2=minecraft:lantern"),clear.writes);
+        FakeWorld unsuitableSoil=new FakeWorld();unsuitableSoil.supportsRoadsidePlants=false;
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED,executor.execute(fragment,unsuitableSoil,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES).status());
+        assertTrue(unsuitableSoil.writes.isEmpty());
+    }
+
     @Test void naturalRoadActuallyCutsDownToAdjacentFrozenPlatformDuringExecution() {
         FakeWorld world = new FakeWorld();
         List<CityLandUseChunkCompiler.FeatureOperation> features = new ArrayList<>();
@@ -809,6 +830,8 @@ class CityLandUseChunkExecutorTest {
     }
 
     private static final class FakeWorld implements CityLandUseChunkExecutor.ExecutionWorld {
+        private boolean supportsRoadsidePlants=true;
+        @Override public boolean supportsRoadsidePlant(String blockId,int x,int y,int z) { return supportsRoadsidePlants; }
         private final java.util.Set<String> vegetation=new java.util.HashSet<>();
         @Override public boolean isPublicVegetation(int x,int y,int z) { return vegetation.contains(x+","+y+","+z); }
         private boolean frozenDesign;

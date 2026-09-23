@@ -10,6 +10,21 @@ import static org.junit.jupiter.api.Assertions.*;
 class CityRoadsideTreePlannerTest {
     private final CityRoadsideTreePlanner planner = new CityRoadsideTreePlanner();
 
+    @Test void villageRoadsUseSmallOrnamentsUnlessStructureTreesAreExplicitlyEnabled() {
+        var input=source();
+        var road=input.getAsJsonArray("streetBands").get(0).getAsJsonObject();
+        road.addProperty("roadKind","COMPACT_ALLEY");road.addProperty("groupId","village");
+        assertTrue(plan(input,new JsonObject(),terrain(false)).getAsJsonArray("anchors").isEmpty());
+        var settings=com.rinsing.geomantia.systems.city.application.landuse.CityVillageRoadSettings.load();
+        var json=new Gson().toJsonTree(settings).getAsJsonObject();json.addProperty("structureTreesEnabled",true);
+        var enabled=new Gson().fromJson(json,com.rinsing.geomantia.systems.city.application.landuse.CityVillageRoadSettings.class);
+        assertFalse(planner.append(input,new JsonObject(),new JsonObject(),terrain(false),trees(),enabled)
+                .getAsJsonArray("anchors").isEmpty());
+        var approach=road.deepCopy();approach.addProperty("roadKind","ENTRANCE_APPROACH");approach.addProperty("streetBandId","approach");
+        input.getAsJsonArray("streetBands").add(approach);
+        assertTrue(plan(input,new JsonObject(),terrain(false)).getAsJsonArray("anchors").isEmpty());
+    }
+
     @Test void publicStructuresOccupySharedGapsWithoutTouchingBuildingsOrRoads() {
         JsonObject input = source();
         for(int x : new int[]{-60,50}) for(int z : new int[]{-36,24}) {

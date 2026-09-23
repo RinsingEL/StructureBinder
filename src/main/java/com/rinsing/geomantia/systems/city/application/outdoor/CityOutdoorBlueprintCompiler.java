@@ -803,6 +803,13 @@ public final class CityOutdoorBlueprintCompiler {
     private static List<LandUseSourceResolver.RoadBand> roadBands(JsonObject materializationPlan) {
         JsonObject anchorMap = object(materializationPlan, "sourceStructureAnchorMap");
         List<LandUseSourceResolver.RoadBand> result = new ArrayList<>();
+        Set<String> villageGroups = new HashSet<>();
+        for (JsonElement element : array(anchorMap, "streetBands")) {
+            if (element.isJsonObject() && "COMPACT_ALLEY".equals(stringValue(element.getAsJsonObject(), "roadKind", ""))) {
+                String group = stringValue(element.getAsJsonObject(), "groupId", "");
+                if (!group.isBlank()) villageGroups.add(group);
+            }
+        }
         for (JsonElement element : array(anchorMap, "streetBands")) {
             if (!element.isJsonObject()) continue;
             JsonObject band = element.getAsJsonObject();
@@ -816,9 +823,13 @@ public final class CityOutdoorBlueprintCompiler {
                 throw new IllegalArgumentException("CITY_OUTDOOR_ROAD_BAND_GEOMETRY_MISSING:"
                         + stringValue(band, "streetBandId", "unknown"));
             }
+            String roadKind = requiredString(band, "roadKind");
+            if (villageGroups.contains(stringValue(band, "groupId", ""))
+                    && Set.of("ENTRANCE_SHORT_ALLEY", "ENTRANCE_APPROACH", "SHARED_NETWORK_EXTENSION").contains(roadKind))
+                roadKind = "COMPACT_ALLEY";
             result.add(new LandUseSourceResolver.RoadBand(
                     requiredString(band, "streetBandId"), requiredString(band, "roadNetworkId"),
-                    requiredString(band, "roadKind"), point(start), point(end), bounds(bounds),
+                    roadKind, point(start), point(end), bounds(bounds),
                     intValue(band, "widthBlocks", 1), requiredString(band, "crossSectionProfile"),
                     roadSurfaceBlockId(requiredString(band, "roadKind")),
                     roadCurbBlockId(requiredString(band, "roadKind")),

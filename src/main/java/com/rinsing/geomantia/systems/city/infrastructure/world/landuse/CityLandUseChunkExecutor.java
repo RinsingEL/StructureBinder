@@ -379,16 +379,23 @@ public final class CityLandUseChunkExecutor {
                 CityBridgeStructurePlanner.posts(fragment);
         Set<ColumnKey> materializedPlatformStairs = new HashSet<>();
         Set<ColumnKey> skippedPublicGround = new HashSet<>();
+        Map<ColumnKey, List<CityLandUseChunkCompiler.FeatureOperation>> roadsideDecorations = new HashMap<>();
+        for (var feature : featureOperations) if (feature.sourceId().startsWith(
+                com.rinsing.geomantia.systems.city.application.landuse.CityVillageRoadPlanner.DECORATION_SOURCE))
+            roadsideDecorations.computeIfAbsent(new ColumnKey(feature.x(), feature.z()), ignored -> new ArrayList<>()).add(feature);
+        Set<ColumnKey> checkedDecorations = new HashSet<>();
         for (CityLandUseChunkCompiler.FeatureOperation operation : featureOperations) {
             ColumnKey key = new ColumnKey(operation.x(), operation.z());
             ColumnSample column = terrainView.sample(operation.x(), operation.z());
             boolean publicGreenery = operation.sourceId().startsWith(
                     com.rinsing.geomantia.systems.city.application.landuse.CityPublicGreeneryPlanner.SOURCE);
+            boolean roadsideDecoration = operation.sourceId().startsWith(
+                    com.rinsing.geomantia.systems.city.application.landuse.CityVillageRoadPlanner.DECORATION_SOURCE);
             boolean terrainRoad = operation.targetSurfaceY() == null && operation.surfaceOffset() == 0
                     && (operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
                     || operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR)
                     && !foundationByColumn.containsKey(key) && !plannedSurfaceY.containsKey(key);
-            if (publicGreenery || terrainRoad) {
+            if (publicGreenery || terrainRoad || roadsideDecoration) {
                 column = world.samplePublicGround(operation.x(), operation.z());
                 if (!column.naturalSurface() || "minecraft:water".equals(column.surfaceBlockId())
                         || "minecraft:lava".equals(column.surfaceBlockId()) || publicGreenery && circulationColumns.contains(key)) {
@@ -396,6 +403,17 @@ public final class CityLandUseChunkExecutor {
                     continue;
                 }
                 if (skippedPublicGround.contains(key)) continue;
+                if (roadsideDecoration && checkedDecorations.add(key)) {
+                    // Optional ornaments never veto an owner's road or leave a lantern without its post.
+                    boolean blocked = circulationColumns.contains(key) || roadsideDecorations.get(key).stream().anyMatch(f ->
+                            !world.isKnownBlock(f.blockId()));
+                    for (var f : roadsideDecorations.get(key)) {
+                        int y = column.surfaceY() + f.surfaceOffset();
+                        if (!world.ensureCanWrite(f.x(), y, f.z()) || !world.inspect(f.x(), y, f.z()).replaceable()
+                                || !world.supportsRoadsidePlant(f.blockId(), f.x(), y, f.z())) blocked = true;
+                    }
+                    if (blocked) { skippedPublicGround.add(key); continue; }
+                }
                 if (operation.surfaceOffset() == 0) {
                     List<PreparedMutation> clearing = new ArrayList<>();
                     for (int y = column.surfaceY() + 1; y <= column.surfaceY() + 32; y++) {
@@ -799,6 +817,7 @@ public final class CityLandUseChunkExecutor {
         /** Optional public ground never grades terrain or overwrites a constructed surface. */
         default ColumnSample samplePublicGround(int x, int z) { return sampleColumn(x, z); }
         default boolean isPublicVegetation(int x, int y, int z) { return false; }
+        default boolean supportsRoadsidePlant(String blockId, int x, int y, int z) { return true; }
 
         default boolean supportsChannel(int worldX, int y, int worldZ, boolean bed) {
             ColumnSample column = sampleColumn(worldX, worldZ);
@@ -1317,6 +1336,16 @@ public final class CityLandUseChunkExecutor {
                     && state.getValue(BlockStateProperties.AXIS) == Direction.Axis.Y;
             return state.getBlock() instanceof net.minecraft.world.level.block.BushBlock
                     || state.is(Blocks.VINE) || state.is(Blocks.SNOW);
+        }
+
+        @Override
+        public boolean supportsRoadsidePlant(String blockId, int x, int y, int z) {
+            ResourceLocation id = ResourceLocation.tryParse(blockId);
+            if (id == null || !BuiltInRegistries.BLOCK.containsKey(id)) return false;
+            var state = BuiltInRegistries.BLOCK.get(id).defaultBlockState();
+            // Lantern support is supplied by the same frozen motif; bushes require real soil below.
+            return !(state.getBlock() instanceof net.minecraft.world.level.block.BushBlock)
+                    || state.canSurvive(level, new BlockPos(x, y, z));
         }
 
         @Override

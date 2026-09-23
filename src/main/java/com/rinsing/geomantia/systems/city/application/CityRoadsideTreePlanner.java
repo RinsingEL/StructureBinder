@@ -67,6 +67,13 @@ public final class CityRoadsideTreePlanner {
 
     public JsonObject append(JsonObject source, JsonObject walls, JsonObject landscapes,
                              LandUseTerrainField terrain, List<Tree> catalog) {
+        return append(source, walls, landscapes, terrain, catalog,
+                com.rinsing.geomantia.systems.city.application.landuse.CityVillageRoadSettings.load());
+    }
+
+    JsonObject append(JsonObject source, JsonObject walls, JsonObject landscapes,
+                      LandUseTerrainField terrain, List<Tree> catalog,
+                      com.rinsing.geomantia.systems.city.application.landuse.CityVillageRoadSettings village) {
         JsonObject result = source.deepCopy();
         JsonArray anchors = result.getAsJsonArray("anchors");
         JsonObject report = new JsonObject();
@@ -91,11 +98,21 @@ public final class CityRoadsideTreePlanner {
                 forbidden.add(expand(bounds(element.getAsJsonObject().getAsJsonObject("blockBounds")), CLEARANCE));
         collectLandscapeSpans(landscapes, forbidden);
         List<JsonObject> roads = new ArrayList<>();
+        Set<String> villageGroups = new HashSet<>();
+        for (var element : array(source, "streetBands")) {
+            var road = element.getAsJsonObject();
+            if (village.roadKinds().contains(text(road, "roadKind")) && !text(road, "groupId").isBlank())
+                villageGroups.add(text(road, "groupId"));
+        }
         for (var element : array(source, "streetBands")) {
             JsonObject road = element.getAsJsonObject();
             if (!road.has("bounds")) continue;
             forbidden.add(expand(bounds(road.getAsJsonObject("bounds")), CLEARANCE));
-            if (!"CITY_BRIDGE".equals(text(road, "roadKind"))) roads.add(road);
+            String kind = text(road, "roadKind");
+            boolean smallVillageDecoration = village.enabled() && !village.structureTreesEnabled()
+                    && (village.roadKinds().contains(kind) || villageGroups.contains(text(road, "groupId"))
+                    && Set.of("ENTRANCE_SHORT_ALLEY", "ENTRANCE_APPROACH", "SHARED_NETWORK_EXTENSION").contains(kind));
+            if (!"CITY_BRIDGE".equals(kind) && !smallVillageDecoration) roads.add(road);
         }
         roads.sort(Comparator.comparing(road -> text(road, "streetBandId")));
         List<Tree> trees = catalog.stream().sorted(Comparator.comparing(Tree::ref)).toList();

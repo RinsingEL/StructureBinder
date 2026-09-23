@@ -183,6 +183,9 @@ public final class LandUsePlanningService {
                     sources.district().urbanSpacePlan(cityId, resolvedExpansion, managed), residualResult.warnings());
         }
         if (!sources.materialField().isEmpty()) surfacePrintPlan = new CityLandUseSurfacePrintPlanCodec().withComputedHash(surfacePrintPlan.withMaterials(sources.materialField()));
+        surfacePrintPlan = new CityVillageRoadPlanner().apply(surfacePrintPlan, sources, plan,
+                new LandUseCorridorExclusionResolver().publicSpaceReservations(d5ReservationMaskPlan),
+                CityVillageRoadSettings.load());
         JsonObject quality = quality(plan, sources, resolvedExpansion, connectionOutcomes,
                 residualResult.urbanSpacePlan(), skippedLandscapes, requiredLandscapeCapacities);
         quality.addProperty("publicGreenGroundBlocks", surfacePrintPlan.featureCells().stream()
