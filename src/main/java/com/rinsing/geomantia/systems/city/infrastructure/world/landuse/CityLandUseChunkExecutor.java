@@ -68,6 +68,8 @@ public final class CityLandUseChunkExecutor {
         Map<ColumnKey, ColumnSample> designTerrain = new HashMap<>();
         CityLandUseMicroGrader.TerrainView designView = (x, z) -> designTerrain.computeIfAbsent(
                 new ColumnKey(x, z), ignored -> Objects.requireNonNull(world.sampleDesignColumn(x, z)));
+        List<CityLandUseChunkCompiler.FeatureOperation> featureOperations =
+                CityRoadTransitionGrader.grade(fragment, designView);
         Map<ColumnKey, ColumnSample> localSurface = new HashMap<>();
         CityLandUseMicroGrader.TerrainView availableTerrain = (x,z) -> {
             ColumnKey key = new ColumnKey(x,z);
@@ -124,17 +126,17 @@ public final class CityLandUseChunkExecutor {
                 new ArrayList<>(fragment.surfaceOperations());
         // Final road geometry owns its entire column, including the crop/overlay layer.
         // Exclusion spans can predate later road grading and access compilation.
-        Set<ColumnKey> roadColumns = fragment.featureOperations().stream()
+        Set<ColumnKey> roadColumns = featureOperations.stream()
                 .filter(operation -> operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
                         || operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR
                         || operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK)
                 .map(operation -> new ColumnKey(operation.x(), operation.z()))
                 .collect(java.util.stream.Collectors.toSet());
-        Set<ColumnKey> bridgeColumns=fragment.featureOperations().stream()
+        Set<ColumnKey> bridgeColumns=featureOperations.stream()
                 .filter(operation->operation.kind()==CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK)
                 .map(operation->new ColumnKey(operation.x(),operation.z())).collect(java.util.stream.Collectors.toSet());
         Map<ColumnKey,String> roadSources = new HashMap<>();
-        for (var road : fragment.featureOperations()) {
+        for (var road : featureOperations) {
             if (roadColumns.contains(new ColumnKey(road.x(),road.z())))
                 roadSources.put(new ColumnKey(road.x(),road.z()),road.sourceId());
         }
@@ -157,7 +159,7 @@ public final class CityLandUseChunkExecutor {
         Set<ColumnKey> surfaceColumns = new HashSet<>();
         Set<ColumnKey> frozenRoadColumns = new HashSet<>();
         surfaceOperations.forEach(operation -> surfaceColumns.add(new ColumnKey(operation.x(), operation.z())));
-        for (var feature : fragment.featureOperations()) {
+        for (var feature : featureOperations) {
             if (feature.targetSurfaceY() == null) continue;
             ColumnKey key = new ColumnKey(feature.x(), feature.z());
             frozenRoadColumns.add(key);
@@ -377,7 +379,7 @@ public final class CityLandUseChunkExecutor {
                 CityBridgeStructurePlanner.posts(fragment);
         Set<ColumnKey> materializedPlatformStairs = new HashSet<>();
         Set<ColumnKey> skippedPublicGround = new HashSet<>();
-        for (CityLandUseChunkCompiler.FeatureOperation operation : fragment.featureOperations()) {
+        for (CityLandUseChunkCompiler.FeatureOperation operation : featureOperations) {
             ColumnKey key = new ColumnKey(operation.x(), operation.z());
             ColumnSample column = terrainView.sample(operation.x(), operation.z());
             boolean publicGreenery = operation.sourceId().startsWith(
@@ -1530,7 +1532,9 @@ public final class CityLandUseChunkExecutor {
                     || state.is(Blocks.SNOW_BLOCK)
                     || state.is(Blocks.ICE)
                     || state.is(Blocks.PACKED_ICE)
-                    || state.is(Blocks.BLUE_ICE);
+                    || state.is(Blocks.BLUE_ICE)
+                    || state.is(Blocks.DRIPSTONE_BLOCK)
+                    || state.is(Blocks.POINTED_DRIPSTONE);
         }
     }
 }

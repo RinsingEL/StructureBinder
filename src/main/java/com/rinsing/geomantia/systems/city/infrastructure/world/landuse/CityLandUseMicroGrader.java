@@ -876,6 +876,23 @@ final class CityLandUseMicroGrader {
             int platformY = platformTargets.get(platformCell);
             Set<Cell> component = sameTargetComponent(platformCell, demand.areaId(), platformY,
                     areaByCell, platformTargets, new HashSet<>(platformTargets.keySet()));
+            // Frozen road grades already include their stairs. Looking only at locally
+            // generated roadStairs misses these and invents a second, impossible staircase.
+            Cell roadJoin = fragment.gradingFeatureOperations().stream()
+                    .filter(operation -> operation.targetSurfaceY() != null
+                            && (operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
+                            || operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR))
+                    .map(operation -> new Cell(operation.x(), operation.z()))
+                    .filter(component::contains)
+                    .min(Comparator.comparingInt((Cell cell) -> manhattan(platformCell, cell))
+                            .thenComparingInt(Cell::z).thenComparingInt(Cell::x)).orElse(null);
+            if (roadJoin != null) {
+                addAccessPath(paths, demand, pathBlock, shortestPath(platformCell, roadJoin, component),
+                        ownedSurfaceCells, stairs.keySet());
+                outcomes.add(new AccessOutcome(demand.demandId(), AccessStatus.LEVEL_ACCESS,
+                        "CITY_LAND_USE_ACCESS_FROZEN_ROAD_CONNECTED"));
+                continue;
+            }
             Set<Cell> alreadyServed = activelyServedPlatforms.stream()
                     .filter(component::equals).findFirst().orElse(null);
             if (alreadyServed != null) {

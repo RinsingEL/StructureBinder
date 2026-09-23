@@ -7,6 +7,19 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CityDistrictPlannerTest {
+    @Test void acceptedUrbanBuildingsAndTheirRoadShouldersDoNotLeaveCliffLabelHoles() {
+        var plain=terrain(false);
+        var cliff=new LandUseTerrainField(plain.schema(),plain.cityId(),plain.planningBounds(),1,
+                plain.cells().stream().map(c->new LandUseTerrainField.Cell(c.cellX(),c.cellZ(),c.blockMinX(),
+                        c.blockMinZ(),1,80,7,21,5,false,0,0,c.biomeId(),"cliff",c.landformPatchId(),true)).toList());
+        var buildings=Map.of("urban",List.of(new BlockBounds(0,0,8,12),new BlockBounds(18,0,26,12)));
+        var result=new CityDistrictPlanner().plan(BOUNDS,cliff,buildings,
+                List.of(new BlockBounds(0,18,40,20)),Set.of(),SETTINGS);
+        assertTrue(result.construction().contains(new BlockPoint(12,6)),"interior cliff cell is construction land");
+        assertTrue(result.construction().contains(new BlockPoint(12,21)),"roadside shoulder must share the platform");
+        assertFalse(result.construction().contains(new BlockPoint(90,20)),"countryside is not urbanized");
+        assertFalse(result.natural().contains(new BlockPoint(40,25)),"exterior cliffs are not planted as public lawns");
+    }
     @Test void aVillageHasPublicGapsWithoutAutomaticallyAcquiringPlatforms() {
         var village = Map.of("village", List.of(new BlockBounds(0,0,8,12), new BlockBounds(18,0,26,12)));
         var result = new CityDistrictPlanner().plan(BOUNDS,terrain(true),village,Map.of(),

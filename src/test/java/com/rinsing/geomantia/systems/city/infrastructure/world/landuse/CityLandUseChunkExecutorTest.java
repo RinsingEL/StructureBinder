@@ -16,6 +16,26 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CityLandUseChunkExecutorTest {
     private final CityLandUseChunkExecutor executor = new CityLandUseChunkExecutor();
 
+    @Test void naturalRoadActuallyCutsDownToAdjacentFrozenPlatformDuringExecution() {
+        FakeWorld world = new FakeWorld();
+        List<CityLandUseChunkCompiler.FeatureOperation> features = new ArrayList<>();
+        for (int x = 0; x < 16; x++) {
+            world.columns.put(x + ",8", new CityLandUseChunkExecutor.ColumnSample(95, "minecraft:grass_block", true));
+            features.add(new CityLandUseChunkCompiler.FeatureOperation("lane", x, 8, "minecraft:mud_brick_slab", 0,
+                    CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,
+                    CityLandUseSurfacePrintPlan.HorizontalFacing.NONE, x == 15 ? 88 : null));
+        }
+        var fragment = new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,
+                "city", "hash", "palette", 0, 0, 16, 0, 0, 0, "minecraft:dirt",
+                List.of(), List.of(), List.of(), features, features, List.of(), List.of());
+        var result = executor.execute(fragment, world, CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED, result.status());
+        assertTrue(world.writes.contains("14,95,8=minecraft:air"));
+        assertTrue(world.featureWrites.contains("14,89,8=ROAD_STAIR:WEST"));
+        assertTrue(world.featureWrites.contains("15,88,8=ROAD_SLAB:NONE"));
+        assertFalse(world.featureWrites.stream().anyMatch(write -> write.startsWith("14,95,")));
+    }
+
     @Test void villageRoadReplacesEachActualGroundColumnWithoutFillOrQuantization() {
         FakeWorld world=new FakeWorld();
         world.columns.put("0,0",new CityLandUseChunkExecutor.ColumnSample(65,"minecraft:dirt",true));

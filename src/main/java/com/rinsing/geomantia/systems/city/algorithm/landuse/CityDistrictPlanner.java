@@ -19,7 +19,7 @@ public final class CityDistrictPlanner {
         return plan(bounds, terrain, buildingGroups, buildingGroups, roads, landscape, settings);
     }
 
-    /** Public space follows all buildings; only explicitly selected groups acquire a platform. */
+    /** Public space follows all buildings; the caller resolves which urban groups own a platform. */
     public Result plan(BlockBounds bounds, LandUseTerrainField terrain,
                        Map<String, List<BlockBounds>> buildingGroups,
                        Map<String, List<BlockBounds>> platformGroups, List<BlockBounds> roads,
@@ -40,7 +40,7 @@ public final class CityDistrictPlanner {
                     entry.getValue(), settings).claims());
             // Fill only short facing gaps within the authored group, never its entire bounding box.
             fillFacingGaps(local, Math.max(1, settings.maxJoinDistanceBlocks()), index, landscape);
-            local.removeIf(point -> !core.contains(point) && (landscape.contains(point) || index.blocked(point)));
+            local.removeIf(point -> !core.contains(point) && (landscape.contains(point) || index.protectedTerrain(point)));
             districts.put(entry.getKey(), Set.copyOf(local));
             construction.addAll(local);
         }
@@ -50,11 +50,16 @@ public final class CityDistrictPlanner {
                 Math.max(settings.structureMarginBlocks(), settings.maxJoinDistanceBlocks()), bounds);
         roadCells.retainAll(nearBuildings);
         construction.addAll(roadCells);
+        // A town street has a shoulder, not a vertical slit cut through untouched hills.
+        // Clip to the same near-building domain so long rural connectors remain natural.
+        Set<BlockPoint> shoulders = dilate(roadCells, Math.max(1, settings.structureMarginBlocks()), bounds);
+        shoulders.retainAll(nearBuildings);
+        construction.addAll(shoulders);
         Set<BlockPoint> gapSupport = new HashSet<>(construction);
         fillFacingGaps(gapSupport, Math.max(1, settings.closeRadiusBlocks() * 2), index, landscape);
         construction.addAll(gapSupport);
         construction.removeAll(landscape);
-        construction.removeIf(point -> !structures.contains(point) && !roadCells.contains(point) && index.blocked(point));
+        construction.removeIf(point -> !structures.contains(point) && !roadCells.contains(point) && index.protectedTerrain(point));
         Set<BlockPoint> directGroundStructures = new HashSet<>(structures);
         directGroundStructures.removeAll(platformStructures);
         construction.removeAll(directGroundStructures);
@@ -90,7 +95,7 @@ public final class CityDistrictPlanner {
                         boolean usable = true;
                         for (int i = previous + 1; i < coordinate; i++) {
                             BlockPoint p = horizontal ? new BlockPoint(i, line.getKey()) : new BlockPoint(line.getKey(), i);
-                            if (protectedCells.contains(p) || terrain.blocked(p)) { usable = false; break; }
+                            if (protectedCells.contains(p) || terrain.protectedTerrain(p)) { usable = false; break; }
                             gap.add(p);
                         }
                         if (usable) additions.addAll(gap);
@@ -217,7 +222,13 @@ public final class CityDistrictPlanner {
         }
         boolean blocked(BlockPoint point) {
             var c = cells.get(new BlockPoint(Math.floorDiv(point.x(),step), Math.floorDiv(point.z(),step)));
-            return c == null || !c.sampled() || c.water() || "cliff".equalsIgnoreCase(c.landformType());
+            return protectedTerrain(point) || "cliff".equalsIgnoreCase(c.landformType());
+        }
+        boolean protectedTerrain(BlockPoint point) {
+            var c = cells.get(new BlockPoint(Math.floorDiv(point.x(),step), Math.floorDiv(point.z(),step)));
+            // The array has already been accepted here. A coarse 16-block cliff label must
+            // not punch holes into its local construction mask. Water and missing data remain protected.
+            return c == null || !c.sampled() || c.water();
         }
     }
 }

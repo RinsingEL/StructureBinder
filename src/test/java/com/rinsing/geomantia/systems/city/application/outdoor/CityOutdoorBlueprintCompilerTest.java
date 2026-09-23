@@ -30,6 +30,38 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityOutdoorBlueprintCompilerTest {
+    @Test void urbanArraysOwnCommonGroundWithoutRequiringAnExplicitLandmarkSelection() {
+        for (String algorithm : List.of("GRID", "COURTYARD", "CENTER_SYMMETRIC")) {
+            var blueprint = automaticGroundBlueprint("BALANCED", "BALANCED");
+            var result = new CityOutdoorBlueprintCompiler().compile(blueprint, d6Plan(), terrain(),
+                    catalog(Map.of("algorithm:test", algorithm)), capacity(blueprint, d6Plan()));
+            assertTrue(result.resolution().district().construction().contains(new BlockPoint(30, 42)), algorithm);
+        }
+    }
+
+    @Test void implicitVillageAndConformingGroupsDoNotAcquireAnUrbanPlatform() {
+        for (String[] settings : List.of(new String[]{"COMPACT", "BALANCED", "BALANCED"},
+                new String[]{"GRID", "SPARSE", "BALANCED"}, new String[]{"GRID", "BALANCED", "CONFORM"})) {
+            var blueprint = automaticGroundBlueprint(settings[1], settings[2]);
+            var result = new CityOutdoorBlueprintCompiler().compile(blueprint, d6Plan(), terrain(),
+                    catalog(Map.of("algorithm:test", settings[0])), capacity(blueprint, d6Plan()));
+            assertTrue(result.resolution().district().construction().isEmpty(), String.join("/", settings));
+        }
+    }
+
+    private static CityBlueprint automaticGroundBlueprint(String density, String terrainPolicy) {
+        var codec = new com.rinsing.geomantia.systems.city.application.CityBlueprintCodec();
+        var json = codec.write(blueprint());
+        json.getAsJsonObject("outdoorPlan").add("foundationGroupIds", new JsonArray());
+        json.getAsJsonObject("outdoorPlan").add("landscapes", new JsonArray());
+        for (var item : json.getAsJsonArray("groups")) {
+            item.getAsJsonObject().addProperty("densityClass", density);
+            item.getAsJsonObject().addProperty("terrainPolicy", terrainPolicy);
+            item.getAsJsonObject().add("preferredPatchRefs", JsonParser.parseString("[\"plain\"]"));
+        }
+        return codec.read(json);
+    }
+
     @Test void roadsideTreeSpaceRemainsUnpavedAndDoesNotSeedAnUrbanDistrict() {
         var compiler = new CityOutdoorBlueprintCompiler();
         var capacity = capacity(blueprint(), d6Plan());
@@ -815,6 +847,10 @@ class CityOutdoorBlueprintCompilerTest {
     }
 
     private static CityBlueprintReferenceCatalog catalog() {
+        return catalog(Map.of());
+    }
+
+    private static CityBlueprintReferenceCatalog catalog(Map<String, String> algorithms) {
         LandUseRuleCatalog rules = LandUseRuleCatalog.defaults();
         CityBlueprintReferenceCatalog.SurfaceRecipe foundationRecipe =
                 new CityBlueprintReferenceCatalog.SurfaceRecipe("surface:foundation", true, false,
@@ -856,7 +892,7 @@ class CityOutdoorBlueprintCompilerTest {
                                         CityBlueprint.RegionGrowthForm.CORRIDOR,
                                         0.02, 0.12, 0.06)),
                         Set.of("crop:wheat"), List.of());
-        return new CityBlueprintReferenceCatalog(new JsonObject(), Set.of(), Set.of(), Set.of(), Map.of(),
+        return new CityBlueprintReferenceCatalog(new JsonObject(), Set.of(), Set.of(), Set.of(), algorithms,
                 Map.of(), Set.of(), Set.of(), Set.of(), Set.of(), rules,
                 Map.of(foundationRecipe.surfaceRecipeRef(), foundationRecipe,
                         farmlandRecipe.surfaceRecipeRef(), farmlandRecipe),

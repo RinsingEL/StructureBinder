@@ -89,7 +89,20 @@ public final class CityOutdoorBlueprintCompiler {
                 landscapeCapacityReservationPlan);
         Map<String, Set<BlockPoint>> capacityDomains = capacityReservation.domains();
         outdoorWarnings.addAll(capacityReservation.warnings());
-        List<String> spatialGroupIds = blueprint.outdoorPlan().foundationGroupIds().stream().distinct().sorted().toList();
+        Set<String> platformGroupIds = new TreeSet<>(blueprint.outdoorPlan().foundationGroupIds());
+        // Dense urban arrays own shared ground even when the author only named the landmark
+        // platforms. Sparse/conforming villages and groups reserving landscape share keep natural ground.
+        for (var group : blueprint.groups()) {
+            String algorithm = catalog.algorithmsByProfileRef().get(group.algorithmProfileRef());
+            if (group.groupKind() == CityBlueprint.GroupKind.STRUCTURE
+                    && group.densityClass() != CityBlueprint.DensityClass.SPARSE
+                    && group.terrainPolicy() != CityBlueprint.TerrainPolicy.CONFORM
+                    && group.spaceComposition().landscapeShare() == 0
+                    && Set.of("GRID", "COURTYARD", "CENTER_SYMMETRIC").contains(algorithm == null ? "" : algorithm)) {
+                platformGroupIds.add(group.groupId());
+            }
+        }
+        List<String> spatialGroupIds = List.copyOf(platformGroupIds);
         List<AnchorData> foundationAnchors = requiredGroups(anchorsByGroup, spatialGroupIds,
                 "CITY_OUTDOOR_STRUCTURE_GROUP_UNKNOWN", false);
         List<BlockBounds> structureFootprints = foundationAnchors.stream()

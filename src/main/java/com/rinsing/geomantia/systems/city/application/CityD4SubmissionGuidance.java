@@ -32,7 +32,7 @@ final class CityD4SubmissionGuidance {
         for(String rule:List.of(
                 "每个建筑组 requiredStructureRefs 至少一个；fillPools 不能替代必需结构声明。",
                 "ADJACENCY/CONNECTION/HIERARCHY 等非 DISTANCE 关系：distancePreference=NONE；只有 DIRECTION 关系填写非 NONE 的 directionPreference。靠近用 ADJACENCY，不要为它填 NEAR。",
-                "foundationGroupIds 只列需要共同台地的本区建筑组 ID。普通村庄默认直接兼容地形落地，不逐栋垫台；地表整理与绿化无需加入台地名单。合理的共同台地与高差仍可保留，总览不填。",
+                "foundationGroupIds 声明显式共同台地与落位时的地形工程承诺。落位后的非 SPARSE、非 CONFORM、无景观份额的 GRID/COURTYARD/CENTER_SYMMETRIC 建筑组也会整理共同地面及近旁路肩。Compact 村落默认保留簇间自然地面；绿化无需加入台地名单，总览不填。",
                 "核心结构必须按阵列同时安排配套，允许复用素材自带的完整院落装饰；不得为完整素材重复加一圈。使用角色标记与实际尺寸选择小型配套，COMPACT 可全部使用小模板。总览若仅留下孤立核心，需调整选材或阵列后重新审查。",
                 "嵌套成员不能同时有独立 placementRelation；保留嵌套时删除该成员的 placementRelation。不要为了修参数删掉建筑组或换算法。",
                 "ATTACHED 景观：提供 owner.groupId，instanceCount=1，省略 placementDomain；多块景观用所选 profile 允许范围内的 parcelCount。",

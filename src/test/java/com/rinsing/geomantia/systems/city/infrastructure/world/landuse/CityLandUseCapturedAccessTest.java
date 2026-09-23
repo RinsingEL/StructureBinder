@@ -8,6 +8,26 @@ import java.util.HashMap;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CityLandUseCapturedAccessTest {
+    @Test void yajingEntrancesUseTheirAlreadyGradedRoadInsteadOfBlockingWholeOwners() throws Exception {
+        for (String name : java.util.List.of("yajing-access-354_274.json", "yajing-access-355_274.json",
+                "yajing-access-358_277.json")) {
+            try(var stream=getClass().getResourceAsStream("/city/"+name)) {
+                assertNotNull(stream);
+                var fragment=new Gson().fromJson(new InputStreamReader(stream,StandardCharsets.UTF_8),
+                        CityLandUseChunkCompiler.ChunkFragment.class);
+                assertTrue(fragment.gradingMaskCells().stream().filter(c->c.foundation()).allMatch(c->c.targetY()!=null));
+                var plan=CityLandUseMicroGrader.planFoundationPlatform(fragment,
+                        (x,z)->new CityLandUseChunkExecutor.ColumnSample(90,"minecraft:grass_block",true));
+                assertFalse(plan.accessOutcomes().isEmpty());
+                assertTrue(plan.accessOutcomes().stream().noneMatch(o->o.status()==CityLandUseMicroGrader.AccessStatus.FAILED));
+                assertTrue(plan.accessOutcomes().stream().anyMatch(o->o.reasonCode().equals("CITY_LAND_USE_ACCESS_FROZEN_ROAD_CONNECTED")));
+                assertTrue(plan.accessPaths().stream().noneMatch(p->fragment.gradingFeatureOperations().stream()
+                        .anyMatch(f->f.x()==p.x()&&f.z()==p.z()
+                                && (f.kind()==com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
+                                || f.kind()==com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR))));
+            }
+        }
+    }
     @Test
     void deepTerraceUsesBoundedHighSideCutWithoutDiscardingEntrance() throws Exception {
         for (String name : java.util.List.of("landuse-access-owner_-395_225.json",
