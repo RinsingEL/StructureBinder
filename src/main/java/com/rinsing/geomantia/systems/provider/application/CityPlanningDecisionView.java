@@ -40,6 +40,7 @@ final class CityPlanningDecisionView {
         JsonObject snapshot = source.getAsJsonObject("catalogSnapshot");
         if (snapshot != null && snapshot.has("templateCatalog") && snapshot.has("referenceCatalog")) {
             JsonObject catalog = snapshot.deepCopy();
+            view.add("materialCatalog", com.rinsing.geomantia.systems.city.application.CityMaterialCatalogBrowser.summary(snapshot));
             JsonObject semanticCatalog = catalog.getAsJsonObject("structureCatalog");
             if (semanticCatalog != null && semanticCatalog.has("semanticProfiles")) {
                 for (JsonElement profile : semanticCatalog.getAsJsonArray("semanticProfiles")) {

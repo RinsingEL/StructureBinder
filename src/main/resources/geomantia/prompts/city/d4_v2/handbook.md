@@ -32,3 +32,5 @@ assessment 必须指出图中具体位置和可见空间关系：主体核心在
 选材先看 planningRoleTerms 与实际 rawSize：核心明确选入阵列，fill 候选用于可重复配套，小店铺与摊位可从小型配套池选择。核心不必最大，COMPACT 可全用小模板。普通村庄默认直接地形兼容落地；foundationGroupIds 仅用于确有需要的共同台地，公共地表与绿化不需要为每栋建筑垫台。小型独立绿化由程序处理公共间隙，完整花园或喷泉庭院由 AI 作为结构设计。
 
 角色与体量分开判断：大型住宅、别墅可以是 fill，不因体积大就充当核心。展示名的“占地宽×深·高”与 rawSize 是模板包围盒，含自带装饰和留白；不可仅凭原名“小屋”判断大小。优先选用 pool:scaled_<用途>_<风格>_<占地档>_<高度档>；占地档 small/medium/large/extra_large，高度档 low≤12、medium≤24、tall≤40、very_tall>40。大住宅选对应填充池，低矮配套不要混入高耸住宅。
+
+建筑分层选材：先读 Context.materialCatalog，或用 city_d4_materials 的 materialSelections（groupId 为当前功能区）查询。filters.roles 可选 core/fill/structure/self_contained/unknown；functionIds 从 facets.functions 的 id 选择，parent 表示父子关系；functionMode 默认 all，也可 any。styles 内任一风格匹配，rawFunctionTerms 要全部匹配，各维度始终取交集。可以先筛核心看功能与风格数量，再按用途、子功能和城市设定缩小范围，也可以一次合并条件；风格不限定种族。facets 统计完整匹配集，每个结构在同一类只数一次，不受候选分页影响。limit=0 只取统计，默认20、最大100，用 nextOffset 翻页。分类只把细用途归入父类，不能由宽泛用途猜子功能；未归类用途保留原始标签可查。结果为空时放宽明确条件或换原始标签，不假定建筑具备未标注能力。确认候选时另行提交 structureRefs/fillPoolRefs，不带 filters/limit/offset；查询本身不改变已确认选材。实际尺寸、作者 terrainModes 与落地校验仍然有效，推荐情境不构成选址硬条件。

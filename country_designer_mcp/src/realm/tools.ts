@@ -1108,6 +1108,15 @@ const originalRealmTools: ToolDefinition[] = [
         }, ["groupId", "role", "intent", "preferredPatchRefs"]) } }, ["groups"]),
         materialSelections: { type: "array", minItems: 1, items: strictObject({
           groupId: nonEmptyString("已提交意图 ID。"), query: { type: "string", description: "搜索作者元数据；可以按多个功能区批量搜索。" },
+          filters: strictObject({
+            roles: { type: "array", items: { type: "string", enum: ["core", "fill", "structure", "self_contained", "unknown"] }, description: "任一角色匹配；core 包含 key/anchor。" },
+            functionIds: { type: "array", items: { type: "string" }, description: "共享功能树 ID，先空筛选查看 facets.functions；子功能匹配父级，父级不推导子级。" },
+            functionMode: { type: "string", enum: ["all", "any"], description: "功能间默认 all；仅作用于 functionIds，其他维度仍取交集。" },
+            styles: { type: "array", items: { type: "string" }, description: "任一风格精确匹配；风格不限定种族。" },
+            rawFunctionTerms: { type: "array", items: { type: "string" }, description: "所有原始用途标签都须匹配；可查询未细分或未映射的用途。" }
+          }, []),
+          limit: { type: "integer", minimum: 0, maximum: 100, description: "默认20；0只取完整匹配集的联动统计。" },
+          offset: { type: "integer", minimum: 0, maximum: 2147483647, description: "默认0，按稳定 structureRef 排序，使用 nextOffset 翻页。" },
           structureRefs: { type: "array", items: { type: "string" } }, fillPoolRefs: { type: "array", items: { type: "string" } }
         }, ["groupId"]) },
         designReview: strictObject({
@@ -1507,7 +1516,9 @@ export const realmTools: ToolDefinition[] = [
       const key=name==="city_d4_materials"?"materialSelections":name==="city_d4_example"?"designExample":"blockMaterials";
       properties[key]=key==="designExample"?strictObject({caseId:nonEmptyString("案例 ID。"),reloadImages:{type:"boolean"}},["caseId"]):oldProperties[key];required.push(key);
     }
-    return {name,description:"D4 一次初版后自动推进；总览标记、受控扩张、最终提交。AI 判断整体性，允许隔河，不要求相连或固定距离；挤占不能破坏其他区功能。",inputSchema:{type:"object",additionalProperties:false,properties,required}} as ToolDefinition;
+    return {name,description: name === "city_d4_materials"
+      ? "按 roles、functionIds、styles、rawFunctionTerms 联合选材。先看核心/填充，再结合功能区用途、子功能数量与城市设定，可一次组合多条件。facets 是应用全部条件后的完整匹配集计数，按 structureRef 去重、不受分页影响；切换条件须移除旧条件。functions.parent 表示层级，directCount 表示直接标注映射数量；宽泛父标签不能证明子功能，空结果可退回父层或原始标签查看。风格不限定种族，分类和推荐情境不授予地形可行性。limit=0 只看统计；确认素材时单独提交 structureRefs/fillPoolRefs，不带 filters/limit/offset。"
+      : "D4 一次初版后自动推进；总览标记、受控扩张、最终提交。AI 判断整体性，允许隔河，不要求相连或固定距离；挤占不能破坏其他区功能。",inputSchema:{type:"object",additionalProperties:false,properties,required}} as ToolDefinition;
   })
 ];
 

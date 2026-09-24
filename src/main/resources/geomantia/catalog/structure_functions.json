@@ -1,0 +1,1220 @@
+{
+  "schema": "structure_function_taxonomy.v1",
+  "functions": [
+    {
+      "id": "commerce",
+      "label": "商业",
+      "parent": "",
+      "terms": [
+        "商贸接洽",
+        "商业",
+        "商业工坊"
+      ]
+    },
+    {
+      "id": "retail",
+      "label": "商品零售",
+      "parent": "commerce",
+      "terms": [
+        "零售",
+        "摊位交易"
+      ]
+    },
+    {
+      "id": "retail.food",
+      "label": "食品",
+      "parent": "retail",
+      "terms": [
+        "食品杂货销售"
+      ]
+    },
+    {
+      "id": "retail.food.grain",
+      "label": "粮油",
+      "parent": "retail.food",
+      "terms": []
+    },
+    {
+      "id": "retail.food.produce",
+      "label": "果蔬",
+      "parent": "retail.food",
+      "terms": [
+        "果蔬销售"
+      ]
+    },
+    {
+      "id": "retail.food.meat",
+      "label": "肉类与水产",
+      "parent": "retail.food",
+      "terms": []
+    },
+    {
+      "id": "retail.food.bread",
+      "label": "面包与糕点",
+      "parent": "retail.food",
+      "terms": []
+    },
+    {
+      "id": "retail.food.spice",
+      "label": "香料",
+      "parent": "retail.food",
+      "terms": [
+        "香料销售"
+      ]
+    },
+    {
+      "id": "retail.clothes",
+      "label": "衣物",
+      "parent": "retail",
+      "terms": [
+        "衣物销售"
+      ]
+    },
+    {
+      "id": "retail.clothes.fabric",
+      "label": "布料",
+      "parent": "retail.clothes",
+      "terms": []
+    },
+    {
+      "id": "retail.clothes.garment",
+      "label": "成衣",
+      "parent": "retail.clothes",
+      "terms": []
+    },
+    {
+      "id": "retail.clothes.shoes",
+      "label": "鞋靴",
+      "parent": "retail.clothes",
+      "terms": []
+    },
+    {
+      "id": "retail.tools",
+      "label": "器具",
+      "parent": "retail",
+      "terms": []
+    },
+    {
+      "id": "retail.tools.work",
+      "label": "生产工具",
+      "parent": "retail.tools",
+      "terms": [
+        "工具销售"
+      ]
+    },
+    {
+      "id": "retail.tools.vessels",
+      "label": "厨具与容器",
+      "parent": "retail.tools",
+      "terms": [
+        "器皿销售"
+      ]
+    },
+    {
+      "id": "retail.tools.fishing",
+      "label": "渔具",
+      "parent": "retail.tools",
+      "terms": [
+        "钓具销售"
+      ]
+    },
+    {
+      "id": "retail.tools.lights",
+      "label": "灯具",
+      "parent": "retail.tools",
+      "terms": [
+        "灯具销售"
+      ]
+    },
+    {
+      "id": "retail.culture",
+      "label": "文化用品",
+      "parent": "retail",
+      "terms": []
+    },
+    {
+      "id": "retail.culture.books",
+      "label": "书籍",
+      "parent": "retail.culture",
+      "terms": [
+        "书籍销售",
+        "书报销售"
+      ]
+    },
+    {
+      "id": "retail.culture.stationery",
+      "label": "文具",
+      "parent": "retail.culture",
+      "terms": [
+        "文具销售"
+      ]
+    },
+    {
+      "id": "retail.culture.maps",
+      "label": "地图",
+      "parent": "retail.culture",
+      "terms": []
+    },
+    {
+      "id": "retail.farm",
+      "label": "农牧用品",
+      "parent": "retail",
+      "terms": []
+    },
+    {
+      "id": "retail.farm.seeds",
+      "label": "种子与苗木",
+      "parent": "retail.farm",
+      "terms": [
+        "种子销售",
+        "种粮销售",
+        "花草销售"
+      ]
+    },
+    {
+      "id": "retail.farm.feed",
+      "label": "饲料",
+      "parent": "retail.farm",
+      "terms": []
+    },
+    {
+      "id": "retail.herbs",
+      "label": "药材",
+      "parent": "retail",
+      "terms": [
+        "药材销售"
+      ]
+    },
+    {
+      "id": "retail.parts",
+      "label": "材料与零件",
+      "parent": "retail",
+      "terms": [
+        "零件交易"
+      ]
+    },
+    {
+      "id": "retail.ritual",
+      "label": "礼仪用品",
+      "parent": "retail",
+      "terms": [
+        "礼仪用品零售"
+      ]
+    },
+    {
+      "id": "retail.general",
+      "label": "综合杂货",
+      "parent": "retail",
+      "terms": [
+        "杂货销售",
+        "食品杂货销售"
+      ]
+    },
+    {
+      "id": "retail.travel",
+      "label": "行李用品",
+      "parent": "retail",
+      "terms": [
+        "行李用品销售"
+      ]
+    },
+    {
+      "id": "retail.cleaning",
+      "label": "清洁用品",
+      "parent": "retail",
+      "terms": [
+        "清洁用品销售"
+      ]
+    },
+    {
+      "id": "market",
+      "label": "集市交易",
+      "parent": "commerce",
+      "terms": [
+        "集市交易"
+      ]
+    },
+    {
+      "id": "housing",
+      "label": "居住与住宿",
+      "parent": "",
+      "terms": [
+        "住宅",
+        "住宿"
+      ]
+    },
+    {
+      "id": "housing.family",
+      "label": "家庭居住",
+      "parent": "housing",
+      "terms": [
+        "家庭居住"
+      ]
+    },
+    {
+      "id": "housing.shared",
+      "label": "集体居住",
+      "parent": "housing",
+      "terms": [
+        "集体住宿",
+        "集体居住"
+      ]
+    },
+    {
+      "id": "housing.guest",
+      "label": "旅客住宿",
+      "parent": "housing",
+      "terms": [
+        "旅客住宿",
+        "商旅住宿"
+      ]
+    },
+    {
+      "id": "housing.stop",
+      "label": "旅途驻留",
+      "parent": "housing",
+      "terms": [
+        "旅途驻留"
+      ]
+    },
+    {
+      "id": "dining",
+      "label": "餐饮",
+      "parent": "",
+      "terms": [
+        "餐饮"
+      ]
+    },
+    {
+      "id": "dining.meals",
+      "label": "正餐供应",
+      "parent": "dining",
+      "terms": []
+    },
+    {
+      "id": "dining.drinks",
+      "label": "饮品供应",
+      "parent": "dining",
+      "terms": [
+        "饮水服务"
+      ]
+    },
+    {
+      "id": "farming",
+      "label": "农牧培育",
+      "parent": "",
+      "terms": [
+        "农业"
+      ]
+    },
+    {
+      "id": "farming.crops",
+      "label": "作物种植",
+      "parent": "farming",
+      "terms": [
+        "农田种植",
+        "棚架种植",
+        "温室种植",
+        "农田"
+      ]
+    },
+    {
+      "id": "farming.fungi",
+      "label": "菌菇培育",
+      "parent": "farming",
+      "terms": [
+        "菌菇培育"
+      ]
+    },
+    {
+      "id": "farming.nursery",
+      "label": "育苗",
+      "parent": "farming",
+      "terms": []
+    },
+    {
+      "id": "farming.care",
+      "label": "园艺养护",
+      "parent": "farming",
+      "terms": [
+        "园艺换盆"
+      ]
+    },
+    {
+      "id": "farming.animals",
+      "label": "畜群照护",
+      "parent": "farming",
+      "terms": [
+        "畜群照护"
+      ]
+    },
+    {
+      "id": "farming.aquatic",
+      "label": "水产培育",
+      "parent": "farming",
+      "terms": [
+        "海藻育场管理"
+      ]
+    },
+    {
+      "id": "production",
+      "label": "生产加工",
+      "parent": "",
+      "terms": [
+        "手工制作",
+        "工坊生产",
+        "商业工坊"
+      ]
+    },
+    {
+      "id": "production.food",
+      "label": "食品加工",
+      "parent": "production",
+      "terms": []
+    },
+    {
+      "id": "production.food.baking",
+      "label": "烘焙",
+      "parent": "production.food",
+      "terms": [
+        "烘焙"
+      ]
+    },
+    {
+      "id": "production.food.dairy",
+      "label": "乳品加工",
+      "parent": "production.food",
+      "terms": [
+        "乳品加工"
+      ]
+    },
+    {
+      "id": "production.food.seafood",
+      "label": "水产加工",
+      "parent": "production.food",
+      "terms": [
+        "水产加工"
+      ]
+    },
+    {
+      "id": "production.food.honey",
+      "label": "蜂蜜加工",
+      "parent": "production.food",
+      "terms": [
+        "蜂蜜加工"
+      ]
+    },
+    {
+      "id": "production.food.mixing",
+      "label": "配料",
+      "parent": "production.food",
+      "terms": [
+        "配料"
+      ]
+    },
+    {
+      "id": "production.textile",
+      "label": "纺织制衣",
+      "parent": "production",
+      "terms": []
+    },
+    {
+      "id": "production.textile.tailoring",
+      "label": "裁缝",
+      "parent": "production.textile",
+      "terms": [
+        "裁缝"
+      ]
+    },
+    {
+      "id": "production.textile.weaving",
+      "label": "编织与织毡",
+      "parent": "production.textile",
+      "terms": [
+        "编织",
+        "织毡"
+      ]
+    },
+    {
+      "id": "production.textile.leather",
+      "label": "皮革鞍具加工",
+      "parent": "production.textile",
+      "terms": [
+        "皮革鞍具加工"
+      ]
+    },
+    {
+      "id": "production.textile.ropes",
+      "label": "缆索与渔网制作",
+      "parent": "production.textile",
+      "terms": [
+        "缆索编结",
+        "渔网制作"
+      ]
+    },
+    {
+      "id": "production.crafts",
+      "label": "器物制作",
+      "parent": "production",
+      "terms": []
+    },
+    {
+      "id": "production.crafts.wood",
+      "label": "木器制作",
+      "parent": "production.crafts",
+      "terms": [
+        "木器制作"
+      ]
+    },
+    {
+      "id": "production.crafts.metal",
+      "label": "金属加工",
+      "parent": "production.crafts",
+      "terms": [
+        "冶炼"
+      ]
+    },
+    {
+      "id": "production.crafts.stone",
+      "label": "石材加工",
+      "parent": "production.crafts",
+      "terms": [
+        "石材雕刻",
+        "石器加工"
+      ]
+    },
+    {
+      "id": "production.crafts.pottery",
+      "label": "陶器制作",
+      "parent": "production.crafts",
+      "terms": [
+        "陶器制作"
+      ]
+    },
+    {
+      "id": "production.crafts.glass",
+      "label": "玻璃加工",
+      "parent": "production.crafts",
+      "terms": [
+        "玻璃加工"
+      ]
+    },
+    {
+      "id": "production.crafts.gems",
+      "label": "宝石与晶石加工",
+      "parent": "production.crafts",
+      "terms": [
+        "宝石加工",
+        "晶石加工",
+        "珍珠加工"
+      ]
+    },
+    {
+      "id": "production.crafts.lights",
+      "label": "灯具与蜡烛制作",
+      "parent": "production.crafts",
+      "terms": [
+        "灯具制作",
+        "蜡烛加工"
+      ]
+    },
+    {
+      "id": "production.documents",
+      "label": "纸墨与书籍制作",
+      "parent": "production",
+      "terms": []
+    },
+    {
+      "id": "production.documents.paper",
+      "label": "纸墨配制",
+      "parent": "production.documents",
+      "terms": [
+        "纸墨配制"
+      ]
+    },
+    {
+      "id": "production.documents.binding",
+      "label": "装订",
+      "parent": "production.documents",
+      "terms": [
+        "装订"
+      ]
+    },
+    {
+      "id": "production.documents.copying",
+      "label": "制图抄录",
+      "parent": "production.documents",
+      "terms": [
+        "制图抄录"
+      ]
+    },
+    {
+      "id": "production.herbs",
+      "label": "药材配制",
+      "parent": "production",
+      "terms": [
+        "药材配制"
+      ]
+    },
+    {
+      "id": "production.ships",
+      "label": "船体修造",
+      "parent": "production",
+      "terms": [
+        "船舶修造",
+        "船体修造"
+      ]
+    },
+    {
+      "id": "production.drying",
+      "label": "材料晾晒",
+      "parent": "production",
+      "terms": [
+        "材料晾晒",
+        "晾晒"
+      ]
+    },
+    {
+      "id": "maintenance",
+      "label": "维修与回收",
+      "parent": "",
+      "terms": []
+    },
+    {
+      "id": "maintenance.general",
+      "label": "修补维护",
+      "parent": "maintenance",
+      "terms": [
+        "修补维护",
+        "看护作业"
+      ]
+    },
+    {
+      "id": "maintenance.tools",
+      "label": "器具维修",
+      "parent": "maintenance",
+      "terms": [
+        "工具维修",
+        "工具维护",
+        "渔具修补",
+        "钓具维修",
+        "灯具维修",
+        "潜具维修"
+      ]
+    },
+    {
+      "id": "maintenance.clothes",
+      "label": "衣物与皮具修补",
+      "parent": "maintenance",
+      "terms": [
+        "鞋靴修补",
+        "皮具修补"
+      ]
+    },
+    {
+      "id": "maintenance.vehicles",
+      "label": "车辆维修",
+      "parent": "maintenance",
+      "terms": [
+        "车辆维修"
+      ]
+    },
+    {
+      "id": "maintenance.ships",
+      "label": "船舶维修",
+      "parent": "maintenance",
+      "terms": [
+        "船舶维修",
+        "船舶修造",
+        "船体修造"
+      ]
+    },
+    {
+      "id": "maintenance.recycling",
+      "label": "材料回收",
+      "parent": "maintenance",
+      "terms": [
+        "材料回收",
+        "残骸回收",
+        "船骸回收",
+        "机械拆解"
+      ]
+    },
+    {
+      "id": "transport",
+      "label": "交通",
+      "parent": "",
+      "terms": []
+    },
+    {
+      "id": "transport.passenger",
+      "label": "客运接驳",
+      "parent": "transport",
+      "terms": []
+    },
+    {
+      "id": "transport.passenger.rail",
+      "label": "铁路客运",
+      "parent": "transport.passenger",
+      "terms": [
+        "铁路客运"
+      ]
+    },
+    {
+      "id": "transport.passenger.water",
+      "label": "水路客运",
+      "parent": "transport.passenger",
+      "terms": [
+        "水路客运"
+      ]
+    },
+    {
+      "id": "transport.freight",
+      "label": "货运接驳",
+      "parent": "transport",
+      "terms": []
+    },
+    {
+      "id": "transport.freight.rail",
+      "label": "铁路货运",
+      "parent": "transport.freight",
+      "terms": [
+        "铁路货运"
+      ]
+    },
+    {
+      "id": "transport.freight.transfer",
+      "label": "货物转运",
+      "parent": "transport.freight",
+      "terms": [
+        "水陆转运",
+        "矿料转运",
+        "矿井提升接驳",
+        "理货"
+      ]
+    },
+    {
+      "id": "transport.links",
+      "label": "交通接驳场所",
+      "parent": "transport",
+      "terms": []
+    },
+    {
+      "id": "transport.links.water",
+      "label": "水路接驳",
+      "parent": "transport.links",
+      "terms": [
+        "水路接驳"
+      ]
+    },
+    {
+      "id": "transport.links.airship",
+      "label": "空艇接驳",
+      "parent": "transport.links",
+      "terms": [
+        "空艇停靠接驳"
+      ]
+    },
+    {
+      "id": "transport.links.portal",
+      "label": "传送接驳场所",
+      "parent": "transport.links",
+      "terms": [
+        "传送接驳场所"
+      ]
+    },
+    {
+      "id": "transport.links.funeral",
+      "label": "送葬交通接驳",
+      "parent": "transport.links",
+      "terms": [
+        "送葬交通接驳"
+      ]
+    },
+    {
+      "id": "transport.transfer",
+      "label": "换乘",
+      "parent": "transport",
+      "terms": [
+        "商队换乘"
+      ]
+    },
+    {
+      "id": "transport.navigation",
+      "label": "导航",
+      "parent": "transport",
+      "terms": [
+        "航路导航观测",
+        "海岸灯塔"
+      ]
+    },
+    {
+      "id": "transport.supply",
+      "label": "旅途补给",
+      "parent": "transport",
+      "terms": [
+        "旅途补给",
+        "商旅补给",
+        "商队补给"
+      ]
+    },
+    {
+      "id": "storage",
+      "label": "仓储",
+      "parent": "",
+      "terms": [
+        "农业仓储"
+      ]
+    },
+    {
+      "id": "storage.goods",
+      "label": "商品与物资仓储",
+      "parent": "storage",
+      "terms": [
+        "货物仓储",
+        "物资仓储",
+        "货物暂存"
+      ]
+    },
+    {
+      "id": "storage.materials",
+      "label": "原料仓储",
+      "parent": "storage",
+      "terms": [
+        "矿料仓储",
+        "材料存放",
+        "饲草储存",
+        "种子保管"
+      ]
+    },
+    {
+      "id": "storage.tools",
+      "label": "工具存放",
+      "parent": "storage",
+      "terms": [
+        "工具存放",
+        "渔具存放"
+      ]
+    },
+    {
+      "id": "storage.luggage",
+      "label": "行李寄存",
+      "parent": "storage",
+      "terms": [
+        "行李暂存"
+      ]
+    },
+    {
+      "id": "storage.ships",
+      "label": "船舶存放",
+      "parent": "storage",
+      "terms": [
+        "船舶存放"
+      ]
+    },
+    {
+      "id": "storage.sealed",
+      "label": "设备封存",
+      "parent": "storage",
+      "terms": [
+        "设备封存"
+      ]
+    },
+    {
+      "id": "utilities",
+      "label": "水务与能源",
+      "parent": "",
+      "terms": []
+    },
+    {
+      "id": "utilities.water",
+      "label": "取水",
+      "parent": "utilities",
+      "terms": [
+        "取水"
+      ]
+    },
+    {
+      "id": "utilities.reservoir",
+      "label": "储水",
+      "parent": "utilities",
+      "terms": [
+        "储水"
+      ]
+    },
+    {
+      "id": "utilities.drainage",
+      "label": "排水维护",
+      "parent": "utilities",
+      "terms": [
+        "排水维护"
+      ]
+    },
+    {
+      "id": "utilities.maintenance",
+      "label": "水务维护",
+      "parent": "utilities",
+      "terms": [
+        "水务维护"
+      ]
+    },
+    {
+      "id": "utilities.power",
+      "label": "能源配给场所",
+      "parent": "utilities",
+      "terms": [
+        "魔力配给场所"
+      ]
+    },
+    {
+      "id": "health",
+      "label": "医疗卫生",
+      "parent": "",
+      "terms": []
+    },
+    {
+      "id": "health.treatment",
+      "label": "诊疗",
+      "parent": "health",
+      "terms": [
+        "诊疗"
+      ]
+    },
+    {
+      "id": "health.nursing",
+      "label": "护理",
+      "parent": "health",
+      "terms": [
+        "护理"
+      ]
+    },
+    {
+      "id": "health.recovery",
+      "label": "康复",
+      "parent": "health",
+      "terms": [
+        "康复"
+      ]
+    },
+    {
+      "id": "health.quarantine",
+      "label": "检疫与隔离",
+      "parent": "health",
+      "terms": [
+        "检疫",
+        "隔离观察"
+      ]
+    },
+    {
+      "id": "health.bath",
+      "label": "公共洗浴",
+      "parent": "health",
+      "terms": [
+        "公共洗浴"
+      ]
+    },
+    {
+      "id": "education",
+      "label": "教育研究",
+      "parent": "",
+      "terms": []
+    },
+    {
+      "id": "education.teaching",
+      "label": "教学",
+      "parent": "education",
+      "terms": [
+        "教学"
+      ]
+    },
+    {
+      "id": "education.reading",
+      "label": "阅览与自习",
+      "parent": "education",
+      "terms": [
+        "阅览",
+        "自习"
+      ]
+    },
+    {
+      "id": "education.experiment",
+      "label": "实验",
+      "parent": "education",
+      "terms": [
+        "实验"
+      ]
+    },
+    {
+      "id": "education.support",
+      "label": "研究配套作业",
+      "parent": "education",
+      "terms": [
+        "研究配套作业"
+      ]
+    },
+    {
+      "id": "education.research",
+      "label": "考察研究",
+      "parent": "education",
+      "terms": [
+        "旧物研究",
+        "海流研究",
+        "水下考察场所"
+      ]
+    },
+    {
+      "id": "education.observation",
+      "label": "观测",
+      "parent": "education",
+      "terms": []
+    },
+    {
+      "id": "education.observation.astronomy",
+      "label": "天文观测",
+      "parent": "education.observation",
+      "terms": [
+        "天文观测"
+      ]
+    },
+    {
+      "id": "education.observation.weather",
+      "label": "气象观测",
+      "parent": "education.observation",
+      "terms": [
+        "气象观测"
+      ]
+    },
+    {
+      "id": "education.observation.anomaly",
+      "label": "异常观测",
+      "parent": "education.observation",
+      "terms": [
+        "异常观测"
+      ]
+    },
+    {
+      "id": "administration",
+      "label": "管理与公共事务",
+      "parent": "",
+      "terms": [
+        "行政"
+      ]
+    },
+    {
+      "id": "administration.council",
+      "label": "议事",
+      "parent": "administration",
+      "terms": [
+        "议事",
+        "行会议事"
+      ]
+    },
+    {
+      "id": "administration.archives",
+      "label": "档案与文献保管",
+      "parent": "administration",
+      "terms": [
+        "档案管理",
+        "档案保管",
+        "文献保管"
+      ]
+    },
+    {
+      "id": "administration.inspection",
+      "label": "查验",
+      "parent": "administration",
+      "terms": [
+        "货运查验",
+        "海关管理"
+      ]
+    },
+    {
+      "id": "administration.public",
+      "label": "公共服务管理",
+      "parent": "administration",
+      "terms": [
+        "水利管理",
+        "水务管理",
+        "船闸管理",
+        "林务管理",
+        "航路管理",
+        "墓园看护"
+      ]
+    },
+    {
+      "id": "administration.mail",
+      "label": "地图书信服务",
+      "parent": "administration",
+      "terms": [
+        "地图书信服务"
+      ]
+    },
+    {
+      "id": "culture",
+      "label": "文化与休闲",
+      "parent": "",
+      "terms": [
+        "体育娱乐"
+      ]
+    },
+    {
+      "id": "culture.gathering",
+      "label": "集会",
+      "parent": "culture",
+      "terms": [
+        "集会"
+      ]
+    },
+    {
+      "id": "culture.performance",
+      "label": "表演与讲述",
+      "parent": "culture",
+      "terms": [
+        "史诗讲述"
+      ]
+    },
+    {
+      "id": "culture.rest",
+      "label": "游憩与休息",
+      "parent": "culture",
+      "terms": [
+        "休息",
+        "候行休息"
+      ]
+    },
+    {
+      "id": "culture.display",
+      "label": "遗址展示",
+      "parent": "culture",
+      "terms": [
+        "遗址展示",
+        "水务遗址展示",
+        "驿站遗址展示",
+        "矿业遗址展示",
+        "育苗设施遗存",
+        "空港遗址展示",
+        "传送设施遗址展示",
+        "营地遗址展示",
+        "海防遗址展示",
+        "档案馆遗址展示",
+        "潮标遗址展示",
+        "陵寝遗址展示",
+        "墓区入口遗址展示",
+        "控制舱遗址展示"
+      ]
+    },
+    {
+      "id": "memorial",
+      "label": "祭祀与纪念",
+      "parent": "",
+      "terms": []
+    },
+    {
+      "id": "memorial.worship",
+      "label": "祭祀",
+      "parent": "memorial",
+      "terms": [
+        "祭祀"
+      ]
+    },
+    {
+      "id": "memorial.mourning",
+      "label": "悼念",
+      "parent": "memorial",
+      "terms": []
+    },
+    {
+      "id": "memorial.burial",
+      "label": "安葬",
+      "parent": "memorial",
+      "terms": []
+    },
+    {
+      "id": "memorial.commemoration",
+      "label": "纪念",
+      "parent": "memorial",
+      "terms": [
+        "祖先纪念",
+        "骨藏纪念"
+      ]
+    },
+    {
+      "id": "defence",
+      "label": "防护与巡守",
+      "parent": "",
+      "terms": [
+        "军事防御",
+        "防御"
+      ]
+    },
+    {
+      "id": "defence.watch",
+      "label": "警戒",
+      "parent": "defence",
+      "terms": []
+    },
+    {
+      "id": "defence.patrol",
+      "label": "巡路与守卫",
+      "parent": "defence",
+      "terms": [
+        "巡路驻守"
+      ]
+    }
+  ],
+  "roles": [
+    {
+      "id": "core",
+      "label": "核心",
+      "values": [
+        "planning_role.key",
+        "planning_role.anchor"
+      ]
+    },
+    {
+      "id": "fill",
+      "label": "填充",
+      "values": [
+        "planning_role.fill"
+      ]
+    },
+    {
+      "id": "structure",
+      "label": "明确选用",
+      "values": [
+        "planning_role.structure"
+      ]
+    },
+    {
+      "id": "self_contained",
+      "label": "完整组合",
+      "values": [
+        "planning_role.self_contained"
+      ]
+    },
+    {
+      "id": "unknown",
+      "label": "未标注／未识别",
+      "values": []
+    }
+  ],
+  "assetRules": [
+    {
+      "ids": [
+        "SR-F01-v01",
+        "DS-F01-v01",
+        "MF-F01-v01",
+        "CN-F01-v01",
+        "AA-F01-v01",
+        "ML-F01-v01"
+      ],
+      "allTerms": [
+        "零售",
+        "烘焙"
+      ],
+      "functionIds": [
+        "retail.food.bread"
+      ]
+    }
+  ]
+}

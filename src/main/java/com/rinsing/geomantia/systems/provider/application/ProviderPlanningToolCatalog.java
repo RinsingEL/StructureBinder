@@ -18,7 +18,9 @@ public final class ProviderPlanningToolCatalog {
 
     private static JsonObject definition(String name) {
         if (com.rinsing.geomantia.systems.city.application.CityD4Workflow.TOOLS.contains(name))
-            return function(name, "D4 一次初版后自动推进；看总览标记外围独立区，再以调整阵列或向外阵列融合主体。整体性由 AI 判断，允许隔河，不要求接触；挤占不能破坏其他区功能。", stageSchema(name));
+            return function(name, name.equals("city_d4_materials")
+                    ? com.rinsing.geomantia.systems.city.application.CityMaterialCatalogBrowser.INSTRUCTION
+                    : "D4 一次初版后自动推进；看总览标记外围独立区，再以调整阵列或向外阵列融合主体。整体性由 AI 判断，允许隔河，不要求接触；挤占不能破坏其他区功能。", stageSchema(name));
         return switch (name) {
             case "realm_w_refresh" -> function(name,
                     "Run or resume the one sealed W survey for this world. The host locks runId and the complete "
@@ -261,6 +263,14 @@ public final class ProviderPlanningToolCatalog {
                         "groupId", string(), "role", string(), "intent", string(), "preferredPatchRefs", nonEmptyArray(string())),
                         "groupId", "role", "intent", "preferredPatchRefs"))), "groups"),
                 "materialSelections", nonEmptyArray(object(properties("groupId", string(), "query", string(),
+                        "filters", object(properties(
+                                "roles", array(enumeration("core", "fill", "structure", "self_contained", "unknown")),
+                                "functionIds", described(array(string()), "共享功能树 ID；从返回的 facets.functions 选择。子功能匹配父级，父级不推导子级。"),
+                                "functionMode", enumeration("all", "any"),
+                                "styles", described(array(string()), "任一风格精确匹配，空数组不限；风格不限定种族。"),
+                                "rawFunctionTerms", described(array(string()), "所有原始用途标签都须匹配；用于未细分或未映射的用途。"))),
+                        "limit", boundedInteger(0, 100, "默认20；0只取完整匹配集的联动统计。"),
+                        "offset", boundedInteger(0, Integer.MAX_VALUE, "默认0，按稳定 structureRef 排序；使用 nextOffset 翻页。"),
                         "structureRefs", array(string()), "fillPoolRefs", array(string())), "groupId")),
                 "designReview", object(properties("baseDraftHash", string(), "groupIds", reviewGroups,
                         "overview", bool(), "assessment", string()), "baseDraftHash"),
@@ -480,6 +490,11 @@ public final class ProviderPlanningToolCatalog {
 
     private static JsonObject number() {
         return typed("number");
+    }
+
+    private static JsonObject boundedInteger(int min, int max, String description) {
+        JsonObject value = described(integer(), description);
+        value.addProperty("minimum", min); value.addProperty("maximum", max); return value;
     }
 
     private static JsonObject integer() {

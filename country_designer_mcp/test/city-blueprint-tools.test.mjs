@@ -3,6 +3,18 @@ import test from "node:test";
 
 import { realmTools, blueprintReferenceCatalogSchema, cityBlueprintSchema } from "../dist/src/realm/tools.js";
 
+test("formal material tool exposes hierarchical filters, counts-only and pagination", () => {
+  const tool = realmTools.find(t => t.name === "city_d4_materials");
+  const fields = tool.inputSchema.properties.materialSelections.items.properties;
+  assert.deepEqual(Object.keys(fields.filters.properties), ["roles", "functionIds", "functionMode", "styles", "rawFunctionTerms"]);
+  assert.deepEqual(fields.filters.required, []);
+  assert.equal(fields.filters.additionalProperties, false);
+  assert.deepEqual(fields.filters.properties.functionMode.enum, ["all", "any"]);
+  assert.equal(fields.limit.minimum, 0); assert.equal(fields.limit.maximum, 100);
+  assert.equal(fields.offset.minimum, 0);
+  assert.match(tool.description, /facets/); assert.match(tool.description, /父标签不能证明子功能/);
+});
+
 test("core repair can change selection through the existing integration protocol", () => {
   const tool = realmTools.find(t => t.name === "city_d4_integrate");
   assert.ok(tool.inputSchema.properties.expansionMode.enum.includes("REPAIR_CORE"));

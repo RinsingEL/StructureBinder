@@ -168,6 +168,8 @@ public final class CityBlueprintService {
         String contextId = sha256(CityJson.GSON.toJson(contextCore));
 
         JsonObject context = contextCore.deepCopy();
+        // Browsing projections may evolve without changing terrain/catalog identity or district progress.
+        context.add("materialCatalog", CityMaterialCatalogBrowser.summary(snapshot));
         // Editable prose must not change the frozen terrain/catalog identity or reset district progress.
         context.getAsJsonObject("designGuide").addProperty("behaviorHandbook",
                 com.rinsing.geomantia.systems.provider.application.AgentPromptConfig.read("city/d4_v2/handbook.md"));
@@ -898,6 +900,7 @@ public final class CityBlueprintService {
         JsonObject core = context.deepCopy();
         core.remove("contextId");
         core.remove("preparedAt");
+        core.remove("materialCatalog");
         if (core.has("designGuide")) core.getAsJsonObject("designGuide").remove("behaviorHandbook");
         return sha256(CityJson.GSON.toJson(core));
     }

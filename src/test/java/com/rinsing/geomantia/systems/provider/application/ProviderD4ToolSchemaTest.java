@@ -7,6 +7,15 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ProviderD4ToolSchemaTest {
+    @Test void materialToolExposesNestedFiltersAndBoundedBrowsing() {
+        JsonObject fields = schema("city_d4_materials").getAsJsonObject("properties").getAsJsonObject("materialSelections")
+                .getAsJsonObject("items").getAsJsonObject("properties");
+        JsonObject filters = fields.getAsJsonObject("filters").getAsJsonObject("properties");
+        for (String key : List.of("roles", "functionIds", "functionMode", "styles", "rawFunctionTerms")) assertTrue(filters.has(key));
+        assertTrue(filters.getAsJsonObject("roles").getAsJsonObject("items").getAsJsonArray("enum").toString().contains("core"));
+        assertEquals(0, fields.getAsJsonObject("limit").get("minimum").getAsInt());
+        assertEquals(100, fields.getAsJsonObject("limit").get("maximum").getAsInt());
+    }
     private JsonObject schema(String name) {
         return ProviderPlanningToolCatalog.definitions(List.of(name)).get(0).getAsJsonObject().getAsJsonObject("parameters");
     }

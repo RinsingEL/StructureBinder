@@ -74,7 +74,7 @@ final class CityDesignSession {
             if (selections.isEmpty()) throw invalid("materialSelections must contain at least one group.");
             for (var element : selections) {
                 JsonObject selection = element.getAsJsonObject();
-                requireFields(selection, Set.of("groupId", "query", "structureRefs", "fillPoolRefs"));
+                requireFields(selection, Set.of("groupId", "query", "filters", "limit", "offset", "structureRefs", "fillPoolRefs"));
                 String id = requiredText(selection, "groupId");
                 for (String key : List.of("structureRefs", "fillPoolRefs")) if (selection.has(key)) requiredArray(selection, key);
                 if (selection.has("query") && (!selection.get("query").isJsonPrimitive() || !selection.getAsJsonPrimitive("query").isString()))
@@ -91,19 +91,16 @@ final class CityDesignSession {
                     if (entry == null) throw invalid(id + ": unknown fillPoolRef " + pool);
                     array(entry, "structureRefs").forEach(ref -> selected.add(ref.getAsString()));
                 }
-                JsonObject response = new JsonObject(); response.addProperty("groupId", id);
-                JsonArray candidates = new JsonArray();
-                String query = text(selection, "query").toLowerCase(Locale.ROOT);
-                Map<String, JsonObject> semantics = index(array(snapshot.getAsJsonObject("structureCatalog"), "semanticProfiles"), "semanticProfileId");
-                for (var entry : refs.entrySet()) {
-                    JsonObject authored = semantics.getOrDefault(entry.getKey(), entry.getValue());
-                    if (!selected.contains(entry.getKey()) && (selected.size() > 0 || !query.isBlank()
-                            && !authored.toString().toLowerCase(Locale.ROOT).contains(query))) continue;
-                    JsonObject candidate = new JsonObject(); candidate.addProperty("structureRef", entry.getKey());
-                    candidate.add("authoredMetadata", authored.deepCopy());
-                    candidate.add("dimensions", dimensions(entry.getValue(), templates)); candidates.add(candidate);
+                if (!selected.isEmpty() && List.of("filters", "limit", "offset").stream().anyMatch(selection::has))
+                    throw invalid(id + ": browse with filters/limit/offset first, then confirm structureRefs/fillPoolRefs separately.");
+                JsonObject response = selected.isEmpty() ? CityMaterialCatalogBrowser.browse(snapshot, selection) : new JsonObject();
+                response.addProperty("groupId", id);
+                response.addProperty("selectionConfirmed", !selected.isEmpty());
+                if (!selected.isEmpty()) response.add("candidates", CityMaterialCatalogBrowser.selected(snapshot, selected));
+                for (var item : response.getAsJsonArray("candidates")) {
+                    JsonObject candidate = item.getAsJsonObject();
+                    candidate.add("dimensions", dimensions(refs.get(text(candidate, "structureRef")), templates));
                 }
-                response.add("candidates", candidates);
                 if (!selected.isEmpty()) {
                     JsonObject estimate = estimate(group, selected, refs, templates, patches, terrain.grid().cellStepBlocks());
                     group.add("materials", selection.deepCopy()); group.add("estimate", estimate);
@@ -142,7 +139,7 @@ final class CityDesignSession {
             JsonObject candidate = element.getAsJsonObject();
             var template = templates.requireTemplate(text(candidate, "templateId"), text(candidate, "variantId"));
             JsonObject size = candidate.deepCopy();
-            size.addProperty("width", template.width()); size.addProperty("depth", template.depth());
+            size.addProperty("width", template.width()); size.addProperty("height", template.height()); size.addProperty("depth", template.depth());
             size.addProperty("clearance", template.clearanceBlocks()); result.add(size);
         }
         return result;

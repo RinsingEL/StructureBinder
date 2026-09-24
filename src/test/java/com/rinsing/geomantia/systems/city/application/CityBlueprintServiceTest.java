@@ -29,6 +29,7 @@ class CityBlueprintServiceTest {
         JsonObject context = JsonParser.parseString("{cityId:'test',designGuide:{behaviorHandbook:'before',roads:'capability'}}").getAsJsonObject();
         String initial = CityBlueprintService.contextIdentity(context);
         context.getAsJsonObject("designGuide").addProperty("behaviorHandbook", "after");
+        context.add("materialCatalog", JsonParser.parseString("{matchedCount:123}"));
         assertEquals(initial, CityBlueprintService.contextIdentity(context));
         context.addProperty("cityId", "another");
         assertNotEquals(initial, CityBlueprintService.contextIdentity(context));
@@ -64,6 +65,21 @@ class CityBlueprintServiceTest {
         JsonObject q=new JsonObject();q.addProperty("d4Tool","city_d4_overview");q.addProperty("workflowRevision",0);q.add("overview",overview);
         var response=service.submitDesign(temporary,f.runId(),f.cityId(),contextId,q);
         assertTrue(response.get("ok").getAsBoolean(),response.toString());
+        assertEquals(1, prepared.getAsJsonObject("cityBlueprintContext").getAsJsonObject("materialCatalog").get("matchedCount").getAsInt());
+        var revision = response.getAsJsonObject("d4Workflow").get("revision").deepCopy();
+        JsonObject browse = JsonParser.parseString("""
+                {d4Tool:'city_d4_materials',materialSelections:[{groupId:'district',
+                filters:{roles:['core'],styles:['style.wood_stone'],rawFunctionTerms:['administration']},limit:1}]}
+                """).getAsJsonObject();
+        browse.add("workflowRevision", revision);
+        var materialReply = service.submitDesign(temporary,f.runId(),f.cityId(),contextId,browse);
+        assertTrue(materialReply.get("ok").getAsBoolean(),materialReply.toString());
+        assertEquals(revision, materialReply.getAsJsonObject("d4Workflow").get("revision"));
+        var materialResult = materialReply.getAsJsonArray("materialResults").get(0).getAsJsonObject();
+        assertEquals(1, materialResult.get("matchedCount").getAsInt());
+        assertFalse(materialResult.get("selectionConfirmed").getAsBoolean());
+        assertFalse(materialReply.getAsJsonObject("designSession").getAsJsonArray("groups").get(0).getAsJsonObject().has("materials"));
+        assertEquals(8, materialResult.getAsJsonArray("candidates").get(0).getAsJsonObject().getAsJsonArray("dimensions").get(0).getAsJsonObject().get("height").getAsInt());
         JsonObject body=new JsonObject();for(String key:List.of("groups","arrayCompositions","relations")) body.add(key,b.get(key).deepCopy());
         for(String key:List.of("foundationGroupIds","landscapes")) body.add(key,b.getAsJsonObject("outdoorPlan").get(key).deepCopy());
         q=new JsonObject();q.addProperty("d4Tool","city_d4_district");q.add("workflowRevision",response.getAsJsonObject("d4Workflow").get("revision"));q.add("districtDesign",body);
@@ -165,6 +181,14 @@ class CityBlueprintServiceTest {
         assertFalse(materials.getAsJsonArray("materialResults").get(0).getAsJsonObject().getAsJsonObject("estimate").get("hardGate").getAsBoolean());
         assertEquals(0, materials.getAsJsonArray("materialResults").get(0).getAsJsonObject().getAsJsonObject("estimate").get("assumedGapBlocks").getAsInt());
         assertEquals("RAW_NBT_WIDTH_DEPTH", materials.getAsJsonArray("materialResults").get(0).getAsJsonObject().getAsJsonObject("estimate").get("footprintBasis").getAsString());
+        JsonObject browse = JsonParser.parseString("{materialSelections:[{groupId:'civic',filters:{roles:['fill']},limit:0}]}").getAsJsonObject();
+        var browsed = service.submitDesignInternal(temporary, f.runId(), f.cityId(), id, browse);
+        assertTrue(browsed.get("ok").getAsBoolean(), browsed.toString());
+        assertEquals(0, browsed.getAsJsonArray("materialResults").get(0).getAsJsonObject().get("matchedCount").getAsInt());
+        assertEquals(materials.get("designSession"), browsed.get("designSession"), "Browsing must preserve confirmed selections.");
+        JsonObject mixed = request.deepCopy();
+        mixed.getAsJsonArray("materialSelections").get(0).getAsJsonObject().add("filters", new JsonObject());
+        assertFalse(service.submitDesignInternal(temporary, f.runId(), f.cityId(), id, mixed).get("ok").getAsBoolean());
         var resumed = service.prepare(temporary, f.runId(), f.cityId(), f.terraSenseSource(), f.templateSource(), f.referenceCatalog());
         assertEquals(materials.get("designSession"), resumed.get("designSession"));
         JsonObject additional = JsonParser.parseString("{designIntent:{groups:[{groupId:'market',role:'trade',intent:'street frontage',preferredPatchRefs:[]}]}}").getAsJsonObject();
