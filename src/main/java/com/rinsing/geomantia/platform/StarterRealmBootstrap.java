@@ -76,7 +76,12 @@ public final class StarterRealmBootstrap {
     private static BlockPos safeGeneratedPosition(ServerLevel level,int x,int z) {
         for(int r=0;r<=16;r++) for(int dz=-r;dz<=r;dz++) for(int dx=-r;dx<=r;dx++) {
             if(Math.max(Math.abs(dx),Math.abs(dz))!=r) continue;
-            BlockPos feet=new BlockPos(x+dx,level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,x+dx,z+dz),z+dz);
+            // Level.getHeight does not load absent chunks and returns minBuildHeight.
+            // During CreateSpawnPosition no spawn chunks exist yet: load the candidate
+            // explicitly after its starter-area generation permission was persisted.
+            var chunk=level.getChunk(Math.floorDiv(x+dx,16),Math.floorDiv(z+dz,16));
+            int feetY=chunk.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,(x+dx)&15,(z+dz)&15)+1;
+            BlockPos feet=new BlockPos(x+dx,feetY,z+dz);
             var floor=level.getBlockState(feet.below());
             if(floor.is(BlockTags.LEAVES) || floor.is(Blocks.MAGMA_BLOCK) || floor.is(Blocks.CACTUS)
                     || floor.is(Blocks.CAMPFIRE) || floor.is(Blocks.SOUL_CAMPFIRE)) continue;
