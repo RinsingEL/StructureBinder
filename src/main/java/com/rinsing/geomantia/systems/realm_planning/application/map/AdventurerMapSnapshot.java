@@ -17,8 +17,21 @@ public record AdventurerMapSnapshot(
         int remainingCityCount,
         int initialActivityRadiusBlocks,
         CoarseMap coarseMap,
-        List<CityNode> cityNodes
+        List<CityNode> cityNodes,
+        int initialCenterX,
+        int initialCenterZ
 ) {
+    public AdventurerMapSnapshot(String runId,String wStatus,String wPhase,double progress,
+            String tStage,String tStatus,String realmId,String realmName,String cityId,String cityStatus,
+            int completed,int remaining,int radius,CoarseMap map,List<CityNode> nodes) {
+        this(runId,wStatus,wPhase,progress,tStage,tStatus,realmId,realmName,cityId,cityStatus,
+                completed,remaining,radius,map,nodes,0,0);
+    }
+    public AdventurerMapSnapshot withInitialArea(com.rinsing.geomantia.systems.realm_planning.application.access.InitialExplorationArea area) {
+        return new AdventurerMapSnapshot(runId,wStatus,wPhase,wProgressPercent,tStage,tStatus,
+                currentRealmId,currentRealmName,currentCityId,cityStatus,completedCityCount,remainingCityCount,
+                area.radius(),coarseMap,cityNodes,area.centerX(),area.centerZ());
+    }
     public AdventurerMapSnapshot {
         runId = safe(runId);
         wStatus = safe(wStatus);
@@ -59,7 +72,7 @@ public record AdventurerMapSnapshot(
         }
         var visible=new CoarseMap(m.dimensionId(),m.minBlockX(),m.minBlockZ(),m.cellSizeBlocks(),m.width(),m.height(),terrain,codes,m.revealedCodes(),ids,names);
         return new AdventurerMapSnapshot("","","",0,"","","","","", "",0,0,initialActivityRadiusBlocks,
-                visible,cityNodes.stream().filter(n->m.revealedAt(n.blockX(),n.blockZ())).toList());
+                visible,cityNodes.stream().filter(n->m.revealedAt(n.blockX(),n.blockZ())).toList(),initialCenterX,initialCenterZ);
     }
 
     private static String safe(String value) {

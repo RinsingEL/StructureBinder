@@ -53,9 +53,10 @@ public final class AdventurerMapStatusReader {
                                               PlanningAreaAccessConfig accessConfig,
                                               MapViewport viewport) throws IOException {
         Path root = debugRoot.toAbsolutePath().normalize();
+        var initial=com.rinsing.geomantia.systems.realm_planning.application.access.InitialExplorationArea.fromDebugRoot(root,accessConfig.initialActivityRadiusBlocks());
         Optional<Path> runDirectory = resolveRunDirectory(root, preferredRunId);
         if (runDirectory.isEmpty()) {
-            return AdventurerMapSnapshot.empty();
+            return AdventurerMapSnapshot.empty().withInitialArea(initial);
         }
         Path run = runDirectory.get();
         String runId = run.getFileName().toString();
@@ -87,12 +88,13 @@ public final class AdventurerMapStatusReader {
         return new AdventurerMapSnapshot(runId, wStatus, wPhase, wProgress,
                 stageState.stage(), stageState.status(), currentRealmId, currentRealmName,
                 currentCityId, cityStatus, completedCount, remainingCount,
-                accessConfig.initialActivityRadiusBlocks(), coarseMap, nodes);
+                accessConfig.initialActivityRadiusBlocks(), coarseMap, nodes).withInitialArea(initial);
     }
 
     private static synchronized CoarseMap coarseMap(Path debugRoot, Path run,
                                                     PlanningAreaAccessConfig accessConfig,
                                                     MapViewport viewport) throws IOException {
+        var initial=com.rinsing.geomantia.systems.realm_planning.application.access.InitialExplorationArea.fromDebugRoot(debugRoot,accessConfig.initialActivityRadiusBlocks());
         Path featurePath = run.resolve("world_feature_grid.json");
         Path territoryPath = run.resolve("realm_territory_map.json");
         Path contextPath = run.resolve("world_survey_context.json");
@@ -202,7 +204,7 @@ public final class AdventurerMapStatusReader {
                 // in a reduced pixel could expose a neighbouring, still-locked country's name.
                 String owner = territory.cellRealms().get(cellKey((int)Math.floor(blockX/sourceCellSize), (int)Math.floor(blockZ/sourceCellSize)));
                 realmCodes[row * width + column] = (byte)(int)(owner == null ? 0 : territory.realmCodes().getOrDefault(owner,0));
-                if (Math.hypot(blockX,blockZ) <= accessConfig.initialActivityRadiusBlocks()) {
+                if (initial.contains(blockX,blockZ)) {
                     realmCodes[row * width + column] = (byte)(territory.realmIds().size()+1);
                 }
                 if (accessPolicy.revealed(dimensionId, blockX, blockZ)) {

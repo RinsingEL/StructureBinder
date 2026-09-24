@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public final class WorldSurveyRunner {
     public static final int DEFAULT_CELL_STEP_BLOCKS = 128;
-    public static final int DEFAULT_PLANNING_RADIUS_BLOCKS = 8192;
+    public static final int DEFAULT_PLANNING_RADIUS_BLOCKS = 12288;
     public static final int DEFAULT_LOCAL_SLOPE_RADIUS_BLOCKS = 8;
     private static final String SCHEMA = RealmPlanningService.SCHEMA;
     private static final int TILE_REFRESH_RADIUS_CHUNKS = 24;

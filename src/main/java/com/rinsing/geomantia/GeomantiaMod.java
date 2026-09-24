@@ -61,8 +61,7 @@ public final class GeomantiaMod {
         try {
             var access = com.rinsing.geomantia.systems.realm_planning.application.access.PlanningAreaAccessConfig.loadOrCreate(
                     event.getServer().getServerDirectory().toPath().resolve("config/geomantia/planning_area_access.json"));
-            java.nio.file.Files.writeString(serverRoot.resolve("geomantia_starter_realm.json"),
-                    com.rinsing.geomantia.systems.realm_planning.application.access.InitialExplorationArea.description(access.initialActivityRadiusBlocks()).toString());
+            // StarterRealmBootstrap chooses and persists land after the overworld exists.
         } catch(java.io.IOException error) { throw new java.io.UncheckedIOException("Cannot initialize starter realm", error); }
         CityReservationMaskRegistry.load(serverRoot);
         CityLandUseWorldgenRegistry.load(serverRoot);

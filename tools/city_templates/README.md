@@ -156,7 +156,21 @@ After the server has reloaded the generated NBT, pass `--query-url` to query
 `city_query_template_metadata` and write the formal catalog. A catalog is never emitted from offline
 hashes or unconfirmed entrance data.
 
-## 聚落素材角色初筛
+## Studio 独立测试素材包
+
+`build_studio_test_bundle.py` 导出沙漠、精灵、魔法学院的常规平地模型，原始 NBT 与作者文件不变。
+参数为 `--output <新目录> --baseline <既有目录> --classpath-file build/classpath/runClient_minecraftClasspath.txt --java <JDK17/java.exe>`。
+基线仅提供算法、道路与景观规则，建筑及填充池全部换为 `studio:` 命名空间。
+工具调用 `StudioTemplateMetadata.java` 使用 Minecraft 1.20.1 的实际模板编解码器计算运行时内容哈希，并核对调色板和方块数量。
+这是离线测试导出，不是正式发布流程：语义 `approved` 只表示已核对作者标签的逐字段映射；不提升 Studio 原有图审状态。
+道路入口按作者朝向投影到边界并检查净空，明确使用 `legacy_catalog`，不生成已图审入口 sidecar。
+接地、道路高差、实际生成必须在游戏内验证；原始选址文字保存在 `asset_names.json` 和 provenance，目前运行时不读取它。
+
+`package_studio_test.py --base-package <既有安装包展开目录> --bundle <已验证的 Studio 导出目录> --output <新安装包目录>`
+组合当前 build/libs 的主包、可选附属包、配置及 NBT，输出 ZIP 和逐文件 SHA-256。
+不携带 `mcp_server.json`，让新实例首次主菜单仍能选择端口；W 半径使用已确认的 12288。
+
+## 聚落素材角色初筛（运行）
 
 运行 `curate_planning_roles.py --bundle <配置目录> --report <报告路径>` 查看保守角色整理；加 `--apply` 写入角色、词表和填充池。完整组合采用 `--overrides asset_catalogs/planning_roles/overrides.json`，每项绑定模板内容哈希与核对证据。
 

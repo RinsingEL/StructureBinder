@@ -8,9 +8,11 @@ import java.util.*;
 public final class PlanningAreaAccessPolicy {
     private final PlanningAreaAccessConfig config;
     private final GeographicAreaAccess regional;
+    private final InitialExplorationArea initial;
     public PlanningAreaAccessPolicy(Path root,PlanningAreaAccessConfig config) { this(root,config,160); }
     public PlanningAreaAccessPolicy(Path root,PlanningAreaAccessConfig config,int safety) {
         this.config=config;
+        initial=InitialExplorationArea.fromDebugRoot(root,config.initialActivityRadiusBlocks());
         GeographicAreaAccess loaded;
         try { loaded=config.enabled()?GeographicAreaAccess.load(root.toAbsolutePath().normalize(),config,Math.max(160,safety)):null; }
         catch(IOException|RuntimeException exception) {
@@ -21,14 +23,14 @@ public final class PlanningAreaAccessPolicy {
     }
     public Decision evaluate(String dimension,double x,double z) {
         if(!config.enabled()||!config.managedDimensions().contains(dimension)) return Decision.allowed("UNMANAGED_DIMENSION","","",Double.POSITIVE_INFINITY);
-        double clearance=config.initialActivityRadiusBlocks()-Math.hypot(x,z);
+        double clearance=config.initialActivityRadiusBlocks()-initial.distance(x,z);
         if((regional==null || !regional.initial.available()) && clearance>=0) return Decision.allowed("INITIAL_ACTIVITY_AREA",activeRunId(),"",clearance);
         if(regional==null) return Decision.denied("PLANNING_AREA_NOT_RELEASED",activeRunId(),"");
         return regional.evaluate(dimension,x,z);
     }
     public boolean revealed(String dimension,double x,double z) {
         if(!config.enabled() || !config.managedDimensions().contains(dimension)) return true;
-        if((regional==null || !regional.initial.available()) && Math.hypot(x,z)<=config.initialActivityRadiusBlocks()) return true;
+        if((regional==null || !regional.initial.available()) && initial.contains(x,z)) return true;
         if (regional==null || !regional.dimension.equals(dimension)) return false;
         for (var city : regional.protectedCities) if (city.protection().contains(x,z)) return false;
         return regional.initial.contains(x,z) || regional.openRegions.contains(regional.geography.at(x,z));
@@ -36,7 +38,7 @@ public final class PlanningAreaAccessPolicy {
     /** A rejected request completes as unavailable; it never advances a chunk status. */
     public boolean permitsChunk(String dimension,int chunkX,int chunkZ) {
         if(!config.enabled()||!config.managedDimensions().contains(dimension)) return true;
-        if(regional==null) return Math.hypot(chunkX*16+8.0,chunkZ*16+8.0)<=config.initialActivityRadiusBlocks()+1024;
+        if(regional==null) return initial.generationContains(chunkX*16+8.0,chunkZ*16+8.0);
         return regional.permitsChunk(dimension,chunkX,chunkZ,config.initialActivityRadiusBlocks());
     }
     public String activeRunId() { return regional==null?"":regional.runId; }
@@ -46,6 +48,8 @@ public final class PlanningAreaAccessPolicy {
         // Hash relevant file identities as well as mtimes: replacing/deleting a session must revoke access.
         long stamp=1;
         try {
+            Path starter=root.toAbsolutePath().normalize().getParent().resolve("geomantia_starter_realm.json");
+            if(Files.isRegularFile(starter)) stamp=31*stamp+Files.size(starter)+Files.getLastModifiedTime(starter).toMillis();
             if(Files.isDirectory(root)) try(var paths=Files.walk(root)) {
                 for(Path p:paths.filter(Files::isRegularFile).filter(PlanningAreaAccessPolicy::relevant).sorted().toList())
                     stamp=31*stamp+p.toString().hashCode()+Files.size(p)+Files.getLastModifiedTime(p).toMillis();

@@ -76,6 +76,18 @@ class CityMaterialCatalogBrowserTest {
         assertEquals(JsonParser.parseString("['SURFACE']"), candidate.getAsJsonObject("authoredMetadata").get("terrainModes"));
         assertEquals(before, snapshot);
     }
+    @Test void studioExportIdsRetainOnlyExplicitBreadShopRules() {
+        var snapshot = catalog();
+        var profiles = snapshot.getAsJsonObject("structureCatalog").getAsJsonArray("semanticProfiles");
+        var refs = snapshot.getAsJsonObject("referenceCatalog").getAsJsonArray("structureRefs");
+        for (String id : new String[]{"studio:ds-f01-v01", "studio:aa-f01-v01", "studio:ds-f01-v02"}) {
+            profiles.add(json("{semanticProfileId:'" + id + "',functionTerms:['零售','烘焙'],planningRoleTerms:['planning_role.fill'],styleTerms:['沙漠']}"));
+            refs.add(json("{structureRef:'" + id + "'}"));
+        }
+        var result = CityMaterialCatalogBrowser.browse(snapshot, json("{filters:{functionIds:['retail.food.bread'],styles:['沙漠']}}"));
+        assertEquals(2, result.get("matchedCount").getAsInt());
+        assertFalse(result.getAsJsonArray("candidates").toString().contains("studio:ds-f01-v02"));
+    }
     @Test void badFiltersAndPaginationFailClearlyRatherThanBeingIgnored() {
         for (String request : new String[]{"{filters:null}","{filters:{functionIds:['missing']}}","{filters:{roles:['key']}}",
                 "{filters:{functionMode:'either'}}","{filters:{style:'中式'}}","{filters:{functionIds:'retail'}}",

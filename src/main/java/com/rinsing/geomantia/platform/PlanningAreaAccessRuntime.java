@@ -172,8 +172,14 @@ public final class PlanningAreaAccessRuntime {
     }
 
     private static SafePosition fallback(ServerLevel level, ServerPlayer player) {
-        int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, 0, 0) + 1;
-        return new SafePosition(dimensionId(level), 0.5D, y, 0.5D, player.getYRot(), player.getXRot());
+        var initial=com.rinsing.geomantia.systems.realm_planning.application.access.InitialExplorationArea.fromDebugRoot(
+                WorldScopedPlanningPaths.realmDebugRoot(level.getServer()),0);
+        var spawn=level.getSharedSpawnPos();
+        if(level.dimension()==net.minecraft.world.level.Level.OVERWORLD &&
+                Math.hypot(spawn.getX()-initial.centerX(),spawn.getZ()-initial.centerZ())<=32)
+            return new SafePosition(dimensionId(level),spawn.getX()+0.5D,spawn.getY(),spawn.getZ()+0.5D,player.getYRot(),player.getXRot());
+        int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, initial.centerX(), initial.centerZ());
+        return new SafePosition(dimensionId(level), initial.centerX()+0.5D, y, initial.centerZ()+0.5D, player.getYRot(), player.getXRot());
     }
 
     private static void returnToSafety(ServerPlayer player, SafePosition destination) {

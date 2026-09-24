@@ -245,8 +245,8 @@ public final class AdventurerMapScreen extends Screen {
     private void drawMap(GuiGraphics graphics, int left, int top, int right, int bottom,
                          int mouseX, int mouseY, float partialTick) {
         MapTransform transform = mapTransform(left, top, right, bottom);
-        int centerX = transform.screenX(0.0D);
-        int centerY = transform.screenY(0.0D);
+        int centerX = transform.screenX(snapshot.initialCenterX());
+        int centerY = transform.screenY(snapshot.initialCenterZ());
         graphics.enableScissor(left, top, right, bottom);
         graphics.fill(left, top, right, bottom, UNREVEALED_MAP);
         CoarseMap coarseMap = snapshot.coarseMap();
@@ -272,10 +272,11 @@ public final class AdventurerMapScreen extends Screen {
             int radius=Math.max(1,(int)Math.round(snapshot.initialActivityRadiusBlocks()*transform.scale()));
             for(int dy=-radius;dy<=radius;dy++) {
                 int half=(int)Math.sqrt((long)radius*radius-(long)dy*dy);
-                graphics.fill(centerX-half,centerY+dy,centerX+half+1,centerY+dy+1,0xFF566C58);
+                graphics.fill(centerX-half,centerY+dy,centerX+half+1,centerY+dy+1,0xFF52565E);
                 graphics.fill(centerX-half,centerY+dy,centerX-half+1,centerY+dy+1,0xFFC6BC96);
                 graphics.fill(centerX+half,centerY+dy,centerX+half+1,centerY+dy+1,0xFFC6BC96);
             }
+            graphics.drawString(font,Component.literal("地形尚未扫描 · 圆圈仅表示初始开放范围"),left+8,top+8,TEXT_PRIMARY,false);
         }
         graphics.fill(centerX - 2, centerY, centerX + 3, centerY + 1, 0xFFD7D7D7);
         graphics.fill(centerX, centerY - 2, centerX + 1, centerY + 3, 0xFFD7D7D7);
@@ -372,7 +373,7 @@ public final class AdventurerMapScreen extends Screen {
                     continue;
                 }
                 int terrainCode = Math.min(TERRAIN_COLORS.length - 1, Byte.toUnsignedInt(terrainCodes[index]));
-                int color = terrainCode <= 2 ? 0xFF193340 : 0xFFC5B88E;
+                int color = terrainCode == 0 ? 0xFF52565E : terrainCode <= 2 ? 0xFF193340 : 0xFFC5B88E;
                 int realmCode = Byte.toUnsignedInt(realmCodes[index]);
                 if (realmCode > 0 && realmCode <= map.realmIds().size()) {
                     String realmId = map.realmIds().get(realmCode - 1);

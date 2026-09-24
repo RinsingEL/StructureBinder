@@ -1206,7 +1206,9 @@
         "MF-F01-v01",
         "CN-F01-v01",
         "AA-F01-v01",
-        "ML-F01-v01"
+        "ML-F01-v01",
+        "studio:ds-f01-v01",
+        "studio:aa-f01-v01"
       ],
       "allTerms": [
         "零售",

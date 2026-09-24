@@ -32,7 +32,7 @@ import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 public final class AdventurerMapNetwork {
-    private static final String PROTOCOL = "7";
+    private static final String PROTOCOL = "8";
     private static final int VIEW_RADIUS_AT_ZOOM_ONE = 4096;
     private static final int MIN_VIEW_RADIUS = 1024;
     private static final int MAX_VIEW_RADIUS = 8192;
@@ -205,6 +205,8 @@ public final class AdventurerMapNetwork {
             buffer.writeVarInt(value.completedCityCount());
             buffer.writeVarInt(value.remainingCityCount());
             buffer.writeVarInt(value.initialActivityRadiusBlocks());
+            buffer.writeInt(value.initialCenterX());
+            buffer.writeInt(value.initialCenterZ());
             CoarseMap map = value.coarseMap();
             buffer.writeUtf(map.dimensionId());
             buffer.writeInt(map.minBlockX());
@@ -244,6 +246,8 @@ public final class AdventurerMapNetwork {
             int completed = buffer.readVarInt();
             int remaining = buffer.readVarInt();
             int initialActivityRadiusBlocks = buffer.readVarInt();
+            int initialCenterX = buffer.readInt();
+            int initialCenterZ = buffer.readInt();
             String dimensionId = buffer.readUtf();
             int minBlockX = buffer.readInt();
             int minBlockZ = buffer.readInt();
@@ -277,7 +281,7 @@ public final class AdventurerMapNetwork {
             }
             return new SnapshotResponse(new AdventurerMapSnapshot(runId, wStatus, wPhase, wProgress,
                     tStage, tStatus, realmId, realmName, cityId, cityStatus, completed, remaining,
-                    initialActivityRadiusBlocks, coarseMap, nodes));
+                    initialActivityRadiusBlocks, coarseMap, nodes, initialCenterX, initialCenterZ));
         }
 
         static void handle(SnapshotResponse response, Supplier<NetworkEvent.Context> contextSupplier) {
