@@ -1,0 +1,556 @@
+package com.rinsing.geomantia.map.client;
+import com.rinsing.geomantia.systems.provider.application.*;
+
+import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.math.Axis;
+import com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapSnapshot;
+import com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapSnapshot.CityNode;
+import com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapSnapshot.CoarseMap;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+
+import java.util.Locale;
+
+public final class AdventurerMapScreen extends Screen {
+    private static final int PANEL_BACKGROUND = 0xE0151A1F;
+    private static final int PANEL_BORDER = 0xFF6C727A;
+    private static final int MAP_BACKGROUND = 0xFF202B2A;
+    private static final int MAP_GRID = 0x443F6E68;
+    private static final int TEXT_PRIMARY = 0xFFF0F0F0;
+    private static final int TEXT_MUTED = 0xFFAAAEB3;
+    private static final int STATUS_GOOD = 0xFF69C779;
+    private static final int STATUS_WARNING = 0xFFE5B95C;
+    private static final int STATUS_ERROR = 0xFFE06B6B;
+    private static final int PLAYER_MARKER = 0xFFFFF36A;
+    private static final int UNREVEALED_MAP = 0xFF050607;
+    private static final int[] TERRAIN_COLORS = {
+            0xFF202B2A, 0xFF315E83, 0xFF789CB2, 0xFF6E9252,
+            0xFF3F7047, 0xFFC6AA62, 0xFFB86B3C, 0xFF777A76,
+            0xFF687548, 0xFFD9E7E8, 0xFF8B815F, 0xFF6E9252
+    };
+    private static final int[] REALM_COLORS = {
+            0xFFD95F59, 0xFF5C88D8, 0xFFD2A64D, 0xFF7FB267,
+            0xFF9A70C7, 0xFF53A7A0, 0xFFC8769B, 0xFFA7764B
+    };
+
+    private AdventurerMapSnapshot snapshot;
+    private boolean loading;
+    private boolean debugLayer;
+    private double zoom = 1.0D;
+    private double viewCenterX;
+    private double viewCenterZ;
+    private boolean viewInitialized;
+    private boolean draggingMap;
+    private boolean refreshQueued;
+    private int viewportRefreshTicks;
+    private Button debugButton;
+    private Button retryButton;
+    private boolean retryPending;
+    private int retryTicks;
+    private Component retryMessage;
+    private DynamicTexture mapTexture;
+    private ResourceLocation mapTextureLocation;
+    private int automaticRefreshTicks;
+
+    AdventurerMapScreen(AdventurerMapSnapshot snapshot) {
+        super(Component.translatable("gui.geomantia.adventurer_map.title"));
+        this.snapshot = snapshot == null ? AdventurerMapSnapshot.empty() : snapshot;
+    }
+
+    @Override
+    protected void init() {
+        draggingMap = false;
+        if (!viewInitialized && minecraft != null && minecraft.player != null) {
+            viewCenterX = minecraft.player.getX();
+            viewCenterZ = minecraft.player.getZ();
+            viewInitialized = true;
+        }
+        int controlsY = this.height - 28;
+        addRenderableWidget(Button.builder(Component.translatable("gui.geomantia.adventurer_map.close"),
+                        button -> onClose())
+                .bounds(this.width - 76, controlsY, 60, 20).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.geomantia.adventurer_map.refresh"),
+                        button -> refresh())
+                .bounds(16, controlsY, 72, 20).build());
+        debugButton = addRenderableWidget(Button.builder(debugLabel(), button -> {
+                    debugLayer = !debugLayer;
+                    button.setMessage(debugLabel());
+                    rebuildMapTexture(); refresh();
+                })
+                .bounds(208, controlsY, 112, 20).build());
+        addRenderableWidget(Button.builder(Component.literal("−"), button -> changeZoom(Math.max(0.5D, zoom / 1.25D)))
+                .bounds(326, controlsY, 24, 20).build());
+        addRenderableWidget(Button.builder(Component.literal("+"), button -> changeZoom(Math.min(4.0D, zoom * 1.25D)))
+                .bounds(354, controlsY, 24, 20).build());
+        retryButton = addRenderableWidget(Button.builder(Component.translatable("gui.geomantia.adventurer_map.retry"),
+                        button -> retryCurrentCity())
+                .bounds(Math.max(16, this.width - 198), 8, 84, 20).build());
+        retryButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+                Component.translatable("gui.geomantia.adventurer_map.retry.hint")));
+        rebuildMapTexture();
+        refresh();
+    }
+
+    void receiveSnapshot(AdventurerMapSnapshot snapshot) {
+        this.snapshot = snapshot == null ? AdventurerMapSnapshot.empty() : snapshot;
+        this.loading = false;
+        updateRetryButton();
+        rebuildMapTexture();
+    }
+
+    private void refresh() {
+        if (loading) {
+            refreshQueued = true;
+            return;
+        }
+        refreshQueued = false;
+        loading = true;
+        updateRetryButton();
+        automaticRefreshTicks = 0;
+        AdventurerMapClient.requestSnapshot(zoom, viewCenterX, viewCenterZ, debugLayer);
+    }
+
+    private void updateRetryButton() {
+        if (retryButton == null) return;
+        retryButton.active = !loading && !retryPending
+                && com.rinsing.geomantia.systems.realm_planning.application.map.AdventurerMapRetryPolicy.available(
+                        snapshot.runId(), snapshot.currentCityId(), snapshot.cityStatus());
+        retryButton.setMessage(Component.translatable(retryPending
+                ? "gui.geomantia.adventurer_map.retry.pending" : "gui.geomantia.adventurer_map.retry"));
+    }
+
+    private void retryCurrentCity() {
+        if (retryButton == null || !retryButton.active) return;
+        retryPending = true;
+        retryTicks = 0;
+        retryMessage = Component.translatable("gui.geomantia.adventurer_map.retry.pending");
+        updateRetryButton();
+        com.rinsing.geomantia.map.platform.network.AdventurerMapNetwork.retryCity(snapshot.runId(), snapshot.currentCityId());
+    }
+
+    void receiveRetryResult(String result) {
+        retryPending = false;
+        retryMessage = Component.translatable("gui.geomantia.adventurer_map.retry." + result);
+        refresh();
+    }
+
+    private void changeZoom(double value) {
+        if (Double.compare(zoom, value) == 0) return;
+        zoom = value;
+        refresh();
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (retryPending && ++retryTicks >= 200) receiveRetryResult("no_response");
+        if (viewportRefreshTicks > 0) viewportRefreshTicks--;
+        if (!loading && ((refreshQueued && viewportRefreshTicks == 0) || ++automaticRefreshTicks >= 100)) {
+            refresh();
+        }
+    }
+
+    private int mapRight() {
+        if (!debugLayer) return width - 16;
+        int sidebarWidth = Math.min(248, Math.max(184, width / 3));
+        return Math.max(136, width - sidebarWidth - 24);
+    }
+
+    private int mapBottom() {
+        return Math.max(132, height - 36);
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (super.mouseClicked(mouseX, mouseY, button)) return true;
+        if (button == 0 && mouseX >= 18 && mouseX < mapRight() - 2
+                && mouseY >= 34 && mouseY < mapBottom() - 2) {
+            draggingMap = true;
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+        if (button == 0 && draggingMap) {
+            double scale = mapTransform(18, 34, mapRight() - 2, mapBottom() - 2).scale();
+            viewCenterX = Math.max(-30_000_000D, Math.min(30_000_000D, viewCenterX - deltaX / scale));
+            viewCenterZ = Math.max(-30_000_000D, Math.min(30_000_000D, viewCenterZ - deltaY / scale));
+            if (!refreshQueued) viewportRefreshTicks = 4;
+            refreshQueued = true;
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (button == 0 && draggingMap) {
+            draggingMap = false;
+            viewportRefreshTicks = 0;
+            if (refreshQueued) refresh();
+            super.mouseReleased(mouseX, mouseY, button);
+            return true;
+        }
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    private Component debugLabel() {
+        return Component.translatable(debugLayer
+                ? "gui.geomantia.adventurer_map.debug_on"
+                : "gui.geomantia.adventurer_map.debug_off");
+    }
+
+    @Override
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        renderBackground(graphics);
+        if (width < 460) graphics.drawString(font, title, 16, 12, TEXT_PRIMARY, false);
+        else graphics.drawCenteredString(font, title, width / 2, 12, TEXT_PRIMARY);
+
+        int mapLeft = 16;
+        int mapTop = 32;
+        int mapRight = mapRight();
+        int contentBottom = mapBottom();
+        int sidebarLeft = mapRight + 8;
+
+        drawPanel(graphics, mapLeft, mapTop, mapRight, contentBottom, MAP_BACKGROUND);
+        drawMap(graphics, mapLeft + 2, mapTop + 2, mapRight - 2, contentBottom - 2, mouseX, mouseY, partialTick);
+        if (debugLayer) {
+        drawPanel(graphics, sidebarLeft, mapTop, width - 16, contentBottom, PANEL_BACKGROUND);
+        drawStatusPanel(graphics, sidebarLeft + 10, mapTop + 10, width - 26);
+
+        if (retryMessage != null) {
+            var lines = font.split(retryMessage, Math.max(40, width - sidebarLeft - 24));
+            int feedbackY = contentBottom - 32 - Math.min(2, lines.size()) * font.lineHeight;
+            graphics.fill(sidebarLeft + 4, feedbackY - 2, width - 20, contentBottom - 30, PANEL_BACKGROUND);
+            for (int i = 0; i < Math.min(2, lines.size()); i++)
+                graphics.drawString(font, lines.get(i), sidebarLeft + 10, feedbackY + i * font.lineHeight, STATUS_WARNING, false);
+        }
+
+        if (loading) {
+            graphics.drawString(font, Component.translatable("gui.geomantia.adventurer_map.loading"),
+                    sidebarLeft + 10, contentBottom - 16, STATUS_WARNING, false);
+        }
+        }
+        retryButton.visible = debugLayer;
+        debugButton.visible = minecraft.player != null && minecraft.player.hasPermissions(2);
+        super.render(graphics, mouseX, mouseY, partialTick);
+    }
+
+    private void drawMap(GuiGraphics graphics, int left, int top, int right, int bottom,
+                         int mouseX, int mouseY, float partialTick) {
+        MapTransform transform = mapTransform(left, top, right, bottom);
+        int centerX = transform.screenX(0.0D);
+        int centerY = transform.screenY(0.0D);
+        graphics.enableScissor(left, top, right, bottom);
+        graphics.fill(left, top, right, bottom, UNREVEALED_MAP);
+        CoarseMap coarseMap = snapshot.coarseMap();
+        if (coarseMap.available() && mapTextureLocation != null) {
+            int textureLeft = transform.screenX(coarseMap.minBlockX());
+            int textureTop = transform.screenY(coarseMap.minBlockZ());
+            int textureRight = transform.screenX(coarseMap.maxBlockX());
+            int textureBottom = transform.screenY(coarseMap.maxBlockZ());
+            int textureScreenWidth = Math.max(1, textureRight - textureLeft);
+            int textureScreenHeight = Math.max(1, textureBottom - textureTop);
+            graphics.blit(mapTextureLocation, textureLeft, textureTop,
+                    textureScreenWidth, textureScreenHeight, 0.0F, 0.0F,
+                    coarseMap.width(), coarseMap.height(), coarseMap.width(), coarseMap.height());
+        }
+        if (debugLayer) {
+            for (int x = left + Math.floorMod(centerX - left, 32); x < right; x += 32)
+                graphics.fill(x, top, x + 1, bottom, MAP_GRID);
+            for (int y = top + Math.floorMod(centerY - top, 32); y < bottom; y += 32)
+                graphics.fill(left, y, right, y + 1, MAP_GRID);
+        }
+
+        if (!coarseMap.available()) {
+            int radius=Math.max(1,(int)Math.round(snapshot.initialActivityRadiusBlocks()*transform.scale()));
+            for(int dy=-radius;dy<=radius;dy++) {
+                int half=(int)Math.sqrt((long)radius*radius-(long)dy*dy);
+                graphics.fill(centerX-half,centerY+dy,centerX+half+1,centerY+dy+1,0xFF566C58);
+                graphics.fill(centerX-half,centerY+dy,centerX-half+1,centerY+dy+1,0xFFC6BC96);
+                graphics.fill(centerX+half,centerY+dy,centerX+half+1,centerY+dy+1,0xFFC6BC96);
+            }
+        }
+        graphics.fill(centerX - 2, centerY, centerX + 3, centerY + 1, 0xFFD7D7D7);
+        graphics.fill(centerX, centerY - 2, centerX + 1, centerY + 3, 0xFFD7D7D7);
+        graphics.drawString(font, Component.literal("新手村国度"), centerX + 4, centerY + 4, TEXT_MUTED, false);
+
+        var labelled = new java.util.HashSet<Integer>();
+        for(int i=0;i<coarseMap.realmCodes().length;i++) {
+            int code=Byte.toUnsignedInt(coarseMap.realmCodes()[i]);
+            if(code==0 || code>coarseMap.realmNames().size() || (!debugLayer && coarseMap.revealedCodes()[i]==0)) continue;
+            int x=transform.screenX(coarseMap.minBlockX()+(i%coarseMap.width()+0.5)*coarseMap.cellSizeBlocks());
+            int y=transform.screenY(coarseMap.minBlockZ()+(i/coarseMap.width()+0.5)*coarseMap.cellSizeBlocks());
+            if(x<left+20 || x>right-60 || y<top+20 || y>bottom-20 || !labelled.add(code)) continue;
+            graphics.drawString(font,coarseMap.realmNames().get(code-1),x,y,0xFFF4E8C5,true);
+        }
+        for (CityNode node : snapshot.cityNodes()) {
+            if (!debugLayer && coarseMap.available() && !coarseMap.revealedAt(node.blockX(), node.blockZ())) continue;
+            int x = transform.screenX(node.blockX());
+            int y = transform.screenY(node.blockZ());
+            if (x < left + 2 || x > right - 2 || y < top + 2 || y > bottom - 2) continue;
+            int radius = node.current() ? 5 : "capital".equals(node.role()) ? 4 : 3;
+            int color = nodeColor(node);
+            graphics.fill(x-radius-1,y-radius-1,x+radius+2,y+radius+2,0xFF17252B);
+            graphics.fill(x-radius,y-radius,x-radius+2,y+radius+1,color);
+            graphics.fill(x+radius-1,y-radius,x+radius+1,y+radius+1,color);
+            graphics.fill(x-radius,y,x+radius+1,y+radius+1,color);
+            graphics.fill(x-1,y-2,x+2,y+radius+1,color);
+            if (node.current()) drawOutline(graphics, x - radius - 2, y - radius - 2,
+                    x + radius + 2, y + radius + 2, 0xFFFFFFFF);
+            if (mouseX >= x - radius - 2 && mouseX <= x + radius + 2
+                    && mouseY >= y - radius - 2 && mouseY <= y + radius + 2) {
+                Component tooltip = debugLayer ? Component.literal(node.citySeedId() + "  [" + node.blockX() + ", "
+                        + node.blockZ() + "]\n").append(statusComponent(node.status()))
+                        : Component.literal("capital".equals(node.role()) ? "首都" : "城市").append(" · ").append(statusComponent(node.status()));
+                graphics.renderTooltip(font, tooltip, mouseX, mouseY);
+            }
+        }
+
+        drawPlayerMarker(graphics, transform, left, top, right, bottom, partialTick);
+        graphics.disableScissor();
+
+        graphics.drawString(font, Component.translatable("gui.geomantia.adventurer_map.initial_area"),
+                left + 6, bottom - 14, 0xFF77B788, false);
+    }
+
+    private MapTransform mapTransform(int left, int top, int right, int bottom) {
+        double diameter = 2.0D * Math.max(1024, Math.min(8192, Math.round(4096.0D / zoom)));
+        double scale = Math.min((right - left - 16.0D) / diameter,
+                (bottom - top - 16.0D) / diameter);
+        return new MapTransform(viewCenterX, viewCenterZ,
+                (left + right) * 0.5D, (top + bottom) * 0.5D, Math.max(0.00001D, scale));
+    }
+
+    private void drawPlayerMarker(GuiGraphics graphics, MapTransform transform,
+                                  int left, int top, int right, int bottom, float partialTick) {
+        if (minecraft == null || minecraft.player == null) return;
+        CoarseMap map = snapshot.coarseMap();
+        String dimensionId = minecraft.player.level().dimension().location().toString();
+        if (map.available() && !map.dimensionId().isBlank() && !map.dimensionId().equals(dimensionId)) return;
+        int x = transform.screenX(minecraft.player.getX());
+        int y = transform.screenY(minecraft.player.getZ());
+        if (x < left || x > right || y < top || y > bottom) return;
+        graphics.pose().pushPose();
+        graphics.pose().translate(x, y, 0);
+        // Map +Z points down: Minecraft yaw 0 faces south, +90 faces west.
+        graphics.pose().mulPose(Axis.ZP.rotationDegrees(minecraft.player.getViewYRot(partialTick)));
+        graphics.fill(-2, -5, 3, 1, 0xFF1A1A1A);
+        for (int row = -1; row <= 6; row++) {
+            int halfWidth = (6 - row) / 2;
+            graphics.fill(-halfWidth - 1, row, halfWidth + 2, row + 1, 0xFF1A1A1A);
+        }
+        graphics.fill(-1, -4, 2, 1, PLAYER_MARKER);
+        for (int row = 0; row <= 5; row++) {
+            int halfWidth = (5 - row) / 2;
+            graphics.fill(-halfWidth, row, halfWidth + 1, row + 1, PLAYER_MARKER);
+        }
+        graphics.pose().popPose();
+        graphics.drawString(font, Component.translatable("gui.geomantia.adventurer_map.player_position",
+                        (int) Math.floor(minecraft.player.getX()), (int) Math.floor(minecraft.player.getZ())),
+                Math.min(right - 92, x + 9), Math.max(top + 2, y - 4), TEXT_PRIMARY, true);
+    }
+
+    private void rebuildMapTexture() {
+        releaseMapTexture();
+        CoarseMap map = snapshot.coarseMap();
+        if (!map.available() || minecraft == null) return;
+        NativeImage image = new NativeImage(map.width(), map.height(), true);
+        byte[] terrainCodes = map.terrainCodes();
+        byte[] realmCodes = map.realmCodes();
+        for (int row = 0; row < map.height(); row++) {
+            for (int column = 0; column < map.width(); column++) {
+                int index = row * map.width() + column;
+                if (!debugLayer && map.revealedCodes()[index] == 0) {
+                    image.setPixelRGBA(column, row, argbToAbgr(UNREVEALED_MAP));
+                    continue;
+                }
+                int terrainCode = Math.min(TERRAIN_COLORS.length - 1, Byte.toUnsignedInt(terrainCodes[index]));
+                int color = terrainCode <= 2 ? 0xFF193340 : 0xFFC5B88E;
+                int realmCode = Byte.toUnsignedInt(realmCodes[index]);
+                if (realmCode > 0 && realmCode <= map.realmIds().size()) {
+                    String realmId = map.realmIds().get(realmCode - 1);
+                    int realmColor = REALM_COLORS[Math.floorMod(realmId.hashCode(), REALM_COLORS.length)];
+                    color = blend(color, realmColor, 0.22D);
+                }
+                boolean edge=false, coast=false;
+                for(int[] delta : new int[][]{{-1,0},{1,0},{0,-1},{0,1}}) {
+                    int nx=column+delta[0], nz=row+delta[1];
+                    if(nx<0 || nz<0 || nx>=map.width() || nz>=map.height()) continue;
+                    int other=nz*map.width()+nx;
+                    if(!debugLayer && map.revealedCodes()[other]==0) { edge=true; continue; }
+                    if((Byte.toUnsignedInt(terrainCodes[other])<=2)!=(terrainCode<=2)) coast=true;
+                    if(realmCodes[other]!=realmCodes[index]) edge=true;
+                }
+                if(coast) color=0xFFE8DDB4; else if(edge) color=0xFF716B55;
+                image.setPixelRGBA(column, row, argbToAbgr(color));
+            }
+        }
+        mapTexture = new DynamicTexture(image);
+        mapTextureLocation = minecraft.getTextureManager().register("geomantia/adventurer_map", mapTexture);
+    }
+
+    private void releaseMapTexture() {
+        if (mapTextureLocation != null && minecraft != null) {
+            minecraft.getTextureManager().release(mapTextureLocation);
+        } else if (mapTexture != null) {
+            mapTexture.close();
+        }
+        mapTexture = null;
+        mapTextureLocation = null;
+    }
+
+    private static int blend(int base, int overlay, double amount) {
+        double inverse = 1.0D - amount;
+        int red = (int) Math.round(((base >> 16) & 0xff) * inverse + ((overlay >> 16) & 0xff) * amount);
+        int green = (int) Math.round(((base >> 8) & 0xff) * inverse + ((overlay >> 8) & 0xff) * amount);
+        int blue = (int) Math.round((base & 0xff) * inverse + (overlay & 0xff) * amount);
+        return 0xff000000 | red << 16 | green << 8 | blue;
+    }
+
+    private static int argbToAbgr(int color) {
+        return color & 0xff00ff00 | color >> 16 & 0xff | (color & 0xff) << 16;
+    }
+
+    @Override
+    public void removed() {
+        draggingMap = false;
+        loading = false;
+        refreshQueued = false;
+        releaseMapTexture();
+        super.removed();
+    }
+
+    private void drawStatusPanel(GuiGraphics graphics, int x, int y, int right) {
+        int line = y;
+        graphics.drawString(font, Component.translatable("gui.geomantia.adventurer_map.world_planning"),
+                x, line, TEXT_PRIMARY, false);
+        line += 16;
+
+        graphics.drawString(font, labelValue("gui.geomantia.adventurer_map.w_status",
+                statusComponent(snapshot.wStatus())), x, line, statusColor(snapshot.wStatus()), false);
+        line += 12;
+        drawProgress(graphics, x, line, right, snapshot.wProgressPercent());
+        line += 14;
+
+        Component tValue = snapshot.tStage().isBlank()
+                ? statusComponent(snapshot.tStatus())
+                : Component.empty().append(stageComponent(snapshot.tStage())).append(Component.literal(" · "))
+                        .append(statusComponent(snapshot.tStatus()));
+        graphics.drawString(font, labelValue("gui.geomantia.adventurer_map.t_status", tValue),
+                x, line, statusColor(snapshot.tStatus()), false);
+        line += 16;
+
+        graphics.drawString(font, labelValue("gui.geomantia.adventurer_map.current_realm",
+                valueOrDash(snapshot.currentRealmName())), x, line, TEXT_PRIMARY, false);
+        line += 12;
+        graphics.drawString(font, labelValue("gui.geomantia.adventurer_map.current_city",
+                valueOrDash(snapshot.currentCityId())), x, line, TEXT_PRIMARY, false);
+        line += 12;
+        graphics.drawString(font, labelValue("gui.geomantia.adventurer_map.city_status",
+                statusComponent(snapshot.cityStatus())), x, line, statusColor(snapshot.cityStatus()), false);
+        line += 16;
+
+        graphics.drawString(font, Component.translatable("gui.geomantia.adventurer_map.city_counts",
+                snapshot.completedCityCount(), snapshot.remainingCityCount()), x, line, TEXT_MUTED, false);
+        line += 16;
+
+        if (debugLayer) {
+            graphics.drawString(font, Component.translatable("gui.geomantia.adventurer_map.debug_title"),
+                    x, line, STATUS_WARNING, false);
+            line += 12;
+            graphics.drawString(font, Component.literal("runId: " + valueOrDash(snapshot.runId()).getString()),
+                    x, line, TEXT_MUTED, false);
+            line += 12;
+            graphics.drawString(font, Component.literal("W phase: " + valueOrDash(snapshot.wPhase()).getString()),
+                    x, line, TEXT_MUTED, false);
+            line += 12;
+            graphics.drawString(font, Component.literal("realmId: " + valueOrDash(snapshot.currentRealmId()).getString()),
+                    x, line, TEXT_MUTED, false);
+            line += 12;
+            graphics.drawString(font, Component.literal("nodes: " + snapshot.cityNodes().size()),
+                    x, line, TEXT_MUTED, false);
+        }
+    }
+
+    private void drawProgress(GuiGraphics graphics, int left, int y, int right, double percent) {
+        int width = Math.max(20, right - left);
+        graphics.fill(left, y, left + width, y + 6, 0xFF30363D);
+        int fill = (int) Math.round(width * Math.max(0.0D, Math.min(100.0D, percent)) / 100.0D);
+        graphics.fill(left, y, left + fill, y + 6, STATUS_GOOD);
+        graphics.drawString(font, Component.literal(String.format(Locale.ROOT, "%.1f%%", percent)),
+                left, y + 8, TEXT_MUTED, false);
+    }
+
+    private static void drawPanel(GuiGraphics graphics, int left, int top, int right, int bottom, int color) {
+        graphics.fill(left, top, right, bottom, PANEL_BORDER);
+        graphics.fill(left + 1, top + 1, right - 1, bottom - 1, color);
+    }
+
+    private static void drawOutline(GuiGraphics graphics, int left, int top, int right, int bottom, int color) {
+        graphics.fill(left, top, right + 1, top + 1, color);
+        graphics.fill(left, bottom, right + 1, bottom + 1, color);
+        graphics.fill(left, top, left + 1, bottom + 1, color);
+        graphics.fill(right, top, right + 1, bottom + 1, color);
+    }
+
+    private static int nodeColor(CityNode node) {
+        if (node.current()) return 0xFFE2BC55;
+        return switch (node.status()) {
+            case "waiting_for_generation" -> 0xFF71A8E0;
+            case "needs_agent", "blocked_by_program" -> STATUS_ERROR;
+            case "post_d4_running" -> 0xFFB78BE2;
+            case "waiting_for_agent", "design_saved" -> STATUS_WARNING;
+            default -> "capital".equals(node.role()) ? 0xFFD89A52 : 0xFFB7B7B7;
+        };
+    }
+
+    private static int statusColor(String status) {
+        return switch (status) {
+            case "completed", "waiting_for_generation" -> STATUS_GOOD;
+            case "error", "needs_agent", "failed", "blocked_by_program" -> STATUS_ERROR;
+            case "running", "pending", "waiting_for_agent", "design_saved", "post_d4_running" -> STATUS_WARNING;
+            default -> TEXT_MUTED;
+        };
+    }
+
+    private static Component labelValue(String labelKey, Component value) {
+        return Component.translatable(labelKey).append(Component.literal(": ")).append(value);
+    }
+
+    private static Component valueOrDash(String value) {
+        return Component.literal(value == null || value.isBlank() ? "—" : value);
+    }
+
+    private static Component statusComponent(String status) {
+        String safe = status == null || status.isBlank() ? "not_started" : status;
+        return Component.translatable("gui.geomantia.adventurer_map.status." + safe);
+    }
+
+    private static Component stageComponent(String stage) {
+        String safe = stage == null ? "" : stage.toLowerCase(Locale.ROOT);
+        return Component.translatable("gui.geomantia.adventurer_map.stage." + safe);
+    }
+
+    @Override
+    public boolean isPauseScreen() {
+        return false;
+    }
+
+    private record MapTransform(double worldCenterX, double worldCenterZ,
+                                double screenCenterX, double screenCenterY, double scale) {
+        int screenX(double blockX) {
+            return (int) Math.round(screenCenterX + (blockX - worldCenterX) * scale);
+        }
+
+        int screenY(double blockZ) {
+            return (int) Math.round(screenCenterY + (blockZ - worldCenterZ) * scale);
+        }
+    }
+}

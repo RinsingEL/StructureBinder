@@ -117,7 +117,9 @@ public final class ProviderPlanningDiscovery {
 
         Set<String> registeredRealms = registeredCapitalRealms(runDirectory);
         JsonObject queue = readObject(runDirectory.resolve("automation/city_design_queue.json"));
-        if (!registeredRealms.isEmpty() && (queue == null || queueItems(queue).size() < registeredCityCount(runDirectory))) {
+        var continents = com.rinsing.geomantia.systems.realm_planning.application.access.ContinentalPlanning.load(runDirectory);
+        if (!registeredRealms.isEmpty() && (queue == null || queueItems(queue).size() < registeredCityCount(runDirectory)
+                || (continents != null && !"continent_grouped".equals(string(queue,"orderingMode"))))) {
             JsonObject state = baseState(Stage.QUEUE_REFRESH, runId, "city_design_queue_refresh");
             return step(Stage.QUEUE_REFRESH, runId, "", "", "city_design_queue_refresh", state,
                     runDirectory, List.of());
@@ -130,6 +132,15 @@ public final class ProviderPlanningDiscovery {
                     pendingExtension.entry().id(), pendingExtension.state(), runDirectory, List.of());
         }
 
+        if (continents != null) {
+            String missing = continents.missingRealm(registeredRealms,
+                    readObject(runDirectory.resolve("city_seed_registry.json")), queue);
+            if (!missing.isBlank()) {
+                for (JsonObject profile : orderedRealms(profiles, runDirectory))
+                    if (missing.equals(string(profile, "realmId"))) return t4Step(profile, runDirectory, runId, quantities);
+                throw new IOException("CONTINENT_REALM_PROFILE_MISSING: " + missing);
+            }
+        }
         if (queue != null && queueHasUnfinishedCity(queue)) {
             String status = string(queue, "status");
             String cityId = string(queue, "currentCitySeedId");
@@ -163,6 +174,17 @@ public final class ProviderPlanningDiscovery {
         for (JsonObject profile : orderedRealms(profiles, runDirectory)) {
             String realmId = string(profile, "realmId");
             if (registeredRealms.contains(realmId)) continue;
+            return t4Step(profile, runDirectory, runId, quantities);
+        }
+
+        JsonObject state = baseState(Stage.COMPLETE, runId, "");
+        if (queue != null) state.add("cityDesignQueue", queue.deepCopy());
+        return step(Stage.COMPLETE, runId, "", "", "", state, runDirectory, List.of());
+    }
+
+    private PlanningStep t4Step(JsonObject profile, Path runDirectory, String runId,
+                                com.rinsing.geomantia.systems.realm_planning.RealmPopulationConfig quantities) {
+        String realmId = string(profile, "realmId");
             JsonObject state = baseState(Stage.T4, runId, "realm_t4_patch_planning_create");
             state.addProperty("realmId", realmId);
             state.add("cityCountRequirements", quantities.asJson());
@@ -178,11 +200,6 @@ public final class ProviderPlanningDiscovery {
                     + "non-capital city seeds within the session cityCountRequirements (including the capital), then finalize. Do not omit configured minimum cities or exceed the maximum. Do not start or refresh the City queue.");
             return step(Stage.T4, runId, realmId, "", string(state, "nextAction"), state,
                     runDirectory, List.of());
-        }
-
-        JsonObject state = baseState(Stage.COMPLETE, runId, "");
-        if (queue != null) state.add("cityDesignQueue", queue.deepCopy());
-        return step(Stage.COMPLETE, runId, "", "", "", state, runDirectory, List.of());
     }
 
     private Optional<Path> newestCurrentWorldRun(WorldSurveySettingsConfig surveySettings) throws IOException {

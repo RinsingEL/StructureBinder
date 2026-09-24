@@ -1,0 +1,13 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="All Rights Reserved"
+[[mods]]
+modId="geomantia_map"
+version="${mod_version}"
+displayName="Geomantia Adventure Map"
+[[dependencies.geomantia_map]]
+modId="geomantia"
+mandatory=true
+versionRange="[${mod_version},)"
+ordering="AFTER"
+side="BOTH"

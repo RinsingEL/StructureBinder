@@ -1,10 +1,11 @@
-package com.rinsing.geomantia.systems.provider.application;
+package com.rinsing.geomantia.harness.systems.provider.application;
+import com.rinsing.geomantia.systems.provider.application.*;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonArray;
-import com.rinsing.geomantia.systems.provider.application.ProviderConfigStore.Credentials;
+import com.rinsing.geomantia.harness.systems.provider.application.ProviderConfigStore.Credentials;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterEach;

@@ -1,4 +1,6 @@
-package com.rinsing.geomantia.systems.provider.application;
+package com.rinsing.geomantia.harness.systems.provider.application;
+import com.rinsing.geomantia.systems.provider.application.*;
+import com.rinsing.geomantia.harness.systems.provider.application.*;
 
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpServer;
@@ -41,7 +43,7 @@ class ProviderRevisionLoopTest {
                 job(run, next, immediateFailure ? next - 1 : next - 2, "ctx");
                 queue(run, immediateFailure ? "needs_agent" : "compiling", "submission");
             } catch (Exception error) { throw new RuntimeException(error); }
-            return new DeepSeekToolLoopClient.LoopResult(true, "completed", "", 1, "");
+            return new PlanningLoopResult(true, "completed", "", 1, "");
         };
         try (PlayerProviderAgentRunner runner = new PlayerProviderAgentRunner(store, client, client,
                 ignored -> {}, ignored -> {})) {

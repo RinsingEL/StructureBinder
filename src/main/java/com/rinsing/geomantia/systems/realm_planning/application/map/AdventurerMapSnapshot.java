@@ -43,6 +43,25 @@ public record AdventurerMapSnapshot(
                 CoarseMap.empty(), List.of());
     }
 
+    /** Remove hidden data before transmitting an ordinary player's snapshot. */
+    public AdventurerMapSnapshot forViewer(boolean debug) {
+        if(debug) return this;
+        CoarseMap m=coarseMap;
+        byte[] terrain=m.terrainCodes().clone(), codes=m.realmCodes().clone();
+        var ids=new java.util.ArrayList<String>(); var names=new java.util.ArrayList<String>();
+        var mapping=new java.util.HashMap<Integer,Integer>();
+        for(int i=0;i<codes.length;i++) {
+            if(m.revealedCodes()[i]==0) { terrain[i]=0; codes[i]=0; continue; }
+            int old=Byte.toUnsignedInt(codes[i]);
+            if(old==0 || old>m.realmIds().size()) continue;
+            if(!mapping.containsKey(old)) { ids.add(m.realmIds().get(old-1)); names.add(m.realmNames().get(old-1)); mapping.put(old,ids.size()); }
+            codes[i]=(byte)(int)mapping.get(old);
+        }
+        var visible=new CoarseMap(m.dimensionId(),m.minBlockX(),m.minBlockZ(),m.cellSizeBlocks(),m.width(),m.height(),terrain,codes,m.revealedCodes(),ids,names);
+        return new AdventurerMapSnapshot("","","",0,"","","","","", "",0,0,initialActivityRadiusBlocks,
+                visible,cityNodes.stream().filter(n->m.revealedAt(n.blockX(),n.blockZ())).toList());
+    }
+
     private static String safe(String value) {
         return value == null ? "" : value;
     }
@@ -59,7 +78,11 @@ public record AdventurerMapSnapshot(
 
     public record CoarseMap(String dimensionId, int minBlockX, int minBlockZ, int cellSizeBlocks,
                             int width, int height, byte[] terrainCodes, byte[] realmCodes, byte[] revealedCodes,
-                            List<String> realmIds) {
+                            List<String> realmIds, List<String> realmNames) {
+        public CoarseMap(String dimensionId,int minBlockX,int minBlockZ,int cellSizeBlocks,int width,int height,
+                         byte[] terrain,byte[] realms,byte[] revealed,List<String> ids) {
+            this(dimensionId,minBlockX,minBlockZ,cellSizeBlocks,width,height,terrain,realms,revealed,ids,ids);
+        }
         private static final int MAX_SIDE = 128;
 
         public CoarseMap {
@@ -75,6 +98,8 @@ public record AdventurerMapSnapshot(
                 throw new IllegalArgumentException("ADVENTURER_MAP_RASTER_SIZE_MISMATCH");
             }
             realmIds = realmIds == null ? List.of() : List.copyOf(realmIds);
+            realmNames = realmNames == null ? realmIds : List.copyOf(realmNames);
+            if(realmNames.size()!=realmIds.size()) throw new IllegalArgumentException("MAP_REALM_NAMES_MISMATCH");
             if (realmIds.size() > 255) {
                 throw new IllegalArgumentException("ADVENTURER_MAP_REALM_PALETTE_TOO_LARGE");
             }

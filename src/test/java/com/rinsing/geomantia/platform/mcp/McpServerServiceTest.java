@@ -23,6 +23,10 @@ class McpServerServiceTest {
         assertEquals(invalid,Files.readString(McpServerConfig.path(root)));
     }
     @Test void bundledServiceStartsWithoutAWorldAcceptsMcpAndAppliesPortChanges() throws Exception {
+        if (Boolean.getBoolean("geomantia.coreOnlyTest")) {
+            assertNull(getClass().getResource("/com/rinsing/geomantia/harness/systems/provider/application/HarnessAgentClient.class"));
+            assertNull(getClass().getResource("/com/rinsing/geomantia/map/client/AdventurerMapScreen.class"));
+        }
         int first=freePort(),second=freePort();
         while(first==second) second=freePort();
         new McpServerConfig(true,first).save(root);

@@ -1,4 +1,5 @@
 package com.rinsing.geomantia.systems.provider.application;
+import com.rinsing.geomantia.harness.systems.provider.application.*;
 
 import com.google.gson.JsonObject;
 import org.junit.jupiter.api.Test;

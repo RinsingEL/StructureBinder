@@ -31,7 +31,7 @@ public final class PlanningAreaAccessPolicy {
         if((regional==null || !regional.initial.available()) && Math.hypot(x,z)<=config.initialActivityRadiusBlocks()) return true;
         if (regional==null || !regional.dimension.equals(dimension)) return false;
         for (var city : regional.protectedCities) if (city.protection().contains(x,z)) return false;
-        return regional.openRegions.contains(regional.geography.at(x,z));
+        return regional.initial.contains(x,z) || regional.openRegions.contains(regional.geography.at(x,z));
     }
     /** A rejected request completes as unavailable; it never advances a chunk status. */
     public boolean permitsChunk(String dimension,int chunkX,int chunkZ) {

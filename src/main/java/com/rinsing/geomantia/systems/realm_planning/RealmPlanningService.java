@@ -2138,6 +2138,9 @@ public final class RealmPlanningService {
         manifest.add("surveyStats", surveyStatsJson(run.surveyResult));
         manifest.add("continents", continentsJson(run.continentSummaries.values()));
         writeJson(run.runDirectory.resolve("w_manifest.json"), manifest);
+        writeJson(run.runDirectory.resolve("starter_realm.json"),
+                com.rinsing.geomantia.systems.realm_planning.application.access.InitialExplorationArea.description(accessConfig.initialActivityRadiusBlocks()));
+        run.artifacts.put("starterRealm", "starter_realm.json");
         run.artifacts.put("worldSurveyContext", "world_survey_context.json");
         run.artifacts.put("worldPatchMap", "world_patch_map.json");
         run.artifacts.put("worldPatchPreview", "world_patch_preview.png");

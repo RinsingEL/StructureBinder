@@ -58,6 +58,12 @@ public final class CityDesignQueue {
                 ? registry.getAsJsonArray("citySeeds") : new JsonArray();
         List<Seed> seeds = parseSeeds(seedsJson, worldSurveyStep(runDirectory));
         sort(seeds, mode);
+        var continents = com.rinsing.geomantia.systems.realm_planning.application.access.ContinentalPlanning.load(runDirectory);
+        if (continents != null) {
+            mode = OrderingMode.CONTINENT_GROUPED;
+            seeds.sort(Comparator.comparingInt((Seed seed) -> continents.rank(seed.blockX(), seed.blockZ()))
+                    .thenComparingLong(Seed::originDistanceSquared).thenComparing(Seed::citySeedId));
+        }
 
         JsonObject previous = readState(safeRunId);
         Map<String, JsonObject> previousItems = itemsById(previous);

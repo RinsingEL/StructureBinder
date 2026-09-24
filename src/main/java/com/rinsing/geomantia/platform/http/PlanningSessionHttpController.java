@@ -1,7 +1,7 @@
 package com.rinsing.geomantia.platform.http;
 
 import com.google.gson.JsonObject;
-import com.rinsing.geomantia.systems.provider.application.PlayerProviderService;
+import com.rinsing.geomantia.systems.provider.application.PlanningHost;
 import com.rinsing.geomantia.systems.provider.application.PlanningSessionService;
 import com.sun.net.httpserver.*;
 import net.minecraft.server.MinecraftServer;
@@ -15,7 +15,7 @@ final class PlanningSessionHttpController {
     private final Supplier<String> worldName;
     private final Semaphore waits = new Semaphore(2);
     PlanningSessionHttpController(MinecraftServer server) {
-        this(() -> PlayerProviderService.instance().planning(), () -> server.getWorldData().getLevelName());
+        this(() -> PlanningHost.session(), () -> server.getWorldData().getLevelName());
     }
     PlanningSessionHttpController(Supplier<PlanningSessionService> sessions, Supplier<String> worldName) {
         this.sessions = sessions; this.worldName = worldName;

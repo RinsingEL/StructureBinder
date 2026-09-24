@@ -6,11 +6,11 @@ import com.google.gson.JsonObject;
 import java.util.List;
 
 /** Responses API definitions for the release-safe subset of the existing MCP planning tools. */
-final class ProviderPlanningToolCatalog {
+public final class ProviderPlanningToolCatalog {
     private ProviderPlanningToolCatalog() {
     }
 
-    static JsonArray definitions(List<String> allowedTools) {
+    public static JsonArray definitions(List<String> allowedTools) {
         JsonArray result = new JsonArray();
         for (String name : allowedTools) result.add(definition(name));
         return result;

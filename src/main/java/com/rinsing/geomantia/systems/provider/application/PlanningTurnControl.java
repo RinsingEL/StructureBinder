@@ -6,8 +6,8 @@ import com.google.gson.JsonParser;
 import java.util.Set;
 
 /** Host-owned stop policy shared by embedded and sidecar loops. */
-final class PlanningTurnControl implements DeepSeekToolLoopClient.ToolExecutor {
-    private final DeepSeekToolLoopClient.ToolExecutor delegate;
+public final class PlanningTurnControl implements PlanningToolExecutor {
+    private final PlanningToolExecutor delegate;
     private volatile boolean finished;
     private volatile String error = "";
     private String lastFailure = "";
@@ -16,11 +16,11 @@ final class PlanningTurnControl implements DeepSeekToolLoopClient.ToolExecutor {
     private boolean revisionProgress;
     private String lastRevision = "";
     private JsonElement lastReviewState;
-    boolean permitsDesignContinuation() { return error.isBlank() && (formatCorrection || revisionProgress); }
+    public boolean permitsDesignContinuation() { return error.isBlank() && (formatCorrection || revisionProgress); }
 
 
-    PlanningTurnControl(DeepSeekToolLoopClient.ToolExecutor delegate) { this(delegate, new JsonObject()); }
-    PlanningTurnControl(DeepSeekToolLoopClient.ToolExecutor delegate, JsonObject initialState) {
+    public PlanningTurnControl(PlanningToolExecutor delegate) { this(delegate, new JsonObject()); }
+    public PlanningTurnControl(PlanningToolExecutor delegate, JsonObject initialState) {
         this.delegate = delegate;
         this.lastRevision = revisionIdentity(initialState);
         this.lastReviewState = initialState.get("designReviewWorkflow");
@@ -33,9 +33,9 @@ final class PlanningTurnControl implements DeepSeekToolLoopClient.ToolExecutor {
             if (evidence.has(key)) return evidence.get(key).getAsString();
         return "";
     }
-    boolean finished() { return finished; }
-    DeepSeekToolLoopClient.LoopResult result(int calls) {
-        return new DeepSeekToolLoopClient.LoopResult(error.isBlank(), error.isBlank() ? "completed" : "blocked", error, calls, "");
+    public boolean finished() { return finished; }
+    public PlanningLoopResult result(int calls) {
+        return new PlanningLoopResult(error.isBlank(), error.isBlank() ? "completed" : "blocked", error, calls, "");
     }
 
     @Override
@@ -109,7 +109,7 @@ final class PlanningTurnControl implements DeepSeekToolLoopClient.ToolExecutor {
 
     private String lastD4State = "";
 
-    static JsonObject payload(JsonElement output) {
+    public static JsonObject payload(JsonElement output) {
         try {
             if (output.isJsonPrimitive()) return JsonParser.parseString(output.getAsString()).getAsJsonObject();
             if (output.isJsonArray()) {
@@ -123,7 +123,7 @@ final class PlanningTurnControl implements DeepSeekToolLoopClient.ToolExecutor {
         return new JsonObject();
     }
 
-    static String failure(JsonObject payload) {
+    public static String failure(JsonObject payload) {
         if (payload.has("response") && payload.get("response").isJsonObject()) {
             String nested = failure(payload.getAsJsonObject("response"));
             if (!nested.isBlank()) return nested;

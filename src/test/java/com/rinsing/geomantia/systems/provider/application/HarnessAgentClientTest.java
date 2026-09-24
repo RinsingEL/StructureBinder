@@ -1,4 +1,5 @@
-package com.rinsing.geomantia.systems.provider.application;
+package com.rinsing.geomantia.harness.systems.provider.application;
+import com.rinsing.geomantia.systems.provider.application.*;
 
 import com.google.gson.*;
 import com.sun.net.httpserver.HttpServer;
@@ -57,7 +58,7 @@ class HarnessAgentClientTest {
             var config = new PlayerProviderConfig("custom", true, "http://127.0.0.1:" + server.getAddress().getPort() + "/v1",
                     "deepseek-v4.1-flash", "chat_completions", 20, "harness");
             List<AgentActivityEvent> activity = new ArrayList<>();
-            var executor = new DeepSeekToolLoopClient.ToolExecutor() {
+            var executor = new PlanningToolExecutor() {
                 public JsonArray definitions(List<String> names) {
                     return JsonParser.parseString("[{\"type\":\"function\",\"name\":\"exampleaddon_preview\",\"description\":\"Preview addon content\",\"parameters\":{\"type\":\"object\",\"properties\":{}}}]").getAsJsonArray();
                 }

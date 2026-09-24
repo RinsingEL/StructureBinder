@@ -98,7 +98,7 @@ public final class AdventurerMapStatusReader {
         Path contextPath = run.resolve("world_survey_context.json");
         String fingerprint = fileFingerprint(featurePath) + '|' + fileFingerprint(territoryPath)
                 + '|' + fileFingerprint(contextPath) + '|' + PlanningAreaAccessPolicy.sourceStamp(debugRoot)
-                + '|' + accessConfig + '|' + viewport;
+                + '|' + fileFingerprint(run.resolve("realm_profiles.json")) + '|' + accessConfig + '|' + viewport;
         if (run.equals(cachedMapRun) && fingerprint.equals(cachedMapFingerprint)) {
             return cachedMap;
         }
@@ -198,14 +198,26 @@ public final class AdventurerMapStatusReader {
             for (int column = 0; column < width; column++) {
                 double blockX = minBlockX + (column + 0.5D) * outputCellSize;
                 double blockZ = minBlockZ + (row + 0.5D) * outputCellSize;
+                // Ownership must refer to the same sampled location as fog. Taking any cell
+                // in a reduced pixel could expose a neighbouring, still-locked country's name.
+                String owner = territory.cellRealms().get(cellKey((int)Math.floor(blockX/sourceCellSize), (int)Math.floor(blockZ/sourceCellSize)));
+                realmCodes[row * width + column] = (byte)(int)(owner == null ? 0 : territory.realmCodes().getOrDefault(owner,0));
+                if (Math.hypot(blockX,blockZ) <= accessConfig.initialActivityRadiusBlocks()) {
+                    realmCodes[row * width + column] = (byte)(territory.realmIds().size()+1);
+                }
                 if (accessPolicy.revealed(dimensionId, blockX, blockZ)) {
                     revealedCodes[row * width + column] = 1;
                 }
             }
         }
 
+        var labels=realmNames(run.resolve("realm_profiles.json"));
+        var ids=new ArrayList<>(territory.realmIds());
+        ids.add(com.rinsing.geomantia.systems.realm_planning.application.access.InitialExplorationArea.REALM_ID);
+        var names=ids.stream().map(id -> id.equals(com.rinsing.geomantia.systems.realm_planning.application.access.InitialExplorationArea.REALM_ID)
+                ? com.rinsing.geomantia.systems.realm_planning.application.access.InitialExplorationArea.NAME : labels.getOrDefault(id,id)).toList();
         CoarseMap value = new CoarseMap(dimensionId, minBlockX, minBlockZ,
-                outputCellSize, width, height, terrainCodes, realmCodes, revealedCodes, territory.realmIds());
+                outputCellSize, width, height, terrainCodes, realmCodes, revealedCodes, ids, names);
         return cacheMap(run, fingerprint, value);
     }
 
@@ -235,7 +247,7 @@ public final class AdventurerMapStatusReader {
             sortedRealmIds.add(realmId);
         }
         List<String> realmIds = new ArrayList<>(sortedRealmIds);
-        if (realmIds.size() > 255) realmIds = new ArrayList<>(realmIds.subList(0, 255));
+        if (realmIds.size() > 254) realmIds = new ArrayList<>(realmIds.subList(0, 254));
         Map<String, Integer> realmCodes = new LinkedHashMap<>();
         for (int index = 0; index < realmIds.size() && index < 255; index++) {
             realmCodes.put(realmIds.get(index), index + 1);

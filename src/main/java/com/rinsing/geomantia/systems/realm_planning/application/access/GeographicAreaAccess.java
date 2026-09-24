@@ -16,9 +16,9 @@ final class GeographicAreaAccess {
     final List<CityPlanningReservation> protectedCities;
     final int safety;
     private GeographicAreaAccess(String runId, String dimension, GeographicRegions geography, Set<String> open,
-                                 Set<String> ready, Set<String> blocked, List<CityPlanningReservation> reservations, int safety) {
+                                 Set<String> ready, Set<String> blocked, List<CityPlanningReservation> reservations, int safety, int initialRadius) {
         this.runId=runId; this.dimension=dimension; this.geography=geography; this.openRegions=Set.copyOf(open);
-        this.initial = new InitialExplorationArea(geography);
+        this.initial = new InitialExplorationArea(geography, initialRadius);
         this.readyCities=Set.copyOf(ready); this.blockedCities=Set.copyOf(blocked); this.protectedCities=List.copyOf(reservations); this.safety=safety;
     }
     static GeographicAreaAccess load(Path root, PlanningAreaAccessConfig config, int safety) throws IOException {
@@ -134,9 +134,7 @@ final class GeographicAreaAccess {
                     && closedRealms.containsAll(regionRealms.getOrDefault(r.id(),Set.of()))) open.add(r.id());
         }
         // Initial exploration does not itself authorize the adjacent distant oceans.
-        var initial = new InitialExplorationArea(geo);
-        if (initial.available()) open.add(initial.regionId());
-        return new GeographicAreaAccess(run.getFileName().toString(),dimension,geo,open,ready,blocked,reservations,safety);
+        return new GeographicAreaAccess(run.getFileName().toString(),dimension,geo,open,ready,blocked,reservations,safety,config.initialActivityRadiusBlocks());
     }
     PlanningAreaAccessPolicy.Decision evaluate(String dim,double x,double z) {
         if(!dimension.equals(dim)) return PlanningAreaAccessPolicy.Decision.denied("PLANNING_AREA_NOT_RELEASED",runId,"");

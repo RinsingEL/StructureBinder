@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 /** Safe Provider adapter over the same localhost HTTP handlers used by the Node MCP server. */
-public final class ProviderPlanningToolGateway implements DeepSeekToolLoopClient.ToolExecutor {
+public final class ProviderPlanningToolGateway implements PlanningToolExecutor {
     private static final int MAX_ARGUMENT_CHARS = 2 * 1024 * 1024;
     private static final int MAX_RESPONSE_CHARS = 6 * 1024 * 1024;
     private static final long MAX_IMAGE_BYTES = 8L * 1024 * 1024;

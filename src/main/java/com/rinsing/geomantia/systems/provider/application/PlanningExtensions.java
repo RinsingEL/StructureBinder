@@ -63,7 +63,7 @@ final class PlanningExtensions {
         JsonObject state = pending.state();
         state.add("extensionTask", task.deepCopy());
         var definitions = definitions(entry);
-        var executor = new DeepSeekToolLoopClient.ToolExecutor() {
+        var executor = new PlanningToolExecutor() {
             @Override public JsonArray definitions(List<String> allowed) { return definitions.deepCopy(); }
             @Override public JsonElement execute(String tool, JsonObject arguments) throws Exception {
                 var definition = entry.tools().stream().filter(t -> t.name().equals(tool)).findFirst().orElse(null);

@@ -3,7 +3,7 @@ package com.rinsing.geomantia.platform.http;
 import com.mojang.logging.LogUtils;
 import com.rinsing.geomantia.GeomantiaMod;
 import com.rinsing.geomantia.platform.WorldScopedPlanningPaths;
-import com.rinsing.geomantia.systems.provider.application.PlayerProviderService;
+import com.rinsing.geomantia.systems.provider.application.PlanningHost;
 import com.sun.net.httpserver.HttpServer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.event.server.ServerStartedEvent;
@@ -152,7 +152,7 @@ public final class GeomantiaHttpServer {
             httpServer = createdServer;
             httpExecutor = createdExecutor;
             activeRealmController = realmController;
-            PlayerProviderService.instance().startAutomation(
+            PlanningHost.start(
                     minecraftServer.getServerDirectory().toPath(),
                     WorldScopedPlanningPaths.realmDebugRoot(minecraftServer), port,
                     minecraftServer.overworld().getSeed(), extensions);
@@ -177,7 +177,7 @@ public final class GeomantiaHttpServer {
         if (activeRealmController != null) {
             activeRealmController.close();
         }
-        PlayerProviderService.instance().stopAutomation();
+        PlanningHost.stop();
         HttpServer server = httpServer;
         ExecutorService executor = httpExecutor;
         RealmPlanningHttpController realmController = activeRealmController;

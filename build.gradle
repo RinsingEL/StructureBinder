@@ -183,24 +183,108 @@ tasks.named('test', Test).configure {
     useJUnitPlatform()
 }
 
-tasks.named('processResources', ProcessResources).configure {
-    dependsOn tasks.named('bundleCountryDesignerMcp')
+sourceSets {
+    harness { compileClasspath += sourceSets.main.output; runtimeClasspath += sourceSets.main.output }
+    map { compileClasspath += sourceSets.main.output; runtimeClasspath += sourceSets.main.output }
+}
+configurations {
+    harnessImplementation.extendsFrom implementation
+    mapImplementation.extendsFrom implementation
+    harnessCompileOnly.extendsFrom compileOnly
+    mapCompileOnly.extendsFrom compileOnly
+}
+sourceSets.harness.compileClasspath += sourceSets.main.compileClasspath
+sourceSets.map.compileClasspath += sourceSets.main.compileClasspath
+sourceSets.test.compileClasspath += sourceSets.harness.output + sourceSets.map.output
+sourceSets.test.runtimeClasspath += sourceSets.harness.output + sourceSets.map.output
+minecraft.runs.configureEach {
+    if (providers.gradleProperty('geomantiaDevAddons').orElse('false').get().toBoolean()) {
+        mods {
+            geomantia_harness { source sourceSets.harness }
+            geomantia_map { source sourceSets.map }
+        }
+    }
+}
+['harness', 'map'].each { addon ->
+    tasks.named("process${addon.capitalize()}Resources", ProcessResources) {
+        filesMatching('META-INF/mods.toml') { expand(mod_version: mod_version) }
+    }
+    tasks.register("${addon}Jar", Jar) {
+        doFirst { manifest.attributes.remove('MixinConfigs') }
+        archiveClassifier = addon
+        from sourceSets[addon].output
+        finalizedBy "reobf${addon.capitalize()}Jar"
+    }
+}
+reobf { harnessJar {}; mapJar {} }
+tasks.named('assemble') { dependsOn 'harnessJar', 'mapJar' }
+tasks.register('coreMcpTest', Test) {
+    description = 'Exercise the external MCP server without either optional addon on the classpath.'
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.test.output.classesDirs
+    include '**/McpServerServiceTest.class'
+    classpath = sourceSets.test.runtimeClasspath - sourceSets.harness.output - sourceSets.map.output
+    filter { includeTestsMatching '*McpServerServiceTest' }
+    systemProperty 'geomantia.coreOnlyTest', 'true'
+}
+tasks.register('verifyAddonPackaging') {
+    dependsOn 'reobfJar', 'reobfHarnessJar', 'reobfMapJar'
+    doLast {
+        def archives = [:]
+        ['main': 'jar', 'harness': 'harnessJar', 'map': 'mapJar'].each { name, task ->
+            archives[name] = new java.util.zip.ZipFile(tasks.named(task).get().archiveFile.get().asFile)
+        }
+        try {
+            def packages = archives.collectEntries { name, archive ->
+                [(name): archive.entries().findAll { it.name.endsWith('.class') && it.name.contains('/') }
+                        .collect { it.name.substring(0, it.name.lastIndexOf('/')) }.toSet()]
+            }
+            [['main', 'harness'], ['main', 'map'], ['harness', 'map']].each { pair ->
+                def shared = packages[pair[0]].intersect(packages[pair[1]])
+                if (!shared.empty) throw new GradleException("Split packages between ${pair}: ${shared}")
+            }
+            def optional = ['harness', 'map'].collectMany { name ->
+                archives[name].entries().findAll { it.name.endsWith('.class') }.collect { it.name[0..-7] }
+            }
+            archives.main.entries().findAll { it.name.endsWith('.class') }.each { entry ->
+                def bytes = new String(archives.main.getInputStream(entry).bytes, java.nio.charset.StandardCharsets.ISO_8859_1)
+                optional.each { type ->
+                    if (bytes.contains(type)) throw new GradleException("Core references optional class ${type} from ${entry.name}")
+                }
+            }
+            ['harness', 'map'].each { name ->
+                def manifest = new java.util.jar.Manifest(archives[name].getInputStream(archives[name].getEntry('META-INF/MANIFEST.MF')))
+                if (manifest.mainAttributes.getValue('MixinConfigs')) throw new GradleException("${name} repeats core mixins")
+            }
+            if (archives.main.getEntry('data/geomantia/recipes/adventurer_map.json')) throw new GradleException('Map recipe leaked into core')
+            if (!archives.map.getEntry('data/geomantia/recipes/adventurer_map.json')) throw new GradleException('Map recipe missing')
+            if (archives.main.entries().any { it.name.contains('harness-runtime') }) throw new GradleException('Harness runtime leaked into core')
+            if (!archives.main.getEntry('geomantia/sidecar/node.exe')) throw new GradleException('Core MCP runtime missing')
+        } finally { archives.values().each { it.close() } }
+    }
+}
+tasks.named('processHarnessResources', ProcessResources) {
+    inputs.files(fileTree('geomantia_harness/src'), 'geomantia_harness/build.mjs', 'geomantia_harness/package.json',
+            'geomantia_harness/package-lock.json', 'runtime/harness/manifest.json')
     doFirst {
-        def archive = file('runtime/harness/harness-runtime-0.1.5-rc.2-win-x64.zip')
-        if (!archive.isFile()) throw new GradleException('Missing Harness runtime; see runtime/harness/README.md')
         def manifest = new groovy.json.JsonSlurper().parse(file('runtime/harness/manifest.json'))
         manifest.inputs.each { name, expected ->
             def actual = java.security.MessageDigest.getInstance('SHA-256').digest(file("geomantia_harness/${name}").bytes).encodeHex().toString()
             if (actual != expected) throw new GradleException("Stale Harness runtime (${name}); see runtime/harness/README.md")
         }
     }
-    inputs.files(fileTree('geomantia_harness/src'), 'geomantia_harness/build.mjs', 'geomantia_harness/package.json',
-            'geomantia_harness/package-lock.json', 'runtime/harness/manifest.json')
+    from('runtime/harness/harness-runtime-0.1.5-rc.2-win-x64.zip') { into 'geomantia/sidecar' }
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    dependsOn tasks.named('bundleCountryDesignerMcp')
     from('country_designer_mcp/dist/geomantia-mcp-bundle.mjs') {
         into 'geomantia/sidecar'
     }
-    from('runtime/harness/harness-runtime-0.1.5-rc.2-win-x64.zip') {
-        into 'geomantia/sidecar'
+    from(zipTree('runtime/harness/harness-runtime-0.1.5-rc.2-win-x64.zip')) {
+        include '**/node.exe'
+        eachFile { path = 'geomantia/sidecar/node.exe' }
+        includeEmptyDirs = false
     }
     var replaceProperties = [
             minecraft_version: minecraft_version, minecraft_version_range: minecraft_version_range,

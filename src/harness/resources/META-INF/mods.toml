@@ -1,0 +1,13 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="All Rights Reserved"
+[[mods]]
+modId="geomantia_harness"
+version="${mod_version}"
+displayName="Geomantia Harness"
+[[dependencies.geomantia_harness]]
+modId="geomantia"
+mandatory=true
+versionRange="[${mod_version},)"
+ordering="AFTER"
+side="BOTH"

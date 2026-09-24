@@ -1,7 +1,7 @@
 package com.rinsing.geomantia.platform.mcp;
 
 import com.google.gson.JsonParser;
-import com.rinsing.geomantia.systems.provider.application.HarnessPortableRuntime;
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -19,6 +19,8 @@ public final class McpServerService implements AutoCloseable {
     private volatile Path gameDirectory;
     private volatile Process process;
     private volatile Snapshot snapshot = new Snapshot("starting", "", "MCP 等待初始化", true, 5001);
+    private volatile boolean needsSetup;
+    public boolean needsSetup() { return needsSetup; }
     private boolean hookInstalled;
     private volatile boolean closed;
     public record Snapshot(String state, String url, String message, boolean enabled, int port) { }
@@ -31,6 +33,12 @@ public final class McpServerService implements AutoCloseable {
             Runtime.getRuntime().addShutdownHook(new Thread(this::close, "Geomantia-MCP-Shutdown"));
             hookInstalled = true;
         }
+        if (!Files.isRegularFile(McpServerConfig.path(gameDirectory))
+                && net.minecraftforge.fml.loading.FMLEnvironment.dist == net.minecraftforge.api.distmarker.Dist.CLIENT) {
+            needsSetup=true;
+            snapshot=new Snapshot("setup", "", "选择端口并保存以启动外部 MCP 连接", true, 5001);
+            return;
+        }
         lifecycle.execute(() -> {
             try { restart(McpServerConfig.load(gameDirectory)); }
             catch (Exception ex) { failed(ex, null); }
@@ -42,6 +50,7 @@ public final class McpServerService implements AutoCloseable {
                 if (gameDirectory == null) throw new IOException("MCP 尚未初始化");
                 McpServerConfig config = new McpServerConfig(enabled, port);
                 config.save(gameDirectory);
+                needsSetup=false;
                 restart(config);
             } catch (Exception ex) { failed(ex, null); }
             return snapshot;
@@ -52,7 +61,7 @@ public final class McpServerService implements AutoCloseable {
         stopChild();
         if (!config.enabled()) { snapshot = new Snapshot("disabled", "", "MCP 自动服务已关闭", false, config.port()); return; }
         snapshot = new Snapshot("starting", "", "正在启动 MCP 服务…", true, config.port());
-        Path runtime = HarnessPortableRuntime.ensureInstalled(gameDirectory,
+        Path runtime = McpNodeRuntime.ensureInstalled(gameDirectory,
                 ignored -> snapshot = new Snapshot("starting", "", "首次准备 MCP 内置运行环境…", true, config.port()));
         Path bundle = installBundle(gameDirectory);
         Path log = gameDirectory.resolve("logs/geomantia-mcp-server.log");

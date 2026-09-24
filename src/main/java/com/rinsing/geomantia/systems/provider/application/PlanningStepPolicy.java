@@ -6,9 +6,9 @@ import java.nio.file.Path;
 import java.util.List;
 
 /** Shared stage policy: deterministic transitions and the model's decision scope. */
-final class PlanningStepPolicy {
+public final class PlanningStepPolicy {
     private PlanningStepPolicy() { }
-    static List<String> toolsFor(ProviderPlanningDiscovery.Stage stage) {
+    public static List<String> toolsFor(ProviderPlanningDiscovery.Stage stage) {
         return switch (stage) {
             case W -> List.of("realm_w_refresh");
             case T1 -> List.of("realm_t1_prepare");
@@ -25,14 +25,14 @@ final class PlanningStepPolicy {
         };
     }
 
-    static boolean hostOnly(ProviderPlanningDiscovery.PlanningStep step) {
+    public static boolean hostOnly(ProviderPlanningDiscovery.PlanningStep step) {
         return step.stage() == ProviderPlanningDiscovery.Stage.W || step.stage() == ProviderPlanningDiscovery.Stage.T3
                 || step.stage() == ProviderPlanningDiscovery.Stage.QUEUE_REFRESH
                 || step.stage() == ProviderPlanningDiscovery.Stage.CITY
                 && List.of("city_plan_d3", "patch_explorer_show_candidates").contains(step.nextAction());
     }
 
-    static JsonObject hostArguments(ProviderPlanningDiscovery.PlanningStep step, Path debugRoot) throws IOException {
+    public static JsonObject hostArguments(ProviderPlanningDiscovery.PlanningStep step, Path debugRoot) throws IOException {
         JsonObject args = new JsonObject();
         if (!"patch_explorer_show_candidates".equals(step.nextAction())) return args;
         for (var entry : step.state().getAsJsonArray("items")) {

@@ -126,8 +126,9 @@ class AdventurerMapStatusReaderTest {
         assertEquals(3, Byte.toUnsignedInt(map.terrainCodes()[1]));
         assertEquals(7, Byte.toUnsignedInt(map.terrainCodes()[2]));
         assertEquals(4, Byte.toUnsignedInt(map.terrainCodes()[3]));
-        assertEquals(1, map.realmIds().size());
-        assertEquals(1, Byte.toUnsignedInt(map.realmCodes()[1]));
+        assertEquals(2, map.realmIds().size());
+        assertEquals("新手村国度", map.realmNames().get(1));
+        assertEquals(2, Byte.toUnsignedInt(map.realmCodes()[1]));
         assertEquals(1, Byte.toUnsignedInt(map.revealedCodes()[0]));
     }
 

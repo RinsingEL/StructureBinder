@@ -7,12 +7,29 @@ import java.util.concurrent.*;
 
 /** Provider-independent planning entry point; all progress is recovered from world artifacts. */
 public final class PlanningSessionService implements AutoCloseable {
+    public static String programBlockMessage(JsonObject queue) {
+        JsonObject current = queue.has("currentCity") ? queue.getAsJsonObject("currentCity") : queue;
+        if (queue.has("items") && queue.has("currentCitySeedId")) {
+            for (var value : queue.getAsJsonArray("items")) {
+                JsonObject item = value.getAsJsonObject();
+                if (queue.get("currentCitySeedId").equals(item.get("citySeedId"))) { current = item; break; }
+            }
+        }
+        String reason = current.has("failureReasonCode") ? current.get("failureReasonCode").getAsString()
+                : current.has("reasonCode") ? current.get("reasonCode").getAsString() : "POST_D4_PROGRAM_FAILURE";
+        String step = current.has("failedStep") ? current.get("failedStep").getAsString() : "";
+        String detail = current.has("message") ? current.get("message").getAsString()
+                : current.has("error") ? current.get("error").getAsString() : "";
+        return "PLANNING_HOST_BLOCKED: " + (step.isBlank() ? "" : step + " · ") + reason
+                + (detail.isBlank() ? "" : " · " + detail);
+    }
+
     private final ProviderPlanningDiscovery discovery;
     private final PlanningExtensions extensions;
     private final Path serverDirectory, debugRoot;
     private final int port;
     @FunctionalInterface interface TurnPreparer {
-        PreparedPlanningTurn prepare(ProviderPlanningDiscovery.PlanningStep step, ProviderPlanningToolGateway gateway) throws Exception;
+        public PreparedPlanningTurn prepare(ProviderPlanningDiscovery.PlanningStep step, ProviderPlanningToolGateway gateway) throws Exception;
     }
     private final TurnPreparer turnPreparer;
     private final PlanningLease lease = new PlanningLease();
@@ -43,9 +60,10 @@ public final class PlanningSessionService implements AutoCloseable {
         this.turnPreparer = turnPreparer == null
                 ? (step, gateway) -> PreparedPlanningTurn.prepare(step, gateway, serverDirectory, debugRoot) : turnPreparer;
     }
-    PreparedPlanningTurn prepare(ProviderPlanningDiscovery.PlanningStep step, ProviderPlanningToolGateway gateway) throws Exception {
+    public PreparedPlanningTurn prepare(ProviderPlanningDiscovery.PlanningStep step, ProviderPlanningToolGateway gateway) throws Exception {
         return step.stage() == ProviderPlanningDiscovery.Stage.EXTENSION ? extensions.prepare(step) : turnPreparer.prepare(step, gateway);
     }
+    public static boolean isCityDesign(ProviderPlanningDiscovery.PlanningStep step) { return PreparedCityDesignTurn.applies(step); }
     public ProviderPlanningDiscovery discovery() { return discovery; }
     public JsonObject artifact(String operation, String path, String query, int offset) throws Exception {
         Path run = discovery.nextStep().runDirectory().toRealPath();
@@ -86,7 +104,7 @@ public final class PlanningSessionService implements AutoCloseable {
         String error = failure;
         if (queue.has("status") && ("blocked_by_program".equals(queue.get("status").getAsString())
                 || step.stage() == ProviderPlanningDiscovery.Stage.WAITING && "needs_agent".equals(queue.get("status").getAsString())))
-            error = PlayerProviderAgentRunner.programBlockMessage(queue);
+            error = programBlockMessage(queue);
         result.addProperty("status", running ? "running" : !error.isBlank() ? "blocked" : status);
         result.addProperty("error", error);
         result.addProperty("cursor", step.semanticIdentity() + ":" + taskId + ":" + running + ":" + error + ":" + result.get("owner"));

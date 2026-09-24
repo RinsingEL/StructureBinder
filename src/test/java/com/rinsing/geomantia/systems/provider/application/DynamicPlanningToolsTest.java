@@ -1,4 +1,5 @@
-package com.rinsing.geomantia.systems.provider.application;
+package com.rinsing.geomantia.harness.systems.provider.application;
+import com.rinsing.geomantia.systems.provider.application.*;
 
 import com.google.gson.*;
 import com.sun.net.httpserver.HttpServer;
@@ -25,7 +26,7 @@ class DynamicPlanningToolsTest {
             });
             server.start();
             try {
-                var executor = new DeepSeekToolLoopClient.ToolExecutor() {
+                var executor = new PlanningToolExecutor() {
                     public JsonArray definitions(List<String> names) { return JsonParser.parseString("[{\"type\":\"function\",\"name\":\"exampleaddon_publish\",\"description\":\"Configure city\",\"parameters\":{\"type\":\"object\",\"properties\":{\"pool\":{\"type\":\"string\"}}}}]").getAsJsonArray(); }
                     public JsonElement execute(String name, JsonObject args) {
                         called.set(name);

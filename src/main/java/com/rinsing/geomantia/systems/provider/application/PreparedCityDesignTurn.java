@@ -15,7 +15,7 @@ final class PreparedCityDesignTurn {
                 && (Set.of("city_prepare_d4_blueprint_context", "city_submit_d4_blueprint").contains(step.nextAction()) || TOOLS.contains(step.nextAction()));
     }
 
-    static Input prepare(JsonObject queue, DeepSeekToolLoopClient.ToolExecutor gateway, Path debugRoot) throws Exception {
+    static Input prepare(JsonObject queue, PlanningToolExecutor gateway, Path debugRoot) throws Exception {
         JsonObject prepared = PlanningTurnControl.payload(gateway.execute("city_prepare_d4_blueprint_context", new JsonObject()));
         String failure = PlanningTurnControl.failure(prepared);
         if (!failure.isBlank()) throw new IOException(failure);

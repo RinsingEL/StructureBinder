@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 /** One evidence and execution contract for both embedded and external agents. */
-record PreparedPlanningTurn(JsonObject state, List<Path> images, List<String> tools, PlanningTurnControl control) {
+public record PreparedPlanningTurn(JsonObject state, List<Path> images, List<String> tools, PlanningTurnControl control) {
     static PreparedPlanningTurn prepare(ProviderPlanningDiscovery.PlanningStep run,
             ProviderPlanningToolGateway gateway, Path serverDirectory, Path debugRoot) throws Exception {
         com.google.gson.JsonObject designState = run.state().deepCopy();
@@ -45,7 +45,7 @@ record PreparedPlanningTurn(JsonObject state, List<Path> images, List<String> to
         }
         List<String> allowed = designTools;
         JsonObject scopedD3Evidence = d3Evidence;
-        DeepSeekToolLoopClient.ToolExecutor scoped = (tool, arguments) -> {
+        PlanningToolExecutor scoped = (tool, arguments) -> {
             if (!allowed.contains(tool)) {
                 var denied = new com.google.gson.JsonObject();
                 denied.addProperty("ok", false);

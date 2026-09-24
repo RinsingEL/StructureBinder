@@ -7,10 +7,6 @@ import com.rinsing.geomantia.systems.city.infrastructure.world.CityTemplateConte
 import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.landuse.LandUseDefaultConfigBootstrap;
 import com.rinsing.geomantia.systems.provider.application.ManagedCityPlanningSources;
-import com.rinsing.geomantia.systems.realm_planning.adapter.minecraft.AdventurerMapStarterGrant;
-import com.rinsing.geomantia.platform.network.AdventurerMapNetwork;
-import com.rinsing.geomantia.platform.network.ProviderNetwork;
-import com.rinsing.geomantia.platform.registry.GeomantiaItems;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.common.MinecraftForge;
@@ -30,11 +26,9 @@ public final class GeomantiaMod {
 
     public GeomantiaMod(FMLJavaModLoadingContext context) {
         IEventBus modEventBus = context.getModEventBus();
-        GeomantiaItems.register(modEventBus);
         CityTemplateTerrainStructureRegistries.register(modEventBus);
         modEventBus.addListener(this::onCommonSetup);
         MinecraftForge.EVENT_BUS.register(this);
-        MinecraftForge.EVENT_BUS.register(new AdventurerMapStarterGrant());
         registerClientDevHooks();
     }
 
@@ -50,14 +44,12 @@ public final class GeomantiaMod {
             } catch (java.io.IOException ex) {
                 LOGGER.error("Failed to create global realm planning defaults in {}.", FMLPaths.CONFIGDIR.get(), ex);
             }
-            AdventurerMapNetwork.register();
             try {
                 com.rinsing.geomantia.systems.city.infrastructure.world.CityWallModuleConfig.ensureDefaults(
                         com.rinsing.geomantia.systems.city.infrastructure.world.CityWallModuleConfig.directory());
             } catch (java.io.IOException ex) {
                 LOGGER.error("Failed to install independent City wall configuration.", ex);
             }
-            ProviderNetwork.register();
             com.rinsing.geomantia.platform.mcp.McpServerService.instance().start(FMLPaths.GAMEDIR.get());
         });
         LOGGER.info("Geomantia initialized.");
@@ -66,6 +58,12 @@ public final class GeomantiaMod {
     @net.minecraftforge.eventbus.api.SubscribeEvent
     public void onServerAboutToStart(ServerAboutToStartEvent event) {
         java.nio.file.Path serverRoot = event.getServer().getWorldPath(LevelResource.ROOT);
+        try {
+            var access = com.rinsing.geomantia.systems.realm_planning.application.access.PlanningAreaAccessConfig.loadOrCreate(
+                    event.getServer().getServerDirectory().toPath().resolve("config/geomantia/planning_area_access.json"));
+            java.nio.file.Files.writeString(serverRoot.resolve("geomantia_starter_realm.json"),
+                    com.rinsing.geomantia.systems.realm_planning.application.access.InitialExplorationArea.description(access.initialActivityRadiusBlocks()).toString());
+        } catch(java.io.IOException error) { throw new java.io.UncheckedIOException("Cannot initialize starter realm", error); }
         CityReservationMaskRegistry.load(serverRoot);
         CityLandUseWorldgenRegistry.load(serverRoot);
         com.rinsing.geomantia.systems.city.infrastructure.world.CityWallWorldgenRegistry.load(serverRoot);

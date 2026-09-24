@@ -1,4 +1,5 @@
-package com.rinsing.geomantia.systems.provider.application;
+package com.rinsing.geomantia.harness.systems.provider.application;
+import com.rinsing.geomantia.harness.systems.provider.application.*;
 
 import org.junit.jupiter.api.Test;
 import java.net.URI;
