@@ -21,10 +21,11 @@ export const planningTools = [
 ];
 
 export function renderLobby(data: Record<string, any>): string {
-  const stage: Record<string, string> = { W: "世界扫描", T1: "国度设计", T2: "国度选址", T3: "领土扩张", T4: "城市选址", CITY: "城市设计", QUEUE_REFRESH: "城市队列准备", WAITING: "等待程序推进", COMPLETE: "规划完成" };
+  const stage: Record<string, string> = { W: "世界扫描", T1: "国度设计", T2: "国度选址", T3: "领土扩张", T4: "城市选址", CITY: "城市设计", EXTENSION: "附属内容设计", QUEUE_REFRESH: "城市队列准备", WAITING: "等待程序推进", COMPLETE: "规划完成" };
   return ["```text", "+-------- Geomantia · 存档大厅 --------+",
     `  当前存档：${data.worldName ?? "未知"}`, `  当前阶段：${stage[data.stage] ?? data.stage ?? "未知"}`,
     ...(data.citySeedId ? [`  当前城市：${data.citySeedId}`] : []),
+    ...(data.extensionTitle ? [`  当前任务：${data.extensionTitle}`] : []),
     `  状态：${data.error || ({ready:"可以继续",running:"程序处理中",waiting:"等待程序推进",complete:"规划完成",blocked:"遇到阻塞"} as Record<string,string>)[data.status] || data.status}`,
     ...(data.owner ? [`  当前执行端：${data.owner === "embedded" ? "游戏内置 Harness" : data.ownedByThisConnection ? "本次连接" : "其他外部 Agent"}`] : []),
     "+-------------------------------------+", "",

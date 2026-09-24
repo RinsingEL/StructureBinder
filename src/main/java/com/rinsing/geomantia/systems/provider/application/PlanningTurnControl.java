@@ -39,6 +39,9 @@ final class PlanningTurnControl implements DeepSeekToolLoopClient.ToolExecutor {
     }
 
     @Override
+    public com.google.gson.JsonArray definitions(java.util.List<String> tools) { return delegate.definitions(tools); }
+
+    @Override
     public synchronized JsonElement execute(String tool, JsonObject arguments) throws Exception {
         if (finished) throw new IllegalStateException("PLANNING_TURN_FINISHED: wait for the host's next task.");
         JsonElement output;
@@ -146,7 +149,8 @@ final class PlanningTurnControl implements DeepSeekToolLoopClient.ToolExecutor {
     }
 
     private static boolean hostFailure(String error) {
-        return error.contains("MANAGED_CITY_SOURCE") || error.contains("CITY_TEMPLATE_CONTENT")
+        return error.startsWith("PLANNING_EXTENSION_FAILED") || error.startsWith("PLANNING_EXTENSION_INPUT_CHANGED")
+                || error.contains("MANAGED_CITY_SOURCE") || error.contains("CITY_TEMPLATE_CONTENT")
                 || error.contains("PLANNING_PRESENTATION_TOO_LARGE")
                 || error.contains("PLANNING_AUTHOR_ANNOTATION_REQUIRED")
                 || error.contains("CITY_TEMPLATE_CATALOG") || error.contains("ConnectException")

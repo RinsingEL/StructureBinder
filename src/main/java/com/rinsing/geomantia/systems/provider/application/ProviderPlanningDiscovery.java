@@ -25,16 +25,26 @@ public final class ProviderPlanningDiscovery {
     private static final Set<String> CITY_ACTIONABLE = Set.of(
             "waiting_for_agent", "waiting_for_patch_review");
     private final Path debugRoot;
+    private final PlanningExtensions extensions;
     private final Path surveySettingsPath;
     private final String worldSeed;
     private int realmCount;
     private final int realmCountOverride;
 
     public ProviderPlanningDiscovery(Path debugRoot, long worldSeed) {
-        this(debugRoot, worldSeed, 0);
+        this(debugRoot, worldSeed, 0, PlanningExtensionRegistry.empty());
     }
 
     ProviderPlanningDiscovery(Path debugRoot, long worldSeed, int realmCount) {
+        this(debugRoot, worldSeed, realmCount, PlanningExtensionRegistry.empty());
+    }
+
+    ProviderPlanningDiscovery(Path debugRoot, long worldSeed, PlanningExtensionRegistry registry) {
+        this(debugRoot, worldSeed, 0, registry);
+    }
+
+    private ProviderPlanningDiscovery(Path debugRoot, long worldSeed, int realmCount, PlanningExtensionRegistry registry) {
+        this.extensions = new PlanningExtensions(registry);
         this.debugRoot = debugRoot.toAbsolutePath().normalize();
         this.surveySettingsPath = this.debugRoot.getParent().resolve("config").resolve("geomantia")
                 .resolve("world_survey.json");
@@ -111,6 +121,13 @@ public final class ProviderPlanningDiscovery {
             JsonObject state = baseState(Stage.QUEUE_REFRESH, runId, "city_design_queue_refresh");
             return step(Stage.QUEUE_REFRESH, runId, "", "", "city_design_queue_refresh", state,
                     runDirectory, List.of());
+        }
+
+        var pendingExtension = extensions.next(runDirectory, queue);
+        if (pendingExtension != null) {
+            var context = pendingExtension.context();
+            return step(Stage.EXTENSION, runId, context.realmId(), context.citySeedId(),
+                    pendingExtension.entry().id(), pendingExtension.state(), runDirectory, List.of());
         }
 
         if (queue != null && queueHasUnfinishedCity(queue)) {
@@ -322,7 +339,7 @@ public final class ProviderPlanningDiscovery {
                 fileStamp(runDirectory.resolve("realm_coordinate_selections.json")),
                 fileStamp(runDirectory.resolve("t3_report.json")),
                 fileStamp(runDirectory.resolve("city_seed_registry.json")),
-                stage == Stage.CITY ? cityDecisionRevision(runDirectory, cityId) : "");
+                stage == Stage.CITY ? cityDecisionRevision(runDirectory, cityId) : string(state, "taskRevision"));
         return new PlanningStep(stage, runId, realmId, cityId, nextAction, state, runDirectory, images, identity);
     }
 
@@ -422,7 +439,7 @@ public final class ProviderPlanningDiscovery {
 
     public enum Stage {
         W("w"), T1("t1"), T2("t2"), T3("t3"), T4("t4"),
-        QUEUE_REFRESH("city_queue_refresh"), CITY("city"), WAITING("waiting"), COMPLETE("complete");
+        QUEUE_REFRESH("city_queue_refresh"), CITY("city"), EXTENSION("extension"), WAITING("waiting"), COMPLETE("complete");
 
         private final String contractName;
 

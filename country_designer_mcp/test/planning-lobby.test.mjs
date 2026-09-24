@@ -58,6 +58,8 @@ test('embedded bridge does not receive lobby instructions or tools', async () =>
 });
 
 test('new-world menu and JPEG/WebP action output do not invent saved progress', () => {
+  const extension = renderLobby({worldName:'河谷',stage:'EXTENSION',extensionTitle:'配置居民与商品',status:'ready',hasSavedProgress:true});
+  assert.match(extension, /附属内容设计/); assert.match(extension, /配置居民与商品/); assert.match(extension, /继续规划/);
   assert.match(renderLobby({worldName:'新世界',stage:'W',status:'ready',hasSavedProgress:false}), /开始规划/);
   const result = actionResult({ok:false,output:[{type:'input_image',image_url:'data:image/webp;base64,AQID'}]});
   assert.equal(result.isError,true); assert.equal(result.content[1].mimeType,'image/webp');

@@ -32,13 +32,13 @@ class HarnessAgentClientTest {
     }
 
     @Test @Timeout(60)
-    void bundledRuntimeExecutesHostToolAndSendsNativeImagesWithoutSystemDependencies() throws Exception {
+    void bundledRuntimeExecutesAddonToolAndSendsNativeImagesWithoutSystemDependencies() throws Exception {
         List<JsonObject> requests = new CopyOnWriteArrayList<>();
         HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/v1/chat/completions", exchange -> {
             requests.add(JsonParser.parseString(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8)).getAsJsonObject());
             String delta = requests.size() == 1
-                    ? "{\"tool_calls\":[{\"index\":0,\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"city_d4_preview\",\"arguments\":\"{}\"}}]}"
+                    ? "{\"tool_calls\":[{\"index\":0,\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"exampleaddon_preview\",\"arguments\":\"{}\"}}]}"
                     : "{\"content\":\"预览可见\"}";
             String response = "data: {\"id\":\"test\",\"choices\":[{\"index\":0,\"delta\":" + delta + ",\"finish_reason\":null}]}\n\n"
                     + "data: {\"id\":\"test\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\""
@@ -57,14 +57,21 @@ class HarnessAgentClientTest {
             var config = new PlayerProviderConfig("custom", true, "http://127.0.0.1:" + server.getAddress().getPort() + "/v1",
                     "deepseek-v4.1-flash", "chat_completions", 20, "harness");
             List<AgentActivityEvent> activity = new ArrayList<>();
+            var executor = new DeepSeekToolLoopClient.ToolExecutor() {
+                public JsonArray definitions(List<String> names) {
+                    return JsonParser.parseString("[{\"type\":\"function\",\"name\":\"exampleaddon_preview\",\"description\":\"Preview addon content\",\"parameters\":{\"type\":\"object\",\"properties\":{}}}]").getAsJsonArray();
+                }
+                public JsonElement execute(String name, JsonObject args) throws Exception {
+                    assertEquals("exampleaddon_preview", name);
+                    return HarnessAgentClient.promptContent(new JsonObject(), List.of(image));
+                }
+            };
             var result = client.run(config, new ProviderConfigStore.Credentials("test-only", "test"), "isolated-harness-test",
-                    new JsonObject(), List.of(image), List.of("city_d4_preview"), (name, args) -> {
-                        assertEquals("city_d4_preview", name);
-                        return HarnessAgentClient.promptContent(new JsonObject(), List.of(image));
-                    }, activity::add);
+                    new JsonObject(), List.of(image), List.of("exampleaddon_preview"), new PlanningTurnControl(executor), activity::add);
             assertTrue(result.success(), () -> result + " " + activity + " " + runtimeLog());
             assertEquals(1, result.toolCalls());
             assertEquals(2, requests.size());
+            assertTrue(requests.get(0).getAsJsonArray("tools").toString().contains("exampleaddon_preview"));
             assertEquals(32768, requests.get(0).get("max_tokens").getAsInt());
             assertEquals(1, imageCount(requests.get(0)));
             assertEquals(1, imageCount(requests.get(1)));

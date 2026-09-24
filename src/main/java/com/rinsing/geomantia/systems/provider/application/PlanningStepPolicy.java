@@ -21,7 +21,7 @@ final class PlanningStepPolicy {
             case CITY -> java.util.stream.Stream.concat(List.of("city_design_queue_status", "city_plan_d3", "city_review_d3_site",
                     "patch_explorer_open", "patch_explorer_show_candidates",
                     "city_prepare_d4_blueprint_context").stream(), com.rinsing.geomantia.systems.city.application.CityD4Workflow.TOOLS.stream()).toList();
-            case WAITING, COMPLETE -> List.of();
+            case EXTENSION, WAITING, COMPLETE -> List.of();
         };
     }
 

@@ -62,6 +62,7 @@ public final class GeomantiaHttpServer {
         ExecutorService createdExecutor = null;
         RealmPlanningHttpController createdRealmController = null;
         try {
+            var extensions = com.rinsing.geomantia.platform.PlanningExtensionRegistration.collect(minecraftServer);
             createdServer = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
             PlanningSessionHttpController planningController = new PlanningSessionHttpController(minecraftServer);
             createdServer.createContext("/planning/", planningController::handle);
@@ -154,7 +155,7 @@ public final class GeomantiaHttpServer {
             PlayerProviderService.instance().startAutomation(
                     minecraftServer.getServerDirectory().toPath(),
                     WorldScopedPlanningPaths.realmDebugRoot(minecraftServer), port,
-                    minecraftServer.overworld().getSeed());
+                    minecraftServer.overworld().getSeed(), extensions);
             LOGGER.info("Geomantia GIS API server started on 127.0.0.1:{}.", port);
         } catch (IOException | RuntimeException ex) {
             LOGGER.error("Failed to start Geomantia GIS API server.", ex);

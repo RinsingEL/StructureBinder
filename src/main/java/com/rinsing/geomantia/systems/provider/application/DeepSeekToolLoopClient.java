@@ -98,7 +98,7 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
             int toolCalls = 0;
             String finalText = "";
             for (int round = 0; round < MAX_ROUNDS; round++) {
-                JsonObject response = request(value, credentials, input, allowedTools, toolCalls == 0, sessionId);
+                JsonObject response = request(value, credentials, input, toolExecutor.definitions(allowedTools), toolCalls == 0, sessionId);
                 JsonArray output = response.has("output") && response.get("output").isJsonArray()
                         ? response.getAsJsonArray("output") : new JsonArray();
                 JsonArray calls = new JsonArray();
@@ -212,7 +212,7 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
             long requestStarted = System.nanoTime();
             JsonObject response;
             try {
-                response = requestChatCompletions(config, credentials, messages, allowedTools, sessionId);
+                response = requestChatCompletions(config, credentials, messages, toolExecutor.definitions(allowedTools), sessionId);
             } catch (IOException exception) {
                 long elapsedSeconds = Math.max(1L, (System.nanoTime() - requestStarted) / 1_000_000_000L);
                 emit(activityListener, "error", "模型请求失败（第 " + (round + 1) + " 轮，耗时 "
@@ -352,12 +352,12 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
     }
 
     private JsonObject requestChatCompletions(PlayerProviderConfig config, Credentials credentials,
-                                              JsonArray messages, List<String> allowedTools, String sessionId)
+                                              JsonArray messages, JsonArray definitions, String sessionId)
             throws IOException, InterruptedException {
         JsonObject body = new JsonObject();
         body.addProperty("model", config.model());
         body.add("messages", messages.deepCopy());
-        body.add("tools", chatTools(allowedTools));
+        body.add("tools", chatTools(definitions));
         body.addProperty("tool_choice", "auto");
         body.addProperty("max_tokens", 32768);
         if (config.model().toLowerCase(java.util.Locale.ROOT).startsWith("glm-5.3")) {
@@ -381,9 +381,9 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
         return JsonParser.parseString(response.body()).getAsJsonObject();
     }
 
-    private static JsonArray chatTools(List<String> allowedTools) {
+    private static JsonArray chatTools(JsonArray definitions) {
         JsonArray tools = new JsonArray();
-        for (JsonElement element : ProviderPlanningToolCatalog.definitions(allowedTools)) {
+        for (JsonElement element : definitions) {
             if (!element.isJsonObject()) continue;
             JsonObject source = element.getAsJsonObject();
             JsonObject function = new JsonObject();
@@ -547,13 +547,13 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
     }
 
     private JsonObject request(PlayerProviderConfig config, Credentials credentials, JsonArray input,
-                               List<String> allowedTools, boolean requireTool, String sessionId)
+                               JsonArray definitions, boolean requireTool, String sessionId)
             throws IOException, InterruptedException {
         JsonObject body = new JsonObject();
         body.addProperty("model", config.model());
         body.addProperty("instructions", AgentPromptConfig.agent("direct"));
         body.add("input", input.deepCopy());
-        body.add("tools", ProviderPlanningToolCatalog.definitions(allowedTools));
+        body.add("tools", definitions.deepCopy());
         body.addProperty("tool_choice", requireTool ? "required" : "auto");
         JsonObject reasoning = new JsonObject();
         reasoning.addProperty("effort", requireTool ? "none" : "high");
@@ -648,6 +648,7 @@ public final class DeepSeekToolLoopClient implements ProviderAgentClient {
     @FunctionalInterface
     public interface ToolExecutor {
         JsonElement execute(String toolName, JsonObject arguments) throws Exception;
+        default JsonArray definitions(List<String> tools) { return ProviderPlanningToolCatalog.definitions(tools); }
     }
 
     public record LoopResult(boolean success, String state, String errorCode, int toolCalls,

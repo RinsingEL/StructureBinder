@@ -71,7 +71,7 @@ final class HarnessAgentClient implements ProviderAgentClient {
                 request.addProperty("timeoutSeconds", config.timeoutSeconds());
                 request.addProperty("instructions", AgentPromptConfig.agent("harness"));
                 request.add("content", promptContent(state, images));
-                request.add("tools", ProviderPlanningToolCatalog.definitions(allowedTools));
+                request.add("tools", executor.definitions(allowedTools));
                 send(writer, request);
                 emit(activity, "system", "DeepSeek Harness 已接管：" + sessionId);
                 long deadline = System.nanoTime() + TimeUnit.MINUTES.toNanos(20);

@@ -8,6 +8,7 @@ import java.util.concurrent.*;
 /** Provider-independent planning entry point; all progress is recovered from world artifacts. */
 public final class PlanningSessionService implements AutoCloseable {
     private final ProviderPlanningDiscovery discovery;
+    private final PlanningExtensions extensions;
     private final Path serverDirectory, debugRoot;
     private final int port;
     @FunctionalInterface interface TurnPreparer {
@@ -26,13 +27,24 @@ public final class PlanningSessionService implements AutoCloseable {
     private JsonObject lastActionResult;
 
     public PlanningSessionService(Path serverDirectory, Path debugRoot, int port, long seed) {
-        this(serverDirectory, debugRoot, port, seed, null);
+        this(serverDirectory, debugRoot, port, seed, PlanningExtensionRegistry.empty(), null);
+    }
+    public PlanningSessionService(Path serverDirectory, Path debugRoot, int port, long seed, PlanningExtensionRegistry registry) {
+        this(serverDirectory, debugRoot, port, seed, registry, null);
     }
     PlanningSessionService(Path serverDirectory, Path debugRoot, int port, long seed, TurnPreparer turnPreparer) {
+        this(serverDirectory, debugRoot, port, seed, PlanningExtensionRegistry.empty(), turnPreparer);
+    }
+    private PlanningSessionService(Path serverDirectory, Path debugRoot, int port, long seed,
+                                   PlanningExtensionRegistry registry, TurnPreparer turnPreparer) {
         this.serverDirectory = serverDirectory; this.debugRoot = debugRoot; this.port = port;
-        discovery = new ProviderPlanningDiscovery(debugRoot, seed);
+        discovery = new ProviderPlanningDiscovery(debugRoot, seed, registry);
+        extensions = new PlanningExtensions(registry);
         this.turnPreparer = turnPreparer == null
                 ? (step, gateway) -> PreparedPlanningTurn.prepare(step, gateway, serverDirectory, debugRoot) : turnPreparer;
+    }
+    PreparedPlanningTurn prepare(ProviderPlanningDiscovery.PlanningStep step, ProviderPlanningToolGateway gateway) throws Exception {
+        return step.stage() == ProviderPlanningDiscovery.Stage.EXTENSION ? extensions.prepare(step) : turnPreparer.prepare(step, gateway);
     }
     public ProviderPlanningDiscovery discovery() { return discovery; }
     public JsonObject artifact(String operation, String path, String query, int offset) throws Exception {
@@ -63,6 +75,10 @@ public final class PlanningSessionService implements AutoCloseable {
         result.addProperty("citySeedId", step.citySeedId());
         result.addProperty("stage", step.stage().name());
         result.addProperty("nextAction", step.nextAction());
+        if (step.stage() == ProviderPlanningDiscovery.Stage.EXTENSION) {
+            result.add("extensionId", step.state().get("extensionId"));
+            result.add("extensionTitle", step.state().get("extensionTitle"));
+        }
         result.addProperty("owner", lease.owner().isEmpty() ? "" : lease.owner().equals("embedded") ? "embedded" : "external");
         String status = step.stage() == ProviderPlanningDiscovery.Stage.COMPLETE ? "complete"
                 : step.stage() == ProviderPlanningDiscovery.Stage.WAITING ? "waiting" : "ready";
@@ -124,7 +140,8 @@ public final class PlanningSessionService implements AutoCloseable {
             if (!step.stage().actionable()) return;
             var gateway = gateway(step, token);
             if (!PlanningStepPolicy.hostOnly(step)) {
-                prepared = turnPreparer.prepare(step, gateway);
+                prepared = prepare(step, gateway);
+                if (prepared == null) continue;
                 taskId = UUID.randomUUID().toString();
                 return;
             }
@@ -157,7 +174,7 @@ public final class PlanningSessionService implements AutoCloseable {
             result.addProperty("taskId", taskId);
             result.addProperty("taskFinished", task.control().finished());
             result.add("state", task.state().deepCopy());
-            result.add("tools", ProviderPlanningToolCatalog.definitions(task.tools()));
+            result.add("tools", task.control().definitions(task.tools()));
             result.addProperty("instructions", AgentPromptConfig.read("agent.md") +
                     "\n通过 planning_action 调用本次 tools 中的工具。任务完成后调用 planning_resume 领取下一项；程序运行时使用 planning_wait。用户暂停时调用 planning_release。图片必须实际读取，不能仅凭路径判断。不要调用旧入口绕过本次任务范围。");
             JsonArray images = new JsonArray();

@@ -53,10 +53,14 @@ public final class PlayerProviderService {
     }
 
     public void startAutomation(Path serverDirectory, Path debugRoot, int apiPort, long worldSeed) {
+        startAutomation(serverDirectory, debugRoot, apiPort, worldSeed, PlanningExtensionRegistry.empty());
+    }
+
+    public void startAutomation(Path serverDirectory, Path debugRoot, int apiPort, long worldSeed, PlanningExtensionRegistry extensions) {
         synchronized (activityEvents) {
             activityEvents.clear();
         }
-        agentRunner.start(serverDirectory, debugRoot, apiPort, worldSeed);
+        agentRunner.start(serverDirectory, debugRoot, apiPort, worldSeed, extensions);
     }
 
     public PlanningSessionService planning() { return agentRunner.planning(); }

@@ -72,11 +72,15 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
     }
 
     public synchronized void start(Path serverDirectory, Path debugRoot, int apiPort, long worldSeed) {
+        start(serverDirectory, debugRoot, apiPort, worldSeed, PlanningExtensionRegistry.empty());
+    }
+
+    public synchronized void start(Path serverDirectory, Path debugRoot, int apiPort, long worldSeed, PlanningExtensionRegistry extensions) {
         close();
         this.serverDirectory = serverDirectory.toAbsolutePath().normalize();
         this.debugRoot = debugRoot.toAbsolutePath().normalize();
         this.apiPort = apiPort;
-        this.planning = new PlanningSessionService(this.serverDirectory, this.debugRoot, apiPort, worldSeed);
+        this.planning = new PlanningSessionService(this.serverDirectory, this.debugRoot, apiPort, worldSeed, extensions);
         this.discovery = planning.discovery();
         legacyClient.start(this.serverDirectory, this.debugRoot, apiPort);
         if (harnessClient != legacyClient) harnessClient.start(this.serverDirectory, this.debugRoot, apiPort);
@@ -169,7 +173,11 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
                 if (!failure.isBlank()) throw new IOException(failure);
                 result = new DeepSeekToolLoopClient.LoopResult(true, "completed", "", 0, "");
             } else {
-                var prepared = PreparedPlanningTurn.prepare(run, gateway, serverDirectory, debugRoot);
+                var prepared = sessions.prepare(run, gateway);
+                if (prepared == null) {
+                    acceptSuccessfulTurnOnlyAfterStateProgress(currentDiscovery, run);
+                    return;
+                }
                 var designState = prepared.state();
                 var designImages = prepared.images();
                 var designTools = prepared.tools();
@@ -284,6 +292,9 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
     }
 
     static String designSessionId(Path debugRoot, ProviderPlanningDiscovery.PlanningStep step, JsonObject state) {
+        if (step.stage() == ProviderPlanningDiscovery.Stage.EXTENSION)
+            return "geomantia-extension-" + java.util.UUID.nameUUIDFromBytes((debugRoot.toAbsolutePath().normalize()
+                    + "|" + step.runId() + "|" + step.citySeedId() + "|" + state.get("taskRevision")).getBytes(java.nio.charset.StandardCharsets.UTF_8));
         if (!state.has("preparedBlueprintContext")) return sessionId(debugRoot, step);
         String identity = debugRoot.toAbsolutePath().normalize() + "|" + step.runId() + "|" + step.citySeedId()
                 + "|" + state.get("contextId").getAsString() + "|"
