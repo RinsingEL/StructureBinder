@@ -71,7 +71,7 @@ public record AdventurerMapSnapshot(
             codes[i]=(byte)(int)mapping.get(old);
         }
         var visible=new CoarseMap(m.dimensionId(),m.minBlockX(),m.minBlockZ(),m.cellSizeBlocks(),m.width(),m.height(),terrain,codes,m.revealedCodes(),ids,names);
-        return new AdventurerMapSnapshot("","","",0,"","","","","", "",0,0,initialActivityRadiusBlocks,
+        return new AdventurerMapSnapshot("",wStatus,wPhase,wProgressPercent,"","","","","", "",0,0,initialActivityRadiusBlocks,
                 visible,cityNodes.stream().filter(n->m.revealedAt(n.blockX(),n.blockZ())).toList(),initialCenterX,initialCenterZ);
     }
 

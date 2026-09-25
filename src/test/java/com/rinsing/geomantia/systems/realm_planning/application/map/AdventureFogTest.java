@@ -19,6 +19,8 @@ class AdventureFogTest {
         assertEquals(0,normal.coarseMap().realmCodes()[1]);
         assertEquals(1,normal.cityNodes().size());
         assertTrue(normal.currentRealmName().isEmpty());
+        assertEquals("running",normal.wStatus());
+        assertEquals(25,normal.wProgressPercent());
         assertSame(snapshot,snapshot.forViewer(true));
         assertEquals(7,snapshot.coarseMap().terrainCodes()[1]);
     }

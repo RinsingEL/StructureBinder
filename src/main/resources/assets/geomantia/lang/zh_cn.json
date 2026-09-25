@@ -6,7 +6,7 @@
   "gui.geomantia.adventurer_map.debug_on": "Debug 图层：开",
   "gui.geomantia.adventurer_map.debug_off": "Debug 图层：关",
   "gui.geomantia.adventurer_map.loading": "正在读取规划状态…",
-  "gui.geomantia.adventurer_map.initial_area": "0,0 初始活动区",
+  "gui.geomantia.adventurer_map.initial_area": "初始大陆及近海",
   "gui.geomantia.adventurer_map.world_planning": "世界规划",
   "gui.geomantia.adventurer_map.w_status": "W 世界扫描",
   "gui.geomantia.adventurer_map.t_status": "T 国度规划",

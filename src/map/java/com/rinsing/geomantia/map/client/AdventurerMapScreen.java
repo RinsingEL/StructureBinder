@@ -60,6 +60,11 @@ public final class AdventurerMapScreen extends Screen {
         super(Component.translatable("gui.geomantia.adventurer_map.title"));
         this.snapshot = snapshot == null ? AdventurerMapSnapshot.empty() : snapshot;
     }
+    void initialView(double x,double z,double initialZoom) {
+        if(!Double.isFinite(x)||!Double.isFinite(z)) return;
+        viewCenterX=x; viewCenterZ=z; viewInitialized=true;
+        zoom=Math.max(1.0D/128,Math.min(4,initialZoom));
+    }
 
     @Override
     protected void init() {
@@ -82,7 +87,7 @@ public final class AdventurerMapScreen extends Screen {
                     rebuildMapTexture(); refresh();
                 })
                 .bounds(208, controlsY, 112, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("−"), button -> changeZoom(Math.max(0.5D, zoom / 1.25D)))
+        addRenderableWidget(Button.builder(Component.literal("−"), button -> changeZoom(Math.max(1.0D/128, zoom / 1.25D)))
                 .bounds(326, controlsY, 24, 20).build());
         addRenderableWidget(Button.builder(Component.literal("+"), button -> changeZoom(Math.min(4.0D, zoom * 1.25D)))
                 .bounds(354, controlsY, 24, 20).build());
@@ -269,14 +274,10 @@ public final class AdventurerMapScreen extends Screen {
         }
 
         if (!coarseMap.available()) {
-            int radius=Math.max(1,(int)Math.round(snapshot.initialActivityRadiusBlocks()*transform.scale()));
-            for(int dy=-radius;dy<=radius;dy++) {
-                int half=(int)Math.sqrt((long)radius*radius-(long)dy*dy);
-                graphics.fill(centerX-half,centerY+dy,centerX+half+1,centerY+dy+1,0xFF52565E);
-                graphics.fill(centerX-half,centerY+dy,centerX-half+1,centerY+dy+1,0xFFC6BC96);
-                graphics.fill(centerX+half,centerY+dy,centerX+half+1,centerY+dy+1,0xFFC6BC96);
-            }
-            graphics.drawString(font,Component.literal("地形尚未扫描 · 圆圈仅表示初始开放范围"),left+8,top+8,TEXT_PRIMARY,false);
+            String message="failed".equals(snapshot.wStatus()) ? "世界扫描失败，请查看服务器提示"
+                    : "completed".equals(snapshot.wStatus()) ? "正在读取大陆轮廓…"
+                    : "正在准备初始大陆 · 世界扫描 " + String.format(java.util.Locale.ROOT,"%.1f%%",snapshot.wProgressPercent());
+            graphics.drawString(font,Component.literal(message),left+8,top+8,TEXT_PRIMARY,false);
         }
         graphics.fill(centerX - 2, centerY, centerX + 3, centerY + 1, 0xFFD7D7D7);
         graphics.fill(centerX, centerY - 2, centerX + 1, centerY + 3, 0xFFD7D7D7);
@@ -322,7 +323,7 @@ public final class AdventurerMapScreen extends Screen {
     }
 
     private MapTransform mapTransform(int left, int top, int right, int bottom) {
-        double diameter = 2.0D * Math.max(1024, Math.min(8192, Math.round(4096.0D / zoom)));
+        double diameter = 2.0D * Math.max(1024, Math.min(524288, Math.round(4096.0D / zoom)));
         double scale = Math.min((right - left - 16.0D) / diameter,
                 (bottom - top - 16.0D) / diameter);
         return new MapTransform(viewCenterX, viewCenterZ,

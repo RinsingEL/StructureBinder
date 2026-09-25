@@ -14,8 +14,10 @@ final class PlanningSessionHttpController {
     private final Supplier<PlanningSessionService> sessions;
     private final Supplier<String> worldName;
     private final Semaphore waits = new Semaphore(2);
+    private java.util.function.BooleanSupplier worldPreparing=()->false;
     PlanningSessionHttpController(MinecraftServer server) {
         this(() -> PlanningHost.session(), () -> server.getWorldData().getLevelName());
+        worldPreparing=()->com.rinsing.geomantia.platform.InitialWorldPreparation.busy(server);
     }
     PlanningSessionHttpController(Supplier<PlanningSessionService> sessions, Supplier<String> worldName) {
         this.sessions = sessions; this.worldName = worldName;
@@ -32,6 +34,8 @@ final class PlanningSessionHttpController {
         try {
             JsonObject args = GisHttpUtil.readJsonObject(exchange);
             String token = exchange.getRequestHeaders().getFirst("X-Geomantia-Planning-Token");
+            if(worldPreparing.getAsBoolean() && Set.of("resume","action").contains(operation))
+                throw new IllegalStateException("WORLD_PREPARING: 首次世界扫描尚未完成，请等待进度完成后继续规划。");
             JsonObject result;
             switch (operation) {
                 case "lobby" -> {
@@ -71,6 +75,9 @@ final class PlanningSessionHttpController {
                     chain.doFilter(exchange); return;
                 }
                 AutoCloseable pin;
+                if(worldPreparing.getAsBoolean()) {
+                    GisHttpUtil.sendError(exchange,409,"WORLD_PREPARING: 首次世界扫描尚未完成。"); return;
+                }
                 try { pin = service().enter(exchange.getRequestHeaders().getFirst("X-Geomantia-Planning-Token")); }
                 catch (IllegalStateException occupied) { GisHttpUtil.sendError(exchange, 409, occupied.getMessage()); return; }
                 try (pin) { chain.doFilter(exchange); }

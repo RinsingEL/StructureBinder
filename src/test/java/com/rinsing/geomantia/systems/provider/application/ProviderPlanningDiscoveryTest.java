@@ -9,6 +9,24 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ProviderPlanningDiscoveryTest {
+    @Test void aiWaitsForInitialScanAndArrivalPreparationInsteadOfLaunchingAnotherW() throws Exception {
+        Path root=debugRoot.resolve("save/realm_debug"); Files.createDirectories(root);
+        Path pointer=root.getParent().resolve("geomantia_world_entry.json");
+        Files.writeString(pointer,"{\"worldSeed\":\"42\",\"runId\":\"startup\",\"status\":\"preparing\"}");
+        assertEquals(ProviderPlanningDiscovery.Stage.WAITING,new ProviderPlanningDiscovery(root,42).nextStep().stage());
+        com.rinsing.geomantia.systems.realm_planning.application.access.WorldEntrySurvey.markReady(root);
+        assertEquals("ready",com.rinsing.geomantia.systems.realm_planning.application.access.WorldEntrySurvey.read(pointer).get("status").getAsString());
+    }
+    @Test void startupSurveyRemainsAuthoritativeWhenPackRadiusChanges() throws Exception {
+        Path root=debugRoot.resolve("save/realm_debug");
+        Path run=root.resolve("startup"); Files.createDirectories(run);
+        Files.writeString(root.getParent().resolve("geomantia_world_entry.json"),"{\"worldSeed\":\"42\",\"runId\":\"startup\"}");
+        write(run,"world_survey_context.json","{\"worldSeed\":\"42\",\"sealed\":true,\"scanBounds\":{\"planningRadiusBlocks\":4096}}");
+        write(run,"world_patch_map.json","{}");
+        var next=new ProviderPlanningDiscovery(root,42).nextStep();
+        assertEquals("startup",next.runId());
+        assertEquals(ProviderPlanningDiscovery.Stage.T1,next.stage());
+    }
     @Test void readsConfiguredRealmCountInsteadOfHardcodedThree() throws Exception {
         Path root = debugRoot.resolve("world/realm_debug");
         Path config = root.getParent().resolve("config/geomantia/realm_planning.json");

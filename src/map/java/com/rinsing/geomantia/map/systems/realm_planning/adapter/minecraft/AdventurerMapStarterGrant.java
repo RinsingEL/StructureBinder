@@ -14,6 +14,12 @@ public final class AdventurerMapStarterGrant {
     private static final String GRANTED_KEY = "geomantiaAdventurerMapGranted";
 
     @SubscribeEvent
+    public void onStarterReady(com.rinsing.geomantia.api.regions.StarterRealmReadyEvent event) {
+        if(event.getEntity() instanceof ServerPlayer player)
+            com.rinsing.geomantia.map.platform.network.AdventurerMapNetwork.openStarterFor(player);
+    }
+
+    @SubscribeEvent
     public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;

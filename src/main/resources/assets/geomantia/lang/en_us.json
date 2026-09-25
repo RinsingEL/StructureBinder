@@ -6,7 +6,7 @@
   "gui.geomantia.adventurer_map.debug_on": "Debug Layer: On",
   "gui.geomantia.adventurer_map.debug_off": "Debug Layer: Off",
   "gui.geomantia.adventurer_map.loading": "Reading planning status…",
-  "gui.geomantia.adventurer_map.initial_area": "0,0 Initial Area",
+  "gui.geomantia.adventurer_map.initial_area": "Starter continent and near sea",
   "gui.geomantia.adventurer_map.world_planning": "World Planning",
   "gui.geomantia.adventurer_map.w_status": "W World Survey",
   "gui.geomantia.adventurer_map.t_status": "T Realm Planning",

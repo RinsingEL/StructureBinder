@@ -81,6 +81,8 @@ public final class AdventurerMapStatusReader {
         int remainingCount = intValue(queue, "remainingCount", 0);
         CoarseMap coarseMap = coarseMap(root, run, accessConfig,
                 viewport == null ? MapViewport.full() : viewport);
+        if(Files.isRegularFile(root.getParent().resolve("geomantia_world_entry.json")) && !initial.geographic())
+            coarseMap=CoarseMap.empty(); // Preparation is progress, never a pretend circular continent.
         List<CityNode> nodes = visibleCityNodes(
                 cityNodes(run.resolve("city_seed_registry.json"), queueItems, currentCityId), coarseMap,
                 viewport == null ? MapViewport.full() : viewport);
@@ -300,6 +302,8 @@ public final class AdventurerMapStatusReader {
     }
 
     private static Optional<Path> resolveRunDirectory(Path root, String preferredRunId) throws IOException {
+        Path saved=com.rinsing.geomantia.systems.realm_planning.application.access.WorldEntrySurvey.savedRun(root);
+        if(saved!=null) return Files.isDirectory(saved)?Optional.of(saved):Optional.empty();
         if (preferredRunId != null && !preferredRunId.isBlank()) {
             Path preferred = root.resolve(preferredRunId).normalize();
             if (preferred.startsWith(root) && Files.isDirectory(preferred)) {

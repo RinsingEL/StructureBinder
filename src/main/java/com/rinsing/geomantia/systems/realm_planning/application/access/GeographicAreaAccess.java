@@ -23,12 +23,13 @@ final class GeographicAreaAccess {
     }
     static GeographicAreaAccess load(Path root, PlanningAreaAccessConfig config, int safety) throws IOException {
         if (!Files.isDirectory(root)) return null;
-        Path run;
-        try (var paths=Files.list(root)) {
+        Path run=WorldEntrySurvey.savedRun(root);
+        if(run==null) try (var paths=Files.list(root)) {
             run=paths.filter(Files::isDirectory).filter(p->Files.isRegularFile(p.resolve("world_feature_grid.json")))
                     .max(Comparator.comparingLong(GeographicAreaAccess::activity)).orElse(null);
         }
         if (run==null) return null;
+        if(!Files.isRegularFile(run.resolve("world_feature_grid.json"))) return null;
         JsonObject grid=read(run.resolve("world_feature_grid.json"));
         GeographicRegions geo=GeographicRegions.build(grid,config.nearSeaDistanceBlocks(),config.oceanRegionSpanBlocks());
         JsonObject manifest=read(run.resolve("world_survey_manifest.json"));

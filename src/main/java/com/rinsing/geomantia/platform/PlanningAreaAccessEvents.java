@@ -33,6 +33,7 @@ public final class PlanningAreaAccessEvents {
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.START || !(event.player instanceof ServerPlayer player)) return;
+        if (InitialWorldPreparation.hold(player)) return;
         PlanningAreaAccessRuntime.handleMovement(player);
     }
 
@@ -43,7 +44,7 @@ public final class PlanningAreaAccessEvents {
 
     @SubscribeEvent
     public static void onLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) PlanningAreaAccessRuntime.handleMovement(player);
+        if (event.getEntity() instanceof ServerPlayer player && !InitialWorldPreparation.hold(player)) PlanningAreaAccessRuntime.handleMovement(player);
     }
 
     @SubscribeEvent

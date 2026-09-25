@@ -57,6 +57,15 @@ public final class ProviderPlanningDiscovery {
         var quantities = com.rinsing.geomantia.systems.realm_planning.RealmPopulationConfig.load(debugRoot);
         this.realmCount = realmCountOverride > 0 ? realmCountOverride : quantities.realmCount();
         WorldSurveySettingsConfig surveySettings = WorldSurveySettingsConfig.loadOrCreate(surveySettingsPath);
+        JsonObject entry=readObject(debugRoot.getParent().resolve("geomantia_world_entry.json"));
+        if(entry!=null && worldSeed.equals(string(entry,"worldSeed")) && "preparing".equals(string(entry,"status"))) {
+            String id=string(entry,"runId");
+            if(!id.matches("[A-Za-z0-9._-]+") || id.equals(".") || id.equals("..")) throw new IOException("WORLD_ENTRY_RUN_INVALID");
+            JsonObject state=baseState(Stage.WAITING,id,""); state.addProperty("status","preparing");
+            state.addProperty("reasonCode","INITIAL_WORLD_PREPARING");
+            state.addProperty("instruction","首次世界扫描和出生大陆正在由程序准备，完成后再开始设计；不要另行启动 W。");
+            return step(Stage.WAITING,id,"","","",state,debugRoot.resolve(id),List.of());
+        }
         Optional<Path> newest = newestCurrentWorldRun(surveySettings);
         if (newest.isEmpty()) {
             String runId = "provider_" + Long.toUnsignedString(Long.parseLong(worldSeed), 16)
@@ -204,6 +213,15 @@ public final class ProviderPlanningDiscovery {
 
     private Optional<Path> newestCurrentWorldRun(WorldSurveySettingsConfig surveySettings) throws IOException {
         if (!Files.isDirectory(debugRoot)) return Optional.empty();
+        // A world's first completed scan stays authoritative when pack defaults later change.
+        JsonObject entry=readObject(debugRoot.getParent().resolve("geomantia_world_entry.json"));
+        if(entry!=null && worldSeed.equals(string(entry,"worldSeed"))) {
+            String id=string(entry,"runId");
+            if(id.matches("[A-Za-z0-9._-]+") && !id.equals(".") && !id.equals("..")) {
+                Path saved=debugRoot.resolve(id);
+                if(Files.isDirectory(saved)) return Optional.of(saved);
+            }
+        }
         try (Stream<Path> paths = Files.list(debugRoot)) {
             return paths.filter(Files::isDirectory).filter(path -> matchesWorld(path, surveySettings))
                     .max(Comparator.comparing(this::createdAt));

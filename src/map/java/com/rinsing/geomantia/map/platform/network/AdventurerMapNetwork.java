@@ -32,10 +32,10 @@ import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 public final class AdventurerMapNetwork {
-    private static final String PROTOCOL = "8";
+    private static final String PROTOCOL = "9";
     private static final int VIEW_RADIUS_AT_ZOOM_ONE = 4096;
     private static final int MIN_VIEW_RADIUS = 1024;
-    private static final int MAX_VIEW_RADIUS = 8192;
+    private static final int MAX_VIEW_RADIUS = 524288;
     private static final int VIEWPORT_CENTER_QUANTUM_BLOCKS = 256;
     private static final int MAX_NODES = 8192;
     private static final int MAX_MAP_PIXELS = 128 * 128;
@@ -113,7 +113,15 @@ public final class AdventurerMapNetwork {
     }
 
     public static void openFor(ServerPlayer player) {
-        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new OpenMap());
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new OpenMap(Double.NaN,Double.NaN,1));
+    }
+
+    public static void openStarterFor(ServerPlayer player) {
+        var area=com.rinsing.geomantia.systems.realm_planning.application.access.InitialExplorationArea.fromDebugRoot(
+                WorldScopedPlanningPaths.realmDebugRoot(player.server),0);
+        var view=area.mapView();
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                new OpenMap(view.centerX(),view.centerZ(),normalizeZoom(VIEW_RADIUS_AT_ZOOM_ONE/view.radius())));
     }
 
     private record SnapshotRequest(double zoom, double centerX, double centerZ, boolean debug) {
@@ -176,7 +184,7 @@ public final class AdventurerMapNetwork {
     }
 
     private static double normalizeZoom(double zoom) {
-        return Double.isFinite(zoom) ? Math.max(0.5D, Math.min(4.0D, zoom)) : 1.0D;
+        return Double.isFinite(zoom) ? Math.max(1.0D/128, Math.min(4.0D, zoom)) : 1.0D;
     }
 
     private static int normalizeCenter(double value, double fallback) {
@@ -292,18 +300,19 @@ public final class AdventurerMapNetwork {
         }
     }
 
-    private record OpenMap() {
-        static void encode(OpenMap ignored, FriendlyByteBuf buffer) {
+    private record OpenMap(double centerX,double centerZ,double zoom) {
+        static void encode(OpenMap value, FriendlyByteBuf buffer) {
+            buffer.writeDouble(value.centerX); buffer.writeDouble(value.centerZ); buffer.writeDouble(value.zoom);
         }
 
         static OpenMap decode(FriendlyByteBuf buffer) {
-            return new OpenMap();
+            return new OpenMap(buffer.readDouble(),buffer.readDouble(),normalizeZoom(buffer.readDouble()));
         }
 
-        static void handle(OpenMap ignored, Supplier<NetworkEvent.Context> contextSupplier) {
+        static void handle(OpenMap value, Supplier<NetworkEvent.Context> contextSupplier) {
             NetworkEvent.Context context = contextSupplier.get();
             context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                    () -> () -> AdventurerMapClient.openMap()));
+                    () -> () -> AdventurerMapClient.openMap(value.centerX,value.centerZ,value.zoom)));
             context.setPacketHandled(true);
         }
     }

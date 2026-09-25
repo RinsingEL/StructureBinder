@@ -38,6 +38,21 @@ class PlanningAreaAccessPolicyTest {
         assertTrue(policy().permitsChunk("minecraft:overworld",4096/16,0));
     }
 
+    @Test void persistedStarterContinentOpensWithoutTAndRetainsPendingCityProtection() throws Exception {
+        fixture(false,false);
+        var grid=GeographicRegionsTest.grid(-8,95,-16,16,(x,z)->x<52||x>68);
+        write(run().resolve("world_feature_grid.json"),grid);
+        var area=InitialExplorationArea.continent(GeographicRegions.build(grid,256,1024),0,0);
+        write(temp.resolve("geomantia_starter_realm.json"),area.description());
+        var access=policy();
+        assertTrue(access.evaluate("minecraft:overworld",3000,0).allowed());
+        assertTrue(access.revealed("minecraft:overworld",3000,0));
+        assertTrue(access.permitsChunk("minecraft:overworld",3000/16,0));
+        assertFalse(access.evaluate("minecraft:overworld",5632,0).allowed(),"Existing pending city remains protected");
+        assertFalse(access.permitsChunk("minecraft:overworld",5632/16,0));
+        assertFalse(access.revealed("minecraft:overworld",60*128,0),"Distant ocean stays fogged");
+    }
+
     @TempDir Path temp;
     Path root() { return temp.resolve("realm_debug"); }
     Path run() { return root().resolve("run"); }

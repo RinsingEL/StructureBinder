@@ -17,8 +17,13 @@ public final class AdventurerMapClient {
     }
 
     public static void openMap() {
+        openMap(Double.NaN,Double.NaN,1);
+    }
+    public static void openMap(double centerX,double centerZ,double zoom) {
         Minecraft minecraft = Minecraft.getInstance();
-        minecraft.setScreen(new AdventurerMapScreen(AdventurerMapSnapshot.empty()));
+        var screen=new AdventurerMapScreen(AdventurerMapSnapshot.empty());
+        screen.initialView(centerX,centerZ,zoom);
+        minecraft.setScreen(screen);
     }
 
     static void requestSnapshot(double zoom, double centerX, double centerZ, boolean debug) {

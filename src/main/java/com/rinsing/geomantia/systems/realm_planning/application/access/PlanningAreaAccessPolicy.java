@@ -24,13 +24,13 @@ public final class PlanningAreaAccessPolicy {
     public Decision evaluate(String dimension,double x,double z) {
         if(!config.enabled()||!config.managedDimensions().contains(dimension)) return Decision.allowed("UNMANAGED_DIMENSION","","",Double.POSITIVE_INFINITY);
         double clearance=config.initialActivityRadiusBlocks()-initial.distance(x,z);
-        if((regional==null || !regional.initial.available()) && clearance>=0) return Decision.allowed("INITIAL_ACTIVITY_AREA",activeRunId(),"",clearance);
+        if(!initial.geographic() && (regional==null || !regional.initial.available()) && clearance>=0) return Decision.allowed("INITIAL_ACTIVITY_AREA",activeRunId(),"",clearance);
         if(regional==null) return Decision.denied("PLANNING_AREA_NOT_RELEASED",activeRunId(),"");
         return regional.evaluate(dimension,x,z);
     }
     public boolean revealed(String dimension,double x,double z) {
         if(!config.enabled() || !config.managedDimensions().contains(dimension)) return true;
-        if((regional==null || !regional.initial.available()) && initial.contains(x,z)) return true;
+        if(!initial.geographic() && (regional==null || !regional.initial.available()) && initial.contains(x,z)) return true;
         if (regional==null || !regional.dimension.equals(dimension)) return false;
         for (var city : regional.protectedCities) if (city.protection().contains(x,z)) return false;
         return regional.initial.contains(x,z) || regional.openRegions.contains(regional.geography.at(x,z));
@@ -38,7 +38,7 @@ public final class PlanningAreaAccessPolicy {
     /** A rejected request completes as unavailable; it never advances a chunk status. */
     public boolean permitsChunk(String dimension,int chunkX,int chunkZ) {
         if(!config.enabled()||!config.managedDimensions().contains(dimension)) return true;
-        if(regional==null) return initial.generationContains(chunkX*16+8.0,chunkZ*16+8.0);
+        if(regional==null) return !initial.geographic() && initial.generationContains(chunkX*16+8.0,chunkZ*16+8.0);
         return regional.permitsChunk(dimension,chunkX,chunkZ,config.initialActivityRadiusBlocks());
     }
     public String activeRunId() { return regional==null?"":regional.runId; }

@@ -18,7 +18,7 @@ import net.minecraftforge.fml.common.Mod;
 import java.nio.file.*;
 import java.io.*;
 
-/** Select and freeze the starter realm before player entry, independently of W/AI. */
+/** Prepare a safe waiting spawn, then publish the starter continent after the first W survey. */
 @Mod.EventBusSubscriber(modid="geomantia")
 public final class StarterRealmBootstrap {
     @SubscribeEvent public static void createSpawn(LevelEvent.CreateSpawnPosition event) {
@@ -35,7 +35,8 @@ public final class StarterRealmBootstrap {
             if(!config.enabled() || !config.managedDimensions().contains("minecraft:overworld")) return false;
             if(Files.isRegularFile(target)) {
                 JsonObject saved=JsonParser.parseString(Files.readString(target)).getAsJsonObject();
-                if(saved.has("selection") && "land_v1".equals(saved.get("selection").getAsString())) return true;
+                if(saved.has("selection") && ("land_v1".equals(saved.get("selection").getAsString())
+                        || saved.get("selection").getAsString().startsWith("continent_"))) return true;
             }
             var survey=WorldSurveySettingsConfig.loadOrCreate(game.resolve("config/geomantia/world_survey.json"));
             var generator=level.getChunkSource().getGenerator();
@@ -72,6 +73,38 @@ public final class StarterRealmBootstrap {
             org.slf4j.LoggerFactory.getLogger(StarterRealmBootstrap.class).info("Starter realm land selected at {} radius {}",actual,area.radius());
             return true;
         } catch(IOException ex) { throw new UncheckedIOException("Cannot initialize land starter realm",ex); }
+    }
+    static BlockPos completeSurvey(ServerLevel level,Path run,PlanningAreaAccessConfig config) throws IOException {
+        Path world=level.getServer().getWorldPath(LevelResource.ROOT);
+        Path target=world.resolve("geomantia_starter_realm.json");
+        JsonObject saved=WorldEntrySurvey.read(target);
+        if("continent_v2".equals(saved.get("selection").getAsString())) {
+            if(!run.getFileName().toString().equals(saved.get("sourceRunId").getAsString()))
+                throw new IOException("STARTER_SURVEY_ID_MISMATCH");
+            if(!saved.get("sourceConfigHash").equals(WorldEntrySurvey.read(run.resolve("world_survey_manifest.json")).get("configHash")))
+                throw new IOException("STARTER_SURVEY_CHANGED");
+            return new BlockPos(saved.get("spawnX").getAsInt(),saved.get("spawnY").getAsInt(),saved.get("spawnZ").getAsInt());
+        }
+        JsonObject grid=WorldEntrySurvey.read(run.resolve("world_feature_grid.json"));
+        var geography=GeographicRegions.build(grid,config.nearSeaDistanceBlocks(),config.oceanRegionSpanBlocks());
+        int x=saved.get("centerBlockX").getAsInt(),z=saved.get("centerBlockZ").getAsInt();
+        var area=InitialExplorationArea.continent(geography,x,z);
+        JsonObject description=area.description();
+        description.addProperty("selection","continent_candidate");
+        description.addProperty("sourceRunId",run.getFileName().toString());
+        description.add("sourceConfigHash",grid.get("configHash"));
+        WorldEntrySurvey.writeAtomic(target,description);
+        PlanningAreaAccessRuntime.invalidate(level.getServer());
+        var permission=new PlanningAreaAccessPolicy(run.getParent(),config).evaluate("minecraft:overworld",x,z);
+        if(!permission.allowed()) throw new IOException("STARTER_SPAWN_PROTECTED: "+permission.reasonCode());
+        BlockPos actual=safeGeneratedPosition(level,x,z);
+        description.addProperty("spawnX",actual.getX()); description.addProperty("spawnY",actual.getY());
+        description.addProperty("spawnZ",actual.getZ()); description.addProperty("selection","continent_v2");
+        WorldEntrySurvey.writeAtomic(target,description);
+        WorldEntrySurvey.writeAtomic(run.resolve("starter_realm.json"),description);
+        level.setDefaultSpawnPos(actual,0);
+        PlanningAreaAccessRuntime.invalidate(level.getServer());
+        return actual;
     }
     private static BlockPos safeGeneratedPosition(ServerLevel level,int x,int z) {
         for(int r=0;r<=16;r++) for(int dz=-r;dz<=r;dz++) for(int dx=-r;dx<=r;dx++) {
