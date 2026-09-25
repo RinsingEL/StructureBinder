@@ -6,6 +6,11 @@ import java.util.*;
 
 /** Shared geographical release authority for movement, map fog and chunk scheduling. */
 public final class PlanningAreaAccessPolicy {
+    // 1.20.1: maximum status distance (12) plus ENTITY_TICKING -> FULL distance (2).
+    public static final int PLAYER_DEPENDENCY_RADIUS_CHUNKS = 14;
+    public static final int MOVEMENT_SAFETY_BLOCKS = 256;
+    private final Map<String,Map<Long,Boolean>> playerTicketCache = new HashMap<>();
+    private final Map<String,Map<Long,Boolean>> chunkPermissionCache = new HashMap<>();
     private final PlanningAreaAccessConfig config;
     private final GeographicAreaAccess regional;
     private final InitialExplorationArea initial;
@@ -42,6 +47,30 @@ public final class PlanningAreaAccessPolicy {
         return regional.permitsChunk(dimension,chunkX,chunkZ,config.initialActivityRadiusBlocks());
     }
     public String activeRunId() { return regional==null?"":regional.runId; }
+    /** Only start a FULL/player demand when its complete conservative generation neighborhood is legal. */
+    public boolean permitsPlayerTicket(String dimension,int x,int z) {
+        if(!config.enabled() || !config.managedDimensions().contains(dimension)) return true;
+        var tickets=playerTicketCache.computeIfAbsent(dimension,k->new HashMap<>());
+        var chunks=chunkPermissionCache.computeIfAbsent(dimension,k->new HashMap<>());
+        if(tickets.size()>16384) tickets.clear();
+        if(chunks.size()>65536) chunks.clear();
+        long key=chunkKey(x,z);
+        Boolean cached=tickets.get(key);
+        if(cached!=null) return cached;
+        boolean allowed=true;
+        // Centre first rejects forbidden demand without walking its neighborhood.
+        if(!permitsChunk(dimension,x,z)) allowed=false;
+        else outer: for(int dz=-PLAYER_DEPENDENCY_RADIUS_CHUNKS;dz<=PLAYER_DEPENDENCY_RADIUS_CHUNKS;dz++)
+            for(int dx=-PLAYER_DEPENDENCY_RADIUS_CHUNKS;dx<=PLAYER_DEPENDENCY_RADIUS_CHUNKS;dx++) {
+                int cx=x+dx,cz=z+dz;
+                if(!chunks.computeIfAbsent(chunkKey(cx,cz),k->permitsChunk(dimension,cx,cz))) {
+                    allowed=false; break outer;
+                }
+            }
+        tickets.put(key,allowed);
+        return allowed;
+    }
+    private static long chunkKey(int x,int z) { return (x & 0xffffffffL) | ((long)z << 32); }
     public Set<String> connectedCityIds() { return regional==null?Set.of():regional.readyCities; }
     public Set<String> disconnectedCityIds() { return regional==null?Set.of():regional.blockedCities; }
     public static long sourceStamp(Path root) {

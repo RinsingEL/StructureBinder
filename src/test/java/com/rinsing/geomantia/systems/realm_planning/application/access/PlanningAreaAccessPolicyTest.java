@@ -7,6 +7,17 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PlanningAreaAccessPolicyTest {
+    @Test void viewDemandRequiresLegalGenerationNeighborsAndNewSnapshotRestoresIt() throws Exception {
+        fixture(false,false);
+        var before=policy();
+        assertFalse(before.permitsPlayerTicket("minecraft:overworld",5632/16,0));
+        assertFalse(before.permitsPlayerTicket("minecraft:overworld",100000/16,0));
+        assertTrue(before.permitsPlayerTicket("minecraft:the_nether",100000/16,0));
+        fixture(true,true);
+        var after=policy();
+        assertTrue(after.permitsPlayerTicket("minecraft:overworld",4096/16,0));
+        assertFalse(after.permitsPlayerTicket("minecraft:overworld",3072/16,0),"A legal centre beside a closed neighbor cannot start FULL demand");
+    }
     @Test void addonReadinessGatesItsWholeContinentAndInvalidatesAccessStamp() throws Exception {
         fixture(true,true);
         Files.writeString(run().resolve("world_survey_context.json"), "{}");

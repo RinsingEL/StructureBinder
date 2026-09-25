@@ -16,6 +16,11 @@ import java.util.concurrent.CompletableFuture;
 @Mixin(ChunkMap.class)
 public abstract class PlanningChunkSchedulingMixin {
     @Shadow @Final private ServerLevel level;
+    @Shadow public abstract net.minecraft.server.level.DistanceManager getDistanceManager();
+    @Inject(method="<init>",at=@At("RETURN"))
+    private void geomantia$bindDistanceManager(org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+        ((com.rinsing.geomantia.platform.PlanningDistanceContext)getDistanceManager()).geomantia$bind(level);
+    }
     @Inject(method="schedule", at=@At("HEAD"), cancellable=true)
     private void geomantia$protectUnreleasedRegion(ChunkHolder holder, ChunkStatus status,
             CallbackInfoReturnable<CompletableFuture<Either<ChunkAccess,ChunkHolder.ChunkLoadingFailure>>> cir) {

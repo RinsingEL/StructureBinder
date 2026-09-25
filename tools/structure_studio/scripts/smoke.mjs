@@ -7,10 +7,11 @@ try{
   const errors=[];page.on('pageerror',e=>errors.push(String(e)));
   await page.goto(`${base}/?asset=SR-F01-v01`);
   await page.waitForFunction(()=>window.studio?.telemetry.ready);
-  await page.getByRole('searchbox').fill('不存在的结构');
+  await page.getByRole('searchbox',{name:'查找结构',exact:true}).fill('不存在的结构');
   assert.equal(await page.locator('#assets button').count(),0);
-  await page.getByRole('searchbox').fill('面包');
-  assert.equal(await page.locator('#assets button').count(),1);
+  await page.getByRole('searchbox',{name:'查找结构',exact:true}).fill('面包');
+  assert.ok(await page.locator('#assets button').count()>=1);
+  assert.equal(await page.locator('#assets button').filter({hasText:'SR-F01-v01'}).count(),1);
   await page.getByRole('button',{name:'去屋顶',exact:true}).click();
   assert.equal(await page.locator('#roof').getAttribute('class'),'selected');
   await page.getByRole('combobox',{name:'楼层',exact:true}).selectOption('1');

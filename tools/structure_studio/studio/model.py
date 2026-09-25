@@ -123,6 +123,8 @@ class Model:
 
     def export(self, directory: Path, registry=None):
         """Serialize, reopen, then return the actual delivered NBT representation."""
+        from .annotation_policy import refine_metadata
+        self.meta = refine_metadata(self.meta)
         directory.mkdir(parents=True, exist_ok=True)
         normalized = {}
         for p, (name, props) in self.blocks.items():

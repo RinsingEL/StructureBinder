@@ -2,11 +2,13 @@ import {BlockDefinition, BlockModel, BlockState, NbtTag, Structure, StructureRen
 import {mat4, vec4} from 'gl-matrix';
 import './style.css';
 import {createSite} from './site.js';
+import {createFilters} from './filters.js';
+import {roleOf} from './functions.js';
 
 const $ = id => document.getElementById(id);
 const canvas = $('scene');
 const gl = canvas.getContext('webgl', {antialias: true, preserveDrawingBuffer: true, alpha: false});
-let renderer, resources, current, rows = [], visible, loadingGeneration = 0;
+let renderer, resources, current, rows = [], visible, loadingGeneration = 0, library;
 let yaw = .66, pitch = .5, distance = 40, target = [0, 0, 0], eye = [0, 0, 0], walk = false;
 let markers = false, roof = false, floorMin = 0, clip = [1, 1, 1], selectedPreset = 'front';
 let terrainRenderer,site,context=false;
@@ -62,18 +64,21 @@ async function loadResources() {
 }
 
 function populateList() {
-  const search = $('search').value.toLowerCase(), civilization = $('civilization').value;
-  const filtered = rows.filter(row => (!civilization || row.civilization === civilization) && `${row.id} ${row.name} ${row.civilization}`.toLowerCase().includes(search));
+  const filtered = library?.results() ?? rows;
   $('count').textContent = `${filtered.length} / ${rows.length}`;
+  $('selection-note').hidden = !current || filtered.some(row => row.id === current.author.id);
   $('assets').replaceChildren();
   for (const row of filtered) {
     const button = document.createElement('button');
     if (current?.author.id === row.id) button.classList.add('active');
     const small = document.createElement('small'); small.textContent = `${row.id} · ${row.size.join(' × ')}`;
+    const roleTag = document.createElement('span'); roleTag.className = 'role-badge'; roleTag.textContent = roleOf(row).label; small.append(roleTag);
     const label = document.createElement('span'); label.textContent = row.name;
-    button.append(small, label); button.onclick = () => load(row.id).catch(fail); $('assets').append(button);
+    const tags = document.createElement('span'); tags.className = 'result-tags';
+    tags.textContent = (row.function_terms ?? []).join(' · ') || '未标注功能';
+    button.append(small, label, tags); button.onclick = () => load(row.id).catch(fail); $('assets').append(button);
   }
-  if (!filtered.length) { const el=document.createElement('p'); el.className='empty'; el.textContent='没有匹配的结构'; $('assets').append(el); }
+  if (!filtered.length) { const el=document.createElement('p'); el.className='empty'; el.textContent='没有匹配的结构。可移除一项用途、切换“任一具备”，或放宽其他筛选。'; $('assets').append(el); }
 }
 
 async function load(id) {
@@ -86,15 +91,14 @@ async function load(id) {
   $('title').textContent = data.author.name;
   $('eyebrow').textContent = `${data.author.id} / ${data.author.civilization}`;
   const count = data.blocks.filter(b => !['minecraft:air','minecraft:cave_air','minecraft:void_air'].includes(data.palette[b.state].name)).length;
-  const role=data.author.planning_role.replace('planning_role.','');
-  $('subtitle').textContent = `${data.size.join(' × ')} 格 · ${count.toLocaleString()} 个方块 · ${role==='fill'?'填充结构':['key','anchor'].includes(role)?'核心结构':'明确选用结构'}`;
+  $('subtitle').textContent = `${data.size.join(' × ')} 格 · ${count.toLocaleString()} 个方块 · 规划角色：${roleOf(data.author).label}`;
   context=false;site=null;$('context').classList.remove('selected');$('context').disabled=!data.author.preview_context;$('axis').textContent='X 东 · Y 上 · Z 南';
   $('floor').replaceChildren(new Option('全部楼层',''));
   for (const [i, floor] of (data.author.floors ?? []).entries()) $('floor').append(new Option(floor.name,String(i)));
   $('rooms').replaceChildren();
   for (const room of data.author.rooms) { const button=document.createElement('button');button.textContent=room.name;button.onclick=()=>focusRoom(room);$('rooms').append(button); }
   const notes = document.createElement('div'); notes.textContent = (data.author.design_notes ?? []).join(' '); $('rooms').append(notes);
-  $('terrain').textContent = Object.entries(data.author.terrain).map(([k,v]) => `${k}：${Array.isArray(v)?v.join('、'):v}`).join('；') || '测试夹具';
+  library?.select(data.author);
   $('checks').replaceChildren();
   for (const [text,cls] of [
     [data.validation?.passed && data.validation?.nbt_sha256 === data.sha256 ? `数据检查通过 · ${data.validation.warnings.length} 项待核对` : '数据检查待完成', data.validation?.passed && data.validation?.nbt_sha256 === data.sha256?'good':'warning'],
@@ -102,7 +106,6 @@ async function load(id) {
     [`包含 ${data.author.rooms.length} 个空间、${data.author.points.length} 处标记。标记为作者记录。`, ''],
   ]) { const line=document.createElement('div');line.className=cls;line.textContent=text;$('checks').append(line); }
   reset(false); populateList(); updateGeometry(); preset('front');
-  history.replaceState(null,'',`?asset=${encodeURIComponent(id)}`);
   telemetry.ready = true; telemetry.id=id;telemetry.sha256=data.sha256;telemetry.authorSha256=data.author_sha256;telemetry.visibleBlocks=count;
   $('loading').hidden = true;
   requestAnimationFrame(draw);
@@ -238,7 +241,6 @@ $('floor').onchange=()=>{const value=$('floor').value;reset(false);$('floor').va
 $('markers').onclick=()=>{markers=!markers;$('markers').classList.toggle('selected',markers);draw();};
 $('walk').onclick=()=>walk?preset('front'):enterWalk();
 $('reset').onclick=()=>reset();
-$('search').oninput=populateList;$('civilization').onchange=populateList;
 $('save').onclick=()=>{draw();const a=document.createElement('a');a.download=`${current.author.id}-${selectedPreset}.png`;a.href=canvas.toDataURL('image/png');a.click();};
 new ResizeObserver(resize).observe(canvas);
 
@@ -251,7 +253,7 @@ window.studio={telemetry,load,preset,reset,draw,focusRoom,enterWalk,showContext,
 try {
   if(!gl)throw new Error('浏览器无法创建 WebGL 上下文');
   [resources,rows]=await Promise.all([loadResources(),fetchJSON('/api/catalog')]);
-  for(const name of [...new Set(rows.map(r=>r.civilization))])$('civilization').append(new Option(name,name));
+  library = createFilters(rows, populateList);
   populateList();
   const requested=new URLSearchParams(location.search).get('asset');
   if(rows.length)await load(rows.some(r=>r.id===requested)?requested:rows[0].id);

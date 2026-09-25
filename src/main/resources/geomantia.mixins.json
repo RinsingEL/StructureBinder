@@ -6,6 +6,8 @@
   "refmap": "geomantia.refmap.json",
   "mixins": [
     "PlanningChunkSchedulingMixin",
+    "PlanningDistanceManagerMixin",
+    "PlanningPlayerTicketMixin",
     "CityStructureFoundationBeardifierMixin",
     "ConfiguredFeatureMaskMixin",
     "CityWorldGenRegionSurfaceProtectionMixin",

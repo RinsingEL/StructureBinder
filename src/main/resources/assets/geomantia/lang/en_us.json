@@ -1,4 +1,5 @@
 {
+  "geomantia.boundary.distance": "Unreleased area nearby · About %s blocks to boundary",
   "item.geomantia.adventurer_map": "Adventurer Map",
   "gui.geomantia.adventurer_map.title": "Adventurer Map",
   "gui.geomantia.adventurer_map.close": "Close",

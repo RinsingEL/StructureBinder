@@ -41,7 +41,19 @@ public record PreparedPlanningTurn(JsonObject state, List<Path> images, List<Str
                 designTools = List.of(CityD3ReviewDecisionView.TOOL, "city_review_d3_site");
             }
             var sources = new ManagedCityPlanningSources(serverDirectory).resolve();
-            designState.add("authoringBrief", sources.authoringBrief().deepCopy());
+            if (run.stage() == ProviderPlanningDiscovery.Stage.T1) {
+                var atlas = RealmCoreAtlas.prepare(sources.directory(), debugRoot.resolve(run.runId()), sources.authoringBrief());
+                designState.add("authoringBrief", atlas.brief());
+                designState.addProperty("creativeGuidance", AgentPromptConfig.read("realm/t1.md"));
+                var images = new java.util.ArrayList<>(designImages);
+                images.addAll(atlas.images());
+                designImages = List.copyOf(images);
+            } else {
+                designState.add("authoringBrief", sources.authoringBrief().deepCopy());
+            }
+        }
+        if (run.stage() == ProviderPlanningDiscovery.Stage.CITY || run.stage() == ProviderPlanningDiscovery.Stage.EXTENSION) {
+            attachRealmIntent(designState, debugRoot.resolve(run.runId()), run.realmId());
         }
         List<String> allowed = designTools;
         JsonObject scopedD3Evidence = d3Evidence;
@@ -57,5 +69,21 @@ public record PreparedPlanningTurn(JsonObject state, List<Path> images, List<Str
             return PreparedRealmDesignTurn.execute(run.stage(), gateway, tool, arguments);
         };
         return new PreparedPlanningTurn(designState, designImages, designTools, new PlanningTurnControl(scoped, designState));
+    }
+
+    static void attachRealmIntent(JsonObject state, Path runDirectory, String realmId) throws IOException {
+        Path path = runDirectory.resolve("realm_profiles.json");
+        if (realmId.isBlank() || !java.nio.file.Files.isRegularFile(path)) return;
+        var value = com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(path));
+        var profiles = value.isJsonArray() ? value.getAsJsonArray() : value.getAsJsonObject().getAsJsonArray("realmProfiles");
+        if (profiles == null) return;
+        for (var entry : profiles) {
+            var profile = entry.getAsJsonObject();
+            if (realmId.equals(profile.get("realmId").getAsString())) {
+                state.add("realmDesignIntent", profile.deepCopy());
+                state.addProperty("realmDesignGuidance", "继承realmDesignIntent.theme中的国度构想，结合本城职责与实际地形，在本阶段可表达的建筑组合、空间、居民或经济中落实差异；不照搬其他城市，不虚构未实现能力。当前阶段工具与作者素材约束继续有效。");
+                return;
+            }
+        }
     }
 }

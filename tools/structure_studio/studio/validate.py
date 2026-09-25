@@ -32,6 +32,11 @@ def validate(directory: Path, registry=None, *, save=True):
     role = meta.get("planning_role")
     if not isinstance(role, str) or role not in PLANNING_ROLES:
         errors.append(f"Invalid author planning_role: {role!r}")
+    terms = meta.get('function_terms')
+    if terms is not None and (not isinstance(terms, list) or not terms
+            or any(not isinstance(t, str) or not t.strip() for t in terms)
+            or (all(isinstance(t, str) for t in terms) and len(set(terms)) != len(terms))):
+        errors.append('Author function_terms must be a nonempty list of unique strings')
     grid = {tuple(b["pos"]): data["palette"][b["state"]] for b in data["blocks"]}
     for value in data["palette"]:
         name, props = value["name"], value["properties"]

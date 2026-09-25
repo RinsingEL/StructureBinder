@@ -12,6 +12,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+from export_core_atlas import export as export_core_atlas
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools/structure_studio'))
@@ -176,6 +177,7 @@ def build(args):
         siteConditionsRuntimeSupported=False,rawNbtUnmodified=True))
     # This file was only an input to the local codec process; retain portable form.
     write(args.output/'codec_input.json', [dict(templateRef=r['templateRef'],sourceNbt=r['sourceNbt'],sourceSha256=r['sourceSha256']) for r in rows])
+    export_core_atlas(args.output)
     print(json.dumps(dict(output=str(args.output),selected=len(rows),styles=dict(Counter(r['author']['civilization'] for r in rows)),omitted=omitted),ensure_ascii=False))
 
 

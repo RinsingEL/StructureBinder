@@ -163,7 +163,7 @@ final class GeographicAreaAccess {
         var bounds=new CityPlanningReservation.Bounds(cx*16,cz*16,cx*16+15,cz*16+15);
         for(var city:protectedCities) if(city.protection().overlaps(bounds)) return false;
         double x=cx*16+8.0,z=cz*16+8.0;
-        if(initial.available() ? initial.generationContains(x,z) : Math.hypot(x,z)<=initialRadius+1024) return true;
+        if(initial.available() ? initial.generationContains(x,z) : Math.hypot(x,z)<=initialRadius+InitialExplorationArea.GENERATION_HALO_BLOCKS) return true;
         return openRegions.contains(geography.at(bounds.minX(),bounds.minZ()))
                 && openRegions.contains(geography.at(bounds.maxX(),bounds.maxZ()));
     }

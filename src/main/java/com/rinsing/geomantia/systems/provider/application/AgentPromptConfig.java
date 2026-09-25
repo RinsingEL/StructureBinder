@@ -8,7 +8,7 @@ import java.util.List;
 
 /** Editable prompts; no content cache and no silent fallback for broken user files. */
 public final class AgentPromptConfig {
-    static final List<String> FILES = List.of("README.md", "agent.md", "providers/harness.md",
+    static final List<String> FILES = List.of("README.md", "agent.md", "realm/t1.md", "providers/harness.md",
             "providers/direct.md", "city/d4_v2/overview.md", "city/d4_v2/district.md", "city/d4_v2/integration.md",
             "city/d4_v2/finalize.md", "city/d4_v2/complete.md", "city/d4_v2/handbook.md");
     private AgentPromptConfig() { }

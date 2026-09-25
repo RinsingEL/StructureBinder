@@ -5,13 +5,34 @@
   <aside>
     <div class="brand"><span class="mark">▧</span><div><strong>国度 · 结构工坊</strong><small>离线建模与验收</small></div></div>
     <div class="library-head"><span>结构库</span><span id="count">—</span></div>
-    <input id="search" type="search" placeholder="查找编号、名称或文明" aria-label="查找结构">
-    <select id="civilization" aria-label="文明"><option value="">全部文明</option></select>
+    <div class="filter-panel">
+      <input id="search" type="search" placeholder="编号、名称、功能；空格分词" aria-label="查找结构">
+      <select id="civilization" aria-label="建筑风格"><option value="">全部风格</option></select>
+      <select id="planning-role" aria-label="规划角色"><option value="">全部规划角色</option></select>
+      <details open class="function-filter"><summary>功能层级</summary>
+        <div id="function-path"></div>
+        <p id="function-choice" class="hint"></p>
+        <button id="add-function" disabled>按此用途筛选</button>
+        <p class="hint">仅筛选列表，不修改标签；可叠加多个用途。</p>
+        <p class="hint">数量随风格、规划角色、搜索和选址文字变化，包含下级用途；加入后再按组合条件筛选。</p>
+      </details>
+      <div id="selected-functions" aria-label="已选用途"></div>
+      <select id="match-mode" aria-label="用途匹配方式"><option value="all">同时具备全部用途</option><option value="any">具备任一用途</option></select>
+      <details class="extra-filters"><summary>原始标签与选址文字</summary>
+        <label for="raw-tag">原始功能标签（精确匹配）</label>
+        <select id="raw-tag" aria-label="原始功能标签"><option value="">全部原始标签</option></select>
+        <label for="site-search">选址说明关键词</label>
+        <input id="site-search" type="search" placeholder="例如：岸线、承载、入口" aria-label="选址说明关键词">
+        <p class="hint">只检索作者条件文字，排除推荐情境；不判定实际地形是否可用。</p>
+      </details>
+    </div>
+    <div class="filter-summary"><span id="filter-status" role="status"></span><button id="clear-filters">清空筛选</button></div>
     <nav id="assets" aria-label="结构列表"></nav>
     <footer><span class="dot"></span> 本地工作台 · Minecraft 1.20.1</footer>
   </aside>
   <main>
     <header><div><div id="eyebrow">STRUCTURE STUDIO</div><h1 id="title">正在打开结构库…</h1><p id="subtitle">读取最终导出的结构文件</p></div><button id="save">保存当前视图</button></header>
+    <p id="selection-note" hidden role="status">当前预览不在筛选结果中，请从左侧选择模型。</p>
     <div class="toolbar">
       <div class="group"><button data-preset="front" class="selected">前侧</button><button data-preset="back">后侧</button><button data-preset="left">左侧</button><button data-preset="right">右侧</button><button data-preset="top">俯视</button></div>
       <div class="group"><button id="roof">去屋顶</button><select id="floor" aria-label="楼层"><option value="">全部楼层</option></select><button id="context" disabled>地形示意</button><button id="markers">标记</button><button id="walk">室内漫游</button></div>
@@ -24,7 +45,8 @@
       <div id="error" hidden></div>
     </section>
     <div class="section-controls"><span>剖切</span><label>X <input type="range" id="clip-x" min="0" max="1" value="1"><output id="value-x">—</output></label><label>Y <input type="range" id="clip-y" min="0" max="1" value="1"><output id="value-y">—</output></label><label>Z <input type="range" id="clip-z" min="0" max="1" value="1"><output id="value-z">—</output></label><button id="reset">还原</button></div>
-    <div class="details"><section><h2>空间与使用点</h2><div id="rooms"></div></section><section><h2>因地制宜</h2><div id="terrain"></div></section><section><h2>验收进度</h2><div id="checks"></div></section></div>
+    <section class="tag-details"><h2>功能标签</h2><div id="function-tags"></div><div class="original-tag-line"><span>原始标记</span><div id="original-tags"></div></div><p id="tag-note" class="hint"></p></section>
+    <div class="details"><section><h2>空间与使用点</h2><div id="rooms"></div></section><section><h2>选址与使用条件</h2><div id="terrain"></div><h2 class="recommend-heading">推荐情境 · 不作为准入条件</h2><div id="recommended"></div></section><section><h2>验收进度</h2><div id="checks"></div></section></div>
   </main>
   <script type="module" src="/web/main.js"></script>
 </body></html>

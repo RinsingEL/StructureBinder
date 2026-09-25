@@ -22,7 +22,7 @@ def catalog():
     rows = []
     for key, path in sorted(asset_paths().items()):
         meta = json.loads((path / "author.json").read_text(encoding="utf-8"))
-        rows.append({k: meta.get(k) for k in ("id", "name", "family", "civilization", "planning_role", "size", "lifecycle")})
+        rows.append({k: meta.get(k) for k in ("id", "name", "family", "civilization", "function_terms", "terrain", "planning_role", "size", "lifecycle")})
     return rows
 
 

@@ -1,4 +1,5 @@
 {
+  "geomantia.boundary.distance": "附近区域尚未开放 · 距禁行边界约 %s 格",
   "item.geomantia.adventurer_map": "冒险者地图",
   "gui.geomantia.adventurer_map.title": "冒险者地图",
   "gui.geomantia.adventurer_map.close": "关闭",

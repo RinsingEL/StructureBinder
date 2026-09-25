@@ -10,7 +10,7 @@ import java.util.Set;
 
 /** Persisted starter continent and near sea; a circle is used only while preparing spawn. */
 public final class InitialExplorationArea {
-    public static final int GENERATION_HALO_BLOCKS = 1024;
+    public static final int GENERATION_HALO_BLOCKS = 256;
     public static final String REALM_ID = "geomantia_starter";
     public static final String NAME = "新手村国度";
     private final int radius;
@@ -110,7 +110,12 @@ public final class InitialExplorationArea {
         return geographic()?cells.contains(new GeographicRegions.Cell((int)Math.floor(x/step),(int)Math.floor(z/step))):distance(x,z)<=radius;
     }
     public boolean generationContains(double x, double z) {
-        if(!geographic()) return distance(x,z)<=radius+GENERATION_HALO_BLOCKS;
+        if(!geographic()) {
+            // Chunk dependencies form a square, including at a circular waiting area's diagonal edge.
+            double dx=Math.max(0,Math.abs(x-centerX)-GENERATION_HALO_BLOCKS);
+            double dz=Math.max(0,Math.abs(z-centerZ)-GENERATION_HALO_BLOCKS);
+            return Math.hypot(dx,dz)<=radius;
+        }
         int minX=(int)Math.floor((x-GENERATION_HALO_BLOCKS)/step),maxX=(int)Math.floor((x+GENERATION_HALO_BLOCKS)/step);
         int minZ=(int)Math.floor((z-GENERATION_HALO_BLOCKS)/step),maxZ=(int)Math.floor((z+GENERATION_HALO_BLOCKS)/step);
         for(int cz=minZ;cz<=maxZ;cz++) for(int cx=minX;cx<=maxX;cx++)

@@ -48,6 +48,16 @@ public final class PlanningAreaAccessRuntime {
         return state.policy.permitsChunk(dimensionId(level), chunkX, chunkZ);
     }
 
+    public static PlanningAreaAccessPolicy policySnapshot(ServerLevel level) {
+        ServerState state=state(level.getServer());
+        state.refreshIfNeeded(level.getGameTime());
+        return state.policy;
+    }
+
+    public static boolean permitsPlayerTicket(ServerLevel level,int chunkX,int chunkZ) {
+        return policySnapshot(level).permitsPlayerTicket(dimensionId(level),chunkX,chunkZ);
+    }
+
     public static void handleMovement(ServerPlayer player) {
         ServerState state = state(player.getServer());
         state.handleMovement(player);
@@ -85,13 +95,13 @@ public final class PlanningAreaAccessRuntime {
         private final Path debugRoot;
         private final Map<PlayerDimensionKey, SafePosition> safePositions = new HashMap<>();
         private final Map<UUID, Long> nextMessageTick = new HashMap<>();
+        private final Map<UUID, BoundaryCache> boundaries = new HashMap<>();
 
         private PlanningAreaAccessConfig config = PlanningAreaAccessConfig.defaults();
         private PlanningAreaAccessPolicy policy;
         private long lastPolicyCheckTick = Long.MIN_VALUE;
         private long loadedConfigStamp = Long.MIN_VALUE;
         private long loadedSourceStamp = Long.MIN_VALUE;
-        private int loadedViewSafetyBlocks = -1;
 
         private ServerState(MinecraftServer server) {
             this.server = server;
@@ -109,6 +119,7 @@ public final class PlanningAreaAccessRuntime {
         private void handleMovement(ServerPlayer player) {
             long gameTime = player.serverLevel().getGameTime();
             PlanningAreaAccessPolicy.Decision decision = evaluate(player, player.getX(), player.getZ());
+            syncBoundary(player, gameTime, decision);
             if ("UNMANAGED_DIMENSION".equals(decision.reasonCode())) return;
 
             PlayerDimensionKey key = new PlayerDimensionKey(player.getUUID(), dimensionId(player.serverLevel()));
@@ -142,21 +153,43 @@ public final class PlanningAreaAccessRuntime {
             lastPolicyCheckTick = gameTime;
             long configStamp = lastModified(configPath);
             long sourceStamp = PlanningAreaAccessPolicy.sourceStamp(debugRoot);
-            int viewSafetyBlocks = (Math.max(2, server.getPlayerList().getViewDistance()) + 12) * 16;
-            if (policy != null && configStamp == loadedConfigStamp && sourceStamp == loadedSourceStamp
-                    && viewSafetyBlocks == loadedViewSafetyBlocks) return;
+            int safetyBlocks = PlanningAreaAccessPolicy.MOVEMENT_SAFETY_BLOCKS;
+            if (policy != null && configStamp == loadedConfigStamp && sourceStamp == loadedSourceStamp) return;
             try {
                 config = PlanningAreaAccessConfig.loadOrCreate(configPath);
-                policy = new PlanningAreaAccessPolicy(debugRoot, config, viewSafetyBlocks);
+                policy = new PlanningAreaAccessPolicy(debugRoot, config, safetyBlocks);
                 loadedConfigStamp = lastModified(configPath);
                 loadedSourceStamp = sourceStamp;
-                loadedViewSafetyBlocks = viewSafetyBlocks;
             } catch (IOException | RuntimeException exception) {
                 LOGGER.error("Could not refresh planning-area access policy; retaining the last safe policy",
                         exception);
-                if (policy == null) policy = new PlanningAreaAccessPolicy(debugRoot, config, viewSafetyBlocks);
+                if (policy == null) policy = new PlanningAreaAccessPolicy(debugRoot, config, safetyBlocks);
             }
         }
+
+        private void syncBoundary(ServerPlayer player, long tick, PlanningAreaAccessPolicy.Decision decision) {
+            // Stagger players; reuse stationary geometry until the immutable policy changes.
+            if (Math.floorMod(tick + player.getId(), 20) != 0) return;
+            String dim=dimensionId(player.serverLevel());
+            int x=Math.floorDiv(player.blockPosition().getX(),16),z=Math.floorDiv(player.blockPosition().getZ(),16);
+            BoundaryCache previous=boundaries.get(player.getUUID());
+            if(previous!=null && previous.policy==policy && previous.x==x && previous.z==z && previous.dimension.equals(dim)) {
+                if(tick-previous.sentAt>=100) {
+                    BoundaryNetwork.send(player,previous.segments);
+                    boundaries.put(player.getUUID(),new BoundaryCache(policy,dim,x,z,tick,previous.segments));
+                }
+                return;
+            }
+            var lines="UNMANAGED_DIMENSION".equals(decision.reasonCode())
+                    ? java.util.List.<com.rinsing.geomantia.systems.realm_planning.application.access.AccessBoundary.Segment>of()
+                    : com.rinsing.geomantia.systems.realm_planning.application.access.AccessBoundary.sample(
+                            player.getX(),player.getZ(),(px,pz)->policy.evaluate(dim,px,pz).allowed());
+            boundaries.put(player.getUUID(),new BoundaryCache(policy,dim,x,z,tick,lines));
+            BoundaryNetwork.send(player,lines);
+        }
+
+        private record BoundaryCache(PlanningAreaAccessPolicy policy,String dimension,int x,int z,long sentAt,
+                java.util.List<com.rinsing.geomantia.systems.realm_planning.application.access.AccessBoundary.Segment> segments) {}
 
         private boolean readyForMessage(UUID playerId, long gameTime) {
             long next = nextMessageTick.getOrDefault(playerId, Long.MIN_VALUE);
@@ -168,6 +201,7 @@ public final class PlanningAreaAccessRuntime {
         private void forget(UUID playerId) {
             safePositions.keySet().removeIf(key -> key.playerId().equals(playerId));
             nextMessageTick.remove(playerId);
+            boundaries.remove(playerId);
         }
     }
 

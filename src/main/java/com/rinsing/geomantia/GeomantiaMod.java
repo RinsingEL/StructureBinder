@@ -26,6 +26,7 @@ public final class GeomantiaMod {
 
     public GeomantiaMod(FMLJavaModLoadingContext context) {
         IEventBus modEventBus = context.getModEventBus();
+        com.rinsing.geomantia.platform.BoundaryNetwork.register();
         CityTemplateTerrainStructureRegistries.register(modEventBus);
         modEventBus.addListener(this::onCommonSetup);
         MinecraftForge.EVENT_BUS.register(this);
