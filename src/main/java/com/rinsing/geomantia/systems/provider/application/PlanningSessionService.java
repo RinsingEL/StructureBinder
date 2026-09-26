@@ -220,6 +220,11 @@ public final class PlanningSessionService implements AutoCloseable {
         String status = step.stage() == ProviderPlanningDiscovery.Stage.COMPLETE ? "complete"
                 : step.stage() == ProviderPlanningDiscovery.Stage.WAITING ? "waiting" : "ready";
         JsonObject queue = step.state().has("cityDesignQueue") ? step.state().getAsJsonObject("cityDesignQueue") : step.state();
+        result.addProperty("cityQueueStatus", queue.has("status") ? queue.get("status").getAsString() : "");
+        if (queue.has("completedCount") && queue.has("remainingCount")) {
+            result.add("completedCityCount", queue.get("completedCount"));
+            result.add("remainingCityCount", queue.get("remainingCount"));
+        }
         String error = failure;
         if (queue.has("status") && ("blocked_by_program".equals(queue.get("status").getAsString())
                 || step.stage() == ProviderPlanningDiscovery.Stage.WAITING && "needs_agent".equals(queue.get("status").getAsString())))
