@@ -7,6 +7,51 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PlanningAreaAccessPolicyTest {
+    @Test void offshoreOpensBeforePlanningButOnlyAfterSurveySeals() throws Exception {
+        write(run().resolve("world_feature_grid.json"), GeographicRegionsTest.grid(24,95,-16,16,(x,z)->false));
+        write(run().resolve("world_survey_manifest.json"), JsonParser.parseString("{\"status\":\"running\"}").getAsJsonObject());
+        assertFalse(policy().revealed("minecraft:overworld",7680,0));
+        assertFalse(policy().permitsChunk("minecraft:overworld",480,0));
+        write(run().resolve("world_survey_manifest.json"), JsonParser.parseString("{\"status\":\"sealed\"}").getAsJsonObject());
+        var access=policy();
+        assertTrue(access.revealed("minecraft:overworld",7680,0));
+        assertTrue(access.evaluate("minecraft:overworld",7680,0).allowed());
+        assertTrue(access.permitsChunk("minecraft:overworld",480,0));
+        assertTrue(access.permitsPlayerTicket("minecraft:overworld",480,0));
+        assertFalse(access.revealed("minecraft:overworld",100000,0));
+        assertFalse(access.permitsChunk("minecraft:overworld",6250,0));
+    }
+
+    @Test void offshoreIgnoresClosedContinentsAndUnfinishedRosters() throws Exception {
+        fixture(false,false);
+        var access=policy();
+        assertTrue(access.revealed("minecraft:overworld",7680,0));
+        assertTrue(access.evaluate("minecraft:overworld",7680,0).allowed());
+        assertTrue(access.permitsPlayerTicket("minecraft:overworld",480,0));
+        assertFalse(access.revealed("minecraft:overworld",4096,0));
+        assertFalse(access.revealed("minecraft:overworld",52*128,0));
+        JsonObject registry=read(run().resolve("city_seed_registry.json"));
+        registry.getAsJsonArray("citySeeds").get(1).getAsJsonObject().getAsJsonObject("anchorBlock").addProperty("x",7680);
+        write(run().resolve("city_seed_registry.json"),registry);
+        assertFalse(policy().revealed("minecraft:overworld",7680,0));
+        assertFalse(policy().evaluate("minecraft:overworld",7680,0).allowed());
+        assertFalse(policy().permitsChunk("minecraft:overworld",480,0));
+    }
+
+    @Test void offshoreAddonReservationStillWaitsForReadiness() throws Exception {
+        fixture(false,false);
+        Files.writeString(run().resolve("world_survey_context.json"), "{}");
+        var region=new com.rinsing.geomantia.api.regions.ReservedRegion("boss:sea",List.of(
+                new com.rinsing.geomantia.api.regions.RegionBounds(7680,0,7807,127)));
+        com.rinsing.geomantia.systems.realm_planning.application.reservation.RegionReservationStore.create(run(),"minecraft:overworld",List.of(region));
+        assertFalse(policy().revealed("minecraft:overworld",7680,0));
+        assertFalse(policy().evaluate("minecraft:overworld",7680,0).allowed());
+        assertFalse(policy().permitsChunk("minecraft:overworld",480,0));
+        com.rinsing.geomantia.systems.realm_planning.application.reservation.RegionReservationStore.markReady(run(),"boss:sea");
+        assertTrue(policy().revealed("minecraft:overworld",7680,0));
+        assertTrue(policy().permitsPlayerTicket("minecraft:overworld",480,0));
+    }
+
     @Test void stableSurveyIsReusedWhilePermissionsStillRevoke() throws Exception {
         fixture(true,true);
         var config=new PlanningAreaAccessConfig(true,256,512,Set.of("minecraft:overworld"),256,1024);
@@ -108,7 +153,7 @@ class PlanningAreaAccessPolicyTest {
         assertTrue(access.permitsChunk("minecraft:overworld",3000/16,0));
         assertFalse(access.evaluate("minecraft:overworld",5632,0).allowed(),"Existing pending city remains protected");
         assertFalse(access.permitsChunk("minecraft:overworld",5632/16,0));
-        assertFalse(access.revealed("minecraft:overworld",60*128,0),"Distant ocean stays fogged");
+        assertTrue(access.revealed("minecraft:overworld",60*128,0),"Offshore water opens independently");
     }
 
     @TempDir Path temp;
@@ -162,7 +207,7 @@ class PlanningAreaAccessPolicyTest {
         assertFalse(access.evaluate("minecraft:overworld",5632,0).allowed());
         assertFalse(access.revealed("minecraft:overworld",5632,0));
         assertFalse(access.permitsChunk("minecraft:overworld",5632/16,0));
-        assertFalse(access.revealed("minecraft:overworld",60*128,0)); // No automatic distant-ocean release.
+        assertTrue(access.revealed("minecraft:overworld",60*128,0));
     }
 
     @Test void sealedOriginRegionStaysClosedOutsideStarterRealm() throws Exception {
@@ -170,7 +215,7 @@ class PlanningAreaAccessPolicyTest {
         write(run().resolve("world_survey_manifest.json"), JsonParser.parseString("{\"status\":\"sealed\"}").getAsJsonObject());
         assertFalse(policy().evaluate("minecraft:overworld",3000,0).allowed());
         assertFalse(policy().revealed("minecraft:overworld",3900,0)); // Near sea.
-        assertFalse(policy().revealed("minecraft:overworld",4600,0));
+        assertTrue(policy().revealed("minecraft:overworld",4600,0)); // Offshore water.
     }
 
     @Test void initialAndUnmanagedAreasRemainAvailableButUnknownTerrainDoesNotGenerate() {

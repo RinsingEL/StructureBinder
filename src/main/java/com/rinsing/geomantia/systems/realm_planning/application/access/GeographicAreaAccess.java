@@ -126,26 +126,11 @@ final class GeographicAreaAccess {
             if (!realms.isEmpty() && !currentTerritory) continue;
             if(closedRealms.containsAll(realms) && !blockedRegions.contains(r.id())) open.add(r.id());
         }
-        // Every ocean area has its own nearest-continent dependencies (ties retain all dependencies).
-        Map<String,Set<String>> oceanDependencies=new HashMap<>(); Map<String,Integer> distances=new HashMap<>();
-        ArrayDeque<String> frontier=new ArrayDeque<>();
-        for(var r:new TreeMap<>(geo.regions()).values()) if(!r.ocean()) {
-            distances.put(r.id(),0); oceanDependencies.put(r.id(),new HashSet<>(Set.of(r.id()))); frontier.add(r.id());
-        }
-        while(!frontier.isEmpty()) { String id=frontier.remove(); int d=distances.get(id)+1;
-            for(String next:geo.regions().get(id).adjacentRegions()) {
-                if(!geo.regions().get(next).ocean()) continue;
-                int old=distances.getOrDefault(next,Integer.MAX_VALUE);
-                if(d<old) { distances.put(next,d); oceanDependencies.put(next,new HashSet<>(oceanDependencies.get(id))); frontier.add(next); }
-                else if(d==old && oceanDependencies.get(next).addAll(oceanDependencies.get(id))) frontier.add(next);
-            }
-        }
+        // A sealed survey releases offshore water independently of continent/realm progress.
+        // Explicit unfinished city and addon reservations still protect their ocean regions.
         for(var r:geo.regions().values()) if(r.ocean()) {
-            Set<String> dependencies=oceanDependencies.getOrDefault(r.id(),Set.of());
-            if(!dependencies.isEmpty() && open.containsAll(dependencies) && !blockedRegions.contains(r.id())
-                    && closedRealms.containsAll(regionRealms.getOrDefault(r.id(),Set.of()))) open.add(r.id());
+            if(!blockedRegions.contains(r.id())) open.add(r.id());
         }
-        // Initial exploration does not itself authorize the adjacent distant oceans.
         return new GeographicAreaAccess(run.getFileName().toString(),dimension,geo,open,ready,blocked,reservations,safety,InitialExplorationArea.fromDebugRoot(root,config.initialActivityRadiusBlocks()));
     }
     PlanningAreaAccessPolicy.Decision evaluate(String dim,double x,double z) {
