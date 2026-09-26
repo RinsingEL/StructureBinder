@@ -2,6 +2,7 @@ package com.rinsing.geomantia.systems.city.infrastructure.world;
 
 import com.google.gson.*;
 import com.rinsing.geomantia.systems.city.application.CityWallTerrainPlanner;
+import com.rinsing.geomantia.systems.city.application.CityWallTowerGeometry;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import net.minecraft.core.BlockPos;
@@ -145,6 +146,13 @@ public final class CityWallPlacementBackend {
             supports.put(p,start);
         }
         Map<BlockPos,BlockState> changes=new LinkedHashMap<>();
+        List<BlockBounds> horizontalWalls = new ArrayList<>(), verticalWalls = new ArrayList<>();
+        for (JsonElement element : array(plan,"wallUnits")) {
+            JsonObject unit = element.getAsJsonObject();
+            if ("gate_gap".equals(string(unit,"unitType",""))) continue;
+            ("X".equals(string(unit,"wallAxis","")) ? horizontalWalls : verticalWalls)
+                    .add(bounds(unit.getAsJsonObject("blockBounds")));
+        }
         for(JsonElement element:array(plan,"wallUnits")) {
             JsonObject unit=element.getAsJsonObject(); BlockBounds area=bounds(unit.getAsJsonObject("blockBounds"));
             boolean horizontal="X".equals(string(unit,"wallAxis",""));
@@ -163,6 +171,12 @@ public final class CityWallPlacementBackend {
                 for(int y=gate?9:0;y<12;y++) {
                     BlockState state = wallStates[Math.floorMod(along,16)][y][horizontal ? across : 4-across];
                     if (!horizontal) state = state.rotate(net.minecraft.world.level.block.Rotation.CLOCKWISE_90);
+                    if (!gate && y >= 10 && contains(horizontalWalls,x,z) && contains(verticalWalls,x,z)) {
+                        state = cornerWalkway(x,z,horizontalWalls,verticalWalls)
+                                ? net.minecraft.world.level.block.Blocks.AIR.defaultBlockState()
+                                : wallStates[Math.floorMod(along,16)][y][0];
+                        if (!horizontal) state = state.rotate(net.minecraft.world.level.block.Rotation.CLOCKWISE_90);
+                    }
                     // Embed into hills without excavating the mountain below its walkway.
                     if(!state.isAir() || y>=9) changes.put(new BlockPos(x,base+y,z),state);
                 }
@@ -173,8 +187,9 @@ public final class CityWallPlacementBackend {
             CompoundTag template=modules.guardTower();
             ListTag blocks=template.getList("blocks",Tag.TAG_COMPOUND);
             for(JsonElement element:array(plan,"wallNodes")) {
-                BlockBounds area=bounds(element.getAsJsonObject().getAsJsonObject("blockBounds"));
-                int base=integer(element.getAsJsonObject(),"baseY",0);
+                JsonObject node = element.getAsJsonObject();
+                BlockBounds area=bounds(node.getAsJsonObject("blockBounds"));
+                int base=integer(node,"baseY",0);
                 for(int z=area.minZ();z<=area.maxZ();z++) for(int x=area.minX();x<=area.maxX();x++) {
                     if(!owner.contains(x,z))continue;
                     Integer surface=surfaces.get(new BlockPoint(x,z));
@@ -183,9 +198,9 @@ public final class CityWallPlacementBackend {
                 }
                 for(int i=0;i<blocks.size();i++) {
                     CompoundTag block=blocks.getCompound(i); ListTag pos=block.getList("pos",Tag.TAG_INT);
-                    BlockPos at=new BlockPos(area.minX()+pos.getInt(0),base+pos.getInt(1),area.minZ()+pos.getInt(2));
+                    BlockPos at=towerBlockPosition(node,pos.getInt(0),pos.getInt(1),pos.getInt(2));
                     if(!owner.contains(at.getX(),at.getZ()))continue;
-                    BlockState state=towerStates.get(block.getInt("state"));
+                    BlockState state=towerStates.get(block.getInt("state")).rotate(towerRotation(node));
                     if(!state.isAir() || pos.getInt(1)>=9)changes.put(at,state);
                 }
             }
@@ -259,6 +274,30 @@ public final class CityWallPlacementBackend {
         report.addProperty("executedSegments",array(plan,"wallUnits").size()+nodes.size()); report.addProperty("skippedSegments",0);
         report.add("wallModuleSnapshot", modules.snapshot().deepCopy());
         return report;
+    }
+
+    static boolean cornerWalkway(int x, int z, List<BlockBounds> horizontal, List<BlockBounds> vertical) {
+        for (int[] d : new int[][]{{1,0},{-1,0},{0,1},{0,-1}})
+            if (!contains(horizontal,x+d[0],z+d[1]) && !contains(vertical,x+d[0],z+d[1])) return false;
+        return true;
+    }
+
+    static net.minecraft.world.level.block.Rotation towerRotation(JsonObject node) {
+        return switch (CityWallTowerGeometry.facing(string(node,"facing","SOUTH"))) {
+            case "NORTH" -> net.minecraft.world.level.block.Rotation.CLOCKWISE_180;
+            case "EAST" -> net.minecraft.world.level.block.Rotation.COUNTERCLOCKWISE_90;
+            case "WEST" -> net.minecraft.world.level.block.Rotation.CLOCKWISE_90;
+            default -> net.minecraft.world.level.block.Rotation.NONE;
+        };
+    }
+
+    static BlockPos towerBlockPosition(JsonObject node, int x, int y, int z) {
+        BlockBounds area = bounds(node.getAsJsonObject("blockBounds"));
+        // Frozen legacy plans keep their original placement until explicitly replanned.
+        if (!node.has("facing")) return new BlockPos(area.minX()+x,integer(node,"baseY",0)+y,area.minZ()+z);
+        BlockPoint offset = CityWallTowerGeometry.offset(x,z,string(node,"facing","SOUTH"));
+        return new BlockPos(integer(node,"x",0)+offset.x(),integer(node,"baseY",0)+y,
+                integer(node,"z",0)+offset.z());
     }
 
     static String geometryConflict(JsonObject plan) {

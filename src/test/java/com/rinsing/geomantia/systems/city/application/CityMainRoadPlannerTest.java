@@ -179,6 +179,30 @@ class CityMainRoadPlannerTest {
     }
 
     @Test
+    void bridgeChecksFullWidthIncludingStairsAtDesignBoundary() {
+        for (int maxZ : new int[]{23, 24}) {
+            var terrain = new LandUseTerrainField(LandUseTerrainField.SCHEMA,
+                    "city:test", new BlockBounds(0, 0, 95, maxZ), 32,
+                    List.of(cell(0, 0, false), cell(1, 0, true), cell(2, 0, false)));
+            var result = planner.plan(blueprint("HIERARCHICAL"), references("HIERARCHICAL"), terrain,
+                    List.of(anchor("a", new BlockBounds(8, 8, 14, 14), new BlockPoint(14, 15)),
+                            anchor("b", new BlockBounds(80, 8, 86, 14), new BlockPoint(80, 15))),
+                    List.of(street("a", "LINEAR_STREET_BAND", 5,
+                                    new BlockPoint(5, 20), new BlockPoint(15, 20)),
+                            street("b", "LINEAR_STREET_BAND", 5,
+                                    new BlockPoint(79, 20), new BlockPoint(90, 20))));
+            assertTrue(result.ok(), result.plan().toString());
+            // A boundary-crossing street exit must fall back to a legal building entrance.
+            assertEquals(1, result.plan().get("bridgeConnectionCount").getAsInt());
+            for (JsonObject band : result.streetBands()) {
+                BlockBounds full = CityStreetObstacleRouter.crossSection(band);
+                assertTrue(terrain.planningBounds().contains(full.minX(), full.minZ()));
+                assertTrue(terrain.planningBounds().contains(full.maxX(), full.maxZ()));
+            }
+        }
+    }
+
+    @Test
     void spatialGrowthSkipDoesNotCancelExplicitTrafficBridge() {
         List<LandUseTerrainField.Cell> cells = List.of(cell(0, 0, false), cell(1, 0, true),
                 cell(2, 0, false));

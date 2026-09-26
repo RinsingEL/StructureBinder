@@ -294,7 +294,10 @@ final class CityMainRoadPlanner {
                                                List<BlockBounds> obstacles) {
         for (BlockPoint point : unitPolyline(points)) {
             LandUseTerrainField.Cell cell = terrain.cellAt(point.x(), point.z()).orElse(null);
-            if (cell == null || !passable(cell, true) || blocked(point, width, obstacles)) return false;
+            // Width already includes both stair/rail margins, just as for land routes.
+            if (cell == null || !passable(cell, true)
+                    || !fullWidthInside(point, width, terrain.planningBounds())
+                    || blocked(point, width, obstacles)) return false;
         }
         return true;
     }
@@ -782,9 +785,15 @@ final class CityMainRoadPlanner {
         int upper = width / 2;
         BlockBounds road = new BlockBounds(point.x() - lower, point.z() - lower,
                 point.x() + upper, point.z() + upper);
-        if (!lookup.planningBounds().contains(road.minX(), road.minZ())
-                || !lookup.planningBounds().contains(road.maxX(), road.maxZ())) return false;
+        if (!fullWidthInside(point, width, lookup.planningBounds())) return false;
         return obstacles.stream().noneMatch(road::overlaps);
+    }
+
+    private static boolean fullWidthInside(BlockPoint point, int width, BlockBounds bounds) {
+        int lower = (width - 1) / 2;
+        int upper = width / 2;
+        return bounds.contains(point.x() - lower, point.z() - lower)
+                && bounds.contains(point.x() + upper, point.z() + upper);
     }
 
     private static BlockPoint cellCenter(LandUseTerrainField.Cell cell) {

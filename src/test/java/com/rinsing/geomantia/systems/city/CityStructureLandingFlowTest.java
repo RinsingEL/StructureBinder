@@ -768,47 +768,57 @@ final class CityStructureLandingFlowTest {
     }
 
     @Test
-    void cornerTowerMovesAlongWallWithoutChangingRoadOrBoundary() throws Exception {
+    void shortWallCornersConnectWithoutTowersOrGateConflicts() throws Exception {
         JsonObject anchors = JsonParser.parseString("""
-                {"anchors":[{"plannedFootprint":{"minX":0,"minZ":0,"maxX":15,"maxZ":15}}],
-                 "streetBands":[]}
+                {"anchors":[
+                  {"plannedFootprint":{"minX":0,"minZ":0,"maxX":15,"maxZ":15}},
+                  {"plannedFootprint":{"minX":32,"minZ":32,"maxX":47,"maxZ":47}}],
+                 "streetBands":[
+                  {"streetBandId":"vertical","bounds":{"minX":61,"minZ":-40,"maxX":67,"maxZ":8}},
+                  {"streetBandId":"horizontal","bounds":{"minX":56,"minZ":-3,"maxX":104,"maxZ":3}}]}
                 """).getAsJsonObject();
         var planner = new CityWallReservationPlanner();
-        var review = fixture().review();
-        var coverage = new BlockBounds(-10000,-10000,10000,10000);
-        var baseline = planner.plan(review, anchors, 24, 4, coverage);
-        anchors.getAsJsonArray("streetBands").add(JsonParser.parseString("""
-                {"streetBandId":"exit","bounds":{"minX":20,"minZ":-33,"maxX":100,"maxZ":-29}}
-                """));
         var original = anchors.deepCopy();
-        var result = planner.plan(review, anchors, 24, 4, coverage);
-        assertEquals(original, anchors);
+        var coverage = new BlockBounds(-10000,-10000,10000,10000);
+        var result = planner.plan(fixture().review(), anchors, 24, 4, coverage);
+        var withoutRoads = anchors.deepCopy();
+        withoutRoads.add("streetBands", new JsonArray());
+        var baseline = planner.plan(fixture().review(), withoutRoads, 24, 4, coverage);
         assertEquals(baseline.get("wallLine"), result.get("wallLine"));
-        assertEquals(baseline.getAsJsonArray("wallNodeSlots").size(), result.getAsJsonArray("wallNodeSlots").size());
-        assertTrue(result.getAsJsonArray("wallNodeSlots").asList().stream().anyMatch(e ->
-                e.getAsJsonObject().get("reasonCode").getAsString().equals("DISTRICT_CORNER_GATE_AVOIDANCE")));
-        for (var node : result.getAsJsonArray("wallNodeSlots")) {
-            var a = node.getAsJsonObject().getAsJsonObject("blockBounds");
-            for (var gate : result.getAsJsonArray("gateSlots")) {
-                var b = gate.getAsJsonObject().getAsJsonObject("blockBounds");
-                assertTrue(a.get("maxX").getAsInt() < b.get("minX").getAsInt()
-                        || a.get("minX").getAsInt() > b.get("maxX").getAsInt()
-                        || a.get("maxZ").getAsInt() < b.get("minZ").getAsInt()
-                        || a.get("minZ").getAsInt() > b.get("maxZ").getAsInt());
-            }
-        }
-        assertEquals(result, planner.plan(review, anchors, 24, 4, coverage));
+        assertEquals(original, anchors);
+        assertEquals(result, planner.plan(fixture().review(), anchors, 24, 4, coverage));
+        assertTrue(result.getAsJsonArray("wallNodeSlots").isEmpty());
+        var wall = new CityWallPlanner().plan(result, CityWallPlanner.Options.defaults());
+        assertTrue(wall.getAsJsonArray("wallNodes").isEmpty());
+        assertFalse(wall.getAsJsonArray("wallUnits").isEmpty());
     }
 
     @Test
-    void blockedAdjacentWallsStillRejectCornerTower() throws Exception {
+    void longWallTowersFaceOutwardAndReserveRotatedFootprints() throws Exception {
         JsonObject anchors = JsonParser.parseString("""
-                {"anchors":[{"plannedFootprint":{"minX":0,"minZ":0,"maxX":15,"maxZ":15}}],
-                 "streetBands":[{"streetBandId":"blocked","bounds":{"minX":-100,"minZ":-100,"maxX":100,"maxZ":100}}]}
+                {"anchors":[{"plannedFootprint":{"minX":0,"minZ":0,"maxX":255,"maxZ":255}}],"streetBands":[]}
                 """).getAsJsonObject();
-        var error = assertThrows(IllegalArgumentException.class, () -> new CityWallReservationPlanner()
-                .plan(fixture().review(), anchors, 24, 4, new BlockBounds(-10000,-10000,10000,10000)));
-        assertTrue(error.getMessage().startsWith("WALL_GATE_CORNER_CONFLICT"));
+        var reservation = new CityWallReservationPlanner().plan(fixture().review(), anchors, 24, 4,
+                new BlockBounds(-10000,-10000,10000,10000));
+        var plan = new CityWallPlanner().plan(reservation, CityWallPlanner.Options.defaults());
+        assertEquals(4, plan.getAsJsonArray("wallNodes").size());
+        var facings = new java.util.HashSet<String>();
+        for (var value : plan.getAsJsonArray("wallNodes")) {
+            var node = value.getAsJsonObject();
+            String facing = node.get("facing").getAsString(); facings.add(facing);
+            int x=node.get("x").getAsInt(), z=node.get("z").getAsInt();
+            assertTrue(switch(facing) {
+                case "NORTH" -> z < 0;
+                case "SOUTH" -> z > 255;
+                case "EAST" -> x > 255;
+                default -> x < 0;
+            });
+            var slot = reservation.getAsJsonArray("wallNodeSlots").asList().stream()
+                    .map(e -> e.getAsJsonObject()).filter(o -> o.get("facing").getAsString().equals(facing)).findFirst().orElseThrow();
+            assertEquals(slot.get("blockBounds"),node.get("blockBounds"));
+            assertEquals("LONG_WALL_SUPPORT",node.get("reasonCode").getAsString());
+        }
+        assertEquals(java.util.Set.of("NORTH","SOUTH","EAST","WEST"),facings);
     }
 
     @Test

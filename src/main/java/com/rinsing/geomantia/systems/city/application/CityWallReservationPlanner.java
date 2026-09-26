@@ -320,56 +320,23 @@ public final class CityWallReservationPlanner {
     }
 
     private static JsonArray wallNodeSlots(List<Segment> segments, JsonArray gateSlots, JsonObject anchorMap) {
-        JsonArray out = new JsonArray(); Set<String> corners = new LinkedHashSet<>();
-        List<BlockPoint> displaced = new ArrayList<>();
-        for (Segment segment : segments) {
-            if (overlapsAny(towerBounds(segment.from), gateSlots)) {
-                if (!displaced.contains(segment.from)) displaced.add(segment.from);
-            } else addNodeSlot(out, corners, segment.from, "guard_tower", "DISTRICT_CORNER");
-        }
-        // Reserve unaffected corners first, so moving one tower cannot consume another corner.
-        for (BlockPoint corner : displaced) {
-            BlockPoint replacement = relocateCorner(corner, segments, gateSlots, out, anchorMap);
-            if (replacement == null)
-                throw new IllegalArgumentException("WALL_GATE_CORNER_CONFLICT: no safe tower position within 64 blocks along adjacent walls at "
-                        + corner.x() + "," + corner.z());
-            addNodeSlot(out, corners, replacement, "guard_tower", "DISTRICT_CORNER_GATE_AVOIDANCE");
-        }
+        JsonArray out = new JsonArray(); Set<String> seen = new LinkedHashSet<>();
+        // Corners are connected by masonry; towers only support long straight walls.
         for (Segment segment : segments) {
             int length = Math.abs(segment.to.x()-segment.from.x())+Math.abs(segment.to.z()-segment.from.z());
             if (length > 160) {
                 BlockPoint middle = new BlockPoint((segment.from.x()+segment.to.x())/2,
                         (segment.from.z()+segment.to.z())/2);
-                if (safeTowerPosition(middle, gateSlots, out, anchorMap))
-                    addNodeSlot(out,corners,middle,"guard_tower","LONG_WALL_SUPPORT");
+                String facing = CityWallTowerGeometry.facing(segment.side);
+                if (safeTowerPosition(middle, facing, gateSlots, out, anchorMap))
+                    addNodeSlot(out,seen,middle,facing,"LONG_WALL_SUPPORT");
             }
         }
         return out;
     }
 
-    private static BlockPoint relocateCorner(BlockPoint corner, List<Segment> segments,
-                                              JsonArray gates, JsonArray nodes, JsonObject anchors) {
-        for (int distance = 1; distance <= 64; distance++) {
-            for (Segment segment : segments) {
-                BlockPoint other = segment.from.equals(corner) ? segment.to
-                        : segment.to.equals(corner) ? segment.from : null;
-                if (other == null) continue;
-                int length = Math.abs(other.x()-corner.x()) + Math.abs(other.z()-corner.z());
-                if (distance > length - 8) continue;
-                BlockPoint candidate = new BlockPoint(corner.x() + Integer.signum(other.x()-corner.x())*distance,
-                        corner.z() + Integer.signum(other.z()-corner.z())*distance);
-                if (safeTowerPosition(candidate, gates, nodes, anchors)) return candidate;
-            }
-        }
-        return null;
-    }
-
-    private static BlockBounds towerBounds(BlockPoint point) {
-        return new BlockBounds(point.x()-3, point.z()-6, point.x()+3, point.z()+3);
-    }
-
-    private static boolean safeTowerPosition(BlockPoint point, JsonArray gates, JsonArray nodes, JsonObject anchorMap) {
-        BlockBounds tower = towerBounds(point);
+    private static boolean safeTowerPosition(BlockPoint point, String facing, JsonArray gates, JsonArray nodes, JsonObject anchorMap) {
+        BlockBounds tower = CityWallTowerGeometry.bounds(point, facing);
         if (overlapsAny(tower, gates) || overlapsAny(tower, nodes)) return false;
         for (JsonElement element : array(anchorMap, "streetBands")) {
             JsonObject road = element.getAsJsonObject();
@@ -385,19 +352,19 @@ public final class CityWallReservationPlanner {
     }
 
     private static void addNodeSlot(JsonArray out, Set<String> seen, BlockPoint point,
-                                    String nodeType, String reasonCode) {
+                                    String facing, String reasonCode) {
         String key = point.x() + "," + point.z();
         if (!seen.add(key)) {
             return;
         }
         JsonObject slot = new JsonObject();
         slot.addProperty("nodeSlotId", "d5_node_slot_" + (out.size()));
-        slot.addProperty("nodeType", nodeType);
+        slot.addProperty("nodeType", "guard_tower");
+        slot.addProperty("facing", facing);
         slot.addProperty("templateId", "guard_tower");
         slot.addProperty("reasonCode", reasonCode);
         slot.add("block", point.asJson());
-        slot.add("blockBounds", boundsJson(new BlockBounds(point.x() - 3, point.z() - 6,
-                point.x() + 3, point.z() + 3)));
+        slot.add("blockBounds", boundsJson(CityWallTowerGeometry.bounds(point, facing)));
         out.add(slot);
     }
 

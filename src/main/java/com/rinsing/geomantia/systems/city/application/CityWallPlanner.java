@@ -96,11 +96,14 @@ public final class CityWallPlanner {
             BlockBounds slotBounds = bounds(slot.getAsJsonObject("blockBounds"));
             JsonObject point = slot.has("block") ? slot.getAsJsonObject("block") : new JsonObject();
             int nodeX = intValue(point,"x",slotBounds.center().x()), nodeZ = intValue(point,"z",slotBounds.center().z());
-            BlockBounds bounds = new BlockBounds(nodeX-3,nodeZ-6,nodeX+3,nodeZ+3);
+            String facing = CityWallTowerGeometry.facing(stringValue(slot, "facing",
+                    sideForNode(slotBounds, line)));
+            BlockBounds bounds = CityWallTowerGeometry.bounds(new BlockPoint(nodeX, nodeZ), facing);
             JsonObject node = graphNode("wall_wall_node_" + nodeIndex++,
                     "guard_tower",
                     nodeX, nodeZ, bounds, 0, 0,
                     "terrain_following_sections");
+            node.addProperty("facing", facing);
             node.addProperty("sourceNodeSlotId", stringValue(slot, "nodeSlotId", ""));
             node.addProperty("reasonCode", stringValue(slot, "reasonCode", "D5_WALL_NODE_SLOT"));
             node.addProperty("wallAxis", wallAxisForNode(bounds, line));
@@ -239,6 +242,15 @@ public final class CityWallPlanner {
 
     private static String wallAxis(BlockBounds bounds) {
         return bounds.widthBlocks() >= bounds.heightBlocks() ? "X" : "Z";
+    }
+
+    private static String sideForNode(BlockBounds node, JsonArray lines) {
+        for (JsonElement element : lines) {
+            JsonObject line = element.getAsJsonObject();
+            if (line.has("blockBounds") && node.overlaps(bounds(line.getAsJsonObject("blockBounds"))))
+                return stringValue(line, "sideHint", "south");
+        }
+        throw new IllegalArgumentException("WALL_TOWER_WALL_SIDE_UNAVAILABLE");
     }
 
     private static String wallAxisForNode(BlockBounds nodeBounds, JsonArray wallLine) {
