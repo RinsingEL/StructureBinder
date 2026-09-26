@@ -7,6 +7,21 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PlanningAreaAccessPolicyTest {
+    @Test void starterNearSeaAndOpenOceanHaveNoInternalMovementBarrier() throws Exception {
+        fixture(false,false);
+        var grid=GeographicRegionsTest.grid(-8,95,-16,16,(x,z)->x<52||x>68);
+        write(run().resolve("world_feature_grid.json"),grid);
+        write(temp.resolve("geomantia_starter_realm.json"),
+                InitialExplorationArea.continent(GeographicRegions.build(grid,256,1024),0,0).description());
+        var access=new PlanningAreaAccessPolicy(root(),new PlanningAreaAccessConfig(true,256,512,Set.of("minecraft:overworld"),256,1024),256);
+        for(int x=6800;x<=7360;x+=16) {
+            assertTrue(access.revealed("minecraft:overworld",x,1024));
+            assertTrue(access.evaluate("minecraft:overworld",x,1024).allowed(),"Movement blocked at "+x+": "+access.evaluate("minecraft:overworld",x,1024).reasonCode());
+            assertTrue(access.permitsPlayerTicket("minecraft:overworld",x/16,64),"Generation blocked at "+x);
+        }
+        assertTrue(AccessBoundary.sample(6912,1024,(x,z)->access.evaluate("minecraft:overworld",x,z).allowed()).isEmpty());
+    }
+
     @Test void offshoreOpensBeforePlanningButOnlyAfterSurveySeals() throws Exception {
         write(run().resolve("world_feature_grid.json"), GeographicRegionsTest.grid(24,95,-16,16,(x,z)->false));
         write(run().resolve("world_survey_manifest.json"), JsonParser.parseString("{\"status\":\"running\"}").getAsJsonObject());

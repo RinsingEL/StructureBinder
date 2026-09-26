@@ -146,7 +146,8 @@ final class GeographicAreaAccess {
         int radius=(int)Math.ceil((safety+128.0)/geography.step());
         for(int dz=-radius;dz<=radius;dz++) for(int dx=-radius;dx<=radius;dx++) {
             int cx=gx+dx,cz=gz+dz;
-            if(openRegions.contains(geography.at(new GeographicRegions.Cell(cx,cz)))) continue;
+            if(openRegions.contains(geography.at(new GeographicRegions.Cell(cx,cz)))
+                    || initial.geographic() && initial.contains((cx+0.5)*geography.step(),(cz+0.5)*geography.step())) continue;
             double gapX=Math.max(Math.max(cx*(double)geography.step()-x,0),x-(cx+1.0)*geography.step());
             double gapZ=Math.max(Math.max(cz*(double)geography.step()-z,0),z-(cz+1.0)*geography.step());
             clearance=Math.min(clearance,Math.max(gapX,gapZ));
