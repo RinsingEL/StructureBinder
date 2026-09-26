@@ -32,7 +32,7 @@ import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 public final class AdventurerMapNetwork {
-    private static final String PROTOCOL = "9";
+    private static final String PROTOCOL = "11";
     private static final int VIEW_RADIUS_AT_ZOOM_ONE = 4096;
     private static final int MIN_VIEW_RADIUS = 1024;
     private static final int MAX_VIEW_RADIUS = 524288;
@@ -108,8 +108,8 @@ public final class AdventurerMapNetwork {
         }
     }
 
-    public static void requestSnapshot(double zoom, double centerX, double centerZ, boolean debug) {
-        CHANNEL.sendToServer(new SnapshotRequest(normalizeZoom(zoom), centerX, centerZ, debug));
+    public static void requestSnapshot(long requestId, double zoom, double centerX, double centerZ, boolean debug) {
+        CHANNEL.sendToServer(new SnapshotRequest(requestId, normalizeZoom(zoom), centerX, centerZ, debug));
     }
 
     public static void openFor(ServerPlayer player) {
@@ -124,8 +124,9 @@ public final class AdventurerMapNetwork {
                 new OpenMap(view.centerX(),view.centerZ(),normalizeZoom(VIEW_RADIUS_AT_ZOOM_ONE/view.radius())));
     }
 
-    private record SnapshotRequest(double zoom, double centerX, double centerZ, boolean debug) {
+    private record SnapshotRequest(long requestId, double zoom, double centerX, double centerZ, boolean debug) {
         static void encode(SnapshotRequest request, FriendlyByteBuf buffer) {
+            buffer.writeLong(request.requestId);
             buffer.writeDouble(request.zoom);
             buffer.writeDouble(request.centerX);
             buffer.writeDouble(request.centerZ);
@@ -133,7 +134,7 @@ public final class AdventurerMapNetwork {
         }
 
         static SnapshotRequest decode(FriendlyByteBuf buffer) {
-            return new SnapshotRequest(normalizeZoom(buffer.readDouble()), buffer.readDouble(), buffer.readDouble(), buffer.readBoolean());
+            return new SnapshotRequest(buffer.readLong(), normalizeZoom(buffer.readDouble()), buffer.readDouble(), buffer.readDouble(), buffer.readBoolean());
         }
 
         static void handle(SnapshotRequest ignored, Supplier<NetworkEvent.Context> contextSupplier) {
@@ -165,7 +166,7 @@ public final class AdventurerMapNetwork {
             viewport = new MapViewport(snapViewportCenter(normalizeCenter(request.centerX, sender.getX())),
                     snapViewportCenter(normalizeCenter(request.centerZ, sender.getZ())), radius);
         } catch (RuntimeException exception) {
-            CHANNEL.send(PacketDistributor.PLAYER.with(() -> sender), new SnapshotResponse(errorSnapshot()));
+            CHANNEL.send(PacketDistributor.PLAYER.with(() -> sender), new SnapshotResponse(request.requestId, errorSnapshot()));
             return;
         }
         boolean debug = request.debug && sender.hasPermissions(2);
@@ -179,7 +180,7 @@ public final class AdventurerMapNetwork {
             }
             AdventurerMapSnapshot completed = snapshot;
             sender.server.execute(() -> CHANNEL.send(
-                    PacketDistributor.PLAYER.with(() -> sender), new SnapshotResponse(completed)));
+                    PacketDistributor.PLAYER.with(() -> sender), new SnapshotResponse(request.requestId, completed)));
         });
     }
 
@@ -197,8 +198,9 @@ public final class AdventurerMapNetwork {
                 * VIEWPORT_CENTER_QUANTUM_BLOCKS + VIEWPORT_CENTER_QUANTUM_BLOCKS / 2;
     }
 
-    private record SnapshotResponse(AdventurerMapSnapshot snapshot) {
+    private record SnapshotResponse(long requestId, AdventurerMapSnapshot snapshot) {
         static void encode(SnapshotResponse response, FriendlyByteBuf buffer) {
+            buffer.writeLong(response.requestId);
             AdventurerMapSnapshot value = response.snapshot;
             buffer.writeUtf(value.runId());
             buffer.writeUtf(value.wStatus());
@@ -215,6 +217,9 @@ public final class AdventurerMapNetwork {
             buffer.writeVarInt(value.initialActivityRadiusBlocks());
             buffer.writeInt(value.initialCenterX());
             buffer.writeInt(value.initialCenterZ());
+            var bounds = value.surveyBounds();
+            buffer.writeInt(bounds.minX()); buffer.writeInt(bounds.minZ());
+            buffer.writeInt(bounds.maxX()); buffer.writeInt(bounds.maxZ());
             CoarseMap map = value.coarseMap();
             buffer.writeUtf(map.dimensionId());
             buffer.writeInt(map.minBlockX());
@@ -241,6 +246,7 @@ public final class AdventurerMapNetwork {
         }
 
         static SnapshotResponse decode(FriendlyByteBuf buffer) {
+            long requestId = buffer.readLong();
             String runId = buffer.readUtf();
             String wStatus = buffer.readUtf();
             String wPhase = buffer.readUtf();
@@ -256,6 +262,7 @@ public final class AdventurerMapNetwork {
             int initialActivityRadiusBlocks = buffer.readVarInt();
             int initialCenterX = buffer.readInt();
             int initialCenterZ = buffer.readInt();
+            var bounds = new AdventurerMapSnapshot.SurveyBounds(buffer.readInt(), buffer.readInt(), buffer.readInt(), buffer.readInt());
             String dimensionId = buffer.readUtf();
             int minBlockX = buffer.readInt();
             int minBlockZ = buffer.readInt();
@@ -287,15 +294,15 @@ public final class AdventurerMapNetwork {
                 nodes.add(new CityNode(buffer.readUtf(), buffer.readUtf(), buffer.readUtf(),
                         buffer.readInt(), buffer.readInt(), buffer.readUtf(), buffer.readBoolean()));
             }
-            return new SnapshotResponse(new AdventurerMapSnapshot(runId, wStatus, wPhase, wProgress,
+            return new SnapshotResponse(requestId, new AdventurerMapSnapshot(runId, wStatus, wPhase, wProgress,
                     tStage, tStatus, realmId, realmName, cityId, cityStatus, completed, remaining,
-                    initialActivityRadiusBlocks, coarseMap, nodes, initialCenterX, initialCenterZ));
+                    initialActivityRadiusBlocks, coarseMap, nodes, initialCenterX, initialCenterZ, bounds));
         }
 
         static void handle(SnapshotResponse response, Supplier<NetworkEvent.Context> contextSupplier) {
             NetworkEvent.Context context = contextSupplier.get();
             context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                    () -> () -> AdventurerMapClient.receiveSnapshot(response.snapshot)));
+                    () -> () -> AdventurerMapClient.receiveSnapshot(response.requestId, response.snapshot)));
             context.setPacketHandled(true);
         }
     }

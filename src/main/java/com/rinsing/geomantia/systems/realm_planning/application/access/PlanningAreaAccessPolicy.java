@@ -95,7 +95,7 @@ public final class PlanningAreaAccessPolicy {
         String name=p.getFileName().toString();
         return Set.of("world_feature_grid.json","world_survey_manifest.json","realm_territory_map.json",
                 "city_seed_registry.json","city_design_queue.json","planning_session.json","test_run_manifest.json",
-                "addon_region_reservations.json","addon_region_generation_ready.json").contains(name)
+                "addon_region_reservations.json","addon_region_generation_ready.json","city_blueprint.json").contains(name)
                 || p.getParent().getFileName().toString().equals("post_d4");
     }
     public record Decision(boolean allowed,String reasonCode,String runId,String citySeedId,double clearanceBlocks) {

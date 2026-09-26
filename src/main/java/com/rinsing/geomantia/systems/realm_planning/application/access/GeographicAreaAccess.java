@@ -181,6 +181,14 @@ final class GeographicAreaAccess {
                     && (!arr(obj(plan,"areaPlan"),"areas").isEmpty()
                     || !arr(obj(plan,"surfacePrintPlan"),"featureCells").isEmpty())) ready.add(id);
         }
+        // PRESERVE deliberately has no LandUse activation. It still needs the actual
+        // structure registry for this run and a ready queue state (checked by load).
+        Path run = worldRoot.resolve("realm_debug").resolve(runId);
+        for (String id : structures) {
+            JsonObject blueprint = read(run.resolve("city_test_runs").resolve(safe(id))
+                    .resolve("steps/blueprint/city_blueprint.json"));
+            if ("PRESERVE".equals(str(obj(blueprint, "outdoorPlan"), "mode", ""))) ready.add(id);
+        }
         return ready;
     }
     static long activity(Path p) { try { Path q=p.resolve("automation/city_design_queue.json"); return Files.getLastModifiedTime(Files.exists(q)?q:p.resolve("world_feature_grid.json")).toMillis(); } catch(IOException e) { return 0; } }

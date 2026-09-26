@@ -29,6 +29,13 @@ public final class AdventurerMapStatusReader {
     private static Path cachedMapRun;
     private static String cachedMapFingerprint = "";
     private static CoarseMap cachedMap = CoarseMap.empty();
+    // Keep only compact samples, never the full world JSON tree, across viewport changes.
+    private static Path cachedSourceRun;
+    private static String cachedSourceFingerprint = "";
+    private static MapSource cachedSource;
+    private static Path cachedPolicyRoot;
+    private static String cachedPolicyFingerprint = "";
+    private static PlanningAreaAccessPolicy cachedPolicy;
 
     private AdventurerMapStatusReader() {
     }
@@ -80,7 +87,7 @@ public final class AdventurerMapStatusReader {
         int completedCount = intValue(queue, "completedCount", 0);
         int remainingCount = intValue(queue, "remainingCount", 0);
         CoarseMap coarseMap = coarseMap(root, run, accessConfig,
-                viewport == null ? MapViewport.full() : viewport);
+                viewport == null ? MapViewport.full() : viewport, initial);
         if(Files.isRegularFile(root.getParent().resolve("geomantia_world_entry.json")) && !initial.geographic())
             coarseMap=CoarseMap.empty(); // Preparation is progress, never a pretend circular continent.
         List<CityNode> nodes = visibleCityNodes(
@@ -90,57 +97,42 @@ public final class AdventurerMapStatusReader {
         return new AdventurerMapSnapshot(runId, wStatus, wPhase, wProgress,
                 stageState.stage(), stageState.status(), currentRealmId, currentRealmName,
                 currentCityId, cityStatus, completedCount, remainingCount,
-                accessConfig.initialActivityRadiusBlocks(), coarseMap, nodes).withInitialArea(initial);
+                accessConfig.initialActivityRadiusBlocks(), coarseMap, nodes).withInitialArea(initial).withSurveyBounds(surveyBounds(run));
+    }
+
+    private static AdventurerMapSnapshot.SurveyBounds surveyBounds(Path run) throws IOException {
+        JsonObject context = readObjectIfPresent(run.resolve("world_survey_context.json"));
+        JsonObject bounds = objectValue(context, "scanBounds");
+        if (bounds == null) return AdventurerMapSnapshot.SurveyBounds.empty();
+        // Persisted scan maxima are inclusive; rendering uses exclusive bounds.
+        return new AdventurerMapSnapshot.SurveyBounds(intValue(bounds,"minBlockX",0),intValue(bounds,"minBlockZ",0),
+                intValue(bounds,"maxBlockX",-1)+1,intValue(bounds,"maxBlockZ",-1)+1);
     }
 
     private static synchronized CoarseMap coarseMap(Path debugRoot, Path run,
                                                     PlanningAreaAccessConfig accessConfig,
-                                                    MapViewport viewport) throws IOException {
-        var initial=com.rinsing.geomantia.systems.realm_planning.application.access.InitialExplorationArea.fromDebugRoot(debugRoot,accessConfig.initialActivityRadiusBlocks());
+                                                    MapViewport viewport,
+                                                    com.rinsing.geomantia.systems.realm_planning.application.access.InitialExplorationArea initial) throws IOException {
         Path featurePath = run.resolve("world_feature_grid.json");
         Path territoryPath = run.resolve("realm_territory_map.json");
         Path contextPath = run.resolve("world_survey_context.json");
-        String fingerprint = fileFingerprint(featurePath) + '|' + fileFingerprint(territoryPath)
-                + '|' + fileFingerprint(contextPath) + '|' + PlanningAreaAccessPolicy.sourceStamp(debugRoot)
-                + '|' + fileFingerprint(run.resolve("realm_profiles.json")) + '|' + accessConfig + '|' + viewport;
+        String sourceFingerprint = fileFingerprint(featurePath) + '|' + fileFingerprint(territoryPath)
+                + '|' + fileFingerprint(contextPath);
+        String policyFingerprint = PlanningAreaAccessPolicy.sourceStamp(debugRoot)
+                + "|" + fileFingerprint(debugRoot.getParent().resolve("geomantia_world_entry.json")) + '|' + accessConfig;
+        String fingerprint = sourceFingerprint + '|' + policyFingerprint
+                + '|' + fileFingerprint(run.resolve("realm_profiles.json")) + '|' + viewport;
         if (run.equals(cachedMapRun) && fingerprint.equals(cachedMapFingerprint)) {
             return cachedMap;
         }
 
-        JsonObject context = readObjectIfPresent(contextPath);
-        String dimensionId = stringValue(context, "dimensionId", "minecraft:overworld");
-        JsonObject featureGrid = readObjectIfPresent(featurePath);
-        if (featureGrid == null || !featureGrid.has("cells") || !featureGrid.get("cells").isJsonArray()) {
-            return cacheMap(run, fingerprint, new CoarseMap(dimensionId, 0, 0, 1,
-                    0, 0, new byte[0], new byte[0], new byte[0], List.of()));
-        }
-
-        JsonArray cells = featureGrid.getAsJsonArray("cells");
-        if (cells.isEmpty()) {
-            return cacheMap(run, fingerprint, new CoarseMap(dimensionId, 0, 0, 1,
-                    0, 0, new byte[0], new byte[0], new byte[0], List.of()));
-        }
-
-        int minGridX = Integer.MAX_VALUE;
-        int minGridZ = Integer.MAX_VALUE;
-        int maxGridX = Integer.MIN_VALUE;
-        int maxGridZ = Integer.MIN_VALUE;
-        for (JsonElement element : cells) {
-            if (!element.isJsonObject()) continue;
-            JsonObject cell = element.getAsJsonObject();
-            int gridX = intValue(cell, "gridX", 0);
-            int gridZ = intValue(cell, "gridZ", 0);
-            minGridX = Math.min(minGridX, gridX);
-            minGridZ = Math.min(minGridZ, gridZ);
-            maxGridX = Math.max(maxGridX, gridX);
-            maxGridZ = Math.max(maxGridZ, gridZ);
-        }
-        if (minGridX == Integer.MAX_VALUE) {
-            return cacheMap(run, fingerprint, CoarseMap.empty());
-        }
-
-        int sourceCellSize = Math.max(1, intValue(featureGrid, "cellStepBlocks",
-                intValue(context, "cellStepBlocks", 128)));
+        MapSource source = mapSource(run, sourceFingerprint);
+        String dimensionId = source.dimensionId();
+        if (source.samples().isEmpty()) return cacheMap(run, fingerprint, new CoarseMap(dimensionId, 0, 0, 1,
+                0, 0, new byte[0], new byte[0], new byte[0], List.of()));
+        int minGridX = source.minX(), minGridZ = source.minZ();
+        int maxGridX = source.maxX(), maxGridZ = source.maxZ();
+        int sourceCellSize = source.cellSize();
         if (viewport.bounded()) {
             minGridX = Math.max(minGridX, Math.floorDiv(viewport.centerBlockX() - viewport.radiusBlocks(),
                     sourceCellSize));
@@ -168,18 +160,16 @@ public final class AdventurerMapStatusReader {
         byte[] realmCodes = new byte[pixelCount];
         byte[] revealedCodes = new byte[pixelCount];
 
-        TerritoryPalette territory = territoryPalette(territoryPath);
-        for (JsonElement element : cells) {
-            if (!element.isJsonObject()) continue;
-            JsonObject cell = element.getAsJsonObject();
-            int gridX = intValue(cell, "gridX", 0);
-            int gridZ = intValue(cell, "gridZ", 0);
+        TerritoryPalette territory = source.territory();
+        for (MapSample cell : source.samples()) {
+            int gridX = cell.x();
+            int gridZ = cell.z();
             if (gridX < minGridX || gridX > maxGridX || gridZ < minGridZ || gridZ > maxGridZ) continue;
             int column = (gridX - minGridX) / reduction;
             int row = (gridZ - minGridZ) / reduction;
             if (column < 0 || column >= width || row < 0 || row >= height) continue;
             int index = row * width + column;
-            int terrainCode = terrainCode(cell);
+            int terrainCode = cell.terrain();
             terrainCounts[index][terrainCode]++;
             String realmId = territory.cellRealms().get(cellKey(gridX, gridZ));
             Integer realmCode = realmId == null ? null : territory.realmCodes().get(realmId);
@@ -195,7 +185,12 @@ public final class AdventurerMapStatusReader {
             terrainCodes[index] = (byte) selected;
         }
 
-        PlanningAreaAccessPolicy accessPolicy = new PlanningAreaAccessPolicy(debugRoot, accessConfig);
+        if (!debugRoot.equals(cachedPolicyRoot) || !policyFingerprint.equals(cachedPolicyFingerprint)) {
+            cachedPolicy = new PlanningAreaAccessPolicy(debugRoot, accessConfig);
+            cachedPolicyRoot = debugRoot;
+            cachedPolicyFingerprint = policyFingerprint;
+        }
+        PlanningAreaAccessPolicy accessPolicy = cachedPolicy;
         int minBlockX = minGridX * sourceCellSize;
         int minBlockZ = minGridZ * sourceCellSize;
         for (int row = 0; row < height; row++) {
@@ -224,6 +219,36 @@ public final class AdventurerMapStatusReader {
                 outputCellSize, width, height, terrainCodes, realmCodes, revealedCodes, ids, names);
         return cacheMap(run, fingerprint, value);
     }
+
+    private static MapSource mapSource(Path run, String fingerprint) throws IOException {
+        if (run.equals(cachedSourceRun) && fingerprint.equals(cachedSourceFingerprint)) return cachedSource;
+        JsonObject context = readObjectIfPresent(run.resolve("world_survey_context.json"));
+        JsonObject grid = readObjectIfPresent(run.resolve("world_feature_grid.json"));
+        List<MapSample> samples = new ArrayList<>();
+        int minX = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
+        if (grid != null && grid.has("cells") && grid.get("cells").isJsonArray()) {
+            for (JsonElement element : grid.getAsJsonArray("cells")) {
+                if (!element.isJsonObject()) continue;
+                JsonObject cell = element.getAsJsonObject();
+                int x = intValue(cell, "gridX", 0), z = intValue(cell, "gridZ", 0);
+                samples.add(new MapSample(x, z, terrainCode(cell)));
+                minX = Math.min(minX, x); minZ = Math.min(minZ, z);
+                maxX = Math.max(maxX, x); maxZ = Math.max(maxZ, z);
+            }
+        }
+        MapSource loaded = new MapSource(stringValue(context, "dimensionId", "minecraft:overworld"),
+                Math.max(1, intValue(grid, "cellStepBlocks", intValue(context, "cellStepBlocks", 128))),
+                minX, minZ, maxX, maxZ, List.copyOf(samples), territoryPalette(run.resolve("realm_territory_map.json")));
+        cachedSourceRun = run;
+        cachedSourceFingerprint = fingerprint;
+        cachedSource = loaded;
+        return loaded;
+    }
+
+    private record MapSample(int x, int z, int terrain) { }
+    private record MapSource(String dimensionId, int cellSize, int minX, int minZ, int maxX, int maxZ,
+                             List<MapSample> samples, TerritoryPalette territory) { }
 
     private static CoarseMap cacheMap(Path run, String fingerprint, CoarseMap value) {
         cachedMapRun = run;

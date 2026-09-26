@@ -19,12 +19,117 @@ class AdventurerMapStatusReaderTest {
     Path temporaryDirectory;
 
     @Test
+    void overviewUsesSurveyExtentAndSurvivesPlayerFiltering() throws Exception {
+        Path root = temporaryDirectory.resolve("realm_debug");
+        Path run = Files.createDirectories(root.resolve("survey_bounds"));
+        Files.writeString(run.resolve("world_survey_context.json"), """
+                {"scanBounds":{"minBlockX":-12288,"minBlockZ":-12288,"maxBlockX":12287,"maxBlockZ":12287}}
+                """);
+        var bounds = AdventurerMapStatusReader.read(root,"survey_bounds").forViewer(false).surveyBounds();
+        assertTrue(bounds.available());
+        assertEquals(24576,bounds.maxX()-bounds.minX());
+        assertEquals(0,bounds.centerX());
+        assertTrue(4096/bounds.minimumZoom() >= 12288);
+        assertTrue(4096/bounds.minimumZoom() < 15000,"Overview must not zoom out to the old 524288 radius");
+        assertFalse(AdventurerMapSnapshot.empty().surveyBounds().available());
+    }
+
+    @Test
+    void cachedSourcesFollowEditsDeletionAndWorldChanges() throws Exception {
+        Path root = temporaryDirectory.resolve("first/realm_debug");
+        Path run = Files.createDirectories(root.resolve("same_run"));
+        Path grid = run.resolve("world_feature_grid.json");
+        String land = "{\"cellStepBlocks\":128,\"cells\":[{\"gridX\":0,\"gridZ\":0,\"waterFrac\":0}]}";
+        Files.writeString(run.resolve("world_survey_context.json"), "{}");
+        Files.writeString(grid, land);
+        var config = new PlanningAreaAccessConfig(true, 2048, 8192, Set.of("minecraft:overworld"));
+        var firstView = new AdventurerMapStatusReader.MapViewport(0, 0, 1024);
+        var nextView = new AdventurerMapStatusReader.MapViewport(128, 0, 1024);
+        var landMap = AdventurerMapStatusReader.read(root, "same_run", config, firstView).coarseMap();
+        assertEquals(3, landMap.terrainCodes()[0]);
+        assertTrue(landMap.revealedAt(64, 64));
+
+        // A changed starter mask must invalidate fog even if world samples are unchanged.
+        Files.writeString(root.getParent().resolve("geomantia_starter_realm.json"),
+                "{\"centerBlockX\":10000,\"centerBlockZ\":10000}");
+        var moved = AdventurerMapStatusReader.read(root, "same_run", config, nextView).coarseMap();
+        assertFalse(moved.revealedAt(64, 64));
+
+        Files.writeString(grid, land.replace("\"waterFrac\":0", "\"waterFrac\":1.00"));
+        assertEquals(1, AdventurerMapStatusReader.read(root, "same_run", config, firstView)
+                .coarseMap().terrainCodes()[0]);
+
+        Path otherRoot = temporaryDirectory.resolve("second/realm_debug");
+        Path otherRun = Files.createDirectories(otherRoot.resolve("same_run"));
+        Files.writeString(otherRun.resolve("world_survey_context.json"), "{}");
+        Files.writeString(otherRun.resolve("world_feature_grid.json"), land);
+        var otherMap = AdventurerMapStatusReader.read(otherRoot, "same_run", config, nextView).coarseMap();
+        assertEquals(3, otherMap.terrainCodes()[0]);
+        assertTrue(otherMap.revealedAt(64, 64));
+
+        Files.delete(grid);
+        assertFalse(AdventurerMapStatusReader.read(root, "same_run", config, firstView).coarseMap().available());
+    }
+
+    @Test
+    void rasterComparisonDetectsFogAndOwnershipChangesAcrossDecodedArrays() {
+        var first = new AdventurerMapSnapshot.CoarseMap("minecraft:overworld", 0, 0, 128, 1, 1,
+                new byte[]{3}, new byte[]{1}, new byte[]{1}, java.util.List.of("realm"));
+        var decoded = new AdventurerMapSnapshot.CoarseMap("minecraft:overworld", 0, 0, 128, 1, 1,
+                new byte[]{3}, new byte[]{1}, new byte[]{1}, java.util.List.of("realm"));
+        var hidden = new AdventurerMapSnapshot.CoarseMap("minecraft:overworld", 0, 0, 128, 1, 1,
+                new byte[]{3}, new byte[]{1}, new byte[]{0}, java.util.List.of("realm"));
+        var newOwner = new AdventurerMapSnapshot.CoarseMap("minecraft:overworld", 0, 0, 128, 1, 1,
+                new byte[]{3}, new byte[]{1}, new byte[]{1}, java.util.List.of("other"));
+        assertTrue(first.sameRaster(decoded));
+        assertFalse(first.sameRaster(hidden));
+        assertFalse(first.sameRaster(newOwner));
+    }
+
+    @Test
     void returnsEmptySnapshotWhenNoPlanningRunExists() throws Exception {
         var snapshot = AdventurerMapStatusReader.read(temporaryDirectory.resolve("realm_debug"), "");
 
         assertEquals("", snapshot.runId());
         assertEquals("not_started", snapshot.wStatus());
         assertTrue(snapshot.cityNodes().isEmpty());
+    }
+
+    @Test
+    void reusesLargeSurveyAcrossViewportChanges() throws Exception {
+        Path root = temporaryDirectory.resolve("benchmark/realm_debug");
+        Path run = Files.createDirectories(root.resolve("survey"));
+        Files.writeString(run.resolve("world_survey_context.json"), "{}");
+        Files.writeString(run.resolve("world_survey_manifest.json"), "{\"status\":\"sealed\"}");
+        JsonObject grid = new JsonObject();
+        grid.addProperty("cellStepBlocks", 128);
+        JsonArray cells = new JsonArray();
+        for (int z = -64; z < 64; z++) for (int x = -64; x < 64; x++) {
+            JsonObject cell = new JsonObject();
+            cell.addProperty("gridX", x); cell.addProperty("gridZ", z);
+            cell.addProperty("waterFrac", x < 0 ? 1 : 0);
+            cells.add(cell);
+        }
+        grid.add("cells", cells);
+        Files.writeString(run.resolve("world_feature_grid.json"), grid.toString());
+        var config = new PlanningAreaAccessConfig(true, 2048, 8192, Set.of("minecraft:overworld"));
+        long start = System.nanoTime();
+        AdventurerMapStatusReader.read(root, "survey", config,
+                new AdventurerMapStatusReader.MapViewport(0, 0, 1024));
+        double coldMs = (System.nanoTime() - start) / 1_000_000.0;
+        double[] warmMs = new double[8];
+        for (int i = 0; i < warmMs.length; i++) {
+            int center = i % 2 == 0 ? -4096 : 4096;
+            start = System.nanoTime();
+            var map = AdventurerMapStatusReader.read(root, "survey", config,
+                    new AdventurerMapStatusReader.MapViewport(center, i * 128, 1024)).coarseMap();
+            warmMs[i] = (System.nanoTime() - start) / 1_000_000.0;
+            assertEquals(center < 0 ? 1 : 3, map.terrainCodes()[0]);
+            assertEquals(16, map.width());
+        }
+        java.util.Arrays.sort(warmMs);
+        System.out.printf(java.util.Locale.ROOT,
+                "Map survey 16384 cells: cold=%.2f ms, changed-view median=%.2f ms%n", coldMs, warmMs[4]);
     }
 
     @Test

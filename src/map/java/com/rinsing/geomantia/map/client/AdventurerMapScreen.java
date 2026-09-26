@@ -39,11 +39,15 @@ public final class AdventurerMapScreen extends Screen {
 
     private AdventurerMapSnapshot snapshot;
     private boolean loading;
+    private boolean receivedSnapshot;
+    private long requestId;
+    private boolean requestedDebugLayer;
     private boolean debugLayer;
     private double zoom = 1.0D;
     private double viewCenterX;
     private double viewCenterZ;
     private boolean viewInitialized;
+    private boolean fitOnFirstSnapshot = true;
     private boolean draggingMap;
     private boolean refreshQueued;
     private int viewportRefreshTicks;
@@ -59,9 +63,11 @@ public final class AdventurerMapScreen extends Screen {
     AdventurerMapScreen(AdventurerMapSnapshot snapshot) {
         super(Component.translatable("gui.geomantia.adventurer_map.title"));
         this.snapshot = snapshot == null ? AdventurerMapSnapshot.empty() : snapshot;
+        receivedSnapshot = snapshot != null;
     }
     void initialView(double x,double z,double initialZoom) {
         if(!Double.isFinite(x)||!Double.isFinite(z)) return;
+        fitOnFirstSnapshot = false;
         viewCenterX=x; viewCenterZ=z; viewInitialized=true;
         zoom=Math.max(1.0D/128,Math.min(4,initialZoom));
     }
@@ -74,23 +80,30 @@ public final class AdventurerMapScreen extends Screen {
             viewCenterZ = minecraft.player.getZ();
             viewInitialized = true;
         }
+        if (fitOnFirstSnapshot && snapshot.surveyBounds().available()) fitSurveyView();
         int controlsY = this.height - 28;
         addRenderableWidget(Button.builder(Component.translatable("gui.geomantia.adventurer_map.close"),
                         button -> onClose())
                 .bounds(this.width - 76, controlsY, 60, 20).build());
         addRenderableWidget(Button.builder(Component.translatable("gui.geomantia.adventurer_map.refresh"),
                         button -> refresh())
-                .bounds(16, controlsY, 72, 20).build());
+                .bounds(16, controlsY, 52, 20).build());
         debugButton = addRenderableWidget(Button.builder(debugLabel(), button -> {
                     debugLayer = !debugLayer;
                     button.setMessage(debugLabel());
+                    // A debug response must never survive a switch back to the player map.
+                    snapshot = snapshot.forViewer(false);
                     rebuildMapTexture(); refresh();
                 })
-                .bounds(208, controlsY, 112, 20).build());
+                .bounds(196, controlsY, Math.max(40, Math.min(112, width - 280)), 20).build());
+        debugButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(mapText("legend_debug")));
         addRenderableWidget(Button.builder(Component.literal("−"), button -> changeZoom(Math.max(1.0D/128, zoom / 1.25D)))
-                .bounds(326, controlsY, 24, 20).build());
+                .bounds(76, controlsY, 24, 20).build());
         addRenderableWidget(Button.builder(Component.literal("+"), button -> changeZoom(Math.min(4.0D, zoom * 1.25D)))
-                .bounds(354, controlsY, 24, 20).build());
+                .bounds(104, controlsY, 24, 20).build());
+        addRenderableWidget(Button.builder(mapText("overview"), button -> {
+            if (snapshot.surveyBounds().available()) { fitSurveyView(); refresh(); }
+        }).bounds(136, controlsY, 52, 20).build());
         retryButton = addRenderableWidget(Button.builder(Component.translatable("gui.geomantia.adventurer_map.retry"),
                         button -> retryCurrentCity())
                 .bounds(Math.max(16, this.width - 198), 8, 84, 20).build());
@@ -100,11 +113,21 @@ public final class AdventurerMapScreen extends Screen {
         refresh();
     }
 
-    void receiveSnapshot(AdventurerMapSnapshot snapshot) {
-        this.snapshot = snapshot == null ? AdventurerMapSnapshot.empty() : snapshot;
+    void receiveSnapshot(long responseId, AdventurerMapSnapshot snapshot) {
+        if (responseId != requestId) return;
         this.loading = false;
+        if (requestedDebugLayer != debugLayer) { refresh(); return; }
+        CoarseMap previous = this.snapshot.coarseMap();
+        this.snapshot = snapshot == null ? AdventurerMapSnapshot.empty() : snapshot;
+        receivedSnapshot = true;
+        if (!debugLayer && !"error".equals(this.snapshot.wStatus())) AdventurerMapClient.cacheSnapshot(this.snapshot);
         updateRetryButton();
-        rebuildMapTexture();
+        if (!previous.sameRaster(this.snapshot.coarseMap())) rebuildMapTexture();
+        if (fitOnFirstSnapshot && this.snapshot.surveyBounds().available()) {
+            fitSurveyView(); refresh();
+        } else if (zoom < this.snapshot.surveyBounds().minimumZoom()) {
+            changeZoom(this.snapshot.surveyBounds().minimumZoom());
+        }
     }
 
     private void refresh() {
@@ -116,7 +139,9 @@ public final class AdventurerMapScreen extends Screen {
         loading = true;
         updateRetryButton();
         automaticRefreshTicks = 0;
-        AdventurerMapClient.requestSnapshot(zoom, viewCenterX, viewCenterZ, debugLayer);
+        requestId = AdventurerMapClient.nextRequestId();
+        requestedDebugLayer = debugLayer;
+        AdventurerMapClient.requestSnapshot(requestId, zoom, viewCenterX, viewCenterZ, debugLayer);
     }
 
     private void updateRetryButton() {
@@ -143,7 +168,16 @@ public final class AdventurerMapScreen extends Screen {
         refresh();
     }
 
+    private void fitSurveyView() {
+        var bounds = snapshot.surveyBounds();
+        viewCenterX = bounds.centerX(); viewCenterZ = bounds.centerZ();
+        zoom = bounds.minimumZoom();
+        fitOnFirstSnapshot = false;
+        viewInitialized = true;
+    }
+
     private void changeZoom(double value) {
+        value = Math.max(snapshot.surveyBounds().minimumZoom(), Math.min(4, value));
         if (Double.compare(zoom, value) == 0) return;
         zoom = value;
         refresh();
@@ -186,6 +220,11 @@ public final class AdventurerMapScreen extends Screen {
             double scale = mapTransform(18, 34, mapRight() - 2, mapBottom() - 2).scale();
             viewCenterX = Math.max(-30_000_000D, Math.min(30_000_000D, viewCenterX - deltaX / scale));
             viewCenterZ = Math.max(-30_000_000D, Math.min(30_000_000D, viewCenterZ - deltaY / scale));
+            var bounds = snapshot.surveyBounds();
+            if (bounds.available()) {
+                viewCenterX = Math.max(bounds.minX(), Math.min(bounds.maxX(), viewCenterX));
+                viewCenterZ = Math.max(bounds.minZ(), Math.min(bounds.maxZ(), viewCenterZ));
+            }
             if (!refreshQueued) viewportRefreshTicks = 4;
             refreshQueued = true;
             return true;
@@ -253,7 +292,12 @@ public final class AdventurerMapScreen extends Screen {
         int centerX = transform.screenX(snapshot.initialCenterX());
         int centerY = transform.screenY(snapshot.initialCenterZ());
         graphics.enableScissor(left, top, right, bottom);
-        graphics.fill(left, top, right, bottom, UNREVEALED_MAP);
+        var survey = snapshot.surveyBounds();
+        graphics.fill(left, top, right, bottom, survey.available() ? MAP_BACKGROUND : UNREVEALED_MAP);
+        if (survey.available()) {
+            graphics.fill(transform.screenX(survey.minX()), transform.screenY(survey.minZ()),
+                    transform.screenX(survey.maxX()), transform.screenY(survey.maxZ()), UNREVEALED_MAP);
+        }
         CoarseMap coarseMap = snapshot.coarseMap();
         if (coarseMap.available() && mapTextureLocation != null) {
             int textureLeft = transform.screenX(coarseMap.minBlockX());
@@ -274,14 +318,18 @@ public final class AdventurerMapScreen extends Screen {
         }
 
         if (!coarseMap.available()) {
-            String message="failed".equals(snapshot.wStatus()) ? "世界扫描失败，请查看服务器提示"
-                    : "completed".equals(snapshot.wStatus()) ? "正在读取大陆轮廓…"
-                    : "正在准备初始大陆 · 世界扫描 " + String.format(java.util.Locale.ROOT,"%.1f%%",snapshot.wProgressPercent());
-            graphics.drawString(font,Component.literal(message),left+8,top+8,TEXT_PRIMARY,false);
+            Component message;
+            if (!receivedSnapshot) message = mapText("connecting");
+            else if ("error".equals(snapshot.wStatus())) message = mapText("read_failed");
+            else if ("failed".equals(snapshot.wStatus())) message = mapText("scan_failed");
+            else if ("completed".equals(snapshot.wStatus())) message = mapText("no_outline");
+            else if ("running".equals(snapshot.wStatus())) message = Component.translatable(
+                    "gui.geomantia.adventurer_map.scanning", String.format(Locale.ROOT, "%.1f", snapshot.wProgressPercent()));
+            else message = mapText("preparing");
+            graphics.drawWordWrap(font, message, left + 8, top + 8, Math.max(40, right - left - 16), TEXT_PRIMARY);
+        } else if (loading) {
+            graphics.drawString(font, mapText("updating"), left + 8, top + 8, TEXT_MUTED, false);
         }
-        graphics.fill(centerX - 2, centerY, centerX + 3, centerY + 1, 0xFFD7D7D7);
-        graphics.fill(centerX, centerY - 2, centerX + 1, centerY + 3, 0xFFD7D7D7);
-        graphics.drawString(font, Component.literal("新手村国度"), centerX + 4, centerY + 4, TEXT_MUTED, false);
 
         var labelled = new java.util.HashSet<Integer>();
         for(int i=0;i<coarseMap.realmCodes().length;i++) {
@@ -318,8 +366,19 @@ public final class AdventurerMapScreen extends Screen {
         drawPlayerMarker(graphics, transform, left, top, right, bottom, partialTick);
         graphics.disableScissor();
 
-        graphics.drawString(font, Component.translatable("gui.geomantia.adventurer_map.initial_area"),
-                left + 6, bottom - 14, 0xFF77B788, false);
+        if (survey.available()) {
+            graphics.drawString(font, Component.translatable("gui.geomantia.adventurer_map.extent",
+                    survey.maxX() - survey.minX(), survey.maxZ() - survey.minZ()),
+                    left + 8, top + 20, TEXT_MUTED, true);
+        }
+        Component legend = mapText(debugLayer ? "legend_debug" : "legend");
+        var legendLines = font.split(legend, Math.max(40, right - left - 12));
+        int legendY = bottom - 6 - legendLines.size() * font.lineHeight;
+        graphics.fill(left, legendY - 3, right, bottom, 0xD0151A1F);
+        for (var line : legendLines) {
+            graphics.drawString(font, line, left + 6, legendY, TEXT_MUTED, false);
+            legendY += font.lineHeight;
+        }
     }
 
     private MapTransform mapTransform(int left, int top, int right, int bottom) {
@@ -528,6 +587,10 @@ public final class AdventurerMapScreen extends Screen {
 
     private static Component valueOrDash(String value) {
         return Component.literal(value == null || value.isBlank() ? "—" : value);
+    }
+
+    private static Component mapText(String key) {
+        return Component.translatable("gui.geomantia.adventurer_map." + key);
     }
 
     private static Component statusComponent(String status) {

@@ -7,6 +7,22 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PlanningAreaAccessPolicyTest {
+    @Test void preserveOutdoorNeedsStructuresButNotLandUseAndGenerateStillNeedsBoth() throws Exception {
+        fixture(true,true);
+        Files.delete(temp.resolve("geomantia_city_masks/active_city_land_use_area_plans.json"));
+        assertTrue(policy().connectedCityIds().isEmpty());
+        long before = PlanningAreaAccessPolicy.sourceStamp(root());
+        for (int i=0;i<3;i++) write(run().resolve("city_test_runs/city_"+i+"/steps/blueprint/city_blueprint.json"),
+                JsonParser.parseString("{\"outdoorPlan\":{\"mode\":\"PRESERVE\"}}").getAsJsonObject());
+        assertNotEquals(before, PlanningAreaAccessPolicy.sourceStamp(root()));
+        assertEquals(Set.of("city_0","city_1","city_2"),policy().connectedCityIds());
+        assertTrue(policy().revealed("minecraft:overworld",4096,0));
+        write(run().resolve("city_test_runs/city_1/steps/blueprint/city_blueprint.json"),
+                JsonParser.parseString("{\"outdoorPlan\":{\"mode\":\"GENERATE\"}}").getAsJsonObject());
+        assertFalse(policy().revealed("minecraft:overworld",4096,0),"One unprepared city keeps its continent closed");
+        Files.delete(temp.resolve("geomantia_city_masks/active_planned_structure_registry.json"));
+        assertTrue(policy().connectedCityIds().isEmpty(),"PRESERVE alone must never release a city");
+    }
     @Test void viewDemandRequiresLegalGenerationNeighborsAndNewSnapshotRestoresIt() throws Exception {
         fixture(false,false);
         var before=policy();

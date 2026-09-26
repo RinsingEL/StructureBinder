@@ -19,8 +19,28 @@ public record AdventurerMapSnapshot(
         CoarseMap coarseMap,
         List<CityNode> cityNodes,
         int initialCenterX,
-        int initialCenterZ
+        int initialCenterZ,
+        SurveyBounds surveyBounds
 ) {
+    public record SurveyBounds(int minX, int minZ, int maxX, int maxZ) {
+        public static SurveyBounds empty() { return new SurveyBounds(0,0,0,0); }
+        public boolean available() { return maxX > minX && maxZ > minZ; }
+        public double centerX() { return (minX + (double) maxX) / 2; }
+        public double centerZ() { return (minZ + (double) maxZ) / 2; }
+        public double overviewRadius() { return Math.max(1024, Math.max(maxX-(double)minX,maxZ-(double)minZ)*0.55+256); }
+        public double minimumZoom() { return available() ? Math.min(4, Math.max(1.0/128, 4096/overviewRadius())) : 1.0/128; }
+    }
+    public AdventurerMapSnapshot(String runId,String wStatus,String wPhase,double progress,
+            String tStage,String tStatus,String realmId,String realmName,String cityId,String cityStatus,
+            int completed,int remaining,int radius,CoarseMap map,List<CityNode> nodes,int centerX,int centerZ) {
+        this(runId,wStatus,wPhase,progress,tStage,tStatus,realmId,realmName,cityId,cityStatus,
+                completed,remaining,radius,map,nodes,centerX,centerZ,SurveyBounds.empty());
+    }
+    public AdventurerMapSnapshot withSurveyBounds(SurveyBounds bounds) {
+        return new AdventurerMapSnapshot(runId,wStatus,wPhase,wProgressPercent,tStage,tStatus,
+                currentRealmId,currentRealmName,currentCityId,cityStatus,completedCityCount,remainingCityCount,
+                initialActivityRadiusBlocks,coarseMap,cityNodes,initialCenterX,initialCenterZ,bounds);
+    }
     public AdventurerMapSnapshot(String runId,String wStatus,String wPhase,double progress,
             String tStage,String tStatus,String realmId,String realmName,String cityId,String cityStatus,
             int completed,int remaining,int radius,CoarseMap map,List<CityNode> nodes) {
@@ -30,9 +50,10 @@ public record AdventurerMapSnapshot(
     public AdventurerMapSnapshot withInitialArea(com.rinsing.geomantia.systems.realm_planning.application.access.InitialExplorationArea area) {
         return new AdventurerMapSnapshot(runId,wStatus,wPhase,wProgressPercent,tStage,tStatus,
                 currentRealmId,currentRealmName,currentCityId,cityStatus,completedCityCount,remainingCityCount,
-                area.radius(),coarseMap,cityNodes,area.centerX(),area.centerZ());
+                area.radius(),coarseMap,cityNodes,area.centerX(),area.centerZ(),surveyBounds);
     }
     public AdventurerMapSnapshot {
+        surveyBounds = surveyBounds == null ? SurveyBounds.empty() : surveyBounds;
         runId = safe(runId);
         wStatus = safe(wStatus);
         wPhase = safe(wPhase);
@@ -72,7 +93,7 @@ public record AdventurerMapSnapshot(
         }
         var visible=new CoarseMap(m.dimensionId(),m.minBlockX(),m.minBlockZ(),m.cellSizeBlocks(),m.width(),m.height(),terrain,codes,m.revealedCodes(),ids,names);
         return new AdventurerMapSnapshot("",wStatus,wPhase,wProgressPercent,"","","","","", "",0,0,initialActivityRadiusBlocks,
-                visible,cityNodes.stream().filter(n->m.revealedAt(n.blockX(),n.blockZ())).toList(),initialCenterX,initialCenterZ);
+                visible,cityNodes.stream().filter(n->m.revealedAt(n.blockX(),n.blockZ())).toList(),initialCenterX,initialCenterZ,surveyBounds);
     }
 
     private static String safe(String value) {
@@ -124,6 +145,17 @@ public record AdventurerMapSnapshot(
 
         public boolean available() {
             return width > 0 && height > 0;
+        }
+
+        /** Network decoding creates new arrays even when the visible raster did not change. */
+        public boolean sameRaster(CoarseMap other) {
+            return other != null && dimensionId.equals(other.dimensionId)
+                    && minBlockX == other.minBlockX && minBlockZ == other.minBlockZ
+                    && cellSizeBlocks == other.cellSizeBlocks && width == other.width && height == other.height
+                    && realmIds.equals(other.realmIds)
+                    && java.util.Arrays.equals(terrainCodes, other.terrainCodes)
+                    && java.util.Arrays.equals(realmCodes, other.realmCodes)
+                    && java.util.Arrays.equals(revealedCodes, other.revealedCodes);
         }
 
         public int maxBlockX() {
