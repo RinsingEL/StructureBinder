@@ -12,6 +12,9 @@ import java.util.function.Consumer;
 
 /** Geomantia plugin host for the pinned DeepSeek Harness kernel over private stdio. */
 final class HarnessAgentClient implements ProviderAgentClient {
+    private final PlanningRole role;
+    HarnessAgentClient() { this(PlanningRole.FLASH); }
+    HarnessAgentClient(PlanningRole role) { this.role=role; }
     private Path serverDirectory;
     private Path home;
     private volatile Process process;
@@ -19,7 +22,7 @@ final class HarnessAgentClient implements ProviderAgentClient {
     @Override public void start(Path serverDirectory, Path debugRoot, int apiPort) {
         close();
         this.serverDirectory = serverDirectory.toAbsolutePath().normalize();
-        this.home = debugRoot.toAbsolutePath().normalize().resolve(".harness");
+        this.home = debugRoot.toAbsolutePath().normalize().resolve(role==PlanningRole.FLASH ? ".harness" : ".harness-advanced");
     }
 
     @Override public PlanningLoopResult run(PlayerProviderConfig config, Credentials credentials,

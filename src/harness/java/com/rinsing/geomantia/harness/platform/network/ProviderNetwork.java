@@ -24,7 +24,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 public final class ProviderNetwork {
-    private static final String PROTOCOL = "5";
+    private static final String PROTOCOL = "6";
     private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.fromNamespaceAndPath(GeomantiaMod.MOD_ID, "player_provider"),
             () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
@@ -57,21 +57,21 @@ public final class ProviderNetwork {
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
 
-    public static void requestSettings() {
-        CHANNEL.sendToServer(new SettingsRequest());
+    public static void requestSettings(PlanningRole role) {
+        CHANNEL.sendToServer(new SettingsRequest(role));
     }
 
-    public static void saveSettings(String providerKind, boolean enabled, String baseUrl,
+    public static void saveSettings(PlanningRole role, String providerKind, boolean enabled, String baseUrl,
                                     String model, String apiProtocol, int timeoutSeconds, String agentRuntime,
                                     String replacementApiKey,
                                     boolean clearStoredApiKey) {
-        CHANNEL.sendToServer(new SaveRequest(providerKind, enabled, baseUrl, model, apiProtocol, timeoutSeconds,
+        CHANNEL.sendToServer(new SaveRequest(role, providerKind, enabled, baseUrl, model, apiProtocol, timeoutSeconds,
                 agentRuntime,
                 replacementApiKey, clearStoredApiKey));
     }
 
-    public static void testConnection() {
-        CHANNEL.sendToServer(new TestRequest());
+    public static void testConnection(PlanningRole role) {
+        CHANNEL.sendToServer(new TestRequest(role));
     }
 
     public static void requestActivity() {
@@ -82,29 +82,31 @@ public final class ProviderNetwork {
         return player.hasPermissions(2) || player.server.isSingleplayerOwner(player.getGameProfile());
     }
 
-    private static void send(ServerPlayer player, ProviderSettingsSnapshot snapshot) {
-        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new SettingsResponse(snapshot));
+    private static void send(ServerPlayer player, PlanningRole role, ProviderSettingsSnapshot snapshot) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new SettingsResponse(role,snapshot));
     }
 
-    private record SettingsRequest() {
+    private record SettingsRequest(PlanningRole role) {
         static void encode(SettingsRequest ignored, FriendlyByteBuf buffer) {
+            buffer.writeEnum(ignored.role);
         }
 
         static SettingsRequest decode(FriendlyByteBuf buffer) {
-            return new SettingsRequest();
+            return new SettingsRequest(buffer.readEnum(PlanningRole.class));
         }
 
         static void handle(SettingsRequest ignored, Supplier<NetworkEvent.Context> contextSupplier) {
             NetworkEvent.Context context = contextSupplier.get();
             ServerPlayer player = context.getSender();
-            if (player != null) context.enqueueWork(() -> send(player,
-                    PlayerProviderService.instance().snapshot(editable(player))));
+            if (player != null) context.enqueueWork(() -> send(player,ignored.role,
+                    PlayerProviderService.instance(ignored.role).snapshot(editable(player))));
             context.setPacketHandled(true);
         }
     }
 
-    private record SettingsResponse(ProviderSettingsSnapshot snapshot) {
+    private record SettingsResponse(PlanningRole role, ProviderSettingsSnapshot snapshot) {
         static void encode(SettingsResponse response, FriendlyByteBuf buffer) {
+            buffer.writeEnum(response.role);
             ProviderSettingsSnapshot value = response.snapshot;
             buffer.writeUtf(value.providerKind());
             buffer.writeBoolean(value.enabled());
@@ -126,7 +128,7 @@ public final class ProviderNetwork {
         }
 
         static SettingsResponse decode(FriendlyByteBuf buffer) {
-            return new SettingsResponse(new ProviderSettingsSnapshot(buffer.readUtf(), buffer.readBoolean(),
+            return new SettingsResponse(buffer.readEnum(PlanningRole.class),new ProviderSettingsSnapshot(buffer.readUtf(), buffer.readBoolean(),
                     buffer.readUtf(512), buffer.readUtf(160), buffer.readUtf(32), buffer.readVarInt(),
                     buffer.readUtf(32), buffer.readBoolean(),
                     buffer.readUtf(32), buffer.readBoolean(), buffer.readUtf(64), buffer.readUtf(256),
@@ -137,15 +139,16 @@ public final class ProviderNetwork {
         static void handle(SettingsResponse response, Supplier<NetworkEvent.Context> contextSupplier) {
             NetworkEvent.Context context = contextSupplier.get();
             context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                    () -> () -> ProviderSettingsClient.receive(response.snapshot)));
+                    () -> () -> ProviderSettingsClient.receive(response.role,response.snapshot)));
             context.setPacketHandled(true);
         }
     }
 
-    private record SaveRequest(String providerKind, boolean enabled, String baseUrl, String model, String apiProtocol,
+    private record SaveRequest(PlanningRole role, String providerKind, boolean enabled, String baseUrl, String model, String apiProtocol,
                                int timeoutSeconds, String agentRuntime, String replacementApiKey,
                                boolean clearStoredApiKey) {
         static void encode(SaveRequest request, FriendlyByteBuf buffer) {
+            buffer.writeEnum(request.role);
             buffer.writeUtf(request.providerKind);
             buffer.writeBoolean(request.enabled);
             buffer.writeUtf(request.baseUrl);
@@ -158,7 +161,7 @@ public final class ProviderNetwork {
         }
 
         static SaveRequest decode(FriendlyByteBuf buffer) {
-            return new SaveRequest(buffer.readUtf(32), buffer.readBoolean(), buffer.readUtf(512),
+            return new SaveRequest(buffer.readEnum(PlanningRole.class),buffer.readUtf(32), buffer.readBoolean(), buffer.readUtf(512),
                     buffer.readUtf(160), buffer.readUtf(32), buffer.readVarInt(), buffer.readUtf(32),
                     buffer.readUtf(4096), buffer.readBoolean());
         }
@@ -171,20 +174,21 @@ public final class ProviderNetwork {
                 PlayerProviderConfig config = new PlayerProviderConfig(request.providerKind, request.enabled,
                         request.baseUrl, request.model, request.apiProtocol, request.timeoutSeconds,
                         request.agentRuntime);
-                PlayerProviderService.instance().save(config, request.replacementApiKey,
+                PlayerProviderService.instance(request.role).save(config, request.replacementApiKey,
                                 request.clearStoredApiKey, canEdit)
-                        .thenAccept(snapshot -> player.server.execute(() -> send(player, snapshot)));
+                        .thenAccept(snapshot -> player.server.execute(() -> send(player, request.role,snapshot)));
             });
             context.setPacketHandled(true);
         }
     }
 
-    private record TestRequest() {
+    private record TestRequest(PlanningRole role) {
         static void encode(TestRequest ignored, FriendlyByteBuf buffer) {
+            buffer.writeEnum(ignored.role);
         }
 
         static TestRequest decode(FriendlyByteBuf buffer) {
-            return new TestRequest();
+            return new TestRequest(buffer.readEnum(PlanningRole.class));
         }
 
         static void handle(TestRequest ignored, Supplier<NetworkEvent.Context> contextSupplier) {
@@ -192,10 +196,10 @@ public final class ProviderNetwork {
             ServerPlayer player = context.getSender();
             if (player != null) context.enqueueWork(() -> {
                 boolean canEdit = editable(player);
-                var test = PlayerProviderService.instance().test(canEdit);
-                send(player, PlayerProviderService.instance().snapshot(canEdit));
+                var test = PlayerProviderService.instance(ignored.role).test(canEdit);
+                send(player,ignored.role, PlayerProviderService.instance(ignored.role).snapshot(canEdit));
                 test
-                        .thenAccept(snapshot -> player.server.execute(() -> send(player, snapshot)));
+                        .thenAccept(snapshot -> player.server.execute(() -> send(player,ignored.role,snapshot)));
             });
             context.setPacketHandled(true);
         }
@@ -214,7 +218,7 @@ public final class ProviderNetwork {
             ServerPlayer player = context.getSender();
             if (player != null) context.enqueueWork(() -> CHANNEL.send(
                     PacketDistributor.PLAYER.with(() -> player),
-                    new ActivityResponse(PlayerProviderService.instance().activityEvents())));
+                    new ActivityResponse(java.util.Arrays.stream(PlanningRole.values()).flatMap(role->PlayerProviderService.instance(role).activityEvents().stream().map(e->new AgentActivityEvent(e.occurredAt(),e.kind(),"["+role+"] "+e.message()))).sorted(java.util.Comparator.comparing(AgentActivityEvent::occurredAt).reversed()).limit(160).toList())));
             context.setPacketHandled(true);
         }
     }

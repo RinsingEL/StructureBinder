@@ -43,6 +43,7 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
     private volatile long retryAfterEpochSecond;
     private volatile String lastCompletedIdentity = "";
     private volatile String haltedIdentity = "";
+    private boolean wasEnabled;
     private volatile String noProgressIdentity = "";
     private volatile int consecutiveNoProgress;
     private volatile AutomationStatus status = AutomationStatus.idle();
@@ -135,12 +136,21 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
         if (currentDiscovery == null || serverDirectory == null || debugRoot == null || turnRunning.get()) return;
         PlayerProviderConfig config = store.load();
         if (!config.enabled()) {
+            wasEnabled=false;
             updateIfChanged(new AutomationStatus("disabled", "", "", "", "", Instant.now().toString()));
             return;
         }
+        if(!wasEnabled) { wasEnabled=true;haltedIdentity="";lastCompletedIdentity="";resetNoProgress();retryAfterEpochSecond=0; }
         Credentials credentials = store.credentials(config);
         if (Instant.now().getEpochSecond() < retryAfterEpochSecond) return;
         ProviderPlanningDiscovery.PlanningStep run = currentDiscovery.nextStep();
+        if (run.stage().actionable() && !hostOnly(run) && planning.requiredRole(run) != store.role()) {
+            updateIfChanged(new AutomationStatus("waiting", "PLANNING_WAITING_FOR_"+planning.requiredRole(run), run.runId(),run.citySeedId(),run.nextAction(),Instant.now().toString()));
+            return;
+        }
+        if (run.stage().actionable() && !hostOnly(run) && store.role()==PlanningRole.ADVANCED && !store.configured()) {
+            updateIfChanged(new AutomationStatus("missing_config", "请配置高级模型的 API、模型名称和 Key",run.runId(),run.citySeedId(),run.nextAction(),Instant.now().toString()));return;
+        }
         if (run.stage().actionable() && !hostOnly(run) && !credentials.present()) {
             updateIfChanged(new AutomationStatus("missing_key", "PROVIDER_API_KEY_MISSING",
                     run.runId(), run.citySeedId(), run.nextAction(), Instant.now().toString()));
@@ -157,12 +167,12 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
         if (run.semanticIdentity().equals(lastCompletedIdentity)
                 || run.semanticIdentity().equals(haltedIdentity)) return;
         PlanningSessionService sessions = planning;
-        if (!hostOnly(run) && sessions.requiredRole(run) != PlanningRole.FLASH) {
-            updateIfChanged(new AutomationStatus("waiting", "PLANNING_WAITING_FOR_ADVANCED", run.runId(),run.citySeedId(),run.nextAction(),Instant.now().toString()));
+        if (!hostOnly(run) && sessions.requiredRole(run) != store.role()) {
+            updateIfChanged(new AutomationStatus("waiting", "PLANNING_WAITING_FOR_"+sessions.requiredRole(run), run.runId(),run.citySeedId(),run.nextAction(),Instant.now().toString()));
             return;
         }
         String token;
-        try { token = sessions.acquireEmbedded(PlanningRole.FLASH); }
+        try { token = sessions.acquireEmbedded(store.role()); }
         catch (Exception occupied) { return; }
         if (!turnRunning.compareAndSet(false, true)) { sessions.release(token); return; }
         update(new AutomationStatus("running", "", run.runId(), run.citySeedId(), run.nextAction(),
@@ -329,6 +339,8 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
 
     private void update(AutomationStatus value) {
         status = value;
+        PlanningSessionService current = planning;
+        if (current != null) current.reportEmbedded(store.role(),value.state(), value.message());
         statusListener.accept(value);
     }
 
@@ -336,8 +348,10 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
     public synchronized void close() {
         ScheduledExecutorService current = scheduler;
         scheduler = null;
+        wasEnabled=false;
         discovery = null;
         PlanningSessionService previousPlanning = planning;
+        if (previousPlanning != null) previousPlanning.reportEmbedded(store.role(),"unavailable", "");
         planning = null;
         if (previousPlanning != null && ownsPlanning) previousPlanning.close();
         serverDirectory = null;

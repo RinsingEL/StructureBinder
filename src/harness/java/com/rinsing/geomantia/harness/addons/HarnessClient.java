@@ -13,6 +13,8 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 @Mod.EventBusSubscriber(modid="geomantia_harness", value=Dist.CLIENT, bus=Mod.EventBusSubscriber.Bus.MOD)
 public final class HarnessClient {
     @SubscribeEvent public static void setup(FMLClientSetupEvent event) {
+        com.rinsing.geomantia.client.McpSettingsScreen.providerSettingsOpener=(parent,role)->
+                net.minecraft.client.Minecraft.getInstance().setScreen(new ProviderSettingsScreen(parent,role));
         ModLoadingContext.get().registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class,
                 () -> new ConfigScreenHandler.ConfigScreenFactory((minecraft,parent) -> new ProviderSettingsScreen(parent)));
     }

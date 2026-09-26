@@ -22,6 +22,11 @@ public final class McpServerService implements AutoCloseable {
     private volatile boolean needsSetup;
     private volatile int flashPort = 5002;
     public int flashPort() { return flashPort; }
+    private volatile McpServerConfig appliedConfig;
+    public McpServerConfig settings() {
+        try { return gameDirectory==null ? McpServerConfig.defaults() : McpServerConfig.load(gameDirectory); }
+        catch(IOException ex){ return appliedConfig==null ? McpServerConfig.defaults() : appliedConfig; }
+    }
     public String flashUrl() { return snapshot.state().equals("ready") ? "http://127.0.0.1:" + flashPort + "/mcp" : ""; }
     public boolean needsSetup() { return needsSetup; }
     private boolean hookInstalled;
@@ -51,13 +56,19 @@ public final class McpServerService implements AutoCloseable {
         return save(enabled, port, flashPort);
     }
     public CompletableFuture<Snapshot> save(boolean enabled, int port, int flashPort) {
+        var current=settings();
+        return save(enabled,port,flashPort,current.embeddedAdvanced(),current.embeddedFlash());
+    }
+    public CompletableFuture<Snapshot> save(boolean enabled,int port,int flashPort,boolean advanced,boolean flash) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 if (gameDirectory == null) throw new IOException("MCP 尚未初始化");
-                McpServerConfig config = new McpServerConfig(enabled, port, flashPort);
+                McpServerConfig config = new McpServerConfig(enabled, port, flashPort,advanced,flash);
                 config.save(gameDirectory);
                 needsSetup=false;
-                restart(config);
+                if(appliedConfig==null || appliedConfig.enabled()!=enabled || appliedConfig.port()!=port || appliedConfig.flashPort()!=flashPort
+                        || snapshot.state().equals("error")) restart(config);
+                else { appliedConfig=config; }
             } catch (Exception ex) { failed(ex, null); }
             return snapshot;
         }, lifecycle);
@@ -65,6 +76,7 @@ public final class McpServerService implements AutoCloseable {
     private void restart(McpServerConfig config) throws Exception {
         if (closed) throw new IOException("MCP 服务已关闭");
         flashPort = config.flashPort();
+        appliedConfig=config;
         stopChild();
         if (!config.enabled()) { snapshot = new Snapshot("disabled", "", "MCP 自动服务已关闭", false, config.port()); return; }
         snapshot = new Snapshot("starting", "", "正在启动 MCP 服务…", true, config.port());

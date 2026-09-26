@@ -23,19 +23,31 @@ public final class ProviderConfigStore {
 
     private final Path configPath;
     private final Path secretPath;
+    private final PlanningRole role;
+    public PlanningRole role() { return role; }
+    public boolean configured() { return Files.isRegularFile(configPath); }
 
     public ProviderConfigStore(Path geomantiaConfigDirectory) {
+        this(geomantiaConfigDirectory,PlanningRole.FLASH);
+    }
+    public ProviderConfigStore(Path geomantiaConfigDirectory,PlanningRole role) {
+        this.role=role;
         Path root = geomantiaConfigDirectory.toAbsolutePath().normalize();
-        this.configPath = root.resolve("provider.json");
-        this.secretPath = root.resolve("provider-secret.txt");
+        this.configPath = root.resolve(role==PlanningRole.FLASH ? "provider.json" : "provider-advanced.json");
+        this.secretPath = root.resolve(role==PlanningRole.FLASH ? "provider-secret.txt" : "provider-advanced-secret.txt");
     }
 
     public synchronized PlayerProviderConfig load() throws IOException {
-        if (!Files.isRegularFile(configPath)) return PlayerProviderConfig.defaults();
+        boolean enabled=com.rinsing.geomantia.platform.mcp.McpServerConfig.loadDirectory(configPath.getParent()).handles(role);
+        if (!Files.isRegularFile(configPath)) {
+            var defaults=PlayerProviderConfig.defaults();
+            return role==PlanningRole.ADVANCED ? new PlayerProviderConfig(PlayerProviderConfig.CUSTOM,enabled,"","",PlayerProviderConfig.RESPONSES,20,PlayerProviderConfig.HARNESS)
+                    : new PlayerProviderConfig(defaults.providerKind(),enabled,defaults.baseUrl(),defaults.model(),defaults.apiProtocol(),defaults.timeoutSeconds(),defaults.agentRuntime());
+        }
         JsonObject json = JsonParser.parseString(Files.readString(configPath, StandardCharsets.UTF_8))
                 .getAsJsonObject();
         return new PlayerProviderConfig(string(json, "providerKind", PlayerProviderConfig.DEEPSEEK),
-                bool(json, "enabled", false), string(json, "baseUrl", PlayerProviderConfig.DEEPSEEK_BASE_URL),
+                enabled, string(json, "baseUrl", PlayerProviderConfig.DEEPSEEK_BASE_URL),
                 string(json, "model", PlayerProviderConfig.DEEPSEEK_VISION_MODEL),
                 string(json, "apiProtocol", PlayerProviderConfig.RESPONSES),
                 integer(json, "timeoutSeconds", 20),
@@ -47,9 +59,9 @@ public final class ProviderConfigStore {
             String stored = Files.readString(secretPath, StandardCharsets.UTF_8).trim();
             if (!stored.isBlank()) return new Credentials(stored, "stored");
         }
-        String generic = System.getenv(ENV_GENERIC);
+        String generic = System.getenv(role==PlanningRole.ADVANCED ? "GEOMANTIA_ADVANCED_API_KEY" : ENV_GENERIC);
         if (generic != null && !generic.isBlank()) return new Credentials(generic.trim(), "environment");
-        if (PlayerProviderConfig.DEEPSEEK.equals(config.providerKind())) {
+        if (role==PlanningRole.FLASH && PlayerProviderConfig.DEEPSEEK.equals(config.providerKind())) {
             String deepSeek = System.getenv(ENV_DEEPSEEK);
             if (deepSeek != null && !deepSeek.isBlank()) {
                 return new Credentials(deepSeek.trim(), "environment");
@@ -72,6 +84,7 @@ public final class ProviderConfigStore {
         json.addProperty("timeoutSeconds", value.timeoutSeconds());
         json.addProperty("agentRuntime", value.agentRuntime());
         atomicWrite(configPath, GSON.toJson(json));
+        com.rinsing.geomantia.platform.mcp.McpServerConfig.setTakeover(configPath.getParent(),role,value.enabled());
 
         if (clearStoredApiKey) {
             Files.deleteIfExists(secretPath);

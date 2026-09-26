@@ -13,6 +13,81 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class PlanningSessionServiceTest {
     @TempDir Path root;
+    @Test void embeddedRolesHaveSeparateOwnershipAndExternalDispatcherDefersToAssignedHarness() throws Exception {
+        Path run=root.resolve("provider_2a_r8192");sealed(run);
+        try(var service=new PlanningSessionService(root,root,1,42)) {
+            String flash=service.acquireEmbedded(PlanningRole.FLASH);
+            var identity=service.discovery().nextStep().semanticIdentity();
+            var escalation=new JsonObject();escalation.addProperty("identity",identity);
+            Files.writeString(run.resolve("planning_role_escalation.json"),escalation.toString());
+            assertThrows(IllegalStateException.class,()->service.acquireEmbedded(PlanningRole.ADVANCED));
+            service.release(flash);
+            service.reportEmbedded(PlanningRole.ADVANCED,"waiting","");
+            assertEquals("waiting_for_executor",service.next("external-advanced","",PlanningRole.ADVANCED,0,false).get("dispatch").getAsString());
+            service.reportEmbedded(PlanningRole.ADVANCED,"missing_config","");
+            assertEquals("needs_input",service.next("external-advanced","",PlanningRole.ADVANCED,0,false).get("dispatch").getAsString());
+            String advanced=service.acquireEmbedded(PlanningRole.ADVANCED);
+            assertNotEquals(flash,advanced);service.release(advanced);
+        }
+    }
+    @Test void dispatcherWaitsWithoutLeaseThenReceivesEscalatedTask() throws Exception {
+        sealed(root.resolve("provider_2a_r8192"));
+        try(var service=new PlanningSessionService(root,root,1,42,(step,gateway)->new PreparedPlanningTurn(step.state(),List.of(),List.of("realm_t1_prepare"),
+                new PlanningTurnControl((name,args)->JsonParser.parseString("{ok:true}"))))) {
+            var waiting=service.next("advanced-next","",PlanningRole.ADVANCED,0,false);
+            assertEquals("waiting_for_role",waiting.get("dispatch").getAsString());
+            assertEquals("planning_next",waiting.get("nextCall").getAsString());
+            assertEquals("",service.snapshot().get("owner").getAsString());
+            var future=java.util.concurrent.CompletableFuture.supplyAsync(()->{
+                try { return service.next("advanced-next","",PlanningRole.ADVANCED,5,false); }
+                catch(Exception ex){throw new RuntimeException(ex);}
+            });
+            String flash=service.resume("flash-actor","",false,PlanningRole.FLASH).get("leaseToken").getAsString();
+            var task=awaitTask(service,flash);
+            service.escalate(flash,task.get("taskId").getAsString(),"Need advanced terrain review");
+            var advanced=future.get(6,java.util.concurrent.TimeUnit.SECONDS);
+            assertEquals("task",advanced.get("dispatch").getAsString());
+            assertTrue(advanced.getAsJsonObject("state").has("handoff"));
+            service.release(advanced.get("leaseToken").getAsString());
+        }
+    }
+    @Test void dispatcherYieldsToFlashAndReplacementSessionDoesNotSteal() throws Exception {
+        Path run=root.resolve("provider_2a_r8192");sealed(run);
+        try(var service=new PlanningSessionService(root,root,1,42,(step,gateway)->new PreparedPlanningTurn(step.state(),List.of(),List.of("realm_t1_prepare"),
+                new PlanningTurnControl((name,args)->{Files.writeString(run.resolve("realm_profiles.json"),"[{\"realmId\":\"a\"}]");return JsonParser.parseString("{ok:true}");})))) {
+            String flash=service.resume("flash-actor","",false,PlanningRole.FLASH).get("leaseToken").getAsString();
+            var first=awaitTask(service,flash);service.escalate(flash,first.get("taskId").getAsString(),"Need review");
+            var advanced=service.next("advanced-old","",PlanningRole.ADVANCED,5,false);
+            assertEquals("waiting_for_executor",service.next("advanced-new","",PlanningRole.ADVANCED,0,false).get("dispatch").getAsString());
+            service.release(advanced.get("leaseToken").getAsString());
+            var replacement=service.next("advanced-new","",PlanningRole.ADVANCED,5,false);
+            String token=replacement.get("leaseToken").getAsString();
+            assertNotEquals(advanced.get("taskId"),replacement.get("taskId"));
+            var action=service.action(token,replacement.get("taskId").getAsString(),"advance","realm_t1_prepare",new JsonObject());
+            assertEquals("planning_next",action.get("nextCall").getAsString());
+            var waiting=service.next("advanced-new",token,PlanningRole.ADVANCED,0,false);
+            assertEquals("waiting_for_role",waiting.get("dispatch").getAsString());
+            assertEquals("",waiting.get("leaseToken").getAsString());
+            String embedded=service.acquireEmbedded(PlanningRole.FLASH);service.release(embedded);
+        }
+    }
+    @Test void dispatcherReportsDisabledFlashAndCancelsWaitOnRelease() throws Exception {
+        sealed(root.resolve("provider_2a_r8192"));
+        try(var service=new PlanningSessionService(root,root,1,42)) {
+            service.reportEmbeddedFlash("disabled", "");
+            var missing=service.next("advanced-next","",PlanningRole.ADVANCED,0,false);
+            assertEquals("needs_input",missing.get("dispatch").getAsString());
+            assertFalse(missing.get("continuePlanning").getAsBoolean());
+            service.reportEmbeddedFlash("waiting", "");
+            var future=java.util.concurrent.CompletableFuture.supplyAsync(()->{
+                try{return service.next("advanced-next","",PlanningRole.ADVANCED,5,false);}
+                catch(Exception ex){throw new RuntimeException(ex);}
+            });
+            Thread.sleep(100);service.cancelNext("advanced-next");
+            assertEquals("paused",future.get(2,java.util.concurrent.TimeUnit.SECONDS).get("dispatch").getAsString());
+            assertEquals("",service.snapshot().get("owner").getAsString());
+        }
+    }
     @Test void rolesShareOneLeaseAndEscalationInvalidatesFlashCredential() throws Exception {
         sealed(root.resolve("provider_2a_r8192"));
         try(var service=new PlanningSessionService(root,root,1,42,(step,gateway)->new PreparedPlanningTurn(step.state(),List.of(),List.of("realm_t1_prepare"),

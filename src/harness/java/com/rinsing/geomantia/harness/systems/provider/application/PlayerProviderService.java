@@ -20,6 +20,10 @@ public final class PlayerProviderService {
     private static final PlayerProviderService INSTANCE = new PlayerProviderService(
             new ProviderConfigStore(FMLPaths.CONFIGDIR.get().resolve("geomantia")),
             new ProviderConnectionTester(), new MultimodalProviderClient());
+    private static final PlayerProviderService ADVANCED = new PlayerProviderService(
+            new ProviderConfigStore(FMLPaths.CONFIGDIR.get().resolve("geomantia"),PlanningRole.ADVANCED),
+            new ProviderConnectionTester(),new MultimodalProviderClient());
+    public static PlayerProviderService instance(PlanningRole role) { return role==PlanningRole.ADVANCED ? ADVANCED : INSTANCE; }
 
     private final ProviderConfigStore store;
     private final ProviderConnectionTester tester;
@@ -36,7 +40,7 @@ public final class PlayerProviderService {
         this.tester = tester;
         this.client = client;
         this.agentRunner = new PlayerProviderAgentRunner(store, new DeepSeekToolLoopClient(),
-                new HarnessAgentClient(),
+                new HarnessAgentClient(store.role()),
                 ignored -> { }, this::recordActivity);
         this.executor = Executors.newSingleThreadExecutor(runnable -> {
             Thread thread = new Thread(runnable, "Geomantia-Player-Provider");

@@ -10,6 +10,16 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class McpServerServiceTest {
     @TempDir Path root;
+    @Test void legacyFlashSettingMigratesAndBothRolesCanBeEnabledIndependently() throws Exception {
+        Path directory=Files.createDirectories(root.resolve("config/geomantia"));
+        Files.writeString(directory.resolve("provider.json"),"{\"enabled\":true}");
+        Files.writeString(directory.resolve("mcp_server.json"),"{\"enabled\":true,\"port\":5001}");
+        assertTrue(McpServerConfig.load(root).embeddedFlash());assertFalse(McpServerConfig.load(root).embeddedAdvanced());
+        McpServerConfig.setTakeover(directory,com.rinsing.geomantia.systems.provider.application.PlanningRole.ADVANCED,true);
+        assertTrue(McpServerConfig.load(root).embeddedFlash());assertTrue(McpServerConfig.load(root).embeddedAdvanced());
+        McpServerConfig.setTakeover(directory,com.rinsing.geomantia.systems.provider.application.PlanningRole.FLASH,false);
+        assertFalse(McpServerConfig.load(root).embeddedFlash());assertTrue(McpServerConfig.load(root).embeddedAdvanced());
+    }
     @Test void configValidatesAndNeverOverwritesInvalidExistingSettings() throws Exception {
         assertTrue(McpServerConfig.load(root).enabled());
         assertEquals(5001,McpServerConfig.load(root).port());
@@ -44,6 +54,14 @@ class McpServerServiceTest {
             assertEquals(200,response.statusCode(),response.body());
             assertTrue(response.body().contains("geomantia_lobby"));
             assertTrue(response.headers().firstValue("mcp-session-id").isPresent());
+            String session=response.headers().firstValue("mcp-session-id").orElseThrow();
+            service.save(true,first,flash,true,true).get(10,TimeUnit.SECONDS);
+            var stillConnected=client.send(HttpRequest.newBuilder(URI.create(service.snapshot().url()))
+                    .header("Content-Type","application/json").header("Accept","application/json, text/event-stream")
+                    .header("mcp-session-id",session)
+                    .POST(HttpRequest.BodyPublishers.ofString("{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/list\"}")).build(),HttpResponse.BodyHandlers.ofString());
+            assertEquals(200,stillConnected.statusCode(),"Role-only changes must keep existing MCP sessions alive");
+            assertTrue(McpServerConfig.load(root).embeddedAdvanced());assertTrue(McpServerConfig.load(root).embeddedFlash());
             assertEquals("ready",service.save(true,second).get(40,TimeUnit.SECONDS).state());
             assertEquals(second,McpServerConfig.load(root).port());
             assertEquals(200,client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+second+"/health")).GET().build(),HttpResponse.BodyHandlers.ofString()).statusCode());

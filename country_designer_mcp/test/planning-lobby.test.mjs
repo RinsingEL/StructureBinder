@@ -5,7 +5,34 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { createServer } from 'node:http';
 import { once } from 'node:events';
 import { fileURLToPath } from 'node:url';
-import { actionResult, renderLobby } from '../dist/src/planning.js';
+import { actionResult, renderLobby, createPlanningHandlers } from '../dist/src/planning.js';
+
+test('dispatcher forwards role, preserves images and clears the lease when yielding', async () => {
+  const requests=[]; let count=0;
+  const api=createServer(async(req,res)=>{
+    const chunks=[];for await(const chunk of req) chunks.push(chunk);
+    requests.push({path:req.url,role:req.headers['x-geomantia-planning-role'],token:req.headers['x-geomantia-planning-token'],args:JSON.parse(Buffer.concat(chunks))});
+    res.setHeader('Content-Type','application/json');
+    res.end(JSON.stringify(req.url==='/planning/next' ? ++count===1
+      ? {ok:true,dispatch:'task',leaseToken:'private-next-lease',taskId:'one',imageEvidence:[{type:'image',mimeType:'image/png',data:'AQID'}]}
+      : {ok:true,dispatch:'waiting_for_role',leaseToken:'',continuePlanning:true,nextCall:'planning_next'} : {ok:true}));
+  });
+  api.listen(0,'127.0.0.1');await once(api,'listening');
+  const bridge=createPlanningHandlers(`http://127.0.0.1:${api.address().port}`,'ADVANCED');
+  try {
+    const first=await bridge.handlers.planning_next({timeoutSeconds:20});
+    assert.equal(JSON.stringify(first).includes('private-next-lease'),false);
+    assert.equal(first.content[1].type,'image');
+    await bridge.handlers.planning_next({timeoutSeconds:0});
+    assert.equal(requests.at(-1).token,'private-next-lease');
+    await bridge.handlers.planning_next({timeoutSeconds:0});
+    assert.equal(requests.at(-1).token,'');
+    assert.equal(requests.at(-1).role,'ADVANCED');
+    await bridge.handlers.planning_release({});
+    assert.equal(requests.at(-1).args.ownerId,requests[0].args.ownerId);
+    assert.match(renderLobby({embeddedFlashStatus:'disabled',requiredRole:'FLASH'}),/自动规划未开启/);
+  } finally {await bridge.close();await new Promise(resolve=>api.close(resolve));}
+});
 
 test('external MCP initializes with lobby guidance, keeps ownership private and returns actual image content', async () => {
   const requests = [];

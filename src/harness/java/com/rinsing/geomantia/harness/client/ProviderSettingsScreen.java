@@ -22,6 +22,7 @@ public final class ProviderSettingsScreen extends Screen {
     private static final int ERROR = 0xFFE06B6B;
 
     private final Screen parent;
+    public final PlanningRole role;
     private String providerKind = PlayerProviderConfig.DEEPSEEK;
     private String apiProtocol = PlayerProviderConfig.RESPONSES;
     private String agentRuntime = PlayerProviderConfig.HARNESS;
@@ -56,7 +57,11 @@ public final class ProviderSettingsScreen extends Screen {
     private int automationY;
 
     public ProviderSettingsScreen(Screen parent) {
-        super(Component.translatable("gui.geomantia.provider_settings.title"));
+        this(parent,PlanningRole.FLASH);
+    }
+    public ProviderSettingsScreen(Screen parent,PlanningRole role) {
+        super(Component.literal(role==PlanningRole.ADVANCED ? "高级模型 · 内置 Harness" : "Flash · 内置 Harness"));
+        this.role=role;
         this.parent = parent;
     }
 
@@ -131,7 +136,7 @@ public final class ProviderSettingsScreen extends Screen {
         addRenderableWidget(Button.builder(Component.translatable("gui.geomantia.provider_settings.back"),
                         button -> onClose()).bounds(left + panelWidth - 92, controlsY, 72, 20).build());
         setEditable(false);
-        ProviderSettingsClient.request();
+        ProviderSettingsClient.request(role);
     }
 
     void receive(ProviderSettingsSnapshot snapshot) {
@@ -163,7 +168,7 @@ public final class ProviderSettingsScreen extends Screen {
         if (testAfterSave && !savePending && "saved".equals(connectionState)) {
             testAfterSave = false;
             connectionState = "testing";
-            ProviderNetwork.testConnection();
+            ProviderSettingsClient.test(role);
         }
     }
 
@@ -205,7 +210,7 @@ public final class ProviderSettingsScreen extends Screen {
         super.tick();
         if (++statusRefreshTicks >= 40) {
             statusRefreshTicks = 0;
-            ProviderSettingsClient.request();
+            ProviderSettingsClient.request(role);
         }
     }
 
@@ -244,7 +249,7 @@ public final class ProviderSettingsScreen extends Screen {
         testAfterSave = thenTest;
         savePending = true;
         connectionState = "saving";
-        ProviderNetwork.saveSettings(providerKind, enabled, baseUrl.getValue(), model.getValue(), apiProtocol,
+        ProviderSettingsClient.save(role,providerKind, enabled, baseUrl.getValue(), model.getValue(), apiProtocol,
                 timeoutSeconds, agentRuntime, apiKey.getValue(), clearStoredApiKey);
     }
 

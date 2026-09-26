@@ -34,10 +34,19 @@ final class PlanningSessionHttpController {
         try {
             JsonObject args = GisHttpUtil.readJsonObject(exchange);
             String token = exchange.getRequestHeaders().getFirst("X-Geomantia-Planning-Token");
-            if(worldPreparing.getAsBoolean() && Set.of("resume","action").contains(operation))
+            if(worldPreparing.getAsBoolean() && Set.of("resume","next","action").contains(operation))
                 throw new IllegalStateException("WORLD_PREPARING: 首次世界扫描尚未完成，请等待进度完成后继续规划。");
             JsonObject result;
             switch (operation) {
+                case "next" -> {
+                    if (!waits.tryAcquire()) throw new IllegalStateException("PLANNING_TOO_MANY_WAITERS");
+                    waiting = true;
+                    result = service().next(string(args,"ownerId"), token,
+                            com.rinsing.geomantia.systems.provider.application.PlanningRole.valueOf(
+                                    java.util.Objects.requireNonNullElse(exchange.getRequestHeaders().getFirst("X-Geomantia-Planning-Role"), "ADVANCED")),
+                            args.has("timeoutSeconds") ? args.get("timeoutSeconds").getAsInt() : 20,
+                            args.has("retry") && args.get("retry").getAsBoolean());
+                }
                 case "lobby" -> {
                     result = service().snapshot();
                     result.addProperty("worldName", worldName.get());
@@ -58,7 +67,7 @@ final class PlanningSessionHttpController {
                     result = service().await(token, string(args, "cursor"), args.has("timeoutSeconds") ? args.get("timeoutSeconds").getAsInt() : 20);
                 }
                 case "heartbeat" -> { service().heartbeat(token); result = new JsonObject(); result.addProperty("ok", true); }
-                case "release" -> { service().release(token); result = new JsonObject(); result.addProperty("ok", true); }
+                case "release" -> { service().cancelNext(string(args,"ownerId")); if (service().owns(token)) service().release(token); result = new JsonObject(); result.addProperty("ok", true); }
                 default -> throw new IllegalArgumentException("Unknown planning operation");
             }
             GisHttpUtil.sendJson(exchange, 200, result);

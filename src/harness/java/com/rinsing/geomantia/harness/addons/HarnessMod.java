@@ -17,7 +17,7 @@ public final class HarnessMod {
     }
     private void setup(FMLCommonSetupEvent event) { event.enqueueWork(ProviderNetwork::register); }
     private void started(PlanningHost.Started event) {
-        PlayerProviderService.instance().startAutomation(event.serverDirectory, event.debugRoot, event.port, event.seed);
+        for(var role:PlanningRole.values()) PlayerProviderService.instance(role).startAutomation(event.serverDirectory, event.debugRoot, event.port, event.seed);
     }
-    private void stopping(PlanningHost.Stopping event) { PlayerProviderService.instance().stopAutomation(); }
+    private void stopping(PlanningHost.Stopping event) { for(var role:PlanningRole.values()) PlayerProviderService.instance(role).stopAutomation(); }
 }

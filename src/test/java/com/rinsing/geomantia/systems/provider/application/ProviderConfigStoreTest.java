@@ -15,6 +15,26 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ProviderConfigStoreTest {
     @TempDir
     Path temporaryDirectory;
+    @Test void independentRoleProfilesAndTakeoverFlagsDoNotShareKeys() throws Exception {
+        var flash=new ProviderConfigStore(temporaryDirectory,PlanningRole.FLASH);
+        var advanced=new ProviderConfigStore(temporaryDirectory,PlanningRole.ADVANCED);
+        var f=new PlayerProviderConfig(PlayerProviderConfig.CUSTOM,true,"https://flash.example/v1","flash-model",PlayerProviderConfig.RESPONSES,20);
+        var a=new PlayerProviderConfig(PlayerProviderConfig.CUSTOM,true,"https://advanced.example/v1","advanced-model",PlayerProviderConfig.RESPONSES,20);
+        flash.save(f,"flash-test-secret",false);
+        assertFalse(advanced.configured());assertEquals("",advanced.load().model());
+        advanced.save(a,"advanced-test-secret",false);
+        assertEquals("flash-test-secret",flash.credentials(f).apiKey());
+        assertEquals("advanced-test-secret",advanced.credentials(a).apiKey());
+        assertEquals(f,flash.load());assertEquals(a,advanced.load());
+        var settings=com.rinsing.geomantia.platform.mcp.McpServerConfig.loadDirectory(temporaryDirectory);
+        assertTrue(settings.embeddedAdvanced());assertTrue(settings.embeddedFlash());
+        com.rinsing.geomantia.platform.mcp.McpServerConfig.setTakeover(temporaryDirectory,PlanningRole.FLASH,false);
+        assertFalse(flash.load().enabled());assertTrue(advanced.load().enabled());
+        assertFalse(Files.readString(temporaryDirectory.resolve("provider-advanced.json")).contains("advanced-test-secret"));
+        advanced.save(a,"",true);
+        assertTrue(Files.exists(temporaryDirectory.resolve("provider-secret.txt")));
+        assertFalse(Files.exists(temporaryDirectory.resolve("provider-advanced-secret.txt")));
+    }
 
     @Test
     void defaultsToDisabledDeepSeekVisionPreset() throws Exception {
