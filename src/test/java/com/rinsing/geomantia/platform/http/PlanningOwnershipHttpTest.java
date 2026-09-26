@@ -25,6 +25,11 @@ class PlanningOwnershipHttpTest {
             http.start();
             URI base = URI.create("http://127.0.0.1:" + http.getAddress().getPort());
             HttpClient client = HttpClient.newHttpClient();
+            var invalid = client.send(HttpRequest.newBuilder(base.resolve("/planning/action"))
+                    .POST(HttpRequest.BodyPublishers.ofString("{\"arguments\":\"{}\"}")).build(), HttpResponse.BodyHandlers.ofString());
+            assertEquals(400, invalid.statusCode());
+            assertTrue(invalid.body().contains("$.arguments must be a JSON object"));
+            assertFalse(invalid.body().contains("ClassCastException"));
             assertEquals(200, post(client, base, "/realm/city/submit_d4_blueprint", "").statusCode());
             String token = service.acquireEmbedded();
             assertEquals(409, post(client, base, "/realm/city/submit_d4_blueprint", "").statusCode());

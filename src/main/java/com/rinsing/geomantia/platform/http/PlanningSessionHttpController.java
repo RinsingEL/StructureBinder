@@ -44,9 +44,12 @@ final class PlanningSessionHttpController {
                     result.addProperty("ownedByThisConnection", service().owns(token));
                 }
                 case "resume" -> result = service().resume(string(args, "ownerId"), token,
-                        args.has("retry") && args.get("retry").getAsBoolean());
+                        args.has("retry") && args.get("retry").getAsBoolean(),
+                        com.rinsing.geomantia.systems.provider.application.PlanningRole.valueOf(
+                            java.util.Objects.requireNonNullElse(exchange.getRequestHeaders().getFirst("X-Geomantia-Planning-Role"), "ADVANCED")));
+                case "escalate" -> result = service().escalate(token, string(args, "taskId"), string(args, "reason"));
                 case "action" -> result = service().action(token, string(args, "taskId"), string(args, "actionId"),
-                        string(args, "tool"), args.has("arguments") ? args.getAsJsonObject("arguments") : new JsonObject());
+                        string(args, "tool"), actionArguments(args));
                 case "artifact" -> result = service().artifact(string(args, "operation"), string(args, "path"),
                         string(args, "query"), args.has("offset") ? args.get("offset").getAsInt() : 0);
                 case "wait" -> {
@@ -85,6 +88,12 @@ final class PlanningSessionHttpController {
                 catch (Exception ex) { throw new IOException(ex); }
             }
         };
+    }
+    private static JsonObject actionArguments(JsonObject args) {
+        if (!args.has("arguments")) return new JsonObject();
+        if (!args.get("arguments").isJsonObject())
+            throw new IllegalArgumentException("PLANNING_ARGUMENT_INVALID: $.arguments must be a JSON object, not a JSON-encoded string");
+        return args.getAsJsonObject("arguments");
     }
     private static String string(JsonObject args, String key) { return args.has(key) ? args.get(key).getAsString() : ""; }
 }

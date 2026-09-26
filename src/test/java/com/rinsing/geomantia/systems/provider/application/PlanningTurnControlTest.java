@@ -5,6 +5,20 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PlanningTurnControlTest {
+    @Test void d4FinalizationEndsTurnOnlyAfterAcceptedFinal() throws Exception {
+        var accepted = new PlanningTurnControl((tool,args) -> JsonParser.parseString(
+                "{ok:true,d4Workflow:{stage:'COMPLETE'}}"));
+        accepted.execute("city_d4_finalize",new JsonObject());
+        assertTrue(accepted.finished());
+        var pending = new PlanningTurnControl((tool,args) -> JsonParser.parseString(
+                "{ok:true,designInProgress:true,d4Workflow:{stage:'INTEGRATION'}}"));
+        pending.execute("city_d4_finalize",new JsonObject());
+        assertFalse(pending.finished());
+        var rejected = new PlanningTurnControl((tool,args) -> JsonParser.parseString(
+                "{ok:false,error:'CITY_REVIEW_REQUIRED'}"));
+        rejected.execute("city_d4_finalize",new JsonObject());
+        assertFalse(rejected.finished());
+    }
     @Test void retargetFinishesTurnSoNextTaskPreparesFreshContinentCandidates() throws Exception {
         var control = new PlanningTurnControl((tool, args) -> JsonParser.parseString("{ok:true,status:'completed'}"));
         control.execute("realm_t2_retarget", new JsonObject());

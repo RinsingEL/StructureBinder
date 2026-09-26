@@ -20,6 +20,9 @@ public final class McpServerService implements AutoCloseable {
     private volatile Process process;
     private volatile Snapshot snapshot = new Snapshot("starting", "", "MCP 等待初始化", true, 5001);
     private volatile boolean needsSetup;
+    private volatile int flashPort = 5002;
+    public int flashPort() { return flashPort; }
+    public String flashUrl() { return snapshot.state().equals("ready") ? "http://127.0.0.1:" + flashPort + "/mcp" : ""; }
     public boolean needsSetup() { return needsSetup; }
     private boolean hookInstalled;
     private volatile boolean closed;
@@ -45,10 +48,13 @@ public final class McpServerService implements AutoCloseable {
         });
     }
     public CompletableFuture<Snapshot> save(boolean enabled, int port) {
+        return save(enabled, port, flashPort);
+    }
+    public CompletableFuture<Snapshot> save(boolean enabled, int port, int flashPort) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 if (gameDirectory == null) throw new IOException("MCP 尚未初始化");
-                McpServerConfig config = new McpServerConfig(enabled, port);
+                McpServerConfig config = new McpServerConfig(enabled, port, flashPort);
                 config.save(gameDirectory);
                 needsSetup=false;
                 restart(config);
@@ -58,6 +64,7 @@ public final class McpServerService implements AutoCloseable {
     }
     private void restart(McpServerConfig config) throws Exception {
         if (closed) throw new IOException("MCP 服务已关闭");
+        flashPort = config.flashPort();
         stopChild();
         if (!config.enabled()) { snapshot = new Snapshot("disabled", "", "MCP 自动服务已关闭", false, config.port()); return; }
         snapshot = new Snapshot("starting", "", "正在启动 MCP 服务…", true, config.port());
@@ -72,6 +79,7 @@ public final class McpServerService implements AutoCloseable {
         builder.environment().remove("GEOMANTIA_PROVIDER_TOOL_URL");
         builder.environment().remove("GEOMANTIA_PROVIDER_TOOL_KEY");
         builder.environment().put("GEOMANTIA_MCP_PORT", Integer.toString(config.port()));
+        builder.environment().put("GEOMANTIA_FLASH_MCP_PORT", Integer.toString(config.flashPort()));
         builder.environment().put("GEOMANTIA_MC_API_URL", "http://127.0.0.1:" + Integer.getInteger("geomantia.apiPort", 5000));
         builder.environment().put("GEOMANTIA_PARENT_PID", Long.toString(ProcessHandle.current().pid()));
         if (closed || Thread.currentThread().isInterrupted()) throw new IOException("MCP 启动已取消");
@@ -95,7 +103,7 @@ public final class McpServerService implements AutoCloseable {
         try {
             ready.get(30, TimeUnit.SECONDS);
             if (!child.isAlive()) throw new IOException("MCP 启动后异常退出");
-            snapshot = new Snapshot("ready", config.url(), "MCP 服务已启动，AI 可直接连接此 URL", true, config.port());
+            snapshot = new Snapshot("ready", config.url(), "高级 MCP：" + config.url() + "；Flash MCP：http://127.0.0.1:" + config.flashPort() + "/mcp", true, config.port());
         } catch (Exception ex) { stopChild(); failed(ex, config); }
     }
     static Path installBundle(Path directory) throws Exception {

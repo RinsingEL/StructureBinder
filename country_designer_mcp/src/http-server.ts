@@ -4,7 +4,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { createMcpServer } from "./server.js";
 
-export async function startMcpHttpServer(port: number) {
+export async function startMcpHttpServer(port: number, role?: "ADVANCED" | "FLASH") {
   const sessions = new Map<string, { transport: StreamableHTTPServerTransport; close: () => Promise<void>; usedAt: number; active: number }>();
   let boundPort = port, closing = false;
   async function body(req: IncomingMessage) {
@@ -36,7 +36,7 @@ export async function startMcpHttpServer(port: number) {
       else if (id) { res.writeHead(404).end("MCP session expired; initialize again"); return; }
       else if (req.method === "POST" && isInitializeRequest(payload)) {
         if (sessions.size >= 32) { res.writeHead(503).end("Too many MCP sessions"); return; }
-        const service = createMcpServer(false);
+        const service = createMcpServer(false, role);
         const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: randomUUID, enableJsonResponse: true,
           onsessioninitialized: sessionId => { sessions.set(sessionId, entry); } });
         entry = { transport, close: service.close, usedAt: Date.now(), active: 0 };

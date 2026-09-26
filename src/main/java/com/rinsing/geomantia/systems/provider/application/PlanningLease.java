@@ -29,6 +29,8 @@ final class PlanningLease {
     }
     synchronized AutoCloseable enter(String credential) {
         expire();
+        if (owner.isEmpty() && credential != null && !credential.isBlank())
+            throw new IllegalStateException("PLANNING_LEASE_EXPIRED");
         if (!owner.isEmpty() && !token.equals(credential)) throw new IllegalStateException("PLANNING_BUSY");
         requests++;
         return () -> { synchronized (this) { requests--; deadline = clock.millis() + 120_000; } };

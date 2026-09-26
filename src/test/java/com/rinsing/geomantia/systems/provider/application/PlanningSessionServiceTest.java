@@ -13,6 +13,57 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class PlanningSessionServiceTest {
     @TempDir Path root;
+    @Test void rolesShareOneLeaseAndEscalationInvalidatesFlashCredential() throws Exception {
+        sealed(root.resolve("provider_2a_r8192"));
+        try(var service=new PlanningSessionService(root,root,1,42,(step,gateway)->new PreparedPlanningTurn(step.state(),List.of(),List.of("realm_t1_prepare"),
+                new PlanningTurnControl((name,args)->JsonParser.parseString("{ok:true}"))))) {
+            assertEquals("waiting_for_role",service.resume("advanced-agent","",false,PlanningRole.ADVANCED).get("status").getAsString());
+            assertEquals("",service.snapshot().get("owner").getAsString());
+            String token=service.resume("flash-agent-one","",false,PlanningRole.FLASH).get("leaseToken").getAsString();
+            var task=awaitTask(service,token);
+            assertThrows(IllegalStateException.class,()->service.resume("flash-agent-two","",false,PlanningRole.FLASH));
+            String id=task.get("taskId").getAsString();
+            service.escalate(token,id,"No available terrain satisfies both constraints");
+            assertEquals("ADVANCED",service.snapshot().get("requiredRole").getAsString());
+            assertThrows(IllegalStateException.class,()->service.action(token,id,"old","realm_t1_prepare",new JsonObject()));
+            assertThrows(IllegalStateException.class,()->service.enter(token));
+            assertEquals("waiting_for_role",service.resume("flash-agent-one",token,false,PlanningRole.FLASH).get("status").getAsString());
+            String next=service.resume("advanced-agent","",false,PlanningRole.ADVANCED).get("leaseToken").getAsString();
+            assertNotEquals(token,next);awaitTask(service,next);service.release(next);
+        }
+        try(var restored=new PlanningSessionService(root,root,1,42)) {
+            assertEquals("ADVANCED",restored.snapshot().get("requiredRole").getAsString());
+        }
+    }
+    @Test void staleUnfinishedTaskIsDiscardedWhenArtifactsAdvanceStage() throws Exception {
+        Path run = root.resolve("provider_2a_r8192"); sealed(run);
+        AtomicInteger preparedCount = new AtomicInteger(), executed = new AtomicInteger();
+        try (var service = new PlanningSessionService(root,root,1,42,(step,gateway) -> {
+            preparedCount.incrementAndGet();
+            return new PreparedPlanningTurn(step.state(),List.of(),List.of("realm_t1_prepare"),
+                    new PlanningTurnControl((name,args) -> {
+                        executed.incrementAndGet(); return JsonParser.parseString("{ok:true}");
+                    }));
+        })) {
+            var first = service.resume("stale-task-test","",false);
+            String token = first.get("leaseToken").getAsString();
+            var old = awaitTask(service,token);
+            assertFalse(old.get("taskFinished").getAsBoolean());
+            // Simulate a committed stage whose old tool failed to mark the in-memory turn finished.
+            Files.writeString(run.resolve("realm_profiles.json"),"[{\"realmId\":\"a\"}]");
+            assertEquals("T2",service.snapshot().get("stage").getAsString());
+            var error = assertThrows(IllegalStateException.class,() -> service.action(token,
+                    old.get("taskId").getAsString(),"stale-action","realm_t1_prepare",new JsonObject()));
+            assertTrue(error.getMessage().contains("PLANNING_TASK_STALE"));
+            assertEquals(0,executed.get());
+            assertFalse(service.view(token).has("tools"));
+            service.resume("stale-task-test",token,false);
+            var next = awaitTask(service,token);
+            assertEquals("T2",next.get("stage").getAsString());
+            assertNotEquals(old.get("taskId"),next.get("taskId"));
+            assertEquals(2,preparedCount.get());
+        }
+    }
     @Test void explicitResumeEnqueuesSavedBlueprintThroughHttpWithoutPreparingD4() throws Exception {
         Path run = root.resolve("provider_2a_r8192"); sealed(run);
         Files.writeString(run.resolve("realm_profiles.json"), "[{\"realmId\":\"a\"}]");

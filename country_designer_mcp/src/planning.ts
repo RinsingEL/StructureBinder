@@ -17,6 +17,7 @@ export const planningTools = [
   tool("planning_action", "执行任务包 tools 中的一个工具。只用当前 taskId；重试同一请求时保持 actionId 不变。", { taskId: str, actionId: str, tool: str, arguments: { type: "object" } }, ["taskId", "actionId", "tool", "arguments"]),
   tool("planning_wait", "等待状态变化，最多20秒；不重复返回图片。准备好后调用 resume 获取任务。", { cursor: str, timeoutSeconds: { type: "integer", minimum: 0, maximum: 20 } }, ["cursor"]),
   tool("planning_release", "用户暂停或任务结束时释放占用，已提交进度保存在存档；运行中的程序操作不会被强制中断。"),
+  tool("planning_escalate", "Flash 无合适候选或约束冲突时，将当前任务及已保存进度交给高级模型，并释放执行权。", { taskId: str, reason: str }, ["taskId", "reason"]),
   tool("planning_artifact", "按需浏览/搜索/读取当前规划 run 的资料或实际图片；仅当前 run 内只读，path 为相对路径。", { operation: { type: "string", enum: ["list", "search", "text", "image"] }, path: str, query: str, offset: { type: "integer", minimum: 0 } }, ["operation"]),
 ];
 
@@ -53,7 +54,7 @@ export function actionResult(data: Record<string, any>): ToolResult {
   return result;
 }
 
-export function createPlanningHandlers(baseUrl = MC_API_URL) {
+export function createPlanningHandlers(baseUrl = MC_API_URL, role: "ADVANCED" | "FLASH" = "ADVANCED") {
   const ownerId = randomUUID();
   let token = "";
   let activeRequests = 0, lastActivity = Date.now();
@@ -61,7 +62,7 @@ export function createPlanningHandlers(baseUrl = MC_API_URL) {
     if (operation !== "heartbeat") { activeRequests++; lastActivity = Date.now(); }
     try {
       const response = await axios.post(`${baseUrl}/planning/${operation}`, args,
-        { timeout: operation === "action" ? 660_000 : 30_000, headers: { "X-Geomantia-Planning-Token": token } });
+        { timeout: operation === "action" ? 660_000 : 30_000, headers: { "X-Geomantia-Planning-Token": token, "X-Geomantia-Planning-Role": role } });
       return response.data;
     } finally {
       if (operation !== "heartbeat") { activeRequests--; lastActivity = Date.now(); }
@@ -80,11 +81,12 @@ export function createPlanningHandlers(baseUrl = MC_API_URL) {
     },
     async planning_resume(args) {
       const data = await request("resume", { ...args, ownerId });
-      token = data.leaseToken; delete data.leaseToken;
-      if (data.status === "complete") { await request("release"); token = ""; }
+      token = data.leaseToken ?? ""; delete data.leaseToken;
+      if (data.status === "complete" && token) { await request("release"); token = ""; }
       return planningResult(data);
     },
     async planning_action(args) { return actionResult(await request("action", args)); },
+    async planning_escalate(args) { const data = await request("escalate", args); token = ""; return planningResult(data); },
     async planning_wait(args) { return planningResult(await request("wait", args)); },
     async planning_release() { const data = await request("release"); token = ""; return planningResult(data); },
     async planning_artifact(args) { return planningResult(await request("artifact", args)); },

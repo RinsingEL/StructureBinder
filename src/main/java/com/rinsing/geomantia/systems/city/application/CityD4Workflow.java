@@ -8,7 +8,7 @@ import java.util.*;
 /** One initial design per district, followed by overview-driven, persistent expansion. */
 public final class CityD4Workflow {
     public static final List<String> TOOLS = List.of("city_d4_overview", "city_d4_district", "city_d4_mark",            "city_d4_integrate", "city_d4_finalize", "city_d4_preview",
-            "city_d4_materials", "city_d4_example", "city_d4_blocks", "city_d4_handbook");
+            "city_d4_materials", "city_d4_example", "city_d4_blocks", "city_d4_handbook", "city_d4_answers");
     private static final String FILE = "city_d4_workflow.json";
     private CityD4Workflow() { }
     @FunctionalInterface interface Submit { JsonObject call(JsonObject request) throws IOException; }
@@ -52,6 +52,10 @@ public final class CityD4Workflow {
         };
         JsonArray actions=new JsonArray();
         if(!stage.equals("COMPLETE")) {
+            if(!stage.equals("OVERVIEW")) {
+                actions.add("city_d4_answers");
+                if(!state.has("overviewAnswers")) next="city_d4_answers";
+            }
             actions.add(next);
             if(stage.equals("INTEGRATION") || stage.equals("FINAL")) {
                 if(!next.equals("city_d4_mark")) actions.add("city_d4_finalize");
@@ -64,6 +68,7 @@ public final class CityD4Workflow {
             result.add("currentDistrict",array(state,"districts").get(state.get("districtIndex").getAsInt()).deepCopy());
         }
         result.add("submissionRules",CityD4SubmissionGuidance.describe(state));
+        result.add("designQuestions",CityDesignQuestions.guide(state));
         String prompt=switch(stage){case "OVERVIEW"->"overview";case "DISTRICTS"->"district";case "COMPLETE"->"complete";default->"integration";};
         result.addProperty("instruction",com.rinsing.geomantia.systems.provider.application.AgentPromptConfig.read("city/d4_v2/"+prompt+".md"));
         return result;
@@ -90,9 +95,11 @@ public final class CityD4Workflow {
                 require(Set.of("citySettings","districts","districtDisposition").containsAll(overview.keySet()),"总览含未知字段。");
                 require(Set.of("designIntent","styleProfile","roadProfile","surfaceDetailProfile","surfaceMaterials","outdoorPlan").containsAll(settings.keySet()),"citySettings 只接受全城设置。");
                 JsonObject outdoor=object(settings,"outdoorPlan");
+                CityDesignQuestions.overview(settings,object(request,"designAnswers"));
                 require(!outdoor.has("landscapes")&&!outdoor.has("spatialGrounds")&&!outdoor.has("foundationGroupIds"),"景观与台地组在功能区初版设置。");
                 Set<String> ids=new HashSet<>();for(var d:array(overview,"districts"))require(!text(d.getAsJsonObject(),"groupId").isBlank()&&ids.add(text(d.getAsJsonObject(),"groupId")),"功能区 ID 不可空或重复。");
                 JsonObject candidate=state.deepCopy();candidate.add("districts",array(overview,"districts").deepCopy());
+                candidate.add("overviewAnswers",request.get("designAnswers").deepCopy());
                 if(overview.has("districtDisposition")) candidate.add("districtDisposition",validateDisposition(candidate,array(overview,"districtDisposition")));
                 JsonObject intent=new JsonObject(),groups=new JsonObject();groups.add("groups",array(overview,"districts").deepCopy());intent.add("designIntent",groups);
                 JsonObject response=compiler.call(intent);if(!ok(response))return receipt(state,response);
@@ -100,6 +107,40 @@ public final class CityD4Workflow {
                 save(dir,candidate);return receipt(candidate,response);
             }
             JsonObject draft=CityBlueprintDraft.current(dir,contextId,cityId);
+            if(tool.equals("city_d4_answers")) {
+                require(draft!=null&&text(request,"baseDraftHash").equals(text(draft,"baseDraftHash")),"补答必须绑定当前草稿 hash。");
+                JsonObject candidate=state.deepCopy(),settings=object(candidate,"citySettings"),overview=object(request,"overviewAnswers");
+                JsonObject surface=object(settings,"surfaceMaterials"),defaults=object(surface,"defaults");
+                // Expand existing recipes before adding the two explicitly answered slots.
+                defaults=com.rinsing.geomantia.systems.city.domain.blueprint.CitySurfaceMaterials.read(surface).isEmpty()?new JsonObject():
+                    new Gson().toJsonTree(com.rinsing.geomantia.systems.city.domain.blueprint.CitySurfaceMaterials.read(surface).defaults()).getAsJsonObject();
+                for(String slot:List.of("ground","roadSurface"))defaults.add(slot,overview.get(slot));
+                surface.add("defaults",defaults);settings.add("surfaceMaterials",surface);
+                object(settings,"outdoorPlan").add("mode",overview.get("groundTreatment"));
+                candidate.add("overviewAnswers",overview.deepCopy());candidate.add("districtAnswers",object(request,"districtAnswers").deepCopy());
+                require(object(request,"districtAnswers").keySet().equals(object(candidate,"bodies").keySet()),"补答必须覆盖全部已保存功能区。");
+                for(var entry:object(candidate,"bodies").entrySet()) {
+                    JsonObject body=entry.getValue().getAsJsonObject(),materials=object(body,"surfaceMaterials"),groupMaterials=object(materials,"groups");
+                    JsonArray foundations=new JsonArray();
+                    for(var value:array(object(request,"districtAnswers"),entry.getKey())) {
+                        JsonObject answer=value.getAsJsonObject();String id=text(answer,"groupId");
+                        JsonObject slots=new Gson().toJsonTree(com.rinsing.geomantia.systems.city.domain.blueprint.CitySurfaceMaterials.read(materials).groups().getOrDefault(id,Map.of())).getAsJsonObject();for(String slot:List.of("ground","roadSurface"))slots.add(slot,answer.get(slot));
+                        groupMaterials.add(id,slots);
+                        if(answer.has("foundation")&&answer.get("foundation").getAsBoolean())foundations.add(id);
+                        for(var g:array(body,"groups"))if(id.equals(text(g.getAsJsonObject(),"groupId"))){JsonObject policy=object(g.getAsJsonObject(),"expansionPolicy");policy.add("allowRelationConnection",answer.get("roadConnected"));g.getAsJsonObject().add("expansionPolicy",policy);}
+                    }
+                    materials.add("groups",groupMaterials);body.add("surfaceMaterials",materials);body.add("foundationGroupIds",foundations);
+                }
+                validateAnswers(dir,candidate);
+                JsonObject proposal=new JsonObject();proposal.add("cityBlueprint",assemble(candidate));proposal.addProperty("submissionMode","DRAFT");proposal.addProperty("proportionMode","RELATIVE_WEIGHTS");
+                proposal.add("hostLayoutPolicy",CityD4LayoutPolicy.request(state,candidate,draft,"__decisions__",false));
+                JsonObject response=compiler.call(proposal);
+                if(ok(response)&&"preview_valid".equals(text(object(response,"revisionEvidence"),"status"))){
+                    JsonObject current=CityBlueprintDraft.current(dir,contextId,cityId);candidate.addProperty("activeDraftHash",text(current,"baseDraftHash"));
+                    save(dir,candidate);attachPreview(dir,contextId,current,new JsonObject(),true,response);return receipt(candidate,response);
+                }
+                return receipt(state,response);
+            }
             if(tool.equals("city_d4_preview")) {
                 require(draft!=null&&text(request,"baseDraftHash").equals(text(draft,"baseDraftHash")),"预览 hash 已过期。");
                 JsonObject review=new JsonObject();for(String key:List.of("baseDraftHash","groupIds","overview"))if(request.has(key))review.add(key,request.get(key));
@@ -113,6 +154,7 @@ public final class CityD4Workflow {
             }
             if(tool.equals("city_d4_finalize")) {
                 requireCurrentOverview(dir,contextId,draft,request);
+                validateAnswers(dir,state);
                 require(request.has("functionsPreserved")&&request.get("functionsPreserved").isJsonPrimitive()&&request.getAsJsonPrimitive("functionsPreserved").isBoolean()&&request.get("functionsPreserved").getAsBoolean(),"确认所有功能区的有效主体仍成立后才能提交；仅剩无关配套不算保留功能。");
                 for(var entry:object(state,"bodies").entrySet()) require(CityD4LayoutPolicy.hasContent(draft,entry.getValue().getAsJsonObject()),"功能区 "+entry.getKey()+" 已全部为空，不能提交。");
                 JsonObject review=new JsonObject();review.add("baseDraftHash",draft.get("baseDraftHash"));review.addProperty("overview",true);review.add("assessment",request.get("assessment"));
@@ -159,6 +201,8 @@ public final class CityD4Workflow {
                 require(!array(body,"groups").isEmpty(),"初版至少声明一个建筑阵列。");
             }
             object(candidate,"bodies").add(owner,body);
+            JsonObject answers=object(candidate,"districtAnswers");answers.add(owner,request.get("designAnswers").deepCopy());candidate.add("districtAnswers",answers);
+            CityDesignQuestions.district(dir,assemble(candidate),body,array(request,"designAnswers"),CityDesignQuestions.strings(object(candidate,"overviewAnswers"),"styles"));
             JsonObject proposal=new JsonObject();proposal.add("cityBlueprint",assemble(candidate));proposal.addProperty("proportionMode","RELATIVE_WEIGHTS");proposal.addProperty("submissionMode","DRAFT");
             proposal.add("hostLayoutPolicy",CityD4LayoutPolicy.request(state,candidate,
                     geometryBase(dir,contextId,cityId,state,draft),owner,integrating));
@@ -239,9 +283,13 @@ public final class CityD4Workflow {
             case "city_d4_mark"->List.of("baseDraftHash","assessment","districtDisposition");
             case "city_d4_integrate"->List.of("baseDraftHash","assessment","targetDistrictId","protectedDistrictIds","expansionMode","integrationIntent","changes");
             case "city_d4_finalize"->List.of("baseDraftHash","assessment","functionsPreserved");
+            case "city_d4_answers"->List.of("baseDraftHash","overviewAnswers","districtAnswers");
             case "city_d4_preview"->List.of("baseDraftHash");case "city_d4_materials"->List.of("materialSelections");
             case "city_d4_example"->List.of("designExample");case "city_d4_blocks"->List.of("blockMaterials");default->List.of();};
         fields.addAll(required);if(tool.equals("city_d4_integrate"))fields.add("previousExpansionComplete");
+        if(Set.of("city_d4_overview","city_d4_district","city_d4_integrate").contains(tool)) {
+            fields.add("designAnswers");require(request.has("designAnswers"),"缺少必答 designAnswers，见 designQuestions；高级模型同样必答。");
+        }
         if(tool.equals("city_d4_finalize"))fields.add("autoAdvanceAfterD4");
         if(tool.equals("city_d4_preview"))fields.addAll(List.of("groupIds","overview"));
         require(fields.containsAll(request.keySet()),"工具含未知或混合操作字段。");for(String f:required)require(request.has(f),"缺少字段："+f);
@@ -375,6 +423,12 @@ public final class CityD4Workflow {
                 || !valid.has("compiledLayout") || !valid.has("landscapeLayout"))
             throw new IOException("CITY_D4_FROZEN_GEOMETRY_BASE_MISMATCH");
         return valid;
+    }
+    private static void validateAnswers(Path dir,JsonObject state) throws IOException {
+        CityDesignQuestions.overview(object(state,"citySettings"),object(state,"overviewAnswers"));
+        JsonObject city=assemble(state);
+        for(var e:object(state,"bodies").entrySet()) CityDesignQuestions.district(dir,city,e.getValue().getAsJsonObject(),
+            array(object(state,"districtAnswers"),e.getKey()),CityDesignQuestions.strings(object(state,"overviewAnswers"),"styles"));
     }
     private static void require(boolean condition,String message) { if(!condition) throw new IllegalArgumentException(message); }
     private static JsonObject object(JsonObject o,String k) { return o!=null && o.has(k) && o.get(k).isJsonObject()?o.getAsJsonObject(k):new JsonObject(); }

@@ -29,12 +29,14 @@ class McpServerServiceTest {
         }
         int first=freePort(),second=freePort();
         while(first==second) second=freePort();
-        new McpServerConfig(true,first).save(root);
+        int flash=freePort();while(flash==first||flash==second)flash=freePort();
+        new McpServerConfig(true,first,flash).save(root);
         try(var service=new McpServerService()) {
             service.start(root);
             for(int i=0;i<600 && service.snapshot().state().equals("starting");i++) Thread.sleep(100);
             assertEquals("ready",service.snapshot().state(),service.snapshot().message());
             assertEquals("http://127.0.0.1:"+first+"/mcp",service.snapshot().url());
+            assertEquals(flash,McpServerConfig.load(root).flashPort());
             var client=HttpClient.newHttpClient();
             var response=client.send(HttpRequest.newBuilder(URI.create(service.snapshot().url()))
                     .header("Content-Type","application/json").header("Accept","application/json, text/event-stream")

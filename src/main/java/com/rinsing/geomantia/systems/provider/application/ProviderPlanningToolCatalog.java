@@ -183,6 +183,12 @@ public final class ProviderPlanningToolCatalog {
         JsonObject p=properties("runId",string(),"citySeedId",string(),"contextId",string(),"workflowRevision",integer());
         List<String> required=new java.util.ArrayList<>(List.of("contextId","workflowRevision"));
         switch(name) {
+            case "city_d4_answers" -> {
+                p.add("baseDraftHash",string());
+                p.add("overviewAnswers",com.rinsing.geomantia.systems.city.application.CityDesignQuestions.schema(true));
+                p.add("districtAnswers",mapSchema(com.rinsing.geomantia.systems.city.application.CityDesignQuestions.schema(false)));
+                required.addAll(List.of("baseDraftHash","overviewAnswers","districtAnswers"));
+            }
             case "city_d4_overview" -> {
                 JsonObject settings=new JsonObject();
                 for(String key:List.of("designIntent","styleProfile","roadProfile","surfaceDetailProfile","surfaceMaterials")) settings.add(key,blueprint.get(key).deepCopy());
@@ -216,6 +222,10 @@ public final class ProviderPlanningToolCatalog {
             }
             case "city_d4_handbook" -> { }
             default -> throw new IllegalArgumentException("Unknown D4 tool: "+name);
+        }
+        if(java.util.Set.of("city_d4_overview","city_d4_district","city_d4_integrate").contains(name)) {
+            p.add("designAnswers",com.rinsing.geomantia.systems.city.application.CityDesignQuestions.schema(name.equals("city_d4_overview")));
+            required.add("designAnswers");
         }
         return object(p,required.toArray(String[]::new));
     }

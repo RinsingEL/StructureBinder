@@ -10,6 +10,19 @@ import static org.junit.jupiter.api.Assertions.*;
 class CityD4WorkflowTest {
     @TempDir Path dir;
     private int compiled;
+    @Test void legacySavedDesignCanSupplyMandatoryAnswersWithoutRestartingDistricts() throws Exception {
+        districts();
+        JsonObject saved=CityD4Workflow.load(dir,"ctx");
+        JsonObject request=new JsonObject();request.add("overviewAnswers",saved.remove("overviewAnswers"));request.add("districtAnswers",saved.remove("districtAnswers"));
+        saved.getAsJsonObject("citySettings").remove("surfaceMaterials");
+        Files.writeString(dir.resolve("city_d4_workflow.json"),saved.toString());
+        assertEquals("city_d4_answers",state().get("nextAction").getAsString());
+        request.add("baseDraftHash",CityBlueprintDraft.current(dir,"ctx","city").get("baseDraftHash"));
+        JsonObject result=call("city_d4_answers",request);
+        assertTrue(result.get("ok").getAsBoolean(),result.toString());
+        assertEquals("INTEGRATION",state().get("stage").getAsString());
+        assertEquals(2,lastCity.getAsJsonArray("groups").size());
+    }
 
     @Test void unrelatedDistrictAdjustmentDoesNotConsumeCoreReworkBudget() throws Exception {
         districts();mark();
@@ -42,6 +55,28 @@ class CityD4WorkflowTest {
     private static JsonObject json(String text) { return JsonParser.parseString(text).getAsJsonObject(); }
     private JsonObject state() throws Exception { return CityD4Workflow.status(dir,"ctx"); }
     private JsonObject call(String tool,JsonObject request) throws Exception {
+        // These layout fixtures use explicit, valid material decisions; omission tests call submit directly.
+        if(tool.equals("city_d4_overview") && request.has("overview") && request.getAsJsonObject("overview").has("citySettings")) {
+            var settings=request.getAsJsonObject("overview").getAsJsonObject("citySettings");
+            settings.add("roadProfile",json("{profileRef:'road'}"));
+            settings.add("surfaceMaterials",json("{defaults:{ground:'minecraft:stone',roadSurface:'minecraft:stone'}}"));
+            settings.getAsJsonObject("outdoorPlan").addProperty("mode","GENERATE");
+            request.add("designAnswers",json("{styles:['test'],roadProfileRef:'road',ground:'minecraft:stone',roadSurface:'minecraft:stone',groundTreatment:'GENERATE'}"));
+            Files.writeString(dir.resolve("city_blueprint_catalog_snapshot.json"),"{referenceCatalog:{structureRefs:[{structureRef:'core',styleTerms:['test']},{structureRef:'small_shop',styleTerms:['test']}],fillPools:[]},structureCatalog:{semanticProfiles:[]}}");
+        }
+        if(tool.equals("city_d4_district") || tool.equals("city_d4_integrate")) {
+            boolean initial=tool.equals("city_d4_district");
+            JsonObject body=initial?request.getAsJsonObject("districtDesign"):CityD4Workflow.load(dir,"ctx").getAsJsonObject("bodies").getAsJsonObject(request.get("targetDistrictId").getAsString());
+            if(body!=null) {
+                JsonArray answers=new JsonArray();
+                for(var e:body.getAsJsonArray("groups")) {
+                    JsonObject g=e.getAsJsonObject();if(initial)g.add("expansionPolicy",json("{allowRelationConnection:true}"));
+                    var a=json("{roadConnected:true,foundation:false,noFoundationReason:'layout-only fixture',ground:'minecraft:stone',roadSurface:'minecraft:stone',styles:['test']}");
+                    a.add("groupId",g.get("groupId"));answers.add(a);
+                }
+                request.add("designAnswers",answers);
+            }
+        }
         request.addProperty("d4Tool",tool); request.addProperty("workflowRevision",state().get("revision").getAsInt());
         return CityD4Workflow.submit(dir,"ctx","city",request,this::compile);
     }

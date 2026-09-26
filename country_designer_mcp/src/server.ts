@@ -12,15 +12,15 @@ import { lobbyInstructions, planningTools, createPlanningHandlers } from "./plan
 
 
 /** Each MCP client owns its own planning credential and tool session. */
-export function createMcpServer(embeddedBridge = Boolean(process.env.GEOMANTIA_PROVIDER_TOOL_URL)) {
-  const planning = embeddedBridge ? undefined : createPlanningHandlers();
+export function createMcpServer(embeddedBridge = Boolean(process.env.GEOMANTIA_PROVIDER_TOOL_URL), role?: "ADVANCED" | "FLASH") {
+  const planning = embeddedBridge ? undefined : createPlanningHandlers(undefined, role);
 
   const server = new Server(
     { name: "geomantia-gis-debug", version: "0.1.0" },
     { capabilities: { tools: {} }, ...(embeddedBridge ? {} : { instructions: lobbyInstructions }) }
   );
 
-  const tools: ToolDefinition[] = [...(embeddedBridge ? [] : planningTools), ...gisTools, ...realmTools];
+  const tools: ToolDefinition[] = role ? planningTools : [...(embeddedBridge ? [] : planningTools), ...gisTools, ...realmTools];
   const handlers: Record<string, ToolHandler> = {
     ...gisHandlers,
     ...realmHandlers,
@@ -41,6 +41,7 @@ export function createMcpServer(embeddedBridge = Boolean(process.env.GEOMANTIA_P
     const toolArgs = (request.params.arguments as Record<string, unknown>) || {};
     const call = beginMcpCall(toolName, toolArgs);
     try {
+      if (role && !planningTools.some(tool => tool.name === toolName)) throw new Error("PLANNING_SCOPED_ENTRY_REQUIRED: use planning_action");
       const handler = handlers[toolName];
       const bridge = embeddedBridge ? process.env.GEOMANTIA_PROVIDER_TOOL_URL : undefined;
       if (!bridge && !handler) {

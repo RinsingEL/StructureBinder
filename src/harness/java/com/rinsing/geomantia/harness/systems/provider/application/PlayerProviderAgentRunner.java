@@ -157,9 +157,13 @@ public final class PlayerProviderAgentRunner implements AutoCloseable {
         if (run.semanticIdentity().equals(lastCompletedIdentity)
                 || run.semanticIdentity().equals(haltedIdentity)) return;
         PlanningSessionService sessions = planning;
+        if (!hostOnly(run) && sessions.requiredRole(run) != PlanningRole.FLASH) {
+            updateIfChanged(new AutomationStatus("waiting", "PLANNING_WAITING_FOR_ADVANCED", run.runId(),run.citySeedId(),run.nextAction(),Instant.now().toString()));
+            return;
+        }
         String token;
-        try { token = sessions.acquireEmbedded(); }
-        catch (IllegalStateException occupied) { return; }
+        try { token = sessions.acquireEmbedded(PlanningRole.FLASH); }
+        catch (Exception occupied) { return; }
         if (!turnRunning.compareAndSet(false, true)) { sessions.release(token); return; }
         update(new AutomationStatus("running", "", run.runId(), run.citySeedId(), run.nextAction(),
                 Instant.now().toString()));
