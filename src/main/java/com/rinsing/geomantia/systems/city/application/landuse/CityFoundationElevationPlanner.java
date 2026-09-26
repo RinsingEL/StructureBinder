@@ -43,7 +43,8 @@ public final class CityFoundationElevationPlanner {
                         new BlockPoint(point.x()+1,point.z()),new BlockPoint(point.x(),point.z()-1),
                         new BlockPoint(point.x(),point.z()+1))) if (remaining.remove(next)) queue.addLast(next);
             }
-            if (counts.isEmpty()) throw new IllegalArgumentException("CITY_FOUNDATION_ELEVATION_UNAVAILABLE");
+            if (counts.isEmpty()) throw new IllegalArgumentException("CITY_FOUNDATION_ELEVATION_UNAVAILABLE"
+                    + ":componentBlocks=" + component.size() + ":seed=" + seed + ":step=" + step);
             int target = counts.entrySet().stream().sorted(Comparator
                     .<Map.Entry<Integer,Integer>>comparingInt(Map.Entry::getValue).reversed()
                     .thenComparingInt(Map.Entry::getKey)).findFirst().orElseThrow().getKey();

@@ -12,7 +12,7 @@ public final class PlanningStepPolicy {
         return switch (stage) {
             case W -> List.of("realm_w_refresh");
             case T1 -> List.of("realm_t1_prepare");
-            case T2 -> List.of("patch_explorer_show_candidates", "patch_explorer_select_candidate");
+            case T2 -> List.of("patch_explorer_show_candidates", "patch_explorer_select_candidate", "realm_t2_retarget");
             case T3 -> List.of("realm_t3_expand");
             case T4 -> List.of("patch_explorer_show_candidates",
                     "realm_t4_patch_planning_select_capital", "realm_t4_patch_planning_add_city",

@@ -100,7 +100,7 @@ public final class PlanningTurnControl implements PlanningToolExecutor {
                 finished = true; // Next prepared turn attaches the new rendered preview.
                 return output;
             }
-            if (Set.of("realm_t1_prepare", "realm_t2_select_coordinate", "realm_t4_patch_planning_finalize",
+            if (Set.of("realm_t1_prepare", "realm_t2_retarget", "realm_t2_select_coordinate", "realm_t4_patch_planning_finalize",
                     "city_submit_d4_blueprint", "city_review_d3_site").contains(tool)
                     || payload.has("hostDecisionCommitted") && payload.get("hostDecisionCommitted").getAsBoolean()) finished = true;
         }

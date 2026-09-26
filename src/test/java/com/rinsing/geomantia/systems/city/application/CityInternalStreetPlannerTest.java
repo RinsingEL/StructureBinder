@@ -14,6 +14,44 @@ class CityInternalStreetPlannerTest {
     private final CityBlueprintGroupLayoutPlanner layout = new CityBlueprintGroupLayoutPlanner();
     private final CityInternalStreetPlanner planner = new CityInternalStreetPlanner();
 
+    @Test void entranceExtensionsStayInsideDesignBoundsIncludingShoulders() {
+        JsonObject house = anchor("compact_edge", "fill", 0, 0, 4, 4, new JsonObject());
+        JsonObject entrance = new JsonObject();
+        entrance.addProperty("entranceId", "front");
+        entrance.addProperty("direction", "EAST");
+        entrance.add("worldPosition", point(4, 2));
+        var entrances = new com.google.gson.JsonArray(); entrances.add(entrance);
+        JsonObject transformed = new JsonObject(); transformed.add("roadEntrances", entrances);
+        JsonObject placement = new JsonObject(); placement.add("transformed", transformed);
+        house.add("templatePlacementPlan", placement);
+        JsonObject obstacle = anchor("compact_wall", "fill", 12, 0, 20, 15, new JsonObject());
+        JsonObject main = new JsonObject();
+        main.addProperty("roadHierarchy", "MAIN"); main.addProperty("widthBlocks", 3);
+        main.add("start", point(30, 2)); main.add("end", point(30, 25));
+        main.add("bounds", CityStructureCandidateEnvelope.boundsJson(
+                new com.rinsing.geomantia.systems.city.domain.model.BlockBounds(29,2,31,25)));
+        var bounds = new com.rinsing.geomantia.systems.city.domain.model.BlockBounds(-5,0,40,30);
+        var anchors = List.of(house, obstacle);
+        String original = anchors.toString();
+        var unrestricted = planner.finalizeSkeleton(List.of(), List.of(main), anchors);
+        assertTrue(unrestricted.streetBands().stream().anyMatch(b -> CityStreetObstacleRouter.crossSection(b).minZ()<0));
+        var result = planner.finalizeSkeleton(List.of(), List.of(main), anchors, bounds);
+        assertEquals("CONNECTED_BY_SHARED_EXTENSION", result.trace().getAsJsonArray("accessOutcomes")
+                .get(0).getAsJsonObject().get("status").getAsString());
+        assertFalse(result.streetBands().isEmpty());
+        assertTrue(result.streetBands().stream().allMatch(b -> {
+            var r = CityStreetObstacleRouter.crossSection(b);
+            return bounds.contains(r.minX(),r.minZ()) && bounds.contains(r.maxX(),r.maxZ());
+        }));
+        assertEquals(original,anchors.toString());
+        assertEquals(result,planner.finalizeSkeleton(List.of(),List.of(main),anchors,bounds));
+        var sealed = planner.finalizeSkeleton(List.of(),List.of(main),anchors,
+                new com.rinsing.geomantia.systems.city.domain.model.BlockBounds(-5,0,40,15));
+        assertEquals("UNRESOLVED",sealed.trace().getAsJsonArray("accessOutcomes")
+                .get(0).getAsJsonObject().get("status").getAsString());
+        assertTrue(sealed.streetBands().isEmpty());
+    }
+
     @Test
     void gridProducesMainStreetAndColumnLaneFromFixedRowsAndColumns() {
         var anchors = List.of(

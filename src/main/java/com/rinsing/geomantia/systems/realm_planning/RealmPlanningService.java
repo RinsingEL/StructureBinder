@@ -190,12 +190,16 @@ public final class RealmPlanningService {
                 throw new IllegalArgumentException("Profile target continent is not available: " + profile.realmId);
             }
         }
+        Map<String, CandidatePackage> proposedPackages = new LinkedHashMap<>();
+        for (RealmProfile profile : proposedProfiles) {
+            proposedPackages.put(profile.realmId, buildCandidatePackage(run, profile));
+        }
         run.profiles.clear();
         run.profiles.addAll(proposedProfiles);
         run.candidatePackages.clear();
         validateProfiles(run, continentId);
         for (RealmProfile profile : run.profiles) {
-            CandidatePackage pack = buildCandidatePackage(run, profile);
+            CandidatePackage pack = proposedPackages.get(profile.realmId);
             run.candidatePackages.put(profile.realmId, pack);
             exportCandidateMap(run, pack);
         }
@@ -210,6 +214,32 @@ public final class RealmPlanningService {
         response.add("candidatePackages", candidatePackagesJson(run.candidatePackages.values()));
         response.add("nextActions", arrayOf("patch_explorer_open"));
         response.add("compatibilityActions", arrayOf("realm_t2_select_coordinate"));
+        return response;
+    }
+
+    public JsonObject retargetT2(String runId, String realmId, String targetContinentId) throws IOException {
+        RealmRun run = requireRun(runId);
+        if (run.seeds.containsKey(realmId)) {
+            throw new IllegalArgumentException("REALM_CORE_ALREADY_SELECTED: " + realmId);
+        }
+        RealmProfile current = run.profiles.stream().filter(p -> p.realmId.equals(realmId)).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Unknown realmId: " + realmId));
+        String target = resolveTargetContinent(run, targetContinentId);
+        JsonObject json = current.asJson();
+        json.addProperty("targetContinentId", target);
+        if (current.targetContinentId.equals(current.scalePlan.normalizationGroup)) {
+            json.getAsJsonObject("scalePlan").addProperty("normalizationGroup", target);
+        }
+        RealmProfile replacement = RealmProfile.fromJson(json, target, 0);
+        CandidatePackage pack = buildCandidatePackage(run, replacement);
+        exportCandidateMap(run, pack);
+        run.profiles.set(run.profiles.indexOf(current), replacement);
+        run.candidatePackages.put(realmId, pack);
+        exportT1(run);
+        JsonObject response = baseResponse("T2", runId);
+        response.addProperty("status", "completed");
+        response.add("realmProfile", replacement.asJson());
+        response.addProperty("instruction", "Continent updated; open a new Patch Explorer session before selecting a core. Existing realm cores are preserved.");
         return response;
     }
 
@@ -979,6 +1009,10 @@ public final class RealmPlanningService {
     }
 
     private CandidatePackage buildCandidatePackage(RealmRun run, RealmProfile profile) {
+        return buildCandidatePackage(run, profile, true);
+    }
+
+    private CandidatePackage buildCandidatePackage(RealmRun run, RealmProfile profile, boolean excludeInitialArea) {
         Set<String> allowed = new LinkedHashSet<>();
         List<WorldCell> candidates = new ArrayList<>();
         for (PatchSummary patch : run.patchSummaries.values()) {
@@ -988,12 +1022,14 @@ public final class RealmPlanningService {
         }
         for (WorldCell cell : run.worldCells) {
             if (cell.assignableLand() && profile.targetContinentId.equals(cell.continentId)
-                    && allowed.contains(cell.patchId) && !reservedCell(run, cell)) {
+                    && allowed.contains(cell.patchId) && !reservedCell(run, cell)
+                    && (!excludeInitialArea || outsideOriginRadius(cell, run, accessConfig.firstCityMinimumDistanceBlocks()))) {
                 candidates.add(cell);
             }
         }
         if (candidates.isEmpty()) {
-            throw new IllegalArgumentException("No candidate cells for realmId: " + profile.realmId);
+            throw new IllegalArgumentException("No eligible core cells outside initial exploration area and reservations for realmId: "
+                    + profile.realmId + "; targetContinentId: " + profile.targetContinentId);
         }
         WorldCell suggested = candidates.stream()
                 .min(Comparator.comparingDouble((WorldCell cell) -> candidateScore(run, profile, cell))
@@ -1001,7 +1037,8 @@ public final class RealmPlanningService {
                         .thenComparingInt(cell -> cell.gridX))
                 .orElse(candidates.get(0));
         String packageId = "candidate_" + profile.realmId;
-        List<GridPoint> blocked = run.worldCells.stream().filter(cell -> reservedCell(run, cell))
+        List<GridPoint> blocked = run.worldCells.stream().filter(cell -> reservedCell(run, cell)
+                        || excludeInitialArea && !outsideOriginRadius(cell, run, accessConfig.firstCityMinimumDistanceBlocks()))
                 .map(cell -> new GridPoint(cell.gridX, cell.gridZ)).toList();
         return new CandidatePackage(packageId, profile.realmId, "survey_" + run.runId, allowed, blocked, List.of(),
                 new GridPoint(run.surveyResult.gridOriginBlockX(), run.surveyResult.gridOriginBlockZ()),
@@ -3888,7 +3925,8 @@ public final class RealmPlanningService {
         }
         return run.continentSummaries.values().stream()
                 .filter(continent -> run.worldCells.stream().anyMatch(cell -> cell.assignableLand()
-                        && continent.continentId.equals(cell.continentId) && !reservedCell(run, cell)))
+                        && continent.continentId.equals(cell.continentId)
+                        && outsideOriginRadius(cell, run, accessConfig.firstCityMinimumDistanceBlocks())))
                 .max(Comparator.comparingInt(continent -> continent.areaCells))
                 .map(continent -> continent.continentId)
                 .orElseThrow(() -> new IllegalArgumentException("No land continent available."));
@@ -3981,7 +4019,9 @@ public final class RealmPlanningService {
         }
         validateProfiles(run, run.profiles.get(0).targetContinentId);
         for (RealmProfile profile : run.profiles) {
-            run.candidatePackages.put(profile.realmId, buildCandidatePackage(run, profile));
+            // Legacy T1 checkpoints may target the starter continent. Restore them so the
+            // unselected realm can be retargeted without discarding other realms' progress.
+            run.candidatePackages.put(profile.realmId, buildCandidatePackage(run, profile, false));
         }
 
         JsonArray persistedPackages = readJsonArray(packagesPath, "candidate_map_packages");

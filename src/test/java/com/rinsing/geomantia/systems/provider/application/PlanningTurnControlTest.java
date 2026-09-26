@@ -5,6 +5,13 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PlanningTurnControlTest {
+    @Test void retargetFinishesTurnSoNextTaskPreparesFreshContinentCandidates() throws Exception {
+        var control = new PlanningTurnControl((tool, args) -> JsonParser.parseString("{ok:true,status:'completed'}"));
+        control.execute("realm_t2_retarget", new JsonObject());
+        assertTrue(control.finished());
+        assertTrue(PlanningStepPolicy.toolsFor(ProviderPlanningDiscovery.Stage.T2).contains("realm_t2_retarget"));
+        assertFalse(PlanningStepPolicy.toolsFor(ProviderPlanningDiscovery.Stage.T4).contains("realm_t2_retarget"));
+    }
     @Test void savedStageProgressSurvivesAProviderTurnWithoutNewGeometry() throws Exception {
         var initial=com.google.gson.JsonParser.parseString("{d4Workflow:{stage:'DISTRICTS',revision:1}}").getAsJsonObject();
         var control=new PlanningTurnControl((tool,args)->com.google.gson.JsonParser.parseString("{ok:true,designInProgress:true,d4Workflow:{stage:'DISTRICTS',revision:2}}"),initial);

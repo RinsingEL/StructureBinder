@@ -113,6 +113,14 @@ final class RealmPlanningHttpController implements AutoCloseable {
         });
     }
 
+    void handleT2Retarget(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return callOnServerThread(() -> realmPlanningService.retargetT2(requiredString(request, "runId"),
+                    requiredString(request, "realmId"), stringValue(request, "targetContinentId", "")));
+        });
+    }
+
     void handleT2SelectCoordinate(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);

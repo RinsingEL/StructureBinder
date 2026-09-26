@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools/structure_studio'))
 from studio.model import read_structure
 from studio.navigation import collision_boxes
+from studio.frontage import runtime_frontage
 
 STYLES = ('03_desert_stars', '05_forest_symbiosis', '07_arcane_academy')
 EXCLUDE = {'DS-03-v01': '地下蓄水厅：首轮不验证地下接地',
@@ -76,7 +77,7 @@ def build(args):
     if args.output.exists():
         raise ValueError(f'Use a fresh output directory: {args.output}')
     registry = read(ROOT / 'tools/structure_studio/.cache/registry.json')
-    rows, omitted = [], []
+    rows, omitted, unmarked = [], [], []
     for style in STYLES:
         directory = ROOT / 'asset_catalogs/original_civilizations' / style / 'models'
         if not directory.is_dir():
@@ -104,11 +105,18 @@ def build(args):
             except ValueError as error:
                 omitted.append(dict(id=a['id'], reason=str(error)))
                 continue
+            try:
+                ports, frontage_policy = runtime_frontage(a, ports)
+            except ValueError as error:
+                unmarked.append(str(error))
+                continue
             rows.append(dict(templateRef='studio:' + a['id'].lower(), sourceNbt=str(nbt),
                 sourceSha256=digest(nbt), authorSha256=digest(author_file), author=a,
                 rawSize=dict(zip(('width','height','depth'),data['size'])),
-                roadEntrances=ports, entranceEvidence=evidence,
+                roadEntrances=ports, frontagePolicy=frontage_policy, entranceEvidence=evidence,
                 validationSha256=digest(author_file.parent / 'validation.json')))
+    if unmarked:
+        raise ValueError('请先在 Structure Studio 完成以下入口标注，再重新导出：\n' + '\n'.join(unmarked))
     if not rows:
         raise ValueError('Empty selection')
     args.output.mkdir(parents=True)
@@ -134,7 +142,7 @@ def build(args):
             rawSize=row['rawSize'],allowedRotations=['NONE','CLOCKWISE_90','CLOCKWISE_180','COUNTERCLOCKWISE_90'],
             allowedMirrors=['NONE'],roadEntrances=row['roadEntrances'],
             terrainPosePolicy='structure_start_beard_thin', supportPolicy='full_footprint_support',
-            clearanceBlocks=0,frontagePolicy='FIXED_FRONT'))
+            clearanceBlocks=0,frontagePolicy=row['frontagePolicy']))
         payloads.append(dict(templateRef=ref,sourceFile=relative,sourceSha256=row['sourceSha256'],
             sourceIdentity=f"structure-studio:{a['id']}",converterId='studio_byte_exact_test_export_v1'))
         profiles.append(dict(structureId=ref,sourceProfileRef=f"structure-studio://{a['id']}",

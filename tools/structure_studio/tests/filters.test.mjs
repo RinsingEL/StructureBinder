@@ -88,12 +88,21 @@ test('unknown author tags remain searchable without inventing a category', () =>
   assert.ok(!matches(row, {functions: ['retail']}));
 });
 test('URL state survives reload and rejects invalid function IDs', () => {
-  const state = {search: '烘焙 商业', style: '蒸汽朋克', role: 'fill', tag: '零售', site: '入口', functions: ['retail', 'housing.family'], mode: 'any'};
+  const state = {search: '烘焙 商业', style: '蒸汽朋克', role: 'fill', frontage: 'pending', tag: '零售', site: '入口', functions: ['retail', 'housing.family'], mode: 'any'};
   const query = writeFilters(state, 'SR-F01-v01');
   assert.deepEqual(readFilters(query), state);
   assert.equal(new URLSearchParams(query).get('asset'), 'SR-F01-v01');
   assert.deepEqual(readFilters('?functions=retail,missing,retail').functions, ['retail']);
   assert.equal(readFilters('?role=invalid').role, '');
+});
+
+test('frontage filter includes pending and stale records while intersecting style', () => {
+  for (const status of ['pending', 'stale', 'invalid', 'missing']) {
+    assert.ok(matches({civilization: '沙漠', frontage: {status}}, {style: '沙漠', frontage: 'pending'}));
+  }
+  assert.ok(!matches({civilization: '沙漠', frontage: {status: 'ready'}}, {frontage: 'pending'}));
+  assert.ok(!matches({civilization: '森林', frontage: {status: 'pending'}}, {style: '沙漠', frontage: 'pending'}));
+  assert.ok(matches({frontage: {status: 'ready'}}, {frontage: 'ready'}));
 });
 test('all current assets are covered without changing author data; real combinations stay precise', () => {
   assert.equal(rows.length, 498);

@@ -9,6 +9,7 @@
       <input id="search" type="search" placeholder="编号、名称、功能；空格分词" aria-label="查找结构">
       <select id="civilization" aria-label="建筑风格"><option value="">全部风格</option></select>
       <select id="planning-role" aria-label="规划角色"><option value="">全部规划角色</option></select>
+      <select id="frontage-filter" aria-label="入口标注状态"><option value="">全部入口状态</option><option value="pending">仅待标注／需复核</option><option value="ready">正面配置可导出</option></select>
       <details open class="function-filter"><summary>功能层级</summary>
         <div id="function-path"></div>
         <p id="function-choice" class="hint"></p>
@@ -45,6 +46,16 @@
       <div id="error" hidden></div>
     </section>
     <div class="section-controls"><span>剖切</span><label>X <input type="range" id="clip-x" min="0" max="1" value="1"><output id="value-x">—</output></label><label>Y <input type="range" id="clip-y" min="0" max="1" value="1"><output id="value-y">—</output></label><label>Z <input type="range" id="clip-z" min="0" max="1" value="1"><output id="value-z">—</output></label><button id="reset">还原</button></div>
+    <section class="frontage-editor" aria-labelledby="frontage-title">
+      <div class="frontage-heading"><h2 id="frontage-title">入口与正面</h2><button id="frontage-next">下一个待标（当前筛选）</button></div>
+      <p id="frontage-status" role="status"></p>
+      <div id="frontage-entrances" aria-label="已标入口"></div>
+      <div class="frontage-controls"><label>正面方式<select id="frontage-policy" aria-label="正面方式"><option value="">请选择…</option><option value="FIXED_FRONT">指定主入口</option><option value="ANY_AUTHORED_ENTRANCE">任一已标入口均可作为正面</option></select></label>
+        <label>主入口<select id="frontage-primary" aria-label="主入口"></select></label>
+        <button id="frontage-save" disabled>保存入口标注</button><button id="frontage-reload">重新读取</button>
+      </div>
+      <p class="hint">点击入口查看位置与朝向，再指定面向道路的主入口。选择“任一入口”表示建筑没有固定正面。保存后需重新导出素材包；旧图审需重新核对。</p>
+    </section>
     <section class="tag-details"><h2>功能标签</h2><div id="function-tags"></div><div class="original-tag-line"><span>原始标记</span><div id="original-tags"></div></div><p id="tag-note" class="hint"></p></section>
     <div class="details"><section><h2>空间与使用点</h2><div id="rooms"></div></section><section><h2>选址与使用条件</h2><div id="terrain"></div><h2 class="recommend-heading">推荐情境 · 不作为准入条件</h2><div id="recommended"></div></section><section><h2>验收进度</h2><div id="checks"></div></section></div>
   </main>

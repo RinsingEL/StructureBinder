@@ -79,6 +79,7 @@ public final class GeomantiaHttpServer {
             createdServer.createContext("/realm/status", realmController::handleStatus).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/realm/w/refresh", realmController::handleWRefresh).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/realm/t1/prepare", realmController::handleT1Prepare).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/t2/retarget", realmController::handleT2Retarget).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/realm/t2/select_coordinate", realmController::handleT2SelectCoordinate).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/realm/t3/expand", realmController::handleT3Expand).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/realm/t4/build_registry", realmController::handleT4BuildRegistry).getFilters().add(planningController.ownershipFilter());

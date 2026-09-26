@@ -773,6 +773,7 @@ public final class PatchExplorerService {
         }
         Set<String> owned = null;
         Set<String> allowedPatches = null;
+        Set<String> blockedCells = new HashSet<>();
         TerrainEvidenceBundle terrainEvidence = TerrainEvidenceBundle.empty();
         TerrainPatchSource terrainPatchSource = null;
         Path territoryPath = runDir.resolve("realm_territory_map.json");
@@ -811,6 +812,10 @@ public final class PatchExplorerService {
                         }
                     }
                 }
+                for (JsonElement entry : array(candidatePackage, "blockedCells")) {
+                    JsonObject blocked = entry.getAsJsonObject();
+                    blockedCells.add(key(intValue(blocked, "gridX", 0), intValue(blocked, "gridZ", 0)));
+                }
                 continentScope = "";
                 sources.add(packagesPath);
             }
@@ -823,6 +828,7 @@ public final class PatchExplorerService {
             JsonObject cell = element.getAsJsonObject();
             int x = intValue(cell, "gridX", 0);
             int z = intValue(cell, "gridZ", 0);
+            if (blockedCells.contains(key(x, z))) continue;
             int blockX = intValue(cell, "blockX", x * step), blockZ = intValue(cell, "blockZ", z * step);
             if (reserved.overlaps(new com.rinsing.geomantia.api.regions.RegionBounds(blockX, blockZ, blockX + step - 1, blockZ + step - 1))) continue;
             if (owned != null && !owned.contains(key(x, z))) {

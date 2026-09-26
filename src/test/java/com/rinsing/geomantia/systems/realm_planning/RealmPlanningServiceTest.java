@@ -35,6 +35,70 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RealmPlanningServiceTest {
     @Test
+    void starterContinentIsRejectedBeforeT1SaveAndLegacyRealmCanRetargetWithoutLosingCore() throws Exception {
+        Path root = tempDir.resolve("starter_debug");
+        String id = "starter_retarget";
+        var terrain = new SyntheticTerrainProfile() {
+            public double seaLevel() { return 62; }
+            public double elevationAt(double x, double z) { return Math.abs(x) < 512 ? 30 : 75; }
+        };
+        var survey = new WorldSurveyRunner(root, GisClassifierConfig.defaults()).run(
+                new WorldSurveyRunner.Config(id, "minecraft:overworld", "test", 0,
+                        0, 0, 2048, 256, 128, 4, GisTestCase.byId("plain").sampleMode(),
+                        WorldSurveyRunner.ResumePolicy.USE_CACHE), new SyntheticAtlasSampler(terrain));
+        var legacy = new RealmPlanningService(root);
+        legacy.runW(survey, null);
+        Path run = root.resolve(id);
+        JsonArray cells = readJson(run.resolve("world_patch_map.json")).getAsJsonArray("cells");
+        String left = "", right = "";
+        JsonArray mask = new JsonArray();
+        for (var entry : cells) {
+            JsonObject cell = entry.getAsJsonObject();
+            if (!cell.has("continentId")) continue;
+            int x = cell.get("blockX").getAsInt();
+            if (x < -512) left = cell.get("continentId").getAsString();
+            if (x > 512) right = cell.get("continentId").getAsString();
+            if (x < 0) {
+                JsonObject point = new JsonObject();
+                point.add("gridX", cell.get("gridX")); point.add("gridZ", cell.get("gridZ"));
+                mask.add(point);
+            }
+        }
+        assertFalse(left.isBlank()); assertFalse(right.isBlank()); assertFalse(left.equals(right));
+        JsonArray profiles = new JsonArray();
+        for (String realm : List.of("saved", "blocked")) {
+            JsonObject p = new JsonObject();
+            p.addProperty("realmId", realm); p.addProperty("theme", realm + " culture preserved");
+            p.addProperty("targetContinentId", realm.equals("saved") ? right : left);
+            profiles.add(p);
+        }
+        legacy.prepareT1(id, profiles, 2, right, false);
+        var point = legacy.suggestedPoint(id, "saved");
+        assertEquals("completed", legacy.selectT2(id, "saved", point.x(), point.z(), null,
+                "saved", "debug", false).get("status").getAsString());
+        String seeds = Files.readString(run.resolve("realm_seeds.json"));
+        String intents = Files.readString(run.resolve("capital_city_intents.json"));
+        String before = Files.readString(run.resolve("realm_profiles.json"));
+        JsonObject starter = JsonParser.parseString("{shape:'continent_and_near_sea',cellStepBlocks:256,centerBlockX:-1024,centerBlockZ:0,geographicRegionId:'starter'}").getAsJsonObject();
+        starter.add("cells", mask);
+        Files.writeString(tempDir.resolve("geomantia_starter_realm.json"), starter.toString());
+        var config = new com.rinsing.geomantia.systems.realm_planning.application.access.PlanningAreaAccessConfig(
+                true, 0, 0, Set.of("minecraft:overworld"));
+        var restored = new RealmPlanningService(root, config);
+        final String allowed = right;
+        assertThrows(IllegalArgumentException.class, () -> restored.prepareT1(id, profiles, 2, allowed, false));
+        assertEquals(before, Files.readString(run.resolve("realm_profiles.json")));
+        assertThrows(IllegalArgumentException.class, () -> restored.retargetT2(id, "saved", ""));
+        JsonObject updated = restored.retargetT2(id, "blocked", "").getAsJsonObject("realmProfile");
+        assertEquals(right, updated.get("targetContinentId").getAsString());
+        assertEquals("blocked culture preserved", updated.get("theme").getAsString());
+        assertEquals(seeds, Files.readString(run.resolve("realm_seeds.json")));
+        assertEquals(intents, Files.readString(run.resolve("capital_city_intents.json")));
+        var resumed = new RealmPlanningService(root, config);
+        assertEquals("completed", resumed.retargetT2(id, "blocked", right).get("status").getAsString());
+    }
+
+    @Test
     void addonReservationRunsOnceAndExcludesT2AndBothT3Models() throws Exception {
         var config = new com.rinsing.geomantia.systems.realm_planning.application.access.PlanningAreaAccessConfig(false, 0, 0, Set.of("minecraft:overworld"));
         var chosen = new java.util.concurrent.atomic.AtomicReference<com.rinsing.geomantia.api.regions.RegionPlanningContext.Cell>();

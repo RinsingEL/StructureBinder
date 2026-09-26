@@ -11,7 +11,7 @@ export function createFilters(rows, onChange) {
   const styles = [...new Set(rows.map(row => row.civilization).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh'));
   if (!styles.includes(state.style)) state.style = '';
   $('civilization').replaceChildren(new Option('全部风格', ''), ...styles.map(style => new Option(style, style)));
-  for (const [id, key] of [['search', 'search'], ['civilization', 'style'], ['planning-role', 'role'], ['raw-tag', 'tag'], ['site-search', 'site'], ['match-mode', 'mode']]) {
+  for (const [id, key] of [['search', 'search'], ['civilization', 'style'], ['planning-role', 'role'], ['frontage-filter', 'frontage'], ['raw-tag', 'tag'], ['site-search', 'site'], ['match-mode', 'mode']]) {
     const el = $(id);
     el.value = state[key];
     el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', () => {
@@ -19,9 +19,9 @@ export function createFilters(rows, onChange) {
     });
   }
   $('clear-filters').onclick = () => {
-    Object.assign(state, {search: '', style: '', role: '', tag: '', site: '', functions: [], mode: 'all'});
+    Object.assign(state, {search: '', style: '', role: '', frontage: '', tag: '', site: '', functions: [], mode: 'all'});
     selection = [];
-    for (const [id, value] of [['search', ''], ['civilization', ''], ['site-search', ''], ['match-mode', 'all']]) $(id).value = value;
+    for (const [id, value] of [['search', ''], ['civilization', ''], ['frontage-filter', ''], ['site-search', ''], ['match-mode', 'all']]) $(id).value = value;
     update();
   };
   $('add-function').onclick = () => addFunction(selection.at(-1));
@@ -81,7 +81,7 @@ export function createFilters(rows, onChange) {
       $('selected-functions').append(chip);
     }
     $('match-mode').disabled = state.functions.length < 2;
-    const active = state.search || state.style || state.role || state.tag || state.site || state.functions.length;
+    const active = state.search || state.style || state.role || state.frontage || state.tag || state.site || state.functions.length;
     $('clear-filters').disabled = !active;
     $('filter-status').textContent = active
       ? `${state.functions.length ? `${state.functions.length} 项用途 · ${state.mode === 'any' ? '任一具备' : '同时具备'}` : '用途不限'}${state.role ? ` · ${roles.find(role => role.id === state.role).label}` : ''}${state.tag ? ` · 原始标签：${state.tag}` : ''}${state.site ? ' · 检索选址文字' : ''}`
@@ -121,6 +121,7 @@ export function createFilters(rows, onChange) {
   }
   refresh();
   return {
+    refresh,
     get state() { return state; },
     results() { return rows.filter(row => matches(row, state)); },
     select(row) { currentId = row.id; syncURL(); renderDetails(row); },

@@ -125,6 +125,13 @@ class Model:
         """Serialize, reopen, then return the actual delivered NBT representation."""
         from .annotation_policy import refine_metadata
         self.meta = refine_metadata(self.meta)
+        previous = directory / "author.json"
+        if previous.is_file() and "frontage" not in self.meta:
+            saved = json.loads(previous.read_text(encoding="utf-8"))
+            if saved.get("id") == self.meta["id"] and "frontage" in saved:
+                # Keep the manual decision and its original geometry hashes. Changed
+                # geometry makes it stale; a rebuild must never silently approve it.
+                self.meta["frontage"] = saved["frontage"]
         directory.mkdir(parents=True, exist_ok=True)
         normalized = {}
         for p, (name, props) in self.blocks.items():

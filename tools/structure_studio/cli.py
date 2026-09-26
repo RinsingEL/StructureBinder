@@ -12,7 +12,7 @@ def main():
     commands = parser.add_subparsers(dest="command", required=True)
     cmd = commands.add_parser("prepare", help="Read local Minecraft 1.20.1 resources")
     cmd.add_argument("--jar", type=Path, required=True)
-    cmd = commands.add_parser("serve", help="Start local read-only preview")
+    cmd = commands.add_parser("serve", help="Start local preview and manual frontage authoring")
     cmd.add_argument("--port", type=int, default=8765)
     cmd = commands.add_parser("validate", help="Validate exported NBT and annotations")
     cmd.add_argument("ids", nargs="*")

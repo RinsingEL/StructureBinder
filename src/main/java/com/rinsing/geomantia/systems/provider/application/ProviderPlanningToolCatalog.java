@@ -38,6 +38,11 @@ public final class ProviderPlanningToolCatalog {
                     object(properties("runId", string(), "realmProfiles", array(com.rinsing.geomantia.systems.realm_planning.RealmProfileInput.schema()),
                             "realmCount", integer()),
                             "realmProfiles", "realmCount"));
+            case "realm_t2_retarget" -> function(name,
+                    "Change only the current unselected realm's continent, preserving designs and completed cores. "
+                            + "Use when the assigned continent is blocked by the starter exploration area. "
+                            + "Omit targetContinentId to use the largest eligible continent. The next turn opens fresh candidates.",
+                    object(properties("targetContinentId", string())));
             case "realm_t2_select_coordinate" -> function(name,
                     "Submit the frozen realm_t2 Patch selection for the active realm. Normal Provider operation "
                             + "must use patchSelectionRef, not invented grid coordinates.",

@@ -29,6 +29,26 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PatchExplorerServiceTest {
+    @Test
+    void t2ExplorerOmitsBlockedCellsFromItsTerrainCatalog() throws Exception {
+        Path root = tempDir.resolve("blocked_debug"), run = root.resolve("blocked");
+        Files.createDirectories(run);
+        writeRealmArtifacts(run);
+        var packages = JsonParser.parseString(Files.readString(run.resolve("candidate_map_packages.json"))).getAsJsonArray();
+        JsonArray blocked = new JsonArray();
+        for (var entry : read(run.resolve("world_patch_map.json")).getAsJsonArray("cells")) {
+            var cell = entry.getAsJsonObject();
+            if (!"shore".equals(cell.get("landform").getAsString())) continue;
+            JsonObject point = new JsonObject();
+            point.add("gridX", cell.get("gridX")); point.add("gridZ", cell.get("gridZ")); blocked.add(point);
+        }
+        packages.get(0).getAsJsonObject().add("blockedCells", blocked);
+        Files.writeString(run.resolve("candidate_map_packages.json"), packages.toString());
+        var opened = new PatchExplorerService(root).open(request("blocked", "realm_t2", "realm_a"));
+        assertFalse(hasPatchType(opened.getAsJsonArray("typeCatalog"), "shore"));
+        assertTrue(hasPatchType(opened.getAsJsonArray("typeCatalog"), "plain"));
+    }
+
     @TempDir
     Path tempDir;
 

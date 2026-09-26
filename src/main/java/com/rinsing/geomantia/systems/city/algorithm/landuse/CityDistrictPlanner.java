@@ -49,6 +49,8 @@ public final class CityDistrictPlanner {
         Set<BlockPoint> nearBuildings = dilate(platformStructures,
                 Math.max(settings.structureMarginBlocks(), settings.maxJoinDistanceBlocks()), bounds);
         roadCells.retainAll(nearBuildings);
+        // Water crossings belong to the road/bridge projection, not to dry-land foundations.
+        roadCells.removeIf(index::protectedTerrain);
         construction.addAll(roadCells);
         // A town street has a shoulder, not a vertical slit cut through untouched hills.
         // Clip to the same near-building domain so long rural connectors remain natural.

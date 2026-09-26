@@ -443,7 +443,7 @@ public final class CityBlueprintCompilerService {
                 .map(JsonElement::getAsJsonObject).toList();
         CityInternalStreetPlanner.Finalization streetFinalization = internalStreetPlanner.finalizeSkeleton(
                 preFillStreetSkeleton.asList().stream().map(JsonElement::getAsJsonObject).toList(),
-                mainRoads.streetBands(), anchorObjects);
+                mainRoads.streetBands(), anchorObjects, cityPlanningBounds);
         JsonArray streetBands = new JsonArray();
         streetFinalization.streetBands().forEach(streetBands::add);
         CityResidentialOverflowPlanner.Result residentialOverflow = residentialOverflowPlanner.plan(

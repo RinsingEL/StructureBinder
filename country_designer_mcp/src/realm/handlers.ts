@@ -18,6 +18,11 @@ export const realmHandlers: Record<string, ToolHandler> = {
     return planningResult(res.data);
   },
 
+  async realm_t2_retarget(args) {
+    const res = await postJson(`${MC_API_URL}/realm/t2/retarget`, payload(args), TIMEOUTS.quick);
+    return planningResult(res.data);
+  },
+
   async realm_t2_select_coordinate(args) {
     const res = await postJson(`${MC_API_URL}/realm/t2/select_coordinate`, payload(args), TIMEOUTS.quick);
     return planningResult(res.data);

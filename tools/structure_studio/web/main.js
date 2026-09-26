@@ -4,6 +4,7 @@ import './style.css';
 import {createSite} from './site.js';
 import {createFilters} from './filters.js';
 import {roleOf} from './functions.js';
+import {createFrontageEditor} from './frontage.js';
 
 const $ = id => document.getElementById(id);
 const canvas = $('scene');
@@ -15,6 +16,26 @@ let terrainRenderer,site,context=false;
 const telemetry = {ready: false, renderErrors: [], missingTextures: [], source: 'serialized NBT'};
 const view = mat4.create();
 const projection = mat4.create();
+const frontage = createFrontageEditor({
+  focus(point) {
+    reset(false); updateGeometry();
+    markers = true; $('markers').classList.add('selected');
+    walk = false;
+    yaw = {north: Math.PI, south: 0, east: Math.PI / 2, west: -Math.PI / 2}[point.facing?.toLowerCase()] ?? Math.PI;
+    pitch = .35;
+    target = point.pos.map((v, i) => v + (i === 1 ? 1 : .5)); distance = 12;
+    $('view-note').textContent = `入口 ${point.id} · ${point.facing ?? '朝向未标'} · ${point.pos.join(', ')}`;
+    draw();
+  },
+  saved(source, result) {
+    Object.assign(source, result);
+    const row = rows.find(row => row.id === source.author.id);
+    if (row) row.frontage = result.frontage;
+    if (current === source) { telemetry.authorSha256 = result.author_sha256; renderChecks(source); }
+    library?.refresh(); populateList();
+  },
+  reload(id) { load(id).catch(fail); },
+});
 function fail(err) { $('error').hidden = false; $('error').textContent = String(err); $('loading').hidden = true; telemetry.renderErrors.push(String(err)); }
 const originalError = console.error;
 console.error = (...args) => { telemetry.renderErrors.push(args.map(String).join(' ')); originalError(...args); };
@@ -73,6 +94,9 @@ function populateList() {
     if (current?.author.id === row.id) button.classList.add('active');
     const small = document.createElement('small'); small.textContent = `${row.id} · ${row.size.join(' × ')}`;
     const roleTag = document.createElement('span'); roleTag.className = 'role-badge'; roleTag.textContent = roleOf(row).label; small.append(roleTag);
+    if (row.frontage?.status !== 'ready') {
+      const badge = document.createElement('span'); badge.className = 'role-badge warning'; badge.textContent = '入口待核对'; small.append(badge);
+    }
     const label = document.createElement('span'); label.textContent = row.name;
     const tags = document.createElement('span'); tags.className = 'result-tags';
     tags.textContent = (row.function_terms ?? []).join(' · ') || '未标注功能';
@@ -82,11 +106,16 @@ function populateList() {
 }
 
 async function load(id) {
+  if (current && !frontage.canLeave()) return;
   const generation = ++loadingGeneration;
+  frontage.select(null);
   telemetry.ready = false; $('loading').hidden = false; $('error').hidden = true;
   const data = await fetchJSON(`/api/model?id=${encodeURIComponent(id)}`);
   if (generation !== loadingGeneration) return;
   current = data;
+  const row = rows.find(row => row.id === data.author.id);
+  if (row) row.frontage = data.frontage;
+  library?.refresh();
   telemetry.renderErrors = []; telemetry.missingTextures = [];
   $('title').textContent = data.author.name;
   $('eyebrow').textContent = `${data.author.id} / ${data.author.civilization}`;
@@ -99,16 +128,21 @@ async function load(id) {
   for (const room of data.author.rooms) { const button=document.createElement('button');button.textContent=room.name;button.onclick=()=>focusRoom(room);$('rooms').append(button); }
   const notes = document.createElement('div'); notes.textContent = (data.author.design_notes ?? []).join(' '); $('rooms').append(notes);
   library?.select(data.author);
+  frontage.select(data);
+  renderChecks(data);
+  reset(false); populateList(); updateGeometry(); preset('front');
+  telemetry.ready = true; telemetry.id=id;telemetry.sha256=data.sha256;telemetry.authorSha256=data.author_sha256;telemetry.visibleBlocks=count;
+  $('loading').hidden = true;
+  requestAnimationFrame(draw);
+}
+
+function renderChecks(data) {
   $('checks').replaceChildren();
   for (const [text,cls] of [
     [data.validation?.passed && data.validation?.nbt_sha256 === data.sha256 ? `数据检查通过 · ${data.validation.warnings.length} 项待核对` : '数据检查待完成', data.validation?.passed && data.validation?.nbt_sha256 === data.sha256?'good':'warning'],
     [data.review?.nbt_sha256 === data.sha256 && data.review?.author_sha256 === data.author_sha256 && data.review?.status === 'accepted' ? '视觉验收已记录' : '视觉验收待完成',''],
     [`包含 ${data.author.rooms.length} 个空间、${data.author.points.length} 处标记。标记为作者记录。`, ''],
   ]) { const line=document.createElement('div');line.className=cls;line.textContent=text;$('checks').append(line); }
-  reset(false); populateList(); updateGeometry(); preset('front');
-  telemetry.ready = true; telemetry.id=id;telemetry.sha256=data.sha256;telemetry.authorSha256=data.author_sha256;telemetry.visibleBlocks=count;
-  $('loading').hidden = true;
-  requestAnimationFrame(draw);
 }
 
 function updateGeometry() {
@@ -189,7 +223,7 @@ function draw() {
     if(point.pos.some((v,i)=>v>clip[i])||point.pos[1]<floorMin)continue;
     const p=vec4.fromValues(point.pos[0]+.5,point.pos[1]+1,point.pos[2]+.5,1);vec4.transformMat4(p,p,view);vec4.transformMat4(p,p,projection);
     if(p[3]<=0||Math.abs(p[0]/p[3])>1||Math.abs(p[1]/p[3])>1)continue;
-    const el=document.createElement('button');el.className='pin';el.textContent=point.name;el.title=`${point.kind} · ${point.pos.join(', ')}（透视标记）`;
+    const el=document.createElement('button');el.className='pin';el.textContent=point.kind === 'entrance' ? `${point.id} · ${point.name}` : point.name;el.title=`${point.kind} · ${point.pos.join(', ')}（透视标记）`;
     el.style.left=`${(p[0]/p[3]+1)*.5*canvas.clientWidth}px`;el.style.top=`${(1-p[1]/p[3])*.5*canvas.clientHeight}px`;
     el.onclick=()=>enterWalk(point);$('labels').append(el);
   }
@@ -242,6 +276,14 @@ $('markers').onclick=()=>{markers=!markers;$('markers').classList.toggle('select
 $('walk').onclick=()=>walk?preset('front'):enterWalk();
 $('reset').onclick=()=>reset();
 $('save').onclick=()=>{draw();const a=document.createElement('a');a.download=`${current.author.id}-${selectedPreset}.png`;a.href=canvas.toDataURL('image/png');a.click();};
+$('frontage-next').onclick = () => {
+  const candidates = library?.results() ?? rows;
+  const index = candidates.findIndex(row => row.id === current?.author.id);
+  const next = [...candidates.slice(index + 1), ...candidates.slice(0, index + 1)]
+    .find(row => row.id !== current?.author.id && row.frontage?.status !== 'ready');
+  if (next) load(next.id).catch(fail);
+  else $('frontage-status').textContent = '当前筛选中没有其他待标注素材。';
+};
 new ResizeObserver(resize).observe(canvas);
 
 // Read-only automation surface, also used by the screenshot acceptance runner.

@@ -10,7 +10,7 @@ class CityBoundaryCapturedReplayTest {
   String fixture = System.getenv("GEOMANTIA_CITY_BOUNDARY_REPLAY_RUN");
   Assumptions.assumeTrue(fixture != null);
   Path run = Path.of(fixture);
-  String city = "city_realm_northmark_capital";
+  String city = System.getenv().getOrDefault("GEOMANTIA_CITY_BOUNDARY_REPLAY_CITY", "city_realm_northmark_capital");
   Path source = run.resolve("city_test_runs").resolve(city);
   Path target = root.resolve(run.getFileName()).resolve("city_test_runs").resolve(city);
   for (String step : new String[]{"blueprint", "d3", "land_use"}) {
@@ -27,5 +27,6 @@ class CityBoundaryCapturedReplayTest {
   System.out.println("BOUNDARY_REPLAY ok=" + result.ok() + " reason=" + result.reasonCode() + " message=" + result.message());
   assertTrue(result.ok(), result.reasonCode() + ": " + result.message());
   assertEquals(original, proposal);
+  System.out.println("BOUNDARY_REPLAY anchors=" + result.structureAnchorPlan().getAsJsonArray("anchors").size());
  }
 }

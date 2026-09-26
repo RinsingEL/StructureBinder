@@ -40,6 +40,8 @@ export function matches(row, state = {}) {
   const meaning = describe(row);
   if (state.style && row.civilization !== state.style) return false;
   if (state.role && roleOf(row).id !== state.role) return false;
+  if (state.frontage === 'pending' && row.frontage?.status === 'ready') return false;
+  if (state.frontage === 'ready' && row.frontage?.status !== 'ready') return false;
   if (state.tag && !(row.function_terms ?? []).includes(state.tag)) return false;
   if (state.site && !containsWords(siteText(row), state.site)) return false;
   const text = [row.id, row.name, row.civilization, ...(row.function_terms ?? []), ...meaning.leaves.map(pathLabel)].join(' ');
@@ -52,12 +54,13 @@ export function readFilters(search) {
   const p = new URLSearchParams(search);
   return {search: p.get('q') ?? '', style: p.get('style') ?? '', tag: p.get('tag') ?? '', site: p.get('site') ?? '',
     role: roles.some(role => role.id === p.get('role')) ? p.get('role') : '',
+    frontage: ['pending', 'ready'].includes(p.get('frontage')) ? p.get('frontage') : '',
     functions: [...new Set((p.get('functions') ?? '').split(',').filter(id => byId.has(id)))], mode: p.get('mode') === 'any' ? 'any' : 'all'};
 }
 export function writeFilters(state, asset) {
   const p = new URLSearchParams();
   if (asset) p.set('asset', asset);
-  for (const [key, value] of Object.entries({q: state.search, style: state.style, role: state.role, tag: state.tag, site: state.site,
+  for (const [key, value] of Object.entries({q: state.search, style: state.style, role: state.role, frontage: state.frontage, tag: state.tag, site: state.site,
     functions: state.functions?.join(','), mode: state.mode === 'any' ? 'any' : ''})) if (value) p.set(key, value);
   return `?${p}`;
 }

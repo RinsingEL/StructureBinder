@@ -29,6 +29,11 @@ def validate(directory: Path, registry=None, *, save=True):
         errors.append("Author annotations refer to a different NBT hash")
     if meta.get("size") != size:
         errors.append("Author/NBT size mismatch")
+    if "frontage" in meta:
+        from .frontage import resolve
+        frontage = resolve(meta, data["sha256"])
+        if frontage["status"] != "ready":
+            errors.append("Invalid author frontage: " + frontage["message"])
     role = meta.get("planning_role")
     if not isinstance(role, str) or role not in PLANNING_ROLES:
         errors.append(f"Invalid author planning_role: {role!r}")

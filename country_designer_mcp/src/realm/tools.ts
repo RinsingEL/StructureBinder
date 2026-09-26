@@ -771,6 +771,19 @@ const originalRealmTools: ToolDefinition[] = [
     },
   },
   {
+    name: "realm_t2_retarget",
+    description: "为尚未完成核心选址的国度重新选洲，保留国度方案和其他国度已完成核心。targetContinentId 留空时选择最大可用大陆；成功后重新打开 Patch Explorer。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string" },
+        realmId: { type: "string" },
+        targetContinentId: { type: "string" },
+      },
+      required: ["runId", "realmId"],
+    },
+  },
+  {
     name: "realm_t2_select_coordinate",
     description: "提交 realm_t2 Patch Explorer 的 patchSelectionRef，校验并生成国度扩张用 RealmSeed 与无坐标 CapitalCityIntent。此处不决定首都最终位置；正常 AI 主链必须先完成 patch_explorer_open/show/select。",
     inputSchema: {

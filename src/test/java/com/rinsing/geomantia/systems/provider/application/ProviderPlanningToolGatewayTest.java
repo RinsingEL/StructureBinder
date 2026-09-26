@@ -57,6 +57,26 @@ class ProviderPlanningToolGatewayTest {
     }
 
     @Test
+    void retargetLocksRealmIdentityAndPreservesRequestedContinent() throws Exception {
+        server.createContext("/realm/t2/retarget", exchange -> {
+            received.set(read(exchange));
+            reply(exchange, "{\"ok\":true,\"status\":\"completed\"}");
+        });
+        var step = new ProviderPlanningDiscovery.PlanningStep(ProviderPlanningDiscovery.Stage.T2,
+                "run_a", "realm_a", "", "patch_explorer_open", new JsonObject(),
+                serverDirectory.resolve("realm_debug/run_a"), java.util.List.of(), "identity");
+        var gateway = ProviderPlanningToolGateway.forStep(server.getAddress().getPort(), serverDirectory, step);
+        JsonObject args = new JsonObject();
+        args.addProperty("targetContinentId", "continent_2");
+        gateway.execute("realm_t2_retarget", args);
+        assertEquals("run_a", received.get().get("runId").getAsString());
+        assertEquals("realm_a", received.get().get("realmId").getAsString());
+        assertEquals("continent_2", received.get().get("targetContinentId").getAsString());
+        args.addProperty("realmId", "other_realm");
+        assertThrows(IllegalArgumentException.class, () -> gateway.execute("realm_t2_retarget", args));
+    }
+
+    @Test
     void injectsActiveScopeAndAttachesReturnedPreview() throws Exception {
         Path preview = serverDirectory.resolve("realm_debug/run_a/preview.png");
         Files.createDirectories(preview.getParent());

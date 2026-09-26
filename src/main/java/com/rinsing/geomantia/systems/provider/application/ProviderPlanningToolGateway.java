@@ -113,7 +113,7 @@ public final class ProviderPlanningToolGateway implements PlanningToolExecutor {
             if (arguments.has("realmProfiles") && arguments.get("realmProfiles").isJsonArray())
                 arguments.addProperty("realmCount", arguments.getAsJsonArray("realmProfiles").size());
         }
-        if ("realm_t2_select_coordinate".equals(toolName)
+        if ("realm_t2_retarget".equals(toolName) || "realm_t2_select_coordinate".equals(toolName)
                 || "realm_t4_patch_planning_create".equals(toolName)) {
             injectIdentity(arguments, "realmId", requiredScope(realmId, "realmId"));
         }
@@ -342,6 +342,7 @@ public final class ProviderPlanningToolGateway implements PlanningToolExecutor {
         Map<String, Endpoint> endpoints = new LinkedHashMap<>();
         endpoints.put("realm_w_refresh", new Endpoint("/realm/w/refresh", false, true));
         endpoints.put("realm_t1_prepare", new Endpoint("/realm/t1/prepare", false, false));
+        endpoints.put("realm_t2_retarget", new Endpoint("/realm/t2/retarget", false, false));
         endpoints.put("realm_t2_select_coordinate",
                 new Endpoint("/realm/t2/select_coordinate", false, false));
         endpoints.put("realm_t3_expand", new Endpoint("/realm/t3/expand", false, true));

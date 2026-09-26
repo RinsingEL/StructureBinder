@@ -60,6 +60,12 @@ final class CityInternalStreetPlanner {
     Finalization finalizeSkeleton(List<JsonObject> skeletonBands,
                                   List<JsonObject> mainRoadBands,
                                   List<JsonObject> anchors) {
+        return finalizeSkeleton(skeletonBands, mainRoadBands, anchors, null);
+    }
+
+    Finalization finalizeSkeleton(List<JsonObject> skeletonBands,
+                                  List<JsonObject> mainRoadBands,
+                                  List<JsonObject> anchors, BlockBounds designBounds) {
         List<Anchor> parsed = anchors.stream().map(Anchor::parse).toList();
         List<JsonObject> allSkeleton = new ArrayList<>();
         skeletonBands.forEach(band -> allSkeleton.add(band.deepCopy()));
@@ -107,14 +113,14 @@ final class CityInternalStreetPlanner {
                                 || anchor.groupId().equals(string(band, "targetGroupId")))
                         .toList();
                 BlockPoint doorstep = outsideBody(entrance.point(), entrance.direction(), anchor.body(), 1);
-                if (roadPointClear(doorstep, 1, parsed) && groupNetwork.stream()
+                if (roadPointClear(doorstep, 1, parsed, designBounds) && groupNetwork.stream()
                         .anyMatch(band -> bounds(band).contains(doorstep.x(), doorstep.z()))) {
                     accessOutcomes.add(accessOutcome(entrance, "CONNECTED_TO_SHARED_SKELETON", ""));
                     continue;
                 }
-                Alley alley = shortestLegalAlley(entrance, anchor, parsed, groupNetwork);
+                Alley alley = shortestLegalAlley(entrance, anchor, parsed, groupNetwork, designBounds);
                 if (alley == null) {
-                    Alley extension = shortestLegalNetworkExtension(entrance, anchor, parsed, groupNetwork);
+                    Alley extension = shortestLegalNetworkExtension(entrance, anchor, parsed, groupNetwork, designBounds);
                     if (extension == null) {
                         accessOutcomes.add(accessOutcome(entrance, "UNRESOLVED",
                                 "CITY_INTERNAL_STREET_ENTRANCE_NETWORK_EXTENSION_UNAVAILABLE"));
@@ -724,7 +730,7 @@ final class CityInternalStreetPlanner {
     private static Alley shortestLegalAlley(Entrance entrance,
                                              Anchor source,
                                              List<Anchor> anchors,
-                                             List<JsonObject> network) {
+                                             List<JsonObject> network, BlockBounds designBounds) {
         if (network.isEmpty()) return null;
         List<Alley> candidates = new ArrayList<>();
         for (JsonObject band : network) {
@@ -733,12 +739,12 @@ final class CityInternalStreetPlanner {
             if (startJson.size() == 0 || endJson.size() == 0) continue;
             int width = Math.max(1, Math.min(3, intValue(band, "widthBlocks", 1)));
             BlockPoint start = outsideBody(entrance.point(), entrance.direction(), source.body(), width);
-            if (!entranceApproachClear(entrance, source, start, anchors)) continue;
+            if (!entranceApproachClear(entrance, source, start, anchors, designBounds)) continue;
             BlockPoint target = nearestPoint(start, point(startJson), point(endJson));
             int distance = Math.abs(start.x() - target.x()) + Math.abs(start.z() - target.z());
             if (distance == 0 || distance > 32) continue;
             for (List<BlockPoint> path : orthogonalPaths(start, target)) {
-                if (path.size() >= 2 && alleyClear(path, width, anchors)) {
+                if (path.size() >= 2 && alleyClear(path, width, anchors, designBounds)) {
                     candidates.add(new Alley(path, width, distance));
                 }
             }
@@ -748,9 +754,9 @@ final class CityInternalStreetPlanner {
     }
 
     private static boolean entranceApproachClear(Entrance entrance, Anchor source, BlockPoint start,
-                                                  List<Anchor> anchors) {
+                                                  List<Anchor> anchors, BlockBounds designBounds) {
         BlockPoint doorstep = outsideBody(entrance.point(), entrance.direction(), source.body(), 1);
-        return alleyClear(List.of(doorstep, start), 1, anchors);
+        return alleyClear(List.of(doorstep, start), 1, anchors, designBounds);
     }
 
     private static void addDoorstepApproach(Anchor source, Entrance entrance, Alley alley,
@@ -783,18 +789,18 @@ final class CityInternalStreetPlanner {
     private static Alley shortestLegalNetworkExtension(Entrance entrance,
                                                         Anchor source,
                                                         List<Anchor> anchors,
-                                                        List<JsonObject> network) {
-        Alley wide = shortestLegalNetworkExtension(entrance, source, anchors, network, 3);
-        return wide != null ? wide : shortestLegalNetworkExtension(entrance, source, anchors, network, 1);
+                                                        List<JsonObject> network, BlockBounds designBounds) {
+        Alley wide = shortestLegalNetworkExtension(entrance, source, anchors, network, 3, designBounds);
+        return wide != null ? wide : shortestLegalNetworkExtension(entrance, source, anchors, network, 1, designBounds);
     }
 
     private static Alley shortestLegalNetworkExtension(Entrance entrance, Anchor source,
-                                                        List<Anchor> anchors, List<JsonObject> network, int width) {
+                                                        List<Anchor> anchors, List<JsonObject> network, int width, BlockBounds designBounds) {
         if (network.isEmpty()) return null;
         BlockPoint start = outsideBody(entrance.point(), entrance.direction(), source.body(), width);
         List<BlockBounds> searchParts = new ArrayList<>(anchors.stream().map(Anchor::body).toList());
-        if (!roadPointClear(start, width, anchors)
-                || !entranceApproachClear(entrance, source, start, anchors)) return null;
+        if (!roadPointClear(start, width, anchors, designBounds)
+                || !entranceApproachClear(entrance, source, start, anchors, designBounds)) return null;
         List<BlockBounds> networkBounds = network.stream().map(CityInternalStreetPlanner::bounds).toList();
         searchParts.addAll(networkBounds);
         searchParts.add(new BlockBounds(start.x(), start.z(), start.x(), start.z()));
@@ -817,7 +823,7 @@ final class CityInternalStreetPlanner {
             for (int[] direction : directions) {
                 BlockPoint next = new BlockPoint(current.x() + direction[0], current.z() + direction[1]);
                 if (!search.contains(next.x(), next.z()) || distance.containsKey(next)
-                        || !roadPointClear(next, width, anchors)) continue;
+                        || !roadPointClear(next, width, anchors, designBounds)) continue;
                 previous.put(next, current);
                 distance.put(next, currentDistance + 1);
                 queue.addLast(next);
@@ -831,12 +837,15 @@ final class CityInternalStreetPlanner {
         return new Alley(corners, width, Math.max(0, cells.size() - 1));
     }
 
-    private static boolean roadPointClear(BlockPoint point, int width, List<Anchor> anchors) {
+    private static boolean roadPointClear(BlockPoint point, int width, List<Anchor> anchors, BlockBounds designBounds) {
         int lower = (width - 1) / 2 + (width == 1 ? 0 : 1);
         int upper = width / 2 + (width == 1 ? 0 : 1);
         BlockBounds road = new BlockBounds(point.x() - lower, point.z() - lower,
                 point.x() + upper, point.z() + upper);
-        return anchors.stream().map(Anchor::body).noneMatch(road::overlaps);
+        // Include the stair shoulders as well as the road surface, before accepting a search cell.
+        return (designBounds == null || designBounds.contains(road.minX(), road.minZ())
+                && designBounds.contains(road.maxX(), road.maxZ()))
+                && anchors.stream().map(Anchor::body).noneMatch(road::overlaps);
     }
 
     private static List<BlockPoint> compressOrthogonalPath(List<BlockPoint> cells) {
@@ -856,7 +865,7 @@ final class CityInternalStreetPlanner {
         return List.copyOf(result);
     }
 
-    private static boolean alleyClear(List<BlockPoint> path, int width, List<Anchor> anchors) {
+    private static boolean alleyClear(List<BlockPoint> path, int width, List<Anchor> anchors, BlockBounds designBounds) {
         for (int index = 0; index + 1 < path.size(); index++) {
             BlockPoint start = path.get(index);
             BlockPoint end = path.get(index + 1);
@@ -865,11 +874,7 @@ final class CityInternalStreetPlanner {
             int length = Math.abs(end.x() - start.x()) + Math.abs(end.z() - start.z());
             for (int step = 0; step <= length; step++) {
                 BlockPoint point = new BlockPoint(start.x() + dx * step, start.z() + dz * step);
-                int lower = (width - 1) / 2 + (width == 1 ? 0 : 1);
-                int upper = width / 2 + (width == 1 ? 0 : 1);
-                BlockBounds road = new BlockBounds(point.x() - lower, point.z() - lower,
-                        point.x() + upper, point.z() + upper);
-                if (anchors.stream().map(Anchor::body).anyMatch(road::overlaps)) return false;
+                if (!roadPointClear(point, width, anchors, designBounds)) return false;
             }
         }
         return true;

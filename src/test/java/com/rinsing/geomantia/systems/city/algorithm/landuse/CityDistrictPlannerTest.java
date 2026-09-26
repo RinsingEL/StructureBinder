@@ -7,6 +7,21 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CityDistrictPlannerTest {
+    @Test void roadCrossingsDoNotTurnWaterOrMissingSamplesIntoFoundations() {
+        var groups = Map.of("town", List.of(new BlockBounds(0,0,8,12),new BlockBounds(18,0,26,12)));
+        var road = List.of(new BlockBounds(8,4,18,6));
+        var river = terrain(true);
+        var missing = new LandUseTerrainField(river.schema(),river.cityId(),BOUNDS,1,
+                river.cells().stream().filter(c -> c.cellX()!=13).toList());
+        for (var terrain : List.of(river,missing)) {
+            var result = new CityDistrictPlanner().plan(BOUNDS,terrain,groups,road,Set.of(),SETTINGS);
+            assertFalse(result.construction().stream().anyMatch(p -> p.x()==13),
+                    "crossing and shoulders must not claim protected terrain as dry-land foundation");
+            assertTrue(result.construction().contains(new BlockPoint(12,5)),"land approach remains paved");
+            assertTrue(result.construction().contains(new BlockPoint(14,5)),"far bank remains paved");
+        }
+    }
+
     @Test void acceptedUrbanBuildingsAndTheirRoadShouldersDoNotLeaveCliffLabelHoles() {
         var plain=terrain(false);
         var cliff=new LandUseTerrainField(plain.schema(),plain.cityId(),plain.planningBounds(),1,
