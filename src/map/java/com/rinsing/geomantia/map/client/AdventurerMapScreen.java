@@ -39,6 +39,7 @@ public final class AdventurerMapScreen extends Screen {
 
     private AdventurerMapSnapshot snapshot;
     private boolean loading;
+    private boolean backgroundRefresh;
     private boolean receivedSnapshot;
     private long requestId;
     private boolean requestedDebugLayer;
@@ -131,12 +132,17 @@ public final class AdventurerMapScreen extends Screen {
     }
 
     private void refresh() {
+        refresh(false);
+    }
+
+    private void refresh(boolean background) {
         if (loading) {
             refreshQueued = true;
             return;
         }
         refreshQueued = false;
         loading = true;
+        backgroundRefresh = background && receivedSnapshot;
         updateRetryButton();
         automaticRefreshTicks = 0;
         requestId = AdventurerMapClient.nextRequestId();
@@ -189,7 +195,7 @@ public final class AdventurerMapScreen extends Screen {
         if (retryPending && ++retryTicks >= 200) receiveRetryResult("no_response");
         if (viewportRefreshTicks > 0) viewportRefreshTicks--;
         if (!loading && ((refreshQueued && viewportRefreshTicks == 0) || ++automaticRefreshTicks >= 100)) {
-            refresh();
+            refresh(!refreshQueued);
         }
     }
 
@@ -327,7 +333,7 @@ public final class AdventurerMapScreen extends Screen {
                     "gui.geomantia.adventurer_map.scanning", String.format(Locale.ROOT, "%.1f", snapshot.wProgressPercent()));
             else message = mapText("preparing");
             graphics.drawWordWrap(font, message, left + 8, top + 8, Math.max(40, right - left - 16), TEXT_PRIMARY);
-        } else if (loading) {
+        } else if (loading && !backgroundRefresh) {
             graphics.drawString(font, mapText("updating"), left + 8, top + 8, TEXT_MUTED, false);
         }
 

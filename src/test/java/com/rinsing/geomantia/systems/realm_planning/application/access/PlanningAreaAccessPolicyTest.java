@@ -7,6 +7,37 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PlanningAreaAccessPolicyTest {
+    @Test void stableSurveyIsReusedWhilePermissionsStillRevoke() throws Exception {
+        fixture(true,true);
+        var config=new PlanningAreaAccessConfig(true,256,512,Set.of("minecraft:overworld"),256,1024);
+        var first=GeographicAreaAccess.load(root(),config,256);
+        var firstPolicy=policy();
+        assertTrue(firstPolicy.sameAccessAs(policy()));
+        assertFalse(first.readyCities.isEmpty());
+        Files.delete(temp.resolve("geomantia_city_masks/active_planned_structure_registry.json"));
+        var second=GeographicAreaAccess.load(root(),config,256);
+        assertSame(first.geography,second.geography);
+        assertTrue(second.readyCities.isEmpty());
+        assertFalse(firstPolicy.sameAccessAs(policy()));
+        Path grid=run().resolve("world_feature_grid.json");
+        Files.setLastModifiedTime(grid,java.nio.file.attribute.FileTime.fromMillis(
+                Files.getLastModifiedTime(grid).toMillis()+2000));
+        var third=GeographicAreaAccess.load(root(),config,256);
+        assertNotSame(second.geography,third.geography);
+        assertEquals(second.geography.asJson(),third.geography.asJson());
+    }
+    @Test void sourceStampIgnoresArtifactsButTracksFallbackCityReports() throws Exception {
+        fixture(true,true);
+        long before=PlanningAreaAccessPolicy.sourceStamp(root());
+        write(run().resolve("exports/nested/city_blueprint.json"),new JsonObject());
+        assertEquals(before,PlanningAreaAccessPolicy.sourceStamp(root()));
+        Path fallback=run().resolve("city_test_runs/city_0/test_run_manifest.json");
+        write(fallback,JsonParser.parseString("{\"status\":\"running\"}").getAsJsonObject());
+        long changed=PlanningAreaAccessPolicy.sourceStamp(root());
+        assertNotEquals(before,changed);
+        Files.delete(fallback);
+        assertEquals(before,PlanningAreaAccessPolicy.sourceStamp(root()));
+    }
     @Test void preserveOutdoorNeedsStructuresButNotLandUseAndGenerateStillNeedsBoth() throws Exception {
         fixture(true,true);
         Files.delete(temp.resolve("geomantia_city_masks/active_city_land_use_area_plans.json"));

@@ -24,6 +24,60 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityWorldgenBlockObservationRegistryTest {
+    @Test
+    void schedulingDoesNotWaitForSerializationAndDoesNotScheduleDuplicateDrains() throws Exception {
+        var entered=new java.util.concurrent.CountDownLatch(1);
+        var release=new java.util.concurrent.CountDownLatch(1);
+        var armed=new java.util.concurrent.atomic.AtomicBoolean();
+        var writerThread=new java.util.concurrent.atomic.AtomicReference<String>();
+        var expected=new java.util.AbstractMap<BlockPos,CityWorldgenBlockObservationRegistry.ExpectedWrite>() {
+            @Override public java.util.Set<Entry<BlockPos,CityWorldgenBlockObservationRegistry.ExpectedWrite>> entrySet() {
+                if(armed.get()) {
+                    writerThread.set(Thread.currentThread().getName());
+                    entered.countDown();
+                    try { release.await(5,java.util.concurrent.TimeUnit.SECONDS); }
+                    catch(InterruptedException ex) { Thread.currentThread().interrupt(); throw new RuntimeException(ex); }
+                }
+                return java.util.Set.of();
+            }
+        };
+        var captured=CityWorldgenBlockObservationRegistry.captureObservationFromStates(
+                snapshot(expected,0),"chunk_save","test",pos -> { throw new AssertionError(); });
+        armed.set(true);
+        CityWorldgenBlockObservationRegistry.queueObservation(captured);
+        try {
+            CityWorldgenBlockObservationRegistry.schedulePersistence();
+            assertTrue(entered.await(5,java.util.concurrent.TimeUnit.SECONDS));
+            assertEquals("geomantia-observation-writer",writerThread.get());
+            CityWorldgenBlockObservationRegistry.schedulePersistence();
+        } finally {
+            release.countDown();
+            CityWorldgenBlockObservationRegistry.awaitPersistence();
+        }
+        assertEquals(1,Files.readAllLines(CityWorldgenBlockObservationRegistry.observationPath(
+                tempDirectory,"minecraft:overworld",new ChunkPos(0,0))).size());
+    }
+    @Test
+    void asyncWriterRetainsFailedEvidenceAndRetriesWithoutDuplicates() throws Exception {
+        var captured=CityWorldgenBlockObservationRegistry.captureObservationFromStates(
+                snapshot(Map.of(),0),"chunk_save","test",pos -> { throw new AssertionError("No world reads on writer"); });
+        Path obstacle=tempDirectory.resolve("geomantia_city_masks");
+        Files.writeString(obstacle,"blocks directory creation");
+        CityWorldgenBlockObservationRegistry.queueObservation(captured);
+        CityWorldgenBlockObservationRegistry.schedulePersistence();
+        CityWorldgenBlockObservationRegistry.awaitPersistence();
+        var pending=CityWorldgenBlockObservationRegistry.query(tempDirectory,"minecraft:overworld",0,0,"",10,true);
+        assertEquals(1,pending.getAsJsonArray("observations").size());
+        Files.delete(obstacle);
+        CityWorldgenBlockObservationRegistry.schedulePersistence();
+        CityWorldgenBlockObservationRegistry.awaitPersistence();
+        CityWorldgenBlockObservationRegistry.schedulePersistence();
+        CityWorldgenBlockObservationRegistry.awaitPersistence();
+        var saved=CityWorldgenBlockObservationRegistry.query(tempDirectory,"minecraft:overworld",0,0,"",10,true);
+        assertEquals(1,saved.getAsJsonArray("observations").size());
+        assertEquals(1,Files.readAllLines(CityWorldgenBlockObservationRegistry.observationPath(
+                tempDirectory,"minecraft:overworld",new ChunkPos(0,0))).size());
+    }
     @TempDir
     Path tempDirectory;
 

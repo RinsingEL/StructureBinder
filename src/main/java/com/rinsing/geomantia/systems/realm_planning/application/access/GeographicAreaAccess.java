@@ -7,6 +7,11 @@ import java.util.*;
 
 /** Immutable regional release snapshot; no chunk IO and no mutation of the save. */
 final class GeographicAreaAccess {
+    private record FileVersion(Path path, long size, java.nio.file.attribute.FileTime modified) {}
+    private record SurveyCache(FileVersion version, int nearSea, int oceanSpan, String configHash, GeographicRegions geography) {}
+    private record ActivationCache(Path run, String dimension, List<FileVersion> versions, Set<String> cities) {}
+    private static SurveyCache surveyCache;
+    private static ActivationCache activationCache;
     private static final Set<String> READY = Set.of("waiting_for_generation", "waiting_for_worldgen", "completed", "completed_with_errors",
             "queued", "running", "post_d4_running", "blocked_by_program");
     final String runId, dimension;
@@ -15,6 +20,12 @@ final class GeographicAreaAccess {
     final Set<String> openRegions, readyCities, blockedCities;
     final List<CityPlanningReservation> protectedCities;
     final int safety;
+    boolean sameAccess(GeographicAreaAccess other) {
+        return other!=null && runId.equals(other.runId) && dimension.equals(other.dimension)
+                && geography==other.geography && safety==other.safety && initial.sameArea(other.initial)
+                && openRegions.equals(other.openRegions) && readyCities.equals(other.readyCities)
+                && blockedCities.equals(other.blockedCities) && protectedCities.equals(other.protectedCities);
+    }
     private GeographicAreaAccess(String runId, String dimension, GeographicRegions geography, Set<String> open,
                                  Set<String> ready, Set<String> blocked, List<CityPlanningReservation> reservations, int safety, InitialExplorationArea initialArea) {
         this.runId=runId; this.dimension=dimension; this.geography=geography; this.openRegions=Set.copyOf(open);
@@ -30,11 +41,11 @@ final class GeographicAreaAccess {
         }
         if (run==null) return null;
         if(!Files.isRegularFile(run.resolve("world_feature_grid.json"))) return null;
-        JsonObject grid=read(run.resolve("world_feature_grid.json"));
-        GeographicRegions geo=GeographicRegions.build(grid,config.nearSeaDistanceBlocks(),config.oceanRegionSpanBlocks());
+        SurveyCache survey=survey(run.resolve("world_feature_grid.json"),config);
+        GeographicRegions geo=survey.geography();
         JsonObject manifest=read(run.resolve("world_survey_manifest.json"));
         if (!"sealed".equals(str(manifest,"status",""))) throw new IOException("GEOGRAPHIC_SURVEY_NOT_SEALED");
-        if (!str(manifest,"configHash","").equals(str(grid,"configHash",""))) throw new IOException("GEOGRAPHIC_SURVEY_GRID_STALE");
+        if (!str(manifest,"configHash","").equals(survey.configHash())) throw new IOException("GEOGRAPHIC_SURVEY_GRID_STALE");
         String dimension=str(obj(manifest,"config"),"dimensionId","minecraft:overworld");
         JsonObject registry=read(run.resolve("city_seed_registry.json"));
         JsonObject territory=read(run.resolve("realm_territory_map.json"));
@@ -167,7 +178,47 @@ final class GeographicAreaAccess {
         return openRegions.contains(geography.at(bounds.minX(),bounds.minZ()))
                 && openRegions.contains(geography.at(bounds.maxX(),bounds.maxZ()));
     }
-    private static Set<String> activatedCities(Path worldRoot, String runId, String dimension) throws IOException {
+    private static FileVersion version(Path path) throws IOException {
+        path=path.toAbsolutePath().normalize();
+        if(!Files.exists(path)) return new FileVersion(path,-1,null);
+        var attrs=Files.readAttributes(path,java.nio.file.attribute.BasicFileAttributes.class);
+        return new FileVersion(path,attrs.size(),attrs.lastModifiedTime());
+    }
+    private static synchronized SurveyCache survey(Path path, PlanningAreaAccessConfig config) throws IOException {
+        FileVersion version=version(path);
+        if(surveyCache!=null && surveyCache.version().equals(version)
+                && surveyCache.nearSea()==config.nearSeaDistanceBlocks()
+                && surveyCache.oceanSpan()==config.oceanRegionSpanBlocks()) return surveyCache;
+        JsonObject grid=read(path);
+        var geography=GeographicRegions.build(grid,config.nearSeaDistanceBlocks(),config.oceanRegionSpanBlocks());
+        SurveyCache result=new SurveyCache(version,config.nearSeaDistanceBlocks(),config.oceanRegionSpanBlocks(),
+                str(grid,"configHash",""),geography);
+        if(version.equals(version(path))) surveyCache=result;
+        else throw new IOException("GEOGRAPHIC_SURVEY_CHANGED_DURING_READ");
+        return result;
+    }
+    private static synchronized Set<String> activatedCities(Path worldRoot, String runId, String dimension) throws IOException {
+        Path run=worldRoot.resolve("realm_debug").resolve(runId).toAbsolutePath().normalize();
+        List<FileVersion> versions=activationVersions(worldRoot,run);
+        if(activationCache!=null && activationCache.run().equals(run) && activationCache.dimension().equals(dimension)
+                && activationCache.versions().equals(versions)) return activationCache.cities();
+        Set<String> cities=Set.copyOf(readActivatedCities(worldRoot,runId,dimension));
+        if(!versions.equals(activationVersions(worldRoot,run))) throw new IOException("CITY_ACTIVATION_CHANGED_DURING_READ");
+        activationCache=new ActivationCache(run,dimension,List.copyOf(versions),cities);
+        return cities;
+    }
+    private static List<FileVersion> activationVersions(Path worldRoot,Path run) throws IOException {
+        List<FileVersion> versions=new ArrayList<>();
+        Path masks=worldRoot.resolve("geomantia_city_masks");
+        versions.add(version(masks.resolve("active_planned_structure_registry.json")));
+        versions.add(version(masks.resolve("active_city_land_use_area_plans.json")));
+        Path cities=run.resolve("city_test_runs");
+        if(Files.isDirectory(cities)) try(var paths=Files.list(cities)) {
+            for(Path city:paths.sorted().toList()) versions.add(version(city.resolve("steps/blueprint/city_blueprint.json")));
+        }
+        return versions;
+    }
+    private static Set<String> readActivatedCities(Path worldRoot, String runId, String dimension) throws IOException {
         Path masks=worldRoot.resolve("geomantia_city_masks");
         Set<String> structures=new HashSet<>(), ready=new HashSet<>();
         for(JsonElement e:arr(read(masks.resolve("active_planned_structure_registry.json")),"registries")) {

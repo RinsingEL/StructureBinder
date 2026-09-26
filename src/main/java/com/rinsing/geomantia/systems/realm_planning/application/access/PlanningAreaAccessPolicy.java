@@ -73,30 +73,50 @@ public final class PlanningAreaAccessPolicy {
     private static long chunkKey(int x,int z) { return (x & 0xffffffffL) | ((long)z << 32); }
     public Set<String> connectedCityIds() { return regional==null?Set.of():regional.readyCities; }
     public Set<String> disconnectedCityIds() { return regional==null?Set.of():regional.blockedCities; }
+    /** Compare only immutable authority; do not touch the server-owned ticket caches on a reader thread. */
+    public boolean sameAccessAs(PlanningAreaAccessPolicy other) {
+        return other!=null && config.equals(other.config) && initial.sameArea(other.initial)
+                && (regional==null ? other.regional==null : regional.sameAccess(other.regional));
+    }
     public static long sourceStamp(Path root) {
         // Hash relevant file identities as well as mtimes: replacing/deleting a session must revoke access.
         long stamp=1;
         try {
             Path starter=root.toAbsolutePath().normalize().getParent().resolve("geomantia_starter_realm.json");
-            if(Files.isRegularFile(starter)) stamp=31*stamp+Files.size(starter)+Files.getLastModifiedTime(starter).toMillis();
-            if(Files.isDirectory(root)) try(var paths=Files.walk(root)) {
-                for(Path p:paths.filter(Files::isRegularFile).filter(PlanningAreaAccessPolicy::relevant).sorted().toList())
-                    stamp=31*stamp+p.toString().hashCode()+Files.size(p)+Files.getLastModifiedTime(p).toMillis();
-            }
+            if(Files.isRegularFile(starter)) stamp=31*stamp+Files.size(starter)+Files.getLastModifiedTime(starter).hashCode();
+            // Only visit the directories consumed by GeographicAreaAccess. Structure artifacts,
+            // exports and block observations can contain thousands of unrelated files.
+            for(Path p:sourceFiles(root))
+                if(Files.isRegularFile(p))
+                    stamp=31*stamp+p.toString().hashCode()+Files.size(p)+Files.getLastModifiedTime(p).hashCode();
             Path masks=root.toAbsolutePath().normalize().getParent().resolve("geomantia_city_masks");
             for(String name:List.of("active_planned_structure_registry.json","active_city_land_use_area_plans.json")) {
                 Path p=masks.resolve(name);
-                stamp=31*stamp+(Files.isRegularFile(p)?Files.size(p)+Files.getLastModifiedTime(p).toMillis():0);
+                stamp=31*stamp+(Files.isRegularFile(p)?Files.size(p)+Files.getLastModifiedTime(p).hashCode():0);
             }
             return stamp;
         } catch(IOException exception) { return Long.MIN_VALUE; }
     }
-    private static boolean relevant(Path p) {
-        String name=p.getFileName().toString();
-        return Set.of("world_feature_grid.json","world_survey_manifest.json","realm_territory_map.json",
-                "city_seed_registry.json","city_design_queue.json","planning_session.json","test_run_manifest.json",
-                "addon_region_reservations.json","addon_region_generation_ready.json","city_blueprint.json").contains(name)
-                || p.getParent().getFileName().toString().equals("post_d4");
+    private static Set<Path> sourceFiles(Path root) throws IOException {
+        Set<Path> files=new TreeSet<>();
+        for(Path run:children(root)) {
+            for(String name:List.of("world_feature_grid.json","world_survey_manifest.json","realm_territory_map.json",
+                    "city_seed_registry.json","addon_region_reservations.json","addon_region_generation_ready.json",
+                    "automation/city_design_queue.json")) files.add(run.resolve(name));
+            for(Path session:children(run))
+                if(session.getFileName().toString().startsWith("realm_t4_patch_planning_"))
+                    files.add(session.resolve("planning_session.json"));
+            files.addAll(children(run.resolve("automation/post_d4")));
+            for(Path city:children(run.resolve("city_test_runs"))) {
+                files.add(city.resolve("test_run_manifest.json"));
+                files.add(city.resolve("steps/blueprint/city_blueprint.json"));
+            }
+        }
+        return files;
+    }
+    private static List<Path> children(Path directory) throws IOException {
+        if(!Files.isDirectory(directory)) return List.of();
+        try(var paths=Files.list(directory)) { return paths.toList(); }
     }
     public record Decision(boolean allowed,String reasonCode,String runId,String citySeedId,double clearanceBlocks) {
         static Decision allowed(String reason,String run,String city,double clearance) { return new Decision(true,reason,run,city,clearance); }

@@ -51,6 +51,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 
 /** Records actual block states at Minecraft lifecycle boundaries after City worldgen writes. */
@@ -60,7 +63,6 @@ public final class CityWorldgenBlockObservationRegistry {
     public static final String POST_FEATURES = "post_features";
     public static final String CHUNK_SAVE = "chunk_save";
     private static final String ROOT_DIRECTORY = "geomantia_city_masks/worldgen_block_observations";
-    private static final int MAX_FLUSH_PER_TICK = 2;
     private static final Set<String> QUERYABLE_PHASES = Set.of(POST_FEATURES, "post_retry_tick", CHUNK_SAVE);
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final Object FILE_LOCK = new Object();
@@ -69,6 +71,13 @@ public final class CityWorldgenBlockObservationRegistry {
     private static final ConcurrentLinkedQueue<CapturedObservation> PENDING_PERSISTENCE =
             new ConcurrentLinkedQueue<>();
     private static final Map<String, List<LocalExpectedBlock>> TEMPLATE_BLOCK_CACHE = new ConcurrentHashMap<>();
+    private static final ExecutorService WRITER = Executors.newSingleThreadExecutor(task -> {
+        Thread thread = new Thread(task, "geomantia-observation-writer");
+        thread.setDaemon(true);
+        return thread;
+    });
+    // At most one drain is scheduled. Queue entries remain queryable until successfully written.
+    private static CompletableFuture<Void> pendingWrite;
 
     private CityWorldgenBlockObservationRegistry() {
     }
@@ -276,7 +285,7 @@ public final class CityWorldgenBlockObservationRegistry {
         if (snapshot == null) {
             return;
         }
-        PENDING_PERSISTENCE.add(captureObservation(snapshot, CHUNK_SAVE,
+        queueObservation(captureObservation(snapshot, CHUNK_SAVE,
                 "Forge.ChunkDataEvent.Save", chunk::getBlockState));
         PENDING_SAVE.remove(key, snapshot);
     }
@@ -284,16 +293,21 @@ public final class CityWorldgenBlockObservationRegistry {
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase == TickEvent.Phase.END) {
-            flushPending(MAX_FLUSH_PER_TICK);
+            schedulePersistence();
         }
     }
 
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
-        flushPending(Integer.MAX_VALUE);
+        // Shutdown is the only place that waits for disk IO; tick callbacks never join a writer.
+        awaitPersistence();
+        schedulePersistence();
+        awaitPersistence();
         CURRENT.remove();
         PENDING_SAVE.clear();
-        PENDING_PERSISTENCE.clear();
+        if (!PENDING_PERSISTENCE.isEmpty())
+            LOGGER.error("City observation persistence failed on shutdown; retaining {} pending observations for retry",
+                    PENDING_PERSISTENCE.size());
         TEMPLATE_BLOCK_CACHE.clear();
     }
 
@@ -395,7 +409,7 @@ public final class CityWorldgenBlockObservationRegistry {
                 pos -> observedState(stateReader.apply(pos)));
     }
 
-    private static CapturedObservation captureObservationFromStates(ObservationSnapshot snapshot,
+    static CapturedObservation captureObservationFromStates(ObservationSnapshot snapshot,
                                                                      String phase,
                                                                      String callback,
                                                                      Function<BlockPos, ObservedState> stateReader) {
@@ -566,6 +580,26 @@ public final class CityWorldgenBlockObservationRegistry {
         }
     }
 
+    static synchronized void schedulePersistence() {
+        if (pendingWrite != null && !pendingWrite.isDone()) return;
+        if (PENDING_PERSISTENCE.isEmpty()) return;
+        pendingWrite = CompletableFuture.runAsync(() -> flushPending(Integer.MAX_VALUE), WRITER)
+                .exceptionally(error -> {
+                    LOGGER.error("City observation writer failed; pending evidence retained for retry", error);
+                    return null;
+                });
+    }
+
+    static void queueObservation(CapturedObservation observation) {
+        PENDING_PERSISTENCE.add(observation);
+    }
+
+    static void awaitPersistence() {
+        CompletableFuture<Void> write;
+        synchronized (CityWorldgenBlockObservationRegistry.class) { write = pendingWrite; }
+        if (write != null) write.join();
+    }
+
     static Path observationPath(Path serverRoot, String dimensionId, ChunkPos chunkPos) {
         ResourceLocation dimension = ResourceLocation.tryParse(dimensionId);
         if (dimension == null) {
@@ -618,7 +652,7 @@ public final class CityWorldgenBlockObservationRegistry {
         }
     }
 
-    private record CapturedObservation(ObservationSnapshot snapshot,
+    record CapturedObservation(ObservationSnapshot snapshot,
                                        String observationId,
                                        String observedAt,
                                        String phase,

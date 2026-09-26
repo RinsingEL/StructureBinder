@@ -6,6 +6,14 @@ import java.util.*;
 /** Deterministic geographic partition of W cells, independent of political ownership. */
 public final class GeographicRegions {
     public record Cell(int x, int z) implements Comparable<Cell> {
+        // Record's default 31*x+z clusters an entire rectangular survey into a few
+        // thousand buckets, making immutable set/map construction nearly quadratic.
+        @Override public int hashCode() {
+            long value = ((long)x << 32) ^ (z & 0xffffffffL);
+            value = (value ^ (value >>> 33)) * 0xff51afd7ed558ccdL;
+            value = (value ^ (value >>> 33)) * 0xc4ceb9fe1a85ec53L;
+            return (int)(value ^ (value >>> 33));
+        }
         public int compareTo(Cell other) { int c = Integer.compare(z, other.z); return c != 0 ? c : Integer.compare(x, other.x); }
         List<Cell> neighbors() { return List.of(new Cell(x-1,z), new Cell(x+1,z), new Cell(x,z-1), new Cell(x,z+1)); }
     }

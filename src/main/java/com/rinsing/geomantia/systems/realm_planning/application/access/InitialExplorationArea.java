@@ -21,6 +21,10 @@ public final class InitialExplorationArea {
     public int centerX() { return centerX; }
     public int centerZ() { return centerZ; }
     public int radius() { return radius; }
+    boolean sameArea(InitialExplorationArea other) {
+        return other!=null && radius==other.radius && centerX==other.centerX && centerZ==other.centerZ
+                && step==other.step && geographicRegionId.equals(other.geographicRegionId) && cells.equals(other.cells);
+    }
     public double distance(double x,double z) { return Math.hypot(x-centerX,z-centerZ); }
     public InitialExplorationArea(int x,int z,int radius) {
         this(x,z,radius,0,Set.of(),"");

@@ -25,6 +25,9 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /** Server-scoped cache and last-safe-position state for planning-area access. */
 public final class PlanningAreaAccessRuntime {
@@ -33,6 +36,11 @@ public final class PlanningAreaAccessRuntime {
     private static final long MESSAGE_COOLDOWN_TICKS = 60L;
     private static final double SAFE_POSITION_MARGIN_BLOCKS = 32.0D;
     private static final Map<MinecraftServer, ServerState> STATES = new IdentityHashMap<>();
+    private static final ExecutorService POLICY_READER = Executors.newSingleThreadExecutor(task -> {
+        Thread thread = new Thread(task, "geomantia-access-reader");
+        thread.setDaemon(true);
+        return thread;
+    });
 
     private PlanningAreaAccessRuntime() {
     }
@@ -73,7 +81,11 @@ public final class PlanningAreaAccessRuntime {
     public static void invalidate(MinecraftServer server) {
         synchronized (STATES) {
             ServerState state = STATES.get(server);
-            if (state != null) state.policy = null;
+            if (state != null) {
+                state.policy = null;
+                // A queued snapshot from before explicit invalidation must never replace its successor.
+                state.pendingRefresh = null;
+            }
         }
     }
 
@@ -102,6 +114,9 @@ public final class PlanningAreaAccessRuntime {
         private long lastPolicyCheckTick = Long.MIN_VALUE;
         private long loadedConfigStamp = Long.MIN_VALUE;
         private long loadedSourceStamp = Long.MIN_VALUE;
+        private CompletableFuture<PolicyRefresh> pendingRefresh;
+        private record PolicyRefresh(PlanningAreaAccessConfig config, PlanningAreaAccessPolicy policy,
+                                     long configStamp, long sourceStamp) {}
 
         private ServerState(MinecraftServer server) {
             this.server = server;
@@ -149,21 +164,55 @@ public final class PlanningAreaAccessRuntime {
         }
 
         private void refreshIfNeeded(long gameTime) {
+            if (pendingRefresh != null && pendingRefresh.isDone()) {
+                PolicyRefresh refreshed = pendingRefresh.join();
+                pendingRefresh = null;
+                if (refreshed != null) {
+                    config = refreshed.config();
+                    policy = refreshed.policy();
+                    loadedConfigStamp = refreshed.configStamp();
+                    loadedSourceStamp = refreshed.sourceStamp();
+                }
+            }
+            if (pendingRefresh != null) return;
             if (policy != null && gameTime - lastPolicyCheckTick < POLICY_CHECK_INTERVAL_TICKS) return;
             lastPolicyCheckTick = gameTime;
-            long configStamp = lastModified(configPath);
-            long sourceStamp = PlanningAreaAccessPolicy.sourceStamp(debugRoot);
-            int safetyBlocks = PlanningAreaAccessPolicy.MOVEMENT_SAFETY_BLOCKS;
-            if (policy != null && configStamp == loadedConfigStamp && sourceStamp == loadedSourceStamp) return;
+            if (policy != null) {
+                long previousConfigStamp = loadedConfigStamp, previousSourceStamp = loadedSourceStamp;
+                PlanningAreaAccessPolicy previousPolicy = policy;
+                pendingRefresh = CompletableFuture.supplyAsync(
+                        () -> {
+                            PolicyRefresh next = readRefresh(previousConfigStamp, previousSourceStamp);
+                            // Status reports may change without changing authority. Keep the existing
+                            // ticket and boundary caches in that case, rather than restarting them on tick.
+                            if (next != null && next.policy().sameAccessAs(previousPolicy))
+                                return new PolicyRefresh(next.config(), previousPolicy, next.configStamp(), next.sourceStamp());
+                            return next;
+                        }, POLICY_READER);
+                return;
+            }
+            // The first snapshot and explicit invalidation remain synchronous: never expose a
+            // permissive temporary policy while the initial authority is still being loaded.
+            PolicyRefresh initial = readRefresh(Long.MIN_VALUE, Long.MIN_VALUE);
+            if (initial != null) {
+                config = initial.config(); policy = initial.policy();
+                loadedConfigStamp = initial.configStamp(); loadedSourceStamp = initial.sourceStamp();
+            } else policy = new PlanningAreaAccessPolicy(debugRoot, config, PlanningAreaAccessPolicy.MOVEMENT_SAFETY_BLOCKS);
+        }
+
+        private PolicyRefresh readRefresh(long previousConfigStamp, long previousSourceStamp) {
             try {
-                config = PlanningAreaAccessConfig.loadOrCreate(configPath);
-                policy = new PlanningAreaAccessPolicy(debugRoot, config, safetyBlocks);
-                loadedConfigStamp = lastModified(configPath);
-                loadedSourceStamp = sourceStamp;
+                long configStamp = lastModified(configPath);
+                long sourceStamp = PlanningAreaAccessPolicy.sourceStamp(debugRoot);
+                int safetyBlocks = PlanningAreaAccessPolicy.MOVEMENT_SAFETY_BLOCKS;
+                if (configStamp == previousConfigStamp && sourceStamp == previousSourceStamp) return null;
+                PlanningAreaAccessConfig nextConfig = PlanningAreaAccessConfig.loadOrCreate(configPath);
+                PlanningAreaAccessPolicy nextPolicy = new PlanningAreaAccessPolicy(debugRoot, nextConfig, safetyBlocks);
+                return new PolicyRefresh(nextConfig, nextPolicy, configStamp, sourceStamp);
             } catch (IOException | RuntimeException exception) {
                 LOGGER.error("Could not refresh planning-area access policy; retaining the last safe policy",
                         exception);
-                if (policy == null) policy = new PlanningAreaAccessPolicy(debugRoot, config, safetyBlocks);
+                return null;
             }
         }
 
