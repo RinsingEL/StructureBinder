@@ -73,6 +73,8 @@ class PlanningBoundaryTest {
                 "fillPools":[{"poolRef":"pool:mill","structureRefs":["author:mill"]}],"landscapeFillProfiles":[{"fillProfileRef":"fill:field"}]}}}
             """).getAsJsonObject();
         JsonArray patches = context.getAsJsonObject("d3ReviewPackage").getAsJsonArray("landformPatches");
+        context.addProperty("environmentStyleGuidance", "结合真实群系选择作者风格");
+        context.add("siteReviewDecision", JsonParser.parseString("{decisionReason:'森林城址接受，调整主体风格'}"));
         for (int i = 0; i < 445; i++) {
             JsonObject patch = new JsonObject();
             patch.addProperty("landformPatchId", "patch_" + i);
@@ -84,6 +86,8 @@ class PlanningBoundaryTest {
         JsonObject view = PlanningToolPresentation.present(context, directory);
         assertEquals(original, context.toString());
         assertEquals("frozen", view.get("contextId").getAsString());
+        assertEquals(context.get("environmentStyleGuidance"), view.get("environmentStyleGuidance"));
+        assertEquals(context.get("siteReviewDecision"), view.get("siteReviewDecision"));
         assertEquals(2, view.getAsJsonObject("d3ReviewPackage").getAsJsonArray("landformPatches").size());
         JsonObject catalog = view.getAsJsonObject("catalogSnapshot");
         assertEquals(context.getAsJsonObject("catalogSnapshot").get("structureCatalog"), catalog.get("structureCatalog"));

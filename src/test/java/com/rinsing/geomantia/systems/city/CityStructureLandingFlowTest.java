@@ -164,6 +164,8 @@ final class CityStructureLandingFlowTest {
     void d4CandidatePlannerPreservesTemplateMaterializationMetadata() throws Exception {
         Fixture fixture = fixture();
         JsonObject plan = designSlotPlan(fixture.review());
+        plan.getAsJsonObject("templateCatalog").getAsJsonArray("templates").get(0)
+                .getAsJsonObject().addProperty("groundPlaneY", 2);
 
         CityStructureAnchorCandidatePlanner planner = new CityStructureAnchorCandidatePlanner();
         CityStructureAnchorCandidatePlanner.Result result = planner.plan(
@@ -176,6 +178,8 @@ final class CityStructureLandingFlowTest {
         assertEquals("fixed_v1", candidate.get("variantId").getAsString());
         assertEquals("structure_template_nbt", candidate.get("materializationSource").getAsString());
         assertEquals(20, candidate.getAsJsonObject("rawSize").get("width").getAsInt());
+        assertEquals(2, candidate.get("groundPlaneY").getAsInt());
+        assertEquals(2, candidate.getAsJsonObject("templatePlacementPlan").get("groundPlaneY").getAsInt());
         assertEquals(1, candidate.getAsJsonObject("templatePlacementPlan")
                 .getAsJsonObject("transformed").getAsJsonArray("roadEntrances").size());
 

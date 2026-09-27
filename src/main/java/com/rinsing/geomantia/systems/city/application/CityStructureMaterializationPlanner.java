@@ -233,6 +233,10 @@ public final class CityStructureMaterializationPlanner {
         if (!task.templateSize().equals(size(objectValue(runtime, "rawSize")))) {
             return "STRUCTURE_TEMPLATE_RAW_SIZE_DRIFT";
         }
+        if (!java.util.Objects.equals(task.groundPlaneY(),
+                CityTemplateGroundPlane.read(runtime, task.templateSize().height()))) {
+            return "STRUCTURE_TEMPLATE_GROUND_PLANE_DRIFT";
+        }
         JsonObject actual = objectValue(runtime, "actualFootprint");
         if (actual == null || !task.footprint().equals(bounds(actual))) {
             return "STRUCTURE_TEMPLATE_FOOTPRINT_DRIFT";
@@ -347,6 +351,7 @@ public final class CityStructureMaterializationPlanner {
         template.addProperty("mirror", task.mirror());
         template.add("rawSize", sizeJson(task.templateSize()));
         template.addProperty("terrainPosePolicy", task.terrainPosePolicy());
+        CityTemplateGroundPlane.write(template, task.groundPlaneY());
         template.addProperty("templateDatumPolicy", task.templateDatumPolicy());
         template.addProperty("materializationSource", TEMPLATE_MATERIALIZATION_SOURCE);
         return template;
@@ -486,7 +491,7 @@ public final class CityStructureMaterializationPlanner {
                                 CityTemplatePlacementGeometry.Size templateSize, BlockPoint anchorBlock,
                                 BlockBounds footprint, BlockBounds collisionEnvelope, BlockBounds maskEnvelope,
                                 String terrainPosePolicy, String templateDatumPolicy, int maskMarginBlocks,
-                                boolean locked, JsonObject source) {
+                                boolean locked, Integer groundPlaneY, JsonObject source) {
         static TemplateTask from(JsonElement element) {
             if (element == null || !element.isJsonObject()) throw removed();
             JsonObject source = element.getAsJsonObject();
@@ -532,7 +537,8 @@ public final class CityStructureMaterializationPlanner {
             return new TemplateTask(requiredString(source, "anchorId"), templateId, templateRef, templateHash,
                     variantId, rotation, mirror, templateSize, anchorBlock, footprint, collisionEnvelope,
                     maskEnvelope, terrain, CityTemplateTerrainPosePolicy.templateDatumPolicy(terrain), maskMargin,
-                    source.has("locked") && source.get("locked").getAsBoolean(), source.deepCopy());
+                    source.has("locked") && source.get("locked").getAsBoolean(),
+                    CityTemplateGroundPlane.read(source, templateSize.height()), source.deepCopy());
         }
 
         String validationFailure() {
@@ -573,6 +579,7 @@ public final class CityStructureMaterializationPlanner {
             result.addProperty("locked", true);
             result.addProperty("materializationSource", TEMPLATE_MATERIALIZATION_SOURCE);
             result.addProperty("terrainPosePolicy", terrainPosePolicy);
+            CityTemplateGroundPlane.write(result, groundPlaneY);
             result.addProperty("templateDatumPolicy", templateDatumPolicy);
             result.addProperty("status", status.status());
             result.addProperty("reasonCode", status.reasonCode());

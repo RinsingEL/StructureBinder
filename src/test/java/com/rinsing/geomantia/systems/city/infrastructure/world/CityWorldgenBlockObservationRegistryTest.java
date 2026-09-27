@@ -25,6 +25,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityWorldgenBlockObservationRegistryTest {
     @Test
+    void productionDebugCaptureIsDisabledBeforeTouchingWorldOrSchedulingWrites() {
+        assertFalse(CityWorldgenBlockObservationRegistry.isEnabled());
+        org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> {
+            CityWorldgenBlockObservationRegistry.begin(null, null);
+            CityWorldgenBlockObservationRegistry.finishAfterFeatures(null, null);
+            CityWorldgenBlockObservationRegistry.finishAfterRetry(null, null);
+            CityWorldgenBlockObservationRegistry.onChunkSave(null);
+            CityWorldgenBlockObservationRegistry.onServerTick(null);
+            CityWorldgenBlockObservationRegistry.onServerStopped(null);
+        });
+        org.junit.jupiter.api.Assertions.assertNull(CityWorldgenBlockObservationRegistry.newRollbackToken());
+    }
+    @Test
     void schedulingDoesNotWaitForSerializationAndDoesNotScheduleDuplicateDrains() throws Exception {
         var entered=new java.util.concurrent.CountDownLatch(1);
         var release=new java.util.concurrent.CountDownLatch(1);

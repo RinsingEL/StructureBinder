@@ -91,8 +91,10 @@ public final class ProviderPlanningToolCatalog {
                     object(properties("page", integer(), "pageSize", integer(),
                             "landformType", string(), "landformPatchId", string())));
             case "city_review_d3_site" -> function(name,
-                    "Review the current capital site from returned D3 evidence and preview. Accept only if the "
-                            + "terrain supports the intended capital; otherwise request reselection.",
+                    "Review the current capital site using actual terrain/biome evidence, author requirements and available styles. "
+                            + "In decisionReason explain environmental fit and any locally suitable authored style to carry into D4. "
+                            + "Accept a usable site with an explicit compatible style adjustment; request reselection when fixed author requirements cannot fit. "
+                            + "A migration/trade story alone does not resolve an acknowledged environmental mismatch.",
                     object(properties(
                             "runId", string(), "citySeedId", string(),
                             "decision", enumeration("accept_selected_site", "reselect_required"),

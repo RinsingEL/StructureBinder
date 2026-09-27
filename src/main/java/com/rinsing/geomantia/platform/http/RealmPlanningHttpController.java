@@ -60,6 +60,7 @@ final class RealmPlanningHttpController implements AutoCloseable {
     private final RealmPlanningService realmPlanningService;
     private final CityDesignQueue cityDesignQueue;
     private final CityPostD4AutoCompileQueue postD4AutoCompileQueue;
+    private final CityGenerationPollCache generationPollCache = new CityGenerationPollCache();
 
     RealmPlanningHttpController(MinecraftServer server) {
         this.server = server;
@@ -610,6 +611,16 @@ final class RealmPlanningHttpController implements AutoCloseable {
     private JsonObject runPostD4AutoCompile(String runId, String citySeedId) throws Exception {
         String dimensionId = restoredRunDimensionId(runId);
         ServerLevel level = callOnServerThread(() -> resolveLevel(dimensionId, null));
+        var runtimeVersion = callOnServerThread(() -> java.util.List.of(
+                level.getChunkSource().getLoadedChunksCount(),
+                com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseWorldgenRegistry
+                        .d7ProgressVersion(citySeedId)));
+        return generationPollCache.poll(debugRoot().resolve(runId), citySeedId,
+                server.getWorldPath(LevelResource.ROOT), runtimeVersion,
+                () -> executePostD4AutoCompile(runId, citySeedId, level));
+    }
+
+    private JsonObject executePostD4AutoCompile(String runId, String citySeedId, ServerLevel level) throws Exception {
         JsonObject request = postD4AutoCompileWorkflowRequest(runId, citySeedId);
         JsonObject response = CityPlanningEndpointHandler.handleRunWorkflow(debugRoot(),
                 server.getWorldPath(LevelResource.ROOT), runId, citySeedId, request,

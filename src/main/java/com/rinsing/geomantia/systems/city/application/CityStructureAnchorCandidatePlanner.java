@@ -1001,6 +1001,7 @@ public final class CityStructureAnchorCandidatePlanner {
         metadata.addProperty("rotation", rotation.name());
         metadata.addProperty("mirror", mirror.name());
         metadata.addProperty("terrainPosePolicy", template.terrainPosePolicy());
+        CityTemplateGroundPlane.write(metadata, template.groundPlaneY());
         metadata.addProperty("materializationSource",
                 CityStructureMaterializationPlanner.TEMPLATE_MATERIALIZATION_SOURCE);
         metadata.add("rawSize", sizeJson(template.rawSize()));
@@ -1048,7 +1049,7 @@ public final class CityStructureAnchorCandidatePlanner {
         }
         JsonObject placement = new JsonObject();
         for (String key : List.of("templateId", "templateRef", "templateHash", "variantId",
-                "rotation", "mirror", "terrainPosePolicy")) {
+                "rotation", "mirror", "terrainPosePolicy", "groundPlaneY")) {
             if (source.has(key)) {
                 placement.add(key, source.get(key).deepCopy());
             }
@@ -1104,7 +1105,7 @@ public final class CityStructureAnchorCandidatePlanner {
             return;
         }
         for (String key : List.of("templateId", "templateRef", "templateHash", "variantId",
-                "rotation", "mirror", "terrainPosePolicy", "rawSize",
+                "rotation", "mirror", "terrainPosePolicy", "groundPlaneY", "rawSize",
                 "materializationSource", "roadEntrances", "allowedRotations", "allowedMirrors",
                 "supportPolicy", "clearanceBlocks", "templatePlacementPlan", "structureTemplate")) {
             if (source.has(key)) {

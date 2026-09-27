@@ -6,6 +6,7 @@ import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import com.rinsing.geomantia.systems.city.application.CityStructureMaterializationPlanner;
 import com.rinsing.geomantia.systems.city.application.CityTemplatePlacementGeometry;
+import com.rinsing.geomantia.systems.city.application.CityTemplateGroundPlane;
 import com.rinsing.geomantia.systems.city.application.CityTemplateTerrainPosePolicy;
 import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseChunkExecutor;
 import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseWorldgenRegistry;
@@ -185,8 +186,10 @@ public final class MinecraftCityWorldgenStructurePlacer {
                                     heightAccessor, randomState)));
             // A persisted datum belongs to an existing StructureStart: never move its remaining pieces.
             var persistedDatum = CityReservationMaskRegistry.resolvedTemplateDatum(item);
-            datumY = persistedDatum.isPresent() ? persistedDatum.getAsInt()
-                    : datumY - read.template().map(CityTemplateGroundLevel::offset).orElse(0);
+            Integer groundPlaneY = CityTemplateGroundPlane.read(plan.has("groundPlaneY") ? plan
+                    : plan.getAsJsonObject("structureTemplate"), size.height());
+            datumY = CityTemplateGroundPlane.originY(datumY, groundPlaneY,
+                    () -> read.template().map(CityTemplateGroundLevel::offset).orElse(0), persistedDatum);
             if (datumY <= chunk.getMinBuildHeight()) {
                 CityReservationMaskRegistry.recordWorldgenFailure(item, chunkPos,
                         "TEMPLATE_DATUM_SURFACE_UNAVAILABLE",

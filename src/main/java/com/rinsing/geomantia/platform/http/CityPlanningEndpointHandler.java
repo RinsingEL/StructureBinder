@@ -1944,7 +1944,7 @@ final class CityPlanningEndpointHandler {
 
     static JsonObject handleExecuteD7(Path debugRoot, String runId, String citySeedId, long worldSeed,
                                       boolean executeStructurePlacement,
-                                      MinecraftServerHolder serverHolder, ServerLevel level) throws IOException {
+                                      MinecraftServerHolder serverHolder, ServerLevel level) throws Exception {
         Path runDir = debugRoot.resolve(runId);
         requireMatchingRunWorldIdentity(runDir, level);
         loadCitySeed(runDir, runId, citySeedId);
@@ -1969,17 +1969,18 @@ final class CityPlanningEndpointHandler {
         }
         Path outputDirectory = cityStageDir(runDir, citySeedId, CityTestRunLayout.D7);
         Path ledgerPath = outputDirectory.resolve("placed_structure_ledger.json");
-        JsonObject runtimeLedger = CityReservationMaskRegistry.ledgerForCity(
+        JsonObject runtimeLedger = serverHolder.callOnServerThread(() -> CityReservationMaskRegistry.ledgerForCity(
                 runId,
                 citySeedId,
-                stringValue(materializationPlan, "cityId"));
+                stringValue(materializationPlan, "cityId")));
         CityStructureMaterializationPlanner.ChunkStatusInspector inspector = CityReservationMaskRegistry
                 .hasActivePlannedStructuresFor(runId, citySeedId, stringValue(materializationPlan, "cityId"))
                 ? new MinecraftCityWorldgenStatusInspector(level)
                 : task -> CityStructureMaterializationPlanner.ChunkStatusResult.registryMissing(
                         "Run city_execute_d5 confirmWorldMutation=true before loading target chunks.");
-        CityStructureMaterializationPlanner.Result result = new CityStructureMaterializationPlanner()
-                .executeWorldgen(materializationPlan, runtimeLedger, inspector, executeStructurePlacement);
+        CityStructureMaterializationPlanner.Result result = serverHolder.callOnServerThread(() ->
+                new CityStructureMaterializationPlanner()
+                        .executeWorldgen(materializationPlan, runtimeLedger, inspector, executeStructurePlacement));
 
         Files.createDirectories(outputDirectory);
         CityLandUseWorldgenRegistry.BackfillSummary landUseBackfill = null;
@@ -1994,8 +1995,9 @@ final class CityPlanningEndpointHandler {
                     JsonParser.parseString(Files.readString(landUseAreaPlanPath)).getAsJsonObject());
             CityLandUseSurfacePrintPlan landUseSurfacePlan = new CityLandUseSurfacePrintPlanCodec().fromJson(
                     JsonParser.parseString(Files.readString(landUseSurfacePlanPath)).getAsJsonObject());
-            landUseBackfill = CityLandUseWorldgenRegistry.enqueueD7Backfill(
-                    level.dimension().location().toString(), landUseAreaPlan, landUseSurfacePlan, level);
+            var prepared = CityLandUseWorldgenRegistry.prepareD7Backfill(landUseAreaPlan, landUseSurfacePlan);
+            landUseBackfill = serverHolder.callOnServerThread(() -> CityLandUseWorldgenRegistry.enqueuePreparedD7Backfill(
+                    level.dimension().location().toString(), prepared, level));
             Files.writeString(landUseBackfillPath, CityJson.GSON.toJson(
                     landUseBackfillJson(landUseBackfill)));
 
@@ -2435,8 +2437,8 @@ final class CityPlanningEndpointHandler {
         }
 
         if (!ctx.workflow().runStep("city_execute_d7", null,
-                () -> serverHolder.callOnServerThread(() -> handleExecuteD7(
-                        debugRoot, runId, citySeedId, level.getSeed(), true, serverHolder, level)))) {
+                () -> handleExecuteD7(
+                        debugRoot, runId, citySeedId, level.getSeed(), true, serverHolder, level))) {
             return ctx.workflow().finish(workflowStarted, "failed");
         }
         JsonObject d7Step = steps.get(steps.size() - 1).getAsJsonObject();

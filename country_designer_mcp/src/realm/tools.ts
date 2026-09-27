@@ -1080,7 +1080,7 @@ const originalRealmTools: ToolDefinition[] = [
   },
   {
     name: "city_review_d3_site",
-    description: "显式审查 T4 AI 选出首都的 D3 局部真实地形。接受当前点位后才可进入 D4；选择 reselect_required 时必须回到 T4 重选，不默认改变城市原型。",
+    description: "结合 D3 真实地形、群系、作者要求和可用风格复核首都。decisionReason 说明环境相容依据；城址可用时可明确调整为目录内协调风格，接受理由会交给 D4。作者固定要求无法满足时用 reselect_required 回到 T4 重选。不能只用移民、贸易等故事解释已知错配。",
     inputSchema: {
       type: "object",
       additionalProperties: false,

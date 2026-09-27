@@ -31,6 +31,26 @@ class CityBlueprintCompilerServiceTest {
     Path temporary;
 
     @Test
+    void catalogGroundPlaneSurvivesBlueprintArrayPlacement() throws Exception {
+        var fixture = acceptedFixture("ground_plane", "city:ground_plane", 18, 18, "MEDIUM",
+                CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid, field -> {}, catalog -> {},
+                templates -> templates.getAsJsonArray("templates").forEach(e ->
+                        e.getAsJsonObject().addProperty("groundPlaneY", 2)), bp -> {
+                    var group = bp.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    group.addProperty("structureCount", 3);
+                });
+        var result = new CityBlueprintCompilerService().compile(temporary, fixture.runId(), fixture.cityId());
+        assertTrue(result.ok(), result.message());
+        var anchors = result.structureAnchorPlan().getAsJsonArray("anchors");
+        assertFalse(anchors.isEmpty());
+        for (var entry : anchors) {
+            var anchor = entry.getAsJsonObject();
+            assertEquals(2, anchor.get("groundPlaneY").getAsInt());
+            assertEquals(2, anchor.getAsJsonObject("templatePlacementPlan").get("groundPlaneY").getAsInt());
+        }
+    }
+
+    @Test
     void denseSymmetricLayersWithAxisStreetKeepEntrancesConnected() throws Exception {
         var fixture = acceptedFixture("symmetric_axis_depth", "city:symmetric_axis_depth", 18, 18, "MEDIUM",
                 CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid, field -> {}, catalog -> {

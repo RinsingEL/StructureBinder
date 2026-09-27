@@ -1247,6 +1247,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         target.addProperty("rotation", selection.rotation().name());
         target.addProperty("mirror", selection.mirror().name());
         target.addProperty("terrainPosePolicy", template.terrainPosePolicy());
+        CityTemplateGroundPlane.write(target, template.groundPlaneY());
         target.addProperty("supportPolicy", template.supportPolicy());
         target.addProperty("clearanceBlocks", template.clearanceBlocks());
         target.addProperty("materializationSource", CityStructureMaterializationPlanner.TEMPLATE_MATERIALIZATION_SOURCE);
@@ -1270,6 +1271,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         plan.addProperty("rotation", selection.rotation().name());
         plan.addProperty("mirror", selection.mirror().name());
         plan.addProperty("terrainPosePolicy", template.terrainPosePolicy());
+        CityTemplateGroundPlane.write(plan, template.groundPlaneY());
         plan.add("anchorBlock", anchor.asJson());
         plan.add("rawSize", sizeJson(geometry.sourceSize()));
         JsonObject transformed = new JsonObject();
@@ -2983,7 +2985,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
             JsonObject normalized = anchor.deepCopy();
             for (String field : List.of("templateHash", "rawSize", "templateSize", "templatePlacementPlan",
                     "actualFootprint", "plannedFootprint", "collisionEnvelope", "reservedEnvelope",
-                    "maskEnvelope", "materializationSource", "terrainPosePolicy", "supportPolicy",
+                    "maskEnvelope", "materializationSource", "terrainPosePolicy", "groundPlaneY", "supportPolicy",
                     "clearanceBlocks", "maskMarginBlocks", "smallClearanceBlocks")) {
                 normalized.remove(field);
             }

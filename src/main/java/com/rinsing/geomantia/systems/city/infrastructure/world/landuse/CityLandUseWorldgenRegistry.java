@@ -414,16 +414,43 @@ public final class CityLandUseWorldgenRegistry {
                                                     LandUseAreaPlan areaPlan,
                                                     CityLandUseSurfacePrintPlan surfacePrintPlan,
                                                     ServerLevel level) {
-        Objects.requireNonNull(level, "level");
+        return enqueuePreparedD7Backfill(dimensionId, prepareD7Backfill(areaPlan, surfacePrintPlan), level);
+    }
+
+    public record PreparedD7Backfill(LandUseAreaPlan areaPlan, CityLandUseSurfacePrintPlan surfacePrintPlan,
+                                    List<CityLandUseChunkStatusPreflight.OwnerChunk> owners) {}
+
+    /** Pure plan validation/compilation. Call from the workflow worker before entering the server thread. */
+    public static PreparedD7Backfill prepareD7Backfill(LandUseAreaPlan areaPlan,
+                                                       CityLandUseSurfacePrintPlan surfacePrintPlan) {
         validatePlanHash(Objects.requireNonNull(areaPlan, "areaPlan"));
         validateSurfacePrintLink(areaPlan, surfacePrintPlan);
+        return new PreparedD7Backfill(areaPlan, surfacePrintPlan,
+                List.copyOf(CityLandUseChunkStatusPreflight.ownerChunks(areaPlan, surfacePrintPlan)));
+    }
+
+    public static synchronized String d7ProgressVersion(String cityId) {
+        StringBuilder result = new StringBuilder().append(ledgerMutationVersion);
+        for (D7BackfillJob job : D7_BACKFILL_JOBS.values()) {
+            if (!job.areaPlan().cityId().equals(cityId)) continue;
+            result.append('|').append(job.key()).append(':').append(job.cursor()).append(':').append(job.terminal())
+                    .append(':').append(job.pendingLoad() != null && job.pendingLoad().isDone());
+        }
+        return result.toString();
+    }
+
+    public static BackfillSummary enqueuePreparedD7Backfill(String dimensionId, PreparedD7Backfill prepared,
+                                                           ServerLevel level) {
+        Objects.requireNonNull(level, "level");
+        LandUseAreaPlan areaPlan = prepared.areaPlan();
+        CityLandUseSurfacePrintPlan surfacePrintPlan = prepared.surfacePrintPlan();
         if (!level.getServer().isSameThread()) {
             throw new IllegalStateException("CITY_LAND_USE_D7_QUEUE_REQUIRES_SERVER_THREAD");
         }
         String dimension = dimensionId(dimensionId);
         ActivePlan active;
         List<CityLandUseChunkStatusPreflight.OwnerChunk> owners =
-                CityLandUseChunkStatusPreflight.ownerChunks(areaPlan, surfacePrintPlan);
+                prepared.owners();
         D7BackfillJob job;
         synchronized (CityLandUseWorldgenRegistry.class) {
             ActiveKey activeKey = new ActiveKey(dimension, areaPlan.cityId());

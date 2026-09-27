@@ -1261,7 +1261,7 @@ public final class CityBlueprintCompilerService {
                     "Single-structure placement did not expose one frozen template item.");
         }
         JsonObject frozenItem = selectedItems.get(0).getAsJsonObject();
-        for (String field : List.of("templateHash", "rawSize", "terrainPosePolicy", "supportPolicy",
+        for (String field : List.of("templateHash", "rawSize", "terrainPosePolicy", "groundPlaneY", "supportPolicy",
                 "clearanceBlocks", "materializationSource", "templatePlacementPlan")) {
             if (frozenItem.has(field)) anchor.add(field, frozenItem.get(field).deepCopy());
         }
@@ -1453,7 +1453,7 @@ public final class CityBlueprintCompilerService {
         for (int index = 0; index < 2; index++) {
             JsonObject anchor = selectedAnchors.get(index).getAsJsonObject().deepCopy();
             JsonObject frozenItem = selectedItems.get(index).getAsJsonObject();
-            for (String field : List.of("templateHash", "rawSize", "terrainPosePolicy", "supportPolicy",
+            for (String field : List.of("templateHash", "rawSize", "terrainPosePolicy", "groundPlaneY", "supportPolicy",
                     "clearanceBlocks", "materializationSource", "templatePlacementPlan")) {
                 if (frozenItem.has(field)) anchor.add(field, frozenItem.get(field).deepCopy());
             }

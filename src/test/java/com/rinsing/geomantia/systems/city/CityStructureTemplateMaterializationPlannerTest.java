@@ -12,6 +12,23 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityStructureTemplateMaterializationPlannerTest {
+    @Test
+    void freezesAuthoredGroundPlaneIncludingZeroAndRejectsBadHeight() {
+        for (int y : new int[]{0, 4}) {
+            var map = anchorMap();
+            map.getAsJsonArray("anchors").get(0).getAsJsonObject().addProperty("groundPlaneY", y);
+            var plan = new CityStructureMaterializationPlanner().planWorldgen(map, null, null, metadata())
+                    .structureMaterializationPlan();
+            var item = plan.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject();
+            assertEquals(y, item.get("groundPlaneY").getAsInt());
+            assertEquals(y, item.getAsJsonObject("structureTemplate").get("groundPlaneY").getAsInt());
+        }
+        var bad = anchorMap();
+        bad.getAsJsonArray("anchors").get(0).getAsJsonObject().addProperty("groundPlaneY", 5);
+        assertThrows(IllegalArgumentException.class, () -> new CityStructureMaterializationPlanner()
+                .planWorldgen(bad, null, null, metadata()));
+    }
+
     @Test void publicPlanterUsesDecorationLifecycleEvenOutsideRoadsideNamespace() {
         JsonObject input=anchorMap();
         input.getAsJsonArray("anchors").get(0).getAsJsonObject().addProperty("placementRole","public_greenery");

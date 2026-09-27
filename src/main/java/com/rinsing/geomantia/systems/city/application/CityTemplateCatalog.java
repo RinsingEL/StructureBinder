@@ -75,7 +75,18 @@ public final class CityTemplateCatalog {
                             String terrainPosePolicy,
                             String supportPolicy,
                             int clearanceBlocks,
-                            FrontagePolicy frontagePolicy) {
+                            FrontagePolicy frontagePolicy, Integer groundPlaneY) {
+        public Template(String buildingSemantic, String style, String templateId, String nbtFile,
+                        String contentHash, String variantId, CityTemplatePlacementGeometry.Size rawSize,
+                        List<CityTemplatePlacementGeometry.Rotation> allowedRotations,
+                        List<CityTemplatePlacementGeometry.Mirror> allowedMirrors,
+                        List<CityTemplatePlacementGeometry.RoadEntrance> roadEntrances,
+                        String terrainPosePolicy, String supportPolicy, int clearanceBlocks,
+                        FrontagePolicy frontagePolicy) {
+            this(buildingSemantic, style, templateId, nbtFile, contentHash, variantId, rawSize,
+                    allowedRotations, allowedMirrors, roadEntrances, terrainPosePolicy, supportPolicy,
+                    clearanceBlocks, frontagePolicy, null);
+        }
         public Template(String buildingSemantic, String style, String templateId, String nbtFile,
                         String contentHash, String variantId, CityTemplatePlacementGeometry.Size rawSize,
                         List<CityTemplatePlacementGeometry.Rotation> allowedRotations,
@@ -95,6 +106,7 @@ public final class CityTemplateCatalog {
             contentHash = required(contentHash, "contentHash");
             variantId = required(variantId, "variantId");
             Objects.requireNonNull(rawSize, "rawSize");
+            groundPlaneY = CityTemplateGroundPlane.validate(groundPlaneY, rawSize.height());
             allowedRotations = List.copyOf(Objects.requireNonNull(allowedRotations, "allowedRotations"));
             allowedMirrors = List.copyOf(Objects.requireNonNull(allowedMirrors, "allowedMirrors"));
             roadEntrances = List.copyOf(Objects.requireNonNull(roadEntrances, "roadEntrances"));

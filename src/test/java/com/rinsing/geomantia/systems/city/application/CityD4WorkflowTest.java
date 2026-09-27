@@ -10,6 +10,68 @@ import static org.junit.jupiter.api.Assertions.*;
 class CityD4WorkflowTest {
     @TempDir Path dir;
     private int compiled;
+    private JsonObject correctedOverview() throws Exception {
+        JsonObject saved=CityD4Workflow.load(dir,"ctx");
+        JsonObject request=json("{d4Tool:'city_d4_overview'}"), overview=new JsonObject();
+        overview.add("citySettings",saved.get("citySettings").deepCopy());
+        overview.add("districts",saved.get("districts").deepCopy());
+        overview.getAsJsonObject("citySettings").getAsJsonObject("surfaceMaterials")
+                .getAsJsonObject("defaults").addProperty("roadSurface","minecraft:oak_slab");
+        request.add("overview",overview);
+        request.add("designAnswers",saved.get("overviewAnswers").deepCopy());
+        request.getAsJsonObject("designAnswers").addProperty("roadSurface","minecraft:oak_slab");
+        request.add("workflowRevision",saved.get("revision"));
+        return request;
+    }
+
+    @Test void lockedInvalidDefaultsCanBeCorrectedWithoutAnyDraft() throws Exception {
+        overview();
+        JsonObject saved=CityD4Workflow.load(dir,"ctx");
+        saved.getAsJsonObject("citySettings").getAsJsonObject("surfaceMaterials")
+                .getAsJsonObject("defaults").addProperty("roadSurface","minecraft:gravel");
+        saved.getAsJsonObject("overviewAnswers").addProperty("roadSurface","minecraft:gravel");
+        saved.add("districtDisposition",JsonParser.parseString("[{districtId:'civic',independent:false},{districtId:'market',independent:false}]"));
+        Files.writeString(dir.resolve("city_d4_workflow.json"),saved.toString());
+        assertNull(CityBlueprintDraft.current(dir,"ctx","city"));
+        assertTrue(state().getAsJsonArray("availableActions").contains(new JsonPrimitive("city_d4_overview")));
+        JsonObject request=correctedOverview();
+        JsonObject result=CityD4Workflow.submit(dir,"ctx","city",request,this::compile);
+        assertTrue(result.get("ok").getAsBoolean(),result.toString());
+        assertNull(CityBlueprintDraft.current(dir,"ctx","city"));
+        JsonObject corrected=CityD4Workflow.load(dir,"ctx");
+        assertEquals("minecraft:oak_slab",corrected.getAsJsonObject("citySettings").getAsJsonObject("surfaceMaterials").getAsJsonObject("defaults").get("roadSurface").getAsString());
+        assertEquals(saved.get("districts"),corrected.get("districts"));
+        assertEquals(0,corrected.getAsJsonObject("bodies").size());
+        assertFalse(corrected.has("districtDisposition"));
+        assertEquals("DISTRICTS",corrected.get("stage").getAsString());
+        assertEquals("civic",state().getAsJsonObject("currentDistrict").get("groupId").getAsString());
+        assertEquals("CITY_D4_REVISION_STALE",CityD4Workflow.submit(dir,"ctx","city",request,this::compile).get("reasonCode").getAsString());
+        JsonObject district=json("{d4Tool:'city_d4_district',districtDesign:{groups:[{groupId:'a',expansionPolicy:{allowRelationConnection:true}}]},designAnswers:[{groupId:'a',roadConnected:true,foundation:false,noFoundationReason:'fixture',ground:'minecraft:stone',roadSurface:'minecraft:oak_slab',styles:['test']}]}");
+        district.add("workflowRevision",corrected.get("revision"));
+        result=CityD4Workflow.submit(dir,"ctx","city",district,this::compile);
+        assertTrue(result.get("ok").getAsBoolean(),result.toString());
+        assertEquals("minecraft:oak_slab",lastCity.getAsJsonObject("surfaceMaterials").getAsJsonObject("defaults").get("roadSurface").getAsString());
+        assertEquals("market",state().getAsJsonObject("currentDistrict").get("groupId").getAsString());
+    }
+
+    @Test void invalidOverviewCorrectionDoesNotOverwriteSavedSettings() throws Exception {
+        overview();
+        JsonObject before=CityD4Workflow.load(dir,"ctx"), request=correctedOverview();
+        request.getAsJsonObject("designAnswers").addProperty("roadSurface","minecraft:gravel");
+        assertFalse(CityD4Workflow.submit(dir,"ctx","city",request,this::compile).get("ok").getAsBoolean());
+        assertEquals(before,CityD4Workflow.load(dir,"ctx"));
+    }
+
+    @Test void overviewCorrectionCannotReopenAnEffectiveInitialDistrict() throws Exception {
+        overview();design("a");
+        JsonObject before=CityD4Workflow.load(dir,"ctx");
+        String draft=Files.readString(dir.resolve(CityBlueprintDraft.FILE));
+        assertFalse(state().getAsJsonArray("availableActions").contains(new JsonPrimitive("city_d4_overview")));
+        assertFalse(CityD4Workflow.submit(dir,"ctx","city",correctedOverview(),this::compile).get("ok").getAsBoolean());
+        assertEquals(before,CityD4Workflow.load(dir,"ctx"));
+        assertEquals(draft,Files.readString(dir.resolve(CityBlueprintDraft.FILE)));
+    }
+
     @Test void legacySavedDesignCanSupplyMandatoryAnswersWithoutRestartingDistricts() throws Exception {
         districts();
         JsonObject saved=CityD4Workflow.load(dir,"ctx");

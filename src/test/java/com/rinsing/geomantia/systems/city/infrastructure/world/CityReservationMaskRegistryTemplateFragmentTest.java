@@ -26,6 +26,25 @@ class CityReservationMaskRegistryTemplateFragmentTest {
     Path tempDir;
 
     @Test
+    void authoredGroundPlaneAndFrozenOriginSurviveReload() throws Exception {
+        var footprint = new BlockBounds(8, 8, 20, 26);
+        var plan = materializationPlan("city_fragment_test", footprint, CityTemplatePlacementGeometry.Rotation.CLOCKWISE_90);
+        var item = plan.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject();
+        item.addProperty("groundPlaneY", 0);
+        CityReservationMaskRegistry.activate(maskPlan("city_fragment_test", footprint), null, plan,
+                "run_fragment_test", "seed_fragment_test", tempDir);
+        var planned = CityReservationMaskRegistry.plannedStructuresForChunk(new ChunkPos(0, 0)).get(0);
+        assertTrue(CityReservationMaskRegistry.prepareTemplateTerrainStart(planned, 74).ready());
+        CityReservationMaskRegistry.load(tempDir);
+        var reloaded = CityReservationMaskRegistry.plannedStructuresForChunk(new ChunkPos(0, 0)).get(0);
+        assertEquals(0, reloaded.templatePlan().get("groundPlaneY").getAsInt());
+        assertEquals(0, reloaded.asJson().get("groundPlaneY").getAsInt());
+        assertEquals(74, CityReservationMaskRegistry.resolvedTemplateDatum(reloaded).orElseThrow());
+        assertEquals(74, com.rinsing.geomantia.systems.city.application.CityTemplateGroundPlane.originY(
+                80, 0, () -> 7, CityReservationMaskRegistry.resolvedTemplateDatum(reloaded)));
+    }
+
+    @Test
     void roadsideRootAndDecorationPolicySurviveRegistryReload() throws Exception {
         var footprint = new BlockBounds(8, 8, 20, 26);
         var plan = materializationPlan("city_fragment_test", footprint, CityTemplatePlacementGeometry.Rotation.CLOCKWISE_90);

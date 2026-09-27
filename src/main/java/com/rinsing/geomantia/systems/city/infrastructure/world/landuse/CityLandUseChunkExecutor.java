@@ -1508,6 +1508,9 @@ public final class CityLandUseChunkExecutor {
         }
 
         private void watchObservedNeighborhood(BlockPos center) {
+            // 调试观测关闭时，不为日志额外读取主坐标及四邻的方块状态。
+            // 此开关只影响观测，不跳过施工、回滚或正式生成 ledger。
+            if (!CityWorldgenBlockObservationRegistry.isEnabled()) return;
             watchObservedBlock(center, "land_use_direct");
             for (Direction direction : HORIZONTAL_DIRECTIONS) {
                 watchObservedBlock(center.relative(direction), "land_use_neighbor_reconcile");

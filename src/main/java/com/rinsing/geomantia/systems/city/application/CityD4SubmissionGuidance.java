@@ -25,6 +25,7 @@ final class CityD4SubmissionGuidance {
             occupiedElsewhere |= !entry.getKey().equals(current);
         }
         result.add("savedCoreOwners",owners);
+        result.addProperty("overviewCorrection", "首个有效分区保存前，可用当前 workflowRevision 重交 city_d4_overview 修正全城默认设置，无需 baseDraftHash；保存有效分区后总览锁定，不能借此重做已有初版。roadSurface 使用半砖 slab，roadStair/roadCurb 使用楼梯 stair；局部覆盖不会修正不合规的全城默认值。");
         result.addProperty("coreRule",occupiedElsewhere
                 ? "全城唯一 CORE 已被其他区占用。当前新增区/整体修饰的组使用 STANDARD 或 PERIPHERAL；本区的构图中心仍可用 centerGroupId 表达，不需要 CORE。"
                 : "CORE 是全城唯一的优先级，不是每区的构图中心。当前区与已保存其他区合并后必须恰好一个 CORE；嵌套中心使用 centerGroupId，与 CORE 无关。");

@@ -79,7 +79,7 @@ public final class CityTemplateCatalogLoader {
                 "buildingSemantic", "style", "templateId", "templateRef", "nbtFile", "contentHash", "variant",
                 "variantId",
                 "width", "height", "depth", "size", "dimensions", "rawSize", "allowedRotations", "allowedMirrors",
-                "roadEntrances", "terrainPosePolicy", "supportPolicy", "clearanceBlocks", "frontagePolicy"),
+                "roadEntrances", "terrainPosePolicy", "supportPolicy", "clearanceBlocks", "frontagePolicy", "groundPlaneY"),
                 "templates[" + index + "]");
         String buildingSemantic = requiredString(object, "buildingSemantic");
         String style = requiredString(object, "style");
@@ -100,7 +100,7 @@ public final class CityTemplateCatalogLoader {
         try {
             return new CityTemplateCatalog.Template(buildingSemantic, style, templateId, nbtFile, contentHash,
                     variantId, size, rotations, mirrors, entrances, terrainPosePolicy, supportPolicy,
-                    clearanceBlocks, parseFrontagePolicy(object));
+                    clearanceBlocks, parseFrontagePolicy(object), CityTemplateGroundPlane.read(object, size.height()));
         } catch (CityTemplateCatalog.CatalogException ex) {
             throw ex;
         } catch (IllegalArgumentException ex) {

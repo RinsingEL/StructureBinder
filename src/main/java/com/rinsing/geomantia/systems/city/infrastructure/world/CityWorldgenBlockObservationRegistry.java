@@ -59,6 +59,15 @@ import java.util.function.Function;
 /** Records actual block states at Minecraft lifecycle boundaries after City worldgen writes. */
 @Mod.EventBusSubscriber(modid = GeomantiaMod.MOD_ID)
 public final class CityWorldgenBlockObservationRegistry {
+    // 仅用于排查“写入成功但方块未落地”的逐方块调试取证，不是生成完成 ledger。
+    // 正常游玩必须关闭：完整状态会在生成后及保存时重复追加，曾产生数 GB 日志并写满磁盘。
+    // 重新启用前必须实现采集范围/时长、队列与磁盘容量上限，以及写失败退避；不要直接改为常开。
+    private static final boolean DEBUG_BLOCK_OBSERVATIONS_ENABLED = false;
+
+    public static boolean isEnabled() {
+        return DEBUG_BLOCK_OBSERVATIONS_ENABLED;
+    }
+
     public static final String SCHEMA = "city_worldgen_block_observation";
     public static final String POST_FEATURES = "post_features";
     public static final String CHUNK_SAVE = "chunk_save";
@@ -83,6 +92,7 @@ public final class CityWorldgenBlockObservationRegistry {
     }
 
     public static void begin(WorldGenLevel level, ChunkAccess ownerChunk) {
+        if (!isEnabled()) return;
         Objects.requireNonNull(level, "level");
         Objects.requireNonNull(ownerChunk, "ownerChunk");
         Capture abandoned = CURRENT.get();
@@ -273,6 +283,7 @@ public final class CityWorldgenBlockObservationRegistry {
 
     @SubscribeEvent
     public static void onChunkSave(ChunkDataEvent.Save event) {
+        if (!isEnabled()) return;
         if (!(event.getLevel() instanceof ServerLevel level)) {
             return;
         }
@@ -292,6 +303,7 @@ public final class CityWorldgenBlockObservationRegistry {
 
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
+        if (!isEnabled()) return;
         if (event.phase == TickEvent.Phase.END) {
             schedulePersistence();
         }
@@ -299,6 +311,10 @@ public final class CityWorldgenBlockObservationRegistry {
 
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
+        if (!isEnabled()) {
+            CURRENT.remove();
+            return;
+        }
         // Shutdown is the only place that waits for disk IO; tick callbacks never join a writer.
         awaitPersistence();
         schedulePersistence();

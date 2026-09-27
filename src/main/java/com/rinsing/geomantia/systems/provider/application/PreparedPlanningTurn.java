@@ -52,6 +52,10 @@ public record PreparedPlanningTurn(JsonObject state, List<Path> images, List<Str
                 designState.add("authoringBrief", sources.authoringBrief().deepCopy());
             }
         }
+        // D4 receives the same editable guidance in its canonical context; do not send it twice.
+        if (run.stage() != ProviderPlanningDiscovery.Stage.EXTENSION && !PreparedCityDesignTurn.applies(run)) {
+            designState.addProperty("environmentStyleGuidance", AgentPromptConfig.read("realm/environment_style.md"));
+        }
         if (run.stage() == ProviderPlanningDiscovery.Stage.CITY || run.stage() == ProviderPlanningDiscovery.Stage.EXTENSION) {
             attachRealmIntent(designState, debugRoot.resolve(run.runId()), run.realmId());
         }
@@ -81,7 +85,7 @@ public record PreparedPlanningTurn(JsonObject state, List<Path> images, List<Str
             var profile = entry.getAsJsonObject();
             if (realmId.equals(profile.get("realmId").getAsString())) {
                 state.add("realmDesignIntent", profile.deepCopy());
-                state.addProperty("realmDesignGuidance", "继承realmDesignIntent.theme中的国度构想，结合本城职责与实际地形，在本阶段可表达的建筑组合、空间、居民或经济中落实差异；不照搬其他城市，不虚构未实现能力。当前阶段工具与作者素材约束继续有效。");
+                state.addProperty("realmDesignGuidance", "继承realmDesignIntent.theme中的国度职责与生活方式，结合本城实际地形和群系落实差异；上游AI拟定的建筑传统仍须验证环境协调，不能以继承theme为由沿用不相容主体风格。作者明确设定与素材标注继续有效，不改写素材语义，不虚构未实现能力。");
                 return;
             }
         }

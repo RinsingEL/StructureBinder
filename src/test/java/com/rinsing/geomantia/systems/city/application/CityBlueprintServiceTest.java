@@ -30,10 +30,60 @@ class CityBlueprintServiceTest {
         String initial = CityBlueprintService.contextIdentity(context);
         context.getAsJsonObject("designGuide").addProperty("behaviorHandbook", "after");
         context.add("materialCatalog", JsonParser.parseString("{matchedCount:123}"));
+        context.addProperty("environmentStyleGuidance", "作者修改了环境偏好");
+        context.add("siteReviewDecision", JsonParser.parseString("{decisionReason:'改用协调的本地建筑表达'}"));
         assertEquals(initial, CityBlueprintService.contextIdentity(context));
         context.addProperty("cityId", "another");
         assertNotEquals(initial, CityBlueprintService.contextIdentity(context));
     }
+
+    @Test void acceptedSiteStyleAdjustmentReachesD4WithoutResettingDesignProgress() throws Exception {
+        var f = fixture("run_style_review", "city:style_review");
+        Path registryPath = f.runDir().resolve("city_seed_registry.json");
+        JsonObject registry = JsonParser.parseString(Files.readString(registryPath)).getAsJsonObject();
+        JsonObject seed = registry.getAsJsonArray("citySeeds").get(0).getAsJsonObject();
+        seed.addProperty("role", "capital");
+        seed.add("source", JsonParser.parseString("{siteSelectionMode:'ai_candidate_selection'}"));
+        Files.writeString(registryPath, registry.toString());
+        Path d3Dir = CityTestRunLayout.open(f.runDir(), f.cityId()).stepDirectory(CityTestRunLayout.D3);
+        String d3Raw = Files.readString(d3Dir.resolve("city_landform_review_package.json"));
+        JsonObject review = new JsonObject();
+        review.addProperty("decision", "accept_selected_site");
+        review.addProperty("decisionReason", "实际为森林，保留商旅职责，主体改用目录中协调的木石风格。");
+        review.addProperty("d3PackageIdentity", reviewHash(d3Raw));
+        review.addProperty("citySeedIdentity", reviewHash(
+                com.rinsing.geomantia.systems.city.infrastructure.json.CityJson.GSON.toJson(seed)));
+        Path reviewPath = d3Dir.resolve("city_site_review_decision.json");
+        Files.writeString(reviewPath, review.toString());
+        var service = validationService();
+        JsonObject prepared = service.prepare(temporary, f.runId(), f.cityId(),
+                f.terraSenseSource(), f.templateSource(), f.referenceCatalog());
+        JsonObject context = prepared.getAsJsonObject("cityBlueprintContext");
+        assertEquals(review, context.get("siteReviewDecision"));
+        assertFalse(context.get("environmentStyleGuidance").getAsString().isBlank());
+        assertEquals(prepared.get("contextId").getAsString(), CityBlueprintService.contextIdentity(context));
+
+        // Refreshing review prose does not invalidate an existing district's frozen geometry identity.
+        review.addProperty("decisionReason", "森林中的商旅聚落，木石建筑沿用当前作者标签。");
+        Files.writeString(reviewPath, review.toString());
+        JsonObject resumed = service.prepare(temporary, f.runId(), f.cityId(),
+                f.terraSenseSource(), f.templateSource(), f.referenceCatalog());
+        assertEquals(prepared.get("contextId"), resumed.get("contextId"));
+        assertEquals(review, resumed.getAsJsonObject("cityBlueprintContext").get("siteReviewDecision"));
+
+        // A real terrain or seed change still cannot reuse the old review.
+        review.addProperty("d3PackageIdentity", "sha256:old-site");
+        Files.writeString(reviewPath, review.toString());
+        var stale = assertThrows(CityBlueprintContractException.class, () -> service.prepare(
+                temporary, f.runId(), f.cityId(), f.terraSenseSource(), f.templateSource(), f.referenceCatalog()));
+        assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_D3_SITE_REVIEW_STALE, stale.reasonCode());
+    }
+
+    private static String reviewHash(String raw) throws Exception {
+        return "sha256:" + java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256")
+                .digest(raw.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+    }
+
     @Test void stagedPublicEntryKeepsWhollyEmptyDistrictRetryableAndRejectsWholeCityShortcut() throws Exception {
         var f=fixture("run_staged","city:staged"); var service=validationService();
         Path d3File = f.runDir().resolve("city_d3_" + safe(f.cityId())).resolve("city_landform_review_package.json");

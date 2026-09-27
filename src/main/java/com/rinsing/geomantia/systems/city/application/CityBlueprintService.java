@@ -101,7 +101,7 @@ public final class CityBlueprintService {
             throw new CityBlueprintContractException(CityBlueprintReasonCode.CITY_BLUEPRINT_D3_PARTIAL,
                     "$.d3ReviewPackage.status", "A partial D3 artifact cannot prepare a formal Blueprint context.");
         }
-        requireD3SiteReview(runDir, cityId, seed, d3Raw);
+        JsonObject siteReviewDecision = requireD3SiteReview(runDir, cityId, seed, d3Raw);
 
         CityStructureProfileCatalog.ImportedCatalog structureCatalog =
                 CityStructureProfileCatalog.importCatalog(runDir, terraSenseProfileSource);
@@ -173,6 +173,11 @@ public final class CityBlueprintService {
         // Editable prose must not change the frozen terrain/catalog identity or reset district progress.
         context.getAsJsonObject("designGuide").addProperty("behaviorHandbook",
                 com.rinsing.geomantia.systems.provider.application.AgentPromptConfig.read("city/d4_v2/handbook.md"));
+        context.addProperty("environmentStyleGuidance",
+                com.rinsing.geomantia.systems.provider.application.AgentPromptConfig.read("realm/environment_style.md"));
+        // The current accepted review is a design handoff, not another geometry input.
+        // Its terrain/seed identities were checked above; do not reset existing districts on upgrade.
+        if (siteReviewDecision != null) context.add("siteReviewDecision", siteReviewDecision.deepCopy());
         context.addProperty("contextId", contextId);
         context.addProperty("preparedAt", Instant.now().toString());
         Path contextPath = outputDir.resolve("city_blueprint_context.json");
@@ -784,13 +789,13 @@ public final class CityBlueprintService {
         throw new IllegalArgumentException("CITY_BLUEPRINT_CITY_SEED_NOT_FOUND: " + cityId);
     }
 
-    private static void requireD3SiteReview(Path runDir, String cityId, JsonObject seed, String d3Raw)
+    private static JsonObject requireD3SiteReview(Path runDir, String cityId, JsonObject seed, String d3Raw)
             throws IOException {
         JsonObject source = seed.has("source") && seed.get("source").isJsonObject()
                 ? seed.getAsJsonObject("source") : null;
         boolean required = "capital".equals(string(seed, "role")) && source != null
                 && "ai_candidate_selection".equals(string(source, "siteSelectionMode"));
-        if (!required) return;
+        if (!required) return null;
         Path decisionPath = CityTestRunLayout.open(runDir, cityId).stepDirectory(CityTestRunLayout.D3)
                 .resolve("city_site_review_decision.json");
         if (!Files.isRegularFile(decisionPath)) {
@@ -807,6 +812,7 @@ public final class CityBlueprintService {
             throw new CityBlueprintContractException(CityBlueprintReasonCode.CITY_BLUEPRINT_D3_SITE_REVIEW_STALE,
                     "$context", "The D3 site review does not match the current D3 package and city seed.");
         }
+        return decision;
     }
 
     private static Path requireRunDirectory(Path debugRoot, String runId) {
@@ -901,6 +907,8 @@ public final class CityBlueprintService {
         core.remove("contextId");
         core.remove("preparedAt");
         core.remove("materialCatalog");
+        core.remove("environmentStyleGuidance");
+        core.remove("siteReviewDecision");
         if (core.has("designGuide")) core.getAsJsonObject("designGuide").remove("behaviorHandbook");
         return sha256(CityJson.GSON.toJson(core));
     }

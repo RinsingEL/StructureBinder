@@ -923,6 +923,7 @@ public final class CityStructureArrayCandidatePlanner {
         target.addProperty("rotation", geometry.rotation().name());
         target.addProperty("mirror", geometry.mirror().name());
         target.addProperty("terrainPosePolicy", template.terrainPosePolicy());
+        CityTemplateGroundPlane.write(target, template.groundPlaneY());
         target.addProperty("supportPolicy", template.supportPolicy());
         target.addProperty("clearanceBlocks", template.clearanceBlocks());
         target.addProperty("materializationSource",
@@ -930,8 +931,8 @@ public final class CityStructureArrayCandidatePlanner {
         target.add("rawSize", sizeJson(template.rawSize()));
         JsonObject placement = new JsonObject();
         for (String key : List.of("templateId", "templateRef", "templateHash", "variantId",
-                "rotation", "mirror", "terrainPosePolicy")) {
-            placement.add(key, target.get(key).deepCopy());
+                "rotation", "mirror", "terrainPosePolicy", "groundPlaneY")) {
+            if (target.has(key)) placement.add(key, target.get(key).deepCopy());
         }
         placement.add("anchorBlock", anchor.asJson());
         placement.add("templateSize", sizeJson(template.rawSize()));

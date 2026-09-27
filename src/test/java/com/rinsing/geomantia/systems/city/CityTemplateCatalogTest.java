@@ -17,6 +17,23 @@ class CityTemplateCatalogTest {
     private final CityTemplateCatalogLoader loader = new CityTemplateCatalogLoader();
 
     @Test
+    void optionalGroundPlaneIsStrictAndIndependentOfRotation() {
+        var object = com.google.gson.JsonParser.parseString(catalogJson("[]")).getAsJsonObject();
+        var row = object.getAsJsonArray("templates").get(0).getAsJsonObject();
+        org.junit.jupiter.api.Assertions.assertNull(loader.load(object).templates().get(0).groundPlaneY());
+        row.addProperty("groundPlaneY", 0);
+        assertEquals(0, loader.load(object).templates().get(0).groundPlaneY());
+        row.addProperty("groundPlaneY", 5);
+        var template = loader.load(object).templates().get(0);
+        template.geometry(template.allowedRotations().get(0), template.allowedMirrors().get(0));
+        assertEquals(5, template.groundPlaneY());
+        for (String value : List.of("6", "-1", "null", "true", "\"2\"", "2.5")) {
+            row.add("groundPlaneY", com.google.gson.JsonParser.parseString(value));
+            assertThrows(CityTemplateCatalog.CatalogException.class, () -> loader.load(object));
+        }
+    }
+
+    @Test
     void legacyClearanceIsIgnoredAndNoLongerRequired() {
         String json = catalogJson("[]");
         assertEquals(0, loader.load(json.replace("\"clearanceBlocks\": 2", "\"clearanceBlocks\": 100"))

@@ -1027,6 +1027,8 @@ public final class CityReservationMaskRegistry {
         identity.addProperty("templateRef", templateRef(planned));
         identity.addProperty("templateHash", templateHash(planned));
         identity.addProperty("terrainPosePolicy", stringValue(planned.templatePlan(), "terrainPosePolicy", ""));
+        if (planned.templatePlan().has("groundPlaneY"))
+            identity.add("groundPlaneY", planned.templatePlan().get("groundPlaneY").deepCopy());
         return identity;
     }
 
@@ -1531,7 +1533,7 @@ public final class CityReservationMaskRegistry {
             obj.add("qualityTerms", qualityTerms.deepCopy());
             if (isTemplatePlacement()) {
                 for (String key : List.of("templateId", "templateRef", "templateHash", "variantId", "mirror",
-                        "terrainPosePolicy", "placementRole", "treeRootBlock", "sourceRoadId",
+                        "terrainPosePolicy", "groundPlaneY", "placementRole", "treeRootBlock", "sourceRoadId",
                         "placementGroupId", "blueprintPlacementPhase",
                         "materializationSource", "templateDatumPolicy", "rawSize", "lockedActualFootprint",
                         "transformed", "transformedRoadEntrances", "structureTemplate")) {

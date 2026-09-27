@@ -57,6 +57,8 @@ public final class CityD4Workflow {
                 if(!state.has("overviewAnswers")) next="city_d4_answers";
             }
             actions.add(next);
+            // No effective initial district exists yet: allow correcting locked city defaults.
+            if(stage.equals("DISTRICTS") && object(state,"bodies").size()==0) actions.add("city_d4_overview");
             if(stage.equals("INTEGRATION") || stage.equals("FINAL")) {
                 if(!next.equals("city_d4_mark")) actions.add("city_d4_finalize");
             }
@@ -99,6 +101,8 @@ public final class CityD4Workflow {
                 require(!outdoor.has("landscapes")&&!outdoor.has("spatialGrounds")&&!outdoor.has("foundationGroupIds"),"景观与台地组在功能区初版设置。");
                 Set<String> ids=new HashSet<>();for(var d:array(overview,"districts"))require(!text(d.getAsJsonObject(),"groupId").isBlank()&&ids.add(text(d.getAsJsonObject(),"groupId")),"功能区 ID 不可空或重复。");
                 JsonObject candidate=state.deepCopy();candidate.add("districts",array(overview,"districts").deepCopy());
+                candidate.addProperty("districtIndex",0);
+                candidate.remove("districtDisposition");
                 candidate.add("overviewAnswers",request.get("designAnswers").deepCopy());
                 if(overview.has("districtDisposition")) candidate.add("districtDisposition",validateDisposition(candidate,array(overview,"districtDisposition")));
                 JsonObject intent=new JsonObject(),groups=new JsonObject();groups.add("groups",array(overview,"districts").deepCopy());intent.add("designIntent",groups);

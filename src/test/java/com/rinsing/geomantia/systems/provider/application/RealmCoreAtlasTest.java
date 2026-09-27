@@ -73,6 +73,8 @@ class RealmCoreAtlasTest {
             assertEquals(4, task.images().size());
             assertEquals(14, task.state().getAsJsonObject("authoringBrief").getAsJsonArray("cores").size());
             assertTrue(task.state().get("creativeGuidance").getAsString().contains("不按风格数量分配国度"));
+            assertEquals(AgentPromptConfig.read("realm/environment_style.md"),
+                    task.state().get("environmentStyleGuidance").getAsString());
             assertEquals(java.util.List.of("realm_t1_prepare"), task.tools());
         } finally {
             if (previous == null) System.clearProperty("geomantia.providerPlanningSourceDir");
