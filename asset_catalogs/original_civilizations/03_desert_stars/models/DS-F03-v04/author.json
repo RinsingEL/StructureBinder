@@ -1,179 +1,156 @@
 {
   "schema": "structure-studio.author.v1",
   "id": "DS-F03-v04",
-  "name": "双列采收葡萄园",
+  "name": "沿墙葡萄分拣庭",
   "family": "DS-F03",
   "civilization": "沙漠",
   "planning_role": "planning_role.fill",
   "size": [
-    34,
-    14,
-    35
+    26,
+    11,
+    21
   ],
   "terrain": {
-    "选址": "只用于整合包设定允许种植葡萄、具可靠灌溉和适宜土壤的绿洲",
-    "地块": "两列长藤棚夹中央作业道，后段设独立分拣遮棚、货筐和取水处。",
-    "接地": "使用地坪 Y=1，脚底 Y=2；不自动削坡或补齐外部通路",
-    "边界": "模板包含内部地坪和封边，未写入的凹角与外部格保持原环境",
-    "作物表达": "原版木架、常驻树叶和倒挂紫晶簇作为葡萄果串外观；非可收获作物，不声明生长或产量"
+    "选址": "平缓街边或灌溉庭院",
+    "接地": "外部地面方块 Y=1，人员脚底 Y=2"
   },
   "rooms": [
     {
-      "id": "西棚",
-      "name": "葡萄棚 · 西棚",
+      "id": "wall",
+      "name": "葡萄棚采收道",
       "min": [
         4,
         2,
-        6
+        4
       ],
       "max": [
+        7,
+        5,
+        16
+      ],
+      "purpose": "原版叶块与紫色玻璃表现葡萄；中间保留贯通采收道"
+    },
+    {
+      "id": "cross",
+      "name": "葡萄棚采收道",
+      "min": [
         10,
-        6,
-        28
-      ],
-      "purpose": "土床、备水渠、棚架与采收道；原版方块视觉表达"
-    },
-    {
-      "id": "东棚",
-      "name": "葡萄棚 · 东棚",
-      "min": [
-        22,
         2,
-        6
-      ],
-      "max": [
-        28,
-        6,
-        28
-      ],
-      "purpose": "土床、备水渠、棚架与采收道；原版方块视觉表达"
-    },
-    {
-      "id": "packing",
-      "name": "采收分拣棚",
-      "min": [
-        13,
-        2,
-        20
+        4
       ],
       "max": [
         19,
-        7,
-        29
+        5,
+        9
       ],
-      "purpose": "分拣、周转筐与装运"
+      "purpose": "原版叶块与紫色玻璃表现葡萄；中间保留贯通采收道"
     }
   ],
   "points": [
     {
-      "id": "西棚_harvest",
-      "kind": "work",
+      "id": "wall_walk",
+      "kind": "circulation",
       "pos": [
         5,
-        4,
+        2,
         10
       ],
-      "name": "棚下采收 · 西棚",
-      "look_at": [
-        5.5,
-        4,
-        10.5
-      ],
-      "approach": [
-        7,
+      "name": "棚下采收路线"
+    },
+    {
+      "id": "cross_walk",
+      "kind": "circulation",
+      "pos": [
+        14,
         2,
-        9
+        6
+      ],
+      "name": "棚下采收路线"
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        11,
+        2,
+        18
+      ],
+      "name": "人员与手推货物入口",
+      "facing": "south"
+    },
+    {
+      "id": "sorting",
+      "kind": "work",
+      "pos": [
+        20,
+        2,
+        15
+      ],
+      "name": "分拣桌",
+      "approach": [
+        19,
+        2,
+        15
       ]
     },
     {
-      "id": "东棚_harvest",
+      "id": "crates",
       "kind": "work",
       "pos": [
-        23,
-        4,
-        10
+        20,
+        2,
+        16
       ],
-      "name": "棚下采收 · 东棚",
-      "look_at": [
-        23.5,
-        4,
-        10.5
-      ],
+      "name": "装筐货位",
       "approach": [
-        25,
+        19,
         2,
-        9
-      ]
-    },
-    {
-      "id": "sort",
-      "kind": "work",
-      "pos": [
-        15,
-        2,
-        24
-      ],
-      "name": "集中分拣台",
-      "approach": [
-        15,
-        2,
-        23
+        16
       ]
     },
     {
       "id": "water",
       "kind": "work",
       "pos": [
-        16,
+        12,
         2,
-        9
+        5
       ],
-      "name": "作业道储水",
+      "name": "工具清洗用水",
       "approach": [
-        16,
+        12,
         2,
-        8
+        6
       ]
-    },
-    {
-      "id": "entry",
-      "kind": "entrance",
-      "pos": [
-        16,
-        2,
-        4
-      ],
-      "name": "人员与货物入口",
-      "facing": "north"
     }
   ],
   "connections": [
     {
       "kind": "pedestrian",
       "pos": [
-        16,
+        11,
         1,
-        4
+        18
       ],
-      "direction": "north",
+      "direction": "south",
       "clearance": [
-        5,
+        3,
         3
       ],
-      "note": "作者预留几何接口；需另外核对外部地面及具体实体尺寸"
+      "note": "外部连接地面 Y=1"
     }
   ],
   "design_notes": [
-    "两列长藤棚夹中央作业道，后段设独立分拣遮棚、货筐和取水处。"
+    "长院墙承托边棚，侧面小分拣棚形成不对称工作庭。"
   ],
   "differences": [
-    "两列长藤棚夹中央作业道，后段设独立分拣遮棚、货筐和取水处。"
+    "长院墙承托边棚，侧面小分拣棚形成不对称工作庭。"
   ],
   "floors": [
     {
-      "name": "地坪、布置与通路",
+      "name": "地面作业与通路",
       "y": 1,
-      "max_y": 4
+      "max_y": 5
     }
   ],
   "roof_min_y": 6,
@@ -181,9 +158,13 @@
   "offline_limits": [
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。",
-    "紫色方块果串是视觉表达；原版藤架不会自动长葡萄，须按整合包作物另行替换或接入。"
+    "葡萄由原版常绿叶块与紫色玻璃静态表达，不提供葡萄种植或收获功能。"
   ],
-  "source": "tools/structure_studio/studio/oasis_yards.py:vineyard(4)",
+  "source": "tools/structure_studio/studio/desert_fill_shelters.py:vineyard(4)",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部铺地顶面与人员脚底高度，铺地方块 Y=1，外地表站立面 Y=2"
+  },
   "preview_context": {
     "kind": "flat",
     "land_surface_y": 2,
@@ -191,5 +172,8 @@
     "padding": 3,
     "surface": "sand"
   },
-  "nbt_sha256": "9ce4380ae809922b37771357c97b0f73c64bd4cb51188ecc833d43045ef6501a"
+  "function_terms": [
+    "棚架种植"
+  ],
+  "nbt_sha256": "cfac820c923254e46fd1f7418c29ea18d36bbb36dadd586464c2e8ece8decdcb"
 }

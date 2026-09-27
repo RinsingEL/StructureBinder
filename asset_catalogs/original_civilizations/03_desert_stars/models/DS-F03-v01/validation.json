@@ -1,10 +1,10 @@
 {
   "schema": "structure-studio.validation.v1",
-  "nbt_sha256": "515356d1971e7f5670344b9300cb7294d28f891bee1df8150a95edd14f9191e9",
+  "nbt_sha256": "c103266dac73577232978564c4af11beed6446d80ce7eeebce3dfa5cb92b0cc9",
   "navigation": {
     "passed": true,
     "unreachable": [],
-    "nodes": 1289,
+    "nodes": 1221,
     "highest_standing_y": 2,
     "truncated": false,
     "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
@@ -14,26 +14,30 @@
   "warnings": [],
   "size": [
     15,
-    13,
-    35
+    11,
+    29
   ],
-  "visible_blocks": 877,
-  "explicit_air": 3413,
-  "palette": 13,
+  "visible_blocks": 978,
+  "explicit_air": 2883,
+  "palette": 17,
   "block_entities": 0,
   "agriculture": null,
   "materials": {
-    "minecraft:cut_sandstone": 330,
-    "minecraft:smooth_sandstone": 211,
-    "minecraft:oak_leaves": 123,
-    "minecraft:stripped_acacia_log": 56,
-    "minecraft:water": 44,
-    "minecraft:rooted_dirt": 44,
-    "minecraft:sandstone": 31,
-    "minecraft:acacia_fence": 30,
-    "minecraft:amethyst_cluster": 6,
-    "minecraft:composter": 1,
-    "minecraft:barrel": 1
+    "minecraft:cut_sandstone": 439,
+    "minecraft:smooth_sandstone": 162,
+    "minecraft:oak_leaves": 125,
+    "minecraft:sandstone": 64,
+    "minecraft:spruce_slab": 60,
+    "minecraft:coarse_dirt": 42,
+    "minecraft:stripped_spruce_log": 24,
+    "minecraft:spruce_fence": 20,
+    "minecraft:purple_stained_glass_pane": 14,
+    "minecraft:oak_fence": 10,
+    "minecraft:gravel": 7,
+    "minecraft:sandstone_wall": 6,
+    "minecraft:lantern": 3,
+    "minecraft:barrel": 1,
+    "minecraft:crafting_table": 1
   },
-  "scope": "NBT、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
 }

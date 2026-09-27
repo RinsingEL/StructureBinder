@@ -176,5 +176,9 @@
     "land_surface_y": 2,
     "padding": 5
   },
-  "nbt_sha256": "b6d5cc6e96f8381034aa49a091f58ea57f7c9368e21e2fb2caab5eba252f93ab"
+  "nbt_sha256": "b6d5cc6e96f8381034aa49a091f58ea57f7c9368e21e2fb2caab5eba252f93ab",
+  "function_terms": [
+    "零售",
+    "杂货销售"
+  ]
 }

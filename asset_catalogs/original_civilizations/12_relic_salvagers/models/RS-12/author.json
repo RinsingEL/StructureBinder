@@ -1,0 +1,215 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "RS-12",
+  "name": "封存动力舱设备库",
+  "family": "RS-12",
+  "civilization": "废土拾荒",
+  "planning_role": "planning_role.structure",
+  "size": [
+    47,
+    25,
+    45
+  ],
+  "terrain": {
+    "选址": "完整旧动力舱基础上的设备封存遗址，单侧维修走廊开放；封存区保留可观察边界。",
+    "接地": "完整旧机座埋入稳固碎石台地，地坪Y=2、入口脚底Y=3；不将薄壳残板当作新房基础。",
+    "外接": "南侧接既有搬运路；模板外须保留回转、排水与坠落隔离带。避开活动滑坡、洪道及悬空残骸。",
+    "供给": "生活水依外部运水，燃料和食物由聚落补给；不假设旧机械仍能工作。",
+    "边界": "独立承载静态原版结构；残骸稳定、探险门禁与设备功能未接入运行时。"
+  },
+  "rooms": [
+    {
+      "id": "service",
+      "name": "设备维护备品侧间",
+      "min": [
+        36,
+        3,
+        9
+      ],
+      "max": [
+        42,
+        7,
+        26
+      ],
+      "purpose": "有独立旧场坪支承的后加板房，门窗和完整使用通路"
+    },
+    {
+      "id": "sealedbay",
+      "name": "封存双动力机舱",
+      "min": [
+        8,
+        3,
+        8
+      ],
+      "max": [
+        29,
+        17,
+        28
+      ],
+      "purpose": "两组真实机座、轮轴与管体；封存区只从开放走廊观察，不伪造内部可达点"
+    },
+    {
+      "id": "aisle",
+      "name": "开放维护走廊",
+      "min": [
+        6,
+        3,
+        32
+      ],
+      "max": [
+        31,
+        7,
+        40
+      ],
+      "purpose": "检查窗、耗材及记录点保持连通"
+    }
+  ],
+  "points": [
+    {
+      "id": "sealed",
+      "kind": "work",
+      "pos": [
+        17,
+        5,
+        30
+      ],
+      "name": "玻璃封存界面与设备观察",
+      "approach": [
+        17,
+        3,
+        32
+      ]
+    },
+    {
+      "id": "spares",
+      "kind": "storage",
+      "pos": [
+        37,
+        4,
+        10
+      ],
+      "name": "密封备件与工具",
+      "approach": [
+        37,
+        3,
+        11
+      ]
+    },
+    {
+      "id": "bench",
+      "kind": "work",
+      "pos": [
+        38,
+        3,
+        17
+      ],
+      "name": "维护装配台",
+      "approach": [
+        38,
+        3,
+        18
+      ]
+    },
+    {
+      "id": "ledger",
+      "kind": "work",
+      "pos": [
+        38,
+        3,
+        23
+      ],
+      "name": "封存台账",
+      "approach": [
+        38,
+        3,
+        24
+      ]
+    },
+    {
+      "id": "kits",
+      "kind": "storage",
+      "pos": [
+        7,
+        4,
+        37
+      ],
+      "name": "开放维护通道耗材",
+      "approach": [
+        7,
+        3,
+        38
+      ]
+    },
+    {
+      "id": "inspect",
+      "kind": "work",
+      "pos": [
+        26,
+        3,
+        37
+      ],
+      "name": "设备布局核验",
+      "approach": [
+        26,
+        3,
+        38
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        20,
+        3,
+        42
+      ],
+      "name": "搬运路入口",
+      "facing": "south"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        20,
+        2,
+        42
+      ],
+      "direction": "south",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "接稳固旧场坪，货运另保留转向区"
+    }
+  ],
+  "design_notes": [
+    "深色旧机梁、齿轴与氧化铜壳为旧骨架；浅木、橙色板补丁与布棚为后加住用空间。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "修补地坪",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/relic_salvagers.py:RS-12",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 5,
+    "surface": "grass"
+  },
+  "nbt_sha256": "b58bd9e36f0ed7031cc37215975a3233f6b649366c114ed830a88f3d07f3353b",
+  "function_terms": [
+    "设备封存",
+    "遗址展示"
+  ]
+}

@@ -1,0 +1,283 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "NS-08-v03",
+  "name": "两层窄仓与吊货梁",
+  "family": "NS-08",
+  "civilization": "北欧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    21,
+    28,
+    29
+  ],
+  "terrain": {
+    "选址": "干燥稳定地基，外部街面接Y=3；仓储需外部货源，客栈需食品及饮水供给；不强制滨海选址。",
+    "高程": "干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。",
+    "保留空间": "完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。",
+    "风雪": "厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。",
+    "推荐情境": [
+      "寒地背风聚落或海湾聚落；这是常见使用背景，不要求所有北欧建筑临海，也不限定住户种族。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "tools",
+      "name": "下层工具收发库",
+      "min": [
+        4,
+        3,
+        4
+      ],
+      "max": [
+        16,
+        6,
+        24
+      ],
+      "purpose": "重工具和常领用件在下层，登记与修补靠前；具体设施：领用登记、检验和修补、分批工具与修缮备件、分批工具与修缮备件、分批工具与修缮备件"
+    },
+    {
+      "id": "dry",
+      "name": "上层轻质干货库",
+      "min": [
+        4,
+        9,
+        4
+      ],
+      "max": [
+        16,
+        12,
+        24
+      ],
+      "purpose": "密封食品和织物在高处隔潮，梯口周边保留通道；具体设施：密封干粮及冬衣储备、密封干粮及冬衣储备、密封干粮及冬衣储备、上层轻件备用品"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        10,
+        3,
+        2
+      ],
+      "name": "背风步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "check",
+      "kind": "work",
+      "pos": [
+        4,
+        3,
+        5
+      ],
+      "name": "领用登记、检验和修补",
+      "look_at": [
+        4,
+        4,
+        5
+      ],
+      "approach": [
+        4,
+        3,
+        6
+      ]
+    },
+    {
+      "id": "tools10",
+      "kind": "storage",
+      "pos": [
+        4,
+        3,
+        10
+      ],
+      "name": "分批工具与修缮备件",
+      "look_at": [
+        4,
+        4,
+        10
+      ],
+      "approach": [
+        4,
+        3,
+        11
+      ]
+    },
+    {
+      "id": "tools16",
+      "kind": "storage",
+      "pos": [
+        4,
+        3,
+        16
+      ],
+      "name": "分批工具与修缮备件",
+      "look_at": [
+        4,
+        4,
+        16
+      ],
+      "approach": [
+        4,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "tools22",
+      "kind": "storage",
+      "pos": [
+        4,
+        3,
+        22
+      ],
+      "name": "分批工具与修缮备件",
+      "look_at": [
+        4,
+        4,
+        22
+      ],
+      "approach": [
+        4,
+        3,
+        23
+      ]
+    },
+    {
+      "id": "food5",
+      "kind": "storage",
+      "pos": [
+        4,
+        9,
+        5
+      ],
+      "name": "密封干粮及冬衣储备",
+      "look_at": [
+        4,
+        10,
+        5
+      ],
+      "approach": [
+        4,
+        9,
+        6
+      ]
+    },
+    {
+      "id": "food11",
+      "kind": "storage",
+      "pos": [
+        4,
+        9,
+        11
+      ],
+      "name": "密封干粮及冬衣储备",
+      "look_at": [
+        4,
+        10,
+        11
+      ],
+      "approach": [
+        4,
+        9,
+        12
+      ]
+    },
+    {
+      "id": "food20",
+      "kind": "storage",
+      "pos": [
+        4,
+        9,
+        20
+      ],
+      "name": "密封干粮及冬衣储备",
+      "look_at": [
+        4,
+        10,
+        20
+      ],
+      "approach": [
+        4,
+        9,
+        21
+      ]
+    },
+    {
+      "id": "light",
+      "kind": "storage",
+      "pos": [
+        11,
+        9,
+        23
+      ],
+      "name": "上层轻件备用品",
+      "look_at": [
+        11,
+        10,
+        23
+      ],
+      "approach": [
+        11,
+        9,
+        24
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        10,
+        3,
+        2
+      ],
+      "direction": "north",
+      "clearance": [
+        1,
+        2
+      ],
+      "note": "已标入口与外部Y=3街面接驳"
+    }
+  ],
+  "design_notes": [
+    "参考北欧图4：两层窄仓与吊货梁；复用完整可达的分类储物或食宿内饰，重组屋顶和装卸/入口体量。"
+  ],
+  "differences": [
+    "两层窄仓与吊货梁"
+  ],
+  "floors": [
+    {
+      "name": "装备收发",
+      "y": 2,
+      "max_y": 6
+    },
+    {
+      "name": "轻质干储",
+      "y": 8,
+      "max_y": 12
+    }
+  ],
+  "roof_min_y": 14,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/northern_fill_storage_inns.py:build('NS-08',3)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 5,
+    "surface": "snow"
+  },
+  "ground_plane": {
+    "y": 3,
+    "note": "外部稳定街面与模板场坪顶面齐平，站立脚底Y=3；基础方块在其下"
+  },
+  "function_terms": [
+    "仓储",
+    "物资配给"
+  ],
+  "nbt_sha256": "3090a3891f2a9a560588c55315bca41f1144bc38d886b5722a6ca7d9decab9e2"
+}

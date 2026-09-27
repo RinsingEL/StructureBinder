@@ -2,6 +2,7 @@ import {BlockDefinition, BlockModel, BlockState, NbtTag, Structure, StructureRen
 import {mat4, vec4} from 'gl-matrix';
 import './style.css';
 import {createSite} from './site.js';
+import {groundPlane} from './grounding.js';
 import {createFilters} from './filters.js';
 import {roleOf} from './functions.js';
 import {createFrontageEditor} from './frontage.js';
@@ -12,7 +13,35 @@ const gl = canvas.getContext('webgl', {antialias: true, preserveDrawingBuffer: t
 let renderer, resources, current, rows = [], visible, loadingGeneration = 0, library;
 let yaw = .66, pitch = .5, distance = 40, target = [0, 0, 0], eye = [0, 0, 0], walk = false;
 let markers = false, roof = false, floorMin = 0, clip = [1, 1, 1], selectedPreset = 'front';
-let terrainRenderer,site,context=false;
+let terrainRenderer,site,context=false,groundVisible=false;
+const groundButton=document.createElement('button');groundButton.id='ground-plane';groundButton.textContent='地面参考线';groundButton.title='作者外部地面 Y 的透视叠加参考线，不改变结构方块';groundButton.disabled=true;$('context').after(groundButton);
+const groundInfo=document.createElement('p');groundInfo.id='ground-info';$('subtitle').after(groundInfo);
+const groundOverlay=document.createElementNS('http://www.w3.org/2000/svg','svg');
+groundOverlay.id='ground-overlay';groundOverlay.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2';
+canvas.parentElement.append(groundOverlay);
+function groundState(data) {
+  const plane=groundPlane(data);
+  groundInfo.textContent=plane.status==='marked'?`${plane.message} · ${plane.note}。Y 为外部地表上边界/站立脚底；不等于室内楼层。`:plane.message+' · 未从最低方块、入口或地形示意推断。';
+  groundButton.disabled=plane.status!=='marked';groundVisible=false;groundButton.classList.remove('selected');
+}
+function showGroundPlane(value) {
+  groundVisible=Boolean(value)&&groundPlane(current).status==='marked';groundButton.classList.toggle('selected',groundVisible);draw();
+}
+groundButton.onclick=()=>showGroundPlane(!groundVisible);
+function drawGroundPlane() {
+  groundOverlay.replaceChildren();if(!groundVisible)return;
+  const plane=groundPlane(current);if(plane.status!=='marked')return;
+  const [w,,d]=current.size,points=[];
+  for(const [x,z] of [[-2,-2],[w+2,-2],[w+2,d+2],[-2,d+2]]) {
+    const p=vec4.fromValues(x,plane.y,z,1);vec4.transformMat4(p,p,view);vec4.transformMat4(p,p,projection);
+    if(p[3]<=0)return;
+    points.push(`${(p[0]/p[3]+1)*.5*canvas.clientWidth},${(1-p[1]/p[3])*.5*canvas.clientHeight}`);
+  }
+  const polygon=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+  polygon.setAttribute('points',points.join(' '));polygon.setAttribute('fill','rgba(53,213,226,0.10)');polygon.setAttribute('stroke','#35d5e2');polygon.setAttribute('stroke-width','2');polygon.setAttribute('stroke-dasharray','8 5');
+  const title=document.createElementNS('http://www.w3.org/2000/svg','title');title.textContent=`外部地面 Y=${plane.y} · 透视叠加参考线，不改变 NBT`;
+  polygon.append(title);groundOverlay.append(polygon);
+}
 const telemetry = {ready: false, renderErrors: [], missingTextures: [], source: 'serialized NBT'};
 const view = mat4.create();
 const projection = mat4.create();
@@ -113,6 +142,7 @@ async function load(id) {
   const data = await fetchJSON(`/api/model?id=${encodeURIComponent(id)}`);
   if (generation !== loadingGeneration) return;
   current = data;
+  groundState(data);
   const row = rows.find(row => row.id === data.author.id);
   if (row) row.frontage = data.frontage;
   library?.refresh();
@@ -121,7 +151,7 @@ async function load(id) {
   $('eyebrow').textContent = `${data.author.id} / ${data.author.civilization}`;
   const count = data.blocks.filter(b => !['minecraft:air','minecraft:cave_air','minecraft:void_air'].includes(data.palette[b.state].name)).length;
   $('subtitle').textContent = `${data.size.join(' × ')} 格 · ${count.toLocaleString()} 个方块 · 规划角色：${roleOf(data.author).label}`;
-  context=false;site=null;$('context').classList.remove('selected');$('context').disabled=!data.author.preview_context;$('axis').textContent='X 东 · Y 上 · Z 南';
+  context=false;site=null;$('context').classList.remove('selected');$('context').disabled=groundPlane(data).status==='invalid'||(!data.author.preview_context&&groundPlane(data).status!=='marked');$('axis').textContent='X 东 · Y 上 · Z 南';
   $('floor').replaceChildren(new Option('全部楼层',''));
   for (const [i, floor] of (data.author.floors ?? []).entries()) $('floor').append(new Option(floor.name,String(i)));
   $('rooms').replaceChildren();
@@ -218,6 +248,7 @@ function draw() {
     terrainRenderer.setViewport(0,0,canvas.width,canvas.height);terrainRenderer.drawStructure(siteView);
   }
   mat4.copy(projection,renderer.projection());
+  drawGroundPlane();
   $('labels').replaceChildren();
   if(markers) for(const point of current.author.points) {
     if(point.pos.some((v,i)=>v>clip[i])||point.pos[1]<floorMin)continue;
@@ -229,7 +260,7 @@ function draw() {
   }
 }
 function showContext(value) {
-  if(value&&!current.author.preview_context)return;
+  if(value&&(groundPlane(current).status==='invalid'||(!current.author.preview_context&&groundPlane(current).status!=='marked')))return;
   context=value;$('context').classList.toggle('selected',value);
   if(value&&!site) {
     site=createSite(current);
@@ -287,7 +318,7 @@ $('frontage-next').onclick = () => {
 new ResizeObserver(resize).observe(canvas);
 
 // Read-only automation surface, also used by the screenshot acceptance runner.
-window.studio={telemetry,load,preset,reset,draw,focusRoom,enterWalk,showContext,
+window.studio={telemetry,load,preset,reset,draw,focusRoom,enterWalk,showContext,showGroundPlane,
   get model(){return current;},setMarkers(value){markers=value;draw();},
   slice(axis,value){clip[['x','y','z'].indexOf(axis)]=value;updateGeometry();},
   hideRoof(){roof=true;updateGeometry();},floor(index){$('floor').value=String(index);$('floor').onchange();},

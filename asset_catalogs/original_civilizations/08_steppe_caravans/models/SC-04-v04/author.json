@@ -1,0 +1,293 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "SC-04-v04",
+  "name": "双帐共享炊庭",
+  "family": "SC-04",
+  "civilization": "游牧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    53,
+    19,
+    45
+  ],
+  "terrain": {
+    "选址": "背风稳定营地，按具体帐群占地接已有营路；双帐共享炊庭",
+    "资源与季节": "有人驻留须有可行淡水、食物与补给来源，储槽只表达运水储备；畜群照护另需饮水与饲料，种植另需耕土和足够生长季。短停与长驻按单体用途区分。",
+    "高程": "默认入口脚底Y=3；坡台住宅Y=5由实体台阶接入，见点位。",
+    "落地限制": "仅整理模板营地占地，不推平外部草坡；留出畜群、货车或来客外接通路。",
+    "运行边界": "原版静态空间与作者点位，未接入动物、交易、季节迁徙或运行时生成。",
+    "推荐情境": [
+      "商路营地、季节牧场或长驻聚落；驻留时长按具体用途决定，游牧风格不等于所有设施都可随队移动。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "a",
+      "name": "独立寝居帐",
+      "min": [
+        6,
+        3,
+        5
+      ],
+      "max": [
+        20,
+        6,
+        22
+      ],
+      "purpose": "寝居与家户用品独立，炊事集中院内公共棚"
+    },
+    {
+      "id": "b",
+      "name": "独立寝居帐",
+      "min": [
+        32,
+        3,
+        5
+      ],
+      "max": [
+        46,
+        6,
+        22
+      ],
+      "purpose": "寝居与家户用品独立，炊事集中院内公共棚"
+    },
+    {
+      "id": "yard",
+      "name": "双帐共享炊庭",
+      "min": [
+        5,
+        3,
+        24
+      ],
+      "max": [
+        47,
+        6,
+        39
+      ],
+      "purpose": "两帐之间及前庭形成环行交往空间，公共厨房不复制进每个帐"
+    }
+  ],
+  "points": [
+    {
+      "id": "abed",
+      "kind": "sleep",
+      "pos": [
+        9,
+        3,
+        10
+      ],
+      "name": "独立床榻",
+      "approach": [
+        10,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "acloth",
+      "kind": "storage",
+      "pos": [
+        14,
+        4,
+        7
+      ],
+      "name": "个人衣物与毡被",
+      "approach": [
+        14,
+        3,
+        8
+      ]
+    },
+    {
+      "id": "asit",
+      "kind": "work",
+      "pos": [
+        13,
+        3,
+        15
+      ],
+      "name": "浅木餐桌与双侧席",
+      "approach": [
+        12,
+        3,
+        15
+      ]
+    },
+    {
+      "id": "bbed",
+      "kind": "sleep",
+      "pos": [
+        35,
+        3,
+        10
+      ],
+      "name": "独立床榻",
+      "approach": [
+        36,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "bcloth",
+      "kind": "storage",
+      "pos": [
+        40,
+        4,
+        7
+      ],
+      "name": "个人衣物与毡被",
+      "approach": [
+        40,
+        3,
+        8
+      ]
+    },
+    {
+      "id": "bsit",
+      "kind": "work",
+      "pos": [
+        39,
+        3,
+        15
+      ],
+      "name": "浅木餐桌与双侧席",
+      "approach": [
+        38,
+        3,
+        15
+      ]
+    },
+    {
+      "id": "sharedkcook",
+      "kind": "work",
+      "pos": [
+        16,
+        3,
+        30
+      ],
+      "name": "炊煮与备餐",
+      "approach": [
+        16,
+        3,
+        31
+      ]
+    },
+    {
+      "id": "sharedkwater",
+      "kind": "work",
+      "pos": [
+        20,
+        3,
+        30
+      ],
+      "name": "运水清洗",
+      "approach": [
+        20,
+        3,
+        31
+      ]
+    },
+    {
+      "id": "sharedkfood",
+      "kind": "storage",
+      "pos": [
+        17,
+        4,
+        28
+      ],
+      "name": "干粮与炊具",
+      "approach": [
+        17,
+        3,
+        29
+      ]
+    },
+    {
+      "id": "sharedmeal",
+      "kind": "work",
+      "pos": [
+        27,
+        3,
+        32
+      ],
+      "name": "浅木餐桌与双侧席",
+      "approach": [
+        26,
+        3,
+        32
+      ]
+    },
+    {
+      "id": "tools",
+      "kind": "storage",
+      "pos": [
+        6,
+        4,
+        31
+      ],
+      "name": "共同迁徙工具",
+      "approach": [
+        6,
+        3,
+        32
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        26,
+        3,
+        42
+      ],
+      "name": "背风营路入口",
+      "facing": "south"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        26,
+        2,
+        42
+      ],
+      "direction": "south",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "接已有营路；人畜与车辆另留净空"
+    }
+  ],
+  "design_notes": [],
+  "differences": [
+    "双帐共享炊庭；以火塘、床榻、厨房和公共空间关系决定平面，浅木家具与织毯区分功能。"
+  ],
+  "floors": [
+    {
+      "name": "营地生活层",
+      "y": 2,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/steppe_life.py:SC-04-v04",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "nbt_sha256": "658872f3baa0e433aa2c1338ecd4cc0e7d2b3ef2d32b12184ec81038e02a255a",
+  "function_terms": [
+    "家庭居住"
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "SC-09-v01",
+  "nbt_sha256": "0fbbac3e6d93045e1949fef50b49bcec918c6c1e32805069c1c0b9788addf24a",
+  "author_sha256": "301aff11bb24871c4ec01c837f03cad29c56470fd0fda95c2ee296e5b97441fe",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-left",
+    "room-right",
+    "point-leftbed",
+    "point-leftbag",
+    "point-leftpacking",
+    "point-leftread",
+    "point-rightbed",
+    "point-rightbag",
+    "point-rightpacking",
+    "point-rightread",
+    "point-meal",
+    "point-host",
+    "point-water",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

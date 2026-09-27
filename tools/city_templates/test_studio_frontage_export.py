@@ -24,6 +24,11 @@ class StudioFrontageExportTests(unittest.TestCase):
             for name in ['author.json', 'structure.nbt', 'validation.json']:
                 shutil.copy2(source / name, asset / name)
             author = exporter.read(asset / 'author.json'); author.pop('frontage', None)
+            # This tests frontage mapping with stubbed geometry, not the mutable
+            # source model's door layout. Supply the two ports the test needs.
+            entry = next(p for p in author['points'] if p['kind'] == 'entrance')
+            author['points'] = [dict(entry, id='front', facing='north'),
+                                dict(entry, id='side', facing='east')]
             exporter.write(asset / 'author.json', author)
             cache = root / 'tools/structure_studio/.cache'; cache.mkdir(parents=True)
             exporter.write(cache / 'registry.json', {})

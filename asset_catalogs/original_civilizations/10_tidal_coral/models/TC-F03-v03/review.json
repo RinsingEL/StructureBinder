@@ -1,0 +1,34 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "TC-F03-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors / 海洋幻想作者实看",
+  "nbt_sha256": "ea0225e5805ce4a1d621c4261f61e27ce7131e0034d08ed56075f78f7c8a7ac6",
+  "author_sha256": "aaca978c25b1aa66ce372680bb7a7d1de5caba621bbf051201ea433c61a9dd80",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-shelter.png",
+    "previews/point-tools.png",
+    "previews/point-repair.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "逐图核对养殖水池围边、独立干路、淡水岸田隔离、遮棚分拣与维护用途；屋顶切片修正后重新拍摄实看。",
+    "实际看过全部外观、去顶、分层、房间、功能点、标注与地形视图；结合零警告数据与导航核对。",
+    "贴墙工具长棚",
+    "开放遮棚提供明确休憩、维修或货运用途，连续柱梁承载贝肋屋盖，临水边护独立连续"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

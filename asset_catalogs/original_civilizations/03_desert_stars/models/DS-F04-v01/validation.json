@@ -1,10 +1,10 @@
 {
   "schema": "structure-studio.validation.v1",
-  "nbt_sha256": "e8224818b2445176cfed6acf8d498e21d40cc9afe425a1e9db89e8e228c596e0",
+  "nbt_sha256": "217cf95646fa8774ff03e4410f354fe05959c73c0233b3012dacad816943df73",
   "navigation": {
     "passed": true,
     "unreachable": [],
-    "nodes": 501,
+    "nodes": 704,
     "highest_standing_y": 2,
     "truncated": false,
     "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
@@ -14,28 +14,30 @@
   "warnings": [],
   "size": [
     16,
-    13,
+    11,
     17
   ],
-  "visible_blocks": 437,
-  "explicit_air": 1435,
-  "palette": 15,
+  "visible_blocks": 653,
+  "explicit_air": 1657,
+  "palette": 18,
   "block_entities": 0,
   "agriculture": null,
   "materials": {
-    "minecraft:cut_sandstone": 144,
-    "minecraft:smooth_sandstone": 124,
-    "minecraft:orange_wool": 54,
-    "minecraft:white_wool": 36,
-    "minecraft:stripped_acacia_log": 34,
-    "minecraft:sandstone": 20,
+    "minecraft:cut_sandstone": 268,
+    "minecraft:sandstone": 120,
+    "minecraft:smooth_sandstone": 105,
+    "minecraft:white_wool": 34,
+    "minecraft:smooth_sandstone_slab": 32,
+    "minecraft:stripped_spruce_log": 28,
+    "minecraft:red_terracotta": 22,
+    "minecraft:spruce_fence": 12,
     "minecraft:barrel": 11,
-    "minecraft:spruce_planks": 6,
-    "minecraft:flower_pot": 2,
-    "minecraft:brown_carpet": 2,
-    "minecraft:orange_carpet": 2,
-    "minecraft:lectern": 1,
-    "minecraft:yellow_carpet": 1
+    "minecraft:spruce_slab": 6,
+    "minecraft:gravel": 5,
+    "minecraft:flower_pot": 4,
+    "minecraft:yellow_carpet": 3,
+    "minecraft:lantern": 2,
+    "minecraft:red_carpet": 1
   },
-  "scope": "NBT、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
 }

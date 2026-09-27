@@ -221,5 +221,8 @@
     "land_surface_y": 2,
     "padding": 5
   },
-  "nbt_sha256": "ceb12cc0584727eed65f1879e9180f6776e929e15485f4dd4d4551227acb5e94"
+  "nbt_sha256": "ceb12cc0584727eed65f1879e9180f6776e929e15485f4dd4d4551227acb5e94",
+  "function_terms": [
+    "矿料仓储"
+  ]
 }

@@ -225,5 +225,9 @@
     "padding": 4,
     "surface": "podzol"
   },
-  "nbt_sha256": "1a89d89ec606e85aa39f66a032cca75b867b6852b8abd7c4dbe9d4478c685d8e"
+  "nbt_sha256": "1a89d89ec606e85aa39f66a032cca75b867b6852b8abd7c4dbe9d4478c685d8e",
+  "function_terms": [
+    "零售",
+    "药材配制"
+  ]
 }

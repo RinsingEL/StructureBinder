@@ -254,5 +254,9 @@
     "bed_y": -1,
     "padding": 4
   },
-  "nbt_sha256": "9fc419a85570ca29ec53390eb6327531fd72b7483e49a223f7a21110ddfb9c3c"
+  "nbt_sha256": "9fc419a85570ca29ec53390eb6327531fd72b7483e49a223f7a21110ddfb9c3c",
+  "function_terms": [
+    "货物仓储",
+    "水陆转运"
+  ]
 }

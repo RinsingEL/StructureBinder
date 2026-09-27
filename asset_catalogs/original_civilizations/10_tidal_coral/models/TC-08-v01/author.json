@@ -341,5 +341,8 @@
     "padding": 4,
     "surface": "sand"
   },
-  "nbt_sha256": "7345cfc093a537281413ce2a1feb664b092950a458e75d532ef83c28491725c8"
+  "nbt_sha256": "7345cfc093a537281413ce2a1feb664b092950a458e75d532ef83c28491725c8",
+  "function_terms": [
+    "水下考察场所"
+  ]
 }

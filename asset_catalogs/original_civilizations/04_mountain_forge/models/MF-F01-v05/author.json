@@ -181,5 +181,10 @@
     "land_surface_y": 2,
     "padding": 5
   },
-  "nbt_sha256": "a102d278d83a628a702bb920651db4c3f8096a00309ed88ac197d193680dfab7"
+  "nbt_sha256": "a102d278d83a628a702bb920651db4c3f8096a00309ed88ac197d193680dfab7",
+  "function_terms": [
+    "零售",
+    "书籍销售",
+    "制图抄录"
+  ]
 }

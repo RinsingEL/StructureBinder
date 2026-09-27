@@ -1,96 +1,65 @@
 {
   "schema": "structure-studio.author.v1",
   "id": "DS-07-v03",
-  "name": "前售楼展玻璃坊",
+  "name": "临街展示工坊",
   "family": "DS-07",
   "civilization": "沙漠",
   "planning_role": "planning_role.fill",
   "size": [
-    35,
-    31,
-    41
+    37,
+    26,
+    39
   ],
   "terrain": {
-    "选址": "具砂料、燃料、供水与外运条件的生产地块，热作业区和烟道周围保持净空",
-    "地块": "下层前售后作，上层展示和职工休息；内部楼梯通向屋面连廊，避开窑炉烟道。",
-    "接地": "主入口与地面层脚底 Y=2；上层版二层脚底 Y=9",
-    "落地": "独立完整建筑与内部院落，不依靠运行时补齐；模板外与凹角未写入格保持原环境"
+    "选址": "有原砂、燃料供给及货物接驳的工商业地块",
+    "地基": "完整支撑地基；门外地面上边界为局部 y=2，台地通过建筑内阶梯连接",
+    "配套": "原砂、燃料、窑前热加工、冷加工、成品陈列和独立窑后维护通路"
   },
   "rooms": [
     {
-      "id": "sales",
-      "name": "前铺展示接待",
+      "id": "sales_room",
+      "name": "沿街成品展示铺",
       "min": [
         5,
         2,
         7
       ],
       "max": [
-        27,
-        6,
-        15
-      ],
-      "purpose": "顾客观样与交易，隔墙后为生产空间"
-    },
-    {
-      "id": "workshop",
-      "name": "后部窑炉工作厅",
-      "min": [
-        5,
-        2,
-        17
-      ],
-      "max": [
-        27,
-        6,
-        33
-      ],
-      "purpose": "窑炉、原料、加工与侧门装卸"
-    },
-    {
-      "id": "gallery",
-      "name": "楼上精品展厅",
-      "min": [
-        5,
-        9,
-        7
-      ],
-      "max": [
-        19,
-        13,
-        17
-      ],
-      "purpose": "采光陈列与坐席"
-    },
-    {
-      "id": "rest",
-      "name": "职工值班室",
-      "min": [
         21,
+        7,
+        16
+      ],
+      "purpose": "沿街成品展示铺"
+    },
+    {
+      "id": "gallery_room",
+      "name": "楼上精品陈列与歇工",
+      "min": [
+        5,
         9,
         7
       ],
       "max": [
-        27,
-        13,
-        17
+        21,
+        14,
+        16
       ],
-      "purpose": "夜间看守、饮水和简单用餐"
+      "purpose": "楼上精品陈列与歇工"
     },
     {
-      "id": "terrace",
-      "name": "窑侧屋面连廊",
+      "id": "kiln",
+      "name": "窑炉热加工与后维护",
       "min": [
-        5,
-        9,
-        19
+        10,
+        2,
+        25
       ],
       "max": [
-        27,
-        13,
-        33
+        16,
+        7,
+        34
       ],
-      "purpose": "楼梯通往展厅与值班室，窑炉烟道保持独立"
+      "purpose": "窑前操作和独立窑后检修"
     }
   ],
   "points": [
@@ -98,222 +67,262 @@
       "id": "sales",
       "kind": "work",
       "pos": [
-        9,
+        10,
         3,
         11
       ],
-      "name": "玻璃冷却陈列架",
+      "name": "成品冷却与玻璃陈列",
       "approach": [
-        9,
+        10,
         2,
         10
       ]
     },
     {
-      "id": "sand",
+      "id": "account",
       "kind": "work",
       "pos": [
         18,
         2,
-        29
+        11
       ],
-      "name": "原砂备料",
+      "name": "接待与交易账目",
       "approach": [
         18,
         2,
-        28
-      ]
-    },
-    {
-      "id": "mould",
-      "kind": "work",
-      "pos": [
-        18,
-        2,
-        20
-      ],
-      "name": "模具与冷加工台",
-      "approach": [
-        18,
-        2,
-        19
-      ]
-    },
-    {
-      "id": "kiln",
-      "kind": "work",
-      "pos": [
-        8,
-        2,
-        22
-      ],
-      "name": "窑炉装料与出料",
-      "approach": [
-        8,
-        2,
-        21
-      ]
-    },
-    {
-      "id": "kiln_service",
-      "kind": "work",
-      "pos": [
-        8,
-        3,
-        27
-      ],
-      "name": "窑后检查与维护",
-      "approach": [
-        8,
-        2,
-        28
+        10
       ]
     },
     {
       "id": "gallery",
       "kind": "work",
       "pos": [
-        11,
         10,
+        10,
+        10
+      ],
+      "name": "成品冷却与玻璃陈列",
+      "approach": [
+        10,
+        9,
         9
-      ],
-      "name": "玻璃冷却陈列架",
-      "approach": [
-        11,
-        9,
-        8
       ]
     },
     {
-      "id": "sleep",
-      "kind": "sleep",
-      "pos": [
-        24,
-        9,
-        10
-      ],
-      "name": "值班休息床",
-      "approach": [
-        23,
-        9,
-        10
-      ]
-    },
-    {
-      "id": "terrace",
-      "kind": "circulation",
-      "pos": [
-        21,
-        9,
-        23
-      ],
-      "name": "屋面连廊",
-      "look_at": [
-        14,
-        10,
-        24
-      ]
-    },
-    {
-      "id": "entry",
-      "kind": "entrance",
-      "pos": [
-        16,
-        2,
-        4
-      ],
-      "name": "主入口",
-      "facing": "north"
-    },
-    {
-      "id": "cargo",
-      "kind": "entrance",
-      "pos": [
-        30,
-        2,
-        28
-      ],
-      "name": "侧巷卸货门",
-      "facing": "east"
-    },
-    {
-      "id": "account",
+      "id": "rest",
       "kind": "work",
       "pos": [
-        22,
-        2,
+        19,
+        9,
         10
       ],
-      "name": "成品接待账台",
+      "name": "离窑饮水与歇工",
       "approach": [
-        22,
-        2,
+        19,
+        9,
         11
+      ]
+    },
+    {
+      "id": "bed",
+      "kind": "bed",
+      "pos": [
+        7,
+        9,
+        15
+      ],
+      "name": "夜间看窑休息床",
+      "approach": [
+        7,
+        9,
+        14
+      ]
+    },
+    {
+      "id": "upper",
+      "kind": "circulation",
+      "pos": [
+        25,
+        9,
+        15
+      ],
+      "name": "楼梯上层平台"
+    },
+    {
+      "id": "raw",
+      "kind": "work",
+      "pos": [
+        5,
+        2,
+        21
+      ],
+      "name": "原砂与配料槽",
+      "approach": [
+        5,
+        2,
+        20
+      ]
+    },
+    {
+      "id": "fuel",
+      "kind": "work",
+      "pos": [
+        9,
+        2,
+        22
+      ],
+      "name": "燃料及包材储备",
+      "approach": [
+        9,
+        2,
+        21
+      ]
+    },
+    {
+      "id": "kiln",
+      "kind": "work",
+      "pos": [
+        13,
+        2,
+        26
+      ],
+      "name": "窑炉装料与热加工",
+      "approach": [
+        13,
+        2,
+        25
+      ]
+    },
+    {
+      "id": "kiln_service",
+      "kind": "work",
+      "pos": [
+        13,
+        3,
+        33
+      ],
+      "name": "窑后检修口",
+      "approach": [
+        13,
+        2,
+        34
+      ]
+    },
+    {
+      "id": "mould",
+      "kind": "work",
+      "pos": [
+        25,
+        2,
+        26
+      ],
+      "name": "模具与冷加工台",
+      "approach": [
+        25,
+        2,
+        25
       ]
     },
     {
       "id": "tools",
       "kind": "work",
       "pos": [
-        14,
+        26,
         2,
-        25
+        29
       ],
-      "name": "冷整修器具",
+      "name": "玻璃修整器具",
       "approach": [
-        14,
+        26,
         2,
-        24
+        28
       ]
+    },
+    {
+      "id": "cooling",
+      "kind": "work",
+      "pos": [
+        26,
+        3,
+        33
+      ],
+      "name": "成品冷却与玻璃陈列",
+      "approach": [
+        26,
+        2,
+        32
+      ]
+    },
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        13,
+        2,
+        2
+      ],
+      "name": "沿街展示入口",
+      "facing": "north"
+    },
+    {
+      "id": "cargo",
+      "kind": "entrance",
+      "pos": [
+        34,
+        2,
+        23
+      ],
+      "name": "侧巷原料入口",
+      "facing": "east"
     }
   ],
   "connections": [
     {
       "kind": "pedestrian",
       "pos": [
-        16,
-        1,
-        4
+        13,
+        2,
+        2
       ],
       "direction": "north",
       "clearance": [
         3,
-        3
+        4
       ],
-      "note": "外部步行或卸货面需接脚底 Y=2"
+      "note": "作者明确的外部地面线 y=2；与外部街道平接"
     },
     {
       "kind": "pedestrian",
       "pos": [
-        30,
-        1,
-        28
+        34,
+        2,
+        23
       ],
       "direction": "east",
       "clearance": [
         3,
-        3
+        4
       ],
-      "note": "外部步行或卸货面需接脚底 Y=2"
+      "note": "作者明确的外部地面线 y=2；与外部街道平接"
     }
   ],
   "design_notes": [
-    "下层前售后作，上层展示和职工休息；内部楼梯通向屋面连廊，避开窑炉烟道。",
-    "砖窑和贯通烟道为原版熔炉的建筑表达；标记操作与维护位置，不声明配方、热工或自动化生产。"
+    "参考用户图3：退台土色砖窑与真实贯通烟道决定轮廓，低木棚分隔热冷加工。",
+    "原版熔炉、器具与空心烟道为静态工艺表达，不声明热工配方、烟气或自动生产机制。"
   ],
   "differences": [
-    "下层前售后作，上层展示和职工休息；内部楼梯通向屋面连廊，避开窑炉烟道。"
+    "临街展示工坊：独立平面、窑位与工作动线。"
   ],
   "floors": [
     {
-      "name": "接待与生产",
-      "y": 1,
-      "max_y": 6
+      "name": "临街铺与后院生产",
+      "y": 2,
+      "max_y": 7
     },
     {
-      "name": "上层展示与值班",
-      "y": 8,
-      "max_y": 13
+      "name": "楼上展厅",
+      "y": 9,
+      "max_y": 14
     }
   ],
   "roof_min_y": 15,
@@ -322,13 +331,20 @@
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
   ],
-  "source": "tools/structure_studio/studio/oasis_crafts.py:glassworks(3)",
+  "source": "tools/structure_studio/studio/desert_fill_glassworks.py:glassworks(3)",
+  "ground_plane": {
+    "y": 2,
+    "note": "主入口门外砂岩场坪上边界，玩家脚底 y=2；内部高台不改变外部接地线"
+  },
   "preview_context": {
     "kind": "flat",
     "land_surface_y": 2,
-    "bed_y": -1,
-    "padding": 3,
+    "bed_y": -2,
+    "padding": 4,
     "surface": "sand"
   },
-  "nbt_sha256": "3a03964f58c3da748ed8930475667c7cf2e1ce939718cfd2840f9e187c017889"
+  "function_terms": [
+    "玻璃加工"
+  ],
+  "nbt_sha256": "1d689135a41e11255754caa6b84982ea6769b4b6cbed4ef8e1339d3cd15f2c8f"
 }

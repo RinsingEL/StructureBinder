@@ -125,5 +125,8 @@
     "layout": "单阶小梯田，前胡萝卜后薯畦各有独立水沟，中部宽阶及田埂连接一格坡差。",
     "irrigation": "每畦固定水源，最终NBT另核对4格水源距离和耕地支撑。"
   },
-  "nbt_sha256": "eedda7281c27dac02562a31fb42929ac890b1f925b36bc18192a9bb6452cf78d"
+  "nbt_sha256": "eedda7281c27dac02562a31fb42929ac890b1f925b36bc18192a9bb6452cf78d",
+  "function_terms": [
+    "农田种植"
+  ]
 }

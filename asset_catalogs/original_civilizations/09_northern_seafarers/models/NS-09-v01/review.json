@@ -1,0 +1,43 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "NS-09-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 北欧套系作者逐图审查",
+  "nbt_sha256": "b10d94c6f870ff8959e5f2b7c82e57e029e5a0b7555cea31dcc9b21697ba3eec",
+  "author_sha256": "41232e4bdf60046a98d1650a1fc6f7a3d6b48888957c4ba9614c81119e0ca2fd",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-food.png",
+    "previews/room-sleep.png",
+    "previews/point-cook.png",
+    "previews/point-desk.png",
+    "previews/point-bags.png",
+    "previews/point-guest0.png",
+    "previews/point-guest1.png",
+    "previews/point-guest2.png",
+    "previews/point-guest3.png",
+    "previews/point-linen.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与用途": "小型海员栈用前食堂兼登记与后四床客寝组成完整接待，行李靠厅后，床边另有个人柜，湿装备不堆床旁。",
+    "实际内饰图审": "紧凑旅宿将餐食、行李与床位分开，床侧有站位。",
+    "完整证据": "已实际查看最终四向、顶视、去顶、全部楼层与房间、使用站位、标记及场地示意；四个双层模型另补楼层斜视核对护栏。",
+    "数据与通路": "NBT 重读、方块状态、作者标记与离线碰撞导航通过，零警告。",
+    "选址条件": "稳定的寒地海湾背风岸台；避开潮涌、雪崩、海冰推挤和行洪通道。；干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。；完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。；厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "设备、晾晒及温床为静态表达，未接入加工、气候或作物生产机制。"
+  ]
+}

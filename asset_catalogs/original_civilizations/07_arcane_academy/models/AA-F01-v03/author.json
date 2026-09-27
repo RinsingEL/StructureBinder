@@ -1,0 +1,356 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "AA-F01-v03",
+  "name": "纸墨抄材铺 · 转角折翼连铺",
+  "family": "AA-F01",
+  "civilization": "魔法学院",
+  "planning_role": "planning_role.fill",
+  "size": [
+    60,
+    42,
+    53
+  ],
+  "terrain": {
+    "选址": "干燥稳定地块；石基落连续承载层，北侧接普通步行通路。",
+    "高程": "主地板Y=3，普通道路脚底接Y=4；基础底Y=0须落在连续承载地层",
+    "地形处理": "模板是人工整平石基，不适用于未经处理的峡谷、水域或陡坡。观测馆上台阶为模板内实体台地。",
+    "接驳": "南北朝向以作者入口标记为准；外部道路须连通真实步行入口，服务范围按用途确定。普通生活空间不因建筑风格要求魔力管线。",
+    "魔法边界": "紫晶、终界烛、传送环、隔离屏与供能接口仅为静态原版陈设，不代表传送、供能、治疗或异常模拟。",
+    "推荐情境": [
+      "学院街区、研究聚落；普通生活与商业建筑可以服务其他居民，不以居民会魔法或已有学院为准入条件。专用设备按自身用途选择。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "shop",
+      "name": "交易陈列与专业工作间",
+      "min": [
+        6,
+        4,
+        8
+      ],
+      "max": [
+        28,
+        9,
+        30
+      ],
+      "purpose": "纸卷装订、墨液调配和纸墨库存；接单、原料、主次操作和成品分区"
+    },
+    {
+      "id": "side_workroom",
+      "name": "街角侧翼操作间",
+      "min": [
+        30,
+        4,
+        8
+      ],
+      "max": [
+        52,
+        9,
+        24
+      ],
+      "purpose": "与营业厅相接的独立加工和分类原料"
+    },
+    {
+      "id": "home_common",
+      "name": "店主餐厨起居",
+      "min": [
+        30,
+        4,
+        27
+      ],
+      "max": [
+        42,
+        9,
+        43
+      ],
+      "purpose": "完整备餐、就餐、坐读和食品存放"
+    },
+    {
+      "id": "home_sleep",
+      "name": "隔门店主寝室",
+      "min": [
+        44,
+        4,
+        27
+      ],
+      "max": [
+        52,
+        9,
+        43
+      ],
+      "purpose": "个人床柜、书写、衣物和盥洗"
+    }
+  ],
+  "points": [
+    {
+      "id": "shop_trade",
+      "kind": "work",
+      "pos": [
+        8,
+        4,
+        10
+      ],
+      "name": "交易、订单与签收",
+      "approach": [
+        8,
+        4,
+        11
+      ]
+    },
+    {
+      "id": "shop_stock",
+      "kind": "storage",
+      "pos": [
+        8,
+        5,
+        14
+      ],
+      "name": "分类用品和档案",
+      "approach": [
+        8,
+        4,
+        15
+      ]
+    },
+    {
+      "id": "shop_work",
+      "kind": "work",
+      "pos": [
+        8,
+        4,
+        19
+      ],
+      "name": "纸卷装订、墨液调配和纸墨库存",
+      "approach": [
+        8,
+        4,
+        20
+      ]
+    },
+    {
+      "id": "shop_secondary",
+      "kind": "work",
+      "pos": [
+        26,
+        4,
+        19
+      ],
+      "name": "分开的第二操作与检验工位",
+      "approach": [
+        26,
+        4,
+        20
+      ]
+    },
+    {
+      "id": "shop_finished",
+      "kind": "storage",
+      "pos": [
+        8,
+        5,
+        29
+      ],
+      "name": "分类用品和档案",
+      "approach": [
+        8,
+        4,
+        28
+      ]
+    },
+    {
+      "id": "shop_catalog",
+      "kind": "storage",
+      "pos": [
+        25,
+        5,
+        10
+      ],
+      "name": "分类用品和档案",
+      "approach": [
+        25,
+        4,
+        11
+      ]
+    },
+    {
+      "id": "side_work",
+      "kind": "work",
+      "pos": [
+        32,
+        4,
+        10
+      ],
+      "name": "纸卷装订、墨液调配和纸墨库存的侧翼精修",
+      "approach": [
+        32,
+        4,
+        11
+      ]
+    },
+    {
+      "id": "side_raw",
+      "kind": "storage",
+      "pos": [
+        32,
+        5,
+        18
+      ],
+      "name": "分类用品和档案",
+      "approach": [
+        32,
+        4,
+        17
+      ]
+    },
+    {
+      "id": "home_cook",
+      "kind": "work",
+      "pos": [
+        32,
+        4,
+        28
+      ],
+      "name": "连续备餐、清洗与食品存储",
+      "approach": [
+        32,
+        4,
+        29
+      ]
+    },
+    {
+      "id": "home_food",
+      "kind": "storage",
+      "pos": [
+        32,
+        5,
+        42
+      ],
+      "name": "分类用品和档案",
+      "approach": [
+        32,
+        4,
+        41
+      ]
+    },
+    {
+      "id": "home_read",
+      "kind": "storage",
+      "pos": [
+        38,
+        5,
+        29
+      ],
+      "name": "分类用品和档案",
+      "approach": [
+        38,
+        4,
+        30
+      ]
+    },
+    {
+      "id": "home_bed",
+      "kind": "sleep",
+      "pos": [
+        47,
+        4,
+        40
+      ],
+      "name": "有个人灯柜的床位",
+      "approach": [
+        48,
+        4,
+        40
+      ]
+    },
+    {
+      "id": "home_desk",
+      "kind": "work",
+      "pos": [
+        46,
+        4,
+        28
+      ],
+      "name": "店主私室书写",
+      "approach": [
+        46,
+        4,
+        29
+      ]
+    },
+    {
+      "id": "home_clothes",
+      "kind": "storage",
+      "pos": [
+        46,
+        5,
+        42
+      ],
+      "name": "分类用品和档案",
+      "approach": [
+        46,
+        4,
+        41
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        16,
+        4,
+        3
+      ],
+      "name": "普通步行入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        16,
+        3,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "外接连续普通街道；魔法设施不替代步行"
+    }
+  ],
+  "design_notes": [],
+  "differences": [
+    "转角折翼连铺",
+    "纸卷装订、墨液调配和纸墨库存",
+    "连通主体、分室生活与行业工位；依据街面、楼层或内庭组织真实流线，不以独栋位置互换作为变体"
+  ],
+  "floors": [
+    {
+      "name": "连通店铺主层",
+      "y": 3,
+      "max_y": 9
+    }
+  ],
+  "roof_min_y": 10,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/arcane_crafts.py",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 4,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "nbt_sha256": "57b9e539fbfd15a7bda9f5016c450cb0e3388656cc1a7b9550df7e0742607675",
+  "function_terms": [
+    "零售",
+    "纸墨配制",
+    "装订"
+  ]
+}

@@ -92,5 +92,8 @@
     "layout": "碎石台地留十字硬路，四块独立窄畦混作；每畦自有水沟，中央水盆供洗菜。",
     "irrigation": "每畦固定水源，最终NBT另核对4格水源距离和耕地支撑。"
   },
-  "nbt_sha256": "dee10b801ee1f0c9fbd79277b60ef1a2a7a8fce5db65b2e7b846f0bb39df36cf"
+  "nbt_sha256": "dee10b801ee1f0c9fbd79277b60ef1a2a7a8fce5db65b2e7b846f0bb39df36cf",
+  "function_terms": [
+    "农田种植"
+  ]
 }

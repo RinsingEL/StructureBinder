@@ -180,5 +180,9 @@
     "padding": 4,
     "surface": "podzol"
   },
-  "nbt_sha256": "e4e036dd59a35c6218995d68a14921e1714ee56ce5e9e2847151a7564caf6ade"
+  "nbt_sha256": "e4e036dd59a35c6218995d68a14921e1714ee56ce5e9e2847151a7564caf6ade",
+  "function_terms": [
+    "零售",
+    "餐饮"
+  ]
 }

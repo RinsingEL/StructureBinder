@@ -1,5 +1,5 @@
 """Gothic everyday trades: process-specific stations in several spatial organizations."""
-from .memorial_life import base,house,entry,upper,partition,zone,finish,cook,dining,sleep,stores,counter,use,pointed
+from .memorial_crafts_base import base,house,entry,upper,partition,zone,finish,cook,dining,sleep,stores,counter,use,pointed
 from .components import bench,pendant
 
 
@@ -117,7 +117,20 @@ def decorate_trade(m,kind,positions):
 
 
 def shop(key,name,shape,trade):
-    m,positions,note=workplace(key,name,shape);decorate_trade(m,trade,positions)
+    m,positions,note=workplace(key,name,shape)
+    # Open production and sales arcades face the paved courtyard as in the reference sheets.
+    if shape in ('side','rear','court','elbow'):
+        x0,z0,x1,z1,y,height=m.meta['craft_volumes'][0]
+        doors={p['pos'][0] for p in m.meta['points'] if p['kind']=='entrance' and p['pos'][2]==z0-1}
+        for x in range(x0+2,x1-1):
+            if any(abs(x-door)<=1 for door in doors):continue
+            m.box((x,3,z0),(x,5,z0),'air')
+            m.set(x,6,z0,'dark_oak_log[axis=x]')
+        for x in range(x0+2,x1-1,5):
+            if any(abs(x-door)<=1 for door in doors):continue
+            m.box((x,3,z0),(x,5,z0),'stone_bricks')
+            m.set(x,6,z0-1,'lantern')
+    decorate_trade(m,trade,positions)
     return finish(m,note+' '+TRADES[trade][0]+'经营完整设置原料、加工、成品、交易和管理，每处标注独立站位。')
 
 

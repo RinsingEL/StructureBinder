@@ -222,5 +222,8 @@
     "padding": 4,
     "surface": "podzol"
   },
-  "nbt_sha256": "6c654aa01313aa90229163837f770ef49c1e467a729f086388e464f4973fc459"
+  "nbt_sha256": "6c654aa01313aa90229163837f770ef49c1e467a729f086388e464f4973fc459",
+  "function_terms": [
+    "集市交易"
+  ]
 }

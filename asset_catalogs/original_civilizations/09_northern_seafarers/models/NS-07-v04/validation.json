@@ -1,0 +1,44 @@
+{
+  "schema": "structure-studio.validation.v1",
+  "nbt_sha256": "4e533131716380f191d936832b158e43ff107e9e6a5e45a3d73c03eed71d6456",
+  "navigation": {
+    "passed": true,
+    "unreachable": [],
+    "nodes": 5143,
+    "highest_standing_y": 4,
+    "truncated": false,
+    "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "size": [
+    41,
+    29,
+    41
+  ],
+  "visible_blocks": 6800,
+  "explicit_air": 37309,
+  "palette": 23,
+  "block_entities": 0,
+  "agriculture": null,
+  "materials": {
+    "minecraft:cobblestone": 3042,
+    "minecraft:spruce_planks": 1619,
+    "minecraft:gravel": 1032,
+    "minecraft:spruce_stairs": 621,
+    "minecraft:dark_oak_log": 276,
+    "minecraft:stripped_spruce_log": 70,
+    "minecraft:cobweb": 52,
+    "minecraft:chain": 31,
+    "minecraft:light_blue_stained_glass_pane": 24,
+    "minecraft:lantern": 9,
+    "minecraft:light_blue_stained_glass": 8,
+    "minecraft:barrel": 5,
+    "minecraft:spruce_slab": 5,
+    "minecraft:crafting_table": 3,
+    "minecraft:loom": 2,
+    "minecraft:water_cauldron": 1
+  },
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+}

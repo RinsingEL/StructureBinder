@@ -158,5 +158,8 @@
     "layout": "L形田地绕开东北树根，分别种植地下块茎和蔬菜",
     "water": "每个田块独立水眼，与最终NBT四格水源核对；实际生长、光照与季节另验"
   },
-  "nbt_sha256": "4815c030ac69b31a076b497bb6eb142e66d911caaf333287ea0fa8d894a3eb1c"
+  "nbt_sha256": "4815c030ac69b31a076b497bb6eb142e66d911caaf333287ea0fa8d894a3eb1c",
+  "function_terms": [
+    "农田种植"
+  ]
 }

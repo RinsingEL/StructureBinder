@@ -1,0 +1,248 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "SC-04-v02",
+  "name": "周边床榻家庭圆帐",
+  "family": "SC-04",
+  "civilization": "游牧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    33,
+    19,
+    37
+  ],
+  "terrain": {
+    "选址": "背风稳定营地，按具体帐群占地接已有营路；周边床榻家庭圆帐",
+    "资源与季节": "有人驻留须有可行淡水、食物与补给来源，储槽只表达运水储备；畜群照护另需饮水与饲料，种植另需耕土和足够生长季。短停与长驻按单体用途区分。",
+    "高程": "默认入口脚底Y=3；坡台住宅Y=5由实体台阶接入，见点位。",
+    "落地限制": "仅整理模板营地占地，不推平外部草坡；留出畜群、货车或来客外接通路。",
+    "运行边界": "原版静态空间与作者点位，未接入动物、交易、季节迁徙或运行时生成。",
+    "推荐情境": [
+      "商路营地、季节牧场或长驻聚落；驻留时长按具体用途决定，游牧风格不等于所有设施都可随队移动。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "family",
+      "name": "周边床榻与中心餐叙",
+      "min": [
+        6,
+        3,
+        5
+      ],
+      "max": [
+        27,
+        6,
+        27
+      ],
+      "purpose": "三处床榻沿弧墙分布，以短侧屏遮视线；中心不设横墙，厨房在入口侧"
+    }
+  ],
+  "points": [
+    {
+      "id": "westbed",
+      "kind": "sleep",
+      "pos": [
+        9,
+        3,
+        12
+      ],
+      "name": "独立床榻",
+      "approach": [
+        10,
+        3,
+        12
+      ]
+    },
+    {
+      "id": "eastbed",
+      "kind": "sleep",
+      "pos": [
+        23,
+        3,
+        12
+      ],
+      "name": "独立床榻",
+      "approach": [
+        24,
+        3,
+        12
+      ]
+    },
+    {
+      "id": "rearbed",
+      "kind": "sleep",
+      "pos": [
+        16,
+        3,
+        7
+      ],
+      "name": "独立床榻",
+      "approach": [
+        17,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "westcloth",
+      "kind": "storage",
+      "pos": [
+        9,
+        4,
+        17
+      ],
+      "name": "个人衣物与毡被",
+      "approach": [
+        9,
+        3,
+        18
+      ]
+    },
+    {
+      "id": "eastcloth",
+      "kind": "storage",
+      "pos": [
+        22,
+        4,
+        17
+      ],
+      "name": "个人衣物与毡被",
+      "approach": [
+        22,
+        3,
+        18
+      ]
+    },
+    {
+      "id": "familymeal",
+      "kind": "work",
+      "pos": [
+        14,
+        3,
+        16
+      ],
+      "name": "浅木餐桌与双侧席",
+      "approach": [
+        13,
+        3,
+        16
+      ]
+    },
+    {
+      "id": "familykcook",
+      "kind": "work",
+      "pos": [
+        13,
+        3,
+        23
+      ],
+      "name": "炊煮与备餐",
+      "approach": [
+        13,
+        3,
+        24
+      ]
+    },
+    {
+      "id": "familykwater",
+      "kind": "work",
+      "pos": [
+        17,
+        3,
+        23
+      ],
+      "name": "运水清洗",
+      "approach": [
+        17,
+        3,
+        24
+      ]
+    },
+    {
+      "id": "familykfood",
+      "kind": "storage",
+      "pos": [
+        14,
+        4,
+        21
+      ],
+      "name": "干粮与炊具",
+      "approach": [
+        14,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "sew",
+      "kind": "work",
+      "pos": [
+        9,
+        3,
+        21
+      ],
+      "name": "家庭缝补",
+      "approach": [
+        10,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        16,
+        3,
+        34
+      ],
+      "name": "背风营路入口",
+      "facing": "south"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        16,
+        2,
+        34
+      ],
+      "direction": "south",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "接已有营路；人畜与车辆另留净空"
+    }
+  ],
+  "design_notes": [],
+  "differences": [
+    "周边床榻家庭圆帐；以火塘、床榻、厨房和公共空间关系决定平面，浅木家具与织毯区分功能。"
+  ],
+  "floors": [
+    {
+      "name": "营地生活层",
+      "y": 2,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/steppe_life.py:SC-04-v02",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "nbt_sha256": "a070fd50d47808f24cae2c38369940e051670054bfb6ad65344dc49f45ef0bc5",
+  "function_terms": [
+    "家庭居住"
+  ]
+}

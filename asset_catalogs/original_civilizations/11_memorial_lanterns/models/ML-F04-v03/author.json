@@ -1,0 +1,215 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "ML-F04-v03",
+  "name": "干库与转角清洗棚",
+  "family": "ML-F04",
+  "civilization": "哥特",
+  "planning_role": "planning_role.fill",
+  "size": [
+    29,
+    24,
+    30
+  ],
+  "terrain": {
+    "选址": "稳定、排水良好并可接近工作区域的地块；保留工具搬运及入口空间。工具棚本身不要求耕地、种植日照或灌溉供水。",
+    "高程": "基础底Y=0、常规地面Y=2、脚底Y=3；抬高或双层版本另记。",
+    "边界": "完整独立模板，保留外扶柱、檐口、采光和门外站位，不默认邻居补齐。",
+    "落地": "独立工具配套模板；基础、出入口及搬运空间按实际模型核对。",
+    "生产": "工具、维护与储物空间为静态表达；不以工具棚声明作物生产能力。",
+    "推荐情境": [
+      "庭园、墓园或其他需要看护与工具存放的区域；实际种植区另行满足其农业条件。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "dry",
+      "name": "封闭干燥工具库",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        14,
+        7,
+        23
+      ],
+      "purpose": "干净物资及登记独立保管；设施：干燥工具归还柜、干净布料与清洁材料、领用与维修登记"
+    },
+    {
+      "id": "wet",
+      "name": "开敞转角湿作业棚",
+      "min": [
+        19,
+        3,
+        16
+      ],
+      "max": [
+        23,
+        7,
+        23
+      ],
+      "purpose": "沾泥器具先清洗换柄，干后转入主库；设施：棚下换柄和整修、沾泥工具清洗"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        14,
+        3,
+        2
+      ],
+      "name": "园地前入口",
+      "facing": "north"
+    },
+    {
+      "id": "shed",
+      "kind": "entrance",
+      "pos": [
+        10,
+        3,
+        3
+      ],
+      "name": "尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "tools",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        7
+      ],
+      "name": "干燥工具归还柜",
+      "look_at": [
+        5,
+        4,
+        7
+      ],
+      "approach": [
+        5,
+        3,
+        8
+      ]
+    },
+    {
+      "id": "clean",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        13
+      ],
+      "name": "干净布料与清洁材料",
+      "look_at": [
+        5,
+        4,
+        13
+      ],
+      "approach": [
+        5,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "record",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        20
+      ],
+      "name": "领用与维修登记",
+      "look_at": [
+        5,
+        4,
+        20
+      ],
+      "approach": [
+        5,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "repair",
+      "kind": "work",
+      "pos": [
+        19,
+        3,
+        21
+      ],
+      "name": "棚下换柄和整修",
+      "look_at": [
+        19,
+        4,
+        21
+      ],
+      "approach": [
+        19,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "wash",
+      "kind": "work",
+      "pos": [
+        22,
+        3,
+        17
+      ],
+      "name": "沾泥工具清洗",
+      "look_at": [
+        22,
+        4,
+        17
+      ],
+      "approach": [
+        22,
+        3,
+        18
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "闭合长库与侧后开敞清洗棚形成L形工作关系，工具先湿洗整修再入干库，净料和登记保持室内。"
+  ],
+  "differences": [
+    "闭合长库与侧后开敞清洗棚形成L形工作关系，工具先湿洗整修再入干库，净料和登记保持室内。"
+  ],
+  "floors": [
+    {
+      "name": "生活作业层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 6,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/memorial_gardens.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "ground_plane": {
+    "y": 3,
+    "note": "正面院门外铺装地坪顶面；台地田内部逐阶抬高。"
+  },
+  "function_terms": [
+    "工具存放",
+    "看护作业"
+  ],
+  "nbt_sha256": "b8d618a447fab6f7bfb2323c56765997663a586d29ab12d8de685ec2d472b580"
+}

@@ -1,0 +1,53 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "NS-F01-v04",
+  "nbt_sha256": "da6d8bdb462f0093e5c3689c5e0e018c8be69773c1eebc2829b6b0b42efffa81",
+  "author_sha256": "d20ef77b9d42b2727dc54285238653159b02ec8926bf9975569c6554a5320fe2",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-sale",
+    "room-fix",
+    "room-yard",
+    "point-goods",
+    "point-sale",
+    "point-fix",
+    "point-parts",
+    "point-stock",
+    "point-receive",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending",
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "寒海航民",
+      "after": "霜帆王国",
+      "previous_author_sha256": "ae7761dd9d6d604f7e2f3d40ae7618c970ddd4e23f866baae57e1a78666d3002",
+      "current_author_sha256": "b37e3e8290714c93fd296e4cc8b34d896722c5e029f4d3394fc8d103bf46ce9f",
+      "nbt_sha256": "da6d8bdb462f0093e5c3689c5e0e018c8be69773c1eebc2829b6b0b42efffa81",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "霜帆王国",
+      "after": "北欧",
+      "previous_author_sha256": "b37e3e8290714c93fd296e4cc8b34d896722c5e029f4d3394fc8d103bf46ce9f",
+      "current_author_sha256": "d20ef77b9d42b2727dc54285238653159b02ec8926bf9975569c6554a5320fe2",
+      "nbt_sha256": "da6d8bdb462f0093e5c3689c5e0e018c8be69773c1eebc2829b6b0b42efffa81",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
+  ]
+}

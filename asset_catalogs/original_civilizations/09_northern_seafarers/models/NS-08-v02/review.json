@@ -1,0 +1,46 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "NS-08-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 北欧套系作者逐图审查",
+  "nbt_sha256": "34b54a9c0e22ff99b411b0de7700404a9b7b8327dd9123b8b34aeaf374ecaa79",
+  "author_sha256": "45b80aa8dd175bb7febd3cd1d50edaf513126f0008f692c50207da55af58fef7",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-cell0.png",
+    "previews/room-cell1.png",
+    "previews/room-cell2.png",
+    "previews/room-cell3.png",
+    "previews/room-check.png",
+    "previews/point-stock0.png",
+    "previews/point-reserve0.png",
+    "previews/point-stock1.png",
+    "previews/point-reserve1.png",
+    "previews/point-stock2.png",
+    "previews/point-reserve2.png",
+    "previews/point-fuel.png",
+    "previews/point-record.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与用途": "四个带独立入口的短仓围绕中央收发廊，食品、被服、工具和燃料彻底分屋，冬季领用可直接到对应库门。",
+    "实际内饰图审": "多格库食品、燃料与工具分别保管，中央配发区域连通。",
+    "完整证据": "已实际查看最终四向、顶视、去顶、全部楼层与房间、使用站位、标记及场地示意；四个双层模型另补楼层斜视核对护栏。",
+    "数据与通路": "NBT 重读、方块状态、作者标记与离线碰撞导航通过，零警告。",
+    "选址条件": "稳定的寒地海湾背风岸台；避开潮涌、雪崩、海冰推挤和行洪通道。；干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。；完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。；厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "设备、晾晒及温床为静态表达，未接入加工、气候或作物生产机制。"
+  ]
+}

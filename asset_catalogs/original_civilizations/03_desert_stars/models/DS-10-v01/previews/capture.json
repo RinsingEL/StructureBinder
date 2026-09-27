@@ -1,8 +1,8 @@
 {
   "schema": "structure-studio.capture.v1",
   "id": "DS-10-v01",
-  "nbt_sha256": "b5d4dee0c975fd265d5c9585fe82e47f0645e5f478c230aab43f2d57265b484c",
-  "author_sha256": "2d75905c4f50117ef28f4795e9376167a7de8fde8fdc507c9af3960c6bef8e47",
+  "nbt_sha256": "85dfa7c325245edb59d75cd036956dd37002c98dbef3074ba6ff11e6b7c25839",
+  "author_sha256": "1764a9f93cfec2c48efcd3c9d0917eceb49803ffc7dd8f0dd0e479620bbee128",
   "shots": [
     "front",
     "back",
@@ -13,44 +13,28 @@
     "floor-1",
     "floor-2",
     "floor-3",
-    "room-calculation",
     "room-library",
-    "room-gallery",
-    "room-deck",
+    "room-keeper",
+    "room-calibration",
+    "room-upper",
+    "room-instrument",
+    "room-sundial",
+    "room-summit",
     "point-survey",
     "point-records",
+    "point-calibration",
     "point-keeper_bed",
+    "point-clock_records",
+    "point-upper_records",
+    "point-summit",
+    "point-instrument",
+    "point-sundial",
     "point-first_landing",
     "point-deck_landing",
-    "point-instrument",
     "annotations",
     "site-context"
   ],
   "render_errors": [],
   "missing_textures": [],
-  "visual_review": "pending",
-  "metadata_migrations": [
-    {
-      "kind": "civilization_display_name_only",
-      "date": "2026-09-22",
-      "field": "civilization",
-      "before": "沙海星象文明",
-      "after": "星仪王国",
-      "previous_author_sha256": "c8f409f8d29cc232716523f81e2a3f49ed80377fbb163829b205cbdadf0a869a",
-      "current_author_sha256": "de6218f68389c0f3a46a8cf6b466216f0509767b6d8d9b5d29e16904fa003fc3",
-      "nbt_sha256": "b5d4dee0c975fd265d5c9585fe82e47f0645e5f478c230aab43f2d57265b484c",
-      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
-    },
-    {
-      "kind": "civilization_display_name_only",
-      "date": "2026-09-22",
-      "field": "civilization",
-      "before": "星仪王国",
-      "after": "沙漠",
-      "previous_author_sha256": "de6218f68389c0f3a46a8cf6b466216f0509767b6d8d9b5d29e16904fa003fc3",
-      "current_author_sha256": "2d75905c4f50117ef28f4795e9376167a7de8fde8fdc507c9af3960c6bef8e47",
-      "nbt_sha256": "b5d4dee0c975fd265d5c9585fe82e47f0645e5f478c230aab43f2d57265b484c",
-      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
-    }
-  ]
+  "visual_review": "pending"
 }

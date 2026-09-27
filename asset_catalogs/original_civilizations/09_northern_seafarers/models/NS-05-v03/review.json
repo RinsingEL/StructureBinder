@@ -1,0 +1,24 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "NS-05-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex northern homes subagent 2026-09-27",
+  "nbt_sha256": "ac9b681fc027a27e0bed7b60fe5c5861d86459c0c19d64d61b34fe1adbb10ec0",
+  "author_sha256": "67033b26ff8c43b8178313f4ab4b2b709f8e3a6d999e83267262f8af2aa430f8",
+  "evidence": [
+    "previews/front.png",
+    "previews/interior.png"
+  ],
+  "checks": [
+    "已实际查看最终外观与生活层剖切；第六栋另看阁楼层。",
+    "参考图六种轮廓已区分：单户、双户错位、高厅低翼、L院、双屋共院、阁楼。",
+    "复用完整厨房餐桌、床位与储物，入口与生活站位离线全部可达，阁楼阳台有实心支撑与护栏。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "按用户速度优先要求复用原有内饰，只参考主要轮廓与空间分型，未逐方块复刻图中装饰。"
+  ]
+}

@@ -1,0 +1,230 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "RS-04",
+  "name": "断裂控制舱与侧接档案间",
+  "family": "RS-04",
+  "civilization": "废土拾荒",
+  "planning_role": "planning_role.structure",
+  "size": [
+    43,
+    23,
+    39
+  ],
+  "terrain": {
+    "选址": "旧控制舱嵌在稳定半截机壳内；残轴尾段保持封边，新增档案间由外侧地基承重。",
+    "接地": "完整旧机座埋入稳固碎石台地，地坪Y=2、入口脚底Y=3；不将薄壳残板当作新房基础。",
+    "外接": "南侧接既有搬运路；模板外须保留回转、排水与坠落隔离带。避开活动滑坡、洪道及悬空残骸。",
+    "供给": "生活水依外部运水，燃料和食物由聚落补给；不假设旧机械仍能工作。",
+    "边界": "独立承载静态原版结构；残骸稳定、探险门禁与设备功能未接入运行时。"
+  },
+  "rooms": [
+    {
+      "id": "repair",
+      "name": "后加档案修复间",
+      "min": [
+        30,
+        3,
+        9
+      ],
+      "max": [
+        37,
+        7,
+        22
+      ],
+      "purpose": "有独立旧场坪支承的后加板房，门窗和完整使用通路"
+    },
+    {
+      "id": "controls",
+      "name": "原控制舱",
+      "min": [
+        6,
+        3,
+        6
+      ],
+      "max": [
+        24,
+        13,
+        23
+      ],
+      "purpose": "成排停用控制台、操作席与旧档案，保持历史用途证据"
+    }
+  ],
+  "points": [
+    {
+      "id": "console",
+      "kind": "work",
+      "pos": [
+        12,
+        4,
+        8
+      ],
+      "name": "断电主控制台",
+      "approach": [
+        12,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "archive",
+      "kind": "storage",
+      "pos": [
+        8,
+        4,
+        19
+      ],
+      "name": "旧纸本运行档案",
+      "approach": [
+        8,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "map",
+      "kind": "work",
+      "pos": [
+        20,
+        3,
+        18
+      ],
+      "name": "旧线路图校对",
+      "approach": [
+        20,
+        3,
+        19
+      ]
+    },
+    {
+      "id": "oldbunk",
+      "kind": "sleep",
+      "pos": [
+        22,
+        3,
+        22
+      ],
+      "name": "旧值班铺与遗留私物",
+      "approach": [
+        23,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "newfiles",
+      "kind": "storage",
+      "pos": [
+        31,
+        4,
+        10
+      ],
+      "name": "整理后档案柜",
+      "approach": [
+        31,
+        3,
+        11
+      ]
+    },
+    {
+      "id": "desk",
+      "kind": "work",
+      "pos": [
+        32,
+        3,
+        15
+      ],
+      "name": "复抄工作台",
+      "approach": [
+        32,
+        3,
+        16
+      ]
+    },
+    {
+      "id": "restore",
+      "kind": "work",
+      "pos": [
+        35,
+        3,
+        18
+      ],
+      "name": "纸本装帧修补",
+      "approach": [
+        35,
+        3,
+        19
+      ]
+    },
+    {
+      "id": "shell",
+      "kind": "work",
+      "pos": [
+        9,
+        5,
+        27
+      ],
+      "name": "控制舱外断轴遗存",
+      "approach": [
+        9,
+        3,
+        25
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        27,
+        3,
+        36
+      ],
+      "name": "搬运路入口",
+      "facing": "south"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        27,
+        2,
+        36
+      ],
+      "direction": "south",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "接稳固旧场坪，货运另保留转向区"
+    }
+  ],
+  "design_notes": [
+    "深色旧机梁、齿轴与氧化铜壳为旧骨架；浅木、橙色板补丁与布棚为后加住用空间。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "修补地坪",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/relic_salvagers.py:RS-04",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 5,
+    "surface": "grass"
+  },
+  "nbt_sha256": "35dd2c7259c7a38f6ef7097c4af3fe0455e705fe65ca2e11d9c4ca7a877b3c15",
+  "function_terms": [
+    "控制舱遗址展示",
+    "档案保管"
+  ]
+}

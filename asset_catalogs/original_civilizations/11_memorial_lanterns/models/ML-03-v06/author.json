@@ -1,0 +1,316 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "ML-03-v06",
+  "name": "钟务三屋围庭宅",
+  "family": "ML-03",
+  "civilization": "哥特",
+  "planning_role": "planning_role.fill",
+  "size": [
+    35,
+    29,
+    35
+  ],
+  "terrain": {
+    "选址": "稳定、排水良好的居民地块，日照与通路按具体用途保留；哥特是建造风格而非地形限制。",
+    "高程": "基础底Y=0、常规地面Y=2、脚底Y=3；抬高或双层版本另记。",
+    "边界": "完整独立模板，保留外扶柱、檐口、采光和门外站位，不默认邻居补齐。"
+  },
+  "rooms": [
+    {
+      "id": "eat",
+      "name": "独立餐厨屋",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        15,
+        7,
+        14
+      ],
+      "purpose": "完整家庭炊食与备粮；设施：备餐、热食与洗涤、全家食粮餐具"
+    },
+    {
+      "id": "sleep",
+      "name": "双寝房纵翼",
+      "min": [
+        23,
+        3,
+        5
+      ],
+      "max": [
+        29,
+        7,
+        25
+      ],
+      "purpose": "两个两床寝间与中央过道；设施：床位与个人衣物、床位与个人衣物、床位与个人衣物、床位与个人衣物、共用被服"
+    },
+    {
+      "id": "clock",
+      "name": "后院钟务屋",
+      "min": [
+        5,
+        3,
+        23
+      ],
+      "max": [
+        15,
+        7,
+        29
+      ],
+      "purpose": "安静工作、备件与院前交班；设施：独立安静钟务桌、钟务零件库"
+    }
+  ],
+  "points": [
+    {
+      "id": "livingentry",
+      "kind": "entrance",
+      "pos": [
+        10,
+        3,
+        3
+      ],
+      "name": "尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "sleepentry",
+      "kind": "entrance",
+      "pos": [
+        26,
+        3,
+        3
+      ],
+      "name": "尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "clockentry",
+      "kind": "circulation",
+      "pos": [
+        10,
+        3,
+        21
+      ],
+      "name": "院内房门：尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "cook",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        6
+      ],
+      "name": "备餐、热食与洗涤",
+      "look_at": [
+        5,
+        4,
+        6
+      ],
+      "approach": [
+        5,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "pantry",
+      "kind": "storage",
+      "pos": [
+        12,
+        3,
+        12
+      ],
+      "name": "全家食粮餐具",
+      "look_at": [
+        12,
+        4,
+        12
+      ],
+      "approach": [
+        12,
+        3,
+        13
+      ]
+    },
+    {
+      "id": "beds0",
+      "kind": "bed",
+      "pos": [
+        23,
+        3,
+        10
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        23,
+        4,
+        10
+      ],
+      "approach": [
+        24,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "beds1",
+      "kind": "bed",
+      "pos": [
+        26,
+        3,
+        10
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        26,
+        4,
+        10
+      ],
+      "approach": [
+        27,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "bedsrear0",
+      "kind": "bed",
+      "pos": [
+        23,
+        3,
+        20
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        23,
+        4,
+        20
+      ],
+      "approach": [
+        24,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "bedsrear1",
+      "kind": "bed",
+      "pos": [
+        26,
+        3,
+        20
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        26,
+        4,
+        20
+      ],
+      "approach": [
+        27,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "linen",
+      "kind": "storage",
+      "pos": [
+        23,
+        3,
+        24
+      ],
+      "name": "共用被服",
+      "look_at": [
+        23,
+        4,
+        24
+      ],
+      "approach": [
+        23,
+        3,
+        25
+      ]
+    },
+    {
+      "id": "clock",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        24
+      ],
+      "name": "独立安静钟务桌",
+      "look_at": [
+        5,
+        4,
+        24
+      ],
+      "approach": [
+        5,
+        3,
+        25
+      ]
+    },
+    {
+      "id": "parts",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        28
+      ],
+      "name": "钟务零件库",
+      "look_at": [
+        5,
+        4,
+        28
+      ],
+      "approach": [
+        5,
+        3,
+        29
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "餐厨、两间寝室与钟务分成三屋围庭，四床家庭经开敞庭院往来，工作噪声与日常炊食物理分离。",
+    "按2026-09-27效果图重绘：浅石深木、陡瓦白边、铁脊老虎窗、紫金彩窗与灯柱围院。"
+  ],
+  "differences": [
+    "餐厨、两间寝室与钟务分成三屋围庭，四床家庭经开敞庭院往来，工作噪声与日常炊食物理分离。"
+  ],
+  "floors": [
+    {
+      "name": "生活作业层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/memorial_life.py:BUILDERS",
+  "ground_plane": {
+    "y": 3,
+    "note": "外部场坪顶面与脚底Y=3，铺地方块Y=2；内部上层及高台不改变接地基准。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "家庭居住"
+  ],
+  "nbt_sha256": "f95677f0965b4079c8612720799d237a417adec0682984209e4c9d61bc2eafa5"
+}

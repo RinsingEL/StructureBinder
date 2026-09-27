@@ -5,6 +5,7 @@ from pathlib import Path
 
 from .model import DATA_VERSION, read_structure, write_json
 from .navigation import audit
+from .grounding import resolve_ground_plane
 
 AIR = {"minecraft:air", "minecraft:cave_air", "minecraft:void_air"}
 DIRECTIONS = dict(north=(0, -1), south=(0, 1), east=(1, 0), west=(-1, 0))
@@ -23,6 +24,9 @@ def validate(directory: Path, registry=None, *, save=True):
     except (ValueError, KeyError, OSError) as exc:
         return dict(passed=False, errors=[str(exc)], warnings=[])
     size = data["size"]
+    grounding = resolve_ground_plane(meta, size)
+    if grounding["status"] == "invalid":
+        errors.append("Invalid author ground_plane: " + grounding["message"])
     if data["data_version"] != DATA_VERSION:
         errors.append(f"Expected DataVersion {DATA_VERSION}")
     if meta.get("nbt_sha256") != data["sha256"]:

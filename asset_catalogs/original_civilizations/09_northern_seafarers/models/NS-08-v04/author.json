@@ -1,0 +1,319 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "NS-08-v04",
+  "name": "分屋卸货冬储场",
+  "family": "NS-08",
+  "civilization": "北欧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    35,
+    28,
+    31
+  ],
+  "terrain": {
+    "选址": "干燥稳定地基，外部街面接Y=3；仓储需外部货源，客栈需食品及饮水供给；不强制滨海选址。",
+    "高程": "干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。",
+    "保留空间": "完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。",
+    "风雪": "厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。",
+    "推荐情境": [
+      "寒地背风聚落或海湾聚落；这是常见使用背景，不要求所有北欧建筑临海，也不限定住户种族。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "food",
+      "name": "长条食品批次库",
+      "min": [
+        4,
+        3,
+        4
+      ],
+      "max": [
+        14,
+        6,
+        25
+      ],
+      "purpose": "验收后按批次入三排食品架；具体设施：粮食验收与封包复查、批次密封食品、批次密封食品、批次密封食品"
+    },
+    {
+      "id": "tool",
+      "name": "独立装备小库",
+      "min": [
+        24,
+        3,
+        4
+      ],
+      "max": [
+        30,
+        6,
+        14
+      ],
+      "purpose": "工具储存与维护；具体设施：工具和灯具、备用工具保养"
+    },
+    {
+      "id": "fuel",
+      "name": "露侧有顶燃料场",
+      "min": [
+        21,
+        3,
+        20
+      ],
+      "max": [
+        30,
+        6,
+        25
+      ],
+      "purpose": "木料与食品分开，通风防雪不模拟防火功能；具体设施：独立遮雪燃料垛"
+    },
+    {
+      "id": "yard",
+      "name": "中间卸货与配给院",
+      "min": [
+        16,
+        3,
+        4
+      ],
+      "max": [
+        22,
+        6,
+        25
+      ],
+      "purpose": "分拣台旁留贯通搬运路线；具体设施：院内配给分拣与交接"
+    }
+  ],
+  "points": [
+    {
+      "id": "foodentry",
+      "kind": "entrance",
+      "pos": [
+        9,
+        3,
+        2
+      ],
+      "name": "背风步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "toolentry",
+      "kind": "entrance",
+      "pos": [
+        27,
+        3,
+        2
+      ],
+      "name": "背风步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "receive",
+      "kind": "work",
+      "pos": [
+        4,
+        3,
+        5
+      ],
+      "name": "粮食验收与封包复查",
+      "look_at": [
+        4,
+        4,
+        5
+      ],
+      "approach": [
+        4,
+        3,
+        6
+      ]
+    },
+    {
+      "id": "food11",
+      "kind": "storage",
+      "pos": [
+        4,
+        3,
+        11
+      ],
+      "name": "批次密封食品",
+      "look_at": [
+        4,
+        4,
+        11
+      ],
+      "approach": [
+        4,
+        3,
+        12
+      ]
+    },
+    {
+      "id": "food17",
+      "kind": "storage",
+      "pos": [
+        4,
+        3,
+        17
+      ],
+      "name": "批次密封食品",
+      "look_at": [
+        4,
+        4,
+        17
+      ],
+      "approach": [
+        4,
+        3,
+        18
+      ]
+    },
+    {
+      "id": "food23",
+      "kind": "storage",
+      "pos": [
+        4,
+        3,
+        23
+      ],
+      "name": "批次密封食品",
+      "look_at": [
+        4,
+        4,
+        23
+      ],
+      "approach": [
+        4,
+        3,
+        24
+      ]
+    },
+    {
+      "id": "tools",
+      "kind": "storage",
+      "pos": [
+        24,
+        3,
+        5
+      ],
+      "name": "工具和灯具",
+      "look_at": [
+        24,
+        4,
+        5
+      ],
+      "approach": [
+        24,
+        3,
+        6
+      ]
+    },
+    {
+      "id": "repair",
+      "kind": "work",
+      "pos": [
+        24,
+        3,
+        11
+      ],
+      "name": "备用工具保养",
+      "look_at": [
+        24,
+        4,
+        11
+      ],
+      "approach": [
+        24,
+        3,
+        12
+      ]
+    },
+    {
+      "id": "wood",
+      "kind": "storage",
+      "pos": [
+        23,
+        3,
+        21
+      ],
+      "name": "独立遮雪燃料垛",
+      "look_at": [
+        23,
+        4,
+        21
+      ],
+      "approach": [
+        23,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "issue",
+      "kind": "work",
+      "pos": [
+        17,
+        3,
+        10
+      ],
+      "name": "院内配给分拣与交接",
+      "look_at": [
+        17,
+        4,
+        10
+      ],
+      "approach": [
+        17,
+        3,
+        11
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        9,
+        3,
+        2
+      ],
+      "direction": "north",
+      "clearance": [
+        1,
+        2
+      ],
+      "note": "已标入口与外部Y=3街面接驳"
+    }
+  ],
+  "design_notes": [
+    "参考北欧图4：分屋卸货冬储场；复用完整可达的分类储物或食宿内饰，重组屋顶和装卸/入口体量。"
+  ],
+  "differences": [
+    "分屋卸货冬储场"
+  ],
+  "floors": [
+    {
+      "name": "岸台生活作业层",
+      "y": 2,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/northern_fill_storage_inns.py:build('NS-08',4)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 5,
+    "surface": "snow"
+  },
+  "ground_plane": {
+    "y": 3,
+    "note": "外部稳定街面与模板场坪顶面齐平，站立脚底Y=3；基础方块在其下"
+  },
+  "function_terms": [
+    "仓储",
+    "物资配给"
+  ],
+  "nbt_sha256": "fb69e3db3658546da67312ae1daa54706c9bd7445042ba0333cfee865a5f10f3"
+}

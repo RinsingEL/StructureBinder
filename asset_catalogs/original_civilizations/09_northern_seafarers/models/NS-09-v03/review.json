@@ -1,0 +1,46 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "NS-09-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 北欧套系作者逐图审查",
+  "nbt_sha256": "9a81812d256652c5d4a3f0cc6da00f4acdb9d51b15b9732b85f85b7a5b35233b",
+  "author_sha256": "b7ad00be687918effef42ec69cbf7454ced86bcc4a3b5d4d1cee4d312f9ec9ec",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-public.png",
+    "previews/room-frontbed.png",
+    "previews/room-backbed.png",
+    "previews/point-cook.png",
+    "previews/point-desk.png",
+    "previews/point-gear.png",
+    "previews/point-front0.png",
+    "previews/point-front1.png",
+    "previews/point-back0.png",
+    "previews/point-back1.png",
+    "previews/point-linen.png",
+    "previews/annotations.png",
+    "previews/site-context.png",
+    "previews/floor-2-oblique.png"
+  ],
+  "checks": {
+    "形体与用途": "狭窄港街地块把接待食堂和湿装备留街层，上层前后两组双寝隔门，楼梯落脚处连到服务廊而非穿床位。",
+    "实际内饰图审": "楼上客房床柜和隔断完整，补斜视确认楼梯口连续护栏。",
+    "完整证据": "已实际查看最终四向、顶视、去顶、全部楼层与房间、使用站位、标记及场地示意；四个双层模型另补楼层斜视核对护栏。",
+    "数据与通路": "NBT 重读、方块状态、作者标记与离线碰撞导航通过，零警告。",
+    "选址条件": "稳定的寒地海湾背风岸台；避开潮涌、雪崩、海冰推挤和行洪通道。；干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。；完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。；厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "设备、晾晒及温床为静态表达，未接入加工、气候或作物生产机制。"
+  ]
+}

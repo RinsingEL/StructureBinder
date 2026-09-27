@@ -8,55 +8,101 @@ def base(key,name,w,d,h=29):
         '选址':'稳定、排水良好的居民地块，日照与通路按具体用途保留；哥特是建造风格而非地形限制。',
         '高程':'基础底Y=0、常规地面Y=2、脚底Y=3；抬高或双层版本另记。',
         '边界':'完整独立模板，保留外扶柱、檐口、采光和门外站位，不默认邻居补齐。'})
-    m.box((1,0,1),(w-2,2,d-2),'stone_bricks');m.box((1,2,1),(w-2,2,d-2),'gravel')
+    m.box((1,0,1),(w-2,2,d-2),'stone_bricks');m.box((1,2,1),(w-2,2,d-2),'stone_bricks')
     m.box((1,3,1),(w-2,h-1,d-2),'air')
     m.meta.update(source='tools/structure_studio/studio/memorial_life.py:BUILDERS',roof_min_y=25,
+        ground_plane=dict(y=3,note='外部场坪顶面与脚底Y=3，铺地方块Y=2；内部上层及高台不改变接地基准。'),
         floors=[dict(name='生活作业层',y=2,max_y=7)],preview_context=dict(kind='flat',land_surface_y=3,padding=4,surface='grass'))
     return m
 
 
-def pointed(m,c,z,y=4,axis='x',color='cyan'):
+def pointed(m,c,z,y=4,axis='x',color='purple'):
     for u in (-1,0,1):
         top=y+3-abs(u)
         for yy in range(y,top+1):
             x,zz=(c+u,z) if axis=='x' else (c,z+u)
-            m.set(x,yy,zz,'polished_andesite' if yy==top else f'{color}_stained_glass')
+            block='stone_bricks' if yy==top else ('yellow_stained_glass' if u==0 else f'{color}_stained_glass')
+            m.set(x,yy,zz,block)
 
 
 def house(m,x0,z0,x1,z1,y=2,height=5):
     top=y+height
     shell(m,(x0,y,z0),(x1,top,z1),'calcite','spruce_planks',ceiling='spruce_planks')
     for x in (x0,x1):
-        for z in range(z0,z1+1,5):
-            m.box((x,y+1,z),(x,top,z),'dark_oak_log[axis=y]')
+        for z in range(z0,z1+1,5):m.box((x,y+1,z),(x,top,z),'dark_oak_log[axis=y]')
         m.box((x,top,z0),(x,top,z1),'dark_oak_log[axis=z]')
         for z in range(z0+3,z1-1,5):pointed(m,x,z,y+2,axis='z')
     for z in (z0,z1):
         m.box((x0,top,z),(x1,top,z),'dark_oak_log[axis=x]')
         for x in (x0,x1):
+            m.box((x,y+1,z),(x,top,z),'dark_oak_log[axis=y]')
             m.box((x,y+1,z-1 if z==z0 else z+1),(x,y+3,z-1 if z==z0 else z+1),'stone_bricks')
-    for i in range((x1-x0+4)//2):
-        a,b=x0-1+i,x1+1-i
+        for x in range(x0+3,x1-1,6):pointed(m,x,z,y+2)
+    if height>=10:
+        for z in (z0,z1):
+            m.box((x0,y+6,z),(x1,y+6,z),'dark_oak_log[axis=x]')
+            pointed(m,(x0+x1)//2,z,y+8)
+            for xx in range((x0+x1)//2-1,(x0+x1)//2+2):
+                zz=z-1 if z==z0 else z+1
+                m.set(xx,y+7,zz,'dark_oak_slab')
+        for x in (x0,x1):m.box((x,y+6,z0),(x,y+6,z1),'dark_oak_log[axis=z]')
+    # Use the shorter span for a human-scale roof, so transverse wings have
+    # a transverse ridge rather than one enormous pyramid-like gable.
+    sideways=(x1-x0)>(z1-z0)
+    lo,hi=(z0,z1) if sideways else (x0,x1)
+    start,end=(x0,x1) if sideways else (z0,z1)
+    def put(u,yy,v,block):
+        m.set(v,yy,u,block) if sideways else m.set(u,yy,v,block)
+    def fill(u0,yy0,v,u1,yy1,block):
+        for u in range(u0,u1+1):
+            for yy in range(yy0,yy1+1):put(u,yy,v,block)
+    ridge=top+1
+    for i in range((hi-lo+4)//2):
+        a,b=lo-1+i,hi+1-i
         if a>b:break
-        for z in range(z0-1,z1+2):
-            m.set(a,top+1+i,z,'deepslate_tile_stairs[facing=east]')
-            m.set(b,top+1+i,z,'deepslate_tile_stairs[facing=west]')
+        ridge=top+1+i
+        for v in range(start-1,end+2):
+            put(a,ridge,v,'deepslate_tile_stairs[facing='+('south' if sideways else 'east')+']')
+            put(b,ridge,v,'deepslate_tile_stairs[facing='+('north' if sideways else 'west')+']')
         if i:
-            for z in (z0,z1):m.box((a,top+1,z),(b,top+i,z),'calcite')
-    center=(x0+x1)//2
-    for z in (z0,z1):
-        m.box((center,top+1,z),(center,top+(x1-x0)//2,z),'dark_oak_log[axis=y]')
-        m.set(center,top+(x1-x0)//2+1,z,'stone_brick_wall')
-    for x in (x0,x1):m.box((x,top+1,z0),(x,top+1,z1),'dark_oak_log[axis=z]')
-    for z in range(z0+4,z1,7):pendant(m,center,top-1,z,top+1)
+            for v in (start,end):fill(a,top+1,v,b,ridge-1,'calcite')
+        for v in (start-1,end+1):
+            put(a,ridge,v,'stone_brick_stairs[facing='+('south' if sideways else 'east')+']')
+            put(b,ridge,v,'stone_brick_stairs[facing='+('north' if sideways else 'west')+']')
+    center=(lo+hi)//2
+    for v in range(start,end+1):
+        put(center,ridge+1,v,'deepslate_tiles')
+        put(center,ridge+2,v,'iron_bars['+('east=true,west=true' if sideways else 'north=true,south=true')+']')
+    for v in (start-1,end+1):
+        put(center,ridge+1,v,'stone_brick_wall')
+        put(center,ridge+2,v,'stone_brick_wall')
+    for v in (start,end):
+        if ridge-top>=4:
+            for yy in range(top+1,ridge):put(center,yy,v,'dark_oak_log[axis=y]')
+            put(center,top+2,v,'yellow_stained_glass')
+            put(center,top+3,v,'purple_stained_glass')
+    # Small paired dormers break up long roof slopes without blocking rooms.
+    if end-start>=10 and hi-lo>=8:
+        for v in range(start+4,end-2,8):
+            u=lo+2
+            for vv in range(v-1,v+2):
+                for yy in range(top+3,top+6):put(u,yy,vv,'dark_oak_planks')
+                put(u,top+6-abs(vv-v),vv,'deepslate_tiles')
+            put(u,top+4,v,'yellow_stained_glass')
+            put(u,top+5,v,'stone_brick_slab')
     m.meta['roof_min_y']=min(m.meta['roof_min_y'],top+1)
+    m.meta.setdefault('reference_roofs',[]).append([x0,z0,x1,z1,top,ridge])
+    for z in range(z0+4,z1,7):pendant(m,(x0+x1)//2,top-1,z,top+1)
 
 
 def entry(m,key,x,z,y=3):
     m.door(x,y,z,wood='dark_oak',facing='north')
     for xx in (x-1,x+1):m.set(xx,y+2,z,'polished_andesite')
-    m.set(x,y+3,z,'polished_andesite')
-    m.point(key,'entrance',(x,y,z-1),'尖楣入户门')
+    m.set(x,y+3,z,'stone_bricks')
+    for xx in (x-2,x+2):
+        m.set(xx,y+2,z-1,'lantern[hanging=true]')
+        m.set(xx,y+3,z-1,'dark_oak_fence')
+    m.point(key,'entrance',(x,y,z-1),'尖楣入户门',facing='north')
 
 
 def use(m,key,name,x,z,ax=None,az=None,y=3,kind='work'):
@@ -82,8 +128,9 @@ def sleep(m,key,x,z,n=2,y=3):
 
 def cook(m,key,x,z,y=3):
     counter(m,key,'备餐、热食与洗涤',x,z,4,y,'smoker[facing=south,lit=false]');m.set(x+2,y,z,'water_cauldron[level=3]')
-    roof=max(yy for (xx,yy,zz),b in m.blocks.items() if xx==x and zz==z and b[0]!='minecraft:air')
-    m.box((x,y+1,z),(x,roof+2,z),'stone_bricks')
+    roof=min(m.size[1]-3,max(yy for (xx,yy,zz),b in m.blocks.items() if b[0]!='minecraft:air'))
+    m.box((x,y+1,z),(x,roof+1,z),'stone_bricks')
+    m.set(x,roof+2,z,'stone_brick_wall')
 
 
 def dining(m,x,z,n=4,y=3):
@@ -111,7 +158,37 @@ def bellwork(m,key,x,z):
 
 
 def finish(m,note):
-    m.meta['design_notes']=[note];m.meta['differences']=[note]
+    m.meta['design_notes']=[note,'按2026-09-27效果图重绘：浅石深木、陡瓦白边、铁脊老虎窗、紫金彩窗与灯柱围院。'];m.meta['differences']=[note]
+    w,h,d=m.size
+    gates={int(p['pos'][0]) for p in m.meta['points'] if p['kind']=='entrance'}
+    for x in range(2,w-2):
+        for z in (2,d-3):
+            if z==2 and (x<=6 or x>=w-7 or any(abs(x-g)<=2 for g in gates)):continue
+            if m.blocks.get((x,3,z),('minecraft:air',()))[0]!='minecraft:air':continue
+            m.set(x,3,z,'stone_bricks');m.set(x,4,z,'iron_bars[east=true,west=true]')
+            if x%5==2:
+                m.box((x,3,z),(x,5,z),'stone_bricks');m.set(x,6,z,'lantern')
+    for z in range(3,d-3):
+        for x in (2,w-3):
+            if m.blocks.get((x,3,z),('minecraft:air',()))[0]!='minecraft:air':continue
+            m.set(x,3,z,'stone_bricks');m.set(x,4,z,'iron_bars[north=true,south=true]')
+            if z%6==3:
+                m.box((x,3,z),(x,5,z),'stone_bricks');m.set(x,6,z,'stone_brick_slab')
+    # Front gable planters remain beside entrances, never on their approach.
+    for x0,z0,x1,z1,top,ridge in m.meta.pop('reference_roofs',[]):
+        for x in (x0+1,x1-1):
+            z=z0-1
+            if any(abs(x-p['pos'][0])<=1 and abs(z-p['pos'][2])<=1 for p in m.meta['points']):continue
+            if m.blocks.get((x,3,z),('minecraft:air',()))[0]=='minecraft:air':
+                m.set(x,3,z,'barrel');m.set(x,4,z,'flower_pot')
+
+    # Rear/service room doors are reached through the courtyard, not straight
+    # through the front buildings; keep them as internal circulation markers.
+    courtyard_doors={'ML-03-v05':{'home'},'ML-03-v06':{'clockentry'},
+                     'ML-07-v01':{'toolentry'},'ML-07-v02':{'tools'}}
+    for point in m.meta['points']:
+        if point['id'] in courtyard_doors.get(m.meta['id'],set()):
+            point['kind']='circulation';point['name']='院内房门：'+point['name']
     for r in m.meta['rooms']:
         names=[p['name'] for p in m.meta['points'] if all(r['min'][i]<=p['pos'][i]<=r['max'][i] for i in range(3))]
         if names:r['purpose']+='；设施：'+'、'.join(names)
@@ -119,28 +196,31 @@ def finish(m,note):
 
 
 def clock_short():
-    m=base('ML-03-v01','短街守钟人家庭宅',21,27)
-    house(m,4,4,16,23);entry(m,'entry',10,4)
-    partition(m,5,14,15,10)
-    cook(m,'cook',5,6);dining(m,10,9,4);bellwork(m,'clock',5,16)
-    sleep(m,'family',11,18,2);stores(m,'linen','被服与家庭粮食',11,21,4)
-    zone(m,'living','前炊食起居',5,5,15,13,'炊洗、共桌与入户换鞋')
-    zone(m,'workhome','后寝室与小钟务间',5,15,15,22,'家庭床柜与侧钟务工作面，以中央通道相隔')
-    return finish(m,'紧凑街宅前炊食后寝与钟务，钟具独占一侧工作面；浅灰石与木框架、尖楣小窗和陡瓦顶用于普通家庭尺度。')
+    m=base('ML-03-v01','短街守钟人家庭宅',33,29,35)
+    house(m,4,4,16,24,height=11);entry(m,'entry',10,4);upper(m,5,5,15,23,12,10)
+    house(m,20,13,28,24);entry(m,'clockentry',24,13)
+    cook(m,'cook',5,6);dining(m,6,11,4);stores(m,'pantry','家庭餐具食粮',5,20,4)
+    bellwork(m,'clock',21,16)
+    sleep(m,'family',6,19,2,y=9);stores(m,'linen','被服与家庭粮食',6,22,5,y=9)
+    counter(m,'reading','上层家庭读写',6,6,4,y=9,block='lectern[facing=south]')
+    zone(m,'living','下层炊食起居',5,5,15,23,'餐厨、楼梯与家庭储存')
+    zone(m,'family','上层家庭寝居',5,5,15,23,'双床、衣物与读写',y=9)
+    zone(m,'work','低檐钟具工作附屋',21,14,27,23,'与家庭高主楼隔院相望的钟务台和零件库')
+    return finish(m,'依参考图：窄高双层尖顶家宅与右侧低钟坊，高低山墙面向前院；家庭楼梯和楼上双床实际可达。')
 
 
 def caretaker_court():
     m=base('ML-07-v01','看护家庭与独立工具院',31,29)
-    house(m,4,4,16,25);house(m,22,13,27,25);entry(m,'entry',10,4);entry(m,'toolentry',24,13)
-    partition(m,5,14,15,10);cook(m,'cook',5,6);dining(m,10,9,4);sleep(m,'family',6,19,3)
-    stores(m,'linen','家用被服与衣物',6,23,4);counter(m,'records','家庭值守与墓区记录',11,16,4,block='lectern[facing=south,has_book=false]')
+    house(m,4,4,16,25,height=11);upper(m,5,5,15,24,12,10);house(m,22,13,27,25);entry(m,'entry',10,4);entry(m,'toolentry',24,13)
+    cook(m,'cook',5,6);dining(m,6,11,4);sleep(m,'family',6,19,2,y=9)
+    stores(m,'linen','家用被服与衣物',6,23,4,y=9);counter(m,'records','家庭值守与墓区记录',11,16,4,block='lectern[facing=south,has_book=false]')
     stores(m,'tools','清扫、除草与维修工具',23,16,3);counter(m,'repair','工具维护与换柄',23,21,3)
     m.box((21,2,5),(27,2,9),'moss_block');m.set(22,3,6,'flowering_azalea');bench(m,21,3,10,5,wood='spruce')
     m.point('court','circulation',(19,3,10),'居住与工具屋间院路',look_at=[24,4,13])
     zone(m,'living','家庭起居餐厨',5,5,15,13,'正常三人家庭炊食')
-    zone(m,'sleep','三床寝区与记录',5,15,15,24,'个人床柜、被服和值守记录')
+    zone(m,'sleep','上层家庭双床寝区',5,15,15,24,'个人床柜、被服',y=9)
     zone(m,'tools','独立干燥工具屋',23,14,26,24,'工具归还、维护与存放，不占家庭餐厨')
-    return finish(m,'家庭主屋和狭长工具屋隔院分置，三床生活完整；前院绿角与长凳提供家人休憩，墓园工作不吞并家庭空间。')
+    return finish(m,'依参考图：双层高主屋与低工具屋隔院分置，上层双床家居有实梯；下层完整餐厨与值守，前院留维护与休憩空间。')
 
 
 BUILDERS={'ML-03-v01':clock_short,'ML-07-v01':caretaker_court}
@@ -171,15 +251,17 @@ def clock_wing():
 
 
 def clock_tower():
-    m=base('ML-03-v03','钟务附楼双层家宅',25,29,35)
-    house(m,4,4,20,25,height=11);entry(m,'entry',12,4);upper(m,5,5,19,24,16,12)
-    cook(m,'cook',5,6);dining(m,6,11,5);bellwork(m,'clock',5,18)
-    partition(m,5,15,15,11,y=9);sleep(m,'beds',6,20,3,y=9)
-    stores(m,'linen','上层家庭被服',6,23,5,y=9);counter(m,'reading','上层读写与钟务交班',6,7,5,y=9,block='lectern[facing=south]')
-    bench(m,6,9,11,5,wood='spruce');m.set(12,20,4,'bell[attachment=floor,facing=north]')
-    zone(m,'ground','餐厨与后钟务间',5,5,15,24,'前部完整炊食，后部校时修钟，侧梯上楼')
-    zone(m,'upper','读写起居与隔屏三床',5,5,19,24,'独立上层家庭生活和后寝，梯井有护栏',y=9)
-    return finish(m,'狭地向上发展，下层餐厨与钟务、上层读写和隔屏寝室；六级实梯、封护梯井和高山墙钟共同形成垂直轮廓。')
+    m=base('ML-03-v03','钟务附楼双层家宅',35,30,35)
+    house(m,4,4,16,25,height=11);entry(m,'entry',10,4);upper(m,5,5,15,24,12,11)
+    house(m,20,12,30,25);entry(m,'clockentry',25,12)
+    cook(m,'cook',5,6);dining(m,6,11,4);stores(m,'pantry','家庭备粮',5,21,4)
+    bellwork(m,'clock',21,15);counter(m,'records','钟务交班记录',21,22,4,block='lectern[facing=south]')
+    sleep(m,'beds',6,20,2,y=9);stores(m,'linen','上层家庭被服',6,23,5,y=9)
+    counter(m,'reading','上层读写',6,7,4,y=9,block='lectern[facing=south]')
+    zone(m,'ground','高宅家庭餐厨',5,5,15,24,'主楼起居餐厨与侧楼梯')
+    zone(m,'upper','上层双床家庭',5,5,15,24,'双床、衣物与读写',y=9)
+    zone(m,'clock','低檐独立钟务附楼',21,13,29,24,'前校时后记录，宽工作门向庭院')
+    return finish(m,'依参考图：高瘦双层主宅与宽低钟务翼并置，屋脊高差和开敞院路形成主次体量。')
 
 
 def clock_pair():
@@ -229,7 +311,7 @@ def clock_three():
 
 def caretaker_duplex():
     m=base('ML-07-v02','横向双户共用值守宅',37,29)
-    house(m,4,4,32,18);house(m,13,21,23,25)
+    house(m,4,4,17,18);house(m,19,4,32,18);house(m,13,21,23,25)
     for i,x in enumerate((5,20)):
         entry(m,'entry'+str(i),x+5,4);cook(m,'cook'+str(i),x,6);dining(m,x+5,7,4)
         sleep(m,'beds'+str(i),x+1,14,2);stores(m,'linen'+str(i),'本户衣物被服',x+7,15,4)
@@ -243,7 +325,7 @@ def caretaker_duplex():
 def caretaker_elbow():
     m=base('ML-07-v03','折角宅与雨天清洗廊',31,32)
     house(m,4,4,25,14);house(m,4,14,14,27);entry(m,'entry',20,4)
-    m.box((7,3,14),(11,6,14),'air');cook(m,'cook',16,6);dining(m,17,10,5)
+    m.box((7,3,14),(11,6,14),'air');m.box((15,3,15),(16,5,17),'air');cook(m,'cook',16,6);dining(m,17,10,5)
     counter(m,'records','值守书桌与地图',5,6,5,block='cartography_table');stores(m,'gear','室内干燥工具柜',5,11,5)
     sleep(m,'beds',6,21,2);stores(m,'linen','家庭被服',6,25,6)
     for x in (18,26):m.box((x,3,19),(x,6,19),'dark_oak_log[axis=y]')
@@ -286,7 +368,8 @@ def caretaker_raised():
 
 def caretaker_corridor():
     m=base('ML-07-v06','通廊三间值守家庭宅',23,38)
-    house(m,4,4,18,33);entry(m,'entry',14,4)
+    house(m,4,4,18,13);house(m,4,14,18,23,height=6);house(m,4,24,18,33,height=7);
+    m.box((5,3,13),(17,6,14),'air');m.box((5,3,23),(17,6,24),'air');entry(m,'entry',14,4)
     m.box((12,3,14),(12,6,32),'calcite')
     for zz in (19,27):m.door(12,3,zz,wood='dark_oak',facing='east')
     partition(m,5,14,11,8);partition(m,5,23,11,8)

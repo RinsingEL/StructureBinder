@@ -166,5 +166,9 @@
     "land_surface_y": 2,
     "padding": 5
   },
-  "nbt_sha256": "fdcb9c9453c2339ac4fb07c32e01581f6d083296a35fd561cd3a6a8fe343efc2"
+  "nbt_sha256": "fdcb9c9453c2339ac4fb07c32e01581f6d083296a35fd561cd3a6a8fe343efc2",
+  "function_terms": [
+    "家庭居住",
+    "手工制作"
+  ]
 }

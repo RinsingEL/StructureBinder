@@ -344,5 +344,8 @@
     "shore_z": 44,
     "water_surface_y": 3
   },
-  "nbt_sha256": "ba85d461a459b173b0b86285abd08e46970e7b65414ff4b9ae8a54494b6c5724"
+  "nbt_sha256": "ba85d461a459b173b0b86285abd08e46970e7b65414ff4b9ae8a54494b6c5724",
+  "function_terms": [
+    "船舶修造"
+  ]
 }

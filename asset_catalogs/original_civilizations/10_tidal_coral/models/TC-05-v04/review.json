@@ -1,0 +1,47 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "TC-05-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors / 海洋幻想作者实看",
+  "nbt_sha256": "ae6aad012f4d3d58f0a1e636a22a496a1488881ff7e21b814f65c84572237939",
+  "author_sha256": "7530a74a4b4dd86c8e34d44a9384c6d004584f25f68194a1693d5838e92f731a",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-shop.png",
+    "previews/room-ownerlive.png",
+    "previews/room-ownerbed.png",
+    "previews/room-workwing.png",
+    "previews/point-shoptrade.png",
+    "previews/point-shopraw.png",
+    "previews/point-shopbench.png",
+    "previews/point-shopindustry.png",
+    "previews/point-ownerlivecook.png",
+    "previews/point-ownerlivefood.png",
+    "previews/point-ownerlivebooks.png",
+    "previews/point-ownerbeda.png",
+    "previews/point-ownerbedcloth.png",
+    "previews/point-ownerbeddesk.png",
+    "previews/point-craft.png",
+    "previews/point-materials.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "逐图核对行业专用台、交易与原料储存、独立生活卧室；仓库货垛与装卸通道分开。",
+    "实际看过全部外观、去顶、分层、房间、功能点、标注与地形视图；结合零警告数据与导航核对。",
+    "内庭珍珠交易坊",
+    "三面内庭，交易、精作与生活分翼"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

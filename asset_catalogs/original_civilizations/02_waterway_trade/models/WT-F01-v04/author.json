@@ -1,0 +1,296 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "WT-F01-v04",
+  "name": "敞廊器具维修铺",
+  "family": "WT-F01",
+  "civilization": "地中海",
+  "planning_role": "planning_role.fill",
+  "size": [
+    39,
+    30,
+    35
+  ],
+  "terrain": {
+    "选址": "稳定排水良好的普通街巷地块；商铺不要求临水或码头。",
+    "高程": "外部铺地顶面和一层脚底Y=3，上层脚底Y=9。",
+    "边界": "建筑、遮阳棚、院墙和经营内饰均独立完整，街面需接入口。"
+  },
+  "rooms": [
+    {
+      "id": "home",
+      "name": "独立家庭起居寝室",
+      "min": [
+        28,
+        3,
+        12
+      ],
+      "max": [
+        35,
+        7,
+        26
+      ],
+      "purpose": "完整餐厨、双床、床柜和衣物"
+    },
+    {
+      "id": "repair",
+      "name": "开敞维修作业厅",
+      "min": [
+        5,
+        3,
+        8
+      ],
+      "max": [
+        22,
+        7,
+        27
+      ],
+      "purpose": "接件、零件、工台和交付，宽阔中央通路"
+    }
+  ],
+  "points": [
+    {
+      "id": "homeentry",
+      "kind": "entrance",
+      "pos": [
+        31,
+        3,
+        9
+      ],
+      "name": "木门临街入口",
+      "facing": "north"
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        13,
+        3,
+        2
+      ],
+      "name": "开敞修理廊入口",
+      "facing": "north"
+    },
+    {
+      "id": "homecook",
+      "kind": "work",
+      "pos": [
+        28,
+        3,
+        12
+      ],
+      "name": "家庭烹饪洗涤",
+      "look_at": [
+        28,
+        4,
+        12
+      ],
+      "approach": [
+        28,
+        3,
+        13
+      ]
+    },
+    {
+      "id": "homebed0",
+      "kind": "bed",
+      "pos": [
+        29,
+        3,
+        22
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        29,
+        4,
+        22
+      ],
+      "approach": [
+        30,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "homebed1",
+      "kind": "bed",
+      "pos": [
+        32,
+        3,
+        22
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        32,
+        4,
+        22
+      ],
+      "approach": [
+        33,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "homelinen",
+      "kind": "storage",
+      "pos": [
+        29,
+        3,
+        25
+      ],
+      "name": "家庭衣物被服",
+      "look_at": [
+        29,
+        4,
+        25
+      ],
+      "approach": [
+        29,
+        3,
+        26
+      ]
+    },
+    {
+      "id": "station0",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        9
+      ],
+      "name": "修理接件",
+      "look_at": [
+        5,
+        4,
+        9
+      ],
+      "approach": [
+        5,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "station1",
+      "kind": "work",
+      "pos": [
+        16,
+        3,
+        10
+      ],
+      "name": "零件存放",
+      "look_at": [
+        16,
+        4,
+        10
+      ],
+      "approach": [
+        16,
+        3,
+        11
+      ]
+    },
+    {
+      "id": "station2",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        18
+      ],
+      "name": "拆检修复",
+      "look_at": [
+        5,
+        4,
+        18
+      ],
+      "approach": [
+        5,
+        3,
+        19
+      ]
+    },
+    {
+      "id": "station3",
+      "kind": "work",
+      "pos": [
+        15,
+        3,
+        24
+      ],
+      "name": "已修器具",
+      "look_at": [
+        15,
+        4,
+        24
+      ],
+      "approach": [
+        15,
+        3,
+        25
+      ]
+    },
+    {
+      "id": "station4",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        25
+      ],
+      "name": "经营记录与订单",
+      "look_at": [
+        5,
+        4,
+        25
+      ],
+      "approach": [
+        5,
+        3,
+        26
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "按图4八个日常小商铺设计：暖白米石墙、低坡红瓦、木廊、蓝绿百叶与有用途的经营院。"
+  ],
+  "differences": [
+    "敞廊器具维修铺；占地、层数、廊院、工作台与生活组织独立配置。"
+  ],
+  "floors": [
+    {
+      "name": "街铺与庭院",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mediterranean_shops.py:BUILDERS",
+  "ground_plane": {
+    "y": 3,
+    "note": "外部米石铺地顶面与首层入口脚底Y=3"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "零售",
+    "工具维修",
+    "修理接件",
+    "零件存放",
+    "拆检修复",
+    "已修器具",
+    "家庭居住"
+  ],
+  "static_facilities": "烘炉、织造、器物、绳帆与商品为原版方块静态表达。",
+  "nbt_sha256": "e3cecfea32097c0f9f8bce2b46bc98b07bf49373e9ed0fac2d2870c5e532b65d"
+}

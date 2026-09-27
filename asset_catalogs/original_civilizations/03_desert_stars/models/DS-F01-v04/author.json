@@ -1,153 +1,191 @@
 {
   "schema": "structure-studio.author.v1",
   "id": "DS-F01-v04",
-  "name": "院边旅具修补铺",
+  "name": "折角敞院工具铺",
   "family": "DS-F01",
   "civilization": "沙漠",
   "planning_role": "planning_role.fill",
   "size": [
-    30,
-    23,
-    27
+    28,
+    15,
+    30
   ],
   "terrain": {
-    "选址": "有实际居民、旅人和相应行业供需的绿洲生活街区",
-    "地块": "封闭前铺卖小工具，院内开放凉棚承担修补、打磨和备件存放，适合有侧院的商路街段。",
-    "高程": "主入口脚底 Y=2；两层版上层脚底 Y=9",
-    "落地": "结构连同内院及铺面完整落地；外部交通、供水与库存另行接入，未写入的凹角保持原环境"
+    "选址": "稳定商业街地块，北侧顾客入口和侧后方进货作业面须接通",
+    "供给": "按行业提供原料、货品和饮水；烘焙与陶窑需燃料、排烟空间",
+    "接驳": "外部街面脚底Y=2，与首层同高；高台仅在明确外阶处接通"
   },
   "rooms": [
     {
-      "id": "shop",
-      "name": "旅具小铺",
+      "id": "工具后库",
+      "name": "工具后库",
       "min": [
-        4,
+        5,
         2,
-        6
-      ],
-      "max": [
-        12,
-        6,
         18
       ],
-      "purpose": "小工具展示、接待与备件"
+      "max": [
+        18,
+        6,
+        24
+      ],
+      "purpose": "本店售卖、作业或后勤空间"
     },
     {
-      "id": "yard",
-      "name": "院内维修凉棚",
+      "id": "折角工具铺",
+      "name": "折角工具铺",
       "min": [
-        16,
+        5,
         2,
-        9
+        8
       ],
       "max": [
-        25,
-        7,
-        21
+        8,
+        5,
+        15
       ],
-      "purpose": "修补、打磨、取水和备料"
+      "purpose": "本店售卖、作业或后勤空间"
     }
   ],
   "points": [
     {
-      "id": "sales",
-      "kind": "work",
-      "pos": [
-        7,
-        2,
-        10
-      ],
-      "name": "旅具与配件柜台",
-      "approach": [
-        7,
-        2,
-        11
-      ]
-    },
-    {
-      "id": "repair",
-      "kind": "work",
-      "pos": [
-        17,
-        2,
-        14
-      ],
-      "name": "修补工作台",
-      "approach": [
-        17,
-        2,
-        13
-      ]
-    },
-    {
-      "id": "forge",
-      "kind": "work",
-      "pos": [
-        22,
-        2,
-        14
-      ],
-      "name": "旅具整形砧",
-      "approach": [
-        22,
-        2,
-        13
-      ]
-    },
-    {
-      "id": "entry",
+      "id": "front",
       "kind": "entrance",
       "pos": [
-        8,
+        16,
         2,
         3
       ],
-      "name": "主入口",
+      "name": "临街顾客入口",
       "facing": "north"
+    },
+    {
+      "id": "零件柜台",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        10
+      ],
+      "name": "零件柜台",
+      "approach": [
+        6,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "磨具",
+      "kind": "work",
+      "pos": [
+        5,
+        2,
+        14
+      ],
+      "name": "磨具",
+      "approach": [
+        6,
+        2,
+        14
+      ]
+    },
+    {
+      "id": "修理砧",
+      "kind": "work",
+      "pos": [
+        16,
+        2,
+        7
+      ],
+      "name": "修理砧",
+      "approach": [
+        17,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "装配",
+      "kind": "work",
+      "pos": [
+        14,
+        2,
+        14
+      ],
+      "name": "装配",
+      "approach": [
+        14,
+        2,
+        13
+      ]
+    },
+    {
+      "id": "修理院",
+      "kind": "circulation",
+      "pos": [
+        13,
+        2,
+        9
+      ],
+      "name": "开放工具修理院"
     }
   ],
   "connections": [
     {
       "kind": "pedestrian",
       "pos": [
-        8,
+        16,
         1,
-        3
+        2
       ],
       "direction": "north",
       "clearance": [
         3,
-        3
+        4
       ],
-      "note": "接外部步行街或商旅停驻面，脚底 Y=2"
+      "note": "同层外街面脚底Y=2"
     }
   ],
   "design_notes": [
-    "封闭前铺卖小工具，院内开放凉棚承担修补、打磨和备件存放，适合有侧院的商路街段。"
+    "L形货库与工具壁围合开放修理院，局部木檐留出砧前作业天空。",
+    "日间营业店铺，不声明店主住宅；炉具、货品和工序为原版静态表达。"
   ],
   "differences": [
-    "封闭前铺卖小工具，院内开放凉棚承担修补、打磨和备件存放，适合有侧院的商路街段。"
+    "L形货库与工具壁围合开放修理院，局部木檐留出砧前作业天空。"
   ],
   "floors": [
     {
-      "name": "地面空间与院落",
+      "name": "售卖与行业作业",
       "y": 1,
-      "max_y": 6
+      "max_y": 5
+    },
+    {
+      "name": "完整上部体量",
+      "y": 6,
+      "max_y": 14
     }
   ],
-  "roof_min_y": 8,
+  "roof_min_y": 6,
   "lifecycle": "draft",
   "offline_limits": [
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
   ],
-  "source": "tools/structure_studio/studio/oasis_hospitality.py:shop(4)",
+  "source": "tools/structure_studio/studio/desert_fill_shops.py:shop(4)",
+  "function_terms": [
+    "工具零售",
+    "工具维修"
+  ],
+  "ground_plane": {
+    "y": 2,
+    "note": "北侧店外场坪支撑方块Y=1，外部步行街面上边界Y=2，与首层入口齐平"
+  },
   "preview_context": {
     "kind": "flat",
     "land_surface_y": 2,
     "bed_y": -1,
-    "padding": 3,
+    "padding": 4,
     "surface": "sand"
   },
-  "nbt_sha256": "528449f48de8859bdd54d077d7323766338919ea89286831a01a3df2c9544da4"
+  "nbt_sha256": "5ac59bfd5c969b28ade6e8ba4c4d75a9c2ec083add7ef4116f1556ebae2d45b5"
 }

@@ -231,5 +231,8 @@
     "padding": 4,
     "surface": "sand"
   },
-  "nbt_sha256": "8942cdb32e4ddb7237b4d858433661c29a6943580eebb9d384023206609931a3"
+  "nbt_sha256": "8942cdb32e4ddb7237b4d858433661c29a6943580eebb9d384023206609931a3",
+  "function_terms": [
+    "议事"
+  ]
 }

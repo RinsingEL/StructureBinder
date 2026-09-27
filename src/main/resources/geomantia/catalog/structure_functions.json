@@ -17,7 +17,8 @@
       "parent": "commerce",
       "terms": [
         "零售",
-        "摊位交易"
+        "摊位交易",
+        "皮具零售"
       ]
     },
     {
@@ -25,7 +26,10 @@
       "label": "食品",
       "parent": "retail",
       "terms": [
-        "食品杂货销售"
+        "食品杂货销售",
+        "食品零售",
+        "热食零售",
+        "干粮零售"
       ]
     },
     {
@@ -52,14 +56,17 @@
       "id": "retail.food.bread",
       "label": "面包与糕点",
       "parent": "retail.food",
-      "terms": []
+      "terms": [
+        "面包零售"
+      ]
     },
     {
       "id": "retail.food.spice",
       "label": "香料",
       "parent": "retail.food",
       "terms": [
-        "香料销售"
+        "香料销售",
+        "香料零售"
       ]
     },
     {
@@ -74,13 +81,17 @@
       "id": "retail.clothes.fabric",
       "label": "布料",
       "parent": "retail.clothes",
-      "terms": []
+      "terms": [
+        "布匹零售"
+      ]
     },
     {
       "id": "retail.clothes.garment",
       "label": "成衣",
       "parent": "retail.clothes",
-      "terms": []
+      "terms": [
+        "防寒衣物零售"
+      ]
     },
     {
       "id": "retail.clothes.shoes",
@@ -99,7 +110,8 @@
       "label": "生产工具",
       "parent": "retail.tools",
       "terms": [
-        "工具销售"
+        "工具销售",
+        "工具零售"
       ]
     },
     {
@@ -107,7 +119,9 @@
       "label": "厨具与容器",
       "parent": "retail.tools",
       "terms": [
-        "器皿销售"
+        "器皿销售",
+        "陶器零售",
+        "桶器零售"
       ]
     },
     {
@@ -115,7 +129,8 @@
       "label": "渔具",
       "parent": "retail.tools",
       "terms": [
-        "钓具销售"
+        "钓具销售",
+        "钓具零售"
       ]
     },
     {
@@ -123,7 +138,8 @@
       "label": "灯具",
       "parent": "retail.tools",
       "terms": [
-        "灯具销售"
+        "灯具销售",
+        "灯具零售"
       ]
     },
     {
@@ -146,14 +162,17 @@
       "label": "文具",
       "parent": "retail.culture",
       "terms": [
-        "文具销售"
+        "文具销售",
+        "文具零售"
       ]
     },
     {
       "id": "retail.culture.maps",
       "label": "地图",
       "parent": "retail.culture",
-      "terms": []
+      "terms": [
+        "海图零售"
+      ]
     },
     {
       "id": "retail.farm",
@@ -207,7 +226,8 @@
       "parent": "retail",
       "terms": [
         "杂货销售",
-        "食品杂货销售"
+        "食品杂货销售",
+        "杂货零售"
       ]
     },
     {
@@ -240,7 +260,8 @@
       "parent": "",
       "terms": [
         "住宅",
-        "住宿"
+        "住宿",
+        "旅宿"
       ]
     },
     {
@@ -289,14 +310,18 @@
       "id": "dining.meals",
       "label": "正餐供应",
       "parent": "dining",
-      "terms": []
+      "terms": [
+        "烹饪"
+      ]
     },
     {
       "id": "dining.drinks",
       "label": "饮品供应",
       "parent": "dining",
       "terms": [
-        "饮水服务"
+        "饮水服务",
+        "茶饮",
+        "饮水供应"
       ]
     },
     {
@@ -393,7 +418,9 @@
       "label": "水产加工",
       "parent": "production.food",
       "terms": [
-        "水产加工"
+        "水产加工",
+        "盐鱼加工",
+        "鱼类晾晒"
       ]
     },
     {
@@ -409,7 +436,8 @@
       "label": "配料",
       "parent": "production.food",
       "terms": [
-        "配料"
+        "配料",
+        "香料配制"
       ]
     },
     {
@@ -440,7 +468,8 @@
       "label": "皮革鞍具加工",
       "parent": "production.textile",
       "terms": [
-        "皮革鞍具加工"
+        "皮革鞍具加工",
+        "皮具制作"
       ]
     },
     {
@@ -449,7 +478,8 @@
       "parent": "production.textile",
       "terms": [
         "缆索编结",
-        "渔网制作"
+        "渔网制作",
+        "织网"
       ]
     },
     {
@@ -463,7 +493,8 @@
       "label": "木器制作",
       "parent": "production.crafts",
       "terms": [
-        "木器制作"
+        "木器制作",
+        "制桶"
       ]
     },
     {
@@ -488,7 +519,8 @@
       "label": "陶器制作",
       "parent": "production.crafts",
       "terms": [
-        "陶器制作"
+        "陶器制作",
+        "制陶"
       ]
     },
     {
@@ -545,7 +577,8 @@
       "label": "制图抄录",
       "parent": "production.documents",
       "terms": [
-        "制图抄录"
+        "制图抄录",
+        "抄写"
       ]
     },
     {
@@ -599,7 +632,10 @@
         "渔具修补",
         "钓具维修",
         "灯具维修",
-        "潜具维修"
+        "潜具维修",
+        "修网",
+        "渔具修缮",
+        "木器维修"
       ]
     },
     {
@@ -755,7 +791,8 @@
       "terms": [
         "旅途补给",
         "商旅补给",
-        "商队补给"
+        "商队补给",
+        "物资配给"
       ]
     },
     {
@@ -773,7 +810,8 @@
       "terms": [
         "货物仓储",
         "物资仓储",
-        "货物暂存"
+        "货物暂存",
+        "仓储"
       ]
     },
     {

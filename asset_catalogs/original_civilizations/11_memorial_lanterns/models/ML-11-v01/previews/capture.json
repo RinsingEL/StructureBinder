@@ -1,0 +1,31 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "ML-11-v01",
+  "nbt_sha256": "d06db011e5104ab97086fe6d00808aeb6bbfb777377886392d6558528f7d06c4",
+  "author_sha256": "fc97bf8d64c2f94a419b393c1f419765e985d1e3234e5f35c5af9607aee91f86",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "floor-2",
+    "room-stairs",
+    "room-guard",
+    "room-burial",
+    "point-offer",
+    "point-guardian",
+    "point-tomb12",
+    "point-tomb23",
+    "point-inscription",
+    "point-landing",
+    "point-descent",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

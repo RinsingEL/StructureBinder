@@ -1,0 +1,42 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "NS-F01-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 北欧套系作者逐图审查",
+  "nbt_sha256": "da6d8bdb462f0093e5c3689c5e0e018c8be69773c1eebc2829b6b0b42efffa81",
+  "author_sha256": "d20ef77b9d42b2727dc54285238653159b02ec8926bf9975569c6554a5320fe2",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-sale.png",
+    "previews/room-fix.png",
+    "previews/room-yard.png",
+    "previews/point-goods.png",
+    "previews/point-sale.png",
+    "previews/point-fix.png",
+    "previews/point-parts.png",
+    "previews/point-stock.png",
+    "previews/point-receive.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与用途": "工具铺区分顾客验货、后场维修和侧棚卸货，拆箱与长木柄不堵店内通道，保养台配置实际砂轮。",
+    "实际内饰图审": "工具验货、加工及原料成品分区明确。",
+    "完整证据": "已实际查看最终四向、顶视、去顶、全部楼层与房间、使用站位、标记及场地示意；四个双层模型另补楼层斜视核对护栏。",
+    "数据与通路": "NBT 重读、方块状态、作者标记与离线碰撞导航通过，零警告。",
+    "选址条件": "稳定的寒地海湾背风岸台；避开潮涌、雪崩、海冰推挤和行洪通道。；干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。；完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。；厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "设备、晾晒及温床为静态表达，未接入加工、气候或作物生产机制。"
+  ]
+}

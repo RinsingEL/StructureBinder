@@ -1,0 +1,39 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "NS-F03-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 北欧套系作者逐图审查",
+  "nbt_sha256": "3fbfd842f56f731067580a9615bd43674e5cd40c612365d6a2b28f0a93df6bff",
+  "author_sha256": "ff5c02b2879fe12fa3fdfb2f7997cee583a45b6d1bb21a380dbc344c47b5c16f",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-dry.png",
+    "previews/room-check.png",
+    "previews/point-stack0.png",
+    "previews/point-stack1.png",
+    "previews/point-stack2.png",
+    "previews/point-grade.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与用途": "低长棚针对木料风干，三组不同存取批次的垫木料垛之间留检查道，后边尺量台记录出库，不把网架改名当木料棚。",
+    "实际内饰图审": "三组木料垛放在垫木上，分级台位于入口侧，长料间留通道。",
+    "完整证据": "已实际查看最终四向、顶视、去顶、全部楼层与房间、使用站位、标记及场地示意；四个双层模型另补楼层斜视核对护栏。",
+    "数据与通路": "NBT 重读、方块状态、作者标记与离线碰撞导航通过，零警告。",
+    "选址条件": "稳定的寒地海湾背风岸台；避开潮涌、雪崩、海冰推挤和行洪通道。；干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。；完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。；厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "设备、晾晒及温床为静态表达，未接入加工、气候或作物生产机制。"
+  ]
+}

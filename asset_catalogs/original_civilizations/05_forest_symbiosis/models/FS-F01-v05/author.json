@@ -235,5 +235,9 @@
     "padding": 4,
     "surface": "podzol"
   },
-  "nbt_sha256": "ced41b9e0d536715b3a5c0b410ac15ac12ff6d9b0c97f4ad1b17837bae54907b"
+  "nbt_sha256": "ced41b9e0d536715b3a5c0b410ac15ac12ff6d9b0c97f4ad1b17837bae54907b",
+  "function_terms": [
+    "零售",
+    "种子销售"
+  ]
 }

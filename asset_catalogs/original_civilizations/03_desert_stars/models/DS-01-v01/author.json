@@ -11,368 +11,368 @@
     51
   ],
   "terrain": {
-    "选址": "有可靠水源的商路补给节点，不因沙地外观自动成立",
-    "地形": "约 47×43 格可整备平缓地块，北侧保留旅人与货运动线",
-    "接地": "地坪 Y=1、室内与院内脚底 Y=2",
-    "组合": "自身含客房、饮食、存货与庭院；动物换乘仍由外部兽栏承担"
+    "选址": "有可靠水源的商路补给节点",
+    "地形": "约 47×45 格可整备平缓地块，北侧保留旅人与货运动线",
+    "接地": "地坪 Y=1，室内与院内脚底 Y=2",
+    "组合": "客房、餐饮、存货与庭院完整；动物换乘由外部兽栏承担"
   },
   "rooms": [
     {
-      "id": "west_a",
-      "name": "双床客房 · west_a",
+      "id": "west_1",
+      "name": "双床客房",
       "min": [
-        5,
+        6,
         2,
-        18
+        17
       ],
       "max": [
-        13,
+        12,
         6,
-        26
+        25
       ],
-      "purpose": "睡眠、行李与取水"
+      "purpose": "睡眠、行李、取水"
     },
     {
-      "id": "west_b",
-      "name": "双床客房 · west_b",
+      "id": "west_2",
+      "name": "双床客房",
       "min": [
-        5,
+        6,
         2,
-        30
+        28
       ],
       "max": [
-        13,
+        12,
         6,
-        37
+        35
       ],
-      "purpose": "睡眠、行李与取水"
+      "purpose": "睡眠、行李、取水"
     },
     {
-      "id": "east_a",
-      "name": "双床客房 · east_a",
+      "id": "east_1",
+      "name": "双床客房",
       "min": [
-        39,
+        40,
         2,
-        18
+        17
       ],
       "max": [
-        47,
+        46,
         6,
-        26
+        25
       ],
-      "purpose": "睡眠、行李与取水"
+      "purpose": "睡眠、行李、取水"
     },
     {
-      "id": "east_b",
-      "name": "双床客房 · east_b",
+      "id": "east_2",
+      "name": "双床客房",
       "min": [
-        39,
+        40,
         2,
-        30
+        28
       ],
       "max": [
-        47,
+        46,
         6,
-        37
+        35
       ],
-      "purpose": "睡眠、行李与取水"
+      "purpose": "睡眠、行李、取水"
     },
     {
       "id": "reception",
-      "name": "登记与寄物",
+      "name": "登记候坐厅",
       "min": [
-        5,
+        6,
         2,
-        7
+        8
       ],
       "max": [
         19,
         6,
-        14
+        13
       ],
-      "purpose": "旅人登记和货物接收"
+      "purpose": "登记、歇脚与接待"
+    },
+    {
+      "id": "storage",
+      "name": "行李货物寄存",
+      "min": [
+        33,
+        2,
+        8
+      ],
+      "max": [
+        46,
+        6,
+        13
+      ],
+      "purpose": "货物寄存与交接"
     },
     {
       "id": "dining",
-      "name": "公共餐厅",
+      "name": "高厅公共餐厅",
       "min": [
+        20,
+        2,
+        39
+      ],
+      "max": [
         32,
-        2,
-        7
+        13,
+        44
       ],
-      "max": [
-        47,
-        6,
-        14
-      ],
-      "purpose": "餐桌、候坐与饮食"
-    },
-    {
-      "id": "washroom",
-      "name": "洗漱间",
-      "min": [
-        5,
-        2,
-        41
-      ],
-      "max": [
-        15,
-        6,
-        45
-      ],
-      "purpose": "取水、盥洗与用品"
+      "purpose": "共同用餐与商旅交谈"
     },
     {
       "id": "kitchen",
-      "name": "公共厨房",
+      "name": "西翼厨房",
       "min": [
-        19,
+        6,
         2,
-        41
+        39
       ],
       "max": [
-        31,
-        6,
-        45
+        17,
+        7,
+        44
       ],
       "purpose": "备餐、炉灶和用水"
     },
     {
-      "id": "storage",
-      "name": "货物寄存库",
+      "id": "washroom",
+      "name": "东翼洗漱间",
       "min": [
         35,
         2,
-        41
+        39
       ],
       "max": [
-        47,
-        6,
-        45
+        46,
+        7,
+        44
       ],
-      "purpose": "货物储藏"
+      "purpose": "盥洗、取水与用品"
     },
     {
       "id": "court",
-      "name": "月井内庭",
+      "name": "月井内庭与遮阴廊",
       "min": [
-        17,
+        15,
         2,
-        18
+        16
       ],
       "max": [
-        35,
+        37,
         6,
-        37
+        36
       ],
-      "purpose": "遮阳、饮水与集散"
+      "purpose": "搬货、集散、遮阴、饮水"
     }
   ],
   "points": [
+    {
+      "id": "west_1_bed1",
+      "kind": "bed",
+      "pos": [
+        7,
+        2,
+        24
+      ],
+      "name": "客房床位",
+      "approach": [
+        8,
+        2,
+        24
+      ]
+    },
+    {
+      "id": "west_1_bed2",
+      "kind": "bed",
+      "pos": [
+        11,
+        2,
+        24
+      ],
+      "name": "客房床位",
+      "approach": [
+        10,
+        2,
+        24
+      ]
+    },
+    {
+      "id": "west_2_bed1",
+      "kind": "bed",
+      "pos": [
+        7,
+        2,
+        34
+      ],
+      "name": "客房床位",
+      "approach": [
+        8,
+        2,
+        34
+      ]
+    },
+    {
+      "id": "west_2_bed2",
+      "kind": "bed",
+      "pos": [
+        11,
+        2,
+        34
+      ],
+      "name": "客房床位",
+      "approach": [
+        10,
+        2,
+        34
+      ]
+    },
+    {
+      "id": "east_1_bed1",
+      "kind": "bed",
+      "pos": [
+        41,
+        2,
+        24
+      ],
+      "name": "客房床位",
+      "approach": [
+        42,
+        2,
+        24
+      ]
+    },
+    {
+      "id": "east_1_bed2",
+      "kind": "bed",
+      "pos": [
+        45,
+        2,
+        24
+      ],
+      "name": "客房床位",
+      "approach": [
+        44,
+        2,
+        24
+      ]
+    },
+    {
+      "id": "east_2_bed1",
+      "kind": "bed",
+      "pos": [
+        41,
+        2,
+        34
+      ],
+      "name": "客房床位",
+      "approach": [
+        42,
+        2,
+        34
+      ]
+    },
+    {
+      "id": "east_2_bed2",
+      "kind": "bed",
+      "pos": [
+        45,
+        2,
+        34
+      ],
+      "name": "客房床位",
+      "approach": [
+        44,
+        2,
+        34
+      ]
+    },
     {
       "id": "front",
       "kind": "entrance",
       "pos": [
         26,
         2,
-        5
+        3
       ],
       "name": "主入口",
       "facing": "north"
     },
     {
-      "id": "west_a_bed1",
-      "kind": "bed",
-      "pos": [
-        6,
-        2,
-        25
-      ],
-      "name": "west_a床位",
-      "approach": [
-        7,
-        2,
-        25
-      ]
-    },
-    {
-      "id": "west_a_bed2",
-      "kind": "bed",
-      "pos": [
-        12,
-        2,
-        25
-      ],
-      "name": "west_a第二床位",
-      "approach": [
-        11,
-        2,
-        25
-      ]
-    },
-    {
-      "id": "west_b_bed1",
-      "kind": "bed",
-      "pos": [
-        6,
-        2,
-        36
-      ],
-      "name": "west_b床位",
-      "approach": [
-        7,
-        2,
-        36
-      ]
-    },
-    {
-      "id": "west_b_bed2",
-      "kind": "bed",
-      "pos": [
-        12,
-        2,
-        36
-      ],
-      "name": "west_b第二床位",
-      "approach": [
-        11,
-        2,
-        36
-      ]
-    },
-    {
-      "id": "east_a_bed1",
-      "kind": "bed",
-      "pos": [
-        40,
-        2,
-        25
-      ],
-      "name": "east_a床位",
-      "approach": [
-        41,
-        2,
-        25
-      ]
-    },
-    {
-      "id": "east_a_bed2",
-      "kind": "bed",
-      "pos": [
-        46,
-        2,
-        25
-      ],
-      "name": "east_a第二床位",
-      "approach": [
-        45,
-        2,
-        25
-      ]
-    },
-    {
-      "id": "east_b_bed1",
-      "kind": "bed",
-      "pos": [
-        40,
-        2,
-        36
-      ],
-      "name": "east_b床位",
-      "approach": [
-        41,
-        2,
-        36
-      ]
-    },
-    {
-      "id": "east_b_bed2",
-      "kind": "bed",
-      "pos": [
-        46,
-        2,
-        36
-      ],
-      "name": "east_b第二床位",
-      "approach": [
-        45,
-        2,
-        36
-      ]
-    },
-    {
       "id": "register",
       "kind": "work",
       "pos": [
-        7,
-        2,
+        9,
+        3,
         10
       ],
       "name": "旅人登记",
       "approach": [
-        7,
+        9,
         2,
         11
-      ]
-    },
-    {
-      "id": "water",
-      "kind": "work",
-      "pos": [
-        23,
-        2,
-        27
-      ],
-      "name": "月井取水",
-      "approach": [
-        22,
-        2,
-        27
-      ]
-    },
-    {
-      "id": "kitchen",
-      "kind": "work",
-      "pos": [
-        21,
-        2,
-        45
-      ],
-      "name": "公共厨房",
-      "approach": [
-        21,
-        2,
-        44
-      ]
-    },
-    {
-      "id": "wash",
-      "kind": "work",
-      "pos": [
-        9,
-        2,
-        44
-      ],
-      "name": "洗漱取水",
-      "approach": [
-        9,
-        2,
-        43
       ]
     },
     {
       "id": "freight",
       "kind": "work",
       "pos": [
-        40,
+        39,
         2,
-        43
+        9
       ],
       "name": "寄存货物",
       "approach": [
-        40,
+        39,
         2,
-        42
+        12
+      ]
+    },
+    {
+      "id": "kitchen",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        44
+      ],
+      "name": "公共厨房",
+      "approach": [
+        7,
+        2,
+        43
+      ]
+    },
+    {
+      "id": "wash",
+      "kind": "work",
+      "pos": [
+        41,
+        2,
+        44
+      ],
+      "name": "洗漱取水",
+      "approach": [
+        41,
+        2,
+        43
+      ]
+    },
+    {
+      "id": "water",
+      "kind": "work",
+      "pos": [
+        24,
+        2,
+        27
+      ],
+      "name": "月井取水",
+      "approach": [
+        25,
+        2,
+        27
       ]
     }
   ],
@@ -382,7 +382,7 @@
       "pos": [
         26,
         1,
-        4
+        2
       ],
       "direction": "north",
       "clearance": [
@@ -393,12 +393,12 @@
     }
   ],
   "design_notes": [
-    "四边厚墙围合月井内庭，北侧拱门进入；四间双床客房与餐饮后勤各自分区。",
-    "蓝色穹顶、赭色门楼与分段遮阳廊区别于铁路街区。"
+    "参考对称围院方案：连续厚墙建筑翼围合内庭，深门楼与后部高厅形成主次。",
+    "客房共享平整屋面，赭色连续内庭拱廊遮阴；一座风塔与局部高低体量取代逐间装饰。"
   ],
   "differences": [
-    "四边厚墙围合月井内庭，北侧拱门进入；四间双床客房与餐饮后勤各自分区。",
-    "蓝色穹顶、赭色门楼与分段遮阳廊区别于铁路街区。"
+    "参考对称围院方案：连续厚墙建筑翼围合内庭，深门楼与后部高厅形成主次。",
+    "客房共享平整屋面，赭色连续内庭拱廊遮阴；一座风塔与局部高低体量取代逐间装饰。"
   ],
   "floors": [
     {
@@ -407,13 +407,13 @@
       "max_y": 6
     }
   ],
-  "roof_min_y": 8,
+  "roof_min_y": 7,
   "lifecycle": "draft",
   "offline_limits": [
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
   ],
-  "source": "tools/structure_studio/studio/desert.py:desert(1)",
+  "source": "tools/structure_studio/studio/desert_caravanserai.py:caravanserai",
   "preview_context": {
     "kind": "flat",
     "land_surface_y": 1,
@@ -421,5 +421,13 @@
     "padding": 4,
     "surface": "sand"
   },
-  "nbt_sha256": "245a47e00dbe1724f5d478b564e76dc0287bf88f8530d4254eceb6aa721ae42a"
+  "ground_plane": {
+    "y": 1,
+    "note": "外部街面上边界 Y=1；室内与院内脚底 Y=2。门前朝南阶梯连续衔接外街面与门内平台。"
+  },
+  "function_terms": [
+    "商旅住宿",
+    "商队补给"
+  ],
+  "nbt_sha256": "4cf1d7c9ab2a4e91a449cd01cd8d666df2d450c4cdb35952d189456e9a4c4702"
 }

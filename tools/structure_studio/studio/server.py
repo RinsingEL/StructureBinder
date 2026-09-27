@@ -8,6 +8,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlsplit
 
 from .model import read_structure, sha256
+from .grounding import resolve_ground_plane
 from .frontage import resolve, save as save_frontage
 
 TOOL = Path(__file__).resolve().parents[1]
@@ -26,6 +27,7 @@ def catalog():
         meta = json.loads((path / "author.json").read_text(encoding="utf-8"))
         row = {k: meta.get(k) for k in ("id", "name", "family", "civilization", "function_terms", "terrain", "planning_role", "size", "lifecycle")}
         row["frontage"] = resolve(meta)
+        row["grounding"] = resolve_ground_plane(meta)
         rows.append(row)
     return rows
 
@@ -46,6 +48,7 @@ class Handler(BaseHTTPRequestHandler):
                 payload["author"] = json.loads(author_bytes)
                 payload["author_sha256"] = hashlib.sha256(author_bytes).hexdigest()
                 payload["frontage"] = resolve(payload["author"], payload["sha256"])
+                payload["grounding"] = resolve_ground_plane(payload["author"], payload["size"])
                 for kind in ("validation", "review"):
                     if (path / f"{kind}.json").exists():
                         payload[kind] = json.loads((path / f"{kind}.json").read_text(encoding="utf-8"))

@@ -1,292 +1,295 @@
 {
   "schema": "structure-studio.author.v1",
   "id": "DS-07-v04",
-  "name": "分台玻璃院坊",
+  "name": "分台工坊",
   "family": "DS-07",
   "civilization": "沙漠",
   "planning_role": "planning_role.fill",
   "size": [
-    39,
-    24,
-    39
+    41,
+    28,
+    45
   ],
   "terrain": {
-    "选址": "具砂料、燃料、供水与外运条件的生产地块，热作业区和烟道周围保持净空",
-    "地块": "下台收料与成品，上台窑炉和加工，短阶连接一格高差，生产与顾客空间分开。",
-    "接地": "下台脚底 Y=2，上台脚底 Y=3，沿 +Z 抬升一格",
-    "落地": "独立完整建筑与内部院落，不依靠运行时补齐；模板外与凹角未写入格保持原环境"
+    "选址": "有原砂、燃料供给及货物接驳的工商业地块",
+    "地基": "完整支撑地基；门外地面上边界为局部 y=2，台地通过建筑内阶梯连接",
+    "配套": "原砂、燃料、窑前热加工、冷加工、成品陈列和独立窑后维护通路"
   },
   "rooms": [
     {
-      "id": "raw",
-      "name": "下台原料库",
+      "id": "raw_room",
+      "name": "低台原料库",
       "min": [
         5,
         2,
-        7
+        8
       ],
       "max": [
-        13,
-        6,
-        15
-      ],
-      "purpose": "由下台卸货面送入原砂和燃料"
-    },
-    {
-      "id": "sales",
-      "name": "下台成品间",
-      "min": [
-        24,
-        2,
-        7
-      ],
-      "max": [
-        33,
-        6,
-        15
-      ],
-      "purpose": "顾客观样、成品打包与交付"
-    },
-    {
-      "id": "finishing",
-      "name": "上台加工间",
-      "min": [
-        19,
-        3,
-        24
-      ],
-      "max": [
-        32,
+        14,
         7,
-        33
+        16
       ],
-      "purpose": "模具与冷加工、冷却架、饮水与歇坐"
+      "purpose": "低台原料库"
+    },
+    {
+      "id": "sales_room",
+      "name": "低台成品交付",
+      "min": [
+        27,
+        2,
+        8
+      ],
+      "max": [
+        36,
+        7,
+        16
+      ],
+      "purpose": "低台成品交付"
     },
     {
       "id": "kiln",
-      "name": "上台露窑与遮阳",
+      "name": "窑炉热加工与后维护",
       "min": [
-        4,
-        3,
-        20
+        8,
+        6,
+        27
       ],
       "max": [
-        15,
-        7,
-        32
+        14,
+        11,
+        36
       ],
-      "purpose": "窑前候作，后方保留维护通道"
+      "purpose": "窑前操作和独立窑后检修"
+    },
+    {
+      "id": "upper_yard",
+      "name": "上台热冷加工院",
+      "min": [
+        4,
+        6,
+        25
+      ],
+      "max": [
+        36,
+        10,
+        40
+      ],
+      "purpose": "窑前热加工、后检修、冷却和整修"
     }
   ],
   "points": [
     {
-      "id": "sand",
+      "id": "raw",
       "kind": "work",
       "pos": [
         7,
         2,
-        8
+        10
       ],
-      "name": "原砂备料",
+      "name": "原砂与配料槽",
       "approach": [
         7,
         2,
-        7
+        9
       ]
     },
     {
       "id": "fuel",
       "kind": "work",
       "pos": [
-        6,
+        11,
         2,
-        13
+        11
       ],
-      "name": "原料库燃料",
+      "name": "燃料及包材储备",
       "approach": [
-        5,
+        11,
         2,
-        13
+        10
       ]
     },
     {
       "id": "sales",
       "kind": "work",
       "pos": [
-        28,
+        31,
         3,
-        10
+        11
       ],
-      "name": "玻璃冷却陈列架",
+      "name": "成品冷却与玻璃陈列",
       "approach": [
-        28,
+        31,
         2,
-        9
-      ]
-    },
-    {
-      "id": "mould",
-      "kind": "work",
-      "pos": [
-        21,
-        3,
-        28
-      ],
-      "name": "模具与冷加工台",
-      "approach": [
-        21,
-        3,
-        27
-      ]
-    },
-    {
-      "id": "cooling",
-      "kind": "work",
-      "pos": [
-        29,
-        4,
-        32
-      ],
-      "name": "玻璃冷却陈列架",
-      "approach": [
-        29,
-        3,
-        31
-      ]
-    },
-    {
-      "id": "rest",
-      "kind": "work",
-      "pos": [
-        19,
-        3,
-        25
-      ],
-      "name": "歇工饮水",
-      "approach": [
-        20,
-        3,
-        25
+        10
       ]
     },
     {
       "id": "kiln",
       "kind": "work",
       "pos": [
-        7,
-        3,
-        24
+        11,
+        6,
+        28
       ],
-      "name": "窑炉装料与出料",
+      "name": "窑炉装料与热加工",
       "approach": [
-        7,
-        3,
-        23
+        11,
+        6,
+        27
       ]
     },
     {
       "id": "kiln_service",
       "kind": "work",
       "pos": [
+        11,
         7,
-        4,
-        29
+        35
       ],
-      "name": "窑后检查与维护",
+      "name": "窑后检修口",
       "approach": [
-        7,
-        3,
-        30
+        11,
+        6,
+        36
       ]
     },
     {
-      "id": "entry",
-      "kind": "entrance",
-      "pos": [
-        19,
-        2,
-        4
-      ],
-      "name": "主入口",
-      "facing": "north"
-    },
-    {
-      "id": "account",
+      "id": "mould",
       "kind": "work",
       "pos": [
-        27,
-        2,
-        14
+        26,
+        6,
+        30
       ],
-      "name": "下台成品登记",
+      "name": "模具与冷加工台",
       "approach": [
-        27,
-        2,
-        13
+        26,
+        6,
+        29
       ]
     },
     {
       "id": "tools",
       "kind": "work",
       "pos": [
-        15,
-        3,
-        29
+        27,
+        6,
+        33
       ],
-      "name": "窑侧加工器具",
+      "name": "玻璃修整器具",
       "approach": [
-        15,
-        3,
-        28
+        27,
+        6,
+        32
       ]
+    },
+    {
+      "id": "cooling",
+      "kind": "work",
+      "pos": [
+        27,
+        7,
+        37
+      ],
+      "name": "成品冷却与玻璃陈列",
+      "approach": [
+        27,
+        6,
+        36
+      ]
+    },
+    {
+      "id": "rest",
+      "kind": "work",
+      "pos": [
+        31,
+        6,
+        25
+      ],
+      "name": "离窑饮水与歇工",
+      "approach": [
+        31,
+        6,
+        26
+      ]
+    },
+    {
+      "id": "upper",
+      "kind": "circulation",
+      "pos": [
+        20,
+        6,
+        26
+      ],
+      "name": "分台阶梯上口"
+    },
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        20,
+        2,
+        3
+      ],
+      "name": "下台进料入口",
+      "facing": "north"
     }
   ],
   "connections": [
     {
       "kind": "pedestrian",
       "pos": [
-        19,
-        1,
-        4
+        20,
+        2,
+        3
       ],
       "direction": "north",
       "clearance": [
         3,
-        3
+        4
       ],
-      "note": "外部步行或卸货面需接脚底 Y=2"
+      "note": "作者明确的外部地面线 y=2；与外部街道平接"
     }
   ],
   "design_notes": [
-    "下台收料与成品，上台窑炉和加工，短阶连接一格高差，生产与顾客空间分开。",
-    "砖窑和贯通烟道为原版熔炉的建筑表达；标记操作与维护位置，不声明配方、热工或自动化生产。"
+    "参考用户图3：退台土色砖窑与真实贯通烟道决定轮廓，低木棚分隔热冷加工。",
+    "原版熔炉、器具与空心烟道为静态工艺表达，不声明热工配方、烟气或自动生产机制。"
   ],
   "differences": [
-    "下台收料与成品，上台窑炉和加工，短阶连接一格高差，生产与顾客空间分开。"
+    "分台工坊：独立平面、窑位与工作动线。"
   ],
   "floors": [
     {
-      "name": "上下台工作地坪",
-      "y": 1,
+      "name": "低台存料与交付",
+      "y": 2,
       "max_y": 7
+    },
+    {
+      "name": "上台加工",
+      "y": 6,
+      "max_y": 10
     }
   ],
-  "roof_min_y": 8,
+  "roof_min_y": 11,
   "lifecycle": "draft",
   "offline_limits": [
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
   ],
-  "source": "tools/structure_studio/studio/oasis_crafts.py:glassworks(4)",
-  "preview_context": {
-    "kind": "slope",
-    "land_surface_y": 2,
-    "bed_y": -1,
-    "padding": 3,
-    "surface": "sand",
-    "run": 20,
-    "rise": 1,
-    "slope_origin_z": 0
+  "source": "tools/structure_studio/studio/desert_fill_glassworks.py:glassworks(4)",
+  "ground_plane": {
+    "y": 2,
+    "note": "主入口门外砂岩场坪上边界，玩家脚底 y=2；内部高台不改变外部接地线"
   },
-  "nbt_sha256": "46742367b0920e648949ddd7515b5b8557f59256c63771e9981453b54dff520d"
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "bed_y": -2,
+    "padding": 4,
+    "surface": "sand"
+  },
+  "function_terms": [
+    "玻璃加工"
+  ],
+  "nbt_sha256": "a78e0d1585773ce08a33083223f08f0ca24a34a0e5372d80962cd2ef4f3d2514"
 }

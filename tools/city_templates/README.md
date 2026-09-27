@@ -159,6 +159,15 @@ hashes or unconfirmed entrance data.
 ## Studio 独立测试素材包
 
 `build_studio_test_bundle.py` 导出沙漠、精灵、魔法学院的常规平地模型，原始 NBT 与作者文件不变。
+
+作者可显式标记 `ground_plane: {"y": 2, "note": "外部地面上边界/玩家脚底高度"}`。
+`y` 是结构局部整数坐标，必须满足 `0 <= y < size[1]`；`note` 必须为非空说明。
+导出器使用 Studio 共用校验，拒绝存在但非法的标记（含布尔值），并将合法 `y` 原值写入
+`template_catalog.json` 的 `templates[].groundPlaneY`、`codec_input.json` 与导出 provenance。
+没有标记的旧资产继续导出并省略该字段，不从 `preview_context`、入口或其他几何猜测。
+终端 summary 与 `studio_export_provenance.json` 的 `groundPlaneCoverage` 记录已标数量、未标数量和未标资产 ID，便于后续补齐。
+该字段表达放置接地基准，不代表已通过实际世界接地验收。聚焦回归：
+`python -m unittest discover -s tools/city_templates -p 'test_studio_ground_plane_export.py' -v`。
 参数为 `--output <新目录> --baseline <既有目录> --classpath-file build/classpath/runClient_minecraftClasspath.txt --java <JDK17/java.exe>`。
 基线仅提供算法、道路与景观规则，建筑及填充池全部换为 `studio:` 命名空间。
 工具调用 `StudioTemplateMetadata.java` 使用 Minecraft 1.20.1 的实际模板编解码器计算运行时内容哈希，并核对调色板和方块数量。

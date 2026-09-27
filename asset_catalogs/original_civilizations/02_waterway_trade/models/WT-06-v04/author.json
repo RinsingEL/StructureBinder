@@ -1,0 +1,312 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "WT-06-v04",
+  "name": "折角家庭庭院宅",
+  "family": "WT-06",
+  "civilization": "地中海",
+  "planning_role": "planning_role.fill",
+  "size": [
+    39,
+    31,
+    39
+  ],
+  "terrain": {
+    "选址": "普通稳定平地；无需水岸。台地版由模板内石基形成高差。",
+    "边界": "完整独立建筑与庭院，保留入口通路和屋檐。"
+  },
+  "rooms": [
+    {
+      "id": "西寝翼",
+      "name": "西寝翼",
+      "min": [
+        6,
+        3,
+        11
+      ],
+      "max": [
+        14,
+        6,
+        30
+      ],
+      "purpose": "客房床位、行李与休息"
+    },
+    {
+      "id": "后家庭ground",
+      "name": "后家庭ground",
+      "min": [
+        21,
+        3,
+        19
+      ],
+      "max": [
+        32,
+        6,
+        31
+      ],
+      "purpose": "接待、行李与后勤"
+    },
+    {
+      "id": "后家庭",
+      "name": "后家庭",
+      "min": [
+        21,
+        9,
+        19
+      ],
+      "max": [
+        32,
+        12,
+        31
+      ],
+      "purpose": "家庭餐厨、双床与衣物"
+    }
+  ],
+  "points": [
+    {
+      "id": "西寝翼entry",
+      "kind": "circulation",
+      "pos": [
+        10,
+        3,
+        9
+      ],
+      "name": "院内房门：入户或营业入口",
+      "facing": "north"
+    },
+    {
+      "id": "西寝翼bed0",
+      "kind": "bed",
+      "pos": [
+        7,
+        3,
+        28
+      ],
+      "name": "床位与行李",
+      "approach": [
+        8,
+        3,
+        28
+      ]
+    },
+    {
+      "id": "西寝翼bed1",
+      "kind": "bed",
+      "pos": [
+        13,
+        3,
+        28
+      ],
+      "name": "床位与行李",
+      "approach": [
+        12,
+        3,
+        28
+      ]
+    },
+    {
+      "id": "西寝翼store",
+      "kind": "storage",
+      "pos": [
+        14,
+        3,
+        12
+      ],
+      "name": "衣物食粮或营业库存",
+      "look_at": [
+        14,
+        4,
+        12
+      ],
+      "approach": [
+        14,
+        3,
+        13
+      ]
+    },
+    {
+      "id": "后家庭groundentry",
+      "kind": "circulation",
+      "pos": [
+        22,
+        3,
+        17
+      ],
+      "name": "院内房门：入户或营业入口",
+      "facing": "north"
+    },
+    {
+      "id": "后家庭groundwork",
+      "kind": "work",
+      "pos": [
+        22,
+        3,
+        21
+      ],
+      "name": "接待或作业台",
+      "look_at": [
+        22,
+        4,
+        21
+      ],
+      "approach": [
+        22,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "后家庭groundstore",
+      "kind": "storage",
+      "pos": [
+        32,
+        3,
+        20
+      ],
+      "name": "衣物食粮或营业库存",
+      "look_at": [
+        32,
+        4,
+        20
+      ],
+      "approach": [
+        32,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "后家庭entry",
+      "kind": "circulation",
+      "pos": [
+        26,
+        9,
+        17
+      ],
+      "name": "院内房门：入户或营业入口",
+      "facing": "north"
+    },
+    {
+      "id": "后家庭work",
+      "kind": "work",
+      "pos": [
+        22,
+        9,
+        21
+      ],
+      "name": "餐厨备制",
+      "look_at": [
+        22,
+        10,
+        21
+      ],
+      "approach": [
+        22,
+        9,
+        22
+      ]
+    },
+    {
+      "id": "后家庭bed0",
+      "kind": "bed",
+      "pos": [
+        22,
+        9,
+        29
+      ],
+      "name": "床位与行李",
+      "approach": [
+        23,
+        9,
+        29
+      ]
+    },
+    {
+      "id": "后家庭bed1",
+      "kind": "bed",
+      "pos": [
+        31,
+        9,
+        29
+      ],
+      "name": "床位与行李",
+      "approach": [
+        30,
+        9,
+        29
+      ]
+    },
+    {
+      "id": "后家庭store",
+      "kind": "storage",
+      "pos": [
+        32,
+        9,
+        20
+      ],
+      "name": "衣物食粮或营业库存",
+      "look_at": [
+        32,
+        10,
+        20
+      ],
+      "approach": [
+        32,
+        9,
+        21
+      ]
+    },
+    {
+      "id": "courtyard_street_entry",
+      "kind": "entrance",
+      "pos": [
+        19,
+        3,
+        2
+      ],
+      "name": "前院墙中央实际开口接路",
+      "facing": "north"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "折角家庭庭院宅：独立入口、生活内饰和不同屋体/庭院组合。",
+    "依2026-09-27用户参考图：暖白浅石、缓坡红瓦、木廊与蓝绿百叶，完整生活和营业尺度。"
+  ],
+  "differences": [
+    "折角家庭庭院宅：独立入口、生活内饰和不同屋体/庭院组合。"
+  ],
+  "floors": [
+    {
+      "name": "庭院与下层",
+      "y": 2,
+      "max_y": 7
+    },
+    {
+      "name": "上层或台地",
+      "y": 8,
+      "max_y": 13
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mediterranean_living.py:BUILDERS",
+  "ground_plane": {
+    "y": 3,
+    "note": "门外路面方块Y=2，外部站立接地线Y=3；上层与台地由实阶连接。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "住宅",
+    "家庭居住"
+  ],
+  "nbt_sha256": "fef6c4a6797e5c490084b082f1968aa622f70a993890d94b3e90c84e2d0c4c0e"
+}

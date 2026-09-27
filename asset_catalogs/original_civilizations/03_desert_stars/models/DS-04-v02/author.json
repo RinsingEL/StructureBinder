@@ -1,96 +1,95 @@
 {
   "schema": "structure-studio.author.v1",
   "id": "DS-04-v02",
-  "name": "双户共水宅",
+  "name": "双户共院宅",
   "family": "DS-04",
   "civilization": "沙漠",
   "planning_role": "planning_role.fill",
   "size": [
-    33,
-    23,
-    28
+    34,
+    22,
+    30
   ],
   "terrain": {
-    "选址": "有稳定生活用水的干热聚落，通风方向与遮阳不被邻屋完全堵塞",
-    "地块": "两户各有炊事和卧室，共享中央储水庭与遮阳入口，不通过另一户进入。",
-    "落地": "独立住宅模板，庭院及其硬地属于实际占地；未写入格保留原环境",
-    "高程": "主入口与生活空间脚底 Y=2"
+    "选址": "有可靠生活用水的干热聚落，外阶和遮阳廊保持通行",
+    "地块": "两户各占一翼，前低后高；双外阶、独立炊事和上层卧室，共享中央水庭。",
+    "落地": "整备平地；院内、门外街面脚底均Y=2，上层露台由自带楼梯连接"
   },
   "rooms": [
     {
       "id": "west_living",
-      "name": "西户起居",
+      "name": "家庭炊事与起居",
       "min": [
         4,
         2,
-        6
+        8
       ],
       "max": [
-        12,
+        10,
         6,
-        12
+        24
       ],
-      "purpose": "炊事、备水、进餐与用品"
+      "purpose": "烹饪、用水、餐桌、坐席和储物"
     },
     {
       "id": "west_bedroom",
-      "name": "西户卧室",
+      "name": "睡眠与衣物",
       "min": [
         4,
-        2,
-        14
+        8,
+        19
       ],
       "max": [
+        10,
         12,
-        6,
-        22
+        25
       ],
-      "purpose": "睡眠、衣物与室内盥洗"
+      "purpose": "独立睡眠、衣物与阅读"
     },
     {
       "id": "east_living",
-      "name": "东户起居",
+      "name": "家庭炊事与起居",
       "min": [
-        20,
+        23,
         2,
-        6
+        8
       ],
       "max": [
-        28,
+        29,
         6,
-        12
+        24
       ],
-      "purpose": "炊事、备水、进餐与用品"
+      "purpose": "烹饪、用水、餐桌、坐席和储物"
     },
     {
       "id": "east_bedroom",
-      "name": "东户卧室",
+      "name": "睡眠与衣物",
       "min": [
-        20,
-        2,
-        14
+        23,
+        8,
+        19
       ],
       "max": [
-        28,
-        6,
-        22
+        29,
+        12,
+        25
       ],
-      "purpose": "睡眠、衣物与室内盥洗"
+      "purpose": "独立睡眠、衣物与阅读"
     },
     {
-      "id": "common",
-      "name": "共水窄庭",
+      "id": "court",
+      "name": "两户共水院",
       "min": [
-        14,
+        12,
         2,
         4
       ],
       "max": [
-        18,
+        21,
         6,
-        24
+        26
       ],
-      "purpose": "两户独立入口与共享储水"
+      "purpose": "共享取水与两户各自独立登楼"
     }
   ],
   "points": [
@@ -100,13 +99,28 @@
       "pos": [
         4,
         2,
-        12
+        24
       ],
-      "name": "西户起居炉灶",
+      "name": "家庭炊事",
       "approach": [
         4,
         2,
-        11
+        23
+      ]
+    },
+    {
+      "id": "west_living_store",
+      "kind": "work",
+      "pos": [
+        10,
+        2,
+        24
+      ],
+      "name": "家用储物",
+      "approach": [
+        9,
+        2,
+        24
       ]
     },
     {
@@ -114,59 +128,119 @@
       "kind": "bed",
       "pos": [
         5,
-        2,
-        21
+        8,
+        24
       ],
-      "name": "西户卧室床位 1",
+      "name": "卧室床位",
       "approach": [
         6,
-        2,
-        21
+        8,
+        24
+      ]
+    },
+    {
+      "id": "west_bedroom_bed2",
+      "kind": "bed",
+      "pos": [
+        9,
+        8,
+        24
+      ],
+      "name": "卧室床位",
+      "approach": [
+        8,
+        8,
+        24
+      ]
+    },
+    {
+      "id": "west_stair",
+      "kind": "circulation",
+      "pos": [
+        13,
+        8,
+        17
+      ],
+      "name": "外阶上平台",
+      "look_at": [
+        10,
+        9,
+        17
       ]
     },
     {
       "id": "east_living_cook",
       "kind": "work",
       "pos": [
-        20,
+        23,
         2,
-        12
+        24
       ],
-      "name": "东户起居炉灶",
+      "name": "家庭炊事",
       "approach": [
-        20,
+        23,
         2,
-        11
+        23
+      ]
+    },
+    {
+      "id": "east_living_store",
+      "kind": "work",
+      "pos": [
+        29,
+        2,
+        24
+      ],
+      "name": "家用储物",
+      "approach": [
+        28,
+        2,
+        24
       ]
     },
     {
       "id": "east_bedroom_bed1",
       "kind": "bed",
       "pos": [
-        21,
-        2,
-        21
+        24,
+        8,
+        24
       ],
-      "name": "东户卧室床位 1",
+      "name": "卧室床位",
       "approach": [
-        22,
-        2,
-        21
+        25,
+        8,
+        24
       ]
     },
     {
-      "id": "well",
-      "kind": "work",
+      "id": "east_bedroom_bed2",
+      "kind": "bed",
       "pos": [
-        16,
-        2,
-        22
+        28,
+        8,
+        24
       ],
-      "name": "两户共用取水点",
+      "name": "卧室床位",
       "approach": [
-        16,
-        2,
-        21
+        27,
+        8,
+        24
+      ]
+    },
+    {
+      "id": "east_stair",
+      "kind": "circulation",
+      "pos": [
+        20,
+        8,
+        17
+      ],
+      "name": "外阶上平台",
+      "look_at": [
+        17,
+        9,
+        17
       ]
     },
     {
@@ -175,10 +249,55 @@
       "pos": [
         16,
         2,
-        4
+        3
       ],
-      "name": "主入口",
+      "name": "街面主入口",
       "facing": "north"
+    },
+    {
+      "id": "water",
+      "kind": "work",
+      "pos": [
+        15,
+        2,
+        23
+      ],
+      "name": "共院取水",
+      "approach": [
+        15,
+        2,
+        22
+      ]
+    },
+    {
+      "id": "roof_wash_4",
+      "kind": "work",
+      "pos": [
+        6,
+        8,
+        16
+      ],
+      "name": "各户露台洗晒",
+      "approach": [
+        6,
+        8,
+        15
+      ]
+    },
+    {
+      "id": "roof_wash_23",
+      "kind": "work",
+      "pos": [
+        25,
+        8,
+        16
+      ],
+      "name": "各户露台洗晒",
+      "approach": [
+        25,
+        8,
+        15
+      ]
     }
   ],
   "connections": [
@@ -186,36 +305,47 @@
       "kind": "pedestrian",
       "pos": [
         16,
-        1,
+        2,
         3
       ],
       "direction": "north",
       "clearance": [
         3,
-        4
+        3
       ],
-      "note": "外部街面衔接台阶，不自动随地形移动入口"
+      "note": "门外铺地与外部脚底基准Y=2对齐"
     }
   ],
   "design_notes": [
-    "两户各有炊事和卧室，共享中央储水庭与遮阳入口，不通过另一户进入。"
+    "两户各占一翼，前低后高；双外阶、独立炊事和上层卧室，共享中央水庭。",
+    "砂岩框架、局部赭色灰泥嵌面、木凉棚和小幅布帘；楼梯与家具按玩家尺度布置。"
   ],
   "differences": [
-    "两户各有炊事和卧室，共享中央储水庭与遮阳入口，不通过另一户进入。"
+    "两户各占一翼，前低后高；双外阶、独立炊事和上层卧室，共享中央水庭。"
   ],
   "floors": [
     {
-      "name": "起居与内庭",
+      "name": "首层与院落",
       "y": 1,
       "max_y": 6
+    },
+    {
+      "name": "二层与露台",
+      "y": 7,
+      "max_y": 12
     }
   ],
-  "roof_min_y": 8,
+  "roof_min_y": 7,
   "lifecycle": "draft",
   "offline_limits": [
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
   ],
+  "source": "tools/structure_studio/studio/desert_fill_homes.py:home(2)",
+  "ground_plane": {
+    "y": 2,
+    "note": "门外砂岩铺地顶面与院内首层同高，脚底Y=2；外阶从该面登上屋顶，不以露台或门槛替代外部地面。"
+  },
   "preview_context": {
     "kind": "flat",
     "land_surface_y": 2,
@@ -223,36 +353,8 @@
     "padding": 3,
     "surface": "sand"
   },
-  "source": "tools/structure_studio/studio/oasis_life.py:home(2)",
-  "ventilation": [
-    {
-      "roof_y": 8,
-      "min": [
-        5,
-        8,
-        7
-      ],
-      "max": [
-        6,
-        13,
-        8
-      ],
-      "note": "连续通风孔的几何表达，不模拟气流或温度"
-    },
-    {
-      "roof_y": 8,
-      "min": [
-        26,
-        8,
-        18
-      ],
-      "max": [
-        27,
-        13,
-        19
-      ],
-      "note": "连续通风孔的几何表达，不模拟气流或温度"
-    }
+  "function_terms": [
+    "家庭居住"
   ],
-  "nbt_sha256": "ac4f124743de74a3a874f52255c1c88e5ae6116b0ee2f4db13e1b69fab910332"
+  "nbt_sha256": "9562108ff5e7232b6ef375a0c9078a6ab043d4d42e35e575b3e37bae75e1bf4f"
 }

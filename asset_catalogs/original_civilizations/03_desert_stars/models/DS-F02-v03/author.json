@@ -1,86 +1,197 @@
 {
   "schema": "structure-studio.author.v1",
   "id": "DS-F02-v03",
-  "name": "围墙内院菜畦",
+  "name": "内院菜畦",
   "family": "DS-F02",
   "civilization": "沙漠",
   "planning_role": "planning_role.fill",
   "size": [
-    25,
-    12,
-    23
+    29,
+    13,
+    29
   ],
   "terrain": {
-    "选址": "有可靠引水与适宜土壤的绿洲；不在无水沙海仅凭文明标签放置",
-    "形状": "小型住宅内院菜畦，围墙、四区短畦与田头用品形成完整庭园。",
-    "地面": "作业道脚底 Y=2，有限地块内备土与灌溉",
-    "落地方式": "独立固定模板田块，包含封边与作业道；不替代 Landscape 自然生成大田"
+    "选址": "有可靠灌溉供水、适宜土壤及日照的地块；模板水槽须有真实供水来源。",
+    "地块": "围墙庭园、四块短畦、中央取水庭与后侧小型工具凉棚。",
+    "落地": "外部入口脚底 Y=2；耕地及地坪顶层方块 Y=1。三级台田内部地坪另升至 Y=2、3。",
+    "适用": "独立固定田块，不替代随自然地形生成的大田。"
   },
   "rooms": [
     {
-      "id": "field",
-      "name": "灌渠种植与维护",
+      "id": "b0",
+      "name": "灌溉种植畦 b0",
       "min": [
         3,
         2,
-        3
+        5
       ],
       "max": [
-        21,
-        6,
-        19
+        11,
+        4,
+        11
       ],
-      "purpose": "小型住宅内院菜畦，围墙、四区短畦与田头用品形成完整庭园。"
+      "purpose": "水渠、耕土及沿畦采收"
+    },
+    {
+      "id": "b1",
+      "name": "灌溉种植畦 b1",
+      "min": [
+        17,
+        2,
+        5
+      ],
+      "max": [
+        25,
+        4,
+        11
+      ],
+      "purpose": "水渠、耕土及沿畦采收"
+    },
+    {
+      "id": "b2",
+      "name": "灌溉种植畦 b2",
+      "min": [
+        3,
+        2,
+        15
+      ],
+      "max": [
+        11,
+        4,
+        21
+      ],
+      "purpose": "水渠、耕土及沿畦采收"
+    },
+    {
+      "id": "b3",
+      "name": "灌溉种植畦 b3",
+      "min": [
+        17,
+        2,
+        15
+      ],
+      "max": [
+        25,
+        4,
+        21
+      ],
+      "purpose": "水渠、耕土及沿畦采收"
+    },
+    {
+      "id": "shed",
+      "name": "田头工具分拣棚",
+      "min": [
+        4,
+        2,
+        23
+      ],
+      "max": [
+        11,
+        5,
+        26
+      ],
+      "purpose": "遮阳、工具、收获物分拣与装筐"
     }
   ],
   "points": [
     {
-      "id": "compost",
+      "id": "sorting",
       "kind": "work",
       "pos": [
-        5,
+        7,
         2,
-        4
+        26
       ],
-      "name": "堆肥与田务",
+      "name": "分拣装筐台",
       "approach": [
-        5,
+        7,
         2,
-        5
+        25
       ]
     },
     {
       "id": "entry",
       "kind": "entrance",
       "pos": [
+        14,
+        2,
+        1
+      ],
+      "name": "田头主入口",
+      "facing": "north"
+    },
+    {
+      "id": "workway0",
+      "kind": "circulation",
+      "pos": [
         12,
         2,
-        3
+        9
       ],
-      "name": "田头入口",
-      "facing": "north"
+      "name": "第1处采收作业道",
+      "look_at": [
+        10,
+        3,
+        12
+      ]
+    },
+    {
+      "id": "workway1",
+      "kind": "circulation",
+      "pos": [
+        16,
+        2,
+        18
+      ],
+      "name": "第2处采收作业道",
+      "look_at": [
+        14,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "workway2",
+      "kind": "circulation",
+      "pos": [
+        14,
+        2,
+        23
+      ],
+      "name": "第3处采收作业道",
+      "look_at": [
+        12,
+        3,
+        26
+      ]
     }
   ],
   "connections": [],
   "design_notes": [
-    "小型住宅内院菜畦，围墙、四区短畦与田头用品形成完整庭园。"
+    "围墙庭园、四块短畦、中央取水庭与后侧小型工具凉棚。",
+    "参考用户图7大轮廓与水渠组织，使用原版作物；保留作业净空。"
   ],
   "differences": [
-    "小型住宅内院菜畦，围墙、四区短畦与田头用品形成完整庭园。"
+    "围墙庭园、四块短畦、中央取水庭与后侧小型工具凉棚。"
   ],
   "floors": [
     {
-      "name": "灌渠与田埂",
+      "name": "灌溉与作业层",
       "y": 0,
-      "max_y": 5
+      "max_y": 7
     }
   ],
-  "roof_min_y": null,
+  "roof_min_y": 6,
   "lifecycle": "draft",
   "offline_limits": [
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
   ],
+  "source": "tools/structure_studio/studio/desert_fill_farms.py:garden(3)",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部接路站立面 Y=2；地坪顶层方块 Y=1，内部种植台和短阶不改变对地基准。"
+  },
   "preview_context": {
     "kind": "flat",
     "land_surface_y": 2,
@@ -88,18 +199,19 @@
     "padding": 3,
     "surface": "sand"
   },
-  "source": "tools/structure_studio/studio/oasis_life.py:garden(3)",
   "agriculture": {
     "crops": [
-      "beetroots",
+      "wheat",
       "carrots",
-      "potatoes"
+      "potatoes",
+      "beetroots"
     ],
-    "layout": "小型住宅内院菜畦，围墙、四区短畦与田头用品形成完整庭园。",
-    "planted_cells": 168,
-    "irrigation_sources": 4,
+    "layout": "围墙庭园、四块短畦、中央取水庭与后侧小型工具凉棚。",
     "template_mode": "independent_fixed_plot",
-    "hydration": "以最终 NBT 校核支撑与同高程或高一格、水平 4 格水源"
+    "hydration": "全部原版作物检查实际耕地与水平四格同层水源。"
   },
-  "nbt_sha256": "87a74f8c6a25645424d669da662449b9afb3d68b8d0d61f9a99765659e2f50b2"
+  "function_terms": [
+    "农田种植"
+  ],
+  "nbt_sha256": "3ba1dc096dd4fea926f49fbd5a270c0e51499b65c9f3cb316a3af2c7a16c06a0"
 }

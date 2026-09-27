@@ -255,5 +255,9 @@
     "padding": 4,
     "surface": "podzol"
   },
-  "nbt_sha256": "2ff2d58db2a9550cdeef83a0681b6e19506a6a141ff36690b25674ffd1d8ea21"
+  "nbt_sha256": "2ff2d58db2a9550cdeef83a0681b6e19506a6a141ff36690b25674ffd1d8ea21",
+  "function_terms": [
+    "零售",
+    "灯具制作"
+  ]
 }

@@ -1,0 +1,130 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "TC-F03-v03",
+  "name": "贴墙工具长棚",
+  "family": "TC-F03",
+  "civilization": "海洋幻想",
+  "planning_role": "planning_role.fill",
+  "size": [
+    49,
+    36,
+    27
+  ],
+  "terrain": {
+    "选址": "避风潮上岸台或人工桩台；水侧支柱底Y=0必须接稳定海床，不自动适应任意水深",
+    "潮位": "低潮Y=3、参考水面Y=5、预期高潮Y=6；主层干地板Y=7、脚底Y=8，潮汐仅为条件记录",
+    "支撑接驳": "北侧接Y=8普通步行道路；所有楼梯为实体台阶。高层与分台另有房间高程，不依赖跳跃或游泳",
+    "供水生活": "厨房淡水和食物依岸上补给；海水不能视为饮用或灌溉水。居室采用干燥外壳，气候通风与实际水密另验",
+    "风格": "棱面近似贝壳的弧顶、放射或分瓣舱室、青绿石质桩台；风格不是国名",
+    "限制": "原版静态模型；不代表潮汐、潜水呼吸、流体、生产或运行时生成已接入"
+  },
+  "rooms": [
+    {
+      "id": "shelter",
+      "name": "背墙维护棚",
+      "min": [
+        5,
+        8,
+        6
+      ],
+      "max": [
+        42,
+        13,
+        20
+      ],
+      "purpose": "背墙工具柜和维修，前方坐席及侧通路"
+    }
+  ],
+  "points": [
+    {
+      "id": "tools",
+      "kind": "storage",
+      "pos": [
+        9,
+        9,
+        9
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        9,
+        8,
+        10
+      ]
+    },
+    {
+      "id": "repair",
+      "kind": "work",
+      "pos": [
+        27,
+        8,
+        9
+      ],
+      "name": "靠墙工具检修",
+      "approach": [
+        27,
+        8,
+        10
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        24,
+        8,
+        3
+      ],
+      "name": "陆侧普通步行入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        24,
+        7,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "接同高程干燥道路或栈桥"
+    }
+  ],
+  "design_notes": [],
+  "differences": [
+    "贴墙工具长棚",
+    "开放遮棚提供明确休憩、维修或货运用途，连续柱梁承载贝肋屋盖，临水边护独立连续"
+  ],
+  "floors": [
+    {
+      "name": "干式生活层",
+      "y": 7,
+      "max_y": 12
+    }
+  ],
+  "roof_min_y": 13,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/tidal_gardens.py",
+  "preview_context": {
+    "kind": "shore",
+    "shore_z": 13,
+    "water_surface_y": 5,
+    "land_surface_y": 8,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "sand"
+  },
+  "nbt_sha256": "ea0225e5805ce4a1d621c4261f61e27ce7131e0034d08ed56075f78f7c8a7ac6",
+  "function_terms": [
+    "休息",
+    "货物暂存"
+  ]
+}

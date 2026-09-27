@@ -1,0 +1,242 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "NS-07-v02",
+  "name": "双跨开放修网棚",
+  "family": "NS-07",
+  "civilization": "北欧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    35,
+    28,
+    39
+  ],
+  "terrain": {
+    "选址": "具备干燥稳定地基的寒地渔业街区；原料和饮水需外部供给",
+    "地基": "外部街面/入口脚底局部Y=3；保留场坪支撑及全套晾晒、修网和装卸工作面",
+    "用途边界": "加工器具与晾架为原版方块静态表达，不声明自动生产或渔获机制",
+    "推荐情境": [
+      "寒地背风聚落或海湾聚落；这是常见使用背景，不要求所有北欧建筑临海，也不限定住户种族。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "west",
+      "name": "开放修网跨",
+      "min": [
+        5,
+        3,
+        11
+      ],
+      "max": [
+        13,
+        7,
+        30
+      ],
+      "purpose": "行业设备、原料与成品之间保留通道"
+    },
+    {
+      "id": "east",
+      "name": "开放修网跨",
+      "min": [
+        20,
+        3,
+        11
+      ],
+      "max": [
+        28,
+        7,
+        30
+      ],
+      "purpose": "行业设备、原料与成品之间保留通道"
+    }
+  ],
+  "points": [
+    {
+      "id": "weave",
+      "kind": "work",
+      "pos": [
+        6,
+        3,
+        14
+      ],
+      "name": "编织与梭线工作台",
+      "look_at": [
+        6,
+        4,
+        14
+      ],
+      "approach": [
+        6,
+        3,
+        15
+      ]
+    },
+    {
+      "id": "repair",
+      "kind": "work",
+      "pos": [
+        6,
+        3,
+        19
+      ],
+      "name": "修补与裁绳台",
+      "look_at": [
+        6,
+        4,
+        19
+      ],
+      "approach": [
+        6,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "twine",
+      "kind": "storage",
+      "pos": [
+        6,
+        3,
+        23
+      ],
+      "name": "线团、浮子与配件储柜",
+      "look_at": [
+        6,
+        4,
+        23
+      ],
+      "approach": [
+        6,
+        3,
+        24
+      ]
+    },
+    {
+      "id": "net_0",
+      "kind": "work",
+      "pos": [
+        24,
+        5,
+        15
+      ],
+      "name": "立式张网检修架",
+      "approach": [
+        24,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "net_1",
+      "kind": "work",
+      "pos": [
+        24,
+        5,
+        25
+      ],
+      "name": "立式张网检修架",
+      "approach": [
+        24,
+        3,
+        24
+      ]
+    },
+    {
+      "id": "finished",
+      "kind": "storage",
+      "pos": [
+        20,
+        3,
+        33
+      ],
+      "name": "已修渔网与浮子",
+      "look_at": [
+        20,
+        4,
+        33
+      ],
+      "approach": [
+        20,
+        3,
+        34
+      ]
+    },
+    {
+      "id": "water",
+      "kind": "work",
+      "pos": [
+        9,
+        3,
+        34
+      ],
+      "name": "工人饮水歇脚",
+      "approach": [
+        9,
+        3,
+        33
+      ]
+    },
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        17,
+        3,
+        3
+      ],
+      "name": "街面装卸与人员入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        17,
+        3,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "与外部Y=3街面平接"
+    }
+  ],
+  "design_notes": [
+    "参考图3，以陡坡木屋、附棚、开放工作架和不同生产动线区分八款；不复制图片非原版装饰。"
+  ],
+  "differences": [
+    "双跨开放修网棚"
+  ],
+  "floors": [
+    {
+      "name": "工作地坪",
+      "y": 3,
+      "max_y": 8
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/northern_fill_workshops.py:nets(2)",
+  "ground_plane": {
+    "y": 3,
+    "note": "外部街道与场坪上边界/入口脚底Y=3；内部错台由楼梯连接"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "织网",
+    "修网"
+  ],
+  "nbt_sha256": "b3fb6f4009a3a54d1f9a4fb1eae3552e7dd5428e0bc307ca76db918e78c9bd27"
+}

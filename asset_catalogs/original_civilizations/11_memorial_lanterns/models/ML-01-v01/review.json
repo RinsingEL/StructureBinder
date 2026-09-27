@@ -1,0 +1,50 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "ML-01-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 哥特作者离线全图审查",
+  "nbt_sha256": "ed75cedb1e8757f658ac0edcf394f84c9d936dc1ab545a8af36418421a6e679e",
+  "author_sha256": "5da3dc44474c105bfdca1036e5a037bb998b89a6ae0261048a844228d96dee7e",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-reading.png",
+    "previews/room-archive.png",
+    "previews/room-repair.png",
+    "previews/room-keeper.png",
+    "previews/room-court.png",
+    "previews/point-westbooks.png",
+    "previews/point-eastbooks.png",
+    "previews/point-catalogue.png",
+    "previews/point-read15.png",
+    "previews/point-read19.png",
+    "previews/point-archive.png",
+    "previews/point-relics.png",
+    "previews/point-memorial.png",
+    "previews/point-restore.png",
+    "previews/point-supplies.png",
+    "previews/point-keeper.png",
+    "previews/point-keeperdesk.png",
+    "previews/point-court.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与用途": "高挑主书库、较低修复翼与纪念庭院组成非对称布局；浅石扶壁、阶式尖窗、彩玻璃和深色陡顶清楚可辨。",
+    "内饰与空间": "实际查看27图：公开目录、双组阅览桌与封存纪念档案分隔，修复纸墨和管理员床柜另设侧翼，读者庭院有停留空间。",
+    "完整证据": "实际查看当前版本全部四向外观、顶视、去顶、楼层、房间、站位、标记与地形图；不以拍摄自动代替审美检查。",
+    "数据与通路": "最终 NBT 重读、状态、门床、标记与碰撞导航检查通过，零警告。",
+    "环境条件": "排水良好的稳定台地，连接仍有常住居民的聚落道路；纪念设施不替代活人的生活供给。；基础底 Y=0，公共地面 Y=2，步行脚底 Y=3；道路接入口同高。；独立完整模板，保留外扶壁、彩窗采光面及庭院；不可用相邻建筑遮挡。；尖拱、外扶壁与内肋共同表达高挑空间；不模拟结构受力、照度或天气。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

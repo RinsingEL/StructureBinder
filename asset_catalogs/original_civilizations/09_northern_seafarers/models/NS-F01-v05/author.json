@@ -1,0 +1,189 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "NS-F01-v05",
+  "name": "前低后高住家杂货铺",
+  "family": "NS-F01",
+  "civilization": "北欧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    29,
+    27,
+    31
+  ],
+  "terrain": {
+    "选址": "稳定平缓且排水良好的街区地块，保留院落和屋檐范围，不要求临海",
+    "供给": "商铺需相应货物及行业原料；有人居住的v05另需生活食水与燃料",
+    "地面": "外街面脚底Y=3，入口和首层同高；基础连续落地",
+    "边界": "原版方块静态表达行业工序，不模拟交易、风雪与专用设备行为",
+    "推荐情境": [
+      "寒地背风聚落或海湾聚落；这是常见使用背景，不要求所有北欧建筑临海，也不限定住户种族。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "低前杂货铺",
+      "name": "低前杂货铺",
+      "min": [
+        5,
+        3,
+        6
+      ],
+      "max": [
+        13,
+        5,
+        12
+      ],
+      "purpose": "经营、行业工作或生活空间"
+    },
+    {
+      "id": "高后店主住宅",
+      "name": "高后店主住宅",
+      "min": [
+        9,
+        3,
+        17
+      ],
+      "max": [
+        22,
+        7,
+        26
+      ],
+      "purpose": "经营、行业工作或生活空间"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        9,
+        3,
+        3
+      ],
+      "name": "北侧临街入口",
+      "facing": "north"
+    },
+    {
+      "id": "杂货配单",
+      "kind": "work",
+      "pos": [
+        6,
+        3,
+        9
+      ],
+      "name": "杂货配单",
+      "approach": [
+        6,
+        3,
+        8
+      ]
+    },
+    {
+      "id": "侧摊",
+      "kind": "work",
+      "pos": [
+        18,
+        3,
+        10
+      ],
+      "name": "临街日杂陈列",
+      "approach": [
+        18,
+        3,
+        9
+      ]
+    },
+    {
+      "id": "炉_10",
+      "kind": "work",
+      "pos": [
+        10,
+        3,
+        24
+      ],
+      "name": "炉火与烹饪",
+      "approach": [
+        10,
+        3,
+        23
+      ]
+    },
+    {
+      "id": "owner_bed",
+      "kind": "bed",
+      "pos": [
+        20,
+        3,
+        23
+      ],
+      "name": "店主床位",
+      "approach": [
+        21,
+        3,
+        23
+      ]
+    },
+    {
+      "id": "居家",
+      "kind": "circulation",
+      "pos": [
+        18,
+        3,
+        19
+      ],
+      "name": "后屋炊食生活区"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        9,
+        3,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "外街面脚底Y=3"
+    }
+  ],
+  "design_notes": [
+    "临街低铺与后部高屋分离，后屋有炊洗、就餐、床柜。"
+  ],
+  "differences": [
+    "临街低铺与后部高屋分离，后屋有炊洗、就餐、床柜。"
+  ],
+  "floors": [
+    {
+      "name": "营业与作业生活层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/northern_fill_shops.py:shop(5)",
+  "function_terms": [
+    "杂货零售",
+    "家庭居住"
+  ],
+  "ground_plane": {
+    "y": 3,
+    "note": "北侧外部街面与首层支撑方块顶面Y=3，不以屋顶或作业高台代替外部基准"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "snow"
+  },
+  "nbt_sha256": "3a9adcf6f97a1f2b29b39e02f72dc904075b67539f5d68403beb1347bb0079d7"
+}

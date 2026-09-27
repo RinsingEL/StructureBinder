@@ -255,5 +255,9 @@
     "padding": 4,
     "surface": "podzol"
   },
-  "nbt_sha256": "21d2ad8b32a4d3994f2c3e0b87fea09bc9392f7464a7cac40a0d4d491cafbbb6"
+  "nbt_sha256": "21d2ad8b32a4d3994f2c3e0b87fea09bc9392f7464a7cac40a0d4d491cafbbb6",
+  "function_terms": [
+    "家庭居住",
+    "林务管理"
+  ]
 }

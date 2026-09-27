@@ -1,0 +1,274 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "ML-03-v02",
+  "name": "横厅与侧钟务翼宅",
+  "family": "ML-03",
+  "civilization": "哥特",
+  "planning_role": "planning_role.fill",
+  "size": [
+    33,
+    29,
+    28
+  ],
+  "terrain": {
+    "选址": "稳定、排水良好的居民地块，日照与通路按具体用途保留；哥特是建造风格而非地形限制。",
+    "高程": "基础底Y=0、常规地面Y=2、脚底Y=3；抬高或双层版本另记。",
+    "边界": "完整独立模板，保留外扶柱、檐口、采光和门外站位，不默认邻居补齐。"
+  },
+  "rooms": [
+    {
+      "id": "clock",
+      "name": "横厅西侧钟务室",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        15,
+        7,
+        13
+      ],
+      "purpose": "修理、图谱与零件成组靠近侧翼；设施：钟务校时、零件与交班记录、钟绳、润滑与备用小件、值勤图谱与维修日志"
+    },
+    {
+      "id": "living",
+      "name": "朝街炊食厅",
+      "min": [
+        17,
+        3,
+        5
+      ],
+      "max": [
+        26,
+        7,
+        13
+      ],
+      "purpose": "入口及家庭共食，侧门入钟务室；设施：备餐、热食与洗涤"
+    },
+    {
+      "id": "beds",
+      "name": "后伸安静寝翼",
+      "min": [
+        5,
+        3,
+        15
+      ],
+      "max": [
+        15,
+        7,
+        23
+      ],
+      "purpose": "三床及共用被服，跨宽门联系横厅；设施：床位与个人衣物、床位与个人衣物、床位与个人衣物、家用衣物被服"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        23,
+        3,
+        3
+      ],
+      "name": "尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "cook",
+      "kind": "work",
+      "pos": [
+        18,
+        3,
+        6
+      ],
+      "name": "备餐、热食与洗涤",
+      "look_at": [
+        18,
+        4,
+        6
+      ],
+      "approach": [
+        18,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "clock",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        6
+      ],
+      "name": "钟务校时、零件与交班记录",
+      "look_at": [
+        5,
+        4,
+        6
+      ],
+      "approach": [
+        5,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "clockparts",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        10
+      ],
+      "name": "钟绳、润滑与备用小件",
+      "look_at": [
+        5,
+        4,
+        10
+      ],
+      "approach": [
+        5,
+        3,
+        11
+      ]
+    },
+    {
+      "id": "ledger",
+      "kind": "storage",
+      "pos": [
+        10,
+        3,
+        11
+      ],
+      "name": "值勤图谱与维修日志",
+      "look_at": [
+        10,
+        4,
+        11
+      ],
+      "approach": [
+        10,
+        3,
+        12
+      ]
+    },
+    {
+      "id": "beds0",
+      "kind": "bed",
+      "pos": [
+        6,
+        3,
+        20
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        6,
+        4,
+        20
+      ],
+      "approach": [
+        7,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "beds1",
+      "kind": "bed",
+      "pos": [
+        9,
+        3,
+        20
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        9,
+        4,
+        20
+      ],
+      "approach": [
+        10,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "beds2",
+      "kind": "bed",
+      "pos": [
+        12,
+        3,
+        20
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        12,
+        4,
+        20
+      ],
+      "approach": [
+        13,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "linen",
+      "kind": "storage",
+      "pos": [
+        7,
+        3,
+        23
+      ],
+      "name": "家用衣物被服",
+      "look_at": [
+        7,
+        4,
+        23
+      ],
+      "approach": [
+        7,
+        3,
+        22
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "横向餐厨与钟务并列，寝翼向后伸成L形；生活、钟务与夜间睡眠具有三个真正分隔的空间。",
+    "按2026-09-27效果图重绘：浅石深木、陡瓦白边、铁脊老虎窗、紫金彩窗与灯柱围院。"
+  ],
+  "differences": [
+    "横向餐厨与钟务并列，寝翼向后伸成L形；生活、钟务与夜间睡眠具有三个真正分隔的空间。"
+  ],
+  "floors": [
+    {
+      "name": "生活作业层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/memorial_life.py:BUILDERS",
+  "ground_plane": {
+    "y": 3,
+    "note": "外部场坪顶面与脚底Y=3，铺地方块Y=2；内部上层及高台不改变接地基准。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "家庭居住"
+  ],
+  "nbt_sha256": "6193c4c3ad4b1c739f76328dad5215561057b926e8fe8329d99d1488c3dd0962"
+}

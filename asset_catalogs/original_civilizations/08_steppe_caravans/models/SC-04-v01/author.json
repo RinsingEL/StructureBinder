@@ -1,0 +1,218 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "SC-04-v01",
+  "name": "独居中心火塘帐",
+  "family": "SC-04",
+  "civilization": "游牧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    27,
+    19,
+    33
+  ],
+  "terrain": {
+    "选址": "背风稳定营地，按具体帐群占地接已有营路；独居中心火塘帐",
+    "资源与季节": "有人驻留须有可行淡水、食物与补给来源，储槽只表达运水储备；畜群照护另需饮水与饲料，种植另需耕土和足够生长季。短停与长驻按单体用途区分。",
+    "高程": "默认入口脚底Y=3；坡台住宅Y=5由实体台阶接入，见点位。",
+    "落地限制": "仅整理模板营地占地，不推平外部草坡；留出畜群、货车或来客外接通路。",
+    "运行边界": "原版静态空间与作者点位，未接入动物、交易、季节迁徙或运行时生成。",
+    "推荐情境": [
+      "商路营地、季节牧场或长驻聚落；驻留时长按具体用途决定，游牧风格不等于所有设施都可随队移动。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "one",
+      "name": "围火独居空间",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        21,
+        6,
+        23
+      ],
+      "purpose": "入口绕火塘抵达西侧屏后床榻，北侧衣柜与东侧厨房分开"
+    }
+  ],
+  "points": [
+    {
+      "id": "fire",
+      "kind": "work",
+      "pos": [
+        13,
+        3,
+        13
+      ],
+      "name": "中心可收拢火塘",
+      "approach": [
+        15,
+        3,
+        13
+      ]
+    },
+    {
+      "id": "bed",
+      "kind": "sleep",
+      "pos": [
+        8,
+        3,
+        10
+      ],
+      "name": "独立床榻",
+      "approach": [
+        9,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "clothes",
+      "kind": "storage",
+      "pos": [
+        11,
+        4,
+        6
+      ],
+      "name": "个人衣物与毡被",
+      "approach": [
+        11,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "kcook",
+      "kind": "work",
+      "pos": [
+        15,
+        3,
+        9
+      ],
+      "name": "炊煮与备餐",
+      "approach": [
+        15,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "kwater",
+      "kind": "work",
+      "pos": [
+        19,
+        3,
+        9
+      ],
+      "name": "运水清洗",
+      "approach": [
+        19,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "kfood",
+      "kind": "storage",
+      "pos": [
+        16,
+        4,
+        7
+      ],
+      "name": "干粮与炊具",
+      "approach": [
+        16,
+        3,
+        8
+      ]
+    },
+    {
+      "id": "meal",
+      "kind": "work",
+      "pos": [
+        9,
+        3,
+        18
+      ],
+      "name": "浅木餐桌与双侧席",
+      "approach": [
+        8,
+        3,
+        18
+      ]
+    },
+    {
+      "id": "read",
+      "kind": "work",
+      "pos": [
+        18,
+        3,
+        17
+      ],
+      "name": "独居读写",
+      "approach": [
+        17,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        13,
+        3,
+        30
+      ],
+      "name": "背风营路入口",
+      "facing": "south"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        13,
+        2,
+        30
+      ],
+      "direction": "south",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "接已有营路；人畜与车辆另留净空"
+    }
+  ],
+  "design_notes": [],
+  "differences": [
+    "独居中心火塘帐；以火塘、床榻、厨房和公共空间关系决定平面，浅木家具与织毯区分功能。"
+  ],
+  "floors": [
+    {
+      "name": "营地生活层",
+      "y": 2,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/steppe_life.py:SC-04-v01",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "nbt_sha256": "2bd1cfef6a8e7f6cd5651af3eb5da48b4d5cf2d1031c74f2bff08b5b206e4ade",
+  "function_terms": [
+    "家庭居住"
+  ]
+}

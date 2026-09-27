@@ -1,0 +1,248 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "WT-F02-v02",
+  "name": "十字水渠四格混种园",
+  "family": "WT-F02",
+  "civilization": "地中海",
+  "planning_role": "planning_role.fill",
+  "size": [
+    29,
+    22,
+    30
+  ],
+  "terrain": {
+    "选址": "稳定排水的聚落地块；种植版本需要日照与灌溉供水，不要求贴临水岸。",
+    "高程": "外部铺地顶面Y=3；内部阶台另行标记。",
+    "边界": "独立低院墙、红瓦棚和可通行入口，不依赖相邻建筑。"
+  },
+  "rooms": [
+    {
+      "id": "plot0",
+      "name": "灌溉作物畦",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        10,
+        7,
+        10
+      ],
+      "purpose": "原版成熟作物、真实耕地与就近灌溉水源"
+    },
+    {
+      "id": "plot1",
+      "name": "灌溉作物畦",
+      "min": [
+        17,
+        3,
+        5
+      ],
+      "max": [
+        22,
+        7,
+        10
+      ],
+      "purpose": "原版成熟作物、真实耕地与就近灌溉水源"
+    },
+    {
+      "id": "plot2",
+      "name": "灌溉作物畦",
+      "min": [
+        5,
+        3,
+        15
+      ],
+      "max": [
+        10,
+        7,
+        20
+      ],
+      "purpose": "原版成熟作物、真实耕地与就近灌溉水源"
+    },
+    {
+      "id": "plot3",
+      "name": "灌溉作物畦",
+      "min": [
+        17,
+        3,
+        15
+      ],
+      "max": [
+        22,
+        7,
+        20
+      ],
+      "purpose": "原版成熟作物、真实耕地与就近灌溉水源"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        14,
+        3,
+        2
+      ],
+      "name": "前院入口",
+      "facing": "north"
+    },
+    {
+      "id": "plot0",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        5
+      ],
+      "name": "灌溉种植与采收",
+      "look_at": [
+        5,
+        4,
+        5
+      ],
+      "approach": [
+        4,
+        3,
+        5
+      ]
+    },
+    {
+      "id": "plot1",
+      "kind": "work",
+      "pos": [
+        17,
+        3,
+        5
+      ],
+      "name": "灌溉种植与采收",
+      "look_at": [
+        17,
+        4,
+        5
+      ],
+      "approach": [
+        16,
+        3,
+        5
+      ]
+    },
+    {
+      "id": "plot2",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        15
+      ],
+      "name": "灌溉种植与采收",
+      "look_at": [
+        5,
+        4,
+        15
+      ],
+      "approach": [
+        4,
+        3,
+        15
+      ]
+    },
+    {
+      "id": "plot3",
+      "kind": "work",
+      "pos": [
+        17,
+        3,
+        15
+      ],
+      "name": "灌溉种植与采收",
+      "look_at": [
+        17,
+        4,
+        15
+      ],
+      "approach": [
+        16,
+        3,
+        15
+      ]
+    },
+    {
+      "id": "sort",
+      "kind": "work",
+      "pos": [
+        8,
+        3,
+        25
+      ],
+      "name": "采收分选与清洗",
+      "look_at": [
+        8,
+        4,
+        25
+      ],
+      "approach": [
+        8,
+        3,
+        26
+      ]
+    },
+    {
+      "id": "seed",
+      "kind": "storage",
+      "pos": [
+        13,
+        3,
+        25
+      ],
+      "name": "种子与小农具",
+      "look_at": [
+        13,
+        4,
+        25
+      ],
+      "approach": [
+        13,
+        3,
+        26
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "四格粮菜环绕中央蓄水槽和十字作业路，后侧低红瓦棚存种与分选。"
+  ],
+  "differences": [
+    "四格粮菜环绕中央蓄水槽和十字作业路，后侧低红瓦棚存种与分选。"
+  ],
+  "floors": [
+    {
+      "name": "庭院作业层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mediterranean_gardens.py:BUILDERS",
+  "ground_plane": {
+    "y": 3,
+    "note": "院门外铺地顶面，阶台为内部高差。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "农田种植"
+  ],
+  "nbt_sha256": "04584636603f92bb2978e549d5d9e83ef0f17a31d34b2a49335c43fb3a880b78"
+}

@@ -147,5 +147,8 @@
     "padding": 4,
     "surface": "podzol"
   },
-  "nbt_sha256": "1bafa22f716cb54b43f59e758e779558ddd4f576dd4122b3ec9a37342981dc13"
+  "nbt_sha256": "1bafa22f716cb54b43f59e758e779558ddd4f576dd4122b3ec9a37342981dc13",
+  "function_terms": [
+    "遗址展示"
+  ]
 }

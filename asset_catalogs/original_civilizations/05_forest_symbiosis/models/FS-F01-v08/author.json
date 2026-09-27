@@ -210,5 +210,9 @@
     "padding": 4,
     "surface": "podzol"
   },
-  "nbt_sha256": "00c20b78ffef4c6a024b76d57fbc68149565494213b14b7d34424790e9000e03"
+  "nbt_sha256": "00c20b78ffef4c6a024b76d57fbc68149565494213b14b7d34424790e9000e03",
+  "function_terms": [
+    "零售",
+    "制图抄录"
+  ]
 }

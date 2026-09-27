@@ -175,5 +175,8 @@
     "padding": 4,
     "surface": "podzol"
   },
-  "nbt_sha256": "fb0dd83ed4f6ae1ac253f0b64d36dc8edcd55f9ebb7e5a88c045a9fdd02d1808"
+  "nbt_sha256": "fb0dd83ed4f6ae1ac253f0b64d36dc8edcd55f9ebb7e5a88c045a9fdd02d1808",
+  "function_terms": [
+    "教学"
+  ]
 }

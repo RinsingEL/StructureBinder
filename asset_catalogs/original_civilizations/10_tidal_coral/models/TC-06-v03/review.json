@@ -1,0 +1,45 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "TC-06-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors / 海洋幻想作者实看",
+  "nbt_sha256": "589ff9bcc7bb2b57cb448694a1207d7ca0e5f874bdbbb3b8f7123404caf5c114",
+  "author_sha256": "16910842885ceb53124d6211d50c9095f5c5d58f179149636fb6944f7d90e990",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-watchroom.png",
+    "previews/room-warehouse.png",
+    "previews/point-kitchen.png",
+    "previews/point-watch.png",
+    "previews/point-personal.png",
+    "previews/point-cargo0.png",
+    "previews/point-cargo1.png",
+    "previews/point-cargo2.png",
+    "previews/point-weigh.png",
+    "previews/point-waiting.png",
+    "previews/point-pallet0.png",
+    "previews/point-pallet1.png",
+    "previews/point-pallet2.png",
+    "previews/point-pallet3.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "逐图核对行业专用台、交易与原料储存、独立生活卧室；仓库货垛与装卸通道分开。",
+    "实际看过全部外观、去顶、分层、房间、功能点、标注与地形视图；结合零警告数据与导航核对。",
+    "岸端转运侧仓",
+    "货物离参考水面和高潮线存放；真实干式步行通路，桩脚接连续承载海床"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

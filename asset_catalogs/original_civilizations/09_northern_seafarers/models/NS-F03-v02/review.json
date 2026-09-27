@@ -1,0 +1,39 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "NS-F03-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 北欧套系作者逐图审查",
+  "nbt_sha256": "a3ed289ac29b288e1c09b22c3e1e3f04d7a19d8f89e0126a94ead7906d3da6b8",
+  "author_sha256": "81224b85abd72646ab07acb7cfb99ef5d06647f8c5b492498d041e4735417578",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-front.png",
+    "previews/room-back.png",
+    "previews/point-wash.png",
+    "previews/point-dry.png",
+    "previews/point-dry2.png",
+    "previews/point-baskets.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与用途": "完整自带背墙的鱼获棚可贴近院边独立使用，前清洗分级、后两组悬挂架；不依赖相邻建筑补齐背墙。",
+    "实际内饰图审": "背墙避风、前洗选与后分组晾晒明确，架间可维护。",
+    "完整证据": "已实际查看最终四向、顶视、去顶、全部楼层与房间、使用站位、标记及场地示意；四个双层模型另补楼层斜视核对护栏。",
+    "数据与通路": "NBT 重读、方块状态、作者标记与离线碰撞导航通过，零警告。",
+    "选址条件": "稳定的寒地海湾背风岸台；避开潮涌、雪崩、海冰推挤和行洪通道。；干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。；完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。；厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "设备、晾晒及温床为静态表达，未接入加工、气候或作物生产机制。"
+  ]
+}

@@ -1,0 +1,297 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "NS-06-v05",
+  "name": "下网厅上家居宅",
+  "family": "NS-06",
+  "civilization": "北欧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    29,
+    27,
+    29
+  ],
+  "terrain": {
+    "选址": "稳定、排水良好的承载地面，接通实际入口并保留工作面；避开活动灾害和行洪通道。水岸设施另须满足本模型的岸线、水深与接驳要求。",
+    "高程": "干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。",
+    "保留空间": "完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。",
+    "风雪": "厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。",
+    "岸线": "海面在 +Z，展示水面Y=1，低于陆侧站立面Y=3；生产点需实际渔业水域，水面不作为落地基准。",
+    "推荐情境": [
+      "寒地背风聚落或海湾聚落；这是常见使用背景，不要求所有北欧建筑临海，也不限定住户种族。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "net",
+      "name": "下层专业网厅",
+      "min": [
+        4,
+        3,
+        4
+      ],
+      "max": [
+        16,
+        6,
+        22
+      ],
+      "purpose": "铺网、补结、冲洗及干湿分柜，楼梯到家居；具体设施：长网铺展与补结台、绳索浮子与小工具、已修网具、网具冲洗"
+    },
+    {
+      "id": "family",
+      "name": "上层完整家居",
+      "min": [
+        4,
+        9,
+        4
+      ],
+      "max": [
+        16,
+        12,
+        22
+      ],
+      "purpose": "厨房、餐桌、隔屏双床与干衣保管；具体设施：备餐、热食与洗涤、床铺与个人防寒用品、床铺与个人防寒用品、家庭干衣"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        10,
+        3,
+        2
+      ],
+      "name": "背风步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "net",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        8
+      ],
+      "name": "长网铺展与补结台",
+      "look_at": [
+        5,
+        4,
+        8
+      ],
+      "approach": [
+        5,
+        3,
+        9
+      ]
+    },
+    {
+      "id": "gear",
+      "kind": "storage",
+      "pos": [
+        4,
+        3,
+        5
+      ],
+      "name": "绳索浮子与小工具",
+      "look_at": [
+        4,
+        4,
+        5
+      ],
+      "approach": [
+        4,
+        3,
+        6
+      ]
+    },
+    {
+      "id": "finished",
+      "kind": "storage",
+      "pos": [
+        4,
+        3,
+        20
+      ],
+      "name": "已修网具",
+      "look_at": [
+        4,
+        4,
+        20
+      ],
+      "approach": [
+        4,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "wash",
+      "kind": "work",
+      "pos": [
+        11,
+        3,
+        20
+      ],
+      "name": "网具冲洗",
+      "look_at": [
+        11,
+        4,
+        20
+      ],
+      "approach": [
+        11,
+        3,
+        19
+      ]
+    },
+    {
+      "id": "cook",
+      "kind": "work",
+      "pos": [
+        4,
+        9,
+        5
+      ],
+      "name": "备餐、热食与洗涤",
+      "look_at": [
+        4,
+        10,
+        5
+      ],
+      "approach": [
+        4,
+        9,
+        6
+      ]
+    },
+    {
+      "id": "beds0",
+      "kind": "bed",
+      "pos": [
+        5,
+        9,
+        19
+      ],
+      "name": "床铺与个人防寒用品",
+      "look_at": [
+        5,
+        10,
+        19
+      ],
+      "approach": [
+        6,
+        9,
+        19
+      ]
+    },
+    {
+      "id": "beds1",
+      "kind": "bed",
+      "pos": [
+        8,
+        9,
+        19
+      ],
+      "name": "床铺与个人防寒用品",
+      "look_at": [
+        8,
+        10,
+        19
+      ],
+      "approach": [
+        9,
+        9,
+        19
+      ]
+    },
+    {
+      "id": "linen",
+      "kind": "storage",
+      "pos": [
+        10,
+        9,
+        21
+      ],
+      "name": "家庭干衣",
+      "look_at": [
+        10,
+        10,
+        21
+      ],
+      "approach": [
+        10,
+        9,
+        22
+      ]
+    },
+    {
+      "id": "balcony",
+      "kind": "circulation",
+      "pos": [
+        22,
+        9,
+        15
+      ],
+      "name": "上层岸边阳台"
+    },
+    {
+      "id": "dry",
+      "kind": "work",
+      "pos": [
+        6,
+        5,
+        2
+      ],
+      "name": "晾晒补网架",
+      "approach": [
+        6,
+        3,
+        1
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "下层石基湿作业，上层木住宅；内外双梯、岸向阳台及柱撑。"
+  ],
+  "differences": [
+    "下层石基湿作业，上层木住宅；内外双梯、岸向阳台及柱撑。"
+  ],
+  "floors": [
+    {
+      "name": "渔具作业层",
+      "y": 2,
+      "max_y": 6
+    },
+    {
+      "name": "家庭生活层",
+      "y": 8,
+      "max_y": 12
+    }
+  ],
+  "roof_min_y": 14,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/northern_fill_fishers.py:fisher(5)",
+  "preview_context": {
+    "kind": "shore",
+    "land_surface_y": 3,
+    "shore_z": 27,
+    "water_surface_y": 1,
+    "bed_y": -2,
+    "padding": 4,
+    "surface": "snow"
+  },
+  "ground_plane": {
+    "y": 3,
+    "note": "北侧外部岸台为本地Y=2方块顶面，站立脚底Y=3；内部抬高台地及上层另算"
+  },
+  "function_terms": [
+    "住宅",
+    "渔具修缮"
+  ],
+  "nbt_sha256": "e73c0ecfbbc4c37b81c78067d1d2670a67da85411c2fd9d9988df307ab40c1c5"
+}

@@ -1,0 +1,29 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "SC-04-v06",
+  "nbt_sha256": "7cf19eb16e73d9b14c89233dde66bc81cb569ecd032e41fbacdc26bc6f5f4f1a",
+  "author_sha256": "62e7f082b1610d2f716e5976c90e8072a81090f909c64e0be27112ed8cb9083d",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-winter",
+    "point-winterfire",
+    "point-leftbed",
+    "point-rightbed",
+    "point-wintercloth",
+    "point-winterkcook",
+    "point-winterkwater",
+    "point-winterkfood",
+    "point-wintermeal",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

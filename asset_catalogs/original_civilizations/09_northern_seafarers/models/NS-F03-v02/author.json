@@ -1,0 +1,183 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "NS-F03-v02",
+  "name": "封背贴墙鱼获棚",
+  "family": "NS-F03",
+  "civilization": "北欧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    25,
+    24,
+    21
+  ],
+  "terrain": {
+    "选址": "稳定、排水良好的承载地面，接通实际入口并保留工作面；避开活动灾害和行洪通道。水岸设施另须满足本模型的岸线、水深与接驳要求。",
+    "高程": "干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。",
+    "保留空间": "完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。",
+    "风雪": "厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。",
+    "推荐情境": [
+      "寒地背风聚落或海湾聚落；这是常见使用背景，不要求所有北欧建筑临海，也不限定住户种族。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "front",
+      "name": "前处理与容器带",
+      "min": [
+        4,
+        3,
+        5
+      ],
+      "max": [
+        20,
+        6,
+        9
+      ],
+      "purpose": "清洗分级和容器分开；具体设施：鱼获冲洗与分级、鱼筐、粗盐与备用容器"
+    },
+    {
+      "id": "back",
+      "name": "封背通风挂鱼带",
+      "min": [
+        4,
+        3,
+        10
+      ],
+      "max": [
+        20,
+        6,
+        15
+      ],
+      "purpose": "并列短挂架，实木背墙挡主风；具体设施：分列悬挂干燥架、分列悬挂干燥架"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        12,
+        3,
+        3
+      ],
+      "name": "背风步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "wash",
+      "kind": "work",
+      "pos": [
+        4,
+        3,
+        7
+      ],
+      "name": "鱼获冲洗与分级",
+      "look_at": [
+        4,
+        4,
+        7
+      ],
+      "approach": [
+        4,
+        3,
+        8
+      ]
+    },
+    {
+      "id": "dry",
+      "kind": "work",
+      "pos": [
+        6,
+        3,
+        12
+      ],
+      "name": "分列悬挂干燥架",
+      "look_at": [
+        6,
+        4,
+        12
+      ],
+      "approach": [
+        6,
+        3,
+        13
+      ]
+    },
+    {
+      "id": "dry2",
+      "kind": "work",
+      "pos": [
+        16,
+        3,
+        12
+      ],
+      "name": "分列悬挂干燥架",
+      "look_at": [
+        16,
+        4,
+        12
+      ],
+      "approach": [
+        16,
+        3,
+        13
+      ]
+    },
+    {
+      "id": "baskets",
+      "kind": "storage",
+      "pos": [
+        14,
+        3,
+        7
+      ],
+      "name": "鱼筐、粗盐与备用容器",
+      "look_at": [
+        14,
+        4,
+        7
+      ],
+      "approach": [
+        14,
+        3,
+        8
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "完整自带背墙的鱼获棚可贴近院边独立使用，前清洗分级、后两组悬挂架；不依赖相邻建筑补齐背墙。"
+  ],
+  "differences": [
+    "完整自带背墙的鱼获棚可贴近院边独立使用，前清洗分级、后两组悬挂架；不依赖相邻建筑补齐背墙。"
+  ],
+  "floors": [
+    {
+      "name": "岸台生活作业层",
+      "y": 2,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/northern_fill_gardens_sheds.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 5,
+    "surface": "grass"
+  },
+  "ground_plane": {
+    "y": 3,
+    "note": "外部步行地面上边界接Y=3，基础方块顶Y=3；不是基础底。"
+  },
+  "function_terms": [
+    "渔具存放",
+    "晾晒"
+  ],
+  "nbt_sha256": "d10ab70e1e76b852c62d5722f535feced1adc8912080d3a5833083800b29ad9c"
+}

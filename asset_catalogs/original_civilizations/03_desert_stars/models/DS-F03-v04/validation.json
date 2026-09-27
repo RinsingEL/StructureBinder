@@ -1,10 +1,10 @@
 {
   "schema": "structure-studio.validation.v1",
-  "nbt_sha256": "9ce4380ae809922b37771357c97b0f73c64bd4cb51188ecc833d43045ef6501a",
+  "nbt_sha256": "cfac820c923254e46fd1f7418c29ea18d36bbb36dadd586464c2e8ece8decdcb",
   "navigation": {
     "passed": true,
     "unreachable": [],
-    "nodes": 3430,
+    "nodes": 1536,
     "highest_standing_y": 2,
     "truncated": false,
     "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
@@ -13,32 +13,35 @@
   "errors": [],
   "warnings": [],
   "size": [
-    34,
-    14,
-    35
+    26,
+    11,
+    21
   ],
-  "visible_blocks": 2340,
-  "explicit_air": 10260,
-  "palette": 19,
+  "visible_blocks": 1396,
+  "explicit_air": 3620,
+  "palette": 23,
   "block_entities": 0,
   "agriculture": null,
   "materials": {
-    "minecraft:cut_sandstone": 900,
-    "minecraft:smooth_sandstone": 640,
-    "minecraft:oak_leaves": 236,
-    "minecraft:stripped_acacia_log": 148,
-    "minecraft:sandstone": 92,
-    "minecraft:water": 84,
-    "minecraft:rooted_dirt": 84,
-    "minecraft:acacia_fence": 60,
-    "minecraft:purple_wool": 40,
-    "minecraft:white_wool": 30,
-    "minecraft:amethyst_cluster": 12,
-    "minecraft:birch_slab": 4,
-    "minecraft:purple_carpet": 4,
-    "minecraft:barrel": 3,
-    "minecraft:spruce_planks": 2,
-    "minecraft:water_cauldron": 1
+    "minecraft:cut_sandstone": 554,
+    "minecraft:smooth_sandstone": 234,
+    "minecraft:sandstone": 157,
+    "minecraft:oak_leaves": 141,
+    "minecraft:spruce_slab": 75,
+    "minecraft:stripped_spruce_log": 50,
+    "minecraft:coarse_dirt": 38,
+    "minecraft:white_wool": 34,
+    "minecraft:spruce_fence": 32,
+    "minecraft:terracotta": 22,
+    "minecraft:red_terracotta": 17,
+    "minecraft:purple_stained_glass_pane": 12,
+    "minecraft:gravel": 11,
+    "minecraft:oak_fence": 8,
+    "minecraft:lantern": 5,
+    "minecraft:sandstone_wall": 3,
+    "minecraft:water_cauldron": 1,
+    "minecraft:crafting_table": 1,
+    "minecraft:barrel": 1
   },
-  "scope": "NBT、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
 }

@@ -146,5 +146,9 @@
     "land_surface_y": 2,
     "padding": 5
   },
-  "nbt_sha256": "8692c3758fa4e76fa0dd7ac19602d33f522add387e47aa3b704f311d36346a59"
+  "nbt_sha256": "8692c3758fa4e76fa0dd7ac19602d33f522add387e47aa3b704f311d36346a59",
+  "function_terms": [
+    "零售",
+    "烘焙"
+  ]
 }

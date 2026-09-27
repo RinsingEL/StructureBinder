@@ -1,0 +1,278 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "SC-09-v01",
+  "name": "双独立旅人小帐",
+  "family": "SC-09",
+  "civilization": "游牧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    47,
+    19,
+    35
+  ],
+  "terrain": {
+    "选址": "路线补给节点，入口避开牲畜与货车主路；双独立旅人小帐",
+    "资源与季节": "有人驻留须有可行淡水、食物与补给来源，储槽只表达运水储备；畜群照护另需饮水与饲料，种植另需耕土和足够生长季。短停与长驻按单体用途区分。",
+    "高程": "默认入口脚底Y=3；坡台住宅Y=5由实体台阶接入，见点位。",
+    "落地限制": "仅整理模板营地占地，不推平外部草坡；留出畜群、货车或来客外接通路。",
+    "运行边界": "原版静态空间与作者点位，未接入动物、交易、季节迁徙或运行时生成。",
+    "推荐情境": [
+      "商路营地、季节牧场或长驻聚落；驻留时长按具体用途决定，游牧风格不等于所有设施都可随队移动。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "left",
+      "name": "独立旅人寝帐",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        17,
+        6,
+        20
+      ],
+      "purpose": "只含休息、衣物、读写，避免将家庭厨房复制进每个客帐"
+    },
+    {
+      "id": "right",
+      "name": "独立旅人寝帐",
+      "min": [
+        29,
+        3,
+        5
+      ],
+      "max": [
+        41,
+        6,
+        20
+      ],
+      "purpose": "只含休息、衣物、读写，避免将家庭厨房复制进每个客帐"
+    }
+  ],
+  "points": [
+    {
+      "id": "leftbed",
+      "kind": "sleep",
+      "pos": [
+        8,
+        3,
+        10
+      ],
+      "name": "独立床榻",
+      "approach": [
+        9,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "leftbag",
+      "kind": "storage",
+      "pos": [
+        11,
+        4,
+        6
+      ],
+      "name": "旅人独立行李与毡被",
+      "approach": [
+        11,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "leftpacking",
+      "kind": "work",
+      "pos": [
+        10,
+        3,
+        14
+      ],
+      "name": "浅木餐桌与双侧席",
+      "approach": [
+        9,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "leftread",
+      "kind": "work",
+      "pos": [
+        13,
+        3,
+        17
+      ],
+      "name": "旅途阅读与便笺",
+      "approach": [
+        13,
+        3,
+        18
+      ]
+    },
+    {
+      "id": "rightbed",
+      "kind": "sleep",
+      "pos": [
+        32,
+        3,
+        10
+      ],
+      "name": "独立床榻",
+      "approach": [
+        33,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "rightbag",
+      "kind": "storage",
+      "pos": [
+        35,
+        4,
+        6
+      ],
+      "name": "旅人独立行李与毡被",
+      "approach": [
+        35,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "rightpacking",
+      "kind": "work",
+      "pos": [
+        34,
+        3,
+        14
+      ],
+      "name": "浅木餐桌与双侧席",
+      "approach": [
+        33,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "rightread",
+      "kind": "work",
+      "pos": [
+        37,
+        3,
+        17
+      ],
+      "name": "旅途阅读与便笺",
+      "approach": [
+        37,
+        3,
+        18
+      ]
+    },
+    {
+      "id": "meal",
+      "kind": "work",
+      "pos": [
+        16,
+        3,
+        27
+      ],
+      "name": "浅木餐桌与双侧席",
+      "approach": [
+        15,
+        3,
+        27
+      ]
+    },
+    {
+      "id": "host",
+      "kind": "work",
+      "pos": [
+        29,
+        3,
+        27
+      ],
+      "name": "双帐登记",
+      "approach": [
+        29,
+        3,
+        28
+      ]
+    },
+    {
+      "id": "water",
+      "kind": "work",
+      "pos": [
+        33,
+        3,
+        27
+      ],
+      "name": "公共饮水",
+      "approach": [
+        33,
+        3,
+        28
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        23,
+        3,
+        32
+      ],
+      "name": "背风营路入口",
+      "facing": "south"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        23,
+        2,
+        32
+      ],
+      "direction": "south",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "接已有营路；人畜与车辆另留净空"
+    }
+  ],
+  "design_notes": [],
+  "differences": [
+    "双独立旅人小帐；独立客帐、共宿舱、餐帐与接待帐按服务组织分别组合。"
+  ],
+  "floors": [
+    {
+      "name": "营地生活层",
+      "y": 2,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/steppe_life.py:SC-09-v01",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "nbt_sha256": "0fbbac3e6d93045e1949fef50b49bcec918c6c1e32805069c1c0b9788addf24a",
+  "function_terms": [
+    "旅客住宿"
+  ]
+}

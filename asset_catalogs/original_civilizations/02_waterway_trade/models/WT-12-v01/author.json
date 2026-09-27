@@ -225,5 +225,9 @@
     "shore_z": 40,
     "water_surface_y": 3
   },
-  "nbt_sha256": "57519a9ca5ad2f22ac4e90903c7f099af6768124ef331dd9fd9037c50c7af56b"
+  "nbt_sha256": "57519a9ca5ad2f22ac4e90903c7f099af6768124ef331dd9fd9037c50c7af56b",
+  "function_terms": [
+    "祭祀",
+    "遗址展示"
+  ]
 }

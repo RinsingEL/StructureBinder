@@ -1,0 +1,378 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "ML-08-v01",
+  "name": "侧廊双客房小旅店",
+  "family": "ML-08",
+  "civilization": "哥特",
+  "planning_role": "planning_role.fill",
+  "size": [
+    27,
+    29,
+    40
+  ],
+  "terrain": {
+    "选址": "稳定、排水良好的居民地块，日照与通路按具体用途保留；哥特是建造风格而非地形限制。",
+    "高程": "基础底Y=0、常规地面Y=2、脚底Y=3；抬高或双层版本另记。",
+    "边界": "完整独立模板，保留外扶柱、檐口、采光和门外站位，不默认邻居补齐。"
+  },
+  "rooms": [
+    {
+      "id": "common",
+      "name": "登记寄物与前餐厅",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        21,
+        7,
+        19
+      ],
+      "purpose": "正常供餐、备粮、入店登记及寄存；设施：住宿登记与房间分配、带号寄存行李、备餐、热食与洗涤、旅店备粮与餐具"
+    },
+    {
+      "id": "rooma",
+      "name": "第一双床客房",
+      "min": [
+        5,
+        3,
+        21
+      ],
+      "max": [
+        12,
+        7,
+        27
+      ],
+      "purpose": "双床与个人柜，侧廊独立门；设施：床位与个人衣物、床位与个人衣物"
+    },
+    {
+      "id": "roomb",
+      "name": "第二双床客房",
+      "min": [
+        5,
+        3,
+        29
+      ],
+      "max": [
+        12,
+        7,
+        35
+      ],
+      "purpose": "安静双床客房与独立床柜；设施：床位与个人衣物、床位与个人衣物"
+    },
+    {
+      "id": "staff",
+      "name": "后店主双床间",
+      "min": [
+        14,
+        3,
+        28
+      ],
+      "max": [
+        21,
+        7,
+        35
+      ],
+      "purpose": "店主家庭寝居与被服；设施：床位与个人衣物、床位与个人衣物、后寝共用被服"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        13,
+        3,
+        3
+      ],
+      "name": "尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "reception",
+      "kind": "work",
+      "pos": [
+        16,
+        3,
+        6
+      ],
+      "name": "住宿登记与房间分配",
+      "look_at": [
+        16,
+        4,
+        6
+      ],
+      "approach": [
+        16,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "luggage",
+      "kind": "storage",
+      "pos": [
+        16,
+        3,
+        11
+      ],
+      "name": "带号寄存行李",
+      "look_at": [
+        16,
+        4,
+        11
+      ],
+      "approach": [
+        16,
+        3,
+        12
+      ]
+    },
+    {
+      "id": "kitchen",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        6
+      ],
+      "name": "备餐、热食与洗涤",
+      "look_at": [
+        5,
+        4,
+        6
+      ],
+      "approach": [
+        5,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "food",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        17
+      ],
+      "name": "旅店备粮与餐具",
+      "look_at": [
+        5,
+        4,
+        17
+      ],
+      "approach": [
+        5,
+        3,
+        18
+      ]
+    },
+    {
+      "id": "guesta0",
+      "kind": "bed",
+      "pos": [
+        6,
+        3,
+        24
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        6,
+        4,
+        24
+      ],
+      "approach": [
+        7,
+        3,
+        24
+      ]
+    },
+    {
+      "id": "guesta1",
+      "kind": "bed",
+      "pos": [
+        9,
+        3,
+        24
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        9,
+        4,
+        24
+      ],
+      "approach": [
+        10,
+        3,
+        24
+      ]
+    },
+    {
+      "id": "guestb0",
+      "kind": "bed",
+      "pos": [
+        6,
+        3,
+        32
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        6,
+        4,
+        32
+      ],
+      "approach": [
+        7,
+        3,
+        32
+      ]
+    },
+    {
+      "id": "guestb1",
+      "kind": "bed",
+      "pos": [
+        9,
+        3,
+        32
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        9,
+        4,
+        32
+      ],
+      "approach": [
+        10,
+        3,
+        32
+      ]
+    },
+    {
+      "id": "staff0",
+      "kind": "bed",
+      "pos": [
+        15,
+        3,
+        32
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        15,
+        4,
+        32
+      ],
+      "approach": [
+        16,
+        3,
+        32
+      ]
+    },
+    {
+      "id": "staff1",
+      "kind": "bed",
+      "pos": [
+        18,
+        3,
+        32
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        18,
+        4,
+        32
+      ],
+      "approach": [
+        19,
+        3,
+        32
+      ]
+    },
+    {
+      "id": "linen",
+      "kind": "storage",
+      "pos": [
+        16,
+        3,
+        35
+      ],
+      "name": "后寝共用被服",
+      "look_at": [
+        16,
+        4,
+        35
+      ],
+      "approach": [
+        16,
+        3,
+        34
+      ]
+    },
+    {
+      "id": "wash",
+      "kind": "work",
+      "pos": [
+        18,
+        3,
+        22
+      ],
+      "name": "旅客洗尘补水",
+      "look_at": [
+        18,
+        4,
+        22
+      ],
+      "approach": [
+        18,
+        3,
+        23
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "小旅店以前共厅后侧廊组织两间双床客房，另有店主双床寝间；寄存、洗尘、供餐与备粮均独立标记。 按2026-09-27参考图重塑浅石木骨、深瓦浅边山墙、暖窗和院落。"
+  ],
+  "differences": [
+    "小旅店以前共厅后侧廊组织两间双床客房，另有店主双床寝间；寄存、洗尘、供餐与备粮均独立标记。"
+  ],
+  "floors": [
+    {
+      "name": "生活作业层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "ground_plane": {
+    "y": 3,
+    "note": "外部石铺院落顶面与入口脚底Y=3"
+  },
+  "source": "tools/structure_studio/studio/memorial_crafts.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "craft_volumes": [
+    [
+      4,
+      4,
+      22,
+      36,
+      2,
+      5
+    ]
+  ],
+  "function_terms": [
+    "旅客住宿"
+  ],
+  "nbt_sha256": "d18d1e00b848d9cd77cdf2faca9c3728d450dc7fd4b0f03a9eeda59e47af8b19"
+}

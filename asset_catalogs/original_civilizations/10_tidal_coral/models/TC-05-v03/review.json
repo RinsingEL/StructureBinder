@@ -1,0 +1,46 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "TC-05-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors / 海洋幻想作者实看",
+  "nbt_sha256": "547cc122183e8f972022cabc9038189fb80fc00bc25c778939b1514c085c1079",
+  "author_sha256": "5e3ed4afd8520624c3a5519deffa19e901f88daf54662240648b8ee3aa8b397b",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-shop.png",
+    "previews/room-ownerlive.png",
+    "previews/room-ownerbed.png",
+    "previews/room-yard.png",
+    "previews/point-shoptrade.png",
+    "previews/point-shopraw.png",
+    "previews/point-shopbench.png",
+    "previews/point-shopindustry.png",
+    "previews/point-ownerlivecook.png",
+    "previews/point-ownerlivefood.png",
+    "previews/point-ownerlivebooks.png",
+    "previews/point-ownerbeda.png",
+    "previews/point-ownerbedcloth.png",
+    "previews/point-ownerbeddesk.png",
+    "previews/point-packing.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "逐图核对行业专用台、交易与原料储存、独立生活卧室；仓库货垛与装卸通道分开。",
+    "实际看过全部外观、去顶、分层、房间、功能点、标注与地形视图；结合零警告数据与导航核对。",
+    "转角贝作院",
+    "L形转角店面与居住长翼"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "NS-07-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 北欧套系作者逐图审查",
+  "nbt_sha256": "8ab53410bc19fc03574615f0a4db32e95841f4f91758337b789b01ebb9c1a767",
+  "author_sha256": "b6e75988374ac182e5e7e61751241486eb9b1d81f6d693b0325d00a5a530db26",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-retail.png",
+    "previews/room-work.png",
+    "previews/point-sale.png",
+    "previews/point-samples.png",
+    "previews/point-weave.png",
+    "previews/point-fiber.png",
+    "previews/point-dry.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与用途": "面街订单厅给顾客比较网样并登记尺寸，后部单长台适合铺展定制网幅，材料和完成网分靠后墙两侧。",
+    "实际内饰图审": "前售后织布局清楚，织机、交付柜和后存货可分别使用。",
+    "完整证据": "已实际查看最终四向、顶视、去顶、全部楼层与房间、使用站位、标记及场地示意；四个双层模型另补楼层斜视核对护栏。",
+    "数据与通路": "NBT 重读、方块状态、作者标记与离线碰撞导航通过，零警告。",
+    "选址条件": "稳定的寒地海湾背风岸台；避开潮涌、雪崩、海冰推挤和行洪通道。；干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。；完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。；厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "设备、晾晒及温床为静态表达，未接入加工、气候或作物生产机制。"
+  ]
+}

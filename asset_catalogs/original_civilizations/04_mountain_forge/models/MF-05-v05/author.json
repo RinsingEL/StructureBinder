@@ -190,5 +190,9 @@
     "rise": 1,
     "slope_origin_z": 17
   },
-  "nbt_sha256": "0dfb7ad9d5465bd4fbed21c466c9602e5c9e2cf85fadae33bc298ae6626c8866"
+  "nbt_sha256": "0dfb7ad9d5465bd4fbed21c466c9602e5c9e2cf85fadae33bc298ae6626c8866",
+  "function_terms": [
+    "家庭居住",
+    "手工制作"
+  ]
 }

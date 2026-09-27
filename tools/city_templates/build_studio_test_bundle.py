@@ -19,6 +19,7 @@ sys.path.insert(0, str(ROOT / 'tools/structure_studio'))
 from studio.model import read_structure
 from studio.navigation import collision_boxes
 from studio.frontage import runtime_frontage
+from studio.grounding import resolve_ground_plane
 
 STYLES = ('03_desert_stars', '05_forest_symbiosis', '07_arcane_academy')
 EXCLUDE = {'DS-03-v01': '地下蓄水厅：首轮不验证地下接地',
@@ -36,6 +37,14 @@ def write(path, value):
 
 def digest(path):
     return 'sha256:' + hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def ground_plane_y(author):
+    """Read explicit local ground contact height; absence keeps legacy placement."""
+    resolved = resolve_ground_plane(author)
+    if resolved['status'] == 'invalid':
+        raise ValueError(f"Invalid ground_plane: {author.get('id', '<unknown>')}; {resolved['message']}")
+    return resolved['y']
 
 
 def project_entrances(author, data, registry):
@@ -78,12 +87,13 @@ def build(args):
         raise ValueError(f'Use a fresh output directory: {args.output}')
     registry = read(ROOT / 'tools/structure_studio/.cache/registry.json')
     rows, omitted, unmarked = [], [], []
-    for style in STYLES:
+    for style in (getattr(args, 'styles', None) or STYLES):
         directory = ROOT / 'asset_catalogs/original_civilizations' / style / 'models'
         if not directory.is_dir():
             raise ValueError(f'Missing style: {directory}')
         for author_file in sorted(directory.glob('*/author.json')):
             a = read(author_file)
+            ground_y = ground_plane_y(a)
             if a['id'] in EXCLUDE:
                 omitted.append(dict(id=a['id'], reason=EXCLUDE[a['id']]))
                 continue
@@ -94,7 +104,7 @@ def build(args):
                     or validation['nbt_sha256'] != data['sha256'] or a['nbt_sha256'] != data['sha256']
                     or a['size'] != data['size'] or data['data_version'] != 3465):
                 raise ValueError(f'Source validation mismatch: {a["id"]}')
-            if a.get('preview_context', {}).get('kind') != 'flat':
+            if not getattr(args, 'all_previews', False) and a.get('preview_context', {}).get('kind') != 'flat':
                 omitted.append(dict(id=a['id'],reason='首轮仅使用平地预览模型'))
                 continue
             if (not a['function_terms'] or not a['civilization'] or a['planning_role'] not in
@@ -114,7 +124,8 @@ def build(args):
                 sourceSha256=digest(nbt), authorSha256=digest(author_file), author=a,
                 rawSize=dict(zip(('width','height','depth'),data['size'])),
                 roadEntrances=ports, frontagePolicy=frontage_policy, entranceEvidence=evidence,
-                validationSha256=digest(author_file.parent / 'validation.json')))
+                validationSha256=digest(author_file.parent / 'validation.json'),
+                **({'groundPlaneY': ground_y} if ground_y is not None else {})))
     if unmarked:
         raise ValueError('请先在 Structure Studio 完成以下入口标注，再重新导出：\n' + '\n'.join(unmarked))
     if not rows:
@@ -142,7 +153,8 @@ def build(args):
             rawSize=row['rawSize'],allowedRotations=['NONE','CLOCKWISE_90','CLOCKWISE_180','COUNTERCLOCKWISE_90'],
             allowedMirrors=['NONE'],roadEntrances=row['roadEntrances'],
             terrainPosePolicy='structure_start_beard_thin', supportPolicy='full_footprint_support',
-            clearanceBlocks=0,frontagePolicy=row['frontagePolicy']))
+            clearanceBlocks=0,frontagePolicy=row['frontagePolicy'],
+            **({'groundPlaneY': row['groundPlaneY']} if 'groundPlaneY' in row else {})))
         payloads.append(dict(templateRef=ref,sourceFile=relative,sourceSha256=row['sourceSha256'],
             sourceIdentity=f"structure-studio:{a['id']}",converterId='studio_byte_exact_test_export_v1'))
         profiles.append(dict(structureId=ref,sourceProfileRef=f"structure-studio://{a['id']}",
@@ -170,23 +182,29 @@ def build(args):
     references['structureRefs'] = refs
     references['fillPools'] = [dict(poolRef=f'pool:studio_{i:03}',structureRefs=values)
                               for i,(_,values) in enumerate(sorted(pools.items()),1)]
-    references['styleProfiles'] = [dict(profileRef='style:studio_'+style) for style in ('desert','forest','arcane')]
+    references['styleProfiles'] = [dict(profileRef='style:studio_'+style) for style in (getattr(args, 'styles', None) or ('desert','forest','arcane'))]
     write(args.output/'blueprint_reference_catalog.json',references)
     write(args.output/'asset_names.json',names)
     # Portable provenance: no absolute developer paths in the delivered bundle.
     for row in rows:
         row['sourceNbt'] = Path(row['sourceNbt']).relative_to(ROOT).as_posix()
+    ground_unmarked = [row['author']['id'] for row in rows if 'groundPlaneY' not in row]
+    ground_coverage = dict(markedCount=len(rows)-len(ground_unmarked),
+                           unmarkedCount=len(ground_unmarked), unmarkedIds=ground_unmarked)
     write(args.output/'studio_export_provenance.json',dict(schema='studio_test_export.v1',templates=rows,
         omitted=omitted,styleCounts=dict(Counter(r['author']['civilization'] for r in rows)),
+        groundPlaneCoverage=ground_coverage,
         semanticReviewScope='仅核对已选 Studio 作者标签到测试目录的逐字段映射；不代表原模型图审通过',
         entranceAuthority='legacy_catalog_unreviewed',
         entranceReviewScope='沿作者标明朝向投影至边界并检查净空；未验证世界道路高度与接地',
         cachedNavigationVerifiedByNbtHash=True,gameplayValidated=False,
         siteConditionsRuntimeSupported=False,rawNbtUnmodified=True))
     # This file was only an input to the local codec process; retain portable form.
-    write(args.output/'codec_input.json', [dict(templateRef=r['templateRef'],sourceNbt=r['sourceNbt'],sourceSha256=r['sourceSha256']) for r in rows])
+    write(args.output/'codec_input.json', [dict(templateRef=r['templateRef'],sourceNbt=r['sourceNbt'],sourceSha256=r['sourceSha256'],
+        **({'groundPlaneY': r['groundPlaneY']} if 'groundPlaneY' in r else {})) for r in rows])
     export_core_atlas(args.output)
-    print(json.dumps(dict(output=str(args.output),selected=len(rows),styles=dict(Counter(r['author']['civilization'] for r in rows)),omitted=omitted),ensure_ascii=False))
+    print(json.dumps(dict(output=str(args.output),selected=len(rows),styles=dict(Counter(r['author']['civilization'] for r in rows)),
+        omitted=omitted,groundPlaneCoverage=ground_coverage),ensure_ascii=False))
 
 
 if __name__ == '__main__':
@@ -194,4 +212,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     for field in ('output','baseline','classpath-file','java'):
         parser.add_argument('--'+field,type=Path,required=True)
+    parser.add_argument('--styles', nargs='+', help='Explicit catalog directory names')
+    parser.add_argument('--all-previews', action='store_true', help='Include non-flat preview scenes for terrain testing; preview is not runtime terrain admission')
     build(parser.parse_args())

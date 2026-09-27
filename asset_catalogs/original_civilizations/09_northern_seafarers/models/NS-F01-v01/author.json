@@ -1,0 +1,150 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "NS-F01-v01",
+  "name": "侧炉热食干粮铺",
+  "family": "NS-F01",
+  "civilization": "北欧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    28,
+    24,
+    28
+  ],
+  "terrain": {
+    "选址": "稳定平缓且排水良好的街区地块，保留院落和屋檐范围，不要求临海",
+    "供给": "商铺需相应货物及行业原料；有人居住的v05另需生活食水与燃料",
+    "地面": "外街面脚底Y=3，入口和首层同高；基础连续落地",
+    "边界": "原版方块静态表达行业工序，不模拟交易、风雪与专用设备行为",
+    "推荐情境": [
+      "寒地背风聚落或海湾聚落；这是常见使用背景，不要求所有北欧建筑临海，也不限定住户种族。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "热食与干粮店",
+      "name": "热食与干粮店",
+      "min": [
+        5,
+        3,
+        9
+      ],
+      "max": [
+        15,
+        6,
+        22
+      ],
+      "purpose": "经营、行业工作或生活空间"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        10,
+        3,
+        3
+      ],
+      "name": "北侧临街入口",
+      "facing": "north"
+    },
+    {
+      "id": "热食交付",
+      "kind": "work",
+      "pos": [
+        6,
+        3,
+        5
+      ],
+      "name": "热食交付",
+      "approach": [
+        6,
+        3,
+        4
+      ]
+    },
+    {
+      "id": "备餐",
+      "kind": "work",
+      "pos": [
+        6,
+        3,
+        15
+      ],
+      "name": "备餐",
+      "approach": [
+        6,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "外凸烤炉",
+      "kind": "work",
+      "pos": [
+        19,
+        3,
+        16
+      ],
+      "name": "外凸烤炉",
+      "approach": [
+        18,
+        3,
+        16
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        10,
+        3,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "外街面脚底Y=3"
+    }
+  ],
+  "design_notes": [
+    "外凸石炉、矮备餐棚与主厅共同围合前售卖区。"
+  ],
+  "differences": [
+    "外凸石炉、矮备餐棚与主厅共同围合前售卖区。"
+  ],
+  "floors": [
+    {
+      "name": "营业与作业生活层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/northern_fill_shops.py:shop(1)",
+  "function_terms": [
+    "热食零售",
+    "干粮零售",
+    "烹饪"
+  ],
+  "ground_plane": {
+    "y": 3,
+    "note": "北侧外部街面与首层支撑方块顶面Y=3，不以屋顶或作业高台代替外部基准"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "snow"
+  },
+  "nbt_sha256": "5dca49fa38cac6432deec7957d2fbf1d4d3ee0cd4de925f4a031196493cbbebd"
+}

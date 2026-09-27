@@ -1,0 +1,287 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "WT-08-v03",
+  "name": "围院多人旅店",
+  "family": "WT-08",
+  "civilization": "地中海",
+  "planning_role": "planning_role.fill",
+  "size": [
+    45,
+    31,
+    43
+  ],
+  "terrain": {
+    "选址": "普通稳定平地；无需水岸。台地版由模板内石基形成高差。",
+    "边界": "完整独立建筑与庭院，保留入口通路和屋檐。"
+  },
+  "rooms": [
+    {
+      "id": "西客翼",
+      "name": "西客翼",
+      "min": [
+        6,
+        3,
+        13
+      ],
+      "max": [
+        14,
+        6,
+        34
+      ],
+      "purpose": "客房床位、行李与休息"
+    },
+    {
+      "id": "东客翼",
+      "name": "东客翼",
+      "min": [
+        31,
+        3,
+        13
+      ],
+      "max": [
+        39,
+        6,
+        34
+      ],
+      "purpose": "客房床位、行李与休息"
+    },
+    {
+      "id": "后接待餐厅",
+      "name": "后接待餐厅",
+      "min": [
+        19,
+        3,
+        30
+      ],
+      "max": [
+        26,
+        6,
+        37
+      ],
+      "purpose": "茶饮备制、客桌与器皿"
+    }
+  ],
+  "points": [
+    {
+      "id": "西客翼entry",
+      "kind": "circulation",
+      "pos": [
+        10,
+        3,
+        11
+      ],
+      "name": "院内房门：入户或营业入口",
+      "facing": "north"
+    },
+    {
+      "id": "西客翼bed0",
+      "kind": "bed",
+      "pos": [
+        7,
+        3,
+        32
+      ],
+      "name": "床位与行李",
+      "approach": [
+        8,
+        3,
+        32
+      ]
+    },
+    {
+      "id": "西客翼bed1",
+      "kind": "bed",
+      "pos": [
+        13,
+        3,
+        32
+      ],
+      "name": "床位与行李",
+      "approach": [
+        12,
+        3,
+        32
+      ]
+    },
+    {
+      "id": "西客翼store",
+      "kind": "storage",
+      "pos": [
+        14,
+        3,
+        14
+      ],
+      "name": "衣物食粮或营业库存",
+      "look_at": [
+        14,
+        4,
+        14
+      ],
+      "approach": [
+        14,
+        3,
+        15
+      ]
+    },
+    {
+      "id": "东客翼entry",
+      "kind": "circulation",
+      "pos": [
+        35,
+        3,
+        11
+      ],
+      "name": "院内房门：入户或营业入口",
+      "facing": "north"
+    },
+    {
+      "id": "东客翼bed0",
+      "kind": "bed",
+      "pos": [
+        32,
+        3,
+        32
+      ],
+      "name": "床位与行李",
+      "approach": [
+        33,
+        3,
+        32
+      ]
+    },
+    {
+      "id": "东客翼bed1",
+      "kind": "bed",
+      "pos": [
+        38,
+        3,
+        32
+      ],
+      "name": "床位与行李",
+      "approach": [
+        37,
+        3,
+        32
+      ]
+    },
+    {
+      "id": "东客翼store",
+      "kind": "storage",
+      "pos": [
+        39,
+        3,
+        14
+      ],
+      "name": "衣物食粮或营业库存",
+      "look_at": [
+        39,
+        4,
+        14
+      ],
+      "approach": [
+        39,
+        3,
+        15
+      ]
+    },
+    {
+      "id": "后接待餐厅entry",
+      "kind": "circulation",
+      "pos": [
+        22,
+        3,
+        28
+      ],
+      "name": "院内房门：入户或营业入口",
+      "facing": "north"
+    },
+    {
+      "id": "后接待餐厅work",
+      "kind": "work",
+      "pos": [
+        20,
+        3,
+        32
+      ],
+      "name": "接待或作业台",
+      "look_at": [
+        20,
+        4,
+        32
+      ],
+      "approach": [
+        20,
+        3,
+        33
+      ]
+    },
+    {
+      "id": "后接待餐厅store",
+      "kind": "storage",
+      "pos": [
+        26,
+        3,
+        31
+      ],
+      "name": "衣物食粮或营业库存",
+      "look_at": [
+        26,
+        4,
+        31
+      ],
+      "approach": [
+        26,
+        3,
+        32
+      ]
+    },
+    {
+      "id": "courtyard_street_entry",
+      "kind": "entrance",
+      "pos": [
+        22,
+        3,
+        2
+      ],
+      "name": "前院墙中央实际开口接路",
+      "facing": "north"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "围院多人旅店：接待餐饮与独立双床客房分区，行李柜和可达楼层齐备。",
+    "依2026-09-27用户参考图：暖白浅石、缓坡红瓦、木廊与蓝绿百叶，完整生活和营业尺度。"
+  ],
+  "differences": [
+    "围院多人旅店：接待餐饮与独立双床客房分区，行李柜和可达楼层齐备。"
+  ],
+  "floors": [
+    {
+      "name": "庭院与首层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mediterranean_living.py:BUILDERS",
+  "ground_plane": {
+    "y": 3,
+    "note": "门外路面方块Y=2，外部站立接地线Y=3；上层与台地由实阶连接。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "旅客住宿",
+    "餐饮"
+  ],
+  "nbt_sha256": "552e004221a96153b033c99dc91c8d7149217f3ebec473c8e07f57ee9956ec8a"
+}

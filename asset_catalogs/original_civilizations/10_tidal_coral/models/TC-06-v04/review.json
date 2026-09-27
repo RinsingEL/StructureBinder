@@ -1,0 +1,49 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "TC-06-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors / 海洋幻想作者实看",
+  "nbt_sha256": "fa7d1f6b0d9d34ca858494077d88ba79185f4addf5b1b031610687698347165f",
+  "author_sha256": "00fe4ecbdffe13e61975488d7e142a6cab429660ba941fa333c7be5d6b9cdcf1",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-wing0.png",
+    "previews/room-wing1.png",
+    "previews/room-yardroom.png",
+    "previews/point-cargo0_10.png",
+    "previews/point-cargo0_20.png",
+    "previews/point-cargo0_30.png",
+    "previews/point-log0.png",
+    "previews/point-cargo1_10.png",
+    "previews/point-cargo1_20.png",
+    "previews/point-cargo1_30.png",
+    "previews/point-log1.png",
+    "previews/point-yard.png",
+    "previews/point-pallet0.png",
+    "previews/point-pallet1.png",
+    "previews/point-pallet2.png",
+    "previews/point-pallet3.png",
+    "previews/point-pallet4.png",
+    "previews/point-pallet5.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "逐图核对行业专用台、交易与原料储存、独立生活卧室；仓库货垛与装卸通道分开。",
+    "实际看过全部外观、去顶、分层、房间、功能点、标注与地形视图；结合零警告数据与导航核对。",
+    "双翼看管货院",
+    "货物离参考水面和高潮线存放；真实干式步行通路，桩脚接连续承载海床"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

@@ -1,0 +1,164 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "NS-F01-v03",
+  "name": "窄铺侧棚钓具店",
+  "family": "NS-F01",
+  "civilization": "北欧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    29,
+    22,
+    29
+  ],
+  "terrain": {
+    "选址": "稳定平缓且排水良好的街区地块，保留院落和屋檐范围，不要求临海",
+    "供给": "商铺需相应货物及行业原料；有人居住的v05另需生活食水与燃料",
+    "地面": "外街面脚底Y=3，入口和首层同高；基础连续落地",
+    "边界": "原版方块静态表达行业工序，不模拟交易、风雪与专用设备行为",
+    "推荐情境": [
+      "寒地背风聚落或海湾聚落；这是常见使用背景，不要求所有北欧建筑临海，也不限定住户种族。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "窄钓具店",
+      "name": "窄钓具店",
+      "min": [
+        5,
+        3,
+        6
+      ],
+      "max": [
+        11,
+        6,
+        23
+      ],
+      "purpose": "经营、行业工作或生活空间"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        8,
+        3,
+        3
+      ],
+      "name": "北侧临街入口",
+      "facing": "north"
+    },
+    {
+      "id": "钓具选配",
+      "kind": "work",
+      "pos": [
+        6,
+        3,
+        10
+      ],
+      "name": "钓具选配",
+      "approach": [
+        6,
+        3,
+        9
+      ]
+    },
+    {
+      "id": "配线",
+      "kind": "work",
+      "pos": [
+        6,
+        3,
+        17
+      ],
+      "name": "配线",
+      "approach": [
+        6,
+        3,
+        16
+      ]
+    },
+    {
+      "id": "结线维修",
+      "kind": "work",
+      "pos": [
+        19,
+        3,
+        16
+      ],
+      "name": "结线维修",
+      "approach": [
+        19,
+        3,
+        15
+      ]
+    },
+    {
+      "id": "旧具清洗",
+      "kind": "work",
+      "pos": [
+        23,
+        3,
+        20
+      ],
+      "name": "旧具清洗",
+      "approach": [
+        22,
+        3,
+        20
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        8,
+        3,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "外街面脚底Y=3"
+    }
+  ],
+  "design_notes": [
+    "狭长主店与开敞结线侧棚并列，院内保留钓具清洗与备料。"
+  ],
+  "differences": [
+    "狭长主店与开敞结线侧棚并列，院内保留钓具清洗与备料。"
+  ],
+  "floors": [
+    {
+      "name": "营业与作业生活层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/northern_fill_shops.py:shop(3)",
+  "function_terms": [
+    "钓具零售",
+    "钓具维修"
+  ],
+  "ground_plane": {
+    "y": 3,
+    "note": "北侧外部街面与首层支撑方块顶面Y=3，不以屋顶或作业高台代替外部基准"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "snow"
+  },
+  "nbt_sha256": "3629fcf7d4f5806da0cb09ae049daa410a7cdb3a2d63d6b36ba4cdc92e0a415f"
+}

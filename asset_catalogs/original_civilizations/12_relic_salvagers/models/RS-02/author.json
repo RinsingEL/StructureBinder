@@ -1,0 +1,320 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "RS-02",
+  "name": "巨械肋架拆解大厅",
+  "family": "RS-02",
+  "civilization": "废土拾荒",
+  "planning_role": "planning_role.key",
+  "size": [
+    49,
+    23,
+    45
+  ],
+  "terrain": {
+    "选址": "废弃巨械腹腔旧机座上开展拆解；侧边新值守屋独立落地，前场通重件。",
+    "接地": "完整旧机座埋入稳固碎石台地，地坪Y=2、入口脚底Y=3；不将薄壳残板当作新房基础。",
+    "外接": "南侧接既有搬运路；模板外须保留回转、排水与坠落隔离带。避开活动滑坡、洪道及悬空残骸。",
+    "供给": "生活水依外部运水，燃料和食物由聚落补给；不假设旧机械仍能工作。",
+    "边界": "独立承载静态原版结构；残骸稳定、探险门禁与设备功能未接入运行时。"
+  },
+  "rooms": [
+    {
+      "id": "keeper",
+      "name": "修补值守住屋",
+      "min": [
+        34,
+        3,
+        7
+      ],
+      "max": [
+        44,
+        7,
+        20
+      ],
+      "purpose": "有独立旧场坪支承的后加板房，门窗和完整使用通路"
+    },
+    {
+      "id": "salvage",
+      "name": "巨械残轴拆解区",
+      "min": [
+        6,
+        3,
+        5
+      ],
+      "max": [
+        26,
+        15,
+        30
+      ],
+      "purpose": "双侧工位围绕真实旧轴和机座，中央吊运天窗及前场搬运通路"
+    }
+  ],
+  "points": [
+    {
+      "id": "keeperbed",
+      "kind": "sleep",
+      "pos": [
+        35,
+        3,
+        10
+      ],
+      "name": "屏后床位",
+      "approach": [
+        36,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "keeperlinen",
+      "kind": "storage",
+      "pos": [
+        35,
+        4,
+        13
+      ],
+      "name": "衣物与床品",
+      "approach": [
+        35,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "keeperfood",
+      "kind": "storage",
+      "pos": [
+        41,
+        4,
+        8
+      ],
+      "name": "干粮与器具",
+      "approach": [
+        41,
+        3,
+        9
+      ]
+    },
+    {
+      "id": "keepercook",
+      "kind": "work",
+      "pos": [
+        41,
+        3,
+        12
+      ],
+      "name": "备餐火灶",
+      "approach": [
+        41,
+        3,
+        13
+      ]
+    },
+    {
+      "id": "keeperwater",
+      "kind": "work",
+      "pos": [
+        43,
+        3,
+        13
+      ],
+      "name": "运水和清洗",
+      "approach": [
+        43,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "keeperdine",
+      "kind": "work",
+      "pos": [
+        40,
+        3,
+        16
+      ],
+      "name": "用餐桌席",
+      "approach": [
+        38,
+        3,
+        16
+      ]
+    },
+    {
+      "id": "keeperread",
+      "kind": "work",
+      "pos": [
+        35,
+        3,
+        17
+      ],
+      "name": "起居记事与交接",
+      "approach": [
+        35,
+        3,
+        18
+      ]
+    },
+    {
+      "id": "raw",
+      "kind": "storage",
+      "pos": [
+        6,
+        4,
+        33
+      ],
+      "name": "拆解待验零件",
+      "approach": [
+        6,
+        3,
+        34
+      ]
+    },
+    {
+      "id": "parts",
+      "kind": "storage",
+      "pos": [
+        21,
+        4,
+        33
+      ],
+      "name": "分类合格部件",
+      "approach": [
+        21,
+        3,
+        34
+      ]
+    },
+    {
+      "id": "cut",
+      "kind": "work",
+      "pos": [
+        8,
+        3,
+        24
+      ],
+      "name": "初拆切整台",
+      "approach": [
+        8,
+        3,
+        25
+      ]
+    },
+    {
+      "id": "repair",
+      "kind": "work",
+      "pos": [
+        23,
+        3,
+        24
+      ],
+      "name": "修复校整台",
+      "approach": [
+        23,
+        3,
+        25
+      ]
+    },
+    {
+      "id": "record",
+      "kind": "work",
+      "pos": [
+        33,
+        3,
+        30
+      ],
+      "name": "作业工单与检验",
+      "approach": [
+        33,
+        3,
+        31
+      ]
+    },
+    {
+      "id": "wash",
+      "kind": "work",
+      "pos": [
+        37,
+        3,
+        30
+      ],
+      "name": "零件清洗",
+      "approach": [
+        37,
+        3,
+        31
+      ]
+    },
+    {
+      "id": "rotor",
+      "kind": "work",
+      "pos": [
+        16,
+        5,
+        10
+      ],
+      "name": "旧巨械传动轴勘察",
+      "approach": [
+        16,
+        3,
+        8
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        17,
+        3,
+        42
+      ],
+      "name": "搬运路入口",
+      "facing": "south"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        17,
+        2,
+        42
+      ],
+      "direction": "south",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "接稳固旧场坪，货运另保留转向区"
+    }
+  ],
+  "design_notes": [
+    "深色旧机梁、齿轴与氧化铜壳为旧骨架；浅木、橙色板补丁与布棚为后加住用空间。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "修补地坪",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/relic_salvagers.py:RS-02",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 5,
+    "surface": "grass"
+  },
+  "nbt_sha256": "22e9cbfda985e13eb3f6fff306de0ae6d8b186198898f96cc1709d61cf5bf7b4",
+  "function_terms": [
+    "机械拆解",
+    "材料回收"
+  ]
+}

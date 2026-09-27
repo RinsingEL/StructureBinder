@@ -1,0 +1,275 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "ML-07-v03",
+  "name": "折角宅与雨天清洗廊",
+  "family": "ML-07",
+  "civilization": "哥特",
+  "planning_role": "planning_role.fill",
+  "size": [
+    31,
+    29,
+    32
+  ],
+  "terrain": {
+    "选址": "稳定、排水良好的居民地块，日照与通路按具体用途保留；哥特是建造风格而非地形限制。",
+    "高程": "基础底Y=0、常规地面Y=2、脚底Y=3；抬高或双层版本另记。",
+    "边界": "完整独立模板，保留外扶柱、檐口、采光和门外站位，不默认邻居补齐。"
+  },
+  "rooms": [
+    {
+      "id": "main",
+      "name": "横向起居与值守厅",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        24,
+        7,
+        13
+      ],
+      "purpose": "东侧餐厨、西侧记录及干柜；设施：备餐、热食与洗涤、值守书桌与地图、室内干燥工具柜"
+    },
+    {
+      "id": "bed",
+      "name": "折后双床寝翼",
+      "min": [
+        5,
+        3,
+        15
+      ],
+      "max": [
+        13,
+        7,
+        26
+      ],
+      "purpose": "双床及被服远离院中湿作业；设施：床位与个人衣物、床位与个人衣物、家庭被服"
+    },
+    {
+      "id": "wash",
+      "name": "开敞遮雨清洗廊",
+      "min": [
+        18,
+        3,
+        17
+      ],
+      "max": [
+        26,
+        7,
+        21
+      ],
+      "purpose": "先清洗维护工具，再入干柜；设施：湿工具清洗换柄、泥污工具清洗盆"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        20,
+        3,
+        3
+      ],
+      "name": "尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "cook",
+      "kind": "work",
+      "pos": [
+        16,
+        3,
+        6
+      ],
+      "name": "备餐、热食与洗涤",
+      "look_at": [
+        16,
+        4,
+        6
+      ],
+      "approach": [
+        16,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "records",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        6
+      ],
+      "name": "值守书桌与地图",
+      "look_at": [
+        5,
+        4,
+        6
+      ],
+      "approach": [
+        5,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "gear",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        11
+      ],
+      "name": "室内干燥工具柜",
+      "look_at": [
+        5,
+        4,
+        11
+      ],
+      "approach": [
+        5,
+        3,
+        12
+      ]
+    },
+    {
+      "id": "beds0",
+      "kind": "bed",
+      "pos": [
+        6,
+        3,
+        21
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        6,
+        4,
+        21
+      ],
+      "approach": [
+        7,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "beds1",
+      "kind": "bed",
+      "pos": [
+        9,
+        3,
+        21
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        9,
+        4,
+        21
+      ],
+      "approach": [
+        10,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "linen",
+      "kind": "storage",
+      "pos": [
+        6,
+        3,
+        25
+      ],
+      "name": "家庭被服",
+      "look_at": [
+        6,
+        4,
+        25
+      ],
+      "approach": [
+        6,
+        3,
+        26
+      ]
+    },
+    {
+      "id": "repair",
+      "kind": "work",
+      "pos": [
+        23,
+        3,
+        18
+      ],
+      "name": "湿工具清洗换柄",
+      "look_at": [
+        23,
+        4,
+        18
+      ],
+      "approach": [
+        23,
+        3,
+        19
+      ]
+    },
+    {
+      "id": "wash",
+      "kind": "work",
+      "pos": [
+        20,
+        3,
+        18
+      ],
+      "name": "泥污工具清洗盆",
+      "look_at": [
+        20,
+        4,
+        18
+      ],
+      "approach": [
+        20,
+        3,
+        19
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "L形寝居围出工作小院，雨棚下单独组织沾泥工具清洗与换柄，干燥记录和家庭双床留在实体屋内。",
+    "按2026-09-27效果图重绘：浅石深木、陡瓦白边、铁脊老虎窗、紫金彩窗与灯柱围院。"
+  ],
+  "differences": [
+    "L形寝居围出工作小院，雨棚下单独组织沾泥工具清洗与换柄，干燥记录和家庭双床留在实体屋内。"
+  ],
+  "floors": [
+    {
+      "name": "生活作业层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/memorial_life.py:BUILDERS",
+  "ground_plane": {
+    "y": 3,
+    "note": "外部场坪顶面与脚底Y=3，铺地方块Y=2；内部上层及高台不改变接地基准。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "家庭居住",
+    "墓园看护"
+  ],
+  "nbt_sha256": "a8eea82d4f29d0fa29a0211129f1c5a931a3956b45fe50dd994c546182903bb7"
+}

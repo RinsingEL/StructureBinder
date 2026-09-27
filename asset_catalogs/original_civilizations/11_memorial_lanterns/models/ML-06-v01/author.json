@@ -1,0 +1,358 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "ML-06-v01",
+  "name": "宽前雕刻后宅石坊",
+  "family": "ML-06",
+  "civilization": "哥特",
+  "planning_role": "planning_role.fill",
+  "size": [
+    31,
+    29,
+    45
+  ],
+  "terrain": {
+    "选址": "稳定、排水良好的居民地块，日照与通路按具体用途保留；哥特是建造风格而非地形限制。",
+    "高程": "基础底Y=0、常规地面Y=2、脚底Y=3；抬高或双层版本另记。",
+    "边界": "完整独立模板，保留外扶柱、檐口、采光和门外站位，不默认邻居补齐。"
+  },
+  "rooms": [
+    {
+      "id": "shop",
+      "name": "宽横交易厅",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        25,
+        7,
+        11
+      ],
+      "purpose": "顾客选购、进料与验货，中央通路贯通；设施：碑石样品与委托、石坯、磨料及工具、顾客选货与交付停留"
+    },
+    {
+      "id": "work",
+      "name": "宽横后加工厅",
+      "min": [
+        5,
+        3,
+        12
+      ],
+      "max": [
+        25,
+        7,
+        21
+      ],
+      "purpose": "加工整理与成品独立两侧；设施：刻字与精雕工作台、待交碑面与成品、碑文校核与订单、待刻大石坯与侧向搬运面"
+    },
+    {
+      "id": "home",
+      "name": "后院横向家宅",
+      "min": [
+        5,
+        3,
+        29
+      ],
+      "max": [
+        25,
+        7,
+        39
+      ],
+      "purpose": "侧隔墙区分餐厨与双床寝室；设施：备餐、热食与洗涤、床位与个人衣物、床位与个人衣物、家庭被服衣物"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        15,
+        3,
+        3
+      ],
+      "name": "尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "homeentry",
+      "kind": "circulation",
+      "pos": [
+        15,
+        3,
+        27
+      ],
+      "name": "尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "homecook",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        30
+      ],
+      "name": "备餐、热食与洗涤",
+      "look_at": [
+        5,
+        4,
+        30
+      ],
+      "approach": [
+        5,
+        3,
+        31
+      ]
+    },
+    {
+      "id": "homebed0",
+      "kind": "bed",
+      "pos": [
+        18,
+        3,
+        35
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        18,
+        4,
+        35
+      ],
+      "approach": [
+        19,
+        3,
+        35
+      ]
+    },
+    {
+      "id": "homebed1",
+      "kind": "bed",
+      "pos": [
+        21,
+        3,
+        35
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        21,
+        4,
+        35
+      ],
+      "approach": [
+        22,
+        3,
+        35
+      ]
+    },
+    {
+      "id": "homelinen",
+      "kind": "storage",
+      "pos": [
+        19,
+        3,
+        38
+      ],
+      "name": "家庭被服衣物",
+      "look_at": [
+        19,
+        4,
+        38
+      ],
+      "approach": [
+        19,
+        3,
+        39
+      ]
+    },
+    {
+      "id": "sale",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        6
+      ],
+      "name": "碑石样品与委托",
+      "look_at": [
+        5,
+        4,
+        6
+      ],
+      "approach": [
+        5,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "raw",
+      "kind": "storage",
+      "pos": [
+        19,
+        3,
+        7
+      ],
+      "name": "石坯、磨料及工具",
+      "look_at": [
+        19,
+        4,
+        7
+      ],
+      "approach": [
+        19,
+        3,
+        8
+      ]
+    },
+    {
+      "id": "process",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        13
+      ],
+      "name": "刻字与精雕工作台",
+      "look_at": [
+        5,
+        4,
+        13
+      ],
+      "approach": [
+        5,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "finished",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        19
+      ],
+      "name": "待交碑面与成品",
+      "look_at": [
+        5,
+        4,
+        19
+      ],
+      "approach": [
+        5,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "records",
+      "kind": "work",
+      "pos": [
+        19,
+        3,
+        18
+      ],
+      "name": "碑文校核与订单",
+      "look_at": [
+        19,
+        4,
+        18
+      ],
+      "approach": [
+        19,
+        3,
+        19
+      ]
+    },
+    {
+      "id": "customer",
+      "kind": "circulation",
+      "pos": [
+        6,
+        3,
+        8
+      ],
+      "name": "顾客选货与交付停留",
+      "look_at": [
+        6,
+        4,
+        6
+      ]
+    },
+    {
+      "id": "roughcut",
+      "kind": "work",
+      "pos": [
+        6,
+        3,
+        16
+      ],
+      "name": "待刻大石坯与侧向搬运面",
+      "look_at": [
+        6,
+        4,
+        16
+      ],
+      "approach": [
+        5,
+        3,
+        16
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "宽短经营屋与后院横向家庭宅分离，中央院路缓冲营业噪声。 碑石样品与委托经营完整设置原料、加工、成品、交易和管理，每处标注独立站位。 按2026-09-27参考图重塑浅石木骨、深瓦浅边山墙、暖窗和院落。"
+  ],
+  "differences": [
+    "宽短经营屋与后院横向家庭宅分离，中央院路缓冲营业噪声。 碑石样品与委托经营完整设置原料、加工、成品、交易和管理，每处标注独立站位。"
+  ],
+  "floors": [
+    {
+      "name": "生活作业层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "ground_plane": {
+    "y": 3,
+    "note": "外部石铺院落顶面与入口脚底Y=3"
+  },
+  "source": "tools/structure_studio/studio/memorial_crafts.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "craft_volumes": [
+    [
+      4,
+      4,
+      26,
+      22,
+      2,
+      5
+    ],
+    [
+      4,
+      28,
+      26,
+      40,
+      2,
+      5
+    ]
+  ],
+  "static_facilities": "行业设备、蜡液、加工与商品均为静态场景表达；未声称接入生产或交易机制。",
+  "function_terms": [
+    "石材雕刻"
+  ],
+  "nbt_sha256": "0096975b7173f57096c17bbc3c34655a028022c82b9680e9acbd387cb13d0970"
+}

@@ -1,0 +1,170 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "NS-F01-v02",
+  "name": "转角防寒衣物铺",
+  "family": "NS-F01",
+  "civilization": "北欧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    29,
+    24,
+    29
+  ],
+  "terrain": {
+    "选址": "稳定平缓且排水良好的街区地块，保留院落和屋檐范围，不要求临海",
+    "供给": "商铺需相应货物及行业原料；有人居住的v05另需生活食水与燃料",
+    "地面": "外街面脚底Y=3，入口和首层同高；基础连续落地",
+    "边界": "原版方块静态表达行业工序，不模拟交易、风雪与专用设备行为",
+    "推荐情境": [
+      "寒地背风聚落或海湾聚落；这是常见使用背景，不要求所有北欧建筑临海，也不限定住户种族。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "防寒衣物前铺",
+      "name": "防寒衣物前铺",
+      "min": [
+        5,
+        3,
+        7
+      ],
+      "max": [
+        13,
+        6,
+        23
+      ],
+      "purpose": "经营、行业工作或生活空间"
+    },
+    {
+      "id": "转角裁缝间",
+      "name": "转角裁缝间",
+      "min": [
+        16,
+        3,
+        16
+      ],
+      "max": [
+        24,
+        6,
+        23
+      ],
+      "purpose": "经营、行业工作或生活空间"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        9,
+        3,
+        3
+      ],
+      "name": "北侧临街入口",
+      "facing": "north"
+    },
+    {
+      "id": "衣物量身",
+      "kind": "work",
+      "pos": [
+        6,
+        3,
+        11
+      ],
+      "name": "衣物量身",
+      "approach": [
+        6,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "裁缝",
+      "kind": "work",
+      "pos": [
+        18,
+        3,
+        20
+      ],
+      "name": "裁缝",
+      "approach": [
+        18,
+        3,
+        19
+      ]
+    },
+    {
+      "id": "试穿",
+      "kind": "circulation",
+      "pos": [
+        12,
+        3,
+        19
+      ],
+      "name": "防寒衣物试穿角"
+    },
+    {
+      "id": "corner",
+      "kind": "entrance",
+      "pos": [
+        26,
+        3,
+        19
+      ],
+      "name": "转角取衣侧门",
+      "facing": "east"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        9,
+        3,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "外街面脚底Y=3"
+    }
+  ],
+  "design_notes": [
+    "折角双山墙连接衣物前店与侧裁缝间，双街面开门。"
+  ],
+  "differences": [
+    "折角双山墙连接衣物前店与侧裁缝间，双街面开门。"
+  ],
+  "floors": [
+    {
+      "name": "营业与作业生活层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/northern_fill_shops.py:shop(2)",
+  "function_terms": [
+    "防寒衣物零售",
+    "裁缝"
+  ],
+  "ground_plane": {
+    "y": 3,
+    "note": "北侧外部街面与首层支撑方块顶面Y=3，不以屋顶或作业高台代替外部基准"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "snow"
+  },
+  "nbt_sha256": "6f8f54eda35e44a1fc7ff33cf90a004527ba82382e2e4f81c2c2eafc56795f2d"
+}

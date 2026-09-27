@@ -92,5 +92,8 @@
     "layout": "玻璃弧折盖与三面低石墙挡风，正面开放；棚内集中薯畦及四周通路用于受控的小型菜园。",
     "irrigation": "每畦固定水源，最终NBT另核对4格水源距离和耕地支撑。"
   },
-  "nbt_sha256": "032c092b621860559685838ce4fa96c8c24dfe3dc12dad5caf3b1ca45ffcc5e3"
+  "nbt_sha256": "032c092b621860559685838ce4fa96c8c24dfe3dc12dad5caf3b1ca45ffcc5e3",
+  "function_terms": [
+    "农田种植"
+  ]
 }

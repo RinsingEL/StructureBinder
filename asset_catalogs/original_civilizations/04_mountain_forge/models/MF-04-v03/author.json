@@ -191,5 +191,8 @@
     "land_surface_y": 2,
     "padding": 5
   },
-  "nbt_sha256": "ca51b43329b9bebfaec150d76bdd3a9c50944221450941aadc848bddf8cc387a"
+  "nbt_sha256": "ca51b43329b9bebfaec150d76bdd3a9c50944221450941aadc848bddf8cc387a",
+  "function_terms": [
+    "集体住宿"
+  ]
 }

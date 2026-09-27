@@ -105,7 +105,7 @@ test('frontage filter includes pending and stale records while intersecting styl
   assert.ok(matches({frontage: {status: 'ready'}}, {frontage: 'ready'}));
 });
 test('all current assets are covered without changing author data; real combinations stay precise', () => {
-  assert.equal(rows.length, 498);
+  assert.equal(rows.length, 534);
   const before = JSON.stringify(rows);
   assert.deepEqual([...new Set(rows.flatMap(row => describe(row).unmapped))], []);
   const bakery = rows.filter(row => matches(row, {functions: ['retail.food.bread', 'production.food.baking']}));

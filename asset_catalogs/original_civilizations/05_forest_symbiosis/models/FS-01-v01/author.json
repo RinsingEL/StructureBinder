@@ -210,5 +210,8 @@
     "padding": 4,
     "surface": "podzol"
   },
-  "nbt_sha256": "927cc7443db7ef347f0b1b17f471a7d07fd55f85c21066da48338de4b6825837"
+  "nbt_sha256": "927cc7443db7ef347f0b1b17f471a7d07fd55f85c21066da48338de4b6825837",
+  "function_terms": [
+    "家庭居住"
+  ]
 }

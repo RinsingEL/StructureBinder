@@ -1,0 +1,250 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "ML-F02-v06",
+  "name": "环路菜药混合供给园",
+  "family": "ML-F02",
+  "civilization": "哥特",
+  "planning_role": "planning_role.fill",
+  "size": [
+    35,
+    24,
+    35
+  ],
+  "terrain": {
+    "选址": "日照充分、排水稳定且有灌溉供水的聚落园地；不因哥特风格限定生物群系。",
+    "高程": "基础底Y=0、常规地面Y=2、脚底Y=3；抬高或双层版本另记。",
+    "边界": "完整独立模板，保留外扶柱、檐口、采光和门外站位，不默认邻居补齐。",
+    "落地": "固定小园模板与完整封边；不冒充按自然地形延伸的 Landscape 大田。",
+    "生产": "原版粮菜与花材为静态成熟或展示状态；药材和葡萄不声称已接入专用生产机制。"
+  },
+  "rooms": [
+    {
+      "id": "fronta",
+      "name": "灌溉粮菜畦",
+      "min": [
+        5,
+        3,
+        6
+      ],
+      "max": [
+        11,
+        7,
+        11
+      ],
+      "purpose": "原版耕地与中央灌渠，边埂作业；设施：粮菜灌溉及采收"
+    },
+    {
+      "id": "frontb",
+      "name": "灌溉粮菜畦",
+      "min": [
+        22,
+        3,
+        6
+      ],
+      "max": [
+        28,
+        7,
+        11
+      ],
+      "purpose": "原版耕地与中央灌渠，边埂作业；设施：粮菜灌溉及采收"
+    },
+    {
+      "id": "rear",
+      "name": "灌溉粮菜畦",
+      "min": [
+        5,
+        3,
+        25
+      ],
+      "max": [
+        11,
+        7,
+        29
+      ],
+      "purpose": "原版耕地与中央灌渠，边埂作业；设施：粮菜灌溉及采收"
+    },
+    {
+      "id": "herb",
+      "name": "药材花圃",
+      "min": [
+        22,
+        3,
+        24
+      ],
+      "max": [
+        28,
+        7,
+        29
+      ],
+      "purpose": "花材静态种植；具体药效未接入；设施：药用花材分格种植"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        17,
+        3,
+        2
+      ],
+      "name": "园地前入口",
+      "facing": "north"
+    },
+    {
+      "id": "fronta",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        6
+      ],
+      "name": "粮菜灌溉及采收",
+      "look_at": [
+        5,
+        4,
+        6
+      ],
+      "approach": [
+        4,
+        3,
+        6
+      ]
+    },
+    {
+      "id": "frontb",
+      "kind": "work",
+      "pos": [
+        22,
+        3,
+        6
+      ],
+      "name": "粮菜灌溉及采收",
+      "look_at": [
+        22,
+        4,
+        6
+      ],
+      "approach": [
+        21,
+        3,
+        6
+      ]
+    },
+    {
+      "id": "rear",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        25
+      ],
+      "name": "粮菜灌溉及采收",
+      "look_at": [
+        5,
+        4,
+        25
+      ],
+      "approach": [
+        4,
+        3,
+        25
+      ]
+    },
+    {
+      "id": "herb",
+      "kind": "work",
+      "pos": [
+        22,
+        3,
+        24
+      ],
+      "name": "药用花材分格种植",
+      "look_at": [
+        22,
+        4,
+        24
+      ],
+      "approach": [
+        21,
+        3,
+        24
+      ]
+    },
+    {
+      "id": "seed",
+      "kind": "storage",
+      "pos": [
+        6,
+        3,
+        31
+      ],
+      "name": "园地种料与养护工具",
+      "look_at": [
+        6,
+        4,
+        31
+      ],
+      "approach": [
+        6,
+        3,
+        30
+      ]
+    },
+    {
+      "id": "compost",
+      "kind": "work",
+      "pos": [
+        28,
+        3,
+        19
+      ],
+      "name": "植物残料归集",
+      "look_at": [
+        28,
+        4,
+        19
+      ],
+      "approach": [
+        28,
+        3,
+        20
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "四角菜药畦围绕中央分选与种料工作岛，环路同时连接两种根菜、谷物、药材及残料归集点。"
+  ],
+  "differences": [
+    "四角菜药畦围绕中央分选与种料工作岛，环路同时连接两种根菜、谷物、药材及残料归集点。"
+  ],
+  "floors": [
+    {
+      "name": "生活作业层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 6,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/memorial_gardens.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "ground_plane": {
+    "y": 3,
+    "note": "正面院门外铺装地坪顶面；台地田内部逐阶抬高。"
+  },
+  "function_terms": [
+    "农田种植"
+  ],
+  "nbt_sha256": "b862e37c1b2ca3f19642c630f9d4fc16be68182d90ae1c87ed0277007de87bb0"
+}

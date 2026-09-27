@@ -213,5 +213,9 @@
     "padding": 4,
     "surface": "sand"
   },
-  "nbt_sha256": "52f3bc49894f8dc5b2b6962a85f9bb15cb2eaab424512cfba688c62640f5b9f8"
+  "nbt_sha256": "52f3bc49894f8dc5b2b6962a85f9bb15cb2eaab424512cfba688c62640f5b9f8",
+  "function_terms": [
+    "取水",
+    "水务管理"
+  ]
 }

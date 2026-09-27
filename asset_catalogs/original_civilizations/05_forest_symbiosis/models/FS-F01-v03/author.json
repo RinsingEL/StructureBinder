@@ -255,5 +255,9 @@
     "padding": 4,
     "surface": "podzol"
   },
-  "nbt_sha256": "88530f78c27cf220892821517ea02462d5ca431964c3cc0c134a9ab546a3f470"
+  "nbt_sha256": "88530f78c27cf220892821517ea02462d5ca431964c3cc0c134a9ab546a3f470",
+  "function_terms": [
+    "零售",
+    "编织"
+  ]
 }

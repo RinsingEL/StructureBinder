@@ -265,5 +265,9 @@
     "rise": 1,
     "slope_origin_z": 16
   },
-  "nbt_sha256": "9279a90b4335f2104c4d6f27f6fce9f11376af7f0e7e9aecf1352d1fbfcbc438"
+  "nbt_sha256": "9279a90b4335f2104c4d6f27f6fce9f11376af7f0e7e9aecf1352d1fbfcbc438",
+  "function_terms": [
+    "餐饮",
+    "旅客住宿"
+  ]
 }

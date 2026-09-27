@@ -1,0 +1,298 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "NS-09-v03",
+  "name": "两层港街廊栈",
+  "family": "NS-09",
+  "civilization": "北欧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    21,
+    28,
+    29
+  ],
+  "terrain": {
+    "选址": "干燥稳定地基，外部街面接Y=3；仓储需外部货源，客栈需食品及饮水供给；不强制滨海选址。",
+    "高程": "干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。",
+    "保留空间": "完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。",
+    "风雪": "厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。",
+    "推荐情境": [
+      "寒地背风聚落或海湾聚落；这是常见使用背景，不要求所有北欧建筑临海，也不限定住户种族。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "public",
+      "name": "街层接待食堂",
+      "min": [
+        4,
+        3,
+        4
+      ],
+      "max": [
+        16,
+        6,
+        24
+      ],
+      "purpose": "厨房、登记、共桌和后装备寄存，内梯靠侧；具体设施：备餐、热食与洗涤、前台登记与船讯、海员公共湿具寄存"
+    },
+    {
+      "id": "frontbed",
+      "name": "上层前双寝间",
+      "min": [
+        4,
+        9,
+        4
+      ],
+      "max": [
+        11,
+        12,
+        12
+      ],
+      "purpose": "两床及私柜，隔门安静休息；具体设施：床铺与个人防寒用品、床铺与个人防寒用品"
+    },
+    {
+      "id": "backbed",
+      "name": "上层后双寝与服务廊",
+      "min": [
+        4,
+        9,
+        14
+      ],
+      "max": [
+        16,
+        12,
+        24
+      ],
+      "purpose": "两床、清洁织物与楼梯落脚通路；具体设施：床铺与个人防寒用品、床铺与个人防寒用品、上层被褥与换洗用品"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        10,
+        3,
+        2
+      ],
+      "name": "背风步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "cook",
+      "kind": "work",
+      "pos": [
+        4,
+        3,
+        5
+      ],
+      "name": "备餐、热食与洗涤",
+      "look_at": [
+        4,
+        4,
+        5
+      ],
+      "approach": [
+        4,
+        3,
+        6
+      ]
+    },
+    {
+      "id": "desk",
+      "kind": "work",
+      "pos": [
+        11,
+        3,
+        5
+      ],
+      "name": "前台登记与船讯",
+      "look_at": [
+        11,
+        4,
+        5
+      ],
+      "approach": [
+        11,
+        3,
+        6
+      ]
+    },
+    {
+      "id": "gear",
+      "kind": "storage",
+      "pos": [
+        4,
+        3,
+        21
+      ],
+      "name": "海员公共湿具寄存",
+      "look_at": [
+        4,
+        4,
+        21
+      ],
+      "approach": [
+        4,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "front0",
+      "kind": "bed",
+      "pos": [
+        5,
+        9,
+        7
+      ],
+      "name": "床铺与个人防寒用品",
+      "look_at": [
+        5,
+        10,
+        7
+      ],
+      "approach": [
+        6,
+        9,
+        7
+      ]
+    },
+    {
+      "id": "front1",
+      "kind": "bed",
+      "pos": [
+        8,
+        9,
+        7
+      ],
+      "name": "床铺与个人防寒用品",
+      "look_at": [
+        8,
+        10,
+        7
+      ],
+      "approach": [
+        9,
+        9,
+        7
+      ]
+    },
+    {
+      "id": "back0",
+      "kind": "bed",
+      "pos": [
+        5,
+        9,
+        19
+      ],
+      "name": "床铺与个人防寒用品",
+      "look_at": [
+        5,
+        10,
+        19
+      ],
+      "approach": [
+        6,
+        9,
+        19
+      ]
+    },
+    {
+      "id": "back1",
+      "kind": "bed",
+      "pos": [
+        8,
+        9,
+        19
+      ],
+      "name": "床铺与个人防寒用品",
+      "look_at": [
+        8,
+        10,
+        19
+      ],
+      "approach": [
+        9,
+        9,
+        19
+      ]
+    },
+    {
+      "id": "linen",
+      "kind": "storage",
+      "pos": [
+        10,
+        9,
+        23
+      ],
+      "name": "上层被褥与换洗用品",
+      "look_at": [
+        10,
+        10,
+        23
+      ],
+      "approach": [
+        10,
+        9,
+        24
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        10,
+        3,
+        2
+      ],
+      "direction": "north",
+      "clearance": [
+        1,
+        2
+      ],
+      "note": "已标入口与外部Y=3街面接驳"
+    }
+  ],
+  "design_notes": [
+    "参考北欧图4：两层港街廊栈；复用完整可达的分类储物或食宿内饰，重组屋顶和装卸/入口体量。"
+  ],
+  "differences": [
+    "两层港街廊栈"
+  ],
+  "floors": [
+    {
+      "name": "接待食堂",
+      "y": 2,
+      "max_y": 6
+    },
+    {
+      "name": "四床客寝",
+      "y": 8,
+      "max_y": 12
+    }
+  ],
+  "roof_min_y": 14,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/northern_fill_storage_inns.py:build('NS-09',3)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 5,
+    "surface": "snow"
+  },
+  "ground_plane": {
+    "y": 3,
+    "note": "外部稳定街面与模板场坪顶面齐平，站立脚底Y=3；基础方块在其下"
+  },
+  "function_terms": [
+    "旅宿",
+    "餐饮"
+  ],
+  "nbt_sha256": "187d3a60360e06310f5aa8075b62e8546fe464f2276b4916bcb301f8288b87ff"
+}

@@ -220,5 +220,8 @@
     "layout": "四个独立短畦由十字作业路分开，适合开阔林缘日照地",
     "water": "每个田块独立水眼，与最终NBT四格水源核对；实际生长、光照与季节另验"
   },
-  "nbt_sha256": "ee738f68c2742a42a8af7db9a9489eec3786d02e00e631a22c4722eaff84983f"
+  "nbt_sha256": "ee738f68c2742a42a8af7db9a9489eec3786d02e00e631a22c4722eaff84983f",
+  "function_terms": [
+    "农田种植"
+  ]
 }

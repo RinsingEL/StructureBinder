@@ -1,0 +1,278 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "NS-09-v01",
+  "name": "路边前廊客栈",
+  "family": "NS-09",
+  "civilization": "北欧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    25,
+    28,
+    31
+  ],
+  "terrain": {
+    "选址": "干燥稳定地基，外部街面接Y=3；仓储需外部货源，客栈需食品及饮水供给；不强制滨海选址。",
+    "高程": "干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。",
+    "保留空间": "完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。",
+    "风雪": "厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。",
+    "推荐情境": [
+      "寒地背风聚落或海湾聚落；这是常见使用背景，不要求所有北欧建筑临海，也不限定住户种族。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "food",
+      "name": "登记与食堂前厅",
+      "min": [
+        4,
+        3,
+        4
+      ],
+      "max": [
+        20,
+        6,
+        15
+      ],
+      "purpose": "厨房、八格共桌和靠门登记，后侧装备架；具体设施：备餐、热食与洗涤、入住登记与寄存收据、公共行李和航海装备"
+    },
+    {
+      "id": "sleep",
+      "name": "隔门四床客寝",
+      "min": [
+        4,
+        3,
+        17
+      ],
+      "max": [
+        20,
+        6,
+        26
+      ],
+      "purpose": "每床私柜，后置清洁织物与走道；具体设施：床铺与个人防寒用品、床铺与个人防寒用品、床铺与个人防寒用品、床铺与个人防寒用品、清洁被褥和换洗衣物"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        12,
+        3,
+        2
+      ],
+      "name": "背风步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "cook",
+      "kind": "work",
+      "pos": [
+        4,
+        3,
+        5
+      ],
+      "name": "备餐、热食与洗涤",
+      "look_at": [
+        4,
+        4,
+        5
+      ],
+      "approach": [
+        4,
+        3,
+        6
+      ]
+    },
+    {
+      "id": "desk",
+      "kind": "work",
+      "pos": [
+        14,
+        3,
+        5
+      ],
+      "name": "入住登记与寄存收据",
+      "look_at": [
+        14,
+        4,
+        5
+      ],
+      "approach": [
+        14,
+        3,
+        6
+      ]
+    },
+    {
+      "id": "bags",
+      "kind": "storage",
+      "pos": [
+        14,
+        3,
+        14
+      ],
+      "name": "公共行李和航海装备",
+      "look_at": [
+        14,
+        4,
+        14
+      ],
+      "approach": [
+        14,
+        3,
+        15
+      ]
+    },
+    {
+      "id": "guest0",
+      "kind": "bed",
+      "pos": [
+        5,
+        3,
+        20
+      ],
+      "name": "床铺与个人防寒用品",
+      "look_at": [
+        5,
+        4,
+        20
+      ],
+      "approach": [
+        6,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "guest1",
+      "kind": "bed",
+      "pos": [
+        8,
+        3,
+        20
+      ],
+      "name": "床铺与个人防寒用品",
+      "look_at": [
+        8,
+        4,
+        20
+      ],
+      "approach": [
+        9,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "guest2",
+      "kind": "bed",
+      "pos": [
+        11,
+        3,
+        20
+      ],
+      "name": "床铺与个人防寒用品",
+      "look_at": [
+        11,
+        4,
+        20
+      ],
+      "approach": [
+        12,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "guest3",
+      "kind": "bed",
+      "pos": [
+        14,
+        3,
+        20
+      ],
+      "name": "床铺与个人防寒用品",
+      "look_at": [
+        14,
+        4,
+        20
+      ],
+      "approach": [
+        15,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "linen",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        25
+      ],
+      "name": "清洁被褥和换洗衣物",
+      "look_at": [
+        5,
+        4,
+        25
+      ],
+      "approach": [
+        5,
+        3,
+        26
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        12,
+        3,
+        2
+      ],
+      "direction": "north",
+      "clearance": [
+        1,
+        2
+      ],
+      "note": "已标入口与外部Y=3街面接驳"
+    }
+  ],
+  "design_notes": [
+    "参考北欧图4：路边前廊客栈；复用完整可达的分类储物或食宿内饰，重组屋顶和装卸/入口体量。"
+  ],
+  "differences": [
+    "路边前廊客栈"
+  ],
+  "floors": [
+    {
+      "name": "岸台生活作业层",
+      "y": 2,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/northern_fill_storage_inns.py:build('NS-09',1)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 5,
+    "surface": "snow"
+  },
+  "ground_plane": {
+    "y": 3,
+    "note": "外部稳定街面与模板场坪顶面齐平，站立脚底Y=3；基础方块在其下"
+  },
+  "function_terms": [
+    "旅宿",
+    "餐饮"
+  ],
+  "nbt_sha256": "a33527efcc7ae1916e0784ee21545133e4eaa31e0ef8ead53a2b06574c3dc54a"
+}

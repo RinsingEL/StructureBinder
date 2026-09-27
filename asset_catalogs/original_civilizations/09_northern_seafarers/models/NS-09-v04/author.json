@@ -1,0 +1,330 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "NS-09-v04",
+  "name": "分屋避风院客栈",
+  "family": "NS-09",
+  "civilization": "北欧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    35,
+    28,
+    33
+  ],
+  "terrain": {
+    "选址": "干燥稳定地基，外部街面接Y=3；仓储需外部货源，客栈需食品及饮水供给；不强制滨海选址。",
+    "高程": "干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。",
+    "保留空间": "完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。",
+    "风雪": "厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。",
+    "推荐情境": [
+      "寒地背风聚落或海湾聚落；这是常见使用背景，不要求所有北欧建筑临海，也不限定住户种族。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "public",
+      "name": "长食堂及登记寄物厅",
+      "min": [
+        4,
+        3,
+        4
+      ],
+      "max": [
+        14,
+        6,
+        27
+      ],
+      "purpose": "登记、公共餐桌、后部装备行李分区；具体设施：登记、船期和寄物票、分格海员行李和雨具"
+    },
+    {
+      "id": "cook",
+      "name": "独立厨房",
+      "min": [
+        24,
+        3,
+        4
+      ],
+      "max": [
+        30,
+        6,
+        14
+      ],
+      "purpose": "厨房及食品避免穿客寝配送；具体设施：备餐、热食与洗涤、客栈粮食与餐具"
+    },
+    {
+      "id": "sleep",
+      "name": "后院三床客寝",
+      "min": [
+        20,
+        3,
+        22
+      ],
+      "max": [
+        30,
+        6,
+        27
+      ],
+      "purpose": "三床及个人柜，离街休息；具体设施：床铺与个人防寒用品、床铺与个人防寒用品、床铺与个人防寒用品"
+    },
+    {
+      "id": "wash",
+      "name": "遮雪洗漱廊",
+      "min": [
+        18,
+        3,
+        8
+      ],
+      "max": [
+        20,
+        6,
+        16
+      ],
+      "purpose": "集中洗漱和饮水，院内通往独立客寝；具体设施：院廊洗漱与饮水"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        9,
+        3,
+        2
+      ],
+      "name": "背风步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "kitchenentry",
+      "kind": "entrance",
+      "pos": [
+        27,
+        3,
+        2
+      ],
+      "name": "背风步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "sleepentry",
+      "kind": "entrance",
+      "pos": [
+        25,
+        3,
+        20
+      ],
+      "name": "背风步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "desk",
+      "kind": "work",
+      "pos": [
+        4,
+        3,
+        5
+      ],
+      "name": "登记、船期和寄物票",
+      "look_at": [
+        4,
+        4,
+        5
+      ],
+      "approach": [
+        4,
+        3,
+        6
+      ]
+    },
+    {
+      "id": "gear",
+      "kind": "storage",
+      "pos": [
+        4,
+        3,
+        24
+      ],
+      "name": "分格海员行李和雨具",
+      "look_at": [
+        4,
+        4,
+        24
+      ],
+      "approach": [
+        4,
+        3,
+        25
+      ]
+    },
+    {
+      "id": "cook",
+      "kind": "work",
+      "pos": [
+        24,
+        3,
+        5
+      ],
+      "name": "备餐、热食与洗涤",
+      "look_at": [
+        24,
+        4,
+        5
+      ],
+      "approach": [
+        24,
+        3,
+        6
+      ]
+    },
+    {
+      "id": "food",
+      "kind": "storage",
+      "pos": [
+        24,
+        3,
+        12
+      ],
+      "name": "客栈粮食与餐具",
+      "look_at": [
+        24,
+        4,
+        12
+      ],
+      "approach": [
+        24,
+        3,
+        13
+      ]
+    },
+    {
+      "id": "guest0",
+      "kind": "bed",
+      "pos": [
+        20,
+        3,
+        25
+      ],
+      "name": "床铺与个人防寒用品",
+      "look_at": [
+        20,
+        4,
+        25
+      ],
+      "approach": [
+        21,
+        3,
+        25
+      ]
+    },
+    {
+      "id": "guest1",
+      "kind": "bed",
+      "pos": [
+        23,
+        3,
+        25
+      ],
+      "name": "床铺与个人防寒用品",
+      "look_at": [
+        23,
+        4,
+        25
+      ],
+      "approach": [
+        24,
+        3,
+        25
+      ]
+    },
+    {
+      "id": "guest2",
+      "kind": "bed",
+      "pos": [
+        26,
+        3,
+        25
+      ],
+      "name": "床铺与个人防寒用品",
+      "look_at": [
+        26,
+        4,
+        25
+      ],
+      "approach": [
+        27,
+        3,
+        25
+      ]
+    },
+    {
+      "id": "wash",
+      "kind": "work",
+      "pos": [
+        18,
+        3,
+        11
+      ],
+      "name": "院廊洗漱与饮水",
+      "look_at": [
+        18,
+        4,
+        11
+      ],
+      "approach": [
+        18,
+        3,
+        12
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        9,
+        3,
+        2
+      ],
+      "direction": "north",
+      "clearance": [
+        1,
+        2
+      ],
+      "note": "已标入口与外部Y=3街面接驳"
+    }
+  ],
+  "design_notes": [
+    "参考北欧图4：分屋避风院客栈；复用完整可达的分类储物或食宿内饰，重组屋顶和装卸/入口体量。"
+  ],
+  "differences": [
+    "分屋避风院客栈"
+  ],
+  "floors": [
+    {
+      "name": "岸台生活作业层",
+      "y": 2,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/northern_fill_storage_inns.py:build('NS-09',4)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 5,
+    "surface": "snow"
+  },
+  "ground_plane": {
+    "y": 3,
+    "note": "外部稳定街面与模板场坪顶面齐平，站立脚底Y=3；基础方块在其下"
+  },
+  "function_terms": [
+    "旅宿",
+    "餐饮"
+  ],
+  "nbt_sha256": "b73a15bb6bd78c8ff8ff8fe24dd70f92300dd8f01dd71e406e1167cd0cf034f4"
+}

@@ -1,0 +1,175 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "TC-F03-v04",
+  "name": "贯通装货双棚",
+  "family": "TC-F03",
+  "civilization": "海洋幻想",
+  "planning_role": "planning_role.fill",
+  "size": [
+    39,
+    36,
+    45
+  ],
+  "terrain": {
+    "选址": "避风潮上岸台或人工桩台；水侧支柱底Y=0必须接稳定海床，不自动适应任意水深",
+    "潮位": "低潮Y=3、参考水面Y=5、预期高潮Y=6；主层干地板Y=7、脚底Y=8，潮汐仅为条件记录",
+    "支撑接驳": "北侧接Y=8普通步行道路；所有楼梯为实体台阶。高层与分台另有房间高程，不依赖跳跃或游泳",
+    "供水生活": "厨房淡水和食物依岸上补给；海水不能视为饮用或灌溉水。居室采用干燥外壳，气候通风与实际水密另验",
+    "风格": "棱面近似贝壳的弧顶、放射或分瓣舱室、青绿石质桩台；风格不是国名",
+    "限制": "原版静态模型；不代表潮汐、潜水呼吸、流体、生产或运行时生成已接入"
+  },
+  "rooms": [
+    {
+      "id": "shelter0",
+      "name": "侧列货棚",
+      "min": [
+        5,
+        8,
+        5
+      ],
+      "max": [
+        15,
+        13,
+        38
+      ],
+      "purpose": "货物靠两侧，中央贯通搬运线不受屋柱阻挡"
+    },
+    {
+      "id": "shelter1",
+      "name": "侧列货棚",
+      "min": [
+        23,
+        8,
+        5
+      ],
+      "max": [
+        33,
+        13,
+        38
+      ],
+      "purpose": "货物靠两侧，中央贯通搬运线不受屋柱阻挡"
+    }
+  ],
+  "points": [
+    {
+      "id": "cargo0",
+      "kind": "storage",
+      "pos": [
+        8,
+        9,
+        9
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        8,
+        8,
+        10
+      ]
+    },
+    {
+      "id": "check0",
+      "kind": "work",
+      "pos": [
+        8,
+        8,
+        29
+      ],
+      "name": "货物封装和交接",
+      "approach": [
+        8,
+        8,
+        30
+      ]
+    },
+    {
+      "id": "cargo1",
+      "kind": "storage",
+      "pos": [
+        26,
+        9,
+        9
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        26,
+        8,
+        10
+      ]
+    },
+    {
+      "id": "check1",
+      "kind": "work",
+      "pos": [
+        26,
+        8,
+        29
+      ],
+      "name": "货物封装和交接",
+      "approach": [
+        26,
+        8,
+        30
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        19,
+        8,
+        3
+      ],
+      "name": "陆侧普通步行入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        19,
+        7,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "接同高程干燥道路或栈桥"
+    }
+  ],
+  "design_notes": [],
+  "differences": [
+    "贯通装货双棚",
+    "开放遮棚提供明确休憩、维修或货运用途，连续柱梁承载贝肋屋盖，临水边护独立连续"
+  ],
+  "floors": [
+    {
+      "name": "干式生活层",
+      "y": 7,
+      "max_y": 12
+    }
+  ],
+  "roof_min_y": 13,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/tidal_gardens.py",
+  "preview_context": {
+    "kind": "shore",
+    "shore_z": 22,
+    "water_surface_y": 5,
+    "land_surface_y": 8,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "sand"
+  },
+  "nbt_sha256": "722f2635d1d5b4ce7b9de1a80e00a5a3f70d0569c9dc82572a5b2aac82a15a6a",
+  "function_terms": [
+    "休息",
+    "货物暂存"
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "NS-09-v02",
+  "nbt_sha256": "834362e02768f812b354e6347a1b775f8f3ef8674e5a4b6da26993e420e7cd92",
+  "author_sha256": "da1a849595ac8ed391116bce02064aabe08588a2521c148c99dc33b7a7600eec",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-guest0",
+    "room-guest1",
+    "room-guest2",
+    "room-guest3",
+    "room-public",
+    "point-cook",
+    "point-desk",
+    "point-guest00",
+    "point-bag0",
+    "point-guest10",
+    "point-bag1",
+    "point-guest20",
+    "point-bag2",
+    "point-guest30",
+    "point-bag3",
+    "point-linen",
+    "point-tea",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending",
+  "metadata_migrations": [
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "寒海航民",
+      "after": "霜帆王国",
+      "previous_author_sha256": "8b96d0fd0ca4eb4e3cf9b663a6a00dfb11d3dc1f0ae8a622aedd92d7d4c23cd7",
+      "current_author_sha256": "245c9b95e4314c263fcdbd4a612a767a1d90effdd1f4d9fb3d1519fe31bac8e3",
+      "nbt_sha256": "834362e02768f812b354e6347a1b775f8f3ef8674e5a4b6da26993e420e7cd92",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    },
+    {
+      "kind": "civilization_display_name_only",
+      "date": "2026-09-22",
+      "field": "civilization",
+      "before": "霜帆王国",
+      "after": "北欧",
+      "previous_author_sha256": "245c9b95e4314c263fcdbd4a612a767a1d90effdd1f4d9fb3d1519fe31bac8e3",
+      "current_author_sha256": "da1a849595ac8ed391116bce02064aabe08588a2521c148c99dc33b7a7600eec",
+      "nbt_sha256": "834362e02768f812b354e6347a1b775f8f3ef8674e5a4b6da26993e420e7cd92",
+      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
+    }
+  ]
+}

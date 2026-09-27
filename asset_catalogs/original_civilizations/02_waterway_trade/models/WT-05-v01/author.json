@@ -274,5 +274,9 @@
     "bed_y": -1,
     "padding": 4
   },
-  "nbt_sha256": "1787ec76f02f139b9a4e772eac8a1808ea02a0a32f184c6c371065b55af7a5fc"
+  "nbt_sha256": "1787ec76f02f139b9a4e772eac8a1808ea02a0a32f184c6c371065b55af7a5fc",
+  "function_terms": [
+    "零售",
+    "家庭居住"
+  ]
 }

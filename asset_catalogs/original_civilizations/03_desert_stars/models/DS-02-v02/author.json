@@ -1,259 +1,422 @@
 {
   "schema": "structure-studio.author.v1",
   "id": "DS-02-v02",
-  "name": "双栏护理内院",
+  "name": "围院兽栏",
   "family": "DS-02",
   "civilization": "沙漠",
   "planning_role": "planning_role.fill",
   "size": [
-    39,
-    18,
-    37
+    41,
+    15,
+    39
   ],
   "terrain": {
-    "选址": "依托商路补给点和可靠饮水，保持动物活动与人货搬运空间",
-    "地块": "两座兽栏沿西侧排列，东侧分别设置值守室和饲料库，中央留宽护理院。",
-    "接地": "使用地坪 Y=1，脚底 Y=2；不自动削坡或补齐外部通路",
-    "边界": "模板包含内部地坪和封边，未写入的凹角与外部格保持原环境"
+    "选址": "连续承载的平坦地块；入口连接商路并有可靠饮水饲料来源。",
+    "接地": "外部地面脚底 Y=2，实体地坪顶面；基础底部 Y=0 不作为落地线。"
   },
   "rooms": [
     {
-      "id": "前栏",
-      "name": "遮阳兽栏 · 前栏",
+      "id": "west0",
+      "name": "遮阴兽栏",
       "min": [
         5,
         2,
-        7
+        6
       ],
       "max": [
-        14,
+        13,
         6,
-        17
+        12
       ],
-      "purpose": "兽栏、饲料、饮水与牵引通道"
+      "purpose": "饮水、饲料与静态栏位；开口三格"
     },
     {
-      "id": "后栏",
-      "name": "遮阳兽栏 · 后栏",
+      "id": "east0",
+      "name": "遮阴兽栏",
+      "min": [
+        27,
+        2,
+        6
+      ],
+      "max": [
+        35,
+        6,
+        12
+      ],
+      "purpose": "饮水、饲料与静态栏位；开口三格"
+    },
+    {
+      "id": "west1",
+      "name": "遮阴兽栏",
       "min": [
         5,
         2,
-        21
+        16
       ],
       "max": [
-        14,
+        13,
         6,
-        31
+        22
       ],
-      "purpose": "兽栏、饲料、饮水与牵引通道"
+      "purpose": "饮水、饲料与静态栏位；开口三格"
+    },
+    {
+      "id": "east1",
+      "name": "遮阴兽栏",
+      "min": [
+        27,
+        2,
+        16
+      ],
+      "max": [
+        35,
+        6,
+        22
+      ],
+      "purpose": "饮水、饲料与静态栏位；开口三格"
+    },
+    {
+      "id": "west2",
+      "name": "遮阴兽栏",
+      "min": [
+        5,
+        2,
+        26
+      ],
+      "max": [
+        13,
+        6,
+        32
+      ],
+      "purpose": "饮水、饲料与静态栏位；开口三格"
+    },
+    {
+      "id": "east2",
+      "name": "遮阴兽栏",
+      "min": [
+        27,
+        2,
+        26
+      ],
+      "max": [
+        35,
+        6,
+        32
+      ],
+      "purpose": "饮水、饲料与静态栏位；开口三格"
     },
     {
       "id": "keeper",
-      "name": "换乘值守室",
+      "name": "鞍具与值守室",
       "min": [
-        27,
+        18,
         2,
-        7
+        28
       ],
       "max": [
-        33,
+        22,
         6,
-        15
+        35
       ],
-      "purpose": "登记、夜间值守、个人物品与取水"
-    },
-    {
-      "id": "feed_store",
-      "name": "干燥饲料库",
-      "min": [
-        27,
-        2,
-        23
-      ],
-      "max": [
-        33,
-        6,
-        31
-      ],
-      "purpose": "草料、精饲料与搬运空地"
-    },
-    {
-      "id": "court",
-      "name": "护理内院",
-      "min": [
-        16,
-        2,
-        5
-      ],
-      "max": [
-        24,
-        7,
-        32
-      ],
-      "purpose": "牵引、饮水与遮阳护理"
+      "purpose": "登记、鞍具修补、寄存、值守睡眠"
     }
   ],
   "points": [
-    {
-      "id": "前栏_feed",
-      "kind": "work",
-      "pos": [
-        7,
-        2,
-        15
-      ],
-      "name": "前栏饲料",
-      "approach": [
-        8,
-        2,
-        15
-      ]
-    },
-    {
-      "id": "前栏_water",
-      "kind": "work",
-      "pos": [
-        12,
-        2,
-        9
-      ],
-      "name": "前栏饮水",
-      "approach": [
-        11,
-        2,
-        9
-      ]
-    },
-    {
-      "id": "前栏_gate",
-      "kind": "circulation",
-      "pos": [
-        14,
-        2,
-        14
-      ],
-      "name": "前栏牵引宽口",
-      "look_at": [
-        7,
-        3,
-        14
-      ]
-    },
-    {
-      "id": "后栏_feed",
-      "kind": "work",
-      "pos": [
-        7,
-        2,
-        29
-      ],
-      "name": "后栏饲料",
-      "approach": [
-        8,
-        2,
-        29
-      ]
-    },
-    {
-      "id": "后栏_water",
-      "kind": "work",
-      "pos": [
-        12,
-        2,
-        23
-      ],
-      "name": "后栏饮水",
-      "approach": [
-        11,
-        2,
-        23
-      ]
-    },
-    {
-      "id": "后栏_gate",
-      "kind": "circulation",
-      "pos": [
-        14,
-        2,
-        28
-      ],
-      "name": "后栏牵引宽口",
-      "look_at": [
-        7,
-        3,
-        28
-      ]
-    },
-    {
-      "id": "keeper_bed",
-      "kind": "bed",
-      "pos": [
-        32,
-        2,
-        14
-      ],
-      "name": "值守卧床",
-      "approach": [
-        31,
-        2,
-        14
-      ]
-    },
-    {
-      "id": "register",
-      "kind": "work",
-      "pos": [
-        28,
-        2,
-        8
-      ],
-      "name": "换乘登记",
-      "approach": [
-        28,
-        2,
-        9
-      ]
-    },
-    {
-      "id": "feed_store",
-      "kind": "work",
-      "pos": [
-        28,
-        2,
-        25
-      ],
-      "name": "集中饲料库",
-      "approach": [
-        28,
-        2,
-        26
-      ]
-    },
-    {
-      "id": "care",
-      "kind": "work",
-      "pos": [
-        22,
-        2,
-        29
-      ],
-      "name": "内院护理",
-      "approach": [
-        21,
-        2,
-        29
-      ]
-    },
     {
       "id": "entry",
       "kind": "entrance",
       "pos": [
         20,
         2,
-        4
+        2
       ],
-      "name": "动物与人员宽口",
+      "name": "五格牵引主入口",
       "facing": "north"
+    },
+    {
+      "id": "west0_feed",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        10
+      ],
+      "name": "草料取放",
+      "approach": [
+        6,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "west0_water",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        7
+      ],
+      "name": "栏内饮水",
+      "approach": [
+        6,
+        2,
+        8
+      ]
+    },
+    {
+      "id": "west0_gate",
+      "kind": "circulation",
+      "pos": [
+        14,
+        2,
+        9
+      ],
+      "name": "三格牵引开口"
+    },
+    {
+      "id": "east0_feed",
+      "kind": "work",
+      "pos": [
+        28,
+        2,
+        10
+      ],
+      "name": "草料取放",
+      "approach": [
+        28,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "east0_water",
+      "kind": "work",
+      "pos": [
+        28,
+        2,
+        7
+      ],
+      "name": "栏内饮水",
+      "approach": [
+        28,
+        2,
+        8
+      ]
+    },
+    {
+      "id": "east0_gate",
+      "kind": "circulation",
+      "pos": [
+        26,
+        2,
+        9
+      ],
+      "name": "三格牵引开口"
+    },
+    {
+      "id": "west1_feed",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        20
+      ],
+      "name": "草料取放",
+      "approach": [
+        6,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "west1_water",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        17
+      ],
+      "name": "栏内饮水",
+      "approach": [
+        6,
+        2,
+        18
+      ]
+    },
+    {
+      "id": "west1_gate",
+      "kind": "circulation",
+      "pos": [
+        14,
+        2,
+        19
+      ],
+      "name": "三格牵引开口"
+    },
+    {
+      "id": "east1_feed",
+      "kind": "work",
+      "pos": [
+        28,
+        2,
+        20
+      ],
+      "name": "草料取放",
+      "approach": [
+        28,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "east1_water",
+      "kind": "work",
+      "pos": [
+        28,
+        2,
+        17
+      ],
+      "name": "栏内饮水",
+      "approach": [
+        28,
+        2,
+        18
+      ]
+    },
+    {
+      "id": "east1_gate",
+      "kind": "circulation",
+      "pos": [
+        26,
+        2,
+        19
+      ],
+      "name": "三格牵引开口"
+    },
+    {
+      "id": "west2_feed",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        30
+      ],
+      "name": "草料取放",
+      "approach": [
+        6,
+        2,
+        29
+      ]
+    },
+    {
+      "id": "west2_water",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        27
+      ],
+      "name": "栏内饮水",
+      "approach": [
+        6,
+        2,
+        28
+      ]
+    },
+    {
+      "id": "west2_gate",
+      "kind": "circulation",
+      "pos": [
+        14,
+        2,
+        29
+      ],
+      "name": "三格牵引开口"
+    },
+    {
+      "id": "east2_feed",
+      "kind": "work",
+      "pos": [
+        28,
+        2,
+        30
+      ],
+      "name": "草料取放",
+      "approach": [
+        28,
+        2,
+        29
+      ]
+    },
+    {
+      "id": "east2_water",
+      "kind": "work",
+      "pos": [
+        28,
+        2,
+        27
+      ],
+      "name": "栏内饮水",
+      "approach": [
+        28,
+        2,
+        28
+      ]
+    },
+    {
+      "id": "east2_gate",
+      "kind": "circulation",
+      "pos": [
+        26,
+        2,
+        29
+      ],
+      "name": "三格牵引开口"
+    },
+    {
+      "id": "keeper_bed",
+      "kind": "bed",
+      "pos": [
+        21,
+        2,
+        34
+      ],
+      "name": "值守床",
+      "approach": [
+        20,
+        2,
+        34
+      ]
+    },
+    {
+      "id": "register",
+      "kind": "work",
+      "pos": [
+        19,
+        2,
+        28
+      ],
+      "name": "换乘登记",
+      "approach": [
+        19,
+        2,
+        29
+      ]
+    },
+    {
+      "id": "tack",
+      "kind": "work",
+      "pos": [
+        22,
+        2,
+        30
+      ],
+      "name": "鞍具修补",
+      "approach": [
+        21,
+        2,
+        30
+      ]
     }
   ],
   "connections": [
@@ -262,27 +425,27 @@
       "pos": [
         20,
         1,
-        4
+        2
       ],
       "direction": "north",
       "clearance": [
         5,
         5
       ],
-      "note": "作者预留几何接口；需另外核对外部地面及具体实体尺寸"
+      "note": "五格宽几何预留，须另外验证具体实体及外部接驳。"
     }
   ],
   "design_notes": [
-    "两座兽栏沿西侧排列，东侧分别设置值守室和饲料库，中央留宽护理院。"
+    "六个分栏朝向中央宽牵引道，后端低矮值守翼，连续分段遮阴棚。"
   ],
   "differences": [
-    "两座兽栏沿西侧排列，东侧分别设置值守室和饲料库，中央留宽护理院。"
+    "六个分栏朝向中央宽牵引道，后端低矮值守翼，连续分段遮阴棚。"
   ],
   "floors": [
     {
-      "name": "地坪、布置与通路",
+      "name": "牵引通道、兽栏与值守内饰",
       "y": 1,
-      "max_y": 4
+      "max_y": 5
     }
   ],
   "roof_min_y": 6,
@@ -290,9 +453,13 @@
   "offline_limits": [
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。",
-    "兽栏不含活体动物；入口为宽口，动物高度、回转、牵引和围栏行为须另行验证。"
+    "静态栏位和护理设备，无动物实体；动物尺寸、牵引、回转与围栏行为未做游戏验收。"
   ],
-  "source": "tools/structure_studio/studio/oasis_yards.py:beast_yard(2)",
+  "source": "tools/structure_studio/studio/desert_fill_beasts.py:beast_yard(2)",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路与院内地坪统一脚底 Y=2，地坪方块在 Y=1；不以基础最低层定位。"
+  },
   "preview_context": {
     "kind": "flat",
     "land_surface_y": 2,
@@ -300,5 +467,9 @@
     "padding": 3,
     "surface": "sand"
   },
-  "nbt_sha256": "42abca12b311a05bf90ecf434e952b34bd8794d10c3fba8aa023c9872b3cb370"
+  "function_terms": [
+    "畜群照护",
+    "商队换乘"
+  ],
+  "nbt_sha256": "1f297e2ee9d73efbbbd20af465314255d0ac285861e0c9ac2a8500b8dd9b4032"
 }

@@ -1,0 +1,26 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "TC-F03-v04",
+  "nbt_sha256": "722f2635d1d5b4ce7b9de1a80e00a5a3f70d0569c9dc82572a5b2aac82a15a6a",
+  "author_sha256": "46f14b08238d9525e89dd91d36d4fd3017675a60de25511fe2d53f9531f1982e",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-shelter0",
+    "room-shelter1",
+    "point-cargo0",
+    "point-check0",
+    "point-cargo1",
+    "point-check1",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

@@ -1,0 +1,265 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "ML-07-v04",
+  "name": "下层值守上层家居宅",
+  "family": "ML-07",
+  "civilization": "哥特",
+  "planning_role": "planning_role.fill",
+  "size": [
+    25,
+    35,
+    30
+  ],
+  "terrain": {
+    "选址": "稳定、排水良好的居民地块，日照与通路按具体用途保留；哥特是建造风格而非地形限制。",
+    "高程": "基础底Y=0、常规地面Y=2、脚底Y=3；抬高或双层版本另记。",
+    "边界": "完整独立模板，保留外扶柱、檐口、采光和门外站位，不默认邻居补齐。"
+  },
+  "rooms": [
+    {
+      "id": "duty",
+      "name": "登记接待及后工具间",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        15,
+        7,
+        25
+      ],
+      "purpose": "前部来访停留，后部工具储存维修；设施：墓区登记与来访问询、清扫与修整分柜、后部工具维护"
+    },
+    {
+      "id": "family",
+      "name": "上层完整三床家居",
+      "min": [
+        5,
+        9,
+        5
+      ],
+      "max": [
+        19,
+        13,
+        25
+      ],
+      "purpose": "独立炊食、隔屏三床与被服，不把家庭当作值守宿舍；设施：备餐、热食与洗涤、床位与个人衣物、床位与个人衣物、床位与个人衣物、上层被服"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        12,
+        3,
+        3
+      ],
+      "name": "尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "record",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        6
+      ],
+      "name": "墓区登记与来访问询",
+      "look_at": [
+        5,
+        4,
+        6
+      ],
+      "approach": [
+        5,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "tools",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        18
+      ],
+      "name": "清扫与修整分柜",
+      "look_at": [
+        5,
+        4,
+        18
+      ],
+      "approach": [
+        5,
+        3,
+        19
+      ]
+    },
+    {
+      "id": "repair",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        23
+      ],
+      "name": "后部工具维护",
+      "look_at": [
+        5,
+        4,
+        23
+      ],
+      "approach": [
+        5,
+        3,
+        24
+      ]
+    },
+    {
+      "id": "cook",
+      "kind": "work",
+      "pos": [
+        5,
+        9,
+        6
+      ],
+      "name": "备餐、热食与洗涤",
+      "look_at": [
+        5,
+        10,
+        6
+      ],
+      "approach": [
+        5,
+        9,
+        7
+      ]
+    },
+    {
+      "id": "beds0",
+      "kind": "bed",
+      "pos": [
+        6,
+        9,
+        21
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        6,
+        10,
+        21
+      ],
+      "approach": [
+        7,
+        9,
+        21
+      ]
+    },
+    {
+      "id": "beds1",
+      "kind": "bed",
+      "pos": [
+        9,
+        9,
+        21
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        9,
+        10,
+        21
+      ],
+      "approach": [
+        10,
+        9,
+        21
+      ]
+    },
+    {
+      "id": "beds2",
+      "kind": "bed",
+      "pos": [
+        12,
+        9,
+        21
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        12,
+        10,
+        21
+      ],
+      "approach": [
+        13,
+        9,
+        21
+      ]
+    },
+    {
+      "id": "linen",
+      "kind": "storage",
+      "pos": [
+        6,
+        9,
+        24
+      ],
+      "name": "上层被服",
+      "look_at": [
+        6,
+        10,
+        24
+      ],
+      "approach": [
+        6,
+        9,
+        25
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "紧凑两层值守宅，下层来访登记与后部工具间，上层三人家庭餐厨寝居完整；侧实梯与护栏形成唯一清晰上下通路。",
+    "按2026-09-27效果图重绘：浅石深木、陡瓦白边、铁脊老虎窗、紫金彩窗与灯柱围院。"
+  ],
+  "differences": [
+    "紧凑两层值守宅，下层来访登记与后部工具间，上层三人家庭餐厨寝居完整；侧实梯与护栏形成唯一清晰上下通路。"
+  ],
+  "floors": [
+    {
+      "name": "下层作业起居",
+      "y": 2,
+      "max_y": 7
+    },
+    {
+      "name": "上层家居钟务",
+      "y": 8,
+      "max_y": 13
+    }
+  ],
+  "roof_min_y": 14,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/memorial_life.py:BUILDERS",
+  "ground_plane": {
+    "y": 3,
+    "note": "外部场坪顶面与脚底Y=3，铺地方块Y=2；内部上层及高台不改变接地基准。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "家庭居住",
+    "墓园看护"
+  ],
+  "nbt_sha256": "2c65438248082268b787dcf6db8a7e0c9dab4319ef957c99dd19208a3dcb9f3e"
+}

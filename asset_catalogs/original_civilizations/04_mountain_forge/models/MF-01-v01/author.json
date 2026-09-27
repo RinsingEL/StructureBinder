@@ -216,5 +216,8 @@
     "land_surface_y": 2,
     "padding": 5
   },
-  "nbt_sha256": "fc758d378f2c00fe1ae3def0e7c5c4a5c7c6dd0e3623e505d21d475c63a1c8bd"
+  "nbt_sha256": "fc758d378f2c00fe1ae3def0e7c5c4a5c7c6dd0e3623e505d21d475c63a1c8bd",
+  "function_terms": [
+    "矿料转运"
+  ]
 }

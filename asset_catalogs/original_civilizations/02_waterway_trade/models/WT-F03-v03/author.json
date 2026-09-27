@@ -1,0 +1,155 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "WT-F03-v03",
+  "name": "折角藤廊采收庭院",
+  "family": "WT-F03",
+  "civilization": "地中海",
+  "planning_role": "planning_role.fill",
+  "size": [
+    30,
+    22,
+    29
+  ],
+  "terrain": {
+    "选址": "稳定排水的聚落地块；种植版本需要日照与灌溉供水，不要求贴临水岸。",
+    "高程": "外部铺地顶面Y=3；内部阶台另行标记。",
+    "边界": "独立低院墙、红瓦棚和可通行入口，不依赖相邻建筑。"
+  },
+  "rooms": [
+    {
+      "id": "court",
+      "name": "L形采收藤庭",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        24,
+        7,
+        22
+      ],
+      "purpose": "藤架围合分选桌、水槽与休息席"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        15,
+        3,
+        2
+      ],
+      "name": "前院入口",
+      "facing": "north"
+    },
+    {
+      "id": "shed",
+      "kind": "entrance",
+      "pos": [
+        20,
+        3,
+        22
+      ],
+      "name": "木门入口",
+      "facing": "north"
+    },
+    {
+      "id": "tools",
+      "kind": "storage",
+      "pos": [
+        17,
+        3,
+        25
+      ],
+      "name": "庭院剪枝与清洗工具",
+      "look_at": [
+        17,
+        4,
+        25
+      ],
+      "approach": [
+        17,
+        3,
+        24
+      ]
+    },
+    {
+      "id": "sort",
+      "kind": "work",
+      "pos": [
+        15,
+        3,
+        8
+      ],
+      "name": "采收分级装篮",
+      "look_at": [
+        15,
+        4,
+        8
+      ],
+      "approach": [
+        15,
+        3,
+        9
+      ]
+    },
+    {
+      "id": "tend",
+      "kind": "work",
+      "pos": [
+        8,
+        3,
+        13
+      ],
+      "name": "折角藤廊维护",
+      "look_at": [
+        8,
+        4,
+        13
+      ],
+      "approach": [
+        8,
+        3,
+        14
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "两段藤架呈L形围合开放采收庭，后角低屋保管器具，中央留出清洗分选与停留空间。"
+  ],
+  "differences": [
+    "两段藤架呈L形围合开放采收庭，后角低屋保管器具，中央留出清洗分选与停留空间。"
+  ],
+  "floors": [
+    {
+      "name": "庭院作业层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mediterranean_gardens.py:BUILDERS",
+  "ground_plane": {
+    "y": 3,
+    "note": "院门外铺地顶面，阶台为内部高差。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "棚架种植"
+  ],
+  "grape_expression": "木棚叶幕与下垂紫晶簇表达葡萄外观；未接入葡萄作物产量与采收机制。",
+  "nbt_sha256": "97f0a636a01aaf67a92d114f1041026b8e0731e731728b812629d328353c3fd3"
+}

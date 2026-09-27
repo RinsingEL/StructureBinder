@@ -1,86 +1,152 @@
 {
   "schema": "structure-studio.author.v1",
   "id": "DS-F02-v04",
-  "name": "斜巷阶边田",
+  "name": "L形巷边田",
   "family": "DS-F02",
   "civilization": "沙漠",
   "planning_role": "planning_role.fill",
   "size": [
-    25,
-    12,
-    30
+    33,
+    13,
+    33
   ],
   "terrain": {
-    "选址": "有可靠引水与适宜土壤的绿洲；不在无水沙海仅凭文明标签放置",
-    "形状": "随道路边角逐段展开的非矩形田，纵渠随宽度增减，凹边不清地。",
-    "地面": "作业道脚底 Y=2，有限地块内备土与灌溉",
-    "落地方式": "独立固定模板田块，包含封边与作业道；不替代 Landscape 自然生成大田"
+    "选址": "有可靠灌溉供水、适宜土壤及日照的地块；模板水槽须有真实供水来源。",
+    "地块": "沿折角街巷展开的L形种植带，凹角不铺地，渠边保持干燥搬运道。",
+    "落地": "外部入口脚底 Y=2；耕地及地坪顶层方块 Y=1。三级台田内部地坪另升至 Y=2、3。",
+    "适用": "独立固定田块，不替代随自然地形生成的大田。"
   },
   "rooms": [
     {
-      "id": "field",
-      "name": "灌渠种植与维护",
+      "id": "north",
+      "name": "灌溉种植畦 north",
       "min": [
+        3,
         2,
-        2,
-        3
+        4
       ],
       "max": [
-        18,
-        6,
-        26
+        10,
+        4,
+        15
       ],
-      "purpose": "随道路边角逐段展开的非矩形田，纵渠随宽度增减，凹边不清地。"
+      "purpose": "水渠、耕土及沿畦采收"
+    },
+    {
+      "id": "elbow",
+      "name": "灌溉种植畦 elbow",
+      "min": [
+        3,
+        2,
+        20
+      ],
+      "max": [
+        10,
+        4,
+        29
+      ],
+      "purpose": "水渠、耕土及沿畦采收"
+    },
+    {
+      "id": "east",
+      "name": "灌溉种植畦 east",
+      "min": [
+        16,
+        2,
+        22
+      ],
+      "max": [
+        28,
+        4,
+        29
+      ],
+      "purpose": "水渠、耕土及沿畦采收"
     }
   ],
   "points": [
     {
-      "id": "compost",
-      "kind": "work",
+      "id": "entry",
+      "kind": "entrance",
       "pos": [
-        3,
+        7,
         2,
-        24
+        1
       ],
-      "name": "堆肥与田务",
-      "approach": [
+      "name": "田头主入口",
+      "facing": "north"
+    },
+    {
+      "id": "workway0",
+      "kind": "circulation",
+      "pos": [
+        11,
         2,
+        10
+      ],
+      "name": "第1处采收作业道",
+      "look_at": [
+        9,
+        3,
+        13
+      ]
+    },
+    {
+      "id": "workway1",
+      "kind": "circulation",
+      "pos": [
+        14,
         2,
+        21
+      ],
+      "name": "第2处采收作业道",
+      "look_at": [
+        12,
+        3,
         24
       ]
     },
     {
-      "id": "entry",
-      "kind": "entrance",
+      "id": "workway2",
+      "kind": "circulation",
       "pos": [
-        3,
+        29,
         2,
-        3
+        21
       ],
-      "name": "田头入口",
-      "facing": "north"
+      "name": "第3处采收作业道",
+      "look_at": [
+        27,
+        3,
+        24
+      ]
     }
   ],
   "connections": [],
   "design_notes": [
-    "随道路边角逐段展开的非矩形田，纵渠随宽度增减，凹边不清地。"
+    "沿折角街巷展开的L形种植带，凹角不铺地，渠边保持干燥搬运道。",
+    "参考用户图7大轮廓与水渠组织，使用原版作物；保留作业净空。"
   ],
   "differences": [
-    "随道路边角逐段展开的非矩形田，纵渠随宽度增减，凹边不清地。"
+    "沿折角街巷展开的L形种植带，凹角不铺地，渠边保持干燥搬运道。"
   ],
   "floors": [
     {
-      "name": "灌渠与田埂",
+      "name": "灌溉与作业层",
       "y": 0,
-      "max_y": 5
+      "max_y": 7
     }
   ],
-  "roof_min_y": null,
+  "roof_min_y": 6,
   "lifecycle": "draft",
   "offline_limits": [
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
   ],
+  "source": "tools/structure_studio/studio/desert_fill_farms.py:garden(4)",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部接路站立面 Y=2；地坪顶层方块 Y=1，内部种植台和短阶不改变对地基准。"
+  },
   "preview_context": {
     "kind": "flat",
     "land_surface_y": 2,
@@ -88,17 +154,19 @@
     "padding": 3,
     "surface": "sand"
   },
-  "source": "tools/structure_studio/studio/oasis_life.py:garden(4)",
   "agriculture": {
     "crops": [
       "wheat",
-      "carrots"
+      "carrots",
+      "potatoes",
+      "beetroots"
     ],
-    "layout": "随道路边角逐段展开的非矩形田，纵渠随宽度增减，凹边不清地。",
-    "planted_cells": 151,
-    "irrigation_sources": 28,
+    "layout": "沿折角街巷展开的L形种植带，凹角不铺地，渠边保持干燥搬运道。",
     "template_mode": "independent_fixed_plot",
-    "hydration": "以最终 NBT 校核支撑与同高程或高一格、水平 4 格水源"
+    "hydration": "全部原版作物检查实际耕地与水平四格同层水源。"
   },
-  "nbt_sha256": "5ebba736be978e6227ddd8a9e6ee4c2a9b33978db3e6f15d082af323cb1a8a4b"
+  "function_terms": [
+    "农田种植"
+  ],
+  "nbt_sha256": "fa6bcd96d22b0496c970d1a18755c29fda0c727d5b5462a78b7b2c966cde9834"
 }

@@ -205,5 +205,8 @@
     "rise": 1,
     "slope_origin_z": 14
   },
-  "nbt_sha256": "bf7712936962307df932dd7a7f6bd549c76db1e2a77049a348bf3bffb9709fa7"
+  "nbt_sha256": "bf7712936962307df932dd7a7f6bd549c76db1e2a77049a348bf3bffb9709fa7",
+  "function_terms": [
+    "宝石加工"
+  ]
 }

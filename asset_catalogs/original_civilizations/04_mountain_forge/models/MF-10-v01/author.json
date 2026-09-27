@@ -161,5 +161,8 @@
     "land_surface_y": 2,
     "padding": 5
   },
-  "nbt_sha256": "a5137a47be47be81aabcf7d670f2258afefcf912ec374f255bf9f4039421f4b1"
+  "nbt_sha256": "a5137a47be47be81aabcf7d670f2258afefcf912ec374f255bf9f4039421f4b1",
+  "function_terms": [
+    "祖先纪念"
+  ]
 }

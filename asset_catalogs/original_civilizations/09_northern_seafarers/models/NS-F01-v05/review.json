@@ -1,0 +1,41 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "NS-F01-v05",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 北欧套系作者逐图审查",
+  "nbt_sha256": "5bb8fb3038b910c4e1299739e2f30f9972d8ece70324e4dea7968b54185a412f",
+  "author_sha256": "94914ebde27bb9b26cfb5be0f84bc0db7238e13135c576beadd0051560191173",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-sale.png",
+    "previews/room-home.png",
+    "previews/point-goodsA.png",
+    "previews/point-goodsB.png",
+    "previews/point-sale.png",
+    "previews/point-cook.png",
+    "previews/point-owner0.png",
+    "previews/point-linen.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与用途": "杂货铺采用紧凑前店后住，店主后间具有完整炊食床柜而非象征床位，经营动线与生活区通过侧门隔开。",
+    "实际内饰图审": "前杂货经营、后店主炊食与床柜生活完整分开。",
+    "完整证据": "已实际查看最终四向、顶视、去顶、全部楼层与房间、使用站位、标记及场地示意；四个双层模型另补楼层斜视核对护栏。",
+    "数据与通路": "NBT 重读、方块状态、作者标记与离线碰撞导航通过，零警告。",
+    "选址条件": "稳定的寒地海湾背风岸台；避开潮涌、雪崩、海冰推挤和行洪通道。；干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。；完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。；厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "设备、晾晒及温床为静态表达，未接入加工、气候或作物生产机制。"
+  ]
+}

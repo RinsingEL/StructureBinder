@@ -1,0 +1,259 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "NS-05-v01",
+  "name": "紧凑单户短长屋",
+  "family": "NS-05",
+  "civilization": "北欧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    25,
+    32,
+    33
+  ],
+  "terrain": {
+    "选址": "稳定、排水良好的背风聚落地块，完整承托石基并留出门前通路；住宅不要求临海。",
+    "高程": "干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。",
+    "保留空间": "完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。",
+    "风雪": "厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。",
+    "推荐情境": [
+      "寒地背风聚落或海湾聚落；这是常见使用背景，不要求所有北欧建筑临海，也不限定住户种族。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "living",
+      "name": "共炉炊食厅",
+      "min": [
+        7,
+        3,
+        8
+      ],
+      "max": [
+        17,
+        6,
+        17
+      ],
+      "purpose": "炊洗、对坐餐桌、独立封护炉及粮食；具体设施：备餐、热食与洗涤、封护共炉与灰渣清理、粮食及餐具"
+    },
+    {
+      "id": "sleep",
+      "name": "三床后寝间",
+      "min": [
+        7,
+        3,
+        19
+      ],
+      "max": [
+        17,
+        6,
+        24
+      ],
+      "purpose": "完整隔门卧室、床边个人柜与被褥架；具体设施：床铺与个人防寒用品、床铺与个人防寒用品、床铺与个人防寒用品、御寒被褥和冬衣"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        12,
+        3,
+        6
+      ],
+      "name": "背风步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "family0",
+      "kind": "bed",
+      "pos": [
+        8,
+        3,
+        22
+      ],
+      "name": "床铺与个人防寒用品",
+      "look_at": [
+        8,
+        4,
+        22
+      ],
+      "approach": [
+        9,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "family1",
+      "kind": "bed",
+      "pos": [
+        11,
+        3,
+        22
+      ],
+      "name": "床铺与个人防寒用品",
+      "look_at": [
+        11,
+        4,
+        22
+      ],
+      "approach": [
+        12,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "family2",
+      "kind": "bed",
+      "pos": [
+        14,
+        3,
+        22
+      ],
+      "name": "床铺与个人防寒用品",
+      "look_at": [
+        14,
+        4,
+        22
+      ],
+      "approach": [
+        15,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "blankets",
+      "kind": "storage",
+      "pos": [
+        8,
+        3,
+        24
+      ],
+      "name": "御寒被褥和冬衣",
+      "look_at": [
+        8,
+        4,
+        24
+      ],
+      "approach": [
+        8,
+        3,
+        23
+      ]
+    },
+    {
+      "id": "kitchen",
+      "kind": "work",
+      "pos": [
+        7,
+        3,
+        9
+      ],
+      "name": "备餐、热食与洗涤",
+      "look_at": [
+        7,
+        4,
+        9
+      ],
+      "approach": [
+        7,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "hearth",
+      "kind": "work",
+      "pos": [
+        15,
+        3,
+        12
+      ],
+      "name": "封护共炉与灰渣清理",
+      "look_at": [
+        15,
+        4,
+        12
+      ],
+      "approach": [
+        15,
+        3,
+        13
+      ]
+    },
+    {
+      "id": "food",
+      "kind": "storage",
+      "pos": [
+        13,
+        3,
+        16
+      ],
+      "name": "粮食及餐具",
+      "look_at": [
+        13,
+        4,
+        16
+      ],
+      "approach": [
+        13,
+        3,
+        17
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        12,
+        3,
+        6
+      ],
+      "direction": "north",
+      "clearance": [
+        2,
+        3
+      ],
+      "note": "外部街面脚底Y3，同高进入木门廊"
+    }
+  ],
+  "design_notes": [
+    "单户山墙长屋，前置低门廊与侧边柴棚，前炊食后分寝。"
+  ],
+  "differences": [
+    "单户山墙长屋，前置低门廊与侧边柴棚，前炊食后分寝。"
+  ],
+  "floors": [
+    {
+      "name": "岸台生活作业层",
+      "y": 2,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/northern_fill_homes.py:home(1)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -2,
+    "padding": 3,
+    "surface": "snow"
+  },
+  "ground_plane": {
+    "y": 3,
+    "note": "外部院落与街面由Y2砾石/石基顶面承托，站立脚底Y3；阁楼与阳台另行计高。"
+  },
+  "function_terms": [
+    "住宅",
+    "家庭居住"
+  ],
+  "nbt_sha256": "a54f9ce032c6b341d22259b93b8b265d931e4ca080900eb0bae28909cd990885"
+}

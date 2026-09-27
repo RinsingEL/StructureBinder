@@ -1,66 +1,50 @@
 {
   "schema": "structure-studio.author.v1",
   "id": "DS-04-v01",
-  "name": "单户凉廊宅",
+  "name": "单户小宅",
   "family": "DS-04",
   "civilization": "沙漠",
   "planning_role": "planning_role.fill",
   "size": [
-    23,
-    23,
-    25
+    24,
+    22,
+    26
   ],
   "terrain": {
-    "选址": "有稳定生活用水的干热聚落，通风方向与遮阳不被邻屋完全堵塞",
-    "地块": "前院凉廊接后排起居与卧室，小家庭独立生活，沿北侧街巷进入。",
-    "落地": "独立住宅模板，庭院及其硬地属于实际占地；未写入格保留原环境",
-    "高程": "主入口与生活空间脚底 Y=2"
+    "选址": "有可靠生活用水的干热聚落，外阶和遮阳廊保持通行",
+    "地块": "前院木凉棚、后排起居，单侧上层卧室与开敞屋顶露台；侧阶直接登台。",
+    "落地": "整备平地；院内、门外街面脚底均Y=2，上层露台由自带楼梯连接"
   },
   "rooms": [
     {
       "id": "living",
-      "name": "炊事与起居",
+      "name": "家庭炊事与起居",
       "min": [
-        4,
+        5,
         2,
         12
       ],
       "max": [
-        10,
+        16,
         6,
-        20
+        21
       ],
-      "purpose": "炊事、备水、进餐与用品"
+      "purpose": "烹饪、用水、餐桌、坐席和储物"
     },
     {
       "id": "bedroom",
-      "name": "单户卧室",
+      "name": "睡眠与衣物",
       "min": [
+        5,
+        8,
+        16
+      ],
+      "max": [
+        9,
         12,
-        2,
-        12
+        21
       ],
-      "max": [
-        18,
-        6,
-        20
-      ],
-      "purpose": "睡眠、衣物与室内盥洗"
-    },
-    {
-      "id": "court",
-      "name": "前院凉廊",
-      "min": [
-        3,
-        2,
-        4
-      ],
-      "max": [
-        19,
-        6,
-        10
-      ],
-      "purpose": "歇凉、取水与家务"
+      "purpose": "独立睡眠、衣物与阅读"
     }
   ],
   "points": [
@@ -68,45 +52,75 @@
       "id": "living_cook",
       "kind": "work",
       "pos": [
-        4,
+        5,
+        2,
+        21
+      ],
+      "name": "家庭炊事",
+      "approach": [
+        5,
         2,
         20
-      ],
-      "name": "炊事与起居炉灶",
-      "approach": [
-        4,
+      ]
+    },
+    {
+      "id": "living_store",
+      "kind": "work",
+      "pos": [
+        16,
         2,
-        19
+        21
+      ],
+      "name": "家用储物",
+      "approach": [
+        15,
+        2,
+        21
       ]
     },
     {
       "id": "bedroom_bed1",
       "kind": "bed",
       "pos": [
-        13,
-        2,
-        19
+        6,
+        8,
+        20
       ],
-      "name": "单户卧室床位 1",
+      "name": "卧室床位",
       "approach": [
-        14,
-        2,
-        19
+        7,
+        8,
+        20
       ]
     },
     {
-      "id": "cool",
+      "id": "terrace_stair",
       "kind": "circulation",
       "pos": [
-        7,
-        2,
-        9
+        19,
+        8,
+        12
       ],
-      "name": "凉廊活动位",
+      "name": "外阶上平台",
       "look_at": [
-        6,
-        3,
-        7
+        16,
+        9,
+        12
+      ]
+    },
+    {
+      "id": "roof_seat",
+      "kind": "circulation",
+      "pos": [
+        14,
+        8,
+        18
+      ],
+      "name": "屋顶凉棚",
+      "look_at": [
+        14,
+        9,
+        20
       ]
     },
     {
@@ -117,8 +131,23 @@
         2,
         3
       ],
-      "name": "主入口",
+      "name": "街面主入口",
       "facing": "north"
+    },
+    {
+      "id": "roof_wash",
+      "kind": "work",
+      "pos": [
+        19,
+        8,
+        19
+      ],
+      "name": "露台洗衣",
+      "approach": [
+        18,
+        8,
+        19
+      ]
     }
   ],
   "connections": [
@@ -126,36 +155,47 @@
       "kind": "pedestrian",
       "pos": [
         13,
-        1,
-        2
+        2,
+        3
       ],
       "direction": "north",
       "clearance": [
         3,
-        4
+        3
       ],
-      "note": "外部街面衔接台阶，不自动随地形移动入口"
+      "note": "门外铺地与外部脚底基准Y=2对齐"
     }
   ],
   "design_notes": [
-    "前院凉廊接后排起居与卧室，小家庭独立生活，沿北侧街巷进入。"
+    "前院木凉棚、后排起居，单侧上层卧室与开敞屋顶露台；侧阶直接登台。",
+    "砂岩框架、局部赭色灰泥嵌面、木凉棚和小幅布帘；楼梯与家具按玩家尺度布置。"
   ],
   "differences": [
-    "前院凉廊接后排起居与卧室，小家庭独立生活，沿北侧街巷进入。"
+    "前院木凉棚、后排起居，单侧上层卧室与开敞屋顶露台；侧阶直接登台。"
   ],
   "floors": [
     {
-      "name": "起居与内庭",
+      "name": "首层与院落",
       "y": 1,
       "max_y": 6
+    },
+    {
+      "name": "二层与露台",
+      "y": 7,
+      "max_y": 12
     }
   ],
-  "roof_min_y": 8,
+  "roof_min_y": 7,
   "lifecycle": "draft",
   "offline_limits": [
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
   ],
+  "source": "tools/structure_studio/studio/desert_fill_homes.py:home(1)",
+  "ground_plane": {
+    "y": 2,
+    "note": "门外砂岩铺地顶面与院内首层同高，脚底Y=2；外阶从该面登上屋顶，不以露台或门槛替代外部地面。"
+  },
   "preview_context": {
     "kind": "flat",
     "land_surface_y": 2,
@@ -163,22 +203,8 @@
     "padding": 3,
     "surface": "sand"
   },
-  "source": "tools/structure_studio/studio/oasis_life.py:home(1)",
-  "ventilation": [
-    {
-      "roof_y": 8,
-      "min": [
-        16,
-        8,
-        18
-      ],
-      "max": [
-        17,
-        13,
-        19
-      ],
-      "note": "连续通风孔的几何表达，不模拟气流或温度"
-    }
+  "function_terms": [
+    "家庭居住"
   ],
-  "nbt_sha256": "663296e2d01df4f0f2e9f2965b9444cbe1e1622c3b6e7aca9d5e7bddb2619ac8"
+  "nbt_sha256": "8453cce35e1f3dcbb650047a692d61a141af80416b7ede93733246efb9ba01ee"
 }

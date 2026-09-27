@@ -1,138 +1,217 @@
 {
   "schema": "structure-studio.author.v1",
   "id": "DS-F02-v06",
-  "name": "两台等高渠田",
+  "name": "三级等高渠田",
   "family": "DS-F02",
   "civilization": "沙漠",
   "planning_role": "planning_role.fill",
   "size": [
-    33,
-    12,
-    29
+    31,
+    15,
+    41
   ],
   "terrain": {
-    "选址": "有可靠引水与适宜土壤的绿洲；不在无水沙海仅凭文明标签放置",
-    "形状": "前低后高一格的两台菜田，沿等高方向布渠，中央短阶贯通作业。",
-    "地面": "下台脚底 Y=2，上台 Y=3，沿 +Z 方向抬升",
-    "落地方式": "独立固定模板田块，包含封边与作业道；不替代 Landscape 自然生成大田"
+    "选址": "有可靠灌溉供水、适宜土壤及日照的地块；模板水槽须有真实供水来源。",
+    "地块": "三道等高种植台、侧边跌水渠与连续中央短阶，逐级向后抬升。",
+    "落地": "外部入口脚底 Y=2；耕地及地坪顶层方块 Y=1。三级台田内部地坪另升至 Y=2、3。",
+    "适用": "独立固定田块，不替代随自然地形生成的大田。"
   },
   "rooms": [
     {
-      "id": "field",
-      "name": "灌渠种植与维护",
+      "id": "west0",
+      "name": "灌溉种植畦 west0",
       "min": [
+        3,
         2,
-        2,
-        3
+        4
       ],
       "max": [
-        29,
-        6,
-        25
+        11,
+        4,
+        11
       ],
-      "purpose": "前低后高一格的两台菜田，沿等高方向布渠，中央短阶贯通作业。"
+      "purpose": "水渠、耕土及沿畦采收"
+    },
+    {
+      "id": "east0",
+      "name": "灌溉种植畦 east0",
+      "min": [
+        19,
+        2,
+        4
+      ],
+      "max": [
+        27,
+        4,
+        11
+      ],
+      "purpose": "水渠、耕土及沿畦采收"
+    },
+    {
+      "id": "west1",
+      "name": "灌溉种植畦 west1",
+      "min": [
+        3,
+        3,
+        16
+      ],
+      "max": [
+        11,
+        5,
+        23
+      ],
+      "purpose": "水渠、耕土及沿畦采收"
+    },
+    {
+      "id": "east1",
+      "name": "灌溉种植畦 east1",
+      "min": [
+        19,
+        3,
+        16
+      ],
+      "max": [
+        27,
+        5,
+        23
+      ],
+      "purpose": "水渠、耕土及沿畦采收"
+    },
+    {
+      "id": "west2",
+      "name": "灌溉种植畦 west2",
+      "min": [
+        3,
+        4,
+        28
+      ],
+      "max": [
+        11,
+        6,
+        35
+      ],
+      "purpose": "水渠、耕土及沿畦采收"
+    },
+    {
+      "id": "east2",
+      "name": "灌溉种植畦 east2",
+      "min": [
+        19,
+        4,
+        28
+      ],
+      "max": [
+        27,
+        6,
+        35
+      ],
+      "purpose": "水渠、耕土及沿畦采收"
     }
   ],
   "points": [
     {
-      "id": "compost",
-      "kind": "work",
-      "pos": [
-        28,
-        3,
-        22
-      ],
-      "name": "堆肥与田务",
-      "approach": [
-        29,
-        3,
-        22
-      ]
-    },
-    {
-      "id": "terrace_1",
-      "kind": "circulation",
-      "pos": [
-        17,
-        2,
-        11
-      ],
-      "name": "第 1 台田埂",
-      "look_at": [
-        10,
-        3,
-        11
-      ]
-    },
-    {
-      "id": "terrace_2",
-      "kind": "circulation",
-      "pos": [
-        17,
-        3,
-        22
-      ],
-      "name": "第 2 台田埂",
-      "look_at": [
-        10,
-        4,
-        22
-      ]
-    },
-    {
       "id": "entry",
       "kind": "entrance",
       "pos": [
-        17,
+        15,
         2,
-        3
+        1
       ],
-      "name": "田头入口",
+      "name": "田头主入口",
       "facing": "north"
+    },
+    {
+      "id": "workway0",
+      "kind": "circulation",
+      "pos": [
+        15,
+        2,
+        9
+      ],
+      "name": "第1处采收作业道",
+      "look_at": [
+        13,
+        3,
+        12
+      ]
+    },
+    {
+      "id": "workway1",
+      "kind": "circulation",
+      "pos": [
+        15,
+        3,
+        21
+      ],
+      "name": "第2处采收作业道",
+      "look_at": [
+        13,
+        4,
+        24
+      ]
+    },
+    {
+      "id": "workway2",
+      "kind": "circulation",
+      "pos": [
+        15,
+        4,
+        33
+      ],
+      "name": "第3处采收作业道",
+      "look_at": [
+        13,
+        5,
+        36
+      ]
     }
   ],
   "connections": [],
   "design_notes": [
-    "前低后高一格的两台菜田，沿等高方向布渠，中央短阶贯通作业。"
+    "三道等高种植台、侧边跌水渠与连续中央短阶，逐级向后抬升。",
+    "参考用户图7大轮廓与水渠组织，使用原版作物；保留作业净空。"
   ],
   "differences": [
-    "前低后高一格的两台菜田，沿等高方向布渠，中央短阶贯通作业。"
+    "三道等高种植台、侧边跌水渠与连续中央短阶，逐级向后抬升。"
   ],
   "floors": [
     {
-      "name": "灌渠与田埂",
+      "name": "三级种植台与中央短阶",
       "y": 0,
-      "max_y": 5
+      "max_y": 8
     }
   ],
-  "roof_min_y": null,
+  "roof_min_y": 6,
   "lifecycle": "draft",
   "offline_limits": [
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
   ],
+  "source": "tools/structure_studio/studio/desert_fill_farms.py:garden(6)",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部接路站立面 Y=2；地坪顶层方块 Y=1，内部种植台和短阶不改变对地基准。"
+  },
   "preview_context": {
-    "kind": "slope",
+    "kind": "flat",
     "land_surface_y": 2,
     "bed_y": -1,
     "padding": 3,
-    "surface": "sand",
-    "run": 14,
-    "rise": 1,
-    "slope_origin_z": 0
+    "surface": "sand"
   },
-  "source": "tools/structure_studio/studio/oasis_life.py:garden(6)",
   "agriculture": {
     "crops": [
-      "carrots",
       "wheat",
+      "carrots",
+      "potatoes",
       "beetroots"
     ],
-    "layout": "前低后高一格的两台菜田，沿等高方向布渠，中央短阶贯通作业。",
-    "planted_cells": 264,
-    "irrigation_sources": 37,
+    "layout": "三道等高种植台、侧边跌水渠与连续中央短阶，逐级向后抬升。",
     "template_mode": "independent_fixed_plot",
-    "hydration": "以最终 NBT 校核支撑与同高程或高一格、水平 4 格水源"
+    "hydration": "全部原版作物检查实际耕地与水平四格同层水源。"
   },
-  "nbt_sha256": "aea773fa2784af63186cd6153fb53b6361e0a12271b38e7f37d2bc6e8e1ddcb1"
+  "function_terms": [
+    "农田种植"
+  ],
+  "nbt_sha256": "e5a2ea48e11a06979b0420d946fb09f4dd42e2d0513a3b28f4a68724d32af948"
 }

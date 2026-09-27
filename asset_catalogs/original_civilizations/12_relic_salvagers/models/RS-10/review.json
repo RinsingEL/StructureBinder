@@ -1,0 +1,41 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "RS-10",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 废土拾荒作者全图实看",
+  "nbt_sha256": "ba2860f0d497de34c2bb9a76d73193a0cc401ab031f02be519901eeaa9001fac",
+  "author_sha256": "4492394a632b13abb20013c0985f1a3e4be02f41b941ea20e14eb3e9b3084613",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-restore.png",
+    "previews/room-class.png",
+    "previews/point-teach.png",
+    "previews/point-learn.png",
+    "previews/point-books.png",
+    "previews/point-supplies.png",
+    "previews/point-repair.png",
+    "previews/point-catalog.png",
+    "previews/point-exhibit.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "18张当前最终外观、去顶、房间、使用点及场地示意全部实看。",
+    "旧机械肋架、断轮、断塔或机轴为真实几何，与独立支承的新板房、布棚和修补材料可区分。",
+    "当前NBT/作者标记双哈希绑定；确定性重建及离线数据、导航零警告。"
+  ],
+  "revisions": [
+    "修正场地示意surface枚举，完整重拍；补有支承吊灯，控制舱值班遗留床铺，修复桌席与学堂耗材旧管道。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

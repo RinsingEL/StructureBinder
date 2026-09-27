@@ -1,0 +1,53 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "TC-07-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors / 海洋幻想作者实看",
+  "nbt_sha256": "1fabac62d1f5458cd66e6cb9f72e993c6a15451314a824e587765c7d4d8c2a87",
+  "author_sha256": "7b13253ac97190ecbbd5b9111cb87519bbd68abf1a056a3aef7bf74e075302f9",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-dining.png",
+    "previews/room-guest0.png",
+    "previews/room-guest1.png",
+    "previews/room-guest2.png",
+    "previews/room-equipment.png",
+    "previews/point-dining_cook.png",
+    "previews/point-dining_food.png",
+    "previews/point-dining_books.png",
+    "previews/point-guest0a.png",
+    "previews/point-guest0b.png",
+    "previews/point-guest0_clothes.png",
+    "previews/point-guest0_desk.png",
+    "previews/point-guest1a.png",
+    "previews/point-guest1b.png",
+    "previews/point-guest1_clothes.png",
+    "previews/point-guest1_desk.png",
+    "previews/point-guest2a.png",
+    "previews/point-guest2b.png",
+    "previews/point-guest2_clothes.png",
+    "previews/point-guest2_desk.png",
+    "previews/point-reception.png",
+    "previews/point-gear.png",
+    "previews/point-repair.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "高台和下沉入口护栏完整；连体旅舍公共走廊与分间卧室可用；住宅起居餐厨和床头储藏分区。",
+    "实际看过全部外观、去顶、分层、房间、功能点、标注与地形视图；结合零警告数据与导航核对。",
+    "3间独立双床客舱，独立餐饮贝舱与装备服务舱；三翼扇形客房"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

@@ -353,5 +353,4 @@ def abandoned_watch():
     return finish(m,'旧木营房与石质海向信号台分占两级岬角；保留日志、两床、旧炉与封存工具，抬高观测层有连续矮垛墙和停用火盆，残损石屏表现弃置而不破坏可走路线。')
 
 
-BUILDERS={'NS-01-v01':boathouse,'NS-02-v01':supply_station,'NS-04-v01':bathhouse,
-          'NS-10-v01':epic_hall,'NS-11-v01':salvage_camp,'NS-12-v01':abandoned_watch}
+from .northern_reference import BUILDERS

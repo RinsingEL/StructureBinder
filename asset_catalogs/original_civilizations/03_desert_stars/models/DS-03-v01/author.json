@@ -1,66 +1,65 @@
 {
   "schema": "structure-studio.author.v1",
   "id": "DS-03-v01",
-  "name": "蓝柱地下蓄水厅",
+  "name": "阶庭地下蓄水厅",
   "family": "DS-03",
   "civilization": "沙漠",
   "planning_role": "planning_role.key",
   "size": [
-    36,
-    25,
+    43,
+    30,
     40
   ],
   "terrain": {
-    "选址": "可靠集水或引水系统的地下储水节点，需足够岩土覆深与防渗条件",
-    "埋置": "模型 Y=14 对应地表脚底；主体底部 Y=0，预留约 14 格地下空间",
-    "入口": "北侧值守门廊接下行楼梯，检修平台脚底 Y=3",
-    "水": "蓄水池为封闭原版水体，补水、排水与容量逻辑尚未接入"
+    "选址": "稳定岩土内的储水节点，需要可靠引水、防渗与地下开挖条件。",
+    "埋置": "地表脚底 Y=15；基底 Y=0，干侧检修脚底 Y=3。",
+    "水": "两座封闭蓄水池；补水、排水、容量机制未接入。"
   },
   "rooms": [
     {
       "id": "vault",
-      "name": "地下柱廊与蓄水池",
+      "name": "双池地下柱厅",
       "min": [
         4,
         3,
-        10
+        14
       ],
       "max": [
-        31,
-        11,
+        38,
+        12,
         35
       ],
-      "purpose": "有支撑顶板、封闭蓄水和周边干侧检修"
+      "purpose": "两池储水与连续干侧检修环道"
     },
     {
       "id": "records",
-      "name": "管理与检修角",
+      "name": "干侧管理与维修厅",
       "min": [
-        24,
+        4,
         3,
-        24
+        4
       ],
       "max": [
-        31,
-        7,
-        35
+        38,
+        10,
+        12
       ],
-      "purpose": "水位记录和维修工具"
+      "purpose": "蓄水记录、工具与维修工作台"
     },
     {
       "id": "gate",
-      "name": "地上门房",
+      "name": "阶顶入口亭",
       "min": [
-        23,
         14,
-        3
+        15,
+        4
       ],
       "max": [
-        30,
-        18,
-        8
+        28,
+        21,
+        10
       ],
-      "purpose": "遮阳入口与地下登临"
+      "purpose": "有顶遮阳入口、值守与下行长阶"
     }
   ],
   "points": [
@@ -68,71 +67,101 @@
       "id": "front",
       "kind": "entrance",
       "pos": [
-        26,
-        14,
+        21,
+        15,
         1
       ],
-      "name": "主入口",
+      "name": "地表仪式入口",
       "facing": "north"
     },
     {
       "id": "down",
       "kind": "circulation",
       "pos": [
-        26,
+        21,
         3,
-        22
-      ],
-      "name": "地下楼梯出口",
-      "look_at": [
-        15,
-        5,
         25
-      ]
-    },
-    {
-      "id": "gauge",
-      "kind": "work",
-      "pos": [
-        22,
-        4,
-        20
       ],
-      "name": "取水与水位记录位置",
-      "approach": [
-        23,
-        3,
-        20
+      "name": "长阶地下落地平台",
+      "look_at": [
+        10,
+        6,
+        26
       ]
     },
     {
       "id": "register",
       "kind": "work",
       "pos": [
-        29,
+        30,
         3,
-        29
+        7
       ],
-      "name": "蓄水管理记录",
+      "name": "水位与维护记录",
       "approach": [
-        28,
+        30,
         3,
-        29
+        8
       ]
     },
     {
       "id": "maintenance",
       "kind": "work",
       "pos": [
-        30,
+        8,
         3,
-        25
+        7
       ],
-      "name": "检修工具",
+      "name": "检修工作台",
       "approach": [
-        29,
+        8,
         3,
+        8
+      ]
+    },
+    {
+      "id": "west_pool",
+      "kind": "circulation",
+      "pos": [
+        5,
+        3,
+        27
+      ],
+      "name": "西池干侧环道",
+      "look_at": [
+        11,
+        4,
         25
+      ]
+    },
+    {
+      "id": "east_pool",
+      "kind": "circulation",
+      "pos": [
+        37,
+        3,
+        27
+      ],
+      "name": "东池干侧环道",
+      "look_at": [
+        31,
+        4,
+        25
+      ]
+    },
+    {
+      "id": "gate_register",
+      "kind": "work",
+      "pos": [
+        28,
+        15,
+        8
+      ],
+      "name": "入口值守登记",
+      "approach": [
+        27,
+        15,
+        8
       ]
     }
   ],
@@ -140,8 +169,8 @@
     {
       "kind": "pedestrian",
       "pos": [
-        26,
-        13,
+        21,
+        15,
         0
       ],
       "direction": "north",
@@ -149,25 +178,26 @@
         5,
         4
       ],
-      "note": "外部街面衔接台阶，不自动随地形移动入口"
+      "note": "地表入口脚底 Y=15，需与现场地表对齐"
     }
   ],
   "design_notes": [
-    "地上小门房连接十一格下降楼梯；地下柱廊围绕蓄水池，检修通道和记录区在干侧。"
+    "参考用户左案：阶顶入口亭、露天下降仪式长阶与地下柱厅。",
+    "厚覆土顶板下的双池、连续干侧环道；楼梯和柱梁均落地支撑。"
   ],
   "differences": [
-    "地上小门房连接十一格下降楼梯；地下柱廊围绕蓄水池，检修通道和记录区在干侧。"
+    "以地下柱厅与下沉长阶组织空间，不复用住宅方盒。"
   ],
   "floors": [
     {
-      "name": "地上入口",
-      "y": 13,
-      "max_y": 19
+      "name": "地下柱厅与双池",
+      "y": 2,
+      "max_y": 12
     },
     {
-      "name": "地下蓄水与检修",
-      "y": 2,
-      "max_y": 10
+      "name": "地上阶顶入口亭",
+      "y": 14,
+      "max_y": 28
     }
   ],
   "roof_min_y": 13,
@@ -176,13 +206,21 @@
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
   ],
-  "source": "tools/structure_studio/studio/desert.py:desert(3)",
+  "source": "tools/structure_studio/studio/desert_cistern.py:cistern",
   "preview_context": {
     "kind": "flat",
-    "land_surface_y": 14,
-    "bed_y": 11,
+    "land_surface_y": 15,
+    "bed_y": 0,
     "padding": 4,
     "surface": "sand"
   },
-  "nbt_sha256": "c56a22710b453787e763f6b141d87790863e579bd8aaf071b9f2502f69779408"
+  "ground_plane": {
+    "y": 15,
+    "note": "自然地表上边界 Y=15；入口外沿支撑方块为 Y=14，地下柱厅脚底 Y=3。"
+  },
+  "function_terms": [
+    "储水",
+    "水务维护"
+  ],
+  "nbt_sha256": "cb6281dab61651f9267beed4bfed25c9237635488abdad131d25e8d5f20c2bca"
 }

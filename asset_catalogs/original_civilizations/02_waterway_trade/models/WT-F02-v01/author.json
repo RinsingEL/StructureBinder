@@ -1,0 +1,178 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "WT-F02-v01",
+  "name": "长条双畦引水菜粮园",
+  "family": "WT-F02",
+  "civilization": "地中海",
+  "planning_role": "planning_role.fill",
+  "size": [
+    21,
+    22,
+    34
+  ],
+  "terrain": {
+    "选址": "稳定排水的聚落地块；种植版本需要日照与灌溉供水，不要求贴临水岸。",
+    "高程": "外部铺地顶面Y=3；内部阶台另行标记。",
+    "边界": "独立低院墙、红瓦棚和可通行入口，不依赖相邻建筑。"
+  },
+  "rooms": [
+    {
+      "id": "west",
+      "name": "灌溉作物畦",
+      "min": [
+        4,
+        3,
+        5
+      ],
+      "max": [
+        8,
+        7,
+        24
+      ],
+      "purpose": "原版成熟作物、真实耕地与就近灌溉水源"
+    },
+    {
+      "id": "east",
+      "name": "灌溉作物畦",
+      "min": [
+        13,
+        3,
+        5
+      ],
+      "max": [
+        16,
+        7,
+        24
+      ],
+      "purpose": "原版成熟作物、真实耕地与就近灌溉水源"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        10,
+        3,
+        2
+      ],
+      "name": "前院入口",
+      "facing": "north"
+    },
+    {
+      "id": "west",
+      "kind": "work",
+      "pos": [
+        4,
+        3,
+        5
+      ],
+      "name": "灌溉种植与采收",
+      "look_at": [
+        4,
+        4,
+        5
+      ],
+      "approach": [
+        3,
+        3,
+        5
+      ]
+    },
+    {
+      "id": "east",
+      "kind": "work",
+      "pos": [
+        13,
+        3,
+        5
+      ],
+      "name": "灌溉种植与采收",
+      "look_at": [
+        13,
+        4,
+        5
+      ],
+      "approach": [
+        12,
+        3,
+        5
+      ]
+    },
+    {
+      "id": "sort",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        29
+      ],
+      "name": "采收分选与清洗",
+      "look_at": [
+        5,
+        4,
+        29
+      ],
+      "approach": [
+        5,
+        3,
+        30
+      ]
+    },
+    {
+      "id": "seed",
+      "kind": "storage",
+      "pos": [
+        10,
+        3,
+        29
+      ],
+      "name": "种子与小农具",
+      "look_at": [
+        10,
+        4,
+        29
+      ],
+      "approach": [
+        10,
+        3,
+        30
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "双条种植畦夹中央铺石步道，两条明渠供水，末端横向红瓦工具棚。"
+  ],
+  "differences": [
+    "双条种植畦夹中央铺石步道，两条明渠供水，末端横向红瓦工具棚。"
+  ],
+  "floors": [
+    {
+      "name": "庭院作业层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mediterranean_gardens.py:BUILDERS",
+  "ground_plane": {
+    "y": 3,
+    "note": "院门外铺地顶面，阶台为内部高差。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "农田种植"
+  ],
+  "nbt_sha256": "cfa38050d71dbe35d6f27ca3b2096c485ee7d347486e39880e8d802ebd64a531"
+}

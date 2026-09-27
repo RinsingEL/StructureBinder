@@ -1,0 +1,275 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "ML-03-v05",
+  "name": "前低钟坊后高家宅",
+  "family": "ML-03",
+  "civilization": "哥特",
+  "planning_role": "planning_role.fill",
+  "size": [
+    25,
+    29,
+    37
+  ],
+  "terrain": {
+    "选址": "稳定、排水良好的居民地块，日照与通路按具体用途保留；哥特是建造风格而非地形限制。",
+    "高程": "基础底Y=0、常规地面Y=2、脚底Y=3；抬高或双层版本另记。",
+    "边界": "完整独立模板，保留外扶柱、檐口、采光和门外站位，不默认邻居补齐。"
+  },
+  "rooms": [
+    {
+      "id": "work",
+      "name": "前低钟务屋",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        19,
+        7,
+        15
+      ],
+      "purpose": "校时、修理、干件及交班；设施：钟务校时、零件与交班记录、钟绳、润滑与备用小件、交班及钟楼记录、干燥钟绳备件"
+    },
+    {
+      "id": "home",
+      "name": "后高日常宅",
+      "min": [
+        5,
+        5,
+        22
+      ],
+      "max": [
+        19,
+        9,
+        31
+      ],
+      "purpose": "高台干燥家居，厨房餐桌与双床分置两侧；设施：备餐、热食与洗涤、床位与个人衣物、床位与个人衣物、家用被服"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        12,
+        3,
+        3
+      ],
+      "name": "尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "home",
+      "kind": "circulation",
+      "pos": [
+        12,
+        5,
+        20
+      ],
+      "name": "院内房门：尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "clock",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        6
+      ],
+      "name": "钟务校时、零件与交班记录",
+      "look_at": [
+        5,
+        4,
+        6
+      ],
+      "approach": [
+        5,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "clockparts",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        10
+      ],
+      "name": "钟绳、润滑与备用小件",
+      "look_at": [
+        5,
+        4,
+        10
+      ],
+      "approach": [
+        5,
+        3,
+        11
+      ]
+    },
+    {
+      "id": "records",
+      "kind": "work",
+      "pos": [
+        14,
+        3,
+        7
+      ],
+      "name": "交班及钟楼记录",
+      "look_at": [
+        14,
+        4,
+        7
+      ],
+      "approach": [
+        14,
+        3,
+        8
+      ]
+    },
+    {
+      "id": "rope",
+      "kind": "storage",
+      "pos": [
+        14,
+        3,
+        12
+      ],
+      "name": "干燥钟绳备件",
+      "look_at": [
+        14,
+        4,
+        12
+      ],
+      "approach": [
+        14,
+        3,
+        13
+      ]
+    },
+    {
+      "id": "cook",
+      "kind": "work",
+      "pos": [
+        5,
+        5,
+        23
+      ],
+      "name": "备餐、热食与洗涤",
+      "look_at": [
+        5,
+        6,
+        23
+      ],
+      "approach": [
+        5,
+        5,
+        24
+      ]
+    },
+    {
+      "id": "beds0",
+      "kind": "bed",
+      "pos": [
+        14,
+        5,
+        28
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        14,
+        6,
+        28
+      ],
+      "approach": [
+        15,
+        5,
+        28
+      ]
+    },
+    {
+      "id": "beds1",
+      "kind": "bed",
+      "pos": [
+        17,
+        5,
+        28
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        17,
+        6,
+        28
+      ],
+      "approach": [
+        18,
+        5,
+        28
+      ]
+    },
+    {
+      "id": "linen",
+      "kind": "storage",
+      "pos": [
+        15,
+        5,
+        31
+      ],
+      "name": "家用被服",
+      "look_at": [
+        15,
+        6,
+        31
+      ],
+      "approach": [
+        15,
+        5,
+        30
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "前低工作屋与后高家庭屋间有两级实阶和平台；后屋整体抬高两格，适应小台地而非以同一水平盒替代坡地。",
+    "按2026-09-27效果图重绘：浅石深木、陡瓦白边、铁脊老虎窗、紫金彩窗与灯柱围院。"
+  ],
+  "differences": [
+    "前低工作屋与后高家庭屋间有两级实阶和平台；后屋整体抬高两格，适应小台地而非以同一水平盒替代坡地。"
+  ],
+  "floors": [
+    {
+      "name": "前低作业层",
+      "y": 2,
+      "max_y": 7
+    },
+    {
+      "name": "后高家居层",
+      "y": 4,
+      "max_y": 9
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/memorial_life.py:BUILDERS",
+  "ground_plane": {
+    "y": 3,
+    "note": "外部场坪顶面与脚底Y=3，铺地方块Y=2；内部上层及高台不改变接地基准。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "家庭居住"
+  ],
+  "nbt_sha256": "d01e0cbc169f206f07308ef2c1be5f3afedca278032b6e248a18c342b553bc73"
+}

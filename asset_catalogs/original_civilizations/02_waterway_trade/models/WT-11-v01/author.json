@@ -224,5 +224,8 @@
     "shore_z": 25,
     "water_surface_y": 3
   },
-  "nbt_sha256": "8029b4ac1092c2a33f617eb4402d1d0cbd5bbe2cf6f665ffddd18e1ad36f6b2c"
+  "nbt_sha256": "8029b4ac1092c2a33f617eb4402d1d0cbd5bbe2cf6f665ffddd18e1ad36f6b2c",
+  "function_terms": [
+    "水务遗址展示"
+  ]
 }

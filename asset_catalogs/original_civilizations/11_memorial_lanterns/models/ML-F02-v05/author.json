@@ -1,0 +1,226 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "ML-F02-v05",
+  "name": "谷田与独立备种屋",
+  "family": "ML-F02",
+  "civilization": "哥特",
+  "planning_role": "planning_role.fill",
+  "size": [
+    34,
+    24,
+    33
+  ],
+  "terrain": {
+    "选址": "日照充分、排水稳定且有灌溉供水的聚落园地；不因哥特风格限定生物群系。",
+    "高程": "基础底Y=0、常规地面Y=2、脚底Y=3；抬高或双层版本另记。",
+    "边界": "完整独立模板，保留外扶柱、檐口、采光和门外站位，不默认邻居补齐。",
+    "落地": "固定小园模板与完整封边；不冒充按自然地形延伸的 Landscape 大田。",
+    "生产": "原版粮菜与花材为静态成熟或展示状态；药材和葡萄不声称已接入专用生产机制。"
+  },
+  "rooms": [
+    {
+      "id": "grainwest",
+      "name": "灌溉粮菜畦",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        14,
+        7,
+        17
+      ],
+      "purpose": "原版耕地与中央灌渠，边埂作业；设施：粮菜灌溉及采收"
+    },
+    {
+      "id": "graineast",
+      "name": "灌溉粮菜畦",
+      "min": [
+        20,
+        3,
+        5
+      ],
+      "max": [
+        28,
+        7,
+        17
+      ],
+      "purpose": "原版耕地与中央灌渠，边埂作业；设施：粮菜灌溉及采收"
+    },
+    {
+      "id": "shed",
+      "name": "备种主屋与两侧分拣棚",
+      "min": [
+        4,
+        3,
+        24
+      ],
+      "max": [
+        29,
+        7,
+        29
+      ],
+      "purpose": "粮种、手工具与开放分拣台；设施：封存谷种与周转粮袋、去杂、称量与分选、锄具和收割器具"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        17,
+        3,
+        2
+      ],
+      "name": "园地前入口",
+      "facing": "north"
+    },
+    {
+      "id": "grainwest",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        5
+      ],
+      "name": "粮菜灌溉及采收",
+      "look_at": [
+        5,
+        4,
+        5
+      ],
+      "approach": [
+        4,
+        3,
+        5
+      ]
+    },
+    {
+      "id": "graineast",
+      "kind": "work",
+      "pos": [
+        20,
+        3,
+        5
+      ],
+      "name": "粮菜灌溉及采收",
+      "look_at": [
+        20,
+        4,
+        5
+      ],
+      "approach": [
+        19,
+        3,
+        5
+      ]
+    },
+    {
+      "id": "seedentry",
+      "kind": "entrance",
+      "pos": [
+        17,
+        3,
+        23
+      ],
+      "name": "尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "seed",
+      "kind": "storage",
+      "pos": [
+        13,
+        3,
+        27
+      ],
+      "name": "封存谷种与周转粮袋",
+      "look_at": [
+        13,
+        4,
+        27
+      ],
+      "approach": [
+        13,
+        3,
+        28
+      ]
+    },
+    {
+      "id": "sort",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        27
+      ],
+      "name": "去杂、称量与分选",
+      "look_at": [
+        5,
+        4,
+        27
+      ],
+      "approach": [
+        5,
+        3,
+        28
+      ]
+    },
+    {
+      "id": "tools",
+      "kind": "storage",
+      "pos": [
+        25,
+        3,
+        27
+      ],
+      "name": "锄具和收割器具",
+      "look_at": [
+        25,
+        4,
+        27
+      ],
+      "approach": [
+        25,
+        3,
+        28
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "前部成片金色谷田分两条灌溉，后部高尖顶备种屋与双侧低棚围合硬地打谷场。"
+  ],
+  "differences": [
+    "前部成片金色谷田分两条灌溉，后部高尖顶备种屋与双侧低棚围合硬地打谷场。"
+  ],
+  "floors": [
+    {
+      "name": "生活作业层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 6,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/memorial_gardens.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "ground_plane": {
+    "y": 3,
+    "note": "正面院门外铺装地坪顶面；台地田内部逐阶抬高。"
+  },
+  "function_terms": [
+    "农田种植"
+  ],
+  "nbt_sha256": "ca63fb19929b2cb1072b7283cf610bdb6ed78d5481c060fd5d2b839fc26a2d6f"
+}

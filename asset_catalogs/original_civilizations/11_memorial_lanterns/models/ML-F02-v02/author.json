@@ -1,0 +1,276 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "ML-F02-v02",
+  "name": "四格药材花圃与标本屋",
+  "family": "ML-F02",
+  "civilization": "哥特",
+  "planning_role": "planning_role.fill",
+  "size": [
+    29,
+    24,
+    33
+  ],
+  "terrain": {
+    "选址": "日照充分、排水稳定且有灌溉供水的聚落园地；不因哥特风格限定生物群系。",
+    "高程": "基础底Y=0、常规地面Y=2、脚底Y=3；抬高或双层版本另记。",
+    "边界": "完整独立模板，保留外扶柱、檐口、采光和门外站位，不默认邻居补齐。",
+    "落地": "固定小园模板与完整封边；不冒充按自然地形延伸的 Landscape 大田。",
+    "生产": "原版粮菜与花材为静态成熟或展示状态；药材和葡萄不声称已接入专用生产机制。"
+  },
+  "rooms": [
+    {
+      "id": "herb0",
+      "name": "药材花圃",
+      "min": [
+        5,
+        3,
+        6
+      ],
+      "max": [
+        10,
+        7,
+        11
+      ],
+      "purpose": "花材静态种植；具体药效未接入；设施：药用花材分格种植"
+    },
+    {
+      "id": "herb1",
+      "name": "药材花圃",
+      "min": [
+        17,
+        3,
+        6
+      ],
+      "max": [
+        22,
+        7,
+        11
+      ],
+      "purpose": "花材静态种植；具体药效未接入；设施：药用花材分格种植"
+    },
+    {
+      "id": "herb2",
+      "name": "药材花圃",
+      "min": [
+        5,
+        3,
+        16
+      ],
+      "max": [
+        10,
+        7,
+        21
+      ],
+      "purpose": "花材静态种植；具体药效未接入；设施：药用花材分格种植"
+    },
+    {
+      "id": "herb3",
+      "name": "药材花圃",
+      "min": [
+        17,
+        3,
+        16
+      ],
+      "max": [
+        22,
+        7,
+        21
+      ],
+      "purpose": "花材静态种植；具体药效未接入；设施：药用花材分格种植"
+    },
+    {
+      "id": "shed",
+      "name": "后部药材标本小屋",
+      "min": [
+        6,
+        3,
+        26
+      ],
+      "max": [
+        22,
+        7,
+        28
+      ],
+      "purpose": "花材整理和干燥保管；展示不等于药物生产已接入；设施：干燥花材与标本签、分类、称量和养护记录"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        14,
+        3,
+        2
+      ],
+      "name": "园地前入口",
+      "facing": "north"
+    },
+    {
+      "id": "herb0",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        6
+      ],
+      "name": "药用花材分格种植",
+      "look_at": [
+        5,
+        4,
+        6
+      ],
+      "approach": [
+        4,
+        3,
+        6
+      ]
+    },
+    {
+      "id": "herb1",
+      "kind": "work",
+      "pos": [
+        17,
+        3,
+        6
+      ],
+      "name": "药用花材分格种植",
+      "look_at": [
+        17,
+        4,
+        6
+      ],
+      "approach": [
+        16,
+        3,
+        6
+      ]
+    },
+    {
+      "id": "herb2",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        16
+      ],
+      "name": "药用花材分格种植",
+      "look_at": [
+        5,
+        4,
+        16
+      ],
+      "approach": [
+        4,
+        3,
+        16
+      ]
+    },
+    {
+      "id": "herb3",
+      "kind": "work",
+      "pos": [
+        17,
+        3,
+        16
+      ],
+      "name": "药用花材分格种植",
+      "look_at": [
+        17,
+        4,
+        16
+      ],
+      "approach": [
+        16,
+        3,
+        16
+      ]
+    },
+    {
+      "id": "shed",
+      "kind": "entrance",
+      "pos": [
+        14,
+        3,
+        24
+      ],
+      "name": "尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "specimen",
+      "kind": "storage",
+      "pos": [
+        11,
+        3,
+        27
+      ],
+      "name": "干燥花材与标本签",
+      "look_at": [
+        11,
+        4,
+        27
+      ],
+      "approach": [
+        11,
+        3,
+        28
+      ]
+    },
+    {
+      "id": "sorting",
+      "kind": "work",
+      "pos": [
+        16,
+        3,
+        27
+      ],
+      "name": "分类、称量和养护记录",
+      "look_at": [
+        16,
+        4,
+        27
+      ],
+      "approach": [
+        16,
+        3,
+        28
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "四格花圃以十字养护道隔开，后部窄标本屋专门储存花材与记录；药材用途标注为静态表达。"
+  ],
+  "differences": [
+    "四格花圃以十字养护道隔开，后部窄标本屋专门储存花材与记录；药材用途标注为静态表达。"
+  ],
+  "floors": [
+    {
+      "name": "生活作业层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/memorial_gardens.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "ground_plane": {
+    "y": 3,
+    "note": "正面院门外铺装地坪顶面；台地田内部逐阶抬高。"
+  },
+  "function_terms": [
+    "农田种植"
+  ],
+  "nbt_sha256": "c76e59933f9bbc558ec971aef1c0df59b8ef96b9d62d2ced2a851362b2653fb8"
+}

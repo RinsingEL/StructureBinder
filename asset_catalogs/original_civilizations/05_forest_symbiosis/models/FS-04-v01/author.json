@@ -237,5 +237,9 @@
     "padding": 4,
     "surface": "podzol"
   },
-  "nbt_sha256": "0831bcfedaa49d7a498a89962a35df140fc5185fa95bbcd86c257d49b68fc4a5"
+  "nbt_sha256": "0831bcfedaa49d7a498a89962a35df140fc5185fa95bbcd86c257d49b68fc4a5",
+  "function_terms": [
+    "商旅补给",
+    "畜群照护"
+  ]
 }

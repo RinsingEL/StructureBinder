@@ -1,0 +1,344 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "ML-09-v02",
+  "name": "楼下配烛楼上家宅",
+  "family": "ML-09",
+  "civilization": "哥特",
+  "planning_role": "planning_role.fill",
+  "size": [
+    29,
+    36,
+    35
+  ],
+  "terrain": {
+    "选址": "稳定、排水良好的居民地块，日照与通路按具体用途保留；哥特是建造风格而非地形限制。",
+    "高程": "基础底Y=0、常规地面Y=2、脚底Y=3；抬高或双层版本另记。",
+    "边界": "完整独立模板，保留外扶柱、檐口、采光和门外站位，不默认邻居补齐。"
+  },
+  "rooms": [
+    {
+      "id": "shop",
+      "name": "下层交易原料前厅",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        23,
+        7,
+        15
+      ],
+      "purpose": "销售、验货和原料归类；设施：日用祭礼蜡烛选购、蜡烛线芯与包装、配烛、修芯及包扎、顾客选货与交付停留"
+    },
+    {
+      "id": "work",
+      "name": "下层后加工成品区",
+      "min": [
+        5,
+        3,
+        16
+      ],
+      "max": [
+        19,
+        7,
+        30
+      ],
+      "purpose": "加工、成品、工作记录与侧梯；设施：按单成组蜡烛、用品订单与账册"
+    },
+    {
+      "id": "home",
+      "name": "上层家庭炊食寝居",
+      "min": [
+        5,
+        9,
+        5
+      ],
+      "max": [
+        23,
+        13,
+        30
+      ],
+      "purpose": "完整双床家庭、食粮与被服，实体分隔前后；设施：备餐、热食与洗涤、床位与个人衣物、床位与个人衣物、经营家庭衣物与被服、上层家庭备用食粮"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        14,
+        3,
+        3
+      ],
+      "name": "尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "homecook",
+      "kind": "work",
+      "pos": [
+        5,
+        9,
+        6
+      ],
+      "name": "备餐、热食与洗涤",
+      "look_at": [
+        5,
+        10,
+        6
+      ],
+      "approach": [
+        5,
+        9,
+        7
+      ]
+    },
+    {
+      "id": "homebed0",
+      "kind": "bed",
+      "pos": [
+        6,
+        9,
+        18
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        6,
+        10,
+        18
+      ],
+      "approach": [
+        7,
+        9,
+        18
+      ]
+    },
+    {
+      "id": "homebed1",
+      "kind": "bed",
+      "pos": [
+        9,
+        9,
+        18
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        9,
+        10,
+        18
+      ],
+      "approach": [
+        10,
+        9,
+        18
+      ]
+    },
+    {
+      "id": "homelinen",
+      "kind": "storage",
+      "pos": [
+        7,
+        9,
+        21
+      ],
+      "name": "经营家庭衣物与被服",
+      "look_at": [
+        7,
+        10,
+        21
+      ],
+      "approach": [
+        7,
+        9,
+        22
+      ]
+    },
+    {
+      "id": "familyextra",
+      "kind": "storage",
+      "pos": [
+        14,
+        9,
+        27
+      ],
+      "name": "上层家庭备用食粮",
+      "look_at": [
+        14,
+        10,
+        27
+      ],
+      "approach": [
+        14,
+        9,
+        28
+      ]
+    },
+    {
+      "id": "sale",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        6
+      ],
+      "name": "日用祭礼蜡烛选购",
+      "look_at": [
+        5,
+        4,
+        6
+      ],
+      "approach": [
+        5,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "raw",
+      "kind": "storage",
+      "pos": [
+        16,
+        3,
+        10
+      ],
+      "name": "蜡烛线芯与包装",
+      "look_at": [
+        16,
+        4,
+        10
+      ],
+      "approach": [
+        16,
+        3,
+        11
+      ]
+    },
+    {
+      "id": "process",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        14
+      ],
+      "name": "配烛、修芯及包扎",
+      "look_at": [
+        5,
+        4,
+        14
+      ],
+      "approach": [
+        5,
+        3,
+        15
+      ]
+    },
+    {
+      "id": "finished",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        25
+      ],
+      "name": "按单成组蜡烛",
+      "look_at": [
+        5,
+        4,
+        25
+      ],
+      "approach": [
+        5,
+        3,
+        26
+      ]
+    },
+    {
+      "id": "records",
+      "kind": "work",
+      "pos": [
+        13,
+        3,
+        26
+      ],
+      "name": "用品订单与账册",
+      "look_at": [
+        13,
+        4,
+        26
+      ],
+      "approach": [
+        13,
+        3,
+        27
+      ]
+    },
+    {
+      "id": "customer",
+      "kind": "circulation",
+      "pos": [
+        6,
+        3,
+        8
+      ],
+      "name": "顾客选货与交付停留",
+      "look_at": [
+        6,
+        4,
+        6
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "经营在下、家庭在上，以内侧实梯连接，生活寝居独立成层。 日用祭礼蜡烛选购经营完整设置原料、加工、成品、交易和管理，每处标注独立站位。 按2026-09-27参考图重塑浅石木骨、深瓦浅边山墙、暖窗和院落。"
+  ],
+  "differences": [
+    "经营在下、家庭在上，以内侧实梯连接，生活寝居独立成层。 日用祭礼蜡烛选购经营完整设置原料、加工、成品、交易和管理，每处标注独立站位。"
+  ],
+  "floors": [
+    {
+      "name": "下层作业起居",
+      "y": 2,
+      "max_y": 7
+    },
+    {
+      "name": "上层家居钟务",
+      "y": 8,
+      "max_y": 13
+    }
+  ],
+  "roof_min_y": 14,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "ground_plane": {
+    "y": 3,
+    "note": "外部石铺院落顶面与入口脚底Y=3"
+  },
+  "source": "tools/structure_studio/studio/memorial_crafts.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "craft_volumes": [
+    [
+      4,
+      4,
+      24,
+      31,
+      2,
+      11
+    ]
+  ],
+  "static_facilities": "行业设备、蜡液、加工与商品均为静态场景表达；未声称接入生产或交易机制。",
+  "function_terms": [
+    "礼仪用品零售"
+  ],
+  "nbt_sha256": "02a25a5f3346997d5efe3c5eb0e4357092e963cb099baecb12a374b60bb73348"
+}

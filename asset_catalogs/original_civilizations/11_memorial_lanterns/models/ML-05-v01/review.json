@@ -1,0 +1,44 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "ML-05-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 哥特作者离线全图审查",
+  "nbt_sha256": "ec64efb5b214b06bacb3874582c0adf7450722219542936621431bbbb40ed8c2",
+  "author_sha256": "2f1e21c80c65a63dfe496bde6dbafb6888c35c734924e27bb5761e4f0e6a84ce",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-public.png",
+    "previews/room-debate.png",
+    "previews/room-archive.png",
+    "previews/room-clerk.png",
+    "previews/point-chair.png",
+    "previews/point-debate.png",
+    "previews/point-memorial.png",
+    "previews/point-minutes.png",
+    "previews/point-copy.png",
+    "previews/point-documents.png",
+    "previews/point-service.png",
+    "previews/point-publiccourt.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与用途": "高挑议事主庭配双侧低翼，前纪念花庭形成公开入口，石肋和彩窗保持一致构造语言。",
+    "内饰与空间": "实际查看21图：前旁听长凳、两侧代表桌、中央陈述位、后主持记录及纪念台完整；公档查阅和公众事务各占独立窄翼。",
+    "完整证据": "实际查看当前版本全部四向外观、顶视、去顶、楼层、房间、站位、标记与地形图；不以拍摄自动代替审美检查。",
+    "数据与通路": "最终 NBT 重读、状态、门床、标记与碰撞导航检查通过，零警告。",
+    "环境条件": "排水良好的稳定台地，连接仍有常住居民的聚落道路；纪念设施不替代活人的生活供给。；基础底 Y=0，公共地面 Y=2，步行脚底 Y=3；道路接入口同高。；独立完整模板，保留外扶壁、彩窗采光面及庭院；不可用相邻建筑遮挡。；尖拱、外扶壁与内肋共同表达高挑空间；不模拟结构受力、照度或天气。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

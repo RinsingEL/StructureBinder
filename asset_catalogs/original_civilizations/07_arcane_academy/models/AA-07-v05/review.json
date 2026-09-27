@@ -1,0 +1,44 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "AA-07-v05",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors / 魔法学院返工作者实看",
+  "nbt_sha256": "288133b6deab19f34e88397e2e70a5a13c158cb83644c1a409e5094f074bd35c",
+  "author_sha256": "5f753d40666b0358bb7a87bd4308ba921508c5d787862dadcbef6e61b05638f8",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-common.png",
+    "previews/room-workroom.png",
+    "previews/room-sleep.png",
+    "previews/point-common_cook.png",
+    "previews/point-common_food.png",
+    "previews/point-common_study.png",
+    "previews/point-common_books.png",
+    "previews/point-rear_work.png",
+    "previews/point-samples.png",
+    "previews/point-sleep0.png",
+    "previews/point-sleep_desk.png",
+    "previews/point-sleep_clothes.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "32项旧版已撤回；本批12项采用双层侧塔、通廊分寝、联排、转角、阁楼与内庭等实际平面重新建模。",
+    "实际看过全部外观、去顶、分层、房间、功能点、标注与地形视图；结合零警告数据与导航核对。",
+    "长屋夹层阁楼宅",
+    "共用生活、研究和私密床位按相连主体组织；山墙木构框与窗台，完整个人储物和真实通路"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

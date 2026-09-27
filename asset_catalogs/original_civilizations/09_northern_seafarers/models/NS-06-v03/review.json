@@ -1,0 +1,48 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "NS-06-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 北欧套系作者逐图审查",
+  "nbt_sha256": "83d1809eeddd166600375a6b305b9e5d68f705dee2a1d7dfd8835f46449b198d",
+  "author_sha256": "361fb7df65fdd34da5cedfc5a846d9ce709a84501728c1ac949a3d36ba9bf8f6",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-life0.png",
+    "previews/room-sleep0.png",
+    "previews/room-life1.png",
+    "previews/room-sleep1.png",
+    "previews/room-court.png",
+    "previews/point-cook0.png",
+    "previews/point-beds00.png",
+    "previews/point-beds01.png",
+    "previews/point-linen0.png",
+    "previews/point-cook1.png",
+    "previews/point-beds10.png",
+    "previews/point-beds11.png",
+    "previews/point-linen1.png",
+    "previews/point-net.png",
+    "previews/point-rope.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与用途": "两户各自完整炊食双寝，面对中间共网院；渔业工具共享，家庭床柜和厨房不共享，形成真实双户布局。",
+    "实际内饰图审": "双户各有生活床位，共用网院保留独立出入口。",
+    "完整证据": "已实际查看最终四向、顶视、去顶、全部楼层与房间、使用站位、标记及场地示意；四个双层模型另补楼层斜视核对护栏。",
+    "数据与通路": "NBT 重读、方块状态、作者标记与离线碰撞导航通过，零警告。",
+    "选址条件": "稳定的寒地海湾背风岸台；避开潮涌、雪崩、海冰推挤和行洪通道。；干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。；完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。；厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "设备、晾晒及温床为静态表达，未接入加工、气候或作物生产机制。"
+  ]
+}

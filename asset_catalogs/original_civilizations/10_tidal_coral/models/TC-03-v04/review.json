@@ -1,0 +1,47 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "TC-03-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors / 海洋幻想作者实看",
+  "nbt_sha256": "0e50991d40c10146ae4128b2d4bdc279074b4d34f11c3a44b402694071d1e6ad",
+  "author_sha256": "5e1daccbb54437755bf5552044127ca3999de5a2d6879275b01fae83f3e4dd9c",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-common0.png",
+    "previews/room-bedroom0.png",
+    "previews/room-bedroom1.png",
+    "previews/room-court0.png",
+    "previews/point-common0_cook.png",
+    "previews/point-common0_food.png",
+    "previews/point-common0_books.png",
+    "previews/point-bedroom0a.png",
+    "previews/point-bedroom0b.png",
+    "previews/point-bedroom0_clothes.png",
+    "previews/point-bedroom0_desk.png",
+    "previews/point-bedroom1a.png",
+    "previews/point-bedroom1b.png",
+    "previews/point-bedroom1_clothes.png",
+    "previews/point-bedroom1_desk.png",
+    "previews/point-court0.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "高台和下沉入口护栏完整；连体旅舍公共走廊与分间卧室可用；住宅起居餐厨和床头储藏分区。",
+    "实际看过全部外观、去顶、分层、房间、功能点、标注与地形视图；结合零警告数据与导航核对。",
+    "半环海庭宅",
+    "1个起居舱与2个独门休眠舱，位置/尺度/楼面高程共同变化；低位水庭与干燥住宅分别围护"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

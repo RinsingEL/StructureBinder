@@ -1,0 +1,46 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "RS-03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 废土拾荒作者全图实看",
+  "nbt_sha256": "a835de152b84f82c8c1b2e1cc59c1d473b860b6ff890a9f72ce991ea4a1f1add",
+  "author_sha256": "2f9cd9c71f9e822da385c1ed3ee95f8c45d9e357af57d9cd9b99a8d031c6d0f1",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-warehouse.png",
+    "previews/room-sales.png",
+    "previews/point-stock.png",
+    "previews/point-fragile.png",
+    "previews/point-appraise.png",
+    "previews/point-fasteners.png",
+    "previews/point-fastenersstock.png",
+    "previews/point-instruments.png",
+    "previews/point-instrumentsstock.png",
+    "previews/point-cloth.png",
+    "previews/point-clothstock.png",
+    "previews/point-tools.png",
+    "previews/point-toolsstock.png",
+    "previews/point-record.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "23张当前最终外观、去顶、房间、使用点及场地示意全部实看。",
+    "旧机械肋架、断轮、断塔或机轴为真实几何，与独立支承的新板房、布棚和修补材料可区分。",
+    "当前NBT/作者标记双哈希绑定；确定性重建及离线数据、导航零警告。"
+  ],
+  "revisions": [
+    "修正场地示意surface枚举，完整重拍；补有支承吊灯，控制舱值班遗留床铺，修复桌席与学堂耗材旧管道。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

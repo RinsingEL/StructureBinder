@@ -217,5 +217,9 @@
     "land_surface_y": 2,
     "padding": 5
   },
-  "nbt_sha256": "511dad978d38dafb32be13226b14293fbc817754db257b4071193871121d9671"
+  "nbt_sha256": "511dad978d38dafb32be13226b14293fbc817754db257b4071193871121d9671",
+  "function_terms": [
+    "零售",
+    "裁缝"
+  ]
 }

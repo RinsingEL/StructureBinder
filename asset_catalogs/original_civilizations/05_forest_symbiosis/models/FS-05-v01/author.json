@@ -133,5 +133,8 @@
     "padding": 4,
     "surface": "podzol"
   },
-  "nbt_sha256": "7c8ed8b016987641aa796fde1f5ef4010ae1001be80a1875a13dc6f48f662351"
+  "nbt_sha256": "7c8ed8b016987641aa796fde1f5ef4010ae1001be80a1875a13dc6f48f662351",
+  "function_terms": [
+    "议事"
+  ]
 }

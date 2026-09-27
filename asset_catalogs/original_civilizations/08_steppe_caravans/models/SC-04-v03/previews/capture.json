@@ -1,0 +1,31 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "SC-04-v03",
+  "nbt_sha256": "907929ba965208d111f17e4bbe913f58b26aff518d67a7286ce3a745a58ac87c",
+  "author_sha256": "46653fed5c8eca2436b899353cb7c7b0c1f75304f017f3520f3812eedbe441f1",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-long",
+    "point-bed0",
+    "point-box0",
+    "point-bed1",
+    "point-box1",
+    "point-longkcook",
+    "point-longkwater",
+    "point-longkfood",
+    "point-longmeal",
+    "point-loom",
+    "point-record",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

@@ -1,8 +1,19 @@
-# 国度 Mod 原创文明结构库
+# 国度 Mod 原创建筑清单
 
-更新日期：2026-09-22。当前状态：**制作中：离线工具已可用，商住、交通、农业变体与沙海公共设施已完成离线验收；全库尚未完成**。
+更新日期：2026-09-23。当前状态：**制作中：离线工具已可用，商住、交通、农业变体与沙海公共设施已完成离线验收；全库尚未完成**。
 
-本目录按文明组织素材，每个文明使用 **核心结构.md＋填充结构.md** 两份制作文档。文明主题与条目是讨论形成的候选，数量表示制作范围；实际生成仍由地理条件、文明需求和项目当前能力决定。
+2026-09-24 标签修订：作者记录增加功能词，部分选址说明拆出非必需的推荐情境；原 NBT 和旧预览不变。下方及单体文档的既有“完成／验收”记录对应当时的作者版本，不能代替本轮改标后的新图审；以匹配当前双哈希的证据为准。此次修改与核对见[标签任务记录](../../dev_docs/tools/structure_studio/active/20260924_建筑标签情景检查/任务记录.md)。
+
+2026-09-23 调整清单组织：**一个风格一份建筑清单，在各自风格内定义建筑、用途与形体。** 原目录与编号保留，材料换皮单独配置。
+
+| 清单入口 | 用途 |
+| --- | --- |
+| [各风格建筑清单](文明命名.md) | 选择风格，进入其独立文档查看建筑设计与制作进度。 |
+| [通用建筑与景物](建筑类型清单.md) | 小屋、雕像、喷泉等常见对象的选题参考，不提供统一布局模板。 |
+| [建筑功能层级与选址](../../../designer_territoryMod/docs/tools/structure_studio/10_product/建筑功能层级与选址.md) | 分层功能、独立用途与配套、组合检索和选址规则；Studio 已支持层级及组合筛选，可对照原始标签人工试用。 |
+| 下方既有资产目录 | 查找原编号、模型、预览与证据。 |
+
+具体建筑在所属风格中一起确定功能、形体、空间与材料。不同风格可以有不同的建筑内容，不要求填同一张功能表，也不按固定“类型×布局×风格”组合生产。各目录的核心与填充内容已合并到 **建筑清单.md**，原两份文件只保留跳转入口；核心、填充与明确选用继续作为条目的规划角色。
 
 风格采用能够联想到具体建筑传统的常见类别，例如矮人、精灵、北欧、沙漠与蒸汽朋克；不编造国名代替风格定义，也不机械禁止地域词。各类的形体、材料与装饰基准见[建筑风格分类](文明命名.md)。目录与结构 ID 保持稳定，具体落地仍以模型条件为准。
 
@@ -12,7 +23,7 @@
 - 发挥 AI 在多风格、多功能建筑与组合设计上的能力，包含车站、码头等基础设施。
 - 可进入的建筑具有与用途一致的完整内饰，建模过程中同步标记。
 - **这是国度 Mod；“因地制宜”是原则。**
-- **核心与填充分开维护；商铺、小房屋、农田、葡萄棚等填充结构重点关注多样性。**
+- **一个风格一份建筑清单；核心与填充在文档内区分，日常建筑与配套重点关注多样性。**
 
 ## 核心与填充的分工
 
@@ -39,29 +50,39 @@
 - “山地铁路接入运河港口”是条件合适时的组合示例，不是每局必须施工的场景。
 - 保留所在地的地貌特色；填充同样受地理、资源与作物条件约束。
 
-## 清单与优先级
+## 既有套系与进度导航
+
+下表“建议批次”保留历史制作顺序供定位，不再作为按文明整套补齐的优先级。后续进入具体风格清单选择需要深化或补充的建筑，不按统一功能编制批量生产。
 
 | 文明 | 建议批次 | 核心清单 | 填充清单 |
 | --- | --- | --- | --- |
-| [蒸汽朋克](01_steam_rail/README.md) | 首批 | [5 个核心＋3 个专项](01_steam_rail/核心结构.md) | [8 个结构族](01_steam_rail/填充结构.md) |
-| [地中海](02_waterway_trade/README.md) | 首批 | [5 个核心＋2 个专项](02_waterway_trade/核心结构.md) | [9 个结构族](02_waterway_trade/填充结构.md) |
-| [沙漠](03_desert_stars/README.md) | 首批 | [5 个核心＋2 个专项](03_desert_stars/核心结构.md) | [9 个结构族](03_desert_stars/填充结构.md) |
-| [矮人](04_mountain_forge/README.md) | 首批 | [6 个核心＋1 个专项](04_mountain_forge/核心结构.md) | [8 个结构族](04_mountain_forge/填充结构.md) |
-| [精灵](05_forest_symbiosis/README.md) | 首批 | [5 个核心＋2 个专项](05_forest_symbiosis/核心结构.md) | [9 个结构族](05_forest_symbiosis/填充结构.md) |
-| [空艇幻想](06_cloud_navigation/README.md) | 首批 | [5 个核心＋2 个专项](06_cloud_navigation/核心结构.md) | [8 个结构族](06_cloud_navigation/填充结构.md) |
-| [魔法学院](07_arcane_academy/README.md) | 扩展 | [5 个核心＋2 个专项](07_arcane_academy/核心结构.md) | [9 个结构族](07_arcane_academy/填充结构.md) |
-| [游牧](08_steppe_caravans/README.md) | 扩展 | [3 个核心＋2 个专项](08_steppe_caravans/核心结构.md) | [10 个结构族](08_steppe_caravans/填充结构.md) |
-| [北欧](09_northern_seafarers/README.md) | 扩展 | [3 个核心＋3 个专项](09_northern_seafarers/核心结构.md) | [9 个结构族](09_northern_seafarers/填充结构.md) |
-| [海洋幻想](10_tidal_coral/README.md) | 扩展 | [4 个核心＋2 个专项](10_tidal_coral/核心结构.md) | [9 个结构族](10_tidal_coral/填充结构.md) |
-| [哥特](11_memorial_lanterns/README.md) | 扩展 | [4 个核心＋2 个专项](11_memorial_lanterns/核心结构.md) | [10 个结构族](11_memorial_lanterns/填充结构.md) |
-| [废土拾荒](12_relic_salvagers/README.md) | 扩展 | [3 个核心＋3 个专项](12_relic_salvagers/核心结构.md) | [9 个结构族](12_relic_salvagers/填充结构.md) |
-| [跨文明结构](13_cross_civilization/README.md) | 与相邻文明配套 | [6 个核心](13_cross_civilization/核心结构.md) | [5 个结构族](13_cross_civilization/填充结构.md) |
+| [蒸汽朋克](01_steam_rail/README.md) | 首批 | [5 个核心＋3 个专项](01_steam_rail/建筑清单.md) | [8 个结构族](01_steam_rail/建筑清单.md) |
+| [地中海](02_waterway_trade/README.md) | 首批 | [5 个核心＋2 个专项](02_waterway_trade/建筑清单.md) | [9 个结构族](02_waterway_trade/建筑清单.md) |
+| [沙漠](03_desert_stars/README.md) | 首批 | [5 个核心＋2 个专项](03_desert_stars/建筑清单.md) | [9 个结构族](03_desert_stars/建筑清单.md) |
+| [矮人](04_mountain_forge/README.md) | 首批 | [6 个核心＋1 个专项](04_mountain_forge/建筑清单.md) | [8 个结构族](04_mountain_forge/建筑清单.md) |
+| [精灵](05_forest_symbiosis/README.md) | 首批 | [5 个核心＋2 个专项](05_forest_symbiosis/建筑清单.md) | [9 个结构族](05_forest_symbiosis/建筑清单.md) |
+| [空艇幻想](06_cloud_navigation/README.md) | 首批 | [5 个核心＋2 个专项](06_cloud_navigation/建筑清单.md) | [8 个结构族](06_cloud_navigation/建筑清单.md) |
+| [魔法学院](07_arcane_academy/README.md) | 扩展 | [5 个核心＋2 个专项](07_arcane_academy/建筑清单.md) | [9 个结构族](07_arcane_academy/建筑清单.md) |
+| [游牧](08_steppe_caravans/README.md) | 扩展 | [3 个核心＋2 个专项](08_steppe_caravans/建筑清单.md) | [10 个结构族](08_steppe_caravans/建筑清单.md) |
+| [北欧](09_northern_seafarers/README.md) | 扩展 | [3 个核心＋3 个专项](09_northern_seafarers/建筑清单.md) | [9 个结构族](09_northern_seafarers/建筑清单.md) |
+| [海洋幻想](10_tidal_coral/README.md) | 扩展 | [4 个核心＋2 个专项](10_tidal_coral/建筑清单.md) | [9 个结构族](10_tidal_coral/建筑清单.md) |
+| [哥特](11_memorial_lanterns/README.md) | 扩展 | [4 个核心＋2 个专项](11_memorial_lanterns/建筑清单.md) | [10 个结构族](11_memorial_lanterns/建筑清单.md) |
+| [废土拾荒](12_relic_salvagers/README.md) | 扩展 | [3 个核心＋3 个专项](12_relic_salvagers/建筑清单.md) | [9 个结构族](12_relic_salvagers/建筑清单.md) |
+| [跨文明结构](13_cross_civilization/README.md) | 与相邻文明配套 | [6 个核心](13_cross_civilization/建筑清单.md) | [5 个结构族](13_cross_civilization/建筑清单.md) |
 
 本版保留原 **152 个编号条目**，按角色拆分，并新增 **45 个填充结构族**。当前为 **59 个核心候选、26 个专项候选、112 个填充结构族**。结构族数量不等于实际模型数量，填充族还需制作多个变体。
 
-首批仍优先六个文明：蒸汽朋克、地中海、沙漠、矮人、精灵、空艇幻想。按“功能主体＋足够丰富的配套变体”形成可体验的样板，避免只完成核心而缺少日常生活。
+后续按具体风格组织设计：先明确该风格中有哪些值得制作的建筑，以及各自的用途与形体，再选择条目推进。通用建筑与景物表仅用于补充选题。
 
-每套清单为起步素材池，根据实际功能缺口补充；不要求各文明拥有相同建筑编制。中式、日式、哥特等视觉语言可在具体套系内确定。
+每套清单为既有素材池，不要求各文明拥有相同建筑编制。新增风格见风格清单；列入设计候选不等于承诺制作数量或已有成品。
+
+## 材料换皮与设计差异
+
+- 材料换皮方案在 AI 设计前填写，限定墙、柱梁、屋面、基础与装饰的材料映射；执行替换不再触发多模态审美判断或结构重设计。
+- 换皮仅替换材料，不改变方块位置、平面、屋顶形状、门窗位置和通路。映射需保留对应构件形状与所需方块状态；无法兼容的替换不能作为纯材料方案。
+- 中式小住宅与欧洲中世纪小住宅即使用途、体量相近，其屋顶和构架差异仍属于风格设计，分别制作模型，不能以换材料代替。
+- 同一种风格内，布局、体量组合与用途差异形成不同建筑样式；单纯换色换材不计为新增样式或风格。
+- 以上为制作清单约定，本次未实现材料替换功能，也未新增运行时字段。
 
 ## 填充多样性
 
@@ -85,8 +106,8 @@
 
 ## 文件与进度维护
 
-- 总清单维护共同方向与导航；各文明 README 只作入口；**逐项进度只在核心或填充文档维护**。
-- 每个结构或结构族保留唯一主归属；跨文明设施归跨文明文件夹，交通类别用索引检索。
+- 总清单维护共同方向与导航；各风格 README 只作入口；**逐项进度只在该风格的建筑清单.md 维护**。
+- 每个结构或结构族保留唯一主归属；跨风格组合归原跨文明文件夹，交通类别用索引检索。
 - 原编号保持稳定。新增填充族使用文明前缀＋`Fxx`，制作具体模型时再追加 `-v01` 等变体编号。
 - 一个填充族完成首个模型不等于该族已完成；在所属文档记录已做变体、仍缺的差异和验收状态。
 - 条目状态为“待建模”“建模中”“待验收”“完成”；实际模型须核对外观、内饰、入口、标记与适用环境后计为成品。
@@ -96,14 +117,14 @@
 
 | 类别 | 所属清单与编号 |
 | --- | --- |
-| 铁路与矿运 | [蒸汽朋克 SR-01、SR-02、SR-03、SR-11](01_steam_rail/核心结构.md)；[矮人 MF-01、MF-02](04_mountain_forge/核心结构.md) |
-| 码头、船坞与船闸 | [地中海 WT-01、WT-03、WT-04、WT-09](02_waterway_trade/核心结构.md)；[地中海 WT-02](02_waterway_trade/填充结构.md)；[北欧 NS-01](09_northern_seafarers/核心结构.md)；[海洋幻想 TC-01](10_tidal_coral/核心结构.md)；[海洋幻想 TC-06](10_tidal_coral/填充结构.md) |
-| 商队与陆路补给 | [沙漠 DS-01](03_desert_stars/核心结构.md)；[沙漠 DS-02、DS-08](03_desert_stars/填充结构.md)；[精灵 FS-04](05_forest_symbiosis/核心结构.md)；[游牧 SC-12](08_steppe_caravans/核心结构.md)；[游牧 SC-02、SC-03](08_steppe_caravans/填充结构.md) |
-| 高差与飞行交通 | [矮人 MF-02](04_mountain_forge/核心结构.md)；[空艇幻想 CN-01、CN-02、CN-03](06_cloud_navigation/核心结构.md)；[空艇幻想 CN-04、CN-08](06_cloud_navigation/填充结构.md)；[跨文明结构 XC-07](13_cross_civilization/核心结构.md) |
-| 魔法与仪式交通 | [魔法学院 AA-01、AA-02、AA-11](07_arcane_academy/核心结构.md)；[哥特 ML-02](11_memorial_lanterns/核心结构.md) |
-| 供水、供能与补给 | [沙漠 DS-03、DS-12](03_desert_stars/核心结构.md)；[矮人 MF-12](04_mountain_forge/核心结构.md)；[魔法学院 AA-03](07_arcane_academy/核心结构.md) |
+| 铁路与矿运 | [蒸汽朋克 SR-01、SR-02、SR-03、SR-11](01_steam_rail/建筑清单.md)；[矮人 MF-01、MF-02](04_mountain_forge/建筑清单.md) |
+| 码头、船坞与船闸 | [地中海 WT-01、WT-03、WT-04、WT-09](02_waterway_trade/建筑清单.md)；[地中海 WT-02](02_waterway_trade/建筑清单.md)；[北欧 NS-01](09_northern_seafarers/建筑清单.md)；[海洋幻想 TC-01](10_tidal_coral/建筑清单.md)；[海洋幻想 TC-06](10_tidal_coral/建筑清单.md) |
+| 商队与陆路补给 | [沙漠 DS-01](03_desert_stars/建筑清单.md)；[沙漠 DS-02、DS-08](03_desert_stars/建筑清单.md)；[精灵 FS-04](05_forest_symbiosis/建筑清单.md)；[游牧 SC-12](08_steppe_caravans/建筑清单.md)；[游牧 SC-02、SC-03](08_steppe_caravans/建筑清单.md) |
+| 高差与飞行交通 | [矮人 MF-02](04_mountain_forge/建筑清单.md)；[空艇幻想 CN-01、CN-02、CN-03](06_cloud_navigation/建筑清单.md)；[空艇幻想 CN-04、CN-08](06_cloud_navigation/建筑清单.md)；[跨文明结构 XC-07](13_cross_civilization/建筑清单.md) |
+| 魔法与仪式交通 | [魔法学院 AA-01、AA-02、AA-11](07_arcane_academy/建筑清单.md)；[哥特 ML-02](11_memorial_lanterns/建筑清单.md) |
+| 供水、供能与补给 | [沙漠 DS-03、DS-12](03_desert_stars/建筑清单.md)；[矮人 MF-12](04_mountain_forge/建筑清单.md)；[魔法学院 AA-03](07_arcane_academy/建筑清单.md) |
 
-后续交通扩充候选包括乡间小站、山地终点站、渔码头、小渡口、索道两端站、峡谷桥头堡、道路养护屋。先判断用途与重复适用性，再归入对应核心或填充文档。
+后续交通扩充候选包括乡间小站、山地终点站、渔码头、小渡口、索道两端站、峡谷桥头堡、道路养护屋。先判断用途与重复适用性，再写入对应风格的建筑清单，并标明规划角色。
 
 ## 内饰与随建随标记
 

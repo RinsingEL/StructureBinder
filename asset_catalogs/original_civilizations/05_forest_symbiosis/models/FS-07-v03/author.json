@@ -300,5 +300,9 @@
     "padding": 4,
     "surface": "podzol"
   },
-  "nbt_sha256": "e4d139d3318839a6bc9b68573c9d1987b04e9c1839e31d487a548eae1d1f535f"
+  "nbt_sha256": "e4d139d3318839a6bc9b68573c9d1987b04e9c1839e31d487a548eae1d1f535f",
+  "function_terms": [
+    "诊疗",
+    "药材配制"
+  ]
 }

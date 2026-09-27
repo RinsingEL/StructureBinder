@@ -1,0 +1,286 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "ML-07-v01",
+  "name": "看护家庭与独立工具院",
+  "family": "ML-07",
+  "civilization": "哥特",
+  "planning_role": "planning_role.fill",
+  "size": [
+    31,
+    29,
+    29
+  ],
+  "terrain": {
+    "选址": "稳定、排水良好的居民地块，日照与通路按具体用途保留；哥特是建造风格而非地形限制。",
+    "高程": "基础底Y=0、常规地面Y=2、脚底Y=3；抬高或双层版本另记。",
+    "边界": "完整独立模板，保留外扶柱、檐口、采光和门外站位，不默认邻居补齐。"
+  },
+  "rooms": [
+    {
+      "id": "living",
+      "name": "家庭起居餐厨",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        15,
+        7,
+        13
+      ],
+      "purpose": "正常三人家庭炊食；设施：备餐、热食与洗涤"
+    },
+    {
+      "id": "sleep",
+      "name": "上层家庭双床寝区",
+      "min": [
+        5,
+        9,
+        15
+      ],
+      "max": [
+        15,
+        13,
+        24
+      ],
+      "purpose": "个人床柜、被服；设施：床位与个人衣物、床位与个人衣物、家用被服与衣物"
+    },
+    {
+      "id": "tools",
+      "name": "独立干燥工具屋",
+      "min": [
+        23,
+        3,
+        14
+      ],
+      "max": [
+        26,
+        7,
+        24
+      ],
+      "purpose": "工具归还、维护与存放，不占家庭餐厨；设施：清扫、除草与维修工具、工具维护与换柄"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        10,
+        3,
+        3
+      ],
+      "name": "尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "toolentry",
+      "kind": "circulation",
+      "pos": [
+        24,
+        3,
+        12
+      ],
+      "name": "院内房门：尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "cook",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        6
+      ],
+      "name": "备餐、热食与洗涤",
+      "look_at": [
+        5,
+        4,
+        6
+      ],
+      "approach": [
+        5,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "family0",
+      "kind": "bed",
+      "pos": [
+        6,
+        9,
+        19
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        6,
+        10,
+        19
+      ],
+      "approach": [
+        7,
+        9,
+        19
+      ]
+    },
+    {
+      "id": "family1",
+      "kind": "bed",
+      "pos": [
+        9,
+        9,
+        19
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        9,
+        10,
+        19
+      ],
+      "approach": [
+        10,
+        9,
+        19
+      ]
+    },
+    {
+      "id": "linen",
+      "kind": "storage",
+      "pos": [
+        6,
+        9,
+        23
+      ],
+      "name": "家用被服与衣物",
+      "look_at": [
+        6,
+        10,
+        23
+      ],
+      "approach": [
+        6,
+        9,
+        24
+      ]
+    },
+    {
+      "id": "records",
+      "kind": "work",
+      "pos": [
+        11,
+        3,
+        16
+      ],
+      "name": "家庭值守与墓区记录",
+      "look_at": [
+        11,
+        4,
+        16
+      ],
+      "approach": [
+        11,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "tools",
+      "kind": "storage",
+      "pos": [
+        23,
+        3,
+        16
+      ],
+      "name": "清扫、除草与维修工具",
+      "look_at": [
+        23,
+        4,
+        16
+      ],
+      "approach": [
+        23,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "repair",
+      "kind": "work",
+      "pos": [
+        23,
+        3,
+        21
+      ],
+      "name": "工具维护与换柄",
+      "look_at": [
+        23,
+        4,
+        21
+      ],
+      "approach": [
+        23,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "court",
+      "kind": "circulation",
+      "pos": [
+        19,
+        3,
+        10
+      ],
+      "name": "居住与工具屋间院路",
+      "look_at": [
+        24,
+        4,
+        13
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "依参考图：双层高主屋与低工具屋隔院分置，上层双床家居有实梯；下层完整餐厨与值守，前院留维护与休憩空间。",
+    "按2026-09-27效果图重绘：浅石深木、陡瓦白边、铁脊老虎窗、紫金彩窗与灯柱围院。"
+  ],
+  "differences": [
+    "依参考图：双层高主屋与低工具屋隔院分置，上层双床家居有实梯；下层完整餐厨与值守，前院留维护与休憩空间。"
+  ],
+  "floors": [
+    {
+      "name": "下层作业起居",
+      "y": 2,
+      "max_y": 7
+    },
+    {
+      "name": "上层家居钟务",
+      "y": 8,
+      "max_y": 13
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/memorial_life.py:BUILDERS",
+  "ground_plane": {
+    "y": 3,
+    "note": "外部场坪顶面与脚底Y=3，铺地方块Y=2；内部上层及高台不改变接地基准。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "家庭居住",
+    "墓园看护"
+  ],
+  "nbt_sha256": "e58f70ee71cbf60604c3e28fad9313a078114e4d697e5019c1a74884d6830085"
+}

@@ -82,277 +82,28 @@ def bedroom(m,key,x0,z0,x1,z1,*,f=1,color="cyan",two=True):
 
 
 def caravanserai():
-    m=base(1,"月井商队大驿站",(53,23,51),{"选址":"有可靠水源的商路补给节点，不因沙地外观自动成立",
-        "地形":"约 47×43 格可整备平缓地块，北侧保留旅人与货运动线","接地":"地坪 Y=1、室内与院内脚底 Y=2",
-        "组合":"自身含客房、饮食、存货与庭院；动物换乘仍由外部兽栏承担"},
-        ["四边厚墙围合月井内庭，北侧拱门进入；四间双床客房与餐饮后勤各自分区。","蓝色穹顶、赭色门楼与分段遮阳廊区别于铁路街区。"])
-    pad(m,3,5,49,47)
-    # Independent perimeter rooms, with shaded circulation outside their doors.
-    for spec in ((4,6,20,15),(31,6,48,15),(4,17,14,27),(4,29,14,38),(38,17,48,27),(38,29,48,38),(4,40,16,46),(18,40,32,46),(34,40,48,46)):
-        room_shell(m,*spec)
-    room_shell(m,21,6,30,15,wall="orange_terracotta")
-    arch_front(m,22,2,6,8,7);arch_front(m,22,2,15,8,7)
-    m.box((23,2,7),(28,6,14),"air")
-    front(m,26,6,width=5)
-    m.door(12,2,15,facing="south");m.door(40,2,15,facing="south")
-    for key,a,b,c,d,side in (("west_a",4,17,14,27,"west"),("west_b",4,29,14,38,"west"),("east_a",38,17,48,27,"east"),("east_b",38,29,48,38,"east")):
-        m.door(c if side=="west" else a,2,b+2,facing="east" if side=="west" else "west")
-        bedroom(m,key,a,b,c,d)
-        m.room(key,"双床客房 · "+key,(a+1,2,b+1),(c-1,6,d-1),"睡眠、行李与取水")
-    for x in (10,25,41):m.door(x,2,40,facing="north")
-    # Colonnades deliberately keep a broad inner court, rather than filling it.
-    for x in (16,36):
-        for z in (17,23,29,35,39):m.box((x,2,z),(x,6,z),"cut_sandstone")
-        m.box((x-1,7,16),(x+1,7,39),"smooth_sandstone_slab[type=top]")
-    for x in range(18,35,4):
-        for z in (16,39):m.box((x,2,z),(x,6,z),"cut_sandstone")
-    m.box((17,7,15),(35,7,17),"smooth_sandstone_slab[type=top]")
-    m.box((17,7,38),(35,7,40),"smooth_sandstone_slab[type=top]")
-    m.box((23,1,24),(29,1,30),"blue_terracotta");m.box((24,1,25),(28,1,29),"water[level=0]")
-    for x in (23,29):m.box((x,2,24),(x,2,30),"smooth_sandstone_slab[type=bottom]")
-    for z in (24,30):m.box((24,2,z),(28,2,z),"smooth_sandstone_slab[type=bottom]")
-    for x,z in ((20,21),(32,21),(20,33),(32,33)):
-        m.set(x,2,z,"moss_block");m.set(x,3,z,"flowering_azalea")
-    m.box((6,2,10),(12,2,10),"dark_oak_planks");m.set(7,2,10,"lectern[facing=south]")
-    crate_stack(m,16,2,8,3,4,3)
-    for z in (9,12):
-        table(m,34,2,z,5,"orange");bench(m,34,2,z+2,5,"north","birch")
-    m.set(6,2,44,"water_cauldron[level=3]");m.set(9,2,44,"water_cauldron[level=3]")
-    m.box((12,2,42),(12,3,44),"barrel[facing=west]")
-    for x in (21,23):m.set(x,2,45,"smoker[facing=north,lit=false]")
-    m.box((21,3,45),(23,5,45),"sandstone");m.box((22,6,45),(22,13,45),"sandstone")
-    table(m,26,2,43,4,"white");m.set(30,2,45,"water_cauldron[level=3]")
-    for x in (36,40,44):crate_stack(m,x,2,43,2,2,2)
-    for key,pos,approach,name in (("register",(7,2,10),(7,2,11),"旅人登记"),("water",(23,2,27),(22,2,27),"月井取水"),("kitchen",(21,2,45),(21,2,44),"公共厨房"),("wash",(9,2,44),(9,2,43),"洗漱取水"),("freight",(40,2,43),(40,2,42),"寄存货物")):
-        m.point(key,"work",pos,name,approach=approach)
-    for key,name,a,b,purpose in (("reception","登记与寄物",(5,2,7),(19,6,14),"旅人登记和货物接收"),("dining","公共餐厅",(32,2,7),(47,6,14),"餐桌、候坐与饮食"),("washroom","洗漱间",(5,2,41),(15,6,45),"取水、盥洗与用品"),("kitchen","公共厨房",(19,2,41),(31,6,45),"备餐、炉灶和用水"),("storage","货物寄存库",(35,2,41),(47,6,45),"货物储藏"),("court","月井内庭",(17,2,18),(35,6,37),"遮阳、饮水与集散")):
-        m.room(key,name,a,b,purpose)
-    dome(m,26,10,9,5);windtower(m,5,7);windtower(m,43,41)
-    for x,z in ((10,12),(42,12),(25,43),(40,43),(16,26),(36,26)):pendant(m,x,6,z,8)
-    return m
+    from .desert_caravanserai import caravanserai as build_caravanserai
+    return build_caravanserai()
 
 
 def cistern():
-    m=base(3,"蓝柱地下蓄水厅",(36,25,40),{"选址":"可靠集水或引水系统的地下储水节点，需足够岩土覆深与防渗条件",
-        "埋置":"模型 Y=14 对应地表脚底；主体底部 Y=0，预留约 14 格地下空间",
-        "入口":"北侧值守门廊接下行楼梯，检修平台脚底 Y=3","水":"蓄水池为封闭原版水体，补水、排水与容量逻辑尚未接入"},
-        ["地上小门房连接十一格下降楼梯；地下柱廊围绕蓄水池，检修通道和记录区在干侧。"],ground=14,roof=13)
-    m.box((3,0,9),(32,2,36),"stone_bricks")
-    shell(m,(3,2,9),(32,12,36),"sandstone","stone_bricks",ceiling="sandstone")
-    m.box((9,1,17),(21,2,32),"water[level=0]")
-    for x in (8,22):m.box((x,3,16),(x,3,33),"smooth_sandstone_slab[type=bottom]")
-    for z in (16,33):m.box((9,3,z),(21,3,z),"smooth_sandstone_slab[type=bottom]")
-    for x in (7,15,23):
-        for z in (15,24,33):
-            m.box((x,1,z),(x,10,z),"cut_sandstone");m.set(x,4,z,"blue_terracotta");m.set(x,10,z,"chiseled_sandstone")
-    for z in (15,24,33):m.box((7,11,z),(23,11,z),"smooth_sandstone")
-    room_shell(m,22,2,31,9,f=13)
-    m.box((24,14,2),(28,17,2),"air");m.box((24,14,9),(28,17,9),"air")
-    front(m,26,2,f=13,width=5)
-    # Descend along the dry east side; clear headroom through the near roof.
-    for i in range(11):
-        y=13-i;z=10+i
-        m.box((25,y+1,z),(27,min(21,y+4),z),"air")
-        for x in (25,26,27):
-            m.box((x,3,z),(x,y,z),"sandstone")
-            m.set(x,y,z,"sandstone_stairs[facing=north]")
-    m.box((25,3,21),(27,5,22),"air")
-    m.set(29,3,29,"lectern[facing=west]");m.set(29,3,32,"barrel[facing=west]")
-    m.set(30,3,25,"grindstone[face=floor,facing=west]")
-    for y in (4,6,8,10):m.set(32,y,29,"blue_terracotta")
-    m.set(22,3,20,"smooth_sandstone")
-    m.set(22,4,20,"lever[face=floor,facing=east,powered=false]")
-    m.point("down","circulation",(26,3,22),"地下楼梯出口",look_at=[15,5,25])
-    m.point("gauge","work",(22,4,20),"取水与水位记录位置",approach=(23,3,20))
-    m.point("register","work",(29,3,29),"蓄水管理记录",approach=(28,3,29))
-    m.point("maintenance","work",(30,3,25),"检修工具",approach=(29,3,25))
-    m.room("vault","地下柱廊与蓄水池",(4,3,10),(31,11,35),"有支撑顶板、封闭蓄水和周边干侧检修")
-    m.room("records","管理与检修角",(24,3,24),(31,7,35),"水位记录和维修工具")
-    m.room("gate","地上门房",(23,14,3),(30,18,8),"遮阳入口与地下登临")
-    m.meta["floors"]=[dict(name="地上入口",y=13,max_y=19),dict(name="地下蓄水与检修",y=2,max_y=10)]
-    for x,z in ((7,19),(23,19),(7,28),(23,28)):pendant(m,x,10,z,13)
-    m.set(29,14,5,"barrel[facing=west]");m.set(29,15,5,"lantern")
-    return m
+    from .desert_cistern import cistern as build
+    return build()
 
 
 def spice_market():
-    m=base(6,"六帆香料市集厅",(48,23,39),{"选址":"绿洲贸易节点与实际商路，能容纳人流和后侧进货",
-        "地形":"宽阔平缓商业地块；北侧入口与南侧补货口保持通行","配套":"内含六类铺位、称量与货仓，外部小摊按空地另选"},
-        ["中央遮阳商街连通两翼交易铺位，后侧双货仓；布棚高差、半开放拱廊与蓝穹顶形成市集轮廓。"])
-    pad(m,3,4,44,35)
-    room_shell(m,4,24,22,34);room_shell(m,25,24,43,34)
-    for x in (13,34):m.door(x,2,24,facing="north")
-    for x in (8,13,18,28,33,38):crate_stack(m,x,2,31,3,2,3)
-    for x in (5,11,17,29,35,41):
-        for z in (8,22):m.box((x,2,z),(x,8,z),"cut_sandstone")
-    for x in range(4,44):
-        for z in range(7,24):
-            height=10 if 13<=z<=17 else 9
-            m.set(x,height,z,"white_wool" if (x//6)%2 else "orange_wool")
-    # Transverse lintels carry the separate canvas bays.
-    for x in (5,11,17,29,35,41):
-        m.box((x,8,8),(x,8,22),"stripped_acacia_log[axis=z]")
-        m.box((x,9,13),(x,9,17),"stripped_acacia_log[axis=z]")
-    for z in (8,22):m.box((4,8,z),(43,8,z),"stripped_acacia_log[axis=x]")
-    for i,(x,product) in enumerate(((6,"flower_pot"),(13,"hay_block"),(20,"yellow_wool"),(27,"barrel"),(34,"red_wool"),(40,"melon"))):
-        z=15 if i%2==0 else 21
-        width=min(5,44-x)
-        m.box((x,2,z),(x+width-1,2,z),"stripped_acacia_log[axis=x]")
-        m.set(x+1,3,z,product)
-        if product.endswith("wool"):m.set(x+2,3,z,"blue_carpet")
-        m.set(x+width-1,3,z,"lantern")
-        if i%2==0:
-            for xx in (x,x+2):m.set(xx,2,z-1,"barrel[facing=south]")
-        else:
-            for xx in (x+1,x+2):m.set(xx,2,z+1,"barrel[facing=north]")
-        if i==0:
-            for xx,plant in ((x,"fern"),(x+2,"red_mushroom"),(x+3,"dead_bush")):m.set(xx,3,z,"potted_"+plant)
-        elif i==1:m.set(x+3,3,z,"pumpkin")
-        m.point(f"stall_{i+1}","work",(x+1,2,z),["香料","粮食","布匹","饮水","染料","果蔬"][i]+"铺位",approach=(x+1,2,z+1 if z==15 else z-1))
-    table(m,19,2,28,3,"blue");m.set(20,3,28,"light_weighted_pressure_plate[power=0]")
-    m.point("weighing","work",(20,3,28),"称量与结算",approach=(20,2,27))
-    m.set(28,2,27,"lectern[facing=east]");m.point("ledger","work",(28,2,27),"交易账目",approach=(29,2,27))
-    room_shell(m,4,5,12,13,wall="orange_terracotta");arch_front(m,5,2,13,7,6)
-    room_shell(m,35,5,43,13,wall="orange_terracotta");arch_front(m,36,2,13,7,6)
-    dome(m,8,9,9,4);dome(m,39,9,9,4)
-    # The end pavilions are rest/inspection alcoves, separate from the six stalls.
-    bench(m,6,2,8,4,"south","birch");m.set(40,2,8,"water_cauldron[level=3]")
-    m.point("rest","circulation",(9,2,11),"候行拱室",look_at=[8,3,8])
-    m.point("water","work",(40,2,8),"公共取水",approach=(40,2,9))
-    front(m,23,5,width=5)
-    m.room("market","遮阳交易街",(5,2,14),(42,8,23),"六类摊铺的公共通行与停留")
-    m.room("west_store","西货仓与称量",(5,2,25),(21,6,33),"寄存、称量与结算")
-    m.room("east_store","东货仓与账房",(26,2,25),(42,6,33),"补货与交易账目")
-    m.room("rest","候行拱室",(5,2,6),(11,6,12),"歇脚等候")
-    m.room("water","饮水拱室",(36,2,6),(42,6,12),"公共饮水与看守")
-    for x,z in ((15,15),(23,15),(32,15),(11,28),(37,28)):pendant(m,x,7,z,10)
-    return m
+    from .desert_market import spice_market as build
+    return build()
 
 
 def clinic():
-    m=base(9,"清泉内庭医馆",(39,23,38),{"选址":"安静可达的居民或旅人服务地块，有可靠洁净用水与药材补给",
-        "地形":"平缓地块，北入口到候诊院落，病床避开主通道","角色":"诊疗、休养与药材空间；不附加治疗机制或药效"},
-        ["前庭候诊、侧翼诊室和药房、后部静养与值守；围合院落兼顾遮阳和互不穿行。"])
-    pad(m,3,4,35,34)
-    for spec in ((4,5,15,16),(23,5,34,16),(4,19,15,33),(18,23,34,33)):
-        room_shell(m,*spec,wall="white_terracotta")
-    m.door(15,2,12,facing="east");m.door(23,2,12,facing="west")
-    m.door(15,2,21,facing="east");m.door(25,2,23,facing="north")
-    # Two low exam couches with approach space, not decorative inaccessible beds.
-    for x in (7,11):
-        m.bed(x,2,12,color="light_blue",facing="north")
-        m.point(f"exam_{x}","bed",(x,2,12),"诊室躺床",approach=(x+1,2,12))
-    m.set(6,2,7,"water_cauldron[level=3]");table(m,9,2,7,4,"white")
-    m.box((9,2,10),(9,4,13),"white_wool")
-    m.box((7,1,9),(8,1,14),"light_blue_terracotta")
-    m.box((11,1,9),(12,1,14),"light_blue_terracotta")
-    shelf(m,25,2,7,7,contents="flower_pot")
-    m.box((25,2,13),(29,2,13),"birch_planks");m.set(25,3,13,"potted_fern")
-    m.set(28,2,13,"crafting_table");m.set(32,2,13,"barrel[facing=west]")
-    m.point("pharmacy","work",(28,2,13),"药材整理",approach=(28,2,12))
-    for z in (24,29):
-        m.bed(7,2,z,color="white",facing="west")
-        m.point(f"ward_{z}","bed",(7,2,z),"静养床位",approach=(8,2,z))
-        m.set(10,2,z,"birch_slab[type=top]");m.set(10,3,z,"lantern")
-    m.box((13,2,27),(13,4,31),"light_blue_wool")
-    m.box((5,2,26),(8,4,26),"white_wool")
-    m.set(14,2,30,"water_cauldron[level=3]")
-    m.point("ward_wash","work",(14,2,30),"病房盥洗角",approach=(14,2,29))
-    m.bed(30,2,29,color="cyan",facing="south");m.point("staff_bed","bed",(30,2,29),"值守床",approach=(29,2,29))
-    m.set(20,2,31,"smoker[facing=north]");m.set(22,2,31,"water_cauldron[level=3]")
-    m.set(20,2,26,"lectern[facing=south]");m.point("records","work",(20,2,26),"诊疗记录",approach=(20,2,27))
-    shelf(m,25,2,32,3,contents="bookshelf")
-    m.box((31,2,25),(33,3,25),"barrel[facing=south]")
-    table(m,25,2,28,3,"white")
-    bench(m,17,2,8,4,"south","birch");bench(m,17,2,18,4,"north","birch")
-    for x,z in ((17,6),(21,6),(17,19),(21,19)):m.box((x,2,z),(x,6,z),"cut_sandstone")
-    m.box((16,7,5),(22,7,20),"white_wool")
-    m.set(19,2,14,"water_cauldron[level=3]")
-    front(m,19,5,width=3)
-    dome(m,9,10,9,4,"prismarine_bricks");windtower(m,29,26)
-    for key,name,a,b,purpose in (("exam","诊室",(5,2,6),(14,6,15),"诊察躺床、取水与备品"),("pharmacy","药材房",(24,2,6),(33,6,15),"药材整理和存放"),("ward","静养病房",(5,2,20),(14,6,32),"独立休养床与遮挡洗漱角"),("staff","值守与记录",(19,2,24),(33,6,32),"值守睡眠、料理与档案"),("waiting","遮阳候诊庭",(16,2,6),(22,6,22),"候坐和饮水")):
-        m.room(key,name,a,b,purpose)
-    for x,z in ((9,9),(28,10),(10,21),(24,28)):pendant(m,x,6,z,8)
-    return m
+    from .desert_clinic import clinic as build
+    return build()
 
 
 def observatory():
-    m=base(10,"黄铜星仪台",(35,32,35),{"选址":"视野开阔且可安全登临的台地，避免树冠与高崖遮挡观测方向",
-        "地形":"平缓台地上的独立观测塔，入口脚底 Y=2，二层 Y=9，观测露台 Y=16",
-        "连接":"两段内部楼梯，保留入口步行和露台四周净空"},
-        ["三层登临次序为接待计算、藏书值守、露天观测；砂岩塔身、蓝色腰线与黄铜星仪形成垂直轮廓。"],roof=16)
-    pad(m,4,4,30,30)
-    room_shell(m,6,6,28,28,roof=False)
-    shell(m,(6,8,6),(28,14,28),"smooth_sandstone","birch_planks",ceiling="smooth_sandstone")
-    for y in (7,14):
-        for z in (6,28):m.box((6,y,z),(28,y,z),"blue_terracotta")
-        for x in (6,28):m.box((x,y,6),(x,y,28),"blue_terracotta")
-    for y in (3,10):
-        for x in (10,16,22):
-            window(m,(x,y,6),(x+2,y+2,6),color="cyan_stained_glass")
-            window(m,(x,y,28),(x+2,y+2,28),color="cyan_stained_glass")
-        for z in (10,18):
-            for x in (6,28):window(m,(x,y,z),(x,y+2,z+2),"z","cyan_stained_glass")
-    m.door(17,2,6,facing="north");front(m,17,6,width=3)
-    table(m,12,2,12,7,"blue");m.set(15,3,12,"light_weighted_pressure_plate[power=0]")
-    bench(m,12,2,15,7,"north","birch")
-    m.box((8,2,25),(14,4,25),"bookshelf");m.set(19,2,25,"lectern[facing=north]")
-    m.point("survey","work",(15,3,12),"星图计算台",approach=(15,2,11))
-    m.point("records","work",(19,2,25),"历法与观测记录",approach=(19,2,24))
-    # Separate sides prevent crossing flights from sharing insufficient headroom.
-    m.box((24,8,11),(25,8,21),"air")
-    for i in range(7):
-        y=2+i;z=20-i
-        for x in (24,25):
-            m.box((x,2,z),(x,y,z),"sandstone");m.set(x,y,z,"sandstone_stairs[facing=north]")
-    m.box((24,8,11),(25,8,13),"birch_planks")
-    railing(m,(23,9,14),(23,9,21),wood="birch",axis="z")
-    m.box((8,15,11),(9,15,22),"air")
-    for i in range(7):
-        y=9+i;z=13+i
-        for x in (8,9):
-            m.box((x,9,z),(x,y,z),"sandstone");m.set(x,y,z,"sandstone_stairs[facing=south]")
-    m.box((8,15,20),(9,15,22),"smooth_sandstone")
-    railing(m,(10,16,12),(10,16,19),wood="birch",axis="z")
-    m.box((13,9,7),(13,13,20),"white_terracotta");m.door(13,9,11,facing="east")
-    m.box((15,9,26),(26,11,26),"bookshelf")
-    m.bed(19,9,19,color="blue",facing="south");m.point("keeper_bed","bed",(19,9,19),"观测者床位",approach=(20,9,19))
-    table(m,17,9,11,4,"cyan");m.set(17,10,11,"potted_dead_bush")
-    m.set(25,9,9,"water_cauldron[level=3]");m.set(26,9,9,"barrel[facing=south]")
-    for z in (6,28):m.box((6,16,z),(28,16,z),"sandstone_wall")
-    for x in (6,28):m.box((x,16,6),(x,16,28),"sandstone_wall")
-    for x,z in ((7,7),(27,7),(7,27),(27,27)):
-        m.box((x,16,z),(x,19,z),"cut_sandstone");m.set(x,20,z,"lantern")
-    m.box((16,16,17),(18,18,19),"waxed_cut_copper")
-    for i in range(6):m.set(17,19+i//2,16+i,"waxed_cut_copper")
-    m.set(17,21,22,"cyan_stained_glass")
-    m.set(20,16,18,"lectern[facing=east]")
-    # Two large meridian rings make the armillary instrument legible from afar.
-    for step in range(72):
-        angle=step*math.tau/72;horizontal=round(5*math.cos(angle));vertical=round(5*math.sin(angle))
-        material="gold_block" if step%18==0 else "waxed_cut_copper"
-        m.set(17+horizontal,22+vertical,18,material)
-        m.set(17,22+vertical,18+horizontal,material)
-    m.set(17,21,18,"lightning_rod[facing=up]");m.set(17,22,18,"gold_block")
-    for deg in range(0,360,30):
-        x=17+round(7*math.cos(math.radians(deg)));z=17+round(7*math.sin(math.radians(deg)))
-        m.set(x,15,z,"blue_terracotta")
-    m.point("first_landing","circulation",(24,9,12),"藏书层楼梯口",look_at=[20,10,15])
-    m.point("deck_landing","circulation",(8,16,21),"观测露台楼梯口",look_at=[17,20,18])
-    m.point("instrument","work",(20,16,18),"星仪观测与记录",approach=(21,16,18))
-    m.box((15,9,22),(17,10,24),"bookshelf")
-    m.box((21,9,22),(22,9,24),"birch_slab[type=top]")
-    m.set(22,10,23,"lantern")
-    m.box((18,8,17),(21,8,21),"blue_terracotta")
-    m.box((12,1,10),(19,1,16),"light_blue_terracotta")
-    m.room("calculation","接待与星图计算",(7,2,7),(27,6,27),"计算桌、记录与上楼")
-    m.room("library","藏书和值守",(14,9,7),(27,13,27),"观测藏书、起居与床位")
-    m.room("gallery","二层登临廊",(7,9,7),(12,14,26),"通向露台的另一段楼梯")
-    m.room("deck","露天观测层",(7,16,7),(27,28,27),"星仪、刻度与开阔观测面")
-    m.meta["floors"]=[dict(name="接待计算",y=1,max_y=6),dict(name="藏书值守",y=8,max_y=13),dict(name="观测露台",y=15,max_y=27)]
-    m.meta["design_notes"].append("星仪是原版方块构成的空间装置，不代表天文或望远镜机制已接入。")
-    for x,y,z in ((17,6,17),(20,13,14),(18,13,23)):pendant(m,x,y,z,15)
-    return m
+    from .desert_observatory import observatory as build
+    return build()
 
 
 def buried_inn():

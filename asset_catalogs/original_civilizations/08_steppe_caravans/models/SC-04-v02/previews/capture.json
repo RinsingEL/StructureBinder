@@ -1,0 +1,31 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "SC-04-v02",
+  "nbt_sha256": "a070fd50d47808f24cae2c38369940e051670054bfb6ad65344dc49f45ef0bc5",
+  "author_sha256": "abb52bf4dc6f5b5b41be7d1368699fc105241406c1163d1a91cd9b5b2632e8e6",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-family",
+    "point-westbed",
+    "point-eastbed",
+    "point-rearbed",
+    "point-westcloth",
+    "point-eastcloth",
+    "point-familymeal",
+    "point-familykcook",
+    "point-familykwater",
+    "point-familykfood",
+    "point-sew",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

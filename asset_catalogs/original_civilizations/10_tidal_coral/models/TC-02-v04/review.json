@@ -1,0 +1,41 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "TC-02-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors / 海洋幻想作者实看",
+  "nbt_sha256": "7eb2d82bf7db6da5f493835e2df149b13e3999d540774ccadac54c589f435ec4",
+  "author_sha256": "e86b9b03dd306a8335a4ca934cfde74c811404fd81d928f0d07021ecd5f8ec97",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-common0.png",
+    "previews/room-bedroom0.png",
+    "previews/point-common0_cook.png",
+    "previews/point-common0_food.png",
+    "previews/point-common0_books.png",
+    "previews/point-bedroom0a.png",
+    "previews/point-bedroom0b.png",
+    "previews/point-bedroom0_clothes.png",
+    "previews/point-bedroom0_desk.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "高台和下沉入口护栏完整；连体旅舍公共走廊与分间卧室可用；住宅起居餐厨和床头储藏分区。",
+    "实际看过全部外观、去顶、分层、房间、功能点、标注与地形视图；结合零警告数据与导航核对。",
+    "坡岸阶贝宅",
+    "1个起居舱与1个独门休眠舱，位置/尺度/楼面高程共同变化；贯通架空平台和独立舱门"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

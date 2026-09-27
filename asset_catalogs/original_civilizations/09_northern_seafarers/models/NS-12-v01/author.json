@@ -1,277 +1,247 @@
 {
   "schema": "structure-studio.author.v1",
   "id": "NS-12-v01",
-  "name": "岬角旧海防哨",
+  "name": "错层残墙旧海防哨",
   "family": "NS-12",
   "civilization": "北欧",
   "planning_role": "planning_role.structure",
   "size": [
     35,
-    25,
-    35
+    36,
+    39
   ],
   "terrain": {
-    "选址": "稳定的寒地海湾背风岸台；避开潮涌、雪崩、海冰推挤和行洪通道。",
-    "高程": "旧营房脚底 Y=3，岬角高台脚底 Y=6；三级三宽石阶连接，入口与海向必须匹配真实岬地。",
-    "保留空间": "完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。",
-    "风雪": "厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。",
-    "岸线": "海在 +Z，示意岸线 Z=31、水面 Y=2；需校对潮差与实际船舶吃水。",
-    "历史": "选择有旧航路/边防历史的位置；为停用遗存，设备未燃烧、床位仅遗留，不承诺现役防御或自动补给。"
+    "选址": "寒地聚落或背风海岸，基础须稳定；保留完整出入口与工作面",
+    "地面": "外部陆侧街面脚底Y=3；高台、露台和水面另记，不能取代此基准",
+    "边界": "原版方块静态建筑，不模拟温度、潮汐、吊装或船舶运行",
+    "推荐情境": [
+      "寒地背风聚落或海湾聚落；这是常见使用背景，不要求所有北欧建筑临海，也不限定住户种族。"
+    ]
   },
   "rooms": [
     {
-      "id": "guard",
-      "name": "旧值守与两人歇宿屋",
+      "id": "ruin",
+      "name": "破顶旧营房",
       "min": [
-        4,
-        3,
-        6
+        6,
+        7,
+        15
       ],
       "max": [
-        13,
-        6,
-        21
+        14,
+        11,
+        22
       ],
-      "purpose": "旧日志、歇宿、封存装备与停用炉灶；厚木屋面保留可遮蔽部分；具体设施：床铺与个人防寒用品、床铺与个人防寒用品、旧值守日志和航路记录台、封存海防工具与旧灯具、备餐、热食与洗涤、旧值班公共餐桌"
+      "purpose": "旧床、日志、工具与破损木屋顶"
     },
     {
-      "id": "bastion",
-      "name": "开放海向信号台",
+      "id": "tower",
+      "name": "残石塔底层",
       "min": [
-        18,
-        6,
-        19
+        22,
+        11,
+        26
       ],
       "max": [
-        29,
-        10,
-        29
+        28,
+        17,
+        34
       ],
-      "purpose": "停用火盆、海图工作台与观测通路，低矮连续垛墙围护高台边缘；具体设施：停用信号火盆检视、避雨残桌与海图观测位、朝海观测平台"
+      "purpose": "旧信号储物与石塔内部"
+    },
+    {
+      "id": "lookout",
+      "name": "上层木观测台",
+      "min": [
+        22,
+        19,
+        26
+      ],
+      "max": [
+        28,
+        23,
+        34
+      ],
+      "purpose": "可由外阶及桥到达的观测台与海图桌"
     }
   ],
   "points": [
     {
-      "id": "entry",
-      "kind": "entrance",
+      "id": "lower_steps",
+      "kind": "circulation",
       "pos": [
-        8,
-        3,
-        4
+        16,
+        7,
+        11
       ],
-      "name": "背风步行入口",
-      "facing": "north"
+      "name": "石阶上平台"
+    },
+    {
+      "id": "upper_steps",
+      "kind": "circulation",
+      "pos": [
+        24,
+        11,
+        21
+      ],
+      "name": "石阶上平台"
     },
     {
       "id": "oldbunk0",
       "kind": "bed",
       "pos": [
-        4,
-        3,
-        11
+        6,
+        7,
+        21
       ],
-      "name": "床铺与个人防寒用品",
-      "look_at": [
-        4,
-        4,
-        11
-      ],
+      "name": "轮休床位",
       "approach": [
-        5,
-        3,
-        11
+        7,
+        7,
+        21
       ]
     },
     {
-      "id": "oldbunk1",
-      "kind": "bed",
+      "id": "oldgear",
+      "kind": "storage",
       "pos": [
+        13,
         7,
-        3,
-        11
+        20
       ],
-      "name": "床铺与个人防寒用品",
-      "look_at": [
-        7,
-        4,
-        11
-      ],
+      "name": "封存旧装备",
       "approach": [
-        8,
-        3,
-        11
+        12,
+        7,
+        20
       ]
     },
     {
       "id": "log",
       "kind": "work",
       "pos": [
-        4,
-        3,
-        7
-      ],
-      "name": "旧值守日志和航路记录台",
-      "look_at": [
-        4,
-        4,
-        7
-      ],
-      "approach": [
-        4,
-        3,
-        8
-      ]
-    },
-    {
-      "id": "gear",
-      "kind": "storage",
-      "pos": [
-        4,
-        3,
-        19
-      ],
-      "name": "封存海防工具与旧灯具",
-      "look_at": [
-        4,
-        4,
-        19
-      ],
-      "approach": [
-        4,
-        3,
-        20
-      ]
-    },
-    {
-      "id": "oldstove",
-      "kind": "work",
-      "pos": [
-        9,
-        3,
-        19
-      ],
-      "name": "备餐、热食与洗涤",
-      "look_at": [
-        9,
-        4,
-        19
-      ],
-      "approach": [
-        9,
-        3,
-        20
-      ]
-    },
-    {
-      "id": "mess",
-      "kind": "work",
-      "pos": [
-        8,
-        3,
-        15
-      ],
-      "name": "旧值班公共餐桌",
-      "look_at": [
-        8,
-        4,
-        15
-      ],
-      "approach": [
-        8,
-        3,
-        14
-      ]
-    },
-    {
-      "id": "signal",
-      "kind": "work",
-      "pos": [
-        20,
         6,
-        25
-      ],
-      "name": "停用信号火盆检视",
-      "look_at": [
-        20,
         7,
-        25
+        16
       ],
+      "name": "旧值守日志",
       "approach": [
+        7,
+        7,
+        16
+      ]
+    },
+    {
+      "id": "tower_stair",
+      "kind": "circulation",
+      "pos": [
+        18,
         19,
-        6,
-        25
-      ]
-    },
-    {
-      "id": "chart",
-      "kind": "work",
-      "pos": [
-        25,
-        6,
-        21
+        32
       ],
-      "name": "避雨残桌与海图观测位",
-      "look_at": [
-        25,
-        7,
-        21
-      ],
-      "approach": [
-        25,
-        6,
-        22
-      ]
+      "name": "石阶上平台"
     },
     {
       "id": "watch",
-      "kind": "circulation",
+      "kind": "work",
       "pos": [
         27,
-        6,
-        28
+        19,
+        32
       ],
-      "name": "朝海观测平台",
-      "look_at": [
-        27,
-        5,
-        34
+      "name": "高台海图观测",
+      "approach": [
+        26,
+        19,
+        32
       ]
+    },
+    {
+      "id": "tower_store",
+      "kind": "storage",
+      "pos": [
+        25,
+        11,
+        32
+      ],
+      "name": "石塔旧信号用品",
+      "approach": [
+        25,
+        11,
+        31
+      ]
+    },
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        16,
+        3,
+        4
+      ],
+      "name": "陆侧主入口",
+      "facing": "north"
     }
   ],
-  "connections": [],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        16,
+        3,
+        4
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "陆侧脚底Y=3接外部街面"
+    }
+  ],
   "design_notes": [
-    "旧木营房与石质海向信号台分占两级岬角；保留日志、两床、旧炉与封存工具，抬高观测层有连续矮垛墙和停用火盆，残损石屏表现弃置而不破坏可走路线。"
+    "残损石墙沿三段高差叠起，破屋与完整可达木望台分开；下院、上院和外阶桥连接而非平地摆塔，保留旧值守用途而非新堡垒。"
   ],
   "differences": [
-    "旧木营房与石质海向信号台分占两级岬角；保留日志、两床、旧炉与封存工具，抬高观测层有连续矮垛墙和停用火盆，残损石屏表现弃置而不破坏可走路线。"
+    "残损石墙沿三段高差叠起，破屋与完整可达木望台分开；下院、上院和外阶桥连接而非平地摆塔，保留旧值守用途而非新堡垒。"
   ],
   "floors": [
     {
-      "name": "旧营房及下院",
-      "y": 2,
-      "max_y": 6
+      "name": "下院旧营房",
+      "y": 6,
+      "max_y": 11
     },
     {
-      "name": "高台观测层",
-      "y": 5,
-      "max_y": 10
+      "name": "上院及石塔",
+      "y": 10,
+      "max_y": 17
+    },
+    {
+      "name": "观测台",
+      "y": 18,
+      "max_y": 24
     }
   ],
-  "roof_min_y": 7,
+  "roof_min_y": 11,
   "lifecycle": "draft",
   "offline_limits": [
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
   ],
-  "source": "tools/structure_studio/studio/northern_seafarers.py:BUILDERS",
-  "preview_context": {
-    "kind": "shore",
-    "land_surface_y": 3,
-    "padding": 5,
-    "surface": "snow",
-    "shore_z": 31,
-    "water_surface_y": 2,
-    "bed_y": -2
+  "source": "tools/structure_studio/studio/northern_reference.py:BUILDERS['NS-12-v01']",
+  "ground_plane": {
+    "y": 3,
+    "note": "陆侧入口外地面方块顶面，脚底Y=3；海水表面和内部高台分别记录，不用于接地。"
   },
-  "nbt_sha256": "e6dbfeb359bfe2c8fd7512f9900f794f6fca90ce769c6c83d3b3e375a60de8e3"
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -2,
+    "padding": 4,
+    "surface": "snow"
+  },
+  "function_terms": [
+    "海防遗址展示"
+  ],
+  "nbt_sha256": "d1720f9ab08559a9bd452dabbff4db5da5f9c78c5462065caefb5e860f20eca9"
 }

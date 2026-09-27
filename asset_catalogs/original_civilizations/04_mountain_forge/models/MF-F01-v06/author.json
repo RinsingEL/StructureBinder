@@ -161,5 +161,9 @@
     "land_surface_y": 2,
     "padding": 5
   },
-  "nbt_sha256": "dbd747e0c591f161e8702d910dbf52eb642cb4b9602a98aad062a854025b1f77"
+  "nbt_sha256": "dbd747e0c591f161e8702d910dbf52eb642cb4b9602a98aad062a854025b1f77",
+  "function_terms": [
+    "零售",
+    "餐饮"
+  ]
 }

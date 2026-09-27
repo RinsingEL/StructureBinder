@@ -1,0 +1,43 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "NS-06-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 北欧套系作者逐图审查",
+  "nbt_sha256": "eb08019a33e56961e06c0b91890779a91db44b70168c91fbffafc276e34461f8",
+  "author_sha256": "d9cdee9c1293eb53c84ddd43c906c8ab615f6bba1fef9407bd4da50d0c36700b",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-life.png",
+    "previews/room-sleep.png",
+    "previews/room-net.png",
+    "previews/point-cook.png",
+    "previews/point-beds0.png",
+    "previews/point-beds1.png",
+    "previews/point-linen.png",
+    "previews/point-net.png",
+    "previews/point-netstore.png",
+    "previews/point-wash.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与用途": "前炊食后双寝构成紧凑住宅，折角侧房单独容纳整网、网柜和冲洗；生产屋和卧室分别有完整功能边界。",
+    "实际内饰图审": "侧工作间与二床生活区分开，维修材料不占餐桌与床侧通道。",
+    "完整证据": "已实际查看最终四向、顶视、去顶、全部楼层与房间、使用站位、标记及场地示意；四个双层模型另补楼层斜视核对护栏。",
+    "数据与通路": "NBT 重读、方块状态、作者标记与离线碰撞导航通过，零警告。",
+    "选址条件": "稳定的寒地海湾背风岸台；避开潮涌、雪崩、海冰推挤和行洪通道。；干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。；完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。；厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "设备、晾晒及温床为静态表达，未接入加工、气候或作物生产机制。"
+  ]
+}

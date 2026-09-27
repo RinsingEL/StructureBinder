@@ -1,11 +1,11 @@
 {
   "schema": "structure-studio.validation.v1",
-  "nbt_sha256": "afc5b45b0bd6d071bde92961b663e079bdb542b39c13c9dca58053faeef0a857",
+  "nbt_sha256": "a1139b874f3e1186d11cc11aa6eaf7804d4199811d3df467dd11f3175da43de2",
   "navigation": {
     "passed": true,
     "unreachable": [],
-    "nodes": 2541,
-    "highest_standing_y": 3,
+    "nodes": 1833,
+    "highest_standing_y": 2,
     "truncated": false,
     "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
   },
@@ -13,30 +13,31 @@
   "errors": [],
   "warnings": [],
   "size": [
-    33,
-    18,
-    29
+    25,
+    14,
+    25
   ],
-  "visible_blocks": 2210,
-  "explicit_air": 10318,
+  "visible_blocks": 1528,
+  "explicit_air": 5878,
   "palette": 18,
   "block_entities": 0,
   "agriculture": null,
   "materials": {
-    "minecraft:cut_sandstone": 696,
-    "minecraft:smooth_sandstone": 609,
-    "minecraft:orange_wool": 270,
-    "minecraft:white_wool": 243,
-    "minecraft:stripped_acacia_log": 171,
-    "minecraft:sandstone": 87,
-    "minecraft:barrel": 59,
-    "minecraft:spruce_planks": 57,
-    "minecraft:birch_slab": 5,
-    "minecraft:orange_carpet": 5,
-    "minecraft:acacia_stairs": 4,
-    "minecraft:acacia_trapdoor": 2,
+    "minecraft:cut_sandstone": 622,
+    "minecraft:smooth_sandstone": 301,
+    "minecraft:white_wool": 160,
+    "minecraft:sandstone": 124,
+    "minecraft:red_terracotta": 90,
+    "minecraft:stripped_spruce_log": 76,
+    "minecraft:barrel": 52,
+    "minecraft:spruce_fence": 46,
+    "minecraft:sandstone_wall": 24,
+    "minecraft:gravel": 16,
+    "minecraft:spruce_slab": 9,
+    "minecraft:lantern": 4,
+    "minecraft:flower_pot": 2,
     "minecraft:lectern": 1,
     "minecraft:water_cauldron": 1
   },
-  "scope": "NBT、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
 }

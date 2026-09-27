@@ -1,0 +1,43 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "SC-04-v05",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 游牧生活返修作者逐图实看",
+  "nbt_sha256": "7047e9b17365f59978fad75402395d0685f483614ba01b4263d21077662722c4",
+  "author_sha256": "74ce5abbecc3396e61b91daffb69dd2f4b938c1388f44c869ef70e497829c621",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-porch.png",
+    "previews/room-sleep.png",
+    "previews/point-bed.png",
+    "previews/point-linen.png",
+    "previews/point-indoor.png",
+    "previews/point-read.png",
+    "previews/point-porchkcook.png",
+    "previews/point-porchkwater.png",
+    "previews/point-porchkfood.png",
+    "previews/point-weave.png",
+    "previews/point-workstock.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "当前全部外观、去顶、楼层、房间、功能点、标注及场景图逐张实看；浅木家具与织毯对比清楚。",
+    "住宅按围火、弧墙床榻、纵向家务、双帐炊庭、作业前廊、冬居坡台组织；客宿按独立帐、六床舱、寝餐分帐、接待分帐组织。",
+    "标记与NBT同步；入口至功能点零警告离线导航。"
+  ],
+  "revisions": [
+    "主审退回旧同构生活平面后完整重建，旧221图不计本次成品。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

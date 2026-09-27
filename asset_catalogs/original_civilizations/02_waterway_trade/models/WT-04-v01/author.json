@@ -352,5 +352,8 @@
     "upstream_surface_y": 5,
     "downstream_surface_y": 3
   },
-  "nbt_sha256": "4af97768a946537c1663555aee01436a0d3fd8ad03eee33cc1e1e63cf6e4c40a"
+  "nbt_sha256": "4af97768a946537c1663555aee01436a0d3fd8ad03eee33cc1e1e63cf6e4c40a",
+  "function_terms": [
+    "船闸管理"
+  ]
 }

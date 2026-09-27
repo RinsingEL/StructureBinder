@@ -1,0 +1,310 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "ML-03-v03",
+  "name": "钟务附楼双层家宅",
+  "family": "ML-03",
+  "civilization": "哥特",
+  "planning_role": "planning_role.fill",
+  "size": [
+    35,
+    35,
+    30
+  ],
+  "terrain": {
+    "选址": "稳定、排水良好的居民地块，日照与通路按具体用途保留；哥特是建造风格而非地形限制。",
+    "高程": "基础底Y=0、常规地面Y=2、脚底Y=3；抬高或双层版本另记。",
+    "边界": "完整独立模板，保留外扶柱、檐口、采光和门外站位，不默认邻居补齐。"
+  },
+  "rooms": [
+    {
+      "id": "ground",
+      "name": "高宅家庭餐厨",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        15,
+        7,
+        24
+      ],
+      "purpose": "主楼起居餐厨与侧楼梯；设施：备餐、热食与洗涤、家庭备粮"
+    },
+    {
+      "id": "upper",
+      "name": "上层双床家庭",
+      "min": [
+        5,
+        9,
+        5
+      ],
+      "max": [
+        15,
+        13,
+        24
+      ],
+      "purpose": "双床、衣物与读写；设施：床位与个人衣物、床位与个人衣物、上层家庭被服、上层读写"
+    },
+    {
+      "id": "clock",
+      "name": "低檐独立钟务附楼",
+      "min": [
+        21,
+        3,
+        13
+      ],
+      "max": [
+        29,
+        7,
+        24
+      ],
+      "purpose": "前校时后记录，宽工作门向庭院；设施：钟务校时、零件与交班记录、钟绳、润滑与备用小件、钟务交班记录"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        10,
+        3,
+        3
+      ],
+      "name": "尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "clockentry",
+      "kind": "entrance",
+      "pos": [
+        25,
+        3,
+        11
+      ],
+      "name": "尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "cook",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        6
+      ],
+      "name": "备餐、热食与洗涤",
+      "look_at": [
+        5,
+        4,
+        6
+      ],
+      "approach": [
+        5,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "pantry",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        21
+      ],
+      "name": "家庭备粮",
+      "look_at": [
+        5,
+        4,
+        21
+      ],
+      "approach": [
+        5,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "clock",
+      "kind": "work",
+      "pos": [
+        21,
+        3,
+        15
+      ],
+      "name": "钟务校时、零件与交班记录",
+      "look_at": [
+        21,
+        4,
+        15
+      ],
+      "approach": [
+        21,
+        3,
+        16
+      ]
+    },
+    {
+      "id": "clockparts",
+      "kind": "storage",
+      "pos": [
+        21,
+        3,
+        19
+      ],
+      "name": "钟绳、润滑与备用小件",
+      "look_at": [
+        21,
+        4,
+        19
+      ],
+      "approach": [
+        21,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "records",
+      "kind": "work",
+      "pos": [
+        21,
+        3,
+        22
+      ],
+      "name": "钟务交班记录",
+      "look_at": [
+        21,
+        4,
+        22
+      ],
+      "approach": [
+        21,
+        3,
+        23
+      ]
+    },
+    {
+      "id": "beds0",
+      "kind": "bed",
+      "pos": [
+        6,
+        9,
+        20
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        6,
+        10,
+        20
+      ],
+      "approach": [
+        7,
+        9,
+        20
+      ]
+    },
+    {
+      "id": "beds1",
+      "kind": "bed",
+      "pos": [
+        9,
+        9,
+        20
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        9,
+        10,
+        20
+      ],
+      "approach": [
+        10,
+        9,
+        20
+      ]
+    },
+    {
+      "id": "linen",
+      "kind": "storage",
+      "pos": [
+        6,
+        9,
+        23
+      ],
+      "name": "上层家庭被服",
+      "look_at": [
+        6,
+        10,
+        23
+      ],
+      "approach": [
+        6,
+        9,
+        24
+      ]
+    },
+    {
+      "id": "reading",
+      "kind": "work",
+      "pos": [
+        6,
+        9,
+        7
+      ],
+      "name": "上层读写",
+      "look_at": [
+        6,
+        10,
+        7
+      ],
+      "approach": [
+        6,
+        9,
+        8
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "依参考图：高瘦双层主宅与宽低钟务翼并置，屋脊高差和开敞院路形成主次体量。",
+    "按2026-09-27效果图重绘：浅石深木、陡瓦白边、铁脊老虎窗、紫金彩窗与灯柱围院。"
+  ],
+  "differences": [
+    "依参考图：高瘦双层主宅与宽低钟务翼并置，屋脊高差和开敞院路形成主次体量。"
+  ],
+  "floors": [
+    {
+      "name": "下层作业起居",
+      "y": 2,
+      "max_y": 7
+    },
+    {
+      "name": "上层家居钟务",
+      "y": 8,
+      "max_y": 13
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/memorial_life.py:BUILDERS",
+  "ground_plane": {
+    "y": 3,
+    "note": "外部场坪顶面与脚底Y=3，铺地方块Y=2；内部上层及高台不改变接地基准。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "家庭居住"
+  ],
+  "nbt_sha256": "cd38ae6d6026751065558ec61b0b8adf2ee462198de45287b1a3909a46768c8f"
+}

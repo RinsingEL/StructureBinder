@@ -1,0 +1,222 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "NS-03-v01",
+  "name": "小型盐鱼作坊",
+  "family": "NS-03",
+  "civilization": "北欧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    33,
+    28,
+    35
+  ],
+  "terrain": {
+    "选址": "具备干燥稳定地基的寒地渔业街区；原料和饮水需外部供给",
+    "地基": "外部街面/入口脚底局部Y=3；保留场坪支撑及全套晾晒、修网和装卸工作面",
+    "用途边界": "加工器具与晾架为原版方块静态表达，不声明自动生产或渔获机制",
+    "推荐情境": [
+      "寒地背风聚落或海湾聚落；这是常见使用背景，不要求所有北欧建筑临海，也不限定住户种族。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "processing",
+      "name": "遮风加工厅",
+      "min": [
+        5,
+        3,
+        13
+      ],
+      "max": [
+        15,
+        7,
+        28
+      ],
+      "purpose": "行业设备、原料与成品之间保留通道"
+    }
+  ],
+  "points": [
+    {
+      "id": "cut",
+      "kind": "work",
+      "pos": [
+        6,
+        3,
+        16
+      ],
+      "name": "去鳞分切与盐渍台",
+      "look_at": [
+        6,
+        4,
+        16
+      ],
+      "approach": [
+        6,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "smoke",
+      "kind": "work",
+      "pos": [
+        6,
+        3,
+        20
+      ],
+      "name": "熏鱼火箱",
+      "approach": [
+        6,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "salt",
+      "kind": "storage",
+      "pos": [
+        10,
+        3,
+        21
+      ],
+      "name": "盐料与包材储柜",
+      "look_at": [
+        10,
+        4,
+        21
+      ],
+      "approach": [
+        10,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "drying",
+      "kind": "work",
+      "pos": [
+        23,
+        5,
+        22
+      ],
+      "name": "悬挂盐鱼风干架（静态形象）",
+      "approach": [
+        23,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "front_rack",
+      "kind": "work",
+      "pos": [
+        10,
+        5,
+        7
+      ],
+      "name": "悬挂盐鱼风干架（静态形象）",
+      "approach": [
+        10,
+        3,
+        6
+      ]
+    },
+    {
+      "id": "pack",
+      "kind": "work",
+      "pos": [
+        20,
+        3,
+        28
+      ],
+      "name": "包装交货台",
+      "look_at": [
+        20,
+        4,
+        28
+      ],
+      "approach": [
+        20,
+        3,
+        29
+      ]
+    },
+    {
+      "id": "water",
+      "kind": "work",
+      "pos": [
+        25,
+        3,
+        11
+      ],
+      "name": "工人饮水歇脚",
+      "approach": [
+        25,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        17,
+        3,
+        3
+      ],
+      "name": "街面装卸与人员入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        17,
+        3,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "与外部Y=3街面平接"
+    }
+  ],
+  "design_notes": [
+    "参考图3，以陡坡木屋、附棚、开放工作架和不同生产动线区分八款；不复制图片非原版装饰。"
+  ],
+  "differences": [
+    "小型盐鱼作坊"
+  ],
+  "floors": [
+    {
+      "name": "工作地坪",
+      "y": 3,
+      "max_y": 8
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/northern_fill_workshops.py:fish(1)",
+  "ground_plane": {
+    "y": 3,
+    "note": "外部街道与场坪上边界/入口脚底Y=3；内部错台由楼梯连接"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "盐鱼加工",
+    "鱼类晾晒"
+  ],
+  "nbt_sha256": "6f1586d0f99d58eb2293dad3e7eaea14252c7352ef4cef167e8b50d78573cafe"
+}

@@ -1,8 +1,8 @@
 {
   "schema": "structure-studio.capture.v1",
   "id": "DS-F02-v04",
-  "nbt_sha256": "5ebba736be978e6227ddd8a9e6ee4c2a9b33978db3e6f15d082af323cb1a8a4b",
-  "author_sha256": "46bb155b9a034c15b1fb518098a62072bb997c431cbb73d7bfad0c676b584599",
+  "nbt_sha256": "fa6bcd96d22b0496c970d1a18755c29fda0c727d5b5462a78b7b2c966cde9834",
+  "author_sha256": "41ee01e8710e5281b0c4e25bbabd27086c865136672bd422c7f6ee3373dbc0c3",
   "shots": [
     "front",
     "back",
@@ -11,36 +11,16 @@
     "top",
     "roof-off",
     "floor-1",
-    "room-field",
-    "point-compost",
+    "room-north",
+    "room-elbow",
+    "room-east",
+    "point-workway0",
+    "point-workway1",
+    "point-workway2",
     "annotations",
     "site-context"
   ],
   "render_errors": [],
   "missing_textures": [],
-  "visual_review": "pending",
-  "metadata_migrations": [
-    {
-      "kind": "civilization_display_name_only",
-      "date": "2026-09-22",
-      "field": "civilization",
-      "before": "沙海星象文明",
-      "after": "星仪王国",
-      "previous_author_sha256": "3fea44bc3933d7f7e1c3cd7e803a3d85267643a3b1cb80f75a729957006290e1",
-      "current_author_sha256": "ae1d99c4a9ed4df748a7b7ae71c8494f4e14ee35db17fa50eb213d8d091156a5",
-      "nbt_sha256": "5ebba736be978e6227ddd8a9e6ee4c2a9b33978db3e6f15d082af323cb1a8a4b",
-      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
-    },
-    {
-      "kind": "civilization_display_name_only",
-      "date": "2026-09-22",
-      "field": "civilization",
-      "before": "星仪王国",
-      "after": "沙漠",
-      "previous_author_sha256": "ae1d99c4a9ed4df748a7b7ae71c8494f4e14ee35db17fa50eb213d8d091156a5",
-      "current_author_sha256": "46bb155b9a034c15b1fb518098a62072bb997c431cbb73d7bfad0c676b584599",
-      "nbt_sha256": "5ebba736be978e6227ddd8a9e6ee4c2a9b33978db3e6f15d082af323cb1a8a4b",
-      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
-    }
-  ]
+  "visual_review": "pending"
 }

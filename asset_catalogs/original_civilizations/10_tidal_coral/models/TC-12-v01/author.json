@@ -296,5 +296,8 @@
     "padding": 4,
     "surface": "sand"
   },
-  "nbt_sha256": "392dae3a122123620881e8bf1a816f294ec0b4cf3c64f59711096522392f4c70"
+  "nbt_sha256": "392dae3a122123620881e8bf1a816f294ec0b4cf3c64f59711096522392f4c70",
+  "function_terms": [
+    "潮标遗址展示"
+  ]
 }

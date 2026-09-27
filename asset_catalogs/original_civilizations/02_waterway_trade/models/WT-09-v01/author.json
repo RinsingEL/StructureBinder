@@ -339,5 +339,9 @@
     "shore_z": 36,
     "water_surface_y": 3
   },
-  "nbt_sha256": "b703448bea230a70f0a75dc505cbcfa812868a557f372292d4a27bade5f440cf"
+  "nbt_sha256": "b703448bea230a70f0a75dc505cbcfa812868a557f372292d4a27bade5f440cf",
+  "function_terms": [
+    "货运查验",
+    "海关管理"
+  ]
 }

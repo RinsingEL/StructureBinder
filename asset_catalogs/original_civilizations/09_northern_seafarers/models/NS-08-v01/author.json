@@ -1,0 +1,253 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "NS-08-v01",
+  "name": "紧凑石基粮仓",
+  "family": "NS-08",
+  "civilization": "北欧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    25,
+    28,
+    27
+  ],
+  "terrain": {
+    "选址": "干燥稳定地基，外部街面接Y=3；仓储需外部货源，客栈需食品及饮水供给；不强制滨海选址。",
+    "高程": "干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。",
+    "保留空间": "完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。",
+    "风雪": "厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。",
+    "推荐情境": [
+      "寒地背风聚落或海湾聚落；这是常见使用背景，不要求所有北欧建筑临海，也不限定住户种族。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "food",
+      "name": "收发及食品前仓",
+      "min": [
+        4,
+        3,
+        4
+      ],
+      "max": [
+        20,
+        6,
+        11
+      ],
+      "purpose": "前部登记台与两组食品架；具体设施：物资称验与领用登记、粮食与盐藏品、备用食物和饮水容器"
+    },
+    {
+      "id": "tools",
+      "name": "后工具被服仓",
+      "min": [
+        4,
+        3,
+        13
+      ],
+      "max": [
+        11,
+        6,
+        22
+      ],
+      "purpose": "工具和被服分架储存；具体设施：工具、灯具与修缮物资、被服和防寒用品"
+    },
+    {
+      "id": "fuel",
+      "name": "隔门燃料仓",
+      "min": [
+        13,
+        3,
+        13
+      ],
+      "max": [
+        20,
+        6,
+        22
+      ],
+      "purpose": "中部燃料垛四周可搬运，与食品间隔墙；具体设施：隔间干燥燃料垛"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        12,
+        3,
+        2
+      ],
+      "name": "背风步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "check",
+      "kind": "work",
+      "pos": [
+        4,
+        3,
+        5
+      ],
+      "name": "物资称验与领用登记",
+      "look_at": [
+        4,
+        4,
+        5
+      ],
+      "approach": [
+        4,
+        3,
+        6
+      ]
+    },
+    {
+      "id": "food",
+      "kind": "storage",
+      "pos": [
+        4,
+        3,
+        9
+      ],
+      "name": "粮食与盐藏品",
+      "look_at": [
+        4,
+        4,
+        9
+      ],
+      "approach": [
+        4,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "food2",
+      "kind": "storage",
+      "pos": [
+        14,
+        3,
+        5
+      ],
+      "name": "备用食物和饮水容器",
+      "look_at": [
+        14,
+        4,
+        5
+      ],
+      "approach": [
+        14,
+        3,
+        6
+      ]
+    },
+    {
+      "id": "tools",
+      "kind": "storage",
+      "pos": [
+        4,
+        3,
+        15
+      ],
+      "name": "工具、灯具与修缮物资",
+      "look_at": [
+        4,
+        4,
+        15
+      ],
+      "approach": [
+        4,
+        3,
+        16
+      ]
+    },
+    {
+      "id": "clothes",
+      "kind": "storage",
+      "pos": [
+        4,
+        3,
+        21
+      ],
+      "name": "被服和防寒用品",
+      "look_at": [
+        4,
+        4,
+        21
+      ],
+      "approach": [
+        4,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "wood",
+      "kind": "storage",
+      "pos": [
+        15,
+        3,
+        17
+      ],
+      "name": "隔间干燥燃料垛",
+      "look_at": [
+        15,
+        4,
+        17
+      ],
+      "approach": [
+        14,
+        3,
+        17
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        12,
+        3,
+        2
+      ],
+      "direction": "north",
+      "clearance": [
+        1,
+        2
+      ],
+      "note": "已标入口与外部Y=3街面接驳"
+    }
+  ],
+  "design_notes": [
+    "参考北欧图4：紧凑石基粮仓；复用完整可达的分类储物或食宿内饰，重组屋顶和装卸/入口体量。"
+  ],
+  "differences": [
+    "紧凑石基粮仓"
+  ],
+  "floors": [
+    {
+      "name": "岸台生活作业层",
+      "y": 2,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/northern_fill_storage_inns.py:build('NS-08',1)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 5,
+    "surface": "snow"
+  },
+  "ground_plane": {
+    "y": 3,
+    "note": "外部稳定街面与模板场坪顶面齐平，站立脚底Y=3；基础方块在其下"
+  },
+  "function_terms": [
+    "仓储",
+    "物资配给"
+  ],
+  "nbt_sha256": "ebac47953670b4dbc4474bd28cb002d99ab6a68d559decc15c03459da98d23b0"
+}

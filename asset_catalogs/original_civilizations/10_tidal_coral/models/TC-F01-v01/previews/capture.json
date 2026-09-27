@@ -1,0 +1,33 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "TC-F01-v01",
+  "nbt_sha256": "00a98c44691bb3a831ae5ea358e8efd690ebc3f041f570a9fa15706570cafdda",
+  "author_sha256": "d1c4990ba089aa07ee07990d7f4736ee30532d5ff117a425cea6d7e6381cdf9e",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-shop",
+    "room-ownerlive",
+    "room-ownerbed",
+    "point-shoptrade",
+    "point-shopraw",
+    "point-shopbench",
+    "point-shopindustry",
+    "point-ownerlivecook",
+    "point-ownerlivefood",
+    "point-ownerlivebooks",
+    "point-ownerbeda",
+    "point-ownerbedcloth",
+    "point-ownerbeddesk",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

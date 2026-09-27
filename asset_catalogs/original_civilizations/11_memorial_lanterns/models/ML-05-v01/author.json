@@ -1,0 +1,301 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "ML-05-v01",
+  "name": "祖先议事庭与双侧公档翼",
+  "family": "ML-05",
+  "civilization": "哥特",
+  "planning_role": "planning_role.key",
+  "size": [
+    47,
+    32,
+    41
+  ],
+  "terrain": {
+    "选址": "排水良好的稳定台地，保留并接通模型实际入口；在用设施按实际使用人群组织供给，历史遗存不强制邻接常住聚落。",
+    "高程": "基础底 Y=0，公共地面 Y=2，步行脚底 Y=3；道路接入口同高。",
+    "保留空间": "独立完整模板，保留外扶壁、彩窗采光面及庭院；不可用相邻建筑遮挡。",
+    "构造": "尖拱、外扶壁与内肋共同表达高挑空间；不模拟结构受力、照度或天气。",
+    "推荐情境": [
+      "居民聚落的公共服务与纪念建筑，或有相应历史的遗址；哥特风格不限定居民种族。已建骨藏、陵寝等专用空间仍保留自身用途。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "public",
+      "name": "开放旁听席",
+      "min": [
+        16,
+        3,
+        6
+      ],
+      "max": [
+        30,
+        10,
+        15
+      ],
+      "purpose": "四组旁听长凳和中央进入通道"
+    },
+    {
+      "id": "debate",
+      "name": "议事与纪念主庭",
+      "min": [
+        16,
+        3,
+        16
+      ],
+      "max": [
+        30,
+        10,
+        34
+      ],
+      "purpose": "两侧代表席、中央陈述、主持记录和祖先誓约台；设施：公开议事主持与文书、中央陈述与公共讨论位、祖先纪念与公共誓约石台"
+    },
+    {
+      "id": "archive",
+      "name": "公共档案侧翼",
+      "min": [
+        6,
+        3,
+        20
+      ],
+      "max": [
+        10,
+        10,
+        34
+      ],
+      "purpose": "议事记录与查阅抄录；设施：历次议事记录、公档查阅抄录"
+    },
+    {
+      "id": "clerk",
+      "name": "书记事务侧翼",
+      "min": [
+        36,
+        3,
+        20
+      ],
+      "max": [
+        40,
+        10,
+        34
+      ],
+      "purpose": "公众申请、决议公布和文具保管；设施：待公布决议与文具、公众申请与书记交接"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        23,
+        3,
+        4
+      ],
+      "name": "尖拱门入口",
+      "facing": "north"
+    },
+    {
+      "id": "archiveentry",
+      "kind": "circulation",
+      "pos": [
+        8,
+        3,
+        18
+      ],
+      "name": "尖拱门入口",
+      "facing": "north"
+    },
+    {
+      "id": "serviceentry",
+      "kind": "circulation",
+      "pos": [
+        38,
+        3,
+        18
+      ],
+      "name": "尖拱门入口",
+      "facing": "north"
+    },
+    {
+      "id": "chair",
+      "kind": "work",
+      "pos": [
+        19,
+        3,
+        29
+      ],
+      "name": "公开议事主持与文书",
+      "look_at": [
+        19,
+        4,
+        29
+      ],
+      "approach": [
+        19,
+        3,
+        30
+      ]
+    },
+    {
+      "id": "debate",
+      "kind": "circulation",
+      "pos": [
+        23,
+        3,
+        22
+      ],
+      "name": "中央陈述与公共讨论位",
+      "look_at": [
+        23,
+        4,
+        29
+      ]
+    },
+    {
+      "id": "memorial",
+      "kind": "work",
+      "pos": [
+        20,
+        3,
+        33
+      ],
+      "name": "祖先纪念与公共誓约石台",
+      "look_at": [
+        20,
+        4,
+        33
+      ],
+      "approach": [
+        20,
+        3,
+        34
+      ]
+    },
+    {
+      "id": "minutes",
+      "kind": "storage",
+      "pos": [
+        6,
+        3,
+        23
+      ],
+      "name": "历次议事记录",
+      "look_at": [
+        6,
+        4,
+        23
+      ],
+      "approach": [
+        6,
+        3,
+        24
+      ]
+    },
+    {
+      "id": "copy",
+      "kind": "work",
+      "pos": [
+        6,
+        3,
+        29
+      ],
+      "name": "公档查阅抄录",
+      "look_at": [
+        6,
+        4,
+        29
+      ],
+      "approach": [
+        6,
+        3,
+        30
+      ]
+    },
+    {
+      "id": "documents",
+      "kind": "storage",
+      "pos": [
+        36,
+        3,
+        23
+      ],
+      "name": "待公布决议与文具",
+      "look_at": [
+        36,
+        4,
+        23
+      ],
+      "approach": [
+        36,
+        3,
+        24
+      ]
+    },
+    {
+      "id": "service",
+      "kind": "work",
+      "pos": [
+        36,
+        3,
+        29
+      ],
+      "name": "公众申请与书记交接",
+      "look_at": [
+        36,
+        4,
+        29
+      ],
+      "approach": [
+        36,
+        3,
+        30
+      ]
+    },
+    {
+      "id": "publiccourt",
+      "kind": "circulation",
+      "pos": [
+        23,
+        3,
+        3
+      ],
+      "name": "公众集会前庭",
+      "look_at": [
+        23,
+        12,
+        5
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "主庭采用中央陈述、两侧议事桌、前旁听后主持的公共制度布局；双侧低翼分别保存公档与办理事务，前庭树丛围绕开放集会口。"
+  ],
+  "differences": [
+    "主庭采用中央陈述、两侧议事桌、前旁听后主持的公共制度布局；双侧低翼分别保存公档与办理事务，前庭树丛围绕开放集会口。"
+  ],
+  "floors": [
+    {
+      "name": "公共与作业层",
+      "y": 2,
+      "max_y": 11
+    }
+  ],
+  "roof_min_y": 11,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/memorial_lanterns.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 5,
+    "surface": "grass"
+  },
+  "nbt_sha256": "ec64efb5b214b06bacb3874582c0adf7450722219542936621431bbbb40ed8c2",
+  "function_terms": [
+    "议事",
+    "档案管理"
+  ]
+}

@@ -1,223 +1,426 @@
 {
   "schema": "structure-studio.author.v1",
   "id": "DS-02-v04",
-  "name": "转角换乘兽院",
+  "name": "商队换乘场",
   "family": "DS-02",
   "civilization": "沙漠",
   "planning_role": "planning_role.fill",
   "size": [
-    41,
-    18,
-    32
+    45,
+    15,
+    35
   ],
   "terrain": {
-    "选址": "依托商路补给点和可靠饮水，保持动物活动与人货搬运空间",
-    "地块": "L 形地块避开外部街角，兽栏接南北通道与后部横向换乘通道，提供北、东两个宽口。",
-    "接地": "使用地坪 Y=1，脚底 Y=2；不自动削坡或补齐外部通路",
-    "边界": "模板包含内部地坪和封边，未写入的凹角与外部格保持原环境"
+    "选址": "连续承载的平坦地块；入口连接商路并有可靠饮水饲料来源。",
+    "接地": "外部地面脚底 Y=2，实体地坪顶面；基础底部 Y=0 不作为落地线。"
   },
   "rooms": [
     {
-      "id": "转角栏",
-      "name": "遮阳兽栏 · 转角栏",
+      "id": "long0",
+      "name": "遮阴兽栏",
       "min": [
         5,
         2,
-        7
+        21
       ],
       "max": [
-        17,
+        12,
         6,
-        23
+        29
       ],
-      "purpose": "兽栏、饲料、饮水与牵引通道"
+      "purpose": "饮水、饲料与静态栏位；开口三格"
     },
     {
-      "id": "keeper",
-      "name": "换乘值守室",
+      "id": "long1",
+      "name": "遮阴兽栏",
+      "min": [
+        16,
+        2,
+        21
+      ],
+      "max": [
+        23,
+        6,
+        29
+      ],
+      "purpose": "饮水、饲料与静态栏位；开口三格"
+    },
+    {
+      "id": "long2",
+      "name": "遮阴兽栏",
+      "min": [
+        27,
+        2,
+        21
+      ],
+      "max": [
+        32,
+        6,
+        29
+      ],
+      "purpose": "饮水、饲料与静态栏位；开口三格"
+    },
+    {
+      "id": "shortA",
+      "name": "短时停留栏",
+      "min": [
+        5,
+        2,
+        6
+      ],
+      "max": [
+        13,
+        6,
+        12
+      ],
+      "purpose": "饮水、饲料与静态栏位；开口三格"
+    },
+    {
+      "id": "shortB",
+      "name": "短时停留栏",
       "min": [
         26,
         2,
-        16
+        6
       ],
       "max": [
         33,
         6,
-        22
+        12
       ],
-      "purpose": "登记、夜间值守、个人物品与取水"
+      "purpose": "饮水、饲料与静态栏位；开口三格"
     },
     {
-      "id": "transfer",
-      "name": "转角牵引通道",
+      "id": "keeper",
+      "name": "鞍具与值守室",
       "min": [
-        18,
+        38,
         2,
-        4
+        21
       ],
       "max": [
-        37,
+        41,
         6,
-        28
+        30
       ],
-      "purpose": "北侧进入、东侧离开的内部转角通道"
+      "purpose": "登记、鞍具修补、寄存、值守睡眠"
+    },
+    {
+      "id": "cargo",
+      "name": "侧边旅具寄放棚",
+      "min": [
+        36,
+        2,
+        5
+      ],
+      "max": [
+        41,
+        5,
+        13
+      ],
+      "purpose": "寄存、装卸、交接"
     }
   ],
   "points": [
     {
-      "id": "转角栏_feed",
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        22,
+        2,
+        2
+      ],
+      "name": "五格牵引主入口",
+      "facing": "north"
+    },
+    {
+      "id": "long0_feed",
       "kind": "work",
       "pos": [
-        7,
+        6,
         2,
-        21
+        27
       ],
-      "name": "转角栏饲料",
+      "name": "草料取放",
       "approach": [
+        6,
+        2,
+        26
+      ]
+    },
+    {
+      "id": "long0_water",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        22
+      ],
+      "name": "栏内饮水",
+      "approach": [
+        6,
+        2,
+        23
+      ]
+    },
+    {
+      "id": "long0_gate",
+      "kind": "circulation",
+      "pos": [
         8,
         2,
-        21
-      ]
-    },
-    {
-      "id": "转角栏_water",
-      "kind": "work",
-      "pos": [
-        15,
-        2,
-        9
+        20
       ],
-      "name": "转角栏饮水",
-      "approach": [
-        14,
-        2,
-        9
-      ]
+      "name": "三格牵引开口"
     },
     {
-      "id": "转角栏_gate",
-      "kind": "circulation",
+      "id": "long1_feed",
+      "kind": "work",
       "pos": [
         17,
         2,
-        18
+        27
       ],
-      "name": "转角栏牵引宽口",
-      "look_at": [
-        7,
-        3,
-        18
+      "name": "草料取放",
+      "approach": [
+        17,
+        2,
+        26
       ]
+    },
+    {
+      "id": "long1_water",
+      "kind": "work",
+      "pos": [
+        17,
+        2,
+        22
+      ],
+      "name": "栏内饮水",
+      "approach": [
+        17,
+        2,
+        23
+      ]
+    },
+    {
+      "id": "long1_gate",
+      "kind": "circulation",
+      "pos": [
+        19,
+        2,
+        20
+      ],
+      "name": "三格牵引开口"
+    },
+    {
+      "id": "long2_feed",
+      "kind": "work",
+      "pos": [
+        28,
+        2,
+        27
+      ],
+      "name": "草料取放",
+      "approach": [
+        28,
+        2,
+        26
+      ]
+    },
+    {
+      "id": "long2_water",
+      "kind": "work",
+      "pos": [
+        28,
+        2,
+        22
+      ],
+      "name": "栏内饮水",
+      "approach": [
+        28,
+        2,
+        23
+      ]
+    },
+    {
+      "id": "long2_gate",
+      "kind": "circulation",
+      "pos": [
+        29,
+        2,
+        20
+      ],
+      "name": "三格牵引开口"
+    },
+    {
+      "id": "shortA_feed",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        10
+      ],
+      "name": "草料取放",
+      "approach": [
+        6,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "shortA_water",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        7
+      ],
+      "name": "栏内饮水",
+      "approach": [
+        6,
+        2,
+        8
+      ]
+    },
+    {
+      "id": "shortA_gate",
+      "kind": "circulation",
+      "pos": [
+        14,
+        2,
+        9
+      ],
+      "name": "三格牵引开口"
+    },
+    {
+      "id": "shortB_feed",
+      "kind": "work",
+      "pos": [
+        27,
+        2,
+        10
+      ],
+      "name": "草料取放",
+      "approach": [
+        27,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "shortB_water",
+      "kind": "work",
+      "pos": [
+        27,
+        2,
+        7
+      ],
+      "name": "栏内饮水",
+      "approach": [
+        27,
+        2,
+        8
+      ]
+    },
+    {
+      "id": "shortB_gate",
+      "kind": "circulation",
+      "pos": [
+        25,
+        2,
+        9
+      ],
+      "name": "三格牵引开口"
     },
     {
       "id": "keeper_bed",
       "kind": "bed",
       "pos": [
-        32,
+        40,
         2,
-        21
+        29
       ],
-      "name": "值守卧床",
+      "name": "值守床",
       "approach": [
-        31,
+        39,
         2,
-        21
+        29
       ]
     },
     {
       "id": "register",
       "kind": "work",
       "pos": [
-        27,
+        39,
         2,
-        17
+        21
       ],
       "name": "换乘登记",
       "approach": [
-        27,
+        39,
         2,
-        18
+        22
       ]
     },
     {
-      "id": "care",
+      "id": "tack",
       "kind": "work",
       "pos": [
-        32,
+        41,
         2,
-        27
+        23
       ],
-      "name": "出发前护理",
+      "name": "鞍具修补",
       "approach": [
-        32,
+        40,
         2,
-        26
+        23
       ]
     },
     {
-      "id": "north_entry",
-      "kind": "entrance",
+      "id": "cargo",
+      "kind": "work",
       "pos": [
-        21,
+        39,
         2,
-        4
+        9
       ],
-      "name": "动物与人员宽口",
-      "facing": "north"
-    },
-    {
-      "id": "east_entry",
-      "kind": "entrance",
-      "pos": [
+      "name": "旅具交接暂存",
+      "approach": [
         38,
         2,
-        26
-      ],
-      "name": "动物与人员宽口",
-      "facing": "east"
+        9
+      ]
     }
   ],
   "connections": [
     {
       "kind": "animal",
       "pos": [
-        21,
+        22,
         1,
-        4
+        2
       ],
       "direction": "north",
-      "clearance": [
-        3,
-        5
-      ],
-      "note": "作者预留几何接口；需另外核对外部地面及具体实体尺寸"
-    },
-    {
-      "kind": "animal",
-      "pos": [
-        38,
-        1,
-        26
-      ],
-      "direction": "east",
       "clearance": [
         5,
         5
       ],
-      "note": "作者预留几何接口；需另外核对外部地面及具体实体尺寸"
+      "note": "五格宽几何预留，须另外验证具体实体及外部接驳。"
     }
   ],
   "design_notes": [
-    "L 形地块避开外部街角，兽栏接南北通道与后部横向换乘通道，提供北、东两个宽口。"
+    "后部连续长棚、前置短时栏、中央搬运横道和侧边鞍具寄存小屋。"
   ],
   "differences": [
-    "L 形地块避开外部街角，兽栏接南北通道与后部横向换乘通道，提供北、东两个宽口。"
+    "后部连续长棚、前置短时栏、中央搬运横道和侧边鞍具寄存小屋。"
   ],
   "floors": [
     {
-      "name": "地坪、布置与通路",
+      "name": "牵引通道、兽栏与值守内饰",
       "y": 1,
-      "max_y": 4
+      "max_y": 5
     }
   ],
   "roof_min_y": 6,
@@ -225,9 +428,13 @@
   "offline_limits": [
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。",
-    "兽栏不含活体动物；入口为宽口，动物高度、回转、牵引和围栏行为须另行验证。"
+    "静态栏位和护理设备，无动物实体；动物尺寸、牵引、回转与围栏行为未做游戏验收。"
   ],
-  "source": "tools/structure_studio/studio/oasis_yards.py:beast_yard(4)",
+  "source": "tools/structure_studio/studio/desert_fill_beasts.py:beast_yard(4)",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路与院内地坪统一脚底 Y=2，地坪方块在 Y=1；不以基础最低层定位。"
+  },
   "preview_context": {
     "kind": "flat",
     "land_surface_y": 2,
@@ -235,5 +442,9 @@
     "padding": 3,
     "surface": "sand"
   },
-  "nbt_sha256": "b0b96965ed185d172b6ca16401864ebbd2ab9a120e7f7d6e6138a6bc710bece2"
+  "function_terms": [
+    "畜群照护",
+    "商队换乘"
+  ],
+  "nbt_sha256": "1d43d31d61d8a3a276a1871730dfabd90bd453ad96fcdf31fc59a4d8f58431fd"
 }

@@ -1,0 +1,49 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "AA-06-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors / 魔法学院返工作者实看",
+  "nbt_sha256": "2a8ef0e807663f9dbd31f4a7a51faa94e4f374af6461e302face317c1bd93d40",
+  "author_sha256": "09b761eff7bce0ddcd3c56e72f2b84dbc7c14aa2a2047eee2e98ad38483030be",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-common.png",
+    "previews/room-sleep1.png",
+    "previews/room-sleep2.png",
+    "previews/room-court.png",
+    "previews/point-common_cook.png",
+    "previews/point-common_food.png",
+    "previews/point-common_study.png",
+    "previews/point-common_books.png",
+    "previews/point-study.png",
+    "previews/point-books.png",
+    "previews/point-sleep10.png",
+    "previews/point-sleep11.png",
+    "previews/point-sleep1_desk.png",
+    "previews/point-sleep1_clothes.png",
+    "previews/point-sleep20.png",
+    "previews/point-sleep21.png",
+    "previews/point-sleep2_desk.png",
+    "previews/point-sleep2_clothes.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "32项旧版已撤回；本批12项采用双层侧塔、通廊分寝、联排、转角、阁楼与内庭等实际平面重新建模。",
+    "实际看过全部外观、去顶、分层、房间、功能点、标注与地形视图；结合零警告数据与导航核对。",
+    "三翼小院四人宿舍",
+    "公共生活与各寝室通过门和连续走廊组织；每床个人灯柜，共用餐厨、自习与洗漱完整"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

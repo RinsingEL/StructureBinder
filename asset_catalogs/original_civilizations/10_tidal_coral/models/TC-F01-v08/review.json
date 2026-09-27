@@ -1,0 +1,47 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "TC-F01-v08",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors / 海洋幻想作者实看",
+  "nbt_sha256": "b9a74a959ca055901765a1c0936b14f7dcb57d99cb256b4f1e589a708b7f8d6c",
+  "author_sha256": "1ba6766563880ab92a4601c9061b4a301a99546f9b1ba392f9a85f991a33badd",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-shop.png",
+    "previews/room-ownerlive.png",
+    "previews/room-ownerbed.png",
+    "previews/room-workwing.png",
+    "previews/point-shoptrade.png",
+    "previews/point-shopraw.png",
+    "previews/point-shopbench.png",
+    "previews/point-shopindustry.png",
+    "previews/point-ownerlivecook.png",
+    "previews/point-ownerlivefood.png",
+    "previews/point-ownerlivebooks.png",
+    "previews/point-ownerbeda.png",
+    "previews/point-ownerbedcloth.png",
+    "previews/point-ownerbeddesk.png",
+    "previews/point-craft.png",
+    "previews/point-materials.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "逐图核对行业专用台、交易与原料储存、独立生活卧室；仓库货垛与装卸通道分开。",
+    "实际看过全部外观、去顶、分层、房间、功能点、标注与地形视图；结合零警告数据与导航核对。",
+    "海路行李铺",
+    "三面内庭，交易、精作与生活分翼"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

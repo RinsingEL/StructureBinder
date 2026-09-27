@@ -6,283 +6,253 @@
   "civilization": "沙漠",
   "planning_role": "planning_role.fill",
   "size": [
-    49,
-    24,
-    43
+    43,
+    23,
+    54
   ],
   "terrain": {
-    "选址": "可靠供水的贸易聚落，有顾客步行、货物卸载与家居生活需求",
-    "地块": "中央账房分隔前后两庭，前庭会商与存货，后庭家宴与起居，侧廊连接两者。",
-    "接地": "主入口与地面层脚底 Y=2；上层版二层脚底 Y=9",
-    "落地": "独立完整建筑与内部院落，不依靠运行时补齐；模板外与凹角未写入格保持原环境"
+    "选址": "稳定平缓的贸易聚落地块，有洁净用水、食品与货物补给。",
+    "地块": "前庭接待交易，中间横翼分开客院与后部家院，家居在最深处。",
+    "接地": "外部街面与场坪脚底均为Y=2；二层脚底Y=9。"
   },
   "rooms": [
     {
-      "id": "showroom",
-      "name": "临街接待铺面",
+      "id": "shop",
+      "name": "前客庭铺面",
       "min": [
         5,
         2,
         7
       ],
       "max": [
-        14,
-        6,
-        17
+        16,
+        7,
+        15
       ],
-      "purpose": "商品、接待柜台和备货"
-    },
-    {
-      "id": "living",
-      "name": "后庭起居",
-      "min": [
-        5,
-        2,
-        23
-      ],
-      "max": [
-        14,
-        6,
-        36
-      ],
-      "purpose": "炊事、备水、进餐与用品"
-    },
-    {
-      "id": "bedroom",
-      "name": "后庭双床房",
-      "min": [
-        34,
-        2,
-        23
-      ],
-      "max": [
-        43,
-        6,
-        36
-      ],
-      "purpose": "睡眠、衣物与室内盥洗"
+      "purpose": "前客庭铺面"
     },
     {
       "id": "accounts",
-      "name": "会客账房",
+      "name": "客庭账房与寄货",
       "min": [
-        21,
-        2,
-        19
-      ],
-      "max": [
-        27,
-        6,
-        27
-      ],
-      "purpose": "接待、账册、贵重小货与交易记录"
-    },
-    {
-      "id": "stock",
-      "name": "贸易小货仓",
-      "min": [
-        34,
+        26,
         2,
         7
       ],
       "max": [
-        43,
-        6,
-        17
+        37,
+        7,
+        15
       ],
-      "purpose": "分类货箱、交付与搬运通道"
+      "purpose": "客庭账房与寄货"
     },
     {
-      "id": "front_court",
-      "name": "前庭会商",
+      "id": "meeting",
+      "name": "分庭会商厅",
       "min": [
-        16,
+        5,
         2,
-        7
+        26
       ],
       "max": [
-        32,
-        6,
-        17
+        16,
+        7,
+        32
       ],
-      "purpose": "接待、候坐与公共水庭"
+      "purpose": "分庭会商厅"
     },
     {
-      "id": "rear_court",
-      "name": "后庭家宴",
+      "id": "store",
+      "name": "分庭货仓",
       "min": [
-        16,
+        26,
         2,
-        29
+        26
       ],
       "max": [
-        32,
-        6,
-        38
+        37,
+        7,
+        32
       ],
-      "purpose": "家人起居和遮阳进餐"
+      "purpose": "分庭货仓"
+    },
+    {
+      "id": "home",
+      "name": "后院家庭长翼",
+      "min": [
+        5,
+        2,
+        44
+      ],
+      "max": [
+        37,
+        7,
+        49
+      ],
+      "purpose": "后院家庭长翼"
     }
   ],
   "points": [
     {
-      "id": "showroom",
+      "id": "trade",
       "kind": "work",
       "pos": [
         7,
         2,
-        10
+        9
       ],
-      "name": "接待与商品展示",
+      "name": "交易柜台",
       "approach": [
         7,
         2,
-        11
+        8
       ]
     },
     {
-      "id": "living_cook",
+      "id": "ledger",
       "kind": "work",
       "pos": [
-        5,
+        27,
         2,
-        36
+        8
       ],
-      "name": "后庭起居炉灶",
+      "name": "账房与会商记录",
       "approach": [
-        5,
+        27,
         2,
-        35
+        9
       ]
     },
     {
-      "id": "bedroom_bed1",
+      "id": "meeting",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        27
+      ],
+      "name": "账房与会商记录",
+      "approach": [
+        6,
+        2,
+        28
+      ]
+    },
+    {
+      "id": "store",
+      "kind": "work",
+      "pos": [
+        28,
+        2,
+        28
+      ],
+      "name": "交易柜台",
+      "approach": [
+        28,
+        2,
+        27
+      ]
+    },
+    {
+      "id": "home_kitchen",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        44
+      ],
+      "name": "家用灶台",
+      "approach": [
+        6,
+        2,
+        45
+      ]
+    },
+    {
+      "id": "home_bed0",
       "kind": "bed",
       "pos": [
-        35,
-        2,
-        35
-      ],
-      "name": "后庭双床房床位 1",
-      "approach": [
         36,
         2,
-        35
+        48
+      ],
+      "name": "家人床位",
+      "approach": [
+        35,
+        2,
+        48
       ]
     },
     {
-      "id": "bedroom_bed2",
+      "id": "home_bed1",
       "kind": "bed",
       "pos": [
-        42,
+        33,
         2,
-        35
+        48
       ],
-      "name": "后庭双床房床位 2",
+      "name": "家人床位",
       "approach": [
-        41,
+        32,
         2,
-        35
+        48
       ]
     },
     {
-      "id": "accounts",
-      "kind": "work",
+      "id": "rear_court",
+      "kind": "circulation",
       "pos": [
-        23,
+        21,
         2,
-        22
+        39
       ],
-      "name": "会商与账记",
-      "approach": [
-        23,
-        2,
-        23
+      "name": "私家庭院",
+      "look_at": [
+        29,
+        3,
+        38
       ]
     },
     {
-      "id": "stock",
-      "kind": "work",
-      "pos": [
-        36,
-        2,
-        10
-      ],
-      "name": "前庭小货仓",
-      "approach": [
-        35,
-        2,
-        10
-      ]
-    },
-    {
-      "id": "family_table",
-      "kind": "work",
-      "pos": [
-        24,
-        2,
-        34
-      ],
-      "name": "后庭家宴桌",
-      "approach": [
-        24,
-        2,
-        33
-      ]
-    },
-    {
-      "id": "entry",
+      "id": "front",
       "kind": "entrance",
       "pos": [
-        24,
+        21,
         2,
-        4
+        2
       ],
-      "name": "主入口",
+      "name": "街面主入口",
       "facing": "north"
-    },
-    {
-      "id": "tea",
-      "kind": "work",
-      "pos": [
-        9,
-        2,
-        31
-      ],
-      "name": "后院茶桌",
-      "approach": [
-        9,
-        2,
-        30
-      ]
     }
   ],
   "connections": [
     {
       "kind": "pedestrian",
       "pos": [
-        24,
-        1,
-        4
+        21,
+        2,
+        2
       ],
       "direction": "north",
       "clearance": [
         3,
         3
       ],
-      "note": "外部步行或卸货面需接脚底 Y=2"
+      "note": "无阶衔接外部脚底Y2街面"
     }
   ],
   "design_notes": [
-    "中央账房分隔前后两庭，前庭会商与存货，后庭家宴与起居，侧廊连接两者。"
+    "前庭接待交易，中间横翼分开客院与后部家院，家居在最深处。",
+    "参考图的深门窗、落地木棚、砂岩与局部赭墙、绿荫和织物；家庭与交易流线分开。"
   ],
   "differences": [
-    "中央账房分隔前后两庭，前庭会商与存货，后庭家宴与起居，侧廊连接两者。"
+    "前庭接待交易，中间横翼分开客院与后部家院，家居在最深处。"
   ],
   "floors": [
     {
-      "name": "室内与院落",
+      "name": "前客院与后家院",
       "y": 1,
-      "max_y": 6
+      "max_y": 7
     }
   ],
   "roof_min_y": 8,
@@ -291,7 +261,11 @@
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
   ],
-  "source": "tools/structure_studio/studio/oasis_crafts.py:merchant(3)",
+  "source": "tools/structure_studio/studio/desert_fill_merchants.py:merchant(3)",
+  "ground_plane": {
+    "y": 2,
+    "note": "无阶外部街面上边界Y=2，与Y=1场坪方块顶面齐平；室外上楼梯另行起步。"
+  },
   "preview_context": {
     "kind": "flat",
     "land_surface_y": 2,
@@ -299,21 +273,9 @@
     "padding": 3,
     "surface": "sand"
   },
-  "ventilation": [
-    {
-      "roof_y": 8,
-      "min": [
-        7,
-        8,
-        27
-      ],
-      "max": [
-        8,
-        13,
-        28
-      ],
-      "note": "连续通风孔的几何表达，不模拟气流或温度"
-    }
+  "function_terms": [
+    "家庭居住",
+    "商贸接洽"
   ],
-  "nbt_sha256": "d171ca31f5ce81a51e1efcecf3584ad4792c29b6ced8621b624cac915346979d"
+  "nbt_sha256": "8daf8f1ff05cb90d6d1c958f181fb63a1e03f231c29b3959567c38fd6bb4354b"
 }

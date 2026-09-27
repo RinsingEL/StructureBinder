@@ -92,5 +92,8 @@
     "layout": "窄长等高线地块，中央水沟将薯畦分成两带，侧边通路连续；单层地坪不假装追随任意坡。",
     "irrigation": "每畦固定水源，最终NBT另核对4格水源距离和耕地支撑。"
   },
-  "nbt_sha256": "fa26ded27c9dd3597bea473b2bd111a90c5e3d4f148b4c6c75ded7b9a9b3ab1d"
+  "nbt_sha256": "fa26ded27c9dd3597bea473b2bd111a90c5e3d4f148b4c6c75ded7b9a9b3ab1d",
+  "function_terms": [
+    "农田种植"
+  ]
 }

@@ -3,59 +3,24 @@
   "id": "DS-F02-v05",
   "status": "accepted",
   "scope": "offline_asset_review",
-  "reviewer": "Codex 离线视觉审查",
-  "nbt_sha256": "ce9e4e368e2452e14f549bf23a3d340bb65913acf57e3d7fb5d779c3332b4134",
-  "author_sha256": "24fe88fe17b1d760986c3ca400f5ff49ff44d86a4df0e7561d13ba4ef3365cab",
+  "reviewer": "Codex desert_fill_farms agent, 2026-09-26",
+  "nbt_sha256": "21c8e9a924f3d387fdb9e1f4a0ecb59d823f84d35e974dbe03cebd25dcd4201e",
+  "author_sha256": "8eb042be53de8f94a70abd7e3a8c6041fdd85ba4b487c2a80c67fb477de10f9e",
   "evidence": [
     "previews/front.png",
-    "previews/back.png",
-    "previews/left.png",
-    "previews/right.png",
     "previews/top.png",
-    "previews/roof-off.png",
-    "previews/floor-1.png",
-    "previews/room-sorting.png",
-    "previews/room-field.png",
-    "previews/point-compost.png",
-    "previews/point-sort.png",
-    "previews/annotations.png",
-    "previews/site-context.png"
+    "previews/point-workway1.png"
   ],
-  "checks": {
-    "形体与布局": "双侧长畦、中央宽通道与横向田埂构成四区，田头分拣棚提供鲜明功能节点。",
-    "内饰与使用": "分拣桌、堆肥桶和收纳桶配合遮棚，种植、采后处理和出入位置不同。",
-    "标记与通路": "已查看四向外观、俯视、去屋顶、楼层、房间、使用点和标记图；最终 NBT 的入口至已标站位通过碰撞初筛。",
-    "因地制宜": "有可靠引水与适宜土壤的绿洲；不在无水沙海仅凭文明标签放置；两侧长畦与宽中道相接，田头有遮阳分拣棚，供小规模市场种植。；作业道脚底 Y=2，有限地块内备土与灌溉；独立固定模板田块，包含封边与作业道；不替代 Landscape 自然生成大田。已查看匹配条件的沙地或微坡示意。",
-    "种植与灌溉": "最终 NBT 共 280 格作物，支撑土壤与 4 格内水源全部通过检查；田埂和使用站位保持通行。"
-  },
-  "revisions": [],
+  "checks": [
+    "大片生产田连接后部通透分拣棚，收获、称量、装筐与堆肥分开。",
+    "实际查看本次 NBT 的外观、俯视及作业层截图，入口与干燥采收通路清晰，耕畦和渠道有连续实心边界。",
+    "外部地面线 Y=2，三级田仅在内部抬升；数据、农业水源和通路均通过，零错误警告。"
+  ],
+  "revisions": [
+    "按用户图7重建独立平面，补充田头收获筐和木棚支柱；修复L田工作站位被筐占用。"
+  ],
   "limitations": [
     "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
-    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
-    "需要实际可靠供水和适宜土壤；离线检查不证明游戏内生长、照度或流体更新。"
-  ],
-  "metadata_migrations": [
-    {
-      "kind": "civilization_display_name_only",
-      "date": "2026-09-22",
-      "field": "civilization",
-      "before": "沙海星象文明",
-      "after": "星仪王国",
-      "previous_author_sha256": "e507b0f8e1bb1d137589400151603c07e2cbc96ac3e9ae8f5501af418cf9cc76",
-      "current_author_sha256": "6ea56fb2fa351ab71245ae1db4bbff9d3ed80d442ca6c498c5a0a255e8c28278",
-      "nbt_sha256": "ce9e4e368e2452e14f549bf23a3d340bb65913acf57e3d7fb5d779c3332b4134",
-      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
-    },
-    {
-      "kind": "civilization_display_name_only",
-      "date": "2026-09-22",
-      "field": "civilization",
-      "before": "星仪王国",
-      "after": "沙漠",
-      "previous_author_sha256": "6ea56fb2fa351ab71245ae1db4bbff9d3ed80d442ca6c498c5a0a255e8c28278",
-      "current_author_sha256": "24fe88fe17b1d760986c3ca400f5ff49ff44d86a4df0e7561d13ba4ef3365cab",
-      "nbt_sha256": "ce9e4e368e2452e14f549bf23a3d340bb65913acf57e3d7fb5d779c3332b4134",
-      "scope": "Only civilization text changed; geometry, markers and viewport images unchanged. No new visual review or capture."
-    }
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
   ]
 }

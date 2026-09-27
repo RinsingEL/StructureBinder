@@ -1,0 +1,47 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "AA-10-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors / 魔法学院返工作者实看",
+  "nbt_sha256": "8846975c086fed70b8b7a55b4a7bc1aa8a2ad2baccfe9bd2005ed37a2b7aa33f",
+  "author_sha256": "3b4c3a3da72cd270848061bbdc349a6e4669a0b0fc6d09195844d8927b079f25",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-shop.png",
+    "previews/room-home_common.png",
+    "previews/room-home_sleep.png",
+    "previews/point-shop_trade.png",
+    "previews/point-shop_stock.png",
+    "previews/point-shop_work.png",
+    "previews/point-shop_secondary.png",
+    "previews/point-shop_finished.png",
+    "previews/point-shop_heavy.png",
+    "previews/point-home_cook.png",
+    "previews/point-home_food.png",
+    "previews/point-home_read.png",
+    "previews/point-home_bed.png",
+    "previews/point-home_desk.png",
+    "previews/point-home_clothes.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "32项旧版已撤回；本批20项按紧凑单铺、上住下店、转角门面、院坊和后部夹层五类实平面重建，逐图核对行业操作与家庭起居。",
+    "实际看过全部外观、去顶、分层、房间、功能点、标注与地形视图；结合零警告数据与导航核对。",
+    "紧凑前店后住",
+    "晶具组装、加工、销售与返修",
+    "连通主体、分室生活与行业工位；依据街面、楼层或内庭组织真实流线，不以独栋位置互换作为变体"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

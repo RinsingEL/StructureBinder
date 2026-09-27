@@ -1,0 +1,295 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "TC-04-v01",
+  "name": "长槽管理贝屋",
+  "family": "TC-04",
+  "civilization": "海洋幻想",
+  "planning_role": "planning_role.fill",
+  "size": [
+    61,
+    36,
+    51
+  ],
+  "terrain": {
+    "选址": "避风潮上岸台或人工桩台；水侧支柱底Y=0必须接稳定海床，不自动适应任意水深",
+    "潮位": "低潮Y=3、参考水面Y=5、预期高潮Y=6；主层干地板Y=7、脚底Y=8，潮汐仅为条件记录",
+    "支撑接驳": "北侧接Y=8普通步行道路；所有楼梯为实体台阶。高层与分台另有房间高程，不依赖跳跃或游泳",
+    "供水生活": "厨房淡水和食物依岸上补给；海水不能视为饮用或灌溉水。居室采用干燥外壳，气候通风与实际水密另验",
+    "风格": "棱面近似贝壳的弧顶、放射或分瓣舱室、青绿石质桩台；风格不是国名",
+    "限制": "原版静态模型；不代表潮汐、潜水呼吸、流体、生产或运行时生成已接入",
+    "水产条件": "育苗池水体为静态原版海带示例；池底有沙与连续水柱，人工分批维护。投放时需核对实际水温、水交换、污染和运行时邻居更新。"
+  },
+  "rooms": [
+    {
+      "id": "stay",
+      "name": "厨房餐读起居",
+      "min": [
+        7,
+        8,
+        7
+      ],
+      "max": [
+        25,
+        13,
+        27
+      ],
+      "purpose": "完整厨房、食品柜、共餐桌椅、相向读书座与书物柜"
+    },
+    {
+      "id": "bed",
+      "name": "隔门干式卧室",
+      "min": [
+        7,
+        8,
+        31
+      ],
+      "max": [
+        25,
+        13,
+        41
+      ],
+      "purpose": "床位与个人灯柜、衣物储藏、写字和盥洗，实体隔门"
+    },
+    {
+      "id": "nursery0",
+      "name": "海带育苗槽",
+      "min": [
+        32,
+        4,
+        7
+      ],
+      "max": [
+        42,
+        8,
+        42
+      ],
+      "purpose": "沙底水槽种植原版海带；干燥围护通道人工维护，不模拟流体与自动收获"
+    },
+    {
+      "id": "nursery1",
+      "name": "海带育苗槽",
+      "min": [
+        47,
+        4,
+        7
+      ],
+      "max": [
+        55,
+        8,
+        42
+      ],
+      "purpose": "沙底水槽种植原版海带；干燥围护通道人工维护，不模拟流体与自动收获"
+    }
+  ],
+  "points": [
+    {
+      "id": "staycook",
+      "kind": "work",
+      "pos": [
+        9,
+        8,
+        8
+      ],
+      "name": "储备淡水与连续备餐",
+      "approach": [
+        9,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "stayfood",
+      "kind": "storage",
+      "pos": [
+        21,
+        9,
+        8
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        21,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "staybooks",
+      "kind": "storage",
+      "pos": [
+        9,
+        9,
+        26
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        9,
+        8,
+        25
+      ]
+    },
+    {
+      "id": "beda",
+      "kind": "sleep",
+      "pos": [
+        9,
+        8,
+        38
+      ],
+      "name": "值守床位与个人柜",
+      "approach": [
+        10,
+        8,
+        38
+      ]
+    },
+    {
+      "id": "bedcloth",
+      "kind": "storage",
+      "pos": [
+        9,
+        9,
+        32
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        9,
+        8,
+        33
+      ]
+    },
+    {
+      "id": "beddesk",
+      "kind": "work",
+      "pos": [
+        22,
+        8,
+        33
+      ],
+      "name": "个人书写灯案",
+      "approach": [
+        22,
+        8,
+        34
+      ]
+    },
+    {
+      "id": "nursery0",
+      "kind": "work",
+      "pos": [
+        33,
+        6,
+        9
+      ],
+      "name": "受护栏围护的海带育苗水槽",
+      "approach": [
+        31,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "nursery1",
+      "kind": "work",
+      "pos": [
+        48,
+        6,
+        9
+      ],
+      "name": "受护栏围护的海带育苗水槽",
+      "approach": [
+        46,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "sort",
+      "kind": "work",
+      "pos": [
+        9,
+        8,
+        45
+      ],
+      "name": "收获分拣与周转装筐",
+      "approach": [
+        9,
+        8,
+        44
+      ]
+    },
+    {
+      "id": "tools",
+      "kind": "storage",
+      "pos": [
+        25,
+        9,
+        45
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        25,
+        8,
+        44
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        30,
+        8,
+        3
+      ],
+      "name": "陆侧普通步行入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        30,
+        7,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "接同高程干燥道路或栈桥"
+    }
+  ],
+  "design_notes": [],
+  "differences": [
+    "长槽管理贝屋",
+    "两条纵长槽共用岸侧生活房"
+  ],
+  "floors": [
+    {
+      "name": "干式生活层",
+      "y": 7,
+      "max_y": 13
+    }
+  ],
+  "roof_min_y": 14,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/tidal_gardens.py",
+  "preview_context": {
+    "kind": "shore",
+    "shore_z": 25,
+    "water_surface_y": 5,
+    "land_surface_y": 8,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "sand"
+  },
+  "nbt_sha256": "1eb75595f5e66aa08b6d1db508948b28d6e3e01f693646dee2a291dfdaf4e607",
+  "function_terms": [
+    "海藻育场管理"
+  ]
+}

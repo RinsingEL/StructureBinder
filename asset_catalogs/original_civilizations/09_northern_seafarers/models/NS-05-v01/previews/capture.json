@@ -1,0 +1,13 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "NS-05-v01",
+  "nbt_sha256": "a54f9ce032c6b341d22259b93b8b265d931e4ca080900eb0bae28909cd990885",
+  "author_sha256": "5f3670469d754ca664c96c553f64792efe4a9a7b7bb6560cbda648395522650e",
+  "shots": [
+    "front",
+    "interior"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

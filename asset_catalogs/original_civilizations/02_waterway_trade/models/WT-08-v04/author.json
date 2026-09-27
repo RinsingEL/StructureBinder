@@ -1,0 +1,358 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "WT-08-v04",
+  "name": "坡台层叠旅店",
+  "family": "WT-08",
+  "civilization": "地中海",
+  "planning_role": "planning_role.fill",
+  "size": [
+    45,
+    31,
+    43
+  ],
+  "terrain": {
+    "选址": "普通稳定平地；无需水岸。台地版由模板内石基形成高差。",
+    "边界": "完整独立建筑与庭院，保留入口通路和屋檐。"
+  },
+  "rooms": [
+    {
+      "id": "西楼客房ground",
+      "name": "西楼客房ground",
+      "min": [
+        6,
+        3,
+        16
+      ],
+      "max": [
+        17,
+        6,
+        31
+      ],
+      "purpose": "茶饮备制、客桌与器皿"
+    },
+    {
+      "id": "西楼客房",
+      "name": "西楼客房",
+      "min": [
+        6,
+        9,
+        16
+      ],
+      "max": [
+        17,
+        12,
+        31
+      ],
+      "purpose": "客房床位、行李与休息"
+    },
+    {
+      "id": "高台客舍",
+      "name": "高台客舍",
+      "min": [
+        26,
+        9,
+        28
+      ],
+      "max": [
+        38,
+        12,
+        37
+      ],
+      "purpose": "客房床位、行李与休息"
+    },
+    {
+      "id": "低院餐厅",
+      "name": "低院餐厅",
+      "min": [
+        26,
+        3,
+        8
+      ],
+      "max": [
+        38,
+        6,
+        16
+      ],
+      "purpose": "茶饮备制、客桌与器皿"
+    }
+  ],
+  "points": [
+    {
+      "id": "西楼客房groundentry",
+      "kind": "circulation",
+      "pos": [
+        7,
+        3,
+        14
+      ],
+      "name": "院内房门：入户或营业入口",
+      "facing": "north"
+    },
+    {
+      "id": "西楼客房groundwork",
+      "kind": "work",
+      "pos": [
+        7,
+        3,
+        18
+      ],
+      "name": "接待或作业台",
+      "look_at": [
+        7,
+        4,
+        18
+      ],
+      "approach": [
+        7,
+        3,
+        19
+      ]
+    },
+    {
+      "id": "西楼客房groundstore",
+      "kind": "storage",
+      "pos": [
+        17,
+        3,
+        17
+      ],
+      "name": "衣物食粮或营业库存",
+      "look_at": [
+        17,
+        4,
+        17
+      ],
+      "approach": [
+        17,
+        3,
+        18
+      ]
+    },
+    {
+      "id": "西楼客房entry",
+      "kind": "circulation",
+      "pos": [
+        11,
+        9,
+        14
+      ],
+      "name": "院内房门：入户或营业入口",
+      "facing": "north"
+    },
+    {
+      "id": "西楼客房bed0",
+      "kind": "bed",
+      "pos": [
+        7,
+        9,
+        29
+      ],
+      "name": "床位与行李",
+      "approach": [
+        8,
+        9,
+        29
+      ]
+    },
+    {
+      "id": "西楼客房bed1",
+      "kind": "bed",
+      "pos": [
+        16,
+        9,
+        29
+      ],
+      "name": "床位与行李",
+      "approach": [
+        15,
+        9,
+        29
+      ]
+    },
+    {
+      "id": "西楼客房store",
+      "kind": "storage",
+      "pos": [
+        17,
+        9,
+        17
+      ],
+      "name": "衣物食粮或营业库存",
+      "look_at": [
+        17,
+        10,
+        17
+      ],
+      "approach": [
+        17,
+        9,
+        18
+      ]
+    },
+    {
+      "id": "高台客舍entry",
+      "kind": "circulation",
+      "pos": [
+        32,
+        9,
+        26
+      ],
+      "name": "院内房门：入户或营业入口",
+      "facing": "north"
+    },
+    {
+      "id": "高台客舍bed0",
+      "kind": "bed",
+      "pos": [
+        27,
+        9,
+        35
+      ],
+      "name": "床位与行李",
+      "approach": [
+        28,
+        9,
+        35
+      ]
+    },
+    {
+      "id": "高台客舍bed1",
+      "kind": "bed",
+      "pos": [
+        37,
+        9,
+        35
+      ],
+      "name": "床位与行李",
+      "approach": [
+        36,
+        9,
+        35
+      ]
+    },
+    {
+      "id": "高台客舍store",
+      "kind": "storage",
+      "pos": [
+        38,
+        9,
+        29
+      ],
+      "name": "衣物食粮或营业库存",
+      "look_at": [
+        38,
+        10,
+        29
+      ],
+      "approach": [
+        38,
+        9,
+        30
+      ]
+    },
+    {
+      "id": "低院餐厅entry",
+      "kind": "circulation",
+      "pos": [
+        32,
+        3,
+        6
+      ],
+      "name": "院内房门：入户或营业入口",
+      "facing": "north"
+    },
+    {
+      "id": "低院餐厅work",
+      "kind": "work",
+      "pos": [
+        27,
+        3,
+        10
+      ],
+      "name": "接待或作业台",
+      "look_at": [
+        27,
+        4,
+        10
+      ],
+      "approach": [
+        27,
+        3,
+        11
+      ]
+    },
+    {
+      "id": "低院餐厅store",
+      "kind": "storage",
+      "pos": [
+        38,
+        3,
+        9
+      ],
+      "name": "衣物食粮或营业库存",
+      "look_at": [
+        38,
+        4,
+        9
+      ],
+      "approach": [
+        38,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "courtyard_street_entry",
+      "kind": "entrance",
+      "pos": [
+        22,
+        3,
+        2
+      ],
+      "name": "前院墙中央实际开口接路",
+      "facing": "north"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "坡台层叠旅店：接待餐饮与独立双床客房分区，行李柜和可达楼层齐备。",
+    "依2026-09-27用户参考图：暖白浅石、缓坡红瓦、木廊与蓝绿百叶，完整生活和营业尺度。"
+  ],
+  "differences": [
+    "坡台层叠旅店：接待餐饮与独立双床客房分区，行李柜和可达楼层齐备。"
+  ],
+  "floors": [
+    {
+      "name": "庭院与下层",
+      "y": 2,
+      "max_y": 7
+    },
+    {
+      "name": "上层或台地",
+      "y": 8,
+      "max_y": 13
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mediterranean_living.py:BUILDERS",
+  "ground_plane": {
+    "y": 3,
+    "note": "门外路面方块Y=2，外部站立接地线Y=3；上层与台地由实阶连接。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "旅客住宿",
+    "餐饮"
+  ],
+  "nbt_sha256": "2392a7a74be31321d5f83ffa1aa5848f6dad4cf8f0972ae81ffe654dd048cca6"
+}

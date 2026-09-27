@@ -1,81 +1,66 @@
 {
   "schema": "structure-studio.author.v1",
   "id": "DS-08-v01",
-  "name": "路旁双间客栈",
+  "name": "路边露廊小客栈",
   "family": "DS-08",
   "civilization": "沙漠",
   "planning_role": "planning_role.fill",
   "size": [
-    29,
+    33,
     24,
-    37
+    35
   ],
   "terrain": {
-    "选址": "有可靠生活用水与补给条件的聚落入口或商路停驻点",
-    "地块": "前厅接待与进餐，后排两间客房分开，侧道通后院；适合商路旁的小补给点。",
-    "高程": "主入口脚底 Y=2；两层版上层脚底 Y=9",
-    "落地": "结构连同内院及铺面完整落地；外部交通、供水与库存另行接入，未写入的凹角保持原环境"
+    "选址": "有可靠生活用水、餐食补给及旅人需求的绿洲街道或商路停驻点",
+    "地块": "一低一高的路边客栈；前餐廊和左侧露台衬托侧边客房塔。",
+    "外部地面": "北侧街面脚底Y=2；台地为模型内人工支撑台基，不要求天然高坡",
+    "配套": "客房床位、登记、餐食炉灶、盥洗、行李寄存均为可达原版陈设，服务机制另接入"
   },
   "rooms": [
     {
-      "id": "common",
-      "name": "登记餐饮与补给前厅",
+      "id": "hall",
+      "name": "接待餐饮与后勤",
       "min": [
         5,
         2,
-        7
+        12
       ],
       "max": [
-        23,
-        6,
-        17
-      ],
-      "purpose": "登记、用餐、炊事和旅具修补"
-    },
-    {
-      "id": "west",
-      "name": "单人客房",
-      "min": [
-        5,
-        2,
-        22
-      ],
-      "max": [
-        12,
-        6,
-        31
-      ],
-      "purpose": "睡眠、衣物与室内盥洗"
-    },
-    {
-      "id": "east",
-      "name": "双人客房",
-      "min": [
         16,
-        2,
-        22
+        7,
+        28
       ],
-      "max": [
-        23,
-        6,
-        31
-      ],
-      "purpose": "睡眠、衣物与室内盥洗"
+      "purpose": "接待餐饮与后勤"
     },
     {
-      "id": "rear",
-      "name": "后院歇脚",
+      "id": "lower",
+      "name": "独立客房 lower",
       "min": [
-        4,
+        19,
         2,
-        33
+        16
       ],
       "max": [
-        24,
-        6,
-        34
+        28,
+        7,
+        28
       ],
-      "purpose": "客房后歇坐与旅人通路"
+      "purpose": "独立客房 lower"
+    },
+    {
+      "id": "upper",
+      "name": "独立客房 upper",
+      "min": [
+        19,
+        9,
+        16
+      ],
+      "max": [
+        28,
+        14,
+        28
+      ],
+      "purpose": "独立客房 upper"
     }
   ],
   "points": [
@@ -83,30 +68,15 @@
       "id": "register",
       "kind": "work",
       "pos": [
-        7,
-        2,
-        9
-      ],
-      "name": "接待登记",
-      "approach": [
-        7,
-        2,
-        10
-      ]
-    },
-    {
-      "id": "meal",
-      "kind": "work",
-      "pos": [
-        12,
+        6,
         2,
         13
       ],
-      "name": "旅人用餐桌",
+      "name": "入住登记",
       "approach": [
-        12,
+        6,
         2,
-        12
+        14
       ]
     },
     {
@@ -115,99 +85,184 @@
       "pos": [
         5,
         2,
-        17
+        28
       ],
-      "name": "餐食炉灶",
+      "name": "备餐厨房",
       "approach": [
         5,
+        2,
+        27
+      ]
+    },
+    {
+      "id": "luggage",
+      "kind": "storage",
+      "pos": [
+        16,
+        2,
+        27
+      ],
+      "name": "行李寄存",
+      "approach": [
+        15,
+        2,
+        27
+      ]
+    },
+    {
+      "id": "meal",
+      "kind": "work",
+      "pos": [
+        8,
+        2,
+        17
+      ],
+      "name": "旅人餐桌",
+      "approach": [
+        8,
         2,
         16
       ]
     },
     {
-      "id": "repair",
-      "kind": "work",
+      "id": "lower_bed0",
+      "kind": "bed",
       "pos": [
         20,
-        2,
-        9
-      ],
-      "name": "旅具检查与修补",
-      "approach": [
-        20,
-        2,
-        8
-      ]
-    },
-    {
-      "id": "west_bed1",
-      "kind": "bed",
-      "pos": [
-        6,
-        2,
-        30
-      ],
-      "name": "单人客房床位 1",
-      "approach": [
-        7,
-        2,
-        30
-      ]
-    },
-    {
-      "id": "east_bed1",
-      "kind": "bed",
-      "pos": [
-        17,
-        2,
-        30
-      ],
-      "name": "双人客房床位 1",
-      "approach": [
-        18,
-        2,
-        30
-      ]
-    },
-    {
-      "id": "east_bed2",
-      "kind": "bed",
-      "pos": [
-        22,
-        2,
-        30
-      ],
-      "name": "双人客房床位 2",
-      "approach": [
-        21,
-        2,
-        30
-      ]
-    },
-    {
-      "id": "wash",
-      "kind": "work",
-      "pos": [
-        26,
         2,
         27
       ],
-      "name": "院侧洗漱",
+      "name": "旅人客床",
       "approach": [
-        26,
+        21,
         2,
-        26
+        27
       ]
     },
     {
-      "id": "entry",
+      "id": "lower_bed1",
+      "kind": "bed",
+      "pos": [
+        27,
+        2,
+        27
+      ],
+      "name": "旅人客床",
+      "approach": [
+        26,
+        2,
+        27
+      ]
+    },
+    {
+      "id": "lower_wash",
+      "kind": "work",
+      "pos": [
+        28,
+        2,
+        16
+      ],
+      "name": "客房洗漱",
+      "approach": [
+        27,
+        2,
+        16
+      ]
+    },
+    {
+      "id": "upper_bed0",
+      "kind": "bed",
+      "pos": [
+        20,
+        9,
+        27
+      ],
+      "name": "旅人客床",
+      "approach": [
+        21,
+        9,
+        27
+      ]
+    },
+    {
+      "id": "upper_bed1",
+      "kind": "bed",
+      "pos": [
+        27,
+        9,
+        27
+      ],
+      "name": "旅人客床",
+      "approach": [
+        26,
+        9,
+        27
+      ]
+    },
+    {
+      "id": "upper_wash",
+      "kind": "work",
+      "pos": [
+        28,
+        9,
+        16
+      ],
+      "name": "客房洗漱",
+      "approach": [
+        27,
+        9,
+        16
+      ]
+    },
+    {
+      "id": "outdoor_meal",
+      "kind": "work",
+      "pos": [
+        8,
+        2,
+        6
+      ],
+      "name": "旅人餐桌",
+      "approach": [
+        8,
+        2,
+        5
+      ]
+    },
+    {
+      "id": "terrace",
+      "kind": "circulation",
+      "pos": [
+        11,
+        9,
+        15
+      ],
+      "name": "低翼屋顶露台"
+    },
+    {
+      "id": "roof_meal",
+      "kind": "work",
+      "pos": [
+        8,
+        9,
+        22
+      ],
+      "name": "旅人餐桌",
+      "approach": [
+        8,
+        9,
+        21
+      ]
+    },
+    {
+      "id": "front",
       "kind": "entrance",
       "pos": [
-        13,
+        20,
         2,
         4
       ],
-      "name": "主入口",
+      "name": "街面主入口",
       "facing": "north"
     }
   ],
@@ -215,8 +270,8 @@
     {
       "kind": "pedestrian",
       "pos": [
-        13,
-        1,
+        20,
+        2,
         4
       ],
       "direction": "north",
@@ -224,29 +279,38 @@
         3,
         3
       ],
-      "note": "接外部步行街或商旅停驻面，脚底 Y=2"
+      "note": "外部街面脚底Y=2"
     }
   ],
   "design_notes": [
-    "前厅接待与进餐，后排两间客房分开，侧道通后院；适合商路旁的小补给点。"
+    "一低一高的路边客栈；前餐廊和左侧露台衬托侧边客房塔。"
   ],
   "differences": [
-    "前厅接待与进餐，后排两间客房分开，侧道通后院；适合商路旁的小补给点。"
+    "一低一高的路边客栈；前餐廊和左侧露台衬托侧边客房塔。"
   ],
   "floors": [
     {
-      "name": "地面空间与院落",
+      "name": "街面接待",
       "y": 1,
-      "max_y": 6
+      "max_y": 7
+    },
+    {
+      "name": "客房与露台",
+      "y": 8,
+      "max_y": 14
     }
   ],
-  "roof_min_y": 8,
+  "roof_min_y": 15,
   "lifecycle": "draft",
   "offline_limits": [
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
   ],
-  "source": "tools/structure_studio/studio/oasis_hospitality.py:inn(1)",
+  "source": "tools/structure_studio/studio/desert_fill_inns.py:inn(1)",
+  "ground_plane": {
+    "y": 2,
+    "note": "北侧外部街面为Y=1方块顶面，玩家脚底Y=2；内部楼层及台基不改变此基准"
+  },
   "preview_context": {
     "kind": "flat",
     "land_surface_y": 2,
@@ -254,21 +318,9 @@
     "padding": 3,
     "surface": "sand"
   },
-  "ventilation": [
-    {
-      "roof_y": 8,
-      "min": [
-        7,
-        8,
-        24
-      ],
-      "max": [
-        8,
-        13,
-        25
-      ],
-      "note": "连续通风孔的几何表达，不模拟气流或温度"
-    }
+  "function_terms": [
+    "旅客住宿",
+    "餐饮"
   ],
-  "nbt_sha256": "b0bbaa5ab8a4c0dbe6dd9677050a17068bba9ea396e6318434865fb7cc781a27"
+  "nbt_sha256": "d4ff61cf533953992175b68b287dab5e4cfe79a3c77b17fabb8c43bb732d6fbc"
 }

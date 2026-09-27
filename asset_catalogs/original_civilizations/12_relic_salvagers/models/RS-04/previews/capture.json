@@ -1,0 +1,30 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "RS-04",
+  "nbt_sha256": "35dd2c7259c7a38f6ef7097c4af3fe0455e705fe65ca2e11d9c4ca7a877b3c15",
+  "author_sha256": "adfacb468f2a52769a721abe57ca506f635275bb2222662c21a44a36583d4d48",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-repair",
+    "room-controls",
+    "point-console",
+    "point-archive",
+    "point-map",
+    "point-oldbunk",
+    "point-newfiles",
+    "point-desk",
+    "point-restore",
+    "point-shell",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

@@ -1,0 +1,190 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "TC-F02-v02",
+  "name": "沿岸窄长淡水田",
+  "family": "TC-F02",
+  "civilization": "海洋幻想",
+  "planning_role": "planning_role.fill",
+  "size": [
+    35,
+    36,
+    59
+  ],
+  "terrain": {
+    "选址": "避风潮上岸台或人工桩台；水侧支柱底Y=0必须接稳定海床，不自动适应任意水深",
+    "潮位": "低潮Y=3、参考水面Y=5、预期高潮Y=6；主层干地板Y=7、脚底Y=8，潮汐仅为条件记录",
+    "支撑接驳": "北侧接Y=8普通步行道路；所有楼梯为实体台阶。高层与分台另有房间高程，不依赖跳跃或游泳",
+    "供水生活": "厨房淡水和食物依岸上补给；海水不能视为饮用或灌溉水。居室采用干燥外壳，气候通风与实际水密另验",
+    "风格": "棱面近似贝壳的弧顶、放射或分瓣舱室、青绿石质桩台；风格不是国名",
+    "限制": "原版静态模型；不代表潮汐、潜水呼吸、流体、生产或运行时生成已接入",
+    "农业前提": "仅部署于高潮和盐雾浸泡线以上且有持续淡水补给的稳定岸台；人工架床有实体底板与土层，不直接移入海水。开放天光，运行时光照另验。"
+  },
+  "rooms": [
+    {
+      "id": "bed0",
+      "name": "高于高潮的淡水菜床",
+      "min": [
+        7,
+        8,
+        8
+      ],
+      "max": [
+        16,
+        10,
+        42
+      ],
+      "purpose": "连续土层、四格以内淡水和开放光照；种植与走道分离"
+    },
+    {
+      "id": "bed1",
+      "name": "高于高潮的淡水菜床",
+      "min": [
+        22,
+        8,
+        8
+      ],
+      "max": [
+        29,
+        10,
+        42
+      ],
+      "purpose": "连续土层、四格以内淡水和开放光照；种植与走道分离"
+    }
+  ],
+  "points": [
+    {
+      "id": "bed0",
+      "kind": "work",
+      "pos": [
+        8,
+        8,
+        9
+      ],
+      "name": "淡水灌溉作物维护",
+      "approach": [
+        6,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "bed1",
+      "kind": "work",
+      "pos": [
+        23,
+        8,
+        9
+      ],
+      "name": "淡水灌溉作物维护",
+      "approach": [
+        21,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "water",
+      "kind": "work",
+      "pos": [
+        29,
+        8,
+        52
+      ],
+      "name": "淡水储备与取水",
+      "approach": [
+        29,
+        8,
+        51
+      ]
+    },
+    {
+      "id": "tools",
+      "kind": "work",
+      "pos": [
+        9,
+        8,
+        51
+      ],
+      "name": "田间工具整理",
+      "approach": [
+        9,
+        8,
+        52
+      ]
+    },
+    {
+      "id": "seed",
+      "kind": "storage",
+      "pos": [
+        21,
+        9,
+        51
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        21,
+        8,
+        52
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        17,
+        8,
+        3
+      ],
+      "name": "陆侧普通步行入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        17,
+        7,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "接同高程干燥道路或栈桥"
+    }
+  ],
+  "design_notes": [],
+  "differences": [
+    "沿岸窄长淡水田",
+    "种植床间有独立干道，淡水槽与岸外海水不连通；原版作物支撑及四格灌溉经数据检查"
+  ],
+  "floors": [
+    {
+      "name": "干式生活层",
+      "y": 7,
+      "max_y": 12
+    }
+  ],
+  "roof_min_y": 13,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/tidal_gardens.py",
+  "preview_context": {
+    "kind": "shore",
+    "shore_z": 29,
+    "water_surface_y": 5,
+    "land_surface_y": 8,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "sand"
+  },
+  "nbt_sha256": "7e3371714ab0753632f3ab18db9e5b6bd4449f303a2343e3264beb3eb98e1e07",
+  "function_terms": [
+    "农田种植"
+  ]
+}

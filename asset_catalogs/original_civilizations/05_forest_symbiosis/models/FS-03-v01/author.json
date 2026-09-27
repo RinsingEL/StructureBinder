@@ -193,5 +193,9 @@
     "padding": 4,
     "surface": "podzol"
   },
-  "nbt_sha256": "9bbd9a9d220760bf6a3c43b640f0a06828f5b715243cff717c40a2e581f1c569"
+  "nbt_sha256": "9bbd9a9d220760bf6a3c43b640f0a06828f5b715243cff717c40a2e581f1c569",
+  "function_terms": [
+    "种子保管",
+    "档案管理"
+  ]
 }

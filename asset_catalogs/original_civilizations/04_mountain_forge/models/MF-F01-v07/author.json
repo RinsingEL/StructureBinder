@@ -175,5 +175,9 @@
     "rise": 1,
     "slope_origin_z": 13
   },
-  "nbt_sha256": "8021d7ccc1f2d58961f15247d793f496a48651b3dbe142698517846d01c18ef4"
+  "nbt_sha256": "8021d7ccc1f2d58961f15247d793f496a48651b3dbe142698517846d01c18ef4",
+  "function_terms": [
+    "零售",
+    "皮具修补"
+  ]
 }

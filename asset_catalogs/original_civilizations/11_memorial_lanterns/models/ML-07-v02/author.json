@@ -1,0 +1,337 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "ML-07-v02",
+  "name": "横向双户共用值守宅",
+  "family": "ML-07",
+  "civilization": "哥特",
+  "planning_role": "planning_role.fill",
+  "size": [
+    37,
+    29,
+    29
+  ],
+  "terrain": {
+    "选址": "稳定、排水良好的居民地块，日照与通路按具体用途保留；哥特是建造风格而非地形限制。",
+    "高程": "基础底Y=0、常规地面Y=2、脚底Y=3；抬高或双层版本另记。",
+    "边界": "完整独立模板，保留外扶柱、檐口、采光和门外站位，不默认邻居补齐。"
+  },
+  "rooms": [
+    {
+      "id": "home0",
+      "name": "独立双床横向家庭1",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        16,
+        7,
+        17
+      ],
+      "purpose": "前部炊食和后部双床、侧衣物柜；设施：备餐、热食与洗涤、床位与个人衣物、床位与个人衣物、本户衣物被服"
+    },
+    {
+      "id": "home1",
+      "name": "独立双床横向家庭2",
+      "min": [
+        20,
+        3,
+        5
+      ],
+      "max": [
+        31,
+        7,
+        17
+      ],
+      "purpose": "前部炊食和后部双床、侧衣物柜；设施：备餐、热食与洗涤、床位与个人衣物、床位与个人衣物、本户衣物被服"
+    },
+    {
+      "id": "tools",
+      "name": "共用后院值守间",
+      "min": [
+        14,
+        3,
+        22
+      ],
+      "max": [
+        22,
+        7,
+        24
+      ],
+      "purpose": "两户独立生活，共享后院值班与工具；设施：轮值与墓园记录、共用清扫养护工具"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry0",
+      "kind": "entrance",
+      "pos": [
+        10,
+        3,
+        3
+      ],
+      "name": "尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "cook0",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        6
+      ],
+      "name": "备餐、热食与洗涤",
+      "look_at": [
+        5,
+        4,
+        6
+      ],
+      "approach": [
+        5,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "beds00",
+      "kind": "bed",
+      "pos": [
+        6,
+        3,
+        14
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        6,
+        4,
+        14
+      ],
+      "approach": [
+        7,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "beds01",
+      "kind": "bed",
+      "pos": [
+        9,
+        3,
+        14
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        9,
+        4,
+        14
+      ],
+      "approach": [
+        10,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "linen0",
+      "kind": "storage",
+      "pos": [
+        12,
+        3,
+        15
+      ],
+      "name": "本户衣物被服",
+      "look_at": [
+        12,
+        4,
+        15
+      ],
+      "approach": [
+        12,
+        3,
+        16
+      ]
+    },
+    {
+      "id": "entry1",
+      "kind": "entrance",
+      "pos": [
+        25,
+        3,
+        3
+      ],
+      "name": "尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "cook1",
+      "kind": "work",
+      "pos": [
+        20,
+        3,
+        6
+      ],
+      "name": "备餐、热食与洗涤",
+      "look_at": [
+        20,
+        4,
+        6
+      ],
+      "approach": [
+        20,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "beds10",
+      "kind": "bed",
+      "pos": [
+        21,
+        3,
+        14
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        21,
+        4,
+        14
+      ],
+      "approach": [
+        22,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "beds11",
+      "kind": "bed",
+      "pos": [
+        24,
+        3,
+        14
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        24,
+        4,
+        14
+      ],
+      "approach": [
+        25,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "linen1",
+      "kind": "storage",
+      "pos": [
+        27,
+        3,
+        15
+      ],
+      "name": "本户衣物被服",
+      "look_at": [
+        27,
+        4,
+        15
+      ],
+      "approach": [
+        27,
+        3,
+        16
+      ]
+    },
+    {
+      "id": "tools",
+      "kind": "circulation",
+      "pos": [
+        18,
+        3,
+        20
+      ],
+      "name": "院内房门：尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "records",
+      "kind": "work",
+      "pos": [
+        14,
+        3,
+        23
+      ],
+      "name": "轮值与墓园记录",
+      "look_at": [
+        14,
+        4,
+        23
+      ],
+      "approach": [
+        14,
+        3,
+        24
+      ]
+    },
+    {
+      "id": "toolstore",
+      "kind": "storage",
+      "pos": [
+        20,
+        3,
+        23
+      ],
+      "name": "共用清扫养护工具",
+      "look_at": [
+        20,
+        4,
+        23
+      ],
+      "approach": [
+        20,
+        3,
+        24
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "宽横屋用实体中墙分成两户，各有双床餐厨；共用值守间独立设在后院，入口与住宅生活动线分开。",
+    "按2026-09-27效果图重绘：浅石深木、陡瓦白边、铁脊老虎窗、紫金彩窗与灯柱围院。"
+  ],
+  "differences": [
+    "宽横屋用实体中墙分成两户，各有双床餐厨；共用值守间独立设在后院，入口与住宅生活动线分开。"
+  ],
+  "floors": [
+    {
+      "name": "生活作业层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/memorial_life.py:BUILDERS",
+  "ground_plane": {
+    "y": 3,
+    "note": "外部场坪顶面与脚底Y=3，铺地方块Y=2；内部上层及高台不改变接地基准。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "家庭居住",
+    "墓园看护"
+  ],
+  "nbt_sha256": "49e0825bcbbc6a7ff248ea50b08f8a59f32f108801281d63c1da8b578b0a6492"
+}

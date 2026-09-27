@@ -1,0 +1,30 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "TC-F02-v01",
+  "nbt_sha256": "bc18f424a55b816f2eca3220710327d95a0268c355bb45c2dca48fb8e85f6b07",
+  "author_sha256": "a9b8278a761e6d6b429ecc8a76b46d0a447b8c31ef7c74edf1c5e1c4b0e9aa1d",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-bed0",
+    "room-bed1",
+    "room-bed2",
+    "room-bed3",
+    "point-bed0",
+    "point-bed1",
+    "point-bed2",
+    "point-bed3",
+    "point-water",
+    "point-seed",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

@@ -1,189 +1,166 @@
 {
   "schema": "structure-studio.author.v1",
   "id": "DS-F03-v03",
-  "name": "折巷转角葡萄棚",
+  "name": "L形转角葡萄棚",
   "family": "DS-F03",
   "civilization": "沙漠",
   "planning_role": "planning_role.fill",
   "size": [
-    37,
-    13,
-    32
+    28,
+    11,
+    27
   ],
   "terrain": {
-    "选址": "只用于整合包设定允许种植葡萄、具可靠灌溉和适宜土壤的绿洲",
-    "地块": "两段棚架沿 L 形地块展开，转角设采收台，外侧凹角保留街巷。",
-    "接地": "使用地坪 Y=1，脚底 Y=2；不自动削坡或补齐外部通路",
-    "边界": "模板包含内部地坪和封边，未写入的凹角与外部格保持原环境",
-    "作物表达": "原版木架、常驻树叶和倒挂紫晶簇作为葡萄果串外观；非可收获作物，不声明生长或产量"
+    "选址": "平缓街边或灌溉庭院",
+    "接地": "外部地面方块 Y=1，人员脚底 Y=2"
   },
   "rooms": [
     {
-      "id": "纵棚",
-      "name": "葡萄棚 · 纵棚",
+      "id": "west",
+      "name": "葡萄棚采收道",
       "min": [
         4,
         2,
-        5
+        4
       ],
       "max": [
-        10,
-        6,
-        25
+        7,
+        5,
+        22
       ],
-      "purpose": "土床、备水渠、棚架与采收道；原版方块视觉表达"
+      "purpose": "原版叶块与紫色玻璃表现葡萄；中间保留贯通采收道"
     },
     {
-      "id": "横棚",
-      "name": "葡萄棚 · 横棚",
-      "min": [
-        15,
-        2,
-        19
-      ],
-      "max": [
-        30,
-        6,
-        25
-      ],
-      "purpose": "土床、备水渠、棚架与采收道；原版方块视觉表达"
-    },
-    {
-      "id": "corner",
-      "name": "转角作业位",
+      "id": "north",
+      "name": "葡萄棚采收道",
       "min": [
         10,
         2,
-        25
+        4
       ],
       "max": [
-        30,
-        6,
-        28
+        22,
+        5,
+        9
       ],
-      "purpose": "连接两段棚架的转运与分拣"
+      "purpose": "原版叶块与紫色玻璃表现葡萄；中间保留贯通采收道"
     }
   ],
   "points": [
     {
-      "id": "纵棚_harvest",
-      "kind": "work",
+      "id": "west_walk",
+      "kind": "circulation",
       "pos": [
         5,
-        4,
-        9
-      ],
-      "name": "棚下采收 · 纵棚",
-      "look_at": [
-        5.5,
-        4,
-        9.5
-      ],
-      "approach": [
-        7,
         2,
-        8
-      ]
+        13
+      ],
+      "name": "棚下采收路线"
     },
     {
-      "id": "横棚_harvest",
-      "kind": "work",
+      "id": "north_walk",
+      "kind": "circulation",
       "pos": [
-        19,
-        4,
-        20
-      ],
-      "name": "棚下采收 · 横棚",
-      "look_at": [
-        19.5,
-        4,
-        20.5
-      ],
-      "approach": [
-        18,
+        16,
         2,
-        22
-      ]
+        6
+      ],
+      "name": "棚下采收路线"
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        15,
+        2,
+        24
+      ],
+      "name": "人员与手推货物入口",
+      "facing": "south"
+    },
+    {
+      "id": "side",
+      "kind": "entrance",
+      "pos": [
+        25,
+        2,
+        15
+      ],
+      "name": "人员与手推货物入口",
+      "facing": "east"
     },
     {
       "id": "sort",
       "kind": "work",
       "pos": [
-        12,
+        10,
         2,
-        27
+        19
       ],
-      "name": "转角采收台",
+      "name": "转角分拣",
       "approach": [
-        12,
+        11,
         2,
-        26
+        19
       ]
     },
     {
-      "id": "north_entry",
-      "kind": "entrance",
+      "id": "basket",
+      "kind": "work",
       "pos": [
-        7,
+        10,
         2,
-        3
+        21
       ],
-      "name": "人员与货物入口",
-      "facing": "north"
-    },
-    {
-      "id": "east_entry",
-      "kind": "entrance",
-      "pos": [
-        33,
+      "name": "采收筐",
+      "approach": [
+        11,
         2,
-        22
-      ],
-      "name": "人员与货物入口",
-      "facing": "east"
+        21
+      ]
     }
   ],
   "connections": [
     {
       "kind": "pedestrian",
       "pos": [
-        7,
+        15,
         1,
-        3
+        24
       ],
-      "direction": "north",
+      "direction": "south",
       "clearance": [
         3,
         3
       ],
-      "note": "作者预留几何接口；需另外核对外部地面及具体实体尺寸"
+      "note": "外部连接地面 Y=1"
     },
     {
       "kind": "pedestrian",
       "pos": [
-        33,
+        25,
         1,
-        22
+        15
       ],
       "direction": "east",
       "clearance": [
         3,
         3
       ],
-      "note": "作者预留几何接口；需另外核对外部地面及具体实体尺寸"
+      "note": "外部连接地面 Y=1"
     }
   ],
   "design_notes": [
-    "两段棚架沿 L 形地块展开，转角设采收台，外侧凹角保留街巷。"
+    "两段相交棚架围绕开放转角作业庭，凹角保持宽通路。"
   ],
   "differences": [
-    "两段棚架沿 L 形地块展开，转角设采收台，外侧凹角保留街巷。"
+    "两段相交棚架围绕开放转角作业庭，凹角保持宽通路。"
   ],
   "floors": [
     {
-      "name": "地坪、布置与通路",
+      "name": "地面作业与通路",
       "y": 1,
-      "max_y": 4
+      "max_y": 5
     }
   ],
   "roof_min_y": 6,
@@ -191,9 +168,13 @@
   "offline_limits": [
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。",
-    "紫色方块果串是视觉表达；原版藤架不会自动长葡萄，须按整合包作物另行替换或接入。"
+    "葡萄由原版常绿叶块与紫色玻璃静态表达，不提供葡萄种植或收获功能。"
   ],
-  "source": "tools/structure_studio/studio/oasis_yards.py:vineyard(3)",
+  "source": "tools/structure_studio/studio/desert_fill_shelters.py:vineyard(3)",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部铺地顶面与人员脚底高度，铺地方块 Y=1，外地表站立面 Y=2"
+  },
   "preview_context": {
     "kind": "flat",
     "land_surface_y": 2,
@@ -201,5 +182,8 @@
     "padding": 3,
     "surface": "sand"
   },
-  "nbt_sha256": "2d3c12cb582c734d6cad41a75f831d27c7c7f9e9a4f050bcd041b89839a9b1e9"
+  "function_terms": [
+    "棚架种植"
+  ],
+  "nbt_sha256": "824b0fa9b7fdc459cc7a19d8898e00de54ea80625851640ad407937a4c36cc13"
 }

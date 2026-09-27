@@ -421,5 +421,8 @@
     "padding": 4,
     "surface": "podzol"
   },
-  "nbt_sha256": "30fd4094dd0e091d709dc9706f78d5abf1d2431102eb4faccb3026e651c01d09"
+  "nbt_sha256": "30fd4094dd0e091d709dc9706f78d5abf1d2431102eb4faccb3026e651c01d09",
+  "function_terms": [
+    "蜂蜜加工"
+  ]
 }

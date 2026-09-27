@@ -119,5 +119,8 @@
     "padding": 4,
     "surface": "podzol"
   },
-  "nbt_sha256": "3d6535ca53e2759b943de32162ad8b4c8e0346604d1b582077d94d3588f1ab48"
+  "nbt_sha256": "3d6535ca53e2759b943de32162ad8b4c8e0346604d1b582077d94d3588f1ab48",
+  "function_terms": [
+    "棚架种植"
+  ]
 }

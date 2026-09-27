@@ -393,5 +393,9 @@
     "run": 20,
     "slope_origin_z": 19
   },
-  "nbt_sha256": "4c0bdfa92feb914e284c5b2ba64cede3b5f18a2350352058123643d58e456235"
+  "nbt_sha256": "4c0bdfa92feb914e284c5b2ba64cede3b5f18a2350352058123643d58e456235",
+  "function_terms": [
+    "家庭居住",
+    "林务管理"
+  ]
 }

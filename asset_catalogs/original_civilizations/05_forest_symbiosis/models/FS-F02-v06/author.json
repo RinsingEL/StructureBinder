@@ -173,5 +173,8 @@
     "layout": "西侧菜畦与东侧示范药花格院分开；原版花卉只作药材种植外形表达",
     "water": "每个田块独立水眼，与最终NBT四格水源核对；实际生长、光照与季节另验"
   },
-  "nbt_sha256": "3ab78e31d9c41dc9d57f13aba1cd863b2044822fbac6ae854ebda0555ad6d1ee"
+  "nbt_sha256": "3ab78e31d9c41dc9d57f13aba1cd863b2044822fbac6ae854ebda0555ad6d1ee",
+  "function_terms": [
+    "农田种植"
+  ]
 }

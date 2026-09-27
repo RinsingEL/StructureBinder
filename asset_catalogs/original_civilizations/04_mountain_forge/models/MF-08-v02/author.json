@@ -261,5 +261,9 @@
     "land_surface_y": 2,
     "padding": 5
   },
-  "nbt_sha256": "5cf97858650439b1367752daec1ea1e0f3f9750468c55c76bca6a67ab52e03c3"
+  "nbt_sha256": "5cf97858650439b1367752daec1ea1e0f3f9750468c55c76bca6a67ab52e03c3",
+  "function_terms": [
+    "餐饮",
+    "旅客住宿"
+  ]
 }

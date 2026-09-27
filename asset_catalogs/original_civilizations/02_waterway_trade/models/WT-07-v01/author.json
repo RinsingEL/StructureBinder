@@ -1,0 +1,272 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "WT-07-v01",
+  "name": "街角双层茶馆",
+  "family": "WT-07",
+  "civilization": "地中海",
+  "planning_role": "planning_role.fill",
+  "size": [
+    43,
+    31,
+    41
+  ],
+  "terrain": {
+    "选址": "普通稳定平地；无需水岸。台地版由模板内石基形成高差。",
+    "边界": "完整独立建筑与庭院，保留入口通路和屋檐。"
+  },
+  "rooms": [
+    {
+      "id": "后茶厅ground",
+      "name": "后茶厅ground",
+      "min": [
+        9,
+        3,
+        19
+      ],
+      "max": [
+        26,
+        6,
+        33
+      ],
+      "purpose": "接待、行李与后勤"
+    },
+    {
+      "id": "后茶厅",
+      "name": "后茶厅",
+      "min": [
+        9,
+        9,
+        19
+      ],
+      "max": [
+        26,
+        12,
+        33
+      ],
+      "purpose": "茶饮备制、客桌与器皿"
+    },
+    {
+      "id": "侧营业翼",
+      "name": "侧营业翼",
+      "min": [
+        31,
+        3,
+        14
+      ],
+      "max": [
+        37,
+        6,
+        32
+      ],
+      "purpose": "茶饮备制、客桌与器皿"
+    }
+  ],
+  "points": [
+    {
+      "id": "后茶厅groundentry",
+      "kind": "circulation",
+      "pos": [
+        10,
+        3,
+        17
+      ],
+      "name": "院内房门：入户或营业入口",
+      "facing": "north"
+    },
+    {
+      "id": "后茶厅groundwork",
+      "kind": "work",
+      "pos": [
+        10,
+        3,
+        21
+      ],
+      "name": "接待或作业台",
+      "look_at": [
+        10,
+        4,
+        21
+      ],
+      "approach": [
+        10,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "后茶厅groundstore",
+      "kind": "storage",
+      "pos": [
+        26,
+        3,
+        20
+      ],
+      "name": "衣物食粮或营业库存",
+      "look_at": [
+        26,
+        4,
+        20
+      ],
+      "approach": [
+        26,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "后茶厅entry",
+      "kind": "circulation",
+      "pos": [
+        17,
+        9,
+        17
+      ],
+      "name": "院内房门：入户或营业入口",
+      "facing": "north"
+    },
+    {
+      "id": "后茶厅work",
+      "kind": "work",
+      "pos": [
+        10,
+        9,
+        21
+      ],
+      "name": "接待或作业台",
+      "look_at": [
+        10,
+        10,
+        21
+      ],
+      "approach": [
+        10,
+        9,
+        22
+      ]
+    },
+    {
+      "id": "后茶厅store",
+      "kind": "storage",
+      "pos": [
+        26,
+        9,
+        20
+      ],
+      "name": "衣物食粮或营业库存",
+      "look_at": [
+        26,
+        10,
+        20
+      ],
+      "approach": [
+        26,
+        9,
+        21
+      ]
+    },
+    {
+      "id": "侧营业翼entry",
+      "kind": "circulation",
+      "pos": [
+        34,
+        3,
+        12
+      ],
+      "name": "院内房门：入户或营业入口",
+      "facing": "north"
+    },
+    {
+      "id": "侧营业翼work",
+      "kind": "work",
+      "pos": [
+        32,
+        3,
+        16
+      ],
+      "name": "接待或作业台",
+      "look_at": [
+        32,
+        4,
+        16
+      ],
+      "approach": [
+        32,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "侧营业翼store",
+      "kind": "storage",
+      "pos": [
+        37,
+        3,
+        15
+      ],
+      "name": "衣物食粮或营业库存",
+      "look_at": [
+        37,
+        4,
+        15
+      ],
+      "approach": [
+        37,
+        3,
+        16
+      ]
+    },
+    {
+      "id": "courtyard_street_entry",
+      "kind": "entrance",
+      "pos": [
+        21,
+        3,
+        2
+      ],
+      "name": "前院墙中央实际开口接路",
+      "facing": "north"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "街角双层茶馆：各翼独立备茶器皿与客桌，露天座席和高差形成各自轮廓。",
+    "依2026-09-27用户参考图：暖白浅石、缓坡红瓦、木廊与蓝绿百叶，完整生活和营业尺度。"
+  ],
+  "differences": [
+    "街角双层茶馆：各翼独立备茶器皿与客桌，露天座席和高差形成各自轮廓。"
+  ],
+  "floors": [
+    {
+      "name": "庭院与下层",
+      "y": 2,
+      "max_y": 7
+    },
+    {
+      "name": "上层或台地",
+      "y": 8,
+      "max_y": 13
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mediterranean_living.py:BUILDERS",
+  "ground_plane": {
+    "y": 3,
+    "note": "门外路面方块Y=2，外部站立接地线Y=3；上层与台地由实阶连接。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "餐饮",
+    "茶饮"
+  ],
+  "nbt_sha256": "dc94fc10ef4815c579541e36e77212342dc6c2e794e4f19ac75845580840ad09"
+}

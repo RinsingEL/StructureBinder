@@ -1,0 +1,183 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "NS-F03-v03",
+  "name": "长条木料风干棚",
+  "family": "NS-F03",
+  "civilization": "北欧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    33,
+    24,
+    19
+  ],
+  "terrain": {
+    "选址": "稳定、排水良好的承载地面，接通实际入口并保留工作面；避开活动灾害和行洪通道。水岸设施另须满足本模型的岸线、水深与接驳要求。",
+    "高程": "干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。",
+    "保留空间": "完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。",
+    "风雪": "厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。",
+    "推荐情境": [
+      "寒地背风聚落或海湾聚落；这是常见使用背景，不要求所有北欧建筑临海，也不限定住户种族。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "dry",
+      "name": "三组离地木料垛",
+      "min": [
+        4,
+        3,
+        5
+      ],
+      "max": [
+        28,
+        6,
+        12
+      ],
+      "purpose": "垫木托起木料、垛间检查路径、四面通风；具体设施：分长分批船用木料垛、分长分批船用木料垛、分长分批船用木料垛"
+    },
+    {
+      "id": "check",
+      "name": "后侧尺量登记带",
+      "min": [
+        4,
+        3,
+        13
+      ],
+      "max": [
+        13,
+        6,
+        14
+      ],
+      "purpose": "检查干料批次及出库尺寸；具体设施：干料检查、尺量与记录"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        16,
+        3,
+        3
+      ],
+      "name": "背风步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "stack0",
+      "kind": "storage",
+      "pos": [
+        7,
+        3,
+        7
+      ],
+      "name": "分长分批船用木料垛",
+      "look_at": [
+        7,
+        4,
+        7
+      ],
+      "approach": [
+        7,
+        3,
+        6
+      ]
+    },
+    {
+      "id": "stack1",
+      "kind": "storage",
+      "pos": [
+        16,
+        3,
+        7
+      ],
+      "name": "分长分批船用木料垛",
+      "look_at": [
+        16,
+        4,
+        7
+      ],
+      "approach": [
+        16,
+        3,
+        6
+      ]
+    },
+    {
+      "id": "stack2",
+      "kind": "storage",
+      "pos": [
+        25,
+        3,
+        7
+      ],
+      "name": "分长分批船用木料垛",
+      "look_at": [
+        25,
+        4,
+        7
+      ],
+      "approach": [
+        25,
+        3,
+        6
+      ]
+    },
+    {
+      "id": "grade",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        13
+      ],
+      "name": "干料检查、尺量与记录",
+      "look_at": [
+        5,
+        4,
+        13
+      ],
+      "approach": [
+        5,
+        3,
+        14
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "低长棚针对木料风干，三组不同存取批次的垫木料垛之间留检查道，后边尺量台记录出库，不把网架改名当木料棚。"
+  ],
+  "differences": [
+    "低长棚针对木料风干，三组不同存取批次的垫木料垛之间留检查道，后边尺量台记录出库，不把网架改名当木料棚。"
+  ],
+  "floors": [
+    {
+      "name": "岸台生活作业层",
+      "y": 2,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/northern_fill_gardens_sheds.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 5,
+    "surface": "grass"
+  },
+  "ground_plane": {
+    "y": 3,
+    "note": "外部步行地面上边界接Y=3，基础方块顶Y=3；不是基础底。"
+  },
+  "function_terms": [
+    "渔具存放",
+    "晾晒"
+  ],
+  "nbt_sha256": "689da8613714cb4d98f0c4b2030de9040e21c5db7fb76cd1ab1213075d49e596"
+}

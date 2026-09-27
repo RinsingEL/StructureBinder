@@ -1,8 +1,9 @@
 import {Structure} from 'deepslate';
+import {previewContext} from './grounding.js';
 
 // Synthetic context is a separate mesh: it never changes the exported NBT.
 export function createSite(model) {
-  const spec=model.author.preview_context;
+  const spec=previewContext(model);
   if(!spec)return null;
   if(!['flat','shore','slope','canal'].includes(spec.kind))throw new Error(`Unknown site kind: ${spec.kind}`);
   const pad=Math.max(2,Math.min(12,spec.padding??5));

@@ -191,5 +191,10 @@
     "land_surface_y": 2,
     "padding": 5
   },
-  "nbt_sha256": "45765f935e98c92e6e22500abcd01a8d2b8ff9d3f6a1c6e03470a7db1abcbfb9"
+  "nbt_sha256": "45765f935e98c92e6e22500abcd01a8d2b8ff9d3f6a1c6e03470a7db1abcbfb9",
+  "function_terms": [
+    "零售",
+    "石器加工",
+    "陶器制作"
+  ]
 }

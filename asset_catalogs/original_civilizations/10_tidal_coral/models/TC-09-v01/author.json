@@ -321,5 +321,9 @@
     "padding": 4,
     "surface": "sand"
   },
-  "nbt_sha256": "f9bfc253c2ba88684c0f51b15040f028188199d3ee0cc61b352efae93f07b4b5"
+  "nbt_sha256": "f9bfc253c2ba88684c0f51b15040f028188199d3ee0cc61b352efae93f07b4b5",
+  "function_terms": [
+    "海流研究",
+    "教学"
+  ]
 }

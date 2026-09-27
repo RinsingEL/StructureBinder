@@ -1,0 +1,20 @@
+# NS-F02-v04 · 玻璃盖温床育苗院
+
+25×24×25 格。并列低木框玻璃盖温床与后部种子工作棚，透明上盖和侧维护口完整；这是固定育苗模板，保温功能需另行接入。
+
+两座玻璃温床与后备种棚分开，侧面开启处可以接近。
+
+- [结构 NBT](structure.nbt) · [作者标记](author.json) · [数据与导航](validation.json) · [实际图审](review.json)
+- [外观](previews/front.png) · [去顶](previews/roof-off.png) · [首层](previews/floor-1.png) · [标记](previews/annotations.png) · [场地示意](previews/site-context.png)
+- [建模源码](../../../../../tools/structure_studio/studio/northern_gardens.py)。在 tools/structure_studio 执行 `python runtime/northern_fill_build.py NS-F02-v04` 可独立重建。
+
+角色：`planning_role.fill`。空间：并列玻璃盖低温床、有顶苗盘与种子工作边。
+
+- **选址**：稳定的寒地海湾背风岸台；避开潮涌、雪崩、海冰推挤和行洪通道。
+- **高程**：干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。
+- **保留空间**：完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。
+- **风雪**：厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。
+- **种植条件**：固定模板菜畦；只在具备光照、土壤与可种植季节的背风地块使用。不得当作冰原全年农业。
+- **水与保温**：水源已覆盖防止直接暴露；屋盖和风障只是构造表达，不声称提供模组温度或冬季生长加成。
+
+本项 15 张最终浏览器截图已实际查看并归档，NBT/作者双哈希匹配。未启动 Minecraft；不代表运行时生成、机器、气候或作物机制已经接入。

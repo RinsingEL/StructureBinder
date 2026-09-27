@@ -6,152 +6,114 @@
   "civilization": "沙漠",
   "planning_role": "planning_role.fill",
   "size": [
-    22,
-    15,
-    29
+    23,
+    12,
+    18
   ],
   "terrain": {
-    "选址": "依托商路与聚落交易需求，货物需能从街道搬入，棚周保留通风和行走",
-    "地块": "单边厚墙承托斜顶，前端交易、后段寄货，东侧保留手推货物的侧向开口。",
-    "接地": "使用地坪 Y=1，脚底 Y=2；不自动削坡或补齐外部通路",
-    "边界": "模板包含内部地坪和封边，未写入的凹角与外部格保持原环境"
+    "选址": "平缓街边或灌溉庭院",
+    "接地": "外部地面方块 Y=1，人员脚底 Y=2"
   },
   "rooms": [
     {
-      "id": "counter",
-      "name": "棚前接货",
+      "id": "store",
+      "name": "干燥寄货区",
       "min": [
-        5,
+        10,
         2,
-        6
+        7
       ],
       "max": [
-        13,
+        18,
         5,
-        15
+        12
       ],
-      "purpose": "寄货登记、捆扎挂具与搬运通道"
-    },
-    {
-      "id": "stores",
-      "name": "后段货仓",
-      "min": [
-        5,
-        2,
-        16
-      ],
-      "max": [
-        13,
-        5,
-        23
-      ],
-      "purpose": "分区货箱与布包"
+      "purpose": "分格堆货与宽卸货通道"
     }
   ],
   "points": [
     {
-      "id": "trade",
-      "kind": "work",
-      "pos": [
-        9,
-        2,
-        7
-      ],
-      "name": "寄货登记桌",
-      "approach": [
-        9,
-        2,
-        8
-      ]
-    },
-    {
-      "id": "stock",
-      "kind": "work",
-      "pos": [
-        8,
-        2,
-        19
-      ],
-      "name": "后段寄存箱",
-      "approach": [
-        9,
-        2,
-        19
-      ]
-    },
-    {
       "id": "entry",
       "kind": "entrance",
       "pos": [
-        9,
+        11,
         2,
-        3
+        2
       ],
-      "name": "人员与货物入口",
+      "name": "人员与手推货物入口",
       "facing": "north"
     },
     {
-      "id": "side",
-      "kind": "entrance",
+      "id": "register",
+      "kind": "work",
       "pos": [
-        18,
+        6,
         2,
-        14
+        6
       ],
-      "name": "人员与货物入口",
-      "facing": "east"
+      "name": "寄货交接",
+      "approach": [
+        6,
+        2,
+        5
+      ]
+    },
+    {
+      "id": "warehouse",
+      "kind": "work",
+      "pos": [
+        13,
+        2,
+        10
+      ],
+      "name": "分格寄货",
+      "approach": [
+        13,
+        2,
+        9
+      ]
     }
   ],
   "connections": [
     {
       "kind": "pedestrian",
       "pos": [
-        9,
+        11,
         1,
-        3
+        2
       ],
       "direction": "north",
       "clearance": [
         3,
         3
       ],
-      "note": "作者预留几何接口；需另外核对外部地面及具体实体尺寸"
-    },
-    {
-      "kind": "pedestrian",
-      "pos": [
-        18,
-        1,
-        14
-      ],
-      "direction": "east",
-      "clearance": [
-        3,
-        3
-      ],
-      "note": "作者预留几何接口；需另外核对外部地面及具体实体尺寸"
+      "note": "外部连接地面 Y=1"
     }
   ],
   "design_notes": [
-    "单边厚墙承托斜顶，前端交易、后段寄货，东侧保留手推货物的侧向开口。"
+    "自身厚背墙支撑长棚，前端交接后端分格寄货。"
   ],
   "differences": [
-    "单边厚墙承托斜顶，前端交易、后段寄货，东侧保留手推货物的侧向开口。"
+    "自身厚背墙支撑长棚，前端交接后端分格寄货。"
   ],
   "floors": [
     {
-      "name": "地坪、布置与通路",
+      "name": "地面作业与通路",
       "y": 1,
-      "max_y": 4
+      "max_y": 5
     }
   ],
-  "roof_min_y": 5,
+  "roof_min_y": 6,
   "lifecycle": "draft",
   "offline_limits": [
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
   ],
-  "source": "tools/structure_studio/studio/oasis_yards.py:trade_shelter(3)",
+  "source": "tools/structure_studio/studio/desert_fill_shelters.py:trade_shelter(3)",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部铺地顶面与人员脚底高度，铺地方块 Y=1，外地表站立面 Y=2"
+  },
   "preview_context": {
     "kind": "flat",
     "land_surface_y": 2,
@@ -159,5 +121,9 @@
     "padding": 3,
     "surface": "sand"
   },
-  "nbt_sha256": "f4bc25c81bd9219a39a5770ed80a468be878d2e45309e19193266da0542a28db"
+  "function_terms": [
+    "货物暂存",
+    "摊位交易"
+  ],
+  "nbt_sha256": "8aa902609a7bce1a9de84b7aafd6a4c0631d51e47c60397e5cbb657bd7035d3a"
 }

@@ -1,0 +1,46 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "SC-04-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 游牧生活返修作者逐图实看",
+  "nbt_sha256": "658872f3baa0e433aa2c1338ecd4cc0e7d2b3ef2d32b12184ec81038e02a255a",
+  "author_sha256": "b0a98821c70d6730cfb925a9ab52aaf8878a7131bd9f43418acca5e027f97a8f",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-a.png",
+    "previews/room-b.png",
+    "previews/room-yard.png",
+    "previews/point-abed.png",
+    "previews/point-acloth.png",
+    "previews/point-asit.png",
+    "previews/point-bbed.png",
+    "previews/point-bcloth.png",
+    "previews/point-bsit.png",
+    "previews/point-sharedkcook.png",
+    "previews/point-sharedkwater.png",
+    "previews/point-sharedkfood.png",
+    "previews/point-sharedmeal.png",
+    "previews/point-tools.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "当前全部外观、去顶、楼层、房间、功能点、标注及场景图逐张实看；浅木家具与织毯对比清楚。",
+    "住宅按围火、弧墙床榻、纵向家务、双帐炊庭、作业前廊、冬居坡台组织；客宿按独立帐、六床舱、寝餐分帐、接待分帐组织。",
+    "标记与NBT同步；入口至功能点零警告离线导航。"
+  ],
+  "revisions": [
+    "主审退回旧同构生活平面后完整重建，旧221图不计本次成品。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

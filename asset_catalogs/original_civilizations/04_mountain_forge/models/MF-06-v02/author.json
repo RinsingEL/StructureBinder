@@ -206,5 +206,8 @@
     "land_surface_y": 2,
     "padding": 5
   },
-  "nbt_sha256": "e24e70b7f7f51756f4624e2454318a560467db0cf4fdc3f8ad31a2ecfe43030b"
+  "nbt_sha256": "e24e70b7f7f51756f4624e2454318a560467db0cf4fdc3f8ad31a2ecfe43030b",
+  "function_terms": [
+    "宝石加工"
+  ]
 }

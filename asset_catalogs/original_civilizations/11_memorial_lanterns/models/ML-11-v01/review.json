@@ -1,0 +1,43 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "ML-11-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 哥特作者离线全图审查",
+  "nbt_sha256": "d06db011e5104ab97086fe6d00808aeb6bbfb777377886392d6558528f7d06c4",
+  "author_sha256": "fc97bf8d64c2f94a419b393c1f419765e985d1e3234e5f35c5af9607aee91f86",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-stairs.png",
+    "previews/room-guard.png",
+    "previews/room-burial.png",
+    "previews/point-offer.png",
+    "previews/point-guardian.png",
+    "previews/point-tomb12.png",
+    "previews/point-tomb23.png",
+    "previews/point-inscription.png",
+    "previews/point-landing.png",
+    "previews/point-descent.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与用途": "旧路高台经六级实阶下至陵寝，坡地与地下保留范围单列；纪念室仍有尖顶石肋和彩窗。",
+    "内饰与空间": "实际查看最终20图：补看高台上口及石阶房间，确认台阶连续、护边与底部平台完整；前仪式守护、后双棺和碑文记录可达，地形示意方向已与高前低后条件对齐。",
+    "完整证据": "实际查看当前版本全部四向外观、顶视、去顶、楼层、房间、站位、标记与地形图；不以拍摄自动代替审美检查。",
+    "数据与通路": "最终 NBT 重读、状态、门床、标记与碰撞导航检查通过，零警告。",
+    "环境条件": "排水良好的稳定台地，连接仍有常住居民的聚落道路；纪念设施不替代活人的生活供给。；基础底 Y=0，公共地面 Y=2，步行脚底 Y=3；道路接入口同高。；独立完整模板，保留外扶壁、彩窗采光面及庭院；不可用相邻建筑遮挡。；尖拱、外扶壁与内肋共同表达高挑空间；不模拟结构受力、照度或天气。；前旧路脚底 Y=9，经6级台阶下至 Y=3。地下保留范围 X=10～28、Z=20～41、Y=2～10；两侧围土不得侵入彩窗和内部通路。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

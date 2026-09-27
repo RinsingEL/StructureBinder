@@ -202,5 +202,8 @@
     "land_surface_y": 2,
     "padding": 5
   },
-  "nbt_sha256": "f5182cad37e302b3604166367afa74d81d5efec90625f8e456b9093271e87f9f"
+  "nbt_sha256": "f5182cad37e302b3604166367afa74d81d5efec90625f8e456b9093271e87f9f",
+  "function_terms": [
+    "冶炼"
+  ]
 }

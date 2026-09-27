@@ -1,0 +1,230 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "ML-F02-v03",
+  "name": "院角折线蔬菜园",
+  "family": "ML-F02",
+  "civilization": "哥特",
+  "planning_role": "planning_role.fill",
+  "size": [
+    31,
+    24,
+    31
+  ],
+  "terrain": {
+    "选址": "日照充分、排水稳定且有灌溉供水的聚落园地；不因哥特风格限定生物群系。",
+    "高程": "基础底Y=0、常规地面Y=2、脚底Y=3；抬高或双层版本另记。",
+    "边界": "完整独立模板，保留外扶柱、檐口、采光和门外站位，不默认邻居补齐。",
+    "落地": "固定小园模板与完整封边；不冒充按自然地形延伸的 Landscape 大田。",
+    "生产": "原版粮菜与花材为静态成熟或展示状态；药材和葡萄不声称已接入专用生产机制。"
+  },
+  "rooms": [
+    {
+      "id": "west",
+      "name": "灌溉粮菜畦",
+      "min": [
+        5,
+        3,
+        6
+      ],
+      "max": [
+        9,
+        7,
+        23
+      ],
+      "purpose": "原版耕地与中央灌渠，边埂作业；设施：粮菜灌溉及采收"
+    },
+    {
+      "id": "north",
+      "name": "灌溉粮菜畦",
+      "min": [
+        16,
+        3,
+        6
+      ],
+      "max": [
+        24,
+        7,
+        10
+      ],
+      "purpose": "原版耕地与中央灌渠，边埂作业；设施：粮菜灌溉及采收"
+    },
+    {
+      "id": "corner",
+      "name": "灌溉粮菜畦",
+      "min": [
+        16,
+        3,
+        16
+      ],
+      "max": [
+        20,
+        7,
+        21
+      ],
+      "purpose": "原版耕地与中央灌渠，边埂作业；设施：粮菜灌溉及采收"
+    },
+    {
+      "id": "work",
+      "name": "园地作业与种料角",
+      "min": [
+        16,
+        3,
+        24
+      ],
+      "max": [
+        20,
+        7,
+        29
+      ],
+      "purpose": "采后分选、清洗、种料及工具存放；设施：采收、分选与装篮、种料、标牌与手工具"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        15,
+        3,
+        2
+      ],
+      "name": "园地前入口",
+      "facing": "north"
+    },
+    {
+      "id": "west",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        6
+      ],
+      "name": "粮菜灌溉及采收",
+      "look_at": [
+        5,
+        4,
+        6
+      ],
+      "approach": [
+        4,
+        3,
+        6
+      ]
+    },
+    {
+      "id": "north",
+      "kind": "work",
+      "pos": [
+        16,
+        3,
+        6
+      ],
+      "name": "粮菜灌溉及采收",
+      "look_at": [
+        16,
+        4,
+        6
+      ],
+      "approach": [
+        15,
+        3,
+        6
+      ]
+    },
+    {
+      "id": "corner",
+      "kind": "work",
+      "pos": [
+        16,
+        3,
+        16
+      ],
+      "name": "粮菜灌溉及采收",
+      "look_at": [
+        16,
+        4,
+        16
+      ],
+      "approach": [
+        15,
+        3,
+        16
+      ]
+    },
+    {
+      "id": "sort",
+      "kind": "work",
+      "pos": [
+        16,
+        3,
+        24
+      ],
+      "name": "采收、分选与装篮",
+      "look_at": [
+        16,
+        4,
+        24
+      ],
+      "approach": [
+        16,
+        3,
+        25
+      ]
+    },
+    {
+      "id": "seed",
+      "kind": "storage",
+      "pos": [
+        16,
+        3,
+        28
+      ],
+      "name": "种料、标牌与手工具",
+      "look_at": [
+        16,
+        4,
+        28
+      ],
+      "approach": [
+        16,
+        3,
+        27
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "三块不同长宽菜畦折成院角L形，空出的内角安排休息绿角与分选角，根菜各有明渠。"
+  ],
+  "differences": [
+    "三块不同长宽菜畦折成院角L形，空出的内角安排休息绿角与分选角，根菜各有明渠。"
+  ],
+  "floors": [
+    {
+      "name": "生活作业层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 6,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/memorial_gardens.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "ground_plane": {
+    "y": 3,
+    "note": "正面院门外铺装地坪顶面；台地田内部逐阶抬高。"
+  },
+  "function_terms": [
+    "农田种植"
+  ],
+  "nbt_sha256": "1a9d77c9a32fcd25421c9115d5042b9323bb14b175f7c00cf8301a3dab5f6104"
+}

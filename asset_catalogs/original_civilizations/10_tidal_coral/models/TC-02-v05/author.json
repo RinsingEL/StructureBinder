@@ -1,0 +1,239 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "TC-02-v05",
+  "name": "叠层错台宅",
+  "family": "TC-02",
+  "civilization": "海洋幻想",
+  "planning_role": "planning_role.fill",
+  "size": [
+    43,
+    42,
+    37
+  ],
+  "terrain": {
+    "选址": "避风潮上岸台或人工桩台；水侧支柱底Y=0必须接稳定海床，不自动适应任意水深",
+    "潮位": "低潮Y=3、参考水面Y=5、预期高潮Y=6；主层干地板Y=7、脚底Y=8，潮汐仅为条件记录",
+    "支撑接驳": "北侧接Y=8普通步行道路；所有楼梯为实体台阶。高层与分台另有房间高程，不依赖跳跃或游泳",
+    "供水生活": "厨房淡水和食物依岸上补给；海水不能视为饮用或灌溉水。居室采用干燥外壳，气候通风与实际水密另验",
+    "风格": "棱面近似贝壳的弧顶、放射或分瓣舱室、青绿石质桩台；风格不是国名",
+    "限制": "原版静态模型；不代表潮汐、潜水呼吸、流体、生产或运行时生成已接入",
+    "分层": "下层地板7，上层19，外梯位于东侧；上层由四根实体柱及下层贝顶承托，需连续承载基础"
+  },
+  "rooms": [
+    {
+      "id": "lower",
+      "name": "贝舱共居起居间",
+      "min": [
+        7,
+        8,
+        7
+      ],
+      "max": [
+        23,
+        13,
+        23
+      ],
+      "purpose": "连续厨房与食品柜、六席餐桌、面对面坐读、书柜与家务地毯"
+    },
+    {
+      "id": "upper",
+      "name": "独门休眠贝舱",
+      "min": [
+        11,
+        20,
+        11
+      ],
+      "max": [
+        21,
+        25,
+        21
+      ],
+      "purpose": "个人床头灯柜、衣物柜、书写座位、洗盆与低屏，普通木门保障私密"
+    },
+    {
+      "id": "upper_bridge",
+      "name": "高层接驳廊",
+      "min": [
+        24,
+        20,
+        17
+      ],
+      "max": [
+        32,
+        23,
+        20
+      ],
+      "purpose": "外侧实心楼梯接带边护高廊"
+    }
+  ],
+  "points": [
+    {
+      "id": "lower_cook",
+      "kind": "work",
+      "pos": [
+        9,
+        8,
+        8
+      ],
+      "name": "储备淡水与连续备餐",
+      "approach": [
+        9,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "lower_food",
+      "kind": "storage",
+      "pos": [
+        19,
+        9,
+        8
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        19,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "lower_books",
+      "kind": "storage",
+      "pos": [
+        9,
+        9,
+        22
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        9,
+        8,
+        21
+      ]
+    },
+    {
+      "id": "uppera",
+      "kind": "sleep",
+      "pos": [
+        13,
+        20,
+        18
+      ],
+      "name": "值守床位与个人柜",
+      "approach": [
+        14,
+        20,
+        18
+      ]
+    },
+    {
+      "id": "upperb",
+      "kind": "sleep",
+      "pos": [
+        19,
+        20,
+        18
+      ],
+      "name": "值守床位与个人柜",
+      "approach": [
+        20,
+        20,
+        18
+      ]
+    },
+    {
+      "id": "upper_clothes",
+      "kind": "storage",
+      "pos": [
+        13,
+        21,
+        12
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        13,
+        20,
+        13
+      ]
+    },
+    {
+      "id": "upper_desk",
+      "kind": "work",
+      "pos": [
+        18,
+        20,
+        13
+      ],
+      "name": "个人书写与物品",
+      "approach": [
+        18,
+        20,
+        14
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        27,
+        8,
+        3
+      ],
+      "name": "陆侧普通步行入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        27,
+        7,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "接同高程干燥道路或栈桥"
+    }
+  ],
+  "design_notes": [],
+  "differences": [
+    "上下贝舱错台，外侧独立长阶与高廊接独门睡眠舱，起居/睡眠分层"
+  ],
+  "floors": [
+    {
+      "name": "干式生活层",
+      "y": 7,
+      "max_y": 13
+    },
+    {
+      "name": "高层睡眠舱",
+      "y": 19,
+      "max_y": 25
+    }
+  ],
+  "roof_min_y": 14,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/tidal_life.py",
+  "preview_context": {
+    "kind": "shore",
+    "shore_z": 18,
+    "water_surface_y": 5,
+    "land_surface_y": 8,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "sand"
+  },
+  "nbt_sha256": "e2b1be4871481057cab3977cf3fb737e63d9c5ccde0d2645a4444221a534657b",
+  "function_terms": [
+    "家庭居住"
+  ]
+}

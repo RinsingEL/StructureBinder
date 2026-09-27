@@ -1,0 +1,200 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "ML-F04-v01",
+  "name": "尖顶独立看护工具屋",
+  "family": "ML-F04",
+  "civilization": "哥特",
+  "planning_role": "planning_role.fill",
+  "size": [
+    27,
+    24,
+    25
+  ],
+  "terrain": {
+    "选址": "稳定、排水良好并可接近工作区域的地块；保留工具搬运及入口空间。工具棚本身不要求耕地、种植日照或灌溉供水。",
+    "高程": "基础底Y=0、常规地面Y=2、脚底Y=3；抬高或双层版本另记。",
+    "边界": "完整独立模板，保留外扶柱、檐口、采光和门外站位，不默认邻居补齐。",
+    "落地": "独立工具配套模板；基础、出入口及搬运空间按实际模型核对。",
+    "生产": "工具、维护与储物空间为静态表达；不以工具棚声明作物生产能力。",
+    "推荐情境": [
+      "庭园、墓园或其他需要看护与工具存放的区域；实际种植区另行满足其农业条件。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "shed",
+      "name": "闭合干燥工具屋",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        15,
+        7,
+        18
+      ],
+      "purpose": "工具归还、磨修、洗涤及干料分别布置；设施：长短养护工具分柜、磨修换柄工作台、干净清洁材料、工具洗涤"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        13,
+        3,
+        2
+      ],
+      "name": "园地前入口",
+      "facing": "north"
+    },
+    {
+      "id": "yardrepair",
+      "kind": "work",
+      "pos": [
+        20,
+        3,
+        16
+      ],
+      "name": "檐下工具整理",
+      "look_at": [
+        20,
+        4,
+        16
+      ],
+      "approach": [
+        20,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "shed",
+      "kind": "entrance",
+      "pos": [
+        10,
+        3,
+        3
+      ],
+      "name": "尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "tools",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        7
+      ],
+      "name": "长短养护工具分柜",
+      "look_at": [
+        5,
+        4,
+        7
+      ],
+      "approach": [
+        5,
+        3,
+        8
+      ]
+    },
+    {
+      "id": "repair",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        13
+      ],
+      "name": "磨修换柄工作台",
+      "look_at": [
+        5,
+        4,
+        13
+      ],
+      "approach": [
+        5,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "clean",
+      "kind": "storage",
+      "pos": [
+        11,
+        3,
+        16
+      ],
+      "name": "干净清洁材料",
+      "look_at": [
+        11,
+        4,
+        16
+      ],
+      "approach": [
+        11,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "wash",
+      "kind": "work",
+      "pos": [
+        13,
+        3,
+        10
+      ],
+      "name": "工具洗涤",
+      "look_at": [
+        13,
+        4,
+        10
+      ],
+      "approach": [
+        13,
+        3,
+        11
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "完整独立尖顶工具屋，长短工具柜、磨修工作台、洗涤盆及干净清洁材料分区，入口和中央通路通畅。"
+  ],
+  "differences": [
+    "完整独立尖顶工具屋，长短工具柜、磨修工作台、洗涤盆及干净清洁材料分区，入口和中央通路通畅。"
+  ],
+  "floors": [
+    {
+      "name": "生活作业层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 6,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/memorial_gardens.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "ground_plane": {
+    "y": 3,
+    "note": "正面院门外铺装地坪顶面；台地田内部逐阶抬高。"
+  },
+  "function_terms": [
+    "工具存放",
+    "看护作业"
+  ],
+  "nbt_sha256": "0443802ecf2e0b9bd45100c702a7c36b9a2e1d3c0c3ff4e165219b3594594d55"
+}

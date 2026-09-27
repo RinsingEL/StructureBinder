@@ -1,0 +1,39 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "NS-F02-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 北欧套系作者逐图审查",
+  "nbt_sha256": "533439a430b9a92caac58c6310afc29939645e0f74229129bf30ff9257add6bf",
+  "author_sha256": "79a44df5c758d84bdb7577ccb85ba584bc7264d98906d4e5585df5be1d133bed",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-beds.png",
+    "previews/room-work.png",
+    "previews/point-bed5.png",
+    "previews/point-bed15.png",
+    "previews/point-pot.png",
+    "previews/point-seed.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与用途": "并列低木框玻璃盖温床与后部种子工作棚，透明上盖和侧维护口完整；这是固定育苗模板，保温功能需另行接入。",
+    "实际内饰图审": "两座玻璃温床与后备种棚分开，侧面开启处可以接近。",
+    "完整证据": "已实际查看最终四向、顶视、去顶、全部楼层与房间、使用站位、标记及场地示意；四个双层模型另补楼层斜视核对护栏。",
+    "数据与通路": "NBT 重读、方块状态、作者标记与离线碰撞导航通过，零警告。",
+    "选址条件": "稳定的寒地海湾背风岸台；避开潮涌、雪崩、海冰推挤和行洪通道。；干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。；完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。；厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。；固定模板菜畦；只在具备光照、土壤与可种植季节的背风地块使用。不得当作冰原全年农业。；水源已覆盖防止直接暴露；屋盖和风障只是构造表达，不声称提供模组温度或冬季生长加成。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "设备、晾晒及温床为静态表达，未接入加工、气候或作物生产机制。"
+  ]
+}

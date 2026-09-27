@@ -1,80 +1,126 @@
 {
   "schema": "structure-studio.author.v1",
   "id": "DS-10-v01",
-  "name": "黄铜星仪台",
+  "name": "连桥三塔星象台",
   "family": "DS-10",
   "civilization": "沙漠",
   "planning_role": "planning_role.key",
   "size": [
-    35,
-    32,
-    35
+    46,
+    31,
+    37
   ],
   "terrain": {
-    "选址": "视野开阔且可安全登临的台地，避免树冠与高崖遮挡观测方向",
-    "地形": "平缓台地上的独立观测塔，入口脚底 Y=2，二层 Y=9，观测露台 Y=16",
-    "连接": "两段内部楼梯，保留入口步行和露台四周净空"
+    "选址": "开阔天空与稳定平地，观测方向避免高山和树冠遮挡",
+    "地形": "完整承重基座，北侧主门接街道；外梯和连桥均需保留",
+    "供给": "值守人员需食物和洁净水补给",
+    "机制": "星仪、刻度和观测装置为原版静态表达"
   },
   "rooms": [
     {
-      "id": "calculation",
-      "name": "接待与星图计算",
-      "min": [
-        7,
-        2,
-        7
-      ],
-      "max": [
-        27,
-        6,
-        27
-      ],
-      "purpose": "计算桌、记录与上楼"
-    },
-    {
       "id": "library",
-      "name": "藏书和值守",
+      "name": "藏书与星图计算翼",
       "min": [
-        14,
-        9,
-        7
+        31,
+        2,
+        8
+      ],
+      "max": [
+        40,
+        6,
+        16
+      ],
+      "purpose": "书架、星图台、读写与遮阴门廊"
+    },
+    {
+      "id": "keeper",
+      "name": "低塔值守居室",
+      "min": [
+        5,
+        2,
+        21
+      ],
+      "max": [
+        11,
+        7,
+        29
+      ],
+      "purpose": "床位、饮水、炊具与储物"
+    },
+    {
+      "id": "calibration",
+      "name": "主塔仪器校准室",
+      "min": [
+        20,
+        2,
+        19
       ],
       "max": [
         27,
-        13,
+        8,
         27
       ],
-      "purpose": "观测藏书、起居与床位"
+      "purpose": "校准、仪器维护与历法藏书"
     },
     {
-      "id": "gallery",
-      "name": "二层登临廊",
+      "id": "upper",
+      "name": "主塔日志室",
       "min": [
-        7,
-        9,
-        7
+        21,
+        13,
+        21
       ],
       "max": [
-        12,
-        14,
+        26,
+        20,
         26
       ],
-      "purpose": "通向露台的另一段楼梯"
+      "purpose": "桥层读写与观测日志"
     },
     {
-      "id": "deck",
-      "name": "露天观测层",
+      "id": "instrument",
+      "name": "低塔星仪平台",
       "min": [
-        7,
-        16,
-        7
+        5,
+        13,
+        21
       ],
       "max": [
-        27,
+        11,
+        21,
+        29
+      ],
+      "purpose": "小型星仪和环绕操作空间"
+    },
+    {
+      "id": "sundial",
+      "name": "东塔测时亭",
+      "min": [
+        36,
+        13,
+        21
+      ],
+      "max": [
+        40,
+        17,
+        27
+      ],
+      "purpose": "带遮檐的校时观测平台"
+    },
+    {
+      "id": "summit",
+      "name": "主塔高空观测台",
+      "min": [
+        20,
+        24,
+        19
+      ],
+      "max": [
+        30,
         28,
         27
       ],
-      "purpose": "星仪、刻度与开阔观测面"
+      "purpose": "子午刻度与开阔观测"
     }
   ],
   "points": [
@@ -82,101 +128,176 @@
       "id": "front",
       "kind": "entrance",
       "pos": [
-        17,
+        23,
         2,
-        5
+        2
       ],
-      "name": "主入口",
+      "name": "北侧星图门",
       "facing": "north"
     },
     {
       "id": "survey",
       "kind": "work",
       "pos": [
-        15,
+        36,
         3,
-        12
+        10
       ],
       "name": "星图计算台",
       "approach": [
-        15,
+        36,
         2,
-        11
+        9
       ]
     },
     {
       "id": "records",
       "kind": "work",
       "pos": [
-        19,
+        32,
         2,
-        25
+        14
       ],
       "name": "历法与观测记录",
       "approach": [
-        19,
+        31,
         2,
-        24
+        14
+      ]
+    },
+    {
+      "id": "calibration",
+      "kind": "work",
+      "pos": [
+        26,
+        2,
+        21
+      ],
+      "name": "仪器校准台",
+      "approach": [
+        25,
+        2,
+        21
       ]
     },
     {
       "id": "keeper_bed",
       "kind": "bed",
       "pos": [
-        19,
-        9,
-        19
+        6,
+        2,
+        26
       ],
       "name": "观测者床位",
       "approach": [
-        20,
-        9,
-        19
+        7,
+        2,
+        26
       ]
     },
     {
-      "id": "first_landing",
-      "kind": "circulation",
+      "id": "clock_records",
+      "kind": "work",
+      "pos": [
+        39,
+        2,
+        26
+      ],
+      "name": "测时记录室",
+      "approach": [
+        39,
+        2,
+        25
+      ]
+    },
+    {
+      "id": "upper_records",
+      "kind": "work",
       "pos": [
         24,
-        9,
-        12
+        13,
+        25
       ],
-      "name": "藏书层楼梯口",
-      "look_at": [
-        20,
-        10,
-        15
+      "name": "高塔观测日志",
+      "approach": [
+        24,
+        13,
+        24
       ]
     },
     {
-      "id": "deck_landing",
-      "kind": "circulation",
+      "id": "summit",
+      "kind": "work",
       "pos": [
-        8,
-        16,
-        21
+        26,
+        24,
+        22
       ],
-      "name": "观测露台楼梯口",
-      "look_at": [
-        17,
-        20,
-        18
+      "name": "高塔子午观测台",
+      "approach": [
+        27,
+        24,
+        22
       ]
     },
     {
       "id": "instrument",
       "kind": "work",
       "pos": [
-        20,
-        16,
-        18
+        10,
+        13,
+        22
       ],
       "name": "星仪观测与记录",
       "approach": [
-        21,
+        11,
+        13,
+        22
+      ]
+    },
+    {
+      "id": "sundial",
+      "kind": "work",
+      "pos": [
+        39,
+        14,
+        24
+      ],
+      "name": "日影校时台",
+      "approach": [
+        38,
+        13,
+        24
+      ]
+    },
+    {
+      "id": "first_landing",
+      "kind": "circulation",
+      "pos": [
         16,
-        18
+        13,
+        19
+      ],
+      "name": "外梯第一平台",
+      "look_at": [
+        8,
+        17,
+        25
+      ]
+    },
+    {
+      "id": "deck_landing",
+      "kind": "circulation",
+      "pos": [
+        30,
+        24,
+        30
+      ],
+      "name": "高塔楼梯出口",
+      "look_at": [
+        24,
+        25,
+        23
       ]
     }
   ],
@@ -184,50 +305,50 @@
     {
       "kind": "pedestrian",
       "pos": [
-        17,
+        23,
         1,
-        4
+        2
       ],
       "direction": "north",
       "clearance": [
         3,
         4
       ],
-      "note": "外部街面衔接台阶，不自动随地形移动入口"
+      "note": "街面脚底 Y=2"
     }
   ],
   "design_notes": [
-    "三层登临次序为接待计算、藏书值守、露天观测；砂岩塔身、蓝色腰线与黄铜星仪形成垂直轮廓。",
-    "星仪是原版方块构成的空间装置，不代表天文或望远镜机制已接入。"
+    "参考用户星象台右案：独立三塔、折转外楼梯、架空连桥和低层藏书翼。",
+    "主塔分两段登临，所有平台通过三格宽楼梯或连桥抵达；砂岩台墩与柱梁承担桥面。",
+    "取消贯穿各栋的统一彩色腰线，赭色局部遮檐与观测刻度用于识别。"
   ],
   "differences": [
-    "三层登临次序为接待计算、藏书值守、露天观测；砂岩塔身、蓝色腰线与黄铜星仪形成垂直轮廓。",
-    "星仪是原版方块构成的空间装置，不代表天文或望远镜机制已接入。"
+    "纵向主塔、低星仪塔、东侧测时亭和藏书翼分别由用途决定轮廓。"
   ],
   "floors": [
     {
-      "name": "接待计算",
+      "name": "藏书计算与值守",
       "y": 1,
       "max_y": 6
     },
     {
-      "name": "藏书值守",
-      "y": 8,
-      "max_y": 13
+      "name": "连桥与星仪平台",
+      "y": 12,
+      "max_y": 19
     },
     {
-      "name": "观测露台",
-      "y": 15,
-      "max_y": 27
+      "name": "高塔观测台",
+      "y": 23,
+      "max_y": 28
     }
   ],
-  "roof_min_y": 16,
+  "roof_min_y": 7,
   "lifecycle": "draft",
   "offline_limits": [
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
   ],
-  "source": "tools/structure_studio/studio/desert.py:desert(10)",
+  "source": "tools/structure_studio/studio/desert_observatory.py:observatory",
   "preview_context": {
     "kind": "flat",
     "land_surface_y": 1,
@@ -235,5 +356,12 @@
     "padding": 4,
     "surface": "sand"
   },
-  "nbt_sha256": "b5d4dee0c975fd265d5c9585fe82e47f0645e5f478c230aab43f2d57265b484c"
+  "ground_plane": {
+    "y": 1,
+    "note": "自然街面上边界 Y=1；北侧 Y=1 南向楼梯从半格踏面升至 Y=2 门前平台，入口高于外部地面一格。"
+  },
+  "function_terms": [
+    "天文观测"
+  ],
+  "nbt_sha256": "85dfa7c325245edb59d75cd036956dd37002c98dbef3074ba6ff11e6b7c25839"
 }

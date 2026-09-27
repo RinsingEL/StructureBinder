@@ -1,0 +1,44 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "TC-F01-v05",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors / 海洋幻想作者实看",
+  "nbt_sha256": "0dd46d918fc46f3fdcee8b638a7e165ed33bef2a075475a87bf5a5d2f18d7fdb",
+  "author_sha256": "935de2a4f7c1a3aba0563843f45fa9dd09483c6653eb87de0db2385d8902705e",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-shop.png",
+    "previews/room-ownerlive.png",
+    "previews/room-ownerbed.png",
+    "previews/point-shoptrade.png",
+    "previews/point-shopraw.png",
+    "previews/point-shopbench.png",
+    "previews/point-shopindustry.png",
+    "previews/point-ownerlivecook.png",
+    "previews/point-ownerlivefood.png",
+    "previews/point-ownerlivebooks.png",
+    "previews/point-ownerbeda.png",
+    "previews/point-ownerbedcloth.png",
+    "previews/point-ownerbeddesk.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "逐图核对行业专用台、交易与原料储存、独立生活卧室；仓库货垛与装卸通道分开。",
+    "实际看过全部外观、去顶、分层、房间、功能点、标注与地形视图；结合零警告数据与导航核对。",
+    "贝器杂货铺",
+    "一体长贝前店后居，内部隔门"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

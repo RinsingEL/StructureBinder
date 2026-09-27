@@ -1,0 +1,43 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "ML-03-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 哥特作者逐图核对",
+  "nbt_sha256": "04b245d5b04a15a85aa98446e60cd07a0719f5ce97fc9db62fb81a24f62fa0e6",
+  "author_sha256": "413fd620d501950dd9853728913a59e0378af78a2d21d620cdf724af19ebb642",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-ground.png",
+    "previews/room-upper.png",
+    "previews/point-cook.png",
+    "previews/point-clock.png",
+    "previews/point-clockparts.png",
+    "previews/point-beds0.png",
+    "previews/point-beds1.png",
+    "previews/point-beds2.png",
+    "previews/point-linen.png",
+    "previews/point-reading.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "实际图审": "两层真实实梯与U形石栏清楚，下层钟务餐厨、上层书桌和三床隔间各有用途。",
+    "形体与用途": "狭地向上发展，下层餐厨与钟务、上层读写和隔屏寝室；六级实梯、封护梯井和高山墙钟共同形成垂直轮廓。",
+    "数据导航": "数据、标记和离线碰撞导航零警告。",
+    "证据范围": "当前四向、顶视、去顶、所有楼层、房间、使用站位、标记和场地截图已实际查看。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "离线静态模板；未接入机器、交易、气候或作物生产机制。"
+  ]
+}

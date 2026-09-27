@@ -1,0 +1,31 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "TC-03-v01",
+  "nbt_sha256": "919747f217cb06162a263310e47ed8157b41b43156ff974c8f27789bf3c23698",
+  "author_sha256": "8f66f19faea74b435ff6cd78e724dcb7f754ce0c4153254777501f7c82c92d9b",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-common0",
+    "room-bedroom0",
+    "room-court0",
+    "point-common0_cook",
+    "point-common0_food",
+    "point-common0_books",
+    "point-bedroom0a",
+    "point-bedroom0b",
+    "point-bedroom0_clothes",
+    "point-bedroom0_desk",
+    "point-court0",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

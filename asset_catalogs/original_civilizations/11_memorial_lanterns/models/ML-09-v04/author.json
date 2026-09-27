@@ -1,0 +1,333 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "ML-09-v04",
+  "name": "三进纸品装订铺",
+  "family": "ML-09",
+  "civilization": "哥特",
+  "planning_role": "planning_role.fill",
+  "size": [
+    31,
+    29,
+    41
+  ],
+  "terrain": {
+    "选址": "稳定、排水良好的居民地块，日照与通路按具体用途保留；哥特是建造风格而非地形限制。",
+    "高程": "基础底Y=0、常规地面Y=2、脚底Y=3；抬高或双层版本另记。",
+    "边界": "完整独立模板，保留外扶柱、檐口、采光和门外站位，不默认邻居补齐。"
+  },
+  "rooms": [
+    {
+      "id": "front",
+      "name": "前端窄交易间",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        15,
+        7,
+        13
+      ],
+      "purpose": "街面选货与接单；设施：信纸、纪念卡与册页、纸材、染料与封套、顾客选货与交付停留"
+    },
+    {
+      "id": "work",
+      "name": "中段独立加工间",
+      "min": [
+        5,
+        3,
+        15
+      ],
+      "max": [
+        15,
+        7,
+        23
+      ],
+      "purpose": "闭门加工，避免顾客直接触及工具；设施：裁纸、抄写及装订"
+    },
+    {
+      "id": "stock",
+      "name": "后段成品与管理",
+      "min": [
+        5,
+        3,
+        25
+      ],
+      "max": [
+        15,
+        7,
+        34
+      ],
+      "purpose": "成品库及账册管理；设施：已装订册与干纸品、版式与委托档案"
+    },
+    {
+      "id": "home",
+      "name": "侧后单人家宅",
+      "min": [
+        22,
+        3,
+        16
+      ],
+      "max": [
+        26,
+        7,
+        34
+      ],
+      "purpose": "单床、餐厨与被服，不依赖商铺充当寝室；设施：备餐、热食与洗涤、床位与个人衣物、单人家庭被服"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        10,
+        3,
+        3
+      ],
+      "name": "尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "homeentry",
+      "kind": "entrance",
+      "pos": [
+        24,
+        3,
+        14
+      ],
+      "name": "尖楣入户门",
+      "facing": "north"
+    },
+    {
+      "id": "homecook",
+      "kind": "work",
+      "pos": [
+        22,
+        3,
+        17
+      ],
+      "name": "备餐、热食与洗涤",
+      "look_at": [
+        22,
+        4,
+        17
+      ],
+      "approach": [
+        22,
+        3,
+        18
+      ]
+    },
+    {
+      "id": "homebed0",
+      "kind": "bed",
+      "pos": [
+        22,
+        3,
+        29
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        22,
+        4,
+        29
+      ],
+      "approach": [
+        23,
+        3,
+        29
+      ]
+    },
+    {
+      "id": "homelinen",
+      "kind": "storage",
+      "pos": [
+        22,
+        3,
+        33
+      ],
+      "name": "单人家庭被服",
+      "look_at": [
+        22,
+        4,
+        33
+      ],
+      "approach": [
+        22,
+        3,
+        34
+      ]
+    },
+    {
+      "id": "sale",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        6
+      ],
+      "name": "信纸、纪念卡与册页",
+      "look_at": [
+        5,
+        4,
+        6
+      ],
+      "approach": [
+        5,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "raw",
+      "kind": "storage",
+      "pos": [
+        12,
+        3,
+        10
+      ],
+      "name": "纸材、染料与封套",
+      "look_at": [
+        12,
+        4,
+        10
+      ],
+      "approach": [
+        12,
+        3,
+        11
+      ]
+    },
+    {
+      "id": "process",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        17
+      ],
+      "name": "裁纸、抄写及装订",
+      "look_at": [
+        5,
+        4,
+        17
+      ],
+      "approach": [
+        5,
+        3,
+        18
+      ]
+    },
+    {
+      "id": "finished",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        28
+      ],
+      "name": "已装订册与干纸品",
+      "look_at": [
+        5,
+        4,
+        28
+      ],
+      "approach": [
+        5,
+        3,
+        29
+      ]
+    },
+    {
+      "id": "records",
+      "kind": "work",
+      "pos": [
+        12,
+        3,
+        30
+      ],
+      "name": "版式与委托档案",
+      "look_at": [
+        12,
+        4,
+        30
+      ],
+      "approach": [
+        12,
+        3,
+        31
+      ]
+    },
+    {
+      "id": "customer",
+      "kind": "circulation",
+      "pos": [
+        6,
+        3,
+        8
+      ],
+      "name": "顾客选货与交付停留",
+      "look_at": [
+        6,
+        4,
+        6
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "窄长营业屋明确分成前交易、中加工、后库三个实墙房间，侧后另接单人家宅。 信纸、纪念卡与册页经营完整设置原料、加工、成品、交易和管理，每处标注独立站位。 按2026-09-27参考图重塑浅石木骨、深瓦浅边山墙、暖窗和院落。"
+  ],
+  "differences": [
+    "窄长营业屋明确分成前交易、中加工、后库三个实墙房间，侧后另接单人家宅。 信纸、纪念卡与册页经营完整设置原料、加工、成品、交易和管理，每处标注独立站位。"
+  ],
+  "floors": [
+    {
+      "name": "生活作业层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "ground_plane": {
+    "y": 3,
+    "note": "外部石铺院落顶面与入口脚底Y=3"
+  },
+  "source": "tools/structure_studio/studio/memorial_crafts.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "craft_volumes": [
+    [
+      4,
+      4,
+      16,
+      35,
+      2,
+      5
+    ],
+    [
+      21,
+      15,
+      27,
+      35,
+      2,
+      5
+    ]
+  ],
+  "static_facilities": "行业设备、蜡液、加工与商品均为静态场景表达；未声称接入生产或交易机制。",
+  "function_terms": [
+    "礼仪用品零售"
+  ],
+  "nbt_sha256": "9c06618279c8b6d63e54e923809fc29768a61073fac9548cebc2dada073ccf1b"
+}

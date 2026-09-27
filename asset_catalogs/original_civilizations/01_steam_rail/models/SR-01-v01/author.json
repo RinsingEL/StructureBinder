@@ -303,5 +303,9 @@
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
   ],
   "source": "tools/structure_studio/studio/transport.py:steam_station",
-  "nbt_sha256": "67fc2df3f72f5acd0058084acaed880ed723da0b8534f0e2e642211f472a7a26"
+  "nbt_sha256": "67fc2df3f72f5acd0058084acaed880ed723da0b8534f0e2e642211f472a7a26",
+  "function_terms": [
+    "铁路客运",
+    "铁路货运"
+  ]
 }

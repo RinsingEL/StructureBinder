@@ -1,168 +1,130 @@
 {
   "schema": "structure-studio.author.v1",
   "id": "DS-F04-v02",
-  "name": "夹道双摊",
+  "name": "双面交接小摊",
   "family": "DS-F04",
   "civilization": "沙漠",
   "planning_role": "planning_role.fill",
   "size": [
-    28,
-    14,
-    22
+    23,
+    12,
+    21
   ],
   "terrain": {
-    "选址": "依托商路与聚落交易需求，货物需能从街道搬入，棚周保留通风和行走",
-    "地块": "香料与布料两摊朝中央小巷开口，背后各有备货位，遮棚高低错开。",
-    "接地": "使用地坪 Y=1，脚底 Y=2；不自动削坡或补齐外部通路",
-    "边界": "模板包含内部地坪和封边，未写入的凹角与外部格保持原环境"
+    "选址": "平缓街边或灌溉庭院",
+    "接地": "外部地面方块 Y=1，人员脚底 Y=2"
   },
-  "rooms": [
-    {
-      "id": "spice",
-      "name": "香料摊",
-      "min": [
-        3,
-        2,
-        5
-      ],
-      "max": [
-        10,
-        6,
-        17
-      ],
-      "purpose": "香料桶、柜台与后备货"
-    },
-    {
-      "id": "cloth",
-      "name": "布匹摊",
-      "min": [
-        17,
-        2,
-        5
-      ],
-      "max": [
-        24,
-        7,
-        17
-      ],
-      "purpose": "布料展示、柜台与后备货"
-    },
-    {
-      "id": "lane",
-      "name": "交易小巷",
-      "min": [
-        11,
-        2,
-        4
-      ],
-      "max": [
-        16,
-        6,
-        18
-      ],
-      "purpose": "两侧柜台前的公共通道"
-    }
-  ],
+  "rooms": [],
   "points": [
-    {
-      "id": "spice",
-      "kind": "work",
-      "pos": [
-        9,
-        2,
-        10
-      ],
-      "name": "香料摊主",
-      "approach": [
-        8,
-        2,
-        10
-      ]
-    },
-    {
-      "id": "cloth",
-      "kind": "work",
-      "pos": [
-        18,
-        2,
-        10
-      ],
-      "name": "布匹摊主",
-      "approach": [
-        19,
-        2,
-        10
-      ]
-    },
-    {
-      "id": "spice_buy",
-      "kind": "work",
-      "pos": [
-        9,
-        2,
-        10
-      ],
-      "name": "香料顾客",
-      "approach": [
-        10,
-        2,
-        10
-      ]
-    },
-    {
-      "id": "cloth_buy",
-      "kind": "work",
-      "pos": [
-        18,
-        2,
-        10
-      ],
-      "name": "布匹顾客",
-      "approach": [
-        17,
-        2,
-        10
-      ]
-    },
     {
       "id": "entry",
       "kind": "entrance",
       "pos": [
-        13,
+        11,
         2,
-        3
+        2
       ],
-      "name": "人员与货物入口",
+      "name": "人员与手推货物入口",
       "facing": "north"
+    },
+    {
+      "id": "rear",
+      "kind": "entrance",
+      "pos": [
+        11,
+        2,
+        18
+      ],
+      "name": "人员与手推货物入口",
+      "facing": "south"
+    },
+    {
+      "id": "front_trade",
+      "kind": "work",
+      "pos": [
+        5,
+        2,
+        6
+      ],
+      "name": "前侧交易",
+      "approach": [
+        5,
+        2,
+        5
+      ]
+    },
+    {
+      "id": "rear_trade",
+      "kind": "work",
+      "pos": [
+        17,
+        2,
+        14
+      ],
+      "name": "后侧交易",
+      "approach": [
+        17,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "stock",
+      "kind": "work",
+      "pos": [
+        10,
+        2,
+        10
+      ],
+      "name": "共享库存",
+      "approach": [
+        10,
+        2,
+        9
+      ]
     }
   ],
   "connections": [
     {
       "kind": "pedestrian",
       "pos": [
-        13,
+        11,
         1,
-        3
+        2
       ],
       "direction": "north",
       "clearance": [
-        5,
+        3,
         3
       ],
-      "note": "作者预留几何接口；需另外核对外部地面及具体实体尺寸"
+      "note": "外部连接地面 Y=1"
+    },
+    {
+      "kind": "pedestrian",
+      "pos": [
+        11,
+        1,
+        18
+      ],
+      "direction": "south",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "外部连接地面 Y=1"
     }
   ],
   "design_notes": [
-    "香料与布料两摊朝中央小巷开口，背后各有备货位，遮棚高低错开。"
+    "两侧经营面共享中央库存，前后通道与错落双棚。"
   ],
   "differences": [
-    "香料与布料两摊朝中央小巷开口，背后各有备货位，遮棚高低错开。"
+    "两侧经营面共享中央库存，前后通道与错落双棚。"
   ],
   "floors": [
     {
-      "name": "地坪、布置与通路",
+      "name": "地面作业与通路",
       "y": 1,
-      "max_y": 4
+      "max_y": 5
     }
   ],
   "roof_min_y": 6,
@@ -171,7 +133,11 @@
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
   ],
-  "source": "tools/structure_studio/studio/oasis_yards.py:trade_shelter(2)",
+  "source": "tools/structure_studio/studio/desert_fill_shelters.py:trade_shelter(2)",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部铺地顶面与人员脚底高度，铺地方块 Y=1，外地表站立面 Y=2"
+  },
   "preview_context": {
     "kind": "flat",
     "land_surface_y": 2,
@@ -179,5 +145,9 @@
     "padding": 3,
     "surface": "sand"
   },
-  "nbt_sha256": "00b46dfbf9c4a613ca30487a9e0dcc4e675a37f3a5a3e7c2073c42b0c0eb8c0c"
+  "function_terms": [
+    "货物暂存",
+    "摊位交易"
+  ],
+  "nbt_sha256": "555f33dfa3f102d6490a2f99cff44d59a7c28cfe32a030ce81f78dd9977cc850"
 }

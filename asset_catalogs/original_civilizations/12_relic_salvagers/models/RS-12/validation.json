@@ -1,0 +1,49 @@
+{
+  "schema": "structure-studio.validation.v1",
+  "nbt_sha256": "b58bd9e36f0ed7031cc37215975a3233f6b649366c114ed830a88f3d07f3353b",
+  "navigation": {
+    "passed": true,
+    "unreachable": [],
+    "nodes": 5852,
+    "highest_standing_y": 3,
+    "truncated": false,
+    "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "size": [
+    47,
+    25,
+    45
+  ],
+  "visible_blocks": 8256,
+  "explicit_air": 40119,
+  "palette": 23,
+  "block_entities": 0,
+  "agriculture": null,
+  "materials": {
+    "minecraft:gravel": 5326,
+    "minecraft:waxed_oxidized_cut_copper": 764,
+    "minecraft:polished_blackstone_bricks": 558,
+    "minecraft:spruce_planks": 328,
+    "minecraft:polished_deepslate": 280,
+    "minecraft:iron_block": 246,
+    "minecraft:spruce_slab": 194,
+    "minecraft:deepslate_tiles": 184,
+    "minecraft:glass": 116,
+    "minecraft:waxed_weathered_cut_copper": 108,
+    "minecraft:stripped_spruce_wood": 56,
+    "minecraft:waxed_exposed_cut_copper": 40,
+    "minecraft:lightning_rod": 31,
+    "minecraft:barrel": 12,
+    "minecraft:orange_terracotta": 6,
+    "minecraft:spruce_door": 2,
+    "minecraft:smithing_table": 1,
+    "minecraft:lectern": 1,
+    "minecraft:cartography_table": 1,
+    "minecraft:lantern": 1,
+    "minecraft:chain": 1
+  },
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+}

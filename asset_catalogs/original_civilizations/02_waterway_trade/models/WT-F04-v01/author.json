@@ -1,0 +1,155 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "WT-F04-v01",
+  "name": "白墙干库与侧修工具棚",
+  "family": "WT-F04",
+  "civilization": "地中海",
+  "planning_role": "planning_role.fill",
+  "size": [
+    27,
+    22,
+    24
+  ],
+  "terrain": {
+    "选址": "稳定排水的聚落地块；种植版本需要日照与灌溉供水，不要求贴临水岸。",
+    "高程": "外部铺地顶面Y=3；内部阶台另行标记。",
+    "边界": "独立低院墙、红瓦棚和可通行入口，不依赖相邻建筑。"
+  },
+  "rooms": [
+    {
+      "id": "dry",
+      "name": "白墙蓝绿百叶干库",
+      "min": [
+        5,
+        3,
+        6
+      ],
+      "max": [
+        12,
+        7,
+        19
+      ],
+      "purpose": "工具分类柜与中央取用路线"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        13,
+        3,
+        2
+      ],
+      "name": "前院入口",
+      "facing": "north"
+    },
+    {
+      "id": "shed",
+      "kind": "entrance",
+      "pos": [
+        8,
+        3,
+        4
+      ],
+      "name": "木门入口",
+      "facing": "north"
+    },
+    {
+      "id": "dry",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        17
+      ],
+      "name": "干燥工具分类归还",
+      "look_at": [
+        5,
+        4,
+        17
+      ],
+      "approach": [
+        5,
+        3,
+        18
+      ]
+    },
+    {
+      "id": "repair",
+      "kind": "work",
+      "pos": [
+        17,
+        3,
+        17
+      ],
+      "name": "修配换柄台",
+      "look_at": [
+        17,
+        4,
+        17
+      ],
+      "approach": [
+        17,
+        3,
+        18
+      ]
+    },
+    {
+      "id": "wash",
+      "kind": "work",
+      "pos": [
+        17,
+        3,
+        7
+      ],
+      "name": "器具洗涤",
+      "look_at": [
+        17,
+        4,
+        7
+      ],
+      "approach": [
+        17,
+        3,
+        9
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "短红瓦干库与右侧低檐工作棚并置，白墙蓝绿百叶、水槽和宽门前院区分干湿作业。"
+  ],
+  "differences": [
+    "短红瓦干库与右侧低檐工作棚并置，白墙蓝绿百叶、水槽和宽门前院区分干湿作业。"
+  ],
+  "floors": [
+    {
+      "name": "庭院作业层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mediterranean_gardens.py:BUILDERS",
+  "ground_plane": {
+    "y": 3,
+    "note": "院门外铺地顶面，阶台为内部高差。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "工具存放",
+    "货物暂存"
+  ],
+  "nbt_sha256": "c2d236a4ede2bbeb969435d649f4d0d05a6f48911a9c4170fd7e52a8ec184f1e"
+}

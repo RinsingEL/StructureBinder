@@ -1,0 +1,369 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "TC-02-v03",
+  "name": "长贝内廊三室宅",
+  "family": "TC-02",
+  "civilization": "海洋幻想",
+  "planning_role": "planning_role.fill",
+  "size": [
+    61,
+    36,
+    41
+  ],
+  "terrain": {
+    "选址": "避风潮上岸台或人工桩台；水侧支柱底Y=0必须接稳定海床，不自动适应任意水深",
+    "潮位": "低潮Y=3、参考水面Y=5、预期高潮Y=6；主层干地板Y=7、脚底Y=8，潮汐仅为条件记录",
+    "支撑接驳": "北侧接Y=8普通步行道路；所有楼梯为实体台阶。高层与分台另有房间高程，不依赖跳跃或游泳",
+    "供水生活": "厨房淡水和食物依岸上补给；海水不能视为饮用或灌溉水。居室采用干燥外壳，气候通风与实际水密另验",
+    "风格": "棱面近似贝壳的弧顶、放射或分瓣舱室、青绿石质桩台；风格不是国名",
+    "限制": "原版静态模型；不代表潮汐、潜水呼吸、流体、生产或运行时生成已接入"
+  },
+  "rooms": [
+    {
+      "id": "living",
+      "name": "厨房餐读起居",
+      "min": [
+        7,
+        8,
+        7
+      ],
+      "max": [
+        28,
+        13,
+        20
+      ],
+      "purpose": "完整厨房、食品柜、共餐桌椅、相向读书座与书物柜"
+    },
+    {
+      "id": "study",
+      "name": "共用读图间",
+      "min": [
+        32,
+        8,
+        6
+      ],
+      "max": [
+        53,
+        13,
+        21
+      ],
+      "purpose": "海图长案与书柜，连通前部公共生活"
+    },
+    {
+      "id": "room0",
+      "name": "隔门干式卧室",
+      "min": [
+        7,
+        8,
+        24
+      ],
+      "max": [
+        20,
+        13,
+        33
+      ],
+      "purpose": "床位与个人灯柜、衣物储藏、写字和盥洗，实体隔门"
+    },
+    {
+      "id": "room1",
+      "name": "隔门干式卧室",
+      "min": [
+        23,
+        8,
+        24
+      ],
+      "max": [
+        36,
+        13,
+        33
+      ],
+      "purpose": "床位与个人灯柜、衣物储藏、写字和盥洗，实体隔门"
+    },
+    {
+      "id": "room2",
+      "name": "隔门干式卧室",
+      "min": [
+        39,
+        8,
+        24
+      ],
+      "max": [
+        52,
+        13,
+        33
+      ],
+      "purpose": "床位与个人灯柜、衣物储藏、写字和盥洗，实体隔门"
+    }
+  ],
+  "points": [
+    {
+      "id": "livingcook",
+      "kind": "work",
+      "pos": [
+        9,
+        8,
+        8
+      ],
+      "name": "储备淡水与连续备餐",
+      "approach": [
+        9,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "livingfood",
+      "kind": "storage",
+      "pos": [
+        24,
+        9,
+        8
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        24,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "livingbooks",
+      "kind": "storage",
+      "pos": [
+        9,
+        9,
+        19
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        9,
+        8,
+        18
+      ]
+    },
+    {
+      "id": "study",
+      "kind": "work",
+      "pos": [
+        38,
+        8,
+        10
+      ],
+      "name": "共用海图书写",
+      "approach": [
+        38,
+        8,
+        11
+      ]
+    },
+    {
+      "id": "study_books",
+      "kind": "storage",
+      "pos": [
+        38,
+        9,
+        18
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        38,
+        8,
+        17
+      ]
+    },
+    {
+      "id": "room0a",
+      "kind": "sleep",
+      "pos": [
+        9,
+        8,
+        30
+      ],
+      "name": "值守床位与个人柜",
+      "approach": [
+        10,
+        8,
+        30
+      ]
+    },
+    {
+      "id": "room0cloth",
+      "kind": "storage",
+      "pos": [
+        9,
+        9,
+        25
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        9,
+        8,
+        26
+      ]
+    },
+    {
+      "id": "room0desk",
+      "kind": "work",
+      "pos": [
+        17,
+        8,
+        26
+      ],
+      "name": "个人书写灯案",
+      "approach": [
+        17,
+        8,
+        27
+      ]
+    },
+    {
+      "id": "room1a",
+      "kind": "sleep",
+      "pos": [
+        25,
+        8,
+        30
+      ],
+      "name": "值守床位与个人柜",
+      "approach": [
+        26,
+        8,
+        30
+      ]
+    },
+    {
+      "id": "room1cloth",
+      "kind": "storage",
+      "pos": [
+        25,
+        9,
+        25
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        25,
+        8,
+        26
+      ]
+    },
+    {
+      "id": "room1desk",
+      "kind": "work",
+      "pos": [
+        33,
+        8,
+        26
+      ],
+      "name": "个人书写灯案",
+      "approach": [
+        33,
+        8,
+        27
+      ]
+    },
+    {
+      "id": "room2a",
+      "kind": "sleep",
+      "pos": [
+        41,
+        8,
+        30
+      ],
+      "name": "值守床位与个人柜",
+      "approach": [
+        42,
+        8,
+        30
+      ]
+    },
+    {
+      "id": "room2cloth",
+      "kind": "storage",
+      "pos": [
+        41,
+        9,
+        25
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        41,
+        8,
+        26
+      ]
+    },
+    {
+      "id": "room2desk",
+      "kind": "work",
+      "pos": [
+        49,
+        8,
+        26
+      ],
+      "name": "个人书写灯案",
+      "approach": [
+        49,
+        8,
+        27
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        30,
+        8,
+        3
+      ],
+      "name": "陆侧普通步行入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        30,
+        7,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "接同高程干燥道路或栈桥"
+    }
+  ],
+  "design_notes": [],
+  "differences": [
+    "长贝内廊三室宅",
+    "主体内部分隔共居与寝室，居住和起居以室内门相连；拱壳肋与连续支承落在桩台"
+  ],
+  "floors": [
+    {
+      "name": "干式生活层",
+      "y": 7,
+      "max_y": 13
+    }
+  ],
+  "roof_min_y": 14,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/tidal_life.py",
+  "preview_context": {
+    "kind": "shore",
+    "shore_z": 20,
+    "water_surface_y": 5,
+    "land_surface_y": 8,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "sand"
+  },
+  "nbt_sha256": "5a3341083a700637aca568b2bb5b0ed38821cf5f1575549ef6cbde85dd7c248e",
+  "function_terms": [
+    "家庭居住"
+  ]
+}

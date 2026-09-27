@@ -58,11 +58,12 @@ def hall(m,x0,z0,x1,z1,tall=10):
     for z in range(z0+5,z1,8):pendant(m,center,8,z,ridge)
 
 
-def entry(m,key,x,z):
+def entry(m,key,x,z,kind='entrance'):
     lancet(m,x,z,y=3,glass=False)
     m.door(x,3,z,wood='dark_oak',facing='north')
     for xx in (x-1,x+1):m.box((xx,3,z),(xx,4,z),'stone_bricks')
-    m.point(key,'entrance',(x,3,z-1),'尖拱门入口')
+    # Courtyard wing doors remain walking targets, not direct road connections.
+    m.point(key,kind,(x,3,z-1),'尖拱门入口',facing='north')
 
 
 def use(m,key,name,x,z,ax=None,az=None,kind='work',y=3):
@@ -117,7 +118,7 @@ def finish(m,note):
 
 def library():
     m=base('ML-01-v01','尖拱纪念书库与抄录院',43,39)
-    hall(m,6,5,22,33);hall(m,28,17,38,33,tall=8);entry(m,'entry',14,5);entry(m,'adminentry',33,17)
+    hall(m,6,5,22,33);hall(m,28,17,38,33,tall=8);entry(m,'entry',14,5);entry(m,'adminentry',33,17,kind='circulation')
     partition(m,7,23,21,14)
     store(m,'westbooks','地方记忆与家系书架',7,9,5,True);store(m,'eastbooks','公众借阅与历史著录',16,9,5,True)
     desk(m,'catalogue','借阅登记及归还核对',7,6,5,'lectern[facing=south,has_book=false]')
@@ -205,7 +206,7 @@ def station():
 def council():
     m=base('ML-05-v01','祖先议事庭与双侧公档翼',47,41)
     hall(m,15,5,31,35);hall(m,5,19,11,35,tall=8);hall(m,35,19,41,35,tall=8)
-    entry(m,'entry',23,5);entry(m,'archiveentry',8,19);entry(m,'serviceentry',38,19)
+    entry(m,'entry',23,5);entry(m,'archiveentry',8,19,kind='circulation');entry(m,'serviceentry',38,19,kind='circulation')
     for z in (9,12):
         bench(m,17,3,z,4,wood='dark_oak');bench(m,25,3,z,4,wood='dark_oak')
     m.box((18,3,18),(18,3,26),'dark_oak_planks');m.box((28,3,18),(28,3,26),'dark_oak_planks')
@@ -238,7 +239,7 @@ def mausoleum():
     # Wide lower landing to ceremonial entry. Upper terrace is the only external entrance.
     lancet(m,19,20,y=3,glass=False);m.door(19,3,20,wood='dark_oak')
     for x in (18,20):m.box((x,3,20),(x,4,20),'stone_bricks')
-    m.point('entry','entrance',(19,9,7),'旧路高台入口')
+    m.point('entry','entrance',(19,9,7),'旧路高台入口',facing='north')
     partition(m,11,28,27,19)
     desk(m,'offer','仪式清洁与祭品准备',11,23,5);store(m,'guardian','守护灯具与历史记录',22,25,5)
     for x in (12,23):

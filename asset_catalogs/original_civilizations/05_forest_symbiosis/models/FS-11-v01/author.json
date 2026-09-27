@@ -148,5 +148,8 @@
     "padding": 4,
     "surface": "podzol"
   },
-  "nbt_sha256": "65225bcf774a5e81c6d423ac39cf70e768412751958d9a26a2a90813950f1d40"
+  "nbt_sha256": "65225bcf774a5e81c6d423ac39cf70e768412751958d9a26a2a90813950f1d40",
+  "function_terms": [
+    "育苗设施遗存"
+  ]
 }

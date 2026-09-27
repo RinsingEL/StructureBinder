@@ -1,266 +1,357 @@
 {
   "schema": "structure-studio.author.v1",
   "id": "DS-09-v01",
-  "name": "清泉内庭医馆",
+  "name": "棕影错院医馆",
   "family": "DS-09",
   "civilization": "沙漠",
   "planning_role": "planning_role.key",
   "size": [
-    39,
-    23,
-    38
+    43,
+    16,
+    40
   ],
   "terrain": {
-    "选址": "安静可达的居民或旅人服务地块，有可靠洁净用水与药材补给",
-    "地形": "平缓地块，北入口到候诊院落，病床避开主通道",
-    "角色": "诊疗、休养与药材空间；不附加治疗机制或药效"
+    "选址": "安静可达的居民或旅人服务地块，可靠洁净用水与药材补给",
+    "地形": "平缓干燥地基；北入口脚底 Y=2，诊室与休养床位同层无台阶",
+    "配套": "诊疗、药房、候诊、休养及值守生活；不附加治疗机制"
   },
   "rooms": [
     {
-      "id": "exam",
-      "name": "诊室",
+      "id": "duty",
+      "name": "值守起居与小厨房",
       "min": [
-        5,
+        6,
         2,
-        6
+        5
       ],
       "max": [
-        14,
-        6,
-        15
+        13,
+        8,
+        10
       ],
-      "purpose": "诊察躺床、取水与备品"
+      "purpose": "值守起居与小厨房"
+    },
+    {
+      "id": "treatment",
+      "name": "西侧诊疗室",
+      "min": [
+        6,
+        2,
+        12
+      ],
+      "max": [
+        13,
+        6,
+        23
+      ],
+      "purpose": "西侧诊疗室"
     },
     {
       "id": "pharmacy",
-      "name": "药材房",
-      "min": [
-        24,
-        2,
-        6
-      ],
-      "max": [
-        33,
-        6,
-        15
-      ],
-      "purpose": "药材整理和存放"
-    },
-    {
-      "id": "ward",
-      "name": "静养病房",
+      "name": "药房与药材分拣",
       "min": [
         5,
         2,
-        20
+        26
       ],
       "max": [
         14,
-        6,
-        32
+        9,
+        34
       ],
-      "purpose": "独立休养床与遮挡洗漱角"
+      "purpose": "药房与药材分拣"
     },
     {
-      "id": "staff",
-      "name": "值守与记录",
-      "min": [
-        19,
-        2,
-        24
-      ],
-      "max": [
-        33,
-        6,
-        32
-      ],
-      "purpose": "值守睡眠、料理与档案"
-    },
-    {
-      "id": "waiting",
-      "name": "遮阳候诊庭",
+      "id": "recovery",
+      "name": "安静休养长翼",
       "min": [
         16,
         2,
-        6
+        28
       ],
       "max": [
-        22,
+        35,
         6,
+        34
+      ],
+      "purpose": "安静休养长翼"
+    },
+    {
+      "id": "consult",
+      "name": "东侧问诊室",
+      "min": [
+        31,
+        2,
+        11
+      ],
+      "max": [
+        37,
+        7,
         22
       ],
-      "purpose": "候坐和饮水"
+      "purpose": "东侧问诊室"
+    },
+    {
+      "id": "waiting",
+      "name": "树荫候诊与药草小院",
+      "min": [
+        16,
+        2,
+        8
+      ],
+      "max": [
+        29,
+        6,
+        26
+      ],
+      "purpose": "候诊、遮阴步行、庭院休养"
     }
   ],
   "points": [
     {
-      "id": "exam_7",
-      "kind": "bed",
+      "id": "front",
+      "kind": "entrance",
       "pos": [
-        7,
+        21,
         2,
-        12
+        3
       ],
-      "name": "诊室躺床",
-      "approach": [
-        8,
-        2,
-        12
-      ]
+      "name": "北侧候诊入口",
+      "facing": "north"
     },
     {
-      "id": "exam_11",
-      "kind": "bed",
-      "pos": [
-        11,
-        2,
-        12
-      ],
-      "name": "诊室躺床",
-      "approach": [
-        12,
-        2,
-        12
-      ]
-    },
-    {
-      "id": "pharmacy",
+      "id": "waiting",
       "kind": "work",
       "pos": [
-        28,
+        21,
         2,
-        13
+        10
       ],
-      "name": "药材整理",
+      "name": "树荫候诊座椅",
       "approach": [
-        28,
+        21,
         2,
-        12
+        11
       ]
     },
     {
-      "id": "ward_24",
+      "id": "duty_bed",
       "kind": "bed",
       "pos": [
         7,
         2,
-        24
-      ],
-      "name": "静养床位",
-      "approach": [
-        8,
-        2,
-        24
-      ]
-    },
-    {
-      "id": "ward_29",
-      "kind": "bed",
-      "pos": [
-        7,
-        2,
-        29
-      ],
-      "name": "静养床位",
-      "approach": [
-        8,
-        2,
-        29
-      ]
-    },
-    {
-      "id": "ward_wash",
-      "kind": "work",
-      "pos": [
-        14,
-        2,
-        30
-      ],
-      "name": "病房盥洗角",
-      "approach": [
-        14,
-        2,
-        29
-      ]
-    },
-    {
-      "id": "staff_bed",
-      "kind": "bed",
-      "pos": [
-        30,
-        2,
-        29
+        8
       ],
       "name": "值守床",
       "approach": [
-        29,
+        8,
         2,
-        29
+        8
+      ]
+    },
+    {
+      "id": "kitchen",
+      "kind": "work",
+      "pos": [
+        9,
+        2,
+        5
+      ],
+      "name": "值守备餐",
+      "approach": [
+        9,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "treatment_bed",
+      "kind": "bed",
+      "pos": [
+        8,
+        2,
+        21
+      ],
+      "name": "诊疗床",
+      "approach": [
+        9,
+        2,
+        21
+      ]
+    },
+    {
+      "id": "consult_bed",
+      "kind": "bed",
+      "pos": [
+        35,
+        2,
+        20
+      ],
+      "name": "诊疗床",
+      "approach": [
+        36,
+        2,
+        20
       ]
     },
     {
       "id": "records",
       "kind": "work",
       "pos": [
-        20,
+        11,
         2,
-        26
+        13
       ],
       "name": "诊疗记录",
       "approach": [
-        20,
+        11,
         2,
-        27
+        14
       ]
     },
     {
-      "id": "front",
-      "kind": "entrance",
+      "id": "consult_desk",
+      "kind": "work",
       "pos": [
+        32,
+        2,
+        19
+      ],
+      "name": "问诊案桌",
+      "approach": [
+        33,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "compound",
+      "kind": "work",
+      "pos": [
+        9,
+        3,
+        34
+      ],
+      "name": "药材配制",
+      "approach": [
+        9,
+        2,
+        33
+      ]
+    },
+    {
+      "id": "medicine",
+      "kind": "storage",
+      "pos": [
+        5,
+        2,
+        30
+      ],
+      "name": "药材储存",
+      "approach": [
+        6,
+        2,
+        30
+      ]
+    },
+    {
+      "id": "recovery_a",
+      "kind": "bed",
+      "pos": [
+        18,
+        2,
+        33
+      ],
+      "name": "静养床位",
+      "approach": [
         19,
         2,
-        4
+        33
+      ]
+    },
+    {
+      "id": "recovery_b",
+      "kind": "bed",
+      "pos": [
+        23,
+        2,
+        33
       ],
-      "name": "主入口",
-      "facing": "north"
+      "name": "静养床位",
+      "approach": [
+        24,
+        2,
+        33
+      ]
+    },
+    {
+      "id": "recovery_c",
+      "kind": "bed",
+      "pos": [
+        29,
+        2,
+        33
+      ],
+      "name": "静养床位",
+      "approach": [
+        30,
+        2,
+        33
+      ]
+    },
+    {
+      "id": "recovery_d",
+      "kind": "bed",
+      "pos": [
+        34,
+        2,
+        33
+      ],
+      "name": "静养床位",
+      "approach": [
+        35,
+        2,
+        33
+      ]
     }
   ],
   "connections": [
     {
       "kind": "pedestrian",
       "pos": [
-        19,
-        1,
-        3
+        21,
+        2,
+        2
       ],
       "direction": "north",
       "clearance": [
-        3,
+        5,
         4
       ],
-      "note": "外部街面衔接台阶，不自动随地形移动入口"
+      "note": "同层入口接步行街面"
     }
   ],
   "design_notes": [
-    "前庭候诊、侧翼诊室和药房、后部静养与值守；围合院落兼顾遮阳和互不穿行。"
+    "参考用户 Gemini 左案：错落诊疗翼、局部土色高厅、木遮阴廊和小尺度花园。",
+    "低矮相连建筑翼与两处高厅形成非对称轮廓，无整圈堡垒墙、无连续彩带。"
   ],
   "differences": [
-    "前庭候诊、侧翼诊室和药房、后部静养与值守；围合院落兼顾遮阳和互不穿行。"
+    "北侧开放门庭通向树荫候诊，东西诊室各自开门；后侧静养远离入口。"
   ],
   "floors": [
     {
-      "name": "使用空间",
+      "name": "候诊、诊疗与静养",
       "y": 1,
       "max_y": 6
     }
   ],
-  "roof_min_y": 8,
+  "roof_min_y": 7,
   "lifecycle": "draft",
   "offline_limits": [
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
   ],
-  "source": "tools/structure_studio/studio/desert.py:desert(9)",
+  "source": "tools/structure_studio/studio/desert_clinic.py:clinic",
   "preview_context": {
     "kind": "flat",
     "land_surface_y": 1,
@@ -268,5 +359,12 @@
     "padding": 4,
     "surface": "sand"
   },
-  "nbt_sha256": "22d48d9786f940f0628ea1502fb67ee5f3b668702024c80938ec9ef25fe467d8"
+  "ground_plane": {
+    "y": 2,
+    "note": "北侧为同层入口，无外阶；门外场坪支撑方块 Y=1，外部步行街面上边界 Y=2。旧 preview_context 的 Y=1 未表示正确同层接驳。"
+  },
+  "function_terms": [
+    "诊疗"
+  ],
+  "nbt_sha256": "ba483aa49e792a9c8f08143c9d103bba885fbfbce721f693a36d2ae6179a0997"
 }

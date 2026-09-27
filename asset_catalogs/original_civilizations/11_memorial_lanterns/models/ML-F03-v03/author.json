@@ -1,0 +1,125 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "ML-F03-v03",
+  "name": "折角纪念休憩藤廊",
+  "family": "ML-F03",
+  "civilization": "哥特",
+  "planning_role": "planning_role.fill",
+  "size": [
+    31,
+    24,
+    31
+  ],
+  "terrain": {
+    "选址": "日照充分、排水稳定且有灌溉供水的聚落园地；不因哥特风格限定生物群系。",
+    "高程": "基础底Y=0、常规地面Y=2、脚底Y=3；抬高或双层版本另记。",
+    "边界": "完整独立模板，保留外扶柱、檐口、采光和门外站位，不默认邻居补齐。",
+    "落地": "固定小园模板与完整封边；不冒充按自然地形延伸的 Landscape 大田。",
+    "生产": "原版粮菜与花材为静态成熟或展示状态；药材和葡萄不声称已接入专用生产机制。"
+  },
+  "rooms": [
+    {
+      "id": "rest",
+      "name": "折角休憩廊与长凳",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        25,
+        7,
+        23
+      ],
+      "purpose": "纪念休憩用途，不标记葡萄产出；设施：安静纪念与献花"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        15,
+        3,
+        2
+      ],
+      "name": "园地前入口",
+      "facing": "north"
+    },
+    {
+      "id": "memorial",
+      "kind": "work",
+      "pos": [
+        7,
+        3,
+        21
+      ],
+      "name": "安静纪念与献花",
+      "look_at": [
+        7,
+        4,
+        21
+      ],
+      "approach": [
+        8,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "care",
+      "kind": "storage",
+      "pos": [
+        21,
+        3,
+        26
+      ],
+      "name": "庭院清扫与花器",
+      "look_at": [
+        21,
+        4,
+        26
+      ],
+      "approach": [
+        21,
+        3,
+        27
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "L形带尖拱端头的休憩廊围出花木小庭，长凳、低纪念台和清扫柜成组布置；明确属于纪念休息而非葡萄生产。"
+  ],
+  "differences": [
+    "L形带尖拱端头的休憩廊围出花木小庭，长凳、低纪念台和清扫柜成组布置；明确属于纪念休息而非葡萄生产。"
+  ],
+  "floors": [
+    {
+      "name": "生活作业层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/memorial_gardens.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "ground_plane": {
+    "y": 3,
+    "note": "正面院门外铺装地坪顶面；台地田内部逐阶抬高。"
+  },
+  "function_terms": [
+    "棚架种植"
+  ],
+  "nbt_sha256": "1df34f68d08870a805ea9c80f5b84d8170a510fa5a83901ef2af62b1ded19f94"
+}

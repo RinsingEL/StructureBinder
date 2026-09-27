@@ -192,5 +192,8 @@
     "land_surface_y": 2,
     "padding": 5
   },
-  "nbt_sha256": "d886b74759aac6159a171813918f56c50a7a33af7c81bef85ed11ef2dad33162"
+  "nbt_sha256": "d886b74759aac6159a171813918f56c50a7a33af7c81bef85ed11ef2dad33162",
+  "function_terms": [
+    "排水维护"
+  ]
 }

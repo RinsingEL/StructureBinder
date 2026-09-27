@@ -132,5 +132,8 @@
     "land_surface_y": 2,
     "padding": 5
   },
-  "nbt_sha256": "01fe47d0c42da7023521bdf063306286bed7bffcf48916f0349b56b1685d32fe"
+  "nbt_sha256": "01fe47d0c42da7023521bdf063306286bed7bffcf48916f0349b56b1685d32fe",
+  "function_terms": [
+    "矿业遗址展示"
+  ]
 }

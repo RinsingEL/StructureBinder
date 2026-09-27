@@ -196,5 +196,8 @@
     "land_surface_y": 2,
     "padding": 5
   },
-  "nbt_sha256": "f886a779a193f1c34f50430cf832fbe0e673fc2cd6af40afd026772ed32af95a"
+  "nbt_sha256": "f886a779a193f1c34f50430cf832fbe0e673fc2cd6af40afd026772ed32af95a",
+  "function_terms": [
+    "矿井提升接驳"
+  ]
 }

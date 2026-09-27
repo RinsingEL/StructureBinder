@@ -1,0 +1,47 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "AA-07-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors / 魔法学院返工作者实看",
+  "nbt_sha256": "2aa61dd5d381941ec8eced2bc854d234779fdb77819dbb0c855b7b3de08df312",
+  "author_sha256": "3fed95e66ebbc0251b1e1b2d0dbb0ace8718c25890cc02420b77c31fc16b93e3",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-living.png",
+    "previews/room-bedroom.png",
+    "previews/room-book_gallery.png",
+    "previews/room-tower.png",
+    "previews/point-cook.png",
+    "previews/point-food.png",
+    "previews/point-read.png",
+    "previews/point-household.png",
+    "previews/point-bed.png",
+    "previews/point-wardrobe.png",
+    "previews/point-private_desk.png",
+    "previews/point-upstairs_read.png",
+    "previews/point-upper_books.png",
+    "previews/point-research.png",
+    "previews/point-tower_books.png",
+    "previews/point-instrument.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "32项旧版已撤回；本批12项采用双层侧塔、通廊分寝、联排、转角、阁楼与内庭等实际平面重新建模。",
+    "实际看过全部外观、去顶、分层、房间、功能点、标注与地形视图；结合零警告数据与导航核对。",
+    "紧凑双层家庭主体附一座窄研究尖塔；室内楼梯、楼上隔门卧室与家庭书阁，生活空间不拆成三栋"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

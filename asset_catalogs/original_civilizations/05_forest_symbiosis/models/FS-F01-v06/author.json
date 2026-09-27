@@ -210,5 +210,9 @@
     "padding": 4,
     "surface": "podzol"
   },
-  "nbt_sha256": "7c62dae33941e46025dee936b251769c6a249dd5f10b8e41de6cd29cccb7af98"
+  "nbt_sha256": "7c62dae33941e46025dee936b251769c6a249dd5f10b8e41de6cd29cccb7af98",
+  "function_terms": [
+    "零售",
+    "木器制作"
+  ]
 }

@@ -195,5 +195,9 @@
     "padding": 4,
     "surface": "podzol"
   },
-  "nbt_sha256": "ac7157f7277f4a71cab17707ffe0e60cf76ce662dfb8c32b3cdeb2834ac21f62"
+  "nbt_sha256": "ac7157f7277f4a71cab17707ffe0e60cf76ce662dfb8c32b3cdeb2834ac21f62",
+  "function_terms": [
+    "工具维护",
+    "材料晾晒"
+  ]
 }

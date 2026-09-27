@@ -223,5 +223,8 @@
     "layout": "南侧高两格的实心保土台，中央宽阶连接上下田间道路",
     "water": "每个田块独立水眼，与最终NBT四格水源核对；实际生长、光照与季节另验"
   },
-  "nbt_sha256": "fc9e4ef00057d8d9e1f2722e7950ee818adead1674ea791277671fea92d9a0ba"
+  "nbt_sha256": "fc9e4ef00057d8d9e1f2722e7950ee818adead1674ea791277671fea92d9a0ba",
+  "function_terms": [
+    "农田种植"
+  ]
 }

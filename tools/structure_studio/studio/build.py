@@ -9,10 +9,14 @@ from .agriculture import farm
 from .samples import bakery
 from .shops import shop
 from .desert import desert
-from .oasis_life import home,garden
-from .oasis_yards import beast_yard,vineyard,trade_shelter
-from .oasis_crafts import merchant,glassworks
-from .oasis_hospitality import inn,shop as oasis_shop
+from .desert_fill_homes import home
+from .desert_fill_farms import garden
+from .desert_fill_beasts import beast_yard
+from .desert_fill_shelters import vineyard,trade_shelter
+from .desert_fill_merchants import merchant
+from .desert_fill_glassworks import glassworks
+from .desert_fill_inns import inn
+from .desert_fill_shops import shop as oasis_shop
 from .waterway import waterway
 from .waterway_trade import warehouse,merchant as waterway_merchant
 from .mountain_forge import BUILDERS as MOUNTAIN_CORES
@@ -31,9 +35,21 @@ from .arcane_academy import BUILDERS as ARCANE_CORES
 from .arcane_gardens import BUILDERS as ARCANE_GARDENS
 from .steppe_caravans import BUILDERS as STEPPE_CORES
 from .northern_seafarers import BUILDERS as NORTHERN_CORES
+from .northern_fill_homes import BUILDERS as NORTHERN_HOMES
+from .northern_fill_fishers import BUILDERS as NORTHERN_FISHERS
+from .northern_fill_workshops import BUILDERS as NORTHERN_WORKSHOPS
+from .northern_fill_shops import BUILDERS as NORTHERN_SHOPS
+from .northern_fill_storage_inns import BUILDERS as NORTHERN_STORAGE_INNS
+from .northern_fill_gardens_sheds import BUILDERS as NORTHERN_GARDENS_SHEDS
 from .tidal_coral import BUILDERS as TIDAL_CORES
 from .steppe_crafts import BUILDERS as STEPPE_CRAFTS
 from .steppe_gardens import BUILDERS as STEPPE_GARDENS
+from .memorial_life import BUILDERS as MEMORIAL_LIFE
+from .memorial_crafts import BUILDERS as MEMORIAL_CRAFTS
+from .memorial_gardens import BUILDERS as MEMORIAL_GARDENS
+from .mediterranean_living import BUILDERS as MEDITERRANEAN_LIVING
+from .mediterranean_shops import BUILDERS as MEDITERRANEAN_SHOPS
+from .mediterranean_gardens import BUILDERS as MEDITERRANEAN_GARDENS
 from .validate import validate
 
 BUILDERS={"SR-01-v01":("01_steam_rail",steam_station),"WT-01-v01":("02_waterway_trade",passenger_quay)}
@@ -67,6 +83,15 @@ BUILDERS.update({key:("10_tidal_coral",builder) for key,builder in TIDAL_CORES.i
 for builders in (STEPPE_CRAFTS,STEPPE_GARDENS):
     BUILDERS.update({key:("08_steppe_caravans",builder) for key,builder in builders.items()})
 
+
+for builders in (NORTHERN_HOMES, NORTHERN_FISHERS, NORTHERN_WORKSHOPS, NORTHERN_SHOPS, NORTHERN_STORAGE_INNS, NORTHERN_GARDENS_SHEDS):
+    BUILDERS.update({key:("09_northern_seafarers",builder) for key,builder in builders.items()})
+
+for builders in (MEMORIAL_LIFE, MEMORIAL_CRAFTS, MEMORIAL_GARDENS):
+    BUILDERS.update({key:("11_memorial_lanterns",builder) for key,builder in builders.items()})
+
+for builders in (MEDITERRANEAN_LIVING, MEDITERRANEAN_SHOPS, MEDITERRANEAN_GARDENS):
+    BUILDERS.update({key:("02_waterway_trade",builder) for key,builder in builders.items()})
 
 def main():
     p=argparse.ArgumentParser();p.add_argument("ids",nargs="+",help="Asset ID, family ID, or all")

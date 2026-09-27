@@ -1,0 +1,304 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "TC-06-v03",
+  "name": "岸端转运侧仓",
+  "family": "TC-06",
+  "civilization": "海洋幻想",
+  "planning_role": "planning_role.fill",
+  "size": [
+    51,
+    36,
+    51
+  ],
+  "terrain": {
+    "选址": "避风潮上岸台或人工桩台；水侧支柱底Y=0必须接稳定海床，不自动适应任意水深",
+    "潮位": "低潮Y=3、参考水面Y=5、预期高潮Y=6；主层干地板Y=7、脚底Y=8，潮汐仅为条件记录",
+    "支撑接驳": "北侧接Y=8普通步行道路；所有楼梯为实体台阶。高层与分台另有房间高程，不依赖跳跃或游泳",
+    "供水生活": "厨房淡水和食物依岸上补给；海水不能视为饮用或灌溉水。居室采用干燥外壳，气候通风与实际水密另验",
+    "风格": "棱面近似贝壳的弧顶、放射或分瓣舱室、青绿石质桩台；风格不是国名",
+    "限制": "原版静态模型；不代表潮汐、潜水呼吸、流体、生产或运行时生成已接入"
+  },
+  "rooms": [
+    {
+      "id": "watchroom",
+      "name": "干式看管小室",
+      "min": [
+        6,
+        8,
+        29
+      ],
+      "max": [
+        20,
+        13,
+        41
+      ],
+      "purpose": "备餐、床位与私人用品，货区隔门"
+    },
+    {
+      "id": "warehouse",
+      "name": "高于高潮的干货主仓",
+      "min": [
+        6,
+        8,
+        6
+      ],
+      "max": [
+        44,
+        13,
+        42
+      ],
+      "purpose": "桩台主仓，分类货架和宽通道，普通门仅步行，货运机制另验"
+    }
+  ],
+  "points": [
+    {
+      "id": "kitchen",
+      "kind": "work",
+      "pos": [
+        9,
+        8,
+        31
+      ],
+      "name": "储备淡水与连续备餐",
+      "approach": [
+        9,
+        8,
+        32
+      ]
+    },
+    {
+      "id": "watch",
+      "kind": "sleep",
+      "pos": [
+        16,
+        8,
+        38
+      ],
+      "name": "值守床位与个人柜",
+      "approach": [
+        17,
+        8,
+        38
+      ]
+    },
+    {
+      "id": "personal",
+      "kind": "storage",
+      "pos": [
+        9,
+        9,
+        39
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        9,
+        8,
+        38
+      ]
+    },
+    {
+      "id": "cargo0",
+      "kind": "storage",
+      "pos": [
+        30,
+        9,
+        10
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        30,
+        8,
+        11
+      ]
+    },
+    {
+      "id": "cargo1",
+      "kind": "storage",
+      "pos": [
+        30,
+        9,
+        20
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        30,
+        8,
+        21
+      ]
+    },
+    {
+      "id": "cargo2",
+      "kind": "storage",
+      "pos": [
+        30,
+        9,
+        33
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        30,
+        8,
+        34
+      ]
+    },
+    {
+      "id": "weigh",
+      "kind": "work",
+      "pos": [
+        9,
+        8,
+        15
+      ],
+      "name": "陆水转运登记",
+      "approach": [
+        9,
+        8,
+        16
+      ]
+    },
+    {
+      "id": "waiting",
+      "kind": "storage",
+      "pos": [
+        9,
+        9,
+        23
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        9,
+        8,
+        22
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        25,
+        8,
+        3
+      ],
+      "name": "陆侧普通步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "pallet0",
+      "kind": "storage",
+      "pos": [
+        34,
+        10,
+        14
+      ],
+      "name": "离地捆装防潮货垛",
+      "approach": [
+        34,
+        8,
+        13
+      ]
+    },
+    {
+      "id": "pallet1",
+      "kind": "storage",
+      "pos": [
+        34,
+        10,
+        24
+      ],
+      "name": "离地捆装防潮货垛",
+      "approach": [
+        34,
+        8,
+        23
+      ]
+    },
+    {
+      "id": "pallet2",
+      "kind": "storage",
+      "pos": [
+        34,
+        10,
+        37
+      ],
+      "name": "离地捆装防潮货垛",
+      "approach": [
+        34,
+        8,
+        36
+      ]
+    },
+    {
+      "id": "pallet3",
+      "kind": "storage",
+      "pos": [
+        12,
+        10,
+        8
+      ],
+      "name": "离地捆装防潮货垛",
+      "approach": [
+        12,
+        8,
+        7
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        25,
+        7,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "接同高程干燥道路或栈桥"
+    },
+    {
+      "kind": "water",
+      "pos": [
+        25,
+        5,
+        50
+      ],
+      "direction": "south",
+      "note": "水侧货物由港区转运，登船和升降装卸另接"
+    }
+  ],
+  "design_notes": [],
+  "differences": [
+    "岸端转运侧仓",
+    "货物离参考水面和高潮线存放；真实干式步行通路，桩脚接连续承载海床"
+  ],
+  "floors": [
+    {
+      "name": "干式生活层",
+      "y": 7,
+      "max_y": 13
+    }
+  ],
+  "roof_min_y": 14,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/tidal_crafts.py",
+  "preview_context": {
+    "kind": "shore",
+    "shore_z": 25,
+    "water_surface_y": 5,
+    "land_surface_y": 8,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "sand"
+  },
+  "nbt_sha256": "589ff9bcc7bb2b57cb448694a1207d7ca0e5f874bdbbb3b8f7123404caf5c114",
+  "function_terms": [
+    "货物仓储"
+  ]
+}

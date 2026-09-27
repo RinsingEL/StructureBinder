@@ -348,5 +348,8 @@
     "run": 20,
     "slope_origin_z": 19
   },
-  "nbt_sha256": "aa3f87414ba91236b9e95657b790e6916f94efe80c8aecc24d924adeb458b74d"
+  "nbt_sha256": "aa3f87414ba91236b9e95657b790e6916f94efe80c8aecc24d924adeb458b74d",
+  "function_terms": [
+    "家庭居住"
+  ]
 }

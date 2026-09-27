@@ -1,209 +1,201 @@
 {
   "schema": "structure-studio.author.v1",
   "id": "DS-F01-v03",
-  "name": "转角织物裁缝铺",
+  "name": "前售后裁阶台布铺",
   "family": "DS-F01",
   "civilization": "沙漠",
   "planning_role": "planning_role.fill",
   "size": [
-    25,
-    23,
-    27
+    28,
+    17,
+    30
   ],
   "terrain": {
-    "选址": "有实际居民、旅人和相应行业供需的绿洲生活街区",
-    "地块": "L 形铺面围住歇脚小院，北门陈列、东侧裁缝作业，织机与试衣空间分别布置。",
-    "高程": "主入口脚底 Y=2；两层版上层脚底 Y=9",
-    "落地": "结构连同内院及铺面完整落地；外部交通、供水与库存另行接入，未写入的凹角保持原环境"
+    "选址": "稳定商业街地块，北侧顾客入口和侧后方进货作业面须接通",
+    "供给": "按行业提供原料、货品和饮水；烘焙与陶窑需燃料、排烟空间",
+    "接驳": "外部街面脚底Y=2，与首层同高；高台仅在明确外阶处接通"
   },
   "rooms": [
     {
-      "id": "sales",
-      "name": "北侧布匹陈列",
+      "id": "前段布匹店",
+      "name": "前段布匹店",
       "min": [
-        4,
+        5,
         2,
         6
       ],
       "max": [
-        11,
-        6,
+        10,
+        5,
+        12
+      ],
+      "purpose": "本店售卖、作业或后勤空间"
+    },
+    {
+      "id": "后段裁缝高间",
+      "name": "后段裁缝高间",
+      "min": [
+        5,
+        2,
         15
       ],
-      "purpose": "织物样品与接待"
-    },
-    {
-      "id": "work",
-      "name": "东侧裁缝间",
-      "min": [
-        14,
-        2,
-        14
-      ],
       "max": [
-        20,
-        6,
-        22
+        13,
+        9,
+        24
       ],
-      "purpose": "织机、裁布桌与试衣隔帘"
-    },
-    {
-      "id": "court",
-      "name": "院边歇脚棚",
-      "min": [
-        3,
-        2,
-        18
-      ],
-      "max": [
-        12,
-        6,
-        23
-      ],
-      "purpose": "等候取衣与通风歇坐"
+      "purpose": "本店售卖、作业或后勤空间"
     }
   ],
   "points": [
     {
-      "id": "sales",
-      "kind": "work",
-      "pos": [
-        7,
-        2,
-        12
-      ],
-      "name": "织物接待台",
-      "approach": [
-        7,
-        2,
-        11
-      ]
-    },
-    {
-      "id": "sew",
-      "kind": "work",
-      "pos": [
-        15,
-        2,
-        17
-      ],
-      "name": "织机与修衣",
-      "approach": [
-        15,
-        2,
-        16
-      ]
-    },
-    {
-      "id": "fit",
-      "kind": "circulation",
-      "pos": [
-        20,
-        2,
-        21
-      ],
-      "name": "试衣隔帘",
-      "look_at": [
-        20,
-        3,
-        17
-      ]
-    },
-    {
-      "id": "entry",
+      "id": "front",
       "kind": "entrance",
       "pos": [
-        8,
+        7,
         2,
         3
       ],
-      "name": "主入口",
+      "name": "临街顾客入口",
       "facing": "north"
     },
     {
-      "id": "east",
-      "kind": "entrance",
+      "id": "布匹接待",
+      "kind": "work",
       "pos": [
-        22,
+        6,
+        2,
+        8
+      ],
+      "name": "布匹接待",
+      "approach": [
+        6,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "裁剪",
+      "kind": "work",
+      "pos": [
+        8,
+        2,
+        19
+      ],
+      "name": "裁剪",
+      "approach": [
+        8,
         2,
         18
+      ]
+    },
+    {
+      "id": "织机",
+      "kind": "work",
+      "pos": [
+        5,
+        2,
+        22
       ],
-      "name": "东侧取衣口",
-      "facing": "east"
+      "name": "织机",
+      "approach": [
+        6,
+        2,
+        22
+      ]
+    },
+    {
+      "id": "试衣",
+      "kind": "circulation",
+      "pos": [
+        13,
+        2,
+        23
+      ],
+      "name": "后部试衣隔帘"
+    },
+    {
+      "id": "晾布",
+      "kind": "work",
+      "pos": [
+        20,
+        6,
+        22
+      ],
+      "name": "侧台晾布",
+      "approach": [
+        20,
+        5,
+        21
+      ]
+    },
+    {
+      "id": "侧台",
+      "kind": "circulation",
+      "pos": [
+        21,
+        5,
+        16
+      ],
+      "name": "晾布平台"
     }
   ],
   "connections": [
     {
       "kind": "pedestrian",
       "pos": [
-        8,
+        7,
         1,
-        3
+        2
       ],
       "direction": "north",
       "clearance": [
         3,
-        3
+        4
       ],
-      "note": "接外部步行街或商旅停驻面，脚底 Y=2"
-    },
-    {
-      "kind": "pedestrian",
-      "pos": [
-        22,
-        1,
-        18
-      ],
-      "direction": "east",
-      "clearance": [
-        3,
-        3
-      ],
-      "note": "接外部步行街或商旅停驻面，脚底 Y=2"
+      "note": "同层外街面脚底Y=2"
     }
   ],
   "design_notes": [
-    "L 形铺面围住歇脚小院，北门陈列、东侧裁缝作业，织机与试衣空间分别布置。"
+    "前段低铺、后段高裁剪间，独立侧台晾布，短阶从侧院进入。",
+    "日间营业店铺，不声明店主住宅；炉具、货品和工序为原版静态表达。"
   ],
   "differences": [
-    "L 形铺面围住歇脚小院，北门陈列、东侧裁缝作业，织机与试衣空间分别布置。"
+    "前段低铺、后段高裁剪间，独立侧台晾布，短阶从侧院进入。"
   ],
   "floors": [
     {
-      "name": "地面空间与院落",
+      "name": "售卖与行业作业",
       "y": 1,
-      "max_y": 6
+      "max_y": 5
+    },
+    {
+      "name": "完整上部体量",
+      "y": 6,
+      "max_y": 16
     }
   ],
-  "roof_min_y": 8,
+  "roof_min_y": 6,
   "lifecycle": "draft",
   "offline_limits": [
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
   ],
-  "source": "tools/structure_studio/studio/oasis_hospitality.py:shop(3)",
+  "source": "tools/structure_studio/studio/desert_fill_shops.py:shop(3)",
+  "function_terms": [
+    "布匹零售",
+    "裁缝"
+  ],
+  "ground_plane": {
+    "y": 2,
+    "note": "北侧店外场坪支撑方块Y=1，外部步行街面上边界Y=2，与首层入口齐平"
+  },
   "preview_context": {
     "kind": "flat",
     "land_surface_y": 2,
     "bed_y": -1,
-    "padding": 3,
+    "padding": 4,
     "surface": "sand"
   },
-  "ventilation": [
-    {
-      "roof_y": 8,
-      "min": [
-        17,
-        8,
-        19
-      ],
-      "max": [
-        18,
-        13,
-        20
-      ],
-      "note": "连续通风孔的几何表达，不模拟气流或温度"
-    }
-  ],
-  "nbt_sha256": "256daed1c5b178bd325e331cc5c1ea72ca3dacd2abd63a023a8debe38cc28956"
+  "nbt_sha256": "83542e574b85e4d77d10f70c68ba084e9c4191c2f189a539e94be87a09eb87dc"
 }

@@ -1,0 +1,369 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "TC-07-v01",
+  "name": "连体双客房潜旅舍",
+  "family": "TC-07",
+  "civilization": "海洋幻想",
+  "planning_role": "planning_role.fill",
+  "size": [
+    51,
+    36,
+    59
+  ],
+  "terrain": {
+    "选址": "避风潮上岸台或人工桩台；水侧支柱底Y=0必须接稳定海床，不自动适应任意水深",
+    "潮位": "低潮Y=3、参考水面Y=5、预期高潮Y=6；主层干地板Y=7、脚底Y=8，潮汐仅为条件记录",
+    "支撑接驳": "北侧接Y=8普通步行道路；所有楼梯为实体台阶。高层与分台另有房间高程，不依赖跳跃或游泳",
+    "供水生活": "厨房淡水和食物依岸上补给；海水不能视为饮用或灌溉水。居室采用干燥外壳，气候通风与实际水密另验",
+    "风格": "棱面近似贝壳的弧顶、放射或分瓣舱室、青绿石质桩台；风格不是国名",
+    "限制": "原版静态模型；不代表潮汐、潜水呼吸、流体、生产或运行时生成已接入"
+  },
+  "rooms": [
+    {
+      "id": "dining",
+      "name": "厨房餐读起居",
+      "min": [
+        7,
+        8,
+        7
+      ],
+      "max": [
+        26,
+        13,
+        23
+      ],
+      "purpose": "完整厨房、食品柜、共餐桌椅、相向读书座与书物柜"
+    },
+    {
+      "id": "guest0",
+      "name": "隔门干式卧室",
+      "min": [
+        7,
+        8,
+        31
+      ],
+      "max": [
+        23,
+        13,
+        51
+      ],
+      "purpose": "床位与个人灯柜、衣物储藏、写字和盥洗，实体隔门"
+    },
+    {
+      "id": "guest1",
+      "name": "隔门干式卧室",
+      "min": [
+        27,
+        8,
+        31
+      ],
+      "max": [
+        43,
+        13,
+        51
+      ],
+      "purpose": "床位与个人灯柜、衣物储藏、写字和盥洗，实体隔门"
+    },
+    {
+      "id": "gearroom",
+      "name": "接待装具整理厅",
+      "min": [
+        29,
+        8,
+        6
+      ],
+      "max": [
+        44,
+        13,
+        24
+      ],
+      "purpose": "登记接待、行李柜和装具维修，与住宿隔门分区"
+    },
+    {
+      "id": "corridor",
+      "name": "室内客房公共走廊",
+      "min": [
+        6,
+        8,
+        25
+      ],
+      "max": [
+        44,
+        13,
+        28
+      ],
+      "purpose": "宽干道串联独立寝室，避开公共餐厨和维修工位"
+    }
+  ],
+  "points": [
+    {
+      "id": "diningcook",
+      "kind": "work",
+      "pos": [
+        9,
+        8,
+        8
+      ],
+      "name": "储备淡水与连续备餐",
+      "approach": [
+        9,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "diningfood",
+      "kind": "storage",
+      "pos": [
+        22,
+        9,
+        8
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        22,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "diningbooks",
+      "kind": "storage",
+      "pos": [
+        9,
+        9,
+        22
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        9,
+        8,
+        21
+      ]
+    },
+    {
+      "id": "guest0a",
+      "kind": "sleep",
+      "pos": [
+        9,
+        8,
+        48
+      ],
+      "name": "值守床位与个人柜",
+      "approach": [
+        10,
+        8,
+        48
+      ]
+    },
+    {
+      "id": "guest0b",
+      "kind": "sleep",
+      "pos": [
+        21,
+        8,
+        48
+      ],
+      "name": "值守床位与个人柜",
+      "approach": [
+        22,
+        8,
+        48
+      ]
+    },
+    {
+      "id": "guest0cloth",
+      "kind": "storage",
+      "pos": [
+        9,
+        9,
+        32
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        9,
+        8,
+        33
+      ]
+    },
+    {
+      "id": "guest0desk",
+      "kind": "work",
+      "pos": [
+        20,
+        8,
+        33
+      ],
+      "name": "个人书写灯案",
+      "approach": [
+        20,
+        8,
+        34
+      ]
+    },
+    {
+      "id": "guest1a",
+      "kind": "sleep",
+      "pos": [
+        29,
+        8,
+        48
+      ],
+      "name": "值守床位与个人柜",
+      "approach": [
+        30,
+        8,
+        48
+      ]
+    },
+    {
+      "id": "guest1b",
+      "kind": "sleep",
+      "pos": [
+        41,
+        8,
+        48
+      ],
+      "name": "值守床位与个人柜",
+      "approach": [
+        42,
+        8,
+        48
+      ]
+    },
+    {
+      "id": "guest1cloth",
+      "kind": "storage",
+      "pos": [
+        29,
+        9,
+        32
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        29,
+        8,
+        33
+      ]
+    },
+    {
+      "id": "guest1desk",
+      "kind": "work",
+      "pos": [
+        40,
+        8,
+        33
+      ],
+      "name": "个人书写灯案",
+      "approach": [
+        40,
+        8,
+        34
+      ]
+    },
+    {
+      "id": "reception",
+      "kind": "work",
+      "pos": [
+        32,
+        8,
+        8
+      ],
+      "name": "潜行登记与补给账册",
+      "approach": [
+        32,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "repair",
+      "kind": "work",
+      "pos": [
+        32,
+        8,
+        14
+      ],
+      "name": "装备检修与清洗",
+      "approach": [
+        32,
+        8,
+        15
+      ]
+    },
+    {
+      "id": "gear",
+      "kind": "storage",
+      "pos": [
+        32,
+        9,
+        22
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        32,
+        8,
+        21
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        25,
+        8,
+        3
+      ],
+      "name": "陆侧普通步行入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        25,
+        7,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "接同高程干燥道路或栈桥"
+    }
+  ],
+  "design_notes": [],
+  "differences": [
+    "连体双客房潜旅舍",
+    "连体肋拱贝厅以真实公共走廊串联两间双床客房，前部接待、装备与共餐起居分区"
+  ],
+  "floors": [
+    {
+      "name": "干式生活层",
+      "y": 7,
+      "max_y": 13
+    }
+  ],
+  "roof_min_y": 14,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/tidal_life.py",
+  "preview_context": {
+    "kind": "shore",
+    "shore_z": 29,
+    "water_surface_y": 5,
+    "land_surface_y": 8,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "sand"
+  },
+  "nbt_sha256": "25d88603fa55869096bd2e5f4322fb3d1d6220e29450350c22a854be5039e9c8",
+  "function_terms": [
+    "旅客住宿"
+  ]
+}

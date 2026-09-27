@@ -92,5 +92,8 @@
     "layout": "两块不同长宽的田畦组成 L 形，内角保留取水、堆肥与歇脚，不用作物填满转角。",
     "irrigation": "每畦固定水源，最终NBT另核对4格水源距离和耕地支撑。"
   },
-  "nbt_sha256": "e89a7df7aee51e552c2b07f88c4610da2025a24911ae6fe3ba319c24facb78fa"
+  "nbt_sha256": "e89a7df7aee51e552c2b07f88c4610da2025a24911ae6fe3ba319c24facb78fa",
+  "function_terms": [
+    "农田种植"
+  ]
 }

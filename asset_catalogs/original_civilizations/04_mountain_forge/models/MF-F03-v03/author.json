@@ -85,5 +85,9 @@
     "land_surface_y": 2,
     "padding": 5
   },
-  "nbt_sha256": "9d6f334a6dd421bdb676b607167551141180a0da752adeefe4872d3cf1b91a4f"
+  "nbt_sha256": "9d6f334a6dd421bdb676b607167551141180a0da752adeefe4872d3cf1b91a4f",
+  "function_terms": [
+    "工具维护",
+    "材料存放"
+  ]
 }

@@ -1,268 +1,330 @@
 {
   "schema": "structure-studio.author.v1",
   "id": "DS-02-v03",
-  "name": "长廊鞍具兽舍",
+  "name": "护理兽栏",
   "family": "DS-02",
   "civilization": "沙漠",
   "planning_role": "planning_role.fill",
   "size": [
-    34,
-    24,
-    37
+    37,
+    15,
+    35
   ],
   "terrain": {
-    "选址": "依托商路补给点和可靠饮水，保持动物活动与人货搬运空间",
-    "地块": "长屋顶覆盖分栏与中央通道，侧接鞍具房，前端另留卸载等候区。",
-    "接地": "使用地坪 Y=1，脚底 Y=2；不自动削坡或补齐外部通路",
-    "边界": "模板包含内部地坪和封边，未写入的凹角与外部格保持原环境"
+    "选址": "连续承载的平坦地块；入口连接商路并有可靠饮水饲料来源。",
+    "接地": "外部地面脚底 Y=2，实体地坪顶面；基础底部 Y=0 不作为落地线。"
   },
   "rooms": [
     {
-      "id": "前厩",
-      "name": "遮阳兽栏 · 前厩",
+      "id": "quiet",
+      "name": "遮阴兽栏",
       "min": [
         5,
-        2,
-        8
-      ],
-      "max": [
-        10,
-        6,
-        16
-      ],
-      "purpose": "兽栏、饲料、饮水与牵引通道"
-    },
-    {
-      "id": "后厩",
-      "name": "遮阳兽栏 · 后厩",
-      "min": [
-        5,
-        2,
-        20
-      ],
-      "max": [
-        10,
-        6,
-        28
-      ],
-      "purpose": "兽栏、饲料、饮水与牵引通道"
-    },
-    {
-      "id": "tack",
-      "name": "鞍具储藏与护理房",
-      "min": [
-        23,
-        2,
-        22
-      ],
-      "max": [
-        29,
-        6,
-        31
-      ],
-      "purpose": "挂具、储物、维修工作台与整理桌"
-    },
-    {
-      "id": "aisle",
-      "name": "兽舍中央通廊",
-      "min": [
-        11,
-        2,
-        5
-      ],
-      "max": [
-        19,
-        6,
-        31
-      ],
-      "purpose": "牵引、喂养、护理与后房出入"
-    },
-    {
-      "id": "wait",
-      "name": "遮阳等候区",
-      "min": [
-        23,
         2,
         6
       ],
       "max": [
-        29,
+        13,
+        6,
+        15
+      ],
+      "purpose": "饮水、饲料与静态栏位；开口三格"
+    },
+    {
+      "id": "recovery",
+      "name": "遮阴兽栏",
+      "min": [
+        5,
+        2,
+        21
+      ],
+      "max": [
+        13,
+        6,
+        29
+      ],
+      "purpose": "饮水、饲料与静态栏位；开口三格"
+    },
+    {
+      "id": "observe",
+      "name": "遮阴兽栏",
+      "min": [
+        24,
+        2,
+        6
+      ],
+      "max": [
+        31,
         6,
         14
       ],
-      "purpose": "卸鞍后临时等候与人员歇脚"
+      "purpose": "饮水、饲料与静态栏位；开口三格"
+    },
+    {
+      "id": "keeper",
+      "name": "鞍具与值守室",
+      "min": [
+        26,
+        2,
+        22
+      ],
+      "max": [
+        32,
+        6,
+        30
+      ],
+      "purpose": "登记、鞍具修补、寄存、值守睡眠"
+    },
+    {
+      "id": "care",
+      "name": "开放护理棚",
+      "min": [
+        16,
+        2,
+        24
+      ],
+      "max": [
+        21,
+        6,
+        31
+      ],
+      "purpose": "护理工具、清水和等候操作空地"
     }
   ],
   "points": [
     {
-      "id": "前厩_feed",
-      "kind": "work",
+      "id": "entry",
+      "kind": "entrance",
       "pos": [
-        7,
+        18,
         2,
-        14
+        2
       ],
-      "name": "前厩饲料",
-      "approach": [
-        8,
-        2,
-        14
-      ]
+      "name": "五格牵引主入口",
+      "facing": "north"
     },
     {
-      "id": "前厩_water",
+      "id": "quiet_feed",
       "kind": "work",
       "pos": [
-        8,
+        6,
         2,
-        10
+        13
       ],
-      "name": "前厩饮水",
+      "name": "草料取放",
       "approach": [
-        7,
+        6,
         2,
-        10
-      ]
-    },
-    {
-      "id": "前厩_gate",
-      "kind": "circulation",
-      "pos": [
-        10,
-        2,
-        12
-      ],
-      "name": "前厩牵引宽口",
-      "look_at": [
-        7,
-        3,
         12
       ]
     },
     {
-      "id": "后厩_feed",
+      "id": "quiet_water",
       "kind": "work",
       "pos": [
-        7,
+        6,
         2,
-        26
+        7
       ],
-      "name": "后厩饲料",
+      "name": "栏内饮水",
       "approach": [
-        8,
+        6,
         2,
-        26
+        8
       ]
     },
     {
-      "id": "后厩_water",
-      "kind": "work",
-      "pos": [
-        8,
-        2,
-        22
-      ],
-      "name": "后厩饮水",
-      "approach": [
-        7,
-        2,
-        22
-      ]
-    },
-    {
-      "id": "后厩_gate",
+      "id": "quiet_gate",
       "kind": "circulation",
       "pos": [
-        10,
+        14,
         2,
-        24
+        10
       ],
-      "name": "后厩牵引宽口",
-      "look_at": [
-        7,
-        3,
-        24
+      "name": "三格牵引开口"
+    },
+    {
+      "id": "recovery_feed",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        27
+      ],
+      "name": "草料取放",
+      "approach": [
+        6,
+        2,
+        26
+      ]
+    },
+    {
+      "id": "recovery_water",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        22
+      ],
+      "name": "栏内饮水",
+      "approach": [
+        6,
+        2,
+        23
+      ]
+    },
+    {
+      "id": "recovery_gate",
+      "kind": "circulation",
+      "pos": [
+        14,
+        2,
+        25
+      ],
+      "name": "三格牵引开口"
+    },
+    {
+      "id": "observe_feed",
+      "kind": "work",
+      "pos": [
+        25,
+        2,
+        12
+      ],
+      "name": "草料取放",
+      "approach": [
+        25,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "observe_water",
+      "kind": "work",
+      "pos": [
+        25,
+        2,
+        7
+      ],
+      "name": "栏内饮水",
+      "approach": [
+        25,
+        2,
+        8
+      ]
+    },
+    {
+      "id": "observe_gate",
+      "kind": "circulation",
+      "pos": [
+        23,
+        2,
+        10
+      ],
+      "name": "三格牵引开口"
+    },
+    {
+      "id": "keeper_bed",
+      "kind": "bed",
+      "pos": [
+        31,
+        2,
+        29
+      ],
+      "name": "值守床",
+      "approach": [
+        30,
+        2,
+        29
+      ]
+    },
+    {
+      "id": "register",
+      "kind": "work",
+      "pos": [
+        27,
+        2,
+        22
+      ],
+      "name": "换乘登记",
+      "approach": [
+        27,
+        2,
+        23
       ]
     },
     {
       "id": "tack",
       "kind": "work",
       "pos": [
-        24,
+        32,
         2,
-        30
+        24
       ],
-      "name": "鞍具整理与维修",
+      "name": "鞍具修补",
       "approach": [
-        24,
+        31,
         2,
-        29
+        24
       ]
     },
     {
       "id": "care",
       "kind": "work",
       "pos": [
-        18,
-        2,
-        16
-      ],
-      "name": "廊内护理架",
-      "approach": [
         17,
         2,
-        16
-      ]
-    },
-    {
-      "id": "entry",
-      "kind": "entrance",
-      "pos": [
-        14,
-        2,
-        4
+        29
       ],
-      "name": "动物与人员宽口",
-      "facing": "north"
+      "name": "遮阴护理工作位",
+      "approach": [
+        18,
+        2,
+        29
+      ]
     }
   ],
   "connections": [
     {
       "kind": "animal",
       "pos": [
-        14,
+        18,
         1,
-        4
+        2
       ],
       "direction": "north",
       "clearance": [
         5,
         5
       ],
-      "note": "作者预留几何接口；需另外核对外部地面及具体实体尺寸"
+      "note": "五格宽几何预留，须另外验证具体实体及外部接驳。"
     }
   ],
   "design_notes": [
-    "长屋顶覆盖分栏与中央通道，侧接鞍具房，前端另留卸载等候区。"
+    "两侧安静隔栏、后部开放护理棚与独立值守室，中央护理等候院。"
   ],
   "differences": [
-    "长屋顶覆盖分栏与中央通道，侧接鞍具房，前端另留卸载等候区。"
+    "两侧安静隔栏、后部开放护理棚与独立值守室，中央护理等候院。"
   ],
   "floors": [
     {
-      "name": "地坪、布置与通路",
+      "name": "牵引通道、兽栏与值守内饰",
       "y": 1,
-      "max_y": 4
+      "max_y": 5
     }
   ],
-  "roof_min_y": 7,
+  "roof_min_y": 6,
   "lifecycle": "draft",
   "offline_limits": [
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。",
-    "兽栏不含活体动物；入口为宽口，动物高度、回转、牵引和围栏行为须另行验证。"
+    "静态栏位和护理设备，无动物实体；动物尺寸、牵引、回转与围栏行为未做游戏验收。"
   ],
-  "source": "tools/structure_studio/studio/oasis_yards.py:beast_yard(3)",
+  "source": "tools/structure_studio/studio/desert_fill_beasts.py:beast_yard(3)",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路与院内地坪统一脚底 Y=2，地坪方块在 Y=1；不以基础最低层定位。"
+  },
   "preview_context": {
     "kind": "flat",
     "land_surface_y": 2,
@@ -270,5 +332,9 @@
     "padding": 3,
     "surface": "sand"
   },
-  "nbt_sha256": "a35e3970c896cd63ea4211dc29e7fb743453d9033f531b0ba2ddc4238eb22c61"
+  "function_terms": [
+    "畜群照护",
+    "商队换乘"
+  ],
+  "nbt_sha256": "9e6f92f6178e2d76af0b23cb2109e8a1df31209b67c6fcf3d8b447e54436ec5e"
 }

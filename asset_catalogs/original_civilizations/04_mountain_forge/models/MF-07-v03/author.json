@@ -205,5 +205,8 @@
     "rise": 1,
     "slope_origin_z": 14
   },
-  "nbt_sha256": "34191bc8d595160df236aaca11a5d94ed953880a920c1ee53b52bc5707ec8d84"
+  "nbt_sha256": "34191bc8d595160df236aaca11a5d94ed953880a920c1ee53b52bc5707ec8d84",
+  "function_terms": [
+    "矿料仓储"
+  ]
 }

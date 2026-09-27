@@ -228,5 +228,8 @@
     "land_surface_y": 2,
     "padding": 5
   },
-  "nbt_sha256": "6eeb5dfad74955ace10daeafb5898c37ffdeec6785410a32dd9d49ba2f119577"
+  "nbt_sha256": "6eeb5dfad74955ace10daeafb5898c37ffdeec6785410a32dd9d49ba2f119577",
+  "function_terms": [
+    "行会议事"
+  ]
 }

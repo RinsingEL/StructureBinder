@@ -1,101 +1,167 @@
 {
   "schema": "structure-studio.author.v1",
   "id": "DS-F02-v02",
-  "name": "四岛分水菜园",
+  "name": "十字分水田",
   "family": "DS-F02",
   "civilization": "沙漠",
   "planning_role": "planning_role.fill",
   "size": [
-    27,
-    12,
-    27
+    33,
+    13,
+    33
   ],
   "terrain": {
-    "选址": "有可靠引水与适宜土壤的绿洲；不在无水沙海仅凭文明标签放置",
-    "形状": "四块种植岛由十字作业道分隔，交叉水渠贴近每块菜畦。",
-    "地面": "作业道脚底 Y=2，有限地块内备土与灌溉",
-    "落地方式": "独立固定模板田块，包含封边与作业道；不替代 Landscape 自然生成大田"
+    "选址": "有可靠灌溉供水、适宜土壤及日照的地块；模板水槽须有真实供水来源。",
+    "地块": "十字分水渠将大田分为四片，桥梁衔接四周环路与中央作业道。",
+    "落地": "外部入口脚底 Y=2；耕地及地坪顶层方块 Y=1。三级台田内部地坪另升至 Y=2、3。",
+    "适用": "独立固定田块，不替代随自然地形生成的大田。"
   },
   "rooms": [
     {
-      "id": "field",
-      "name": "灌渠种植与维护",
+      "id": "b0",
+      "name": "灌溉种植畦 b0",
       "min": [
+        3,
         2,
-        2,
-        3
+        4
       ],
       "max": [
-        24,
-        6,
-        24
+        13,
+        4,
+        13
       ],
-      "purpose": "四块种植岛由十字作业道分隔，交叉水渠贴近每块菜畦。"
+      "purpose": "水渠、耕土及沿畦采收"
+    },
+    {
+      "id": "b1",
+      "name": "灌溉种植畦 b1",
+      "min": [
+        19,
+        2,
+        4
+      ],
+      "max": [
+        29,
+        4,
+        13
+      ],
+      "purpose": "水渠、耕土及沿畦采收"
+    },
+    {
+      "id": "b2",
+      "name": "灌溉种植畦 b2",
+      "min": [
+        3,
+        2,
+        19
+      ],
+      "max": [
+        13,
+        4,
+        28
+      ],
+      "purpose": "水渠、耕土及沿畦采收"
+    },
+    {
+      "id": "b3",
+      "name": "灌溉种植畦 b3",
+      "min": [
+        19,
+        2,
+        19
+      ],
+      "max": [
+        29,
+        4,
+        28
+      ],
+      "purpose": "水渠、耕土及沿畦采收"
     }
   ],
   "points": [
     {
-      "id": "compost",
-      "kind": "work",
-      "pos": [
-        13,
-        2,
-        22
-      ],
-      "name": "堆肥与田务",
-      "approach": [
-        12,
-        2,
-        22
-      ]
-    },
-    {
-      "id": "water",
-      "kind": "work",
-      "pos": [
-        13,
-        2,
-        13
-      ],
-      "name": "分水庭取水",
-      "approach": [
-        12,
-        2,
-        13
-      ]
-    },
-    {
       "id": "entry",
       "kind": "entrance",
       "pos": [
-        13,
+        16,
         2,
-        3
+        1
       ],
-      "name": "田头入口",
+      "name": "田头主入口",
       "facing": "north"
+    },
+    {
+      "id": "workway0",
+      "kind": "circulation",
+      "pos": [
+        2,
+        2,
+        14
+      ],
+      "name": "第1处采收作业道",
+      "look_at": [
+        0,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "workway1",
+      "kind": "circulation",
+      "pos": [
+        30,
+        2,
+        17
+      ],
+      "name": "第2处采收作业道",
+      "look_at": [
+        28,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "workway2",
+      "kind": "circulation",
+      "pos": [
+        14,
+        2,
+        28
+      ],
+      "name": "第3处采收作业道",
+      "look_at": [
+        12,
+        3,
+        31
+      ]
     }
   ],
   "connections": [],
   "design_notes": [
-    "四块种植岛由十字作业道分隔，交叉水渠贴近每块菜畦。"
+    "十字分水渠将大田分为四片，桥梁衔接四周环路与中央作业道。",
+    "参考用户图7大轮廓与水渠组织，使用原版作物；保留作业净空。"
   ],
   "differences": [
-    "四块种植岛由十字作业道分隔，交叉水渠贴近每块菜畦。"
+    "十字分水渠将大田分为四片，桥梁衔接四周环路与中央作业道。"
   ],
   "floors": [
     {
-      "name": "灌渠与田埂",
+      "name": "灌溉与作业层",
       "y": 0,
-      "max_y": 5
+      "max_y": 7
     }
   ],
-  "roof_min_y": null,
+  "roof_min_y": 6,
   "lifecycle": "draft",
   "offline_limits": [
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
   ],
+  "source": "tools/structure_studio/studio/desert_fill_farms.py:garden(2)",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部接路站立面 Y=2；地坪顶层方块 Y=1，内部种植台和短阶不改变对地基准。"
+  },
   "preview_context": {
     "kind": "flat",
     "land_surface_y": 2,
@@ -103,19 +169,19 @@
     "padding": 3,
     "surface": "sand"
   },
-  "source": "tools/structure_studio/studio/oasis_life.py:garden(2)",
   "agriculture": {
     "crops": [
+      "wheat",
       "carrots",
-      "beetroots",
       "potatoes",
-      "wheat"
+      "beetroots"
     ],
-    "layout": "四块种植岛由十字作业道分隔，交叉水渠贴近每块菜畦。",
-    "planted_cells": 240,
-    "irrigation_sources": 66,
+    "layout": "十字分水渠将大田分为四片，桥梁衔接四周环路与中央作业道。",
     "template_mode": "independent_fixed_plot",
-    "hydration": "以最终 NBT 校核支撑与同高程或高一格、水平 4 格水源"
+    "hydration": "全部原版作物检查实际耕地与水平四格同层水源。"
   },
-  "nbt_sha256": "fc715e86beef10ef7ef60a985eaf9afba3c539e12dc9667358d55978dbff8348"
+  "function_terms": [
+    "农田种植"
+  ],
+  "nbt_sha256": "029ac9a25d94f12684175b4bb4cbab5e5f07e0abfb2ecaab04f9dce96b2a16f8"
 }

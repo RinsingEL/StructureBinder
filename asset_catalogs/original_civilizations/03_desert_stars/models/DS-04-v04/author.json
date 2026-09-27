@@ -6,133 +6,207 @@
   "civilization": "沙漠",
   "planning_role": "planning_role.fill",
   "size": [
-    17,
-    31,
-    31
+    18,
+    26,
+    32
   ],
   "terrain": {
-    "选址": "有稳定生活用水的干热聚落，通风方向与遮阳不被邻屋完全堵塞",
-    "地块": "窄长占地，底层炊事与凉室，上层睡眠、阅读和晾晒；内部楼梯连接两层。",
-    "落地": "独立住宅模板，庭院及其硬地属于实际占地；未写入格保留原环境",
-    "高程": "主入口与底层脚底 Y=2；叠居版二层脚底 Y=9"
+    "选址": "有可靠生活用水的干热聚落，外阶和遮阳廊保持通行",
+    "地块": "窄长三层：底层家务、中层睡眠、顶层小书房与露台，侧巷两段外阶连续可达。",
+    "落地": "整备平地；院内、门外街面脚底均Y=2，上层露台由自带楼梯连接"
   },
   "rooms": [
     {
       "id": "living",
-      "name": "底层炊事与凉室",
+      "name": "家庭炊事与起居",
       "min": [
         4,
         2,
-        6
+        8
       ],
       "max": [
-        12,
+        10,
         6,
-        25
+        26
       ],
-      "purpose": "餐桌、炊事与避暑"
+      "purpose": "烹饪、用水、餐桌、坐席和储物"
     },
     {
       "id": "bedroom",
-      "name": "上层卧室",
+      "name": "睡眠与衣物",
       "min": [
         4,
-        9,
-        20
-      ],
-      "max": [
-        9,
-        13,
-        25
-      ],
-      "purpose": "睡眠与盥洗"
-    },
-    {
-      "id": "upper",
-      "name": "上层阅读凉廊",
-      "min": [
-        4,
-        9,
-        6
-      ],
-      "max": [
-        12,
-        13,
+        8,
         18
       ],
-      "purpose": "阅读、储物与楼梯连接"
+      "max": [
+        10,
+        12,
+        26
+      ],
+      "purpose": "独立睡眠、衣物与阅读"
+    },
+    {
+      "id": "attic",
+      "name": "顶层书房",
+      "min": [
+        4,
+        14,
+        21
+      ],
+      "max": [
+        10,
+        18,
+        26
+      ],
+      "purpose": "阅读、储藏和露台出入"
     }
   ],
   "points": [
+    {
+      "id": "living_cook",
+      "kind": "work",
+      "pos": [
+        4,
+        2,
+        26
+      ],
+      "name": "家庭炊事",
+      "approach": [
+        4,
+        2,
+        25
+      ]
+    },
+    {
+      "id": "living_store",
+      "kind": "work",
+      "pos": [
+        10,
+        2,
+        26
+      ],
+      "name": "家用储物",
+      "approach": [
+        9,
+        2,
+        26
+      ]
+    },
+    {
+      "id": "bedroom_bed1",
+      "kind": "bed",
+      "pos": [
+        5,
+        8,
+        25
+      ],
+      "name": "卧室床位",
+      "approach": [
+        6,
+        8,
+        25
+      ]
+    },
+    {
+      "id": "bedroom_bed2",
+      "kind": "bed",
+      "pos": [
+        9,
+        8,
+        25
+      ],
+      "name": "卧室床位",
+      "approach": [
+        8,
+        8,
+        25
+      ]
+    },
+    {
+      "id": "first_stair",
+      "kind": "circulation",
+      "pos": [
+        13,
+        8,
+        13
+      ],
+      "name": "外阶上平台",
+      "look_at": [
+        10,
+        9,
+        13
+      ]
+    },
+    {
+      "id": "second_stair",
+      "kind": "circulation",
+      "pos": [
+        13,
+        14,
+        24
+      ],
+      "name": "外阶上平台",
+      "look_at": [
+        10,
+        15,
+        24
+      ]
+    },
+    {
+      "id": "reading",
+      "kind": "work",
+      "pos": [
+        5,
+        14,
+        25
+      ],
+      "name": "顶层书房",
+      "approach": [
+        6,
+        14,
+        25
+      ]
+    },
+    {
+      "id": "roof",
+      "kind": "circulation",
+      "pos": [
+        7,
+        14,
+        18
+      ],
+      "name": "顶层晾晒露台",
+      "look_at": [
+        7,
+        15,
+        12
+      ]
+    },
     {
       "id": "front",
       "kind": "entrance",
       "pos": [
         7,
         2,
-        4
+        3
       ],
-      "name": "主入口",
+      "name": "街面主入口",
       "facing": "north"
     },
     {
-      "id": "bed",
-      "kind": "bed",
+      "id": "attic_desk",
+      "kind": "work",
       "pos": [
         5,
-        9,
-        24
+        14,
+        22
       ],
-      "name": "上层卧床",
+      "name": "顶层阅读桌",
       "approach": [
-        6,
-        9,
-        24
-      ]
-    },
-    {
-      "id": "linen",
-      "kind": "work",
-      "pos": [
-        8,
-        11,
-        12
-      ],
-      "name": "凉廊晾晒架",
-      "approach": [
-        9,
-        9,
-        12
-      ]
-    },
-    {
-      "id": "cook",
-      "kind": "work",
-      "pos": [
-        4,
-        2,
-        24
-      ],
-      "name": "底层炉灶",
-      "approach": [
-        4,
-        2,
+        5,
+        14,
         23
-      ]
-    },
-    {
-      "id": "landing",
-      "kind": "circulation",
-      "pos": [
-        11,
-        9,
-        14
-      ],
-      "name": "楼上凉廊",
-      "look_at": [
-        6,
-        10,
-        10
       ]
     }
   ],
@@ -141,41 +215,52 @@
       "kind": "pedestrian",
       "pos": [
         7,
-        1,
+        2,
         3
       ],
       "direction": "north",
       "clearance": [
         3,
-        4
+        3
       ],
-      "note": "外部街面衔接台阶，不自动随地形移动入口"
+      "note": "门外铺地与外部脚底基准Y=2对齐"
     }
   ],
   "design_notes": [
-    "窄长占地，底层炊事与凉室，上层睡眠、阅读和晾晒；内部楼梯连接两层。"
+    "窄长三层：底层家务、中层睡眠、顶层小书房与露台，侧巷两段外阶连续可达。",
+    "砂岩框架、局部赭色灰泥嵌面、木凉棚和小幅布帘；楼梯与家具按玩家尺度布置。"
   ],
   "differences": [
-    "窄长占地，底层炊事与凉室，上层睡眠、阅读和晾晒；内部楼梯连接两层。"
+    "窄长三层：底层家务、中层睡眠、顶层小书房与露台，侧巷两段外阶连续可达。"
   ],
   "floors": [
     {
-      "name": "底层起居",
+      "name": "首层与院落",
       "y": 1,
       "max_y": 6
     },
     {
-      "name": "上层睡眠与凉廊",
-      "y": 8,
-      "max_y": 13
+      "name": "二层与露台",
+      "y": 7,
+      "max_y": 12
+    },
+    {
+      "name": "顶层风庭",
+      "y": 13,
+      "max_y": 18
     }
   ],
-  "roof_min_y": 15,
+  "roof_min_y": 7,
   "lifecycle": "draft",
   "offline_limits": [
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
   ],
+  "source": "tools/structure_studio/studio/desert_fill_homes.py:home(4)",
+  "ground_plane": {
+    "y": 2,
+    "note": "门外砂岩铺地顶面与院内首层同高，脚底Y=2；外阶从该面登上屋顶，不以露台或门槛替代外部地面。"
+  },
   "preview_context": {
     "kind": "flat",
     "land_surface_y": 2,
@@ -183,22 +268,8 @@
     "padding": 3,
     "surface": "sand"
   },
-  "source": "tools/structure_studio/studio/oasis_life.py:home(4)",
-  "ventilation": [
-    {
-      "roof_y": 15,
-      "min": [
-        5,
-        15,
-        7
-      ],
-      "max": [
-        6,
-        20,
-        8
-      ],
-      "note": "连续通风孔的几何表达，不模拟气流或温度"
-    }
+  "function_terms": [
+    "家庭居住"
   ],
-  "nbt_sha256": "cafde2307c3c631e8a7868f97b2bd77df7f6c02f80136754c6b120a15e755b81"
+  "nbt_sha256": "c81a762ee76a30e18bda83ae25f9088c2b2dedbd56790d6831e75751be9d2caf"
 }

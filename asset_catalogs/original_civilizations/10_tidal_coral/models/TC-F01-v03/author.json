@@ -1,0 +1,311 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "TC-F01-v03",
+  "name": "潮图书铺 · 转角长翼",
+  "family": "TC-F01",
+  "civilization": "海洋幻想",
+  "planning_role": "planning_role.fill",
+  "size": [
+    63,
+    36,
+    49
+  ],
+  "terrain": {
+    "选址": "避风潮上岸台或人工桩台；水侧支柱底Y=0必须接稳定海床，不自动适应任意水深",
+    "潮位": "低潮Y=3、参考水面Y=5、预期高潮Y=6；主层干地板Y=7、脚底Y=8，潮汐仅为条件记录",
+    "支撑接驳": "北侧接Y=8普通步行道路；所有楼梯为实体台阶。高层与分台另有房间高程，不依赖跳跃或游泳",
+    "供水生活": "厨房淡水和食物依岸上补给；海水不能视为饮用或灌溉水。居室采用干燥外壳，气候通风与实际水密另验",
+    "风格": "棱面近似贝壳的弧顶、放射或分瓣舱室、青绿石质桩台；风格不是国名",
+    "限制": "原版静态模型；不代表潮汐、潜水呼吸、流体、生产或运行时生成已接入"
+  },
+  "rooms": [
+    {
+      "id": "shop",
+      "name": "潮图书铺交易与加工",
+      "min": [
+        7,
+        8,
+        7
+      ],
+      "max": [
+        27,
+        13,
+        27
+      ],
+      "purpose": "交易柜台、分类原料和成品，行业工具与侧墙陈列；中部留贯通搬运通道"
+    },
+    {
+      "id": "ownerlive",
+      "name": "厨房餐读起居",
+      "min": [
+        31,
+        8,
+        7
+      ],
+      "max": [
+        54,
+        13,
+        26
+      ],
+      "purpose": "完整厨房、食品柜、共餐桌椅、相向读书座与书物柜"
+    },
+    {
+      "id": "ownerbed",
+      "name": "隔门干式卧室",
+      "min": [
+        31,
+        8,
+        30
+      ],
+      "max": [
+        54,
+        13,
+        39
+      ],
+      "purpose": "床位与个人灯柜、衣物储藏、写字和盥洗，实体隔门"
+    },
+    {
+      "id": "yard",
+      "name": "岸端工作小院",
+      "min": [
+        5,
+        8,
+        32
+      ],
+      "max": [
+        27,
+        13,
+        42
+      ],
+      "purpose": "带边护的干式露天包装院"
+    }
+  ],
+  "points": [
+    {
+      "id": "shoptrade",
+      "kind": "work",
+      "pos": [
+        9,
+        8,
+        9
+      ],
+      "name": "潮图书铺收银交接",
+      "approach": [
+        9,
+        8,
+        10
+      ]
+    },
+    {
+      "id": "shopraw",
+      "kind": "storage",
+      "pos": [
+        9,
+        9,
+        25
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        9,
+        8,
+        24
+      ]
+    },
+    {
+      "id": "shopbench",
+      "kind": "work",
+      "pos": [
+        9,
+        8,
+        16
+      ],
+      "name": "潮图书铺行业操作",
+      "approach": [
+        9,
+        8,
+        17
+      ]
+    },
+    {
+      "id": "shopindustry",
+      "kind": "work",
+      "pos": [
+        17,
+        8,
+        12
+      ],
+      "name": "图志翻阅与海图校对",
+      "approach": [
+        16,
+        8,
+        12
+      ]
+    },
+    {
+      "id": "ownerlivecook",
+      "kind": "work",
+      "pos": [
+        33,
+        8,
+        8
+      ],
+      "name": "储备淡水与连续备餐",
+      "approach": [
+        33,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "ownerlivefood",
+      "kind": "storage",
+      "pos": [
+        50,
+        9,
+        8
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        50,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "ownerlivebooks",
+      "kind": "storage",
+      "pos": [
+        33,
+        9,
+        25
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        33,
+        8,
+        24
+      ]
+    },
+    {
+      "id": "ownerbeda",
+      "kind": "sleep",
+      "pos": [
+        33,
+        8,
+        36
+      ],
+      "name": "值守床位与个人柜",
+      "approach": [
+        34,
+        8,
+        36
+      ]
+    },
+    {
+      "id": "ownerbedcloth",
+      "kind": "storage",
+      "pos": [
+        33,
+        9,
+        31
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        33,
+        8,
+        32
+      ]
+    },
+    {
+      "id": "ownerbeddesk",
+      "kind": "work",
+      "pos": [
+        51,
+        8,
+        32
+      ],
+      "name": "个人书写灯案",
+      "approach": [
+        51,
+        8,
+        33
+      ]
+    },
+    {
+      "id": "packing",
+      "kind": "work",
+      "pos": [
+        9,
+        8,
+        36
+      ],
+      "name": "侧院包装与货物交接",
+      "approach": [
+        9,
+        8,
+        37
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        31,
+        8,
+        3
+      ],
+      "name": "陆侧普通步行入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        31,
+        7,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "接同高程干燥道路或栈桥"
+    }
+  ],
+  "design_notes": [],
+  "differences": [
+    "潮图书铺",
+    "L形转角店面与居住长翼"
+  ],
+  "floors": [
+    {
+      "name": "干式生活层",
+      "y": 7,
+      "max_y": 13
+    }
+  ],
+  "roof_min_y": 14,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/tidal_crafts.py",
+  "preview_context": {
+    "kind": "shore",
+    "shore_z": 24,
+    "water_surface_y": 5,
+    "land_surface_y": 8,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "sand"
+  },
+  "nbt_sha256": "a48159fe5a10b0ff7533ca8ade50420982a856a7661fa164f33c45bc8357ceba",
+  "function_terms": [
+    "零售",
+    "书籍销售",
+    "制图抄录"
+  ]
+}

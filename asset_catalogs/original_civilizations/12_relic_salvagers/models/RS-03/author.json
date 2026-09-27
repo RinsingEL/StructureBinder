@@ -1,0 +1,289 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "RS-03",
+  "name": "断轮广场零件市场",
+  "family": "RS-03",
+  "civilization": "废土拾荒",
+  "planning_role": "planning_role.key",
+  "size": [
+    47,
+    24,
+    43
+  ],
+  "terrain": {
+    "选址": "旧巨械车轮骨架包围交易前庭，商棚与后仓使用独立落地支架，南侧接商路。",
+    "接地": "完整旧机座埋入稳固碎石台地，地坪Y=2、入口脚底Y=3；不将薄壳残板当作新房基础。",
+    "外接": "南侧接既有搬运路；模板外须保留回转、排水与坠落隔离带。避开活动滑坡、洪道及悬空残骸。",
+    "供给": "生活水依外部运水，燃料和食物由聚落补给；不假设旧机械仍能工作。",
+    "边界": "独立承载静态原版结构；残骸稳定、探险门禁与设备功能未接入运行时。"
+  },
+  "rooms": [
+    {
+      "id": "warehouse",
+      "name": "市场分类后仓",
+      "min": [
+        31,
+        3,
+        12
+      ],
+      "max": [
+        40,
+        7,
+        24
+      ],
+      "purpose": "有独立旧场坪支承的后加板房，门窗和完整使用通路"
+    },
+    {
+      "id": "sales",
+      "name": "旧断轮下新摊街",
+      "min": [
+        4,
+        3,
+        10
+      ],
+      "max": [
+        29,
+        7,
+        35
+      ],
+      "purpose": "四类有后勤柜的行业摊位围绕可通行庭院"
+    }
+  ],
+  "points": [
+    {
+      "id": "stock",
+      "kind": "storage",
+      "pos": [
+        32,
+        4,
+        13
+      ],
+      "name": "登记零件后仓",
+      "approach": [
+        32,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "fragile",
+      "kind": "storage",
+      "pos": [
+        32,
+        4,
+        18
+      ],
+      "name": "精细仪表盒",
+      "approach": [
+        32,
+        3,
+        19
+      ]
+    },
+    {
+      "id": "appraise",
+      "kind": "work",
+      "pos": [
+        38,
+        3,
+        21
+      ],
+      "name": "鉴定与批次登记",
+      "approach": [
+        38,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "fasteners",
+      "kind": "work",
+      "pos": [
+        9,
+        3,
+        16
+      ],
+      "name": "紧固件与金工",
+      "approach": [
+        9,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "fastenersstock",
+      "kind": "storage",
+      "pos": [
+        8,
+        4,
+        13
+      ],
+      "name": "紧固件与金工储物",
+      "approach": [
+        8,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "instruments",
+      "kind": "work",
+      "pos": [
+        22,
+        3,
+        16
+      ],
+      "name": "旧仪表鉴别",
+      "approach": [
+        22,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "instrumentsstock",
+      "kind": "storage",
+      "pos": [
+        21,
+        4,
+        13
+      ],
+      "name": "旧仪表鉴别储物",
+      "approach": [
+        21,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "cloth",
+      "kind": "work",
+      "pos": [
+        9,
+        3,
+        30
+      ],
+      "name": "回收帆布缝补",
+      "approach": [
+        9,
+        3,
+        31
+      ]
+    },
+    {
+      "id": "clothstock",
+      "kind": "storage",
+      "pos": [
+        8,
+        4,
+        27
+      ],
+      "name": "回收帆布缝补储物",
+      "approach": [
+        8,
+        3,
+        28
+      ]
+    },
+    {
+      "id": "tools",
+      "kind": "work",
+      "pos": [
+        24,
+        3,
+        31
+      ],
+      "name": "修复工具试用",
+      "approach": [
+        24,
+        3,
+        32
+      ]
+    },
+    {
+      "id": "toolsstock",
+      "kind": "storage",
+      "pos": [
+        23,
+        4,
+        28
+      ],
+      "name": "修复工具试用储物",
+      "approach": [
+        23,
+        3,
+        29
+      ]
+    },
+    {
+      "id": "record",
+      "kind": "work",
+      "pos": [
+        36,
+        3,
+        31
+      ],
+      "name": "摊位管理与账目",
+      "approach": [
+        36,
+        3,
+        32
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        18,
+        3,
+        40
+      ],
+      "name": "搬运路入口",
+      "facing": "south"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        18,
+        2,
+        40
+      ],
+      "direction": "south",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "接稳固旧场坪，货运另保留转向区"
+    }
+  ],
+  "design_notes": [
+    "深色旧机梁、齿轴与氧化铜壳为旧骨架；浅木、橙色板补丁与布棚为后加住用空间。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "修补地坪",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/relic_salvagers.py:RS-03",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 5,
+    "surface": "grass"
+  },
+  "nbt_sha256": "a835de152b84f82c8c1b2e1cc59c1d473b860b6ff890a9f72ce991ea4a1f1add",
+  "function_terms": [
+    "零件交易"
+  ]
+}

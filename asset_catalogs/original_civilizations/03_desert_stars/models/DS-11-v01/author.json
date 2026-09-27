@@ -178,5 +178,8 @@
     "padding": 4,
     "surface": "sand"
   },
-  "nbt_sha256": "ae423def45ce2230e4fc5a0e99edde22b3cb63a4c4197ad837072d7f0f9b173d"
+  "nbt_sha256": "ae423def45ce2230e4fc5a0e99edde22b3cb63a4c4197ad837072d7f0f9b173d",
+  "function_terms": [
+    "驿站遗址展示"
+  ]
 }

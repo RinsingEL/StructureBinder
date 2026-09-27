@@ -1,0 +1,41 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "NS-F02-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 北欧套系作者逐图审查",
+  "nbt_sha256": "2302e7215bda0a8c4b508b1010ba60b3c0b5ca456baeabdaee3d8e0b6535d4f6",
+  "author_sha256": "28a202288783b2aa72da8334ecef397bb6355267b5bf0733415c082163d6c195",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-tools.png",
+    "previews/room-garden.png",
+    "previews/room-south.png",
+    "previews/point-tools.png",
+    "previews/point-seed.png",
+    "previews/point-east.png",
+    "previews/point-south.png",
+    "previews/point-wash.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与用途": "园务小屋与两块大小不同的菜畦组成折角院，工具和育苗台在室内，主畦受屋体与北东风障保护，后边短畦独立维护。",
+    "实际内饰图审": "工具屋、主菜畦和院后短畦结合，种料保管独立。",
+    "完整证据": "已实际查看最终四向、顶视、去顶、全部楼层与房间、使用站位、标记及场地示意；四个双层模型另补楼层斜视核对护栏。",
+    "数据与通路": "NBT 重读、方块状态、作者标记与离线碰撞导航通过，零警告。",
+    "选址条件": "稳定的寒地海湾背风岸台；避开潮涌、雪崩、海冰推挤和行洪通道。；干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。；完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。；厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。；固定模板菜畦；只在具备光照、土壤与可种植季节的背风地块使用。不得当作冰原全年农业。；水源已覆盖防止直接暴露；屋盖和风障只是构造表达，不声称提供模组温度或冬季生长加成。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "设备、晾晒及温床为静态表达，未接入加工、气候或作物生产机制。"
+  ]
+}

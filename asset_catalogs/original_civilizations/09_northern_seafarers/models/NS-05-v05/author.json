@@ -1,0 +1,334 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "NS-05-v05",
+  "name": "双屋围院共食宅",
+  "family": "NS-05",
+  "civilization": "北欧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    39,
+    32,
+    39
+  ],
+  "terrain": {
+    "选址": "稳定、排水良好的背风聚落地块，完整承托石基并留出门前通路；住宅不要求临海。",
+    "高程": "干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。",
+    "保留空间": "完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。",
+    "风雪": "厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。",
+    "推荐情境": [
+      "寒地背风聚落或海湾聚落；这是常见使用背景，不要求所有北欧建筑临海，也不限定住户种族。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "sleep",
+      "name": "四床分寝长翼",
+      "min": [
+        7,
+        3,
+        8
+      ],
+      "max": [
+        15,
+        6,
+        29
+      ],
+      "purpose": "前后两间双床，集中衣物保管；具体设施：床铺与个人防寒用品、床铺与个人防寒用品、床铺与个人防寒用品、床铺与个人防寒用品、全户换季衣物"
+    },
+    {
+      "id": "kitchen",
+      "name": "独立炊事翼",
+      "min": [
+        25,
+        3,
+        8
+      ],
+      "max": [
+        31,
+        6,
+        18
+      ],
+      "purpose": "炊洗及家庭冬储食品；具体设施：备餐、热食与洗涤、干粮、餐具与柴火"
+    },
+    {
+      "id": "dining",
+      "name": "后共食横厅",
+      "min": [
+        17,
+        3,
+        25
+      ],
+      "max": [
+        31,
+        6,
+        29
+      ],
+      "purpose": "八格长桌与对坐凳，连接庭院与寝翼"
+    },
+    {
+      "id": "court",
+      "name": "避风炉院",
+      "min": [
+        17,
+        3,
+        8
+      ],
+      "max": [
+        23,
+        6,
+        23
+      ],
+      "purpose": "保留中心炉和进出两翼的绕行路线；具体设施：封护共炉与灰渣清理"
+    }
+  ],
+  "points": [
+    {
+      "id": "west_entry",
+      "kind": "entrance",
+      "pos": [
+        11,
+        3,
+        6
+      ],
+      "name": "背风步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "east_entry",
+      "kind": "entrance",
+      "pos": [
+        28,
+        3,
+        6
+      ],
+      "name": "背风步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "front0",
+      "kind": "bed",
+      "pos": [
+        8,
+        3,
+        13
+      ],
+      "name": "床铺与个人防寒用品",
+      "look_at": [
+        8,
+        4,
+        13
+      ],
+      "approach": [
+        9,
+        3,
+        13
+      ]
+    },
+    {
+      "id": "front1",
+      "kind": "bed",
+      "pos": [
+        11,
+        3,
+        13
+      ],
+      "name": "床铺与个人防寒用品",
+      "look_at": [
+        11,
+        4,
+        13
+      ],
+      "approach": [
+        12,
+        3,
+        13
+      ]
+    },
+    {
+      "id": "rear0",
+      "kind": "bed",
+      "pos": [
+        8,
+        3,
+        21
+      ],
+      "name": "床铺与个人防寒用品",
+      "look_at": [
+        8,
+        4,
+        21
+      ],
+      "approach": [
+        9,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "rear1",
+      "kind": "bed",
+      "pos": [
+        11,
+        3,
+        21
+      ],
+      "name": "床铺与个人防寒用品",
+      "look_at": [
+        11,
+        4,
+        21
+      ],
+      "approach": [
+        12,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "sleepstore",
+      "kind": "storage",
+      "pos": [
+        7,
+        3,
+        28
+      ],
+      "name": "全户换季衣物",
+      "look_at": [
+        7,
+        4,
+        28
+      ],
+      "approach": [
+        7,
+        3,
+        29
+      ]
+    },
+    {
+      "id": "cook",
+      "kind": "work",
+      "pos": [
+        25,
+        3,
+        9
+      ],
+      "name": "备餐、热食与洗涤",
+      "look_at": [
+        25,
+        4,
+        9
+      ],
+      "approach": [
+        25,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "food",
+      "kind": "storage",
+      "pos": [
+        25,
+        3,
+        16
+      ],
+      "name": "干粮、餐具与柴火",
+      "look_at": [
+        25,
+        4,
+        16
+      ],
+      "approach": [
+        25,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "hearth",
+      "kind": "work",
+      "pos": [
+        19,
+        3,
+        20
+      ],
+      "name": "封护共炉与灰渣清理",
+      "look_at": [
+        19,
+        4,
+        20
+      ],
+      "approach": [
+        19,
+        3,
+        21
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        11,
+        3,
+        6
+      ],
+      "direction": "north",
+      "clearance": [
+        2,
+        3
+      ],
+      "note": "外部街面脚底Y3，同高进入木门廊"
+    },
+    {
+      "kind": "pedestrian",
+      "pos": [
+        28,
+        3,
+        6
+      ],
+      "direction": "north",
+      "clearance": [
+        2,
+        3
+      ],
+      "note": "外部街面脚底Y3，同高进入木门廊"
+    }
+  ],
+  "design_notes": [
+    "两座独立山墙长屋以低后廊围住共食院，睡眠与炊事分别成翼。"
+  ],
+  "differences": [
+    "两座独立山墙长屋以低后廊围住共食院，睡眠与炊事分别成翼。"
+  ],
+  "floors": [
+    {
+      "name": "岸台生活作业层",
+      "y": 2,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/northern_fill_homes.py:home(5)",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -2,
+    "padding": 3,
+    "surface": "snow"
+  },
+  "ground_plane": {
+    "y": 3,
+    "note": "外部院落与街面由Y2砾石/石基顶面承托，站立脚底Y3；阁楼与阳台另行计高。"
+  },
+  "function_terms": [
+    "住宅",
+    "家庭居住"
+  ],
+  "nbt_sha256": "7fee7389657f51089d58caadbd9ce93751b6286fdfab2f290959a5d278f2c692"
+}

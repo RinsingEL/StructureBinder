@@ -1,0 +1,174 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "NS-F01-v04",
+  "name": "工具售修敞院",
+  "family": "NS-F01",
+  "civilization": "北欧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    32,
+    25,
+    30
+  ],
+  "terrain": {
+    "选址": "稳定平缓且排水良好的街区地块，保留院落和屋檐范围，不要求临海",
+    "供给": "商铺需相应货物及行业原料；有人居住的v05另需生活食水与燃料",
+    "地面": "外街面脚底Y=3，入口和首层同高；基础连续落地",
+    "边界": "原版方块静态表达行业工序，不模拟交易、风雪与专用设备行为",
+    "推荐情境": [
+      "寒地背风聚落或海湾聚落；这是常见使用背景，不要求所有北欧建筑临海，也不限定住户种族。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "工具销售屋",
+      "name": "工具销售屋",
+      "min": [
+        5,
+        3,
+        13
+      ],
+      "max": [
+        14,
+        7,
+        24
+      ],
+      "purpose": "经营、行业工作或生活空间"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        11,
+        3,
+        3
+      ],
+      "name": "北侧临街入口",
+      "facing": "north"
+    },
+    {
+      "id": "工具柜台",
+      "kind": "work",
+      "pos": [
+        6,
+        3,
+        16
+      ],
+      "name": "工具柜台",
+      "approach": [
+        6,
+        3,
+        15
+      ]
+    },
+    {
+      "id": "工具试磨",
+      "kind": "work",
+      "pos": [
+        12,
+        3,
+        21
+      ],
+      "name": "工具试磨",
+      "approach": [
+        12,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "砧前修理",
+      "kind": "work",
+      "pos": [
+        13,
+        3,
+        7
+      ],
+      "name": "砧前修理",
+      "approach": [
+        14,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "拆修装配",
+      "kind": "work",
+      "pos": [
+        21,
+        3,
+        17
+      ],
+      "name": "拆修装配",
+      "approach": [
+        21,
+        3,
+        16
+      ]
+    },
+    {
+      "id": "作业院",
+      "kind": "circulation",
+      "pos": [
+        16,
+        3,
+        11
+      ],
+      "name": "工具开放作业院"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        11,
+        3,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        3
+      ],
+      "note": "外街面脚底Y=3"
+    }
+  ],
+  "design_notes": [
+    "店屋退后，砧台前院与侧面修理棚形成开敞工作场。"
+  ],
+  "differences": [
+    "店屋退后，砧台前院与侧面修理棚形成开敞工作场。"
+  ],
+  "floors": [
+    {
+      "name": "营业与作业生活层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/northern_fill_shops.py:shop(4)",
+  "function_terms": [
+    "工具零售",
+    "工具维修"
+  ],
+  "ground_plane": {
+    "y": 3,
+    "note": "北侧外部街面与首层支撑方块顶面Y=3，不以屋顶或作业高台代替外部基准"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "snow"
+  },
+  "nbt_sha256": "10ec606bc06bad8e8f64a9499ebd8843c5ceef251531aefaf5e1a3016b580d66"
+}

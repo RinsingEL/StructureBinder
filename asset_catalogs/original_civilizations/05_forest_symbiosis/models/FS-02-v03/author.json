@@ -345,5 +345,8 @@
     "padding": 4,
     "surface": "podzol"
   },
-  "nbt_sha256": "66fb321e8316ecfafcbf38f6f93be408da58b5dd35d65c291805b6066ca0ede1"
+  "nbt_sha256": "66fb321e8316ecfafcbf38f6f93be408da58b5dd35d65c291805b6066ca0ede1",
+  "function_terms": [
+    "菌菇培育"
+  ]
 }

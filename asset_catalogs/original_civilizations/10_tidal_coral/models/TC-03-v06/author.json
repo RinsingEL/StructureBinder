@@ -1,0 +1,254 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "TC-03-v06",
+  "name": "干式下沉观景宅",
+  "family": "TC-03",
+  "civilization": "海洋幻想",
+  "planning_role": "planning_role.fill",
+  "size": [
+    53,
+    42,
+    51
+  ],
+  "terrain": {
+    "选址": "避风潮上岸台或人工桩台；水侧支柱底Y=0必须接稳定海床，不自动适应任意水深",
+    "潮位": "低潮Y=3、参考水面Y=5、预期高潮Y=6；主层干地板Y=7、脚底Y=8，潮汐仅为条件记录",
+    "支撑接驳": "北侧接Y=8普通步行道路；所有楼梯为实体台阶。高层与分台另有房间高程，不依赖跳跃或游泳",
+    "供水生活": "厨房淡水和食物依岸上补给；海水不能视为饮用或灌溉水。居室采用干燥外壳，气候通风与实际水密另验",
+    "风格": "棱面近似贝壳的弧顶、放射或分瓣舱室、青绿石质桩台；风格不是国名",
+    "限制": "原版静态模型；不代表潮汐、潜水呼吸、流体、生产或运行时生成已接入"
+  },
+  "rooms": [
+    {
+      "id": "common0",
+      "name": "贝舱共居起居间",
+      "min": [
+        7,
+        8,
+        7
+      ],
+      "max": [
+        23,
+        13,
+        23
+      ],
+      "purpose": "连续厨房与食品柜、六席餐桌、面对面坐读、书柜与家务地毯"
+    },
+    {
+      "id": "bedroom0",
+      "name": "独门休眠贝舱",
+      "min": [
+        33,
+        4,
+        31
+      ],
+      "max": [
+        43,
+        9,
+        43
+      ],
+      "purpose": "个人床头灯柜、衣物柜、书写座位、洗盆与低屏，普通木门保障私密"
+    },
+    {
+      "id": "court0",
+      "name": "低位珊瑚水庭",
+      "min": [
+        9,
+        6,
+        32
+      ],
+      "max": [
+        22,
+        9,
+        42
+      ],
+      "purpose": "水槽低于干燥台面，原版珊瑚置水中；实际生态与流体另验"
+    }
+  ],
+  "points": [
+    {
+      "id": "common0_cook",
+      "kind": "work",
+      "pos": [
+        9,
+        8,
+        8
+      ],
+      "name": "储备淡水与连续备餐",
+      "approach": [
+        9,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "common0_food",
+      "kind": "storage",
+      "pos": [
+        19,
+        9,
+        8
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        19,
+        8,
+        9
+      ]
+    },
+    {
+      "id": "common0_books",
+      "kind": "storage",
+      "pos": [
+        9,
+        9,
+        22
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        9,
+        8,
+        21
+      ]
+    },
+    {
+      "id": "bedroom0a",
+      "kind": "sleep",
+      "pos": [
+        35,
+        4,
+        40
+      ],
+      "name": "值守床位与个人柜",
+      "approach": [
+        36,
+        4,
+        40
+      ]
+    },
+    {
+      "id": "bedroom0b",
+      "kind": "sleep",
+      "pos": [
+        41,
+        4,
+        40
+      ],
+      "name": "值守床位与个人柜",
+      "approach": [
+        42,
+        4,
+        40
+      ]
+    },
+    {
+      "id": "bedroom0_clothes",
+      "kind": "storage",
+      "pos": [
+        35,
+        5,
+        32
+      ],
+      "name": "分类储藏与取放",
+      "approach": [
+        35,
+        4,
+        33
+      ]
+    },
+    {
+      "id": "bedroom0_desk",
+      "kind": "work",
+      "pos": [
+        40,
+        4,
+        33
+      ],
+      "name": "个人书写与物品",
+      "approach": [
+        40,
+        4,
+        34
+      ]
+    },
+    {
+      "id": "court0",
+      "kind": "work",
+      "pos": [
+        15,
+        7,
+        37
+      ],
+      "name": "有水与边护的珊瑚陈设庭",
+      "approach": [
+        15,
+        8,
+        31
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        26,
+        8,
+        3
+      ],
+      "name": "陆侧普通步行入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [
+    {
+      "kind": "pedestrian",
+      "pos": [
+        26,
+        7,
+        3
+      ],
+      "direction": "north",
+      "clearance": [
+        3,
+        4
+      ],
+      "note": "接同高程干燥道路或栈桥"
+    }
+  ],
+  "design_notes": [],
+  "differences": [
+    "干式下沉观景宅",
+    "1个起居舱与1个独门休眠舱，位置/尺度/楼面高程共同变化；低位水庭与干燥住宅分别围护"
+  ],
+  "floors": [
+    {
+      "name": "干式生活层",
+      "y": 7,
+      "max_y": 13
+    },
+    {
+      "name": "分台居住层",
+      "y": 3,
+      "max_y": 9
+    }
+  ],
+  "roof_min_y": 14,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/tidal_life.py",
+  "preview_context": {
+    "kind": "shore",
+    "shore_z": 25,
+    "water_surface_y": 5,
+    "land_surface_y": 8,
+    "bed_y": -1,
+    "padding": 4,
+    "surface": "sand"
+  },
+  "nbt_sha256": "c5b28180847858c66bd42e46fb756a92d88c0a83397a00f69fd1e30563cd408f",
+  "function_terms": [
+    "家庭居住"
+  ]
+}

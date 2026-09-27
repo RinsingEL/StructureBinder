@@ -1,0 +1,51 @@
+{
+  "schema": "structure-studio.validation.v1",
+  "nbt_sha256": "4d21da18f486b12d250e16c2a1a7478244bc48c68227cdc3c9e097729263d5e8",
+  "navigation": {
+    "passed": true,
+    "unreachable": [],
+    "nodes": 4304,
+    "highest_standing_y": 4.5,
+    "truncated": false,
+    "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "size": [
+    39,
+    31,
+    39
+  ],
+  "visible_blocks": 5850,
+  "explicit_air": 36589,
+  "palette": 30,
+  "block_entities": 4,
+  "agriculture": null,
+  "materials": {
+    "minecraft:sandstone": 2782,
+    "minecraft:smooth_sandstone": 1361,
+    "minecraft:birch_planks": 796,
+    "minecraft:brick_stairs": 304,
+    "minecraft:bricks": 232,
+    "minecraft:sandstone_wall": 91,
+    "minecraft:warped_trapdoor": 70,
+    "minecraft:oak_slab": 68,
+    "minecraft:brick_slab": 36,
+    "minecraft:light_blue_stained_glass": 34,
+    "minecraft:sandstone_slab": 18,
+    "minecraft:stripped_oak_log": 16,
+    "minecraft:lantern": 12,
+    "minecraft:barrel": 7,
+    "minecraft:oak_stairs": 4,
+    "minecraft:warped_door": 4,
+    "minecraft:cyan_bed": 4,
+    "minecraft:crafting_table": 3,
+    "minecraft:oak_fence": 2,
+    "minecraft:oak_pressure_plate": 2,
+    "minecraft:sandstone_stairs": 2,
+    "minecraft:smoker": 1,
+    "minecraft:flower_pot": 1
+  },
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+}

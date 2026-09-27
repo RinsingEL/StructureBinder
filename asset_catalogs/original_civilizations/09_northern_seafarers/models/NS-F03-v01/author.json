@@ -1,0 +1,183 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "NS-F03-v01",
+  "name": "独立双列晾网棚",
+  "family": "NS-F03",
+  "civilization": "北欧",
+  "planning_role": "planning_role.fill",
+  "size": [
+    23,
+    24,
+    27
+  ],
+  "terrain": {
+    "选址": "稳定、排水良好的承载地面，接通实际入口并保留工作面；避开活动灾害和行洪通道。水岸设施另须满足本模型的岸线、水深与接驳要求。",
+    "高程": "干燥主层脚底 Y=3，建筑基础底 Y=0；外部步行地面需接主层。",
+    "保留空间": "完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。",
+    "风雪": "厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。",
+    "推荐情境": [
+      "寒地背风聚落或海湾聚落；这是常见使用背景，不要求所有北欧建筑临海，也不限定住户种族。"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "dry",
+      "name": "两列长幅晾网",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        17,
+        6,
+        18
+      ],
+      "purpose": "宽架之间可展开转运，开放四周通风；具体设施：分列悬挂干燥架、分列悬挂干燥架"
+    },
+    {
+      "id": "check",
+      "name": "后边折检工具带",
+      "min": [
+        5,
+        3,
+        19
+      ],
+      "max": [
+        17,
+        6,
+        21
+      ],
+      "purpose": "补结、折网与绳料存放；具体设施：晾后检查与折网工作台、备用绳和浮子"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        11,
+        3,
+        3
+      ],
+      "name": "背风步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "front",
+      "kind": "work",
+      "pos": [
+        7,
+        3,
+        8
+      ],
+      "name": "分列悬挂干燥架",
+      "look_at": [
+        7,
+        4,
+        8
+      ],
+      "approach": [
+        7,
+        3,
+        9
+      ]
+    },
+    {
+      "id": "back",
+      "kind": "work",
+      "pos": [
+        7,
+        3,
+        16
+      ],
+      "name": "分列悬挂干燥架",
+      "look_at": [
+        7,
+        4,
+        16
+      ],
+      "approach": [
+        7,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "check",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        20
+      ],
+      "name": "晾后检查与折网工作台",
+      "look_at": [
+        5,
+        4,
+        20
+      ],
+      "approach": [
+        5,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "rope",
+      "kind": "storage",
+      "pos": [
+        13,
+        3,
+        20
+      ],
+      "name": "备用绳和浮子",
+      "look_at": [
+        13,
+        4,
+        20
+      ],
+      "approach": [
+        13,
+        3,
+        21
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "独立无顶晾网架以两列高低双层长幅挂架为主，后侧完整折检台和绳料架，架间留宽通路，适合远离居室的网具周转。"
+  ],
+  "differences": [
+    "独立无顶晾网架以两列高低双层长幅挂架为主，后侧完整折检台和绳料架，架间留宽通路，适合远离居室的网具周转。"
+  ],
+  "floors": [
+    {
+      "name": "岸台生活作业层",
+      "y": 2,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 9,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/northern_fill_gardens_sheds.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 5,
+    "surface": "grass"
+  },
+  "ground_plane": {
+    "y": 3,
+    "note": "外部步行地面上边界接Y=3，基础方块顶Y=3；不是基础底。"
+  },
+  "function_terms": [
+    "渔具存放",
+    "晾晒"
+  ],
+  "nbt_sha256": "955b43f2ad6a69d833363e6eb911878f722bbb424e4494f01672bed6e4fff02e"
+}

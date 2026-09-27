@@ -1,0 +1,161 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "ML-F03-v02",
+  "name": "双列葡萄与中间搬运道",
+  "family": "ML-F03",
+  "civilization": "哥特",
+  "planning_role": "planning_role.fill",
+  "size": [
+    31,
+    24,
+    29
+  ],
+  "terrain": {
+    "选址": "日照充分、排水稳定且有灌溉供水的聚落园地；不因哥特风格限定生物群系。",
+    "高程": "基础底Y=0、常规地面Y=2、脚底Y=3；抬高或双层版本另记。",
+    "边界": "完整独立模板，保留外扶柱、檐口、采光和门外站位，不默认邻居补齐。",
+    "落地": "固定小园模板与完整封边；不冒充按自然地形延伸的 Landscape 大田。",
+    "生产": "原版粮菜与花材为静态成熟或展示状态；药材和葡萄不声称已接入专用生产机制。"
+  },
+  "rooms": [
+    {
+      "id": "long",
+      "name": "长列葡萄架",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        11,
+        7,
+        23
+      ],
+      "purpose": "连续维护通道及葡萄静态叶幕"
+    },
+    {
+      "id": "short",
+      "name": "短列与采后作业",
+      "min": [
+        19,
+        3,
+        5
+      ],
+      "max": [
+        25,
+        7,
+        24
+      ],
+      "purpose": "短列末端接分选台，保留中间主搬运道；设施：采收分级与装篮"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        15,
+        3,
+        2
+      ],
+      "name": "园地前入口",
+      "facing": "north"
+    },
+    {
+      "id": "sort",
+      "kind": "work",
+      "pos": [
+        19,
+        3,
+        23
+      ],
+      "name": "采收分级与装篮",
+      "look_at": [
+        19,
+        4,
+        23
+      ],
+      "approach": [
+        19,
+        3,
+        24
+      ]
+    },
+    {
+      "id": "tools",
+      "kind": "storage",
+      "pos": [
+        13,
+        3,
+        6
+      ],
+      "name": "两列共用工具及绑绳",
+      "look_at": [
+        13,
+        4,
+        6
+      ],
+      "approach": [
+        13,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "tend",
+      "kind": "work",
+      "pos": [
+        15,
+        3,
+        16
+      ],
+      "name": "双列之间采收搬运道",
+      "look_at": [
+        15,
+        4,
+        16
+      ],
+      "approach": [
+        15,
+        3,
+        17
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "不等长双列架夹出宽搬运道，短列尾部接分选装篮，长列专用于连续攀援展示。"
+  ],
+  "differences": [
+    "不等长双列架夹出宽搬运道，短列尾部接分选装篮，长列专用于连续攀援展示。"
+  ],
+  "floors": [
+    {
+      "name": "生活作业层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 6,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/memorial_gardens.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "ground_plane": {
+    "y": 3,
+    "note": "正面院门外铺装地坪顶面；台地田内部逐阶抬高。"
+  },
+  "grape_expression": "深木架、叶幕与紫晶下垂果串表示葡萄棚；未接入实际葡萄作物与采收机制。",
+  "function_terms": [
+    "棚架种植"
+  ],
+  "nbt_sha256": "5167169c9534c60185670e1d19055dca8e166c3a47677c3745296e096cbc6ca7"
+}

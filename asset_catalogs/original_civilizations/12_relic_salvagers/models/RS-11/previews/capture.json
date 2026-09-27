@@ -1,0 +1,33 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "RS-11",
+  "nbt_sha256": "b5c2f9798913ab838a36e79992b13cf79045d61b466939fe5df9e54aea38bf5c",
+  "author_sha256": "2ba4282345e3540904670757831b1232529a44d025ea3570296e189c0ce3ac44",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-shelter",
+    "room-tower",
+    "point-shelterbed",
+    "point-shelterlinen",
+    "point-shelterfood",
+    "point-sheltercook",
+    "point-shelterwater",
+    "point-shelterdine",
+    "point-shelterread",
+    "point-parts",
+    "point-repair",
+    "point-water",
+    "point-relay",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

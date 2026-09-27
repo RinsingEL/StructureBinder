@@ -1,0 +1,43 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "NS-06-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 北欧套系作者逐图审查",
+  "nbt_sha256": "7038f853a125832ba83216454289d5dc33f15a36a7da08132dffdc81ca6dbbe0",
+  "author_sha256": "81d6dbdadbf9c243829a263bf7447c08a7b82c087c951ff5ce9a05b1d68266b7",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-gear.png",
+    "previews/room-living.png",
+    "previews/room-sleep.png",
+    "previews/point-repair.png",
+    "previews/point-gear.png",
+    "previews/point-clean.png",
+    "previews/point-cook.png",
+    "previews/point-beds0.png",
+    "previews/point-beds1.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与用途": "湿具处理与小修留在低岸前屋，家居抬高两格，后屋再隔炊食与双床寝间；中央阶院连接两屋，防止湿具穿越卧室。",
+    "实际内饰图审": "前作业后抬高生活台可辨，台阶衔接，二床区与湿具分离。",
+    "完整证据": "已实际查看最终四向、顶视、去顶、全部楼层与房间、使用站位、标记及场地示意；四个双层模型另补楼层斜视核对护栏。",
+    "数据与通路": "NBT 重读、方块状态、作者标记与离线碰撞导航通过，零警告。",
+    "选址条件": "稳定的寒地海湾背风岸台；避开潮涌、雪崩、海冰推挤和行洪通道。；前部作业脚底Y=3，后部生活脚底Y=5，双级三宽石阶连接；需匹配前低后高岸坡。；完整独立模板，连同檐口、通路和本体配套保留；不可贴邻堵住工作面。；厚木围护、短风斗和陡坡屋面表达避风防雪；不模拟风雪、温度或雪荷载。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "设备、晾晒及温床为静态表达，未接入加工、气候或作物生产机制。"
+  ]
+}

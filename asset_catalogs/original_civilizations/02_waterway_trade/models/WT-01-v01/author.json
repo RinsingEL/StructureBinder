@@ -255,5 +255,8 @@
     "padding": 5
   },
   "source": "tools/structure_studio/studio/transport.py:passenger_quay",
-  "nbt_sha256": "42610c292fd451287cc5d99d0512334e4d98213fa0cf6612f4a953224a1ff99b"
+  "nbt_sha256": "42610c292fd451287cc5d99d0512334e4d98213fa0cf6612f4a953224a1ff99b",
+  "function_terms": [
+    "水路客运"
+  ]
 }

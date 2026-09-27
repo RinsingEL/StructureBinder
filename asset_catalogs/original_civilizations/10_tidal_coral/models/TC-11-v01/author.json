@@ -186,5 +186,8 @@
     "padding": 4,
     "surface": "sand"
   },
-  "nbt_sha256": "677a319c280900cd09fdba050a24a0c51187dd503327240e6c72c69798b7a754"
+  "nbt_sha256": "677a319c280900cd09fdba050a24a0c51187dd503327240e6c72c69798b7a754",
+  "function_terms": [
+    "档案馆遗址展示"
+  ]
 }

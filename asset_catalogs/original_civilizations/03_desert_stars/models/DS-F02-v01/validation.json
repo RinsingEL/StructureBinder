@@ -1,11 +1,11 @@
 {
   "schema": "structure-studio.validation.v1",
-  "nbt_sha256": "4ae3ad5e4fe49d4163cdba476c282628ee75eef5cc3cc3ad280401d9c954da9d",
+  "nbt_sha256": "33644f326debacb2e5e0cfe9f01dda5c4d0f7c156170da998b163947105b991e",
   "navigation": {
     "passed": true,
     "unreachable": [],
-    "nodes": 1479,
-    "highest_standing_y": 2,
+    "nodes": 2115,
+    "highest_standing_y": 3.5625,
     "truncated": false,
     "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
   },
@@ -13,32 +13,37 @@
   "errors": [],
   "warnings": [],
   "size": [
-    18,
-    12,
-    31
+    21,
+    13,
+    39
   ],
-  "visible_blocks": 878,
-  "explicit_air": 2398,
-  "palette": 14,
+  "visible_blocks": 1903,
+  "explicit_air": 7236,
+  "palette": 18,
   "block_entities": 0,
   "agriculture": {
-    "planted_cells": 147,
+    "planted_cells": 108,
     "missing_soil": [],
     "dry_cells": [],
     "scope": "最终 NBT 的四类原版作物、耕地和同层/高一层 4 格水源核对；不模拟光照或生长 tick"
   },
   "materials": {
-    "minecraft:dirt": 288,
-    "minecraft:farmland": 147,
-    "minecraft:smooth_sandstone": 120,
-    "minecraft:sandstone": 76,
-    "minecraft:cut_sandstone": 76,
-    "minecraft:potatoes": 76,
-    "minecraft:carrots": 71,
-    "minecraft:water": 21,
-    "minecraft:barrel": 1,
-    "minecraft:composter": 1,
-    "minecraft:lantern": 1
+    "minecraft:sandstone": 803,
+    "minecraft:cut_sandstone": 300,
+    "minecraft:smooth_sandstone_slab": 246,
+    "minecraft:smooth_sandstone": 193,
+    "minecraft:farmland": 108,
+    "minecraft:water": 65,
+    "minecraft:coarse_dirt": 59,
+    "minecraft:carrots": 36,
+    "minecraft:potatoes": 36,
+    "minecraft:wheat": 18,
+    "minecraft:beetroots": 18,
+    "minecraft:spruce_planks": 12,
+    "minecraft:composter": 3,
+    "minecraft:lantern": 3,
+    "minecraft:barrel": 2,
+    "minecraft:spruce_fence": 1
   },
-  "scope": "NBT、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
 }

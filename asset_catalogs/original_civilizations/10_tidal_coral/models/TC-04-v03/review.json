@@ -1,0 +1,45 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "TC-04-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "cloud_interiors / 海洋幻想作者实看",
+  "nbt_sha256": "ff6d19b56cabdd6f56294eddbeda4f895c771625100add3fee804b57af1c82b4",
+  "author_sha256": "45c050f501ebeaa1a53c9b14ff7b9a8ad950b88a2c35dd7f8f8e2b4de736c77f",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-stay.png",
+    "previews/room-bed.png",
+    "previews/room-nursery0.png",
+    "previews/room-nursery1.png",
+    "previews/point-staycook.png",
+    "previews/point-stayfood.png",
+    "previews/point-staybooks.png",
+    "previews/point-beda.png",
+    "previews/point-bedcloth.png",
+    "previews/point-beddesk.png",
+    "previews/point-nursery0.png",
+    "previews/point-nursery1.png",
+    "previews/point-sort.png",
+    "previews/point-tools.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "逐图核对养殖水池围边、独立干路、淡水岸田隔离、遮棚分拣与维护用途；屋顶切片修正后重新拍摄实看。",
+    "实际看过全部外观、去顶、分层、房间、功能点、标注与地形视图；结合零警告数据与导航核对。",
+    "横池前棚育场",
+    "管理长屋在前，两道横槽位于后场"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

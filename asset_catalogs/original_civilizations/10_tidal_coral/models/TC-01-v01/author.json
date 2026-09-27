@@ -346,5 +346,8 @@
     "padding": 4,
     "surface": "sand"
   },
-  "nbt_sha256": "dfeb78fe828f48d6530086db062eac02cfece93bea36497e801ca0c87b26d989"
+  "nbt_sha256": "dfeb78fe828f48d6530086db062eac02cfece93bea36497e801ca0c87b26d989",
+  "function_terms": [
+    "水路接驳"
+  ]
 }

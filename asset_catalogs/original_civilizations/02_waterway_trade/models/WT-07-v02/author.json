@@ -1,0 +1,201 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "WT-07-v02",
+  "name": "临水长廊茶馆",
+  "family": "WT-07",
+  "civilization": "地中海",
+  "planning_role": "planning_role.fill",
+  "size": [
+    43,
+    31,
+    41
+  ],
+  "terrain": {
+    "选址": "真实临水茶馆：模板前缘需接稳定岸墙或码头平台，水面在模板外，不把水写入室内地坪。",
+    "边界": "完整独立建筑与庭院，保留入口通路和屋檐。"
+  },
+  "rooms": [
+    {
+      "id": "长茶厅",
+      "name": "长茶厅",
+      "min": [
+        6,
+        3,
+        14
+      ],
+      "max": [
+        35,
+        6,
+        24
+      ],
+      "purpose": "茶饮备制、客桌与器皿"
+    },
+    {
+      "id": "后厨房",
+      "name": "后厨房",
+      "min": [
+        13,
+        3,
+        30
+      ],
+      "max": [
+        28,
+        6,
+        35
+      ],
+      "purpose": "茶饮备制、客桌与器皿"
+    }
+  ],
+  "points": [
+    {
+      "id": "长茶厅entry",
+      "kind": "circulation",
+      "pos": [
+        20,
+        3,
+        12
+      ],
+      "name": "院内房门：入户或营业入口",
+      "facing": "north"
+    },
+    {
+      "id": "长茶厅work",
+      "kind": "work",
+      "pos": [
+        7,
+        3,
+        16
+      ],
+      "name": "接待或作业台",
+      "look_at": [
+        7,
+        4,
+        16
+      ],
+      "approach": [
+        7,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "长茶厅store",
+      "kind": "storage",
+      "pos": [
+        35,
+        3,
+        15
+      ],
+      "name": "衣物食粮或营业库存",
+      "look_at": [
+        35,
+        4,
+        15
+      ],
+      "approach": [
+        35,
+        3,
+        16
+      ]
+    },
+    {
+      "id": "后厨房entry",
+      "kind": "circulation",
+      "pos": [
+        20,
+        3,
+        28
+      ],
+      "name": "院内房门：入户或营业入口",
+      "facing": "north"
+    },
+    {
+      "id": "后厨房work",
+      "kind": "work",
+      "pos": [
+        14,
+        3,
+        32
+      ],
+      "name": "接待或作业台",
+      "look_at": [
+        14,
+        4,
+        32
+      ],
+      "approach": [
+        14,
+        3,
+        33
+      ]
+    },
+    {
+      "id": "后厨房store",
+      "kind": "storage",
+      "pos": [
+        28,
+        3,
+        31
+      ],
+      "name": "衣物食粮或营业库存",
+      "look_at": [
+        28,
+        4,
+        31
+      ],
+      "approach": [
+        28,
+        3,
+        32
+      ]
+    },
+    {
+      "id": "courtyard_street_entry",
+      "kind": "entrance",
+      "pos": [
+        21,
+        3,
+        2
+      ],
+      "name": "前院墙中央实际开口接路",
+      "facing": "north"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "临水长廊茶馆：各翼独立备茶器皿与客桌，露天座席和高差形成各自轮廓。",
+    "依2026-09-27用户参考图：暖白浅石、缓坡红瓦、木廊与蓝绿百叶，完整生活和营业尺度。"
+  ],
+  "differences": [
+    "临水长廊茶馆：各翼独立备茶器皿与客桌，露天座席和高差形成各自轮廓。"
+  ],
+  "floors": [
+    {
+      "name": "庭院与首层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/mediterranean_living.py:BUILDERS",
+  "ground_plane": {
+    "y": 3,
+    "note": "门外路面方块Y=2，外部站立接地线Y=3；上层与台地由实阶连接。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "餐饮",
+    "茶饮"
+  ],
+  "nbt_sha256": "25a1fa6034bc12d050d8a432d86c2898d94e196ed04e52d2ee44927c25f67172"
+}

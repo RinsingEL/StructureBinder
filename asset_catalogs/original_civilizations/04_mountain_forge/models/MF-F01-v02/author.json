@@ -171,5 +171,9 @@
     "land_surface_y": 2,
     "padding": 5
   },
-  "nbt_sha256": "2330153b085af4f8ad4ccb6f6c949ffed8e361464db38a112300f3f027e0da79"
+  "nbt_sha256": "2330153b085af4f8ad4ccb6f6c949ffed8e361464db38a112300f3f027e0da79",
+  "function_terms": [
+    "零售",
+    "工具维修"
+  ]
 }

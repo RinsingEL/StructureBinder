@@ -1,138 +1,176 @@
 {
   "schema": "structure-studio.author.v1",
   "id": "DS-F01-v01",
-  "name": "街口薄饼干粮铺",
+  "name": "侧炉低翼面包铺",
   "family": "DS-F01",
   "civilization": "沙漠",
   "planning_role": "planning_role.fill",
   "size": [
-    17,
-    23,
-    25
+    26,
+    18,
+    28
   ],
   "terrain": {
-    "选址": "有实际居民、旅人和相应行业供需的绿洲生活街区",
-    "地块": "小矩形店铺前售后烤，备料与烤炉相邻，短遮阳檐面对聚落街口。",
-    "高程": "主入口脚底 Y=2；两层版上层脚底 Y=9",
-    "落地": "结构连同内院及铺面完整落地；外部交通、供水与库存另行接入，未写入的凹角保持原环境"
+    "选址": "稳定商业街地块，北侧顾客入口和侧后方进货作业面须接通",
+    "供给": "按行业提供原料、货品和饮水；烘焙与陶窑需燃料、排烟空间",
+    "接驳": "外部街面脚底Y=2，与首层同高；高台仅在明确外阶处接通"
   },
   "rooms": [
     {
-      "id": "shop",
-      "name": "干粮与烘烤间",
+      "id": "面包前店",
+      "name": "面包前店",
       "min": [
-        4,
+        5,
         2,
-        7
+        8
       ],
       "max": [
-        12,
-        6,
-        19
+        13,
+        7,
+        15
       ],
-      "purpose": "展示、备料、饮水和烘烤"
+      "purpose": "本店售卖、作业或后勤空间"
+    },
+    {
+      "id": "低翼和面备料",
+      "name": "低翼和面备料",
+      "min": [
+        5,
+        2,
+        18
+      ],
+      "max": [
+        11,
+        4,
+        23
+      ],
+      "purpose": "本店售卖、作业或后勤空间"
     }
   ],
   "points": [
     {
-      "id": "sales",
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        8,
+        2,
+        3
+      ],
+      "name": "临街顾客入口",
+      "facing": "north"
+    },
+    {
+      "id": "面包售卖",
       "kind": "work",
       "pos": [
-        7,
+        6,
         2,
-        11
+        5
       ],
-      "name": "薄饼与干粮柜台",
+      "name": "面包售卖",
       "approach": [
-        7,
+        6,
+        2,
+        4
+      ]
+    },
+    {
+      "id": "侧炉烘烤",
+      "kind": "work",
+      "pos": [
+        16,
+        2,
+        12
+      ],
+      "name": "侧炉烘烤",
+      "approach": [
+        15,
         2,
         12
       ]
     },
     {
-      "id": "bake",
+      "id": "和面",
       "kind": "work",
       "pos": [
-        4,
+        6,
         2,
-        17
+        21
       ],
-      "name": "烘烤炉",
+      "name": "和面",
       "approach": [
-        5,
+        6,
         2,
-        17
+        20
       ]
     },
     {
-      "id": "prep",
-      "kind": "work",
+      "id": "备料",
+      "kind": "circulation",
       "pos": [
-        8,
+        9,
         2,
-        17
+        19
       ],
-      "name": "和面备餐台",
-      "approach": [
-        8,
-        2,
-        16
-      ]
-    },
-    {
-      "id": "entry",
-      "kind": "entrance",
-      "pos": [
-        11,
-        2,
-        4
-      ],
-      "name": "主入口",
-      "facing": "north"
+      "name": "低翼备料通道"
     }
   ],
   "connections": [
     {
       "kind": "pedestrian",
       "pos": [
-        11,
+        8,
         1,
-        4
+        2
       ],
       "direction": "north",
       "clearance": [
         3,
-        3
+        4
       ],
-      "note": "接外部步行街或商旅停驻面，脚底 Y=2"
+      "note": "同层外街面脚底Y=2"
     }
   ],
   "design_notes": [
-    "小矩形店铺前售后烤，备料与烤炉相邻，短遮阳檐面对聚落街口。"
+    "紧凑主店向侧面凸出砖炉，后接低矮和面备料翼；取消空屋顶。",
+    "日间营业店铺，不声明店主住宅；炉具、货品和工序为原版静态表达。"
   ],
   "differences": [
-    "小矩形店铺前售后烤，备料与烤炉相邻，短遮阳檐面对聚落街口。"
+    "紧凑主店向侧面凸出砖炉，后接低矮和面备料翼；取消空屋顶。"
   ],
   "floors": [
     {
-      "name": "地面空间与院落",
+      "name": "售卖与行业作业",
       "y": 1,
-      "max_y": 6
+      "max_y": 5
+    },
+    {
+      "name": "完整上部体量",
+      "y": 6,
+      "max_y": 17
     }
   ],
-  "roof_min_y": 8,
+  "roof_min_y": 6,
   "lifecycle": "draft",
   "offline_limits": [
     "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
     "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
   ],
-  "source": "tools/structure_studio/studio/oasis_hospitality.py:shop(1)",
+  "source": "tools/structure_studio/studio/desert_fill_shops.py:shop(1)",
+  "function_terms": [
+    "面包零售",
+    "烘焙"
+  ],
+  "ground_plane": {
+    "y": 2,
+    "note": "北侧店外场坪支撑方块Y=1，外部步行街面上边界Y=2，与首层入口齐平"
+  },
   "preview_context": {
     "kind": "flat",
     "land_surface_y": 2,
     "bed_y": -1,
-    "padding": 3,
+    "padding": 4,
     "surface": "sand"
   },
-  "nbt_sha256": "988969a04492bf4a75e84563ed96539d289b1675d0ccee9e6c68f59fc4d5b55e"
+  "nbt_sha256": "dba41e73f563f6b0bfa2e6b4c8eaf2bf7b661f74f51b49de2f5707855de62ad8"
 }

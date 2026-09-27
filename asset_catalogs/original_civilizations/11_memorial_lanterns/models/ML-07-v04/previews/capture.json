@@ -1,0 +1,31 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "ML-07-v04",
+  "nbt_sha256": "7768c887e43a9e1141c16d9e2df4bcc61fca2b170b465d09f32393ce4e234e05",
+  "author_sha256": "c1bde28a5e5a5b33ce6f6aca4ce0e1931da0ad2ac6b6d66d53eb924a4fb918c4",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "floor-2",
+    "room-duty",
+    "room-family",
+    "point-record",
+    "point-tools",
+    "point-repair",
+    "point-cook",
+    "point-beds0",
+    "point-beds1",
+    "point-beds2",
+    "point-linen",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}
