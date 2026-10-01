@@ -135,5 +135,9 @@
   "nbt_sha256": "01fe47d0c42da7023521bdf063306286bed7bffcf48916f0349b56b1685d32fe",
   "function_terms": [
     "矿业遗址展示"
-  ]
+  ],
+  "ground_plane": {
+    "y": 2,
+    "note": "外部街面与基础顶面脚底Y=2；后部高台和上层不改变前街基准。"
+  }
 }

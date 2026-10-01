@@ -227,5 +227,9 @@
   "nbt_sha256": "8029b4ac1092c2a33f617eb4402d1d0cbd5bbe2cf6f665ffddd18e1ad36f6b2c",
   "function_terms": [
     "水务遗址展示"
-  ]
+  ],
+  "ground_plane": {
+    "y": 4,
+    "note": "陆侧外部道路与岸台脚底Y=4，铺面方块Y=3；航道水面与河床不能替代道路基准。"
+  }
 }

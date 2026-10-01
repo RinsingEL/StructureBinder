@@ -136,5 +136,9 @@
   "nbt_sha256": "7c8ed8b016987641aa796fde1f5ef4010ae1001be80a1875a13dc6f48f662351",
   "function_terms": [
     "议事"
-  ]
+  ],
+  "ground_plane": {
+    "y": 3,
+    "note": "林下外部步道与地坪顶面脚底Y=3；树冠与内部坡台另行接驳。"
+  }
 }

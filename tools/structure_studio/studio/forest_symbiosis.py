@@ -10,7 +10,8 @@ def base(key, name, size, condition, role='fill', f=2):
         terrain={'选址':condition,'落地':'只整理建筑本体与步道；保留未写入的林地。附树版本包含独立柱脚和树根占地，不能套入任意现存树体。',
                  '高程':f'主入口脚底 Y={f+1}；高位层和坡地接驳另见楼层与使用点',
                  '运行边界':'种植、蜂具、藤果、兽栏与遗留物均为原版静态空间表达；实际生产、动物和生态行为须另行接入。'})
-    m.meta.update(source='tools/structure_studio/studio/forest_symbiosis.py:'+key, roof_min_y=f+6,
+    m.meta.update(ground_plane=dict(y=f+1,note=f'林下外部步道与地坪顶面脚底Y={f+1}；树冠与内部坡台另行接驳。'),
+        source='tools/structure_studio/studio/forest_symbiosis.py:'+key, roof_min_y=f+6,
         floors=[dict(name='林下使用层',y=f,max_y=f+5)],
         preview_context=dict(kind='flat',land_surface_y=f+1,bed_y=-1,padding=4,surface='podzol'))
     return m

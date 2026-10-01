@@ -280,5 +280,9 @@
   "nbt_sha256": "1159fd142bd01b4a26bdeb5b06afd10a864586ca23ade51998f27a0f39593b77",
   "function_terms": [
     "家庭居住"
-  ]
+  ],
+  "ground_plane": {
+    "y": 8,
+    "note": "北侧外接岩台道路脚底Y=8，与主平台顶面齐平；不是谷底或支柱底高度。"
+  }
 }

@@ -331,5 +331,9 @@
   "nbt_sha256": "0ed7ecc2eb3d922b6a4395418582aa880efb58897f7a492daaeb73c305110016",
   "function_terms": [
     "集市交易"
-  ]
+  ],
+  "ground_plane": {
+    "y": 3,
+    "note": "营路与营地铺面顶面脚底Y=3，地坪方块Y=2；局部巡路台另行登阶。"
+  }
 }

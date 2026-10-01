@@ -11,7 +11,8 @@ def base(key,name,w,d,h=32,role='key'):
         '构造':'尖拱、外扶壁与内肋共同表达高挑空间；不模拟结构受力、照度或天气。'})
     m.box((1,0,1),(w-2,2,d-2),'stone_bricks');m.box((1,2,1),(w-2,2,d-2),'smooth_stone')
     m.box((1,3,1),(w-2,h-1,d-2),'air')
-    m.meta.update(source='tools/structure_studio/studio/memorial_lanterns.py:BUILDERS',roof_min_y=13,
+    m.meta.update(ground_plane=dict(y=3,note='外部公共街面与铺装顶面脚底Y=3，铺地方块Y=2；纪念台不改变街面高度。'),
+        source='tools/structure_studio/studio/memorial_lanterns.py:BUILDERS',roof_min_y=13,
         floors=[dict(name='公共与作业层',y=2,max_y=11)],preview_context=dict(kind='flat',land_surface_y=3,padding=5,surface='grass'))
     return m
 
@@ -230,6 +231,8 @@ def mausoleum():
     m=base('ML-11-v01','下沉旧陵寝与守护前厅',39,47,role='structure')
     # Buried margins and an upper approach terrace make the underground range explicit.
     m.box((2,3,2),(36,8,11),'stone_bricks')
+    # Connect the upper road across the base() air-cleared one-cell front margin.
+    m.box((18,3,1),(20,8,1),'stone_bricks')
     for x0,x1 in ((2,9),(29,36)):m.box((x0,3,12),(x1,8,43),'stone')
     hall(m,10,20,28,41,tall=8)
     for i in range(6):
@@ -252,6 +255,7 @@ def mausoleum():
     zone(m,'guard','仪式与守护前厅',11,21,27,27,'祭品整理、旧灯具和档案')
     zone(m,'burial','下沉双棺纪念室',11,29,27,40,'两侧封闭石棺，中央历史参观通路')
     m.meta.update(floors=[dict(name='下沉陵寝层',y=2,max_y=10),dict(name='旧路高台',y=8,max_y=12)])
+    m.meta['ground_plane']=dict(y=9,note='北侧旧路高台脚底Y=9、台面方块Y=8；内部沿六级石阶下至Y=3，不能以陵寝底层作外部地面。')
     m.meta['preview_context'].update(kind='slope',land_surface_y=9,slope_origin_z=0,run=8,rise=-1)
     m.meta['terrain']['地下']='前旧路脚底 Y=9，经6级台阶下至 Y=3。地下保留范围 X=10～28、Z=20～41、Y=2～10；两侧围土不得侵入彩窗和内部通路。'
     return finish(m,'旧陵寝的旧路高台经连续实阶下降到礼仪前厅和双棺纪念室，明确地下范围；不做无出口迷宫，历史纪念、守护用品和碑文记录均有可达位置。')

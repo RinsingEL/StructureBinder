@@ -178,8 +178,12 @@
     "padding": 4,
     "surface": "sand"
   },
-  "nbt_sha256": "ae423def45ce2230e4fc5a0e99edde22b3cb63a4c4197ad837072d7f0f9b173d",
+  "nbt_sha256": "82c71937de316f36e15d9cb518d493988ab867c0e7639aa7e8b84e062b8f6138",
   "function_terms": [
     "驿站遗址展示"
-  ]
+  ],
+  "ground_plane": {
+    "y": 1,
+    "note": "外部积沙街面脚底Y=1，经门外半格台阶升至旧驿院脚底Y=2；内部砂堆不改变街面基准。"
+  }
 }

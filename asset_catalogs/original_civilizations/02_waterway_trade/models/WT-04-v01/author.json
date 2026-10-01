@@ -355,5 +355,9 @@
   "nbt_sha256": "4af97768a946537c1663555aee01436a0d3fd8ad03eee33cc1e1e63cf6e4c40a",
   "function_terms": [
     "船闸管理"
-  ]
+  ],
+  "ground_plane": {
+    "y": 6,
+    "note": "陆侧外部道路与岸台脚底Y=6，铺面方块Y=5；航道水面与河床不能替代道路基准。"
+  }
 }

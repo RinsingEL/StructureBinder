@@ -95,5 +95,9 @@
   "nbt_sha256": "e89a7df7aee51e552c2b07f88c4610da2025a24911ae6fe3ba319c24facb78fa",
   "function_terms": [
     "农田种植"
-  ]
+  ],
+  "ground_plane": {
+    "y": 2,
+    "note": "外部街面与基础顶面脚底Y=2；后部高台和上层不改变前街基准。"
+  }
 }

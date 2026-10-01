@@ -229,5 +229,9 @@
   "nbt_sha256": "1d594b11e3dd8f0b1dd475f2c843d1bf217151e6aa6ebfec6634a64d75296f87",
   "function_terms": [
     "货物暂存"
-  ]
+  ],
+  "ground_plane": {
+    "y": 3,
+    "note": "外部营路与低位营地脚底Y=3；坡台及内部高层保留自身台阶。"
+  }
 }

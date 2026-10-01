@@ -208,5 +208,9 @@
   "nbt_sha256": "34191bc8d595160df236aaca11a5d94ed953880a920c1ee53b52bc5707ec8d84",
   "function_terms": [
     "矿料仓储"
-  ]
+  ],
+  "ground_plane": {
+    "y": 2,
+    "note": "外部街面与基础顶面脚底Y=2；后部高台和上层不改变前街基准。"
+  }
 }

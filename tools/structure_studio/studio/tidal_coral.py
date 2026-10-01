@@ -14,7 +14,7 @@ def base(code,name,w,d,h=34,role='key',f=7,water=5,shore=22):
  '接驳':'北侧为陆路或干式栈桥入口；水侧作业接口不替代普通步行路线，船舶吃水与上下船机制另接',
  '供给':'淡水由岸上补给或收集后处理；水盆与食品柜表达储备，不假定海水可饮用；驻留与生产均需岸上补给',
  '边界':'原版静态珊瑚色建材与海洋设备陈设；不证明潮门、潜水、呼吸、流体或机器已运行'})
- m.meta.update(source='tools/structure_studio/studio/tidal_coral.py',roof_min_y=f+7,floors=[dict(name='干式主层',y=f,max_y=f+6)],preview_context=dict(kind='shore',shore_z=shore,water_surface_y=water,land_surface_y=f+1,bed_y=-1,padding=4,surface='sand'))
+ m.meta.update(ground_plane=dict(y=f+1,note=f'陆侧干式道路或栈桥脚底Y={f+1}；水面与海床是独立选址条件，不作为接地高度。'),source='tools/structure_studio/studio/tidal_coral.py',roof_min_y=f+7,floors=[dict(name='干式主层',y=f,max_y=f+6)],preview_context=dict(kind='shore',shore_z=shore,water_surface_y=water,land_surface_y=f+1,bed_y=-1,padding=4,surface='sand'))
  return m
 
 
@@ -91,7 +91,8 @@ def port():
 def underwater():
  m=base('TC-08','玻璃双舱 · 水下考察站',53,46,f=3,water=14,shore=5,h=28)
  m.meta['terrain']['干湿区']='海床舱地板Y=3，舱顶Y=11；参考水面Y=14，低潮12/高潮15。密闭外壳内为干式空间，北端Y=17平台高于高潮，经封闭楼梯降至舱内；水密和呼吸玩法另验证。'
- m.meta['preview_context']['land_surface_y']=18
+ m.meta['ground_plane']=dict(y=17,note='北端入站平台方块Y=16，外接干式道路脚底Y=17；舱内脚底Y=4和参考水面Y=14不是外部地面。')
+ m.meta['preview_context']['land_surface_y']=17
  m.meta['roof_min_y']=10;m.meta['floors']=[dict(name='干燥海床舱',y=3,max_y=9),dict(name='地面入站口',y=16,max_y=21)]
  deck(m,2,18,50,43,f=3)
  hall(m,4,20,17,20,f=3,glass=True);hall(m,31,20,17,20,f=3,glass=True)

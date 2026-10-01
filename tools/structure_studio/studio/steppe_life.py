@@ -12,7 +12,8 @@ def base(key,name,size,condition,source='steppe_life'):
         '高程':'默认入口脚底Y=3；坡台住宅Y=5由实体台阶接入，见点位。',
         '落地限制':'仅整理模板营地占地，不推平外部草坡；留出畜群、货车或来客外接通路。',
         '运行边界':'原版静态空间与作者点位，未接入动物、交易、季节迁徙或运行时生成。'})
-    m.meta.update(source='tools/structure_studio/studio/'+source+'.py:'+key,roof_min_y=7,
+    m.meta.update(ground_plane=dict(y=3,note='外部营路与低位营地脚底Y=3；坡台及内部高层保留自身台阶。'),
+        source='tools/structure_studio/studio/'+source+'.py:'+key,roof_min_y=7,
         floors=[dict(name='营地生活层',y=2,max_y=6)],preview_context=dict(kind='flat',land_surface_y=3,bed_y=-1,padding=3,surface='grass'))
     return m
 

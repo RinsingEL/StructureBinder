@@ -202,5 +202,9 @@
   "nbt_sha256": "45281ee859e2fd6a73a4a8b7d6f8f60bf36ec153ade3de900ad5049042a29db7",
   "function_terms": [
     "传送设施遗址展示"
-  ]
+  ],
+  "ground_plane": {
+    "y": 4,
+    "note": "外部道路接人工石坪顶面脚底Y=4，铺地方块Y=3；内部高台不改变街面基准。"
+  }
 }

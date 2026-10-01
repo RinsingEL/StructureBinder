@@ -200,5 +200,9 @@
   "nbt_sha256": "54f253bbca87188295e1efa641422040364ecec61b531fd04b787ec9ec224dce",
   "function_terms": [
     "温室种植"
-  ]
+  ],
+  "ground_plane": {
+    "y": 8,
+    "note": "北侧外接岩台道路脚底Y=8，与主平台顶面齐平；不是谷底或支柱底高度。"
+  }
 }

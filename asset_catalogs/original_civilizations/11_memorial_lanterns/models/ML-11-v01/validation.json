@@ -1,10 +1,10 @@
 {
   "schema": "structure-studio.validation.v1",
-  "nbt_sha256": "d06db011e5104ab97086fe6d00808aeb6bbfb777377886392d6558528f7d06c4",
+  "nbt_sha256": "78513ef27bdbcc8373dcdca90b4ba1fb3ddeee44d725c744c02eacafb0230340",
   "navigation": {
     "passed": true,
     "unreachable": [],
-    "nodes": 4894,
+    "nodes": 4908,
     "highest_standing_y": 9,
     "truncated": false,
     "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
@@ -17,13 +17,13 @@
     32,
     47
   ],
-  "visible_blocks": 11876,
-  "explicit_air": 41404,
+  "visible_blocks": 11894,
+  "explicit_air": 41386,
   "palette": 25,
   "block_entities": 0,
   "agriculture": null,
   "materials": {
-    "minecraft:stone_bricks": 6310,
+    "minecraft:stone_bricks": 6328,
     "minecraft:stone": 2984,
     "minecraft:smooth_stone": 1201,
     "minecraft:dark_oak_planks": 433,

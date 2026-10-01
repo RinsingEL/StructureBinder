@@ -113,5 +113,9 @@
   "nbt_sha256": "914ce23f3c29abc7d9c7f35b646eef96dc9ba3f3a7ee7a3c10bd5d9fad43a4a4",
   "function_terms": [
     "棚架种植"
-  ]
+  ],
+  "ground_plane": {
+    "y": 4,
+    "note": "外部道路接人工石坪顶面脚底Y=4，铺地方块Y=3；内部高台不改变街面基准。"
+  }
 }

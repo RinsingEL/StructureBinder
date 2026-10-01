@@ -36,6 +36,32 @@ class RtfTerrainPreviewReflectionBridgeTest {
         assertEquals("rtf:temperate_forest", sample.sourceBiomeId());
         assertEquals("inferred_climate", binding.apiVariant());
         assertEquals(1, heightmap.calls);
+        assertFalse(binding.climateAvailable());
+        assertEquals(null, sample.climate());
+    }
+
+    @Test
+    void readsPreviewRegionClimateSeparatelyFromFinalClimate() throws Exception {
+        var binding = RtfTerrainPreviewReflectionBridge.bind(
+                new FakeRandomState(new FakeContext(new FakeGenerator(new NativeClimateHeightmap()))),
+                FakeRandomStateContract.class, NativeClimateCell.class);
+        var sample=binding.sample(3,4);
+        assertTrue(binding.climateAvailable());
+        assertEquals(.2, sample.climate().regionTemperature(), 1e-6);
+        assertEquals(.7, sample.climate().regionMoisture(), 1e-6);
+        assertEquals(.4, sample.climate().temperature(), 1e-6);
+        assertEquals(.8, sample.climate().moisture(), 1e-6);
+    }
+
+    public static final class NativeClimateCell extends FakeCell {
+        public float regionTemperature, regionMoisture, temperature, moisture;
+    }
+    public static final class NativeClimateHeightmap {
+        public void apply(NativeClimateCell cell,float x,float z) {
+            cell.height=.75F;
+            cell.regionTemperature=.2F;cell.regionMoisture=.7F;
+            cell.temperature=.4F;cell.moisture=.8F;
+        }
     }
 
     @Test
@@ -218,7 +244,7 @@ class RtfTerrainPreviewReflectionBridgeTest {
         }
     }
 
-    public static final class FakeCell {
+    public static class FakeCell {
         public float height;
         public FakeTerrain terrain = new FakeTerrain("none");
         public FakeBiome biome = FakeBiome.GRASSLAND;

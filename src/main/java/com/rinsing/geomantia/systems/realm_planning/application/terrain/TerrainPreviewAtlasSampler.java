@@ -10,7 +10,7 @@ import com.rinsing.geomantia.systems.gis.domain.cell.SurfaceType;
 import java.util.Objects;
 
 /** Adapts a selected generation-prior provider to the existing W survey sampler contract. */
-public final class TerrainPreviewAtlasSampler implements AtlasSampler {
+public final class TerrainPreviewAtlasSampler implements AtlasSampler, TerrainClimateSampler {
     private final TerrainPreviewProviderSelection selection;
 
     public TerrainPreviewAtlasSampler(TerrainPreviewProviderSelection selection) {
@@ -37,6 +37,20 @@ public final class TerrainPreviewAtlasSampler implements AtlasSampler {
         return new SampledCell(SampleSource.PRIOR, sample.elevation(),
                 sample.water() ? SurfaceType.WATER : SurfaceType.UNKNOWN,
                 sample.biomeId(), sample.water(), 0.0);
+    }
+
+    @Override public com.google.gson.JsonObject climateSourceDetails() {
+        return selection.provider() instanceof TerrainClimateSampler climate
+                ? climate.climateSourceDetails() : new com.google.gson.JsonObject();
+    }
+
+    @Override public boolean climateAvailable() {
+        return selection.provider() instanceof TerrainClimateSampler climate && climate.climateAvailable();
+    }
+
+    @Override public TerrainClimateSample sampleClimate(int blockX, int blockZ) {
+        if (!climateAvailable()) throw new IllegalStateException("NATIVE_CLIMATE_UNAVAILABLE");
+        return ((TerrainClimateSampler) selection.provider()).sampleClimate(blockX, blockZ);
     }
 
     private TerrainPreviewSample sample(AtlasCell cell) {

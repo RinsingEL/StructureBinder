@@ -289,5 +289,9 @@
   "nbt_sha256": "658872f3baa0e433aa2c1338ecd4cc0e7d2b3ef2d32b12184ec81038e02a255a",
   "function_terms": [
     "家庭居住"
-  ]
+  ],
+  "ground_plane": {
+    "y": 3,
+    "note": "外部营路与低位营地脚底Y=3；坡台及内部高层保留自身台阶。"
+  }
 }

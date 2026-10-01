@@ -194,5 +194,9 @@
   "nbt_sha256": "ca51b43329b9bebfaec150d76bdd3a9c50944221450941aadc848bddf8cc387a",
   "function_terms": [
     "集体住宿"
-  ]
+  ],
+  "ground_plane": {
+    "y": 2,
+    "note": "外部街面与基础顶面脚底Y=2；后部高台和上层不改变前街基准。"
+  }
 }

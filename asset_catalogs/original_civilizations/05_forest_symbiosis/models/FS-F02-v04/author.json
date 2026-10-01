@@ -226,5 +226,9 @@
   "nbt_sha256": "fc9e4ef00057d8d9e1f2722e7950ee818adead1674ea791277671fea92d9a0ba",
   "function_terms": [
     "农田种植"
-  ]
+  ],
+  "ground_plane": {
+    "y": 3,
+    "note": "林下外部步道与地坪顶面脚底Y=3；树冠与内部坡台另行接驳。"
+  }
 }

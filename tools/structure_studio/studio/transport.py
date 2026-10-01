@@ -146,6 +146,7 @@ def passenger_quay():
     m.meta.update(roof_min_y=11,floors=[dict(name="候船厅与临水栈桥",y=3,max_y=7)],
         design_notes=["浅色拱廊、蓝绿檐口与橙陶屋面围合面向水面的候船庭院。", "两条桩架栈桥之间留出水道，蓝白帆布廊遮雨；岸侧石基与水侧木桩有明确分界。"],
         differences=["双栈桥浅岸客运码头；中部候船，东翼行李站务，临水遮雨连廊。"],
+        ground_plane=dict(y=4,note="陆侧街面与木码头顶面脚底Y=4；参考水面Y=3、浅岸河床支撑另行核对。"),
         preview_context=dict(kind="shore",shore_z=21,land_surface_y=4,water_surface_y=3,bed_y=-1,padding=5),
         source="tools/structure_studio/studio/transport.py:passenger_quay")
     # Shore-contact geometry and quay wall; water is environment, not baked in.

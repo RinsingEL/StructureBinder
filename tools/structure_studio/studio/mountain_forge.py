@@ -14,7 +14,8 @@ def base(key,name,w,d,h=18,role='key',terrain=None):
     m.box((1,0,1),(w-2,1,d-2),'stone_bricks')
     m.box((1,1,1),(w-2,1,d-2),FLOOR)
     m.box((1,2,1),(w-2,h-1,d-2),'air')
-    m.meta.update(roof_min_y=8,floors=[dict(name='生活与作业层',y=1,max_y=5)],
+    m.meta.update(ground_plane=dict(y=2,note='外部街面与基础顶面脚底Y=2；后部高台和上层不改变前街基准。'),
+        roof_min_y=8,floors=[dict(name='生活与作业层',y=1,max_y=5)],
         source='tools/structure_studio/studio/mountain_forge.py:BUILDERS',
         preview_context=dict(kind='flat',land_surface_y=2,padding=5),
         design_notes=['厚石墙、深板岩扶壁、云杉内饰和铜屋面构成山地工艺语言。'],differences=[])

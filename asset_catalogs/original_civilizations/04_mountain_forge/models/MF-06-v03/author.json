@@ -194,5 +194,9 @@
   "nbt_sha256": "c5b5c86442d2d45de45ceff22f4832ed848f551461ec9199af23ab5f0df53b51",
   "function_terms": [
     "宝石加工"
-  ]
+  ],
+  "ground_plane": {
+    "y": 2,
+    "note": "外部街面与基础顶面脚底Y=2；后部高台和上层不改变前街基准。"
+  }
 }

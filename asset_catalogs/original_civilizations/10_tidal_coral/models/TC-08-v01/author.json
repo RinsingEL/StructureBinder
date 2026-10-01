@@ -336,7 +336,7 @@
     "kind": "shore",
     "shore_z": 5,
     "water_surface_y": 14,
-    "land_surface_y": 18,
+    "land_surface_y": 17,
     "bed_y": -1,
     "padding": 4,
     "surface": "sand"
@@ -344,5 +344,9 @@
   "nbt_sha256": "7345cfc093a537281413ce2a1feb664b092950a458e75d532ef83c28491725c8",
   "function_terms": [
     "水下考察场所"
-  ]
+  ],
+  "ground_plane": {
+    "y": 17,
+    "note": "北端入站平台方块Y=16，外接干式道路脚底Y=17；舱内脚底Y=4和参考水面Y=14不是外部地面。"
+  }
 }

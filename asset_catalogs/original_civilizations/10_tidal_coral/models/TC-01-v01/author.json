@@ -349,5 +349,9 @@
   "nbt_sha256": "dfeb78fe828f48d6530086db062eac02cfece93bea36497e801ca0c87b26d989",
   "function_terms": [
     "水路接驳"
-  ]
+  ],
+  "ground_plane": {
+    "y": 8,
+    "note": "陆侧干式道路或栈桥脚底Y=8；水面与海床是独立选址条件，不作为接地高度。"
+  }
 }

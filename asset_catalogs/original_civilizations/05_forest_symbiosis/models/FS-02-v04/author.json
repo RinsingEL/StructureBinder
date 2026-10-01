@@ -348,5 +348,9 @@
   "nbt_sha256": "bfcdcef575c4daeeb63469d134da722f0d745f2c863c279af4fda3c721a777bf",
   "function_terms": [
     "菌菇培育"
-  ]
+  ],
+  "ground_plane": {
+    "y": 3,
+    "note": "林下外部步道与地坪顶面脚底Y=3；树冠与内部坡台另行接驳。"
+  }
 }

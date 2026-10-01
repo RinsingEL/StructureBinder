@@ -244,5 +244,9 @@
   "nbt_sha256": "42d2a242f4ef7ff910be241744be9b46af8d052dcb42302f63035cee7a8f4dfb",
   "function_terms": [
     "家庭居住"
-  ]
+  ],
+  "ground_plane": {
+    "y": 4,
+    "note": "外部道路接人工石坪顶面脚底Y=4，铺地方块Y=3；内部高台不改变街面基准。"
+  }
 }

@@ -27,6 +27,7 @@ def base(family,variant,plans):
         '落地':'保留明确岸壁与桩脚；模板外航行宽度、水深、洪水线及道路另按实际环境核对，不填平外部水道'})
     m.meta.update(source=f"tools/structure_studio/studio/waterway_trade.py:{'warehouse' if family=='WT-02' else 'merchant'}({variant})",
         design_notes=[note],differences=[note],roof_min_y=11,floors=[dict(name='岸台与地面空间',y=3,max_y=8)],
+        ground_plane=dict(y=4,note='前街与低位岸台脚底Y=4，铺面方块Y=3；后部高院和上层不改变前街基准。'),
         preview_context=dict(kind='shore',shore_z=shore,land_surface_y=4,water_surface_y=3,bed_y=-1,padding=4))
     return m
 

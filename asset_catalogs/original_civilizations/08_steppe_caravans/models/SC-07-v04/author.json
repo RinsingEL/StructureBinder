@@ -274,5 +274,9 @@
   "nbt_sha256": "846c8fc66bcd9a50ee0b0113b7db23f1c2bc7f3273461f2726c06d4df0907217",
   "function_terms": [
     "皮革鞍具加工"
-  ]
+  ],
+  "ground_plane": {
+    "y": 3,
+    "note": "外部营路与低位营地脚底Y=3；坡台及内部高层保留自身台阶。"
+  }
 }

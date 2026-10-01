@@ -152,5 +152,9 @@
   "nbt_sha256": "a80ab185d39c34e88771efd93b70c22b9784134ff94fe880b3aed6fe61bf8c81",
   "function_terms": [
     "棚架种植"
-  ]
+  ],
+  "ground_plane": {
+    "y": 3,
+    "note": "林下外部步道与地坪顶面脚底Y=3；树冠与内部坡台另行接驳。"
+  }
 }

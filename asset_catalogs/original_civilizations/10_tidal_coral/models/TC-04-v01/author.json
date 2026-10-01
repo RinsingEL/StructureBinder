@@ -291,5 +291,9 @@
   "nbt_sha256": "1eb75595f5e66aa08b6d1db508948b28d6e3e01f693646dee2a291dfdaf4e607",
   "function_terms": [
     "海藻育场管理"
-  ]
+  ],
+  "ground_plane": {
+    "y": 8,
+    "note": "北侧外接干式道路与栈桥脚底Y=8，地板Y=7；参考水面Y=5、海床支撑另行核对。"
+  }
 }

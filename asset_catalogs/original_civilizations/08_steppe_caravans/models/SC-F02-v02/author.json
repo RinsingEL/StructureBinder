@@ -208,5 +208,9 @@
   "nbt_sha256": "2800b36629bf3a079d8de228298ad2a6a309c0e1f50ce5c981a8a4339878eee1",
   "function_terms": [
     "农田种植"
-  ]
+  ],
+  "ground_plane": {
+    "y": 3,
+    "note": "外部营路与低位营地脚底Y=3；坡台及内部高层保留自身台阶。"
+  }
 }

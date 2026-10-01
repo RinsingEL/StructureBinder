@@ -305,5 +305,9 @@
   "nbt_sha256": "8846975c086fed70b8b7a55b4a7bc1aa8a2ad2baccfe9bd2005ed37a2b7aa33f",
   "function_terms": [
     "晶石加工"
-  ]
+  ],
+  "ground_plane": {
+    "y": 4,
+    "note": "外部道路接人工石坪顶面脚底Y=4，铺地方块Y=3；内部高台不改变街面基准。"
+  }
 }

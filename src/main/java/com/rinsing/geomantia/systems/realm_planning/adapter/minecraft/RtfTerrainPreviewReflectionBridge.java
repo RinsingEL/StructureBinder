@@ -3,6 +3,7 @@ package com.rinsing.geomantia.systems.realm_planning.adapter.minecraft;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainClimateSample;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -100,10 +101,17 @@ final class RtfTerrainPreviewReflectionBridge {
                 cellType.getField("height"),
                 cellType.getField("terrain"),
                 cellType.getField("biome"),
+                optionalField(cellType, "regionTemperature"), optionalField(cellType, "regionMoisture"),
+                optionalField(cellType, "temperature"), optionalField(cellType, "moisture"),
                 cellType.getField("terrain").getType().getMethod("getName"),
                 explicitClimate ? "explicit_climate" : "inferred_climate",
                 presetFingerprintMaterial(preset)
         );
+    }
+
+    private static Field optionalField(Class<?> type, String name) {
+        try { return type.getField(name); }
+        catch (NoSuchFieldException absent) { return null; }
     }
 
     private static Method findInitializeMethod(Class<?> contract, Object registryAccess)
@@ -191,6 +199,7 @@ final class RtfTerrainPreviewReflectionBridge {
         private final Field height;
         private final Field terrain;
         private final Field biome;
+        private final Field regionTemperature, regionMoisture, temperature, moisture;
         private final Method terrainName;
         private final int waterSurfaceElevation;
         private final String apiVariant;
@@ -199,7 +208,8 @@ final class RtfTerrainPreviewReflectionBridge {
 
         private Binding(Constructor<?> cellConstructor, Method reset, Object heightmap, Method apply,
                 boolean explicitClimate, Object levels, Method scale, Field water, Field height,
-                Field terrain, Field biome, Method terrainName, String apiVariant,
+                Field terrain, Field biome, Field regionTemperature, Field regionMoisture,
+                Field temperature, Field moisture, Method terrainName, String apiVariant,
                 String presetFingerprintMaterial) throws ReflectiveOperationException {
             this.reset = reset;
             this.heightmap = heightmap;
@@ -211,6 +221,10 @@ final class RtfTerrainPreviewReflectionBridge {
             this.height = height;
             this.terrain = terrain;
             this.biome = biome;
+            this.regionTemperature = regionTemperature;
+            this.regionMoisture = regionMoisture;
+            this.temperature = temperature;
+            this.moisture = moisture;
             this.terrainName = terrainName;
             this.waterSurfaceElevation = ((Number) invoke(scale, levels, water.getFloat(levels))).intValue();
             this.apiVariant = apiVariant;
@@ -235,11 +249,18 @@ final class RtfTerrainPreviewReflectionBridge {
                 Object sampledBiome = Objects.requireNonNull(biome.get(cell), "RTF cell biome is null.");
                 String terrainId = "rtf:" + normalize(String.valueOf(invoke(terrainName, sampledTerrain)));
                 String sourceBiomeId = "rtf:" + normalize(enumName(sampledBiome));
-                return new RawSample(elevation, sampledWater, waterSurfaceElevation, terrainId, sourceBiomeId);
+                TerrainClimateSample climate = climateAvailable() ? new TerrainClimateSample(
+                        regionTemperature.getFloat(cell), regionMoisture.getFloat(cell),
+                        temperature.getFloat(cell), moisture.getFloat(cell), sampledWater) : null;
+                return new RawSample(elevation, sampledWater, waterSurfaceElevation, terrainId, sourceBiomeId, climate);
             } catch (ReflectiveOperationException | RuntimeException ex) {
                 throw new IllegalStateException("RTF heightmap preview sample failed at "
                         + blockX + "," + blockZ + ": " + message(ex), ex);
             }
+        }
+
+        boolean climateAvailable() {
+            return regionTemperature != null && regionMoisture != null && temperature != null && moisture != null;
         }
 
         String apiVariant() {
@@ -274,7 +295,7 @@ final class RtfTerrainPreviewReflectionBridge {
     }
 
     record RawSample(int elevation, boolean water, int waterSurfaceElevation,
-                     String terrainId, String sourceBiomeId) {
+                     String terrainId, String sourceBiomeId, TerrainClimateSample climate) {
     }
 
     private static final class GeneratorContextUnavailableException extends ReflectiveOperationException {

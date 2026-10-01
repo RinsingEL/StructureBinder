@@ -9,7 +9,8 @@ def base(key,name,size,condition,role='key'):
         '资源与季节':'依赖外部季节水草及商路补给；水槽为运水储备，不凭空生成水源。严寒风暴季撤帐或转入冬营。',
         '适配边界':'朝南开口按当地背风方向旋转；保留营地外人畜廊道，禁止直接压平山体或河滩。',
         '运行边界':'帐篷、马具、货车与遗存均为原版静态表达，动物、交易及迁徙尚未接入。'})
-    m.meta.update(source='tools/structure_studio/studio/steppe_caravans.py:'+key,
+    m.meta.update(ground_plane=dict(y=3,note='营路与营地铺面顶面脚底Y=3，地坪方块Y=2；局部巡路台另行登阶。'),
+        source='tools/structure_studio/studio/steppe_caravans.py:'+key,
         roof_min_y=7,floors=[dict(name='营地使用层',y=2,max_y=6)],
         preview_context=dict(kind='flat',land_surface_y=3,bed_y=-1,padding=5,surface='grass'))
     m.meta['design_notes']=['暖白毡面、橙赭织带、深木框与粗石形成共同材料语言；不同用途分别安排开敞大帐、圆形家帐、露天石阵和路线营地。']

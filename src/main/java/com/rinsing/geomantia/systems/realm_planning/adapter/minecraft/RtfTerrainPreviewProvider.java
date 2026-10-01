@@ -5,6 +5,8 @@ import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainP
 import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainPreviewProviderDescriptor;
 import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainPreviewSample;
 import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainPreviewSourceKind;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainClimateSampler;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainClimateSample;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -17,7 +19,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.Objects;
 
-public final class RtfTerrainPreviewProvider implements TerrainPreviewProvider {
+public final class RtfTerrainPreviewProvider implements TerrainPreviewProvider, TerrainClimateSampler {
     private static final String GENERIC_PROVIDER_ID = "rtf_heightmap_preview";
 
     private final ServerLevel level;
@@ -82,6 +84,26 @@ public final class RtfTerrainPreviewProvider implements TerrainPreviewProvider {
                 raw.terrainId(),
                 raw.sourceBiomeId()
         );
+    }
+
+    @Override public com.google.gson.JsonObject climateSourceDetails() {
+        var details = new com.google.gson.JsonObject();
+        details.addProperty("dimensionId", level.dimension().location().toString());
+        details.addProperty("worldSeed", Long.toString(level.getSeed()));
+        if (probe.available()) {
+            details.addProperty("apiVariant", probe.binding().apiVariant());
+            details.addProperty("presetFingerprintMaterial", probe.binding().presetFingerprintMaterial());
+        }
+        return details;
+    }
+
+    @Override public boolean climateAvailable() {
+        return probe.available() && probe.binding().climateAvailable();
+    }
+
+    @Override public TerrainClimateSample sampleClimate(int blockX, int blockZ) {
+        if (!climateAvailable()) throw new IllegalStateException("RTF_NATIVE_CLIMATE_UNAVAILABLE");
+        return probe.binding().sample(blockX, blockZ).climate();
     }
 
     private String minecraftBiomeId(int blockX, int blockZ, int height) {

@@ -280,5 +280,9 @@
   "nbt_sha256": "b6eeb1fba8dcaddcf16aa55c9f44f48b4d806030f4119d2a096cb256c5f7ef12",
   "function_terms": [
     "集体住宿"
-  ]
+  ],
+  "ground_plane": {
+    "y": 8,
+    "note": "北侧外接岩台道路脚底Y=8，与主平台顶面齐平；不是谷底或支柱底高度。"
+  }
 }

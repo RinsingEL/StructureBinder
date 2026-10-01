@@ -274,5 +274,9 @@
   "nbt_sha256": "0fbbac3e6d93045e1949fef50b49bcec918c6c1e32805069c1c0b9788addf24a",
   "function_terms": [
     "旅客住宿"
-  ]
+  ],
+  "ground_plane": {
+    "y": 3,
+    "note": "外部营路与低位营地脚底Y=3；坡台及内部高层保留自身台阶。"
+  }
 }

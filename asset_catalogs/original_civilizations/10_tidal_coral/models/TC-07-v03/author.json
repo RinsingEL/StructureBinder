@@ -349,5 +349,9 @@
   "nbt_sha256": "b2a001a0a67859e37a13181c3fbca93bfe0588772eddce5a183054cc3add6967",
   "function_terms": [
     "旅客住宿"
-  ]
+  ],
+  "ground_plane": {
+    "y": 8,
+    "note": "北侧外接干式道路与栈桥脚底Y=8，地板Y=7；参考水面Y=5、海床支撑另行核对。"
+  }
 }

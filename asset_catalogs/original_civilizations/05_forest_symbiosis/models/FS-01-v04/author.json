@@ -303,5 +303,9 @@
   "nbt_sha256": "13df4aef879e5929b420a679b411a654d7c6ab8a2ea714a9d85aa60cb10529e4",
   "function_terms": [
     "家庭居住"
-  ]
+  ],
+  "ground_plane": {
+    "y": 3,
+    "note": "林下外部步道与地坪顶面脚底Y=3；树冠与内部坡台另行接驳。"
+  }
 }

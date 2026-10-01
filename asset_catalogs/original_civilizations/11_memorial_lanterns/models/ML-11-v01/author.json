@@ -245,8 +245,12 @@
     "run": 8,
     "rise": -1
   },
-  "nbt_sha256": "d06db011e5104ab97086fe6d00808aeb6bbfb777377886392d6558528f7d06c4",
+  "nbt_sha256": "78513ef27bdbcc8373dcdca90b4ba1fb3ddeee44d725c744c02eacafb0230340",
   "function_terms": [
     "陵寝遗址展示"
-  ]
+  ],
+  "ground_plane": {
+    "y": 9,
+    "note": "北侧旧路高台脚底Y=9、台面方块Y=8；内部沿六级石阶下至Y=3，不能以陵寝底层作外部地面。"
+  }
 }

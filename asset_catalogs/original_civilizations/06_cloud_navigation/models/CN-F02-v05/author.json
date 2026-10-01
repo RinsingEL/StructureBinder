@@ -200,5 +200,9 @@
   "nbt_sha256": "643fa00c0f5417fab3db7ba4ef297e2d62a9bbaef5a87adaa24405e9fb6c2cf0",
   "function_terms": [
     "农田种植"
-  ]
+  ],
+  "ground_plane": {
+    "y": 5,
+    "note": "北侧外接岩台道路脚底Y=5，与主平台顶面齐平；不是谷底或支柱底高度。"
+  }
 }

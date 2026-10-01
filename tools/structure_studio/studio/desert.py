@@ -141,6 +141,8 @@ def buried_inn():
             if (x+2*z)%5==0:m.set(x,9,z,"air")
     m.set(18,2,21,"cauldron")
     front(m,18,5,width=3,name="旧门楼缺口")
+    m.meta['ground_plane']=dict(y=1,note='外部积沙街面脚底Y=1，经门外半格台阶升至旧驿院脚底Y=2；内部砂堆不改变街面基准。')
+    for x in range(17,20):m.set(x,1,3,'sandstone_stairs[facing=south]')
     m.room("guest","残存客房",(23,2,7),(34,6,16),"旧床、行李与屋顶缺口")
     m.room("store","废弃货仓",(23,2,21),(34,6,31),"旧包装台和遗货")
     m.room("ledger","后墙账册夹室",(5,2,24),(11,6,31),"局部坍顶和仍可进入的记录室")

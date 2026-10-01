@@ -263,5 +263,9 @@
   "nbt_sha256": "48e4cad43c0c9354718a1acc761979d7447e5dd462dfe674c1fef8aa360bf31e",
   "function_terms": [
     "船体修造"
-  ]
+  ],
+  "ground_plane": {
+    "y": 8,
+    "note": "北侧外接岩台道路脚底Y=8，与主平台顶面齐平；不是谷底或支柱底高度。"
+  }
 }

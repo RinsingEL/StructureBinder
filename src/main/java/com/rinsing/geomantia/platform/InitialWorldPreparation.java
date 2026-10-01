@@ -75,6 +75,7 @@ public final class InitialWorldPreparation {
         final ExecutorService worker=Executors.newSingleThreadExecutor(r->{ Thread t=new Thread(r,"Geomantia-Initial-W");t.setDaemon(true);return t; });
         final ServerBossEvent bar=new ServerBossEvent(Component.literal("正在读取世界扫描…"),BossEvent.BossBarColor.BLUE,BossEvent.BossBarOverlay.PROGRESS);
         volatile boolean ready,closed;
+        volatile boolean supplementingClimate;
         volatile String failure="";
         volatile WorldSurveyRunner.ProgressUpdate progress;
         BlockPos destination;
@@ -98,6 +99,15 @@ public final class InitialWorldPreparation {
                     if(closed) throw new CancellationException();
                     new RealmPlanningService(root,access).runW(result,null);
                 });
+                if(closed) return;
+                Prepared climatePrepared=server.submit(()->prepareSampler(run.getFileName().toString(),settings)).get();
+                if(climatePrepared.sampler instanceof TerrainClimateSampler climate && climate.climateAvailable()) {
+                    supplementingClimate=true;
+                    try {
+                        WorldClimateSurvey.supplement(run,Long.toString(server.overworld().getSeed()),
+                                "minecraft:overworld",climatePrepared.config.terrainProvider(),climate,()->closed);
+                    } finally { supplementingClimate=false; }
+                }
                 if(closed) return;
                 server.submit(()->{
                     if(closed) return;
@@ -152,6 +162,7 @@ public final class InitialWorldPreparation {
             arrivalDue.keySet().removeIf(id->server.getPlayerList().getPlayer(id)==null);
             if(ready) return;
             if(!failure.isBlank()) { bar.setName(Component.literal(failure)); bar.setColor(BossEvent.BossBarColor.RED); return; }
+            if(supplementingClimate) { bar.setName(Component.literal("正在补采 RTF 原生温湿度…")); bar.setProgress(0); return; }
             var update=progress;
             if(update==null) return;
             String phase=switch(update.phase()) { case "micro_sampling"->"地貌采样"; case "complete"->"整理大陆轮廓"; default->"世界扫描"; };

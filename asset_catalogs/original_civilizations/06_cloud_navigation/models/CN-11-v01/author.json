@@ -173,5 +173,9 @@
   "nbt_sha256": "e57407cf977acc1ccbc2703c422ed3edb82a99ee84d197f8a83c59688a0917ba",
   "function_terms": [
     "空港遗址展示"
-  ]
+  ],
+  "ground_plane": {
+    "y": 8,
+    "note": "北侧外接岩台道路脚底Y=8，与主平台顶面齐平；不是谷底或支柱底高度。"
+  }
 }

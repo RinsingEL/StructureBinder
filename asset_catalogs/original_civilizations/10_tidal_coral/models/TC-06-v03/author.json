@@ -300,5 +300,9 @@
   "nbt_sha256": "589ff9bcc7bb2b57cb448694a1207d7ca0e5f874bdbbb3b8f7123404caf5c114",
   "function_terms": [
     "货物仓储"
-  ]
+  ],
+  "ground_plane": {
+    "y": 8,
+    "note": "北侧外接干式道路与栈桥脚底Y=8，地板Y=7；参考水面Y=5、海床支撑另行核对。"
+  }
 }

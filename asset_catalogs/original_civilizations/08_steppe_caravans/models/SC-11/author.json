@@ -211,5 +211,9 @@
   "nbt_sha256": "c1306ac051734a9f6516ed2e6bbded72dde8b14d67056f17267e2cbe11e0d146",
   "function_terms": [
     "营地遗址展示"
-  ]
+  ],
+  "ground_plane": {
+    "y": 3,
+    "note": "营路与营地铺面顶面脚底Y=3，地坪方块Y=2；局部巡路台另行登阶。"
+  }
 }

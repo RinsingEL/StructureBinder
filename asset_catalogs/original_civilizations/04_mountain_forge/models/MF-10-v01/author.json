@@ -164,5 +164,9 @@
   "nbt_sha256": "a5137a47be47be81aabcf7d670f2258afefcf912ec374f255bf9f4039421f4b1",
   "function_terms": [
     "祖先纪念"
-  ]
+  ],
+  "ground_plane": {
+    "y": 2,
+    "note": "外部街面与基础顶面脚底Y=2；后部高台和上层不改变前街基准。"
+  }
 }

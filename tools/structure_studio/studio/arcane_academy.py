@@ -10,7 +10,8 @@ def base(code,name,w,d,h=30,site='城镇稳定干燥台地，连接学院和普�
         '地形处理':'模板是人工整平石基，不适用于未经处理的峡谷、水域或陡坡。观测馆上台阶为模板内实体台地。',
         '接驳':'南北朝向以作者入口标记为准；外部道路、服务范围和供能管线另行核对。',
         '魔法边界':'紫晶、终界烛、传送环、隔离屏与供能接口仅为静态原版陈设，不代表传送、供能、治疗或异常模拟。'})
-    m.meta.update(source='tools/structure_studio/studio/arcane_academy.py',roof_min_y=10,
+    m.meta.update(ground_plane=dict(y=4,note='外部道路接人工石坪顶面脚底Y=4，铺地方块Y=3；内部高台不改变街面基准。'),
+        source='tools/structure_studio/studio/arcane_academy.py',roof_min_y=10,
         floors=[dict(name='城台主层',y=3,max_y=9)],preview_context=dict(kind='flat',land_surface_y=4,padding=4,surface='grass'))
     m.box((2,0,2),(w-3,2,d-3),'stone_bricks');m.box((2,3,2),(w-3,3,d-3),'polished_andesite')
     m.box((2,4,2),(w-3,h-1,d-3),'air')

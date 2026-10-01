@@ -2183,6 +2183,10 @@ public final class RealmPlanningService {
         run.artifacts.put("worldPatchPreview", "world_patch_preview.png");
         run.artifacts.put("gridOverlayPreview", "grid_overlay_preview.png");
         run.artifacts.put("worldBiomePreview", "world_biome_preview.png");
+        registerArtifact(run, "worldClimateGrid", WorldClimateSurvey.GRID);
+        registerArtifact(run, "worldTemperaturePreview", WorldClimateSurvey.TEMPERATURE);
+        registerArtifact(run, "worldMoisturePreview", WorldClimateSurvey.MOISTURE);
+        registerArtifact(run, "worldClimateManifest", WorldClimateSurvey.MANIFEST);
         run.artifacts.put("wManifest", "w_manifest.json");
         if (Files.exists(run.runDirectory.resolve("world_feature_grid.json"))) {
             run.artifacts.put("worldFeatureGrid", "world_feature_grid.json");
@@ -4397,6 +4401,10 @@ public final class RealmPlanningService {
         registerArtifact(run, "worldPatchPreview", "world_patch_preview.png");
         registerArtifact(run, "gridOverlayPreview", "grid_overlay_preview.png");
         registerArtifact(run, "worldBiomePreview", "world_biome_preview.png");
+        registerArtifact(run, "worldClimateGrid", WorldClimateSurvey.GRID);
+        registerArtifact(run, "worldTemperaturePreview", WorldClimateSurvey.TEMPERATURE);
+        registerArtifact(run, "worldMoisturePreview", WorldClimateSurvey.MOISTURE);
+        registerArtifact(run, "worldClimateManifest", WorldClimateSurvey.MANIFEST);
         registerArtifact(run, "wManifest", "w_manifest.json");
         registerArtifact(run, "worldFeatureGrid", "world_feature_grid.json");
         registerArtifact(run, "worldSurveyManifest", "world_survey_manifest.json");

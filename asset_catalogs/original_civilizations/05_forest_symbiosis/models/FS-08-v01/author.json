@@ -289,5 +289,9 @@
   "nbt_sha256": "e20cc55921de3a070d5d14453cd5b8c06525e627aff41f07905133c50b655ade",
   "function_terms": [
     "蜂蜜加工"
-  ]
+  ],
+  "ground_plane": {
+    "y": 3,
+    "note": "林下外部步道与地坪顶面脚底Y=3；树冠与内部坡台另行接驳。"
+  }
 }

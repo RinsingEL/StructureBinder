@@ -365,5 +365,9 @@
   "nbt_sha256": "5a3341083a700637aca568b2bb5b0ed38821cf5f1575549ef6cbde85dd7c248e",
   "function_terms": [
     "家庭居住"
-  ]
+  ],
+  "ground_plane": {
+    "y": 8,
+    "note": "北侧外接干式道路与栈桥脚底Y=8，地板Y=7；参考水面Y=5、海床支撑另行核对。"
+  }
 }

@@ -15,7 +15,8 @@ def base(key, name, size, *, f=7, role='key', description='高原岩台边缘，
         '固定与承重':'北侧石砌锚座压在实体岩台，南侧木梁和斜撑回接石墩；石墩底必须落在连续承载岩层。不可当作无支撑浮空结构。',
         '接驳边界':'模板内支撑与边栏完整；外侧山体、接驳道路、峡谷宽度及航行净空必须按实际场地核对。',
         '运行边界':'泊位、缆索、风向仪、船体与吊装均为静态空间表达；未实现飞行、气象、物流或受力模拟。'})
-    m.meta.update(source='tools/structure_studio/studio/cloud_navigation.py', roof_min_y=f+7,
+    m.meta.update(ground_plane=dict(y=f+1,note=f'北侧外接岩台道路脚底Y={f+1}，与主平台顶面齐平；不是谷底或支柱底高度。'),
+                  source='tools/structure_studio/studio/cloud_navigation.py', roof_min_y=f+7,
                   floors=[dict(name='岩台主层',y=f,max_y=f+6)],
                   preview_context=dict(kind='slope',land_surface_y=f+1,bed_y=-3,padding=4,run=8,rise=-1,slope_origin_z=0,surface='snow'))
     return m

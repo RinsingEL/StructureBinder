@@ -193,5 +193,9 @@
   "nbt_sha256": "c15c5200f2912bf58f175d8bf2808efafad748730cfad1f028045b5400afa46a",
   "function_terms": [
     "航路导航观测"
-  ]
+  ],
+  "ground_plane": {
+    "y": 8,
+    "note": "北侧外接岩台道路脚底Y=8，与主平台顶面齐平；不是谷底或支柱底高度。"
+  }
 }

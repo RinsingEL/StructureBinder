@@ -46,7 +46,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public final class WorldSurveyRunner {
     public static final int DEFAULT_CELL_STEP_BLOCKS = 128;
-    public static final int DEFAULT_PLANNING_RADIUS_BLOCKS = 12288;
+    // RTF 0.0.5a maximum preview: 256 samples * 150 blocks / 2; tiles round outward.
+    public static final int DEFAULT_PLANNING_RADIUS_BLOCKS = 19200;
     public static final int DEFAULT_LOCAL_SLOPE_RADIUS_BLOCKS = 8;
     private static final String SCHEMA = RealmPlanningService.SCHEMA;
     private static final int TILE_REFRESH_RADIUS_CHUNKS = 24;
@@ -209,6 +210,11 @@ public final class WorldSurveyRunner {
             writeManifest(result, manifests, normalized, bounds, manifestPath);
             if (!sealed) {
                 throw new IOException("World survey did not seal: failedTileCount=" + failed);
+            }
+            if (sampler instanceof com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainClimateSampler climate
+                    && climate.climateAvailable()) {
+                WorldClimateSurvey.supplement(runDirectory, normalized.worldSeed, normalized.dimensionId,
+                        normalized.terrainProvider, climate, worldClosed);
             }
             progress.complete(durationMs);
             return result;

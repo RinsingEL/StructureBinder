@@ -248,5 +248,9 @@
   "nbt_sha256": "868cba8db260e6b09f0c02becf4361e712a1782a77c1db0c71922da9b471c63d",
   "function_terms": [
     "残骸回收"
-  ]
+  ],
+  "ground_plane": {
+    "y": 5,
+    "note": "北侧外接岩台道路脚底Y=5，与主平台顶面齐平；不是谷底或支柱底高度。"
+  }
 }

@@ -195,5 +195,9 @@
   "nbt_sha256": "d886b74759aac6159a171813918f56c50a7a33af7c81bef85ed11ef2dad33162",
   "function_terms": [
     "排水维护"
-  ]
+  ],
+  "ground_plane": {
+    "y": 2,
+    "note": "外部街面与基础顶面脚底Y=2；后部高台和上层不改变前街基准。"
+  }
 }

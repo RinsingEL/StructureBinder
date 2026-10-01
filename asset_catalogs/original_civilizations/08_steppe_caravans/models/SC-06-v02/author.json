@@ -244,5 +244,9 @@
   "nbt_sha256": "ca9eb6fb901123dc1b5265ac8ea461c99dd0d3d63ad6a7aa0bfba242384e4964",
   "function_terms": [
     "乳品加工"
-  ]
+  ],
+  "ground_plane": {
+    "y": 3,
+    "note": "外部营路与低位营地脚底Y=3；坡台及内部高层保留自身台阶。"
+  }
 }

@@ -247,5 +247,9 @@
   "nbt_sha256": "ef6c346c998d1a977b3992b5cf5be9f6c98233c282527daf9c96fd360bb7bfe7",
   "function_terms": [
     "农田种植"
-  ]
+  ],
+  "ground_plane": {
+    "y": 4,
+    "note": "外部道路接人工石坪顶面脚底Y=4，铺地方块Y=3；内部高台不改变街面基准。"
+  }
 }

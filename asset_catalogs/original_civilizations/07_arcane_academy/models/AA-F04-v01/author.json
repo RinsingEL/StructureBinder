@@ -142,5 +142,9 @@
   "nbt_sha256": "50dc72870be4a3615d6dd89da258f32ea97ea1183d900bb6d0ec77ff48651b78",
   "function_terms": [
     "研究配套作业"
-  ]
+  ],
+  "ground_plane": {
+    "y": 4,
+    "note": "外部道路接人工石坪顶面脚底Y=4，铺地方块Y=3；内部高台不改变街面基准。"
+  }
 }

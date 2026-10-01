@@ -1,10 +1,10 @@
 {
   "schema": "structure-studio.validation.v1",
-  "nbt_sha256": "ae423def45ce2230e4fc5a0e99edde22b3cb63a4c4197ad837072d7f0f9b173d",
+  "nbt_sha256": "82c71937de316f36e15d9cb518d493988ab867c0e7639aa7e8b84e062b8f6138",
   "navigation": {
     "passed": true,
     "unreachable": [],
-    "nodes": 2417,
+    "nodes": 2431,
     "highest_standing_y": 2.5625,
     "truncated": false,
     "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
@@ -17,7 +17,7 @@
     19,
     37
   ],
-  "visible_blocks": 4032,
+  "visible_blocks": 4035,
   "explicit_air": 15351,
   "palette": 29,
   "block_entities": 2,
@@ -34,11 +34,11 @@
     "minecraft:barrel": 11,
     "minecraft:spruce_planks": 10,
     "minecraft:bookshelf": 8,
+    "minecraft:sandstone_stairs": 6,
     "minecraft:birch_planks": 6,
     "minecraft:spruce_door": 6,
     "minecraft:sandstone_slab": 5,
     "minecraft:lantern": 4,
-    "minecraft:sandstone_stairs": 3,
     "minecraft:potted_dead_bush": 2,
     "minecraft:brown_bed": 2,
     "minecraft:water_cauldron": 1,
@@ -47,5 +47,5 @@
     "minecraft:crafting_table": 1,
     "minecraft:lectern": 1
   },
-  "scope": "NBT、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
 }

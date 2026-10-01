@@ -12,7 +12,7 @@ def start(family,v,name,w,d,h=36):
  '供水生活':'厨房淡水和食物依岸上补给；海水不能视为饮用或灌溉水。居室采用干燥外壳，气候通风与实际水密另验',
  '风格':'棱面近似贝壳的弧顶、放射或分瓣舱室、青绿石质桩台；风格不是国名',
  '限制':'原版静态模型；不代表潮汐、潜水呼吸、流体、生产或运行时生成已接入'})
- m.meta.update(source='tools/structure_studio/studio/tidal_life.py',roof_min_y=14,floors=[dict(name='干式生活层',y=7,max_y=13)],preview_context=dict(kind='shore',shore_z=max(12,d//2),water_surface_y=5,land_surface_y=8,bed_y=-1,padding=4,surface='sand'))
+ m.meta.update(ground_plane=dict(y=8,note='北侧外接干式道路与栈桥脚底Y=8，地板Y=7；参考水面Y=5、海床支撑另行核对。'),source='tools/structure_studio/studio/tidal_life.py',roof_min_y=14,floors=[dict(name='干式生活层',y=7,max_y=13)],preview_context=dict(kind='shore',shore_z=max(12,d//2),water_surface_y=5,land_surface_y=8,bed_y=-1,padding=4,surface='sand'))
  deck(m,2,2,w-3,d-3)
  rail(m,2,d//2,2,d-3);rail(m,w-3,d//2,w-3,d-3);rail(m,2,d-3,w-3,d-3)
  return m

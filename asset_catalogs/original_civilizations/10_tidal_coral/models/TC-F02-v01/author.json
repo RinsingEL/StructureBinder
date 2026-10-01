@@ -231,5 +231,9 @@
   "nbt_sha256": "bc18f424a55b816f2eca3220710327d95a0268c355bb45c2dca48fb8e85f6b07",
   "function_terms": [
     "农田种植"
-  ]
+  ],
+  "ground_plane": {
+    "y": 8,
+    "note": "北侧外接干式道路与栈桥脚底Y=8，地板Y=7；参考水面Y=5、海床支撑另行核对。"
+  }
 }

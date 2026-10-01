@@ -277,5 +277,9 @@
   "nbt_sha256": "739b769cea3900ae5db401e8d2fea917880ecde67dc3e0ec377ec2255ea514b6",
   "function_terms": [
     "魔力配给场所"
-  ]
+  ],
+  "ground_plane": {
+    "y": 4,
+    "note": "外部道路接人工石坪顶面脚底Y=4，铺地方块Y=3；内部高台不改变街面基准。"
+  }
 }

@@ -11,6 +11,7 @@ def base(number,name,size,description,*,shore=None,f=3,role='key'):
         '运行边界':'作者资产表达空间与设备外形，交通、船只、液体和机器行为需要另行接入'})
     m.meta.update(source=f'tools/structure_studio/studio/waterway.py:waterway({number})',roof_min_y=f+8,
         floors=[dict(name='地面使用空间',y=f,max_y=f+5)],design_notes=[],differences=[],
+        ground_plane=dict(y=f+1,note=f'陆侧外部道路与岸台脚底Y={f+1}，铺面方块Y={f}；航道水面与河床不能替代道路基准。'),
         preview_context=dict(kind='flat',land_surface_y=f+1,bed_y=-1,padding=4))
     if shore is not None:
         m.meta['preview_context'].update(kind='shore',shore_z=shore,water_surface_y=3)
