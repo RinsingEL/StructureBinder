@@ -1,4 +1,4 @@
-import {children, describe, matches, pathLabel, readFilters, writeFilters, roles, roleOf, assetTags, tagsOf, categories, categoryOf} from './functions.js';
+import {children, describe, matches, pathLabel, readFilters, writeFilters, assetTags, tagsOf, categories, categoryOf} from './functions.js';
 
 const $ = id => document.getElementById(id);
 function textElement(tag, text, className = '') {
@@ -11,7 +11,7 @@ export function createFilters(rows, onChange) {
   const styles = [...new Set(rows.map(row => row.civilization).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh'));
   if (!styles.includes(state.style)) state.style = '';
   $('civilization').replaceChildren(new Option('全部风格', ''), ...styles.map(style => new Option(style, style)));
-  for (const [id, key] of [['search', 'search'], ['civilization', 'style'], ['structure-category', 'category'], ['planning-role', 'role'], ['asset-tag', 'assetTag'], ['frontage-filter', 'frontage'], ['raw-tag', 'tag'], ['site-search', 'site'], ['match-mode', 'mode']]) {
+  for (const [id, key] of [['search', 'search'], ['civilization', 'style'], ['structure-category', 'category'], ['asset-tag', 'assetTag'], ['frontage-filter', 'frontage'], ['raw-tag', 'tag'], ['site-search', 'site'], ['match-mode', 'mode']]) {
     const el = $(id);
     if (!el) continue;
     el.value = state[key];
@@ -20,9 +20,9 @@ export function createFilters(rows, onChange) {
     });
   }
   $('clear-filters').onclick = () => {
-    Object.assign(state, {search: '', style: '', category: '', role: '', assetTag: '', frontage: '', tag: '', site: '', functions: [], mode: 'all'});
+    Object.assign(state, {search: '', style: '', category: '', assetTag: '', frontage: '', tag: '', site: '', functions: [], mode: 'all'});
     selection = [];
-    for (const [id, value] of [['search', ''], ['civilization', ''], ['structure-category', ''], ['planning-role', ''], ['asset-tag', ''], ['frontage-filter', ''], ['site-search', ''], ['match-mode', 'all']]) {
+    for (const [id, value] of [['search', ''], ['civilization', ''], ['structure-category', ''], ['asset-tag', ''], ['frontage-filter', ''], ['site-search', ''], ['match-mode', 'all']]) {
       const el = $(id);
       if (el) el.value = value;
     }
@@ -67,20 +67,13 @@ export function createFilters(rows, onChange) {
         const id = categoryOf(row).id;
         catCounts.set(id, (catCounts.get(id) ?? 0) + 1);
       }
-      $('structure-category').replaceChildren(new Option('全部建筑类别', ''), ...categories.map(c => new Option(`${c.label} · ${catCounts.get(c.id) ?? 0}`, c.id)));
+      $('structure-category').replaceChildren(new Option('全部素材类别', ''), ...categories.map(c => new Option(`${c.label} · ${catCounts.get(c.id) ?? 0}`, c.id)));
       $('structure-category').value = state.category;
     }
-    const roleCounts = new Map();
-    for (const row of rows.filter(row => matches(row, {...state, role: ''}))) {
-      const id = roleOf(row).id;
-      roleCounts.set(id, (roleCounts.get(id) ?? 0) + 1);
-    }
-    $('planning-role').replaceChildren(new Option('全部规划角色', ''), ...roles.map(role => new Option(`${role.label} · ${roleCounts.get(role.id) ?? 0}`, role.id)));
-    $('planning-role').value = state.role;
     const assetCounts = new Map();
     for (const row of rows.filter(row => matches(row, {...state, assetTag: ''})))
       for (const tag of tagsOf(row)) assetCounts.set(tag.id, (assetCounts.get(tag.id) ?? 0) + 1);
-    $('asset-tag').replaceChildren(new Option('全部结构标签', ''), ...assetTags.map(tag => new Option(`${tag.label} · ${assetCounts.get(tag.id) ?? 0}`, tag.id)));
+    $('asset-tag').replaceChildren(new Option('全部配套标签', ''), ...assetTags.map(tag => new Option(`${tag.label} · ${assetCounts.get(tag.id) ?? 0}`, tag.id)));
     $('asset-tag').value = state.assetTag;
     const counts = new Map(), tags = new Map();
     for (const row of rows.filter(row => matches(row, {...state, functions: [], tag: ''}))) {
@@ -99,10 +92,10 @@ export function createFilters(rows, onChange) {
       $('selected-functions').append(chip);
     }
     $('match-mode').disabled = state.functions.length < 2;
-    const active = state.search || state.style || state.category || state.role || state.assetTag || state.frontage || state.tag || state.site || state.functions.length;
+    const active = state.search || state.style || state.category || state.assetTag || state.frontage || state.tag || state.site || state.functions.length;
     $('clear-filters').disabled = !active;
     $('filter-status').textContent = active
-      ? `${state.functions.length ? `${state.functions.length} 项用途 · ${state.mode === 'any' ? '任一具备' : '同时具备'}` : '用途不限'}${state.style ? ` · ${state.style}` : ''}${state.category ? ` · ${categories.find(c => c.id === state.category)?.label}` : ''}${state.role ? ` · ${roles.find(role => role.id === state.role)?.label}` : ''}${state.assetTag ? ` · ${assetTags.find(tag => tag.id === state.assetTag)?.label}` : ''}${state.tag ? ` · 原始标签：${state.tag}` : ''}${state.site ? ' · 检索选址文字' : ''}`
+      ? `${state.functions.length ? `${state.functions.length} 项用途 · ${state.mode === 'any' ? '任一具备' : '同时具备'}` : '用途不限'}${state.style ? ` · ${state.style}` : ''}${state.category ? ` · ${categories.find(c => c.id === state.category)?.label}` : ''}${state.assetTag ? ` · ${assetTags.find(tag => tag.id === state.assetTag)?.label}` : ''}${state.tag ? ` · 原始标签：${state.tag}` : ''}${state.site ? ' · 检索选址文字' : ''}`
       : '全部结构 · 可按类别、用途逐层缩小范围';
   }
   function update() { refresh(); syncURL(); onChange(); }
@@ -121,7 +114,7 @@ export function createFilters(rows, onChange) {
       button.onclick = () => { state.assetTag = tag.id; update(); };
       $('asset-tags').append(button);
     }
-    if (!tagsOf(row).length) $('asset-tags').append(textElement('span', '未标注结构标签'));
+    if (!tagsOf(row).length) $('asset-tags').append(textElement('span', '未标注配套标签'));
     $('function-tags').replaceChildren();
     const meanings = describe(row);
     for (const id of meanings.leaves) {

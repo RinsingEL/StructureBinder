@@ -5,8 +5,6 @@ nav button .role-badge{display:inline-block;font-size:10px;line-height:1.5;lette
 nav button .category-badge{display:inline-block;font-size:10px;line-height:1.5;letter-spacing:0;margin-right:6px;padding:0 5px;border-radius:3px;font-weight:500}
 nav button .category-specialty, .path-tag.category-specialty{color:#ffd8a8;background:#442b15;border:1px solid #945f2f}
 nav button .category-common, .path-tag.category-common{color:#a5d8ff;background:#15283f;border:1px solid #2d5a88}
-nav button .category-infrastructure, .path-tag.category-infrastructure{color:#ffe066;background:#383214;border:1px solid #827122}
-nav button .category-landscape, .path-tag.category-landscape{color:#b2f2bb;background:#183923;border:1px solid #3b7b4d}
 /* Manual frontage authoring. */
 .frontage-editor{border:1px solid #43594f;background:#172821;border-radius:7px;padding:14px 16px;margin:8px 0 18px}.frontage-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}.frontage-heading h2{font-size:15px;font-weight:500;margin:0}.frontage-heading button{font-size:11px}.frontage-editor>p{font-size:12px;line-height:1.6}.frontage-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:end}.frontage-controls label{display:flex;flex-direction:column;gap:6px;font-size:11px;color:#b6c6be;max-width:100%}.frontage-controls select{padding:8px;max-width:100%}.frontage-controls button{font-size:12px;min-height:35px}#frontage-save{background:#354f38;border-color:#8faa70}#frontage-entrances{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}#frontage-entrances button{font-size:11px;text-align:left}.frontage-editor .hint{margin:10px 0 0}
 #viewport{height:calc(100vh - 545px);min-height:320px}

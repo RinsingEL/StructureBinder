@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
-import {functions, describe, matches, readFilters, writeFilters, roleOf, tagsOf, categories, categoryOf} from '../web/functions.js';
+import {functions, describe, matches, readFilters, writeFilters, tagsOf, categories, categoryOf} from '../web/functions.js';
 
 const root = fileURLToPath(new URL('../../../asset_catalogs/original_civilizations/', import.meta.url));
 // This regression inventory is the original 12 styles, not a cap on new pools.
@@ -49,19 +49,15 @@ test('AND, OR and empty selection have different semantics', () => {
   assert.ok(matches(house, {functions: ['housing', 'retail'], mode: 'any'}));
   assert.ok(matches(house, {functions: []}));
 });
-test('planning role groups core roles and intersects every function mode', () => {
-  for (const planning_role of ['planning_role.key', 'planning_role.anchor']) {
-    const row = {planning_role, civilization: '北欧', function_terms: ['家庭居住']};
-    assert.ok(matches(row, {role: 'core', style: '北欧', functions: ['housing']}));
-    assert.ok(!matches(row, {role: 'fill', functions: ['housing', 'retail'], mode: 'any'}));
+test('legacy planning roles do not choose a city core or restrict Studio browsing', () => {
+  for (const planning_role of ['planning_role.key', 'planning_role.anchor', 'planning_role.fill', 'planning_role.self_contained']) {
+    const row = {id: 'CH-19-v01', planning_role, function_terms: ['家庭居住']};
+    assert.ok(matches(row, {role: 'fill', category: 'common', functions: ['housing']}));
+    assert.equal(categoryOf(row).id, 'common');
   }
-  assert.ok(matches({planning_role: 'planning_role.fill'}, {role: 'fill'}));
-  for (const planning_role of ['planning_role.structure', 'planning_role.self_contained', 'invalid', undefined]) {
-    assert.ok(!matches({planning_role}, {role: 'core'}));
-    assert.ok(!matches({planning_role}, {role: 'fill'}));
-  }
-  assert.equal(roleOf({planning_role: 'planning_role.self_contained'}).label, '完整组合');
-  assert.ok(matches({}, {role: 'unknown'}));
+  const state = readFilters('?role=core&style=中式木构');
+  assert.equal('role' in state, false);
+  assert.equal(new URLSearchParams(writeFilters({...state, role: 'core'})).has('role'), false);
 });
 test('style, original tag and word search remain independent intersecting filters', () => {
   const row = {id: 'ABC-01', name: '工具铺', civilization: '北欧', function_terms: ['工具维修', '零售']};
@@ -89,19 +85,19 @@ test('unknown author tags remain searchable without inventing a category', () =>
   assert.ok(!matches(row, {functions: ['retail']}));
 });
 test('URL state survives reload and rejects invalid function IDs', () => {
-  const state = {search: '烘焙 商业', style: '蒸汽朋克', category: 'specialty', role: 'fill', assetTag: 'infrastructure', frontage: 'pending', tag: '零售', site: '入口', functions: ['retail', 'housing.family'], mode: 'any'};
+  const state = {search: '烘焙 商业', style: '蒸汽朋克', category: 'specialty', assetTag: 'infrastructure', frontage: 'pending', tag: '零售', site: '入口', functions: ['retail', 'housing.family'], mode: 'any'};
   const query = writeFilters(state, 'SR-F01-v01');
   assert.deepEqual(readFilters(query), state);
   assert.equal(new URLSearchParams(query).get('asset'), 'SR-F01-v01');
   assert.deepEqual(readFilters('?functions=retail,missing,retail').functions, ['retail']);
-  assert.equal(readFilters('?role=invalid').role, '');
+  assert.equal('role' in readFilters('?role=invalid'), false);
   assert.equal(readFilters('?category=invalid').category, '');
   assert.equal(readFilters('?assetTag=invalid').assetTag, '');
 });
 
 test('landscape and infrastructure are explicit tags independent of cultural role', () => {
   const garden = {civilization: '中式木构', planning_role: 'planning_role.key', asset_tags: ['landscape'], function_terms: ['游赏']};
-  assert.ok(matches(garden, {role: 'core', assetTag: 'landscape', style: '中式木构'}));
+  assert.ok(matches(garden, {assetTag: 'landscape', style: '中式木构'}));
   assert.ok(matches(garden, {search: '景观 中式'}));
   assert.ok(!matches(garden, {assetTag: 'infrastructure'}));
   assert.ok(!matches({name: '景观园林', planning_role: 'planning_role.key'}, {assetTag: 'landscape'}));
@@ -118,18 +114,25 @@ test('frontage filter includes pending and stale records while intersecting styl
   assert.ok(matches({frontage: {status: 'ready'}}, {frontage: 'ready'}));
 });
 
-test('structure categories specialty, common, infrastructure, landscape filter accurately', () => {
-  assert.equal(categories.length, 4);
-  assert.equal(categoryOf({id: 'CH-13-v01', civilization: '中式木构'}).id, 'specialty');
-  assert.equal(categoryOf({id: 'EU-01-v01', civilization: '欧洲中世纪新制'}).id, 'specialty');
-  assert.equal(categoryOf({id: 'CH-19-v01', civilization: '中式木构'}).id, 'common');
-  assert.equal(categoryOf({id: 'EU-03-v01', civilization: '欧洲中世纪新制'}).id, 'common');
-  assert.equal(categoryOf({id: 'CH-24-v01', asset_tags: ['infrastructure']}).id, 'infrastructure');
-  assert.equal(categoryOf({id: 'CH-26-v01', asset_tags: ['landscape']}).id, 'landscape');
+test('cultural identity intersects supporting tags without being overwritten', () => {
+  assert.deepEqual(categories.map(c => c.id), ['specialty', 'common']);
+  const garden = JSON.parse(fs.readFileSync(path.join(root, 'S13_chinese_timber/models/CH-22-v01/author.json'), 'utf8'));
+  assert.equal(categoryOf(garden).id, 'specialty');
+  assert.ok(matches(garden, {category: 'specialty', assetTag: 'landscape', style: '中式木构'}));
+  assert.ok(!matches(garden, {category: 'common'}));
+  assert.equal(categoryOf({id: 'CH-130-v01'}).id, 'common');
+  assert.equal(categoryOf({id: 'CH-19-v01', planning_role: 'planning_role.key'}).id, 'common');
+  assert.equal(categoryOf({id: 'variant', family: 'CH-22', asset_tags: ['infrastructure', 'landscape']}).id, 'specialty');
+  assert.ok(matches({id: 'CH-24-v01', asset_tags: ['infrastructure']}, {category: 'common', assetTag: 'infrastructure'}));
+});
 
-  const specialtyRow = {id: 'CH-13-v01', civilization: '中式木构'};
-  assert.ok(matches(specialtyRow, {category: 'specialty'}));
-  assert.ok(!matches(specialtyRow, {category: 'common'}));
+test('old infrastructure and landscape category URLs migrate to independent tags', () => {
+  for (const tag of ['infrastructure', 'landscape']) {
+    const state = readFilters(`?category=${tag}&role=core`);
+    assert.equal(state.category, ''); assert.equal(state.assetTag, tag);
+    assert.equal(readFilters(writeFilters(state)).assetTag, tag);
+  }
+  assert.equal(readFilters('?category=landscape&assetTag=infrastructure').assetTag, 'infrastructure');
 });
 
 test('original 12-style inventory is covered without changing author data; real combinations stay precise', () => {

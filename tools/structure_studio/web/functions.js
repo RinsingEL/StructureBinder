@@ -1,39 +1,20 @@
 // Shared author-term meanings; parent tags never imply child functions.
 import taxonomy from '../../../src/main/resources/geomantia/catalog/structure_functions.json' with {type: 'json'};
+import catalogRules from '../catalog.json' with {type: 'json'};
 export const functions = taxonomy.functions;
 const byId = new Map(functions.map(n => [n.id, n]));
 const byTerm = new Map();
 for (const n of functions) for (const t of n.terms) byTerm.set(t, [...(byTerm.get(t) ?? []), n.id]);
 const meanings = new WeakMap();
 
-// Planning role is independent of function and style; key and anchor are core.
-export const roles = taxonomy.roles;
-export function roleOf(row) { return roles.find(role => role.values.includes(row.planning_role)) ?? roles.at(-1); }
-
-// Structure categories: specialty, common, infrastructure, landscape
-export const categories = [
-  { id: 'specialty', label: '文化特色' },
-  { id: 'common', label: '通用功能' },
-  { id: 'infrastructure', label: '基础设施' },
-  { id: 'landscape', label: '自然景观' }
-];
-const specialtyPrefixes = [
-  'CH-13', 'CH-16', 'CH-17', 'CH-18', 'CH-21', 'CH-22',
-  'EU-01', 'EU-02', 'EU-13', 'EU-16',
-  'EL-01', 'EL-02', 'EL-03', 'EL-04', 'EL-13', 'EL-14', 'EL-16',
-  'DV-01', 'DV-02', 'DV-04', 'DV-13', 'DV-15', 'DV-16',
-  'MG-01', 'MG-02', 'MG-03', 'MG-04', 'MG-14', 'MG-15', 'MG-16',
-  'DS-03', 'DS-10', 'DS-11', 'DS-12'
-];
+// One author-side rule table is shared by the API and detail/list rendering.
+export const categories = catalogRules.categories;
+const specialtyFamilies = new Set(catalogRules.specialty_families);
 export function categoryOf(row) {
-  if (row.category) return categories.find(c => c.id === row.category) ?? categories[1];
-  if (Array.isArray(row.asset_tags)) {
-    if (row.asset_tags.includes('infrastructure')) return categories.find(c => c.id === 'infrastructure');
-    if (row.asset_tags.includes('landscape')) return categories.find(c => c.id === 'landscape');
-  }
-  const id = row.id ?? '', family = row.family ?? '';
-  if (specialtyPrefixes.some(p => id.startsWith(p) || family.startsWith(p))) return categories.find(c => c.id === 'specialty');
-  return categories.find(c => c.id === 'common');
+  const explicit = categories.find(c => c.id === row.category);
+  if (explicit) return explicit;
+  const specialty = specialtyFamilies.has(row.family) || specialtyFamilies.has((row.id ?? '').split('-v')[0]);
+  return categories.find(c => c.id === (specialty ? 'specialty' : 'common'));
 }
 
 // Asset tags are explicit and independent of both cultural role and function.
@@ -70,7 +51,6 @@ export function matches(row, state = {}) {
   const meaning = describe(row);
   if (state.style && row.civilization !== state.style) return false;
   if (state.category && categoryOf(row).id !== state.category) return false;
-  if (state.role && roleOf(row).id !== state.role) return false;
   if (state.assetTag && !tagsOf(row).some(tag => tag.id === state.assetTag)) return false;
   if (state.frontage === 'pending' && row.frontage?.status === 'ready') return false;
   if (state.frontage === 'ready' && row.frontage?.status !== 'ready') return false;
@@ -84,9 +64,11 @@ export function matches(row, state = {}) {
 }
 export function readFilters(search) {
   const p = new URLSearchParams(search);
+  // Old four-category links become supporting-tag filters; retired role filters are ignored.
+  if (assetTags.some(tag => tag.id === p.get('category')) && !assetTags.some(tag => tag.id === p.get('assetTag')))
+    p.set('assetTag', p.get('category'));
   return {search: p.get('q') ?? '', style: p.get('style') ?? '', tag: p.get('tag') ?? '', site: p.get('site') ?? '',
     category: categories.some(cat => cat.id === p.get('category')) ? p.get('category') : '',
-    role: roles.some(role => role.id === p.get('role')) ? p.get('role') : '',
     assetTag: assetTags.some(tag => tag.id === p.get('assetTag')) ? p.get('assetTag') : '',
     frontage: ['pending', 'ready'].includes(p.get('frontage')) ? p.get('frontage') : '',
     functions: [...new Set((p.get('functions') ?? '').split(',').filter(id => byId.has(id)))], mode: p.get('mode') === 'any' ? 'any' : 'all'};
@@ -94,7 +76,7 @@ export function readFilters(search) {
 export function writeFilters(state, asset) {
   const p = new URLSearchParams();
   if (asset) p.set('asset', asset);
-  for (const [key, value] of Object.entries({q: state.search, style: state.style, category: state.category, role: state.role, assetTag: state.assetTag, frontage: state.frontage, tag: state.tag, site: state.site,
+  for (const [key, value] of Object.entries({q: state.search, style: state.style, category: state.category, assetTag: state.assetTag, frontage: state.frontage, tag: state.tag, site: state.site,
     functions: state.functions?.join(','), mode: state.mode === 'any' ? 'any' : ''})) if (value) p.set(key, value);
   return `?${p}`;
 }

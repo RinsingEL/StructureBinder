@@ -41,7 +41,7 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument("reviews",type=Path);args=p.parse_args()
     records=json.loads(args.reviews.read_text(encoding="utf-8"))
     registry=json.loads((TOOL/".cache/registry.json").read_text(encoding="utf-8"))
-    paths=asset_paths()
+    paths=asset_paths(active_only=False)
     for record in records:publish(record,paths,registry)
 
 

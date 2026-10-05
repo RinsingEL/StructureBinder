@@ -5,7 +5,7 @@ import {createSite} from './site.js';
 import {walkPose} from './walk-pose.js';
 import {groundPlane} from './grounding.js';
 import {createFilters} from './filters.js';
-import {roleOf, tagsOf, categoryOf} from './functions.js';
+import {tagsOf, categoryOf} from './functions.js';
 import {createFrontageEditor} from './frontage.js';
 
 const $ = id => document.getElementById(id);
@@ -126,7 +126,6 @@ function populateList() {
     const cat = categoryOf(row);
     const catBadge = document.createElement('span'); catBadge.className = `category-badge category-${cat.id}`; catBadge.textContent = cat.label; small.append(catBadge);
     small.append(document.createTextNode(` ${row.id} · ${row.size.join(' × ')}`));
-    const roleTag = document.createElement('span'); roleTag.className = 'role-badge'; roleTag.textContent = roleOf(row).label; small.append(roleTag);
     for (const tag of tagsOf(row)) {
       const badge = document.createElement('span'); badge.className = 'role-badge'; badge.textContent = tag.label; small.append(badge);
     }
@@ -157,14 +156,14 @@ async function load(id) {
   $('title').textContent = data.author.name;
   $('eyebrow').textContent = `${data.author.id} / ${data.author.civilization}`;
   const count = data.blocks.filter(b => !['minecraft:air','minecraft:cave_air','minecraft:void_air'].includes(data.palette[b.state].name)).length;
-  $('subtitle').textContent = `${data.size.join(' × ')} 格 · ${count.toLocaleString()} 个方块 · 规划角色：${roleOf(data.author).label}`;
+  $('subtitle').textContent = `${data.size.join(' × ')} 格 · ${count.toLocaleString()} 个方块`;
   context=false;site=null;$('context').classList.remove('selected');$('context').disabled=groundPlane(data).status==='invalid'||(!data.author.preview_context&&groundPlane(data).status!=='marked');$('axis').textContent='X 东 · Y 上 · Z 南';
   $('floor').replaceChildren(new Option('全部楼层',''));
   for (const [i, floor] of (data.author.floors ?? []).entries()) $('floor').append(new Option(floor.name,String(i)));
   $('rooms').replaceChildren();
   for (const room of data.author.rooms) { const button=document.createElement('button');button.textContent=room.name;button.onclick=()=>focusRoom(room);$('rooms').append(button); }
   const notes = document.createElement('div'); notes.textContent = (data.author.design_notes ?? []).join(' '); $('rooms').append(notes);
-  library?.select(data.author);
+  library?.select({...data.author, category: data.category});
   frontage.select(data);
   renderChecks(data);
   reset(false); populateList(); updateGeometry(); preset('front');

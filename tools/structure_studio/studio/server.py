@@ -17,12 +17,14 @@ REPO = TOOL.parents[1]
 CATALOG = REPO / "asset_catalogs/original_civilizations"
 
 
-def asset_paths():
-    roots = [CATALOG, TOOL / "fixtures"]
+def asset_paths(*, active_only=True, include_fixtures=False):
+    roots = [CATALOG]
+    if include_fixtures:
+        roots.append(TOOL / "fixtures")
     paths = {}
     for root in roots:
         for p in root.glob("**/author.json"):
-            if root == CATALOG:
+            if root == CATALOG and active_only:
                 rel = p.relative_to(CATALOG)
                 if rel.parts[0] not in ACTIVE_CATALOG_DIRS:
                     continue
@@ -30,9 +32,9 @@ def asset_paths():
     return paths
 
 
-def catalog():
+def catalog(paths=None):
     rows = []
-    for key, path in sorted(asset_paths().items()):
+    for key, path in sorted((asset_paths() if paths is None else paths).items()):
         meta = json.loads((path / "author.json").read_text(encoding="utf-8"))
         row = {k: meta.get(k) for k in ("id", "name", "family", "civilization", "function_terms", "asset_tags", "terrain", "planning_role", "size", "lifecycle")}
         row["category"] = resolve_category(meta)
@@ -43,14 +45,18 @@ def catalog():
 
 
 class Handler(BaseHTTPRequestHandler):
+    def asset_paths(self):
+        return asset_paths(active_only=getattr(self.server, "active_only", True),
+                           include_fixtures=getattr(self.server, "include_fixtures", False))
+
     def do_GET(self):
         url = urlsplit(self.path)
         try:
             if url.path == "/api/catalog":
-                return self.json(catalog())
+                return self.json(catalog(self.asset_paths()))
             if url.path == "/api/model":
                 key = parse_qs(url.query).get("id", [""])[0]
-                path = asset_paths().get(key)
+                path = self.asset_paths().get(key)
                 if path is None:
                     return self.send_error(404, "Unknown asset")
                 payload = read_structure(path / "structure.nbt")
@@ -93,7 +99,7 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError("Invalid frontage request")
             if not isinstance(request.get("id"), str):
                 raise ValueError("请选择素材编号。")
-            path = asset_paths().get(request["id"])
+            path = self.asset_paths().get(request["id"])
             if path is None:
                 return self.json({"error": "Unknown asset"}, 404)
             return self.json(save_frontage(path, request))
@@ -124,9 +130,11 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
 
-def serve(port=8765):
+def serve(port=8765, *, active_only=True, include_fixtures=False):
     if not (TOOL / "dist/index.html").exists() or not (TOOL / ".cache/registry.json").exists():
         raise RuntimeError("Run resource preparation and npm run build first")
     server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    server.active_only = active_only
+    server.include_fixtures = include_fixtures
     print(f"Structure Studio: http://127.0.0.1:{port}", flush=True)
     server.serve_forever()
