@@ -1,4 +1,4 @@
-import {children, describe, matches, pathLabel, readFilters, writeFilters, roles, roleOf, assetTags, tagsOf} from './functions.js';
+import {children, describe, matches, pathLabel, readFilters, writeFilters, roles, roleOf, assetTags, tagsOf, categories, categoryOf} from './functions.js';
 
 const $ = id => document.getElementById(id);
 function textElement(tag, text, className = '') {
@@ -11,17 +11,21 @@ export function createFilters(rows, onChange) {
   const styles = [...new Set(rows.map(row => row.civilization).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh'));
   if (!styles.includes(state.style)) state.style = '';
   $('civilization').replaceChildren(new Option('全部风格', ''), ...styles.map(style => new Option(style, style)));
-  for (const [id, key] of [['search', 'search'], ['civilization', 'style'], ['planning-role', 'role'], ['asset-tag', 'assetTag'], ['frontage-filter', 'frontage'], ['raw-tag', 'tag'], ['site-search', 'site'], ['match-mode', 'mode']]) {
+  for (const [id, key] of [['search', 'search'], ['civilization', 'style'], ['structure-category', 'category'], ['planning-role', 'role'], ['asset-tag', 'assetTag'], ['frontage-filter', 'frontage'], ['raw-tag', 'tag'], ['site-search', 'site'], ['match-mode', 'mode']]) {
     const el = $(id);
+    if (!el) continue;
     el.value = state[key];
     el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', () => {
       state[key] = el.value; update();
     });
   }
   $('clear-filters').onclick = () => {
-    Object.assign(state, {search: '', style: '', role: '', assetTag: '', frontage: '', tag: '', site: '', functions: [], mode: 'all'});
+    Object.assign(state, {search: '', style: '', category: '', role: '', assetTag: '', frontage: '', tag: '', site: '', functions: [], mode: 'all'});
     selection = [];
-    for (const [id, value] of [['search', ''], ['civilization', ''], ['frontage-filter', ''], ['site-search', ''], ['match-mode', 'all']]) $(id).value = value;
+    for (const [id, value] of [['search', ''], ['civilization', ''], ['structure-category', ''], ['planning-role', ''], ['asset-tag', ''], ['frontage-filter', ''], ['site-search', ''], ['match-mode', 'all']]) {
+      const el = $(id);
+      if (el) el.value = value;
+    }
     update();
   };
   $('add-function').onclick = () => addFunction(selection.at(-1));
@@ -57,6 +61,15 @@ export function createFilters(rows, onChange) {
     $('function-choice').textContent = selected ? pathLabel(selected) : '可选大类，也可继续选到具体用途';
   }
   function refresh() {
+    if ($('structure-category')) {
+      const catCounts = new Map();
+      for (const row of rows.filter(row => matches(row, {...state, category: ''}))) {
+        const id = categoryOf(row).id;
+        catCounts.set(id, (catCounts.get(id) ?? 0) + 1);
+      }
+      $('structure-category').replaceChildren(new Option('全部建筑类别', ''), ...categories.map(c => new Option(`${c.label} · ${catCounts.get(c.id) ?? 0}`, c.id)));
+      $('structure-category').value = state.category;
+    }
     const roleCounts = new Map();
     for (const row of rows.filter(row => matches(row, {...state, role: ''}))) {
       const id = roleOf(row).id;
@@ -86,14 +99,22 @@ export function createFilters(rows, onChange) {
       $('selected-functions').append(chip);
     }
     $('match-mode').disabled = state.functions.length < 2;
-    const active = state.search || state.style || state.role || state.assetTag || state.frontage || state.tag || state.site || state.functions.length;
+    const active = state.search || state.style || state.category || state.role || state.assetTag || state.frontage || state.tag || state.site || state.functions.length;
     $('clear-filters').disabled = !active;
     $('filter-status').textContent = active
-      ? `${state.functions.length ? `${state.functions.length} 项用途 · ${state.mode === 'any' ? '任一具备' : '同时具备'}` : '用途不限'}${state.role ? ` · ${roles.find(role => role.id === state.role).label}` : ''}${state.assetTag ? ` · ${assetTags.find(tag => tag.id === state.assetTag).label}` : ''}${state.tag ? ` · 原始标签：${state.tag}` : ''}${state.site ? ' · 检索选址文字' : ''}`
-      : '全部结构 · 可按用途逐层缩小范围';
+      ? `${state.functions.length ? `${state.functions.length} 项用途 · ${state.mode === 'any' ? '任一具备' : '同时具备'}` : '用途不限'}${state.style ? ` · ${state.style}` : ''}${state.category ? ` · ${categories.find(c => c.id === state.category)?.label}` : ''}${state.role ? ` · ${roles.find(role => role.id === state.role)?.label}` : ''}${state.assetTag ? ` · ${assetTags.find(tag => tag.id === state.assetTag)?.label}` : ''}${state.tag ? ` · 原始标签：${state.tag}` : ''}${state.site ? ' · 检索选址文字' : ''}`
+      : '全部结构 · 可按类别、用途逐层缩小范围';
   }
   function update() { refresh(); syncURL(); onChange(); }
   function renderDetails(row) {
+    if ($('category-tags')) {
+      $('category-tags').replaceChildren();
+      const cat = categoryOf(row);
+      const button = textElement('button', cat.label, `path-tag category-${cat.id}`);
+      button.title = '按此类别筛选';
+      button.onclick = () => { state.category = cat.id; update(); };
+      $('category-tags').append(button);
+    }
     $('asset-tags').replaceChildren();
     for (const tag of tagsOf(row)) {
       const button = textElement('button', tag.label, 'path-tag');

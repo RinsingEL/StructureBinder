@@ -8,6 +8,7 @@
     <div class="filter-panel">
       <input id="search" type="search" placeholder="编号、名称、功能；空格分词" aria-label="查找结构">
       <select id="civilization" aria-label="建筑风格"><option value="">全部风格</option></select>
+      <select id="structure-category" aria-label="建筑类别"><option value="">全部建筑类别</option></select>
       <select id="planning-role" aria-label="规划角色"><option value="">全部规划角色</option></select>
       <select id="asset-tag" aria-label="结构标签"><option value="">全部结构标签</option></select>
       <select id="frontage-filter" aria-label="入口标注状态"><option value="">全部入口状态</option><option value="pending">仅待标注／需复核</option><option value="ready">正面配置可导出</option></select>
@@ -57,7 +58,7 @@
       </div>
       <p class="hint">点击入口查看位置与朝向，再指定面向道路的主入口。选择“任一入口”表示建筑没有固定正面。保存后需重新导出素材包；旧图审需重新核对。</p>
     </section>
-    <section class="tag-details"><h2>结构标签</h2><div id="asset-tags"></div><h2>功能标签</h2><div id="function-tags"></div><div class="original-tag-line"><span>原始标记</span><div id="original-tags"></div></div><p id="tag-note" class="hint"></p></section>
+    <section class="tag-details"><h2>建筑类别</h2><div id="category-tags"></div><h2>结构标签</h2><div id="asset-tags"></div><h2>功能标签</h2><div id="function-tags"></div><div class="original-tag-line"><span>原始标记</span><div id="original-tags"></div></div><p id="tag-note" class="hint"></p></section>
     <div class="details"><section><h2>空间与使用点</h2><div id="rooms"></div></section><section><h2>选址与使用条件</h2><div id="terrain"></div><h2 class="recommend-heading">推荐情境 · 不作为准入条件</h2><div id="recommended"></div></section><section><h2>验收进度</h2><div id="checks"></div></section></div>
   </main>
   <script type="module" src="/web/main.js"></script>

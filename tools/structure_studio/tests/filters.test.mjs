@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
-import {functions, describe, matches, readFilters, writeFilters, roleOf, tagsOf} from '../web/functions.js';
+import {functions, describe, matches, readFilters, writeFilters, roleOf, tagsOf, categories, categoryOf} from '../web/functions.js';
 
 const root = fileURLToPath(new URL('../../../asset_catalogs/original_civilizations/', import.meta.url));
 // This regression inventory is the original 12 styles, not a cap on new pools.
@@ -89,12 +89,13 @@ test('unknown author tags remain searchable without inventing a category', () =>
   assert.ok(!matches(row, {functions: ['retail']}));
 });
 test('URL state survives reload and rejects invalid function IDs', () => {
-  const state = {search: '烘焙 商业', style: '蒸汽朋克', role: 'fill', assetTag: 'infrastructure', frontage: 'pending', tag: '零售', site: '入口', functions: ['retail', 'housing.family'], mode: 'any'};
+  const state = {search: '烘焙 商业', style: '蒸汽朋克', category: 'specialty', role: 'fill', assetTag: 'infrastructure', frontage: 'pending', tag: '零售', site: '入口', functions: ['retail', 'housing.family'], mode: 'any'};
   const query = writeFilters(state, 'SR-F01-v01');
   assert.deepEqual(readFilters(query), state);
   assert.equal(new URLSearchParams(query).get('asset'), 'SR-F01-v01');
   assert.deepEqual(readFilters('?functions=retail,missing,retail').functions, ['retail']);
   assert.equal(readFilters('?role=invalid').role, '');
+  assert.equal(readFilters('?category=invalid').category, '');
   assert.equal(readFilters('?assetTag=invalid').assetTag, '');
 });
 
@@ -116,6 +117,21 @@ test('frontage filter includes pending and stale records while intersecting styl
   assert.ok(!matches({civilization: '森林', frontage: {status: 'pending'}}, {style: '沙漠', frontage: 'pending'}));
   assert.ok(matches({frontage: {status: 'ready'}}, {frontage: 'ready'}));
 });
+
+test('structure categories specialty, common, infrastructure, landscape filter accurately', () => {
+  assert.equal(categories.length, 4);
+  assert.equal(categoryOf({id: 'CH-13-v01', civilization: '中式木构'}).id, 'specialty');
+  assert.equal(categoryOf({id: 'EU-01-v01', civilization: '欧洲中世纪新制'}).id, 'specialty');
+  assert.equal(categoryOf({id: 'CH-19-v01', civilization: '中式木构'}).id, 'common');
+  assert.equal(categoryOf({id: 'EU-03-v01', civilization: '欧洲中世纪新制'}).id, 'common');
+  assert.equal(categoryOf({id: 'CH-24-v01', asset_tags: ['infrastructure']}).id, 'infrastructure');
+  assert.equal(categoryOf({id: 'CH-26-v01', asset_tags: ['landscape']}).id, 'landscape');
+
+  const specialtyRow = {id: 'CH-13-v01', civilization: '中式木构'};
+  assert.ok(matches(specialtyRow, {category: 'specialty'}));
+  assert.ok(!matches(specialtyRow, {category: 'common'}));
+});
+
 test('original 12-style inventory is covered without changing author data; real combinations stay precise', () => {
   assert.equal(rows.length, 534);
   const before = JSON.stringify(rows);

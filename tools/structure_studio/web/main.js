@@ -5,7 +5,7 @@ import {createSite} from './site.js';
 import {walkPose} from './walk-pose.js';
 import {groundPlane} from './grounding.js';
 import {createFilters} from './filters.js';
-import {roleOf, tagsOf} from './functions.js';
+import {roleOf, tagsOf, categoryOf} from './functions.js';
 import {createFrontageEditor} from './frontage.js';
 
 const $ = id => document.getElementById(id);
@@ -122,7 +122,10 @@ function populateList() {
   for (const row of filtered) {
     const button = document.createElement('button');
     if (current?.author.id === row.id) button.classList.add('active');
-    const small = document.createElement('small'); small.textContent = `${row.id} · ${row.size.join(' × ')}`;
+    const small = document.createElement('small');
+    const cat = categoryOf(row);
+    const catBadge = document.createElement('span'); catBadge.className = `category-badge category-${cat.id}`; catBadge.textContent = cat.label; small.append(catBadge);
+    small.append(document.createTextNode(` ${row.id} · ${row.size.join(' × ')}`));
     const roleTag = document.createElement('span'); roleTag.className = 'role-badge'; roleTag.textContent = roleOf(row).label; small.append(roleTag);
     for (const tag of tagsOf(row)) {
       const badge = document.createElement('span'); badge.className = 'role-badge'; badge.textContent = tag.label; small.append(badge);

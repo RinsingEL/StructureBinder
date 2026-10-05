@@ -10,6 +10,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 from .model import read_structure, sha256
 from .grounding import resolve_ground_plane
 from .frontage import resolve, save as save_frontage
+from .categories import ACTIVE_CATALOG_DIRS, resolve_category
 
 TOOL = Path(__file__).resolve().parents[1]
 REPO = TOOL.parents[1]
@@ -18,7 +19,15 @@ CATALOG = REPO / "asset_catalogs/original_civilizations"
 
 def asset_paths():
     roots = [CATALOG, TOOL / "fixtures"]
-    return {p.parent.name: p.parent for root in roots for p in root.glob("**/author.json")}
+    paths = {}
+    for root in roots:
+        for p in root.glob("**/author.json"):
+            if root == CATALOG:
+                rel = p.relative_to(CATALOG)
+                if rel.parts[0] not in ACTIVE_CATALOG_DIRS:
+                    continue
+            paths[p.parent.name] = p.parent
+    return paths
 
 
 def catalog():
@@ -26,6 +35,7 @@ def catalog():
     for key, path in sorted(asset_paths().items()):
         meta = json.loads((path / "author.json").read_text(encoding="utf-8"))
         row = {k: meta.get(k) for k in ("id", "name", "family", "civilization", "function_terms", "asset_tags", "terrain", "planning_role", "size", "lifecycle")}
+        row["category"] = resolve_category(meta)
         row["frontage"] = resolve(meta)
         row["grounding"] = resolve_ground_plane(meta)
         rows.append(row)
@@ -49,6 +59,7 @@ class Handler(BaseHTTPRequestHandler):
                 payload["author_sha256"] = hashlib.sha256(author_bytes).hexdigest()
                 payload["frontage"] = resolve(payload["author"], payload["sha256"])
                 payload["grounding"] = resolve_ground_plane(payload["author"], payload["size"])
+                payload["category"] = resolve_category(payload["author"])
                 for kind in ("validation", "review"):
                     if (path / f"{kind}.json").exists():
                         payload[kind] = json.loads((path / f"{kind}.json").read_text(encoding="utf-8"))
