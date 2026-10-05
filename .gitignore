@@ -51,3 +51,6 @@ country_designer_mcp_log.jsonl
 
 /geomantia_harness/node_modules/
 /geomantia_harness/dist/
+
+.DS_Store
+* 2.*
