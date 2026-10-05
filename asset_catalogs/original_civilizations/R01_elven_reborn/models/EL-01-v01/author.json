@@ -1,0 +1,134 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "EL-01-v01",
+  "name": "白枝议庭 · 叶脉穹廊与双层露台",
+  "family": "EL-01",
+  "civilization": "精灵新制",
+  "planning_role": "planning_role.key",
+  "size": [
+    73,
+    69,
+    83
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [
+    {
+      "id": "council",
+      "name": "白枝穹廊",
+      "min": [
+        25,
+        5,
+        34
+      ],
+      "max": [
+        47,
+        20,
+        59
+      ],
+      "purpose": "沿叶脉承重拱肋展开的开放议事厅"
+    },
+    {
+      "id": "balcony",
+      "name": "后部观礼廊",
+      "min": [
+        28,
+        13,
+        62
+      ],
+      "max": [
+        46,
+        18,
+        67
+      ],
+      "purpose": "分叉柱托起的实体上层露台"
+    }
+  ],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        36,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "assembly",
+      "kind": "work",
+      "pos": [
+        36,
+        5,
+        43
+      ],
+      "name": "开敞议事厅中央",
+      "approach": [
+        36,
+        5,
+        43
+      ]
+    },
+    {
+      "id": "upper",
+      "kind": "work",
+      "pos": [
+        36,
+        13,
+        63
+      ],
+      "name": "上层观礼与会谈露台",
+      "approach": [
+        36,
+        13,
+        63
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。",
+    "白石分叉柱沿细長叶脉顶展开；屋顶轮廓、柱距与地坪同为长椭圆组织。",
+    "双门塔、主穹廊、低侧廊与后部实用露台形成四级高差；花木仅作为庭园配景。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "主庭与侧廊",
+      "y": 4,
+      "max_y": 11
+    },
+    {
+      "name": "观礼露台",
+      "y": 12,
+      "max_y": 21
+    }
+  ],
+  "roof_min_y": 24,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "议事",
+    "正式接见"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/elven_revision2.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "fda88fd9f75c3622ceab5056d64dc7989b271c49f0cabd72fd41306418aad140"
+}

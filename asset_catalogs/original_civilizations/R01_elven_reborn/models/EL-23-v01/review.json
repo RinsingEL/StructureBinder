@@ -1,0 +1,25 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "EL-23-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-05 revision2 visual review",
+  "nbt_sha256": "a45df43e787f2e425d6845dc3de04087d1b6f2d770d1775e9c47956edf94c579",
+  "author_sha256": "f557229a2c89ab95f755a86da4a49c7c5a04738cf0b79e4a5a20cfbe7054c982",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png"
+  ],
+  "checks": [
+    "双侧弧线花埠和临水步道形成装卸与停留空间。",
+    "已实际查看所列当前版本视角，并与独立用途、入口和内部组织核对。"
+  ],
+  "revisions": [
+    "重做为分叉柱、曲线叶脊、椭圆地坪和高架桥廊；核心采用独立厅庭组织。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "制作方离线图审；用户尚未确认本轮审美质量。"
+  ]
+}

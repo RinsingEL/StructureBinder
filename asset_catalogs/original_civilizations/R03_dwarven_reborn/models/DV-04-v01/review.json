@@ -1,0 +1,26 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DV-04-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-05 revision2 visual review",
+  "nbt_sha256": "6d5d945f0947a4fae0434236dc094034d25a56ae1cb58435a285dea0044ddb4a",
+  "author_sha256": "3067a04257b67e5d004a050391f5efcc80f233ac78cf2597d192e636080badb3",
+  "evidence": [
+    "previews/front.png",
+    "previews/floor-1.png",
+    "previews/roof-off.png"
+  ],
+  "checks": [
+    "八角阶顶有连续放射石肋；内部四尊祖像围绕祭火，入口在独立台阶轴线上。",
+    "本轮已实际查看所列最终版本视角；数量和数据检测不替代结构外观判断。"
+  ],
+  "revisions": [
+    "替换上一版方房坡顶组合；按厚壁、折角券与外露作业架重做。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "制作方离线图审；用户尚未确认本轮审美质量。"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "EU-18-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-05 revision2 visual review",
+  "nbt_sha256": "ea3ce991c6fe6a624ae461c722caff600ec9100dfee0ce265f2b4860a6b0b4ff",
+  "author_sha256": "0f319b41a5fb26f3d04d95f3eb46db12c438ba8a85af0c23effed2d3ed45b5a9",
+  "evidence": [
+    "previews/front.png",
+    "previews/floor-1.png"
+  ],
+  "checks": [
+    "前店作业桌与后部双圆窑、双烟道组合，烘焙功能可从外部辨认。",
+    "已实际查看所列当前版本视角，并与独立用途、入口和内部组织核对。"
+  ],
+  "revisions": [
+    "重做为圆塔环墙、圆券侧廊、逐层挑楼、三跨木架与用途明确的生产构筑物。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "制作方离线图审；用户尚未确认本轮审美质量。"
+  ]
+}

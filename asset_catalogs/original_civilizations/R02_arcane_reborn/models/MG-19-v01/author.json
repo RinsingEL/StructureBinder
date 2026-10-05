@@ -1,0 +1,112 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-19-v01",
+  "name": "卷轴抄写所 · 连拱采光书廊",
+  "family": "MG-19",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    57,
+    39,
+    45
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [
+    {
+      "id": "cloister",
+      "name": "抄写中廊",
+      "min": [
+        24,
+        2,
+        12
+      ],
+      "max": [
+        32,
+        10,
+        34
+      ],
+      "purpose": "双工作翼之间的连续拱廊"
+    }
+  ],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        28,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "copy_7",
+      "kind": "work",
+      "pos": [
+        15,
+        2,
+        21
+      ],
+      "name": "沿高窗排列的抄写桌",
+      "approach": [
+        15,
+        2,
+        21
+      ]
+    },
+    {
+      "id": "copy_34",
+      "kind": "work",
+      "pos": [
+        42,
+        2,
+        21
+      ],
+      "name": "沿高窗排列的抄写桌",
+      "approach": [
+        42,
+        2,
+        21
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "首层",
+      "y": 1,
+      "max_y": 8
+    }
+  ],
+  "roof_min_y": 15,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "文献抄写",
+    "书籍制作"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "8d68d65e4d11398122a8de601400b3baaaf98fffad2ca70ef11969b72a65a747"
+}

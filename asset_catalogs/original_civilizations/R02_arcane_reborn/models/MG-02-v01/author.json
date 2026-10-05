@@ -1,0 +1,133 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-02-v01",
+  "name": "八瓣藏书馆 · 双层环廊与采光穹顶",
+  "family": "MG-02",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.key",
+  "size": [
+    61,
+    61,
+    65
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [
+    {
+      "id": "reading",
+      "name": "环形阅览厅",
+      "min": [
+        17,
+        2,
+        21
+      ],
+      "max": [
+        43,
+        9,
+        47
+      ],
+      "purpose": "中央采光井与周边阅览座位"
+    },
+    {
+      "id": "gallery",
+      "name": "双层藏书环廊",
+      "min": [
+        13,
+        12,
+        19
+      ],
+      "max": [
+        47,
+        20,
+        49
+      ],
+      "purpose": "围绕挑空中庭的连续藏书层"
+    }
+  ],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        30,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "catalog",
+      "kind": "work",
+      "pos": [
+        30,
+        2,
+        22
+      ],
+      "name": "一层书目检索",
+      "approach": [
+        30,
+        2,
+        22
+      ]
+    },
+    {
+      "id": "upper",
+      "kind": "work",
+      "pos": [
+        44,
+        12,
+        39
+      ],
+      "name": "上层环廊书架",
+      "approach": [
+        44,
+        12,
+        39
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "中央阅览厅",
+      "y": 1,
+      "max_y": 10
+    },
+    {
+      "name": "环形藏书廊",
+      "y": 11,
+      "max_y": 21
+    }
+  ],
+  "roof_min_y": 23,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "书籍借阅",
+    "文献保管",
+    "阅读"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "84fc677af8dfbf65853b1016843cb45f2a7578355f62c8c9e537faa91da6a3e3"
+}

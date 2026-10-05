@@ -1,0 +1,127 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DV-07-v01",
+  "name": "拱券货仓 · 三门石跨与卸货台",
+  "family": "DV-07",
+  "civilization": "矮人新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    55,
+    34,
+    55
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [
+    {
+      "id": "loading",
+      "name": "三门卸货前台",
+      "min": [
+        7,
+        2,
+        7
+      ],
+      "max": [
+        48,
+        7,
+        16
+      ],
+      "purpose": "分别对应三间拱券货仓的装卸面"
+    }
+  ],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        27,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "aisle_6",
+      "kind": "work",
+      "pos": [
+        12,
+        2,
+        32
+      ],
+      "name": "分券货仓主通道",
+      "approach": [
+        12,
+        2,
+        32
+      ]
+    },
+    {
+      "id": "aisle_21",
+      "kind": "work",
+      "pos": [
+        27,
+        2,
+        32
+      ],
+      "name": "分券货仓主通道",
+      "approach": [
+        27,
+        2,
+        32
+      ]
+    },
+    {
+      "id": "aisle_36",
+      "kind": "work",
+      "pos": [
+        42,
+        2,
+        32
+      ],
+      "name": "分券货仓主通道",
+      "approach": [
+        42,
+        2,
+        32
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "首层",
+      "y": 1,
+      "max_y": 8
+    }
+  ],
+  "roof_min_y": 15,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "货物仓储",
+    "装卸"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/dwarven_revision2.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "4a6052a0bc1ea3e572a394eaf44e59974f1b859492a620f0b1e822f6f6f1ab7a"
+}

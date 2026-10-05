@@ -1,0 +1,158 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "EU-13-v01",
+  "name": "修道院 · 圆券四面回廊与独立小堂",
+  "family": "EU-13",
+  "civilization": "欧洲中世纪新制",
+  "planning_role": "planning_role.key",
+  "size": [
+    77,
+    48,
+    79
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [
+    {
+      "id": "cloister",
+      "name": "内院回廊",
+      "min": [
+        25,
+        2,
+        30
+      ],
+      "max": [
+        52,
+        9,
+        56
+      ],
+      "purpose": "连续可行走的四面圆券廊与中央水庭"
+    }
+  ],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        38,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "monk_35",
+      "kind": "bed",
+      "pos": [
+        13,
+        2,
+        35
+      ],
+      "name": "床位",
+      "approach": [
+        14,
+        2,
+        35
+      ]
+    },
+    {
+      "id": "monk_45",
+      "kind": "bed",
+      "pos": [
+        13,
+        2,
+        45
+      ],
+      "name": "床位",
+      "approach": [
+        14,
+        2,
+        45
+      ]
+    },
+    {
+      "id": "monk_57",
+      "kind": "bed",
+      "pos": [
+        13,
+        2,
+        57
+      ],
+      "name": "床位",
+      "approach": [
+        14,
+        2,
+        57
+      ]
+    },
+    {
+      "id": "cloister",
+      "kind": "work",
+      "pos": [
+        29,
+        2,
+        40
+      ],
+      "name": "圆券修道回廊",
+      "approach": [
+        29,
+        2,
+        40
+      ]
+    },
+    {
+      "id": "scriptorium",
+      "kind": "work",
+      "pos": [
+        60,
+        2,
+        41
+      ],
+      "name": "抄写与藏书室",
+      "approach": [
+        60,
+        2,
+        41
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "首层",
+      "y": 1,
+      "max_y": 8
+    }
+  ],
+  "roof_min_y": 15,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "礼仪",
+    "文献保管",
+    "集体居住"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/european_revision2.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "a5a4365c9350a7d260b55830ddaefbc45db641a947d4d043c905bd35041c8098"
+}

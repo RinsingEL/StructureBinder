@@ -1,0 +1,28 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CH-17-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex · 2026-10-05 实际 NBT 看图复核",
+  "nbt_sha256": "46e35fd599a0073c2cbdb7a96e9d0e3d57cc98e3f56fdbd4c222384b1b3cd136",
+  "author_sha256": "c6a8c70a4b7c88fdb7a414baeb24d9bba73cc00475bab4b8e8ee7f3b36665e7d",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/floor-1.png",
+    "previews/room-ancestral_altar.png"
+  ],
+  "checks": [
+    "前议事后祭堂形成主次，谱牒与祭器分房；供案和拜位明确，台阶与侧廊连续。",
+    "已查看列出的实际 NBT 视角；数据与离线碰撞通路通过，无警告。"
+  ],
+  "revisions": [
+    "祭堂供案改深木，牌位后增加赭红背景。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "默认形体首版；并非用户最终审美签收。",
+    "文化身份与用途为空间和静态陈设，不宣称 NPC、演出、行政或宗教机制已实现。"
+  ]
+}

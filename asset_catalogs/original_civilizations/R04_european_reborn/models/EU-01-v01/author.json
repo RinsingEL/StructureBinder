@@ -1,0 +1,188 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "EU-01-v01",
+  "name": "城门主堡 · 圆塔环墙与三层领主楼",
+  "family": "EU-01",
+  "civilization": "欧洲中世纪新制",
+  "planning_role": "planning_role.key",
+  "size": [
+    85,
+    59,
+    87
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [
+    {
+      "id": "hall",
+      "name": "领主楼",
+      "min": [
+        30,
+        2,
+        44
+      ],
+      "max": [
+        54,
+        25,
+        67
+      ],
+      "purpose": "真实三层主楼与瞭望平台"
+    }
+  ],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        42,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "wall",
+      "kind": "work",
+      "pos": [
+        11,
+        13,
+        57
+      ],
+      "name": "环墙巡逻通道",
+      "approach": [
+        11,
+        13,
+        57
+      ]
+    },
+    {
+      "id": "guard_38",
+      "kind": "bed",
+      "pos": [
+        38,
+        2,
+        64
+      ],
+      "name": "床位",
+      "approach": [
+        39,
+        2,
+        64
+      ]
+    },
+    {
+      "id": "guard_46",
+      "kind": "bed",
+      "pos": [
+        46,
+        2,
+        64
+      ],
+      "name": "床位",
+      "approach": [
+        47,
+        2,
+        64
+      ]
+    },
+    {
+      "id": "council",
+      "kind": "work",
+      "pos": [
+        42,
+        10,
+        58
+      ],
+      "name": "领主楼议事层",
+      "approach": [
+        42,
+        10,
+        58
+      ]
+    },
+    {
+      "id": "private",
+      "kind": "work",
+      "pos": [
+        42,
+        18,
+        58
+      ],
+      "name": "上层会见厅",
+      "approach": [
+        42,
+        18,
+        58
+      ]
+    },
+    {
+      "id": "roof",
+      "kind": "work",
+      "pos": [
+        42,
+        27,
+        60
+      ],
+      "name": "主堡瞭望台",
+      "approach": [
+        42,
+        27,
+        60
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "内院驻守",
+      "y": 1,
+      "max_y": 8
+    },
+    {
+      "name": "议事与环墙",
+      "y": 9,
+      "max_y": 16
+    },
+    {
+      "name": "上层会见",
+      "y": 17,
+      "max_y": 25
+    },
+    {
+      "name": "瞭望台",
+      "y": 26,
+      "max_y": 35
+    }
+  ],
+  "roof_min_y": 28,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "防御",
+    "驻守",
+    "议事"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/european_revision2.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "99dfe07ad2009eb6ed35bb303463a51468619601c313d8a50342b6dc34597cb0"
+}

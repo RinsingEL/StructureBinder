@@ -1,0 +1,48 @@
+{
+  "schema": "structure-studio.validation.v1",
+  "nbt_sha256": "56e5865bc152cab154e044a154a97847c8c1e1a8ee796a4622d9696f2c45eea6",
+  "navigation": {
+    "passed": true,
+    "unreachable": [],
+    "nodes": 6123,
+    "highest_standing_y": 4.5625,
+    "truncated": false,
+    "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "size": [
+    39,
+    43,
+    49
+  ],
+  "visible_blocks": 6950,
+  "explicit_air": 75223,
+  "palette": 23,
+  "block_entities": 4,
+  "agriculture": null,
+  "materials": {
+    "minecraft:stone": 1911,
+    "minecraft:grass_block": 1152,
+    "minecraft:waxed_oxidized_cut_copper": 1037,
+    "minecraft:smooth_quartz": 940,
+    "minecraft:polished_diorite": 693,
+    "minecraft:birch_planks": 681,
+    "minecraft:light_blue_stained_glass": 466,
+    "minecraft:quartz_pillar": 29,
+    "minecraft:end_rod": 10,
+    "minecraft:birch_stairs": 6,
+    "minecraft:birch_slab": 6,
+    "minecraft:white_bed": 4,
+    "minecraft:quartz_stairs": 3,
+    "minecraft:moss_block": 2,
+    "minecraft:flowering_azalea": 2,
+    "minecraft:birch_fence": 2,
+    "minecraft:barrel": 2,
+    "minecraft:lantern": 2,
+    "minecraft:smoker": 1,
+    "minecraft:water_cauldron": 1
+  },
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+}

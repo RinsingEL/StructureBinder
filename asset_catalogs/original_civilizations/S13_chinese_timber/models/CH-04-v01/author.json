@@ -1,0 +1,182 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CH-04-v01",
+  "name": "中式通用店铺 · 前廊后仓",
+  "family": "CH-04",
+  "civilization": "中式木构",
+  "planning_role": "planning_role.fill",
+  "size": [
+    29,
+    23,
+    27
+  ],
+  "terrain": {
+    "选址": "完整稳定平地，外部路面脚底与本地 Y=2 对齐；保留全尺寸院落和檐口净空。",
+    "供给": "有人居住，需生活饮水、食物与燃料；园艺用水另行接入。",
+    "推荐情境": [
+      "城镇核心院落或独立街区"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "sales",
+      "name": "前堂售卖",
+      "min": [
+        6,
+        3,
+        8
+      ],
+      "max": [
+        22,
+        6,
+        16
+      ],
+      "purpose": "陈列、柜台和顾客通道"
+    },
+    {
+      "id": "stock",
+      "name": "后仓备货",
+      "min": [
+        6,
+        3,
+        18
+      ],
+      "max": [
+        22,
+        6,
+        21
+      ],
+      "purpose": "独立侧门收货、暂存"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        14,
+        2,
+        0
+      ],
+      "name": "外部步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "customer",
+      "kind": "circulation",
+      "pos": [
+        13,
+        3,
+        8
+      ],
+      "name": "室内入口通路",
+      "facing": "north"
+    },
+    {
+      "id": "delivery",
+      "kind": "circulation",
+      "pos": [
+        22,
+        3,
+        19
+      ],
+      "name": "室内入口通路",
+      "facing": "east"
+    },
+    {
+      "id": "counter",
+      "kind": "work",
+      "pos": [
+        10,
+        3,
+        14
+      ],
+      "name": "收款与交付",
+      "look_at": [
+        10,
+        4,
+        14
+      ],
+      "approach": [
+        10,
+        3,
+        15
+      ]
+    },
+    {
+      "id": "stock_check",
+      "kind": "storage",
+      "pos": [
+        17,
+        3,
+        20
+      ],
+      "name": "备货清点",
+      "look_at": [
+        17,
+        4,
+        20
+      ],
+      "approach": [
+        17,
+        3,
+        21
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "日常木构沿用灰瓦、浅墙、门廊和石基；具体功能由实际空间及设施表达。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "院落与室内剖面",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/chinese_daily.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部街面和院落地坪顶面为 Y=2；建筑室内由明确台阶抬高。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "零售",
+    "货物仓储"
+  ],
+  "asset_tags": [],
+  "authoring_parts": [
+    {
+      "id": "goods",
+      "prototype": "MOCK-S13-04",
+      "min": [
+        6,
+        3,
+        8
+      ],
+      "max": [
+        22,
+        5,
+        21
+      ],
+      "configuration": {
+        "goods": "general"
+      },
+      "scope": "作者源码局部重建配置，不是 City 运行时字段"
+    }
+  ],
+  "nbt_sha256": "bd5b8a7ce4f46b8eb9498ca5fd02e62e09bb9bd68fca69ab5912eb7b6176ff53"
+}

@@ -1,0 +1,25 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "EU-09-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-05 revision2 visual review",
+  "nbt_sha256": "c5ad007a1263db1f2a31143cf17a53272c5e86e2fe082410fdeaff7b3767e600",
+  "author_sha256": "575402a034ffefb55bade69ccbd143bc4f19486c24d8de94813822d960dbc4af",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png"
+  ],
+  "checks": [
+    "双悬灯笼以木柱、连续斜撑和横梁支承，修复原栅栏构件断续问题。",
+    "已实际查看所列当前版本视角，并与独立用途、入口和内部组织核对。"
+  ],
+  "revisions": [
+    "重做为圆塔环墙、圆券侧廊、逐层挑楼、三跨木架与用途明确的生产构筑物。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "制作方离线图审；用户尚未确认本轮审美质量。"
+  ]
+}

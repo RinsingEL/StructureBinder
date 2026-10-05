@@ -25,7 +25,7 @@ def catalog():
     rows = []
     for key, path in sorted(asset_paths().items()):
         meta = json.loads((path / "author.json").read_text(encoding="utf-8"))
-        row = {k: meta.get(k) for k in ("id", "name", "family", "civilization", "function_terms", "terrain", "planning_role", "size", "lifecycle")}
+        row = {k: meta.get(k) for k in ("id", "name", "family", "civilization", "function_terms", "asset_tags", "terrain", "planning_role", "size", "lifecycle")}
         row["frontage"] = resolve(meta)
         row["grounding"] = resolve_ground_plane(meta)
         rows.append(row)

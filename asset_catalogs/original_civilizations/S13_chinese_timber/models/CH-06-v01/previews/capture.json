@@ -1,0 +1,27 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "CH-06-v01",
+  "nbt_sha256": "99e093466474424c3cc87322cdaecab780406767849d6b7326d963a05c90351a",
+  "author_sha256": "5ac95e6b6b7c330da03c3e3e95e8f6f716d0eec84e82ed587ed98662a15031a2",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-work",
+    "room-yard",
+    "point-work_entry",
+    "point-bench_10",
+    "point-bench_16",
+    "point-bench_22",
+    "point-repair",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

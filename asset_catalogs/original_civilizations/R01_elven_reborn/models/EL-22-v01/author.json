@@ -1,0 +1,82 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "EL-22-v01",
+  "name": "林门与步廊 · 双白枝塔及三瓣门拱",
+  "family": "EL-22",
+  "civilization": "精灵新制",
+  "planning_role": "planning_role.structure",
+  "size": [
+    57,
+    59,
+    37
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        28,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "passage",
+      "kind": "work",
+      "pos": [
+        28,
+        2,
+        21
+      ],
+      "name": "三瓣门拱下通路",
+      "approach": [
+        28,
+        2,
+        21
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "首层",
+      "y": 1,
+      "max_y": 8
+    }
+  ],
+  "roof_min_y": 51,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "出入通行"
+  ],
+  "asset_tags": [
+    "infrastructure"
+  ],
+  "source": "tools/structure_studio/studio/elven_revision2.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "fd7bd03eea02a9c1643b8aaeb2b77fbb5e1f3641cd589e847e648e622e1e753c"
+}

@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
-import {functions, describe, matches, readFilters, writeFilters, roleOf} from '../web/functions.js';
+import {functions, describe, matches, readFilters, writeFilters, roleOf, tagsOf} from '../web/functions.js';
 
 const root = fileURLToPath(new URL('../../../asset_catalogs/original_civilizations/', import.meta.url));
-const rows = fs.readdirSync(root, {withFileTypes: true}).filter(d => d.isDirectory()).flatMap(style => {
+// This regression inventory is the original 12 styles, not a cap on new pools.
+const rows = fs.readdirSync(root, {withFileTypes: true}).filter(d => d.isDirectory() && /^\d{2}_/.test(d.name)).flatMap(style => {
   const models = path.join(root, style.name, 'models');
   if (!fs.existsSync(models)) return [];
   return fs.readdirSync(models, {withFileTypes: true}).filter(d => d.isDirectory()).flatMap(model => {
@@ -88,12 +89,23 @@ test('unknown author tags remain searchable without inventing a category', () =>
   assert.ok(!matches(row, {functions: ['retail']}));
 });
 test('URL state survives reload and rejects invalid function IDs', () => {
-  const state = {search: '烘焙 商业', style: '蒸汽朋克', role: 'fill', frontage: 'pending', tag: '零售', site: '入口', functions: ['retail', 'housing.family'], mode: 'any'};
+  const state = {search: '烘焙 商业', style: '蒸汽朋克', role: 'fill', assetTag: 'infrastructure', frontage: 'pending', tag: '零售', site: '入口', functions: ['retail', 'housing.family'], mode: 'any'};
   const query = writeFilters(state, 'SR-F01-v01');
   assert.deepEqual(readFilters(query), state);
   assert.equal(new URLSearchParams(query).get('asset'), 'SR-F01-v01');
   assert.deepEqual(readFilters('?functions=retail,missing,retail').functions, ['retail']);
   assert.equal(readFilters('?role=invalid').role, '');
+  assert.equal(readFilters('?assetTag=invalid').assetTag, '');
+});
+
+test('landscape and infrastructure are explicit tags independent of cultural role', () => {
+  const garden = {civilization: '中式木构', planning_role: 'planning_role.key', asset_tags: ['landscape'], function_terms: ['游赏']};
+  assert.ok(matches(garden, {role: 'core', assetTag: 'landscape', style: '中式木构'}));
+  assert.ok(matches(garden, {search: '景观 中式'}));
+  assert.ok(!matches(garden, {assetTag: 'infrastructure'}));
+  assert.ok(!matches({name: '景观园林', planning_role: 'planning_role.key'}, {assetTag: 'landscape'}));
+  assert.deepEqual(tagsOf({asset_tags: ['landscape', 'infrastructure']}).map(t => t.id), ['infrastructure', 'landscape']);
+  assert.deepEqual(tagsOf({asset_tags: null}), []);
 });
 
 test('frontage filter includes pending and stale records while intersecting style', () => {
@@ -104,7 +116,7 @@ test('frontage filter includes pending and stale records while intersecting styl
   assert.ok(!matches({civilization: '森林', frontage: {status: 'pending'}}, {style: '沙漠', frontage: 'pending'}));
   assert.ok(matches({frontage: {status: 'ready'}}, {frontage: 'ready'}));
 });
-test('all current assets are covered without changing author data; real combinations stay precise', () => {
+test('original 12-style inventory is covered without changing author data; real combinations stay precise', () => {
   assert.equal(rows.length, 534);
   const before = JSON.stringify(rows);
   assert.deepEqual([...new Set(rows.flatMap(row => describe(row).unmapped))], []);

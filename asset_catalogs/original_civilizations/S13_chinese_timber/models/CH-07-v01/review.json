@@ -1,0 +1,22 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CH-07-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex actual NBT image review 2026-10-05",
+  "nbt_sha256": "e8bc5f92bfcd1840c324fc65deea0574974b8e99cf9924500fcfa5bf32ba7dd5",
+  "author_sha256": "c868f75e8c38d4939c8845a044b4123c7beb4cfc9dfeb4deeaa6e38741747173",
+  "evidence": [
+    "previews/front.png",
+    "previews/floor-1.png"
+  ],
+  "checks": [
+    "双开间货仓配门廊和多组货架，中央理货通道连续。",
+    "最终 NBT 数据、离线通路和截图渲染检查通过。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MG-18-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-05 revision2 visual review",
+  "nbt_sha256": "37102e27c7a584009689244d888fe77205fc2906404ac2063821367de92c0161",
+  "author_sha256": "512515dcd8daf72eae8e69fc80f3eb9b439dd0958bc78e7e22762584de367e2e",
+  "evidence": [
+    "previews/front.png",
+    "previews/floor-1.png"
+  ],
+  "checks": [
+    "高低错位的实验工间、冷却烟塔和配制桌构成不同生产区域。",
+    "已实际查看所列当前版本视角，并与独立用途、入口和内部组织核对。"
+  ],
+  "revisions": [
+    "从旧简单塔房组合重做为高窗中殿、横肋、飞扶壁、环廊和独立实验构架。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "制作方离线图审；用户尚未确认本轮审美质量。"
+  ]
+}

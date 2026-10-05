@@ -2,9 +2,10 @@ import {BlockDefinition, BlockModel, BlockState, NbtTag, Structure, StructureRen
 import {mat4, vec4} from 'gl-matrix';
 import './style.css';
 import {createSite} from './site.js';
+import {walkPose} from './walk-pose.js';
 import {groundPlane} from './grounding.js';
 import {createFilters} from './filters.js';
-import {roleOf} from './functions.js';
+import {roleOf, tagsOf} from './functions.js';
 import {createFrontageEditor} from './frontage.js';
 
 const $ = id => document.getElementById(id);
@@ -123,6 +124,9 @@ function populateList() {
     if (current?.author.id === row.id) button.classList.add('active');
     const small = document.createElement('small'); small.textContent = `${row.id} · ${row.size.join(' × ')}`;
     const roleTag = document.createElement('span'); roleTag.className = 'role-badge'; roleTag.textContent = roleOf(row).label; small.append(roleTag);
+    for (const tag of tagsOf(row)) {
+      const badge = document.createElement('span'); badge.className = 'role-badge'; badge.textContent = tag.label; small.append(badge);
+    }
     if (row.frontage?.status !== 'ready') {
       const badge = document.createElement('span'); badge.className = 'role-badge warning'; badge.textContent = '入口待核对'; small.append(badge);
     }
@@ -272,11 +276,7 @@ function showContext(value) {
 function enterWalk(point) {
   reset(false);updateGeometry();walk=true;$('walk').classList.add('selected');
   point=point??current.author.points.find(p=>p.kind==='entrance');
-  const p=point?.approach??point?.pos??[current.size[0]/2,2,current.size[2]-2];
-  eye=[p[0]+.5,p[1]+1.62,p[2]+.5];
-  yaw={north:0,south:Math.PI,east:-Math.PI/2,west:Math.PI/2}[point?.facing]??0;pitch=0;
-  const focus=point?.look_at??(point?.approach?point.pos:undefined);
-  if(focus) {const dx=focus[0]+.5-eye[0],dy=focus[1]+.5-eye[1],dz=focus[2]+.5-eye[2];yaw=Math.atan2(dx,dz);pitch=Math.atan2(dy,Math.hypot(dx,dz));}
+  ({eye,yaw,pitch}=walkPose(point,current.size));
   renderer.setViewport(0,0,canvas.width,canvas.height);
   $('view-note').textContent='拖动转头 · W A S D 移动 · Q E 升降 · 漫游不模拟碰撞';draw();
 }

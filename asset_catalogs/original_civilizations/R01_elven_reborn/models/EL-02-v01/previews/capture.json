@@ -1,0 +1,22 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "EL-02-v01",
+  "nbt_sha256": "198d834cc680e648290e4f0e278f4d0ff8dd3f73289fa452206dfa63721c42a3",
+  "author_sha256": "988dca1d644454a58934d14443ecae38800bc4efd9692613acfef8c642154dcb",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-moonwell",
+    "point-moon",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

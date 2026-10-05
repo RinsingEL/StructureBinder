@@ -1,0 +1,20 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "CH-28-v01",
+  "nbt_sha256": "81634c073809f42c24d4f27484400827d96af3dd6a698cf2b4df0897846d77a1",
+  "author_sha256": "81921d8959cda9d050d2cd90e02f49429d2102c1585c881733b9a7cc79ab6d65",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "point-garden_seat",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

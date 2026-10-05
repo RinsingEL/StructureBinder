@@ -1,0 +1,26 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MG-02-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-05 revision2 visual review",
+  "nbt_sha256": "84fc677af8dfbf65853b1016843cb45f2a7578355f62c8c9e537faa91da6a3e3",
+  "author_sha256": "203bbbadae42b8123c9784e86daebd37aa74ff59fdda316cb42f553e17ff6fd4",
+  "evidence": [
+    "previews/front.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png"
+  ],
+  "checks": [
+    "八角图书馆有中央挑空采光井、双层环廊及四角小塔；书架与阅览席分列。",
+    "已实际查看所列当前版本视角，并与独立用途、入口和内部组织核对。"
+  ],
+  "revisions": [
+    "从旧简单塔房组合重做为高窗中殿、横肋、飞扶壁、环廊和独立实验构架。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "制作方离线图审；用户尚未确认本轮审美质量。"
+  ]
+}

@@ -1,0 +1,471 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CH-19-v01",
+  "name": "中式衙署 · 公堂文署",
+  "family": "CH-19",
+  "civilization": "中式木构",
+  "planning_role": "planning_role.key",
+  "size": [
+    55,
+    23,
+    63
+  ],
+  "terrain": {
+    "选址": "完整稳定平地，外部路面脚底与本地 Y=2 对齐；保留全尺寸院落和檐口净空。",
+    "供给": "需维护、照明与清洁用水；驻留人员的食物和饮水由所在聚落提供。",
+    "推荐情境": [
+      "城镇核心院落或独立街区"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "public_office",
+      "name": "西办事房：递交与登记",
+      "min": [
+        6,
+        3,
+        19
+      ],
+      "max": [
+        12,
+        7,
+        30
+      ],
+      "purpose": "西办事房：递交与登记"
+    },
+    {
+      "id": "waiting",
+      "name": "东等候房：公告与等候",
+      "min": [
+        42,
+        3,
+        19
+      ],
+      "max": [
+        48,
+        7,
+        30
+      ],
+      "purpose": "东等候房：公告与等候"
+    },
+    {
+      "id": "court",
+      "name": "公堂：公务会商与正式受理",
+      "min": [
+        19,
+        4,
+        29
+      ],
+      "max": [
+        35,
+        9,
+        38
+      ],
+      "purpose": "公堂：公务会商与正式受理"
+    },
+    {
+      "id": "archives",
+      "name": "西后档案库：分类架与查阅",
+      "min": [
+        6,
+        3,
+        44
+      ],
+      "max": [
+        12,
+        7,
+        54
+      ],
+      "purpose": "西后档案库：分类架与查阅"
+    },
+    {
+      "id": "administration",
+      "name": "后文署：公务书写",
+      "min": [
+        21,
+        3,
+        48
+      ],
+      "max": [
+        33,
+        7,
+        56
+      ],
+      "purpose": "后文署：公务书写"
+    },
+    {
+      "id": "duty_room",
+      "name": "东后值房：值守与休息",
+      "min": [
+        42,
+        3,
+        44
+      ],
+      "max": [
+        48,
+        7,
+        54
+      ],
+      "purpose": "东后值房：值守与休息"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        27,
+        2,
+        0
+      ],
+      "name": "正门外部街面",
+      "facing": "north"
+    },
+    {
+      "id": "gate_path",
+      "kind": "circulation",
+      "pos": [
+        27,
+        2,
+        7
+      ],
+      "name": "正门贯通通道"
+    },
+    {
+      "id": "public_office_door",
+      "kind": "circulation",
+      "pos": [
+        12,
+        3,
+        24
+      ],
+      "name": "室内入口通路",
+      "facing": "east"
+    },
+    {
+      "id": "public_desk_20",
+      "kind": "work",
+      "pos": [
+        7,
+        3,
+        20
+      ],
+      "name": "文书受理",
+      "look_at": [
+        7,
+        4,
+        20
+      ],
+      "approach": [
+        7,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "public_desk_27",
+      "kind": "work",
+      "pos": [
+        7,
+        3,
+        27
+      ],
+      "name": "文书受理",
+      "look_at": [
+        7,
+        4,
+        27
+      ],
+      "approach": [
+        7,
+        3,
+        28
+      ]
+    },
+    {
+      "id": "waiting_door",
+      "kind": "circulation",
+      "pos": [
+        42,
+        3,
+        24
+      ],
+      "name": "室内入口通路",
+      "facing": "west"
+    },
+    {
+      "id": "notice_desk",
+      "kind": "work",
+      "pos": [
+        43,
+        3,
+        29
+      ],
+      "name": "公告与办事指引",
+      "look_at": [
+        43,
+        4,
+        29
+      ],
+      "approach": [
+        43,
+        3,
+        30
+      ]
+    },
+    {
+      "id": "court_door",
+      "kind": "circulation",
+      "pos": [
+        26,
+        4,
+        29
+      ],
+      "name": "室内入口通路",
+      "facing": "north"
+    },
+    {
+      "id": "court_back",
+      "kind": "circulation",
+      "pos": [
+        33,
+        4,
+        38
+      ],
+      "name": "室内入口通路",
+      "facing": "south"
+    },
+    {
+      "id": "official_desk",
+      "kind": "work",
+      "pos": [
+        27,
+        4,
+        36
+      ],
+      "name": "公堂案桌",
+      "look_at": [
+        27,
+        5,
+        36
+      ],
+      "approach": [
+        27,
+        4,
+        37
+      ]
+    },
+    {
+      "id": "archives_door",
+      "kind": "circulation",
+      "pos": [
+        12,
+        3,
+        48
+      ],
+      "name": "室内入口通路",
+      "facing": "east"
+    },
+    {
+      "id": "archive_register",
+      "kind": "work",
+      "pos": [
+        7,
+        3,
+        47
+      ],
+      "name": "档案检索登记",
+      "look_at": [
+        7,
+        4,
+        47
+      ],
+      "approach": [
+        7,
+        3,
+        48
+      ]
+    },
+    {
+      "id": "administration_door",
+      "kind": "circulation",
+      "pos": [
+        27,
+        3,
+        48
+      ],
+      "name": "室内入口通路",
+      "facing": "north"
+    },
+    {
+      "id": "clerk_23_49",
+      "kind": "work",
+      "pos": [
+        23,
+        3,
+        49
+      ],
+      "name": "文署书案",
+      "look_at": [
+        23,
+        4,
+        49
+      ],
+      "approach": [
+        23,
+        3,
+        50
+      ]
+    },
+    {
+      "id": "clerk_23_53",
+      "kind": "work",
+      "pos": [
+        23,
+        3,
+        53
+      ],
+      "name": "文署书案",
+      "look_at": [
+        23,
+        4,
+        53
+      ],
+      "approach": [
+        23,
+        3,
+        54
+      ]
+    },
+    {
+      "id": "clerk_30_49",
+      "kind": "work",
+      "pos": [
+        30,
+        3,
+        49
+      ],
+      "name": "文署书案",
+      "look_at": [
+        30,
+        4,
+        49
+      ],
+      "approach": [
+        30,
+        3,
+        50
+      ]
+    },
+    {
+      "id": "clerk_30_53",
+      "kind": "work",
+      "pos": [
+        30,
+        3,
+        53
+      ],
+      "name": "文署书案",
+      "look_at": [
+        30,
+        4,
+        53
+      ],
+      "approach": [
+        30,
+        3,
+        54
+      ]
+    },
+    {
+      "id": "duty_room_door",
+      "kind": "circulation",
+      "pos": [
+        42,
+        3,
+        48
+      ],
+      "name": "室内入口通路",
+      "facing": "west"
+    },
+    {
+      "id": "duty_bed",
+      "kind": "bed",
+      "pos": [
+        44,
+        3,
+        53
+      ],
+      "name": "床位",
+      "look_at": [
+        44,
+        3,
+        52
+      ],
+      "approach": [
+        45,
+        3,
+        53
+      ]
+    },
+    {
+      "id": "duty_wash",
+      "kind": "work",
+      "pos": [
+        43,
+        3,
+        44
+      ],
+      "name": "洗漱与取水",
+      "look_at": [
+        43,
+        4,
+        44
+      ],
+      "approach": [
+        43,
+        3,
+        45
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "文化核心指中式文化代表性；功能区主次与重复布置方式由具体规划决定。",
+    "独立设计的游戏建筑，不绑定特定朝代、地域或宗派。",
+    "灰瓦、浅墙、深木构延续用户参考；设施表达空间用途，不声明 NPC 行为。"
+  ],
+  "differences": [
+    "影壁分流入口，前部办事与等候、公堂居中、后部文署与档案库采用侧路连接。"
+  ],
+  "floors": [
+    {
+      "name": "院落与室内剖面",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/chinese_culture.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部街面和院落地坪顶面为 Y=2；建筑室内由明确台阶抬高。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "政务办理",
+    "公务议事",
+    "档案保管"
+  ],
+  "nbt_sha256": "c5c7795b91514c0569c986e161cc28170584fc51e88f6d99edd3d930207b83b7"
+}

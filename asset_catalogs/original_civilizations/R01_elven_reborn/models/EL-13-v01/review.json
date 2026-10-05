@@ -1,0 +1,27 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "EL-13-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-05 revision2 visual review",
+  "nbt_sha256": "c1108f6642d47fc41cfa365f40515a644376dab091164e4c2563d560219c70ca",
+  "author_sha256": "436b5eb50091f01719d2d39a0800bf113489f6b2a84c7a1c4fd802e06175a35a",
+  "evidence": [
+    "previews/front.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/roof-off.png"
+  ],
+  "checks": [
+    "高大主厅、左右叶顶翼与后部观礼廊形成王庭等级；高层露台具有真实楼板。",
+    "已实际查看所列当前版本视角，并与独立用途、入口和内部组织核对。"
+  ],
+  "revisions": [
+    "重做为分叉柱、曲线叶脊、椭圆地坪和高架桥廊；核心采用独立厅庭组织。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "制作方离线图审；用户尚未确认本轮审美质量。"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CH-13-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex actual NBT visual review 2026-10-05",
+  "nbt_sha256": "2cd57abe870eb2d19f934cfc2d8ac578778bc34b14a723d142ca389902c5ae0b",
+  "author_sha256": "d1d20833256739a89b8579ca97b80bd27bd1642ec96e8224145c303de1160ab3",
+  "evidence": [
+    "previews/front.png",
+    "previews/front-detail.png",
+    "previews/back-detail.png",
+    "previews/room-audience.png",
+    "previews/hall-interior.png",
+    "previews/long-section.png",
+    "previews/point-front_terrace.png",
+    "previews/point-ceremonial_seat.png",
+    "previews/floor-1.png",
+    "previews/room-private_2.png",
+    "previews/room-palace_kitchen.png"
+  ],
+  "checks": [
+    "实际查看正背面及中轴剖面：宽宫门、高台正殿和低侧殿形成主次；重檐由四坡屋面及低墙带衔接，无悬空檐层。",
+    "实际查看正殿去顶及低位切片：柱梁跨接墙体，主位台与中央通道清晰，殿前柱廊和宽阶有连续落脚面；主厅为高挑单层。",
+    "实际查看全院切片、后寝和膳房：内廷门分隔前朝后寝，寝居、起居、备膳及后勤用途保留。",
+    "本次共 52 张最终 NBT 截图，无缺失纹理或渲染错误；离线数据与通路验证通过，零警告。"
+  ],
+  "revisions": [
+    "第一轮图审后压低重檐之间墙带，扩大四坡屋檐并增加殿前柱廊，改善楼式高箱体观感。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "主位、礼仪陈设和内廷用途为作者静态设计；当前没有礼仪或 NPC 活动行为。"
+  ]
+}

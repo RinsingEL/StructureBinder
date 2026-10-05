@@ -1,0 +1,21 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CH-22-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex actual NBT image review 2026-10-05",
+  "nbt_sha256": "9a85e5e30077b064a165b522f0c4c963b24d089639311729c793ff58f4b36ee8",
+  "author_sha256": "ae933699a5dfd47b93516e0858c1bf91df4e0e46644858d28e4557be8aec7070",
+  "evidence": [
+    "previews/front.png"
+  ],
+  "checks": [
+    "原有园林几何保留，新增景观标签；重新截图绑定当前作者哈希。",
+    "最终 NBT 数据、离线通路和截图渲染检查通过。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

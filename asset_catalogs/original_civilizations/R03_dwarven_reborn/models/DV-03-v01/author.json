@@ -1,0 +1,132 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DV-03-v01",
+  "name": "竖井矿业会堂 · 围井调度与双层验矿廊",
+  "family": "DV-03",
+  "civilization": "矮人新制",
+  "planning_role": "planning_role.key",
+  "size": [
+    69,
+    54,
+    73
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [
+    {
+      "id": "shaft",
+      "name": "围井调度厅",
+      "min": [
+        20,
+        2,
+        29
+      ],
+      "max": [
+        48,
+        15,
+        57
+      ],
+      "purpose": "中央围井与左右上层验矿廊"
+    }
+  ],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        34,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "gallery_15",
+      "kind": "work",
+      "pos": [
+        19,
+        11,
+        43
+      ],
+      "name": "验矿与矿具上廊",
+      "approach": [
+        19,
+        11,
+        43
+      ]
+    },
+    {
+      "id": "gallery_45",
+      "kind": "work",
+      "pos": [
+        49,
+        11,
+        43
+      ],
+      "name": "验矿与矿具上廊",
+      "approach": [
+        49,
+        11,
+        43
+      ]
+    },
+    {
+      "id": "dispatch",
+      "kind": "work",
+      "pos": [
+        34,
+        2,
+        30
+      ],
+      "name": "井前调度",
+      "approach": [
+        34,
+        2,
+        30
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "围井大厅",
+      "y": 1,
+      "max_y": 9
+    },
+    {
+      "name": "验矿上廊",
+      "y": 10,
+      "max_y": 17
+    }
+  ],
+  "roof_min_y": 24,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "矿业管理",
+    "矿料检验"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/dwarven_revision2.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "ea44957113723d3739fe039c5b5812bab429461faf35695412b0ec7a22bbc9a5"
+}

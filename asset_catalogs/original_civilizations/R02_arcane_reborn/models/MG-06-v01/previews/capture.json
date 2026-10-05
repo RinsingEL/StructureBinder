@@ -1,0 +1,23 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "MG-06-v01",
+  "nbt_sha256": "950a1b5c37250f646f3bd0cbec1663193d0c950014994dcbbc2fc91b6442a03a",
+  "author_sha256": "74ba68c2601dd174ae0cbbe97182b354cafc22ff5dfbad31bc3b6767ee415110",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-sales",
+    "point-retail",
+    "point-stock",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

@@ -1,0 +1,137 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "EU-05-v01",
+  "name": "挑楼街屋 · 窄面三层与逐级出挑",
+  "family": "EU-05",
+  "civilization": "欧洲中世纪新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    35,
+    43,
+    47
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [
+    {
+      "id": "home",
+      "name": "逐层挑楼",
+      "min": [
+        11,
+        2,
+        14
+      ],
+      "max": [
+        23,
+        21,
+        34
+      ],
+      "purpose": "真实三层窄面住宅与两段室内楼梯"
+    }
+  ],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        17,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "bed1",
+      "kind": "bed",
+      "pos": [
+        16,
+        9,
+        32
+      ],
+      "name": "床位",
+      "approach": [
+        17,
+        9,
+        32
+      ]
+    },
+    {
+      "id": "bed2",
+      "kind": "bed",
+      "pos": [
+        16,
+        16,
+        31
+      ],
+      "name": "床位",
+      "approach": [
+        17,
+        16,
+        31
+      ]
+    },
+    {
+      "id": "home",
+      "kind": "work",
+      "pos": [
+        17,
+        2,
+        19
+      ],
+      "name": "街屋起居厅",
+      "approach": [
+        17,
+        2,
+        19
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "起居层",
+      "y": 1,
+      "max_y": 7
+    },
+    {
+      "name": "二层卧室",
+      "y": 8,
+      "max_y": 14
+    },
+    {
+      "name": "三层卧室",
+      "y": 15,
+      "max_y": 22
+    }
+  ],
+  "roof_min_y": 23,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "居住",
+    "家庭生活"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/european_revision2.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "b475187f81b5b4381e901537277cd3e0267f1bf1d7e849457e19c34404f7b2f8"
+}

@@ -1,0 +1,84 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CH-24-v01",
+  "name": "中式石拱桥 · 双岸踏步",
+  "family": "CH-24",
+  "civilization": "中式木构",
+  "planning_role": "planning_role.structure",
+  "size": [
+    19,
+    17,
+    39
+  ],
+  "terrain": {
+    "选址": "完整稳定平地，外部路面脚底与本地 Y=2 对齐；保留全尺寸院落和檐口净空。",
+    "供给": "有人居住，需生活饮水、食物与燃料；园艺用水另行接入。",
+    "推荐情境": [
+      "城镇核心院落或独立街区"
+    ]
+  },
+  "rooms": [],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        9,
+        2,
+        0
+      ],
+      "name": "外部步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "bridge_crown",
+      "kind": "circulation",
+      "pos": [
+        9,
+        7,
+        19
+      ],
+      "name": "拱桥桥顶"
+    },
+    {
+      "id": "far_bank",
+      "kind": "circulation",
+      "pos": [
+        9,
+        2,
+        36
+      ],
+      "name": "另一岸连接点"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "桥面两岸 Y=2，五级踏步升到 Y=7；栏杆连续。自带封闭水渠仅作摆放示意，未验证船舶净空与真实河道衔接。"
+  ],
+  "differences": [],
+  "floors": [],
+  "roof_min_y": null,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/chinese_daily.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部街面和院落地坪顶面为 Y=2；建筑室内由明确台阶抬高。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "步行过桥"
+  ],
+  "asset_tags": [
+    "infrastructure"
+  ],
+  "nbt_sha256": "3ba8aba31b46bff5786b589d800dd71634f6bbb0bebe6f0ed8b4c61af298d5d7"
+}

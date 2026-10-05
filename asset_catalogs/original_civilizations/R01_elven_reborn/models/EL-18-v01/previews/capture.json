@@ -1,0 +1,23 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "EL-18-v01",
+  "nbt_sha256": "5d97d6adfbf951e019d0edbe5abc52c44f9cf649424ffb7f9dc965e8e406b810",
+  "author_sha256": "552b99b3a9e4b0a6c7a5d7b5e780817233d918faa79d5bb4bcebf2ba26d08570",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-pergola",
+    "point-ferment_18",
+    "point-ferment_43",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

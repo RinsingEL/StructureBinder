@@ -1,0 +1,22 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CH-25-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex actual NBT image review 2026-10-05",
+  "nbt_sha256": "038d0d17820d9d1ae1645132bb8f290e04e3ed5f5e770308b2350a8e03524d27",
+  "author_sha256": "ff14cce5d1c163d7cb88ac1c73f9f76d14b16960d6fc609ea18345c7c9734a97",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png"
+  ],
+  "checks": [
+    "候船房、货棚和带桩脚的 L 形栈桥构成河埠；登船站位已核对。",
+    "最终 NBT 数据、离线通路和截图渲染检查通过。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

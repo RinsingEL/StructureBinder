@@ -10,6 +10,10 @@ const meanings = new WeakMap();
 export const roles = taxonomy.roles;
 export function roleOf(row) { return roles.find(role => role.values.includes(row.planning_role)) ?? roles.at(-1); }
 
+// Asset tags are explicit and independent of both cultural role and function.
+export const assetTags = [{id: 'infrastructure', label: '基础设施'}, {id: 'landscape', label: '景观'}];
+export function tagsOf(row) { return assetTags.filter(tag => Array.isArray(row.asset_tags) && row.asset_tags.includes(tag.id)); }
+
 export function ancestors(id) {
   const result = [];
   for (let node = byId.get(id); node; node = byId.get(node.parent)) result.unshift(node);
@@ -40,11 +44,12 @@ export function matches(row, state = {}) {
   const meaning = describe(row);
   if (state.style && row.civilization !== state.style) return false;
   if (state.role && roleOf(row).id !== state.role) return false;
+  if (state.assetTag && !tagsOf(row).some(tag => tag.id === state.assetTag)) return false;
   if (state.frontage === 'pending' && row.frontage?.status === 'ready') return false;
   if (state.frontage === 'ready' && row.frontage?.status !== 'ready') return false;
   if (state.tag && !(row.function_terms ?? []).includes(state.tag)) return false;
   if (state.site && !containsWords(siteText(row), state.site)) return false;
-  const text = [row.id, row.name, row.civilization, ...(row.function_terms ?? []), ...meaning.leaves.map(pathLabel)].join(' ');
+  const text = [row.id, row.name, row.civilization, ...tagsOf(row).map(tag => tag.label), ...(row.function_terms ?? []), ...meaning.leaves.map(pathLabel)].join(' ');
   if (state.search && !containsWords(text, state.search)) return false;
   const selected = state.functions ?? [];
   return !selected.length || (state.mode === 'any'
@@ -54,13 +59,14 @@ export function readFilters(search) {
   const p = new URLSearchParams(search);
   return {search: p.get('q') ?? '', style: p.get('style') ?? '', tag: p.get('tag') ?? '', site: p.get('site') ?? '',
     role: roles.some(role => role.id === p.get('role')) ? p.get('role') : '',
+    assetTag: assetTags.some(tag => tag.id === p.get('assetTag')) ? p.get('assetTag') : '',
     frontage: ['pending', 'ready'].includes(p.get('frontage')) ? p.get('frontage') : '',
     functions: [...new Set((p.get('functions') ?? '').split(',').filter(id => byId.has(id)))], mode: p.get('mode') === 'any' ? 'any' : 'all'};
 }
 export function writeFilters(state, asset) {
   const p = new URLSearchParams();
   if (asset) p.set('asset', asset);
-  for (const [key, value] of Object.entries({q: state.search, style: state.style, role: state.role, frontage: state.frontage, tag: state.tag, site: state.site,
+  for (const [key, value] of Object.entries({q: state.search, style: state.style, role: state.role, assetTag: state.assetTag, frontage: state.frontage, tag: state.tag, site: state.site,
     functions: state.functions?.join(','), mode: state.mode === 'any' ? 'any' : ''})) if (value) p.set(key, value);
   return `?${p}`;
 }

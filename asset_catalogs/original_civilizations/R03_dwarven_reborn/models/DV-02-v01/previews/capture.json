@@ -1,0 +1,25 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "DV-02-v01",
+  "nbt_sha256": "57cc501a09ea2bba5a5d195d60049904e801bb8ff6da3f46a68a669c0776cc39",
+  "author_sha256": "b4797f26986f7d5a3474001d8ffb5bffe9321f4af97062a255127b2e673a5615",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-forge",
+    "point-smith_6",
+    "point-smith_51",
+    "point-furnace",
+    "point-crane",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

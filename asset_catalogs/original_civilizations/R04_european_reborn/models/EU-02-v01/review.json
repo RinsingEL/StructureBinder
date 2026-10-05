@@ -1,0 +1,25 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "EU-02-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-05 revision2 visual review",
+  "nbt_sha256": "3eca61a104b8d45ea64b7db52db8ccab9cf26647d61a444db140fd8594b30dea",
+  "author_sha256": "034e35c1b0fa8e9aebcb851559f604ddcbb3744467335364e5c1c37e34c89c1f",
+  "evidence": [
+    "previews/front.png",
+    "previews/floor-1.png"
+  ],
+  "checks": [
+    "十字形主厅、低侧廊和后部半圆祭堂组织礼拜空间；钟塔补入转角壁柱、腰线和圆窗。",
+    "已实际查看所列当前版本视角，并与独立用途、入口和内部组织核对。"
+  ],
+  "revisions": [
+    "重做为圆塔环墙、圆券侧廊、逐层挑楼、三跨木架与用途明确的生产构筑物。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "制作方离线图审；用户尚未确认本轮审美质量。"
+  ]
+}

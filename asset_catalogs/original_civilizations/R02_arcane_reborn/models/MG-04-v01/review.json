@@ -1,0 +1,25 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MG-04-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-05 revision2 visual review",
+  "nbt_sha256": "65d0d3827a28a7ae38304db93269b65a834f5323ee8509a2c814c6ff6d57eea6",
+  "author_sha256": "9d0975992ad46070e3ed748e40ea8dfdb1452c20099270c3ef3a8b73d54e5e09",
+  "evidence": [
+    "previews/front.png",
+    "previews/floor-1.png"
+  ],
+  "checks": [
+    "中心晶核庭、左右长玻璃实验翼和低入口塔组成三院，不是单一塔楼改名。",
+    "已实际查看所列当前版本视角，并与独立用途、入口和内部组织核对。"
+  ],
+  "revisions": [
+    "从旧简单塔房组合重做为高窗中殿、横肋、飞扶壁、环廊和独立实验构架。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "制作方离线图审；用户尚未确认本轮审美质量。"
+  ]
+}

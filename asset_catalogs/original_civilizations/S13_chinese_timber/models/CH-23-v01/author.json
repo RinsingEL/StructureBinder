@@ -1,0 +1,80 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CH-23-v01",
+  "name": "中式双挑檐路灯",
+  "family": "CH-23",
+  "civilization": "中式木构",
+  "planning_role": "planning_role.structure",
+  "size": [
+    9,
+    15,
+    9
+  ],
+  "terrain": {
+    "选址": "完整稳定平地，外部路面脚底与本地 Y=2 对齐；保留全尺寸院落和檐口净空。",
+    "供给": "有人居住，需生活饮水、食物与燃料；园艺用水另行接入。",
+    "推荐情境": [
+      "城镇核心院落或独立街区"
+    ]
+  },
+  "rooms": [],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        4,
+        2,
+        0
+      ],
+      "name": "外部步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "maintenance",
+      "kind": "work",
+      "pos": [
+        4,
+        2,
+        2
+      ],
+      "name": "灯柱检修站位"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "日常木构沿用灰瓦、浅墙、门廊和石基；具体功能由实际空间及设施表达。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "院落与室内剖面",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/chinese_daily.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部街面和院落地坪顶面为 Y=2；建筑室内由明确台阶抬高。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "道路照明"
+  ],
+  "asset_tags": [
+    "infrastructure"
+  ],
+  "nbt_sha256": "25e78243a97261ff8611b8c1a4f225879558c0b98b181d5c57083fb1e4741395"
+}

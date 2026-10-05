@@ -1,0 +1,27 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CH-11-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex · 2026-10-05 实际 NBT 看图复核",
+  "nbt_sha256": "13b71dc7a62c1cb90c9543db32ebc607e6c76bf08823e6413ede90876f54f989",
+  "author_sha256": "ed309a38e3dc6a2c8fa5f96ea0f59bad817f1832e30523aa58f3a11784b762c4",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/room-dining.png"
+  ],
+  "checks": [
+    "围院客房、公共餐厅、后厨与布草仍完整；NBT 与上一版逐字节一致，更新为完整组合角色。",
+    "已查看列出的实际 NBT 视角；数据与离线碰撞通路通过，无警告。"
+  ],
+  "revisions": [
+    "仅调整作者角色为 self_contained，重新截图和图审。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "默认形体首版；并非用户最终审美签收。",
+    "文化身份与用途为空间和静态陈设，不宣称 NPC、演出、行政或宗教机制已实现。"
+  ]
+}

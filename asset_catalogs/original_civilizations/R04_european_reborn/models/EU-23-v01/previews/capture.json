@@ -1,0 +1,23 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "EU-23-v01",
+  "nbt_sha256": "52bb433357bf3f4e39a87e20c170367f9c74730f47911ce74a293dfb30dcc31d",
+  "author_sha256": "4d9e51bd111ac64fb9726578f27308dd6af90f63bb1fa25dbe1a434e0b3bd30b",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "point-berth_15",
+    "point-berth_49",
+    "point-crane",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

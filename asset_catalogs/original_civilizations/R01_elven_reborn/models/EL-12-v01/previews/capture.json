@@ -1,0 +1,20 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "EL-12-v01",
+  "nbt_sha256": "71f8104228caf2e10f19a5b9f09890dd9200219a47c5f6f100015fcff01d1265",
+  "author_sha256": "14b3789546f90368a18968b1fd25ee14defadb04fd20a73ca311f9929867f1d7",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

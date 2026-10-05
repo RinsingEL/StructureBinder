@@ -1,0 +1,68 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "EL-12-v01",
+  "name": "阶泉水庭 · 三瓣水盆与曲肋泉亭",
+  "family": "EL-12",
+  "civilization": "精灵新制",
+  "planning_role": "planning_role.structure",
+  "size": [
+    47,
+    39,
+    49
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        23,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "首层",
+      "y": 1,
+      "max_y": 8
+    }
+  ],
+  "roof_min_y": 31,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "水景观赏",
+    "休憩"
+  ],
+  "asset_tags": [
+    "landscape"
+  ],
+  "source": "tools/structure_studio/studio/elven_revision2.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "71f8104228caf2e10f19a5b9f09890dd9200219a47c5f6f100015fcff01d1265"
+}

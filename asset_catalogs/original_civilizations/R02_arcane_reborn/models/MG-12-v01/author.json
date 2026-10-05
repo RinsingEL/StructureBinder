@@ -1,0 +1,68 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-12-v01",
+  "name": "药草温室庭 · 十字花径与双玻璃花房",
+  "family": "MG-12",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.structure",
+  "size": [
+    43,
+    33,
+    47
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        21,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "首层",
+      "y": 1,
+      "max_y": 8
+    }
+  ],
+  "roof_min_y": 18,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "花草观赏",
+    "园艺养护"
+  ],
+  "asset_tags": [
+    "landscape"
+  ],
+  "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "07ddc88d0f55df38e75edff982750a7e73367516365d28e88161ef21d348940b"
+}

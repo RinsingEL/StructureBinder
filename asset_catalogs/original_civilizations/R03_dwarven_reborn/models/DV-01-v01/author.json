@@ -1,0 +1,135 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DV-01-v01",
+  "name": "山砧氏族殿 · 折角重拱与祖卫门庭",
+  "family": "DV-01",
+  "civilization": "矮人新制",
+  "planning_role": "planning_role.key",
+  "size": [
+    77,
+    58,
+    85
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [
+    {
+      "id": "assembly",
+      "name": "折角氏族大殿",
+      "min": [
+        24,
+        5,
+        34
+      ],
+      "max": [
+        52,
+        22,
+        56
+      ],
+      "purpose": "双列议事长桌与中央礼仪通路"
+    },
+    {
+      "id": "upper",
+      "name": "氏族议席廊",
+      "min": [
+        28,
+        13,
+        59
+      ],
+      "max": [
+        50,
+        18,
+        64
+      ],
+      "purpose": "由真实侧梯连通的高层会商席"
+    }
+  ],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        38,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "speaker",
+      "kind": "work",
+      "pos": [
+        38,
+        13,
+        61
+      ],
+      "name": "上层氏族议席",
+      "approach": [
+        38,
+        13,
+        61
+      ]
+    },
+    {
+      "id": "assembly",
+      "kind": "work",
+      "pos": [
+        38,
+        5,
+        44
+      ],
+      "name": "下层会众与中轴通道",
+      "approach": [
+        38,
+        5,
+        44
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。",
+    "折角厚墙、重型斜撑、双层券廊和六进门拱共同定义结构；铜只用于节点与族徽。",
+    "自带稳定石台，独立摆放成立；不以外部山体遮挡未完成的背面。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "门庭与议事厅",
+      "y": 4,
+      "max_y": 11
+    },
+    {
+      "name": "上层议席廊",
+      "y": 12,
+      "max_y": 20
+    }
+  ],
+  "roof_min_y": 27,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "议事",
+    "正式接见",
+    "礼仪"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/dwarven_revision2.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "46e6f1d39faff2d0a466ef1411641fe7f67176b23575a1e4b5e06c1b0b11cda4"
+}

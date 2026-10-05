@@ -1,0 +1,51 @@
+{
+  "schema": "structure-studio.validation.v1",
+  "nbt_sha256": "84fc677af8dfbf65853b1016843cb45f2a7578355f62c8c9e537faa91da6a3e3",
+  "navigation": {
+    "passed": true,
+    "unreachable": [],
+    "nodes": 17193,
+    "highest_standing_y": 12,
+    "truncated": false,
+    "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "size": [
+    61,
+    61,
+    65
+  ],
+  "visible_blocks": 18925,
+  "explicit_air": 222940,
+  "palette": 25,
+  "block_entities": 0,
+  "agriculture": null,
+  "materials": {
+    "minecraft:stone_bricks": 4248,
+    "minecraft:stone": 3965,
+    "minecraft:purple_terracotta": 3227,
+    "minecraft:dark_oak_planks": 2705,
+    "minecraft:calcite": 1801,
+    "minecraft:grass_block": 720,
+    "minecraft:purple_stained_glass": 607,
+    "minecraft:quartz_pillar": 414,
+    "minecraft:polished_andesite": 256,
+    "minecraft:polished_deepslate": 192,
+    "minecraft:stone_brick_slab": 176,
+    "minecraft:bookshelf": 168,
+    "minecraft:stone_brick_wall": 144,
+    "minecraft:quartz_slab": 115,
+    "minecraft:dark_oak_slab": 72,
+    "minecraft:dark_oak_log": 48,
+    "minecraft:stone_brick_stairs": 30,
+    "minecraft:birch_stairs": 12,
+    "minecraft:birch_slab": 10,
+    "minecraft:gold_block": 5,
+    "minecraft:end_rod": 5,
+    "minecraft:birch_fence": 4,
+    "minecraft:lectern": 1
+  },
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+}

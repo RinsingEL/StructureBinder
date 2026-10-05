@@ -1,0 +1,33 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "EL-16-v01",
+  "nbt_sha256": "97ebf67ea1dc64b58a4c6029fee4aac7595e0dd059cc5d6680589abbe6e62adb",
+  "author_sha256": "79c86999824c5f5ffd3d9e8a3aed4a87d681f6424cbe42873b65510a572aca27",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-garden",
+    "point-patient_0_15",
+    "point-patient_0_21",
+    "point-care_0",
+    "point-patient_1_51",
+    "point-patient_1_57",
+    "point-care_1",
+    "point-patient_2_15",
+    "point-patient_2_21",
+    "point-care_2",
+    "point-patient_3_51",
+    "point-patient_3_57",
+    "point-care_3",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

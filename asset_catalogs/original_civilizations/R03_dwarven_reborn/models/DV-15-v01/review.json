@@ -1,0 +1,27 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DV-15-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-05 revision2 visual review",
+  "nbt_sha256": "75ee1a3740f4266fb8890f58608e9862f0f30b1b45953f1db2806afa3abb08f5",
+  "author_sha256": "909d2fdd8b26228526c22b973280e6076d44bc4c2886bce4701d2a2056c4c80f",
+  "evidence": [
+    "previews/front.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/floor-3.png"
+  ],
+  "checks": [
+    "四重墩之间留出升降笼，侧向实楼梯连接两个平台；上层留有检修通道。",
+    "本轮已实际查看所列最终版本视角；数量和数据检测不替代结构外观判断。"
+  ],
+  "revisions": [
+    "替换上一版方房坡顶组合；按厚壁、折角券与外露作业架重做。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "制作方离线图审；用户尚未确认本轮审美质量。"
+  ]
+}

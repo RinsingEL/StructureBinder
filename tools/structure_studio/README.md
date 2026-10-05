@@ -24,6 +24,12 @@ python cli.py serve
 
 ## 建模与验收
 
+### 中式新池：文化核心与完整组合（2026-10-05）
+
+新 S13 已有 **8 项文化核心 + 2 类完整组合**（宫殿 2 版、其余文化核心各 1 版，庄园 1 版、客栈 2 版，共 12 个模型）。文化核心包括宫殿及新增书院、宗祠、庙宇、衙署、会馆、戏台院、园林；庄园和客栈保留实物，以完整组合展示。详见[作者资产入口](../../asset_catalogs/original_civilizations/S13_chinese_timber/README.md)。
+
+`python -m studio.build CH-16 CH-17 CH-18 CH-19 CH-20 CH-21 CH-22` 重建本轮七项文化核心，源码为 `studio/chinese_culture.py`；`chinese_inn.py` 新增 CH-11-v02 三层十二室客栈；`chinese_palace.py` 新增 CH-13-v02 高台重殿宫殿，使用 `python -m studio.build CH-13-v02` 单独重建；`chinese.py` 保留首批宫殿、庄园、客栈，`chinese_parts.py` 提供木构及屋面等部件。Mac 已准备本地环境时使用 `.cache/venv/bin/python`，双击 `start.command` 打开预览。园艺主题和商品内装配置属于作者源码重建，具体支持范围见资产入口。
+
 ### 给国度规划提供核心图册
 
 `tools/city_templates/export_core_atlas.py --bundle <已导出Studio素材包>` 复用当前包核心建筑的 `previews/front.png`，校验 capture.json 的源 NBT 哈希后生成 `realm_core_atlas.json` 和每页四项的 PNG。只选择已安装目录中的 key/anchor，保留作者功能、风格、尺寸和使用条件；其他素材只汇总配套能力。`build_studio_test_bundle.py` 导出时自动调用。截图用于构思参考，不改变原作者审核状态；标签或模板目录更新后须重新导出图册。
@@ -131,3 +137,9 @@ NBT、作者 JSON、报告及归档截图先写入同目录临时文件，完成
 支持本库的原版 1.20.1 方块与实体方块外形。灯光为统一查看光照，纹理动画使用首帧，颜色使用预览器默认色；不替代 Minecraft 的光照、流体、邻居更新、红石或模组机器测试。漫游允许穿墙，通路证据来自独立碰撞初筛和剖面检查。标记是作者记录，不会自动修改国度 Mod 的运行时模板目录。
 
 已经制作商住与多业态商铺、客货车站、客运码头、农田、沙海公共设施、风塔住宅与绿洲灌溉田，以及水网修造、船闸、海关、水务与历史设施，并支持环境示意和同族对照，**整份文明清单仍在制作中**。唯一进度源位于 `asset_catalogs/original_civilizations/` 各风格的 `建筑清单.md`。
+
+### 基础设施与景观标签
+
+结构标签独立于规划角色，可按“基础设施”或“景观”筛选，并与风格、核心/填充及用途取交集；例如中式园林同时是文化核心和景观。URL 的 `assetTag` 保留筛选，列表和详情可点击标签。作者字段为 `asset_tags`，支持 `infrastructure`、`landscape`；未标注不自动猜测。
+
+中式当前为 24 模型、22 建筑族。四文明第二版已重做原 48 项并增加 48 类：精灵、学院、矮人、欧洲各 24 类、各 8 个文化核心；完成当前源码、NBT、通路、截图与图审核对。见[第二版交付总表](../../asset_catalogs/original_civilizations/四文明第二版交付.md)和[可筛选图册](../../asset_catalogs/original_civilizations/四文明第二版图册.html)。第一版数量与反馈保留在历史任务记录中。

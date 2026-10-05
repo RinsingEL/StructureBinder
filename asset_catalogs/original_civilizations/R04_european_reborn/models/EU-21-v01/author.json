@@ -1,0 +1,157 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "EU-21-v01",
+  "name": "守卫营房 · 石屋寝室与操练前院",
+  "family": "EU-21",
+  "civilization": "欧洲中世纪新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    61,
+    38,
+    67
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        30,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "guard_17",
+      "kind": "bed",
+      "pos": [
+        17,
+        2,
+        50
+      ],
+      "name": "床位",
+      "approach": [
+        18,
+        2,
+        50
+      ]
+    },
+    {
+      "id": "guard_25",
+      "kind": "bed",
+      "pos": [
+        25,
+        2,
+        50
+      ],
+      "name": "床位",
+      "approach": [
+        26,
+        2,
+        50
+      ]
+    },
+    {
+      "id": "guard_35",
+      "kind": "bed",
+      "pos": [
+        35,
+        2,
+        50
+      ],
+      "name": "床位",
+      "approach": [
+        36,
+        2,
+        50
+      ]
+    },
+    {
+      "id": "guard_43",
+      "kind": "bed",
+      "pos": [
+        43,
+        2,
+        50
+      ],
+      "name": "床位",
+      "approach": [
+        44,
+        2,
+        50
+      ]
+    },
+    {
+      "id": "training",
+      "kind": "work",
+      "pos": [
+        30,
+        2,
+        22
+      ],
+      "name": "营房操练场",
+      "approach": [
+        30,
+        2,
+        22
+      ]
+    },
+    {
+      "id": "guard",
+      "kind": "work",
+      "pos": [
+        30,
+        2,
+        45
+      ],
+      "name": "寝室与值班厅",
+      "approach": [
+        30,
+        2,
+        45
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "首层",
+      "y": 1,
+      "max_y": 8
+    }
+  ],
+  "roof_min_y": 15,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "驻守",
+    "集体居住",
+    "训练"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/european_revision2.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "fba4b716bb48d6e91bdfa1261ad79f1da8352d859ab27782bf64cf4e7b826a40"
+}

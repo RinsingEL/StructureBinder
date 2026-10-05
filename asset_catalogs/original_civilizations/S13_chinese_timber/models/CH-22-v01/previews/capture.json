@@ -1,0 +1,32 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "CH-22-v01",
+  "nbt_sha256": "9a85e5e30077b064a165b522f0c4c963b24d089639311729c793ff58f4b36ee8",
+  "author_sha256": "ae933699a5dfd47b93516e0858c1bf91df4e0e46644858d28e4557be8aec7070",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-pond",
+    "room-view_pavilion",
+    "room-teahouse",
+    "room-garden_study",
+    "point-gate_path",
+    "point-bridge",
+    "point-view_pavilion_entry",
+    "point-teahouse_door",
+    "point-tea_station",
+    "point-garden_study_door",
+    "point-garden_desk",
+    "point-rear_gallery",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

@@ -1,0 +1,21 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CH-27-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex actual NBT image review 2026-10-05",
+  "nbt_sha256": "d6dfb964cdb08c01b4fddcbfb03a0d701feb6d5fd8231b0b61499c1a25078a4a",
+  "author_sha256": "9c67f9835b549caa961005803d3f8bb479de56af7748c4862e9fe59f0f54c669",
+  "evidence": [
+    "previews/front.png"
+  ],
+  "checks": [
+    "垂柳分枝冠幅和下垂枝叶形成独立轮廓，观赏路径在树冠外围。",
+    "最终 NBT 数据、离线通路和截图渲染检查通过。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

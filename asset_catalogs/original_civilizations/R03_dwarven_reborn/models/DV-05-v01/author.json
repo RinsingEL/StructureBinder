@@ -1,0 +1,126 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DV-05-v01",
+  "name": "厚墙石宅 · 下沉炉间与侧向寝室",
+  "family": "DV-05",
+  "civilization": "矮人新制",
+  "planning_role": "planning_role.self_contained",
+  "size": [
+    39,
+    30,
+    45
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [
+    {
+      "id": "home",
+      "name": "炉间与寝居",
+      "min": [
+        9,
+        2,
+        19
+      ],
+      "max": [
+        28,
+        9,
+        34
+      ],
+      "purpose": "厚墙围合的独立住宅"
+    }
+  ],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        19,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "bed_29",
+      "kind": "bed",
+      "pos": [
+        25,
+        2,
+        29
+      ],
+      "name": "床位",
+      "approach": [
+        26,
+        2,
+        29
+      ]
+    },
+    {
+      "id": "bed_34",
+      "kind": "bed",
+      "pos": [
+        25,
+        2,
+        34
+      ],
+      "name": "床位",
+      "approach": [
+        26,
+        2,
+        34
+      ]
+    },
+    {
+      "id": "living",
+      "kind": "work",
+      "pos": [
+        15,
+        2,
+        23
+      ],
+      "name": "炉边起居",
+      "approach": [
+        15,
+        2,
+        23
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "首层",
+      "y": 1,
+      "max_y": 8
+    }
+  ],
+  "roof_min_y": 15,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "家庭居住"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/dwarven_revision2.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "8a5499320678e5a65368fc2192f8e2ccd4d992cc0ab5c973a3176dafba09ca53"
+}

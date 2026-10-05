@@ -1,0 +1,26 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "EU-13-v01",
+  "nbt_sha256": "a5a4365c9350a7d260b55830ddaefbc45db641a947d4d043c905bd35041c8098",
+  "author_sha256": "175fb46a78f58c60aab2cf221b6f15e064013574e4313686922f20698101559a",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-cloister",
+    "point-monk_35",
+    "point-monk_45",
+    "point-monk_57",
+    "point-cloister",
+    "point-scriptorium",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

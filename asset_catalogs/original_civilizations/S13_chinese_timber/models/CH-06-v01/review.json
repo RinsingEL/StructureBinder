@@ -1,0 +1,22 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CH-06-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex actual NBT image review 2026-10-05",
+  "nbt_sha256": "99e093466474424c3cc87322cdaecab780406767849d6b7326d963a05c90351a",
+  "author_sha256": "5ac95e6b6b7c330da03c3e3e95e8f6f716d0eec84e82ed587ed98662a15031a2",
+  "evidence": [
+    "previews/front.png",
+    "previews/floor-1.png"
+  ],
+  "checks": [
+    "木作主体与独立晾木棚围成侧院；工作台与木料通道可达。",
+    "最终 NBT 数据、离线通路和截图渲染检查通过。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

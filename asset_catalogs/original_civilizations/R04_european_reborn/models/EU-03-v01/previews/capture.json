@@ -1,0 +1,24 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "EU-03-v01",
+  "nbt_sha256": "8959f942394e888bb3a269f5befbe969dff35239efdb19703aa4bfda128b4b7a",
+  "author_sha256": "0e84b227712896101794dfea1c09b618fed65a9f9924f8ba3cf1ec0684b88ca2",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "floor-2",
+    "room-civic",
+    "point-service",
+    "point-council",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

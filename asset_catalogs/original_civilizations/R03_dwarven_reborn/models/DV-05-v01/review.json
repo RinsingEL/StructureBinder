@@ -1,0 +1,26 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DV-05-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-05 revision2 visual review",
+  "nbt_sha256": "8a5499320678e5a65368fc2192f8e2ccd4d992cc0ab5c973a3176dafba09ca53",
+  "author_sha256": "57e748b5b4230e452d02127715d7950cdc690a14b3db76ecf514e2624a4bdb86",
+  "evidence": [
+    "previews/front.png",
+    "previews/floor-1.png",
+    "previews/roof-off.png"
+  ],
+  "checks": [
+    "低矮厚壁石宅有侧卧室、起居炉间和独立烟道。",
+    "本轮已实际查看所列最终版本视角；数量和数据检测不替代结构外观判断。"
+  ],
+  "revisions": [
+    "替换上一版方房坡顶组合；按厚壁、折角券与外露作业架重做。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "制作方离线图审；用户尚未确认本轮审美质量。"
+  ]
+}

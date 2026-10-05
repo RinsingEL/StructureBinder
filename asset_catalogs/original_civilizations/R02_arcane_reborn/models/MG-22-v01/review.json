@@ -1,0 +1,25 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MG-22-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-05 revision2 visual review",
+  "nbt_sha256": "8d9e4bccf9fe1b9e92e568f4d3795528b37d85f53945a0e859e2f9a54e333e29",
+  "author_sha256": "50216be640276758ff42f50be1339bd904fb59661d7b80c04537a516d9f81ec8",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png"
+  ],
+  "checks": [
+    "双塔门洞与上部巡逻桥廊分开，外侧楼梯落到地面。",
+    "已实际查看所列当前版本视角，并与独立用途、入口和内部组织核对。"
+  ],
+  "revisions": [
+    "从旧简单塔房组合重做为高窗中殿、横肋、飞扶壁、环廊和独立实验构架。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "制作方离线图审；用户尚未确认本轮审美质量。"
+  ]
+}

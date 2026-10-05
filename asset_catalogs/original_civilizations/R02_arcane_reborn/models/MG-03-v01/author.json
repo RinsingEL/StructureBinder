@@ -1,0 +1,142 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-03-v01",
+  "name": "子午观星台 · 阶塔与开瓣星穹",
+  "family": "MG-03",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.key",
+  "size": [
+    51,
+    64,
+    55
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [
+    {
+      "id": "archive",
+      "name": "星图档案",
+      "min": [
+        17,
+        2,
+        20
+      ],
+      "max": [
+        33,
+        9,
+        38
+      ],
+      "purpose": "星图存放与接待"
+    }
+  ],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        25,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "chart",
+      "kind": "work",
+      "pos": [
+        25,
+        11,
+        33
+      ],
+      "name": "历法与星图层",
+      "approach": [
+        25,
+        11,
+        33
+      ]
+    },
+    {
+      "id": "study",
+      "kind": "work",
+      "pos": [
+        25,
+        20,
+        33
+      ],
+      "name": "观测准备层",
+      "approach": [
+        25,
+        20,
+        33
+      ]
+    },
+    {
+      "id": "sky",
+      "kind": "work",
+      "pos": [
+        25,
+        29,
+        22
+      ],
+      "name": "星仪观测露台",
+      "approach": [
+        25,
+        29,
+        22
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "档案",
+      "y": 1,
+      "max_y": 9
+    },
+    {
+      "name": "星图工作层",
+      "y": 10,
+      "max_y": 18
+    },
+    {
+      "name": "准备层",
+      "y": 19,
+      "max_y": 27
+    },
+    {
+      "name": "星仪露台",
+      "y": 28,
+      "max_y": 48
+    }
+  ],
+  "roof_min_y": 30,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "天象观测",
+    "研究"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "bd282e5d24e7ebeb3a101fb2bbb841e9d1fb5b548f1ce0d84b41009ce980a9fc"
+}

@@ -1,0 +1,25 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DV-11-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-05 revision2 visual review",
+  "nbt_sha256": "c9adc2dc65e014c1104bad059c89b9ddf1282bb5be37da9e04a6f8fcb76e2e2f",
+  "author_sha256": "77e80e024c1f69329952b5e8e470ef6f7c9f808e9c84f652e361b4896701640c",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png"
+  ],
+  "checks": [
+    "倾斜树干连接三层横枝，根部落在层叠岩台。",
+    "本轮已实际查看所列最终版本视角；数量和数据检测不替代结构外观判断。"
+  ],
+  "revisions": [
+    "替换上一版方房坡顶组合；按厚壁、折角券与外露作业架重做。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "制作方离线图审；用户尚未确认本轮审美质量。"
+  ]
+}

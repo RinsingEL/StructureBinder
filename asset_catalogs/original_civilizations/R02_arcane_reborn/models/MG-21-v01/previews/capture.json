@@ -1,0 +1,24 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "MG-21-v01",
+  "nbt_sha256": "8d91941b897da9becd5a3d6555cedd1e3219b3b1b6a8ac2bf8c8edc323c6d01d",
+  "author_sha256": "14d1906d10dd7b7206e5c2d2d50f200df1af646a90dd37abf86f9cdcc48cf6b5",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-greenhouse",
+    "point-growing_8",
+    "point-growing_23",
+    "point-growing_38",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

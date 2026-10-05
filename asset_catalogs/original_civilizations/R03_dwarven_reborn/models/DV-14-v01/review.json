@@ -1,0 +1,25 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DV-14-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-05 revision2 visual review",
+  "nbt_sha256": "a1ee286a4eb7924d520a8a9ce6f426a6f24fbe115c5def45d03eb5cadb123deb",
+  "author_sha256": "e0aa191ae3874b199f03883f330068d4715f7872a385f5ca7575ce370e1ad947",
+  "evidence": [
+    "previews/front.png",
+    "previews/floor-1.png"
+  ],
+  "checks": [
+    "高压印主厅增加低侧翼和上方折角采光窗；内部分开压印架与核验桌。",
+    "本轮已实际查看所列最终版本视角；数量和数据检测不替代结构外观判断。"
+  ],
+  "revisions": [
+    "替换上一版方房坡顶组合；按厚壁、折角券与外露作业架重做。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "制作方离线图审；用户尚未确认本轮审美质量。"
+  ]
+}

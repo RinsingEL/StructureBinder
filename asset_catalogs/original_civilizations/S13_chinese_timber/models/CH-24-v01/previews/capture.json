@@ -1,0 +1,21 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "CH-24-v01",
+  "nbt_sha256": "3ba8aba31b46bff5786b589d800dd71634f6bbb0bebe6f0ed8b4c61af298d5d7",
+  "author_sha256": "e8095d4894cd28f2dcdea975ca0f25d167c899c3a28d8ac169e5db83417db2a3",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "point-bridge_crown",
+    "point-far_bank",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

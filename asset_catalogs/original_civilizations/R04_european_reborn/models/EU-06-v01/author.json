@@ -1,0 +1,302 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "EU-06-v01",
+  "name": "三层庭院客栈 · 马车门洞与木廊客房",
+  "family": "EU-06",
+  "civilization": "欧洲中世纪新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    71,
+    52,
+    75
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [
+    {
+      "id": "court",
+      "name": "马车庭院",
+      "min": [
+        30,
+        2,
+        31
+      ],
+      "max": [
+        40,
+        20,
+        46
+      ],
+      "purpose": "穿过前楼门洞进入三层环绕庭院"
+    }
+  ],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        35,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "guest_17_2_40",
+      "kind": "bed",
+      "pos": [
+        17,
+        2,
+        40
+      ],
+      "name": "床位",
+      "approach": [
+        18,
+        2,
+        40
+      ]
+    },
+    {
+      "id": "guest_17_2_55",
+      "kind": "bed",
+      "pos": [
+        17,
+        2,
+        55
+      ],
+      "name": "床位",
+      "approach": [
+        18,
+        2,
+        55
+      ]
+    },
+    {
+      "id": "guest_53_2_40",
+      "kind": "bed",
+      "pos": [
+        53,
+        2,
+        40
+      ],
+      "name": "床位",
+      "approach": [
+        54,
+        2,
+        40
+      ]
+    },
+    {
+      "id": "guest_53_2_55",
+      "kind": "bed",
+      "pos": [
+        53,
+        2,
+        55
+      ],
+      "name": "床位",
+      "approach": [
+        54,
+        2,
+        55
+      ]
+    },
+    {
+      "id": "guest_17_9_40",
+      "kind": "bed",
+      "pos": [
+        17,
+        9,
+        40
+      ],
+      "name": "床位",
+      "approach": [
+        18,
+        9,
+        40
+      ]
+    },
+    {
+      "id": "guest_17_9_55",
+      "kind": "bed",
+      "pos": [
+        17,
+        9,
+        55
+      ],
+      "name": "床位",
+      "approach": [
+        18,
+        9,
+        55
+      ]
+    },
+    {
+      "id": "guest_53_9_40",
+      "kind": "bed",
+      "pos": [
+        53,
+        9,
+        40
+      ],
+      "name": "床位",
+      "approach": [
+        54,
+        9,
+        40
+      ]
+    },
+    {
+      "id": "guest_53_9_55",
+      "kind": "bed",
+      "pos": [
+        53,
+        9,
+        55
+      ],
+      "name": "床位",
+      "approach": [
+        54,
+        9,
+        55
+      ]
+    },
+    {
+      "id": "guest_17_16_40",
+      "kind": "bed",
+      "pos": [
+        17,
+        16,
+        40
+      ],
+      "name": "床位",
+      "approach": [
+        18,
+        16,
+        40
+      ]
+    },
+    {
+      "id": "guest_17_16_55",
+      "kind": "bed",
+      "pos": [
+        17,
+        16,
+        55
+      ],
+      "name": "床位",
+      "approach": [
+        18,
+        16,
+        55
+      ]
+    },
+    {
+      "id": "guest_53_16_40",
+      "kind": "bed",
+      "pos": [
+        53,
+        16,
+        40
+      ],
+      "name": "床位",
+      "approach": [
+        54,
+        16,
+        40
+      ]
+    },
+    {
+      "id": "guest_53_16_55",
+      "kind": "bed",
+      "pos": [
+        53,
+        16,
+        55
+      ],
+      "name": "床位",
+      "approach": [
+        54,
+        16,
+        55
+      ]
+    },
+    {
+      "id": "gallery_9",
+      "kind": "work",
+      "pos": [
+        27,
+        9,
+        44
+      ],
+      "name": "内院客房木廊",
+      "approach": [
+        27,
+        9,
+        44
+      ]
+    },
+    {
+      "id": "gallery_16",
+      "kind": "work",
+      "pos": [
+        27,
+        16,
+        44
+      ],
+      "name": "内院客房木廊",
+      "approach": [
+        27,
+        16,
+        44
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "餐厅与内院",
+      "y": 1,
+      "max_y": 7
+    },
+    {
+      "name": "二层客房",
+      "y": 8,
+      "max_y": 14
+    },
+    {
+      "name": "三层客房",
+      "y": 15,
+      "max_y": 22
+    }
+  ],
+  "roof_min_y": 23,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "旅宿",
+    "餐饮"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/european_revision2.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "1bc9a42c28d91dd90eb1f0a725637182e3baeab002d9d2ab151ee463608cefb9"
+}

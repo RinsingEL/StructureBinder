@@ -1,0 +1,28 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "EU-01-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-05 revision2 visual review",
+  "nbt_sha256": "99dfe07ad2009eb6ed35bb303463a51468619601c313d8a50342b6dc34597cb0",
+  "author_sha256": "3aad17e3024f56eb7b85bfa9b272038a5da0f0c7a6785de0b05200c1f4f039d5",
+  "evidence": [
+    "previews/front.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/floor-3.png",
+    "previews/floor-4.png"
+  ],
+  "checks": [
+    "环形城墙、六座圆塔与三层主楼组织防御内院；高层主楼、屋顶和巡墙层已查看。",
+    "已实际查看所列当前版本视角，并与独立用途、入口和内部组织核对。"
+  ],
+  "revisions": [
+    "重做为圆塔环墙、圆券侧廊、逐层挑楼、三跨木架与用途明确的生产构筑物。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "制作方离线图审；用户尚未确认本轮审美质量。"
+  ]
+}

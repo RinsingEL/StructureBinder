@@ -1,0 +1,25 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "EL-15-v01",
+  "nbt_sha256": "9ba03ec6bff7e9068b4bd40c257b6e9a19f4f4af35ae246ceb064ccfc4c55c17",
+  "author_sha256": "14bc8e7511ef21e389adbfe525b94f0ad4ff7489ddd95b4dbfcc2f4fa594ae7f",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-training",
+    "point-range_17",
+    "point-range_31",
+    "point-range_45",
+    "point-instructor",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

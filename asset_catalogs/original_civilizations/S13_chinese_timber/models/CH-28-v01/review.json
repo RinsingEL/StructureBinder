@@ -1,0 +1,21 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CH-28-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex actual NBT image review 2026-10-05",
+  "nbt_sha256": "81634c073809f42c24d4f27484400827d96af3dd6a698cf2b4df0897846d77a1",
+  "author_sha256": "81921d8959cda9d050d2cd90e02f49429d2102c1585c881733b9a7cc79ab6d65",
+  "evidence": [
+    "previews/front.png"
+  ],
+  "checks": [
+    "月牙花坛围合座椅，低石缘、花草与进路明确。",
+    "最终 NBT 数据、离线通路和截图渲染检查通过。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

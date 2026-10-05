@@ -1,0 +1,135 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-01-v01",
+  "name": "星穹礼堂 · 飞扶壁与肋拱中殿",
+  "family": "MG-01",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.key",
+  "size": [
+    71,
+    72,
+    83
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [
+    {
+      "id": "nave",
+      "name": "高挑礼堂",
+      "min": [
+        26,
+        2,
+        33
+      ],
+      "max": [
+        44,
+        26,
+        71
+      ],
+      "purpose": "分列坐席、中轴通行、讲台和肋拱空间"
+    },
+    {
+      "id": "gallery",
+      "name": "二层旁听廊",
+      "min": [
+        22,
+        11,
+        27
+      ],
+      "max": [
+        48,
+        14,
+        30
+      ],
+      "purpose": "实体楼梯连接的跨厅旁听平台"
+    }
+  ],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        35,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "gallery",
+      "kind": "work",
+      "pos": [
+        35,
+        11,
+        29
+      ],
+      "name": "礼堂上层旁听廊",
+      "approach": [
+        35,
+        11,
+        29
+      ]
+    },
+    {
+      "id": "lecturer",
+      "kind": "work",
+      "pos": [
+        35,
+        2,
+        64
+      ],
+      "name": "讲台前演示空间",
+      "approach": [
+        35,
+        2,
+        64
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。",
+    "高窗中殿、低侧廊、三跨外飞扶壁与完整横肋构成骨架；门廊进深四格，玫瑰窗有石质窗棂。",
+    "前塔上部是封闭装饰与采光构架，不声明可用楼层。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "礼堂与侧廊",
+      "y": 1,
+      "max_y": 9
+    },
+    {
+      "name": "旁听廊与高窗",
+      "y": 10,
+      "max_y": 17
+    }
+  ],
+  "roof_min_y": 30,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "教学",
+    "礼仪",
+    "集会"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "41551b2ac39c79c664cb8e40a1976344fdfd01416f2acffd154c8675edd300cb"
+}

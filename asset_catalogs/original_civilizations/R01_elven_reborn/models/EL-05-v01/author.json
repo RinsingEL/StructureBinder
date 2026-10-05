@@ -1,0 +1,126 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "EL-05-v01",
+  "name": "叶顶小宅 · 玻璃花窗与起居露台",
+  "family": "EL-05",
+  "civilization": "精灵新制",
+  "planning_role": "planning_role.self_contained",
+  "size": [
+    39,
+    43,
+    49
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [
+    {
+      "id": "home",
+      "name": "花窗小宅",
+      "min": [
+        12,
+        3,
+        20
+      ],
+      "max": [
+        26,
+        10,
+        37
+      ],
+      "purpose": "玻璃叶壳内的起居、炊事与独立寝居"
+    }
+  ],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        19,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "bed1",
+      "kind": "bed",
+      "pos": [
+        16,
+        3,
+        35
+      ],
+      "name": "床位",
+      "approach": [
+        17,
+        3,
+        35
+      ]
+    },
+    {
+      "id": "bed2",
+      "kind": "bed",
+      "pos": [
+        23,
+        3,
+        35
+      ],
+      "name": "床位",
+      "approach": [
+        24,
+        3,
+        35
+      ]
+    },
+    {
+      "id": "living",
+      "kind": "work",
+      "pos": [
+        19,
+        3,
+        28
+      ],
+      "name": "起居与分隔寝居",
+      "approach": [
+        19,
+        3,
+        28
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "起居层",
+      "y": 2,
+      "max_y": 10
+    }
+  ],
+  "roof_min_y": 13,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "家庭居住"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/elven_revision2.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "56e5865bc152cab154e044a154a97847c8c1e1a8ee796a4622d9696f2c45eea6"
+}

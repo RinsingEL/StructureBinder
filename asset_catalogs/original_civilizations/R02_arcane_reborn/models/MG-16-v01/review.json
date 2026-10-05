@@ -1,0 +1,25 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MG-16-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-05 revision2 visual review",
+  "nbt_sha256": "d765805507c0fe35ab9be57a0637d4ecd83aec44e75ab7ef292bb447f79dc7b4",
+  "author_sha256": "a556a67e1e671ee605a71974d983ce82a829c1a270c663c33ff78040b4267af0",
+  "evidence": [
+    "previews/front.png",
+    "previews/floor-1.png"
+  ],
+  "checks": [
+    "晶核由四柱张拱框架围合，两端低检修工房留出中央操作庭。",
+    "已实际查看所列当前版本视角，并与独立用途、入口和内部组织核对。"
+  ],
+  "revisions": [
+    "从旧简单塔房组合重做为高窗中殿、横肋、飞扶壁、环廊和独立实验构架。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "制作方离线图审；用户尚未确认本轮审美质量。"
+  ]
+}

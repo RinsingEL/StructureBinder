@@ -1,0 +1,26 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "EU-21-v01",
+  "nbt_sha256": "fba4b716bb48d6e91bdfa1261ad79f1da8352d859ab27782bf64cf4e7b826a40",
+  "author_sha256": "c20d6026f3ee5abf6eba335573ef3402541b785dd9b483c1480e17f5ffc3ec58",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "point-guard_17",
+    "point-guard_25",
+    "point-guard_35",
+    "point-guard_43",
+    "point-training",
+    "point-guard",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

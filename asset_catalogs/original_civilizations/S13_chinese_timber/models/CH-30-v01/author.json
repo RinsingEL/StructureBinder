@@ -1,0 +1,173 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CH-30-v01",
+  "name": "中式采矿场 · 矿口与选矿院",
+  "family": "CH-30",
+  "civilization": "中式木构",
+  "planning_role": "planning_role.structure",
+  "size": [
+    43,
+    25,
+    45
+  ],
+  "terrain": {
+    "选址": "完整稳定平地，外部路面脚底与本地 Y=2 对齐；保留全尺寸院落和檐口净空。",
+    "供给": "有人居住，需生活饮水、食物与燃料；园艺用水另行接入。",
+    "推荐情境": [
+      "城镇核心院落或独立街区"
+    ],
+    "资源": "矿石方块为静态矿面表达；放置位置需另行确认资源与开采规则，不声称自动产矿。"
+  },
+  "rooms": [
+    {
+      "id": "gallery",
+      "name": "支护采掘巷道",
+      "min": [
+        18,
+        2,
+        23
+      ],
+      "max": [
+        24,
+        6,
+        37
+      ],
+      "purpose": "矿面、轨道及步行侧道"
+    },
+    {
+      "id": "tools",
+      "name": "工具修理与值守",
+      "min": [
+        5,
+        3,
+        7
+      ],
+      "max": [
+        13,
+        7,
+        16
+      ],
+      "purpose": "工具修理与值守"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        21,
+        2,
+        0
+      ],
+      "name": "外部步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "ore_face",
+      "kind": "work",
+      "pos": [
+        23,
+        2,
+        36
+      ],
+      "name": "采掘工作面前站位"
+    },
+    {
+      "id": "tools_entry",
+      "kind": "circulation",
+      "pos": [
+        9,
+        3,
+        7
+      ],
+      "name": "室内入口通路",
+      "facing": "north"
+    },
+    {
+      "id": "repair",
+      "kind": "work",
+      "pos": [
+        6,
+        3,
+        8
+      ],
+      "name": "工具修理",
+      "look_at": [
+        6,
+        4,
+        8
+      ],
+      "approach": [
+        6,
+        3,
+        9
+      ]
+    },
+    {
+      "id": "register",
+      "kind": "work",
+      "pos": [
+        11,
+        3,
+        13
+      ],
+      "name": "矿料登记",
+      "look_at": [
+        11,
+        4,
+        13
+      ],
+      "approach": [
+        11,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "sort",
+      "kind": "work",
+      "pos": [
+        30,
+        2,
+        12
+      ],
+      "name": "矿料分拣棚侧道"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "日常木构沿用灰瓦、浅墙、门廊和石基；具体功能由实际空间及设施表达。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "院落与室内剖面",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/chinese_daily.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部街面和院落地坪顶面为 Y=2；建筑室内由明确台阶抬高。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "采矿作业",
+    "矿料仓储",
+    "工具维护"
+  ],
+  "asset_tags": [],
+  "nbt_sha256": "87bf40fb63a9f0d475ff534da04d8989de7343f469593ec286ff2e9fee38eb27"
+}

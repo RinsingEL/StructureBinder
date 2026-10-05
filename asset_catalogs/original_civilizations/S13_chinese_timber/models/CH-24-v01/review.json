@@ -1,0 +1,21 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CH-24-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex actual NBT image review 2026-10-05",
+  "nbt_sha256": "3ba8aba31b46bff5786b589d800dd71634f6bbb0bebe6f0ed8b4c61af298d5d7",
+  "author_sha256": "e8095d4894cd28f2dcdea975ca0f25d167c899c3a28d8ac169e5db83417db2a3",
+  "evidence": [
+    "previews/left.png"
+  ],
+  "checks": [
+    "最终版本拱腹从两岸向中央升高，宽踏步和连续栏杆清楚；桥面全程可走。",
+    "最终 NBT 数据、离线通路和截图渲染检查通过。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

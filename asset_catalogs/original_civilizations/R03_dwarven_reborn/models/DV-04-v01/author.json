@@ -1,0 +1,97 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DV-04-v01",
+  "name": "祖脉纪念殿 · 八角祖厅与环列石龛",
+  "family": "DV-04",
+  "civilization": "矮人新制",
+  "planning_role": "planning_role.key",
+  "size": [
+    71,
+    55,
+    73
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [
+    {
+      "id": "ancestral",
+      "name": "环列祖像厅",
+      "min": [
+        21,
+        4,
+        29
+      ],
+      "max": [
+        49,
+        22,
+        57
+      ],
+      "purpose": "厚壁石龛与中央祭火构成纪念空间"
+    }
+  ],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        35,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "ritual",
+      "kind": "work",
+      "pos": [
+        35,
+        4,
+        33
+      ],
+      "name": "祖厅中央礼仪通道",
+      "approach": [
+        35,
+        4,
+        33
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "祖厅",
+      "y": 3,
+      "max_y": 22
+    }
+  ],
+  "roof_min_y": 24,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "祖先纪念",
+    "礼仪"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/dwarven_revision2.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "6d5d945f0947a4fae0434236dc094034d25a56ae1cb58435a285dea0044ddb4a"
+}

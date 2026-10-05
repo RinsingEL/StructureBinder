@@ -1,0 +1,25 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "EU-12-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-05 revision2 visual review",
+  "nbt_sha256": "3bb9a10c205c0eab35b45a9a67fd7f8235c1d9296375834d5f0367a330aea1ff",
+  "author_sha256": "326e41cb0f772ec1b4bf18f1505780fdb270a7ffcc8520a3d0d79cd0a63b1937",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png"
+  ],
+  "checks": [
+    "木篱门架、分格香草畦与小树构成宅旁花园，留出穿行路径。",
+    "已实际查看所列当前版本视角，并与独立用途、入口和内部组织核对。"
+  ],
+  "revisions": [
+    "重做为圆塔环墙、圆券侧廊、逐层挑楼、三跨木架与用途明确的生产构筑物。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "制作方离线图审；用户尚未确认本轮审美质量。"
+  ]
+}

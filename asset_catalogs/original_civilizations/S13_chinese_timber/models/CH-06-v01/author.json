@@ -1,0 +1,201 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CH-06-v01",
+  "name": "中式侧院木作坊",
+  "family": "CH-06",
+  "civilization": "中式木构",
+  "planning_role": "planning_role.fill",
+  "size": [
+    33,
+    23,
+    33
+  ],
+  "terrain": {
+    "选址": "完整稳定平地，外部路面脚底与本地 Y=2 对齐；保留全尺寸院落和檐口净空。",
+    "供给": "有人居住，需生活饮水、食物与燃料；园艺用水另行接入。",
+    "推荐情境": [
+      "城镇核心院落或独立街区"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "work",
+      "name": "接单与木作",
+      "min": [
+        5,
+        3,
+        8
+      ],
+      "max": [
+        17,
+        7,
+        24
+      ],
+      "purpose": "接单与木作"
+    },
+    {
+      "id": "yard",
+      "name": "晾木与卸料棚",
+      "min": [
+        22,
+        2,
+        13
+      ],
+      "max": [
+        29,
+        5,
+        26
+      ],
+      "purpose": "卸料、木材干燥与分拣"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        16,
+        2,
+        0
+      ],
+      "name": "外部步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "work_entry",
+      "kind": "circulation",
+      "pos": [
+        10,
+        3,
+        8
+      ],
+      "name": "室内入口通路",
+      "facing": "north"
+    },
+    {
+      "id": "bench_10",
+      "kind": "work",
+      "pos": [
+        6,
+        3,
+        10
+      ],
+      "name": "木作工作台",
+      "look_at": [
+        6,
+        4,
+        10
+      ],
+      "approach": [
+        6,
+        3,
+        11
+      ]
+    },
+    {
+      "id": "bench_16",
+      "kind": "work",
+      "pos": [
+        6,
+        3,
+        16
+      ],
+      "name": "木作工作台",
+      "look_at": [
+        6,
+        4,
+        16
+      ],
+      "approach": [
+        6,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "bench_22",
+      "kind": "work",
+      "pos": [
+        6,
+        3,
+        22
+      ],
+      "name": "木作工作台",
+      "look_at": [
+        6,
+        4,
+        22
+      ],
+      "approach": [
+        6,
+        3,
+        23
+      ]
+    },
+    {
+      "id": "repair",
+      "kind": "work",
+      "pos": [
+        15,
+        3,
+        10
+      ],
+      "name": "工具手修",
+      "look_at": [
+        15,
+        4,
+        10
+      ],
+      "approach": [
+        15,
+        3,
+        11
+      ]
+    },
+    {
+      "id": "wood_yard",
+      "kind": "work",
+      "pos": [
+        23,
+        2,
+        19
+      ],
+      "name": "木料作业通道"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "日常木构沿用灰瓦、浅墙、门廊和石基；具体功能由实际空间及设施表达。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "院落与室内剖面",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/chinese_daily.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部街面和院落地坪顶面为 Y=2；建筑室内由明确台阶抬高。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "木器制作",
+    "工具维护"
+  ],
+  "asset_tags": [],
+  "nbt_sha256": "99e093466474424c3cc87322cdaecab780406767849d6b7326d963a05c90351a"
+}

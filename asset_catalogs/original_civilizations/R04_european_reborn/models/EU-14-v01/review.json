@@ -1,0 +1,26 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "EU-14-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-05 revision2 visual review",
+  "nbt_sha256": "4fa03d460514728872b666460c01acad4c08ad9ad94a7bec4e4bbd6676599753",
+  "author_sha256": "1f0596edf1decae4fc937d34566c114b07981189b0a7f495b015797ddb64da92",
+  "evidence": [
+    "previews/front.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png"
+  ],
+  "checks": [
+    "高石厅与两侧木翼形成庄园主体，前院独立门屋；上层寝区与主厅挑空区分开。",
+    "已实际查看所列当前版本视角，并与独立用途、入口和内部组织核对。"
+  ],
+  "revisions": [
+    "重做为圆塔环墙、圆券侧廊、逐层挑楼、三跨木架与用途明确的生产构筑物。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "制作方离线图审；用户尚未确认本轮审美质量。"
+  ]
+}

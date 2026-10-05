@@ -1,0 +1,1640 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CH-11-v02",
+  "name": "中式客栈 · 三层十二室",
+  "family": "CH-11",
+  "civilization": "中式木构",
+  "planning_role": "planning_role.self_contained",
+  "size": [
+    51,
+    29,
+    57
+  ],
+  "terrain": {
+    "选址": "完整稳定平地，外部路面脚底与本地 Y=2 对齐；保留全尺寸院落和檐口净空。",
+    "供给": "有人居住，需生活饮水、食物与燃料；园艺用水另行接入。",
+    "推荐情境": [
+      "城镇核心院落或独立街区"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "lobby",
+      "name": "临街大堂与接待",
+      "min": [
+        15,
+        3,
+        6
+      ],
+      "max": [
+        35,
+        7,
+        17
+      ],
+      "purpose": "入住、等候、行李与楼梯口"
+    },
+    {
+      "id": "guest_l2_front_west",
+      "name": "2层临街双床房",
+      "min": [
+        15,
+        10,
+        6
+      ],
+      "max": [
+        21,
+        14,
+        13
+      ],
+      "purpose": "双床客房，独立房门、行李、书案与照明"
+    },
+    {
+      "id": "guest_l2_front_east",
+      "name": "2层临街双床房",
+      "min": [
+        31,
+        10,
+        6
+      ],
+      "max": [
+        35,
+        14,
+        13
+      ],
+      "purpose": "双床客房，独立房门、行李、书案与照明"
+    },
+    {
+      "id": "guest_l3_front_west",
+      "name": "3层临街双床房",
+      "min": [
+        15,
+        17,
+        6
+      ],
+      "max": [
+        21,
+        21,
+        13
+      ],
+      "purpose": "双床客房，独立房门、行李、书案与照明"
+    },
+    {
+      "id": "guest_l3_front_east",
+      "name": "3层临街双床房",
+      "min": [
+        31,
+        17,
+        6
+      ],
+      "max": [
+        35,
+        21,
+        13
+      ],
+      "purpose": "双床客房，独立房门、行李、书案与照明"
+    },
+    {
+      "id": "dining",
+      "name": "一层餐厅",
+      "min": [
+        6,
+        3,
+        23
+      ],
+      "max": [
+        14,
+        7,
+        35
+      ],
+      "purpose": "完整堂食空间"
+    },
+    {
+      "id": "tea_lounge",
+      "name": "一层茶座与公共休息",
+      "min": [
+        6,
+        3,
+        37
+      ],
+      "max": [
+        14,
+        7,
+        49
+      ],
+      "purpose": "住客会客与茶水"
+    },
+    {
+      "id": "kitchen",
+      "name": "一层后厨与食材",
+      "min": [
+        36,
+        3,
+        23
+      ],
+      "max": [
+        44,
+        7,
+        35
+      ],
+      "purpose": "烹调、备餐、食材存放"
+    },
+    {
+      "id": "laundry",
+      "name": "一层洗漱与布草",
+      "min": [
+        36,
+        3,
+        37
+      ],
+      "max": [
+        44,
+        7,
+        42
+      ],
+      "purpose": "洗漱、布草清洗和收纳"
+    },
+    {
+      "id": "staff",
+      "name": "员工值守休息",
+      "min": [
+        36,
+        3,
+        44
+      ],
+      "max": [
+        44,
+        7,
+        49
+      ],
+      "purpose": "两张员工床，区别于对客床位"
+    },
+    {
+      "id": "guest_l2_west_1",
+      "name": "二层west翼双床房 1",
+      "min": [
+        6,
+        10,
+        23
+      ],
+      "max": [
+        14,
+        14,
+        28
+      ],
+      "purpose": "双床客房，独立房门、行李、书案与照明"
+    },
+    {
+      "id": "guest_l2_west_2",
+      "name": "二层west翼双床房 2",
+      "min": [
+        6,
+        10,
+        30
+      ],
+      "max": [
+        14,
+        14,
+        35
+      ],
+      "purpose": "双床客房，独立房门、行李、书案与照明"
+    },
+    {
+      "id": "guest_l2_west_3",
+      "name": "二层west翼双床房 3",
+      "min": [
+        6,
+        10,
+        37
+      ],
+      "max": [
+        14,
+        14,
+        42
+      ],
+      "purpose": "双床客房，独立房门、行李、书案与照明"
+    },
+    {
+      "id": "guest_l2_west_4",
+      "name": "二层west翼双床房 4",
+      "min": [
+        6,
+        10,
+        44
+      ],
+      "max": [
+        14,
+        14,
+        49
+      ],
+      "purpose": "双床客房，独立房门、行李、书案与照明"
+    },
+    {
+      "id": "guest_l2_east_1",
+      "name": "二层east翼双床房 1",
+      "min": [
+        36,
+        10,
+        23
+      ],
+      "max": [
+        44,
+        14,
+        28
+      ],
+      "purpose": "双床客房，独立房门、行李、书案与照明"
+    },
+    {
+      "id": "guest_l2_east_2",
+      "name": "二层east翼双床房 2",
+      "min": [
+        36,
+        10,
+        30
+      ],
+      "max": [
+        44,
+        14,
+        35
+      ],
+      "purpose": "双床客房，独立房门、行李、书案与照明"
+    },
+    {
+      "id": "guest_l2_east_3",
+      "name": "二层east翼双床房 3",
+      "min": [
+        36,
+        10,
+        37
+      ],
+      "max": [
+        44,
+        14,
+        42
+      ],
+      "purpose": "双床客房，独立房门、行李、书案与照明"
+    },
+    {
+      "id": "guest_l2_east_4",
+      "name": "二层east翼双床房 4",
+      "min": [
+        36,
+        10,
+        44
+      ],
+      "max": [
+        44,
+        14,
+        49
+      ],
+      "purpose": "双床客房，独立房门、行李、书案与照明"
+    },
+    {
+      "id": "rear_store",
+      "name": "后院物资与工具",
+      "min": [
+        22,
+        3,
+        46
+      ],
+      "max": [
+        28,
+        7,
+        51
+      ],
+      "purpose": "后院物资与工具"
+    }
+  ],
+  "points": [
+    {
+      "id": "front_hall_door",
+      "kind": "circulation",
+      "pos": [
+        25,
+        3,
+        6
+      ],
+      "name": "室内入口通路",
+      "facing": "north"
+    },
+    {
+      "id": "courtyard_door",
+      "kind": "circulation",
+      "pos": [
+        25,
+        3,
+        17
+      ],
+      "name": "室内入口通路",
+      "facing": "south"
+    },
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        25,
+        2,
+        0
+      ],
+      "name": "临街主入口",
+      "facing": "north"
+    },
+    {
+      "id": "reception",
+      "kind": "work",
+      "pos": [
+        32,
+        3,
+        8
+      ],
+      "name": "入住柜台与账簿",
+      "look_at": [
+        32,
+        4,
+        8
+      ],
+      "approach": [
+        32,
+        3,
+        9
+      ]
+    },
+    {
+      "id": "luggage_store",
+      "kind": "storage",
+      "pos": [
+        31,
+        3,
+        15
+      ],
+      "name": "大堂寄存",
+      "approach": [
+        31,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "guest_l2_front_west_door",
+      "kind": "circulation",
+      "pos": [
+        18,
+        10,
+        13
+      ],
+      "name": "客房或楼廊入口"
+    },
+    {
+      "id": "guest_l2_front_west_bed_1",
+      "kind": "bed",
+      "pos": [
+        16,
+        10,
+        12
+      ],
+      "name": "床位",
+      "look_at": [
+        16,
+        10,
+        11
+      ],
+      "approach": [
+        17,
+        10,
+        12
+      ]
+    },
+    {
+      "id": "guest_l2_front_west_bed_2",
+      "kind": "bed",
+      "pos": [
+        20,
+        10,
+        12
+      ],
+      "name": "床位",
+      "look_at": [
+        20,
+        10,
+        11
+      ],
+      "approach": [
+        21,
+        10,
+        12
+      ]
+    },
+    {
+      "id": "guest_l2_front_west_luggage",
+      "kind": "storage",
+      "pos": [
+        16,
+        10,
+        6
+      ],
+      "name": "客房行李存放",
+      "look_at": [
+        16,
+        11,
+        6
+      ],
+      "approach": [
+        16,
+        10,
+        7
+      ]
+    },
+    {
+      "id": "balcony_l2_west",
+      "kind": "circulation",
+      "pos": [
+        18,
+        10,
+        6
+      ],
+      "name": "客房或楼廊入口"
+    },
+    {
+      "id": "guest_l2_front_east_door",
+      "kind": "circulation",
+      "pos": [
+        33,
+        10,
+        13
+      ],
+      "name": "客房或楼廊入口"
+    },
+    {
+      "id": "guest_l2_front_east_bed_1",
+      "kind": "bed",
+      "pos": [
+        32,
+        10,
+        12
+      ],
+      "name": "床位",
+      "look_at": [
+        32,
+        10,
+        11
+      ],
+      "approach": [
+        33,
+        10,
+        12
+      ]
+    },
+    {
+      "id": "guest_l2_front_east_bed_2",
+      "kind": "bed",
+      "pos": [
+        34,
+        10,
+        12
+      ],
+      "name": "床位",
+      "look_at": [
+        34,
+        10,
+        11
+      ],
+      "approach": [
+        35,
+        10,
+        12
+      ]
+    },
+    {
+      "id": "guest_l2_front_east_luggage",
+      "kind": "storage",
+      "pos": [
+        32,
+        10,
+        6
+      ],
+      "name": "客房行李存放",
+      "look_at": [
+        32,
+        11,
+        6
+      ],
+      "approach": [
+        32,
+        10,
+        7
+      ]
+    },
+    {
+      "id": "balcony_l2_east",
+      "kind": "circulation",
+      "pos": [
+        33,
+        10,
+        6
+      ],
+      "name": "客房或楼廊入口"
+    },
+    {
+      "id": "rear_gallery_l2",
+      "kind": "circulation",
+      "pos": [
+        25,
+        10,
+        17
+      ],
+      "name": "客房或楼廊入口"
+    },
+    {
+      "id": "guest_l3_front_west_door",
+      "kind": "circulation",
+      "pos": [
+        18,
+        17,
+        13
+      ],
+      "name": "客房或楼廊入口"
+    },
+    {
+      "id": "guest_l3_front_west_bed_1",
+      "kind": "bed",
+      "pos": [
+        16,
+        17,
+        12
+      ],
+      "name": "床位",
+      "look_at": [
+        16,
+        17,
+        11
+      ],
+      "approach": [
+        17,
+        17,
+        12
+      ]
+    },
+    {
+      "id": "guest_l3_front_west_bed_2",
+      "kind": "bed",
+      "pos": [
+        20,
+        17,
+        12
+      ],
+      "name": "床位",
+      "look_at": [
+        20,
+        17,
+        11
+      ],
+      "approach": [
+        21,
+        17,
+        12
+      ]
+    },
+    {
+      "id": "guest_l3_front_west_luggage",
+      "kind": "storage",
+      "pos": [
+        16,
+        17,
+        6
+      ],
+      "name": "客房行李存放",
+      "look_at": [
+        16,
+        18,
+        6
+      ],
+      "approach": [
+        16,
+        17,
+        7
+      ]
+    },
+    {
+      "id": "balcony_l3_west",
+      "kind": "circulation",
+      "pos": [
+        18,
+        17,
+        6
+      ],
+      "name": "客房或楼廊入口"
+    },
+    {
+      "id": "guest_l3_front_east_door",
+      "kind": "circulation",
+      "pos": [
+        33,
+        17,
+        13
+      ],
+      "name": "客房或楼廊入口"
+    },
+    {
+      "id": "guest_l3_front_east_bed_1",
+      "kind": "bed",
+      "pos": [
+        32,
+        17,
+        12
+      ],
+      "name": "床位",
+      "look_at": [
+        32,
+        17,
+        11
+      ],
+      "approach": [
+        33,
+        17,
+        12
+      ]
+    },
+    {
+      "id": "guest_l3_front_east_bed_2",
+      "kind": "bed",
+      "pos": [
+        34,
+        17,
+        12
+      ],
+      "name": "床位",
+      "look_at": [
+        34,
+        17,
+        11
+      ],
+      "approach": [
+        35,
+        17,
+        12
+      ]
+    },
+    {
+      "id": "guest_l3_front_east_luggage",
+      "kind": "storage",
+      "pos": [
+        32,
+        17,
+        6
+      ],
+      "name": "客房行李存放",
+      "look_at": [
+        32,
+        18,
+        6
+      ],
+      "approach": [
+        32,
+        17,
+        7
+      ]
+    },
+    {
+      "id": "balcony_l3_east",
+      "kind": "circulation",
+      "pos": [
+        33,
+        17,
+        6
+      ],
+      "name": "客房或楼廊入口"
+    },
+    {
+      "id": "dining_door",
+      "kind": "circulation",
+      "pos": [
+        14,
+        3,
+        29
+      ],
+      "name": "室内入口通路",
+      "facing": "east"
+    },
+    {
+      "id": "dining_service",
+      "kind": "work",
+      "pos": [
+        12,
+        3,
+        26
+      ],
+      "name": "堂食服务",
+      "approach": [
+        12,
+        3,
+        28
+      ]
+    },
+    {
+      "id": "tea_door",
+      "kind": "circulation",
+      "pos": [
+        14,
+        3,
+        43
+      ],
+      "name": "室内入口通路",
+      "facing": "east"
+    },
+    {
+      "id": "tea_station",
+      "kind": "work",
+      "pos": [
+        7,
+        3,
+        38
+      ],
+      "name": "备茶取水",
+      "look_at": [
+        7,
+        4,
+        38
+      ],
+      "approach": [
+        7,
+        3,
+        39
+      ]
+    },
+    {
+      "id": "kitchen_door",
+      "kind": "circulation",
+      "pos": [
+        36,
+        3,
+        29
+      ],
+      "name": "室内入口通路",
+      "facing": "west"
+    },
+    {
+      "id": "kitchen_delivery_door",
+      "kind": "circulation",
+      "pos": [
+        44,
+        3,
+        29
+      ],
+      "name": "室内入口通路",
+      "facing": "east"
+    },
+    {
+      "id": "delivery",
+      "kind": "entrance",
+      "pos": [
+        49,
+        2,
+        29
+      ],
+      "name": "厨房侧面送货入口",
+      "facing": "east"
+    },
+    {
+      "id": "cook",
+      "kind": "work",
+      "pos": [
+        37,
+        3,
+        24
+      ],
+      "name": "备餐与炉灶",
+      "look_at": [
+        37,
+        4,
+        24
+      ],
+      "approach": [
+        37,
+        3,
+        25
+      ]
+    },
+    {
+      "id": "food_store",
+      "kind": "storage",
+      "pos": [
+        42,
+        3,
+        32
+      ],
+      "name": "食材储存",
+      "look_at": [
+        42,
+        4,
+        32
+      ],
+      "approach": [
+        42,
+        3,
+        33
+      ]
+    },
+    {
+      "id": "laundry_door",
+      "kind": "circulation",
+      "pos": [
+        36,
+        3,
+        39
+      ],
+      "name": "室内入口通路",
+      "facing": "west"
+    },
+    {
+      "id": "wash",
+      "kind": "work",
+      "pos": [
+        37,
+        3,
+        38
+      ],
+      "name": "洗漱与取水",
+      "look_at": [
+        37,
+        4,
+        38
+      ],
+      "approach": [
+        37,
+        3,
+        39
+      ]
+    },
+    {
+      "id": "linen",
+      "kind": "storage",
+      "pos": [
+        42,
+        3,
+        40
+      ],
+      "name": "清洁布草",
+      "look_at": [
+        42,
+        4,
+        40
+      ],
+      "approach": [
+        42,
+        3,
+        41
+      ]
+    },
+    {
+      "id": "staff_door",
+      "kind": "circulation",
+      "pos": [
+        36,
+        3,
+        46
+      ],
+      "name": "室内入口通路",
+      "facing": "west"
+    },
+    {
+      "id": "staff_a",
+      "kind": "bed",
+      "pos": [
+        38,
+        3,
+        48
+      ],
+      "name": "床位",
+      "look_at": [
+        38,
+        3,
+        47
+      ],
+      "approach": [
+        39,
+        3,
+        48
+      ]
+    },
+    {
+      "id": "staff_b",
+      "kind": "bed",
+      "pos": [
+        42,
+        3,
+        48
+      ],
+      "name": "床位",
+      "look_at": [
+        42,
+        3,
+        47
+      ],
+      "approach": [
+        43,
+        3,
+        48
+      ]
+    },
+    {
+      "id": "guest_l2_west_1_door",
+      "kind": "circulation",
+      "pos": [
+        14,
+        10,
+        25
+      ],
+      "name": "客房或楼廊入口"
+    },
+    {
+      "id": "guest_l2_west_1_bed_1",
+      "kind": "bed",
+      "pos": [
+        7,
+        10,
+        27
+      ],
+      "name": "床位",
+      "look_at": [
+        7,
+        10,
+        26
+      ],
+      "approach": [
+        8,
+        10,
+        27
+      ]
+    },
+    {
+      "id": "guest_l2_west_1_bed_2",
+      "kind": "bed",
+      "pos": [
+        11,
+        10,
+        27
+      ],
+      "name": "床位",
+      "look_at": [
+        11,
+        10,
+        26
+      ],
+      "approach": [
+        12,
+        10,
+        27
+      ]
+    },
+    {
+      "id": "guest_l2_west_1_luggage",
+      "kind": "storage",
+      "pos": [
+        7,
+        10,
+        23
+      ],
+      "name": "客房行李存放",
+      "look_at": [
+        7,
+        11,
+        23
+      ],
+      "approach": [
+        7,
+        10,
+        24
+      ]
+    },
+    {
+      "id": "guest_l2_west_2_door",
+      "kind": "circulation",
+      "pos": [
+        14,
+        10,
+        32
+      ],
+      "name": "客房或楼廊入口"
+    },
+    {
+      "id": "guest_l2_west_2_bed_1",
+      "kind": "bed",
+      "pos": [
+        7,
+        10,
+        34
+      ],
+      "name": "床位",
+      "look_at": [
+        7,
+        10,
+        33
+      ],
+      "approach": [
+        8,
+        10,
+        34
+      ]
+    },
+    {
+      "id": "guest_l2_west_2_bed_2",
+      "kind": "bed",
+      "pos": [
+        11,
+        10,
+        34
+      ],
+      "name": "床位",
+      "look_at": [
+        11,
+        10,
+        33
+      ],
+      "approach": [
+        12,
+        10,
+        34
+      ]
+    },
+    {
+      "id": "guest_l2_west_2_luggage",
+      "kind": "storage",
+      "pos": [
+        7,
+        10,
+        30
+      ],
+      "name": "客房行李存放",
+      "look_at": [
+        7,
+        11,
+        30
+      ],
+      "approach": [
+        7,
+        10,
+        31
+      ]
+    },
+    {
+      "id": "guest_l2_west_3_door",
+      "kind": "circulation",
+      "pos": [
+        14,
+        10,
+        39
+      ],
+      "name": "客房或楼廊入口"
+    },
+    {
+      "id": "guest_l2_west_3_bed_1",
+      "kind": "bed",
+      "pos": [
+        7,
+        10,
+        41
+      ],
+      "name": "床位",
+      "look_at": [
+        7,
+        10,
+        40
+      ],
+      "approach": [
+        8,
+        10,
+        41
+      ]
+    },
+    {
+      "id": "guest_l2_west_3_bed_2",
+      "kind": "bed",
+      "pos": [
+        11,
+        10,
+        41
+      ],
+      "name": "床位",
+      "look_at": [
+        11,
+        10,
+        40
+      ],
+      "approach": [
+        12,
+        10,
+        41
+      ]
+    },
+    {
+      "id": "guest_l2_west_3_luggage",
+      "kind": "storage",
+      "pos": [
+        7,
+        10,
+        37
+      ],
+      "name": "客房行李存放",
+      "look_at": [
+        7,
+        11,
+        37
+      ],
+      "approach": [
+        7,
+        10,
+        38
+      ]
+    },
+    {
+      "id": "guest_l2_west_4_door",
+      "kind": "circulation",
+      "pos": [
+        14,
+        10,
+        46
+      ],
+      "name": "客房或楼廊入口"
+    },
+    {
+      "id": "guest_l2_west_4_bed_1",
+      "kind": "bed",
+      "pos": [
+        7,
+        10,
+        48
+      ],
+      "name": "床位",
+      "look_at": [
+        7,
+        10,
+        47
+      ],
+      "approach": [
+        8,
+        10,
+        48
+      ]
+    },
+    {
+      "id": "guest_l2_west_4_bed_2",
+      "kind": "bed",
+      "pos": [
+        11,
+        10,
+        48
+      ],
+      "name": "床位",
+      "look_at": [
+        11,
+        10,
+        47
+      ],
+      "approach": [
+        12,
+        10,
+        48
+      ]
+    },
+    {
+      "id": "guest_l2_west_4_luggage",
+      "kind": "storage",
+      "pos": [
+        7,
+        10,
+        44
+      ],
+      "name": "客房行李存放",
+      "look_at": [
+        7,
+        11,
+        44
+      ],
+      "approach": [
+        7,
+        10,
+        45
+      ]
+    },
+    {
+      "id": "guest_l2_east_1_door",
+      "kind": "circulation",
+      "pos": [
+        36,
+        10,
+        25
+      ],
+      "name": "客房或楼廊入口"
+    },
+    {
+      "id": "guest_l2_east_1_bed_1",
+      "kind": "bed",
+      "pos": [
+        37,
+        10,
+        27
+      ],
+      "name": "床位",
+      "look_at": [
+        37,
+        10,
+        26
+      ],
+      "approach": [
+        38,
+        10,
+        27
+      ]
+    },
+    {
+      "id": "guest_l2_east_1_bed_2",
+      "kind": "bed",
+      "pos": [
+        41,
+        10,
+        27
+      ],
+      "name": "床位",
+      "look_at": [
+        41,
+        10,
+        26
+      ],
+      "approach": [
+        42,
+        10,
+        27
+      ]
+    },
+    {
+      "id": "guest_l2_east_1_luggage",
+      "kind": "storage",
+      "pos": [
+        37,
+        10,
+        23
+      ],
+      "name": "客房行李存放",
+      "look_at": [
+        37,
+        11,
+        23
+      ],
+      "approach": [
+        37,
+        10,
+        24
+      ]
+    },
+    {
+      "id": "guest_l2_east_2_door",
+      "kind": "circulation",
+      "pos": [
+        36,
+        10,
+        32
+      ],
+      "name": "客房或楼廊入口"
+    },
+    {
+      "id": "guest_l2_east_2_bed_1",
+      "kind": "bed",
+      "pos": [
+        37,
+        10,
+        34
+      ],
+      "name": "床位",
+      "look_at": [
+        37,
+        10,
+        33
+      ],
+      "approach": [
+        38,
+        10,
+        34
+      ]
+    },
+    {
+      "id": "guest_l2_east_2_bed_2",
+      "kind": "bed",
+      "pos": [
+        41,
+        10,
+        34
+      ],
+      "name": "床位",
+      "look_at": [
+        41,
+        10,
+        33
+      ],
+      "approach": [
+        42,
+        10,
+        34
+      ]
+    },
+    {
+      "id": "guest_l2_east_2_luggage",
+      "kind": "storage",
+      "pos": [
+        37,
+        10,
+        30
+      ],
+      "name": "客房行李存放",
+      "look_at": [
+        37,
+        11,
+        30
+      ],
+      "approach": [
+        37,
+        10,
+        31
+      ]
+    },
+    {
+      "id": "guest_l2_east_3_door",
+      "kind": "circulation",
+      "pos": [
+        36,
+        10,
+        39
+      ],
+      "name": "客房或楼廊入口"
+    },
+    {
+      "id": "guest_l2_east_3_bed_1",
+      "kind": "bed",
+      "pos": [
+        37,
+        10,
+        41
+      ],
+      "name": "床位",
+      "look_at": [
+        37,
+        10,
+        40
+      ],
+      "approach": [
+        38,
+        10,
+        41
+      ]
+    },
+    {
+      "id": "guest_l2_east_3_bed_2",
+      "kind": "bed",
+      "pos": [
+        41,
+        10,
+        41
+      ],
+      "name": "床位",
+      "look_at": [
+        41,
+        10,
+        40
+      ],
+      "approach": [
+        42,
+        10,
+        41
+      ]
+    },
+    {
+      "id": "guest_l2_east_3_luggage",
+      "kind": "storage",
+      "pos": [
+        37,
+        10,
+        37
+      ],
+      "name": "客房行李存放",
+      "look_at": [
+        37,
+        11,
+        37
+      ],
+      "approach": [
+        37,
+        10,
+        38
+      ]
+    },
+    {
+      "id": "guest_l2_east_4_door",
+      "kind": "circulation",
+      "pos": [
+        36,
+        10,
+        46
+      ],
+      "name": "客房或楼廊入口"
+    },
+    {
+      "id": "guest_l2_east_4_bed_1",
+      "kind": "bed",
+      "pos": [
+        37,
+        10,
+        48
+      ],
+      "name": "床位",
+      "look_at": [
+        37,
+        10,
+        47
+      ],
+      "approach": [
+        38,
+        10,
+        48
+      ]
+    },
+    {
+      "id": "guest_l2_east_4_bed_2",
+      "kind": "bed",
+      "pos": [
+        41,
+        10,
+        48
+      ],
+      "name": "床位",
+      "look_at": [
+        41,
+        10,
+        47
+      ],
+      "approach": [
+        42,
+        10,
+        48
+      ]
+    },
+    {
+      "id": "guest_l2_east_4_luggage",
+      "kind": "storage",
+      "pos": [
+        37,
+        10,
+        44
+      ],
+      "name": "客房行李存放",
+      "look_at": [
+        37,
+        11,
+        44
+      ],
+      "approach": [
+        37,
+        10,
+        45
+      ]
+    },
+    {
+      "id": "wing_gallery_17",
+      "kind": "circulation",
+      "pos": [
+        17,
+        10,
+        48
+      ],
+      "name": "翼楼楼廊尽端"
+    },
+    {
+      "id": "wing_gallery_33",
+      "kind": "circulation",
+      "pos": [
+        33,
+        10,
+        48
+      ],
+      "name": "翼楼楼廊尽端"
+    },
+    {
+      "id": "ground_landing",
+      "kind": "circulation",
+      "pos": [
+        24,
+        3,
+        7
+      ],
+      "name": "楼梯平台与楼层通路"
+    },
+    {
+      "id": "middle_landing",
+      "kind": "circulation",
+      "pos": [
+        24,
+        10,
+        16
+      ],
+      "name": "楼梯平台与楼层通路"
+    },
+    {
+      "id": "upper_landing",
+      "kind": "circulation",
+      "pos": [
+        28,
+        17,
+        7
+      ],
+      "name": "楼梯平台与楼层通路"
+    },
+    {
+      "id": "upper_passage",
+      "kind": "circulation",
+      "pos": [
+        24,
+        17,
+        16
+      ],
+      "name": "楼梯平台与楼层通路"
+    },
+    {
+      "id": "rear_store_door",
+      "kind": "circulation",
+      "pos": [
+        25,
+        3,
+        46
+      ],
+      "name": "室内入口通路",
+      "facing": "north"
+    },
+    {
+      "id": "maintenance_store",
+      "kind": "storage",
+      "pos": [
+        23,
+        3,
+        49
+      ],
+      "name": "维护与清洁工具",
+      "look_at": [
+        23,
+        4,
+        49
+      ],
+      "approach": [
+        23,
+        3,
+        50
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "三层主楼和两层翼楼，真实楼板、梯段、转向平台与护栏；不是在单层屋顶上加高装饰。",
+    "一层公共与服务空间，二层十间、三层两间双床客房，共二十四客床；另有两张员工床。",
+    "保留 CH-11-v01 围院客舍体量供对比，新增形体不是简单同比例缩放。",
+    "各层切片可查看内部；去屋顶只裁主楼最高屋面，翼楼请用二层切片查看。"
+  ],
+  "differences": [
+    "三层临街主楼、两层客房翼、十二室二十四客床、串联楼梯、临街阳台和围院楼廊。"
+  ],
+  "floors": [
+    {
+      "name": "一层 · 接待餐饮与后勤",
+      "y": 1,
+      "max_y": 7
+    },
+    {
+      "name": "二层 · 十间客房与楼廊",
+      "y": 9,
+      "max_y": 14
+    },
+    {
+      "name": "三层 · 两间客房与临街阳台",
+      "y": 16,
+      "max_y": 21
+    }
+  ],
+  "roof_min_y": 22,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/chinese_inn.py:tall_inn",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部街面和院落地坪顶面为 Y=2；建筑室内由明确台阶抬高。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "旅客住宿",
+    "餐饮",
+    "接待"
+  ],
+  "nbt_sha256": "3a31cea44985f2cdd943c1214ea55181fedf1782df1b45c94328f1fbaea62a72"
+}

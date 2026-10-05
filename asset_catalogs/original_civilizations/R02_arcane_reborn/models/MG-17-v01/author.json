@@ -1,0 +1,147 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-17-v01",
+  "name": "导师小院 · 阶梯书斋与玻璃冬园",
+  "family": "MG-17",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.self_contained",
+  "size": [
+    47,
+    45,
+    53
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [
+    {
+      "id": "study",
+      "name": "书斋与会面厅",
+      "min": [
+        10,
+        2,
+        18
+      ],
+      "max": [
+        26,
+        8,
+        40
+      ],
+      "purpose": "导师家庭居住与独立书斋"
+    }
+  ],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        23,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "bed_18",
+      "kind": "bed",
+      "pos": [
+        18,
+        10,
+        37
+      ],
+      "name": "床位",
+      "approach": [
+        19,
+        10,
+        37
+      ]
+    },
+    {
+      "id": "bed_23",
+      "kind": "bed",
+      "pos": [
+        23,
+        10,
+        37
+      ],
+      "name": "床位",
+      "approach": [
+        24,
+        10,
+        37
+      ]
+    },
+    {
+      "id": "study",
+      "kind": "work",
+      "pos": [
+        20,
+        2,
+        26
+      ],
+      "name": "导师书斋",
+      "approach": [
+        20,
+        2,
+        26
+      ]
+    },
+    {
+      "id": "upper",
+      "kind": "work",
+      "pos": [
+        19,
+        10,
+        32
+      ],
+      "name": "上层寝居",
+      "approach": [
+        19,
+        10,
+        32
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "书斋与冬园",
+      "y": 1,
+      "max_y": 8
+    },
+    {
+      "name": "寝居",
+      "y": 9,
+      "max_y": 16
+    }
+  ],
+  "roof_min_y": 19,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "家庭居住",
+    "研究"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "403774b26f44f18928aca5954d0f02d85d4bd95f9ff41ca25894c0b5f9aef4ba"
+}

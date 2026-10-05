@@ -1,0 +1,28 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "EU-04-v01",
+  "nbt_sha256": "fcafed3cf28625f756776e357913a54f19c0a42fd87781cad121f91a4e215b62",
+  "author_sha256": "2a34239450eae7563b2642d666fe26fd99e3c66b82e2f3c71e39c4f457cbc092",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-market",
+    "point-stall_13_20",
+    "point-stall_13_32",
+    "point-stall_13_44",
+    "point-stall_40_20",
+    "point-stall_40_32",
+    "point-stall_40_44",
+    "point-aisle",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

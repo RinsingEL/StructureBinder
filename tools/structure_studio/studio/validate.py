@@ -10,6 +10,7 @@ from .grounding import resolve_ground_plane
 AIR = {"minecraft:air", "minecraft:cave_air", "minecraft:void_air"}
 DIRECTIONS = dict(north=(0, -1), south=(0, 1), east=(1, 0), west=(-1, 0))
 PLANNING_ROLES = {f"planning_role.{role}" for role in ("key", "anchor", "fill", "structure", "self_contained")}
+ASSET_TAGS = {"infrastructure", "landscape"}
 # Vanilla 1.20.1 dirt tag plus AzaleaBlock/BushBlock's additional substrates.
 AZALEA_SOIL = {"minecraft:" + name for name in (
     "dirt", "grass_block", "podzol", "coarse_dirt", "mycelium", "rooted_dirt",
@@ -42,6 +43,10 @@ def validate(directory: Path, registry=None, *, save=True):
     if not isinstance(role, str) or role not in PLANNING_ROLES:
         errors.append(f"Invalid author planning_role: {role!r}")
     terms = meta.get('function_terms')
+    tags = meta.get('asset_tags', [])
+    if (not isinstance(tags, list) or any(not isinstance(t, str) or t not in ASSET_TAGS for t in tags)
+            or (all(isinstance(t, str) for t in tags) and len(tags) != len(set(tags)))):
+        errors.append('Author asset_tags must contain unique infrastructure/landscape values')
     if terms is not None and (not isinstance(terms, list) or not terms
             or any(not isinstance(t, str) or not t.strip() for t in terms)
             or (all(isinstance(t, str) for t in terms) and len(set(terms)) != len(terms))):

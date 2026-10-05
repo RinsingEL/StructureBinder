@@ -1,0 +1,148 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "EL-13-v01",
+  "name": "双塔王庭 · 三级露台与白枝王座廊",
+  "family": "EL-13",
+  "civilization": "精灵新制",
+  "planning_role": "planning_role.key",
+  "size": [
+    85,
+    78,
+    87
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [
+    {
+      "id": "court",
+      "name": "三级王庭",
+      "min": [
+        28,
+        7,
+        35
+      ],
+      "max": [
+        56,
+        29,
+        62
+      ],
+      "purpose": "宽外阶、高挑王座廊和上层会谈露台"
+    }
+  ],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        42,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "upper",
+      "kind": "work",
+      "pos": [
+        42,
+        16,
+        66
+      ],
+      "name": "王庭上层会谈廊",
+      "approach": [
+        42,
+        16,
+        66
+      ]
+    },
+    {
+      "id": "audience",
+      "kind": "work",
+      "pos": [
+        42,
+        7,
+        48
+      ],
+      "name": "前部接见通道",
+      "approach": [
+        42,
+        7,
+        48
+      ]
+    },
+    {
+      "id": "private_17",
+      "kind": "bed",
+      "pos": [
+        17,
+        4,
+        57
+      ],
+      "name": "床位",
+      "approach": [
+        18,
+        4,
+        57
+      ]
+    },
+    {
+      "id": "private_67",
+      "kind": "bed",
+      "pos": [
+        67,
+        4,
+        57
+      ],
+      "name": "床位",
+      "approach": [
+        68,
+        4,
+        57
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "王庭与侧居",
+      "y": 3,
+      "max_y": 14
+    },
+    {
+      "name": "上层会谈廊",
+      "y": 15,
+      "max_y": 29
+    }
+  ],
+  "roof_min_y": 33,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "正式接见",
+    "礼仪",
+    "居住"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/elven_revision2.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "c1108f6642d47fc41cfa365f40515a644376dab091164e4c2563d560219c70ca"
+}

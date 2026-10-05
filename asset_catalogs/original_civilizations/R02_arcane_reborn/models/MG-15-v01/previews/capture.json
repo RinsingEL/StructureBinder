@@ -1,0 +1,28 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "MG-15-v01",
+  "nbt_sha256": "79ec9aca84a2b63c0456ef8afaa38f71a1757899e2aef9771147b4b68349b299",
+  "author_sha256": "534035e093005aea36af7bbb1797868df635fbec28fff77a0981424e839f846a",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-care",
+    "point-patient_11",
+    "point-patient_17",
+    "point-nurse_6",
+    "point-patient_47",
+    "point-patient_53",
+    "point-nurse_42",
+    "point-care",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

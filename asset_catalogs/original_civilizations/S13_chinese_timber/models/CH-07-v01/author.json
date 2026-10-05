@@ -1,0 +1,146 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CH-07-v01",
+  "name": "中式院侧货仓 · 双开间",
+  "family": "CH-07",
+  "civilization": "中式木构",
+  "planning_role": "planning_role.fill",
+  "size": [
+    31,
+    23,
+    35
+  ],
+  "terrain": {
+    "选址": "完整稳定平地，外部路面脚底与本地 Y=2 对齐；保留全尺寸院落和檐口净空。",
+    "供给": "有人居住，需生活饮水、食物与燃料；园艺用水另行接入。",
+    "推荐情境": [
+      "城镇核心院落或独立街区"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "storage",
+      "name": "货仓",
+      "min": [
+        6,
+        3,
+        9
+      ],
+      "max": [
+        24,
+        9,
+        27
+      ],
+      "purpose": "货仓"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        15,
+        2,
+        0
+      ],
+      "name": "外部步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "loading",
+      "kind": "circulation",
+      "pos": [
+        14,
+        3,
+        9
+      ],
+      "name": "室内入口通路",
+      "facing": "north"
+    },
+    {
+      "id": "aisle_12",
+      "kind": "storage",
+      "pos": [
+        15,
+        3,
+        12
+      ],
+      "name": "贯通理货通道"
+    },
+    {
+      "id": "aisle_19",
+      "kind": "storage",
+      "pos": [
+        15,
+        3,
+        19
+      ],
+      "name": "贯通理货通道"
+    },
+    {
+      "id": "aisle_26",
+      "kind": "storage",
+      "pos": [
+        15,
+        3,
+        26
+      ],
+      "name": "贯通理货通道"
+    },
+    {
+      "id": "receiving",
+      "kind": "work",
+      "pos": [
+        18,
+        3,
+        10
+      ],
+      "name": "收发账册",
+      "look_at": [
+        18,
+        4,
+        10
+      ],
+      "approach": [
+        18,
+        3,
+        11
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "日常木构沿用灰瓦、浅墙、门廊和石基；具体功能由实际空间及设施表达。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "院落与室内剖面",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/chinese_daily.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部街面和院落地坪顶面为 Y=2；建筑室内由明确台阶抬高。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "货物仓储",
+    "理货"
+  ],
+  "asset_tags": [],
+  "nbt_sha256": "e8bc5f92bfcd1840c324fc65deea0574974b8e99cf9924500fcfa5bf32ba7dd5"
+}

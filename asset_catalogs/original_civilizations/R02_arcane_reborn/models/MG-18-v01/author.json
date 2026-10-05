@@ -1,0 +1,112 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-18-v01",
+  "name": "药剂作坊 · 错顶工间与冷却烟塔",
+  "family": "MG-18",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    49,
+    46,
+    51
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [
+    {
+      "id": "workshop",
+      "name": "前后分开的药剂工间",
+      "min": [
+        9,
+        2,
+        12
+      ],
+      "max": [
+        23,
+        12,
+        37
+      ],
+      "purpose": "前部配售与后部蒸馏工序分离"
+    }
+  ],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        24,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "mix",
+      "kind": "work",
+      "pos": [
+        17,
+        2,
+        25
+      ],
+      "name": "药剂配比与配售",
+      "approach": [
+        17,
+        2,
+        25
+      ]
+    },
+    {
+      "id": "cool",
+      "kind": "work",
+      "pos": [
+        33,
+        2,
+        35
+      ],
+      "name": "后场冷却工间",
+      "approach": [
+        33,
+        2,
+        35
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "首层",
+      "y": 1,
+      "max_y": 8
+    }
+  ],
+  "roof_min_y": 15,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "药剂制作",
+    "商品零售"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "37102e27c7a584009689244d888fe77205fc2906404ac2063821367de92c0161"
+}

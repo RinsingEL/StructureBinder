@@ -1,0 +1,31 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CH-13-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 2026-10-05",
+  "nbt_sha256": "4c559984dad5dbe801654295c774e72846ba79829799b14094500304b6a4fbef",
+  "author_sha256": "a9338bf730300cafc8ec426966f09860d5e72307ff915252034fa0d944624082",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/room-audience.png",
+    "previews/roof-section.png"
+  ],
+  "checks": [
+    "实际查看前后外观、正殿局部和屋面剖面：主殿、配殿、后寝与连廊的主次可辨识。",
+    "重檐上部为封闭构架，檐口与柱梁连接已按模型剖面复核。",
+    "NBT 与标记通路检查通过；正殿后门已避开主位背景墙。"
+  ],
+  "revisions": [
+    "正殿后门移至侧后方，避开主位背景墙。",
+    "增加重檐、门廊、栏杆、庭院石灯与正门赭红饰面。",
+    "棚架横梁改为完整木构件，承接悬挂植物表达。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "首版离线造型与内饰检查，不表示用户已确认最终审美。",
+    "通用材料换皮尚未接入；已实现参数仅为文档所列作者源码局部重建。"
+  ]
+}

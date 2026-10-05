@@ -1,0 +1,21 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CH-26-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex actual NBT image review 2026-10-05",
+  "nbt_sha256": "2641f3fc66b82f3c5ca35d8f4bde3def80774dc49f1c0439395e25c78f8f6b5e",
+  "author_sha256": "eae9d29cc5ef8e963d000b79f0ab1dd98a25a41734c2265e852bfde7d1256dc9",
+  "evidence": [
+    "previews/front.png"
+  ],
+  "checks": [
+    "迎客松有横伸枝干、分层扁冠，树干与冠幅完整。",
+    "最终 NBT 数据、离线通路和截图渲染检查通过。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

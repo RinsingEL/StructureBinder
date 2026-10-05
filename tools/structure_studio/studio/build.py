@@ -51,6 +51,21 @@ from .mediterranean_living import BUILDERS as MEDITERRANEAN_LIVING
 from .mediterranean_shops import BUILDERS as MEDITERRANEAN_SHOPS
 from .mediterranean_gardens import BUILDERS as MEDITERRANEAN_GARDENS
 from .validate import validate
+from .chinese import BUILDERS as CHINESE_CORES
+from .chinese_culture import BUILDERS as CHINESE_CULTURE
+from .chinese_inn import BUILDERS as CHINESE_INNS
+from .chinese_palace import BUILDERS as CHINESE_PALACES
+from .chinese_parts import CATALOG_DIR as CHINESE_CATALOG
+from .chinese_daily import BUILDERS as CHINESE_DAILY
+from .chinese_landscape import BUILDERS as CHINESE_LANDSCAPE
+from .arcane_reborn import BUILDERS as ARCANE_REBORN
+from .elven_reborn import BUILDERS as ELVEN_REBORN
+from .dwarven_reborn import BUILDERS as DWARVEN_REBORN
+from .european_reborn import BUILDERS as EUROPEAN_REBORN
+from .arcane_revision2 import BUILDERS as ARCANE_REVISION2
+from .dwarven_revision2 import BUILDERS as DWARVEN_REVISION2
+from .elven_revision2 import BUILDERS as ELVEN_REVISION2
+from .european_revision2 import BUILDERS as EUROPEAN_REVISION2
 
 BUILDERS={"SR-01-v01":("01_steam_rail",steam_station),"WT-01-v01":("02_waterway_trade",passenger_quay)}
 BUILDERS["SR-F01-v01"]=("01_steam_rail",bakery)
@@ -92,6 +107,27 @@ for builders in (MEMORIAL_LIFE, MEMORIAL_CRAFTS, MEMORIAL_GARDENS):
 
 for builders in (MEDITERRANEAN_LIVING, MEDITERRANEAN_SHOPS, MEDITERRANEAN_GARDENS):
     BUILDERS.update({key:("02_waterway_trade",builder) for key,builder in builders.items()})
+
+BUILDERS.update({key:(CHINESE_CATALOG,builder) for key,builder in CHINESE_CORES.items()})
+BUILDERS.update({key:(CHINESE_CATALOG,builder) for key,builder in CHINESE_CULTURE.items()})
+BUILDERS.update({key:(CHINESE_CATALOG,builder) for key,builder in CHINESE_INNS.items()})
+BUILDERS.update({key:(CHINESE_CATALOG,builder) for key,builder in CHINESE_PALACES.items()})
+
+for builders in (CHINESE_DAILY,CHINESE_LANDSCAPE):
+    BUILDERS.update({key:(CHINESE_CATALOG,fn) for key,fn in builders.items()})
+
+BUILDERS.update({key:("R02_arcane_reborn",fn) for key,fn in ARCANE_REBORN.items()})
+
+BUILDERS.update({key:("R01_elven_reborn",fn) for key,fn in ELVEN_REBORN.items()})
+
+BUILDERS.update({key:("R03_dwarven_reborn",builder) for key,builder in DWARVEN_REBORN.items()})
+
+BUILDERS.update({key:("R04_european_reborn",fn) for key,fn in EUROPEAN_REBORN.items()})
+
+BUILDERS.update({key:("R02_arcane_reborn",fn) for key,fn in ARCANE_REVISION2.items()})
+BUILDERS.update({key:("R03_dwarven_reborn",fn) for key,fn in DWARVEN_REVISION2.items()})
+BUILDERS.update({key:("R01_elven_reborn",fn) for key,fn in ELVEN_REVISION2.items()})
+BUILDERS.update({key:("R04_european_reborn",fn) for key,fn in EUROPEAN_REVISION2.items()})
 
 def main():
     p=argparse.ArgumentParser();p.add_argument("ids",nargs="+",help="Asset ID, family ID, or all")

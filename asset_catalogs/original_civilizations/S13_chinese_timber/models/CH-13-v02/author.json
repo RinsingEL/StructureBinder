@@ -1,0 +1,681 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CH-13-v02",
+  "name": "中式宫殿 · 高台重殿",
+  "family": "CH-13",
+  "civilization": "中式木构",
+  "planning_role": "planning_role.key",
+  "size": [
+    81,
+    31,
+    95
+  ],
+  "terrain": {
+    "选址": "完整稳定平地，外部路面脚底与本地 Y=2 对齐；保留全尺寸院落和檐口净空。",
+    "供给": "有人居住，需生活饮水、食物与燃料；园艺用水另行接入。",
+    "推荐情境": [
+      "城镇核心院落或独立街区"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "palace_gate",
+      "name": "三门宫门与守候",
+      "min": [
+        29,
+        3,
+        6
+      ],
+      "max": [
+        51,
+        11,
+        15
+      ],
+      "purpose": "三门宫门与守候"
+    },
+    {
+      "id": "audience",
+      "name": "高台正殿：礼仪朝会与接见",
+      "min": [
+        28,
+        7,
+        39
+      ],
+      "max": [
+        52,
+        16,
+        56
+      ],
+      "purpose": "高台正殿：礼仪朝会与接见"
+    },
+    {
+      "id": "west_reception",
+      "name": "西侧殿：文书与接见",
+      "min": [
+        7,
+        3,
+        24
+      ],
+      "max": [
+        16,
+        7,
+        39
+      ],
+      "purpose": "西侧殿：文书与接见"
+    },
+    {
+      "id": "east_reception",
+      "name": "东侧殿：议事与等候",
+      "min": [
+        64,
+        3,
+        24
+      ],
+      "max": [
+        73,
+        7,
+        39
+      ],
+      "purpose": "东侧殿：议事与等候"
+    },
+    {
+      "id": "private_1",
+      "name": "西寝居",
+      "min": [
+        24,
+        4,
+        82
+      ],
+      "max": [
+        34,
+        8,
+        89
+      ],
+      "purpose": "内廷起居、寝居与私人会客"
+    },
+    {
+      "id": "private_2",
+      "name": "内廷起居",
+      "min": [
+        36,
+        4,
+        82
+      ],
+      "max": [
+        44,
+        8,
+        89
+      ],
+      "purpose": "内廷起居、寝居与私人会客"
+    },
+    {
+      "id": "private_3",
+      "name": "东寝居",
+      "min": [
+        46,
+        4,
+        82
+      ],
+      "max": [
+        56,
+        8,
+        89
+      ],
+      "purpose": "内廷起居、寝居与私人会客"
+    },
+    {
+      "id": "palace_kitchen",
+      "name": "内廷膳房与备膳",
+      "min": [
+        7,
+        3,
+        74
+      ],
+      "max": [
+        16,
+        7,
+        85
+      ],
+      "purpose": "内廷膳房与备膳"
+    },
+    {
+      "id": "palace_store",
+      "name": "内廷器物与后勤库",
+      "min": [
+        64,
+        3,
+        74
+      ],
+      "max": [
+        73,
+        7,
+        85
+      ],
+      "purpose": "内廷器物与后勤库"
+    },
+    {
+      "id": "inner_pergola",
+      "name": "inner_pergola",
+      "min": [
+        24,
+        2,
+        71
+      ],
+      "max": [
+        32,
+        7,
+        76
+      ],
+      "purpose": "园艺部件；葡萄果串使用紫晶簇、葫芦使用南瓜作静态原版表达"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        40,
+        2,
+        0
+      ],
+      "name": "正门外部街面",
+      "facing": "north"
+    },
+    {
+      "id": "palace_gate_path",
+      "kind": "circulation",
+      "pos": [
+        40,
+        3,
+        10
+      ],
+      "name": "中央宫门贯通"
+    },
+    {
+      "id": "gate_register",
+      "kind": "work",
+      "pos": [
+        35,
+        3,
+        9
+      ],
+      "name": "宫门接见登记",
+      "look_at": [
+        35,
+        4,
+        9
+      ],
+      "approach": [
+        35,
+        3,
+        10
+      ]
+    },
+    {
+      "id": "front_terrace",
+      "kind": "circulation",
+      "pos": [
+        40,
+        6,
+        35
+      ],
+      "name": "高台前沿"
+    },
+    {
+      "id": "rear_terrace",
+      "kind": "circulation",
+      "pos": [
+        40,
+        6,
+        61
+      ],
+      "name": "后阶通往内廷"
+    },
+    {
+      "id": "audience_front",
+      "kind": "circulation",
+      "pos": [
+        39,
+        7,
+        39
+      ],
+      "name": "正殿门内通路"
+    },
+    {
+      "id": "audience_west_front",
+      "kind": "circulation",
+      "pos": [
+        31,
+        7,
+        39
+      ],
+      "name": "正殿门内通路"
+    },
+    {
+      "id": "audience_east_front",
+      "kind": "circulation",
+      "pos": [
+        49,
+        7,
+        39
+      ],
+      "name": "正殿门内通路"
+    },
+    {
+      "id": "audience_back",
+      "kind": "circulation",
+      "pos": [
+        49,
+        7,
+        56
+      ],
+      "name": "正殿门内通路"
+    },
+    {
+      "id": "ceremonial_seat",
+      "kind": "work",
+      "pos": [
+        40,
+        9,
+        54
+      ],
+      "name": "正殿主位",
+      "look_at": [
+        40,
+        10,
+        54
+      ],
+      "approach": [
+        40,
+        9,
+        53
+      ]
+    },
+    {
+      "id": "west_reception_door",
+      "kind": "circulation",
+      "pos": [
+        16,
+        3,
+        31
+      ],
+      "name": "室内入口通路",
+      "facing": "east"
+    },
+    {
+      "id": "record_desk",
+      "kind": "work",
+      "pos": [
+        8,
+        3,
+        25
+      ],
+      "name": "文书与接见登记",
+      "look_at": [
+        8,
+        4,
+        25
+      ],
+      "approach": [
+        8,
+        3,
+        26
+      ]
+    },
+    {
+      "id": "east_reception_door",
+      "kind": "circulation",
+      "pos": [
+        64,
+        3,
+        31
+      ],
+      "name": "室内入口通路",
+      "facing": "west"
+    },
+    {
+      "id": "meeting_record",
+      "kind": "work",
+      "pos": [
+        65,
+        3,
+        36
+      ],
+      "name": "议事文书",
+      "look_at": [
+        65,
+        4,
+        36
+      ],
+      "approach": [
+        65,
+        3,
+        37
+      ]
+    },
+    {
+      "id": "inner_gate_route",
+      "kind": "circulation",
+      "pos": [
+        40,
+        2,
+        72
+      ],
+      "name": "内廷门贯通"
+    },
+    {
+      "id": "private_1_door",
+      "kind": "circulation",
+      "pos": [
+        29,
+        4,
+        82
+      ],
+      "name": "室内入口通路",
+      "facing": "north"
+    },
+    {
+      "id": "private_1_bed",
+      "kind": "bed",
+      "pos": [
+        26,
+        4,
+        88
+      ],
+      "name": "床位",
+      "look_at": [
+        26,
+        4,
+        87
+      ],
+      "approach": [
+        27,
+        4,
+        88
+      ]
+    },
+    {
+      "id": "private_1_wardrobe",
+      "kind": "storage",
+      "pos": [
+        33,
+        4,
+        83
+      ],
+      "name": "寝居衣物",
+      "look_at": [
+        33,
+        5,
+        83
+      ],
+      "approach": [
+        33,
+        4,
+        84
+      ]
+    },
+    {
+      "id": "private_2_door",
+      "kind": "circulation",
+      "pos": [
+        40,
+        4,
+        82
+      ],
+      "name": "室内入口通路",
+      "facing": "north"
+    },
+    {
+      "id": "private_wash",
+      "kind": "work",
+      "pos": [
+        37,
+        4,
+        88
+      ],
+      "name": "洗漱与取水",
+      "look_at": [
+        37,
+        5,
+        88
+      ],
+      "approach": [
+        37,
+        4,
+        89
+      ]
+    },
+    {
+      "id": "private_3_door",
+      "kind": "circulation",
+      "pos": [
+        51,
+        4,
+        82
+      ],
+      "name": "室内入口通路",
+      "facing": "north"
+    },
+    {
+      "id": "private_3_bed",
+      "kind": "bed",
+      "pos": [
+        48,
+        4,
+        88
+      ],
+      "name": "床位",
+      "look_at": [
+        48,
+        4,
+        87
+      ],
+      "approach": [
+        49,
+        4,
+        88
+      ]
+    },
+    {
+      "id": "private_3_wardrobe",
+      "kind": "storage",
+      "pos": [
+        55,
+        4,
+        83
+      ],
+      "name": "寝居衣物",
+      "look_at": [
+        55,
+        5,
+        83
+      ],
+      "approach": [
+        55,
+        4,
+        84
+      ]
+    },
+    {
+      "id": "palace_kitchen_door",
+      "kind": "circulation",
+      "pos": [
+        16,
+        3,
+        79
+      ],
+      "name": "室内入口通路",
+      "facing": "east"
+    },
+    {
+      "id": "palace_stove",
+      "kind": "work",
+      "pos": [
+        8,
+        3,
+        74
+      ],
+      "name": "备餐与炉灶",
+      "look_at": [
+        8,
+        4,
+        74
+      ],
+      "approach": [
+        8,
+        3,
+        75
+      ]
+    },
+    {
+      "id": "palace_wash",
+      "kind": "work",
+      "pos": [
+        8,
+        3,
+        84
+      ],
+      "name": "洗漱与取水",
+      "look_at": [
+        8,
+        4,
+        84
+      ],
+      "approach": [
+        8,
+        3,
+        85
+      ]
+    },
+    {
+      "id": "palace_store_door",
+      "kind": "circulation",
+      "pos": [
+        64,
+        3,
+        79
+      ],
+      "name": "室内入口通路",
+      "facing": "west"
+    },
+    {
+      "id": "palace_inventory",
+      "kind": "storage",
+      "pos": [
+        65,
+        3,
+        84
+      ],
+      "name": "器物领用",
+      "look_at": [
+        65,
+        4,
+        84
+      ],
+      "approach": [
+        65,
+        3,
+        85
+      ]
+    },
+    {
+      "id": "inner_pergola",
+      "kind": "work",
+      "pos": [
+        25,
+        2,
+        75
+      ],
+      "name": "棚架养护与采收",
+      "approach": [
+        26,
+        2,
+        75
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "灰瓦深木延续参考语言，宫门与正殿加朱柱、赭红墙带和局部金饰，区分日常院宅。",
+    "正殿是高挑单层礼仪大厅；重檐上部为封闭屋面构架，不冒充可用楼层。",
+    "中央九格宽外阶接高台，正殿入口再抬一级；后阶连通内廷。",
+    "保留 CH-13-v01，小尺度原版与新体量分别存放。",
+    "种植棚为可配置静态景观：grape/flower/gourd；不声明原版存在葡萄或葫芦作物。"
+  ],
+  "differences": [
+    "三门宫门、宽阔前庭、四级外阶与高台、重檐高挑正殿、低侧殿和独立后寝。"
+  ],
+  "floors": [
+    {
+      "name": "全院与侧殿剖面",
+      "y": 1,
+      "max_y": 7
+    },
+    {
+      "name": "高台正殿与主位",
+      "y": 5,
+      "max_y": 13
+    }
+  ],
+  "roof_min_y": 17,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/chinese_palace.py:palace_grand",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部街面和院落地坪顶面为 Y=2；建筑室内由明确台阶抬高。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "礼仪",
+    "正式接见",
+    "家庭居住"
+  ],
+  "authoring_parts": [
+    {
+      "id": "ceremony",
+      "prototype": "MOCK-S13-13",
+      "min": [
+        28,
+        7,
+        39
+      ],
+      "max": [
+        52,
+        14,
+        56
+      ],
+      "configuration": {
+        "ceremony": "audience"
+      },
+      "scope": "作者源码局部重建配置，不是 City 运行时字段"
+    },
+    {
+      "id": "inner_pergola",
+      "prototype": "MOCK-S13-15",
+      "min": [
+        24,
+        2,
+        71
+      ],
+      "max": [
+        32,
+        7,
+        76
+      ],
+      "configuration": {
+        "garden_theme": "flower"
+      },
+      "scope": "作者源码局部重建配置，不是 City 运行时字段"
+    }
+  ],
+  "nbt_sha256": "2cd57abe870eb2d19f934cfc2d8ac578778bc34b14a723d142ca389902c5ae0b"
+}

@@ -1,0 +1,35 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CH-11-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex · 2026-10-05 实际 NBT 图审",
+  "nbt_sha256": "3a31cea44985f2cdd943c1214ea55181fedf1782df1b45c94328f1fbaea62a72",
+  "author_sha256": "1d5d98ab74b3dbbc688308013988e65bbf908aa32659abf7b6016db427127faa",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/right.png",
+    "previews/floor-2.png",
+    "previews/floor-3.png",
+    "previews/stair-section.png",
+    "previews/second-floor-perspective.png",
+    "previews/room-guest_l3_front_west.png"
+  ],
+  "checks": [
+    "已查看正背面、侧面、二三层切片、主楼剖面和三层客房；三层临街主楼与两层翼楼有明确高低层次。",
+    "十二间双床客房、两张员工床、底层餐饮后勤、楼廊护栏及实际楼板齐全；厨房侧面送货入口可辨。",
+    "导出后的 NBT 数据与离线通路通过；移除首段楼梯的负向测试确认上层不可达会被检出。"
+  ],
+  "revisions": [
+    "保留低层 v01，新增三层主楼和两层翼楼版本。",
+    "增加为二十四张客床；增加真实梯段、楼板洞口、楼廊及护栏。",
+    "补充厨房侧门送货路线和客房灯具支撑横梁。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "默认形体初版，作者图审通过不等于用户最终审美确认。",
+    "设施为建筑空间与静态陈设，未验证 Minecraft 实机、NPC 或经营行为。"
+  ]
+}

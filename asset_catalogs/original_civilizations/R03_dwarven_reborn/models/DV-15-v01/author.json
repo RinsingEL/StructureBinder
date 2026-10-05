@@ -1,0 +1,121 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "DV-15-v01",
+  "name": "矿山升降塔 · 重墩井架与双层接驳",
+  "family": "DV-15",
+  "civilization": "矮人新制",
+  "planning_role": "planning_role.key",
+  "size": [
+    61,
+    65,
+    69
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        30,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "landing1",
+      "kind": "work",
+      "pos": [
+        13,
+        14,
+        48
+      ],
+      "name": "第一接驳层",
+      "approach": [
+        13,
+        14,
+        48
+      ]
+    },
+    {
+      "id": "landing2",
+      "kind": "work",
+      "pos": [
+        13,
+        26,
+        48
+      ],
+      "name": "第二接驳层",
+      "approach": [
+        13,
+        26,
+        48
+      ]
+    },
+    {
+      "id": "dispatch",
+      "kind": "work",
+      "pos": [
+        49,
+        2,
+        42
+      ],
+      "name": "提升值守调度间",
+      "approach": [
+        49,
+        2,
+        42
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "下部井场",
+      "y": 1,
+      "max_y": 12
+    },
+    {
+      "name": "一层接驳",
+      "y": 13,
+      "max_y": 24
+    },
+    {
+      "name": "二层接驳",
+      "y": 25,
+      "max_y": 40
+    }
+  ],
+  "roof_min_y": 46,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "矿运提升",
+    "矿业管理"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/dwarven_revision2.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "75ee1a3740f4266fb8890f58608e9862f0f30b1b45953f1db2806afa3abb08f5"
+}

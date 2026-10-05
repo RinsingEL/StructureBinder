@@ -1,0 +1,30 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "EU-01-v01",
+  "nbt_sha256": "99dfe07ad2009eb6ed35bb303463a51468619601c313d8a50342b6dc34597cb0",
+  "author_sha256": "3aad17e3024f56eb7b85bfa9b272038a5da0f0c7a6785de0b05200c1f4f039d5",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "floor-2",
+    "floor-3",
+    "floor-4",
+    "room-hall",
+    "point-wall",
+    "point-guard_38",
+    "point-guard_46",
+    "point-council",
+    "point-private",
+    "point-roof",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

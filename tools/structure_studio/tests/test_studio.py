@@ -108,6 +108,20 @@ class StudioTest(unittest.TestCase):
             m.set(1,0,1,soil).export(self.path,self.registry)
             self.assertTrue(validate(self.path,self.registry)["passed"])
 
+    def test_asset_tags_validate_final_metadata_independently_of_role(self):
+        m=Model("T","tagged garden",(3,4,3),role="key").box((0,0,0),(2,0,2),"stone")
+        m.point("entry","entrance",(1,1,1),"entry")
+        m.export(self.path,self.registry)
+        meta=json.loads((self.path/"author.json").read_text())
+        for tags in ([], ["landscape"], ["infrastructure"], ["landscape","infrastructure"]):
+            meta['asset_tags']=tags
+            write_json(self.path/"author.json",meta)
+            self.assertTrue(validate(self.path,self.registry)['passed'])
+        for tags in (None, "landscape", ["landscape","landscape"], ["unknown"], [{}]):
+            meta['asset_tags']=tags
+            write_json(self.path/"author.json",meta)
+            self.assertTrue(any('asset_tags' in e for e in validate(self.path,self.registry)['errors']))
+
     def test_stairway_reachable_but_low_ceiling_rejected(self):
         m=Model("T","stairs",(6,10,12))
         m.box((0,0,0),(5,0,11),"stone")

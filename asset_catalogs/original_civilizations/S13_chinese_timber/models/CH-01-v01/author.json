@@ -1,0 +1,210 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CH-01-v01",
+  "name": "中式门廊小宅",
+  "family": "CH-01",
+  "civilization": "中式木构",
+  "planning_role": "planning_role.fill",
+  "size": [
+    23,
+    23,
+    27
+  ],
+  "terrain": {
+    "选址": "完整稳定平地，外部路面脚底与本地 Y=2 对齐；保留全尺寸院落和檐口净空。",
+    "供给": "有人居住，需生活饮水、食物与燃料；园艺用水另行接入。",
+    "推荐情境": [
+      "城镇核心院落或独立街区"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "living",
+      "name": "起居与炊事",
+      "min": [
+        5,
+        3,
+        8
+      ],
+      "max": [
+        17,
+        6,
+        15
+      ],
+      "purpose": "就餐、备餐和洗漱"
+    },
+    {
+      "id": "sleep",
+      "name": "双床寝居",
+      "min": [
+        5,
+        3,
+        17
+      ],
+      "max": [
+        17,
+        6,
+        21
+      ],
+      "purpose": "家庭卧室与衣物"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        11,
+        2,
+        0
+      ],
+      "name": "外部步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "home_door",
+      "kind": "circulation",
+      "pos": [
+        10,
+        3,
+        8
+      ],
+      "name": "室内入口通路",
+      "facing": "north"
+    },
+    {
+      "id": "stove",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        8
+      ],
+      "name": "备餐与炉灶",
+      "look_at": [
+        5,
+        4,
+        8
+      ],
+      "approach": [
+        5,
+        3,
+        9
+      ]
+    },
+    {
+      "id": "wash",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        13
+      ],
+      "name": "洗漱与取水",
+      "look_at": [
+        5,
+        4,
+        13
+      ],
+      "approach": [
+        5,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "bed_west",
+      "kind": "bed",
+      "pos": [
+        7,
+        3,
+        20
+      ],
+      "name": "床位",
+      "look_at": [
+        7,
+        3,
+        19
+      ],
+      "approach": [
+        8,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "bed_east",
+      "kind": "bed",
+      "pos": [
+        14,
+        3,
+        20
+      ],
+      "name": "床位",
+      "look_at": [
+        14,
+        3,
+        19
+      ],
+      "approach": [
+        15,
+        3,
+        20
+      ]
+    },
+    {
+      "id": "wardrobe",
+      "kind": "storage",
+      "pos": [
+        16,
+        3,
+        18
+      ],
+      "name": "工作台",
+      "look_at": [
+        16,
+        4,
+        18
+      ],
+      "approach": [
+        16,
+        3,
+        19
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "日常木构沿用灰瓦、浅墙、门廊和石基；具体功能由实际空间及设施表达。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "院落与室内剖面",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/chinese_daily.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部街面和院落地坪顶面为 Y=2；建筑室内由明确台阶抬高。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "家庭居住"
+  ],
+  "asset_tags": [],
+  "nbt_sha256": "4b1dfab827d410f842fe8c9528e8d29597f8494bdec9dfd18652c78b85b18ece"
+}

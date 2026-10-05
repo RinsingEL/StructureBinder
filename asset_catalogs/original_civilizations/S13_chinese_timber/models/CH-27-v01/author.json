@@ -1,0 +1,74 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CH-27-v01",
+  "name": "中式景观 · 垂柳",
+  "family": "CH-27",
+  "civilization": "中式木构",
+  "planning_role": "planning_role.structure",
+  "size": [
+    23,
+    25,
+    23
+  ],
+  "terrain": {
+    "选址": "完整稳定平地，外部路面脚底与本地 Y=2 对齐；保留全尺寸院落和檐口净空。",
+    "供给": "有人居住，需生活饮水、食物与燃料；园艺用水另行接入。",
+    "推荐情境": [
+      "城镇核心院落或独立街区"
+    ]
+  },
+  "rooms": [],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        11,
+        2,
+        0
+      ],
+      "name": "外部步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "view",
+      "kind": "circulation",
+      "pos": [
+        11,
+        2,
+        4
+      ],
+      "name": "树前观赏站位"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "完整实体树干和冠幅；持久树叶不依赖随机生长。树种是原版方块的造型表达，图审核对每种树的独立轮廓。"
+  ],
+  "differences": [],
+  "floors": [],
+  "roof_min_y": null,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/chinese_landscape.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部街面和院落地坪顶面为 Y=2；建筑室内由明确台阶抬高。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "树木观赏"
+  ],
+  "asset_tags": [
+    "landscape"
+  ],
+  "nbt_sha256": "d6dfb964cdb08c01b4fddcbfb03a0d701feb6d5fd8231b0b61499c1a25078a4a"
+}

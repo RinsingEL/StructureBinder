@@ -1,0 +1,24 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "DV-16-v01",
+  "nbt_sha256": "ebd76635cb0831c9ae4766a322fe1d184a8b1898ad208790d5d121aefda78ef9",
+  "author_sha256": "39852bf5b97dde0a7267722b3cf93b918a0e769af1ac1cec7424bbdfdc93bd31",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-bathhouse",
+    "point-pool_7",
+    "point-pool_24",
+    "point-pool_41",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

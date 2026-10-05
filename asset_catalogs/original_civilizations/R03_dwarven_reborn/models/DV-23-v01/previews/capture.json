@@ -1,0 +1,23 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "DV-23-v01",
+  "nbt_sha256": "03cdf70a7d3e167f84cc76effceb3fdfa551b7e1f323cdfbfdef67b7e067af6d",
+  "author_sha256": "1f244b9a5242f409d2be1ec5a1480c8b5f3c1976d069a92cf26e2e7b0d1e342c",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "point-loading",
+    "point-berth1",
+    "point-berth2",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

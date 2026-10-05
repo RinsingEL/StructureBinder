@@ -1,0 +1,26 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "DV-01-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-05 revision2 visual review",
+  "nbt_sha256": "46e6f1d39faff2d0a466ef1411641fe7f67176b23575a1e4b5e06c1b0b11cda4",
+  "author_sha256": "b266f2e487f319dc1ce3f4c7c47561fccfc3971e47e76c57b69b9fdfc78e7e7f",
+  "evidence": [
+    "previews/front.png",
+    "previews/floor-1.png",
+    "previews/roof-off.png"
+  ],
+  "checks": [
+    "厚壁折角主厅、三道外肋与双祖卫门庭；首层两列议事席保留中轴。",
+    "本轮已实际查看所列最终版本视角；数量和数据检测不替代结构外观判断。"
+  ],
+  "revisions": [
+    "替换上一版方房坡顶组合；按厚壁、折角券与外露作业架重做。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "制作方离线图审；用户尚未确认本轮审美质量。"
+  ]
+}

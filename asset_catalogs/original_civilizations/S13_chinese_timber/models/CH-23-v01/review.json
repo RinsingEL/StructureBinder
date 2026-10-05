@@ -1,0 +1,21 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CH-23-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex actual NBT image review 2026-10-05",
+  "nbt_sha256": "25e78243a97261ff8611b8c1a4f225879558c0b98b181d5c57083fb1e4741395",
+  "author_sha256": "3f1430f239e6c423b915a7e093adb05b766867636bc74eef3e0ae39b2b2f50f7",
+  "evidence": [
+    "previews/front.png"
+  ],
+  "checks": [
+    "石座木柱与两端挑檐承托灯笼，形成中式道路设施轮廓。",
+    "最终 NBT 数据、离线通路和截图渲染检查通过。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

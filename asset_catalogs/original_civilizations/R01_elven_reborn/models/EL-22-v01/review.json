@@ -1,0 +1,25 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "EL-22-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-05 revision2 visual review",
+  "nbt_sha256": "fd7bd03eea02a9c1643b8aaeb2b77fbb5e1f3641cd589e847e648e622e1e753c",
+  "author_sha256": "ca9bdbcc10358792d97b13327380d3f60fac62d9caa33e07e3f401a69ee1ecbd",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png"
+  ],
+  "checks": [
+    "双侧开敞叶脊门架与步廊构成入口设施，保留中部通行宽度。",
+    "已实际查看所列当前版本视角，并与独立用途、入口和内部组织核对。"
+  ],
+  "revisions": [
+    "重做为分叉柱、曲线叶脊、椭圆地坪和高架桥廊；核心采用独立厅庭组织。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "制作方离线图审；用户尚未确认本轮审美质量。"
+  ]
+}

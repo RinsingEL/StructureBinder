@@ -1,0 +1,409 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CH-18-v01",
+  "name": "中式庙宇 · 钟鼓礼庭",
+  "family": "CH-18",
+  "civilization": "中式木构",
+  "planning_role": "planning_role.key",
+  "size": [
+    55,
+    23,
+    65
+  ],
+  "terrain": {
+    "选址": "完整稳定平地，外部路面脚底与本地 Y=2 对齐；保留全尺寸院落和檐口净空。",
+    "供给": "需维护、照明与清洁用水；驻留人员的食物和饮水由所在聚落提供。",
+    "推荐情境": [
+      "城镇核心院落或独立街区"
+    ]
+  },
+  "rooms": [
+    {
+      "id": "bell",
+      "name": "西钟亭",
+      "min": [
+        8,
+        3,
+        16
+      ],
+      "max": [
+        12,
+        7,
+        20
+      ],
+      "purpose": "西钟亭"
+    },
+    {
+      "id": "drum",
+      "name": "东鼓亭",
+      "min": [
+        42,
+        3,
+        16
+      ],
+      "max": [
+        46,
+        7,
+        20
+      ],
+      "purpose": "东鼓亭"
+    },
+    {
+      "id": "sanctuary",
+      "name": "主殿：供奉与礼拜",
+      "min": [
+        19,
+        5,
+        32
+      ],
+      "max": [
+        35,
+        10,
+        45
+      ],
+      "purpose": "主殿：供奉与礼拜"
+    },
+    {
+      "id": "west_chapel",
+      "name": "偏殿：小型供奉与静修",
+      "min": [
+        6,
+        3,
+        33
+      ],
+      "max": [
+        12,
+        7,
+        45
+      ],
+      "purpose": "偏殿：小型供奉与静修"
+    },
+    {
+      "id": "east_chapel",
+      "name": "偏殿：小型供奉与静修",
+      "min": [
+        42,
+        3,
+        33
+      ],
+      "max": [
+        48,
+        7,
+        45
+      ],
+      "purpose": "偏殿：小型供奉与静修"
+    },
+    {
+      "id": "temple_service",
+      "name": "后院斋厨与庙务",
+      "min": [
+        6,
+        3,
+        54
+      ],
+      "max": [
+        18,
+        7,
+        59
+      ],
+      "purpose": "后院斋厨与庙务"
+    },
+    {
+      "id": "caretaker",
+      "name": "后院值守休息",
+      "min": [
+        38,
+        3,
+        54
+      ],
+      "max": [
+        48,
+        7,
+        59
+      ],
+      "purpose": "后院值守休息"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        27,
+        2,
+        0
+      ],
+      "name": "正门外部街面",
+      "facing": "north"
+    },
+    {
+      "id": "gate_path",
+      "kind": "circulation",
+      "pos": [
+        27,
+        2,
+        7
+      ],
+      "name": "正门贯通通道"
+    },
+    {
+      "id": "bell_entry",
+      "kind": "circulation",
+      "pos": [
+        10,
+        3,
+        16
+      ],
+      "name": "亭内通行"
+    },
+    {
+      "id": "bell_use",
+      "kind": "work",
+      "pos": [
+        10,
+        6,
+        18
+      ],
+      "name": "钟亭礼仪设施",
+      "approach": [
+        10,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "drum_entry",
+      "kind": "circulation",
+      "pos": [
+        44,
+        3,
+        16
+      ],
+      "name": "亭内通行"
+    },
+    {
+      "id": "drum_use",
+      "kind": "work",
+      "pos": [
+        44,
+        4,
+        18
+      ],
+      "name": "鼓台静态表达",
+      "approach": [
+        44,
+        3,
+        16
+      ]
+    },
+    {
+      "id": "sanctuary_entry",
+      "kind": "circulation",
+      "pos": [
+        26,
+        5,
+        32
+      ],
+      "name": "室内入口通路",
+      "facing": "north"
+    },
+    {
+      "id": "offering",
+      "kind": "work",
+      "pos": [
+        27,
+        5,
+        39
+      ],
+      "name": "主殿供奉台",
+      "approach": [
+        27,
+        5,
+        38
+      ]
+    },
+    {
+      "id": "west_chapel_door",
+      "kind": "circulation",
+      "pos": [
+        12,
+        3,
+        38
+      ],
+      "name": "室内入口通路",
+      "facing": "east"
+    },
+    {
+      "id": "west_offering",
+      "kind": "work",
+      "pos": [
+        8,
+        3,
+        42
+      ],
+      "name": "偏殿供案",
+      "look_at": [
+        8,
+        4,
+        42
+      ],
+      "approach": [
+        8,
+        3,
+        43
+      ]
+    },
+    {
+      "id": "east_chapel_door",
+      "kind": "circulation",
+      "pos": [
+        42,
+        3,
+        38
+      ],
+      "name": "室内入口通路",
+      "facing": "west"
+    },
+    {
+      "id": "east_offering",
+      "kind": "work",
+      "pos": [
+        44,
+        3,
+        42
+      ],
+      "name": "偏殿供案",
+      "look_at": [
+        44,
+        4,
+        42
+      ],
+      "approach": [
+        44,
+        3,
+        43
+      ]
+    },
+    {
+      "id": "temple_service_door",
+      "kind": "circulation",
+      "pos": [
+        12,
+        3,
+        54
+      ],
+      "name": "室内入口通路",
+      "facing": "north"
+    },
+    {
+      "id": "temple_stove",
+      "kind": "work",
+      "pos": [
+        7,
+        3,
+        54
+      ],
+      "name": "备餐与炉灶",
+      "look_at": [
+        7,
+        4,
+        54
+      ],
+      "approach": [
+        7,
+        3,
+        55
+      ]
+    },
+    {
+      "id": "caretaker_door",
+      "kind": "circulation",
+      "pos": [
+        43,
+        3,
+        54
+      ],
+      "name": "室内入口通路",
+      "facing": "north"
+    },
+    {
+      "id": "caretaker_40",
+      "kind": "bed",
+      "pos": [
+        40,
+        3,
+        58
+      ],
+      "name": "床位",
+      "look_at": [
+        40,
+        3,
+        57
+      ],
+      "approach": [
+        41,
+        3,
+        58
+      ]
+    },
+    {
+      "id": "caretaker_45",
+      "kind": "bed",
+      "pos": [
+        45,
+        3,
+        58
+      ],
+      "name": "床位",
+      "look_at": [
+        45,
+        3,
+        57
+      ],
+      "approach": [
+        46,
+        3,
+        58
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "文化核心指中式文化代表性；功能区主次与重复布置方式由具体规划决定。",
+    "独立设计的游戏建筑，不绑定特定朝代、地域或宗派。",
+    "灰瓦、浅墙、深木构延续用户参考；设施表达空间用途，不声明 NPC 行为。",
+    "供奉对象使用抽象几何表达，未指定宗派与神祇；钟鼓为原版与静态组合。"
+  ],
+  "differences": [
+    "钟鼓亭夹峙前庭，抬高主殿居中，偏殿与后部庙务生活区分开。"
+  ],
+  "floors": [
+    {
+      "name": "院落与室内剖面",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/chinese_culture.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部街面和院落地坪顶面为 Y=2；建筑室内由明确台阶抬高。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "祭祀供奉",
+    "礼仪集会"
+  ],
+  "nbt_sha256": "c60f85ac7af37c082b71f3f2bbd152cca37c995950c4a8eb438d05a544107e3f"
+}

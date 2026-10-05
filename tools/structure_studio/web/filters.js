@@ -1,4 +1,4 @@
-import {children, describe, matches, pathLabel, readFilters, writeFilters, roles, roleOf} from './functions.js';
+import {children, describe, matches, pathLabel, readFilters, writeFilters, roles, roleOf, assetTags, tagsOf} from './functions.js';
 
 const $ = id => document.getElementById(id);
 function textElement(tag, text, className = '') {
@@ -11,7 +11,7 @@ export function createFilters(rows, onChange) {
   const styles = [...new Set(rows.map(row => row.civilization).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh'));
   if (!styles.includes(state.style)) state.style = '';
   $('civilization').replaceChildren(new Option('全部风格', ''), ...styles.map(style => new Option(style, style)));
-  for (const [id, key] of [['search', 'search'], ['civilization', 'style'], ['planning-role', 'role'], ['frontage-filter', 'frontage'], ['raw-tag', 'tag'], ['site-search', 'site'], ['match-mode', 'mode']]) {
+  for (const [id, key] of [['search', 'search'], ['civilization', 'style'], ['planning-role', 'role'], ['asset-tag', 'assetTag'], ['frontage-filter', 'frontage'], ['raw-tag', 'tag'], ['site-search', 'site'], ['match-mode', 'mode']]) {
     const el = $(id);
     el.value = state[key];
     el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', () => {
@@ -19,7 +19,7 @@ export function createFilters(rows, onChange) {
     });
   }
   $('clear-filters').onclick = () => {
-    Object.assign(state, {search: '', style: '', role: '', frontage: '', tag: '', site: '', functions: [], mode: 'all'});
+    Object.assign(state, {search: '', style: '', role: '', assetTag: '', frontage: '', tag: '', site: '', functions: [], mode: 'all'});
     selection = [];
     for (const [id, value] of [['search', ''], ['civilization', ''], ['frontage-filter', ''], ['site-search', ''], ['match-mode', 'all']]) $(id).value = value;
     update();
@@ -64,6 +64,11 @@ export function createFilters(rows, onChange) {
     }
     $('planning-role').replaceChildren(new Option('全部规划角色', ''), ...roles.map(role => new Option(`${role.label} · ${roleCounts.get(role.id) ?? 0}`, role.id)));
     $('planning-role').value = state.role;
+    const assetCounts = new Map();
+    for (const row of rows.filter(row => matches(row, {...state, assetTag: ''})))
+      for (const tag of tagsOf(row)) assetCounts.set(tag.id, (assetCounts.get(tag.id) ?? 0) + 1);
+    $('asset-tag').replaceChildren(new Option('全部结构标签', ''), ...assetTags.map(tag => new Option(`${tag.label} · ${assetCounts.get(tag.id) ?? 0}`, tag.id)));
+    $('asset-tag').value = state.assetTag;
     const counts = new Map(), tags = new Map();
     for (const row of rows.filter(row => matches(row, {...state, functions: [], tag: ''}))) {
       for (const id of describe(row).expanded) counts.set(id, (counts.get(id) ?? 0) + 1);
@@ -81,14 +86,21 @@ export function createFilters(rows, onChange) {
       $('selected-functions').append(chip);
     }
     $('match-mode').disabled = state.functions.length < 2;
-    const active = state.search || state.style || state.role || state.frontage || state.tag || state.site || state.functions.length;
+    const active = state.search || state.style || state.role || state.assetTag || state.frontage || state.tag || state.site || state.functions.length;
     $('clear-filters').disabled = !active;
     $('filter-status').textContent = active
-      ? `${state.functions.length ? `${state.functions.length} 项用途 · ${state.mode === 'any' ? '任一具备' : '同时具备'}` : '用途不限'}${state.role ? ` · ${roles.find(role => role.id === state.role).label}` : ''}${state.tag ? ` · 原始标签：${state.tag}` : ''}${state.site ? ' · 检索选址文字' : ''}`
+      ? `${state.functions.length ? `${state.functions.length} 项用途 · ${state.mode === 'any' ? '任一具备' : '同时具备'}` : '用途不限'}${state.role ? ` · ${roles.find(role => role.id === state.role).label}` : ''}${state.assetTag ? ` · ${assetTags.find(tag => tag.id === state.assetTag).label}` : ''}${state.tag ? ` · 原始标签：${state.tag}` : ''}${state.site ? ' · 检索选址文字' : ''}`
       : '全部结构 · 可按用途逐层缩小范围';
   }
   function update() { refresh(); syncURL(); onChange(); }
   function renderDetails(row) {
+    $('asset-tags').replaceChildren();
+    for (const tag of tagsOf(row)) {
+      const button = textElement('button', tag.label, 'path-tag');
+      button.onclick = () => { state.assetTag = tag.id; update(); };
+      $('asset-tags').append(button);
+    }
+    if (!tagsOf(row).length) $('asset-tags').append(textElement('span', '未标注结构标签'));
     $('function-tags').replaceChildren();
     const meanings = describe(row);
     for (const id of meanings.leaves) {

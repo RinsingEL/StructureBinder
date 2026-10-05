@@ -1,0 +1,26 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "CH-21-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex · 2026-10-05 实际 NBT 看图复核",
+  "nbt_sha256": "56eef0842a9992cc57c15e9e756eae7d5e711ed0dc30eb717e669ea2a8a33541",
+  "author_sha256": "55b63abebe8391f72005947476e2eea041e6e89fb6142b28d0ae7e469900d606",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/floor-1.png",
+    "previews/room-stage.png"
+  ],
+  "checks": [
+    "开敞台口面向六组观众席，后台红帷与两侧出入场可辨，侧阶和中央观众通道均可达。",
+    "已查看列出的实际 NBT 视角；数据与离线碰撞通路通过，无警告。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "默认形体首版；并非用户最终审美签收。",
+    "文化身份与用途为空间和静态陈设，不宣称 NPC、演出、行政或宗教机制已实现。"
+  ]
+}

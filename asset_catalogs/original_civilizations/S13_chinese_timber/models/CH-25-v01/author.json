@@ -1,0 +1,150 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "CH-25-v01",
+  "name": "中式河埠码头 · 候船亭与栈桥",
+  "family": "CH-25",
+  "civilization": "中式木构",
+  "planning_role": "planning_role.structure",
+  "size": [
+    39,
+    23,
+    43
+  ],
+  "terrain": {
+    "选址": "完整稳定平地，外部路面脚底与本地 Y=2 对齐；保留全尺寸院落和檐口净空。",
+    "供给": "有人居住，需生活饮水、食物与燃料；园艺用水另行接入。",
+    "推荐情境": [
+      "城镇核心院落或独立街区"
+    ],
+    "接水": "陆侧 Y=2，栈桥脚底 Y=3，静态水面 Y=2；模型水池需接入真实河岸，航行与船舶另验。"
+  },
+  "rooms": [
+    {
+      "id": "waiting",
+      "name": "候船与登记",
+      "min": [
+        7,
+        3,
+        9
+      ],
+      "max": [
+        19,
+        7,
+        19
+      ],
+      "purpose": "候船与登记"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        19,
+        2,
+        0
+      ],
+      "name": "外部步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "waiting_entry",
+      "kind": "circulation",
+      "pos": [
+        12,
+        3,
+        9
+      ],
+      "name": "室内入口通路",
+      "facing": "north"
+    },
+    {
+      "id": "water_exit",
+      "kind": "circulation",
+      "pos": [
+        14,
+        3,
+        19
+      ],
+      "name": "室内入口通路",
+      "facing": "south"
+    },
+    {
+      "id": "tickets",
+      "kind": "work",
+      "pos": [
+        17,
+        3,
+        11
+      ],
+      "name": "候船登记",
+      "look_at": [
+        17,
+        4,
+        11
+      ],
+      "approach": [
+        17,
+        3,
+        12
+      ]
+    },
+    {
+      "id": "cargo",
+      "kind": "storage",
+      "pos": [
+        29,
+        2,
+        19
+      ],
+      "name": "临水货棚"
+    },
+    {
+      "id": "boarding",
+      "kind": "circulation",
+      "pos": [
+        25,
+        3,
+        36
+      ],
+      "name": "栈桥登船候行处"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "日常木构沿用灰瓦、浅墙、门廊和石基；具体功能由实际空间及设施表达。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "院落与室内剖面",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/chinese_daily.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部街面和院落地坪顶面为 Y=2；建筑室内由明确台阶抬高。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "function_terms": [
+    "水路客运",
+    "货物暂存"
+  ],
+  "asset_tags": [
+    "infrastructure"
+  ],
+  "nbt_sha256": "038d0d17820d9d1ae1645132bb8f290e04e3ed5f5e770308b2350a8e03524d27"
+}
