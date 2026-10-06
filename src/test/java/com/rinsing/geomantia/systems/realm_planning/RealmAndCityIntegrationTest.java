@@ -76,7 +76,7 @@ class RealmAndCityIntegrationTest {
         assertEquals(capGameplay, capResult.getAsJsonArray("gameplayRequirements"));
         assertEquals(capStyle, capResult.getAsJsonObject("styleDirection"));
 
-        // 2. Add non-capital town with specialized outpost hierarchy, functions, gameplay, and style
+        // 2. Add a small non-capital town with freely authored service responsibilities
         JsonObject secondReq = new JsonObject();
         secondReq.addProperty("runId", "run_t4");
         secondReq.addProperty("planningSessionId", "handover_plan");
@@ -85,7 +85,7 @@ class RealmAndCityIntegrationTest {
         secondReq.addProperty("role", "mining_town");
         secondReq.addProperty("name", "深铁哨镇");
         secondReq.addProperty("theoreticalScale", "village");
-        secondReq.addProperty("serviceHierarchy", "specialized_outpost");
+        secondReq.addProperty("serviceHierarchy", "季节性矿业据点，冬季由首都代管补给");
         secondReq.addProperty("positioning", "富铁高地采矿据点与熔炼工坊");
         JsonArray secondFuncs = new JsonArray();
         secondFuncs.add("mining");
@@ -102,11 +102,18 @@ class RealmAndCityIntegrationTest {
         JsonObject secondResult = service.add(secondReq).getAsJsonObject("addedCitySeed");
         assertEquals("深铁哨镇", secondResult.get("name").getAsString());
         assertEquals("village", secondResult.get("theoreticalScale").getAsString());
-        assertEquals("specialized_outpost", secondResult.get("serviceHierarchy").getAsString());
+        assertEquals("季节性矿业据点，冬季由首都代管补给", secondResult.get("serviceHierarchy").getAsString());
         assertEquals("富铁高地采矿据点与熔炼工坊", secondResult.get("positioning").getAsString());
         assertEquals(secondFuncs, secondResult.getAsJsonArray("functionalFocus"));
         assertEquals(secondGameplay, secondResult.getAsJsonArray("gameplayRequirements"));
         assertEquals(secondStyle, secondResult.getAsJsonObject("styleDirection"));
+
+        JsonObject previewRequest = new JsonObject();
+        previewRequest.addProperty("runId", "run_t4");
+        previewRequest.addProperty("planningSessionId", "handover_plan");
+        var legend = service.preview(previewRequest).getAsJsonObject("cityDistributionPreview").getAsJsonArray("cityLegend");
+        assertEquals(secondReq.get("serviceHierarchy"), legend.get(1).getAsJsonObject().get("serviceHierarchy"),
+                "Free service descriptions remain complete in the map's decision data");
 
         // 3. Finalize and verify persistence into city_seed_registry.json
         JsonObject finalizeReq = new JsonObject();
@@ -141,7 +148,7 @@ class RealmAndCityIntegrationTest {
 
         assertEquals("深铁哨镇", savedMine.get("name").getAsString());
         assertEquals("village", savedMine.get("theoreticalScale").getAsString());
-        assertEquals("specialized_outpost", savedMine.get("serviceHierarchy").getAsString());
+        assertEquals("季节性矿业据点，冬季由首都代管补给", savedMine.get("serviceHierarchy").getAsString());
         assertEquals("富铁高地采矿据点与熔炼工坊", savedMine.get("positioning").getAsString());
         assertEquals(secondFuncs, savedMine.getAsJsonArray("functionalFocus"));
         assertEquals(secondGameplay, savedMine.getAsJsonArray("gameplayRequirements"));

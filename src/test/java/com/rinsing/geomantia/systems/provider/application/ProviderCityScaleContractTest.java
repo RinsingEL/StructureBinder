@@ -30,6 +30,13 @@ class ProviderCityScaleContractTest {
 
     @Test
     void t4AllowsComponentStyleTagsAndExposesNationalReview() {
+        for (String name : List.of("realm_t4_patch_planning_select_capital", "realm_t4_patch_planning_add_city")) {
+            var properties = ProviderPlanningToolCatalog.definitions(List.of(name)).get(0).getAsJsonObject()
+                    .getAsJsonObject("parameters").getAsJsonObject("properties");
+            assertEquals("string", properties.getAsJsonObject("serviceHierarchy").get("type").getAsString());
+            assertFalse(properties.getAsJsonObject("serviceHierarchy").has("enum"), "Service responsibilities are authored freely");
+            assertTrue(properties.getAsJsonObject("theoreticalScale").has("enum"), "Physical scale still drives executable capacity rules");
+        }
         var tools = ProviderPlanningToolCatalog.definitions(List.of("realm_t4_patch_planning_select_capital",
                 "realm_t4_patch_planning_preview","realm_t4_patch_planning_review"));
         var style = tools.get(0).getAsJsonObject().getAsJsonObject("parameters")

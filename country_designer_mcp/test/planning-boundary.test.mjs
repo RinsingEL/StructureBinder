@@ -35,6 +35,9 @@ test('T4 publishes component styles and a hash-bound whole-country review before
   for (const name of ['realm_t4_patch_planning_select_capital', 'realm_t4_patch_planning_add_city']) {
     const schema = realmTools.find(t => t.name === name).inputSchema;
     assert.equal(schema.properties.styleDirection.additionalProperties.type, 'string');
+    assert.equal(schema.properties.serviceHierarchy.type, 'string');
+    assert.equal(Object.hasOwn(schema.properties.serviceHierarchy, 'enum'), false);
+    assert.ok(schema.properties.theoreticalScale.enum.length > 0);
   }
   assert.ok(realmTools.find(t => t.name === 'realm_t4_patch_planning_preview'));
   const review = realmTools.find(t => t.name === 'realm_t4_patch_planning_review').inputSchema;

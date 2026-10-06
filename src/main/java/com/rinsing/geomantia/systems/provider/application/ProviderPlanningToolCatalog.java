@@ -173,7 +173,7 @@ public final class ProviderPlanningToolCatalog {
                 "patchSelectionRef", string(), "candidateRangeCells", integer(), "minimumAreaBlocks", integer(),
                 "subregionId", string(), "requiredConditions", array(string()), "coreFunctions", array(string()),
                 "functionalFocus", array(string()), "name", string(),
-                "serviceHierarchy", enumeration("national_center", "regional_center", "local_town", "specialized_outpost"),
+                "serviceHierarchy", described(string(), "自由描述城市在全国体系中的服务范围与分工，如双中心之一、宗教中心或季节性据点；与物理规模独立。旧层级标签仍可使用。"),
                 "positioning", string(), "gameplayRequirements", array(string()),
                 "theoreticalScale", enumeration("large_city", "city", "town", "village", "hamlet", "outpost", "capital"),
                 "selectionReason", string());

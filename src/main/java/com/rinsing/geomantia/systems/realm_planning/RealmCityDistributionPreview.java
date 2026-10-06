@@ -78,10 +78,10 @@ final class RealmCityDistributionPreview {
                 g.drawString(text(seed,"mapLabel"),x+6,z-5);
                 String name=text(seed,"name"); if (name.isBlank()) name=text(seed,"citySeedId");
                 g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,Math.min(13,rowHeight)));
-                g.drawString(text(seed,"mapLabel") + "  " + name,905,88+row*rowHeight);
+                g.drawString(fitText(g,text(seed,"mapLabel") + "  " + name,245),905,88+row*rowHeight);
                 if (rowHeight>=28) {
                     g.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,11));
-                    g.drawString(text(seed,"theoreticalScale") + " / " + text(seed,"serviceHierarchy"),905,103+row*rowHeight);
+                    g.drawString(fitText(g,text(seed,"theoreticalScale") + " / " + text(seed,"serviceHierarchy"),245),905,103+row*rowHeight);
                 }
                 row++;
             }
@@ -99,6 +99,13 @@ final class RealmCityDistributionPreview {
         g.drawRect(30+(int)((x-ox)*scale),70+(int)((z-oz)*scale),
                 Math.max(1,(int)Math.ceil((bounds.get("maxX").getAsDouble()-x+1)*scale)),
                 Math.max(1,(int)Math.ceil((bounds.get("maxZ").getAsDouble()-z+1)*scale)));
+    }
+    private static String fitText(Graphics2D g,String value,int width) {
+        if (g.getFontMetrics().stringWidth(value)<=width) return value;
+        String shortened=value;
+        while (!shortened.isEmpty() && g.getFontMetrics().stringWidth(shortened+"…")>width)
+            shortened=shortened.substring(0,shortened.offsetByCodePoints(shortened.length(),-1));
+        return shortened+"…";
     }
     private static String text(JsonObject o,String key) { return o.has(key)?o.get(key).getAsString():""; }
     private static JsonObject read(Path path) throws IOException { return JsonParser.parseString(Files.readString(path)).getAsJsonObject(); }
