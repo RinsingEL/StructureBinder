@@ -122,7 +122,9 @@ public final class RealmT4PatchPlanningService {
         JsonObject normalized = request.deepCopy();
         normalized.addProperty("citySeedId", requiredString(intent, "citySeedId"));
         normalized.addProperty("role", "capital");
-        normalized.addProperty("theoreticalScale", stringValue(intent, "theoreticalScale", "capital"));
+        String requestedScale = stringValue(request, "theoreticalScale", "");
+        normalized.addProperty("theoreticalScale", !requestedScale.isBlank() ? requestedScale
+                : stringValue(intent, "theoreticalScale", "capital"));
         normalized.addProperty("trigger", "always");
         if (!normalized.has("requiredConditions")) {
             normalized.add("requiredConditions", array(intent, "requiredConditions").deepCopy());
@@ -159,6 +161,54 @@ public final class RealmT4PatchPlanningService {
         writeSession(runId, sessionId, session);
         JsonObject result = response("add_city_seed", session, sessionPath(runId, sessionId));
         result.add("addedCitySeed", seed.deepCopy());
+        return result;
+    }
+
+    public JsonObject removeCity(JsonObject request) throws IOException {
+        String runId = safeId(requiredString(request, "runId"), "runId");
+        String sessionId = safeId(requiredString(request, "planningSessionId"), "planningSessionId");
+        String citySeedId = safeId(requiredString(request, "citySeedId"), "citySeedId");
+        JsonObject session = loadOpenSession(runId, sessionId);
+        requireCurrentTerritory(runId, session);
+
+        JsonArray seeds = array(session, "citySeeds");
+        JsonObject removedSeed = null;
+        int removeIndex = -1;
+        for (int i = 0; i < seeds.size(); i++) {
+            JsonObject seed = seeds.get(i).getAsJsonObject();
+            if (citySeedId.equals(stringValue(seed, "citySeedId", ""))) {
+                removedSeed = seed;
+                removeIndex = i;
+                break;
+            }
+        }
+        if (removedSeed == null) {
+            throw new IllegalArgumentException("T4_CITY_SEED_NOT_FOUND: " + citySeedId);
+        }
+
+        JsonObject source = object(removedSeed, "source");
+        String patchSelectionRef = stringValue(source, "patchSelectionRef", "");
+        if (!patchSelectionRef.isBlank()) {
+            JsonArray usedRefs = array(session, "usedPatchSelectionRefs");
+            JsonArray updatedRefs = new JsonArray();
+            for (JsonElement el : usedRefs) {
+                if (!patchSelectionRef.equals(el.getAsString())) {
+                    updatedRefs.add(el);
+                }
+            }
+            session.add("usedPatchSelectionRefs", updatedRefs);
+        }
+
+        if ("capital".equals(stringValue(removedSeed, "role", ""))) {
+            session.addProperty("capitalSelectionStatus", "awaiting_selection");
+        }
+
+        seeds.remove(removeIndex);
+        session.addProperty("updatedAt", Instant.now().toString());
+        writeSession(runId, sessionId, session);
+
+        JsonObject result = response("remove_city_seed", session, sessionPath(runId, sessionId));
+        result.add("removedCitySeed", removedSeed.deepCopy());
         return result;
     }
 
@@ -207,8 +257,19 @@ public final class RealmT4PatchPlanningService {
         JsonObject seed = new JsonObject();
         seed.addProperty("citySeedId", citySeedId);
         seed.addProperty("realmId", realmId);
+        String name = stringValue(request, "name", "");
+        if (!name.isBlank()) {
+            seed.addProperty("name", name);
+        }
         seed.addProperty("role", role);
         seed.addProperty("theoreticalScale", scale);
+        String serviceHierarchy = stringValue(request, "serviceHierarchy",
+                "capital".equals(role) ? "national_center" : "local_town");
+        seed.addProperty("serviceHierarchy", serviceHierarchy);
+        String positioning = stringValue(request, "positioning", "");
+        if (!positioning.isBlank()) {
+            seed.addProperty("positioning", positioning);
+        }
         seed.add("anchorGrid", point(gridX, gridZ));
         seed.add("anchorBlock", point(anchorBlockX, anchorBlockZ));
         seed.addProperty("candidateRangeCells", intValue(request, "candidateRangeCells", 4));
@@ -223,7 +284,27 @@ public final class RealmT4PatchPlanningService {
         }
         seed.add("requiredConditions", copyArray(request, "requiredConditions",
                 "land", "inside_realm"));
-        seed.add("coreFunctions", copyArray(request, "coreFunctions"));
+        JsonArray coreFunctions = request.has("functionalFocus")
+                ? copyArray(request, "functionalFocus")
+                : request.has("functions")
+                ? copyArray(request, "functions")
+                : copyArray(request, "coreFunctions");
+        seed.add("coreFunctions", coreFunctions);
+        if (request.has("functionalFocus") || request.has("functions")) {
+            seed.add("functionalFocus", coreFunctions.deepCopy());
+        }
+        if (request.has("gameplayRequirements")) {
+            seed.add("gameplayRequirements", copyArray(request, "gameplayRequirements"));
+        }
+        if (request.has("styleDirection")) {
+            JsonElement direction=request.get("styleDirection");
+            if (!direction.isJsonObject()) throw new IllegalArgumentException("T4_CITY_STYLE_DIRECTION_INVALID: expected a component-to-tag object");
+            for (var entry:direction.getAsJsonObject().entrySet()) {
+                if (!entry.getValue().isJsonPrimitive() || !entry.getValue().getAsJsonPrimitive().isString())
+                    throw new IllegalArgumentException("T4_CITY_STYLE_DIRECTION_INVALID: " + entry.getKey() + " must be a string tag");
+            }
+            seed.add("styleDirection", request.get("styleDirection").deepCopy());
+        }
         seed.addProperty("trigger", stringValue(request, "trigger", "realm_development"));
         JsonObject source = new JsonObject();
         source.addProperty("reason", stringValue(request, "selectionReason", "AI selected Patch Explorer candidate"));
@@ -339,6 +420,11 @@ public final class RealmT4PatchPlanningService {
                 || !hasTraceableCapital(sessionSeeds)) {
             throw new IllegalArgumentException("T4_PATCH_EXACTLY_ONE_TRACEABLE_CAPITAL_REQUIRED");
         }
+        JsonObject review = proposalReview(session);
+        if (!"accept".equals(stringValue(review,"decision",""))
+                || !proposalHash(session).equals(stringValue(review,"proposalHash",""))) {
+            throw new IllegalArgumentException("T4_CITY_PROPOSAL_REVIEW_REQUIRED: inspect the current distribution preview and review it before finalize.");
+        }
         String realmId = requiredString(session, "realmId");
         Path runDir = runDir(runId);
         Path registryPath = runDir.resolve("city_seed_registry.json");
@@ -378,12 +464,12 @@ public final class RealmT4PatchPlanningService {
         writeSession(runId, sessionId, session);
         JsonObject result = response("finalize", session, sessionPath(runId, sessionId));
         result.add("citySeedRegistry", registry.deepCopy());
-        if (synchronizedResult.has("artifacts") && synchronizedResult.get("artifacts").isJsonObject()) {
+        if (synchronizedResult != null && synchronizedResult.has("artifacts") && synchronizedResult.get("artifacts").isJsonObject()) {
             result.add("artifacts", synchronizedResult.getAsJsonObject("artifacts").deepCopy());
         } else {
             result.getAsJsonObject("artifacts").addProperty("citySeedRegistry", debugRef(registryPath));
         }
-        result.add("nextActions", synchronizedResult.has("nextActions")
+        result.add("nextActions", synchronizedResult != null && synchronizedResult.has("nextActions")
                 ? synchronizedResult.get("nextActions").deepCopy() : new JsonArray());
         return result;
     }
@@ -583,7 +669,56 @@ public final class RealmT4PatchPlanningService {
                 .resolve("planning_session.json");
     }
 
+    public JsonObject preview(JsonObject request) throws IOException {
+        String runId=safeId(requiredString(request,"runId"),"runId");
+        String sessionId=safeId(requiredString(request,"planningSessionId"),"planningSessionId");
+        JsonObject session=loadOpenSession(runId,sessionId); requireCurrentTerritory(runId,session);
+        writeSession(runId,sessionId,session);
+        return response("preview",session,sessionPath(runId,sessionId));
+    }
+
+    public JsonObject review(JsonObject request) throws IOException {
+        String runId=safeId(requiredString(request,"runId"),"runId");
+        String sessionId=safeId(requiredString(request,"planningSessionId"),"planningSessionId");
+        JsonObject session=loadOpenSession(runId,sessionId); requireCurrentTerritory(runId,session);
+        String hash=requiredString(request,"proposalHash");
+        if (!proposalHash(session).equals(hash)) throw new IllegalArgumentException("T4_CITY_PROPOSAL_REVIEW_STALE");
+        String decision=requiredString(request,"decision");
+        if (!Set.of("accept","revise").contains(decision)) throw new IllegalArgumentException("T4_CITY_PROPOSAL_REVIEW_DECISION_INVALID");
+        JsonObject review=new JsonObject(); review.addProperty("proposalHash",hash);
+        review.addProperty("decision",decision); review.addProperty("assessment",requiredString(request,"assessment"));
+        review.addProperty("reviewedAt",Instant.now().toString()); session.add("proposalReview",review);
+        session.addProperty("updatedAt",Instant.now().toString());
+        writeSession(runId,sessionId,session);
+        return response("review",session,sessionPath(runId,sessionId));
+    }
+
+    private static String proposalHash(JsonObject session) {
+        JsonObject proposal=new JsonObject();
+        for (String key : new String[]{"realmId","territoryIdentity","cityCountRequirements","citySeeds"})
+            proposal.add(key,session.get(key));
+        try { return "sha256:" + java.util.HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+                .digest(GSON.toJson(proposal).getBytes(StandardCharsets.UTF_8))); }
+        catch (NoSuchAlgorithmException ex) { throw new IllegalStateException(ex); }
+    }
+
+    private static JsonObject proposalReview(JsonObject session) {
+        return session.has("proposalReview") && session.get("proposalReview").isJsonObject()
+                ? session.getAsJsonObject("proposalReview") : new JsonObject();
+    }
+
     private void writeSession(String runId, String sessionId, JsonObject session) throws IOException {
+        String hash=proposalHash(session);
+        if (!hash.equals(stringValue(proposalReview(session),"proposalHash",""))) session.remove("proposalReview");
+        session.addProperty("proposalHash",hash);
+        session.addProperty("proposalReviewStatus","accept".equals(stringValue(proposalReview(session),"decision",""))
+                ? "accepted" : "awaiting_review");
+        Path image=sessionPath(runId,sessionId).getParent().resolve("city_distribution_"+hash.substring(7)+".png");
+        JsonObject previous=session.has("cityDistributionPreview") ? session.getAsJsonObject("cityDistributionPreview") : null;
+        JsonObject preview=previous!=null && hash.equals(stringValue(previous,"proposalHash","")) && Files.isRegularFile(image)
+                ? previous.deepCopy() : RealmCityDistributionPreview.render(runDir(runId),image,session);
+        preview.addProperty("imagePath",debugRef(image)); preview.addProperty("proposalHash",hash);
+        session.add("cityDistributionPreview",preview);
         writeJson(sessionPath(runId, sessionId), session);
     }
 
@@ -596,8 +731,10 @@ public final class RealmT4PatchPlanningService {
         result.addProperty("planningSessionId", requiredString(session, "planningSessionId"));
         result.addProperty("status", stringValue(session, "status", "open"));
         result.add("planningSession", session.deepCopy());
+        result.add("cityDistributionPreview", session.get("cityDistributionPreview").deepCopy());
         JsonObject artifacts = new JsonObject();
         artifacts.addProperty("planningSession", debugRef(sessionPath));
+        artifacts.addProperty("cityDistributionPreview",session.getAsJsonObject("cityDistributionPreview").get("imagePath").getAsString());
         result.add("artifacts", artifacts);
         return result;
     }

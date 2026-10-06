@@ -234,7 +234,8 @@ public final class ProviderPlanningDiscovery {
         return context != null && worldSeed.equals(string(context, "worldSeed"))
                 && integer(scanBounds, "centerBlockX") == 0
                 && integer(scanBounds, "centerBlockZ") == 0
-                && integer(scanBounds, "planningRadiusBlocks") == surveySettings.planningRadiusBlocks();
+                && (integer(scanBounds, "planningRadiusBlocks") == surveySettings.planningRadiusBlocks()
+                    || bool(context, "sealed"));
     }
 
     private Instant createdAt(Path runDirectory) {

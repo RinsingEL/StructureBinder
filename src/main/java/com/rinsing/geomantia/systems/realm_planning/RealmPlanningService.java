@@ -1201,6 +1201,14 @@ public final class RealmPlanningService {
         for (WorldCell cell : landCells) {
             landByKey.put(key(cell.gridX, cell.gridZ), cell);
         }
+        // Water is a transit surface, not assignable land. Keep quotas and exported territory on land.
+        Map<String, WorldCell> traversalByKey = new LinkedHashMap<>(landByKey);
+        for (WorldCell cell : run.worldCells) {
+            if ("water".equals(cell.landWater)
+                    && outsideOriginRadius(cell, run, accessConfig.initialActivityRadiusBlocks())) {
+                traversalByKey.put(key(cell.gridX, cell.gridZ), cell);
+            }
+        }
         Map<String, String> ownership = new LinkedHashMap<>();
         Map<String, String> statusByKey = new LinkedHashMap<>();
         Map<String, Double> bestCosts = new LinkedHashMap<>();
@@ -1269,7 +1277,7 @@ public final class RealmPlanningService {
                 continue;
             }
             String previousOwner = ownership.get(cellKey);
-            if (!claim.realmId.equals(previousOwner)
+            if (claim.cell.assignableLand() && !claim.realmId.equals(previousOwner)
                     && ownedCounts.getOrDefault(claim.realmId, 0) >= maximumAreas.get(claim.realmId)) {
                 recordStopReason(run, claim.realmId, "maximum_area_reached", 1);
                 continue;
@@ -1286,22 +1294,24 @@ public final class RealmPlanningService {
                 continue;
             }
             ownership.put(cellKey, claim.realmId);
-            if (!claim.realmId.equals(previousOwner)) {
+            if (claim.cell.assignableLand() && !claim.realmId.equals(previousOwner)) {
                 ownedCounts.merge(claim.realmId, 1, Integer::sum);
                 if (previousOwner != null) ownedCounts.merge(previousOwner, -1, Integer::sum);
             }
             statusByKey.put(cellKey, "owned");
             bestCosts.put(cellKey, claim.cumulativeCost);
             secondBestCosts.remove(cellKey);
-            run.realmClaimCostSums.put(claim.realmId,
-                    run.realmClaimCostSums.getOrDefault(claim.realmId, 0.0) + claim.cumulativeCost);
-            run.realmMaxClaimCosts.put(claim.realmId,
-                    Math.max(run.realmMaxClaimCosts.getOrDefault(claim.realmId, 0.0), claim.cumulativeCost));
-            run.realmClaimCounts.put(claim.realmId, run.realmClaimCounts.getOrDefault(claim.realmId, 0) + 1);
+            if (claim.cell.assignableLand()) {
+                run.realmClaimCostSums.put(claim.realmId,
+                        run.realmClaimCostSums.getOrDefault(claim.realmId, 0.0) + claim.cumulativeCost);
+                run.realmMaxClaimCosts.put(claim.realmId,
+                        Math.max(run.realmMaxClaimCosts.getOrDefault(claim.realmId, 0.0), claim.cumulativeCost));
+                run.realmClaimCounts.put(claim.realmId, run.realmClaimCounts.getOrDefault(claim.realmId, 0) + 1);
+            }
             recordTerrainCost(run, claim.realmId, claim.cell.baseLandform(), Math.max(0.0, claim.cumulativeCost));
 
             for (int[] offset : DIRECTIONS) {
-                WorldCell next = landByKey.get(key(claim.cell.gridX + offset[0], claim.cell.gridZ + offset[1]));
+                WorldCell next = traversalByKey.get(key(claim.cell.gridX + offset[0], claim.cell.gridZ + offset[1]));
                 if (next == null) {
                     continue;
                 }
@@ -3316,6 +3326,23 @@ public final class RealmPlanningService {
         tagCosts.put("lakeshore", -style.waterAffinity * 0.18);
         tagCosts.put("water_edge", -style.waterAffinity * 0.12);
         tagCosts.put("mountain_front", -Math.max(0.0, style.mountainAffinity) * 0.35);
+
+        for (Map.Entry<String, Double> entry : style.terrainCosts.entrySet()) {
+            String key = entry.getKey();
+            double cost = entry.getValue();
+            if (baseCosts.containsKey(key)) {
+                baseCosts.put(key, cost);
+            } else if (tagCosts.containsKey(key)) {
+                tagCosts.put(key, cost);
+            } else if ("mountain".equalsIgnoreCase(key)) {
+                baseCosts.put("ridge", cost);
+                baseCosts.put("upland", cost * 0.85);
+                baseCosts.put("plateau", cost * 0.75);
+                tagCosts.put("steep", Math.max(0.5, cost));
+            } else {
+                baseCosts.put(key, cost);
+            }
+        }
         return new TerrainCostProfile(baseCosts, tagCosts);
     }
 
@@ -3339,11 +3366,21 @@ public final class RealmPlanningService {
 
     private boolean edgeBlocked(RealmRun run, String realmId, WorldCell from, WorldCell to) {
         RealmProfile profile = run.profile(realmId);
-        if ("water".equals(to.baseLandform()) && !"allowed".equals(profile.expansionStyle.seaCrossingPolicy)) {
-            return true;
+        if ("water".equals(to.baseLandform())) {
+            if ("none".equals(profile.expansionStyle.seaCrossingPolicy)) {
+                return true;
+            }
+            Double waterCost = profile.expansionStyle.terrainCosts.get("water");
+            if (waterCost != null && Double.isInfinite(waterCost)) {
+                return true;
+            }
         }
-        if (to.barrierCost() >= 9.0 && profile.expansionStyle.mountainAffinity < 0.15) {
-            return true;
+        if (to.assignableLand() && to.barrierCost() >= 9.0 && profile.expansionStyle.mountainAffinity < 0.15) {
+            double mountainCost = profile.expansionStyle.terrainCosts.getOrDefault("mountain",
+                    profile.expansionStyle.terrainCosts.getOrDefault("ridge", Double.NaN));
+            if (Double.isNaN(mountainCost) || mountainCost >= 2.0) {
+                return true;
+            }
         }
         return false;
     }
@@ -4292,14 +4329,22 @@ public final class RealmPlanningService {
     private static CitySeed citySeedFromJson(JsonObject object) {
         JsonObject source = object.has("source") && object.get("source").isJsonObject()
                 ? object.getAsJsonObject("source") : new JsonObject();
+        JsonObject styleDirection = object.has("styleDirection") && object.get("styleDirection").isJsonObject()
+                ? object.getAsJsonObject("styleDirection") : new JsonObject();
         return new CitySeed(stringValue(object, "citySeedId", ""), stringValue(object, "realmId", ""),
                 stringValue(object, "role", ""), stringValue(object, "theoreticalScale", ""),
                 gridPointFromJson(object.get("anchorGrid")), gridPointFromJson(object.get("anchorBlock")),
                 intValue(object, "candidateRangeCells", 0), intValue(object, "planningRadiusCells", 0),
                 stringValue(object, "subregionId", ""), stringValue(object, "candidateId", ""),
                 doubleValue(object, "graphDistanceToNearestCity", -1.0), stringValue(object, "satelliteOf", ""),
-                stringList(object, "requiredConditions"), stringList(object, "coreFunctions"),
-                stringValue(object, "trigger", ""), stringValue(source, "reason", ""));
+                stringList(object, "requiredConditions"),
+                stringList(object, object.has("functionalFocus") ? "functionalFocus" : "coreFunctions"),
+                stringValue(object, "trigger", ""), stringValue(source, "reason", ""),
+                stringValue(object, "name", ""),
+                stringValue(object, "serviceHierarchy", ""),
+                stringValue(object, "positioning", ""),
+                stringList(object, "gameplayRequirements"),
+                styleDirection);
     }
 
     private static void validateRestoredGrid(RealmRun run, String realmId, GridPoint grid, String continentId,
@@ -5550,8 +5595,24 @@ public final class RealmPlanningService {
 
     private record ExpansionStyle(double waterAffinity, double mountainAffinity, double forestAffinity,
             double compactness, double coastalBias, double resourceSeeking, double borderPressure,
-            String seaCrossingPolicy) {
+            String seaCrossingPolicy, Map<String, Double> terrainCosts) {
+        ExpansionStyle(double waterAffinity, double mountainAffinity, double forestAffinity,
+                double compactness, double coastalBias, double resourceSeeking, double borderPressure,
+                String seaCrossingPolicy) {
+            this(waterAffinity, mountainAffinity, forestAffinity, compactness, coastalBias, resourceSeeking, borderPressure,
+                    seaCrossingPolicy, Map.of());
+        }
+
         static ExpansionStyle fromJson(JsonObject object) {
+            Map<String, Double> terrainCosts = new LinkedHashMap<>();
+            if (object.has("terrainCosts") && object.get("terrainCosts").isJsonObject()) {
+                JsonObject tc = object.getAsJsonObject("terrainCosts");
+                for (var entry : tc.entrySet()) {
+                    if (entry.getValue().isJsonPrimitive() && entry.getValue().getAsJsonPrimitive().isNumber()) {
+                        terrainCosts.put(entry.getKey(), entry.getValue().getAsDouble());
+                    }
+                }
+            }
             return new ExpansionStyle(
                     clamp(doubleValue(object, "waterAffinity", 0.5), 0.0, 1.0),
                     clamp(doubleValue(object, "mountainAffinity", 0.0), -1.0, 1.0),
@@ -5560,7 +5621,8 @@ public final class RealmPlanningService {
                     clamp(doubleValue(object, "coastalBias", 0.3), 0.0, 1.0),
                     clamp(doubleValue(object, "resourceSeeking", 0.4), 0.0, 1.0),
                     clamp(doubleValue(object, "borderPressure", 0.3), 0.0, 1.0),
-                    stringValue(object, "seaCrossingPolicy", "none"));
+                    stringValue(object, "seaCrossingPolicy", "none"),
+                    Map.copyOf(terrainCosts));
         }
 
         JsonObject asJson() {
@@ -5573,6 +5635,13 @@ public final class RealmPlanningService {
             json.addProperty("resourceSeeking", resourceSeeking);
             json.addProperty("borderPressure", borderPressure);
             json.addProperty("seaCrossingPolicy", seaCrossingPolicy);
+            if (!terrainCosts.isEmpty()) {
+                JsonObject tc = new JsonObject();
+                for (var entry : terrainCosts.entrySet()) {
+                    tc.addProperty(entry.getKey(), entry.getValue());
+                }
+                json.add("terrainCosts", tc);
+            }
             return json;
         }
     }
@@ -6115,6 +6184,14 @@ public final class RealmPlanningService {
             Map<String, Set<String>> neighbors = new LinkedHashMap<>();
             Map<String, List<WorldCell>> byRealm = new LinkedHashMap<>();
             Map<String, String> owners = new LinkedHashMap<>();
+            // Include claimed transit water for topology only; it never increases realm land area.
+            for (var entry : ownership.entrySet()) {
+                WorldCell transit = run.worldCellsByKey.get(entry.getKey());
+                if (transit != null && "water".equals(transit.landWater)
+                        && "owned".equals(run.territoryCellStatuses.get(entry.getKey()))) {
+                    owners.put(entry.getKey(), entry.getValue());
+                }
+            }
             for (TerritoryCell cell : territoryCells) {
                 if (!"owned".equals(cell.status)) {
                     continue;
@@ -6316,7 +6393,7 @@ public final class RealmPlanningService {
                 visited.add(start);
                 while (!queue.isEmpty()) {
                     String currentKey = queue.removeFirst();
-                    size++;
+                    if (ownedKeys.contains(currentKey)) size++;
                     String[] parts = currentKey.split(",", 2);
                     int x = Integer.parseInt(parts[0]);
                     int z = Integer.parseInt(parts[1]);
@@ -6371,14 +6448,17 @@ public final class RealmPlanningService {
     private record CitySeed(String citySeedId, String realmId, String role, String theoreticalScale,
             GridPoint anchorGrid, GridPoint anchorBlock, int candidateRangeCells, int planningRadiusCells,
             String subregionId, String candidateId, double graphDistanceToNearestCity, String satelliteOf,
-            List<String> requiredConditions, List<String> coreFunctions, String trigger, String source) {
+            List<String> requiredConditions, List<String> coreFunctions, String trigger, String source,
+            String name, String serviceHierarchy, String positioning, List<String> gameplayRequirements,
+            JsonObject styleDirection) {
         static CitySeed fixtureCapital(CapitalCityIntent intent, RealmSeed realmSeed) {
             return new CitySeed(intent.citySeedId, intent.realmId, "capital", intent.theoreticalScale,
                     realmSeed.seedGrid, realmSeed.seedBlock, 8,
                     RealmPlanningService.planningRadiusCells("capital", intent.theoreticalScale),
                     intent.realmId + "_capital_core", "capital_" + intent.realmId, -1.0, "",
                     intent.requiredConditions, intent.coreFunctions,
-                    "always", "rule_fixture_realm_core");
+                    "always", "rule_fixture_realm_core",
+                    "", "national_center", "", List.of(), new JsonObject());
         }
 
         static CitySeed from(String id, String realmId, String role, String scale, WorldCell cell,
@@ -6386,7 +6466,8 @@ public final class RealmPlanningService {
             return new CitySeed(id, realmId, role, scale, new GridPoint(cell.gridX, cell.gridZ),
                     new GridPoint(cell.blockX, cell.blockZ), range,
                     RealmPlanningService.planningRadiusCells(role, scale), "",
-                    id, -1.0, "", conditions, functions, trigger, source);
+                    id, -1.0, "", conditions, functions, trigger, source,
+                    "", "capital".equals(role) ? "national_center" : "local_town", "", List.of(), new JsonObject());
         }
 
         CitySeed withCandidateMetadata(String subregionId, String candidateId, double graphDistanceToNearestCity,
@@ -6395,15 +6476,25 @@ public final class RealmPlanningService {
                     candidateRangeCells, planningRadiusCells, subregionId == null ? "" : subregionId,
                     candidateId == null || candidateId.isBlank() ? this.candidateId : candidateId,
                     graphDistanceToNearestCity, satelliteOf == null ? "" : satelliteOf,
-                    requiredConditions, coreFunctions, trigger, source);
+                    requiredConditions, coreFunctions, trigger, source,
+                    name, serviceHierarchy, positioning, gameplayRequirements, styleDirection);
         }
 
         JsonObject asJson() {
             JsonObject json = new JsonObject();
             json.addProperty("citySeedId", citySeedId);
             json.addProperty("realmId", realmId);
+            if (name != null && !name.isBlank()) {
+                json.addProperty("name", name);
+            }
             json.addProperty("role", role);
             json.addProperty("theoreticalScale", theoreticalScale);
+            if (serviceHierarchy != null && !serviceHierarchy.isBlank()) {
+                json.addProperty("serviceHierarchy", serviceHierarchy);
+            }
+            if (positioning != null && !positioning.isBlank()) {
+                json.addProperty("positioning", positioning);
+            }
             json.add("anchorGrid", anchorGrid.asJson());
             json.add("anchorBlock", anchorBlock.asJson());
             json.addProperty("candidateRangeCells", candidateRangeCells);
@@ -6416,6 +6507,12 @@ public final class RealmPlanningService {
             }
             json.add("requiredConditions", stringArray(requiredConditions));
             json.add("coreFunctions", stringArray(coreFunctions));
+            if (gameplayRequirements != null && !gameplayRequirements.isEmpty()) {
+                json.add("gameplayRequirements", stringArray(gameplayRequirements));
+            }
+            if (styleDirection != null && !styleDirection.isJsonNull() && !styleDirection.entrySet().isEmpty()) {
+                json.add("styleDirection", styleDirection.deepCopy());
+            }
             json.addProperty("trigger", trigger);
             JsonObject sourceJson = new JsonObject();
             sourceJson.addProperty("reason", source);

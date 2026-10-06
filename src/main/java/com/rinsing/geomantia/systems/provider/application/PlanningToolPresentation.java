@@ -31,13 +31,15 @@ public final class PlanningToolPresentation {
                 ? result.getAsJsonObject("revisionEvidence") : new JsonObject();
         if (revision.has("compiledPreview")) collectPreviews(revision.get("compiledPreview"), paths);
         else collectPreviews(result, paths);
-        Path root = Files.exists(debugRoot) ? debugRoot.toRealPath() : debugRoot.toAbsolutePath().normalize();
+        Path root = debugRoot.toAbsolutePath().normalize();
+        Path realRoot = Files.exists(debugRoot) ? debugRoot.toRealPath() : root;
         for (String value : paths) {
             if (images.size() >= 4) break;
             try {
                 Path requested = Path.of(value);
                 Path path = (requested.isAbsolute() ? requested : root.resolve(requested)).normalize();
-                if (!path.startsWith(root) || !Files.isRegularFile(path) || !path.toRealPath().startsWith(root)) {
+                Path realPath = Files.exists(path) ? path.toRealPath() : path.toAbsolutePath().normalize();
+                if (!realPath.startsWith(realRoot) || !Files.isRegularFile(realPath)) {
                     warnings.add("Preview unavailable inside current world: " + value);
                     continue;
                 }

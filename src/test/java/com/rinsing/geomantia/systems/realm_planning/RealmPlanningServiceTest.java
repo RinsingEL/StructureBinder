@@ -956,6 +956,71 @@ class RealmPlanningServiceTest {
         return result;
     }
 
+    @Test
+    void finiteWaterCostsAffectPublicT3PathsWithoutCountingWaterAsLand() throws Exception {
+        Path root=tempDir.resolve("water_cost_debug"); String runId="water_cost_paths";
+        var terrain=new SyntheticTerrainProfile() {
+            public double seaLevel() { return 62; }
+            public double elevationAt(double x,double z) { return Math.abs(x)<65 && Math.abs(z)<385 ? 60 : 64; }
+        };
+        var config=new com.rinsing.geomantia.systems.realm_planning.application.access.PlanningAreaAccessConfig(
+                false,0,0,Set.of("minecraft:overworld"));
+        var service=new RealmPlanningService(root,config);
+        var survey=new WorldSurveyRunner(root,GisClassifierConfig.defaults()).run(
+                new WorldSurveyRunner.Config(runId,"minecraft:overworld","river_cost",0,0,0,1024,128,32,8,
+                        com.rinsing.geomantia.systems.gis.application.refresh.SampleMode.PRIOR,
+                        WorldSurveyRunner.ResumePolicy.RESCAN),new SyntheticAtlasSampler(terrain));
+        service.runW(survey,null);
+        JsonArray profiles=service.prepareT1(runId,null,1,"",true).getAsJsonArray("realmProfiles");
+        JsonObject profile=profiles.get(0).getAsJsonObject(); String realm=profile.get("realmId").getAsString();
+        JsonObject scale=profile.getAsJsonObject("scalePlan");
+        scale.addProperty("targetAreaRatio",1); scale.addProperty("minAreaRatio",0); scale.addProperty("maxAreaRatio",1);
+        JsonObject style=profile.getAsJsonObject("expansionStyle"); style.addProperty("seaCrossingPolicy","limited");
+        JsonObject costs=new JsonObject(); costs.addProperty("water",0.25); style.add("terrainCosts",costs);
+        JsonArray cells=readJson(root.resolve(runId).resolve("world_patch_map.json")).getAsJsonArray("cells");
+        JsonObject start=null,target=null; Set<String> water=new HashSet<>();
+        for (JsonElement item:cells) {
+            JsonObject cell=item.getAsJsonObject(); int x=cell.get("blockX").getAsInt(),z=cell.get("blockZ").getAsInt();
+            if ("water".equals(cell.get("landWater").getAsString())) water.add(cell.get("gridX")+","+cell.get("gridZ"));
+            if (x==-256 && z==0) start=cell;
+            if (x==256 && z==0) target=cell;
+        }
+        assertTrue(!water.isEmpty()); assertTrue(start!=null && target!=null);
+        service.prepareT1(runId,profiles,1,"",false);
+        assertEquals("completed",service.selectT2(runId,realm,start.get("gridX").getAsInt(),start.get("gridZ").getAsInt(),
+                null,"river bank fixture","debug",false).get("status").getAsString());
+        JsonObject cheap=service.expandT3(runId,"",true,"strict","action_budget").getAsJsonObject("territoryMap");
+        int tx=target.get("gridX").getAsInt(),tz=target.get("gridZ").getAsInt();
+        double cheapCost=claimCost(cheap,tx,tz);
+        assertEquals(cheap,service.expandT3(runId,"",true,"strict","action_budget").getAsJsonObject("territoryMap"));
+        for (JsonElement item:cheap.getAsJsonArray("territoryCells")) {
+            JsonObject cell=item.getAsJsonObject();
+            assertFalse(water.contains(cell.get("gridX")+","+cell.get("gridZ")),"Transit water must not enlarge territory area");
+        }
+        JsonObject stat=cheap.getAsJsonArray("realmStats").get(0).getAsJsonObject();
+        assertEquals(1.0,stat.get("largestComponentRatio").getAsDouble(),1e-9);
+        assertEquals(cheap.getAsJsonArray("territoryCells").size(),stat.get("areaCells").getAsInt());
+        costs.addProperty("water",4.5); service.prepareT1(runId,profiles,1,"",false);
+        service.selectT2(runId,realm,start.get("gridX").getAsInt(),start.get("gridZ").getAsInt(),null,"river bank fixture","debug",false);
+        JsonObject expensive=service.expandT3(runId,"",true,"strict","action_budget").getAsJsonObject("territoryMap");
+        assertTrue(claimCost(expensive,tx,tz)>cheapCost,"Explicit water cost must affect actual public T3 paths");
+        style.addProperty("seaCrossingPolicy","none"); service.prepareT1(runId,profiles,1,"",false);
+        service.selectT2(runId,realm,start.get("gridX").getAsInt(),start.get("gridZ").getAsInt(),null,"river bank fixture","debug",false);
+        JsonObject blocked=service.expandT3(runId,"",true,"strict","action_budget").getAsJsonObject("territoryMap");
+        assertTrue(claimCost(blocked,tx,tz)>cheapCost,"No-crossing policy must use the land detour");
+    }
+
+    private static double claimCost(JsonObject territory,int x,int z) {
+        for (JsonElement item:territory.getAsJsonArray("territoryCells")) {
+            JsonObject cell=item.getAsJsonObject();
+            if (cell.get("gridX").getAsInt()==x && cell.get("gridZ").getAsInt()==z) {
+                assertEquals("owned",cell.get("status").getAsString());
+                return cell.get("claimCost").getAsDouble();
+            }
+        }
+        throw new AssertionError("Target land missing from territory");
+    }
+
     private JsonObject centerCellForSyntheticPlateauProfile(String runId, double plateauHalfSizeBlocks) throws Exception {
         SyntheticTerrainProfile profile = new SyntheticTerrainProfile() {
             @Override

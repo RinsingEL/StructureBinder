@@ -29,6 +29,18 @@ class ProviderCityScaleContractTest {
     }
 
     @Test
+    void t4AllowsComponentStyleTagsAndExposesNationalReview() {
+        var tools = ProviderPlanningToolCatalog.definitions(List.of("realm_t4_patch_planning_select_capital",
+                "realm_t4_patch_planning_preview","realm_t4_patch_planning_review"));
+        var style = tools.get(0).getAsJsonObject().getAsJsonObject("parameters")
+                .getAsJsonObject("properties").getAsJsonObject("styleDirection");
+        assertEquals("string", style.getAsJsonObject("additionalProperties").get("type").getAsString());
+        assertTrue(PlanningStepPolicy.toolsFor(ProviderPlanningDiscovery.Stage.T4).contains("realm_t4_patch_planning_review"));
+        var review = tools.get(2).getAsJsonObject().getAsJsonObject("parameters");
+        assertTrue(review.getAsJsonArray("required").contains(new com.google.gson.JsonPrimitive("proposalHash")));
+    }
+
+    @Test
     void savedOutpostSeedUsesSmallestScaleWithoutLosingRoleOrAnchor() {
         var context = builder.buildWithFixedGridStep(
                 "city_sahra_valdoran_library_qasr_ilm", "realm_sahra_valdoran", "minecraft:overworld",

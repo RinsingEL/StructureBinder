@@ -14,6 +14,14 @@ final class PreparedRealmDesignTurn {
             JsonObject created = call(gateway, "realm_t4_patch_planning_create", new JsonObject());
             state.add("openPlanningSession", created.getAsJsonObject("planningSession").deepCopy());
         }
+        JsonObject distribution = null;
+        if (step.stage() == ProviderPlanningDiscovery.Stage.T4) {
+            JsonObject previewArgs=new JsonObject();
+            previewArgs.add("planningSessionId",state.getAsJsonObject("openPlanningSession").get("planningSessionId"));
+            distribution=call(gateway,"realm_t4_patch_planning_preview",previewArgs);
+            state.add("openPlanningSession",distribution.getAsJsonObject("planningSession").deepCopy());
+            state.add("cityDistributionPreview",distribution.get("cityDistributionPreview").deepCopy());
+        }
         JsonObject explorer = call(gateway, "patch_explorer_open", new JsonObject());
         JsonObject request = new JsonObject();
         request.add("sessionId", explorer.get("sessionId"));
@@ -29,7 +37,9 @@ final class PreparedRealmDesignTurn {
         state.addProperty("nextAction", step.stage() == ProviderPlanningDiscovery.Stage.T2
                 ? "patch_explorer_select_candidate"
                 : "selected".equals(state.getAsJsonObject("openPlanningSession").get("capitalSelectionStatus").getAsString())
-                ? "realm_t4_patch_planning_finalize" : "realm_t4_patch_planning_select_capital");
+                ? "accepted".equals(state.getAsJsonObject("openPlanningSession").get("proposalReviewStatus").getAsString())
+                    ? "realm_t4_patch_planning_finalize" : "realm_t4_patch_planning_review"
+                : "realm_t4_patch_planning_select_capital");
         if (step.stage() == ProviderPlanningDiscovery.Stage.T4) {
             JsonObject session = state.getAsJsonObject("openPlanningSession");
             if (session.has("cityCountRequirements")) {
@@ -44,8 +54,12 @@ final class PreparedRealmDesignTurn {
                 + "This is an overview, not a preferred design. Inspect the images and author brief; request more candidates "
                 + "with patch_explorer_show_candidates when useful. T2: choose a displayed candidate with a reason; the host commits it. "
                 + "T4: select_capital/add_city accept sessionId + candidateId directly and the host freezes the selection. "
-                + "Resume existing citySeeds; never choose a second capital. Follow the frozen cityCountRequirements: min/max include the capital, choose useful sites within that range, and finalize only after the minimum is present. Do not invent unsafe sites to meet the count; report lack of suitable candidates for review.");
+                + "Resume existing citySeeds; never choose a second capital. Follow the frozen cityCountRequirements: min/max include the capital. "
+                + "Independently choose each city's scale and service level; save its name, positioning, functions, gameplay and component style tags. "
+                + "Inspect the whole-realm cityDistributionPreview as well as local candidates. Adjust the national proposal if needed, then review its current proposalHash with an assessment and decision=accept before finalize. Any city change invalidates that review. "
+                + "Do not invent unsafe sites to meet the count; report lack of suitable candidates for review.");
         Set<Path> images = new LinkedHashSet<>();
+        if (distribution != null) PreparedCityDesignTurn.collectImages(distribution.get("cityDistributionPreview"),root.toRealPath(),images);
         PreparedCityDesignTurn.collectImages(candidates, root.toRealPath(), images);
         PreparedCityDesignTurn.collectImages(explorer, root.toRealPath(), images);
         if (images.isEmpty()) throw new IOException("PLANNING_DESIGN_PREVIEW_REQUIRED");

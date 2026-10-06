@@ -352,6 +352,10 @@ public final class ProviderPlanningToolGateway implements PlanningToolExecutor {
                 new Endpoint("/realm/t4/patch_planning/select_capital", false, false));
         endpoints.put("realm_t4_patch_planning_add_city",
                 new Endpoint("/realm/t4/patch_planning/add_city", false, false));
+        endpoints.put("realm_t4_patch_planning_remove_city",
+                new Endpoint("/realm/t4/patch_planning/remove_city", false, false));
+        endpoints.put("realm_t4_patch_planning_preview", new Endpoint("/realm/t4/patch_planning/preview", false, false));
+        endpoints.put("realm_t4_patch_planning_review", new Endpoint("/realm/t4/patch_planning/review", false, false));
         endpoints.put("realm_t4_patch_planning_finalize",
                 new Endpoint("/realm/t4/patch_planning/finalize", false, false));
         endpoints.put("city_design_queue_refresh",

@@ -42,7 +42,7 @@ class ProviderPlanningDiscoveryTest {
         var step = new ProviderPlanningDiscovery(debugRoot, 42L).nextStep();
 
         assertEquals(ProviderPlanningDiscovery.Stage.W, step.stage());
-        assertEquals("provider_2a_r8192", step.runId());
+        assertEquals("provider_2a_r19200", step.runId());
         assertEquals("realm_w_refresh", step.nextAction());
     }
 
@@ -230,7 +230,7 @@ class ProviderPlanningDiscoveryTest {
         Files.createDirectories(run);
         write(run, "world_survey_context.json", """
                 {"worldSeed":"42","sealed":true,
-                 "scanBounds":{"centerBlockX":0,"centerBlockZ":0,"planningRadiusBlocks":8192}}
+                 "scanBounds":{"centerBlockX":0,"centerBlockZ":0,"planningRadiusBlocks":19200}}
                 """);
         write(run, "world_patch_map.json", "{}");
         write(run, "world_survey_manifest.json", """

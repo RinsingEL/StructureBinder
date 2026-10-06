@@ -53,6 +53,21 @@ export const realmHandlers: Record<string, ToolHandler> = {
     return planningResult(res.data);
   },
 
+  async realm_t4_patch_planning_remove_city(args) {
+    const res = await postJson(`${MC_API_URL}/realm/t4/patch_planning/remove_city`, payload(args), TIMEOUTS.quick);
+    return planningResult(res.data);
+  },
+
+  async realm_t4_patch_planning_preview(args) {
+    const res = await postJson(`${MC_API_URL}/realm/t4/patch_planning/preview`, payload(args), TIMEOUTS.quick);
+    return planningResult(res.data);
+  },
+
+  async realm_t4_patch_planning_review(args) {
+    const res = await postJson(`${MC_API_URL}/realm/t4/patch_planning/review`, payload(args), TIMEOUTS.quick);
+    return planningResult(res.data);
+  },
+
   async realm_t4_patch_planning_finalize(args) {
     const res = await postJson(`${MC_API_URL}/realm/t4/patch_planning/finalize`, payload(args), TIMEOUTS.quick);
     return planningResult(res.data);

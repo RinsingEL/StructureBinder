@@ -218,6 +218,31 @@ final class RealmPlanningHttpController implements AutoCloseable {
         });
     }
 
+    void handleT4PatchPlanningRemoveCity(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return callOnServerThread(() -> {
+                JsonObject response = realmT4PatchPlanningService().removeCity(request);
+                com.rinsing.geomantia.platform.PlanningAreaAccessRuntime.invalidate(server);
+                return response;
+            });
+        });
+    }
+
+    void handleT4PatchPlanningPreview(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return callOnServerThread(() -> realmT4PatchPlanningService().preview(request));
+        });
+    }
+
+    void handleT4PatchPlanningReview(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return callOnServerThread(() -> realmT4PatchPlanningService().review(request));
+        });
+    }
+
     void handleT4PatchPlanningFinalize(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);

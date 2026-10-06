@@ -16,6 +16,8 @@ public final class PlanningStepPolicy {
             case T3 -> List.of("realm_t3_expand");
             case T4 -> List.of("patch_explorer_show_candidates",
                     "realm_t4_patch_planning_select_capital", "realm_t4_patch_planning_add_city",
+                    "realm_t4_patch_planning_remove_city",
+                    "realm_t4_patch_planning_preview", "realm_t4_patch_planning_review",
                     "realm_t4_patch_planning_finalize");
             case QUEUE_REFRESH -> List.of("city_design_queue_refresh");
             case CITY -> java.util.stream.Stream.concat(List.of("city_design_queue_status", "city_plan_d3", "city_review_d3_site",

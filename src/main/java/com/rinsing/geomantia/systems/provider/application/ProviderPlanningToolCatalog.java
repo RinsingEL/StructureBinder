@@ -65,12 +65,24 @@ public final class ProviderPlanningToolCatalog {
                     "Add a non-capital city using a displayed sessionId + candidateId and selectionReason; the host freezes it. "
                             + "Use a stable citySeedId derived from the realm and function.",
                     t4SeedSchema(true));
+            case "realm_t4_patch_planning_remove_city" -> function(name,
+                    "Remove a previously added city seed (capital or non-capital) from the active T4 planning session before finalize.",
+                    object(properties("runId", string(), "planningSessionId", string(), "citySeedId", string()),
+                            "planningSessionId", "citySeedId"));
             case "realm_t4_patch_planning_finalize" -> function(name,
-                    "Finalize the active realm after its required city seeds are present. The existing service merges "
+                    "Finalize the active realm after its required city seeds are present and its current distribution proposal was reviewed with decision=accept. The existing service merges "
                             + "the realm into the registry; this realm's cities can start before other realms finish T4. Global T2/T3 must already be complete.",
                     object(properties("runId", string(), "planningSessionId", string(),
                             "cityQueueOrderingMode", enumeration("global_radial", "realm_grouped")),
                             "planningSessionId"));
+            case "realm_t4_patch_planning_preview" -> function(name,
+                    "Show the current whole-realm city proposal, including every city, its design bounds and protection bounds. Compare service roles, sizes and positions before review/finalize.",
+                    object(properties("runId",string(),"planningSessionId",string()),"planningSessionId"));
+            case "realm_t4_patch_planning_review" -> function(name,
+                    "After viewing the current distribution image, assess the whole national city proposal. Use its exact proposalHash; accept only a sound distribution, or revise and adjust cities. Changes invalidate the review.",
+                    object(properties("runId",string(),"planningSessionId",string(),"proposalHash",string(),
+                            "decision",enumeration("accept","revise"),"assessment",string()),
+                            "planningSessionId","proposalHash","decision","assessment"));
             case "city_design_queue_refresh" -> function(name,
                     "Build or reconcile the persistent City queue from the currently finalized T4 realm registries.",
                     object(properties("runId", string(),
@@ -160,11 +172,15 @@ public final class ProviderPlanningToolCatalog {
                 "sessionId", string(), "candidateId", string(),
                 "patchSelectionRef", string(), "candidateRangeCells", integer(), "minimumAreaBlocks", integer(),
                 "subregionId", string(), "requiredConditions", array(string()), "coreFunctions", array(string()),
+                "functionalFocus", array(string()), "name", string(),
+                "serviceHierarchy", enumeration("national_center", "regional_center", "local_town", "specialized_outpost"),
+                "positioning", string(), "gameplayRequirements", array(string()),
+                "theoreticalScale", enumeration("large_city", "city", "town", "village", "hamlet", "outpost", "capital"),
                 "selectionReason", string());
+        values.add("styleDirection", mapSchema(string()));
         if (addCity) {
             values.add("citySeedId", string());
             values.add("role", string());
-            values.add("theoreticalScale", enumeration("large_city", "city", "town", "village", "outpost"));
             values.add("satelliteOf", string());
             values.add("trigger", string());
             return object(values, "planningSessionId", "citySeedId", "role",

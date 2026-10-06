@@ -30,7 +30,10 @@ public final class RealmProfileInput {
         expansion.add("mountainAffinity", number(-1, 1));
         expansion.add("forestAffinity", number(-1, 1));
         expansion.add("seaCrossingPolicy", choice("none", "limited", "allowed"));
-        properties.add("expansionStyle", object(expansion));
+        JsonObject terrainCosts = type("object");
+        terrainCosts.add("additionalProperties", number(0.05, 50));
+        expansion.add("terrainCosts", terrainCosts);
+        properties.add("expansionStyle", object(expansion, "terrainCosts"));
         return object(properties);
     }
 
@@ -73,12 +76,48 @@ public final class RealmProfileInput {
         switch (schema.get("type").getAsString()) {
             case "object" -> {
                 if (!value.isJsonObject()) throw invalid(path, "Expected object.");
-                JsonObject properties = schema.getAsJsonObject("properties");
-                for (String key : value.getAsJsonObject().keySet()) {
-                    if (!properties.has(key)) throw invalid(path + "." + key, "Unknown field; use the tool schema's exact names.");
+                JsonObject properties = schema.has("properties") ? schema.getAsJsonObject("properties") : null;
+                boolean additionalPropertiesAllowed = false;
+                JsonObject additionalPropertiesSchema = null;
+                if (schema.has("additionalProperties")) {
+                    JsonElement addProps = schema.get("additionalProperties");
+                    if (addProps.isJsonObject()) {
+                        additionalPropertiesAllowed = true;
+                        additionalPropertiesSchema = addProps.getAsJsonObject();
+                    } else if (addProps.isJsonPrimitive() && addProps.getAsJsonPrimitive().isBoolean()) {
+                        additionalPropertiesAllowed = addProps.getAsBoolean();
+                    }
                 }
-                for (var field : properties.entrySet()) validate(value.getAsJsonObject().get(field.getKey()),
-                        field.getValue().getAsJsonObject(), path + "." + field.getKey());
+                for (String key : value.getAsJsonObject().keySet()) {
+                    if (properties != null && properties.has(key)) continue;
+                    if (additionalPropertiesSchema != null) {
+                        validate(value.getAsJsonObject().get(key), additionalPropertiesSchema, path + "." + key);
+                        continue;
+                    }
+                    if (!additionalPropertiesAllowed) {
+                        throw invalid(path + "." + key, "Unknown field; use the tool schema's exact names.");
+                    }
+                }
+                if (properties != null) {
+                    Set<String> requiredSet = new HashSet<>();
+                    if (schema.has("required") && schema.get("required").isJsonArray()) {
+                        for (JsonElement req : schema.getAsJsonArray("required")) {
+                            requiredSet.add(req.getAsString());
+                        }
+                    } else {
+                        requiredSet.addAll(properties.keySet());
+                    }
+                    for (var field : properties.entrySet()) {
+                        JsonElement propValue = value.getAsJsonObject().get(field.getKey());
+                        if (propValue == null || propValue.isJsonNull()) {
+                            if (requiredSet.contains(field.getKey())) {
+                                throw invalid(path + "." + field.getKey(), "Required value missing.");
+                            }
+                            continue;
+                        }
+                        validate(propValue, field.getValue().getAsJsonObject(), path + "." + field.getKey());
+                    }
+                }
             }
             case "array" -> {
                 if (!value.isJsonArray()) throw invalid(path, "Expected array; an explicit empty array is allowed.");
@@ -122,10 +161,13 @@ public final class RealmProfileInput {
     private static JsonObject number(double min, double max) {
         JsonObject result = type("number"); result.addProperty("minimum", min); result.addProperty("maximum", max); return result;
     }
-    private static JsonObject object(JsonObject properties) {
+    private static JsonObject object(JsonObject properties, String... optionalFields) {
         JsonObject result = type("object"); result.add("properties", properties);
         result.addProperty("additionalProperties", false);
-        JsonArray required = new JsonArray(); properties.keySet().forEach(required::add); result.add("required", required);
+        Set<String> optional = Set.of(optionalFields);
+        JsonArray required = new JsonArray();
+        properties.keySet().stream().filter(k -> !optional.contains(k)).forEach(required::add);
+        result.add("required", required);
         return result;
     }
 }

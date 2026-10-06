@@ -86,6 +86,9 @@ public final class GeomantiaHttpServer {
             createdServer.createContext("/realm/t4/patch_planning/create", realmController::handleT4PatchPlanningCreate).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/realm/t4/patch_planning/select_capital", realmController::handleT4PatchPlanningSelectCapital).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/realm/t4/patch_planning/add_city", realmController::handleT4PatchPlanningAddCity).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/t4/patch_planning/remove_city", realmController::handleT4PatchPlanningRemoveCity).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/t4/patch_planning/preview", realmController::handleT4PatchPlanningPreview).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/t4/patch_planning/review", realmController::handleT4PatchPlanningReview).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/realm/t4/patch_planning/finalize", realmController::handleT4PatchPlanningFinalize).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/realm/patch_explorer/open", realmController::handlePatchExplorerOpen).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/realm/patch_explorer/show_candidates", realmController::handlePatchExplorerShowCandidates).getFilters().add(planningController.ownershipFilter());

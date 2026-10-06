@@ -31,6 +31,17 @@ test('real image contents are separate from compact decision text', () => {
   assert.equal(planningResult({ok:false,reasonCode:'INVALID'}).isError, true);
 });
 
+test('T4 publishes component styles and a hash-bound whole-country review before finalize', () => {
+  for (const name of ['realm_t4_patch_planning_select_capital', 'realm_t4_patch_planning_add_city']) {
+    const schema = realmTools.find(t => t.name === name).inputSchema;
+    assert.equal(schema.properties.styleDirection.additionalProperties.type, 'string');
+  }
+  assert.ok(realmTools.find(t => t.name === 'realm_t4_patch_planning_preview'));
+  const review = realmTools.find(t => t.name === 'realm_t4_patch_planning_review').inputSchema;
+  for (const key of ['proposalHash', 'decision', 'assessment']) assert.ok(review.required.includes(key));
+  assert.deepEqual(review.properties.decision.enum, ['accept', 'revise']);
+});
+
 test('real MCP stdio routes sidecar calls through the host bridge and preserves images', { timeout: 15000 }, async () => {
   const directory = await mkdtemp(join(tmpdir(), 'geomantia-bridge-test-'));
   let received;

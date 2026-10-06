@@ -214,6 +214,7 @@ class RealmT4PatchPlanningServiceTest {
                 .get("patchSelectionRef").getAsString());
         assertThrows(IllegalArgumentException.class, () -> service.add(add));
 
+        RealmAndCityIntegrationTest.reviewProposal(service,"run_t4","plan_a");
         JsonObject finalized = service.finalizePlanning(finalizeRequest);
         JsonArray finalSeeds = finalized.getAsJsonObject("citySeedRegistry").getAsJsonArray("citySeeds");
         assertEquals(2, finalSeeds.size());
