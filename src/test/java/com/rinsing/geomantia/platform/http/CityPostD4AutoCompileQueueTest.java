@@ -11,10 +11,34 @@ import java.time.Duration;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityPostD4AutoCompileQueueTest {
+    @Test void designRewindIsSerializedWithConstructionAndRefusedAfterItStarts() throws Exception {
+        var entered=new java.util.concurrent.CountDownLatch(1);
+        var release=new java.util.concurrent.CountDownLatch(1);
+        var enqueueFinished=new java.util.concurrent.atomic.AtomicBoolean();
+        try(var queue=new CityPostD4AutoCompileQueue(temporaryDirectory,(r,c)->response("completed",true))) {
+            var pool=java.util.concurrent.Executors.newFixedThreadPool(2);
+            try {
+                var edit=pool.submit(()->queue.withDesignSubmission("run_edit","city_edit",true,()->{
+                    entered.countDown();
+                    try { assertTrue(release.await(3,java.util.concurrent.TimeUnit.SECONDS)); }
+                    catch(InterruptedException ex) { throw new java.io.IOException(ex); }
+                    return response("editing",true);
+                }));
+                assertTrue(entered.await(3,java.util.concurrent.TimeUnit.SECONDS));
+                var enqueue=pool.submit(()->{queue.enqueue("run_edit","city_edit");enqueueFinished.set(true);return true;});
+                assertThrows(java.util.concurrent.TimeoutException.class,()->enqueue.get(50,java.util.concurrent.TimeUnit.MILLISECONDS));
+                assertFalse(enqueueFinished.get());release.countDown();assertTrue(edit.get().get("ok").getAsBoolean());assertTrue(enqueue.get());
+                awaitStatus(queue,"run_edit","city_edit","completed");
+                assertEquals("CITY_D4_REVISION_AFTER_EXECUTION_STARTED",assertThrows(IllegalArgumentException.class,()->queue.withDesignSubmission("run_edit","city_edit",true,()->{throw new AssertionError("must not edit");})).getMessage());
+            } finally { release.countDown();pool.shutdownNow(); }
+        }
+    }
+
     @Test void localFailuresFinishWithVisiblePartialOutcomeWithoutRetrying() throws Exception {
         var calls = new java.util.concurrent.atomic.AtomicInteger();
         try (var queue = new CityPostD4AutoCompileQueue(temporaryDirectory,

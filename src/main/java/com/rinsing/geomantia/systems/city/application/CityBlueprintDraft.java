@@ -60,13 +60,13 @@ public final class CityBlueprintDraft {
                     if ("UNRESOLVED".equals(string(item.getAsJsonObject(), "status"))) unresolved.add(item.deepCopy());
                 review.add("unresolvedEntrances", unresolved);
             }
-            review.addProperty("instruction", "Inspect the current overview for visual coherence and retained district functions. Terrain skips are program-owned; do not retry a nonempty initial district. Roads and entrance access are separate from visual coherence.");
+            review.addProperty("instruction", "Inspect the current overview for visual coherence and retained district functions. Use targeted district revisions for deliberate selection or layout changes; preserve the other districts. Roads and entrance access are separate from visual coherence.");
             result.add("compiledDesignReview", review);
         }
         result.remove("compiledLayout");
         result.remove("landscapeLayout");
         result.remove("groupExtentMap");
-        result.addProperty("instruction", "Use d4Workflow.availableActions and its current revision. Each district receives one valid initial design; only a wholly empty district can retry. After initial designs, mark district roles, then expand one chosen district using city_d4_integrate with current baseDraftHash, protectedDistrictIds and ADJUST_ARRAY or OUTWARD_ARRAY. Judge visual coherence from each returned overview; rivers or open space need not be bridged. Preserve every district's effective function and use city_d4_finalize when satisfied, even if no expansion was needed.");
+        result.addProperty("instruction", "Use d4Workflow.availableActions and its current revision. Saved districts may be revised with targetDistrictId, current baseDraftHash and assessment. Inspect each new local and whole-city preview before finalizing. History/reopen/restore preserve the frozen context and failure budget; restoring always creates a draft and requires a new review and finalization.");
         return result;
     }
 

@@ -185,8 +185,23 @@ tasks.named('test', Test).configure {
 }
 
 sourceSets {
+    cityExperiment {
+        java.srcDir 'tools/city_experiments/java'
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
     harness { compileClasspath += sourceSets.main.output; runtimeClasspath += sourceSets.main.output }
     map { compileClasspath += sourceSets.main.output; runtimeClasspath += sourceSets.main.output }
+}
+tasks.register('cityArrayExperiment', JavaExec) {
+    group = 'verification'
+    description = 'Run the real city array planners offline against an experiment D3 snapshot.'
+    dependsOn tasks.named('compileJava'), tasks.named('compileCityExperimentJava')
+    classpath = sourceSets.cityExperiment.runtimeClasspath
+    mainClass = 'com.rinsing.geomantia.systems.city.application.CityArrayExperiment'
+    doFirst {
+        args = [providers.gradleProperty('experimentRequest').get(), providers.gradleProperty('experimentOutput').get()]
+    }
 }
 configurations {
     harnessImplementation.extendsFrom implementation

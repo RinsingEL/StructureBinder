@@ -264,7 +264,7 @@ public final class CityBlueprintService {
             JsonObject context = readObject(dir.resolve("city_blueprint_context.json"), CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_NOT_FOUND);
             if (!contextId.equals(contextIdentity(context))) throw new IllegalArgumentException("CITY_BLUEPRINT_CONTEXT_STALE");
             return CityD4Workflow.submit(dir, contextId, cityId, request,
-                    input -> submitDesignInternal(debugRoot, runId, cityId, contextId, input));
+                    input -> submitDesignInternal(debugRoot, runId, cityId, contextId, input), requireRunDirectory(debugRoot, runId));
         }
     }
 

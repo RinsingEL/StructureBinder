@@ -567,22 +567,29 @@ final class RealmPlanningHttpController implements AutoCloseable {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             String runId = requiredString(request, "runId");
             String citySeedId = requiredString(request, "citySeedId");
-            cityDesignQueue.requireCurrentIfManaged(runId, citySeedId);
-            JsonObject response = CityPlanningEndpointHandler.handleSubmitD4Design(debugRoot(),
-                    runId, citySeedId, requiredString(request, "contextId"),
-                    request);
-            if (booleanValue(response, "ok", false)
-                    && !booleanValue(response, "designInProgress", false)
-                    && booleanValue(request, "autoAdvanceAfterD4", true)) {
-                response.add("postD4AutoCompile", postD4AutoCompileQueue.enqueue(runId, citySeedId));
-            } else if (booleanValue(response, "ok", false)
-                    && !booleanValue(response, "designInProgress", false)) {
-                response.addProperty("status", "design_saved");
-                response.addProperty("nextAction", "city_post_d4_auto_compile_status");
-                if (java.nio.file.Files.isRegularFile(debugRoot().resolve(runId).resolve("city_seed_registry.json")))
-                    cityDesignQueue.status(runId);
-            }
-            return response;
+            String tool = stringValue(request, "d4Tool", "");
+            boolean rewind = java.util.Set.of("city_d4_reopen", "city_d4_restore").contains(tool);
+            return postD4AutoCompileQueue.withDesignSubmission(runId, citySeedId, rewind, () -> {
+                if (rewind || tool.equals("city_d4_history")) cityDesignQueue.requireDesignVersionIfManaged(runId, citySeedId);
+                else cityDesignQueue.requireCurrentIfManaged(runId, citySeedId);
+                JsonObject response = CityPlanningEndpointHandler.handleSubmitD4Design(debugRoot(),
+                        runId, citySeedId, requiredString(request, "contextId"), request);
+                if (booleanValue(response, "ok", false)
+                        && !booleanValue(response, "designInProgress", false)
+                        && booleanValue(request, "autoAdvanceAfterD4", true)) {
+                    response.add("postD4AutoCompile", postD4AutoCompileQueue.enqueue(runId, citySeedId));
+                } else if (booleanValue(response, "ok", false)
+                        && !booleanValue(response, "designInProgress", false)) {
+                    response.addProperty("status", "design_saved");
+                    response.addProperty("nextAction", "city_post_d4_auto_compile_status");
+                    if (java.nio.file.Files.isRegularFile(debugRoot().resolve(runId).resolve("city_seed_registry.json")))
+                        cityDesignQueue.status(runId);
+                } else if (rewind && booleanValue(response, "ok", false)
+                        && java.nio.file.Files.isRegularFile(debugRoot().resolve(runId).resolve("city_seed_registry.json"))) {
+                    response.add("cityDesignQueue", cityDesignQueue.status(runId));
+                }
+                return response;
+            });
         });
     }
 
@@ -615,12 +622,14 @@ final class RealmPlanningHttpController implements AutoCloseable {
     }
 
     private synchronized JsonObject retryCityProgram(String runId, String citySeedId) throws IOException {
-        cityDesignQueue.requireProgramRetryIfManaged(runId, citySeedId);
-        JsonObject response = new JsonObject();
-        response.addProperty("ok", true);
-        response.addProperty("operation", "city_post_d4_auto_compile_retry");
-        response.add("postD4AutoCompile", postD4AutoCompileQueue.enqueue(runId, citySeedId));
-        return response;
+        return postD4AutoCompileQueue.withDesignSubmission(runId, citySeedId, false, () -> {
+            cityDesignQueue.requireProgramRetryIfManaged(runId, citySeedId);
+            JsonObject response = new JsonObject();
+            response.addProperty("ok", true);
+            response.addProperty("operation", "city_post_d4_auto_compile_retry");
+            response.add("postD4AutoCompile", postD4AutoCompileQueue.enqueue(runId, citySeedId));
+            return response;
+        });
     }
 
     synchronized boolean retryCityFromMap(MinecraftServer requestingServer, String runId, String cityId) throws IOException {

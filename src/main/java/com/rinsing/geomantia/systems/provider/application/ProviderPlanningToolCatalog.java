@@ -20,6 +20,8 @@ public final class ProviderPlanningToolCatalog {
         if (com.rinsing.geomantia.systems.city.application.CityD4Workflow.TOOLS.contains(name))
             return function(name, name.equals("city_d4_materials")
                     ? com.rinsing.geomantia.systems.city.application.CityMaterialCatalogBrowser.INSTRUCTION
+                    : java.util.Set.of("city_d4_history","city_d4_reopen","city_d4_restore").contains(name)
+                    ? "D4 成功方案版本：history 查询历史与当前 base hash；reopen 重开未入施工流程的定稿；restore 恢复同城同 Context 版本。绑定当前 revision 和接受/草稿 hash，重新编译为草稿、看新图再定稿；失败预算保持，施工流程启动后拒绝。"
                     : "D4 按主次查询素材、声明一区一核心与必需/填充角色，编译后看局部与全城预览；指定 targetDistrictId 可修订已保存区，保留其他区。整体性由 AI 判断，允许隔河，不要求接触；挤占不能破坏其他区功能。", stageSchema(name));
         return switch (name) {
             case "realm_w_refresh" -> function(name,
@@ -242,7 +244,14 @@ public final class ProviderPlanningToolCatalog {
             case "city_d4_materials","city_d4_example","city_d4_blocks" -> {
                 String key=switch(name){case "city_d4_materials" -> "materialSelections";case "city_d4_example" -> "designExample";default -> "blockMaterials";};p.add(key,source.get(key).deepCopy());required.add(key);
             }
-            case "city_d4_handbook" -> { }
+            case "city_d4_reopen" -> {
+                p.add("baseBlueprintHash",string());p.add("reason",string());required.addAll(List.of("baseBlueprintHash","reason"));
+            }
+            case "city_d4_restore" -> {
+                p.add("versionId",string());p.add("reason",string());p.add("baseBlueprintHash",string());p.add("baseDraftHash",string());
+                required.addAll(List.of("versionId","reason"));
+            }
+            case "city_d4_history", "city_d4_handbook" -> { }
             default -> throw new IllegalArgumentException("Unknown D4 tool: "+name);
         }
         if(java.util.Set.of("city_d4_overview","city_d4_district","city_d4_integrate").contains(name)) {

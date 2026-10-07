@@ -7,6 +7,13 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ProviderD4ToolSchemaTest {
+    @Test void versionOperationsBindCurrentIdentityAndExposeNoWorldMutation() {
+        var reopen=schema("city_d4_reopen");assertTrue(reopen.getAsJsonArray("required").toString().contains("baseBlueprintHash"));
+        var restore=schema("city_d4_restore");assertTrue(restore.getAsJsonArray("required").toString().contains("versionId"));
+        assertTrue(restore.getAsJsonObject("properties").has("baseDraftHash"));
+        assertTrue(schema("city_d4_history").getAsJsonArray("required").toString().contains("workflowRevision"));
+        for(String name:List.of("city_d4_reopen","city_d4_restore"))assertFalse(schema(name).getAsJsonObject("properties").has("confirmWorldMutation"));
+    }
     @Test void materialToolExposesNestedFiltersAndBoundedBrowsing() {
         JsonObject fields = schema("city_d4_materials").getAsJsonObject("properties").getAsJsonObject("materialSelections")
                 .getAsJsonObject("items").getAsJsonObject("properties");

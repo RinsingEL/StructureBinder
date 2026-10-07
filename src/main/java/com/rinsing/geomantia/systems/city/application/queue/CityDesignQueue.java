@@ -130,6 +130,16 @@ public final class CityDesignQueue {
         requireCurrent(runId, citySeedId, false, false);
     }
 
+    public synchronized void requireDesignVersionIfManaged(String runId, String citySeedId) throws IOException {
+        CityDesignQueueConfig config = CityDesignQueueConfig.loadOrCreate(configPath);
+        if (!config.enabled() || !Files.isRegularFile(runDirectory(runId).resolve("city_seed_registry.json"))) return;
+        JsonObject state = status(runId);
+        if (!citySeedId.equals(stringValue(state, "currentCitySeedId", "")))
+            throw new IllegalArgumentException("CITY_DESIGN_QUEUE_OUT_OF_ORDER");
+        if (DESIGN_SAVED.equals(stringValue(state, "status", ""))) return;
+        requireCurrent(runId, citySeedId, false, false);
+    }
+
     public synchronized void requireContextPreparationIfManaged(String runId, String citySeedId) throws IOException {
         requireCurrent(runId, citySeedId, false, true);
     }

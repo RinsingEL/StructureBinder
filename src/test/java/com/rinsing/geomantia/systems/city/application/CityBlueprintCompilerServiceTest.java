@@ -96,7 +96,7 @@ class CityBlueprintCompilerServiceTest {
         JsonArray newOther=new JsonArray();for(var a:current.getAsJsonObject("compiledLayout").getAsJsonArray("anchors"))if(a.getAsJsonObject().get("placementGroupId").getAsString().equals("housing-array"))newOther.add(a.deepCopy());
         assertEquals(oldOther,newOther,"Local revision must preserve other district anchors exactly");
         var roles=current.getAsJsonObject("previousBlueprint").getAsJsonArray("districtDesigns");assertEquals(2,roles.size());
-        JsonObject finish=new JsonObject();finish.add("baseDraftHash",current.get("baseDraftHash"));finish.addProperty("assessment","Automated fixture review: both compact groups retain cores and required buildings. Visual acceptance remains for later real play.");finish.addProperty("functionsPreserved",true);
+        JsonObject finish=new JsonObject();finish.addProperty("autoAdvanceAfterD4",false);finish.add("baseDraftHash",current.get("baseDraftHash"));finish.addProperty("assessment","Automated fixture review: both compact groups retain cores and required buildings. Visual acceptance remains for later real play.");finish.addProperty("functionsPreserved",true);
         JsonObject saved=loopCall(service,fixture,contextId,dir,"city_d4_finalize",finish,evidence,"06-final");
         assertTrue(saved.get("ok").getAsBoolean(),saved.toString());
         assertFalse(saved.getAsJsonObject("generationHandoff").get("requiredContentMissing").getAsBoolean());
@@ -107,6 +107,69 @@ class CityBlueprintCompilerServiceTest {
         for(Path input:List.of(source,dir.resolve("city_blueprint_context.json"),dir.resolve("city_blueprint_catalog_snapshot.json"),dir.resolve("city_blueprint.json"),dir.resolve("city_d4_workflow.json"),dir.resolve("city_d4_generation_handoff.json")))Files.copy(input,evidence.resolve(input.getFileName()),java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         Files.copy(fixture.runDir().resolve("city_d3_"+safe(fixture.cityId())+"/city_landform_review_package.json"),evidence.resolve("synthetic-d3.json"),java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         Files.copy(fixture.runDir().resolve("city_land_use_"+safe(fixture.cityId())+"/land_use_terrain_field.json"),evidence.resolve("land_use_terrain_field.json"),java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        Path versionEvidence=evidence.resolve("versions");Files.createDirectories(versionEvidence);
+        JsonObject history=loopCall(service,fixture,contextId,dir,"city_d4_history",new JsonObject(),versionEvidence,"01-history");
+        assertTrue(history.get("ok").getAsBoolean(),history.toString());
+        JsonArray versions=history.getAsJsonArray("designHistory");assertTrue(versions.size()>=4);
+        String olderVersion="";
+        for(var item:versions) if(item.getAsJsonObject().get("blueprintHash").getAsString().equals(CityD4Versions.hash(before.get("previousBlueprint").toString())))olderVersion=item.getAsJsonObject().get("versionId").getAsString();
+        assertFalse(olderVersion.isBlank(),"Successful pre-revision design must be restorable");
+        String acceptedHash=JsonParser.parseString(Files.readString(dir.resolve("city_blueprint_submission_trace.json"))).getAsJsonObject().get("cityBlueprintHash").getAsString();
+        JsonObject reopen=new JsonObject();reopen.addProperty("baseBlueprintHash","sha256:stale");reopen.addProperty("reason","Test reopening a saved design before construction");
+        JsonObject stale=loopCall(service,fixture,contextId,dir,"city_d4_reopen",reopen.deepCopy(),versionEvidence,"02-stale-reopen");
+        assertEquals("CITY_D4_ACCEPTED_HASH_STALE",stale.get("reasonCode").getAsString());
+        assertEquals(accepted,JsonParser.parseString(Files.readString(dir.resolve("city_blueprint.json"))));
+        reopen.addProperty("baseBlueprintHash",acceptedHash);
+        Path job=fixture.runDir().resolve("automation/post_d4/"+safe(fixture.cityId())+".json");Files.createDirectories(job.getParent());Files.writeString(job,"{status:'completed'}");
+        JsonObject blocked=loopCall(service,fixture,contextId,dir,"city_d4_reopen",reopen.deepCopy(),versionEvidence,"03-construction-guard");
+        assertEquals("CITY_D4_REVISION_AFTER_EXECUTION_STARTED",blocked.get("reasonCode").getAsString());Files.delete(job);
+        Path generated=CityTestRunLayout.open(fixture.runDir(),fixture.cityId()).stepDirectory(CityTestRunLayout.D4).resolve("structure_anchor_map.json");Files.createDirectories(generated.getParent());Files.writeString(generated,"{oldPlan:true}");
+        new CityBlueprintFailureBudget().recordFailure(temporary,fixture.runId(),fixture.cityId(),"TEST_PRIOR_FAILURE","Explicit regression fixture failure before reopen");
+        var budgetBefore=new CityBlueprintFailureBudget().current(temporary,fixture.runId(),fixture.cityId()).deepCopy();
+        JsonObject reopened=loopCall(service,fixture,contextId,dir,"city_d4_reopen",reopen,versionEvidence,"04-reopened");
+        assertTrue(reopened.get("ok").getAsBoolean(),reopened.toString());
+        assertEquals("INTEGRATION",CityD4Workflow.status(dir,contextId).get("stage").getAsString());
+        assertFalse(Files.exists(dir.resolve("city_blueprint.json")));assertFalse(Files.exists(generated));
+        assertFalse(reopened.getAsJsonArray("retiredArtifacts").isEmpty());
+        assertEquals(current.getAsJsonObject("compiledLayout").get("anchors"),CityBlueprintDraft.current(dir,contextId,fixture.cityId()).getAsJsonObject("compiledLayout").get("anchors"));
+        assertEquals(budgetBefore.get("failureCount"),new CityBlueprintFailureBudget().current(temporary,fixture.runId(),fixture.cityId()).get("failureCount"));
+        assertEquals(budgetBefore.get("failures"),new CityBlueprintFailureBudget().current(temporary,fixture.runId(),fixture.cityId()).get("failures"));
+        var serviceRestarted=new CityBlueprintService(new CityHeadlessMaterialRegistry());
+        JsonObject reopenedDraft=CityBlueprintDraft.current(dir,contextId,fixture.cityId());
+        civic.addProperty("structureCount",5);request=districtRequest(civic,"geomantia:town_hall");request.addProperty("targetDistrictId","admin");request.add("baseDraftHash",reopenedDraft.get("baseDraftHash"));request.addProperty("assessment","Reopened design: enlarge the admin array and preserve housing");
+        JsonObject postFinalRevision=loopCall(serviceRestarted,fixture,contextId,dir,"city_d4_district",request,versionEvidence,"05-revise-after-final");
+        assertTrue(postFinalRevision.get("ok").getAsBoolean(),postFinalRevision.toString());
+        JsonObject restore=new JsonObject();restore.addProperty("versionId",olderVersion);restore.addProperty("reason","Restore the earlier 3-building admin layout");restore.add("baseDraftHash",CityBlueprintDraft.current(dir,contextId,fixture.cityId()).get("baseDraftHash"));
+        JsonObject restored=loopCall(serviceRestarted,fixture,contextId,dir,"city_d4_restore",restore,versionEvidence,"06-restored");
+        assertTrue(restored.get("ok").getAsBoolean(),restored.toString());
+        var restoredDraft=CityBlueprintDraft.current(dir,contextId,fixture.cityId());
+        assertEquals(before.get("previousBlueprint"),restoredDraft.get("previousBlueprint"));
+        assertEquals(before.getAsJsonObject("compiledLayout").get("anchors"),restoredDraft.getAsJsonObject("compiledLayout").get("anchors"));
+        assertTrue(CityD4Workflow.load(dir,contextId).get("revision").getAsInt()>saved.getAsJsonObject("d4Workflow").get("revision").getAsInt());
+        assertEquals(budgetBefore.get("failureCount"),new CityBlueprintFailureBudget().current(temporary,fixture.runId(),fixture.cityId()).get("failureCount"));
+        assertEquals(budgetBefore.get("failures"),new CityBlueprintFailureBudget().current(temporary,fixture.runId(),fixture.cityId()).get("failures"));
+        finish.add("baseDraftHash",restoredDraft.get("baseDraftHash"));
+        JsonObject resaved=loopCall(serviceRestarted,fixture,contextId,dir,"city_d4_finalize",finish,versionEvidence,"07-refinalized");assertTrue(resaved.get("ok").getAsBoolean(),resaved.toString());
+        assertEquals(before.get("previousBlueprint"),JsonParser.parseString(Files.readString(dir.resolve("city_blueprint.json"))));
+        JsonObject currentAccepted=JsonParser.parseString(Files.readString(dir.resolve("city_blueprint.json"))).getAsJsonObject();
+        String resavedHash=JsonParser.parseString(Files.readString(dir.resolve("city_blueprint_submission_trace.json"))).getAsJsonObject().get("cityBlueprintHash").getAsString();
+        JsonObject finalRestore=new JsonObject();finalRestore.addProperty("baseBlueprintHash",resavedHash);finalRestore.addProperty("versionId","a".repeat(64));finalRestore.addProperty("reason","Test unavailable history never replaces accepted design");
+        JsonObject absent=loopCall(serviceRestarted,fixture,contextId,dir,"city_d4_restore",finalRestore.deepCopy(),versionEvidence,"08-missing-version");
+        assertEquals("CITY_D4_VERSION_NOT_FOUND",absent.get("reasonCode").getAsString());assertEquals(currentAccepted,JsonParser.parseString(Files.readString(dir.resolve("city_blueprint.json"))));
+        String finalVersion="";for(var item:versions)if(item.getAsJsonObject().get("stage").getAsString().equals("COMPLETE"))finalVersion=item.getAsJsonObject().get("versionId").getAsString();
+        finalRestore.addProperty("versionId",finalVersion);finalRestore.addProperty("reason","Restore an earlier final version directly into an editable draft");
+        JsonObject restoredFinal=loopCall(serviceRestarted,fixture,contextId,dir,"city_d4_restore",finalRestore,versionEvidence,"09-restore-from-complete");
+        assertTrue(restoredFinal.get("ok").getAsBoolean(),restoredFinal.toString());assertFalse(Files.exists(dir.resolve("city_blueprint.json")));
+        assertEquals(accepted,CityBlueprintDraft.current(dir,contextId,fixture.cityId()).get("previousBlueprint"));
+        finish.add("baseDraftHash",CityBlueprintDraft.current(dir,contextId,fixture.cityId()).get("baseDraftHash"));
+        JsonObject finalAgain=loopCall(serviceRestarted,fixture,contextId,dir,"city_d4_finalize",finish,versionEvidence,"10-final-again");assertTrue(finalAgain.get("ok").getAsBoolean(),finalAgain.toString());
+        assertEquals(accepted,JsonParser.parseString(Files.readString(dir.resolve("city_blueprint.json"))));
+
+        Path savedVersions=versionEvidence.resolve("design_versions");Files.createDirectories(savedVersions);
+        try(var files=Files.list(dir.resolve("design_versions"))) {for(Path file:files.toList())Files.copy(file,savedVersions.resolve(file.getFileName()),java.nio.file.StandardCopyOption.REPLACE_EXISTING);}
+        Files.copy(dir.resolve("city_blueprint_failure_budget.json"),versionEvidence.resolve("final-failure-budget.json"),java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        Files.writeString(versionEvidence.resolve("README.md"),"# 自动化测试样本\n合成 D3 与目录，正式 Java 编译器：保存→重开→修改→恢复旧版→重新定稿。包含旧 hash 拒绝、施工启动后拒绝、旧计划退役、进程重建和预算保持的断言；不代表游戏施工后撤销。\n");
+
     }
     private JsonObject districtRequest(JsonObject group,String core) {
         JsonObject body=new JsonObject();JsonArray groups=new JsonArray();groups.add(group);body.add("groups",groups);

@@ -7,3 +7,6 @@
 GRID 工整街坊；LINEAR 沿轴街面；COURTYARD 院落；CENTER_SYMMETRIC 一中心配成对填充，其他必需项使用配套组；COMPACT/ORGANIC_COMPACT 紧凑组团；CONTIGUOUS 可用于作者标注的连片生产素材。父阵列组织本区子阵列，同类区不强制合成巨型阵列。
 
 道路仅用明确 CONNECTION 服务真实目的地，不从邻接、距离或河流自动造桥。D4 检查平面布局与边界/碰撞，地形适配证据交后续施工；精确台地、支撑与跨水算法不在本轮。每轮看新版本实际预览再判断，不以建筑数量代替视觉整体性。
+
+
+成功方案可用 city_d4_history 查看版本。定稿但尚未进入后半段流程时，用户要求修改可用 city_d4_reopen（绑定接受 hash）或 city_d4_restore（指定版本并绑定当前接受/草稿 hash），重新编译并看新图，再继续逐区修订与定稿。想保留后续修改机会时，定稿明确 autoAdvanceAfterD4=false；默认定稿自动推进。版本恢复不清零失败预算，不混入另一 Context，已开始施工流程不支持设计回退。

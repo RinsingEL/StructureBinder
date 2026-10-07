@@ -32,6 +32,8 @@ class CityDesignQueueTest {
         assertEquals("city_post_d4_auto_compile_retry", state.get("nextAction").getAsString());
         assertEquals("design_saved", restarted.refresh("saved", "").get("status").getAsString());
         assertFalse(Files.exists(temporaryDirectory.resolve("realm_debug/saved/automation/post_d4")));
+        restarted.requireDesignVersionIfManaged("saved", "city_1");
+        assertThrows(IllegalArgumentException.class, () -> restarted.requireDesignVersionIfManaged("saved", "city_2"));
         assertThrows(IllegalArgumentException.class, () -> restarted.requireCurrentIfManaged("saved", "city_1"));
         assertThrows(IllegalArgumentException.class, () -> restarted.requireProgramRetryIfManaged("saved", "city_2"));
         restarted.onPostD4State(postState("saved", "city_1", "running"));
@@ -39,6 +41,21 @@ class CityDesignQueueTest {
         restarted.onPostD4State(postState("saved", "city_1", "completed"));
         assertEquals("city_2", restarted.status("saved").get("currentCitySeedId").getAsString());
         assertThrows(IllegalArgumentException.class, () -> restarted.requireProgramRetryIfManaged("saved", "city_1"));
+    }
+
+    @Test void reopenedDesignReturnsToCurrentCityAndCannotStartOldAcceptance() throws Exception {
+        writeRegistry("reopened", seed("city_1", "realm_a", "capital", 4000, 0));
+        CityDesignQueue queue=queue();queue.refresh("reopened","global_radial");
+        Path dir=temporaryDirectory.resolve("realm_debug/reopened/city_test_runs/city_1/steps/blueprint");Files.createDirectories(dir);
+        Files.writeString(dir.resolve("city_d4_workflow.json"),"{stage:'COMPLETE',contextId:'ctx'}");
+        Files.writeString(dir.resolve("city_blueprint.json"),"{cityId:'city_1'}");
+        Files.writeString(dir.resolve("city_blueprint_submission_trace.json"),"{status:'accepted',contextId:'ctx'}");
+        assertEquals("design_saved",queue.status("reopened").get("status").getAsString());
+        Files.delete(dir.resolve("city_blueprint.json"));Files.delete(dir.resolve("city_blueprint_submission_trace.json"));
+        Files.writeString(dir.resolve("city_d4_workflow.json"),"{stage:'INTEGRATION',contextId:'ctx'}");
+        var restarted=queue();assertEquals("waiting_for_agent",restarted.status("reopened").get("status").getAsString());
+        restarted.requireCurrentIfManaged("reopened","city_1");
+        assertThrows(IllegalArgumentException.class,()->restarted.requireProgramRetryIfManaged("reopened","city_1"));
     }
 
     @Test void incompleteOrStaleAcceptedDesignCannotStartCompilation() throws Exception {

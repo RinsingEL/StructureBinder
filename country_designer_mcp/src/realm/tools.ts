@@ -1521,7 +1521,8 @@ const d4Disposition = {type:"array",minItems:1,items:strictObject({districtId:no
   peripheralRole:{type:"string",enum:["BORDER_OUTPOST","PERIPHERAL_RESOURCE","SUBURBAN_INDUSTRY","OTHER_PERIPHERAL"]}},["districtId","independent"])};
 export const d4StageNames = ["city_d4_overview", "city_d4_district", "city_d4_integrate", "city_d4_finalize",
   "city_d4_mark", "city_d4_preview",
-  "city_d4_materials", "city_d4_example", "city_d4_blocks", "city_d4_handbook"];
+  "city_d4_materials", "city_d4_example", "city_d4_blocks", "city_d4_handbook",
+  "city_d4_history", "city_d4_reopen", "city_d4_restore"];
 export const realmTools: ToolDefinition[] = [
   ...originalRealmTools.filter(t => t.name !== "city_submit_d4_blueprint"),
   ...d4StageNames.map(name => {
@@ -1575,11 +1576,21 @@ export const realmTools: ToolDefinition[] = [
       properties.baseDraftHash=nonEmptyString("当前总览 hash。");properties.autoAdvanceAfterD4=oldProperties.autoAdvanceAfterD4;
       properties.assessment=nonEmptyString("整体性与每个功能区有效主体的最终判断。");properties.functionsPreserved={type:"boolean",description:"全部功能区仍有有效主体，不能只剩无关配套。"};
       required.push("baseDraftHash","assessment","functionsPreserved");
+    } else if(name==="city_d4_reopen") {
+      properties.baseBlueprintHash=nonEmptyString("当前 accepted submissionTrace.cityBlueprintHash。");
+      properties.reason=nonEmptyString("用户重开定稿的修改理由。");required.push("baseBlueprintHash","reason");
+    } else if(name==="city_d4_restore") {
+      properties.versionId=nonEmptyString("city_d4_history 返回的完整 versionId，同城同 Context。");
+      properties.reason=nonEmptyString("恢复旧方案的理由。");
+      properties.baseBlueprintHash=nonEmptyString("当前 COMPLETE 使用接受蓝图 hash。");
+      properties.baseDraftHash=nonEmptyString("当前草稿阶段使用当前 draft hash。");required.push("versionId","reason");
     } else if(["city_d4_materials","city_d4_example","city_d4_blocks"].includes(name)) {
       const key=name==="city_d4_materials"?"materialSelections":name==="city_d4_example"?"designExample":"blockMaterials";
       properties[key]=key==="designExample"?strictObject({caseId:nonEmptyString("案例 ID。"),reloadImages:{type:"boolean"}},["caseId"]):oldProperties[key];required.push(key);
     }
-    return {name,description: name === "city_d4_materials"
+    return {name,description: ["city_d4_history","city_d4_reopen","city_d4_restore"].includes(name)
+      ? "D4 成功方案版本：history 查询同城同 Context 历史；reopen 将未入施工流程的定稿重开；restore 恢复指定历史方案。重开/恢复须绑定当前 revision 与接受或草稿 hash，重新编译为草稿、看新预览再定稿，保留失败预算；已启动后半段或世界激活时拒绝。"
+      : name === "city_d4_materials"
       ? "按 roles、functionIds、styles、rawFunctionTerms 联合选材。素材 categories（特色/通用）和 assetTags（基建/景观）与风格、功能独立。本区核心/必需/填充由设计决定；结合功能区用途、子功能数量与城市设定，可一次组合多条件。facets 是应用全部条件后的完整匹配集计数，按 structureRef 去重、不受分页影响；切换条件须移除旧条件。functions.parent 表示层级，directCount 表示直接标注映射数量；宽泛父标签不能证明子功能，空结果可退回父层或原始标签查看。风格不限定种族，分类和推荐情境不授予地形可行性。limit=0 只看统计；确认素材时单独提交 structureRefs/fillPoolRefs，不带 filters/limit/offset。"
       : "D4 逐区选材、一个核心与必需/填充角色、正式编译、局部和全城预览。带 targetDistrictId、当前 hash 与 assessment 重交该区完整设计，保留其他区；全城满意后提交。AI 判断整体性，允许隔河，不要求相连或固定距离；挤占不能破坏其他区功能。",inputSchema:{type:"object",additionalProperties:false,properties,required}} as ToolDefinition;
   })

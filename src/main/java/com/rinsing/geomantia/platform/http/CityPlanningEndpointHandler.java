@@ -166,10 +166,10 @@ final class CityPlanningEndpointHandler {
         JsonObject response = new CityBlueprintService().submitDesign(debugRoot, runId, citySeedId,
                 contextId, input);
         // Reference reading must not replace the city's workflow status or enqueue compilation.
-        if (input.has("designExample") || input.has("blockMaterials")) return response;
+        if (input.has("designExample") || input.has("blockMaterials") || "city_d4_history".equals(stringValue(input, "d4Tool", ""))) return response;
         JsonObject request = standaloneRequest(stringValue(input, "d4Tool", "city_submit_d4_blueprint"), runId, citySeedId);
         request.addProperty("contextId", contextId);
-        for (String key : java.util.List.of("cityBlueprint", "blueprintPatch", "baseBlueprintHash", "baseDraftHash", "proportionMode", "submissionMode", "designIntent", "materialSelections", "designReview", "designExample", "blockMaterials", "d4Tool", "overview", "districtDesign", "integrationDesign", "integrationIntent", "complete", "workflowRevision", "reopenDistrictId", "changes", "targetDistrictId", "districtId", "groupIds", "assessment"))
+        for (String key : java.util.List.of("cityBlueprint", "blueprintPatch", "baseBlueprintHash", "baseDraftHash", "proportionMode", "submissionMode", "designIntent", "materialSelections", "designReview", "designExample", "blockMaterials", "d4Tool", "overview", "districtDesign", "integrationDesign", "integrationIntent", "complete", "workflowRevision", "reopenDistrictId", "changes", "targetDistrictId", "districtId", "groupIds", "assessment", "versionId", "reason"))
             if (input.has(key)) request.add(key, input.get(key).deepCopy());
         boolean accepted = booleanValue(response, "ok", false) && !booleanValue(response, "designInProgress", false);
         String nextAction = stringValue(response, "nextAction",

@@ -70,6 +70,17 @@ final class CityPostD4AutoCompileQueue implements AutoCloseable {
         return queued.deepCopy();
     }
 
+    /** Serialize design rewinds and enqueue decisions, including the current-city check. */
+    synchronized JsonObject withDesignSubmission(String runId, String citySeedId, boolean rewind,
+                                                DesignSubmission submission) throws IOException {
+        JobKey key = JobKey.of(runId, citySeedId);
+        if (rewind && (active.containsKey(key) || read(key) != null))
+            throw new IllegalArgumentException("CITY_D4_REVISION_AFTER_EXECUTION_STARTED");
+        return submission.submit();
+    }
+
+    @FunctionalInterface interface DesignSubmission { JsonObject submit() throws IOException; }
+
     synchronized JsonObject prepareContext(String runId, String citySeedId, ContextPreparation preparation)
             throws IOException {
         JobKey key = JobKey.of(runId, citySeedId);

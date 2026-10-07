@@ -8,7 +8,8 @@ import java.util.*;
 /** Persistent functional-area selection, compilation, preview and revision loop. */
 public final class CityD4Workflow {
     public static final List<String> TOOLS = List.of("city_d4_overview", "city_d4_district", "city_d4_mark",            "city_d4_integrate", "city_d4_finalize", "city_d4_preview",
-            "city_d4_materials", "city_d4_example", "city_d4_blocks", "city_d4_handbook", "city_d4_answers");
+            "city_d4_materials", "city_d4_example", "city_d4_blocks", "city_d4_handbook", "city_d4_answers",
+            "city_d4_history", "city_d4_reopen", "city_d4_restore");
     private static final String FILE = "city_d4_workflow.json";
     private CityD4Workflow() { }
     @FunctionalInterface interface Submit { JsonObject call(JsonObject request) throws IOException; }
@@ -53,6 +54,9 @@ public final class CityD4Workflow {
             default -> "city_d4_overview";
         };
         JsonArray actions=new JsonArray();
+        actions.add("city_d4_history");
+        if(stage.equals("COMPLETE")) { actions.add("city_d4_reopen"); actions.add("city_d4_restore"); }
+        else if(!stage.equals("OVERVIEW")) actions.add("city_d4_restore");
         if(!stage.equals("COMPLETE")) {
             if(!stage.equals("OVERVIEW")) {
                 actions.add("city_d4_answers");
@@ -79,6 +83,9 @@ public final class CityD4Workflow {
         return result;
     }
     static JsonObject submit(Path dir,String contextId,String cityId,JsonObject request,Submit compiler) throws IOException {
+        return submit(dir,contextId,cityId,request,compiler,null);
+    }
+    static JsonObject submit(Path dir,String contextId,String cityId,JsonObject request,Submit compiler,Path runDir) throws IOException {
         JsonObject state=load(dir,contextId);
         try {
             String tool=text(request,"d4Tool"),stage=text(state,"stage");
@@ -87,6 +94,72 @@ public final class CityD4Workflow {
             if(request.get("workflowRevision").getAsInt()!=state.get("revision").getAsInt()) return error(state,"CITY_D4_REVISION_STALE","请使用当前 revision。");
             validateToolRequest(tool,request);
             require(array(view(state),"availableActions").asList().stream().anyMatch(e->e.getAsString().equals(tool)),"当前阶段不允许此操作。");
+            if(tool.equals("city_d4_history")) {
+                // Bootstrap a pre-versioning saved design without changing its workflow revision.
+                if("COMPLETE".equals(stage)) CityD4Versions.record(dir,state);
+                JsonObject result=new JsonObject();result.add("designHistory",CityD4Versions.list(dir,contextId,cityId));
+                if("COMPLETE".equals(stage)) {
+                    JsonObject trace=CityD4Versions.readSafe(dir,dir.resolve("city_blueprint_submission_trace.json"));
+                    result.add("baseBlueprintHash",trace.get("cityBlueprintHash"));
+                } else {
+                    JsonObject current=CityBlueprintDraft.current(dir,contextId,cityId);
+                    if(current!=null) result.add("baseDraftHash",current.get("baseDraftHash"));
+                }
+                if(runDir!=null) {
+                    try {CityD4Versions.requireEditableRun(runDir,cityId);result.addProperty("designRevisionAllowed",true);}
+                    catch(IllegalArgumentException blocked) {result.addProperty("designRevisionAllowed",false);result.addProperty("designRevisionBlockReason",blocked.getMessage());}
+                }
+                return receipt(state,result);
+            }
+            if(Set.of("city_d4_reopen","city_d4_restore").contains(tool)) {
+                require(runDir!=null,"CITY_D4_REVISION_RUN_REQUIRED");
+                CityD4Versions.requireEditableRun(runDir,cityId);
+                JsonObject version;
+                if(tool.equals("city_d4_reopen")) {
+                    require("COMPLETE".equals(stage),"CITY_D4_REOPEN_REQUIRES_COMPLETE");
+                    JsonObject trace=CityD4Versions.readSafe(dir,dir.resolve("city_blueprint_submission_trace.json"));
+                    require(text(request,"baseBlueprintHash").equals(text(trace,"cityBlueprintHash")),"CITY_D4_ACCEPTED_HASH_STALE");
+                    require(("sha256:"+CityD4Versions.hash(Files.readString(dir.resolve("city_blueprint.json")))).equals(text(trace,"cityBlueprintHash")),"CITY_D4_ACCEPTED_HASH_STALE");
+                    String id=CityD4Versions.record(dir,state);require(!id.isBlank(),"CITY_D4_VERSION_BASE_MISSING");
+                    version=CityD4Versions.load(dir,contextId,cityId,id);
+                } else {
+                    require(request.has("baseBlueprintHash")!=request.has("baseDraftHash"),"CITY_D4_RESTORE_BASE_HASH_REQUIRED");
+                    if("COMPLETE".equals(stage)) {
+                        JsonObject trace=CityD4Versions.readSafe(dir,dir.resolve("city_blueprint_submission_trace.json"));
+                        require(text(request,"baseBlueprintHash").equals(text(trace,"cityBlueprintHash")),"CITY_D4_ACCEPTED_HASH_STALE");
+                    } else {
+                        JsonObject base=CityBlueprintDraft.current(dir,contextId,cityId);
+                        require(base!=null&&text(request,"baseDraftHash").equals(text(base,"baseDraftHash")),"CITY_D4_DRAFT_HASH_STALE");
+                    }
+                    version=CityD4Versions.load(dir,contextId,cityId,text(request,"versionId"));
+                }
+                require(request.get("reason").isJsonPrimitive()&&request.getAsJsonPrimitive("reason").isString()&&!text(request,"reason").isBlank(),"请说明重开或恢复的理由。");
+                JsonObject candidate=version.getAsJsonObject("content").getAsJsonObject("workflow").deepCopy();
+                candidate.add("revision",state.get("revision"));candidate.remove("finalAssessment");
+                candidate.remove("activeExpansionDistrictId");candidate.remove("protectedDistrictIds");
+                candidate.addProperty("restoredFromVersionId",text(version,"versionId"));candidate.addProperty("revisionReason",text(request,"reason"));
+                candidate.addProperty("districtIndex",array(candidate,"districts").size());
+                candidate.addProperty("stage",object(candidate,"bodies").size()==array(candidate,"districts").size()?"INTEGRATION":"DISTRICTS");
+                if("DISTRICTS".equals(text(candidate,"stage"))) {
+                    int next=0;while(next<array(candidate,"districts").size()&&object(candidate,"bodies").has(text(array(candidate,"districts").get(next).getAsJsonObject(),"groupId")))next++;
+                    candidate.addProperty("districtIndex",next);
+                }
+                JsonObject proposal=new JsonObject();proposal.add("cityBlueprint",version.getAsJsonObject("content").get("blueprint").deepCopy());
+                proposal.addProperty("submissionMode","DRAFT");proposal.addProperty("proportionMode","RELATIVE_WEIGHTS");
+                proposal.add("hostLayoutPolicy",CityD4LayoutPolicy.request(candidate,candidate,version.getAsJsonObject("content").getAsJsonObject("geometry"),"__version__",false));
+                JsonObject response=compiler.call(proposal);
+                if(ok(response)&&"preview_valid".equals(text(object(response,"revisionEvidence"),"status"))) {
+                    response.add("retiredArtifacts",CityD4Versions.retire(runDir,cityId,dir));
+                    JsonObject current=CityBlueprintDraft.current(dir,contextId,cityId);
+                    candidate.addProperty("activeDraftHash",text(current,"baseDraftHash"));save(dir,candidate);
+                    response.add("revisionEvidence",CityBlueprintDraft.evidence(current));
+                    attachPreview(dir,contextId,current,new JsonObject(),true,response);
+                    response.addProperty("restoredVersionId",text(version,"versionId"));
+                    response.add("designHistory",CityD4Versions.list(dir,contextId,cityId));
+                    return receipt(candidate,response);
+                }
+                return receipt(state,response);
+            }
             if(tool.equals("city_d4_handbook")) {
                 JsonObject result=new JsonObject();result.addProperty("handbook",com.rinsing.geomantia.systems.provider.application.AgentPromptConfig.read("city/d4_v2/handbook.md"));return receipt(state,result);
             }
@@ -252,7 +325,10 @@ public final class CityD4Workflow {
                 attachPreview(dir,contextId,current,body,true,response);
             }
             return receipt(state,response);
-        } catch(IllegalArgumentException|IllegalStateException ex){return error(state,"CITY_D4_STAGE_INPUT_INVALID",ex.getMessage());}
+        } catch(IllegalArgumentException|IllegalStateException ex){
+            String message=ex.getMessage();
+            return error(state,message!=null&&message.matches("CITY_D4_[A-Z_]+")?message:"CITY_D4_STAGE_INPUT_INVALID",message);
+        }
     }
     private static void requireCurrentOverview(Path dir,String contextId,JsonObject draft,JsonObject request) throws IOException {
         require(draft!=null&&text(request,"baseDraftHash").equals(text(draft,"baseDraftHash")),"请使用当前总览的 baseDraftHash。");
@@ -302,12 +378,15 @@ public final class CityD4Workflow {
         Set<String> fields=new HashSet<>(List.of("contextId","workflowRevision","d4Tool","runId","citySeedId"));
         List<String> required=switch(tool){
             case "city_d4_overview"->List.of("overview");case "city_d4_district"->List.of("districtDesign");
+            case "city_d4_reopen"->List.of("baseBlueprintHash","reason");
+            case "city_d4_restore"->List.of("versionId","reason");
             case "city_d4_mark"->List.of("baseDraftHash","assessment","districtDisposition");
             case "city_d4_integrate"->List.of("baseDraftHash","assessment","targetDistrictId","protectedDistrictIds","expansionMode","integrationIntent","changes");
             case "city_d4_finalize"->List.of("baseDraftHash","assessment","functionsPreserved");
             case "city_d4_answers"->List.of("baseDraftHash","overviewAnswers","districtAnswers");
             case "city_d4_preview"->List.of("baseDraftHash");case "city_d4_materials"->List.of("materialSelections");
             case "city_d4_example"->List.of("designExample");case "city_d4_blocks"->List.of("blockMaterials");default->List.of();};
+        if(tool.equals("city_d4_restore")) fields.addAll(List.of("baseBlueprintHash","baseDraftHash"));
         if(tool.equals("city_d4_district")) fields.addAll(List.of("targetDistrictId","baseDraftHash","assessment"));
         fields.addAll(required);if(tool.equals("city_d4_integrate"))fields.add("previousExpansionComplete");
         if(Set.of("city_d4_overview","city_d4_district","city_d4_integrate").contains(tool)) {
@@ -468,6 +547,7 @@ public final class CityD4Workflow {
         Files.createDirectories(dir); state.addProperty("revision",state.get("revision").getAsInt()+1);
         Path temp=Files.createTempFile(dir,"d4-workflow-",".tmp");
         try { Files.writeString(temp,state.toString()); try { Files.move(temp,dir.resolve(FILE),StandardCopyOption.ATOMIC_MOVE,StandardCopyOption.REPLACE_EXISTING); } catch(AtomicMoveNotSupportedException ex) { Files.move(temp,dir.resolve(FILE),StandardCopyOption.REPLACE_EXISTING); } } finally { Files.deleteIfExists(temp); }
+        CityD4Versions.record(dir,state);
     }
     /** Rejected proposal text is a revision base, never the geometry of the retained districts. */
     static JsonObject geometryBase(Path dir,String contextId,String cityId,JsonObject state,JsonObject draft) throws IOException {

@@ -376,3 +376,19 @@ test("landscapes expose function ownership and independent growth",()=>{
  assert.deepEqual(item.properties.owner.required,["groupId"]);
  assert.deepEqual(item.properties.growth.required,["seed","targetCellCount","allowedLandformTypes"]);
 });
+
+test("version history, reopening and restoring are strict stage tools", () => {
+  const history = realmTools.find(t => t.name === "city_d4_history");
+  const reopen = realmTools.find(t => t.name === "city_d4_reopen");
+  const restore = realmTools.find(t => t.name === "city_d4_restore");
+  for (const tool of [history,reopen,restore]) {
+    assert.ok(tool); assert.equal(tool.inputSchema.additionalProperties,false);
+    assert.ok(tool.inputSchema.required.includes("workflowRevision"));
+    assert.equal(tool.inputSchema.properties.confirmWorldMutation,undefined);
+    assert.match(tool.description,/重新编译为草稿/);
+  }
+  assert.ok(reopen.inputSchema.required.includes("baseBlueprintHash"));
+  assert.ok(restore.inputSchema.required.includes("versionId"));
+  assert.ok(restore.inputSchema.properties.baseDraftHash);
+  assert.ok(restore.inputSchema.properties.baseBlueprintHash);
+});
