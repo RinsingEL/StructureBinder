@@ -190,6 +190,9 @@ public final class RealmPlanningService {
                 throw new IllegalArgumentException("Profile target continent is not available: " + profile.realmId);
             }
         }
+        RealmRun proposedScope = t3InputCopy(run);
+        proposedScope.profiles.clear(); proposedScope.profiles.addAll(proposedProfiles);
+        fixedTerritoryScopes(proposedScope);
         Map<String, CandidatePackage> proposedPackages = new LinkedHashMap<>();
         for (RealmProfile profile : proposedProfiles) {
             proposedPackages.put(profile.realmId, buildCandidatePackage(run, profile));
@@ -1136,6 +1139,9 @@ public final class RealmPlanningService {
         if (continents.isEmpty()) {
             throw new IllegalArgumentException("No profiles for normalizationGroup: " + group);
         }
+        Map<String, List<WorldCell>> fixed = fixedTerritoryScopes(run);
+        Set<String> fixedKeys = fixed.values().stream().flatMap(List::stream)
+                .map(cell -> key(cell.gridX, cell.gridZ)).collect(java.util.stream.Collectors.toSet());
         List<TerritoryCell> cells = new ArrayList<>();
         Map<String, RealmStats> stats = new LinkedHashMap<>();
         Map<String, NormalizedScale> scales = new LinkedHashMap<>();
@@ -1145,7 +1151,15 @@ public final class RealmPlanningService {
             RealmRun local = t3InputCopy(run);
             // All rivals on the same continent compete together, even if their logical group labels differ.
             local.profiles.removeIf(profile -> !continent.equals(profile.targetContinentId));
-            RealmTerritoryMap part = buildContinentTerritory(local, continent, allowUnclaimedLand);
+            RealmProfile fixedProfile = local.profiles.stream().filter(p -> p.territoryPolicy.fixed()).findFirst().orElse(null);
+            RealmTerritoryMap part;
+            if (fixedProfile != null) {
+                part = buildFixedTerritory(local, fixedProfile, fixed.get(fixedProfile.realmId));
+            } else {
+                // Fixed waters are ownership, not available transit for competing expansion.
+                local.worldCells.removeIf(cell -> fixedKeys.contains(key(cell.gridX, cell.gridZ)));
+                part = buildContinentTerritory(local, continent, allowUnclaimedLand);
+            }
             cells.addAll(part.cells); stats.putAll(part.stats); scales.putAll(part.scales);
             warnings.addAll(part.warnings); repairs.addAll(part.repairs);
             mergeT3Diagnostics(run, local);
@@ -1176,6 +1190,70 @@ public final class RealmPlanningService {
         target.realmClaimCostSums.putAll(source.realmClaimCostSums); target.realmMaxClaimCosts.putAll(source.realmMaxClaimCosts);
         target.realmClaimCounts.putAll(source.realmClaimCounts); target.territoryCellStatuses.putAll(source.territoryCellStatuses);
         target.territoryClaimCosts.putAll(source.territoryClaimCosts);
+    }
+
+    private Map<String, List<WorldCell>> fixedTerritoryScopes(RealmRun run) {
+        Map<String, List<WorldCell>> scopes = new LinkedHashMap<>();
+        Map<String, String> owners = new LinkedHashMap<>();
+        for (RealmProfile profile : run.profiles) {
+            if (!profile.territoryPolicy.fixed()) continue;
+            if (run.profiles.stream().anyMatch(p -> !p.realmId.equals(profile.realmId)
+                    && p.targetContinentId.equals(profile.targetContinentId)))
+                throw new IllegalArgumentException("FIXED_TERRITORY_CONFLICT: target landmass also requested by another realm: " + profile.realmId);
+            List<WorldCell> land = run.worldCells.stream()
+                    .filter(c -> profile.targetContinentId.equals(c.continentId) && c.assignableLand()).toList();
+            if (land.isEmpty()) throw new IllegalArgumentException("FIXED_TERRITORY_EMPTY: " + profile.realmId);
+            Map<String, WorldCell> scope = new LinkedHashMap<>();
+            ArrayDeque<WorldCell> frontier = new ArrayDeque<>();
+            Map<String, Integer> distances = new HashMap<>();
+            for (WorldCell cell : land) {
+                String k = key(cell.gridX, cell.gridZ);
+                scope.put(k, cell); distances.put(k, 0); frontier.add(cell);
+            }
+            while (!frontier.isEmpty()) {
+                WorldCell cell = frontier.removeFirst();
+                int distance = distances.get(key(cell.gridX, cell.gridZ));
+                for (int[] direction : DIRECTIONS) {
+                    WorldCell next = run.worldCellsByKey.get(key(cell.gridX + direction[0], cell.gridZ + direction[1]));
+                    // An edge landmass may continue outside this survey; never call it a complete fixed island.
+                    if (next == null && (distance == 0 || distance < profile.territoryPolicy.nearshoreRadiusCells()))
+                        throw new IllegalArgumentException("FIXED_TERRITORY_OUTSIDE_SURVEY: " + profile.realmId);
+                    if (next == null || distance >= profile.territoryPolicy.nearshoreRadiusCells()
+                            || !"water".equals(next.landWater)) continue;
+                    String k = key(next.gridX, next.gridZ);
+                    if (distances.putIfAbsent(k, distance + 1) == null) { scope.put(k, next); frontier.add(next); }
+                }
+            }
+            for (var entry : scope.entrySet()) {
+                WorldCell cell = entry.getValue();
+                if (!outsideOriginRadius(cell, run, accessConfig.initialActivityRadiusBlocks()) || reservedCell(run, cell))
+                    throw new IllegalArgumentException("FIXED_TERRITORY_RESERVED: " + profile.realmId + " at " + entry.getKey());
+                String other = owners.putIfAbsent(entry.getKey(), profile.realmId);
+                if (other != null) throw new IllegalArgumentException("FIXED_TERRITORY_CONFLICT: " + other + " / " + profile.realmId);
+            }
+            scopes.put(profile.realmId, List.copyOf(scope.values()));
+        }
+        return scopes;
+    }
+
+    private RealmTerritoryMap buildFixedTerritory(RealmRun run, RealmProfile profile, List<WorldCell> scope) {
+        List<WorldCell> land = scope.stream().filter(WorldCell::assignableLand).toList();
+        Map<String, String> ownership = new LinkedHashMap<>();
+        for (WorldCell cell : scope) {
+            String k = key(cell.gridX, cell.gridZ);
+            ownership.put(k, profile.realmId); run.territoryCellStatuses.put(k, "owned");
+        }
+        recordStopReason(run, profile.realmId, "fixed_territory_boundary", 1);
+        ScalePlan fixedScale = new ScalePlan(profile.scalePlan.priority, 1, 1, 1, profile.scalePlan.normalizationGroup);
+        Map<String, NormalizedScale> scales = Map.of(profile.realmId, new NormalizedScale(fixedScale, 1));
+        RealmTerritoryMap result = RealmTerritoryMap.from(run.runId, profile.targetContinentId, land, ownership,
+                run, scales, Map.of(profile.realmId, land.size()), List.of());
+        List<TerritoryCell> cells = new ArrayList<>(result.cells);
+        for (WorldCell cell : scope) if ("water".equals(cell.landWater))
+            cells.add(new TerritoryCell(cell.gridX, cell.gridZ, profile.realmId, "owned", 1, 0, "nearshore"));
+        return new RealmTerritoryMap(result.territoryMapId, result.runId, result.normalizationGroup, cells,
+                result.stats, result.scales, result.warnings, result.repairs, run.expansionModel,
+                result.expansionBudgets, result.terrainCostProfiles);
     }
 
     private RealmTerritoryMap buildContinentTerritory(RealmRun run, String continent, boolean allowUnclaimedLand) {
@@ -2158,7 +2236,7 @@ public final class RealmPlanningService {
 
     private void exportWorld(RealmRun run) throws IOException {
         writeJson(run.runDirectory.resolve("world_survey_context.json"), surveyJson(run));
-        writeJson(run.runDirectory.resolve("world_patch_map.json"), worldPatchMapJson(run));
+        writeWorldPatchMap(run);
         exportWorldPreview(run, run.runDirectory.resolve("world_patch_preview.png"), false, null);
         exportWorldPreview(run, run.runDirectory.resolve("grid_overlay_preview.png"), true, null);
         exportWorldBiomePreview(run, run.runDirectory.resolve("world_biome_preview.png"));
@@ -2370,7 +2448,10 @@ public final class RealmPlanningService {
 
     private static Color territoryPreviewColor(TerritoryCell territoryCell, Map<String, Color> realmColors) {
         if ("owned".equals(territoryCell.status)) {
-            return realmColors.getOrDefault(territoryCell.realmId, Color.GRAY);
+            Color color = realmColors.getOrDefault(territoryCell.realmId, Color.GRAY);
+            if ("nearshore".equals(territoryCell.territoryType))
+                return new Color((color.getRed() + 45) / 2, (color.getGreen() + 100) / 2, (color.getBlue() + 170) / 2);
+            return color;
         }
         return switch (territoryCell.status) {
             case "contested" -> new Color(236, 196, 73);
@@ -3061,26 +3142,30 @@ public final class RealmPlanningService {
         return json;
     }
 
-    private JsonObject worldPatchMapJson(RealmRun run) {
-        JsonObject json = new JsonObject();
-        json.addProperty("schema", SCHEMA);
-        json.addProperty("surveyId", "survey_" + run.runId);
-        JsonArray cells = new JsonArray();
-        for (WorldCell cell : run.worldCells) {
-            cells.add(cell.asJson());
-        }
-        json.add("cells", cells);
-        json.add("patches", patchesJson(run.patchSummaries.values()));
-        json.add("continents", continentsJson(run.continentSummaries.values()));
-        JsonObject cleaning = new JsonObject();
-        cleaning.addProperty("baseLandformField", "baseLandform");
-        cleaning.addProperty("tagField", "landformTags");
-        cleaning.addProperty("cliffAsTag", true);
-        cleaning.addProperty("globalPatchMergeImplemented", false);
-        cleaning.addProperty("microSamplingImplemented", run.surveyResult.microSamplingImplemented());
-        cleaning.addProperty("microSampleCount", run.surveyResult.microSampleCount());
-        json.add("cleaningSummary", cleaning);
-        return json;
+    private void writeWorldPatchMap(RealmRun run) throws IOException {
+        writeJsonStream(run.runDirectory.resolve("world_patch_map.json"), writer -> {
+            writer.beginObject();
+            writer.name("schema").value(SCHEMA);
+            writer.name("surveyId").value("survey_" + run.runId);
+            writer.name("cells").beginArray();
+            for (WorldCell cell : run.worldCells) AtlasJson.GSON.toJson(cell.asJson(), writer);
+            writer.endArray();
+            writer.name("patches").beginArray();
+            for (PatchSummary patch : run.patchSummaries.values()) AtlasJson.GSON.toJson(patch.asJson(), writer);
+            writer.endArray();
+            writer.name("continents").beginArray();
+            for (ContinentSummary continent : run.continentSummaries.values()) AtlasJson.GSON.toJson(continent.asJson(), writer);
+            writer.endArray();
+            JsonObject cleaning = new JsonObject();
+            cleaning.addProperty("baseLandformField", "baseLandform");
+            cleaning.addProperty("tagField", "landformTags");
+            cleaning.addProperty("cliffAsTag", true);
+            cleaning.addProperty("globalPatchMergeImplemented", false);
+            cleaning.addProperty("microSamplingImplemented", run.surveyResult.microSamplingImplemented());
+            cleaning.addProperty("microSampleCount", run.surveyResult.microSampleCount());
+            writer.name("cleaningSummary"); AtlasJson.GSON.toJson(cleaning, writer);
+            writer.endObject();
+        });
     }
 
     private JsonObject worldSummary(RealmRun run) {
@@ -4173,13 +4258,33 @@ public final class RealmPlanningService {
             JsonObject object = requireCheckpointObject(element, territoryPath);
             TerritoryCell cell = new TerritoryCell(intValue(object, "gridX", 0), intValue(object, "gridZ", 0),
                     stringValue(object, "realmId", ""), stringValue(object, "status", "wild"),
-                    doubleValue(object, "claimStrength", 0.0), doubleValue(object, "claimCost", 0.0));
+                    doubleValue(object, "claimStrength", 0.0), doubleValue(object, "claimCost", 0.0),
+                    stringValue(object, "territoryType", "land"));
             if (!run.worldCellsByKey.containsKey(key(cell.gridX, cell.gridZ))) {
                 throw invalidCheckpoint(territoryPath, "territory cell is outside the sealed W grid");
             }
+            WorldCell world = run.worldCellsByKey.get(key(cell.gridX, cell.gridZ));
+            if (!"land".equals(cell.territoryType) && !"nearshore".equals(cell.territoryType)
+                    || "nearshore".equals(cell.territoryType) && (!"water".equals(world.landWater)
+                        || !"owned".equals(cell.status) || !run.profile(cell.realmId).territoryPolicy.fixed())
+                    || "land".equals(cell.territoryType) && "water".equals(world.landWater))
+                throw invalidCheckpoint(territoryPath, "invalid land/nearshore territory type");
             cells.add(cell);
         }
 
+        for (var scope : fixedTerritoryScopes(run).entrySet()) {
+            Set<String> expected = scope.getValue().stream().map(c -> key(c.gridX, c.gridZ))
+                    .collect(java.util.stream.Collectors.toSet());
+            Set<String> actual = cells.stream().filter(c -> scope.getKey().equals(c.realmId) && "owned".equals(c.status))
+                    .map(c -> key(c.gridX, c.gridZ)).collect(java.util.stream.Collectors.toSet());
+            // Grouped checkpoints need not contain unrelated fixed realms.
+            RealmProfile profile = run.profile(scope.getKey());
+            String group = stringValue(territory, "normalizationGroup", "");
+            boolean included = group.isBlank() || "all_target_continents".equals(group)
+                    || group.equals(profile.targetContinentId) || group.equals(profile.scalePlan.normalizationGroup);
+            if ((included || !actual.isEmpty()) && !expected.equals(actual))
+                throw invalidCheckpoint(territoryPath, "fixed territory differs from its declared boundary");
+        }
         Map<String, RealmStats> stats = new LinkedHashMap<>();
         JsonArray statsArray = territory.has("realmStats") && territory.get("realmStats").isJsonArray()
                 ? territory.getAsJsonArray("realmStats") : new JsonArray();
@@ -4509,9 +4614,27 @@ public final class RealmPlanningService {
         return response;
     }
 
+    @FunctionalInterface
+    private interface JsonExport { void write(com.google.gson.stream.JsonWriter writer) throws IOException; }
+
     private static void writeJson(Path path, JsonElement json) throws IOException {
+        writeJsonStream(path, writer -> AtlasJson.GSON.toJson(json, writer));
+    }
+
+    private static void writeJsonStream(Path path, JsonExport export) throws IOException {
         Files.createDirectories(path.getParent());
-        Files.writeString(path, AtlasJson.GSON.toJson(json));
+        Path temporary = Files.createTempFile(path.getParent(), "realm-export-", ".tmp");
+        try {
+            try (var writer = AtlasJson.GSON.newJsonWriter(Files.newBufferedWriter(temporary,
+                    java.nio.charset.StandardCharsets.UTF_8))) {
+                export.write(writer);
+            }
+            try { Files.move(temporary, path, java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING); }
+            catch (java.nio.file.AtomicMoveNotSupportedException unsupported) {
+                Files.move(temporary, path, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally { Files.deleteIfExists(temporary); }
     }
 
     private static String normalizeRunId(String requestedRunId, String fallback) {
@@ -5498,6 +5621,7 @@ public final class RealmPlanningService {
         final List<String> avoidLandforms;
         ScalePlan scalePlan;
         final ExpansionStyle expansionStyle;
+        RealmTerritoryPolicy territoryPolicy = RealmTerritoryPolicy.EXPANDING;
 
         RealmProfile(String realmId, String name, String targetContinentId, String theme, List<String> cultureTags,
                 List<String> industryTags, List<String> materialTags, List<String> landformPreferences,
@@ -5524,9 +5648,11 @@ public final class RealmPlanningService {
                     ? object.getAsJsonObject("scalePlan") : new JsonObject(), defaultContinent);
             ExpansionStyle style = ExpansionStyle.fromJson(object.has("expansionStyle") && object.get("expansionStyle").isJsonObject()
                     ? object.getAsJsonObject("expansionStyle") : new JsonObject());
-            return new RealmProfile(realmId, name, continent, theme, stringList(object, "cultureTags"),
+            RealmProfile profile = new RealmProfile(realmId, name, continent, theme, stringList(object, "cultureTags"),
                     stringList(object, "industryTags"), stringList(object, "materialTags"),
                     stringList(object, "landformPreferences"), stringList(object, "avoidLandforms"), scale, style);
+            profile.territoryPolicy = RealmTerritoryPolicy.fromJson(object);
+            return profile;
         }
 
         JsonObject asJson() {
@@ -5534,6 +5660,7 @@ public final class RealmPlanningService {
             json.addProperty("realmId", realmId);
             json.addProperty("name", name);
             json.addProperty("targetContinentId", targetContinentId);
+            if (!territoryPolicy.equals(RealmTerritoryPolicy.EXPANDING)) json.add("territoryPolicy", territoryPolicy.asJson());
             json.addProperty("theme", theme);
             json.add("cultureTags", stringArray(cultureTags));
             json.add("industryTags", stringArray(industryTags));
@@ -6081,7 +6208,10 @@ public final class RealmPlanningService {
     }
 
     private record TerritoryCell(int gridX, int gridZ, String realmId, String status, double claimStrength,
-            double claimCost) {
+            double claimCost, String territoryType) {
+        TerritoryCell(int gridX, int gridZ, String realmId, String status, double claimStrength, double claimCost) {
+            this(gridX, gridZ, realmId, status, claimStrength, claimCost, "land");
+        }
         JsonObject asJson() {
             JsonObject json = new JsonObject();
             json.addProperty("gridX", gridX);
@@ -6090,6 +6220,7 @@ public final class RealmPlanningService {
             json.addProperty("status", status);
             json.addProperty("claimStrength", claimStrength);
             json.addProperty("claimCost", claimCost);
+            json.addProperty("territoryType", territoryType);
             return json;
         }
     }
@@ -6288,7 +6419,10 @@ public final class RealmPlanningService {
             json.add("territoryCells", cellArray);
             JsonArray statsArray = new JsonArray();
             for (RealmStats stat : stats.values()) {
-                statsArray.add(stat.asJson());
+                JsonObject value = stat.asJson();
+                value.addProperty("nearshoreAreaCells", cells.stream().filter(c -> stat.realmId.equals(c.realmId)
+                        && "owned".equals(c.status) && "nearshore".equals(c.territoryType)).count());
+                statsArray.add(value);
             }
             json.add("realmStats", statsArray);
             json.add("warnings", stringArray(warnings));

@@ -118,7 +118,7 @@ public final class InitialWorldPreparation {
                     catch(Exception e) { fail(e); }
                 }).get();
             } catch(InterruptedException|CancellationException stopped) { Thread.currentThread().interrupt(); }
-            catch(Exception error) { if(!closed) fail(error); }
+            catch(Exception | LinkageError | VirtualMachineError error) { if(!closed) fail(error); }
         }
         Prepared prepareSampler(String runId,WorldSurveySettingsConfig settings) {
             var level=server.overworld();
@@ -132,7 +132,7 @@ public final class InitialWorldPreparation {
                     SampleMode.PRIOR,WorldSurveyRunner.ResumePolicy.USE_CACHE,provenance);
             return new Prepared(config,selection.fastPath()?new TerrainPreviewAtlasSampler(selection):fallback);
         }
-        void fail(Exception e) {
+        void fail(Throwable e) {
             failure="世界准备失败，请查看日志；重新进入可继续扫描";
             org.slf4j.LoggerFactory.getLogger(InitialWorldPreparation.class).error("Initial world preparation failed",e);
         }

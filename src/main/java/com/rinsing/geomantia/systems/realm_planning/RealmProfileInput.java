@@ -34,7 +34,12 @@ public final class RealmProfileInput {
         terrainCosts.add("additionalProperties", number(0.05, 50));
         expansion.add("terrainCosts", terrainCosts);
         properties.add("expansionStyle", object(expansion, "terrainCosts"));
-        return object(properties);
+        JsonObject territory = new JsonObject();
+        territory.add("mode", choice("expanding", "fixed"));
+        JsonObject radius = number(0, 16); radius.addProperty("type", "integer");
+        territory.add("nearshoreRadiusCells", radius);
+        properties.add("territoryPolicy", object(territory, "nearshoreRadiusCells"));
+        return object(properties, "territoryPolicy");
     }
 
     public static JsonArray requireProfiles(JsonObject request) {
@@ -62,6 +67,7 @@ public final class RealmProfileInput {
             JsonObject profile = profiles.get(i).getAsJsonObject();
             String id = profile.get("realmId").getAsString();
             if (!id.matches("[A-Za-z0-9._-]+") || !ids.add(id)) throw invalid(path + ".realmId", "Invalid or duplicate identity.");
+            RealmTerritoryPolicy.fromJson(profile);
             JsonObject scale = profile.getAsJsonObject("scalePlan");
             double min = scale.get("minAreaRatio").getAsDouble();
             double target = scale.get("targetAreaRatio").getAsDouble();
@@ -132,8 +138,12 @@ public final class RealmProfileInput {
                     throw invalid(path, "Expected one of " + schema.get("enum") + ".");
                 }
             }
-            case "number" -> {
+            case "number", "integer" -> {
                 if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) throw invalid(path, "Expected number.");
+                if ("integer".equals(schema.get("type").getAsString())) {
+                    try { value.getAsBigDecimal().intValueExact(); }
+                    catch (ArithmeticException failure) { throw invalid(path, "Expected integer."); }
+                }
                 double n = value.getAsDouble();
                 if (!Double.isFinite(n) || n < schema.get("minimum").getAsDouble() || n > schema.get("maximum").getAsDouble()) {
                     throw invalid(path, "Outside declared range; values are not silently clamped.");

@@ -19,6 +19,10 @@ test('T1 publishes exact nested design choices without draft fallbacks', () => {
   for (const key of ['theme', 'cultureTags', 'targetContinentId', 'scalePlan', 'expansionStyle']) assert.ok(profile.required.includes(key));
   assert.equal(profile.additionalProperties, false);
   assert.equal(profile.properties.scalePlan.additionalProperties, false);
+  assert.equal(profile.required.includes("territoryPolicy"), false);
+  assert.deepEqual(profile.properties.territoryPolicy.properties.mode.enum, ["expanding", "fixed"]);
+  assert.equal(profile.properties.territoryPolicy.properties.nearshoreRadiusCells.type, "integer");
+  assert.equal(profile.properties.territoryPolicy.additionalProperties, false);
 });
 
 test('real image contents are separate from compact decision text', () => {

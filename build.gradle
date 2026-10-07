@@ -75,7 +75,8 @@ minecraft {
         client {
             property 'forge.enabledGameTestNamespaces', mod_id
             if (!devPlanningSourceDir.isBlank()) {
-                property 'geomantia.providerPlanningSourceDir', devPlanningSourceDir
+                property 'geomantia.providerPlanningSourceDir', project.file('run').toPath()
+                        .resolve(devPlanningSourceDir).toAbsolutePath().normalize().toString()
             }
             if (!devAutoLoadWorldBase64.isBlank()) {
                 property 'geomantia.devAutoLoadWorldBase64', devAutoLoadWorldBase64
@@ -198,9 +199,11 @@ sourceSets.map.compileClasspath += sourceSets.main.compileClasspath
 sourceSets.test.compileClasspath += sourceSets.harness.output + sourceSets.map.output
 sourceSets.test.runtimeClasspath += sourceSets.harness.output + sourceSets.map.output
 minecraft.runs.configureEach {
-    if (providers.gradleProperty('geomantiaDevAddons').orElse('false').get().toBoolean()) {
+    def allAddons = providers.gradleProperty('geomantiaDevAddons').orElse('false').get().toBoolean()
+    def mapAddon = providers.gradleProperty('geomantiaDevUseMap').orElse('false').get().toBoolean()
+    if (allAddons || mapAddon) {
         mods {
-            geomantia_harness { source sourceSets.harness }
+            if (allAddons) { geomantia_harness { source sourceSets.harness } }
             geomantia_map { source sourceSets.map }
         }
     }

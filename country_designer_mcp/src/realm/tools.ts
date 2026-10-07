@@ -11,13 +11,16 @@ const realmProfileSchema = strictObject({
   avoidLandforms: { type: "array", items: realmText },
   scalePlan: strictObject({ priority: { type: "string", enum: ["minor", "normal", "major", "empire"] }, normalizationGroup: realmText,
     targetAreaRatio: realmRatio, minAreaRatio: realmRatio, maxAreaRatio: realmRatio }),
+  territoryPolicy: strictObject({ mode: { type: "string", enum: ["expanding", "fixed"] },
+    nearshoreRadiusCells: { type: "integer", minimum: 0, maximum: 16 } }, ["mode"]),
   expansionStyle: strictObject({ waterAffinity: realmRatio, compactness: realmRatio, coastalBias: realmRatio,
     resourceSeeking: realmRatio, borderPressure: realmRatio, seaCrossingPolicy: { type: "string", enum: ["none", "limited", "allowed"] },
     mountainAffinity: { type: "number", minimum: -1, maximum: 1 },
     forestAffinity: { type: "number", minimum: -1, maximum: 1 },
     terrainCosts: { type: "object", additionalProperties: { type: "number", minimum: 0.05, maximum: 50 } } },
     ["waterAffinity", "compactness", "coastalBias", "resourceSeeking", "borderPressure", "seaCrossingPolicy", "mountainAffinity", "forestAffinity"]),
-});
+}, ["realmId", "name", "targetContinentId", "theme", "cultureTags", "industryTags", "materialTags",
+  "landformPreferences", "avoidLandforms", "scalePlan", "expansionStyle"]);
 
 const decorationShapeSchema: Record<string, unknown> = {
   oneOf: [

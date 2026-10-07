@@ -56,4 +56,17 @@ class RealmProfileInputTest {
         assertTrue(assertThrows(IllegalArgumentException.class, () -> RealmProfileInput.requireProfiles(request))
                 .getMessage().contains("seaCrossingPolicy"));
     }
+    @Test void fixedPolicyAcceptsIntegerRadiusAndRejectsInvalidBoundaryRequests() {
+        JsonObject request = request();
+        JsonObject profile = request.getAsJsonArray("realmProfiles").get(0).getAsJsonObject();
+        profile.add("territoryPolicy", JsonParser.parseString("{mode:'fixed',nearshoreRadiusCells:2}"));
+        assertEquals(1, RealmProfileInput.requireProfiles(request).size());
+        for (String policy : new String[]{"{mode:'fixed',nearshoreRadiusCells:1.5}",
+                "{mode:'fixed',nearshoreRadiusCells:17}", "{mode:'expanding',nearshoreRadiusCells:1}",
+                "{mode:'island'}", "{mode:'fixed',extra:true}"}) {
+            profile.add("territoryPolicy", JsonParser.parseString(policy));
+            assertThrows(IllegalArgumentException.class, () -> RealmProfileInput.requireProfiles(request), policy);
+        }
+    }
+
 }

@@ -8,6 +8,7 @@ import argparse
 from collections import Counter, defaultdict
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -132,7 +133,7 @@ def build(args):
         raise ValueError('Empty selection')
     args.output.mkdir(parents=True)
     write(args.output / 'codec_input.json', rows)
-    cp = ';'.join(args.classpath_file.read_text(encoding='utf-8-sig').splitlines())
+    cp = os.pathsep.join(args.classpath_file.read_text(encoding='utf-8-sig').splitlines())
     subprocess.run([str(args.java), '-Dfile.encoding=UTF-8', '-cp', cp,
         str(ROOT / 'tools/city_templates/StudioTemplateMetadata.java'),
         str(args.output / 'codec_input.json'), str(args.output / 'runtime_metadata.json')], check=True)
