@@ -11,7 +11,7 @@ class ProviderD4ToolSchemaTest {
         JsonObject fields = schema("city_d4_materials").getAsJsonObject("properties").getAsJsonObject("materialSelections")
                 .getAsJsonObject("items").getAsJsonObject("properties");
         JsonObject filters = fields.getAsJsonObject("filters").getAsJsonObject("properties");
-        for (String key : List.of("roles", "functionIds", "functionMode", "styles", "rawFunctionTerms")) assertTrue(filters.has(key));
+        for (String key : List.of("roles", "functionIds", "functionMode", "styles", "rawFunctionTerms", "categories", "assetTags")) assertTrue(filters.has(key));
         assertTrue(filters.getAsJsonObject("roles").getAsJsonObject("items").getAsJsonArray("enum").toString().contains("core"));
         assertEquals(0, fields.getAsJsonObject("limit").get("minimum").getAsInt());
         assertEquals(100, fields.getAsJsonObject("limit").get("maximum").getAsInt());
@@ -23,6 +23,8 @@ class ProviderD4ToolSchemaTest {
         for(String name:CityD4Workflow.TOOLS) assertNotNull(schema(name));
         JsonObject design=schema("city_d4_district").getAsJsonObject("properties");
         for(String field:List.of("designReview","complete","materialSelections","blockMaterials","integrationDesign")) assertFalse(design.has(field));
+        assertTrue(design.has("targetDistrictId")&&design.has("baseDraftHash")&&design.has("assessment"));
+        assertTrue(design.getAsJsonObject("districtDesign").getAsJsonArray("required").contains(new com.google.gson.JsonPrimitive("core")));
         assertFalse(design.getAsJsonObject("districtDesign").getAsJsonObject("properties").has("spatialGrounds"));
         JsonObject settings=schema("city_d4_overview").getAsJsonObject("properties").getAsJsonObject("overview").getAsJsonObject("properties").getAsJsonObject("citySettings").getAsJsonObject("properties");
         assertFalse(settings.getAsJsonObject("outdoorPlan").getAsJsonObject("properties").has("landscapes"));

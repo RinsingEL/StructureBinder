@@ -46,15 +46,21 @@ public final class CityBlueprintService {
         }
     }
     private final GeometryCompiler geometryCompiler;
-    public CityBlueprintService() { this(new GeometryCompiler() {
+    private final CityBlockMaterials.Registry materialRegistry;
+    public CityBlueprintService() { this(javaCompiler(),null); }
+    CityBlueprintService(CityBlockMaterials.Registry registry) { this(javaCompiler(),registry); }
+    private static GeometryCompiler javaCompiler() { return new GeometryCompiler() {
         public CityBlueprintCompilerService.CompilationResult compile(Path root,String run,String city,JsonObject proposal,boolean draftOnly)throws IOException {
             return compile(root,run,city,proposal,draftOnly,null);
         }
         public CityBlueprintCompilerService.CompilationResult compile(Path root,String run,String city,JsonObject proposal,boolean draftOnly,CityD4LayoutPolicy policy)throws IOException {
             return new CityBlueprintCompilerService().compileProposal(root,run,city,proposal,draftOnly,policy);
         }
-    }); }
-    CityBlueprintService(GeometryCompiler geometryCompiler) { this.geometryCompiler = java.util.Objects.requireNonNull(geometryCompiler); }
+    }; }
+    CityBlueprintService(GeometryCompiler geometryCompiler) { this(geometryCompiler,null); }
+    CityBlueprintService(GeometryCompiler geometryCompiler, CityBlockMaterials.Registry registry) {
+        this.geometryCompiler = java.util.Objects.requireNonNull(geometryCompiler);this.materialRegistry=registry;
+    }
 
     public JsonObject prepare(Path debugRoot, String runId, String cityId,
                                JsonObject terraSenseProfileSource, JsonObject templateCatalogSource,
@@ -170,6 +176,9 @@ public final class CityBlueprintService {
         JsonObject context = contextCore.deepCopy();
         // Browsing projections may evolve without changing terrain/catalog identity or district progress.
         context.add("materialCatalog", CityMaterialCatalogBrowser.summary(snapshot));
+        JsonObject handoff=new JsonObject();handoff.add("savedCityDesign",seed.deepCopy());
+        handoff.addProperty("instruction","继承第二题已保存城市名称、定位、功能、玩家活动与分项风格，结合当前 D3 地图和 siteReviewDecision 简短确认；不重复长篇城市构思。按 districts 顺序逐区选材，core 是本次角色，素材 category 与 assetTags 独立。");
+        context.add("cityDesignHandoff",handoff);
         // Editable prose must not change the frozen terrain/catalog identity or reset district progress.
         context.getAsJsonObject("designGuide").addProperty("behaviorHandbook",
                 com.rinsing.geomantia.systems.provider.application.AgentPromptConfig.read("city/d4_v2/handbook.md"));
@@ -435,7 +444,7 @@ public final class CityBlueprintService {
         CityBlueprint blueprint;
         try {
                 blueprint = codec.read(CityBlueprintDesignInput.bind(blueprintJson, context, relativeWeights));
-                CityMaterialSupport.validate(blueprint,references);
+                CityMaterialSupport.validate(blueprint,references,materialRegistry);
         } catch (CityBlueprintContractException exception) {
             return failure(debugRoot, cityId, contextId, reportPath, tracePath, exception.reasonCode(),
                     exception.fieldPath(), exception.getMessage(), budget, runId);
@@ -907,6 +916,7 @@ public final class CityBlueprintService {
         core.remove("contextId");
         core.remove("preparedAt");
         core.remove("materialCatalog");
+        core.remove("cityDesignHandoff");
         core.remove("environmentStyleGuidance");
         core.remove("siteReviewDecision");
         if (core.has("designGuide")) core.getAsJsonObject("designGuide").remove("behaviorHandbook");

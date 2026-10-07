@@ -47,6 +47,9 @@ def verify(bundle):
         assert profile['styleTerms'] == [row['style']] == [origin['author']['civilization']]
         assert profile['functionTerms'] == origin['author']['function_terms']
         assert profile['planningRoleTerms'] == [origin['author']['planning_role']]
+        if 'category' in profile:
+            assert profile['category'] in {'specialty','common'}
+            assert profile['assetTags'] == origin['author'].get('asset_tags',[])
         assert row['roadEntrances'] == origin['roadEntrances']
         assert all(e['clearanceChecked'] for e in origin['entranceEvidence'])
         assert indexed['refs'][ref]['templateCandidates'] == [dict(templateId=row['templateId'], variantId=row['variant'])]
@@ -54,7 +57,7 @@ def verify(bundle):
     assert len(nbt_files) == len(catalog)
     for pool in refs['fillPools']:
         members = [indexed['profiles'][ref] for ref in pool['structureRefs']]
-        assert members and all(p['planningRoleTerms'] == ['planning_role.fill'] for p in members)
+        assert members  # Pool membership is authored function/style eligibility, not a city role.
         assert len({tuple(p['styleTerms']) for p in members}) == 1
         assert set.intersection(*(set(p['functionTerms']) for p in members))
     cores = {ref for ref, p in indexed['profiles'].items() if set(p['planningRoleTerms']) & {'planning_role.key', 'planning_role.anchor'}}
@@ -104,7 +107,7 @@ def package(source, output, bundle_name='studio_multi_20260927'):
 
 ## 验证范围
 
-已通过 Minecraft 模板编解码和运行时内容哈希核对；目录/profile/manifest/NBT 引用与源文件哈希一致。入口按作者明确朝向投影并通过净空检查，填充池只包含同风格 fill 模型。
+已通过 Minecraft 模板编解码和运行时内容哈希核对；目录/profile/manifest/NBT 引用与源文件哈希一致。入口按作者明确朝向投影并通过净空检查，候选池包含作者同风格、同功能素材，本次核心/必需/填充由功能区设计明确。
 核心图集源截图与 NBT 哈希一致，不代表人工图审通过。采用 legacy_catalog 未审入口模式；道路高度、接地、坡地和岸边适配仍需游戏内实测。
 保留作者 siteConditions，但运行时尚不读取该选址文字。未进行实机验收。
 内部模板 variant/packId 沿用导出器的 studio_test_20260924，引用保持一致；安装目录独立命名为 {bundle_name}。

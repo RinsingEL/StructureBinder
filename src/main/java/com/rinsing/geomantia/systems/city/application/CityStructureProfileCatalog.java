@@ -167,7 +167,27 @@ public final class CityStructureProfileCatalog {
                 planningRoleTerms,
                 terrainModes,
                 styleTerms,
-                catalogMode));
+                catalogMode, materialCategory(obj), assetTags(obj)));
+    }
+
+    private static String materialCategory(JsonObject obj) {
+        String value = firstString(obj,"category");
+        if (!value.isBlank() && !Set.of("specialty","common").contains(value))
+            throw new IllegalArgumentException("CITY_STRUCTURE_CATEGORY_INVALID: " + value);
+        return value;
+    }
+    private static List<String> assetTags(JsonObject obj) {
+        JsonElement value=obj.has("assetTags")?obj.get("assetTags"):obj.get("asset_tags");
+        if(value==null) return List.of();
+        if(!value.isJsonArray()) throw new IllegalArgumentException("CITY_STRUCTURE_ASSET_TAGS_INVALID");
+        List<String> tags=new ArrayList<>();
+        for(JsonElement tag:value.getAsJsonArray()) {
+            if(!tag.isJsonPrimitive()||!tag.getAsJsonPrimitive().isString()) throw new IllegalArgumentException("CITY_STRUCTURE_ASSET_TAGS_INVALID");
+            tags.add(tag.getAsString());
+        }
+        if (!Set.of("infrastructure","landscape").containsAll(tags) || new java.util.HashSet<>(tags).size()!=tags.size())
+            throw new IllegalArgumentException("CITY_STRUCTURE_ASSET_TAGS_INVALID");
+        return tags;
     }
 
     private static void rejectLegacySemanticFields(JsonObject obj, JsonObject nested, String sourceRef) {
@@ -361,8 +381,14 @@ public final class CityStructureProfileCatalog {
     public record StructureProfile(String semanticProfileId, String sourceProfileRef, String reviewState,
                                    List<String> functionTerms, List<String> planningRoleTerms,
                                    List<CityStructureTerrainMode> terrainModes, List<String> styleTerms,
-                                   String catalogMode) {
+                                   String catalogMode, String category, List<String> assetTags) {
+        public StructureProfile(String semanticProfileId, String sourceProfileRef, String reviewState,
+                List<String> functionTerms, List<String> planningRoleTerms, List<CityStructureTerrainMode> terrainModes,
+                List<String> styleTerms, String catalogMode) {
+            this(semanticProfileId,sourceProfileRef,reviewState,functionTerms,planningRoleTerms,terrainModes,styleTerms,catalogMode,"",List.of());
+        }
         public StructureProfile {
+            assetTags = List.copyOf(assetTags);
             functionTerms = List.copyOf(functionTerms);
             planningRoleTerms = List.copyOf(planningRoleTerms);
             terrainModes = List.copyOf(terrainModes);
@@ -380,6 +406,8 @@ public final class CityStructureProfileCatalog {
             terrainModes.forEach(mode -> modes.add(mode.name()));
             obj.add("terrainModes", modes);
             obj.add("styleTerms", stringArray(styleTerms));
+            if (!category.isBlank()) obj.addProperty("category",category);
+            obj.add("assetTags",stringArray(assetTags));
             obj.addProperty("catalogMode", catalogMode);
             return obj;
         }

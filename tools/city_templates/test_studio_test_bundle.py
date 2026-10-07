@@ -1,8 +1,14 @@
 import unittest
-from build_studio_test_bundle import project_entrances
+from build_studio_test_bundle import project_entrances, authored_classification
 
 
 class EntranceExportTest(unittest.TestCase):
+    def test_author_classification_uses_shared_family_rule_not_name_or_role(self):
+        self.assertEqual(dict(category='common',assetTags=['infrastructure']),authored_classification(dict(id='CH-24-v01',name='核心',planning_role='planning_role.key',asset_tags=['infrastructure'])))
+        self.assertEqual('specialty',authored_classification(dict(id='CH-22-v01',planning_role='planning_role.fill'))['category'])
+        for tags in (None,'landscape',['landscape','landscape'],['guessed']):
+            with self.assertRaises(ValueError): authored_classification(dict(id='CH-24-v01',asset_tags=tags))
+
     def fixtures(self):
         registry = {'minecraft:stone': dict(default={}, state_order=[], properties={}, collisions=[[[0,0,0,1,1,1]]])}
         data = dict(size=[7,6,8], palette=[dict(name='minecraft:stone',properties={})], blocks=[])

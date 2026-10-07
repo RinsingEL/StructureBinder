@@ -21,6 +21,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class CityStructureLandingPreviewRendererTest {
     @Test
+    void originGridAndEquivalentBoundsRenderTheSameOverview(@TempDir Path dir) throws Exception {
+        JsonObject origin=JsonParser.parseString("{grid:{originBlockX:-256,originBlockZ:-256,cellStepBlocks:16,cellsX:64,cellsZ:32},anchors:[],skippedMembers:[{groupId:'a',plannedBounds:{minX:100,minZ:100,maxX:120,maxZ:120}}]}").getAsJsonObject();
+        JsonObject bounded=origin.deepCopy();bounded.add("grid",JsonParser.parseString("{blockBounds:{minX:-256,minZ:-256,maxX:768,maxZ:256}}"));
+        var renderer=new CityStructureLandingPreviewRenderer();
+        BufferedImage a=ImageIO.read(renderer.renderD4(origin,dir.resolve("origin")).toFile());
+        BufferedImage b=ImageIO.read(renderer.renderD4(bounded,dir.resolve("bounded")).toFile());
+        assertArrayEquals(a.getRGB(0,0,a.getWidth(),a.getHeight(),null,0,a.getWidth()),b.getRGB(0,0,b.getWidth(),b.getHeight(),null,0,b.getWidth()));
+    }
+
+    @Test
     void revisionAlwaysPublishesLocalGroupsIncludingEmptySkippedGroupsAndRemovesStaleImages(@TempDir Path dir)
             throws Exception {
         JsonObject map = JsonParser.parseString("""

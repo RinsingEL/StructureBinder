@@ -29,6 +29,23 @@ class CityMaterialCatalogBrowserTest {
         return result.getAsJsonObject("facets").getAsJsonArray(type).asList().stream().map(JsonElement::getAsJsonObject)
                 .filter(row -> row.get(field).getAsString().equals(value)).findFirst().orElseThrow();
     }
+    @Test void authoredCategoriesAndTagsIntersectWithoutInventingCityRoles() {
+        var snapshot=catalog();var profiles=snapshot.getAsJsonObject("structureCatalog").getAsJsonArray("semanticProfiles");
+        profiles.get(0).getAsJsonObject().addProperty("category","common");
+        profiles.get(0).getAsJsonObject().add("assetTags",JsonParser.parseString("['infrastructure','landscape']"));
+        profiles.get(1).getAsJsonObject().addProperty("category","specialty");
+        profiles.get(1).getAsJsonObject().add("assetTags",JsonParser.parseString("['landscape']"));
+        var result=CityMaterialCatalogBrowser.browse(snapshot,json("{filters:{categories:['common'],assetTags:['infrastructure','landscape'],styles:['中式']},limit:0}"));
+        assertEquals(1,result.get("matchedCount").getAsInt());assertEquals(0,result.getAsJsonArray("candidates").size());
+        assertEquals(1,facet(result,"categories","term","common").get("count").getAsInt());
+        assertEquals(1,facet(result,"assetTags","term","landscape").get("count").getAsInt());
+        result=CityMaterialCatalogBrowser.browse(snapshot,json("{filters:{categories:['common']}}"));
+        var candidate=result.getAsJsonArray("candidates").get(0).getAsJsonObject();
+        assertEquals("common",candidate.getAsJsonObject("classification").get("category").getAsString());
+        assertFalse(candidate.getAsJsonObject("classification").has("cityRole"));
+        assertEquals(0,CityMaterialCatalogBrowser.browse(snapshot,json("{filters:{categories:['common'],assetTags:['infrastructure'],styles:['中世纪']}}")).get("matchedCount").getAsInt());
+        assertThrows(IllegalArgumentException.class,()->CityMaterialCatalogBrowser.browse(snapshot,json("{filters:{categories:['core']}}")));
+    }
     @Test void coreFunctionChildAndStyleNarrowInEitherOrder() {
         var core = query("{filters:{roles:['core']},limit:0}");
         assertEquals(3, core.get("matchedCount").getAsInt());

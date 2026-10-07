@@ -127,6 +127,8 @@ public final class CityStructureCatalogQueryService {
         profile.terrainModes().forEach(mode -> terrainModes.add(mode.name()));
         profileTerms.add("terrainModes", terrainModes);
         profileTerms.add("styleTerms", stringArray(profile.styleTerms()));
+        candidate.addProperty("category",profile.category());
+        candidate.add("assetTags",stringArray(profile.assetTags()));
         candidate.add("terms", profileTerms);
 
         JsonObject profileSource = new JsonObject();
@@ -142,6 +144,8 @@ public final class CityStructureCatalogQueryService {
         terms.addAll(profile.functionTerms());
         terms.addAll(profile.planningRoleTerms());
         terms.addAll(profile.styleTerms());
+        if (!profile.category().isBlank()) terms.add(profile.category());
+        terms.addAll(profile.assetTags());
         return terms;
     }
 

@@ -8,9 +8,9 @@ import java.util.regex.*;
 final class CityD4SubmissionGuidance {
     private CityD4SubmissionGuidance() { }
     static String acceptanceInstruction() {
-        return "格式、参数、引用错误需修正；正常地形与碰撞逐栋跳过。本区有有效落位即自动推进，只有整区全空允许重做初版。"
+        return "格式、参数、引用错误需修正；设计后看本区和全城预览，可带 targetDistrictId、当前 baseDraftHash 和 assessment 重新提交该区完整 districtDesign。其他区设计与布局保留。"
                 + "qualityFullySatisfied、allFunctionAreasFormed、allRequiredContentPresent、structureGraphConnected 等均为诊断，不要求清零警告或补齐建筑。"
-                + "整城只通过调整阵列/嵌套或向外阵列形成整体性，允许隔河，不要求接触或固定距离。挤占不得清空或破坏其他区功能主体。";
+                + "整城通过逐区选材与阵列修订形成整体性，允许隔河，不要求接触或固定距离。挤占不得清空或破坏其他区功能主体。";
     }
 
     static JsonObject describe(JsonObject state) {
@@ -26,9 +26,7 @@ final class CityD4SubmissionGuidance {
         }
         result.add("savedCoreOwners",owners);
         result.addProperty("overviewCorrection", "首个有效分区保存前，可用当前 workflowRevision 重交 city_d4_overview 修正全城默认设置，无需 baseDraftHash；保存有效分区后总览锁定，不能借此重做已有初版。roadSurface 使用半砖 slab，roadStair/roadCurb 使用楼梯 stair；局部覆盖不会修正不合规的全城默认值。");
-        result.addProperty("coreRule",occupiedElsewhere
-                ? "全城唯一 CORE 已被其他区占用。当前新增区/整体修饰的组使用 STANDARD 或 PERIPHERAL；本区的构图中心仍可用 centerGroupId 表达，不需要 CORE。"
-                : "CORE 是全城唯一的优先级，不是每区的构图中心。当前区与已保存其他区合并后必须恰好一个 CORE；嵌套中心使用 centerGroupId，与 CORE 无关。");
+        result.addProperty("coreRule","每区一个显式 core:{groupId,structureRef}。核心必须列入该组 requiredStructureRefs；其他必需配套同列，可选填充用 fillPools。素材特色/通用、旧作者角色和全城 CORE 编译优先级均不决定本区角色。多个同类区可相邻，不强制共同核心或巨型阵列。");
         JsonArray rules=new JsonArray();
         for(String rule:List.of(
                 "每个建筑组 requiredStructureRefs 至少一个；fillPools 不能替代必需结构声明。",
@@ -37,7 +35,7 @@ final class CityD4SubmissionGuidance {
                 "核心结构必须按阵列同时安排配套，允许复用素材自带的完整院落装饰；不得为完整素材重复加一圈。使用角色标记与实际尺寸选择小型配套，COMPACT 可全部使用小模板。总览若仅留下孤立核心，需调整选材或阵列后重新审查。",
                 "嵌套成员不能同时有独立 placementRelation；保留嵌套时删除该成员的 placementRelation。不要为了修参数删掉建筑组或换算法。",
                 "ATTACHED 景观：提供 owner.groupId，instanceCount=1，省略 placementDomain；多块景观用所选 profile 允许范围内的 parcelCount。",
-                "提交前核对上述参数规则；地形与碰撞由程序处理；有效初版自动推进，不局部重试。")) rules.add(rule);
+                "提交前核对上述参数规则；地形与碰撞由程序处理；初次编译自动推进；已保存区仍可重新选材、调整并再编译。")) rules.add(rule);
         result.add("beforeSubmit",rules);
         result.addProperty("acceptanceInstruction", acceptanceInstruction()); return result;
     }
@@ -70,7 +68,7 @@ final class CityD4SubmissionGuidance {
                             }
                         }
                     }
-                    if(!active) issue.addProperty("repairAction","这是已保存区的错误，保留该区并报告宿主；不要重做有效初版。");
+                    if(!active) issue.addProperty("repairAction","这是已保存区的错误；使用 targetDistrictId 定向修订，保留其他区。");
                     break;
                 }
             } else if(path.equals("$.outdoorPlan.foundationGroupIds")) {

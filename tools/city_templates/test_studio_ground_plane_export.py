@@ -43,7 +43,7 @@ class GroundPlaneExportTests(unittest.TestCase):
                 asset.mkdir(parents=True)
                 (asset / 'structure.nbt').write_bytes(b'isolated fake NBT for codec stub')
                 author = dict(id=key, name=key, size=[4,20,5], nbt_sha256='test-source',
-                    civilization='沙漠', planning_role='planning_role.key', function_terms=['市集'],
+                    civilization='沙漠', planning_role='planning_role.key', function_terms=['市集'],asset_tags=['infrastructure'],
                     preview_context=dict(kind='flat', land_surface_y=17),
                     points=[dict(id='front', kind='entrance', pos=[2,3,0], facing='north')])
                 if y is not None:
@@ -78,6 +78,10 @@ class GroundPlaneExportTests(unittest.TestCase):
                     patch.object(exporter.subprocess, 'run', side_effect=codec) as run, \
                     patch.object(exporter, 'export_core_atlas'), redirect_stdout(output):
                 exporter.build(args)
+                profiles=[exporter.json.loads(line) for line in (args.output/'StructureProfile.jsonl').read_text().splitlines()]
+                self.assertTrue(all(p['category']=='common' and p['assetTags']==['infrastructure'] for p in profiles))
+                pools=exporter.read(args.output/'blueprint_reference_catalog.json')['fillPools']
+                self.assertEqual(4,len(pools[0]['structureRefs']), 'Old key author roles remain selectable in explicit city fill pools')
                 provenance = exporter.read(args.output/'studio_export_provenance.json')
                 catalog = exporter.read(args.output/'template_catalog.json')['templates']
                 portable_codec = exporter.read(args.output/'codec_input.json')

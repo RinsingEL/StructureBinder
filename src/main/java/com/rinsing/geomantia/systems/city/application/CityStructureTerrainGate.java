@@ -25,12 +25,17 @@ final class CityStructureTerrainGate {
     private final Map<CellKey, LandUseTerrainField.Cell> cells;
     private final Map<String, List<CityStructureTerrainMode>> modesByStructure;
     private final Set<String> engineeredGroups;
+    private final boolean designLayout;
 
     CityStructureTerrainGate(LandUseTerrainField terrainField, JsonObject semanticCatalog) {
         this(terrainField, semanticCatalog, Set.of());
     }
 
     CityStructureTerrainGate(LandUseTerrainField terrainField, JsonObject semanticCatalog, Set<String> engineeredGroups) {
+        this(terrainField,semanticCatalog,engineeredGroups,false);
+    }
+    CityStructureTerrainGate(LandUseTerrainField terrainField, JsonObject semanticCatalog, Set<String> engineeredGroups, boolean designLayout) {
+        this.designLayout=designLayout;
         this.engineeredGroups = Set.copyOf(engineeredGroups);
         this.terrainField = terrainField;
         Map<CellKey, LandUseTerrainField.Cell> indexed = new LinkedHashMap<>();
@@ -59,7 +64,26 @@ final class CityStructureTerrainGate {
     }
 
     Evaluation evaluate(String structureRef, BlockBounds footprint, CityBlueprint.TerrainPolicy terrainPolicy, String groupId) {
-        return evaluate(structureRef, footprint, terrainPolicy, engineeredGroups.contains(groupId));
+        Evaluation result=evaluate(structureRef, footprint, terrainPolicy, engineeredGroups.contains(groupId));
+        JsonObject trace=result.trace().deepCopy();
+        // Ordinary relief and sampled shallow water are generation needs, not planar collisions.
+        // Unknown cells, unsupported authored topology, deep water and extreme terrain remain hard failures.
+        boolean deferred=designLayout&&!result.passed()&&trace.has("hardTerrainFailure")
+                &&!trace.get("hardTerrainFailure").getAsBoolean();
+        if(deferred) {
+            JsonArray adaptations=trace.getAsJsonArray("terrainAdaptations");
+            JsonObject requirement=new JsonObject();requirement.addProperty("reasonCode",result.reasonCode());
+            requirement.addProperty("action","preserve_design_and_resolve_terrain_before_generation");adaptations.add(requirement);
+            trace.addProperty("status","passed");trace.addProperty("terrainAdaptationRequired",true);
+            trace.addProperty("terrainAdaptationPolicy","D4_LAYOUT_WITH_DEFERRED_REALIZATION");
+            trace.addProperty("generationReady",false);trace.addProperty("reasonCode","");
+            return new Evaluation(true,"","SURFACE",trace);
+        }
+        if(designLayout&&trace.has("terrainAdaptationRequired")&&trace.get("terrainAdaptationRequired").getAsBoolean()) {
+            trace.addProperty("generationReady",false);
+            trace.addProperty("terrainAdaptationPolicy","D4_LAYOUT_WITH_DEFERRED_REALIZATION");
+        }
+        return new Evaluation(result.passed(),result.reasonCode(),result.resolvedTerrainMode(),trace);
     }
 
     Evaluation evaluate(String structureRef, BlockBounds footprint, CityBlueprint.TerrainPolicy terrainPolicy, boolean engineered) {

@@ -15,6 +15,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityStructureTerrainGateTest {
     @Test
+    void newDistrictLayoutDefersOrdinaryRiverButKeepsHardTerrainFailures() {
+        var bounds=new BlockBounds(0,0,31,31);
+        for(String kind:List.of("river","deep","unsampled")) {
+            var cells=new java.util.ArrayList<LandUseTerrainField.Cell>();
+            for(int z=0;z<2;z++)for(int x=0;x<2;x++)cells.add(new LandUseTerrainField.Cell(x,z,x*16,z*16,16,70,1,1,1,x==0,kind.equals("deep")?30:2,10,"minecraft:plains",x==0?"river":"plain","patch",!kind.equals("unsampled")));
+            var field=new LandUseTerrainField(LandUseTerrainField.SCHEMA,"test",bounds,16,cells);
+            var result=new CityStructureTerrainGate(field,catalog("SURFACE"),java.util.Set.of(),true).evaluate("test:house",bounds,CityBlueprint.TerrainPolicy.BALANCED,"area");
+            if(kind.equals("river")) {
+                assertTrue(result.passed(),result.trace().toString());assertFalse(result.trace().get("generationReady").getAsBoolean());
+                assertEquals("D4_LAYOUT_WITH_DEFERRED_REALIZATION",result.trace().get("terrainAdaptationPolicy").getAsString());
+                assertTrue(result.trace().get("terrainAdaptationRequired").getAsBoolean());
+            } else assertFalse(result.passed(),kind);
+        }
+    }
+
+    @Test
     void adjacentShallowPondCellsAreAdmittedBelowAreaBudget() {
         var result = evaluateGrid((x, z) -> x >= 5 && x < 10 && z >= 5 && z < 13 ? "pond" : "plain",
                 new BlockBounds(0, 0, 319, 319));

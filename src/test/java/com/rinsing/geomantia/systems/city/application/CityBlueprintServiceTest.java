@@ -113,6 +113,8 @@ class CityBlueprintServiceTest {
         JsonArray districts=new JsonArray();districts.add(district);
         JsonObject overview=new JsonObject();overview.add("citySettings",settings);overview.add("districts",districts);
         JsonObject q=new JsonObject();q.addProperty("d4Tool","city_d4_overview");q.addProperty("workflowRevision",0);q.add("overview",overview);
+        settings.add("surfaceMaterials",JsonParser.parseString("{defaults:{ground:'minecraft:stone',roadSurface:'minecraft:stone_brick_slab'}}"));
+        q.add("designAnswers",JsonParser.parseString("{styles:['style.wood_stone'],roadProfileRef:'road:town',ground:'minecraft:stone',roadSurface:'minecraft:stone_brick_slab',groundTreatment:'GENERATE'}"));
         var response=service.submitDesign(temporary,f.runId(),f.cityId(),contextId,q);
         assertTrue(response.get("ok").getAsBoolean(),response.toString());
         assertEquals(1, prepared.getAsJsonObject("cityBlueprintContext").getAsJsonObject("materialCatalog").get("matchedCount").getAsInt());
@@ -133,6 +135,10 @@ class CityBlueprintServiceTest {
         JsonObject body=new JsonObject();for(String key:List.of("groups","arrayCompositions","relations")) body.add(key,b.get(key).deepCopy());
         for(String key:List.of("foundationGroupIds","landscapes")) body.add(key,b.getAsJsonObject("outdoorPlan").get(key).deepCopy());
         q=new JsonObject();q.addProperty("d4Tool","city_d4_district");q.add("workflowRevision",response.getAsJsonObject("d4Workflow").get("revision"));q.add("districtDesign",body);
+        body.add("foundationGroupIds",new JsonArray());
+        JsonObject firstGroup=body.getAsJsonArray("groups").get(0).getAsJsonObject();
+        JsonObject core=new JsonObject();core.add("groupId",firstGroup.get("groupId"));core.add("structureRef",firstGroup.getAsJsonArray("requiredStructureRefs").get(0));body.add("core",core);
+        JsonObject answer=JsonParser.parseString("{styles:['style.wood_stone'],ground:'minecraft:stone',roadSurface:'minecraft:stone_brick_slab',foundation:false,noFoundationReason:'empty fixture',roadConnected:true}").getAsJsonObject();answer.add("groupId",firstGroup.get("groupId"));JsonArray answers=new JsonArray();answers.add(answer);q.add("designAnswers",answers);
         var preview=service.submitDesign(temporary,f.runId(),f.cityId(),contextId,q);
         assertTrue(preview.get("ok").getAsBoolean(),preview.toString());assertTrue(preview.has("revisionEvidence"),preview.toString());
         assertTrue(preview.get("initialDistrictEmpty").getAsBoolean());
@@ -468,7 +474,7 @@ class CityBlueprintServiceTest {
     private static CityBlueprintService validationService() {
         return new CityBlueprintService((root, run, city, proposal, draftOnly) ->
                 CityBlueprintCompilerService.CompilationResult.compiled(new JsonObject(), new JsonObject(),
-                        new JsonObject(), new JsonObject(), new JsonObject(), new JsonObject()));
+                        new JsonObject(), new JsonObject(), new JsonObject(), new JsonObject()),new CityHeadlessMaterialRegistry());
     }
     @Test
     void authorRecoveryArchivesAcceptedDesignAndCarriesBudgetWithoutReset() throws Exception {

@@ -17,7 +17,20 @@ public record CityBlueprint(
         ProfileRef roadProfile,
         ProfileRef surfaceDetailProfile,
         OutdoorPlan outdoorPlan,
-        CitySurfaceMaterials surfaceMaterials) {
+        CitySurfaceMaterials surfaceMaterials, List<DistrictDesign> districtDesigns) {
+
+    public CityBlueprint(String schema, String cityId, ArtifactRef sourceD3Ref, ArtifactRef catalogSnapshotRef,
+            long generationSeed, DesignIntent designIntent, ProfileRef styleProfile, List<Group> groups,
+            List<ArrayComposition> arrayCompositions, List<Relation> relations, ProfileRef roadProfile,
+            ProfileRef surfaceDetailProfile, OutdoorPlan outdoorPlan, CitySurfaceMaterials surfaceMaterials) {
+        this(schema,cityId,sourceD3Ref,catalogSnapshotRef,generationSeed,designIntent,styleProfile,groups,
+                arrayCompositions,relations,roadProfile,surfaceDetailProfile,outdoorPlan,surfaceMaterials,List.of());
+    }
+
+    /** City-specific roles, independent of authored material classification and scheduling priority. */
+    public record DistrictDesign(String districtId, String coreGroupId, String coreStructureRef, List<String> groupIds) {
+        public DistrictDesign { groupIds = List.copyOf(groupIds); }
+    }
 
     public CityBlueprint(String schema, String cityId, ArtifactRef sourceD3Ref, ArtifactRef catalogSnapshotRef,
             long generationSeed, DesignIntent designIntent, ProfileRef styleProfile, List<Group> groups,
@@ -30,6 +43,7 @@ public record CityBlueprint(
     public static final String SCHEMA = "city_blueprint";
 
     public CityBlueprint {
+        districtDesigns = districtDesigns == null ? List.of() : List.copyOf(districtDesigns);
         surfaceMaterials = surfaceMaterials == null ? CitySurfaceMaterials.empty() : surfaceMaterials;
         groups = List.copyOf(groups);
         arrayCompositions = List.copyOf(arrayCompositions);

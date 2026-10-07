@@ -1,3 +1,1 @@
-根据地形、素材和城市要求，用 city_d4_overview 提交城市意图、功能区和全城设置。选风格前读取 environmentStyleGuidance、实际 biomeSummary 和已有 siteReviewDecision；把环境相容依据及需要调整的建筑表达简述于既有 designIntent，落实到 styleProfile 与 designAnswers.styles。总览可用 districtDisposition 预标主体/独立区；初版完成后看实际总览再确认。普通功能区默认同一城市主体；独立仅限边防哨塔、边缘矿区、郊区工业区等职责本身适合独立的外围区，必须说明理由。不能因设计困难或距离远而改标独立。总览不放建筑阵列或景观，选材按需查询。
-
-景观归属于功能区，建筑只可作为位置参考；建筑未落位、后续填充或被挤占，不影响已冻结景观的存在。新设计 owner 只填 groupId，优先用 growth 明确景观自己的起点、范围和地形偏好。不得把景观当作远处随意撒下的斑块：在功能区 intent 中说明服务对象、选址理由和可达方式。农田/牧场考虑生产通道及邻近聚落，林场考虑作业入口和运输关系，公共花园融入公共建筑与步行空间。无需每块地强制造路；确需道路时表达真实目的地之间的 CONNECTION，不能声称没有设计的道路已经存在。
+继承 Context.cityDesignHandoff.savedCityDesign（第二题保存的名称、定位、功能、玩家活动、分项风格），结合 D3 地图、environmentStyleGuidance 与 siteReviewDecision 简短确认一句设计方向，不重新长篇构思城市。用 city_d4_overview 复用全城风格、道路、地表与景观设置，districts 按主次排列。选材按区查询，不必一次挑完所有素材。同类小区可相邻组成大区域，无需共同核心或巨型阵列。

@@ -28,7 +28,7 @@ final class CityD4LayoutPolicy {
         object(after,"bodies").entrySet().forEach(e->{for(var g:array(e.getValue().getAsJsonObject(),"groups")) {
             String id=text(g.getAsJsonObject(),"groupId");owners.addProperty(id,e.getKey());
             if(e.getKey().equals(owner)&&!(outward&&oldOwnerGroups.contains(id)))edited.add(id);
-            else if(e.getKey().equals(owner)||!expansion||protectedDistricts.contains(e.getKey()))protectedIds.add(id);
+            else if(e.getKey().equals(owner)||!expansion||(after.has("protocolVersion")&&after.get("protocolVersion").getAsInt()>=3)||protectedDistricts.contains(e.getKey()))protectedIds.add(id);
         }});
         for(var g:array(object(after,"integrationDesign"),"groups")){String id=text(g.getAsJsonObject(),"groupId");owners.addProperty(id,"legacy_integration");protectedIds.add(id);}
         result.add("editedGroups",edited);result.add("protectedGroups",protectedIds);result.add("districtByGroup",owners);

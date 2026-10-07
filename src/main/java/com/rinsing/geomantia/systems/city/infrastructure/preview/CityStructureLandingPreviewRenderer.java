@@ -2437,11 +2437,11 @@ public final class CityStructureLandingPreviewRenderer {
 
     private static BlockBounds gridBounds(JsonObject obj) {
         JsonObject grid = object(obj, "grid");
-        if (grid == null) {
+        if (grid.size() == 0) {
             return new BlockBounds(0, 0, 256, 256);
         }
         JsonObject blockBounds = object(grid, "blockBounds");
-        if (blockBounds != null) {
+        if (blockBounds.size() > 0) {
             return bounds(blockBounds);
         }
         int minX = intValue(grid, "originBlockX", 0);

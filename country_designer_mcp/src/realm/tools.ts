@@ -1165,7 +1165,9 @@ const originalRealmTools: ToolDefinition[] = [
         materialSelections: { type: "array", minItems: 1, items: strictObject({
           groupId: nonEmptyString("已提交意图 ID。"), query: { type: "string", description: "搜索作者元数据；可以按多个功能区批量搜索。" },
           filters: strictObject({
-            roles: { type: "array", items: { type: "string", enum: ["core", "fill", "structure", "self_contained", "unknown"] }, description: "任一角色匹配；core 包含 key/anchor。" },
+            categories: {type:"array",items:{type:"string",enum:["specialty","common"]},description:"素材特色/通用，不决定本次核心。"},
+            assetTags: {type:"array",items:{type:"string",enum:["infrastructure","landscape"]},description:"作者基建/景观标签，全部匹配。"},
+            roles: { type: "array", items: { type: "string", enum: ["core", "fill", "structure", "self_contained", "unknown"] }, description: "旧作者角色，仅辅助检索。" },
             functionIds: { type: "array", items: { type: "string" }, description: "共享功能树 ID，先空筛选查看 facets.functions；子功能匹配父级，父级不推导子级。" },
             functionMode: { type: "string", enum: ["all", "any"], description: "功能间默认 all；仅作用于 functionIds，其他维度仍取交集。" },
             styles: { type: "array", items: { type: "string" }, description: "任一风格精确匹配；风格不限定种族。" },
@@ -1540,6 +1542,11 @@ export const realmTools: ToolDefinition[] = [
       for (const key of ["foundationGroupIds", "landscapes"]) fragment[key] = structuredClone(bp.outdoorPlan.properties[key]);
       delete fragment.surfaceMaterials.properties.defaults;
       const update=name!=="city_d4_district";
+      if(!update) {
+        fragment.core=strictObject({groupId:nonEmptyString("核心所属阵列组"),structureRef:nonEmptyString("唯一核心，必须列入该组 requiredStructureRefs")});
+        properties.targetDistrictId=nonEmptyString("修订已保存区；省略时初次设计 currentDistrict。");
+        properties.baseDraftHash=nonEmptyString("修订时使用当前预览 hash。");properties.assessment=nonEmptyString("修订依据当前局部与全城预览。");
+      }
       if(update) {
         for(const [key,id] of [["groups","groupId"],["arrayCompositions","compositionId"],["landscapes","landscapeId"]]) {
           delete fragment[key].minItems;delete fragment[key].oneOf;
@@ -1548,7 +1555,7 @@ export const realmTools: ToolDefinition[] = [
         }
         for(const key of ["removeGroupIds","removeCompositionIds","removeLandscapeIds"]) fragment[key]={type:"array",items:nonEmptyString("明确删除的 ID。")};
       }
-      const key=update?"changes":"districtDesign";properties[key]=strictObject(fragment,update?[]:["groups"]);required.push(key);
+      const key=update?"changes":"districtDesign";properties[key]=strictObject(fragment,update?[]:["groups","core"]);required.push(key);
       if(update) properties[key].description="按 ID 合并，未提供字段保留；扩张不允许删除设计对象。relations 与 foundationGroupIds 提供时替换本设计内清单；新增对象需完整配置；已有组只允许 groupId、structureCount、densityClass、algorithmProfileRef、connectionPlan，改嵌套时可用 clearFields 清除 placementRelation。";
       if(name==="city_d4_integrate") {
         for(const field of ["landscapes","surfaceMaterials","removeGroupIds","removeCompositionIds","removeLandscapeIds"])delete fragment[field];
@@ -1573,8 +1580,8 @@ export const realmTools: ToolDefinition[] = [
       properties[key]=key==="designExample"?strictObject({caseId:nonEmptyString("案例 ID。"),reloadImages:{type:"boolean"}},["caseId"]):oldProperties[key];required.push(key);
     }
     return {name,description: name === "city_d4_materials"
-      ? "按 roles、functionIds、styles、rawFunctionTerms 联合选材。先看核心/填充，再结合功能区用途、子功能数量与城市设定，可一次组合多条件。facets 是应用全部条件后的完整匹配集计数，按 structureRef 去重、不受分页影响；切换条件须移除旧条件。functions.parent 表示层级，directCount 表示直接标注映射数量；宽泛父标签不能证明子功能，空结果可退回父层或原始标签查看。风格不限定种族，分类和推荐情境不授予地形可行性。limit=0 只看统计；确认素材时单独提交 structureRefs/fillPoolRefs，不带 filters/limit/offset。"
-      : "D4 一次初版后自动推进；总览标记、受控扩张、最终提交。AI 判断整体性，允许隔河，不要求相连或固定距离；挤占不能破坏其他区功能。",inputSchema:{type:"object",additionalProperties:false,properties,required}} as ToolDefinition;
+      ? "按 roles、functionIds、styles、rawFunctionTerms 联合选材。素材 categories（特色/通用）和 assetTags（基建/景观）与风格、功能独立。本区核心/必需/填充由设计决定；结合功能区用途、子功能数量与城市设定，可一次组合多条件。facets 是应用全部条件后的完整匹配集计数，按 structureRef 去重、不受分页影响；切换条件须移除旧条件。functions.parent 表示层级，directCount 表示直接标注映射数量；宽泛父标签不能证明子功能，空结果可退回父层或原始标签查看。风格不限定种族，分类和推荐情境不授予地形可行性。limit=0 只看统计；确认素材时单独提交 structureRefs/fillPoolRefs，不带 filters/limit/offset。"
+      : "D4 逐区选材、一个核心与必需/填充角色、正式编译、局部和全城预览。带 targetDistrictId、当前 hash 与 assessment 重交该区完整设计，保留其他区；全城满意后提交。AI 判断整体性，允许隔河，不要求相连或固定距离；挤占不能破坏其他区功能。",inputSchema:{type:"object",additionalProperties:false,properties,required}} as ToolDefinition;
   })
 ];
 

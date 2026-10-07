@@ -167,7 +167,7 @@ public final class CityBlueprintCompilerService {
         Set<String> engineeredGroups = blueprint.outdoorPlan().mode() == CityBlueprint.OutdoorMode.GENERATE
                 ? blueprint.outdoorPlan().foundationGroupIds().stream()
                     .collect(java.util.stream.Collectors.toSet()) : Set.of();
-        CityStructureTerrainGate terrainGate = new CityStructureTerrainGate(terrainField, semanticCatalogJson, engineeredGroups);
+        CityStructureTerrainGate terrainGate = new CityStructureTerrainGate(terrainField, semanticCatalogJson, engineeredGroups, !blueprint.districtDesigns().isEmpty());
         CityBlueprint.ArtifactRef expectedD3 = artifactRef(requiredObject(context, "sourceD3Ref"));
         CityBlueprint.ArtifactRef expectedCatalog = artifactRef(requiredObject(context, "catalogSnapshotRef"));
         CityBlueprintValidator.ValidationResult revalidation = validator.validate(blueprint,
@@ -202,7 +202,7 @@ public final class CityBlueprintCompilerService {
         JsonObject structureSource = requiredObject(requiredObject(snapshot, "structureCatalog"), "source");
         candidateMemo = new CityCandidateMemo(blueprintPath.getParent().resolve("candidate_checkpoints_v1"), contextId);
         CatalogIndex catalog = CatalogIndex.parse(requiredObject(snapshot, "referenceCatalog"),
-                semanticCatalogJson);
+                semanticCatalogJson, blueprint);
         Map<String, LandformPatchSummary> patches = new LinkedHashMap<>();
         review.landformPatches().forEach(patch -> patches.put(patch.landformPatchId(), patch));
         List<CityBlueprint.Group> groups = orderGroups(blueprint.groups(),
@@ -589,7 +589,7 @@ public final class CityBlueprintCompilerService {
             String selected = null;
             for (String pool : CityWeightedPoolSelection.order(CityWeightedPoolSelection.fill(group), seed,
                     group.groupId() + ":planned", ordinal)) {
-                selected = CityFillSelection.choose(catalog.pool(pool), counts, Set.of(), catalog.poolCap(pool), copies, ordinal);
+                selected = CityFillSelection.choose(catalog.pool(pool), counts, catalog.explicitCityRoles()?Set.copyOf(group.requiredStructureRefs()):Set.of(), catalog.poolCap(pool), copies, ordinal);
                 if (selected != null) break;
             }
             if (selected == null) break;
@@ -676,8 +676,9 @@ public final class CityBlueprintCompilerService {
             group.addProperty("retainedBuildingCount", state.anchorCount());
             group.addProperty("nested", nested.contains(state.group().groupId()));
             group.addProperty("empty", state.anchorCount() == 0);
-            boolean core = state.group().priority().name().equals("CORE")
-                    || state.structureCounts.keySet().stream().anyMatch(catalog::primaryStructure);
+            boolean core = !blueprint.districtDesigns().isEmpty()
+                    ? blueprint.districtDesigns().stream().anyMatch(d->d.coreGroupId().equals(state.group().groupId()))
+                    : state.group().priority().name().equals("CORE") || state.structureCounts.keySet().stream().anyMatch(catalog::primaryStructure);
             Set<String> related = new LinkedHashSet<>();
             related.add(state.group().groupId());
             boolean changed;
@@ -1799,11 +1800,16 @@ public final class CityBlueprintCompilerService {
                 .distinct().toList();
     }
 
+    private static Set<String> fillBlockedRefs(GroupState state,CatalogIndex catalog) {
+        Set<String> result=new LinkedHashSet<>(state.blockedRefs());
+        if(catalog.explicitCityRoles()) result.addAll(state.group().requiredStructureRefs());
+        return result;
+    }
     private static String chooseFillStructure(CityBlueprint blueprint, GroupState state, CatalogIndex catalog,
                                               int copies, int ordinal) {
         for (String pool : CityWeightedPoolSelection.order(CityWeightedPoolSelection.fill(state.group()),
                 blueprint.generationSeed(), state.group().groupId() + ":initial", ordinal)) {
-            String ref = CityFillSelection.choose(catalog.pool(pool), state.structureCounts, state.blockedRefs(),
+            String ref = CityFillSelection.choose(catalog.pool(pool), state.structureCounts, fillBlockedRefs(state,catalog),
                     catalog.poolCap(pool), copies, ordinal);
             if (ref != null) return ref;
         }
@@ -1977,7 +1983,7 @@ public final class CityBlueprintCompilerService {
     private static List<String> orderedRequiredStructureRefs(CityBlueprint.Group group,
                                                               CatalogIndex catalog) {
         List<String> result = new ArrayList<>(group.requiredStructureRefs());
-        result.sort(Comparator.comparingInt(ref -> catalog.primaryStructure(ref) ? 0 : 1));
+        if(!catalog.explicitCityRoles()) result.sort(Comparator.comparingInt(ref -> catalog.primaryStructure(ref) ? 0 : 1));
         return List.copyOf(result);
     }
 
@@ -5797,8 +5803,8 @@ public final class CityBlueprintCompilerService {
                                 Set<String> primaryStructures,
                                 Set<String> completeStructures,
                                 Map<String, GreenCapability> greenCapabilities,
-                                Map<String, Integer> foundationMargins) {
-        static CatalogIndex parse(JsonObject root, JsonObject semanticCatalog) {
+                                Map<String, Integer> foundationMargins, boolean explicitCityRoles) {
+        static CatalogIndex parse(JsonObject root, JsonObject semanticCatalog, CityBlueprint blueprint) {
             Map<String, List<TemplateCandidate>> structures = new LinkedHashMap<>();
             Map<String, GreenCapability> greenCapabilities = new LinkedHashMap<>();
             for (JsonElement element : array(root, "structureRefs")) {
@@ -5853,7 +5859,11 @@ public final class CityBlueprintCompilerService {
                 }
                 if (primary) primaryStructures.add(string(profile, "semanticProfileId"));
             }
-            pools.replaceAll((ref, values) -> values.stream().filter(candidate -> !explicitOnlyStructures.contains(candidate)).toList());
+            boolean explicitCityRoles = !blueprint.districtDesigns().isEmpty();
+            if(explicitCityRoles) {
+                primaryStructures.clear();
+                blueprint.districtDesigns().forEach(d->primaryStructures.add(d.coreStructureRef()));
+            } else pools.replaceAll((ref, values) -> values.stream().filter(candidate -> !explicitOnlyStructures.contains(candidate)).toList());
             Map<String, Integer> foundationMargins = new LinkedHashMap<>();
             for (JsonElement element : array(root, "foundationProfiles")) {
                 JsonObject item = element.getAsJsonObject();
@@ -5863,7 +5873,7 @@ public final class CityBlueprintCompilerService {
             return new CatalogIndex(Map.copyOf(structures), Map.copyOf(pools), Map.copyOf(poolCaps), Map.copyOf(algorithms),
                     Map.copyOf(centerAxisStreets), Set.copyOf(compositions),
                     Set.copyOf(primaryStructures), Set.copyOf(completeStructures), Map.copyOf(greenCapabilities),
-                    Map.copyOf(foundationMargins));
+                    Map.copyOf(foundationMargins), explicitCityRoles);
         }
         int poolCap(String ref) { return poolCaps.getOrDefault(ref, 0); }
         List<TemplateCandidate> templates(String ref) {
@@ -5874,6 +5884,7 @@ public final class CityBlueprintCompilerService {
         List<String> pool(String ref) {
             List<String> value = pools.get(ref);
             if (value == null) throw fail("CITY_BLUEPRINT_FILL_POOL_UNKNOWN", ref);
+            if(explicitCityRoles) return value;
             return value.stream().filter(candidate -> !primaryStructures.contains(candidate)
                     && !completeStructures.contains(candidate)).toList();
         }

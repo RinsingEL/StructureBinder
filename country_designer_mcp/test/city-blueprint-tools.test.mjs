@@ -6,7 +6,7 @@ import { realmTools, blueprintReferenceCatalogSchema, cityBlueprintSchema } from
 test("formal material tool exposes hierarchical filters, counts-only and pagination", () => {
   const tool = realmTools.find(t => t.name === "city_d4_materials");
   const fields = tool.inputSchema.properties.materialSelections.items.properties;
-  assert.deepEqual(Object.keys(fields.filters.properties), ["roles", "functionIds", "functionMode", "styles", "rawFunctionTerms"]);
+  assert.deepEqual(Object.keys(fields.filters.properties), ["categories", "assetTags", "roles", "functionIds", "functionMode", "styles", "rawFunctionTerms"]);
   assert.deepEqual(fields.filters.required, []);
   assert.equal(fields.filters.additionalProperties, false);
   assert.deepEqual(fields.filters.properties.functionMode.enum, ["all", "any"]);

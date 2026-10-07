@@ -30,6 +30,9 @@ public final class CityMaterialSupport {
         return result;
     }
     public static void validate(CityBlueprint blueprint,CityBlueprintReferenceCatalog catalog) {
+        validate(blueprint,catalog,null);
+    }
+    static void validate(CityBlueprint blueprint,CityBlueprintReferenceCatalog catalog,CityBlockMaterials.Registry registry) {
         var materials=blueprint.surfaceMaterials();
         Set<String> groupIds=new HashSet<>();blueprint.groups().forEach(g->groupIds.add(g.groupId()));
         for(String group:materials.groups().keySet())if(!groupIds.contains(group))throw new IllegalArgumentException("surfaceMaterials.groups."+group+": group does not exist; use an existing groupId");
@@ -44,10 +47,13 @@ public final class CityMaterialSupport {
             var allowed=landscapeSlots(catalog.surfaceRecipes().get(profile.surfaceRecipeRef()));
             for(String slot:slots.keySet())if(!allowed.containsKey(slot))throw new IllegalArgumentException("surfaceMaterials.landscapes."+id+"."+slot+": this landscape cannot replace that content; available="+allowed.keySet());
         });
-        check(materials.defaults(),"defaults");materials.groups().forEach((id,m)->check(m,"groups."+id));
-        materials.roads().forEach((id,m)->check(m,"roads."+id));materials.landscapes().forEach((id,m)->check(m,"landscapes."+id));
+        check(materials.defaults(),"defaults",registry);materials.groups().forEach((id,m)->check(m,"groups."+id,registry));
+        materials.roads().forEach((id,m)->check(m,"roads."+id,registry));materials.landscapes().forEach((id,m)->check(m,"landscapes."+id,registry));
     }
-    private static void check(Map<String,String> slots,String path){slots.forEach((slot,id)->CityBlockMaterials.validateBlock(id,slot,"surfaceMaterials."+path+"."+slot));}
+    private static void check(Map<String,String> slots,String path,CityBlockMaterials.Registry registry){slots.forEach((slot,id)->{
+        if(registry==null) CityBlockMaterials.validateBlock(id,slot,"surfaceMaterials."+path+"."+slot);
+        else CityBlockMaterials.validateBlock(id,slot,"surfaceMaterials."+path+"."+slot,registry);
+    });}
     public static LandUseSurfaceSettings landscapeSettings(LandUseSurfaceSettings s,Map<String,String> overrides){
         if(overrides==null||overrides.isEmpty())return s;
         return new LandUseSurfaceSettings(s.surfacePrintEnabled(),s.autoConnect(),overrides.getOrDefault("surfaceBlockId",s.surfaceBlockId()),

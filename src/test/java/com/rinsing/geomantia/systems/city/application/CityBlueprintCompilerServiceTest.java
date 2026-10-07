@@ -31,6 +31,101 @@ class CityBlueprintCompilerServiceTest {
     Path temporary;
 
     @Test
+    void functionalAreaLoopUsesRealCompilerAndPreservesOtherDistrict() throws Exception {
+        Path evidence=Path.of("build/reports/d4-functional-area-loop").toAbsolutePath();
+        Files.createDirectories(evidence);
+        var fixture=acceptedFixture("functional_loop","city:functional_loop",12,12,"SMALL",
+                d3->{}, f->{}, refs->{
+                    refs.getAsJsonArray("fillPools").get(0).getAsJsonObject().add("structureRefs",
+                            JsonParser.parseString("['geomantia:civic_support','geomantia:terrain_house']"));
+                },bp->{});
+        Path source=fixture.runDir().resolve("structure_debug_catalog.json");
+        JsonObject profiles=JsonParser.parseString(Files.readString(source)).getAsJsonObject();
+        for(var e:profiles.getAsJsonArray("structures")) {
+            JsonObject profile=e.getAsJsonObject();profile.addProperty("category","common");
+            profile.add("assetTags",JsonParser.parseString("['infrastructure']"));
+            // Deliberately non-fill author roles: the city still chooses optional material explicitly.
+            profile.add("planningRoleTerms",JsonParser.parseString("['planning_role.structure']"));
+        }
+        Files.writeString(source,profiles.toString());
+        Path dir=fixture.runDir().resolve("city_blueprint_"+safe(fixture.cityId()));
+        JsonObject oldContext=JsonParser.parseString(Files.readString(dir.resolve("city_blueprint_context.json"))).getAsJsonObject();
+        JsonObject templateSource=new JsonObject();templateSource.add("catalog",oldContext.getAsJsonObject("catalogSnapshot").get("templateCatalog"));
+        JsonObject references=oldContext.getAsJsonObject("catalogSnapshot").getAsJsonObject("referenceCatalog");
+        var service=new CityBlueprintService(new CityHeadlessMaterialRegistry());
+        JsonObject prepared=service.prepare(temporary,fixture.runId(),fixture.cityId(),JsonParser.parseString("{schema:'terrasense_structure_profile_source',sourceType:'debug_catalog',catalogMode:'debug',debugCatalogPath:'structure_debug_catalog.json'}").getAsJsonObject(),templateSource,references);
+        String contextId=prepared.get("contextId").getAsString();
+        JsonObject context=prepared.getAsJsonObject("cityBlueprintContext");
+        JsonObject blueprint=blueprint(context,"SMALL");
+        JsonObject settings=blueprint.deepCopy();
+        for(String key:List.of("schema","cityId","sourceD3Ref","catalogSnapshotRef","generationSeed","groups","arrayCompositions","relations"))settings.remove(key);
+        settings.getAsJsonObject("outdoorPlan").remove("foundationGroupIds");settings.getAsJsonObject("outdoorPlan").remove("landscapes");
+        settings.add("surfaceMaterials",JsonParser.parseString("{defaults:{ground:'minecraft:stone',roadSurface:'minecraft:stone_brick_slab'}}"));
+        JsonObject overview=new JsonObject();overview.add("citySettings",settings);
+        overview.add("districts",JsonParser.parseString("[{groupId:'admin',role:'administration',intent:'court and required support',preferredPatchRefs:['patch:plain:1']},{groupId:'residential',role:'residential',intent:'adjacent neighborhood',preferredPatchRefs:['patch:plain:1']}]"));
+        JsonObject request=new JsonObject();request.add("overview",overview);request.add("designAnswers",JsonParser.parseString("{styles:['style.test'],roadProfileRef:'road:town',ground:'minecraft:stone',roadSurface:'minecraft:stone_brick_slab',groundTreatment:'GENERATE'}"));
+        JsonObject overviewResult=loopCall(service,fixture,contextId,dir,"city_d4_overview",request,evidence,"01-overview");
+        assertTrue(overviewResult.get("ok").getAsBoolean(),overviewResult.toString());
+        request=JsonParser.parseString("{materialSelections:[{groupId:'admin',filters:{categories:['common'],assetTags:['infrastructure'],rawFunctionTerms:['administration']}}]}").getAsJsonObject();
+        JsonObject queried=loopCall(service,fixture,contextId,dir,"city_d4_materials",request,evidence,"02-material-query");
+        assertTrue(queried.get("ok").getAsBoolean(),queried.toString());
+        assertTrue(queried.toString().contains("geomantia:town_hall"));
+        JsonObject civic=blueprint.getAsJsonArray("groups").get(0).getAsJsonObject().deepCopy();
+        civic.addProperty("groupId","admin-array");civic.addProperty("structureCount",3);
+        civic.add("requiredStructureRefs",JsonParser.parseString("['geomantia:town_hall','geomantia:civic_support']"));
+        civic.getAsJsonObject("expansionPolicy").addProperty("allowRelationConnection",false);
+        request=districtRequest(civic,"geomantia:town_hall");
+        JsonObject first=loopCall(service,fixture,contextId,dir,"city_d4_district",request,evidence,"03-admin");
+        assertTrue(first.get("ok").getAsBoolean(),first.toString());
+        JsonObject housing=civic.deepCopy();housing.addProperty("groupId","housing-array");housing.addProperty("priority","STANDARD");housing.addProperty("role","residential");
+        housing.add("preferredPatchRefs",JsonParser.parseString("['patch:plain:1']"));housing.addProperty("preferredPatchZone","EAST");housing.add("requiredStructureRefs",JsonParser.parseString("['geomantia:terrain_house']"));
+        JsonObject second=loopCall(service,fixture,contextId,dir,"city_d4_district",districtRequest(housing,"geomantia:terrain_house"),evidence,"04-housing");
+        assertTrue(second.get("ok").getAsBoolean(),second.toString());
+        JsonObject before=CityBlueprintDraft.current(dir,contextId,fixture.cityId());
+        JsonArray oldOther=new JsonArray();for(var a:before.getAsJsonObject("compiledLayout").getAsJsonArray("anchors"))if(a.getAsJsonObject().get("placementGroupId").getAsString().equals("housing-array"))oldOther.add(a.deepCopy());
+        assertFalse(oldOther.isEmpty());
+        civic.addProperty("structureCount",4);
+        civic.add("requiredStructureRefs",JsonParser.parseString("['geomantia:town_hall','geomantia:terrain_house']"));
+        request=districtRequest(civic,"geomantia:town_hall");request.addProperty("targetDistrictId","admin");request.add("baseDraftHash",before.get("baseDraftHash"));request.addProperty("assessment","Test fixture: revise admin density while retaining the eastern residential group.");
+        JsonObject revised=loopCall(service,fixture,contextId,dir,"city_d4_district",request,evidence,"05-admin-revision");
+        assertTrue(revised.get("ok").getAsBoolean(),revised.toString());
+        JsonObject current=CityBlueprintDraft.current(dir,contextId,fixture.cityId());
+        Files.writeString(evidence.resolve("compiled-layout.json"),current.get("compiledLayout").toString());
+        Files.writeString(evidence.resolve("compiled-result.json"),current.get("compiledResult").toString());
+        assertFalse(before.get("baseDraftHash").equals(current.get("baseDraftHash")));
+        JsonArray newOther=new JsonArray();for(var a:current.getAsJsonObject("compiledLayout").getAsJsonArray("anchors"))if(a.getAsJsonObject().get("placementGroupId").getAsString().equals("housing-array"))newOther.add(a.deepCopy());
+        assertEquals(oldOther,newOther,"Local revision must preserve other district anchors exactly");
+        var roles=current.getAsJsonObject("previousBlueprint").getAsJsonArray("districtDesigns");assertEquals(2,roles.size());
+        JsonObject finish=new JsonObject();finish.add("baseDraftHash",current.get("baseDraftHash"));finish.addProperty("assessment","Automated fixture review: both compact groups retain cores and required buildings. Visual acceptance remains for later real play.");finish.addProperty("functionsPreserved",true);
+        JsonObject saved=loopCall(service,fixture,contextId,dir,"city_d4_finalize",finish,evidence,"06-final");
+        assertTrue(saved.get("ok").getAsBoolean(),saved.toString());
+        assertFalse(saved.getAsJsonObject("generationHandoff").get("requiredContentMissing").getAsBoolean());
+        JsonObject accepted=JsonParser.parseString(Files.readString(dir.resolve("city_blueprint.json"))).getAsJsonObject();
+        assertEquals(current.get("previousBlueprint"),accepted);
+        assertEquals("COMPLETE",CityD4Workflow.status(dir,contextId).get("stage").getAsString());
+        Files.writeString(evidence.resolve("README.md"),"# 明确标注的自动化测试样本\n合成 D3、作者目录与模板；调用正式 CityBlueprintService / CityBlueprintCompilerService。不是游戏内验收。逐轮输入输出、局部与全城预览、最终保存见此目录。\n");
+        for(Path input:List.of(source,dir.resolve("city_blueprint_context.json"),dir.resolve("city_blueprint_catalog_snapshot.json"),dir.resolve("city_blueprint.json"),dir.resolve("city_d4_workflow.json"),dir.resolve("city_d4_generation_handoff.json")))Files.copy(input,evidence.resolve(input.getFileName()),java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(fixture.runDir().resolve("city_d3_"+safe(fixture.cityId())+"/city_landform_review_package.json"),evidence.resolve("synthetic-d3.json"),java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(fixture.runDir().resolve("city_land_use_"+safe(fixture.cityId())+"/land_use_terrain_field.json"),evidence.resolve("land_use_terrain_field.json"),java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+    }
+    private JsonObject districtRequest(JsonObject group,String core) {
+        JsonObject body=new JsonObject();JsonArray groups=new JsonArray();groups.add(group);body.add("groups",groups);
+        JsonObject selected=new JsonObject();selected.add("groupId",group.get("groupId"));selected.addProperty("structureRef",core);body.add("core",selected);
+        JsonObject request=new JsonObject();request.add("districtDesign",body);
+        JsonObject answer=JsonParser.parseString("{roadConnected:false,isolatedReason:'test fixture separates districts without synthetic roads',foundation:false,noFoundationReason:'synthetic flat layout sample',ground:'minecraft:stone',roadSurface:'minecraft:stone_brick_slab',styles:['style.test']}").getAsJsonObject();answer.add("groupId",group.get("groupId"));JsonArray answers=new JsonArray();answers.add(answer);request.add("designAnswers",answers);return request;
+    }
+    private JsonObject loopCall(CityBlueprintService service,Fixture fixture,String contextId,Path dir,String tool,JsonObject request,Path evidence,String name) throws Exception {
+        request.addProperty("d4Tool",tool);request.add("workflowRevision",CityD4Workflow.status(dir,contextId).get("revision"));
+        Files.writeString(evidence.resolve(name+"-input.json"),request.toString());
+        JsonObject result=service.submitDesign(temporary,fixture.runId(),fixture.cityId(),contextId,request);
+        Files.writeString(evidence.resolve(name+"-output.json"),result.toString());
+        if(result.has("requestedPreviews"))for(var entry:result.getAsJsonObject("requestedPreviews").entrySet()) {
+            Path preview=Path.of(entry.getValue().getAsString());Files.copy(preview,evidence.resolve(name+"-"+entry.getKey()+".png"),java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        }
+        return result;
+    }
+
+    @Test
     void catalogGroundPlaneSurvivesBlueprintArrayPlacement() throws Exception {
         var fixture = acceptedFixture("ground_plane", "city:ground_plane", 18, 18, "MEDIUM",
                 CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid, field -> {}, catalog -> {},

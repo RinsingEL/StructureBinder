@@ -18,6 +18,23 @@ class CityStructureProfileCatalogTest {
     Path temporary;
 
     @Test
+    void materialClassificationSurvivesFreezeAndRejectsInvalidAuthorMetadata() throws Exception {
+        Path file=temporary.resolve("profile.jsonl");
+        JsonObject source=new JsonObject();source.addProperty("schema",CityStructureProfileCatalog.SOURCE_SCHEMA);
+        source.addProperty("sourceType","structure_profile_jsonl");source.addProperty("catalogMode","official");source.addProperty("profilePath",file.toString());
+        String profile="{structureId:'test:hall',reviewState:'approved',functionTerms:['administration'],planningRoleTerms:['planning_role.key'],terrainModes:['SURFACE'],styleTerms:['test'],category:'common',assetTags:['infrastructure']}";
+        Files.writeString(file,profile);
+        var frozen=CityStructureProfileCatalog.importCatalog(temporary,source).asJson().getAsJsonArray("semanticProfiles").get(0).getAsJsonObject();
+        assertEquals("common",frozen.get("category").getAsString());assertEquals("infrastructure",frozen.getAsJsonArray("assetTags").get(0).getAsString());
+        for(String invalid:List.of("['landscape','landscape']","'landscape'","['guessed']","[true]")) {
+            Files.writeString(file,profile.replace("['infrastructure']",invalid));
+            assertThrows(IllegalArgumentException.class,()->CityStructureProfileCatalog.importCatalog(temporary,source));
+        }
+        Files.writeString(file,profile.replace(",category:'common',assetTags:['infrastructure']",""));
+        var legacy=CityStructureProfileCatalog.importCatalog(temporary,source).profiles().get(0);
+        assertEquals("",legacy.category());assertTrue(legacy.assetTags().isEmpty());
+    }
+    @Test
     void officialCatalogExposesThreeTermAxesAndNormalizedTerrainModes() throws Exception {
         Path profilePath = temporary.resolve("StructureProfile.jsonl");
         Files.writeString(profilePath, """

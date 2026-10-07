@@ -10,9 +10,9 @@ class CityD4SubmissionGuidanceTest {
     @Test void tellsNextDistrictWhoAlreadyOwnsTheGlobalCore(){
         var guidance=CityD4SubmissionGuidance.describe(state());
         assertEquals("hall",guidance.getAsJsonArray("savedCoreOwners").get(0).getAsJsonObject().get("groupId").getAsString());
-        assertTrue(guidance.get("coreRule").getAsString().contains("已被其他区占用"));
+        assertTrue(guidance.get("coreRule").getAsString().contains("每区一个显式 core"));
         var first=state();first.addProperty("districtIndex",0);
-        assertFalse(CityD4SubmissionGuidance.describe(first).get("coreRule").getAsString().contains("已被其他区占用"));
+        assertTrue(CityD4SubmissionGuidance.describe(first).get("coreRule").getAsString().contains("每区一个显式 core"));
     }
     @Test void translatesMergedIndicesWithoutPointingAnEarlierDistrictAtCurrentInput(){
         var response=json("{validationReport:{issues:[{fieldPath:'$.groups[2].requiredStructureRefs'},{fieldPath:'$.groups[0].priority'},{fieldPath:'$.outdoorPlan.foundationGroupIds'}]}}");

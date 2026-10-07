@@ -124,6 +124,20 @@ public final class CityBlueprintValidator {
 
         java.util.Map<String, CityBlueprint.Group> groupsById = new HashMap<>();
         blueprint.groups().forEach(group -> groupsById.put(group.groupId(), group));
+        if (!blueprint.districtDesigns().isEmpty()) {
+            Set<String> districtIds = new HashSet<>(), owned = new HashSet<>();
+            for (var district : blueprint.districtDesigns()) {
+                var core = groupsById.get(district.coreGroupId());
+                boolean valid = districtIds.add(district.districtId()) && !district.groupIds().isEmpty()
+                        && district.groupIds().contains(district.coreGroupId()) && core != null
+                        && core.requiredStructureRefs().contains(district.coreStructureRef());
+                for (String id : district.groupIds()) valid &= groupIds.contains(id) && owned.add(id);
+                if (!valid) add(issues,CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
+                        "$.districtDesigns","Each district owns distinct existing groups and exactly one explicit required core: " + district.districtId());
+            }
+            if (!owned.equals(groupIds)) add(issues,CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
+                    "$.districtDesigns","District roles must cover all participating groups.");
+        }
         validatePlacementGroupRefs(issues, blueprint.groups(), groupIds);
         validateArrayCompositions(issues, blueprint.arrayCompositions(), groupsById, catalog);
 

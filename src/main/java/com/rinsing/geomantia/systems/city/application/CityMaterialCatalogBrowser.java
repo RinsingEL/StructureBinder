@@ -12,8 +12,8 @@ public final class CityMaterialCatalogBrowser {
     private static final Map<String, JsonObject> FUNCTIONS = index(TAXONOMY.getAsJsonArray("functions"), "id");
     private static final Map<String, JsonObject> ROLES = index(TAXONOMY.getAsJsonArray("roles"), "id");
     private static final Map<String, Set<String>> TERMS = termIndex();
-    public static final String INSTRUCTION = "用 city_d4_materials 的 filters 联合筛选 roles、functionIds、styles、rawFunctionTerms。"
-            + "先看核心/填充，再结合功能区用途、子功能数量与城市风格选材，也可一次组合多个条件。"
+    public static final String INSTRUCTION = "用 city_d4_materials 的 filters 联合筛选 categories、assetTags、functionIds、styles、rawFunctionTerms（roles 为旧作者标记）。"
+            + "素材 categories=特色/通用、assetTags=基建/景观与风格和功能独立；本区核心/必需/填充由设计决定，roles 仅为旧作者标记。结合功能区用途、子功能数量与城市风格选材，也可一次组合多个条件。"
             + "facets 是应用全部条件后的完整匹配集计数，按 structureRef 去重，不受分页影响；切换条件时移除旧条件。"
             + "functions 的 parent 表示层级；子功能包含于父功能，父标签不能证明子功能。directCount 表示直接标注映射到该层的数量。"
             + "空子功能结果表示没有足够细的标签证据，可退回父层或原始标签查看，不能自行补标签。"
@@ -36,10 +36,13 @@ public final class CityMaterialCatalogBrowser {
             if (!request.get("filters").isJsonObject()) throw invalid("filters must be an object.");
             filters = request.getAsJsonObject("filters");
         }
-        for (String field : filters.keySet()) if (!Set.of("roles", "functionIds", "functionMode", "styles", "rawFunctionTerms").contains(field))
+        for (String field : filters.keySet()) if (!Set.of("roles", "functionIds", "functionMode", "styles", "rawFunctionTerms", "categories", "assetTags").contains(field))
             throw invalid("Unknown filters field: " + field);
         Set<String> roles = strings(filters, "roles"), functions = strings(filters, "functionIds"),
                 styles = strings(filters, "styles"), raw = strings(filters, "rawFunctionTerms");
+        Set<String> categories = strings(filters,"categories"), tags = strings(filters,"assetTags");
+        if (!Set.of("specialty","common").containsAll(categories) || !Set.of("infrastructure","landscape").containsAll(tags))
+            throw invalid("Unknown material category or asset tag.");
         if (!ROLES.keySet().containsAll(roles)) throw invalid("Unknown role; use " + ROLES.keySet());
         if (!FUNCTIONS.keySet().containsAll(functions)) throw invalid("Unknown functionIds; use IDs from materialCatalog.facets.functions or materialResults.facets.functions.");
         String mode = optionalText(filters, "functionMode", "all");
@@ -49,6 +52,8 @@ public final class CityMaterialCatalogBrowser {
         List<Entry> entries = entries(snapshot);
         List<Entry> matched = entries.stream().filter(e ->
                 (roles.isEmpty() || roles.contains(e.role())) &&
+                (categories.isEmpty() || categories.contains(optionalText(e.authored(),"category",""))) &&
+                strings(e.authored(),"assetTags").containsAll(tags) &&
                 (styles.isEmpty() || !Collections.disjoint(styles, e.styles())) &&
                 e.terms().containsAll(raw) &&
                 (functions.isEmpty() || (mode.equals("any") ? !Collections.disjoint(functions, e.expanded()) : e.expanded().containsAll(functions))) &&
@@ -81,6 +86,8 @@ public final class CityMaterialCatalogBrowser {
             JsonObject result = new JsonObject(); result.addProperty("structureRef", ref);
             result.add("authoredMetadata", authored.deepCopy());
             JsonObject classification = new JsonObject(); classification.addProperty("role", role);
+            if (authored.has("category")) classification.add("category",authored.get("category"));
+            classification.add("assetTags",jsonStrings(strings(authored,"assetTags")));
             classification.add("functionIds", jsonStrings(expanded)); classification.add("functionPaths", paths.deepCopy());
             classification.add("unmappedFunctionTerms", jsonStrings(unmapped));
             result.add("classification", classification); return result;
@@ -140,6 +147,13 @@ public final class CityMaterialCatalogBrowser {
         roles.forEach((id, count) -> { JsonObject item = new JsonObject(); item.addProperty("id", id);
             item.add("label", ROLES.get(id).get("label")); item.addProperty("count", count); roleFacets.add(item); });
         result.add("roles", roleFacets); result.add("styles", termCounts(styles, false));
+        Map<String,Integer> categories = new TreeMap<>(), tags = new TreeMap<>();
+        for (Entry entry : entries) {
+            String category = optionalText(entry.authored(),"category","");
+            if (!category.isBlank()) categories.merge(category,1,Integer::sum);
+            strings(entry.authored(),"assetTags").forEach(tag -> tags.merge(tag,1,Integer::sum));
+        }
+        result.add("categories",termCounts(categories,false)); result.add("assetTags",termCounts(tags,false));
         result.add("rawFunctionTerms", termCounts(terms, true));
         result.addProperty("unclassifiedCount", entries.stream().filter(e -> e.expanded().isEmpty()).count());
         return result;

@@ -47,6 +47,7 @@ class CityD4WorkflowTest {
         assertEquals("civic",state().getAsJsonObject("currentDistrict").get("groupId").getAsString());
         assertEquals("CITY_D4_REVISION_STALE",CityD4Workflow.submit(dir,"ctx","city",request,this::compile).get("reasonCode").getAsString());
         JsonObject district=json("{d4Tool:'city_d4_district',districtDesign:{groups:[{groupId:'a',expansionPolicy:{allowRelationConnection:true}}]},designAnswers:[{groupId:'a',roadConnected:true,foundation:false,noFoundationReason:'fixture',ground:'minecraft:stone',roadSurface:'minecraft:oak_slab',styles:['test']}]}");
+        addCore(district.getAsJsonObject("districtDesign"));
         district.add("workflowRevision",corrected.get("revision"));
         result=CityD4Workflow.submit(dir,"ctx","city",district,this::compile);
         assertTrue(result.get("ok").getAsBoolean(),result.toString());
@@ -111,6 +112,51 @@ class CityD4WorkflowTest {
         assertEquals(1,CityDesignReviewWorkflow.status(dir,"ctx",CityBlueprintDraft.current(dir,"ctx","city"))
                 .get("coreReworkCount").getAsInt());
     }
+    private void addCore(JsonObject body) {
+        JsonObject first=body.getAsJsonArray("groups").get(0).getAsJsonObject();
+        for(var e:body.getAsJsonArray("groups")) {
+            JsonObject group=e.getAsJsonObject();if(!group.has("requiredStructureRefs")) group.add("requiredStructureRefs",JsonParser.parseString("['core']"));
+        }
+        JsonObject core=new JsonObject();core.add("groupId",first.get("groupId"));core.addProperty("structureRef","core");body.add("core",core);
+    }
+    @Test void savedDistrictCanChangeMaterialsAndLayoutWithoutOverwritingOthers() throws Exception {
+        districts();
+        JsonObject before=CityD4Workflow.load(dir,"ctx");
+        JsonObject request=currentRequest();request.addProperty("targetDistrictId","civic");
+        request.add("districtDesign",json("{core:{groupId:'a',structureRef:'small_shop'},groups:[{groupId:'a',requiredStructureRefs:['small_shop'],structureCount:4}]}"));
+        // fixture helper would use its standard core; explicitly submit authored new core instead.
+        request.getAsJsonObject("districtDesign").getAsJsonArray("groups").get(0).getAsJsonObject().add("expansionPolicy",json("{allowRelationConnection:true}"));
+        request.add("designAnswers",JsonParser.parseString("[{groupId:'a',roadConnected:true,foundation:false,noFoundationReason:'fixture',ground:'minecraft:stone',roadSurface:'minecraft:stone',styles:['test']}]"));
+        request.addProperty("d4Tool","city_d4_district");request.add("workflowRevision",before.get("revision"));
+        JsonObject result=CityD4Workflow.submit(dir,"ctx","city",request,this::compile);
+        assertTrue(result.get("ok").getAsBoolean(),result.toString());
+        JsonObject after=CityD4Workflow.load(dir,"ctx");
+        assertEquals(before.getAsJsonObject("bodies").get("market"),after.getAsJsonObject("bodies").get("market"));
+        assertEquals("small_shop",after.getAsJsonObject("bodies").getAsJsonObject("civic").getAsJsonObject("core").get("structureRef").getAsString());
+        assertEquals(2,lastCity.getAsJsonArray("districtDesigns").size());
+        assertEquals(2,result.getAsJsonObject("requestedPreviews").size());
+        assertEquals("CITY_D4_REVISION_STALE",CityD4Workflow.submit(dir,"ctx","city",request,this::compile).get("reasonCode").getAsString());
+    }
+
+    @Test void failedRevisionCanRetryFromLastSuccessfulPreviewAndCannotFinalizeMissingRequiredContent() throws Exception {
+        districts();JsonObject saved=CityD4Workflow.load(dir,"ctx");
+        JsonObject valid=CityBlueprintDraft.current(dir,"ctx","city");valid.add("landscapeLayout",new JsonObject());
+        Files.writeString(dir.resolve("city_blueprint_last_valid_preview.json"),valid.toString());
+        JsonObject failedBlueprint=valid.getAsJsonObject("previousBlueprint").deepCopy();failedBlueprint.getAsJsonArray("groups").get(0).getAsJsonObject().addProperty("structureCount",99);
+        JsonObject rejected=CityBlueprintDraft.create(dir,"ctx",failedBlueprint,new JsonObject(),false);
+        Files.writeString(dir.resolve(CityBlueprintDraft.FILE),rejected.toString());
+        JsonObject request=json("{d4Tool:'city_d4_district',targetDistrictId:'civic',assessment:'Retry changed core after failed compile',districtDesign:{core:{groupId:'a',structureRef:'small_shop'},groups:[{groupId:'a',requiredStructureRefs:['small_shop'],expansionPolicy:{allowRelationConnection:true}}]},designAnswers:[{groupId:'a',roadConnected:true,foundation:false,noFoundationReason:'fixture',ground:'minecraft:stone',roadSurface:'minecraft:stone',styles:['test']}]}");
+        request.add("workflowRevision",saved.get("revision"));request.add("baseDraftHash",valid.get("baseDraftHash"));
+        JsonObject result=CityD4Workflow.submit(dir,"ctx","city",request,this::compile);
+        assertTrue(result.get("ok").getAsBoolean(),result.toString());
+        JsonObject current=CityBlueprintDraft.current(dir,"ctx","city");
+        for(var e:current.getAsJsonObject("compiledLayout").getAsJsonArray("anchors"))if(e.getAsJsonObject().get("placementGroupId").getAsString().equals("a"))e.getAsJsonObject().addProperty("blueprintStructureRef","optional-decoration");
+        Files.writeString(dir.resolve(CityBlueprintDraft.FILE),current.toString());
+        JsonObject finalize=currentRequest();finalize.addProperty("functionsPreserved",true);
+        assertFalse(call("city_d4_finalize",finalize).get("ok").getAsBoolean());
+        assertNotEquals("COMPLETE",state().get("stage").getAsString());
+    }
+
     private boolean retainIntegration=true;
     private boolean empty=false;
     private JsonObject lastCity;
@@ -130,6 +176,7 @@ class CityD4WorkflowTest {
             boolean initial=tool.equals("city_d4_district");
             JsonObject body=initial?request.getAsJsonObject("districtDesign"):CityD4Workflow.load(dir,"ctx").getAsJsonObject("bodies").getAsJsonObject(request.get("targetDistrictId").getAsString());
             if(body!=null) {
+                if(initial) addCore(body);
                 JsonArray answers=new JsonArray();
                 for(var e:body.getAsJsonArray("groups")) {
                     JsonObject g=e.getAsJsonObject();if(initial)g.add("expansionPolicy",json("{allowRelationConnection:true}"));
@@ -157,7 +204,8 @@ class CityD4WorkflowTest {
         for(var group:city.getAsJsonArray("groups")) {
             String id=group.getAsJsonObject().get("groupId").getAsString();
             Path path=dir.resolve(id+".png"); Files.writeString(path,group.toString()); previews.addProperty(id,path.toString());
-            if(!empty && (retainIntegration || !id.equals("link"))) { JsonObject a=new JsonObject();a.addProperty("placementGroupId",id);a.add("design",group.deepCopy());anchors.add(a); }
+            if(!empty && (retainIntegration || !id.equals("link"))) { JsonObject a=new JsonObject();a.addProperty("placementGroupId",id);a.add("design",group.deepCopy());
+                for(var ref:group.getAsJsonObject().getAsJsonArray("requiredStructureRefs")) {JsonObject retained=a.deepCopy();retained.add("blueprintStructureRef",ref);anchors.add(retained);} }
         }
         Path overview=dir.resolve("overview.png");Files.writeString(overview,city.toString());
         draft.addProperty("compiledPreview",overview.toString());draft.add("compiledGroupPreviews",previews);
@@ -191,7 +239,7 @@ class CityD4WorkflowTest {
         assertFalse(call("city_d4_district_refine",json("{changes:{groups:[]}}")).get("ok").getAsBoolean());
         assertFalse(call("city_d4_overview",json("{overview:{}}")).get("ok").getAsBoolean());
         design("b");assertEquals("INTEGRATION",state().get("stage").getAsString());assertEquals(2,compiled);
-        assertEquals("city_d4_mark",state().get("nextAction").getAsString());
+        assertEquals("city_d4_finalize",state().get("nextAction").getAsString());
     }
     @Test void whollyEmptyInitialCanRetryButValidInitialCannotBeReopened() throws Exception {
         overview();empty=true;JsonObject r=call("city_d4_district",json("{districtDesign:{groups:[{groupId:'a'}]}}"));

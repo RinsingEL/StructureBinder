@@ -15,14 +15,14 @@ public final class CityBlueprintCodec {
     public static final long MAX_SAFE_GENERATION_SEED = 9_007_199_254_740_991L;
     private static final Set<String> ROOT_FIELDS = Set.of("schema", "cityId", "sourceD3Ref",
             "catalogSnapshotRef", "generationSeed", "designIntent", "styleProfile", "groups",
-            "arrayCompositions", "relations", "roadProfile", "surfaceDetailProfile", "outdoorPlan", "surfaceMaterials");
+            "arrayCompositions", "relations", "roadProfile", "surfaceDetailProfile", "outdoorPlan", "surfaceMaterials", "districtDesigns");
     private static final Set<String> FORBIDDEN_FIELDS = Set.of("x", "y", "z", "blockX", "blockY", "blockZ",
             "worldX", "worldY", "worldZ", "anchor", "anchorBlock", "rotation", "mirror", "candidateId",
             "algorithm", "algorithmName", "templateId", "templateRef", "nbtFile");
 
     public CityBlueprint read(JsonObject root) {
         rejectForbidden(root, "$");
-        exactFields(root, ROOT_FIELDS, Set.of("surfaceMaterials"), "$");
+        exactFields(root, ROOT_FIELDS, Set.of("surfaceMaterials", "districtDesigns"), "$");
         String schema = requiredString(root, "schema", "$.schema");
         if (!CityBlueprint.SCHEMA.equals(schema)) {
             fail(CityBlueprintReasonCode.CITY_BLUEPRINT_SCHEMA_UNSUPPORTED, "$.schema",
@@ -45,11 +45,35 @@ public final class CityBlueprintCodec {
                         "$.surfaceDetailProfile"),
                 outdoorPlan(requiredObject(root, "outdoorPlan", "$.outdoorPlan")),
                 com.rinsing.geomantia.systems.city.domain.blueprint.CitySurfaceMaterials.read(root.has("surfaceMaterials")
-                        ? requiredObject(root,"surfaceMaterials","$.surfaceMaterials") : null));
+                        ? requiredObject(root,"surfaceMaterials","$.surfaceMaterials") : null), districtDesigns(root));
+    }
+
+    private List<CityBlueprint.DistrictDesign> districtDesigns(JsonObject root) {
+        List<CityBlueprint.DistrictDesign> result = new ArrayList<>();
+        if (!root.has("districtDesigns")) return result;
+        int index = 0;
+        for (var value : requiredArray(root,"districtDesigns","$.districtDesigns")) {
+            String path = "$.districtDesigns[" + index++ + "]";
+            JsonObject item = value.getAsJsonObject();
+            exactFields(item,Set.of("districtId","coreGroupId","coreStructureRef","groupIds"),Set.of(),path);
+            List<String> ids = nonEmptyStringList(item,"groupIds",path+".groupIds");
+            result.add(new CityBlueprint.DistrictDesign(requiredString(item,"districtId",path+".districtId"),
+                    requiredString(item,"coreGroupId",path+".coreGroupId"),requiredString(item,"coreStructureRef",path+".coreStructureRef"),ids));
+        }
+        return result;
     }
 
     public JsonObject write(CityBlueprint blueprint) {
         JsonObject root = new JsonObject();
+        if (!blueprint.districtDesigns().isEmpty()) {
+            JsonArray districts = new JsonArray();
+            for (var district : blueprint.districtDesigns()) {
+                JsonObject item = new JsonObject(); item.addProperty("districtId",district.districtId());
+                item.addProperty("coreGroupId",district.coreGroupId()); item.addProperty("coreStructureRef",district.coreStructureRef());
+                item.add("groupIds",strings(district.groupIds())); districts.add(item);
+            }
+            root.add("districtDesigns",districts);
+        }
         root.addProperty("schema", blueprint.schema());
         root.addProperty("cityId", blueprint.cityId());
         root.add("sourceD3Ref", artifactRefJson(blueprint.sourceD3Ref()));

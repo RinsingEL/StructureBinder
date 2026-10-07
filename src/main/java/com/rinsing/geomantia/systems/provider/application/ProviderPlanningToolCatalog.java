@@ -20,7 +20,7 @@ public final class ProviderPlanningToolCatalog {
         if (com.rinsing.geomantia.systems.city.application.CityD4Workflow.TOOLS.contains(name))
             return function(name, name.equals("city_d4_materials")
                     ? com.rinsing.geomantia.systems.city.application.CityMaterialCatalogBrowser.INSTRUCTION
-                    : "D4 一次初版后自动推进；看总览标记外围独立区，再以调整阵列或向外阵列融合主体。整体性由 AI 判断，允许隔河，不要求接触；挤占不能破坏其他区功能。", stageSchema(name));
+                    : "D4 按主次查询素材、声明一区一核心与必需/填充角色，编译后看局部与全城预览；指定 targetDistrictId 可修订已保存区，保留其他区。整体性由 AI 判断，允许隔河，不要求接触；挤占不能破坏其他区功能。", stageSchema(name));
         return switch (name) {
             case "realm_w_refresh" -> function(name,
                     "Run or resume the one sealed W survey for this world. The host locks runId and the complete "
@@ -213,7 +213,11 @@ public final class ProviderPlanningToolCatalog {
                 settings.add("outdoorPlan",object(properties("mode",enumeration("GENERATE","PRESERVE"),"envelopeProfile",enumeration("COMPACT","BALANCED","LOOSE"),"foundationProfileRef",string()),"mode","envelopeProfile","foundationProfileRef"));
                 p.add("overview",object(properties("citySettings",object(settings,"designIntent","styleProfile","roadProfile","surfaceDetailProfile","outdoorPlan"),"districts",source.getAsJsonObject("designIntent").getAsJsonObject("properties").get("groups").deepCopy(),"districtDisposition",dispositionSchema()),"citySettings","districts")); required.add("overview");
             }
-            case "city_d4_district" -> {p.add("districtDesign",districtSchema(blueprint,false));required.add("districtDesign");}
+            case "city_d4_district" -> {
+                p.add("districtDesign",districtSchema(blueprint,false));required.add("districtDesign");
+                p.add("targetDistrictId",described(string(),"修订已保存区；初次设计默认 currentDistrict。"));
+                p.add("baseDraftHash",string());p.add("assessment",described(string(),"修订时说明当前预览依据。"));
+            }
             case "city_d4_integrate" -> {
                 JsonObject changes=districtSchema(blueprint,true);
                 JsonObject cp=changes.getAsJsonObject("properties");
@@ -262,7 +266,8 @@ public final class ProviderPlanningToolCatalog {
             }
             for(String key:List.of("removeGroupIds","removeCompositionIds","removeLandscapeIds"))fields.add(key,array(string()));
         }
-        JsonObject schema=update?object(fields):object(fields,"groups");
+        if(!update) fields.add("core",object(properties("groupId",string(),"structureRef",string()),"groupId","structureRef"));
+        JsonObject schema=update?object(fields):object(fields,"groups","core");
         if(update) schema.addProperty("description","按 ID 合并，未提供的字段保留；扩张不允许删除设计对象。relations 和 foundationGroupIds 如提供则替换本设计内清单。新对象仍须完整配置；已有组只允许 groupId、structureCount、densityClass、algorithmProfileRef、connectionPlan，改嵌套时可用 clearFields 清除 placementRelation。");
         return schema;
     }
@@ -301,6 +306,8 @@ public final class ProviderPlanningToolCatalog {
                                 "functionIds", described(array(string()), "共享功能树 ID；从返回的 facets.functions 选择。子功能匹配父级，父级不推导子级。"),
                                 "functionMode", enumeration("all", "any"),
                                 "styles", described(array(string()), "任一风格精确匹配，空数组不限；风格不限定种族。"),
+                                "categories", array(enumeration("specialty","common")),
+                                "assetTags", array(enumeration("infrastructure","landscape")),
                                 "rawFunctionTerms", described(array(string()), "所有原始用途标签都须匹配；用于未细分或未映射的用途。"))),
                         "limit", boundedInteger(0, 100, "默认20；0只取完整匹配集的联动统计。"),
                         "offset", boundedInteger(0, Integer.MAX_VALUE, "默认0，按稳定 structureRef 排序；使用 nextOffset 翻页。"),

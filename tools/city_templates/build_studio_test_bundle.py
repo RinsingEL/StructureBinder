@@ -17,6 +17,7 @@ from export_core_atlas import export as export_core_atlas
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools/structure_studio'))
+from studio.categories import resolve_category
 from studio.model import read_structure
 from studio.navigation import collision_boxes
 from studio.frontage import runtime_frontage
@@ -38,6 +39,13 @@ def write(path, value):
 
 def digest(path):
     return 'sha256:' + hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def authored_classification(author):
+    tags = author.get('asset_tags', [])
+    if not isinstance(tags, list) or any(t not in ('infrastructure', 'landscape') for t in tags) or len(tags) != len(set(tags)):
+        raise ValueError(f"Invalid author asset_tags: {author.get('id')}")
+    return dict(category=resolve_category(author), assetTags=list(tags))
 
 
 def ground_plane_y(author):
@@ -86,6 +94,7 @@ def project_entrances(author, data, registry):
 def build(args):
     if args.output.exists():
         raise ValueError(f'Use a fresh output directory: {args.output}')
+    references = read(args.baseline/'blueprint_reference_catalog.json')
     registry = read(ROOT / 'tools/structure_studio/.cache/registry.json')
     rows, omitted, unmarked = [], [], []
     for style in (getattr(args, 'styles', None) or STYLES):
@@ -95,6 +104,7 @@ def build(args):
         for author_file in sorted(directory.glob('*/author.json')):
             a = read(author_file)
             ground_y = ground_plane_y(a)
+            authored_classification(a)
             if a['id'] in EXCLUDE:
                 omitted.append(dict(id=a['id'], reason=EXCLUDE[a['id']]))
                 continue
@@ -160,13 +170,15 @@ def build(args):
             sourceIdentity=f"structure-studio:{a['id']}",converterId='studio_byte_exact_test_export_v1'))
         profiles.append(dict(structureId=ref,sourceProfileRef=f"structure-studio://{a['id']}",
             reviewState='approved',functionTerms=a['function_terms'],planningRoleTerms=[a['planning_role']],
-            terrainModes=['SURFACE'],styleTerms=[a['civilization']]))
+            terrainModes=['SURFACE'],styleTerms=[a['civilization']],
+            **authored_classification(a)))
         refs.append(dict(structureRef=ref,templateCandidates=[dict(templateId=ref,variantId=VARIANT)]))
-        if a['planning_role'] == 'planning_role.fill':
-            for term in a['function_terms']:
-                pools[(a['civilization'],term)].append(ref)
+        # Eligibility is explicit per-city selection, not the old author planning role.
+        for term in a['function_terms']:
+            pools[(a['civilization'],term)].append(ref)
         names.append(dict(templateRef=ref,displayName=a['name'],functionTerms=a['function_terms'],
-            style=a['civilization'],planningRole=a['planning_role'],siteConditions=a.get('terrain',{})))
+            style=a['civilization'],planningRole=a['planning_role'],
+            **authored_classification(a),siteConditions=a.get('terrain',{})))
     write(args.output / 'template_catalog.json',dict(schema='city_template_catalog',templates=templates))
     write(args.output / 'city_template_content_pack.json',dict(schema='city_template_content_pack.v0.1',
         packId=VARIANT,catalogSha256=digest(args.output/'template_catalog.json'),templates=payloads))
@@ -174,12 +186,14 @@ def build(args):
     vocab = [dict(term_id=t,vocab_type=kind,label=t,aliases=[],status='approved')
         for kind,key in [('function','functionTerms'),('style','styleTerms'),('planning_role','planningRoleTerms')]
         for t in sorted({v for p in profiles for v in p[key]})]
+    vocab += [dict(term_id=t,vocab_type=kind,label=t,aliases=[],status='approved')
+        for kind,values in [('category',{p['category'] for p in profiles}),('asset_tag',{t for p in profiles for t in p['assetTags']})]
+        for t in sorted(values)]
     write(args.output/'StructureVocabulary.snapshot.json',dict(schemaVersion='terrasense_structure_vocabulary_snapshot.v0.1',snapshotId=VARIANT,terms=vocab))
     write(args.output/'TerraSenseStructureProfileSource.official.json',dict(schema='terrasense_structure_profile_source',
         sourceType='structure_profile_jsonl',catalogMode='official',profilePath='StructureProfile.jsonl',
         vocabularySnapshotPath='StructureVocabulary.snapshot.json',terrasenseRunId=VARIANT,
         allowDebugUnapproved=False,entrancePolicy='legacy_catalog'))
-    references = read(args.baseline/'blueprint_reference_catalog.json')
     references['structureRefs'] = refs
     references['fillPools'] = [dict(poolRef=f'pool:studio_{i:03}',structureRefs=values)
                               for i,(_,values) in enumerate(sorted(pools.items()),1)]
