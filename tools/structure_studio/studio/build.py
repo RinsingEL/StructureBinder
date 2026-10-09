@@ -63,6 +63,10 @@ from .elven_reborn import BUILDERS as ELVEN_REBORN
 from .dwarven_reborn import BUILDERS as DWARVEN_REBORN
 from .european_reborn import BUILDERS as EUROPEAN_REBORN
 from .arcane_revision2 import BUILDERS as ARCANE_REVISION2
+from .academy_support import BUILDERS as ACADEMY_SUPPORT
+from .academy_wings import BUILDERS as ACADEMY_WINGS
+from .terrace_fixtures import BUILDERS as TERRACE_FIXTURES
+from .campus_daily import BUILDERS as CAMPUS_DAILY
 from .dwarven_revision2 import BUILDERS as DWARVEN_REVISION2
 from .elven_revision2 import BUILDERS as ELVEN_REVISION2
 from .european_revision2 import BUILDERS as EUROPEAN_REVISION2
@@ -125,6 +129,10 @@ BUILDERS.update({key:("R03_dwarven_reborn",builder) for key,builder in DWARVEN_R
 BUILDERS.update({key:("R04_european_reborn",fn) for key,fn in EUROPEAN_REBORN.items()})
 
 BUILDERS.update({key:("R02_arcane_reborn",fn) for key,fn in ARCANE_REVISION2.items()})
+BUILDERS.update({key:("R02_arcane_reborn",fn) for key,fn in ACADEMY_SUPPORT.items()})
+BUILDERS.update({key:("R02_arcane_reborn",fn) for key,fn in ACADEMY_WINGS.items()})
+BUILDERS.update(TERRACE_FIXTURES)
+BUILDERS.update({key:("R02_arcane_reborn",fn) for key,fn in CAMPUS_DAILY.items()})
 BUILDERS.update({key:("R03_dwarven_reborn",fn) for key,fn in DWARVEN_REVISION2.items()})
 BUILDERS.update({key:("R01_elven_reborn",fn) for key,fn in ELVEN_REVISION2.items()})
 BUILDERS.update({key:("R04_european_reborn",fn) for key,fn in EUROPEAN_REVISION2.items()})

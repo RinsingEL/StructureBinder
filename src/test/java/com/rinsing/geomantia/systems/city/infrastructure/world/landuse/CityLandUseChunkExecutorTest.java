@@ -16,6 +16,25 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CityLandUseChunkExecutorTest {
     private final CityLandUseChunkExecutor executor = new CityLandUseChunkExecutor();
 
+    @Test void retainingWallDoesNotRebuildAboveFrozenRoadAtPlatformEdge() {
+        List<CityLandUseChunkCompiler.GradingMaskCell> mask=new ArrayList<>();
+        List<CityLandUseChunkCompiler.SurfaceOperation> surfaces=new ArrayList<>();
+        for(int x=0;x<8;x++)for(int z=0;z<4;z++) {
+            mask.add(new CityLandUseChunkCompiler.GradingMaskCell("terrace",x,z,true,76));
+            surfaces.add(new CityLandUseChunkCompiler.SurfaceOperation("terrace","plaza",x,z,"minecraft:stone_bricks"));
+        }
+        var road=new CityLandUseChunkCompiler.FeatureOperation("transition",4,3,"minecraft:stone_slab",0,
+                CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,72);
+        var fragment=new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,
+                "city","hash","palette",0,0,32,0,0,0,"minecraft:dirt",mask,surfaces,List.of(),List.of(road),List.of(road),List.of(),List.of());
+        FakeWorld world=new FakeWorld();var result=executor.execute(fragment,world,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED,result.status());
+        assertTrue(world.featureWrites.contains("4,72,3=ROAD_SLAB:NONE"));
+        assertTrue(world.writes.stream().filter(w->w.startsWith("4,")&&w.split("=")[0].endsWith(",3"))
+                .noneMatch(w->Integer.parseInt(w.split(",")[1])>72&&!w.endsWith("=minecraft:air")),world.writes.toString());
+        assertTrue(world.writes.stream().anyMatch(w->w.startsWith("3,75,3=")&&!w.endsWith("=minecraft:air")),"neighbor retaining facade remains");
+    }
+
     @Test void optionalVillageLanternSkipsItsWholeColumnWhenThePostIsObstructed() {
         var features=List.of(new CityLandUseChunkCompiler.FeatureOperation("village_road_decoration::lamp",2,2,
                 "minecraft:oak_fence",1,CityLandUseSurfacePrintPlan.FeatureKind.GREEN_PLANT,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE),

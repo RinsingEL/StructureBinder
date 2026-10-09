@@ -214,11 +214,9 @@ public final class CityTemplateTerrainStructurePiece extends StructurePiece {
                 ground--;
             }
             if (ground >= datumY - 1) continue;
-            boolean deck = support.requiresDeck(ground, datumY - 1);
-            boolean pier = support.pierAt(x, z) || x == footprint.minX() && z == footprint.minZ();
-            for (int y = deck && !pier ? datumY - 1 : ground + 1; y < datumY; y++) {
-                cursor.set(x, y, z);
-                level.setBlock(cursor, (deck && y < datumY - 1
+            for (var block : support.column(ground, datumY, x, z, x == footprint.minX() && z == footprint.minZ())) {
+                cursor.set(x, block.y(), z);
+                level.setBlock(cursor, (block.blackstonePier()
                         ? net.minecraft.world.level.block.Blocks.BLACKSTONE_WALL
                         : net.minecraft.world.level.block.Blocks.STONE_BRICKS).defaultBlockState(), 2);
             }

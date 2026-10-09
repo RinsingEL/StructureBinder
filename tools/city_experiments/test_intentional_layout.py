@@ -1,0 +1,65 @@
+import sys,json,subprocess,tempfile,unittest,copy
+from pathlib import Path
+import workbench as api
+
+class IntentionalLayouts(unittest.TestCase):
+ def setUp(self):
+  self.scene=api.read(Path(__file__).with_name('campus-groups.json'));self.assets=api.catalog()
+ def java(self,scene):
+  with tempfile.TemporaryDirectory() as t:
+   p=Path(t);req={**scene,'assets':self.assets,'terrainPath':str(api.EXPERIMENT/'data/D3地形原始数据.json')};api.write(p/'in.json',req)
+   subprocess.run(['C:/Program Files/Java/jdk-17/bin/java.exe','-cp',(api.ROOT/'build/city-workbench-classpath.txt').read_text(),'com.rinsing.geomantia.systems.city.application.CityArrayExperiment',str(p/'in.json'),str(p/'out.json')],check=True,capture_output=True)
+   r=api.read(p/'out.json');self.assertTrue(r['ok'],r.get('error'));return r
+ def test_nested_geometry_void_fronts_and_translation(self):
+  a=self.java(self.scene);self.assertEqual(len(a['members']),23)
+  self.assertTrue(all(not m['issues'] and not m['terrainEvidence']['waterAreaBlocks'] for m in a['members']))
+  court=[m for m in a['members'] if m['arrayId']=='main-court'];self.assertEqual([m['rotation'] for m in court],[180,90,270,0])
+  self.assertEqual(len(a['layoutSpaces']),2)
+  for s in a['layoutSpaces']:
+   for m in a['members']:
+    p=m['originBlock'];self.assertFalse(p['x']<s['x']+s['width'] and p['x']+m['width']>s['x'] and p['z']<s['z']+s['depth'] and p['z']+m['depth']>s['z'])
+  shifted=copy.deepcopy(self.scene);shifted['compositions'][-1]['anchorBlock']['x']+=7;shifted['compositions'][-1]['anchorBlock']['z']+=9
+  b=self.java(shifted)
+  for ma,mb in zip(a['members'],b['members']):self.assertEqual(mb['originBlock'],dict(x=ma['originBlock']['x']+7,z=ma['originBlock']['z']+9))
+  for sa,sb in zip(a['layoutSpaces'],b['layoutSpaces']):self.assertEqual((sb['x']-sa['x'],sb['z']-sa['z']),(7,9))
+ def test_other_asset_family_uses_same_court(self):
+  scene=copy.deepcopy(self.scene);scene['arrays']=scene['arrays'][:1];scene['compositions']=[]
+  a=scene['arrays'][0];a['coreAssetId']='studio:eu-01-v01';a['requiredAssetIds']=['studio:eu-02-v01','studio:eu-03-v01','studio:eu-04-v01'];a['anchorBlock']=dict(x=-2990,z=5300)
+  r=self.java(scene);self.assertEqual(len(r['members']),4);self.assertTrue(all(not m['collisionsWith'] for m in r['members']));self.assertTrue(all(m['assetId'].startswith('studio:eu-') for m in r['members']))
+ def test_complete_new_assets_and_schema(self):
+  api.validate_scene(self.scene,self.assets)
+  for ident in ('MG-43-v01','MG-44-v01','MG-45-v01','MG-34-v02','MG-37-v02'):
+   a=next(a for a in self.assets if a['id']==ident);meta=api.read(Path(a['path'])/'author.json');validation=api.read(Path(a['path'])/'validation.json')
+   self.assertTrue(validation['passed']);self.assertTrue(validation['navigation']['passed']);self.assertFalse(validation['warnings']);self.assertEqual(meta['id'],ident)
+   if ident.endswith('v02'):self.assertEqual(meta['connections'],[])
+
+class DesignedLandscapeIntegration(unittest.TestCase):
+ def test_actual_voxels_and_greenery_toggle_preserve_circulation(self):
+  old_output=api.OUTPUT
+  with tempfile.TemporaryDirectory() as t:
+   api.OUTPUT=Path(t)
+   try:
+    meta=api.build(api.read(Path(__file__).with_name('campus-groups.json')));folder=Path(meta['evidenceDirectory']);r=api.read(folder/'java-result.json');world=api.read(folder/'world.json')
+    self.assertEqual(len(meta['members']),23);self.assertEqual(len(meta['terraces']),4)
+    self.assertTrue(all(o['status'].startswith('CONNECTED') for o in r['streetReview']['accessOutcomes']))
+    self.assertEqual(len(meta['fixtureChecks']),len(meta['fixtures']))
+    self.assertTrue(all(c['supported'] and c['buildingClearance'] and c['roadClearance'] for c in meta['fixtureChecks']))
+    plans=meta['publicSpacePlans'];self.assertEqual(len(plans),3)
+    for p in plans[:2]:
+     self.assertEqual(p['supportedColumns'],p['bounds']['width']*p['bounds']['depth']);self.assertEqual(len(p['beds']),4)
+     self.assertGreater(p['counts'].get('FLOWER',0),0);self.assertGreater(len(p['trees']),0)
+     cx=p['bounds']['x']+p['bounds']['width']//2;cz=p['bounds']['z']+p['bounds']['depth']//2
+     for x,y,z,kind in p['writes']:
+      if kind in ('LOW_HEDGE','FLOWER','TREE_TRUNK','TREE_CROWN'):
+       self.assertGreater(abs(x-cx),2);self.assertGreater(abs(z-cz),2)
+    self.assertTrue(any(a['kind']=='WELL' for a in plans[1]['amenities']))
+    registry=api.read(api.TOOL/'.cache/registry.json')
+    from studio.navigation import collision_boxes
+    for palette in world['palette']:collision_boxes(palette,registry)
+    before={p['nodeId']:{k:v for k,v in p['counts'].items() if k not in ('BED','LOW_HEDGE','FLOWER','TREE_TRUNK','TREE_CROWN')} for p in plans[:2]}
+    r['scene']['greenery']=False;r['_groundIndex']={(row[0],row[1]):row[2] for row in r['terrainColumns']};api.compose(r,api.catalog())
+    after={p['nodeId']:p['counts'] for p in r['publicSpacePlans']};self.assertEqual(before,after)
+    self.assertEqual(api.read(api.OUTPUT/'state.json')['revision'],1)
+   finally:api.OUTPUT=old_output
+
+if __name__=='__main__':unittest.main()

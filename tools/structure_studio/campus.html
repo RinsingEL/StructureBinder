@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>国度 · 建筑工作台</title></head>
+<body>
+ <aside>
+  <a class="brand" href="/">✧ <span>国度<span class="brand-small">建筑工作台</span></span></a>
+  <div class="sidebar-title">当前分区 <span id="revision">—</span></div>
+  <div id="districts"></div>
+  <div class="sidebar-title">结构与阵列</div>
+  <label>阵列与整体组合<select id="array"></select></label>
+  <div class="pair"><label>布局<select id="algorithm"></select></label><label>疏密<select id="density"><option value="DENSE">紧凑</option><option value="BALANCED">均衡</option><option value="SPARSE">疏朗</option></select></label></div>
+  <div class="pair"><label>成员数量<input id="count" type="number" min="1" max="30"></label><label>模板旋转<select id="rotation"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></label></div>
+  <label>核心 / 主要素材<select id="asset"></select></label>
+  <p class="hint" id="array-note"></p>
+  <div class="sidebar-title">嵌套组团</div>
+  <label>移动对象<select id="node"></select></label>
+  <div class="pair"><label>世界 X<input type="number" id="anchor-x"></label><label>世界 Z<input type="number" id="anchor-z"></label></div>
+  <label class="check"><input type="checkbox" id="greenery" checked> 公共空间绿化</label>
+  <label class="check"><input type="checkbox" id="terrace-features"> 台地边缘与公共设施</label>
+  <label>设施风格<select id="terrace-style"></select></label>
+  <p class="hint" id="fixture-note"></p>
+  <label>地形数据<select id="terrain-source"><option value="D3_INTERPOLATED">D3 · 16 格采样插值</option><option value="DEM_STEP_1" disabled>逐格 DEM · 尚未导入</option></select></label>
+  <label class="hint">导入逐格 DEM <input id="import-dem" type="file" accept="application/json,.json"></label>
+  <button class="build" id="build">生成并查看 <span>↗</span></button>
+  <div class="status" id="status">正在读取场景…</div>
+  <button class="plan-edit" id="edit-plan">编辑 / 导入完整方案</button>
+  <label>试验方案<select id="example-scene"></select></label>
+  <button class="plan-edit" id="load-example">载入并生成</button>
+  <div class="sidebar-foot">核心组各自拥有台地<br>展示分区可包含多个核心组</div>
+ </aside>
+ <main>
+  <header><div><div class="eyebrow">STRUCTURE WORKBENCH</div><h1>核心组与台地</h1><p>组合建筑、台地与道路，比较不同素材和风格。</p></div><div class="header-actions"><span class="badge">离线建造实验</span><button id="export">导出方案 ↓</button><button id="capture">保存预览 ↓</button></div></header>
+  <div class="summary"><div><strong id="buildings">—</strong><span>座建筑与地块</span></div><div><strong id="terraces">—</strong><span>块核心台地</span></div><div><strong id="roads">—</strong><span>段道路与街巷</span></div><div><strong id="lamps">—</strong><span>盏道路灯</span></div><div class="summary-note"><span id="facility-summary">台地设施</span><br><span id="evidence-note">真实结构 / 地形模拟</span></div></div>
+  <section class="scene">
+   <canvas id="viewport"></canvas><div id="labels"></div><div id="loading">正在准备三维场景…</div>
+   <div class="scene-top"><div class="segmented"><button id="overview" class="selected">场景总览</button><button id="landscape">地形总览</button><button id="top">俯视布局</button><button id="close">近看核心</button></div><div class="segmented"><button id="roof">去屋顶</button><button id="terrain" class="selected">地形</button><button id="labels-toggle" class="selected">分区标记</button></div></div>
+   <div class="scene-bottom"><span>拖动旋转 · 滚轮缩放 · 右键平移</span><span>X 东 · Z 南 / 1 格 = 1 方块</span></div>
+  </section>
+  <footer><div><span class="eyebrow">DESIGN NOTES</span><p id="detail">大礼堂带教学楼与阅读小庭，食堂带宿舍，温室联系田地与苗圃。</p></div><div class="footnote"><span id="terrain-detail">D3 真实采样，逐格高度由插值得到。</span><br>可检查构图与生成结果；游戏内落地另行验收。</div></footer>
+ </main>
+ <dialog id="plan-dialog"><form method="dialog"><div class="dialog-head"><h2>建筑方案</h2><button aria-label="关闭">×</button></div></form>
+  <p>阵列可嵌套进组团；一个分区可以包含多个核心台地组，各组内部共享高程。设施由台地风格配置选用。</p>
+  <textarea id="plan-json" spellcheck="false" aria-label="完整建筑方案 JSON"></textarea>
+  <div id="plan-error" role="alert"></div>
+  <div class="dialog-actions"><label class="import-label">导入方案<input id="import-plan" type="file" accept="application/json,.json"></label><button id="default-plan">载入示范学院</button><button id="apply-plan">应用并生成</button></div>
+ </dialog><script type="module" src="/web/campus.js"></script>
+</body></html>

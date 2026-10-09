@@ -1,0 +1,23 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "EU-25-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex offline visual review 2026-10-08",
+  "nbt_sha256": "96b0ef93027014e08f487f329045501dbbb11b1a87218a52dea22595dcddb652",
+  "author_sha256": "384bdc95e802bc5a298b9a84c73c764f4b54beb61832b55e7d293a1382b771a7",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/top.png"
+  ],
+  "checks": [
+    "四柱木构角亭，叠层木顶与石底座清楚；可独立换装同一边缘位置。",
+    "已查看真实 NBT 正面、背面、俯视图；通过注册表、地面基准与离线通路检查。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

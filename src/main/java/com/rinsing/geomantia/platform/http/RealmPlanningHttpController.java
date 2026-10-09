@@ -473,6 +473,17 @@ final class RealmPlanningHttpController implements AutoCloseable {
         });
     }
 
+    void handleCityExportTerrainDem(HttpExchange exchange) {
+        handle(exchange,"POST",()->{
+            JsonObject request=GisHttpUtil.readJsonObject(exchange);
+            String runId=requiredString(request,"runId"),cityId=requiredString(request,"citySeedId");
+            if(hasValue(request,"step")&&intValue(request,"step",1)!=1)throw new IllegalArgumentException("CITY_DEM_STEP_FIXED: step must be 1");
+            String dimensionId=restoredRunDimensionId(runId);
+            ServerLevel level=callOnServerThread(()->resolveLevel(dimensionId,null));
+            return CityPlanningEndpointHandler.handleExportTerrainDem(debugRoot(),runId,cityId,level);
+        });
+    }
+
     void handleCityReviewD3Site(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);

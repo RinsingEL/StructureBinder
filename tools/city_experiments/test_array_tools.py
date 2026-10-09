@@ -71,6 +71,22 @@ class ArrayIntegration(unittest.TestCase):
             self.assertEqual((missing['size']['width'],missing['size']['depth']), (21,17))
             self.assertEqual(nested['compositionPath'], ['inner','outer'])
             self.assertGreaterEqual(nested['originBlock']['x'], -2800)
+            def points(value):
+                if isinstance(value,dict):
+                    if 'x' in value and 'z' in value:yield value
+                    else:
+                        for child in value.values():yield from points(child)
+                elif isinstance(value,list):
+                    for child in value:yield from points(child)
+            for p in points(nested['proposalTrace']):
+                self.assertGreaterEqual(p['x'],-2850,'Nested layout guides must move with the structure')
+            compositions[1]['anchorBlock']['x']+=32
+            moved=api.invoke('layout_update',{'baseRevision':1,'compositions':[compositions[1]]},api.DEFAULT,output)
+            next_nested=next(m for m in moved['members'] if m['arrayId']=='a')
+            self.assertEqual(next_nested['originBlock']['x'],nested['originBlock']['x']+32)
+            before=list(points(nested['proposalTrace']));after=list(points(next_nested['proposalTrace']))
+            self.assertTrue(before)
+            self.assertEqual(after,[{'x':p['x']+32,'z':p['z']} for p in before])
             self.assertIn('OUTSIDE_D3',next(m for m in result['members'] if m['arrayId']=='outside')['issues'])
             compositions[0]['memberIds']=['outer']
             with self.assertRaisesRegex(ValueError, 'cycle'):
@@ -80,7 +96,7 @@ class ArrayIntegration(unittest.TestCase):
         request={'array':{'arrayId':'probe','anchorBlock':{'x':-2900,'z':5250},'algorithm':'GRID','count':1,'coreAssetId':'mock:classroom_small'}}
         messages=[{'jsonrpc':'2.0','id':1,'method':'initialize','params':{'protocolVersion':'2024-11-05'}}, {'jsonrpc':'2.0','method':'notifications/initialized'}, {'jsonrpc':'2.0','id':2,'method':'tools/list'}, {'jsonrpc':'2.0','id':3,'method':'tools/call','params':{'name':'array_preview','arguments':request}}]
         with tempfile.TemporaryDirectory() as temp:
-            proc=subprocess.run([sys.executable,str(Path(api.__file__)), '--stdio','--output',temp],input='\n'.join(json.dumps(m) for m in messages)+'\n',capture_output=True,text=True,check=True)
+            proc=subprocess.run([sys.executable,str(Path(api.__file__)), '--stdio','--output',temp],input='\n'.join(json.dumps(m) for m in messages)+'\n',capture_output=True,text=True,encoding='utf-8',check=True)
             replies=[json.loads(line) for line in proc.stdout.splitlines()]
             self.assertEqual([r['id'] for r in replies],[1,2,3])
             self.assertEqual(len(replies[1]['result']['tools']),3)

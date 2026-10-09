@@ -1,6 +1,8 @@
-# 离线学院阵列工具
+# 离线阵列与建筑工作台
 
-已实现 CLI 和 MCP stdio，复用项目 Java 算法，不需要启动 Minecraft。工具没有自动注册进当前聊天的 MCP 配置。题目仍只要求教学、生活、种植、迎宾、码头。
+现有两个入口：原阵列 CLI/MCP 用于占地试排；新增[建筑工作台](WORKBENCH.md)复用生产 Java 地表、道路、核心台地与挡土、路灯，在网页中摆放真实 NBT。学院与普通城镇使用同一规划器，新增[通用台地设施试验](TERRACE_FEATURES.md)；码头留待专门系统。下文为原阵列工具的能力及历史示例。
+
+Windows 启动工作台：仓库根执行 `powershell -NoProfile -ExecutionPolicy Bypass -File tools/city_experiments/start-workbench.ps1`，打开 `http://127.0.0.1:8767`。
 
 | 工具 | 调用 | 结果 |
 |---|---|---|
@@ -19,6 +21,8 @@ anchorBlock 是世界坐标的占地原点，不是建筑中心。存在核心�
 directionDegrees 可选 0/90/180/270，控制阵列向 +X/+Z/-X/-Z 展开；rotation 独立控制模板旋转，不声称已解析入口朝向。densityClass 为 SPARSE/BALANCED/DENSE，映射生产算法间距。支持 GRID、LINEAR、COURTYARD、COMPACT、ORGANIC_COMPACT、CENTER_SYMMETRIC、CONTIGUOUS；CONTIGUOUS 当前只使用世界轴，directionDegrees 必须为0，可旋转模板尺寸。未暴露自定义gap、行列数、院落开口等生产入口尚不能直接控制的参数。
 
 compositions 通过 compositionId、anchorBlock、algorithm、memberIds 组织完整子阵列包围盒，允许嵌套；父组合会重新定位子组团，但保留组内坐标关系。每个子组团只能归属一个父组合，拒绝循环与未知ID。父组合不能使用CONTIGUOUS。未修改且不受组合移动影响的阵列保持确定性坐标；组合修改后，其子阵列可能一起移动。
+
+可选 `coreNodeId` 必须指向该组合的一个直接子节点，将其占地原点固定在父组合的 anchorBlock；其他子节点继续使用生产布局规则。嵌套移动同时更新成员原点和生产算法轨迹中的世界坐标，避免后续道路消费旧位置。
 
 ## 真实执行与检查边界
 
@@ -54,3 +58,5 @@ cd '/Users/rinsing/Documents/文稿 - Rinsing的MacBook Air/project/StructureBin
 ```sh
 /Users/rinsing/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 tools/city_experiments/test_array_tools.py
 ```
+
+新增 [有目的的嵌套组团](INTENTIONAL_GROUPS.md)：Java 实验矩形排布与公共道路骨架，Python 设计绿化合成；23 栋教学/生活示例。

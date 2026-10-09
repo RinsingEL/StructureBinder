@@ -1,0 +1,25 @@
+{
+  "seed": 20261008,
+  "greenery": true,
+  "arrays": [
+    {"arrayId":"teaching-core","function":"教学","anchorBlock":{"x":0,"z":0},"algorithm":"GRID","count":1,"coreAssetId":"studio:mg-01-v01","densityClass":"DENSE"},
+    {"arrayId":"teaching-small","function":"教学","anchorBlock":{"x":0,"z":0},"algorithm":"LINEAR","directionDegrees":90,"count":3,"requiredAssetIds":["studio:mg-25-v01","studio:mg-26-v01","studio:mg-29-v01"],"densityClass":"DENSE"},
+    {"arrayId":"living-core","function":"生活","anchorBlock":{"x":0,"z":0},"algorithm":"GRID","count":1,"coreAssetId":"studio:mg-28-v01","densityClass":"DENSE"},
+    {"arrayId":"living-homes","function":"生活","anchorBlock":{"x":0,"z":0},"algorithm":"GRID","count":4,"fill":[{"assetId":"studio:mg-27-v01","weight":1}],"densityClass":"DENSE"},
+    {"arrayId":"farm-core","function":"农林","anchorBlock":{"x":-2870,"z":5370},"algorithm":"GRID","count":1,"coreAssetId":"studio:mg-31-v01","densityClass":"DENSE"},
+    {"arrayId":"farm-supply","function":"农林","anchorBlock":{"x":-2838,"z":5370},"algorithm":"GRID","count":1,"coreAssetId":"studio:mg-32-v01","densityClass":"DENSE"},
+    {"arrayId":"farm-plots","function":"农林","anchorBlock":{"x":-2870,"z":5422},"algorithm":"CONTIGUOUS","count":4,"fill":[{"assetId":"studio:mg-30-v01","weight":1}],"densityClass":"DENSE"},
+    {"arrayId":"forest-plots","function":"农林","anchorBlock":{"x":-2820,"z":5410},"algorithm":"CONTIGUOUS","count":2,"fill":[{"assetId":"studio:mg-33-v01","weight":1}],"densityClass":"DENSE"}
+  ],
+  "compositions": [
+    {"compositionId":"teaching-support","anchorBlock":{"x":0,"z":0},"algorithm":"GRID","memberIds":["teaching-small"],"densityClass":"DENSE"},
+    {"compositionId":"teaching-campus","anchorBlock":{"x":-2990,"z":5185},"algorithm":"LINEAR","memberIds":["teaching-core","teaching-support"],"coreNodeId":"teaching-core","densityClass":"DENSE"},
+    {"compositionId":"living-campus","anchorBlock":{"x":-3000,"z":5370},"algorithm":"LINEAR","memberIds":["living-core","living-homes"],"coreNodeId":"living-core","densityClass":"DENSE"}
+  ],
+  "districts": [
+    {"districtId":"teaching","name":"星穹教学区","coreMemberId":"teaching-core:1","arrayIds":["teaching-core","teaching-small"],"platform":true},
+    {"districtId":"living","name":"长桌生活区","coreMemberId":"living-core:1","arrayIds":["living-core","living-homes"],"platform":true},
+    {"districtId":"agroforestry","name":"试种农林区","coreMemberId":"farm-core:1","arrayIds":["farm-core","farm-supply","farm-plots","forest-plots"],"platform":false}
+  ],
+  "connections":[{"from":"teaching","to":"living"},{"from":"living","to":"agroforestry"}]
+}

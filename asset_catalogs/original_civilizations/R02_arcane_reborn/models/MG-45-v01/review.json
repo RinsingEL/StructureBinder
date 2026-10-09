@@ -1,0 +1,23 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MG-45-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex offline visual review",
+  "nbt_sha256": "4ee815e2f8206b05c98f32e86ce2f902f725c768ba7e7475724de2d97572419f",
+  "author_sha256": "e6270253057b373dcf955f809c3203d295f771ca05400c4793d37016bfdf1100",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/floor-1.png"
+  ],
+  "checks": [
+    "实际浏览器模型与纹理正常；门前通路保持净空。",
+    "功能空间与真实 NBT 验证一致，楼层通路验证通过。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

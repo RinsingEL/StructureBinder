@@ -41,6 +41,26 @@ public final class CityLandUseSurfacePrintPlanner {
             List<LandUseSourceResolver.RoadBand> roadBands,
             List<LandUseSourceResolver.GreenParcelSpec> greenParcels,
             List<LandUseSourceResolver.OverflowZoneSpec> overflowZones) {
+        return plan(landUsePlan, seedGroups, terrainField, roadBands, greenParcels, overflowZones, Map.of());
+    }
+
+    public CityLandUseSurfacePrintPlan plan(
+            LandUseAreaPlan landUsePlan, List<LandUseSeedGroup> seedGroups,
+            LandUseTerrainField terrainField, List<LandUseSourceResolver.RoadBand> roadBands,
+            List<LandUseSourceResolver.GreenParcelSpec> greenParcels,
+            List<LandUseSourceResolver.OverflowZoneSpec> overflowZones,
+            Map<String, com.rinsing.geomantia.systems.city.domain.model.BlockBounds> foundationCores) {
+        return plan(landUsePlan,seedGroups,terrainField,roadBands,greenParcels,overflowZones,foundationCores,Map.of());
+    }
+
+    public CityLandUseSurfacePrintPlan plan(
+            LandUseAreaPlan landUsePlan, List<LandUseSeedGroup> seedGroups,
+            LandUseTerrainField terrainField, List<LandUseSourceResolver.RoadBand> roadBands,
+            List<LandUseSourceResolver.GreenParcelSpec> greenParcels,
+            List<LandUseSourceResolver.OverflowZoneSpec> overflowZones,
+            Map<String, com.rinsing.geomantia.systems.city.domain.model.BlockBounds> foundationCores,
+            Map<String,Integer> foundationOffsets) {
+        Objects.requireNonNull(foundationCores, "foundationCores");
         Objects.requireNonNull(landUsePlan, "landUsePlan");
         Objects.requireNonNull(seedGroups, "seedGroups");
         Objects.requireNonNull(terrainField, "terrainField");
@@ -74,7 +94,9 @@ public final class CityLandUseSurfacePrintPlanner {
                 case UNIFORM -> new CityLandUseSurfacePrintPlan.UniformRecipe(
                         settings.surfaceBlockId(), settings.boundaryBlockId(),
                         area.sourceGroupIds().stream().anyMatch(id -> id.endsWith("::foundation"))
-                                ? CityFoundationElevationPlanner.plan(area.memberSpans(), terrainField, area.structureFootprintExclusions()) : List.of());
+                                ? foundationCores.containsKey(area.areaId())
+                                    ? CityFoundationElevationPlanner.planForCore(area.memberSpans(), terrainField, foundationCores.get(area.areaId()),foundationOffsets.getOrDefault(area.areaId(),0))
+                                    : CityFoundationElevationPlanner.plan(area.memberSpans(), terrainField, area.structureFootprintExclusions()) : List.of());
                 case CONTOUR_BANDS -> contourBands(area, settings, exclusions,
                         Objects.requireNonNull(algorithmAnchor, "algorithmAnchor"), terrainField);
                 case RELAY_REGION_GROWTH -> relayRegionGrowth(area, settings, exclusions,

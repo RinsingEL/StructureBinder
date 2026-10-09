@@ -1,0 +1,98 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-26-v01",
+  "name": "小课堂 · 尖拱教室与门廊",
+  "family": "MG-26",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    21,
+    24,
+    21
+  ],
+  "terrain": {
+    "选址": "完整承载面；农林地块保持自然地形，独立建筑使用核心台地。"
+  },
+  "rooms": [
+    {
+      "id": "main",
+      "name": "小课堂 · 尖拱教室与门廊",
+      "min": [
+        4,
+        2,
+        5
+      ],
+      "max": [
+        16,
+        7,
+        16
+      ],
+      "purpose": "教学、研讨"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        10,
+        2,
+        0
+      ],
+      "name": "主入口",
+      "direction": "north",
+      "approach": [
+        10,
+        2,
+        2
+      ]
+    },
+    {
+      "id": "teach",
+      "kind": "work",
+      "pos": [
+        10,
+        2,
+        13
+      ],
+      "name": "教学讲台"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "学院组团配套；尺寸独立于大型文化核心。实际生产、居民和魔法行为另行配置。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "首层",
+      "y": 1,
+      "max_y": 8
+    }
+  ],
+  "roof_min_y": 10,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "教学",
+    "研讨"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/academy_support.py",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部路面脚底为 Y=2。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "campus_consumer": "array",
+  "design_revision": 1,
+  "nbt_sha256": "6834d49503f92dc74792e2bb6ed3aafd0066840d510955c82b76a3005aa314d5"
+}

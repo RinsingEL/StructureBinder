@@ -1,0 +1,429 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-37-v02",
+  "name": "双翼宿舍 · 完整阳台收口",
+  "family": "MG-37",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    45,
+    43,
+    39
+  ],
+  "terrain": {
+    "选址": "核心台地的稳定承载面；连接件由连接系统确定位置与支撑。"
+  },
+  "rooms": [
+    {
+      "id": "west-1",
+      "name": "学生寝室",
+      "min": [
+        7,
+        2,
+        9
+      ],
+      "max": [
+        15,
+        8,
+        21
+      ],
+      "purpose": "床位、储物与自习"
+    },
+    {
+      "id": "east-1",
+      "name": "学生寝室",
+      "min": [
+        29,
+        2,
+        9
+      ],
+      "max": [
+        37,
+        8,
+        21
+      ],
+      "purpose": "床位、储物与自习"
+    },
+    {
+      "id": "west-11",
+      "name": "学生寝室",
+      "min": [
+        7,
+        12,
+        9
+      ],
+      "max": [
+        15,
+        18,
+        21
+      ],
+      "purpose": "床位、储物与自习"
+    },
+    {
+      "id": "east-11",
+      "name": "学生寝室",
+      "min": [
+        29,
+        12,
+        9
+      ],
+      "max": [
+        37,
+        18,
+        21
+      ],
+      "purpose": "床位、储物与自习"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        22,
+        2,
+        0
+      ],
+      "name": "临街主入口",
+      "direction": "north",
+      "approach": [
+        22,
+        2,
+        2
+      ]
+    },
+    {
+      "id": "upper-landing",
+      "kind": "circulation",
+      "pos": [
+        8,
+        12,
+        30
+      ],
+      "name": "楼梯上层平台"
+    },
+    {
+      "id": "west-bed-1-0",
+      "kind": "bed",
+      "pos": [
+        8,
+        2,
+        12
+      ],
+      "name": "学生床位",
+      "approach": [
+        9,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "west-bed-1-0-b",
+      "kind": "bed",
+      "pos": [
+        14,
+        2,
+        12
+      ],
+      "name": "学生床位",
+      "approach": [
+        15,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "west-bed-1-1",
+      "kind": "bed",
+      "pos": [
+        8,
+        2,
+        17
+      ],
+      "name": "学生床位",
+      "approach": [
+        9,
+        2,
+        17
+      ]
+    },
+    {
+      "id": "west-bed-1-1-b",
+      "kind": "bed",
+      "pos": [
+        14,
+        2,
+        17
+      ],
+      "name": "学生床位",
+      "approach": [
+        15,
+        2,
+        17
+      ]
+    },
+    {
+      "id": "east-bed-1-0",
+      "kind": "bed",
+      "pos": [
+        30,
+        2,
+        12
+      ],
+      "name": "学生床位",
+      "approach": [
+        31,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "east-bed-1-0-b",
+      "kind": "bed",
+      "pos": [
+        36,
+        2,
+        12
+      ],
+      "name": "学生床位",
+      "approach": [
+        37,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "east-bed-1-1",
+      "kind": "bed",
+      "pos": [
+        30,
+        2,
+        17
+      ],
+      "name": "学生床位",
+      "approach": [
+        31,
+        2,
+        17
+      ]
+    },
+    {
+      "id": "east-bed-1-1-b",
+      "kind": "bed",
+      "pos": [
+        36,
+        2,
+        17
+      ],
+      "name": "学生床位",
+      "approach": [
+        37,
+        2,
+        17
+      ]
+    },
+    {
+      "id": "reading-1",
+      "kind": "work",
+      "pos": [
+        24,
+        2,
+        30
+      ],
+      "name": "共享书廊研读位",
+      "look_at": [
+        24,
+        3,
+        30
+      ],
+      "approach": [
+        24,
+        2,
+        29
+      ]
+    },
+    {
+      "id": "west-bed-11-0",
+      "kind": "bed",
+      "pos": [
+        8,
+        12,
+        12
+      ],
+      "name": "学生床位",
+      "approach": [
+        9,
+        12,
+        12
+      ]
+    },
+    {
+      "id": "west-bed-11-0-b",
+      "kind": "bed",
+      "pos": [
+        14,
+        12,
+        12
+      ],
+      "name": "学生床位",
+      "approach": [
+        15,
+        12,
+        12
+      ]
+    },
+    {
+      "id": "west-bed-11-1",
+      "kind": "bed",
+      "pos": [
+        8,
+        12,
+        17
+      ],
+      "name": "学生床位",
+      "approach": [
+        9,
+        12,
+        17
+      ]
+    },
+    {
+      "id": "west-bed-11-1-b",
+      "kind": "bed",
+      "pos": [
+        14,
+        12,
+        17
+      ],
+      "name": "学生床位",
+      "approach": [
+        15,
+        12,
+        17
+      ]
+    },
+    {
+      "id": "east-bed-11-0",
+      "kind": "bed",
+      "pos": [
+        30,
+        12,
+        12
+      ],
+      "name": "学生床位",
+      "approach": [
+        31,
+        12,
+        12
+      ]
+    },
+    {
+      "id": "east-bed-11-0-b",
+      "kind": "bed",
+      "pos": [
+        36,
+        12,
+        12
+      ],
+      "name": "学生床位",
+      "approach": [
+        37,
+        12,
+        12
+      ]
+    },
+    {
+      "id": "east-bed-11-1",
+      "kind": "bed",
+      "pos": [
+        30,
+        12,
+        17
+      ],
+      "name": "学生床位",
+      "approach": [
+        31,
+        12,
+        17
+      ]
+    },
+    {
+      "id": "east-bed-11-1-b",
+      "kind": "bed",
+      "pos": [
+        36,
+        12,
+        17
+      ],
+      "name": "学生床位",
+      "approach": [
+        37,
+        12,
+        17
+      ]
+    },
+    {
+      "id": "reading-11",
+      "kind": "work",
+      "pos": [
+        24,
+        12,
+        30
+      ],
+      "name": "共享书廊研读位",
+      "look_at": [
+        24,
+        13,
+        30
+      ],
+      "approach": [
+        24,
+        12,
+        29
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "独立完整建筑；二层侧端为封闭护栏阳台，地面侧门保留，不要求连接廊。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "第1层",
+      "y": 1,
+      "max_y": 9
+    },
+    {
+      "name": "第2层",
+      "y": 11,
+      "max_y": 19
+    }
+  ],
+  "roof_min_y": 22,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "E:\\Mod_Dev\\StructureBinder\\tools\\structure_studio\\studio\\campus_daily.py",
+  "function_terms": [
+    "学生住宿",
+    "自习",
+    "庭院休憩"
+  ],
+  "asset_tags": [],
+  "campus_consumer": "array",
+  "ground_plane": {
+    "y": 2,
+    "note": "街面脚底 Y=2；教学组团二层接口脚底 Y=12。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "511723c84a366ef586bb666766cf5dd2ff3b8ecccc47e5b517ce02ee5d5721e6"
+}

@@ -1,0 +1,24 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MG-37-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-08",
+  "nbt_sha256": "c5bf3774ad6feba8bf9732fd31d3ebc54ff602687eb1fec3b9b08b434ac099a9",
+  "author_sha256": "37f7d5359f3293e55a43af11ccdb5c498dcba095b51e774df370c5cbd73a9e19",
+  "evidence": [
+    "previews/front.png",
+    "previews/floor-2.png"
+  ],
+  "checks": [
+    "查看双翼宿舍及二层平面：寝区、共享书廊、楼梯和窄庭分开。",
+    "16 组床均配对，所有床位站位经离线通路检查；花坛底座检查通过。"
+  ],
+  "revisions": [
+    "修复贯通道路覆盖窄庭花坛土层；花坛移至通路两侧。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

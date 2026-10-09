@@ -1,0 +1,23 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MG-40-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-08",
+  "nbt_sha256": "2fc9fba51dab31a53ac3bba4a1746ed76c74260e5250dbc0a799d0782bd72bf7",
+  "author_sha256": "7174c2e8c3edf98330e500d5fba6050f70cd3ceae7c6f2c393ba7fad10982851",
+  "evidence": [
+    "previews/front.png",
+    "previews/floor-2.png"
+  ],
+  "checks": [
+    "查看实际 NBT 外观和上层平面：尖拱支墩、地面楼梯和上层两侧护栏可辨。",
+    "地面与二层端口分别为脚底 Y=2 和 Y=12；两栋 MG-34 手工对接接缝与跨栋通路通过。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "高架支墩真实地形适配与自动拼接尚未实现。"
+  ]
+}

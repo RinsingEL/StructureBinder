@@ -1,0 +1,24 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MG-35-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-08",
+  "nbt_sha256": "131a2e3d06b70c885aad027beca29a77595838f2cb25e8faaa62a5508237eec0",
+  "author_sha256": "a2e298bd19c3451c4bc6589651b9ccaf80fc3a12ccdc564f9797f6fe04cea993",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/floor-2.png"
+  ],
+  "checks": [
+    "查看正反面及二层平面：L 形内凹角、转角尖塔和独立花庭均可辨。",
+    "楼层经实体楼梯连通；两层连接端口达到约定净空。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "未获得用户审美确认；与原大型核心的接口改造另行处理。"
+  ]
+}

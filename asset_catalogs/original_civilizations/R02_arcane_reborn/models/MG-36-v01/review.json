@@ -1,0 +1,23 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MG-36-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-08",
+  "nbt_sha256": "00e15fc6048bac4a8f256f264f5a927cbb9172b6baf11c8ccc1f2a9ec6c6e05f",
+  "author_sha256": "2248a72fd87f7ec74fe62b19fde17b31fb0ff1753e1c4ac5b7914ad3307033bb",
+  "evidence": [
+    "previews/front.png",
+    "previews/floor-2.png"
+  ],
+  "checks": [
+    "查看双门塔、三翼体量及二层平面：中庭上方敞开，楼体为 U 形。",
+    "西翼、东翼与后翼经过内部楼板相连；二层课堂及连接端口离线可达。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "内庭随完整建筑制作；尚未交给阵列算法自动生成。"
+  ]
+}

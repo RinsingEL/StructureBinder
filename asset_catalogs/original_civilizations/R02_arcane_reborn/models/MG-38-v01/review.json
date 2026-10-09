@@ -1,0 +1,24 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MG-38-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-08",
+  "nbt_sha256": "0782ebe6fd6e16b836e52a8f58f16c7b8694e6c88e947504e9768fcf99324008",
+  "author_sha256": "c8f6f8a18be48c92e2fd81f504f4002d8751a8d0ce570c0685b530f39fb51b21",
+  "evidence": [
+    "previews/front.png",
+    "previews/floor-3.png"
+  ],
+  "checks": [
+    "查看退台研究书楼、尖塔和三层平面：上层退缩，外侧可用露台保留。",
+    "连续实体楼梯走通到脚底 Y=22；上层工作点与露台离线可达。"
+  ],
+  "revisions": [
+    "打通第三层楼梯前的二层墙洞；西侧接口避开实体楼梯。"
+  ],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

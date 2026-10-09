@@ -13,7 +13,8 @@ try {
   const errors=[];
   page.on('pageerror',err=>errors.push(String(err)));
   page.on('console',msg=>{if(msg.type()==='error')errors.push(msg.text());});
-  await page.goto(`${base}/?asset=${encodeURIComponent(id)}`);
+  const address=new URL(base);address.searchParams.set('asset',id);
+  await page.goto(address.toString());
   await page.waitForFunction(()=>window.studio?.telemetry.ready||window.studio?.telemetry.renderErrors.length,{timeout:60000});
   const state=await page.evaluate(()=>window.studio.telemetry);
   if(!state.ready||state.renderErrors.length||state.missingTextures.length||errors.length)throw new Error(JSON.stringify({state,errors}));

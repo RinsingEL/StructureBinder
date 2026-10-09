@@ -1,0 +1,80 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-30-v01",
+  "name": "学院试种田 · 四块作物与灌溉沟",
+  "family": "MG-30",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    19,
+    5,
+    19
+  ],
+  "terrain": {
+    "选址": "完整承载面；农林地块保持自然地形，独立建筑使用核心台地。"
+  },
+  "rooms": [],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        9,
+        2,
+        0
+      ],
+      "name": "田块入口",
+      "direction": "north",
+      "approach": [
+        9,
+        2,
+        1
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "学院组团配套；尺寸独立于大型文化核心。实际生产、居民和魔法行为另行配置。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "首层",
+      "y": 1,
+      "max_y": 8
+    }
+  ],
+  "roof_min_y": null,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "植物教学",
+    "种植",
+    "药草栽培"
+  ],
+  "asset_tags": [
+    "landscape"
+  ],
+  "source": "tools/structure_studio/studio/academy_support.py",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部路面脚底为 Y=2。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "campus_consumer": "array",
+  "design_revision": 1,
+  "natural_ground": true,
+  "agriculture": {
+    "irrigated": true,
+    "note": "两侧与中央水沟，所有耕地在 4 格水源内。"
+  },
+  "nbt_sha256": "fb7c7a69cc89ac19b5de23150249c0b6c86b3a615a6d3ee7b7afc77b5b7cca5f"
+}

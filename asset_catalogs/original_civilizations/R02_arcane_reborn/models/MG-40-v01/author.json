@@ -1,0 +1,197 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-40-v01",
+  "name": "高架教学连廊 · 双层通路与尖拱支墩",
+  "family": "MG-40",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.structure",
+  "size": [
+    11,
+    35,
+    27
+  ],
+  "terrain": {
+    "选址": "核心台地的稳定承载面；连接件由连接系统确定位置与支撑。"
+  },
+  "rooms": [],
+  "points": [
+    {
+      "id": "upper-landing",
+      "kind": "circulation",
+      "pos": [
+        4,
+        12,
+        13
+      ],
+      "name": "楼梯上层平台"
+    },
+    {
+      "id": "north-1",
+      "kind": "circulation",
+      "pos": [
+        5,
+        2,
+        0
+      ],
+      "name": "连廊接口",
+      "direction": "north"
+    },
+    {
+      "id": "south-1",
+      "kind": "circulation",
+      "pos": [
+        5,
+        2,
+        26
+      ],
+      "name": "连廊接口",
+      "direction": "south"
+    },
+    {
+      "id": "north-11",
+      "kind": "circulation",
+      "pos": [
+        5,
+        12,
+        0
+      ],
+      "name": "连廊接口",
+      "direction": "north"
+    },
+    {
+      "id": "south-11",
+      "kind": "circulation",
+      "pos": [
+        5,
+        12,
+        26
+      ],
+      "name": "连廊接口",
+      "direction": "south"
+    },
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        5,
+        2,
+        0
+      ],
+      "name": "连接件地面入口",
+      "direction": "north",
+      "approach": [
+        5,
+        2,
+        1
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "north-1",
+      "point_id": "north-1",
+      "kind": "academy_gallery",
+      "pos": [
+        5,
+        2,
+        0
+      ],
+      "direction": "north",
+      "standing_y": 2,
+      "width": 3,
+      "height": 4,
+      "note": "端点脚底与翼楼同层端口对齐；高架支墩落地适配由程序负责。"
+    },
+    {
+      "id": "south-1",
+      "point_id": "south-1",
+      "kind": "academy_gallery",
+      "pos": [
+        5,
+        2,
+        26
+      ],
+      "direction": "south",
+      "standing_y": 2,
+      "width": 3,
+      "height": 4,
+      "note": "端点脚底与翼楼同层端口对齐；高架支墩落地适配由程序负责。"
+    },
+    {
+      "id": "north-11",
+      "point_id": "north-11",
+      "kind": "academy_gallery",
+      "pos": [
+        5,
+        12,
+        0
+      ],
+      "direction": "north",
+      "standing_y": 12,
+      "width": 3,
+      "height": 4,
+      "note": "端点脚底与翼楼同层端口对齐；高架支墩落地适配由程序负责。"
+    },
+    {
+      "id": "south-11",
+      "point_id": "south-11",
+      "kind": "academy_gallery",
+      "pos": [
+        5,
+        12,
+        26
+      ],
+      "direction": "south",
+      "standing_y": 12,
+      "width": 3,
+      "height": 4,
+      "note": "端点脚底与翼楼同层端口对齐；高架支墩落地适配由程序负责。"
+    }
+  ],
+  "design_notes": [
+    "补足大核心周围的多层翼楼、折角与围院，基础只覆盖实际楼体及通路。",
+    "连接端口为作者标记，尚未接入自动拼装；以局部坐标、方向、脚底高度和净空配对。",
+    "紫晶、仪器与符文均为原版静态方块，不声明魔法功能已经运行。",
+    "独立预览可从地面走通；连接件不能作为学院阵列建筑成员。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "第1层",
+      "y": 1,
+      "max_y": 9
+    },
+    {
+      "name": "第2层",
+      "y": 11,
+      "max_y": 19
+    }
+  ],
+  "roof_min_y": 21,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/academy_wings.py:BUILDERS",
+  "function_terms": [
+    "楼间连接",
+    "步行通行"
+  ],
+  "asset_tags": [
+    "infrastructure"
+  ],
+  "campus_consumer": "infrastructure",
+  "ground_plane": {
+    "y": 2,
+    "note": "街面脚底 Y=2；教学组团二层接口脚底 Y=12。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 1,
+  "nbt_sha256": "2fc9fba51dab31a53ac3bba4a1746ed76c74260e5250dbc0a799d0782bd72bf7"
+}

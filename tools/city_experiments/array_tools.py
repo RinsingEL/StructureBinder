@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Offline array tools: CLI or MCP stdio. Java computes all placement geometry."""
-import argparse, base64, copy, hashlib, json, subprocess, sys
+import argparse, base64, copy, hashlib, json, subprocess, sys, os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -8,7 +8,19 @@ DEFAULT = ROOT.parent / 'designer_territoryMod/experiments/第三题_学院岛�
 ALGORITHMS = ['GRID','LINEAR','COURTYARD','COMPACT','ORGANIC_COMPACT','CENTER_SYMMETRIC','CONTIGUOUS']
 POINT = {'type':'object','properties':{'x':{'type':'integer'},'z':{'type':'integer'}},'required':['x','z'],'additionalProperties':False}
 ARRAY = {'type':'object','properties':{'arrayId':{'type':'string'},'function':{'type':'string'},'anchorBlock':POINT,'algorithm':{'type':'string','enum':ALGORITHMS},'directionDegrees':{'type':'integer','enum':[0,90,180,270]},'rotation':{'type':'integer','enum':[0,90,180,270]},'densityClass':{'type':'string','enum':['SPARSE','BALANCED','DENSE']},'count':{'type':'integer','minimum':1,'maximum':1024},'coreAssetId':{'type':'string'},'requiredAssetIds':{'type':'array','items':{'type':'string'}},'fill':{'type':'array','items':{'type':'object','properties':{'assetId':{'type':'string'},'weight':{'type':'number','exclusiveMinimum':0}},'required':['assetId','weight'],'additionalProperties':False}}},'required':['arrayId','anchorBlock','algorithm','count'],'additionalProperties':False}
-COMPOSITION = {'type':'object','properties':{'compositionId':{'type':'string'},'anchorBlock':POINT,'algorithm':{'type':'string','enum':[a for a in ALGORITHMS if a!='CONTIGUOUS']},'directionDegrees':{'type':'integer','enum':[0,90,180,270]},'densityClass':{'type':'string','enum':['SPARSE','BALANCED','DENSE']},'memberIds':{'type':'array','minItems':1,'items':{'type':'string'}}},'required':['compositionId','anchorBlock','algorithm','memberIds'],'additionalProperties':False}
+COMPOSITION = {'type':'object','properties':{'compositionId':{'type':'string'},'coreNodeId':{'type':'string'},'anchorBlock':POINT,'algorithm':{'type':'string','enum':[a for a in ALGORITHMS if a!='CONTIGUOUS']},'directionDegrees':{'type':'integer','enum':[0,90,180,270]},'densityClass':{'type':'string','enum':['SPARSE','BALANCED','DENSE']},'memberIds':{'type':'array','minItems':1,'items':{'type':'string'}}},'required':['compositionId','anchorBlock','algorithm','memberIds'],'additionalProperties':False}
+# Explicit geometry is opt-in; legacy production proposals remain unchanged.
+LAYOUT = {'type':'object','properties':{
+ 'gapBlocks':{'type':'integer','minimum':4,'maximum':40},
+ 'columns':{'type':'integer','minimum':1,'maximum':12},
+ 'courtWidth':{'type':'integer','minimum':12,'maximum':160},
+ 'courtDepth':{'type':'integer','minimum':12,'maximum':160},
+ 'faceInward':{'type':'boolean'},
+ 'crossAlign':{'type':'string','enum':['START','CENTER','END']},
+ 'purpose':{'type':'string'}},'required':['gapBlocks'],'additionalProperties':False}
+ARRAY['properties']['layout']=LAYOUT
+COMPOSITION['properties']['layout']=LAYOUT
+
 def schema(props, required): return {'type':'object','properties':props,'required':required,'additionalProperties':False}
 TOOLS = [
  {'name':'array_preview','description':'Use production Java geometry for one array at explicit world coordinates. Core is pinned to anchorBlock; courtyard anchor is its composition reference. Density controls production spacing; direction and template rotation are separate. Mock assets use proposed footprints. Returns overview/local images and D3 diagnostics, never world construction.','inputSchema':schema({'array':ARRAY,'seed':{'type':'integer'}},['array'])},
@@ -17,7 +29,7 @@ TOOLS = [
 
 def validate(value, spec, path='$'):
     kind=spec.get('type')
-    valid={'object':isinstance(value,dict),'array':isinstance(value,list),'string':isinstance(value,str),'integer':type(value) is int,'number':type(value) in (int,float)}
+    valid={'object':isinstance(value,dict),'array':isinstance(value,list),'string':isinstance(value,str),'integer':type(value) is int,'number':type(value) in (int,float),'boolean':type(value) is bool}
     if kind and not valid[kind]: raise ValueError(f'{path}: expected {kind}')
     if 'enum' in spec and value not in spec['enum']: raise ValueError(f'{path}: unsupported value {value}')
     if kind=='object':
@@ -29,14 +41,15 @@ def validate(value, spec, path='$'):
             validate(v,props[k],path+'.'+k)
     if kind=='array':
         if len(value)<spec.get('minItems',0): raise ValueError(f'{path}: empty list')
+        if len(value)>spec.get('maxItems',float('inf')): raise ValueError(f'{path}: too many items')
         for i,v in enumerate(value): validate(v,spec['items'],f'{path}[{i}]')
     if kind in ('integer','number'):
         import math
         if not math.isfinite(value) or value<spec.get('minimum',-float('inf')) or value>spec.get('maximum',float('inf')) or value<=spec.get('exclusiveMinimum',-float('inf')): raise ValueError(f'{path}: invalid number')
     if kind=='string' and not value: raise ValueError(f'{path}: empty string')
 
-def read(path): return json.loads(Path(path).read_text())
-def write(path,value): Path(path).write_text(json.dumps(value,ensure_ascii=False,indent=2)+'\n')
+def read(path): return json.loads(Path(path).read_text(encoding='utf-8'))
+def write(path,value): Path(path).write_text(json.dumps(value,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 def catalogue(experiment):
     real=read(experiment/'data/学院素材目录.json')['models']; fake=read(experiment/'data/假结构目录.json')['models'];assets=[]
     for m in real: assets.append({'assetId':m['structureRef'],'name':m['name'],'placeholder':False,**{k:m[k] for k in ['width','height','depth']},'functionTerms':m['functionTerms']})
@@ -50,9 +63,9 @@ def fingerprint(experiment):
 
 def run_java(request, folder):
     inp=folder/'java-input.json';out=folder/'java-result.json';write(inp,request)
-    command=[str(ROOT/'gradlew'),'cityArrayExperiment','--no-daemon','--console=plain','-PexperimentRequest='+str(inp.resolve()),'-PexperimentOutput='+str(out.resolve())]
+    command=[str(ROOT/('gradlew.bat' if os.name=='nt' else 'gradlew')),'cityArrayExperiment','--no-daemon','--console=plain','-PexperimentRequest='+str(inp.resolve()),'-PexperimentOutput='+str(out.resolve())]
     completed=subprocess.run(command,cwd=ROOT,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
-    (folder/'java-execution.log').write_text(completed.stdout)
+    (folder/'java-execution.log').write_text(completed.stdout,encoding='utf-8')
     if completed.returncode: raise RuntimeError('Java execution failed; see '+str(folder/'java-execution.log'))
     result=read(out)
     if not result.get('ok'): raise ValueError(result.get('error','Java rejected input'))
@@ -61,7 +74,7 @@ def run_java(request, folder):
 def render(result, terrain, folder):
     try: from PIL import Image, ImageDraw, ImageFont
     except ImportError: raise RuntimeError('Pillow is required for preview rendering; use the bundled Python or the Studio virtualenv')
-    font_path='/System/Library/Fonts/STHeiti Medium.ttc'
+    font_path='C:/Windows/Fonts/msyh.ttc' if os.name=='nt' else '/System/Library/Fonts/STHeiti Medium.ttc'
     font=ImageFont.truetype(font_path,17) if Path(font_path).exists() else ImageFont.load_default()
     colors={'water':'#65b6e4','shore':'#efdc93','plain':'#91bf86','slope':'#ddad78','terrace':'#bccc82'}
     palette=['#7253a3','#286dac','#ba6942','#498467','#99762f','#ab4b77']
@@ -146,6 +159,8 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--experiment',type=Path,default=DEFAULT);p.add_argument('--output',type=Path);p.add_argument('--tool',choices=[t['name'] for t in TOOLS]);p.add_argument('--request',type=Path);p.add_argument('--list-tools',action='store_true');p.add_argument('--stdio',action='store_true');a=p.parse_args();output=a.output or a.experiment/'result/array-tools'
     if a.list_tools:print(json.dumps({'tools':TOOLS},ensure_ascii=False,indent=2));return
     if a.stdio:
+        # MCP stdio is UTF-8 even on a Windows host whose console default is GBK.
+        sys.stdin.reconfigure(encoding='utf-8');sys.stdout.reconfigure(encoding='utf-8')
         for line in sys.stdin:
             msg=None
             try:

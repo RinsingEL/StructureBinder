@@ -102,6 +102,7 @@ public final class GeomantiaHttpServer {
             createdServer.createContext("/realm/city/design_queue/status",
                     realmController::handleCityDesignQueueStatus).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/realm/city/plan_d3", realmController::handleCityPlanD3).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/export_terrain_dem", realmController::handleCityExportTerrainDem).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/realm/city/review_d3_site", realmController::handleCityReviewD3Site).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/realm/city/prepare_d4_blueprint_context",
                     realmController::handleCityPrepareD4BlueprintContext).getFilters().add(planningController.ownershipFilter());

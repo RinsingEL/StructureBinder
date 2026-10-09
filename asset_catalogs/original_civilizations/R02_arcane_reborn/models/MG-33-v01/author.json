@@ -1,0 +1,75 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-33-v01",
+  "name": "试验苗圃 · 四株小树与林间通道",
+  "family": "MG-33",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    23,
+    13,
+    23
+  ],
+  "terrain": {
+    "选址": "完整承载面；农林地块保持自然地形，独立建筑使用核心台地。"
+  },
+  "rooms": [],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        11,
+        2,
+        0
+      ],
+      "name": "苗圃入口",
+      "direction": "north",
+      "approach": [
+        11,
+        2,
+        2
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "学院组团配套；尺寸独立于大型文化核心。实际生产、居民和魔法行为另行配置。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "首层",
+      "y": 1,
+      "max_y": 8
+    }
+  ],
+  "roof_min_y": null,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "林业教学",
+    "苗木培育"
+  ],
+  "asset_tags": [
+    "landscape"
+  ],
+  "source": "tools/structure_studio/studio/academy_support.py",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部路面脚底为 Y=2。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "campus_consumer": "array",
+  "design_revision": 1,
+  "natural_ground": true,
+  "nbt_sha256": "597711414d8a8d12df3bbdfae56568977d87b3a1d29bb9ce958d5f1ca4ac3c19"
+}

@@ -43,6 +43,15 @@ def validate(directory: Path, registry=None, *, save=True):
     if not isinstance(role, str) or role not in PLANNING_ROLES:
         errors.append(f"Invalid author planning_role: {role!r}")
     terms = meta.get('function_terms')
+    if 'placement_consumer' in meta and meta['placement_consumer'] not in ('array', 'infrastructure'):
+        errors.append('Author placement_consumer must be array/infrastructure')
+    if 'placement_anchor' in meta:
+        anchor = meta['placement_anchor']
+        pos = anchor.get('pos') if isinstance(anchor, dict) else None
+        if (not isinstance(pos, list) or len(pos) != 3
+                or any(type(v) is not int or not 0 <= v < size[i] for i, v in enumerate(pos))
+                or not isinstance(anchor.get('note'), str) or not anchor['note'].strip()):
+            errors.append('Author placement_anchor must have an in-bounds integer pos and a note')
     tags = meta.get('asset_tags', [])
     if (not isinstance(tags, list) or any(not isinstance(t, str) or t not in ASSET_TAGS for t in tags)
             or (all(isinstance(t, str) for t in tags) and len(tags) != len(set(tags)))):

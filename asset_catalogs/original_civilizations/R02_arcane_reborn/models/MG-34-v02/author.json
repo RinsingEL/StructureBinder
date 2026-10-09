@@ -1,0 +1,229 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-34-v02",
+  "name": "双层教学翼楼 · 完整阳台收口",
+  "family": "MG-34",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    47,
+    49,
+    29
+  ],
+  "terrain": {
+    "选址": "核心台地的稳定承载面；连接件由连接系统确定位置与支撑。"
+  },
+  "rooms": [
+    {
+      "id": "west-1",
+      "name": "课堂",
+      "min": [
+        13,
+        2,
+        9
+      ],
+      "max": [
+        21,
+        8,
+        21
+      ],
+      "purpose": "课堂教学与研讨"
+    },
+    {
+      "id": "east-1",
+      "name": "课堂",
+      "min": [
+        28,
+        2,
+        9
+      ],
+      "max": [
+        39,
+        8,
+        21
+      ],
+      "purpose": "课堂教学与研讨"
+    },
+    {
+      "id": "west-11",
+      "name": "课堂",
+      "min": [
+        13,
+        12,
+        9
+      ],
+      "max": [
+        21,
+        18,
+        21
+      ],
+      "purpose": "课堂教学与研讨"
+    },
+    {
+      "id": "east-11",
+      "name": "课堂",
+      "min": [
+        28,
+        12,
+        9
+      ],
+      "max": [
+        39,
+        18,
+        21
+      ],
+      "purpose": "课堂教学与研讨"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        23,
+        2,
+        0
+      ],
+      "name": "临街主入口",
+      "direction": "north",
+      "approach": [
+        23,
+        2,
+        2
+      ]
+    },
+    {
+      "id": "upper-landing",
+      "kind": "circulation",
+      "pos": [
+        7,
+        12,
+        22
+      ],
+      "name": "楼梯上层平台"
+    },
+    {
+      "id": "west-desk-1",
+      "kind": "work",
+      "pos": [
+        17,
+        2,
+        19
+      ],
+      "name": "教学与研读讲台",
+      "look_at": [
+        17,
+        3,
+        19
+      ],
+      "approach": [
+        17,
+        2,
+        20
+      ]
+    },
+    {
+      "id": "east-desk-1",
+      "kind": "work",
+      "pos": [
+        33,
+        2,
+        19
+      ],
+      "name": "教学与研读讲台",
+      "look_at": [
+        33,
+        3,
+        19
+      ],
+      "approach": [
+        33,
+        2,
+        20
+      ]
+    },
+    {
+      "id": "west-desk-11",
+      "kind": "work",
+      "pos": [
+        17,
+        12,
+        19
+      ],
+      "name": "教学与研读讲台",
+      "look_at": [
+        17,
+        13,
+        19
+      ],
+      "approach": [
+        17,
+        12,
+        20
+      ]
+    },
+    {
+      "id": "east-desk-11",
+      "kind": "work",
+      "pos": [
+        33,
+        12,
+        19
+      ],
+      "name": "教学与研读讲台",
+      "look_at": [
+        33,
+        13,
+        19
+      ],
+      "approach": [
+        33,
+        12,
+        20
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "独立完整建筑；二层侧端为封闭护栏阳台，地面侧门保留，不要求连接廊。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "第1层",
+      "y": 1,
+      "max_y": 9
+    },
+    {
+      "name": "第2层",
+      "y": 11,
+      "max_y": 19
+    }
+  ],
+  "roof_min_y": 23,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "E:\\Mod_Dev\\StructureBinder\\tools\\structure_studio\\studio\\campus_daily.py",
+  "function_terms": [
+    "教学",
+    "研讨",
+    "阅读"
+  ],
+  "asset_tags": [],
+  "campus_consumer": "array",
+  "ground_plane": {
+    "y": 2,
+    "note": "街面脚底 Y=2；教学组团二层接口脚底 Y=12。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "nbt_sha256": "c45ad3955a55e3638a7f30f377499b929f00c6e5e4bb2377e57555ac2658cd3b"
+}

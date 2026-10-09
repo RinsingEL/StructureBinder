@@ -1,0 +1,23 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MG-41-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex offline visual review 2026-10-08",
+  "nbt_sha256": "9744cf361919c1dc7bcd2d2d1c5ff7138a7a3e2ccba598ac54c91b52699eeee4",
+  "author_sha256": "ac8a8746f6b547abf8c26468c2a77f3dc8160b1dcb9bacac9b63aa82bafb4b85",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/top.png"
+  ],
+  "checks": [
+    "细石柱和紫色叠层塔顶清楚，四面连续；7 格底座适合边角，不占教学楼规模。",
+    "已查看真实 NBT 正面、背面、俯视图；通过注册表、地面基准与离线通路检查。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

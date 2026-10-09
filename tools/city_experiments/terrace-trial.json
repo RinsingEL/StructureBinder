@@ -1,0 +1,356 @@
+{
+  "seed": 20261008,
+  "greenery": true,
+  "arrays": [
+    {
+      "arrayId": "teaching-core",
+      "function": "教学",
+      "anchorBlock": {
+        "x": -2990,
+        "z": 5185
+      },
+      "algorithm": "GRID",
+      "count": 1,
+      "rotation": 0,
+      "densityClass": "DENSE",
+      "coreAssetId": "studio:mg-01-v01"
+    },
+    {
+      "arrayId": "teaching-wing-west",
+      "function": "教学",
+      "anchorBlock": {
+        "x": -3027,
+        "z": 5197
+      },
+      "algorithm": "GRID",
+      "count": 1,
+      "rotation": 90,
+      "densityClass": "DENSE",
+      "requiredAssetIds": [
+        "studio:mg-34-v01"
+      ]
+    },
+    {
+      "arrayId": "teaching-wing-east",
+      "function": "教学",
+      "anchorBlock": {
+        "x": -2911,
+        "z": 5197
+      },
+      "algorithm": "GRID",
+      "count": 1,
+      "rotation": 270,
+      "densityClass": "DENSE",
+      "requiredAssetIds": [
+        "studio:mg-34-v01"
+      ]
+    },
+    {
+      "arrayId": "teaching-research",
+      "function": "教学",
+      "anchorBlock": {
+        "x": -2970,
+        "z": 5146
+      },
+      "algorithm": "GRID",
+      "count": 1,
+      "rotation": 180,
+      "densityClass": "DENSE",
+      "coreAssetId": "studio:mg-38-v01"
+    },
+    {
+      "arrayId": "teaching-class-west",
+      "function": "教学",
+      "anchorBlock": {
+        "x": -3015,
+        "z": 5153
+      },
+      "algorithm": "GRID",
+      "count": 1,
+      "rotation": 90,
+      "densityClass": "DENSE",
+      "requiredAssetIds": [
+        "studio:mg-26-v01"
+      ]
+    },
+    {
+      "arrayId": "teaching-class-east",
+      "function": "教学",
+      "anchorBlock": {
+        "x": -2915,
+        "z": 5153
+      },
+      "algorithm": "GRID",
+      "count": 1,
+      "rotation": 270,
+      "densityClass": "DENSE",
+      "requiredAssetIds": [
+        "studio:mg-26-v01"
+      ]
+    },
+    {
+      "arrayId": "teaching-garden-west",
+      "function": "教学",
+      "anchorBlock": {
+        "x": -2990,
+        "z": 5160
+      },
+      "algorithm": "GRID",
+      "count": 1,
+      "rotation": 0,
+      "densityClass": "DENSE",
+      "requiredAssetIds": [
+        "studio:mg-29-v01"
+      ]
+    },
+    {
+      "arrayId": "teaching-garden-east",
+      "function": "教学",
+      "anchorBlock": {
+        "x": -2936,
+        "z": 5160
+      },
+      "algorithm": "GRID",
+      "count": 1,
+      "rotation": 0,
+      "densityClass": "DENSE",
+      "requiredAssetIds": [
+        "studio:mg-29-v01"
+      ]
+    },
+    {
+      "arrayId": "living-core",
+      "function": "生活",
+      "anchorBlock": {
+        "x": 0,
+        "z": 0
+      },
+      "algorithm": "GRID",
+      "count": 1,
+      "coreAssetId": "studio:mg-28-v01",
+      "densityClass": "DENSE"
+    },
+    {
+      "arrayId": "living-homes",
+      "function": "生活",
+      "anchorBlock": {
+        "x": 0,
+        "z": 0
+      },
+      "algorithm": "GRID",
+      "count": 4,
+      "fill": [
+        {
+          "assetId": "studio:mg-27-v01",
+          "weight": 1
+        }
+      ],
+      "densityClass": "DENSE"
+    },
+    {
+      "arrayId": "farm-core",
+      "function": "农林",
+      "anchorBlock": {
+        "x": -2870,
+        "z": 5370
+      },
+      "algorithm": "GRID",
+      "count": 1,
+      "coreAssetId": "studio:mg-31-v01",
+      "densityClass": "DENSE"
+    },
+    {
+      "arrayId": "farm-supply",
+      "function": "农林",
+      "anchorBlock": {
+        "x": -2838,
+        "z": 5370
+      },
+      "algorithm": "GRID",
+      "count": 1,
+      "coreAssetId": "studio:mg-32-v01",
+      "densityClass": "DENSE"
+    },
+    {
+      "arrayId": "farm-plots",
+      "function": "农林",
+      "anchorBlock": {
+        "x": -2870,
+        "z": 5422
+      },
+      "algorithm": "CONTIGUOUS",
+      "count": 4,
+      "fill": [
+        {
+          "assetId": "studio:mg-30-v01",
+          "weight": 1
+        }
+      ],
+      "densityClass": "DENSE"
+    },
+    {
+      "arrayId": "forest-plots",
+      "function": "农林",
+      "anchorBlock": {
+        "x": -2820,
+        "z": 5410
+      },
+      "algorithm": "CONTIGUOUS",
+      "count": 2,
+      "fill": [
+        {
+          "assetId": "studio:mg-33-v01",
+          "weight": 1
+        }
+      ],
+      "densityClass": "DENSE"
+    }
+  ],
+  "compositions": [
+    {
+      "compositionId": "living-campus",
+      "anchorBlock": {
+        "x": -3000,
+        "z": 5370
+      },
+      "algorithm": "LINEAR",
+      "memberIds": [
+        "living-core",
+        "living-homes"
+      ],
+      "coreNodeId": "living-core",
+      "densityClass": "DENSE"
+    }
+  ],
+  "districts": [
+    {
+      "districtId": "teaching",
+      "name": "星穹教学区",
+      "coreMemberId": "teaching-core:1",
+      "arrayIds": [
+        "teaching-core",
+        "teaching-wing-west",
+        "teaching-wing-east",
+        "teaching-research",
+        "teaching-class-west",
+        "teaching-class-east",
+        "teaching-garden-west",
+        "teaching-garden-east"
+      ],
+      "platform": true
+    },
+    {
+      "districtId": "living",
+      "name": "长桌生活区",
+      "coreMemberId": "living-core:1",
+      "arrayIds": [
+        "living-core",
+        "living-homes"
+      ],
+      "platform": true
+    },
+    {
+      "districtId": "agroforestry",
+      "name": "试种农林区",
+      "coreMemberId": "farm-core:1",
+      "arrayIds": [
+        "farm-core",
+        "farm-supply",
+        "farm-plots",
+        "forest-plots"
+      ],
+      "platform": false
+    }
+  ],
+  "connections": [
+    {
+      "from": "teaching",
+      "to": "living"
+    },
+    {
+      "from": "living",
+      "to": "agroforestry"
+    }
+  ],
+  "terraceStyles": [
+    {
+      "styleId": "stone_civic",
+      "name": "石砌边缘 · 角塔与晶簇",
+      "railBlock": "minecraft:stone_brick_wall",
+      "postBlock": "minecraft:polished_andesite",
+      "capBlock": "minecraft:quartz_slab",
+      "postSpacing": 10,
+      "minimumExposure": 1,
+      "maximumCorners": 4,
+      "cornerSpacing": 28,
+      "cornerAssetId": "studio:mg-41-v01",
+      "courtAssetId": "studio:mg-42-v01",
+      "materials": {
+        "ground": "minecraft:smooth_stone",
+        "retainingWall": "minecraft:stone_bricks",
+        "wallColumn": "minecraft:polished_andesite",
+        "wallCap": "minecraft:quartz_block",
+        "wallBand": "minecraft:polished_diorite"
+      }
+    },
+    {
+      "styleId": "timber_edge",
+      "name": "木构边缘 · 角亭与石井",
+      "railBlock": "minecraft:spruce_fence",
+      "postBlock": "minecraft:stripped_spruce_log",
+      "capBlock": "minecraft:spruce_slab",
+      "postSpacing": 10,
+      "minimumExposure": 0,
+      "maximumCorners": 4,
+      "cornerSpacing": 28,
+      "cornerAssetId": "studio:eu-25-v01",
+      "courtAssetId": "studio:eu-26-v01",
+      "materials": {
+        "ground": "minecraft:stone_bricks",
+        "retainingWall": "minecraft:cobblestone",
+        "wallColumn": "minecraft:stone_bricks",
+        "wallCap": "minecraft:smooth_stone",
+        "wallBand": "minecraft:mossy_stone_bricks"
+      }
+    }
+  ],
+  "terraceFeatures": true,
+  "foundationMarginBlocks": 8,
+  "terraceGroups": [
+    {
+      "terraceId": "hall-platform",
+      "districtId": "teaching",
+      "coreMemberId": "teaching-core:1",
+      "arrayIds": [
+        "teaching-core",
+        "teaching-wing-west",
+        "teaching-wing-east"
+      ],
+      "styleRef": "stone_civic"
+    },
+    {
+      "terraceId": "study-platform",
+      "districtId": "teaching",
+      "coreMemberId": "teaching-research:1",
+      "arrayIds": [
+        "teaching-research",
+        "teaching-class-west",
+        "teaching-class-east",
+        "teaching-garden-west",
+        "teaching-garden-east"
+      ],
+      "styleRef": "stone_civic",
+      "datumOffsetBlocks": 4
+    },
+    {
+      "terraceId": "residential-platform",
+      "districtId": "living",
+      "coreMemberId": "living-core:1",
+      "arrayIds": [
+        "living-core",
+        "living-homes"
+      ],
+      "styleRef": "stone_civic"
+    }
+  ]
+}

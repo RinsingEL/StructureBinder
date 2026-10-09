@@ -203,6 +203,22 @@ tasks.register('cityArrayExperiment', JavaExec) {
         args = [providers.gradleProperty('experimentRequest').get(), providers.gradleProperty('experimentOutput').get()]
     }
 }
+tasks.register('cityCampusExperiment', JavaExec) {
+    group = 'verification'
+    description = 'Build an offline campus with production roads, core terraces and surface execution.'
+    dependsOn tasks.named('compileJava'), tasks.named('compileCityExperimentJava')
+    classpath = sourceSets.cityExperiment.runtimeClasspath
+    mainClass = 'com.rinsing.geomantia.systems.city.application.CityCampusExperiment'
+    doFirst {
+        args = [providers.gradleProperty('experimentRequest').get(), providers.gradleProperty('experimentOutput').get()]
+    }
+}
+tasks.register('prepareCityWorkbench') {
+    dependsOn tasks.named('compileJava'), tasks.named('compileCityExperimentJava'), tasks.named('processResources')
+    doLast {
+        layout.buildDirectory.file('city-workbench-classpath.txt').get().asFile.text = sourceSets.cityExperiment.runtimeClasspath.asPath
+    }
+}
 configurations {
     harnessImplementation.extendsFrom implementation
     mapImplementation.extendsFrom implementation

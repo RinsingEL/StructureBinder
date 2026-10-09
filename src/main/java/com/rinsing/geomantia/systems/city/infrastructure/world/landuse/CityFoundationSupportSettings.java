@@ -17,6 +17,17 @@ public record CityFoundationSupportSettings(int maximumSolidFillHeight, int pier
     public static CityFoundationSupportSettings current() { return current; }
     public boolean requiresDeck(int groundY, int targetY) { return (long) targetY - groundY > maximumSolidFillHeight; }
     public boolean pierAt(int x, int z) { return Math.floorMod(x, pierSpacingBlocks) == 0 && Math.floorMod(z, pierSpacingBlocks) == 0; }
+    /** Shared by template worldgen and the offline virtual world; floorY is the lowest solid authored floor. */
+    public java.util.List<SupportBlock> column(int groundY, int floorY, int x, int z, boolean cornerPier) {
+        if (groundY >= floorY - 1) return java.util.List.of();
+        boolean deck = requiresDeck(groundY, floorY - 1);
+        boolean pier = pierAt(x,z) || cornerPier;
+        var result = new java.util.ArrayList<SupportBlock>();
+        for (int y = deck && !pier ? floorY - 1 : groundY + 1; y < floorY; y++)
+            result.add(new SupportBlock(y, deck && y < floorY - 1));
+        return java.util.List.copyOf(result);
+    }
+    public record SupportBlock(int y, boolean blackstonePier) { }
     public static synchronized void load(Path configRoot) throws IOException {
         current = defaults();
         Files.createDirectories(configRoot);

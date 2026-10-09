@@ -1,0 +1,23 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MG-42-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex offline visual review 2026-10-08",
+  "nbt_sha256": "61476be34c294cd767bda6b9129542d033426afa8d3927a6e0206b08d708aace",
+  "author_sha256": "1fe1d77a39da6ed4e40b7313092969209a5a6abaa65a84e6ae7b8507306481a4",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/top.png"
+  ],
+  "checks": [
+    "低石台、四角灯和中央晶簇清楚，9 格占地用于庭院空地；不是可强行插进道路的散点。",
+    "已查看真实 NBT 正面、背面、俯视图；通过注册表、地面基准与离线通路检查。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

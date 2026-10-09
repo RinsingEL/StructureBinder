@@ -1,0 +1,89 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-32-v01",
+  "name": "农林工具房 · 储藏与修整台",
+  "family": "MG-32",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    17,
+    24,
+    21
+  ],
+  "terrain": {
+    "选址": "完整承载面；农林地块保持自然地形，独立建筑使用核心台地。"
+  },
+  "rooms": [
+    {
+      "id": "main",
+      "name": "农林工具房 · 储藏与修整台",
+      "min": [
+        4,
+        2,
+        5
+      ],
+      "max": [
+        12,
+        7,
+        16
+      ],
+      "purpose": "工具保管、园艺养护、林业教学"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        8,
+        2,
+        0
+      ],
+      "name": "主入口",
+      "direction": "north",
+      "approach": [
+        8,
+        2,
+        2
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "学院组团配套；尺寸独立于大型文化核心。实际生产、居民和魔法行为另行配置。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "首层",
+      "y": 1,
+      "max_y": 8
+    }
+  ],
+  "roof_min_y": 10,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "工具保管",
+    "园艺养护",
+    "林业教学"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/academy_support.py",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部路面脚底为 Y=2。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "campus_consumer": "array",
+  "design_revision": 1,
+  "nbt_sha256": "011b687d3927c5f7f36d4de31425a028190ca7078c3a9b15fd8b6135dfe052ea"
+}

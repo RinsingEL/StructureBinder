@@ -9,6 +9,23 @@ import java.util.*;
 public final class CityFoundationElevationPlanner {
     private CityFoundationElevationPlanner() {}
 
+    /** A declared core owns one datum across its entire district, including nested support groups. */
+    public static List<CityLandUseSurfacePrintPlan.PlatformSpan> planForCore(
+            List<LandUseAreaPlan.ScanlineSpan> spans, LandUseTerrainField terrain,
+            com.rinsing.geomantia.systems.city.domain.model.BlockBounds core) {
+        Objects.requireNonNull(core, "foundation core");
+        return plan(spans, terrain, List.of(core));
+    }
+
+    /** Explicit design offset, applied before road grading. Zero retains terrain-led behaviour. */
+    public static List<CityLandUseSurfacePrintPlan.PlatformSpan> planForCore(
+            List<LandUseAreaPlan.ScanlineSpan> spans, LandUseTerrainField terrain,
+            com.rinsing.geomantia.systems.city.domain.model.BlockBounds core, int offset) {
+        if (offset < -16 || offset > 16) throw new IllegalArgumentException("CITY_FOUNDATION_DATUM_OFFSET_LIMIT");
+        return planForCore(spans,terrain,core).stream().map(s -> new CityLandUseSurfacePrintPlan.PlatformSpan(
+                s.z(),s.minX(),s.maxX(),s.targetY()+offset)).toList();
+    }
+
     public static List<CityLandUseSurfacePrintPlan.PlatformSpan> plan(
             List<LandUseAreaPlan.ScanlineSpan> spans, LandUseTerrainField terrain) {
         return plan(spans, terrain, List.of());

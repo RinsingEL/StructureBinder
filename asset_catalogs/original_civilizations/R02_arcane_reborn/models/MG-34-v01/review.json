@@ -1,0 +1,24 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MG-34-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-08",
+  "nbt_sha256": "7f1cb5e08d993cf28cf8907b2270765952b92d4c111b0d6e55085f9bc52eff61",
+  "author_sha256": "8ed4f7bb784ea8df8adc32a765f7783b9b4268b407b627b8b6aa0311e6afe046",
+  "evidence": [
+    "previews/front.png",
+    "previews/floor-2.png"
+  ],
+  "checks": [
+    "查看实际 NBT 外观：长翼、十字屋脊、端部尖塔和两层立面。",
+    "查看二层平面：楼板、课堂家具、楼梯洞口及两端接口可辨。",
+    "当前哈希的结构、楼层通路及端口净空检查通过。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "未获得用户审美确认；大核心自动接翼楼尚未实现。"
+  ]
+}

@@ -1,0 +1,172 @@
+{
+  "seed": 20261008,
+  "greenery": true,
+  "terraceFeatures": true,
+  "foundationMarginBlocks": 8,
+  "arrays": [
+    {
+      "arrayId": "civic-hall",
+      "function": "civic-hall",
+      "anchorBlock": {
+        "x": -2990,
+        "z": 5185
+      },
+      "algorithm": "GRID",
+      "count": 1,
+      "densityClass": "DENSE",
+      "rotation": 0,
+      "coreAssetId": "studio:eu-03-v01"
+    },
+    {
+      "arrayId": "house-west",
+      "function": "house-west",
+      "anchorBlock": {
+        "x": -3030,
+        "z": 5200
+      },
+      "algorithm": "GRID",
+      "count": 1,
+      "densityClass": "DENSE",
+      "rotation": 0,
+      "requiredAssetIds": [
+        "studio:eu-05-v01"
+      ]
+    },
+    {
+      "arrayId": "house-east",
+      "function": "house-east",
+      "anchorBlock": {
+        "x": -2920,
+        "z": 5200
+      },
+      "algorithm": "GRID",
+      "count": 1,
+      "densityClass": "DENSE",
+      "rotation": 180,
+      "requiredAssetIds": [
+        "studio:eu-05-v01"
+      ]
+    },
+    {
+      "arrayId": "workshop",
+      "function": "workshop",
+      "anchorBlock": {
+        "x": -2970,
+        "z": 5118
+      },
+      "algorithm": "GRID",
+      "count": 1,
+      "densityClass": "DENSE",
+      "rotation": 180,
+      "coreAssetId": "studio:eu-07-v01"
+    },
+    {
+      "arrayId": "craft-house-west",
+      "function": "craft-house-west",
+      "anchorBlock": {
+        "x": -3030,
+        "z": 5118
+      },
+      "algorithm": "GRID",
+      "count": 1,
+      "densityClass": "DENSE",
+      "rotation": 0,
+      "requiredAssetIds": [
+        "studio:eu-05-v01"
+      ]
+    },
+    {
+      "arrayId": "craft-house-east",
+      "function": "craft-house-east",
+      "anchorBlock": {
+        "x": -2910,
+        "z": 5118
+      },
+      "algorithm": "GRID",
+      "count": 1,
+      "densityClass": "DENSE",
+      "rotation": 180,
+      "requiredAssetIds": [
+        "studio:eu-05-v01"
+      ]
+    }
+  ],
+  "compositions": [],
+  "districts": [
+    {
+      "districtId": "civic",
+      "name": "城镇公共组",
+      "coreMemberId": "civic-hall:1",
+      "arrayIds": [
+        "civic-hall",
+        "house-west",
+        "house-east"
+      ],
+      "platform": true
+    },
+    {
+      "districtId": "craft",
+      "name": "工坊组",
+      "coreMemberId": "workshop:1",
+      "arrayIds": [
+        "workshop",
+        "craft-house-west",
+        "craft-house-east"
+      ],
+      "platform": true
+    }
+  ],
+  "connections": [
+    {
+      "from": "civic",
+      "to": "craft"
+    }
+  ],
+  "terraceGroups": [
+    {
+      "terraceId": "civic-platform",
+      "districtId": "civic",
+      "coreMemberId": "civic-hall:1",
+      "arrayIds": [
+        "civic-hall",
+        "house-west",
+        "house-east"
+      ],
+      "styleRef": "timber_edge"
+    },
+    {
+      "terraceId": "craft-platform",
+      "districtId": "craft",
+      "coreMemberId": "workshop:1",
+      "arrayIds": [
+        "workshop",
+        "craft-house-west",
+        "craft-house-east"
+      ],
+      "styleRef": "timber_edge",
+      "datumOffsetBlocks": 4
+    }
+  ],
+  "terraceStyles": [
+    {
+      "styleId": "timber_edge",
+      "name": "木构边缘 · 角亭与石井",
+      "railBlock": "minecraft:spruce_fence",
+      "postBlock": "minecraft:stripped_spruce_log",
+      "capBlock": "minecraft:spruce_slab",
+      "postSpacing": 10,
+      "minimumExposure": 0,
+      "maximumCorners": 4,
+      "cornerSpacing": 28,
+      "cornerAssetId": "studio:eu-25-v01",
+      "courtAssetId": "studio:eu-26-v01",
+      "materials": {
+        "ground": "minecraft:stone_bricks",
+        "retainingWall": "minecraft:cobblestone",
+        "wallColumn": "minecraft:stone_bricks",
+        "wallCap": "minecraft:smooth_stone",
+        "wallBand": "minecraft:mossy_stone_bricks"
+      }
+    }
+  ]
+}

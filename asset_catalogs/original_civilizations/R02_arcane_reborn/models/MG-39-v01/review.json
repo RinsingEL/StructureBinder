@@ -1,0 +1,22 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MG-39-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex / 2026-10-08",
+  "nbt_sha256": "f7d58c5ae282d94ee9800b761c2a3eec86463581fda0f0282002028a6e89ec91",
+  "author_sha256": "11c104fade251ac192439b29d7720f7fd04fe33bf342bdeb3be44841579c9044",
+  "evidence": [
+    "previews/front.png"
+  ],
+  "checks": [
+    "查看实际 NBT 外观：地面尖拱开间、纵向屋顶和开放两端。",
+    "旋转实际方块后手工连接两栋 MG-34；两处地面接缝与跨栋通路检查通过。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "为程序消费的连接件；未接入自动选择、伸缩或拼接。"
+  ]
+}

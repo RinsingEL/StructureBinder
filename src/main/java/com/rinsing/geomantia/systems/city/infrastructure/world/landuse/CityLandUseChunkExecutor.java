@@ -312,6 +312,11 @@ public final class CityLandUseChunkExecutor {
         }
 
         for (CityLandUseMicroGrader.RetainingWallDecision wall : foundationPlan.retainingWalls()) {
+            ColumnKey roadKey = new ColumnKey(wall.x(), wall.z());
+            // A frozen graded road cuts through a platform edge; retaining masonry must
+            // stop below its walking deck, rather than rebuilding the wall over the steps.
+            if (roadColumns.contains(roadKey) && frozenRoadColumns.contains(roadKey)
+                    && wall.y() > foundationByColumn.get(roadKey).targetY()) continue;
             PreparedMutation mutation = prepare(world, wall.areaId(), OperationPhase.RETAINING_WALL,
                     wall.x(), wall.y(), wall.z(), fragment.materialField().at(wall.materialSlot(),wall.x(),wall.z(),fragment.materialField().at("retainingWall",wall.x(),wall.z(),wall.blockId())), false);
             if (mutation.failureReason() != null) {

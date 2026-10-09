@@ -467,6 +467,43 @@ final class CityPlanningEndpointHandler {
         return response;
     }
 
+    static JsonObject handleExportTerrainDem(Path debugRoot,String runId,String cityId,ServerLevel level) throws IOException {
+        long started=System.nanoTime();
+        if(level.getServer().isSameThread())throw new IllegalArgumentException("CITY_DEM_API_WORKER_REQUIRED");
+        Path runDir=debugRoot.resolve(runId).normalize();
+        if(!runDir.toAbsolutePath().startsWith(debugRoot.toAbsolutePath().normalize()))throw new IllegalArgumentException("CITY_DEM_RUN_PATH_INVALID");
+        if(!cityId.matches("[A-Za-z0-9_.-]+")||cityId.equals(".")||cityId.equals(".."))throw new IllegalArgumentException("CITY_DEM_CITY_ID_INVALID");
+        requireMatchingRunWorldIdentity(runDir,level);
+        Path terrainPath=cityStageDir(runDir,cityId,CityTestRunLayout.LAND_USE).resolve("land_use_terrain_field.json");
+        Path reviewPath=cityStageDir(runDir,cityId,CityTestRunLayout.D3).resolve("city_landform_review_package.json");
+        String terrainText=Files.readString(terrainPath);
+        JsonObject terrain=JsonParser.parseString(terrainText).getAsJsonObject();
+        JsonObject review=JsonParser.parseString(Files.readString(reviewPath)).getAsJsonObject();
+        if(!cityId.equals(terrain.get("cityId").getAsString()))throw new IllegalArgumentException("CITY_DEM_CITY_MISMATCH");
+        var provider=selectD3TerrainProvider(level,true);
+        JsonObject frozen=review.getAsJsonObject("terrainProvider");
+        if(frozen==null||!provider.sourceKind().equals("generator_native")||!provider.sourceFingerprint().equals(frozen.get("sourceFingerprint").getAsString()))
+            throw new IllegalArgumentException("CITY_DEM_D3_PROVIDER_MISMATCH: original D3 generator must be available and unchanged");
+        var nativeProbe=com.rinsing.geomantia.systems.realm_planning.adapter.minecraft.RtfNativeTerrainSampler.probe(level.getChunkSource().randomState(),level.registryAccess());
+        if(!nativeProbe.available())throw new IllegalArgumentException("CITY_DEM_NATIVE_UNAVAILABLE: "+nativeProbe.unavailableReason());
+        String hash;
+        try {hash="sha256:"+java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(terrainPath)));}
+        catch(java.security.NoSuchAlgorithmException e){throw new IllegalStateException(e);}
+        JsonObject source=terrainProviderJson(provider);source.addProperty("kind","generator_native_height_field");source.addProperty("dimensionId",level.dimension().location().toString());source.addProperty("worldSeed",Long.toString(level.getSeed()));source.addProperty("runId",runId);source.addProperty("chunkGeneration",false);source.addProperty("samplingSemantics","per_block_generator_height_field");
+        var exporter=new com.rinsing.geomantia.systems.city.application.terrain.CityTerrainDemExporter();
+        var bounds=new LandUseTerrainFieldCodec().fromJson(terrain).planningBounds();
+        JsonObject dem=exporter.export(cityId,hash,source,bounds,(x,z)->{
+            var c=nativeProbe.sampler().sample(x,z);
+            return new com.rinsing.geomantia.systems.city.application.terrain.CityTerrainDemExporter.Column(c.elevation(),c.water()?Math.max(c.elevation(),c.waterSurfaceElevation()):null);
+        });
+        Path directory=runDir.resolve("city_test_runs").resolve(cityId).resolve("terrain_dem_exports");Files.createDirectories(directory);
+        Path pending=Files.createTempFile(directory,"dem_step1_",".json.tmp");
+        Path output=pending.resolveSibling(pending.getFileName().toString().replace(".json.tmp",".json"));
+        try {Files.writeString(pending,CityJson.GSON.toJson(dem));Files.move(pending,output,java.nio.file.StandardCopyOption.ATOMIC_MOVE);}
+        finally{Files.deleteIfExists(pending);}
+        JsonObject response=new JsonObject();response.addProperty("ok",true);response.addProperty("step",1);response.addProperty("columnCount",dem.getAsJsonArray("groundY").size());response.addProperty("executionMode","api_worker");response.addProperty("serverThreadBlocked",false);response.addProperty("chunkGeneration",false);response.addProperty("durationMs",(System.nanoTime()-started)/1_000_000.0);response.addProperty("demPath",output.toAbsolutePath().toString());response.add("source",source);return response;
+    }
+
     private static TerrainPreviewProviderSelection selectD3TerrainProvider(ServerLevel level,
             boolean preferGeneratorNativeTerrain) {
         String dimensionId = level.dimension().location().toString();

@@ -43,6 +43,28 @@ class CityFoundationElevationPlannerTest {
         assertEquals(64, result.stream().mapToInt(span -> span.maxX()-span.minX()+1).sum());
     }
 
+    @Test void declaredCoreKeepsNestedSupportBuildingsOnItsDatumAcrossDifferentTerrain() {
+        var cells = new ArrayList<LandUseTerrainField.Cell>();
+        for (int x=-32; x<=31; x++) cells.add(cell(x, x<0 ? 68 : 80));
+        var spans = List.of(new LandUseAreaPlan.ScanlineSpan(0,-32,31));
+        var lowCore = new BlockBounds(-28,0,-20,0);
+        assertEquals(List.of(new CityLandUseSurfacePrintPlan.PlatformSpan(0,-32,31,68)),
+                CityFoundationElevationPlanner.planForCore(spans,terrain(cells),lowCore));
+        assertEquals(List.of(new CityLandUseSurfacePrintPlan.PlatformSpan(0,-32,31,80)),
+                CityFoundationElevationPlanner.planForCore(spans,terrain(cells),new BlockBounds(20,0,28,0)));
+        Collections.reverse(cells);
+        assertEquals(List.of(new CityLandUseSurfacePrintPlan.PlatformSpan(0,-32,31,68)),
+                CityFoundationElevationPlanner.planForCore(spans,terrain(cells),lowCore));
+    }
+
+    @Test void explicitOffsetAppliesToTheWholeCoreGroupAndRejectsOverflow() {
+        var cells=new ArrayList<LandUseTerrainField.Cell>();for(int x=-32;x<=31;x++)cells.add(cell(x,68));
+        var spans=List.of(new LandUseAreaPlan.ScanlineSpan(0,-10,10));var core=new BlockBounds(-4,0,4,0);
+        var result=CityFoundationElevationPlanner.planForCore(spans,terrain(cells),core,4);
+        assertEquals(List.of(new CityLandUseSurfacePrintPlan.PlatformSpan(0,-10,10,72)),result);
+        assertThrows(IllegalArgumentException.class,()->CityFoundationElevationPlanner.planForCore(spans,terrain(cells),core,Integer.MIN_VALUE));
+    }
+
     private static LandUseTerrainField terrain(List<LandUseTerrainField.Cell> cells) {
         return new LandUseTerrainField(LandUseTerrainField.SCHEMA,"city",new BlockBounds(-32,0,31,0),1,cells);
     }

@@ -1,0 +1,427 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-36-v01",
+  "name": "三翼教学庭院 · U 形围院与双门塔",
+  "family": "MG-36",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    57,
+    51,
+    49
+  ],
+  "terrain": {
+    "选址": "核心台地的稳定承载面；连接件由连接系统确定位置与支撑。"
+  },
+  "rooms": [
+    {
+      "id": "west-1",
+      "name": "课堂",
+      "min": [
+        7,
+        2,
+        15
+      ],
+      "max": [
+        16,
+        8,
+        26
+      ],
+      "purpose": "课堂教学与研讨"
+    },
+    {
+      "id": "east-1",
+      "name": "课堂",
+      "min": [
+        40,
+        2,
+        15
+      ],
+      "max": [
+        49,
+        8,
+        26
+      ],
+      "purpose": "课堂教学与研讨"
+    },
+    {
+      "id": "rear-1",
+      "name": "研读室",
+      "min": [
+        20,
+        2,
+        31
+      ],
+      "max": [
+        35,
+        8,
+        40
+      ],
+      "purpose": "阅读与小组研究"
+    },
+    {
+      "id": "west-11",
+      "name": "课堂",
+      "min": [
+        7,
+        12,
+        15
+      ],
+      "max": [
+        16,
+        18,
+        26
+      ],
+      "purpose": "课堂教学与研讨"
+    },
+    {
+      "id": "east-11",
+      "name": "课堂",
+      "min": [
+        40,
+        12,
+        15
+      ],
+      "max": [
+        49,
+        18,
+        26
+      ],
+      "purpose": "课堂教学与研讨"
+    },
+    {
+      "id": "rear-11",
+      "name": "研读室",
+      "min": [
+        20,
+        12,
+        31
+      ],
+      "max": [
+        35,
+        18,
+        40
+      ],
+      "purpose": "阅读与小组研究"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        28,
+        2,
+        0
+      ],
+      "name": "临街主入口",
+      "direction": "north",
+      "approach": [
+        28,
+        2,
+        2
+      ]
+    },
+    {
+      "id": "upper-landing",
+      "kind": "circulation",
+      "pos": [
+        9,
+        12,
+        39
+      ],
+      "name": "楼梯上层平台"
+    },
+    {
+      "id": "west-desk-1",
+      "kind": "work",
+      "pos": [
+        11,
+        2,
+        24
+      ],
+      "name": "教学与研读讲台",
+      "look_at": [
+        11,
+        3,
+        24
+      ],
+      "approach": [
+        11,
+        2,
+        25
+      ]
+    },
+    {
+      "id": "east-desk-1",
+      "kind": "work",
+      "pos": [
+        44,
+        2,
+        24
+      ],
+      "name": "教学与研读讲台",
+      "look_at": [
+        44,
+        3,
+        24
+      ],
+      "approach": [
+        44,
+        2,
+        25
+      ]
+    },
+    {
+      "id": "rear-desk-1",
+      "kind": "work",
+      "pos": [
+        27,
+        2,
+        38
+      ],
+      "name": "教学与研读讲台",
+      "look_at": [
+        27,
+        3,
+        38
+      ],
+      "approach": [
+        27,
+        2,
+        39
+      ]
+    },
+    {
+      "id": "west-desk-11",
+      "kind": "work",
+      "pos": [
+        11,
+        12,
+        24
+      ],
+      "name": "教学与研读讲台",
+      "look_at": [
+        11,
+        13,
+        24
+      ],
+      "approach": [
+        11,
+        12,
+        25
+      ]
+    },
+    {
+      "id": "east-desk-11",
+      "kind": "work",
+      "pos": [
+        44,
+        12,
+        24
+      ],
+      "name": "教学与研读讲台",
+      "look_at": [
+        44,
+        13,
+        24
+      ],
+      "approach": [
+        44,
+        12,
+        25
+      ]
+    },
+    {
+      "id": "rear-desk-11",
+      "kind": "work",
+      "pos": [
+        27,
+        12,
+        38
+      ],
+      "name": "教学与研读讲台",
+      "look_at": [
+        27,
+        13,
+        38
+      ],
+      "approach": [
+        27,
+        12,
+        39
+      ]
+    },
+    {
+      "id": "west-ground",
+      "kind": "circulation",
+      "pos": [
+        0,
+        2,
+        21
+      ],
+      "name": "连接廊端口",
+      "direction": "west",
+      "approach": [
+        1,
+        2,
+        21
+      ]
+    },
+    {
+      "id": "west-upper",
+      "kind": "circulation",
+      "pos": [
+        0,
+        12,
+        21
+      ],
+      "name": "连接廊端口",
+      "direction": "west",
+      "approach": [
+        1,
+        12,
+        21
+      ]
+    },
+    {
+      "id": "east-ground",
+      "kind": "circulation",
+      "pos": [
+        56,
+        2,
+        21
+      ],
+      "name": "连接廊端口",
+      "direction": "east",
+      "approach": [
+        55,
+        2,
+        21
+      ]
+    },
+    {
+      "id": "east-upper",
+      "kind": "circulation",
+      "pos": [
+        56,
+        12,
+        21
+      ],
+      "name": "连接廊端口",
+      "direction": "east",
+      "approach": [
+        55,
+        12,
+        21
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "west-ground",
+      "point_id": "west-ground",
+      "kind": "academy_gallery",
+      "pos": [
+        0,
+        2,
+        21
+      ],
+      "direction": "west",
+      "standing_y": 2,
+      "width": 3,
+      "height": 4,
+      "note": "中心线处 3 格宽、4 格高净空；原点为边缘地板上方脚底；需由程序旋转对接。"
+    },
+    {
+      "id": "west-upper",
+      "point_id": "west-upper",
+      "kind": "academy_gallery",
+      "pos": [
+        0,
+        12,
+        21
+      ],
+      "direction": "west",
+      "standing_y": 12,
+      "width": 3,
+      "height": 4,
+      "note": "中心线处 3 格宽、4 格高净空；原点为边缘地板上方脚底；需由程序旋转对接。"
+    },
+    {
+      "id": "east-ground",
+      "point_id": "east-ground",
+      "kind": "academy_gallery",
+      "pos": [
+        56,
+        2,
+        21
+      ],
+      "direction": "east",
+      "standing_y": 2,
+      "width": 3,
+      "height": 4,
+      "note": "中心线处 3 格宽、4 格高净空；原点为边缘地板上方脚底；需由程序旋转对接。"
+    },
+    {
+      "id": "east-upper",
+      "point_id": "east-upper",
+      "kind": "academy_gallery",
+      "pos": [
+        56,
+        12,
+        21
+      ],
+      "direction": "east",
+      "standing_y": 12,
+      "width": 3,
+      "height": 4,
+      "note": "中心线处 3 格宽、4 格高净空；原点为边缘地板上方脚底；需由程序旋转对接。"
+    }
+  ],
+  "design_notes": [
+    "补足大核心周围的多层翼楼、折角与围院，基础只覆盖实际楼体及通路。",
+    "连接端口为作者标记，尚未接入自动拼装；以局部坐标、方向、脚底高度和净空配对。",
+    "紫晶、仪器与符文均为原版静态方块，不声明魔法功能已经运行。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "第1层",
+      "y": 1,
+      "max_y": 9
+    },
+    {
+      "name": "第2层",
+      "y": 11,
+      "max_y": 19
+    }
+  ],
+  "roof_min_y": 23,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/academy_wings.py:BUILDERS",
+  "function_terms": [
+    "教学",
+    "研讨",
+    "研究",
+    "庭院休憩"
+  ],
+  "asset_tags": [],
+  "campus_consumer": "array",
+  "ground_plane": {
+    "y": 2,
+    "note": "街面脚底 Y=2；教学组团二层接口脚底 Y=12。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 1,
+  "nbt_sha256": "00e15fc6048bac4a8f256f264f5a927cbb9172b6baf11c8ccc1f2a9ec6c6e05f"
+}

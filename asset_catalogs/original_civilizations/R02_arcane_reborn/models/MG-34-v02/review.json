@@ -1,0 +1,26 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MG-34-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex offline visual review",
+  "nbt_sha256": "c45ad3955a55e3638a7f30f377499b929f00c6e5e4bb2377e57555ac2658cd3b",
+  "author_sha256": "26b2da6aa7466222057ef45ea2ebb000777358ee0adbefcb4a5607d5098570f3",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/floor-1.png",
+    "previews/left.png",
+    "previews/floor-2.png"
+  ],
+  "checks": [
+    "实际浏览器模型与纹理正常；门前通路保持净空。",
+    "功能空间与真实 NBT 验证一致，楼层通路验证通过。",
+    "二层侧端收为完整护栏阳台，不要求接廊；保留 v01 可连接原件。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}
