@@ -17,6 +17,16 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 class CityBlueprintCodecTest {
     private final CityBlueprintCodec codec = new CityBlueprintCodec();
+    @Test void intentionalLayoutRoundTripsOnLeafAndNestedComposition() throws IOException {
+        var json=fixture("valid_city_blueprint.json");
+        json.getAsJsonArray("groups").get(0).getAsJsonObject().add("layout",JsonParser.parseString(
+                "{gapBlocks:8,columns:2,courtWidth:56,courtDepth:42,faceInward:true,crossAlign:'CENTER',purpose:'public-garden'}"));
+        var blueprint=codec.read(json);assertEquals(56,blueprint.groups().get(0).layout().courtWidth());
+        assertEquals(blueprint,codec.read(codec.write(blueprint)));
+        var composition=new CityBlueprint.ArrayComposition("parent","algorithm:courtyard","core",java.util.List.of("support"),blueprint.groups().get(0).layout());
+        assertEquals("public-garden",composition.layout().purpose());
+        assertThrows(IllegalArgumentException.class,()->CityBlueprintCodec.layout(JsonParser.parseString("{gapBlocks:0}").getAsJsonObject(),"$.layout"));
+    }
 
     @Test
     void independentLandscapeCellDemandRoundTripsWithoutLosingCoordinates() throws IOException {

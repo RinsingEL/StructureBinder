@@ -105,14 +105,15 @@ public record CityLandUseSurfacePrintPlan(
             requireBlock(blockId, "CITY_LAND_USE_SURFACE_FEATURE_BLOCK_INVALID");
             Objects.requireNonNull(kind, "kind");
             facing = facing == null ? HorizontalFacing.NONE : facing;
-            boolean frozenSurface = surfaceOffset == 0 && (kind == FeatureKind.ROAD_SLAB
+            boolean frozenSurface = surfaceOffset == 0 && (kind == FeatureKind.TERRACE_GROUND || kind == FeatureKind.ROAD_SLAB
                     || kind == FeatureKind.ROAD_STAIR || kind == FeatureKind.BRIDGE_DECK);
-            boolean frozenBridgeRail = surfaceOffset == 1 && kind == FeatureKind.BRIDGE_RAIL;
+            boolean frozenBridgeRail = surfaceOffset > 0 && (kind == FeatureKind.BRIDGE_RAIL
+                    || kind == FeatureKind.TERRACE_RAIL || kind == FeatureKind.GREEN_PLANT || kind == FeatureKind.GREEN_FIXTURE);
             if (targetSurfaceY != null && !frozenSurface && !frozenBridgeRail) {
                 throw new IllegalArgumentException("CITY_LAND_USE_FROZEN_GRADE_REQUIRES_ROAD_SURFACE");
             }
             if (surfaceOffset < 0 || kind == FeatureKind.ROAD_STAIR
-                    && facing == HorizontalFacing.NONE || kind != FeatureKind.ROAD_STAIR
+                    && facing == HorizontalFacing.NONE || kind != FeatureKind.ROAD_STAIR && kind != FeatureKind.GREEN_FIXTURE
                     && facing != HorizontalFacing.NONE) {
                 throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_FEATURE_CELL_INVALID");
             }
@@ -128,7 +129,10 @@ public record CityLandUseSurfacePrintPlan(
         GREEN_GROUND,
         GREEN_PATH,
         GREEN_PLANT,
-        OVERFLOW_BOUNDARY
+        OVERFLOW_BOUNDARY,
+        TERRACE_GROUND,
+        TERRACE_RAIL,
+        GREEN_FIXTURE
     }
 
     public enum HorizontalFacing { NONE, NORTH, EAST, SOUTH, WEST }

@@ -15,6 +15,20 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandUseChunkExecutorTest {
     private final CityLandUseChunkExecutor executor = new CityLandUseChunkExecutor();
+    @Test void connectionTerraceIsSolidAndClearsNativeVegetationButRejectsWater() {
+        var ground=new CityLandUseChunkCompiler.FeatureOperation("shared_terrace::city",15,2,"minecraft:smooth_stone",0,
+                CityLandUseSurfacePrintPlan.FeatureKind.TERRACE_GROUND,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,68);
+        var fragment=new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,"city","hash","palette",
+                0,0,1,0,0,0,"minecraft:dirt",List.of(),List.of(),List.of(),List.of(ground),List.of(ground));
+        var world=new FakeWorld();world.vegetation.add("15,69,2");
+        var result=executor.execute(fragment,world,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED,result.status());
+        for(int y=65;y<68;y++)assertTrue(world.writes.contains("15,"+y+",2=minecraft:stone_bricks"));
+        assertTrue(world.writes.contains("15,69,2=minecraft:air"));assertTrue(world.writes.contains("15,68,2=minecraft:smooth_stone"));
+        var water=new FakeWorld();water.columns.put("15,2",new CityLandUseChunkExecutor.ColumnSample(64,"minecraft:water",true));
+        assertEquals(CityLandUseChunkExecutor.Status.FAILED,executor.execute(fragment,water,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES).status());
+        assertTrue(water.writes.isEmpty(),"terrain rejection is transactional");
+    }
 
     @Test void retainingWallDoesNotRebuildAboveFrozenRoadAtPlatformEdge() {
         List<CityLandUseChunkCompiler.GradingMaskCell> mask=new ArrayList<>();

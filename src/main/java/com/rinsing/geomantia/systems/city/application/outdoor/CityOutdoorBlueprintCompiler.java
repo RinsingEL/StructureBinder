@@ -138,6 +138,30 @@ public final class CityOutdoorBlueprintCompiler {
                 anchorsByGroup.getOrDefault(group.groupId(), List.of()).stream().map(AnchorData::footprint).toList());
         for (String groupId : spatialGroupIds) districtGroups.put(groupId,
                 anchorsByGroup.getOrDefault(groupId, List.of()).stream().map(AnchorData::footprint).toList());
+        // A designed district owns a shared platform; leaf arrays do not each acquire a datum.
+        Map<String, BlockBounds> districtCores = new LinkedHashMap<>();
+        for (var design : blueprint.districtDesigns()) {
+            var core = anchorsByGroup.getOrDefault(design.coreGroupId(), List.of()).stream()
+                    .filter(a -> a.structureRef().equals(design.coreStructureRef())).findFirst().orElse(null);
+            if (design.groupIds().stream().noneMatch(platformGroupIds::contains)) continue;
+            if(core==null) {outdoorWarnings.add("CITY_TERRACE_CORE_NOT_RETAINED:"+design.districtId());continue;}
+            List<BlockBounds> members = design.groupIds().stream()
+                    .flatMap(id -> anchorsByGroup.getOrDefault(id, List.of()).stream()).map(AnchorData::footprint).toList();
+            design.groupIds().forEach(districtGroups::remove);
+            districtGroups.put(design.districtId(), members);
+            districtCores.put(design.districtId(), core.footprint());
+        }
+        List<com.rinsing.geomantia.systems.city.algorithm.landuse.CityDistrictPlanner.Result.PublicSpace> designedSpaces = new ArrayList<>();
+        for(var e:array(object(structureMaterializationPlan,"sourceStructureAnchorMap"),"publicSpaces")) {
+            var space=e.getAsJsonObject();String group=requiredString(space,"ownerGroupId");
+            String owner=blueprint.districtDesigns().stream().filter(d->d.groupIds().contains(group))
+                    .map(CityBlueprint.DistrictDesign::districtId).findFirst().orElse(group);
+            if(districtGroups.containsKey(owner)) {
+                var members=new ArrayList<>(districtGroups.get(owner));members.add(bounds(space));districtGroups.put(owner,List.copyOf(members));
+                designedSpaces.add(new com.rinsing.geomantia.systems.city.algorithm.landuse.CityDistrictPlanner.Result.PublicSpace(
+                        owner,bounds(space),stringValue(space,"purpose","public-space")));
+            }
+        }
         Set<BlockPoint> landscapeCells = new java.util.HashSet<>();
         capacityDomains.values().forEach(landscapeCells::addAll);
         // Trees are optional roadside structures, not building groups or extra paving seeds.
@@ -150,7 +174,8 @@ public final class CityOutdoorBlueprintCompiler {
         }
         var district = new com.rinsing.geomantia.systems.city.algorithm.landuse.CityDistrictPlanner().plan(
                 terrain.planningBounds(), terrain, allBuildingGroups, districtGroups,
-                roadBands.stream().map(LandUseSourceResolver.RoadBand::bounds).toList(), landscapeCells, foundationSettings);
+                roadBands.stream().map(LandUseSourceResolver.RoadBand::bounds).toList(), landscapeCells, foundationSettings)
+                .withCores(districtCores).withPublicSpaces(designedSpaces);
         CityFoundationPlanner.Plan foundationPlan = district.construction().isEmpty() ? null : district.foundation();
         String foundationGroupId = cityId + "::foundation";
         List<BlockPoint> foundationSeeds = foundationAnchors.stream().map(anchor -> center(anchor.footprint()))

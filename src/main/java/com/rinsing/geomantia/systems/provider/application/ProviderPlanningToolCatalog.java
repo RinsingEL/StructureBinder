@@ -374,6 +374,7 @@ public final class ProviderPlanningToolCatalog {
                 "extentClass", enumeration("SMALL", "MEDIUM", "LARGE"),
                 "densityClass", enumeration("SPARSE", "BALANCED", "DENSE"),
                 "algorithmProfileRef", string(),
+                "layout", rectangleLayoutSchema(),
                 "terrainPolicy", enumeration("CONFORM", "BALANCED", "ASSERTIVE"),
                 "requiredStructureRefs", described(nonEmptyArray(string()), "每组至少一个必需结构；fillPools 不能替代。"), "fillPoolRef", string(), "fillPools", weightedPoolsSchema(),
                 "connectionPlan", connectionPlanSchema(), "compositionProfileRef", string(),
@@ -440,8 +441,21 @@ public final class ProviderPlanningToolCatalog {
 
     private static JsonObject arrayCompositionSchema() {
         return object(properties("compositionId", string(), "algorithmProfileRef", string(),
-                "centerGroupId", string(), "memberGroupIds", nonEmptyArray(string())),
+                "centerGroupId", string(), "memberGroupIds", nonEmptyArray(string()), "layout", rectangleLayoutSchema()),
                 "compositionId", "algorithmProfileRef", "centerGroupId", "memberGroupIds");
+    }
+
+    private static JsonObject rectangleLayoutSchema() {
+        return described(object(properties(
+                "gapBlocks", boundedInteger(4,40,"Complete envelope separation; default 8."),
+                "columns", boundedInteger(1,180,"GRID columns; default 2."),
+                "courtWidth", boundedInteger(8,256,"Reserved courtyard width; default 36."),
+                "courtDepth", boundedInteger(8,256,"Reserved courtyard depth; default 28."),
+                "faceInward", described(bool(),"COURTYARD leaf buildings only; constrained by authored orientations."),
+                "crossAlign", enumeration("START","CENTER","END"), "purpose", string())),
+                "Optional intentional GRID/LINEAR/COURTYARD packing of complete buildings or child arrays. "
+                        + "COURTYARD has at most four sides around public space; garden purpose reserves designed greenery. "
+                        + "The compiler chooses coordinates. Omit to retain legacy layout.");
     }
 
     private static JsonObject relationSchema() {

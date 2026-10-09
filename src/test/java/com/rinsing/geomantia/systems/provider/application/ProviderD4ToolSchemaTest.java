@@ -7,6 +7,21 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ProviderD4ToolSchemaTest {
+    @Test void districtAndIntegrationExposeOptionalRectangleLayoutsWithoutCoordinates() {
+        for (String name : List.of("city_d4_district", "city_d4_integrate")) {
+            String body = name.equals("city_d4_district") ? "districtDesign" : "changes";
+            var fields = schema(name).getAsJsonObject("properties").getAsJsonObject(body).getAsJsonObject("properties");
+            for (String collection : List.of("groups", "arrayCompositions")) {
+                var item = fields.getAsJsonObject(collection).getAsJsonObject("items");
+                var layout = item.getAsJsonObject("properties").getAsJsonObject("layout").getAsJsonObject("properties");
+                assertEquals(4,layout.getAsJsonObject("gapBlocks").get("minimum").getAsInt());
+                assertEquals(40,layout.getAsJsonObject("gapBlocks").get("maximum").getAsInt());
+                assertTrue(layout.has("purpose") && layout.has("columns") && layout.has("faceInward"));
+                assertFalse(layout.has("anchorBlock") || layout.has("rotation"));
+                assertFalse(item.getAsJsonArray("required").toString().contains("layout"));
+            }
+        }
+    }
     @Test void versionOperationsBindCurrentIdentityAndExposeNoWorldMutation() {
         var reopen=schema("city_d4_reopen");assertTrue(reopen.getAsJsonArray("required").toString().contains("baseBlueprintHash"));
         var restore=schema("city_d4_restore");assertTrue(restore.getAsJsonArray("required").toString().contains("versionId"));

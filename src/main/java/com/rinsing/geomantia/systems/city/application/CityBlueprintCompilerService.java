@@ -328,6 +328,7 @@ public final class CityBlueprintCompilerService {
                 state.contiguousOrigins = contiguousOrigins(blueprint, group, refs, catalog, templates);
             state.layoutFrame = plannedFrame(state.layoutAlgorithm(), state.layoutFrame().center(),
                     plannedTemplate(blueprint, group, refs.get(0), catalog, templates));
+            if(group.layout()!=null) state.rectangleGeometry = rectangleGeometry(blueprint,group,refs,catalog,templates);
             for (int index = 0; index < group.requiredStructureRefs().size(); index++) {
                 state.plannedSlot = index;
                 placePlannedMember(runDir, review, structureSource, templateCatalogJson, templates, blueprint,
@@ -437,6 +438,27 @@ public final class CityBlueprintCompilerService {
         JsonObject anchorPlan = new JsonObject();
         anchorPlan.addProperty("schema", CityStructureAnchorPlanner.PLAN_SCHEMA);
         anchorPlan.addProperty("cityId", cityId);
+        JsonArray publicSpaces = new JsonArray();
+        if (editPolicy != null) for (var element : array(editPolicy.data, "previousPublicSpaces")) {
+            var space = element.getAsJsonObject();
+            var owner = states.get(string(space, "ownerGroupId"));
+            if (owner != null && editPolicy.frozen(owner.group().groupId()) && owner.anchorCount() > 0)
+                publicSpaces.add(space.deepCopy());
+        }
+        for(var state:states.values()) if(state.group().layout()!=null&&"COURTYARD".equals(state.layoutAlgorithm())&&state.anchorCount()>0
+                && (editPolicy == null || !editPolicy.frozen(state.group().groupId()))) {
+            JsonObject space=CityStructureCandidateEnvelope.boundsJson(CityRectangleLayoutPlanner.court(state.group().layout(),state.layoutFrame().center()));
+            space.addProperty("ownerGroupId",state.group().groupId());space.addProperty("purpose",state.group().layout().purpose());publicSpaces.add(space);
+        }
+        anchorPlan.add("publicSpaces",publicSpaces);
+        for(var c:blueprint.arrayCompositions()) if(c.layout()!=null&&"COURTYARD".equals(catalog.algorithm(c.algorithmProfileRef()))) {
+            if (editPolicy != null && editPolicy.frozen(c.centerGroupId())) continue;
+            var first=compositionSlots.get(c.centerGroupId());var state=states.get(c.centerGroupId());
+            if(first==null||state.anchorCount()==0)continue;
+            var b=first.slotBounds();var center=new BlockPoint(b.minX()+b.widthBlocks()/2,b.maxZ()+c.layout().gapBlocks()+1+c.layout().courtDepth()/2);
+            JsonObject space=CityStructureCandidateEnvelope.boundsJson(CityRectangleLayoutPlanner.court(c.layout(),center));
+            space.addProperty("ownerGroupId",c.centerGroupId());space.addProperty("purpose",c.layout().purpose());publicSpaces.add(space);
+        }
         anchorPlan.add("anchors", anchors);
         if(editPolicy!=null) anchorPlan.add("displacedBuildings",editPolicy.evicted.deepCopy());
         List<JsonObject> anchorObjects = anchors.asList().stream()
@@ -575,6 +597,8 @@ public final class CityBlueprintCompilerService {
     }
 
     private static int plannedStructureCount(CityBlueprint.Group group, CityScale scale, String algorithm) {
+        if(group.layout()!=null&&"COURTYARD".equals(algorithm)&&group.structureCount()==null)
+            return group.requiredStructureRefs().size();
         return group.structureCount() == null
                 ? Math.max(group.requiredStructureRefs().size(), minimumGroupStructureCount(scale, group.extentClass(), algorithm))
                 : group.structureCount();
@@ -597,6 +621,26 @@ public final class CityBlueprintCompilerService {
             counts.merge(selected, copies, Integer::sum);
         }
         return List.copyOf(refs);
+    }
+
+    private record RectangleGeometry(List<BlockPoint> origins,List<String> rotations) { }
+    private RectangleGeometry rectangleGeometry(CityBlueprint blueprint,CityBlueprint.Group group,List<String> refs,
+            CatalogIndex catalog,CityTemplateCatalog templates) {
+        List<CityRectangleLayoutPlanner.Size> sizes=new ArrayList<>();List<String> rotations=new ArrayList<>();
+        String algorithm=catalog.algorithm(group.algorithmProfileRef());
+        List<BlockPoint> inward=List.of(new BlockPoint(0,10000),new BlockPoint(10000,0),new BlockPoint(-10000,0),new BlockPoint(0,-10000));
+        for(int i=0;i<refs.size();i++) {
+            var t=plannedTemplate(blueprint,group,refs.get(i),catalog,templates);var rotation=t.allowedRotations().get(0);
+            if(group.layout().faceInward()&&"COURTYARD".equals(algorithm)) {
+                var choice=orientationSolver.rank(t,t.allowedMirrors().get(0),"",new BlockPoint(0,0),
+                        CityTemplateOrientationSolver.FacingTarget.point("rectangle_court",inward.get(i))).get(0);
+                if(choice.alignmentScore()<0.99)throw fail("CITY_BLUEPRINT_INTERNAL_FRONTAGE_UNAVAILABLE",group.groupId());
+                rotation=choice.rotation();
+            }
+            boolean turn=Set.of("CLOCKWISE_90","COUNTERCLOCKWISE_90").contains(rotation.name());
+            sizes.add(new CityRectangleLayoutPlanner.Size(turn?t.depth():t.width(),turn?t.width():t.depth()));rotations.add(rotation.name());
+        }
+        return new RectangleGeometry(CityRectangleLayoutPlanner.plan(algorithm,group.layout(),new BlockPoint(0,0),0,sizes),List.copyOf(rotations));
     }
 
     private void placePlannedMember(Path runDir, CityLandformReviewPackage review, JsonObject structureSource,
@@ -2041,6 +2085,7 @@ public final class CityBlueprintCompilerService {
             var clusterLayout = "COMPACT".equals(algorithm) ? meanderingLayout(memberRefs, catalog, templates,
                     groupLayoutPlanner.parameters(algorithm, group.densityClass()),
                     blueprint.generationSeed() ^ group.groupId().hashCode()) : null;
+            var rectangle = group.layout()==null?null:rectangleGeometry(blueprint,group,memberRefs,catalog,templates);
             for (int i = 0; i < memberRefs.size(); i++) {
                 var proposal = groupLayoutPlanner.propose(algorithm, group.densityClass(), blueprint.generationSeed(),
                         group.groupId(), i, localFrame,
@@ -2053,10 +2098,11 @@ public final class CityBlueprintCompilerService {
                 var physical = plannedTemplate(blueprint, group, memberRefs.get(i), catalog, templates);
                 if (clusterLayout != null) proposal = clusterProposal(proposal, clusterLayout,
                         localFrame.center(), i, physical);
-                if ("COURTYARD".equals(algorithm))
+                if ("COURTYARD".equals(algorithm) && rectangle==null)
                     proposal = layoutWithLegalCardinalFrontage(blueprint, group, algorithm, i, localFrame, physical,
                             new BlockPoint(0, 0), OutwardTarget.none(), span, proposal);
                 BlockPoint point = contiguous.isEmpty() ? proposal.guides().get(0) : contiguous.get(i);
+                if(rectangle!=null) point=rectangle.origins().get(i);
                 if (i == 0) firstOrigins.put(group.groupId(), point);
                 JsonObject orientation = new JsonObject();
                 if ("LINEAR".equals(algorithm) && i > 0) {
@@ -2069,10 +2115,12 @@ public final class CityBlueprintCompilerService {
                 boolean quarterTurn = orientation.has("rotation")
                         ? Set.of("CLOCKWISE_90", "COUNTERCLOCKWISE_90").contains(string(orientation, "rotation"))
                         : Set.of("CLOCKWISE_90", "COUNTERCLOCKWISE_90").contains(physical.allowedRotations().get(0).name());
+                if(rectangle!=null)quarterTurn=Set.of("CLOCKWISE_90","COUNTERCLOCKWISE_90").contains(rectangle.rotations().get(i));
                 int width = quarterTurn ? physical.depth() : physical.width();
                 int depth = quarterTurn ? physical.width() : physical.depth();
                 local = union(local, new BlockBounds(point.x(), point.z(), point.x() + width - 1, point.z() + depth - 1));
             }
+            if(rectangle!=null&&"COURTYARD".equals(algorithm)) local=union(local,CityRectangleLayoutPlanner.court(group.layout(),new BlockPoint(0,0)));
             envelopes.put(group.groupId(), local);
             offsets.put(group.groupId(), new LinkedHashMap<>(Map.of(group.groupId(), new BlockPoint(0, 0))));
         }
@@ -2094,6 +2142,20 @@ public final class CityBlueprintCompilerService {
                 span = Math.max(span, Math.max(box.widthBlocks(), box.heightBlocks()));
             }
             List<BlockBounds> siblingBounds = new ArrayList<>(); siblingBounds.add(combined);
+            if(composition.layout()!=null) {
+                List<String> ids=new ArrayList<>();ids.add(centerId);ids.addAll(composition.memberGroupIds());
+                var origins=CityRectangleLayoutPlanner.plan(algorithm,composition.layout(),new BlockPoint(0,0),0,
+                        ids.stream().map(id->{var b=envelopes.get(id);return new CityRectangleLayoutPlanner.Size(b.widthBlocks(),b.heightBlocks());}).toList());
+                combinedOffsets.clear();combined=null;
+                for(int i=0;i<ids.size();i++) {
+                    String id=ids.get(i);var box=envelopes.get(id);var p=origins.get(i);var shift=new BlockPoint(p.x()-box.minX(),p.z()-box.minZ());
+                    for(var e:offsets.get(id).entrySet())combinedOffsets.put(e.getKey(),new BlockPoint(e.getValue().x()+shift.x(),e.getValue().z()+shift.z()));
+                    combined=union(combined,CityArrayEnvelopePlacement.move(box,shift));
+                    if(i>0){childIds.add(id);parentIds.put(id,composition.compositionId());}
+                }
+                if("COURTYARD".equals(algorithm))combined=union(combined,CityRectangleLayoutPlanner.court(composition.layout(),new BlockPoint(0,0)));
+                envelopes.put(centerId,combined);offsets.put(centerId,combinedOffsets);continue;
+            }
             if ("CONTIGUOUS".equals(algorithm)) {
                 List<String> members = new ArrayList<>(); members.add(centerId); members.addAll(composition.memberGroupIds());
                 var points = CityContiguousLayoutPlanner.plan(members.stream().map(id -> {
@@ -3195,7 +3257,7 @@ public final class CityBlueprintCompilerService {
                     layout.parameters(), layout.spacingBlocks(), false, null, List.of(origin),
                     state.layoutSlotIndex() == 0 ? null : grid.frontage(state.layoutFrame().center(), state.layoutSlotIndex()));
         }
-        if ((("COMPACT".equals(state.layoutAlgorithm()) && state.compactClusterLayout == null) || "COURTYARD".equals(state.layoutAlgorithm()))
+        if (state.group().layout()==null && (("COMPACT".equals(state.layoutAlgorithm()) && state.compactClusterLayout == null) || "COURTYARD".equals(state.layoutAlgorithm()))
                 && phase != PlacementPhase.CONNECTIVITY) {
             layout = layoutWithLegalCardinalFrontage(blueprint, state, physicalTemplate, seedPoint,
                     outward, footprintSpan, layout);
@@ -3221,6 +3283,14 @@ public final class CityBlueprintCompilerService {
             plan.addProperty("rotation", physicalTemplate.allowedRotations().get(0).name());
             plan.addProperty("mirror", physicalTemplate.allowedMirrors().get(0).name());
         }
+        if(state.rectangleGeometry!=null&&phase!=PlacementPhase.CONNECTIVITY) {
+            int slot=state.layoutSlotIndex();var relative=state.rectangleGeometry.origins().get(slot);var center=state.layoutFrame().center();
+            var origin=new BlockPoint(center.x()+relative.x(),center.z()+relative.z());
+            layout=new CityBlueprintGroupLayoutPlanner.Proposal(slot,state.layoutAlgorithm(),layout.parameters(),
+                    state.group().layout().gapBlocks(),false,null,List.of(origin),null);
+            plan.addProperty("rotation",state.rectangleGeometry.rotations().get(slot));
+            plan.addProperty("mirror",physicalTemplate.allowedMirrors().get(0).name());
+        }
         plan.addProperty("spacingBlocks", layout.spacingBlocks());
         JsonArray guides = layout.guidesJson();
         if (state.fixedPlannedLayout && guides.size() > 1) {
@@ -3228,6 +3298,17 @@ public final class CityBlueprintCompilerService {
         }
         plan.add("candidateOrigins", guides);
         JsonObject layoutTrace = layout.traceJson();
+        if(state.rectangleGeometry!=null) {
+            layoutTrace.addProperty("layoutMode","ACTUAL_RECTANGLE_ENVELOPES");
+            layoutTrace.addProperty("purpose",state.group().layout().purpose());
+            if ("GRID".equals(state.layoutAlgorithm())) {
+                // Existing street reservations call the X index row and the Z index column.
+                layoutTrace.addProperty("gridRow", state.layoutSlotIndex() % state.group().layout().columns());
+                layoutTrace.addProperty("gridColumn", state.layoutSlotIndex() / state.group().layout().columns());
+            }
+            if("COURTYARD".equals(state.layoutAlgorithm())) layoutTrace.add("publicSpaceBounds",
+                    CityStructureCandidateEnvelope.boundsJson(CityRectangleLayoutPlanner.court(state.group().layout(),state.layoutFrame().center())));
+        }
         if (state.compactClusterLayout != null && phase != PlacementPhase.CONNECTIVITY
                 && !plan.has("placementGuide")) {
             layoutTrace.addProperty("compactLayoutMode", "MEANDERING_CLUSTERS");
@@ -3244,7 +3325,7 @@ public final class CityBlueprintCompilerService {
         if ((state.fixedPlannedLayout || state.exactInternalGuides()) && phase != PlacementPhase.CONNECTIVITY) {
             plan.addProperty("exactCandidateOriginsOnly", true);
         }
-        if ("LINEAR".equals(state.layoutAlgorithm()) && phase != PlacementPhase.CONNECTIVITY) {
+        if (state.rectangleGeometry==null && "LINEAR".equals(state.layoutAlgorithm()) && phase != PlacementPhase.CONNECTIVITY) {
             if (state.layoutSlotIndex() > 0) {
                 BlockPoint candidate = layout.guides().get(0);
                 BlockPoint streetTarget = projectOntoAxis(state.layoutFrame(), candidate);
@@ -3961,7 +4042,8 @@ public final class CityBlueprintCompilerService {
             Nearest nearest = nearest(footprint, state.envelopes(), state.group().groupId());
             if (state.requiresInternalRoadGap()
                     && (nearest == null
-                    || nearest.gapBlocks() < state.layoutParameters().targetEdgeGapBlocks())) {
+                    || nearest.gapBlocks() < (state.group().layout() == null
+                        ? state.layoutParameters().targetEdgeGapBlocks() : state.group().layout().gapBlocks()))) {
                 return "HARD_SKELETON_GAP_BELOW_TARGET";
             }
             // Preferred compactness affects ranking below; a gap is not a collision or a closed entrance.
@@ -5104,6 +5186,7 @@ public final class CityBlueprintCompilerService {
         private int plannedSlot;
         private List<String> plannedRefs = List.of();
         private CityGridFootprintLayout gridFootprintLayout;
+        private RectangleGeometry rectangleGeometry;
         private CityMeanderingClusterLayout compactClusterLayout;
         private List<BlockPoint> contiguousOrigins;
         private final JsonArray skippedMembers = new JsonArray();
@@ -5146,7 +5229,12 @@ public final class CityBlueprintCompilerService {
             this.preferredOrigin = preferredOrigin;
             this.compositionSlot = compositionSlot;
             this.layoutAlgorithm = layoutAlgorithm;
-            this.layoutParameters = layoutParameters;
+            this.layoutParameters = group.layout() == null ? layoutParameters
+                    : new CityBlueprintGroupLayoutPlanner.Parameters(group.layout().gapBlocks(),
+                        Math.max(group.layout().gapBlocks(), layoutParameters.maximumEdgeGapBlocks()),
+                        Math.min(group.layout().gapBlocks(), layoutParameters.landUseHandoffGapBlocks()),
+                        0, Math.min(group.layout().gapBlocks() - 2, layoutParameters.streetBandWidthBlocks()),
+                        layoutParameters.claimAreaMultiplier(), layoutParameters.outwardBias(), layoutParameters.placementMode());
             this.connectionConfiguration = connectionConfiguration;
             this.minimumStructureCount = minimumStructureCount;
             this.groupSeparationExemptGroupIds = Set.copyOf(groupSeparationExemptGroupIds);

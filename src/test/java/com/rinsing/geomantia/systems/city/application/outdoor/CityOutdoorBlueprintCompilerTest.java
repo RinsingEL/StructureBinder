@@ -30,6 +30,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityOutdoorBlueprintCompilerTest {
+    @Test void designedDistrictConsumesOneCoreAcrossItsNestedSupportArrays() {
+        var b=blueprint();var bp=new CityBlueprint(b.schema(),b.cityId(),b.sourceD3Ref(),b.catalogSnapshotRef(),b.generationSeed(),
+                b.designIntent(),b.styleProfile(),b.groups(),b.arrayCompositions(),b.relations(),b.roadProfile(),b.surfaceDetailProfile(),b.outdoorPlan(),b.surfaceMaterials(),
+                List.of(new CityBlueprint.DistrictDesign("shared","core_group","other",List.of("core_group","farm_group"))));
+        var result=new CityOutdoorBlueprintCompiler().compile(bp,d6Plan(),terrain(),catalog(),capacity(bp,d6Plan()));
+        var district=result.resolution().district();assertEquals(1,district.cores().size());
+        assertEquals(new com.rinsing.geomantia.systems.city.domain.model.BlockBounds(20,40,25,45),district.cores().get("shared"));
+        assertTrue(district.groups().containsKey("shared"));assertFalse(district.groups().containsKey("farm_group"));
+    }
     @Test void compactEntranceApproachSharesVillageAppearanceButMainRoadKeepsItsGrade() {
         var d6=d6Plan();
         d6.add("sourceStructureAnchorMap",JsonParser.parseString("""

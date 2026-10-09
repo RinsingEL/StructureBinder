@@ -27,6 +27,36 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityBlueprintCompilerServiceTest {
+    @Test void intentionalCourtyardUsesFourRealBuildingsAndReservesPublicSpace() throws Exception {
+        var fixture=acceptedFixture("rectangle_court","city:rectangle_court",12,12,"SMALL",
+                CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid,blueprint->{
+                    var group=blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    group.addProperty("algorithmProfileRef","algorithm:courtyard");group.addProperty("structureCount",4);
+                    group.add("layout",JsonParser.parseString("{courtWidth:36,courtDepth:28,gapBlocks:8,purpose:'public-garden'}"));
+                });
+        var result=new CityBlueprintCompilerService().compile(temporary,fixture.runId(),fixture.cityId());
+        assertTrue(result.ok(),result.message());
+        var spaces=result.structureAnchorPlan().getAsJsonArray("publicSpaces");assertEquals(1,spaces.size());
+        var s=spaces.get(0).getAsJsonObject();int minX=s.get("minX").getAsInt(),minZ=s.get("minZ").getAsInt(),maxX=s.get("maxX").getAsInt(),maxZ=s.get("maxZ").getAsInt();
+        assertEquals(36,maxX-minX+1);assertEquals(28,maxZ-minZ+1);
+        var anchors=result.structureAnchorPlan().getAsJsonArray("anchors");assertEquals(4,anchors.size());
+        for(var a:anchors) {
+            var b=a.getAsJsonObject().getAsJsonObject("collisionEnvelope");
+            assertFalse(b.get("minX").getAsInt()<=maxX&&b.get("maxX").getAsInt()>=minX
+                    &&b.get("minZ").getAsInt()<=maxZ&&b.get("maxZ").getAsInt()>=minZ);
+        }
+        var proposal = JsonParser.parseString(Files.readString(CityTestRunLayout.open(fixture.runDir(),fixture.cityId())
+                .stepDirectory(CityTestRunLayout.BLUEPRINT).resolve("city_blueprint.json"))).getAsJsonObject();
+        var policyData = JsonParser.parseString("{editedGroups:[],protectedGroups:[],districtByGroup:{},previousLandscapes:{}}").getAsJsonObject();
+        String owner = proposal.getAsJsonArray("groups").get(0).getAsJsonObject().get("groupId").getAsString();
+        policyData.getAsJsonObject("districtByGroup").addProperty(owner, "frozen");
+        policyData.add("previousAnchors", anchors.deepCopy());
+        policyData.add("previousPublicSpaces", spaces.deepCopy());
+        var frozen = new CityBlueprintCompilerService().compileProposal(temporary, fixture.runId(), fixture.cityId(),
+                proposal, true, new CityD4LayoutPolicy(policyData));
+        assertTrue(frozen.ok(), frozen.message());
+        assertEquals(spaces, frozen.structureAnchorPlan().getAsJsonArray("publicSpaces"));
+    }
     @TempDir
     Path temporary;
 
@@ -626,6 +656,46 @@ class CityBlueprintCompilerServiceTest {
         var result=new CityBlueprintCompilerService().compile(temporary,fixture.runId(),fixture.cityId());
         assertTrue(result.ok(),result.message()+" "+result.compileTrace());
         assertEquals(4,result.groupExtentMap().getAsJsonArray("groups").size());
+    }
+
+    @Test void explicitCourtyardComposesWholeNestedGridAndReservesItsVoid() throws Exception {
+        var fixture = acceptedFixture("nested_rectangle", "city:nested_rectangle", 16, 16, "SMALL",
+                CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid, blueprint -> {
+            var groups = blueprint.getAsJsonArray("groups"); var root = groups.get(0).getAsJsonObject();
+            root.addProperty("algorithmProfileRef", "algorithm:grid");
+            root.addProperty("structureCount", 2);
+            root.add("layout", JsonParser.parseString("{columns:2,gapBlocks:8,purpose:'functional-buildings'}"));
+            for (String id : List.of("a","b","c")) {
+                var g = root.deepCopy(); g.addProperty("groupId",id);g.addProperty("priority","STANDARD");groups.add(g);
+            }
+            blueprint.add("arrayCompositions", JsonParser.parseString("""
+                [{compositionId:'outer',algorithmProfileRef:'algorithm:courtyard',centerGroupId:'civic',memberGroupIds:['a'],layout:{courtWidth:36,courtDepth:28,purpose:'public-plaza'}},
+                 {compositionId:'inner',algorithmProfileRef:'algorithm:grid',centerGroupId:'a',memberGroupIds:['b','c'],layout:{columns:2,purpose:'support-blocks'}}]
+                """));
+        });
+        var result = new CityBlueprintCompilerService().compile(temporary,fixture.runId(),fixture.cityId());
+        assertTrue(result.ok(),result.message()+result.compileTrace());
+        assertEquals(8,result.structureAnchorPlan().getAsJsonArray("anchors").size(),result.structureAnchorPlan().toString());
+        var spaces = result.structureAnchorPlan().getAsJsonArray("publicSpaces");assertEquals(1,spaces.size());
+        var s = spaces.get(0).getAsJsonObject();
+        for (var a : result.structureAnchorPlan().getAsJsonArray("anchors")) {
+            var b = a.getAsJsonObject().getAsJsonObject("collisionEnvelope");
+            assertFalse(b.get("minX").getAsInt() <= s.get("maxX").getAsInt() && b.get("maxX").getAsInt() >= s.get("minX").getAsInt()
+                    && b.get("minZ").getAsInt() <= s.get("maxZ").getAsInt() && b.get("maxZ").getAsInt() >= s.get("minZ").getAsInt());
+        }
+    }
+
+    @Test void explicitGridPreservesAllThreeRowsAndNarrowStreetClearance() throws Exception {
+        var fixture = acceptedFixture("rectangle_grid", "city:rectangle_grid", 16, 16, "SMALL",
+                CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid, blueprint -> {
+            var group = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+            group.addProperty("algorithmProfileRef", "algorithm:grid");group.addProperty("structureCount",6);
+            group.add("layout",JsonParser.parseString("{columns:2,gapBlocks:4,purpose:'classroom-block'}"));
+        });
+        var result = new CityBlueprintCompilerService().compile(temporary,fixture.runId(),fixture.cityId());
+        assertTrue(result.ok(),result.message());
+        assertEquals(6,result.structureAnchorPlan().getAsJsonArray("anchors").size(),result.structureAnchorPlan().toString());
+        assertTrue(result.structureAnchorPlan().getAsJsonArray("skippedMembers").isEmpty());
     }
 
     @Test

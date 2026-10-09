@@ -36,6 +36,7 @@ final class CityD4LayoutPolicy {
         result.addProperty("expansionMode",text(after,"expansionMode"));
         result.add("previousAnchors",array(object(draft,"compiledLayout"),"anchors").deepCopy());
         result.add("previousSkippedMembers",array(object(draft,"compiledLayout"),"skippedMembers").deepCopy());
+        result.add("previousPublicSpaces",array(object(draft,"compiledLayout"),"publicSpaces").deepCopy());
         result.add("previousLandscapes",object(draft,"landscapeLayout").deepCopy());
         JsonArray frozenLandscapes=new JsonArray();
         object(before,"bodies").entrySet().forEach(e->{if(expansion||!e.getKey().equals(owner))for(var l:array(e.getValue().getAsJsonObject(),"landscapes"))frozenLandscapes.add(text(l.getAsJsonObject(),"landscapeId"));});

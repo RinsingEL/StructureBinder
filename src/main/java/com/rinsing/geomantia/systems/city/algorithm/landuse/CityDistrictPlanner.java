@@ -136,7 +136,28 @@ public final class CityDistrictPlanner {
 
     public record Result(Set<BlockPoint> construction, Set<BlockPoint> envelope,
                          Set<BlockPoint> natural, Set<BlockPoint> structures,
-                         Map<String, Set<BlockPoint>> groups, int closeRadius, int marginBlocks) {
+                         Map<String, Set<BlockPoint>> groups, int closeRadius, int marginBlocks,
+                         Map<String, BlockBounds> cores, List<PublicSpace> publicSpaces) {
+        public record PublicSpace(String owner,BlockBounds bounds,String purpose) { }
+        public Result(Set<BlockPoint> construction, Set<BlockPoint> envelope, Set<BlockPoint> natural,
+                      Set<BlockPoint> structures, Map<String, Set<BlockPoint>> groups, int closeRadius, int marginBlocks,
+                      Map<String,BlockBounds> cores) {
+            this(construction,envelope,natural,structures,groups,closeRadius,marginBlocks,cores,List.of());
+        }
+        public Result(Set<BlockPoint> construction, Set<BlockPoint> envelope, Set<BlockPoint> natural,
+                      Set<BlockPoint> structures, Map<String, Set<BlockPoint>> groups, int closeRadius, int marginBlocks) {
+            this(construction, envelope, natural, structures, groups, closeRadius, marginBlocks, Map.of());
+        }
+        public Result {
+            cores = Map.copyOf(cores);
+            publicSpaces = List.copyOf(publicSpaces);
+        }
+        public Result withCores(Map<String, BlockBounds> value) {
+            return new Result(construction, envelope, natural, structures, groups, closeRadius, marginBlocks, value,publicSpaces);
+        }
+        public Result withPublicSpaces(List<PublicSpace> value) {
+            return new Result(construction,envelope,natural,structures,groups,closeRadius,marginBlocks,cores,value);
+        }
         public CityFoundationPlanner.Plan foundation() {
             return new CityFoundationPlanner.Plan(construction, structures.size(), marginBlocks,
                     1, closeRadius, componentCount(construction));

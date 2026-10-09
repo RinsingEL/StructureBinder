@@ -93,6 +93,7 @@ public final class CityBlueprintCodec {
             item.add("preferredPatchRefs", strings(group.preferredPatchRefs()));
             item.addProperty("preferredPatchZone", group.preferredPatchZone().name());
             if (group.structureCount() != null) item.addProperty("structureCount", group.structureCount());
+            if (group.layout() != null) item.add("layout", layoutJson(group.layout()));
             if (group.placementRelation() != null) {
                 item.add("placementRelation", placementRelationJson(group.placementRelation()));
             }
@@ -124,6 +125,7 @@ public final class CityBlueprintCodec {
             item.addProperty("algorithmProfileRef", composition.algorithmProfileRef());
             item.addProperty("centerGroupId", composition.centerGroupId());
             item.add("memberGroupIds", strings(composition.memberGroupIds()));
+            if (composition.layout() != null) item.add("layout", layoutJson(composition.layout()));
             compositions.add(item);
         }
         root.add("arrayCompositions", compositions);
@@ -299,7 +301,7 @@ public final class CityBlueprintCodec {
     private static List<CityBlueprint.Group> groups(JsonArray array) {
         List<CityBlueprint.Group> result = new ArrayList<>();
         Set<String> fields = Set.of("groupId", "groupKind", "preferredPatchRefs", "preferredPatchZone",
-                "placementRelation", "structureCount", "role", "priority",
+                "placementRelation", "structureCount", "layout", "role", "priority",
                 "extentClass", "densityClass",
                 "algorithmProfileRef", "terrainPolicy", "requiredStructureRefs", "fillPoolRef", "fillPools",
                 "connectionPlan", "compositionProfileRef", "attachedFeatures", "targetAreaShare",
@@ -307,7 +309,7 @@ public final class CityBlueprintCodec {
         for (int index = 0; index < array.size(); index++) {
             String path = "$.groups[" + index + "]";
             JsonObject item = objectElement(array.get(index), path);
-            exactFields(item, fields, Set.of("placementRelation", "connectionPlan", "fillPoolRef", "fillPools", "structureCount"), path);
+            exactFields(item, fields, Set.of("placementRelation", "connectionPlan", "fillPoolRef", "fillPools", "structureCount", "layout"), path);
             result.add(new CityBlueprint.Group(
                     requiredString(item, "groupId", path + ".groupId"),
                     enumValue(item, "groupKind", CityBlueprint.GroupKind.class, path),
@@ -338,7 +340,8 @@ public final class CityBlueprintCodec {
                             path + ".expansionPolicy"),
                     buildingGreeneryPolicy(requiredObject(item, "buildingGreeneryPolicy",
                             path + ".buildingGreeneryPolicy"), path + ".buildingGreeneryPolicy"), weightedPools(item, "fillPools", path),
-                    item.has("structureCount") ? positiveInt(item, "structureCount", path + ".structureCount") : null));
+                    item.has("structureCount") ? positiveInt(item, "structureCount", path + ".structureCount") : null,
+                    item.has("layout") ? layout(requiredObject(item,"layout",path+".layout"),path+".layout") : null));
         }
         return List.copyOf(result);
     }
@@ -410,18 +413,34 @@ public final class CityBlueprintCodec {
     private static List<CityBlueprint.ArrayComposition> arrayCompositions(JsonArray array) {
         List<CityBlueprint.ArrayComposition> result = new ArrayList<>();
         Set<String> fields = Set.of("compositionId", "algorithmProfileRef", "centerGroupId",
-                "memberGroupIds");
+                "memberGroupIds", "layout");
         for (int index = 0; index < array.size(); index++) {
             String path = "$.arrayCompositions[" + index + "]";
             JsonObject item = objectElement(array.get(index), path);
-            exactFields(item, fields, path);
+            exactFields(item, fields, Set.of("layout"), path);
             result.add(new CityBlueprint.ArrayComposition(
                     requiredString(item, "compositionId", path + ".compositionId"),
                     requiredString(item, "algorithmProfileRef", path + ".algorithmProfileRef"),
                     requiredString(item, "centerGroupId", path + ".centerGroupId"),
-                    nonEmptyStringList(item, "memberGroupIds", path + ".memberGroupIds")));
+                    nonEmptyStringList(item, "memberGroupIds", path + ".memberGroupIds"),
+                    item.has("layout") ? layout(requiredObject(item,"layout",path+".layout"),path+".layout") : null));
         }
         return List.copyOf(result);
+    }
+
+    public static CityBlueprint.RectangleLayout layout(JsonObject value,String path) {
+        Set<String> fields=Set.of("gapBlocks","columns","courtWidth","courtDepth","faceInward","crossAlign","purpose");
+        exactFields(value,fields,fields,path);
+        return new CityBlueprint.RectangleLayout(value.has("gapBlocks")?requiredInt(value,"gapBlocks",path):8,
+                value.has("columns")?requiredInt(value,"columns",path):2,
+                value.has("courtWidth")?requiredInt(value,"courtWidth",path):36,
+                value.has("courtDepth")?requiredInt(value,"courtDepth",path):28,
+                value.has("faceInward")&&requiredBoolean(value,"faceInward",path),
+                value.has("crossAlign")?requiredString(value,"crossAlign",path):"START",
+                value.has("purpose")?requiredString(value,"purpose",path):"public-space");
+    }
+    private static JsonObject layoutJson(CityBlueprint.RectangleLayout layout) {
+        return new com.google.gson.Gson().toJsonTree(layout).getAsJsonObject();
     }
 
     private static String poolReference(JsonObject item, String single, String multiple, String path) {

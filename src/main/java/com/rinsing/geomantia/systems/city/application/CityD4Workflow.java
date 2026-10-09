@@ -366,7 +366,7 @@ public final class CityD4Workflow {
         for(var e:array(changes,"groups")){JsonObject g=e.getAsJsonObject();String id=text(g,"groupId");
             if(old.contains(id)) {
                 require(!mode.equals("OUTWARD_ARRAY"),"向外阵列保留已有阵列，只追加有方向的阵列。");
-                Set<String> allowed = new HashSet<>(Set.of("groupId","structureCount","densityClass","algorithmProfileRef","connectionPlan","clearFields"));
+                Set<String> allowed = new HashSet<>(Set.of("groupId","structureCount","densityClass","algorithmProfileRef","connectionPlan","layout","clearFields"));
                 if (mode.equals("REPAIR_CORE")) allowed.addAll(Set.of("requiredStructureRefs","fillPools"));
                 require(allowed.containsAll(g.keySet()),"已有阵列仅调整阵列参数；孤立核心修复可调整选材，但不能改用途、选址或删除主体。");
                 if(g.has("clearFields"))for(var f:array(g,"clearFields"))require(f.getAsString().equals("placementRelation"),"仅在改嵌套时清除独立定位。");

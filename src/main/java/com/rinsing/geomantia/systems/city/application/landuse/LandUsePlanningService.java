@@ -172,12 +172,17 @@ public final class LandUsePlanningService {
         CityLandUseSurfacePrintPlan surfacePrintPlan = new CityLandUseSurfacePrintPlanner().plan(
                 plan, sources.seedGroups(), terrainField, sources.roadBands(), sources.greenParcels(),
                 sources.overflowZones());
+        if (!sources.materialField().isEmpty()) surfacePrintPlan = new CityLandUseSurfacePrintPlanCodec().withComputedHash(surfacePrintPlan.withMaterials(sources.materialField()));
+        surfacePrintPlan = new CitySharedTerracePlanner().apply(surfacePrintPlan, sources.district(), terrainField, plan,
+                new LandUseCorridorExclusionResolver().publicSpaceReservations(d5ReservationMaskPlan),
+                CitySharedTerracePlanner.Settings.defaults());
         if (sources.district() != null) surfacePrintPlan = new CityPublicGreeneryPlanner().append(
                 surfacePrintPlan, sources.district(), plan, CityPublicGreeneryPlanner.Preset.load(),
                 new LandUseCorridorExclusionResolver().publicSpaceReservations(d5ReservationMaskPlan));
         if (sources.district() != null) {
             Set<BlockPoint> managed = surfacePrintPlan.featureCells().stream()
-                    .filter(f -> f.sourceId().startsWith(CityPublicGreeneryPlanner.SOURCE) && f.surfaceOffset() == 0)
+                    .filter(f -> (f.sourceId().startsWith(CityPublicGreeneryPlanner.SOURCE)
+                            || f.sourceId().startsWith(CitySharedTerracePlanner.SOURCE)) && f.surfaceOffset() == 0)
                     .map(f -> new BlockPoint(f.x(), f.z())).collect(java.util.stream.Collectors.toSet());
             residualResult = new CityUrbanResidualResolver.Result(resolvedExpansion,
                     sources.district().urbanSpacePlan(cityId, resolvedExpansion, managed), residualResult.warnings());
@@ -190,6 +195,10 @@ public final class LandUsePlanningService {
                 residualResult.urbanSpacePlan(), skippedLandscapes, requiredLandscapeCapacities);
         quality.addProperty("publicGreenGroundBlocks", surfacePrintPlan.featureCells().stream()
                 .filter(f -> f.sourceId().startsWith(CityPublicGreeneryPlanner.SOURCE) && f.surfaceOffset() == 0).count());
+        quality.addProperty("coreTerraceCount", sources.district() == null ? 0 : sources.district().cores().size());
+        quality.addProperty("designedPublicSpaceCount", sources.district() == null ? 0 : sources.district().publicSpaces().size());
+        quality.addProperty("sharedTerraceGroundBlocks", surfacePrintPlan.featureCells().stream()
+                .filter(f -> f.kind() == CityLandUseSurfacePrintPlan.FeatureKind.TERRACE_GROUND).count());
         quality.addProperty("publicGreenPlantBlocks", surfacePrintPlan.featureCells().stream()
                 .filter(f -> f.sourceId().startsWith(CityPublicGreeneryPlanner.SOURCE) && f.surfaceOffset() == 1).count());
         for (var area : surfacePrintPlan.areas()) {

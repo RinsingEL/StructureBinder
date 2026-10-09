@@ -191,48 +191,9 @@ public final class CityArrayExperiment {
         JsonArray reserved=arr(members.get(0),"reservedSpaces").deepCopy();reserved.add(space);members.get(0).add("reservedSpaces",reserved);
     }
     private List<BlockPoint> rectangleOrigins(JsonObject n,List<int[]> sizes) {
-        JsonObject l=n.getAsJsonObject("layout");int gap=integer(l,"gapBlocks",8);BlockPoint anchor=point(n.getAsJsonObject("anchorBlock"));
-        if(gap<4||gap>40)throw new IllegalArgumentException("Rectangle gap must be 4..40");
-        String algorithm=str(n,"algorithm");List<BlockPoint> out=new ArrayList<>();
-        if(algorithm.equals("COURTYARD")) {
-            if(sizes.size()>4)throw new IllegalArgumentException("Rectangle COURTYARD supports up to four sides; nest groups for additional buildings");
-            int w=integer(l,"courtWidth",36),d=integer(l,"courtDepth",28),left=anchor.x()-w/2,top=anchor.z()-d/2;
-            // Open corners provide access; each envelope is entirely outside the reserved central rectangle.
-            for(int i=0;i<sizes.size();i++){int[] s=sizes.get(i);int x,z;
-                if(i==0){x=anchor.x()-s[0]/2;z=top-gap-s[1];}
-                else if(i==1){x=left-gap-s[0];z=anchor.z()-s[1]/2;}
-                else if(i==2){x=left+w+gap;z=anchor.z()-s[1]/2;}
-                else{x=anchor.x()-s[0]/2;z=top+d+gap;}
-                out.add(new BlockPoint(x,z));
-            }
-            // Child envelopes can exceed the void length. Expand side gaps until corner overlap is gone.
-            for(int attempt=0;attempt<512;attempt++) {
-                boolean collision=false;
-                for(int i=0;i<out.size();i++)for(int j=0;j<i;j++){
-                    BlockPoint a=out.get(i),b=out.get(j);int[] sa=sizes.get(i),sb=sizes.get(j);
-                    if(a.x()<b.x()+sb[0]+gap&&a.x()+sa[0]+gap>b.x()&&a.z()<b.z()+sb[1]+gap&&a.z()+sa[1]+gap>b.z()){
-                        collision=true;
-                        if(i==1)out.set(i,new BlockPoint(a.x()-1,a.z()));else if(i==2)out.set(i,new BlockPoint(a.x()+1,a.z()));else out.set(i,new BlockPoint(a.x(),a.z()+1));
-                    }
-                }
-                if(!collision)return out;
-            }
-            throw new IllegalArgumentException("Courtyard envelopes exceed packing budget");
-        }
-        if(!algorithm.equals("GRID")&&!algorithm.equals("LINEAR"))throw new IllegalArgumentException("Explicit rectangle layout requires GRID, LINEAR or COURTYARD");
-        int columns=algorithm.equals("LINEAR")?sizes.size():integer(l,"columns",2),rows=(sizes.size()+columns-1)/columns;
-        if(columns<1||columns>180)throw new IllegalArgumentException("Invalid packing columns");
-        boolean vertical=integer(n,"directionDegrees",0)%180!=0;
-        int[] widths=new int[columns],depths=new int[rows];
-        for(int i=0;i<sizes.size();i++){int[] s=sizes.get(i);widths[i%columns]=Math.max(widths[i%columns],s[vertical?1:0]);depths[i/columns]=Math.max(depths[i/columns],s[vertical?0:1]);}
-        for(int i=0;i<sizes.size();i++){int x=0,z=0;for(int c=0;c<i%columns;c++)x+=widths[c]+gap;for(int r=0;r<i/columns;r++)z+=depths[r]+gap;
-            if(algorithm.equals("LINEAR")){int extra=depths[0]-sizes.get(i)[vertical?0:1];String align=optional(l,"crossAlign","START");z+=align.equals("END")?extra:align.equals("CENTER")?extra/2:0;}
-            int degrees=Math.floorMod(integer(n,"directionDegrees",0),360);
-            int dx=vertical?z:x,dz=vertical?x:z;
-            if(degrees==180){dx=-dx-sizes.get(i)[0];dz=-dz-sizes.get(i)[1];}
-            if(degrees==270){dx=-dx-sizes.get(i)[0];dz=-dz-sizes.get(i)[1];}
-            out.add(new BlockPoint(anchor.x()+dx,anchor.z()+dz));}
-        return out;
+        return CityRectangleLayoutPlanner.plan(str(n,"algorithm"),CityBlueprintCodec.layout(n.getAsJsonObject("layout"),"$.layout"),
+                point(n.getAsJsonObject("anchorBlock")),integer(n,"directionDegrees",0),
+                sizes.stream().map(s->new CityRectangleLayoutPlanner.Size(s[0],s[1])).toList());
     }
     private CityBlueprintGroupLayoutPlanner.Proposal proposal(JsonObject n,int index,int span) {
         BlockPoint origin=point(n.getAsJsonObject("anchorBlock"));int degrees=Math.floorMod(integer(n,"directionDegrees",0),360);

@@ -18,6 +18,15 @@ public final class CityTerraceRoadGradePlanner {
         for(var f:features)if(f.surfaceOffset()==0&&(f.kind()==CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
                 ||f.kind()==CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR))roads.put(new BlockPoint(f.x(),f.z()),f);
         Set<BlockPoint> seams=new HashSet<>();
+        // Core-owned platforms may change datum even when all neighbouring cores
+        // have the same height. Re-grade their connected streets in that case too.
+        for (var entry : roads.entrySet()) {
+            var f = entry.getValue();
+            Integer platformY = platforms.get(entry.getKey());
+            Integer oldY = f.targetSurfaceY() == null ? null : f.targetSurfaceY()
+                    - (f.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR ? 1 : 0);
+            if (platformY != null && oldY != null && !platformY.equals(oldY)) seams.add(entry.getKey());
+        }
         for(var p:roads.keySet())for(var q:neighbors(p))if(roads.containsKey(q)&&platforms.containsKey(p)
                 &&platforms.containsKey(q)&&!platforms.get(p).equals(platforms.get(q))){seams.add(p);seams.add(q);}
         if(seams.isEmpty())return features;

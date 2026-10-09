@@ -1,0 +1,11 @@
+{
+  "flower": "minecraft:allium",
+  "hedge": "minecraft:oak_leaves",
+  "trunk": "minecraft:oak_log",
+  "leaves": "minecraft:azalea_leaves",
+  "border": "minecraft:stone_brick_stairs",
+  "bench": "minecraft:dark_oak_stairs",
+  "lampPost": "minecraft:dark_oak_fence",
+  "lamp": "minecraft:lantern",
+  "monument": "minecraft:chiseled_stone_bricks"
+}

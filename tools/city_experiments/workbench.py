@@ -185,7 +185,19 @@ def compose(result,assets):
             for yy in range(ground+1,y):put(x,yy,z,'minecraft:water','terrain')
         for dy in range(1,3):put(x,ground-dy,z,'minecraft:dirt' if block!='minecraft:water' else 'minecraft:gravel','terrain')
         put(x,y,z,block,'terrain')
-    for x,y,z,s,kind in result['mutations']:put(x,y,z,s,'infrastructure')
+    platform={(x,row['z']):(t['terraceId'],row['targetY']) for t in result['terraces'] for row in t['spans'] for x in range(row['minX'],row['maxX']+1)}
+    mutation_index={(x,y,z):s for x,y,z,s,kind in result['mutations']}
+    removed_enclosures=[]
+    for x,y,z,s,kind in result['mutations']:
+        name=state(s)[0];owner=platform.get((x,z))
+        internal=owner and y==owner[1]+1 and all(platform.get((x+dx,z+dz))==owner for dx,dz in ((1,0),(-1,0),(0,1),(0,-1)))
+        # Land-use lot boundaries duplicate the enclosing core terrace. Leave
+        # explicit terrace features, stacked posts and authored NBT untouched.
+        above=state(mutation_index.get((x,y+1,z),'minecraft:air'))[0]
+        if kind=='SURFACE_OR_ENGINEERING' and internal and name.endswith(('_wall','_fence')) and above in ('minecraft:air','minecraft:cave_air','minecraft:void_air'):
+            removed_enclosures.append([x,y,z,s]);continue
+        put(x,y,z,s,'infrastructure')
+    result['removedBuildingEnclosures']=removed_enclosures
     for member in result['members']:
         asset=by_id[member['assetId']]
         if asset['id'] not in models:models[asset['id']]=read_structure(Path(asset['path'])/'structure.nbt')
@@ -275,7 +287,7 @@ def build(scene,base_revision=None):
     lamps=sum(1 for b in world['blocks'] if world['palette'][b['state']]['name']=='minecraft:lantern')
     walls=sum(r.get('foundationDiagnostics',{}).get('terraceEdgePreparedCount',0) for r in result['execution'])
     metadata=dict(revision=revision,scene=scene,terrain=terrain_info,members=result['members'],terraces=result['terraces'],roadPlan=result['roadPlan'],streetReview=result['streetReview'],
-        publicSpacePlans=result.get('publicSpacePlans',[]),connectionTerracePlan=result.get('connectionTerracePlan'),layoutSpaces=result.get('layoutSpaces',[]),fixtures=result.get('fixtures',[]),fixtureChecks=result.get('fixtureChecks',[]),terraceFeaturePlans=result.get('terraceFeaturePlans',{}),
+        publicSpacePlans=result.get('publicSpacePlans',[]),removedBuildingEnclosures=result.get('removedBuildingEnclosures',[]),connectionTerracePlan=result.get('connectionTerracePlan'),layoutSpaces=result.get('layoutSpaces',[]),fixtures=result.get('fixtures',[]),fixtureChecks=result.get('fixtureChecks',[]),terraceFeaturePlans=result.get('terraceFeaturePlans',{}),
         summary=dict(buildings=len(result['members']),terraces=len(result['terraces']),roadSegments=len(result['roadBands']),lamps=lamps,wallBlocks=walls,
                      fixtures=len(result.get('fixtures',[])),terraceFeatureBlocks=sum(len(p['blocks']) for p in result.get('terraceFeaturePlans',{}).values()),
                      blockCount=len(world['blocks']),owners=len(result['execution'])),

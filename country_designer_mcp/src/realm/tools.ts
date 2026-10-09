@@ -575,6 +575,7 @@ export const cityBlueprintSchema = strictObject({
       densityClass: { type: "string", enum: ["SPARSE", "BALANCED", "DENSE"],
         description: "功能区疏密档位，控制布局间距；计划建筑数量使用 structureCount，省略时沿用建议默认值。" },
       algorithmProfileRef: nonEmptyString("冻结算法 profile 引用。"),
+      layout: rectangleLayoutSchema(),
       terrainPolicy: { type: "string", enum: ["CONFORM", "BALANCED", "ASSERTIVE"] },
       requiredStructureRefs: { type: "array", minItems: 1, uniqueItems: true, items: nonEmptyString("结构白名单引用。") },
       fillPoolRef: nonEmptyString("单池兼容写法；与 fillPools 二选一。"),
@@ -622,6 +623,7 @@ export const cityBlueprintSchema = strictObject({
       compositionId: nonEmptyString("Blueprint 内唯一的父阵列 ID。"),
       algorithmProfileRef: nonEmptyString("编排完整子 Group 的冻结算法 profile；不覆盖子 Group 自身算法。"),
       centerGroupId: nonEmptyString("父阵列中心的完整 Group。"),
+      layout: rectangleLayoutSchema(),
       memberGroupIds: { type: "array", minItems: 1, uniqueItems: true,
         items: nonEmptyString("由父阵列安排槽位的完整子 Group；CENTER_SYMMETRIC 按相邻两项组成对称对。") },
     }, ["compositionId", "algorithmProfileRef", "centerGroupId", "memberGroupIds"]),
@@ -1557,7 +1559,7 @@ export const realmTools: ToolDefinition[] = [
         for(const key of ["removeGroupIds","removeCompositionIds","removeLandscapeIds"]) fragment[key]={type:"array",items:nonEmptyString("明确删除的 ID。")};
       }
       const key=update?"changes":"districtDesign";properties[key]=strictObject(fragment,update?[]:["groups","core"]);required.push(key);
-      if(update) properties[key].description="按 ID 合并，未提供字段保留；扩张不允许删除设计对象。relations 与 foundationGroupIds 提供时替换本设计内清单；新增对象需完整配置；已有组只允许 groupId、structureCount、densityClass、algorithmProfileRef、connectionPlan，改嵌套时可用 clearFields 清除 placementRelation。";
+      if(update) properties[key].description="按 ID 合并，未提供字段保留；扩张不允许删除设计对象。relations 与 foundationGroupIds 提供时替换本设计内清单；新增对象需完整配置；已有组只允许 groupId、structureCount、densityClass、algorithmProfileRef、connectionPlan、layout，改嵌套时可用 clearFields 清除 placementRelation。";
       if(name==="city_d4_integrate") {
         for(const field of ["landscapes","surfaceMaterials","removeGroupIds","removeCompositionIds","removeLandscapeIds"])delete fragment[field];
         properties.integrationIntent=nonEmptyString("面向整体性的扩张用途与目标方向。");properties.targetDistrictId=nonEmptyString("本次扩大哪个非独立功能区。");
@@ -1602,6 +1604,18 @@ function decorationVariant(type: string, params: Record<string, unknown>, requir
     type: { type: "string", enum: [type] },
     params: strictObject(params, required),
   }, ["type", "params"]);
+}
+
+function rectangleLayoutSchema() {
+  return { ...strictObject({
+    gapBlocks: { type: "integer", minimum: 4, maximum: 40, description: "完整边界间距，默认 8。" },
+    columns: { type: "integer", minimum: 1, maximum: 180, description: "GRID 列数，默认 2。" },
+    courtWidth: { type: "integer", minimum: 8, maximum: 256, description: "院落留空宽度，默认 36。" },
+    courtDepth: { type: "integer", minimum: 8, maximum: 256, description: "院落留空深度，默认 28。" },
+    faceInward: { type: "boolean", description: "仅 COURTYARD 叶子建筑；受素材允许方向约束。" },
+    crossAlign: { type: "string", enum: ["START", "CENTER", "END"] },
+    purpose: nonEmptyString("阵列空间目的；含 garden 时留空由程序形成花园，其余为广场。"),
+  }, []), description: "可选完整矩形 GRID/LINEAR/COURTYARD 布局。院落最多四侧；可嵌套完整子阵列，坐标由程序冻结。省略保留旧布局。" };
 }
 
 function strictObject(properties: Record<string, unknown>, required: string[] = Object.keys(properties)) {

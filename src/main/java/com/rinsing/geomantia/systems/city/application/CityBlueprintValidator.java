@@ -93,6 +93,8 @@ public final class CityBlueprintValidator {
             requireRef(issues, catalog.algorithmProfileRefs(), group.algorithmProfileRef(),
                     CityBlueprintReasonCode.CITY_BLUEPRINT_ALGORITHM_PROFILE_UNKNOWN,
                     path + ".algorithmProfileRef");
+            if(group.layout()!=null)validateRectangle(issues,group.layout(),catalog.algorithmsByProfileRef().get(group.algorithmProfileRef()),
+                    group.structureCount()==null?group.requiredStructureRefs().size():group.structureCount(),path+".layout");
             if ("CENTER_SYMMETRIC".equals(catalog.algorithmsByProfileRef().get(group.algorithmProfileRef()))
                     && group.structureCount() != null && group.structureCount() % 2 == 0)
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_CENTER_SYMMETRIC_REQUIRED_COUNT_INVALID,
@@ -279,6 +281,8 @@ public final class CityBlueprintValidator {
             requireRef(issues, catalog.algorithmProfileRefs(), composition.algorithmProfileRef(),
                     CityBlueprintReasonCode.CITY_BLUEPRINT_ALGORITHM_PROFILE_UNKNOWN,
                     path + ".algorithmProfileRef");
+            if(composition.layout()!=null)validateRectangle(issues,composition.layout(),catalog.algorithmsByProfileRef().get(composition.algorithmProfileRef()),
+                    composition.memberGroupIds().size()+1,path+".layout");
             if (composition.memberGroupIds().isEmpty()) {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_INVALID,
                         path + ".memberGroupIds",
@@ -574,6 +578,13 @@ public final class CityBlueprintValidator {
     private static void requireRef(List<Issue> issues, Set<String> allowed, String ref,
                                    CityBlueprintReasonCode reason, String path) {
         if (!allowed.contains(ref)) add(issues, reason, path, "Unknown catalog reference: " + ref + ". Replace this field with a matching ref from the current frozen catalog for this category; do not invent IDs or switch array algorithms solely to fix a reference typo.");
+    }
+
+    private static void validateRectangle(List<Issue> issues,CityBlueprint.RectangleLayout layout,String algorithm,int count,String path) {
+        if(!Set.of("GRID","LINEAR","COURTYARD").contains(algorithm==null?"":algorithm)
+                || "COURTYARD".equals(algorithm)&&count>4 || layout.faceInward()&&!"COURTYARD".equals(algorithm))
+            add(issues,CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_INVALID,path,
+                    "Rectangle layout supports GRID, LINEAR, or a COURTYARD of at most four complete members. Nest arrays for more buildings; faceInward belongs to courtyard buildings.");
     }
 
     private static void add(List<Issue> issues, CityBlueprintReasonCode reason, String path, String message) {

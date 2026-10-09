@@ -41,6 +41,10 @@ class DesignedLandscapeIntegration(unittest.TestCase):
    try:
     meta=api.build(api.read(Path(__file__).with_name('campus-groups.json')));folder=Path(meta['evidenceDirectory']);r=api.read(folder/'java-result.json');world=api.read(folder/'world.json')
     self.assertEqual(len(meta['members']),23);self.assertEqual(len(meta['terraces']),4)
+    # Shared-platform boundaries are now eliminated by the production Java compiler/executor.
+    self.assertEqual(len(meta['removedBuildingEnclosures']),0)
+    # Explicit core terrace edge features survive the internal lot cleanup.
+    self.assertTrue(any(w[4].startswith('TERRACE_EDGE_') for w in r['mutations']))
     self.assertTrue(all(o['status'].startswith('CONNECTED') for o in r['streetReview']['accessOutcomes']))
     self.assertEqual(len(meta['fixtureChecks']),len(meta['fixtures']))
     self.assertTrue(all(c['supported'] and c['buildingClearance'] and c['roadClearance'] for c in meta['fixtureChecks']))

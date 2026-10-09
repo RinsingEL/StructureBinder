@@ -3,6 +3,23 @@ import test from "node:test";
 
 import { realmTools, blueprintReferenceCatalogSchema, cityBlueprintSchema } from "../dist/src/realm/tools.js";
 
+test("district and integration expose optional rectangle layout without placement coordinates", () => {
+  for (const name of ["city_d4_district", "city_d4_integrate"]) {
+    const tool = realmTools.find(t => t.name === name);
+    const body = name === "city_d4_district" ? "districtDesign" : "changes";
+    const fields = tool.inputSchema.properties[body].properties;
+    for (const collection of ["groups", "arrayCompositions"]) {
+      const item = fields[collection].items;
+      const layout = item.properties.layout;
+      assert.equal(layout.properties.gapBlocks.minimum, 4);
+      assert.equal(layout.properties.gapBlocks.maximum, 40);
+      assert.ok(layout.properties.purpose && layout.properties.faceInward);
+      assert.equal(layout.properties.anchorBlock, undefined);
+      assert.ok(!item.required.includes("layout"));
+    }
+  }
+});
+
 test("formal material tool exposes hierarchical filters, counts-only and pagination", () => {
   const tool = realmTools.find(t => t.name === "city_d4_materials");
   const fields = tool.inputSchema.properties.materialSelections.items.properties;

@@ -63,9 +63,7 @@ public final class CityLandUseChunkCompiler {
                 int chunkZ = Math.floorDiv(span.z(), 16);
                 int minChunkX = Math.floorDiv(span.minX(), 16);
                 int maxChunkX = Math.floorDiv(span.maxX(), 16);
-                for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-                    owners.add(new OwnerChunk(chunkX, chunkZ));
-                }
+                for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) owners.add(new OwnerChunk(chunkX, chunkZ));
             }
             for (OwnerChunk owner : owners) {
                 byOwner.computeIfAbsent(owner, ignored -> new HashMap<>()).put(entry.getKey(), entry.getValue());
@@ -99,8 +97,10 @@ public final class CityLandUseChunkCompiler {
         int maxZ = chunkZ * 16 + 15 + halo;
         int ownerRadius = Math.max(1, Math.floorDiv(halo + 15, 16));
         List<CityLandUseSurfacePrintPlan.FeatureCell> gradingFeatures = new ArrayList<>();
+        Map<AreaKey,CityLandUseSurfacePrintPlan.AreaPrint> contextAreas=new HashMap<>();
         for (int dz = -ownerRadius; dz <= ownerRadius; dz++) {
             for (int dx = -ownerRadius; dx <= ownerRadius; dx++) {
+                contextAreas.putAll(prepared.printAreasByOwner().getOrDefault(new OwnerChunk(chunkX+dx,chunkZ+dz),Map.of()));
                 prepared.featureCellsByOwner().getOrDefault(
                                 new OwnerChunk(chunkX + dx, chunkZ + dz), List.of()).stream()
                         .filter(cell -> cell.x() >= minX && cell.x() <= maxX
@@ -109,7 +109,7 @@ public final class CityLandUseChunkCompiler {
             }
         }
         return compileInternal(prepared.areaPlan(),
-                prepared.printAreasByOwner().getOrDefault(owner, Map.of()),
+                contextAreas,
                 prepared.surfacePrintPlan().sharedBoundarySpans(),
                 prepared.featureCellsByOwner().getOrDefault(owner, List.of()),
                 gradingFeatures,
@@ -354,7 +354,18 @@ public final class CityLandUseChunkCompiler {
                 microFillBlock, List.copyOf(gradingMaskCells),
                 List.copyOf(surfaceOperations), List.copyOf(boundaryOperations), featureOperations,
                 gradingFeatureOperations, platformPurposeAnchors, platformAccessDemands,
-                materialField);
+                materialField, sharedTerraceSpans(printAreas.values(), gradingFeatureCells, minChunkX, minChunkZ, maxChunkX, maxChunkZ));
+    }
+
+    private static List<CityLandUseSurfacePrintPlan.PlatformSpan> sharedTerraceSpans(
+            java.util.Collection<CityLandUseSurfacePrintPlan.AreaPrint> areas,
+            List<CityLandUseSurfacePrintPlan.FeatureCell> features, int minX,int minZ,int maxX,int maxZ) {
+        Map<BlockPoint,Integer> heights = new HashMap<>();
+        for(var a:areas) if(a.recipe() instanceof CityLandUseSurfacePrintPlan.UniformRecipe r)
+            for(var s:r.platformSpans()) if(s.z()>=minZ-1&&s.z()<=maxZ+1)
+                for(int x=Math.max(s.minX(),minX-1);x<=Math.min(s.maxX(),maxX+1);x++) heights.put(new BlockPoint(x,s.z()),s.targetY());
+        for(var f:features) if(f.surfaceOffset()==0&&f.targetSurfaceY()!=null) heights.put(new BlockPoint(f.x(),f.z()),f.targetSurfaceY());
+        return com.rinsing.geomantia.systems.city.application.landuse.CitySharedTerracePlanner.spans(heights);
     }
 
     private static boolean intersects(BlockBounds bounds, int minX, int minZ, int maxX, int maxZ) {
@@ -678,7 +689,19 @@ public final class CityLandUseChunkCompiler {
                                 List<FeatureOperation> gradingFeatureOperations,
                                 List<PlatformPurposeAnchor> platformPurposeAnchors,
                                 List<PlatformAccessDemand> platformAccessDemands,
-                                com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField materialField) {
+                                com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField materialField,
+                                List<CityLandUseSurfacePrintPlan.PlatformSpan> sharedTerraceSpans) {
+        public ChunkFragment(String schema,String cityId,String planHash,String paletteHash,int chunkX,int chunkZ,
+                int relevantCellCount,int footprintExcludedCount,int corridorExcludedCount,int gateExcludedCount,
+                String microFillBlockId,List<GradingMaskCell> gradingMaskCells,List<SurfaceOperation> surfaceOperations,
+                List<BoundaryOperation> boundaryOperations,List<FeatureOperation> featureOperations,
+                List<FeatureOperation> gradingFeatureOperations,List<PlatformPurposeAnchor> platformPurposeAnchors,
+                List<PlatformAccessDemand> platformAccessDemands,
+                com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField materialField) {
+            this(schema,cityId,planHash,paletteHash,chunkX,chunkZ,relevantCellCount,footprintExcludedCount,corridorExcludedCount,
+                    gateExcludedCount,microFillBlockId,gradingMaskCells,surfaceOperations,boundaryOperations,featureOperations,
+                    gradingFeatureOperations,platformPurposeAnchors,platformAccessDemands,materialField,List.of());
+        }
         public ChunkFragment(String schema,String cityId,String planHash,String paletteHash,int chunkX,int chunkZ,
                 int relevantCellCount,int footprintExcludedCount,int corridorExcludedCount,int gateExcludedCount,
                 String microFillBlockId,List<GradingMaskCell> gradingMaskCells,List<SurfaceOperation> surfaceOperations,
@@ -691,6 +714,7 @@ public final class CityLandUseChunkCompiler {
                     com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField.empty());
         }
         public ChunkFragment {
+            sharedTerraceSpans = List.copyOf(sharedTerraceSpans);
             materialField = materialField == null ? com.rinsing.geomantia.systems.city.domain.landuse.CityMaterialField.empty() : materialField;
             if (!RESULT_SCHEMA.equals(schema)) {
                 throw new IllegalArgumentException("CITY_LAND_USE_FRAGMENT_SCHEMA_UNSUPPORTED");

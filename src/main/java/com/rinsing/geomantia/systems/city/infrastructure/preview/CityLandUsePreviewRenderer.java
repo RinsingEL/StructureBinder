@@ -340,6 +340,9 @@ public final class CityLandUsePreviewRenderer {
                 case GREEN_PATH -> new Color(173, 145, 94, 238);
                 case GREEN_PLANT -> new Color(57, 122, 63, 245);
                 case OVERFLOW_BOUNDARY -> new Color(69, 82, 67, 245);
+                case TERRACE_GROUND -> new Color(177, 177, 165, 238);
+                case TERRACE_RAIL -> new Color(119, 119, 125, 245);
+                case GREEN_FIXTURE -> new Color(192, 161, 94, 245);
             });
             fillBounds(g, transform, new BlockBounds(cell.x(), cell.z(), cell.x(), cell.z()));
         }

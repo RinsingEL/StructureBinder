@@ -84,7 +84,20 @@ public record CityBlueprint(
             ExpansionPolicy expansionPolicy,
             BuildingGreeneryPolicy buildingGreeneryPolicy,
             List<WeightedPool> fillPools,
-            Integer structureCount) {
+            Integer structureCount,
+            RectangleLayout layout) {
+        public Group(String groupId, GroupKind groupKind, List<String> preferredPatchRefs,
+                PreferredPatchZone preferredPatchZone, PlacementRelation placementRelation, String role,
+                GroupPriority priority, ExtentClass extentClass, DensityClass densityClass, String algorithmProfileRef,
+                TerrainPolicy terrainPolicy, List<String> requiredStructureRefs, String fillPoolRef,
+                ConnectionPlan connectionPlan, String compositionProfileRef, List<String> attachedFeatures,
+                double targetAreaShare, SpaceComposition spaceComposition, ExpansionPolicy expansionPolicy,
+                BuildingGreeneryPolicy buildingGreeneryPolicy, List<WeightedPool> fillPools, Integer structureCount) {
+            this(groupId,groupKind,preferredPatchRefs,preferredPatchZone,placementRelation,role,priority,extentClass,
+                    densityClass,algorithmProfileRef,terrainPolicy,requiredStructureRefs,fillPoolRef,connectionPlan,
+                    compositionProfileRef,attachedFeatures,targetAreaShare,spaceComposition,expansionPolicy,
+                    buildingGreeneryPolicy,fillPools,structureCount,null);
+        }
         public Group(String groupId, GroupKind groupKind, List<String> preferredPatchRefs,
                      PreferredPatchZone preferredPatchZone, PlacementRelation placementRelation,
                      String role, GroupPriority priority, ExtentClass extentClass, DensityClass densityClass,
@@ -239,9 +252,25 @@ public record CityBlueprint(
             String compositionId,
             String algorithmProfileRef,
             String centerGroupId,
-            List<String> memberGroupIds) {
+            List<String> memberGroupIds,
+            RectangleLayout layout) {
+        public ArrayComposition(String compositionId,String algorithmProfileRef,String centerGroupId,List<String> memberGroupIds) {
+            this(compositionId,algorithmProfileRef,centerGroupId,memberGroupIds,null);
+        }
         public ArrayComposition {
             memberGroupIds = List.copyOf(memberGroupIds);
+        }
+    }
+
+    /** Optional intentional geometry. Coordinates and template rotations remain compiler-owned. */
+    public record RectangleLayout(int gapBlocks,int columns,int courtWidth,int courtDepth,
+                                  boolean faceInward,String crossAlign,String purpose) {
+        public RectangleLayout {
+            if(gapBlocks<4||gapBlocks>40||columns<1||columns>180||courtWidth<8||courtWidth>256||courtDepth<8||courtDepth>256)
+                throw new IllegalArgumentException("CITY_RECTANGLE_LAYOUT_DIMENSIONS_INVALID");
+            if(!java.util.Set.of("START","CENTER","END").contains(crossAlign))
+                throw new IllegalArgumentException("CITY_RECTANGLE_LAYOUT_ALIGNMENT_INVALID");
+            if(purpose==null||purpose.isBlank())throw new IllegalArgumentException("CITY_RECTANGLE_LAYOUT_PURPOSE_REQUIRED");
         }
     }
 
