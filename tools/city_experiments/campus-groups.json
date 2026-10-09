@@ -293,5 +293,14 @@
       "nodeId": "campus-center",
       "kind": "PLAZA"
     }
-  ]
+  ],
+  "gapLandscape": true,
+  "landscapeBorder": {
+    "straight": "studio:mg-46-v01",
+    "outer": "studio:mg-47-v01",
+    "inner": "studio:mg-48-v01",
+    "end": "studio:mg-49-v01"
+  },
+  "gapSurface": "CONNECTION_TERRACE",
+  "smallGapMaxBlocks": 32
 }

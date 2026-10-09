@@ -44,7 +44,7 @@ class DesignedLandscapeIntegration(unittest.TestCase):
     self.assertTrue(all(o['status'].startswith('CONNECTED') for o in r['streetReview']['accessOutcomes']))
     self.assertEqual(len(meta['fixtureChecks']),len(meta['fixtures']))
     self.assertTrue(all(c['supported'] and c['buildingClearance'] and c['roadClearance'] for c in meta['fixtureChecks']))
-    plans=meta['publicSpacePlans'];self.assertEqual(len(plans),3)
+    plans=meta['publicSpacePlans'];self.assertEqual(len(plans),4)
     for p in plans[:2]:
      self.assertEqual(p['supportedColumns'],p['bounds']['width']*p['bounds']['depth']);self.assertEqual(len(p['beds']),4)
      self.assertGreater(p['counts'].get('FLOWER',0),0);self.assertGreater(len(p['trees']),0)
@@ -53,12 +53,37 @@ class DesignedLandscapeIntegration(unittest.TestCase):
       if kind in ('LOW_HEDGE','FLOWER','TREE_TRUNK','TREE_CROWN'):
        self.assertGreater(abs(x-cx),2);self.assertGreater(abs(z-cz),2)
     self.assertTrue(any(a['kind']=='WELL' for a in plans[1]['amenities']))
+    gaps=plans[-1];self.assertEqual(gaps['kind'],'GAP_LANDSCAPE');self.assertGreater(len(gaps['regions']),0)
+    self.assertGreater(gaps['counts'].get('FLOWER',0),0);self.assertGreater(gaps['counts'].get('TREE_TRUNK',0),0)
+    native={(c[0],c[1]):(c[2],c[3]) for c in r['terrainColumns']}
+    footprint={(x,row['z']) for t in meta['terraces'] for row in t['spans'] for x in range(row['minX'],row['maxX']+1)}
+    engineering={(c['x'],c['z']):c for c in gaps['engineeringColumns']}
+    self.assertEqual(gaps['terrainPolicy'],'CONNECTION_TERRACE');self.assertGreater(len(engineering),0)
+    connection=meta['connectionTerracePlan'];self.assertGreater(len(connection['removedInternalEdges']),0)
+    self.assertGreater(len(connection['synchronizedColumns']),0)
+    self.assertGreater(len(connection['outerRailColumns']),0)
+    self.assertTrue(any(w[3]=='SUPPORT' for w in connection['writes']))
+    road_y={(f['x'],f['z']):f['targetSurfaceY'] for f in r['surfacePrintPlan']['featureCells'] if f['surfaceOffset']==0}
+    for p,c in engineering.items():
+     self.assertNotIn(p,footprint);self.assertNotIn(p,road_y)
+     self.assertEqual(c['targetY'],road_y[(c['roadX'],c['roadZ'])])
+    for x,y,z,kind in gaps['writes']:
+     self.assertNotIn((x,z),footprint);self.assertNotEqual(native[(x,z)][1],'minecraft:water')
+     if kind=='LAWN':self.assertEqual(y,engineering[(x,z)]['targetY'])
+     for band in r['roadBands']:
+      b=band['bounds']
+      if kind not in ('CLEAR','FILL','SURFACE'):self.assertFalse(b['minX']-2<=x<=b['maxX']+2 and b['minZ']-2<=z<=b['maxZ']+2)
     registry=api.read(api.TOOL/'.cache/registry.json')
     from studio.navigation import collision_boxes
     for palette in world['palette']:collision_boxes(palette,registry)
-    before={p['nodeId']:{k:v for k,v in p['counts'].items() if k not in ('BED','LOW_HEDGE','FLOWER','TREE_TRUNK','TREE_CROWN')} for p in plans[:2]}
+    for p in plans[:2]+[gaps]:
+     self.assertGreater(len(p['borderPlacements']),0)
+     for b in p['borderPlacements']:
+      self.assertTrue(b['nbtSha256']);self.assertIn(b['assetId'],r['scene']['landscapeBorder'].values())
+    before={p['nodeId']:{k:v for k,v in p['counts'].items() if k not in ('BED','LOW_HEDGE','FLOWER','TREE_TRUNK','TREE_CROWN','BORDER')} for p in plans[:2]}
     r['scene']['greenery']=False;r['_groundIndex']={(row[0],row[1]):row[2] for row in r['terrainColumns']};api.compose(r,api.catalog())
-    after={p['nodeId']:p['counts'] for p in r['publicSpacePlans']};self.assertEqual(before,after)
+    after={p['nodeId']:p['counts'] for p in r['publicSpacePlans'][:2]};self.assertEqual(before,after)
+    self.assertEqual(r['publicSpacePlans'][-1]['engineeringColumns'],gaps['engineeringColumns'])
     self.assertEqual(api.read(api.OUTPUT/'state.json')['revision'],1)
    finally:api.OUTPUT=old_output
 

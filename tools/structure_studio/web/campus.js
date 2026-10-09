@@ -30,7 +30,7 @@ function loadControls(){
  choice($('algorithm'),Object.entries(algorithmNames));
  choice($('asset'),data.catalog.filter(a=>a.consumer==='array').map(a=>[a.assetId,`${a.id} · ${a.name.split(' · ')[0]}`]));
  choice($('node'),hierarchyChoices());
- $('greenery').checked=scene.greenery!==false;$('terrain-source').value=scene.terrainSource||'D3_INTERPOLATED';arrayControls();nodeControls();
+ $('greenery').checked=scene.greenery!==false;$('gap-landscape').checked=!!scene.gapLandscape;$('gap-landscape').disabled=!scene.publicSpaces?.length;$('small-gap-max').value=scene.smallGapMaxBlocks||32;$('small-gap-max').disabled=!scene.gapLandscape;$('terrain-source').value=scene.terrainSource||'D3_INTERPOLATED';arrayControls();nodeControls();
  const styles=scene.terraceStyles||[];choice($('terrace-style'),[['','各台地原配置'],...styles.map(s=>[s.styleId,s.name||s.styleId])]);
  $('terrace-style').disabled=!styles.length;$('terrace-features').disabled=!styles.length;$('terrace-features').checked=!!styles.length&&scene.terraceFeatures!==false;
  $('fixture-note').textContent=styles.length?`已放置 ${data.metadata.summary.fixtures||0} 个构件，入口与道路保留通行空间。`:'当前方案未配置台地设施风格。';
@@ -103,7 +103,8 @@ async function generate(nextScene){
  try{await json('/api/campus/build',{method:'POST',headers:{'Content-Type':'application/json','X-Campus-Write':'build'},body:JSON.stringify({scene:nextScene,baseRevision:data.metadata.revision})});await refresh();}
  finally{$('build').disabled=false;$('apply-plan').disabled=false;$('load-example').disabled=false;}
 }
-$('build').onclick=async()=>{try{scene.greenery=$('greenery').checked;scene.terraceFeatures=$('terrace-features').checked;scene.terrainSource=$('terrain-source').value;await generate(scene);}catch(e){$('status').textContent=String(e);$('status').classList.add('error');}};
+$('build').onclick=async()=>{try{scene.greenery=$('greenery').checked;scene.gapLandscape=$('gap-landscape').checked;scene.smallGapMaxBlocks=Number($('small-gap-max').value);scene.terraceFeatures=$('terrace-features').checked;scene.terrainSource=$('terrain-source').value;await generate(scene);}catch(e){$('status').textContent=String(e);$('status').classList.add('error');}};
+$('gap-landscape').onchange=()=>{$('small-gap-max').disabled=!$('gap-landscape').checked;};
 $('terrace-style').onchange=()=>{const ref=$('terrace-style').value;if(!ref)return;
  if(!scene.terraceGroups)scene.terraceGroups=scene.districts.filter(d=>d.platform).map(d=>({terraceId:`${d.districtId}-platform`,districtId:d.districtId,coreMemberId:d.coreMemberId,arrayIds:[...d.arrayIds]}));
  for(const group of scene.terraceGroups)group.styleRef=ref;$('status').textContent='设施风格已修改，点击生成查看。';};
@@ -121,6 +122,6 @@ $('capture').onclick=()=>{draw();canvas.toBlob(b=>{const url=URL.createObjectURL
 let pointer;canvas.onpointerdown=e=>{canvas.setPointerCapture(e.pointerId);pointer={x:e.clientX,y:e.clientY,button:e.button};};canvas.onpointerup=()=>pointer=null;canvas.onpointermove=e=>{if(!pointer)return;const dx=e.clientX-pointer.x,dy=e.clientY-pointer.y;pointer.x=e.clientX;pointer.y=e.clientY;
  if(pointer.button===2){const s=distance*.0017;target[0]-=Math.cos(yaw)*dx*s;target[2]+=Math.sin(yaw)*dx*s;target[1]+=dy*s;}else{yaw-=dx*.007;pitch=Math.max(.04,Math.min(1.56,pitch+dy*.007));}draw();};canvas.oncontextmenu=e=>e.preventDefault();canvas.addEventListener('wheel',e=>{e.preventDefault();distance=Math.max(12,Math.min(2800,distance*Math.exp(e.deltaY*.001)));draw();},{passive:false});
 new ResizeObserver(resize).observe(canvas);
-window.campus={telemetry,focus,focusNode,overview,landscape,draw,get data(){return data},get scene(){return scene},get context(){return context},setView(v){if(v.pitch!=null)pitch=v.pitch;if(v.yaw!=null)yaw=v.yaw;if(v.distance!=null)distance=v.distance;draw();},refresh};
+window.campus={telemetry,focus,focusNode,overview,landscape,draw,get data(){return data},get scene(){return scene},get context(){return context},setView(v){if(v.target?.length===3&&v.target.every(Number.isFinite))target=[...v.target];if(v.pitch!=null)pitch=v.pitch;if(v.yaw!=null)yaw=v.yaw;if(v.distance!=null)distance=v.distance;draw();},refresh};
 window.addEventListener('error',e=>error(e.message));
 try{resources=await loadResources(telemetry);await refresh();}catch(e){error(e);}

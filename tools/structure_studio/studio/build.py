@@ -67,6 +67,7 @@ from .academy_support import BUILDERS as ACADEMY_SUPPORT
 from .academy_wings import BUILDERS as ACADEMY_WINGS
 from .terrace_fixtures import BUILDERS as TERRACE_FIXTURES
 from .campus_daily import BUILDERS as CAMPUS_DAILY
+from .landscape_fixtures import BUILDERS as LANDSCAPE_FIXTURES
 from .dwarven_revision2 import BUILDERS as DWARVEN_REVISION2
 from .elven_revision2 import BUILDERS as ELVEN_REVISION2
 from .european_revision2 import BUILDERS as EUROPEAN_REVISION2
@@ -133,6 +134,7 @@ BUILDERS.update({key:("R02_arcane_reborn",fn) for key,fn in ACADEMY_SUPPORT.item
 BUILDERS.update({key:("R02_arcane_reborn",fn) for key,fn in ACADEMY_WINGS.items()})
 BUILDERS.update(TERRACE_FIXTURES)
 BUILDERS.update({key:("R02_arcane_reborn",fn) for key,fn in CAMPUS_DAILY.items()})
+BUILDERS.update({key:("R02_arcane_reborn",fn) for key,fn in LANDSCAPE_FIXTURES.items()})
 BUILDERS.update({key:("R03_dwarven_reborn",fn) for key,fn in DWARVEN_REVISION2.items()})
 BUILDERS.update({key:("R01_elven_reborn",fn) for key,fn in ELVEN_REVISION2.items()})
 BUILDERS.update({key:("R04_european_reborn",fn) for key,fn in EUROPEAN_REVISION2.items()})

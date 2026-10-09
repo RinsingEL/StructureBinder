@@ -1,0 +1,47 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-47-v01",
+  "name": "石质花坛边 · 外转角",
+  "family": "MG-47-v01",
+  "civilization": "通用石质园景",
+  "planning_role": "planning_role.infrastructure",
+  "size": [
+    1,
+    2,
+    1
+  ],
+  "terrain": {},
+  "rooms": [],
+  "points": [],
+  "connections": [],
+  "design_notes": [
+    "旋转后沿种植边界拼接；端头降为半砖。模板不含植物，不产生独立阵列或台地。"
+  ],
+  "differences": [],
+  "floors": [],
+  "roof_min_y": null,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "asset_tags": [
+    "infrastructure",
+    "landscape_border"
+  ],
+  "placement_consumer": "infrastructure",
+  "source": "tools/structure_studio/studio/landscape_fixtures.py",
+  "ground_plane": {
+    "y": 1,
+    "note": "Y=0 承载，Y=1 低边框。"
+  },
+  "function_terms": [
+    "花坛收边"
+  ],
+  "landscape_border": {
+    "kind": "outer_left",
+    "facing": "south",
+    "tileSize": 1
+  },
+  "nbt_sha256": "dd2fba84a468e7f7dedfa4a48c61b015d15e3aac84ed0142e2eb56fedc666830"
+}

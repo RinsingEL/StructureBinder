@@ -124,4 +124,7 @@ def apply_public_spaces(result, cells, sources, put):
                     put(x,y+1,z,'minecraft:allium','landscape:group-edges');counts['FLOWER']=counts.get('FLOWER',0)+1;writes.append([x,y+1,z,'FLOWER'])
             if valid:edges.append(dict(memberId=m['memberId'],columns=valid))
         plans.append(dict(nodeId='group-edges',kind='EDGE_PLANTING',beds=edges,counts=counts,writes=writes))
+    from gap_landscape import apply_gap_landscape
+    gap_plan=apply_gap_landscape(result,cells,sources,put)
+    if gap_plan is not None:plans.append(gap_plan)
     return plans

@@ -22,6 +22,10 @@ DISTRICT=schema({'districtId':{'type':'string'},'name':{'type':'string'},'coreMe
     'arrayIds':{'type':'array','minItems':1,'maxItems':32,'items':{'type':'string'}},'platform':{'type':'boolean'}},
     ['districtId','name','coreMemberId','arrayIds','platform'])
 SCENE_SCHEMA=schema({'seed':{'type':'integer'},'greenery':{'type':'boolean'},
+    'gapLandscape':{'type':'boolean'},
+    'gapSurface':{'type':'string','enum':['NATURAL','ROAD_LEVEL','CONNECTION_TERRACE']},
+    'smallGapMaxBlocks':{'type':'integer','minimum':4,'maximum':64},
+    'landscapeBorder':schema({k:{'type':'string'} for k in ('straight','outer','inner','end')},['straight','outer','inner','end']),
     'publicSpaces':{'type':'array','maxItems':32,'items':schema({
         'nodeId':{'type':'string'},'kind':{'type':'string','enum':['GARDEN','PLAZA']},
         'flowerBlock':{'type':'string'},'hedgeBlock':{'type':'string'},'treeLeaves':{'type':'string'}},['nodeId','kind'])},
@@ -64,6 +68,8 @@ def validate_scene(scene,assets):
     if len(set(ids))!=len(ids):raise ValueError('分区 ID 重复。')
     if any(c['from'] not in ids or c['to'] not in ids or c['from']==c['to'] for c in scene['connections']):raise ValueError('道路连接需要两个不同的有效分区。')
     by_id={a['assetId']:a for a in assets}
+    for ident in scene.get('landscapeBorder',{}).values():
+        if ident not in by_id or by_id[ident]['consumer']!='infrastructure':raise ValueError('花坛边框必须使用基础设施素材：'+ident)
     styles=scene.get('terraceStyles',[])
     if len({s['styleId'] for s in styles})!=len(styles):raise ValueError('台地风格 ID 重复。')
     registry=read(TOOL/'.cache/registry.json')
@@ -198,8 +204,12 @@ def compose(result,assets):
             s=rotate_state(model['palette'][b['state']],rotation)
             put(ox+rx,yy,oz+rz,s,'building:'+member['memberId'])
         member['nbtSha256']=model['sha256'];member['placementBaseY']=base
+    from connection_terraces import apply_connection_terraces
+    apply_connection_terraces(result,cells,sources,put)
     from designed_landscape import apply_public_spaces
     result['publicSpacePlans']=apply_public_spaces(result, cells, sources, put)
+    from landscape_borders import apply_landscape_borders
+    apply_landscape_borders(result,cells,sources,put,assets,rotate_state)
     fixture_checks=[]
     for fixture in result.get('fixtures',[]):
         asset=by_id[fixture['assetId']]
@@ -265,7 +275,7 @@ def build(scene,base_revision=None):
     lamps=sum(1 for b in world['blocks'] if world['palette'][b['state']]['name']=='minecraft:lantern')
     walls=sum(r.get('foundationDiagnostics',{}).get('terraceEdgePreparedCount',0) for r in result['execution'])
     metadata=dict(revision=revision,scene=scene,terrain=terrain_info,members=result['members'],terraces=result['terraces'],roadPlan=result['roadPlan'],streetReview=result['streetReview'],
-        publicSpacePlans=result.get('publicSpacePlans',[]),layoutSpaces=result.get('layoutSpaces',[]),fixtures=result.get('fixtures',[]),fixtureChecks=result.get('fixtureChecks',[]),terraceFeaturePlans=result.get('terraceFeaturePlans',{}),
+        publicSpacePlans=result.get('publicSpacePlans',[]),connectionTerracePlan=result.get('connectionTerracePlan'),layoutSpaces=result.get('layoutSpaces',[]),fixtures=result.get('fixtures',[]),fixtureChecks=result.get('fixtureChecks',[]),terraceFeaturePlans=result.get('terraceFeaturePlans',{}),
         summary=dict(buildings=len(result['members']),terraces=len(result['terraces']),roadSegments=len(result['roadBands']),lamps=lamps,wallBlocks=walls,
                      fixtures=len(result.get('fixtures',[])),terraceFeatureBlocks=sum(len(p['blocks']) for p in result.get('terraceFeaturePlans',{}).values()),
                      blockCount=len(world['blocks']),owners=len(result['execution'])),
