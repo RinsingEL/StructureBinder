@@ -15,6 +15,17 @@ def fixture(bounds):
 
 
 class DemIntegration(unittest.TestCase):
+    def test_windows_checkout_accepts_only_the_same_lf_content(self):
+        dem=fixture({'minX':-3000,'minZ':5300,'maxX':-2999,'maxZ':5301})
+        raw=dem_tools.TERRAIN.read_bytes().replace(b'\r\n',b'\n')
+        dem['d3TerrainHash']='sha256:'+hashlib.sha256(raw).hexdigest()
+        with tempfile.TemporaryDirectory() as temp:
+            path=Path(temp)/'terrain.json';path.write_bytes(raw.replace(b'\n',b'\r\n'))
+            dem_tools.validate_dem(dem,path)
+            changed=json.loads(raw);changed['cells'][0]['elevation']+=1
+            path.write_text(json.dumps(changed),encoding='utf-8')
+            with self.assertRaisesRegex(ValueError,'哈希不匹配'):dem_tools.validate_dem(dem,path)
+
     def test_exact_columns_no_interpolation_and_missing_coverage_fails(self):
         previous=api.OUTPUT
         with tempfile.TemporaryDirectory() as temp:
@@ -24,6 +35,7 @@ class DemIntegration(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError,'尚未导入'):api.build(scene)
                 box={'minX':-3100,'minZ':5100,'maxX':-2700,'maxZ':5520};dem=fixture(box)
                 # A one-block depression and a wet column outside all structures must remain exact.
+                dem['d3TerrainHash']='sha256:'+hashlib.sha256(dem_tools.TERRAIN.read_bytes().replace(b'\r\n',b'\n')).hexdigest()
                 width=box['maxX']-box['minX']+1
                 def index(x,z):return (z-box['minZ'])*width+x-box['minX']
                 dem['groundY'][index(-3020,5380)]=40

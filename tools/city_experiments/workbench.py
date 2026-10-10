@@ -115,6 +115,22 @@ def terrain_context(directory):
     """Keep the frozen D3 overview separate from the detailed construction window."""
     source=EXPERIMENT/'data/D3地形原始数据.json';raw=source.read_bytes();field=json.loads(raw)
     result=read(Path(directory)/'java-result.json');columns=result['terrainColumns']
+    dem_path=Path(directory)/'dem-step1.json'
+    if dem_path.exists():
+        dem_raw=dem_path.read_bytes();dem=json.loads(dem_raw);box=dem['bounds'];width=box['maxX']-box['minX']+1
+        display_step=16;samples=[];levels=[]
+        for z in range(box['minZ'],box['maxZ']+1,display_step):
+            for x in range(box['minX'],box['maxX']+1,display_step):
+                i=(z-box['minZ'])*width+x-box['minX'];water_y=dem['waterSurfaceY'][i]
+                samples.append([x,z,dem['groundY'][i],water_y is not None])
+                if water_y is not None:levels.append(water_y)
+        return dict(schema='campus_terrain_context.v1',bounds=box,step=display_step,demStep=1,
+            sourceHash='sha256:'+hashlib.sha256(dem_raw).hexdigest(),samples=samples,
+            detailedBounds=dict(minX=min(c[0] for c in columns),maxX=max(c[0] for c in columns),
+                                minZ=min(c[1] for c in columns),maxZ=max(c[1] for c in columns)),
+            waterSampleCount=len(levels),waterDisplayY=max(levels,default=0)+1,
+            waterDisplayMode='DEM_SURFACE_LEVEL',
+            detail='施工地形使用逐格原生 DEM；外围按 16 格抽样显示，水面来自 DEM。')
     water=[c for c in field['cells'] if c['water']]
     return dict(schema='campus_terrain_context.v1',bounds=field['planningBounds'],step=field['cellStepBlocks'],
         sourceHash='sha256:'+hashlib.sha256(raw).hexdigest(),

@@ -11,8 +11,9 @@ REVIEW=EXPERIMENT/'data/D3地貌原始数据.json'
 def validate_dem(dem,terrain_path=TERRAIN,review_path=REVIEW):
     terrain=json.loads(terrain_path.read_text(encoding='utf-8'));review=json.loads(review_path.read_text(encoding='utf-8'))
     if not isinstance(dem,dict) or dem.get('schema')!='city_terrain_dem.v1' or type(dem.get('step')) is not int or dem['step']!=1 or dem.get('order')!='z_then_x':raise ValueError('需要 city_terrain_dem.v1、step=1、z_then_x 的逐格 DEM。')
-    expected='sha256:'+hashlib.sha256(terrain_path.read_bytes()).hexdigest()
-    if dem.get('cityId')!=terrain['cityId'] or dem.get('d3TerrainHash')!=expected:raise ValueError('DEM 城市或 D3 哈希不匹配。')
+    raw=terrain_path.read_bytes()
+    hashes={'sha256:'+hashlib.sha256(data).hexdigest() for data in (raw,raw.replace(b'\r\n',b'\n'))}
+    if dem.get('cityId')!=terrain['cityId'] or dem.get('d3TerrainHash') not in hashes:raise ValueError('DEM 城市或 D3 哈希不匹配。')
     source=dem.get('source',{})
     if source.get('kind')!='generator_native_height_field' or source.get('sourceFingerprint')!=review['terrainProvider']['sourceFingerprint']:raise ValueError('DEM 必须来自这份 D3 的原生成器和配置。')
     bounds=dem.get('bounds',{});keys=('minX','minZ','maxX','maxZ')
@@ -25,7 +26,7 @@ def validate_dem(dem,terrain_path=TERRAIN,review_path=REVIEW):
     if not isinstance(ground,list) or not isinstance(water,list) or len(ground)!=w*d or len(water)!=w*d:raise ValueError('DEM 必须完整覆盖每一格，不能用缺失值代替。')
     for g,y in zip(ground,water):
         if type(g) is not int or not -64<=g<320 or y is not None and (type(y) is not int or not g<=y<320):raise ValueError('DEM 地面或水面高度无效。')
-    return {'bounds':bounds,'step':1,'columns':w*d,'source':source,'d3TerrainHash':expected}
+    return {'bounds':bounds,'step':1,'columns':w*d,'source':source,'d3TerrainHash':dem['d3TerrainHash']}
 
 
 def install(dem,output):

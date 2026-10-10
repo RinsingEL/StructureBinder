@@ -236,8 +236,11 @@ public final class CityCampusExperiment {
             step=field.cellStepBlocks();for(var c:field.cells())terrain.put(new BlockPoint(c.cellX(),c.cellZ()),c);
             dem=input.has("demPath")?JsonParser.parseString(Files.readString(Path.of(text(input,"demPath")))).getAsJsonObject():null;
             if(dem!=null){
-                String hash="sha256:"+java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(Path.of(text(input,"terrainPath")))));
-                if(!text(dem,"schema").equals("city_terrain_dem.v1")||dem.get("step").getAsInt()!=1||!text(dem,"order").equals("z_then_x")||!text(dem,"cityId").equals(field.cityId())||!text(dem,"d3TerrainHash").equals(hash))throw new IllegalArgumentException("DEM identity or format does not match D3");
+                byte[] rawTerrain=Files.readAllBytes(Path.of(text(input,"terrainPath")));
+                var digest=java.security.MessageDigest.getInstance("SHA-256");
+                String hash="sha256:"+java.util.HexFormat.of().formatHex(digest.digest(rawTerrain));
+                String lfHash="sha256:"+java.util.HexFormat.of().formatHex(digest.digest(new String(rawTerrain,java.nio.charset.StandardCharsets.UTF_8).replace("\r\n","\n").getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+                if(!text(dem,"schema").equals("city_terrain_dem.v1")||dem.get("step").getAsInt()!=1||!text(dem,"order").equals("z_then_x")||!text(dem,"cityId").equals(field.cityId())||!(text(dem,"d3TerrainHash").equals(hash)||text(dem,"d3TerrainHash").equals(lfHash)))throw new IllegalArgumentException("DEM identity or format does not match D3");
                 demBounds=bounds(dem.getAsJsonObject("bounds"));demGround=dem.getAsJsonArray("groundY");demWater=dem.getAsJsonArray("waterSurfaceY");
                 long size=(long)demBounds.widthBlocks()*demBounds.heightBlocks();
                 if(size>1048576||demGround.size()!=size||demWater.size()!=size)throw new IllegalArgumentException("DEM must contain every column");
