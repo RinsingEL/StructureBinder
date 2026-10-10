@@ -21,7 +21,7 @@ $values = [ordered]@{
 
 if (Test-Path -LiteralPath $StatePath) {
     try {
-        $existing = Get-Content -Raw -LiteralPath $StatePath | ConvertFrom-Json
+        $existing = Get-Content -Raw -Encoding UTF8 -LiteralPath $StatePath | ConvertFrom-Json
         foreach ($property in $existing.PSObject.Properties) {
             $values[$property.Name] = $property.Value
         }

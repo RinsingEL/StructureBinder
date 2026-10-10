@@ -10,7 +10,7 @@ if (-not (Test-Path -LiteralPath $StatePath)) {
 }
 
 try {
-    $state = Get-Content -Raw -LiteralPath $StatePath | ConvertFrom-Json
+    $state = Get-Content -Raw -Encoding UTF8 -LiteralPath $StatePath | ConvertFrom-Json
     if ([string]$state.status -ne 'CLEAN') {
         Write-Output "DUE status_$($state.status)"
         exit 0
