@@ -72,7 +72,11 @@ def project_entrances(author, data, registry):
         x, y, z = point['pos']
         if not (0 <= x < width and 0 <= y < data['size'][1] and 0 <= z < depth):
             raise ValueError(f"Entrance out of bounds: {author['id']}")
-        direction = point.get('facing', '').upper()
+        facing = point.get('facing', '').upper()
+        authored_direction = point.get('direction', '').upper()
+        if facing and authored_direction and facing != authored_direction:
+            raise ValueError(f"Conflicting explicit entrance directions: {author['id']}")
+        direction = facing or authored_direction
         if direction not in ('NORTH', 'SOUTH', 'WEST', 'EAST'):
             raise ValueError(f"Missing explicit entrance facing: {author['id']}")
         bx = 0 if direction == 'WEST' else width-1 if direction == 'EAST' else x
@@ -103,6 +107,8 @@ def build(args):
             raise ValueError(f'Missing style: {directory}')
         for author_file in sorted(directory.glob('*/author.json')):
             a = read(author_file)
+            if getattr(args, 'asset_ids', None) and a['id'] not in args.asset_ids:
+                continue
             ground_y = ground_plane_y(a)
             authored_classification(a)
             if a['id'] in EXCLUDE:
@@ -197,6 +203,18 @@ def build(args):
     references['structureRefs'] = refs
     references['fillPools'] = [dict(poolRef=f'pool:studio_{i:03}',structureRefs=values)
                               for i,(_,values) in enumerate(sorted(pools.items()),1)]
+    # Keep repeatable small supports selectable without drawing a landmark of the
+    # same function from the mixed-size semantic pool.
+    small_refs = {r['templateRef'] for r in rows
+                  if max(r['rawSize']['width'], r['rawSize']['depth']) <= 35}
+    references['fillPools'] += [dict(poolRef=f'pool:studio_small_{i:03}',
+                                    structureRefs=[ref for ref in values if ref in small_refs])
+                               for i, (_, values) in enumerate(sorted(pools.items()), 1)
+                               if any(ref in small_refs for ref in values)]
+    for algorithm in ('GRID', 'COURTYARD'):
+        if not any(p['algorithm'] == algorithm for p in references.setdefault('algorithmProfiles', [])):
+            references['algorithmProfiles'].append(dict(
+                algorithmProfileRef='algorithm:' + algorithm.lower(), algorithm=algorithm))
     references['styleProfiles'] = [dict(profileRef='style:studio_'+style) for style in (getattr(args, 'styles', None) or ('desert','forest','arcane'))]
     write(args.output/'blueprint_reference_catalog.json',references)
     write(args.output/'asset_names.json',names)
@@ -228,5 +246,6 @@ if __name__ == '__main__':
     for field in ('output','baseline','classpath-file','java'):
         parser.add_argument('--'+field,type=Path,required=True)
     parser.add_argument('--styles', nargs='+', help='Explicit catalog directory names')
+    parser.add_argument('--asset-ids', nargs='+', help='Explicit authored versions to export; other assets are untouched')
     parser.add_argument('--all-previews', action='store_true', help='Include non-flat preview scenes for terrain testing; preview is not runtime terrain admission')
     build(parser.parse_args())

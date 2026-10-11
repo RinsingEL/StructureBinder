@@ -238,8 +238,20 @@ public final class CityStructureProfileCatalog {
         throw new IllegalArgumentException("Unsupported catalogMode for " + schema + ": " + catalogMode);
     }
 
-    private static Path resolve(Path baseDirectory, String raw) {
+    static Path resolve(Path baseDirectory, String raw) {
         Path path = Path.of(raw);
+        String portable = raw.replace('\\', '/');
+        String marker = "/config/structureTemplate/terrasense/";
+        int offset = portable.lastIndexOf(marker);
+        if (!Files.exists(path) && offset >= 0) {
+            String tail = portable.substring(offset + 1);
+            for (Path base = (baseDirectory == null ? Path.of(".") : baseDirectory).toAbsolutePath().normalize();
+                 base != null; base = base.getParent()) {
+                Path root = base.resolve("config/structureTemplate/terrasense");
+                Path candidate = base.resolve(tail).normalize();
+                if (candidate.startsWith(root) && Files.isRegularFile(candidate)) return candidate;
+            }
+        }
         if (path.isAbsolute()) {
             return path.normalize();
         }

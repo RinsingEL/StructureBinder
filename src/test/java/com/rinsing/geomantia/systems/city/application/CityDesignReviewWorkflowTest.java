@@ -9,6 +9,18 @@ import static org.junit.jupiter.api.Assertions.*;
 class CityDesignReviewWorkflowTest {
     @TempDir Path dir;
 
+    @Test void migratedPreviewUsesCurrentCityAndRejectsTraversal() throws Exception {
+        JsonObject draft = draft("moved");
+        Path preview = dir.resolve("working_preview/overview.png");
+        Files.createDirectories(preview.getParent());
+        Files.writeString(preview, "current city image");
+        draft.addProperty("compiledPreview", "E:\\old-machine\\save\\blueprint\\working_preview\\overview.png");
+        JsonObject result = submit(draft, review("moved", true));
+        assertEquals(preview.toRealPath().toString(), result.getAsJsonObject("requestedPreviews").get("overview").getAsString());
+        draft.addProperty("compiledPreview", "E:/old/working_preview/../../outside.png");
+        assertThrows(java.io.IOException.class, () -> submit(draft, review("moved", true)));
+    }
+
     @Test void isolatedCoreBlocksFinalAndCountsDistinctReviewedDraftsOnly() throws Exception {
         JsonObject draft = draft("one");
         draft.add("compiledLayout",JsonParser.parseString("{designReview:{isolatedCoreGroupIds:['a']}}"));

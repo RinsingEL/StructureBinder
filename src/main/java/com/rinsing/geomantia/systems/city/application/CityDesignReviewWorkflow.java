@@ -209,7 +209,14 @@ final class CityDesignReviewWorkflow {
     }
     private static Path previewPath(Path dir, String value) throws IOException {
         if (value.isBlank()) throw new IOException("CITY_DESIGN_REVIEW_PREVIEW_MISSING");
-        Path path = Path.of(value).toRealPath();
+        Path requested = Path.of(value);
+        // Older saves stored absolute preview paths. Resolve their known preview subtree
+        // inside this city's directory after a save has been moved to another machine.
+        String portable = value.replace('\\', '/');
+        int marker = portable.lastIndexOf("/working_preview/");
+        if (marker >= 0) requested = dir.resolve(portable.substring(marker + 1));
+        else if (!requested.isAbsolute()) requested = dir.resolve(requested);
+        Path path = requested.toRealPath();
         if (!path.startsWith(dir.toRealPath()) || !path.toString().toLowerCase(Locale.ROOT).endsWith(".png")
                 || !Files.isRegularFile(path) || Files.size(path) > 8L * 1024 * 1024)
             throw new IOException("CITY_DESIGN_REVIEW_PREVIEW_UNAVAILABLE");

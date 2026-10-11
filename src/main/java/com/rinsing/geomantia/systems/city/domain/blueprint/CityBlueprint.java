@@ -85,7 +85,35 @@ public record CityBlueprint(
             BuildingGreeneryPolicy buildingGreeneryPolicy,
             List<WeightedPool> fillPools,
             Integer structureCount,
+            RectangleLayout layout,
+            com.rinsing.geomantia.systems.city.domain.model.BlockPoint anchorBlock) {
+        public Group(
+            String groupId,
+            GroupKind groupKind,
+            List<String> preferredPatchRefs,
+            PreferredPatchZone preferredPatchZone,
+            PlacementRelation placementRelation,
+            String role,
+            GroupPriority priority,
+            ExtentClass extentClass,
+            DensityClass densityClass,
+            String algorithmProfileRef,
+            TerrainPolicy terrainPolicy,
+            List<String> requiredStructureRefs,
+            String fillPoolRef,
+            ConnectionPlan connectionPlan,
+            String compositionProfileRef,
+            List<String> attachedFeatures,
+            double targetAreaShare,
+            SpaceComposition spaceComposition,
+            ExpansionPolicy expansionPolicy,
+            BuildingGreeneryPolicy buildingGreeneryPolicy,
+            List<WeightedPool> fillPools,
+            Integer structureCount,
             RectangleLayout layout) {
+            this(groupId,groupKind,preferredPatchRefs,preferredPatchZone,placementRelation,role,priority,extentClass,densityClass,algorithmProfileRef,terrainPolicy,requiredStructureRefs,fillPoolRef,connectionPlan,compositionProfileRef,attachedFeatures,targetAreaShare,spaceComposition,expansionPolicy,buildingGreeneryPolicy,fillPools,structureCount,layout,null);
+        }
+
         public Group(String groupId, GroupKind groupKind, List<String> preferredPatchRefs,
                 PreferredPatchZone preferredPatchZone, PlacementRelation placementRelation, String role,
                 GroupPriority priority, ExtentClass extentClass, DensityClass densityClass, String algorithmProfileRef,
@@ -253,7 +281,12 @@ public record CityBlueprint(
             String algorithmProfileRef,
             String centerGroupId,
             List<String> memberGroupIds,
-            RectangleLayout layout) {
+            RectangleLayout layout,
+            com.rinsing.geomantia.systems.city.domain.model.BlockPoint anchorBlock) {
+        public ArrayComposition(String compositionId,String algorithmProfileRef,String centerGroupId,List<String> memberGroupIds,RectangleLayout layout) {
+            this(compositionId,algorithmProfileRef,centerGroupId,memberGroupIds,layout,null);
+        }
+
         public ArrayComposition(String compositionId,String algorithmProfileRef,String centerGroupId,List<String> memberGroupIds) {
             this(compositionId,algorithmProfileRef,centerGroupId,memberGroupIds,null);
         }

@@ -307,8 +307,8 @@ public final class ProviderPlanningToolCatalog {
         return object(properties(
                 "runId", string(), "citySeedId", string(), "contextId", string(),
                 "designIntent", object(properties("groups", nonEmptyArray(object(properties(
-                        "groupId", string(), "role", string(), "intent", string(), "preferredPatchRefs", nonEmptyArray(string())),
-                        "groupId", "role", "intent", "preferredPatchRefs"))), "groups"),
+                        "groupId", string(), "role", string(), "intent", string()),
+                        "groupId", "role", "intent"))), "groups"),
                 "materialSelections", nonEmptyArray(object(properties("groupId", string(), "query", string(),
                         "filters", object(properties(
                                 "roles", array(enumeration("core", "fill", "structure", "self_contained", "unknown")),
@@ -366,9 +366,7 @@ public final class ProviderPlanningToolCatalog {
     private static JsonObject groupSchema() {
         JsonObject values = properties(
                 "groupId", string(), "groupKind", enumeration("STRUCTURE"),
-                "preferredPatchRefs", nonEmptyArray(string()),
-                "preferredPatchZone", enumeration("CENTER", "NORTH", "EAST", "SOUTH", "WEST"),
-                "placementRelation", placementRelationSchema(), "role", string(),
+                "anchorBlock", described(object(properties("x", integer(), "z", integer()), "x", "z"), "World block origin of a root array. Nested arrays omit it and inherit parent geometry; no patch selection or automatic relocation."), "role", string(),
                 "priority", described(enumeration("CORE", "STANDARD", "PERIPHERAL"), "全城合并后仅一个 CORE，不是每区一个。先看 d4Workflow.submissionRules.savedCoreOwners；其他区已占用则本区使用 STANDARD/PERIPHERAL。嵌套构图中心由 centerGroupId 决定。"),
                 "structureCount", described(integer(), "Planned building count including required refs: 1..1024 and >= requiredStructureRefs count. CONTIGUOUS template landscapes may use hundreds of repeated tiles; raise scale, not jitter or gaps. CENTER_SYMMETRIC uses an odd total. This is a design count, not a retained-count gate."),
                 "extentClass", enumeration("SMALL", "MEDIUM", "LARGE"),
@@ -392,7 +390,7 @@ public final class ProviderPlanningToolCatalog {
                         "patternPreference", enumeration("TEMPLATE_DEFAULT", "FREEFORM", "FIELD_GRID", "MIXED"),
                         "densityPreference", enumeration("TEMPLATE_DEFAULT", "LOW", "MEDIUM", "HIGH")),
                         "coverage", "patternPreference", "densityPreference"));
-        JsonObject result = object(values, "groupId", "groupKind", "preferredPatchRefs", "preferredPatchZone", "role",
+        JsonObject result = object(values, "groupId", "groupKind", "role",
                 "priority", "extentClass", "densityClass", "algorithmProfileRef", "terrainPolicy",
                 "requiredStructureRefs", "compositionProfileRef", "attachedFeatures",
                 "targetAreaShare", "spaceComposition", "expansionPolicy", "buildingGreeneryPolicy");
@@ -441,7 +439,8 @@ public final class ProviderPlanningToolCatalog {
 
     private static JsonObject arrayCompositionSchema() {
         return object(properties("compositionId", string(), "algorithmProfileRef", string(),
-                "centerGroupId", string(), "memberGroupIds", nonEmptyArray(string()), "layout", rectangleLayoutSchema()),
+                "centerGroupId", string(), "memberGroupIds", nonEmptyArray(string()), "layout", rectangleLayoutSchema(),
+                "anchorBlock", object(properties("x", integer(), "z", integer()), "x", "z")),
                 "compositionId", "algorithmProfileRef", "centerGroupId", "memberGroupIds");
     }
 

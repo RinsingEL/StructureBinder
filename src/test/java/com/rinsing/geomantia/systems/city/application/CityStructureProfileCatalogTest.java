@@ -17,6 +17,16 @@ class CityStructureProfileCatalogTest {
     @TempDir
     Path temporary;
 
+    @Test void movedSaveResolvesSameCatalogUnderCurrentRun() throws Exception {
+        Path file=temporary.resolve("config/structureTemplate/terrasense/frozen/StructureProfile.jsonl");
+        Files.createDirectories(file.getParent());Files.writeString(file,"catalog");
+        Path run=temporary.resolve("saves/moved/realm_debug/run");Files.createDirectories(run);
+        assertEquals(file,CityStructureProfileCatalog.resolve(run,
+                "Z:\\old-machine\\run\\config\\structureTemplate\\terrasense\\frozen\\StructureProfile.jsonl"));
+        Path missing=CityStructureProfileCatalog.resolve(run,"Z:/old/config/structureTemplate/terrasense/other/StructureProfile.jsonl");
+        assertFalse(Files.exists(missing));
+    }
+
     @Test
     void materialClassificationSurvivesFreezeAndRejectsInvalidAuthorMetadata() throws Exception {
         Path file=temporary.resolve("profile.jsonl");

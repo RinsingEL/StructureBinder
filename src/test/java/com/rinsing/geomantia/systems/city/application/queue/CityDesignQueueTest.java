@@ -216,7 +216,7 @@ class CityDesignQueueTest {
     }
 
     @Test
-    void exposesMandatoryPatchReviewBetweenD3AndBlueprintPreparation() throws Exception {
+    void preparesCoordinatesDirectlyAndResumesLegacyPatchReviewWithoutTopPatch() throws Exception {
         CityDesignQueue queue = queue();
         writeRegistry("run_review", seed("city_1", "realm_a", "capital", 4000, 0));
         queue.refresh("run_review", "global_radial");
@@ -225,12 +225,12 @@ class CityDesignQueueTest {
                 "D4_REQUIRES_TOP_PATCH_REVIEW", "pex_review");
         JsonObject pending = queue.status("run_review");
         assertEquals("waiting_for_patch_review", pending.get("status").getAsString());
-        assertEquals("patch_explorer_show_candidates", pending.get("nextAction").getAsString());
+        assertEquals("city_prepare_d4_blueprint_context", pending.get("nextAction").getAsString());
         assertEquals("pex_review", pending.getAsJsonObject("currentCity")
                 .get("patchExplorerSessionId").getAsString());
 
         queue.onAgentWorkflowState("run_review", "city_1", "waiting_for_agent",
-                "PATCH_REVIEW_COMPLETED", "");
+                "D3_COORDINATE_DESIGN_READY", "");
         assertEquals("city_prepare_d4_blueprint_context",
                 queue.status("run_review").get("nextAction").getAsString());
         queue.onAgentWorkflowState("run_review", "city_1", "waiting_for_agent",

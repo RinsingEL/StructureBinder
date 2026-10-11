@@ -328,7 +328,7 @@ public final class CityDesignQueue {
                 String reasonCode = stringValue(item, "reasonCode", "");
                 boolean agentPhase = WAITING_FOR_PATCH_REVIEW.equals(status)
                         || WAITING_FOR_AGENT.equals(status) && ("D3_SITE_REVIEW_REQUIRED".equals(reasonCode)
-                        || "PATCH_REVIEW_COMPLETED".equals(reasonCode)
+                        || "PATCH_REVIEW_COMPLETED".equals(reasonCode) || "D3_COORDINATE_DESIGN_READY".equals(reasonCode)
                         || "D4_CONTEXT_PREPARED".equals(reasonCode));
                 if (!POST_D4_RUNNING.equals(status) && !NEEDS_AGENT.equals(status)
                         && !"blocked_by_program".equals(status) && !DESIGN_SAVED.equals(status) && !agentPhase) {
@@ -357,11 +357,11 @@ public final class CityDesignQueue {
         state.addProperty("nextAction", switch (currentStatus) {
             case WAITING_FOR_AGENT -> switch (stringValue(current, "reasonCode", "")) {
                 case "D3_SITE_REVIEW_REQUIRED" -> "city_review_d3_site";
-                case "PATCH_REVIEW_COMPLETED" -> "city_prepare_d4_blueprint_context";
+                case "PATCH_REVIEW_COMPLETED", "D3_COORDINATE_DESIGN_READY" -> "city_prepare_d4_blueprint_context";
                 case "D4_CONTEXT_PREPARED" -> stringValue(current,"nextAction","city_d4_overview");
                 default -> "city_plan_d3";
             };
-            case WAITING_FOR_PATCH_REVIEW -> "patch_explorer_show_candidates";
+            case WAITING_FOR_PATCH_REVIEW -> "city_prepare_d4_blueprint_context";
             case POST_D4_RUNNING -> "city_post_d4_auto_compile_status";
             case NEEDS_AGENT, "blocked_by_program", DESIGN_SAVED -> stringValue(current, "nextAction", "city_post_d4_auto_compile_retry");
             default -> "";

@@ -90,8 +90,9 @@ public final class CityBlueprintCodec {
             JsonObject item = new JsonObject();
             item.addProperty("groupId", group.groupId());
             item.addProperty("groupKind", group.groupKind().name());
-            item.add("preferredPatchRefs", strings(group.preferredPatchRefs()));
-            item.addProperty("preferredPatchZone", group.preferredPatchZone().name());
+            if (!group.preferredPatchRefs().isEmpty()) item.add("preferredPatchRefs", strings(group.preferredPatchRefs()));
+            if (group.anchorBlock() != null) item.add("anchorBlock", pointJson(group.anchorBlock()));
+            if (!group.preferredPatchRefs().isEmpty()) item.addProperty("preferredPatchZone", group.preferredPatchZone().name());
             if (group.structureCount() != null) item.addProperty("structureCount", group.structureCount());
             if (group.layout() != null) item.add("layout", layoutJson(group.layout()));
             if (group.placementRelation() != null) {
@@ -125,6 +126,7 @@ public final class CityBlueprintCodec {
             item.addProperty("algorithmProfileRef", composition.algorithmProfileRef());
             item.addProperty("centerGroupId", composition.centerGroupId());
             item.add("memberGroupIds", strings(composition.memberGroupIds()));
+            if (composition.anchorBlock() != null) item.add("anchorBlock", pointJson(composition.anchorBlock()));
             if (composition.layout() != null) item.add("layout", layoutJson(composition.layout()));
             compositions.add(item);
         }
@@ -302,7 +304,7 @@ public final class CityBlueprintCodec {
 
     private static List<CityBlueprint.Group> groups(JsonArray array) {
         List<CityBlueprint.Group> result = new ArrayList<>();
-        Set<String> fields = Set.of("groupId", "groupKind", "preferredPatchRefs", "preferredPatchZone",
+        Set<String> fields = Set.of("groupId", "groupKind", "anchorBlock", "preferredPatchRefs", "preferredPatchZone",
                 "placementRelation", "structureCount", "layout", "role", "priority",
                 "extentClass", "densityClass",
                 "algorithmProfileRef", "terrainPolicy", "requiredStructureRefs", "fillPoolRef", "fillPools",
@@ -311,12 +313,12 @@ public final class CityBlueprintCodec {
         for (int index = 0; index < array.size(); index++) {
             String path = "$.groups[" + index + "]";
             JsonObject item = objectElement(array.get(index), path);
-            exactFields(item, fields, Set.of("placementRelation", "connectionPlan", "fillPoolRef", "fillPools", "structureCount", "layout"), path);
+            exactFields(item, fields, Set.of("anchorBlock", "preferredPatchRefs", "preferredPatchZone", "placementRelation", "connectionPlan", "fillPoolRef", "fillPools", "structureCount", "layout"), path);
             result.add(new CityBlueprint.Group(
                     requiredString(item, "groupId", path + ".groupId"),
                     enumValue(item, "groupKind", CityBlueprint.GroupKind.class, path),
-                    nonEmptyStringList(item, "preferredPatchRefs", path + ".preferredPatchRefs"),
-                    enumValue(item, "preferredPatchZone", CityBlueprint.PreferredPatchZone.class, path),
+                    item.has("preferredPatchRefs") ? nonEmptyStringList(item, "preferredPatchRefs", path + ".preferredPatchRefs") : List.of(),
+                    item.has("preferredPatchZone") ? enumValue(item, "preferredPatchZone", CityBlueprint.PreferredPatchZone.class, path) : CityBlueprint.PreferredPatchZone.CENTER,
                     item.has("placementRelation")
                             ? placementRelation(requiredObject(item, "placementRelation",
                             path + ".placementRelation"), path + ".placementRelation") : null,
@@ -343,7 +345,8 @@ public final class CityBlueprintCodec {
                     buildingGreeneryPolicy(requiredObject(item, "buildingGreeneryPolicy",
                             path + ".buildingGreeneryPolicy"), path + ".buildingGreeneryPolicy"), weightedPools(item, "fillPools", path),
                     item.has("structureCount") ? positiveInt(item, "structureCount", path + ".structureCount") : null,
-                    item.has("layout") ? layout(requiredObject(item,"layout",path+".layout"),path+".layout") : null));
+                    item.has("layout") ? layout(requiredObject(item,"layout",path+".layout"),path+".layout") : null,
+                    item.has("anchorBlock") ? point(item.getAsJsonObject("anchorBlock"),path+".anchorBlock") : null));
         }
         return List.copyOf(result);
     }
@@ -415,17 +418,18 @@ public final class CityBlueprintCodec {
     private static List<CityBlueprint.ArrayComposition> arrayCompositions(JsonArray array) {
         List<CityBlueprint.ArrayComposition> result = new ArrayList<>();
         Set<String> fields = Set.of("compositionId", "algorithmProfileRef", "centerGroupId",
-                "memberGroupIds", "layout");
+                "memberGroupIds", "layout", "anchorBlock");
         for (int index = 0; index < array.size(); index++) {
             String path = "$.arrayCompositions[" + index + "]";
             JsonObject item = objectElement(array.get(index), path);
-            exactFields(item, fields, Set.of("layout"), path);
+            exactFields(item, fields, Set.of("layout", "anchorBlock"), path);
             result.add(new CityBlueprint.ArrayComposition(
                     requiredString(item, "compositionId", path + ".compositionId"),
                     requiredString(item, "algorithmProfileRef", path + ".algorithmProfileRef"),
                     requiredString(item, "centerGroupId", path + ".centerGroupId"),
                     nonEmptyStringList(item, "memberGroupIds", path + ".memberGroupIds"),
-                    item.has("layout") ? layout(requiredObject(item,"layout",path+".layout"),path+".layout") : null));
+                    item.has("layout") ? layout(requiredObject(item,"layout",path+".layout"),path+".layout") : null,
+                    item.has("anchorBlock") ? point(item.getAsJsonObject("anchorBlock"),path+".anchorBlock") : null));
         }
         return List.copyOf(result);
     }
@@ -526,6 +530,19 @@ public final class CityBlueprintCodec {
         return List.copyOf(result);
     }
 
+    private static com.rinsing.geomantia.systems.city.domain.model.BlockPoint point(JsonObject value,String path) {
+        exactFields(value,Set.of("x","z"),path);
+        for (String key : List.of("x","z")) {
+            double n=value.get(key).getAsDouble();
+            if (!Double.isFinite(n) || n != Math.rint(n) || Math.abs(n)>30000000)
+                throw new IllegalArgumentException("CITY_COORDINATE_INVALID: "+path+"."+key);
+        }
+        return new com.rinsing.geomantia.systems.city.domain.model.BlockPoint(value.get("x").getAsInt(),value.get("z").getAsInt());
+    }
+    private static JsonObject pointJson(com.rinsing.geomantia.systems.city.domain.model.BlockPoint point) {
+        JsonObject value=new JsonObject();value.addProperty("x",point.x());value.addProperty("z",point.z());return value;
+    }
+
     private static void rejectForbidden(JsonElement value, String path) {
         if (value == null || value.isJsonNull() || value.isJsonPrimitive()) return;
         if (value.isJsonArray()) {
@@ -537,7 +554,9 @@ public final class CityBlueprintCodec {
         for (var entry : value.getAsJsonObject().entrySet()) {
             boolean landscapeSeedCoordinate = (entry.getKey().equals("x") || entry.getKey().equals("z"))
                     && path.matches("\\$\\.outdoorPlan\\.landscapes\\[[0-9]+\\]\\.growth\\.seed");
-            if (FORBIDDEN_FIELDS.contains(entry.getKey()) && !landscapeSeedCoordinate) {
+            boolean arrayCoordinate = (path.matches("\\$\\.(groups|arrayCompositions)\\[[0-9]+\\]") && entry.getKey().equals("anchorBlock"))
+                    || (path.matches("\\$\\.(groups|arrayCompositions)\\[[0-9]+\\]\\.anchorBlock") && Set.of("x","z").contains(entry.getKey()));
+            if (FORBIDDEN_FIELDS.contains(entry.getKey()) && !landscapeSeedCoordinate && !arrayCoordinate) {
                 fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FORBIDDEN_PLACEMENT_FIELD,
                         path + "." + entry.getKey(), "Coordinate, candidate, template and free algorithm fields are forbidden.");
             }

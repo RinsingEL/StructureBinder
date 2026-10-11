@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { realmTools, blueprintReferenceCatalogSchema, cityBlueprintSchema } from "../dist/src/realm/tools.js";
 
-test("district and integration expose optional rectangle layout without placement coordinates", () => {
+test("district and integration expose rectangle layout with explicit root coordinates", () => {
   for (const name of ["city_d4_district", "city_d4_integrate"]) {
     const tool = realmTools.find(t => t.name === name);
     const body = name === "city_d4_district" ? "districtDesign" : "changes";
@@ -59,8 +59,8 @@ test("publishes the program-only context tool and retryable structure plus outdo
   assert.ok(designQueueStatus);
   const d3 = realmTools.find((tool) => tool.name === "city_plan_d3");
   const showCandidates = realmTools.find((tool) => tool.name === "patch_explorer_show_candidates");
-  assert.match(d3.description, /自动打开 city_d4 Patch Explorer/);
-  assert.match(showCandidates.description, /解锁 city_prepare_d4_blueprint_context/);
+  assert.match(d3.description, /city_prepare_d4_blueprint_context/);
+  assert.match(showCandidates.description, /D4 坐标设计无需此步骤/);
   assert.match(showCandidates.description, /structurePlacementCapacity/);
   assert.match(showCandidates.description, /hardLegal 只表示地块非空/);
   assert.match(prepare.description, /Top Patch review/);
@@ -77,7 +77,7 @@ test("publishes the program-only context tool and retryable structure plus outdo
   assert.equal(review.properties.assessment.type, "string");
   assert.match(autoStatus.description, /workflowResponse/);
   assert.match(autoStatus.description, /禁止转去读取服务端源码/);
-  assert.match(designQueueStatus.description, /waiting_for_patch_review/);
+  assert.match(designQueueStatus.description, /D3 后直接准备 D4 context/);
   assert.deepEqual(autoStatus.inputSchema.required, ["runId", "citySeedId"]);
   assert.deepEqual(designQueueRefresh.inputSchema.properties.orderingMode.enum,
     ["global_radial", "realm_grouped"]);
@@ -91,13 +91,10 @@ test("publishes the program-only context tool and retryable structure plus outdo
   const groupProperties = cityBlueprintSchema.properties.groups.items.properties;
   assert.equal(groupProperties.primaryPatchRef, undefined);
   assert.equal(groupProperties.selectionPolicyRef, undefined);
-  assert.equal(groupProperties.preferredPatchRefs.minItems, 1);
-  assert.deepEqual(groupProperties.preferredPatchZone.enum,
-    ["CENTER", "NORTH", "EAST", "SOUTH", "WEST"]);
-  assert.deepEqual(groupProperties.placementRelation.properties.kind.enum,
-    ["BETWEEN_PATCHES", "ALONG_PATCH_BOUNDARY", "BETWEEN_GROUPS"]);
-  assert.deepEqual(groupProperties.placementRelation.required,
-    ["kind", "patchRefs", "groupRefs"]);
+  assert.equal(groupProperties.preferredPatchRefs, undefined);
+  assert.deepEqual(groupProperties.anchorBlock.required, ["x", "z"]);
+  assert.equal(groupProperties.preferredPatchZone, undefined);
+  assert.equal(groupProperties.placementRelation, undefined);
   assert.deepEqual(groupProperties.extentClass.enum, ["SMALL", "MEDIUM", "LARGE"]);
   assert.deepEqual(groupProperties.densityClass.enum, ["SPARSE", "BALANCED", "DENSE"]);
   assert.deepEqual(cityBlueprintSchema.properties.schema.enum,

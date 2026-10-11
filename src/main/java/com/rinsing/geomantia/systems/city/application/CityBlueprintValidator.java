@@ -31,6 +31,29 @@ public final class CityBlueprintValidator {
                     "Add at least one STRUCTURE group with requiredStructureRefs and a frozen fill pool, then assign exactly one CORE priority.");
         }
 
+        Set<String> coordinateChildren = new HashSet<>();
+        java.util.Map<String,com.rinsing.geomantia.systems.city.domain.model.BlockPoint> compositionOrigins = new HashMap<>();
+        for (var composition : blueprint.arrayCompositions()) {
+            coordinateChildren.addAll(composition.memberGroupIds());
+            if (composition.anchorBlock()!=null) compositionOrigins.put(composition.centerGroupId(),composition.anchorBlock());
+        }
+        for (var group : blueprint.groups()) {
+            boolean nested = coordinateChildren.contains(group.groupId());
+            var origin = compositionOrigins.getOrDefault(group.groupId(),group.anchorBlock());
+            if (!group.preferredPatchRefs().isEmpty()) continue; // Read legacy saved designs.
+            if (!nested && origin==null)
+                add(issues,CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_INVALID,"$.groups",
+                        "Root array "+group.groupId()+" requires anchorBlock {x,z}; nested children inherit their parent placement.");
+            if (nested && origin!=null)
+                add(issues,CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_INVALID,"$.groups",
+                        "Nested array "+group.groupId()+" must omit anchorBlock; place only the root composition.");
+            if (group.anchorBlock()!=null && compositionOrigins.containsKey(group.groupId()))
+                add(issues,CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_INVALID,"$.groups",
+                        "Specify anchorBlock once, on the root group OR its composition.");
+            if (group.placementRelation()!=null)
+                add(issues,CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_INVALID,"$.groups",
+                        "Coordinate arrays use anchorBlock and nesting, not placementRelation.");
+        }
         Set<String> groupIds = new HashSet<>();
         int highestPriorityGroupCount = 0;
         double areaShareSum = 0.0;

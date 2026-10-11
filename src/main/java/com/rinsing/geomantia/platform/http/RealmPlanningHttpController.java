@@ -469,7 +469,7 @@ final class RealmPlanningHttpController implements AutoCloseable {
                         "waiting_for_agent", "D3_SITE_REVIEW_REQUIRED", "");
                 return response;
             }
-            return beginCityD4PatchReview(runId, citySeedId, response);
+            return beginCityD4CoordinateDesign(runId, citySeedId, response);
         });
     }
 
@@ -497,7 +497,7 @@ final class RealmPlanningHttpController implements AutoCloseable {
                     stringValue(request, "decisionReason", ""),
                     stringValue(request, "reviewedBy", "ai"));
             if ("accepted".equals(stringValue(response, "siteReviewStatus", ""))) {
-                return beginCityD4PatchReview(runId, citySeedId, response);
+                return beginCityD4CoordinateDesign(runId, citySeedId, response);
             }
             return response;
         });
@@ -520,8 +520,7 @@ final class RealmPlanningHttpController implements AutoCloseable {
                         new MinecraftCityTemplateReader(level.getStructureManager()));
                 return null;
             });
-            JsonObject patchReviewEvidence = new CityD4PatchReviewService(debugRoot())
-                    .requireReviewed(runId, citySeedId);
+            JsonObject patchReviewEvidence = null;
             JsonObject response = postD4AutoCompileQueue.prepareContext(runId, citySeedId,
                     recovery -> CityPlanningEndpointHandler.handlePrepareD4BlueprintContext(debugRoot(),
                     runId, citySeedId,
@@ -534,23 +533,12 @@ final class RealmPlanningHttpController implements AutoCloseable {
         });
     }
 
-    private JsonObject beginCityD4PatchReview(String runId, String citySeedId,
+    private JsonObject beginCityD4CoordinateDesign(String runId, String citySeedId,
                                                JsonObject response) throws IOException {
-        JsonObject openRequest = new JsonObject();
-        openRequest.addProperty("runId", runId);
-        openRequest.addProperty("scopeType", "city_d4");
-        openRequest.addProperty("scopeId", citySeedId);
-        openRequest.addProperty("citySeedId", citySeedId);
-        JsonObject patchExplorer = new PatchExplorerService(debugRoot()).open(openRequest);
-        JsonObject evidence = new CityD4PatchReviewService(debugRoot())
-                .begin(runId, citySeedId, patchExplorer);
-        response.add("patchExplorer", patchExplorer);
-        response.add("patchReviewEvidence", evidence);
-        addAgentNextAction(response, "waiting_for_patch_review", "D4_REQUIRES_TOP_PATCH_REVIEW",
-                "patch_explorer_show_candidates", stringValue(patchExplorer, "sessionId", ""));
+        addAgentNextAction(response, "waiting_for_agent", "D3_COORDINATE_DESIGN_READY",
+                "city_prepare_d4_blueprint_context", "");
         cityDesignQueue.onAgentWorkflowState(runId, citySeedId,
-                "waiting_for_patch_review", "D4_REQUIRES_TOP_PATCH_REVIEW",
-                stringValue(patchExplorer, "sessionId", ""));
+                "waiting_for_agent", "D3_COORDINATE_DESIGN_READY", "");
         return response;
     }
 

@@ -15,6 +15,16 @@ from studio.model import sha256
 
 
 class StudioFrontageExportTests(unittest.TestCase):
+    def test_academy_direction_alias_and_conflicting_annotations(self):
+        author = {'id': 'support', 'points': [dict(id='front', kind='entrance',
+                  pos=[1, 1, 0], direction='north')]}
+        data = {'size': [3, 4, 3], 'palette': [], 'blocks': []}
+        ports, _ = exporter.project_entrances(author, data, {})
+        self.assertEqual('NORTH', ports[0]['direction'])
+        author['points'][0]['facing'] = 'south'
+        with self.assertRaisesRegex(ValueError, 'Conflicting explicit entrance'):
+            exporter.project_entrances(author, data, {})
+
     def test_invalid_frontage_aborts_then_first_default_and_manual_override_export(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

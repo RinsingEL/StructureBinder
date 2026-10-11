@@ -556,17 +556,8 @@ export const cityBlueprintSchema = strictObject({
     type: "array", minItems: 1, items: { ...strictObject({
       groupId: nonEmptyString("蓝图内唯一 ID。"),
       groupKind: { type: "string", enum: ["STRUCTURE"] },
-      preferredPatchRefs: { type: "array", minItems: 1, uniqueItems: true,
-        items: nonEmptyString("偏好的 D3 landformPatchId；多个 Group 可共享，不允许世界坐标。") },
-      preferredPatchZone: { type: "string", enum: ["CENTER", "NORTH", "EAST", "SOUTH", "WEST"],
-        description: "核心在 preferredPatchRefs 精确成员格并集内的起步方位；北=-Z、南=+Z、西=-X、东=+X。" },
-      placementRelation: strictObject({
-        kind: { type: "string", enum: ["BETWEEN_PATCHES", "ALONG_PATCH_BOUNDARY", "BETWEEN_GROUPS"] },
-        patchRefs: { type: "array", uniqueItems: true,
-          items: nonEmptyString("关系位置引用的 D3 landformPatchId。") },
-        groupRefs: { type: "array", uniqueItems: true,
-          items: nonEmptyString("关系位置引用的同一 Blueprint groupId。") },
-      }, ["kind", "patchRefs", "groupRefs"]),
+      anchorBlock: { ...strictObject({ x: {type:"integer"}, z: {type:"integer"} }, ["x","z"]),
+        description: "顶层阵列世界坐标原点。嵌套子阵列省略，由父组合排布；不选Patch、不自动迁移。" },
       role: nonEmptyString("Group 功能角色。"),
       priority: { type: "string", enum: ["CORE", "STANDARD", "PERIPHERAL"], description: "全城合并后仅一个 CORE，不是每区一个；先看 d4Workflow.submissionRules.savedCoreOwners。其他区占用时本区用 STANDARD/PERIPHERAL，构图中心用 centerGroupId。" },
       structureCount: { type: "integer", minimum: 1, maximum: 256, description: "本阵列计划建筑总数（含 requiredStructureRefs）；不得少于必需引用数。省略按 extent 与算法给建议默认值。地形只筛选单栋，不补量。" },
@@ -612,7 +603,7 @@ export const cityBlueprintSchema = strictObject({
         densityPreference: { type: "string", enum: ["TEMPLATE_DEFAULT", "LOW", "MEDIUM", "HIGH"],
           description: "功能区附属绿化疏密偏好。" },
       }, ["coverage", "patternPreference", "densityPreference"]),
-    }, ["groupId", "groupKind", "preferredPatchRefs", "preferredPatchZone", "role", "priority", "extentClass", "densityClass",
+    }, ["groupId", "groupKind", "role", "priority", "extentClass", "densityClass",
       "algorithmProfileRef", "terrainPolicy", "requiredStructureRefs",
       "compositionProfileRef", "attachedFeatures", "targetAreaShare", "spaceComposition", "expansionPolicy",
       "buildingGreeneryPolicy"]), oneOf: [{ required: ["fillPoolRef"] }, { required: ["fillPools"] }] },
@@ -623,6 +614,7 @@ export const cityBlueprintSchema = strictObject({
       compositionId: nonEmptyString("Blueprint 内唯一的父阵列 ID。"),
       algorithmProfileRef: nonEmptyString("编排完整子 Group 的冻结算法 profile；不覆盖子 Group 自身算法。"),
       centerGroupId: nonEmptyString("父阵列中心的完整 Group。"),
+      anchorBlock: strictObject({x:{type:"integer"},z:{type:"integer"}},["x","z"]),
       layout: rectangleLayoutSchema(),
       memberGroupIds: { type: "array", minItems: 1, uniqueItems: true,
         items: nonEmptyString("由父阵列安排槽位的完整子 Group；CENTER_SYMMETRIC 按相邻两项组成对称对。") },
@@ -969,7 +961,7 @@ const originalRealmTools: ToolDefinition[] = [
   },
   {
     name: "patch_explorer_show_candidates",
-    description: "按 AI 主动选择的 landform 类型返回每类稳定面积分页和仅限当前页候选的稀疏几何关系，默认每类 Top 3。三个 scope 都在 open 的原始地形总览同一边界、同一比例上，把本页所有类型的 Top Patch 聚合高亮并标注候选 ID；city_d4 候选额外返回 structurePlacementCapacity。注意 hardLegal 只表示地块非空，不保证模板或 Group 可落地；提交蓝图前必须用该容量、areaBlocks 与模板尺寸/clearance、Group 空间需求做对照。成功查看一页后写入 Patch Review evidence，并解锁 city_prepare_d4_blueprint_context。",
+    description: "按 AI 主动选择的 landform 类型返回每类稳定面积分页和仅限当前页候选的稀疏几何关系，默认每类 Top 3。三个 scope 都在 open 的原始地形总览同一边界、同一比例上，把本页所有类型的 Top Patch 聚合高亮并标注候选 ID；city_d4 候选额外返回 structurePlacementCapacity。注意 hardLegal 只表示地块非空，不保证模板或 Group 可落地；提交蓝图前必须用该容量、areaBlocks 与模板尺寸/clearance、Group 空间需求做对照。成功查看一页后写入 Patch Review evidence，并供旧版 Patch 审查参考；D4 坐标设计无需此步骤。",
     inputSchema: {
       type: "object",
       additionalProperties: false,
@@ -1086,7 +1078,7 @@ const originalRealmTools: ToolDefinition[] = [
   },
   {
     name: "city_design_queue_status",
-    description: "读取城市设计队列和唯一当前城市。D3 后自动进入 waiting_for_patch_review，必须按 nextAction 调用 patch_explorer_show_candidates；完成 review 后才允许准备 D4 context。post_d4_running 时等待；needs_agent 时按 nextAction 查询程序返回的失败信息，不读取服务端源码、项目文档或原始 run 文件；completed 表示全部进入 WAITING_FOR_GENERATION。",
+    description: "读取城市设计队列和唯一当前城市。D3 后直接准备 D4 context；读取地形图，使用明确坐标和嵌套阵列设计，不要求 Top Patch。post_d4_running 时等待；needs_agent 时按 nextAction 查询程序返回的失败信息，不读取服务端源码、项目文档或原始 run 文件；completed 表示全部进入 WAITING_FOR_GENERATION。",
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: { runId: nonEmptyString("城市设计队列所属 run。") },
@@ -1108,7 +1100,7 @@ const originalRealmTools: ToolDefinition[] = [
   },
   {
     name: "city_plan_d3",
-    description: "City D3: 在 API 工作线程以固定 16-block step 构建局部地貌审查包与群系图，不阻塞服务器 tick。D3 或必要的 site review 完成后，服务端自动打开 city_d4 Patch Explorer，并返回 sessionId 与 nextAction=patch_explorer_show_candidates；Agent 必须查看所选地貌类型的 Top Patch 后才能准备 D4 context。",
+    description: "City D3: 在 API 工作线程以固定 16-block step 构建局部地貌审查包与群系图，不阻塞服务器 tick。D3 或必要的 site review 完成后直接返回 nextAction=city_prepare_d4_blueprint_context。依据地形图和世界坐标设计，不再进行 Top Patch 筛选。",
     inputSchema: {
       type: "object",
       properties: {
@@ -1141,7 +1133,7 @@ const originalRealmTools: ToolDefinition[] = [
   },
   {
     name: "city_prepare_d4_blueprint_context",
-    description: "程序准备并冻结 D4 城市决策的完整只读上下文和 5 次程序编译失败预算。调用前必须完成当前 D3 sourceIdentity 对应的 city_d4 Top Patch review；review evidence 会冻结进 context。该工具不调用模型。当前城市 blocked_by_program 且作者目录已修正时也可准备：保留旧方案/失败记录和计数，成功后按新 Context 完整提交；资料未变应使用程序 retry，不得靠刷新重置预算。",
+    description: "程序准备并冻结 D4 城市决策的完整只读上下文和 5 次程序编译失败预算。D3 准备后即可调用，不要求 Top Patch review；用 anchorBlock 世界坐标和嵌套阵列设计。该工具不调用模型。当前城市 blocked_by_program 且作者目录已修正时也可准备：保留旧方案/失败记录和计数，成功后按新 Context 完整提交；资料未变应使用程序 retry，不得靠刷新重置预算。",
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: {
@@ -1162,8 +1154,8 @@ const originalRealmTools: ToolDefinition[] = [
         contextId: nonEmptyString("prepare-context 返回的冻结 contextId。"),
         designIntent: strictObject({ groups: { type: "array", minItems: 1, items: strictObject({
           groupId: nonEmptyString("功能区意图 ID，后续选材沿用。"), role: nonEmptyString("功能区用途。"),
-          intent: nonEmptyString("设计意图及组团关系。"), preferredPatchRefs: { type: "array", minItems: 1, uniqueItems: true, items: { type: "string" } }
-        }, ["groupId", "role", "intent", "preferredPatchRefs"]) } }, ["groups"]),
+          intent: nonEmptyString("设计意图及组团关系；后续用明确坐标和嵌套定位。")
+        }, ["groupId", "role", "intent"]) } }, ["groups"]),
         materialSelections: { type: "array", minItems: 1, items: strictObject({
           groupId: nonEmptyString("已提交意图 ID。"), query: { type: "string", description: "搜索作者元数据；可以按多个功能区批量搜索。" },
           filters: strictObject({
@@ -1521,7 +1513,7 @@ function relaxUpdateRequired(node: any): void {
 const d4Disposition = {type:"array",minItems:1,items:strictObject({districtId:nonEmptyString("功能区 ID。"),independent:{type:"boolean"},
   reason:nonEmptyString("说明职责为何适合独立；不能因难连接而标独立。"),
   peripheralRole:{type:"string",enum:["BORDER_OUTPOST","PERIPHERAL_RESOURCE","SUBURBAN_INDUSTRY","OTHER_PERIPHERAL"]}},["districtId","independent"])};
-export const d4StageNames = ["city_d4_overview", "city_d4_district", "city_d4_integrate", "city_d4_finalize",
+export const d4StageNames = ["city_d4_overview", "city_d4_district", "city_d4_integrate", "city_d4_finalize", "city_d4_answers",
   "city_d4_mark", "city_d4_preview",
   "city_d4_materials", "city_d4_example", "city_d4_blocks", "city_d4_handbook",
   "city_d4_history", "city_d4_reopen", "city_d4_restore"];
@@ -1532,17 +1524,34 @@ export const realmTools: ToolDefinition[] = [
     const properties: any = { runId: oldProperties.runId, citySeedId: oldProperties.citySeedId, contextId: oldProperties.contextId,
       workflowRevision: { type: "integer", description: "当前 d4Workflow.revision。" } };
     const required = ["runId", "citySeedId", "contextId", "workflowRevision"];
+    const groupAnswers = {type:"array",minItems:1,items:strictObject({
+      groupId:nonEmptyString("组 ID"),roadConnected:{type:"boolean"},foundation:{type:"boolean"},
+      ground:nonEmptyString("实际地表方块"),roadSurface:nonEmptyString("实际道路半砖方块"),
+      styles:{type:"array",minItems:1,items:{type:"string"}},exceptionReason:{type:"string"},
+      noFoundationReason:{type:"string"},isolatedReason:{type:"string"}
+    },["groupId","roadConnected","foundation","ground","roadSurface","styles"])};
+    const overviewAnswers = strictObject({styles:{type:"array",minItems:1,items:{type:"string"}},
+      roadProfileRef:{type:"string"},ground:{type:"string"},roadSurface:{type:"string"},
+      groundTreatment:{type:"string",enum:["GENERATE","PRESERVE"]},preserveReason:{type:"string"}
+    },["styles","roadProfileRef","ground","roadSurface","groundTreatment"]);
+    const publicRealm = {type:"object",description:"city_public_realm.v1 公共空间配置；先查询 city_d4_example caseId=public_realm 获取模板池、示例和约束。"};
+    if (["city_d4_overview","city_d4_district","city_d4_integrate"].includes(name)) {
+      properties.designAnswers=name==="city_d4_overview"?overviewAnswers:groupAnswers;
+      required.push("designAnswers");
+    }
     if (name === "city_d4_overview") {
       const settings: any = {};
       for (const key of ["designIntent", "styleProfile", "roadProfile", "surfaceDetailProfile", "surfaceMaterials"]) settings[key] = bp[key];
       const outdoor: any = {}; for(const key of ["mode","envelopeProfile","foundationProfileRef"]) outdoor[key]=bp.outdoorPlan.properties[key];
       settings.outdoorPlan=strictObject(outdoor,["mode","envelopeProfile","foundationProfileRef"]);
+      settings.outdoorPlan.properties.publicRealm=publicRealm;
       properties.overview = strictObject({ citySettings: strictObject(settings, ["designIntent", "styleProfile", "roadProfile", "surfaceDetailProfile", "outdoorPlan"]),
         districts: oldProperties.designIntent.properties.groups, districtDisposition:d4Disposition }, ["citySettings", "districts"]); required.push("overview");
     } else if (["city_d4_district","city_d4_integrate"].includes(name)) {
       const fragment: any = {};
       for (const key of ["groups", "arrayCompositions", "relations", "surfaceMaterials"]) fragment[key] = structuredClone(bp[key]);
       for (const key of ["foundationGroupIds", "landscapes"]) fragment[key] = structuredClone(bp.outdoorPlan.properties[key]);
+      fragment.publicRealm=publicRealm;
       delete fragment.surfaceMaterials.properties.defaults;
       const update=name!=="city_d4_district";
       if(!update) {
@@ -1569,6 +1578,11 @@ export const realmTools: ToolDefinition[] = [
         properties.previousExpansionComplete={type:"boolean",description:"切换扩张区前确认上一区已形成整体性。"};
         required.push("integrationIntent","targetDistrictId","protectedDistrictIds","expansionMode","baseDraftHash","assessment");
       }
+    } else if(name==="city_d4_answers") {
+      properties.baseDraftHash=nonEmptyString("当前草稿 hash。");
+      properties.overviewAnswers=overviewAnswers;
+      properties.districtAnswers={type:"object",additionalProperties:groupAnswers};
+      required.push("baseDraftHash","overviewAnswers","districtAnswers");
     } else if(name==="city_d4_mark") {
       properties.baseDraftHash=nonEmptyString("当前总览 hash。");properties.assessment=nonEmptyString("总览关系判断。");properties.districtDisposition=d4Disposition;
       required.push("baseDraftHash","assessment","districtDisposition");

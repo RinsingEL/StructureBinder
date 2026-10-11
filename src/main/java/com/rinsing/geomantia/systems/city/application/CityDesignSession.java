@@ -45,10 +45,10 @@ final class CityDesignSession {
             Set<String> incomingIds = new HashSet<>();
             for (JsonElement element : incoming) {
                 JsonObject group = element.getAsJsonObject();
-                requireFields(group, Set.of("groupId", "role", "intent", "preferredPatchRefs"));
+                requireFields(group, group.has("preferredPatchRefs") ? Set.of("groupId", "role", "intent", "preferredPatchRefs") : Set.of("groupId", "role", "intent"));
                 String id = requiredText(group, "groupId"); requiredText(group, "role"); requiredText(group, "intent");
-                JsonArray patchRefs = requiredArray(group, "preferredPatchRefs");
-                if (patchRefs.isEmpty()) throw invalid(id + ": choose at least one preview patch.");
+                JsonArray patchRefs = array(group, "preferredPatchRefs");
+
                 Set<String> uniquePatches = new LinkedHashSet<>();
                 for (var ref : patchRefs) {
                     if (!patches.containsKey(ref.getAsString())) throw invalid(id + ": unknown patch " + ref);

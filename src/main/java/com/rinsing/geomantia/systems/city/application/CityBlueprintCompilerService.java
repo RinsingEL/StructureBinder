@@ -266,6 +266,7 @@ public final class CityBlueprintCompilerService {
                 }
                 preferredPatches.add(patch);
             }
+            if (preferredPatches.isEmpty()) preferredPatches.addAll(planningPatches);
             catalog.composition(group.compositionProfileRef());
             String algorithm = catalog.algorithm(group.algorithmProfileRef());
             List<LandformPatchSummary> connectionPatches = List.copyOf(planningPatches);
@@ -613,7 +614,7 @@ public final class CityBlueprintCompilerService {
             String selected = null;
             for (String pool : CityWeightedPoolSelection.order(CityWeightedPoolSelection.fill(group), seed,
                     group.groupId() + ":planned", ordinal)) {
-                selected = CityFillSelection.choose(catalog.pool(pool), counts, catalog.explicitCityRoles()?Set.copyOf(group.requiredStructureRefs()):Set.of(), catalog.poolCap(pool), copies, ordinal);
+                selected = CityFillSelection.choose(catalog.pool(pool), counts, catalog.explicitCityRoles() ? catalog.primaryStructures() : Set.of(), catalog.poolCap(pool), copies, ordinal);
                 if (selected != null) break;
             }
             if (selected == null) break;
@@ -1846,7 +1847,9 @@ public final class CityBlueprintCompilerService {
 
     private static Set<String> fillBlockedRefs(GroupState state,CatalogIndex catalog) {
         Set<String> result=new LinkedHashSet<>(state.blockedRefs());
-        if(catalog.explicitCityRoles()) result.addAll(state.group().requiredStructureRefs());
+        // Required supports may repeat when explicitly selected in a fill pool.
+        // Only declared district cores are unique in the composed city.
+        if(catalog.explicitCityRoles()) result.addAll(catalog.primaryStructures());
         return result;
     }
     private static String chooseFillStructure(CityBlueprint blueprint, GroupState state, CatalogIndex catalog,
@@ -2250,23 +2253,26 @@ public final class CityBlueprintCompilerService {
 
         for (var root : groupsById.values()) {
             if (childIds.contains(root.groupId())) continue;
-            BlockPoint chosen = patchPlacementOrigin(root, patches, patchStepBlocks, fullPlanningBounds);
+            BlockPoint explicitOrigin = blueprint.arrayCompositions().stream()
+                    .filter(c -> c.centerGroupId().equals(root.groupId()) && c.anchorBlock()!=null)
+                    .map(CityBlueprint.ArrayComposition::anchorBlock).findFirst().orElse(root.anchorBlock());
+            BlockPoint chosen = explicitOrigin != null ? explicitOrigin : patchPlacementOrigin(root, patches, patchStepBlocks, fullPlanningBounds);
             if (chosen == null) {
                 var cell = preferredZoneCell(preferredPatches(root, patches), root.preferredPatchZone(), patchStepBlocks, fullPlanningBounds);
                 chosen = cell == null ? fullPlanningBounds.center() : cellCenter(cell, patchStepBlocks);
             }
-            if (root.placementRelation() != null && root.placementRelation().kind() == CityBlueprint.PlacementRelationKind.BETWEEN_GROUPS) {
+            if (explicitOrigin == null && root.placementRelation() != null && root.placementRelation().kind() == CityBlueprint.PlacementRelationKind.BETWEEN_GROUPS) {
                 var dependencies = root.placementRelation().groupRefs().stream().map(placedRoots::get).filter(java.util.Objects::nonNull).toList();
                 if (dependencies.size() == 2) chosen = new BlockPoint((dependencies.get(0).center().x() + dependencies.get(1).center().x()) / 2,
                         (dependencies.get(0).center().z() + dependencies.get(1).center().z()) / 2);
             }
             BlockBounds local = envelopes.get(root.groupId());
             BlockPoint origin = chosen;
-            if ("COMPACT".equals(catalog.algorithm(root.algorithmProfileRef())) && root.placementRelation() == null) {
+            if (explicitOrigin == null && "COMPACT".equals(catalog.algorithm(root.algorithmProfileRef())) && root.placementRelation() == null) {
                 BlockPoint first = firstOrigins.get(root.groupId());
                 origin = new BlockPoint(chosen.x() - first.x(), chosen.z() - first.z());
             }
-            if ("COMPACT".equals(catalog.algorithm(root.algorithmProfileRef()))
+            if (explicitOrigin == null && "COMPACT".equals(catalog.algorithm(root.algorithmProfileRef()))
                     && local.widthBlocks() <= fullPlanningBounds.widthBlocks()
                     && local.heightBlocks() <= fullPlanningBounds.heightBlocks()) {
                 origin = new BlockPoint(
@@ -2277,7 +2283,7 @@ public final class CityBlueprintCompilerService {
             }
             // An explicit ADJACENCY expresses whole-group proximity; CONNECTION never relocates a group.
             for (var relation : blueprint.relations()) {
-                if (relation.relationKind() != CityBlueprint.RelationKind.ADJACENCY) continue;
+                if (explicitOrigin != null || relation.relationKind() != CityBlueprint.RelationKind.ADJACENCY) continue;
                 String other = relation.toGroupId().equals(root.groupId()) ? relation.fromGroupId()
                         : relation.fromGroupId().equals(root.groupId()) ? relation.toGroupId() : "";
                 if (!placedRoots.containsKey(other)) continue;
@@ -2399,6 +2405,7 @@ public final class CityBlueprintCompilerService {
                                                    Map<String, LandformPatchSummary> patches,
                                                    int patchStepBlocks,
                                                    BlockBounds planningBounds) {
+        if (group.anchorBlock() != null) return group.anchorBlock();
         CityBlueprint.PlacementRelation placement = group.placementRelation();
         if (placement == null
                 || placement.kind() == CityBlueprint.PlacementRelationKind.BETWEEN_GROUPS) return null;
