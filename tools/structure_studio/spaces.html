@@ -1,0 +1,19 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>场地构图 · Structure Workbench</title></head>
+<body><aside><a class="back" href="/">← 学院岛工作台</a><div class="eyebrow">SPACE COMPOSER</div><h1>场地构图</h1><p class="muted">把主体、留白和周围成员组织成一个空间。</p>
+<label>示例<select id="example"></select></label><p id="description" class="muted"></p>
+<div class="pair"><label>宽度<input id="width" type="number" min="32" max="128"></label><label>深度<input id="depth" type="number" min="32" max="128"></label></div>
+<div class="pair"><label>种子<input id="seed" type="number"></label><label>步道宽度<select id="path-width"><option>3</option><option>5</option><option>7</option></select></label></div>
+<label>地表<select id="ground"><option value="STONE">石砌广场</option><option value="GRASS">草地花园</option></select></label>
+<label>植物丰度 <span id="density-value">100%</span><input id="planting-density" type="range" min="0" max="200" step="10" value="100"></label>
+<h2>构图节点</h2><select id="node" aria-label="构图节点"></select><p id="node-note" class="muted"></p>
+<label>成员素材或池<select id="asset"></select></label>
+<div class="pair"><label>相对 X<input id="x" type="number"></label><label>相对 Z<input id="z" type="number"></label></div>
+<div class="pair"><label>排列<select id="layout"><option value="POINT">单点</option><option value="LINE">行列</option><option value="GRID">网格</option><option value="RING">环绕</option></select></label><label>数量<input id="count" type="number" min="1" max="48"></label></div>
+<div class="pair"><label>间距<input id="spacing" type="number" min="1" max="64"></label><label>环绕半径<input id="radius" type="number" min="1" max="60"></label></div>
+<div class="pair"><label>旋转<select id="rotation"><option>0</option><option>90</option><option>180</option><option>270</option></select></label><label>网格列数<input id="columns" type="number" min="1" max="12"></label></div>
+<button id="generate" class="primary">生成预览</button><button id="edit">编辑完整方案</button><button id="export">导出方案 ↓</button><p id="status" role="status"></p></aside>
+<main><header><div><div class="eyebrow">PUBLIC SPACE / COMPOSITION STUDIES</div><h2 id="title">场地构图阵列</h2><p>广场、花园与仪式庭院 · 真实方块素材</p></div><span class="badge">独立场地实验</span></header><div class="stats"><span id="members">—</span><span id="paths">—</span><span>共享地面 · 不新增核心台地</span></div>
+<section><canvas id="viewport"></canvas><div class="views"><button id="overview">立体构图</button><button id="top">俯视布局</button><button id="shot">保存图片</button></div><div id="loading">正在准备素材…</div><div class="hint">拖动旋转 · 滚轮缩放</div></section>
+<footer><p id="result-note"></p><p class="muted">当前为平地构图预览。学院岛 R31 独立保留；局部高差与城市内接入待后续实现。</p></footer></main>
+<dialog id="editor"><h2>完整场地方案</h2><p>children 可嵌套子组；assetId 指定素材，pool 引用加权素材池。entries 定义通路端点，clearings 保留空地。</p><textarea id="json" spellcheck="false" aria-label="场地方案 JSON"></textarea><p id="json-error" role="alert"></p><button id="apply">应用并预览</button><button id="cancel">取消</button></dialog>
+<script type="module" src="/web/spaces.js"></script></body></html>

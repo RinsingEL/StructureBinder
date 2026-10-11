@@ -1,0 +1,27 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MG-57-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex",
+  "nbt_sha256": "91473679b5350519f345bc2e1b31eb1a500b362c5a452baa4aae758fba2ca62d",
+  "author_sha256": "e4f953655d4899bb0e7641a6c82e937d28b0893cb8e1f91f583dfaf896245ecf",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/top.png",
+    "previews/site-context.png"
+  ],
+  "checks": [
+    "已查看前后、俯视和贴地示意；树形、灌木及小构件尺度区分明确。",
+    "核对根部落地、枝干连接、花丛土层和花箱紫晶；无整块地块底板。",
+    "数据及新增放置约束测试通过；所有叶片保持 persistent=true。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "无房间或行走目标；通路报告不构成通行验收。",
+    "使用原版植物外观，尚未验证游戏内光照、随机刻和世界生成；植物须由调用方保证承载与净空。"
+  ]
+}

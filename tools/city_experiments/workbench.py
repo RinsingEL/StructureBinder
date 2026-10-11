@@ -22,6 +22,19 @@ DISTRICT=schema({'districtId':{'type':'string'},'name':{'type':'string'},'coreMe
     'arrayIds':{'type':'array','minItems':1,'maxItems':32,'items':{'type':'string'}},'platform':{'type':'boolean'}},
     ['districtId','name','coreMemberId','arrayIds','platform'])
 SCENE_SCHEMA=schema({'seed':{'type':'integer'},'greenery':{'type':'boolean'},
+    'outerGreenery':schema({'width':{'type':'integer','minimum':8,'maximum':22},'maximumPlacements':{'type':'integer','minimum':1,'maximum':500},
+        'slotLimits':schema({k:{'type':'integer','minimum':0,'maximum':500} for k in ('trees','shrubs','flowers')},[]),
+        'spacing':schema({k:{'type':'integer','minimum':3,'maximum':64} for k in ('trees','shrubs','flowers')},[])},['width','maximumPlacements']),
+    'externalAccess':schema({'width':{'type':'integer','enum':[3,5,7]},
+        'waypoints':{'type':'array','minItems':2,'maxItems':12,'items':schema({'x':{'type':'integer'},'z':{'type':'integer'},'surface':{'type':'number','multipleOf':0.5}},['x','z','surface'])},
+        'landing':schema({k:{'type':'integer'} for k in ('minX','maxX','minZ','maxZ')},['minX','maxX','minZ','maxZ']),
+        'harborReservation':schema({k:{'type':'integer'} for k in ('minX','maxX','minZ','maxZ')},['minX','maxX','minZ','maxZ'])},['width','waypoints','landing','harborReservation']),
+    'greeneryTemplates':schema({'catalog':{'type':'string'},
+        'layeredPlanting':{'type':'boolean'},
+        'slotLimits':schema({k:{'type':'integer','minimum':0,'maximum':1000} for k in ('trees','shrubs','hedges','flowers','planters')},[]),
+        'pools':schema({k:{'type':'string'} for k in ('trees','gapTrees','shrubs','hedges','flowers','planters')},[]),
+        'spacing':schema({k:{'type':'integer','minimum':3,'maximum':64} for k in ('trees','shrubs','hedges','flowers','planters')},[]),
+        'maximumPlacements':{'type':'integer','minimum':1,'maximum':1000}},['catalog','pools']),
     'gapLandscape':{'type':'boolean'},
     'gapSurface':{'type':'string','enum':['NATURAL','ROAD_LEVEL','CONNECTION_TERRACE']},
     'smallGapMaxBlocks':{'type':'integer','minimum':4,'maximum':64},
@@ -158,7 +171,7 @@ def catalog():
                 direction=('west' if dx>0 else 'east') if abs(dx)>abs(dz) else ('north' if dz>0 else 'south')
             if not direction:continue
             entrances.append(dict(id=p['id'],x=p['pos'][0],z=p['pos'][2],direction=direction.upper()))
-        rows.append(dict(assetId='studio:'+folder.name.lower(),id=folder.name,name=meta['name'],width=w,height=h,depth=d,
+        rows.append(dict(assetId='studio:'+folder.name.lower(),id=folder.name,name=meta['name'],width=w,height=h,depth=d,tags=tags,
             path=str(folder),style=meta.get('civilization',''),
             placeholder=False,functionTerms=meta.get('function_terms',[]),consumer=consumer,entrances=entrances,
             groundPlane=meta.get('ground_plane',{}).get('y',2),naturalGround=meta.get('natural_ground',False),
@@ -265,6 +278,23 @@ def compose(result,assets):
         fixture['nbtSha256']=model['sha256']
         fixture_checks.append(dict(placementId=fixture['placementId'],supported=True,buildingClearance=True,roadClearance=True,nbtSha256=model['sha256']))
     result['fixtureChecks']=fixture_checks
+    from city_fringe import apply_access,apply_fringe
+    result['externalAccessPlan']=apply_access(result,cells,sources,put)
+    from template_greenery import apply_template_greenery
+    result['greeneryTemplatePlan']=apply_template_greenery(result,cells,sources,put,assets,rotate_state)
+    fringe=apply_fringe(result,cells,sources,put)
+    if fringe:
+        if not result['scene'].get('greeneryTemplates'):raise ValueError('外围绿化需要配置模板池。')
+        config=copy.deepcopy(result['scene']['greeneryTemplates'])
+        config['pools']={k:v for k,v in config['pools'].items() if k in ('trees','shrubs','flowers')}
+        config['pools']['trees']=result['scene']['greeneryTemplates']['pools'].get('gapTrees',config['pools'].get('trees'))
+        config['spacing']=result['scene']['outerGreenery'].get('spacing',{'trees':10,'shrubs':7,'flowers':7})
+        config['slotLimits']=result['scene']['outerGreenery'].get('slotLimits',{})
+        config['maximumPlacements']=result['scene']['outerGreenery']['maximumPlacements']
+        outer=apply_template_greenery({**result,'scene':{**result['scene'],'greeneryTemplates':config},'publicSpacePlans':[fringe]},cells,sources,put,assets,rotate_state)
+        result['publicSpacePlans'].append(fringe)
+        result['greeneryTemplatePlan']['outerLandscape']=outer
+        result['greeneryTemplatePlan']['placements'].extend(outer['placements'])
     minx=min(p[0] for p in cells);miny=min(p[1] for p in cells);minz=min(p[2] for p in cells)
     size=[max(p[i] for p in cells)-v+1 for i,v in enumerate([minx,miny,minz])]
     palette=[];lookup={};blocks=[]
@@ -287,7 +317,11 @@ def build(scene,base_revision=None):
     revision=previous['revision']+1;folder=OUTPUT/'revisions'/f'r{revision:04d}'
     if folder.exists():folder=folder.with_name(folder.name+'-'+str(time.time_ns()))
     folder.mkdir(parents=True,exist_ok=False)
-    request={**scene,'assets':assets,'terrainPath':str(EXPERIMENT/'data/D3地形原始数据.json')};write(folder/'request.json',request)
+    request={**scene,'assets':assets,'terrainPath':str(EXPERIMENT/'data/D3地形原始数据.json')}
+    if scene.get('greeneryTemplates'):
+        from template_greenery import load_catalog
+        request['greeneryCatalog']=load_catalog(scene['greeneryTemplates'],assets)
+    write(folder/'request.json',request)
     if scene.get('terrainSource')=='DEM_STEP_1':
         # Freeze the DEM with the revision so a later import cannot change this build's input.
         write(folder/'dem-step1.json',read(dem_path));request['demPath']=str(folder/'dem-step1.json');write(folder/'request.json',request)
@@ -303,7 +337,7 @@ def build(scene,base_revision=None):
     lamps=sum(1 for b in world['blocks'] if world['palette'][b['state']]['name']=='minecraft:lantern')
     walls=sum(r.get('foundationDiagnostics',{}).get('terraceEdgePreparedCount',0) for r in result['execution'])
     metadata=dict(revision=revision,scene=scene,terrain=terrain_info,members=result['members'],terraces=result['terraces'],roadPlan=result['roadPlan'],streetReview=result['streetReview'],
-        publicSpacePlans=result.get('publicSpacePlans',[]),removedBuildingEnclosures=result.get('removedBuildingEnclosures',[]),connectionTerracePlan=result.get('connectionTerracePlan'),layoutSpaces=result.get('layoutSpaces',[]),fixtures=result.get('fixtures',[]),fixtureChecks=result.get('fixtureChecks',[]),terraceFeaturePlans=result.get('terraceFeaturePlans',{}),
+        publicSpacePlans=result.get('publicSpacePlans',[]),externalAccessPlan=result.get('externalAccessPlan'),greeneryTemplatePlan=result.get('greeneryTemplatePlan'),removedBuildingEnclosures=result.get('removedBuildingEnclosures',[]),connectionTerracePlan=result.get('connectionTerracePlan'),layoutSpaces=result.get('layoutSpaces',[]),fixtures=result.get('fixtures',[]),fixtureChecks=result.get('fixtureChecks',[]),terraceFeaturePlans=result.get('terraceFeaturePlans',{}),
         summary=dict(buildings=len(result['members']),terraces=len(result['terraces']),roadSegments=len(result['roadBands']),lamps=lamps,wallBlocks=walls,
                      fixtures=len(result.get('fixtures',[])),terraceFeatureBlocks=sum(len(p['blocks']) for p in result.get('terraceFeaturePlans',{}).values()),
                      blockCount=len(world['blocks']),owners=len(result['execution'])),
@@ -315,6 +349,10 @@ def build(scene,base_revision=None):
 class Handler(StudioHandler):
     def do_GET(self):
         path=urlsplit(self.path).path
+        if path=='/spaces':return self.file(TOOL/'dist','spaces.html')
+        if path=='/api/spaces/examples':
+            from space_composer import examples
+            return self.json(examples())
         if path=='/api/campus':
             state_file=OUTPUT/'state.json'
             if not state_file.exists():return self.json({'error':'请先生成学院。'},404)
@@ -336,7 +374,7 @@ class Handler(StudioHandler):
         return super().do_GET()
     def do_POST(self):
         route=urlsplit(self.path).path
-        if route not in ['/api/campus/build','/api/campus/terrain/import']:return super().do_POST()
+        if route not in ['/api/campus/build','/api/campus/terrain/import','/api/spaces/preview']:return super().do_POST()
         port=self.server.server_address[1]
         if not allows_write_origin(self.headers,port) or self.headers.get('X-Campus-Write')!='build':return self.json({'error':'请从已配置的工作台地址生成。'},403)
         if not LOCK.acquire(blocking=False):return self.json({'error':'正在生成，请稍候。'},409)
@@ -345,6 +383,9 @@ class Handler(StudioHandler):
             if not 0<length<=(24000000 if route.endswith('/import') else 200000):raise ValueError('数据大小超出限制。')
             data=json.loads(self.rfile.read(length))
             if not isinstance(data,dict):raise ValueError('请求必须是方案对象。')
+            if route=='/api/spaces/preview':
+                from space_composer import compose as compose_space
+                return self.json(compose_space(data,catalog(),rotate_state))
             if route.endswith('/import'):return self.json(install_dem(data,OUTPUT))
             if type(data.get('baseRevision')) is not int:raise ValueError('baseRevision 必须是整数。')
             return self.json(build(data['scene'],data['baseRevision']))

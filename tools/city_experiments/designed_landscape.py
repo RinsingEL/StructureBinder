@@ -9,7 +9,7 @@ def apply_public_spaces(result, cells, sources, put):
     if not specs:return []
     spaces={p['nodeId']:p for p in result.get('layoutSpaces',[])}
     if set(specs)-spaces.keys():raise ValueError('公共空间需要 COURTYARD 留空：'+str(sorted(set(specs)-spaces.keys())))
-    green=scene.get('greenery',True)
+    green=scene.get('greenery',True);templated=bool(scene.get('greeneryTemplates'))
     plans=[]
     for ident,spec in specs.items():
         space=spaces[ident];x0,z0=space['x'],space['z'];w,d=space['width'],space['depth'];cx,cz=x0+w//2,z0+d//2
@@ -32,6 +32,7 @@ def apply_public_spaces(result, cells, sources, put):
             if sources.get((x,y,z),'').startswith('building:'):return False
             return cells.get((x,y,z),{}).get('name') not in ('minecraft:water',None) and cells.get((x,y+1,z),{}).get('name','minecraft:air')=='minecraft:air'
         def emit(x,yy,z,block,kind):
+            if templated and kind in ('LOW_HEDGE','FLOWER','TREE_TRUNK','TREE_CROWN'):return
             put(x,yy,z,block,'landscape:'+ident);counts[kind]=counts.get(kind,0)+1;writes.append([x,yy,z,kind])
         for x,z in sorted(walk):
             if safe(x,z) and (x,z) not in road_protected:emit(x,y,z,'minecraft:polished_andesite','WALK')
@@ -53,7 +54,7 @@ def apply_public_spaces(result, cells, sources, put):
                         if edge:emit(x,y+1,z,hedge+'[persistent=true]','LOW_HEDGE')
                         elif (x-xa)%3==1 and (z-za)%3==1:emit(x,y+1,z,flower,'FLOWER')
         trees=[]
-        for tx,tz in (((x0+5,z0+5),(x0+w-6,z0+5),(x0+5,z0+d-6),(x0+w-6,z0+d-6)) if green else ()):
+        for tx,tz in (((x0+5,z0+5),(x0+w-6,z0+5),(x0+5,z0+d-6),(x0+w-6,z0+d-6)) if green and not templated else ()):
             footprint={(tx+dx,tz+dz) for dx in range(-2,3) for dz in range(-2,3)}
             def tree_safe(p):
                 x,z=p
@@ -120,7 +121,7 @@ def apply_public_spaces(result, cells, sources, put):
                 if (x,z) in blocked or (x,z) in road or heights.get((x,z))!=y:continue
                 if any((x,yy,z) in cells for yy in (y+1,y+2)) or cells.get((x,y,z),{}).get('name') in (None,'minecraft:water'):continue
                 put(x,y,z,'minecraft:grass_block','landscape:group-edges');counts['BED']=counts.get('BED',0)+1;writes.append([x,y,z,'BED']);valid.append([x,z])
-                if (x+z)%3==0:
+                if not templated and (x+z)%3==0:
                     put(x,y+1,z,'minecraft:allium','landscape:group-edges');counts['FLOWER']=counts.get('FLOWER',0)+1;writes.append([x,y+1,z,'FLOWER'])
             if valid:edges.append(dict(memberId=m['memberId'],columns=valid))
         plans.append(dict(nodeId='group-edges',kind='EDGE_PLANTING',beds=edges,counts=counts,writes=writes))

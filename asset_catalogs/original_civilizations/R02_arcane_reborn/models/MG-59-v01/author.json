@@ -1,0 +1,73 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-59-v01",
+  "name": "紫白星花丛 · 散点",
+  "family": "MG-59-v01",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.structure",
+  "size": [
+    3,
+    3,
+    3
+  ],
+  "terrain": {
+    "选址": "局部种植土可替换原地表；植物下方必须保留模板土块。"
+  },
+  "rooms": [],
+  "points": [],
+  "connections": [],
+  "design_notes": [
+    "独立绿化构件，由程序选位；不作建筑阵列成员，不自动生成台地。",
+    "未写入位置保持原状，无显式空气清场；调用方须检查完整放置净空。",
+    "白桦枝干、尖塔状或分瓣树冠、淡粉花叶与少量紫晶体现学院风格。"
+  ],
+  "differences": [],
+  "floors": [],
+  "roof_min_y": null,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/academy_greenery.py",
+  "asset_tags": [
+    "landscape",
+    "infrastructure"
+  ],
+  "placement_consumer": "infrastructure",
+  "function_terms": [
+    "花草观赏"
+  ],
+  "ground_plane": {
+    "y": 1,
+    "note": "Y=0 的局部种植土嵌入原地表，外部地表上边界为 Y=1。"
+  },
+  "placement_anchor": {
+    "pos": [
+      1,
+      1,
+      1
+    ],
+    "note": "植物定位点，不是玩家入口。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 1,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "greenery": {
+    "kind": "flowers",
+    "usage": "SMALL_INDEPENDENT",
+    "groundMode": "EMBEDDED_SOIL",
+    "rotations": [
+      0,
+      90,
+      180,
+      270
+    ],
+    "style": "arcane_academy",
+    "clearanceBlocks": 1
+  },
+  "nbt_sha256": "56f740b03f6a8afab0bf7574a175fb0a3643f75a09912451edbdf17b45b27ff1"
+}

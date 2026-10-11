@@ -7,11 +7,15 @@ const browser=await chromium.launch({headless:true,executablePath:'C:/Program Fi
 try{
  const page=await browser.newPage({viewport:{width:1700,height:1150}});const errors=[];page.on('pageerror',e=>errors.push(String(e)));page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
  await page.goto('http://127.0.0.1:8767/');await page.waitForFunction(()=>window.campus?.telemetry.ready,{timeout:120000});
- const meta=await page.evaluate(()=>window.campus.data.metadata);assert.equal(meta.members.length,23);assert.equal(meta.publicSpacePlans.length,meta.scene.gapLandscape?4:3);
+ const meta=await page.evaluate(()=>window.campus.data.metadata);assert.equal(meta.members.length,23);assert.equal(meta.publicSpacePlans.length,(meta.scene.gapLandscape?4:3)+(meta.scene.outerGreenery&&meta.scene.greenery?1:0));
  async function shot(name,fn){await page.evaluate(fn);await page.evaluate(()=>new Promise(requestAnimationFrame));await page.locator('#viewport').screenshot({path:path.join(output,name+'.png')});}
  await page.locator('#labels-toggle').click();
  await shot('campus',()=>{window.campus.overview();window.campus.setView({yaw:Math.PI-.65,pitch:.80,distance:480});});
  await shot('top',()=>{window.campus.overview();window.campus.setView({yaw:0,pitch:1.55,distance:440});});
+ if(meta.externalAccessPlan)await shot('harbor-access',()=>{
+  const a=window.campus.data.metadata.externalAccessPlan.axis,o=window.campus.data.world.origin;
+  const p=a[Math.floor(a.length*.65)];window.campus.setView({target:[p[0]-o[0],p[2]-o[1]+3,p[1]-o[2]],yaw:Math.PI-.65,pitch:.95,distance:180});
+ });
  await shot('teaching',()=>{window.campus.focus('teaching');window.campus.setView({yaw:Math.PI-.65,pitch:.75,distance:410});});
  await shot('living',()=>{window.campus.focus('living');window.campus.setView({yaw:Math.PI-.65,pitch:.75,distance:340});});
  await page.locator('#roof').click();await shot('roof-off',()=>{window.campus.overview();window.campus.setView({yaw:Math.PI-.65,pitch:.8,distance:450});});await page.locator('#roof').click();

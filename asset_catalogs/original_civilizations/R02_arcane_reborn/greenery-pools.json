@@ -1,0 +1,519 @@
+{
+  "schema": "studio.greenery-pools.v1",
+  "scope": "author_selection_only",
+  "style": "arcane_academy",
+  "assets": [
+    {
+      "assetId": "studio:mg-50-v01",
+      "kind": "tree",
+      "sizeXYZ": [
+        5,
+        9,
+        5
+      ],
+      "groundPlaneY": 0,
+      "anchorXYZ": [
+        2,
+        0,
+        2
+      ],
+      "groundMode": "SURFACE_ROOT",
+      "canopyBounds": {
+        "min": [
+          0,
+          4,
+          0
+        ],
+        "max": [
+          4,
+          8,
+          4
+        ]
+      },
+      "rotations": [
+        0,
+        90,
+        180,
+        270
+      ],
+      "clearanceBlocks": 1,
+      "nbtSha256": "26afaa114632620a022ffb3b00ef1855c09a1d14b3ab909437b9e8091a0b93a4",
+      "authorSha256": "9799a87b18eca83a740c67b6d3b09ade18f13b296547663454cd55a22240b9a7"
+    },
+    {
+      "assetId": "studio:mg-51-v01",
+      "kind": "tree",
+      "sizeXYZ": [
+        5,
+        13,
+        5
+      ],
+      "groundPlaneY": 0,
+      "anchorXYZ": [
+        2,
+        0,
+        2
+      ],
+      "groundMode": "SURFACE_ROOT",
+      "canopyBounds": {
+        "min": [
+          0,
+          5,
+          0
+        ],
+        "max": [
+          4,
+          12,
+          4
+        ]
+      },
+      "rotations": [
+        0,
+        90,
+        180,
+        270
+      ],
+      "clearanceBlocks": 1,
+      "nbtSha256": "03f36069716c7a22d12636772e080589ac74702a705d70326604fa807d35c65a",
+      "authorSha256": "582c09f43b767e9ede08e3b206314506c2173df52e258d4dc7efc963c7d4b5e9"
+    },
+    {
+      "assetId": "studio:mg-52-v01",
+      "kind": "tree",
+      "sizeXYZ": [
+        7,
+        11,
+        7
+      ],
+      "groundPlaneY": 0,
+      "anchorXYZ": [
+        3,
+        0,
+        3
+      ],
+      "groundMode": "SURFACE_ROOT",
+      "canopyBounds": {
+        "min": [
+          0,
+          5,
+          0
+        ],
+        "max": [
+          6,
+          10,
+          6
+        ]
+      },
+      "rotations": [
+        0,
+        90,
+        180,
+        270
+      ],
+      "clearanceBlocks": 1,
+      "nbtSha256": "0894286c0c0bd6d8b53220a210386e9808076e193b8496db8a58aeb12e22c5ec",
+      "authorSha256": "6135d55ca815d86ab494374f25465074ef1b2330c25ec1a82a6da23488f957b2"
+    },
+    {
+      "assetId": "studio:mg-53-v01",
+      "kind": "tree",
+      "sizeXYZ": [
+        9,
+        14,
+        7
+      ],
+      "groundPlaneY": 0,
+      "anchorXYZ": [
+        4,
+        0,
+        3
+      ],
+      "groundMode": "SURFACE_ROOT",
+      "canopyBounds": {
+        "min": [
+          0,
+          6,
+          0
+        ],
+        "max": [
+          8,
+          13,
+          6
+        ]
+      },
+      "rotations": [
+        0,
+        90,
+        180,
+        270
+      ],
+      "clearanceBlocks": 1,
+      "nbtSha256": "fa16e145930f6e373f2ad11607f90dded74ce3f2fe1709896c89519febcebe31",
+      "authorSha256": "b3716975d8c7b12b36c2e6c67a2bb4d89db832b4011d2b83042b3cadcf30a585"
+    },
+    {
+      "assetId": "studio:mg-54-v01",
+      "kind": "tree",
+      "sizeXYZ": [
+        7,
+        10,
+        7
+      ],
+      "groundPlaneY": 0,
+      "anchorXYZ": [
+        3,
+        0,
+        3
+      ],
+      "groundMode": "SURFACE_ROOT",
+      "canopyBounds": {
+        "min": [
+          0,
+          4,
+          0
+        ],
+        "max": [
+          6,
+          9,
+          6
+        ]
+      },
+      "rotations": [
+        0,
+        90,
+        180,
+        270
+      ],
+      "clearanceBlocks": 1,
+      "nbtSha256": "1dda47aa7a6454ce0cb0fc642766702c0d4fac7012023eceb0748c0d90b8e8ad",
+      "authorSha256": "e2c80f4409419d1b5637314d0731676836147663c0268bdb37a8b5d0bfa6c7c9"
+    },
+    {
+      "assetId": "studio:mg-55-v01",
+      "kind": "tree",
+      "sizeXYZ": [
+        9,
+        13,
+        9
+      ],
+      "groundPlaneY": 0,
+      "anchorXYZ": [
+        4,
+        0,
+        4
+      ],
+      "groundMode": "SURFACE_ROOT",
+      "canopyBounds": {
+        "min": [
+          0,
+          5,
+          0
+        ],
+        "max": [
+          8,
+          12,
+          8
+        ]
+      },
+      "rotations": [
+        0,
+        90,
+        180,
+        270
+      ],
+      "clearanceBlocks": 1,
+      "nbtSha256": "bcea41ef5b7e49f673f7dd2c647322283a2e1b4c628b11ddb73ad027e0c46a6e",
+      "authorSha256": "22e5f0c9ac8556bdbe004476305a4fdd25f228505a3040cbc4f780f7c34086bf"
+    },
+    {
+      "assetId": "studio:mg-56-v01",
+      "kind": "shrub",
+      "sizeXYZ": [
+        3,
+        2,
+        3
+      ],
+      "groundPlaneY": 0,
+      "anchorXYZ": [
+        1,
+        0,
+        1
+      ],
+      "groundMode": "SURFACE_ROOT",
+      "canopyBounds": {
+        "min": [
+          0,
+          0,
+          0
+        ],
+        "max": [
+          2,
+          1,
+          2
+        ]
+      },
+      "rotations": [
+        0,
+        90,
+        180,
+        270
+      ],
+      "clearanceBlocks": 1,
+      "nbtSha256": "a0b7a3583ad0afd8f992b13cd024a84a7170e4e84721ea0cd4da16cd659d16ae",
+      "authorSha256": "837500c394c2efb28a18e2126738cc65eb7c9d09a868849ac8d5633bbdec6204"
+    },
+    {
+      "assetId": "studio:mg-57-v01",
+      "kind": "shrub",
+      "sizeXYZ": [
+        5,
+        3,
+        3
+      ],
+      "groundPlaneY": 0,
+      "anchorXYZ": [
+        2,
+        0,
+        1
+      ],
+      "groundMode": "SURFACE_ROOT",
+      "canopyBounds": {
+        "min": [
+          0,
+          0,
+          0
+        ],
+        "max": [
+          4,
+          2,
+          2
+        ]
+      },
+      "rotations": [
+        0,
+        90,
+        180,
+        270
+      ],
+      "clearanceBlocks": 1,
+      "nbtSha256": "91473679b5350519f345bc2e1b31eb1a500b362c5a452baa4aae758fba2ca62d",
+      "authorSha256": "e4f953655d4899bb0e7641a6c82e937d28b0893cb8e1f91f583dfaf896245ecf"
+    },
+    {
+      "assetId": "studio:mg-58-v01",
+      "kind": "hedge",
+      "sizeXYZ": [
+        5,
+        2,
+        2
+      ],
+      "groundPlaneY": 0,
+      "anchorXYZ": [
+        2,
+        0,
+        1
+      ],
+      "groundMode": "SURFACE_ROOT",
+      "canopyBounds": {
+        "min": [
+          0,
+          0,
+          0
+        ],
+        "max": [
+          4,
+          1,
+          1
+        ]
+      },
+      "rotations": [
+        0,
+        90,
+        180,
+        270
+      ],
+      "clearanceBlocks": 1,
+      "nbtSha256": "23fcf14728093f03c307271b34130360b44417ba4fbc570f680fb1ec9f1be6ad",
+      "authorSha256": "fbae2060b4bb66b7e18cc98c3f35a511e129f874314c6a437002aa709c21d08b"
+    },
+    {
+      "assetId": "studio:mg-59-v01",
+      "kind": "flowers",
+      "sizeXYZ": [
+        3,
+        3,
+        3
+      ],
+      "groundPlaneY": 1,
+      "anchorXYZ": [
+        1,
+        1,
+        1
+      ],
+      "groundMode": "EMBEDDED_SOIL",
+      "canopyBounds": null,
+      "rotations": [
+        0,
+        90,
+        180,
+        270
+      ],
+      "clearanceBlocks": 1,
+      "nbtSha256": "56f740b03f6a8afab0bf7574a175fb0a3643f75a09912451edbdf17b45b27ff1",
+      "authorSha256": "cb2bda901dc1bd0f119c1a27e8bea03d3e6b7492df911eb428c8375d4b1d8ff0"
+    },
+    {
+      "assetId": "studio:mg-60-v01",
+      "kind": "flowers",
+      "sizeXYZ": [
+        5,
+        3,
+        3
+      ],
+      "groundPlaneY": 1,
+      "anchorXYZ": [
+        2,
+        1,
+        1
+      ],
+      "groundMode": "EMBEDDED_SOIL",
+      "canopyBounds": null,
+      "rotations": [
+        0,
+        90,
+        180,
+        270
+      ],
+      "clearanceBlocks": 1,
+      "nbtSha256": "54c71aca3a178175cfebd234e98db9344e1666620242f816b2423300bf88a398",
+      "authorSha256": "d1e32bcef6387ae906f331bfe5dcbf5bf0876c89b6801cc211a870924fa2151f"
+    },
+    {
+      "assetId": "studio:mg-61-v01",
+      "kind": "planter",
+      "sizeXYZ": [
+        5,
+        4,
+        3
+      ],
+      "groundPlaneY": 0,
+      "anchorXYZ": [
+        2,
+        0,
+        1
+      ],
+      "groundMode": "SURFACE_ROOT",
+      "canopyBounds": null,
+      "rotations": [
+        0,
+        90,
+        180,
+        270
+      ],
+      "clearanceBlocks": 1,
+      "nbtSha256": "43ecd047e4828bccf81debceecf2388ee72b51ee3f160664e3355278c9675364",
+      "authorSha256": "e6939f2bc9dbc211c24e121815d54b2506b7d29cb506ddff9479892876f5a915"
+    }
+  ],
+  "pools": {
+    "street_trees": [
+      {
+        "assetId": "studio:mg-50-v01",
+        "weight": 3
+      },
+      {
+        "assetId": "studio:mg-51-v01",
+        "weight": 3
+      },
+      {
+        "assetId": "studio:mg-52-v01",
+        "weight": 2
+      },
+      {
+        "assetId": "studio:mg-54-v01",
+        "weight": 1
+      }
+    ],
+    "courtyard_trees": [
+      {
+        "assetId": "studio:mg-52-v01",
+        "weight": 2
+      },
+      {
+        "assetId": "studio:mg-53-v01",
+        "weight": 2
+      },
+      {
+        "assetId": "studio:mg-54-v01",
+        "weight": 3
+      },
+      {
+        "assetId": "studio:mg-55-v01",
+        "weight": 1
+      }
+    ],
+    "outer_trees": [
+      {
+        "assetId": "studio:mg-50-v01",
+        "weight": 1
+      },
+      {
+        "assetId": "studio:mg-51-v01",
+        "weight": 2
+      },
+      {
+        "assetId": "studio:mg-52-v01",
+        "weight": 2
+      },
+      {
+        "assetId": "studio:mg-53-v01",
+        "weight": 3
+      },
+      {
+        "assetId": "studio:mg-54-v01",
+        "weight": 1
+      },
+      {
+        "assetId": "studio:mg-55-v01",
+        "weight": 1
+      }
+    ],
+    "low_shrubs": [
+      {
+        "assetId": "studio:mg-56-v01",
+        "weight": 3
+      },
+      {
+        "assetId": "studio:mg-57-v01",
+        "weight": 2
+      }
+    ],
+    "hedge_segments": [
+      {
+        "assetId": "studio:mg-58-v01",
+        "weight": 1
+      }
+    ],
+    "flower_patches": [
+      {
+        "assetId": "studio:mg-59-v01",
+        "weight": 2
+      },
+      {
+        "assetId": "studio:mg-60-v01",
+        "weight": 1
+      }
+    ],
+    "planters": [
+      {
+        "assetId": "studio:mg-61-v01",
+        "weight": 1
+      }
+    ]
+  },
+  "notes": [
+    "权重为可编辑建议，AI 可选择子池或指定单项；尺寸与落地约束仍须满足。",
+    "树冠净空按完整模板和实际树冠复核；未写空气不能代替清障。",
+    "花丛土层按 groundPlaneY=1 嵌入地表；其余贴地。未自动接入工作台或正式 MC 生成器。"
+  ]
+}

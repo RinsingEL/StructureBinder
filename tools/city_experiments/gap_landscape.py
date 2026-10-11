@@ -85,6 +85,7 @@ def apply_gap_landscape(result,cells,sources,put):
     regions,ground,roads,occupied=plan_gap_regions(result,road_level=level)
     writes=[];counts={};records=[]
     def emit(x,y,z,block,kind):
+        if scene.get('greeneryTemplates') and kind in ('SHRUB','FLOWER','TREE_TRUNK','TREE_CROWN'):return
         put(x,y,z,block,'landscape:group-gaps');writes.append([x,y,z,kind]);counts[kind]=counts.get(kind,0)+1
     engineering=[]
     if connection:
@@ -133,7 +134,7 @@ def apply_gap_landscape(result,cells,sources,put):
             footprint={(x+dx,z+dz) for dx in range(-3,4) for dz in range(-3,4)}
             if not footprint<=mask or max(ground[q][0] for q in footprint)-min(ground[q][0] for q in footprint)>1:return False
             return all(q not in roads and all(sources.get((q[0],yy,q[1]),'') in ('','landscape:group-gaps') for yy in range(ground[q][0]+1,y+10)) for q in footprint)
-        candidates=[p for p in sorted(mask) if green and depth[p]>=4 and tree_clear(p)]
+        candidates=[p for p in sorted(mask) if green and not scene.get('greeneryTemplates') and depth[p]>=4 and tree_clear(p)]
         limit=min(8,max(1,len(mask)//240))
         while candidates and len(trees)<limit:
             p=max(candidates,key=lambda q:(min((q[0]-t[0])**2+(q[1]-t[1])**2 for t in trees),depth[q],q)) if trees else max(candidates,key=lambda q:(depth[q],q))

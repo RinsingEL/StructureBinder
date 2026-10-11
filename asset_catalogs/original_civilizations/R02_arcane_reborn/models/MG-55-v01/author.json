@@ -1,0 +1,73 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-55-v01",
+  "name": "星花庭树 · 高低三瓣",
+  "family": "MG-55-v01",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.structure",
+  "size": [
+    9,
+    13,
+    9
+  ],
+  "terrain": {
+    "选址": "避让建筑、道路及其他树冠；根部须有实心承载。"
+  },
+  "rooms": [],
+  "points": [],
+  "connections": [],
+  "design_notes": [
+    "独立绿化构件，由程序选位；不作建筑阵列成员，不自动生成台地。",
+    "未写入位置保持原状，无显式空气清场；调用方须检查完整放置净空。",
+    "白桦枝干、尖塔状或分瓣树冠、淡粉花叶与少量紫晶体现学院风格。"
+  ],
+  "differences": [],
+  "floors": [],
+  "roof_min_y": null,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/academy_greenery.py",
+  "asset_tags": [
+    "landscape",
+    "infrastructure"
+  ],
+  "placement_consumer": "infrastructure",
+  "function_terms": [
+    "树木观赏"
+  ],
+  "ground_plane": {
+    "y": 0,
+    "note": "外部地表上边界；根部贴地，无整块台基。"
+  },
+  "placement_anchor": {
+    "pos": [
+      4,
+      0,
+      4
+    ],
+    "note": "植物定位点，不是玩家入口。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 0,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "greenery": {
+    "kind": "tree",
+    "usage": "SMALL_INDEPENDENT",
+    "groundMode": "SURFACE_ROOT",
+    "rotations": [
+      0,
+      90,
+      180,
+      270
+    ],
+    "style": "arcane_academy",
+    "clearanceBlocks": 1
+  },
+  "nbt_sha256": "bcea41ef5b7e49f673f7dd2c647322283a2e1b4c628b11ddb73ad027e0c46a6e"
+}

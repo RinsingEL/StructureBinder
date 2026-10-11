@@ -51,14 +51,21 @@ class DesignedLandscapeIntegration(unittest.TestCase):
     plans=meta['publicSpacePlans'];self.assertEqual(len(plans),4)
     for p in plans[:2]:
      self.assertEqual(p['supportedColumns'],p['bounds']['width']*p['bounds']['depth']);self.assertEqual(len(p['beds']),4)
-     self.assertGreater(p['counts'].get('FLOWER',0),0);self.assertGreater(len(p['trees']),0)
+     self.assertEqual(p['counts'].get('FLOWER',0),0);self.assertEqual(len(p['trees']),0)
      cx=p['bounds']['x']+p['bounds']['width']//2;cz=p['bounds']['z']+p['bounds']['depth']//2
      for x,y,z,kind in p['writes']:
       if kind in ('LOW_HEDGE','FLOWER','TREE_TRUNK','TREE_CROWN'):
        self.assertGreater(abs(x-cx),2);self.assertGreater(abs(z-cz),2)
     self.assertTrue(any(a['kind']=='WELL' for a in plans[1]['amenities']))
     gaps=plans[-1];self.assertEqual(gaps['kind'],'GAP_LANDSCAPE');self.assertGreater(len(gaps['regions']),0)
-    self.assertGreater(gaps['counts'].get('FLOWER',0),0);self.assertGreater(gaps['counts'].get('TREE_TRUNK',0),0)
+    self.assertEqual(gaps['counts'].get('TREE_TRUNK',0),0)
+    placements=meta['greeneryTemplatePlan']['placements'];self.assertTrue(placements)
+    planting={p['nodeId']:{(x,z) for x,y,z,k in p['writes'] if k in ('BED','LAWN')} for p in plans}
+    for a in placements:
+     self.assertTrue(a['nbtSha256']);self.assertTrue(a['authorSha256'])
+     w,_,d=a['sizeXYZ']
+     if a['rotation']%180:w,d=d,w
+     o=a['origin'];self.assertTrue({(x,z) for x in range(o['x'],o['x']+w) for z in range(o['z'],o['z']+d)}<=planting[a['nodeId']])
     native={(c[0],c[1]):(c[2],c[3]) for c in r['terrainColumns']}
     footprint={(x,row['z']) for t in meta['terraces'] for row in t['spans'] for x in range(row['minX'],row['maxX']+1)}
     engineering={(c['x'],c['z']):c for c in gaps['engineeringColumns']}
@@ -87,6 +94,7 @@ class DesignedLandscapeIntegration(unittest.TestCase):
     before={p['nodeId']:{k:v for k,v in p['counts'].items() if k not in ('BED','LOW_HEDGE','FLOWER','TREE_TRUNK','TREE_CROWN','BORDER')} for p in plans[:2]}
     r['scene']['greenery']=False;r['_groundIndex']={(row[0],row[1]):row[2] for row in r['terrainColumns']};api.compose(r,api.catalog())
     after={p['nodeId']:p['counts'] for p in r['publicSpacePlans'][:2]};self.assertEqual(before,after)
+    self.assertFalse(r['greeneryTemplatePlan']['enabled']);self.assertEqual(r['greeneryTemplatePlan']['placements'],[])
     self.assertEqual(r['publicSpacePlans'][-1]['engineeringColumns'],gaps['engineeringColumns'])
     self.assertEqual(api.read(api.OUTPUT/'state.json')['revision'],1)
    finally:api.OUTPUT=old_output

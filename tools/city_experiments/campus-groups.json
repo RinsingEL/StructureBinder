@@ -302,5 +302,24 @@
     "end": "studio:mg-49-v01"
   },
   "gapSurface": "CONNECTION_TERRACE",
-  "smallGapMaxBlocks": 32
+  "smallGapMaxBlocks": 32,
+  "greeneryTemplates": {
+    "catalog": "R02_arcane_reborn/greenery-pools.json",
+    "pools": {
+      "trees": "courtyard_trees",
+      "gapTrees": "outer_trees",
+      "shrubs": "low_shrubs",
+      "hedges": "hedge_segments",
+      "flowers": "flower_patches",
+      "planters": "planters"
+    },
+    "spacing": {
+      "trees": 13,
+      "shrubs": 6,
+      "hedges": 8,
+      "flowers": 5,
+      "planters": 24
+    },
+    "maximumPlacements": 300
+  }
 }

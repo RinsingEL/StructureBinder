@@ -49,6 +49,21 @@ def check(folder):
   points=[dict(id=m['memberId'],kind='entrance' if i==0 else 'circulation',pos=[p[0]-lo[0],m['surfaceY']+1-lo[1],p[1]-lo[2]]) for i,(m,p) in enumerate(((a,pa),(b,pb)))]
   report=audit(data,dict(points=points),registry);row=dict(source=a['memberId'],target=b['memberId'],routeColumns=len(route),audit=report);out.append(row)
   print(json.dumps({k:v for k,v in row.items() if k!='audit'}|dict(passed=report['passed'],nodes=report.get('nodes'),unreachable=report.get('unreachable')),ensure_ascii=False),flush=True)
+ access=meta.get('externalAccessPlan')
+ if access:
+  import math
+  mask={(c['x'],c['z']) for c in access['columns']};axis=access['axis'];start,end=axis[0],axis[-1]
+  # The new path must start on the already checked public road network.
+  assert (start[0],start[1]) in road
+  lo=[min(x for x,z in mask),math.floor(min(p[2] for p in axis))-3,min(z for x,z in mask)]
+  hi=[max(x for x,z in mask),math.ceil(max(p[2] for p in axis))+4,max(z for x,z in mask)]
+  blocks=[dict(pos=[x-lo[0],y-lo[1],z-lo[2]],state=s) for p in mask for x,y,z,s in voxel.get(p,[]) if lo[1]<=y<=hi[1]]
+  from studio.navigation import collision_boxes
+  entry_surface=max(y+box[4] for x,y,z,s in voxel[(start[0],start[1])] for box in collision_boxes(world['palette'][s],registry) if abs(y+box[4]-start[2])<=.6)
+  points=[dict(id=ident,kind='entrance' if i==0 else 'circulation',pos=[p[0]-lo[0],surface-lo[1],p[1]-lo[2]]) for i,(ident,p,surface) in enumerate((('city-exit',start,entry_surface),('harbor-landing',end,end[2])))]
+  report=audit(dict(size=[hi[i]-lo[i]+1 for i in range(3)],palette=world['palette'],blocks=blocks),dict(points=points),registry)
+  out.append(dict(source='city-exit',target='harbor-landing',routeColumns=len(mask),audit=report))
+  print(json.dumps(dict(target='harbor-landing',passed=report['passed'],unreachable=report.get('unreachable'))),flush=True)
  (folder/'campus-walk-check.json').write_text(json.dumps(dict(revision=meta['revision'],passed=all(r['audit']['passed'] for r in out),routes=out),ensure_ascii=False,indent=2),encoding='utf-8')
  return all(r['audit']['passed'] for r in out)
 if __name__=='__main__':sys.exit(0 if check(Path(sys.argv[1])) else 1)

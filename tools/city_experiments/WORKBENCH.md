@@ -86,6 +86,26 @@ GET `/api/campus/terrain/context` 提供完整 D3 的源文件哈希、bounds、
 
 ## 验证与边界
 
+新增独立[场地构图控制台](SPACE_COMPOSER.md)：`/spaces` 可比较星泉广场、阅读花园、仪式庭院，编辑嵌套节点、素材池、留白及入口通路；不会覆盖学院岛版本。
+
+### 城区外围与对外出口
+
+可选 `outerGreenery:{width:20,maximumPlacements:260}` 从核心台地与连接台地的合并外缘生成种植带。外部连通域排除封闭院落；保留原有高度和两格岸边净空，避让道路、港口预留区及已有设施。使用既有外围树、灌木、花丛模板池，分片概率随离城距离降低，尺寸和支撑不合格即跳过。先完成内部模板再放外围模板，避免外围抢占院内绿化名额。全局 `greenery:false` 关闭外围种植。
+
+可选 `externalAccess` 由 AI 根据本次地理信息选择并写入明确路线，不硬编码学院坐标：`waypoints` 为轴向 `{x,z,surface}` 序列（surface 为计划行走面高度，允许半格），`width` 为 3/5/7；`landing` 与 `harborReservation` 使用闭合 minX/maxX/minZ/maxZ 矩形。起点必须接现有道路；允许起点半格踏步。程序检查采样陆地、建筑/设施净空、道路高度、最大八格土方，按半格台阶施工并开通沿线边缘护栏。港口预留范围只用于避让，不自动建造码头或填海。它是工作台独立对外道路试验，报告 `externalAccessPlan` 与原生产 Java 内部道路报告分开记录。
+
+第三题 R31 选择住宿区东侧道路 `(-2830,5394)`，向东后折向南至 `(-2760,5413)`；沿坡连接东南小海湾。岸边承接平台 11×11，新增道路/平台共 551 柱；外围增加 141 棵树、119 处灌木。内部 174 处模板、23 栋建筑、4 个核心台地及设施保持 R30 一致。原有 22 条建筑间路线和新增港口承接路线全部通过离线碰撞通行检查，浏览器截图位于 `runtime/academy-fringe-20261011/applied/`。
+
+### 配置绿化模板池
+
+学院组团默认方案通过 `greeneryTemplates` 引用素材目录下的 `R02_arcane_reborn/greenery-pools.json`。`pools` 将 `trees/gapTrees/shrubs/hedges/flowers/planters` 映射到池名；修改目录中的候选与权重即可调整选择。`spacing` 控制各类中心间距，`maximumPlacements` 限制总量。取消配置保留旧版程序植物；`greenery:false` 同时关闭两种植物模式。
+
+生成时冻结池目录，并校验 NBT、作者文件哈希、尺寸与地面基准。固定种子加权选择真实 NBT，只在既有花床和组团连接绿地内落位；完整包围盒避开建筑、设施、道路、公共通路和已放植物，尺寸不合适则换候选或跳过，不清除已有方块。树木默认分别使用庭院池和外围池。生成报告 `greeneryTemplatePlan` 记录实际素材、旋转、坐标与哈希。
+
+可选 `greeneryTemplates.layeredPlanting:true` 允许灌木和花丛在树冠投影内寻找实际净空，仍检查模板全部体积，不能穿过树干或低树冠。树与树、花槽和绿篱继续保守避让。`slotLimits` 可分别限制 trees/planters/hedges/shrubs/flowers 数量，防止先放的类别占满总预算；花丛优先靠近已有通路及设施边界。`outerGreenery` 可独立指定 trees/shrubs/flowers 的 `spacing` 与 `slotLimits`，不再只能使用固定外围间距。缺省保持旧版行为。
+
+2026-10-11 已应用第三题学院岛 R30：174 处模板绿化（树 22、灌木 49、绿篱 62、花丛 8、花槽 33），保持 R29 的 23 栋建筑、4 个台地、76 段道路及设施几何，22 条通行检查通过。证据位于 `runtime/academy-greenery-20261011/`。本入口仍为离线工作台，尚未接入正式游戏生成。
+
 ```powershell
 $env:JAVA_HOME='C:/Program Files/Java/jdk-17'
 ./gradlew.bat test -x processHarnessResources --offline --no-daemon --tests '*CityFoundationElevationPlannerTest' --tests '*CityFoundationSupportSettingsTest' --tests '*CityLandUseSurfacePrintPlannerTest' --tests '*CityLandUseChunkExecutorTest' --tests '*CityPublicGreeneryPlannerTest'
