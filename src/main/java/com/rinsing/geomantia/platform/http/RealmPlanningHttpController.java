@@ -573,11 +573,11 @@ final class RealmPlanningHttpController implements AutoCloseable {
                 else cityDesignQueue.requireCurrentIfManaged(runId, citySeedId);
                 JsonObject response = CityPlanningEndpointHandler.handleSubmitD4Design(debugRoot(),
                         runId, citySeedId, requiredString(request, "contextId"), request);
-                if (booleanValue(response, "ok", false)
+                if (!rewind && booleanValue(response, "ok", false)
                         && !booleanValue(response, "designInProgress", false)
                         && booleanValue(request, "autoAdvanceAfterD4", true)) {
                     response.add("postD4AutoCompile", postD4AutoCompileQueue.enqueue(runId, citySeedId));
-                } else if (booleanValue(response, "ok", false)
+                } else if (!rewind && booleanValue(response, "ok", false)
                         && !booleanValue(response, "designInProgress", false)) {
                     response.addProperty("status", "design_saved");
                     response.addProperty("nextAction", "city_post_d4_auto_compile_status");

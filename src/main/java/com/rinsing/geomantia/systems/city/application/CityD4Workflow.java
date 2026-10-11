@@ -12,6 +12,9 @@ public final class CityD4Workflow {
             "city_d4_history", "city_d4_reopen", "city_d4_restore");
     private static final String FILE = "city_d4_workflow.json";
     private CityD4Workflow() { }
+    public static void requireRevisionAllowed(Path runDirectory, String cityId) throws IOException {
+        CityD4Versions.requireEditableRun(runDirectory, cityId);
+    }
     @FunctionalInterface interface Submit { JsonObject call(JsonObject request) throws IOException; }
 
     static JsonObject load(Path dir, String contextId) throws IOException {

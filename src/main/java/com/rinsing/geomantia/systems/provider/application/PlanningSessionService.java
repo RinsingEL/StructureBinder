@@ -96,7 +96,7 @@ public final class PlanningSessionService implements AutoCloseable {
                 boolean flashNeedsInput = otherRole && role == PlanningRole.ADVANCED && !occupied && !running
                         && Set.of("disabled", "missing_key", "error").contains(flashStatus);
                 boolean localNeedsInput = embeddedAssigned && !occupied && Set.of("missing_config","missing_key","error").contains(localStatus);
-                boolean needsInput = flashNeedsInput || localNeedsInput || !retry && savedDesign(step);
+                boolean needsInput = flashNeedsInput || localNeedsInput || !running && !retry && savedDesign(step);
                 String dispatch = terminal ? status.equals("complete") ? "complete" : "blocked"
                         : ready ? "task" : needsInput ? "needs_input" : otherRole ? "waiting_for_role" : occupied || embeddedAssigned ? "waiting_for_executor" : "waiting_for_program";
                 result.addProperty("dispatch", dispatch);
@@ -233,14 +233,63 @@ public final class PlanningSessionService implements AutoCloseable {
         result.addProperty("error", error);
         result.addProperty("cursor", step.semanticIdentity() + ":" + taskId + ":" + running + ":" + error + ":" + result.get("owner"));
         result.addProperty("hasSavedProgress", Files.isDirectory(step.runDirectory()));
+        result.addProperty("canRedesign", false);
         if (savedDesign(step)) {
-            result.addProperty("instruction", "设计已保存，尚未施工。用户授权继续后调用 planning_resume(retry=true)，直接使用保存蓝图入队；不要再次提交 D4。");
+            try {
+                com.rinsing.geomantia.systems.city.application.CityD4Workflow.requireRevisionAllowed(step.runDirectory(), step.citySeedId());
+                result.addProperty("canRedesign", true);
+            } catch (IllegalArgumentException blocked) { result.addProperty("redesignBlockReason", blocked.getMessage()); }
+            result.addProperty("instruction", "设计已保存，尚未施工。用户选择继续施工时调用 planning_resume(retry=true)；用户选择重新设计时，以本次 runId、citySeedId 和用户需求调用 planning_redesign，然后 planning_next。重新设计不启动施工。");
         } else if (retryableProgramBlock(step)) {
             result.addProperty("instruction", "当前城市因程序错误暂停。确认修复并获用户授权后，调用 planning_resume(retry=true)，通过当前规划会话重试已有城市；不要改写设计或绕过会话调用旧接口。");
         }
         result.addProperty("artifactRoot", step.runDirectory().toString());
         return result;
     }
+    /** Explicit lobby choice; reopen through the existing versioned D4 endpoint, never enqueue construction. */
+    public synchronized JsonObject redesign(String owner, String token, PlanningRole role,
+                                             String runId, String cityId, String reason) throws Exception {
+        if (owner == null || !owner.matches("[A-Za-z0-9_-]{8,100}")) throw new IllegalArgumentException("PLANNING_OWNER_REQUIRED");
+        if (role != PlanningRole.ADVANCED) throw new IllegalStateException("PLANNING_REDESIGN_ADVANCED_REQUIRED");
+        if (reason == null || reason.isBlank() || reason.length() > 2000) throw new IllegalArgumentException("PLANNING_REDESIGN_REASON_REQUIRED");
+        if (running) throw new IllegalStateException("PLANNING_OPERATION_RUNNING");
+        var step = discovery.nextStep();
+        if (!step.runId().equals(runId) || !step.citySeedId().equals(cityId))
+            throw new IllegalStateException("PLANNING_TARGET_STALE: refresh geomantia_lobby");
+        if (!savedDesign(step)) throw new IllegalStateException("PLANNING_REDESIGN_REQUIRES_SAVED_DESIGN");
+        com.rinsing.geomantia.systems.city.application.CityD4Workflow.requireRevisionAllowed(step.runDirectory(), cityId);
+        Path dir = com.rinsing.geomantia.systems.city.application.CityTestRunLayout.open(step.runDirectory(), cityId)
+                .stepDirectory(com.rinsing.geomantia.systems.city.application.CityTestRunLayout.BLUEPRINT);
+        JsonObject workflow = JsonParser.parseString(Files.readString(dir.resolve("city_d4_workflow.json"))).getAsJsonObject();
+        JsonObject trace = JsonParser.parseString(Files.readString(dir.resolve("city_blueprint_submission_trace.json"))).getAsJsonObject();
+        JsonObject args = new JsonObject();
+        args.add("contextId", workflow.get("contextId"));
+        args.add("workflowRevision", workflow.get("revision"));
+        args.add("baseBlueprintHash", trace.get("cityBlueprintHash"));
+        args.addProperty("reason", reason);
+        if (!args.has("contextId") || !args.has("workflowRevision") || !args.has("baseBlueprintHash")
+                || args.get("contextId").isJsonNull() || args.get("workflowRevision").isJsonNull() || args.get("baseBlueprintHash").isJsonNull())
+            throw new IllegalStateException("PLANNING_REDESIGN_VERSION_MISSING");
+        if (!lease.owner().isEmpty() && lease.owner().equals("external-" + owner)) lease.require(token);
+        String acquired = lease.acquire("external-" + owner);
+        activeRole = role; prepared = null; preparedStep = null; taskId = ""; failure = ""; preparedOwner = acquired;
+        lastActionId = ""; lastActionResult = null;
+        AutoCloseable pin = lease.enter(acquired);
+        running = true;
+        worker.submit(() -> {
+            try (pin) {
+                var output = gateway(step, acquired).executeHost("city_d4_reopen", args);
+                String error = PlanningTurnControl.failure(PlanningTurnControl.payload(output));
+                if (!error.isBlank()) throw new IllegalStateException(error);
+                if (savedDesign(discovery.nextStep())) throw new IllegalStateException("PLANNING_REDESIGN_NO_PROGRESS");
+            } catch (Exception ex) { failure = message(ex); }
+            finally { running = false; }
+        });
+        JsonObject result = snapshot(); result.addProperty("leaseToken", acquired);
+        result.addProperty("nextCall", "planning_next");
+        return result;
+    }
+
     public synchronized JsonObject resume(String owner, String token, boolean retry) throws Exception {
         return resume(owner, token, retry, null);
     }

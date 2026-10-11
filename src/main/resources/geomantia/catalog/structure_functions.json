@@ -18,7 +18,8 @@
       "terms": [
         "零售",
         "摊位交易",
-        "皮具零售"
+        "皮具零售",
+        "商品零售"
       ]
     },
     {
@@ -227,7 +228,8 @@
       "terms": [
         "杂货销售",
         "食品杂货销售",
-        "杂货零售"
+        "杂货零售",
+        "日用品交易"
       ]
     },
     {
@@ -261,7 +263,8 @@
       "terms": [
         "住宅",
         "住宿",
-        "旅宿"
+        "旅宿",
+        "学生住宿"
       ]
     },
     {
@@ -311,7 +314,8 @@
       "label": "正餐供应",
       "parent": "dining",
       "terms": [
-        "烹饪"
+        "烹饪",
+        "集体用餐"
       ]
     },
     {
@@ -329,7 +333,8 @@
       "label": "农牧培育",
       "parent": "",
       "terms": [
-        "农业"
+        "农业",
+        "种植"
       ]
     },
     {
@@ -355,14 +360,17 @@
       "id": "farming.nursery",
       "label": "育苗",
       "parent": "farming",
-      "terms": []
+      "terms": [
+        "苗木培育"
+      ]
     },
     {
       "id": "farming.care",
       "label": "园艺养护",
       "parent": "farming",
       "terms": [
-        "园艺换盆"
+        "园艺换盆",
+        "园艺养护"
       ]
     },
     {
@@ -554,7 +562,9 @@
       "id": "production.documents",
       "label": "纸墨与书籍制作",
       "parent": "production",
-      "terms": []
+      "terms": [
+        "书籍制作"
+      ]
     },
     {
       "id": "production.documents.paper",
@@ -578,7 +588,8 @@
       "parent": "production.documents",
       "terms": [
         "制图抄录",
-        "抄写"
+        "抄写",
+        "文献抄写"
       ]
     },
     {
@@ -822,7 +833,8 @@
         "矿料仓储",
         "材料存放",
         "饲草储存",
-        "种子保管"
+        "种子保管",
+        "材料保管"
       ]
     },
     {
@@ -831,7 +843,8 @@
       "parent": "storage",
       "terms": [
         "工具存放",
-        "渔具存放"
+        "渔具存放",
+        "工具保管"
       ]
     },
     {
@@ -908,7 +921,9 @@
       "id": "health",
       "label": "医疗卫生",
       "parent": "",
-      "terms": []
+      "terms": [
+        "医疗"
+      ]
     },
     {
       "id": "health.treatment",
@@ -931,7 +946,8 @@
       "label": "康复",
       "parent": "health",
       "terms": [
-        "康复"
+        "康复",
+        "休养"
       ]
     },
     {
@@ -948,7 +964,8 @@
       "label": "公共洗浴",
       "parent": "health",
       "terms": [
-        "公共洗浴"
+        "公共洗浴",
+        "洗浴"
       ]
     },
     {
@@ -962,7 +979,11 @@
       "label": "教学",
       "parent": "education",
       "terms": [
-        "教学"
+        "教学",
+        "实验教学",
+        "植物教学",
+        "林业教学",
+        "研讨"
       ]
     },
     {
@@ -971,7 +992,9 @@
       "parent": "education",
       "terms": [
         "阅览",
-        "自习"
+        "自习",
+        "阅读",
+        "书籍借阅"
       ]
     },
     {
@@ -979,7 +1002,9 @@
       "label": "实验",
       "parent": "education",
       "terms": [
-        "实验"
+        "实验",
+        "实验研究",
+        "实验教学"
       ]
     },
     {
@@ -997,7 +1022,9 @@
       "terms": [
         "旧物研究",
         "海流研究",
-        "水下考察场所"
+        "水下考察场所",
+        "研究",
+        "实验研究"
       ]
     },
     {
@@ -1011,7 +1038,8 @@
       "label": "天文观测",
       "parent": "education.observation",
       "terms": [
-        "天文观测"
+        "天文观测",
+        "天象观测"
       ]
     },
     {
@@ -1076,7 +1104,8 @@
         "船闸管理",
         "林务管理",
         "航路管理",
-        "墓园看护"
+        "墓园看护",
+        "公共办事"
       ]
     },
     {
@@ -1117,7 +1146,9 @@
       "parent": "culture",
       "terms": [
         "休息",
-        "候行休息"
+        "候行休息",
+        "休憩",
+        "庭院休憩"
       ]
     },
     {
@@ -1197,6 +1228,104 @@
       "parent": "defence",
       "terms": [
         "巡路驻守"
+      ]
+    },
+    {
+      "id": "farming.herbs",
+      "label": "药草栽培",
+      "parent": "farming",
+      "terms": [
+        "药草栽培"
+      ]
+    },
+    {
+      "id": "production.potions",
+      "label": "药剂制作",
+      "parent": "production",
+      "terms": [
+        "药剂制作"
+      ]
+    },
+    {
+      "id": "production.instruments",
+      "label": "器材制作",
+      "parent": "production",
+      "terms": [
+        "魔法器材制作"
+      ]
+    },
+    {
+      "id": "utilities.energy_maintenance",
+      "label": "能源设施维护",
+      "parent": "utilities",
+      "terms": [
+        "能源设施维护"
+      ]
+    },
+    {
+      "id": "maintenance.portal",
+      "label": "传送设施维护",
+      "parent": "maintenance",
+      "terms": [
+        "传送设施维护"
+      ]
+    },
+    {
+      "id": "transport.registration",
+      "label": "出行登记",
+      "parent": "transport",
+      "terms": [
+        "出行登记"
+      ]
+    },
+    {
+      "id": "culture.garden",
+      "label": "园林观赏",
+      "parent": "culture",
+      "terms": [
+        "花草观赏",
+        "树木观赏",
+        "水景观赏"
+      ]
+    },
+    {
+      "id": "health.laundry",
+      "label": "洗衣",
+      "parent": "health",
+      "terms": [
+        "洗衣"
+      ]
+    },
+    {
+      "id": "services",
+      "label": "生活服务",
+      "parent": "",
+      "terms": [
+        "生活服务"
+      ]
+    },
+    {
+      "id": "transport.walking",
+      "label": "步行通行",
+      "parent": "transport",
+      "terms": [
+        "步行过桥"
+      ]
+    },
+    {
+      "id": "utilities.lighting",
+      "label": "公共照明",
+      "parent": "utilities",
+      "terms": [
+        "道路照明"
+      ]
+    },
+    {
+      "id": "culture.ceremony",
+      "label": "礼仪活动",
+      "parent": "culture",
+      "terms": [
+        "礼仪"
       ]
     }
   ],

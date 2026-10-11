@@ -5,7 +5,7 @@ import { planningResult, textResult, type ToolDefinition, type ToolHandler, type
 
 export const lobbyInstructions = `你已连接 Geomantia，Minecraft 世界规划服务。
 首次接入本服务时，先调用 geomantia_lobby，将返回的存档大厅主界面呈现给用户，然后等待用户选择。不要仅报告连接成功，不要因为连接成功就开始扫描或规划。用户已经明确要求开始/继续规划时，可以呈现简短状态后直接执行，不要重复询问。
-大厅中的名称和进度必须来自工具实时结果，不可编造。用户选择继续后调用总调度入口 planning_next；通过 planning_action 使用任务包提供的工具与参数，实际查看返回的预览图，其他资料使用 planning_artifact 按需读取。每项任务完成后继续 planning_next；waiting_for_role / waiting_for_executor / waiting_for_program 都不是完成，继续调用 planning_next 等待交接，不要结束回复或要求用户反复说继续。只有全流程 complete、明确 blocked、缺少必须由用户处理的运行条件或用户暂停才停止，暂停调用 planning_release。内置接管由 MCP 设置中高级/Flash 两个开关独立控制，可同时开启；未配置对应模型时提示配置 API/Key。换 session 仍调用 planning_next，从存档恢复，不依赖旧聊天。已经结束的外部 session 无法由 Mod 主动唤醒。兼容旧入口 planning_resume / planning_wait，但优先使用总调度入口。`;
+大厅中的名称和进度必须来自工具实时结果，不可编造。用户要求重新设计已保存城市时，使用大厅返回的 runId、citySeedId 调用 planning_redesign，再 planning_next；不要把重设计当成继续施工，不需要源码或 AGENTS.md。用户选择继续后调用总调度入口 planning_next；通过 planning_action 使用任务包提供的工具与参数，实际查看返回的预览图，其他资料使用 planning_artifact 按需读取。每项任务完成后继续 planning_next；waiting_for_role / waiting_for_executor / waiting_for_program 都不是完成，继续调用 planning_next 等待交接，不要结束回复或要求用户反复说继续。只有全流程 complete、明确 blocked、缺少必须由用户处理的运行条件或用户暂停才停止，暂停调用 planning_release。内置接管由 MCP 设置中高级/Flash 两个开关独立控制，可同时开启；未配置对应模型时提示配置 API/Key。换 session 仍调用 planning_next，从存档恢复，不依赖旧聊天。已经结束的外部 session 无法由 Mod 主动唤醒。兼容旧入口 planning_resume / planning_wait，但优先使用总调度入口。`;
 
 const str = { type: "string" };
 function tool(name: string, description: string, properties: Record<string, unknown> = {}, required: string[] = []): ToolDefinition {
@@ -13,6 +13,7 @@ function tool(name: string, description: string, properties: Record<string, unkn
 }
 export const planningTools = [
   tool("planning_next", "总调度：领取本角色下一任务，自动推进程序步骤并等待另一角色交接，最多20秒。返回 nextCall=planning_next 时继续调用，不结束本轮；taskFinished 只代表当前任务完成。换 session 也从这里恢复。", { timeoutSeconds: { type: "integer", minimum: 0, maximum: 20 }, retry: { type: "boolean", description: "仅阻塞已处理且授权重试时为 true。" } }),
+  tool("planning_redesign", "用户明确要求重设计时调用：重开大厅当前尚未施工的已保存 D4，保留历史与 D3，不启动施工。runId/citySeedId 必须来自最新大厅；之后 planning_next 领取设计任务。仅高级角色可用。", { runId: str, citySeedId: str, reason: { type: "string", minLength: 1, maxLength: 2000 } }, ["runId", "citySeedId", "reason"]),
   tool("geomantia_lobby", "首次连接首先调用：只读当前存档大厅，向用户展示菜单并等待选择；不启动规划。"),
   tool("planning_resume", "用户要求开始或继续后调用。恢复存档、执行程序步骤并准备与内置 Harness 相同的任务/图片；busy 时不抢占。", { retry: { type: "boolean", description: "仅在阻塞已处理、用户要求重试后设为 true。" } }),
   tool("planning_action", "执行任务包 tools 中的一个工具。只用当前 taskId；重试同一请求时保持 actionId 不变。", { taskId: str, actionId: str, tool: str, arguments: { type: "object" } }, ["taskId", "actionId", "tool", "arguments"]),
@@ -34,10 +35,11 @@ export function renderLobby(data: Record<string, any>): string {
     ...(data.requiredRole ? [`  当前需要：${data.requiredRole === "FLASH" ? "Flash" : "高级模型"}`] : []),
     ...(data.embeddedFlashStatus ? [`  内置 Flash：${({disabled:"自动规划未开启",missing_key:"缺少 API Key",running:"执行中",waiting:"等待任务",error:"运行受阻",unavailable:"未启动",idle:"待命",completed:"已完成"} as Record<string,string>)[data.embeddedFlashStatus] ?? data.embeddedFlashStatus}${data.embeddedFlashMessage ? " · " + data.embeddedFlashMessage : ""}`] : []),
     "+-------------------------------------+", "",
-    `  [1] ${data.status === "complete" ? "查看最终成果" : data.hasSavedProgress ? "继续规划" : "开始规划"}`,
-    "  [2] 查看当前成果", "  [3] 查看规划状态与问题", "```",
+    `  [1] ${data.cityQueueStatus === "design_saved" ? "使用已保存方案继续施工" : data.status === "complete" ? "查看最终成果" : data.hasSavedProgress ? "继续规划" : "开始规划"}`,
+    "  [2] 查看当前成果", "  [3] 查看规划状态与问题",
+    ...(data.canRedesign ? ["  [4] 重新设计当前城市（保留历史，尚不施工）"] : []), "```",
     "告诉我你想进行哪一项，也可以直接描述需求。",
-    "执行指引：1 在尚未完成时调用 planning_next，已完成则查看成果；2/3 使用 planning_artifact 查看当前 run 的资料，不启动规划。存在其他执行端占用时等待总调度交接，不抢占。",
+    "执行指引：1 若 cityQueueStatus=design_saved，用户选择后调用 planning_resume(retry=true) 继续施工；其他未完成阶段调用 planning_next，已完成则查看成果；4 用户选择重设计时调用 planning_redesign(runId, citySeedId, reason)，之后 planning_next；2/3 使用 planning_artifact 查看当前 run 的资料，不启动规划。存在其他执行端占用时等待总调度交接，不抢占。",
     JSON.stringify(data),
   ].join("\n");
 }
@@ -92,6 +94,11 @@ export function createPlanningHandlers(baseUrl = MC_API_URL, role: "ADVANCED" | 
       const data = await request("resume", { ...args, ownerId });
       token = data.leaseToken ?? ""; delete data.leaseToken;
       if (data.status === "complete" && token) { await request("release"); token = ""; }
+      return planningResult(data);
+    },
+    async planning_redesign(args) {
+      const data = await request("redesign", { ...args, ownerId });
+      token = data.leaseToken ?? ""; delete data.leaseToken;
       return planningResult(data);
     },
     async planning_action(args) { return actionResult(await request("action", args)); },

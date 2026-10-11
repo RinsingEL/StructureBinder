@@ -91,3 +91,30 @@ test('new-world menu and JPEG/WebP action output do not invent saved progress', 
   const result = actionResult({ok:false,output:[{type:'input_image',image_url:'data:image/webp;base64,AQID'}]});
   assert.equal(result.isError,true); assert.equal(result.content[1].mimeType,'image/webp');
 });
+
+
+test('saved-city lobby separates construction and redesign; redesign keeps the lease private', async () => {
+  const menu=renderLobby({worldName:'学院',cityQueueStatus:'design_saved',canRedesign:true,hasSavedProgress:true});
+  assert.match(menu,/使用已保存方案继续施工/);
+  assert.match(menu,/\[4\] 重新设计当前城市/);
+  assert.doesNotMatch(renderLobby({canRedesign:false}),/\[4\]/);
+  const requests=[];
+  const api=createServer(async(req,res)=>{
+    const chunks=[];for await(const chunk of req) chunks.push(chunk);
+    requests.push({path:req.url,token:req.headers['x-geomantia-planning-token'],args:JSON.parse(Buffer.concat(chunks))});
+    res.setHeader('Content-Type','application/json');
+    res.end(JSON.stringify(req.url==='/planning/redesign' ? {ok:true,leaseToken:'redesign-secret',nextCall:'planning_next'} : {ok:true}));
+  });
+  api.listen(0,'127.0.0.1');await once(api,'listening');
+  const bridge=createPlanningHandlers(`http://127.0.0.1:${api.address().port}`,'ADVANCED');
+  try {
+    const result=await bridge.handlers.planning_redesign({runId:'run',citySeedId:'city',reason:'重新设计'});
+    assert.equal(JSON.stringify(result).includes('redesign-secret'),false);
+    assert.equal(requests[0].path,'/planning/redesign');
+    assert.equal(requests[0].args.citySeedId,'city');
+    assert.ok(requests[0].args.ownerId);
+    await bridge.handlers.planning_next({timeoutSeconds:0});
+    assert.equal(requests[1].token,'redesign-secret');
+    assert.equal(requests.some(r=>r.path==='/planning/resume'),false);
+  } finally {await bridge.close();await new Promise(resolve=>api.close(resolve));}
+});

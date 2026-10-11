@@ -83,6 +83,10 @@ class GroundPlaneExportTests(unittest.TestCase):
                 pools=exporter.read(args.output/'blueprint_reference_catalog.json')['fillPools']
                 self.assertEqual(4,len(pools[0]['structureRefs']), 'Old key author roles remain selectable in explicit city fill pools')
                 provenance = exporter.read(args.output/'studio_export_provenance.json')
+                classification = exporter.read(args.output/'classification_coverage.json')
+                self.assertEqual(4, classification['totalCount'])
+                self.assertEqual(4, classification['unclassifiedCount'])
+                self.assertEqual(0, provenance['classificationCoverage']['classifiedCount'])
                 catalog = exporter.read(args.output/'template_catalog.json')['templates']
                 portable_codec = exporter.read(args.output/'codec_input.json')
                 for rows in (catalog, observed_codec, portable_codec, provenance['templates']):

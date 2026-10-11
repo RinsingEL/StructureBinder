@@ -147,3 +147,17 @@ test('original 12-style inventory is covered without changing author data; real 
   assert.equal(rows.filter(row => matches(row, {style: '北欧', functions: ['production.food.baking']})).length, 0);
   assert.equal(JSON.stringify(rows), before);
 });
+
+
+test('academy author terms classify without changing meanings or inferring narrow services', () => {
+  const samples = [
+    ['天象观测','education.observation.astronomy'], ['实验研究','education.experiment'],
+    ['实验教学','education.teaching'], ['阅读','education.reading'], ['休憩','culture.rest'],
+    ['园艺养护','farming.care'], ['苗木培育','farming.nursery'], ['花草观赏','culture.garden'],
+    ['药剂制作','production.potions'], ['洗浴','health.bath']
+  ];
+  for (const [term, id] of samples) assert.ok(matches({function_terms:[term]}, {functions:[id]}),term);
+  assert.equal(matches({function_terms:['生活服务']},{functions:['retail']}),false);
+  assert.equal(matches({function_terms:['研究']},{functions:['education.observation.astronomy']}),false);
+  assert.deepEqual(describe({function_terms:['尚未定义的用途']}).unmapped,['尚未定义的用途']);
+});

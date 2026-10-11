@@ -114,4 +114,19 @@ class CityMaterialCatalogBrowserTest {
             assertTrue(error.getMessage().startsWith("CITY_DESIGN_SESSION_INVALID"), error.getMessage());
         }
     }
+    @Test void academyAliasesAreSearchableWithoutNarrowingBroadTerms() {
+        String[][] cases = {{"天象观测","education.observation.astronomy"}, {"实验研究","education.experiment"},
+                {"实验教学","education.teaching"}, {"阅读","education.reading"}, {"休憩","culture.rest"},
+                {"园艺养护","farming.care"}, {"苗木培育","farming.nursery"}, {"花草观赏","culture.garden"},
+                {"药剂制作","production.potions"}, {"洗浴","health.bath"}};
+        for (String[] pair : cases) {
+            var snapshot = json("{structureCatalog:{semanticProfiles:[{semanticProfileId:'test',functionTerms:['"+pair[0]+"']}]},referenceCatalog:{structureRefs:[{structureRef:'test'}]}}");
+            var before = snapshot.deepCopy();
+            assertEquals(1, CityMaterialCatalogBrowser.browse(snapshot, json("{filters:{functionIds:['"+pair[1]+"']}}")) .get("matchedCount").getAsInt(), pair[0]);
+            assertEquals(before, snapshot);
+        }
+        var broad = json("{structureCatalog:{semanticProfiles:[{semanticProfileId:'test',functionTerms:['生活服务','研究']}]},referenceCatalog:{structureRefs:[{structureRef:'test'}]}}");
+        assertEquals(0, CityMaterialCatalogBrowser.browse(broad, json("{filters:{functionIds:['retail']}}")) .get("matchedCount").getAsInt());
+        assertEquals(0, CityMaterialCatalogBrowser.browse(broad, json("{filters:{functionIds:['education.observation.astronomy']}}")) .get("matchedCount").getAsInt());
+    }
 }

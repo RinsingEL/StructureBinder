@@ -201,6 +201,70 @@ class PlanningSessionServiceTest {
             assertEquals(0, unexpected.get());
         } finally { http.stop(0); }
     }
+    @Test void lobbyRedesignReopensSavedCityWithVersionAndLeaseThenDispatchesDesign() throws Exception {
+        Path run = root.resolve("provider_2a_r8192"); sealed(run);
+        Files.writeString(run.resolve("realm_profiles.json"), "[{\"realmId\":\"a\"}]");
+        Files.writeString(run.resolve("realm_coordinate_selections.json"), "[{\"realmId\":\"a\"}]");
+        Files.writeString(run.resolve("t3_report.json"), "{}");
+        Files.writeString(run.resolve("realm_territory_map.json"), "{}");
+        Files.writeString(run.resolve("city_seed_registry.json"), "{\"citySeeds\":[{\"realmId\":\"a\",\"citySeedId\":\"city_a\",\"role\":\"capital\"}]}");
+        Path bp = Files.createDirectories(run.resolve("city_test_runs/city_a/steps/blueprint"));
+        Files.writeString(bp.resolve("city_d4_workflow.json"), "{\"stage\":\"COMPLETE\",\"contextId\":\"ctx\",\"revision\":7}");
+        Files.writeString(bp.resolve("city_blueprint.json"), "{\"cityId\":\"city_a\"}");
+        Files.writeString(bp.resolve("city_blueprint_submission_trace.json"), "{\"status\":\"accepted\",\"contextId\":\"ctx\",\"cityBlueprintHash\":\"sha256:saved\"}");
+        Files.createDirectories(run.resolve("automation"));
+        JsonObject savedQueue = JsonParser.parseString(queue("design_saved")).getAsJsonObject();
+        savedQueue.addProperty("runId", "provider_2a_r8192");
+        Files.writeString(run.resolve("automation/city_design_queue.json"), savedQueue.toString());
+        AtomicInteger reopened = new AtomicInteger();
+        HttpServer http = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        http.createContext("/", exchange -> {
+            JsonObject result = new JsonObject();
+            try {
+                assertEquals("/realm/city/submit_d4_blueprint", exchange.getRequestURI().getPath());
+                var args = JsonParser.parseString(new String(exchange.getRequestBody().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
+                assertEquals("city_d4_reopen", args.get("d4Tool").getAsString());
+                assertEquals("ctx", args.get("contextId").getAsString());
+                assertEquals(7, args.get("workflowRevision").getAsInt());
+                assertEquals("sha256:saved", args.get("baseBlueprintHash").getAsString());
+                assertFalse(args.has("autoAdvanceAfterD4"));
+                assertEquals("city_a", args.get("citySeedId").getAsString());
+                assertFalse(exchange.getRequestHeaders().getFirst("X-Geomantia-Planning-Token").isBlank());
+                Files.writeString(bp.resolve("city_d4_workflow.json"), "{\"stage\":\"INTEGRATION\",\"contextId\":\"ctx\",\"revision\":8}");
+                Files.delete(bp.resolve("city_blueprint_submission_trace.json"));
+                new com.rinsing.geomantia.systems.city.application.queue.CityDesignQueue(root, root.resolve("queue_config.json")).status("provider_2a_r8192");
+                reopened.incrementAndGet(); result.addProperty("ok", true);
+            } catch (Throwable ex) { result.addProperty("ok", false); result.addProperty("error", ex.toString()); }
+            byte[] bytes = result.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, bytes.length); exchange.getResponseBody().write(bytes); exchange.close();
+        }); http.start();
+        try (var service = new PlanningSessionService(root, root, http.getAddress().getPort(), 42,
+                (step, gateway) -> new PreparedPlanningTurn(step.state(), List.of(), List.of("city_d4_integrate"),
+                    new PlanningTurnControl((name, args) -> new JsonObject())))) {
+            assertTrue(service.snapshot().get("canRedesign").getAsBoolean());
+            assertEquals(0, reopened.get());
+            assertThrows(IllegalStateException.class, () -> service.redesign("lobby-agent", "", PlanningRole.FLASH, "provider_2a_r8192", "city_a", "换个设计"));
+            assertThrows(IllegalStateException.class, () -> service.redesign("lobby-agent", "", PlanningRole.ADVANCED, "provider_2a_r8192", "wrong_city", "换个设计"));
+            String busy = service.acquireEmbedded();
+            assertThrows(IllegalStateException.class, () -> service.redesign("lobby-agent", "", PlanningRole.ADVANCED, "provider_2a_r8192", "city_a", "换个设计"));
+            service.release(busy);
+            Path execution = Files.createDirectories(run.resolve("automation/post_d4")).resolve("city_a.json");
+            Files.writeString(execution, "{}");
+            assertFalse(service.snapshot().get("canRedesign").getAsBoolean());
+            assertThrows(IllegalStateException.class, () -> service.redesign("lobby-agent", "", PlanningRole.ADVANCED, "provider_2a_r8192", "city_a", "换个设计"));
+            Files.delete(execution);
+            var started = service.redesign("lobby-agent", "", PlanningRole.ADVANCED, "provider_2a_r8192", "city_a", "换个设计");
+            String token = started.get("leaseToken").getAsString(); waitForIdle(service);
+            assertEquals(1, reopened.get(), service.snapshot().toString());
+            assertEquals("CITY", service.snapshot().get("stage").getAsString());
+            assertFalse(Files.exists(execution));
+            service.next("lobby-agent", token, PlanningRole.ADVANCED, 0, false);
+            assertTrue(awaitTask(service, token).has("tools"));
+            assertThrows(IllegalStateException.class, () -> service.redesign("lobby-agent", token, PlanningRole.ADVANCED, "provider_2a_r8192", "city_a", "重复请求"));
+            service.release(token);
+        } finally { http.stop(0); }
+    }
+
     private static void waitForIdle(PlanningSessionService service) throws Exception {
         for (int i=0; i<200; i++) {
             if (!"running".equals(service.snapshot().get("status").getAsString())) return;

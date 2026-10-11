@@ -14,6 +14,7 @@ import shutil
 import subprocess
 import sys
 from export_core_atlas import export as export_core_atlas
+from classification_coverage import coverage
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools/structure_studio'))
@@ -224,8 +225,11 @@ def build(args):
     ground_unmarked = [row['author']['id'] for row in rows if 'groundPlaneY' not in row]
     ground_coverage = dict(markedCount=len(rows)-len(ground_unmarked),
                            unmarkedCount=len(ground_unmarked), unmarkedIds=ground_unmarked)
+    classification_report = coverage(profiles)
+    write(args.output/'classification_coverage.json', classification_report)
     write(args.output/'studio_export_provenance.json',dict(schema='studio_test_export.v1',templates=rows,
         omitted=omitted,styleCounts=dict(Counter(r['author']['civilization'] for r in rows)),
+        classificationCoverage={k: classification_report[k] for k in ('totalCount', 'classifiedCount', 'unclassifiedCount', 'unclassifiedRefs', 'unmappedFunctionTerms')},
         groundPlaneCoverage=ground_coverage,
         semanticReviewScope='仅核对已选 Studio 作者标签到测试目录的逐字段映射；不代表原模型图审通过',
         entranceAuthority='legacy_catalog_unreviewed',
@@ -237,7 +241,7 @@ def build(args):
         **({'groundPlaneY': r['groundPlaneY']} if 'groundPlaneY' in r else {})) for r in rows])
     export_core_atlas(args.output)
     print(json.dumps(dict(output=str(args.output),selected=len(rows),styles=dict(Counter(r['author']['civilization'] for r in rows)),
-        omitted=omitted,groundPlaneCoverage=ground_coverage),ensure_ascii=False))
+        omitted=omitted,groundPlaneCoverage=ground_coverage,classificationCoverage={k: classification_report[k] for k in ('classifiedCount','unclassifiedCount','unclassifiedRefs')}),ensure_ascii=False))
 
 
 if __name__ == '__main__':
