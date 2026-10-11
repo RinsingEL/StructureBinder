@@ -323,7 +323,12 @@ public record CityBlueprint(
             EnvelopeProfile envelopeProfile,
             String foundationProfileRef,
             List<String> foundationGroupIds,
-            List<Landscape> landscapes) {
+            List<Landscape> landscapes,
+            CityPublicRealmSpec publicRealm) {
+        public OutdoorPlan(OutdoorMode mode, EnvelopeProfile envelopeProfile, String foundationProfileRef,
+                           List<String> foundationGroupIds, List<Landscape> landscapes) {
+            this(mode,envelopeProfile,foundationProfileRef,foundationGroupIds,landscapes,null);
+        }
         public OutdoorPlan {
             foundationGroupIds = List.copyOf(foundationGroupIds);
             landscapes = List.copyOf(landscapes);

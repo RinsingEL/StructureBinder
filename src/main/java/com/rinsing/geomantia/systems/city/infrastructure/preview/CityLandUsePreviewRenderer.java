@@ -343,6 +343,8 @@ public final class CityLandUsePreviewRenderer {
                 case TERRACE_GROUND -> new Color(177, 177, 165, 238);
                 case TERRACE_RAIL -> new Color(119, 119, 125, 245);
                 case GREEN_FIXTURE -> new Color(192, 161, 94, 245);
+                case AUTHORED_BLOCK -> cell.sourceId().startsWith("public_realm::access/")
+                        ? new Color(173,145,94,238) : new Color(72,145,85,245);
             });
             fillBounds(g, transform, new BlockBounds(cell.x(), cell.z(), cell.x(), cell.z()));
         }

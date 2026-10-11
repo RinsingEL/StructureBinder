@@ -341,7 +341,7 @@ public final class CityBlueprintValidator {
                     "Select foundationProfileRef from the current frozen foundationProfiles; preserve the intended terrain treatment. Unknown foundation profile: " + plan.foundationProfileRef());
         }
         if (plan.mode() == CityBlueprint.OutdoorMode.PRESERVE) {
-            if (!plan.foundationGroupIds().isEmpty() || !plan.landscapes().isEmpty()) {
+            if (!plan.foundationGroupIds().isEmpty() || !plan.landscapes().isEmpty() || plan.publicRealm()!=null) {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_MODE_INVALID,
                         "$.outdoorPlan", "Keep PRESERVE by setting foundationGroupIds=[] and landscapes=[]; only choose GENERATE if you intend new outdoor surfaces or landscapes.");
             }

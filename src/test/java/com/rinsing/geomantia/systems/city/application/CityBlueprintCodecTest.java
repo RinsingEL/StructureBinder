@@ -16,6 +16,16 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 class CityBlueprintCodecTest {
+    @Test void publicRealmRoundTripsAndDefensivelyCopies() throws IOException {
+        var json=fixture("valid_city_blueprint.json");
+        var spec=JsonParser.parseString("{schema:'city_public_realm.v1',catalog:'academy',seed:42,spaces:[]}").getAsJsonObject();
+        json.getAsJsonObject("outdoorPlan").add("publicRealm",spec);
+        var blueprint=codec.read(json);spec.addProperty("seed",99);
+        assertEquals(42,blueprint.outdoorPlan().publicRealm().toJson().get("seed").getAsInt());
+        assertEquals(blueprint,codec.read(codec.write(blueprint)));
+        var copy=blueprint.outdoorPlan().publicRealm().toJson();copy.addProperty("seed",3);
+        assertEquals(42,blueprint.outdoorPlan().publicRealm().toJson().get("seed").getAsInt());
+    }
     private final CityBlueprintCodec codec = new CityBlueprintCodec();
     @Test void intentionalLayoutRoundTripsOnLeafAndNestedComposition() throws IOException {
         var json=fixture("valid_city_blueprint.json");

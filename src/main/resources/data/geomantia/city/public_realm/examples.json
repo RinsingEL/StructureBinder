@@ -1,0 +1,564 @@
+[
+  {
+    "id": "fountain",
+    "description": "大型星泉居中，树木围合；道路绕开主体连接四侧入口。",
+    "plan": {
+      "name": "星泉广场 · 环绕中心",
+      "seed": 20261011,
+      "width": 96,
+      "depth": 80,
+      "ground": "STONE",
+      "pathWidth": 5,
+      "entries": [
+        {
+          "x": 36,
+          "z": 3
+        },
+        {
+          "x": 60,
+          "z": 76
+        },
+        {
+          "x": 3,
+          "z": 40
+        },
+        {
+          "x": 92,
+          "z": 40
+        }
+      ],
+      "pools": {
+        "trees": [
+          {
+            "assetId": "studio:mg-50-v01",
+            "weight": 2
+          },
+          {
+            "assetId": "studio:mg-51-v01",
+            "weight": 1
+          },
+          {
+            "assetId": "studio:mg-54-v01",
+            "weight": 1
+          }
+        ],
+        "shrubs": [
+          {
+            "assetId": "studio:mg-56-v01",
+            "weight": 1
+          },
+          {
+            "assetId": "studio:mg-57-v01",
+            "weight": 1
+          }
+        ]
+      },
+      "clearings": [],
+      "nodes": [
+        {
+          "id": "fountain",
+          "x": 48,
+          "z": 40,
+          "assetId": "studio:mg-10-v01"
+        },
+        {
+          "id": "tree-ring",
+          "x": 48,
+          "z": 40,
+          "pool": "trees",
+          "layout": "RING",
+          "count": 8,
+          "radius": 31
+        },
+        {
+          "id": "corner-0",
+          "x": 10,
+          "z": 10,
+          "assetId": "studio:mg-61-v01"
+        },
+        {
+          "id": "corner-1",
+          "x": 86,
+          "z": 10,
+          "assetId": "studio:mg-61-v01"
+        },
+        {
+          "id": "corner-2",
+          "x": 10,
+          "z": 70,
+          "assetId": "studio:mg-61-v01"
+        },
+        {
+          "id": "corner-3",
+          "x": 86,
+          "z": 70,
+          "assetId": "studio:mg-61-v01"
+        }
+      ]
+    }
+  },
+  {
+    "id": "garden",
+    "description": "两个嵌套阅读小庭、偏置树群与开放草坪，由步道连接。",
+    "plan": {
+      "name": "阅读花园 · 分散小庭",
+      "seed": 20261011,
+      "width": 96,
+      "depth": 80,
+      "ground": "GRASS",
+      "pathWidth": 5,
+      "entries": [
+        {
+          "x": 48,
+          "z": 3
+        },
+        {
+          "x": 48,
+          "z": 76
+        },
+        {
+          "x": 3,
+          "z": 40
+        },
+        {
+          "x": 92,
+          "z": 40
+        }
+      ],
+      "pools": {
+        "trees": [
+          {
+            "assetId": "studio:mg-50-v01",
+            "weight": 2
+          },
+          {
+            "assetId": "studio:mg-51-v01",
+            "weight": 1
+          },
+          {
+            "assetId": "studio:mg-54-v01",
+            "weight": 1
+          }
+        ],
+        "shrubs": [
+          {
+            "assetId": "studio:mg-56-v01",
+            "weight": 1
+          },
+          {
+            "assetId": "studio:mg-57-v01",
+            "weight": 1
+          }
+        ],
+        "flowers": [
+          {
+            "assetId": "studio:mg-59-v01",
+            "weight": 2
+          },
+          {
+            "assetId": "studio:mg-60-v01",
+            "weight": 1
+          }
+        ],
+        "low-shrubs": [
+          {
+            "assetId": "studio:mg-56-v01",
+            "weight": 2
+          },
+          {
+            "assetId": "studio:mg-57-v01",
+            "weight": 1
+          }
+        ],
+        "hedges": [
+          {
+            "assetId": "studio:mg-58-v01",
+            "weight": 1
+          }
+        ],
+        "shade-trees": [
+          {
+            "assetId": "studio:mg-52-v01",
+            "weight": 1
+          },
+          {
+            "assetId": "studio:mg-53-v01",
+            "weight": 1
+          },
+          {
+            "assetId": "studio:mg-54-v01",
+            "weight": 1
+          }
+        ]
+      },
+      "clearings": [
+        {
+          "x": 39,
+          "z": 39,
+          "width": 15,
+          "depth": 12
+        }
+      ],
+      "nodes": [
+        {
+          "id": "reading-west",
+          "x": 24,
+          "z": 25,
+          "children": [
+            {
+              "id": "marker",
+              "x": 0,
+              "z": 0,
+              "assetId": "studio:mg-29-v01"
+            },
+            {
+              "id": "tree",
+              "x": -14,
+              "z": 0,
+              "pool": "trees"
+            },
+            {
+              "id": "flowers",
+              "x": 11,
+              "z": 11,
+              "assetId": "studio:mg-61-v01"
+            }
+          ]
+        },
+        {
+          "id": "reading-east",
+          "x": 70,
+          "z": 54,
+          "rotation": 180,
+          "children": [
+            {
+              "id": "marker-east",
+              "x": 0,
+              "z": 0,
+              "assetId": "studio:mg-29-v01"
+            },
+            {
+              "id": "tree-east",
+              "x": -14,
+              "z": 0,
+              "pool": "trees"
+            },
+            {
+              "id": "flowers-east",
+              "x": 11,
+              "z": 11,
+              "assetId": "studio:mg-61-v01"
+            }
+          ]
+        },
+        {
+          "id": "north-grove",
+          "x": 62,
+          "z": 14,
+          "pool": "trees",
+          "layout": "LINE",
+          "count": 3,
+          "spacing": 11
+        },
+        {
+          "id": "south-grove",
+          "x": 12,
+          "z": 65,
+          "pool": "trees",
+          "layout": "LINE",
+          "count": 3,
+          "spacing": 11
+        },
+        {
+          "id": "shrubs",
+          "x": 45,
+          "z": 24,
+          "pool": "shrubs",
+          "layout": "GRID",
+          "count": 4,
+          "columns": 2,
+          "spacing": 8
+        }
+      ],
+      "plantingDensity": 1,
+      "plantingZones": [
+        {
+          "id": "west-shade",
+          "x": 2,
+          "z": 34,
+          "width": 28,
+          "depth": 23,
+          "pool": "shade-trees",
+          "count": 3,
+          "spacing": 10,
+          "shape": "ELLIPSE"
+        },
+        {
+          "id": "east-shade",
+          "x": 69,
+          "z": 20,
+          "width": 25,
+          "depth": 27,
+          "pool": "shade-trees",
+          "count": 3,
+          "spacing": 10,
+          "shape": "ELLIPSE"
+        },
+        {
+          "id": "south-shade",
+          "x": 40,
+          "z": 57,
+          "width": 19,
+          "depth": 21,
+          "pool": "shade-trees",
+          "count": 2,
+          "spacing": 10,
+          "shape": "ELLIPSE"
+        },
+        {
+          "id": "west-garden-shrubs",
+          "x": 3,
+          "z": 7,
+          "width": 38,
+          "depth": 39,
+          "pool": "low-shrubs",
+          "count": 17,
+          "spacing": 6,
+          "shape": "ELLIPSE"
+        },
+        {
+          "id": "east-garden-shrubs",
+          "x": 55,
+          "z": 35,
+          "width": 38,
+          "depth": 39,
+          "pool": "low-shrubs",
+          "count": 17,
+          "spacing": 6,
+          "shape": "ELLIPSE"
+        },
+        {
+          "id": "south-grove-understory",
+          "x": 5,
+          "z": 54,
+          "width": 38,
+          "depth": 22,
+          "pool": "low-shrubs",
+          "count": 12,
+          "spacing": 5,
+          "shape": "ELLIPSE"
+        },
+        {
+          "id": "north-grove-understory",
+          "x": 53,
+          "z": 4,
+          "width": 38,
+          "depth": 23,
+          "pool": "low-shrubs",
+          "count": 12,
+          "spacing": 5,
+          "shape": "ELLIPSE"
+        },
+        {
+          "id": "walkside-flowers",
+          "x": 2,
+          "z": 2,
+          "width": 92,
+          "depth": 76,
+          "pool": "flowers",
+          "count": 80,
+          "spacing": 4,
+          "shape": "PATH_EDGE"
+        },
+        {
+          "id": "west-flower-meadow",
+          "x": 4,
+          "z": 8,
+          "width": 39,
+          "depth": 39,
+          "pool": "flowers",
+          "count": 35,
+          "spacing": 4,
+          "shape": "ELLIPSE"
+        },
+        {
+          "id": "east-flower-meadow",
+          "x": 55,
+          "z": 34,
+          "width": 38,
+          "depth": 41,
+          "pool": "flowers",
+          "count": 35,
+          "spacing": 4,
+          "shape": "ELLIPSE"
+        },
+        {
+          "id": "south-flower-island",
+          "x": 40,
+          "z": 59,
+          "width": 20,
+          "depth": 17,
+          "pool": "flowers",
+          "count": 10,
+          "spacing": 4,
+          "shape": "ELLIPSE"
+        },
+        {
+          "id": "north-border",
+          "x": 3,
+          "z": 2,
+          "width": 90,
+          "depth": 8,
+          "pool": "hedges",
+          "count": 14,
+          "spacing": 6,
+          "shape": "RECTANGLE"
+        },
+        {
+          "id": "south-border",
+          "x": 3,
+          "z": 70,
+          "width": 90,
+          "depth": 8,
+          "pool": "hedges",
+          "count": 14,
+          "spacing": 6,
+          "shape": "RECTANGLE"
+        }
+      ]
+    }
+  },
+  {
+    "id": "ritual",
+    "description": "以现有星石标景代替主坛，前方集会留白，两侧树列框景。",
+    "plan": {
+      "name": "仪式庭院 · 轴线与留白",
+      "seed": 20261011,
+      "width": 96,
+      "depth": 80,
+      "ground": "STONE",
+      "pathWidth": 5,
+      "entries": [
+        {
+          "x": 48,
+          "z": 76
+        },
+        {
+          "x": 3,
+          "z": 50
+        },
+        {
+          "x": 92,
+          "z": 50
+        },
+        {
+          "x": 48,
+          "z": 29
+        }
+      ],
+      "pools": {
+        "trees": [
+          {
+            "assetId": "studio:mg-50-v01",
+            "weight": 2
+          },
+          {
+            "assetId": "studio:mg-51-v01",
+            "weight": 1
+          },
+          {
+            "assetId": "studio:mg-54-v01",
+            "weight": 1
+          }
+        ],
+        "shrubs": [
+          {
+            "assetId": "studio:mg-56-v01",
+            "weight": 1
+          },
+          {
+            "assetId": "studio:mg-57-v01",
+            "weight": 1
+          }
+        ]
+      },
+      "clearings": [
+        {
+          "x": 33,
+          "z": 33,
+          "width": 31,
+          "depth": 30
+        }
+      ],
+      "nodes": [
+        {
+          "id": "altar",
+          "x": 48,
+          "z": 16,
+          "assetId": "studio:mg-42-v01"
+        },
+        {
+          "id": "left-frame",
+          "x": 19,
+          "z": 16,
+          "rotation": 90,
+          "children": [
+            {
+              "id": "left-trees",
+              "x": 0,
+              "z": 0,
+              "pool": "trees",
+              "layout": "LINE",
+              "count": 4,
+              "spacing": 16
+            },
+            {
+              "id": "left-planters",
+              "x": 8,
+              "z": -9,
+              "assetId": "studio:mg-61-v01",
+              "layout": "LINE",
+              "count": 3,
+              "spacing": 16
+            }
+          ]
+        },
+        {
+          "id": "right-frame",
+          "x": 77,
+          "z": 16,
+          "rotation": 90,
+          "children": [
+            {
+              "id": "right-trees",
+              "x": 0,
+              "z": 0,
+              "pool": "trees",
+              "layout": "LINE",
+              "count": 4,
+              "spacing": 16
+            },
+            {
+              "id": "right-planters",
+              "x": 8,
+              "z": 9,
+              "assetId": "studio:mg-61-v01",
+              "layout": "LINE",
+              "count": 3,
+              "spacing": 16
+            }
+          ]
+        },
+        {
+          "id": "altar-flank",
+          "x": 34,
+          "z": 16,
+          "assetId": "studio:mg-61-v01",
+          "layout": "LINE",
+          "count": 2,
+          "spacing": 28
+        }
+      ]
+    }
+  }
+]

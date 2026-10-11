@@ -30,6 +30,16 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityOutdoorBlueprintCompilerTest {
+    @Test void publicRealmRunsThroughProductionLandUsePlanningAndFreezesItsReport() {
+        var compiled=compile(d6Plan());
+        var spec=new com.rinsing.geomantia.systems.city.domain.blueprint.CityPublicRealmSpec(JsonParser.parseString(
+                "{schema:'city_public_realm.v1',catalog:'academy',seed:123,greenery:{pools:{flowers:'flower_patches'},maxPlacements:10,layeredPlanting:true},fringe:{width:12,pools:{trees:'outer_trees'},maxPlacements:10}}"
+        ).getAsJsonObject());
+        var planned=new LandUsePlanningService().plan("city",compiled.resolution(),d5Corridor(),terrain(),compiled.residualConfig(),spec);
+        assertTrue(planned.quality().has("publicRealm"));
+        assertEquals(planned.surfacePrintPlan().planHash(),planned.quality().getAsJsonObject("publicRealm").get("surfacePlanHash").getAsString());
+        assertTrue(planned.surfacePrintPlan().featureCells().stream().anyMatch(f->f.kind()==com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan.FeatureKind.AUTHORED_BLOCK));
+    }
     @Test void designedDistrictConsumesOneCoreAcrossItsNestedSupportArrays() {
         var b=blueprint();var bp=new CityBlueprint(b.schema(),b.cityId(),b.sourceD3Ref(),b.catalogSnapshotRef(),b.generationSeed(),
                 b.designIntent(),b.styleProfile(),b.groups(),b.arrayCompositions(),b.relations(),b.roadProfile(),b.surfaceDetailProfile(),b.outdoorPlan(),b.surfaceMaterials(),

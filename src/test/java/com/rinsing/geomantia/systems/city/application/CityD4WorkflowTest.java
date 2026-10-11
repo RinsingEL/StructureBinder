@@ -8,6 +8,13 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CityD4WorkflowTest {
+    @Test void publicRealmSurvivesDistrictAssemblyAndRevision() {
+        JsonObject state=json("{citySettings:{outdoorPlan:{mode:'GENERATE'}},bodies:{a:{groups:[],publicRealm:{schema:'city_public_realm.v1',catalog:'academy',spaces:[{id:'a',owner:'a',plan:{}}]}},b:{groups:[],publicRealm:{schema:'city_public_realm.v1',catalog:'academy',spaces:[{id:'b',owner:'b',plan:{}}]}}}}");
+        assertEquals(2,CityD4Workflow.assemble(state).getAsJsonObject("outdoorPlan").getAsJsonObject("publicRealm").getAsJsonArray("spaces").size());
+        var before=state.getAsJsonObject("bodies").getAsJsonObject("a");
+        var updated=CityD4Workflow.mergeChanges(before,json("{publicRealm:{schema:'city_public_realm.v1',catalog:'academy',spaces:[]}}"));
+        assertTrue(updated.getAsJsonObject("publicRealm").getAsJsonArray("spaces").isEmpty());
+    }
     @TempDir Path dir;
     private int compiled;
     private JsonObject correctedOverview() throws Exception {

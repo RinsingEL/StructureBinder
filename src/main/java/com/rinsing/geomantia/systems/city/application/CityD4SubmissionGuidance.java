@@ -35,6 +35,7 @@ final class CityD4SubmissionGuidance {
                 "核心结构必须按阵列同时安排配套，允许复用素材自带的完整院落装饰；不得为完整素材重复加一圈。使用角色标记与实际尺寸选择小型配套，COMPACT 可全部使用小模板。总览若仅留下孤立核心，需调整选材或阵列后重新审查。",
                 "嵌套成员不能同时有独立 placementRelation；保留嵌套时删除该成员的 placementRelation。不要为了修参数删掉建筑组或换算法。",
                 "ATTACHED 景观：提供 owner.groupId，instanceCount=1，省略 placementDomain；多块景观用所选 profile 允许范围内的 parcelCount。",
+                "公共空间可通过 publicRealm 配置真实模板池、嵌套点列/网格/环绕、分层种植、外围绿化及港口/外城出口；先查询 city_d4_example caseId=public_realm。场地 owner 是已声明院落的组或阵列 ID，必须落在冻结公共地面内；出口 waypoints 由 AI 指定且须连接已有道路。",
                 "提交前核对上述参数规则；地形与碰撞由程序处理；初次编译自动推进；已保存区仍可重新选材、调整并再编译。")) rules.add(rule);
         result.add("beforeSubmit",rules);
         result.addProperty("acceptanceInstruction", acceptanceInstruction()); return result;

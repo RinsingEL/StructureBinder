@@ -212,7 +212,7 @@ public final class ProviderPlanningToolCatalog {
             case "city_d4_overview" -> {
                 JsonObject settings=new JsonObject();
                 for(String key:List.of("designIntent","styleProfile","roadProfile","surfaceDetailProfile","surfaceMaterials")) settings.add(key,blueprint.get(key).deepCopy());
-                settings.add("outdoorPlan",object(properties("mode",enumeration("GENERATE","PRESERVE"),"envelopeProfile",enumeration("COMPACT","BALANCED","LOOSE"),"foundationProfileRef",string()),"mode","envelopeProfile","foundationProfileRef"));
+                settings.add("outdoorPlan",object(properties("mode",enumeration("GENERATE","PRESERVE"),"envelopeProfile",enumeration("COMPACT","BALANCED","LOOSE"),"foundationProfileRef",string(),"publicRealm",publicRealmSchema()),"mode","envelopeProfile","foundationProfileRef"));
                 p.add("overview",object(properties("citySettings",object(settings,"designIntent","styleProfile","roadProfile","surfaceDetailProfile","outdoorPlan"),"districts",source.getAsJsonObject("designIntent").getAsJsonObject("properties").get("groups").deepCopy(),"districtDisposition",dispositionSchema()),"citySettings","districts")); required.add("overview");
             }
             case "city_d4_district" -> {
@@ -223,7 +223,7 @@ public final class ProviderPlanningToolCatalog {
             case "city_d4_integrate" -> {
                 JsonObject changes=districtSchema(blueprint,true);
                 JsonObject cp=changes.getAsJsonObject("properties");
-                for(String key:List.of("landscapes","surfaceMaterials","removeGroupIds","removeCompositionIds","removeLandscapeIds"))cp.remove(key);
+                for(String key:List.of("landscapes","surfaceMaterials","publicRealm","removeGroupIds","removeCompositionIds","removeLandscapeIds"))cp.remove(key);
                 p.add("changes",changes);p.add("targetDistrictId",string());p.add("protectedDistrictIds",array(string()));
                 p.add("expansionMode",enumeration("ADJUST_ARRAY","OUTWARD_ARRAY","REPAIR_CORE"));p.add("integrationIntent",string());
                 p.add("baseDraftHash",string());p.add("assessment",described(string(),"看当前总览判断整体性及各区功能是否保留；允许隔河，不要求接触。"));
@@ -265,7 +265,7 @@ public final class ProviderPlanningToolCatalog {
         for(String key:List.of("groups","arrayCompositions","relations","surfaceMaterials")) fields.add(key,blueprint.get(key).deepCopy());
         fields.getAsJsonObject("surfaceMaterials").getAsJsonObject("properties").remove("defaults");
         JsonObject outdoor=blueprint.getAsJsonObject("outdoorPlan").getAsJsonObject("properties");
-        for(String key:List.of("foundationGroupIds","landscapes"))fields.add(key,outdoor.get(key).deepCopy());
+        for(String key:List.of("foundationGroupIds","landscapes","publicRealm"))fields.add(key,outdoor.get(key).deepCopy());
         if(update) {
             for(String key:List.of("groups","arrayCompositions","landscapes")) {
                 JsonObject item=fields.getAsJsonObject(key).getAsJsonObject("items"); relaxUpdateRequired(item);
@@ -477,8 +477,17 @@ public final class ProviderPlanningToolCatalog {
                 "mode", enumeration("GENERATE", "PRESERVE"),
                 "envelopeProfile", enumeration("COMPACT", "BALANCED", "LOOSE"),
                 "foundationProfileRef", string(), "foundationGroupIds", described(array(string()),"明确需要台地/铺地的本区建筑组 ID；未列出的组保留原地面。"),
-                "landscapes", array(landscapeSchema())),
+                "landscapes", array(landscapeSchema()), "publicRealm", publicRealmSchema()),
                 "mode", "envelopeProfile", "foundationProfileRef", "foundationGroupIds", "landscapes");
+    }
+
+    private static JsonObject publicRealmSchema() {
+        return described(object(properties("schema",enumeration("city_public_realm.v1"),"catalog",enumeration("academy"),
+                "seed",integer(),"spaces",array(object(properties("id",string(),"owner",string(),
+                "origin",object(properties("x",integer(),"z",integer()),"x","z"),"plan",object()),"id","owner","plan")),
+                "greenery",object(),"fringe",object(),"externalAccess",object()),"schema","catalog"),
+                "已验证公共空间配置。先查询 city_d4_example caseId=public_realm；提供真实场地 owner、嵌套构图与种植池；外城/港口出口的世界坐标和高度由 AI 指定。只用于 GENERATE，不新增建筑核心或台地。分区可各交 spaces，全城 greenery/fringe/externalAccess 只声明一次。"
+        );
     }
 
     private static JsonObject landscapeSchema() {

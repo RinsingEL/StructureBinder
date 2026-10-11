@@ -14,6 +14,17 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandUseChunkExecutorTest {
+    @Test void authoredStatesReachWriterAndOccupiedTemplateRollsBackWholeChunk() {
+        var features=List.of(new CityLandUseChunkCompiler.FeatureOperation("public_realm::tree@asset#hash",2,2,
+                "minecraft:oak_log[axis=y]",1,CityLandUseSurfacePrintPlan.FeatureKind.AUTHORED_BLOCK,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,64),
+                new CityLandUseChunkCompiler.FeatureOperation("public_realm::tree@asset#hash",2,2,
+                "minecraft:oak_leaves[persistent=true]",2,CityLandUseSurfacePrintPlan.FeatureKind.AUTHORED_BLOCK,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,64));
+        var fragment=new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,"city","hash","palette",0,0,1,0,0,0,"minecraft:dirt",List.of(),List.of(),List.of(),features,features);
+        var clear=new FakeWorld();assertEquals(CityLandUseChunkExecutor.Status.APPLIED,new CityLandUseChunkExecutor().execute(fragment,clear,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES).status());
+        assertTrue(clear.writes.contains("2,65,2=minecraft:oak_log[axis=y]"));
+        var blocked=new FakeWorld();blocked.replaceable.put("2,66,2",false);
+        assertEquals(CityLandUseChunkExecutor.Status.FAILED,new CityLandUseChunkExecutor().execute(fragment,blocked,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES).status());assertTrue(blocked.writes.isEmpty());
+    }
     private final CityLandUseChunkExecutor executor = new CityLandUseChunkExecutor();
     @Test void connectionTerraceIsSolidAndClearsNativeVegetationButRejectsWater() {
         var ground=new CityLandUseChunkCompiler.FeatureOperation("shared_terrace::city",15,2,"minecraft:smooth_stone",0,

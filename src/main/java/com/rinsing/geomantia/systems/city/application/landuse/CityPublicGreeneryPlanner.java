@@ -41,6 +41,11 @@ public final class CityPublicGreeneryPlanner {
     public CityLandUseSurfacePrintPlan append(CityLandUseSurfacePrintPlan source,
             CityDistrictPlanner.Result district, LandUseAreaPlan landUse, Preset preset,
             List<LandUseAreaPlan.CorridorExclusion> reservations) {
+        return append(source,district,landUse,preset,reservations,true);
+    }
+    public CityLandUseSurfacePrintPlan append(CityLandUseSurfacePrintPlan source,
+            CityDistrictPlanner.Result district, LandUseAreaPlan landUse, Preset preset,
+            List<LandUseAreaPlan.CorridorExclusion> reservations,boolean designedFixtures) {
         if (district == null || district.natural().isEmpty() && district.cores().isEmpty()) return source;
         Set<BlockPoint> available = new HashSet<>(district.natural());
         // Designed districts also own gardens on their shared platform, outside building lots.
@@ -97,7 +102,7 @@ public final class CityPublicGreeneryPlanner {
         }
         var planted=new CityLandUseSurfacePrintPlan(source.schema(),source.cityId(),source.sourceLandUsePlanHash(),"",
                 source.areas(),source.sharedBoundarySpans(),features,source.materialField());
-        features=new ArrayList<>(new CityDesignedPublicSpacePlanner().plan(planted,district.publicSpaces(),available,
+        if(designedFixtures)features=new ArrayList<>(new CityDesignedPublicSpacePlanner().plan(planted,district.publicSpaces(),available,
                 preset.density()>0,CityDesignedPublicSpacePlanner.Palette.load()));
         features.sort(Comparator.comparingInt(CityLandUseSurfacePrintPlan.FeatureCell::z)
                 .thenComparingInt(CityLandUseSurfacePrintPlan.FeatureCell::x)

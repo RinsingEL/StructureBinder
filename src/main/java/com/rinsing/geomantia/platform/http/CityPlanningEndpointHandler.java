@@ -1499,7 +1499,7 @@ final class CityPlanningEndpointHandler {
 
         LandUsePlanningService.Result result = new LandUsePlanningService().plan(
                 citySeedId, compiled.resolution(), inputs.d5MaskPlan(), inputs.terrainField(),
-                compiled.residualConfig());
+                compiled.residualConfig(), inputs.blueprint().outdoorPlan().publicRealm());
 
         Path urbanSpacePath = outputDirectory.resolve("city_urban_space_plan.json");
         Path areaPath = outputDirectory.resolve("city_land_use_area_plan.json");
@@ -1920,7 +1920,10 @@ final class CityPlanningEndpointHandler {
                     anchorMap, JsonParser.parseString(Files.readString(exitPath)).getAsJsonObject());
             sourceAnchorMap = anchorMap.deepCopy();
         }
-        if (level != null && Files.exists(treeTerrainPath) && Files.exists(wallReservationPath)) {
+        Path realmBlueprint=d4Dir.resolve("city_blueprint.json");
+        boolean realmOwnsPlanting=Files.isRegularFile(realmBlueprint)&&JsonParser.parseString(
+                Files.readString(realmBlueprint)).getAsJsonObject().getAsJsonObject("outdoorPlan").has("publicRealm");
+        if (!realmOwnsPlanting && level != null && Files.exists(treeTerrainPath) && Files.exists(wallReservationPath)) {
             var trees = com.rinsing.geomantia.systems.city.application.CityRoadsideTreePlanner
                     .readCatalog(templateMetadataInspector);
             anchorMap = new com.rinsing.geomantia.systems.city.application.CityRoadsideTreePlanner().append(

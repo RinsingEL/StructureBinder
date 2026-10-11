@@ -141,6 +141,9 @@ public final class CityLandUseChunkExecutor {
                 roadSources.put(new ColumnKey(road.x(),road.z()),road.sourceId());
         }
         Set<ColumnKey> circulationColumns = new HashSet<>(roadColumns);
+        featureOperations.stream().filter(f->f.kind()==CityLandUseSurfacePrintPlan.FeatureKind.AUTHORED_BLOCK
+                && (f.sourceId().startsWith("public_realm::access/")||f.sourceId().endsWith("/path")))
+                .forEach(f->circulationColumns.add(new ColumnKey(f.x(),f.z())));
         foundationPlan.accessPaths().forEach(path -> circulationColumns.add(new ColumnKey(path.x(), path.z())));
         foundationPlan.stairs().forEach(stair -> circulationColumns.add(new ColumnKey(stair.x(), stair.z())));
         Set<ColumnKey> existingSurfaceColumns = surfaceOperations.stream()
@@ -165,6 +168,7 @@ public final class CityLandUseChunkExecutor {
         surfaceOperations.forEach(operation -> surfaceColumns.add(new ColumnKey(operation.x(), operation.z())));
         for (var feature : featureOperations) {
             if (feature.targetSurfaceY() == null || feature.surfaceOffset() != 0) continue;
+            if(feature.kind()==CityLandUseSurfacePrintPlan.FeatureKind.AUTHORED_BLOCK)continue;
             ColumnKey key = new ColumnKey(feature.x(), feature.z());
             frozenRoadColumns.add(key);
             ColumnSample column = terrainView.sample(feature.x(), feature.z());
@@ -416,6 +420,29 @@ public final class CityLandUseChunkExecutor {
 
         Set<CityLandUseChunkCompiler.FeatureOperation> bridgePierRails =
                 CityBridgeStructurePlanner.posts(fragment);
+        Map<String,List<CityLandUseChunkCompiler.FeatureOperation>> authoredGroups=new HashMap<>();
+        for(var f:featureOperations)if(f.kind()==CityLandUseSurfacePrintPlan.FeatureKind.AUTHORED_BLOCK&&f.sourceId().contains("@"))
+            authoredGroups.computeIfAbsent(f.sourceId(),ignored->new ArrayList<>()).add(f);
+        for(var group:authoredGroups.values()) {
+            int minX=group.stream().mapToInt(CityLandUseChunkCompiler.FeatureOperation::x).min().orElseThrow();
+            int maxX=group.stream().mapToInt(CityLandUseChunkCompiler.FeatureOperation::x).max().orElseThrow();
+            int minZ=group.stream().mapToInt(CityLandUseChunkCompiler.FeatureOperation::z).min().orElseThrow();
+            int maxZ=group.stream().mapToInt(CityLandUseChunkCompiler.FeatureOperation::z).max().orElseThrow();
+            int ground=group.get(0).targetSurfaceY();
+            int minOffset=group.stream().mapToInt(CityLandUseChunkCompiler.FeatureOperation::surfaceOffset).min().orElseThrow();
+            int maxY=group.stream().mapToInt(f->f.targetSurfaceY()+f.surfaceOffset()).max().orElseThrow();
+            // Check unpainted air as well; a hollow template must not swallow a foreign solid.
+            for(int z=minZ;z<=maxZ;z++)for(int x=minX;x<=maxX;x++)for(int y=Math.max(ground+1,ground+minOffset);y<=maxY;y++) {
+                if(!baseMutationClearsTarget(basePrepared,x,y,z)&&!world.canReplacePublicRealm(x,y,z,false))
+                    return ExecutionResult.failed(fragment,"CITY_PUBLIC_REALM_VOLUME_OCCUPIED",0,0,0,0,true,foundationPlan);
+            }
+            if(minOffset<=1)for(var f:group)if(f.surfaceOffset()==minOffset) {
+                int y=f.targetSurfaceY()+f.surfaceOffset()-1;
+                boolean plannedSupport=basePrepared.stream().anyMatch(m->m.x()==f.x()&&m.y()==y&&m.z()==f.z()&&!m.blockId().equals("minecraft:air"));
+                if(!plannedSupport&&!world.supportsPublicRealm(f.x(),y,f.z()))
+                    return ExecutionResult.failed(fragment,"CITY_PUBLIC_REALM_SUPPORT_MISSING",0,0,0,0,true,foundationPlan);
+            }
+        }
         Set<ColumnKey> materializedPlatformStairs = new HashSet<>();
         Set<ColumnKey> skippedPublicGround = new HashSet<>();
         Map<ColumnKey, List<CityLandUseChunkCompiler.FeatureOperation>> roadsideDecorations = new HashMap<>();
@@ -510,6 +537,24 @@ public final class CityLandUseChunkExecutor {
                     operation.x(),operation.z(),fragment.materialField().at("bridgePost",operation.x(),operation.z(),operation.sourceId(),operation.blockId()),
                     operation.surfaceOffset(),operation.kind(),operation.facing(),operation.targetSurfaceY());
             int featureY = surfaceY + effectiveOperation.surfaceOffset();
+            if(operation.kind()==CityLandUseSurfacePrintPlan.FeatureKind.AUTHORED_BLOCK) {
+                boolean ownedBase=basePrepared.stream().anyMatch(m->m.x()==operation.x()&&m.y()==featureY&&m.z()==operation.z());
+                boolean replacement=ownedBase||world.canReplacePublicRealm(operation.x(),featureY,operation.z(),
+                        operation.surfaceOffset()<=0||operation.sourceId().startsWith("public_realm::access/"));
+                if(!replacement) {
+                    PreparedMutation rejected=PreparedMutation.failed(operation.sourceId(),OperationPhase.FEATURE,
+                            operation.x(),featureY,operation.z(),operation.blockId(),"CITY_PUBLIC_REALM_TARGET_OCCUPIED");
+                    return ExecutionResult.failed(fragment,rejected,preparedCount(basePrepared,cropPrepared,boundaryPrepared),
+                            0,naturalSurfaceSkipped,occupiedBoundarySkipped,true);
+                }
+                PreparedMutation authored=prepare(world,operation.sourceId(),OperationPhase.FEATURE,
+                        operation.x(),featureY,operation.z(),operation.blockId(),!replacement)
+                        .withFeature(operation.kind(),operation.facing());
+                if(authored.failureReason()!=null)return ExecutionResult.failed(fragment,authored,
+                        preparedCount(basePrepared,cropPrepared,boundaryPrepared),0,naturalSurfaceSkipped,occupiedBoundarySkipped,true);
+                (operation.surfaceOffset()<=0?basePrepared:cropPrepared).add(authored);
+                continue;
+            }
             PreparedMutation mutation = prepareFeature(world, effectiveOperation, featureY,
                     baseMutationClearsTarget(basePrepared,
                             effectiveOperation.x(), featureY, effectiveOperation.z()));
@@ -865,6 +910,15 @@ public final class CityLandUseChunkExecutor {
         default ColumnSample samplePublicGround(int x, int z) { return sampleColumn(x, z); }
         default boolean isPublicVegetation(int x, int y, int z) { return false; }
         default boolean supportsRoadsidePlant(String blockId, int x, int y, int z) { return true; }
+        default boolean canReplacePublicRealm(int x,int y,int z,boolean ground) {
+            if(inspect(x,y,z).replaceable())return true;
+            ColumnSample c=samplePublicGround(x,z);
+            return ground&&c.naturalSurface()&&y<=c.surfaceY()&&y>=c.surfaceY()-8
+                    &&!"minecraft:water".equals(c.surfaceBlockId())&&!"minecraft:lava".equals(c.surfaceBlockId());
+        }
+        default boolean supportsPublicRealm(int x,int y,int z) {
+            ColumnSample c=samplePublicGround(x,z);return c.naturalSurface()&&c.surfaceY()>=y;
+        }
 
         default boolean supportsChannel(int worldX, int y, int worldZ, boolean bed) {
             ColumnSample column = sampleColumn(worldX, worldZ);
@@ -1211,6 +1265,23 @@ public final class CityLandUseChunkExecutor {
         return requested;
     }
 
+    /** Decode every authored property; malformed values never silently fall back to a default state. */
+    @SuppressWarnings({"rawtypes","unchecked"})
+    static BlockState authoredBlockState(String text) {
+        if(!com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmAssets.validState(text))return null;
+        int bracket=text.indexOf('[');String id=bracket<0?text:text.substring(0,bracket);
+        ResourceLocation key=ResourceLocation.tryParse(id);if(key==null||!BuiltInRegistries.BLOCK.containsKey(key))return null;
+        BlockState state=BuiltInRegistries.BLOCK.get(key).defaultBlockState();
+        Set<String> seen=new HashSet<>();
+        if(bracket>=0)for(String pair:text.substring(bracket+1,text.length()-1).split(",")) {
+            String[] kv=pair.split("=");var property=state.getBlock().getStateDefinition().getProperty(kv[0]);
+            if(property==null||!seen.add(kv[0]))return null;
+            var value=property.getValue(kv[1]);if(value.isEmpty())return null;
+            state=state.setValue((net.minecraft.world.level.block.state.properties.Property)property,(Comparable)value.get());
+        }
+        return state;
+    }
+
     static BlockState boundaryBlockState(BlockState requested) {
         if (requested.hasProperty(LeavesBlock.PERSISTENT)) {
             requested = requested.setValue(LeavesBlock.PERSISTENT, true);
@@ -1357,8 +1428,23 @@ public final class CityLandUseChunkExecutor {
 
         @Override
         public boolean isKnownBlock(String blockId) {
-            ResourceLocation key = ResourceLocation.tryParse(blockId);
-            return key != null && BuiltInRegistries.BLOCK.containsKey(key);
+            return authoredBlockState(blockId)!=null;
+        }
+
+        @Override
+        public boolean canReplacePublicRealm(int x,int y,int z,boolean ground) {
+            BlockState s=getBlockState(new BlockPos(x,y,z));
+            if(!s.getFluidState().isEmpty()||s.hasBlockEntity())return false;
+            if(s.isAir()||s.canBeReplaced())return true;
+            if(isPublicVegetation(x,y,z)&&!s.is(BlockTags.LOGS))return true;
+            ColumnSample c=samplePublicGround(x,z);
+            return ground&&c.naturalSurface()&&Math.abs(c.surfaceY()-y)<=8
+                    &&(s.is(BlockTags.DIRT)||s.is(Blocks.STONE)||s.is(Blocks.DEEPSLATE)||s.is(Blocks.GRAVEL)||s.is(Blocks.SAND));
+        }
+
+        @Override public boolean supportsPublicRealm(int x,int y,int z) {
+            BlockPos pos=new BlockPos(x,y,z);BlockState s=getBlockState(pos);
+            return s.getFluidState().isEmpty()&&s.isFaceSturdy(level,pos,Direction.UP);
         }
 
         @Override
@@ -1473,6 +1559,12 @@ public final class CityLandUseChunkExecutor {
         public boolean setFeatureBlock(int worldX, int y, int worldZ, String blockId,
                                        CityLandUseSurfacePrintPlan.FeatureKind kind,
                                        CityLandUseSurfacePrintPlan.HorizontalFacing facing) {
+            if(kind==CityLandUseSurfacePrintPlan.FeatureKind.AUTHORED_BLOCK) {
+                BlockState requested=authoredBlockState(blockId);if(requested==null)return false;
+                BlockPos pos=new BlockPos(worldX,y,worldZ);
+                boolean written=writeExactBlockState(this,pos,requested,Block.UPDATE_CLIENTS|Block.UPDATE_KNOWN_SHAPE);
+                if(written)watchObservedNeighborhood(pos);return written;
+            }
             if (kind != CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
                     && kind != CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK
                     && kind != CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR

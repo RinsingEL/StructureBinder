@@ -414,8 +414,9 @@ public final class CityD4Workflow {
     }
     private static JsonObject newRequest(JsonObject review){JsonObject r=new JsonObject();r.add("designReview",review);return r;}
     private static void validateBody(JsonObject body) {
-        require(Set.of("groups","arrayCompositions","relations","foundationGroupIds","landscapes","surfaceMaterials","core").containsAll(body.keySet()),
+        require(Set.of("groups","arrayCompositions","relations","foundationGroupIds","landscapes","surfaceMaterials","core","publicRealm").containsAll(body.keySet()),
                 "设计只接受阵列、嵌套、关系、foundationGroupIds、景观与局部表面方块；spatialGrounds 已删除。");
+        if(body.has("publicRealm"))new com.rinsing.geomantia.systems.city.domain.blueprint.CityPublicRealmSpec(body.getAsJsonObject("publicRealm"));
         for(String key:List.of("groups","arrayCompositions","relations","foundationGroupIds","landscapes"))
             if(body.has(key)) require(body.get(key).isJsonArray(),key+" 必须是数组。");
         Set<String> ids=groupIds(body);
@@ -447,11 +448,12 @@ public final class CityD4Workflow {
     }
 
     static JsonObject mergeChanges(JsonObject before,JsonObject changes) {
-        require(Set.of("groups","arrayCompositions","relations","foundationGroupIds","landscapes","surfaceMaterials",
+        require(Set.of("groups","arrayCompositions","relations","foundationGroupIds","landscapes","surfaceMaterials","publicRealm",
                 "removeGroupIds","removeCompositionIds","removeLandscapeIds").containsAll(changes.keySet()),"changes 包含未知字段。");
         require(changes.size()>0,"changes 不能为空。");
-        for(String key:changes.keySet()) if(!key.equals("surfaceMaterials")) require(changes.get(key).isJsonArray(),key+" 必须是数组。");
+        for(String key:changes.keySet()) if(!Set.of("surfaceMaterials","publicRealm").contains(key)) require(changes.get(key).isJsonArray(),key+" 必须是数组。");
         JsonObject result=before.deepCopy();
+        if(changes.has("publicRealm"))result.add("publicRealm",changes.get("publicRealm").deepCopy());
         mergeItems(result,changes,"groups","groupId","removeGroupIds");
         mergeItems(result,changes,"arrayCompositions","compositionId","removeCompositionIds");
         mergeItems(result,changes,"landscapes","landscapeId","removeLandscapeIds");
@@ -518,6 +520,7 @@ public final class CityD4Workflow {
         Set<String> ids=new HashSet<>(), compositions=new HashSet<>(), landscapes=new HashSet<>();
         for(JsonObject body:bodies) {
             validateBody(body);
+            if(body.has("publicRealm"))outdoor.add("publicRealm",mergePublicRealm(object(outdoor,"publicRealm"),body.getAsJsonObject("publicRealm")));
             if(body.has("surfaceMaterials")) city.add("surfaceMaterials",mergeObject(object(city,"surfaceMaterials"),object(body,"surfaceMaterials")));
             for(var group:array(body,"groups")) require(ids.add(text(group.getAsJsonObject(),"groupId")),"不同功能区不可复用建筑组 ID。");
             for(var comp:array(body,"arrayCompositions")) require(compositions.add(text(comp.getAsJsonObject(),"compositionId")),"嵌套 ID 不可重复。");
@@ -526,6 +529,17 @@ public final class CityD4Workflow {
             for(String key:List.of("foundationGroupIds","landscapes")) array(body,key).forEach(e->outdoor.getAsJsonArray(key).add(e.deepCopy()));
         }
         return city;
+    }
+    private static JsonObject mergePublicRealm(JsonObject before,JsonObject next) {
+        JsonObject result=before.deepCopy();
+        for(var entry:next.entrySet()) {
+            if(entry.getKey().equals("spaces"))continue;
+            require(!result.has(entry.getKey())||result.get(entry.getKey()).equals(entry.getValue()),"公共空间全城配置冲突："+entry.getKey());
+            result.add(entry.getKey(),entry.getValue().deepCopy());
+        }
+        JsonArray spaces=array(result,"spaces").deepCopy();Set<String> ids=new HashSet<>();for(var e:spaces)ids.add(text(e.getAsJsonObject(),"id"));
+        for(var e:array(next,"spaces")){require(ids.add(text(e.getAsJsonObject(),"id")),"公共空间 ID 不可重复。");spaces.add(e.deepCopy());}
+        result.add("spaces",spaces);return result;
     }
     static JsonObject receipt(JsonObject state,JsonObject result) {
         result.add("d4Workflow",view(state));

@@ -22,6 +22,7 @@ final class CityDesignExamples {
     static JsonArray index() {
         try {
             JsonArray index = new JsonArray();
+            JsonObject realm=new JsonObject();realm.addProperty("id","public_realm");realm.addProperty("title","可配置公共空间与学院模板池");realm.addProperty("when","构图、绿化或外城/港口出口设计");index.add(realm);
             for (var entry : catalog()) {
                 var item = entry.getAsJsonObject();
                 JsonObject summary = new JsonObject();
@@ -39,6 +40,10 @@ final class CityDesignExamples {
 
     static JsonObject read(Path output, String contextId, JsonObject request) throws IOException {
         String id = request.has("caseId") ? request.get("caseId").getAsString() : "";
+        if(id.equals("public_realm")) {
+            JsonObject result=com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmAssets.describe();
+            result.addProperty("ok",true);result.addProperty("caseId",id);return result;
+        }
         JsonObject selected = null;
         for (var entry : catalog()) if (id.equals(entry.getAsJsonObject().get("id").getAsString()))
             selected = entry.getAsJsonObject();

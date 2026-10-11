@@ -65,7 +65,8 @@ public record CityLandUseSurfacePrintPlan(
         }
         Set<String> featureKeys = new HashSet<>();
         for (FeatureCell cell : featureCells) {
-            String key = cell.x() + ":" + cell.z() + ":" + cell.surfaceOffset();
+            String key = cell.x() + ":" + cell.z() + ":" + (cell.kind()==FeatureKind.AUTHORED_BLOCK
+                    ? "absolute:"+(cell.targetSurfaceY()+cell.surfaceOffset()) : cell.surfaceOffset());
             if (!featureKeys.add(key)) {
                 throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_FEATURE_CELL_DUPLICATE:" + key);
             }
@@ -102,17 +103,21 @@ public record CityLandUseSurfacePrintPlan(
         }
         public FeatureCell {
             requireText(sourceId, "CITY_LAND_USE_SURFACE_FEATURE_SOURCE_REQUIRED");
-            requireBlock(blockId, "CITY_LAND_USE_SURFACE_FEATURE_BLOCK_INVALID");
+            if(kind==FeatureKind.AUTHORED_BLOCK) {
+                if(!com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmAssets.validState(blockId)
+                        ||targetSurfaceY==null||surfaceOffset < -8||surfaceOffset>128)
+                    throw new IllegalArgumentException("CITY_PUBLIC_REALM_BLOCK_INVALID");
+            } else requireBlock(blockId, "CITY_LAND_USE_SURFACE_FEATURE_BLOCK_INVALID");
             Objects.requireNonNull(kind, "kind");
             facing = facing == null ? HorizontalFacing.NONE : facing;
             boolean frozenSurface = surfaceOffset == 0 && (kind == FeatureKind.TERRACE_GROUND || kind == FeatureKind.ROAD_SLAB
                     || kind == FeatureKind.ROAD_STAIR || kind == FeatureKind.BRIDGE_DECK);
             boolean frozenBridgeRail = surfaceOffset > 0 && (kind == FeatureKind.BRIDGE_RAIL
                     || kind == FeatureKind.TERRACE_RAIL || kind == FeatureKind.GREEN_PLANT || kind == FeatureKind.GREEN_FIXTURE);
-            if (targetSurfaceY != null && !frozenSurface && !frozenBridgeRail) {
+            if (targetSurfaceY != null && !frozenSurface && !frozenBridgeRail && kind!=FeatureKind.AUTHORED_BLOCK) {
                 throw new IllegalArgumentException("CITY_LAND_USE_FROZEN_GRADE_REQUIRES_ROAD_SURFACE");
             }
-            if (surfaceOffset < 0 || kind == FeatureKind.ROAD_STAIR
+            if (surfaceOffset < 0 && kind!=FeatureKind.AUTHORED_BLOCK || kind == FeatureKind.ROAD_STAIR
                     && facing == HorizontalFacing.NONE || kind != FeatureKind.ROAD_STAIR && kind != FeatureKind.GREEN_FIXTURE
                     && facing != HorizontalFacing.NONE) {
                 throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_FEATURE_CELL_INVALID");
@@ -132,7 +137,8 @@ public record CityLandUseSurfacePrintPlan(
         OVERFLOW_BOUNDARY,
         TERRACE_GROUND,
         TERRACE_RAIL,
-        GREEN_FIXTURE
+        GREEN_FIXTURE,
+        AUTHORED_BLOCK
     }
 
     public enum HorizontalFacing { NONE, NORTH, EAST, SOUTH, WEST }

@@ -95,7 +95,8 @@ final class CityLandUseMicroGrader {
             frozenCells.add(new Cell(cell.x(),cell.z()));
         roadTargets.keySet().removeAll(frozenCells);
         platformTargets.putAll(roadTargets);
-        fragment.gradingFeatureOperations().stream().filter(operation -> operation.targetSurfaceY() != null)
+        fragment.gradingFeatureOperations().stream().filter(operation -> operation.targetSurfaceY() != null
+                        && operation.kind()!=CityLandUseSurfacePrintPlan.FeatureKind.AUTHORED_BLOCK)
                 .forEach(operation -> {
                     Cell cell = new Cell(operation.x(), operation.z());
                     if (foundationAreaByCell.containsKey(cell)) platformTargets.put(cell, operation.targetSurfaceY());

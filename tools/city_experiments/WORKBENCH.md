@@ -130,3 +130,6 @@ D3 是 16 格采样，虚拟世界使用双线性插值高度；农业 NBT 按�
 DEM 的 `city_terrain_dem.v1` 保存闭合 bounds、step=1、order=z_then_x、source、d3TerrainHash，以及连续 groundY / waterSurfaceY 数组；无水格使用 null。最多 1048576 格。离线回归 `python tools/city_experiments/test_dem.py` 使用临时合成夹具验证一格深坑、水面和相邻高度不被插值，夹具不发布为真实扫描数据。
 
 当前主路规划和核心台地设计高程仍来自 D3；选择 DEM 后，虚拟世界逐格地表、建筑下方支撑和区块施工的原地面采样使用 DEM。它提高预览细节，不自动将正式 D3 规划改为逐格规划。
+# Java 公共空间接入
+
+模板池、场地构图、分层种植、外围绿化和 AI 指定出口的正式接口见 [JAVA_PUBLIC_REALM.md](JAVA_PUBLIC_REALM.md)。工作台仍可独立实验；Java 生产入口消费蓝图配置并冻结到区块施工计划。

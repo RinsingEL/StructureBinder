@@ -932,6 +932,7 @@ public final class CityLandUseChunkCompiler {
                 Comparator.comparingInt(FeatureOperation::z)
                         .thenComparingInt(FeatureOperation::x)
                         .thenComparingInt(FeatureOperation::surfaceOffset)
+                        .thenComparing(operation -> operation.kind()==CityLandUseSurfacePrintPlan.FeatureKind.AUTHORED_BLOCK)
                         .thenComparing(operation -> operation.kind().name())
                         .thenComparing(FeatureOperation::sourceId);
 

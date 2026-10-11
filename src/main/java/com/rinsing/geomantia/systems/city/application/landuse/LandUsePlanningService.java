@@ -62,6 +62,12 @@ public final class LandUsePlanningService {
                        JsonObject d5ReservationMaskPlan,
                        LandUseTerrainField terrainField,
                        CityUrbanResidualResolver.Config residualConfig) {
+        return plan(cityId,sources,d5ReservationMaskPlan,terrainField,residualConfig,null);
+    }
+
+    public Result plan(String cityId, LandUseSourceResolver.Resolution sources, JsonObject d5ReservationMaskPlan,
+                       LandUseTerrainField terrainField, CityUrbanResidualResolver.Config residualConfig,
+                       com.rinsing.geomantia.systems.city.domain.blueprint.CityPublicRealmSpec publicRealm) {
         if (cityId == null || cityId.isBlank()) throw new IllegalArgumentException("cityId is required");
         if (sources == null) throw new IllegalArgumentException("LandUse sources are required");
         if (terrainField == null) throw new IllegalArgumentException("LandUse terrain field is required");
@@ -177,8 +183,9 @@ public final class LandUsePlanningService {
                 new LandUseCorridorExclusionResolver().publicSpaceReservations(d5ReservationMaskPlan),
                 CitySharedTerracePlanner.Settings.defaults());
         if (sources.district() != null) surfacePrintPlan = new CityPublicGreeneryPlanner().append(
-                surfacePrintPlan, sources.district(), plan, CityPublicGreeneryPlanner.Preset.load(),
-                new LandUseCorridorExclusionResolver().publicSpaceReservations(d5ReservationMaskPlan));
+                surfacePrintPlan, sources.district(), plan, publicRealm==null?CityPublicGreeneryPlanner.Preset.load():
+                        new CityPublicGreeneryPlanner.Preset("minecraft:grass_block",List.of("minecraft:allium"),0,2),
+                new LandUseCorridorExclusionResolver().publicSpaceReservations(d5ReservationMaskPlan),publicRealm==null);
         if (sources.district() != null) {
             Set<BlockPoint> managed = surfacePrintPlan.featureCells().stream()
                     .filter(f -> (f.sourceId().startsWith(CityPublicGreeneryPlanner.SOURCE)
@@ -193,6 +200,12 @@ public final class LandUsePlanningService {
                 CityVillageRoadSettings.load());
         JsonObject quality = quality(plan, sources, resolvedExpansion, connectionOutcomes,
                 residualResult.urbanSpacePlan(), skippedLandscapes, requiredLandscapeCapacities);
+        if(publicRealm!=null) {
+            var realm = new com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmPlanner().plan(
+                    surfacePrintPlan,sources.district(),terrainField,
+                    new LandUseCorridorExclusionResolver().publicSpaceReservations(d5ReservationMaskPlan),publicRealm);
+            surfacePrintPlan=realm.surface();quality.add("publicRealm",realm.report());
+        }
         quality.addProperty("publicGreenGroundBlocks", surfacePrintPlan.featureCells().stream()
                 .filter(f -> f.sourceId().startsWith(CityPublicGreeneryPlanner.SOURCE) && f.surfaceOffset() == 0).count());
         quality.addProperty("coreTerraceCount", sources.district() == null ? 0 : sources.district().cores().size());

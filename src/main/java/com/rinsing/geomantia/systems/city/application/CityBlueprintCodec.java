@@ -151,13 +151,15 @@ public final class CityBlueprintCodec {
     private static CityBlueprint.OutdoorPlan outdoorPlan(JsonObject object) {
         String path = "$.outdoorPlan";
         exactFields(object, Set.of("mode", "envelopeProfile", "foundationProfileRef",
-                "foundationGroupIds", "landscapes"), path);
+                "foundationGroupIds", "landscapes", "publicRealm"), Set.of("publicRealm"), path);
         return new CityBlueprint.OutdoorPlan(
                 enumValue(object, "mode", CityBlueprint.OutdoorMode.class, path),
                 enumValue(object, "envelopeProfile", CityBlueprint.EnvelopeProfile.class, path),
                 requiredString(object, "foundationProfileRef", path + ".foundationProfileRef"),
                 stringList(requiredArray(object, "foundationGroupIds", path + ".foundationGroupIds"), path + ".foundationGroupIds"),
-                landscapes(requiredArray(object, "landscapes", path + ".landscapes")));
+                landscapes(requiredArray(object, "landscapes", path + ".landscapes")),
+                object.has("publicRealm") ? new com.rinsing.geomantia.systems.city.domain.blueprint.CityPublicRealmSpec(
+                        requiredObject(object,"publicRealm",path+".publicRealm")) : null);
     }
 
     private static List<CityBlueprint.Landscape> landscapes(JsonArray array) {
@@ -756,6 +758,7 @@ public final class CityBlueprintCodec {
 
     private static JsonObject outdoorPlanJson(CityBlueprint.OutdoorPlan plan) {
         JsonObject object = new JsonObject();
+        if(plan.publicRealm()!=null) object.add("publicRealm",plan.publicRealm().toJson());
         object.addProperty("mode", plan.mode().name());
         object.addProperty("envelopeProfile", plan.envelopeProfile().name());
         object.addProperty("foundationProfileRef", plan.foundationProfileRef());
