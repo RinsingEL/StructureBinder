@@ -110,6 +110,8 @@ def apply_public_spaces(result, cells, sources, put):
             p=f['originBlock'];blocked.update((x,z) for x in range(p['x']-1,p['x']+f['width']+1) for z in range(p['z']-1,p['z']+f['depth']+1))
         edges=[];counts={};writes=[]
         for m in result['members']:
+            # Plots without a road entrance (fields, nurseries) are functional land with no building back.
+            if not m.get('roadEntrances'):continue
             p=m['originBlock'];x0,z0=p['x'],p['z'];w,d=m['width'],m['depth'];direction=m['roadEntrances'][0]['direction'];y=m['surfaceY']
             # Back of each independent building; 3-deep bounded bed, all plants low.
             if direction=='NORTH':bed=[(x,z0+d+q) for x in range(x0+3,x0+w-3) for q in range(2,5)]
