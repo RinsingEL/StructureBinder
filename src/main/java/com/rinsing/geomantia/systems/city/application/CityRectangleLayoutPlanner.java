@@ -45,6 +45,8 @@ public final class CityRectangleLayoutPlanner {
             var s=sizes.get(i);int x=0,z=0;
             for(int c=0;c<i%columns;c++)x+=widths[c]+gap;for(int r=0;r<i/columns;r++)z+=depths[r]+gap;
             if("LINEAR".equals(algorithm)){int extra=depths[0]-(vertical?s.width():s.depth());z+=switch(layout.crossAlign()){case "END"->extra;case "CENTER"->extra/2;default->0;};}
+            // Opt-in: mixed-size GRID members sit centered in their cell instead of hugging its corner.
+            else if("CENTER".equals(layout.crossAlign())){x+=(widths[i%columns]-(vertical?s.depth():s.width()))/2;z+=(depths[i/columns]-(vertical?s.width():s.depth()))/2;}
             int dx=vertical?z:x,dz=vertical?x:z;
             if(Set.of(180,270).contains(Math.floorMod(directionDegrees,360))){dx=-dx-s.width();dz=-dz-s.depth();}
             out.add(new BlockPoint(anchor.x()+dx,anchor.z()+dz));

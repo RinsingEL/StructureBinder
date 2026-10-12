@@ -362,6 +362,7 @@ class Handler(StudioHandler):
         if path=='/api/campus/catalog':return self.json(catalog())
         if path=='/api/campus/default':return self.json(read(SCENE))
         if path=='/api/campus/examples':return self.json([
+            {'id':'starvault','name':'学院 · 星穹主轴构图示范','scene':read(Path(__file__).with_name('academy-starvault.json'))},
             {'id':'campus','name':'学院 · 公共广场与嵌套组团','scene':read(Path(__file__).with_name('campus-groups.json'))},
             {'id':'original','name':'原始学院示范','scene':read(SCENE)},
             {'id':'terraces','name':'学院 · 通用台地设施试验','scene':read(Path(__file__).with_name('terrace-trial.json'))},

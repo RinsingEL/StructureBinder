@@ -1,0 +1,504 @@
+{
+  "seed": 20261012,
+  "greenery": true,
+  "arrays": [
+    {
+      "arrayId": "vault-quad",
+      "function": "星穹主院：礼堂与双教学翼楼围合的礼仪庭院",
+      "anchorBlock": {
+        "x": 0,
+        "z": 0
+      },
+      "algorithm": "COURTYARD",
+      "count": 3,
+      "densityClass": "SPARSE",
+      "layout": {
+        "gapBlocks": 8,
+        "courtWidth": 64,
+        "courtDepth": 52,
+        "faceInward": true,
+        "purpose": "礼仪主庭：礼堂朝南俯瞰主轴"
+      },
+      "coreAssetId": "studio:mg-01-v01",
+      "requiredAssetIds": [
+        "studio:mg-34-v02",
+        "studio:mg-34-v02"
+      ]
+    },
+    {
+      "arrayId": "library",
+      "function": "八瓣藏书馆：广场西侧书院核心",
+      "anchorBlock": {
+        "x": 0,
+        "z": 0
+      },
+      "algorithm": "GRID",
+      "count": 1,
+      "rotation": 90,
+      "densityClass": "BALANCED",
+      "layout": {
+        "gapBlocks": 8,
+        "columns": 1
+      },
+      "coreAssetId": "studio:mg-02-v01"
+    },
+    {
+      "arrayId": "refectory",
+      "function": "锤梁长桌食堂：广场东侧生活核心",
+      "anchorBlock": {
+        "x": 0,
+        "z": 0
+      },
+      "algorithm": "GRID",
+      "count": 1,
+      "rotation": 270,
+      "densityClass": "BALANCED",
+      "layout": {
+        "gapBlocks": 8,
+        "columns": 1
+      },
+      "coreAssetId": "studio:mg-07-v01"
+    },
+    {
+      "arrayId": "registry",
+      "function": "层台院务塔：广场南端迎宾与议事",
+      "anchorBlock": {
+        "x": 0,
+        "z": 0
+      },
+      "algorithm": "GRID",
+      "count": 1,
+      "rotation": 0,
+      "densityClass": "BALANCED",
+      "layout": {
+        "gapBlocks": 8,
+        "columns": 1
+      },
+      "coreAssetId": "studio:mg-13-v01"
+    },
+    {
+      "arrayId": "star-fountain",
+      "function": "三级星泉：主轴与横轴交点的广场焦点",
+      "anchorBlock": {
+        "x": -2937,
+        "z": 5283
+      },
+      "algorithm": "GRID",
+      "count": 1,
+      "densityClass": "BALANCED",
+      "layout": {
+        "gapBlocks": 8,
+        "columns": 1
+      },
+      "coreAssetId": "studio:mg-10-v01"
+    },
+    {
+      "arrayId": "supply-shop",
+      "function": "学院器材店：院务塔东侧的前导商铺",
+      "anchorBlock": {
+        "x": -2882,
+        "z": 5350
+      },
+      "algorithm": "GRID",
+      "count": 1,
+      "rotation": 270,
+      "densityClass": "BALANCED",
+      "layout": {
+        "gapBlocks": 8,
+        "columns": 1
+      },
+      "coreAssetId": "studio:mg-06-v01"
+    },
+    {
+      "arrayId": "scholars",
+      "function": "书院课堂：藏书馆北侧的课堂与研究书楼",
+      "anchorBlock": {
+        "x": -3040,
+        "z": 5130
+      },
+      "algorithm": "GRID",
+      "count": 4,
+      "densityClass": "DENSE",
+      "layout": {
+        "gapBlocks": 6,
+        "columns": 2
+      },
+      "coreAssetId": "studio:mg-25-v01",
+      "requiredAssetIds": [
+        "studio:mg-38-v01",
+        "studio:mg-26-v01",
+        "studio:mg-43-v01"
+      ]
+    },
+    {
+      "arrayId": "observatory",
+      "function": "子午观星台：主峰东肩的次级地标",
+      "anchorBlock": {
+        "x": -2852,
+        "z": 5096
+      },
+      "algorithm": "GRID",
+      "count": 1,
+      "rotation": 270,
+      "densityClass": "BALANCED",
+      "layout": {
+        "gapBlocks": 8,
+        "columns": 1
+      },
+      "coreAssetId": "studio:mg-03-v01"
+    },
+    {
+      "arrayId": "dorm-wings",
+      "function": "双翼宿舍：食堂北侧的高年级宿舍",
+      "anchorBlock": {
+        "x": -2840,
+        "z": 5224
+      },
+      "algorithm": "LINEAR",
+      "count": 2,
+      "densityClass": "DENSE",
+      "layout": {
+        "gapBlocks": 6,
+        "crossAlign": "END"
+      },
+      "requiredAssetIds": [
+        "studio:mg-37-v02",
+        "studio:mg-37-v02"
+      ]
+    },
+    {
+      "arrayId": "dorm-lanes",
+      "function": "宿舍小巷：小宿舍、洗浴与小商店的密集街坊",
+      "anchorBlock": {
+        "x": -2792,
+        "z": 5276
+      },
+      "algorithm": "GRID",
+      "count": 9,
+      "densityClass": "DENSE",
+      "layout": {
+        "gapBlocks": 5,
+        "columns": 3
+      },
+      "requiredAssetIds": [
+        "studio:mg-45-v01",
+        "studio:mg-27-v01",
+        "studio:mg-27-v01",
+        "studio:mg-44-v01",
+        "studio:mg-27-v01",
+        "studio:mg-27-v01",
+        "studio:mg-27-v01",
+        "studio:mg-27-v01",
+        "studio:mg-27-v01"
+      ]
+    },
+    {
+      "arrayId": "herb-garden",
+      "function": "药草温室庭：院务塔西侧的前导花园",
+      "anchorBlock": {
+        "x": -3002,
+        "z": 5346
+      },
+      "algorithm": "GRID",
+      "count": 1,
+      "densityClass": "BALANCED",
+      "layout": {
+        "gapBlocks": 8,
+        "columns": 1
+      },
+      "coreAssetId": "studio:mg-12-v01"
+    },
+    {
+      "arrayId": "garden-sheds",
+      "function": "农林小院：温室与工具房",
+      "anchorBlock": {
+        "x": -3062,
+        "z": 5345
+      },
+      "algorithm": "LINEAR",
+      "count": 2,
+      "densityClass": "DENSE",
+      "layout": {
+        "gapBlocks": 5,
+        "crossAlign": "END"
+      },
+      "coreAssetId": "studio:mg-31-v01",
+      "requiredAssetIds": [
+        "studio:mg-32-v01"
+      ]
+    },
+    {
+      "arrayId": "trial-fields",
+      "function": "试种田",
+      "anchorBlock": {
+        "x": -3010,
+        "z": 5420
+      },
+      "algorithm": "CONTIGUOUS",
+      "count": 4,
+      "densityClass": "DENSE",
+      "fill": [
+        {
+          "assetId": "studio:mg-30-v01",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "arrayId": "nursery",
+      "function": "试验苗圃",
+      "anchorBlock": {
+        "x": -3040,
+        "z": 5377
+      },
+      "algorithm": "CONTIGUOUS",
+      "count": 2,
+      "densityClass": "DENSE",
+      "fill": [
+        {
+          "assetId": "studio:mg-33-v01",
+          "weight": 1
+        }
+      ]
+    }
+  ],
+  "compositions": [
+    {
+      "compositionId": "star-plaza",
+      "algorithm": "COURTYARD",
+      "anchorBlock": {
+        "x": -2920,
+        "z": 5300
+      },
+      "memberIds": [
+        "vault-quad",
+        "library",
+        "refectory",
+        "registry"
+      ],
+      "layout": {
+        "gapBlocks": 10,
+        "courtWidth": 76,
+        "courtDepth": 60,
+        "purpose": "星泉广场：主轴与东西横轴交会"
+      }
+    }
+  ],
+  "districts": [
+    {
+      "districtId": "vault",
+      "name": "星穹主院",
+      "coreMemberId": "vault-quad:1",
+      "arrayIds": [
+        "vault-quad"
+      ],
+      "platform": true
+    },
+    {
+      "districtId": "plaza",
+      "name": "星泉广场与院务",
+      "coreMemberId": "registry:1",
+      "arrayIds": [
+        "registry",
+        "star-fountain",
+        "supply-shop"
+      ],
+      "platform": true
+    },
+    {
+      "districtId": "scholars",
+      "name": "藏书书院",
+      "coreMemberId": "library:1",
+      "arrayIds": [
+        "library",
+        "scholars"
+      ],
+      "platform": true
+    },
+    {
+      "districtId": "living",
+      "name": "长桌生活坊",
+      "coreMemberId": "refectory:1",
+      "arrayIds": [
+        "refectory",
+        "dorm-wings",
+        "dorm-lanes"
+      ],
+      "platform": true
+    },
+    {
+      "districtId": "observatory",
+      "name": "子午观星台",
+      "coreMemberId": "observatory:1",
+      "arrayIds": [
+        "observatory"
+      ],
+      "platform": true
+    },
+    {
+      "districtId": "gardens",
+      "name": "试种农林",
+      "coreMemberId": "garden-sheds:1",
+      "arrayIds": [
+        "herb-garden",
+        "garden-sheds",
+        "trial-fields",
+        "nursery"
+      ],
+      "platform": false
+    }
+  ],
+  "connections": [
+    {
+      "from": "vault",
+      "to": "plaza"
+    },
+    {
+      "from": "plaza",
+      "to": "scholars"
+    },
+    {
+      "from": "plaza",
+      "to": "living"
+    },
+    {
+      "from": "vault",
+      "to": "observatory"
+    },
+    {
+      "from": "scholars",
+      "to": "gardens"
+    }
+  ],
+  "publicSpaces": [
+    {
+      "nodeId": "vault-quad",
+      "kind": "GARDEN"
+    },
+    {
+      "nodeId": "star-plaza",
+      "kind": "PLAZA"
+    }
+  ],
+  "terraceStyles": [
+    {
+      "styleId": "stone_civic",
+      "name": "石砌边缘 · 角塔与晶簇",
+      "railBlock": "minecraft:stone_brick_wall",
+      "postBlock": "minecraft:polished_andesite",
+      "capBlock": "minecraft:quartz_slab",
+      "postSpacing": 10,
+      "minimumExposure": 1,
+      "maximumCorners": 4,
+      "cornerSpacing": 28,
+      "cornerAssetId": "studio:mg-41-v01",
+      "materials": {
+        "ground": "minecraft:smooth_stone",
+        "retainingWall": "minecraft:stone_bricks",
+        "wallColumn": "minecraft:polished_andesite",
+        "wallCap": "minecraft:quartz_block",
+        "wallBand": "minecraft:polished_diorite"
+      }
+    }
+  ],
+  "terraceFeatures": true,
+  "foundationMarginBlocks": 8,
+  "gapLandscape": true,
+  "landscapeBorder": {
+    "straight": "studio:mg-46-v01",
+    "outer": "studio:mg-47-v01",
+    "inner": "studio:mg-48-v01",
+    "end": "studio:mg-49-v01"
+  },
+  "gapSurface": "CONNECTION_TERRACE",
+  "smallGapMaxBlocks": 32,
+  "terrainSource": "D3_INTERPOLATED",
+  "greeneryTemplates": {
+    "catalog": "R02_arcane_reborn/greenery-pools.json",
+    "pools": {
+      "trees": "courtyard_trees",
+      "gapTrees": "outer_trees",
+      "shrubs": "low_shrubs",
+      "hedges": "hedge_segments",
+      "flowers": "flower_patches",
+      "planters": "planters"
+    },
+    "spacing": {
+      "trees": 13,
+      "shrubs": 5,
+      "hedges": 8,
+      "flowers": 4,
+      "planters": 24
+    },
+    "maximumPlacements": 500,
+    "layeredPlanting": true,
+    "slotLimits": {
+      "trees": 80,
+      "planters": 40,
+      "hedges": 65,
+      "shrubs": 95,
+      "flowers": 220
+    }
+  },
+  "outerGreenery": {
+    "width": 20,
+    "maximumPlacements": 500,
+    "spacing": {
+      "trees": 10,
+      "shrubs": 6,
+      "flowers": 4
+    },
+    "slotLimits": {
+      "trees": 150,
+      "shrubs": 120,
+      "flowers": 230
+    }
+  },
+  "externalAccess": {
+    "width": 5,
+    "waypoints": [
+      {
+        "x": -2887,
+        "z": 5372,
+        "surface": 64.5
+      },
+      {
+        "x": -2887,
+        "z": 5405,
+        "surface": 64.5
+      },
+      {
+        "x": -2830,
+        "z": 5405,
+        "surface": 63.5
+      },
+      {
+        "x": -2785,
+        "z": 5405,
+        "surface": 62.5
+      },
+      {
+        "x": -2765,
+        "z": 5405,
+        "surface": 62.5
+      },
+      {
+        "x": -2765,
+        "z": 5414,
+        "surface": 62.5
+      }
+    ],
+    "landing": {
+      "minX": -2770,
+      "maxX": -2760,
+      "minZ": 5409,
+      "maxZ": 5419
+    },
+    "harborReservation": {
+      "minX": -2772,
+      "maxX": -2744,
+      "minZ": 5408,
+      "maxZ": 5436
+    }
+  }
+}

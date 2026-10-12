@@ -451,7 +451,7 @@ public final class ProviderPlanningToolCatalog {
                 "courtWidth", boundedInteger(8,256,"Reserved courtyard width; default 36."),
                 "courtDepth", boundedInteger(8,256,"Reserved courtyard depth; default 28."),
                 "faceInward", described(bool(),"COURTYARD leaf buildings only; constrained by authored orientations."),
-                "crossAlign", enumeration("START","CENTER","END"), "purpose", string())),
+                "crossAlign", described(enumeration("START","CENTER","END"),"LINEAR aligns members across the axis. GRID with CENTER centers mixed-size members inside their cells; START keeps corner alignment."), "purpose", string())),
                 "Optional intentional GRID/LINEAR/COURTYARD packing of complete buildings or child arrays. "
                         + "COURTYARD has at most four sides around public space; garden purpose reserves designed greenery. "
                         + "The compiler chooses coordinates. Omit to retain legacy layout.");

@@ -141,3 +141,9 @@ DEM 的 `city_terrain_dem.v1` 保存闭合 bounds、step=1、order=z_then_x、so
 随后执行 `python tools/city_experiments/build_d4_engineered_preview.py <同一blueprint目录>`，保持建筑平面坐标、旋转与道路平面几何，补充 Java 离线台地、支撑和道路工程，以及工作台模板池绿化。详细地形仅覆盖分区和道路窗口；外围显示 D3 背景，不复现原生群系植被。此入口不写入 MC 存档，不等同于正式 D5 验收。
 
 本轮方案、截图和工程证据见 [2026-10-12 D4 实验](results/20261012_d4_engineered/README.md)。
+
+## 星穹主轴构图示范
+
+`academy-starvault.json` 是一条南北主轴组织的学院对照方案：礼堂居主峰，主院、星泉广场、院务塔逐级下行，二级地标围合广场，生活与书院紧贴两侧，农林与码头在外围。用于说明 D4 提示词中的空间构图手法，详见 [2026-10-12 星穹学院](results/20261012_starvault_academy/README.md)。
+
+GRID 布局的 `crossAlign:"CENTER"` 会让大小不一的成员在各自格子内居中；缺省 START 保持原来的贴角对齐。
