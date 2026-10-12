@@ -206,13 +206,13 @@ def compose(result,assets):
         key=(x,y,z)
         if s['name'] in ['minecraft:air','minecraft:cave_air','minecraft:void_air']:cells.pop(key,None);sources.pop(key,None)
         else:cells[key]=s;sources[key]=layer
-        if len(cells)>1200000:raise ValueError('场景超过 120 万方块，请缩减阵列后重试。')
+        if len(cells)>(2000000 if result.get('frozenImport') else 1200000):raise ValueError('场景超过 120 万方块，请缩减阵列后重试。')
     for row in result['terrainColumns']:
         x,z,y,block=row[:4];ground=row[4] if len(row)>4 else y
         if block=='minecraft:water':
             put(x,ground,z,'minecraft:gravel','terrain')
             for yy in range(ground+1,y):put(x,yy,z,'minecraft:water','terrain')
-        for dy in range(1,3):put(x,ground-dy,z,'minecraft:dirt' if block!='minecraft:water' else 'minecraft:gravel','terrain')
+        for dy in range(1,1 if result.get('frozenImport') else 3):put(x,ground-dy,z,'minecraft:dirt' if block!='minecraft:water' else 'minecraft:gravel','terrain')
         put(x,y,z,block,'terrain')
     platform={(x,row['z']):(t['terraceId'],row['targetY']) for t in result['terraces'] for row in t['spans'] for x in range(row['minX'],row['maxX']+1)}
     mutation_index={(x,y,z):s for x,y,z,s,kind in result['mutations']}
@@ -306,6 +306,8 @@ def compose(result,assets):
 
 
 def build(scene,base_revision=None):
+    if scene.get('importedD4'):
+        raise ValueError('当前是冻结 D4 预览；请在正式 D4 修订后重新导入。')
     OUTPUT.mkdir(parents=True,exist_ok=True);state_file=OUTPUT/'state.json';previous=read(state_file) if state_file.exists() else {'revision':0}
     if base_revision is not None and base_revision!=previous['revision']:raise RevisionConflict('场景已有新版本，请刷新后重试。')
     assets=catalog();validate_scene(scene,assets)
@@ -369,7 +371,8 @@ class Handler(StudioHandler):
         if path=='/api/campus/terrain/context':
             state_file=OUTPUT/'state.json'
             if not state_file.exists():return self.json({'error':'请先生成学院。'},404)
-            return self.json(terrain_context(read(state_file)['directory']))
+            folder=Path(read(state_file)['directory'])
+            return self.json(read(folder/'terrain-context.json') if (folder/'terrain-context.json').exists() else terrain_context(str(folder)))
         if path=='/':return self.file(TOOL/'dist','campus.html')
         return super().do_GET()
     def do_POST(self):

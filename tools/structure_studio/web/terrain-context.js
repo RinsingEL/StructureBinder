@@ -18,7 +18,7 @@ export function createTerrainContext(gl,context,origin){
  const quad=(coords,color)=>mesh.quads.push(Quad.fromPoints(...coords.map(p=>point(...p))).setColor(color));
  for(let zi=0;zi<zs.length-1;zi++)for(let xi=0;xi<xs.length-1;xi++){
   const x=xs[xi],z=zs[zi],xx=xs[xi+1],zz=zs[zi+1];
-  if(x>=detail.minX&&xx<=detail.maxX+1&&z>=detail.minZ&&zz<=detail.maxZ+1)continue;
+  if(context.detailedRegions?context.detailedRegions.some(b=>x>=b.minX&&xx<=b.maxX+1&&z>=b.minZ&&zz<=b.maxZ+1):(x>=detail.minX&&xx<=detail.maxX+1&&z>=detail.minZ&&zz<=detail.maxZ+1))continue;
   const sample=cell((x+xx)/2,(z+zz)/2),water=sample[3];
   const coords=[[x,height(x,z),z],[x,height(x,zz),zz],[xx,height(xx,zz),zz],[xx,height(xx,z),z]];
   if(water){

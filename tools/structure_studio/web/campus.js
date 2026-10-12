@@ -91,7 +91,9 @@ async function refresh(){telemetry.ready=false;$('loading').hidden=false;let ter
  loadControls();updateGeometry();overview();
  const requestedDistrict=new URLSearchParams(location.search).get('district');
  if(scene.districts.some(d=>d.districtId===requestedDistrict)){focus(requestedDistrict);yaw=Math.PI-.65;pitch=.65;draw();}
- $('loading').hidden=true;$('status').classList.remove('error');$('status').textContent=`R${meta.revision} 已生成 · ${meta.summary.owners} 个区块完成模拟`;
+ $('loading').hidden=true;$('status').classList.remove('error');$('status').textContent=meta.importedD4?(meta.engineeredPreview?`R${meta.revision} · ${meta.summary.buildings} 栋 / ${meta.summary.terraces} 台地 · 工程与绿化离线预览`:`R${meta.revision} · 冻结 D4：${meta.summary.buildings} 栋，高程示意，未施工`):`R${meta.revision} 已生成 · ${meta.summary.owners} 个区块完成模拟`;
+ $('build').disabled=!!meta.importedD4;
+ if(meta.importedD4){$('evidence-note').textContent=meta.engineeredPreview?'冻结布局 / 台地与绿化离线模拟':'冻结 D4 / 高程示意 / 未施工';$('fixture-note').textContent=meta.engineeredPreview?'建筑位置与旋转保持；台地、支撑、道路坡度与配置绿化已离线生成，未写入 MC 存档。':'保留正式 D4 的建筑位置和旋转；台地与支撑尚未施工。';}
  telemetry.ready=true;telemetry.revision=meta.revision;telemetry.blockCount=meta.summary.blockCount;
 }
 $('array').onchange=()=>{arrayControls();focusNode($('array').value);};$('node').onchange=nodeControls;

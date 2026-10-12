@@ -133,3 +133,11 @@ DEM 的 `city_terrain_dem.v1` 保存闭合 bounds、step=1、order=z_then_x、so
 # Java 公共空间接入
 
 模板池、场地构图、分层种植、外围绿化和 AI 指定出口的正式接口见 [JAVA_PUBLIC_REALM.md](JAVA_PUBLIC_REALM.md)。工作台仍可独立实验；Java 生产入口消费蓝图配置并冻结到区块施工计划。
+
+## 冻结 D4 导入与工程预览
+
+`python tools/city_experiments/import_d4_preview.py <blueprint目录>` 校验已接受蓝图与冻结几何哈希，直接显示建筑和道路，初始高度仅为 D3 示意。导入场景只读，不能通过网页重新生成阵列。
+
+随后执行 `python tools/city_experiments/build_d4_engineered_preview.py <同一blueprint目录>`，保持建筑平面坐标、旋转与道路平面几何，补充 Java 离线台地、支撑和道路工程，以及工作台模板池绿化。详细地形仅覆盖分区和道路窗口；外围显示 D3 背景，不复现原生群系植被。此入口不写入 MC 存档，不等同于正式 D5 验收。
+
+本轮方案、截图和工程证据见 [2026-10-12 D4 实验](results/20261012_d4_engineered/README.md)。

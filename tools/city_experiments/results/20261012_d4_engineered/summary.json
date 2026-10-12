@@ -1,0 +1,27 @@
+{
+  "revision": 34,
+  "summary": {
+    "buildings": 40,
+    "terraces": 5,
+    "roadSegments": 161,
+    "lamps": 0,
+    "wallBlocks": 2431,
+    "fixtures": 0,
+    "blockCount": 615469,
+    "owners": 604
+  },
+  "verification": {
+    "coordinatesPreserved": true,
+    "rotationsPreserved": true,
+    "roadGeometryPreserved": true,
+    "originalBiomeVegetationGenerated": false,
+    "offlineEngineering": true,
+    "retainedBuildings": 40
+  },
+  "greeneryPlacements": 387,
+  "limitations": [
+    "Offline workbench engineering preview; no Minecraft save writes.",
+    "Original biome vegetation is not reproduced.",
+    "Plant positions use workbench template sampling, not an exact D5 replay."
+  ]
+}

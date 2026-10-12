@@ -19,12 +19,13 @@ public final class CityCampusExperiment {
     private CityCampusExperiment(JsonObject input) { this.input=input; }
 
     private JsonObject run() throws Exception {
-        JsonObject result=new CityArrayExperiment(input).run();
+        boolean frozen=input.has("frozenLayout");
+        JsonObject result=frozen?input.getAsJsonObject("frozenLayout").deepCopy():new CityArrayExperiment(input).run();
         LandUseTerrainField terrain=new LandUseTerrainFieldCodec().fromJson(JsonParser.parseString(Files.readString(Path.of(input.get("terrainPath").getAsString()))).getAsJsonObject());
         List<JsonObject> members=objects(result.getAsJsonArray("members"));
         if(members.size()>180)throw new IllegalArgumentException("Workbench supports at most 180 placed structures");
         int[] box=sceneBounds(members);
-        if((long)(box[2]-box[0]+49)*(box[3]-box[1]+49)>200000)throw new IllegalArgumentException("Scene is too spread out for the lightweight preview (200000 terrain columns maximum)");
+        if(!frozen&&(long)(box[2]-box[0]+49)*(box[3]-box[1]+49)>200000)throw new IllegalArgumentException("Scene is too spread out for the lightweight preview (200000 terrain columns maximum)");
         VirtualWorld world=new VirtualWorld(terrain,input);
         world.requireCoverage(box);
         Map<String,JsonObject> assets=new HashMap<>(), byMember=new HashMap<>(), arrays=new HashMap<>();
@@ -33,7 +34,7 @@ public final class CityCampusExperiment {
         for(var m:members) {
             boolean water=m.getAsJsonObject("terrainEvidence").get("waterAreaBlocks").getAsLong()>0;
             if(world.dem!=null){water=false;var footprint=footprint(m);for(int z=footprint.minZ();z<=footprint.maxZ();z++)for(int x=footprint.minX();x<=footprint.maxX();x++)if(world.sampleDesignColumn(x,z).surfaceBlockId().equals("minecraft:water"))water=true;}
-            if(!m.getAsJsonArray("issues").isEmpty() || water)
+            if(!m.getAsJsonArray("issues").isEmpty() || water&&!frozen)
                 throw new IllegalArgumentException("Resolve structure collision, bounds or water before building: "+text(m,"memberId"));
             JsonObject asset=assets.get(text(m,"assetId"));
             if(asset.has("consumer")&&!text(asset,"consumer").equals("array"))
@@ -52,6 +53,7 @@ public final class CityCampusExperiment {
         var streets=new CityInternalStreetPlanner();var geometry=new CityBlueprintGroupLayoutPlanner();
         List<JsonObject> skeleton=new ArrayList<>();
         for(var entry:arrays.entrySet()) {
+            if(frozen)continue;
             var node=entry.getValue();String algorithm=text(node,"algorithm");
             List<JsonObject> local=anchors.stream().filter(a->text(a,"placementGroupId").equals(entry.getKey())).toList();
             if(local.size()<2||algorithm.equals("CONTIGUOUS")||node.has("layout"))continue;
@@ -61,7 +63,7 @@ public final class CityCampusExperiment {
             skeleton.addAll(streets.planSkeleton(entry.getKey(),algorithm,parameters,local,true,local.size(),span,
                     new CityBlueprintGroupLayoutPlanner.Frame(origin,1,0),terrain.planningBounds()));
         }
-        skeleton.addAll(DesignedStreetWorkbenchAdapter.plan(result.getAsJsonArray("layoutSpaces"),members,anchors,terrain.planningBounds()));
+        if(!frozen)skeleton.addAll(DesignedStreetWorkbenchAdapter.plan(result.getAsJsonArray("layoutSpaces"),members,anchors,terrain.planningBounds()));
         // Nested leaf groups share the explicit district's circulation network, not a new road per hierarchy edge.
         for(var a:anchors)a.addProperty("placementGroupId",arrayDistrict.get(text(a,"placementGroupId")));
         for(var b:skeleton)b.addProperty("groupId",arrayDistrict.get(text(b,"groupId")));
@@ -73,11 +75,12 @@ public final class CityCampusExperiment {
         var blueprint=new CityBlueprint(CityBlueprint.SCHEMA,terrain.cityId(),null,null,input.has("seed")?input.get("seed").getAsLong():20261008L,null,null,List.of(),List.of(),links,new CityBlueprint.ProfileRef("workbench:roads"),null,null);
         var main=new CityMainRoadPlanner().plan(blueprint,references,terrain,anchors,skeleton);
         var finalized=streets.finalizeSkeleton(skeleton,main.streetBands(),anchors,terrain.planningBounds());
-        if(input.has("publicSpaces"))for(var e:finalized.trace().getAsJsonArray("accessOutcomes")) {
+        if(!frozen&&input.has("publicSpaces"))for(var e:finalized.trace().getAsJsonArray("accessOutcomes")) {
             var outcome=e.getAsJsonObject();if(!text(outcome,"status").startsWith("CONNECTED"))
                 throw new IllegalArgumentException("Entrance is not connected: "+text(outcome,"entranceId"));
         }
         List<JsonObject> bands=new ArrayList<>(main.streetBands());bands.addAll(finalized.streetBands());
+        if(frozen){bands.clear();bands.addAll(objects(input.getAsJsonArray("frozenRoadBands")));}
         Map<String,Integer> bandIds=new HashMap<>();
         for(var band:bands){String id=text(band,"streetBandId");int occurrence=bandIds.merge(id,1,Integer::sum);
             if(occurrence>1){band.addProperty("originalStreetBandId",id);band.addProperty("streetBandId",id+"::occurrence_"+occurrence);}}
@@ -192,10 +195,16 @@ public final class CityCampusExperiment {
         result.add("terraceFeaturePlans",JSON.toJsonTree(featurePlans));
         result.add("fixtures",JSON.toJsonTree(featurePlans.values().stream().flatMap(p->p.fixtures().stream()).toList()));
         result.addProperty("schema","city_campus_experiment_result.v1");result.addProperty("executionMode","offline_production_planners_and_chunk_executor");
-        result.add("terraces",terraces);result.add("roadPlan",main.plan());result.add("streetReview",finalized.trace());result.add("roadBands",JSON.toJsonTree(bands));result.add("execution",execution);
+        result.add("terraces",terraces);result.add("roadPlan",frozen?input.get("frozenRoadPlan"):main.plan());result.add("streetReview",finalized.trace());result.add("roadBands",JSON.toJsonTree(bands));result.add("execution",execution);
         result.add("surfacePrintPlan",new CityLandUseSurfacePrintPlanCodec().toJson(surface));result.add("mutations",world.mutations());
         JsonArray ground=new JsonArray();
-        for(int z=box[1]-24;z<=box[3]+24;z++)for(int x=box[0]-24;x<=box[2]+24;x++) { var c=world.sampleDesignColumn(x,z);JsonArray row=new JsonArray();row.add(x);row.add(z);row.add(c.surfaceY());row.add(c.surfaceBlockId());row.add(world.groundY(x,z));ground.add(row); }
+        List<BlockBounds> detail=new ArrayList<>();
+        if(frozen){
+            for(var d:districts){var local=members.stream().filter(m->text(m,"districtId").equals(text(d,"districtId"))).toList();int[] b=sceneBounds(local);detail.add(new BlockBounds(Math.floorDiv(b[0]-24,16)*16,Math.floorDiv(b[1]-24,16)*16,Math.floorDiv(b[2]+24,16)*16+15,Math.floorDiv(b[3]+24,16)*16+15));}
+            for(var road:bands){var b=bounds(road.getAsJsonObject("bounds"));detail.add(new BlockBounds(Math.floorDiv(b.minX()-8,16)*16,Math.floorDiv(b.minZ()-8,16)*16,Math.floorDiv(b.maxX()+8,16)*16+15,Math.floorDiv(b.maxZ()+8,16)*16+15));}
+            result.add("terrainDetailBounds",JSON.toJsonTree(detail));
+        }
+        for(int z=box[1]-32;z<=box[3]+32;z++)for(int x=box[0]-32;x<=box[2]+32;x++) { final int xx=x,zz=z;if(!terrain.planningBounds().contains(x,z))continue;if(frozen&&detail.stream().noneMatch(b->b.contains(xx,zz)))continue; var c=world.sampleDesignColumn(x,z);JsonArray row=new JsonArray();row.add(x);row.add(z);row.add(c.surfaceY());row.add(c.surfaceBlockId());row.add(world.groundY(x,z));ground.add(row); }
         result.add("terrainColumns",ground);result.addProperty("terrainMode",world.dem==null?"D3_16_block_samples_bilinear_height_virtual_world":"DEM_STEP_1_GENERATOR_NATIVE_NO_INTERPOLATION");return result;
     }
     private static String railState(String block,int x,int y,int z,Set<String> cells) {
