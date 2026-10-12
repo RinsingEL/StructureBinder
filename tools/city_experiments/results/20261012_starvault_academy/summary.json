@@ -1,0 +1,398 @@
+{
+ "revision": 5,
+ "summary": {
+  "buildings": 33,
+  "terraces": 5,
+  "roadSegments": 107,
+  "lamps": 23,
+  "wallBlocks": 1234,
+  "fixtures": 0,
+  "terraceFeatureBlocks": 0,
+  "blockCount": 711330,
+  "owners": 329
+ },
+ "terraces": [
+  {
+   "districtId": "living"
+  },
+  {
+   "districtId": "observatory"
+  },
+  {
+   "districtId": "plaza"
+  },
+  {
+   "districtId": "scholars"
+  },
+  {
+   "districtId": "vault"
+  }
+ ],
+ "externalAccess": true,
+ "greeneryPlacements": 654,
+ "members": [
+  {
+   "memberId": "star-fountain:1",
+   "assetId": "studio:mg-10-v01",
+   "originBlock": {
+    "x": -2937,
+    "z": 5283
+   },
+   "width": 35,
+   "depth": 35,
+   "rotation": 0
+  },
+  {
+   "memberId": "supply-shop:1",
+   "assetId": "studio:mg-06-v01",
+   "originBlock": {
+    "x": -2882,
+    "z": 5350
+   },
+   "width": 49,
+   "depth": 43,
+   "rotation": 270
+  },
+  {
+   "memberId": "scholars:1",
+   "assetId": "studio:mg-25-v01",
+   "originBlock": {
+    "x": -3040,
+    "z": 5130
+   },
+   "width": 35,
+   "depth": 31,
+   "rotation": 0
+  },
+  {
+   "memberId": "scholars:2",
+   "assetId": "studio:mg-38-v01",
+   "originBlock": {
+    "x": -2999,
+    "z": 5130
+   },
+   "width": 31,
+   "depth": 31,
+   "rotation": 0
+  },
+  {
+   "memberId": "scholars:3",
+   "assetId": "studio:mg-26-v01",
+   "originBlock": {
+    "x": -3040,
+    "z": 5167
+   },
+   "width": 21,
+   "depth": 21,
+   "rotation": 0
+  },
+  {
+   "memberId": "scholars:4",
+   "assetId": "studio:mg-43-v01",
+   "originBlock": {
+    "x": -2999,
+    "z": 5167
+   },
+   "width": 23,
+   "depth": 25,
+   "rotation": 0
+  },
+  {
+   "memberId": "observatory:1",
+   "assetId": "studio:mg-03-v01",
+   "originBlock": {
+    "x": -2852,
+    "z": 5096
+   },
+   "width": 55,
+   "depth": 51,
+   "rotation": 270
+  },
+  {
+   "memberId": "dorm-wings:1",
+   "assetId": "studio:mg-37-v02",
+   "originBlock": {
+    "x": -2840,
+    "z": 5224
+   },
+   "width": 45,
+   "depth": 39,
+   "rotation": 0
+  },
+  {
+   "memberId": "dorm-wings:2",
+   "assetId": "studio:mg-37-v02",
+   "originBlock": {
+    "x": -2789,
+    "z": 5224
+   },
+   "width": 45,
+   "depth": 39,
+   "rotation": 0
+  },
+  {
+   "memberId": "dorm-lanes:1",
+   "assetId": "studio:mg-45-v01",
+   "originBlock": {
+    "x": -2792,
+    "z": 5276
+   },
+   "width": 25,
+   "depth": 25,
+   "rotation": 0
+  },
+  {
+   "memberId": "dorm-lanes:2",
+   "assetId": "studio:mg-27-v01",
+   "originBlock": {
+    "x": -2762,
+    "z": 5276
+   },
+   "width": 19,
+   "depth": 23,
+   "rotation": 0
+  },
+  {
+   "memberId": "dorm-lanes:3",
+   "assetId": "studio:mg-27-v01",
+   "originBlock": {
+    "x": -2738,
+    "z": 5276
+   },
+   "width": 19,
+   "depth": 23,
+   "rotation": 0
+  },
+  {
+   "memberId": "dorm-lanes:4",
+   "assetId": "studio:mg-44-v01",
+   "originBlock": {
+    "x": -2792,
+    "z": 5306
+   },
+   "width": 23,
+   "depth": 25,
+   "rotation": 0
+  },
+  {
+   "memberId": "dorm-lanes:5",
+   "assetId": "studio:mg-27-v01",
+   "originBlock": {
+    "x": -2762,
+    "z": 5306
+   },
+   "width": 19,
+   "depth": 23,
+   "rotation": 0
+  },
+  {
+   "memberId": "dorm-lanes:6",
+   "assetId": "studio:mg-27-v01",
+   "originBlock": {
+    "x": -2738,
+    "z": 5306
+   },
+   "width": 19,
+   "depth": 23,
+   "rotation": 0
+  },
+  {
+   "memberId": "dorm-lanes:7",
+   "assetId": "studio:mg-27-v01",
+   "originBlock": {
+    "x": -2792,
+    "z": 5336
+   },
+   "width": 19,
+   "depth": 23,
+   "rotation": 0
+  },
+  {
+   "memberId": "dorm-lanes:8",
+   "assetId": "studio:mg-27-v01",
+   "originBlock": {
+    "x": -2762,
+    "z": 5336
+   },
+   "width": 19,
+   "depth": 23,
+   "rotation": 0
+  },
+  {
+   "memberId": "dorm-lanes:9",
+   "assetId": "studio:mg-27-v01",
+   "originBlock": {
+    "x": -2738,
+    "z": 5336
+   },
+   "width": 19,
+   "depth": 23,
+   "rotation": 0
+  },
+  {
+   "memberId": "herb-garden:1",
+   "assetId": "studio:mg-12-v01",
+   "originBlock": {
+    "x": -3002,
+    "z": 5346
+   },
+   "width": 43,
+   "depth": 47,
+   "rotation": 0
+  },
+  {
+   "memberId": "garden-sheds:1",
+   "assetId": "studio:mg-31-v01",
+   "originBlock": {
+    "x": -3062,
+    "z": 5345
+   },
+   "width": 23,
+   "depth": 27,
+   "rotation": 0
+  },
+  {
+   "memberId": "garden-sheds:2",
+   "assetId": "studio:mg-32-v01",
+   "originBlock": {
+    "x": -3034,
+    "z": 5351
+   },
+   "width": 17,
+   "depth": 21,
+   "rotation": 0
+  },
+  {
+   "memberId": "trial-fields:1",
+   "assetId": "studio:mg-30-v01",
+   "originBlock": {
+    "x": -3010,
+    "z": 5420
+   },
+   "width": 19,
+   "depth": 19,
+   "rotation": 0
+  },
+  {
+   "memberId": "trial-fields:2",
+   "assetId": "studio:mg-30-v01",
+   "originBlock": {
+    "x": -3030,
+    "z": 5420
+   },
+   "width": 19,
+   "depth": 19,
+   "rotation": 0
+  },
+  {
+   "memberId": "trial-fields:3",
+   "assetId": "studio:mg-30-v01",
+   "originBlock": {
+    "x": -3030,
+    "z": 5400
+   },
+   "width": 19,
+   "depth": 19,
+   "rotation": 0
+  },
+  {
+   "memberId": "trial-fields:4",
+   "assetId": "studio:mg-30-v01",
+   "originBlock": {
+    "x": -3010,
+    "z": 5400
+   },
+   "width": 19,
+   "depth": 19,
+   "rotation": 0
+  },
+  {
+   "memberId": "nursery:1",
+   "assetId": "studio:mg-33-v01",
+   "originBlock": {
+    "x": -3040,
+    "z": 5377
+   },
+   "width": 23,
+   "depth": 23,
+   "rotation": 0
+  },
+  {
+   "memberId": "nursery:2",
+   "assetId": "studio:mg-33-v01",
+   "originBlock": {
+    "x": -3064,
+    "z": 5377
+   },
+   "width": 23,
+   "depth": 23,
+   "rotation": 0
+  },
+  {
+   "memberId": "vault-quad:1",
+   "assetId": "studio:mg-01-v01",
+   "originBlock": {
+    "x": -2955,
+    "z": 5119
+   },
+   "width": 71,
+   "depth": 83,
+   "rotation": 180
+  },
+  {
+   "memberId": "vault-quad:2",
+   "assetId": "studio:mg-34-v02",
+   "originBlock": {
+    "x": -2989,
+    "z": 5213
+   },
+   "width": 29,
+   "depth": 47,
+   "rotation": 90
+  },
+  {
+   "memberId": "vault-quad:3",
+   "assetId": "studio:mg-34-v02",
+   "originBlock": {
+    "x": -2880,
+    "z": 5213
+   },
+   "width": 29,
+   "depth": 47,
+   "rotation": 270
+  },
+  {
+   "memberId": "library:1",
+   "assetId": "studio:mg-02-v01",
+   "originBlock": {
+    "x": -3033,
+    "z": 5270
+   },
+   "width": 65,
+   "depth": 61,
+   "rotation": 90
+  },
+  {
+   "memberId": "refectory:1",
+   "assetId": "studio:mg-07-v01",
+   "originBlock": {
+    "x": -2872,
+    "z": 5272
+   },
+   "width": 69,
+   "depth": 57,
+   "rotation": 270
+  },
+  {
+   "memberId": "registry:1",
+   "assetId": "studio:mg-13-v01",
+   "originBlock": {
+    "x": -2947,
+    "z": 5340
+   },
+   "width": 55,
+   "depth": 59,
+   "rotation": 0
+  }
+ ]
+}
