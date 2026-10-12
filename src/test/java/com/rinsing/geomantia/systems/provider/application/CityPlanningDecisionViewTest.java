@@ -24,4 +24,31 @@ class CityPlanningDecisionViewTest {
         assertEquals(JsonParser.parseString("[[5,7,6,0]]"), view.getAsJsonObject("catalogSnapshot").getAsJsonObject("structureGeometry").get("shop"));
         assertEquals(original, source);
     }
+    @Test void coordinateViewRemovesNumericAdviceAndPatchSelectionWithoutChangingFrozenContext() {
+        JsonObject source = JsonParser.parseString("""
+                {schema:'city_blueprint_context',contextId:'frozen',sourceD3Ref:{path:'d3.json'},
+                 patchReviewEvidence:{sessionId:'old'},
+                 scaleDesignTask:{scale:'town',suggestedInitialLeafArraysMin:4,suggestedInitialLeafArraysMax:7,counting:'old'},
+                 designGuide:{recovery:'Submit once'},
+                 d3ReviewPackage:{reviewMapImage:'map.png',grid:{minBlockX:-32},
+                  landformPatches:[{landformPatchId:'old',landformType:'PLAIN',areaBlocks:100},
+                                   {landformPatchId:'other',landformType:'PLAIN',areaBlocks:200}]}}
+                """).getAsJsonObject();
+        JsonObject frozen = source.deepCopy();
+        JsonObject view = CityPlanningDecisionView.from(source);
+        assertEquals(frozen, source);
+        JsonObject repeated = new JsonObject(); repeated.add("designSession", source.deepCopy());
+        assertFalse(PlanningToolPresentation.compact(repeated).toString().contains("suggestedInitialLeafArrays"));
+        assertEquals("frozen", view.get("contextId").getAsString());
+        assertFalse(view.has("patchReviewEvidence"));
+        assertFalse(view.getAsJsonObject("scaleDesignTask").has("suggestedInitialLeafArraysMin"));
+        assertFalse(view.getAsJsonObject("scaleDesignTask").has("suggestedInitialLeafArraysMax"));
+        JsonObject terrain = view.getAsJsonObject("d3ReviewPackage");
+        assertFalse(terrain.has("landformPatches"));
+        assertFalse(terrain.has("candidateCoverage"));
+        assertEquals(300, terrain.getAsJsonObject("landformAreaBlocksByType").get("PLAIN").getAsInt());
+        assertEquals("map.png", terrain.get("reviewMapImage").getAsString());
+        assertFalse(view.toString().contains("patch_explorer"));
+        assertTrue(view.getAsJsonObject("designGuide").get("recovery").getAsString().contains("正常生成"));
+    }
 }

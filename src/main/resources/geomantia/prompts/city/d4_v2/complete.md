@@ -1,1 +1,5 @@
-城市设计已定稿。先查询 city_post_d4_auto_compile_status：运行中或已完成时按任务状态继续，不修改设计。若 not_queued，表示仅保存，尚未进入施工流程。用户要求修改时可用 city_d4_history 查询版本，再以当前 workflowRevision 和 accepted submissionTrace.cityBlueprintHash 调用 city_d4_reopen，或 city_d4_restore 恢复指定同 Context 版本。它们重新编译为草稿并退役旧接受及派生计划，必须查看新预览后再定稿；不重置失败预算。用户仅要求继续施工时用 city_post_d4_auto_compile_retry，无需重做设计。未授权修改或施工时保持当前状态。
+# D4 已保存
+
+根据宿主返回说明已保存方案和后续状态。D4 保存表示设计阶段完成，实际台地、支撑、结构放置等结果仍需后续施工验证。
+
+已授权继续时按宿主调度推进；用户暂停时释放会话。用户明确要求修改且尚未进入施工流程时，通过当前正式重开入口保留历史、重开草稿，再按流程复核和修订；施工已开始则遵循宿主拒绝结果。

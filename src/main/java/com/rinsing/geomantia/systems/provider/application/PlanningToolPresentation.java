@@ -86,6 +86,12 @@ public final class PlanningToolPresentation {
                 && "city_blueprint_context".equals(source.getAsJsonObject().get("schema").getAsString())) {
             source = CityPlanningDecisionView.from(source.getAsJsonObject());
         }
+        // The designSession also repeats scaleDesignTask outside the canonical Context.
+        if (source.getAsJsonObject().has("scale")
+                && (source.getAsJsonObject().has("suggestedInitialLeafArraysMin")
+                    || source.getAsJsonObject().has("suggestedInitialLeafArraysMax"))) {
+            source = CityPlanningDecisionView.scaleTask(source.getAsJsonObject());
+        }
         JsonObject result = new JsonObject();
         JsonObject artifacts = source.getAsJsonObject().has("artifacts")
                 && source.getAsJsonObject().get("artifacts").isJsonObject()

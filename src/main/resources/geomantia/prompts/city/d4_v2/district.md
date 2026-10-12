@@ -1,5 +1,23 @@
-按 districts 主次设计 currentDistrict。用 city_d4_materials 按 categories（specialty/common）、assetTags（infrastructure/landscape）、styles、functionIds/rawFunctionTerms 查询作者素材。旧 roles/planningRoleTerms 只辅助检索，不决定哪些能作核心或填充，不按名字猜语义。通用市政厅可以是本次行政区核心。确认选材另行提交 structureRefs/fillPoolRefs。
+# 阶段二：将功能区设计成完整组团
 
-用 city_d4_district 提交完整 districtDesign，core:{groupId,structureRef} 明确本区唯一核心。核心列入该组 requiredStructureRefs，其余必需配套也列入各组 requiredStructureRefs；fillPools 仅包含可选填充。同类区可选不同模型，不靠反复整套组合凑数量。CORE priority 仍是全城编译先后，与本区核心独立。
+## 目标
 
-调用正式 Java 阵列编译，查看返回的本区局部及全城预览。要修订已保存区，用 targetDistrictId、当前 baseDraftHash、assessment 和新的完整 districtDesign；可重新选材、配置阵列和局部景观，其他区设计与几何保留。初次有效编译推进下一区，已保存区仍可修订。每次参数变化必须再编译，禁止拿旧图确认新版本。边界、碰撞与未采样数据为布局约束；地形偏好与适配证据供后续台地、支撑、跨水施工使用，编译预览不证明实际施工。
+围绕 currentDistrict 的核心组织足够的配套、重复功能建筑与公共空间，使本区能承担城市要求，并与全城组织联系。
+
+## 设计工作
+
+先根据用途查询 city_d4_materials，比较尺寸、作者用途与风格。按需要使用公共空间目录、绿化池和布局案例。考虑人数、活动、服务范围与空间层次所需的实际体量；大核心落位之后，仍要设计它周围的日常配套。
+
+用完整阵列与嵌套表达院落、街坊、轴线或组团，明确入口和主要公共空间。建筑、景观和台地安排应有地形依据，服务于本区活动及全城联系。
+
+## 本阶段操作与规则
+
+用 city_d4_district 提交完整 districtDesign 与 designAnswers。core:{groupId,structureRef} 明确本区唯一核心；核心及必需配套列入 requiredStructureRefs，可选填充放入 fillPools。本区核心与全城 CORE priority 是两个概念。根组/根组合使用明确 anchorBlock，嵌套成员由父布局组织。
+
+编译后实际读取局部及全城预览，区分计划内容、保留内容、跳过项与适配交接。初次有效结果自动推进下一区；保存了初版之后，仍可以修订。
+
+正常生成中的必要修订，或用户明确要求的测试/修订，可修改已保存区。修订已有区时，使用 targetDistrictId、当前 baseDraftHash、assessment 以及新的完整 districtDesign 和 designAnswers。可重新选材、修改阵列与本区景观；其他区设计和布局保留。每次变化后再编译并查看新图。格式错误与失败预算遵循当前反馈。
+
+## 阶段完成依据
+
+初版已形成有用途的组团，实际保留内容和缺口有可判断的预览。把需要全城协调的问题带入复核；只有几栋有效落位时，应继续判断职责和体量是否充分。
