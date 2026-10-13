@@ -83,6 +83,7 @@ public final class StarterRealmBootstrap {
                 throw new IOException("STARTER_SURVEY_ID_MISMATCH");
             if(!saved.get("sourceConfigHash").equals(WorldEntrySurvey.read(run.resolve("world_survey_manifest.json")).get("configHash")))
                 throw new IOException("STARTER_SURVEY_CHANGED");
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new com.rinsing.geomantia.api.regions.GeographyReadyEvent(level.getServer()));
             return new BlockPos(saved.get("spawnX").getAsInt(),saved.get("spawnY").getAsInt(),saved.get("spawnZ").getAsInt());
         }
         JsonObject grid=WorldEntrySurvey.read(run.resolve("world_feature_grid.json"));
@@ -94,6 +95,7 @@ public final class StarterRealmBootstrap {
         description.addProperty("sourceRunId",run.getFileName().toString());
         description.add("sourceConfigHash",grid.get("configHash"));
         WorldEntrySurvey.writeAtomic(target,description);
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new com.rinsing.geomantia.api.regions.GeographyReadyEvent(level.getServer()));
         PlanningAreaAccessRuntime.invalidate(level.getServer());
         var permission=new PlanningAreaAccessPolicy(run.getParent(),config).evaluate("minecraft:overworld",x,z);
         if(!permission.allowed()) throw new IOException("STARTER_SPAWN_PROTECTED: "+permission.reasonCode());

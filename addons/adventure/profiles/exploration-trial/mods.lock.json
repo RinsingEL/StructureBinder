@@ -1,0 +1,79 @@
+[
+  {
+    "project": "when-dungeons-arise",
+    "version": "2.1.58-1.20.x",
+    "file": "DungeonsArise-1.20.x-2.1.58-release.jar",
+    "sha512": "021bc9558af43492c45c05874fa9f2e87f1e90298b70681f8d3b845716d29b4a5eae57d06c3c4308fd7d7cd45194dea513e78c891d1f546a8f5474acc204153d",
+    "url": "https://cdn.modrinth.com/data/8DfbfASn/versions/6hQpx5Tc/DungeonsArise-1.20.x-2.1.58-release.jar"
+  },
+  {
+    "project": "when-dungeons-arise-seven-seas",
+    "version": "1.0.2",
+    "file": "DungeonsAriseSevenSeas-1.19.2-1.0.2-forge.jar",
+    "sha512": "1f5627497aee881c3de6cb70fd2a881b929ff62923ddd9ab606622afad459466cd80ad4905e70dc1259c52cf3972a37fca864a0a4447064f69016ecf629de0f7",
+    "url": "https://cdn.modrinth.com/data/ZsrrjDbP/versions/AxIOkvEv/DungeonsAriseSevenSeas-1.19.2-1.0.2-forge.jar"
+  },
+  {
+    "project": "mutant-monsters",
+    "version": "v8.0.8-1.20.1-Forge",
+    "file": "MutantMonsters-v8.0.8-1.20.1-Forge.jar",
+    "sha512": "ff1b7de6461f37c1a12b96efd2e6d4eed3eb0099debecf9eb63eab85f1ce7d9d87c157d2d5da953b3d99642569ef3bc2b410623145fe7a671343d2aa471f6618",
+    "url": "https://cdn.modrinth.com/data/derP0ten/versions/CUgYzMnF/MutantMonsters-v8.0.8-1.20.1-Forge.jar"
+  },
+  {
+    "project": "mowzies-mobs",
+    "version": "1.8.2",
+    "file": "mowziesmobs-1.8.2.jar",
+    "sha512": "c1c5f7b8cba4dbbe57f8eb7150bea94a72076ef4ae923adf7fe1147eef703e4fedc7914a12d51fb4152faccaad94c4053ce3ff21cca8905bf2da17de61db43b0",
+    "url": "https://cdn.modrinth.com/data/BFbX9xcm/versions/acYEfsJa/mowziesmobs-1.8.2.jar"
+  },
+  {
+    "project": "aquamirae",
+    "version": "6.4.0",
+    "file": "aquamirae-forge-1.20.1-6.4.0.jar",
+    "sha512": "d4f689e25f691cf4bafdf1eb26901c4b6d0548c73b136537b90ac649c4f6fa52b00557abf7c82dfbcedd57be5f6931dbfb577cb88f4f9fd4b4725f088200321d",
+    "url": "https://cdn.modrinth.com/data/k23mNPhZ/versions/A6aIqoJZ/aquamirae-forge-1.20.1-6.4.0.jar"
+  },
+  {
+    "project": "l_enders-cataclysm",
+    "version": "3.31",
+    "file": "L_Enders_Cataclysm-3.31.jar",
+    "sha512": "0dccedd79e3e555f5a38075612d91aec23e1f6ca674e7637ea88c669095b44554385abb75826dfa5a0170585c6b3c3b6d9465bed049c0186d80f75d88f45c5e8",
+    "url": "https://cdn.modrinth.com/data/46KJle7n/versions/C3H0azzB/L_Enders_Cataclysm-3.31.jar"
+  },
+  {
+    "project": "QAGBst4M",
+    "version": "v8.1.33-1.20.1-Forge",
+    "file": "PuzzlesLib-v8.1.33-1.20.1-Forge.jar",
+    "sha512": "4e0a6243f70a7f99bb631940bfeca49f31b13ec34f338d994fe129f0445e738ffd925e5c440f4e6bf822f9013bb8c2156de6dfcd62741d85c3ca3e8221d86a19",
+    "url": "https://cdn.modrinth.com/data/QAGBst4M/versions/mIyVGf3d/PuzzlesLib-v8.1.33-1.20.1-Forge.jar"
+  },
+  {
+    "project": "8BmcQJ2H",
+    "version": "4.8.4",
+    "file": "geckolib-forge-1.20.1-4.8.4.jar",
+    "sha512": "443a321a293e3cb92fbbc3c97a38b179a45d1db703cd7bdb123270a9e04e7b7d67d5b06cd8e77a6d4d9139e033e901b9660cccf53ad5f9beaae6d06eae68febf",
+    "url": "https://cdn.modrinth.com/data/8BmcQJ2H/versions/aC5KMoNg/geckolib-forge-1.20.1-4.8.4.jar"
+  },
+  {
+    "project": "vvuO3ImH",
+    "version": "5.14.1+1.20.1",
+    "file": "curios-forge-5.14.1+1.20.1.jar",
+    "sha512": "1373f95fd111c977db2f6adcef8e4eb486a2d926a3e17374692dee4ac3d65857de6446c16922b531aa5ace2c23c666a7fcc28c720b2917c1e04808d15648ba87",
+    "url": "https://cdn.modrinth.com/data/vvuO3ImH/versions/IPQlZkz1/curios-forge-5.14.1%2B1.20.1.jar"
+  },
+  {
+    "project": "FoVacERa",
+    "version": "3.0",
+    "file": "lionfishapi-3.0.jar",
+    "sha512": "a7cf6c9bf27a77b45efe434a166f9c99efdb6db14e5d88ce8417c6364aea9d250a9f43627e9e0ac162e106517fccf51cebb5035852c8449fb7fb299a083770c4",
+    "url": "https://cdn.modrinth.com/data/FoVacERa/versions/CPftDBcY/lionfishapi-3.0.jar"
+  },
+  {
+    "project": "obscure-api",
+    "version": "18",
+    "file": "obscure_api-18.jar",
+    "sha512": "c266efd30b8814166b457e421517c1afebdab1b3406d863acc894e778287482c2b0e63133d7fdf05c5758c480f65c008b70e6f67f82eac22c8dbb4dce5b369ce",
+    "url": "https://cdn.modrinth.com/data/fU7jbFHc/versions/7sZmDObM/obscure_api-18.jar"
+  }
+]

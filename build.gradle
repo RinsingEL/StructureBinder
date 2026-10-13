@@ -97,6 +97,7 @@ minecraft {
         }
 
         gameTestServer {
+            property 'geomantia.apiPort', '0'
             property 'forge.enabledGameTestNamespaces', providers.gradleProperty('geomantiaGameTestNamespaces').orElse(mod_id).get()
             workingDirectory project.file(providers.gradleProperty('geomantiaGameTestDir').orElse('run').get())
         }
@@ -192,6 +193,12 @@ sourceSets {
     }
     harness { compileClasspath += sourceSets.main.output; runtimeClasspath += sourceSets.main.output }
     map { compileClasspath += sourceSets.main.output; runtimeClasspath += sourceSets.main.output }
+    adventure {
+        java.srcDirs = ['addons/adventure/src/main/java']
+        resources.srcDirs = ['addons/adventure/src/main/resources']
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
 }
 tasks.register('cityArrayExperiment', JavaExec) {
     group = 'verification'
@@ -224,11 +231,14 @@ configurations {
     mapImplementation.extendsFrom implementation
     harnessCompileOnly.extendsFrom compileOnly
     mapCompileOnly.extendsFrom compileOnly
+    adventureImplementation.extendsFrom implementation
+    adventureCompileOnly.extendsFrom compileOnly
 }
 sourceSets.harness.compileClasspath += sourceSets.main.compileClasspath
 sourceSets.map.compileClasspath += sourceSets.main.compileClasspath
-sourceSets.test.compileClasspath += sourceSets.harness.output + sourceSets.map.output
-sourceSets.test.runtimeClasspath += sourceSets.harness.output + sourceSets.map.output
+sourceSets.adventure.compileClasspath += sourceSets.main.compileClasspath
+sourceSets.test.compileClasspath += sourceSets.harness.output + sourceSets.map.output + sourceSets.adventure.output
+sourceSets.test.runtimeClasspath += sourceSets.harness.output + sourceSets.map.output + sourceSets.adventure.output
 minecraft.runs.configureEach {
     def allAddons = providers.gradleProperty('geomantiaDevAddons').orElse('false').get().toBoolean()
     def mapAddon = providers.gradleProperty('geomantiaDevUseMap').orElse('false').get().toBoolean()
@@ -238,8 +248,11 @@ minecraft.runs.configureEach {
             geomantia_map { source sourceSets.map }
         }
     }
+    if (allAddons || providers.gradleProperty('geomantiaDevAdventure').orElse('false').get().toBoolean()) {
+        mods { geomantia_adventure { source sourceSets.adventure } }
+    }
 }
-['harness', 'map'].each { addon ->
+['harness', 'map', 'adventure'].each { addon ->
     tasks.named("process${addon.capitalize()}Resources", ProcessResources) {
         filesMatching('META-INF/mods.toml') { expand(mod_version: mod_version) }
     }
@@ -250,22 +263,22 @@ minecraft.runs.configureEach {
         finalizedBy "reobf${addon.capitalize()}Jar"
     }
 }
-reobf { harnessJar {}; mapJar {} }
-tasks.named('assemble') { dependsOn 'harnessJar', 'mapJar' }
+reobf { harnessJar {}; mapJar {}; adventureJar {} }
+tasks.named('assemble') { dependsOn 'harnessJar', 'mapJar', 'adventureJar' }
 tasks.register('coreMcpTest', Test) {
-    description = 'Exercise the external MCP server without either optional addon on the classpath.'
+    description = 'Exercise the external MCP server without optional addons on the classpath.'
     useJUnitPlatform()
     testClassesDirs = sourceSets.test.output.classesDirs
     include '**/McpServerServiceTest.class'
-    classpath = sourceSets.test.runtimeClasspath - sourceSets.harness.output - sourceSets.map.output
+    classpath = sourceSets.test.runtimeClasspath - sourceSets.harness.output - sourceSets.map.output - sourceSets.adventure.output
     filter { includeTestsMatching '*McpServerServiceTest' }
     systemProperty 'geomantia.coreOnlyTest', 'true'
 }
 tasks.register('verifyAddonPackaging') {
-    dependsOn 'reobfJar', 'reobfHarnessJar', 'reobfMapJar'
+    dependsOn 'reobfJar', 'reobfHarnessJar', 'reobfMapJar', 'reobfAdventureJar'
     doLast {
         def archives = [:]
-        ['main': 'jar', 'harness': 'harnessJar', 'map': 'mapJar'].each { name, task ->
+        ['main': 'jar', 'harness': 'harnessJar', 'map': 'mapJar', 'adventure': 'adventureJar'].each { name, task ->
             archives[name] = new java.util.zip.ZipFile(tasks.named(task).get().archiveFile.get().asFile)
         }
         try {
@@ -273,11 +286,11 @@ tasks.register('verifyAddonPackaging') {
                 [(name): archive.entries().findAll { it.name.endsWith('.class') && it.name.contains('/') }
                         .collect { it.name.substring(0, it.name.lastIndexOf('/')) }.toSet()]
             }
-            [['main', 'harness'], ['main', 'map'], ['harness', 'map']].each { pair ->
+            [['main', 'harness'], ['main', 'map'], ['harness', 'map'], ['main', 'adventure'], ['harness', 'adventure'], ['map', 'adventure']].each { pair ->
                 def shared = packages[pair[0]].intersect(packages[pair[1]])
                 if (!shared.empty) throw new GradleException("Split packages between ${pair}: ${shared}")
             }
-            def optional = ['harness', 'map'].collectMany { name ->
+            def optional = ['harness', 'map', 'adventure'].collectMany { name ->
                 archives[name].entries().findAll { it.name.endsWith('.class') }.collect { it.name[0..-7] }
             }
             archives.main.entries().findAll { it.name.endsWith('.class') }.each { entry ->
@@ -286,7 +299,7 @@ tasks.register('verifyAddonPackaging') {
                     if (bytes.contains(type)) throw new GradleException("Core references optional class ${type} from ${entry.name}")
                 }
             }
-            ['harness', 'map'].each { name ->
+            ['harness', 'map', 'adventure'].each { name ->
                 def manifest = new java.util.jar.Manifest(archives[name].getInputStream(archives[name].getEntry('META-INF/MANIFEST.MF')))
                 if (manifest.mainAttributes.getValue('MixinConfigs')) throw new GradleException("${name} repeats core mixins")
             }
@@ -382,7 +395,45 @@ tasks.matching { it.name == 'prepareRunGameTestServer' }.configureEach {
     doLast {
         copy {
             from 'src/main/resources/gameteststructures'
+            if (providers.gradleProperty('geomantiaDevAdventure').orElse('false').get().toBoolean()
+                    || providers.gradleProperty('geomantiaDevAddons').orElse('false').get().toBoolean()) {
+                from 'addons/adventure/src/main/resources/gameteststructures'
+            }
             into project.file(providers.gradleProperty('geomantiaGameTestDir').orElse('run').get() + '/gameteststructures')
         }
+    }
+}
+
+// Isolated adventure checks do not require the UI add-ons or a Minecraft client.
+sourceSets {
+    adventureTest {
+        java.srcDirs = ['addons/adventure/src/test/java']
+        compileClasspath += sourceSets.main.output + sourceSets.adventure.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.adventure.output
+    }
+}
+configurations {
+    adventureTestImplementation.extendsFrom testImplementation
+    adventureTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+tasks.register('adventureTest', Test) {
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.adventureTest.output.classesDirs
+    classpath = sourceSets.adventureTest.runtimeClasspath
+}
+tasks.named('check') { dependsOn 'adventureTest' }
+tasks.register('verifyAdventurePackaging') {
+    dependsOn 'reobfJar', 'reobfAdventureJar'
+    doLast {
+        def core = new java.util.zip.ZipFile(tasks.jar.archiveFile.get().asFile)
+        def addon = new java.util.zip.ZipFile(tasks.adventureJar.archiveFile.get().asFile)
+        try {
+            if (core.entries().any { it.name.startsWith('com/rinsing/geomantia/adventure/') || it.name.startsWith('adventure_defaults/') })
+                throw new GradleException('Adventure implementation leaked into core')
+            if (!addon.getEntry('com/rinsing/geomantia/adventure/AdventureMod.class') || !addon.getEntry('adventure_defaults/distribution.json'))
+                throw new GradleException('Adventure classes/defaults missing')
+            def mf = new java.util.jar.Manifest(addon.getInputStream(addon.getEntry('META-INF/MANIFEST.MF')))
+            if (mf.mainAttributes.getValue('MixinConfigs')) throw new GradleException('Adventure repeats core mixins')
+        } finally { core.close(); addon.close() }
     }
 }

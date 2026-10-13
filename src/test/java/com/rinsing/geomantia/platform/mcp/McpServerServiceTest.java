@@ -36,6 +36,7 @@ class McpServerServiceTest {
         if (Boolean.getBoolean("geomantia.coreOnlyTest")) {
             assertNull(getClass().getResource("/com/rinsing/geomantia/harness/systems/provider/application/HarnessAgentClient.class"));
             assertNull(getClass().getResource("/com/rinsing/geomantia/map/client/AdventurerMapScreen.class"));
+            assertNull(getClass().getResource("/com/rinsing/geomantia/adventure/AdventureMod.class"));
         }
         int first=freePort(),second=freePort();
         while(first==second) second=freePort();

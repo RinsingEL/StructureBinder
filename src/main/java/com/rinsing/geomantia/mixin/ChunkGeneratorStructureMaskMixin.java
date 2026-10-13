@@ -25,6 +25,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ChunkGenerator.class)
 public abstract class ChunkGeneratorStructureMaskMixin {
+    @Inject(method = "tryGenerateStructure", at = @At("HEAD"), cancellable = true)
+    private void geomantia$filterExternalAttempt(StructureSet.StructureSelectionEntry entry, StructureManager manager,
+            RegistryAccess registries, RandomState random, StructureTemplateManager templates, long seed,
+            ChunkAccess chunk, ChunkPos pos, SectionPos section, CallbackInfoReturnable<Boolean> callback) {
+        var world = ((StructureManagerAccessor) manager).geomantia$getLevel();
+        if (world instanceof WorldGenLevel generation
+                && net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new com.rinsing.geomantia.api.regions.StructureDistributionEvent.Attempt(
+                    generation.getLevel(), entry.structure().value(), pos))) callback.setReturnValue(false);
+    }
+
     @org.spongepowered.asm.mixin.injection.Redirect(method = "tryGenerateStructure", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/world/level/StructureManager;setStartForStructure(Lnet/minecraft/core/SectionPos;Lnet/minecraft/world/level/levelgen/structure/Structure;Lnet/minecraft/world/level/levelgen/structure/StructureStart;Lnet/minecraft/world/level/chunk/StructureAccess;)V"))
     private void geomantia$checkCompleteExternalStart(StructureManager manager, SectionPos section,
@@ -37,7 +47,20 @@ public abstract class ChunkGeneratorStructureMaskMixin {
                 && com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityGenerationProtection
                 .intersects(generation.getLevel(), start.getBoundingBox()))
             start = net.minecraft.world.level.levelgen.structure.StructureStart.INVALID_START;
-        manager.setStartForStructure(section, structure, start, chunk);
+        com.rinsing.geomantia.api.regions.StructureDistributionEvent.Candidate decision = null;
+        try {
+            if (start.isValid() && world instanceof WorldGenLevel generation
+                    && !(structure instanceof com.rinsing.geomantia.systems.city.infrastructure.world.CityTemplateTerrainStructure)) {
+                decision = new com.rinsing.geomantia.api.regions.StructureDistributionEvent.Candidate(generation.getLevel(), structure, start);
+                if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(decision))
+                    start = net.minecraft.world.level.levelgen.structure.StructureStart.INVALID_START;
+            }
+            manager.setStartForStructure(section, structure, start, chunk);
+        } catch (RuntimeException | Error failure) {
+            if (decision != null) decision.finish(false);
+            throw failure;
+        }
+        if (decision != null) decision.finish(start.isValid());
     }
 
     @Inject(method = "createStructures", at = @At("TAIL"))
@@ -54,6 +77,10 @@ public abstract class ChunkGeneratorStructureMaskMixin {
                 structureState,
                 chunk,
                 templateManager);
+        var world = ((StructureManagerAccessor) structureManager).geomantia$getLevel();
+        if (world instanceof WorldGenLevel generation)
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new com.rinsing.geomantia.api.regions.StructureDistributionEvent.Prepare(
+                    generation.getLevel(), (ChunkGenerator) (Object) this, structureState, chunk, templateManager));
     }
 
     @Inject(method = "applyBiomeDecoration", at = @At("HEAD"))

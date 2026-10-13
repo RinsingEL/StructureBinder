@@ -1,0 +1,372 @@
+[
+  {
+    "structure": "dungeons_arise:fishing_hut",
+    "sourceSet": "minor_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 35,
+    "sourceSeparationChunks": 25,
+    "tier": 1,
+    "pool": "land_light",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:wishing_well",
+    "sourceSet": "minor_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 35,
+    "sourceSeparationChunks": 25,
+    "tier": 1,
+    "pool": "land_light",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:jungle_tree_house",
+    "sourceSet": "minor_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 35,
+    "sourceSeparationChunks": 25,
+    "tier": 1,
+    "pool": "land_light",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:bathhouse",
+    "sourceSet": "minor_structures",
+    "sourceWeight": 2,
+    "sourceSpacingChunks": 35,
+    "sourceSeparationChunks": 25,
+    "tier": 1,
+    "pool": "land_light",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:abandoned_temple",
+    "sourceSet": "minor_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 35,
+    "sourceSeparationChunks": 25,
+    "tier": 1,
+    "pool": "land_light",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:lighthouse",
+    "sourceSet": "minor_structures",
+    "sourceWeight": 2,
+    "sourceSpacingChunks": 35,
+    "sourceSeparationChunks": 25,
+    "tier": 1,
+    "pool": "land_light",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:bandit_village",
+    "sourceSet": "major_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 3,
+    "pool": "land_rare",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:ceryneian_hind",
+    "sourceSet": "major_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 3,
+    "pool": "land_rare",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:coliseum",
+    "sourceSet": "major_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 3,
+    "pool": "land_rare",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:heavenly_rider",
+    "sourceSet": "major_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 3,
+    "pool": "land_rare",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:heavenly_conqueror",
+    "sourceSet": "major_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 3,
+    "pool": "land_rare",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:illager_campsite",
+    "sourceSet": "major_structures",
+    "sourceWeight": 3,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 2,
+    "pool": "land_encounters",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:illager_corsair",
+    "sourceSet": "major_structures",
+    "sourceWeight": 2,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 2,
+    "pool": "wda_sea_encounters",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:illager_fort",
+    "sourceSet": "major_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 3,
+    "pool": "land_rare",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:illager_galley",
+    "sourceSet": "major_structures",
+    "sourceWeight": 2,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 2,
+    "pool": "wda_sea_encounters",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:illager_windmill",
+    "sourceSet": "major_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 3,
+    "pool": "land_rare",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:merchant_campsite",
+    "sourceSet": "major_structures",
+    "sourceWeight": 3,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 2,
+    "pool": "land_encounters",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:monastery",
+    "sourceSet": "major_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 3,
+    "pool": "land_rare",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:mushroom_house",
+    "sourceSet": "major_structures",
+    "sourceWeight": 2,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 2,
+    "pool": "land_encounters",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:mushroom_mines",
+    "sourceSet": "major_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 3,
+    "pool": "land_rare",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:mushroom_village",
+    "sourceSet": "major_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 3,
+    "pool": "land_rare",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:scorched_mines",
+    "sourceSet": "major_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 3,
+    "pool": "land_rare",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:small_blimp",
+    "sourceSet": "major_structures",
+    "sourceWeight": 3,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 2,
+    "pool": "land_encounters",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:typhon",
+    "sourceSet": "major_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 3,
+    "pool": "wda_sea_rare",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:undead_pirate_ship",
+    "sourceSet": "major_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 3,
+    "pool": "wda_sea_rare",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:greenwood_pub",
+    "sourceSet": "major_structures",
+    "sourceWeight": 2,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 2,
+    "pool": "land_encounters",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:aviary",
+    "sourceSet": "major_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 3,
+    "pool": null,
+    "excludedReason": "End-only; outside current Overworld management"
+  },
+  {
+    "structure": "dungeons_arise:bandit_towers",
+    "sourceSet": "major_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 3,
+    "pool": "land_rare",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:foundry",
+    "sourceSet": "major_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 3,
+    "pool": "land_rare",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:heavenly_challenger",
+    "sourceSet": "major_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 3,
+    "pool": "land_rare",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:thornborn_towers",
+    "sourceSet": "major_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 3,
+    "pool": "land_rare",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:infested_temple",
+    "sourceSet": "major_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 3,
+    "pool": "land_rare",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:mining_system",
+    "sourceSet": "major_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 3,
+    "pool": "land_rare",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:plague_asylum",
+    "sourceSet": "major_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 3,
+    "pool": "land_rare",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:shiraz_palace",
+    "sourceSet": "major_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 3,
+    "pool": "land_rare",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:keep_kayra",
+    "sourceSet": "major_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 3,
+    "pool": "land_rare",
+    "excludedReason": null
+  },
+  {
+    "structure": "dungeons_arise:mechanical_nest",
+    "sourceSet": "major_structures",
+    "sourceWeight": 1,
+    "sourceSpacingChunks": 60,
+    "sourceSeparationChunks": 50,
+    "tier": 3,
+    "pool": "land_rare",
+    "excludedReason": null
+  }
+]

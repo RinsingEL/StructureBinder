@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "tiers": [
+    {
+      "land": {
+        "mobs": [
+          "land_common"
+        ],
+        "structures": [
+          "land_light"
+        ]
+      },
+      "nearSea": {
+        "mobs": [
+          "coastal"
+        ],
+        "structures": [
+          "sea_light"
+        ]
+      }
+    },
+    {
+      "land": {
+        "mobs": [
+          "land_common",
+          "mutants_rare"
+        ],
+        "structures": [
+          "land_light",
+          "land_encounters"
+        ]
+      },
+      "nearSea": {
+        "mobs": [
+          "coastal"
+        ],
+        "structures": [
+          "sea_light",
+          "sea_raiders",
+          "wda_sea_encounters"
+        ]
+      }
+    },
+    {
+      "land": {
+        "mobs": [
+          "land_common",
+          "mutants_rare"
+        ],
+        "structures": [
+          "land_encounters",
+          "land_boss_sites",
+          "land_rare"
+        ]
+      },
+      "nearSea": {
+        "mobs": [
+          "coastal"
+        ],
+        "structures": [
+          "sea_raiders",
+          "sea_major",
+          "ice_sea",
+          "wda_sea_encounters",
+          "wda_sea_rare"
+        ]
+      }
+    }
+  ],
+  "ocean": {
+    "mobs": [
+      "coastal"
+    ],
+    "structures": [
+      "sea_major",
+      "ice_sea",
+      "ocean_boss",
+      "wda_sea_encounters",
+      "wda_sea_rare"
+    ]
+  }
+}

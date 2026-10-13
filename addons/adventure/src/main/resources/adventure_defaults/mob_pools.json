@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "pools": [
+    {
+      "id": "land_common",
+      "chance": 0.7,
+      "cooldownTicks": 0,
+      "nearbyLimit": 12,
+      "nearbyRadius": 48,
+      "entries": [
+        {
+          "entity": "minecraft:zombie",
+          "weight": 100,
+          "minCount": 1,
+          "maxCount": 3,
+          "conditions": {
+            "biomes": [],
+            "minY": -64,
+            "maxY": 320
+          }
+        },
+        {
+          "entity": "minecraft:skeleton",
+          "weight": 60,
+          "minCount": 1,
+          "maxCount": 2,
+          "conditions": {
+            "biomes": [],
+            "minY": -64,
+            "maxY": 320
+          }
+        }
+      ]
+    },
+    {
+      "id": "coastal",
+      "chance": 0.5,
+      "cooldownTicks": 0,
+      "nearbyLimit": 8,
+      "nearbyRadius": 48,
+      "entries": [
+        {
+          "entity": "minecraft:drowned",
+          "weight": 100,
+          "minCount": 1,
+          "maxCount": 2,
+          "conditions": {
+            "biomes": [],
+            "minY": -64,
+            "maxY": 320
+          }
+        }
+      ]
+    }
+  ]
+}

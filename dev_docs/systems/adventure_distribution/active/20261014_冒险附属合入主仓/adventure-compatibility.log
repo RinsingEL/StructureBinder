@@ -1,0 +1,107 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.8/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :
+MixinGradle is skipping eclipse integration, extension not found
+Neither the 'eclipse' nor the 'idea' plugins were found, but IDE resource copy has been enabled.
+
+> Task :downloadMcpConfig
+> Task :extractSrg UP-TO-DATE
+> Task :createMcpToSrg UP-TO-DATE
+
+> Task :compileJava
+ע: SpongePowered MIXIN Annotation Processor Version=0.8.5 (MixinGradle Version=0.7)
+ע: Supported obfuscation types: ObfuscationServiceMCP supports [notch] ObfuscationServiceFG3 supports [searge]
+ע: Loading searge mappings from E:\Mod_Dev\StructureBinder\addons\.realmfolk-build\createMcpToSrg\output.tsrg
+ע: Writing refmap to E:\Mod_Dev\StructureBinder\addons\.realmfolk-build\tmp\compileJava\compileJava-refmap.json
+ע: Writing refmap to E:\Mod_Dev\StructureBinder\addons\.realmfolk-build\tmp\compileJava\compileJava-refmap.json
+ע: Writing searge composite mappings to E:\Mod_Dev\StructureBinder\addons\.realmfolk-build\tmp\compileJava\compileJava-mappings.tsrg
+ע: Writing refmap to E:\Mod_Dev\StructureBinder\addons\.realmfolk-build\tmp\compileJava\compileJava-refmap.json
+ע: Writing refmap to E:\Mod_Dev\StructureBinder\addons\.realmfolk-build\tmp\compileJava\compileJava-refmap.json
+ע: Writing searge composite mappings to E:\Mod_Dev\StructureBinder\addons\.realmfolk-build\tmp\compileJava\compileJava-mappings.tsrg
+E:\Mod_Dev\StructureBinder\addons\realmfolk\src\main\java\com\rinsing\realmfolk\client\ClientViews.java:52: ����: [removal] ResourceLocation �е� ResourceLocation(String,String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+        private static final ResourceLocation TEXTURE=new ResourceLocation("minecraft","textures/entity/villager/villager.png");
+                                                      ^
+E:\Mod_Dev\StructureBinder\addons\realmfolk\src\main\java\com\rinsing\realmfolk\net\Messages.java:19: ����: [removal] ResourceLocation �е� ResourceLocation(String,String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+    public static final SimpleChannel CHANNEL=NetworkRegistry.newSimpleChannel(new ResourceLocation(Realmfolk.ID,"main"),()->"2","2"::equals,"2"::equals);
+                                                                               ^
+E:\Mod_Dev\StructureBinder\addons\realmfolk\src\main\java\com\rinsing\realmfolk\entity\CitizenEntity.java:56: ����: [removal] ResourceLocation �е� ResourceLocation(String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+        var item=net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(new net.minecraft.resources.ResourceLocation(profile.equipment));
+                                                                              ^
+E:\Mod_Dev\StructureBinder\addons\realmfolk\src\main\java\com\rinsing\realmfolk\client\ShopScreen.java:61: ����: [removal] ResourceLocation �е� ResourceLocation(String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+    private ItemStack icon(String item){return new ItemStack(ForgeRegistries.ITEMS.getValue(new ResourceLocation(item)));}
+                                                                                            ^
+E:\Mod_Dev\StructureBinder\addons\realmfolk\src\main\java\com\rinsing\realmfolk\quest\ArsGlyphAdapter.java:19: ����: [removal] ResourceLocation �е� ResourceLocation(String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+        try{return Class.forName(ROOT+"common.items.Glyph").isInstance(ForgeRegistries.ITEMS.getValue(new ResourceLocation(item)));}
+                                                                                                      ^
+E:\Mod_Dev\StructureBinder\addons\realmfolk\src\main\java\com\rinsing\realmfolk\quest\ArsGlyphAdapter.java:32: ����: [removal] ResourceLocation �е� ResourceLocation(String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+            for(String id:candidates){Object item=ForgeRegistries.ITEMS.getValue(new ResourceLocation(id));
+                                                                                 ^
+E:\Mod_Dev\StructureBinder\addons\realmfolk\src\main\java\com\rinsing\realmfolk\Realmfolk.java:24: ����: [removal] FMLJavaModLoadingContext �е� get() �ѹ�ʱ, �ұ��Ϊ��ɾ��
+        IEventBus bus=FMLJavaModLoadingContext.get().getModEventBus();
+                                              ^
+E:\Mod_Dev\StructureBinder\addons\realmfolk\src\main\java\com\rinsing\realmfolk\server\SocietyRuntime.java:167: ����: [removal] ResourceLocation �е� ResourceLocation(String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+            ServerLevel level=server.getLevel(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION,new net.minecraft.resources.ResourceLocation(t.dimension)));
+                                                                                                                                            ^
+E:\Mod_Dev\StructureBinder\addons\realmfolk\src\main\java\com\rinsing\realmfolk\server\SocietyRuntime.java:169: ����: [removal] ResourceLocation �е� ResourceLocation(String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+            EntityType<?> type=net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getValue(new net.minecraft.resources.ResourceLocation(c.entityType));
+                                                                                                   ^
+E:\Mod_Dev\StructureBinder\addons\realmfolk\src\main\java\com\rinsing\realmfolk\server\DesignService.java:15: ����: [removal] ResourceLocation �е� ResourceLocation(String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+    public static boolean itemExists(String id){return ForgeRegistries.ITEMS.containsKey(new ResourceLocation(id));}
+                                                                                         ^
+E:\Mod_Dev\StructureBinder\addons\realmfolk\src\main\java\com\rinsing\realmfolk\server\Dialogues.java:144: ����: [removal] ResourceLocation �е� ResourceLocation(String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+    private static ItemStack stack(String item,int count){return new ItemStack(net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(new net.minecraft.resources.ResourceLocation(item)),count);}
+                                                                                                                                            ^
+E:\Mod_Dev\StructureBinder\addons\realmfolk\src\main\java\com\rinsing\realmfolk\server\ObjectiveQuestRuntime.java:36: ����: [removal] ResourceLocation �е� ResourceLocation(String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+            var compiled=ObjectiveTasks.compile(c,q,ObjectiveQuestRuntime::itemExists,id->ForgeRegistries.ENTITY_TYPES.containsKey(new ResourceLocation(id)),ArsGlyphAdapter::glyph);
+                                                                                                                                   ^
+E:\Mod_Dev\StructureBinder\addons\realmfolk\src\main\java\com\rinsing\realmfolk\server\ObjectiveQuestRuntime.java:42: ����: [removal] ResourceLocation �е� ResourceLocation(String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+    private static boolean itemExists(String id){return id!=null&&ResourceLocation.isValidResourceLocation(id)&&!id.equals("minecraft:air")&&ForgeRegistries.ITEMS.containsKey(new ResourceLocation(id));}
+                                                                                                                                                                               ^
+E:\Mod_Dev\StructureBinder\addons\realmfolk\src\main\java\com\rinsing\realmfolk\server\ObjectiveQuestRuntime.java:50: ����: [removal] ResourceLocation �е� ResourceLocation(String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+        var item=ForgeRegistries.ITEMS.getValue(new ResourceLocation(id));int n=0;
+                                                ^
+E:\Mod_Dev\StructureBinder\addons\realmfolk\src\main\java\com\rinsing\realmfolk\server\ObjectiveQuestRuntime.java:90: ����: [removal] ResourceLocation �е� ResourceLocation(String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+        String items=f.reward.items.entrySet().stream().map(e->new ItemStack(ForgeRegistries.ITEMS.getValue(new ResourceLocation(e.getKey()))).getHoverName().getString()+" �� "+e.getValue()).collect(java.util.stream.Collectors.joining("��"));
+                                                                                                            ^
+E:\Mod_Dev\StructureBinder\addons\realmfolk\src\main\java\com\rinsing\realmfolk\server\ObjectiveQuestRuntime.java:97: ����: [removal] ResourceLocation �е� ResourceLocation(String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+            var item=ForgeRegistries.ITEMS.getValue(new ResourceLocation(e.getKey()));require(itemExists(e.getKey()),"������Ʒ�Ѳ�����");
+                                                    ^
+E:\Mod_Dev\StructureBinder\addons\realmfolk\src\main\java\com\rinsing\realmfolk\server\ObjectiveQuestRuntime.java:122: ����: [removal] ResourceLocation �е� ResourceLocation(String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+                for(var stack:p.getInventory().items)if(stack.is(ForgeRegistries.ITEMS.getValue(new ResourceLocation(item)))&&!stack.hasTag()){
+                                                                                                ^
+E:\Mod_Dev\StructureBinder\addons\realmfolk\src\main\java\com\rinsing\realmfolk\server\ObjectiveQuestRuntime.java:128: ����: [removal] ResourceLocation �е� ResourceLocation(String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+            reward.items.forEach((item,n)->p.getInventory().add(new ItemStack(ForgeRegistries.ITEMS.getValue(new ResourceLocation(item)),n)));
+                                                                                                             ^
+E:\Mod_Dev\StructureBinder\addons\realmfolk\src\main\java\com\rinsing\realmfolk\server\PopulationConfig.java:36: ����: [removal] ResourceLocation �е� ResourceLocation(String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+        for(String type:entityTypesByTemplate.values())if(!net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.containsKey(new net.minecraft.resources.ResourceLocation(type)))throw new IllegalArgumentException("δ֪ʵ�壺"+type);
+                                                                                                                                  ^
+E:\Mod_Dev\StructureBinder\addons\realmfolk\src\main\java\com\rinsing\realmfolk\server\PublicLifeRuntime.java:22: ����: [removal] ResourceLocation �е� ResourceLocation(String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+        var s=society(server);ServerLevel level=server.getLevel(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION,new net.minecraft.resources.ResourceLocation(town.dimension)));
+                                                                                                                                                              ^
+E:\Mod_Dev\StructureBinder\addons\realmfolk\src\main\java\com\rinsing\realmfolk\server\ShopService.java:70: ����: [removal] ResourceLocation �е� ResourceLocation(String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+    private static ItemStack stack(String id,int count){return new ItemStack(Objects.requireNonNull(ForgeRegistries.ITEMS.getValue(new ResourceLocation(id))),count);}
+                                                                                                                                   ^
+ע: ĳЩ�����ļ�ʹ�û򸲸����ѹ�ʱ�� API��
+ע: �й���ϸ��Ϣ, ��ʹ�� -Xlint:deprecation ���±��롣
+21 ������
+
+> Task :addMixinsToJar
+> Task :processResources UP-TO-DATE
+> Task :classes
+> Task :jar
+> Task :compileTestJava UP-TO-DATE
+> Task :processTestResources NO-SOURCE
+> Task :testClasses UP-TO-DATE
+> Task :test
+> Task :configureReobfTaskForReobfJar
+> Task :reobfJar
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.8/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 28s
+11 actionable tasks: 7 executed, 4 up-to-date

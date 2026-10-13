@@ -10,3 +10,7 @@ saves/*.zip filter=lfs diff=lfs merge=lfs -text
 # Preserve byte-level hashes in captured local experiment evidence.
 runtime/** -text
 tmp/** -text
+# Harness input fingerprints must remain stable after a Windows checkout.
+geomantia_harness/*.mjs text eol=lf
+geomantia_harness/src/*.mjs text eol=lf
+geomantia_harness/*.json text eol=lf

@@ -1,0 +1,169 @@
+{
+  "sourceBase": "386d0842",
+  "sourceBranch": "codex/adventure-distribution",
+  "copied": [
+    {
+      "source": "src\\adventure\\java\\com\\rinsing\\geomantia\\adventure\\AdventureConfig.java",
+      "target": "addons\\adventure\\src\\main\\java\\com\\rinsing\\geomantia\\adventure\\AdventureConfig.java",
+      "sha256": "22ebb6d2adfeae2d463cece55960e81623271e4e467d81a50fcc03b9095f4f07"
+    },
+    {
+      "source": "src\\adventure\\java\\com\\rinsing\\geomantia\\adventure\\AdventureGameTests.java",
+      "target": "addons\\adventure\\src\\main\\java\\com\\rinsing\\geomantia\\adventure\\AdventureGameTests.java",
+      "sha256": "31acda5cd870788ffcedd2c482772329df38670126de2a4f0eb2bb3f4f4033a5"
+    },
+    {
+      "source": "src\\adventure\\java\\com\\rinsing\\geomantia\\adventure\\AdventureMod.java",
+      "target": "addons\\adventure\\src\\main\\java\\com\\rinsing\\geomantia\\adventure\\AdventureMod.java",
+      "sha256": "a7e3293169aee01de031786b90d49201be8ac62a1339e75e3d9fa8285568ba50"
+    },
+    {
+      "source": "src\\adventure\\java\\com\\rinsing\\geomantia\\adventure\\AdventureSites.java",
+      "target": "addons\\adventure\\src\\main\\java\\com\\rinsing\\geomantia\\adventure\\AdventureSites.java",
+      "sha256": "93fb5daff04081217e4126b37cd5b2e37f6c52207e336278b27a6dbdc70adc68"
+    },
+    {
+      "source": "src\\adventure\\java\\com\\rinsing\\geomantia\\adventure\\AdventureWorld.java",
+      "target": "addons\\adventure\\src\\main\\java\\com\\rinsing\\geomantia\\adventure\\AdventureWorld.java",
+      "sha256": "70fce58bb3efef62665582e3339f6e5d58985fd724e402e39bb92e5198aef753"
+    },
+    {
+      "source": "src\\adventure\\java\\com\\rinsing\\geomantia\\adventure\\ContinentTiers.java",
+      "target": "addons\\adventure\\src\\main\\java\\com\\rinsing\\geomantia\\adventure\\ContinentTiers.java",
+      "sha256": "2bdeb80d0c657e4124bd59133843b61311cb2e55e1462177e755c19de58a45a9"
+    },
+    {
+      "source": "src\\adventure\\resources\\adventure_defaults\\distribution.json",
+      "target": "addons\\adventure\\src\\main\\resources\\adventure_defaults\\distribution.json",
+      "sha256": "7409766d267d109f1b56054b3f4009e499adb57f2bcb1c947415dba756877ffc"
+    },
+    {
+      "source": "src\\adventure\\resources\\adventure_defaults\\generation_control.json",
+      "target": "addons\\adventure\\src\\main\\resources\\adventure_defaults\\generation_control.json",
+      "sha256": "69fb44481147321dce341be049ba055ab7eda4715c6ba855ddc25d6452e2d19f"
+    },
+    {
+      "source": "src\\adventure\\resources\\adventure_defaults\\mob_pools.json",
+      "target": "addons\\adventure\\src\\main\\resources\\adventure_defaults\\mob_pools.json",
+      "sha256": "8847233a88c37dc848466bc850232c573d65919a094eff32ff09273b78fa3e94"
+    },
+    {
+      "source": "src\\adventure\\resources\\adventure_defaults\\settlement_rules.json",
+      "target": "addons\\adventure\\src\\main\\resources\\adventure_defaults\\settlement_rules.json",
+      "sha256": "f317e63a2360a8bfb09d4293209a72b8d2fa103114eed46fd209add6ac95623c"
+    },
+    {
+      "source": "src\\adventure\\resources\\adventure_defaults\\structure_pools.json",
+      "target": "addons\\adventure\\src\\main\\resources\\adventure_defaults\\structure_pools.json",
+      "sha256": "a7f48efe155524d4b8082b82ca457ef0419c1a10adbfc7a73c2959b642c097f1"
+    },
+    {
+      "source": "src\\adventure\\resources\\gameteststructures\\adventuregametests.empty.snbt",
+      "target": "addons\\adventure\\src\\main\\resources\\gameteststructures\\adventuregametests.empty.snbt",
+      "sha256": "f33c57db2271ab5ef83c95bdf3dae992a056a2de22f92d58091080e2e748c4a3"
+    },
+    {
+      "source": "src\\adventure\\resources\\META-INF\\mods.toml",
+      "target": "addons\\adventure\\src\\main\\resources\\META-INF\\mods.toml",
+      "sha256": "2d84c878ab597c18fd94df9d984042baff9e61adb36cab5335c3331529a07a14"
+    },
+    {
+      "source": "src\\adventureTest\\java\\com\\rinsing\\geomantia\\adventure\\AdventureDistributionTest.java",
+      "target": "addons\\adventure\\src\\test\\java\\com\\rinsing\\geomantia\\adventure\\AdventureDistributionTest.java",
+      "sha256": "a6787aa68510f9aa06da4e940eca9bd5e3edfa0efa3c006fa6cf96d59d17baa9"
+    },
+    {
+      "source": "src\\adventureTest\\java\\com\\rinsing\\geomantia\\adventure\\AdventureSitesTest.java",
+      "target": "addons\\adventure\\src\\test\\java\\com\\rinsing\\geomantia\\adventure\\AdventureSitesTest.java",
+      "sha256": "8775a7d25a83c95bd5310548923c4035bfb5c06199dd6b7271acd71ba0d30356"
+    },
+    {
+      "source": "src\\adventureTest\\java\\com\\rinsing\\geomantia\\adventure\\ExplorationProfileTest.java",
+      "target": "addons\\adventure\\src\\test\\java\\com\\rinsing\\geomantia\\adventure\\ExplorationProfileTest.java",
+      "sha256": "21cd4ae2490349044a0b4425b14782ea7d149e30291de4c1063fccc2a97e1528"
+    },
+    {
+      "source": "src\\adventureTest\\java\\com\\rinsing\\geomantia\\api\\regions\\SettlementReservationTest.java",
+      "target": "addons\\adventure\\src\\test\\java\\com\\rinsing\\geomantia\\api\\regions\\SettlementReservationTest.java",
+      "sha256": "0b6c0f4cf4ec54852758698f4a44aeed7f0729847e69342c4aea565dc7be311c"
+    },
+    {
+      "source": "addons\\adventure\\profiles\\exploration-trial\\distribution.json",
+      "target": "addons\\adventure\\profiles\\exploration-trial\\distribution.json",
+      "sha256": "a500c36fc619321020def80045f4c1943ba4e3a98572935c0535d70c65150fd7"
+    },
+    {
+      "source": "addons\\adventure\\profiles\\exploration-trial\\generation_control.json",
+      "target": "addons\\adventure\\profiles\\exploration-trial\\generation_control.json",
+      "sha256": "f112dedff984724df7cdb42897281a0e7ba7dc4e6eeb6a96b1e415dfb2b92a94"
+    },
+    {
+      "source": "addons\\adventure\\profiles\\exploration-trial\\mob_pools.json",
+      "target": "addons\\adventure\\profiles\\exploration-trial\\mob_pools.json",
+      "sha256": "95801b2dff10015fc1a1f2cff5b25e6701d846e5e3dfea5265879661de62492b"
+    },
+    {
+      "source": "addons\\adventure\\profiles\\exploration-trial\\mods.lock.json",
+      "target": "addons\\adventure\\profiles\\exploration-trial\\mods.lock.json",
+      "sha256": "2ac5b568058861e8dd0efd0a398e9f3ddb845522aeda4e3a3a2b81638159a495"
+    },
+    {
+      "source": "addons\\adventure\\profiles\\exploration-trial\\README.md",
+      "target": "addons\\adventure\\profiles\\exploration-trial\\README.md",
+      "sha256": "0db7d99fc4cc84ff15d4a4319fb6388e475bb4ac75466069ad303381e88581a5"
+    },
+    {
+      "source": "addons\\adventure\\profiles\\exploration-trial\\settlement_rules.json",
+      "target": "addons\\adventure\\profiles\\exploration-trial\\settlement_rules.json",
+      "sha256": "f317e63a2360a8bfb09d4293209a72b8d2fa103114eed46fd209add6ac95623c"
+    },
+    {
+      "source": "addons\\adventure\\profiles\\exploration-trial\\structure-catalog.json",
+      "target": "addons\\adventure\\profiles\\exploration-trial\\structure-catalog.json",
+      "sha256": "9b9478887eb7a690218601fb875bc29d5211851eb0c7644092b99130bb93515e"
+    },
+    {
+      "source": "addons\\adventure\\profiles\\exploration-trial\\structure_pools.json",
+      "target": "addons\\adventure\\profiles\\exploration-trial\\structure_pools.json",
+      "sha256": "34fd0b52c4c65ac860cc9f2ed0b396096cf6b95f62a4a207b3baa9f840fd708e"
+    },
+    {
+      "source": "addons\\adventure\\profiles\\exploration-trial\\wda-rarity-audit.json",
+      "target": "addons\\adventure\\profiles\\exploration-trial\\wda-rarity-audit.json",
+      "sha256": "34dee0eb0723dec06be7c7444e817d706bbc777a77819210f7593f12969807d5"
+    },
+    {
+      "source": "src/main/java/com/rinsing/geomantia/api/regions/GeographyReadyEvent.java",
+      "target": "src/main/java/com/rinsing/geomantia/api/regions/GeographyReadyEvent.java",
+      "sha256": "b61b861c4e7052073324f9fc42f4bfeaa25c899a22963529c4afe57eaf279fac"
+    },
+    {
+      "source": "src/main/java/com/rinsing/geomantia/api/regions/SettlementReservationApi.java",
+      "target": "src/main/java/com/rinsing/geomantia/api/regions/SettlementReservationApi.java",
+      "sha256": "16ef410b9bff18599fd584d902e94c6470e2c2b33be90c0098588c2ba45a9ae3"
+    },
+    {
+      "source": "src/main/java/com/rinsing/geomantia/api/regions/StructureDistributionEvent.java",
+      "target": "src/main/java/com/rinsing/geomantia/api/regions/StructureDistributionEvent.java",
+      "sha256": "17f9a66d2625e6ed8efdd2227cf10659a8d5e5699806cb98a886908fc9d5a80e"
+    },
+    {
+      "source": "src/main/java/com/rinsing/geomantia/api/regions/WorldRegionApi.java",
+      "target": "src/main/java/com/rinsing/geomantia/api/regions/WorldRegionApi.java",
+      "sha256": "438225e2429b388c63584f7702a26da087628b5a232a5d06280ee7e3674371d9"
+    },
+    {
+      "source": "src/main/java/com/rinsing/geomantia/api/regions/WorldRegionSnapshot.java",
+      "target": "src/main/java/com/rinsing/geomantia/api/regions/WorldRegionSnapshot.java",
+      "sha256": "f59adc1378a635aa8d6aca82a325027a6b9c9e3f78607191368b545715dd1c46"
+    }
+  ],
+  "corePatchFiles": [
+    "src/main/java/com/rinsing/geomantia/mixin/ChunkGeneratorStructureMaskMixin.java",
+    "src/main/java/com/rinsing/geomantia/platform/StarterRealmBootstrap.java"
+  ],
+  "corePatchSha256": "6cbe62773a563f3f1f6e48fda051d83d3623be288b028212bfa4bafc14214ce2",
+  "excluded": [
+    "runtime/harness/harness-runtime-0.1.5-rc.2-win-x64.zip"
+  ]
+}

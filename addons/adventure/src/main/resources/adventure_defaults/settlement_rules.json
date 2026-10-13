@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "rules": {
+    "city": {
+      "bufferBlocks": 96,
+      "blockMobs": true,
+      "blockStructures": true,
+      "allowedMobs": [],
+      "allowedStructures": []
+    },
+    "suburb": {
+      "bufferBlocks": 64,
+      "blockMobs": true,
+      "blockStructures": true,
+      "allowedMobs": [],
+      "allowedStructures": []
+    },
+    "village": {
+      "bufferBlocks": 96,
+      "blockMobs": true,
+      "blockStructures": true,
+      "allowedMobs": [],
+      "allowedStructures": []
+    },
+    "road": {
+      "bufferBlocks": 32,
+      "blockMobs": true,
+      "blockStructures": true,
+      "allowedMobs": [],
+      "allowedStructures": []
+    }
+  },
+  "zones": []
+}

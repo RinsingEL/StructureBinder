@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "pools": [
+    {
+      "id": "land_ruins",
+      "spacingChunks": 32,
+      "separationChunks": 12,
+      "chance": 0.4,
+      "entries": [
+        {
+          "structure": "minecraft:ruined_portal",
+          "weight": 100,
+          "conditions": {
+            "biomes": [],
+            "minY": -64,
+            "maxY": 320
+          }
+        }
+      ]
+    },
+    {
+      "id": "shipwrecks",
+      "spacingChunks": 32,
+      "separationChunks": 12,
+      "chance": 0.5,
+      "entries": [
+        {
+          "structure": "minecraft:shipwreck",
+          "weight": 100,
+          "conditions": {
+            "biomes": [],
+            "minY": -64,
+            "maxY": 320
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "test": {
+    "tests": 1364,
+    "failures": 16,
+    "skipped": 13,
+    "failedTests": [
+      "com.rinsing.geomantia.harness.systems.provider.application.ProviderRevisionLoopTest.asyncFailureWakesAnotherRevisionWithoutPollingDuplicates()",
+      "com.rinsing.geomantia.harness.systems.provider.application.ProviderRevisionLoopTest.failureBeforeSuccessfulTurnReturnsAlsoWakesAnotherRevision()",
+      "com.rinsing.geomantia.platform.http.CityPlanningEndpointHandlerTest.blueprintEndpointHandlersPrepareFailureBudgetAndAcceptCompleteRevision()",
+      "com.rinsing.geomantia.platform.http.CityPlanningEndpointHandlerTest.planLandUseHttpRouteRequiresAcceptedBlueprintAndRejectsLegacyIntent()",
+      "com.rinsing.geomantia.platform.http.CityPlanningEndpointHandlerTest.blueprintOutdoorPreservePublishesIntentWithoutPlanning()",
+      "com.rinsing.geomantia.platform.http.CityPlanningEndpointHandlerTest.planLandUseHttpRouteRejectsPartialBlueprintAuthorityAndMissingD6()",
+      "com.rinsing.geomantia.platform.http.CityPlanningEndpointHandlerTest.blueprintOutdoorPlannerPublishesCompleteIdentityBoundArtifacts()",
+      "com.rinsing.geomantia.platform.http.CityPlanningEndpointHandlerTest.handlePlanD6AndExecuteD7_writeStructureArtifactsAndPreviews()",
+      "com.rinsing.geomantia.systems.city.application.CityD4VersionsTest.versionFileCannotFollowSymlinkOutsideCity()",
+      "com.rinsing.geomantia.systems.city.application.CityDesignExamplesTest.catalogIsSmallAndEachCaseDeliversTwoRealImagesOnlyOnDemand()",
+      "com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseCapturedAccessTest.actualBuildingAdjacentSingleCellLedgeMergesInsteadOfRequiringImpossibleStair()",
+      "com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseCapturedAccessTest.deepNarrowLedgeUsesActualGradingCapacityNotExcludedFootprintArea()",
+      "com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseCapturedAccessTest.yajingEntrancesUseTheirAlreadyGradedRoadInsteadOfBlockingWholeOwners()",
+      "com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseCapturedAccessTest.naturalTerrainEntranceDoesNotRequireNonexistentPlatform()",
+      "com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseCapturedAccessTest.deepTerraceUsesBoundedHighSideCutWithoutDiscardingEntrance()",
+      "com.rinsing.geomantia.systems.provider.application.PlanningBoundaryTest.blueprintViewKeepsAuthorChoicesAndPagesTerrainInsteadOfTruncating()"
+    ]
+  },
+  "adventureTest": {
+    "tests": 13,
+    "failures": 0,
+    "skipped": 0,
+    "failedTests": []
+  }
+}

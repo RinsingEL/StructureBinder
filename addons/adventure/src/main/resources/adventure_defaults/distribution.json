@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "tiers": [
+    {
+      "land": {
+        "mobs": [
+          "land_common"
+        ],
+        "structures": [
+          "land_ruins"
+        ]
+      },
+      "nearSea": {
+        "mobs": [
+          "coastal"
+        ],
+        "structures": [
+          "shipwrecks"
+        ]
+      }
+    },
+    {
+      "land": {
+        "mobs": [
+          "land_common"
+        ],
+        "structures": [
+          "land_ruins"
+        ]
+      },
+      "nearSea": {
+        "mobs": [
+          "coastal"
+        ],
+        "structures": [
+          "shipwrecks"
+        ]
+      }
+    },
+    {
+      "land": {
+        "mobs": [
+          "land_common"
+        ],
+        "structures": [
+          "land_ruins"
+        ]
+      },
+      "nearSea": {
+        "mobs": [
+          "coastal"
+        ],
+        "structures": [
+          "shipwrecks"
+        ]
+      }
+    }
+  ],
+  "ocean": {
+    "mobs": [
+      "coastal"
+    ],
+    "structures": [
+      "shipwrecks"
+    ]
+  }
+}

@@ -1,0 +1,105 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.8/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :
+MixinGradle did not locate the diffplug APT plugin, skipping eclipse task configuration
+
+> Task :downloadMcpConfig
+> Task :extractSrg UP-TO-DATE
+> Task :createMcpToSrg UP-TO-DATE
+> Task :compileJava UP-TO-DATE
+> Task :bundleCountryDesignerMcp UP-TO-DATE
+> Task :processResources UP-TO-DATE
+> Task :classes UP-TO-DATE
+> Task :compileHarnessJava UP-TO-DATE
+> Task :compileMapJava UP-TO-DATE
+> Task :processHarnessResources
+> Task :harnessClasses
+> Task :processMapResources
+> Task :mapClasses
+
+E:\Mod_Dev\StructureBinder\build\adventure-baseline-4b32d0b1\src\test\java\com\rinsing\geomantia\systems\city\infrastructure\world\CityTemplateAvailabilityPreflightTest.java:24: ����: [removal] ResourceLocation �е� ResourceLocation(String,String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+        values.put(new ResourceLocation("geomantia", "city/test/house"),
+                   ^
+> Task :compileTestJava
+1 ������
+
+> Task :processTestResources
+> Task :testClasses
+
+> Task :test
+
+ProviderRevisionLoopTest > asyncFailureWakesAnotherRevisionWithoutPollingDuplicates() FAILED
+    org.opentest4j.AssertionFailedError at ProviderRevisionLoopTest.java:61
+
+ProviderRevisionLoopTest > failureBeforeSuccessfulTurnReturnsAlsoWakesAnotherRevision() FAILED
+    org.opentest4j.AssertionFailedError at ProviderRevisionLoopTest.java:61
+
+CityPlanningEndpointHandlerTest > blueprintEndpointHandlersPrepareFailureBudgetAndAcceptCompleteRevision() FAILED
+    org.opentest4j.AssertionFailedError at CityPlanningEndpointHandlerTest.java:2250
+
+CityPlanningEndpointHandlerTest > planLandUseHttpRouteRequiresAcceptedBlueprintAndRejectsLegacyIntent() FAILED
+    org.opentest4j.AssertionFailedError at CityPlanningEndpointHandlerTest.java:2250
+
+CityPlanningEndpointHandlerTest > blueprintOutdoorPreservePublishesIntentWithoutPlanning() FAILED
+    org.opentest4j.AssertionFailedError at CityPlanningEndpointHandlerTest.java:2250
+
+CityPlanningEndpointHandlerTest > planLandUseHttpRouteRejectsPartialBlueprintAuthorityAndMissingD6() FAILED
+    org.opentest4j.AssertionFailedError at CityPlanningEndpointHandlerTest.java:2250
+
+CityPlanningEndpointHandlerTest > blueprintOutdoorPlannerPublishesCompleteIdentityBoundArtifacts() FAILED
+    org.opentest4j.AssertionFailedError at CityPlanningEndpointHandlerTest.java:2250
+
+CityPlanningEndpointHandlerTest > handlePlanD6AndExecuteD7_writeStructureArtifactsAndPreviews() FAILED
+    java.lang.NullPointerException at CityPlanningEndpointHandlerTest.java:1301
+
+CityD4VersionsTest > versionFileCannotFollowSymlinkOutsideCity() FAILED
+    java.nio.file.FileSystemException at CityD4VersionsTest.java:29
+
+CityDesignExamplesTest > catalogIsSmallAndEachCaseDeliversTwoRealImagesOnlyOnDemand() FAILED
+    java.lang.NullPointerException at CityDesignExamplesTest.java:21
+
+CityLandUseCapturedAccessTest > actualBuildingAdjacentSingleCellLedgeMergesInsteadOfRequiringImpossibleStair() FAILED
+    java.lang.RuntimeException at CityLandUseCapturedAccessTest.java:83
+        Caused by: java.lang.NullPointerException at CityLandUseCapturedAccessTest.java:83
+
+CityLandUseCapturedAccessTest > deepNarrowLedgeUsesActualGradingCapacityNotExcludedFootprintArea() FAILED
+    java.lang.RuntimeException at CityLandUseCapturedAccessTest.java:63
+        Caused by: java.lang.NullPointerException at CityLandUseCapturedAccessTest.java:63
+
+CityLandUseCapturedAccessTest > yajingEntrancesUseTheirAlreadyGradedRoadInsteadOfBlockingWholeOwners() FAILED
+    java.lang.RuntimeException at CityLandUseCapturedAccessTest.java:16
+        Caused by: java.lang.NullPointerException at CityLandUseCapturedAccessTest.java:16
+
+CityLandUseCapturedAccessTest > naturalTerrainEntranceDoesNotRequireNonexistentPlatform() FAILED
+    java.lang.RuntimeException at CityLandUseCapturedAccessTest.java:63
+        Caused by: java.lang.NullPointerException at CityLandUseCapturedAccessTest.java:63
+
+CityLandUseCapturedAccessTest > deepTerraceUsesBoundedHighSideCutWithoutDiscardingEntrance() FAILED
+    java.lang.RuntimeException at CityLandUseCapturedAccessTest.java:63
+        Caused by: java.lang.NullPointerException at CityLandUseCapturedAccessTest.java:63
+
+PlanningBoundaryTest > blueprintViewKeepsAuthorChoicesAndPagesTerrainInsteadOfTruncating() FAILED
+    java.lang.NullPointerException at PlanningBoundaryTest.java:91
+
+1364 tests completed, 16 failed, 14 skipped
+
+> Task :test FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':test'.
+> There were failing tests. See the report at: file:///E:/Mod_Dev/StructureBinder/build/adventure-baseline-4b32d0b1/build/reports/tests/test/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.8/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 2m 32s
+13 actionable tasks: 6 executed, 7 up-to-date

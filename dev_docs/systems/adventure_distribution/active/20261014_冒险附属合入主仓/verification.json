@@ -1,0 +1,103 @@
+{
+  "baselineCommit": "4b32d0b1",
+  "mergedMain": {
+    "tests": 1364,
+    "failures": 16,
+    "errors": 0,
+    "skipped": 13,
+    "failedTests": [
+      "com.rinsing.geomantia.harness.systems.provider.application.ProviderRevisionLoopTest.asyncFailureWakesAnotherRevisionWithoutPollingDuplicates()",
+      "com.rinsing.geomantia.harness.systems.provider.application.ProviderRevisionLoopTest.failureBeforeSuccessfulTurnReturnsAlsoWakesAnotherRevision()",
+      "com.rinsing.geomantia.platform.http.CityPlanningEndpointHandlerTest.blueprintEndpointHandlersPrepareFailureBudgetAndAcceptCompleteRevision()",
+      "com.rinsing.geomantia.platform.http.CityPlanningEndpointHandlerTest.blueprintOutdoorPlannerPublishesCompleteIdentityBoundArtifacts()",
+      "com.rinsing.geomantia.platform.http.CityPlanningEndpointHandlerTest.blueprintOutdoorPreservePublishesIntentWithoutPlanning()",
+      "com.rinsing.geomantia.platform.http.CityPlanningEndpointHandlerTest.handlePlanD6AndExecuteD7_writeStructureArtifactsAndPreviews()",
+      "com.rinsing.geomantia.platform.http.CityPlanningEndpointHandlerTest.planLandUseHttpRouteRejectsPartialBlueprintAuthorityAndMissingD6()",
+      "com.rinsing.geomantia.platform.http.CityPlanningEndpointHandlerTest.planLandUseHttpRouteRequiresAcceptedBlueprintAndRejectsLegacyIntent()",
+      "com.rinsing.geomantia.systems.city.application.CityD4VersionsTest.versionFileCannotFollowSymlinkOutsideCity()",
+      "com.rinsing.geomantia.systems.city.application.CityDesignExamplesTest.catalogIsSmallAndEachCaseDeliversTwoRealImagesOnlyOnDemand()",
+      "com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseCapturedAccessTest.actualBuildingAdjacentSingleCellLedgeMergesInsteadOfRequiringImpossibleStair()",
+      "com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseCapturedAccessTest.deepNarrowLedgeUsesActualGradingCapacityNotExcludedFootprintArea()",
+      "com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseCapturedAccessTest.deepTerraceUsesBoundedHighSideCutWithoutDiscardingEntrance()",
+      "com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseCapturedAccessTest.naturalTerrainEntranceDoesNotRequireNonexistentPlatform()",
+      "com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseCapturedAccessTest.yajingEntrancesUseTheirAlreadyGradedRoadInsteadOfBlockingWholeOwners()",
+      "com.rinsing.geomantia.systems.provider.application.PlanningBoundaryTest.blueprintViewKeepsAuthorChoicesAndPagesTerrainInsteadOfTruncating()"
+    ]
+  },
+  "baselineMain": {
+    "tests": 1364,
+    "failures": 16,
+    "errors": 0,
+    "skipped": 14,
+    "failedTests": [
+      "com.rinsing.geomantia.harness.systems.provider.application.ProviderRevisionLoopTest.asyncFailureWakesAnotherRevisionWithoutPollingDuplicates()",
+      "com.rinsing.geomantia.harness.systems.provider.application.ProviderRevisionLoopTest.failureBeforeSuccessfulTurnReturnsAlsoWakesAnotherRevision()",
+      "com.rinsing.geomantia.platform.http.CityPlanningEndpointHandlerTest.blueprintEndpointHandlersPrepareFailureBudgetAndAcceptCompleteRevision()",
+      "com.rinsing.geomantia.platform.http.CityPlanningEndpointHandlerTest.blueprintOutdoorPlannerPublishesCompleteIdentityBoundArtifacts()",
+      "com.rinsing.geomantia.platform.http.CityPlanningEndpointHandlerTest.blueprintOutdoorPreservePublishesIntentWithoutPlanning()",
+      "com.rinsing.geomantia.platform.http.CityPlanningEndpointHandlerTest.handlePlanD6AndExecuteD7_writeStructureArtifactsAndPreviews()",
+      "com.rinsing.geomantia.platform.http.CityPlanningEndpointHandlerTest.planLandUseHttpRouteRejectsPartialBlueprintAuthorityAndMissingD6()",
+      "com.rinsing.geomantia.platform.http.CityPlanningEndpointHandlerTest.planLandUseHttpRouteRequiresAcceptedBlueprintAndRejectsLegacyIntent()",
+      "com.rinsing.geomantia.systems.city.application.CityD4VersionsTest.versionFileCannotFollowSymlinkOutsideCity()",
+      "com.rinsing.geomantia.systems.city.application.CityDesignExamplesTest.catalogIsSmallAndEachCaseDeliversTwoRealImagesOnlyOnDemand()",
+      "com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseCapturedAccessTest.actualBuildingAdjacentSingleCellLedgeMergesInsteadOfRequiringImpossibleStair()",
+      "com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseCapturedAccessTest.deepNarrowLedgeUsesActualGradingCapacityNotExcludedFootprintArea()",
+      "com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseCapturedAccessTest.deepTerraceUsesBoundedHighSideCutWithoutDiscardingEntrance()",
+      "com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseCapturedAccessTest.naturalTerrainEntranceDoesNotRequireNonexistentPlatform()",
+      "com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseCapturedAccessTest.yajingEntrancesUseTheirAlreadyGradedRoadInsteadOfBlockingWholeOwners()",
+      "com.rinsing.geomantia.systems.provider.application.PlanningBoundaryTest.blueprintViewKeepsAuthorChoicesAndPagesTerrainInsteadOfTruncating()"
+    ]
+  },
+  "newFailures": [],
+  "baselineOnlyFailures": [],
+  "adventure": {
+    "tests": 13,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failedTests": []
+  },
+  "coreMcp": {
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failedTests": []
+  },
+  "gameTests": {
+    "coreOnly": {
+      "passed": 1,
+      "buildSuccessful": true
+    },
+    "adventureEnabled": {
+      "passed": 2,
+      "buildSuccessful": true
+    }
+  },
+  "artifacts": {
+    "geomantia-0.1.0-adventure.jar": {
+      "size": 69696,
+      "sha256": "3ec8f41fa8daa81c89722b73f4d10c83a6715a6fd7402885b494937d67920515"
+    },
+    "geomantia-0.1.0-harness.jar": {
+      "size": 43420936,
+      "sha256": "22d7d0a79048f44f8c0aac740de1d532764b30b716def5b2f2d40387d269caae"
+    },
+    "geomantia-0.1.0-map.jar": {
+      "size": 47862,
+      "sha256": "86d1fb8718ee21310ed7d7fedfbb7a4fa94b400568812482aec448c3716fa0e1"
+    },
+    "geomantia-0.1.0.jar": {
+      "size": 37695768,
+      "sha256": "be21970a252f63bcd41e1e4b6f9a7b4329bb1f741d51274543a20b173ec0727a"
+    }
+  },
+  "realmfolkAgainstMergedCore": {
+    "tests": 101,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "coreJarSha256": "be21970a252f63bcd41e1e4b6f9a7b4329bb1f741d51274543a20b173ec0727a"
+  },
+  "baselineAdditionalSkip": "ApprovedEntranceCatalogTest.installedDevelopmentBundleResolvesWithItsAuthoredEntrances (local installed bundle absent from baseline fixture)"
+}

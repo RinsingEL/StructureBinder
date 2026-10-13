@@ -39,6 +39,7 @@ StructureBinder 当前围绕 `terra_script` Mod 与配套 MCP 工具展开，核
 | `country_designer_mcp` | MCP 工具层，负责把 AI 工具调用转发到 Minecraft 运行时接口。 |
 | `code_process_viewer` | 开发过程和调试产物查看相关工具。 |
 | [`addons/realmfolk`](addons/realmfolk/README.md) | 国度 NPC / 冒险附属模组，独立构建；含第四题居民与任务配置实验，跟随本仓推送。 |
+| [`addons/adventure`](addons/adventure/README.md) | 可选冒险分布附属；大陆档位、怪物和结构内容池，主构建单独输出 adventure JAR，默认不启用。 |
 | `config` / `run` / `run-data` | 本地开发运行、数据生成和调试环境目录。 |
 | `dev_docs` | 开发过程记录、阶段讨论、调试证据和提交归档，不作为当前功能真值。 |
 | `docs` | 旧技能/辅助文档入口，当前主方案以独立文档仓库为准。 |

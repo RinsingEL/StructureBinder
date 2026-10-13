@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "mobs": {
+    "minecraft:zombie": false,
+    "minecraft:skeleton": false,
+    "minecraft:drowned": false
+  },
+  "structures": {
+    "minecraft:ruined_portal": false,
+    "minecraft:shipwreck": false
+  }
+}
