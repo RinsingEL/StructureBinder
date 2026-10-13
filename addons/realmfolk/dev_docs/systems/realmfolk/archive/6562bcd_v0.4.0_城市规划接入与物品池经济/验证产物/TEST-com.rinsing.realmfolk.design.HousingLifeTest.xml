@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.rinsing.realmfolk.design.HousingLifeTest" tests="19" skipped="0" failures="0" errors="0" timestamp="2026-09-24T09:48:43" hostname="DEVICE" time="0.078">
+  <properties/>
+  <testcase name="housingShortageDoesNotInvalidateMinimumRoles()" classname="com.rinsing.realmfolk.design.HousingLifeTest" time="0.003"/>
+  <testcase name="legacySettingsResolveToFixedAndNoActivities()" classname="com.rinsing.realmfolk.design.HousingLifeTest" time="0.001"/>
+  <testcase name="walkingProgressAndArrivalDoNotTimeOut()" classname="com.rinsing.realmfolk.design.HousingLifeTest" time="0.001"/>
+  <testcase name="speciesOutsideCitizenPopulationDoNotConsumeHousingTarget()" classname="com.rinsing.realmfolk.design.HousingLifeTest" time="0.002"/>
+  <testcase name="privatePlacesOrMissingSitesLeaveDailyRoutineUntouched()" classname="com.rinsing.realmfolk.design.HousingLifeTest" time="0.021"/>
+  <testcase name="respectsCompanionsDutyAndRest()" classname="com.rinsing.realmfolk.design.HousingLifeTest" time="0.003"/>
+  <testcase name="exploringAnotherHouseAddsOnlyMissingResidents()" classname="com.rinsing.realmfolk.design.HousingLifeTest" time="0.004"/>
+  <testcase name="unreachableVisitYieldsUntilTheNextOccurrence()" classname="com.rinsing.realmfolk.design.HousingLifeTest" time="0.0"/>
+  <testcase name="rejectsInvalidDensityAndActivityDefinitions()" classname="com.rinsing.realmfolk.design.HousingLifeTest" time="0.005"/>
+  <testcase name="fixedModeStillWorksForExplicitScenarios()" classname="com.rinsing.realmfolk.design.HousingLifeTest" time="0.001"/>
+  <testcase name="scheduleAndAssignmentsAreDeterministicWithoutMutatingCitizens()" classname="com.rinsing.realmfolk.design.HousingLifeTest" time="0.014"/>
+  <testcase name="missingJobCapacityIsExplainedRatherThanForcingPopulation()" classname="com.rinsing.realmfolk.design.HousingLifeTest" time="0.003"/>
+  <testcase name="soldAndReservedHousingDoNotIncreaseTarget()" classname="com.rinsing.realmfolk.design.HousingLifeTest" time="0.002"/>
+  <testcase name="occupancyReductionNeverDeletesPeople()" classname="com.rinsing.realmfolk.design.HousingLifeTest" time="0.002"/>
+  <testcase name="midnightDoesNotReshuffleAnOngoingActivity()" classname="com.rinsing.realmfolk.design.HousingLifeTest" time="0.003"/>
+  <testcase name="publicVisitsAreBoundedAndUseDistinctPlaces()" classname="com.rinsing.realmfolk.design.HousingLifeTest" time="0.003"/>
+  <testcase name="populationFollowsHousingAndOccupancyInsteadOfOldFixedValue()" classname="com.rinsing.realmfolk.design.HousingLifeTest" time="0.002"/>
+  <testcase name="unloadedCitizensDoNotOccupyPublicActivitySlots()" classname="com.rinsing.realmfolk.design.HousingLifeTest" time="0.001"/>
+  <testcase name="EndlessDetourHasABoundedAttempt()" classname="com.rinsing.realmfolk.design.HousingLifeTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

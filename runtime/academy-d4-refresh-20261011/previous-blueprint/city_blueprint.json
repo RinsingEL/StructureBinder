@@ -1,0 +1,643 @@
+{
+  "districtDesigns": [
+    {
+      "districtId": "teaching",
+      "coreGroupId": "teaching",
+      "coreStructureRef": "studio:mg-01-v01",
+      "groupIds": [
+        "teaching",
+        "botanical_court",
+        "arcane_workshop"
+      ]
+    },
+    {
+      "districtId": "library",
+      "coreGroupId": "library",
+      "coreStructureRef": "studio:mg-02-v01",
+      "groupIds": [
+        "library"
+      ]
+    },
+    {
+      "districtId": "reception",
+      "coreGroupId": "reception",
+      "coreStructureRef": "studio:mg-23-v01",
+      "groupIds": [
+        "reception",
+        "arrival_services"
+      ]
+    },
+    {
+      "districtId": "living",
+      "coreGroupId": "living",
+      "coreStructureRef": "studio:mg-07-v01",
+      "groupIds": [
+        "living",
+        "faculty_homes"
+      ]
+    }
+  ],
+  "schema": "city_blueprint",
+  "cityId": "city_jingchao_capital",
+  "sourceD3Ref": {
+    "path": "provider_3d25631f_r19200/city_test_runs/city_jingchao_capital/steps/d3/city_landform_review_package.json",
+    "schema": "city_landform_review",
+    "contentHash": "sha256:96ef0c3cb1394d8f595ed6d1742c093640ba99ee7d69f32ef8dd57797f81c6ba"
+  },
+  "catalogSnapshotRef": {
+    "path": "provider_3d25631f_r19200/city_test_runs/city_jingchao_capital/steps/blueprint/city_blueprint_catalog_snapshot.json",
+    "schema": "city_blueprint_catalog_snapshot",
+    "contentHash": "sha256:eb1fa85389a4c837bf2e45be6b354c9a141e3036bc035ccacdbf67fbabf1fb3c"
+  },
+  "generationSeed": 298621986327321,
+  "designIntent": {
+    "cityIdentity": "镜潮桦木林学院岛城",
+    "theme": "由迎客岸边进入教学庭院，再到安静藏书与林缘生活。沿作者魔法学院新制的木石院落结构协调桦木林；紧凑组团与轻道路保留自然地面，观测塔本轮不强制落位。",
+    "functionalRoles": [
+      "教学研究",
+      "档案阅读",
+      "访客接待",
+      "日常生活供应"
+    ]
+  },
+  "styleProfile": {
+    "profileRef": "style:studio_R02_arcane_reborn"
+  },
+  "groups": [
+    {
+      "groupId": "teaching",
+      "groupKind": "STRUCTURE",
+      "preferredPatchRefs": [
+        "minecraft:overworld:step.16:city.city_jingchao_capital:p.100"
+      ],
+      "preferredPatchZone": "CENTER",
+      "structureCount": 2,
+      "role": "教学研究",
+      "priority": "CORE",
+      "extentClass": "LARGE",
+      "densityClass": "BALANCED",
+      "algorithmProfileRef": "algorithm:compact",
+      "terrainPolicy": "BALANCED",
+      "requiredStructureRefs": [
+        "studio:mg-01-v01",
+        "studio:mg-04-v01"
+      ],
+      "fillPools": [
+        {
+          "poolRef": "pool:studio_243",
+          "weight": 1.0
+        }
+      ],
+      "compositionProfileRef": "composition:round_robin",
+      "attachedFeatures": [],
+      "targetAreaShare": 0.125,
+      "spaceComposition": {
+        "buildingShare": 0.65,
+        "landscapeShare": 0.0,
+        "openSpaceShare": 0.35000000000000003
+      },
+      "expansionPolicy": {
+        "allowOutwardExpansion": true,
+        "allowRelationConnection": true,
+        "stopWhenTargetReached": true
+      },
+      "buildingGreeneryPolicy": {
+        "coverage": "SPARSE",
+        "patternPreference": "TEMPLATE_DEFAULT",
+        "densityPreference": "TEMPLATE_DEFAULT"
+      }
+    },
+    {
+      "groupId": "botanical_court",
+      "groupKind": "STRUCTURE",
+      "preferredPatchRefs": [
+        "minecraft:overworld:step.16:city.city_jingchao_capital:p.61"
+      ],
+      "preferredPatchZone": "CENTER",
+      "structureCount": 3,
+      "layout": {
+        "gapBlocks": 16,
+        "columns": 2,
+        "courtWidth": 36,
+        "courtDepth": 28,
+        "faceInward": false,
+        "crossAlign": "START",
+        "purpose": "botanical garden walk"
+      },
+      "role": "Botanical teaching and garden court",
+      "priority": "STANDARD",
+      "extentClass": "MEDIUM",
+      "densityClass": "BALANCED",
+      "algorithmProfileRef": "algorithm:street_band",
+      "terrainPolicy": "BALANCED",
+      "requiredStructureRefs": [
+        "studio:mg-10-v01",
+        "studio:mg-21-v01",
+        "studio:mg-12-v01"
+      ],
+      "fillPools": [
+        {
+          "poolRef": "pool:studio_243",
+          "weight": 1.0
+        }
+      ],
+      "compositionProfileRef": "composition:round_robin",
+      "attachedFeatures": [],
+      "targetAreaShare": 0.125,
+      "spaceComposition": {
+        "buildingShare": 0.65,
+        "landscapeShare": 0.0,
+        "openSpaceShare": 0.35000000000000003
+      },
+      "expansionPolicy": {
+        "allowOutwardExpansion": true,
+        "allowRelationConnection": true,
+        "stopWhenTargetReached": true
+      },
+      "buildingGreeneryPolicy": {
+        "coverage": "SPARSE",
+        "patternPreference": "TEMPLATE_DEFAULT",
+        "densityPreference": "TEMPLATE_DEFAULT"
+      }
+    },
+    {
+      "groupId": "arcane_workshop",
+      "groupKind": "STRUCTURE",
+      "preferredPatchRefs": [
+        "minecraft:overworld:step.16:city.city_jingchao_capital:p.100"
+      ],
+      "preferredPatchZone": "CENTER",
+      "structureCount": 1,
+      "placementRelation": {
+        "kind": "BETWEEN_GROUPS",
+        "patchRefs": [],
+        "groupRefs": [
+          "botanical_court",
+          "library"
+        ]
+      },
+      "role": "Magical instrument workshop",
+      "priority": "STANDARD",
+      "extentClass": "SMALL",
+      "densityClass": "BALANCED",
+      "algorithmProfileRef": "algorithm:compact",
+      "terrainPolicy": "BALANCED",
+      "requiredStructureRefs": [
+        "studio:mg-16-v01"
+      ],
+      "fillPools": [
+        {
+          "poolRef": "pool:studio_243",
+          "weight": 1.0
+        }
+      ],
+      "compositionProfileRef": "composition:round_robin",
+      "attachedFeatures": [],
+      "targetAreaShare": 0.125,
+      "spaceComposition": {
+        "buildingShare": 0.65,
+        "landscapeShare": 0.0,
+        "openSpaceShare": 0.35000000000000003
+      },
+      "expansionPolicy": {
+        "allowOutwardExpansion": true,
+        "allowRelationConnection": true,
+        "stopWhenTargetReached": true
+      },
+      "buildingGreeneryPolicy": {
+        "coverage": "SPARSE",
+        "patternPreference": "TEMPLATE_DEFAULT",
+        "densityPreference": "TEMPLATE_DEFAULT"
+      }
+    },
+    {
+      "groupId": "library",
+      "groupKind": "STRUCTURE",
+      "preferredPatchRefs": [
+        "minecraft:overworld:step.16:city.city_jingchao_capital:p.100"
+      ],
+      "preferredPatchZone": "NORTH",
+      "structureCount": 3,
+      "role": "档案阅读",
+      "priority": "STANDARD",
+      "extentClass": "LARGE",
+      "densityClass": "BALANCED",
+      "algorithmProfileRef": "algorithm:street_band",
+      "terrainPolicy": "BALANCED",
+      "requiredStructureRefs": [
+        "studio:mg-02-v01",
+        "studio:mg-19-v01",
+        "studio:mg-03-v01"
+      ],
+      "fillPools": [
+        {
+          "poolRef": "pool:studio_241",
+          "weight": 1.0
+        }
+      ],
+      "compositionProfileRef": "composition:round_robin",
+      "attachedFeatures": [],
+      "targetAreaShare": 0.125,
+      "spaceComposition": {
+        "buildingShare": 0.65,
+        "landscapeShare": 0.0,
+        "openSpaceShare": 0.35000000000000003
+      },
+      "expansionPolicy": {
+        "allowOutwardExpansion": true,
+        "allowRelationConnection": true,
+        "stopWhenTargetReached": true
+      },
+      "buildingGreeneryPolicy": {
+        "coverage": "SPARSE",
+        "patternPreference": "TEMPLATE_DEFAULT",
+        "densityPreference": "TEMPLATE_DEFAULT"
+      }
+    },
+    {
+      "groupId": "reception",
+      "groupKind": "STRUCTURE",
+      "preferredPatchRefs": [
+        "minecraft:overworld:step.16:city.city_jingchao_capital:p.100"
+      ],
+      "preferredPatchZone": "WEST",
+      "structureCount": 2,
+      "role": "访客接待",
+      "priority": "STANDARD",
+      "extentClass": "LARGE",
+      "densityClass": "BALANCED",
+      "algorithmProfileRef": "algorithm:compact",
+      "terrainPolicy": "BALANCED",
+      "requiredStructureRefs": [
+        "studio:mg-23-v01",
+        "studio:mg-13-v01"
+      ],
+      "fillPools": [
+        {
+          "poolRef": "pool:studio_249",
+          "weight": 1.0
+        }
+      ],
+      "compositionProfileRef": "composition:round_robin",
+      "attachedFeatures": [],
+      "targetAreaShare": 0.125,
+      "spaceComposition": {
+        "buildingShare": 0.65,
+        "landscapeShare": 0.0,
+        "openSpaceShare": 0.35000000000000003
+      },
+      "expansionPolicy": {
+        "allowOutwardExpansion": true,
+        "allowRelationConnection": true,
+        "stopWhenTargetReached": true
+      },
+      "buildingGreeneryPolicy": {
+        "coverage": "SPARSE",
+        "patternPreference": "TEMPLATE_DEFAULT",
+        "densityPreference": "TEMPLATE_DEFAULT"
+      }
+    },
+    {
+      "groupId": "arrival_services",
+      "groupKind": "STRUCTURE",
+      "preferredPatchRefs": [
+        "minecraft:overworld:step.16:city.city_jingchao_capital:p.3"
+      ],
+      "preferredPatchZone": "SOUTH",
+      "structureCount": 2,
+      "layout": {
+        "gapBlocks": 12,
+        "columns": 2,
+        "courtWidth": 36,
+        "courtDepth": 28,
+        "faceInward": false,
+        "crossAlign": "START",
+        "purpose": "public-space"
+      },
+      "role": "Visitor registration and market",
+      "priority": "STANDARD",
+      "extentClass": "MEDIUM",
+      "densityClass": "BALANCED",
+      "algorithmProfileRef": "algorithm:street_band",
+      "terrainPolicy": "BALANCED",
+      "requiredStructureRefs": [
+        "studio:mg-14-v01",
+        "studio:mg-06-v01"
+      ],
+      "fillPools": [
+        {
+          "poolRef": "pool:studio_249",
+          "weight": 1.0
+        }
+      ],
+      "compositionProfileRef": "composition:round_robin",
+      "attachedFeatures": [],
+      "targetAreaShare": 0.125,
+      "spaceComposition": {
+        "buildingShare": 0.65,
+        "landscapeShare": 0.0,
+        "openSpaceShare": 0.35000000000000003
+      },
+      "expansionPolicy": {
+        "allowOutwardExpansion": true,
+        "allowRelationConnection": true,
+        "stopWhenTargetReached": true
+      },
+      "buildingGreeneryPolicy": {
+        "coverage": "SPARSE",
+        "patternPreference": "TEMPLATE_DEFAULT",
+        "densityPreference": "TEMPLATE_DEFAULT"
+      }
+    },
+    {
+      "groupId": "living",
+      "groupKind": "STRUCTURE",
+      "preferredPatchRefs": [
+        "minecraft:overworld:step.16:city.city_jingchao_capital:p.100"
+      ],
+      "preferredPatchZone": "EAST",
+      "structureCount": 6,
+      "role": "日常生活供应",
+      "priority": "STANDARD",
+      "extentClass": "LARGE",
+      "densityClass": "BALANCED",
+      "algorithmProfileRef": "algorithm:street_band",
+      "terrainPolicy": "BALANCED",
+      "requiredStructureRefs": [
+        "studio:mg-07-v01",
+        "studio:mg-05-v01",
+        "studio:mg-17-v01",
+        "studio:mg-18-v01",
+        "studio:mg-20-v01",
+        "studio:mg-15-v01"
+      ],
+      "fillPools": [
+        {
+          "poolRef": "pool:studio_245",
+          "weight": 1.0
+        }
+      ],
+      "compositionProfileRef": "composition:round_robin",
+      "attachedFeatures": [],
+      "targetAreaShare": 0.125,
+      "spaceComposition": {
+        "buildingShare": 0.65,
+        "landscapeShare": 0.0,
+        "openSpaceShare": 0.35000000000000003
+      },
+      "expansionPolicy": {
+        "allowOutwardExpansion": true,
+        "allowRelationConnection": true,
+        "stopWhenTargetReached": true
+      },
+      "buildingGreeneryPolicy": {
+        "coverage": "SPARSE",
+        "patternPreference": "TEMPLATE_DEFAULT",
+        "densityPreference": "TEMPLATE_DEFAULT"
+      }
+    },
+    {
+      "groupId": "faculty_homes",
+      "groupKind": "STRUCTURE",
+      "preferredPatchRefs": [
+        "minecraft:overworld:step.16:city.city_jingchao_capital:p.100"
+      ],
+      "preferredPatchZone": "EAST",
+      "structureCount": 2,
+      "layout": {
+        "gapBlocks": 12,
+        "columns": 2,
+        "courtWidth": 36,
+        "courtDepth": 28,
+        "faceInward": false,
+        "crossAlign": "START",
+        "purpose": "public-space"
+      },
+      "placementRelation": {
+        "kind": "BETWEEN_GROUPS",
+        "patchRefs": [],
+        "groupRefs": [
+          "arrival_services",
+          "reception"
+        ]
+      },
+      "role": "Faculty homes and neighborhood dispensary",
+      "priority": "STANDARD",
+      "extentClass": "MEDIUM",
+      "densityClass": "BALANCED",
+      "algorithmProfileRef": "algorithm:street_band",
+      "terrainPolicy": "BALANCED",
+      "requiredStructureRefs": [
+        "studio:mg-17-v01",
+        "studio:mg-18-v01"
+      ],
+      "fillPools": [
+        {
+          "poolRef": "pool:studio_245",
+          "weight": 1.0
+        }
+      ],
+      "compositionProfileRef": "composition:round_robin",
+      "attachedFeatures": [],
+      "targetAreaShare": 0.125,
+      "spaceComposition": {
+        "buildingShare": 0.65,
+        "landscapeShare": 0.0,
+        "openSpaceShare": 0.35000000000000003
+      },
+      "expansionPolicy": {
+        "allowOutwardExpansion": true,
+        "allowRelationConnection": true,
+        "stopWhenTargetReached": true
+      },
+      "buildingGreeneryPolicy": {
+        "coverage": "SPARSE",
+        "patternPreference": "TEMPLATE_DEFAULT",
+        "densityPreference": "TEMPLATE_DEFAULT"
+      }
+    }
+  ],
+  "arrayCompositions": [],
+  "relations": [
+    {
+      "fromGroupId": "botanical_court",
+      "toGroupId": "teaching",
+      "relationKind": "CONNECTION",
+      "strength": "SOFT",
+      "distancePreference": "NONE",
+      "directionPreference": "NONE"
+    },
+    {
+      "fromGroupId": "arcane_workshop",
+      "toGroupId": "teaching",
+      "relationKind": "CONNECTION",
+      "strength": "SOFT",
+      "distancePreference": "NONE",
+      "directionPreference": "NONE"
+    },
+    {
+      "fromGroupId": "library",
+      "toGroupId": "teaching",
+      "relationKind": "CONNECTION",
+      "strength": "SOFT",
+      "distancePreference": "NONE",
+      "directionPreference": "NONE"
+    },
+    {
+      "fromGroupId": "reception",
+      "toGroupId": "teaching",
+      "relationKind": "CONNECTION",
+      "strength": "SOFT",
+      "distancePreference": "NONE",
+      "directionPreference": "NONE"
+    },
+    {
+      "fromGroupId": "arrival_services",
+      "toGroupId": "reception",
+      "relationKind": "CONNECTION",
+      "strength": "SOFT",
+      "distancePreference": "NONE",
+      "directionPreference": "NONE"
+    },
+    {
+      "fromGroupId": "living",
+      "toGroupId": "teaching",
+      "relationKind": "CONNECTION",
+      "strength": "SOFT",
+      "distancePreference": "NONE",
+      "directionPreference": "NONE"
+    },
+    {
+      "fromGroupId": "faculty_homes",
+      "toGroupId": "arrival_services",
+      "relationKind": "CONNECTION",
+      "strength": "SOFT",
+      "distancePreference": "NONE",
+      "directionPreference": "NONE"
+    }
+  ],
+  "roadProfile": {
+    "profileRef": "road:town"
+  },
+  "surfaceDetailProfile": {
+    "profileRef": "surface:working"
+  },
+  "outdoorPlan": {
+    "publicRealm": {
+      "schema": "city_public_realm.v1",
+      "catalog": "academy",
+      "seed": 20261011,
+      "greenery": {
+        "pools": {
+          "trees": "courtyard_trees",
+          "shrubs": "low_shrubs",
+          "flowers": "flower_patches",
+          "hedges": "hedge_segments",
+          "planters": "planters"
+        },
+        "spacing": {
+          "trees": 13,
+          "shrubs": 5,
+          "flowers": 4,
+          "hedges": 8,
+          "planters": 24
+        },
+        "slotLimits": {
+          "trees": 80,
+          "shrubs": 95,
+          "flowers": 220,
+          "hedges": 65,
+          "planters": 40
+        },
+        "maxPlacements": 500,
+        "layeredPlanting": true
+      },
+      "fringe": {
+        "width": 20,
+        "pools": {
+          "trees": "outer_trees",
+          "shrubs": "low_shrubs",
+          "flowers": "flower_patches"
+        },
+        "spacing": {
+          "trees": 10,
+          "shrubs": 6,
+          "flowers": 4
+        },
+        "slotLimits": {
+          "trees": 150,
+          "shrubs": 120,
+          "flowers": 230
+        },
+        "maxPlacements": 500,
+        "layeredPlanting": true
+      },
+      "spaces": []
+    },
+    "mode": "GENERATE",
+    "envelopeProfile": "COMPACT",
+    "foundationProfileRef": "foundation:urban",
+    "foundationGroupIds": [
+      "teaching",
+      "botanical_court",
+      "arcane_workshop",
+      "library",
+      "reception",
+      "arrival_services",
+      "living",
+      "faculty_homes"
+    ],
+    "landscapes": []
+  },
+  "surfaceMaterials": {
+    "defaults": {
+      "groundAndRoad": {
+        "materials": {
+          "accessStair": "minecraft:stone_brick_stairs",
+          "accessSurface": "minecraft:stone_brick_slab",
+          "ground": "minecraft:gravel",
+          "roadBase": "minecraft:stone_bricks",
+          "roadCurb": "minecraft:stone_brick_stairs",
+          "roadStair": "minecraft:stone_brick_stairs",
+          "roadSurface": "minecraft:stone_brick_slab"
+        }
+      }
+    },
+    "groups": {
+      "library": {
+        "groundAndRoad": {
+          "materials": {
+            "ground": "minecraft:gravel",
+            "roadSurface": "minecraft:stone_brick_slab"
+          }
+        }
+      },
+      "living": {
+        "groundAndRoad": {
+          "materials": {
+            "ground": "minecraft:gravel",
+            "roadSurface": "minecraft:stone_brick_slab"
+          }
+        }
+      },
+      "reception": {
+        "groundAndRoad": {
+          "materials": {
+            "ground": "minecraft:gravel",
+            "roadSurface": "minecraft:stone_brick_slab"
+          }
+        }
+      },
+      "teaching": {
+        "groundAndRoad": {
+          "materials": {
+            "ground": "minecraft:gravel",
+            "roadSurface": "minecraft:stone_brick_slab"
+          }
+        }
+      }
+    },
+    "roads": {},
+    "landscapes": {}
+  }
+}

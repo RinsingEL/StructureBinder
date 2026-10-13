@@ -1,0 +1,213 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "ML-03-v01",
+  "name": "短街守钟人家庭宅",
+  "family": "ML-03",
+  "civilization": "哥特",
+  "planning_role": "planning_role.fill",
+  "size": [
+    21,
+    29,
+    27
+  ],
+  "terrain": {
+    "选址": "稳定、排水良好的居民地块，日照与通路按具体用途保留；哥特是建造风格而非地形限制。",
+    "高程": "基础底Y=0、常规地面Y=2、脚底Y=3；抬高或双层版本另记。",
+    "边界": "完整独立模板，保留外扶柱、檐口、采光和门外站位，不默认邻居补齐。"
+  },
+  "rooms": [
+    {
+      "id": "living",
+      "name": "前炊食起居",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        15,
+        7,
+        13
+      ],
+      "purpose": "炊洗、共桌与入户换鞋；设施：备餐、热食与洗涤"
+    },
+    {
+      "id": "workhome",
+      "name": "后寝室与小钟务间",
+      "min": [
+        5,
+        3,
+        15
+      ],
+      "max": [
+        15,
+        7,
+        22
+      ],
+      "purpose": "家庭床柜与侧钟务工作面，以中央通道相隔；设施：钟务校时、零件与交班记录、钟绳、润滑与备用小件、床位与个人衣物、床位与个人衣物、被服与家庭粮食"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        10,
+        3,
+        3
+      ],
+      "name": "尖楣入户门"
+    },
+    {
+      "id": "cook",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        6
+      ],
+      "name": "备餐、热食与洗涤",
+      "look_at": [
+        5,
+        4,
+        6
+      ],
+      "approach": [
+        5,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "clock",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        16
+      ],
+      "name": "钟务校时、零件与交班记录",
+      "look_at": [
+        5,
+        4,
+        16
+      ],
+      "approach": [
+        5,
+        3,
+        17
+      ]
+    },
+    {
+      "id": "clockparts",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        20
+      ],
+      "name": "钟绳、润滑与备用小件",
+      "look_at": [
+        5,
+        4,
+        20
+      ],
+      "approach": [
+        5,
+        3,
+        21
+      ]
+    },
+    {
+      "id": "family0",
+      "kind": "bed",
+      "pos": [
+        11,
+        3,
+        18
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        11,
+        4,
+        18
+      ],
+      "approach": [
+        12,
+        3,
+        18
+      ]
+    },
+    {
+      "id": "family1",
+      "kind": "bed",
+      "pos": [
+        14,
+        3,
+        18
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        14,
+        4,
+        18
+      ],
+      "approach": [
+        15,
+        3,
+        18
+      ]
+    },
+    {
+      "id": "linen",
+      "kind": "storage",
+      "pos": [
+        11,
+        3,
+        21
+      ],
+      "name": "被服与家庭粮食",
+      "look_at": [
+        11,
+        4,
+        21
+      ],
+      "approach": [
+        11,
+        3,
+        22
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "紧凑街宅前炊食后寝与钟务，钟具独占一侧工作面；浅灰石与木框架、尖楣小窗和陡瓦顶用于普通家庭尺度。"
+  ],
+  "differences": [
+    "紧凑街宅前炊食后寝与钟务，钟具独占一侧工作面；浅灰石与木框架、尖楣小窗和陡瓦顶用于普通家庭尺度。"
+  ],
+  "floors": [
+    {
+      "name": "生活作业层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/memorial_life.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "nbt_sha256": "1196bd50bc114fa728a48d797feaaf7b4460101be8949852a2b04a63171e732f",
+  "function_terms": [
+    "家庭居住"
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "schema": "realmfolk.core-tasks.experiment.v1",
+  "types": {
+    "meet_community": {"name": "认识当地", "checks": ["talk_host", "talk_partner"], "reward": {"coins": 12, "favor": 2}},
+    "professional_supply": {"name": "专业委托", "checks": ["contribute_one_route"], "reward": {"coins": 16, "favor": 4}},
+    "shared_research": {"name": "共同项目", "checks": ["field_record", "return_to_host", "choose_reward"], "reward": {"coins": 0, "favor": 6}}
+  },
+  "programs": {
+    "academy_research": {
+      "stages": ["meet_community", "professional_supply", "shared_research"],
+      "allowedHostTerms": ["教学", "天象观测", "药草栽培", "林业教学"],
+      "allowedPartnerTerms": ["书籍借阅", "文献抄写", "出行登记", "餐饮"],
+      "allowedSiteTerms": ["天象观测", "药草栽培", "林业教学"],
+      "allowedThemes": ["celestial_notes", "botanical_notes"],
+      "rewardBudget": 128,
+      "rewardBundles": ["arcane_starter", "field_starter", "workshop_starter"],
+      "maximumSiteDistance": 1024
+    }
+  },
+  "routes": {
+    "arcane": {"name": "提供魔法材料", "item": "ars_nouveau:source_gem", "count": 4, "contribution": "研究材料已到位"},
+    "industry": {"name": "提供工业制品", "item": "create:andesite_alloy", "count": 6, "contribution": "设备维护材料已到位"},
+    "provisions": {"name": "承担团队伙食", "item": "farmersdelight:tomato", "count": 16, "contribution": "团队补给已到位"}
+  },
+  "themes": {
+    "celestial_notes": {"name": "重开星穹观测记录", "siteTerms": ["天象观测"], "activity": "整理观测记录", "proof": "新的观测笔记", "effect": "星穹研究用品窗口开放，观测资料开始接受查阅", "serviceName": "星穹研究用品", "serviceItems": ["ars_nouveau:source_gem", "ars_nouveau:blank_parchment"]},
+    "botanical_notes": {"name": "整理青枝药草图册", "siteTerms": ["药草栽培"], "activity": "记录温室样本", "proof": "新的栽培笔记", "effect": "青枝实践用品窗口开放，温室观察资料开始接受查阅", "serviceName": "青枝实践用品", "serviceItems": ["ars_nouveau:magebloom_fiber", "ars_nouveau:source_gem"]}
+  },
+  "rewards": {
+    "arcane_starter": {"name": "魔法研究补给", "items": {"ars_nouveau:source_gem": 4, "ars_nouveau:blank_parchment": 2}},
+    "field_starter": {"name": "野外实践补给", "items": {"ars_nouveau:magebloom_fiber": 4, "ars_nouveau:source_gem": 2}},
+    "workshop_starter": {"name": "工坊合作补给", "items": {"create:andesite_alloy": 8, "ars_nouveau:source_gem": 1}}
+  },
+  "itemNames": {
+    "ars_nouveau:source_gem": "魔源宝石", "ars_nouveau:blank_parchment": "空白羊皮纸",
+    "ars_nouveau:magebloom_fiber": "法师之花纤维", "create:andesite_alloy": "安山合金", "farmersdelight:tomato": "番茄"
+  },
+  "playtest": {
+    "coins": 64,
+    "loadouts": {
+      "arcane": {"name": "魔法材料持有者", "items": {"ars_nouveau:source_gem": 4}},
+      "industry": {"name": "工业生产者", "items": {"create:andesite_alloy": 6}},
+      "provisions": {"name": "农产品供应者", "items": {"farmersdelight:tomato": 16}}
+    }
+  }
+}

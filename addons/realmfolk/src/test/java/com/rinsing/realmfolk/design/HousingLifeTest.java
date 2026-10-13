@@ -1,0 +1,43 @@
+package com.rinsing.realmfolk.design;
+
+import com.rinsing.realmfolk.model.Society;
+import org.junit.jupiter.api.Test;
+import java.util.*;
+import static com.rinsing.realmfolk.model.Society.*;
+import static org.junit.jupiter.api.Assertions.*;
+
+class HousingLifeTest {
+    private static Society world(){
+        Society s=new Society();s.design.active=DesignCodec.defaults();s.design.revision=1;
+        s.towns.put("town",new Town("town","realm","住宅镇",new Point(0,65,0)));
+        var settings=s.design.active.realms.get("default").population;settings.populationMode="housing";settings.housingOccupancy=.75;settings.residentsPerHouse=4;
+        settings.jobs=Map.of("resident",new Design.Quota(0,256,1));settings.saleHouseEvery=0;
+        for(int i=0;i<3;i++)house(s,"h"+i,i*12);
+        Property square=new Property("square","town","广场",new Bounds(0,64,30,20,70,40),new Point(5,65,32));square.terms=List.of("广场");square.publicPoints=List.of(new Point(1,65,28),new Point(4,65,28),new Point(7,65,28),new Point(10,65,28));s.properties.put(square.id,square);
+        return s;
+    }
+    private static void house(Society s,String id,int x){Property p=new Property(id,"town","住宅",new Bounds(x,64,0,x+8,70,8),new Point(x+1,65,1));p.terms=List.of("住宅");p.slots=List.of(p.home,p.home.offset(2,0,0),p.home.offset(4,0,0),p.home.offset(6,0,0));s.properties.put(id,p);}
+    private static PopulationPlanner.Plan population(Society s){return PopulationPlanner.plan(s.design.active,s,s.towns.get("town"),17,1);}
+    private static void populate(Society s){population(s).citizens().forEach(c->s.citizens.put(c.id,c));}
+    private static Design.Settings settings(Society s){return s.design.active.resolve("realm","town").settings();}
+    private static PublicLifePlanner.Plan life(Society s,long time){return PublicLifePlanner.plan(s,s.towns.get("town"),settings(s),time,s.citizens.keySet());}
+    @Test void populationFollowsHousingAndOccupancyInsteadOfOldFixedValue(){Society s=world();s.design.active.realms.get("default").population.population=1;var p=population(s);assertEquals(12,p.summary().housingSlots());assertEquals(3,p.summary().housingBuildings());assertEquals(9,p.summary().target());assertEquals(9,p.citizens().size());}
+    @Test void exploringAnotherHouseAddsOnlyMissingResidents(){Society s=world();populate(s);Map<String,Citizen> old=new HashMap<>(s.citizens);house(s,"h3",40);var p=population(s);assertEquals(12,p.summary().target());assertEquals(3,p.citizens().size());populate(s);old.forEach((id,c)->assertSame(c,s.citizens.get(id)));assertEquals(0,population(s).citizens().size());}
+    @Test void soldAndReservedHousingDoNotIncreaseTarget(){Society s=world();s.properties.get("h0").price=32;s.properties.get("h1").owner="player:alice";var p=population(s);assertEquals(4,p.summary().housingSlots());assertEquals(3,p.summary().target());}
+    @Test void occupancyReductionNeverDeletesPeople(){Society s=world();populate(s);s.design.active.realms.get("default").population.housingOccupancy=.1;var p=population(s);assertEquals(1,p.summary().target());assertEquals(9,p.summary().existing());assertEquals(0,p.citizens().size());assertTrue(p.summary().shortages().stream().anyMatch(x->x.contains("保留")));}
+    @Test void speciesOutsideCitizenPopulationDoNotConsumeHousingTarget(){Society s=world();Citizen cow=new Citizen("cow","牛","town","farm","resident",new Point(99,65,0),new Point(99,65,0));cow.entityType="minecraft:cow";s.citizens.put(cow.id,cow);assertEquals(9,population(s).citizens().size());assertEquals(0,population(s).summary().existing());}
+    @Test void fixedModeStillWorksForExplicitScenarios(){Society s=world();var settings=s.design.active.realms.get("default").population;settings.populationMode="fixed";settings.population=3;assertEquals(3,population(s).citizens().size());}
+    @Test void legacySettingsResolveToFixedAndNoActivities(){Design d=DesignCodec.defaults();var settings=d.realms.get("default").population;settings.populationMode=null;settings.housingOccupancy=null;settings.activities=null;var r=d.resolve("realm","town").settings();assertEquals("fixed",r.populationMode);assertEquals(1.0,r.housingOccupancy);assertTrue(r.activities.isEmpty());}
+    @Test void missingJobCapacityIsExplainedRatherThanForcingPopulation(){Society s=world();s.design.active.realms.get("default").population.jobs=Map.of("resident",new Design.Quota(0,2,1));var p=population(s);assertEquals(9,p.summary().target());assertEquals(2,p.citizens().size());assertTrue(p.summary().shortages().stream().anyMatch(x->x.contains("职业权重")));}
+    @Test void housingShortageDoesNotInvalidateMinimumRoles(){Society s=world();s.design.active.realms.get("default").population.jobs=Map.of("resident",new Design.Quota(15,20,1));assertTrue(new DesignValidator(i->true).validate(s.design.active).isEmpty());assertEquals(9,population(s).citizens().size());}
+    @Test void rejectsInvalidDensityAndActivityDefinitions(){for(double n:new double[]{-.1,1.1,Double.NaN}){Society s=world();s.design.active.realms.get("default").population.housingOccupancy=n;assertFalse(new DesignValidator(i->true).validate(s.design.active).isEmpty());}Society s=world();s.design.active.realms.get("default").population.activities.get(0).capacity=100;assertFalse(new DesignValidator(i->true).validate(s.design.active).isEmpty());}
+    @Test void publicVisitsAreBoundedAndUseDistinctPlaces(){Society s=world();populate(s);var a=s.design.active.realms.get("default").population.activities.get(0);a.participation=1;a.capacity=3;var result=life(s,6500);assertEquals(3,result.visits().size());assertEquals(3,result.visits().values().stream().map(PublicLifePlanner.Visit::point).distinct().count());assertTrue(result.visits().values().stream().allMatch(v->v.place().equals("square")));assertEquals(9,s.citizens.size());}
+    @Test void respectsCompanionsDutyAndRest(){Society s=world();populate(s);var citizens=new ArrayList<>(s.citizens.values());citizens.get(0).leader="alice";citizens.get(1).mode="TRAVEL";citizens.get(2).profession.capabilities.add("law_enforcement");citizens.get(3).profession.restStart=6000;citizens.get(3).profession.restEnd=7000;s.design.active.realms.get("default").population.activities.get(0).participation=1;var result=life(s,6500);for(int i=0;i<4;i++)assertFalse(result.visits().containsKey(citizens.get(i).id));assertTrue(life(s,14000).visits().isEmpty());}
+    @Test void privatePlacesOrMissingSitesLeaveDailyRoutineUntouched(){Society s=world();populate(s);s.properties.get("square").owner="player:alice";assertTrue(life(s,6500).visits().isEmpty());s.properties.get("square").owner="";s.properties.get("square").access="RESTRICTED";assertTrue(life(s,6500).visits().isEmpty());s.properties.remove("square");assertTrue(life(s,6500).visits().isEmpty());assertTrue(s.citizens.values().stream().allMatch(c->c.mode.equals("HOME")));}
+    @Test void scheduleAndAssignmentsAreDeterministicWithoutMutatingCitizens(){Society s=world();populate(s);String before=DesignCodec.hash(s.citizens);var first=life(s,6500);var list=new ArrayList<>(s.citizens.values());Collections.reverse(list);s.citizens.clear();list.forEach(c->s.citizens.put(c.id,c));assertEquals(first,life(s,6500));assertEquals(before,DesignCodec.hash(s.citizens));assertTrue(life(s,9500).visits().isEmpty());}
+    @Test void unloadedCitizensDoNotOccupyPublicActivitySlots(){Society s=world();populate(s);assertTrue(PublicLifePlanner.plan(s,s.towns.get("town"),settings(s),6500,Set.of()).visits().isEmpty());}
+    @Test void midnightDoesNotReshuffleAnOngoingActivity(){Society s=world();populate(s);s.citizens.values().forEach(c->{c.profession.restStart=2000;c.profession.restEnd=3000;});var a=s.design.active.realms.get("default").population.activities.get(0);a.start=23000;a.end=1000;a.participation=1;assertFalse(life(s,23999).visits().isEmpty());assertEquals(life(s,23999),life(s,24000));}
+    @Test void unreachableVisitYieldsUntilTheNextOccurrence(){var progress=new PublicVisitProgress();assertTrue(progress.allows("today",0,100));assertTrue(progress.allows("today",399,100));assertFalse(progress.allows("today",400,100));assertFalse(progress.allows("today",800,2));assertTrue(progress.allows("tomorrow",900,100));}
+    @Test void walkingProgressAndArrivalDoNotTimeOut(){var progress=new PublicVisitProgress();assertTrue(progress.allows("today",0,100));assertTrue(progress.allows("today",300,50));assertTrue(progress.allows("today",600,10));assertTrue(progress.allows("today",900,2));assertTrue(progress.allows("today",3000,2));}
+    @Test void EndlessDetourHasABoundedAttempt(){var progress=new PublicVisitProgress();for(int i=0;i<18;i++)assertTrue(progress.allows("today",i*100,100-i*2));assertFalse(progress.allows("today",1800,60));}
+}

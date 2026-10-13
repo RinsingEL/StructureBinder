@@ -1,0 +1,54 @@
+buildscript {
+    repositories { maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }; mavenCentral() }
+    dependencies { classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT' }
+}
+plugins {
+    id 'java'
+    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+}
+apply plugin: 'org.spongepowered.mixin'
+version = mod_version
+group = 'com.rinsing.realmfolk'
+base { archivesName = 'realmfolk' }
+// Keep the add-on build separate from the core, using the sibling path expected by its tools.
+layout.buildDirectory = new File(projectDir.parentFile, '.realmfolk-build')
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+minecraft {
+    mappings channel: 'official', version: '1.20.1'
+    copyIdeResources = true
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.console.level', 'info'
+            mods { realmfolk { source sourceSets.main } }
+        }
+        client {
+            property 'realmfolk.playtest', providers.gradleProperty('playtest').orElse('false').get()
+            property 'geomantia.apiPort', '5011'
+        }
+        server { args '--nogui' }
+        gameTestServer {
+            property 'forge.enabledGameTestNamespaces', 'realmfolk'
+            workingDirectory project.file('run-gametest')
+        }
+    }
+}
+mixin { add sourceSets.main, 'realmfolk.refmap.json'; config 'realmfolk.mixins.json' }
+repositories { mavenCentral(); flatDir { dirs 'libs' } }
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.20.1-47.4.0'
+    implementation fg.deobf('local:geomantia:0.1.0-planning791e5b71')
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+    testImplementation platform('org.junit:junit-bom:5.10.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+tasks.named('test', Test) { useJUnitPlatform() }
+tasks.named('processResources', ProcessResources) {
+    inputs.property 'version', project.version
+    filesMatching('META-INF/mods.toml') { expand version: project.version }
+}
+tasks.named('jar', Jar) {
+    manifest { attributes 'MixinConfigs': 'realmfolk.mixins.json' }
+    finalizedBy 'reobfJar'
+}

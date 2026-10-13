@@ -1,0 +1,229 @@
+[
+  {
+    "call": "01-reopen.response.json",
+    "tool": "city_d4_reopen",
+    "isError": false,
+    "ok": true,
+    "reasonCode": null,
+    "status": null,
+    "planned": 33,
+    "retained": 33,
+    "warnings": [
+      "DESIGNED_RELATION_GAP: teaching -> library CONNECTION is unsatisfied.",
+      "teaching: COURTYARD_REQUIRES_FIVE_BUILDINGS",
+      "teaching: COURTYARD_BASE_RING_INCOMPLETE",
+      "teaching: COURTYARD_GATE_MISSING",
+      "teaching: COURTYARD_RING_ROAD_DISCONNECTED",
+      "classrooms: GRID_STREET_NETWORK_DISCONNECTED",
+      "practice: GRID_STREET_NETWORK_DISCONNECTED",
+      "services: GRID_STREET_NETWORK_DISCONNECTED"
+    ],
+    "missing": [],
+    "terrain": []
+  },
+  {
+    "call": "02-prepare.response.json",
+    "tool": "city_prepare_d4_blueprint_context",
+    "isError": false,
+    "ok": true,
+    "reasonCode": null,
+    "status": null,
+    "planned": null,
+    "retained": null,
+    "warnings": [],
+    "missing": [],
+    "terrain": []
+  },
+  {
+    "call": "03-overview.response.json",
+    "tool": "city_d4_overview",
+    "isError": false,
+    "ok": true,
+    "reasonCode": null,
+    "status": null,
+    "planned": null,
+    "retained": null,
+    "warnings": [],
+    "missing": [],
+    "terrain": []
+  },
+  {
+    "call": "04-teaching.response.json",
+    "tool": "city_d4_district",
+    "isError": false,
+    "ok": true,
+    "reasonCode": null,
+    "status": null,
+    "planned": 14,
+    "retained": 14,
+    "warnings": [
+      "teaching: COURTYARD_REQUIRES_FIVE_BUILDINGS",
+      "teaching: COURTYARD_BASE_RING_INCOMPLETE",
+      "teaching: COURTYARD_GATE_MISSING",
+      "teaching: COURTYARD_RING_ROAD_DISCONNECTED",
+      "classrooms: GRID_STREET_NETWORK_DISCONNECTED",
+      "practice: GRID_STREET_NETWORK_DISCONNECTED"
+    ],
+    "missing": [],
+    "terrain": []
+  },
+  {
+    "call": "05-library.response.json",
+    "tool": "city_d4_district",
+    "isError": false,
+    "ok": true,
+    "reasonCode": null,
+    "status": null,
+    "planned": 17,
+    "retained": 17,
+    "warnings": [
+      "teaching: COURTYARD_REQUIRES_FIVE_BUILDINGS",
+      "teaching: COURTYARD_BASE_RING_INCOMPLETE",
+      "teaching: COURTYARD_GATE_MISSING",
+      "teaching: COURTYARD_RING_ROAD_DISCONNECTED",
+      "classrooms: GRID_STREET_NETWORK_DISCONNECTED",
+      "practice: GRID_STREET_NETWORK_DISCONNECTED"
+    ],
+    "missing": [],
+    "terrain": []
+  },
+  {
+    "call": "06-living.response.json",
+    "tool": "city_d4_district",
+    "isError": false,
+    "ok": true,
+    "reasonCode": null,
+    "status": null,
+    "planned": 29,
+    "retained": 29,
+    "warnings": [
+      "teaching: COURTYARD_REQUIRES_FIVE_BUILDINGS",
+      "teaching: COURTYARD_BASE_RING_INCOMPLETE",
+      "teaching: COURTYARD_GATE_MISSING",
+      "teaching: COURTYARD_RING_ROAD_DISCONNECTED",
+      "classrooms: GRID_STREET_NETWORK_DISCONNECTED",
+      "practice: GRID_STREET_NETWORK_DISCONNECTED",
+      "living: GRID_STREET_NETWORK_DISCONNECTED",
+      "services: GRID_STREET_NETWORK_DISCONNECTED"
+    ],
+    "missing": [],
+    "terrain": [
+      {
+        "groupId": "services",
+        "structureRef": "studio:mg-44-v01",
+        "adaptations": [
+          {
+            "reasonCode": "CITY_STRUCTURE_LOCAL_TERRAIN_ANOMALY_TOLERATED",
+            "action": "foundation_support_required",
+            "anomalyAreaRatio": 0.01391304347826087
+          }
+        ]
+      },
+      {
+        "groupId": "services",
+        "structureRef": "studio:mg-45-v01",
+        "adaptations": [
+          {
+            "reasonCode": "CITY_STRUCTURE_SURFACE_CELL_WATER",
+            "action": "preserve_design_and_resolve_terrain_before_generation"
+          }
+        ]
+      },
+      {
+        "groupId": "living",
+        "structureRef": "studio:mg-27-v01",
+        "adaptations": [
+          {
+            "reasonCode": "CITY_STRUCTURE_SURFACE_CELL_WATER",
+            "action": "preserve_design_and_resolve_terrain_before_generation"
+          }
+        ]
+      },
+      {
+        "groupId": "living",
+        "structureRef": "studio:mg-27-v01",
+        "adaptations": [
+          {
+            "reasonCode": "CITY_STRUCTURE_SURFACE_CELL_WATER",
+            "action": "preserve_design_and_resolve_terrain_before_generation"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "call": "07-reception.response.json",
+    "tool": "city_d4_district",
+    "isError": false,
+    "ok": true,
+    "reasonCode": null,
+    "status": null,
+    "planned": 33,
+    "retained": 33,
+    "warnings": [
+      "DESIGNED_RELATION_GAP: reception -> library CONNECTION is unsatisfied.",
+      "teaching: COURTYARD_REQUIRES_FIVE_BUILDINGS",
+      "teaching: COURTYARD_BASE_RING_INCOMPLETE",
+      "teaching: COURTYARD_GATE_MISSING",
+      "teaching: COURTYARD_RING_ROAD_DISCONNECTED",
+      "classrooms: GRID_STREET_NETWORK_DISCONNECTED",
+      "practice: GRID_STREET_NETWORK_DISCONNECTED",
+      "library: LINEAR_STREET_BAND_DISCONNECTED",
+      "living: GRID_STREET_NETWORK_DISCONNECTED",
+      "services: GRID_STREET_NETWORK_DISCONNECTED",
+      "reception: GRID_STREET_NETWORK_DISCONNECTED"
+    ],
+    "missing": [],
+    "terrain": [
+      {
+        "groupId": "reception",
+        "structureRef": "studio:mg-13-v01",
+        "adaptations": [
+          {
+            "reasonCode": "CITY_STRUCTURE_LOCAL_TERRAIN_ANOMALY_TOLERATED",
+            "action": "foundation_support_required",
+            "anomalyAreaRatio": 0.02773497688751926
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "call": "08-finalize.response.json",
+    "tool": "city_d4_finalize",
+    "isError": false,
+    "ok": true,
+    "reasonCode": null,
+    "status": "design_saved",
+    "planned": null,
+    "retained": null,
+    "warnings": [],
+    "missing": [],
+    "terrain": [
+      {
+        "groupId": "reception",
+        "structureRef": "studio:mg-13-v01",
+        "adaptations": [
+          {
+            "reasonCode": "CITY_STRUCTURE_LOCAL_TERRAIN_ANOMALY_TOLERATED",
+            "action": "foundation_support_required",
+            "anomalyAreaRatio": 0.02773497688751926
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "call": "09-status.response.json",
+    "tool": "city_post_d4_auto_compile_status",
+    "isError": false,
+    "ok": null,
+    "reasonCode": "D4_AUTO_COMPILE_JOB_NOT_FOUND",
+    "status": "not_queued",
+    "planned": null,
+    "retained": null,
+    "warnings": [],
+    "missing": [],
+    "terrain": []
+  }
+]

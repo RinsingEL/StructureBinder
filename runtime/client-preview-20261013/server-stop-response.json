@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "status": "executed",
+  "reasonCode": "DEBUG_COMMAND_EXECUTED",
+  "command": "/stop",
+  "normalizedCommand": "stop",
+  "result": 1,
+  "sourceMode": "server",
+  "requestedSourceMode": "server",
+  "playerName": "",
+  "dimensionId": "minecraft:overworld",
+  "worldSaveRequested": false
+}

@@ -1,0 +1,72 @@
+[
+  {
+    "id": "MG-43-v01",
+    "reviewer": "Codex offline visual review",
+    "reviewed_views": [
+      "front",
+      "back",
+      "floor-1"
+    ],
+    "checks": [
+      "实际浏览器模型与纹理正常；门前通路保持净空。",
+      "功能空间与真实 NBT 验证一致，楼层通路验证通过。"
+    ]
+  },
+  {
+    "id": "MG-44-v01",
+    "reviewer": "Codex offline visual review",
+    "reviewed_views": [
+      "front",
+      "back",
+      "floor-1"
+    ],
+    "checks": [
+      "实际浏览器模型与纹理正常；门前通路保持净空。",
+      "功能空间与真实 NBT 验证一致，楼层通路验证通过。"
+    ]
+  },
+  {
+    "id": "MG-45-v01",
+    "reviewer": "Codex offline visual review",
+    "reviewed_views": [
+      "front",
+      "back",
+      "floor-1"
+    ],
+    "checks": [
+      "实际浏览器模型与纹理正常；门前通路保持净空。",
+      "功能空间与真实 NBT 验证一致，楼层通路验证通过。"
+    ]
+  },
+  {
+    "id": "MG-34-v02",
+    "reviewer": "Codex offline visual review",
+    "reviewed_views": [
+      "front",
+      "back",
+      "floor-1",
+      "left",
+      "floor-2"
+    ],
+    "checks": [
+      "实际浏览器模型与纹理正常；门前通路保持净空。",
+      "功能空间与真实 NBT 验证一致，楼层通路验证通过。",
+      "二层侧端收为完整护栏阳台，不要求接廊；保留 v01 可连接原件。"
+    ]
+  },
+  {
+    "id": "MG-37-v02",
+    "reviewer": "Codex offline visual review",
+    "reviewed_views": [
+      "front",
+      "back",
+      "floor-1",
+      "floor-2"
+    ],
+    "checks": [
+      "实际浏览器模型与纹理正常；门前通路保持净空。",
+      "功能空间与真实 NBT 验证一致，楼层通路验证通过。",
+      "二层侧端收为完整护栏阳台，不要求接廊；保留 v01 可连接原件。"
+    ]
+  }
+]

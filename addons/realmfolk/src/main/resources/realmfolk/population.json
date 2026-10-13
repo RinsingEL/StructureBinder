@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "residentsPerHouse": 2,
+  "maxCitizensPerTown": 64,
+  "saleHouseEvery": 5,
+  "functionRoles": {
+    "住宅": "resident", "民居": "resident", "residential": "resident", "housing": "resident",
+    "铁匠铺": "smith", "smithy": "smith", "农场": "farmer", "农业": "farmer", "farm": "farmer",
+    "兵营": "guard", "守卫塔": "guard", "barracks": "guard", "市场": "merchant", "商店": "merchant", "market": "merchant",
+    "行政": "mayor", "市政厅": "mayor", "administration": "mayor", "猎人小屋": "ranger",
+    "商业": "merchant", "军事防御": "guard", "防御": "guard", "农田": "farmer", "工坊生产": "smith"
+  },
+  "templateRoles": {},
+  "entityTypesByTemplate": {},
+  "names": ["艾琳", "罗文", "米拉", "阿德", "莉亚", "诺尔", "塞拉", "伊文", "莫林", "塔拉", "奥伦", "菲恩"],
+  "keyPeople": []
+}

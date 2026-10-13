@@ -1,0 +1,37 @@
+{
+  "contextId": "sha256:471a166e028911922613aa21925760cd4c6702ce08b25bfb3c717c9ad9e5ed33",
+  "overview": {
+    "viewed": "sha256:e4d111025bc8e6b5a635142551a7827127742f61d3951354724d0c9c5e11dd24:8d7a17a1c2c54684f74a187fb4073e3938d7d56c5a5da0c42c6ea3d2e6e3153d",
+    "reviewed": "sha256:e4d111025bc8e6b5a635142551a7827127742f61d3951354724d0c9c5e11dd24:8d7a17a1c2c54684f74a187fb4073e3938d7d56c5a5da0c42c6ea3d2e6e3153d",
+    "assessment": "已查看当前hash对应正式整城预览：中央教学与南侧实验构成核心；其北侧藏书、抄写、观测三栋与工坊向北端星泉、植物教学和花草庭园递进。东侧六栋沿生活街面成片，餐饮、住宿、居住、药剂、仓储、医疗均保留。西侧港务与办事靠近核心；西北登记和市场由中段教职工住宅及邻里药剂配套过渡，仍有显著林间空隙，定位为沿园路展开的学院岛城。21栋全部实际保留，四区功能主体成立；道路图仅作D4意向，不据此宣称施工可通行或海运已连通。公共绿化与外围模板池已配置，D4未显示其最终种植；港务建筑保留，额外岸线出口与港口施工留后续地形精确验证。本次终审仅冻结D4，不自动进入后半段。"
+  },
+  "groups": {
+    "teaching": {
+      "viewed": "242a2ef0c582f62e294356f4ae671fa38e4e9631fa4f062156f230b2412263b4"
+    },
+    "library": {
+      "viewed": "2c917c937cfc50ebf942bb5c617213f62a0722f5bfd52c9cce356bf738d3b84f"
+    },
+    "reception": {
+      "viewed": "9f797286f1b9703786f337c7d8819e7251a50e84847983a066eada6590ad8370"
+    },
+    "living": {
+      "viewed": "de09ccc8e47fb316ba0db0be2d23937bb97f1b53e1e97b9238df81a553ae4a28"
+    },
+    "arrival_services": {
+      "viewed": "9147715e783543fb4b05d0f6cfdd09a6f0e491ea6e5803f6f9f693ed4ec3179a"
+    },
+    "botanical_court": {
+      "viewed": "6a61757f54b53fb7da39546f61742f6373583647e7ca7d6d65cd6ce41ef513df"
+    },
+    "arcane_workshop": {
+      "viewed": "211a7ad352fb70e411eae3d4b9b729a26c27436bf911ed8f3d2573762c768706"
+    },
+    "academy_market": {
+      "viewed": "214d47a6399dc1643ce2696532fc769a36ccf19879da409f0192c44b7b1b6883"
+    },
+    "faculty_homes": {
+      "viewed": "bb2de052a86cdfc6708f1bd4819337830653dfe74c3e06511af575ccb86fe54c"
+    }
+  }
+}

@@ -1,0 +1,753 @@
+{
+  "schema": "studio_classification_coverage.v1",
+  "taxonomySchema": "structure_function_taxonomy.v1",
+  "taxonomySha256": "sha256:c66d46cdf46eead4c3b1339c782d703014785fa8fde89a5001488666f6246ebe",
+  "totalCount": 35,
+  "classifiedCount": 35,
+  "unclassifiedCount": 0,
+  "missingFunctionTermsCount": 0,
+  "unclassifiedRefs": [],
+  "unmappedFunctionTerms": [
+    "照料"
+  ],
+  "assetTagCounts": {
+    "infrastructure": 0,
+    "landscape": 5
+  },
+  "note": "Diagnostic only: retains author terms and tags; unknown terms are not inferred or rejected.",
+  "entries": [
+    {
+      "structureRef": "studio:mg-01-v01",
+      "functionTerms": [
+        "教学",
+        "礼仪",
+        "集会"
+      ],
+      "directFunctionIds": [
+        "culture.ceremony",
+        "culture.gathering",
+        "education.teaching"
+      ],
+      "functionIds": [
+        "culture",
+        "culture.ceremony",
+        "culture.gathering",
+        "education",
+        "education.teaching"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "specialty",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-02-v01",
+      "functionTerms": [
+        "书籍借阅",
+        "文献保管",
+        "阅读"
+      ],
+      "directFunctionIds": [
+        "administration.archives",
+        "education.reading"
+      ],
+      "functionIds": [
+        "administration",
+        "administration.archives",
+        "education",
+        "education.reading"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "specialty",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-03-v01",
+      "functionTerms": [
+        "天象观测",
+        "研究"
+      ],
+      "directFunctionIds": [
+        "education.observation.astronomy",
+        "education.research"
+      ],
+      "functionIds": [
+        "education",
+        "education.observation",
+        "education.observation.astronomy",
+        "education.research"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "specialty",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-04-v01",
+      "functionTerms": [
+        "实验研究",
+        "药剂制作"
+      ],
+      "directFunctionIds": [
+        "education.experiment",
+        "education.research",
+        "production.potions"
+      ],
+      "functionIds": [
+        "education",
+        "education.experiment",
+        "education.research",
+        "production",
+        "production.potions"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "specialty",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-05-v01",
+      "functionTerms": [
+        "学生住宿",
+        "自习"
+      ],
+      "directFunctionIds": [
+        "education.reading",
+        "housing"
+      ],
+      "functionIds": [
+        "education",
+        "education.reading",
+        "housing"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-06-v01",
+      "functionTerms": [
+        "商品零售",
+        "货物暂存"
+      ],
+      "directFunctionIds": [
+        "retail",
+        "storage.goods"
+      ],
+      "functionIds": [
+        "commerce",
+        "retail",
+        "storage",
+        "storage.goods"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-07-v01",
+      "functionTerms": [
+        "集体用餐",
+        "餐饮"
+      ],
+      "directFunctionIds": [
+        "dining",
+        "dining.meals"
+      ],
+      "functionIds": [
+        "dining",
+        "dining.meals"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-10-v01",
+      "functionTerms": [
+        "休憩",
+        "水景观赏"
+      ],
+      "directFunctionIds": [
+        "culture.garden",
+        "culture.rest"
+      ],
+      "functionIds": [
+        "culture",
+        "culture.garden",
+        "culture.rest"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": [
+        "landscape"
+      ]
+    },
+    {
+      "structureRef": "studio:mg-12-v01",
+      "functionTerms": [
+        "园艺养护",
+        "花草观赏"
+      ],
+      "directFunctionIds": [
+        "culture.garden",
+        "farming.care"
+      ],
+      "functionIds": [
+        "culture",
+        "culture.garden",
+        "farming",
+        "farming.care"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": [
+        "landscape"
+      ]
+    },
+    {
+      "structureRef": "studio:mg-13-v01",
+      "functionTerms": [
+        "公共办事",
+        "文献保管",
+        "议事"
+      ],
+      "directFunctionIds": [
+        "administration.archives",
+        "administration.council",
+        "administration.public"
+      ],
+      "functionIds": [
+        "administration",
+        "administration.archives",
+        "administration.council",
+        "administration.public"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-14-v01",
+      "functionTerms": [
+        "传送设施维护",
+        "出行登记"
+      ],
+      "directFunctionIds": [
+        "maintenance.portal",
+        "transport.registration"
+      ],
+      "functionIds": [
+        "maintenance",
+        "maintenance.portal",
+        "transport",
+        "transport.registration"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "specialty",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-15-v01",
+      "functionTerms": [
+        "休养",
+        "医疗",
+        "照料"
+      ],
+      "directFunctionIds": [
+        "health",
+        "health.recovery"
+      ],
+      "functionIds": [
+        "health",
+        "health.recovery"
+      ],
+      "unmappedFunctionTerms": [
+        "照料"
+      ],
+      "category": "specialty",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-16-v01",
+      "functionTerms": [
+        "能源设施维护",
+        "魔法器材制作"
+      ],
+      "directFunctionIds": [
+        "production.instruments",
+        "utilities.energy_maintenance"
+      ],
+      "functionIds": [
+        "production",
+        "production.instruments",
+        "utilities",
+        "utilities.energy_maintenance"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "specialty",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-17-v01",
+      "functionTerms": [
+        "家庭居住",
+        "研究"
+      ],
+      "directFunctionIds": [
+        "education.research",
+        "housing.family"
+      ],
+      "functionIds": [
+        "education",
+        "education.research",
+        "housing",
+        "housing.family"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-18-v01",
+      "functionTerms": [
+        "商品零售",
+        "药剂制作"
+      ],
+      "directFunctionIds": [
+        "production.potions",
+        "retail"
+      ],
+      "functionIds": [
+        "commerce",
+        "production",
+        "production.potions",
+        "retail"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-19-v01",
+      "functionTerms": [
+        "书籍制作",
+        "文献抄写"
+      ],
+      "directFunctionIds": [
+        "production.documents",
+        "production.documents.copying"
+      ],
+      "functionIds": [
+        "production",
+        "production.documents",
+        "production.documents.copying"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-20-v01",
+      "functionTerms": [
+        "材料保管",
+        "货物仓储"
+      ],
+      "directFunctionIds": [
+        "storage.goods",
+        "storage.materials"
+      ],
+      "functionIds": [
+        "storage",
+        "storage.goods",
+        "storage.materials"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-21-v01",
+      "functionTerms": [
+        "园艺养护",
+        "植物教学"
+      ],
+      "directFunctionIds": [
+        "education.teaching",
+        "farming.care"
+      ],
+      "functionIds": [
+        "education",
+        "education.teaching",
+        "farming",
+        "farming.care"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-25-v01",
+      "functionTerms": [
+        "教学",
+        "研讨",
+        "阅读"
+      ],
+      "directFunctionIds": [
+        "education.reading",
+        "education.teaching"
+      ],
+      "functionIds": [
+        "education",
+        "education.reading",
+        "education.teaching"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-26-v01",
+      "functionTerms": [
+        "教学",
+        "研讨"
+      ],
+      "directFunctionIds": [
+        "education.teaching"
+      ],
+      "functionIds": [
+        "education",
+        "education.teaching"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-27-v01",
+      "functionTerms": [
+        "学生住宿",
+        "自习"
+      ],
+      "directFunctionIds": [
+        "education.reading",
+        "housing"
+      ],
+      "functionIds": [
+        "education",
+        "education.reading",
+        "housing"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-28-v01",
+      "functionTerms": [
+        "集体用餐",
+        "餐饮"
+      ],
+      "directFunctionIds": [
+        "dining",
+        "dining.meals"
+      ],
+      "functionIds": [
+        "dining",
+        "dining.meals"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-29-v01",
+      "functionTerms": [
+        "休憩",
+        "花草观赏",
+        "阅读"
+      ],
+      "directFunctionIds": [
+        "culture.garden",
+        "culture.rest",
+        "education.reading"
+      ],
+      "functionIds": [
+        "culture",
+        "culture.garden",
+        "culture.rest",
+        "education",
+        "education.reading"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": [
+        "landscape"
+      ]
+    },
+    {
+      "structureRef": "studio:mg-30-v01",
+      "functionTerms": [
+        "植物教学",
+        "种植",
+        "药草栽培"
+      ],
+      "directFunctionIds": [
+        "education.teaching",
+        "farming",
+        "farming.herbs"
+      ],
+      "functionIds": [
+        "education",
+        "education.teaching",
+        "farming",
+        "farming.herbs"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": [
+        "landscape"
+      ]
+    },
+    {
+      "structureRef": "studio:mg-31-v01",
+      "functionTerms": [
+        "园艺养护",
+        "植物教学",
+        "药草栽培"
+      ],
+      "directFunctionIds": [
+        "education.teaching",
+        "farming.care",
+        "farming.herbs"
+      ],
+      "functionIds": [
+        "education",
+        "education.teaching",
+        "farming",
+        "farming.care",
+        "farming.herbs"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-32-v01",
+      "functionTerms": [
+        "园艺养护",
+        "工具保管",
+        "林业教学"
+      ],
+      "directFunctionIds": [
+        "education.teaching",
+        "farming.care",
+        "storage.tools"
+      ],
+      "functionIds": [
+        "education",
+        "education.teaching",
+        "farming",
+        "farming.care",
+        "storage",
+        "storage.tools"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-33-v01",
+      "functionTerms": [
+        "林业教学",
+        "苗木培育"
+      ],
+      "directFunctionIds": [
+        "education.teaching",
+        "farming.nursery"
+      ],
+      "functionIds": [
+        "education",
+        "education.teaching",
+        "farming",
+        "farming.nursery"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": [
+        "landscape"
+      ]
+    },
+    {
+      "structureRef": "studio:mg-34-v02",
+      "functionTerms": [
+        "教学",
+        "研讨",
+        "阅读"
+      ],
+      "directFunctionIds": [
+        "education.reading",
+        "education.teaching"
+      ],
+      "functionIds": [
+        "education",
+        "education.reading",
+        "education.teaching"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-35-v01",
+      "functionTerms": [
+        "研究",
+        "研讨",
+        "阅读"
+      ],
+      "directFunctionIds": [
+        "education.reading",
+        "education.research",
+        "education.teaching"
+      ],
+      "functionIds": [
+        "education",
+        "education.reading",
+        "education.research",
+        "education.teaching"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-36-v01",
+      "functionTerms": [
+        "庭院休憩",
+        "教学",
+        "研究",
+        "研讨"
+      ],
+      "directFunctionIds": [
+        "culture.rest",
+        "education.research",
+        "education.teaching"
+      ],
+      "functionIds": [
+        "culture",
+        "culture.rest",
+        "education",
+        "education.research",
+        "education.teaching"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-37-v02",
+      "functionTerms": [
+        "学生住宿",
+        "庭院休憩",
+        "自习"
+      ],
+      "directFunctionIds": [
+        "culture.rest",
+        "education.reading",
+        "housing"
+      ],
+      "functionIds": [
+        "culture",
+        "culture.rest",
+        "education",
+        "education.reading",
+        "housing"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-38-v01",
+      "functionTerms": [
+        "研究",
+        "研讨",
+        "阅读"
+      ],
+      "directFunctionIds": [
+        "education.reading",
+        "education.research",
+        "education.teaching"
+      ],
+      "functionIds": [
+        "education",
+        "education.reading",
+        "education.research",
+        "education.teaching"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-43-v01",
+      "functionTerms": [
+        "实验教学",
+        "研究"
+      ],
+      "directFunctionIds": [
+        "education.experiment",
+        "education.research",
+        "education.teaching"
+      ],
+      "functionIds": [
+        "education",
+        "education.experiment",
+        "education.research",
+        "education.teaching"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-44-v01",
+      "functionTerms": [
+        "洗浴",
+        "洗衣",
+        "生活服务"
+      ],
+      "directFunctionIds": [
+        "health.bath",
+        "health.laundry",
+        "services"
+      ],
+      "functionIds": [
+        "health",
+        "health.bath",
+        "health.laundry",
+        "services"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": []
+    },
+    {
+      "structureRef": "studio:mg-45-v01",
+      "functionTerms": [
+        "日用品交易",
+        "生活服务"
+      ],
+      "directFunctionIds": [
+        "retail.general",
+        "services"
+      ],
+      "functionIds": [
+        "commerce",
+        "retail",
+        "retail.general",
+        "services"
+      ],
+      "unmappedFunctionTerms": [],
+      "category": "common",
+      "assetTags": []
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "ML-07-v06",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 哥特作者逐图核对",
+  "nbt_sha256": "19a5081533ab065a32c518a1933b87bd26c41877b6304fab93621649a6ccf944",
+  "author_sha256": "c62ca8d251de5e7bf0c8d2b64f929b9552fd59163369f79db696a841847a5f38",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-living.png",
+    "previews/room-sleepa.png",
+    "previews/room-sleepb.png",
+    "previews/room-corridor.png",
+    "previews/point-cook.png",
+    "previews/point-bedsa0.png",
+    "previews/point-bedsa1.png",
+    "previews/point-bedsb0.png",
+    "previews/point-bedsb1.png",
+    "previews/point-tools.png",
+    "previews/point-records.png",
+    "previews/point-linen.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "实际图审": "狭长宅用侧廊连接两间独立双床房，前宽餐厨厅及侧廊记录工具均有使用空间。",
+    "形体与用途": "窄长宅采用宽前厅、侧廊和两个独立双床间，四人家庭夜间进出不穿过他人床位；廊侧工具与记录成套设置。",
+    "数据导航": "数据、标记和离线碰撞导航零警告。",
+    "证据范围": "当前四向、顶视、去顶、所有楼层、房间、使用站位、标记和场地截图已实际查看。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "离线静态模板；未接入机器、交易、气候或作物生产机制。"
+  ]
+}

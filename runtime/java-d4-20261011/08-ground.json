@@ -1,0 +1,73 @@
+{
+  "args": {
+    "contextId": "sha256:471a166e028911922613aa21925760cd4c6702ce08b25bfb3c717c9ad9e5ed33",
+    "workflowRevision": 9,
+    "baseDraftHash": "sha256:43c5463b6ade7ba74f18353814b5e2b71419adcce431af2c3bd8e9fe3c067161",
+    "citySeedId": "city_jingchao_capital",
+    "districtAnswers": {
+      "teaching": [
+        {
+          "groupId": "teaching",
+          "roadConnected": true,
+          "foundation": false,
+          "noFoundationReason": "采用CONFORM紧凑组团，保留桦木林地面；素材自带院落，不另设共同台地。",
+          "ground": "minecraft:gravel",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "styles": [
+            "魔法学院新制"
+          ]
+        }
+      ],
+      "library": [
+        {
+          "groupId": "library",
+          "roadConnected": true,
+          "foundation": false,
+          "noFoundationReason": "采用CONFORM紧凑组团，保留桦木林地面；素材自带院落，不另设共同台地。",
+          "ground": "minecraft:gravel",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "styles": [
+            "魔法学院新制"
+          ]
+        }
+      ],
+      "reception": [
+        {
+          "groupId": "reception",
+          "roadConnected": true,
+          "foundation": false,
+          "noFoundationReason": "采用CONFORM紧凑组团，保留桦木林地面；素材自带院落，不另设共同台地。",
+          "ground": "minecraft:gravel",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "styles": [
+            "魔法学院新制"
+          ]
+        }
+      ],
+      "living": [
+        {
+          "groupId": "living",
+          "roadConnected": true,
+          "foundation": false,
+          "noFoundationReason": "采用CONFORM紧凑组团，保留桦木林地面；素材自带院落，不另设共同台地。",
+          "ground": "minecraft:gravel",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "styles": [
+            "魔法学院新制"
+          ]
+        }
+      ]
+    },
+    "overviewAnswers": {
+      "styles": [
+        "魔法学院新制"
+      ],
+      "roadProfileRef": "road:town",
+      "ground": "minecraft:gravel",
+      "roadSurface": "minecraft:stone_brick_slab",
+      "groundTreatment": "GENERATE"
+    },
+    "runId": "provider_3d25631f_r19200"
+  },
+  "tool": "city_d4_answers"
+}

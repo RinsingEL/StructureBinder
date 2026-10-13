@@ -1,0 +1,46 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "ML-02-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 哥特作者离线全图审查",
+  "nbt_sha256": "c02437931fad58b8a7ca9e4bbea722f8457460167208d5fc1bd3266a8f111363",
+  "author_sha256": "461b76263123926539fb28d61ef63cb12534378e45686c8260c02b2ca7a73c37",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-wait.png",
+    "previews/room-prepare.png",
+    "previews/room-dispatch.png",
+    "previews/room-yard.png",
+    "previews/point-tickets.png",
+    "previews/point-luggage.png",
+    "previews/point-prepare.png",
+    "previews/point-cloth.png",
+    "previews/point-dispatch.png",
+    "previews/point-driver.png",
+    "previews/point-drink.png",
+    "previews/point-load12.png",
+    "previews/point-load28.png",
+    "previews/point-drive.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "形体与用途": "长厅分候行、仪式准备与站务三段，双车湾和东侧车道共同表达地面牵引车接驳。",
+    "内饰与空间": "实际查看23图：候车席、行李、礼布柜和准备台完整；调度、车夫轮休饮水与双车侧移交面可达，车棚前后落地柱与加厚坡盖覆盖整车。",
+    "完整证据": "实际查看当前版本全部四向外观、顶视、去顶、楼层、房间、站位、标记与地形图；不以拍摄自动代替审美检查。",
+    "数据与通路": "最终 NBT 重读、状态、门床、标记与碰撞导航检查通过，零警告。",
+    "环境条件": "排水良好的稳定台地，连接仍有常住居民的聚落道路；纪念设施不替代活人的生活供给。；基础底 Y=0，公共地面 Y=2，步行脚底 Y=3；道路接入口同高。；独立完整模板，保留外扶壁、彩窗采光面及庭院；不可用相邻建筑遮挡。；尖拱、外扶壁与内肋共同表达高挑空间；不模拟结构受力、照度或天气。；使用地面牵引车交通，不假定铁路。东侧 X=40～44 的5格车道需两端接通并留外部转弯场；展示车辆非可驾驶实体。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。"
+  ]
+}

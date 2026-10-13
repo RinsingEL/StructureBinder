@@ -1,0 +1,46 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "ML-03-v04",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 哥特作者逐图核对",
+  "nbt_sha256": "e01de8c0a7bf855c8f9f011c65e4854785a00688b89439b8aaf78e366d8a3f4c",
+  "author_sha256": "caf12e3ccc64b60affb09ab748ad7d4bb908775648435ee05e0f0997aea09ef4",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-home0.png",
+    "previews/room-home1.png",
+    "previews/room-shared.png",
+    "previews/point-cook0.png",
+    "previews/point-beds00.png",
+    "previews/point-beds01.png",
+    "previews/point-linen0.png",
+    "previews/point-cook1.png",
+    "previews/point-beds10.png",
+    "previews/point-beds11.png",
+    "previews/point-linen1.png",
+    "previews/point-clock.png",
+    "previews/point-parts.png",
+    "previews/point-court.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "实际图审": "两户各有完整双床餐厨，窄钟务房独立向共院开门，三屋通路完整。",
+    "形体与用途": "两条独立双床长宅夹出共用院路，院后小钟务房单独进入；每户均有完整餐厨和床柜，公共值班不穿私室。",
+    "数据导航": "数据、标记和离线碰撞导航零警告。",
+    "证据范围": "当前四向、顶视、去顶、所有楼层、房间、使用站位、标记和场地截图已实际查看。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "离线静态模板；未接入机器、交易、气候或作物生产机制。"
+  ]
+}

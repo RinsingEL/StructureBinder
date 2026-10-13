@@ -1,0 +1,258 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "ML-03-v03",
+  "name": "钟务附楼双层家宅",
+  "family": "ML-03",
+  "civilization": "哥特",
+  "planning_role": "planning_role.fill",
+  "size": [
+    25,
+    35,
+    29
+  ],
+  "terrain": {
+    "选址": "稳定、排水良好的居民地块，日照与通路按具体用途保留；哥特是建造风格而非地形限制。",
+    "高程": "基础底Y=0、常规地面Y=2、脚底Y=3；抬高或双层版本另记。",
+    "边界": "完整独立模板，保留外扶柱、檐口、采光和门外站位，不默认邻居补齐。"
+  },
+  "rooms": [
+    {
+      "id": "ground",
+      "name": "餐厨与后钟务间",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        15,
+        7,
+        24
+      ],
+      "purpose": "前部完整炊食，后部校时修钟，侧梯上楼；设施：备餐、热食与洗涤、钟务校时、零件与交班记录、钟绳、润滑与备用小件"
+    },
+    {
+      "id": "upper",
+      "name": "读写起居与隔屏三床",
+      "min": [
+        5,
+        9,
+        5
+      ],
+      "max": [
+        19,
+        13,
+        24
+      ],
+      "purpose": "独立上层家庭生活和后寝，梯井有护栏；设施：床位与个人衣物、床位与个人衣物、床位与个人衣物、上层家庭被服、上层读写与钟务交班"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        12,
+        3,
+        3
+      ],
+      "name": "尖楣入户门"
+    },
+    {
+      "id": "cook",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        6
+      ],
+      "name": "备餐、热食与洗涤",
+      "look_at": [
+        5,
+        4,
+        6
+      ],
+      "approach": [
+        5,
+        3,
+        7
+      ]
+    },
+    {
+      "id": "clock",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        18
+      ],
+      "name": "钟务校时、零件与交班记录",
+      "look_at": [
+        5,
+        4,
+        18
+      ],
+      "approach": [
+        5,
+        3,
+        19
+      ]
+    },
+    {
+      "id": "clockparts",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        22
+      ],
+      "name": "钟绳、润滑与备用小件",
+      "look_at": [
+        5,
+        4,
+        22
+      ],
+      "approach": [
+        5,
+        3,
+        23
+      ]
+    },
+    {
+      "id": "beds0",
+      "kind": "bed",
+      "pos": [
+        6,
+        9,
+        20
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        6,
+        10,
+        20
+      ],
+      "approach": [
+        7,
+        9,
+        20
+      ]
+    },
+    {
+      "id": "beds1",
+      "kind": "bed",
+      "pos": [
+        9,
+        9,
+        20
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        9,
+        10,
+        20
+      ],
+      "approach": [
+        10,
+        9,
+        20
+      ]
+    },
+    {
+      "id": "beds2",
+      "kind": "bed",
+      "pos": [
+        12,
+        9,
+        20
+      ],
+      "name": "床位与个人衣物",
+      "look_at": [
+        12,
+        10,
+        20
+      ],
+      "approach": [
+        13,
+        9,
+        20
+      ]
+    },
+    {
+      "id": "linen",
+      "kind": "storage",
+      "pos": [
+        6,
+        9,
+        23
+      ],
+      "name": "上层家庭被服",
+      "look_at": [
+        6,
+        10,
+        23
+      ],
+      "approach": [
+        6,
+        9,
+        24
+      ]
+    },
+    {
+      "id": "reading",
+      "kind": "work",
+      "pos": [
+        6,
+        9,
+        7
+      ],
+      "name": "上层读写与钟务交班",
+      "look_at": [
+        6,
+        10,
+        7
+      ],
+      "approach": [
+        6,
+        9,
+        8
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "狭地向上发展，下层餐厨与钟务、上层读写和隔屏寝室；六级实梯、封护梯井和高山墙钟共同形成垂直轮廓。"
+  ],
+  "differences": [
+    "狭地向上发展，下层餐厨与钟务、上层读写和隔屏寝室；六级实梯、封护梯井和高山墙钟共同形成垂直轮廓。"
+  ],
+  "floors": [
+    {
+      "name": "下层作业起居",
+      "y": 2,
+      "max_y": 7
+    },
+    {
+      "name": "上层家居钟务",
+      "y": 8,
+      "max_y": 13
+    }
+  ],
+  "roof_min_y": 14,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/memorial_life.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "nbt_sha256": "04b245d5b04a15a85aa98446e60cd07a0719f5ce97fc9db62fb81a24f62fa0e6",
+  "function_terms": [
+    "家庭居住"
+  ]
+}

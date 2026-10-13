@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "quests": {
+    "academy:copying":{"type":"common:material_delivery","title":"给学院补充纸张","text":"讲义需要纸张。请带来 4 张普通纸，交给我后领取补给。","issuerRole":"academy_mentor","targets":["minecraft:paper"],"count":4,"reward":"academy:supplies"},
+    "academy:patrol":{"type":"common:hostile_hunt","title":"处理两只僵尸","text":"接下委托后，亲手击败两只僵尸，再回来向我汇报。","issuerRole":"academy_mentor","targets":["minecraft:zombie"],"count":2,"reward":"academy:supplies"},
+    "academy:rations":{"type":"common:field_rations","title":"出发前的补给","text":"接下委托后食用一份面包，再回来找我。拿在手里还不算吃过。","issuerRole":"academy_mentor","targets":["minecraft:bread"],"count":1,"reward":"academy:supplies"},
+    "academy:glyph_apprentice":{"type":"ars_school:basic_glyphs","title":"符文学徒：掌握三种符文","text":"在光亮、伤害、治疗、冻结、生长中掌握任意三种符文。已学会的也算；仅持有符文物品不算。","issuerRole":"academy_mentor","targets":["ars_nouveau:glyph_light","ars_nouveau:glyph_harm","ars_nouveau:glyph_heal","ars_nouveau:glyph_freeze","ars_nouveau:glyph_grow"],"count":3,"reward":"academy:arcane_study"}
+  }
+}

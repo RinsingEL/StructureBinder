@@ -1,19 +1,11 @@
-# 可选附属
+# 附属模组
 
-构建：`gradlew.bat assemble verifyAddonPackaging`。
+独立产出 JAR 的附属模组源码放在这里，跟随 StructureBinder 仓库提交和推送。各模组保留自己的 Gradle wrapper、配置和测试，不自动加入主模组构建或装入游戏。
 
-| 发布包 | 安装用途 |
-| --- | --- |
-| `build/libs/geomantia-0.1.0.jar` | 必装主 Mod：城市生成、workflow、区域保护与统一 MCP。 |
-| `build/libs/geomantia-0.1.0-harness.jar` | 可选规划助手：游戏内配置模型服务，暂停菜单打开“城市规划助手”。 |
-| `build/libs/geomantia-0.1.0-map.jar` | 可选冒险地图：地图物品、轮廓、迷雾、国度及位置标记。 |
+| 目录 | 模组 | 内容 |
+| --- | --- | --- |
+| [realmfolk](realmfolk/README.md) | 国度 NPC / 冒险附属 | 居民、经济、交互、委托，以及第四题离线实验。 |
 
-两个附属分别依赖主 Mod，不互相依赖。服务器与客户端使用地图/Harness 时应安装对应附属。主包的世界生成与区域进入限制不因地图未安装而停用。
+Realmfolk 于 2026-10-14 从本地独立仓库导入，来源提交 `e9ca1de31551cf2650e52de9e3c3cb57367ac8e5`（实验实现提交 `d4848a9`）。导入的是 199 个已提交文件，不包含嵌套 `.git`、凭据、运行存档或依赖缓存。原目录 `E:\Mod\_Dev\国度冒险附属Mod` 保留作迁移来源；后续源码在本目录维护。旧记录里的哈希与绝对路径按历史来源保留。
 
-Harness 使用主 Mod 拥有的规划服务；移除 Harness 不会移除存档内的规划进度。外部 Agent 通过主 Mod 的单一 `/mcp` 地址接入，包括已登记的附属规划任务。模型服务凭证仅属于 Harness，主 Mod 不要求配置模型。
-
-首次使用外部 MCP 时在主菜单选择端口并保存，之后自动启动；默认 5001。安装 Harness 时不主动弹出外部连接配置，仍可通过主 Mod 设置开启。Harness 的普通玩家只需进入世界、打开规划助手并配置模型。
-
-开发客户端默认只加载主 Mod；同时加载附属使用 `-PgeomantiaDevAddons=true`。主包和附属使用不同 Java 包，避免 Forge 模块层 split-package 冲突。
-
-验证入口：`test`、`coreMcpTest`（移除两个附属的 classpath 后运行真实 MCP 初始化）、`verifyAddonPackaging`（主包无附属类依赖、无 Harness 运行资源、无地图配方，附属无重复 Mixin）。区域 GameTest 需新的隔离目录和 `geomantia_regions` 命名空间，分别以 `geomantiaDevAddons=false/true` 验证。
+本机构建、实验进度与可选试玩实例仍使用 `addons/.realmfolk*/`，已忽略，不随源码发布。原运行存档没有迁移；旧试玩批处理需要先准备独立实例。

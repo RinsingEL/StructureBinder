@@ -1,0 +1,54 @@
+{
+  "schema": "realmfolk.group-intent.experiment.v1",
+  "cityName": "星穹魔法学院",
+  "groups": [
+    {
+      "id": "starfall",
+      "name": "星落研习会",
+      "purpose": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。",
+      "work": ["教学", "天象观测"],
+      "roster": {"specialist": 2, "learner": 5},
+      "pools": ["ars_materials", "ars_workshop"],
+      "needs": ["research_materials"],
+      "requestedAbilities": ["teach_magic", "cast_magic"]
+    },
+    {
+      "id": "inkwell",
+      "name": "墨泉家族",
+      "purpose": "家族经营藏书与抄写事务，年轻成员随长辈学习，向学院补充纸墨。",
+      "work": ["书籍借阅", "文献抄写"],
+      "roster": {"specialist": 1, "learner": 2},
+      "pools": ["ars_workshop"],
+      "needs": ["copying_supplies"]
+    },
+    {
+      "id": "greenhand",
+      "name": "青枝实践社",
+      "purpose": "照料药草和苗木，交换魔法栽培材料，组织学徒观察周围林地。",
+      "work": ["药草栽培", "林业教学"],
+      "roster": {"specialist": 1, "learner": 3},
+      "pools": ["ars_materials", "fd_produce"],
+      "needs": ["herbal_supplies"],
+      "requestedAbilities": ["nearby_hunt"]
+    },
+    {
+      "id": "hearth",
+      "name": "暖炉伙房",
+      "purpose": "为师生与旅行者供应饭食和生活用品，与学院长期交换物资。",
+      "work": ["餐饮", "集体用餐"],
+      "roster": {"specialist": 1, "learner": 2},
+      "pools": ["fd_meals", "fd_produce"],
+      "needs": ["kitchen_supplies"]
+    },
+    {
+      "id": "wayfarer",
+      "name": "远行登记处",
+      "purpose": "接待外来冒险者，提供旅途补给；希望把可靠的周边威胁线索转成讨伐委托。",
+      "work": ["出行登记"],
+      "roster": {"specialist": 1, "learner": 1},
+      "pools": ["adventure"],
+      "needs": [],
+      "requestedAbilities": ["nearby_hunt", "dungeon_commission"]
+    }
+  ]
+}

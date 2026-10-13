@@ -1,0 +1,193 @@
+{
+  "seed": 20261010,
+  "greenery": true,
+  "terraceFeatures": true,
+  "foundationMarginBlocks": 8,
+  "terrainSource": "DEM_STEP_1",
+  "gapLandscape": true,
+  "gapSurface": "CONNECTION_TERRACE",
+  "smallGapMaxBlocks": 32,
+  "arrays": [
+    {
+      "arrayId": "services",
+      "function": "services",
+      "anchorBlock": {
+        "x": 0,
+        "z": 0
+      },
+      "algorithm": "GRID",
+      "count": 3,
+      "rotation": 0,
+      "densityClass": "BALANCED",
+      "coreAssetId": "studio:dv-02-v01",
+      "requiredAssetIds": [
+        "studio:dv-18-v01",
+        "studio:dv-07-v01"
+      ],
+      "layout": {
+        "gapBlocks": 10,
+        "columns": 2,
+        "purpose": "锻造、加工与仓储工作院"
+      }
+    },
+    {
+      "arrayId": "exchange",
+      "function": "exchange",
+      "anchorBlock": {
+        "x": 0,
+        "z": 0
+      },
+      "algorithm": "LINEAR",
+      "count": 2,
+      "rotation": 0,
+      "densityClass": "BALANCED",
+      "coreAssetId": "studio:dv-14-v01",
+      "requiredAssetIds": [
+        "studio:dv-17-v01"
+      ],
+      "layout": {
+        "gapBlocks": 10,
+        "crossAlign": "END"
+      }
+    },
+    {
+      "arrayId": "workers",
+      "function": "workers",
+      "anchorBlock": {
+        "x": 0,
+        "z": 0
+      },
+      "algorithm": "GRID",
+      "count": 3,
+      "rotation": 0,
+      "densityClass": "BALANCED",
+      "coreAssetId": "studio:dv-06-v01",
+      "requiredAssetIds": [
+        "studio:dv-20-v01",
+        "studio:dv-05-v01"
+      ],
+      "layout": {
+        "gapBlocks": 10,
+        "columns": 2
+      }
+    }
+  ],
+  "compositions": [
+    {
+      "compositionId": "daily-life",
+      "memberIds": [
+        "exchange",
+        "workers"
+      ],
+      "algorithm": "LINEAR",
+      "anchorBlock": {
+        "x": 0,
+        "z": 0
+      },
+      "directionDegrees": 90,
+      "layout": {
+        "gapBlocks": 18
+      }
+    },
+    {
+      "compositionId": "craft-town",
+      "memberIds": [
+        "services",
+        "daily-life"
+      ],
+      "algorithm": "LINEAR",
+      "anchorBlock": {
+        "x": -3060,
+        "z": 5228
+      },
+      "directionDegrees": 0,
+      "layout": {
+        "gapBlocks": 18,
+        "crossAlign": "CENTER"
+      }
+    }
+  ],
+  "districts": [
+    {
+      "districtId": "services",
+      "name": "工匠聚落中心",
+      "coreMemberId": "services:1",
+      "arrayIds": [
+        "services"
+      ],
+      "platform": true
+    },
+    {
+      "districtId": "exchange",
+      "name": "交易与精加工",
+      "coreMemberId": "exchange:1",
+      "arrayIds": [
+        "exchange"
+      ],
+      "platform": true
+    },
+    {
+      "districtId": "workers",
+      "name": "工人生活",
+      "coreMemberId": "workers:1",
+      "arrayIds": [
+        "workers"
+      ],
+      "platform": true
+    }
+  ],
+  "terraceGroups": [
+    {
+      "terraceId": "services-terrace",
+      "districtId": "services",
+      "coreMemberId": "services:1",
+      "arrayIds": [
+        "services"
+      ],
+      "styleRef": "local"
+    },
+    {
+      "terraceId": "exchange-terrace",
+      "districtId": "exchange",
+      "coreMemberId": "exchange:1",
+      "arrayIds": [
+        "exchange"
+      ],
+      "styleRef": "local"
+    },
+    {
+      "terraceId": "workers-terrace",
+      "districtId": "workers",
+      "coreMemberId": "workers:1",
+      "arrayIds": [
+        "workers"
+      ],
+      "styleRef": "local"
+    }
+  ],
+  "terraceStyles": [
+    {
+      "styleId": "local",
+      "postSpacing": 12,
+      "minimumExposure": 1,
+      "railBlock": "minecraft:stone_brick_wall",
+      "postBlock": "minecraft:polished_andesite",
+      "capBlock": "minecraft:stone_brick_slab",
+      "materials": {
+        "ground": "minecraft:andesite",
+        "retainingWall": "minecraft:stone_bricks"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "to": "exchange",
+      "from": "services"
+    },
+    {
+      "to": "workers",
+      "from": "services"
+    }
+  ],
+  "publicSpaces": []
+}

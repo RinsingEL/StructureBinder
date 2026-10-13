@@ -1,0 +1,32 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "ML-05-v01",
+  "nbt_sha256": "ec64efb5b214b06bacb3874582c0adf7450722219542936621431bbbb40ed8c2",
+  "author_sha256": "2f1e21c80c65a63dfe496bde6dbafb6888c35c734924e27bb5761e4f0e6a84ce",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-public",
+    "room-debate",
+    "room-archive",
+    "room-clerk",
+    "point-chair",
+    "point-debate",
+    "point-memorial",
+    "point-minutes",
+    "point-copy",
+    "point-documents",
+    "point-service",
+    "point-publiccourt",
+    "annotations",
+    "site-context"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

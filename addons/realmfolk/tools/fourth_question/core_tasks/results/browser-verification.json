@@ -1,0 +1,348 @@
+{
+  "passed": true,
+  "paths": 6,
+  "results": [
+    {
+      "program": "starfall_welcome",
+      "route": "arcane",
+      "reward": "workshop_starter",
+      "state": {
+        "packHash": "347c0002157da84ea009bc540864bc5eafb2c55222c7285dac2173e10c2b826a",
+        "program": "starfall_welcome",
+        "loadout": "arcane",
+        "revision": 12,
+        "stage": 3,
+        "place": "council_fill_003",
+        "inventory": {
+          "ars_nouveau:source_gem": 2,
+          "create:andesite_alloy": 8
+        },
+        "coins": 72,
+        "favor": 12,
+        "metHost": true,
+        "proof": true,
+        "rewardPending": false,
+        "completed": true,
+        "route": "arcane",
+        "rewardChoice": "workshop_starter",
+        "service": {
+          "ars_nouveau:source_gem": {
+            "price": 20,
+            "count": 5
+          },
+          "ars_nouveau:blank_parchment": {
+            "price": 12,
+            "count": 6
+          }
+        },
+        "known": [
+          "18e7fff3-7938-3efa-847c-38d2d5896dfb",
+          "0484e34c-f033-300e-b700-f7516dad83c9"
+        ],
+        "history": [
+          "你来到学院，决定先认识这里的人。",
+          "菲恩·18e7：学院欢迎会做事的人。我们正重新整理星穹观测记录，魔法、制造和补给都能帮上忙。先去见见替我们保管文献的墨泉家族吧。",
+          "前往 书籍借阅 / 文献保管。",
+          "洛恩·0484：星落的人擅长仰望天空，我们替他们记住过去。去观测台前，先帮他们解决这一轮研究的实际需要。",
+          "前往 教学 / 阅读。",
+          "你选择了「提供魔法材料」。研究材料已到位，团队可以开展下一步工作。",
+          "前往 天象观测 / 研究。",
+          "你在当地完成了「整理观测记录」，取得新的观测笔记。",
+          "前往 教学 / 阅读。",
+          "菲恩·18e7：记录和准备都齐了。谢谢你，请选择对自己有用的一份补给。",
+          "共同项目完成：星穹研究用品窗口开放，观测资料开始接受查阅。你获得了「工坊合作补给」。",
+          "从新开放的用品窗口购买了 魔源宝石。",
+          "菲恩·18e7：感谢你参与。星穹研究用品窗口开放，观测资料开始接受查阅。"
+        ]
+      },
+      "passed": true,
+      "errors": []
+    },
+    {
+      "program": "starfall_welcome",
+      "route": "industry",
+      "reward": "arcane_starter",
+      "state": {
+        "packHash": "347c0002157da84ea009bc540864bc5eafb2c55222c7285dac2173e10c2b826a",
+        "program": "starfall_welcome",
+        "loadout": "industry",
+        "revision": 12,
+        "stage": 3,
+        "place": "council_fill_003",
+        "inventory": {
+          "create:andesite_alloy": 0,
+          "ars_nouveau:source_gem": 5,
+          "ars_nouveau:blank_parchment": 2
+        },
+        "coins": 72,
+        "favor": 12,
+        "metHost": true,
+        "proof": true,
+        "rewardPending": false,
+        "completed": true,
+        "route": "industry",
+        "rewardChoice": "arcane_starter",
+        "service": {
+          "ars_nouveau:source_gem": {
+            "price": 20,
+            "count": 5
+          },
+          "ars_nouveau:blank_parchment": {
+            "price": 12,
+            "count": 6
+          }
+        },
+        "known": [
+          "18e7fff3-7938-3efa-847c-38d2d5896dfb",
+          "0484e34c-f033-300e-b700-f7516dad83c9"
+        ],
+        "history": [
+          "你来到学院，决定先认识这里的人。",
+          "菲恩·18e7：学院欢迎会做事的人。我们正重新整理星穹观测记录，魔法、制造和补给都能帮上忙。先去见见替我们保管文献的墨泉家族吧。",
+          "前往 书籍借阅 / 文献保管。",
+          "洛恩·0484：星落的人擅长仰望天空，我们替他们记住过去。去观测台前，先帮他们解决这一轮研究的实际需要。",
+          "前往 教学 / 阅读。",
+          "你选择了「提供工业制品」。设备维护材料已到位，团队可以开展下一步工作。",
+          "前往 天象观测 / 研究。",
+          "你在当地完成了「整理观测记录」，取得新的观测笔记。",
+          "前往 教学 / 阅读。",
+          "菲恩·18e7：记录和准备都齐了。谢谢你，请选择对自己有用的一份补给。",
+          "共同项目完成：星穹研究用品窗口开放，观测资料开始接受查阅。你获得了「魔法研究补给」。",
+          "从新开放的用品窗口购买了 魔源宝石。",
+          "菲恩·18e7：感谢你参与。星穹研究用品窗口开放，观测资料开始接受查阅。"
+        ]
+      },
+      "passed": true,
+      "errors": []
+    },
+    {
+      "program": "starfall_welcome",
+      "route": "provisions",
+      "reward": "field_starter",
+      "state": {
+        "packHash": "347c0002157da84ea009bc540864bc5eafb2c55222c7285dac2173e10c2b826a",
+        "program": "starfall_welcome",
+        "loadout": "provisions",
+        "revision": 12,
+        "stage": 3,
+        "place": "council_fill_003",
+        "inventory": {
+          "farmersdelight:tomato": 0,
+          "ars_nouveau:magebloom_fiber": 4,
+          "ars_nouveau:source_gem": 3
+        },
+        "coins": 72,
+        "favor": 12,
+        "metHost": true,
+        "proof": true,
+        "rewardPending": false,
+        "completed": true,
+        "route": "provisions",
+        "rewardChoice": "field_starter",
+        "service": {
+          "ars_nouveau:source_gem": {
+            "price": 20,
+            "count": 5
+          },
+          "ars_nouveau:blank_parchment": {
+            "price": 12,
+            "count": 6
+          }
+        },
+        "known": [
+          "18e7fff3-7938-3efa-847c-38d2d5896dfb",
+          "0484e34c-f033-300e-b700-f7516dad83c9"
+        ],
+        "history": [
+          "你来到学院，决定先认识这里的人。",
+          "菲恩·18e7：学院欢迎会做事的人。我们正重新整理星穹观测记录，魔法、制造和补给都能帮上忙。先去见见替我们保管文献的墨泉家族吧。",
+          "前往 书籍借阅 / 文献保管。",
+          "洛恩·0484：星落的人擅长仰望天空，我们替他们记住过去。去观测台前，先帮他们解决这一轮研究的实际需要。",
+          "前往 教学 / 阅读。",
+          "你选择了「承担团队伙食」。团队补给已到位，团队可以开展下一步工作。",
+          "前往 天象观测 / 研究。",
+          "你在当地完成了「整理观测记录」，取得新的观测笔记。",
+          "前往 教学 / 阅读。",
+          "菲恩·18e7：记录和准备都齐了。谢谢你，请选择对自己有用的一份补给。",
+          "共同项目完成：星穹研究用品窗口开放，观测资料开始接受查阅。你获得了「野外实践补给」。",
+          "从新开放的用品窗口购买了 魔源宝石。",
+          "菲恩·18e7：感谢你参与。星穹研究用品窗口开放，观测资料开始接受查阅。"
+        ]
+      },
+      "passed": true,
+      "errors": []
+    },
+    {
+      "program": "greenhand_welcome",
+      "route": "arcane",
+      "reward": "workshop_starter",
+      "state": {
+        "packHash": "347c0002157da84ea009bc540864bc5eafb2c55222c7285dac2173e10c2b826a",
+        "program": "greenhand_welcome",
+        "loadout": "arcane",
+        "revision": 12,
+        "stage": 3,
+        "place": "forest_school_fill_004",
+        "inventory": {
+          "ars_nouveau:source_gem": 1,
+          "create:andesite_alloy": 8,
+          "ars_nouveau:magebloom_fiber": 1
+        },
+        "coins": 76,
+        "favor": 12,
+        "metHost": true,
+        "proof": true,
+        "rewardPending": false,
+        "completed": true,
+        "route": "arcane",
+        "rewardChoice": "workshop_starter",
+        "service": {
+          "ars_nouveau:magebloom_fiber": {
+            "price": 16,
+            "count": 5
+          },
+          "ars_nouveau:source_gem": {
+            "price": 20,
+            "count": 6
+          }
+        },
+        "known": [
+          "0ae20743-a471-3bf3-9f53-467ed6313b40",
+          "0c7f7d8e-fd17-3a19-a43c-6c26a3d79a75"
+        ],
+        "history": [
+          "你来到学院，决定先认识这里的人。",
+          "艾琳·0ae2：青枝的课程从泥土开始。我们正整理药草图册，缺材料的人也可以用工具维护或伙食补给参与。先向远行登记处了解我们的外出准备吧。",
+          "前往 出行登记 / 传送设施维护。",
+          "米拉·0c7f：实践社每次出发，都要在这里留下准备记录。这回先在学院温室里熟悉材料，再谈真正的野外旅程。",
+          "前往 林业教学 / 苗木培育。",
+          "你选择了「提供魔法材料」。研究材料已到位，团队可以开展下一步工作。",
+          "前往 植物教学 / 园艺养护。",
+          "你在当地完成了「记录温室样本」，取得新的栽培笔记。",
+          "前往 林业教学 / 苗木培育。",
+          "艾琳·0ae2：记录和准备都齐了。谢谢你，请选择对自己有用的一份补给。",
+          "共同项目完成：青枝实践用品窗口开放，温室观察资料开始接受查阅。你获得了「工坊合作补给」。",
+          "从新开放的用品窗口购买了 法师之花纤维。",
+          "艾琳·0ae2：感谢你参与。青枝实践用品窗口开放，温室观察资料开始接受查阅。"
+        ]
+      },
+      "passed": true,
+      "errors": []
+    },
+    {
+      "program": "greenhand_welcome",
+      "route": "industry",
+      "reward": "arcane_starter",
+      "state": {
+        "packHash": "347c0002157da84ea009bc540864bc5eafb2c55222c7285dac2173e10c2b826a",
+        "program": "greenhand_welcome",
+        "loadout": "industry",
+        "revision": 12,
+        "stage": 3,
+        "place": "forest_school_fill_004",
+        "inventory": {
+          "create:andesite_alloy": 0,
+          "ars_nouveau:source_gem": 4,
+          "ars_nouveau:blank_parchment": 2,
+          "ars_nouveau:magebloom_fiber": 1
+        },
+        "coins": 76,
+        "favor": 12,
+        "metHost": true,
+        "proof": true,
+        "rewardPending": false,
+        "completed": true,
+        "route": "industry",
+        "rewardChoice": "arcane_starter",
+        "service": {
+          "ars_nouveau:magebloom_fiber": {
+            "price": 16,
+            "count": 5
+          },
+          "ars_nouveau:source_gem": {
+            "price": 20,
+            "count": 6
+          }
+        },
+        "known": [
+          "0ae20743-a471-3bf3-9f53-467ed6313b40",
+          "0c7f7d8e-fd17-3a19-a43c-6c26a3d79a75"
+        ],
+        "history": [
+          "你来到学院，决定先认识这里的人。",
+          "艾琳·0ae2：青枝的课程从泥土开始。我们正整理药草图册，缺材料的人也可以用工具维护或伙食补给参与。先向远行登记处了解我们的外出准备吧。",
+          "前往 出行登记 / 传送设施维护。",
+          "米拉·0c7f：实践社每次出发，都要在这里留下准备记录。这回先在学院温室里熟悉材料，再谈真正的野外旅程。",
+          "前往 林业教学 / 苗木培育。",
+          "你选择了「提供工业制品」。设备维护材料已到位，团队可以开展下一步工作。",
+          "前往 植物教学 / 园艺养护。",
+          "你在当地完成了「记录温室样本」，取得新的栽培笔记。",
+          "前往 林业教学 / 苗木培育。",
+          "艾琳·0ae2：记录和准备都齐了。谢谢你，请选择对自己有用的一份补给。",
+          "共同项目完成：青枝实践用品窗口开放，温室观察资料开始接受查阅。你获得了「魔法研究补给」。",
+          "从新开放的用品窗口购买了 法师之花纤维。",
+          "艾琳·0ae2：感谢你参与。青枝实践用品窗口开放，温室观察资料开始接受查阅。"
+        ]
+      },
+      "passed": true,
+      "errors": []
+    },
+    {
+      "program": "greenhand_welcome",
+      "route": "provisions",
+      "reward": "field_starter",
+      "state": {
+        "packHash": "347c0002157da84ea009bc540864bc5eafb2c55222c7285dac2173e10c2b826a",
+        "program": "greenhand_welcome",
+        "loadout": "provisions",
+        "revision": 12,
+        "stage": 3,
+        "place": "forest_school_fill_004",
+        "inventory": {
+          "farmersdelight:tomato": 0,
+          "ars_nouveau:magebloom_fiber": 5,
+          "ars_nouveau:source_gem": 2
+        },
+        "coins": 76,
+        "favor": 12,
+        "metHost": true,
+        "proof": true,
+        "rewardPending": false,
+        "completed": true,
+        "route": "provisions",
+        "rewardChoice": "field_starter",
+        "service": {
+          "ars_nouveau:magebloom_fiber": {
+            "price": 16,
+            "count": 5
+          },
+          "ars_nouveau:source_gem": {
+            "price": 20,
+            "count": 6
+          }
+        },
+        "known": [
+          "0ae20743-a471-3bf3-9f53-467ed6313b40",
+          "0c7f7d8e-fd17-3a19-a43c-6c26a3d79a75"
+        ],
+        "history": [
+          "你来到学院，决定先认识这里的人。",
+          "艾琳·0ae2：青枝的课程从泥土开始。我们正整理药草图册，缺材料的人也可以用工具维护或伙食补给参与。先向远行登记处了解我们的外出准备吧。",
+          "前往 出行登记 / 传送设施维护。",
+          "米拉·0c7f：实践社每次出发，都要在这里留下准备记录。这回先在学院温室里熟悉材料，再谈真正的野外旅程。",
+          "前往 林业教学 / 苗木培育。",
+          "你选择了「承担团队伙食」。团队补给已到位，团队可以开展下一步工作。",
+          "前往 植物教学 / 园艺养护。",
+          "你在当地完成了「记录温室样本」，取得新的栽培笔记。",
+          "前往 林业教学 / 苗木培育。",
+          "艾琳·0ae2：记录和准备都齐了。谢谢你，请选择对自己有用的一份补给。",
+          "共同项目完成：青枝实践用品窗口开放，温室观察资料开始接受查阅。你获得了「野外实践补给」。",
+          "从新开放的用品窗口购买了 法师之花纤维。",
+          "艾琳·0ae2：感谢你参与。青枝实践用品窗口开放，温室观察资料开始接受查阅。"
+        ]
+      },
+      "passed": true,
+      "errors": []
+    }
+  ]
+}

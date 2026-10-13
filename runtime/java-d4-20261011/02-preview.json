@@ -1,0 +1,11 @@
+{
+  "tool": "city_d4_preview",
+  "args": {
+    "workflowRevision": 9,
+    "overview": true,
+    "contextId": "sha256:471a166e028911922613aa21925760cd4c6702ce08b25bfb3c717c9ad9e5ed33",
+    "runId": "provider_3d25631f_r19200",
+    "citySeedId": "city_jingchao_capital",
+    "baseDraftHash": "sha256:43c5463b6ade7ba74f18353814b5e2b71419adcce431af2c3bd8e9fe3c067161"
+  }
+}

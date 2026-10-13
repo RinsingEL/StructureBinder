@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.rinsing.realmfolk.model.LawTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-09-24T09:48:43" hostname="DEVICE" time="0.009">
+  <properties/>
+  <testcase name="realmPolicyChangesFineAndEscalationWithoutRepricingOldCases()" classname="com.rinsing.realmfolk.model.LawTest" time="0.005"/>
+  <testcase name="ReturningGoodsDoesNotEraseAssault()" classname="com.rinsing.realmfolk.model.LawTest" time="0.0"/>
+  <testcase name="ReportingOnePettyTheftDoesNotAuthorizeViolentPursuit()" classname="com.rinsing.realmfolk.model.LawTest" time="0.001"/>
+  <testcase name="firstMinorOffenseCanBeRemediedBeforeNationalReputationChanges()" classname="com.rinsing.realmfolk.model.LawTest" time="0.0"/>
+  <testcase name="KingdomsDoNotShareBounties()" classname="com.rinsing.realmfolk.model.LawTest" time="0.0"/>
+  <testcase name="severeAssaultCanImmediatelyTriggerGuards()" classname="com.rinsing.realmfolk.model.LawTest" time="0.0"/>
+  <testcase name="repeatedUnresolvedDamageEscalates()" classname="com.rinsing.realmfolk.model.LawTest" time="0.0"/>
+  <testcase name="ClosedTheftCannotBeReturnedTwice()" classname="com.rinsing.realmfolk.model.LawTest" time="0.0"/>
+  <testcase name="settlingDoesNotMagicallyRepairRelationships()" classname="com.rinsing.realmfolk.model.LawTest" time="0.0"/>
+  <testcase name="ReportIsIdempotentAndCannotReopenSettledCase()" classname="com.rinsing.realmfolk.model.LawTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

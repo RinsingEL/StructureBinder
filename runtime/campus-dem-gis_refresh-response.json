@@ -1,0 +1,8 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"ok\": true,\n  \"runId\": \"gis_mv16zf49_5b3c1b8d\",\n  \"status\": \"completed\",\n  \"sampleMode\": \"prior\",\n  \"cellStepBlocks\": 1,\n  \"dimensionId\": \"minecraft:overworld\",\n  \"centerBlockX\": -2928,\n  \"centerBlockZ\": 5392,\n  \"radiusChunks\": 32,\n  \"completedCells\": 262144,\n  \"totalCells\": 262144,\n  \"currentRing\": 22,\n  \"startedAt\": 1791564058953,\n  \"finishedAt\": 1791564437897,\n  \"errorMessage\": \"\",\n  \"runDirectory\": \"E:\\\\Mod_Dev\\\\StructureBinder\\\\run\\\\.\\\\gis_debug\\\\gis_mv16zf49_5b3c1b8d\",\n  \"dirtyRegions\": [\n    \"minecraft:overworld:step.1:r.-6.10\"\n  ],\n  \"region\": {\n    \"regionId\": \"minecraft:overworld:step.1:r.-6.10\",\n    \"dimensionId\": \"minecraft:overworld\",\n    \"regionX\": -6,\n    \"regionZ\": 10,\n    \"blockMinX\": -3072,\n    \"blockMinZ\": 5120,\n    \"sizeChunks\": 32,\n    \"cellStepBlocks\": 1,\n    \"cellsPerSide\": 512,\n    \"status\": \"ready\"\n  },\n  \"cellCounts\": {\n    \"pending\": 0,\n    \"sampled\": 0,\n    \"metricsSmall\": 0,\n    \"metricsLarge\": 0,\n    \"classified\": 0,\n    \"patched\": 262144,\n    \"edgeDirty\": 24000,\n    \"failed\": 0\n  },\n  \"landformCounts\": {\n    \"water\": 62823,\n    \"shore\": 9528,\n    \"plain\": 187043,\n    \"terrace\": 0,\n    \"slope\": 2487,\n    \"cliff\": 22,\n    \"ridge\": 0,\n    \"valley\": 58,\n    \"basin\": 0,\n    \"unknown\": 183\n  },\n  \"patchCounts\": {\n    \"total\": 274,\n    \"maxPatchCells\": 185868\n  },\n  \"artifacts\": {\n    \"progress\": \"progress.png\",\n    \"progressManifest\": \"progress_manifest.json\",\n    \"previewManifest\": \"preview/preview_manifest.json\"\n  }\n}"
+    }
+  ]
+}

@@ -1,0 +1,200 @@
+{
+  "seed": 20261010,
+  "greenery": true,
+  "terraceFeatures": true,
+  "foundationMarginBlocks": 8,
+  "terrainSource": "DEM_STEP_1",
+  "gapLandscape": true,
+  "gapSurface": "CONNECTION_TERRACE",
+  "smallGapMaxBlocks": 32,
+  "arrays": [
+    {
+      "arrayId": "services",
+      "function": "services",
+      "anchorBlock": {
+        "x": 0,
+        "z": 0
+      },
+      "algorithm": "COURTYARD",
+      "count": 4,
+      "rotation": 0,
+      "densityClass": "BALANCED",
+      "coreAssetId": "studio:eu-04-v01",
+      "requiredAssetIds": [
+        "studio:eu-18-v01",
+        "studio:eu-20-v01",
+        "studio:eu-05-v01"
+      ],
+      "layout": {
+        "gapBlocks": 10,
+        "courtWidth": 42,
+        "courtDepth": 36,
+        "faceInward": true,
+        "purpose": "交易与短时集散广场"
+      }
+    },
+    {
+      "arrayId": "hospitality",
+      "function": "hospitality",
+      "anchorBlock": {
+        "x": 0,
+        "z": 0
+      },
+      "algorithm": "LINEAR",
+      "count": 2,
+      "rotation": 0,
+      "densityClass": "BALANCED",
+      "coreAssetId": "studio:eu-06-v01",
+      "requiredAssetIds": [
+        "studio:eu-05-v01"
+      ],
+      "layout": {
+        "gapBlocks": 10,
+        "crossAlign": "END"
+      }
+    },
+    {
+      "arrayId": "guild",
+      "function": "guild",
+      "anchorBlock": {
+        "x": 0,
+        "z": 0
+      },
+      "algorithm": "LINEAR",
+      "count": 2,
+      "rotation": 0,
+      "densityClass": "BALANCED",
+      "coreAssetId": "studio:eu-15-v01",
+      "requiredAssetIds": [
+        "studio:eu-19-v01"
+      ],
+      "layout": {
+        "gapBlocks": 10,
+        "crossAlign": "END"
+      }
+    }
+  ],
+  "compositions": [
+    {
+      "compositionId": "east-street",
+      "memberIds": [
+        "guild",
+        "hospitality"
+      ],
+      "algorithm": "LINEAR",
+      "anchorBlock": {
+        "x": 0,
+        "z": 0
+      },
+      "directionDegrees": 90,
+      "layout": {
+        "gapBlocks": 18
+      }
+    },
+    {
+      "compositionId": "market-town",
+      "memberIds": [
+        "services",
+        "east-street"
+      ],
+      "algorithm": "LINEAR",
+      "anchorBlock": {
+        "x": -3128,
+        "z": 4932
+      },
+      "directionDegrees": 0,
+      "layout": {
+        "gapBlocks": 18,
+        "crossAlign": "CENTER"
+      }
+    }
+  ],
+  "districts": [
+    {
+      "districtId": "services",
+      "name": "集市商镇中心",
+      "coreMemberId": "services:1",
+      "arrayIds": [
+        "services"
+      ],
+      "platform": true
+    },
+    {
+      "districtId": "hospitality",
+      "name": "旅宿街",
+      "coreMemberId": "hospitality:1",
+      "arrayIds": [
+        "hospitality"
+      ],
+      "platform": true
+    },
+    {
+      "districtId": "guild",
+      "name": "行会与织造",
+      "coreMemberId": "guild:1",
+      "arrayIds": [
+        "guild"
+      ],
+      "platform": true
+    }
+  ],
+  "terraceGroups": [
+    {
+      "terraceId": "services-terrace",
+      "districtId": "services",
+      "coreMemberId": "services:1",
+      "arrayIds": [
+        "services"
+      ],
+      "styleRef": "local"
+    },
+    {
+      "terraceId": "hospitality-terrace",
+      "districtId": "hospitality",
+      "coreMemberId": "hospitality:1",
+      "arrayIds": [
+        "hospitality"
+      ],
+      "styleRef": "local"
+    },
+    {
+      "terraceId": "guild-terrace",
+      "districtId": "guild",
+      "coreMemberId": "guild:1",
+      "arrayIds": [
+        "guild"
+      ],
+      "styleRef": "local"
+    }
+  ],
+  "terraceStyles": [
+    {
+      "styleId": "local",
+      "postSpacing": 12,
+      "minimumExposure": 1,
+      "railBlock": "minecraft:spruce_fence",
+      "postBlock": "minecraft:stripped_spruce_log",
+      "capBlock": "minecraft:spruce_slab",
+      "materials": {
+        "ground": "minecraft:stone_bricks",
+        "retainingWall": "minecraft:cobblestone"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "to": "hospitality",
+      "from": "services"
+    },
+    {
+      "to": "guild",
+      "from": "services"
+    }
+  ],
+  "publicSpaces": [
+    {
+      "nodeId": "services",
+      "kind": "PLAZA"
+    }
+  ]
+}

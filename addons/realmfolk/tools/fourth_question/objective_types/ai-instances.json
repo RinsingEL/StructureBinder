@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "source": "本轮 AI 编写的两份实验样例；没有在线模型调用，人物和环境为实验设定。",
+  "variants": [
+    {
+      "id":"starfall", "name":"星落学院 · 夜行与观测", "intro":"这里的学者经常在夜间观测。出门之前，先学会照明、自保与应急处理，是学院的老习惯。",
+      "actors":[
+        {"id":"sel","role":"academy_mentor","name":"塞尔","job":"符文导师","place":"研习室","greeting":"我教的第一课是照顾好自己。出了学院的门，没人能替你翻开法术书。","thanks":"看来你已经有独自远行的底气了。这些材料带着，下次回来告诉我你看见了什么。"},
+        {"id":"tasha","role":"academy_librarian","name":"塔莎","job":"文库管理员","place":"文库","greeting":"昨晚的观测记录又堆满了桌子。学者不缺想法，倒总是缺纸。","thanks":"正好够抄下一批讲义。下次来查资料，找我就行。"},
+        {"id":"loren","role":"academy_watch","name":"洛恩","job":"守夜人","place":"学院门前","greeting":"我得守着大门。你若要出门，顺手清理两只僵尸，夜归的学徒就能安心些。","thanks":"今晚巡夜能轻松些了。给你留了面包，别空着肚子赶路。"}
+      ],
+      "quests":{
+        "academy:glyph_apprentice":{"type":"ars_school:basic_glyphs","title":"远行之前","text":"在光亮、伤害、治疗、冻结、生长中，掌握任意三种符文，再回来向我展示所学。","issuerRole":"academy_mentor","targets":["ars_nouveau:glyph_light","ars_nouveau:glyph_harm","ars_nouveau:glyph_heal","ars_nouveau:glyph_freeze","ars_nouveau:glyph_grow"],"count":3,"reward":"academy:arcane_study"},
+        "academy:copying":{"type":"common:material_delivery","title":"抄不完的观测笔记","text":"请带来四张纸。我会把它们分给负责整理观测记录的学徒。","issuerRole":"academy_librarian","targets":["minecraft:paper"],"count":4,"reward":"academy:supplies"},
+        "academy:patrol":{"type":"common:hostile_hunt","title":"替守夜人分忧","text":"接取后亲手击败两只僵尸，回来找我领取补给。","issuerRole":"academy_watch","targets":["minecraft:zombie"],"count":2,"reward":"academy:supplies"}
+      }
+    },
+    {
+      "id":"greenhand", "name":"青枝学院 · 温室与照料", "intro":"青枝的学徒先照料植物，再谈研究。导师认为，能让身边的人和作物好好生长，才算学会了有用的魔法。",
+      "actors":[
+        {"id":"mira","role":"academy_mentor","name":"弥拉","job":"温室导师","place":"温室廊下","greeting":"魔法能派上许多用场。在这里，我希望学徒先学会照料生命。","thanks":"生长与治疗，你都掌握了。以后到温室来，咱们可以聊聊你的发现。"},
+        {"id":"ilan","role":"academy_librarian","name":"伊兰","job":"标本记录员","place":"标本室","greeting":"每批种子都要留下记录。这些纸会跟着它们，直到第一茬收获。","thanks":"种子的来历终于能整理清楚了，谢谢。"},
+        {"id":"vera","role":"academy_watch","name":"薇拉","job":"学院巡守","place":"温室外门","greeting":"骨头架子的箭把玻璃打坏了。我在补窗，你替我处理一只骷髅吧。","thanks":"玻璃已经补好了，外面也清静了。拿点补给休息一下。"}
+      ],
+      "quests":{
+        "academy:glyph_apprentice":{"type":"ars_school:basic_glyphs","title":"让生命好好生长","text":"掌握生长和治疗两种符文，再回来找我。温室的基础课就从这里开始。","issuerRole":"academy_mentor","targets":["ars_nouveau:glyph_grow","ars_nouveau:glyph_heal"],"count":2,"reward":"academy:arcane_study"},
+        "academy:copying":{"type":"common:material_delivery","title":"种子也有自己的档案","text":"带来六张纸，用来整理这一季的种植记录。","issuerRole":"academy_librarian","targets":["minecraft:paper"],"count":6,"reward":"academy:supplies"},
+        "academy:patrol":{"type":"common:hostile_hunt","title":"修窗之前","text":"接取后亲手击败一只骷髅，再回来领取补给。","issuerRole":"academy_watch","targets":["minecraft:skeleton"],"count":1,"reward":"academy:supplies"}
+      }
+    }
+  ]
+}

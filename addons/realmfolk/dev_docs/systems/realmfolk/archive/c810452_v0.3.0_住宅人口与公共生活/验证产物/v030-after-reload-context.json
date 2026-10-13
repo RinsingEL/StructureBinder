@@ -1,0 +1,52 @@
+{
+  "cityPlanId": "city_realm_yajing_capital",
+  "revision": 4,
+  "realmId": "realm_yajing",
+  "publicLife": [
+    {
+      "id": "midday_market",
+      "name": "午间闲逛",
+      "start": 5000,
+      "end": 8500,
+      "scheduled": true,
+      "eligiblePeople": 32,
+      "selectedPeople": 12,
+      "places": 1,
+      "points": 32
+    },
+    {
+      "id": "evening_gathering",
+      "name": "傍晚小聚",
+      "start": 10000,
+      "end": 12000,
+      "scheduled": false,
+      "eligiblePeople": 20,
+      "selectedPeople": 0,
+      "places": 1,
+      "points": 32
+    }
+  ],
+  "realmRule": "default",
+  "summary": {
+    "town": "provider_b9332974d2d63a18_r8192:city_realm_yajing_capital",
+    "populationMode": "housing",
+    "occupancy": 0.85,
+    "target": 34,
+    "existing": 34,
+    "created": 0,
+    "housingBuildings": 10,
+    "housingSlots": 40,
+    "freeHousingSlots": 6,
+    "professions": {
+      "resident": 30,
+      "yajing_wayfarer": 4
+    },
+    "workplaceTerms": {
+      "住宅": 48,
+      "宗教": 4,
+      "房屋（用途未细分）": 40
+    },
+    "shortages": [],
+    "samples": []
+  }
+}

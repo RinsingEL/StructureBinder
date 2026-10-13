@@ -1,0 +1,72 @@
+[
+  {
+    "slug": "create",
+    "version": "mc1.20.1-6.0.8",
+    "id": "8amzvn9x",
+    "project_id": "LNytGWDc",
+    "url": "https://cdn.modrinth.com/data/LNytGWDc/versions/8amzvn9x/create-1.20.1-6.0.8.jar",
+    "filename": "create-1.20.1-6.0.8.jar",
+    "sha512": "5b51f5d31437d9bfbf221b67459abd87260d284874e1e23b7ed1d522b23a48059a3b1d2c1c541428da35dc6be15561b4f3c7f36aac6df3a0e8db6a278f6b0316",
+    "sha256": "6fbb910c367dbce8e4fc7e5bf64b6edd4de980906ed00af8e47e4af843c0d9b0"
+  },
+  {
+    "slug": "farmers-delight",
+    "version": "1.20.1-1.3.4",
+    "id": "SiIpcZzM",
+    "project_id": "R2OftAxM",
+    "url": "https://cdn.modrinth.com/data/R2OftAxM/versions/SiIpcZzM/FarmersDelight-1.20.1-1.3.4.jar",
+    "filename": "FarmersDelight-1.20.1-1.3.4.jar",
+    "sha512": "932ae0ab95fa0755bb5a79fbf1d1e31d0e86f3c0f5186796ed06973a3019a618ee8c66a4eae5b901909aed6232abb2bd3b1ff0e1905f74fc70644fada94a80b5",
+    "sha256": "34f03eb671ea1ca579b00c98e4541404cb96d1a292014aed9cc5eb45ad8afbce"
+  },
+  {
+    "slug": "ars-nouveau",
+    "version": "4.12.7",
+    "id": "Hw2aD01e",
+    "project_id": "TKB6INcv",
+    "url": "https://cdn.modrinth.com/data/TKB6INcv/versions/Hw2aD01e/ars_nouveau-1.20.1-4.12.7-all.jar",
+    "filename": "ars_nouveau-1.20.1-4.12.7-all.jar",
+    "sha512": "f3e3abf260fb3ef4c5b6b7324c055802135f82f4c550986f4e93b1a186c9b495cd8b6396ed89ab088b95e6176c0b9e290ccc69a528c521cd1bff19935ac36836",
+    "sha256": "1f1debc282a0c379c1141f2840ea294eede6f6b544c589663f40bbe17b59a1af"
+  },
+  {
+    "slug": "jei",
+    "version": "15.56.0.205",
+    "id": "9jqubC9n",
+    "project_id": "u6dRKJwZ",
+    "url": "https://cdn.modrinth.com/data/u6dRKJwZ/versions/9jqubC9n/jei-1.20.1-forge-15.56.0.205.jar",
+    "filename": "jei-1.20.1-forge-15.56.0.205.jar",
+    "sha512": "1306fe15c81d54aa9ff8f3d9f04812c0d61ffaaae433c29621f926db8f8e2c898669ccdd99e025849859d38b7a2eac170c466390b467f4dfa77542b5dbdd1678",
+    "sha256": "6b251e60a4719c874da89d750af97aa6498f6f4475e3ae79cb1288c7bf0cb65c"
+  },
+  {
+    "slug": "curios",
+    "version": "5.14.1+1.20.1",
+    "id": "IPQlZkz1",
+    "project_id": "vvuO3ImH",
+    "url": "https://cdn.modrinth.com/data/vvuO3ImH/versions/IPQlZkz1/curios-forge-5.14.1%2B1.20.1.jar",
+    "filename": "curios-forge-5.14.1+1.20.1.jar",
+    "sha512": "1373f95fd111c977db2f6adcef8e4eb486a2d926a3e17374692dee4ac3d65857de6446c16922b531aa5ace2c23c666a7fcc28c720b2917c1e04808d15648ba87",
+    "sha256": "1e817919a35b37cf30524aaec73f0ca5130452f23f168f844854df282eb8e51f"
+  },
+  {
+    "slug": "patchouli",
+    "version": "1.20.1-85-forge",
+    "id": "94dtOLgZ",
+    "project_id": "nU0bVIaL",
+    "url": "https://cdn.modrinth.com/data/nU0bVIaL/versions/94dtOLgZ/Patchouli-1.20.1-85-FORGE.jar",
+    "filename": "Patchouli-1.20.1-85-FORGE.jar",
+    "sha512": "15aedda4efcc553d5e3c83aa867b62554bc2fab298b43f55ed324e10507a3605f0ec2c59c01476e6d80b2a49275ef080142e43a6e663f9463b62f520960fc203",
+    "sha256": "05f7b5d52f6b8f0fd7f8b4822fa07a192d1394d83a264309c9d221d6d4fd21c5"
+  },
+  {
+    "slug": "geckolib",
+    "version": "4.8.4",
+    "id": "aC5KMoNg",
+    "project_id": "8BmcQJ2H",
+    "url": "https://cdn.modrinth.com/data/8BmcQJ2H/versions/aC5KMoNg/geckolib-forge-1.20.1-4.8.4.jar",
+    "filename": "geckolib-forge-1.20.1-4.8.4.jar",
+    "sha512": "443a321a293e3cb92fbbc3c97a38b179a45d1db703cd7bdb123270a9e04e7b7d67d5b06cd8e77a6d4d9139e033e901b9660cccf53ad5f9beaae6d06eae68febf",
+    "sha256": "4518779a31b6c2abb92c98b5ad17ef3d60177df68626bfc86c44de2764913c2b"
+  }
+]

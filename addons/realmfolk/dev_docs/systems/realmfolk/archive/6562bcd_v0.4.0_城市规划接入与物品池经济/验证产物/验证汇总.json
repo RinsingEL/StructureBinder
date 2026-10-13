@@ -1,0 +1,36 @@
+{
+  "sourceEntityTypes": {
+    "realmfolk:citizen": 51
+  },
+  "sourceCitizens": 51,
+  "testedCitizens": 60,
+  "preservedAllExistingIdentitiesHomesAndRoles": true,
+  "addedDemoCitizens": 9,
+  "balance": 449,
+  "planningReceipts": {
+    "provider_b9332974d2d63a18_r8192:city_realm_yukimi_capital": {
+      "taskRevision": "2ea79158cd98aa2ca0a1cce95b45f01771ddb2b7f19378c9884aeee1fd621d7f",
+      "draftId": "4a7bd9cd-c64b-4d85-b691-955486409afc",
+      "revision": 5
+    },
+    "provider_b9332974d2d63a18_r8192:city_realm_yajing_capital": {
+      "taskRevision": "4057ff22a73c0e9ade75b428eb2d0e99599feb58f6c22e9c399844767a91120e",
+      "draftId": "3d4b0bf0-2360-4ca6-a08b-0bc174dbd549",
+      "revision": 6
+    }
+  },
+  "sourceHasKeyPerson": [
+    {
+      "id": "mountain_guide",
+      "name": "岚川",
+      "profession": "yajing_wayfarer",
+      "bio": "我记得旧王朝留下的山道。准备好旅行时，再来找我。"
+    }
+  ],
+  "autoTests": {
+    "tests": 83,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+}

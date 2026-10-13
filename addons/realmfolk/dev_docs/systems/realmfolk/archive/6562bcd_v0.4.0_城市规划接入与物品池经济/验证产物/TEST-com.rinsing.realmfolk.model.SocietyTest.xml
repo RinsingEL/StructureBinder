@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.rinsing.realmfolk.model.SocietyTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-09-24T09:48:43" hostname="DEVICE" time="0.006">
+  <properties/>
+  <testcase name="InvalidBoundsAreRejected()" classname="com.rinsing.realmfolk.model.SocietyTest" time="0.001"/>
+  <testcase name="PlayersOwnOnlyTheirOwnDeed()" classname="com.rinsing.realmfolk.model.SocietyTest" time="0.0"/>
+  <testcase name="SmallerHouseOverridesPublicTownAreaAndChecksHeightAndDimension()" classname="com.rinsing.realmfolk.model.SocietyTest" time="0.004"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

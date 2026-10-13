@@ -1,0 +1,32 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.8/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :
+MixinGradle did not locate the diffplug APT plugin, skipping eclipse task configuration
+
+> Task :downloadMcpConfig
+> Task :extractSrg UP-TO-DATE
+> Task :createMcpToSrg UP-TO-DATE
+> Task :compileJava UP-TO-DATE
+
+> Task :bundleCountryDesignerMcp
+
+> country_designer_mcp@1.0.0 bundle
+> npm run build && esbuild dist/index.js --bundle --platform=node --format=esm --banner:js="import { createRequire } from 'module'; const require = createRequire(import.meta.url);" --outfile=dist/geomantia-mcp-bundle.mjs
+
+
+> country_designer_mcp@1.0.0 build
+> tsc
+
+
+> Task :processResources
+> Task :classes
+> Task :compileHarnessJava
+> Task :compileMapJava UP-TO-DATE
+> Task :harnessClasses
+> Task :processMapResources UP-TO-DATE
+> Task :mapClasses UP-TO-DATE
+> Task :compileTestJava
+
+BUILD SUCCESSFUL in 23s
+10 actionable tasks: 5 executed, 5 up-to-date

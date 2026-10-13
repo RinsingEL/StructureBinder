@@ -1,0 +1,29 @@
+{
+  "cityPlanId": "city_realm_yajing_capital",
+  "revision": 3,
+  "realmId": "realm_yajing",
+  "publicLife": [],
+  "realmRule": "default",
+  "summary": {
+    "town": "provider_b9332974d2d63a18_r8192:city_realm_yajing_capital",
+    "populationMode": "fixed",
+    "occupancy": 1.0,
+    "target": 14,
+    "existing": 14,
+    "created": 0,
+    "housingBuildings": 9,
+    "housingSlots": 36,
+    "freeHousingSlots": 22,
+    "professions": {
+      "resident": 10,
+      "yajing_wayfarer": 4
+    },
+    "workplaceTerms": {
+      "住宅": 44,
+      "宗教": 4,
+      "房屋（用途未细分）": 40
+    },
+    "shortages": [],
+    "samples": []
+  }
+}

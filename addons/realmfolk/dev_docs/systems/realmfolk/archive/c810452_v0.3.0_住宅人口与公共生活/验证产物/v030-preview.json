@@ -1,0 +1,73 @@
+{
+  "draftId": "3b43de56-c546-488e-ba09-68c909c7e80b",
+  "baseRevision": 3,
+  "scope": "refresh_unprotected",
+  "previewToken": "38dc6fb2f9ac85f68577d1c468b0ab80b4fbc3c6750b220442db29bda7c71940",
+  "refreshable": 12,
+  "protectedCitizens": 2,
+  "towns": [
+    {
+      "town": "provider_b9332974d2d63a18_r8192:city_realm_yajing_capital",
+      "populationMode": "housing",
+      "occupancy": 0.85,
+      "target": 34,
+      "existing": 14,
+      "created": 20,
+      "housingBuildings": 10,
+      "housingSlots": 40,
+      "freeHousingSlots": 26,
+      "professions": {
+        "resident": 30,
+        "yajing_wayfarer": 4
+      },
+      "workplaceTerms": {
+        "住宅": 48,
+        "宗教": 4,
+        "房屋（用途未细分）": 40
+      },
+      "shortages": [],
+      "samples": [
+        {
+          "name": "岩川·e8b0",
+          "profession": "居民",
+          "trait": "爽朗",
+          "home": "provider_b9332974d2d63a18_r8192:city_realm_yajing_capital:court_fill_002",
+          "workplace": "provider_b9332974d2d63a18_r8192:city_realm_yajing_capital:court_fill_002",
+          "keyPerson": false
+        },
+        {
+          "name": "青禾·3c52",
+          "profession": "居民",
+          "trait": "沉稳",
+          "home": "provider_b9332974d2d63a18_r8192:city_realm_yajing_capital:court_fill_002",
+          "workplace": "provider_b9332974d2d63a18_r8192:city_realm_yajing_capital:court_fill_002",
+          "keyPerson": false
+        },
+        {
+          "name": "松岚·9331",
+          "profession": "居民",
+          "trait": "沉稳",
+          "home": "provider_b9332974d2d63a18_r8192:city_realm_yajing_capital:court_fill_002",
+          "workplace": "provider_b9332974d2d63a18_r8192:city_realm_yajing_capital:court_fill_002",
+          "keyPerson": false
+        },
+        {
+          "name": "青禾·28a2",
+          "profession": "居民",
+          "trait": "沉稳",
+          "home": "provider_b9332974d2d63a18_r8192:city_realm_yajing_capital:court_fill_002",
+          "workplace": "provider_b9332974d2d63a18_r8192:city_realm_yajing_capital:court_fill_002",
+          "keyPerson": false
+        },
+        {
+          "name": "青禾·91df",
+          "profession": "居民",
+          "trait": "爽朗",
+          "home": "provider_b9332974d2d63a18_r8192:city_realm_yajing_capital:north_housing_fill_004",
+          "workplace": "provider_b9332974d2d63a18_r8192:city_realm_yajing_capital:north_housing_fill_004",
+          "keyPerson": false
+        }
+      ]
+    }
+  ]
+}

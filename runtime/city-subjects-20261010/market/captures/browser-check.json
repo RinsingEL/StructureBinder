@@ -1,0 +1,35 @@
+{
+  "summary": {
+    "buildings": 8,
+    "terraces": 3,
+    "roadSegments": 36,
+    "lamps": 32,
+    "wallBlocks": 737,
+    "fixtures": 0,
+    "terraceFeatureBlocks": 1167,
+    "blockCount": 392206,
+    "owners": 224
+  },
+  "telemetry": {
+    "ready": true,
+    "renderErrors": [],
+    "missingTextures": [],
+    "terrainContext": {
+      "waterQuads": 2250,
+      "landQuads": 1665,
+      "shoreQuads": 550,
+      "bounds": {
+        "minX": -3440,
+        "minZ": 4880,
+        "maxX": -2417,
+        "maxZ": 5903
+      },
+      "step": 16,
+      "waterSampleCount": 2214
+    },
+    "view": "overview",
+    "revision": 1,
+    "blockCount": 392206
+  },
+  "errors": []
+}

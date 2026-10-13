@@ -1,0 +1,47 @@
+{
+  "revision": 31,
+  "summary": {
+    "buildings": 23,
+    "terraces": 4,
+    "roadSegments": 76,
+    "lamps": 11,
+    "wallBlocks": 1377,
+    "fixtures": 14,
+    "terraceFeatureBlocks": 1661,
+    "blockCount": 651498,
+    "owners": 292
+  },
+  "choices": [
+    "食堂前共享广场 · 庭院 / 4 组",
+    "　食堂与生活服务 · 线性 / 3 栋",
+    "　安静阅读花园 · 庭院 / 4 栋",
+    "　teaching-support · 线性 / 2 组",
+    "　　普通教学组团 · 网格 / 4 栋",
+    "　　实验教学组团 · 网格 / 4 栋",
+    "　residential-group · 线性 / 2 组",
+    "　　集体住宿组团 · 网格 / 4 栋",
+    "　　小宿舍组团 · 网格 / 4 栋"
+  ],
+  "errors": [],
+  "telemetry": {
+    "ready": true,
+    "renderErrors": [],
+    "missingTextures": [],
+    "terrainContext": {
+      "waterQuads": 2275,
+      "landQuads": 1509,
+      "shoreQuads": 484,
+      "bounds": {
+        "minX": -3440,
+        "minZ": 4880,
+        "maxX": -2417,
+        "maxZ": 5903
+      },
+      "step": 16,
+      "waterSampleCount": 2214
+    },
+    "view": "overview",
+    "revision": 31,
+    "blockCount": 651498
+  }
+}

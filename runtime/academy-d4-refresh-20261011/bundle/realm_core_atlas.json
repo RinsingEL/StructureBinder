@@ -1,0 +1,250 @@
+{
+  "schema": "realm_core_atlas.v1",
+  "sources": {
+    "template_catalog.json": "d5201a26514615620e6f7cce7a3987d96aa89a854da349167672b4f7e7f91e5b",
+    "asset_names.json": "b89260e9975e093d1459cfa4fbdf0800a6a29291818702045cb1c228875aae24",
+    "StructureProfile.jsonl": "63b3d93b4893616bb331582c5ae430f9fa0d03968c3c63d2541d368c5a0b1cc1"
+  },
+  "cores": [
+    {
+      "templateRef": "studio:mg-01-v01",
+      "displayName": "星穹礼堂 · 飞扶壁与肋拱中殿",
+      "functionTerms": [
+        "教学",
+        "礼仪",
+        "集会"
+      ],
+      "styleTerms": [
+        "魔法学院新制"
+      ],
+      "rawSize": {
+        "width": 71,
+        "height": 72,
+        "depth": 83
+      },
+      "siteConditions": {
+        "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+      },
+      "page": 1,
+      "slot": 1
+    },
+    {
+      "templateRef": "studio:mg-02-v01",
+      "displayName": "八瓣藏书馆 · 双层环廊与采光穹顶",
+      "functionTerms": [
+        "书籍借阅",
+        "文献保管",
+        "阅读"
+      ],
+      "styleTerms": [
+        "魔法学院新制"
+      ],
+      "rawSize": {
+        "width": 61,
+        "height": 61,
+        "depth": 65
+      },
+      "siteConditions": {
+        "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+      },
+      "page": 1,
+      "slot": 2
+    },
+    {
+      "templateRef": "studio:mg-03-v01",
+      "displayName": "子午观星台 · 阶塔与开瓣星穹",
+      "functionTerms": [
+        "天象观测",
+        "研究"
+      ],
+      "styleTerms": [
+        "魔法学院新制"
+      ],
+      "rawSize": {
+        "width": 51,
+        "height": 64,
+        "depth": 55
+      },
+      "siteConditions": {
+        "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+      },
+      "page": 1,
+      "slot": 3
+    },
+    {
+      "templateRef": "studio:mg-04-v01",
+      "displayName": "三院炼金实验所 · 晶核中庭与玻璃长翼",
+      "functionTerms": [
+        "实验研究",
+        "药剂制作"
+      ],
+      "styleTerms": [
+        "魔法学院新制"
+      ],
+      "rawSize": {
+        "width": 73,
+        "height": 64,
+        "depth": 73
+      },
+      "siteConditions": {
+        "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+      },
+      "page": 1,
+      "slot": 4
+    },
+    {
+      "templateRef": "studio:mg-13-v01",
+      "displayName": "层台院务塔 · 四层议事与学籍廊",
+      "functionTerms": [
+        "公共办事",
+        "议事",
+        "文献保管"
+      ],
+      "styleTerms": [
+        "魔法学院新制"
+      ],
+      "rawSize": {
+        "width": 55,
+        "height": 68,
+        "depth": 59
+      },
+      "siteConditions": {
+        "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+      },
+      "page": 2,
+      "slot": 1
+    },
+    {
+      "templateRef": "studio:mg-14-v01",
+      "displayName": "三环传送厅 · 三进尖拱与校准侧廊",
+      "functionTerms": [
+        "出行登记",
+        "传送设施维护"
+      ],
+      "styleTerms": [
+        "魔法学院新制"
+      ],
+      "rawSize": {
+        "width": 61,
+        "height": 57,
+        "depth": 69
+      },
+      "siteConditions": {
+        "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+      },
+      "page": 2,
+      "slot": 2
+    },
+    {
+      "templateRef": "studio:mg-15-v01",
+      "displayName": "愈疗圣堂 · 十字病房与日照庭",
+      "functionTerms": [
+        "医疗",
+        "照料",
+        "休养"
+      ],
+      "styleTerms": [
+        "魔法学院新制"
+      ],
+      "rawSize": {
+        "width": 65,
+        "height": 55,
+        "depth": 71
+      },
+      "siteConditions": {
+        "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+      },
+      "page": 2,
+      "slot": 3
+    },
+    {
+      "templateRef": "studio:mg-16-v01",
+      "displayName": "四柱晶核工坊 · 张拱主架与检修庭",
+      "functionTerms": [
+        "魔法器材制作",
+        "能源设施维护"
+      ],
+      "styleTerms": [
+        "魔法学院新制"
+      ],
+      "rawSize": {
+        "width": 65,
+        "height": 65,
+        "depth": 65
+      },
+      "siteConditions": {
+        "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+      },
+      "page": 2,
+      "slot": 4
+    }
+  ],
+  "pages": [
+    {
+      "page": 1,
+      "file": "core_atlas/page-001.png",
+      "sha256": "6fadfd22038bfccfe190f4ae10b85f0f1d182f6659314ba15a341281313a2329",
+      "templateRefs": [
+        "studio:mg-01-v01",
+        "studio:mg-02-v01",
+        "studio:mg-03-v01",
+        "studio:mg-04-v01"
+      ]
+    },
+    {
+      "page": 2,
+      "file": "core_atlas/page-002.png",
+      "sha256": "6e15bd2a2d037fe6229d13fa5b2bbdf7bf6a3266aad414edf7d710bfe1774a64",
+      "templateRefs": [
+        "studio:mg-13-v01",
+        "studio:mg-14-v01",
+        "studio:mg-15-v01",
+        "studio:mg-16-v01"
+      ]
+    }
+  ],
+  "supportSummary": {
+    "templateCount": 18,
+    "coreCount": 8,
+    "functions": {
+      "书籍借阅": 1,
+      "书籍制作": 1,
+      "休养": 1,
+      "休憩": 1,
+      "传送设施维护": 1,
+      "公共办事": 1,
+      "出行登记": 1,
+      "医疗": 1,
+      "商品零售": 2,
+      "园艺养护": 2,
+      "天象观测": 1,
+      "学生住宿": 1,
+      "实验研究": 1,
+      "家庭居住": 1,
+      "教学": 1,
+      "文献保管": 2,
+      "文献抄写": 1,
+      "材料保管": 1,
+      "植物教学": 1,
+      "水景观赏": 1,
+      "照料": 1,
+      "研究": 2,
+      "礼仪": 1,
+      "能源设施维护": 1,
+      "自习": 1,
+      "花草观赏": 1,
+      "药剂制作": 2,
+      "议事": 1,
+      "货物仓储": 1,
+      "货物暂存": 1,
+      "阅读": 1,
+      "集会": 1,
+      "集体用餐": 1,
+      "餐饮": 1,
+      "魔法器材制作": 1
+    },
+    "styles": {
+      "魔法学院新制": 18
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "schema": "terrasense_structure_profile_source",
+  "sourceType": "structure_profile_jsonl",
+  "catalogMode": "official",
+  "profilePath": "StructureProfile.jsonl",
+  "vocabularySnapshotPath": "StructureVocabulary.snapshot.json",
+  "terrasenseRunId": "studio_test_20260924",
+  "allowDebugUnapproved": false,
+  "entrancePolicy": "legacy_catalog"
+}

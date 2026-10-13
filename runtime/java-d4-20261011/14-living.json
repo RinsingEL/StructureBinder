@@ -1,0 +1,102 @@
+{
+  "tool": "city_d4_district",
+  "args": {
+    "runId": "provider_3d25631f_r19200",
+    "citySeedId": "city_jingchao_capital",
+    "contextId": "sha256:471a166e028911922613aa21925760cd4c6702ce08b25bfb3c717c9ad9e5ed33",
+    "workflowRevision": 13,
+    "baseDraftHash": "sha256:8784e0071a53cb549b5bea7ba969fd07b29a1e997d08ced229f0f82532957d16",
+    "targetDistrictId": "living",
+    "districtDesign": {
+      "core": {
+        "groupId": "living",
+        "structureRef": "studio:mg-07-v01"
+      },
+      "groups": [
+        {
+          "groupId": "living",
+          "groupKind": "STRUCTURE",
+          "preferredPatchRefs": [
+            "minecraft:overworld:step.16:city.city_jingchao_capital:p.100"
+          ],
+          "preferredPatchZone": "EAST",
+          "role": "日常生活供应",
+          "priority": "STANDARD",
+          "structureCount": 6,
+          "extentClass": "LARGE",
+          "densityClass": "BALANCED",
+          "algorithmProfileRef": "algorithm:street_band",
+          "terrainPolicy": "BALANCED",
+          "requiredStructureRefs": [
+            "studio:mg-07-v01",
+            "studio:mg-05-v01",
+            "studio:mg-17-v01",
+            "studio:mg-18-v01",
+            "studio:mg-20-v01",
+            "studio:mg-15-v01"
+          ],
+          "fillPools": [
+            {
+              "poolRef": "pool:studio_245",
+              "weight": 1
+            }
+          ],
+          "compositionProfileRef": "composition:round_robin",
+          "attachedFeatures": [],
+          "targetAreaShare": 0.25,
+          "spaceComposition": {
+            "buildingShare": 0.65,
+            "landscapeShare": 0,
+            "openSpaceShare": 0.35
+          },
+          "expansionPolicy": {
+            "allowOutwardExpansion": true,
+            "allowRelationConnection": true,
+            "stopWhenTargetReached": true
+          },
+          "buildingGreeneryPolicy": {
+            "coverage": "SPARSE",
+            "patternPreference": "TEMPLATE_DEFAULT",
+            "densityPreference": "TEMPLATE_DEFAULT"
+          }
+        }
+      ],
+      "arrayCompositions": [],
+      "relations": [
+        {
+          "fromGroupId": "living",
+          "toGroupId": "teaching",
+          "relationKind": "CONNECTION",
+          "strength": "SOFT",
+          "distancePreference": "NONE",
+          "directionPreference": "NONE"
+        }
+      ],
+      "foundationGroupIds": [
+        "living"
+      ],
+      "landscapes": [],
+      "surfaceMaterials": {
+        "groups": {
+          "living": {
+            "ground": "minecraft:gravel",
+            "roadSurface": "minecraft:stone_brick_slab"
+          }
+        }
+      }
+    },
+    "designAnswers": [
+      {
+        "groupId": "living",
+        "roadConnected": true,
+        "foundation": true,
+        "ground": "minecraft:gravel",
+        "roadSurface": "minecraft:stone_brick_slab",
+        "styles": [
+          "魔法学院新制"
+        ]
+      }
+    ],
+    "assessment": "已查看整城图：北侧三栋藏书观测构成组团，中央教学及南侧研究配套保留；西侧接待四栋形成两层深度，与核心间仍有间隔。东侧生活增加医疗、药剂、家庭居住和仓储，连同餐厅宿舍构成完整生活服务区；之后修正中央植物教学冲突槽位。"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Error: CITY_DESIGN_QUEUE_CURRENT_NOT_ACCEPTING_D4: status=design_saved"
+    }
+  ],
+  "isError": true
+}

@@ -1,0 +1,220 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "ML-F02-v05",
+  "name": "谷田与独立备种屋",
+  "family": "ML-F02",
+  "civilization": "哥特",
+  "planning_role": "planning_role.fill",
+  "size": [
+    34,
+    24,
+    31
+  ],
+  "terrain": {
+    "选址": "日照充分、排水稳定且有灌溉供水的聚落园地；不因哥特风格限定生物群系。",
+    "高程": "基础底Y=0、常规地面Y=2、脚底Y=3；抬高或双层版本另记。",
+    "边界": "完整独立模板，保留外扶柱、檐口、采光和门外站位，不默认邻居补齐。",
+    "落地": "固定小园模板与完整封边；不冒充按自然地形延伸的 Landscape 大田。",
+    "生产": "原版粮菜与花材为静态成熟或展示状态；药材和葡萄不声称已接入专用生产机制。"
+  },
+  "rooms": [
+    {
+      "id": "fielda",
+      "name": "灌溉粮菜畦",
+      "min": [
+        20,
+        3,
+        5
+      ],
+      "max": [
+        27,
+        7,
+        12
+      ],
+      "purpose": "原版耕地与中央灌渠，边埂作业；设施：粮菜灌溉及采收"
+    },
+    {
+      "id": "fieldb",
+      "name": "灌溉粮菜畦",
+      "min": [
+        20,
+        3,
+        19
+      ],
+      "max": [
+        27,
+        7,
+        25
+      ],
+      "purpose": "原版耕地与中央灌渠，边埂作业；设施：粮菜灌溉及采收"
+    },
+    {
+      "id": "shed",
+      "name": "窄长备种工作屋",
+      "min": [
+        5,
+        3,
+        5
+      ],
+      "max": [
+        13,
+        7,
+        24
+      ],
+      "purpose": "粮种、手工具、去杂和称量分段布置；设施：封存谷种与周转粮袋、去杂、称量与分选、锄具和收割器具"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        17,
+        3,
+        2
+      ],
+      "name": "园地前入口"
+    },
+    {
+      "id": "seedentry",
+      "kind": "entrance",
+      "pos": [
+        9,
+        3,
+        3
+      ],
+      "name": "尖楣入户门"
+    },
+    {
+      "id": "seed",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        7
+      ],
+      "name": "封存谷种与周转粮袋",
+      "look_at": [
+        5,
+        4,
+        7
+      ],
+      "approach": [
+        5,
+        3,
+        8
+      ]
+    },
+    {
+      "id": "sort",
+      "kind": "work",
+      "pos": [
+        5,
+        3,
+        13
+      ],
+      "name": "去杂、称量与分选",
+      "look_at": [
+        5,
+        4,
+        13
+      ],
+      "approach": [
+        5,
+        3,
+        14
+      ]
+    },
+    {
+      "id": "tools",
+      "kind": "storage",
+      "pos": [
+        5,
+        3,
+        21
+      ],
+      "name": "锄具和收割器具",
+      "look_at": [
+        5,
+        4,
+        21
+      ],
+      "approach": [
+        5,
+        3,
+        22
+      ]
+    },
+    {
+      "id": "fielda",
+      "kind": "work",
+      "pos": [
+        20,
+        3,
+        5
+      ],
+      "name": "粮菜灌溉及采收",
+      "look_at": [
+        20,
+        4,
+        5
+      ],
+      "approach": [
+        19,
+        3,
+        5
+      ]
+    },
+    {
+      "id": "fieldb",
+      "kind": "work",
+      "pos": [
+        20,
+        3,
+        19
+      ],
+      "name": "粮菜灌溉及采收",
+      "look_at": [
+        20,
+        4,
+        19
+      ],
+      "approach": [
+        19,
+        3,
+        19
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "西侧为完整窄备种工作屋，东侧两块方畦分别种粮和根菜，横向中通路可以搬运收获到分选台。"
+  ],
+  "differences": [
+    "西侧为完整窄备种工作屋，东侧两块方畦分别种粮和根菜，横向中通路可以搬运收获到分选台。"
+  ],
+  "floors": [
+    {
+      "name": "生活作业层",
+      "y": 2,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/memorial_gardens.py:BUILDERS",
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 3,
+    "padding": 4,
+    "surface": "grass"
+  },
+  "nbt_sha256": "64e3c144e3cb4c63a59497f5ebc745d4554fc620a56996be5fca7dd4f115b1d7",
+  "function_terms": [
+    "农田种植"
+  ]
+}

@@ -1,0 +1,2 @@
+2026-10-09 16:58:27,471 main WARN Advanced terminal features are not available in this environment
+[16:58:27] [main/WARN] [co.ri.ge.sy.ci.ap.la.CityLandUseSurfacePrintPlanner/]: City road grade requires stair or reroute: city=city_jingchao_capital road=city_main_road_001::segment_003 reason=INSUFFICIENT_GRADE_LENGTH

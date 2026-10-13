@@ -1,0 +1,5 @@
+2026-10-09 23:16:06,392 main WARN Advanced terminal features are not available in this environment
+[23:16:06] [main/WARN] [co.ri.ge.sy.ci.ap.la.CityLandUseSurfacePrintPlanner/]: City road grade requires stair or reroute: city=city_jingchao_capital road=campus-center::public_space_5 reason=INSUFFICIENT_GRADE_LENGTH
+[23:16:06] [main/WARN] [co.ri.ge.sy.ci.ap.la.CityLandUseSurfacePrintPlanner/]: City road grade requires stair or reroute: city=city_jingchao_capital road=campus-center::public_space_7 reason=INSUFFICIENT_GRADE_LENGTH
+[23:16:06] [main/WARN] [co.ri.ge.sy.ci.ap.la.CityLandUseSurfacePrintPlanner/]: City road grade requires stair or reroute: city=city_jingchao_capital road=campus-center::public_space_9 reason=INSUFFICIENT_GRADE_LENGTH
+[23:16:06] [main/WARN] [co.ri.ge.sy.ci.ap.la.CityLandUseSurfacePrintPlanner/]: City road grade requires stair or reroute: city=city_jingchao_capital road=campus-center::public_space_12::detour_4 reason=INSUFFICIENT_GRADE_LENGTH

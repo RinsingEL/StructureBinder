@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "types": {
+    "common:material_delivery": {"adapter":"realmfolk:deliver_items","allowedTargets":["minecraft:paper","minecraft:iron_ingot"],"minCount":1,"maxCount":16,"rewardChoices":["academy:supplies"]},
+    "common:hostile_hunt": {"adapter":"realmfolk:kill_entities","allowedTargets":["minecraft:zombie","minecraft:skeleton"],"minCount":1,"maxCount":8,"rewardChoices":["academy:supplies"]},
+    "ars_school:basic_glyphs": {"adapter":"ars_nouveau:learn_glyphs","allowedTargets":["ars_nouveau:glyph_light","ars_nouveau:glyph_harm","ars_nouveau:glyph_heal","ars_nouveau:glyph_freeze","ars_nouveau:glyph_grow"],"minCount":1,"maxCount":5,"countExisting":true,"rewardChoices":["academy:arcane_study"]}
+  },
+  "rewards": {
+    "academy:supplies":{"items":{"minecraft:bread":2},"coins":16,"affection":3,"reputation":1},
+    "academy:arcane_study":{"items":{"minecraft:lapis_lazuli":4,"minecraft:paper":8},"coins":48,"affection":8,"reputation":3}
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "tool": "city_d4_district",
+  "args": {
+    "runId": "provider_3d25631f_r19200",
+    "citySeedId": "city_jingchao_capital",
+    "contextId": "sha256:471a166e028911922613aa21925760cd4c6702ce08b25bfb3c717c9ad9e5ed33",
+    "workflowRevision": 11,
+    "baseDraftHash": "sha256:a4f6e894a9f911ff29fbe17127ab72bfd52f95ecb6bebd3d51576803600557d6",
+    "targetDistrictId": "library",
+    "districtDesign": {
+      "core": {
+        "groupId": "library",
+        "structureRef": "studio:mg-02-v01"
+      },
+      "groups": [
+        {
+          "groupId": "library",
+          "groupKind": "STRUCTURE",
+          "preferredPatchRefs": [
+            "minecraft:overworld:step.16:city.city_jingchao_capital:p.100"
+          ],
+          "preferredPatchZone": "NORTH",
+          "role": "档案阅读",
+          "priority": "STANDARD",
+          "structureCount": 3,
+          "extentClass": "LARGE",
+          "densityClass": "BALANCED",
+          "algorithmProfileRef": "algorithm:street_band",
+          "terrainPolicy": "BALANCED",
+          "requiredStructureRefs": [
+            "studio:mg-02-v01",
+            "studio:mg-19-v01",
+            "studio:mg-03-v01"
+          ],
+          "fillPools": [
+            {
+              "poolRef": "pool:studio_241",
+              "weight": 1
+            }
+          ],
+          "compositionProfileRef": "composition:round_robin",
+          "attachedFeatures": [],
+          "targetAreaShare": 0.25,
+          "spaceComposition": {
+            "buildingShare": 0.65,
+            "landscapeShare": 0,
+            "openSpaceShare": 0.35
+          },
+          "expansionPolicy": {
+            "allowOutwardExpansion": true,
+            "allowRelationConnection": true,
+            "stopWhenTargetReached": true
+          },
+          "buildingGreeneryPolicy": {
+            "coverage": "SPARSE",
+            "patternPreference": "TEMPLATE_DEFAULT",
+            "densityPreference": "TEMPLATE_DEFAULT"
+          }
+        }
+      ],
+      "arrayCompositions": [],
+      "relations": [
+        {
+          "fromGroupId": "library",
+          "toGroupId": "teaching",
+          "relationKind": "CONNECTION",
+          "strength": "SOFT",
+          "distancePreference": "NONE",
+          "directionPreference": "NONE"
+        }
+      ],
+      "foundationGroupIds": [
+        "library"
+      ],
+      "landscapes": [],
+      "surfaceMaterials": {
+        "groups": {
+          "library": {
+            "ground": "minecraft:gravel",
+            "roadSurface": "minecraft:stone_brick_slab"
+          }
+        }
+      }
+    },
+    "designAnswers": [
+      {
+        "groupId": "library",
+        "roadConnected": true,
+        "foundation": true,
+        "ground": "minecraft:gravel",
+        "roadSurface": "minecraft:stone_brick_slab",
+        "styles": [
+          "魔法学院新制"
+        ]
+      }
+    ],
+    "assessment": "当前图中央教学主楼与南侧两栋研究配套已形成组团，东侧生活仍在，植物教学槽位与生活边界冲突被跳过。北侧藏书有两栋，沿北侧增加观测研究形成第三个节点，保留其他三区，后续再处理教学缺口。"
+  }
+}

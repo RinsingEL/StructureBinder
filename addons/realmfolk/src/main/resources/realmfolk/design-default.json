@@ -1,0 +1,349 @@
+{
+  "version": 2,
+  "professions": {
+    "resident": {
+      "name": "居民",
+      "appearance": "resident",
+      "bio": "今天过得怎么样？",
+      "capabilities": [
+        "conversation",
+        "witness",
+        "rumors",
+        "combat",
+        "commission",
+        "companion",
+        "public_life",
+        "gift"
+      ],
+      "workplaceTerms": [],
+      "commission": {
+        "emeralds": 4,
+        "item": "minecraft:oak_log",
+        "count": 6,
+        "affection": 6,
+        "reputation": 2
+      },
+      "stockSlots": 4
+    },
+    "farmer": {
+      "name": "农夫",
+      "appearance": "farmer",
+      "bio": "今天过得怎么样？",
+      "capabilities": [
+        "conversation",
+        "witness",
+        "rumors",
+        "combat",
+        "commission",
+        "companion",
+        "public_life",
+        "gift"
+      ],
+      "workplaceTerms": [
+        "农业",
+        "农田",
+        "农场",
+        "farm"
+      ],
+      "commission": {
+        "emeralds": 4,
+        "item": "minecraft:wheat",
+        "count": 8,
+        "affection": 6,
+        "reputation": 2
+      },
+      "stockSlots": 4
+    },
+    "smith": {
+      "name": "铁匠",
+      "appearance": "smith",
+      "bio": "今天过得怎么样？",
+      "capabilities": [
+        "conversation",
+        "witness",
+        "rumors",
+        "combat",
+        "commission",
+        "companion",
+        "trade",
+        "public_life",
+        "gift",
+        "buyback"
+      ],
+      "workplaceTerms": [
+        "铁匠铺",
+        "工坊生产",
+        "smithy"
+      ],
+      "commission": {
+        "emeralds": 4,
+        "item": "minecraft:iron_ingot",
+        "count": 3,
+        "affection": 6,
+        "reputation": 2
+      },
+      "offers": [
+        {
+          "emeralds": 1,
+          "item": "minecraft:bread",
+          "count": 4
+        }
+      ],
+      "stockSlots": 18
+    },
+    "ranger": {
+      "name": "游侠",
+      "appearance": "ranger",
+      "bio": "今天过得怎么样？",
+      "capabilities": [
+        "conversation",
+        "witness",
+        "rumors",
+        "combat",
+        "commission",
+        "companion",
+        "public_life",
+        "gift"
+      ],
+      "workplaceTerms": [
+        "猎人小屋"
+      ],
+      "commission": {
+        "emeralds": 4,
+        "item": "minecraft:bread",
+        "count": 3,
+        "affection": 6,
+        "reputation": 2
+      },
+      "equipment": "minecraft:iron_sword",
+      "stockSlots": 4
+    },
+    "guard": {
+      "name": "警卫",
+      "appearance": "guard",
+      "bio": "今天过得怎么样？",
+      "capabilities": [
+        "conversation",
+        "witness",
+        "rumors",
+        "combat",
+        "patrol",
+        "law_enforcement",
+        "gift"
+      ],
+      "workplaceTerms": [
+        "军事防御",
+        "防御",
+        "兵营",
+        "守卫塔",
+        "barracks"
+      ],
+      "commission": {
+        "emeralds": 4,
+        "item": "minecraft:oak_log",
+        "count": 6,
+        "affection": 6,
+        "reputation": 2
+      },
+      "equipment": "minecraft:iron_sword",
+      "stockSlots": 4
+    },
+    "merchant": {
+      "name": "行商",
+      "appearance": "merchant",
+      "bio": "今天过得怎么样？",
+      "capabilities": [
+        "conversation",
+        "witness",
+        "rumors",
+        "combat",
+        "commission",
+        "trade",
+        "travel",
+        "public_life",
+        "gift",
+        "buyback"
+      ],
+      "workplaceTerms": [
+        "商业",
+        "市场",
+        "商店",
+        "market"
+      ],
+      "commission": {
+        "emeralds": 4,
+        "item": "minecraft:oak_log",
+        "count": 6,
+        "affection": 6,
+        "reputation": 2
+      },
+      "offers": [
+        {
+          "emeralds": 1,
+          "item": "minecraft:bread",
+          "count": 4
+        }
+      ],
+      "stockSlots": 18
+    },
+    "mayor": {
+      "name": "领事",
+      "appearance": "mayor",
+      "bio": "今天过得怎么样？",
+      "capabilities": [
+        "conversation",
+        "witness",
+        "rumors",
+        "combat",
+        "commission",
+        "land_office",
+        "public_life",
+        "gift"
+      ],
+      "workplaceTerms": [
+        "行政",
+        "市政厅",
+        "administration"
+      ],
+      "commission": {
+        "emeralds": 4,
+        "item": "minecraft:oak_log",
+        "count": 6,
+        "affection": 6,
+        "reputation": 2
+      },
+      "stockSlots": 4
+    }
+  },
+  "realms": {
+    "default": {
+      "law": {
+        "guardRadius": 28,
+        "chaseRadius": 64,
+        "witnessRadius": 18,
+        "repeatedOffenses": 3,
+        "damageFine": 2,
+        "reportDelay": 600,
+        "theftUnit": 1,
+        "murderFine": 32,
+        "loseSightTicks": 200,
+        "trespassGrace": 200,
+        "trespassFine": 1,
+        "assaultFine": 12
+      },
+      "population": {
+        "workplaceCapacity": 4,
+        "population": 64,
+        "names": [
+          "艾琳",
+          "罗文",
+          "米拉",
+          "阿德",
+          "莉亚",
+          "诺尔",
+          "塞拉",
+          "伊文",
+          "莫林",
+          "塔拉",
+          "奥伦",
+          "菲恩"
+        ],
+        "saleHouseEvery": 5,
+        "housePrice": 32,
+        "traits": {
+          "热心": 3,
+          "好奇": 2,
+          "沉稳": 2,
+          "谨慎": 3
+        },
+        "jobs": {
+          "resident": {
+            "weight": 5,
+            "max": 256,
+            "min": 0
+          },
+          "farmer": {
+            "weight": 3,
+            "max": 32,
+            "min": 0
+          },
+          "smith": {
+            "weight": 1,
+            "max": 8,
+            "min": 0
+          },
+          "ranger": {
+            "weight": 1,
+            "max": 8,
+            "min": 0
+          },
+          "guard": {
+            "weight": 1,
+            "max": 12,
+            "min": 1
+          },
+          "merchant": {
+            "weight": 1,
+            "max": 8,
+            "min": 1
+          },
+          "mayor": {
+            "weight": 0,
+            "max": 1,
+            "min": 1
+          }
+        },
+        "residentsPerHouse": 2,
+        "housingTerms": [
+          "住宅",
+          "民居",
+          "住宿",
+          "residential",
+          "housing"
+        ],
+        "populationMode": "housing",
+        "housingOccupancy": 0.85,
+        "activities": [
+          {
+            "id": "midday_market",
+            "name": "午间闲逛",
+            "start": 5000,
+            "end": 8500,
+            "participation": 0.6,
+            "capacity": 12,
+            "maxDistance": 128,
+            "placeTerms": [
+              "市场",
+              "商业",
+              "公共空间",
+              "广场",
+              "宗教"
+            ]
+          },
+          {
+            "id": "evening_gathering",
+            "name": "傍晚小聚",
+            "start": 10000,
+            "end": 12000,
+            "participation": 0.4,
+            "capacity": 8,
+            "maxDistance": 96,
+            "placeTerms": [
+              "酒馆",
+              "餐饮",
+              "公共空间",
+              "广场",
+              "宗教"
+            ]
+          }
+        ]
+      },
+      "name": "通用文化"
+    }
+  },
+  "realmBindings": {},
+  "cityTemplates": {
+    "default": {}
+  },
+  "cities": {}
+}

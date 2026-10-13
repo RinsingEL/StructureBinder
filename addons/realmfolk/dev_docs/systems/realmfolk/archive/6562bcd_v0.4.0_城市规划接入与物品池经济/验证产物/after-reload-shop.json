@@ -1,0 +1,223 @@
+{
+  "entity": 1048,
+  "token": "156f9140-4636-4049-860d-f8a3b738995f",
+  "revision": 5,
+  "name": "艾琳",
+  "town": "溪桥镇",
+  "currency": "通币",
+  "balance": 448,
+  "affection": 6,
+  "stock": [
+    {
+      "index": 0,
+      "item": "minecraft:bread",
+      "tier": "basic",
+      "count": 20,
+      "price": 6,
+      "gift": true,
+      "chance": 34,
+      "baseChance": 30.0
+    },
+    {
+      "index": 1,
+      "item": "minecraft:carrot",
+      "tier": "basic",
+      "count": 43,
+      "price": 3,
+      "gift": true,
+      "chance": 34,
+      "baseChance": 30.0
+    },
+    {
+      "index": 2,
+      "item": "minecraft:coal",
+      "tier": "basic",
+      "count": 23,
+      "price": 8,
+      "gift": true,
+      "chance": 34,
+      "baseChance": 30.0
+    },
+    {
+      "index": 3,
+      "item": "minecraft:cobblestone",
+      "tier": "basic",
+      "count": 113,
+      "price": 2,
+      "gift": true,
+      "chance": 34,
+      "baseChance": 30.0
+    },
+    {
+      "index": 4,
+      "item": "minecraft:dirt",
+      "tier": "basic",
+      "count": 85,
+      "price": 2,
+      "gift": true,
+      "chance": 34,
+      "baseChance": 30.0
+    },
+    {
+      "index": 5,
+      "item": "minecraft:glass",
+      "tier": "basic",
+      "count": 29,
+      "price": 4,
+      "gift": true,
+      "chance": 34,
+      "baseChance": 30.0
+    },
+    {
+      "index": 6,
+      "item": "minecraft:oak_log",
+      "tier": "basic",
+      "count": 53,
+      "price": 4,
+      "gift": true,
+      "chance": 34,
+      "baseChance": 30.0
+    },
+    {
+      "index": 7,
+      "item": "minecraft:raw_iron",
+      "tier": "basic",
+      "count": 10,
+      "price": 16,
+      "gift": true,
+      "chance": 34,
+      "baseChance": 30.0
+    },
+    {
+      "index": 8,
+      "item": "minecraft:wheat",
+      "tier": "basic",
+      "count": 33,
+      "price": 4,
+      "gift": true,
+      "chance": 34,
+      "baseChance": 30.0
+    },
+    {
+      "index": 9,
+      "item": "minecraft:sand",
+      "tier": "basic",
+      "count": 60,
+      "price": 2,
+      "gift": true,
+      "chance": 34,
+      "baseChance": 30.0
+    },
+    {
+      "index": 10,
+      "item": "minecraft:arrow",
+      "tier": "basic",
+      "count": 26,
+      "price": 4,
+      "gift": true,
+      "chance": 34,
+      "baseChance": 30.0
+    },
+    {
+      "index": 11,
+      "item": "minecraft:spruce_log",
+      "tier": "basic",
+      "count": 46,
+      "price": 4,
+      "gift": true,
+      "chance": 34,
+      "baseChance": 30.0
+    },
+    {
+      "index": 12,
+      "item": "minecraft:apple",
+      "tier": "basic",
+      "count": 13,
+      "price": 4,
+      "gift": true,
+      "chance": 34,
+      "baseChance": 30.0
+    },
+    {
+      "index": 13,
+      "item": "minecraft:iron_sword",
+      "tier": "rare",
+      "count": 1,
+      "price": 96,
+      "gift": true,
+      "chance": 11,
+      "baseChance": 10.0
+    },
+    {
+      "index": 14,
+      "item": "minecraft:iron_ingot",
+      "tier": "basic",
+      "count": 10,
+      "price": 24,
+      "gift": true,
+      "chance": 34,
+      "baseChance": 30.0
+    },
+    {
+      "index": 15,
+      "item": "minecraft:emerald",
+      "tier": "basic",
+      "count": 4,
+      "price": 24,
+      "gift": true,
+      "chance": 34,
+      "baseChance": 30.0
+    },
+    {
+      "index": 16,
+      "item": "minecraft:torch",
+      "tier": "basic",
+      "count": 53,
+      "price": 3,
+      "gift": true,
+      "chance": 34,
+      "baseChance": 30.0
+    },
+    {
+      "index": 17,
+      "item": "minecraft:pumpkin",
+      "tier": "basic",
+      "count": 12,
+      "price": 6,
+      "gift": true,
+      "chance": 34,
+      "baseChance": 30.0
+    }
+  ],
+  "sales": [
+    {
+      "item": "minecraft:bread",
+      "count": 8,
+      "price": 2
+    },
+    {
+      "item": "minecraft:dirt",
+      "count": 32,
+      "price": 1
+    },
+    {
+      "item": "minecraft:emerald",
+      "count": 35,
+      "price": 16
+    },
+    {
+      "item": "minecraft:oak_log",
+      "count": 12,
+      "price": 2
+    }
+  ],
+  "restockIn": 19888,
+  "requestIn": 10663,
+  "buybackBudget": 3648,
+  "giftBudget": 48,
+  "trade": true,
+  "buyback": true,
+  "gift": true,
+  "affectionFactor": 0.025,
+  "feedback": ""
+}

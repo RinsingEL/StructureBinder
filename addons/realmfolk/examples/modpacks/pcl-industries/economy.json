@@ -1,0 +1,1790 @@
+{
+  "version": 1,
+  "restockTicks": 24000,
+  "requestCooldownTicks": 12000,
+  "buybackBudget": 4096,
+  "giftBudget": 48,
+  "currency": "通币",
+  "legacyUnit": 16,
+  "affectionFactor": 0.025,
+  "tiers": {
+    "basic": {
+      "name": "基础",
+      "giftChance": 30.0
+    },
+    "rare": {
+      "name": "稀有",
+      "giftChance": 10.0
+    },
+    "epic": {
+      "name": "史诗",
+      "giftChance": 2.0
+    }
+  },
+  "priceBands": {
+    "standard": {
+      "sell": 1.0,
+      "buy": 1.0
+    },
+    "producer": {
+      "sell": 0.75,
+      "buy": 0.8
+    },
+    "importer": {
+      "sell": 1.35,
+      "buy": 1.4
+    }
+  },
+  "goods": {
+    "minecraft:oak_log": {
+      "tier": "basic",
+      "price": 4,
+      "buyback": 2,
+      "gift": true
+    },
+    "minecraft:cobblestone": {
+      "tier": "basic",
+      "price": 2,
+      "buyback": 1,
+      "gift": true
+    },
+    "minecraft:dirt": {
+      "tier": "basic",
+      "price": 2,
+      "buyback": 1,
+      "gift": true
+    },
+    "minecraft:glass": {
+      "tier": "basic",
+      "price": 4,
+      "buyback": 1,
+      "gift": true
+    },
+    "minecraft:sand": {
+      "tier": "basic",
+      "price": 2,
+      "buyback": 1,
+      "gift": true
+    },
+    "minecraft:bricks": {
+      "tier": "basic",
+      "price": 6,
+      "buyback": 2,
+      "gift": true
+    },
+    "minecraft:stone": {
+      "tier": "basic",
+      "price": 3,
+      "buyback": 1,
+      "gift": true
+    },
+    "minecraft:spruce_log": {
+      "tier": "basic",
+      "price": 4,
+      "buyback": 2,
+      "gift": true
+    },
+    "minecraft:wheat": {
+      "tier": "basic",
+      "price": 4,
+      "buyback": 2,
+      "gift": true
+    },
+    "minecraft:carrot": {
+      "tier": "basic",
+      "price": 3,
+      "buyback": 1,
+      "gift": true
+    },
+    "minecraft:potato": {
+      "tier": "basic",
+      "price": 3,
+      "buyback": 1,
+      "gift": true
+    },
+    "minecraft:bread": {
+      "tier": "basic",
+      "price": 6,
+      "buyback": 2,
+      "gift": true
+    },
+    "minecraft:apple": {
+      "tier": "basic",
+      "price": 4,
+      "buyback": 1,
+      "gift": true
+    },
+    "minecraft:beetroot": {
+      "tier": "basic",
+      "price": 3,
+      "buyback": 1,
+      "gift": true
+    },
+    "minecraft:pumpkin": {
+      "tier": "basic",
+      "price": 6,
+      "buyback": 3,
+      "gift": true
+    },
+    "minecraft:melon_slice": {
+      "tier": "basic",
+      "price": 2,
+      "buyback": 1,
+      "gift": true
+    },
+    "minecraft:coal": {
+      "tier": "basic",
+      "price": 8,
+      "buyback": 4,
+      "gift": true
+    },
+    "minecraft:raw_iron": {
+      "tier": "basic",
+      "price": 16,
+      "buyback": 10,
+      "gift": true
+    },
+    "minecraft:iron_ingot": {
+      "tier": "basic",
+      "price": 24,
+      "buyback": 12,
+      "gift": true
+    },
+    "minecraft:copper_ingot": {
+      "tier": "basic",
+      "price": 8,
+      "buyback": 3,
+      "gift": true
+    },
+    "minecraft:redstone": {
+      "tier": "basic",
+      "price": 8,
+      "buyback": 4,
+      "gift": true
+    },
+    "minecraft:gold_ingot": {
+      "tier": "rare",
+      "price": 48,
+      "buyback": 24,
+      "gift": true
+    },
+    "minecraft:diamond": {
+      "tier": "rare",
+      "price": 120,
+      "buyback": 72,
+      "gift": true
+    },
+    "minecraft:emerald": {
+      "tier": "basic",
+      "price": 24,
+      "buyback": 16,
+      "gift": true
+    },
+    "minecraft:torch": {
+      "tier": "basic",
+      "price": 3,
+      "buyback": 1,
+      "gift": true
+    },
+    "minecraft:arrow": {
+      "tier": "basic",
+      "price": 4,
+      "buyback": 1,
+      "gift": true
+    },
+    "minecraft:leather": {
+      "tier": "basic",
+      "price": 12,
+      "buyback": 6,
+      "gift": true
+    },
+    "minecraft:iron_sword": {
+      "tier": "rare",
+      "price": 96,
+      "buyback": 32,
+      "gift": true
+    },
+    "minecraft:golden_apple": {
+      "tier": "epic",
+      "price": 160,
+      "buyback": 60,
+      "gift": true
+    },
+    "minecraft:ender_pearl": {
+      "tier": "rare",
+      "price": 100,
+      "buyback": 40,
+      "gift": true
+    },
+    "farmersdelight:tomato": {
+      "tier": "basic",
+      "price": 4,
+      "buyback": 2,
+      "gift": true
+    },
+    "farmersdelight:cabbage": {
+      "tier": "basic",
+      "price": 5,
+      "buyback": 2,
+      "gift": true
+    },
+    "farmersdelight:onion": {
+      "tier": "basic",
+      "price": 4,
+      "buyback": 2,
+      "gift": true
+    },
+    "farmersdelight:rice": {
+      "tier": "basic",
+      "price": 4,
+      "buyback": 2,
+      "gift": true
+    },
+    "farmersdelight:tomato_seeds": {
+      "tier": "basic",
+      "price": 3,
+      "buyback": 1,
+      "gift": true
+    },
+    "farmersdelight:cabbage_seeds": {
+      "tier": "basic",
+      "price": 3,
+      "buyback": 1,
+      "gift": true
+    },
+    "farmersdelight:rice_panicle": {
+      "tier": "basic",
+      "price": 5,
+      "buyback": 2,
+      "gift": true
+    },
+    "farmersdelight:straw": {
+      "tier": "basic",
+      "price": 3,
+      "buyback": 1,
+      "gift": true
+    },
+    "farmersdelight:organic_compost": {
+      "tier": "basic",
+      "price": 16,
+      "buyback": 6,
+      "gift": true
+    },
+    "farmersdelight:rich_soil": {
+      "tier": "rare",
+      "price": 24,
+      "buyback": 10,
+      "gift": true
+    },
+    "farmersdelight:wheat_dough": {
+      "tier": "basic",
+      "price": 8,
+      "buyback": 3,
+      "gift": true
+    },
+    "farmersdelight:raw_pasta": {
+      "tier": "basic",
+      "price": 10,
+      "buyback": 4,
+      "gift": true
+    },
+    "farmersdelight:mixed_salad": {
+      "tier": "basic",
+      "price": 14,
+      "buyback": 6,
+      "gift": true
+    },
+    "farmersdelight:vegetable_soup": {
+      "tier": "basic",
+      "price": 20,
+      "buyback": 8,
+      "gift": true
+    },
+    "farmersdelight:cooked_rice": {
+      "tier": "basic",
+      "price": 10,
+      "buyback": 4,
+      "gift": true
+    },
+    "farmersdelight:fried_rice": {
+      "tier": "basic",
+      "price": 24,
+      "buyback": 10,
+      "gift": true
+    },
+    "farmersdelight:chicken_sandwich": {
+      "tier": "basic",
+      "price": 24,
+      "buyback": 10,
+      "gift": true
+    },
+    "farmersdelight:beef_stew": {
+      "tier": "basic",
+      "price": 28,
+      "buyback": 12,
+      "gift": true
+    },
+    "farmersdelight:apple_pie": {
+      "tier": "rare",
+      "price": 48,
+      "buyback": 20,
+      "gift": true
+    },
+    "farmersdelight:honey_cookie": {
+      "tier": "basic",
+      "price": 6,
+      "buyback": 2,
+      "gift": true
+    },
+    "farmersdelight:cooking_pot": {
+      "tier": "rare",
+      "price": 160,
+      "buyback": 48,
+      "gift": false
+    },
+    "farmersdelight:cutting_board": {
+      "tier": "basic",
+      "price": 20,
+      "buyback": 6,
+      "gift": true
+    },
+    "farmersdelight:stove": {
+      "tier": "rare",
+      "price": 144,
+      "buyback": 48,
+      "gift": false
+    },
+    "farmersdelight:rope": {
+      "tier": "basic",
+      "price": 4,
+      "buyback": 1,
+      "gift": true
+    },
+    "farmersdelight:canvas": {
+      "tier": "basic",
+      "price": 12,
+      "buyback": 4,
+      "gift": true
+    },
+    "farmersdelight:oak_cabinet": {
+      "tier": "basic",
+      "price": 32,
+      "buyback": 12,
+      "gift": true
+    },
+    "create:andesite_alloy": {
+      "tier": "basic",
+      "price": 12,
+      "buyback": 5,
+      "gift": true
+    },
+    "create:shaft": {
+      "tier": "basic",
+      "price": 3,
+      "buyback": 1,
+      "gift": true
+    },
+    "create:cogwheel": {
+      "tier": "basic",
+      "price": 8,
+      "buyback": 3,
+      "gift": true
+    },
+    "create:large_cogwheel": {
+      "tier": "basic",
+      "price": 12,
+      "buyback": 5,
+      "gift": true
+    },
+    "create:belt_connector": {
+      "tier": "basic",
+      "price": 24,
+      "buyback": 8,
+      "gift": true
+    },
+    "create:iron_sheet": {
+      "tier": "basic",
+      "price": 32,
+      "buyback": 12,
+      "gift": true
+    },
+    "create:copper_sheet": {
+      "tier": "basic",
+      "price": 12,
+      "buyback": 4,
+      "gift": true
+    },
+    "create:golden_sheet": {
+      "tier": "rare",
+      "price": 56,
+      "buyback": 20,
+      "gift": true
+    },
+    "create:zinc_ingot": {
+      "tier": "basic",
+      "price": 16,
+      "buyback": 6,
+      "gift": true
+    },
+    "create:brass_ingot": {
+      "tier": "basic",
+      "price": 24,
+      "buyback": 10,
+      "gift": true
+    },
+    "create:brass_sheet": {
+      "tier": "basic",
+      "price": 32,
+      "buyback": 12,
+      "gift": true
+    },
+    "create:precision_mechanism": {
+      "tier": "rare",
+      "price": 160,
+      "buyback": 64,
+      "gift": false
+    },
+    "create:andesite_casing": {
+      "tier": "basic",
+      "price": 20,
+      "buyback": 8,
+      "gift": true
+    },
+    "create:gearbox": {
+      "tier": "basic",
+      "price": 48,
+      "buyback": 18,
+      "gift": true
+    },
+    "create:water_wheel": {
+      "tier": "basic",
+      "price": 48,
+      "buyback": 16,
+      "gift": true
+    },
+    "create:millstone": {
+      "tier": "rare",
+      "price": 96,
+      "buyback": 32,
+      "gift": false
+    },
+    "create:mechanical_press": {
+      "tier": "rare",
+      "price": 160,
+      "buyback": 56,
+      "gift": false
+    },
+    "create:mechanical_mixer": {
+      "tier": "rare",
+      "price": 192,
+      "buyback": 64,
+      "gift": false
+    },
+    "create:mechanical_harvester": {
+      "tier": "epic",
+      "price": 256,
+      "buyback": 80,
+      "gift": false
+    },
+    "ars_nouveau:source_gem": {
+      "tier": "basic",
+      "price": 20,
+      "buyback": 8,
+      "gift": true
+    },
+    "ars_nouveau:sourceberry_bush": {
+      "tier": "basic",
+      "price": 5,
+      "buyback": 2,
+      "gift": true
+    },
+    "ars_nouveau:magebloom": {
+      "tier": "basic",
+      "price": 12,
+      "buyback": 5,
+      "gift": true
+    },
+    "ars_nouveau:magebloom_fiber": {
+      "tier": "basic",
+      "price": 16,
+      "buyback": 6,
+      "gift": true
+    },
+    "ars_nouveau:air_essence": {
+      "tier": "rare",
+      "price": 48,
+      "buyback": 18,
+      "gift": true
+    },
+    "ars_nouveau:earth_essence": {
+      "tier": "rare",
+      "price": 48,
+      "buyback": 18,
+      "gift": true
+    },
+    "ars_nouveau:fire_essence": {
+      "tier": "rare",
+      "price": 48,
+      "buyback": 18,
+      "gift": true
+    },
+    "ars_nouveau:water_essence": {
+      "tier": "rare",
+      "price": 48,
+      "buyback": 18,
+      "gift": true
+    },
+    "ars_nouveau:wilden_horn": {
+      "tier": "rare",
+      "price": 32,
+      "buyback": 12,
+      "gift": true
+    },
+    "ars_nouveau:wilden_spike": {
+      "tier": "rare",
+      "price": 32,
+      "buyback": 12,
+      "gift": true
+    },
+    "ars_nouveau:wilden_wing": {
+      "tier": "rare",
+      "price": 32,
+      "buyback": 12,
+      "gift": true
+    },
+    "ars_nouveau:blank_parchment": {
+      "tier": "basic",
+      "price": 12,
+      "buyback": 4,
+      "gift": true
+    },
+    "ars_nouveau:sourcestone": {
+      "tier": "basic",
+      "price": 4,
+      "buyback": 1,
+      "gift": true
+    },
+    "ars_nouveau:archwood_planks": {
+      "tier": "basic",
+      "price": 3,
+      "buyback": 1,
+      "gift": true
+    },
+    "ars_nouveau:arcane_pedestal": {
+      "tier": "basic",
+      "price": 48,
+      "buyback": 16,
+      "gift": true
+    },
+    "ars_nouveau:source_jar": {
+      "tier": "rare",
+      "price": 80,
+      "buyback": 24,
+      "gift": false
+    },
+    "ars_nouveau:imbuement_chamber": {
+      "tier": "rare",
+      "price": 128,
+      "buyback": 40,
+      "gift": false
+    },
+    "ars_nouveau:enchanting_apparatus": {
+      "tier": "epic",
+      "price": 320,
+      "buyback": 96,
+      "gift": false
+    }
+  },
+  "pools": {
+    "building": {
+      "name": "建造材料",
+      "interests": "喜欢建筑、装修的玩家",
+      "function": "建造生活综合池：供应原版建材和农夫乐事厨具、农家用品；收购木材、采掘材料。专门厨具商可选 fd_kitchen。",
+      "weight": 1.0,
+      "entries": [
+        {
+          "item": "minecraft:oak_log",
+          "weight": 10.0,
+          "min": 32,
+          "max": 64,
+          "guaranteed": true
+        },
+        {
+          "item": "minecraft:cobblestone",
+          "weight": 10.0,
+          "min": 64,
+          "max": 128,
+          "guaranteed": true
+        },
+        {
+          "item": "minecraft:dirt",
+          "weight": 10.0,
+          "min": 64,
+          "max": 128,
+          "guaranteed": true
+        },
+        {
+          "item": "minecraft:glass",
+          "weight": 10.0,
+          "min": 24,
+          "max": 48,
+          "guaranteed": true
+        },
+        {
+          "item": "minecraft:sand",
+          "weight": 10.0,
+          "min": 32,
+          "max": 64,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:bricks",
+          "weight": 10.0,
+          "min": 16,
+          "max": 32,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:stone",
+          "weight": 10.0,
+          "min": 32,
+          "max": 64,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:spruce_log",
+          "weight": 10.0,
+          "min": 24,
+          "max": 48,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:cooking_pot",
+          "weight": 3,
+          "min": 1,
+          "max": 3,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:cutting_board",
+          "weight": 8,
+          "min": 2,
+          "max": 6,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:stove",
+          "weight": 3,
+          "min": 1,
+          "max": 3,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:rope",
+          "weight": 10,
+          "min": 24,
+          "max": 48,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:canvas",
+          "weight": 6,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:oak_cabinet",
+          "weight": 5,
+          "min": 4,
+          "max": 8,
+          "guaranteed": false
+        }
+      ]
+    },
+    "farming": {
+      "name": "农业与餐食",
+      "interests": "喜欢种菜、养殖和烹饪的玩家",
+      "function": "农业综合池：原版作物与农夫乐事的种苗、农产品、料理；兼容已有城市。专门农场或餐馆可改选 fd_produce、fd_meals。",
+      "weight": 1.0,
+      "entries": [
+        {
+          "item": "minecraft:wheat",
+          "weight": 10.0,
+          "min": 24,
+          "max": 48,
+          "guaranteed": true
+        },
+        {
+          "item": "minecraft:carrot",
+          "weight": 10.0,
+          "min": 24,
+          "max": 48,
+          "guaranteed": true
+        },
+        {
+          "item": "minecraft:potato",
+          "weight": 10.0,
+          "min": 24,
+          "max": 48,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:bread",
+          "weight": 10.0,
+          "min": 16,
+          "max": 32,
+          "guaranteed": true
+        },
+        {
+          "item": "minecraft:apple",
+          "weight": 10.0,
+          "min": 12,
+          "max": 24,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:beetroot",
+          "weight": 10.0,
+          "min": 16,
+          "max": 32,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:pumpkin",
+          "weight": 10.0,
+          "min": 12,
+          "max": 24,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:melon_slice",
+          "weight": 10.0,
+          "min": 24,
+          "max": 48,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:tomato",
+          "weight": 12,
+          "min": 24,
+          "max": 48,
+          "guaranteed": true
+        },
+        {
+          "item": "farmersdelight:cabbage",
+          "weight": 10,
+          "min": 24,
+          "max": 48,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:onion",
+          "weight": 10,
+          "min": 24,
+          "max": 48,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:rice",
+          "weight": 12,
+          "min": 24,
+          "max": 48,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:tomato_seeds",
+          "weight": 8,
+          "min": 8,
+          "max": 24,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:cabbage_seeds",
+          "weight": 8,
+          "min": 8,
+          "max": 24,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:rice_panicle",
+          "weight": 6,
+          "min": 8,
+          "max": 24,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:straw",
+          "weight": 8,
+          "min": 16,
+          "max": 32,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:organic_compost",
+          "weight": 4,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:rich_soil",
+          "weight": 3,
+          "min": 4,
+          "max": 12,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:wheat_dough",
+          "weight": 8,
+          "min": 12,
+          "max": 24,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:raw_pasta",
+          "weight": 7,
+          "min": 12,
+          "max": 24,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:mixed_salad",
+          "weight": 10,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:vegetable_soup",
+          "weight": 10,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:cooked_rice",
+          "weight": 10,
+          "min": 12,
+          "max": 24,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:fried_rice",
+          "weight": 8,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:chicken_sandwich",
+          "weight": 7,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:beef_stew",
+          "weight": 6,
+          "min": 6,
+          "max": 12,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:apple_pie",
+          "weight": 3,
+          "min": 2,
+          "max": 6,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:honey_cookie",
+          "weight": 8,
+          "min": 16,
+          "max": 32,
+          "guaranteed": false
+        }
+      ]
+    },
+    "mining": {
+      "name": "矿材与工坊",
+      "interests": "喜欢挖矿、生产或机械制造的玩家",
+      "function": "工坊综合池：收购原版矿产，供应机械动力加工材料、传动零件与少量设备；兼容已有城市。精细分工可选 create_components、create_machines。",
+      "weight": 1.0,
+      "entries": [
+        {
+          "item": "minecraft:coal",
+          "weight": 10.0,
+          "min": 16,
+          "max": 32,
+          "guaranteed": true
+        },
+        {
+          "item": "minecraft:raw_iron",
+          "weight": 10.0,
+          "min": 8,
+          "max": 16,
+          "guaranteed": true
+        },
+        {
+          "item": "minecraft:iron_ingot",
+          "weight": 10.0,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:copper_ingot",
+          "weight": 10.0,
+          "min": 16,
+          "max": 32,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:redstone",
+          "weight": 10.0,
+          "min": 16,
+          "max": 32,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:gold_ingot",
+          "weight": 3.0,
+          "min": 4,
+          "max": 8,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:diamond",
+          "weight": 3.0,
+          "min": 1,
+          "max": 2,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:emerald",
+          "weight": 10.0,
+          "min": 2,
+          "max": 4,
+          "guaranteed": false
+        },
+        {
+          "item": "create:andesite_alloy",
+          "weight": 12,
+          "min": 16,
+          "max": 32,
+          "guaranteed": true
+        },
+        {
+          "item": "create:shaft",
+          "weight": 12,
+          "min": 32,
+          "max": 64,
+          "guaranteed": false
+        },
+        {
+          "item": "create:cogwheel",
+          "weight": 10,
+          "min": 16,
+          "max": 32,
+          "guaranteed": false
+        },
+        {
+          "item": "create:large_cogwheel",
+          "weight": 8,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "create:belt_connector",
+          "weight": 8,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "create:iron_sheet",
+          "weight": 8,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "create:copper_sheet",
+          "weight": 8,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "create:golden_sheet",
+          "weight": 3,
+          "min": 4,
+          "max": 8,
+          "guaranteed": false
+        },
+        {
+          "item": "create:zinc_ingot",
+          "weight": 9,
+          "min": 16,
+          "max": 32,
+          "guaranteed": false
+        },
+        {
+          "item": "create:brass_ingot",
+          "weight": 7,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "create:brass_sheet",
+          "weight": 5,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "create:precision_mechanism",
+          "weight": 2,
+          "min": 1,
+          "max": 3,
+          "guaranteed": false
+        },
+        {
+          "item": "create:andesite_casing",
+          "weight": 10,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "create:gearbox",
+          "weight": 8,
+          "min": 4,
+          "max": 8,
+          "guaranteed": false
+        },
+        {
+          "item": "create:water_wheel",
+          "weight": 6,
+          "min": 2,
+          "max": 4,
+          "guaranteed": false
+        },
+        {
+          "item": "create:millstone",
+          "weight": 4,
+          "min": 1,
+          "max": 3,
+          "guaranteed": false
+        },
+        {
+          "item": "create:mechanical_press",
+          "weight": 4,
+          "min": 1,
+          "max": 3,
+          "guaranteed": false
+        },
+        {
+          "item": "create:mechanical_mixer",
+          "weight": 3,
+          "min": 1,
+          "max": 2,
+          "guaranteed": false
+        },
+        {
+          "item": "create:mechanical_harvester",
+          "weight": 1,
+          "min": 1,
+          "max": 2,
+          "guaranteed": false
+        }
+      ]
+    },
+    "adventure": {
+      "name": "探索补给",
+      "interests": "喜欢冒险、战斗和魔法的玩家",
+      "function": "探索研究综合池：原版冒险补给、新生魔艺材料与少量未充能设备；兼容已有城市。专门研究或栽培商可选 ars_materials、ars_workshop。",
+      "weight": 1.0,
+      "entries": [
+        {
+          "item": "minecraft:torch",
+          "weight": 10.0,
+          "min": 32,
+          "max": 64,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:arrow",
+          "weight": 10.0,
+          "min": 24,
+          "max": 48,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:leather",
+          "weight": 10.0,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:iron_sword",
+          "weight": 3.0,
+          "min": 1,
+          "max": 1,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:golden_apple",
+          "weight": 1.0,
+          "min": 1,
+          "max": 2,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:ender_pearl",
+          "weight": 3.0,
+          "min": 1,
+          "max": 3,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:source_gem",
+          "weight": 12,
+          "min": 8,
+          "max": 24,
+          "guaranteed": true
+        },
+        {
+          "item": "ars_nouveau:sourceberry_bush",
+          "weight": 10,
+          "min": 16,
+          "max": 32,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:magebloom",
+          "weight": 8,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:magebloom_fiber",
+          "weight": 7,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:air_essence",
+          "weight": 3,
+          "min": 2,
+          "max": 6,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:earth_essence",
+          "weight": 3,
+          "min": 2,
+          "max": 6,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:fire_essence",
+          "weight": 3,
+          "min": 2,
+          "max": 6,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:water_essence",
+          "weight": 3,
+          "min": 2,
+          "max": 6,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:wilden_horn",
+          "weight": 4,
+          "min": 2,
+          "max": 6,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:wilden_spike",
+          "weight": 4,
+          "min": 2,
+          "max": 6,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:wilden_wing",
+          "weight": 4,
+          "min": 2,
+          "max": 6,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:blank_parchment",
+          "weight": 10,
+          "min": 8,
+          "max": 24,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:sourcestone",
+          "weight": 10,
+          "min": 32,
+          "max": 64,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:archwood_planks",
+          "weight": 9,
+          "min": 32,
+          "max": 64,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:arcane_pedestal",
+          "weight": 6,
+          "min": 2,
+          "max": 6,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:source_jar",
+          "weight": 4,
+          "min": 1,
+          "max": 3,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:imbuement_chamber",
+          "weight": 4,
+          "min": 1,
+          "max": 3,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:enchanting_apparatus",
+          "weight": 1,
+          "min": 1,
+          "max": 1,
+          "guaranteed": false
+        }
+      ]
+    },
+    "fd_produce": {
+      "name": "农作物与种苗",
+      "interests": "喜欢种田、育苗、经营农场的玩家；出售收成换取建材或生产工具。",
+      "function": "支持农田种植、棚架种植、种子保管、种子销售、果蔬销售。收购作物，供应种苗与土壤改良用品；可用于任何建筑风格。",
+      "weight": 1.0,
+      "entries": [
+        {
+          "item": "farmersdelight:tomato",
+          "weight": 12,
+          "min": 24,
+          "max": 48,
+          "guaranteed": true
+        },
+        {
+          "item": "farmersdelight:cabbage",
+          "weight": 10,
+          "min": 24,
+          "max": 48,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:onion",
+          "weight": 10,
+          "min": 24,
+          "max": 48,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:rice",
+          "weight": 12,
+          "min": 24,
+          "max": 48,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:tomato_seeds",
+          "weight": 8,
+          "min": 8,
+          "max": 24,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:cabbage_seeds",
+          "weight": 8,
+          "min": 8,
+          "max": 24,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:rice_panicle",
+          "weight": 6,
+          "min": 8,
+          "max": 24,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:straw",
+          "weight": 8,
+          "min": 16,
+          "max": 32,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:organic_compost",
+          "weight": 4,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:rich_soil",
+          "weight": 3,
+          "min": 4,
+          "max": 12,
+          "guaranteed": false
+        }
+      ]
+    },
+    "fd_meals": {
+      "name": "餐馆与旅途餐食",
+      "interests": "喜欢烹饪、经营餐馆和为冒险准备补给的玩家；成品料理也能出售。",
+      "function": "支持餐饮、烘焙、商队补给、旅客住宿。收购普通成品料理并供应便携餐食；可与农业、商贸或魔法研究池混选。",
+      "weight": 1.0,
+      "entries": [
+        {
+          "item": "farmersdelight:wheat_dough",
+          "weight": 8,
+          "min": 12,
+          "max": 24,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:raw_pasta",
+          "weight": 7,
+          "min": 12,
+          "max": 24,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:mixed_salad",
+          "weight": 10,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:vegetable_soup",
+          "weight": 10,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:cooked_rice",
+          "weight": 10,
+          "min": 12,
+          "max": 24,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:fried_rice",
+          "weight": 8,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:chicken_sandwich",
+          "weight": 7,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:beef_stew",
+          "weight": 6,
+          "min": 6,
+          "max": 12,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:apple_pie",
+          "weight": 3,
+          "min": 2,
+          "max": 6,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:honey_cookie",
+          "weight": 8,
+          "min": 16,
+          "max": 32,
+          "guaranteed": false
+        }
+      ]
+    },
+    "fd_kitchen": {
+      "name": "厨具与农家用品",
+      "interests": "喜欢装修厨房、开餐馆和建设农庄的玩家。",
+      "function": "支持器皿销售、工具维护、餐饮与零售；提供普通未使用的厨具、绳索和收纳建材。可与机械加工及农业池混选。",
+      "weight": 1.0,
+      "entries": [
+        {
+          "item": "farmersdelight:cooking_pot",
+          "weight": 3,
+          "min": 1,
+          "max": 3,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:cutting_board",
+          "weight": 8,
+          "min": 2,
+          "max": 6,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:stove",
+          "weight": 3,
+          "min": 1,
+          "max": 3,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:rope",
+          "weight": 10,
+          "min": 24,
+          "max": 48,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:canvas",
+          "weight": 6,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "farmersdelight:oak_cabinet",
+          "weight": 5,
+          "min": 4,
+          "max": 8,
+          "guaranteed": false
+        }
+      ]
+    },
+    "create_components": {
+      "name": "机械零件与加工材料",
+      "interests": "喜欢机械动力、自动化和工厂建设的玩家；通过出售矿物或加工件换取常用零件。",
+      "function": "支持工具维修、工具维护、修补维护、研究配套作业和零售。提供传动件、合金与金属板；依据城市产业选择，任何风格均可使用。",
+      "weight": 1.0,
+      "entries": [
+        {
+          "item": "create:andesite_alloy",
+          "weight": 12,
+          "min": 16,
+          "max": 32,
+          "guaranteed": true
+        },
+        {
+          "item": "create:shaft",
+          "weight": 12,
+          "min": 32,
+          "max": 64,
+          "guaranteed": false
+        },
+        {
+          "item": "create:cogwheel",
+          "weight": 10,
+          "min": 16,
+          "max": 32,
+          "guaranteed": false
+        },
+        {
+          "item": "create:large_cogwheel",
+          "weight": 8,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "create:belt_connector",
+          "weight": 8,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "create:iron_sheet",
+          "weight": 8,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "create:copper_sheet",
+          "weight": 8,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "create:golden_sheet",
+          "weight": 3,
+          "min": 4,
+          "max": 8,
+          "guaranteed": false
+        },
+        {
+          "item": "create:zinc_ingot",
+          "weight": 9,
+          "min": 16,
+          "max": 32,
+          "guaranteed": false
+        },
+        {
+          "item": "create:brass_ingot",
+          "weight": 7,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "create:brass_sheet",
+          "weight": 5,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "create:precision_mechanism",
+          "weight": 2,
+          "min": 1,
+          "max": 3,
+          "guaranteed": false
+        }
+      ]
+    },
+    "create_machines": {
+      "name": "动力与生产设备",
+      "interests": "喜欢搭建生产线、农业自动化和机械研究，愿意用收入换取成品设备的玩家。",
+      "function": "支持修补维护、研究配套作业、农田种植与工坊零售。供应少量成品设备；与零件池组合可经营设备商，城镇规模不作硬性限制。",
+      "weight": 1.0,
+      "entries": [
+        {
+          "item": "create:andesite_casing",
+          "weight": 10,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "create:gearbox",
+          "weight": 8,
+          "min": 4,
+          "max": 8,
+          "guaranteed": false
+        },
+        {
+          "item": "create:water_wheel",
+          "weight": 6,
+          "min": 2,
+          "max": 4,
+          "guaranteed": false
+        },
+        {
+          "item": "create:millstone",
+          "weight": 4,
+          "min": 1,
+          "max": 3,
+          "guaranteed": false
+        },
+        {
+          "item": "create:mechanical_press",
+          "weight": 4,
+          "min": 1,
+          "max": 3,
+          "guaranteed": false
+        },
+        {
+          "item": "create:mechanical_mixer",
+          "weight": 3,
+          "min": 1,
+          "max": 2,
+          "guaranteed": false
+        },
+        {
+          "item": "create:mechanical_harvester",
+          "weight": 1,
+          "min": 1,
+          "max": 2,
+          "guaranteed": false
+        }
+      ]
+    },
+    "ars_materials": {
+      "name": "魔法原料与栽培",
+      "interests": "喜欢新生魔艺、魔法研究、魔法农业和收集素材的玩家。",
+      "function": "支持晶石加工、药材配制、棚架种植、实验与研究配套作业。收购栽培产物和冒险素材，供应魔源宝石、纤维与元素精华；任何风格均可采用。",
+      "weight": 1.0,
+      "entries": [
+        {
+          "item": "ars_nouveau:source_gem",
+          "weight": 12,
+          "min": 8,
+          "max": 24,
+          "guaranteed": true
+        },
+        {
+          "item": "ars_nouveau:sourceberry_bush",
+          "weight": 10,
+          "min": 16,
+          "max": 32,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:magebloom",
+          "weight": 8,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:magebloom_fiber",
+          "weight": 7,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:air_essence",
+          "weight": 3,
+          "min": 2,
+          "max": 6,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:earth_essence",
+          "weight": 3,
+          "min": 2,
+          "max": 6,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:fire_essence",
+          "weight": 3,
+          "min": 2,
+          "max": 6,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:water_essence",
+          "weight": 3,
+          "min": 2,
+          "max": 6,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:wilden_horn",
+          "weight": 4,
+          "min": 2,
+          "max": 6,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:wilden_spike",
+          "weight": 4,
+          "min": 2,
+          "max": 6,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:wilden_wing",
+          "weight": 4,
+          "min": 2,
+          "max": 6,
+          "guaranteed": false
+        }
+      ]
+    },
+    "ars_workshop": {
+      "name": "魔法工坊与研究用品",
+      "interests": "喜欢建设魔法实验室、研究设施和魔法生产线的玩家。",
+      "function": "支持魔力配给场所、实验、晶石加工、文具销售、纸墨配制与研究配套作业。供应空白耗材与未充能设备；不生成预写法术书、绑定传送卷轴或装满魔力的容器。",
+      "weight": 1.0,
+      "entries": [
+        {
+          "item": "ars_nouveau:blank_parchment",
+          "weight": 10,
+          "min": 8,
+          "max": 24,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:sourcestone",
+          "weight": 10,
+          "min": 32,
+          "max": 64,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:archwood_planks",
+          "weight": 9,
+          "min": 32,
+          "max": 64,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:arcane_pedestal",
+          "weight": 6,
+          "min": 2,
+          "max": 6,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:source_jar",
+          "weight": 4,
+          "min": 1,
+          "max": 3,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:imbuement_chamber",
+          "weight": 4,
+          "min": 1,
+          "max": 3,
+          "guaranteed": false
+        },
+        {
+          "item": "ars_nouveau:enchanting_apparatus",
+          "weight": 1,
+          "min": 1,
+          "max": 1,
+          "guaranteed": false
+        }
+      ]
+    }
+  },
+  "defaults": {
+    "pools": {
+      "building": 1.0,
+      "farming": 1.0,
+      "mining": 1.0,
+      "adventure": 0.5
+    },
+    "tiers": {},
+    "priceBand": "standard"
+  }
+}

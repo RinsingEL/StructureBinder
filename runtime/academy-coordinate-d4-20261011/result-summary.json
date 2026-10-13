@@ -1,0 +1,39 @@
+{
+  "groups": 7,
+  "rootCoordinateCount": 4,
+  "patchSelectedGroups": 0,
+  "topPatchCalls": 0,
+  "planned": 33,
+  "retained": 33,
+  "autoCompile": "not_queued",
+  "anchors": [
+    {
+      "id": "library",
+      "anchorBlock": {
+        "x": -3030,
+        "z": 5164
+      }
+    },
+    {
+      "id": "reception",
+      "anchorBlock": {
+        "x": -2854,
+        "z": 5124
+      }
+    },
+    {
+      "id": "teaching-campus",
+      "anchorBlock": {
+        "x": -3016,
+        "z": 5250
+      }
+    },
+    {
+      "id": "living-block",
+      "anchorBlock": {
+        "x": -3010,
+        "z": 5446
+      }
+    }
+  ]
+}

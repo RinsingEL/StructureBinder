@@ -1,0 +1,43 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "ML-07-v05",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 哥特作者逐图核对",
+  "nbt_sha256": "46fed170956b69e7cc6d2ed37a2f116271a7ad98f40d2c52e45118fb72b96ef7",
+  "author_sha256": "6ed9f6c2f1dcef1922aa1b74adc3c7698efbc75a82b26cdf771d40f30a37bdb1",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/room-tools.png",
+    "previews/room-living.png",
+    "previews/room-beds.png",
+    "previews/point-tools.png",
+    "previews/point-washwork.png",
+    "previews/point-cook.png",
+    "previews/point-beds0.png",
+    "previews/point-beds1.png",
+    "previews/point-linen.png",
+    "previews/point-record.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "实际图审": "台阶前工具屋、清洗台与高台家庭分开，高宅侧墙分隔寝室和起居记录。",
+    "形体与用途": "前低工具院与后高干燥家庭形成真实两格台差；高台用侧隔墙区分起居记录与双床寝室，泥污工具不经过家庭门。",
+    "数据导航": "数据、标记和离线碰撞导航零警告。",
+    "证据范围": "当前四向、顶视、去顶、所有楼层、房间、使用站位、标记和场地截图已实际查看。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "离线静态模板；未接入机器、交易、气候或作物生产机制。"
+  ]
+}

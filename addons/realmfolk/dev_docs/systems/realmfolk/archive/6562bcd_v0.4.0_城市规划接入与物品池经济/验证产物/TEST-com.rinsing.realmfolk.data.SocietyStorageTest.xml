@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.rinsing.realmfolk.data.SocietyStorageTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-09-24T09:48:41" hostname="DEVICE" time="0.835">
+  <properties/>
+  <testcase name="migratesLegacyStringWithoutChangingIdentities()" classname="com.rinsing.realmfolk.data.SocietyStorageTest" time="0.486"/>
+  <testcase name="largerThanNbtStringLimitSurvivesCompressedDiskFormat()" classname="com.rinsing.realmfolk.data.SocietyStorageTest" time="0.348"/>
+  <system-out><![CDATA[2026-09-24 17:48:42,331 Test worker WARN Advanced terminal features are not available in this environment
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

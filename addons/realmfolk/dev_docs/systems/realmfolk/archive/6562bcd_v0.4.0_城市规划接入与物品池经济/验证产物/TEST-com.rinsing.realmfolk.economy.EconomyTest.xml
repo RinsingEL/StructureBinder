@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.rinsing.realmfolk.economy.EconomyTest" tests="19" skipped="0" failures="0" errors="0" timestamp="2026-09-24T09:48:43" hostname="DEVICE" time="0.492">
+  <properties/>
+  <testcase name="everyPriceBandPreventsImmediateResaleProfit()" classname="com.rinsing.realmfolk.economy.EconomyTest" time="0.005"/>
+  <testcase name="farmingAndMiningCanFinanceBuildingMaterials()" classname="com.rinsing.realmfolk.economy.EconomyTest" time="0.01"/>
+  <testcase name="professionPoolSubsetAndZeroTierWeightsAreRespected()" classname="com.rinsing.realmfolk.economy.EconomyTest" time="0.003"/>
+  <testcase name="giftBudgetSharedBetweenPlayersButCooldownPersonal()" classname="com.rinsing.realmfolk.economy.EconomyTest" time="0.003"/>
+  <testcase name="budgetAndBalanceOverflowLeaveSaleUntouched()" classname="com.rinsing.realmfolk.economy.EconomyTest" time="0.004"/>
+  <testcase name="failedBuyCannotPartiallyMutateAccountOrStock()" classname="com.rinsing.realmfolk.economy.EconomyTest" time="0.004"/>
+  <testcase name="restockHappensOnlyAfterElapsedGameTime()" classname="com.rinsing.realmfolk.economy.EconomyTest" time="0.005"/>
+  <testcase name="poolSizeDoesNotMultiplyPoolSelectionProbability()" classname="com.rinsing.realmfolk.economy.EconomyTest" time="0.423"/>
+  <testcase name="reopeningAndReloadingCannotRerollOrRestoreStock()" classname="com.rinsing.realmfolk.economy.EconomyTest" time="0.001"/>
+  <testcase name="changingItemAndReopeningDoesNotResetRequestCooldown()" classname="com.rinsing.realmfolk.economy.EconomyTest" time="0.002"/>
+  <testcase name="demandDoesNotDependOnRandomShelfAppearance()" classname="com.rinsing.realmfolk.economy.EconomyTest" time="0.001"/>
+  <testcase name="bulkBuyDebitsExactlyAndConsumesSharedStock()" classname="com.rinsing.realmfolk.economy.EconomyTest" time="0.001"/>
+  <testcase name="authorCatalogueValidatesAndRejectsUnknownItems()" classname="com.rinsing.realmfolk.economy.EconomyTest" time="0.003"/>
+  <testcase name="affectionIncreasesOddsWhileRarityAndQuantityReduceThem()" classname="com.rinsing.realmfolk.economy.EconomyTest" time="0.001"/>
+  <testcase name="giftUsesOneDiceAndConsumesSameGoods()" classname="com.rinsing.realmfolk.economy.EconomyTest" time="0.001"/>
+  <testcase name="accountInventoryAndRequestOutcomeSurviveWorldJsonRoundTrip()" classname="com.rinsing.realmfolk.economy.EconomyTest" time="0.001"/>
+  <testcase name="unknownFieldsAndCoercedBooleansCannotBecomeExecutableContent()" classname="com.rinsing.realmfolk.economy.EconomyTest" time="0.002"/>
+  <testcase name="deterministicStockAndSharedReferencesProduceOneLine()" classname="com.rinsing.realmfolk.economy.EconomyTest" time="0.002"/>
+  <testcase name="noPositiveSupplyIsRejected()" classname="com.rinsing.realmfolk.economy.EconomyTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

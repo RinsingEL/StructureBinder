@@ -1,0 +1,35 @@
+注: SpongePowered MIXIN Annotation Processor Version=0.8.5 (MixinGradle Version=0.7)
+注: Supported obfuscation types: ObfuscationServiceMCP supports [notch] ObfuscationServiceFG3 supports [searge]
+注: Loading searge mappings from E:\Mod_Dev\StructureBinder\build\createMcpToSrg\output.tsrg
+注: Writing refmap to E:\Mod_Dev\StructureBinder\build\tmp\compileJava\compileJava-refmap.json
+注: Writing refmap to E:\Mod_Dev\StructureBinder\build\tmp\compileJava\compileJava-refmap.json
+注: Writing searge composite mappings to E:\Mod_Dev\StructureBinder\build\tmp\compileJava\compileJava-mappings.tsrg
+注: Writing refmap to E:\Mod_Dev\StructureBinder\build\tmp\compileJava\compileJava-refmap.json
+注: Writing refmap to E:\Mod_Dev\StructureBinder\build\tmp\compileJava\compileJava-refmap.json
+注: Writing searge composite mappings to E:\Mod_Dev\StructureBinder\build\tmp\compileJava\compileJava-mappings.tsrg
+E:\Mod_Dev\StructureBinder\src\main\java\com\rinsing\geomantia\client\McpSettingsScreen.java:29: 警告: [removal] ModLoadingContext 中的 get() 已过时, 且标记为待删除
+        ModLoadingContext.get().registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class,
+                         ^
+E:\Mod_Dev\StructureBinder\src\main\java\com\rinsing\geomantia\systems\city\infrastructure\world\landuse\CityLandUseWorldgenRegistry.java:493: 警告: [removal] ResourceLocation 中的 ResourceLocation(String) 已过时, 且标记为待删除
+                        new ResourceLocation(active.key().dimensionId()));
+                        ^
+E:\Mod_Dev\StructureBinder\src\main\java\com\rinsing\geomantia\platform\RealmPlanningServices.java:43: 警告: [removal] ResourceLocation 中的 ResourceLocation(String) 已过时, 且标记为待删除
+                var level = server.getLevel(ResourceKey.create(Registries.DIMENSION, new ResourceLocation(context.dimensionId())));
+                                                                                     ^
+E:\Mod_Dev\StructureBinder\src\main\java\com\rinsing\geomantia\systems\city\infrastructure\preview\CityBlockMaterialPreviewClient.java:18: 警告: [removal] ResourceLocation 中的 ResourceLocation(String) 已过时, 且标记为待删除
+        var mc=Minecraft.getInstance();var block=BuiltInRegistries.BLOCK.get(new ResourceLocation(id));
+                                                                             ^
+E:\Mod_Dev\StructureBinder\src\main\java\com\rinsing\geomantia\systems\city\infrastructure\preview\CityBlockMaterialPreviewClient.java:20: 警告: [removal] ResourceLocation 中的 ResourceLocation(String,String) 已过时, 且标记为待删除
+        var resource=mc.getResourceManager().getResource(new ResourceLocation(texture.getNamespace(),"textures/"+texture.getPath()+".png"));
+                                                         ^
+E:\Mod_Dev\StructureBinder\src\main\java\com\rinsing\geomantia\systems\city\infrastructure\world\CityTemplateTerrainStructureRegistries.java:15: 警告: [removal] ResourceLocation 中的 ResourceLocation(String,String) 已过时, 且标记为待删除
+            new ResourceLocation(GeomantiaMod.MOD_ID, "city_template_terrain");
+            ^
+E:\Mod_Dev\StructureBinder\src\main\java\com\rinsing\geomantia\systems\city\infrastructure\world\CityTemplateTerrainStructureRegistries.java:17: 警告: [removal] ResourceLocation 中的 ResourceLocation(String,String) 已过时, 且标记为待删除
+            new ResourceLocation(GeomantiaMod.MOD_ID, "city_roadside_decoration");
+            ^
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+注: E:\Mod_Dev\StructureBinder\src\main\java\com\rinsing\geomantia\mixin\ConfiguredFeatureMaskMixin.java使用了未经检查或不安全的操作。
+注: 有关详细信息, 请使用 -Xlint:unchecked 重新编译。
+7 个警告

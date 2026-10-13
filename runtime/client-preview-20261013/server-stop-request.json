@@ -1,0 +1,6 @@
+{
+  "command": "stop",
+  "allowUnsafeCommand": true,
+  "confirmCommandExecution": true,
+  "sourceMode": "server"
+}

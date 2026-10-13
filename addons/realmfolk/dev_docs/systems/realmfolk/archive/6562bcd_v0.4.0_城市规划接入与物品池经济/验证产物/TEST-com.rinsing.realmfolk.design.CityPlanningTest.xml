@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.rinsing.realmfolk.design.CityPlanningTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-09-24T09:48:42" hostname="DEVICE" time="0.145">
+  <properties/>
+  <testcase name="scopedPlansTakePrecedenceButLegacyPlansRemainReadable()" classname="com.rinsing.realmfolk.design.CityPlanningTest" time="0.004"/>
+  <testcase name="cannotCreateDependencyOnAnotherCityPrivateProfession()" classname="com.rinsing.realmfolk.design.CityPlanningTest" time="0.036"/>
+  <testcase name="citiesCanUseSameProfessionNameWithDifferentCapabilities()" classname="com.rinsing.realmfolk.design.CityPlanningTest" time="0.043"/>
+  <testcase name="rejectsMissingPoolAndCrossRevisionPublication()" classname="com.rinsing.realmfolk.design.CityPlanningTest" time="0.004"/>
+  <testcase name="duplicatePublishAndWrongCityCannotCreateOrOverwritePeople()" classname="com.rinsing.realmfolk.design.CityPlanningTest" time="0.005"/>
+  <testcase name="publishesUnloadedCityRulesWithoutSpawningAndSurvivesRestart()" classname="com.rinsing.realmfolk.design.CityPlanningTest" time="0.026"/>
+  <testcase name="replacingOwnDraftDoesNotExhaustDraftSlots()" classname="com.rinsing.realmfolk.design.CityPlanningTest" time="0.019"/>
+  <testcase name="planningContextRetainsLegacyKeyPeopleAndEconomy()" classname="com.rinsing.realmfolk.design.CityPlanningTest" time="0.004"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

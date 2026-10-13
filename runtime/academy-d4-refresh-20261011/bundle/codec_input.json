@@ -1,0 +1,110 @@
+[
+  {
+    "templateRef": "studio:mg-01-v01",
+    "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-01-v01/structure.nbt",
+    "sourceSha256": "sha256:41551b2ac39c79c664cb8e40a1976344fdfd01416f2acffd154c8675edd300cb",
+    "groundPlaneY": 2
+  },
+  {
+    "templateRef": "studio:mg-02-v01",
+    "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-02-v01/structure.nbt",
+    "sourceSha256": "sha256:84fc677af8dfbf65853b1016843cb45f2a7578355f62c8c9e537faa91da6a3e3",
+    "groundPlaneY": 2
+  },
+  {
+    "templateRef": "studio:mg-03-v01",
+    "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-03-v01/structure.nbt",
+    "sourceSha256": "sha256:bd282e5d24e7ebeb3a101fb2bbb841e9d1fb5b548f1ce0d84b41009ce980a9fc",
+    "groundPlaneY": 2
+  },
+  {
+    "templateRef": "studio:mg-04-v01",
+    "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-04-v01/structure.nbt",
+    "sourceSha256": "sha256:65d0d3827a28a7ae38304db93269b65a834f5323ee8509a2c814c6ff6d57eea6",
+    "groundPlaneY": 2
+  },
+  {
+    "templateRef": "studio:mg-05-v01",
+    "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-05-v01/structure.nbt",
+    "sourceSha256": "sha256:9776fb572fadf61deba905ab48d97bfa0de09539dcb59e9f584f3d463ffc8257",
+    "groundPlaneY": 2
+  },
+  {
+    "templateRef": "studio:mg-06-v01",
+    "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-06-v01/structure.nbt",
+    "sourceSha256": "sha256:950a1b5c37250f646f3bd0cbec1663193d0c950014994dcbbc2fc91b6442a03a",
+    "groundPlaneY": 2
+  },
+  {
+    "templateRef": "studio:mg-07-v01",
+    "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-07-v01/structure.nbt",
+    "sourceSha256": "sha256:c4d7cd16dc86c480a29d6e83e0d028511428b4b384809f1c6424ec0a854aa468",
+    "groundPlaneY": 2
+  },
+  {
+    "templateRef": "studio:mg-10-v01",
+    "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-10-v01/structure.nbt",
+    "sourceSha256": "sha256:4375a4bf7016631d38d3bdb2e5a19efaa880f2023baae9c23e13fd52125ea8dd",
+    "groundPlaneY": 2
+  },
+  {
+    "templateRef": "studio:mg-12-v01",
+    "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-12-v01/structure.nbt",
+    "sourceSha256": "sha256:07ddc88d0f55df38e75edff982750a7e73367516365d28e88161ef21d348940b",
+    "groundPlaneY": 2
+  },
+  {
+    "templateRef": "studio:mg-13-v01",
+    "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-13-v01/structure.nbt",
+    "sourceSha256": "sha256:96f92571beca9df92618a0340951b8c30e79ad47ba52f4c6a02aeaee0ae855ed",
+    "groundPlaneY": 2
+  },
+  {
+    "templateRef": "studio:mg-14-v01",
+    "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-14-v01/structure.nbt",
+    "sourceSha256": "sha256:a04ea19a3836062fbde8a0064187b02873d54421eec96c28bd65130387121217",
+    "groundPlaneY": 2
+  },
+  {
+    "templateRef": "studio:mg-15-v01",
+    "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-15-v01/structure.nbt",
+    "sourceSha256": "sha256:79ec9aca84a2b63c0456ef8afaa38f71a1757899e2aef9771147b4b68349b299",
+    "groundPlaneY": 2
+  },
+  {
+    "templateRef": "studio:mg-16-v01",
+    "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-16-v01/structure.nbt",
+    "sourceSha256": "sha256:d765805507c0fe35ab9be57a0637d4ecd83aec44e75ab7ef292bb447f79dc7b4",
+    "groundPlaneY": 2
+  },
+  {
+    "templateRef": "studio:mg-17-v01",
+    "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-17-v01/structure.nbt",
+    "sourceSha256": "sha256:403774b26f44f18928aca5954d0f02d85d4bd95f9ff41ca25894c0b5f9aef4ba",
+    "groundPlaneY": 2
+  },
+  {
+    "templateRef": "studio:mg-18-v01",
+    "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-18-v01/structure.nbt",
+    "sourceSha256": "sha256:37102e27c7a584009689244d888fe77205fc2906404ac2063821367de92c0161",
+    "groundPlaneY": 2
+  },
+  {
+    "templateRef": "studio:mg-19-v01",
+    "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-19-v01/structure.nbt",
+    "sourceSha256": "sha256:8d68d65e4d11398122a8de601400b3baaaf98fffad2ca70ef11969b72a65a747",
+    "groundPlaneY": 2
+  },
+  {
+    "templateRef": "studio:mg-20-v01",
+    "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-20-v01/structure.nbt",
+    "sourceSha256": "sha256:887470a2abf86d4a8ca01b88b127076be81579668d9be8d3d630f77bee1ba5fb",
+    "groundPlaneY": 2
+  },
+  {
+    "templateRef": "studio:mg-21-v01",
+    "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-21-v01/structure.nbt",
+    "sourceSha256": "sha256:8d91941b897da9becd5a3d6555cedd1e3219b3b1b6a8ac2bf8c8edc323c6d01d",
+    "groundPlaneY": 2
+  }
+]

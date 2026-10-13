@@ -1,0 +1,395 @@
+{
+  "groups": [
+    {
+      "id": "starfall",
+      "name": "星落研习会",
+      "purpose": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。",
+      "work": [
+        "教学",
+        "天象观测"
+      ],
+      "roster": {
+        "specialist": 2,
+        "learner": 5
+      },
+      "pools": [
+        "ars_materials",
+        "ars_workshop"
+      ],
+      "needs": [
+        "research_materials"
+      ],
+      "requestedAbilities": [
+        "teach_magic",
+        "cast_magic"
+      ],
+      "professions": [
+        "starfall_learner",
+        "starfall_specialist"
+      ],
+      "workBuildings": [
+        "observation_required_001",
+        "teaching_required_001",
+        "teaching_required_002",
+        "teaching_required_003",
+        "council_required_002",
+        "seminars_required_001",
+        "council_fill_003",
+        "seminars_fill_003",
+        "seminars_fill_004",
+        "seminars_fill_005",
+        "seminars_fill_006"
+      ]
+    },
+    {
+      "id": "inkwell",
+      "name": "墨泉家族",
+      "purpose": "家族经营藏书与抄写事务，年轻成员随长辈学习，向学院补充纸墨。",
+      "work": [
+        "书籍借阅",
+        "文献抄写"
+      ],
+      "roster": {
+        "specialist": 1,
+        "learner": 2
+      },
+      "pools": [
+        "ars_workshop"
+      ],
+      "needs": [
+        "copying_supplies"
+      ],
+      "professions": [
+        "inkwell_learner",
+        "inkwell_specialist"
+      ],
+      "workBuildings": [
+        "archives_required_001",
+        "archives_required_002"
+      ]
+    },
+    {
+      "id": "greenhand",
+      "name": "青枝实践社",
+      "purpose": "照料药草和苗木，交换魔法栽培材料，组织学徒观察周围林地。",
+      "work": [
+        "药草栽培",
+        "林业教学"
+      ],
+      "roster": {
+        "specialist": 1,
+        "learner": 3
+      },
+      "pools": [
+        "ars_materials",
+        "fd_produce"
+      ],
+      "needs": [
+        "herbal_supplies"
+      ],
+      "requestedAbilities": [
+        "nearby_hunt"
+      ],
+      "professions": [
+        "greenhand_learner",
+        "greenhand_specialist"
+      ],
+      "workBuildings": [
+        "forest_school_required_001",
+        "forest_school_required_002",
+        "forest_school_required_003",
+        "forest_school_fill_004",
+        "forest_school_fill_005",
+        "forest_school_fill_006"
+      ]
+    },
+    {
+      "id": "hearth",
+      "name": "暖炉伙房",
+      "purpose": "为师生与旅行者供应饭食和生活用品，与学院长期交换物资。",
+      "work": [
+        "餐饮",
+        "集体用餐"
+      ],
+      "roster": {
+        "specialist": 1,
+        "learner": 2
+      },
+      "pools": [
+        "fd_meals",
+        "fd_produce"
+      ],
+      "needs": [
+        "kitchen_supplies"
+      ],
+      "professions": [
+        "hearth_learner",
+        "hearth_specialist"
+      ],
+      "workBuildings": [
+        "daily_care_required_002",
+        "reception_required_003",
+        "reception_fill_005"
+      ]
+    },
+    {
+      "id": "wayfarer",
+      "name": "远行登记处",
+      "purpose": "接待外来冒险者，提供旅途补给；希望把可靠的周边威胁线索转成讨伐委托。",
+      "work": [
+        "出行登记"
+      ],
+      "roster": {
+        "specialist": 1,
+        "learner": 1
+      },
+      "pools": [
+        "adventure"
+      ],
+      "needs": [],
+      "requestedAbilities": [
+        "nearby_hunt",
+        "dungeon_commission"
+      ],
+      "professions": [
+        "wayfarer_learner",
+        "wayfarer_specialist"
+      ],
+      "workBuildings": [
+        "reception_required_001"
+      ]
+    }
+  ],
+  "pendingAbilities": [
+    {
+      "group": "starfall",
+      "ability": "teach_magic",
+      "reason": "尚无 Ars Nouveau 教学适配器，不能用售卖材料冒充解锁法术。"
+    },
+    {
+      "group": "starfall",
+      "ability": "cast_magic",
+      "reason": "当前居民战斗未接入魔法施放，不能凭职业名称获得法术。"
+    },
+    {
+      "group": "greenhand",
+      "ability": "nearby_hunt",
+      "reason": "缺少本学院周围的真实怪物观测以及通用讨伐计数、结算接口。"
+    },
+    {
+      "group": "wayfarer",
+      "ability": "nearby_hunt",
+      "reason": "缺少本学院周围的真实怪物观测以及通用讨伐计数、结算接口。"
+    },
+    {
+      "group": "wayfarer",
+      "ability": "dungeon_commission",
+      "reason": "冒险旧工作树已有地点记录，但尚未迁接；地点生成完成也不等于清剿完成。"
+    }
+  ],
+  "deliveryDemands": [
+    {
+      "group": "starfall",
+      "profession": "starfall_specialist",
+      "item": "ars_nouveau:source_gem",
+      "count": 2,
+      "purpose": "补充魔源研究消耗品",
+      "source": "configured_city_trade_pool",
+      "sourcePools": [
+        "ars_materials"
+      ],
+      "availability": "供货规则可达；随机库存不保证即时有货，未证明野外分布",
+      "currencyReward": 16
+    },
+    {
+      "group": "inkwell",
+      "profession": "inkwell_specialist",
+      "item": "ars_nouveau:blank_parchment",
+      "count": 3,
+      "purpose": "补充文献抄写耗材",
+      "source": "configured_city_trade_pool",
+      "sourcePools": [
+        "ars_workshop"
+      ],
+      "availability": "供货规则可达；随机库存不保证即时有货，未证明野外分布",
+      "currencyReward": 0
+    },
+    {
+      "group": "greenhand",
+      "profession": "greenhand_specialist",
+      "item": "ars_nouveau:magebloom_fiber",
+      "count": 4,
+      "purpose": "收集魔法栽培纤维用于实践课",
+      "source": "configured_city_trade_pool",
+      "sourcePools": [
+        "ars_materials"
+      ],
+      "availability": "供货规则可达；随机库存不保证即时有货，未证明野外分布",
+      "currencyReward": 16
+    },
+    {
+      "group": "hearth",
+      "profession": "hearth_specialist",
+      "item": "farmersdelight:tomato",
+      "count": 6,
+      "purpose": "补充学院伙房原料",
+      "source": "configured_city_trade_pool",
+      "sourcePools": [
+        "fd_produce"
+      ],
+      "availability": "供货规则可达；随机库存不保证即时有货，未证明野外分布",
+      "currencyReward": 0
+    }
+  ],
+  "title": "星穹魔法学院",
+  "scope": "offline_configuration_experiment",
+  "source": {
+    "directory": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\campus_java_acceptance_20261010\\realm_debug\\provider_3d25631f_r19200\\city_test_runs\\city_jingchao_capital\\steps\\blueprint",
+    "blueprintHash": "sha256:8141b7803c448686ff59ed4af130c6bc1db04a093e5b9769bb12842bd56dfe8d",
+    "files": {
+      "city_blueprint.json": "8141b7803c448686ff59ed4af130c6bc1db04a093e5b9769bb12842bd56dfe8d",
+      "city_blueprint_submission_trace.json": "f9d2959ac3c430cd4bf64e836a5b33cf18165af9b632fc407fb099a5abf93285",
+      "city_blueprint_geometry_commit.json": "4f84e598df8460497b4832d7a90ab0e9c2d926892081bd4de2724304a7738a33",
+      "city_blueprint_catalog_snapshot.json": "399733dcacfe5cdad42a572317a0dc33e39941eb0a67fe2c650e187698899087"
+    }
+  },
+  "inputHashes": {
+    "E:\\Mod\\_Dev\\国度冒险附属Mod\\tools\\fourth_question\\academy.intent.json": "2677a9069612211c81a54d1a5efa7df891e73f0d0ebe10b8bf6dc661674c161a",
+    "E:\\Mod\\_Dev\\国度冒险附属Mod\\tools\\fourth_question\\author-policy.json": "f6728487f28929c9b71c5ee656ce13c1fc19a298906f7886f3995bd79f5c2350",
+    "E:\\Mod\\_Dev\\国度冒险附属Mod\\examples\\modpacks\\pcl-industries\\economy.json": "0549a80de6aa112be91887d8e5fdd93510f2dc82a32bdc6aee7062b06b33f1dd"
+  },
+  "seed": 20261013,
+  "intent": {
+    "schema": "realmfolk.group-intent.experiment.v1",
+    "cityName": "星穹魔法学院",
+    "groups": [
+      {
+        "id": "starfall",
+        "name": "星落研习会",
+        "purpose": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。",
+        "work": [
+          "教学",
+          "天象观测"
+        ],
+        "roster": {
+          "specialist": 2,
+          "learner": 5
+        },
+        "pools": [
+          "ars_materials",
+          "ars_workshop"
+        ],
+        "needs": [
+          "research_materials"
+        ],
+        "requestedAbilities": [
+          "teach_magic",
+          "cast_magic"
+        ]
+      },
+      {
+        "id": "inkwell",
+        "name": "墨泉家族",
+        "purpose": "家族经营藏书与抄写事务，年轻成员随长辈学习，向学院补充纸墨。",
+        "work": [
+          "书籍借阅",
+          "文献抄写"
+        ],
+        "roster": {
+          "specialist": 1,
+          "learner": 2
+        },
+        "pools": [
+          "ars_workshop"
+        ],
+        "needs": [
+          "copying_supplies"
+        ]
+      },
+      {
+        "id": "greenhand",
+        "name": "青枝实践社",
+        "purpose": "照料药草和苗木，交换魔法栽培材料，组织学徒观察周围林地。",
+        "work": [
+          "药草栽培",
+          "林业教学"
+        ],
+        "roster": {
+          "specialist": 1,
+          "learner": 3
+        },
+        "pools": [
+          "ars_materials",
+          "fd_produce"
+        ],
+        "needs": [
+          "herbal_supplies"
+        ],
+        "requestedAbilities": [
+          "nearby_hunt"
+        ]
+      },
+      {
+        "id": "hearth",
+        "name": "暖炉伙房",
+        "purpose": "为师生与旅行者供应饭食和生活用品，与学院长期交换物资。",
+        "work": [
+          "餐饮",
+          "集体用餐"
+        ],
+        "roster": {
+          "specialist": 1,
+          "learner": 2
+        },
+        "pools": [
+          "fd_meals",
+          "fd_produce"
+        ],
+        "needs": [
+          "kitchen_supplies"
+        ]
+      },
+      {
+        "id": "wayfarer",
+        "name": "远行登记处",
+        "purpose": "接待外来冒险者，提供旅途补给；希望把可靠的周边威胁线索转成讨伐委托。",
+        "work": [
+          "出行登记"
+        ],
+        "roster": {
+          "specialist": 1,
+          "learner": 1
+        },
+        "pools": [
+          "adventure"
+        ],
+        "needs": [],
+        "requestedAbilities": [
+          "nearby_hunt",
+          "dungeon_commission"
+        ]
+      }
+    ]
+  },
+  "metrics": {
+    "aiGroups": 5,
+    "compiledProfessions": 10,
+    "retainedBuildings": 51,
+    "functionRows": 38,
+    "aiInputCharacters": 1183,
+    "expandedCharacters": 8253
+  },
+  "nearby": {
+    "locations": [],
+    "huntContracts": [],
+    "reason": "本学院未提供真实冒险地点/怪物观测；不从结构池虚构附近坐标。"
+  },
+  "limitations": [
+    "离线使用正式校验与规划器，不代表游戏已生成 NPC。",
+    "人口演算站立点为显式试验假设，未进行游戏内可站立验证。",
+    "群体目前映射为职业与背景，亲属关系、共同住所、群体声望尚未写入运行时。",
+    "岗位按建筑用途匹配，不能保证落在 AI 指定的某个院落。",
+    "赠礼使用已有个人好感和 d100 规则；尚无派系专属关系门槛。",
+    "教学、施法及附近讨伐待接入；不会自动降级成交易来宣称已实现。"
+  ]
+}

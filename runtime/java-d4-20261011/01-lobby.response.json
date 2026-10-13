@@ -1,0 +1,8 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "```text\n+-------- Geomantia · 存档大厅 --------+\n  当前存档：geometia_beta3_02\n  当前阶段：城市设计\n  当前城市：city_jingchao_capital\n  状态：可以继续\n  内置高级模型：未启动\n  当前需要：高级模型\n  内置 Flash：未启动\n+-------------------------------------+\n\n  [1] 继续规划\n  [2] 查看当前成果\n  [3] 查看规划状态与问题\n```\n告诉我你想进行哪一项，也可以直接描述需求。\n执行指引：1 在尚未完成时调用 planning_next，已完成则查看成果；2/3 使用 planning_artifact 查看当前 run 的资料，不启动规划。存在其他执行端占用时等待总调度交接，不抢占。\n{\"ok\":true,\"runId\":\"provider_3d25631f_r19200\",\"realmId\":\"jingchao\",\"citySeedId\":\"city_jingchao_capital\",\"stage\":\"CITY\",\"requiredRole\":\"ADVANCED\",\"activeRole\":\"\",\"embeddedFlashStatus\":\"unavailable\",\"embeddedFlashMessage\":\"\",\"embeddedAdvancedStatus\":\"unavailable\",\"embeddedAdvancedMessage\":\"\",\"nextAction\":\"city_d4_integrate\",\"owner\":\"\",\"cityQueueStatus\":\"waiting_for_agent\",\"completedCityCount\":0,\"remainingCityCount\":1,\"status\":\"ready\",\"error\":\"\",\"cursor\":\"city|provider_3d25631f_r19200|jingchao|city_jingchao_capital|city_d4_integrate|waiting_for_agent|||1791563673831|1791563673845|1791563673844|1791563673814|::sha256:471a166e028911922613aa21925760cd4c6702ce08b25bfb3c717c9ad9e5ed33:0::false::\\\"\\\"\",\"hasSavedProgress\":true,\"artifactRoot\":\"E:\\\\Mod_Dev\\\\StructureBinder\\\\run\\\\saves\\\\campus_java_acceptance_20261010\\\\realm_debug\\\\provider_3d25631f_r19200\",\"worldName\":\"geometia_beta3_02\",\"ownedByThisConnection\":false}"
+    }
+  ]
+}

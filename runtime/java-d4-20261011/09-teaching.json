@@ -1,0 +1,142 @@
+{
+  "tool": "city_d4_district",
+  "args": {
+    "runId": "provider_3d25631f_r19200",
+    "citySeedId": "city_jingchao_capital",
+    "contextId": "sha256:471a166e028911922613aa21925760cd4c6702ce08b25bfb3c717c9ad9e5ed33",
+    "workflowRevision": 10,
+    "baseDraftHash": "sha256:e04678fbb425f9eb828a08a4480e6c2216b91a1be283fd8c83d290fe81c0e716",
+    "targetDistrictId": "teaching",
+    "districtDesign": {
+      "core": {
+        "groupId": "teaching",
+        "structureRef": "studio:mg-01-v01"
+      },
+      "groups": [
+        {
+          "groupId": "teaching",
+          "groupKind": "STRUCTURE",
+          "preferredPatchRefs": [
+            "minecraft:overworld:step.16:city.city_jingchao_capital:p.100"
+          ],
+          "preferredPatchZone": "CENTER",
+          "role": "教学研究",
+          "priority": "CORE",
+          "structureCount": 4,
+          "extentClass": "LARGE",
+          "densityClass": "BALANCED",
+          "algorithmProfileRef": "algorithm:compact",
+          "terrainPolicy": "BALANCED",
+          "requiredStructureRefs": [
+            "studio:mg-01-v01",
+            "studio:mg-04-v01",
+            "studio:mg-21-v01",
+            "studio:mg-16-v01"
+          ],
+          "fillPools": [
+            {
+              "poolRef": "pool:studio_243",
+              "weight": 1
+            }
+          ],
+          "compositionProfileRef": "composition:round_robin",
+          "attachedFeatures": [],
+          "targetAreaShare": 0.25,
+          "spaceComposition": {
+            "buildingShare": 0.65,
+            "landscapeShare": 0,
+            "openSpaceShare": 0.35
+          },
+          "expansionPolicy": {
+            "allowOutwardExpansion": true,
+            "allowRelationConnection": true,
+            "stopWhenTargetReached": true
+          },
+          "buildingGreeneryPolicy": {
+            "coverage": "SPARSE",
+            "patternPreference": "TEMPLATE_DEFAULT",
+            "densityPreference": "TEMPLATE_DEFAULT"
+          }
+        }
+      ],
+      "arrayCompositions": [],
+      "relations": [],
+      "foundationGroupIds": [
+        "teaching"
+      ],
+      "landscapes": [],
+      "surfaceMaterials": {
+        "groups": {
+          "teaching": {
+            "ground": "minecraft:gravel",
+            "roadSurface": "minecraft:stone_brick_slab"
+          }
+        }
+      },
+      "publicRealm": {
+        "schema": "city_public_realm.v1",
+        "catalog": "academy",
+        "seed": 20261011,
+        "spaces": [],
+        "greenery": {
+          "pools": {
+            "trees": "courtyard_trees",
+            "shrubs": "low_shrubs",
+            "flowers": "flower_patches",
+            "hedges": "hedge_segments",
+            "planters": "planters"
+          },
+          "spacing": {
+            "trees": 13,
+            "shrubs": 5,
+            "flowers": 4,
+            "hedges": 8,
+            "planters": 24
+          },
+          "slotLimits": {
+            "trees": 80,
+            "shrubs": 95,
+            "flowers": 220,
+            "hedges": 65,
+            "planters": 40
+          },
+          "maxPlacements": 500,
+          "layeredPlanting": true
+        },
+        "fringe": {
+          "width": 20,
+          "pools": {
+            "trees": "outer_trees",
+            "shrubs": "low_shrubs",
+            "flowers": "flower_patches"
+          },
+          "spacing": {
+            "trees": 10,
+            "shrubs": 6,
+            "flowers": 4
+          },
+          "slotLimits": {
+            "trees": 150,
+            "shrubs": 120,
+            "flowers": 230
+          },
+          "maxPlacements": 500,
+          "layeredPlanting": true
+        }
+      }
+    },
+    "designAnswers": [
+      {
+        "groupId": "teaching",
+        "roadConnected": true,
+        "foundation": true,
+        "ground": "minecraft:gravel",
+        "roadSurface": "minecraft:stone_brick_slab",
+        "styles": [
+          "魔法学院新制"
+        ]
+      }
+    ],
+    "assessment": "已查看当前整城总览：教学核心位于中部，北侧藏书、西侧迎客、东侧生活有效保留。将中央教学从两栋扩成教学、研究、植物教学及器材制作四栋完整主体，配置公共绿化和外围过渡；保持其他三区用途和位置关系。"
+  }
+}

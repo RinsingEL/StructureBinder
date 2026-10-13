@@ -1,0 +1,3459 @@
+{
+  "schema": "studio_test_export.v1",
+  "templates": [
+    {
+      "templateRef": "studio:mg-01-v01",
+      "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-01-v01/structure.nbt",
+      "sourceSha256": "sha256:41551b2ac39c79c664cb8e40a1976344fdfd01416f2acffd154c8675edd300cb",
+      "authorSha256": "sha256:95303ee15f6e4573f58cc19fdd37a4327592ab61cb31b126fbfd825735394cf0",
+      "author": {
+        "schema": "structure-studio.author.v1",
+        "id": "MG-01-v01",
+        "name": "星穹礼堂 · 飞扶壁与肋拱中殿",
+        "family": "MG-01",
+        "civilization": "魔法学院新制",
+        "planning_role": "planning_role.key",
+        "size": [
+          71,
+          72,
+          83
+        ],
+        "terrain": {
+          "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+        },
+        "rooms": [
+          {
+            "id": "nave",
+            "name": "高挑礼堂",
+            "min": [
+              26,
+              2,
+              33
+            ],
+            "max": [
+              44,
+              26,
+              71
+            ],
+            "purpose": "分列坐席、中轴通行、讲台和肋拱空间"
+          },
+          {
+            "id": "gallery",
+            "name": "二层旁听廊",
+            "min": [
+              22,
+              11,
+              27
+            ],
+            "max": [
+              48,
+              14,
+              30
+            ],
+            "purpose": "实体楼梯连接的跨厅旁听平台"
+          }
+        ],
+        "points": [
+          {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              35,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          {
+            "id": "gallery",
+            "kind": "work",
+            "pos": [
+              35,
+              11,
+              29
+            ],
+            "name": "礼堂上层旁听廊",
+            "approach": [
+              35,
+              11,
+              29
+            ]
+          },
+          {
+            "id": "lecturer",
+            "kind": "work",
+            "pos": [
+              35,
+              2,
+              64
+            ],
+            "name": "讲台前演示空间",
+            "approach": [
+              35,
+              2,
+              64
+            ]
+          }
+        ],
+        "connections": [],
+        "design_notes": [
+          "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。",
+          "高窗中殿、低侧廊、三跨外飞扶壁与完整横肋构成骨架；门廊进深四格，玫瑰窗有石质窗棂。",
+          "前塔上部是封闭装饰与采光构架，不声明可用楼层。"
+        ],
+        "differences": [],
+        "floors": [
+          {
+            "name": "礼堂与侧廊",
+            "y": 1,
+            "max_y": 9
+          },
+          {
+            "name": "旁听廊与高窗",
+            "y": 10,
+            "max_y": 17
+          }
+        ],
+        "roof_min_y": 30,
+        "lifecycle": "draft",
+        "offline_limits": [
+          "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+          "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+        ],
+        "function_terms": [
+          "教学",
+          "礼仪",
+          "集会"
+        ],
+        "asset_tags": [],
+        "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+        "ground_plane": {
+          "y": 2,
+          "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+        },
+        "preview_context": {
+          "kind": "flat",
+          "land_surface_y": 2,
+          "padding": 3,
+          "surface": "grass"
+        },
+        "design_revision": 2,
+        "nbt_sha256": "41551b2ac39c79c664cb8e40a1976344fdfd01416f2acffd154c8675edd300cb"
+      },
+      "rawSize": {
+        "width": 71,
+        "height": 72,
+        "depth": 83
+      },
+      "roadEntrances": [
+        {
+          "entranceId": "front",
+          "position": {
+            "x": 35,
+            "z": 0
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "frontagePolicy": "FIXED_FRONT",
+      "entranceEvidence": [
+        {
+          "authorPoint": {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              35,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          "projectedBoundary": [
+            35,
+            0
+          ],
+          "clearanceChecked": true,
+          "worldRoadHeightValidated": false
+        }
+      ],
+      "validationSha256": "sha256:0b1678136701c9decc28fe640f3b60b4242ce66bd3c7309537048525d15afd01",
+      "groundPlaneY": 2
+    },
+    {
+      "templateRef": "studio:mg-02-v01",
+      "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-02-v01/structure.nbt",
+      "sourceSha256": "sha256:84fc677af8dfbf65853b1016843cb45f2a7578355f62c8c9e537faa91da6a3e3",
+      "authorSha256": "sha256:203bbbadae42b8123c9784e86daebd37aa74ff59fdda316cb42f553e17ff6fd4",
+      "author": {
+        "schema": "structure-studio.author.v1",
+        "id": "MG-02-v01",
+        "name": "八瓣藏书馆 · 双层环廊与采光穹顶",
+        "family": "MG-02",
+        "civilization": "魔法学院新制",
+        "planning_role": "planning_role.key",
+        "size": [
+          61,
+          61,
+          65
+        ],
+        "terrain": {
+          "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+        },
+        "rooms": [
+          {
+            "id": "reading",
+            "name": "环形阅览厅",
+            "min": [
+              17,
+              2,
+              21
+            ],
+            "max": [
+              43,
+              9,
+              47
+            ],
+            "purpose": "中央采光井与周边阅览座位"
+          },
+          {
+            "id": "gallery",
+            "name": "双层藏书环廊",
+            "min": [
+              13,
+              12,
+              19
+            ],
+            "max": [
+              47,
+              20,
+              49
+            ],
+            "purpose": "围绕挑空中庭的连续藏书层"
+          }
+        ],
+        "points": [
+          {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              30,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          {
+            "id": "catalog",
+            "kind": "work",
+            "pos": [
+              30,
+              2,
+              22
+            ],
+            "name": "一层书目检索",
+            "approach": [
+              30,
+              2,
+              22
+            ]
+          },
+          {
+            "id": "upper",
+            "kind": "work",
+            "pos": [
+              44,
+              12,
+              39
+            ],
+            "name": "上层环廊书架",
+            "approach": [
+              44,
+              12,
+              39
+            ]
+          }
+        ],
+        "connections": [],
+        "design_notes": [
+          "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+        ],
+        "differences": [],
+        "floors": [
+          {
+            "name": "中央阅览厅",
+            "y": 1,
+            "max_y": 10
+          },
+          {
+            "name": "环形藏书廊",
+            "y": 11,
+            "max_y": 21
+          }
+        ],
+        "roof_min_y": 23,
+        "lifecycle": "draft",
+        "offline_limits": [
+          "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+          "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+        ],
+        "function_terms": [
+          "书籍借阅",
+          "文献保管",
+          "阅读"
+        ],
+        "asset_tags": [],
+        "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+        "ground_plane": {
+          "y": 2,
+          "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+        },
+        "preview_context": {
+          "kind": "flat",
+          "land_surface_y": 2,
+          "padding": 3,
+          "surface": "grass"
+        },
+        "design_revision": 2,
+        "nbt_sha256": "84fc677af8dfbf65853b1016843cb45f2a7578355f62c8c9e537faa91da6a3e3"
+      },
+      "rawSize": {
+        "width": 61,
+        "height": 61,
+        "depth": 65
+      },
+      "roadEntrances": [
+        {
+          "entranceId": "front",
+          "position": {
+            "x": 30,
+            "z": 0
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "frontagePolicy": "FIXED_FRONT",
+      "entranceEvidence": [
+        {
+          "authorPoint": {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              30,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          "projectedBoundary": [
+            30,
+            0
+          ],
+          "clearanceChecked": true,
+          "worldRoadHeightValidated": false
+        }
+      ],
+      "validationSha256": "sha256:4091575095373d252e462e1785472c229a62dbbed4cb542c55bb302c857c6ce1",
+      "groundPlaneY": 2
+    },
+    {
+      "templateRef": "studio:mg-03-v01",
+      "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-03-v01/structure.nbt",
+      "sourceSha256": "sha256:bd282e5d24e7ebeb3a101fb2bbb841e9d1fb5b548f1ce0d84b41009ce980a9fc",
+      "authorSha256": "sha256:b9d2af7361938b4aed333ec45f0fe55f45fe16994d0cff518e2b92de47d3b7c9",
+      "author": {
+        "schema": "structure-studio.author.v1",
+        "id": "MG-03-v01",
+        "name": "子午观星台 · 阶塔与开瓣星穹",
+        "family": "MG-03",
+        "civilization": "魔法学院新制",
+        "planning_role": "planning_role.key",
+        "size": [
+          51,
+          64,
+          55
+        ],
+        "terrain": {
+          "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+        },
+        "rooms": [
+          {
+            "id": "archive",
+            "name": "星图档案",
+            "min": [
+              17,
+              2,
+              20
+            ],
+            "max": [
+              33,
+              9,
+              38
+            ],
+            "purpose": "星图存放与接待"
+          }
+        ],
+        "points": [
+          {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              25,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          {
+            "id": "chart",
+            "kind": "work",
+            "pos": [
+              25,
+              11,
+              33
+            ],
+            "name": "历法与星图层",
+            "approach": [
+              25,
+              11,
+              33
+            ]
+          },
+          {
+            "id": "study",
+            "kind": "work",
+            "pos": [
+              25,
+              20,
+              33
+            ],
+            "name": "观测准备层",
+            "approach": [
+              25,
+              20,
+              33
+            ]
+          },
+          {
+            "id": "sky",
+            "kind": "work",
+            "pos": [
+              25,
+              29,
+              22
+            ],
+            "name": "星仪观测露台",
+            "approach": [
+              25,
+              29,
+              22
+            ]
+          }
+        ],
+        "connections": [],
+        "design_notes": [
+          "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+        ],
+        "differences": [],
+        "floors": [
+          {
+            "name": "档案",
+            "y": 1,
+            "max_y": 9
+          },
+          {
+            "name": "星图工作层",
+            "y": 10,
+            "max_y": 18
+          },
+          {
+            "name": "准备层",
+            "y": 19,
+            "max_y": 27
+          },
+          {
+            "name": "星仪露台",
+            "y": 28,
+            "max_y": 48
+          }
+        ],
+        "roof_min_y": 30,
+        "lifecycle": "draft",
+        "offline_limits": [
+          "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+          "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+        ],
+        "function_terms": [
+          "天象观测",
+          "研究"
+        ],
+        "asset_tags": [],
+        "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+        "ground_plane": {
+          "y": 2,
+          "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+        },
+        "preview_context": {
+          "kind": "flat",
+          "land_surface_y": 2,
+          "padding": 3,
+          "surface": "grass"
+        },
+        "design_revision": 2,
+        "nbt_sha256": "bd282e5d24e7ebeb3a101fb2bbb841e9d1fb5b548f1ce0d84b41009ce980a9fc"
+      },
+      "rawSize": {
+        "width": 51,
+        "height": 64,
+        "depth": 55
+      },
+      "roadEntrances": [
+        {
+          "entranceId": "front",
+          "position": {
+            "x": 25,
+            "z": 0
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "frontagePolicy": "FIXED_FRONT",
+      "entranceEvidence": [
+        {
+          "authorPoint": {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              25,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          "projectedBoundary": [
+            25,
+            0
+          ],
+          "clearanceChecked": true,
+          "worldRoadHeightValidated": false
+        }
+      ],
+      "validationSha256": "sha256:3a92efe65fe2b8bae943b84dd4db85e99ba8da697e9f5338492f4362986de35f",
+      "groundPlaneY": 2
+    },
+    {
+      "templateRef": "studio:mg-04-v01",
+      "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-04-v01/structure.nbt",
+      "sourceSha256": "sha256:65d0d3827a28a7ae38304db93269b65a834f5323ee8509a2c814c6ff6d57eea6",
+      "authorSha256": "sha256:9d0975992ad46070e3ed748e40ea8dfdb1452c20099270c3ef3a8b73d54e5e09",
+      "author": {
+        "schema": "structure-studio.author.v1",
+        "id": "MG-04-v01",
+        "name": "三院炼金实验所 · 晶核中庭与玻璃长翼",
+        "family": "MG-04",
+        "civilization": "魔法学院新制",
+        "planning_role": "planning_role.key",
+        "size": [
+          73,
+          64,
+          73
+        ],
+        "terrain": {
+          "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+        },
+        "rooms": [
+          {
+            "id": "crystal",
+            "name": "四柱晶核实验庭",
+            "min": [
+              26,
+              2,
+              33
+            ],
+            "max": [
+              46,
+              29,
+              53
+            ],
+            "purpose": "封护实验核心及周边观察通路"
+          }
+        ],
+        "points": [
+          {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              36,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          {
+            "id": "lab_7",
+            "kind": "work",
+            "pos": [
+              15,
+              2,
+              29
+            ],
+            "name": "独立实验长翼",
+            "approach": [
+              15,
+              2,
+              29
+            ]
+          },
+          {
+            "id": "lab_49",
+            "kind": "work",
+            "pos": [
+              57,
+              2,
+              29
+            ],
+            "name": "独立实验长翼",
+            "approach": [
+              57,
+              2,
+              29
+            ]
+          },
+          {
+            "id": "central",
+            "kind": "work",
+            "pos": [
+              36,
+              2,
+              36
+            ],
+            "name": "晶核实验观察环道",
+            "approach": [
+              36,
+              2,
+              36
+            ]
+          }
+        ],
+        "connections": [],
+        "design_notes": [
+          "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+        ],
+        "differences": [],
+        "floors": [
+          {
+            "name": "首层",
+            "y": 1,
+            "max_y": 8
+          }
+        ],
+        "roof_min_y": 30,
+        "lifecycle": "draft",
+        "offline_limits": [
+          "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+          "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+        ],
+        "function_terms": [
+          "实验研究",
+          "药剂制作"
+        ],
+        "asset_tags": [],
+        "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+        "ground_plane": {
+          "y": 2,
+          "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+        },
+        "preview_context": {
+          "kind": "flat",
+          "land_surface_y": 2,
+          "padding": 3,
+          "surface": "grass"
+        },
+        "design_revision": 2,
+        "nbt_sha256": "65d0d3827a28a7ae38304db93269b65a834f5323ee8509a2c814c6ff6d57eea6"
+      },
+      "rawSize": {
+        "width": 73,
+        "height": 64,
+        "depth": 73
+      },
+      "roadEntrances": [
+        {
+          "entranceId": "front",
+          "position": {
+            "x": 36,
+            "z": 0
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "frontagePolicy": "FIXED_FRONT",
+      "entranceEvidence": [
+        {
+          "authorPoint": {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              36,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          "projectedBoundary": [
+            36,
+            0
+          ],
+          "clearanceChecked": true,
+          "worldRoadHeightValidated": false
+        }
+      ],
+      "validationSha256": "sha256:9018f0488a60944ee81ed11339d80fffe05bbff9ed4ddae4121dfee668cc5566",
+      "groundPlaneY": 2
+    },
+    {
+      "templateRef": "studio:mg-05-v01",
+      "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-05-v01/structure.nbt",
+      "sourceSha256": "sha256:9776fb572fadf61deba905ab48d97bfa0de09539dcb59e9f584f3d463ffc8257",
+      "authorSha256": "sha256:e9a8c6b8122c477a1c1cbfdeb42806cdd1dad111f144f0df442914ee4a609d74",
+      "author": {
+        "schema": "structure-studio.author.v1",
+        "id": "MG-05-v01",
+        "name": "回廊学生宿舍 · 双翼三层寝室",
+        "family": "MG-05",
+        "civilization": "魔法学院新制",
+        "planning_role": "planning_role.self_contained",
+        "size": [
+          69,
+          61,
+          67
+        ],
+        "terrain": {
+          "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+        },
+        "rooms": [
+          {
+            "id": "court",
+            "name": "双翼学习庭",
+            "min": [
+              27,
+              2,
+              19
+            ],
+            "max": [
+              41,
+              7,
+              45
+            ],
+            "purpose": "宿舍围成的安静步行庭院"
+          }
+        ],
+        "points": [
+          {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              34,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          {
+            "id": "bed_9_2_43",
+            "kind": "bed",
+            "pos": [
+              16,
+              2,
+              43
+            ],
+            "name": "床位",
+            "approach": [
+              17,
+              2,
+              43
+            ]
+          },
+          {
+            "id": "bed_b_9_2_43",
+            "kind": "bed",
+            "pos": [
+              21,
+              2,
+              43
+            ],
+            "name": "床位",
+            "approach": [
+              22,
+              2,
+              43
+            ]
+          },
+          {
+            "id": "bed_9_2_51",
+            "kind": "bed",
+            "pos": [
+              16,
+              2,
+              51
+            ],
+            "name": "床位",
+            "approach": [
+              17,
+              2,
+              51
+            ]
+          },
+          {
+            "id": "bed_b_9_2_51",
+            "kind": "bed",
+            "pos": [
+              21,
+              2,
+              51
+            ],
+            "name": "床位",
+            "approach": [
+              22,
+              2,
+              51
+            ]
+          },
+          {
+            "id": "bed_9_9_43",
+            "kind": "bed",
+            "pos": [
+              16,
+              9,
+              43
+            ],
+            "name": "床位",
+            "approach": [
+              17,
+              9,
+              43
+            ]
+          },
+          {
+            "id": "bed_b_9_9_43",
+            "kind": "bed",
+            "pos": [
+              21,
+              9,
+              43
+            ],
+            "name": "床位",
+            "approach": [
+              22,
+              9,
+              43
+            ]
+          },
+          {
+            "id": "bed_9_9_51",
+            "kind": "bed",
+            "pos": [
+              16,
+              9,
+              51
+            ],
+            "name": "床位",
+            "approach": [
+              17,
+              9,
+              51
+            ]
+          },
+          {
+            "id": "bed_b_9_9_51",
+            "kind": "bed",
+            "pos": [
+              21,
+              9,
+              51
+            ],
+            "name": "床位",
+            "approach": [
+              22,
+              9,
+              51
+            ]
+          },
+          {
+            "id": "bed_9_16_43",
+            "kind": "bed",
+            "pos": [
+              16,
+              16,
+              43
+            ],
+            "name": "床位",
+            "approach": [
+              17,
+              16,
+              43
+            ]
+          },
+          {
+            "id": "bed_b_9_16_43",
+            "kind": "bed",
+            "pos": [
+              21,
+              16,
+              43
+            ],
+            "name": "床位",
+            "approach": [
+              22,
+              16,
+              43
+            ]
+          },
+          {
+            "id": "bed_9_16_51",
+            "kind": "bed",
+            "pos": [
+              16,
+              16,
+              51
+            ],
+            "name": "床位",
+            "approach": [
+              17,
+              16,
+              51
+            ]
+          },
+          {
+            "id": "bed_b_9_16_51",
+            "kind": "bed",
+            "pos": [
+              21,
+              16,
+              51
+            ],
+            "name": "床位",
+            "approach": [
+              22,
+              16,
+              51
+            ]
+          },
+          {
+            "id": "floor3_9",
+            "kind": "work",
+            "pos": [
+              17,
+              16,
+              37
+            ],
+            "name": "三层自习与寝居通道",
+            "approach": [
+              17,
+              16,
+              37
+            ]
+          },
+          {
+            "id": "bed_43_2_43",
+            "kind": "bed",
+            "pos": [
+              50,
+              2,
+              43
+            ],
+            "name": "床位",
+            "approach": [
+              51,
+              2,
+              43
+            ]
+          },
+          {
+            "id": "bed_b_43_2_43",
+            "kind": "bed",
+            "pos": [
+              55,
+              2,
+              43
+            ],
+            "name": "床位",
+            "approach": [
+              56,
+              2,
+              43
+            ]
+          },
+          {
+            "id": "bed_43_2_51",
+            "kind": "bed",
+            "pos": [
+              50,
+              2,
+              51
+            ],
+            "name": "床位",
+            "approach": [
+              51,
+              2,
+              51
+            ]
+          },
+          {
+            "id": "bed_b_43_2_51",
+            "kind": "bed",
+            "pos": [
+              55,
+              2,
+              51
+            ],
+            "name": "床位",
+            "approach": [
+              56,
+              2,
+              51
+            ]
+          },
+          {
+            "id": "bed_43_9_43",
+            "kind": "bed",
+            "pos": [
+              50,
+              9,
+              43
+            ],
+            "name": "床位",
+            "approach": [
+              51,
+              9,
+              43
+            ]
+          },
+          {
+            "id": "bed_b_43_9_43",
+            "kind": "bed",
+            "pos": [
+              55,
+              9,
+              43
+            ],
+            "name": "床位",
+            "approach": [
+              56,
+              9,
+              43
+            ]
+          },
+          {
+            "id": "bed_43_9_51",
+            "kind": "bed",
+            "pos": [
+              50,
+              9,
+              51
+            ],
+            "name": "床位",
+            "approach": [
+              51,
+              9,
+              51
+            ]
+          },
+          {
+            "id": "bed_b_43_9_51",
+            "kind": "bed",
+            "pos": [
+              55,
+              9,
+              51
+            ],
+            "name": "床位",
+            "approach": [
+              56,
+              9,
+              51
+            ]
+          },
+          {
+            "id": "bed_43_16_43",
+            "kind": "bed",
+            "pos": [
+              50,
+              16,
+              43
+            ],
+            "name": "床位",
+            "approach": [
+              51,
+              16,
+              43
+            ]
+          },
+          {
+            "id": "bed_b_43_16_43",
+            "kind": "bed",
+            "pos": [
+              55,
+              16,
+              43
+            ],
+            "name": "床位",
+            "approach": [
+              56,
+              16,
+              43
+            ]
+          },
+          {
+            "id": "bed_43_16_51",
+            "kind": "bed",
+            "pos": [
+              50,
+              16,
+              51
+            ],
+            "name": "床位",
+            "approach": [
+              51,
+              16,
+              51
+            ]
+          },
+          {
+            "id": "bed_b_43_16_51",
+            "kind": "bed",
+            "pos": [
+              55,
+              16,
+              51
+            ],
+            "name": "床位",
+            "approach": [
+              56,
+              16,
+              51
+            ]
+          },
+          {
+            "id": "floor3_43",
+            "kind": "work",
+            "pos": [
+              51,
+              16,
+              37
+            ],
+            "name": "三层自习与寝居通道",
+            "approach": [
+              51,
+              16,
+              37
+            ]
+          }
+        ],
+        "connections": [],
+        "design_notes": [
+          "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+        ],
+        "differences": [],
+        "floors": [
+          {
+            "name": "宿舍首层",
+            "y": 1,
+            "max_y": 7
+          },
+          {
+            "name": "寝居与桥廊",
+            "y": 8,
+            "max_y": 14
+          },
+          {
+            "name": "上层寝室",
+            "y": 15,
+            "max_y": 23
+          }
+        ],
+        "roof_min_y": 26,
+        "lifecycle": "draft",
+        "offline_limits": [
+          "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+          "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+        ],
+        "function_terms": [
+          "学生住宿",
+          "自习"
+        ],
+        "asset_tags": [],
+        "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+        "ground_plane": {
+          "y": 2,
+          "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+        },
+        "preview_context": {
+          "kind": "flat",
+          "land_surface_y": 2,
+          "padding": 3,
+          "surface": "grass"
+        },
+        "design_revision": 2,
+        "nbt_sha256": "9776fb572fadf61deba905ab48d97bfa0de09539dcb59e9f584f3d463ffc8257"
+      },
+      "rawSize": {
+        "width": 69,
+        "height": 61,
+        "depth": 67
+      },
+      "roadEntrances": [
+        {
+          "entranceId": "front",
+          "position": {
+            "x": 34,
+            "z": 0
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "frontagePolicy": "FIXED_FRONT",
+      "entranceEvidence": [
+        {
+          "authorPoint": {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              34,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          "projectedBoundary": [
+            34,
+            0
+          ],
+          "clearanceChecked": true,
+          "worldRoadHeightValidated": false
+        }
+      ],
+      "validationSha256": "sha256:b1fc8bbe9947157aa0b5cb2f4899312b78774bbd219f4b929f256d4686b7f84d",
+      "groundPlaneY": 2
+    },
+    {
+      "templateRef": "studio:mg-06-v01",
+      "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-06-v01/structure.nbt",
+      "sourceSha256": "sha256:950a1b5c37250f646f3bd0cbec1663193d0c950014994dcbbc2fc91b6442a03a",
+      "authorSha256": "sha256:74ba68c2601dd174ae0cbbe97182b354cafc22ff5dfbad31bc3b6767ee415110",
+      "author": {
+        "schema": "structure-studio.author.v1",
+        "id": "MG-06-v01",
+        "name": "学院器材店 · 八角陈列窗与后部货间",
+        "family": "MG-06",
+        "civilization": "魔法学院新制",
+        "planning_role": "planning_role.fill",
+        "size": [
+          43,
+          43,
+          49
+        ],
+        "terrain": {
+          "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+        },
+        "rooms": [
+          {
+            "id": "sales",
+            "name": "八角器材陈列厅",
+            "min": [
+              13,
+              2,
+              12
+            ],
+            "max": [
+              29,
+              10,
+              26
+            ],
+            "purpose": "环列陈设与居中的选购通道"
+          }
+        ],
+        "points": [
+          {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              21,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          {
+            "id": "retail",
+            "kind": "work",
+            "pos": [
+              21,
+              2,
+              20
+            ],
+            "name": "中央选购通道",
+            "approach": [
+              21,
+              2,
+              20
+            ]
+          },
+          {
+            "id": "stock",
+            "kind": "work",
+            "pos": [
+              21,
+              2,
+              36
+            ],
+            "name": "后部补货间",
+            "approach": [
+              21,
+              2,
+              36
+            ]
+          }
+        ],
+        "connections": [],
+        "design_notes": [
+          "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+        ],
+        "differences": [],
+        "floors": [
+          {
+            "name": "首层",
+            "y": 1,
+            "max_y": 8
+          }
+        ],
+        "roof_min_y": 15,
+        "lifecycle": "draft",
+        "offline_limits": [
+          "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+          "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+        ],
+        "function_terms": [
+          "商品零售",
+          "货物暂存"
+        ],
+        "asset_tags": [],
+        "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+        "ground_plane": {
+          "y": 2,
+          "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+        },
+        "preview_context": {
+          "kind": "flat",
+          "land_surface_y": 2,
+          "padding": 3,
+          "surface": "grass"
+        },
+        "design_revision": 2,
+        "nbt_sha256": "950a1b5c37250f646f3bd0cbec1663193d0c950014994dcbbc2fc91b6442a03a"
+      },
+      "rawSize": {
+        "width": 43,
+        "height": 43,
+        "depth": 49
+      },
+      "roadEntrances": [
+        {
+          "entranceId": "front",
+          "position": {
+            "x": 21,
+            "z": 0
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "frontagePolicy": "FIXED_FRONT",
+      "entranceEvidence": [
+        {
+          "authorPoint": {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              21,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          "projectedBoundary": [
+            21,
+            0
+          ],
+          "clearanceChecked": true,
+          "worldRoadHeightValidated": false
+        }
+      ],
+      "validationSha256": "sha256:3e980d84b807160aad80261678f18f26fd5431cdfb9013bb77757b54955fddf8",
+      "groundPlaneY": 2
+    },
+    {
+      "templateRef": "studio:mg-07-v01",
+      "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-07-v01/structure.nbt",
+      "sourceSha256": "sha256:c4d7cd16dc86c480a29d6e83e0d028511428b4b384809f1c6424ec0a854aa468",
+      "authorSha256": "sha256:7d1d0dfb72fa4486ee538714c1dd8e20228486a5489245ca1f6e3a5fe6becd7f",
+      "author": {
+        "schema": "structure-studio.author.v1",
+        "id": "MG-07-v01",
+        "name": "锤梁长桌食堂 · 高窗长厅与备餐院",
+        "family": "MG-07",
+        "civilization": "魔法学院新制",
+        "planning_role": "planning_role.self_contained",
+        "size": [
+          57,
+          56,
+          69
+        ],
+        "terrain": {
+          "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+        },
+        "rooms": [
+          {
+            "id": "dining",
+            "name": "锤梁食堂",
+            "min": [
+              15,
+              2,
+              16
+            ],
+            "max": [
+              37,
+              19,
+              55
+            ],
+            "purpose": "长桌、锤梁与高窗共同形成集体用餐空间"
+          }
+        ],
+        "points": [
+          {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              26,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          {
+            "id": "dining",
+            "kind": "work",
+            "pos": [
+              26,
+              2,
+              32
+            ],
+            "name": "长桌间主通道",
+            "approach": [
+              26,
+              2,
+              32
+            ]
+          },
+          {
+            "id": "kitchen",
+            "kind": "work",
+            "pos": [
+              45,
+              2,
+              45
+            ],
+            "name": "备餐工间",
+            "approach": [
+              45,
+              2,
+              45
+            ]
+          }
+        ],
+        "connections": [],
+        "design_notes": [
+          "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+        ],
+        "differences": [],
+        "floors": [
+          {
+            "name": "首层",
+            "y": 1,
+            "max_y": 8
+          }
+        ],
+        "roof_min_y": 22,
+        "lifecycle": "draft",
+        "offline_limits": [
+          "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+          "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+        ],
+        "function_terms": [
+          "餐饮",
+          "集体用餐"
+        ],
+        "asset_tags": [],
+        "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+        "ground_plane": {
+          "y": 2,
+          "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+        },
+        "preview_context": {
+          "kind": "flat",
+          "land_surface_y": 2,
+          "padding": 3,
+          "surface": "grass"
+        },
+        "design_revision": 2,
+        "nbt_sha256": "c4d7cd16dc86c480a29d6e83e0d028511428b4b384809f1c6424ec0a854aa468"
+      },
+      "rawSize": {
+        "width": 57,
+        "height": 56,
+        "depth": 69
+      },
+      "roadEntrances": [
+        {
+          "entranceId": "front",
+          "position": {
+            "x": 26,
+            "z": 0
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "frontagePolicy": "FIXED_FRONT",
+      "entranceEvidence": [
+        {
+          "authorPoint": {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              26,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          "projectedBoundary": [
+            26,
+            0
+          ],
+          "clearanceChecked": true,
+          "worldRoadHeightValidated": false
+        }
+      ],
+      "validationSha256": "sha256:4e4df80b85ff3f23622a79e1983224ef941f8937d4b815a152cf865f7ca69bb9",
+      "groundPlaneY": 2
+    },
+    {
+      "templateRef": "studio:mg-10-v01",
+      "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-10-v01/structure.nbt",
+      "sourceSha256": "sha256:4375a4bf7016631d38d3bdb2e5a19efaa880f2023baae9c23e13fd52125ea8dd",
+      "authorSha256": "sha256:5f142e74960fb55fccb808b6d6e84ba8459d34aff1d1d76d2359c6863bee2c09",
+      "author": {
+        "schema": "structure-studio.author.v1",
+        "id": "MG-10-v01",
+        "name": "三级星泉 · 放射石肋与水盆",
+        "family": "MG-10",
+        "civilization": "魔法学院新制",
+        "planning_role": "planning_role.structure",
+        "size": [
+          35,
+          31,
+          35
+        ],
+        "terrain": {
+          "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+        },
+        "rooms": [],
+        "points": [
+          {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              17,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          }
+        ],
+        "connections": [],
+        "design_notes": [
+          "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+        ],
+        "differences": [],
+        "floors": [
+          {
+            "name": "首层",
+            "y": 1,
+            "max_y": 8
+          }
+        ],
+        "roof_min_y": 22,
+        "lifecycle": "draft",
+        "offline_limits": [
+          "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+          "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+        ],
+        "function_terms": [
+          "水景观赏",
+          "休憩"
+        ],
+        "asset_tags": [
+          "landscape"
+        ],
+        "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+        "ground_plane": {
+          "y": 2,
+          "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+        },
+        "preview_context": {
+          "kind": "flat",
+          "land_surface_y": 2,
+          "padding": 3,
+          "surface": "grass"
+        },
+        "design_revision": 2,
+        "nbt_sha256": "4375a4bf7016631d38d3bdb2e5a19efaa880f2023baae9c23e13fd52125ea8dd"
+      },
+      "rawSize": {
+        "width": 35,
+        "height": 31,
+        "depth": 35
+      },
+      "roadEntrances": [
+        {
+          "entranceId": "front",
+          "position": {
+            "x": 17,
+            "z": 0
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "frontagePolicy": "FIXED_FRONT",
+      "entranceEvidence": [
+        {
+          "authorPoint": {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              17,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          "projectedBoundary": [
+            17,
+            0
+          ],
+          "clearanceChecked": true,
+          "worldRoadHeightValidated": false
+        }
+      ],
+      "validationSha256": "sha256:17ede497438154024c24de374665d9ac599886ebfefbe7376058bfb7f078c495",
+      "groundPlaneY": 2
+    },
+    {
+      "templateRef": "studio:mg-12-v01",
+      "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-12-v01/structure.nbt",
+      "sourceSha256": "sha256:07ddc88d0f55df38e75edff982750a7e73367516365d28e88161ef21d348940b",
+      "authorSha256": "sha256:ae15aae1f0a21605887ad5a34400c29696ca1e963a4daa0803e169eaec9b5da1",
+      "author": {
+        "schema": "structure-studio.author.v1",
+        "id": "MG-12-v01",
+        "name": "药草温室庭 · 十字花径与双玻璃花房",
+        "family": "MG-12",
+        "civilization": "魔法学院新制",
+        "planning_role": "planning_role.structure",
+        "size": [
+          43,
+          33,
+          47
+        ],
+        "terrain": {
+          "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+        },
+        "rooms": [],
+        "points": [
+          {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              21,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          }
+        ],
+        "connections": [],
+        "design_notes": [
+          "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+        ],
+        "differences": [],
+        "floors": [
+          {
+            "name": "首层",
+            "y": 1,
+            "max_y": 8
+          }
+        ],
+        "roof_min_y": 18,
+        "lifecycle": "draft",
+        "offline_limits": [
+          "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+          "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+        ],
+        "function_terms": [
+          "花草观赏",
+          "园艺养护"
+        ],
+        "asset_tags": [
+          "landscape"
+        ],
+        "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+        "ground_plane": {
+          "y": 2,
+          "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+        },
+        "preview_context": {
+          "kind": "flat",
+          "land_surface_y": 2,
+          "padding": 3,
+          "surface": "grass"
+        },
+        "design_revision": 2,
+        "nbt_sha256": "07ddc88d0f55df38e75edff982750a7e73367516365d28e88161ef21d348940b"
+      },
+      "rawSize": {
+        "width": 43,
+        "height": 33,
+        "depth": 47
+      },
+      "roadEntrances": [
+        {
+          "entranceId": "front",
+          "position": {
+            "x": 21,
+            "z": 0
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "frontagePolicy": "FIXED_FRONT",
+      "entranceEvidence": [
+        {
+          "authorPoint": {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              21,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          "projectedBoundary": [
+            21,
+            0
+          ],
+          "clearanceChecked": true,
+          "worldRoadHeightValidated": false
+        }
+      ],
+      "validationSha256": "sha256:1aed4df674ceb98c082c9e446534a605b75f435a08db9590f05c8d629c5d8301",
+      "groundPlaneY": 2
+    },
+    {
+      "templateRef": "studio:mg-13-v01",
+      "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-13-v01/structure.nbt",
+      "sourceSha256": "sha256:96f92571beca9df92618a0340951b8c30e79ad47ba52f4c6a02aeaee0ae855ed",
+      "authorSha256": "sha256:9512db077d18d8847f09a48e31acb469d291d233d58709684c6508159d9b137a",
+      "author": {
+        "schema": "structure-studio.author.v1",
+        "id": "MG-13-v01",
+        "name": "层台院务塔 · 四层议事与学籍廊",
+        "family": "MG-13",
+        "civilization": "魔法学院新制",
+        "planning_role": "planning_role.key",
+        "size": [
+          55,
+          68,
+          59
+        ],
+        "terrain": {
+          "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+        },
+        "rooms": [
+          {
+            "id": "administration",
+            "name": "院务塔",
+            "min": [
+              17,
+              2,
+              21
+            ],
+            "max": [
+              37,
+              33,
+              41
+            ],
+            "purpose": "四个实体楼层经交替楼梯连通"
+          }
+        ],
+        "points": [
+          {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              27,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          {
+            "id": "floor_2",
+            "kind": "work",
+            "pos": [
+              27,
+              2,
+              34
+            ],
+            "name": "院务议事与学籍工作层",
+            "approach": [
+              27,
+              2,
+              34
+            ]
+          },
+          {
+            "id": "floor_10",
+            "kind": "work",
+            "pos": [
+              27,
+              10,
+              34
+            ],
+            "name": "院务议事与学籍工作层",
+            "approach": [
+              27,
+              10,
+              34
+            ]
+          },
+          {
+            "id": "floor_18",
+            "kind": "work",
+            "pos": [
+              27,
+              18,
+              34
+            ],
+            "name": "院务议事与学籍工作层",
+            "approach": [
+              27,
+              18,
+              34
+            ]
+          },
+          {
+            "id": "floor_26",
+            "kind": "work",
+            "pos": [
+              27,
+              26,
+              34
+            ],
+            "name": "院务议事与学籍工作层",
+            "approach": [
+              27,
+              26,
+              34
+            ]
+          }
+        ],
+        "connections": [],
+        "design_notes": [
+          "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+        ],
+        "differences": [],
+        "floors": [
+          {
+            "name": "接待",
+            "y": 1,
+            "max_y": 8
+          },
+          {
+            "name": "学籍",
+            "y": 9,
+            "max_y": 16
+          },
+          {
+            "name": "会商",
+            "y": 17,
+            "max_y": 24
+          },
+          {
+            "name": "院长议事",
+            "y": 25,
+            "max_y": 32
+          }
+        ],
+        "roof_min_y": 35,
+        "lifecycle": "draft",
+        "offline_limits": [
+          "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+          "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+        ],
+        "function_terms": [
+          "公共办事",
+          "议事",
+          "文献保管"
+        ],
+        "asset_tags": [],
+        "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+        "ground_plane": {
+          "y": 2,
+          "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+        },
+        "preview_context": {
+          "kind": "flat",
+          "land_surface_y": 2,
+          "padding": 3,
+          "surface": "grass"
+        },
+        "design_revision": 2,
+        "nbt_sha256": "96f92571beca9df92618a0340951b8c30e79ad47ba52f4c6a02aeaee0ae855ed"
+      },
+      "rawSize": {
+        "width": 55,
+        "height": 68,
+        "depth": 59
+      },
+      "roadEntrances": [
+        {
+          "entranceId": "front",
+          "position": {
+            "x": 27,
+            "z": 0
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "frontagePolicy": "FIXED_FRONT",
+      "entranceEvidence": [
+        {
+          "authorPoint": {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              27,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          "projectedBoundary": [
+            27,
+            0
+          ],
+          "clearanceChecked": true,
+          "worldRoadHeightValidated": false
+        }
+      ],
+      "validationSha256": "sha256:0680ad3ef96e4ac69dfb41e9032675bcfab1f9903607a9541abbdfe37621ca5d",
+      "groundPlaneY": 2
+    },
+    {
+      "templateRef": "studio:mg-14-v01",
+      "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-14-v01/structure.nbt",
+      "sourceSha256": "sha256:a04ea19a3836062fbde8a0064187b02873d54421eec96c28bd65130387121217",
+      "authorSha256": "sha256:f9ace520190ec290ba9f04cec6c245741247b5aca3bb0dd51aa0db186bb77d15",
+      "author": {
+        "schema": "structure-studio.author.v1",
+        "id": "MG-14-v01",
+        "name": "三环传送厅 · 三进尖拱与校准侧廊",
+        "family": "MG-14",
+        "civilization": "魔法学院新制",
+        "planning_role": "planning_role.key",
+        "size": [
+          61,
+          57,
+          69
+        ],
+        "terrain": {
+          "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+        },
+        "rooms": [
+          {
+            "id": "rings",
+            "name": "三进传送环庭",
+            "min": [
+              19,
+              2,
+              15
+            ],
+            "max": [
+              41,
+              25,
+              56
+            ],
+            "purpose": "有普通步行通路的静态传送环序列"
+          }
+        ],
+        "points": [
+          {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              30,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          {
+            "id": "service_5",
+            "kind": "work",
+            "pos": [
+              10,
+              2,
+              37
+            ],
+            "name": "目的地校准与出行登记",
+            "approach": [
+              10,
+              2,
+              37
+            ]
+          },
+          {
+            "id": "service_45",
+            "kind": "work",
+            "pos": [
+              50,
+              2,
+              37
+            ],
+            "name": "目的地校准与出行登记",
+            "approach": [
+              50,
+              2,
+              37
+            ]
+          },
+          {
+            "id": "portal",
+            "kind": "work",
+            "pos": [
+              30,
+              2,
+              43
+            ],
+            "name": "三环校准通道",
+            "approach": [
+              30,
+              2,
+              43
+            ]
+          }
+        ],
+        "connections": [],
+        "design_notes": [
+          "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+        ],
+        "differences": [],
+        "floors": [
+          {
+            "name": "首层",
+            "y": 1,
+            "max_y": 8
+          }
+        ],
+        "roof_min_y": 35,
+        "lifecycle": "draft",
+        "offline_limits": [
+          "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+          "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+        ],
+        "function_terms": [
+          "出行登记",
+          "传送设施维护"
+        ],
+        "asset_tags": [],
+        "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+        "ground_plane": {
+          "y": 2,
+          "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+        },
+        "preview_context": {
+          "kind": "flat",
+          "land_surface_y": 2,
+          "padding": 3,
+          "surface": "grass"
+        },
+        "design_revision": 2,
+        "nbt_sha256": "a04ea19a3836062fbde8a0064187b02873d54421eec96c28bd65130387121217"
+      },
+      "rawSize": {
+        "width": 61,
+        "height": 57,
+        "depth": 69
+      },
+      "roadEntrances": [
+        {
+          "entranceId": "front",
+          "position": {
+            "x": 30,
+            "z": 0
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "frontagePolicy": "FIXED_FRONT",
+      "entranceEvidence": [
+        {
+          "authorPoint": {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              30,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          "projectedBoundary": [
+            30,
+            0
+          ],
+          "clearanceChecked": true,
+          "worldRoadHeightValidated": false
+        }
+      ],
+      "validationSha256": "sha256:8184dab3fbcf9f435c2934ca5a20e24a20ca62dd59b6e8191843ece5caceb687",
+      "groundPlaneY": 2
+    },
+    {
+      "templateRef": "studio:mg-15-v01",
+      "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-15-v01/structure.nbt",
+      "sourceSha256": "sha256:79ec9aca84a2b63c0456ef8afaa38f71a1757899e2aef9771147b4b68349b299",
+      "authorSha256": "sha256:534035e093005aea36af7bbb1797868df635fbec28fff77a0981424e839f846a",
+      "author": {
+        "schema": "structure-studio.author.v1",
+        "id": "MG-15-v01",
+        "name": "愈疗圣堂 · 十字病房与日照庭",
+        "family": "MG-15",
+        "civilization": "魔法学院新制",
+        "planning_role": "planning_role.key",
+        "size": [
+          65,
+          55,
+          71
+        ],
+        "terrain": {
+          "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+        },
+        "rooms": [
+          {
+            "id": "care",
+            "name": "采光照护中厅",
+            "min": [
+              25,
+              2,
+              17
+            ],
+            "max": [
+              39,
+              18,
+              57
+            ],
+            "purpose": "两侧病房围绕高窗中厅展开"
+          }
+        ],
+        "points": [
+          {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              32,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          {
+            "id": "patient_11",
+            "kind": "bed",
+            "pos": [
+              11,
+              2,
+              44
+            ],
+            "name": "床位",
+            "approach": [
+              12,
+              2,
+              44
+            ]
+          },
+          {
+            "id": "patient_17",
+            "kind": "bed",
+            "pos": [
+              17,
+              2,
+              44
+            ],
+            "name": "床位",
+            "approach": [
+              18,
+              2,
+              44
+            ]
+          },
+          {
+            "id": "nurse_6",
+            "kind": "work",
+            "pos": [
+              14,
+              2,
+              37
+            ],
+            "name": "病房巡视与照护",
+            "approach": [
+              14,
+              2,
+              37
+            ]
+          },
+          {
+            "id": "patient_47",
+            "kind": "bed",
+            "pos": [
+              47,
+              2,
+              44
+            ],
+            "name": "床位",
+            "approach": [
+              48,
+              2,
+              44
+            ]
+          },
+          {
+            "id": "patient_53",
+            "kind": "bed",
+            "pos": [
+              53,
+              2,
+              44
+            ],
+            "name": "床位",
+            "approach": [
+              54,
+              2,
+              44
+            ]
+          },
+          {
+            "id": "nurse_42",
+            "kind": "work",
+            "pos": [
+              50,
+              2,
+              37
+            ],
+            "name": "病房巡视与照护",
+            "approach": [
+              50,
+              2,
+              37
+            ]
+          },
+          {
+            "id": "care",
+            "kind": "work",
+            "pos": [
+              32,
+              2,
+              49
+            ],
+            "name": "中央照护与配药台",
+            "approach": [
+              32,
+              2,
+              49
+            ]
+          }
+        ],
+        "connections": [],
+        "design_notes": [
+          "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+        ],
+        "differences": [],
+        "floors": [
+          {
+            "name": "首层",
+            "y": 1,
+            "max_y": 8
+          }
+        ],
+        "roof_min_y": 23,
+        "lifecycle": "draft",
+        "offline_limits": [
+          "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+          "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+        ],
+        "function_terms": [
+          "医疗",
+          "照料",
+          "休养"
+        ],
+        "asset_tags": [],
+        "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+        "ground_plane": {
+          "y": 2,
+          "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+        },
+        "preview_context": {
+          "kind": "flat",
+          "land_surface_y": 2,
+          "padding": 3,
+          "surface": "grass"
+        },
+        "design_revision": 2,
+        "nbt_sha256": "79ec9aca84a2b63c0456ef8afaa38f71a1757899e2aef9771147b4b68349b299"
+      },
+      "rawSize": {
+        "width": 65,
+        "height": 55,
+        "depth": 71
+      },
+      "roadEntrances": [
+        {
+          "entranceId": "front",
+          "position": {
+            "x": 32,
+            "z": 0
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "frontagePolicy": "FIXED_FRONT",
+      "entranceEvidence": [
+        {
+          "authorPoint": {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              32,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          "projectedBoundary": [
+            32,
+            0
+          ],
+          "clearanceChecked": true,
+          "worldRoadHeightValidated": false
+        }
+      ],
+      "validationSha256": "sha256:57b44d790722550da8fc29820452eab9a8415fe083be3a537df670cdc600c502",
+      "groundPlaneY": 2
+    },
+    {
+      "templateRef": "studio:mg-16-v01",
+      "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-16-v01/structure.nbt",
+      "sourceSha256": "sha256:d765805507c0fe35ab9be57a0637d4ecd83aec44e75ab7ef292bb447f79dc7b4",
+      "authorSha256": "sha256:a556a67e1e671ee605a71974d983ce82a829c1a270c663c33ff78040b4267af0",
+      "author": {
+        "schema": "structure-studio.author.v1",
+        "id": "MG-16-v01",
+        "name": "四柱晶核工坊 · 张拱主架与检修庭",
+        "family": "MG-16",
+        "civilization": "魔法学院新制",
+        "planning_role": "planning_role.key",
+        "size": [
+          65,
+          65,
+          65
+        ],
+        "terrain": {
+          "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+        },
+        "rooms": [
+          {
+            "id": "core",
+            "name": "张拱晶核庭",
+            "min": [
+              19,
+              2,
+              19
+            ],
+            "max": [
+              45,
+              45,
+              45
+            ],
+            "purpose": "四角主架与巨型晶核形成独立设备空间"
+          }
+        ],
+        "points": [
+          {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              32,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          {
+            "id": "repair",
+            "kind": "work",
+            "pos": [
+              21,
+              2,
+              32
+            ],
+            "name": "晶核外围检修通道",
+            "approach": [
+              21,
+              2,
+              32
+            ]
+          },
+          {
+            "id": "register",
+            "kind": "work",
+            "pos": [
+              32,
+              2,
+              13
+            ],
+            "name": "前部物资与停机登记",
+            "approach": [
+              32,
+              2,
+              13
+            ]
+          }
+        ],
+        "connections": [],
+        "design_notes": [
+          "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+        ],
+        "differences": [],
+        "floors": [
+          {
+            "name": "首层",
+            "y": 1,
+            "max_y": 8
+          }
+        ],
+        "roof_min_y": 50,
+        "lifecycle": "draft",
+        "offline_limits": [
+          "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+          "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+        ],
+        "function_terms": [
+          "魔法器材制作",
+          "能源设施维护"
+        ],
+        "asset_tags": [],
+        "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+        "ground_plane": {
+          "y": 2,
+          "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+        },
+        "preview_context": {
+          "kind": "flat",
+          "land_surface_y": 2,
+          "padding": 3,
+          "surface": "grass"
+        },
+        "design_revision": 2,
+        "nbt_sha256": "d765805507c0fe35ab9be57a0637d4ecd83aec44e75ab7ef292bb447f79dc7b4"
+      },
+      "rawSize": {
+        "width": 65,
+        "height": 65,
+        "depth": 65
+      },
+      "roadEntrances": [
+        {
+          "entranceId": "front",
+          "position": {
+            "x": 32,
+            "z": 0
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "frontagePolicy": "FIXED_FRONT",
+      "entranceEvidence": [
+        {
+          "authorPoint": {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              32,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          "projectedBoundary": [
+            32,
+            0
+          ],
+          "clearanceChecked": true,
+          "worldRoadHeightValidated": false
+        }
+      ],
+      "validationSha256": "sha256:d31f887e341ab63230969daba477a82833bc4053085de469836746e279a96a54",
+      "groundPlaneY": 2
+    },
+    {
+      "templateRef": "studio:mg-17-v01",
+      "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-17-v01/structure.nbt",
+      "sourceSha256": "sha256:403774b26f44f18928aca5954d0f02d85d4bd95f9ff41ca25894c0b5f9aef4ba",
+      "authorSha256": "sha256:3d6b5640dcb3dde88989313c033933516a6f7da1d46ec1faf380f46c89536932",
+      "author": {
+        "schema": "structure-studio.author.v1",
+        "id": "MG-17-v01",
+        "name": "导师小院 · 阶梯书斋与玻璃冬园",
+        "family": "MG-17",
+        "civilization": "魔法学院新制",
+        "planning_role": "planning_role.self_contained",
+        "size": [
+          47,
+          45,
+          53
+        ],
+        "terrain": {
+          "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+        },
+        "rooms": [
+          {
+            "id": "study",
+            "name": "书斋与会面厅",
+            "min": [
+              10,
+              2,
+              18
+            ],
+            "max": [
+              26,
+              8,
+              40
+            ],
+            "purpose": "导师家庭居住与独立书斋"
+          }
+        ],
+        "points": [
+          {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              23,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          {
+            "id": "bed_18",
+            "kind": "bed",
+            "pos": [
+              18,
+              10,
+              37
+            ],
+            "name": "床位",
+            "approach": [
+              19,
+              10,
+              37
+            ]
+          },
+          {
+            "id": "bed_23",
+            "kind": "bed",
+            "pos": [
+              23,
+              10,
+              37
+            ],
+            "name": "床位",
+            "approach": [
+              24,
+              10,
+              37
+            ]
+          },
+          {
+            "id": "study",
+            "kind": "work",
+            "pos": [
+              20,
+              2,
+              26
+            ],
+            "name": "导师书斋",
+            "approach": [
+              20,
+              2,
+              26
+            ]
+          },
+          {
+            "id": "upper",
+            "kind": "work",
+            "pos": [
+              19,
+              10,
+              32
+            ],
+            "name": "上层寝居",
+            "approach": [
+              19,
+              10,
+              32
+            ]
+          }
+        ],
+        "connections": [],
+        "design_notes": [
+          "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+        ],
+        "differences": [],
+        "floors": [
+          {
+            "name": "书斋与冬园",
+            "y": 1,
+            "max_y": 8
+          },
+          {
+            "name": "寝居",
+            "y": 9,
+            "max_y": 16
+          }
+        ],
+        "roof_min_y": 19,
+        "lifecycle": "draft",
+        "offline_limits": [
+          "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+          "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+        ],
+        "function_terms": [
+          "家庭居住",
+          "研究"
+        ],
+        "asset_tags": [],
+        "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+        "ground_plane": {
+          "y": 2,
+          "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+        },
+        "preview_context": {
+          "kind": "flat",
+          "land_surface_y": 2,
+          "padding": 3,
+          "surface": "grass"
+        },
+        "design_revision": 2,
+        "nbt_sha256": "403774b26f44f18928aca5954d0f02d85d4bd95f9ff41ca25894c0b5f9aef4ba"
+      },
+      "rawSize": {
+        "width": 47,
+        "height": 45,
+        "depth": 53
+      },
+      "roadEntrances": [
+        {
+          "entranceId": "front",
+          "position": {
+            "x": 23,
+            "z": 0
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "frontagePolicy": "FIXED_FRONT",
+      "entranceEvidence": [
+        {
+          "authorPoint": {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              23,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          "projectedBoundary": [
+            23,
+            0
+          ],
+          "clearanceChecked": true,
+          "worldRoadHeightValidated": false
+        }
+      ],
+      "validationSha256": "sha256:5f86c601929ecb6b5e5d5ea371fda483a1faa916e3068e609e4df50e34900a98",
+      "groundPlaneY": 2
+    },
+    {
+      "templateRef": "studio:mg-18-v01",
+      "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-18-v01/structure.nbt",
+      "sourceSha256": "sha256:37102e27c7a584009689244d888fe77205fc2906404ac2063821367de92c0161",
+      "authorSha256": "sha256:512515dcd8daf72eae8e69fc80f3eb9b439dd0958bc78e7e22762584de367e2e",
+      "author": {
+        "schema": "structure-studio.author.v1",
+        "id": "MG-18-v01",
+        "name": "药剂作坊 · 错顶工间与冷却烟塔",
+        "family": "MG-18",
+        "civilization": "魔法学院新制",
+        "planning_role": "planning_role.fill",
+        "size": [
+          49,
+          46,
+          51
+        ],
+        "terrain": {
+          "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+        },
+        "rooms": [
+          {
+            "id": "workshop",
+            "name": "前后分开的药剂工间",
+            "min": [
+              9,
+              2,
+              12
+            ],
+            "max": [
+              23,
+              12,
+              37
+            ],
+            "purpose": "前部配售与后部蒸馏工序分离"
+          }
+        ],
+        "points": [
+          {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              24,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          {
+            "id": "mix",
+            "kind": "work",
+            "pos": [
+              17,
+              2,
+              25
+            ],
+            "name": "药剂配比与配售",
+            "approach": [
+              17,
+              2,
+              25
+            ]
+          },
+          {
+            "id": "cool",
+            "kind": "work",
+            "pos": [
+              33,
+              2,
+              35
+            ],
+            "name": "后场冷却工间",
+            "approach": [
+              33,
+              2,
+              35
+            ]
+          }
+        ],
+        "connections": [],
+        "design_notes": [
+          "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+        ],
+        "differences": [],
+        "floors": [
+          {
+            "name": "首层",
+            "y": 1,
+            "max_y": 8
+          }
+        ],
+        "roof_min_y": 15,
+        "lifecycle": "draft",
+        "offline_limits": [
+          "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+          "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+        ],
+        "function_terms": [
+          "药剂制作",
+          "商品零售"
+        ],
+        "asset_tags": [],
+        "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+        "ground_plane": {
+          "y": 2,
+          "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+        },
+        "preview_context": {
+          "kind": "flat",
+          "land_surface_y": 2,
+          "padding": 3,
+          "surface": "grass"
+        },
+        "design_revision": 2,
+        "nbt_sha256": "37102e27c7a584009689244d888fe77205fc2906404ac2063821367de92c0161"
+      },
+      "rawSize": {
+        "width": 49,
+        "height": 46,
+        "depth": 51
+      },
+      "roadEntrances": [
+        {
+          "entranceId": "front",
+          "position": {
+            "x": 24,
+            "z": 0
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "frontagePolicy": "FIXED_FRONT",
+      "entranceEvidence": [
+        {
+          "authorPoint": {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              24,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          "projectedBoundary": [
+            24,
+            0
+          ],
+          "clearanceChecked": true,
+          "worldRoadHeightValidated": false
+        }
+      ],
+      "validationSha256": "sha256:0e74db189cdd0cf1267019b134bcec5ca2590710e5dd1f290e0e609d23e2607d",
+      "groundPlaneY": 2
+    },
+    {
+      "templateRef": "studio:mg-19-v01",
+      "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-19-v01/structure.nbt",
+      "sourceSha256": "sha256:8d68d65e4d11398122a8de601400b3baaaf98fffad2ca70ef11969b72a65a747",
+      "authorSha256": "sha256:fb03dc39e7fe05715df312ebab5bd68ab456b199745a074ad9418a2fde516ff2",
+      "author": {
+        "schema": "structure-studio.author.v1",
+        "id": "MG-19-v01",
+        "name": "卷轴抄写所 · 连拱采光书廊",
+        "family": "MG-19",
+        "civilization": "魔法学院新制",
+        "planning_role": "planning_role.fill",
+        "size": [
+          57,
+          39,
+          45
+        ],
+        "terrain": {
+          "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+        },
+        "rooms": [
+          {
+            "id": "cloister",
+            "name": "抄写中廊",
+            "min": [
+              24,
+              2,
+              12
+            ],
+            "max": [
+              32,
+              10,
+              34
+            ],
+            "purpose": "双工作翼之间的连续拱廊"
+          }
+        ],
+        "points": [
+          {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              28,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          {
+            "id": "copy_7",
+            "kind": "work",
+            "pos": [
+              15,
+              2,
+              21
+            ],
+            "name": "沿高窗排列的抄写桌",
+            "approach": [
+              15,
+              2,
+              21
+            ]
+          },
+          {
+            "id": "copy_34",
+            "kind": "work",
+            "pos": [
+              42,
+              2,
+              21
+            ],
+            "name": "沿高窗排列的抄写桌",
+            "approach": [
+              42,
+              2,
+              21
+            ]
+          }
+        ],
+        "connections": [],
+        "design_notes": [
+          "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+        ],
+        "differences": [],
+        "floors": [
+          {
+            "name": "首层",
+            "y": 1,
+            "max_y": 8
+          }
+        ],
+        "roof_min_y": 15,
+        "lifecycle": "draft",
+        "offline_limits": [
+          "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+          "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+        ],
+        "function_terms": [
+          "文献抄写",
+          "书籍制作"
+        ],
+        "asset_tags": [],
+        "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+        "ground_plane": {
+          "y": 2,
+          "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+        },
+        "preview_context": {
+          "kind": "flat",
+          "land_surface_y": 2,
+          "padding": 3,
+          "surface": "grass"
+        },
+        "design_revision": 2,
+        "nbt_sha256": "8d68d65e4d11398122a8de601400b3baaaf98fffad2ca70ef11969b72a65a747"
+      },
+      "rawSize": {
+        "width": 57,
+        "height": 39,
+        "depth": 45
+      },
+      "roadEntrances": [
+        {
+          "entranceId": "front",
+          "position": {
+            "x": 28,
+            "z": 0
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "frontagePolicy": "FIXED_FRONT",
+      "entranceEvidence": [
+        {
+          "authorPoint": {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              28,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          "projectedBoundary": [
+            28,
+            0
+          ],
+          "clearanceChecked": true,
+          "worldRoadHeightValidated": false
+        }
+      ],
+      "validationSha256": "sha256:9e13b158cd93cb744e5a585e4f7a0f0878110978bb3e42f28eeeed7db2cf127f",
+      "groundPlaneY": 2
+    },
+    {
+      "templateRef": "studio:mg-20-v01",
+      "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-20-v01/structure.nbt",
+      "sourceSha256": "sha256:887470a2abf86d4a8ca01b88b127076be81579668d9be8d3d630f77bee1ba5fb",
+      "authorSha256": "sha256:e3a8010f0bad22def760b17d46af6f455b9e0a8c70e9b76a510e84d5c1142f54",
+      "author": {
+        "schema": "structure-studio.author.v1",
+        "id": "MG-20-v01",
+        "name": "封印材料库 · 厚壁券室与卸货前庭",
+        "family": "MG-20",
+        "civilization": "魔法学院新制",
+        "planning_role": "planning_role.fill",
+        "size": [
+          45,
+          38,
+          55
+        ],
+        "terrain": {
+          "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+        },
+        "rooms": [
+          {
+            "id": "stock",
+            "name": "封印材料券室",
+            "min": [
+              11,
+              2,
+              20
+            ],
+            "max": [
+              33,
+              12,
+              44
+            ],
+            "purpose": "左右成组货架与居中搬运通路"
+          }
+        ],
+        "points": [
+          {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              22,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          {
+            "id": "inventory",
+            "kind": "work",
+            "pos": [
+              22,
+              2,
+              34
+            ],
+            "name": "材料清点主通道",
+            "approach": [
+              22,
+              2,
+              34
+            ]
+          }
+        ],
+        "connections": [],
+        "design_notes": [
+          "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+        ],
+        "differences": [],
+        "floors": [
+          {
+            "name": "首层",
+            "y": 1,
+            "max_y": 8
+          }
+        ],
+        "roof_min_y": 15,
+        "lifecycle": "draft",
+        "offline_limits": [
+          "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+          "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+        ],
+        "function_terms": [
+          "货物仓储",
+          "材料保管"
+        ],
+        "asset_tags": [],
+        "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+        "ground_plane": {
+          "y": 2,
+          "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+        },
+        "preview_context": {
+          "kind": "flat",
+          "land_surface_y": 2,
+          "padding": 3,
+          "surface": "grass"
+        },
+        "design_revision": 2,
+        "nbt_sha256": "887470a2abf86d4a8ca01b88b127076be81579668d9be8d3d630f77bee1ba5fb"
+      },
+      "rawSize": {
+        "width": 45,
+        "height": 38,
+        "depth": 55
+      },
+      "roadEntrances": [
+        {
+          "entranceId": "front",
+          "position": {
+            "x": 22,
+            "z": 0
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "frontagePolicy": "FIXED_FRONT",
+      "entranceEvidence": [
+        {
+          "authorPoint": {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              22,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          "projectedBoundary": [
+            22,
+            0
+          ],
+          "clearanceChecked": true,
+          "worldRoadHeightValidated": false
+        }
+      ],
+      "validationSha256": "sha256:2d8bc0b3c388a0c8af15494f2cb68d03cbf4cbbb84ce84c4b84c51c2d1a34f57",
+      "groundPlaneY": 2
+    },
+    {
+      "templateRef": "studio:mg-21-v01",
+      "sourceNbt": "asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-21-v01/structure.nbt",
+      "sourceSha256": "sha256:8d91941b897da9becd5a3d6555cedd1e3219b3b1b6a8ac2bf8c8edc323c6d01d",
+      "authorSha256": "sha256:14d1906d10dd7b7206e5c2d2d50f200df1af646a90dd37abf86f9cdcc48cf6b5",
+      "author": {
+        "schema": "structure-studio.author.v1",
+        "id": "MG-21-v01",
+        "name": "教学玻璃温室 · 三跨肋架与试植床",
+        "family": "MG-21",
+        "civilization": "魔法学院新制",
+        "planning_role": "planning_role.fill",
+        "size": [
+          59,
+          34,
+          51
+        ],
+        "terrain": {
+          "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+        },
+        "rooms": [
+          {
+            "id": "greenhouse",
+            "name": "三跨试植温室",
+            "min": [
+              9,
+              2,
+              15
+            ],
+            "max": [
+              49,
+              18,
+              40
+            ],
+            "purpose": "三种采光试植床与独立维护通道"
+          }
+        ],
+        "points": [
+          {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              29,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          {
+            "id": "growing_8",
+            "kind": "work",
+            "pos": [
+              14,
+              2,
+              27
+            ],
+            "name": "温室试植与通行带",
+            "approach": [
+              14,
+              2,
+              27
+            ]
+          },
+          {
+            "id": "growing_23",
+            "kind": "work",
+            "pos": [
+              29,
+              2,
+              27
+            ],
+            "name": "温室试植与通行带",
+            "approach": [
+              29,
+              2,
+              27
+            ]
+          },
+          {
+            "id": "growing_38",
+            "kind": "work",
+            "pos": [
+              44,
+              2,
+              27
+            ],
+            "name": "温室试植与通行带",
+            "approach": [
+              44,
+              2,
+              27
+            ]
+          }
+        ],
+        "connections": [],
+        "design_notes": [
+          "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+        ],
+        "differences": [],
+        "floors": [
+          {
+            "name": "首层",
+            "y": 1,
+            "max_y": 8
+          }
+        ],
+        "roof_min_y": 12,
+        "lifecycle": "draft",
+        "offline_limits": [
+          "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+          "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+        ],
+        "function_terms": [
+          "植物教学",
+          "园艺养护"
+        ],
+        "asset_tags": [],
+        "source": "tools/structure_studio/studio/arcane_revision2.py:BUILDERS",
+        "ground_plane": {
+          "y": 2,
+          "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+        },
+        "preview_context": {
+          "kind": "flat",
+          "land_surface_y": 2,
+          "padding": 3,
+          "surface": "grass"
+        },
+        "design_revision": 2,
+        "nbt_sha256": "8d91941b897da9becd5a3d6555cedd1e3219b3b1b6a8ac2bf8c8edc323c6d01d"
+      },
+      "rawSize": {
+        "width": 59,
+        "height": 34,
+        "depth": 51
+      },
+      "roadEntrances": [
+        {
+          "entranceId": "front",
+          "position": {
+            "x": 29,
+            "z": 0
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "frontagePolicy": "FIXED_FRONT",
+      "entranceEvidence": [
+        {
+          "authorPoint": {
+            "id": "street",
+            "kind": "entrance",
+            "pos": [
+              29,
+              2,
+              0
+            ],
+            "name": "临街步行入口",
+            "facing": "north"
+          },
+          "projectedBoundary": [
+            29,
+            0
+          ],
+          "clearanceChecked": true,
+          "worldRoadHeightValidated": false
+        }
+      ],
+      "validationSha256": "sha256:3b4e3e0e17f9cf030d711712cb845c78b5621651e9c80c11a1e334f218a981ec",
+      "groundPlaneY": 2
+    }
+  ],
+  "omitted": [
+    {
+      "id": "MG-25-v01",
+      "reason": "Missing explicit entrance facing: MG-25-v01"
+    },
+    {
+      "id": "MG-26-v01",
+      "reason": "Missing explicit entrance facing: MG-26-v01"
+    },
+    {
+      "id": "MG-27-v01",
+      "reason": "Missing explicit entrance facing: MG-27-v01"
+    },
+    {
+      "id": "MG-28-v01",
+      "reason": "Missing explicit entrance facing: MG-28-v01"
+    },
+    {
+      "id": "MG-29-v01",
+      "reason": "Missing explicit entrance facing: MG-29-v01"
+    },
+    {
+      "id": "MG-30-v01",
+      "reason": "Missing explicit entrance facing: MG-30-v01"
+    },
+    {
+      "id": "MG-31-v01",
+      "reason": "Missing explicit entrance facing: MG-31-v01"
+    },
+    {
+      "id": "MG-32-v01",
+      "reason": "Missing explicit entrance facing: MG-32-v01"
+    },
+    {
+      "id": "MG-33-v01",
+      "reason": "Missing explicit entrance facing: MG-33-v01"
+    },
+    {
+      "id": "MG-34-v02",
+      "reason": "Missing explicit entrance facing: MG-34-v02"
+    },
+    {
+      "id": "MG-35-v01",
+      "reason": "Missing explicit entrance facing: MG-35-v01"
+    },
+    {
+      "id": "MG-36-v01",
+      "reason": "Missing explicit entrance facing: MG-36-v01"
+    },
+    {
+      "id": "MG-37-v02",
+      "reason": "Missing explicit entrance facing: MG-37-v02"
+    },
+    {
+      "id": "MG-38-v01",
+      "reason": "Missing explicit entrance facing: MG-38-v01"
+    },
+    {
+      "id": "MG-43-v01",
+      "reason": "Missing explicit entrance facing: MG-43-v01"
+    },
+    {
+      "id": "MG-44-v01",
+      "reason": "Missing explicit entrance facing: MG-44-v01"
+    },
+    {
+      "id": "MG-45-v01",
+      "reason": "Missing explicit entrance facing: MG-45-v01"
+    }
+  ],
+  "styleCounts": {
+    "魔法学院新制": 18
+  },
+  "groundPlaneCoverage": {
+    "markedCount": 18,
+    "unmarkedCount": 0,
+    "unmarkedIds": []
+  },
+  "semanticReviewScope": "仅核对已选 Studio 作者标签到测试目录的逐字段映射；不代表原模型图审通过",
+  "entranceAuthority": "legacy_catalog_unreviewed",
+  "entranceReviewScope": "沿作者标明朝向投影至边界并检查净空；未验证世界道路高度与接地",
+  "cachedNavigationVerifiedByNbtHash": true,
+  "gameplayValidated": false,
+  "siteConditionsRuntimeSupported": false,
+  "rawNbtUnmodified": true
+}

@@ -1,0 +1,1302 @@
+{
+  "schema": "realmfolk.core-task-pack.experiment.v1",
+  "programs": [
+    {
+      "id": "starfall_welcome",
+      "name": "学院初访 · 跟随星光",
+      "program": "academy_research",
+      "hostGroup": "starfall",
+      "partnerGroup": "inkwell",
+      "siteFunction": "天象观测",
+      "theme": "celestial_notes",
+      "routes": {
+        "arcane": {
+          "name": "提供魔法材料",
+          "item": "ars_nouveau:source_gem",
+          "count": 4,
+          "contribution": "研究材料已到位"
+        },
+        "industry": {
+          "name": "提供工业制品",
+          "item": "create:andesite_alloy",
+          "count": 6,
+          "contribution": "设备维护材料已到位"
+        },
+        "provisions": {
+          "name": "承担团队伙食",
+          "item": "farmersdelight:tomato",
+          "count": 16,
+          "contribution": "团队补给已到位"
+        }
+      },
+      "rewardChoices": [
+        "arcane_starter",
+        "field_starter",
+        "workshop_starter"
+      ],
+      "purpose": "让来访者认识研习会与藏书家族，选择擅长的方式支持研究，再到观测台留下自己的记录。",
+      "welcome": "学院欢迎会做事的人。我们正重新整理星穹观测记录，魔法、制造和补给都能帮上忙。先去见见替我们保管文献的墨泉家族吧。",
+      "partnerLine": "星落的人擅长仰望天空，我们替他们记住过去。去观测台前，先帮他们解决这一轮研究的实际需要。",
+      "actors": [
+        {
+          "id": "18e7fff3-7938-3efa-847c-38d2d5896dfb",
+          "name": "菲恩·18e7",
+          "role": "host",
+          "profession": "星落研习会·执事",
+          "group": "starfall",
+          "place": "council_fill_003"
+        },
+        {
+          "id": "0484e34c-f033-300e-b700-f7516dad83c9",
+          "name": "洛恩·0484",
+          "role": "partner",
+          "profession": "墨泉家族·执事",
+          "group": "inkwell",
+          "place": "archives_required_001"
+        }
+      ],
+      "site": "observation_required_001",
+      "themeData": {
+        "name": "重开星穹观测记录",
+        "siteTerms": [
+          "天象观测"
+        ],
+        "activity": "整理观测记录",
+        "proof": "新的观测笔记",
+        "effect": "星穹研究用品窗口开放，观测资料开始接受查阅",
+        "serviceName": "星穹研究用品",
+        "serviceItems": [
+          "ars_nouveau:source_gem",
+          "ars_nouveau:blank_parchment"
+        ]
+      },
+      "stages": [
+        {
+          "type": "meet_community",
+          "title": "认识他们的生活",
+          "reward": {
+            "coins": 12,
+            "favor": 2
+          }
+        },
+        {
+          "type": "professional_supply",
+          "title": "用你的专长帮忙",
+          "reward": {
+            "coins": 16,
+            "favor": 4
+          }
+        },
+        {
+          "type": "shared_research",
+          "title": "重开星穹观测记录",
+          "reward": {
+            "coins": 0,
+            "favor": 6
+          }
+        }
+      ],
+      "rewards": {
+        "arcane_starter": {
+          "name": "魔法研究补给",
+          "items": {
+            "ars_nouveau:source_gem": 4,
+            "ars_nouveau:blank_parchment": 2
+          }
+        },
+        "field_starter": {
+          "name": "野外实践补给",
+          "items": {
+            "ars_nouveau:magebloom_fiber": 4,
+            "ars_nouveau:source_gem": 2
+          }
+        },
+        "workshop_starter": {
+          "name": "工坊合作补给",
+          "items": {
+            "create:andesite_alloy": 8,
+            "ars_nouveau:source_gem": 1
+          }
+        }
+      },
+      "service": {
+        "ars_nouveau:source_gem": {
+          "price": 20,
+          "count": 6
+        },
+        "ars_nouveau:blank_parchment": {
+          "price": 12,
+          "count": 6
+        }
+      }
+    },
+    {
+      "id": "greenhand_welcome",
+      "name": "学院初访 · 顺着青枝",
+      "program": "academy_research",
+      "hostGroup": "greenhand",
+      "partnerGroup": "wayfarer",
+      "siteFunction": "药草栽培",
+      "theme": "botanical_notes",
+      "routes": {
+        "arcane": {
+          "name": "提供魔法材料",
+          "item": "ars_nouveau:source_gem",
+          "count": 4,
+          "contribution": "研究材料已到位"
+        },
+        "industry": {
+          "name": "提供工业制品",
+          "item": "create:andesite_alloy",
+          "count": 6,
+          "contribution": "设备维护材料已到位"
+        },
+        "provisions": {
+          "name": "承担团队伙食",
+          "item": "farmersdelight:tomato",
+          "count": 16,
+          "contribution": "团队补给已到位"
+        }
+      },
+      "rewardChoices": [
+        "field_starter",
+        "arcane_starter",
+        "workshop_starter"
+      ],
+      "purpose": "让来访者认识实践社与远行登记处，通过供给和温室观察参与药草资料整理。",
+      "welcome": "青枝的课程从泥土开始。我们正整理药草图册，缺材料的人也可以用工具维护或伙食补给参与。先向远行登记处了解我们的外出准备吧。",
+      "partnerLine": "实践社每次出发，都要在这里留下准备记录。这回先在学院温室里熟悉材料，再谈真正的野外旅程。",
+      "actors": [
+        {
+          "id": "0ae20743-a471-3bf3-9f53-467ed6313b40",
+          "name": "艾琳·0ae2",
+          "role": "host",
+          "profession": "青枝实践社·执事",
+          "group": "greenhand",
+          "place": "forest_school_fill_004"
+        },
+        {
+          "id": "0c7f7d8e-fd17-3a19-a43c-6c26a3d79a75",
+          "name": "米拉·0c7f",
+          "role": "partner",
+          "profession": "远行登记处·执事",
+          "group": "wayfarer",
+          "place": "reception_required_001"
+        }
+      ],
+      "site": "forest_school_required_003",
+      "themeData": {
+        "name": "整理青枝药草图册",
+        "siteTerms": [
+          "药草栽培"
+        ],
+        "activity": "记录温室样本",
+        "proof": "新的栽培笔记",
+        "effect": "青枝实践用品窗口开放，温室观察资料开始接受查阅",
+        "serviceName": "青枝实践用品",
+        "serviceItems": [
+          "ars_nouveau:magebloom_fiber",
+          "ars_nouveau:source_gem"
+        ]
+      },
+      "stages": [
+        {
+          "type": "meet_community",
+          "title": "认识他们的生活",
+          "reward": {
+            "coins": 12,
+            "favor": 2
+          }
+        },
+        {
+          "type": "professional_supply",
+          "title": "用你的专长帮忙",
+          "reward": {
+            "coins": 16,
+            "favor": 4
+          }
+        },
+        {
+          "type": "shared_research",
+          "title": "整理青枝药草图册",
+          "reward": {
+            "coins": 0,
+            "favor": 6
+          }
+        }
+      ],
+      "rewards": {
+        "field_starter": {
+          "name": "野外实践补给",
+          "items": {
+            "ars_nouveau:magebloom_fiber": 4,
+            "ars_nouveau:source_gem": 2
+          }
+        },
+        "arcane_starter": {
+          "name": "魔法研究补给",
+          "items": {
+            "ars_nouveau:source_gem": 4,
+            "ars_nouveau:blank_parchment": 2
+          }
+        },
+        "workshop_starter": {
+          "name": "工坊合作补给",
+          "items": {
+            "create:andesite_alloy": 8,
+            "ars_nouveau:source_gem": 1
+          }
+        }
+      },
+      "service": {
+        "ars_nouveau:magebloom_fiber": {
+          "price": 16,
+          "count": 6
+        },
+        "ars_nouveau:source_gem": {
+          "price": 20,
+          "count": 6
+        }
+      }
+    }
+  ],
+  "buildings": {
+    "archives_required_001": {
+      "id": "archives_required_001",
+      "asset": "studio:mg-02-v01",
+      "group": "archives",
+      "terms": [
+        "书籍借阅",
+        "文献保管",
+        "阅读"
+      ],
+      "bounds": {
+        "minX": -2930,
+        "minZ": 5055,
+        "maxX": -2870,
+        "maxZ": 5119
+      },
+      "position": {
+        "x": -2900,
+        "z": 5087
+      }
+    },
+    "archives_required_002": {
+      "id": "archives_required_002",
+      "asset": "studio:mg-19-v01",
+      "group": "archives",
+      "terms": [
+        "文献抄写",
+        "书籍制作"
+      ],
+      "bounds": {
+        "minX": -2983,
+        "minZ": 5122,
+        "maxX": -2939,
+        "maxZ": 5178
+      },
+      "position": {
+        "x": -2961,
+        "z": 5150
+      }
+    },
+    "archives_required_003": {
+      "id": "archives_required_003",
+      "asset": "studio:mg-38-v01",
+      "group": "archives",
+      "terms": [
+        "阅读",
+        "研究",
+        "研讨"
+      ],
+      "bounds": {
+        "minX": -2868,
+        "minZ": 5135,
+        "maxX": -2838,
+        "maxZ": 5165
+      },
+      "position": {
+        "x": -2853,
+        "z": 5150
+      }
+    },
+    "archives_required_004": {
+      "id": "archives_required_004",
+      "asset": "studio:mg-29-v01",
+      "group": "archives",
+      "terms": [
+        "花草观赏",
+        "休憩",
+        "阅读"
+      ],
+      "bounds": {
+        "minX": -2908,
+        "minZ": 5180,
+        "maxX": -2892,
+        "maxZ": 5196
+      },
+      "position": {
+        "x": -2900,
+        "z": 5188
+      }
+    },
+    "forest_school_required_001": {
+      "id": "forest_school_required_001",
+      "asset": "studio:mg-32-v01",
+      "group": "forest_school",
+      "terms": [
+        "工具保管",
+        "园艺养护",
+        "林业教学"
+      ],
+      "bounds": {
+        "minX": -3177,
+        "minZ": 5103,
+        "maxX": -3161,
+        "maxZ": 5123
+      },
+      "position": {
+        "x": -3169,
+        "z": 5113
+      }
+    },
+    "forest_school_required_002": {
+      "id": "forest_school_required_002",
+      "asset": "studio:mg-33-v01",
+      "group": "forest_school",
+      "terms": [
+        "林业教学",
+        "苗木培育"
+      ],
+      "bounds": {
+        "minX": -3149,
+        "minZ": 5102,
+        "maxX": -3127,
+        "maxZ": 5124
+      },
+      "position": {
+        "x": -3138,
+        "z": 5113
+      }
+    },
+    "forest_school_required_003": {
+      "id": "forest_school_required_003",
+      "asset": "studio:mg-31-v01",
+      "group": "forest_school",
+      "terms": [
+        "植物教学",
+        "园艺养护",
+        "药草栽培"
+      ],
+      "bounds": {
+        "minX": -3118,
+        "minZ": 5100,
+        "maxX": -3096,
+        "maxZ": 5126
+      },
+      "position": {
+        "x": -3107,
+        "z": 5113
+      }
+    },
+    "observation_required_001": {
+      "id": "observation_required_001",
+      "asset": "studio:mg-03-v01",
+      "group": "observation",
+      "terms": [
+        "天象观测",
+        "研究"
+      ],
+      "bounds": {
+        "minX": -3134,
+        "minZ": 4967,
+        "maxX": -3084,
+        "maxZ": 5021
+      },
+      "position": {
+        "x": -3109,
+        "z": 4994
+      }
+    },
+    "observation_required_002": {
+      "id": "observation_required_002",
+      "asset": "studio:mg-38-v01",
+      "group": "observation",
+      "terms": [
+        "阅读",
+        "研究",
+        "研讨"
+      ],
+      "bounds": {
+        "minX": -3110,
+        "minZ": 5042,
+        "maxX": -3080,
+        "maxZ": 5072
+      },
+      "position": {
+        "x": -3095,
+        "z": 5057
+      }
+    },
+    "observation_required_003": {
+      "id": "observation_required_003",
+      "asset": "studio:mg-43-v01",
+      "group": "observation",
+      "terms": [
+        "实验教学",
+        "研究"
+      ],
+      "bounds": {
+        "minX": -3070,
+        "minZ": 4997,
+        "maxX": -3048,
+        "maxZ": 5021
+      },
+      "position": {
+        "x": -3059,
+        "z": 5009
+      }
+    },
+    "forest_school_fill_004": {
+      "id": "forest_school_fill_004",
+      "asset": "studio:mg-33-v01",
+      "group": "forest_school",
+      "terms": [
+        "林业教学",
+        "苗木培育"
+      ],
+      "bounds": {
+        "minX": -3180,
+        "minZ": 5135,
+        "maxX": -3158,
+        "maxZ": 5157
+      },
+      "position": {
+        "x": -3169,
+        "z": 5146
+      }
+    },
+    "forest_school_fill_005": {
+      "id": "forest_school_fill_005",
+      "asset": "studio:mg-32-v01",
+      "group": "forest_school",
+      "terms": [
+        "工具保管",
+        "园艺养护",
+        "林业教学"
+      ],
+      "bounds": {
+        "minX": -3146,
+        "minZ": 5136,
+        "maxX": -3130,
+        "maxZ": 5156
+      },
+      "position": {
+        "x": -3138,
+        "z": 5146
+      }
+    },
+    "forest_school_fill_006": {
+      "id": "forest_school_fill_006",
+      "asset": "studio:mg-33-v01",
+      "group": "forest_school",
+      "terms": [
+        "林业教学",
+        "苗木培育"
+      ],
+      "bounds": {
+        "minX": -3118,
+        "minZ": 5135,
+        "maxX": -3096,
+        "maxZ": 5157
+      },
+      "position": {
+        "x": -3107,
+        "z": 5146
+      }
+    },
+    "observation_fill_004": {
+      "id": "observation_fill_004",
+      "asset": "studio:mg-43-v01",
+      "group": "observation",
+      "terms": [
+        "实验教学",
+        "研究"
+      ],
+      "bounds": {
+        "minX": -3066,
+        "minZ": 5050,
+        "maxX": -3044,
+        "maxZ": 5074
+      },
+      "position": {
+        "x": -3055,
+        "z": 5062
+      }
+    },
+    "observation_fill_005": {
+      "id": "observation_fill_005",
+      "asset": "studio:mg-38-v01",
+      "group": "observation",
+      "terms": [
+        "阅读",
+        "研究",
+        "研讨"
+      ],
+      "bounds": {
+        "minX": -3071,
+        "minZ": 4956,
+        "maxX": -3041,
+        "maxZ": 4986
+      },
+      "position": {
+        "x": -3056,
+        "z": 4971
+      }
+    },
+    "daily_care_required_001": {
+      "id": "daily_care_required_001",
+      "asset": "studio:mg-15-v01",
+      "group": "daily_care",
+      "terms": [
+        "医疗",
+        "照料",
+        "休养"
+      ],
+      "bounds": {
+        "minX": -2860,
+        "minZ": 5248,
+        "maxX": -2796,
+        "maxZ": 5318
+      },
+      "position": {
+        "x": -2828,
+        "z": 5283
+      }
+    },
+    "daily_care_required_002": {
+      "id": "daily_care_required_002",
+      "asset": "studio:mg-28-v01",
+      "group": "daily_care",
+      "terms": [
+        "餐饮",
+        "集体用餐"
+      ],
+      "bounds": {
+        "minX": -2816,
+        "minZ": 5339,
+        "maxX": -2792,
+        "maxZ": 5365
+      },
+      "position": {
+        "x": -2804,
+        "z": 5352
+      }
+    },
+    "daily_care_required_003": {
+      "id": "daily_care_required_003",
+      "asset": "studio:mg-44-v01",
+      "group": "daily_care",
+      "terms": [
+        "洗浴",
+        "洗衣",
+        "生活服务"
+      ],
+      "bounds": {
+        "minX": -2780,
+        "minZ": 5294,
+        "maxX": -2758,
+        "maxZ": 5318
+      },
+      "position": {
+        "x": -2769,
+        "z": 5306
+      }
+    },
+    "daily_care_required_004": {
+      "id": "daily_care_required_004",
+      "asset": "studio:mg-45-v01",
+      "group": "daily_care",
+      "terms": [
+        "日用品交易",
+        "生活服务"
+      ],
+      "bounds": {
+        "minX": -2776,
+        "minZ": 5347,
+        "maxX": -2752,
+        "maxZ": 5371
+      },
+      "position": {
+        "x": -2764,
+        "z": 5359
+      }
+    },
+    "residence_required_001": {
+      "id": "residence_required_001",
+      "asset": "studio:mg-37-v02",
+      "group": "residence",
+      "terms": [
+        "学生住宿",
+        "自习",
+        "庭院休憩"
+      ],
+      "bounds": {
+        "minX": -2752,
+        "minZ": 5116,
+        "maxX": -2708,
+        "maxZ": 5154
+      },
+      "position": {
+        "x": -2730,
+        "z": 5135
+      }
+    },
+    "residence_required_002": {
+      "id": "residence_required_002",
+      "asset": "studio:mg-27-v01",
+      "group": "residence",
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "bounds": {
+        "minX": -2785,
+        "minZ": 5176,
+        "maxX": -2763,
+        "maxZ": 5194
+      },
+      "position": {
+        "x": -2774,
+        "z": 5185
+      }
+    },
+    "resident_rooms_required_001": {
+      "id": "resident_rooms_required_001",
+      "asset": "studio:mg-27-v01",
+      "group": "resident_rooms",
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "bounds": {
+        "minX": -2815,
+        "minZ": 5005,
+        "maxX": -2797,
+        "maxZ": 5027
+      },
+      "position": {
+        "x": -2806,
+        "z": 5016
+      }
+    },
+    "daily_care_fill_005": {
+      "id": "daily_care_fill_005",
+      "asset": "studio:mg-44-v01",
+      "group": "daily_care",
+      "terms": [
+        "洗浴",
+        "洗衣",
+        "生活服务"
+      ],
+      "bounds": {
+        "minX": -2781,
+        "minZ": 5259,
+        "maxX": -2759,
+        "maxZ": 5283
+      },
+      "position": {
+        "x": -2770,
+        "z": 5271
+      }
+    },
+    "residence_fill_003": {
+      "id": "residence_fill_003",
+      "asset": "studio:mg-27-v01",
+      "group": "residence",
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "bounds": {
+        "minX": -2698,
+        "minZ": 5176,
+        "maxX": -2676,
+        "maxZ": 5194
+      },
+      "position": {
+        "x": -2687,
+        "z": 5185
+      }
+    },
+    "residence_fill_004": {
+      "id": "residence_fill_004",
+      "asset": "studio:mg-27-v01",
+      "group": "residence",
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "bounds": {
+        "minX": -2739,
+        "minZ": 5215,
+        "maxX": -2721,
+        "maxZ": 5237
+      },
+      "position": {
+        "x": -2730,
+        "z": 5226
+      }
+    },
+    "resident_rooms_fill_002": {
+      "id": "resident_rooms_fill_002",
+      "asset": "studio:mg-27-v01",
+      "group": "resident_rooms",
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "bounds": {
+        "minX": -2788,
+        "minZ": 5005,
+        "maxX": -2770,
+        "maxZ": 5027
+      },
+      "position": {
+        "x": -2779,
+        "z": 5016
+      }
+    },
+    "resident_rooms_fill_003": {
+      "id": "resident_rooms_fill_003",
+      "asset": "studio:mg-27-v01",
+      "group": "resident_rooms",
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "bounds": {
+        "minX": -2761,
+        "minZ": 5005,
+        "maxX": -2743,
+        "maxZ": 5027
+      },
+      "position": {
+        "x": -2752,
+        "z": 5016
+      }
+    },
+    "resident_rooms_fill_004": {
+      "id": "resident_rooms_fill_004",
+      "asset": "studio:mg-27-v01",
+      "group": "resident_rooms",
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "bounds": {
+        "minX": -2815,
+        "minZ": 5036,
+        "maxX": -2797,
+        "maxZ": 5058
+      },
+      "position": {
+        "x": -2806,
+        "z": 5047
+      }
+    },
+    "resident_rooms_fill_005": {
+      "id": "resident_rooms_fill_005",
+      "asset": "studio:mg-27-v01",
+      "group": "resident_rooms",
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "bounds": {
+        "minX": -2788,
+        "minZ": 5036,
+        "maxX": -2770,
+        "maxZ": 5058
+      },
+      "position": {
+        "x": -2779,
+        "z": 5047
+      }
+    },
+    "resident_rooms_fill_006": {
+      "id": "resident_rooms_fill_006",
+      "asset": "studio:mg-27-v01",
+      "group": "resident_rooms",
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "bounds": {
+        "minX": -2761,
+        "minZ": 5036,
+        "maxX": -2743,
+        "maxZ": 5058
+      },
+      "position": {
+        "x": -2752,
+        "z": 5047
+      }
+    },
+    "resident_rooms_fill_007": {
+      "id": "resident_rooms_fill_007",
+      "asset": "studio:mg-27-v01",
+      "group": "resident_rooms",
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "bounds": {
+        "minX": -2815,
+        "minZ": 5067,
+        "maxX": -2797,
+        "maxZ": 5089
+      },
+      "position": {
+        "x": -2806,
+        "z": 5078
+      }
+    },
+    "resident_rooms_fill_008": {
+      "id": "resident_rooms_fill_008",
+      "asset": "studio:mg-27-v01",
+      "group": "resident_rooms",
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "bounds": {
+        "minX": -2788,
+        "minZ": 5067,
+        "maxX": -2770,
+        "maxZ": 5089
+      },
+      "position": {
+        "x": -2779,
+        "z": 5078
+      }
+    },
+    "reception_required_001": {
+      "id": "reception_required_001",
+      "asset": "studio:mg-14-v01",
+      "group": "reception",
+      "terms": [
+        "出行登记",
+        "传送设施维护"
+      ],
+      "bounds": {
+        "minX": -3070,
+        "minZ": 5375,
+        "maxX": -3010,
+        "maxZ": 5443
+      },
+      "position": {
+        "x": -3040,
+        "z": 5409
+      }
+    },
+    "reception_required_002": {
+      "id": "reception_required_002",
+      "asset": "studio:mg-45-v01",
+      "group": "reception",
+      "terms": [
+        "日用品交易",
+        "生活服务"
+      ],
+      "bounds": {
+        "minX": -3001,
+        "minZ": 5397,
+        "maxX": -2977,
+        "maxZ": 5421
+      },
+      "position": {
+        "x": -2989,
+        "z": 5409
+      }
+    },
+    "reception_required_003": {
+      "id": "reception_required_003",
+      "asset": "studio:mg-28-v01",
+      "group": "reception",
+      "terms": [
+        "餐饮",
+        "集体用餐"
+      ],
+      "bounds": {
+        "minX": -2968,
+        "minZ": 5396,
+        "maxX": -2944,
+        "maxZ": 5422
+      },
+      "position": {
+        "x": -2956,
+        "z": 5409
+      }
+    },
+    "reception_required_004": {
+      "id": "reception_required_004",
+      "asset": "studio:mg-20-v01",
+      "group": "reception",
+      "terms": [
+        "货物仓储",
+        "材料保管"
+      ],
+      "bounds": {
+        "minX": -3062,
+        "minZ": 5452,
+        "maxX": -3018,
+        "maxZ": 5506
+      },
+      "position": {
+        "x": -3040,
+        "z": 5479
+      }
+    },
+    "reception_fill_005": {
+      "id": "reception_fill_005",
+      "asset": "studio:mg-28-v01",
+      "group": "reception",
+      "terms": [
+        "餐饮",
+        "集体用餐"
+      ],
+      "bounds": {
+        "minX": -3001,
+        "minZ": 5466,
+        "maxX": -2977,
+        "maxZ": 5492
+      },
+      "position": {
+        "x": -2989,
+        "z": 5479
+      }
+    },
+    "reception_fill_006": {
+      "id": "reception_fill_006",
+      "asset": "studio:mg-45-v01",
+      "group": "reception",
+      "terms": [
+        "日用品交易",
+        "生活服务"
+      ],
+      "bounds": {
+        "minX": -2968,
+        "minZ": 5467,
+        "maxX": -2944,
+        "maxZ": 5491
+      },
+      "position": {
+        "x": -2956,
+        "z": 5479
+      }
+    },
+    "teaching_required_001": {
+      "id": "teaching_required_001",
+      "asset": "studio:mg-01-v01",
+      "group": "teaching",
+      "terms": [
+        "教学",
+        "礼仪",
+        "集会"
+      ],
+      "bounds": {
+        "minX": -3005,
+        "minZ": 5179,
+        "maxX": -2935,
+        "maxZ": 5261
+      },
+      "position": {
+        "x": -2970,
+        "z": 5220
+      }
+    },
+    "teaching_required_002": {
+      "id": "teaching_required_002",
+      "asset": "studio:mg-25-v01",
+      "group": "teaching",
+      "terms": [
+        "教学",
+        "阅读",
+        "研讨"
+      ],
+      "bounds": {
+        "minX": -3045,
+        "minZ": 5283,
+        "maxX": -3015,
+        "maxZ": 5317
+      },
+      "position": {
+        "x": -3030,
+        "z": 5300
+      }
+    },
+    "teaching_required_003": {
+      "id": "teaching_required_003",
+      "asset": "studio:mg-26-v01",
+      "group": "teaching",
+      "terms": [
+        "教学",
+        "研讨"
+      ],
+      "bounds": {
+        "minX": -2926,
+        "minZ": 5290,
+        "maxX": -2906,
+        "maxZ": 5310
+      },
+      "position": {
+        "x": -2916,
+        "z": 5300
+      }
+    },
+    "teaching_required_004": {
+      "id": "teaching_required_004",
+      "asset": "studio:mg-43-v01",
+      "group": "teaching",
+      "terms": [
+        "实验教学",
+        "研究"
+      ],
+      "bounds": {
+        "minX": -2981,
+        "minZ": 5338,
+        "maxX": -2959,
+        "maxZ": 5362
+      },
+      "position": {
+        "x": -2970,
+        "z": 5350
+      }
+    },
+    "council_required_001": {
+      "id": "council_required_001",
+      "asset": "studio:mg-13-v01",
+      "group": "council",
+      "terms": [
+        "公共办事",
+        "议事",
+        "文献保管"
+      ],
+      "bounds": {
+        "minX": -2999,
+        "minZ": 4920,
+        "maxX": -2945,
+        "maxZ": 4978
+      },
+      "position": {
+        "x": -2972,
+        "z": 4949
+      }
+    },
+    "council_required_002": {
+      "id": "council_required_002",
+      "asset": "studio:mg-26-v01",
+      "group": "council",
+      "terms": [
+        "教学",
+        "研讨"
+      ],
+      "bounds": {
+        "minX": -2958,
+        "minZ": 4999,
+        "maxX": -2938,
+        "maxZ": 5019
+      },
+      "position": {
+        "x": -2948,
+        "z": 5009
+      }
+    },
+    "seminars_required_001": {
+      "id": "seminars_required_001",
+      "asset": "studio:mg-26-v01",
+      "group": "seminars",
+      "terms": [
+        "教学",
+        "研讨"
+      ],
+      "bounds": {
+        "minX": -2900,
+        "minZ": 5410,
+        "maxX": -2880,
+        "maxZ": 5430
+      },
+      "position": {
+        "x": -2890,
+        "z": 5420
+      }
+    },
+    "seminars_required_002": {
+      "id": "seminars_required_002",
+      "asset": "studio:mg-43-v01",
+      "group": "seminars",
+      "terms": [
+        "实验教学",
+        "研究"
+      ],
+      "bounds": {
+        "minX": -2865,
+        "minZ": 5408,
+        "maxX": -2843,
+        "maxZ": 5432
+      },
+      "position": {
+        "x": -2854,
+        "z": 5420
+      }
+    },
+    "council_fill_003": {
+      "id": "council_fill_003",
+      "asset": "studio:mg-25-v01",
+      "group": "council",
+      "terms": [
+        "教学",
+        "阅读",
+        "研讨"
+      ],
+      "bounds": {
+        "minX": -2931,
+        "minZ": 4944,
+        "maxX": -2897,
+        "maxZ": 4974
+      },
+      "position": {
+        "x": -2914,
+        "z": 4959
+      }
+    },
+    "seminars_fill_003": {
+      "id": "seminars_fill_003",
+      "asset": "studio:mg-25-v01",
+      "group": "seminars",
+      "terms": [
+        "教学",
+        "阅读",
+        "研讨"
+      ],
+      "bounds": {
+        "minX": -2828,
+        "minZ": 5405,
+        "maxX": -2794,
+        "maxZ": 5435
+      },
+      "position": {
+        "x": -2811,
+        "z": 5420
+      }
+    },
+    "seminars_fill_004": {
+      "id": "seminars_fill_004",
+      "asset": "studio:mg-26-v01",
+      "group": "seminars",
+      "terms": [
+        "教学",
+        "研讨"
+      ],
+      "bounds": {
+        "minX": -2900,
+        "minZ": 5449,
+        "maxX": -2880,
+        "maxZ": 5469
+      },
+      "position": {
+        "x": -2890,
+        "z": 5459
+      }
+    },
+    "seminars_fill_005": {
+      "id": "seminars_fill_005",
+      "asset": "studio:mg-25-v01",
+      "group": "seminars",
+      "terms": [
+        "教学",
+        "阅读",
+        "研讨"
+      ],
+      "bounds": {
+        "minX": -2871,
+        "minZ": 5444,
+        "maxX": -2837,
+        "maxZ": 5474
+      },
+      "position": {
+        "x": -2854,
+        "z": 5459
+      }
+    },
+    "seminars_fill_006": {
+      "id": "seminars_fill_006",
+      "asset": "studio:mg-26-v01",
+      "group": "seminars",
+      "terms": [
+        "教学",
+        "研讨"
+      ],
+      "bounds": {
+        "minX": -2821,
+        "minZ": 5449,
+        "maxX": -2801,
+        "maxZ": 5469
+      },
+      "position": {
+        "x": -2811,
+        "z": 5459
+      }
+    }
+  },
+  "itemNames": {
+    "ars_nouveau:source_gem": "魔源宝石",
+    "ars_nouveau:blank_parchment": "空白羊皮纸",
+    "ars_nouveau:magebloom_fiber": "法师之花纤维",
+    "create:andesite_alloy": "安山合金",
+    "farmersdelight:tomato": "番茄"
+  },
+  "playtest": {
+    "coins": 64,
+    "loadouts": {
+      "arcane": {
+        "name": "魔法材料持有者",
+        "items": {
+          "ars_nouveau:source_gem": 4
+        }
+      },
+      "industry": {
+        "name": "工业生产者",
+        "items": {
+          "create:andesite_alloy": 6
+        }
+      },
+      "provisions": {
+        "name": "农产品供应者",
+        "items": {
+          "farmersdelight:tomato": 16
+        }
+      }
+    }
+  },
+  "sourceBlueprintHash": "sha256:8141b7803c448686ff59ed4af130c6bc1db04a093e5b9769bb12842bd56dfe8d",
+  "metrics": {
+    "coreTypes": 3,
+    "aiPrograms": 2,
+    "generatedTasks": 6,
+    "aiInputCharacters": 1002
+  },
+  "boundaries": [
+    "浏览器中的旅行、交谈、记录和物品均为隔离模拟。",
+    "场所与人物来自学院 D4 和上轮规划结果，未在 Minecraft 中生成本轮任务。",
+    "未模拟法术教学、实际工业制作或地牢讨伐；三条供给途径使用明确的起始试验物资。"
+  ],
+  "inputHashes": {
+    "E:\\Mod_Dev\\StructureBinder\\addons\\realmfolk\\tools\\fourth_question\\core_tasks\\author-catalog.json": "9f1c0ee74386d2d503dc46591efc01582aa4b3e1394e0b26d8fcfbf16bc13a77",
+    "E:\\Mod_Dev\\StructureBinder\\addons\\realmfolk\\tools\\fourth_question\\core_tasks\\ai-programs.json": "5d62a8cedf7766e2c1596e4fd85f36a8321b78c715a9de618804d07f4a5c624c",
+    "E:\\Mod_Dev\\StructureBinder\\addons\\realmfolk\\tools\\fourth_question\\results\\academy\\evidence.json": "e80bbceca662d7c65262a4efd89edf1f0c07f1a113280f47f93fbf503b81a89e",
+    "E:\\Mod_Dev\\StructureBinder\\addons\\realmfolk\\tools\\fourth_question\\results\\academy\\runtime.json": "af5b143bc96a278d126e233a0a25d539b3f518ba3aa035146627e5a51042ab0c",
+    "E:\\Mod_Dev\\StructureBinder\\addons\\realmfolk\\tools\\fourth_question\\results\\academy\\economy.json": "e8fefcd041654842acbb21d6276268d07c39dfb56995862b8940ad379decf2d1"
+  },
+  "hash": "2959452f927084c1497331959e21f9ac7f6de3c66c032858132b04c1c36ed797"
+}

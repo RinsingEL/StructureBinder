@@ -1,0 +1,600 @@
+{
+  "baseRevision": 1,
+  "plan": {
+    "template": "default",
+    "overrides": {
+      "populationMode": "housing",
+      "residentsPerHouse": 4,
+      "housingOccupancy": 0.85,
+      "housingTerms": [
+        "学生住宿"
+      ],
+      "saleHouseEvery": 0,
+      "housePrice": 32,
+      "workplaceCapacity": 4,
+      "activities": [],
+      "names": [
+        "洛恩",
+        "米拉",
+        "伊森",
+        "艾琳",
+        "塞尔",
+        "诺雅",
+        "菲恩",
+        "莱娅"
+      ],
+      "traits": {
+        "好奇": 3,
+        "谨慎": 2,
+        "热心": 2,
+        "沉静": 2
+      },
+      "jobs": {
+        "starfall_learner": {
+          "min": 0,
+          "max": 256,
+          "weight": 5
+        },
+        "starfall_specialist": {
+          "min": 1,
+          "max": 8,
+          "weight": 2
+        },
+        "inkwell_learner": {
+          "min": 0,
+          "max": 256,
+          "weight": 2
+        },
+        "inkwell_specialist": {
+          "min": 1,
+          "max": 8,
+          "weight": 1
+        },
+        "greenhand_learner": {
+          "min": 0,
+          "max": 256,
+          "weight": 3
+        },
+        "greenhand_specialist": {
+          "min": 1,
+          "max": 8,
+          "weight": 1
+        },
+        "hearth_learner": {
+          "min": 0,
+          "max": 256,
+          "weight": 2
+        },
+        "hearth_specialist": {
+          "min": 1,
+          "max": 8,
+          "weight": 1
+        },
+        "wayfarer_learner": {
+          "min": 0,
+          "max": 256,
+          "weight": 1
+        },
+        "wayfarer_specialist": {
+          "min": 1,
+          "max": 8,
+          "weight": 1
+        }
+      }
+    },
+    "keyPeople": [],
+    "economy": {
+      "pools": {
+        "ars_materials": 1,
+        "ars_workshop": 1,
+        "fd_produce": 1,
+        "fd_meals": 1,
+        "adventure": 1
+      },
+      "tiers": {
+        "basic": 1,
+        "rare": 0.5,
+        "epic": 0.1
+      },
+      "priceBand": "standard"
+    },
+    "functionAnswers": [
+      {
+        "functionTerm": "书籍借阅",
+        "housing": false,
+        "professions": [
+          "inkwell_specialist"
+        ],
+        "reason": "按群体规则安排岗位或住所"
+      },
+      {
+        "functionTerm": "书籍制作",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "休养",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "休憩",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "传送设施维护",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "公共办事",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "出行登记",
+        "housing": false,
+        "professions": [
+          "wayfarer_specialist"
+        ],
+        "reason": "按群体规则安排岗位或住所"
+      },
+      {
+        "functionTerm": "医疗",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "园艺养护",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "天象观测",
+        "housing": false,
+        "professions": [
+          "starfall_specialist"
+        ],
+        "reason": "按群体规则安排岗位或住所"
+      },
+      {
+        "functionTerm": "学生住宿",
+        "housing": true,
+        "professions": [
+          "starfall_learner",
+          "inkwell_learner",
+          "greenhand_learner",
+          "hearth_learner",
+          "wayfarer_learner"
+        ],
+        "reason": "按群体规则安排岗位或住所"
+      },
+      {
+        "functionTerm": "实验教学",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "工具保管",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "庭院休憩",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "教学",
+        "housing": false,
+        "professions": [
+          "starfall_specialist"
+        ],
+        "reason": "按群体规则安排岗位或住所"
+      },
+      {
+        "functionTerm": "文献保管",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "文献抄写",
+        "housing": false,
+        "professions": [
+          "inkwell_specialist"
+        ],
+        "reason": "按群体规则安排岗位或住所"
+      },
+      {
+        "functionTerm": "日用品交易",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "材料保管",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "林业教学",
+        "housing": false,
+        "professions": [
+          "greenhand_specialist"
+        ],
+        "reason": "按群体规则安排岗位或住所"
+      },
+      {
+        "functionTerm": "植物教学",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "洗浴",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "洗衣",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "照料",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "生活服务",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "研究",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "研讨",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "礼仪",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "自习",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "花草观赏",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "苗木培育",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "药草栽培",
+        "housing": false,
+        "professions": [
+          "greenhand_specialist"
+        ],
+        "reason": "按群体规则安排岗位或住所"
+      },
+      {
+        "functionTerm": "议事",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "货物仓储",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "阅读",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "集会",
+        "housing": false,
+        "professions": [],
+        "reason": "建筑用途保留，本轮不另设常驻岗位"
+      },
+      {
+        "functionTerm": "集体用餐",
+        "housing": false,
+        "professions": [
+          "hearth_specialist"
+        ],
+        "reason": "按群体规则安排岗位或住所"
+      },
+      {
+        "functionTerm": "餐饮",
+        "housing": false,
+        "professions": [
+          "hearth_specialist"
+        ],
+        "reason": "按群体规则安排岗位或住所"
+      }
+    ]
+  },
+  "professions": {
+    "starfall_learner": {
+      "name": "星落研习会·学徒",
+      "bio": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。",
+      "appearance": "resident",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "workplaceTerms": [],
+      "restStart": 12500,
+      "restEnd": 23000,
+      "itemPools": [
+        "ars_materials",
+        "ars_workshop"
+      ],
+      "stockSlots": 6,
+      "goodsPurpose": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。"
+    },
+    "starfall_specialist": {
+      "name": "星落研习会·执事",
+      "bio": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。",
+      "appearance": "merchant",
+      "capabilities": [
+        "conversation",
+        "trade",
+        "buyback",
+        "gift",
+        "witness",
+        "commission"
+      ],
+      "workplaceTerms": [
+        "教学",
+        "天象观测"
+      ],
+      "restStart": 12500,
+      "restEnd": 23000,
+      "itemPools": [
+        "ars_materials",
+        "ars_workshop"
+      ],
+      "stockSlots": 12,
+      "goodsPurpose": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。",
+      "commission": {
+        "item": "ars_nouveau:source_gem",
+        "count": 2,
+        "emeralds": 1,
+        "affection": 6,
+        "reputation": 2
+      },
+      "commissionPurpose": "补充魔源研究消耗品"
+    },
+    "inkwell_learner": {
+      "name": "墨泉家族·学徒",
+      "bio": "家族经营藏书与抄写事务，年轻成员随长辈学习，向学院补充纸墨。",
+      "appearance": "resident",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "workplaceTerms": [],
+      "restStart": 12500,
+      "restEnd": 23000,
+      "itemPools": [
+        "ars_workshop"
+      ],
+      "stockSlots": 6,
+      "goodsPurpose": "家族经营藏书与抄写事务，年轻成员随长辈学习，向学院补充纸墨。"
+    },
+    "inkwell_specialist": {
+      "name": "墨泉家族·执事",
+      "bio": "家族经营藏书与抄写事务，年轻成员随长辈学习，向学院补充纸墨。",
+      "appearance": "merchant",
+      "capabilities": [
+        "conversation",
+        "trade",
+        "buyback",
+        "gift",
+        "witness",
+        "commission"
+      ],
+      "workplaceTerms": [
+        "书籍借阅",
+        "文献抄写"
+      ],
+      "restStart": 12500,
+      "restEnd": 23000,
+      "itemPools": [
+        "ars_workshop"
+      ],
+      "stockSlots": 12,
+      "goodsPurpose": "家族经营藏书与抄写事务，年轻成员随长辈学习，向学院补充纸墨。",
+      "commission": {
+        "item": "ars_nouveau:blank_parchment",
+        "count": 3,
+        "emeralds": 0,
+        "affection": 6,
+        "reputation": 2
+      },
+      "commissionPurpose": "补充文献抄写耗材"
+    },
+    "greenhand_learner": {
+      "name": "青枝实践社·学徒",
+      "bio": "照料药草和苗木，交换魔法栽培材料，组织学徒观察周围林地。",
+      "appearance": "resident",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "workplaceTerms": [],
+      "restStart": 12500,
+      "restEnd": 23000,
+      "itemPools": [
+        "ars_materials",
+        "fd_produce"
+      ],
+      "stockSlots": 6,
+      "goodsPurpose": "照料药草和苗木，交换魔法栽培材料，组织学徒观察周围林地。"
+    },
+    "greenhand_specialist": {
+      "name": "青枝实践社·执事",
+      "bio": "照料药草和苗木，交换魔法栽培材料，组织学徒观察周围林地。",
+      "appearance": "merchant",
+      "capabilities": [
+        "conversation",
+        "trade",
+        "buyback",
+        "gift",
+        "witness",
+        "commission"
+      ],
+      "workplaceTerms": [
+        "药草栽培",
+        "林业教学"
+      ],
+      "restStart": 12500,
+      "restEnd": 23000,
+      "itemPools": [
+        "ars_materials",
+        "fd_produce"
+      ],
+      "stockSlots": 12,
+      "goodsPurpose": "照料药草和苗木，交换魔法栽培材料，组织学徒观察周围林地。",
+      "commission": {
+        "item": "ars_nouveau:magebloom_fiber",
+        "count": 4,
+        "emeralds": 1,
+        "affection": 6,
+        "reputation": 2
+      },
+      "commissionPurpose": "收集魔法栽培纤维用于实践课"
+    },
+    "hearth_learner": {
+      "name": "暖炉伙房·学徒",
+      "bio": "为师生与旅行者供应饭食和生活用品，与学院长期交换物资。",
+      "appearance": "resident",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "workplaceTerms": [],
+      "restStart": 12500,
+      "restEnd": 23000,
+      "itemPools": [
+        "fd_meals",
+        "fd_produce"
+      ],
+      "stockSlots": 6,
+      "goodsPurpose": "为师生与旅行者供应饭食和生活用品，与学院长期交换物资。"
+    },
+    "hearth_specialist": {
+      "name": "暖炉伙房·执事",
+      "bio": "为师生与旅行者供应饭食和生活用品，与学院长期交换物资。",
+      "appearance": "merchant",
+      "capabilities": [
+        "conversation",
+        "trade",
+        "buyback",
+        "gift",
+        "witness",
+        "commission"
+      ],
+      "workplaceTerms": [
+        "餐饮",
+        "集体用餐"
+      ],
+      "restStart": 12500,
+      "restEnd": 23000,
+      "itemPools": [
+        "fd_meals",
+        "fd_produce"
+      ],
+      "stockSlots": 12,
+      "goodsPurpose": "为师生与旅行者供应饭食和生活用品，与学院长期交换物资。",
+      "commission": {
+        "item": "farmersdelight:tomato",
+        "count": 6,
+        "emeralds": 0,
+        "affection": 6,
+        "reputation": 2
+      },
+      "commissionPurpose": "补充学院伙房原料"
+    },
+    "wayfarer_learner": {
+      "name": "远行登记处·学徒",
+      "bio": "接待外来冒险者，提供旅途补给；希望把可靠的周边威胁线索转成讨伐委托。",
+      "appearance": "resident",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "workplaceTerms": [],
+      "restStart": 12500,
+      "restEnd": 23000,
+      "itemPools": [
+        "adventure"
+      ],
+      "stockSlots": 6,
+      "goodsPurpose": "接待外来冒险者，提供旅途补给；希望把可靠的周边威胁线索转成讨伐委托。"
+    },
+    "wayfarer_specialist": {
+      "name": "远行登记处·执事",
+      "bio": "接待外来冒险者，提供旅途补给；希望把可靠的周边威胁线索转成讨伐委托。",
+      "appearance": "merchant",
+      "capabilities": [
+        "conversation",
+        "trade",
+        "buyback",
+        "gift",
+        "witness"
+      ],
+      "workplaceTerms": [
+        "出行登记"
+      ],
+      "restStart": 12500,
+      "restEnd": 23000,
+      "itemPools": [
+        "adventure"
+      ],
+      "stockSlots": 12,
+      "goodsPurpose": "接待外来冒险者，提供旅途补给；希望把可靠的周边威胁线索转成讨伐委托。"
+    }
+  },
+  "reuseProfessions": []
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "city_blueprint_validation_report",
+  "cityId": "city_jingchao_capital",
+  "contextId": "sha256:471a166e028911922613aa21925760cd4c6702ce08b25bfb3c717c9ad9e5ed33",
+  "valid": false,
+  "validatedAt": "2026-10-11T10:58:15.852312800Z",
+  "issues": [
+    {
+      "reasonCode": "CITY_BLUEPRINT_ARRAY_COMPOSITION_INVALID",
+      "fieldPath": "$.groups[1].layout",
+      "message": "Rectangle layout supports GRID, LINEAR, or a COURTYARD of at most four complete members. Nest arrays for more buildings; faceInward belongs to courtyard buildings."
+    },
+    {
+      "reasonCode": "CITY_BLUEPRINT_CENTER_SYMMETRIC_REQUIRED_COUNT_INVALID",
+      "fieldPath": "$.groups[1].requiredStructureRefs",
+      "message": "Current requiredStructureRefs count=3; CENTER_SYMMETRIC requires exactly 1 center structure. Keep this algorithm: select one center and move other mandatory buildings into separate groups. Only optional buildings may become fill-pool candidates; changing the algorithm is an alternative only if multiple mandatory buildings must stay in this group."
+    }
+  ]
+}

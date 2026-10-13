@@ -1,0 +1,52 @@
+{
+  "passed": true,
+  "groups": [
+    {
+      "id": "starfall",
+      "title": "星落研习会",
+      "residents": 17,
+      "mapBuildings": 51,
+      "traders": 3,
+      "pending": "尚无 Ars Nouveau 教学适配器，不能用售卖材料冒充解锁法术。当前居民战斗未接入魔法施放，不能凭职业名称获得法术。",
+      "overflow": false
+    },
+    {
+      "id": "inkwell",
+      "title": "墨泉家族",
+      "residents": 8,
+      "mapBuildings": 51,
+      "traders": 3,
+      "pending": "本群体未请求新增行为；亲属与群体关系仍仅是背景设定。",
+      "overflow": false
+    },
+    {
+      "id": "greenhand",
+      "title": "青枝实践社",
+      "residents": 7,
+      "mapBuildings": 51,
+      "traders": 4,
+      "pending": "缺少本学院周围的真实怪物观测以及通用讨伐计数、结算接口。",
+      "overflow": false
+    },
+    {
+      "id": "hearth",
+      "title": "暖炉伙房",
+      "residents": 6,
+      "mapBuildings": 51,
+      "traders": 2,
+      "pending": "本群体未请求新增行为；亲属与群体关系仍仅是背景设定。",
+      "overflow": false
+    },
+    {
+      "id": "wayfarer",
+      "title": "远行登记处",
+      "residents": 2,
+      "mapBuildings": 51,
+      "traders": 2,
+      "pending": "缺少本学院周围的真实怪物观测以及通用讨伐计数、结算接口。冒险旧工作树已有地点记录，但尚未迁接；地点生成完成也不等于清剿完成。",
+      "overflow": false
+    }
+  ],
+  "pageErrors": [],
+  "mobileOverflow": false
+}

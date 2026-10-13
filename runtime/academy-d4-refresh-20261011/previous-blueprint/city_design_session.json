@@ -1,0 +1,333 @@
+{
+  "contextId": "sha256:471a166e028911922613aa21925760cd4c6702ce08b25bfb3c717c9ad9e5ed33",
+  "groups": [
+    {
+      "groupId": "teaching",
+      "role": "教学研究",
+      "intent": "中央星厅带植物教学配套，共用院落；复用素材本身完整庭院，不另加外围一圈。",
+      "preferredPatchRefs": [
+        "minecraft:overworld:step.16:city.city_jingchao_capital:p.100"
+      ],
+      "materials": {
+        "groupId": "teaching",
+        "structureRefs": [
+          "studio:mg-01-v01",
+          "studio:mg-21-v01"
+        ],
+        "fillPoolRefs": [
+          "pool:studio_243"
+        ]
+      },
+      "estimate": {
+        "terrainAreaBlocks": 73728,
+        "capacityUsingLargestTemplate": 12,
+        "capacityUsingSmallestTemplate": 24,
+        "assumedGapBlocks": 0,
+        "patches": [
+          {
+            "patchRef": "minecraft:overworld:step.16:city.city_jingchao_capital:p.100",
+            "capacityUsingLargestTemplate": 12,
+            "capacityUsingSmallestTemplate": 24,
+            "terrainAreaBlocks": 73728,
+            "areaBasis": "exact_member_cells",
+            "widthBlocks": 384,
+            "depthBlocks": 384
+          }
+        ],
+        "footprintBasis": "RAW_NBT_WIDTH_DEPTH",
+        "hardGate": false,
+        "instruction": "Geometric capacity estimate, not a target or guaranteed fit. Reserve additional room for landscape, roads and open space. Choose intended structureCount and nesting; terrain and collisions filter individual members in the preview.",
+        "existingScaleDefaultsByArray": [
+          {
+            "algorithm": "GRID",
+            "SMALL": 3,
+            "MEDIUM": 6,
+            "LARGE": 9
+          },
+          {
+            "algorithm": "LINEAR",
+            "SMALL": 2,
+            "MEDIUM": 4,
+            "LARGE": 7
+          },
+          {
+            "algorithm": "COURTYARD",
+            "SMALL": 5,
+            "MEDIUM": 6,
+            "LARGE": 9
+          },
+          {
+            "algorithm": "CENTER_SYMMETRIC",
+            "SMALL": 3,
+            "MEDIUM": 5,
+            "LARGE": 9
+          },
+          {
+            "algorithm": "COMPACT",
+            "SMALL": 3,
+            "MEDIUM": 6,
+            "LARGE": 9
+          },
+          {
+            "algorithm": "ORGANIC_COMPACT",
+            "SMALL": 3,
+            "MEDIUM": 6,
+            "LARGE": 9
+          },
+          {
+            "algorithm": "CONTIGUOUS",
+            "SMALL": 3,
+            "MEDIUM": 6,
+            "LARGE": 9
+          }
+        ]
+      }
+    },
+    {
+      "groupId": "library",
+      "role": "档案阅读",
+      "intent": "主平原北缘藏书馆与抄写阅读配套，朝教学区开入口、背向林地留静院；不占容量不足的北台地。",
+      "preferredPatchRefs": [
+        "minecraft:overworld:step.16:city.city_jingchao_capital:p.100"
+      ],
+      "materials": {
+        "groupId": "library",
+        "structureRefs": [
+          "studio:mg-02-v01",
+          "studio:mg-19-v01"
+        ],
+        "fillPoolRefs": [
+          "pool:studio_241"
+        ]
+      },
+      "estimate": {
+        "terrainAreaBlocks": 73728,
+        "capacityUsingLargestTemplate": 18,
+        "capacityUsingSmallestTemplate": 28,
+        "assumedGapBlocks": 0,
+        "patches": [
+          {
+            "patchRef": "minecraft:overworld:step.16:city.city_jingchao_capital:p.100",
+            "capacityUsingLargestTemplate": 18,
+            "capacityUsingSmallestTemplate": 28,
+            "terrainAreaBlocks": 73728,
+            "areaBasis": "exact_member_cells",
+            "widthBlocks": 384,
+            "depthBlocks": 384
+          }
+        ],
+        "footprintBasis": "RAW_NBT_WIDTH_DEPTH",
+        "hardGate": false,
+        "instruction": "Geometric capacity estimate, not a target or guaranteed fit. Reserve additional room for landscape, roads and open space. Choose intended structureCount and nesting; terrain and collisions filter individual members in the preview.",
+        "existingScaleDefaultsByArray": [
+          {
+            "algorithm": "GRID",
+            "SMALL": 3,
+            "MEDIUM": 6,
+            "LARGE": 9
+          },
+          {
+            "algorithm": "LINEAR",
+            "SMALL": 2,
+            "MEDIUM": 4,
+            "LARGE": 7
+          },
+          {
+            "algorithm": "COURTYARD",
+            "SMALL": 5,
+            "MEDIUM": 6,
+            "LARGE": 9
+          },
+          {
+            "algorithm": "CENTER_SYMMETRIC",
+            "SMALL": 3,
+            "MEDIUM": 5,
+            "LARGE": 9
+          },
+          {
+            "algorithm": "COMPACT",
+            "SMALL": 3,
+            "MEDIUM": 6,
+            "LARGE": 9
+          },
+          {
+            "algorithm": "ORGANIC_COMPACT",
+            "SMALL": 3,
+            "MEDIUM": 6,
+            "LARGE": 9
+          },
+          {
+            "algorithm": "CONTIGUOUS",
+            "SMALL": 3,
+            "MEDIUM": 6,
+            "LARGE": 9
+          }
+        ]
+      }
+    },
+    {
+      "groupId": "reception",
+      "role": "访客接待",
+      "intent": "主平原西南近岸迎客港务与旅宿接待，共同入口接教学庭院；港务结构先放可建陆地侧，不宣称水路已接通。",
+      "preferredPatchRefs": [
+        "minecraft:overworld:step.16:city.city_jingchao_capital:p.100"
+      ],
+      "materials": {
+        "groupId": "reception",
+        "structureRefs": [
+          "studio:mg-23-v01",
+          "studio:mg-13-v01"
+        ],
+        "fillPoolRefs": [
+          "pool:studio_249"
+        ]
+      },
+      "estimate": {
+        "terrainAreaBlocks": 73728,
+        "capacityUsingLargestTemplate": 22,
+        "capacityUsingSmallestTemplate": 34,
+        "assumedGapBlocks": 0,
+        "patches": [
+          {
+            "patchRef": "minecraft:overworld:step.16:city.city_jingchao_capital:p.100",
+            "capacityUsingLargestTemplate": 22,
+            "capacityUsingSmallestTemplate": 34,
+            "terrainAreaBlocks": 73728,
+            "areaBasis": "exact_member_cells",
+            "widthBlocks": 384,
+            "depthBlocks": 384
+          }
+        ],
+        "footprintBasis": "RAW_NBT_WIDTH_DEPTH",
+        "hardGate": false,
+        "instruction": "Geometric capacity estimate, not a target or guaranteed fit. Reserve additional room for landscape, roads and open space. Choose intended structureCount and nesting; terrain and collisions filter individual members in the preview.",
+        "existingScaleDefaultsByArray": [
+          {
+            "algorithm": "GRID",
+            "SMALL": 3,
+            "MEDIUM": 6,
+            "LARGE": 9
+          },
+          {
+            "algorithm": "LINEAR",
+            "SMALL": 2,
+            "MEDIUM": 4,
+            "LARGE": 7
+          },
+          {
+            "algorithm": "COURTYARD",
+            "SMALL": 5,
+            "MEDIUM": 6,
+            "LARGE": 9
+          },
+          {
+            "algorithm": "CENTER_SYMMETRIC",
+            "SMALL": 3,
+            "MEDIUM": 5,
+            "LARGE": 9
+          },
+          {
+            "algorithm": "COMPACT",
+            "SMALL": 3,
+            "MEDIUM": 6,
+            "LARGE": 9
+          },
+          {
+            "algorithm": "ORGANIC_COMPACT",
+            "SMALL": 3,
+            "MEDIUM": 6,
+            "LARGE": 9
+          },
+          {
+            "algorithm": "CONTIGUOUS",
+            "SMALL": 3,
+            "MEDIUM": 6,
+            "LARGE": 9
+          }
+        ]
+      }
+    },
+    {
+      "groupId": "living",
+      "role": "日常生活供应",
+      "intent": "主平原东侧公共餐厅与常住宿舍、储物配套，服务师生，朝教学区开入口；保留组团间自然林地。",
+      "preferredPatchRefs": [
+        "minecraft:overworld:step.16:city.city_jingchao_capital:p.100"
+      ],
+      "materials": {
+        "groupId": "living",
+        "structureRefs": [
+          "studio:mg-07-v01",
+          "studio:mg-05-v01"
+        ],
+        "fillPoolRefs": [
+          "pool:studio_245"
+        ]
+      },
+      "estimate": {
+        "terrainAreaBlocks": 73728,
+        "capacityUsingLargestTemplate": 15,
+        "capacityUsingSmallestTemplate": 29,
+        "assumedGapBlocks": 0,
+        "patches": [
+          {
+            "patchRef": "minecraft:overworld:step.16:city.city_jingchao_capital:p.100",
+            "capacityUsingLargestTemplate": 15,
+            "capacityUsingSmallestTemplate": 29,
+            "terrainAreaBlocks": 73728,
+            "areaBasis": "exact_member_cells",
+            "widthBlocks": 384,
+            "depthBlocks": 384
+          }
+        ],
+        "footprintBasis": "RAW_NBT_WIDTH_DEPTH",
+        "hardGate": false,
+        "instruction": "Geometric capacity estimate, not a target or guaranteed fit. Reserve additional room for landscape, roads and open space. Choose intended structureCount and nesting; terrain and collisions filter individual members in the preview.",
+        "existingScaleDefaultsByArray": [
+          {
+            "algorithm": "GRID",
+            "SMALL": 3,
+            "MEDIUM": 6,
+            "LARGE": 9
+          },
+          {
+            "algorithm": "LINEAR",
+            "SMALL": 2,
+            "MEDIUM": 4,
+            "LARGE": 7
+          },
+          {
+            "algorithm": "COURTYARD",
+            "SMALL": 5,
+            "MEDIUM": 6,
+            "LARGE": 9
+          },
+          {
+            "algorithm": "CENTER_SYMMETRIC",
+            "SMALL": 3,
+            "MEDIUM": 5,
+            "LARGE": 9
+          },
+          {
+            "algorithm": "COMPACT",
+            "SMALL": 3,
+            "MEDIUM": 6,
+            "LARGE": 9
+          },
+          {
+            "algorithm": "ORGANIC_COMPACT",
+            "SMALL": 3,
+            "MEDIUM": 6,
+            "LARGE": 9
+          },
+          {
+            "algorithm": "CONTIGUOUS",
+            "SMALL": 3,
+            "MEDIUM": 6,
+            "LARGE": 9
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"ok\": true,\n  \"modId\": \"geomantia\",\n  \"api\": \"geomantia-gis-debug\",\n  \"serverDirectory\": \"E:\\\\Mod_Dev\\\\StructureBinder\\\\run\\\\.\",\n  \"debugRoot\": \"E:\\\\Mod_Dev\\\\StructureBinder\\\\run\\\\.\\\\gis_debug\",\n  \"players\": [\n    {\n      \"name\": \"Dev\",\n      \"dimensionId\": \"minecraft:overworld\",\n      \"blockX\": 3913,\n      \"blockY\": 83,\n      \"blockZ\": -4307\n    }\n  ]\n}"
+    }
+  ]
+}

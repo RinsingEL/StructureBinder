@@ -1,0 +1,455 @@
+{
+  "status": "design_saved",
+  "planned": 33,
+  "retained": 33,
+  "smallFootprints": 26,
+  "smallFootprintDefinition": "max(width,depth)<=35; includes reading garden",
+  "review": {
+    "plannedAndRetained": {
+      "policy": "AI_REVIEW_PLANNED_AND_RETAINED_ARRAYS",
+      "fixedAreaGate": false,
+      "plannedLeafArrayCount": 7,
+      "retainedLeafArrayCount": 7,
+      "nestedLeafArrayCount": 5,
+      "plannedBuildingCount": 33,
+      "retainedBuildingCount": 33,
+      "nestedPlannedBuildingCount": 26,
+      "nestedRetainedLeafArrayCount": 5,
+      "nestedRetainedBuildingCount": 26,
+      "automaticBuildingCount": 0,
+      "groups": [
+        {
+          "groupId": "teaching",
+          "role": "teaching",
+          "algorithm": "COURTYARD",
+          "plannedBuildingCount": 4,
+          "requestedBuildingCount": 4,
+          "retainedBuildingCount": 4,
+          "nested": true,
+          "empty": false,
+          "core": true,
+          "retainedCompositionCount": 14,
+          "selfContainedComposition": false,
+          "isolatedCore": false,
+          "skippedMembers": [],
+          "retainedBounds": {
+            "minX": -2984,
+            "minZ": 5352,
+            "maxX": -2841,
+            "maxZ": 5526
+          }
+        },
+        {
+          "groupId": "classrooms",
+          "role": "classrooms",
+          "algorithm": "GRID",
+          "plannedBuildingCount": 6,
+          "requestedBuildingCount": 6,
+          "retainedBuildingCount": 6,
+          "nested": true,
+          "empty": false,
+          "core": false,
+          "retainedCompositionCount": 14,
+          "selfContainedComposition": false,
+          "isolatedCore": false,
+          "skippedMembers": [],
+          "retainedBounds": {
+            "minX": -2828,
+            "minZ": 5352,
+            "maxX": -2765,
+            "maxZ": 5460
+          }
+        },
+        {
+          "groupId": "library",
+          "role": "library",
+          "algorithm": "LINEAR",
+          "plannedBuildingCount": 3,
+          "requestedBuildingCount": 3,
+          "retainedBuildingCount": 3,
+          "nested": false,
+          "empty": false,
+          "core": true,
+          "retainedCompositionCount": 3,
+          "selfContainedComposition": false,
+          "isolatedCore": false,
+          "skippedMembers": [],
+          "retainedBounds": {
+            "minX": -2888,
+            "minZ": 5032,
+            "maxX": -2738,
+            "maxZ": 5096
+          }
+        },
+        {
+          "groupId": "living",
+          "role": "living",
+          "algorithm": "GRID",
+          "plannedBuildingCount": 9,
+          "requestedBuildingCount": 9,
+          "retainedBuildingCount": 9,
+          "nested": true,
+          "empty": false,
+          "core": true,
+          "retainedCompositionCount": 12,
+          "selfContainedComposition": false,
+          "isolatedCore": false,
+          "skippedMembers": [],
+          "retainedBounds": {
+            "minX": -2600,
+            "minZ": 5160,
+            "maxX": -2502,
+            "maxZ": 5260
+          }
+        },
+        {
+          "groupId": "practice",
+          "role": "practice",
+          "algorithm": "GRID",
+          "plannedBuildingCount": 4,
+          "requestedBuildingCount": 4,
+          "retainedBuildingCount": 4,
+          "nested": true,
+          "empty": false,
+          "core": false,
+          "retainedCompositionCount": 14,
+          "selfContainedComposition": false,
+          "isolatedCore": false,
+          "skippedMembers": [],
+          "retainedBounds": {
+            "minX": -2752,
+            "minZ": 5352,
+            "maxX": -2699,
+            "maxZ": 5411
+          }
+        },
+        {
+          "groupId": "reception",
+          "role": "reception",
+          "algorithm": "LINEAR",
+          "plannedBuildingCount": 4,
+          "requestedBuildingCount": 4,
+          "retainedBuildingCount": 4,
+          "nested": false,
+          "empty": false,
+          "core": true,
+          "retainedCompositionCount": 4,
+          "selfContainedComposition": false,
+          "isolatedCore": false,
+          "skippedMembers": [],
+          "retainedBounds": {
+            "minX": -3160,
+            "minZ": 5080,
+            "maxX": -2971,
+            "maxZ": 5148
+          }
+        },
+        {
+          "groupId": "services",
+          "role": "services",
+          "algorithm": "GRID",
+          "plannedBuildingCount": 3,
+          "requestedBuildingCount": 3,
+          "retainedBuildingCount": 3,
+          "nested": true,
+          "empty": false,
+          "core": false,
+          "retainedCompositionCount": 12,
+          "selfContainedComposition": false,
+          "isolatedCore": false,
+          "skippedMembers": [],
+          "retainedBounds": {
+            "minX": -2489,
+            "minZ": 5160,
+            "maxX": -2465,
+            "maxZ": 5252
+          }
+        }
+      ],
+      "isolatedCoreGroupIds": [],
+      "instruction": "Review actual core/support composition. Isolated cores must be repaired before FINAL; authored self-contained courts count as composition. Also judge visual scale and support quality; a numerical companion alone does not establish the intended effect. Use existing bounded failure handling and record rework counts."
+    },
+    "acceptance": {
+      "passed": true,
+      "acceptancePolicy": "SAFE_MEMBERS_WITH_EXPLICIT_GAPS_V2",
+      "instruction": "格式、参数、引用错误需修正；设计后看本区和全城预览，可带 targetDistrictId、当前 baseDraftHash 和 assessment 重新提交该区完整 districtDesign。其他区设计与布局保留。qualityFullySatisfied、allFunctionAreasFormed、allRequiredContentPresent、structureGraphConnected 等均为诊断，不要求清零警告或补齐建筑。整城通过逐区选材与阵列修订形成整体性，允许隔河，不要求接触或固定距离。挤占不得清空或破坏其他区功能主体。",
+      "qualityFullySatisfied": false,
+      "previewCompiled": true,
+      "trafficGroupCount": 7,
+      "trafficConnectionCount": 6,
+      "requiredRelationCount": 6,
+      "requiredRelationsSatisfied": true,
+      "structureGraphConnected": true,
+      "allFunctionAreasFormed": true,
+      "allRequiredStructuresCommitted": true,
+      "allRequiredContentPresent": true,
+      "arrayVisualGeometryPassed": false,
+      "allStreetEntrancesConnected": true,
+      "hardBlocks": [],
+      "warnings": [
+        "DESIGNED_RELATION_GAP: teaching -> library CONNECTION is unsatisfied.",
+        "teaching: COURTYARD_REQUIRES_FIVE_BUILDINGS",
+        "teaching: COURTYARD_BASE_RING_INCOMPLETE",
+        "teaching: COURTYARD_GATE_MISSING",
+        "teaching: COURTYARD_RING_ROAD_DISCONNECTED",
+        "classrooms: GRID_STREET_NETWORK_DISCONNECTED",
+        "practice: GRID_STREET_NETWORK_DISCONNECTED",
+        "services: GRID_STREET_NETWORK_DISCONNECTED"
+      ]
+    },
+    "unresolvedEntrances": [],
+    "instruction": "Inspect the current overview for visual coherence and retained district functions. Use targeted district revisions for deliberate selection or layout changes; preserve the other districts. Roads and entrance access are separate from visual coherence."
+  },
+  "handoff": {
+    "schema": "city_d4_generation_handoff.v1",
+    "baseDraftHash": "sha256:967042557a9d4eb0cf0ea06cb37da76750b0f5f13350dc7086aeb1938b5497c4",
+    "contextId": "sha256:e12c7d3bc219b7fee9e49d3e90052441f6ede4bf4c36570a518ff4ad048ec01d",
+    "districtDesigns": [
+      {
+        "districtId": "teaching",
+        "coreGroupId": "teaching",
+        "coreStructureRef": "studio:mg-01-v01",
+        "groupIds": [
+          "teaching",
+          "classrooms",
+          "practice"
+        ]
+      },
+      {
+        "districtId": "library",
+        "coreGroupId": "library",
+        "coreStructureRef": "studio:mg-02-v01",
+        "groupIds": [
+          "library"
+        ]
+      },
+      {
+        "districtId": "living",
+        "coreGroupId": "living",
+        "coreStructureRef": "studio:mg-37-v02",
+        "groupIds": [
+          "living",
+          "services"
+        ]
+      },
+      {
+        "districtId": "reception",
+        "coreGroupId": "reception",
+        "coreStructureRef": "studio:mg-14-v01",
+        "groupIds": [
+          "reception"
+        ]
+      }
+    ],
+    "requiredStructures": [
+      {
+        "groupId": "teaching",
+        "structureRef": "studio:mg-01-v01",
+        "designRole": "CORE",
+        "retainedInLayout": true
+      },
+      {
+        "groupId": "teaching",
+        "structureRef": "studio:mg-34-v02",
+        "designRole": "REQUIRED_SUPPORT",
+        "retainedInLayout": true
+      },
+      {
+        "groupId": "teaching",
+        "structureRef": "studio:mg-38-v01",
+        "designRole": "REQUIRED_SUPPORT",
+        "retainedInLayout": true
+      },
+      {
+        "groupId": "teaching",
+        "structureRef": "studio:mg-25-v01",
+        "designRole": "REQUIRED_SUPPORT",
+        "retainedInLayout": true
+      },
+      {
+        "groupId": "classrooms",
+        "structureRef": "studio:mg-25-v01",
+        "designRole": "REQUIRED_SUPPORT",
+        "retainedInLayout": true
+      },
+      {
+        "groupId": "classrooms",
+        "structureRef": "studio:mg-26-v01",
+        "designRole": "REQUIRED_SUPPORT",
+        "retainedInLayout": true
+      },
+      {
+        "groupId": "practice",
+        "structureRef": "studio:mg-43-v01",
+        "designRole": "REQUIRED_SUPPORT",
+        "retainedInLayout": true
+      },
+      {
+        "groupId": "practice",
+        "structureRef": "studio:mg-31-v01",
+        "designRole": "REQUIRED_SUPPORT",
+        "retainedInLayout": true
+      },
+      {
+        "groupId": "library",
+        "structureRef": "studio:mg-02-v01",
+        "designRole": "CORE",
+        "retainedInLayout": true
+      },
+      {
+        "groupId": "library",
+        "structureRef": "studio:mg-19-v01",
+        "designRole": "REQUIRED_SUPPORT",
+        "retainedInLayout": true
+      },
+      {
+        "groupId": "library",
+        "structureRef": "studio:mg-29-v01",
+        "designRole": "REQUIRED_SUPPORT",
+        "retainedInLayout": true
+      },
+      {
+        "groupId": "living",
+        "structureRef": "studio:mg-37-v02",
+        "designRole": "CORE",
+        "retainedInLayout": true
+      },
+      {
+        "groupId": "living",
+        "structureRef": "studio:mg-27-v01",
+        "designRole": "REQUIRED_SUPPORT",
+        "retainedInLayout": true
+      },
+      {
+        "groupId": "services",
+        "structureRef": "studio:mg-28-v01",
+        "designRole": "REQUIRED_SUPPORT",
+        "retainedInLayout": true
+      },
+      {
+        "groupId": "services",
+        "structureRef": "studio:mg-44-v01",
+        "designRole": "REQUIRED_SUPPORT",
+        "retainedInLayout": true
+      },
+      {
+        "groupId": "services",
+        "structureRef": "studio:mg-45-v01",
+        "designRole": "REQUIRED_SUPPORT",
+        "retainedInLayout": true
+      },
+      {
+        "groupId": "reception",
+        "structureRef": "studio:mg-14-v01",
+        "designRole": "CORE",
+        "retainedInLayout": true
+      },
+      {
+        "groupId": "reception",
+        "structureRef": "studio:mg-13-v01",
+        "designRole": "REQUIRED_SUPPORT",
+        "retainedInLayout": true
+      },
+      {
+        "groupId": "reception",
+        "structureRef": "studio:mg-45-v01",
+        "designRole": "REQUIRED_SUPPORT",
+        "retainedInLayout": true
+      },
+      {
+        "groupId": "reception",
+        "structureRef": "studio:mg-28-v01",
+        "designRole": "REQUIRED_SUPPORT",
+        "retainedInLayout": true
+      }
+    ],
+    "missingRequiredStructures": [],
+    "terrainRequirements": [
+      {
+        "groupId": "services",
+        "structureRef": "studio:mg-45-v01",
+        "terrainEvidence": {
+          "schema": "city_structure_terrain_gate_trace",
+          "evaluationScope": "all_intersecting_terrain_field_cells",
+          "structureRef": "studio:mg-45-v01",
+          "declaredTerrainModes": [
+            "SURFACE"
+          ],
+          "footprint": {
+            "minX": -2489,
+            "minZ": 5228,
+            "maxX": -2465,
+            "maxZ": 5252
+          },
+          "resolvedTerrainMode": "SURFACE",
+          "intersectingCellCount": 6,
+          "evaluatedCellCount": 6,
+          "terrainPolicy": "BALANCED",
+          "maximumAllowedSlope": 12,
+          "maximumAllowedLocalRelief": 12,
+          "maximumAllowedElevationRange": 12,
+          "minimumElevation": 61,
+          "maximumElevation": 63,
+          "elevationRange": 2,
+          "maximumObservedSlope": 1,
+          "maximumObservedLocalRelief": 4,
+          "anomalyAreaBlocks": 125,
+          "footprintAreaBlocks": 625,
+          "anomalyAreaRatio": 0.2,
+          "maximumAnomalyAreaRatio": 0.1,
+          "anomalyCellCount": 2,
+          "hardTerrainFailure": false,
+          "crossingAnomaly": true,
+          "referenceElevation": 62,
+          "rejectedCellCount": 2,
+          "status": "passed",
+          "reasonCode": "",
+          "failureSamples": [
+            {
+              "cellX": -156,
+              "cellZ": 328,
+              "reasonCode": "CITY_STRUCTURE_SURFACE_CELL_WATER",
+              "sampled": true,
+              "water": true,
+              "elevation": 61,
+              "slope": 1,
+              "localRelief": 3
+            },
+            {
+              "cellX": -155,
+              "cellZ": 328,
+              "reasonCode": "CITY_STRUCTURE_SURFACE_CELL_WATER",
+              "sampled": true,
+              "water": true,
+              "elevation": 61,
+              "slope": 1,
+              "localRelief": 3
+            }
+          ],
+          "terrainAdaptationRequired": true,
+          "terrainAdaptationPolicy": "D4_LAYOUT_WITH_DEFERRED_REALIZATION",
+          "terrainAdaptations": [
+            {
+              "reasonCode": "CITY_STRUCTURE_SURFACE_CELL_WATER",
+              "action": "preserve_design_and_resolve_terrain_before_generation"
+            }
+          ],
+          "generationReady": false,
+          "groupTerrainPolicy": "BALANCED",
+          "groupTerrainPolicyRole": "hard_footprint_gate",
+          "sourcePatchPreferences": [
+            {
+              "patchRef": "minecraft:overworld:step.16:city.city_jingchao_capital:p.2",
+              "meanSlope": 1.422847399829497,
+              "preferredByGroupTerrainPolicy": true
+            }
+          ]
+        }
+      }
+    ],
+    "skippedMembers": [],
+    "terrainResolutionRequired": true,
+    "requiredContentMissing": false,
+    "instruction": "D4 只冻结平面设计。后续生成保留每区核心与必需配套，解决 terrainRequirements 中的高差/水域适配，核对 missingRequiredStructures；不得把跳过内容或预览当作已施工。精确台地、支撑、跨水施工和真实游玩验收另行完成。"
+  }
+}

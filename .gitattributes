@@ -6,3 +6,7 @@ src/generated/**/*.json text eol=lf
 runtime/hermes/*.zip filter=lfs diff=lfs merge=lfs -text
 runclient-t3-12realm-monotonic.out.log filter=lfs diff=lfs merge=lfs -text
 runtime/harness/*.zip filter=lfs diff=lfs merge=lfs -text
+saves/*.zip filter=lfs diff=lfs merge=lfs -text
+# Preserve byte-level hashes in captured local experiment evidence.
+runtime/** -text
+tmp/** -text

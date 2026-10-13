@@ -1,0 +1,748 @@
+{
+  "version": 1,
+  "sourceBlueprintHash": "sha256:8141b7803c448686ff59ed4af130c6bc1db04a093e5b9769bb12842bd56dfe8d",
+  "evidenceSha256": "e80bbceca662d7c65262a4efd89edf1f0c07f1a113280f47f93fbf503b81a89e",
+  "note": "D4 建筑布局为已有冻结证据；人物落点是本实验绑定，不是已生成游戏实体或实际可站立坐标。",
+  "buildings": [
+    {
+      "id": "archives_required_001",
+      "bounds": {
+        "minX": -2930,
+        "minZ": 5055,
+        "maxX": -2870,
+        "maxZ": 5119
+      },
+      "terms": [
+        "书籍借阅",
+        "文献保管",
+        "阅读"
+      ],
+      "template": "studio:mg-02-v01"
+    },
+    {
+      "id": "archives_required_002",
+      "bounds": {
+        "minX": -2983,
+        "minZ": 5122,
+        "maxX": -2939,
+        "maxZ": 5178
+      },
+      "terms": [
+        "文献抄写",
+        "书籍制作"
+      ],
+      "template": "studio:mg-19-v01"
+    },
+    {
+      "id": "archives_required_003",
+      "bounds": {
+        "minX": -2868,
+        "minZ": 5135,
+        "maxX": -2838,
+        "maxZ": 5165
+      },
+      "terms": [
+        "阅读",
+        "研究",
+        "研讨"
+      ],
+      "template": "studio:mg-38-v01"
+    },
+    {
+      "id": "archives_required_004",
+      "bounds": {
+        "minX": -2908,
+        "minZ": 5180,
+        "maxX": -2892,
+        "maxZ": 5196
+      },
+      "terms": [
+        "花草观赏",
+        "休憩",
+        "阅读"
+      ],
+      "template": "studio:mg-29-v01"
+    },
+    {
+      "id": "forest_school_required_001",
+      "bounds": {
+        "minX": -3177,
+        "minZ": 5103,
+        "maxX": -3161,
+        "maxZ": 5123
+      },
+      "terms": [
+        "工具保管",
+        "园艺养护",
+        "林业教学"
+      ],
+      "template": "studio:mg-32-v01"
+    },
+    {
+      "id": "forest_school_required_002",
+      "bounds": {
+        "minX": -3149,
+        "minZ": 5102,
+        "maxX": -3127,
+        "maxZ": 5124
+      },
+      "terms": [
+        "林业教学",
+        "苗木培育"
+      ],
+      "template": "studio:mg-33-v01"
+    },
+    {
+      "id": "forest_school_required_003",
+      "bounds": {
+        "minX": -3118,
+        "minZ": 5100,
+        "maxX": -3096,
+        "maxZ": 5126
+      },
+      "terms": [
+        "植物教学",
+        "园艺养护",
+        "药草栽培"
+      ],
+      "template": "studio:mg-31-v01"
+    },
+    {
+      "id": "observation_required_001",
+      "bounds": {
+        "minX": -3134,
+        "minZ": 4967,
+        "maxX": -3084,
+        "maxZ": 5021
+      },
+      "terms": [
+        "天象观测",
+        "研究"
+      ],
+      "template": "studio:mg-03-v01"
+    },
+    {
+      "id": "observation_required_002",
+      "bounds": {
+        "minX": -3110,
+        "minZ": 5042,
+        "maxX": -3080,
+        "maxZ": 5072
+      },
+      "terms": [
+        "阅读",
+        "研究",
+        "研讨"
+      ],
+      "template": "studio:mg-38-v01"
+    },
+    {
+      "id": "observation_required_003",
+      "bounds": {
+        "minX": -3070,
+        "minZ": 4997,
+        "maxX": -3048,
+        "maxZ": 5021
+      },
+      "terms": [
+        "实验教学",
+        "研究"
+      ],
+      "template": "studio:mg-43-v01"
+    },
+    {
+      "id": "forest_school_fill_004",
+      "bounds": {
+        "minX": -3180,
+        "minZ": 5135,
+        "maxX": -3158,
+        "maxZ": 5157
+      },
+      "terms": [
+        "林业教学",
+        "苗木培育"
+      ],
+      "template": "studio:mg-33-v01"
+    },
+    {
+      "id": "forest_school_fill_005",
+      "bounds": {
+        "minX": -3146,
+        "minZ": 5136,
+        "maxX": -3130,
+        "maxZ": 5156
+      },
+      "terms": [
+        "工具保管",
+        "园艺养护",
+        "林业教学"
+      ],
+      "template": "studio:mg-32-v01"
+    },
+    {
+      "id": "forest_school_fill_006",
+      "bounds": {
+        "minX": -3118,
+        "minZ": 5135,
+        "maxX": -3096,
+        "maxZ": 5157
+      },
+      "terms": [
+        "林业教学",
+        "苗木培育"
+      ],
+      "template": "studio:mg-33-v01"
+    },
+    {
+      "id": "observation_fill_004",
+      "bounds": {
+        "minX": -3066,
+        "minZ": 5050,
+        "maxX": -3044,
+        "maxZ": 5074
+      },
+      "terms": [
+        "实验教学",
+        "研究"
+      ],
+      "template": "studio:mg-43-v01"
+    },
+    {
+      "id": "observation_fill_005",
+      "bounds": {
+        "minX": -3071,
+        "minZ": 4956,
+        "maxX": -3041,
+        "maxZ": 4986
+      },
+      "terms": [
+        "阅读",
+        "研究",
+        "研讨"
+      ],
+      "template": "studio:mg-38-v01"
+    },
+    {
+      "id": "daily_care_required_001",
+      "bounds": {
+        "minX": -2860,
+        "minZ": 5248,
+        "maxX": -2796,
+        "maxZ": 5318
+      },
+      "terms": [
+        "医疗",
+        "照料",
+        "休养"
+      ],
+      "template": "studio:mg-15-v01"
+    },
+    {
+      "id": "daily_care_required_002",
+      "bounds": {
+        "minX": -2816,
+        "minZ": 5339,
+        "maxX": -2792,
+        "maxZ": 5365
+      },
+      "terms": [
+        "餐饮",
+        "集体用餐"
+      ],
+      "template": "studio:mg-28-v01"
+    },
+    {
+      "id": "daily_care_required_003",
+      "bounds": {
+        "minX": -2780,
+        "minZ": 5294,
+        "maxX": -2758,
+        "maxZ": 5318
+      },
+      "terms": [
+        "洗浴",
+        "洗衣",
+        "生活服务"
+      ],
+      "template": "studio:mg-44-v01"
+    },
+    {
+      "id": "daily_care_required_004",
+      "bounds": {
+        "minX": -2776,
+        "minZ": 5347,
+        "maxX": -2752,
+        "maxZ": 5371
+      },
+      "terms": [
+        "日用品交易",
+        "生活服务"
+      ],
+      "template": "studio:mg-45-v01"
+    },
+    {
+      "id": "residence_required_001",
+      "bounds": {
+        "minX": -2752,
+        "minZ": 5116,
+        "maxX": -2708,
+        "maxZ": 5154
+      },
+      "terms": [
+        "学生住宿",
+        "自习",
+        "庭院休憩"
+      ],
+      "template": "studio:mg-37-v02"
+    },
+    {
+      "id": "residence_required_002",
+      "bounds": {
+        "minX": -2785,
+        "minZ": 5176,
+        "maxX": -2763,
+        "maxZ": 5194
+      },
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "template": "studio:mg-27-v01"
+    },
+    {
+      "id": "resident_rooms_required_001",
+      "bounds": {
+        "minX": -2815,
+        "minZ": 5005,
+        "maxX": -2797,
+        "maxZ": 5027
+      },
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "template": "studio:mg-27-v01"
+    },
+    {
+      "id": "daily_care_fill_005",
+      "bounds": {
+        "minX": -2781,
+        "minZ": 5259,
+        "maxX": -2759,
+        "maxZ": 5283
+      },
+      "terms": [
+        "洗浴",
+        "洗衣",
+        "生活服务"
+      ],
+      "template": "studio:mg-44-v01"
+    },
+    {
+      "id": "residence_fill_003",
+      "bounds": {
+        "minX": -2698,
+        "minZ": 5176,
+        "maxX": -2676,
+        "maxZ": 5194
+      },
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "template": "studio:mg-27-v01"
+    },
+    {
+      "id": "residence_fill_004",
+      "bounds": {
+        "minX": -2739,
+        "minZ": 5215,
+        "maxX": -2721,
+        "maxZ": 5237
+      },
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "template": "studio:mg-27-v01"
+    },
+    {
+      "id": "resident_rooms_fill_002",
+      "bounds": {
+        "minX": -2788,
+        "minZ": 5005,
+        "maxX": -2770,
+        "maxZ": 5027
+      },
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "template": "studio:mg-27-v01"
+    },
+    {
+      "id": "resident_rooms_fill_003",
+      "bounds": {
+        "minX": -2761,
+        "minZ": 5005,
+        "maxX": -2743,
+        "maxZ": 5027
+      },
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "template": "studio:mg-27-v01"
+    },
+    {
+      "id": "resident_rooms_fill_004",
+      "bounds": {
+        "minX": -2815,
+        "minZ": 5036,
+        "maxX": -2797,
+        "maxZ": 5058
+      },
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "template": "studio:mg-27-v01"
+    },
+    {
+      "id": "resident_rooms_fill_005",
+      "bounds": {
+        "minX": -2788,
+        "minZ": 5036,
+        "maxX": -2770,
+        "maxZ": 5058
+      },
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "template": "studio:mg-27-v01"
+    },
+    {
+      "id": "resident_rooms_fill_006",
+      "bounds": {
+        "minX": -2761,
+        "minZ": 5036,
+        "maxX": -2743,
+        "maxZ": 5058
+      },
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "template": "studio:mg-27-v01"
+    },
+    {
+      "id": "resident_rooms_fill_007",
+      "bounds": {
+        "minX": -2815,
+        "minZ": 5067,
+        "maxX": -2797,
+        "maxZ": 5089
+      },
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "template": "studio:mg-27-v01"
+    },
+    {
+      "id": "resident_rooms_fill_008",
+      "bounds": {
+        "minX": -2788,
+        "minZ": 5067,
+        "maxX": -2770,
+        "maxZ": 5089
+      },
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "template": "studio:mg-27-v01"
+    },
+    {
+      "id": "reception_required_001",
+      "bounds": {
+        "minX": -3070,
+        "minZ": 5375,
+        "maxX": -3010,
+        "maxZ": 5443
+      },
+      "terms": [
+        "出行登记",
+        "传送设施维护"
+      ],
+      "template": "studio:mg-14-v01"
+    },
+    {
+      "id": "reception_required_002",
+      "bounds": {
+        "minX": -3001,
+        "minZ": 5397,
+        "maxX": -2977,
+        "maxZ": 5421
+      },
+      "terms": [
+        "日用品交易",
+        "生活服务"
+      ],
+      "template": "studio:mg-45-v01"
+    },
+    {
+      "id": "reception_required_003",
+      "bounds": {
+        "minX": -2968,
+        "minZ": 5396,
+        "maxX": -2944,
+        "maxZ": 5422
+      },
+      "terms": [
+        "餐饮",
+        "集体用餐"
+      ],
+      "template": "studio:mg-28-v01"
+    },
+    {
+      "id": "reception_required_004",
+      "bounds": {
+        "minX": -3062,
+        "minZ": 5452,
+        "maxX": -3018,
+        "maxZ": 5506
+      },
+      "terms": [
+        "货物仓储",
+        "材料保管"
+      ],
+      "template": "studio:mg-20-v01"
+    },
+    {
+      "id": "reception_fill_005",
+      "bounds": {
+        "minX": -3001,
+        "minZ": 5466,
+        "maxX": -2977,
+        "maxZ": 5492
+      },
+      "terms": [
+        "餐饮",
+        "集体用餐"
+      ],
+      "template": "studio:mg-28-v01"
+    },
+    {
+      "id": "reception_fill_006",
+      "bounds": {
+        "minX": -2968,
+        "minZ": 5467,
+        "maxX": -2944,
+        "maxZ": 5491
+      },
+      "terms": [
+        "日用品交易",
+        "生活服务"
+      ],
+      "template": "studio:mg-45-v01"
+    },
+    {
+      "id": "teaching_required_001",
+      "bounds": {
+        "minX": -3005,
+        "minZ": 5179,
+        "maxX": -2935,
+        "maxZ": 5261
+      },
+      "terms": [
+        "教学",
+        "礼仪",
+        "集会"
+      ],
+      "template": "studio:mg-01-v01"
+    },
+    {
+      "id": "teaching_required_002",
+      "bounds": {
+        "minX": -3045,
+        "minZ": 5283,
+        "maxX": -3015,
+        "maxZ": 5317
+      },
+      "terms": [
+        "教学",
+        "阅读",
+        "研讨"
+      ],
+      "template": "studio:mg-25-v01"
+    },
+    {
+      "id": "teaching_required_003",
+      "bounds": {
+        "minX": -2926,
+        "minZ": 5290,
+        "maxX": -2906,
+        "maxZ": 5310
+      },
+      "terms": [
+        "教学",
+        "研讨"
+      ],
+      "template": "studio:mg-26-v01"
+    },
+    {
+      "id": "teaching_required_004",
+      "bounds": {
+        "minX": -2981,
+        "minZ": 5338,
+        "maxX": -2959,
+        "maxZ": 5362
+      },
+      "terms": [
+        "实验教学",
+        "研究"
+      ],
+      "template": "studio:mg-43-v01"
+    },
+    {
+      "id": "council_required_001",
+      "bounds": {
+        "minX": -2999,
+        "minZ": 4920,
+        "maxX": -2945,
+        "maxZ": 4978
+      },
+      "terms": [
+        "公共办事",
+        "议事",
+        "文献保管"
+      ],
+      "template": "studio:mg-13-v01"
+    },
+    {
+      "id": "council_required_002",
+      "bounds": {
+        "minX": -2958,
+        "minZ": 4999,
+        "maxX": -2938,
+        "maxZ": 5019
+      },
+      "terms": [
+        "教学",
+        "研讨"
+      ],
+      "template": "studio:mg-26-v01"
+    },
+    {
+      "id": "seminars_required_001",
+      "bounds": {
+        "minX": -2900,
+        "minZ": 5410,
+        "maxX": -2880,
+        "maxZ": 5430
+      },
+      "terms": [
+        "教学",
+        "研讨"
+      ],
+      "template": "studio:mg-26-v01"
+    },
+    {
+      "id": "seminars_required_002",
+      "bounds": {
+        "minX": -2865,
+        "minZ": 5408,
+        "maxX": -2843,
+        "maxZ": 5432
+      },
+      "terms": [
+        "实验教学",
+        "研究"
+      ],
+      "template": "studio:mg-43-v01"
+    },
+    {
+      "id": "council_fill_003",
+      "bounds": {
+        "minX": -2931,
+        "minZ": 4944,
+        "maxX": -2897,
+        "maxZ": 4974
+      },
+      "terms": [
+        "教学",
+        "阅读",
+        "研讨"
+      ],
+      "template": "studio:mg-25-v01"
+    },
+    {
+      "id": "seminars_fill_003",
+      "bounds": {
+        "minX": -2828,
+        "minZ": 5405,
+        "maxX": -2794,
+        "maxZ": 5435
+      },
+      "terms": [
+        "教学",
+        "阅读",
+        "研讨"
+      ],
+      "template": "studio:mg-25-v01"
+    },
+    {
+      "id": "seminars_fill_004",
+      "bounds": {
+        "minX": -2900,
+        "minZ": 5449,
+        "maxX": -2880,
+        "maxZ": 5469
+      },
+      "terms": [
+        "教学",
+        "研讨"
+      ],
+      "template": "studio:mg-26-v01"
+    },
+    {
+      "id": "seminars_fill_005",
+      "bounds": {
+        "minX": -2871,
+        "minZ": 5444,
+        "maxX": -2837,
+        "maxZ": 5474
+      },
+      "terms": [
+        "教学",
+        "阅读",
+        "研讨"
+      ],
+      "template": "studio:mg-25-v01"
+    },
+    {
+      "id": "seminars_fill_006",
+      "bounds": {
+        "minX": -2821,
+        "minZ": 5449,
+        "maxX": -2801,
+        "maxZ": 5469
+      },
+      "terms": [
+        "教学",
+        "研讨"
+      ],
+      "template": "studio:mg-26-v01"
+    }
+  ],
+  "bindings": {
+    "sel": "observation_required_002",
+    "tasha": "archives_required_002",
+    "loren": "reception_required_001",
+    "mira": "forest_school_required_003",
+    "ilan": "archives_required_002",
+    "vera": "forest_school_required_001"
+  }
+}

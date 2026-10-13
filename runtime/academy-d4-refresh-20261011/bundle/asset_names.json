@@ -1,0 +1,280 @@
+[
+  {
+    "templateRef": "studio:mg-01-v01",
+    "displayName": "星穹礼堂 · 飞扶壁与肋拱中殿",
+    "functionTerms": [
+      "教学",
+      "礼仪",
+      "集会"
+    ],
+    "style": "魔法学院新制",
+    "planningRole": "planning_role.key",
+    "category": "specialty",
+    "assetTags": [],
+    "siteConditions": {
+      "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+    }
+  },
+  {
+    "templateRef": "studio:mg-02-v01",
+    "displayName": "八瓣藏书馆 · 双层环廊与采光穹顶",
+    "functionTerms": [
+      "书籍借阅",
+      "文献保管",
+      "阅读"
+    ],
+    "style": "魔法学院新制",
+    "planningRole": "planning_role.key",
+    "category": "specialty",
+    "assetTags": [],
+    "siteConditions": {
+      "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+    }
+  },
+  {
+    "templateRef": "studio:mg-03-v01",
+    "displayName": "子午观星台 · 阶塔与开瓣星穹",
+    "functionTerms": [
+      "天象观测",
+      "研究"
+    ],
+    "style": "魔法学院新制",
+    "planningRole": "planning_role.key",
+    "category": "specialty",
+    "assetTags": [],
+    "siteConditions": {
+      "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+    }
+  },
+  {
+    "templateRef": "studio:mg-04-v01",
+    "displayName": "三院炼金实验所 · 晶核中庭与玻璃长翼",
+    "functionTerms": [
+      "实验研究",
+      "药剂制作"
+    ],
+    "style": "魔法学院新制",
+    "planningRole": "planning_role.key",
+    "category": "specialty",
+    "assetTags": [],
+    "siteConditions": {
+      "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+    }
+  },
+  {
+    "templateRef": "studio:mg-05-v01",
+    "displayName": "回廊学生宿舍 · 双翼三层寝室",
+    "functionTerms": [
+      "学生住宿",
+      "自习"
+    ],
+    "style": "魔法学院新制",
+    "planningRole": "planning_role.self_contained",
+    "category": "common",
+    "assetTags": [],
+    "siteConditions": {
+      "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+    }
+  },
+  {
+    "templateRef": "studio:mg-06-v01",
+    "displayName": "学院器材店 · 八角陈列窗与后部货间",
+    "functionTerms": [
+      "商品零售",
+      "货物暂存"
+    ],
+    "style": "魔法学院新制",
+    "planningRole": "planning_role.fill",
+    "category": "common",
+    "assetTags": [],
+    "siteConditions": {
+      "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+    }
+  },
+  {
+    "templateRef": "studio:mg-07-v01",
+    "displayName": "锤梁长桌食堂 · 高窗长厅与备餐院",
+    "functionTerms": [
+      "餐饮",
+      "集体用餐"
+    ],
+    "style": "魔法学院新制",
+    "planningRole": "planning_role.self_contained",
+    "category": "common",
+    "assetTags": [],
+    "siteConditions": {
+      "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+    }
+  },
+  {
+    "templateRef": "studio:mg-10-v01",
+    "displayName": "三级星泉 · 放射石肋与水盆",
+    "functionTerms": [
+      "水景观赏",
+      "休憩"
+    ],
+    "style": "魔法学院新制",
+    "planningRole": "planning_role.structure",
+    "category": "common",
+    "assetTags": [
+      "landscape"
+    ],
+    "siteConditions": {
+      "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+    }
+  },
+  {
+    "templateRef": "studio:mg-12-v01",
+    "displayName": "药草温室庭 · 十字花径与双玻璃花房",
+    "functionTerms": [
+      "花草观赏",
+      "园艺养护"
+    ],
+    "style": "魔法学院新制",
+    "planningRole": "planning_role.structure",
+    "category": "common",
+    "assetTags": [
+      "landscape"
+    ],
+    "siteConditions": {
+      "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+    }
+  },
+  {
+    "templateRef": "studio:mg-13-v01",
+    "displayName": "层台院务塔 · 四层议事与学籍廊",
+    "functionTerms": [
+      "公共办事",
+      "议事",
+      "文献保管"
+    ],
+    "style": "魔法学院新制",
+    "planningRole": "planning_role.key",
+    "category": "common",
+    "assetTags": [],
+    "siteConditions": {
+      "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+    }
+  },
+  {
+    "templateRef": "studio:mg-14-v01",
+    "displayName": "三环传送厅 · 三进尖拱与校准侧廊",
+    "functionTerms": [
+      "出行登记",
+      "传送设施维护"
+    ],
+    "style": "魔法学院新制",
+    "planningRole": "planning_role.key",
+    "category": "specialty",
+    "assetTags": [],
+    "siteConditions": {
+      "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+    }
+  },
+  {
+    "templateRef": "studio:mg-15-v01",
+    "displayName": "愈疗圣堂 · 十字病房与日照庭",
+    "functionTerms": [
+      "医疗",
+      "照料",
+      "休养"
+    ],
+    "style": "魔法学院新制",
+    "planningRole": "planning_role.key",
+    "category": "specialty",
+    "assetTags": [],
+    "siteConditions": {
+      "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+    }
+  },
+  {
+    "templateRef": "studio:mg-16-v01",
+    "displayName": "四柱晶核工坊 · 张拱主架与检修庭",
+    "functionTerms": [
+      "魔法器材制作",
+      "能源设施维护"
+    ],
+    "style": "魔法学院新制",
+    "planningRole": "planning_role.key",
+    "category": "specialty",
+    "assetTags": [],
+    "siteConditions": {
+      "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+    }
+  },
+  {
+    "templateRef": "studio:mg-17-v01",
+    "displayName": "导师小院 · 阶梯书斋与玻璃冬园",
+    "functionTerms": [
+      "家庭居住",
+      "研究"
+    ],
+    "style": "魔法学院新制",
+    "planningRole": "planning_role.self_contained",
+    "category": "common",
+    "assetTags": [],
+    "siteConditions": {
+      "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+    }
+  },
+  {
+    "templateRef": "studio:mg-18-v01",
+    "displayName": "药剂作坊 · 错顶工间与冷却烟塔",
+    "functionTerms": [
+      "药剂制作",
+      "商品零售"
+    ],
+    "style": "魔法学院新制",
+    "planningRole": "planning_role.fill",
+    "category": "common",
+    "assetTags": [],
+    "siteConditions": {
+      "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+    }
+  },
+  {
+    "templateRef": "studio:mg-19-v01",
+    "displayName": "卷轴抄写所 · 连拱采光书廊",
+    "functionTerms": [
+      "文献抄写",
+      "书籍制作"
+    ],
+    "style": "魔法学院新制",
+    "planningRole": "planning_role.fill",
+    "category": "common",
+    "assetTags": [],
+    "siteConditions": {
+      "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+    }
+  },
+  {
+    "templateRef": "studio:mg-20-v01",
+    "displayName": "封印材料库 · 厚壁券室与卸货前庭",
+    "functionTerms": [
+      "货物仓储",
+      "材料保管"
+    ],
+    "style": "魔法学院新制",
+    "planningRole": "planning_role.fill",
+    "category": "common",
+    "assetTags": [],
+    "siteConditions": {
+      "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+    }
+  },
+  {
+    "templateRef": "studio:mg-21-v01",
+    "displayName": "教学玻璃温室 · 三跨肋架与试植床",
+    "functionTerms": [
+      "植物教学",
+      "园艺养护"
+    ],
+    "style": "魔法学院新制",
+    "planningRole": "planning_role.fill",
+    "category": "common",
+    "assetTags": [],
+    "siteConditions": {
+      "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+    }
+  }
+]

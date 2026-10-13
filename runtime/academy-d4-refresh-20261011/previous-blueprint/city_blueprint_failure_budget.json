@@ -1,0 +1,13 @@
+{
+  "schema": "city_blueprint_failure_budget",
+  "cityId": "city_jingchao_capital",
+  "contextId": "sha256:471a166e028911922613aa21925760cd4c6702ce08b25bfb3c717c9ad9e5ed33",
+  "failureCount": 0,
+  "maximumFailureCount": 5,
+  "remainingFailureCount": 5,
+  "status": "open",
+  "retryAllowed": true,
+  "failures": [],
+  "createdAt": "2026-10-07T15:18:08.478343Z",
+  "updatedAt": "2026-10-11T11:12:50.984124300Z"
+}

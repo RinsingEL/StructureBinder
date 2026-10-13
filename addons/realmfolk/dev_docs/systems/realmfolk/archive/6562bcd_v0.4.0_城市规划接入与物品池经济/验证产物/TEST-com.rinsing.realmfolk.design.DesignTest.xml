@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.rinsing.realmfolk.design.DesignTest" tests="21" skipped="0" failures="0" errors="0" timestamp="2026-09-24T09:48:42" hostname="DEVICE" time="0.161">
+  <properties/>
+  <testcase name="forSaleAndPlayerHomesAreExcluded()" classname="com.rinsing.realmfolk.design.DesignTest" time="0.039"/>
+  <testcase name="draftsAndProfilesSurviveJsonRoundTrip()" classname="com.rinsing.realmfolk.design.DesignTest" time="0.022"/>
+  <testcase name="keyPeopleAreGeneratedOnceBeforeFillers()" classname="com.rinsing.realmfolk.design.DesignTest" time="0.008"/>
+  <testcase name="stateChangesRequireAnotherPreview()" classname="com.rinsing.realmfolk.design.DesignTest" time="0.014"/>
+  <testcase name="rejectsCoercedTypesAndNulls()" classname="com.rinsing.realmfolk.design.DesignTest" time="0.001"/>
+  <testcase name="previewAndPublicationAgreeAndRetriesAreIdempotent()" classname="com.rinsing.realmfolk.design.DesignTest" time="0.006"/>
+  <testcase name="explicitRefreshProtectsRelationshipsAndRolledAttributes()" classname="com.rinsing.realmfolk.design.DesignTest" time="0.011"/>
+  <testcase name="deterministicDespitePropertyMapOrder()" classname="com.rinsing.realmfolk.design.DesignTest" time="0.005"/>
+  <testcase name="keepsExistingIdentityAndDoesNotResurrect()" classname="com.rinsing.realmfolk.design.DesignTest" time="0.002"/>
+  <testcase name="cityOverridesRealmAndTemplate()" classname="com.rinsing.realmfolk.design.DesignTest" time="0.001"/>
+  <testcase name="arbitraryProfessionNamesComposeCapabilities()" classname="com.rinsing.realmfolk.design.DesignTest" time="0.003"/>
+  <testcase name="assignsDistinctHomesAndSeparateWorkplaces()" classname="com.rinsing.realmfolk.design.DesignTest" time="0.007"/>
+  <testcase name="rejectsExecutableAndUnknownFields()" classname="com.rinsing.realmfolk.design.DesignTest" time="0.002"/>
+  <testcase name="conflictingDraftCannotOverwriteNewRevision()" classname="com.rinsing.realmfolk.design.DesignTest" time="0.008"/>
+  <testcase name="defaultsAreValid()" classname="com.rinsing.realmfolk.design.DesignTest" time="0.002"/>
+  <testcase name="rejectsUnknownAbilitiesAndUnsafeCombos()" classname="com.rinsing.realmfolk.design.DesignTest" time="0.003"/>
+  <testcase name="futureOnlyKeepsAllExistingSnapshots()" classname="com.rinsing.realmfolk.design.DesignTest" time="0.008"/>
+  <testcase name="respectsWorkplaceCapacityAndJobMaximum()" classname="com.rinsing.realmfolk.design.DesignTest" time="0.002"/>
+  <testcase name="globalChangesMustPreviewEveryAffectedCity()" classname="com.rinsing.realmfolk.design.DesignTest" time="0.004"/>
+  <testcase name="missingWorkplaceReservesMinimumInsteadOfFillingWithResidents()" classname="com.rinsing.realmfolk.design.DesignTest" time="0.005"/>
+  <testcase name="rejectsUnknownItems()" classname="com.rinsing.realmfolk.design.DesignTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

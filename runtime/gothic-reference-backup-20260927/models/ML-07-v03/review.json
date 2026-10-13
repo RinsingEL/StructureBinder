@@ -1,0 +1,43 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "ML-07-v03",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 哥特作者逐图核对",
+  "nbt_sha256": "1209c41f16a77a210628c27c4e45efaf6fb932e9aefc41480ee0e890a09769df",
+  "author_sha256": "dd25f12a3e421245c386d1c0f48621e8e7629c1fa6cb91e527aae6530d1388fc",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-main.png",
+    "previews/room-bed.png",
+    "previews/room-wash.png",
+    "previews/point-cook.png",
+    "previews/point-records.png",
+    "previews/point-gear.png",
+    "previews/point-beds0.png",
+    "previews/point-beds1.png",
+    "previews/point-linen.png",
+    "previews/point-repair.png",
+    "previews/point-wash.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "实际图审": "折角家宅和半开放清洗廊形成干湿作业边界，双床后寝不占清洗工作面。",
+    "形体与用途": "L形寝居围出工作小院，雨棚下单独组织沾泥工具清洗与换柄，干燥记录和家庭双床留在实体屋内。",
+    "数据导航": "数据、标记和离线碰撞导航零警告。",
+    "证据范围": "当前四向、顶视、去顶、所有楼层、房间、使用站位、标记和场地截图已实际查看。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "离线静态模板；未接入机器、交易、气候或作物生产机制。"
+  ]
+}

@@ -1,0 +1,1 @@
+{"tool": "city_d4_reopen", "args": {"runId": "provider_3d25631f_r19200", "citySeedId": "city_jingchao_capital", "contextId": "sha256:e12c7d3bc219b7fee9e49d3e90052441f6ede4bf4c36570a518ff4ad048ec01d", "workflowRevision": 10, "baseBlueprintHash": "sha256:967042557a9d4eb0cf0ea06cb37da76750b0f5f13350dc7086aeb1938b5497c4", "reason": "用户授权改为坐标选址，重做工作台式紧凑学院并对照。"}}

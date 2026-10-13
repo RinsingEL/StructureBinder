@@ -1,0 +1,203 @@
+{
+  "seed": 20261010,
+  "greenery": true,
+  "terraceFeatures": true,
+  "foundationMarginBlocks": 8,
+  "terrainSource": "DEM_STEP_1",
+  "gapLandscape": true,
+  "gapSurface": "CONNECTION_TERRACE",
+  "smallGapMaxBlocks": 32,
+  "arrays": [
+    {
+      "arrayId": "services",
+      "function": "services",
+      "anchorBlock": {
+        "x": 0,
+        "z": 0
+      },
+      "algorithm": "COURTYARD",
+      "count": 3,
+      "rotation": 0,
+      "densityClass": "BALANCED",
+      "coreAssetId": "studio:el-16-v01",
+      "requiredAssetIds": [
+        "studio:el-20-v01",
+        "studio:el-05-v01"
+      ],
+      "layout": {
+        "gapBlocks": 10,
+        "courtWidth": 34,
+        "courtDepth": 30,
+        "faceInward": true,
+        "purpose": "疗养与园艺庭院"
+      }
+    },
+    {
+      "arrayId": "guest",
+      "function": "guest",
+      "anchorBlock": {
+        "x": 0,
+        "z": 0
+      },
+      "algorithm": "LINEAR",
+      "count": 2,
+      "rotation": 0,
+      "densityClass": "BALANCED",
+      "coreAssetId": "studio:el-07-v01",
+      "requiredAssetIds": [
+        "studio:el-06-v01"
+      ],
+      "layout": {
+        "gapBlocks": 10,
+        "crossAlign": "END"
+      }
+    },
+    {
+      "arrayId": "orchard",
+      "function": "orchard",
+      "anchorBlock": {
+        "x": 0,
+        "z": 0
+      },
+      "algorithm": "GRID",
+      "count": 3,
+      "rotation": 0,
+      "densityClass": "BALANCED",
+      "coreAssetId": "studio:el-18-v01",
+      "requiredAssetIds": [
+        "studio:el-19-v01",
+        "studio:el-05-v01"
+      ],
+      "layout": {
+        "gapBlocks": 10,
+        "columns": 2
+      }
+    }
+  ],
+  "compositions": [
+    {
+      "compositionId": "supply",
+      "memberIds": [
+        "guest",
+        "orchard"
+      ],
+      "algorithm": "LINEAR",
+      "anchorBlock": {
+        "x": 0,
+        "z": 0
+      },
+      "directionDegrees": 90,
+      "layout": {
+        "gapBlocks": 18
+      }
+    },
+    {
+      "compositionId": "woodland-town",
+      "memberIds": [
+        "services",
+        "supply"
+      ],
+      "algorithm": "LINEAR",
+      "anchorBlock": {
+        "x": -3184,
+        "z": 4932
+      },
+      "directionDegrees": 0,
+      "layout": {
+        "gapBlocks": 18,
+        "crossAlign": "CENTER"
+      }
+    }
+  ],
+  "districts": [
+    {
+      "districtId": "services",
+      "name": "园艺疗养聚落中心",
+      "coreMemberId": "services:1",
+      "arrayIds": [
+        "services"
+      ],
+      "platform": true
+    },
+    {
+      "districtId": "guest",
+      "name": "访客接待",
+      "coreMemberId": "guest:1",
+      "arrayIds": [
+        "guest"
+      ],
+      "platform": true
+    },
+    {
+      "districtId": "orchard",
+      "name": "酿造与林果储存",
+      "coreMemberId": "orchard:1",
+      "arrayIds": [
+        "orchard"
+      ],
+      "platform": true
+    }
+  ],
+  "terraceGroups": [
+    {
+      "terraceId": "services-terrace",
+      "districtId": "services",
+      "coreMemberId": "services:1",
+      "arrayIds": [
+        "services"
+      ],
+      "styleRef": "local"
+    },
+    {
+      "terraceId": "guest-terrace",
+      "districtId": "guest",
+      "coreMemberId": "guest:1",
+      "arrayIds": [
+        "guest"
+      ],
+      "styleRef": "local"
+    },
+    {
+      "terraceId": "orchard-terrace",
+      "districtId": "orchard",
+      "coreMemberId": "orchard:1",
+      "arrayIds": [
+        "orchard"
+      ],
+      "styleRef": "local"
+    }
+  ],
+  "terraceStyles": [
+    {
+      "styleId": "local",
+      "postSpacing": 12,
+      "minimumExposure": 1,
+      "railBlock": "minecraft:birch_fence",
+      "postBlock": "minecraft:stripped_birch_log",
+      "capBlock": "minecraft:birch_slab",
+      "materials": {
+        "ground": "minecraft:mossy_stone_bricks",
+        "retainingWall": "minecraft:mossy_cobblestone"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "to": "guest",
+      "from": "services"
+    },
+    {
+      "to": "orchard",
+      "from": "services"
+    }
+  ],
+  "publicSpaces": [
+    {
+      "nodeId": "services",
+      "kind": "GARDEN",
+      "flowerBlock": "minecraft:allium",
+      "hedgeBlock": "minecraft:azalea_leaves",
+      "treeLeaves": "minecraft:birch_leaves"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "request": {
+    "runId": "provider_3d25631f_r19200",
+    "citySeedId": "city_jingchao_capital",
+    "step": 1
+  },
+  "response": {
+    "ok": true,
+    "step": 1,
+    "columnCount": 1048576,
+    "executionMode": "api_worker",
+    "serverThreadBlocked": false,
+    "chunkGeneration": false,
+    "durationMs": 4616.171,
+    "demPath": "E:\\Mod_Dev\\StructureBinder\\run\\saves\\campus_java_acceptance_20261010\\realm_debug\\provider_3d25631f_r19200\\city_test_runs\\city_jingchao_capital\\terrain_dem_exports\\dem_step1_14447500565523752362.json",
+    "source": {
+      "providerId": "rtf_heightmap_preview_inferred_climate",
+      "sourceKind": "generator_native",
+      "fastPath": true,
+      "fallbackReason": "",
+      "sourceFingerprint": "sha256:f5286b8aa9ad56b26e98667f48f7c37e0d74f4ff42190ba5a2ce886994555d72",
+      "samplingSemantics": "per_block_generator_height_field",
+      "kind": "generator_native_height_field",
+      "dimensionId": "minecraft:overworld",
+      "worldSeed": "1025860383",
+      "runId": "provider_3d25631f_r19200",
+      "chunkGeneration": false
+    },
+    "presentation": "planning_decision_view.v0.1"
+  }
+}

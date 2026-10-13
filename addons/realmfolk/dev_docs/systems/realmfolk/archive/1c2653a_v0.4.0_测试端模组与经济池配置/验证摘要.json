@@ -1,0 +1,44 @@
+{
+  "date": "2026-09-25",
+  "minecraft": "1.20.1",
+  "forge": "47.4.23",
+  "addedJars": 7,
+  "activeJars": 12,
+  "goods": 93,
+  "pools": 11,
+  "configSha256": "0549a80de6aa112be91887d8e5fdd93510f2dc82a32bdc6aee7062b06b33f1dd",
+  "calls": 33,
+  "validationDirectory": "E:\\Mod\\_Dev\\.realmfolk-modpack-validation-20260925",
+  "fixture": "Fresh flat world; gave 64 tomatoes using normal give command",
+  "trade": {
+    "sold": {
+      "item": "farmersdelight:tomato",
+      "count": 64,
+      "income": 128
+    },
+    "purchased": [
+      {
+        "item": "create:andesite_alloy",
+        "count": 4,
+        "cost": 48
+      },
+      {
+        "item": "ars_nouveau:source_gem",
+        "count": 1,
+        "cost": 20
+      }
+    ],
+    "balance": 60
+  },
+  "gift": {
+    "item": "farmersdelight:tomato",
+    "dice": 54,
+    "chance": 30,
+    "success": false,
+    "affection": 0
+  },
+  "limitations": [
+    "Existing ReTerraForged pack metadata warning; warning screen disabled only in isolated validation config.",
+    "No full gameplay, world generation or long-term balance certification."
+  ]
+}

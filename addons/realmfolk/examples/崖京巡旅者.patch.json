@@ -1,0 +1,132 @@
+{
+  "professions": {
+    "yajing_wayfarer": {
+      "name": "崖京巡旅者",
+      "appearance": "ranger",
+      "bio": "我们守望古寺附近的山道。带来两根木料，我会为你备好盘缠。",
+      "equipment": "minecraft:iron_sword",
+      "capabilities": [
+        "conversation",
+        "commission",
+        "trade",
+        "companion",
+        "combat",
+        "witness",
+        "rumors",
+        "patrol",
+        "public_life"
+      ],
+      "workplaceTerms": [
+        "宗教"
+      ],
+      "health": {
+        "min": 40,
+        "max": 44
+      },
+      "attack": {
+        "min": 6,
+        "max": 8
+      },
+      "speed": {
+        "min": 0.27,
+        "max": 0.31
+      },
+      "recruitFavor": 8,
+      "patrolRadius": 3,
+      "commission": {
+        "item": "minecraft:oak_log",
+        "count": 2,
+        "emeralds": 7,
+        "affection": 8,
+        "reputation": 3
+      },
+      "offers": [
+        {
+          "item": "minecraft:apple",
+          "count": 2,
+          "emeralds": 3
+        },
+        {
+          "item": "minecraft:cooked_beef",
+          "count": 1,
+          "emeralds": 4
+        }
+      ]
+    }
+  },
+  "cityTemplates": {
+    "yajing_adventurers": {
+      "residentsPerHouse": 4,
+      "names": [
+        "岩川",
+        "青禾",
+        "松岚"
+      ],
+      "traits": {
+        "沉稳": 3,
+        "爽朗": 2
+      },
+      "jobs": {
+        "resident": {
+          "min": 0,
+          "max": 256,
+          "weight": 5
+        },
+        "yajing_wayfarer": {
+          "min": 1,
+          "max": 6,
+          "weight": 1
+        }
+      },
+      "populationMode": "housing",
+      "housingOccupancy": 0.85,
+      "activities": [
+        {
+          "id": "midday_market",
+          "name": "午间闲逛",
+          "start": 5000,
+          "end": 8500,
+          "participation": 0.6,
+          "capacity": 12,
+          "maxDistance": 128,
+          "placeTerms": [
+            "市场",
+            "商业",
+            "公共空间",
+            "广场",
+            "宗教"
+          ]
+        },
+        {
+          "id": "evening_gathering",
+          "name": "傍晚小聚",
+          "start": 10000,
+          "end": 12000,
+          "participation": 0.4,
+          "capacity": 8,
+          "maxDistance": 96,
+          "placeTerms": [
+            "酒馆",
+            "餐饮",
+            "公共空间",
+            "广场",
+            "宗教"
+          ]
+        }
+      ]
+    }
+  },
+  "cities": {
+    "city_realm_yajing_capital": {
+      "template": "yajing_adventurers",
+      "keyPeople": [
+        {
+          "id": "mountain_guide",
+          "name": "岚川",
+          "profession": "yajing_wayfarer",
+          "bio": "我记得旧王朝留下的山道。准备好旅行时，再来找我。"
+        }
+      ]
+    }
+  }
+}

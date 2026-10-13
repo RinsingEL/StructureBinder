@@ -1,0 +1,164 @@
+[
+  {
+    "templateRef": "studio:mg-01-v01",
+    "templateHash": "sha256:bab47be7f8bf17dbbeffba62e4692a55001af7e645051f147e1a46205873ce89",
+    "rawSize": {
+      "width": 71,
+      "height": 72,
+      "depth": 83
+    }
+  },
+  {
+    "templateRef": "studio:mg-02-v01",
+    "templateHash": "sha256:9a2567d363223838bc9b9d41327275aced4d6a036a8847221334a3a1932d30a6",
+    "rawSize": {
+      "width": 61,
+      "height": 61,
+      "depth": 65
+    }
+  },
+  {
+    "templateRef": "studio:mg-03-v01",
+    "templateHash": "sha256:6e745f3ab671962ffa62e017adae707fe5ca158bc0b764c864c848012cce2859",
+    "rawSize": {
+      "width": 51,
+      "height": 64,
+      "depth": 55
+    }
+  },
+  {
+    "templateRef": "studio:mg-04-v01",
+    "templateHash": "sha256:45872f1077efae8de4837f608aef19f829634ea2d7e1f25d753f8cbc953bff3d",
+    "rawSize": {
+      "width": 73,
+      "height": 64,
+      "depth": 73
+    }
+  },
+  {
+    "templateRef": "studio:mg-05-v01",
+    "templateHash": "sha256:493eed4ba4b76775fa111a3377b2855cf9dd906199d74753770ec4746d70eb34",
+    "rawSize": {
+      "width": 69,
+      "height": 61,
+      "depth": 67
+    }
+  },
+  {
+    "templateRef": "studio:mg-06-v01",
+    "templateHash": "sha256:91bcd67cf331e8fe70d77ee04be850eca8bbbd0070678d4cf2d3a8d5e4c0799b",
+    "rawSize": {
+      "width": 43,
+      "height": 43,
+      "depth": 49
+    }
+  },
+  {
+    "templateRef": "studio:mg-07-v01",
+    "templateHash": "sha256:3295d3a04083ce8c8496abb9b0a335f8d1e07fed9f8ab42190bd98695eb10cad",
+    "rawSize": {
+      "width": 57,
+      "height": 56,
+      "depth": 69
+    }
+  },
+  {
+    "templateRef": "studio:mg-10-v01",
+    "templateHash": "sha256:8c45729e520a81f65400c3a083155c625d5e53702b0ea65a7fa3455f309fef61",
+    "rawSize": {
+      "width": 35,
+      "height": 31,
+      "depth": 35
+    }
+  },
+  {
+    "templateRef": "studio:mg-12-v01",
+    "templateHash": "sha256:b4585ec25236cd2fb0f690392155fcd6e056bd363757cef6bff1caee0b1cae5c",
+    "rawSize": {
+      "width": 43,
+      "height": 33,
+      "depth": 47
+    }
+  },
+  {
+    "templateRef": "studio:mg-13-v01",
+    "templateHash": "sha256:49402f605516357e9e9f74adfd3e0e8e4b7375f12e500e5077b7205b9efb6b8a",
+    "rawSize": {
+      "width": 55,
+      "height": 68,
+      "depth": 59
+    }
+  },
+  {
+    "templateRef": "studio:mg-14-v01",
+    "templateHash": "sha256:dcda56b5890f1f82be7f3077cfc972f233a55747dc80ce3169c27432b48a9009",
+    "rawSize": {
+      "width": 61,
+      "height": 57,
+      "depth": 69
+    }
+  },
+  {
+    "templateRef": "studio:mg-15-v01",
+    "templateHash": "sha256:c275d422a33179083bf739d28375bb1acd435b5305356da58a2b467a3a910105",
+    "rawSize": {
+      "width": 65,
+      "height": 55,
+      "depth": 71
+    }
+  },
+  {
+    "templateRef": "studio:mg-16-v01",
+    "templateHash": "sha256:91aa2701e4f92f9a8faaada974c98a7cb990ba50a2a2fe023ed6d1de5c5affde",
+    "rawSize": {
+      "width": 65,
+      "height": 65,
+      "depth": 65
+    }
+  },
+  {
+    "templateRef": "studio:mg-17-v01",
+    "templateHash": "sha256:befa3a5d1cc54c1d789c438f12aaf2145f7ad7870f10c99b84e10020fdd970e1",
+    "rawSize": {
+      "width": 47,
+      "height": 45,
+      "depth": 53
+    }
+  },
+  {
+    "templateRef": "studio:mg-18-v01",
+    "templateHash": "sha256:c1d63518f206222b3bc6951057d8ff7eb80b8906bced55ddf683dace497b163c",
+    "rawSize": {
+      "width": 49,
+      "height": 46,
+      "depth": 51
+    }
+  },
+  {
+    "templateRef": "studio:mg-19-v01",
+    "templateHash": "sha256:c5867f11e84ee0a5900fb734216d88b4627b018c6d2e99d5c4117f0d7f0d382a",
+    "rawSize": {
+      "width": 57,
+      "height": 39,
+      "depth": 45
+    }
+  },
+  {
+    "templateRef": "studio:mg-20-v01",
+    "templateHash": "sha256:5fbb030d8607c32570af0f15a05dc0d2b990ff79746694a2a70b3806530a3d33",
+    "rawSize": {
+      "width": 45,
+      "height": 38,
+      "depth": 55
+    }
+  },
+  {
+    "templateRef": "studio:mg-21-v01",
+    "templateHash": "sha256:477f4de2c455cbcf4c5918f691f243fad8c19f9abb7830c6f9857453d7bbe9bd",
+    "rawSize": {
+      "width": 59,
+      "height": 34,
+      "depth": 51
+    }
+  }
+]

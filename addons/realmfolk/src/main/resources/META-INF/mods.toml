@@ -1,0 +1,27 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="GPL-3.0-or-later"
+[[mods]]
+modId="realmfolk"
+version="${version}"
+displayName="国度居民 · Realmfolk"
+authors="Rinsing"
+description='''国度居民、冒险同伴与有温度的城镇秩序。Geomantia 附属模组。'''
+[[dependencies.realmfolk]]
+modId="forge"
+mandatory=true
+versionRange="[47.4,)"
+ordering="NONE"
+side="BOTH"
+[[dependencies.realmfolk]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.20.1,1.20.2)"
+ordering="NONE"
+side="BOTH"
+[[dependencies.realmfolk]]
+modId="geomantia"
+mandatory=true
+versionRange="[0.1.0,)"
+ordering="AFTER"
+side="BOTH"

@@ -1,0 +1,473 @@
+{
+  "version": 1,
+  "currency": "通币",
+  "restockTicks": 24000,
+  "requestCooldownTicks": 12000,
+  "buybackBudget": 4096,
+  "giftBudget": 48,
+  "affectionFactor": 0.025,
+  "tiers": {
+    "basic": {
+      "name": "基础",
+      "giftChance": 30
+    },
+    "rare": {
+      "name": "稀有",
+      "giftChance": 10
+    },
+    "epic": {
+      "name": "史诗",
+      "giftChance": 2
+    }
+  },
+  "priceBands": {
+    "standard": {
+      "sell": 1,
+      "buy": 1
+    },
+    "producer": {
+      "sell": 0.75,
+      "buy": 0.8
+    },
+    "importer": {
+      "sell": 1.35,
+      "buy": 1.4
+    }
+  },
+  "goods": {
+    "minecraft:oak_log": {
+      "tier": "basic",
+      "price": 4,
+      "buyback": 2,
+      "gift": true
+    },
+    "minecraft:cobblestone": {
+      "tier": "basic",
+      "price": 2,
+      "buyback": 1,
+      "gift": true
+    },
+    "minecraft:dirt": {
+      "tier": "basic",
+      "price": 2,
+      "buyback": 1,
+      "gift": true
+    },
+    "minecraft:glass": {
+      "tier": "basic",
+      "price": 4,
+      "buyback": 1,
+      "gift": true
+    },
+    "minecraft:sand": {
+      "tier": "basic",
+      "price": 2,
+      "buyback": 1,
+      "gift": true
+    },
+    "minecraft:bricks": {
+      "tier": "basic",
+      "price": 6,
+      "buyback": 2,
+      "gift": true
+    },
+    "minecraft:stone": {
+      "tier": "basic",
+      "price": 3,
+      "buyback": 1,
+      "gift": true
+    },
+    "minecraft:spruce_log": {
+      "tier": "basic",
+      "price": 4,
+      "buyback": 2,
+      "gift": true
+    },
+    "minecraft:wheat": {
+      "tier": "basic",
+      "price": 4,
+      "buyback": 2,
+      "gift": true
+    },
+    "minecraft:carrot": {
+      "tier": "basic",
+      "price": 3,
+      "buyback": 1,
+      "gift": true
+    },
+    "minecraft:potato": {
+      "tier": "basic",
+      "price": 3,
+      "buyback": 1,
+      "gift": true
+    },
+    "minecraft:bread": {
+      "tier": "basic",
+      "price": 6,
+      "buyback": 2,
+      "gift": true
+    },
+    "minecraft:apple": {
+      "tier": "basic",
+      "price": 4,
+      "buyback": 1,
+      "gift": true
+    },
+    "minecraft:beetroot": {
+      "tier": "basic",
+      "price": 3,
+      "buyback": 1,
+      "gift": true
+    },
+    "minecraft:pumpkin": {
+      "tier": "basic",
+      "price": 6,
+      "buyback": 3,
+      "gift": true
+    },
+    "minecraft:melon_slice": {
+      "tier": "basic",
+      "price": 2,
+      "buyback": 1,
+      "gift": true
+    },
+    "minecraft:coal": {
+      "tier": "basic",
+      "price": 8,
+      "buyback": 4,
+      "gift": true
+    },
+    "minecraft:raw_iron": {
+      "tier": "basic",
+      "price": 16,
+      "buyback": 10,
+      "gift": true
+    },
+    "minecraft:iron_ingot": {
+      "tier": "basic",
+      "price": 24,
+      "buyback": 12,
+      "gift": true
+    },
+    "minecraft:copper_ingot": {
+      "tier": "basic",
+      "price": 8,
+      "buyback": 3,
+      "gift": true
+    },
+    "minecraft:redstone": {
+      "tier": "basic",
+      "price": 8,
+      "buyback": 4,
+      "gift": true
+    },
+    "minecraft:gold_ingot": {
+      "tier": "rare",
+      "price": 48,
+      "buyback": 24,
+      "gift": true
+    },
+    "minecraft:diamond": {
+      "tier": "rare",
+      "price": 120,
+      "buyback": 72,
+      "gift": true
+    },
+    "minecraft:emerald": {
+      "tier": "basic",
+      "price": 24,
+      "buyback": 16,
+      "gift": true
+    },
+    "minecraft:torch": {
+      "tier": "basic",
+      "price": 3,
+      "buyback": 1,
+      "gift": true
+    },
+    "minecraft:arrow": {
+      "tier": "basic",
+      "price": 4,
+      "buyback": 1,
+      "gift": true
+    },
+    "minecraft:leather": {
+      "tier": "basic",
+      "price": 12,
+      "buyback": 6,
+      "gift": true
+    },
+    "minecraft:iron_sword": {
+      "tier": "rare",
+      "price": 96,
+      "buyback": 32,
+      "gift": true
+    },
+    "minecraft:golden_apple": {
+      "tier": "epic",
+      "price": 160,
+      "buyback": 60,
+      "gift": true
+    },
+    "minecraft:ender_pearl": {
+      "tier": "rare",
+      "price": 100,
+      "buyback": 40,
+      "gift": true
+    }
+  },
+  "pools": {
+    "building": {
+      "name": "建造材料",
+      "interests": "喜欢建筑、装修的玩家",
+      "function": "提供日常建房用料；收购木材和采掘材料。",
+      "weight": 1,
+      "entries": [
+        {
+          "item": "minecraft:oak_log",
+          "weight": 10,
+          "min": 32,
+          "max": 64,
+          "guaranteed": true
+        },
+        {
+          "item": "minecraft:cobblestone",
+          "weight": 10,
+          "min": 64,
+          "max": 128,
+          "guaranteed": true
+        },
+        {
+          "item": "minecraft:dirt",
+          "weight": 10,
+          "min": 64,
+          "max": 128,
+          "guaranteed": true
+        },
+        {
+          "item": "minecraft:glass",
+          "weight": 10,
+          "min": 24,
+          "max": 48,
+          "guaranteed": true
+        },
+        {
+          "item": "minecraft:sand",
+          "weight": 10,
+          "min": 32,
+          "max": 64,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:bricks",
+          "weight": 10,
+          "min": 16,
+          "max": 32,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:stone",
+          "weight": 10,
+          "min": 32,
+          "max": 64,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:spruce_log",
+          "weight": 10,
+          "min": 24,
+          "max": 48,
+          "guaranteed": false
+        }
+      ]
+    },
+    "farming": {
+      "name": "农业与餐食",
+      "interests": "喜欢种菜、养殖和烹饪的玩家",
+      "function": "收购农业产出，供应食物与种苗。",
+      "weight": 1,
+      "entries": [
+        {
+          "item": "minecraft:wheat",
+          "weight": 10,
+          "min": 24,
+          "max": 48,
+          "guaranteed": true
+        },
+        {
+          "item": "minecraft:carrot",
+          "weight": 10,
+          "min": 24,
+          "max": 48,
+          "guaranteed": true
+        },
+        {
+          "item": "minecraft:potato",
+          "weight": 10,
+          "min": 24,
+          "max": 48,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:bread",
+          "weight": 10,
+          "min": 16,
+          "max": 32,
+          "guaranteed": true
+        },
+        {
+          "item": "minecraft:apple",
+          "weight": 10,
+          "min": 12,
+          "max": 24,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:beetroot",
+          "weight": 10,
+          "min": 16,
+          "max": 32,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:pumpkin",
+          "weight": 10,
+          "min": 12,
+          "max": 24,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:melon_slice",
+          "weight": 10,
+          "min": 24,
+          "max": 48,
+          "guaranteed": false
+        }
+      ]
+    },
+    "mining": {
+      "name": "矿材与工坊",
+      "interests": "喜欢挖矿、生产或机械制造的玩家",
+      "function": "收购矿产，以基础加工物资支持生产。可由作者加入机械动力的内容。",
+      "weight": 1,
+      "entries": [
+        {
+          "item": "minecraft:coal",
+          "weight": 10,
+          "min": 16,
+          "max": 32,
+          "guaranteed": true
+        },
+        {
+          "item": "minecraft:raw_iron",
+          "weight": 10,
+          "min": 8,
+          "max": 16,
+          "guaranteed": true
+        },
+        {
+          "item": "minecraft:iron_ingot",
+          "weight": 10,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:copper_ingot",
+          "weight": 10,
+          "min": 16,
+          "max": 32,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:redstone",
+          "weight": 10,
+          "min": 16,
+          "max": 32,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:gold_ingot",
+          "weight": 3,
+          "min": 4,
+          "max": 8,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:diamond",
+          "weight": 3,
+          "min": 1,
+          "max": 2,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:emerald",
+          "weight": 10,
+          "min": 2,
+          "max": 4,
+          "guaranteed": false
+        }
+      ]
+    },
+    "adventure": {
+      "name": "探索补给",
+      "interests": "喜欢冒险、战斗和魔法的玩家",
+      "function": "提供补给、装备；可由作者混入魔法 Mod 的道具。",
+      "weight": 1,
+      "entries": [
+        {
+          "item": "minecraft:torch",
+          "weight": 10,
+          "min": 32,
+          "max": 64,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:arrow",
+          "weight": 10,
+          "min": 24,
+          "max": 48,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:leather",
+          "weight": 10,
+          "min": 8,
+          "max": 16,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:iron_sword",
+          "weight": 3,
+          "min": 1,
+          "max": 1,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:golden_apple",
+          "weight": 1,
+          "min": 1,
+          "max": 2,
+          "guaranteed": false
+        },
+        {
+          "item": "minecraft:ender_pearl",
+          "weight": 3,
+          "min": 1,
+          "max": 3,
+          "guaranteed": false
+        }
+      ]
+    }
+  },
+  "defaults": {
+    "pools": {
+      "building": 1,
+      "farming": 1,
+      "mining": 1,
+      "adventure": 0.5
+    },
+    "tiers": {},
+    "priceBand": "standard"
+  }
+}

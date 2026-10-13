@@ -1,0 +1,13 @@
+.gradle/
+build/
+run/
+run-*/
+libs/*.jar
+.idea/
+*.log
+*.hprof
+*.jfr
+*.secret
+**/provider-secret.txt
+playtest-evidence/
+releases/

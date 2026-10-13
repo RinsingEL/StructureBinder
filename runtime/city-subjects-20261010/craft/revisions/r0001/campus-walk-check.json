@@ -1,0 +1,97 @@
+{
+  "revision": 1,
+  "passed": true,
+  "routes": [
+    {
+      "source": "services:1",
+      "target": "services:2",
+      "routeColumns": 84,
+      "audit": {
+        "passed": true,
+        "unreachable": [],
+        "nodes": 1817,
+        "highest_standing_y": 9,
+        "truncated": false,
+        "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+      }
+    },
+    {
+      "source": "services:1",
+      "target": "services:3",
+      "routeColumns": 178,
+      "audit": {
+        "passed": true,
+        "unreachable": [],
+        "nodes": 3677,
+        "highest_standing_y": 10,
+        "truncated": false,
+        "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+      }
+    },
+    {
+      "source": "services:1",
+      "target": "exchange:1",
+      "routeColumns": 182,
+      "audit": {
+        "passed": true,
+        "unreachable": [],
+        "nodes": 3811,
+        "highest_standing_y": 15,
+        "truncated": false,
+        "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+      }
+    },
+    {
+      "source": "exchange:1",
+      "target": "exchange:2",
+      "routeColumns": 80,
+      "audit": {
+        "passed": true,
+        "unreachable": [],
+        "nodes": 1664,
+        "highest_standing_y": 9,
+        "truncated": false,
+        "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+      }
+    },
+    {
+      "source": "services:1",
+      "target": "workers:1",
+      "routeColumns": 210,
+      "audit": {
+        "passed": true,
+        "unreachable": [],
+        "nodes": 4487,
+        "highest_standing_y": 13,
+        "truncated": false,
+        "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+      }
+    },
+    {
+      "source": "workers:1",
+      "target": "workers:2",
+      "routeColumns": 76,
+      "audit": {
+        "passed": true,
+        "unreachable": [],
+        "nodes": 1535,
+        "highest_standing_y": 9,
+        "truncated": false,
+        "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+      }
+    },
+    {
+      "source": "workers:1",
+      "target": "workers:3",
+      "routeColumns": 143,
+      "audit": {
+        "passed": true,
+        "unreachable": [],
+        "nodes": 2792,
+        "highest_standing_y": 9,
+        "truncated": false,
+        "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+      }
+    }
+  ]
+}

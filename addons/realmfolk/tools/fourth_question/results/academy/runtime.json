@@ -1,0 +1,3769 @@
+{
+  "validation": "passed",
+  "population": {
+    "town": "academy",
+    "populationMode": "housing",
+    "occupancy": 0.85,
+    "target": 40,
+    "existing": 0,
+    "created": 40,
+    "housingBuildings": 12,
+    "housingSlots": 48,
+    "freeHousingSlots": 48,
+    "professions": {
+      "city_57489cb6ebb5_greenhand_learner": 3,
+      "city_57489cb6ebb5_greenhand_specialist": 4,
+      "city_57489cb6ebb5_hearth_learner": 4,
+      "city_57489cb6ebb5_hearth_specialist": 2,
+      "city_57489cb6ebb5_inkwell_learner": 5,
+      "city_57489cb6ebb5_inkwell_specialist": 3,
+      "city_57489cb6ebb5_starfall_learner": 14,
+      "city_57489cb6ebb5_starfall_specialist": 3,
+      "city_57489cb6ebb5_wayfarer_specialist": 2
+    },
+    "workplaceTerms": {
+      "书籍借阅": 4,
+      "书籍制作": 4,
+      "休养": 4,
+      "休憩": 4,
+      "传送设施维护": 4,
+      "公共办事": 4,
+      "出行登记": 4,
+      "医疗": 4,
+      "园艺养护": 12,
+      "天象观测": 4,
+      "学生住宿": 48,
+      "实验教学": 16,
+      "工具保管": 8,
+      "庭院休憩": 4,
+      "教学": 40,
+      "文献保管": 8,
+      "文献抄写": 4,
+      "日用品交易": 12,
+      "材料保管": 4,
+      "林业教学": 20,
+      "植物教学": 4,
+      "洗浴": 8,
+      "洗衣": 8,
+      "照料": 4,
+      "生活服务": 20,
+      "研究": 32,
+      "研讨": 48,
+      "礼仪": 4,
+      "自习": 48,
+      "花草观赏": 4,
+      "苗木培育": 12,
+      "药草栽培": 4,
+      "议事": 4,
+      "货物仓储": 4,
+      "阅读": 36,
+      "集会": 4,
+      "集体用餐": 12,
+      "餐饮": 12
+    },
+    "shortages": [],
+    "samples": [
+      {
+        "name": "伊森·0cb0",
+        "profession": "青枝实践社·执事",
+        "trait": "谨慎",
+        "home": "residence_fill_003",
+        "workplace": "forest_school_fill_004",
+        "keyPerson": false
+      },
+      {
+        "name": "米拉·0a95",
+        "profession": "暖炉伙房·执事",
+        "trait": "好奇",
+        "home": "residence_fill_003",
+        "workplace": "daily_care_required_002",
+        "keyPerson": false
+      },
+      {
+        "name": "洛恩·17ac",
+        "profession": "墨泉家族·执事",
+        "trait": "好奇",
+        "home": "residence_fill_003",
+        "workplace": "archives_required_001",
+        "keyPerson": false
+      },
+      {
+        "name": "塞尔·3379",
+        "profession": "星落研习会·执事",
+        "trait": "沉静",
+        "home": "residence_fill_003",
+        "workplace": "council_fill_003",
+        "keyPerson": false
+      },
+      {
+        "name": "米拉·0c7f",
+        "profession": "远行登记处·执事",
+        "trait": "沉静",
+        "home": "residence_fill_004",
+        "workplace": "reception_required_001",
+        "keyPerson": false
+      }
+    ]
+  },
+  "groupCounts": {
+    "greenhand": 7,
+    "hearth": 6,
+    "inkwell": 8,
+    "starfall": 17,
+    "wayfarer": 2
+  },
+  "citizens": [
+    {
+      "id": "0cb04bcb-971e-330b-8342-63d14c573691",
+      "name": "伊森·0cb0",
+      "group": "greenhand",
+      "profession": "青枝实践社·执事",
+      "trait": "谨慎",
+      "home": "residence_fill_003",
+      "workplace": "forest_school_fill_004",
+      "capabilities": [
+        "conversation",
+        "trade",
+        "buyback",
+        "gift",
+        "witness",
+        "commission"
+      ],
+      "bio": "照料药草和苗木，交换魔法栽培材料，组织学徒观察周围林地。",
+      "commission": {
+        "item": "ars_nouveau:magebloom_fiber",
+        "count": 4,
+        "emeralds": 1,
+        "affection": 6,
+        "reputation": 2
+      },
+      "stock": [
+        {
+          "item": "ars_nouveau:source_gem",
+          "tier": "basic",
+          "count": 8,
+          "price": 20,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:tomato",
+          "tier": "basic",
+          "count": 39,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:magebloom_fiber",
+          "tier": "basic",
+          "count": 15,
+          "price": 16,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:straw",
+          "tier": "basic",
+          "count": 30,
+          "price": 3,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:sourceberry_bush",
+          "tier": "basic",
+          "count": 30,
+          "price": 5,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:air_essence",
+          "tier": "rare",
+          "count": 4,
+          "price": 48,
+          "gift": true,
+          "baseChance": 10.0
+        },
+        {
+          "item": "farmersdelight:onion",
+          "tier": "basic",
+          "count": 31,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:magebloom",
+          "tier": "basic",
+          "count": 13,
+          "price": 12,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:cabbage",
+          "tier": "basic",
+          "count": 32,
+          "price": 5,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:wilden_wing",
+          "tier": "rare",
+          "count": 6,
+          "price": 32,
+          "gift": true,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:earth_essence",
+          "tier": "rare",
+          "count": 3,
+          "price": 48,
+          "gift": true,
+          "baseChance": 10.0
+        },
+        {
+          "item": "farmersdelight:rice",
+          "tier": "basic",
+          "count": 30,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        }
+      ],
+      "giftChances": [
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:source_gem",
+          "favor30": 52
+        },
+        {
+          "favor0": 30,
+          "item": "farmersdelight:tomato",
+          "favor30": 52
+        },
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:magebloom_fiber",
+          "favor30": 52
+        }
+      ]
+    },
+    {
+      "id": "0a9575af-f350-3460-b51b-acc64e55a8dd",
+      "name": "米拉·0a95",
+      "group": "hearth",
+      "profession": "暖炉伙房·执事",
+      "trait": "好奇",
+      "home": "residence_fill_003",
+      "workplace": "daily_care_required_002",
+      "capabilities": [
+        "conversation",
+        "trade",
+        "buyback",
+        "gift",
+        "witness",
+        "commission"
+      ],
+      "bio": "为师生与旅行者供应饭食和生活用品，与学院长期交换物资。",
+      "commission": {
+        "item": "farmersdelight:tomato",
+        "count": 6,
+        "emeralds": 0,
+        "affection": 6,
+        "reputation": 2
+      },
+      "stock": [
+        {
+          "item": "farmersdelight:tomato",
+          "tier": "basic",
+          "count": 27,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:chicken_sandwich",
+          "tier": "basic",
+          "count": 16,
+          "price": 24,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:cabbage",
+          "tier": "basic",
+          "count": 31,
+          "price": 5,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:fried_rice",
+          "tier": "basic",
+          "count": 8,
+          "price": 24,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:rice",
+          "tier": "basic",
+          "count": 26,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:tomato_seeds",
+          "tier": "basic",
+          "count": 19,
+          "price": 3,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:organic_compost",
+          "tier": "basic",
+          "count": 12,
+          "price": 16,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:rice_panicle",
+          "tier": "basic",
+          "count": 14,
+          "price": 5,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:straw",
+          "tier": "basic",
+          "count": 31,
+          "price": 3,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:wheat_dough",
+          "tier": "basic",
+          "count": 12,
+          "price": 8,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:raw_pasta",
+          "tier": "basic",
+          "count": 16,
+          "price": 10,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:onion",
+          "tier": "basic",
+          "count": 33,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        }
+      ],
+      "giftChances": [
+        {
+          "favor0": 30,
+          "item": "farmersdelight:tomato",
+          "favor30": 52
+        },
+        {
+          "favor0": 30,
+          "item": "farmersdelight:chicken_sandwich",
+          "favor30": 52
+        },
+        {
+          "favor0": 30,
+          "item": "farmersdelight:cabbage",
+          "favor30": 52
+        }
+      ]
+    },
+    {
+      "id": "17ac33d3-2074-3c5a-9bb2-e0cd7e23f2ae",
+      "name": "洛恩·17ac",
+      "group": "inkwell",
+      "profession": "墨泉家族·执事",
+      "trait": "好奇",
+      "home": "residence_fill_003",
+      "workplace": "archives_required_001",
+      "capabilities": [
+        "conversation",
+        "trade",
+        "buyback",
+        "gift",
+        "witness",
+        "commission"
+      ],
+      "bio": "家族经营藏书与抄写事务，年轻成员随长辈学习，向学院补充纸墨。",
+      "commission": {
+        "item": "ars_nouveau:blank_parchment",
+        "count": 3,
+        "emeralds": 0,
+        "affection": 6,
+        "reputation": 2
+      },
+      "stock": [
+        {
+          "item": "ars_nouveau:archwood_planks",
+          "tier": "basic",
+          "count": 49,
+          "price": 3,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:blank_parchment",
+          "tier": "basic",
+          "count": 22,
+          "price": 12,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:imbuement_chamber",
+          "tier": "rare",
+          "count": 2,
+          "price": 128,
+          "gift": false,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:sourcestone",
+          "tier": "basic",
+          "count": 62,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:source_jar",
+          "tier": "rare",
+          "count": 3,
+          "price": 80,
+          "gift": false,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:arcane_pedestal",
+          "tier": "basic",
+          "count": 3,
+          "price": 48,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:enchanting_apparatus",
+          "tier": "epic",
+          "count": 1,
+          "price": 320,
+          "gift": false,
+          "baseChance": 2.0
+        }
+      ],
+      "giftChances": [
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:archwood_planks",
+          "favor30": 52
+        },
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:blank_parchment",
+          "favor30": 52
+        },
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:sourcestone",
+          "favor30": 52
+        }
+      ]
+    },
+    {
+      "id": "33790b8a-dc9c-33b4-ba2b-adaf2f3f1a77",
+      "name": "塞尔·3379",
+      "group": "starfall",
+      "profession": "星落研习会·执事",
+      "trait": "沉静",
+      "home": "residence_fill_003",
+      "workplace": "council_fill_003",
+      "capabilities": [
+        "conversation",
+        "trade",
+        "buyback",
+        "gift",
+        "witness",
+        "commission"
+      ],
+      "bio": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。",
+      "commission": {
+        "item": "ars_nouveau:source_gem",
+        "count": 2,
+        "emeralds": 1,
+        "affection": 6,
+        "reputation": 2
+      },
+      "stock": [
+        {
+          "item": "ars_nouveau:source_gem",
+          "tier": "basic",
+          "count": 20,
+          "price": 20,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:source_jar",
+          "tier": "rare",
+          "count": 2,
+          "price": 80,
+          "gift": false,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:sourcestone",
+          "tier": "basic",
+          "count": 56,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:blank_parchment",
+          "tier": "basic",
+          "count": 16,
+          "price": 12,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:magebloom_fiber",
+          "tier": "basic",
+          "count": 14,
+          "price": 16,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:magebloom",
+          "tier": "basic",
+          "count": 9,
+          "price": 12,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:imbuement_chamber",
+          "tier": "rare",
+          "count": 2,
+          "price": 128,
+          "gift": false,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:sourceberry_bush",
+          "tier": "basic",
+          "count": 31,
+          "price": 5,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:archwood_planks",
+          "tier": "basic",
+          "count": 50,
+          "price": 3,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:wilden_wing",
+          "tier": "rare",
+          "count": 3,
+          "price": 32,
+          "gift": true,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:arcane_pedestal",
+          "tier": "basic",
+          "count": 3,
+          "price": 48,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:enchanting_apparatus",
+          "tier": "epic",
+          "count": 1,
+          "price": 320,
+          "gift": false,
+          "baseChance": 2.0
+        }
+      ],
+      "giftChances": [
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:source_gem",
+          "favor30": 52
+        },
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:sourcestone",
+          "favor30": 52
+        },
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:blank_parchment",
+          "favor30": 52
+        }
+      ]
+    },
+    {
+      "id": "0c7f7d8e-fd17-3a19-a43c-6c26a3d79a75",
+      "name": "米拉·0c7f",
+      "group": "wayfarer",
+      "profession": "远行登记处·执事",
+      "trait": "沉静",
+      "home": "residence_fill_004",
+      "workplace": "reception_required_001",
+      "capabilities": [
+        "conversation",
+        "trade",
+        "buyback",
+        "gift",
+        "witness"
+      ],
+      "bio": "接待外来冒险者，提供旅途补给；希望把可靠的周边威胁线索转成讨伐委托。",
+      "stock": [
+        {
+          "item": "ars_nouveau:source_gem",
+          "tier": "basic",
+          "count": 17,
+          "price": 20,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:blank_parchment",
+          "tier": "basic",
+          "count": 13,
+          "price": 12,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:wilden_horn",
+          "tier": "rare",
+          "count": 6,
+          "price": 32,
+          "gift": true,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:sourcestone",
+          "tier": "basic",
+          "count": 41,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:magebloom",
+          "tier": "basic",
+          "count": 9,
+          "price": 12,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:fire_essence",
+          "tier": "rare",
+          "count": 2,
+          "price": 48,
+          "gift": true,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:archwood_planks",
+          "tier": "basic",
+          "count": 35,
+          "price": 3,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:sourceberry_bush",
+          "tier": "basic",
+          "count": 22,
+          "price": 5,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "minecraft:torch",
+          "tier": "basic",
+          "count": 35,
+          "price": 3,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "minecraft:iron_sword",
+          "tier": "rare",
+          "count": 1,
+          "price": 96,
+          "gift": true,
+          "baseChance": 10.0
+        },
+        {
+          "item": "minecraft:arrow",
+          "tier": "basic",
+          "count": 38,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:wilden_spike",
+          "tier": "rare",
+          "count": 5,
+          "price": 32,
+          "gift": true,
+          "baseChance": 10.0
+        }
+      ],
+      "giftChances": [
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:source_gem",
+          "favor30": 52
+        },
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:blank_parchment",
+          "favor30": 52
+        },
+        {
+          "favor0": 10,
+          "item": "ars_nouveau:wilden_horn",
+          "favor30": 17
+        }
+      ]
+    },
+    {
+      "id": "17bbd5a0-f044-3129-8c9f-1260dd27342e",
+      "name": "洛恩·17bb",
+      "group": "starfall",
+      "profession": "星落研习会·学徒",
+      "trait": "好奇",
+      "home": "residence_fill_004",
+      "workplace": "residence_fill_004",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。"
+    },
+    {
+      "id": "835eb2c2-ce60-3447-b007-b4a1ebea8f05",
+      "name": "伊森·835e",
+      "group": "starfall",
+      "profession": "星落研习会·执事",
+      "trait": "热心",
+      "home": "residence_fill_004",
+      "workplace": "council_fill_003",
+      "capabilities": [
+        "conversation",
+        "trade",
+        "buyback",
+        "gift",
+        "witness",
+        "commission"
+      ],
+      "bio": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。",
+      "commission": {
+        "item": "ars_nouveau:source_gem",
+        "count": 2,
+        "emeralds": 1,
+        "affection": 6,
+        "reputation": 2
+      },
+      "stock": [
+        {
+          "item": "ars_nouveau:source_gem",
+          "tier": "basic",
+          "count": 10,
+          "price": 20,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:source_jar",
+          "tier": "rare",
+          "count": 3,
+          "price": 80,
+          "gift": false,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:archwood_planks",
+          "tier": "basic",
+          "count": 35,
+          "price": 3,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:sourcestone",
+          "tier": "basic",
+          "count": 64,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:sourceberry_bush",
+          "tier": "basic",
+          "count": 18,
+          "price": 5,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:blank_parchment",
+          "tier": "basic",
+          "count": 12,
+          "price": 12,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:wilden_spike",
+          "tier": "rare",
+          "count": 4,
+          "price": 32,
+          "gift": true,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:magebloom",
+          "tier": "basic",
+          "count": 8,
+          "price": 12,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:arcane_pedestal",
+          "tier": "basic",
+          "count": 3,
+          "price": 48,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:imbuement_chamber",
+          "tier": "rare",
+          "count": 1,
+          "price": 128,
+          "gift": false,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:air_essence",
+          "tier": "rare",
+          "count": 4,
+          "price": 48,
+          "gift": true,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:enchanting_apparatus",
+          "tier": "epic",
+          "count": 1,
+          "price": 320,
+          "gift": false,
+          "baseChance": 2.0
+        }
+      ],
+      "giftChances": [
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:source_gem",
+          "favor30": 52
+        },
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:archwood_planks",
+          "favor30": 52
+        },
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:sourcestone",
+          "favor30": 52
+        }
+      ]
+    },
+    {
+      "id": "95c1a221-1ad7-3e30-b189-2d9a1fde15ae",
+      "name": "洛恩·95c1",
+      "group": "hearth",
+      "profession": "暖炉伙房·学徒",
+      "trait": "好奇",
+      "home": "residence_fill_004",
+      "workplace": "residence_fill_004",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "为师生与旅行者供应饭食和生活用品，与学院长期交换物资。"
+    },
+    {
+      "id": "a511fe1c-0096-359e-9862-fa6eb1a253c9",
+      "name": "伊森·a511",
+      "group": "greenhand",
+      "profession": "青枝实践社·执事",
+      "trait": "好奇",
+      "home": "residence_required_001",
+      "workplace": "forest_school_fill_004",
+      "capabilities": [
+        "conversation",
+        "trade",
+        "buyback",
+        "gift",
+        "witness",
+        "commission"
+      ],
+      "bio": "照料药草和苗木，交换魔法栽培材料，组织学徒观察周围林地。",
+      "commission": {
+        "item": "ars_nouveau:magebloom_fiber",
+        "count": 4,
+        "emeralds": 1,
+        "affection": 6,
+        "reputation": 2
+      },
+      "stock": [
+        {
+          "item": "ars_nouveau:source_gem",
+          "tier": "basic",
+          "count": 16,
+          "price": 20,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:tomato",
+          "tier": "basic",
+          "count": 36,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:straw",
+          "tier": "basic",
+          "count": 25,
+          "price": 3,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:wilden_spike",
+          "tier": "rare",
+          "count": 4,
+          "price": 32,
+          "gift": true,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:magebloom",
+          "tier": "basic",
+          "count": 12,
+          "price": 12,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:magebloom_fiber",
+          "tier": "basic",
+          "count": 10,
+          "price": 16,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:earth_essence",
+          "tier": "rare",
+          "count": 6,
+          "price": 48,
+          "gift": true,
+          "baseChance": 10.0
+        },
+        {
+          "item": "farmersdelight:rice",
+          "tier": "basic",
+          "count": 32,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:sourceberry_bush",
+          "tier": "basic",
+          "count": 23,
+          "price": 5,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:wilden_wing",
+          "tier": "rare",
+          "count": 4,
+          "price": 32,
+          "gift": true,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:air_essence",
+          "tier": "rare",
+          "count": 5,
+          "price": 48,
+          "gift": true,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:fire_essence",
+          "tier": "rare",
+          "count": 5,
+          "price": 48,
+          "gift": true,
+          "baseChance": 10.0
+        }
+      ],
+      "giftChances": [
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:source_gem",
+          "favor30": 52
+        },
+        {
+          "favor0": 30,
+          "item": "farmersdelight:tomato",
+          "favor30": 52
+        },
+        {
+          "favor0": 30,
+          "item": "farmersdelight:straw",
+          "favor30": 52
+        }
+      ]
+    },
+    {
+      "id": "ff19e503-b0b5-33ff-b6c1-9f72fb93a7b3",
+      "name": "洛恩·ff19",
+      "group": "inkwell",
+      "profession": "墨泉家族·学徒",
+      "trait": "沉静",
+      "home": "residence_required_001",
+      "workplace": "residence_required_001",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "家族经营藏书与抄写事务，年轻成员随长辈学习，向学院补充纸墨。"
+    },
+    {
+      "id": "d10d7b2b-d89d-3c59-970f-508e8fe69807",
+      "name": "洛恩·d10d",
+      "group": "inkwell",
+      "profession": "墨泉家族·学徒",
+      "trait": "好奇",
+      "home": "residence_required_001",
+      "workplace": "residence_required_001",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "家族经营藏书与抄写事务，年轻成员随长辈学习，向学院补充纸墨。"
+    },
+    {
+      "id": "b4a022f8-4c34-3818-9a49-e145058fb36f",
+      "name": "诺雅·b4a0",
+      "group": "starfall",
+      "profession": "星落研习会·学徒",
+      "trait": "沉静",
+      "home": "residence_required_001",
+      "workplace": "residence_required_001",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。"
+    },
+    {
+      "id": "3eba5f52-1072-388a-81ad-915bfde40854",
+      "name": "伊森·3eba",
+      "group": "starfall",
+      "profession": "星落研习会·学徒",
+      "trait": "好奇",
+      "home": "residence_required_002",
+      "workplace": "residence_required_002",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。"
+    },
+    {
+      "id": "e7667abe-b9c8-3f73-8220-658e5f9a53be",
+      "name": "米拉·e766",
+      "group": "greenhand",
+      "profession": "青枝实践社·学徒",
+      "trait": "好奇",
+      "home": "residence_required_002",
+      "workplace": "residence_required_002",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "照料药草和苗木，交换魔法栽培材料，组织学徒观察周围林地。"
+    },
+    {
+      "id": "be8e2e0e-2a60-3043-bf02-fbe18023bb68",
+      "name": "塞尔·be8e",
+      "group": "starfall",
+      "profession": "星落研习会·学徒",
+      "trait": "沉静",
+      "home": "residence_required_002",
+      "workplace": "residence_required_002",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。"
+    },
+    {
+      "id": "7c89099c-6396-3ffb-9dea-e813cef44253",
+      "name": "艾琳·7c89",
+      "group": "starfall",
+      "profession": "星落研习会·学徒",
+      "trait": "谨慎",
+      "home": "residence_required_002",
+      "workplace": "residence_required_002",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。"
+    },
+    {
+      "id": "a7f74ea9-9586-31ab-8675-35df54c3e033",
+      "name": "米拉·a7f7",
+      "group": "hearth",
+      "profession": "暖炉伙房·学徒",
+      "trait": "谨慎",
+      "home": "resident_rooms_fill_002",
+      "workplace": "resident_rooms_fill_002",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "为师生与旅行者供应饭食和生活用品，与学院长期交换物资。"
+    },
+    {
+      "id": "f4066f9a-32dd-380f-99fb-e8e2328f0dae",
+      "name": "米拉·f406",
+      "group": "starfall",
+      "profession": "星落研习会·学徒",
+      "trait": "沉静",
+      "home": "resident_rooms_fill_002",
+      "workplace": "resident_rooms_fill_002",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。"
+    },
+    {
+      "id": "fa124ba8-2f3e-3c0e-9f2c-bf689250e054",
+      "name": "莱娅·fa12",
+      "group": "greenhand",
+      "profession": "青枝实践社·学徒",
+      "trait": "谨慎",
+      "home": "resident_rooms_fill_002",
+      "workplace": "resident_rooms_fill_002",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "照料药草和苗木，交换魔法栽培材料，组织学徒观察周围林地。"
+    },
+    {
+      "id": "8c093ba9-61b8-348a-aaac-3f2018b12c50",
+      "name": "伊森·8c09",
+      "group": "starfall",
+      "profession": "星落研习会·学徒",
+      "trait": "好奇",
+      "home": "resident_rooms_fill_002",
+      "workplace": "resident_rooms_fill_002",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。"
+    },
+    {
+      "id": "ddd2dc92-01e5-3672-8c5c-a81d2126515f",
+      "name": "艾琳·ddd2",
+      "group": "starfall",
+      "profession": "星落研习会·学徒",
+      "trait": "热心",
+      "home": "resident_rooms_fill_003",
+      "workplace": "resident_rooms_fill_003",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。"
+    },
+    {
+      "id": "77d040b2-c3cd-302f-95de-fbd4f3c11b4f",
+      "name": "诺雅·77d0",
+      "group": "hearth",
+      "profession": "暖炉伙房·学徒",
+      "trait": "谨慎",
+      "home": "resident_rooms_fill_003",
+      "workplace": "resident_rooms_fill_003",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "为师生与旅行者供应饭食和生活用品，与学院长期交换物资。"
+    },
+    {
+      "id": "afedef66-531a-331f-90c5-723ba738530b",
+      "name": "塞尔·afed",
+      "group": "starfall",
+      "profession": "星落研习会·学徒",
+      "trait": "热心",
+      "home": "resident_rooms_fill_003",
+      "workplace": "resident_rooms_fill_003",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。"
+    },
+    {
+      "id": "bc2e514b-96e4-3513-91c6-ee4bf6932345",
+      "name": "伊森·bc2e",
+      "group": "inkwell",
+      "profession": "墨泉家族·执事",
+      "trait": "好奇",
+      "home": "resident_rooms_fill_003",
+      "workplace": "archives_required_001",
+      "capabilities": [
+        "conversation",
+        "trade",
+        "buyback",
+        "gift",
+        "witness",
+        "commission"
+      ],
+      "bio": "家族经营藏书与抄写事务，年轻成员随长辈学习，向学院补充纸墨。",
+      "commission": {
+        "item": "ars_nouveau:blank_parchment",
+        "count": 3,
+        "emeralds": 0,
+        "affection": 6,
+        "reputation": 2
+      },
+      "stock": [
+        {
+          "item": "ars_nouveau:blank_parchment",
+          "tier": "basic",
+          "count": 9,
+          "price": 12,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:arcane_pedestal",
+          "tier": "basic",
+          "count": 4,
+          "price": 48,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:sourcestone",
+          "tier": "basic",
+          "count": 63,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:imbuement_chamber",
+          "tier": "rare",
+          "count": 2,
+          "price": 128,
+          "gift": false,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:archwood_planks",
+          "tier": "basic",
+          "count": 46,
+          "price": 3,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:source_jar",
+          "tier": "rare",
+          "count": 3,
+          "price": 80,
+          "gift": false,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:enchanting_apparatus",
+          "tier": "epic",
+          "count": 1,
+          "price": 320,
+          "gift": false,
+          "baseChance": 2.0
+        }
+      ],
+      "giftChances": [
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:blank_parchment",
+          "favor30": 52
+        },
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:arcane_pedestal",
+          "favor30": 52
+        },
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:sourcestone",
+          "favor30": 52
+        }
+      ]
+    },
+    {
+      "id": "227e9ad5-188e-3855-a252-2ba2bf96f605",
+      "name": "菲恩·227e",
+      "group": "greenhand",
+      "profession": "青枝实践社·执事",
+      "trait": "好奇",
+      "home": "resident_rooms_fill_004",
+      "workplace": "forest_school_fill_004",
+      "capabilities": [
+        "conversation",
+        "trade",
+        "buyback",
+        "gift",
+        "witness",
+        "commission"
+      ],
+      "bio": "照料药草和苗木，交换魔法栽培材料，组织学徒观察周围林地。",
+      "commission": {
+        "item": "ars_nouveau:magebloom_fiber",
+        "count": 4,
+        "emeralds": 1,
+        "affection": 6,
+        "reputation": 2
+      },
+      "stock": [
+        {
+          "item": "ars_nouveau:source_gem",
+          "tier": "basic",
+          "count": 21,
+          "price": 20,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:tomato",
+          "tier": "basic",
+          "count": 31,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:rice_panicle",
+          "tier": "basic",
+          "count": 9,
+          "price": 5,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:rice",
+          "tier": "basic",
+          "count": 28,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:onion",
+          "tier": "basic",
+          "count": 35,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:fire_essence",
+          "tier": "rare",
+          "count": 5,
+          "price": 48,
+          "gift": true,
+          "baseChance": 10.0
+        },
+        {
+          "item": "farmersdelight:cabbage",
+          "tier": "basic",
+          "count": 34,
+          "price": 5,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:cabbage_seeds",
+          "tier": "basic",
+          "count": 9,
+          "price": 3,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:sourceberry_bush",
+          "tier": "basic",
+          "count": 17,
+          "price": 5,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:magebloom_fiber",
+          "tier": "basic",
+          "count": 12,
+          "price": 16,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:organic_compost",
+          "tier": "basic",
+          "count": 13,
+          "price": 16,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:magebloom",
+          "tier": "basic",
+          "count": 16,
+          "price": 12,
+          "gift": true,
+          "baseChance": 30.0
+        }
+      ],
+      "giftChances": [
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:source_gem",
+          "favor30": 52
+        },
+        {
+          "favor0": 30,
+          "item": "farmersdelight:tomato",
+          "favor30": 52
+        },
+        {
+          "favor0": 30,
+          "item": "farmersdelight:rice_panicle",
+          "favor30": 52
+        }
+      ]
+    },
+    {
+      "id": "ade3bb00-858b-37f0-8b90-2596c4f4442d",
+      "name": "艾琳·ade3",
+      "group": "starfall",
+      "profession": "星落研习会·学徒",
+      "trait": "热心",
+      "home": "resident_rooms_fill_004",
+      "workplace": "resident_rooms_fill_004",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。"
+    },
+    {
+      "id": "18e7fff3-7938-3efa-847c-38d2d5896dfb",
+      "name": "菲恩·18e7",
+      "group": "starfall",
+      "profession": "星落研习会·执事",
+      "trait": "谨慎",
+      "home": "resident_rooms_fill_004",
+      "workplace": "council_fill_003",
+      "capabilities": [
+        "conversation",
+        "trade",
+        "buyback",
+        "gift",
+        "witness",
+        "commission"
+      ],
+      "bio": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。",
+      "commission": {
+        "item": "ars_nouveau:source_gem",
+        "count": 2,
+        "emeralds": 1,
+        "affection": 6,
+        "reputation": 2
+      },
+      "stock": [
+        {
+          "item": "ars_nouveau:source_gem",
+          "tier": "basic",
+          "count": 22,
+          "price": 20,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:sourceberry_bush",
+          "tier": "basic",
+          "count": 17,
+          "price": 5,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:wilden_horn",
+          "tier": "rare",
+          "count": 2,
+          "price": 32,
+          "gift": true,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:earth_essence",
+          "tier": "rare",
+          "count": 4,
+          "price": 48,
+          "gift": true,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:arcane_pedestal",
+          "tier": "basic",
+          "count": 3,
+          "price": 48,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:archwood_planks",
+          "tier": "basic",
+          "count": 32,
+          "price": 3,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:air_essence",
+          "tier": "rare",
+          "count": 3,
+          "price": 48,
+          "gift": true,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:fire_essence",
+          "tier": "rare",
+          "count": 4,
+          "price": 48,
+          "gift": true,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:magebloom",
+          "tier": "basic",
+          "count": 14,
+          "price": 12,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:magebloom_fiber",
+          "tier": "basic",
+          "count": 8,
+          "price": 16,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:sourcestone",
+          "tier": "basic",
+          "count": 59,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:imbuement_chamber",
+          "tier": "rare",
+          "count": 1,
+          "price": 128,
+          "gift": false,
+          "baseChance": 10.0
+        }
+      ],
+      "giftChances": [
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:source_gem",
+          "favor30": 52
+        },
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:sourceberry_bush",
+          "favor30": 52
+        },
+        {
+          "favor0": 10,
+          "item": "ars_nouveau:wilden_horn",
+          "favor30": 17
+        }
+      ]
+    },
+    {
+      "id": "c51dc29a-3d96-35ac-8a62-ffa8e2a7f39e",
+      "name": "菲恩·c51d",
+      "group": "starfall",
+      "profession": "星落研习会·学徒",
+      "trait": "谨慎",
+      "home": "resident_rooms_fill_004",
+      "workplace": "resident_rooms_fill_004",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。"
+    },
+    {
+      "id": "5eed73c3-3239-35a0-b015-6c49c6c8f869",
+      "name": "洛恩·5eed",
+      "group": "wayfarer",
+      "profession": "远行登记处·执事",
+      "trait": "谨慎",
+      "home": "resident_rooms_fill_005",
+      "workplace": "reception_required_001",
+      "capabilities": [
+        "conversation",
+        "trade",
+        "buyback",
+        "gift",
+        "witness"
+      ],
+      "bio": "接待外来冒险者，提供旅途补给；希望把可靠的周边威胁线索转成讨伐委托。",
+      "stock": [
+        {
+          "item": "ars_nouveau:source_gem",
+          "tier": "basic",
+          "count": 20,
+          "price": 20,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:wilden_spike",
+          "tier": "rare",
+          "count": 4,
+          "price": 32,
+          "gift": true,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:magebloom_fiber",
+          "tier": "basic",
+          "count": 11,
+          "price": 16,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "minecraft:leather",
+          "tier": "basic",
+          "count": 8,
+          "price": 12,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:archwood_planks",
+          "tier": "basic",
+          "count": 33,
+          "price": 3,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "minecraft:torch",
+          "tier": "basic",
+          "count": 58,
+          "price": 3,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "minecraft:arrow",
+          "tier": "basic",
+          "count": 45,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:blank_parchment",
+          "tier": "basic",
+          "count": 15,
+          "price": 12,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:sourceberry_bush",
+          "tier": "basic",
+          "count": 23,
+          "price": 5,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:imbuement_chamber",
+          "tier": "rare",
+          "count": 3,
+          "price": 128,
+          "gift": false,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:sourcestone",
+          "tier": "basic",
+          "count": 60,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "minecraft:iron_sword",
+          "tier": "rare",
+          "count": 1,
+          "price": 96,
+          "gift": true,
+          "baseChance": 10.0
+        }
+      ],
+      "giftChances": [
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:source_gem",
+          "favor30": 52
+        },
+        {
+          "favor0": 10,
+          "item": "ars_nouveau:wilden_spike",
+          "favor30": 17
+        },
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:magebloom_fiber",
+          "favor30": 52
+        }
+      ]
+    },
+    {
+      "id": "98bbbf63-4bd0-39aa-acbb-0c8a9b080f9c",
+      "name": "诺雅·98bb",
+      "group": "starfall",
+      "profession": "星落研习会·学徒",
+      "trait": "好奇",
+      "home": "resident_rooms_fill_005",
+      "workplace": "resident_rooms_fill_005",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。"
+    },
+    {
+      "id": "beb94f98-4a68-3f9b-a439-b239094961c7",
+      "name": "莱娅·beb9",
+      "group": "hearth",
+      "profession": "暖炉伙房·学徒",
+      "trait": "热心",
+      "home": "resident_rooms_fill_005",
+      "workplace": "resident_rooms_fill_005",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "为师生与旅行者供应饭食和生活用品，与学院长期交换物资。"
+    },
+    {
+      "id": "e49737f8-bade-378a-a326-74e2b91644a9",
+      "name": "莱娅·e497",
+      "group": "inkwell",
+      "profession": "墨泉家族·学徒",
+      "trait": "谨慎",
+      "home": "resident_rooms_fill_005",
+      "workplace": "resident_rooms_fill_005",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "家族经营藏书与抄写事务，年轻成员随长辈学习，向学院补充纸墨。"
+    },
+    {
+      "id": "18395d11-0e64-3b35-9b73-08e0f7763d0e",
+      "name": "诺雅·1839",
+      "group": "starfall",
+      "profession": "星落研习会·学徒",
+      "trait": "沉静",
+      "home": "resident_rooms_fill_006",
+      "workplace": "resident_rooms_fill_006",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。"
+    },
+    {
+      "id": "1891c549-033b-31a2-a307-4a7fc7c8ec94",
+      "name": "塞尔·1891",
+      "group": "hearth",
+      "profession": "暖炉伙房·执事",
+      "trait": "好奇",
+      "home": "resident_rooms_fill_006",
+      "workplace": "daily_care_required_002",
+      "capabilities": [
+        "conversation",
+        "trade",
+        "buyback",
+        "gift",
+        "witness",
+        "commission"
+      ],
+      "bio": "为师生与旅行者供应饭食和生活用品，与学院长期交换物资。",
+      "commission": {
+        "item": "farmersdelight:tomato",
+        "count": 6,
+        "emeralds": 0,
+        "affection": 6,
+        "reputation": 2
+      },
+      "stock": [
+        {
+          "item": "farmersdelight:tomato",
+          "tier": "basic",
+          "count": 39,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:cabbage_seeds",
+          "tier": "basic",
+          "count": 23,
+          "price": 3,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:wheat_dough",
+          "tier": "basic",
+          "count": 23,
+          "price": 8,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:onion",
+          "tier": "basic",
+          "count": 42,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:cabbage",
+          "tier": "basic",
+          "count": 28,
+          "price": 5,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:cooked_rice",
+          "tier": "basic",
+          "count": 22,
+          "price": 10,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:fried_rice",
+          "tier": "basic",
+          "count": 11,
+          "price": 24,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:tomato_seeds",
+          "tier": "basic",
+          "count": 20,
+          "price": 3,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:straw",
+          "tier": "basic",
+          "count": 17,
+          "price": 3,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:apple_pie",
+          "tier": "rare",
+          "count": 2,
+          "price": 48,
+          "gift": true,
+          "baseChance": 10.0
+        },
+        {
+          "item": "farmersdelight:rice",
+          "tier": "basic",
+          "count": 30,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:chicken_sandwich",
+          "tier": "basic",
+          "count": 16,
+          "price": 24,
+          "gift": true,
+          "baseChance": 30.0
+        }
+      ],
+      "giftChances": [
+        {
+          "favor0": 30,
+          "item": "farmersdelight:tomato",
+          "favor30": 52
+        },
+        {
+          "favor0": 30,
+          "item": "farmersdelight:cabbage_seeds",
+          "favor30": 52
+        },
+        {
+          "favor0": 30,
+          "item": "farmersdelight:wheat_dough",
+          "favor30": 52
+        }
+      ]
+    },
+    {
+      "id": "0484e34c-f033-300e-b700-f7516dad83c9",
+      "name": "洛恩·0484",
+      "group": "inkwell",
+      "profession": "墨泉家族·执事",
+      "trait": "热心",
+      "home": "resident_rooms_fill_006",
+      "workplace": "archives_required_001",
+      "capabilities": [
+        "conversation",
+        "trade",
+        "buyback",
+        "gift",
+        "witness",
+        "commission"
+      ],
+      "bio": "家族经营藏书与抄写事务，年轻成员随长辈学习，向学院补充纸墨。",
+      "commission": {
+        "item": "ars_nouveau:blank_parchment",
+        "count": 3,
+        "emeralds": 0,
+        "affection": 6,
+        "reputation": 2
+      },
+      "stock": [
+        {
+          "item": "ars_nouveau:imbuement_chamber",
+          "tier": "rare",
+          "count": 1,
+          "price": 128,
+          "gift": false,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:archwood_planks",
+          "tier": "basic",
+          "count": 42,
+          "price": 3,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:arcane_pedestal",
+          "tier": "basic",
+          "count": 5,
+          "price": 48,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:blank_parchment",
+          "tier": "basic",
+          "count": 12,
+          "price": 12,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:sourcestone",
+          "tier": "basic",
+          "count": 45,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:source_jar",
+          "tier": "rare",
+          "count": 3,
+          "price": 80,
+          "gift": false,
+          "baseChance": 10.0
+        },
+        {
+          "item": "ars_nouveau:enchanting_apparatus",
+          "tier": "epic",
+          "count": 1,
+          "price": 320,
+          "gift": false,
+          "baseChance": 2.0
+        }
+      ],
+      "giftChances": [
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:archwood_planks",
+          "favor30": 52
+        },
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:arcane_pedestal",
+          "favor30": 52
+        },
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:blank_parchment",
+          "favor30": 52
+        }
+      ]
+    },
+    {
+      "id": "79c319cc-8973-3c4b-bb38-d4b884bef81a",
+      "name": "莱娅·79c3",
+      "group": "starfall",
+      "profession": "星落研习会·学徒",
+      "trait": "热心",
+      "home": "resident_rooms_fill_006",
+      "workplace": "resident_rooms_fill_006",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。"
+    },
+    {
+      "id": "99fd45c9-5a99-3f4c-9b18-42cc31c91bc4",
+      "name": "艾琳·99fd",
+      "group": "inkwell",
+      "profession": "墨泉家族·学徒",
+      "trait": "好奇",
+      "home": "resident_rooms_fill_007",
+      "workplace": "resident_rooms_fill_007",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "家族经营藏书与抄写事务，年轻成员随长辈学习，向学院补充纸墨。"
+    },
+    {
+      "id": "f6e781e8-fb6a-35d1-934a-dafc68d7d128",
+      "name": "莱娅·f6e7",
+      "group": "inkwell",
+      "profession": "墨泉家族·学徒",
+      "trait": "谨慎",
+      "home": "resident_rooms_fill_007",
+      "workplace": "resident_rooms_fill_007",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "家族经营藏书与抄写事务，年轻成员随长辈学习，向学院补充纸墨。"
+    },
+    {
+      "id": "8d65e13e-41d7-3ff8-a10a-cbe0711e0a54",
+      "name": "诺雅·8d65",
+      "group": "greenhand",
+      "profession": "青枝实践社·学徒",
+      "trait": "热心",
+      "home": "resident_rooms_fill_007",
+      "workplace": "resident_rooms_fill_007",
+      "capabilities": [
+        "conversation",
+        "witness"
+      ],
+      "bio": "照料药草和苗木，交换魔法栽培材料，组织学徒观察周围林地。"
+    },
+    {
+      "id": "0ae20743-a471-3bf3-9f53-467ed6313b40",
+      "name": "艾琳·0ae2",
+      "group": "greenhand",
+      "profession": "青枝实践社·执事",
+      "trait": "热心",
+      "home": "resident_rooms_fill_007",
+      "workplace": "forest_school_fill_004",
+      "capabilities": [
+        "conversation",
+        "trade",
+        "buyback",
+        "gift",
+        "witness",
+        "commission"
+      ],
+      "bio": "照料药草和苗木，交换魔法栽培材料，组织学徒观察周围林地。",
+      "commission": {
+        "item": "ars_nouveau:magebloom_fiber",
+        "count": 4,
+        "emeralds": 1,
+        "affection": 6,
+        "reputation": 2
+      },
+      "stock": [
+        {
+          "item": "ars_nouveau:source_gem",
+          "tier": "basic",
+          "count": 16,
+          "price": 20,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:tomato",
+          "tier": "basic",
+          "count": 24,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:magebloom_fiber",
+          "tier": "basic",
+          "count": 8,
+          "price": 16,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:onion",
+          "tier": "basic",
+          "count": 32,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:wilden_spike",
+          "tier": "rare",
+          "count": 6,
+          "price": 32,
+          "gift": true,
+          "baseChance": 10.0
+        },
+        {
+          "item": "farmersdelight:cabbage_seeds",
+          "tier": "basic",
+          "count": 22,
+          "price": 3,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:sourceberry_bush",
+          "tier": "basic",
+          "count": 26,
+          "price": 5,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:organic_compost",
+          "tier": "basic",
+          "count": 15,
+          "price": 16,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:rice",
+          "tier": "basic",
+          "count": 29,
+          "price": 4,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "farmersdelight:cabbage",
+          "tier": "basic",
+          "count": 45,
+          "price": 5,
+          "gift": true,
+          "baseChance": 30.0
+        },
+        {
+          "item": "ars_nouveau:wilden_horn",
+          "tier": "rare",
+          "count": 3,
+          "price": 32,
+          "gift": true,
+          "baseChance": 10.0
+        },
+        {
+          "item": "farmersdelight:tomato_seeds",
+          "tier": "basic",
+          "count": 17,
+          "price": 3,
+          "gift": true,
+          "baseChance": 30.0
+        }
+      ],
+      "giftChances": [
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:source_gem",
+          "favor30": 52
+        },
+        {
+          "favor0": 30,
+          "item": "farmersdelight:tomato",
+          "favor30": 52
+        },
+        {
+          "favor0": 30,
+          "item": "ars_nouveau:magebloom_fiber",
+          "favor30": 52
+        }
+      ]
+    }
+  ],
+  "worksheet": {
+    "errors": [],
+    "functionTable": [
+      {
+        "fact": {
+          "functionTerm": "书籍借阅",
+          "buildingCount": 1,
+          "groupIds": [
+            "archives"
+          ],
+          "templateIds": [
+            "studio:mg-02-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "书籍借阅",
+          "housing": false,
+          "professions": [
+            "inkwell_specialist"
+          ],
+          "reason": "按群体规则安排岗位或住所"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "书籍制作",
+          "buildingCount": 1,
+          "groupIds": [
+            "archives"
+          ],
+          "templateIds": [
+            "studio:mg-19-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "书籍制作",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "休养",
+          "buildingCount": 1,
+          "groupIds": [
+            "daily_care"
+          ],
+          "templateIds": [
+            "studio:mg-15-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "休养",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "休憩",
+          "buildingCount": 1,
+          "groupIds": [
+            "archives"
+          ],
+          "templateIds": [
+            "studio:mg-29-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "休憩",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "传送设施维护",
+          "buildingCount": 1,
+          "groupIds": [
+            "reception"
+          ],
+          "templateIds": [
+            "studio:mg-14-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "传送设施维护",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "公共办事",
+          "buildingCount": 1,
+          "groupIds": [
+            "council"
+          ],
+          "templateIds": [
+            "studio:mg-13-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "公共办事",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "出行登记",
+          "buildingCount": 1,
+          "groupIds": [
+            "reception"
+          ],
+          "templateIds": [
+            "studio:mg-14-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "出行登记",
+          "housing": false,
+          "professions": [
+            "wayfarer_specialist"
+          ],
+          "reason": "按群体规则安排岗位或住所"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "医疗",
+          "buildingCount": 1,
+          "groupIds": [
+            "daily_care"
+          ],
+          "templateIds": [
+            "studio:mg-15-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "医疗",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "园艺养护",
+          "buildingCount": 3,
+          "groupIds": [
+            "forest_school"
+          ],
+          "templateIds": [
+            "studio:mg-31-v01",
+            "studio:mg-32-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "园艺养护",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "天象观测",
+          "buildingCount": 1,
+          "groupIds": [
+            "observation"
+          ],
+          "templateIds": [
+            "studio:mg-03-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "天象观测",
+          "housing": false,
+          "professions": [
+            "starfall_specialist"
+          ],
+          "reason": "按群体规则安排岗位或住所"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "学生住宿",
+          "buildingCount": 12,
+          "groupIds": [
+            "residence",
+            "resident_rooms"
+          ],
+          "templateIds": [
+            "studio:mg-27-v01",
+            "studio:mg-37-v02"
+          ]
+        },
+        "answer": {
+          "functionTerm": "学生住宿",
+          "housing": true,
+          "professions": [
+            "starfall_learner",
+            "inkwell_learner",
+            "greenhand_learner",
+            "hearth_learner",
+            "wayfarer_learner"
+          ],
+          "reason": "按群体规则安排岗位或住所"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "实验教学",
+          "buildingCount": 4,
+          "groupIds": [
+            "observation",
+            "seminars",
+            "teaching"
+          ],
+          "templateIds": [
+            "studio:mg-43-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "实验教学",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "工具保管",
+          "buildingCount": 2,
+          "groupIds": [
+            "forest_school"
+          ],
+          "templateIds": [
+            "studio:mg-32-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "工具保管",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "庭院休憩",
+          "buildingCount": 1,
+          "groupIds": [
+            "residence"
+          ],
+          "templateIds": [
+            "studio:mg-37-v02"
+          ]
+        },
+        "answer": {
+          "functionTerm": "庭院休憩",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "教学",
+          "buildingCount": 10,
+          "groupIds": [
+            "council",
+            "seminars",
+            "teaching"
+          ],
+          "templateIds": [
+            "studio:mg-01-v01",
+            "studio:mg-25-v01",
+            "studio:mg-26-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "教学",
+          "housing": false,
+          "professions": [
+            "starfall_specialist"
+          ],
+          "reason": "按群体规则安排岗位或住所"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "文献保管",
+          "buildingCount": 2,
+          "groupIds": [
+            "archives",
+            "council"
+          ],
+          "templateIds": [
+            "studio:mg-02-v01",
+            "studio:mg-13-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "文献保管",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "文献抄写",
+          "buildingCount": 1,
+          "groupIds": [
+            "archives"
+          ],
+          "templateIds": [
+            "studio:mg-19-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "文献抄写",
+          "housing": false,
+          "professions": [
+            "inkwell_specialist"
+          ],
+          "reason": "按群体规则安排岗位或住所"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "日用品交易",
+          "buildingCount": 3,
+          "groupIds": [
+            "daily_care",
+            "reception"
+          ],
+          "templateIds": [
+            "studio:mg-45-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "日用品交易",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "材料保管",
+          "buildingCount": 1,
+          "groupIds": [
+            "reception"
+          ],
+          "templateIds": [
+            "studio:mg-20-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "材料保管",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "林业教学",
+          "buildingCount": 5,
+          "groupIds": [
+            "forest_school"
+          ],
+          "templateIds": [
+            "studio:mg-32-v01",
+            "studio:mg-33-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "林业教学",
+          "housing": false,
+          "professions": [
+            "greenhand_specialist"
+          ],
+          "reason": "按群体规则安排岗位或住所"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "植物教学",
+          "buildingCount": 1,
+          "groupIds": [
+            "forest_school"
+          ],
+          "templateIds": [
+            "studio:mg-31-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "植物教学",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "洗浴",
+          "buildingCount": 2,
+          "groupIds": [
+            "daily_care"
+          ],
+          "templateIds": [
+            "studio:mg-44-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "洗浴",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "洗衣",
+          "buildingCount": 2,
+          "groupIds": [
+            "daily_care"
+          ],
+          "templateIds": [
+            "studio:mg-44-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "洗衣",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "照料",
+          "buildingCount": 1,
+          "groupIds": [
+            "daily_care"
+          ],
+          "templateIds": [
+            "studio:mg-15-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "照料",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "生活服务",
+          "buildingCount": 5,
+          "groupIds": [
+            "daily_care",
+            "reception"
+          ],
+          "templateIds": [
+            "studio:mg-44-v01",
+            "studio:mg-45-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "生活服务",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "研究",
+          "buildingCount": 8,
+          "groupIds": [
+            "archives",
+            "observation",
+            "seminars",
+            "teaching"
+          ],
+          "templateIds": [
+            "studio:mg-03-v01",
+            "studio:mg-38-v01",
+            "studio:mg-43-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "研究",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "研讨",
+          "buildingCount": 12,
+          "groupIds": [
+            "archives",
+            "council",
+            "observation",
+            "seminars",
+            "teaching"
+          ],
+          "templateIds": [
+            "studio:mg-25-v01",
+            "studio:mg-26-v01",
+            "studio:mg-38-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "研讨",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "礼仪",
+          "buildingCount": 1,
+          "groupIds": [
+            "teaching"
+          ],
+          "templateIds": [
+            "studio:mg-01-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "礼仪",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "自习",
+          "buildingCount": 12,
+          "groupIds": [
+            "residence",
+            "resident_rooms"
+          ],
+          "templateIds": [
+            "studio:mg-27-v01",
+            "studio:mg-37-v02"
+          ]
+        },
+        "answer": {
+          "functionTerm": "自习",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "花草观赏",
+          "buildingCount": 1,
+          "groupIds": [
+            "archives"
+          ],
+          "templateIds": [
+            "studio:mg-29-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "花草观赏",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "苗木培育",
+          "buildingCount": 3,
+          "groupIds": [
+            "forest_school"
+          ],
+          "templateIds": [
+            "studio:mg-33-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "苗木培育",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "药草栽培",
+          "buildingCount": 1,
+          "groupIds": [
+            "forest_school"
+          ],
+          "templateIds": [
+            "studio:mg-31-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "药草栽培",
+          "housing": false,
+          "professions": [
+            "greenhand_specialist"
+          ],
+          "reason": "按群体规则安排岗位或住所"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "议事",
+          "buildingCount": 1,
+          "groupIds": [
+            "council"
+          ],
+          "templateIds": [
+            "studio:mg-13-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "议事",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "货物仓储",
+          "buildingCount": 1,
+          "groupIds": [
+            "reception"
+          ],
+          "templateIds": [
+            "studio:mg-20-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "货物仓储",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "阅读",
+          "buildingCount": 9,
+          "groupIds": [
+            "archives",
+            "council",
+            "observation",
+            "seminars",
+            "teaching"
+          ],
+          "templateIds": [
+            "studio:mg-02-v01",
+            "studio:mg-25-v01",
+            "studio:mg-29-v01",
+            "studio:mg-38-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "阅读",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "集会",
+          "buildingCount": 1,
+          "groupIds": [
+            "teaching"
+          ],
+          "templateIds": [
+            "studio:mg-01-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "集会",
+          "housing": false,
+          "professions": [],
+          "reason": "建筑用途保留，本轮不另设常驻岗位"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "集体用餐",
+          "buildingCount": 3,
+          "groupIds": [
+            "daily_care",
+            "reception"
+          ],
+          "templateIds": [
+            "studio:mg-28-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "集体用餐",
+          "housing": false,
+          "professions": [
+            "hearth_specialist"
+          ],
+          "reason": "按群体规则安排岗位或住所"
+        }
+      },
+      {
+        "fact": {
+          "functionTerm": "餐饮",
+          "buildingCount": 3,
+          "groupIds": [
+            "daily_care",
+            "reception"
+          ],
+          "templateIds": [
+            "studio:mg-28-v01"
+          ]
+        },
+        "answer": {
+          "functionTerm": "餐饮",
+          "housing": false,
+          "professions": [
+            "hearth_specialist"
+          ],
+          "reason": "按群体规则安排岗位或住所"
+        }
+      }
+    ],
+    "functionCount": 38,
+    "uniquePlannedBuildings": 51,
+    "unclassifiedAnchors": [],
+    "plannedHousingBuildings": 12,
+    "plannedHousingSlotsBeforeSaleAndStandability": 48,
+    "plannedPopulationUpperBoundBeforeSaleAndStandability": 40,
+    "populationSettings": {
+      "residentsPerHouse": 4,
+      "saleHouseEvery": 0,
+      "housePrice": 32,
+      "workplaceCapacity": 4,
+      "populationMode": "housing",
+      "housingOccupancy": 0.85,
+      "activities": [],
+      "names": [
+        "洛恩",
+        "米拉",
+        "伊森",
+        "艾琳",
+        "塞尔",
+        "诺雅",
+        "菲恩",
+        "莱娅"
+      ],
+      "housingTerms": [
+        "学生住宿"
+      ],
+      "traits": {
+        "好奇": 3.0,
+        "谨慎": 2.0,
+        "热心": 2.0,
+        "沉静": 2.0
+      },
+      "jobs": {
+        "starfall_learner": {
+          "min": 0,
+          "max": 256,
+          "weight": 5.0
+        },
+        "starfall_specialist": {
+          "min": 1,
+          "max": 8,
+          "weight": 2.0
+        },
+        "inkwell_learner": {
+          "min": 0,
+          "max": 256,
+          "weight": 2.0
+        },
+        "inkwell_specialist": {
+          "min": 1,
+          "max": 8,
+          "weight": 1.0
+        },
+        "greenhand_learner": {
+          "min": 0,
+          "max": 256,
+          "weight": 3.0
+        },
+        "greenhand_specialist": {
+          "min": 1,
+          "max": 8,
+          "weight": 1.0
+        },
+        "hearth_learner": {
+          "min": 0,
+          "max": 256,
+          "weight": 2.0
+        },
+        "hearth_specialist": {
+          "min": 1,
+          "max": 8,
+          "weight": 1.0
+        },
+        "wayfarer_learner": {
+          "min": 0,
+          "max": 256,
+          "weight": 1.0
+        },
+        "wayfarer_specialist": {
+          "min": 1,
+          "max": 8,
+          "weight": 1.0
+        }
+      }
+    },
+    "keyPeople": [],
+    "professionTable": [
+      {
+        "professionId": "starfall_learner",
+        "quota": {
+          "min": 0,
+          "max": 256,
+          "weight": 5.0
+        },
+        "definition": {
+          "name": "星落研习会·学徒",
+          "appearance": "resident",
+          "bio": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。",
+          "equipment": "minecraft:air",
+          "capabilities": [
+            "conversation",
+            "witness"
+          ],
+          "workplaceTerms": [],
+          "health": {
+            "min": 30.0,
+            "max": 30.0
+          },
+          "attack": {
+            "min": 5.0,
+            "max": 5.0
+          },
+          "speed": {
+            "min": 0.29,
+            "max": 0.29
+          },
+          "restStart": 12500,
+          "restEnd": 23000,
+          "recruitFavor": 5,
+          "patrolRadius": 5,
+          "commission": {
+            "item": "minecraft:oak_log",
+            "count": 6,
+            "emeralds": 4,
+            "affection": 6,
+            "reputation": 2
+          },
+          "commissionPurpose": "",
+          "goodsPurpose": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。",
+          "offers": [],
+          "itemPools": [
+            "ars_materials",
+            "ars_workshop"
+          ],
+          "stockSlots": 6
+        },
+        "effectivePools": [
+          "ars_materials",
+          "ars_workshop"
+        ],
+        "guaranteedItems": [
+          "ars_nouveau:source_gem"
+        ],
+        "randomStockSlots": 5
+      },
+      {
+        "professionId": "starfall_specialist",
+        "quota": {
+          "min": 1,
+          "max": 8,
+          "weight": 2.0
+        },
+        "definition": {
+          "name": "星落研习会·执事",
+          "appearance": "merchant",
+          "bio": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。",
+          "equipment": "minecraft:air",
+          "capabilities": [
+            "conversation",
+            "trade",
+            "buyback",
+            "gift",
+            "witness",
+            "commission"
+          ],
+          "workplaceTerms": [
+            "教学",
+            "天象观测"
+          ],
+          "health": {
+            "min": 30.0,
+            "max": 30.0
+          },
+          "attack": {
+            "min": 5.0,
+            "max": 5.0
+          },
+          "speed": {
+            "min": 0.29,
+            "max": 0.29
+          },
+          "restStart": 12500,
+          "restEnd": 23000,
+          "recruitFavor": 5,
+          "patrolRadius": 5,
+          "commission": {
+            "item": "ars_nouveau:source_gem",
+            "count": 2,
+            "emeralds": 1,
+            "affection": 6,
+            "reputation": 2
+          },
+          "commissionPurpose": "补充魔源研究消耗品",
+          "goodsPurpose": "研究魔源与天象，向来访者提供研究用品；成员希望开展魔法教学。",
+          "offers": [],
+          "itemPools": [
+            "ars_materials",
+            "ars_workshop"
+          ],
+          "stockSlots": 12
+        },
+        "effectivePools": [
+          "ars_materials",
+          "ars_workshop"
+        ],
+        "guaranteedItems": [
+          "ars_nouveau:source_gem"
+        ],
+        "randomStockSlots": 11
+      },
+      {
+        "professionId": "inkwell_learner",
+        "quota": {
+          "min": 0,
+          "max": 256,
+          "weight": 2.0
+        },
+        "definition": {
+          "name": "墨泉家族·学徒",
+          "appearance": "resident",
+          "bio": "家族经营藏书与抄写事务，年轻成员随长辈学习，向学院补充纸墨。",
+          "equipment": "minecraft:air",
+          "capabilities": [
+            "conversation",
+            "witness"
+          ],
+          "workplaceTerms": [],
+          "health": {
+            "min": 30.0,
+            "max": 30.0
+          },
+          "attack": {
+            "min": 5.0,
+            "max": 5.0
+          },
+          "speed": {
+            "min": 0.29,
+            "max": 0.29
+          },
+          "restStart": 12500,
+          "restEnd": 23000,
+          "recruitFavor": 5,
+          "patrolRadius": 5,
+          "commission": {
+            "item": "minecraft:oak_log",
+            "count": 6,
+            "emeralds": 4,
+            "affection": 6,
+            "reputation": 2
+          },
+          "commissionPurpose": "",
+          "goodsPurpose": "家族经营藏书与抄写事务，年轻成员随长辈学习，向学院补充纸墨。",
+          "offers": [],
+          "itemPools": [
+            "ars_workshop"
+          ],
+          "stockSlots": 6
+        },
+        "effectivePools": [
+          "ars_workshop"
+        ],
+        "guaranteedItems": [],
+        "randomStockSlots": 6
+      },
+      {
+        "professionId": "inkwell_specialist",
+        "quota": {
+          "min": 1,
+          "max": 8,
+          "weight": 1.0
+        },
+        "definition": {
+          "name": "墨泉家族·执事",
+          "appearance": "merchant",
+          "bio": "家族经营藏书与抄写事务，年轻成员随长辈学习，向学院补充纸墨。",
+          "equipment": "minecraft:air",
+          "capabilities": [
+            "conversation",
+            "trade",
+            "buyback",
+            "gift",
+            "witness",
+            "commission"
+          ],
+          "workplaceTerms": [
+            "书籍借阅",
+            "文献抄写"
+          ],
+          "health": {
+            "min": 30.0,
+            "max": 30.0
+          },
+          "attack": {
+            "min": 5.0,
+            "max": 5.0
+          },
+          "speed": {
+            "min": 0.29,
+            "max": 0.29
+          },
+          "restStart": 12500,
+          "restEnd": 23000,
+          "recruitFavor": 5,
+          "patrolRadius": 5,
+          "commission": {
+            "item": "ars_nouveau:blank_parchment",
+            "count": 3,
+            "emeralds": 0,
+            "affection": 6,
+            "reputation": 2
+          },
+          "commissionPurpose": "补充文献抄写耗材",
+          "goodsPurpose": "家族经营藏书与抄写事务，年轻成员随长辈学习，向学院补充纸墨。",
+          "offers": [],
+          "itemPools": [
+            "ars_workshop"
+          ],
+          "stockSlots": 12
+        },
+        "effectivePools": [
+          "ars_workshop"
+        ],
+        "guaranteedItems": [],
+        "randomStockSlots": 12
+      },
+      {
+        "professionId": "greenhand_learner",
+        "quota": {
+          "min": 0,
+          "max": 256,
+          "weight": 3.0
+        },
+        "definition": {
+          "name": "青枝实践社·学徒",
+          "appearance": "resident",
+          "bio": "照料药草和苗木，交换魔法栽培材料，组织学徒观察周围林地。",
+          "equipment": "minecraft:air",
+          "capabilities": [
+            "conversation",
+            "witness"
+          ],
+          "workplaceTerms": [],
+          "health": {
+            "min": 30.0,
+            "max": 30.0
+          },
+          "attack": {
+            "min": 5.0,
+            "max": 5.0
+          },
+          "speed": {
+            "min": 0.29,
+            "max": 0.29
+          },
+          "restStart": 12500,
+          "restEnd": 23000,
+          "recruitFavor": 5,
+          "patrolRadius": 5,
+          "commission": {
+            "item": "minecraft:oak_log",
+            "count": 6,
+            "emeralds": 4,
+            "affection": 6,
+            "reputation": 2
+          },
+          "commissionPurpose": "",
+          "goodsPurpose": "照料药草和苗木，交换魔法栽培材料，组织学徒观察周围林地。",
+          "offers": [],
+          "itemPools": [
+            "ars_materials",
+            "fd_produce"
+          ],
+          "stockSlots": 6
+        },
+        "effectivePools": [
+          "ars_materials",
+          "fd_produce"
+        ],
+        "guaranteedItems": [
+          "ars_nouveau:source_gem",
+          "farmersdelight:tomato"
+        ],
+        "randomStockSlots": 4
+      },
+      {
+        "professionId": "greenhand_specialist",
+        "quota": {
+          "min": 1,
+          "max": 8,
+          "weight": 1.0
+        },
+        "definition": {
+          "name": "青枝实践社·执事",
+          "appearance": "merchant",
+          "bio": "照料药草和苗木，交换魔法栽培材料，组织学徒观察周围林地。",
+          "equipment": "minecraft:air",
+          "capabilities": [
+            "conversation",
+            "trade",
+            "buyback",
+            "gift",
+            "witness",
+            "commission"
+          ],
+          "workplaceTerms": [
+            "药草栽培",
+            "林业教学"
+          ],
+          "health": {
+            "min": 30.0,
+            "max": 30.0
+          },
+          "attack": {
+            "min": 5.0,
+            "max": 5.0
+          },
+          "speed": {
+            "min": 0.29,
+            "max": 0.29
+          },
+          "restStart": 12500,
+          "restEnd": 23000,
+          "recruitFavor": 5,
+          "patrolRadius": 5,
+          "commission": {
+            "item": "ars_nouveau:magebloom_fiber",
+            "count": 4,
+            "emeralds": 1,
+            "affection": 6,
+            "reputation": 2
+          },
+          "commissionPurpose": "收集魔法栽培纤维用于实践课",
+          "goodsPurpose": "照料药草和苗木，交换魔法栽培材料，组织学徒观察周围林地。",
+          "offers": [],
+          "itemPools": [
+            "ars_materials",
+            "fd_produce"
+          ],
+          "stockSlots": 12
+        },
+        "effectivePools": [
+          "ars_materials",
+          "fd_produce"
+        ],
+        "guaranteedItems": [
+          "ars_nouveau:source_gem",
+          "farmersdelight:tomato"
+        ],
+        "randomStockSlots": 10
+      },
+      {
+        "professionId": "hearth_learner",
+        "quota": {
+          "min": 0,
+          "max": 256,
+          "weight": 2.0
+        },
+        "definition": {
+          "name": "暖炉伙房·学徒",
+          "appearance": "resident",
+          "bio": "为师生与旅行者供应饭食和生活用品，与学院长期交换物资。",
+          "equipment": "minecraft:air",
+          "capabilities": [
+            "conversation",
+            "witness"
+          ],
+          "workplaceTerms": [],
+          "health": {
+            "min": 30.0,
+            "max": 30.0
+          },
+          "attack": {
+            "min": 5.0,
+            "max": 5.0
+          },
+          "speed": {
+            "min": 0.29,
+            "max": 0.29
+          },
+          "restStart": 12500,
+          "restEnd": 23000,
+          "recruitFavor": 5,
+          "patrolRadius": 5,
+          "commission": {
+            "item": "minecraft:oak_log",
+            "count": 6,
+            "emeralds": 4,
+            "affection": 6,
+            "reputation": 2
+          },
+          "commissionPurpose": "",
+          "goodsPurpose": "为师生与旅行者供应饭食和生活用品，与学院长期交换物资。",
+          "offers": [],
+          "itemPools": [
+            "fd_meals",
+            "fd_produce"
+          ],
+          "stockSlots": 6
+        },
+        "effectivePools": [
+          "fd_meals",
+          "fd_produce"
+        ],
+        "guaranteedItems": [
+          "farmersdelight:tomato"
+        ],
+        "randomStockSlots": 5
+      },
+      {
+        "professionId": "hearth_specialist",
+        "quota": {
+          "min": 1,
+          "max": 8,
+          "weight": 1.0
+        },
+        "definition": {
+          "name": "暖炉伙房·执事",
+          "appearance": "merchant",
+          "bio": "为师生与旅行者供应饭食和生活用品，与学院长期交换物资。",
+          "equipment": "minecraft:air",
+          "capabilities": [
+            "conversation",
+            "trade",
+            "buyback",
+            "gift",
+            "witness",
+            "commission"
+          ],
+          "workplaceTerms": [
+            "餐饮",
+            "集体用餐"
+          ],
+          "health": {
+            "min": 30.0,
+            "max": 30.0
+          },
+          "attack": {
+            "min": 5.0,
+            "max": 5.0
+          },
+          "speed": {
+            "min": 0.29,
+            "max": 0.29
+          },
+          "restStart": 12500,
+          "restEnd": 23000,
+          "recruitFavor": 5,
+          "patrolRadius": 5,
+          "commission": {
+            "item": "farmersdelight:tomato",
+            "count": 6,
+            "emeralds": 0,
+            "affection": 6,
+            "reputation": 2
+          },
+          "commissionPurpose": "补充学院伙房原料",
+          "goodsPurpose": "为师生与旅行者供应饭食和生活用品，与学院长期交换物资。",
+          "offers": [],
+          "itemPools": [
+            "fd_meals",
+            "fd_produce"
+          ],
+          "stockSlots": 12
+        },
+        "effectivePools": [
+          "fd_meals",
+          "fd_produce"
+        ],
+        "guaranteedItems": [
+          "farmersdelight:tomato"
+        ],
+        "randomStockSlots": 11
+      },
+      {
+        "professionId": "wayfarer_learner",
+        "quota": {
+          "min": 0,
+          "max": 256,
+          "weight": 1.0
+        },
+        "definition": {
+          "name": "远行登记处·学徒",
+          "appearance": "resident",
+          "bio": "接待外来冒险者，提供旅途补给；希望把可靠的周边威胁线索转成讨伐委托。",
+          "equipment": "minecraft:air",
+          "capabilities": [
+            "conversation",
+            "witness"
+          ],
+          "workplaceTerms": [],
+          "health": {
+            "min": 30.0,
+            "max": 30.0
+          },
+          "attack": {
+            "min": 5.0,
+            "max": 5.0
+          },
+          "speed": {
+            "min": 0.29,
+            "max": 0.29
+          },
+          "restStart": 12500,
+          "restEnd": 23000,
+          "recruitFavor": 5,
+          "patrolRadius": 5,
+          "commission": {
+            "item": "minecraft:oak_log",
+            "count": 6,
+            "emeralds": 4,
+            "affection": 6,
+            "reputation": 2
+          },
+          "commissionPurpose": "",
+          "goodsPurpose": "接待外来冒险者，提供旅途补给；希望把可靠的周边威胁线索转成讨伐委托。",
+          "offers": [],
+          "itemPools": [
+            "adventure"
+          ],
+          "stockSlots": 6
+        },
+        "effectivePools": [
+          "adventure"
+        ],
+        "guaranteedItems": [
+          "ars_nouveau:source_gem"
+        ],
+        "randomStockSlots": 5
+      },
+      {
+        "professionId": "wayfarer_specialist",
+        "quota": {
+          "min": 1,
+          "max": 8,
+          "weight": 1.0
+        },
+        "definition": {
+          "name": "远行登记处·执事",
+          "appearance": "merchant",
+          "bio": "接待外来冒险者，提供旅途补给；希望把可靠的周边威胁线索转成讨伐委托。",
+          "equipment": "minecraft:air",
+          "capabilities": [
+            "conversation",
+            "trade",
+            "buyback",
+            "gift",
+            "witness"
+          ],
+          "workplaceTerms": [
+            "出行登记"
+          ],
+          "health": {
+            "min": 30.0,
+            "max": 30.0
+          },
+          "attack": {
+            "min": 5.0,
+            "max": 5.0
+          },
+          "speed": {
+            "min": 0.29,
+            "max": 0.29
+          },
+          "restStart": 12500,
+          "restEnd": 23000,
+          "recruitFavor": 5,
+          "patrolRadius": 5,
+          "commission": {
+            "item": "minecraft:oak_log",
+            "count": 6,
+            "emeralds": 4,
+            "affection": 6,
+            "reputation": 2
+          },
+          "commissionPurpose": "",
+          "goodsPurpose": "接待外来冒险者，提供旅途补给；希望把可靠的周边威胁线索转成讨伐委托。",
+          "offers": [],
+          "itemPools": [
+            "adventure"
+          ],
+          "stockSlots": 12
+        },
+        "effectivePools": [
+          "adventure"
+        ],
+        "guaranteedItems": [
+          "ars_nouveau:source_gem"
+        ],
+        "randomStockSlots": 11
+      }
+    ],
+    "warnings": [
+      "住房格数为规划上限，尚未扣除待售、玩家房产和不可站立空间；实际人口须使用加载后的预览统计。"
+    ]
+  },
+  "sourceBlueprintHash": "sha256:8141b7803c448686ff59ed4af130c6bc1db04a093e5b9769bb12842bd56dfe8d",
+  "assertions": [
+    "真实功能填写校验",
+    "正式事务仅发布内存规则，未加载城镇不造人",
+    "住房与岗位限制",
+    "固定种子重复一致",
+    "重入/序列化后不重复造人",
+    "无可站立名额则零人口",
+    "库存仅来自所选池",
+    "好感影响正式赠礼概率"
+  ],
+  "worldWrites": false,
+  "standingSlots": "synthetic_capacity_assumption",
+  "registryValidation": "author_catalogue_only_not_live_registry",
+  "inputHashes": {
+    "economy.json": "e8fefcd041654842acbb21d6276268d07c39dfb56995862b8940ad379decf2d1",
+    "evidence.json": "e80bbceca662d7c65262a4efd89edf1f0c07f1a113280f47f93fbf503b81a89e",
+    "submission.json": "1c3cc4974152bd6e959624b74bf1b98ef77e18483583ebbfeb65174797706f1b"
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "args": {
+    "runId": "provider_3d25631f_r19200",
+    "baseDraftHash": "sha256:43c5463b6ade7ba74f18353814b5e2b71419adcce431af2c3bd8e9fe3c067161",
+    "citySeedId": "city_jingchao_capital",
+    "workflowRevision": 9,
+    "districtDesign": {
+      "core": {
+        "groupId": "teaching",
+        "structureRef": "studio:mg-01-v01"
+      },
+      "groups": [
+        {
+          "groupId": "teaching",
+          "groupKind": "STRUCTURE",
+          "preferredPatchRefs": [
+            "minecraft:overworld:step.16:city.city_jingchao_capital:p.100"
+          ],
+          "preferredPatchZone": "CENTER",
+          "role": "教学研究",
+          "priority": "CORE",
+          "structureCount": 2,
+          "extentClass": "MEDIUM",
+          "densityClass": "BALANCED",
+          "algorithmProfileRef": "algorithm:compact",
+          "terrainPolicy": "CONFORM",
+          "requiredStructureRefs": [
+            "studio:mg-01-v01",
+            "studio:mg-21-v01"
+          ],
+          "fillPools": [
+            {
+              "poolRef": "pool:studio_243",
+              "weight": 1
+            }
+          ],
+          "compositionProfileRef": "composition:round_robin",
+          "attachedFeatures": [],
+          "targetAreaShare": 0.25,
+          "spaceComposition": {
+            "buildingShare": 0.65,
+            "landscapeShare": 0,
+            "openSpaceShare": 0.35
+          },
+          "expansionPolicy": {
+            "allowOutwardExpansion": true,
+            "allowRelationConnection": true,
+            "stopWhenTargetReached": true
+          },
+          "buildingGreeneryPolicy": {
+            "coverage": "SPARSE",
+            "patternPreference": "TEMPLATE_DEFAULT",
+            "densityPreference": "TEMPLATE_DEFAULT"
+          }
+        }
+      ],
+      "arrayCompositions": [],
+      "relations": [],
+      "foundationGroupIds": [],
+      "landscapes": []
+    },
+    "assessment": "开发端D4回归：已查看本hash整城图，教学居中、档案北侧、接待西侧、生活东侧，九栋保留一栋跳过。先原样重编译教学区，验证迁移后正式编译与预览，保留其他区；不进入施工。",
+    "targetDistrictId": "teaching",
+    "contextId": "sha256:471a166e028911922613aa21925760cd4c6702ce08b25bfb3c717c9ad9e5ed33"
+  },
+  "tool": "city_d4_district"
+}

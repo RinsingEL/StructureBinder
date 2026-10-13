@@ -1,0 +1,32 @@
+{
+  "schema": "realmfolk.group-policy.experiment.v1",
+  "seed": 20261013,
+  "population": {
+    "populationMode": "housing", "residentsPerHouse": 4, "housingOccupancy": 0.85,
+    "housingTerms": ["学生住宿"], "saleHouseEvery": 0, "housePrice": 32,
+    "workplaceCapacity": 4, "activities": [],
+    "names": ["洛恩", "米拉", "伊森", "艾琳", "塞尔", "诺雅", "菲恩", "莱娅"],
+    "traits": {"好奇": 3, "谨慎": 2, "热心": 2, "沉静": 2}
+  },
+  "roles": {
+    "specialist": {"name": "执事", "appearance": "merchant", "minimum": 1, "maximum": 8, "capabilities": ["conversation", "trade", "buyback", "gift", "witness"], "atWork": true, "stockSlots": 12},
+    "learner": {"name": "学徒", "appearance": "resident", "minimum": 0, "maximum": 256, "capabilities": ["conversation", "witness"], "atWork": false, "stockSlots": 6}
+  },
+  "needs": {
+    "research_materials": {"item": "ars_nouveau:source_gem", "count": 2, "purpose": "补充魔源研究消耗品"},
+    "copying_supplies": {"item": "ars_nouveau:blank_parchment", "count": 3, "purpose": "补充文献抄写耗材"},
+    "herbal_supplies": {"item": "ars_nouveau:magebloom_fiber", "count": 4, "purpose": "收集魔法栽培纤维用于实践课"},
+    "kitchen_supplies": {"item": "farmersdelight:tomato", "count": 6, "purpose": "补充学院伙房原料"}
+  },
+  "quest": {"affection": 6, "reputation": 2, "maximumDistance": 2048, "maximumTier": 2},
+  "priceBand": "standard",
+  "tiers": {"basic": 1, "rare": 0.5, "epic": 0.1},
+  "restStart": 12500,
+  "restEnd": 23000,
+  "unsupported": {
+    "teach_magic": "尚无 Ars Nouveau 教学适配器，不能用售卖材料冒充解锁法术。",
+    "cast_magic": "当前居民战斗未接入魔法施放，不能凭职业名称获得法术。",
+    "nearby_hunt": "缺少本学院周围的真实怪物观测以及通用讨伐计数、结算接口。",
+    "dungeon_commission": "冒险旧工作树已有地点记录，但尚未迁接；地点生成完成也不等于清剿完成。"
+  }
+}

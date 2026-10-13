@@ -1,0 +1,132 @@
+{
+  "passed": true,
+  "paths": [
+    {
+      "program": "starfall_welcome",
+      "route": "arcane",
+      "reward": "arcane_starter",
+      "completed": true,
+      "newServiceUsed": true
+    },
+    {
+      "program": "starfall_welcome",
+      "route": "arcane",
+      "reward": "field_starter",
+      "completed": true,
+      "newServiceUsed": true
+    },
+    {
+      "program": "starfall_welcome",
+      "route": "arcane",
+      "reward": "workshop_starter",
+      "completed": true,
+      "newServiceUsed": true
+    },
+    {
+      "program": "starfall_welcome",
+      "route": "industry",
+      "reward": "arcane_starter",
+      "completed": true,
+      "newServiceUsed": true
+    },
+    {
+      "program": "starfall_welcome",
+      "route": "industry",
+      "reward": "field_starter",
+      "completed": true,
+      "newServiceUsed": true
+    },
+    {
+      "program": "starfall_welcome",
+      "route": "industry",
+      "reward": "workshop_starter",
+      "completed": true,
+      "newServiceUsed": true
+    },
+    {
+      "program": "starfall_welcome",
+      "route": "provisions",
+      "reward": "arcane_starter",
+      "completed": true,
+      "newServiceUsed": true
+    },
+    {
+      "program": "starfall_welcome",
+      "route": "provisions",
+      "reward": "field_starter",
+      "completed": true,
+      "newServiceUsed": true
+    },
+    {
+      "program": "starfall_welcome",
+      "route": "provisions",
+      "reward": "workshop_starter",
+      "completed": true,
+      "newServiceUsed": true
+    },
+    {
+      "program": "greenhand_welcome",
+      "route": "arcane",
+      "reward": "field_starter",
+      "completed": true,
+      "newServiceUsed": true
+    },
+    {
+      "program": "greenhand_welcome",
+      "route": "arcane",
+      "reward": "arcane_starter",
+      "completed": true,
+      "newServiceUsed": true
+    },
+    {
+      "program": "greenhand_welcome",
+      "route": "arcane",
+      "reward": "workshop_starter",
+      "completed": true,
+      "newServiceUsed": true
+    },
+    {
+      "program": "greenhand_welcome",
+      "route": "industry",
+      "reward": "field_starter",
+      "completed": true,
+      "newServiceUsed": true
+    },
+    {
+      "program": "greenhand_welcome",
+      "route": "industry",
+      "reward": "arcane_starter",
+      "completed": true,
+      "newServiceUsed": true
+    },
+    {
+      "program": "greenhand_welcome",
+      "route": "industry",
+      "reward": "workshop_starter",
+      "completed": true,
+      "newServiceUsed": true
+    },
+    {
+      "program": "greenhand_welcome",
+      "route": "provisions",
+      "reward": "field_starter",
+      "completed": true,
+      "newServiceUsed": true
+    },
+    {
+      "program": "greenhand_welcome",
+      "route": "provisions",
+      "reward": "arcane_starter",
+      "completed": true,
+      "newServiceUsed": true
+    },
+    {
+      "program": "greenhand_welcome",
+      "route": "provisions",
+      "reward": "workshop_starter",
+      "completed": true,
+      "newServiceUsed": true
+    }
+  ],
+  "scope": "pure_rule_engine_not_minecraft"
+}

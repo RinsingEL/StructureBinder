@@ -1,0 +1,307 @@
+{
+  "schemaVersion": "terrasense_structure_vocabulary_snapshot.v0.1",
+  "snapshotId": "studio_test_20260924",
+  "terms": [
+    {
+      "term_id": "书籍借阅",
+      "vocab_type": "function",
+      "label": "书籍借阅",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "书籍制作",
+      "vocab_type": "function",
+      "label": "书籍制作",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "休养",
+      "vocab_type": "function",
+      "label": "休养",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "休憩",
+      "vocab_type": "function",
+      "label": "休憩",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "传送设施维护",
+      "vocab_type": "function",
+      "label": "传送设施维护",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "公共办事",
+      "vocab_type": "function",
+      "label": "公共办事",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "出行登记",
+      "vocab_type": "function",
+      "label": "出行登记",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "医疗",
+      "vocab_type": "function",
+      "label": "医疗",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "商品零售",
+      "vocab_type": "function",
+      "label": "商品零售",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "园艺养护",
+      "vocab_type": "function",
+      "label": "园艺养护",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "天象观测",
+      "vocab_type": "function",
+      "label": "天象观测",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "学生住宿",
+      "vocab_type": "function",
+      "label": "学生住宿",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "实验研究",
+      "vocab_type": "function",
+      "label": "实验研究",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "家庭居住",
+      "vocab_type": "function",
+      "label": "家庭居住",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "教学",
+      "vocab_type": "function",
+      "label": "教学",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "文献保管",
+      "vocab_type": "function",
+      "label": "文献保管",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "文献抄写",
+      "vocab_type": "function",
+      "label": "文献抄写",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "材料保管",
+      "vocab_type": "function",
+      "label": "材料保管",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "植物教学",
+      "vocab_type": "function",
+      "label": "植物教学",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "水景观赏",
+      "vocab_type": "function",
+      "label": "水景观赏",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "照料",
+      "vocab_type": "function",
+      "label": "照料",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "研究",
+      "vocab_type": "function",
+      "label": "研究",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "礼仪",
+      "vocab_type": "function",
+      "label": "礼仪",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "能源设施维护",
+      "vocab_type": "function",
+      "label": "能源设施维护",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "自习",
+      "vocab_type": "function",
+      "label": "自习",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "花草观赏",
+      "vocab_type": "function",
+      "label": "花草观赏",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "药剂制作",
+      "vocab_type": "function",
+      "label": "药剂制作",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "议事",
+      "vocab_type": "function",
+      "label": "议事",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "货物仓储",
+      "vocab_type": "function",
+      "label": "货物仓储",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "货物暂存",
+      "vocab_type": "function",
+      "label": "货物暂存",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "阅读",
+      "vocab_type": "function",
+      "label": "阅读",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "集会",
+      "vocab_type": "function",
+      "label": "集会",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "集体用餐",
+      "vocab_type": "function",
+      "label": "集体用餐",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "餐饮",
+      "vocab_type": "function",
+      "label": "餐饮",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "魔法器材制作",
+      "vocab_type": "function",
+      "label": "魔法器材制作",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "魔法学院新制",
+      "vocab_type": "style",
+      "label": "魔法学院新制",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "planning_role.fill",
+      "vocab_type": "planning_role",
+      "label": "planning_role.fill",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "planning_role.key",
+      "vocab_type": "planning_role",
+      "label": "planning_role.key",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "planning_role.self_contained",
+      "vocab_type": "planning_role",
+      "label": "planning_role.self_contained",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "planning_role.structure",
+      "vocab_type": "planning_role",
+      "label": "planning_role.structure",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "common",
+      "vocab_type": "category",
+      "label": "common",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "specialty",
+      "vocab_type": "category",
+      "label": "specialty",
+      "aliases": [],
+      "status": "approved"
+    },
+    {
+      "term_id": "landscape",
+      "vocab_type": "asset_tag",
+      "label": "landscape",
+      "aliases": [],
+      "status": "approved"
+    }
+  ]
+}

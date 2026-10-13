@@ -1,0 +1,42 @@
+{
+  "preview": {
+    "draftId": "3d4b0bf0-2360-4ca6-a08b-0bc174dbd549",
+    "baseRevision": 5,
+    "scope": "future_only",
+    "previewToken": "dfa68d7bce2dd43949a5b6ef32f4a5c951d3ed33889cefadd00cfd2d3287739c",
+    "refreshable": 0,
+    "protectedCitizens": 2,
+    "towns": [
+      {
+        "town": "provider_b9332974d2d63a18_r8192:city_realm_yajing_capital",
+        "populationMode": "housing",
+        "occupancy": 0.85,
+        "target": 51,
+        "existing": 51,
+        "created": 0,
+        "housingBuildings": 15,
+        "housingSlots": 60,
+        "freeHousingSlots": 9,
+        "professions": {
+          "resident": 47,
+          "yajing_wayfarer": 4
+        },
+        "workplaceTerms": {
+          "住宅": 72,
+          "军事防御": 4,
+          "宗教": 4,
+          "房屋（用途未细分）": 56
+        },
+        "shortages": [],
+        "samples": []
+      }
+    ]
+  },
+  "receipt": {
+    "draftId": "3d4b0bf0-2360-4ca6-a08b-0bc174dbd549",
+    "revision": 6,
+    "created": 0,
+    "refreshed": 0,
+    "previewToken": "dfa68d7bce2dd43949a5b6ef32f4a5c951d3ed33889cefadd00cfd2d3287739c"
+  }
+}

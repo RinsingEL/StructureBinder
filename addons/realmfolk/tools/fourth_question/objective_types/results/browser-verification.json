@@ -1,0 +1,84 @@
+{
+  "experiment": "objective-types-03",
+  "time": "2026-10-13T17:12:50.303Z",
+  "results": [
+    {
+      "variant": "starfall",
+      "scenario": "d4_map_51_buildings",
+      "keyboardInspect": true,
+      "npcClickChangesDialogue": true
+    },
+    {
+      "variant": "starfall",
+      "path": "learn_glyphs",
+      "inventoryIsNotLearning": true,
+      "reloadPreserved": true,
+      "rewardOnce": true
+    },
+    {
+      "variant": "starfall",
+      "path": "deliver_items",
+      "deducted": true
+    },
+    {
+      "variant": "starfall",
+      "path": "kill_entities",
+      "wrongTargetIgnored": true,
+      "allThreeCompleted": true
+    },
+    {
+      "variant": "greenhand",
+      "scenario": "d4_map_51_buildings",
+      "keyboardInspect": true,
+      "npcClickChangesDialogue": true
+    },
+    {
+      "variant": "greenhand",
+      "path": "learn_glyphs",
+      "inventoryIsNotLearning": true,
+      "reloadPreserved": true,
+      "rewardOnce": true
+    },
+    {
+      "variant": "greenhand",
+      "path": "deliver_items",
+      "deducted": true
+    },
+    {
+      "variant": "greenhand",
+      "path": "kill_entities",
+      "wrongTargetIgnored": true,
+      "allThreeCompleted": true
+    },
+    {
+      "scenario": "count_existing",
+      "pass": true
+    },
+    {
+      "scenario": "exclude_existing",
+      "pass": true
+    },
+    {
+      "scenario": "unreachable_new_learning_rejected",
+      "pass": true
+    },
+    {
+      "scenario": "missing_mod",
+      "pass": true
+    },
+    {
+      "scenario": "mobile_390",
+      "pass": true
+    }
+  ],
+  "pageErrors": [],
+  "hashes": {
+    "author-catalog.json": "48a12aa94b92803e104af5ed18bb1ab9a6feed51a4f3fce79213aa01e50e6d94",
+    "ai-instances.json": "71f2a2a140775b005098033961c984e4560590edb228933293ed51211ec8ee13",
+    "engine.mjs": "0c1ebf721041a7212ae1c8fa81e1f2316387e1a3e24952978ac5141d4ccd8718",
+    "app.mjs": "8cd3f4ce098aafbedb8963e183953e3e9d12e268c19c322fb106e4d5f8b75542",
+    "index.html": "b0e87b397c31e8464fbc1dfea93375d67d57b5ee3a27ac9e0d70d77f64e6c58c",
+    "map.mjs": "defd4b5d3a688fa4b033ce25d9a883c9cd0ede29b40e9543d1dfec3c139c030a",
+    "campus-layout.json": "0743adb08ee03e04ee8ec9e86d78c2230319a915b339be317cf5f6aa8a626bb9"
+  }
+}

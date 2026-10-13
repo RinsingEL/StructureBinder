@@ -1,0 +1,70 @@
+TAP version 13
+# Subtest: district and integration expose rectangle layout with explicit root coordinates
+ok 1 - district and integration expose rectangle layout with explicit root coordinates
+  ---
+  duration_ms: 0.6108
+  ...
+# Subtest: formal material tool exposes hierarchical filters, counts-only and pagination
+ok 2 - formal material tool exposes hierarchical filters, counts-only and pagination
+  ---
+  duration_ms: 0.4459
+  ...
+# Subtest: core repair can change selection through the existing integration protocol
+ok 3 - core repair can change selection through the existing integration protocol
+  ---
+  duration_ms: 0.109
+  ...
+# Subtest: publishes the program-only context tool and retryable structure plus outdoor Blueprint schema
+ok 4 - publishes the program-only context tool and retryable structure plus outdoor Blueprint schema
+  ---
+  duration_ms: 0.379
+  ...
+# Subtest: does not publish superseded D4 planning tools
+ok 5 - does not publish superseded D4 planning tools
+  ---
+  duration_ms: 0.0765
+  ...
+# Subtest: publishes the programmatic compiler and defaults workflow to Blueprint
+ok 6 - publishes the programmatic compiler and defaults workflow to Blueprint
+  ---
+  duration_ms: 0.1423
+  ...
+# Subtest: publishes the current strict LandUse intent wire shape
+ok 7 - publishes the current strict LandUse intent wire shape
+  ---
+  duration_ms: 0.083
+  ...
+# Subtest: author configuration retains greenery and Landscape profiles without asking the model to supply it
+ok 8 - author configuration retains greenery and Landscape profiles without asking the model to supply it
+  ---
+  duration_ms: 0.2025
+  ...
+# Subtest: block material discovery is separate and blueprint materials remain optional
+ok 9 - block material discovery is separate and blueprint materials remain optional
+  ---
+  duration_ms: 0.1674
+  ...
+# Subtest: D4 separates actions and supports partial district enlargement
+ok 10 - D4 separates actions and supports partial district enlargement
+  ---
+  duration_ms: 0.2786
+  ...
+# Subtest: landscapes expose function ownership and independent growth
+ok 11 - landscapes expose function ownership and independent growth
+  ---
+  duration_ms: 0.1423
+  ...
+# Subtest: version history, reopening and restoring are strict stage tools
+ok 12 - version history, reopening and restoring are strict stage tools
+  ---
+  duration_ms: 0.1129
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 103.0246

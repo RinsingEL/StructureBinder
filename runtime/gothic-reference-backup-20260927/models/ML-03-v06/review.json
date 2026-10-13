@@ -1,0 +1,44 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "ML-03-v06",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex 哥特作者逐图核对",
+  "nbt_sha256": "011f143feab1f4c4f8fb8a75d25e163e507daa95743f2ccd4a84df98b9fe3254",
+  "author_sha256": "32f8aebde01dd5f216d8387a24392843293793e84c83c5d417a189ba32792472",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-eat.png",
+    "previews/room-sleep.png",
+    "previews/room-clock.png",
+    "previews/point-cook.png",
+    "previews/point-pantry.png",
+    "previews/point-beds0.png",
+    "previews/point-beds1.png",
+    "previews/point-bedsrear0.png",
+    "previews/point-bedsrear1.png",
+    "previews/point-linen.png",
+    "previews/point-clock.png",
+    "previews/point-parts.png",
+    "previews/annotations.png",
+    "previews/site-context.png"
+  ],
+  "checks": {
+    "实际图审": "三座独立屋分别服务餐厨、两组寝室与钟务，院内绿角与长凳留通行。",
+    "形体与用途": "餐厨、两间寝室与钟务分成三屋围庭，四床家庭经开敞庭院往来，工作噪声与日常炊食物理分离。",
+    "数据导航": "数据、标记和离线碰撞导航零警告。",
+    "证据范围": "当前四向、顶视、去顶、所有楼层、房间、使用站位、标记和场地截图已实际查看。"
+  },
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "离线静态模板；未接入机器、交易、气候或作物生产机制。"
+  ]
+}

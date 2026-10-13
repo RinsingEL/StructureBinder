@@ -1,0 +1,172 @@
+{
+  "templates": 35,
+  "smallTemplates": [
+    "studio:mg-10-v01",
+    "studio:mg-25-v01",
+    "studio:mg-26-v01",
+    "studio:mg-27-v01",
+    "studio:mg-28-v01",
+    "studio:mg-29-v01",
+    "studio:mg-30-v01",
+    "studio:mg-31-v01",
+    "studio:mg-32-v01",
+    "studio:mg-33-v01",
+    "studio:mg-38-v01",
+    "studio:mg-43-v01",
+    "studio:mg-44-v01",
+    "studio:mg-45-v01"
+  ],
+  "smallPools": [
+    {
+      "poolRef": "pool:studio_small_004",
+      "structureRefs": [
+        "studio:mg-10-v01",
+        "studio:mg-29-v01"
+      ]
+    },
+    {
+      "poolRef": "pool:studio_small_010",
+      "structureRefs": [
+        "studio:mg-31-v01",
+        "studio:mg-32-v01"
+      ]
+    },
+    {
+      "poolRef": "pool:studio_small_012",
+      "structureRefs": [
+        "studio:mg-27-v01"
+      ]
+    },
+    {
+      "poolRef": "pool:studio_small_013",
+      "structureRefs": [
+        "studio:mg-43-v01"
+      ]
+    },
+    {
+      "poolRef": "pool:studio_small_016",
+      "structureRefs": [
+        "studio:mg-32-v01"
+      ]
+    },
+    {
+      "poolRef": "pool:studio_small_018",
+      "structureRefs": [
+        "studio:mg-25-v01",
+        "studio:mg-26-v01"
+      ]
+    },
+    {
+      "poolRef": "pool:studio_small_021",
+      "structureRefs": [
+        "studio:mg-45-v01"
+      ]
+    },
+    {
+      "poolRef": "pool:studio_small_023",
+      "structureRefs": [
+        "studio:mg-32-v01",
+        "studio:mg-33-v01"
+      ]
+    },
+    {
+      "poolRef": "pool:studio_small_024",
+      "structureRefs": [
+        "studio:mg-30-v01",
+        "studio:mg-31-v01"
+      ]
+    },
+    {
+      "poolRef": "pool:studio_small_025",
+      "structureRefs": [
+        "studio:mg-10-v01"
+      ]
+    },
+    {
+      "poolRef": "pool:studio_small_026",
+      "structureRefs": [
+        "studio:mg-44-v01"
+      ]
+    },
+    {
+      "poolRef": "pool:studio_small_027",
+      "structureRefs": [
+        "studio:mg-44-v01"
+      ]
+    },
+    {
+      "poolRef": "pool:studio_small_029",
+      "structureRefs": [
+        "studio:mg-44-v01",
+        "studio:mg-45-v01"
+      ]
+    },
+    {
+      "poolRef": "pool:studio_small_030",
+      "structureRefs": [
+        "studio:mg-38-v01",
+        "studio:mg-43-v01"
+      ]
+    },
+    {
+      "poolRef": "pool:studio_small_031",
+      "structureRefs": [
+        "studio:mg-25-v01",
+        "studio:mg-26-v01",
+        "studio:mg-38-v01"
+      ]
+    },
+    {
+      "poolRef": "pool:studio_small_033",
+      "structureRefs": [
+        "studio:mg-30-v01"
+      ]
+    },
+    {
+      "poolRef": "pool:studio_small_035",
+      "structureRefs": [
+        "studio:mg-27-v01"
+      ]
+    },
+    {
+      "poolRef": "pool:studio_small_036",
+      "structureRefs": [
+        "studio:mg-29-v01"
+      ]
+    },
+    {
+      "poolRef": "pool:studio_small_037",
+      "structureRefs": [
+        "studio:mg-33-v01"
+      ]
+    },
+    {
+      "poolRef": "pool:studio_small_039",
+      "structureRefs": [
+        "studio:mg-30-v01",
+        "studio:mg-31-v01"
+      ]
+    },
+    {
+      "poolRef": "pool:studio_small_043",
+      "structureRefs": [
+        "studio:mg-25-v01",
+        "studio:mg-29-v01",
+        "studio:mg-38-v01"
+      ]
+    },
+    {
+      "poolRef": "pool:studio_small_045",
+      "structureRefs": [
+        "studio:mg-28-v01"
+      ]
+    },
+    {
+      "poolRef": "pool:studio_small_046",
+      "structureRefs": [
+        "studio:mg-28-v01"
+      ]
+    }
+  ],
+  "installedPath": "E:\\Mod_Dev\\StructureBinder\\run\\config\\structureTemplate\\terrasense\\studio_current_20261007"
+}
