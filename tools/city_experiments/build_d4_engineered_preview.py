@@ -43,9 +43,10 @@ def build(source):
             if m['arrayId'] in ids:
                 m['compositionPath'].append(c['compositionId'])
     districts = copy.deepcopy(old['scene']['districts'])
+    foundation_groups = set(blueprint['outdoorPlan'].get('foundationGroupIds', []))
     for d in districts:
         d['arrayIds'] = next(x['groupIds'] for x in blueprint['districtDesigns'] if x['districtId'] == d['districtId'])
-        d['platform'] = True
+        d['platform'] = any(a in foundation_groups for a in d['arrayIds'])
     spaces = []
     for i, s in enumerate(layout.get('publicSpaces', [])):
         c = next((c for c in compositions if s['ownerGroupId'] in c['memberIds']), None)
@@ -61,7 +62,8 @@ def build(source):
                     postSpacing=10, minimumExposure=1, maximumCorners=0,
                     materials={'ground':'minecraft:stone_bricks','retainingWall':'minecraft:stone_bricks'})],
                  terraceGroups=[dict(terraceId='terrace:'+d['districtId'], districtId=d['districtId'],
-                     coreMemberId=d['coreMemberId'], arrayIds=d['arrayIds'], styleRef='d4_stone') for d in districts])
+                     coreMemberId=d['coreMemberId'], arrayIds=[a for a in d['arrayIds'] if a in foundation_groups],
+                     styleRef='d4_stone') for d in districts if d['platform']])
     public = blueprint['outdoorPlan'].get('publicRealm', {})
     green = public.get('greenery')
     if green:
@@ -80,6 +82,7 @@ def build(source):
     request = {**scene, 'assets':assets, 'terrainPath':str(source.parent/'land_use/land_use_terrain_field.json'),
                'frozenLayout':{'ok':True,'members':members,'scene':scene,'layoutSpaces':spaces},
                'frozenRoadBands':layout['streetBands'], 'frozenRoadPlan':layout.get('cityMainRoadPlan', {})}
+    request['frozenNaturalArrays'] = [a['arrayId'] for a in arrays if a['arrayId'] not in foundation_groups]
     if green:
         request['greeneryCatalog'] = load_catalog(scene['greeneryTemplates'], assets)
         request['frozenLayout']['scene']['greeneryCatalog'] = request['greeneryCatalog']

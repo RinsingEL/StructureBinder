@@ -35,8 +35,10 @@ def import_preview(source, output=wb.OUTPUT):
     if trace['status'] != 'accepted' or trace['cityBlueprintHash'] != digest or commit['blueprintHash'] != digest:
         raise ValueError('D4 accepted blueprint and frozen geometry hashes do not match')
     layout = commit['result']['structureAnchorPlan']
-    if wb.read(source / 'city_blueprint_last_valid_preview.json')['landscapeLayout'].get('instances'):
-        raise ValueError('This importer does not yet render landscape parcels; no partial import was published')
+    landscape = wb.read(source / 'city_blueprint_last_valid_preview.json')['landscapeLayout']
+    instances = landscape.get('instances', [])
+    if any(i.get('profileRef') != 'landscape:woodland' for i in instances):
+        raise ValueError('This importer does not yet render non-woodland landscape parcels; no partial import was published')
     terrain_file = source.parent / 'land_use/land_use_terrain_field.json'
     field = wb.read(terrain_file)
     sample = height_sampler(field)
@@ -137,6 +139,8 @@ def import_preview(source, output=wb.OUTPUT):
                    waterSampleCount=len(water), waterDisplayY=max((c['elevation'] for c in water), default=0) + 1,
                    detail='冻结 D4 坐标与旋转；建筑和道路高程按 D3 插值示意，未生成台地、支撑或施工结果。')
     metadata = dict(revision=revision, scene=scene, members=members, terraces=[], fixtures=[],
+                    landscapeReservations=landscape,
+                    omittedBiomeVegetation=[i['landscapeInstanceId'] for i in instances],
                     roadPlan=layout.get('cityMainRoadPlan', {}), streetReview=layout.get('designReview', {}),
                     terrain=dict(mode='D4_FROZEN_PREVIEW', detail=context['detail']), generationReady=False,
                     importedD4=True, evidenceDirectory=str(folder), sourceDirectory=str(source), sourceBlueprintHash=digest,

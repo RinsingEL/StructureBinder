@@ -115,7 +115,7 @@ public final class CityCampusExperiment {
             platforms.put(id,support);cores.put(id,footprint(core));
         }
         for(var d:districts)if(d.get("platform").getAsBoolean())for(var a:d.getAsJsonArray("arrayIds"))
-            if(!arrayTerrace.containsKey(a.getAsString()))throw new IllegalArgumentException("Missing terrace ownership: "+a);
+            if(!arrayTerrace.containsKey(a.getAsString())&&!(frozen&&input.has("frozenNaturalArrays")&&input.getAsJsonArray("frozenNaturalArrays").contains(a)))throw new IllegalArgumentException("Missing terrace ownership: "+a);
         var district=new CityDistrictPlanner().plan(terrain.planningBounds(),terrain,buildings,platforms,roadBands.stream().map(LandUseSourceResolver.RoadBand::bounds).toList(),landscape,
                 new LandUseSeedGroup.FoundationSettings(input.has("foundationMarginBlocks")?input.get("foundationMarginBlocks").getAsInt():4,8,24));
         var resolvedGroups=TerraceWorkbenchAdapter.resolveClaims(district.groups(),buildings);
