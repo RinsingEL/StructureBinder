@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Cross-platform requirement-cleanup state: `check` prints OK/DUE, `mark <reason>` forces DUE.
+"""Cross-platform requirement-cleanup state: `check` prints OK/DUE, `mark <reason>` forces DUE,
+`complete` records a finished cleanup and schedules the next reminder.
 
 Same state file and semantics as the original PowerShell scripts, resolved relative to this repository.
 """
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 STATE = Path(__file__).resolve().parents[1] / 'run' / 'workflow_state' / 'requirement_case_cleanup.json'
@@ -46,11 +47,34 @@ def mark(state_path, reason):
     return f'DUE requirement_changed {reason}'
 
 
+def complete(state_path):
+    values = {'schemaVersion': 'requirement_case_cleanup_state.v0.1', 'intervalDays': 1}
+    if state_path.exists():
+        try:
+            values.update(json.loads(state_path.read_text(encoding='utf-8-sig')))
+        except Exception:
+            pass  # An invalid state is replaced by the completed one.
+    try:
+        interval = max(1, int(values.get('intervalDays', 1)))
+    except (TypeError, ValueError):
+        interval = 1
+    now = datetime.now().astimezone()
+    values.update(status='CLEAN', intervalDays=interval, lastCompletedAt=now.isoformat(),
+                  nextCheckAt=(now + timedelta(days=interval)).isoformat())
+    values.pop('dueReason', None)
+    values.pop('markedAt', None)
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_text(json.dumps(values, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    return f"CLEAN next {values['nextCheckAt']}"
+
+
 if __name__ == '__main__':
     command = sys.argv[1] if len(sys.argv) > 1 else 'check'
     if command == 'check':
         print(check(STATE))
     elif command == 'mark':
         print(mark(STATE, sys.argv[2] if len(sys.argv) > 2 else 'requirement_changed'))
+    elif command == 'complete':
+        print(complete(STATE))
     else:
-        sys.exit('usage: requirement_cleanup.py [check | mark <reason>]')
+        sys.exit('usage: requirement_cleanup.py [check | mark <reason> | complete]')
