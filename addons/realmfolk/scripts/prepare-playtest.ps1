@@ -8,7 +8,8 @@ $gameRoot=[IO.Path]::GetFullPath($GameDirectory)
 if ($gameRoot -eq [IO.Path]::GetPathRoot($gameRoot) -or $gameRoot -eq [IO.Path]::GetFullPath($SourceMod)) { throw 'Choose a dedicated test directory.' }
 $buildRoot=Join-Path (Split-Path $repoRoot -Parent) '.realmfolk-build'
 $addonJar=Join-Path $buildRoot 'libs/realmfolk-0.4.0.jar'
-$baseJar=Join-Path $SourceMod 'build/libs/geomantia-0.1.0.jar'
+$coreVersion=((Get-Content -LiteralPath (Join-Path $SourceMod 'gradle.properties') | Where-Object { $_ -match '^mod_version=' }) -replace '^mod_version=','').Trim()
+$baseJar=Join-Path $SourceMod "build/libs/geomantia-$coreVersion.jar"
 foreach($required in @($addonJar,$baseJar)) { if (!(Test-Path -LiteralPath $required)) { throw "Build first: $required" } }
 foreach($directory in @('mods','config/geomantia','config/structureTemplate/terrasense','screenshots')) { New-Item -ItemType Directory -Path (Join-Path $gameRoot $directory) -Force | Out-Null }
 # Keep a previous addon outside Forge's mods directory, so upgrades cannot load two versions.

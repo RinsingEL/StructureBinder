@@ -1,6 +1,6 @@
 param(
     [string]$Reason = 'requirement_changed',
-    [string]$StatePath = 'E:\Mod_Dev\StructureBinder\run\workflow_state\requirement_case_cleanup.json'
+    [string]$StatePath = (Join-Path $PSScriptRoot '../run/workflow_state/requirement_case_cleanup.json')
 )
 
 $ErrorActionPreference = 'Stop'

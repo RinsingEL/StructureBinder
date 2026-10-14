@@ -7,7 +7,7 @@
 | [realmfolk](realmfolk/README.md) | 国度 NPC / 冒险附属 | 居民、经济、交互、委托与第四题离线实验；在该目录独立 Gradle 构建。 |
 | [adventure](adventure/README.md) | 冒险内容分布附属 | 大陆档位、怪物/结构池、居民区避让与地点记录；主仓 `adventureJar` 单独打包。 |
 
-既有 Harness 与地图附属仍分别由 `src/harness`、`src/map` 构建为 `-harness.jar`、`-map.jar`。冒险包为 `build/libs/geomantia-0.1.0-adventure.jar`，依赖主包，不依赖这些 UI 附属或 Realmfolk。主包提供公共接口，不包含冒险实现或默认内容池。
+既有 Harness 与地图附属仍分别由 `src/harness`、`src/map` 构建为 `-harness.jar`、`-map.jar`。冒险包为 `build/libs/geomantia-<版本>-adventure.jar`，依赖主包，不依赖这些 UI 附属或 Realmfolk。主包提供公共接口，不包含冒险实现或默认内容池。
 
 `-PgeomantiaDevAdventure=true` 单独启用冒险附属；默认 false。`-PgeomantiaDevAddons=true` 加载主构建管理的 Harness、地图、冒险三个附属；已有 `geomantiaDevUseMap` 地图开关保留。Realmfolk 仍通过独立项目/安装自己的 JAR 使用。
 
