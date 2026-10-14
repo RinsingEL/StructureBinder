@@ -17,7 +17,7 @@
 gradlew.bat adventureTest verifyAdventurePackaging -PgeomantiaDevUseReTerraForged=false -PgeomantiaDevUseStructurePacks=false
 ```
 
-输出 `build/libs/geomantia-0.1.0-adventure.jar`，需配套本次公开区域接口的主包。只安装主包时不加载冒险规则；开发环境默认 `geomantiaDevAdventure=false`，仅显式加 `-PgeomantiaDevAdventure=true` 或 `-PgeomantiaDevAddons=true` 才加载。
+输出 `build/libs/geomantia-<版本>-adventure.jar`（版本见根目录 `gradle.properties`），需配套本次公开区域接口的主包。只安装主包时不加载冒险规则；开发环境默认 `geomantiaDevAdventure=false`，仅显式加 `-PgeomantiaDevAdventure=true` 或 `-PgeomantiaDevAddons=true` 才加载。
 
 实现位于 `addons/adventure/src/main/`，测试位于 `addons/adventure/src/test/`。使用主仓 Gradle 的独立 source set 与 Jar 任务，没有复制独立 wrapper 或把附属实现打进主 JAR。
 

@@ -20,7 +20,8 @@ survey['planningRadiusBlocks']=12288
 survey_path.write_text(json.dumps(survey,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 bundle=out/'config/structureTemplate/terrasense/studio_test_20260924'
 shutil.copytree(source,bundle)
-for name,dest in [('geomantia-0.1.0.jar','mods'),('geomantia-0.1.0-harness.jar','optional/harness/mods'),('geomantia-0.1.0-map.jar','optional/map/mods')]:
+version=next(l.split('=',1)[1].strip() for l in (root/'gradle.properties').read_text(encoding='utf-8').splitlines() if l.startswith('mod_version='))
+for name,dest in [(f'geomantia-{version}.jar','mods'),(f'geomantia-{version}-harness.jar','optional/harness/mods'),(f'geomantia-{version}-map.jar','optional/map/mods')]:
     (out/dest).mkdir(parents=True,exist_ok=True)
     shutil.copy2(root/'build/libs'/name,out/dest/name)
 provenance=json.loads((source/'studio_export_provenance.json').read_text(encoding='utf-8'))

@@ -47,7 +47,12 @@ run_logs/
 country_designer_mcp_log.jsonl
 
 # Local development notes, previews and playtest evidence
-/dev_docs/
+# dev_docs: task records and bug indexes are tracked automatically; other evidence stays local unless force-added.
+/dev_docs/**
+!/dev_docs/**/
+!/dev_docs/README.md
+!/dev_docs/**/故障索引.md
+!/dev_docs/**/archive/*/任务记录.md
 /runtime/campus-workbench/
 
 /geomantia_harness/node_modules/
