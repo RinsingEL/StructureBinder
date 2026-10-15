@@ -1,0 +1,18 @@
+{
+  "complete": true,
+  "owners": 844,
+  "pendingOwners": 0,
+  "decisions": {
+    "PUBLIC_REALM_SUPPORT_MISSING": 72,
+    "PUBLIC_REALM_ADMITTED": 503,
+    "PUBLIC_REALM_VOLUME_OCCUPIED": 25
+  },
+  "acceptedInstances": 503,
+  "fullyMatchingInstances": 503,
+  "blockNames": {
+    "checked": 25488,
+    "matched": 25488
+  },
+  "mismatches": [],
+  "note": "Offline saved Anvil block identities; connection properties and leaf distance excluded from this comparison."
+}

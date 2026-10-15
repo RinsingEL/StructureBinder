@@ -14,6 +14,34 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandUseChunkExecutorTest {
+    @Test void stackedWallShapesSettleFromTheCapDown() {
+        Map<BlockPos,String> states=new HashMap<>();
+        for(int y=30;y<=70;y++)states.put(new BlockPos(2,y,2),"low");
+        states.put(new BlockPos(2,71,2),"cap");
+        var world=new CityLandUseChunkExecutor.BlockStateWriteAccess<String>() {
+            public String getBlockState(BlockPos p){return states.getOrDefault(p,"air");}
+            public boolean isHorizontalConnectionBlock(String s){return s.equals("low")||s.equals("tall");}
+            public boolean ensureCanWrite(BlockPos p){return true;}
+            public boolean setBlock(BlockPos p,String s,int flags){states.put(p,s);return true;}
+            public String updateFromNeighbourShapes(String s,BlockPos p){return List.of("cap","tall").contains(getBlockState(p.above()))?"tall":"low";}
+        };
+        var positions=java.util.stream.IntStream.rangeClosed(30,70).mapToObj(y->new BlockPos(2,y,2)).toList();
+        assertTrue(CityLandUseChunkExecutor.finalizeHorizontalConnections(world,positions).success());
+        assertTrue(positions.stream().allMatch(p->states.get(p).equals("tall")));
+    }
+    @Test void bridgeMeetingTheBankDoesNotDemandAnUndergroundBeam() {
+        var deck=new CityLandUseChunkCompiler.FeatureOperation("bridge",2,2,"minecraft:stone_slab",0,
+                CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,64);
+        var rail=new CityLandUseChunkCompiler.FeatureOperation("bridge",2,3,"minecraft:stone_brick_wall",1,
+                CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_RAIL,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,64);
+        var fs=List.of(deck,rail);
+        var fragment=new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,"city","hash","palette",
+                0,0,1,0,0,0,"minecraft:dirt",List.of(),List.of(),List.of(),fs,fs);
+        var world=new FakeWorld();world.replaceable.put("2,63,2",false);world.replaceable.put("2,63,3",false);
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED,new CityLandUseChunkExecutor().execute(fragment,world,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES).status());
+        assertTrue(world.writes.contains("2,64,2=minecraft:stone_slab"));
+        assertTrue(world.writes.stream().noneMatch(w->w.startsWith("2,63,")));
+    }
     @Test void authoredStatesReachWriterAndOccupiedTemplateRollsBackWholeChunk() {
         var features=List.of(new CityLandUseChunkCompiler.FeatureOperation("public_realm::tree@asset#hash",2,2,
                 "minecraft:oak_log[axis=y]",1,CityLandUseSurfacePrintPlan.FeatureKind.AUTHORED_BLOCK,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,64),
@@ -873,7 +901,7 @@ class CityLandUseChunkExecutorTest {
                         "area", "farm", 1, 0, "minecraft:oak_fence")));
     }
 
-    private static final class FakeWorld implements CityLandUseChunkExecutor.ExecutionWorld {
+    private static class FakeWorld implements CityLandUseChunkExecutor.ExecutionWorld {
         private boolean supportsRoadsidePlants=true;
         @Override public boolean supportsRoadsidePlant(String blockId,int x,int y,int z) { return supportsRoadsidePlants; }
         private final java.util.Set<String> vegetation=new java.util.HashSet<>();

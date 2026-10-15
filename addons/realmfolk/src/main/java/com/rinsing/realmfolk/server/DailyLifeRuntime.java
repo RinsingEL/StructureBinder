@@ -45,14 +45,16 @@ public final class DailyLifeRuntime {
         var phase=DailySchedule.phase(c.id,profile,level.getDayTime());
         LivingSite bed=FacilityAssignments.site(society.properties.get(c.property),c.bedSite);
         LivingSite job=FacilityAssignments.site(society.properties.get(c.workProperty),c.workSite);
-        if(level.players().stream().noneMatch(p->npc.distanceToSqr(p)<96*96)){npc.getNavigation().stop();return;}
+        if(level.players().stream().noneMatch(p->npc.distanceToSqr(p)<96*96)){
+            npc.getNavigation().stop();npc.activity(phase==DailySchedule.Phase.SLEEP?"远处休息":level.isRaining()?"远处避雨作息":"远处日常作息");return;
+        }
         if(c.lastRoutineTick>0&&now-c.lastRoutineTick>200&&level.players().stream().noneMatch(p->npc.distanceToSqr(p)<48*48)){
             Point current=phase==DailySchedule.Phase.SLEEP?c.home:c.work;
             if(FacilityRuntime.standable(level,current)){interrupt(npc);npc.moveTo(current.x()+.5,current.y(),current.z()+.5,npc.getYRot(),0);}
         }
         c.lastRoutineTick=now;if(npc.tickCount%200==0)dirty(level.getServer());
         if(phase==DailySchedule.Phase.SLEEP&&!c.visitor){
-            if(bed==null||!bed.available||!FacilityRuntime.valid(level,bed)){
+            if(!knownUsable(level,bed)){
                 interrupt(npc);npc.activity(bed!=null&&bed.retainsClaim()?"回家通路受阻":"缺少可用床位");npc.getNavigation().stop();return;
             }
             if(npc.isSleeping()){
@@ -69,6 +71,7 @@ public final class DailyLifeRuntime {
         }
         if(npc.isSleeping())npc.stopSleeping();
         boolean indoorWork=phase==DailySchedule.Phase.WORK&&!c.visitor&&!profile.has("patrol")&&job!=null&&job.available
+            &&level.hasChunkAt(pos(job.approach))
             &&FacilityRuntime.valid(level,job)&&!level.canSeeSky(pos(job.approach));
         if(level.isRaining()&&!indoorWork){
             interrupt(npc);
@@ -112,20 +115,28 @@ public final class DailyLifeRuntime {
             if(route.isEmpty()){npc.activity("缺少巡逻通路");return;}
             Point next=route.get(Math.floorMod((int)(level.getDayTime()/600)+c.id.hashCode(),route.size()));npc.activity(walk(npc,next)?"沿街巡逻":"巡逻通路受阻");return;
         }
-        if(!profile.workplaceTerms.isEmpty()&&(job==null||!job.available||!FacilityRuntime.valid(level,job))){npc.activity(job!=null&&job.retainsClaim()?"工作通路受阻":"缺少可用岗位");npc.getNavigation().stop();return;}
+        if(!profile.workplaceTerms.isEmpty()&&!knownUsable(level,job)){npc.activity(job!=null&&job.retainsClaim()?"工作通路受阻":"缺少可用岗位");npc.getNavigation().stop();return;}
         Point workplace=job==null?c.work:job.approach;
         if(!near(npc,workplace)){npc.activity(walk(npc,workplace)?"前往岗位":"工作通路受阻");return;}
         npc.getNavigation().stop();npc.activity(job==null?"料理家务":"工作");
         if(job!=null){npc.getLookControl().setLookAt(job.object.x()+.5,job.object.y()+1,job.object.z()+.5,30,30);if(npc.tickCount%60==0)npc.swing(InteractionHand.MAIN_HAND);}
     }
     private static boolean walk(CitizenEntity npc,Point destination){
-        if(!FacilityRuntime.standable((ServerLevel)npc.level(),destination))return false;
+        if(destination==null)return false;
+        ServerLevel level=(ServerLevel)npc.level();
+        // A remote chunk is unknown, not an obstruction. Vanilla navigation can make a partial path
+        // through the loaded region; the destination is checked again when the resident approaches it.
+        if(level.hasChunkAt(pos(destination))&&!FacilityRuntime.standable(level,destination))return false;
         if(near(npc,destination)){npc.getNavigation().stop();return true;}
         long now=npc.level().getGameTime();Walk old=WALKS.get(npc.getUUID());
         if(old!=null&&old.destination.equals(destination)&&!npc.getNavigation().isDone())return true;
         if(old!=null&&old.destination.equals(destination)&&now-old.attempted<80)return false;
         WALKS.put(npc.getUUID(),new Walk(destination,now));
         var path=npc.getNavigation().createPath(pos(destination),1);return path!=null&&npc.getNavigation().moveTo(path,.85);
+    }
+    private static boolean knownUsable(ServerLevel level,LivingSite site){
+        if(site==null||!site.available||site.approach==null)return false;
+        return !level.hasChunkAt(pos(site.object))||!level.hasChunkAt(pos(site.approach))||FacilityRuntime.valid(level,site);
     }
     private static boolean walkExact(CitizenEntity npc,Point destination){
         var path=npc.getNavigation().createPath(pos(destination),0);return path!=null&&npc.getNavigation().moveTo(path,.85);

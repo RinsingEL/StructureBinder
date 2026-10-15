@@ -46,16 +46,14 @@ public final class CitySharedTerracePlanner {
                     new CityLandUseSurfacePrintPlan.UniformRecipe(recipe.surfaceBlockId(),recipe.boundaryBlockId(),spans(local)),area.terrainReferenceCells()));
         }
         Map<BlockPoint,CityLandUseSurfacePrintPlan.FeatureCell> roads = new HashMap<>();
-        for (var f : source.featureCells()) if (f.surfaceOffset()==0 && (f.kind()==CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
-                || f.kind()==CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR)) roads.put(new BlockPoint(f.x(),f.z()),f);
+        for (var f : source.featureCells()) if (circulation(f)) roads.put(new BlockPoint(f.x(),f.z()),f);
         Map<BlockPoint,Integer> entrancePins = new HashMap<>();
         for(var a:landUse.areas())for(var gate:a.gateSlots())for(var p:roads.keySet())
             if(Math.abs(p.x()-gate.block().x())+Math.abs(p.z()-gate.block().z())<=2 && platforms.containsKey(p)) entrancePins.put(p,platforms.get(p));
         var graded = new CityTerraceRoadGradePlanner().plan(source.featureCells(),platforms,entrancePins,samples::height);
         // Re-read the frozen grade, including internal streets absent from coarse roadBands.
         roads.clear();
-        for (var f : graded) if (f.surfaceOffset()==0 && (f.kind()==CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
-                || f.kind()==CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR)) roads.put(new BlockPoint(f.x(),f.z()),f);
+        for (var f : graded) if (circulation(f)) roads.put(new BlockPoint(f.x(),f.z()),f);
         Set<BlockPoint> blocked = new HashSet<>(district.structures());
         for (var area : landUse.areas()) if (!area.sourceGroupIds().stream().anyMatch(id -> id.endsWith("::foundation")))
             for (var s : area.memberSpans()) for (int x=s.minX();x<=s.maxX();x++) blocked.add(new BlockPoint(x,s.z()));
@@ -149,6 +147,11 @@ public final class CitySharedTerracePlanner {
         }
         return new CityLandUseSurfacePrintPlanCodec().withComputedHash(new CityLandUseSurfacePrintPlan(source.schema(),source.cityId(),
                 source.sourceLandUsePlanHash(),"",areas,source.sharedBoundarySpans(),features,source.materialField()));
+    }
+    private static boolean circulation(CityLandUseSurfacePrintPlan.FeatureCell feature) {
+        return feature.surfaceOffset()==0 && (feature.kind()==CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
+                || feature.kind()==CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR
+                || feature.kind()==CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK);
     }
     public static List<CityLandUseSurfacePrintPlan.PlatformSpan> spans(Map<BlockPoint,Integer> cells) {
         List<CityLandUseSurfacePrintPlan.PlatformSpan> out=new ArrayList<>();var sorted=cells.keySet().stream().sorted(ORDER).toList();

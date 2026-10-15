@@ -68,6 +68,12 @@ public final class LandUsePlanningService {
     public Result plan(String cityId, LandUseSourceResolver.Resolution sources, JsonObject d5ReservationMaskPlan,
                        LandUseTerrainField terrainField, CityUrbanResidualResolver.Config residualConfig,
                        com.rinsing.geomantia.systems.city.domain.blueprint.CityPublicRealmSpec publicRealm) {
+        return plan(cityId,sources,d5ReservationMaskPlan,terrainField,residualConfig,publicRealm,null);
+    }
+    public Result plan(String cityId, LandUseSourceResolver.Resolution sources, JsonObject d5ReservationMaskPlan,
+                       LandUseTerrainField terrainField, CityUrbanResidualResolver.Config residualConfig,
+                       com.rinsing.geomantia.systems.city.domain.blueprint.CityPublicRealmSpec publicRealm,
+                       com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmPlanner.GroundSampler preciseGround) {
         if (cityId == null || cityId.isBlank()) throw new IllegalArgumentException("cityId is required");
         if (sources == null) throw new IllegalArgumentException("LandUse sources are required");
         if (terrainField == null) throw new IllegalArgumentException("LandUse terrain field is required");
@@ -203,7 +209,7 @@ public final class LandUsePlanningService {
         if(publicRealm!=null) {
             var realm = new com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmPlanner().plan(
                     surfacePrintPlan,sources.district(),terrainField,
-                    new LandUseCorridorExclusionResolver().publicSpaceReservations(d5ReservationMaskPlan),publicRealm);
+                    new LandUseCorridorExclusionResolver().publicSpaceReservations(d5ReservationMaskPlan),publicRealm,preciseGround);
             surfacePrintPlan=realm.surface();quality.add("publicRealm",realm.report());
         }
         quality.addProperty("publicGreenGroundBlocks", surfacePrintPlan.featureCells().stream()

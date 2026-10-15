@@ -1,6 +1,7 @@
 ﻿param(
     [string]$SourceMod=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../..')),
-    [string]$GameDirectory=(Join-Path $PSScriptRoot '../../.realmfolk-playtest')
+    [string]$GameDirectory=(Join-Path $PSScriptRoot '../../.realmfolk-playtest'),
+    [string]$TemplateDirectory=''
 )
 $ErrorActionPreference='Stop'
 $repoRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
@@ -23,8 +24,10 @@ Get-ChildItem -LiteralPath $modsRoot -Filter 'realmfolk-*.jar' -File | Where-Obj
 Copy-Item -LiteralPath $addonJar,$baseJar -Destination (Join-Path $gameRoot 'mods')
 $sourceConfig=Join-Path $SourceMod 'run/config/geomantia'
 Get-ChildItem -LiteralPath $sourceConfig -Filter '*.json' -File | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $gameRoot 'config/geomantia') }
-$templates=Join-Path $SourceMod 'run/config/structureTemplate/terrasense/pcl_validation_02'
-if(Test-Path -LiteralPath $templates) { Copy-Item -LiteralPath $templates -Destination (Join-Path $gameRoot 'config/structureTemplate/terrasense') -Recurse -Force }
+$templates=if($TemplateDirectory){[IO.Path]::GetFullPath($TemplateDirectory)}else{Join-Path $SourceMod 'run/config/structureTemplate/terrasense/pcl_validation_02'}
+if(!(Test-Path -LiteralPath (Join-Path $templates 'city_template_content_pack.json') -PathType Leaf)){throw "Missing template content pack: $templates"}
+$planningSourceRelative='config/structureTemplate/terrasense/'+(Split-Path $templates -Leaf)
+Copy-Item -LiteralPath $templates -Destination (Join-Path $gameRoot 'config/structureTemplate/terrasense') -Recurse -Force
 foreach($dependency in @('reterraforged','trek','t_and_t','cristellib','libraryferret')) {
     $folder=Join-Path $SourceMod "libs/local/$dependency"
     if(Test-Path -LiteralPath $folder) { Get-ChildItem -LiteralPath $folder -Filter '*.jar' -File -Recurse | Where-Object { $_.Name -notmatch 'sources|javadoc' } | Select-Object -First 1 | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $gameRoot 'mods') } }
@@ -54,6 +57,6 @@ Write-TestJson 'mcp_server.json' { param($value) $value.port=5011 }
 $options=@('lang:zh_cn','guiScale:2','renderDistance:8','simulationDistance:5','enableVsync:true','maxFps:60','pauseOnLostFocus:false','onboardAccessibility:false','showSubtitles:true')
 $optionPath=Join-Path $gameRoot 'options.txt'
 if(!(Test-Path -LiteralPath $optionPath)) { [IO.File]::WriteAllLines($optionPath,$options,[Text.UTF8Encoding]::new($false)) }
-$provenance=[ordered]@{preparedAt=[DateTimeOffset]::Now.ToString('o');sourceMod=$SourceMod;gameDirectory=$gameRoot;geomantiaSha256=(Get-FileHash -LiteralPath $baseJar).Hash;realmfolkSha256=(Get-FileHash -LiteralPath $addonJar).Hash;providerEnabled=$false;copiedCredentialFiles=$false}
+$provenance=[ordered]@{preparedAt=[DateTimeOffset]::Now.ToString('o');sourceMod=$SourceMod;gameDirectory=$gameRoot;planningSourceRelative=$planningSourceRelative;templateManifestSha256=(Get-FileHash -LiteralPath (Join-Path $templates 'city_template_content_pack.json')).Hash;geomantiaSha256=(Get-FileHash -LiteralPath $baseJar).Hash;realmfolkSha256=(Get-FileHash -LiteralPath $addonJar).Hash;providerEnabled=$false;copiedCredentialFiles=$false}
 [IO.File]::WriteAllText((Join-Path $gameRoot 'dependency-manifest.json'),($provenance|ConvertTo-Json),[Text.UTF8Encoding]::new($false))
 Write-Output "Prepared isolated playtest: $gameRoot"
