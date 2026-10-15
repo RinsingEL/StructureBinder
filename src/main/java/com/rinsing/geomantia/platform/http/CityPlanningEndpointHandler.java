@@ -1465,6 +1465,10 @@ final class CityPlanningEndpointHandler {
     static JsonObject handlePlanBlueprintOutdoor(Path debugRoot,
                                                   String runId,
                                                   String citySeedId) throws IOException {
+        return handlePlanBlueprintOutdoor(debugRoot,runId,citySeedId,null);
+    }
+    static JsonObject handlePlanBlueprintOutdoor(Path debugRoot, String runId, String citySeedId,
+                                                 ServerLevel level) throws IOException {
         long started = System.nanoTime();
         Path runDir = debugRoot.resolve(runId);
         loadCitySeed(runDir, runId, citySeedId);
@@ -1497,9 +1501,17 @@ final class CityPlanningEndpointHandler {
             return response;
         }
 
+        com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmPlanner.GroundSampler preciseGround = level==null?null:(x,z)->{
+            var source=level.getChunkSource();var generator=source.getGenerator();
+            int y=generator.getBaseHeight(x,z,net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                    level,source.randomState())-1;
+            var state=generator.getBaseColumn(x,z,level,source.randomState()).getBlock(y);
+            return new com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmPlanner.Ground(y,
+                    !state.isAir()&&state.getFluidState().isEmpty());
+        };
         LandUsePlanningService.Result result = new LandUsePlanningService().plan(
                 citySeedId, compiled.resolution(), inputs.d5MaskPlan(), inputs.terrainField(),
-                compiled.residualConfig(), inputs.blueprint().outdoorPlan().publicRealm());
+                compiled.residualConfig(), inputs.blueprint().outdoorPlan().publicRealm(), preciseGround);
 
         Path urbanSpacePath = outputDirectory.resolve("city_urban_space_plan.json");
         Path areaPath = outputDirectory.resolve("city_land_use_area_plan.json");
@@ -1920,7 +1932,7 @@ final class CityPlanningEndpointHandler {
                     anchorMap, JsonParser.parseString(Files.readString(exitPath)).getAsJsonObject());
             sourceAnchorMap = anchorMap.deepCopy();
         }
-        Path realmBlueprint=d4Dir.resolve("city_blueprint.json");
+        Path realmBlueprint=cityStageDir(runDir,citySeedId,CityTestRunLayout.BLUEPRINT).resolve("city_blueprint.json");
         boolean realmOwnsPlanting=Files.isRegularFile(realmBlueprint)&&JsonParser.parseString(
                 Files.readString(realmBlueprint)).getAsJsonObject().getAsJsonObject("outdoorPlan").has("publicRealm");
         if (!realmOwnsPlanting && level != null && Files.exists(treeTerrainPath) && Files.exists(wallReservationPath)) {
@@ -1933,7 +1945,7 @@ final class CityPlanningEndpointHandler {
                             : new JsonObject(),
                     new LandUseTerrainFieldCodec().fromJson(
                             JsonParser.parseString(Files.readString(treeTerrainPath)).getAsJsonObject()), trees);
-            Path publicBlueprint = d4Dir.resolve("city_blueprint.json");
+            Path publicBlueprint = realmBlueprint;
             if (Files.isRegularFile(publicBlueprint) && "GENERATE".equals(JsonParser.parseString(
                     Files.readString(publicBlueprint)).getAsJsonObject().getAsJsonObject("outdoorPlan").get("mode").getAsString())) {
                 anchorMap = new com.rinsing.geomantia.systems.city.application.CityRoadsideTreePlanner().appendPublic(
@@ -2355,7 +2367,7 @@ final class CityPlanningEndpointHandler {
             if (!ctx.workflow().runStep("city_plan_land_use",
                     landUseSkipArtifact,
                     () -> blueprintWorkflow
-                            ? handlePlanBlueprintOutdoor(debugRoot, runId, citySeedId)
+                            ? handlePlanBlueprintOutdoor(debugRoot, runId, citySeedId, level)
                             : handlePlanLandUse(debugRoot, runId, citySeedId,
                             request.has("landUseIntentPlan") && request.get("landUseIntentPlan").isJsonObject()
                                     ? request.getAsJsonObject("landUseIntentPlan") : null))) {
@@ -3434,6 +3446,7 @@ final class CityPlanningEndpointHandler {
         }
         json.add("failures", failures);
         json.add("foundationDiagnostics", result.foundationDiagnostics().deepCopy());
+        json.add("publicRealmInstances",CityLandUseWorldgenRegistry.publicRealmInstances(result.cityId(),result.surfacePrintPlanHash()));
         return json;
     }
 

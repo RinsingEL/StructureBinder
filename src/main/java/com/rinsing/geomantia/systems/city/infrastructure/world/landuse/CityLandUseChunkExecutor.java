@@ -192,7 +192,7 @@ public final class CityLandUseChunkExecutor {
             }
             foundationByColumn.put(key, new CityLandUseMicroGrader.FoundationDecision(feature.sourceId(),
                     feature.x(), feature.z(), column.surfaceY(), targetY,
-                    bridgeColumns.contains(key) && targetY>=column.surfaceY()
+                    bridgeColumns.contains(key) && targetY>column.surfaceY()+1
                             ? CityLandUseMicroGrader.FoundationMode.DECK
                             : connectionColumns.contains(key) && targetY>column.surfaceY()
                                 ? CityLandUseMicroGrader.FoundationMode.FILL
@@ -433,14 +433,22 @@ public final class CityLandUseChunkExecutor {
             int maxY=group.stream().mapToInt(f->f.targetSurfaceY()+f.surfaceOffset()).max().orElseThrow();
             // Check unpainted air as well; a hollow template must not swallow a foreign solid.
             for(int z=minZ;z<=maxZ;z++)for(int x=minX;x<=maxX;x++)for(int y=Math.max(ground+1,ground+minOffset);y<=maxY;y++) {
-                if(!baseMutationClearsTarget(basePrepared,x,y,z)&&!world.canReplacePublicRealm(x,y,z,false))
+                if(!baseMutationClearsTarget(basePrepared,x,y,z)&&!world.canReplacePublicRealm(x,y,z,false)) {
+                    LOGGER.warn("Public realm occupied volume: source={} pos={},{},{} ground={} actual={}",
+                            group.get(0).sourceId(),x,y,z,ground,world.inspect(x,y,z));
                     return ExecutionResult.failed(fragment,"CITY_PUBLIC_REALM_VOLUME_OCCUPIED",0,0,0,0,true,foundationPlan);
+                }
             }
             if(minOffset<=1)for(var f:group)if(f.surfaceOffset()==minOffset) {
                 int y=f.targetSurfaceY()+f.surfaceOffset()-1;
                 boolean plannedSupport=basePrepared.stream().anyMatch(m->m.x()==f.x()&&m.y()==y&&m.z()==f.z()&&!m.blockId().equals("minecraft:air"));
-                if(!plannedSupport&&!world.supportsPublicRealm(f.x(),y,f.z()))
+                boolean existingSoil=minOffset<=0 && world.supportsPublicRealm(f.x(),y+1,f.z())
+                        && world.canReplacePublicRealm(f.x(),y+1,f.z(),true);
+                if(!plannedSupport&&!existingSoil&&!world.supportsPublicRealm(f.x(),y,f.z())) {
+                    LOGGER.warn("Public realm missing support: source={} pos={},{},{} ground={} actual={}",
+                            f.sourceId(),f.x(),y,f.z(),ground,world.inspect(f.x(),y,f.z()));
                     return ExecutionResult.failed(fragment,"CITY_PUBLIC_REALM_SUPPORT_MISSING",0,0,0,0,true,foundationPlan);
+                }
             }
         }
         Set<ColumnKey> materializedPlatformStairs = new HashSet<>();
@@ -508,11 +516,13 @@ public final class CityLandUseChunkExecutor {
                     && internalTerrace(sharedTerraceHeights,operation.x(),operation.z(),surfaceY)) continue;
             if(operation.kind()==CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_RAIL) {
                 String beam=fragment.materialField().at("bridgeBeam",operation.x(),operation.z(),operation.sourceId(),"minecraft:stone_bricks");
-                PreparedMutation edgeBeam=prepare(world,operation.sourceId(),OperationPhase.FEATURE,
-                        operation.x(),surfaceY-1,operation.z(),beam,true);
-                if(edgeBeam.failureReason()!=null)return ExecutionResult.failed(fragment,edgeBeam,
-                        preparedCount(basePrepared,cropPrepared,boundaryPrepared),0,naturalSurfaceSkipped,occupiedBoundarySkipped,true);
-                basePrepared.add(edgeBeam);
+                if(!world.supportsPublicRealm(operation.x(),surfaceY-1,operation.z())) {
+                    PreparedMutation edgeBeam=prepare(world,operation.sourceId(),OperationPhase.FEATURE,
+                            operation.x(),surfaceY-1,operation.z(),beam,true);
+                    if(edgeBeam.failureReason()!=null)return ExecutionResult.failed(fragment,edgeBeam,
+                            preparedCount(basePrepared,cropPrepared,boundaryPrepared),0,naturalSurfaceSkipped,occupiedBoundarySkipped,true);
+                    basePrepared.add(edgeBeam);
+                }
             }
             if (bridgePost) {
                 for (int y = surfaceY - 2, depth = 0; depth < 64; y--, depth++) {
@@ -559,6 +569,13 @@ public final class CityLandUseChunkExecutor {
                     baseMutationClearsTarget(basePrepared,
                             effectiveOperation.x(), featureY, effectiveOperation.z()));
             if (mutation.failureReason() != null) {
+                if(operation.kind()==CityLandUseSurfacePrintPlan.FeatureKind.TERRACE_RAIL
+                        && "CITY_LAND_USE_FEATURE_TARGET_OCCUPIED".equals(mutation.failureReason())) {
+                    // A bank rising above the terrace already closes this edge; do not carve it for a rail.
+                    if(column.naturalSurface() && column.surfaceY()>=featureY) {
+                        occupiedBoundarySkipped++; continue;
+                    }
+                }
                 return ExecutionResult.failed(fragment, mutation,
                         preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
                         naturalSurfaceSkipped, occupiedBoundarySkipped, true);
@@ -917,7 +934,8 @@ public final class CityLandUseChunkExecutor {
                     &&!"minecraft:water".equals(c.surfaceBlockId())&&!"minecraft:lava".equals(c.surfaceBlockId());
         }
         default boolean supportsPublicRealm(int x,int y,int z) {
-            ColumnSample c=samplePublicGround(x,z);return c.naturalSurface()&&c.surfaceY()>=y;
+            ColumnSample c=samplePublicGround(x,z);return c.naturalSurface()&&c.surfaceY()>=y
+                    &&!"minecraft:water".equals(c.surfaceBlockId())&&!"minecraft:lava".equals(c.surfaceBlockId());
         }
 
         default boolean supportsChannel(int worldX, int y, int worldZ, boolean bed) {
@@ -1306,6 +1324,8 @@ public final class CityLandUseChunkExecutor {
         }
         List<BlockPos> stableCandidates = candidates.stream()
                 .sorted((left, right) -> {
+                    int y = Integer.compare(right.getY(), left.getY());
+                    if (y != 0) return y;
                     int z = Integer.compare(left.getZ(), right.getZ());
                     if (z != 0) return z;
                     int x = Integer.compare(left.getX(), right.getX());
@@ -1316,31 +1336,30 @@ public final class CityLandUseChunkExecutor {
         Map<BlockPos, S> snapshots = new LinkedHashMap<>();
         stableCandidates.forEach(pos -> snapshots.put(pos, world.getBlockState(pos)));
 
-        Map<BlockPos, S> desired = new LinkedHashMap<>();
-        for (BlockPos pos : stableCandidates) {
-            S current = world.getBlockState(pos);
-            if (!world.isHorizontalConnectionBlock(current)) continue;
-            S reconciled = world.updateFromNeighbourShapes(current, pos);
-            desired.put(pos, reconciled);
-            if (!current.equals(reconciled) && !world.ensureCanWrite(pos)) {
-                return BoundaryFinalizeResult.failed(true);
+        // Stacked walls depend on the collision shape above them, not just block identities.
+        // Reconcile from top to bottom and retain one snapshot for the entire transaction.
+        for (int pass=0; pass<4; pass++) {
+            for (BlockPos pos : stableCandidates) {
+                S current=world.getBlockState(pos);
+                if(!world.isHorizontalConnectionBlock(current))continue;
+                S desired=world.updateFromNeighbourShapes(current,pos);
+                if(current.equals(desired))continue;
+                if(!world.ensureCanWrite(pos) || !writeExactBlockState(world,pos,desired,
+                        Block.UPDATE_CLIENTS|Block.UPDATE_KNOWN_SHAPE)) {
+                    LOGGER.warn("Boundary reconciliation write failed: pos={} desired={}",pos,desired);
+                    return BoundaryFinalizeResult.failed(restoreSnapshots(world,snapshots));
+                }
             }
-        }
-        for (Map.Entry<BlockPos, S> entry : desired.entrySet()) {
-            if (!snapshots.get(entry.getKey()).equals(entry.getValue())
-                    && !writeExactBlockState(world, entry.getKey(), entry.getValue(),
-                    Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE)) {
-                return BoundaryFinalizeResult.failed(restoreSnapshots(world, snapshots));
+            boolean stable=true;
+            for(BlockPos pos:stableCandidates) {
+                S current=world.getBlockState(pos);
+                if(world.isHorizontalConnectionBlock(current)
+                        && !current.equals(world.updateFromNeighbourShapes(current,pos))) { stable=false;break; }
             }
+            if(stable)return BoundaryFinalizeResult.succeeded();
         }
-        for (BlockPos pos : stableCandidates) {
-            S current = world.getBlockState(pos);
-            if (world.isHorizontalConnectionBlock(current)
-                    && !current.equals(world.updateFromNeighbourShapes(current, pos))) {
-                return BoundaryFinalizeResult.failed(restoreSnapshots(world, snapshots));
-            }
-        }
-        return BoundaryFinalizeResult.succeeded();
+        LOGGER.warn("Boundary reconciliation did not settle after four passes");
+        return BoundaryFinalizeResult.failed(restoreSnapshots(world,snapshots));
     }
 
     private static <S> boolean restoreSnapshots(BlockStateWriteAccess<S> world, Map<BlockPos, S> snapshots) {
@@ -1700,6 +1719,14 @@ public final class CityLandUseChunkExecutor {
                     || state.is(BlockTags.SAND)
                     || state.is(BlockTags.BASE_STONE_OVERWORLD)
                     || state.is(BlockTags.BASE_STONE_NETHER)
+                    || state.is(BlockTags.COAL_ORES)
+                    || state.is(BlockTags.IRON_ORES)
+                    || state.is(BlockTags.COPPER_ORES)
+                    || state.is(BlockTags.GOLD_ORES)
+                    || state.is(BlockTags.REDSTONE_ORES)
+                    || state.is(BlockTags.LAPIS_ORES)
+                    || state.is(BlockTags.DIAMOND_ORES)
+                    || state.is(BlockTags.EMERALD_ORES)
                     || state.is(Blocks.GRAVEL)
                     || state.is(Blocks.CLAY)
                     || state.is(Blocks.MUD)

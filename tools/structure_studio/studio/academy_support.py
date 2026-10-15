@@ -27,15 +27,17 @@ def house(number, name, w, d, terms, *, medium=False, furnishing='classroom'):
     rect(m,3,4,w-4,d-4,top=10 if medium else 8)
     gable(m,3,4,w-4,d-4,11 if medium else 9)
     cx=w//2
-    arch(m,cx,4,2,3,6,glass=False)
     for wall_z in (4,d-4):
         for window_x in (7,w-8):arch(m,window_x,wall_z,3,3,4)
         arch(m,cx,wall_z,11 if medium else 9,3,4)
+    # Narrow facades share window jambs with the entrance. The doorway owns its final clearance.
+    arch(m,cx,4,2,3,6,glass=False)
     m.box((cx-2,1,0),(cx+2,1,4),'polished_andesite')
     for z in range(7,d-5,5):
         arch(m,z,3,3,3,4,axis='z')
         arch(m,z,w-4,3,3,4,axis='z')
     m.point('front','entrance',(cx,2,0),'主入口',approach=(cx,2,2),direction='north')
+    m.point('main_access','circulation',(cx,2,5),'室内通路',approach=(cx,2,5))
     m.room('main',name,(4,2,5),(w-5,7,d-5),'、'.join(terms))
     if furnishing=='classroom':
         m.box((5,2,d-6),(w-6,4,d-6),'bookshelf')

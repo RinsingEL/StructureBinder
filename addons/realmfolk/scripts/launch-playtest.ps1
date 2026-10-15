@@ -1,6 +1,7 @@
 ﻿param([string]$GameDirectory=(Join-Path $PSScriptRoot '../../.realmfolk-playtest'),
       [string]$World='', [switch]$TestBridge, [switch]$Designer,
       [int]$PlaytestPort=5021, [int]$DesignerPort=5022, [int]$GeomantiaPort=5011,
+      [string]$PlanningSourceDirectory='',
       [string]$VersionDirectory='D:/PCL2-2.8.12/.minecraft/versions/1.20.1-Forge_47.4.23')
 $ErrorActionPreference='Stop'
 $gameRoot=(Resolve-Path -LiteralPath $GameDirectory).Path
@@ -63,7 +64,15 @@ function Expand-Argument([string]$argument) {
 $argsList=[System.Collections.Generic.List[string]]::new()
 $argsList.Add('-Xmx6G'); $argsList.Add('-Dgeomantia.apiPort='+$GeomantiaPort)
 $argsList.Add('-Dgeomantia.landUseFailureCaptureDir='+(Join-Path $gameRoot 'landuse-failure-captures'))
-$argsList.Add('-Dgeomantia.providerPlanningSourceDir='+(Join-Path $gameRoot 'config/structureTemplate/terrasense/pcl_validation_02'))
+if(!$PlanningSourceDirectory){
+    $dependencyFile=Join-Path $gameRoot 'dependency-manifest.json'
+    $prepared=if(Test-Path -LiteralPath $dependencyFile){Get-Content -LiteralPath $dependencyFile -Raw | ConvertFrom-Json}else{$null}
+    $relative=if($prepared.planningSourceRelative){$prepared.planningSourceRelative}else{'config/structureTemplate/terrasense/pcl_validation_02'}
+    $PlanningSourceDirectory=Join-Path $gameRoot $relative
+}
+$planningSource=(Resolve-Path -LiteralPath $PlanningSourceDirectory).Path
+if(!(Test-Path -LiteralPath (Join-Path $planningSource 'city_template_content_pack.json') -PathType Leaf)){throw "Missing template content pack: $planningSource"}
+$argsList.Add('-Dgeomantia.providerPlanningSourceDir='+$planningSource)
 if ($TestBridge) { $argsList.Add('-Drealmfolk.playtest=true') }
 $argsList.Add('-Drealmfolk.playtestPort='+$PlaytestPort)
 if ($Designer) { $argsList.Add('-Drealmfolk.designer=true'); $argsList.Add('-Drealmfolk.designerPort='+$DesignerPort) }
@@ -81,4 +90,4 @@ $argFile=Join-Path $gameRoot 'launch-arguments.txt'
 $encoded=$argsList | ForEach-Object { '"'+$_.Replace('\','/').Replace('"','\"')+'"' }
 [IO.File]::WriteAllLines($argFile,$encoded,[Text.UTF8Encoding]::new($false))
 $process=Start-Process -FilePath 'C:/Program Files/Java/jdk-17/bin/java.exe' -ArgumentList ('@"'+$argFile+'"') -WorkingDirectory $gameRoot -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $gameRoot 'launch.stdout.log') -RedirectStandardError (Join-Path $gameRoot 'launch.stderr.log')
-Write-Output "Packaged Forge PID=$($process.Id); gameDir=$gameRoot; world=$World; offline local test identity"
+Write-Output "Packaged Forge PID=$($process.Id); gameDir=$gameRoot; world=$World; planningSource=$planningSource; offline local test identity"

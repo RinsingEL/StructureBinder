@@ -71,6 +71,7 @@ public final class CityLandUseWorldgenRegistry {
     private static final Map<ActiveKey, ActivePlan> ACTIVE = new LinkedHashMap<>();
     private static final Set<OwnerKey> IN_FLIGHT = new HashSet<>();
     private static final Set<OwnerKey> APPLIED_OWNER_KEYS = new HashSet<>();
+    private static final Map<OwnerKey,JsonObject> PENDING_PUBLIC_REALM_OWNERS=new HashMap<>();
     private static final Map<PreparedChunkKey, CityLandUseChunkCompiler.ChunkFragment> PREPARED_CHUNK_CACHE =
             new HashMap<>();
     private static final Map<Object, StructureTerrainSession> STRUCTURE_TERRAIN_SESSIONS = new WeakHashMap<>();
@@ -85,6 +86,8 @@ public final class CityLandUseWorldgenRegistry {
     private static boolean ledgerPersistenceInProgress;
     private static Predicate<ResourceLocation> surfaceBlockExists =
             CityLandUseWorldgenRegistry::registeredSurfaceBlockExists;
+    private static Predicate<String> authoredSurfaceStateExists =
+            text -> CityLandUseChunkExecutor.authoredBlockState(text) != null;
     private static LedgerPersistenceWriter ledgerPersistenceWriter = CityLandUseWorldgenRegistry::atomicWrite;
 
     private CityLandUseWorldgenRegistry() {
@@ -374,16 +377,50 @@ public final class CityLandUseWorldgenRegistry {
                 ineligible++;
                 continue;
             }
+            Set<String> plantingInstances=fragment.featureOperations().stream()
+                    .map(CityLandUseChunkCompiler.FeatureOperation::sourceId)
+                    .filter(CityPublicRealmAdmission::optional).collect(java.util.stream.Collectors.toCollection(java.util.TreeSet::new));
+            if(hasPendingPlanting(ownerKey) && eligibility==CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES) {
+                alreadyApplied++; continue;
+            }
             if (!claim(ownerKey)) {
                 continue;
             }
             try {
+                if(!plantingInstances.isEmpty()&&!hasPendingPlanting(ownerKey)) {
+                    var baseFragment=withoutPlanting(fragment,plantingInstances);
+                    var base=EXECUTOR.execute(baseFragment,world,eligibility);
+                    if(base.status()!=CityLandUseChunkExecutor.Status.APPLIED) {
+                        failed++;failures.add(new OwnerFailure(active.key().cityId(),active.areaPlan().planHash(),
+                                active.surfacePrintPlan().planHash(),chunkX,chunkZ,base.reasonCode(),base.rollbackComplete(),base.materialFailure()));
+                        continue;
+                    }
+                    recordApplied(ownerKey,baseFragment,base,base.phaseCounts(),true);
+                    appliedOperations+=base.appliedOperationCount();
+                    naturalSkipped+=base.naturalSurfaceSkippedCount();boundarySkipped+=base.occupiedBoundarySkippedCount();
+                    if(eligibility==CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES) { applied++;continue; }
+                }
+                Set<String> rejected=new HashSet<>();
+                boolean contextReady=true;
+                for(String source:plantingInstances) {
+                    var decision=plantingDecision(active,source,world);
+                    if(decision.reasonCode().equals("PUBLIC_REALM_CONTEXT_NOT_READY")) { contextReady=false;break; }
+                    if(!decision.accepted())rejected.add(source);
+                }
+                if(!contextReady) {
+                    failed++;
+                    failures.add(new OwnerFailure(active.key().cityId(),active.areaPlan().planHash(),
+                            active.surfacePrintPlan().planHash(),chunkX,chunkZ,"PUBLIC_REALM_CONTEXT_NOT_READY",true));
+                    continue;
+                }
+                fragment=withoutPlanting(fragment,rejected);
+                if(!plantingInstances.isEmpty())fragment=onlyPlanting(fragment);
                 CityLandUseChunkExecutor.ExecutionResult result =
                         EXECUTOR.execute(fragment, world, eligibility);
                 naturalSkipped += result.naturalSurfaceSkippedCount();
                 boundarySkipped += result.occupiedBoundarySkippedCount();
                 if (result.status() == CityLandUseChunkExecutor.Status.APPLIED) {
-                    recordApplied(ownerKey, fragment, result, result.phaseCounts());
+                    recordApplied(ownerKey, fragment, result, result.phaseCounts(),false);
                     applied++;
                     appliedOperations += result.appliedOperationCount();
                 } else if (result.status() == CityLandUseChunkExecutor.Status.INELIGIBLE) {
@@ -404,6 +441,59 @@ public final class CityLandUseWorldgenRegistry {
         return new ApplySummary(dimension, chunkX, chunkZ, plans.size(), relevant, applied,
                 alreadyApplied, failed, ineligible, appliedOperations, naturalSkipped, boundarySkipped,
                 List.copyOf(failures));
+    }
+
+    private static CityLandUseChunkCompiler.ChunkFragment withoutPlanting(
+            CityLandUseChunkCompiler.ChunkFragment f,Set<String> rejected) {
+        if(rejected.isEmpty())return f;
+        return new CityLandUseChunkCompiler.ChunkFragment(f.schema(),f.cityId(),f.planHash(),f.paletteHash(),
+                f.chunkX(),f.chunkZ(),f.relevantCellCount(),f.footprintExcludedCount(),f.corridorExcludedCount(),f.gateExcludedCount(),
+                f.microFillBlockId(),f.gradingMaskCells(),f.surfaceOperations(),f.boundaryOperations(),
+                f.featureOperations().stream().filter(v->!rejected.contains(v.sourceId())).toList(),
+                f.gradingFeatureOperations().stream().filter(v->!rejected.contains(v.sourceId())).toList(),
+                f.platformPurposeAnchors(),f.platformAccessDemands(),f.materialField(),f.sharedTerraceSpans());
+    }
+
+    private static CityLandUseChunkCompiler.ChunkFragment onlyPlanting(CityLandUseChunkCompiler.ChunkFragment f) {
+        return new CityLandUseChunkCompiler.ChunkFragment(f.schema(),f.cityId(),f.planHash(),f.paletteHash(),
+                f.chunkX(),f.chunkZ(),f.relevantCellCount(),0,0,0,f.microFillBlockId(),List.of(),List.of(),List.of(),
+                f.featureOperations().stream().filter(v->CityPublicRealmAdmission.optional(v.sourceId())).toList(),
+                f.gradingFeatureOperations().stream().filter(v->CityPublicRealmAdmission.optional(v.sourceId())).toList(),
+                List.of(),List.of(),f.materialField(),List.of());
+    }
+
+    private static synchronized boolean hasPendingPlanting(OwnerKey key) { return PENDING_PUBLIC_REALM_OWNERS.containsKey(key); }
+
+    private static synchronized CityPublicRealmAdmission.Decision plantingDecision(ActivePlan active,String source,
+            CityLandUseChunkExecutor.ExecutionWorld world) {
+        if(!ledger.has("publicRealmInstances"))ledger.add("publicRealmInstances",new JsonArray());
+        var entries=ledger.getAsJsonArray("publicRealmInstances");
+        for(var item:entries) {
+            var e=item.getAsJsonObject();
+            if(e.get("dimensionId").getAsString().equals(active.key().dimensionId())
+                    && e.get("cityId").getAsString().equals(active.key().cityId())
+                    && e.get("surfacePrintPlanHash").getAsString().equals(active.surfacePrintPlan().planHash())
+                    && e.get("sourceId").getAsString().equals(source))
+                return new CityPublicRealmAdmission.Decision(e.get("reasonCode").getAsString(),e.get("x").getAsInt(),e.get("y").getAsInt(),e.get("z").getAsInt());
+        }
+        var decision=active.publicRealmAdmission().evaluate(source,world);
+        if(decision.reasonCode().equals("PUBLIC_REALM_CONTEXT_NOT_READY"))return decision;
+        JsonObject entry=new JsonObject();
+        entry.addProperty("dimensionId",active.key().dimensionId());entry.addProperty("cityId",active.key().cityId());
+        entry.addProperty("surfacePrintPlanHash",active.surfacePrintPlan().planHash());entry.addProperty("sourceId",source);
+        entry.addProperty("accepted",decision.accepted());entry.addProperty("reasonCode",decision.reasonCode());
+        entry.addProperty("x",decision.x());entry.addProperty("y",decision.y());entry.addProperty("z",decision.z());
+        entries.add(entry);markLedgerDirty();
+        return decision;
+    }
+
+    public static synchronized JsonArray publicRealmInstances(String cityId,String surfaceHash) {
+        JsonArray result=new JsonArray();
+        if(ledger.has("publicRealmInstances"))for(var item:ledger.getAsJsonArray("publicRealmInstances")) {
+            var e=item.getAsJsonObject();
+            if(e.get("cityId").getAsString().equals(cityId)&&e.get("surfacePrintPlanHash").getAsString().equals(surfaceHash))result.add(e.deepCopy());
+        }
+        return result;
     }
 
     /**
@@ -766,7 +856,7 @@ public final class CityLandUseWorldgenRegistry {
     private static synchronized void recordApplied(OwnerKey key,
                                                    CityLandUseChunkCompiler.ChunkFragment fragment,
                                                    CityLandUseChunkExecutor.ExecutionResult result,
-                                                   CityLandUseChunkExecutor.PhaseCounts phaseCounts) {
+                                                   CityLandUseChunkExecutor.PhaseCounts phaseCounts,boolean publicRealmPending) {
         if (isApplied(key)) return;
         JsonObject entry = new JsonObject();
         entry.addProperty("dimensionId", key.key().dimensionId());
@@ -791,8 +881,19 @@ public final class CityLandUseWorldgenRegistry {
         entry.addProperty("occupiedBoundarySkippedCount", result.occupiedBoundarySkippedCount());
         entry.add("foundationDiagnostics", foundationDiagnosticsJson(result.foundationDiagnostics()));
         entry.addProperty("appliedAt", Instant.now().toString());
+        entry.addProperty("publicRealmPending",publicRealmPending);
+        JsonObject previous=PENDING_PUBLIC_REALM_OWNERS.remove(key);
+        if(previous!=null) {
+            for(String count:List.of("surfaceOperationCount","boundaryOperationCount","featureOperationCount","appliedOperationCount",
+                    "preparedBaseOperationCount","appliedBaseOperationCount","preparedCropOperationCount","appliedCropOperationCount",
+                    "preparedBoundaryOperationCount","appliedBoundaryOperationCount","naturalSurfaceSkippedCount","occupiedBoundarySkippedCount"))
+                entry.addProperty(count,entry.get(count).getAsInt()+previous.get(count).getAsInt());
+            entry.add("foundationDiagnostics",previous.get("foundationDiagnostics").deepCopy());
+            appliedOwners().remove(previous);
+        }
         appliedOwners().add(entry);
-        APPLIED_OWNER_KEYS.add(key);
+        if(publicRealmPending)PENDING_PUBLIC_REALM_OWNERS.put(key,entry);
+        else APPLIED_OWNER_KEYS.add(key);
         markLedgerDirty();
     }
 
@@ -904,8 +1005,20 @@ public final class CityLandUseWorldgenRegistry {
         if (!LEDGER_SCHEMA.equals(ledgerSchema)) {
             throw new IllegalArgumentException("CITY_LAND_USE_LEDGER_SCHEMA_UNSUPPORTED: " + ledgerSchema);
         }
-        requireFields(persistedLedger, Set.of("schema", "appliedOwners"),
+        if(!persistedLedger.has("publicRealmInstances"))persistedLedger.add("publicRealmInstances",new JsonArray());
+        requireFields(persistedLedger, Set.of("schema", "appliedOwners", "publicRealmInstances"),
                 "CITY_LAND_USE_LEDGER_FIELDS_UNSUPPORTED");
+        for(var item:requiredArray(persistedLedger,"publicRealmInstances")) {
+            var e=requiredObject(item,"CITY_PUBLIC_REALM_DECISION_INVALID");
+            requireFields(e,Set.of("dimensionId","cityId","surfacePrintPlanHash","sourceId","accepted","reasonCode","x","y","z"),
+                    "CITY_PUBLIC_REALM_DECISION_FIELDS_UNSUPPORTED");
+            dimensionId(requiredString(e,"dimensionId"));requiredString(e,"cityId");requiredString(e,"surfacePrintPlanHash");
+            if(!CityPublicRealmAdmission.optional(requiredString(e,"sourceId"))
+                    || !e.getAsJsonPrimitive("accepted").isBoolean()
+                    || e.get("accepted").getAsBoolean()!=requiredString(e,"reasonCode").equals("PUBLIC_REALM_ADMITTED"))
+                throw new IllegalArgumentException("CITY_PUBLIC_REALM_DECISION_INVALID");
+            requiredInt(e,"x");requiredInt(e,"y");requiredInt(e,"z");
+        }
         for (JsonElement element : requiredArray(persistedLedger, "appliedOwners")) {
             JsonObject entry = requiredObject(element, "CITY_LAND_USE_LEDGER_ENTRY_INVALID");
             Set<String> entryFields = new HashSet<>(Set.of("dimensionId", "cityId", "areaPlanHash", "surfacePrintPlanHash",
@@ -916,6 +1029,7 @@ public final class CityLandUseWorldgenRegistry {
                     "preparedBoundaryOperationCount", "appliedBoundaryOperationCount",
                     "naturalSurfaceSkippedCount", "occupiedBoundarySkippedCount", "appliedAt"));
             entryFields.add("foundationDiagnostics");
+            if(entry.has("publicRealmPending"))entryFields.add("publicRealmPending");
             requireFields(entry, entryFields,
                     "CITY_LAND_USE_LEDGER_ENTRY_FIELDS_UNSUPPORTED");
             dimensionId(requiredString(entry, "dimensionId"));
@@ -1019,17 +1133,20 @@ public final class CityLandUseWorldgenRegistry {
 
     private static void rebuildAppliedOwnerIndex() {
         APPLIED_OWNER_KEYS.clear();
+        PENDING_PUBLIC_REALM_OWNERS.clear();
         PREPARED_CHUNK_CACHE.clear();
         STRUCTURE_TERRAIN_SESSIONS.clear();
         for (JsonElement element : appliedOwners()) {
             JsonObject entry = element.getAsJsonObject();
-            APPLIED_OWNER_KEYS.add(new OwnerKey(
+            OwnerKey key=new OwnerKey(
                     new ActiveKey(requiredString(entry, "dimensionId"), requiredString(entry, "cityId")),
                     requiredString(entry, "areaPlanHash"),
                     requiredString(entry, "surfacePrintPlanHash"),
                     requiredString(entry, "paletteHash"),
                     requiredInt(entry, "chunkX"),
-                    requiredInt(entry, "chunkZ")));
+                    requiredInt(entry, "chunkZ"));
+            if(entry.has("publicRealmPending")&&entry.get("publicRealmPending").getAsBoolean())PENDING_PUBLIC_REALM_OWNERS.put(key,entry);
+            else APPLIED_OWNER_KEYS.add(key);
         }
     }
 
@@ -1041,6 +1158,7 @@ public final class CityLandUseWorldgenRegistry {
         JsonObject root = new JsonObject();
         root.addProperty("schema", LEDGER_SCHEMA);
         root.add("appliedOwners", new JsonArray());
+        root.add("publicRealmInstances",new JsonArray());
         return root;
     }
 
@@ -1106,8 +1224,15 @@ public final class CityLandUseWorldgenRegistry {
             validateSurfaceBlockId(area.printAreaId(), "boundaryBlockId",
                     area.surfaceSettings().boundaryBlockId());
         }
+        Set<String> checkedStates = new HashSet<>();
         for (CityLandUseSurfacePrintPlan.FeatureCell cell : plan.featureCells()) {
-            validateSurfaceBlockId(cell.sourceId(), cell.kind().name(), cell.blockId());
+            if (cell.kind() == CityLandUseSurfacePrintPlan.FeatureKind.AUTHORED_BLOCK) {
+                // Use the execution parser: authored NBT includes properties, not just registry IDs.
+                if (checkedStates.add(cell.blockId()) && !authoredSurfaceStateExists.test(cell.blockId())) {
+                    throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_BLOCK_UNKNOWN: area="
+                            + cell.sourceId() + ", role=" + cell.kind() + ", blockId=" + cell.blockId());
+                }
+            } else validateSurfaceBlockId(cell.sourceId(), cell.kind().name(), cell.blockId());
         }
     }
 
@@ -1237,6 +1362,7 @@ public final class CityLandUseWorldgenRegistry {
         cancelAllD7Backfills();
         IN_FLIGHT.clear();
         APPLIED_OWNER_KEYS.clear();
+        PENDING_PUBLIC_REALM_OWNERS.clear();
         PREPARED_CHUNK_CACHE.clear();
         STRUCTURE_TERRAIN_SESSIONS.clear();
         FEATURE_OWNER_APPLICATIONS.clear();
@@ -1249,6 +1375,7 @@ public final class CityLandUseWorldgenRegistry {
         ledgerPersistenceInProgress = false;
         ledgerPersistenceWriter = CityLandUseWorldgenRegistry::atomicWrite;
         surfaceBlockExists = CityLandUseWorldgenRegistry::registeredSurfaceBlockExists;
+        authoredSurfaceStateExists = text -> CityLandUseChunkExecutor.authoredBlockState(text) != null;
     }
 
     static synchronized void setLedgerPersistenceWriterForTests(LedgerPersistenceWriter writer) {
@@ -1257,6 +1384,9 @@ public final class CityLandUseWorldgenRegistry {
 
     static synchronized void setSurfaceBlockExistsForTests(Predicate<ResourceLocation> predicate) {
         surfaceBlockExists = Objects.requireNonNull(predicate, "predicate");
+    }
+    static synchronized void setAuthoredSurfaceStateExistsForTests(Predicate<String> predicate) {
+        authoredSurfaceStateExists = Objects.requireNonNull(predicate, "predicate");
     }
 
     @FunctionalInterface
@@ -1449,7 +1579,8 @@ public final class CityLandUseWorldgenRegistry {
                               LandUseAreaPlan areaPlan,
                               CityLandUseChunkCompiler.MaterialPalette palette,
                               CityLandUseSurfacePrintPlan surfacePrintPlan,
-                              CityLandUseChunkCompiler.PreparedSurfacePlan preparedSurfacePlan) {
+                              CityLandUseChunkCompiler.PreparedSurfacePlan preparedSurfacePlan,
+                              CityPublicRealmAdmission publicRealmAdmission) {
         private ActivePlan {
             Objects.requireNonNull(key, "key");
             Objects.requireNonNull(areaPlan, "areaPlan");
@@ -1470,7 +1601,7 @@ public final class CityLandUseWorldgenRegistry {
                                          CityLandUseSurfacePrintPlan surfacePrintPlan,
                                          CityLandUseChunkCompiler.MaterialPalette palette) {
             return new ActivePlan(key, areaPlan, palette, surfacePrintPlan,
-                    new CityLandUseChunkCompiler(palette).prepare(areaPlan, surfacePrintPlan));
+                    new CityLandUseChunkCompiler(palette).prepare(areaPlan, surfacePrintPlan),new CityPublicRealmAdmission(surfacePrintPlan));
         }
     }
 

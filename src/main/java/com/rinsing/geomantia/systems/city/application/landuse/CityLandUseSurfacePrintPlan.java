@@ -63,12 +63,14 @@ public record CityLandUseSurfacePrintPlan(
                         + area.printAreaId());
             }
         }
-        Set<String> featureKeys = new HashSet<>();
+        Map<String, FeatureCell> featureKeys = new HashMap<>();
         for (FeatureCell cell : featureCells) {
             String key = cell.x() + ":" + cell.z() + ":" + (cell.kind()==FeatureKind.AUTHORED_BLOCK
                     ? "absolute:"+(cell.targetSurfaceY()+cell.surfaceOffset()) : cell.surfaceOffset());
-            if (!featureKeys.add(key)) {
-                throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_FEATURE_CELL_DUPLICATE:" + key);
+            FeatureCell previous = featureKeys.putIfAbsent(key, cell);
+            if (previous != null) {
+                throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_FEATURE_CELL_DUPLICATE:" + key
+                        + ":previous=" + previous + ":incoming=" + cell);
             }
         }
     }

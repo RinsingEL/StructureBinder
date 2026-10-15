@@ -39,6 +39,25 @@ class CityPublicRealmPlannerTest {
         assertEquals(7680,result.surface().featureCells().stream().filter(f->f.kind()==FeatureKind.TERRACE_GROUND).count());
         assertTrue(result.report().getAsJsonArray("placements").asList().stream().allMatch(e->{var p=e.getAsJsonObject();return !ground().contains(new BlockPoint(p.get("x").getAsInt(),p.get("z").getAsInt()));}));
     }
+    @Test void naturalPlantingUsesExactColumnsWhileAcceptedPlatformsKeepTheirDatum(){
+        JsonObject s=spec(null);s.add("fringe",JsonParser.parseString("{width:20,pools:{flowers:'flower_patches'},maxPlacements:20}").getAsJsonObject());
+        Map<BlockPoint,Integer> calls=new HashMap<>();
+        var result=new CityPublicRealmPlanner().plan(source(),district(),terrain(false),List.of(),new CityPublicRealmSpec(s),(x,z)->{
+            calls.merge(new BlockPoint(x,z),1,Integer::sum);return new CityPublicRealmPlanner.Ground(66,true);
+        });
+        var authored=result.surface().featureCells().stream().filter(f->f.kind()==FeatureKind.AUTHORED_BLOCK).toList();
+        assertFalse(authored.isEmpty());assertTrue(authored.stream().allMatch(f->f.targetSurfaceY()==66));
+        assertTrue(result.surface().featureCells().stream().filter(f->f.kind()==FeatureKind.TERRACE_GROUND).allMatch(f->f.targetSurfaceY()==64));
+        assertTrue(calls.values().stream().allMatch(n->n==1));
+        assertEquals("exact_generator_columns",result.report().get("naturalGroundSource").getAsString());
+    }
+    @Test void exactWetColumnsCannotReceivePlantsEvenWhenCoarseCellSaysLand(){
+        JsonObject s=spec(null);s.add("fringe",JsonParser.parseString("{width:20,pools:{flowers:'flower_patches'},maxPlacements:20}").getAsJsonObject());
+        var result=new CityPublicRealmPlanner().plan(source(),district(),terrain(false),List.of(),new CityPublicRealmSpec(s),
+                (x,z)->new CityPublicRealmPlanner.Ground(66,x<-116));
+        var authored=result.surface().featureCells().stream().filter(f->f.kind()==FeatureKind.AUTHORED_BLOCK).toList();
+        assertFalse(authored.isEmpty());assertTrue(authored.stream().allMatch(f->f.x()<-116));
+    }
     @Test void compositionRejectsWaterBadOwnerAndBadWeights(){
         var s=spec(examples().get(0).getAsJsonObject().getAsJsonObject("plan"));
         assertThrows(IllegalArgumentException.class,()->new CityPublicRealmPlanner().plan(source(),district(),terrain(true),List.of(),new CityPublicRealmSpec(s)));

@@ -16,10 +16,14 @@ public final class CityPublicRealmPlanner {
     private static final int[][] DIR={{1,0},{0,1},{-1,0},{0,-1}};
     private static final Comparator<BlockPoint> ORDER=Comparator.comparingInt(BlockPoint::z).thenComparingInt(BlockPoint::x);
     public record Result(CityLandUseSurfacePrintPlan surface,JsonObject report) {}
+    public record Ground(int surfaceY, boolean dryLand) {}
+    @FunctionalInterface public interface GroundSampler { Ground sample(int x, int z); }
     private record XYZ(int x,int y,int z) {}
     private record Volume(BlockBounds bounds,int minY,int maxY,boolean tree) {}
     private CityPublicRealmAssets assets;
     private LandUseTerrainField terrain;
+    private GroundSampler preciseGround;
+    private final Map<BlockPoint,Ground> groundSamples=new HashMap<>();
     private final Map<BlockPoint,LandUseTerrainField.Cell> terrainIndex=new HashMap<>();
     private final Map<BlockPoint,Integer> heights=new HashMap<>();
     private final Map<XYZ,FeatureCell> writes=new LinkedHashMap<>();
@@ -34,11 +38,15 @@ public final class CityPublicRealmPlanner {
 
     public Result plan(CityLandUseSurfacePrintPlan source,CityDistrictPlanner.Result district,
                        LandUseTerrainField terrain,List<com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan.CorridorExclusion> reservations,CityPublicRealmSpec spec) {
+        return plan(source,district,terrain,reservations,spec,null);
+    }
+    public Result plan(CityLandUseSurfacePrintPlan source,CityDistrictPlanner.Result district,
+                       LandUseTerrainField terrain,List<com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan.CorridorExclusion> reservations,CityPublicRealmSpec spec,GroundSampler preciseGround) {
         if(spec==null)return new Result(source,new JsonObject());
         if(district==null)throw new IllegalArgumentException("PUBLIC_REALM_REQUIRES_DISTRICT");
         // Planner instances are deliberately single-use: no state can leak between cities.
         if(this.terrain!=null)throw new IllegalStateException("PUBLIC_REALM_PLANNER_ALREADY_USED");
-        this.terrain=terrain;JsonObject config=spec.toJson();assets=CityPublicRealmAssets.load(text(config,"catalog","academy"));
+        this.terrain=terrain;this.preciseGround=preciseGround;JsonObject config=spec.toJson();assets=CityPublicRealmAssets.load(text(config,"catalog","academy"));
         seed=integer(config,"seed",0,Integer.MIN_VALUE,Integer.MAX_VALUE);
         for(var c:terrain.cells())terrainIndex.put(new BlockPoint(Math.floorDiv(c.blockMinX(),terrain.cellStepBlocks()),Math.floorDiv(c.blockMinZ(),terrain.cellStepBlocks())),c);
         for(var a:source.areas())if(a.recipe() instanceof UniformRecipe u)for(var s:u.platformSpans())for(int x=s.minX();x<=s.maxX();x++)heights.put(new BlockPoint(x,s.z()),s.targetY());
@@ -92,6 +100,8 @@ public final class CityPublicRealmPlanner {
         CityLandUseSurfacePrintPlan finalPlan=new CityLandUseSurfacePrintPlanCodec().withComputedHash(new CityLandUseSurfacePrintPlan(source.schema(),source.cityId(),source.sourceLandUsePlanHash(),"",source.areas(),source.sharedBoundarySpans(),retained,source.materialField()));
         JsonObject report=new JsonObject();report.addProperty("schema","city_public_realm_report.v1");report.add("spec",config);report.add("placements",placements);report.add("warnings",warnings);report.add("externalAccess",access);
         report.addProperty("fringeColumns",fringe.size());report.addProperty("authoredBlocks",writes.size());report.addProperty("surfacePlanHash",finalPlan.planHash());
+        report.addProperty("naturalGroundSource",preciseGround==null?"d3_coarse_field":"exact_generator_columns");
+        report.addProperty("naturalGroundSamples",groundSamples.size());
         JsonObject counts=new JsonObject();counters.forEach(counts::addProperty);report.add("counts",counts);
         return new Result(finalPlan,report);
     }
@@ -255,9 +265,11 @@ public final class CityPublicRealmPlanner {
     }
 
     private void emit(String id,BlockPoint p,int ground,int offset,String state){if(writes.size()>500_000)throw new IllegalArgumentException("PUBLIC_REALM_BLOCK_LIMIT");writes.put(new XYZ(p.x(),ground+offset,p.z()),new FeatureCell(SOURCE+id,p.x(),p.z(),state,offset,FeatureKind.AUTHORED_BLOCK,HorizontalFacing.NONE,ground));}
-    private int height(BlockPoint q){Integer h=heights.get(q);if(h!=null)return h;var c=cell(q);if(c==null||!c.sampled())throw new IllegalArgumentException("PUBLIC_REALM_UNSAMPLED_TERRAIN:"+q);return (int)Math.floor(c.elevation());}
+    private int height(BlockPoint q){Integer h=heights.get(q);if(h!=null)return h;if(preciseGround!=null)return ground(q).surfaceY();var c=cell(q);if(c==null||!c.sampled())throw new IllegalArgumentException("PUBLIC_REALM_UNSAMPLED_TERRAIN:"+q);return (int)Math.floor(c.elevation());}
+    private Ground ground(BlockPoint q){return groundSamples.computeIfAbsent(q,p->Objects.requireNonNull(preciseGround.sample(p.x(),p.z())));}
     private LandUseTerrainField.Cell cell(BlockPoint q){return terrainIndex.get(p(Math.floorDiv(q.x(),terrain.cellStepBlocks()),Math.floorDiv(q.z(),terrain.cellStepBlocks())));}
-    private boolean knownLand(BlockPoint q){var c=cell(q);return terrain.planningBounds().contains(q.x(),q.z())&&c!=null&&c.sampled()&&!c.water()&&Double.isFinite(c.elevation());}
+    private boolean knownLand(BlockPoint q){var c=cell(q);return terrain.planningBounds().contains(q.x(),q.z())&&c!=null&&c.sampled()&&!c.water()&&Double.isFinite(c.elevation())
+            &&(preciseGround==null||heights.containsKey(q)||ground(q).dryLand());}
     private double random(String salt,BlockPoint q){long h=seed^salt.hashCode()*0x9E3779B97F4A7C15L^q.x()*0xBF58476D1CE4E5B9L^q.z()*0x94D049BB133111EBL;h=(h^(h>>>30))*0xBF58476D1CE4E5B9L;h=(h^(h>>>27))*0x94D049BB133111EBL;h^=h>>>31;return ((h>>>11)+.5)*0x1.0p-53;}
     private List<CityPublicRealmAssets.Choice> weighted(List<CityPublicRealmAssets.Choice> choices,String id,BlockPoint q){return choices.stream().sorted(Comparator.comparingDouble(c->-Math.log(random(id+"/"+c.assetId(),q))/c.weight())).toList();}
     private static boolean circulation(FeatureCell f){return f.kind()==FeatureKind.ROAD_SLAB||f.kind()==FeatureKind.ROAD_STAIR||f.kind()==FeatureKind.BRIDGE_DECK||f.kind()==FeatureKind.GREEN_PATH;}

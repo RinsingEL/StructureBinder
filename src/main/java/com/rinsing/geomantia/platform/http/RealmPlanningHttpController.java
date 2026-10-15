@@ -1180,11 +1180,18 @@ final class RealmPlanningHttpController implements AutoCloseable {
     }
 
     void handleCityPlanLandUse(HttpExchange exchange) {
-        handle(exchange, "POST", () -> handleCityPlanLandUseRequest(
-                debugRoot(), GisHttpUtil.readJsonObject(exchange)));
+        handle(exchange, "POST", () -> {
+            JsonObject request=GisHttpUtil.readJsonObject(exchange);
+            ServerLevel level=callOnServerThread(()->resolveLevel(stringValue(request,"dimensionId",""),
+                    resolvePlayer(stringValue(request,"playerName",""))));
+            return handleCityPlanLandUseRequest(debugRoot(),request,level);
+        });
     }
 
     static JsonObject handleCityPlanLandUseRequest(Path debugRoot, JsonObject request) throws IOException {
+        return handleCityPlanLandUseRequest(debugRoot,request,null);
+    }
+    static JsonObject handleCityPlanLandUseRequest(Path debugRoot, JsonObject request, ServerLevel level) throws IOException {
         String runId = requiredString(request, "runId");
         String citySeedId = requiredString(request, "citySeedId");
         boolean acceptedBlueprint = hasAcceptedBlueprintD6(debugRoot, runId, citySeedId);
@@ -1193,7 +1200,7 @@ final class RealmPlanningHttpController implements AutoCloseable {
                     + "current CityBlueprint is the only outdoor design authority.");
         }
         if (acceptedBlueprint) {
-            return CityPlanningEndpointHandler.handlePlanBlueprintOutdoor(debugRoot, runId, citySeedId);
+            return CityPlanningEndpointHandler.handlePlanBlueprintOutdoor(debugRoot, runId, citySeedId,level);
         }
         throw new IllegalArgumentException("CITY_BLUEPRINT_WORKFLOW_REQUIRED: prepare, submit and compile "
                 + "current CityBlueprint before planning city outdoor space.");

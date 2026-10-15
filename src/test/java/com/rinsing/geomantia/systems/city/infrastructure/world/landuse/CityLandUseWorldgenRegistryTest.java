@@ -31,6 +31,44 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandUseWorldgenRegistryTest {
+    @Test void rejectedPlantingIsWholeAcrossOwnersAndSurvivesReloadWithoutTouchingTerrain() {
+        var area=areaPlan("city_planting");
+        String source="public_realm::fringe/trees/1@tree#hash";
+        var cells=List.of(
+                new CityLandUseSurfacePrintPlan.FeatureCell("road",1,2,"minecraft:stone_slab",0,CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,64),
+                new CityLandUseSurfacePrintPlan.FeatureCell(source,15,2,"minecraft:oak_log",1,CityLandUseSurfacePrintPlan.FeatureKind.AUTHORED_BLOCK,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,64),
+                new CityLandUseSurfacePrintPlan.FeatureCell(source,16,2,"minecraft:oak_leaves",1,CityLandUseSurfacePrintPlan.FeatureKind.AUTHORED_BLOCK,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,64));
+        var surface=new com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlanCodec().withComputedHash(
+                new CityLandUseSurfacePrintPlan(CityLandUseSurfacePrintPlan.SCHEMA,area.cityId(),area.planHash(),"",List.of(),List.of(),cells));
+        CityLandUseWorldgenRegistry.setAuthoredSurfaceStateExistsForTests(ignored->true);
+        CityLandUseWorldgenRegistry.activate("minecraft:overworld",area,surface,serverRoot);
+        var world=new FakeWorld();world.replaceable.put("16,65,2",false);
+        assertEquals(1,CityLandUseWorldgenRegistry.applyForChunk("minecraft:overworld",0,0,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES,world).appliedOwnerCount());
+        assertTrue(world.writes.contains("1,64,2=minecraft:stone_slab"),"roads must retain their original worldgen timing");
+        int baseWrites=world.writes.size();
+        CityLandUseWorldgenRegistry.flushPendingLedgerNow();
+        CityLandUseWorldgenRegistry.resetForTests();
+        CityLandUseWorldgenRegistry.setSurfaceBlockExistsForTests(ignored->true);
+        CityLandUseWorldgenRegistry.setAuthoredSurfaceStateExistsForTests(ignored->true);
+        CityLandUseWorldgenRegistry.load(serverRoot);
+        assertEquals(1,CityLandUseWorldgenRegistry.applyForChunk("minecraft:overworld",0,0,
+                CityLandUseChunkExecutor.GenerationEligibility.CONTROLLED_D7_BACKFILL,world).appliedOwnerCount());
+        assertEquals(baseWrites,world.writes.size(),"reject the whole tree without rebuilding the road");
+        CityLandUseWorldgenRegistry.flushPendingLedgerNow();
+        CityLandUseWorldgenRegistry.resetForTests();
+        CityLandUseWorldgenRegistry.setSurfaceBlockExistsForTests(ignored->true);
+        CityLandUseWorldgenRegistry.setAuthoredSurfaceStateExistsForTests(ignored->true);
+        CityLandUseWorldgenRegistry.load(serverRoot);
+        world.replaceable.clear();
+        assertEquals(1,CityLandUseWorldgenRegistry.applyForChunk("minecraft:overworld",1,0,
+                CityLandUseChunkExecutor.GenerationEligibility.CONTROLLED_D7_BACKFILL,world).appliedOwnerCount());
+        assertEquals(baseWrites,world.writes.size(),"another owner must reuse the persisted instance decision");
+        var decisions=CityLandUseWorldgenRegistry.publicRealmInstances(area.cityId(),surface.planHash());
+        assertEquals(1,decisions.size());
+        assertFalse(decisions.get(0).getAsJsonObject().get("accepted").getAsBoolean());
+        assertEquals("PUBLIC_REALM_VOLUME_OCCUPIED",decisions.get(0).getAsJsonObject().get("reasonCode").getAsString());
+    }
     @TempDir
     Path serverRoot;
 
@@ -185,6 +223,36 @@ class CityLandUseWorldgenRegistryTest {
 
         assertTrue(failure.getMessage().contains("CITY_LAND_USE_SURFACE_BLOCK_UNKNOWN"));
         assertFalse(Files.exists(CityLandUseWorldgenRegistry.activePlansPath(serverRoot)));
+    }
+
+    @Test
+    void activationValidatesAndPreservesCompleteAuthoredBlockState() throws IOException {
+        String state="minecraft:birch_leaves[distance=1,persistent=true,waterlogged=false]";
+        CityLandUseWorldgenRegistry.setAuthoredSurfaceStateExistsForTests(state::equals);
+        var area=areaPlan("city_authored_state");
+        var surface=authoredSurface(area,state);
+        CityLandUseWorldgenRegistry.activate("minecraft:overworld",area,surface,serverRoot);
+        assertTrue(Files.readString(CityLandUseWorldgenRegistry.activePlansPath(serverRoot)).contains(state));
+    }
+
+    @Test
+    void activationRejectsInvalidAuthoredPropertiesBeforePersisting() {
+        CityLandUseWorldgenRegistry.setAuthoredSurfaceStateExistsForTests(ignored->false);
+        var area=areaPlan("city_bad_authored_state");
+        var surface=authoredSurface(area,"minecraft:birch_leaves[distance=99]");
+        var failure=assertThrows(IllegalArgumentException.class,()->CityLandUseWorldgenRegistry.activate(
+                "minecraft:overworld",area,surface,serverRoot));
+        assertTrue(failure.getMessage().contains("CITY_LAND_USE_SURFACE_BLOCK_UNKNOWN"));
+        assertFalse(Files.exists(CityLandUseWorldgenRegistry.activePlansPath(serverRoot)));
+    }
+
+    private static CityLandUseSurfacePrintPlan authoredSurface(LandUseAreaPlan area,String state) {
+        var base=CityLandUseChunkCompilerTest.uniformPlan(area);
+        var cell=new CityLandUseSurfacePrintPlan.FeatureCell("tree",1,1,state,1,
+                CityLandUseSurfacePrintPlan.FeatureKind.AUTHORED_BLOCK,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,64);
+        return new com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlanCodec().withComputedHash(
+                new CityLandUseSurfacePrintPlan(base.schema(),base.cityId(),base.sourceLandUsePlanHash(),"",
+                        base.areas(),base.sharedBoundarySpans(),List.of(cell)));
     }
 
     @Test

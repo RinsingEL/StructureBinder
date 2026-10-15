@@ -64,4 +64,25 @@ class CitySharedTerracePlannerTest {
         assertEquals(9, result.featureCells().stream().filter(f -> f.sourceId().equals("internal")
                 && f.targetSurfaceY() == 64 && f.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB).count());
     }
+    @Test void bridgeDeckKeepsTerracePostsOutOfItsRailAndApproach() {
+        var original=source();
+        var features=new ArrayList<>(original.featureCells());
+        var deck=new CityLandUseSurfacePrintPlan.FeatureCell("bridge",0,0,"minecraft:stone_slab",0,
+                CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,62);
+        var rail=new CityLandUseSurfacePrintPlan.FeatureCell("bridge",0,0,"minecraft:spruce_fence",1,
+                CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_RAIL,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,62);
+        features.add(deck);features.add(rail);
+        var input=new CityLandUseSurfacePrintPlan(original.schema(),original.cityId(),original.sourceLandUsePlanHash(),"",
+                original.areas(),original.sharedBoundarySpans(),features);
+        List<LandUseTerrainField.Cell> samples=new ArrayList<>();
+        for(int z=-8;z<=28;z++)for(int x=-4;x<=40;x++)
+            samples.add(new LandUseTerrainField.Cell(x,z,x,z,1,x<0?60:64,0,0,0,false,0,10,"minecraft:plains","plain","p",true));
+        var terrain=new LandUseTerrainField(LandUseTerrainField.SCHEMA,"city",BOUNDS,1,samples);
+        var result=new CitySharedTerracePlanner().apply(input,district(),terrain,empty(),List.of(),CitySharedTerracePlanner.Settings.defaults());
+        assertTrue(result.featureCells().contains(deck));assertTrue(result.featureCells().contains(rail));
+        assertTrue(result.featureCells().stream().noneMatch(f->f.kind()==CityLandUseSurfacePrintPlan.FeatureKind.TERRACE_RAIL
+                &&Math.abs(f.x())<=2&&Math.abs(f.z())<=2));
+        assertTrue(result.featureCells().stream().anyMatch(f->f.kind()==CityLandUseSurfacePrintPlan.FeatureKind.TERRACE_RAIL),
+                "Other exposed platform edges still need protection");
+    }
 }
