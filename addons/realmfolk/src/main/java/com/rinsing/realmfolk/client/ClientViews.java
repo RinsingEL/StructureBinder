@@ -50,7 +50,7 @@ public final class ClientViews {
     }
     private static class CitizenRenderer extends MobRenderer<CitizenEntity,VillagerModel<CitizenEntity>> {
         private static final ResourceLocation TEXTURE=new ResourceLocation("minecraft","textures/entity/villager/villager.png");
-        CitizenRenderer(EntityRendererProvider.Context context){super(context,new VillagerModel<>(context.bakeLayer(ModelLayers.VILLAGER)),.5f);
+        CitizenRenderer(EntityRendererProvider.Context context){super(context,new LivingCitizenModel(context.bakeLayer(ModelLayers.VILLAGER)),.5f);
             addLayer(new net.minecraft.client.renderer.entity.layers.CustomHeadLayer<>(this,context.getModelSet(),context.getItemInHandRenderer()));
             addLayer(new net.minecraft.client.renderer.entity.layers.VillagerProfessionLayer<>(this,context.getResourceManager(),"villager"));
         }

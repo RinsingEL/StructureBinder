@@ -29,7 +29,7 @@ public final class CitizenEntity extends PathfinderMob implements net.minecraft.
     }
     public static AttributeSupplier.Builder attributes() {
         return Mob.createMobAttributes().add(Attributes.MAX_HEALTH,30).add(Attributes.MOVEMENT_SPEED,.29)
-            .add(Attributes.ATTACK_DAMAGE,5).add(Attributes.FOLLOW_RANGE,28);
+            .add(Attributes.ATTACK_DAMAGE,5).add(Attributes.FOLLOW_RANGE,80);
     }
     @Override protected void defineSynchedData() { super.defineSynchedData(); entityData.define(ROLE,"resident"); entityData.define(ACTIVITY,"闲逛");entityData.define(APPEARANCE,"resident"); }
     @Override protected void registerGoals() {
@@ -45,6 +45,8 @@ public final class CitizenEntity extends PathfinderMob implements net.minecraft.
         applyProfile(citizen);setHealth((float)citizen.health);
     }
     public void applyProfile(Society.Citizen citizen){
+        // Entity NBT from earlier builds retains the old 16-block navigation search range.
+        getAttribute(Attributes.FOLLOW_RANGE).setBaseValue(80);
         var profile=com.rinsing.realmfolk.server.DesignService.profile(level().getServer(),citizen);
         if(appliedRevision==citizen.designRevision)return;
         float ratio=getHealth()/getMaxHealth();
@@ -78,7 +80,7 @@ public final class CitizenEntity extends PathfinderMob implements net.minecraft.
     @Override public void readAdditionalSaveData(CompoundTag tag) { super.readAdditionalSaveData(tag); citizenId=tag.getString("CitizenId"); entityData.set(ROLE,tag.getString("Role")); }
     @Override public InteractionResult mobInteract(Player player, InteractionHand hand) {
         if (hand!=InteractionHand.MAIN_HAND) return InteractionResult.PASS;
-        if (player instanceof ServerPlayer serverPlayer) Dialogues.open(serverPlayer,this,"");
+        if (player instanceof ServerPlayer serverPlayer) { com.rinsing.realmfolk.server.DailyLifeRuntime.interrupt(this); Dialogues.open(serverPlayer,this,""); }
         return InteractionResult.sidedSuccess(level().isClientSide);
     }
     @Override public void tick() { super.tick(); if (!level().isClientSide && tickCount%20==0) SocietyRuntime.tickCitizen(this); }

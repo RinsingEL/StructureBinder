@@ -44,8 +44,13 @@ public final class Society {
         public String templateId = "";
         public List<String> terms = new ArrayList<>();
         public List<Point> slots = new ArrayList<>();
+        /** Null means an old/uninspected property; an empty list means inspected with no facilities. */
+        public List<com.rinsing.realmfolk.life.LivingSite> livingSites;
+        public List<Point> entrances=new ArrayList<>();
+        public String facilitySource="";
         /** Public approach points outside the building, discovered only in loaded terrain. */
         public List<Point> publicPoints;
+        public Property() {} // Gson must run field initializers when reading older saves.
         public Property(String id, String town, String name, Bounds bounds, Point home) {
             this.id=id; this.town=town; this.name=name; this.bounds=bounds; this.home=home; this.work=home;
         }
@@ -56,11 +61,16 @@ public final class Society {
         public String bio = "今天过得怎么样？", leader = "", mode = "HOME", targetTown = "";
         public Point home, work;
         public boolean spawned, dead, keyPerson;
+        public String bedSite="", workSite="";
+        public boolean visitor;
+        public boolean needsVisitorPlacement;
+        public long lastRoutineTick;
         public String workProperty = "", keyPersonId = "", trait = "";
         public com.rinsing.realmfolk.design.Design.Profession profession;
         public double health = 30, attack = 5, speed = .29;
         public int designRevision;
         public com.rinsing.realmfolk.economy.Inventory inventory;
+        public Citizen() {} // Older saves omit facility claims and visitor state.
         public Citizen(String id, String name, String town, String property, String role, Point home, Point work) {
             this.id=id; this.name=name; this.town=town; this.property=property; this.role=role; this.home=home; this.work=work;
         }

@@ -33,6 +33,7 @@ public final class CityPlanningExtension implements PlanningExtension {
             tool("realmfolk_worksheet_update","持久化填写差异；每批 5–8 功能行。functionAnswers 按 functionTerm 替换行；professions 按 ID 完整替换定义；其他对象逐键合并、数组整体替换。removeJobs/removeProfessions 显式删除。填写不等于发布",worksheetPatchSchema()),
             tool("realmfolk_worksheet_submit","校验并提交全部已保存填写，返回所有漏项或草案和全城审查。不会静默补齐委托",object(Map.of("worksheetRevision",type("integer")),"worksheetRevision")),
             tool("realmfolk_worksheet_reset","明确清空当前城市未提交填写，用于世界/任务版本变化后重新审查；不修改已发布居民",object(Map.of("worksheetRevision",type("integer")),"worksheetRevision")),
+            tool("realmfolk_quick_plan","用城市性格与少量职业群体快速配置居民和商店。继承文明默认，程序展开全部功能行；返回草案后继续 preview/publish",required(DesignerMcp.schema(QuickCityPlan.Input.class),"baseRevision")),
             tool("realmfolk_planning_submit","批量提交当前城市完整方案与最多 16 个局部职业；professions 是顶层对象 {局部ID:职业定义}，与 plan 同级，不能放进 plan。局部 ID 自动隔离。其他 NPC 由住房规则生成",submissionSchema()),
             tool("realmfolk_planning_preview","预览当前草案，已加载住房生成人口统计；未加载城市仍可发布规则",object(Map.of("draftId",type("string")),"draftId")),
             tool("realmfolk_planning_publish","审查全城功能、人口、商品及委托差异后，携带预览返回的 reviewToken 与 previewToken 发布",object(Map.of("draftId",type("string"),"previewToken",type("string"),"reviewToken",type("string")),"draftId","previewToken","reviewToken")));
@@ -58,7 +59,7 @@ public final class CityPlanningExtension implements PlanningExtension {
             "普通 NPC 按住房与职业配额生成。先查模板，复用能力组合；只有最多 16 位关键人物可以单独设定。",
             "trade 出售、buyback 收购、gift 接受赠礼请求可独立组合；itemPools 为空表示使用本城全部已选池，非空表示取交集。",
             "plan.overrides.populationMode 建议 housing；plan 是完整城市替换。professions 里的局部 ID 自动隔离，只在 jobs 和 keyPeople 中用局部名引用。",
-            "先读全城事实和人口设置，再 worksheet_read/update 分批填 5–8 行；职业共享定义，不重复造人。程序保存全表，修改只交差异。",
+            "优先用 realmfolk_quick_plan：只给城市性格、住房/公共用途及少量群体。程序继承文明默认，展开功能行，居民与商店无需配置完整委托。需要逐项修订时才使用 worksheet。",
             "每个 functionTerm 必须回答 housing、professions 和 reason；无需 NPC 的功能也要填写空 professions 并说明原因。housing 必须与 housingTerms 一致。",
             "新职业启用 commission 时必须明确材料、数量、全部奖励和 commissionPurpose；禁用委托则不加入该能力。商品能力须明确 itemPools、stockSlots、goodsPurpose。",
             "复用现有职业先按需 read 查看完整定义，再在 reuseProfessions 显式确认；有默认委托不代表适合本城。",
@@ -98,6 +99,7 @@ public final class CityPlanningExtension implements PlanningExtension {
                 }
                 case "realmfolk_worksheet_reset"->{var work=work(c);if(args.get("worksheetRevision").getAsInt()!=(work==null?0:work.revision))throw new IllegalArgumentException("填写版本已变化");society(server).design.worksheets.remove(key(c));dirty(server);SocietyData.flush(server);yield worksheetRead(c,"summary",0,8);}
                 case "realmfolk_worksheet_submit"->{var work=work(c);if(work==null||args.get("worksheetRevision").getAsInt()!=work.revision)throw new IllegalArgumentException("请先填写或刷新表格版本");yield submit(c,work.submission);}
+                case "realmfolk_quick_plan"->submit(c,DesignCodec.JSON.toJsonTree(QuickCityPlan.expand(DesignCodec.decode(args,QuickCityPlan.Input.class),society(server).design.active,c.realmId(),key(c),evidence(c),EconomyService.config(server))).getAsJsonObject());
                 case "realmfolk_planning_submit"->submit(c,args);
                 case "realmfolk_planning_preview"->{String id=args.get("draftId").getAsString();var preview=service().preview(key(c),c.taskRevision(),id);var d=society(server).design.drafts.get(id);var result=DesignCodec.JSON.toJsonTree(preview).getAsJsonObject();result.add("cityReview",d.worksheetReview);result.addProperty("reviewToken",CityPlanning.reviewToken(d));yield result;}
                 case "realmfolk_planning_publish"->{if(!args.has("reviewToken"))throw new IllegalArgumentException("先预览并审查全城表，再携带 reviewToken 发布");var r=service().publishReviewed(key(c),c.taskRevision(),args.get("draftId").getAsString(),args.get("previewToken").getAsString(),args.get("reviewToken").getAsString());dirty(server);SocietyData.flush(server);yield r;}

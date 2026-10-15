@@ -20,6 +20,7 @@ public final class Commands {
                 j.quests.forEach((q,state)->tell(p,"委托："+questName(s,q)+" · "+switch(state){case "DONE"->"已完成";case "READY"->"可领取奖励";default->"进行中";}));
                 j.offenses.stream().filter(o->!o.settled).forEach(o->tell(p,"待处理："+switch(o.crime){case THEFT->"取走他人财物";case DAMAGE->"损坏财产";case TRESPASS->"擅闯私人房间";case ASSAULT->"伤害居民 / 纵火";case MURDER->"杀害居民";}+" · "+EconomyService.money(p.server,EconomyService.legacy(p.server,o.fine))+(o.reported?" · 已报案":" · 可先补救")));return 1;}))
             .then(literal("demo").requires(s->s.hasPermission(2)).executes(c->{var p=c.getSource().getPlayerOrException();DemoTown.create(p);return 1;}))
+            .then(literal("life_demo").requires(s->s.hasPermission(2)).executes(c->{LifeDemoTown.create(c.getSource().getPlayerOrException());return 1;}))
             .then(literal("objective_demo").requires(s->s.hasPermission(2)).executes(c->{ObjectiveQuestRuntime.demo(c.getSource().getPlayerOrException());return 1;}))
             .then(literal("import").requires(s->s.hasPermission(2)).executes(c->{int count=GeomantiaBridge.refresh(c.getSource().getServer());c.getSource().sendSuccess(()->Component.literal("已接入附近 "+count+" 处有已批准用途和落地证据的建筑。"),false);return count;}))
             .then(literal("reload").requires(s->s.hasPermission(2)).executes(c->{PopulationConfig.load();c.getSource().sendSuccess(()->Component.literal("旧版建筑与生物映射已重载；城市人口方案请通过设计 MCP 预览并发布。"),false);return 1;})));

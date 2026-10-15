@@ -57,6 +57,7 @@ public final class DesignService {
             if(s.design.drafts.values().stream().anyMatch(d->d.baseRevision==s.design.revision&&d.towns.contains(town.id)))continue;
             var plan=PopulationPlanner.plan(s.design.active,s,town,server.overworld().getSeed(),s.design.revision);
             for(var c:plan.citizens()){s.citizens.put(c.id,c);var property=s.properties.get(c.property);if(property.owner.isBlank())property.owner=c.id;dirty(server);}
+            VisitorRuntime.populate(server,town);
         }
     }
 }

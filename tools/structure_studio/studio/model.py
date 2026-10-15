@@ -172,6 +172,8 @@ class Model:
         write_bytes(nbt_path, compressed)
         self.meta["nbt_sha256"] = sha256(nbt_path)
         write_json(directory / "author.json", self.meta)
+        from .living import extract
+        write_json(directory / "living_facilities.json", extract(read_structure(directory / "structure.nbt"), self.meta))
         return read_structure(nbt_path)
 
 

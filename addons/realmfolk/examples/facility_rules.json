@@ -1,0 +1,17 @@
+{
+  "facilities": [
+    {
+      "blocks": ["#realmfolk:workstations"],
+      "kind": "work",
+      "adapter": "stand",
+      "use": "building"
+    },
+    {
+      "blocks": ["#realmfolk:seats"],
+      "kind": "seat",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "use": "public"
+    }
+  ]
+}

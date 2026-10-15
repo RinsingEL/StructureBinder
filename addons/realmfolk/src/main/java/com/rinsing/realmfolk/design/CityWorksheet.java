@@ -137,13 +137,13 @@ public final class CityWorksheet {
         for(var f:evidence.functions()){var row=new LinkedHashMap<String,Object>();row.put("fact",f);row.put("answer",answers.get(f.functionTerm()));rows.add(row);}
         result.put("functionTable",rows);result.put("functionCount",evidence.functions().size());result.put("uniquePlannedBuildings",evidence.buildings().size());
         result.put("unclassifiedAnchors",evidence.unclassifiedAnchors());
-        var s=in.plan.overrides;int houses=0,seats=0;
-        if(s.housingTerms!=null&&s.residentsPerHouse!=null)for(var b:evidence.buildings())if(!Collections.disjoint(b.terms(),s.housingTerms)){houses++;seats+=PopulationPlanner.housingCapacity(s,List.copyOf(b.terms()));}
-        result.put("plannedHousingBuildings",houses);result.put("plannedHousingSlotsBeforeSaleAndStandability",seats);
-        if(s.housingOccupancy!=null)result.put("plannedPopulationUpperBoundBeforeSaleAndStandability",Math.min(Design.MAX_POPULATION,(int)Math.floor(seats*s.housingOccupancy)));
+        var s=in.plan.overrides;int houses=0;
+        if(s.housingTerms!=null)for(var b:evidence.buildings())if(!Collections.disjoint(b.terms(),s.housingTerms))houses++;
+        result.put("plannedHousingBuildings",houses);
+        result.put("housingCapacityStatus","requires_physical_facilities");
         result.put("populationSettings",s);result.put("keyPeople",in.plan.keyPeople);
         if("fixed".equals(s.populationMode)&&s.population!=null)result.put("configuredFixedPopulation",s.population);
-        warnings.add("住房格数为规划上限，尚未扣除待售、玩家房产和不可站立空间；实际人口须使用加载后的预览统计。");
+        warnings.add("建筑用途不能证明床位数量；住房名额与人口以加载后的物理设施预览为准，未加载时不提供人数上限。");
         var professionRows=new ArrayList<Object>();var commissions=new TreeMap<String,List<String>>();
         if(s.jobs!=null)for(var entry:s.jobs.entrySet()){
             String id=entry.getKey();var p=in.professions.getOrDefault(id,active.professions.get(id));if(p==null)continue;

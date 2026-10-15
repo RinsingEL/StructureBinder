@@ -20,7 +20,8 @@ class PlanningApiCompatibilityTest {
             public JsonObject prepare(PlanningExtensionContext c){return new JsonObject();}
             public JsonObject execute(PlanningExtensionContext c,String tool,JsonObject args){return new JsonObject();}
         };
-        assertEquals(9,definitions.size());
+        assertEquals(10,definitions.size());
+        assertTrue(definitions.stream().anyMatch(t->t.name().equals("realmfolk_quick_plan")));
         assertDoesNotThrow(()->new PlanningExtensionRegistry(List.of(addon),Runnable::run));
         assertThrows(ClassNotFoundException.class,()->Class.forName("com.rinsing.geomantia.harness.addons.HarnessMod"));
         assertThrows(ClassNotFoundException.class,()->Class.forName("com.rinsing.geomantia.map.addons.AdventureMapMod"));

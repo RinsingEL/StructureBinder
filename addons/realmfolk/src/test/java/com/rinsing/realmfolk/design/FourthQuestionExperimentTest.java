@@ -46,7 +46,7 @@ class FourthQuestionExperimentTest {
             // Capacity assumptions only: no claim these positions are traversable in Minecraft.
             if(!Collections.disjoint(p.terms,submission.plan.overrides.housingTerms))
                 for(int n=0;n<submission.plan.overrides.residentsPerHouse;n++)p.slots.add(new Society.Point(x+n,65,z));
-            s.properties.put(id,p);
+            FacilityFixtures.physical(p,submission.plan.overrides.workplaceCapacity);s.properties.put(id,p);
         }
         var result=PopulationPlanner.plan(s.design.active,s,town,seed,s.design.revision);
         var again=PopulationPlanner.plan(s.design.active,s,town,seed,s.design.revision);
@@ -82,12 +82,12 @@ class FourthQuestionExperimentTest {
         assertEquals(0,PopulationPlanner.plan(s.design.active,s,town,seed,s.design.revision).summary().created());
         var restored=DesignCodec.copy(s,Society.class);
         assertEquals(0,PopulationPlanner.plan(restored.design.active,restored,restored.towns.get(town.id),seed,restored.design.revision).summary().created());
-        var noHousing=DesignCodec.copy(s,Society.class);noHousing.citizens.clear();noHousing.properties.values().forEach(p->p.slots.clear());
+        var noHousing=DesignCodec.copy(s,Society.class);noHousing.citizens.clear();noHousing.properties.values().forEach(p->{p.slots.clear();p.livingSites.removeIf(site->site.kind.equals("bed"));});
         assertEquals(0,PopulationPlanner.plan(noHousing.design.active,noHousing,noHousing.towns.get(town.id),seed,noHousing.design.revision).summary().created());
         var output=new LinkedHashMap<String,Object>();output.put("validation","passed");output.put("population",result.summary());output.put("groupCounts",counts);
         output.put("citizens",citizens);output.put("worksheet",draft.worksheetReview);output.put("sourceBlueprintHash",revision);
         output.put("assertions",List.of("真实功能填写校验","正式事务仅发布内存规则，未加载城镇不造人","住房与岗位限制","固定种子重复一致","重入/序列化后不重复造人","无可站立名额则零人口","库存仅来自所选池","好感影响正式赠礼概率"));
-        output.put("worldWrites",false);output.put("standingSlots","synthetic_capacity_assumption");output.put("registryValidation","author_catalogue_only_not_live_registry");
+        output.put("worldWrites",false);output.put("standingSlots","synthetic_physical_facility_assumption");output.put("registryValidation","author_catalogue_only_not_live_registry");
         var inputHashes=new TreeMap<String,String>();
         for(String name:List.of("submission.json","evidence.json","economy.json"))
             inputHashes.put(name,HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(directory.resolve(name)))));

@@ -5,6 +5,7 @@ import java.util.*;
 import static com.rinsing.realmfolk.design.Design.*;
 import static com.rinsing.realmfolk.model.Society.*;
 import com.rinsing.realmfolk.model.Society;
+import com.rinsing.realmfolk.life.FacilityAssignments;
 
 /** Pure, deterministic planner shared by preview, publication and discovery. Never edits its inputs. */
 public final class PopulationPlanner {
@@ -12,22 +13,23 @@ public final class PopulationPlanner {
     public record Summary(String town,String populationMode,double occupancy,int target,int existing,int created,int housingBuildings,int housingSlots,int freeHousingSlots,Map<String,Integer> professions,
                           Map<String,Integer> workplaceTerms,List<String> shortages,List<Sample> samples) {}
     public record Plan(List<Citizen> citizens,Summary summary) {}
-    private record Bed(Property property,Point point,int index) {}
+    private record Bed(Property property,Point point,int index,String siteId) {}
 
     public static String cityKey(Town t){return t.planningKey!=null&&!t.planningKey.isBlank()?t.planningKey:t.sourceCity==null||t.sourceCity.isBlank()?t.id:t.sourceCity;}
     public static Plan plan(Design design,Society world,Town town,long seed,int revision){
         Resolved resolved=design.resolve(town.realm,cityKey(town));Settings settings=resolved.settings();
         List<Property> sites=world.properties.values().stream().filter(p->p.town.equals(town.id)).sorted(Comparator.comparing(p->p.id)).toList();
-        List<Citizen> existing=world.citizens.values().stream().filter(c->c.town.equals(town.id)&&"realmfolk:citizen".equals(c.entityType)).toList();
+        List<Citizen> existing=world.citizens.values().stream().filter(c->c.town.equals(town.id)&&!c.visitor&&"realmfolk:citizen".equals(c.entityType)).toList();
         Map<String,Integer> counts=new TreeMap<>(),workers=new HashMap<>(),terms=new TreeMap<>();
         Set<Point> occupied=new HashSet<>();
         for(Citizen c:existing){counts.merge(c.role,1,Integer::sum);occupied.add(c.home);workers.merge(c.workProperty==null||c.workProperty.isBlank()?c.property:c.workProperty,1,Integer::sum);}
         List<Bed> beds=new ArrayList<>();int totalBeds=0,houses=0;
         for(Property p:sites){
-            if(p.terms!=null)for(String term:p.terms)terms.merge(term,settings.workplaceCapacity,Integer::sum);
+            if(p.terms!=null)for(String term:p.terms)terms.merge(term,jobCapacity(p,settings),Integer::sum);
             if(p.slots==null||p.terms==null||Collections.disjoint(p.terms,settings.housingTerms)||p.price>0||p.owner.startsWith("player:"))continue;
-            int n=Math.min(housingCapacity(settings,p.terms),p.slots.size());totalBeds+=n;if(n>0)houses++;
-            for(int i=0;i<n;i++)if(!occupied.contains(p.slots.get(i)))beds.add(new Bed(p,p.slots.get(i),i));
+            if(p.livingSites==null)continue;
+            var physicalBeds=FacilityAssignments.beds(p);int n=physicalBeds.size();totalBeds+=n;if(n>0)houses++;
+            for(int i=0;i<n;i++){var bed=physicalBeds.get(i);if(existing.stream().noneMatch(c->c.property.equals(p.id)&&bed.id.equals(c.bedSite))&&!occupied.contains(bed.approach))beds.add(new Bed(p,bed.approach,i,bed.id));}
         }
         int target=settings.populationMode.equals("housing")?Math.min(MAX_POPULATION,(int)Math.floor(totalBeds*settings.housingOccupancy)):settings.population;
         int freeBeds=beds.size();
@@ -73,11 +75,13 @@ public final class PopulationPlanner {
                                Map<String,Integer> counts,List<Citizen> added,int existing,String job,KeyPerson key){
         if(beds.isEmpty()||existing+added.size()>=target)return false;
         Profession profile=design.professions.get(job);Property work=workplace(profile,sites,workers,settings);if(work==null)return false;
-        Bed bed=beds.remove(0);String id=UUID.nameUUIDFromBytes((seed+":"+town.id+":"+bed.property.id+":"+bed.index).getBytes(StandardCharsets.UTF_8)).toString();
+        Bed bed=beds.remove(0);String id=UUID.nameUUIDFromBytes((seed+":"+town.id+":"+bed.property.id+":"+bed.siteId).getBytes(StandardCharsets.UTF_8)).toString();
         if(world.citizens.containsKey(id))return false; // Dead residents keep their identity; no silent resurrection.
         String name=key==null?settings.names.get((int)(unit(id+":name")*settings.names.size()))+"·"+id.substring(0,4):key.name;
         Property actual=profile.workplaceTerms.isEmpty()?bed.property:work;
-        Citizen c=new Citizen(id,name,town.id,bed.property.id,job,bed.point,actual.work);
+        var station=profile.workplaceTerms.isEmpty()?null:FacilityAssignments.jobs(actual).stream().skip(workers.getOrDefault(actual.id,0)).findFirst().orElse(null);
+        Citizen c=new Citizen(id,name,town.id,bed.property.id,job,bed.point,station==null?bed.point:station.approach);
+        c.bedSite=bed.siteId;c.workSite=station==null?"":station.id;
         c.workProperty=actual.id;c.keyPerson=key!=null;c.keyPersonId=key==null?"":key.id;
         c.profession=DesignCodec.copy(profile,Profession.class);c.bio=key!=null&&!key.bio.isBlank()?key.bio:profile.bio;
         c.trait=weighted(new TreeMap<>(settings.traits),unit(id+":trait"));c.designRevision=revision;
@@ -86,8 +90,9 @@ public final class PopulationPlanner {
     }
     private static Property workplace(Profession profile,List<Property> sites,Map<String,Integer> workers,Settings settings){
         if(profile.workplaceTerms.isEmpty())return sites.isEmpty()?null:sites.get(0);
-        return sites.stream().filter(p->p.price==0&&!p.owner.startsWith("player:")&&p.terms!=null&&!Collections.disjoint(p.terms,profile.workplaceTerms)&&workers.getOrDefault(p.id,0)<settings.workplaceCapacity).findFirst().orElse(null);
+        return sites.stream().filter(p->p.price==0&&!p.owner.startsWith("player:")&&p.terms!=null&&!Collections.disjoint(p.terms,profile.workplaceTerms)&&workers.getOrDefault(p.id,0)<jobCapacity(p,settings)).findFirst().orElse(null);
     }
+    private static int jobCapacity(Property p,Settings settings){return Math.min(settings.workplaceCapacity,FacilityAssignments.jobs(p).size());}
     public static int housingCapacity(Settings settings,List<String> terms){
         // A multi-use building contributes once. Explicit matching capacities use the maximum, not a sum.
         return settings.residentsByFunction==null?settings.residentsPerHouse:terms.stream()

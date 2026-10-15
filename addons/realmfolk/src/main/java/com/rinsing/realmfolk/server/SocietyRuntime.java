@@ -74,12 +74,13 @@ public final class SocietyRuntime {
     @SubscribeEvent(priority=EventPriority.HIGHEST) public static void start(ServerStartedEvent event) {
         TRESPASS.clear(); INSPECT.clear(); LAST_SEEN.clear(); ContainerWatch.clear();
         PopulationConfig.load();
-        Dialogues.clear();PublicLifeRuntime.clear();
+        Dialogues.clear();PublicLifeRuntime.clear();DailyLifeRuntime.clear();
         DesignService.start(event.getServer());
         EconomyService.start(event.getServer());
+        FacilityRuntime.start(event.getServer());
         IGNITIONS.clear();GUARD_WARNINGS.clear();
     }
-    @SubscribeEvent public static void stop(ServerStoppingEvent event) { DesignerMcp.stop();EconomyService.stop();PublicLifeRuntime.clear();Dialogues.clear(); TRESPASS.clear(); INSPECT.clear(); LAST_SEEN.clear(); ContainerWatch.clear(); IGNITIONS.clear();GUARD_WARNINGS.clear(); }
+    @SubscribeEvent public static void stop(ServerStoppingEvent event) { DesignerMcp.stop();EconomyService.stop();PublicLifeRuntime.clear();DailyLifeRuntime.clear();Dialogues.clear(); TRESPASS.clear(); INSPECT.clear(); LAST_SEEN.clear(); ContainerWatch.clear(); IGNITIONS.clear();GUARD_WARNINGS.clear(); }
     @SubscribeEvent public static void commands(RegisterCommandsEvent event) { Commands.register(event.getDispatcher()); }
     @SubscribeEvent public static void login(PlayerEvent.PlayerLoggedInEvent event) {
         if(event.getEntity() instanceof ServerPlayer p) {
@@ -117,7 +118,7 @@ public final class SocietyRuntime {
         if(event.getAmount()<=0 || event.isCanceled() || !(event.getSource().getEntity() instanceof ServerPlayer p))return;
         LivingEntity victim=event.getEntity();
         if(victim instanceof CitizenEntity npc) {
-            Citizen c=npc.profile();if(c==null)return;
+            Citizen c=npc.profile();if(c==null)return;DailyLifeRuntime.interrupt(npc);
             // The victim can identify an attacker even when no bystander is looking.
             Society s=society(p.server);Town t=s.towns.get(c.town);if(t==null)return;
             Offense offense=Law.record(journal(p),t.realm,c.property,c.id,Crime.ASSAULT,p.level().getGameTime(),1,DesignService.law(p.server,t.realm));
@@ -130,7 +131,7 @@ public final class SocietyRuntime {
     }
     @SubscribeEvent public static void death(LivingDeathEvent event) {
         if(event.getEntity() instanceof CitizenEntity npc && npc.level().getServer()!=null) {
-            Citizen c=npc.profile();if(c!=null){c.dead=true;dirty(npc.level().getServer());
+            DailyLifeRuntime.interrupt(npc);Citizen c=npc.profile();if(c!=null){c.dead=true;dirty(npc.level().getServer());
                 if(event.getSource().getEntity() instanceof ServerPlayer p)
                     crime(p,society(p.server).properties.get(c.property),npc.blockPosition(),Crime.MURDER,1,ItemStack.EMPTY);
             }
@@ -219,7 +220,7 @@ public final class SocietyRuntime {
             if(suspect!=null){
                 if(Law.dangerous(journal(suspect),t.realm,policy)){npc.setTarget(suspect);LAST_SEEN.put(npc.getUUID(),level.getGameTime());}
                 else {
-                    npc.setTarget(null);npc.activity("查问纠纷");
+                    DailyLifeRuntime.interrupt(npc);npc.setTarget(null);npc.activity("查问纠纷");
                     if(npc.distanceToSqr(suspect)>9)npc.getNavigation().moveTo(suspect,.85);
                     String key=playerId(suspect)+":"+t.realm;long now=level.getGameTime();
                     if(now-GUARD_WARNINGS.getOrDefault(key,-1000L)>=300){tell(suspect,npc.getName().getString()+"：有人报了案。请与我交谈，归还物品或赔偿损失。");GUARD_WARNINGS.put(key,now);}
@@ -230,9 +231,9 @@ public final class SocietyRuntime {
                 ||level.getGameTime()-LAST_SEEN.getOrDefault(npc.getUUID(),0L)>policy.loseSightTicks))npc.setTarget(null);
         }
         ServerPlayer leader=c.leader.isBlank()?null:level.getServer().getPlayerList().getPlayer(UUID.fromString(c.leader));
-        if(npc.getTarget()==null&&Dialogues.conversing(npc))return;
+        if(npc.getTarget()==null&&Dialogues.conversing(npc)){DailyLifeRuntime.interrupt(npc);return;}
         if(leader!=null && leader.level()==level && !c.mode.equals("STAY")) {
-            npc.activity("同行");
+            DailyLifeRuntime.interrupt(npc);npc.activity("同行");
             if(npc.getTarget()==null&&profile.has("combat")){
                 Monster hostile=level.getEntitiesOfClass(Monster.class,npc.getBoundingBox().inflate(12),m->m.isAlive()&&npc.hasLineOfSight(m)).stream().min(Comparator.comparingDouble(npc::distanceToSqr)).orElse(null);
                 if(hostile!=null)npc.setTarget(hostile);
@@ -243,8 +244,8 @@ public final class SocietyRuntime {
             }
             return;
         }
-        if(!c.leader.isBlank() && (leader==null||leader.level()!=level||c.mode.equals("STAY"))) {npc.activity("等候队友");npc.getNavigation().stop();return;}
-        if(npc.getTarget()!=null){npc.activity("战斗");return;}
+        if(!c.leader.isBlank() && (leader==null||leader.level()!=level||c.mode.equals("STAY"))) {DailyLifeRuntime.interrupt(npc);npc.activity("等候队友");npc.getNavigation().stop();return;}
+        if(npc.getTarget()!=null){DailyLifeRuntime.interrupt(npc);npc.activity("战斗");return;}
         if(c.mode.equals("TRAVEL")&&profile.has("travel")) {
             Town destination=s.towns.get(c.targetTown);
             if(destination!=null&&destination.dimension.equals(dimension(level))) {
@@ -258,19 +259,9 @@ public final class SocietyRuntime {
                 return;
             }
         }
-        var visit=PublicLifeRuntime.visit(npc,c,t);
-        if(visit!=null){
-            boolean arrived=npc.blockPosition().distSqr(pos(visit.point()))<=3;
-            npc.activity(arrived?visit.name():"前往"+visit.name());
-            if(arrived)npc.getNavigation().stop();else navigate(npc,visit.point(),.8);
-            return;
-        }
-        long time=level.getDayTime()%24000;boolean rest=profile.restStart<profile.restEnd?time>=profile.restStart&&time<profile.restEnd:time>=profile.restStart||time<profile.restEnd;
-        Point destination=rest?c.home:c.work;
-        npc.activity(rest?"回家休息":profile.has("patrol")?"巡逻":profile.has("travel")?"等候旅客":"工作");
-        if(npc.tickCount%100==0 && !rest && profile.has("patrol"))destination=c.work.offset(npc.getRandom().nextInt(profile.patrolRadius*2+1)-profile.patrolRadius,0,npc.getRandom().nextInt(profile.patrolRadius*2+1)-profile.patrolRadius);
-        if(npc.blockPosition().distSqr(pos(destination))>3)navigate(npc,destination,.75);
+        DailyLifeRuntime.tick(npc,c,t);
     }
+
     private static void navigate(CitizenEntity npc,Point destination,double speed) {
         Vec3 delta=Vec3.atBottomCenterOf(pos(destination)).subtract(npc.position());
         if(delta.horizontalDistance()>24) {Vec3 step=npc.position().add(delta.normalize().scale(20));BlockPos ground=npc.level().getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,BlockPos.containing(step));

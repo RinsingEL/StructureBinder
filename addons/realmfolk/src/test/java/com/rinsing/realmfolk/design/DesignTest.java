@@ -16,8 +16,8 @@ class DesignTest {
     private static Society world(){
         Society s=new Society();s.design.active=design();s.design.revision=1;
         s.towns.put("town",new Town("town","realm","测试城",new Point(0,65,0)));
-        for(int i=0;i<3;i++){Property p=new Property("house"+i,"town","民居",new Bounds(i*10,64,0,i*10+8,70,8),new Point(i*10+2,65,2));p.terms=List.of("住宅");p.slots=List.of(p.home,p.home.offset(2,0,0));s.properties.put(p.id,p);}
-        Property work=new Property("work","town","工坊",new Bounds(0,64,20,8,70,28),new Point(2,65,22));work.terms=List.of("工坊生产");s.properties.put(work.id,work);return s;
+        for(int i=0;i<3;i++){Property p=new Property("house"+i,"town","民居",new Bounds(i*10,64,0,i*10+8,70,8),new Point(i*10+2,65,2));p.terms=List.of("住宅");p.slots=List.of(p.home,p.home.offset(2,0,0));FacilityFixtures.physical(p,0);s.properties.put(p.id,p);}
+        Property work=new Property("work","town","工坊",new Bounds(0,64,20,8,70,28),new Point(2,65,22));work.terms=List.of("工坊生产");FacilityFixtures.physical(work,4);s.properties.put(work.id,work);return s;
     }
     private static PopulationPlanner.Plan plan(Society s){return PopulationPlanner.plan(s.design.active,s,s.towns.get("town"),17,1);}
     @Test void defaultsAreValid(){assertEquals(List.of(),new DesignValidator(ITEMS::contains).validate(DesignCodec.defaults()));}
