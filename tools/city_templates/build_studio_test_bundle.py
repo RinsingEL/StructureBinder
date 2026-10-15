@@ -20,6 +20,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools/structure_studio'))
 from studio.categories import resolve_category
 from studio.model import read_structure
+from studio.living import extract as extract_living
 from studio.navigation import collision_boxes
 from studio.frontage import runtime_frontage
 from studio.grounding import resolve_ground_plane
@@ -102,6 +103,7 @@ def build(args):
     references = read(args.baseline/'blueprint_reference_catalog.json')
     registry = read(ROOT / 'tools/structure_studio/.cache/registry.json')
     rows, omitted, unmarked = [], [], []
+    living_rules = read(args.living_rules) if getattr(args, 'living_rules', None) else {}
     for style in (getattr(args, 'styles', None) or STYLES):
         directory = ROOT / 'asset_catalogs/original_civilizations' / style / 'models'
         if not directory.is_dir():
@@ -140,6 +142,7 @@ def build(args):
                 continue
             rows.append(dict(templateRef='studio:' + a['id'].lower(), sourceNbt=str(nbt),
                 sourceSha256=digest(nbt), authorSha256=digest(author_file), author=a,
+                living=extract_living(data, a, living_rules),
                 rawSize=dict(zip(('width','height','depth'),data['size'])),
                 roadEntrances=ports, frontagePolicy=frontage_policy, entranceEvidence=evidence,
                 validationSha256=digest(author_file.parent / 'validation.json'),
@@ -155,6 +158,9 @@ def build(args):
         str(ROOT / 'tools/city_templates/StudioTemplateMetadata.java'),
         str(args.output / 'codec_input.json'), str(args.output / 'runtime_metadata.json')], check=True)
     runtime = {r['templateRef']:r for r in read(args.output / 'runtime_metadata.json')}
+    write(args.output / 'realmfolk_facilities.json', dict(schema='realmfolk_facility_catalog.v1',
+        templates=[dict(templateRef=r['templateRef'], templateHash=runtime[r['templateRef']]['templateHash'],
+                        **r['living']) for r in rows]))
     templates, payloads, profiles, refs, names = [], [], [], [], []
     pools = defaultdict(list)
     for row in rows:
@@ -251,5 +257,6 @@ if __name__ == '__main__':
         parser.add_argument('--'+field,type=Path,required=True)
     parser.add_argument('--styles', nargs='+', help='Explicit catalog directory names')
     parser.add_argument('--asset-ids', nargs='+', help='Explicit authored versions to export; other assets are untouched')
+    parser.add_argument('--living-rules', type=Path, help='Target pack tag snapshot and living facility rules')
     parser.add_argument('--all-previews', action='store_true', help='Include non-flat preview scenes for terrain testing; preview is not runtime terrain admission')
     build(parser.parse_args())

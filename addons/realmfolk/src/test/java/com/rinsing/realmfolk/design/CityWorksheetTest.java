@@ -35,8 +35,9 @@ class CityWorksheetTest {
         var e=evidence();assertEquals(Set.of("住宿","餐饮"),e.terms());assertEquals(2,e.functions().get(0).buildingCount());
         assertEquals(Set.of("arrival","market"),e.functions().get(0).groupIds());assertEquals(List.of("c"),e.unclassifiedAnchors());
         var review=CityWorksheet.review(valid(),DesignCodec.defaults(),e,EconomyConfig.defaults());
-        assertEquals(2,review.get("plannedHousingBuildings"));assertEquals(12,review.get("plannedHousingSlotsBeforeSaleAndStandability"));
-        assertEquals(9,review.get("plannedPopulationUpperBoundBeforeSaleAndStandability"));
+        assertEquals(2,review.get("plannedHousingBuildings"));assertEquals("requires_physical_facilities",review.get("housingCapacityStatus"));
+        assertFalse(review.containsKey("plannedHousingSlotsBeforeSaleAndStandability"));
+        assertFalse(review.containsKey("plannedPopulationUpperBoundBeforeSaleAndStandability"));
     }
     @Test void missingCommissionIsRejectedBeforeDefaultValuesCanHideIt(){
         var raw=valid();var p=raw.getAsJsonObject("professions").getAsJsonObject("keeper");p.getAsJsonArray("capabilities").add("commission");

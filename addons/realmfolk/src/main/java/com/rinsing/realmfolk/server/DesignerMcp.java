@@ -26,12 +26,14 @@ public final class DesignerMcp {
     private static final Map<String,Tool> TOOLS=new LinkedHashMap<>();
     private record Tool(String description,JsonObject inputSchema) {}
     static {
+        tool("realmfolk_life_status","只读核对已加载世界的生活设施、床位岗位与居民活动",Map.of(),List.of());
         tool("realmfolk_capabilities","查询已实现能力、组合限制与作者工作流",Map.of(),List.of());
         tool("realmfolk_economy_catalogue","作者配置的物品池、玩家兴趣、稀有度与价格档位；AI 只能选择组合",Map.of(),List.of());
         tool("realmfolk_read_pool","按需读取作者物品池和相关物品价格，不能通过 AI 改写基础池",Map.of("id",type("string")),List.of("id"));
         tool("realmfolk_schema","按类型查询配置 JSON Schema；只允许声明式数据",Map.of("kind",enumeration("patch","profession","realm","city_template","city_plan")),List.of("kind"));
         tool("realmfolk_city_context","已发现城市的住房、工作、现有人口摘要；cityId 为空时列出城市（最多 64）",Map.of("cityId",type("string")),List.of());
         tool("realmfolk_read_design","读取一个当前定义，避免整库或逐人展开",Map.of("kind",enumeration("profession","realm","city_template","city_plan"),"id",type("string")),List.of("kind","id"));
+        tool("realmfolk_quick_city","为已发现城市提交居民与商店快速配置，按真实用途展开；仍须 preview/publish",Map.of("cityId",type("string"),"choices",schema(QuickCityPlan.Input.class)),List.of("cityId","choices"));
         tool("realmfolk_submit_draft","批量提交定义和城市人口方案。map 条目为完整替换；普通 NPC 由规则生成",Map.of("baseRevision",type("integer"),"patch",schema(Design.Patch.class),"towns",array(type("string")),"scope",enumeration("future_only","refresh_unprotected")),List.of("baseRevision","patch","towns","scope"));
         tool("realmfolk_preview","校验草案并返回统计、缺口、最多五个新居民样例以及发布凭证",Map.of("draftId",type("string")),List.of("draftId"));
         tool("realmfolk_publish","凭最近预览发布。重复提交同一凭证不会重复造人。过期状态必须重新预览",Map.of("draftId",type("string"),"previewToken",type("string")),List.of("draftId","previewToken"));
@@ -91,6 +93,7 @@ public final class DesignerMcp {
     private static Object call(MinecraftServer server,String name,JsonObject a){
         var s=society(server);var d=s.design.active;var tx=DesignService.transactions(server);
         return switch(name){
+            case "realmfolk_life_status" -> LifeReport.read(server);
             case "realmfolk_economy_catalogue" -> {var cfg=EconomyService.config(server);yield Map.of("currency",cfg.currency,"pools",cfg.catalogue(),"tiers",cfg.tiers,"priceBands",cfg.priceBands,"defaults",cfg.defaults);}
             case "realmfolk_read_pool" -> {var cfg=EconomyService.config(server);var pool=cfg.pools.get(a.get("id").getAsString());if(pool==null)throw new IllegalArgumentException("Unknown pool");Map<String,Object> goods=new TreeMap<>();pool.entries.forEach(e->goods.put(e.item,cfg.goods.get(e.item)));yield Map.of("pool",pool,"goods",goods);}
             case "realmfolk_capabilities" -> Map.of("revision",s.design.revision,"capabilities",new TreeSet<>(Design.CAPABILITIES),"restrictions",List.of("所有职业需要 conversation","law_enforcement 需要 combat 和 witness，不能兼任 companion","travel 不能兼任 companion","appearance 只选择现有七种村民外观","trait 为个性标签，本版不改变行为","populationMode=housing 时按可用住宅名额乘 housingOccupancy 决定目标；population 仅用于 fixed 模式","public_life 按城市 activities 安排公共活动，同伴、执法者、赶路和休息中的人物不参加","每城最多 16 位关键人物；普通人口批量生成","职业/模板 map 条目为完整替换，未提供的条目保留","修改已影响城市必须列入 towns；未发现城市方案可先发布"));
@@ -103,6 +106,21 @@ public final class DesignerMcp {
             case "realmfolk_read_design" -> {
                 Map<?,?> values=switch(a.get("kind").getAsString()){case "profession"->d.professions;case "realm"->d.realms;case "city_template"->d.cityTemplates;default->d.cities;};
                 Object value=values.get(a.get("id").getAsString());if(value==null)throw new IllegalArgumentException("Definition not found");yield Map.of("revision",s.design.revision,"value",value);
+            }
+            case "realmfolk_quick_city" -> {
+                var town=s.towns.get(a.get("cityId").getAsString());if(town==null)throw new IllegalArgumentException("Unknown city");
+                var facts=QuickCityPlan.loadedEvidence(s,town.id);var cfg=EconomyService.config(server);
+                var input=QuickCityPlan.expand(DesignCodec.decode(a.get("choices"),QuickCityPlan.Input.class),d,town.realm,PopulationPlanner.cityKey(town),facts,cfg);
+                var raw=DesignCodec.JSON.toJsonTree(input).getAsJsonObject();var errors=CityWorksheet.errors(raw,d,facts);
+                if(!errors.isEmpty())throw new IllegalArgumentException(String.join("; ",errors));
+                var patch=new Design.Patch();String prefix="city_"+DesignCodec.hash(PopulationPlanner.cityKey(town)).substring(0,12)+"_";
+                input.professions.forEach((id,p)->patch.professions.put(prefix+id,p));
+                var jobs=new LinkedHashMap<String,Design.Quota>();input.plan.overrides.jobs.forEach((id,q)->jobs.put(prefix+id,q));input.plan.overrides.jobs=jobs;
+                input.plan.keyPeople.forEach(k->k.profession=prefix+k.profession);
+                input.plan.functionAnswers.forEach(r->r.professions=r.professions.stream().map(id->prefix+id).toList());
+                patch.cities.put(PopulationPlanner.cityKey(town),input.plan);
+                var draft=tx.submit(input.baseRevision,patch,List.of(town.id),"future_only");dirty(server);
+                yield Map.of("draftId",draft.id,"baseRevision",draft.baseRevision,"cityReview",CityWorksheet.review(raw,d,facts,cfg));
             }
             case "realmfolk_submit_draft" -> {
                 List<String> towns=new ArrayList<>();a.getAsJsonArray("towns").forEach(t->towns.add(t.getAsString()));

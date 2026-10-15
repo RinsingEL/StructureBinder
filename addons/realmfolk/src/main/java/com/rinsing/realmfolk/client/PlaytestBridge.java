@@ -51,13 +51,17 @@ public final class PlaytestBridge {
         Minecraft mc=Minecraft.getInstance();JsonObject result=new JsonObject();result.addProperty("screen",mc.screen==null?"game":mc.screen.getClass().getSimpleName());
         if(route.equals("/state")) {
             if(mc.player!=null){result.addProperty("x",mc.player.getX());result.addProperty("y",mc.player.getY());result.addProperty("z",mc.player.getZ());result.addProperty("health",mc.player.getHealth());result.addProperty("yaw",mc.player.getYRot());result.addProperty("pitch",mc.player.getXRot());
-                JsonArray entities=new JsonArray();for(var entity:mc.level.entitiesForRendering()){if(entity.distanceToSqr(mc.player)>16384)continue;JsonObject e=new JsonObject();e.addProperty("id",entity.getId());e.addProperty("name",entity.getName().getString());e.addProperty("type",net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(entity.getType()).toString());e.addProperty("x",entity.getX());e.addProperty("y",entity.getY());e.addProperty("z",entity.getZ());if(entity instanceof CitizenEntity n){e.addProperty("activity",n.activity());e.addProperty("role",n.role());}entities.add(e);}result.add("entities",entities);
+                JsonArray entities=new JsonArray();for(var entity:mc.level.entitiesForRendering()){if(entity.distanceToSqr(mc.player)>16384)continue;JsonObject e=new JsonObject();e.addProperty("id",entity.getId());e.addProperty("name",entity.getName().getString());e.addProperty("type",net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(entity.getType()).toString());e.addProperty("x",entity.getX());e.addProperty("y",entity.getY());e.addProperty("z",entity.getZ());if(entity instanceof CitizenEntity n){e.addProperty("activity",n.activity());e.addProperty("role",n.role());e.addProperty("sleeping",n.isSleeping());e.addProperty("sitting",n.isPassenger());e.addProperty("usingItem",n.isUsingItem());e.addProperty("citizenId",n.getUUID().toString());}entities.add(e);}result.add("entities",entities);
                 JsonArray inventory=new JsonArray();for(int i=0;i<mc.player.getInventory().getContainerSize();i++){var stack=mc.player.getInventory().getItem(i);if(stack.isEmpty())continue;JsonObject item=new JsonObject();item.addProperty("slot",i);item.addProperty("item",net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(stack.getItem()).toString());item.addProperty("count",stack.getCount());inventory.add(item);}result.add("inventory",inventory);
                 JsonArray slots=new JsonArray();if(mc.player.containerMenu!=null)for(var slot:mc.player.containerMenu.slots){if(slot.getItem().isEmpty())continue;JsonObject item=new JsonObject();item.addProperty("slot",slot.index);item.addProperty("item",net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(slot.getItem().getItem()).toString());item.addProperty("count",slot.getItem().getCount());slots.add(item);}result.add("menuSlots",slots);
             }
             if(mc.screen instanceof ClientViews.DialogueScreen screen)result.add("dialogue",SocietyData.JSON.toJsonTree(screen.dialogue));
             if(mc.screen instanceof ShopScreen screen)result.add("shop",SocietyData.JSON.toJsonTree(screen.shop));
             return result;
+        }
+        if(route.equals("/life")){
+            var server=mc.getSingleplayerServer();if(server==null)throw new IllegalStateException("Requires local integrated world");
+            return server.submit(()->com.rinsing.realmfolk.server.LifeReport.read(server)).join();
         }
         if(route.equals("/screenshot")){
             String name="realmfolk-"+System.currentTimeMillis()+".png";

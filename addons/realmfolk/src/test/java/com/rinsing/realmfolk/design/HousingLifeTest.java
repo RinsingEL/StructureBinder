@@ -16,7 +16,7 @@ class HousingLifeTest {
         Property square=new Property("square","town","广场",new Bounds(0,64,30,20,70,40),new Point(5,65,32));square.terms=List.of("广场");square.publicPoints=List.of(new Point(1,65,28),new Point(4,65,28),new Point(7,65,28),new Point(10,65,28));s.properties.put(square.id,square);
         return s;
     }
-    private static void house(Society s,String id,int x){Property p=new Property(id,"town","住宅",new Bounds(x,64,0,x+8,70,8),new Point(x+1,65,1));p.terms=List.of("住宅");p.slots=List.of(p.home,p.home.offset(2,0,0),p.home.offset(4,0,0),p.home.offset(6,0,0));s.properties.put(id,p);}
+    private static void house(Society s,String id,int x){Property p=new Property(id,"town","住宅",new Bounds(x,64,0,x+8,70,8),new Point(x+1,65,1));p.terms=List.of("住宅");p.slots=List.of(p.home,p.home.offset(2,0,0),p.home.offset(4,0,0),p.home.offset(6,0,0));FacilityFixtures.physical(p,0);s.properties.put(id,p);}
     private static PopulationPlanner.Plan population(Society s){return PopulationPlanner.plan(s.design.active,s,s.towns.get("town"),17,1);}
     private static void populate(Society s){population(s).citizens().forEach(c->s.citizens.put(c.id,c));}
     private static Design.Settings settings(Society s){return s.design.active.resolve("realm","town").settings();}

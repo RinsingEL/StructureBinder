@@ -39,7 +39,10 @@ public final class GeomantiaBridge {
             Property previous=s.properties.get(key);
             Town existingTown=s.towns.get(planned.runId()+":"+planned.cityId());
             if(existingTown!=null)existingTown.planningKey=planned.runId()+":"+planned.citySeedId();
-            if(previous!=null&&previous.terms!=null&&!previous.terms.isEmpty())continue;
+            if(previous!=null&&previous.terms!=null&&!previous.terms.isEmpty()){
+                if(previous.livingSites==null)FacilityRuntime.discover(level,previous,planned);
+                continue;
+            }
             var datum=CityReservationMaskRegistry.resolvedTemplateDatum(planned);if(datum.isEmpty())continue;
             var bounds=planned.lockedActualFootprint();
             boolean complete=true;
@@ -72,18 +75,14 @@ public final class GeomantiaBridge {
                 if(home==null)continue;
                 Property property=new Property(key,townId,String.join(" / ",terms),new Bounds(bounds.minX(),datum.getAsInt(),bounds.minZ(),bounds.maxX(),datum.getAsInt()+height-1,bounds.maxZ()),home);
                 property.templateId=planned.templateId();property.terms=new ArrayList<>(new TreeSet<>(terms));
-                property.work=workPoint(level,property.bounds,home);
+                property.work=home;
                 var settings=DesignService.active(server).resolve(town.realm,com.rinsing.realmfolk.design.PopulationPlanner.cityKey(town)).settings();
-                Set<Point> occupied=new HashSet<>();
-                for(int i=0;i<8;i++){
-                    Point slot=findWalkable(level,bounds.minX(),bounds.maxX(),datum.getAsInt(),bounds.minZ(),bounds.maxZ(),occupied);
-                    if(slot==null)break;occupied.add(slot);property.slots.add(slot);
-                }
+                FacilityRuntime.discover(level,property,planned);
                 if(!Collections.disjoint(terms,settings.housingTerms)&&settings.saleHouseEvery>1){
                     long houses=s.properties.values().stream().filter(p->p.town.equals(townId)&&p.terms!=null&&!Collections.disjoint(p.terms,settings.housingTerms)).count();
                     if((houses+1)%settings.saleHouseEvery==0){property.price=settings.housePrice;property.owner="town:"+townId;property.name+=" · 待售";}
                 }
-                if(previous!=null){previous.templateId=property.templateId;previous.terms=property.terms;previous.slots=property.slots;}
+                if(previous!=null){previous.templateId=property.templateId;previous.terms=property.terms;previous.slots=property.slots;previous.livingSites=property.livingSites;previous.entrances=property.entrances;previous.facilitySource=property.facilitySource;}
                 else {s.properties.put(key,property);created++;}
                 String fauna=PopulationConfig.current.entityTypesByTemplate.get(planned.templateId());
                 if(previous==null&&fauna!=null&&!fauna.equals("realmfolk:citizen")){
@@ -96,32 +95,9 @@ public final class GeomantiaBridge {
         }
         for(Town t:s.towns.values())if(t.nextTown.isBlank())s.towns.values().stream().filter(other->!other.id.equals(t.id)&&other.dimension.equals(t.dimension))
             .min(Comparator.comparingDouble(other->t.center.distanceSquared(other.center))).ifPresent(other->{t.nextTown=other.id;dirty(server);});
-        discoverPublicPoints(server);
+        FacilityRuntime.refresh(server);
         DesignService.populate(server);
         return created;
-    }
-    private static void discoverPublicPoints(MinecraftServer server){
-        ServerLevel level=server.overworld();Society society=society(server);
-        for(Property property:society.properties.values()){
-            Town town=society.towns.get(property.town);if(town==null||!town.dimension.equals(dimension(level))||property.publicPoints!=null||property.terms==null||property.terms.isEmpty())continue;
-            Bounds b=property.bounds;if(!level.hasChunkAt(new BlockPos(b.minX()-2,b.minY(),b.minZ()-2))||!level.hasChunkAt(new BlockPos(b.maxX()+2,b.minY(),b.maxZ()+2)))continue;
-            // Sample street approaches around all four sides. These points never become extra housing.
-            Set<Point> points=new LinkedHashSet<>();
-            for(int edge=0;edge<4;edge++){
-                int low=edge<2?b.minX():b.minZ(),high=edge<2?b.maxX():b.maxZ();
-                int step=Math.max(2,(high-low)/12);
-                for(int along=low;along<=high&&points.size()<32;along+=step){
-                    int x=edge<2?along:edge==2?b.minX()-2:b.maxX()+2,z=edge>=2?along:edge==0?b.minZ()-2:b.maxZ()+2;
-                    for(int dy=-3;dy<=8;dy++){
-                        Point point=new Point(x,b.minY()+dy,z);if(!PublicLifeRuntime.standable(level,point))continue;
-                        Property claim=society.propertyAt(town.dimension,point).orElse(null);
-                        if(claim!=null&&(!"PUBLIC".equals(claim.access)||claim.price>0||claim.owner.startsWith("player:")))continue;
-                        points.add(point);break;
-                    }
-                }
-            }
-            property.publicPoints=new ArrayList<>(points);dirty(server);
-        }
     }
     private static void refreshBuildingIndex(MinecraftServer server){
         try {
@@ -163,7 +139,7 @@ public final class GeomantiaBridge {
         Map<String,Set<Point>> occupied=new HashMap<>();Society s=society(server);
         for(Citizen c:s.citizens.values()){
             Property prop=s.properties.get(c.property);Town town=s.towns.get(c.town);
-            if(prop==null||town==null||!town.dimension.equals(dimension(server.overworld()))||!c.mode.equals("HOME"))continue;
+            if(prop==null||prop.livingSites!=null||town==null||!town.dimension.equals(dimension(server.overworld()))||!c.mode.equals("HOME"))continue;
             Set<Point> homes=occupied.computeIfAbsent(prop.id,key->new HashSet<>());
             if(!homes.add(c.home)){
                 Bounds b=prop.bounds;Point home=findWalkable(server.overworld(),b.minX(),b.maxX(),b.minY(),b.minZ(),b.maxZ(),homes);

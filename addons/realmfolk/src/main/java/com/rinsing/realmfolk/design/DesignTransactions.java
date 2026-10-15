@@ -59,7 +59,9 @@ public final class DesignTransactions {
     }
     private String fingerprint(Draft d){
         // No clock/entity position: only content and durable gameplay state can invalidate approval.
-        return DesignCodec.hash(List.of(d,seed,world.towns,world.properties,world.citizens,world.players));
+        var people=DesignCodec.JSON.toJsonTree(world.citizens).getAsJsonObject();
+        people.entrySet().forEach(e->e.getValue().getAsJsonObject().remove("lastRoutineTick"));
+        return DesignCodec.hash(List.of(d,seed,world.towns,world.properties,people,world.players));
     }
     public Receipt publish(String id,String token){
         Receipt previous=world.design.receipts.get(id);
