@@ -8,7 +8,7 @@ Minecraft 1.20.1 / Forge 47.4.x / Java 17，依赖 Geomantia 0.1.0 及以上（�
 
 **本次经济版本：双击 `试玩城市经济.bat`。** 使用独立目录 `.realmfolk-economy-playtest` 和存档 `Realmfolk_Economy`，从住房试玩世界复制而来，原世界不受影响。角色位于额外的双城示范区；右键附近铁匠艾琳 → 查看货物，可以卖矿产、农作物，再按 1/16/64/全部采购建材。普通居民也能请求赠礼。主 MCP 为 `http://127.0.0.1:5060/mcp`，独立居民设计 MCP 为 5062，后者 token 仍保存在该游戏目录的 runtime 文件里。
 
-主模组新拆出的 Harness 和冒险地图都是可选包；本次接入只需主包，已经在未安装两个可选包的客户端验证。城市主流程会自动追加居民与商贸任务，具体规则见[经济与主流程契约](docs/城市经济与主流程契约.md)。
+主模组新拆出的 Harness 和冒险地图都是可选包；本次接入只需主包，已经在未安装两个可选包的客户端验证。城市主流程会自动追加居民与商贸任务，具体规则见经济与主流程契约（文档仓 `docs/addons/realmfolk/契约/`）。
 
 以下为保留的旧版试玩入口：
 
@@ -68,12 +68,9 @@ $env:PATH=$env:JAVA_HOME+'\bin;'+$env:PATH
 
 ## 文档入口
 
-- [城市经济与主流程契约](docs/城市经济与主流程契约.md)
-- [城市设计 MCP 与配置示例](docs/城市设计MCP.md)
-- [人口配置与集成契约](docs/人口配置与集成.md)
+- 契约（城市经济与主流程、人口配置与集成、城市设计 MCP）与物品池接入设计草案：文档仓 `docs/addons/realmfolk/`
 - [本地真实客户端试玩接口](docs/试玩接口.md)
 - 需求案（01～10，含职责身份）：文档仓 `docs/addons/README.md` 的 Realmfolk 一节
-- [物品池与主流程接入设计草案](docs/城市物品池与主流程接入设计草案.md)
 - [故障索引](dev_docs/systems/realmfolk/故障索引.md)
 
 项目规则遵循 `E:\Mod_Dev\designer_territoryMod\docs\00_nav\README.md`。本轮仅更新此次实现涉及的需求，不清理其他案子。
