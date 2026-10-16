@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "behaviors": {
+    "academy:read_seated": {
+      "kinds": ["seat"],
+      "steps": [
+        {"action": "realmfolk:face"},
+        {"action": "realmfolk:hold_item", "parameters": {"item": "minecraft:book"}},
+        {"action": "realmfolk:sit"}
+      ]
+    },
+    "pack:sleeping_bag": {
+      "kinds": ["bed"],
+      "steps": [{"action": "realmfolk:sleep_surface", "parameters": {"occupiedProperty": "occupied"}}]
+    },
+    "pack:hammock": {
+      "kinds": ["bed"],
+      "steps": [{"action": "realmfolk:sleep_surface", "parameters": {"occupiedProperty": "occupied"}}]
+    }
+  }
+}

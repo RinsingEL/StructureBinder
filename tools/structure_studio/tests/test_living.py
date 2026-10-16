@@ -54,3 +54,27 @@ class LivingFacilitiesTest(unittest.TestCase):
         m = Model('test', 'shop', (8, 5, 8)).set(2, 1, 3, 'smithing_table')
         m.point('smith', 'work', (2, 1, 3), '锻造', approach=(3, 1, 3))
         self.assertEqual(1, len(extract(self.export(m), m.meta)['facilities']))
+
+    def test_configured_sleeping_bag_checks_state_parts_and_rotates_use_points(self):
+        data=dict(size=[8,5,8],sha256='test',palette=[dict(name='pack:bag',properties={'part':'head','facing':'east'}),dict(name='pack:bag',properties={'part':'foot','facing':'east'})],blocks=[dict(pos=[3,1,3],state=0),dict(pos=[2,1,3],state=1)])
+        rules=dict(facilities=[dict(id='bag',blocks=['pack:bag'],state={'part':'head'},kind='bed',behavior='pack:rest',height=.2,
+                    requires=[dict(offset=[0,0,1],sameBlock=True,state={'part':'foot'})],slots=[dict(id='default',approach=[1,0,0],offset=[0,0,.25])])])
+        result=extract(data,{},rules)
+        self.assertEqual([],result['warnings']);self.assertEqual(1,len(result['facilities']))
+        site=result['facilities'][0]
+        self.assertEqual('pack:rest',site['behavior']);self.assertEqual([3,1,4],site['approach']);self.assertEqual([-.25,0,0],site['useOffset'])
+        self.assertEqual([2,1,3],site['requiredParts'][0]['pos'])
+        data['blocks'].pop()
+        result=extract(data,{},rules);self.assertEqual([],result['facilities']);self.assertEqual(1,len(result['warnings']))
+
+    def test_bench_slots_have_stable_distinct_ids(self):
+        data=dict(size=[8,5,8],sha256='test',palette=[dict(name='pack:bench',properties={})],blocks=[dict(pos=[3,1,3],state=0)])
+        rules=dict(facilities=[dict(id='bench',blocks=['pack:bench'],kind='seat',behavior='pack:read',slots=[dict(id='left',approach=[-1,0,0],offset=[-.25,0,0]),dict(id='right',approach=[1,0,0],offset=[.25,0,0])])])
+        sites=extract(data,{},rules)['facilities']
+        self.assertEqual(['seat:3,1,3:left','seat:3,1,3:right'],[s['id'] for s in sites])
+        self.assertEqual([[-.25,0,0],[.25,0,0]],[s['useOffset'] for s in sites])
+
+    def test_vertical_work_block_facing_does_not_become_actor_orientation(self):
+        data=dict(size=[8,5,8],sha256='test',palette=[dict(name='minecraft:barrel',properties={'facing':'up'})],blocks=[dict(pos=[3,1,3],state=0)])
+        site=extract(data,{})['facilities'][0]
+        self.assertEqual('work',site['kind']);self.assertEqual('north',site['facing'])

@@ -4,14 +4,10 @@ import com.rinsing.realmfolk.entity.CitizenEntity;
 import com.rinsing.realmfolk.life.*;
 import com.rinsing.realmfolk.design.*;
 import net.minecraft.core.*;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.*;
-import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.item.*;
-import net.minecraft.world.level.block.BedBlock;
-import net.minecraft.world.phys.Vec3;
 import java.util.*;
 import static com.rinsing.realmfolk.model.Society.*;
 import static com.rinsing.realmfolk.server.SocietyRuntime.*;
@@ -29,15 +25,16 @@ public final class DailyLifeRuntime {
     private static final Map<UUID,Meal> MEALS=new HashMap<>();
     private static final Map<UUID,Walk> WALKS=new HashMap<>();
     private static final Map<UUID,Point> SHELTERS=new HashMap<>();
-    public static void clear(){MEALS.clear();WALKS.clear();SHELTERS.clear();}
+    public static void clear(){LivingBehaviorRuntime.clear();MEALS.clear();WALKS.clear();SHELTERS.clear();}
     public static void interrupt(CitizenEntity npc){
+        Meal meal=MEALS.remove(npc.getUUID());if(meal!=null){npc.stopUsingItem();npc.setItemSlot(EquipmentSlot.MAINHAND,meal.previous);}
+        LivingBehaviorRuntime.stop(npc);
         if(npc.isSleeping())npc.stopSleeping();
         if(npc.getVehicle()!=null&&npc.getVehicle().getTags().contains("realmfolk_seat")){
             Entity seat=npc.getVehicle();Point exit=new Point(seat.getPersistentData().getInt("ExitX"),seat.getPersistentData().getInt("ExitY"),seat.getPersistentData().getInt("ExitZ"));
             npc.stopRiding();seat.discard();
             if(npc.level() instanceof ServerLevel level&&FacilityRuntime.standable(level,exit))npc.moveTo(exit.x()+.5,exit.y(),exit.z()+.5,npc.getYRot(),0);
         }
-        Meal meal=MEALS.remove(npc.getUUID());if(meal!=null){npc.stopUsingItem();npc.setItemSlot(EquipmentSlot.MAINHAND,meal.previous);}
     }
     private static void finishMeal(CitizenEntity npc,long now){
         Meal meal=MEALS.get(npc.getUUID());if(meal!=null&&now>=meal.until){npc.stopUsingItem();npc.setItemSlot(EquipmentSlot.MAINHAND,meal.previous);MEALS.remove(npc.getUUID());}
@@ -63,19 +60,15 @@ public final class DailyLifeRuntime {
             if(!knownUsable(level,bed)){
                 interrupt(npc);npc.activity(bed!=null&&bed.retainsClaim()?"回家通路受阻":"缺少可用床位");npc.getNavigation().stop();return;
             }
-            if(npc.isSleeping()){
-                if(npc.getSleepingPos().filter(p->p.equals(pos(bed.object))).isPresent()){npc.activity("睡觉");return;}
-                npc.stopSleeping();
+            if(LivingBehaviorRuntime.active(npc,bed)||near(npc,bed.approach)){
+                npc.activity(LivingBehaviorRuntime.run(npc,bed)?"睡觉":"床位正在使用或动作不可用");
+            }else{
+                interrupt(npc);
+                npc.activity(walk(npc,bed.approach)?"回家睡觉":"回家通路受阻");
             }
-            interrupt(npc);
-            if(near(npc,bed.approach)&&canSeeBed(npc,bed)){
-                var state=level.getBlockState(pos(bed.object));
-                if(state.hasProperty(BedBlock.OCCUPIED)&&state.getValue(BedBlock.OCCUPIED)){npc.activity("床位正在使用");return;}
-                npc.getNavigation().stop();npc.startSleeping(pos(bed.object));npc.activity("睡觉");
-            }else{npc.activity((near(npc,bed.approach)?walkExact(npc,bed.approach):walk(npc,bed.approach))?"回家睡觉":"回家通路受阻");}
             return;
         }
-        if(npc.isSleeping())npc.stopSleeping();
+        if(npc.isSleeping())interrupt(npc);
         boolean indoorWork=phase==DailySchedule.Phase.WORK&&!c.visitor&&!profile.has("patrol")&&job!=null&&job.available
             &&level.hasChunkAt(pos(job.approach))
             &&FacilityRuntime.valid(level,job)&&!level.canSeeSky(pos(job.approach));
@@ -92,16 +85,16 @@ public final class DailyLifeRuntime {
         }
         SHELTERS.remove(npc.getUUID());
         if(phase==DailySchedule.Phase.MEAL||phase==DailySchedule.Phase.SOCIAL||c.visitor){
+            if(LivingBehaviorRuntime.using(npc,"bed")||LivingBehaviorRuntime.using(npc,"work"))interrupt(npc);
             var visit=PublicLifeRuntime.visit(npc,c,town);
             Point destination=visit==null?c.home:visit.point();Property place=visit==null?society.properties.get(c.property):society.properties.get(visit.place());
             if(c.visitor){var options=VisitorPlaces.select(society,town);
                 if(!options.isEmpty()){place=options.get(Math.floorMod((int)(level.getDayTime()/1800)+c.id.hashCode(),options.size()));destination=place.publicPoints.get(Math.floorMod(c.id.hashCode(),place.publicPoints.size()));}}
-            if(npc.isPassenger()){
-                var vehicle=npc.getVehicle();Point chair=point(vehicle.blockPosition());
-                boolean remains=place!=null&&place.livingSites!=null&&place.livingSites.stream().anyMatch(s->s.kind.equals("seat")&&s.object.distanceSquared(chair)<4&&FacilityRuntime.valid(level,s));
+            if(LivingBehaviorRuntime.using(npc,"seat")||LivingBehaviorRuntime.using(npc,"meeting")){
+                boolean remains=place!=null&&place.livingSites!=null&&place.livingSites.stream().anyMatch(s->LivingBehaviorRuntime.active(npc,s)&&FacilityRuntime.valid(level,s));
                 if(!remains)interrupt(npc);
             }
-            if(!npc.isPassenger()&&!near(npc,destination)){npc.activity(walk(npc,destination)?(phase==DailySchedule.Phase.MEAL?"去吃午饭":c.visitor?"在城中游览":"前往公共活动"):"活动通路受阻");return;}
+            if(!LivingBehaviorRuntime.using(npc,"seat")&&!LivingBehaviorRuntime.using(npc,"meeting")&&!near(npc,destination)){npc.activity(walk(npc,destination)?(phase==DailySchedule.Phase.MEAL?"去吃午饭":c.visitor?"在城中游览":"前往公共活动"):"活动通路受阻");return;}
             npc.getNavigation().stop();sit(npc,place);
             if(phase==DailySchedule.Phase.MEAL){
                 npc.activity("午间用餐");
@@ -115,17 +108,18 @@ public final class DailyLifeRuntime {
             }
             return;
         }
-        interrupt(npc);
+        if(LivingBehaviorRuntime.using(npc,"bed")||LivingBehaviorRuntime.using(npc,"seat")||LivingBehaviorRuntime.using(npc,"meeting"))interrupt(npc);
         if(profile.has("patrol")){
+            interrupt(npc);
             var route=society.properties.values().stream().filter(p->p.town.equals(town.id)&&p.entrances!=null&&p.price==0&&!p.owner.startsWith("player:")).flatMap(p->p.entrances.stream()).filter(p->FacilityRuntime.standable(level,p)).distinct().sorted(Comparator.comparingInt(Point::x).thenComparingInt(Point::z)).toList();
             if(route.isEmpty()){npc.activity("缺少巡逻通路");return;}
             Point next=route.get(Math.floorMod((int)(level.getDayTime()/600)+c.id.hashCode(),route.size()));npc.activity(walk(npc,next)?"沿街巡逻":"巡逻通路受阻");return;
         }
-        if(!profile.workplaceTerms.isEmpty()&&!knownUsable(level,job)){npc.activity(job!=null&&job.retainsClaim()?"工作通路受阻":"缺少可用岗位");npc.getNavigation().stop();return;}
+        if(!profile.workplaceTerms.isEmpty()&&!knownUsable(level,job)){interrupt(npc);npc.activity(job!=null&&job.retainsClaim()?"工作通路受阻":"缺少可用岗位");npc.getNavigation().stop();return;}
         Point workplace=job==null?c.work:job.approach;
-        if(!near(npc,workplace)){npc.activity(walk(npc,workplace)?"前往岗位":"工作通路受阻");return;}
+        if(!near(npc,workplace)){interrupt(npc);npc.activity(walk(npc,workplace)?"前往岗位":"工作通路受阻");return;}
         npc.getNavigation().stop();npc.activity(job==null?"料理家务":"工作");
-        if(job!=null){npc.getLookControl().setLookAt(job.object.x()+.5,job.object.y()+1,job.object.z()+.5,30,30);if(npc.tickCount%60==0)npc.swing(InteractionHand.MAIN_HAND);}
+        if(job!=null){if(!LivingBehaviorRuntime.run(npc,job))npc.activity("岗位动作不可用");}else interrupt(npc);
     }
     private static boolean walk(CitizenEntity npc,Point destination){
         if(destination==null)return false;
@@ -165,30 +159,16 @@ public final class DailyLifeRuntime {
         if(site==null||!site.available||site.approach==null)return false;
         return !level.hasChunkAt(pos(site.object))||!level.hasChunkAt(pos(site.approach))||FacilityRuntime.valid(level,site);
     }
-    private static boolean walkExact(CitizenEntity npc,Point destination){
-        var path=npc.getNavigation().createPath(pos(destination),0);return path!=null&&npc.getNavigation().moveTo(path,.85);
-    }
     private static void sit(CitizenEntity npc,Property place){
-        if(npc.isPassenger()||place==null||place.livingSites==null)return;
-        ServerLevel level=(ServerLevel)npc.level();
-        for(LivingSite seat:place.livingSites){
-            if(!seat.kind.equals("seat")||!seat.available||!seat.adapter.equals("marker_seat")||!FacilityRuntime.valid(level,seat)||npc.blockPosition().distSqr(pos(seat.approach))>4)continue;
-            if(!level.getEntitiesOfClass(ArmorStand.class,new net.minecraft.world.phys.AABB(pos(seat.object)).inflate(1),e->e.getTags().contains("realmfolk_seat")&&!e.getPassengers().isEmpty()).isEmpty())continue;
-            // Villager hips are 12 model pixels (0.75 blocks) above the entity's feet.
-            double mountY=seat.object.y()+seat.seatHeight-.75;
-            var mount=new ArmorStand(level,seat.object.x()+.5,mountY,seat.object.z()+.5);
-            CompoundTag tag=new CompoundTag();tag.putBoolean("Invisible",true);tag.putBoolean("Marker",true);tag.putBoolean("NoGravity",true);tag.putBoolean("Invulnerable",true);mount.load(tag);
-            mount.setPos(seat.object.x()+.5,mountY,seat.object.z()+.5);mount.addTag("realmfolk_seat");
-            mount.getPersistentData().putInt("ExitX",seat.approach.x());mount.getPersistentData().putInt("ExitY",seat.approach.y());mount.getPersistentData().putInt("ExitZ",seat.approach.z());
-            if(level.addFreshEntity(mount)&&npc.startRiding(mount,true)){Direction facing=Direction.byName(seat.facing);if(facing!=null){npc.setYRot(facing.toYRot());npc.setYHeadRot(facing.toYRot());}return;}
-            mount.discard();
+        if(place==null||place.livingSites==null)return;
+        var level=(ServerLevel)npc.level();
+        for(LivingSite seat:place.livingSites)if(Set.of("seat","meeting").contains(seat.kind)&&LivingBehaviorRuntime.active(npc,seat)){
+            LivingBehaviorRuntime.run(npc,seat);return;
+        }
+        for(String kind:List.of("seat","meeting"))for(LivingSite seat:place.livingSites){
+            if(!seat.kind.equals(kind)||!seat.available||!FacilityRuntime.valid(level,seat)||!near(npc,seat.approach))continue;
+            if(LivingBehaviorRuntime.run(npc,seat))return;
         }
     }
     private static boolean near(CitizenEntity npc,Point p){return LivingSite.withinUseDistance(npc.getX(),npc.getY(),npc.getZ(),p);}
-    private static boolean canSeeBed(CitizenEntity npc,LivingSite bed){
-        var target=Vec3.atCenterOf(pos(bed.object)).add(0,.2,0);
-        var hit=npc.level().clip(new net.minecraft.world.level.ClipContext(npc.getEyePosition(),target,net.minecraft.world.level.ClipContext.Block.COLLIDER,net.minecraft.world.level.ClipContext.Fluid.NONE,npc));
-        if(hit.getType()==net.minecraft.world.phys.HitResult.Type.MISS||hit.getBlockPos().equals(pos(bed.object)))return true;
-        var state=npc.level().getBlockState(pos(bed.object));return state.hasProperty(BedBlock.FACING)&&hit.getBlockPos().equals(pos(bed.object).relative(state.getValue(BedBlock.FACING).getOpposite()));
-    }
 }

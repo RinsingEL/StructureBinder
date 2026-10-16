@@ -1,0 +1,59 @@
+{
+  "main": {
+    "tests": 1373,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 15
+  },
+  "adventure": {
+    "tests": 13,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "coreMcp": {
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "realmfolk": {
+    "tests": 130,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "forgeGameTests": {
+    "passed": 10,
+    "required": 10,
+    "log": "gametest-final.log"
+  },
+  "python": {
+    "studio": 67,
+    "bundleFocused": 4,
+    "failed": 0,
+    "utf8Mode": true
+  },
+  "identity": {
+    "count": 35,
+    "sameIds": true,
+    "changed": {}
+  },
+  "sourceSaveUnchanged": true,
+  "jars": {
+    "build\\libs\\geomantia-0.2.0.jar": "7601a86b6b0eaff105566432cbea0a3d5b9504f11eb37979be46947cce89096c",
+    "addons\\.realmfolk-build\\libs\\realmfolk-0.4.0.jar": "f6a3cfd1fae65bcb8d60be3b2b2c7c41bd4ea1fe384ee9e753985e3567322699"
+  },
+  "note": "Unchanged core/adventure/MCP tasks reused valid Gradle results; Realmfolk and real GameTests ran. Main skips: 14 optional local fixtures/environment switches and 1 Windows symlink privilege.",
+  "clientFinalSmoke": {
+    "call": "call-0090.json",
+    "citizens": 35,
+    "runningBehaviors": 30,
+    "includes": [
+      "pack:sleeping_bag",
+      "pack:hammock"
+    ],
+    "protocol": 3
+  },
+  "playtestJarMatchesBuild": true
+}

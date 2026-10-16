@@ -16,7 +16,8 @@ import java.util.*;
 import java.util.function.Supplier;
 
 public final class Messages {
-    public static final SimpleChannel CHANNEL=NetworkRegistry.newSimpleChannel(new ResourceLocation(Realmfolk.ID,"main"),()->"2","2"::equals,"2"::equals);
+    // Protocol 3 also requires the configured-sleep entity data understood by this client build.
+    public static final SimpleChannel CHANNEL=NetworkRegistry.newSimpleChannel(new ResourceLocation(Realmfolk.ID,"main"),()->"3","3"::equals,"3"::equals);
     public record Action(int entity,String action) {}
     public record Option(String id,String label,boolean enabled) {}
     public record Dialogue(int entity,String name,String subtitle,String text,List<Option> options) {}
