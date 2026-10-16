@@ -1,0 +1,617 @@
+{
+  "date": "2026-10-17",
+  "sourceRoot": "E:/Mod_Dev/StructureBinder",
+  "baselineCommit": "369d2a4aea3447cc3db99ae183d2359c2240c1be",
+  "removedLogFiles": 2499,
+  "freedBytes": 4152645796.0,
+  "trackedLogFiles": [
+    {
+      "Path": "runclient-center-symmetric-preview.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-center-symmetric-landscape-preview.out.log",
+      "Bytes": 228808,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-center-symmetric-landscape-preview.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-center-symmetric-final2.out.log",
+      "Bytes": 174163,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-center-symmetric-final2.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-center-symmetric-final.out.log",
+      "Bytes": 174368,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-center-symmetric-final.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-center-symmetric-cache.out.log",
+      "Bytes": 174820,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-center-symmetric-cache.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-agent-loop-removal.out.log",
+      "Bytes": 172714,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-agent-loop-removal.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-20260815-225339.out.log",
+      "Bytes": 176068,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-20260815-225339.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf0805-d-pipeline.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf-w32768.out.log",
+      "Bytes": 4410753,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf-w32768.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf-w32768-optimized.out.log",
+      "Bytes": 12657029,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf-w32768-optimized.err.log",
+      "Bytes": 452,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf-w-no-tile-debug.out.log",
+      "Bytes": 177804,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf-w-no-tile-debug.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf-t4-preview.out.log",
+      "Bytes": 136436,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf-t4-preview.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-patch-height-preview.out.log",
+      "Bytes": 176302,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-patch-height-preview.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-group-scale-test.out.log",
+      "Bytes": 266524,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-group-scale-test.err.log",
+      "Bytes": 4609,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-frontier-terminal.out.log",
+      "Bytes": 164133,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-frontier-terminal.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-frontier-preview.out.log",
+      "Bytes": 164581,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-frontier-preview.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-frontier-fix.out.log",
+      "Bytes": 164550,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-frontier-fix.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-frontier-final.out.log",
+      "Bytes": 164376,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-frontier-final.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-frontier-closed-loop.out.log",
+      "Bytes": 164792,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-frontier-closed-loop.err.log",
+      "Bytes": 2318,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-epic-terrain.out.log",
+      "Bytes": 483534,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-epic-terrain.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-center-symmetric.out.log",
+      "Bytes": 175399,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-center-symmetric.err.log",
+      "Bytes": 3982,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-center-symmetric-preview3.out.log",
+      "Bytes": 174577,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-center-symmetric-preview3.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-center-symmetric-preview2.out.log",
+      "Bytes": 174166,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-center-symmetric-preview2.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-center-symmetric-preview.out.log",
+      "Bytes": 174257,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf0810-template-repair.out.log",
+      "Bytes": 174594,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf0810-template-repair.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf0810-relay-fix.out.log",
+      "Bytes": 143580,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf0810-relay-fix.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf0810-parcel-layout.out.log",
+      "Bytes": 174673,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf0810-parcel-layout.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf0810-parcel-layout-packs.out.log",
+      "Bytes": 175182,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf0810-parcel-layout-packs.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf0810-fan-acceptance.out.log",
+      "Bytes": 218150,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf0810-fan-acceptance.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf0810-effective-seed.out.log",
+      "Bytes": 258472,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf0810-effective-seed.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf08052-spatial-v06.out.log",
+      "Bytes": 552886,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf08052-spatial-v06.err.log",
+      "Bytes": 6936,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf08052-outdoor-v05.out.log",
+      "Bytes": 173327,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf08052-outdoor-v05.err.log",
+      "Bytes": 449,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf08052-landscape-seed-fix.out.log",
+      "Bytes": 166723,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf08052-landscape-seed-fix.err.log",
+      "Bytes": 448,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf08052-d-pipeline.out.log",
+      "Bytes": 225915,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf08052-d-pipeline.err.log",
+      "Bytes": 4612,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf08052-city-foundation-relaunch-20260807-001637.out.log",
+      "Bytes": 488610,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf08052-city-foundation-relaunch-20260807-001637.err.log",
+      "Bytes": 49,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf08052-city-foundation-20260807-001400.out.log",
+      "Bytes": 162272,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf08052-city-foundation-20260807-001400.err.log",
+      "Bytes": 448,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf08052-blueprint-provenance-fix.out.log",
+      "Bytes": 236448,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf08052-blueprint-provenance-fix.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf0805-quick.out.log",
+      "Bytes": 265638,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf0805-quick.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-rtf0805-d-pipeline.out.log",
+      "Bytes": 176032,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-v05-zone.out.log",
+      "Bytes": 2065015,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-v05-zone.err.log",
+      "Bytes": 448,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-v05-zone-fix.out.log",
+      "Bytes": 1767163,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-v05-zone-fix.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-v04-connectivity.out.log",
+      "Bytes": 1819466,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-v04-connectivity.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-terrain-policy.out.log",
+      "Bytes": 397846,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-terrain-policy.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-terrain-modes.out.log",
+      "Bytes": 215686,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-terrain-modes.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-t3-12realm-optimized.out.log",
+      "Bytes": 166076,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-t3-12realm-optimized.err.log",
+      "Bytes": 448,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-t3-12realm-monotonic.out.log",
+      "Bytes": 172149524,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-t3-12realm-monotonic.err.log",
+      "Bytes": 147,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/lobby-restart-20261012.out.log",
+      "Bytes": 157994,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/lobby-restart-20261012.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/headless-academy-20261012/server.out.log",
+      "Bytes": 99190,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/headless-academy-20261012/server.err.log",
+      "Bytes": 366,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/headless-academy-20261012/server-retry.out.log",
+      "Bytes": 119496,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/headless-academy-20261012/server-retry.err.log",
+      "Bytes": 606,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/headless-academy-20261012/server-no-remap.out.log",
+      "Bytes": 111364,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/headless-academy-20261012/server-no-remap.err.log",
+      "Bytes": 366,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/headless-academy-20261012/server-final.out.log",
+      "Bytes": 146634,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/headless-academy-20261012/server-final.err.log",
+      "Bytes": 366,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/d4-preview-20261013-prepare.log",
+      "Bytes": 770,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/d4-guidance-review-20261012.log",
+      "Bytes": 5438,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/d4-engineered-prepare.log",
+      "Bytes": 770,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/client-preview-20261013/client.out.log",
+      "Bytes": 105018,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/client-preview-20261013/client.err.log",
+      "Bytes": 2176,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/client-preview-20261013/client-offline.out.log",
+      "Bytes": 160170,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/client-preview-20261013/client-offline.err.log",
+      "Bytes": 3771,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/classification-restart-20261012.out.log",
+      "Bytes": 157313,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/classification-restart-20261012.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/classification-java-20261012.log",
+      "Bytes": 1370,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/city-subjects-20261010/woodland/revisions/r0001/java.log",
+      "Bytes": 540,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/city-subjects-20261010/market/revisions/r0001-1791621058680513200/java.log",
+      "Bytes": 100,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/city-subjects-20261010/market/revisions/r0001/java.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/city-subjects-20261010/craft/revisions/r0001/java.log",
+      "Bytes": 100,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/campus-java-port-check/revisions/r0001/java.log",
+      "Bytes": 983,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/campus-groups-check/revisions/r0002/java.log",
+      "Bytes": 100,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/campus-groups-check/revisions/r0001-1791536305208676500/java.log",
+      "Bytes": 320,
+      "Tracked": true
+    },
+    {
+      "Path": "runtime/campus-groups-check/revisions/r0001/java.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-v06-far-terrain.out.log",
+      "Bytes": 2244039,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-v06-far-terrain.err.log",
+      "Bytes": 0,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-v06-blueprint-array.out.log",
+      "Bytes": 1758132,
+      "Tracked": true
+    },
+    {
+      "Path": "runclient-v06-blueprint-array.err.log",
+      "Bytes": 448,
+      "Tracked": true
+    }
+  ],
+  "preserved": [
+    "world saves",
+    "realm_debug AI artifacts",
+    "dev_docs evidence",
+    "current campus and Realmfolk playtest instances",
+    "files modified since 2026-10-15"
+  ],
+  "historyPolicy": "No Git history rewrite; tracked logs remain available in baseline commit."
+}
