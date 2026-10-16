@@ -46,6 +46,21 @@
         2,
         2
       ]
+    },
+    {
+      "id": "main_access",
+      "kind": "circulation",
+      "pos": [
+        8,
+        2,
+        5
+      ],
+      "name": "室内通路",
+      "approach": [
+        8,
+        2,
+        5
+      ]
     }
   ],
   "connections": [],
@@ -85,5 +100,5 @@
   },
   "campus_consumer": "array",
   "design_revision": 1,
-  "nbt_sha256": "011b687d3927c5f7f36d4de31425a028190ca7078c3a9b15fd8b6135dfe052ea"
+  "nbt_sha256": "a4480d2c3c8e379e9e123ba2d6e10d3ea853155da5a8ba3be5b72224859b475a"
 }

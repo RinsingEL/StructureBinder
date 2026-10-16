@@ -163,7 +163,12 @@ final class CityPlanningEndpointHandler {
 
     static JsonObject handleSubmitD4Design(Path debugRoot, String runId, String citySeedId,
                                           String contextId, JsonObject input) throws IOException {
-        JsonObject response = new CityBlueprintService().submitDesign(debugRoot, runId, citySeedId,
+        return handleSubmitD4Design(debugRoot, runId, citySeedId, contextId, input, new CityBlueprintService());
+    }
+
+    static JsonObject handleSubmitD4Design(Path debugRoot, String runId, String citySeedId,
+                                          String contextId, JsonObject input, CityBlueprintService service) throws IOException {
+        JsonObject response = service.submitDesign(debugRoot, runId, citySeedId,
                 contextId, input);
         // Reference reading must not replace the city's workflow status or enqueue compilation.
         if (input.has("designExample") || input.has("blockMaterials") || "city_d4_history".equals(stringValue(input, "d4Tool", ""))) return response;
@@ -1996,7 +2001,7 @@ final class CityPlanningEndpointHandler {
 
     static JsonObject handleExecuteD7(Path debugRoot, String runId, String citySeedId, long worldSeed,
                                       boolean executeStructurePlacement,
-                                      MinecraftServerHolder serverHolder, ServerLevel level) throws Exception {
+                                      ServerThreadExecutor serverHolder, ServerLevel level) throws Exception {
         Path runDir = debugRoot.resolve(runId);
         requireMatchingRunWorldIdentity(runDir, level);
         loadCitySeed(runDir, runId, citySeedId);
@@ -5034,8 +5039,12 @@ final class CityPlanningEndpointHandler {
     }
 
 
-    record MinecraftServerHolder(net.minecraft.server.MinecraftServer server) {
-        <T> T callOnServerThread(Callable<T> action) throws Exception {
+    interface ServerThreadExecutor {
+        <T> T callOnServerThread(Callable<T> action) throws Exception;
+    }
+
+    record MinecraftServerHolder(net.minecraft.server.MinecraftServer server) implements ServerThreadExecutor {
+        public <T> T callOnServerThread(Callable<T> action) throws Exception {
             if (server.isSameThread()) {
                 if (!server.isRunning() || server.isStopped()) throw new java.util.concurrent.CancellationException("CITY_SERVER_STOPPING");
                 return action.call();

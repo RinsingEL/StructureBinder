@@ -48,6 +48,21 @@
       ]
     },
     {
+      "id": "main_access",
+      "kind": "circulation",
+      "pos": [
+        17,
+        2,
+        5
+      ],
+      "name": "室内通路",
+      "approach": [
+        17,
+        2,
+        5
+      ]
+    },
+    {
       "id": "teach",
       "kind": "work",
       "pos": [

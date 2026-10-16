@@ -1,0 +1,129 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    19,
+    24,
+    23
+  ],
+  "sourceSha256": "1f78f589e2fcc3c914f13805ad892ec16a168c6fef69bb3138a215137ac6b906",
+  "facilities": [
+    {
+      "id": "bed:5,2,8",
+      "kind": "bed",
+      "pos": [
+        5,
+        2,
+        8
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "building",
+      "room": "main",
+      "name": "bed",
+      "adapter": "bed",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "bed:5,2,12",
+      "kind": "bed",
+      "pos": [
+        5,
+        2,
+        12
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "building",
+      "room": "main",
+      "name": "bed",
+      "adapter": "bed",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "bed:5,2,16",
+      "kind": "bed",
+      "pos": [
+        5,
+        2,
+        16
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "building",
+      "room": "main",
+      "name": "bed",
+      "adapter": "bed",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "bed:13,2,8",
+      "kind": "bed",
+      "pos": [
+        13,
+        2,
+        8
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "building",
+      "room": "main",
+      "name": "bed",
+      "adapter": "bed",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "bed:13,2,12",
+      "kind": "bed",
+      "pos": [
+        13,
+        2,
+        12
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "building",
+      "room": "main",
+      "name": "bed",
+      "adapter": "bed",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "bed:13,2,16",
+      "kind": "bed",
+      "pos": [
+        13,
+        2,
+        16
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "building",
+      "room": "main",
+      "name": "bed",
+      "adapter": "bed",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "entrance:9,2,0",
+      "kind": "entrance",
+      "pos": [
+        9,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "主入口",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        9,
+        2,
+        2
+      ]
+    }
+  ],
+  "warnings": []
+}

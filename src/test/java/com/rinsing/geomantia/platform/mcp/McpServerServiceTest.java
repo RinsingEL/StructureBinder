@@ -32,6 +32,8 @@ class McpServerServiceTest {
         assertThrows(java.io.IOException.class,()->McpServerConfig.load(root));
         assertEquals(invalid,Files.readString(McpServerConfig.path(root)));
     }
+    @org.junit.jupiter.api.condition.EnabledOnOs(value = org.junit.jupiter.api.condition.OS.WINDOWS,
+            disabledReason = "The bundled MCP sidecar contains Windows node.exe")
     @Test void bundledServiceStartsWithoutAWorldAcceptsMcpAndAppliesPortChanges() throws Exception {
         if (Boolean.getBoolean("geomantia.coreOnlyTest")) {
             assertNull(getClass().getResource("/com/rinsing/geomantia/harness/systems/provider/application/HarnessAgentClient.class"));

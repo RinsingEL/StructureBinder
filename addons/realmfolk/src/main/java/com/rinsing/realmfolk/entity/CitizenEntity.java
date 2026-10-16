@@ -31,6 +31,9 @@ public final class CitizenEntity extends PathfinderMob implements net.minecraft.
         return Mob.createMobAttributes().add(Attributes.MAX_HEALTH,30).add(Attributes.MOVEMENT_SPEED,.29)
             .add(Attributes.ATTACK_DAMAGE,5).add(Attributes.FOLLOW_RANGE,80);
     }
+    @Override protected net.minecraft.world.entity.ai.navigation.PathNavigation createNavigation(Level level) {
+        return new CitizenNavigation(this,level);
+    }
     @Override protected void defineSynchedData() { super.defineSynchedData(); entityData.define(ROLE,"resident"); entityData.define(ACTIVITY,"闲逛");entityData.define(APPEARANCE,"resident"); }
     @Override protected void registerGoals() {
         goalSelector.addGoal(0,new FloatGoal(this));

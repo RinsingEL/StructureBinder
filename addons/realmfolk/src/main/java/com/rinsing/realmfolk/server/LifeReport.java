@@ -23,10 +23,24 @@ public final class LifeReport {
         for(var c:world.citizens.values()){
             var row=new JsonObject();row.addProperty("id",c.id);row.addProperty("name",c.name);row.addProperty("town",c.town);row.addProperty("role",c.role);row.addProperty("visitor",c.visitor);row.addProperty("dead",c.dead);
             row.addProperty("homeProperty",c.property);row.addProperty("workProperty",c.workProperty);row.addProperty("bedSite",c.bedSite);row.addProperty("workSite",c.workSite);
+            row.addProperty("spawned",c.spawned);
             row.add("home",DesignCodec.JSON.toJsonTree(c.home));row.add("work",DesignCodec.JSON.toJsonTree(c.work));
             var town=world.towns.get(c.town);var level=town==null?null:server.getLevel(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION,new net.minecraft.resources.ResourceLocation(town.dimension)));
             var entity=level==null?null:level.getEntity(UUID.fromString(c.id));row.addProperty("loaded",entity!=null);
             if(entity instanceof CitizenEntity npc){row.addProperty("entityId",npc.getId());row.addProperty("activity",npc.activity());row.addProperty("sleeping",npc.isSleeping());row.addProperty("sitting",npc.isPassenger());row.addProperty("usingItem",npc.isUsingItem());row.addProperty("sheltered",!level.canSeeSky(npc.blockPosition()));row.add("position",DesignCodec.JSON.toJsonTree(point(npc.blockPosition())));}
+            if(entity instanceof CitizenEntity npc){
+                row.addProperty("entityTicks",npc.tickCount);
+                row.addProperty("nearestPlayerDistance",level.players().stream().mapToDouble(npc::distanceToSqr).min().stream().map(Math::sqrt).findFirst().orElse(-1));
+                row.addProperty("navigationDone",npc.getNavigation().isDone());
+                var path=npc.getNavigation().getPath();
+                if(path!=null){
+                    row.add("navigationTarget",DesignCodec.JSON.toJsonTree(point(path.getTarget())));
+                    row.addProperty("pathReachesTarget",path.canReach());
+                    row.addProperty("pathNodeIndex",path.getNextNodeIndex());
+                    row.addProperty("pathNodeCount",path.getNodeCount());
+                    if(path.getEndNode()!=null)row.add("pathEnd",DesignCodec.JSON.toJsonTree(point(path.getEndNode().asBlockPos())));
+                }
+            }
             people.add(row);
         }
         root.add("citizens",people);return root;

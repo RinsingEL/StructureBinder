@@ -1,7 +1,10 @@
 package com.rinsing.geomantia.systems.city.application;
 import java.util.Set;
 /** Synthetic installed blocks for headless tests; production always reads the live registry. */
-final class CityHeadlessMaterialRegistry implements CityBlockMaterials.Registry {
+public final class CityHeadlessMaterialRegistry implements CityBlockMaterials.Registry {
+    public static CityBlueprintService blueprintService() {
+        return new CityBlueprintService(new CityHeadlessMaterialRegistry());
+    }
     public Set<String> ids() { return Set.of("minecraft:stone","minecraft:stone_brick_slab"); }
     public CityBlockMaterials.BlockInfo get(String id) {
         if(!ids().contains(id)) return null;

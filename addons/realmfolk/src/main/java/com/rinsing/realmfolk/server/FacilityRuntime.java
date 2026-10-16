@@ -36,8 +36,9 @@ public final class FacilityRuntime {
     private static JsonArray RULES=new JsonArray();
     private static MinecraftServer owner;
     private static int cursor;
+    private static final Map<String,Long> LAST_SCAN=new HashMap<>();
     public static void start(MinecraftServer server){
-        owner=server;cursor=0;CATALOG.clear();INVALID.clear();RULES=new JsonArray();
+        owner=server;cursor=0;CATALOG.clear();INVALID.clear();LAST_SCAN.clear();RULES=new JsonArray();
         Path root=FMLPaths.CONFIGDIR.get();
         var files=new TreeSet<Path>();files.add(root.resolve("realmfolk/facilities.json"));
         Path packs=root.resolve("structureTemplate/terrasense");
@@ -109,6 +110,12 @@ public final class FacilityRuntime {
         if(!loaded(level,property.bounds)||property.bounds.volume()>2_000_000)return;
         var sites=new LinkedHashMap<String,LivingSite>();var entrances=new LinkedHashSet<Point>();
         boolean authored=false;
+        if(placement==null&&property.livingSites!=null){
+            // Rechecking a furnished building must retain authored room/use/approach metadata and claims.
+            property.livingSites.forEach(s->sites.put(s.id,s));
+            if(property.entrances!=null)entrances.addAll(property.entrances);
+            authored=property.facilitySource!=null&&property.facilitySource.startsWith("export:");
+        }
         if(placement!=null)try{
             var plan=placement.templatePlan();String ref=text(plan,"templateRef",placement.templateId());
             var row=CATALOG.get(ref+"/"+text(plan,"templateHash",""));
@@ -153,7 +160,7 @@ public final class FacilityRuntime {
         }
         property.livingSites=new ArrayList<>(sites.values());property.entrances=new ArrayList<>(entrances);
         if(!authored)property.facilitySource="loaded_world";
-        verify(level,property);dirty(level.getServer());
+        verify(level,property);LAST_SCAN.put(property.id,level.getGameTime());dirty(level.getServer());
     }
     private static boolean matches(BlockState state,JsonObject rule){
         for(var selector:rule.getAsJsonArray("blocks")){
@@ -204,12 +211,27 @@ public final class FacilityRuntime {
         if(owner!=server)start(server);var society=society(server);var properties=society.properties.values().stream().filter(p->{
             Town t=society.towns.get(p.town);return t!=null&&t.dimension.equals(dimension(server.overworld()))&&loaded(server.overworld(),p.bounds);
         }).toList();
+        // One physical rescan per refresh, oldest/changed building first. Existing sites still get
+        // cheap validity checks below. This also detects command/mod-added furniture without events.
+        long now=server.overworld().getGameTime();
+        Property rescan=properties.stream().filter(p->now-LAST_SCAN.getOrDefault(p.id,now-1200)>=1200)
+                .min(Comparator.comparingLong((Property p)->LAST_SCAN.getOrDefault(p.id,Long.MIN_VALUE)).thenComparing(p->p.id)).orElse(null);
+        if(rescan!=null)discover(server.overworld(),rescan,null);
         for(int i=0;i<Math.min(4,properties.size());i++){
             Property p=properties.get(Math.floorMod(cursor++,properties.size()));Town t=society.towns.get(p.town);
             if(t==null||!t.dimension.equals(dimension(server.overworld()))||!loaded(server.overworld(),p.bounds))continue;
-            if(p.livingSites==null)discover(server.overworld(),p,null);else verify(server.overworld(),p);
+            if(p==rescan)continue;
+            if(p.livingSites!=null)verify(server.overworld(),p);
         }
         if(FacilityAssignments.repair(society))dirty(server);
+    }
+    public static void changed(ServerLevel level,BlockPos position){
+        var world=society(level.getServer());String dimension=dimension(level);
+        for(Property p:world.properties.values()){
+            Town town=world.towns.get(p.town);
+            if(town!=null&&dimension.equals(town.dimension)&&p.bounds.contains(point(position)))
+                LAST_SCAN.put(p.id,level.getGameTime()-1200);
+        }
     }
     private static String text(JsonObject o,String key,String fallback){return o.has(key)&&!o.get(key).isJsonNull()?o.get(key).getAsString():fallback;}
 }

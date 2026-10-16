@@ -1,0 +1,81 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    25,
+    24,
+    27
+  ],
+  "sourceSha256": "3fe567896945c6f0129c9b4233a79176d6b50634f8b7d8d169432883b3018c44",
+  "facilities": [
+    {
+      "id": "work:5,2,21",
+      "kind": "work",
+      "pos": [
+        5,
+        2,
+        21
+      ],
+      "block": "minecraft:furnace",
+      "facing": "north",
+      "use": "building",
+      "room": "main",
+      "name": "work",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "work:6,2,21",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        21
+      ],
+      "block": "minecraft:smoker",
+      "facing": "north",
+      "use": "building",
+      "room": "main",
+      "name": "work",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "work:7,2,21",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        21
+      ],
+      "block": "minecraft:barrel",
+      "facing": "north",
+      "use": "building",
+      "room": "main",
+      "name": "work",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "entrance:12,2,0",
+      "kind": "entrance",
+      "pos": [
+        12,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "主入口",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        12,
+        2,
+        2
+      ]
+    }
+  ],
+  "warnings": []
+}
