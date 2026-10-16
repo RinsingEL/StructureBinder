@@ -45,6 +45,12 @@ run-mask-validation-*/
 run-data/
 run_logs/
 country_designer_mcp_log.jsonl
+geomantia_mcp_log.jsonl
+
+# Generated client launch and local validation logs; keep evidence explicitly in dev_docs.
+/runclient-*.log
+/runtime/**/*.log
+/runtime/**/*.log.*
 
 # Local development notes, previews and playtest evidence
 # dev_docs: task records and bug indexes are tracked automatically; other evidence stays local unless force-added.

@@ -1,0 +1,135 @@
+{
+  "schema": 1,
+  "release": "https://github.com/RinsingEL/StructureBinder/releases/tag/experiments/campus-20261017",
+  "releaseId": 415211274,
+  "codeRef": "369d2a4a",
+  "packages": [
+    {
+      "filename": "campus-save-20261017.zip",
+      "bytes": 131452688,
+      "sha256": "5831624ba66aef73ccfdfc977afe04456966d0bd3b2036ccca355cc242945a02",
+      "url": "https://github.com/RinsingEL/StructureBinder/releases/download/experiments/campus-20261017/campus-save-20261017.zip",
+      "assetId": 648075917,
+      "verifiedBy": "GitHub asset SHA-256 and size"
+    },
+    {
+      "filename": "campus-workflow-20261017.zip",
+      "bytes": 73015384,
+      "sha256": "9ede9e0256e46978ed688617c54a7f3b4d4da16f260f79e71f5f12ffc0d91865",
+      "url": "https://github.com/RinsingEL/StructureBinder/releases/download/experiments/campus-20261017/campus-workflow-20261017.zip",
+      "assetId": 648078214,
+      "verifiedBy": "GitHub asset SHA-256 and size"
+    }
+  ],
+  "metadata": [
+    {
+      "filename": "package-summary.json",
+      "bytes": 2540,
+      "sha256": "62e6388f14f6d87276f65a0e22d56800a68e385b3906362525d4fdc07da2d519",
+      "url": "https://github.com/RinsingEL/StructureBinder/releases/download/experiments/campus-20261017/package-summary.json",
+      "assetId": 648079519,
+      "verifiedBy": "GitHub asset SHA-256 and size"
+    },
+    {
+      "filename": "mod-manifest.json",
+      "bytes": 2787,
+      "sha256": "0b5802199226f56ffe7430ed44e2d41fd287e55bd97c8cf43f76ed0290f723b6",
+      "url": "https://github.com/RinsingEL/StructureBinder/releases/download/experiments/campus-20261017/mod-manifest.json",
+      "assetId": 648079568,
+      "verifiedBy": "GitHub asset SHA-256 and size"
+    }
+  ],
+  "screenshots": [
+    {
+      "filename": "2026-10-16-22-21-02-image.png",
+      "bytes": 4625309,
+      "sha256": "1b93714ecb588f0e1877910e20395014f1d1e87ba5452aa73b9c7e03daa879ff",
+      "url": "https://github.com/RinsingEL/StructureBinder/releases/download/experiments/campus-20261017/2026-10-16-22-21-02-image.png",
+      "assetId": 648079615,
+      "verifiedBy": "GitHub asset SHA-256 and size"
+    },
+    {
+      "filename": "2026-10-16-23-17-35-image.png",
+      "bytes": 35961,
+      "sha256": "f9f3dc73f3f297cc8b06f12e0470f09d60c3743c8a5f966ecee1b2e855baa0e3",
+      "url": "https://github.com/RinsingEL/StructureBinder/releases/download/experiments/campus-20261017/2026-10-16-23-17-35-image.png",
+      "assetId": 648079708,
+      "verifiedBy": "GitHub asset SHA-256 and size"
+    },
+    {
+      "filename": "2026-10-16-23-20-08-image.png",
+      "bytes": 1829854,
+      "sha256": "477526c2744786ad8a27c1881f885212856282539ac5db86f63f44dfd87fd2c2",
+      "url": "https://github.com/RinsingEL/StructureBinder/releases/download/experiments/campus-20261017/2026-10-16-23-20-08-image.png",
+      "assetId": 648079765,
+      "verifiedBy": "GitHub asset SHA-256 and size"
+    },
+    {
+      "filename": "2026-10-16-23-20-33-image.png",
+      "bytes": 46619,
+      "sha256": "27813f38a5347fd3f634c7183d2b4224de9d0e3c3c01e1f7d87f120284ee5889",
+      "url": "https://github.com/RinsingEL/StructureBinder/releases/download/experiments/campus-20261017/2026-10-16-23-20-33-image.png",
+      "assetId": 648079878,
+      "verifiedBy": "GitHub asset SHA-256 and size"
+    },
+    {
+      "filename": "2026-10-16-23-21-27-image.png",
+      "bytes": 2621081,
+      "sha256": "8747325f527b6df5868f9e7c8a7edc50dac6433b33713e33dbcae431f3fa5a68",
+      "url": "https://github.com/RinsingEL/StructureBinder/releases/download/experiments/campus-20261017/2026-10-16-23-21-27-image.png",
+      "assetId": 648079960,
+      "verifiedBy": "GitHub asset SHA-256 and size"
+    },
+    {
+      "filename": "2026-10-16-23-59-16-image.png",
+      "bytes": 3170205,
+      "sha256": "b2e39f80848ac5868bf58065f2d50e3ab1ce55fa6eecde0b42c7480a1bbcff92",
+      "url": "https://github.com/RinsingEL/StructureBinder/releases/download/experiments/campus-20261017/2026-10-16-23-59-16-image.png",
+      "assetId": 648080023,
+      "verifiedBy": "GitHub asset SHA-256 and size"
+    },
+    {
+      "filename": "2026-10-17-00-00-00-image.png",
+      "bytes": 1853582,
+      "sha256": "75a8003ca4e94ed9b15000191161d1651fe2707d6b8b81da173e665a4a3392e7",
+      "url": "https://github.com/RinsingEL/StructureBinder/releases/download/experiments/campus-20261017/2026-10-17-00-00-00-image.png",
+      "assetId": 648080112,
+      "verifiedBy": "GitHub asset SHA-256 and size"
+    },
+    {
+      "filename": "2026-10-17-00-50-23-image.png",
+      "bytes": 2399232,
+      "sha256": "bf74c4a7cc5bf0d8d0d863fed9f76130de397492743466342f6b1c111b183f98",
+      "url": "https://github.com/RinsingEL/StructureBinder/releases/download/experiments/campus-20261017/2026-10-17-00-50-23-image.png",
+      "assetId": 648080176,
+      "verifiedBy": "GitHub asset SHA-256 and size"
+    },
+    {
+      "filename": "2026-10-17-00-51-00-image.png",
+      "bytes": 15667,
+      "sha256": "6acf24bd3302622efd8dd367e3106831831874fabcf75017336cfffed8e49841",
+      "url": "https://github.com/RinsingEL/StructureBinder/releases/download/experiments/campus-20261017/2026-10-17-00-51-00-image.png",
+      "assetId": 648080275,
+      "verifiedBy": "GitHub asset SHA-256 and size"
+    },
+    {
+      "filename": "2026-10-17-00-52-23-image.png",
+      "bytes": 3183168,
+      "sha256": "bb4b3866e14b4a4c3d146db72558456ec6e1fc80b9c57502f37a51f9cc4b4d05",
+      "url": "https://github.com/RinsingEL/StructureBinder/releases/download/experiments/campus-20261017/2026-10-17-00-52-23-image.png",
+      "assetId": 648080339,
+      "verifiedBy": "GitHub asset SHA-256 and size"
+    },
+    {
+      "filename": "2026-10-17-00-53-24-image.png",
+      "bytes": 3607514,
+      "sha256": "67ff226e40b43f63f5912862b7820e2b1b4dea9674e725cb0d35ced2c51583bc",
+      "url": "https://github.com/RinsingEL/StructureBinder/releases/download/experiments/campus-20261017/2026-10-17-00-53-24-image.png",
+      "assetId": 648080430,
+      "verifiedBy": "GitHub asset SHA-256 and size"
+    }
+  ],
+  "worldLevelDatSha256": "7f5b56c37dd9435ce4d4efa9349ff2ca8f6542fed03fbf499a9768543a7729ab",
+  "sourceWorldUnchanged": true,
+  "publication": "experimental prerelease, not a milestone release"
+}

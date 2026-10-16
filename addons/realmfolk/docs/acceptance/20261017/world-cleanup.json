@@ -1,0 +1,175 @@
+{
+  "schema": 1,
+  "date": "2026-10-17",
+  "authorization": "用户确认删除清理建议第一批5份副本并提交",
+  "status": "completed",
+  "deletedWorlds": [
+    {
+      "path": "run/realmfolk_03_playtest/saves/Realmfolk_Natural03",
+      "bytes": 5714202120,
+      "files": 4690,
+      "levelDatSha256Before": "585706839e4310b522a8b4a4231b24e3e42a035250122661051a3f6636c2ce62"
+    },
+    {
+      "path": "run/campus_d7_playtest/saves/Realmfolk_Campus_D7",
+      "bytes": 1089884006,
+      "files": 13211,
+      "levelDatSha256Before": "cf457fcc02b39bc82a522cd7249fc60608e37fd4f20c7b1b001b1e7589dfc072"
+    },
+    {
+      "path": "run/campus_d7_playtest/saves/Realmfolk_Campus_D7_Final",
+      "bytes": 1090537019,
+      "files": 13211,
+      "levelDatSha256Before": "ccb17be8bc065764f32fd3fef6a8a3c439a8c489350d7afee7f1881a193da9bc"
+    },
+    {
+      "path": "run/campus_d7_playtest/saves/Realmfolk_Campus03",
+      "bytes": 1088951359,
+      "files": 13203,
+      "levelDatSha256Before": "1a45948df8bbd36dbe675c0ee818cc975881b65d597e207192016eff5940a2bb"
+    },
+    {
+      "path": "run/realmfolk_behavior_playtest/saves/Realmfolk_Behavior_Config_Round1",
+      "bytes": 1044920224,
+      "files": 13078,
+      "levelDatSha256Before": "f7f33b756cb4b61fc91eca40a7e2c7f66b1ede9b80cbbaa7bd4547ee57d5da5d"
+    }
+  ],
+  "freedLogicalBytes": 10028494728.0,
+  "deletedWorldCount": 5,
+  "deletedFileCount": 57393,
+  "protectedDirectoryCount": 23,
+  "protectedMetadata": [
+    {
+      "path": "run/realmfolk_behavior_playtest/saves/Realmfolk_Behavior_Config/level.dat",
+      "sha256BeforeAndAfter": "7f5b56c37dd9435ce4d4efa9349ff2ca8f6542fed03fbf499a9768543a7729ab"
+    },
+    {
+      "path": "run/realmfolk_behavior_playtest/saves/Realmfolk_Behavior_Config/data/realmfolk_society.dat",
+      "sha256BeforeAndAfter": "bd518fb89f8590814696fecd476baa0db7fe40d8c4f7c9dcc75bc234383aeae9"
+    },
+    {
+      "path": "run/campus_d7_playtest/saves/Realmfolk_Campus03_Updated/level.dat",
+      "sha256BeforeAndAfter": "5acd089899a6a85911e4b8fea5d16471cd6ccead61533942161274b4884fcd64"
+    },
+    {
+      "path": "run/campus_d7_playtest/saves/Realmfolk_Campus03_Updated/data/realmfolk_society.dat",
+      "sha256BeforeAndAfter": "11d648c8987971b373a618bb54210a0894d842a400dc99af2afcfda253478ad0"
+    },
+    {
+      "path": "run/saves/campus_java_acceptance_20261010/level.dat",
+      "sha256BeforeAndAfter": "1bfc27efe1e927ff1975a79fa7d4648f7ece61578b513f074dd71cb93baf3f1a"
+    },
+    {
+      "path": "run/campus_d7_playtest/saves/Realmfolk_Campus03_v2/level.dat",
+      "sha256BeforeAndAfter": "7355249660aa835da99b85ed2f6a33a29b478537341482954580167f08acce6d"
+    },
+    {
+      "path": "run/campus_d7_playtest/saves/Realmfolk_Campus03_v2/data/realmfolk_society.dat",
+      "sha256BeforeAndAfter": "0a8765328359e59288f69ddb3ec7ca2e78b05e767258da30ad5d2adaaa7b15e2"
+    },
+    {
+      "path": "run/campus_d7_playtest/saves/Realmfolk_Campus03_Wrapup/level.dat",
+      "sha256BeforeAndAfter": "acecb972389c8794d41be314cfa4fd2928926c31949bc061fbe8b892fca39c35"
+    },
+    {
+      "path": "run/campus_d7_playtest/saves/Realmfolk_Campus03_Wrapup/data/realmfolk_society.dat",
+      "sha256BeforeAndAfter": "7d1a64705ef54a9c58ab012d4cdd97d334ed4fa39d6487bb51d3cdeaf40a584d"
+    },
+    {
+      "path": "run/realmfolk_03_playtest/saves/Realmfolk_Natural03_FullPack/level.dat",
+      "sha256BeforeAndAfter": "1f160dba54c9ba3a63e512cf6d0e699302a00509398d5f03e7b1a131dd7e3441"
+    },
+    {
+      "path": "run/realmfolk_03_playtest/saves/Realmfolk_Natural03_FullPack/data/realmfolk_society.dat",
+      "sha256BeforeAndAfter": "1a9ea980f70a86a90819fe8ba302df864c10ea4930c4f56620b561c99f74f94e"
+    },
+    {
+      "path": "run/saves/flash_npc_acceptance_20260927/level.dat",
+      "sha256BeforeAndAfter": "b0d3a1e0adb628e309cfe8452253c412575982e7ef0023cef1785b0c671ad089"
+    },
+    {
+      "path": "run/saves/flash_npc_acceptance_20260927/data/realmfolk_society.dat",
+      "sha256BeforeAndAfter": "0b425a37fe67f13be2ddd5a749d77fe6ff552177b40ea8f218cff99c4a27e671"
+    },
+    {
+      "path": "run/realmfolk_03_playtest/saves/Realmfolk_Living03/level.dat",
+      "sha256BeforeAndAfter": "377b35f47c1293beb89bc213a27d685be0f069fbdd5bc480846b067806e59ac5"
+    },
+    {
+      "path": "run/realmfolk_03_playtest/saves/Realmfolk_Living03/data/realmfolk_society.dat",
+      "sha256BeforeAndAfter": "8c9a34d94f16bc1db092af1440e5f2a83fa198d41ce0a1d2e5820b58ffb90264"
+    },
+    {
+      "path": "run/realmfolk_03_wrapup/studio_wrapup_20261016/city_template_content_pack.json",
+      "sha256BeforeAndAfter": "5dc8941ee871b2b5b766697c13f0e0c13f3752c36d5c399d83acd21ee37b68d4"
+    },
+    {
+      "path": "run/saves/RTF_beta_perf_after_20260903/level.dat",
+      "sha256BeforeAndAfter": "125aa2b1c89148e53a01a90b84a39a83bb4f24e177d492422ab6e26df0fcead7"
+    },
+    {
+      "path": "run/saves/RTF_beta_perf_after_cache_20260903/level.dat",
+      "sha256BeforeAndAfter": "c40ad99079f7c409ef983bfe6a2333b1ef9fcf400f44ce698132234157db2e86"
+    },
+    {
+      "path": "run/saves/RTF_beta_perf_after_fastpath_20260903/level.dat",
+      "sha256BeforeAndAfter": "24843f293d7c0c34ffb4dcd50ef644a60b77cfec25050fd06c3cdf2143a7eff2"
+    },
+    {
+      "path": "run/saves/RTF_beta_perf_profile2_20260903/level.dat",
+      "sha256BeforeAndAfter": "bb7d51ed50825d26c88252c35f07aa7a5c4dc411e8ddff5f0602865de4bdf00f"
+    },
+    {
+      "path": "run/saves/RTF_beta_perf_profile_20260903/level.dat",
+      "sha256BeforeAndAfter": "b7bb3bc36d6ed47b3cd87b82a88595fc7155760f3804fc0ee3d7bdcd33ace6a5"
+    },
+    {
+      "path": "run/saves/codex_bounded_jigsaw_20260625_pass4/level.dat",
+      "sha256BeforeAndAfter": "8054f7ebd628dc83b05cd3776f8a48a3239a941f7d3e9177484a3d4a2cc9ba93"
+    },
+    {
+      "path": "run/saves/codex_d6d7_vanilla_20260624_city_acceptance/level.dat",
+      "sha256BeforeAndAfter": "41f4439d37b241250601a123a0b6c5fd22763eb6624b3359353d6b86b3f1fe0e"
+    },
+    {
+      "path": "run/saves/codex_trek_city_20260628_001848/level.dat",
+      "sha256BeforeAndAfter": "b86aaf790a080347f124f39473c9ca28ff2638414e5433d794702121516d5968"
+    },
+    {
+      "path": "run/saves/codex_trek_city_20260629_002031/level.dat",
+      "sha256BeforeAndAfter": "6169054e4061aaa6d3c6ee839239d6c39fab4833a7deeef0df2b86f11b23e548"
+    },
+    {
+      "path": "run/saves/codex_worldgen_time_20260628_183914/level.dat",
+      "sha256BeforeAndAfter": "41f4439d37b241250601a123a0b6c5fd22763eb6624b3359353d6b86b3f1fe0e"
+    },
+    {
+      "path": "run/saves/codex_worldgen_time_20260628_184237/level.dat",
+      "sha256BeforeAndAfter": "ed3fa75182fad4801ec3320de6ca70f3daea17780d9ee368cc3025a698875407"
+    },
+    {
+      "path": "run/saves/codex_worldgen_time_20260628_191613/level.dat",
+      "sha256BeforeAndAfter": "9844947a1fd28279ce9daadc50fa658a90ae0995f0f8868cd7c975ee5bf5b76f"
+    },
+    {
+      "path": "run/saves/codex_worldgen_time_20260628_193220/level.dat",
+      "sha256BeforeAndAfter": "9747db54131f9f972c4cfaab93a85b2a5654fdd2dc0e9f5ba81d5026b58abbcd"
+    },
+    {
+      "path": "run/saves/codex_worldgen_time_20260628_193822/level.dat",
+      "sha256BeforeAndAfter": "b86aaf790a080347f124f39473c9ca28ff2638414e5433d794702121516d5968"
+    }
+  ],
+  "secondBatchDeleted": 0,
+  "checks": [
+    "all final absolute targets within approved workspace and allowlist",
+    "no reparse point in targets or descendants",
+    "level.dat hashes and directory bytes equal reviewed proposal",
+    "session.lock handles held exclusively against readers/writers through deletion",
+    "all five targets absent afterward",
+    "all 23 protected directories exist afterward",
+    "30 protected metadata hashes unchanged"
+  ],
+  "backupBoundary": "这些旧检查点并非字节重复；195MiB上传包仅覆盖当前试玩与本城复现资料，不是这五份旧世界的完整备份。"
+}
