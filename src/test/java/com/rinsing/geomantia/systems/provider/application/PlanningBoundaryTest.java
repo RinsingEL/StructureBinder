@@ -63,7 +63,7 @@ class PlanningBoundaryTest {
         assertFalse(result.has("imageEvidence")); assertTrue(result.has("previewWarnings"));
     }
 
-    @Test void blueprintViewKeepsAuthorChoicesAndPagesTerrainInsteadOfTruncating() throws Exception {
+    @Test void blueprintViewKeepsAuthorChoicesAndSummarizesTerrainWithoutRankedSites() throws Exception {
         JsonObject context = JsonParser.parseString("""
             {"schema":"city_blueprint_context","contextId":"frozen","d3ReviewPackage":{"landformPatches":[]},
              "catalogSnapshot":{"structureCatalog":{"semanticProfiles":[{"semanticProfileId":"author:mill",
@@ -88,7 +88,11 @@ class PlanningBoundaryTest {
         assertEquals("frozen", view.get("contextId").getAsString());
         assertEquals(context.get("environmentStyleGuidance"), view.get("environmentStyleGuidance"));
         assertEquals(context.get("siteReviewDecision"), view.get("siteReviewDecision"));
-        assertEquals(2, view.getAsJsonObject("d3ReviewPackage").getAsJsonArray("landformPatches").size());
+        JsonObject terrain = view.getAsJsonObject("d3ReviewPackage");
+        assertFalse(terrain.has("landformPatches"));
+        assertEquals(4_950_600, terrain.getAsJsonObject("landformAreaBlocksByType").get("plain").getAsInt());
+        assertEquals(4_928_400, terrain.getAsJsonObject("landformAreaBlocksByType").get("valley").getAsInt());
+        assertFalse(terrain.get("geographicEvidence").getAsString().isBlank());
         JsonObject catalog = view.getAsJsonObject("catalogSnapshot");
         assertEquals(context.getAsJsonObject("catalogSnapshot").get("structureCatalog"), catalog.get("structureCatalog"));
         assertEquals(context.getAsJsonObject("catalogSnapshot").getAsJsonObject("referenceCatalog").get("fillPools"),

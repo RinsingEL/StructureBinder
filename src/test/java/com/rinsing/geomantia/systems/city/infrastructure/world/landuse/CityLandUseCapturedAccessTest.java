@@ -13,8 +13,8 @@ class CityLandUseCapturedAccessTest {
                 "yajing-access-358_277.json")) {
             try(var stream=getClass().getResourceAsStream("/city/"+name)) {
                 assertNotNull(stream);
-                var fragment=new Gson().fromJson(new InputStreamReader(stream,StandardCharsets.UTF_8),
-                        CityLandUseChunkCompiler.ChunkFragment.class);
+                var fragment = readCapturedFragment(JsonParser.parseReader(
+                        new InputStreamReader(stream, StandardCharsets.UTF_8)).getAsJsonObject());
                 assertTrue(fragment.gradingMaskCells().stream().filter(c->c.foundation()).allMatch(c->c.targetY()!=null));
                 var plan=CityLandUseMicroGrader.planFoundationPlatform(fragment,
                         (x,z)->new CityLandUseChunkExecutor.ColumnSample(90,"minecraft:grass_block",true));
@@ -60,7 +60,7 @@ class CityLandUseCapturedAccessTest {
         try (var stream = getClass().getResourceAsStream("/city/" + name)) {
             assertNotNull(stream);
             var capture = JsonParser.parseReader(new InputStreamReader(stream, StandardCharsets.UTF_8)).getAsJsonObject();
-            var fragment = gson.fromJson(capture.get("fragment"), CityLandUseChunkCompiler.ChunkFragment.class);
+            var fragment = readCapturedFragment(capture.getAsJsonObject("fragment"));
             var samples = new HashMap<String, CityLandUseChunkExecutor.ColumnSample>();
             for (var element : capture.getAsJsonArray("terrain")) {
                 var item = element.getAsJsonObject();
@@ -80,7 +80,7 @@ class CityLandUseCapturedAccessTest {
         try (var stream = getClass().getResourceAsStream("/city/landuse-access-owner-minus391-219.json")) {
             assertNotNull(stream);
             var capture = JsonParser.parseReader(new InputStreamReader(stream, StandardCharsets.UTF_8)).getAsJsonObject();
-            var fragment = gson.fromJson(capture.get("fragment"), CityLandUseChunkCompiler.ChunkFragment.class);
+            var fragment = readCapturedFragment(capture.getAsJsonObject("fragment"));
             var samples = new HashMap<String, CityLandUseChunkExecutor.ColumnSample>();
             for (var element : capture.getAsJsonArray("terrain")) {
                 var item = element.getAsJsonObject();
@@ -100,5 +100,12 @@ class CityLandUseCapturedAccessTest {
                             && adjustment.status() == CityLandUseMicroGrader.PlatformAdjustmentStatus.MERGED));
             assertEquals(plan, CityLandUseMicroGrader.planFoundationPlatform(fragment, terrain));
         }
+    }
+    private static CityLandUseChunkCompiler.ChunkFragment readCapturedFragment(JsonObject captured) {
+        JsonObject migrated = captured.deepCopy();
+        // These captures predate shared terraces; retain their actual terrain and access geometry.
+        // An absent shared-span field means the captured planner had no shared-terrace authority.
+        if (!migrated.has("sharedTerraceSpans")) migrated.add("sharedTerraceSpans", new JsonArray());
+        return new Gson().fromJson(migrated, CityLandUseChunkCompiler.ChunkFragment.class);
     }
 }

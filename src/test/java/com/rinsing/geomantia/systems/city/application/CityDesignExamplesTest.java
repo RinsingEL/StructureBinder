@@ -11,13 +11,22 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CityDesignExamplesTest {
     @TempDir Path output;
-    @Test void catalogIsSmallAndEachCaseDeliversTwoRealImagesOnlyOnDemand() throws Exception {
+    @Test void catalogDeliversAuthoredPublicRealmOrTwoRealImagesOnlyOnDemand() throws Exception {
         for (var entry : CityDesignExamples.index()) {
             assertFalse(entry.getAsJsonObject().has("images"));
             assertFalse(entry.getAsJsonObject().has("process"));
             JsonObject request = new JsonObject();
             request.add("caseId", entry.getAsJsonObject().get("id"));
             var first = CityDesignExamples.read(output, "context-a", request);
+            assertTrue(first.get("ok").getAsBoolean());
+            if (entry.getAsJsonObject().get("id").getAsString().equals("public_realm")) {
+                assertFalse(first.has("imageEvidence"));
+                assertFalse(first.getAsJsonArray("assets").isEmpty());
+                assertTrue(first.has("examples"));
+                assertFalse(first.get("contract").getAsString().isBlank());
+                for (var asset : first.getAsJsonArray("assets")) assertFalse(asset.getAsJsonObject().has("blocks"));
+                continue;
+            }
             assertEquals(2, first.getAsJsonArray("imageEvidence").size());
             for (var image : first.getAsJsonArray("imageEvidence")) {
                 var bytes = Base64.getDecoder().decode(image.getAsJsonObject().get("data").getAsString());

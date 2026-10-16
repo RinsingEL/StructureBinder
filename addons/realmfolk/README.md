@@ -6,6 +6,8 @@ Minecraft 1.20.1 / Forge 47.4.x / Java 17，依赖 Geomantia 0.1.0 及以上（�
 
 ## 直接试玩
 
+2026-10-16基础生活修复已完成自动与实机验收：[结果、截图及新学院启动命令](docs/0.3收尾验收.md)。本机新存档为`Realmfolk_Campus03_Updated`，包含51栋建筑、32常住居民与3访客；同日确认的作者生活行为配置/组合与开发扩展仍待实现，主模组0.3里程碑尚未确认。
+
 主模组 0.3“城里有人”开发版：本机已准备 `run/realmfolk_03_playtest`，存档 `Realmfolk_Living03`。从主仓运行：
 
 ```powershell
@@ -79,7 +81,7 @@ $env:PATH=$env:JAVA_HOME+'\bin;'+$env:PATH
 
 - 契约（城市经济与主流程、人口配置与集成、城市设计 MCP）与物品池接入设计草案：文档仓 `docs/addons/realmfolk/`
 - [本地真实客户端试玩接口](docs/试玩接口.md)
-- 需求案（01～10，含职责身份）：文档仓 `docs/addons/README.md` 的 Realmfolk 一节
+- 需求案（01～11，含职责身份）：文档仓 `docs/addons/README.md` 的 Realmfolk 一节
 - [故障索引](../../dev_docs/systems/realmfolk/故障索引.md)
 
 项目规则遵循 `E:\Mod_Dev\designer_territoryMod\docs\00_nav\README.md`。本轮仅更新此次实现涉及的需求，不清理其他案子。

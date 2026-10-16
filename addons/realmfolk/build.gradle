@@ -52,3 +52,12 @@ tasks.named('jar', Jar) {
     manifest { attributes 'MixinConfigs': 'realmfolk.mixins.json' }
     finalizedBy 'reobfJar'
 }
+
+tasks.matching { it.name == 'prepareRunGameTestServer' }.configureEach {
+    doLast {
+        copy {
+            from 'src/main/resources/gameteststructures'
+            into 'run-gametest/gameteststructures'
+        }
+    }
+}

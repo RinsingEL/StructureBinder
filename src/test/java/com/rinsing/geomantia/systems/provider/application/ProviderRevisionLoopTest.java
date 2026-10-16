@@ -33,7 +33,8 @@ class ProviderRevisionLoopTest {
             exchange.close();
         });
         http.start();
-        ProviderConfigStore store = new ProviderConfigStore(root.resolve("config"));
+        // A D4 failure budget of two hands the revision to the advanced executor.
+        ProviderConfigStore store = new ProviderConfigStore(root.resolve("config"), PlanningRole.ADVANCED);
         store.save(new PlayerProviderConfig("custom", true, "http://127.0.0.1", "test-model",
                 "chat_completions", 10, "hermes"), "test-key-not-a-real-secret", false);
         ProviderAgentClient client = (config, credentials, session, state, images, tools, executor, listener) -> {

@@ -1,0 +1,49 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    21,
+    24,
+    21
+  ],
+  "sourceSha256": "3f68b13d8445abd4e166f23c796cc3b4550942763594a431c232542508491eb3",
+  "facilities": [
+    {
+      "id": "entrance:10,2,0",
+      "kind": "entrance",
+      "pos": [
+        10,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "主入口",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        10,
+        2,
+        2
+      ]
+    },
+    {
+      "id": "work:10,2,13",
+      "kind": "work",
+      "pos": [
+        10,
+        2,
+        13
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "main",
+      "name": "教学讲台",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    }
+  ],
+  "warnings": []
+}

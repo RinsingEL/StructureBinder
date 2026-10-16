@@ -1,0 +1,11 @@
+{
+  "facilities": [
+    {
+      "blocks": ["#create:seats"],
+      "kind": "seat",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5
+    }
+  ]
+}

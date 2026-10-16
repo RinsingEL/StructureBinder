@@ -19,7 +19,13 @@ import static com.rinsing.realmfolk.server.SocietyRuntime.*;
 /** Ordinary embodied actions; a failed path never relocates a resident in front of a player. */
 public final class DailyLifeRuntime {
     private record Meal(ItemStack previous,long until){}
-    private record Walk(Point destination,long attempted){}
+    private static final class Walk {
+        final Point destination;
+        final List<Point> waypoints;
+        int index;
+        long attempted = Long.MIN_VALUE;
+        Walk(Point destination, List<Point> waypoints) { this.destination=destination; this.waypoints=waypoints; }
+    }
     private static final Map<UUID,Meal> MEALS=new HashMap<>();
     private static final Map<UUID,Walk> WALKS=new HashMap<>();
     private static final Map<UUID,Point> SHELTERS=new HashMap<>();
@@ -128,11 +134,32 @@ public final class DailyLifeRuntime {
         // through the loaded region; the destination is checked again when the resident approaches it.
         if(level.hasChunkAt(pos(destination))&&!FacilityRuntime.standable(level,destination))return false;
         if(near(npc,destination)){npc.getNavigation().stop();return true;}
-        long now=npc.level().getGameTime();Walk old=WALKS.get(npc.getUUID());
-        if(old!=null&&old.destination.equals(destination)&&!npc.getNavigation().isDone())return true;
-        if(old!=null&&old.destination.equals(destination)&&now-old.attempted<80)return false;
-        WALKS.put(npc.getUUID(),new Walk(destination,now));
-        var path=npc.getNavigation().createPath(pos(destination),1);return path!=null&&npc.getNavigation().moveTo(path,.85);
+        long now=npc.level().getGameTime();Walk route=WALKS.get(npc.getUUID());
+        if(route==null||!route.destination.equals(destination)){
+            var citizen=npc.profile();
+            var waypoints=citizen==null?List.of(destination):RoutineRoute.waypoints(
+                    society(level.getServer()).properties.values(),citizen.town,point(npc.blockPosition()),destination,
+                    p->!level.hasChunkAt(pos(p))||FacilityRuntime.standable(level,p));
+            route=new Walk(destination,waypoints);WALKS.put(npc.getUUID(),route);
+            npc.getNavigation().stop();
+        }
+        // Keep completed entrances across partial-path retries, even while still inside the footprint.
+        while(route.index<route.waypoints.size()-1&&near(npc,route.waypoints.get(route.index))){
+            route.index++;route.attempted=Long.MIN_VALUE;npc.getNavigation().stop();
+        }
+        if(!npc.getNavigation().isDone())return true;
+        if(route.attempted!=Long.MIN_VALUE&&now-route.attempted<80)return false;
+        route.attempted=now;
+        // Courtyard floors can require a long detour away from the target before descending.
+        // The saved academy's upper-floor exit is an 83-block walk despite being only 13 blocks away.
+        // Bound routine paths at 160 blocks; PathNavigationRegion reads already loaded chunks only.
+        // This does not increase combat follow range or force chunks to load.
+        var navigation=npc.getNavigation();
+        navigation.setMaxVisitedNodesMultiplier(4);
+        net.minecraft.world.level.pathfinder.Path path;
+        try { path=navigation.createPath(pos(route.waypoints.get(route.index)),1,160); }
+        finally { navigation.resetMaxVisitedNodesMultiplier(); }
+        return path!=null&&npc.getNavigation().moveTo(path,.85);
     }
     private static boolean knownUsable(ServerLevel level,LivingSite site){
         if(site==null||!site.available||site.approach==null)return false;
@@ -147,9 +174,11 @@ public final class DailyLifeRuntime {
         for(LivingSite seat:place.livingSites){
             if(!seat.kind.equals("seat")||!seat.available||!seat.adapter.equals("marker_seat")||!FacilityRuntime.valid(level,seat)||npc.blockPosition().distSqr(pos(seat.approach))>4)continue;
             if(!level.getEntitiesOfClass(ArmorStand.class,new net.minecraft.world.phys.AABB(pos(seat.object)).inflate(1),e->e.getTags().contains("realmfolk_seat")&&!e.getPassengers().isEmpty()).isEmpty())continue;
-            var mount=new ArmorStand(level,seat.object.x()+.5,seat.object.y()+seat.seatHeight,seat.object.z()+.5);
+            // Villager hips are 12 model pixels (0.75 blocks) above the entity's feet.
+            double mountY=seat.object.y()+seat.seatHeight-.75;
+            var mount=new ArmorStand(level,seat.object.x()+.5,mountY,seat.object.z()+.5);
             CompoundTag tag=new CompoundTag();tag.putBoolean("Invisible",true);tag.putBoolean("Marker",true);tag.putBoolean("NoGravity",true);tag.putBoolean("Invulnerable",true);mount.load(tag);
-            mount.setPos(seat.object.x()+.5,seat.object.y()+seat.seatHeight,seat.object.z()+.5);mount.addTag("realmfolk_seat");
+            mount.setPos(seat.object.x()+.5,mountY,seat.object.z()+.5);mount.addTag("realmfolk_seat");
             mount.getPersistentData().putInt("ExitX",seat.approach.x());mount.getPersistentData().putInt("ExitY",seat.approach.y());mount.getPersistentData().putInt("ExitZ",seat.approach.z());
             if(level.addFreshEntity(mount)&&npc.startRiding(mount,true)){Direction facing=Direction.byName(seat.facing);if(facing!=null){npc.setYRot(facing.toYRot());npc.setYHeadRot(facing.toYRot());}return;}
             mount.discard();

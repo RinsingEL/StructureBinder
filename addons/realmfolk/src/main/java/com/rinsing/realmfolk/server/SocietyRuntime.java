@@ -90,6 +90,7 @@ public final class SocietyRuntime {
     @SubscribeEvent public static void logout(PlayerEvent.PlayerLoggedOutEvent event) { ShopService.close(event.getEntity().getUUID());ContainerWatch.close(event.getEntity().getUUID()); INSPECT.remove(event.getEntity().getUUID().toString()); }
     @SubscribeEvent(priority=EventPriority.LOWEST) public static void broken(BlockEvent.BreakEvent event) {
         if(event.isCanceled() || !(event.getPlayer() instanceof ServerPlayer p)) return;
+        FacilityRuntime.changed(p.serverLevel(),event.getPos());
         Society s=society(p.server);
         String key=blockKey(dimension(p.level()),point(event.getPos()));
         if(playerId(p).equals(s.placedBy.remove(key))) { dirty(p.server); return; }
@@ -97,6 +98,7 @@ public final class SocietyRuntime {
     }
     @SubscribeEvent(priority=EventPriority.LOWEST) public static void placed(BlockEvent.EntityPlaceEvent event) {
         if(!event.isCanceled() && event.getEntity() instanceof ServerPlayer p) {
+            FacilityRuntime.changed(p.serverLevel(),event.getPos());
             if(property(p.serverLevel(),event.getPos())!=null) {
                 society(p.server).placedBy.put(blockKey(dimension(p.level()),point(event.getPos())),playerId(p)); dirty(p.server);
             }
@@ -199,7 +201,8 @@ public final class SocietyRuntime {
         }
     }
     public static Point safe(ServerLevel level,Point around) {
-        for(int radius=0;radius<=3;radius++)for(int dx=-radius;dx<=radius;dx++)for(int dz=-radius;dz<=radius;dz++)for(int dy=0;dy<=4;dy++) {
+        // Facility approaches can sit above a partial-height bed; nearby floor may be one block lower.
+        for(int radius=0;radius<=3;radius++)for(int dx=-radius;dx<=radius;dx++)for(int dz=-radius;dz<=radius;dz++)for(int dy:new int[]{0,-1,1,-2,2,-3,3,-4,4}) {
             BlockPos p=pos(around).offset(dx,dy,dz);
             if(!level.hasChunkAt(p))continue;
             if(level.getBlockState(p.below()).isCollisionShapeFullBlock(level,p.below())&&level.getBlockState(p).getCollisionShape(level,p).isEmpty()

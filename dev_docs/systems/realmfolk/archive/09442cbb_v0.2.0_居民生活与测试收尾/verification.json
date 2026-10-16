@@ -1,0 +1,75 @@
+{
+  "main": {
+    "tests": 1373,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 15,
+    "skipNames": [
+      "com.rinsing.geomantia.platform.http.CityWallSavedD5ReplayTest.savedCityCompilesThroughOfficialD5WithOutwardStraightWallTowers()",
+      "com.rinsing.geomantia.systems.city.application.CityBoundaryCapturedReplayTest.originalProposalCompilesWithoutMovingAuthoredGroups()",
+      "com.rinsing.geomantia.systems.city.application.CityD4VersionsTest.versionFileCannotFollowSymlinkOutsideCity()",
+      "com.rinsing.geomantia.systems.city.application.CitySavedBlueprintReplayTest.renderSavedReplay()",
+      "com.rinsing.geomantia.systems.city.application.CitySavedBlueprintReplayTest.savedCapitalDraftCompilesWithCurrentRoadPlanner()",
+      "com.rinsing.geomantia.systems.city.application.DesignFirstCapturedReplayTest.unchangedFiveDistrictDesignCompilesFromCapturedTerrain()",
+      "com.rinsing.geomantia.systems.city.application.landuse.CityFrozenOutdoorReplayTest.frozenD6CanProduceCompleteSurfacePlan()",
+      "com.rinsing.geomantia.systems.city.application.landuse.LandscapeSavedOutdoorReplayTest.blockedCityCompletesOutdoorPlanWithApproximateLandscape()",
+      "com.rinsing.geomantia.systems.city.application.landuse.QadirOutdoorReplayTest.replayFrozenOutdoorInputsWithoutWritingWorld()",
+      "com.rinsing.geomantia.systems.city.application.QadirCompilationReplayTest.replayAcceptedDesignWithoutMutatingTheWorld()",
+      "com.rinsing.geomantia.systems.city.infrastructure.world.landuse.QadirOwnerPreflightReplayTest.preparesActualOwnersWithoutMinecraftOrWorldWrites()",
+      "com.rinsing.geomantia.systems.provider.application.CityD3ReviewDecisionViewTest.realWorldFixtureWhenProvided()",
+      "com.rinsing.geomantia.systems.provider.application.CityRevisionEvidenceTest.capturedRealFailurePreservesAllReportedHardBlocks()",
+      "com.rinsing.geomantia.systems.provider.application.PlanningBoundaryTest.capturedLiveContextFitsHarnessWithoutLosingAnyAuthorProfile()",
+      "com.rinsing.geomantia.systems.provider.application.RealmCoreAtlasTest.installedBundleCanBePreparedWithoutMinecraft()"
+    ]
+  },
+  "adventure": {
+    "tests": 13,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "skipNames": []
+  },
+  "coreMcp": {
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "skipNames": []
+  },
+  "realmfolk": {
+    "tests": 122,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "realmfolkGameTests": {
+    "required": 4,
+    "passed": 4,
+    "log": "logs/realmfolk-gametest-03.log"
+  },
+  "python": {
+    "studioBundle": 4,
+    "livingFacilities": 6,
+    "academyAccess": 2,
+    "failures": 0
+  },
+  "skipExplanation": "14 existing optional local fixtures/environment opt-ins; 1 Windows symbolic-link privilege unavailable. The 2 Windows runtime tests ran and passed here; non-Windows runs explicitly skip them.",
+  "formalPublish": {
+    "revision": 3,
+    "created": 0,
+    "refreshed": 0,
+    "hostDecisionCommitted": true,
+    "taskFinished": true,
+    "nextStage": "T4",
+    "identity": {
+      "countBefore": 35,
+      "countAfter": 35,
+      "sameIds": true,
+      "changed": {}
+    }
+  },
+  "artifacts": {
+    "build\\libs\\geomantia-0.2.0.jar": "1e65f938f8721b9497d324dda7c3ed1dc1a639fc3b3093f447b631748dc6f12d",
+    "addons\\.realmfolk-build\\libs\\realmfolk-0.4.0.jar": "af68d362f040de1dfe778c744a35aeb35b001d65505e0f47668d46b0898d2372"
+  }
+}

@@ -1,11 +1,11 @@
 {
   "schema": "structure-studio.validation.v1",
-  "nbt_sha256": "b64cd99ac68ff876ad1bbb9ea066f248983f3a2c254ec34f240471c94b4af995",
+  "nbt_sha256": "1f78f589e2fcc3c914f13805ad892ec16a168c6fef69bb3138a215137ac6b906",
   "navigation": {
     "passed": true,
     "unreachable": [],
-    "nodes": 774,
-    "highest_standing_y": 2,
+    "nodes": 1341,
+    "highest_standing_y": 2.5625,
     "truncated": false,
     "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
   },
@@ -17,8 +17,8 @@
     24,
     23
   ],
-  "visible_blocks": 1716,
-  "explicit_air": 1064,
+  "visible_blocks": 1704,
+  "explicit_air": 1076,
   "palette": 15,
   "block_entities": 0,
   "agriculture": null,
@@ -26,10 +26,10 @@
     "minecraft:stone_bricks": 486,
     "minecraft:purple_terracotta": 240,
     "minecraft:grass_block": 209,
-    "minecraft:polished_andesite": 198,
+    "minecraft:polished_andesite": 200,
     "minecraft:calcite": 182,
     "minecraft:dark_oak_planks": 154,
-    "minecraft:purple_stained_glass": 120,
+    "minecraft:purple_stained_glass": 106,
     "minecraft:smooth_stone_slab": 36,
     "minecraft:polished_blackstone_bricks": 30,
     "minecraft:smooth_stone": 25,

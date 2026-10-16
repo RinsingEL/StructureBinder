@@ -159,7 +159,12 @@ class CityPlanningEndpointHandlerTest {
                 .map(value -> value.getAsJsonObject().get("kind").getAsString())
                 .collect(java.util.stream.Collectors.toSet());
         assertTrue(featureKinds.contains("ROAD_SLAB"));
-        assertTrue(featureKinds.contains("ROAD_STAIR"));
+        // This fixture is level at y=70. Slope/stair transitions have dedicated planner tests.
+        assertFalse(featureKinds.contains("ROAD_STAIR"));
+        assertTrue(surfacePlan.getAsJsonArray("featureCells").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .filter(cell -> cell.get("kind").getAsString().equals("ROAD_SLAB"))
+                .allMatch(cell -> cell.get("blockId").getAsString().equals("minecraft:stone_brick_slab")));
         assertTrue(CityPlanningEndpointHandler.workflowBlueprintOutdoorArtifactsCurrent(
                 debugRoot, debugRoot.resolve(runId), citySeedId));
 
@@ -1304,7 +1309,11 @@ class CityPlanningEndpointHandlerTest {
                 citySeedId,
                 12345L,
                 false,
-                null,
+                new CityPlanningEndpointHandler.ServerThreadExecutor() {
+                    public <T> T callOnServerThread(java.util.concurrent.Callable<T> action) throws Exception {
+                        return action.call();
+                    }
+                },
                 null);
 
         assertTrue(d7.get("ok").getAsBoolean());
@@ -2234,7 +2243,8 @@ class CityPlanningEndpointHandlerTest {
             int revision;
             JsonObject call(String tool,JsonObject input) throws Exception {
                 input.addProperty("d4Tool",tool);input.addProperty("workflowRevision",revision);
-                JsonObject result=CityPlanningEndpointHandler.handleSubmitD4Design(root,run,city,context,input);
+                JsonObject result=CityPlanningEndpointHandler.handleSubmitD4Design(root,run,city,context,input,
+                        com.rinsing.geomantia.systems.city.application.CityHeadlessMaterialRegistry.blueprintService());
                 assertTrue(result.get("ok").getAsBoolean(),result.toString());
                 if(result.has("d4Workflow"))revision=result.getAsJsonObject("d4Workflow").get("revision").getAsInt();
                 return result;
@@ -2243,15 +2253,34 @@ class CityPlanningEndpointHandlerTest {
         StageClient client=new StageClient();
         JsonObject settings=new JsonObject();
         for(String key:List.of("designIntent","styleProfile","roadProfile","surfaceDetailProfile","outdoorPlan"))settings.add(key,blueprint.get(key).deepCopy());
+        settings.add("surfaceMaterials", JsonParser.parseString(
+                "{defaults:{ground:'minecraft:stone',roadSurface:'minecraft:stone_brick_slab'}}"));
         settings.getAsJsonObject("outdoorPlan").remove("foundationGroupIds");settings.getAsJsonObject("outdoorPlan").remove("landscapes");
         JsonObject district=new JsonObject();district.addProperty("groupId","fixture");district.addProperty("role","landmark");district.addProperty("intent","landmark cluster");
         district.add("preferredPatchRefs",blueprint.getAsJsonArray("groups").get(0).getAsJsonObject().get("preferredPatchRefs").deepCopy());
         JsonArray districts=new JsonArray();districts.add(district);JsonObject overview=new JsonObject();overview.add("citySettings",settings);overview.add("districts",districts);
-        JsonObject request=new JsonObject();request.add("overview",overview);client.call("city_d4_overview",request);
+        JsonObject request=new JsonObject();request.add("overview",overview);
+        JsonObject overviewAnswers = JsonParser.parseString(
+                "{styles:['test'],roadProfileRef:'road:test',ground:'minecraft:stone',roadSurface:'minecraft:stone_brick_slab'}").getAsJsonObject();
+        overviewAnswers.add("groundTreatment", settings.getAsJsonObject("outdoorPlan").get("mode"));
+        overviewAnswers.addProperty("preserveReason", "This fixture explicitly tests preserving the natural surface.");
+        request.add("designAnswers", overviewAnswers);
+        client.call("city_d4_overview",request);
         JsonObject body=new JsonObject();for(String key:List.of("groups","arrayCompositions","relations"))body.add(key,blueprint.get(key).deepCopy());
         body.getAsJsonArray("groups").get(0).getAsJsonObject().addProperty("structureCount",3);
         for(String key:List.of("foundationGroupIds","landscapes"))body.add(key,blueprint.getAsJsonObject("outdoorPlan").get(key).deepCopy());
+        body.add("core", JsonParser.parseString("{groupId:'core',structureRef:'minecraft:desert_pyramid'}"));
         request=new JsonObject();request.add("districtDesign",body);
+        JsonArray groupAnswers = new JsonArray();
+        for (JsonElement element : body.getAsJsonArray("groups")) {
+            JsonObject group = element.getAsJsonObject();
+            JsonObject answer = JsonParser.parseString(
+                    "{styles:['test'],roadConnected:true,ground:'minecraft:stone',roadSurface:'minecraft:stone_brick_slab',noFoundationReason:'Preserve the existing terrain'}").getAsJsonObject();
+            answer.add("groupId", group.get("groupId"));
+            answer.addProperty("foundation", body.getAsJsonArray("foundationGroupIds").asList().contains(group.get("groupId")));
+            groupAnswers.add(answer);
+        }
+        request.add("designAnswers", groupAnswers);
         JsonObject evidence=client.call("city_d4_district",request).getAsJsonObject("revisionEvidence");
         JsonObject marking=new JsonObject();marking.addProperty("districtId","fixture");marking.addProperty("independent",false);
         JsonArray disposition=new JsonArray();disposition.add(marking);
@@ -2832,6 +2861,7 @@ class CityPlanningEndpointHandlerTest {
                       "footprintMode": "fixed_footprint",
                       "reviewState": "approved",
                       "functionTerms": ["function.landmark"],
+                      "styleTerms": ["test"],
                       "planningRoleTerms": ["planning_role.key", "planning_role.self_contained"],
                       "terrainModes": ["SURFACE"],
                       "fixedFootprint": {"widthBlocks": 12, "depthBlocks": 12, "heightBlocks": 10},
@@ -2849,6 +2879,7 @@ class CityPlanningEndpointHandlerTest {
                       "footprintMode": "variable_area",
                       "reviewState": "approved",
                       "functionTerms": ["function.村庄"],
+                      "styleTerms": ["test"],
                       "planningRoleTerms": ["planning_role.fill"],
                       "terrainModes": ["SURFACE"],
                       "expectedAreaRange": {

@@ -48,6 +48,21 @@
       ]
     },
     {
+      "id": "main_access",
+      "kind": "circulation",
+      "pos": [
+        10,
+        2,
+        5
+      ],
+      "name": "室内通路",
+      "approach": [
+        10,
+        2,
+        5
+      ]
+    },
+    {
       "id": "teach",
       "kind": "work",
       "pos": [
@@ -94,5 +109,5 @@
   },
   "campus_consumer": "array",
   "design_revision": 1,
-  "nbt_sha256": "6834d49503f92dc74792e2bb6ed3aafd0066840d510955c82b76a3005aa314d5"
+  "nbt_sha256": "3f68b13d8445abd4e166f23c796cc3b4550942763594a431c232542508491eb3"
 }

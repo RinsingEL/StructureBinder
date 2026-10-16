@@ -33,6 +33,8 @@ class HarnessAgentClientTest {
     }
 
     @Test @Timeout(60)
+    @org.junit.jupiter.api.condition.EnabledOnOs(value = org.junit.jupiter.api.condition.OS.WINDOWS,
+            disabledReason = "The bundled portable runtime contains Windows node.exe")
     void bundledRuntimeExecutesAddonToolAndSendsNativeImagesWithoutSystemDependencies() throws Exception {
         List<JsonObject> requests = new CopyOnWriteArrayList<>();
         HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);

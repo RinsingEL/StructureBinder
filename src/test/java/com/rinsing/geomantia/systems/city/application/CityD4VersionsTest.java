@@ -26,7 +26,16 @@ class CityD4VersionsTest {
     @Test void versionFileCannotFollowSymlinkOutsideCity() throws Exception {
         Path dir=root.resolve("city");Files.createDirectories(dir.resolve("design_versions"));
         String id="a".repeat(64);Path outside=root.resolve("outside.json");Files.writeString(outside,"{}");
-        Files.createSymbolicLink(dir.resolve("design_versions/"+id+".json"),outside);
+        try {
+            Files.createSymbolicLink(dir.resolve("design_versions/"+id+".json"),outside);
+        } catch (java.nio.file.FileSystemException unavailable) {
+            // Windows requires Developer Mode or SeCreateSymbolicLinkPrivilege.
+            // Other filesystem failures remain errors, including on Unix CI.
+            String reason = String.valueOf(unavailable.getReason());
+            if (!System.getProperty("os.name").startsWith("Windows")
+                    || !(reason.toLowerCase(java.util.Locale.ROOT).contains("privilege") || reason.contains("特权"))) throw unavailable;
+            org.junit.jupiter.api.Assumptions.abort("Windows symbolic-link capability unavailable: " + unavailable.getReason());
+        }
         assertEquals("CITY_D4_VERSION_OUTSIDE_CITY",assertThrows(java.io.IOException.class,()->CityD4Versions.load(dir,"ctx","city",id)).getMessage());
     }
 
