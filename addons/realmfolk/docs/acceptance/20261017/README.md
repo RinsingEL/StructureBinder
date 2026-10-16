@@ -45,3 +45,15 @@
 准备Minecraft 1.20.1 / Forge 47.4.23，安装mod-manifest列出的第三方模组，将随包本项目JAR放入game/mods。在对应代码基线用addons/realmfolk/scripts/launch-playtest.ps1指定GameDirectory为解压目录/game、World为Realmfolk_Behavior_Config、PlanningSourceDirectory为解压目录/planning_source，VersionDirectory指定本机Forge实例。首次复现用独立副本。
 
 验收agent先按项目入口读取适用规则，分别记录bug、素材问题、配置缺口和设计取舍。未实测不写“已复现”；用户猜测不当作结论；新增动作/人口方案不借此自动列为本版已授权实现。
+
+## 已确认的本机副本清理 · 2026-10-17
+
+用户审阅清单后确认删除第一批5份旧检查点，共10028494728字节（约9.34GiB）。这些目录未被Git跟踪，本提交保存[删除回执与保留对象哈希](world-cleanup.json)。
+
+- run/realmfolk_03_playtest/saves/Realmfolk_Natural03
+- run/campus_d7_playtest/saves/Realmfolk_Campus_D7
+- run/campus_d7_playtest/saves/Realmfolk_Campus_D7_Final
+- run/campus_d7_playtest/saves/Realmfolk_Campus03
+- run/realmfolk_behavior_playtest/saves/Realmfolk_Behavior_Config_Round1
+
+当前验收世界Realmfolk_Behavior_Config、Campus03_Updated、原始D4基线及自然城市FullPack等23个保留目录仍在，30份关键元数据哈希未变；第二批14份世界未删除。上述5份旧现场不能通过本页195MiB精简包完整恢复。当前世界与线上附件不受此次清理影响。
