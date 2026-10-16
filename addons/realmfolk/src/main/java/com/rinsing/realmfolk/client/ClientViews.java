@@ -53,6 +53,7 @@ public final class ClientViews {
         CitizenRenderer(EntityRendererProvider.Context context){super(context,new LivingCitizenModel(context.bakeLayer(ModelLayers.VILLAGER)),.5f);
             addLayer(new net.minecraft.client.renderer.entity.layers.CustomHeadLayer<>(this,context.getModelSet(),context.getItemInHandRenderer()));
             addLayer(new net.minecraft.client.renderer.entity.layers.VillagerProfessionLayer<>(this,context.getResourceManager(),"villager"));
+            addLayer(new net.minecraft.client.renderer.entity.layers.CrossedArmsItemLayer<>(this,context.getItemInHandRenderer()));
         }
         @Override public ResourceLocation getTextureLocation(CitizenEntity entity){return TEXTURE;}
     }

@@ -33,12 +33,12 @@ public final class FacilityRuntime {
         Blocks.CRAFTING_TABLE,Blocks.FURNACE,Blocks.ANVIL,Blocks.CHIPPED_ANVIL,Blocks.DAMAGED_ANVIL);
     private static final Map<String,JsonObject> CATALOG=new HashMap<>();
     private static final Set<String> INVALID=new HashSet<>();
-    private static JsonArray RULES=new JsonArray();
     private static MinecraftServer owner;
     private static int cursor;
     private static final Map<String,Long> LAST_SCAN=new HashMap<>();
     public static void start(MinecraftServer server){
-        owner=server;cursor=0;CATALOG.clear();INVALID.clear();LAST_SCAN.clear();RULES=new JsonArray();
+        owner=server;cursor=0;CATALOG.clear();INVALID.clear();LAST_SCAN.clear();
+        LivingBehaviorRuntime.reload(server);
         Path root=FMLPaths.CONFIGDIR.get();
         var files=new TreeSet<Path>();files.add(root.resolve("realmfolk/facilities.json"));
         Path packs=root.resolve("structureTemplate/terrasense");
@@ -57,9 +57,6 @@ public final class FacilityRuntime {
                 if(old!=null&&!old.equals(row)){CATALOG.remove(key);INVALID.add(key);Realmfolk.LOG.warn("Conflicting facility metadata: {}",key);}
             }
         }catch(Exception ex){Realmfolk.LOG.warn("Invalid living facility catalog {}",file,ex);}
-        Path rules=root.resolve("realmfolk/facility_rules.json");
-        if(Files.isRegularFile(rules))try{RULES=JsonParser.parseString(Files.readString(rules)).getAsJsonObject().getAsJsonArray("facilities");}
-        catch(Exception ex){throw new IllegalStateException("Invalid facility rules: "+rules,ex);}
     }
     public static boolean loaded(ServerLevel level,Bounds b){
         for(int x=Math.floorDiv(b.minX()-1,16);x<=Math.floorDiv(b.maxX()+1,16);x++)
@@ -83,15 +80,25 @@ public final class FacilityRuntime {
         return standable(level,object)?object:null;
     }
     public static boolean valid(ServerLevel level,LivingSite site){
-        return present(level,site)&&standable(level,site.approach);
+        return present(level,site)&&LivingBehaviorRuntime.supported(site)&&standable(level,site.approach);
     }
     private static boolean present(ServerLevel level,LivingSite site){
         if(site==null||site.object==null||!level.hasChunkAt(pos(site.object)))return false;
         BlockState actual=level.getBlockState(pos(site.object));
-        if(site.kind.equals("bed"))return actual.is(BlockTags.BEDS)&&actual.hasProperty(BedBlock.PART)
-            &&actual.getValue(BedBlock.PART)==BedPart.HEAD&&completeBed(level,pos(site.object),actual);
-        if(site.block.equals("minecraft:air"))return true; // An authored activity location survives temporary obstacles.
-        return ForgeRegistries.BLOCKS.getKey(actual.getBlock()).toString().equals(site.block);
+        if(site.kind.equals("bed")&&site.behaviorId().equals("realmfolk:bed"))return nativeBed(level,pos(site.object),actual);
+        if(site.block.equals("minecraft:air"))return !Set.of("bed","seat").contains(site.kind); // Activity locations cannot invent sleeping furniture.
+        if(!ForgeRegistries.BLOCKS.getKey(actual.getBlock()).toString().equals(site.block)||!matchesState(actual,site.requiredState))return false;
+        for(var part:site.requiredParts){
+            BlockPos p=pos(part.position());if(!level.hasChunkAt(p))return false;var other=level.getBlockState(p);
+            if(part.sameBlock()&&!other.is(actual.getBlock()))return false;
+            if(!part.blocks().isEmpty()&&!matches(other,part.blocks()))return false;
+            if(!matchesState(other,part.state()))return false;
+        }
+        return true;
+    }
+    public static boolean nativeBed(ServerLevel level,BlockPos head,BlockState state){
+        return state.is(BlockTags.BEDS)&&state.hasProperty(BedBlock.PART)&&state.hasProperty(BedBlock.FACING)
+                &&state.getValue(BedBlock.PART)==BedPart.HEAD&&completeBed(level,head,state);
     }
     private static boolean completeBed(ServerLevel level,BlockPos head,BlockState state){
         BlockPos foot=head.relative(state.getValue(BedBlock.FACING).getOpposite());
@@ -108,7 +115,7 @@ public final class FacilityRuntime {
     }
     public static void discover(ServerLevel level,Property property,PlannedStructure placement){
         if(!loaded(level,property.bounds)||property.bounds.volume()>2_000_000)return;
-        var sites=new LinkedHashMap<String,LivingSite>();var entrances=new LinkedHashSet<Point>();
+        var sites=new LinkedHashMap<String,LivingSite>();var entrances=new LinkedHashSet<Point>();var configured=new HashSet<String>();
         boolean authored=false;
         if(placement==null&&property.livingSites!=null){
             // Rechecking a furnished building must retain authored room/use/approach metadata and claims.
@@ -130,6 +137,15 @@ public final class FacilityRuntime {
                     String kind=text(f,"kind","");LivingSite site=site(level,kind,p);
                     site.block=text(f,"block",site.block);site.use=text(f,"use","building");site.room=text(f,"room","");site.name=text(f,"name",kind);
                     site.adapter=text(f,"adapter",site.adapter);if(f.has("seatHeight"))site.seatHeight=f.get("seatHeight").getAsDouble();
+                    site.authored=true;site.behavior=text(f,"behavior","");site.sourceRule=text(f,"sourceRule","");
+                    if(f.has("surfaceHeight"))site.surfaceHeight=f.get("surfaceHeight").getAsDouble();
+                    if(f.has("useOffset")){var a=f.getAsJsonArray("useOffset");site.useOffset=transformOffset(new double[]{a.get(0).getAsDouble(),a.get(1).getAsDouble(),a.get(2).getAsDouble()},geometry,property);}
+                    if(f.has("requiredState"))site.requiredState=stateMap(f.getAsJsonObject("requiredState"));
+                    if(f.has("requiredParts"))for(var part:f.getAsJsonArray("requiredParts")){
+                        var q=part.getAsJsonObject();var selectors=new ArrayList<String>();q.getAsJsonArray("blocks").forEach(v->selectors.add(v.getAsString()));
+                        site.requiredParts.add(new LivingSite.Part(transform(q.getAsJsonArray("pos"),geometry,property),selectors,stateMap(q.getAsJsonObject("state")),q.get("sameBlock").getAsBoolean()));
+                    }
+                    if(f.has("slot")&&!f.get("slot").getAsString().equals("default"))site.id+=":"+f.get("slot").getAsString();
                     if(f.has("approach"))site.approach=transform(f.getAsJsonArray("approach"),geometry,property);
                     if(kind.equals("entrance")){if(site.approach!=null)entrances.add(site.approach);else entrances.add(p);}
                     else sites.put(site.id,site);
@@ -140,34 +156,73 @@ public final class FacilityRuntime {
         Bounds b=property.bounds;
         // Physical discovery also handles old templates and furnishings edited after placement.
         for(BlockPos p:BlockPos.betweenClosed(b.minX(),b.minY(),b.minZ(),b.maxX(),b.maxY(),b.maxZ())){
-            var state=level.getBlockState(p);String kind="";
-            if(state.is(BlockTags.BEDS)&&state.hasProperty(BedBlock.PART)&&state.getValue(BedBlock.PART)==BedPart.HEAD&&completeBed(level,p,state))kind="bed";
-            else if(WORK.contains(state.getBlock())||state.is(TagKey.create(Registries.BLOCK,new ResourceLocation("realmfolk:workstations"))))kind="work";
-            if(!kind.isEmpty()){LivingSite s=site(level,kind,point(p));sites.putIfAbsent(s.id,s);}
-            if(state.getBlock() instanceof DoorBlock&&state.getValue(DoorBlock.HALF)==DoubleBlockHalf.LOWER&&standable(level,point(p)))entrances.add(point(p));
-            for(var value:RULES){var rule=value.getAsJsonObject();if(!matches(state,rule))continue;
-                String type=text(rule,"kind","");if(!Set.of("work","seat").contains(type))throw new IllegalArgumentException("Facility kind must be work or seat");
-                LivingSite s=site(level,type,point(p));s.adapter=text(rule,"adapter","stand");s.use=text(rule,"use","building");
-                if(rule.has("seatHeight"))s.seatHeight=rule.get("seatHeight").getAsDouble();
-                if(!Double.isFinite(s.seatHeight)||s.seatHeight<0||s.seatHeight>2)throw new IllegalArgumentException("seatHeight outside 0..2");
-                sites.putIfAbsent(s.id,s);
+            var state=level.getBlockState(p);if(state.isAir())continue;String kind="";
+            for(FacilityRule rule:LivingBehaviorRuntime.rules())if(matches(state,rule.blocks())&&matchesState(state,rule.state())){
+                for(var slot:rule.slots()){
+                    LivingSite fresh=site(level,rule.kind(),point(p));if(!slot.id().equals("default"))fresh.id+=":"+slot.id();
+                    if(!configured.add(fresh.id))continue; // First matching rule owns a physical slot.
+                    fresh.sourceRule=rule.id();fresh.behavior=rule.behavior();fresh.use=rule.use();fresh.surfaceHeight=rule.height();
+                    if(!rule.facing().isEmpty())fresh.facing=rule.facing();
+                    fresh.useOffset=rotate(slot.offset(),fresh.facing);fresh.requiredState=rule.state();
+                    if(slot.approach()!=null){var o=rotate(new double[]{slot.approach()[0],slot.approach()[1],slot.approach()[2]},fresh.facing);fresh.approach=point(p.offset((int)o[0],(int)o[1],(int)o[2]));}
+                    for(var part:rule.parts()){var o=rotate(new double[]{part.offset()[0],part.offset()[1],part.offset()[2]},fresh.facing);fresh.requiredParts.add(new LivingSite.Part(point(p.offset((int)o[0],(int)o[1],(int)o[2])),part.blocks(),partState(part.state(),state),part.sameBlock()));}
+                    preserveAuthor(fresh,sites.get(fresh.id));sites.put(fresh.id,fresh);
+                }
             }
+            if(nativeBed(level,p,state))kind="bed";
+            else if(WORK.contains(state.getBlock())||state.is(TagKey.create(Registries.BLOCK,new ResourceLocation("realmfolk:workstations"))))kind="work";
+            if(!kind.isEmpty()){
+                LivingSite s=site(level,kind,point(p));var old=sites.get(s.id);
+                boolean hasRule=configured.stream().anyMatch(id->id.equals(s.id)||id.startsWith(s.id+":"));
+                if(!hasRule&&(old==null||!old.sourceRule.isEmpty())){preserveAuthor(s,old);sites.put(s.id,s);}
+                else if(hasRule&&!configured.contains(s.id))sites.remove(s.id);
+            }
+            if(state.getBlock() instanceof DoorBlock&&state.getValue(DoorBlock.HALF)==DoubleBlockHalf.LOWER&&standable(level,point(p)))entrances.add(point(p));
         }
         if(entrances.isEmpty())for(int y=b.minY();y<=Math.min(b.maxY(),b.minY()+4);y++){
             for(int x=b.minX();x<=b.maxX();x++)for(int z:new int[]{b.minZ(),b.maxZ()})if(standable(level,new Point(x,y,z)))entrances.add(new Point(x,y,z));
             for(int z=b.minZ();z<=b.maxZ();z++)for(int x:new int[]{b.minX(),b.maxX()})if(standable(level,new Point(x,y,z)))entrances.add(new Point(x,y,z));
             if(!entrances.isEmpty())break;
         }
+        sites.entrySet().removeIf(e->!e.getValue().sourceRule.isEmpty()&&!configured.contains(e.getKey()));
         property.livingSites=new ArrayList<>(sites.values());property.entrances=new ArrayList<>(entrances);
         if(!authored)property.facilitySource="loaded_world";
         verify(level,property);LAST_SCAN.put(property.id,level.getGameTime());dirty(level.getServer());
     }
-    private static boolean matches(BlockState state,JsonObject rule){
-        for(var selector:rule.getAsJsonArray("blocks")){
-            String id=selector.getAsString();
+    private static boolean matches(BlockState state,List<String> selectors){
+        for(String id:selectors){
             if(id.startsWith("#")?state.is(TagKey.create(Registries.BLOCK,new ResourceLocation(id.substring(1)))):ForgeRegistries.BLOCKS.getKey(state.getBlock()).toString().equals(id))return true;
         }return false;
     }
+    @SuppressWarnings({"rawtypes","unchecked"})
+    private static boolean matchesState(BlockState state,Map<String,String> required){
+        for(var e:required.entrySet()){
+            net.minecraft.world.level.block.state.properties.Property p=state.getBlock().getStateDefinition().getProperty(e.getKey());
+            if(p==null||!p.getName(state.getValue(p)).equals(e.getValue()))return false;
+        }return true;
+    }
+    private static Map<String,String> stateMap(JsonObject json){var values=new LinkedHashMap<String,String>();json.entrySet().forEach(e->values.put(e.getKey(),e.getValue().getAsString()));return values;}
+    @SuppressWarnings({"rawtypes","unchecked"})
+    private static Map<String,String> partState(Map<String,String> conditions,BlockState anchor){
+        var result=new LinkedHashMap<String,String>();
+        conditions.forEach((key,value)->{
+            if(value.startsWith("$")){
+                net.minecraft.world.level.block.state.properties.Property property=anchor.getBlock().getStateDefinition().getProperty(value.substring(1));
+                result.put(key,property==null?"<missing anchor property>":property.getName(anchor.getValue(property)));
+            }else result.put(key,value);
+        });return result;
+    }
+    private static void preserveAuthor(LivingSite fresh,LivingSite previous){
+        fresh.inheritAuthorMetadata(previous);
+    }
+    static double[] rotate(double[] p,String facing){return switch(facing){case "east"->new double[]{-p[2],p[1],p[0]};case "south"->new double[]{-p[0],p[1],-p[2]};case "west"->new double[]{p[2],p[1],-p[0]};default->p.clone();};}
+    private static double[] transformOffset(double[] p,CityTemplatePlacementGeometry geometry,Property property){
+        var origin=geometry.worldPosition(new BlockPoint(property.bounds.minX(),property.bounds.minZ()),new BlockPoint(0,0));
+        var x=geometry.worldPosition(new BlockPoint(property.bounds.minX(),property.bounds.minZ()),new BlockPoint(1,0));
+        var z=geometry.worldPosition(new BlockPoint(property.bounds.minX(),property.bounds.minZ()),new BlockPoint(0,1));
+        return new double[]{p[0]*(x.x()-origin.x())+p[2]*(z.x()-origin.x()),p[1],p[0]*(x.z()-origin.z())+p[2]*(z.z()-origin.z())};
+    }
+    public static void invalidateScans(){LAST_SCAN.clear();}
     private static Point transform(JsonArray a,CityTemplatePlacementGeometry geometry,Property p){
         var point=geometry.worldPosition(new BlockPoint(p.bounds.minX(),p.bounds.minZ()),new BlockPoint(a.get(0).getAsInt(),a.get(2).getAsInt()));
         return new Point(point.x(),p.bounds.minY()+a.get(1).getAsInt(),point.z());
@@ -197,7 +252,7 @@ public final class FacilityRuntime {
         for(LivingSite site:property.livingSites){
             site.present=present(level,site);
             site.available=site.present&&site.approach!=null&&reachable.contains(site.approach)&&standable(level,site.approach)
-                &&(!site.kind.equals("seat")||site.adapter.equals("marker_seat"));
+                &&LivingBehaviorRuntime.supported(site);
         }
         property.slots=FacilityAssignments.beds(property).stream().map(s->s.approach).distinct().toList();
         if(!property.slots.isEmpty())property.home=property.slots.get(0);

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "behaviors": {
+    "testpack:reader": {"kinds": ["seat"], "steps": [
+      {"action": "testpack:extension_probe"},
+      {"action": "realmfolk:face"},
+      {"action": "realmfolk:hold_item", "parameters": {"item": "minecraft:book"}},
+      {"action": "realmfolk:sit"}
+    ]}
+  }
+}

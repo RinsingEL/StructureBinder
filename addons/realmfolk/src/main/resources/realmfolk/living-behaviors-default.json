@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "behaviors": {
+    "realmfolk:seat": {"kinds": ["seat"], "steps": [{"action": "realmfolk:face"}, {"action": "realmfolk:sit"}]},
+    "realmfolk:bed": {"kinds": ["bed"], "steps": [{"action": "realmfolk:sleep_bed"}]},
+    "realmfolk:sleep_surface": {"kinds": ["bed"], "steps": [{"action": "realmfolk:face"}, {"action": "realmfolk:sleep_surface"}]},
+    "realmfolk:work": {"kinds": ["work", "meeting"], "steps": [{"action": "realmfolk:work"}]}
+  }
+}

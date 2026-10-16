@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "facilities": [
+    {
+      "id": "create_reading_seats", "requiresMod": "create",
+      "blocks": ["#create:seats"], "kind": "seat", "use": "public",
+      "behavior": "academy:read_seated", "height": 0.5
+    },
+    {
+      "id": "comforts_sleeping_bags", "requiresMod": "comforts",
+      "blocks": ["#comforts:sleeping_bags"], "state": {"part": "head", "waterlogged": "false"},
+      "kind": "bed", "use": "building", "behavior": "pack:sleeping_bag", "height": 0.1875,
+      "requires": [{"offset": [0, 0, 1], "sameBlock": true, "state": {"part": "foot", "facing": "$facing", "waterlogged": "false"}}]
+    },
+    {
+      "id": "comforts_hammocks", "requiresMod": "comforts",
+      "blocks": ["#comforts:hammocks"], "state": {"part": "head", "waterlogged": "false"},
+      "kind": "bed", "use": "building", "behavior": "pack:hammock", "height": 0.0625,
+      "requires": [{"offset": [0, 0, 1], "sameBlock": true, "state": {"part": "foot", "facing": "$facing", "waterlogged": "false"}}]
+    }
+  ]
+}

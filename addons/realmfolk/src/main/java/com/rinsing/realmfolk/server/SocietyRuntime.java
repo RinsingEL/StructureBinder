@@ -88,6 +88,10 @@ public final class SocietyRuntime {
         }
     }
     @SubscribeEvent public static void logout(PlayerEvent.PlayerLoggedOutEvent event) { ShopService.close(event.getEntity().getUUID());ContainerWatch.close(event.getEntity().getUUID()); INSPECT.remove(event.getEntity().getUUID().toString()); }
+    @SubscribeEvent public static void sleepingLocation(SleepingLocationCheckEvent event){
+        if(event.getEntity() instanceof CitizenEntity npc&&npc.configuredSleeping())
+            event.setResult(npc.level().isClientSide||LivingBehaviorRuntime.permitsSleep(npc,event.getSleepingLocation())?Event.Result.ALLOW:Event.Result.DENY);
+    }
     @SubscribeEvent(priority=EventPriority.LOWEST) public static void broken(BlockEvent.BreakEvent event) {
         if(event.isCanceled() || !(event.getPlayer() instanceof ServerPlayer p)) return;
         FacilityRuntime.changed(p.serverLevel(),event.getPos());
@@ -162,7 +166,7 @@ public final class SocietyRuntime {
         IGNITIONS.clear();
         if(event.getServer().getTickCount()%20!=0)return;
         MinecraftServer server=event.getServer(); Society s=society(server);
-        if(server.getTickCount()%200==0) GeomantiaBridge.refresh(server);
+        if(server.getTickCount()%200==0){LivingBehaviorRuntime.prune();GeomantiaBridge.refresh(server);}
         int spawned=0;
         for(Citizen c:s.citizens.values()) {
             if(c.spawned||c.dead||spawned>=8)continue;

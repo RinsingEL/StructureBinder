@@ -29,6 +29,7 @@ minecraft {
         server { args '--nogui' }
         gameTestServer {
             property 'forge.enabledGameTestNamespaces', 'realmfolk'
+            property 'realmfolk.behaviorGameTests', 'true'
             workingDirectory project.file('run-gametest')
         }
     }
@@ -58,6 +59,10 @@ tasks.matching { it.name == 'prepareRunGameTestServer' }.configureEach {
         copy {
             from 'src/main/resources/gameteststructures'
             into 'run-gametest/gameteststructures'
+        }
+        copy {
+            from 'src/gametest/resources/config'
+            into 'run-gametest/config'
         }
     }
 }

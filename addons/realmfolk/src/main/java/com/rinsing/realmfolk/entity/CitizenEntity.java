@@ -21,8 +21,10 @@ public final class CitizenEntity extends PathfinderMob implements net.minecraft.
     private static final EntityDataAccessor<String> ROLE=SynchedEntityData.defineId(CitizenEntity.class,EntityDataSerializers.STRING);
     private static final EntityDataAccessor<String> ACTIVITY=SynchedEntityData.defineId(CitizenEntity.class,EntityDataSerializers.STRING);
     private static final EntityDataAccessor<String> APPEARANCE=SynchedEntityData.defineId(CitizenEntity.class,EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<String> SLEEP_DIRECTION=SynchedEntityData.defineId(CitizenEntity.class,EntityDataSerializers.STRING);
     private String citizenId="";
     private int appliedRevision=-1;
+    private boolean recoveredBehavior;
     public CitizenEntity(EntityType<? extends CitizenEntity> type, Level level) {
         super(type,level); setPersistenceRequired(); setPathfindingMalus(BlockPathTypes.DANGER_FIRE,16);
         if (getNavigation() instanceof net.minecraft.world.entity.ai.navigation.GroundPathNavigation nav) nav.setCanOpenDoors(true);
@@ -34,7 +36,7 @@ public final class CitizenEntity extends PathfinderMob implements net.minecraft.
     @Override protected net.minecraft.world.entity.ai.navigation.PathNavigation createNavigation(Level level) {
         return new CitizenNavigation(this,level);
     }
-    @Override protected void defineSynchedData() { super.defineSynchedData(); entityData.define(ROLE,"resident"); entityData.define(ACTIVITY,"闲逛");entityData.define(APPEARANCE,"resident"); }
+    @Override protected void defineSynchedData() { super.defineSynchedData(); entityData.define(ROLE,"resident"); entityData.define(ACTIVITY,"闲逛");entityData.define(APPEARANCE,"resident");entityData.define(SLEEP_DIRECTION,""); }
     @Override protected void registerGoals() {
         goalSelector.addGoal(0,new FloatGoal(this));
         goalSelector.addGoal(1,new MeleeAttackGoal(this,1.15,true));
@@ -65,6 +67,17 @@ public final class CitizenEntity extends PathfinderMob implements net.minecraft.
     public String citizenId() { return citizenId; }
     public String role() { return entityData.get(ROLE); }
     public String activity() { return entityData.get(ACTIVITY); }
+    public boolean configuredSleeping(){return !entityData.get(SLEEP_DIRECTION).isEmpty();}
+    public void startConfiguredSleeping(BlockPos position,net.minecraft.core.Direction direction,net.minecraft.world.phys.Vec3 location){
+        if(isPassenger())stopRiding();entityData.set(SLEEP_DIRECTION,direction.getName());
+        setPose(Pose.SLEEPING);setSleepingPos(position);setPos(location);setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);hasImpulse=true;
+    }
+    @Override public net.minecraft.core.Direction getBedOrientation(){return configuredSleeping()?net.minecraft.core.Direction.byName(entityData.get(SLEEP_DIRECTION)):super.getBedOrientation();}
+    @Override public void stopSleeping(){
+        // A configured surface need not implement vanilla bed properties or stand-up placement.
+        if(configuredSleeping()){clearSleepingPos();entityData.set(SLEEP_DIRECTION,"");}
+        super.stopSleeping();
+    }
     @Override public net.minecraft.world.entity.npc.VillagerData getVillagerData() {
         var profession=switch(entityData.get(APPEARANCE)) {
             case "smith" -> net.minecraft.world.entity.npc.VillagerProfession.TOOLSMITH;
@@ -79,14 +92,19 @@ public final class CitizenEntity extends PathfinderMob implements net.minecraft.
     }
     @Override public void setVillagerData(net.minecraft.world.entity.npc.VillagerData data) { /* Occupation is authored in the citizen profile. */ }
     public void activity(String text) { entityData.set(ACTIVITY,text); }
-    @Override public void addAdditionalSaveData(CompoundTag tag) { super.addAdditionalSaveData(tag); tag.putString("CitizenId",citizenId); tag.putString("Role",role()); }
-    @Override public void readAdditionalSaveData(CompoundTag tag) { super.readAdditionalSaveData(tag); citizenId=tag.getString("CitizenId"); entityData.set(ROLE,tag.getString("Role")); }
+    @Override public void addAdditionalSaveData(CompoundTag tag) { super.addAdditionalSaveData(tag); tag.putString("CitizenId",citizenId); tag.putString("Role",role());tag.putString("LivingSleepDirection",entityData.get(SLEEP_DIRECTION)); }
+    @Override public void readAdditionalSaveData(CompoundTag tag) { super.readAdditionalSaveData(tag); citizenId=tag.getString("CitizenId"); entityData.set(ROLE,tag.getString("Role"));entityData.set(SLEEP_DIRECTION,tag.getString("LivingSleepDirection"));recoveredBehavior=false; }
     @Override public InteractionResult mobInteract(Player player, InteractionHand hand) {
         if (hand!=InteractionHand.MAIN_HAND) return InteractionResult.PASS;
         if (player instanceof ServerPlayer serverPlayer) { com.rinsing.realmfolk.server.DailyLifeRuntime.interrupt(this); Dialogues.open(serverPlayer,this,""); }
         return InteractionResult.sidedSuccess(level().isClientSide);
     }
-    @Override public void tick() { super.tick(); if (!level().isClientSide && tickCount%20==0) SocietyRuntime.tickCitizen(this); }
+    @Override public void tick() {
+        if(!level().isClientSide&&!recoveredBehavior){
+            com.rinsing.realmfolk.server.BuiltinLivingActions.recover(this);recoveredBehavior=true;
+        }
+        super.tick();if(!level().isClientSide&&tickCount%20==0)SocietyRuntime.tickCitizen(this);
+    }
     @Override public boolean removeWhenFarAway(double distance) { return false; }
     @Override public boolean canAttack(LivingEntity target) { return target.isAlive() && super.canAttack(target); }
     public Society.Citizen profile() { return level().getServer()==null?null:SocietyData.get(level().getServer()).society.citizens.get(citizenId); }

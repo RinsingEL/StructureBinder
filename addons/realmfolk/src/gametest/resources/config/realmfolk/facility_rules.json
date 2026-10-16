@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "facilities": [
+    {"id": "test_mat", "blocks": ["minecraft:blue_carpet"], "kind": "bed", "behavior": "realmfolk:sleep_surface", "height": 0.1875, "slots": [{"id": "default", "approach": [1, 0, 0]}]},
+    {"id": "test_bag", "blocks": ["minecraft:white_carpet"], "kind": "bed", "behavior": "realmfolk:sleep_surface", "height": 0.1875,
+      "requires": [{"offset": [0, 0, 1], "sameBlock": true}], "slots": [{"id": "default", "approach": [1, 0, 0]}]},
+    {"id": "test_seat", "blocks": ["minecraft:oak_stairs"], "kind": "seat", "behavior": "testpack:reader", "height": 0.5, "slots": [{"id": "default", "approach": [1, 0, 0]}]}
+  ]
+}

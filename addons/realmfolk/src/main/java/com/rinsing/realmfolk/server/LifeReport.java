@@ -29,6 +29,7 @@ public final class LifeReport {
             var entity=level==null?null:level.getEntity(UUID.fromString(c.id));row.addProperty("loaded",entity!=null);
             if(entity instanceof CitizenEntity npc){row.addProperty("entityId",npc.getId());row.addProperty("activity",npc.activity());row.addProperty("sleeping",npc.isSleeping());row.addProperty("sitting",npc.isPassenger());row.addProperty("usingItem",npc.isUsingItem());row.addProperty("sheltered",!level.canSeeSky(npc.blockPosition()));row.add("position",DesignCodec.JSON.toJsonTree(point(npc.blockPosition())));}
             if(entity instanceof CitizenEntity npc){
+                row.add("livingBehavior",LivingBehaviorRuntime.status(npc));
                 row.addProperty("entityTicks",npc.tickCount);
                 row.addProperty("nearestPlayerDistance",level.players().stream().mapToDouble(npc::distanceToSqr).min().stream().map(Math::sqrt).findFirst().orElse(-1));
                 row.addProperty("navigationDone",npc.getNavigation().isDone());
