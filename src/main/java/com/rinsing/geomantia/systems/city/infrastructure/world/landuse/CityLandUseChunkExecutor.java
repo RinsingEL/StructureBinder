@@ -458,6 +458,7 @@ public final class CityLandUseChunkExecutor {
                 com.rinsing.geomantia.systems.city.application.landuse.CityVillageRoadPlanner.DECORATION_SOURCE))
             roadsideDecorations.computeIfAbsent(new ColumnKey(feature.x(), feature.z()), ignored -> new ArrayList<>()).add(feature);
         Set<ColumnKey> checkedDecorations = new HashSet<>();
+        Map<ColumnKey,Integer> greeneryTargets = greenerySectionTargets(world, featureOperations);
         for (CityLandUseChunkCompiler.FeatureOperation operation : featureOperations) {
             ColumnKey key = new ColumnKey(operation.x(), operation.z());
             ColumnSample column = terrainView.sample(operation.x(), operation.z());
@@ -517,6 +518,25 @@ public final class CityLandUseChunkExecutor {
                     : fill == null ? column.surfaceY() : fill.targetY());
             boolean bridgePost=bridgePierRails.contains(operation);
             if(operation.targetSurfaceY()!=null) surfaceY=operation.targetSurfaceY();
+            // 公共绿地按 3x3 邻域众数归并小起伏，最多填/挖 2 格；大高差保持原地形，由边界收边。
+            Integer greeneryTarget = publicGreenery && operation.surfaceOffset() == 0 ? greeneryTargets.get(key) : null;
+            if (greeneryTarget != null) {
+                int delta = greeneryTarget - column.surfaceY();
+                for (int y = Math.min(column.surfaceY(), greeneryTarget) + 1;
+                     y <= Math.max(column.surfaceY(), greeneryTarget); y++) {
+                    boolean raising = delta > 0;
+                    PreparedMutation level = prepare(world, operation.sourceId(),
+                            raising ? OperationPhase.MICRO_FILL : OperationPhase.MICRO_CUT,
+                            operation.x(), y, operation.z(), raising ? "minecraft:dirt" : "minecraft:air", raising);
+                    if (level.failureReason() != null) {
+                        return ExecutionResult.failed(fragment, level,
+                                preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
+                                naturalSurfaceSkipped, occupiedBoundarySkipped, true);
+                    }
+                    basePrepared.add(level);
+                }
+                surfaceY = greeneryTarget;
+            }
             if(operation.kind()==CityLandUseSurfacePrintPlan.FeatureKind.TERRACE_RAIL
                     && internalTerrace(sharedTerraceHeights,operation.x(),operation.z(),surfaceY)) continue;
             if(operation.kind()==CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_RAIL) {
@@ -1209,7 +1229,34 @@ public final class CityLandUseChunkExecutor {
         }
     }
 
-    private record ColumnKey(int x, int z) {
+    /** 公共绿化列按 3x3 邻域众数取整平目标；与原地形差超过 2 格的列不动。 */
+    static Map<ColumnKey,Integer> greenerySectionTargets(ExecutionWorld world, List<CityLandUseChunkCompiler.FeatureOperation> features) {
+        Map<ColumnKey,Integer> ground = new LinkedHashMap<>();
+        for (var feature : features) {
+            if (feature.surfaceOffset() != 0) continue;
+            if (!feature.sourceId().startsWith(com.rinsing.geomantia.systems.city.application.landuse.CityPublicGreeneryPlanner.SOURCE)) continue;
+            if (feature.kind() != CityLandUseSurfacePrintPlan.FeatureKind.GREEN_GROUND
+                    && feature.kind() != CityLandUseSurfacePrintPlan.FeatureKind.GREEN_PATH) continue;
+            ground.putIfAbsent(new ColumnKey(feature.x(), feature.z()),
+                    world.samplePublicGround(feature.x(), feature.z()).surfaceY());
+        }
+        Map<ColumnKey,Integer> targets = new LinkedHashMap<>();
+        for (var entry : ground.entrySet()) {
+            int x = entry.getKey().x(), z = entry.getKey().z();
+            Map<Integer,Integer> counts = new java.util.TreeMap<>();
+            for (int dz = -1; dz <= 1; dz++) for (int dx = -1; dx <= 1; dx++) {
+                Integer y = ground.get(new ColumnKey(x + dx, z + dz));
+                if (y != null) counts.merge(y, 1, Integer::sum);
+            }
+            int mode = counts.entrySet().stream()
+                    .max(java.util.Comparator.<Map.Entry<Integer,Integer>>comparingInt(Map.Entry::getValue)
+                            .thenComparingInt(candidate -> -candidate.getKey())).orElseThrow().getKey();
+            if (Math.abs(mode - entry.getValue()) <= 2) targets.put(entry.getKey(), mode);
+        }
+        return targets;
+    }
+
+    record ColumnKey(int x, int z) {
     }
 
     private record BoundaryApplyResult(boolean success, String reasonCode, boolean rollbackComplete, PreparedMutation failedMutation) {
