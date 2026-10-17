@@ -60,7 +60,7 @@ public final class Design {
     }
     public static class PublicActivity {
         public String id="market", name="逛集市";
-        public int start=5000, end=8000, capacity=12, maxDistance=128;
+        public int start=5000, end=8000, capacity=12, maxDistance=384;
         public double participation=.6;
         public List<String> placeTerms=new ArrayList<>();
     }
@@ -114,6 +114,13 @@ public final class Design {
         if(result.populationMode==null)result.populationMode="fixed";
         if(result.housingOccupancy==null)result.housingOccupancy=1.0;
         if(result.activities==null)result.activities=List.of();
+        // 旧默认 128 格覆盖不了学院城 142–334 格的食堂与广场；新默认 384，老配置解析时迁移。
+        result.activities=result.activities.stream().map(activity->{
+            if(activity.maxDistance>128)return activity;
+            PublicActivity migrated=DesignCodec.copy(activity,PublicActivity.class);
+            migrated.maxDistance=new PublicActivity().maxDistance;
+            return migrated;
+        }).toList();
         return new Resolved(result,plan.keyPeople,rule.law);
     }
     private static void apply(Settings target,Settings source) {
