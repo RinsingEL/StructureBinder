@@ -4339,6 +4339,11 @@ final class CityPlanningEndpointHandler {
         if (!CityWallReservationPlanner.SCHEMA.equals(stringValue(reservation, "schema", ""))) {
             return;
         }
+        // 按城市定位不建墙时没有墙线，也就没有可校验的墙内约束。
+        if ("none".equals(stringValue(reservation, "wallPolicy", ""))
+                || !reservation.has("wallLine") || reservation.getAsJsonArray("wallLine").isEmpty()) {
+            return;
+        }
         BlockBounds coverage = reservation.has("wallCoverageBounds")
                 && reservation.get("wallCoverageBounds").isJsonObject()
                 ? bounds(reservation.getAsJsonObject("wallCoverageBounds"))
