@@ -1,5 +1,6 @@
 {
   "enabled": true,
+  "scales": ["village"],
   "roadKinds": ["COMPACT_ALLEY"],
   "seed": 7391,
   "surfacePalette": [
