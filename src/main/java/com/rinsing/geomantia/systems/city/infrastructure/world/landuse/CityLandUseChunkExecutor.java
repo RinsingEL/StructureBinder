@@ -490,16 +490,21 @@ public final class CityLandUseChunkExecutor {
                 }
                 if (operation.surfaceOffset() == 0) {
                     List<PreparedMutation> clearing = new ArrayList<>();
-                    for (int y = column.surfaceY() + 1; y <= column.surfaceY() + 32; y++) {
-                        if (!world.isPublicVegetation(operation.x(), y, operation.z())) continue;
-                        PreparedMutation clear = prepare(world, operation.sourceId(), OperationPhase.MICRO_CUT,
-                                operation.x(), y, operation.z(), "minecraft:air", false);
-                        if (clear.failureReason() != null) {
-                            return ExecutionResult.failed(fragment, clear,
-                                    preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
-                                    naturalSurfaceSkipped, occupiedBoundarySkipped, true);
+                    // 原生树冠可能伸进相邻 2 格；只清本列会把树裁成悬空树叶，这里按整棵树清理。
+                    for (int dz = -2; dz <= 2; dz++) for (int dx = -2; dx <= 2; dx++) {
+                        int clearX = operation.x() + dx, clearZ = operation.z() + dz;
+                        if (!world.ensureCanWrite(clearX, column.surfaceY() + 1, clearZ)) continue;
+                        for (int y = column.surfaceY() + 1; y <= column.surfaceY() + 32; y++) {
+                            if (!world.isPublicVegetation(clearX, y, clearZ)) continue;
+                            PreparedMutation clear = prepare(world, operation.sourceId(), OperationPhase.MICRO_CUT,
+                                    clearX, y, clearZ, "minecraft:air", false);
+                            if (clear.failureReason() != null) {
+                                return ExecutionResult.failed(fragment, clear,
+                                        preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
+                                        naturalSurfaceSkipped, occupiedBoundarySkipped, true);
+                            }
+                            clearing.add(clear);
                         }
-                        clearing.add(clear);
                     }
                     basePrepared.addAll(clearing);
                 }

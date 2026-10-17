@@ -69,6 +69,7 @@ public final class CityReservationMaskPlanner {
             addReason(reasons, anchorId, "footprint", footprint, "planned footprint");
         }
         appendWallReservation(noVegetation, vegetationLimited, noVanillaStructure, reasons, wallReservationPlan);
+        appendCityDomainMask(noVegetation, reasons, structureAnchorMap, wallReservationPlan);
 
         JsonObject mask = new JsonObject();
         mask.addProperty("schema", MASK_SCHEMA);
@@ -122,6 +123,38 @@ public final class CityReservationMaskPlanner {
         BuildOperationPlan operationPlan = new BuildOperationPlan(BuildOperationPlan.SCHEMA,
                 cityId, "geomantia_templates/d5", operations);
         return new Result(mask, roadIntent.asJson(), operationPlan.asJson(), quality);
+    }
+
+    /** 城区域内不再保留原生植被：墙线优先，没有墙时用结构包络外扩，避免树被裁成半棵。 */
+    static void appendCityDomainMask(JsonArray noVegetation, JsonArray reasons, JsonObject anchorMap,
+                                     JsonObject wallReservationPlan) {
+        BlockBounds domain = null;
+        if (wallReservationPlan != null && wallReservationPlan.has("wallBounds")
+                && wallReservationPlan.get("wallBounds").isJsonObject()) {
+            domain = bounds(wallReservationPlan.getAsJsonObject("wallBounds"));
+        } else if (anchorMap != null && anchorMap.has("anchors") && anchorMap.get("anchors").isJsonArray()) {
+            for (JsonElement element : anchorMap.getAsJsonArray("anchors")) {
+                if (!element.isJsonObject()) continue;
+                JsonObject anchor = element.getAsJsonObject();
+                JsonObject envelope = anchor.has("collisionEnvelope") && anchor.get("collisionEnvelope").isJsonObject()
+                        ? anchor.getAsJsonObject("collisionEnvelope")
+                        : anchor.has("reservedEnvelope") && anchor.get("reservedEnvelope").isJsonObject()
+                        ? anchor.getAsJsonObject("reservedEnvelope") : null;
+                if (envelope == null) continue;
+                BlockBounds expanded = CityStructureAnchorPlanner.expand(bounds(envelope),
+                        CityStructureAnchorPlanner.DEFAULT_MASK_MARGIN_BLOCKS);
+                domain = domain == null ? expanded : union(domain, expanded);
+            }
+        }
+        if (domain == null) return;
+        addMask(noVegetation, "city_domain_no_vegetation", domain, "city_domain_no_vegetation", "city_domain");
+        addReason(reasons, "city_domain", "city_domain_no_vegetation", domain,
+                "clear native vegetation inside the planned city domain");
+    }
+
+    private static BlockBounds union(BlockBounds left, BlockBounds right) {
+        return new BlockBounds(Math.min(left.minX(), right.minX()), Math.min(left.minZ(), right.minZ()),
+                Math.max(left.maxX(), right.maxX()), Math.max(left.maxZ(), right.maxZ()));
     }
 
     private static void addMask(JsonArray array, String id, BlockBounds bounds, String type, String sourceRef) {
