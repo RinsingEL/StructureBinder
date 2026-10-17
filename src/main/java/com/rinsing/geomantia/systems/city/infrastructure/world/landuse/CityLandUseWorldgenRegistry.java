@@ -449,9 +449,22 @@ public final class CityLandUseWorldgenRegistry {
         return new CityLandUseChunkCompiler.ChunkFragment(f.schema(),f.cityId(),f.planHash(),f.paletteHash(),
                 f.chunkX(),f.chunkZ(),f.relevantCellCount(),f.footprintExcludedCount(),f.corridorExcludedCount(),f.gateExcludedCount(),
                 f.microFillBlockId(),f.gradingMaskCells(),f.surfaceOperations(),f.boundaryOperations(),
-                f.featureOperations().stream().filter(v->!rejected.contains(v.sourceId())).toList(),
-                f.gradingFeatureOperations().stream().filter(v->!rejected.contains(v.sourceId())).toList(),
+                plantingBackground(f.featureOperations(),rejected),
+                plantingBackground(f.gradingFeatureOperations(),rejected),
                 f.platformPurposeAnchors(),f.platformAccessDemands(),f.materialField(),f.sharedTerraceSpans());
+    }
+
+    private static List<CityLandUseChunkCompiler.FeatureOperation> plantingBackground(
+            List<CityLandUseChunkCompiler.FeatureOperation> features,Set<String> deferred) {
+        // Authored soil replaces the green feature during planning. Keep that ground in
+        // the base pass, so admission sees supported soil and rejection leaves grass.
+        return features.stream().filter(f->!deferred.contains(f.sourceId())
+                        || f.surfaceOffset()==0 && f.targetSurfaceY()!=null)
+                .map(f->deferred.contains(f.sourceId())
+                        ? new CityLandUseChunkCompiler.FeatureOperation(
+                        com.rinsing.geomantia.systems.city.application.landuse.CityPublicGroundPlanner.SOURCE+f.sourceId(),
+                        f.x(),f.z(),"minecraft:grass_block",0,CityLandUseSurfacePrintPlan.FeatureKind.GREEN_GROUND,
+                        CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,f.targetSurfaceY()) : f).toList();
     }
 
     private static CityLandUseChunkCompiler.ChunkFragment onlyPlanting(CityLandUseChunkCompiler.ChunkFragment f) {

@@ -8,6 +8,14 @@ import java.util.HashMap;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CityLandUseCapturedAccessTest {
+    @Test void campusEntrancesFollowActualOneBlockGroundGradesToFrozenRoads() throws Exception {
+        for(String name:java.util.List.of("campus-access--174_312.json","campus-access--176_312.json")) {
+            var plan=replay(name);
+            assertFalse(plan.accessOutcomes().isEmpty());
+            assertTrue(plan.accessOutcomes().stream().noneMatch(o->o.status()==CityLandUseMicroGrader.AccessStatus.FAILED),
+                    name+": "+plan.accessOutcomes());
+        }
+    }
     @Test void yajingEntrancesUseTheirAlreadyGradedRoadInsteadOfBlockingWholeOwners() throws Exception {
         for (String name : java.util.List.of("yajing-access-354_274.json", "yajing-access-355_274.json",
                 "yajing-access-358_277.json")) {

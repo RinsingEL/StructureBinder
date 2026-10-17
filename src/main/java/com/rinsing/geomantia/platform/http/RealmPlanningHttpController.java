@@ -1383,7 +1383,10 @@ final class RealmPlanningHttpController implements AutoCloseable {
                     && response.get("ok").getAsBoolean()
                     && java.util.Set.of("completed", "completed_with_errors").contains(stringValue(response, "status", ""));
             if (saveAfter) {
-                server.saveAllChunks(true, true, true);
+                callOnServerThread(() -> {
+                    server.saveAllChunks(true, true, true);
+                    return null;
+                });
             }
             response.addProperty("worldSaveRequested", saveAfter);
             return response;

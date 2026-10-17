@@ -15,6 +15,28 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandUseMicroGraderTest {
+    @Test void flowerPatchFrozenGroundDoesNotGrowAnOldPlatformAndRailingUnderIt() {
+        var mask=new ArrayList<CityLandUseChunkCompiler.GradingMaskCell>();
+        var surfaces=new ArrayList<CityLandUseChunkCompiler.SurfaceOperation>();
+        var features=new ArrayList<CityLandUseChunkCompiler.FeatureOperation>();
+        for(int z=0;z<5;z++)for(int x=0;x<5;x++) {
+            mask.add(new CityLandUseChunkCompiler.GradingMaskCell("pad",x,z,true,68));
+            surfaces.add(new CityLandUseChunkCompiler.SurfaceOperation("pad","plaza",x,z,"minecraft:stone_bricks"));
+            boolean flower=x==2&&z==2;
+            features.add(new CityLandUseChunkCompiler.FeatureOperation(flower?"public_realm::flower@asset#hash":"public_ground::city",
+                    x,z,flower?"minecraft:dirt":"minecraft:grass_block",0,flower?CityLandUseSurfacePrintPlan.FeatureKind.AUTHORED_BLOCK:
+                    CityLandUseSurfacePrintPlan.FeatureKind.GREEN_GROUND,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,65));
+        }
+        features.add(new CityLandUseChunkCompiler.FeatureOperation("public_realm::flower@asset#hash",2,2,"minecraft:allium",1,
+                CityLandUseSurfacePrintPlan.FeatureKind.AUTHORED_BLOCK,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,65));
+        var fragment=new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,"city","hash","palette",
+                0,0,25,0,0,0,"minecraft:dirt",mask,surfaces,List.of(),features,features);
+        var plan=CityLandUseMicroGrader.planFoundationPlatform(fragment,
+                (x,z)->new CityLandUseChunkExecutor.ColumnSample(65,"minecraft:grass_block",true));
+        assertTrue(plan.decisions().stream().allMatch(d->d.targetY()==65));
+        assertTrue(plan.retainingWalls().isEmpty());
+        assertTrue(plan.terraceEdges().isEmpty());
+    }
     @Test
     void platformAccessChoosesAnotherWholeFlightWhenItsOriginalRunIsARoad() {
         var purposes=List.of(

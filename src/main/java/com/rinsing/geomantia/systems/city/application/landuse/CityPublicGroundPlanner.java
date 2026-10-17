@@ -23,6 +23,7 @@ public final class CityPublicGroundPlanner {
             return c==null?new CityPublicRealmPlanner.Ground(-2048,false):new CityPublicRealmPlanner.Ground((int)Math.round(c.elevation()),c.sampled()&&!c.water());});
         Set<BlockPoint> protectedStructures=district.structures();int wetCount=0;
         List<AreaPrint> areas=new ArrayList<>();
+        Map<BlockPoint,Integer> frozenPlatforms=new HashMap<>();
         for(var area:source.areas()){
             if(!(area.recipe() instanceof UniformRecipe u)||u.platformSpans().isEmpty()){areas.add(area);continue;}
             Map<BlockPoint,Integer> dry=new HashMap<>(),excluded=new HashMap<>();
@@ -30,6 +31,7 @@ public final class CityPublicGroundPlanner {
             for(var s:u.platformSpans())for(int x=s.minX();x<=s.maxX();x++){var p=new BlockPoint(x,s.z());
                 if(protectedStructures.contains(p)||ground.apply(p).dryLand())dry.put(p,s.targetY());else {wetCount++;excluded.put(p,0);}}
             var spans=CitySharedTerracePlanner.spans(dry);
+            frozenPlatforms.putAll(dry);
             areas.add(new AreaPrint(area.printAreaId(),area.landUseAreaId(),area.sourceGroupIds(),area.surfaceSettings(),
                     area.memberSpans(),CitySharedTerracePlanner.spans(excluded).stream().map(s->new LandUseAreaPlan.ScanlineSpan(s.z(),s.minX(),s.maxX())).toList(),area.surfaceAlgorithm(),area.algorithmAnchor(),
                     new UniformRecipe(u.surfaceBlockId(),u.boundaryBlockId(),spans),area.terrainReferenceCells()));
@@ -57,7 +59,12 @@ public final class CityPublicGroundPlanner {
         for(var space:district.publicSpaces()){
             var b=space.bounds();var points=greens.keySet().stream().filter(p->b.contains(p.x(),p.z())).toList();if(points.isEmpty())continue;
             var ys=points.stream().map(p->greens.get(p).targetSurfaceY()!=null?greens.get(p).targetSurfaceY():ground.apply(p).surfaceY()).sorted().toList();int y=ys.get(ys.size()/2);
-            if(points.stream().allMatch(p->Math.abs(ground.apply(p).surfaceY()-y)<=6))points.forEach(p->targets.put(p,y));
+            var sharedYs=points.stream().map(frozenPlatforms::get).filter(Objects::nonNull).sorted().toList();
+            if(sharedYs.isEmpty())sharedYs=kept.stream().filter(f->f.surfaceOffset()==0&&f.kind()==FeatureKind.TERRACE_GROUND
+                    &&f.targetSurfaceY()!=null&&b.contains(f.x(),f.z())).map(FeatureCell::targetSurfaceY).sorted().toList();
+            if(!sharedYs.isEmpty())y=sharedYs.get(sharedYs.size()/2);
+            final int courtY=y;
+            if(points.stream().allMatch(p->Math.abs(ground.apply(p).surfaceY()-courtY)<=6))points.forEach(p->targets.put(p,courtY));
             else warnings.add("CITY_PUBLIC_SPACE_RELIEF_REQUIRES_DESIGN:"+space.owner());
             long area=(long)b.widthBlocks()*b.heightBlocks();if(points.size()<area*.9)warnings.add("CITY_PUBLIC_SPACE_NATURAL_WATER_RETAINED:"+space.owner());
         }

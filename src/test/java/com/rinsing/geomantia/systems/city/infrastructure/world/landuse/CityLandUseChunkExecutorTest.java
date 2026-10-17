@@ -1,6 +1,7 @@
 package com.rinsing.geomantia.systems.city.infrastructure.world.landuse;
 
 import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan;
+import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import net.minecraft.core.BlockPos;
 import org.junit.jupiter.api.Test;
 
@@ -63,7 +64,44 @@ class CityLandUseChunkExecutorTest {
         assertEquals(CityLandUseChunkExecutor.Status.FAILED,new CityLandUseChunkExecutor().execute(fragment,blocked,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES).status());assertTrue(blocked.writes.isEmpty());
     }
     private final CityLandUseChunkExecutor executor = new CityLandUseChunkExecutor();
-    @Test void connectionTerraceIsSolidAndClearsNativeVegetationButRejectsWater() {
+    @Test void publicGreenGroundCapsADeepDryCarverWithoutRollingBackTheOwner() {
+        var ground=new CityLandUseChunkCompiler.FeatureOperation("public_ground::city",3,3,"minecraft:grass_block",0,
+                CityLandUseSurfacePrintPlan.FeatureKind.GREEN_GROUND,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,64);
+        var fragment=new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,"city","hash","palette",
+                0,0,1,0,0,0,"minecraft:dirt",List.of(),List.of(),List.of(),List.of(ground),List.of(ground));
+        var world=new FakeWorld();world.columns.put("3,3",new CityLandUseChunkExecutor.ColumnSample(34,"minecraft:stone",true));
+        var result=executor.execute(fragment,world,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED,result.status());
+        assertTrue(world.writes.contains("3,63,3=minecraft:stone_bricks"));
+        assertTrue(world.writes.contains("3,64,3=minecraft:grass_block"));
+    }
+
+    @Test void accessCutReplacesFrozenGrassAndActuallyWritesItsStairs() {
+        var mask=new ArrayList<CityLandUseChunkCompiler.GradingMaskCell>();
+        var surfaces=new ArrayList<CityLandUseChunkCompiler.SurfaceOperation>();
+        var features=new ArrayList<CityLandUseChunkCompiler.FeatureOperation>();
+        for(int z=0;z<=10;z++)for(int x=0;x<16;x++) {
+            int y=z==10?64:68;
+            mask.add(new CityLandUseChunkCompiler.GradingMaskCell("pad",x,z,true,y));
+            surfaces.add(new CityLandUseChunkCompiler.SurfaceOperation("pad","plaza",x,z,"minecraft:stone_bricks"));
+            features.add(new CityLandUseChunkCompiler.FeatureOperation(z==10?"road":"public_ground::city",x,z,
+                    z==10?"minecraft:stone_brick_slab":"minecraft:grass_block",0,
+                    z==10?CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB:CityLandUseSurfacePrintPlan.FeatureKind.GREEN_GROUND,
+                    CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,y));
+        }
+        var demand=new CityLandUseChunkCompiler.PlatformAccessDemand("pad","door",new BlockPoint(8,4),
+                com.rinsing.geomantia.systems.city.domain.landuse.CardinalDirection.SOUTH);
+        var fragment=new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,"city","hash","palette",
+                0,0,176,0,0,0,"minecraft:dirt",mask,surfaces,List.of(),features,features,List.of(),List.of(demand));
+        var world=new FakeWorld();var plan=CityLandUseMicroGrader.planFoundationPlatform(fragment,world::sampleColumn);
+        assertFalse(plan.stairs().isEmpty());
+        var result=executor.execute(fragment,world,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED,result.status());
+        for(var stair:plan.stairs())assertTrue(world.featureWrites.contains(stair.x()+","+stair.targetY()+","+stair.z()+
+                "=ROAD_STAIR:"+stair.facing()),stair.toString());
+    }
+
+    @Test void connectionTerraceIsSolidAndPreservesLateWaterWithoutRollingBackDryColumns() {
         var ground=new CityLandUseChunkCompiler.FeatureOperation("shared_terrace::city",15,2,"minecraft:smooth_stone",0,
                 CityLandUseSurfacePrintPlan.FeatureKind.TERRACE_GROUND,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,68);
         var fragment=new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,"city","hash","palette",
@@ -74,8 +112,10 @@ class CityLandUseChunkExecutorTest {
         for(int y=65;y<68;y++)assertTrue(world.writes.contains("15,"+y+",2=minecraft:stone_bricks"));
         assertTrue(world.writes.contains("15,69,2=minecraft:air"));assertTrue(world.writes.contains("15,68,2=minecraft:smooth_stone"));
         var water=new FakeWorld();water.columns.put("15,2",new CityLandUseChunkExecutor.ColumnSample(64,"minecraft:water",true));
-        assertEquals(CityLandUseChunkExecutor.Status.FAILED,executor.execute(fragment,water,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES).status());
-        assertTrue(water.writes.isEmpty(),"terrain rejection is transactional");
+        var clipped=executor.execute(fragment,water,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED,clipped.status());
+        assertEquals(1,clipped.naturalSurfaceSkippedCount());
+        assertTrue(water.writes.isEmpty(),"the late water column remains untouched");
     }
 
     @Test void retainingWallDoesNotRebuildAboveFrozenRoadAtPlatformEdge() {

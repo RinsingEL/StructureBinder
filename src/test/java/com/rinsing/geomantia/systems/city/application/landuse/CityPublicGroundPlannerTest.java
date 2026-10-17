@@ -10,6 +10,19 @@ import static org.junit.jupiter.api.Assertions.*;
 import static com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan.*;
 
 class CityPublicGroundPlannerTest {
+    @Test void courtyardGreenGroundInheritsItsFrozenSharedPlatformInsteadOfNaturalLevel() {
+        var floor=new HashMap<BlockPoint,Integer>();
+        for(int z=0;z<16;z++)for(int x=0;x<32;x++)floor.put(new BlockPoint(x,z),68);
+        var members=java.util.stream.IntStream.range(0,16).mapToObj(z->new LandUseAreaPlan.ScanlineSpan(z,0,31)).toList();
+        var area=new AreaPrint("court","court",List.of("city::foundation"),LandUseSurfaceSettings.defaults(SurfacePolicy.PAVE),
+                members,List.of(),LandUseSurfaceSettings.SurfaceAlgorithm.UNIFORM,null,
+                new UniformRecipe("minecraft:stone_bricks","",CitySharedTerracePlanner.spans(floor)));
+        var result=new CityPublicGroundPlanner().plan(source(List.of(area),green()),
+                district(List.of(new CityDistrictPlanner.Result.PublicSpace("court",bounds,"courtyard"))),terrain,
+                (x,z)->new CityPublicRealmPlanner.Ground(65,true));
+        assertTrue(result.surface().featureCells().stream().filter(f->f.surfaceOffset()==0)
+                .allMatch(f->f.targetSurfaceY()==68));
+    }
     @Test void unequalBanksUseABridgeStairRatherThanAFullBlockLip(){
         var output=new CityPublicGroundPlanner().plan(source(List.of(),green()),district(List.of()),terrain,
                 (x,z)->new CityPublicRealmPlanner.Ground(x>=8&&x<=15?34:x>=16?63:62,true));

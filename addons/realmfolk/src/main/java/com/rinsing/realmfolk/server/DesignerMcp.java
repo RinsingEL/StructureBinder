@@ -133,9 +133,9 @@ public final class DesignerMcp {
             default -> throw new IllegalArgumentException("Unknown tool");
         };
     }
-    private static void validateArgs(JsonElement value,JsonObject schema){
+    static void validateArgs(JsonElement value,JsonObject schema){
         String type=schema.get("type").getAsString();
-        boolean valid=switch(type){case "object"->value.isJsonObject();case "array"->value.isJsonArray();case "string"->value.isJsonPrimitive()&&value.getAsJsonPrimitive().isString();case "integer","number"->value.isJsonPrimitive()&&value.getAsJsonPrimitive().isNumber()&&Double.isFinite(value.getAsDouble())&&(!type.equals("integer")||value.getAsDouble()==Math.rint(value.getAsDouble())&&Math.abs(value.getAsDouble())<=Integer.MAX_VALUE);default->false;};
+        boolean valid=switch(type){case "object"->value.isJsonObject();case "array"->value.isJsonArray();case "string"->value.isJsonPrimitive()&&value.getAsJsonPrimitive().isString();case "boolean"->value.isJsonPrimitive()&&value.getAsJsonPrimitive().isBoolean();case "integer","number"->value.isJsonPrimitive()&&value.getAsJsonPrimitive().isNumber()&&Double.isFinite(value.getAsDouble())&&(!type.equals("integer")||value.getAsDouble()==Math.rint(value.getAsDouble())&&Math.abs(value.getAsDouble())<=Integer.MAX_VALUE);default->false;};
         if(!valid)throw new IllegalArgumentException("Expected "+type);
         if(schema.has("enum")&&!schema.getAsJsonArray("enum").contains(value))throw new IllegalArgumentException("Unsupported value: "+value);
         if(type.equals("object")){

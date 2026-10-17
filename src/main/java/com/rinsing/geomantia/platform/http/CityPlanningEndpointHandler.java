@@ -1507,11 +1507,14 @@ final class CityPlanningEndpointHandler {
         }
 
         com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmPlanner.GroundSampler preciseGround = level==null?null:(x,z)->{
-            var source=level.getChunkSource();var generator=source.getGenerator();
-            int y=generator.getBaseHeight(x,z,net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                    level,source.randomState())-1;
-            var state=generator.getBaseColumn(x,z,level,source.randomState()).getBlock(y);
-            return new com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmPlanner.Ground(y,
+            var source=level.getChunkSource();
+            // Share the calibrated, chunk-free terrain source used by construction and protection.
+            // Raw generator columns repeat RTF noise evaluation for every public-ground/fringe block.
+            var sample=com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityWorldgenStructurePlacer
+                    .sampleDesignTerrain(source.getGenerator(),level.registryAccess(),source.randomState(),level,x,z);
+            var state=net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
+                    net.minecraft.resources.ResourceLocation.tryParse(sample.surfaceBlockId())).defaultBlockState();
+            return new com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmPlanner.Ground(sample.surfaceY(),
                     !state.isAir()&&state.getFluidState().isEmpty());
         };
         LandUsePlanningService.Result result = new LandUsePlanningService().plan(
