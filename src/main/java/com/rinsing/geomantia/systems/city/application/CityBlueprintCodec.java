@@ -55,12 +55,32 @@ public final class CityBlueprintCodec {
         for (var value : requiredArray(root,"districtDesigns","$.districtDesigns")) {
             String path = "$.districtDesigns[" + index++ + "]";
             JsonObject item = value.getAsJsonObject();
-            exactFields(item,Set.of("districtId","coreGroupId","coreStructureRef","groupIds"),Set.of(),path);
+            exactFields(item,Set.of("districtId","coreGroupId","coreStructureRef","groupIds","population"),
+                    Set.of("population"),path);
             List<String> ids = nonEmptyStringList(item,"groupIds",path+".groupIds");
+            JsonObject population = districtPopulation(item,path);
             result.add(new CityBlueprint.DistrictDesign(requiredString(item,"districtId",path+".districtId"),
-                    requiredString(item,"coreGroupId",path+".coreGroupId"),requiredString(item,"coreStructureRef",path+".coreStructureRef"),ids));
+                    requiredString(item,"coreGroupId",path+".coreGroupId"),requiredString(item,"coreStructureRef",path+".coreStructureRef"),ids,population));
         }
         return result;
+    }
+
+    /** 可选的分区人口构成：先定职责、再定人、再定楼；旧蓝图缺省为空。 */
+    private JsonObject districtPopulation(JsonObject item, String path) {
+        if (!item.has("population")) return null;
+        JsonObject population = item.getAsJsonObject("population");
+        exactFields(population,Set.of("roles","reason"),Set.of("reason"),path+".population");
+        if (!population.has("roles") || !population.get("roles").isJsonArray())
+            throw new IllegalArgumentException(path+".population.roles must be an array");
+        for (var role : population.getAsJsonArray("roles")) {
+            String rolePath = path+".population.roles["+role+"]";
+            if (!role.isJsonObject()) throw new IllegalArgumentException(rolePath+" must be an object");
+            exactFields(role.getAsJsonObject(),Set.of("role","count"),Set.of(),rolePath);
+            requiredString(role.getAsJsonObject(),"role",rolePath+".role");
+            if (role.getAsJsonObject().get("count").getAsInt() < 0)
+                throw new IllegalArgumentException(rolePath+".count must be >= 0");
+        }
+        return population.deepCopy();
     }
 
     public JsonObject write(CityBlueprint blueprint) {
@@ -70,7 +90,9 @@ public final class CityBlueprintCodec {
             for (var district : blueprint.districtDesigns()) {
                 JsonObject item = new JsonObject(); item.addProperty("districtId",district.districtId());
                 item.addProperty("coreGroupId",district.coreGroupId()); item.addProperty("coreStructureRef",district.coreStructureRef());
-                item.add("groupIds",strings(district.groupIds())); districts.add(item);
+                item.add("groupIds",strings(district.groupIds()));
+                if (district.population()!=null) item.add("population",district.population().deepCopy());
+                districts.add(item);
             }
             root.add("districtDesigns",districts);
         }

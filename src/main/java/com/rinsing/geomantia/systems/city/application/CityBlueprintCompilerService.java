@@ -881,6 +881,18 @@ public final class CityBlueprintCompilerService {
                 .noneMatch(outcome -> "UNRESOLVED".equals(string(outcome, "status"))));
         acceptance.add("hardBlocks", hardBlocks);
         acceptance.add("warnings", warnings);
+        // 逐区人口构成随设计保存，交给快速配置起名与展开，不再重新猜人数。
+        JsonObject districtPopulation = new JsonObject();
+        for (var district : blueprint.districtDesigns()) {
+            if (district.population() == null) continue;
+            JsonObject row = district.population().deepCopy();
+            int total = 0;
+            for (var role : district.population().getAsJsonArray("roles"))
+                total += role.getAsJsonObject().get("count").getAsInt();
+            row.addProperty("total", total);
+            districtPopulation.add(district.districtId(), row);
+        }
+        if (districtPopulation.size() > 0) acceptance.add("districtPopulation", districtPopulation);
         return acceptance;
     }
 

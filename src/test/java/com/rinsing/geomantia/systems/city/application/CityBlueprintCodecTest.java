@@ -26,6 +26,24 @@ class CityBlueprintCodecTest {
         var copy=blueprint.outdoorPlan().publicRealm().toJson();copy.addProperty("seed",3);
         assertEquals(42,blueprint.outdoorPlan().publicRealm().toJson().get("seed").getAsInt());
     }
+    @Test void districtPopulationIsOptionalAndRoundTrips() throws IOException {
+        var json=fixture("valid_city_blueprint.json");
+        String groupId=json.getAsJsonArray("groups").get(0).getAsJsonObject().get("groupId").getAsString();
+        json.add("districtDesigns",JsonParser.parseString(("[{districtId:'district_a',coreGroupId:'%s',"
+                + "coreStructureRef:'%s',groupIds:['%s'],population:{roles:[{role:'教师',count:8},{role:'院务',count:2}],"
+                + "reason:'教学区负责上课、集会与学籍'}}]").formatted(groupId,groupId,groupId)));
+        var blueprint=codec.read(json);
+        assertEquals(8,blueprint.districtDesigns().get(0).population()
+                .getAsJsonArray("roles").get(0).getAsJsonObject().get("count").getAsInt());
+        assertEquals(blueprint,codec.read(codec.write(blueprint)));
+        var population=json.getAsJsonArray("districtDesigns").get(0).getAsJsonObject().getAsJsonObject("population");
+        population.addProperty("reason","changed");
+        assertEquals("教学区负责上课、集会与学籍",
+                blueprint.districtDesigns().get(0).population().get("reason").getAsString());
+        json.getAsJsonArray("districtDesigns").get(0).getAsJsonObject().remove("population");
+        assertNull(codec.read(json).districtDesigns().get(0).population());
+    }
+
     private final CityBlueprintCodec codec = new CityBlueprintCodec();
     @Test void intentionalLayoutRoundTripsOnLeafAndNestedComposition() throws IOException {
         var json=fixture("valid_city_blueprint.json");

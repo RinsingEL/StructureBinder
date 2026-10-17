@@ -28,8 +28,16 @@ public record CityBlueprint(
     }
 
     /** City-specific roles, independent of authored material classification and scheduling priority. */
-    public record DistrictDesign(String districtId, String coreGroupId, String coreStructureRef, List<String> groupIds) {
-        public DistrictDesign { groupIds = List.copyOf(groupIds); }
+    /** population 可选：逐区先定职责、再定人、再定楼；旧蓝图没有该字段时按空处理。 */
+    public record DistrictDesign(String districtId, String coreGroupId, String coreStructureRef, List<String> groupIds,
+                                  com.google.gson.JsonObject population) {
+        public DistrictDesign {
+            groupIds = List.copyOf(groupIds);
+            population = population == null ? null : population.deepCopy();
+        }
+        public DistrictDesign(String districtId, String coreGroupId, String coreStructureRef, List<String> groupIds) {
+            this(districtId, coreGroupId, coreStructureRef, groupIds, null);
+        }
     }
 
     public CityBlueprint(String schema, String cityId, ArtifactRef sourceD3Ref, ArtifactRef catalogSnapshotRef,
