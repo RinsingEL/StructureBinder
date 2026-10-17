@@ -16,6 +16,7 @@ import com.rinsing.geomantia.systems.city.domain.landuse.LandscapeFillProgram;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseTerrainField;
 import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRuleCatalog;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
+import com.rinsing.geomantia.systems.city.domain.model.CityScale;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -74,6 +75,13 @@ public final class LandUsePlanningService {
                        LandUseTerrainField terrainField, CityUrbanResidualResolver.Config residualConfig,
                        com.rinsing.geomantia.systems.city.domain.blueprint.CityPublicRealmSpec publicRealm,
                        com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmPlanner.GroundSampler preciseGround) {
+        return plan(cityId,sources,d5ReservationMaskPlan,terrainField,residualConfig,publicRealm,preciseGround,null);
+    }
+    public Result plan(String cityId, LandUseSourceResolver.Resolution sources, JsonObject d5ReservationMaskPlan,
+                       LandUseTerrainField terrainField, CityUrbanResidualResolver.Config residualConfig,
+                       com.rinsing.geomantia.systems.city.domain.blueprint.CityPublicRealmSpec publicRealm,
+                       com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmPlanner.GroundSampler preciseGround,
+                       CityScale scale) {
         if (cityId == null || cityId.isBlank()) throw new IllegalArgumentException("cityId is required");
         if (sources == null) throw new IllegalArgumentException("LandUse sources are required");
         if (terrainField == null) throw new IllegalArgumentException("LandUse terrain field is required");
@@ -201,16 +209,19 @@ public final class LandUsePlanningService {
                     sources.district().urbanSpacePlan(cityId, resolvedExpansion, managed), residualResult.warnings());
         }
         if (!sources.materialField().isEmpty()) surfacePrintPlan = new CityLandUseSurfacePrintPlanCodec().withComputedHash(surfacePrintPlan.withMaterials(sources.materialField()));
-        surfacePrintPlan = new CityVillageRoadPlanner().apply(surfacePrintPlan, sources, plan,
+        var villageRoads = new CityVillageRoadPlanner().plan(surfacePrintPlan, sources, plan,
                 new LandUseCorridorExclusionResolver().publicSpaceReservations(d5ReservationMaskPlan),
-                CityVillageRoadSettings.load());
+                CityVillageRoadSettings.load(),scale);
+        surfacePrintPlan = villageRoads.surface();
         JsonObject quality = quality(plan, sources, resolvedExpansion, connectionOutcomes,
                 residualResult.urbanSpacePlan(), skippedLandscapes, requiredLandscapeCapacities);
+        quality.add("villageRoads",villageRoads.report());
         if(publicRealm!=null) {
             var realm = new com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmPlanner().plan(
                     surfacePrintPlan,sources.district(),terrainField,
                     new LandUseCorridorExclusionResolver().publicSpaceReservations(d5ReservationMaskPlan),publicRealm,preciseGround);
             surfacePrintPlan=realm.surface();quality.add("publicRealm",realm.report());
+            quality.getAsJsonArray("warnings").addAll(realm.report().getAsJsonArray("warnings"));
         }
         quality.addProperty("publicGreenGroundBlocks", surfacePrintPlan.featureCells().stream()
                 .filter(f -> f.sourceId().startsWith(CityPublicGreeneryPlanner.SOURCE) && f.surfaceOffset() == 0).count());
@@ -240,6 +251,7 @@ public final class LandUsePlanningService {
                 }
             }
         }
+        if(!quality.getAsJsonArray("warnings").isEmpty())quality.addProperty("status","warning");
         return new Result(plan, trace(sources, probe, resolvedExpansion, connectionOutcomes,
                 residualResult.urbanSpacePlan(), resolvedFoundationCloseRadius,
                  resolvedFoundationComponentCount, skippedLandscapes),

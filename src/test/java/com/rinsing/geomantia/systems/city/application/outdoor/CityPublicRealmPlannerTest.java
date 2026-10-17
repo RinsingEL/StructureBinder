@@ -23,6 +23,48 @@ class CityPublicRealmPlannerTest {
     static CityLandUseSurfacePrintPlan source(){List<FeatureCell> f=new ArrayList<>();for(var p:ground())f.add(new FeatureCell("terrace",p.x(),p.z(),"minecraft:grass_block",0,FeatureKind.TERRACE_GROUND,HorizontalFacing.NONE,64));return new CityLandUseSurfacePrintPlan(SCHEMA,"city","source","",List.of(),List.of(),f);}
     static JsonObject spec(JsonObject plan){JsonObject root=new JsonObject();root.addProperty("schema","city_public_realm.v1");root.addProperty("catalog","academy");root.addProperty("seed",42);JsonArray spaces=new JsonArray();if(plan!=null){JsonObject space=new JsonObject();space.addProperty("id","trial");space.addProperty("owner","campus");space.add("plan",plan);spaces.add(space);}root.add("spaces",spaces);return root;}
     static CityPublicRealmPlanner.Result run(JsonObject spec){return new CityPublicRealmPlanner().plan(source(),district(),terrain(false),List.of(),new CityPublicRealmSpec(spec));}
+    @Test void missingPlanterAndHedgeLimitsCannotStarveLaterPlantingSlots() {
+        JsonObject s=spec(null);
+        s.add("greenery",JsonParser.parseString("""
+                {pools:{trees:'courtyard_trees',planters:'planters',hedges:'hedge_segments',
+                        shrubs:'low_shrubs',flowers:'flower_patches'},
+                 slotLimits:{trees:4,shrubs:4,flowers:4},maxPlacements:20,layeredPlanting:true}
+                """).getAsJsonObject());
+        var result=run(s);
+        var counts=result.report().getAsJsonObject("counts");
+        for(String kind:List.of("tree","planter","hedge","shrub","flowers")) {
+            assertTrue(counts.has(kind)&&counts.get(kind).getAsInt()>0,kind+": "+counts);
+            assertTrue(counts.get(kind).getAsInt()<=4,kind+": "+counts);
+        }
+        assertTrue(result.report().getAsJsonArray("placements").size()<=20);
+        assertFalse(result.report().getAsJsonArray("warnings").isEmpty());
+        assertEquals(result.report(),run(s).report());
+    }
+
+    @Test void oversubscribedBudgetReservesLaterSlotsAndHonorsExplicitZero() {
+        JsonObject s=spec(null);
+        s.add("greenery",JsonParser.parseString("""
+                {pools:{planters:'planters',shrubs:'low_shrubs',flowers:'flower_patches'},
+                 slotLimits:{planters:100,shrubs:0,flowers:100},maxPlacements:10}
+                """).getAsJsonObject());
+        var result=run(s);
+        var counts=result.report().getAsJsonObject("counts");
+        assertEquals(5,counts.get("planter").getAsInt());assertEquals(5,counts.get("flowers").getAsInt());
+        assertFalse(counts.has("shrub"));
+        assertTrue(result.report().getAsJsonArray("warnings").toString().contains("PUBLIC_REALM_BUDGET_LIMIT"));
+        assertEquals(0,result.report().getAsJsonObject("plantingBudgets").getAsJsonObject("interior")
+                .getAsJsonObject("shrubs").get("allocated").getAsInt());
+    }
+    @Test void tinyAndZeroBudgetsDoNotLoseEveryDefaultSlotOrExceedTheMaximum() {
+        for(int maximum:List.of(0,1)) {
+            JsonObject s=spec(null);
+            s.add("greenery",JsonParser.parseString("{pools:{planters:'planters',flowers:'flower_patches'},maxPlacements:"+maximum+"}").getAsJsonObject());
+            var result=run(s);
+            assertEquals(maximum,result.report().getAsJsonArray("placements").size());
+            assertFalse(result.report().getAsJsonArray("warnings").isEmpty());
+        }
+    }
+
     @Test void allVerifiedRecipesCompileOnNegativeCoordinatesAndRoundTrip(){
         for(JsonElement e:examples()) {
             var s=spec(e.getAsJsonObject().getAsJsonObject("plan"));var a=run(s);var b=run(s);

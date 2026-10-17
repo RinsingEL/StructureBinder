@@ -52,6 +52,28 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class CityStructureLandingFlowTest {
     @Test
+    void d4PublicSpacesSurviveAnchorMapAndD6Handoff() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject plan = singleAnchorPlan(fixture.review());
+        JsonArray spaces = JsonParser.parseString("""
+                [{ownerGroupId:'campus',purpose:'garden',minX:0,minZ:0,maxX:15,maxZ:15}]
+                """).getAsJsonArray();
+        plan.add("publicSpaces", spaces);
+        var result = new CityStructureAnchorPlanner().plan(fixture.baseDir(), fixture.review(),
+                fixture.terraSenseSource(), plan);
+        assertEquals(spaces, result.structureAnchorMap().getAsJsonArray("publicSpaces"));
+        var d6 = new CityStructureMaterializationPlanner().planWorldgen(result.structureAnchorMap(), null, null,
+                ref -> CityStructureMaterializationPlanner.TemplateMetadata.readable("sha256:test-house",
+                        new com.rinsing.geomantia.systems.city.application.CityTemplatePlacementGeometry.Size(20,10,12)))
+                .structureMaterializationPlan();
+        assertTrue(d6.get("locked").getAsBoolean());
+        assertEquals(spaces,d6.getAsJsonObject("sourceStructureAnchorMap").getAsJsonArray("publicSpaces"));
+        spaces.get(0).getAsJsonObject().addProperty("purpose", "changed");
+        assertEquals("garden", result.structureAnchorMap().getAsJsonArray("publicSpaces")
+                .get(0).getAsJsonObject().get("purpose").getAsString());
+    }
+
+    @Test
     void d4RejectsLegacyFunctionZonePayload() throws Exception {
         Fixture fixture = fixture();
         JsonObject legacy = anchorPlan(fixture.review());
