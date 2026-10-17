@@ -8,10 +8,13 @@ import java.nio.file.*;
 import java.util.*;
 
 /** Read once per compilation; generated features and materials freeze the chosen appearance. */
-public record CityVillageRoadSettings(boolean enabled, Set<String> roadKinds, long seed,
+public record CityVillageRoadSettings(boolean enabled, Set<String> scales, Set<String> roadKinds, long seed,
         List<WeightedBlock> surfacePalette, String stairBlockId, String baseBlockId,
         boolean decorationsEnabled, boolean structureTreesEnabled, int spacingBlocks, double chance, int edgeOffsetBlocks,
         int endClearanceBlocks, List<Variant> variants) {
+    /** 村庄道路外观只属于村庄规模；town 及以上的城市沿用蓝图材质。 */
+    public static final Set<String> DEFAULT_SCALES = Set.of("village");
+
     public record WeightedBlock(String blockId, int weight) {
         public WeightedBlock { validBlock(blockId); positiveWeight(weight); }
     }
@@ -36,16 +39,29 @@ public record CityVillageRoadSettings(boolean enabled, Set<String> roadKinds, lo
         }
     }
     public CityVillageRoadSettings {
+        scales=scales==null?DEFAULT_SCALES:Set.copyOf(scales);
         roadKinds=Set.copyOf(roadKinds); surfacePalette=List.copyOf(surfacePalette); variants=List.copyOf(variants);
         validBlock(stairBlockId); validBlock(baseBlockId);
-        if (!stairBlockId.endsWith("_stairs") || roadKinds.isEmpty() || roadKinds.contains("CITY_BRIDGE")
+        if (!stairBlockId.endsWith("_stairs") || scales.isEmpty() || roadKinds.isEmpty() || roadKinds.contains("CITY_BRIDGE")
                 || surfacePalette.isEmpty() || surfacePalette.size()>32 || variants.size()>32
                 || spacingBlocks<4 || spacingBlocks>128 || !Double.isFinite(chance) || chance<0 || chance>1
                 || edgeOffsetBlocks<1 || edgeOffsetBlocks>8 || endClearanceBlocks<0 || endClearanceBlocks>16
                 || decorationsEnabled && variants.isEmpty())
             throw new IllegalArgumentException("VILLAGE_ROAD_CONFIG_INVALID");
+        if(scales.stream().anyMatch(scale -> scale==null || !scale.matches("[a-z_]+")))
+            throw new IllegalArgumentException("VILLAGE_ROAD_SCALE_INVALID");
+        if(roadKinds.stream().anyMatch(kind -> kind==null || kind.isBlank()))
+            throw new IllegalArgumentException("VILLAGE_ROAD_KIND_INVALID");
         if(variants.stream().map(Variant::id).distinct().count()!=variants.size())
             throw new IllegalArgumentException("VILLAGE_ROAD_VARIANT_ID_DUPLICATE");
+    }
+    /** 未声明 scales 的旧配置按村庄规模处理，避免老存档的世界重新编译出不同路面。 */
+    public CityVillageRoadSettings(boolean enabled, Set<String> roadKinds, long seed,
+            List<WeightedBlock> surfacePalette, String stairBlockId, String baseBlockId,
+            boolean decorationsEnabled, boolean structureTreesEnabled, int spacingBlocks, double chance,
+            int edgeOffsetBlocks, int endClearanceBlocks, List<Variant> variants) {
+        this(enabled,DEFAULT_SCALES,roadKinds,seed,surfacePalette,stairBlockId,baseBlockId,decorationsEnabled,
+                structureTreesEnabled,spacingBlocks,chance,edgeOffsetBlocks,endClearanceBlocks,variants);
     }
     public static CityVillageRoadSettings load() {
         return load(Path.of("config","geomantia","city_land_use","village_roads.json"));
@@ -55,7 +71,12 @@ public record CityVillageRoadSettings(boolean enabled, Set<String> roadKinds, lo
                 Objects.requireNonNull(CityVillageRoadSettings.class.getResourceAsStream(
                         "/geomantia/default_config/city_land_use/village_roads.json")), StandardCharsets.UTF_8)) {
             var json=JsonParser.parseReader(reader).getAsJsonObject();
-            if(!json.keySet().equals(Set.of("enabled","roadKinds","seed","surfacePalette","stairBlockId",
+            if(!json.has("scales")) {
+                var scales=new com.google.gson.JsonArray();
+                DEFAULT_SCALES.stream().sorted().forEach(scales::add);
+                json.add("scales",scales);
+            }
+            if(!json.keySet().equals(Set.of("enabled","scales","roadKinds","seed","surfacePalette","stairBlockId",
                     "baseBlockId","decorationsEnabled","structureTreesEnabled","spacingBlocks","chance","edgeOffsetBlocks","endClearanceBlocks","variants")))
                 throw new IllegalArgumentException("VILLAGE_ROAD_CONFIG_FIELDS_INVALID");
             return new Gson().fromJson(json,CityVillageRoadSettings.class);

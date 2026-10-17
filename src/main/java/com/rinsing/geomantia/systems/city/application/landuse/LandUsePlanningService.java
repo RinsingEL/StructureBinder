@@ -50,11 +50,22 @@ public final class LandUsePlanningService {
                        JsonObject d5ReservationMaskPlan,
                        LandUseTerrainField terrainField,
                        LandUseRuleCatalog ruleCatalog) {
+        return plan(structureMaterializationPlan, landUseIntentPlan, functionalArrayZones, d5ReservationMaskPlan,
+                terrainField, ruleCatalog, null);
+    }
+
+    public Result plan(JsonObject structureMaterializationPlan,
+                       JsonObject landUseIntentPlan,
+                       JsonObject functionalArrayZones,
+                       JsonObject d5ReservationMaskPlan,
+                       LandUseTerrainField terrainField,
+                       LandUseRuleCatalog ruleCatalog,
+                       String cityScale) {
         LandUseSourceResolver.Resolution sources = new LandUseSourceResolver().resolve(
                 structureMaterializationPlan, landUseIntentPlan, functionalArrayZones, ruleCatalog);
         String cityId = structureMaterializationPlan.get("cityId").getAsString();
         return plan(cityId, sources, d5ReservationMaskPlan, terrainField,
-                CityUrbanResidualResolver.Config.disabled());
+                CityUrbanResidualResolver.Config.disabled(), null, null, cityScale);
     }
 
     public Result plan(String cityId,
@@ -74,6 +85,14 @@ public final class LandUsePlanningService {
                        LandUseTerrainField terrainField, CityUrbanResidualResolver.Config residualConfig,
                        com.rinsing.geomantia.systems.city.domain.blueprint.CityPublicRealmSpec publicRealm,
                        com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmPlanner.GroundSampler preciseGround) {
+        return plan(cityId,sources,d5ReservationMaskPlan,terrainField,residualConfig,publicRealm,preciseGround,null);
+    }
+    /** cityScale 为空表示调用方未提供规模，村路外观按旧行为应用；生产入口应传城市种子的 theoreticalScale。 */
+    public Result plan(String cityId, LandUseSourceResolver.Resolution sources, JsonObject d5ReservationMaskPlan,
+                       LandUseTerrainField terrainField, CityUrbanResidualResolver.Config residualConfig,
+                       com.rinsing.geomantia.systems.city.domain.blueprint.CityPublicRealmSpec publicRealm,
+                       com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmPlanner.GroundSampler preciseGround,
+                       String cityScale) {
         if (cityId == null || cityId.isBlank()) throw new IllegalArgumentException("cityId is required");
         if (sources == null) throw new IllegalArgumentException("LandUse sources are required");
         if (terrainField == null) throw new IllegalArgumentException("LandUse terrain field is required");
@@ -201,11 +220,13 @@ public final class LandUsePlanningService {
                     sources.district().urbanSpacePlan(cityId, resolvedExpansion, managed), residualResult.warnings());
         }
         if (!sources.materialField().isEmpty()) surfacePrintPlan = new CityLandUseSurfacePrintPlanCodec().withComputedHash(surfacePrintPlan.withMaterials(sources.materialField()));
-        surfacePrintPlan = new CityVillageRoadPlanner().apply(surfacePrintPlan, sources, plan,
+        var villageRoad = new CityVillageRoadPlanner().apply(surfacePrintPlan, sources, plan,
                 new LandUseCorridorExclusionResolver().publicSpaceReservations(d5ReservationMaskPlan),
-                CityVillageRoadSettings.load());
+                CityVillageRoadSettings.load(), cityScale);
+        surfacePrintPlan = villageRoad.plan();
         JsonObject quality = quality(plan, sources, resolvedExpansion, connectionOutcomes,
                 residualResult.urbanSpacePlan(), skippedLandscapes, requiredLandscapeCapacities);
+        for (String note : villageRoad.notes()) quality.getAsJsonArray("warnings").add(note);
         if(publicRealm!=null) {
             var realm = new com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmPlanner().plan(
                     surfacePrintPlan,sources.district(),terrainField,

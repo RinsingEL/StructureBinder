@@ -9,16 +9,40 @@ import static com.rinsing.geomantia.systems.city.application.landuse.CityLandUse
 /** Compiles village appearance after city material overrides, before chunk ownership is assigned. */
 public final class CityVillageRoadPlanner {
     public static final String DECORATION_SOURCE = "village_road_decoration::";
+    public static final String SKIPPED_SCALE = "VILLAGE_ROAD_SKIPPED_CITY_SCALE:";
+    public static final String SKIPPED_EXPLICIT = "VILLAGE_ROAD_SKIPPED_EXPLICIT_MATERIAL:";
     private record Key(int x,int z,int offset) { }
+    public record Result(CityLandUseSurfacePrintPlan plan,List<String> notes) {
+        public Result { notes=List.copyOf(notes); }
+    }
 
+    /** 不带城市规模的旧入口保持原行为，生产调用一律走 {@link #apply(..., String)}。 */
     public CityLandUseSurfacePrintPlan apply(CityLandUseSurfacePrintPlan source,
             LandUseSourceResolver.Resolution sources, LandUseAreaPlan landUse,
             List<LandUseAreaPlan.CorridorExclusion> reservations, CityVillageRoadSettings settings) {
-        if (!settings.enabled()) return source;
+        return apply(source,sources,landUse,reservations,settings,null).plan();
+    }
+
+    public Result apply(CityLandUseSurfacePrintPlan source,
+            LandUseSourceResolver.Resolution sources, LandUseAreaPlan landUse,
+            List<LandUseAreaPlan.CorridorExclusion> reservations, CityVillageRoadSettings settings, String cityScale) {
+        if (!settings.enabled()) return new Result(source,List.of());
+        String scale=cityScale==null?null:cityScale.trim().toLowerCase(Locale.ROOT);
+        if (scale!=null && !settings.scales().contains(scale))
+            return new Result(source,List.of(SKIPPED_SCALE+scale));
+        List<String> notes=new ArrayList<>();
         Map<String,LandUseSourceResolver.RoadBand> village=new TreeMap<>();
-        for(var band:sources.roadBands()) if(!band.bridge() && settings.roadKinds().contains(band.roadKind()))
+        for(var band:sources.roadBands()) {
+            if(band.bridge() || !settings.roadKinds().contains(band.roadKind())) continue;
+            // 蓝图按道路类型显式给出的材质优先，村路外观不得悄悄替换。
+            if(sources.materialField().selections().roads().containsKey(band.roadKind())) {
+                notes.add(SKIPPED_EXPLICIT+band.roadKind()+":"+band.streetBandId());
+                continue;
+            }
             village.put(band.streetBandId(),band);
-        if(village.isEmpty()) return source;
+        }
+        if(village.isEmpty()) return new Result(source,notes);
+
 
         long seed=mix(settings.seed() ^ source.cityId().hashCode());
         Map<Key,FeatureCell> cells=new HashMap<>();
@@ -97,8 +121,8 @@ public final class CityVillageRoadPlanner {
         var selection=new CitySurfaceMaterials(original.selections().defaults(),original.selections().groups(),roads,original.selections().landscapes());
         var field=new CityMaterialField(selection,original.owners(),sources.roadBands().stream()
                 .map(b->new CityMaterialField.Road(b.streetBandId(),b.roadKind(),b.bounds())).toList());
-        return new CityLandUseSurfacePrintPlanCodec().withComputedHash(new CityLandUseSurfacePrintPlan(source.schema(),
-                source.cityId(),source.sourceLandUsePlanHash(),"",source.areas(),source.sharedBoundarySpans(),features,field));
+        return new Result(new CityLandUseSurfacePrintPlanCodec().withComputedHash(new CityLandUseSurfacePrintPlan(source.schema(),
+                source.cityId(),source.sourceLandUsePlanHash(),"",source.areas(),source.sharedBoundarySpans(),features,field)),notes);
     }
     private static String surface(CityVillageRoadSettings s,long seed,int x,int z) {
         int choice=Math.floorMod(mix(seed ^ ((long)x<<32) ^ (z&0xffffffffL)),s.surfacePalette().stream().mapToInt(CityVillageRoadSettings.WeightedBlock::weight).sum());

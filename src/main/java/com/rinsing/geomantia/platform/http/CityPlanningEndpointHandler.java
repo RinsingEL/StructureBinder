@@ -1360,7 +1360,8 @@ final class CityPlanningEndpointHandler {
                                         JsonObject optionalIntent) throws IOException {
         long started = System.nanoTime();
         Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
+        JsonObject citySeed = loadCitySeed(runDir, runId, citySeedId);
+        String cityScale = stringValue(citySeed, "theoreticalScale", "");
         Path outputDirectory = cityStageDir(runDir, citySeedId, CityTestRunLayout.LAND_USE);
         Path terrainPath = outputDirectory.resolve("land_use_terrain_field.json");
         Path d4AnchorMapPath = cityStageDir(runDir, citySeedId, CityTestRunLayout.D4)
@@ -1409,7 +1410,7 @@ final class CityPlanningEndpointHandler {
         Files.deleteIfExists(completePath);
         Files.deleteIfExists(surfacePrintPath);
         LandUsePlanningService.Result result = new LandUsePlanningService().plan(
-                d6Plan, optionalIntent, functionalArrayZones, d5MaskPlan, terrainField, rules);
+                d6Plan, optionalIntent, functionalArrayZones, d5MaskPlan, terrainField, rules, cityScale);
         LandUseAreaPlanCodec planCodec = new LandUseAreaPlanCodec();
         JsonObject planJson = planCodec.toJson(result.plan());
         JsonObject surfacePrintJson = new CityLandUseSurfacePrintPlanCodec()
@@ -1476,7 +1477,8 @@ final class CityPlanningEndpointHandler {
                                                  ServerLevel level) throws IOException {
         long started = System.nanoTime();
         Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
+        JsonObject citySeed = loadCitySeed(runDir, runId, citySeedId);
+        String cityScale = stringValue(citySeed, "theoreticalScale", "");
         BlueprintOutdoorInputs inputs = loadBlueprintOutdoorInputs(debugRoot, runDir, citySeedId);
         CityOutdoorBlueprintCompiler.Result compiled = new CityOutdoorBlueprintCompiler().compile(
                 inputs.blueprint(), inputs.d6Plan(), inputs.terrainField(), inputs.referenceCatalog(),
@@ -1516,7 +1518,7 @@ final class CityPlanningEndpointHandler {
         };
         LandUsePlanningService.Result result = new LandUsePlanningService().plan(
                 citySeedId, compiled.resolution(), inputs.d5MaskPlan(), inputs.terrainField(),
-                compiled.residualConfig(), inputs.blueprint().outdoorPlan().publicRealm(), preciseGround);
+                compiled.residualConfig(), inputs.blueprint().outdoorPlan().publicRealm(), preciseGround, cityScale);
 
         Path urbanSpacePath = outputDirectory.resolve("city_urban_space_plan.json");
         Path areaPath = outputDirectory.resolve("city_land_use_area_plan.json");

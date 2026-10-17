@@ -65,16 +65,38 @@ class CityVillageRoadPlannerTest {
         assertThrows(IllegalArgumentException.class,()->CityVillageRoadSettings.load(config));
     }
 
+    @Test void townScaleKeepsBlueprintMaterialsAndRecordsSkip() {
+        var input=surface();
+        var result=new CityVillageRoadPlanner().apply(input,sources(),area(),List.of(),settings(),"town");
+        assertEquals(input,result.plan());
+        assertEquals(List.of(CityVillageRoadPlanner.SKIPPED_SCALE+"town"),result.notes());
+    }
+
+    @Test void villageScaleAppliesButExplicitRoadMaterialWins() {
+        var applied=new CityVillageRoadPlanner().apply(surface(),sources(),area(),List.of(),settings(),"village");
+        assertTrue(applied.notes().isEmpty());
+        assertTrue(applied.plan().featureCells().stream().anyMatch(f->f.blockId().equals("minecraft:dirt_path")));
+        var kept=new CityVillageRoadPlanner().apply(surface(),sources("COMPACT_ALLEY"),area(),List.of(),settings(),"village");
+        assertEquals(surface(),kept.plan());
+        assertEquals(1,kept.notes().size());
+        assertTrue(kept.notes().get(0).startsWith(CityVillageRoadPlanner.SKIPPED_EXPLICIT));
+    }
+
     private static CityLandUseSurfacePrintPlan apply(CityLandUseSurfacePrintPlan input,LandUseSourceResolver.Resolution sources,
             CityVillageRoadSettings settings,List<LandUseAreaPlan.CorridorExclusion> reservations) {
-        var area=new LandUseAreaPlan(LandUseAreaPlan.SCHEMA,"v1","city","hash",new BlockBounds(-20,-20,120,30),
-                List.of(),List.of(),List.of(),List.of(),List.of());
-        return new CityVillageRoadPlanner().apply(input,sources,area,reservations,settings);
+        return new CityVillageRoadPlanner().apply(input,sources,area(),reservations,settings);
     }
-    private static LandUseSourceResolver.Resolution sources() {
+    private static LandUseAreaPlan area() {
+        return new LandUseAreaPlan(LandUseAreaPlan.SCHEMA,"v1","city","hash",new BlockBounds(-20,-20,120,30),
+                List.of(),List.of(),List.of(),List.of(),List.of());
+    }
+    private static LandUseSourceResolver.Resolution sources() { return sources(""); }
+    private static LandUseSourceResolver.Resolution sources(String explicitRoadKind) {
         var band=new LandUseSourceResolver.RoadBand("village","group::network","COMPACT_ALLEY",
                 new BlockPoint(0,0),new BlockPoint(100,0),new BlockBounds(0,-1,100,1),3,"STAIR_SLAB_STAIR");
-        var field=new CityMaterialField(new CitySurfaceMaterials(Map.of("roadSurface","minecraft:stone_brick_slab"),Map.of(),Map.of(),Map.of()),
+        Map<String,Map<String,String>> roads=explicitRoadKind.isEmpty()?Map.of():
+                Map.of(explicitRoadKind,Map.of("roadSurface","minecraft:stone_brick_slab"));
+        var field=new CityMaterialField(new CitySurfaceMaterials(Map.of("roadSurface","minecraft:stone_brick_slab"),Map.of(),roads,Map.of()),
                 List.of(new CityMaterialField.Owner("house",new BlockBounds(0,3,20,5))),List.of());
         return new LandUseSourceResolver.Resolution(List.of(),List.of(),List.of(),"seed",Map.of(),Map.of(),List.of(band),List.of(),List.of(),field);
     }
