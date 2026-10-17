@@ -152,5 +152,26 @@ def extract(data, author, rules=None):
         rule = {'adapter': p.get('adapter', 'stand'), 'seatHeight': p.get('seat_height', .5)}
         if 'behavior' in p:rule['behavior']=p['behavior']
         add(kind, pos, state, p, rule)
+    warnings.extend(usage_warnings(author, facilities))
     return dict(schema='realmfolk_facilities.v1', size=data['size'], sourceSha256=data['sha256'],
                 facilities=facilities, warnings=warnings)
+
+
+RESIDENTIAL_HINTS = ('house', 'home', 'residence', 'dorm', 'inn', 'apartment', 'housing', '宿舍', '住宅', '民居')
+WORK_HINTS = ('workshop', 'shop', 'store', 'tavern', 'kitchen', 'smithy', 'classroom', 'office',
+              'library', 'clinic', 'laboratory', '工坊', '商店', '食堂', '教室', '学堂', '图书')
+
+
+def usage_warnings(author, facilities):
+    """作者声明的用途需要床位或工位、模板里却没有时提示，供导出者补素材。"""
+    author = author or {}
+    text = ' '.join([str(author.get('planning_role', '')), str(author.get('name', ''))]
+                    + [str(room.get('purpose', '')) for room in author.get('rooms', []) or []]).lower()
+    beds = sum(1 for facility in facilities if facility.get('kind') == 'bed')
+    works = sum(1 for facility in facilities if facility.get('kind') == 'work')
+    warnings = []
+    if beds == 0 and any(hint in text for hint in RESIDENTIAL_HINTS):
+        warnings.append('REALMFOLK_FACILITY_MISSING_BEDS: 用途需要床位，模板里没有可用的床')
+    if works == 0 and any(hint in text for hint in WORK_HINTS):
+        warnings.append('REALMFOLK_FACILITY_MISSING_WORKSITES: 用途需要工位，模板里没有工作设施')
+    return warnings
