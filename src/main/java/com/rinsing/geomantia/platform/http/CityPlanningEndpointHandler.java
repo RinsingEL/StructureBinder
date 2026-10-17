@@ -1271,6 +1271,13 @@ final class CityPlanningEndpointHandler {
                 CityWallReservationPlanner.DEFAULT_WALL_CORRIDOR_HALF_WIDTH_BLOCKS);
     }
 
+    /** 城市种子显式写 wallPolicy 时优先，否则按 theoreticalScale 推默认形式。 */
+    private static CityWallReservationPlanner.WallPolicy wallPolicy(JsonObject seed) {
+        String raw = stringValue(seed, "wallPolicy", "");
+        if (!raw.isBlank()) return CityWallReservationPlanner.WallPolicy.parse(raw);
+        return CityWallReservationPlanner.WallPolicy.infer(stringValue(seed, "theoreticalScale", ""));
+    }
+
     static JsonObject handlePlanD5(Path debugRoot, String runId, String citySeedId,
                                    int wallMarginBlocks,
                                    int wallCorridorHalfWidthBlocks) throws IOException {
@@ -1306,15 +1313,16 @@ final class CityPlanningEndpointHandler {
                 : null;
         // Foundation membership selects paving/terrain work, not membership inside the city wall.
         // Keep natural-ground building groups in the boundary; only an explicit wall filter may exclude them.
+        CityWallReservationPlanner.WallPolicy wallPolicy = wallPolicy(seed);
         JsonObject wallReservationPlan = new CityWallReservationPlanner().plan(
-                reviewPackage, anchorMap, wallMarginBlocks, wallCorridorHalfWidthBlocks, patchContextBounds);
+                reviewPackage, anchorMap, wallMarginBlocks, wallCorridorHalfWidthBlocks, patchContextBounds, wallPolicy);
         JsonObject interCityExits = new com.rinsing.geomantia.systems.city.application.intercity.CityExitRoadPlanner().plan(
                 citySeedId, anchorMap, wallReservationPlan,
                 bounds(wallReservationPlan.getAsJsonObject("sourceD3CoverageBounds")),
                 interCityNetwork(runDir, metadata.cellStepBlocks()));
         anchorMap = com.rinsing.geomantia.systems.city.application.intercity.CityExitRoadPlanner.append(anchorMap, interCityExits);
         wallReservationPlan = new CityWallReservationPlanner().plan(
-                reviewPackage, anchorMap, wallMarginBlocks, wallCorridorHalfWidthBlocks, patchContextBounds);
+                reviewPackage, anchorMap, wallMarginBlocks, wallCorridorHalfWidthBlocks, patchContextBounds, wallPolicy);
         CityReservationMaskPlanner.Result result = new CityReservationMaskPlanner().plan(ctx, anchorMap,
                 wallReservationPlan);
 

@@ -673,6 +673,7 @@ class CityPlanningEndpointHandlerTest {
                       "realmId": "realm_test",
                       "role": "village",
                       "theoreticalScale": "village",
+                      "wallPolicy": "full",
                       "anchorBlock": {"x": 0, "z": 0},
                       "planningRadiusCells": 64,
                       "candidateId": "candidate_test"
@@ -796,6 +797,7 @@ class CityPlanningEndpointHandlerTest {
                       "realmId": "realm_test",
                       "role": "village",
                       "theoreticalScale": "village",
+                      "wallPolicy": "full",
                       "anchorBlock": {"x": 0, "z": 0},
                       "planningRadiusCells": 64,
                       "candidateId": "candidate_test"
@@ -877,6 +879,7 @@ class CityPlanningEndpointHandlerTest {
                       "realmId": "realm_test",
                       "role": "village",
                       "theoreticalScale": "village",
+                      "wallPolicy": "full",
                       "anchorBlock": {"x": 0, "z": 0},
                       "planningRadiusCells": 128,
                       "candidateId": "candidate_test"
@@ -938,6 +941,7 @@ class CityPlanningEndpointHandlerTest {
                       "realmId": "realm_test",
                       "role": "town",
                       "theoreticalScale": "town",
+                      "wallPolicy": "full",
                       "anchorBlock": {"x": 0, "z": 0},
                       "planningRadiusCells": 128,
                       "candidateId": "candidate_test"
@@ -1076,6 +1080,7 @@ class CityPlanningEndpointHandlerTest {
                       "realmId": "realm_test",
                       "role": "village",
                       "theoreticalScale": "village",
+                      "wallPolicy": "full",
                       "anchorBlock": {"x": 0, "z": 0},
                       "planningRadiusCells": 128,
                       "candidateId": "candidate_test"
@@ -1138,6 +1143,7 @@ class CityPlanningEndpointHandlerTest {
                       "realmId": "realm_test",
                       "role": "village",
                       "theoreticalScale": "village",
+                      "wallPolicy": "full",
                       "anchorBlock": {"x": 0, "z": 0},
                       "planningRadiusCells": 64,
                       "candidateId": "candidate_test"
@@ -1225,6 +1231,7 @@ class CityPlanningEndpointHandlerTest {
                       "realmId": "realm_test",
                       "role": "village",
                       "theoreticalScale": "village",
+                      "wallPolicy": "full",
                       "anchorBlock": {"x": 0, "z": 0},
                       "planningRadiusCells": 64,
                       "candidateId": "candidate_test"
@@ -1683,6 +1690,7 @@ class CityPlanningEndpointHandlerTest {
                       "realmId": "realm_test",
                       "role": "village",
                       "theoreticalScale": "village",
+                      "wallPolicy": "full",
                       "anchorBlock": {"x": 0, "z": 0}
                     }
                   ]
@@ -1720,6 +1728,7 @@ class CityPlanningEndpointHandlerTest {
                       "realmId": "realm_test",
                       "role": "village",
                       "theoreticalScale": "village",
+                      "wallPolicy": "full",
                       "anchorBlock": {"x": 0, "z": 0}
                     }
                   ]
@@ -2202,6 +2211,7 @@ class CityPlanningEndpointHandlerTest {
                       "realmId": "realm_test",
                       "role": "village",
                       "theoreticalScale": "village",
+                      "wallPolicy": "full",
                       "anchorBlock": {"x": 0, "z": 0},
                       "planningRadiusCells": 64,
                       "candidateId": "candidate_test"

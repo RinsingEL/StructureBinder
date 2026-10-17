@@ -22,6 +22,30 @@ public final class CityWallReservationPlanner {
     public static final int DEFAULT_WALL_UNIT_LENGTH_BLOCKS = 8;
     public static final int DEFAULT_COVERAGE_RESCAN_MARGIN_BLOCKS = 16;
 
+    /** 城市定位决定城墙形式；未实现的形式按不建墙处理并写明原因。 */
+    public enum WallPolicy {
+        NONE("none"), GATE_ONLY("gate_only"), LOW_WALL("low_wall"), LAND_SIDE_ONLY("land_side_only"), FULL("full");
+        private final String id;
+        WallPolicy(String id) { this.id = id; }
+        public String id() { return id; }
+        public boolean buildsWall() { return this == FULL || this == LAND_SIDE_ONLY; }
+        public static WallPolicy parse(String raw) {
+            if (raw == null || raw.isBlank()) return null;
+            for (WallPolicy policy : values()) if (policy.id.equals(raw.trim().toLowerCase(java.util.Locale.ROOT))) return policy;
+            throw new IllegalArgumentException("CITY_WALL_POLICY_UNKNOWN: " + raw);
+        }
+        /** 没写形式时按城市规模推出默认值；首都保留完整城墙，城市只封陆侧，城镇与村庄不建墙。 */
+        public static WallPolicy infer(String theoreticalScale) {
+            String scale = theoreticalScale == null ? "" : theoreticalScale.trim().toLowerCase(java.util.Locale.ROOT);
+            return switch (scale) {
+                case "capital" -> FULL;
+                case "city" -> LAND_SIDE_ONLY;
+                case "town", "village", "hamlet", "settlement" -> NONE;
+                default -> FULL;
+            };
+        }
+    }
+
     public JsonObject plan(CityLandformReviewPackage reviewPackage,
                            JsonObject anchorMap,
                            int wallMarginBlocks,
@@ -34,6 +58,21 @@ public final class CityWallReservationPlanner {
                            int wallMarginBlocks,
                            int wallCorridorHalfWidthBlocks,
                            BlockBounds patchContextBounds) {
+        return plan(reviewPackage, anchorMap, wallMarginBlocks, wallCorridorHalfWidthBlocks, patchContextBounds, null);
+    }
+
+    public JsonObject plan(CityLandformReviewPackage reviewPackage,
+                           JsonObject anchorMap,
+                           int wallMarginBlocks,
+                           int wallCorridorHalfWidthBlocks,
+                           BlockBounds patchContextBounds,
+                           WallPolicy requestedPolicy) {
+        WallPolicy policy = requestedPolicy == null ? WallPolicy.FULL : requestedPolicy;
+        if (!policy.buildsWall()) {
+            String reason = policy == WallPolicy.NONE ? "city_positioning_requires_no_wall"
+                    : "wall_form_not_implemented_yet:" + policy.id();
+            return emptyPlan(reviewPackage, wallMarginBlocks, wallCorridorHalfWidthBlocks, policy, reason);
+        }
         int margin = wallMarginBlocks <= 0 ? DEFAULT_WALL_MARGIN_BLOCKS : wallMarginBlocks;
         int halfWidth = wallCorridorHalfWidthBlocks <= 0
                 ? DEFAULT_WALL_CORRIDOR_HALF_WIDTH_BLOCKS : wallCorridorHalfWidthBlocks;
@@ -61,9 +100,20 @@ public final class CityWallReservationPlanner {
             BlockBounds footprint = anchorEnvelopeUnion(one);
             if (footprint != null) districtFootprints.add(footprint);
         }
-        List<Segment> segments = new com.rinsing.geomantia.systems.city.algorithm.landuse.CityDistrictBoundary()
+        List<Segment> outlined = new com.rinsing.geomantia.systems.city.algorithm.landuse.CityDistrictBoundary()
                 .outline(districtFootprints, Math.max(margin, halfWidth + unitLength), 32).stream()
                 .map(edge -> segment(edge.side(), edge.from(), edge.to(), halfWidth)).toList();
+        // 连续临水的一段不建墙，以水为天然边界；部分临水段保留，由执行层的墙高/基础消化。
+        List<Segment> segments = new ArrayList<>();
+        int waterSkippedSegments = 0;
+        for (Segment segment : outlined) {
+            if (mostlyWater(segment, reviewPackage)) { waterSkippedSegments++; continue; }
+            segments.add(segment);
+        }
+        if (segments.isEmpty()) {
+            return emptyPlan(reviewPackage, wallMarginBlocks, wallCorridorHalfWidthBlocks, policy,
+                    "all_wall_segments_are_water");
+        }
         BlockBounds wallBounds = union(segments);
         BlockBounds corridorBounds = union(segments);
         int rescanMargin = Math.max(DEFAULT_COVERAGE_RESCAN_MARGIN_BLOCKS, halfWidth + unitLength);
@@ -96,6 +146,8 @@ public final class CityWallReservationPlanner {
         plan.addProperty("patchUsage", "semantic_and_coverage_check_only");
         plan.addProperty("wallCorridorHalfWidthBlocks", halfWidth);
         plan.addProperty("wallMarginBlocks", margin);
+        plan.addProperty("wallPolicy", policy.id());
+        plan.addProperty("wallSkippedWaterSegments", waterSkippedSegments);
         plan.addProperty("wallUnitLengthBlocks", unitLength);
         plan.addProperty("segmentLengthBlocks", unitLength);
         plan.add("sourcePatchRefs", sourcePatchRefs(reviewPackage, anchorMap));
@@ -234,6 +286,60 @@ public final class CityWallReservationPlanner {
     private static Segment segment(String side, BlockPoint from, BlockPoint to, int halfWidth) {
         BlockBounds bounds = corridorBounds(from, to, halfWidth);
         return new Segment(side, from, to, bounds);
+    }
+
+    /** 段上超过一半的格落在 D3 水域 patch 时整段不建墙。 */
+    private static boolean mostlyWater(Segment segment, CityLandformReviewPackage reviewPackage) {
+        int total = 0, water = 0;
+        int minX = Math.min(segment.from().x(), segment.to().x());
+        int maxX = Math.max(segment.from().x(), segment.to().x());
+        int minZ = Math.min(segment.from().z(), segment.to().z());
+        int maxZ = Math.max(segment.from().z(), segment.to().z());
+        for (int z = minZ; z <= maxZ; z++) for (int x = minX; x <= maxX; x++) {
+            total++;
+            if (waterAt(reviewPackage, x, z)) water++;
+        }
+        return total > 0 && water * 2 > total;
+    }
+
+    private static boolean waterAt(CityLandformReviewPackage reviewPackage, int x, int z) {
+        for (LandformPatchSummary patch : reviewPackage.landformPatches()) {
+            BlockBounds bounds = patch.blockBounds();
+            if (x < bounds.minX() || x > bounds.maxX() || z < bounds.minZ() || z > bounds.maxZ()) continue;
+            if (patch.landformType() == com.rinsing.geomantia.systems.gis.domain.cell.LandformType.WATER) return true;
+        }
+        return false;
+    }
+
+    static JsonObject emptyPlan(CityLandformReviewPackage reviewPackage, int wallMarginBlocks,
+                                        int wallCorridorHalfWidthBlocks, WallPolicy policy, String reason) {
+        int margin = wallMarginBlocks <= 0 ? DEFAULT_WALL_MARGIN_BLOCKS : wallMarginBlocks;
+        int halfWidth = wallCorridorHalfWidthBlocks <= 0
+                ? DEFAULT_WALL_CORRIDOR_HALF_WIDTH_BLOCKS : wallCorridorHalfWidthBlocks;
+        JsonObject plan = new JsonObject();
+        plan.addProperty("schema", SCHEMA);
+        plan.addProperty("cityId", reviewPackage == null ? "" : reviewPackage.cityId());
+        plan.addProperty("wallPolicy", policy.id());
+        plan.addProperty("wallSkippedReason", reason);
+        plan.addProperty("wallCorridorHalfWidthBlocks", halfWidth);
+        plan.addProperty("wallMarginBlocks", margin);
+        plan.addProperty("wallSkippedWaterSegments", 0);
+        plan.add("wallLine", new JsonArray());
+        plan.add("wallCorridorMask", new JsonArray());
+        plan.add("gateSlots", new JsonArray());
+        plan.add("wallNodeSlots", new JsonArray());
+        plan.add("maskChannels", new JsonObject());
+        plan.add("gateCorridorMask", new JsonArray());
+        plan.add("sourcePatchRefs", new JsonArray());
+        if (reviewPackage != null) {
+            // 仍给出 D3 覆盖范围，让后续出城道路规划保持可执行，只是不预留墙带。
+            BlockBounds gridCoverage = new BlockBounds(reviewPackage.grid().blockMinX(),
+                    reviewPackage.grid().blockMinZ(), reviewPackage.grid().blockMaxX() - 1,
+                    reviewPackage.grid().blockMaxZ() - 1);
+            plan.add("sourceD3CoreGridBounds", boundsJson(gridCoverage));
+            plan.add("sourceD3CoverageBounds", boundsJson(gridCoverage));
+        }
+        return plan;
     }
 
     private static JsonArray wallLine(List<Segment> segments) {
