@@ -117,6 +117,7 @@ public final class CityStructureAnchorPlanner {
             anchorMap.add("residentialOverflowPlan",
                     structureAnchorPlan.getAsJsonObject("residentialOverflowPlan").deepCopy());
         }
+        copyPublicSpaces(structureAnchorPlan, anchorMap);
         anchorMap.add("anchors", anchors);
         JsonObject quality = quality(hardBlocks, warnings, needsReview, anchors.size());
         if (structureAnchorPlan.has("arrayVisualQuality")
@@ -146,6 +147,12 @@ public final class CityStructureAnchorPlanner {
             if (elem.isJsonObject()) applyPlacementProvenance(elem.getAsJsonObject(), elem.getAsJsonObject());
         }
         return new Result(normalizedPlan, anchorMap, quality);
+    }
+
+    /** D4 设计的内院与广场要交给 D6/LandUse 才能布置公共空间与绿化；丢了它 designedPublicSpaceCount 恒为 0。 */
+    static void copyPublicSpaces(JsonObject structureAnchorPlan, JsonObject anchorMap) {
+        if (!structureAnchorPlan.has("publicSpaces") || !structureAnchorPlan.get("publicSpaces").isJsonArray()) return;
+        anchorMap.add("publicSpaces", structureAnchorPlan.getAsJsonArray("publicSpaces").deepCopy());
     }
 
     private static JsonObject templateAnchorJson(JsonObject source,
