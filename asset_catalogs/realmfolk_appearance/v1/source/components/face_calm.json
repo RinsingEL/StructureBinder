@@ -1,0 +1,9 @@
+{
+  "schema": "realmfolk_component.draft1",
+  "id": "realmfolk:face/calm",
+  "type": "face",
+  "skeleton": "realmfolk:humanoid_v1",
+  "variants": {},
+  "material": "face_calm",
+  "materials": {}
+}

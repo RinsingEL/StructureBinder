@@ -81,6 +81,7 @@ $env:PATH=$env:JAVA_HOME+'\bin;'+$env:PATH
 
 ## 文档入口
 
+- [可组合 NPC 外观素材样板](../../asset_catalogs/realmfolk_appearance/v1/README.md)：25 个资产 ID、三风格×三体型、可编辑源与离线预览；新骨架及素材池尚未接入游戏。
 - 契约（城市经济与主流程、人口配置与集成、城市设计 MCP）与物品池接入设计草案：文档仓 `docs/addons/realmfolk/`
 - [本地真实客户端试玩接口](docs/试玩接口.md)
 - 需求案（01～11，含职责身份）：文档仓 `docs/addons/README.md` 的 Realmfolk 一节

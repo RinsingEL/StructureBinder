@@ -1,0 +1,48 @@
+{
+  "schema": "realmfolk_resolved_appearance.draft1",
+  "citizenDemoId": "demo_steam_standard",
+  "appearanceVersion": 1,
+  "catalogRevision": "draft-1",
+  "skeleton": "realmfolk:humanoid_v1",
+  "body": "realmfolk:body/standard",
+  "skinAsset": "realmfolk:skin/neutral",
+  "skin": "warm_ochre",
+  "face": "realmfolk:face/calm",
+  "eyes": "realmfolk:eyes/open",
+  "ears": "realmfolk:ears/rounded",
+  "hair": "realmfolk:hair/cropped",
+  "hairColor": "umber",
+  "eyeColor": "#5c867f",
+  "base": "realmfolk:base/tunic",
+  "outer": "realmfolk:outer/steam",
+  "palette": "steam",
+  "accessories": [
+    "realmfolk:accessory/goggles",
+    "realmfolk:accessory/belt",
+    "realmfolk:accessory/pouch",
+    "realmfolk:accessory/backpack"
+  ],
+  "visualScale": 1.0,
+  "presentation": "neutral",
+  "species": "unspecified",
+  "generation": {
+    "method": "authored_reference_combination",
+    "notRandomPopulation": true
+  },
+  "immutable": true,
+  "migrationPolicy": "preserve_ids; missing optional draw fallback only, do not overwrite original IDs",
+  "colors": {
+    "cloth": "#654331",
+    "secondary": "#d5c39b",
+    "trim": "#bd783f",
+    "leather": "#382d2b",
+    "metal": "#c99b4d",
+    "lens": "#65b1af",
+    "skin": "#ba805f",
+    "hair": "#533e31",
+    "eye": "#5c867f"
+  },
+  "optionalSlots": {
+    "beard": []
+  }
+}

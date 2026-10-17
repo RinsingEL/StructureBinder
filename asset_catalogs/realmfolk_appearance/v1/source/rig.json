@@ -1,0 +1,656 @@
+{
+  "schema": "realmfolk_rig.draft1",
+  "id": "realmfolk:humanoid_v1",
+  "unit": "1/16 block",
+  "axes": "+X character-left; +Y up; front -Z; right-handed",
+  "restHeight": 30,
+  "rotationOrder": "local X then Y then Z; Rz*Ry*Rx",
+  "pivots": "global rest coordinates; convert to parent local on load",
+  "bodyDimensions": {
+    "standard": [
+      8,
+      4,
+      3,
+      3.5
+    ],
+    "slender": [
+      7,
+      3.5,
+      2.5,
+      3
+    ],
+    "sturdy": [
+      10,
+      5,
+      4,
+      4.5
+    ]
+  },
+  "variants": {
+    "standard": {
+      "bones": {
+        "root": {
+          "parent": null,
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        "pelvis": {
+          "parent": "root",
+          "pivot": [
+            0,
+            12,
+            0
+          ]
+        },
+        "spine": {
+          "parent": "pelvis",
+          "pivot": [
+            0,
+            12,
+            0
+          ]
+        },
+        "head": {
+          "parent": "spine",
+          "pivot": [
+            0,
+            22,
+            0
+          ]
+        },
+        "hair_tail": {
+          "parent": "head",
+          "pivot": [
+            0,
+            23,
+            3.8
+          ]
+        },
+        "right_upper_arm": {
+          "parent": "spine",
+          "pivot": [
+            -5.5,
+            21,
+            0
+          ]
+        },
+        "right_forearm": {
+          "parent": "right_upper_arm",
+          "pivot": [
+            -5.5,
+            16,
+            0
+          ]
+        },
+        "right_thigh": {
+          "parent": "pelvis",
+          "pivot": [
+            -1.9,
+            12,
+            0
+          ]
+        },
+        "right_shin": {
+          "parent": "right_thigh",
+          "pivot": [
+            -1.9,
+            6,
+            0
+          ]
+        },
+        "left_upper_arm": {
+          "parent": "spine",
+          "pivot": [
+            5.5,
+            21,
+            0
+          ]
+        },
+        "left_forearm": {
+          "parent": "left_upper_arm",
+          "pivot": [
+            5.5,
+            16,
+            0
+          ]
+        },
+        "left_thigh": {
+          "parent": "pelvis",
+          "pivot": [
+            1.9,
+            12,
+            0
+          ]
+        },
+        "left_shin": {
+          "parent": "left_thigh",
+          "pivot": [
+            1.9,
+            6,
+            0
+          ]
+        }
+      },
+      "sockets": {
+        "hand_r": {
+          "bone": "right_forearm",
+          "position": [
+            -5.5,
+            11.2,
+            -0.5
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "hand_l": {
+          "bone": "left_forearm",
+          "position": [
+            5.5,
+            11.2,
+            -0.5
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "head_top": {
+          "bone": "head",
+          "position": [
+            0,
+            30,
+            0
+          ]
+        },
+        "face": {
+          "bone": "head",
+          "position": [
+            0,
+            26,
+            -4.15
+          ]
+        },
+        "neck": {
+          "bone": "spine",
+          "position": [
+            0,
+            21.6,
+            0
+          ]
+        },
+        "chest": {
+          "bone": "spine",
+          "position": [
+            -2.6666666666666665,
+            19,
+            -2.2
+          ]
+        },
+        "waist": {
+          "bone": "pelvis",
+          "position": [
+            0,
+            12.6,
+            0
+          ]
+        },
+        "hip_r": {
+          "bone": "pelvis",
+          "position": [
+            -4.5,
+            12,
+            0
+          ]
+        },
+        "back": {
+          "bone": "spine",
+          "position": [
+            0,
+            18,
+            2.3
+          ]
+        },
+        "seat_contact": {
+          "bone": "pelvis",
+          "position": [
+            0,
+            12,
+            0.5
+          ]
+        },
+        "sleep_head": {
+          "bone": "head",
+          "position": [
+            0,
+            26,
+            0
+          ]
+        }
+      }
+    },
+    "slender": {
+      "bones": {
+        "root": {
+          "parent": null,
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        "pelvis": {
+          "parent": "root",
+          "pivot": [
+            0,
+            12,
+            0
+          ]
+        },
+        "spine": {
+          "parent": "pelvis",
+          "pivot": [
+            0,
+            12,
+            0
+          ]
+        },
+        "head": {
+          "parent": "spine",
+          "pivot": [
+            0,
+            22,
+            0
+          ]
+        },
+        "hair_tail": {
+          "parent": "head",
+          "pivot": [
+            0,
+            23,
+            3.8
+          ]
+        },
+        "right_upper_arm": {
+          "parent": "spine",
+          "pivot": [
+            -4.75,
+            21,
+            0
+          ]
+        },
+        "right_forearm": {
+          "parent": "right_upper_arm",
+          "pivot": [
+            -4.75,
+            16,
+            0
+          ]
+        },
+        "right_thigh": {
+          "parent": "pelvis",
+          "pivot": [
+            -1.65,
+            12,
+            0
+          ]
+        },
+        "right_shin": {
+          "parent": "right_thigh",
+          "pivot": [
+            -1.65,
+            6,
+            0
+          ]
+        },
+        "left_upper_arm": {
+          "parent": "spine",
+          "pivot": [
+            4.75,
+            21,
+            0
+          ]
+        },
+        "left_forearm": {
+          "parent": "left_upper_arm",
+          "pivot": [
+            4.75,
+            16,
+            0
+          ]
+        },
+        "left_thigh": {
+          "parent": "pelvis",
+          "pivot": [
+            1.65,
+            12,
+            0
+          ]
+        },
+        "left_shin": {
+          "parent": "left_thigh",
+          "pivot": [
+            1.65,
+            6,
+            0
+          ]
+        }
+      },
+      "sockets": {
+        "hand_r": {
+          "bone": "right_forearm",
+          "position": [
+            -4.75,
+            11.2,
+            -0.5
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "hand_l": {
+          "bone": "left_forearm",
+          "position": [
+            4.75,
+            11.2,
+            -0.5
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "head_top": {
+          "bone": "head",
+          "position": [
+            0,
+            30,
+            0
+          ]
+        },
+        "face": {
+          "bone": "head",
+          "position": [
+            0,
+            26,
+            -4.15
+          ]
+        },
+        "neck": {
+          "bone": "spine",
+          "position": [
+            0,
+            21.6,
+            0
+          ]
+        },
+        "chest": {
+          "bone": "spine",
+          "position": [
+            -2.3333333333333335,
+            19,
+            -1.95
+          ]
+        },
+        "waist": {
+          "bone": "pelvis",
+          "position": [
+            0,
+            12.6,
+            0
+          ]
+        },
+        "hip_r": {
+          "bone": "pelvis",
+          "position": [
+            -4.0,
+            12,
+            0
+          ]
+        },
+        "back": {
+          "bone": "spine",
+          "position": [
+            0,
+            18,
+            2.05
+          ]
+        },
+        "seat_contact": {
+          "bone": "pelvis",
+          "position": [
+            0,
+            12,
+            0.5
+          ]
+        },
+        "sleep_head": {
+          "bone": "head",
+          "position": [
+            0,
+            26,
+            0
+          ]
+        }
+      }
+    },
+    "sturdy": {
+      "bones": {
+        "root": {
+          "parent": null,
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        "pelvis": {
+          "parent": "root",
+          "pivot": [
+            0,
+            12,
+            0
+          ]
+        },
+        "spine": {
+          "parent": "pelvis",
+          "pivot": [
+            0,
+            12,
+            0
+          ]
+        },
+        "head": {
+          "parent": "spine",
+          "pivot": [
+            0,
+            22,
+            0
+          ]
+        },
+        "hair_tail": {
+          "parent": "head",
+          "pivot": [
+            0,
+            23,
+            3.8
+          ]
+        },
+        "right_upper_arm": {
+          "parent": "spine",
+          "pivot": [
+            -7.0,
+            21,
+            0
+          ]
+        },
+        "right_forearm": {
+          "parent": "right_upper_arm",
+          "pivot": [
+            -7.0,
+            16,
+            0
+          ]
+        },
+        "right_thigh": {
+          "parent": "pelvis",
+          "pivot": [
+            -2.4,
+            12,
+            0
+          ]
+        },
+        "right_shin": {
+          "parent": "right_thigh",
+          "pivot": [
+            -2.4,
+            6,
+            0
+          ]
+        },
+        "left_upper_arm": {
+          "parent": "spine",
+          "pivot": [
+            7.0,
+            21,
+            0
+          ]
+        },
+        "left_forearm": {
+          "parent": "left_upper_arm",
+          "pivot": [
+            7.0,
+            16,
+            0
+          ]
+        },
+        "left_thigh": {
+          "parent": "pelvis",
+          "pivot": [
+            2.4,
+            12,
+            0
+          ]
+        },
+        "left_shin": {
+          "parent": "left_thigh",
+          "pivot": [
+            2.4,
+            6,
+            0
+          ]
+        }
+      },
+      "sockets": {
+        "hand_r": {
+          "bone": "right_forearm",
+          "position": [
+            -7.0,
+            11.2,
+            -0.5
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "hand_l": {
+          "bone": "left_forearm",
+          "position": [
+            7.0,
+            11.2,
+            -0.5
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "head_top": {
+          "bone": "head",
+          "position": [
+            0,
+            30,
+            0
+          ]
+        },
+        "face": {
+          "bone": "head",
+          "position": [
+            0,
+            26,
+            -4.15
+          ]
+        },
+        "neck": {
+          "bone": "spine",
+          "position": [
+            0,
+            21.6,
+            0
+          ]
+        },
+        "chest": {
+          "bone": "spine",
+          "position": [
+            -3.3333333333333335,
+            19,
+            -2.7
+          ]
+        },
+        "waist": {
+          "bone": "pelvis",
+          "position": [
+            0,
+            12.6,
+            0
+          ]
+        },
+        "hip_r": {
+          "bone": "pelvis",
+          "position": [
+            -5.5,
+            12,
+            0
+          ]
+        },
+        "back": {
+          "bone": "spine",
+          "position": [
+            0,
+            18,
+            2.8
+          ]
+        },
+        "seat_contact": {
+          "bone": "pelvis",
+          "position": [
+            0,
+            12,
+            0.5
+          ]
+        },
+        "sleep_head": {
+          "bone": "head",
+          "position": [
+            0,
+            26,
+            0
+          ]
+        }
+      }
+    }
+  },
+  "runtimeSupported": false
+}

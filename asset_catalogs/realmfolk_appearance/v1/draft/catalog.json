@@ -1,0 +1,1218 @@
+{
+  "schema": "realmfolk_appearance_catalog.draft1",
+  "runtimeSupported": false,
+  "assets": [
+    {
+      "id": "realmfolk:body/standard",
+      "type": "body",
+      "model": "realmfolk:appearance/models/body/standard.rfmodel.json",
+      "texture": "realmfolk:appearance/textures/body.png",
+      "materials": {
+        "skin": {
+          "texture": "realmfolk:appearance/textures/body__skin.png",
+          "regionMask": "realmfolk:appearance/textures/body__skin_regions.png",
+          "tintRegion": "skin"
+        }
+      },
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "standard"
+        ]
+      },
+      "occupies": [
+        "body"
+      ],
+      "styleTags": [
+        "shared"
+      ],
+      "professionTags": [
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "skin"
+      ],
+      "excludes": [],
+      "hideRules": [],
+      "fallback": null,
+      "lod": {
+        "maxCubes": 10
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": []
+    },
+    {
+      "id": "realmfolk:body/slender",
+      "type": "body",
+      "model": "realmfolk:appearance/models/body/slender.rfmodel.json",
+      "texture": "realmfolk:appearance/textures/body.png",
+      "materials": {
+        "skin": {
+          "texture": "realmfolk:appearance/textures/body__skin.png",
+          "regionMask": "realmfolk:appearance/textures/body__skin_regions.png",
+          "tintRegion": "skin"
+        }
+      },
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "slender"
+        ]
+      },
+      "occupies": [
+        "body"
+      ],
+      "styleTags": [
+        "shared"
+      ],
+      "professionTags": [
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "skin"
+      ],
+      "excludes": [],
+      "hideRules": [],
+      "fallback": "realmfolk:body/standard",
+      "lod": {
+        "maxCubes": 10
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": []
+    },
+    {
+      "id": "realmfolk:body/sturdy",
+      "type": "body",
+      "model": "realmfolk:appearance/models/body/sturdy.rfmodel.json",
+      "texture": "realmfolk:appearance/textures/body.png",
+      "materials": {
+        "skin": {
+          "texture": "realmfolk:appearance/textures/body__skin.png",
+          "regionMask": "realmfolk:appearance/textures/body__skin_regions.png",
+          "tintRegion": "skin"
+        }
+      },
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "sturdy"
+        ]
+      },
+      "occupies": [
+        "body"
+      ],
+      "styleTags": [
+        "shared"
+      ],
+      "professionTags": [
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "skin"
+      ],
+      "excludes": [],
+      "hideRules": [],
+      "fallback": "realmfolk:body/standard",
+      "lod": {
+        "maxCubes": 10
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": []
+    },
+    {
+      "id": "realmfolk:skin/neutral",
+      "type": "skin",
+      "model": null,
+      "texture": "realmfolk:appearance/textures/skin.png",
+      "materials": {},
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "standard",
+          "slender",
+          "sturdy"
+        ]
+      },
+      "occupies": [],
+      "styleTags": [
+        "shared"
+      ],
+      "professionTags": [
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "skin"
+      ],
+      "excludes": [],
+      "hideRules": [],
+      "fallback": null,
+      "lod": {
+        "maxCubes": 0
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": []
+    },
+    {
+      "id": "realmfolk:face/calm",
+      "type": "face",
+      "model": null,
+      "texture": "realmfolk:appearance/textures/face_calm.png",
+      "materials": {},
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "standard",
+          "slender",
+          "sturdy"
+        ]
+      },
+      "occupies": [
+        "face_overlay"
+      ],
+      "styleTags": [
+        "shared"
+      ],
+      "professionTags": [
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "skin"
+      ],
+      "excludes": [],
+      "hideRules": [],
+      "fallback": null,
+      "lod": {
+        "maxCubes": 0
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": []
+    },
+    {
+      "id": "realmfolk:face/freckled",
+      "type": "face",
+      "model": null,
+      "texture": "realmfolk:appearance/textures/face_freckled.png",
+      "materials": {},
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "standard",
+          "slender",
+          "sturdy"
+        ]
+      },
+      "occupies": [
+        "face_overlay"
+      ],
+      "styleTags": [
+        "shared"
+      ],
+      "professionTags": [
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "skin"
+      ],
+      "excludes": [],
+      "hideRules": [],
+      "fallback": "realmfolk:face/calm",
+      "lod": {
+        "maxCubes": 0
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": []
+    },
+    {
+      "id": "realmfolk:eyes/open",
+      "type": "eyes",
+      "model": null,
+      "texture": "realmfolk:appearance/textures/eyes_open.png",
+      "materials": {},
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "standard",
+          "slender",
+          "sturdy"
+        ]
+      },
+      "occupies": [
+        "eye_overlay"
+      ],
+      "styleTags": [
+        "shared"
+      ],
+      "professionTags": [
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "skin"
+      ],
+      "excludes": [],
+      "hideRules": [],
+      "fallback": null,
+      "lod": {
+        "maxCubes": 0
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": []
+    },
+    {
+      "id": "realmfolk:eyes/narrow",
+      "type": "eyes",
+      "model": null,
+      "texture": "realmfolk:appearance/textures/eyes_narrow.png",
+      "materials": {},
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "standard",
+          "slender",
+          "sturdy"
+        ]
+      },
+      "occupies": [
+        "eye_overlay"
+      ],
+      "styleTags": [
+        "shared"
+      ],
+      "professionTags": [
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "skin"
+      ],
+      "excludes": [],
+      "hideRules": [],
+      "fallback": "realmfolk:eyes/open",
+      "lod": {
+        "maxCubes": 0
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": []
+    },
+    {
+      "id": "realmfolk:hair/cropped",
+      "type": "hair",
+      "model": "realmfolk:appearance/models/hair/cropped.rfmodel.json",
+      "texture": "realmfolk:appearance/textures/hair_cropped.png",
+      "materials": {
+        "hair": {
+          "texture": "realmfolk:appearance/textures/hair_cropped__hair.png",
+          "regionMask": "realmfolk:appearance/textures/hair_cropped__hair_regions.png",
+          "tintRegion": "hair"
+        }
+      },
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "standard",
+          "slender",
+          "sturdy"
+        ]
+      },
+      "occupies": [
+        "hair_crown",
+        "hair_sides"
+      ],
+      "styleTags": [
+        "shared"
+      ],
+      "professionTags": [
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "hair"
+      ],
+      "excludes": [],
+      "hideRules": [],
+      "fallback": null,
+      "lod": {
+        "maxCubes": 3
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": [
+        "hair_low"
+      ]
+    },
+    {
+      "id": "realmfolk:hair/bob",
+      "type": "hair",
+      "model": "realmfolk:appearance/models/hair/bob.rfmodel.json",
+      "texture": "realmfolk:appearance/textures/hair_bob.png",
+      "materials": {
+        "hair": {
+          "texture": "realmfolk:appearance/textures/hair_bob__hair.png",
+          "regionMask": "realmfolk:appearance/textures/hair_bob__hair_regions.png",
+          "tintRegion": "hair"
+        }
+      },
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "standard",
+          "slender",
+          "sturdy"
+        ]
+      },
+      "occupies": [
+        "hair_crown",
+        "hair_sides"
+      ],
+      "styleTags": [
+        "shared"
+      ],
+      "professionTags": [
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "hair"
+      ],
+      "excludes": [],
+      "hideRules": [],
+      "fallback": null,
+      "lod": {
+        "maxCubes": 4
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": [
+        "hair_low"
+      ]
+    },
+    {
+      "id": "realmfolk:hair/tied",
+      "type": "hair",
+      "model": "realmfolk:appearance/models/hair/tied.rfmodel.json",
+      "texture": "realmfolk:appearance/textures/hair_tied.png",
+      "materials": {
+        "hair": {
+          "texture": "realmfolk:appearance/textures/hair_tied__hair.png",
+          "regionMask": "realmfolk:appearance/textures/hair_tied__hair_regions.png",
+          "tintRegion": "hair"
+        },
+        "trim": {
+          "texture": "realmfolk:appearance/textures/hair_tied__trim.png",
+          "regionMask": "realmfolk:appearance/textures/hair_tied__trim_regions.png",
+          "tintRegion": "trim"
+        }
+      },
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "standard",
+          "slender",
+          "sturdy"
+        ]
+      },
+      "occupies": [
+        "hair_crown",
+        "hair_sides",
+        "hair_back_long"
+      ],
+      "styleTags": [
+        "shared"
+      ],
+      "professionTags": [
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "hair",
+        "trim"
+      ],
+      "excludes": [],
+      "hideRules": [
+        {
+          "poses": [
+            "sit",
+            "sleep"
+          ],
+          "bones": [
+            "hair_tail"
+          ],
+          "action": "hide_geometry",
+          "restoreOnExit": true,
+          "meaning": "束发状态隐藏垂尾，后脑发壳保留；不更换持久化发型 ID"
+        }
+      ],
+      "fallback": null,
+      "lod": {
+        "maxCubes": 4
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": [
+        "hair_low",
+        "hair_back_long"
+      ]
+    },
+    {
+      "id": "realmfolk:beard/short",
+      "type": "beard",
+      "model": "realmfolk:appearance/models/beard/short.rfmodel.json",
+      "texture": "realmfolk:appearance/textures/beard_short.png",
+      "materials": {
+        "hair": {
+          "texture": "realmfolk:appearance/textures/beard_short__hair.png",
+          "regionMask": "realmfolk:appearance/textures/beard_short__hair_regions.png",
+          "tintRegion": "hair"
+        }
+      },
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "standard",
+          "slender",
+          "sturdy"
+        ]
+      },
+      "occupies": [
+        "chin"
+      ],
+      "styleTags": [
+        "shared"
+      ],
+      "professionTags": [
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "hair"
+      ],
+      "excludes": [],
+      "hideRules": [],
+      "fallback": null,
+      "lod": {
+        "maxCubes": 1
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": []
+    },
+    {
+      "id": "realmfolk:ears/rounded",
+      "type": "ears",
+      "model": "realmfolk:appearance/models/ears/rounded.rfmodel.json",
+      "texture": "realmfolk:appearance/textures/ears_rounded.png",
+      "materials": {
+        "skin": {
+          "texture": "realmfolk:appearance/textures/ears_rounded__skin.png",
+          "regionMask": "realmfolk:appearance/textures/ears_rounded__skin_regions.png",
+          "tintRegion": "skin"
+        }
+      },
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "standard",
+          "slender",
+          "sturdy"
+        ]
+      },
+      "occupies": [
+        "ears"
+      ],
+      "styleTags": [
+        "shared"
+      ],
+      "professionTags": [
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "skin"
+      ],
+      "excludes": [],
+      "hideRules": [],
+      "fallback": null,
+      "lod": {
+        "maxCubes": 2
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": []
+    },
+    {
+      "id": "realmfolk:ears/pointed",
+      "type": "ears",
+      "model": "realmfolk:appearance/models/ears/pointed.rfmodel.json",
+      "texture": "realmfolk:appearance/textures/ears_pointed.png",
+      "materials": {
+        "skin": {
+          "texture": "realmfolk:appearance/textures/ears_pointed__skin.png",
+          "regionMask": "realmfolk:appearance/textures/ears_pointed__skin_regions.png",
+          "tintRegion": "skin"
+        }
+      },
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "standard",
+          "slender",
+          "sturdy"
+        ]
+      },
+      "occupies": [
+        "ears"
+      ],
+      "styleTags": [
+        "shared"
+      ],
+      "professionTags": [
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "skin"
+      ],
+      "excludes": [],
+      "hideRules": [],
+      "fallback": "realmfolk:ears/rounded",
+      "lod": {
+        "maxCubes": 6
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": []
+    },
+    {
+      "id": "realmfolk:base/tunic",
+      "type": "base_clothing",
+      "model": "realmfolk:appearance/models/base/tunic.rfmodel.json",
+      "texture": "realmfolk:appearance/textures/base_tunic.png",
+      "materials": {
+        "leather": {
+          "texture": "realmfolk:appearance/textures/base_tunic__leather.png",
+          "regionMask": "realmfolk:appearance/textures/base_tunic__leather_regions.png",
+          "tintRegion": "leather"
+        },
+        "secondary": {
+          "texture": "realmfolk:appearance/textures/base_tunic__secondary.png",
+          "regionMask": "realmfolk:appearance/textures/base_tunic__secondary_regions.png",
+          "tintRegion": "secondary"
+        }
+      },
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "standard",
+          "slender",
+          "sturdy"
+        ]
+      },
+      "occupies": [
+        "base_clothing"
+      ],
+      "styleTags": [
+        "shared"
+      ],
+      "professionTags": [
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "leather",
+        "secondary"
+      ],
+      "excludes": [],
+      "hideRules": [],
+      "fallback": null,
+      "lod": {
+        "maxCubes": 9
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": []
+    },
+    {
+      "id": "realmfolk:outer/academy",
+      "type": "outer_clothing",
+      "model": "realmfolk:appearance/models/outer/academy.rfmodel.json",
+      "texture": "realmfolk:appearance/textures/outer_academy.png",
+      "materials": {
+        "cloth": {
+          "texture": "realmfolk:appearance/textures/outer_academy__cloth.png",
+          "regionMask": "realmfolk:appearance/textures/outer_academy__cloth_regions.png",
+          "tintRegion": "cloth"
+        },
+        "trim": {
+          "texture": "realmfolk:appearance/textures/outer_academy__trim.png",
+          "regionMask": "realmfolk:appearance/textures/outer_academy__trim_regions.png",
+          "tintRegion": "trim"
+        }
+      },
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "standard",
+          "slender",
+          "sturdy"
+        ]
+      },
+      "occupies": [
+        "outer_clothing"
+      ],
+      "styleTags": [
+        "academy"
+      ],
+      "professionTags": [
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "cloth",
+        "trim"
+      ],
+      "excludes": [],
+      "hideRules": [],
+      "fallback": null,
+      "lod": {
+        "maxCubes": 7
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": []
+    },
+    {
+      "id": "realmfolk:outer/steam",
+      "type": "outer_clothing",
+      "model": "realmfolk:appearance/models/outer/steam.rfmodel.json",
+      "texture": "realmfolk:appearance/textures/outer_steam.png",
+      "materials": {
+        "cloth": {
+          "texture": "realmfolk:appearance/textures/outer_steam__cloth.png",
+          "regionMask": "realmfolk:appearance/textures/outer_steam__cloth_regions.png",
+          "tintRegion": "cloth"
+        },
+        "trim": {
+          "texture": "realmfolk:appearance/textures/outer_steam__trim.png",
+          "regionMask": "realmfolk:appearance/textures/outer_steam__trim_regions.png",
+          "tintRegion": "trim"
+        }
+      },
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "standard",
+          "slender",
+          "sturdy"
+        ]
+      },
+      "occupies": [
+        "outer_clothing"
+      ],
+      "styleTags": [
+        "steam"
+      ],
+      "professionTags": [
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "cloth",
+        "trim"
+      ],
+      "excludes": [],
+      "hideRules": [],
+      "fallback": null,
+      "lod": {
+        "maxCubes": 7
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": []
+    },
+    {
+      "id": "realmfolk:outer/elven",
+      "type": "outer_clothing",
+      "model": "realmfolk:appearance/models/outer/elven.rfmodel.json",
+      "texture": "realmfolk:appearance/textures/outer_elven.png",
+      "materials": {
+        "cloth": {
+          "texture": "realmfolk:appearance/textures/outer_elven__cloth.png",
+          "regionMask": "realmfolk:appearance/textures/outer_elven__cloth_regions.png",
+          "tintRegion": "cloth"
+        },
+        "secondary": {
+          "texture": "realmfolk:appearance/textures/outer_elven__secondary.png",
+          "regionMask": "realmfolk:appearance/textures/outer_elven__secondary_regions.png",
+          "tintRegion": "secondary"
+        }
+      },
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "standard",
+          "slender",
+          "sturdy"
+        ]
+      },
+      "occupies": [
+        "outer_clothing"
+      ],
+      "styleTags": [
+        "elven"
+      ],
+      "professionTags": [
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "cloth",
+        "secondary"
+      ],
+      "excludes": [],
+      "hideRules": [],
+      "fallback": null,
+      "lod": {
+        "maxCubes": 8
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": []
+    },
+    {
+      "id": "realmfolk:accessory/scholar_cap",
+      "type": "headwear",
+      "model": "realmfolk:appearance/models/accessory/scholar_cap.rfmodel.json",
+      "texture": "realmfolk:appearance/textures/accessory_scholar_cap.png",
+      "materials": {
+        "cloth": {
+          "texture": "realmfolk:appearance/textures/accessory_scholar_cap__cloth.png",
+          "regionMask": "realmfolk:appearance/textures/accessory_scholar_cap__cloth_regions.png",
+          "tintRegion": "cloth"
+        },
+        "metal": {
+          "texture": "realmfolk:appearance/textures/accessory_scholar_cap__metal.png",
+          "regionMask": "realmfolk:appearance/textures/accessory_scholar_cap__metal_regions.png",
+          "tintRegion": "metal"
+        }
+      },
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "standard",
+          "slender",
+          "sturdy"
+        ]
+      },
+      "occupies": [
+        "headwear"
+      ],
+      "styleTags": [
+        "academy"
+      ],
+      "professionTags": [
+        "scholar",
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "cloth",
+        "metal"
+      ],
+      "excludes": [
+        {
+          "withTag": "hair_tall",
+          "action": "reject"
+        }
+      ],
+      "hideRules": [
+        {
+          "poses": [
+            "sleep"
+          ],
+          "action": "hide_geometry",
+          "restoreOnExit": true
+        }
+      ],
+      "fallback": null,
+      "lod": {
+        "maxCubes": 3
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": []
+    },
+    {
+      "id": "realmfolk:accessory/goggles",
+      "type": "eyewear",
+      "model": "realmfolk:appearance/models/accessory/goggles.rfmodel.json",
+      "texture": "realmfolk:appearance/textures/accessory_goggles.png",
+      "materials": {
+        "lens": {
+          "texture": "realmfolk:appearance/textures/accessory_goggles__lens.png",
+          "regionMask": "realmfolk:appearance/textures/accessory_goggles__lens_regions.png",
+          "tintRegion": "lens"
+        },
+        "metal": {
+          "texture": "realmfolk:appearance/textures/accessory_goggles__metal.png",
+          "regionMask": "realmfolk:appearance/textures/accessory_goggles__metal_regions.png",
+          "tintRegion": "metal"
+        }
+      },
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "standard",
+          "slender",
+          "sturdy"
+        ]
+      },
+      "occupies": [
+        "eyewear"
+      ],
+      "styleTags": [
+        "steam"
+      ],
+      "professionTags": [
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "lens",
+        "metal"
+      ],
+      "excludes": [],
+      "hideRules": [],
+      "fallback": null,
+      "lod": {
+        "maxCubes": 5
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": []
+    },
+    {
+      "id": "realmfolk:accessory/belt",
+      "type": "accessory",
+      "model": "realmfolk:appearance/models/accessory/belt.rfmodel.json",
+      "texture": "realmfolk:appearance/textures/accessory_belt.png",
+      "materials": {
+        "leather": {
+          "texture": "realmfolk:appearance/textures/accessory_belt__leather.png",
+          "regionMask": "realmfolk:appearance/textures/accessory_belt__leather_regions.png",
+          "tintRegion": "leather"
+        },
+        "metal": {
+          "texture": "realmfolk:appearance/textures/accessory_belt__metal.png",
+          "regionMask": "realmfolk:appearance/textures/accessory_belt__metal_regions.png",
+          "tintRegion": "metal"
+        }
+      },
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "standard",
+          "slender",
+          "sturdy"
+        ]
+      },
+      "occupies": [
+        "waist"
+      ],
+      "styleTags": [
+        "shared"
+      ],
+      "professionTags": [
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "leather",
+        "metal"
+      ],
+      "excludes": [],
+      "hideRules": [],
+      "fallback": null,
+      "lod": {
+        "maxCubes": 2
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": []
+    },
+    {
+      "id": "realmfolk:accessory/pouch",
+      "type": "accessory",
+      "model": "realmfolk:appearance/models/accessory/pouch.rfmodel.json",
+      "texture": "realmfolk:appearance/textures/accessory_pouch.png",
+      "materials": {
+        "leather": {
+          "texture": "realmfolk:appearance/textures/accessory_pouch__leather.png",
+          "regionMask": "realmfolk:appearance/textures/accessory_pouch__leather_regions.png",
+          "tintRegion": "leather"
+        },
+        "metal": {
+          "texture": "realmfolk:appearance/textures/accessory_pouch__metal.png",
+          "regionMask": "realmfolk:appearance/textures/accessory_pouch__metal_regions.png",
+          "tintRegion": "metal"
+        }
+      },
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "standard",
+          "slender",
+          "sturdy"
+        ]
+      },
+      "occupies": [
+        "hip_r"
+      ],
+      "styleTags": [
+        "shared"
+      ],
+      "professionTags": [
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "leather",
+        "metal"
+      ],
+      "excludes": [],
+      "hideRules": [
+        {
+          "poses": [
+            "sit",
+            "sleep"
+          ],
+          "action": "hide_geometry",
+          "restoreOnExit": true
+        }
+      ],
+      "fallback": null,
+      "lod": {
+        "maxCubes": 2
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": []
+    },
+    {
+      "id": "realmfolk:accessory/backpack",
+      "type": "accessory",
+      "model": "realmfolk:appearance/models/accessory/backpack.rfmodel.json",
+      "texture": "realmfolk:appearance/textures/accessory_backpack.png",
+      "materials": {
+        "cloth": {
+          "texture": "realmfolk:appearance/textures/accessory_backpack__cloth.png",
+          "regionMask": "realmfolk:appearance/textures/accessory_backpack__cloth_regions.png",
+          "tintRegion": "cloth"
+        },
+        "leather": {
+          "texture": "realmfolk:appearance/textures/accessory_backpack__leather.png",
+          "regionMask": "realmfolk:appearance/textures/accessory_backpack__leather_regions.png",
+          "tintRegion": "leather"
+        }
+      },
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "standard",
+          "slender",
+          "sturdy"
+        ]
+      },
+      "occupies": [
+        "back"
+      ],
+      "styleTags": [
+        "shared"
+      ],
+      "professionTags": [
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "cloth",
+        "leather"
+      ],
+      "excludes": [
+        {
+          "withSlot": "cape",
+          "action": "reject"
+        },
+        {
+          "withSlot": "hair_back_long",
+          "action": "reject"
+        }
+      ],
+      "hideRules": [
+        {
+          "poses": [
+            "sit",
+            "sleep"
+          ],
+          "action": "hide_geometry",
+          "restoreOnExit": true
+        }
+      ],
+      "fallback": null,
+      "lod": {
+        "maxCubes": 4
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": []
+    },
+    {
+      "id": "realmfolk:accessory/badge",
+      "type": "accessory",
+      "model": "realmfolk:appearance/models/accessory/badge.rfmodel.json",
+      "texture": "realmfolk:appearance/textures/accessory_badge.png",
+      "materials": {
+        "metal": {
+          "texture": "realmfolk:appearance/textures/accessory_badge__metal.png",
+          "regionMask": "realmfolk:appearance/textures/accessory_badge__metal_regions.png",
+          "tintRegion": "metal"
+        }
+      },
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "standard",
+          "slender",
+          "sturdy"
+        ]
+      },
+      "occupies": [
+        "chest_badge"
+      ],
+      "styleTags": [
+        "shared"
+      ],
+      "professionTags": [
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "metal"
+      ],
+      "excludes": [],
+      "hideRules": [],
+      "fallback": null,
+      "lod": {
+        "maxCubes": 1
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": []
+    },
+    {
+      "id": "realmfolk:accessory/scarf",
+      "type": "accessory",
+      "model": "realmfolk:appearance/models/accessory/scarf.rfmodel.json",
+      "texture": "realmfolk:appearance/textures/accessory_scarf.png",
+      "materials": {
+        "secondary": {
+          "texture": "realmfolk:appearance/textures/accessory_scarf__secondary.png",
+          "regionMask": "realmfolk:appearance/textures/accessory_scarf__secondary_regions.png",
+          "tintRegion": "secondary"
+        }
+      },
+      "supports": {
+        "skeletons": [
+          "realmfolk:humanoid_v1"
+        ],
+        "bodies": [
+          "standard",
+          "slender",
+          "sturdy"
+        ]
+      },
+      "occupies": [
+        "neckwear"
+      ],
+      "styleTags": [
+        "shared"
+      ],
+      "professionTags": [
+        "any"
+      ],
+      "weight": 1,
+      "colorRegions": [
+        "secondary"
+      ],
+      "excludes": [],
+      "hideRules": [],
+      "fallback": null,
+      "lod": {
+        "maxCubes": 2
+      },
+      "status": "offline_prototype",
+      "license": "GPL-3.0-or-later",
+      "compatibilityTags": []
+    }
+  ]
+}

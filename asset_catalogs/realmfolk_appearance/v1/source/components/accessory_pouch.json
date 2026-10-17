@@ -1,0 +1,351 @@
+{
+  "schema": "realmfolk_component.draft1",
+  "id": "realmfolk:accessory/pouch",
+  "type": "accessory",
+  "skeleton": "realmfolk:humanoid_v1",
+  "variants": {
+    "standard": [
+      {
+        "name": "pouch",
+        "bone": "pelvis",
+        "from": [
+          -6.0,
+          10.5,
+          -1.8
+        ],
+        "to": [
+          -4.35,
+          13.1,
+          1.8
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "leather",
+        "detail": "fabric"
+      },
+      {
+        "name": "flap",
+        "bone": "pelvis",
+        "from": [
+          -6.1,
+          12.1,
+          -1.95
+        ],
+        "to": [
+          -4.25,
+          13.25,
+          -1.75
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "metal",
+        "detail": "fabric"
+      }
+    ],
+    "slender": [
+      {
+        "name": "pouch",
+        "bone": "pelvis",
+        "from": [
+          -5.5,
+          10.5,
+          -1.8
+        ],
+        "to": [
+          -3.85,
+          13.1,
+          1.8
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "leather",
+        "detail": "fabric"
+      },
+      {
+        "name": "flap",
+        "bone": "pelvis",
+        "from": [
+          -5.6,
+          12.1,
+          -1.95
+        ],
+        "to": [
+          -3.75,
+          13.25,
+          -1.75
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "metal",
+        "detail": "fabric"
+      }
+    ],
+    "sturdy": [
+      {
+        "name": "pouch",
+        "bone": "pelvis",
+        "from": [
+          -7.0,
+          10.5,
+          -1.8
+        ],
+        "to": [
+          -5.35,
+          13.1,
+          1.8
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "leather",
+        "detail": "fabric"
+      },
+      {
+        "name": "flap",
+        "bone": "pelvis",
+        "from": [
+          -7.1,
+          12.1,
+          -1.95
+        ],
+        "to": [
+          -5.25,
+          13.25,
+          -1.75
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "metal",
+        "detail": "fabric"
+      }
+    ]
+  },
+  "material": "accessory_pouch",
+  "materials": {
+    "leather": {
+      "texture": "realmfolk:appearance/textures/accessory_pouch__leather.png",
+      "regionMask": "realmfolk:appearance/textures/accessory_pouch__leather_regions.png",
+      "tintRegion": "leather"
+    },
+    "metal": {
+      "texture": "realmfolk:appearance/textures/accessory_pouch__metal.png",
+      "regionMask": "realmfolk:appearance/textures/accessory_pouch__metal_regions.png",
+      "tintRegion": "metal"
+    }
+  }
+}

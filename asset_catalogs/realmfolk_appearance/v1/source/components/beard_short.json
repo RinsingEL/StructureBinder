@@ -1,0 +1,184 @@
+{
+  "schema": "realmfolk_component.draft1",
+  "id": "realmfolk:beard/short",
+  "type": "beard",
+  "skeleton": "realmfolk:humanoid_v1",
+  "variants": {
+    "standard": [
+      {
+        "name": "beard",
+        "bone": "head",
+        "from": [
+          -3,
+          22,
+          -4.3
+        ],
+        "to": [
+          3,
+          24.2,
+          -3.95
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "hair",
+        "detail": "hair"
+      }
+    ],
+    "slender": [
+      {
+        "name": "beard",
+        "bone": "head",
+        "from": [
+          -3,
+          22,
+          -4.3
+        ],
+        "to": [
+          3,
+          24.2,
+          -3.95
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "hair",
+        "detail": "hair"
+      }
+    ],
+    "sturdy": [
+      {
+        "name": "beard",
+        "bone": "head",
+        "from": [
+          -3,
+          22,
+          -4.3
+        ],
+        "to": [
+          3,
+          24.2,
+          -3.95
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "hair",
+        "detail": "hair"
+      }
+    ]
+  },
+  "material": "beard_short",
+  "materials": {
+    "hair": {
+      "texture": "realmfolk:appearance/textures/beard_short__hair.png",
+      "regionMask": "realmfolk:appearance/textures/beard_short__hair_regions.png",
+      "tintRegion": "hair"
+    }
+  }
+}

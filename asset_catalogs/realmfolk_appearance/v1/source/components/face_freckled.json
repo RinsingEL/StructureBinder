@@ -1,0 +1,9 @@
+{
+  "schema": "realmfolk_component.draft1",
+  "id": "realmfolk:face/freckled",
+  "type": "face",
+  "skeleton": "realmfolk:humanoid_v1",
+  "variants": {},
+  "material": "face_freckled",
+  "materials": {}
+}

@@ -1,0 +1,679 @@
+{
+  "schema": "realmfolk_rfmodel.draft1",
+  "id": "realmfolk:hair/tied",
+  "type": "hair",
+  "skeleton": "realmfolk:humanoid_v1",
+  "variants": {
+    "standard": [
+      {
+        "name": "crown",
+        "bone": "head",
+        "from": [
+          -4.18,
+          28.6,
+          -4.18
+        ],
+        "to": [
+          4.18,
+          30.25,
+          4.18
+        ],
+        "uv": {
+          "north": [
+            0,
+            0,
+            12,
+            10
+          ],
+          "east": [
+            16,
+            0,
+            28,
+            10
+          ],
+          "south": [
+            32,
+            0,
+            44,
+            10
+          ],
+          "west": [
+            48,
+            0,
+            60,
+            10
+          ],
+          "up": [
+            64,
+            0,
+            76,
+            10
+          ],
+          "down": [
+            80,
+            0,
+            92,
+            10
+          ]
+        },
+        "region": "hair",
+        "detail": "hair"
+      },
+      {
+        "name": "back",
+        "bone": "head",
+        "from": [
+          -4.1,
+          24,
+          3.9
+        ],
+        "to": [
+          4.1,
+          28.6,
+          4.4
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "hair",
+        "detail": "hair"
+      },
+      {
+        "name": "tie",
+        "bone": "hair_tail",
+        "from": [
+          -1.45,
+          22.8,
+          4.3
+        ],
+        "to": [
+          1.45,
+          24,
+          5.7
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "trim",
+        "detail": "fabric"
+      },
+      {
+        "name": "tail",
+        "bone": "hair_tail",
+        "from": [
+          -1.2,
+          18.8,
+          4.4
+        ],
+        "to": [
+          1.2,
+          22.8,
+          5.5
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "hair",
+        "detail": "hair"
+      }
+    ],
+    "slender": [
+      {
+        "name": "crown",
+        "bone": "head",
+        "from": [
+          -4.18,
+          28.6,
+          -4.18
+        ],
+        "to": [
+          4.18,
+          30.25,
+          4.18
+        ],
+        "uv": {
+          "north": [
+            0,
+            0,
+            12,
+            10
+          ],
+          "east": [
+            16,
+            0,
+            28,
+            10
+          ],
+          "south": [
+            32,
+            0,
+            44,
+            10
+          ],
+          "west": [
+            48,
+            0,
+            60,
+            10
+          ],
+          "up": [
+            64,
+            0,
+            76,
+            10
+          ],
+          "down": [
+            80,
+            0,
+            92,
+            10
+          ]
+        },
+        "region": "hair",
+        "detail": "hair"
+      },
+      {
+        "name": "back",
+        "bone": "head",
+        "from": [
+          -4.1,
+          24,
+          3.9
+        ],
+        "to": [
+          4.1,
+          28.6,
+          4.4
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "hair",
+        "detail": "hair"
+      },
+      {
+        "name": "tie",
+        "bone": "hair_tail",
+        "from": [
+          -1.45,
+          22.8,
+          4.3
+        ],
+        "to": [
+          1.45,
+          24,
+          5.7
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "trim",
+        "detail": "fabric"
+      },
+      {
+        "name": "tail",
+        "bone": "hair_tail",
+        "from": [
+          -1.2,
+          18.8,
+          4.4
+        ],
+        "to": [
+          1.2,
+          22.8,
+          5.5
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "hair",
+        "detail": "hair"
+      }
+    ],
+    "sturdy": [
+      {
+        "name": "crown",
+        "bone": "head",
+        "from": [
+          -4.18,
+          28.6,
+          -4.18
+        ],
+        "to": [
+          4.18,
+          30.25,
+          4.18
+        ],
+        "uv": {
+          "north": [
+            0,
+            0,
+            12,
+            10
+          ],
+          "east": [
+            16,
+            0,
+            28,
+            10
+          ],
+          "south": [
+            32,
+            0,
+            44,
+            10
+          ],
+          "west": [
+            48,
+            0,
+            60,
+            10
+          ],
+          "up": [
+            64,
+            0,
+            76,
+            10
+          ],
+          "down": [
+            80,
+            0,
+            92,
+            10
+          ]
+        },
+        "region": "hair",
+        "detail": "hair"
+      },
+      {
+        "name": "back",
+        "bone": "head",
+        "from": [
+          -4.1,
+          24,
+          3.9
+        ],
+        "to": [
+          4.1,
+          28.6,
+          4.4
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "hair",
+        "detail": "hair"
+      },
+      {
+        "name": "tie",
+        "bone": "hair_tail",
+        "from": [
+          -1.45,
+          22.8,
+          4.3
+        ],
+        "to": [
+          1.45,
+          24,
+          5.7
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "trim",
+        "detail": "fabric"
+      },
+      {
+        "name": "tail",
+        "bone": "hair_tail",
+        "from": [
+          -1.2,
+          18.8,
+          4.4
+        ],
+        "to": [
+          1.2,
+          22.8,
+          5.5
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "hair",
+        "detail": "hair"
+      }
+    ]
+  },
+  "material": "hair_tied",
+  "materials": {
+    "hair": {
+      "texture": "realmfolk:appearance/textures/hair_tied__hair.png",
+      "regionMask": "realmfolk:appearance/textures/hair_tied__hair_regions.png",
+      "tintRegion": "hair"
+    },
+    "trim": {
+      "texture": "realmfolk:appearance/textures/hair_tied__trim.png",
+      "regionMask": "realmfolk:appearance/textures/hair_tied__trim_regions.png",
+      "tintRegion": "trim"
+    }
+  },
+  "unit": "1/16 block",
+  "coordinateSystem": "RH +X character-left, +Y up, front -Z",
+  "runtimeSupported": false,
+  "variantCoordinates": "global rest coordinates; bone pivot local conversion required"
+}

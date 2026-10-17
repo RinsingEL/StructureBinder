@@ -1,0 +1,350 @@
+{
+  "schema": "realmfolk_rfmodel.draft1",
+  "id": "realmfolk:accessory/scarf",
+  "type": "accessory",
+  "skeleton": "realmfolk:humanoid_v1",
+  "variants": {
+    "standard": [
+      {
+        "name": "scarf_front",
+        "bone": "spine",
+        "from": [
+          -2.8,
+          20.5,
+          -2.8
+        ],
+        "to": [
+          2.8,
+          22,
+          -2.4
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "secondary",
+        "detail": "fabric"
+      },
+      {
+        "name": "scarf_tail",
+        "bone": "spine",
+        "from": [
+          1.1,
+          17,
+          -2.82
+        ],
+        "to": [
+          2.3,
+          20.5,
+          -2.5
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "secondary",
+        "detail": "fabric"
+      }
+    ],
+    "slender": [
+      {
+        "name": "scarf_front",
+        "bone": "spine",
+        "from": [
+          -2.8,
+          20.5,
+          -2.55
+        ],
+        "to": [
+          2.8,
+          22,
+          -2.15
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "secondary",
+        "detail": "fabric"
+      },
+      {
+        "name": "scarf_tail",
+        "bone": "spine",
+        "from": [
+          1.1,
+          17,
+          -2.57
+        ],
+        "to": [
+          2.3,
+          20.5,
+          -2.25
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "secondary",
+        "detail": "fabric"
+      }
+    ],
+    "sturdy": [
+      {
+        "name": "scarf_front",
+        "bone": "spine",
+        "from": [
+          -2.8,
+          20.5,
+          -3.3
+        ],
+        "to": [
+          2.8,
+          22,
+          -2.9
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "secondary",
+        "detail": "fabric"
+      },
+      {
+        "name": "scarf_tail",
+        "bone": "spine",
+        "from": [
+          1.1,
+          17,
+          -3.32
+        ],
+        "to": [
+          2.3,
+          20.5,
+          -3.0
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "secondary",
+        "detail": "fabric"
+      }
+    ]
+  },
+  "material": "accessory_scarf",
+  "materials": {
+    "secondary": {
+      "texture": "realmfolk:appearance/textures/accessory_scarf__secondary.png",
+      "regionMask": "realmfolk:appearance/textures/accessory_scarf__secondary_regions.png",
+      "tintRegion": "secondary"
+    }
+  },
+  "unit": "1/16 block",
+  "coordinateSystem": "RH +X character-left, +Y up, front -Z",
+  "runtimeSupported": false,
+  "variantCoordinates": "global rest coordinates; bone pivot local conversion required"
+}

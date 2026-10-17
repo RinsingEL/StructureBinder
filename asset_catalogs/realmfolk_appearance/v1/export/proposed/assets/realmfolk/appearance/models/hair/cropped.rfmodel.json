@@ -1,0 +1,512 @@
+{
+  "schema": "realmfolk_rfmodel.draft1",
+  "id": "realmfolk:hair/cropped",
+  "type": "hair",
+  "skeleton": "realmfolk:humanoid_v1",
+  "variants": {
+    "standard": [
+      {
+        "name": "crown",
+        "bone": "head",
+        "from": [
+          -4.18,
+          28.6,
+          -4.18
+        ],
+        "to": [
+          4.18,
+          30.25,
+          4.18
+        ],
+        "uv": {
+          "north": [
+            0,
+            0,
+            12,
+            10
+          ],
+          "east": [
+            16,
+            0,
+            28,
+            10
+          ],
+          "south": [
+            32,
+            0,
+            44,
+            10
+          ],
+          "west": [
+            48,
+            0,
+            60,
+            10
+          ],
+          "up": [
+            64,
+            0,
+            76,
+            10
+          ],
+          "down": [
+            80,
+            0,
+            92,
+            10
+          ]
+        },
+        "region": "hair",
+        "detail": "hair"
+      },
+      {
+        "name": "side_r",
+        "bone": "head",
+        "from": [
+          -4.2,
+          26,
+          -2
+        ],
+        "to": [
+          -3.95,
+          28.6,
+          4.1
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "hair",
+        "detail": "hair"
+      },
+      {
+        "name": "side_l",
+        "bone": "head",
+        "from": [
+          3.95,
+          26,
+          -2
+        ],
+        "to": [
+          4.2,
+          28.6,
+          4.1
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "hair",
+        "detail": "hair"
+      }
+    ],
+    "slender": [
+      {
+        "name": "crown",
+        "bone": "head",
+        "from": [
+          -4.18,
+          28.6,
+          -4.18
+        ],
+        "to": [
+          4.18,
+          30.25,
+          4.18
+        ],
+        "uv": {
+          "north": [
+            0,
+            0,
+            12,
+            10
+          ],
+          "east": [
+            16,
+            0,
+            28,
+            10
+          ],
+          "south": [
+            32,
+            0,
+            44,
+            10
+          ],
+          "west": [
+            48,
+            0,
+            60,
+            10
+          ],
+          "up": [
+            64,
+            0,
+            76,
+            10
+          ],
+          "down": [
+            80,
+            0,
+            92,
+            10
+          ]
+        },
+        "region": "hair",
+        "detail": "hair"
+      },
+      {
+        "name": "side_r",
+        "bone": "head",
+        "from": [
+          -4.2,
+          26,
+          -2
+        ],
+        "to": [
+          -3.95,
+          28.6,
+          4.1
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "hair",
+        "detail": "hair"
+      },
+      {
+        "name": "side_l",
+        "bone": "head",
+        "from": [
+          3.95,
+          26,
+          -2
+        ],
+        "to": [
+          4.2,
+          28.6,
+          4.1
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "hair",
+        "detail": "hair"
+      }
+    ],
+    "sturdy": [
+      {
+        "name": "crown",
+        "bone": "head",
+        "from": [
+          -4.18,
+          28.6,
+          -4.18
+        ],
+        "to": [
+          4.18,
+          30.25,
+          4.18
+        ],
+        "uv": {
+          "north": [
+            0,
+            0,
+            12,
+            10
+          ],
+          "east": [
+            16,
+            0,
+            28,
+            10
+          ],
+          "south": [
+            32,
+            0,
+            44,
+            10
+          ],
+          "west": [
+            48,
+            0,
+            60,
+            10
+          ],
+          "up": [
+            64,
+            0,
+            76,
+            10
+          ],
+          "down": [
+            80,
+            0,
+            92,
+            10
+          ]
+        },
+        "region": "hair",
+        "detail": "hair"
+      },
+      {
+        "name": "side_r",
+        "bone": "head",
+        "from": [
+          -4.2,
+          26,
+          -2
+        ],
+        "to": [
+          -3.95,
+          28.6,
+          4.1
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "hair",
+        "detail": "hair"
+      },
+      {
+        "name": "side_l",
+        "bone": "head",
+        "from": [
+          3.95,
+          26,
+          -2
+        ],
+        "to": [
+          4.2,
+          28.6,
+          4.1
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "hair",
+        "detail": "hair"
+      }
+    ]
+  },
+  "material": "hair_cropped",
+  "materials": {
+    "hair": {
+      "texture": "realmfolk:appearance/textures/hair_cropped__hair.png",
+      "regionMask": "realmfolk:appearance/textures/hair_cropped__hair_regions.png",
+      "tintRegion": "hair"
+    }
+  },
+  "unit": "1/16 block",
+  "coordinateSystem": "RH +X character-left, +Y up, front -Z",
+  "runtimeSupported": false,
+  "variantCoordinates": "global rest coordinates; bone pivot local conversion required"
+}

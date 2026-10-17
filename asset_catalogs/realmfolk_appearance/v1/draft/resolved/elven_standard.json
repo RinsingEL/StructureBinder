@@ -1,0 +1,47 @@
+{
+  "schema": "realmfolk_resolved_appearance.draft1",
+  "citizenDemoId": "demo_elven_standard",
+  "appearanceVersion": 1,
+  "catalogRevision": "draft-1",
+  "skeleton": "realmfolk:humanoid_v1",
+  "body": "realmfolk:body/standard",
+  "skinAsset": "realmfolk:skin/neutral",
+  "skin": "warm_ochre",
+  "face": "realmfolk:face/calm",
+  "eyes": "realmfolk:eyes/open",
+  "ears": "realmfolk:ears/rounded",
+  "hair": "realmfolk:hair/tied",
+  "hairColor": "silver",
+  "eyeColor": "#5c867f",
+  "base": "realmfolk:base/tunic",
+  "outer": "realmfolk:outer/elven",
+  "palette": "elven",
+  "accessories": [
+    "realmfolk:accessory/scarf",
+    "realmfolk:accessory/belt",
+    "realmfolk:accessory/badge"
+  ],
+  "visualScale": 1.0,
+  "presentation": "neutral",
+  "species": "unspecified",
+  "generation": {
+    "method": "authored_reference_combination",
+    "notRandomPopulation": true
+  },
+  "immutable": true,
+  "migrationPolicy": "preserve_ids; missing optional draw fallback only, do not overwrite original IDs",
+  "colors": {
+    "cloth": "#365e50",
+    "secondary": "#b4c7a4",
+    "trim": "#e0c27e",
+    "leather": "#6e4b37",
+    "metal": "#c5bd91",
+    "lens": "#a4d0c0",
+    "skin": "#ba805f",
+    "hair": "#c6c3b4",
+    "eye": "#5c867f"
+  },
+  "optionalSlots": {
+    "beard": []
+  }
+}

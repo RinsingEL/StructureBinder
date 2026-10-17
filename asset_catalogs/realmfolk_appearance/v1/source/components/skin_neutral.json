@@ -1,0 +1,9 @@
+{
+  "schema": "realmfolk_component.draft1",
+  "id": "realmfolk:skin/neutral",
+  "type": "skin",
+  "skeleton": "realmfolk:humanoid_v1",
+  "variants": {},
+  "material": "skin",
+  "materials": {}
+}

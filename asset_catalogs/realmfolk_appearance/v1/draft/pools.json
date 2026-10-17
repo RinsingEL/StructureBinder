@@ -1,0 +1,235 @@
+{
+  "schema": "realmfolk_appearance_pools.draft1",
+  "runtimeSupported": false,
+  "order": [
+    "civilization_default",
+    "city_patch",
+    "profession_bias",
+    "individual_draw",
+    "key_person_override"
+  ],
+  "merge": {
+    "object": "recursive",
+    "array": "replace",
+    "omitted": "inherit",
+    "null": "reject; use explicit empty array"
+  },
+  "seed": "SHA256(worldSeed|cityInstance|citizenUUID|appearanceVersion|slot); sorted IDs; per-slot stream",
+  "palettes": {
+    "academy": {
+      "cloth": "#303c72",
+      "secondary": "#dad6bf",
+      "trim": "#d8b968",
+      "leather": "#655044",
+      "metal": "#c7ac68",
+      "lens": "#8fc8c7"
+    },
+    "steam": {
+      "cloth": "#654331",
+      "secondary": "#d5c39b",
+      "trim": "#bd783f",
+      "leather": "#382d2b",
+      "metal": "#c99b4d",
+      "lens": "#65b1af"
+    },
+    "elven": {
+      "cloth": "#365e50",
+      "secondary": "#b4c7a4",
+      "trim": "#e0c27e",
+      "leather": "#6e4b37",
+      "metal": "#c5bd91",
+      "lens": "#a4d0c0"
+    }
+  },
+  "skinPalette": {
+    "warm_ochre": "#ba805f",
+    "deep_umber": "#704638",
+    "light_peach": "#dfb496",
+    "olive": "#a48d66",
+    "copper": "#975940",
+    "rose": "#c89b8e",
+    "cool_brown": "#8e7067",
+    "fantasy_ash": "#8e9e9c"
+  },
+  "hairPalette": {
+    "ink": "#252b32",
+    "umber": "#533e31",
+    "silver": "#c6c3b4",
+    "copper": "#a65c38",
+    "wheat": "#be9954",
+    "plum": "#594555"
+  },
+  "civilizations": {
+    "academy": {
+      "styleTags": [
+        "academy",
+        "shared"
+      ],
+      "bodyWeights": {
+        "standard": 6,
+        "slender": 3,
+        "sturdy": 3
+      },
+      "skinWeights": {
+        "warm_ochre": 1,
+        "deep_umber": 1,
+        "light_peach": 1,
+        "olive": 1,
+        "copper": 1,
+        "rose": 1,
+        "cool_brown": 1
+      },
+      "earWeights": {
+        "rounded": 4,
+        "pointed": 1
+      },
+      "hairWeights": {
+        "cropped": 3,
+        "bob": 2,
+        "tied": 2
+      },
+      "palette": "academy",
+      "outer": "realmfolk:outer/academy",
+      "speciesPolicy": "separate authored demographic pool; never derive from architecture",
+      "presentationWeights": {
+        "neutral": 1,
+        "masculine": 1,
+        "feminine": 1
+      }
+    },
+    "steam": {
+      "styleTags": [
+        "steam",
+        "shared"
+      ],
+      "bodyWeights": {
+        "standard": 6,
+        "slender": 3,
+        "sturdy": 3
+      },
+      "skinWeights": {
+        "warm_ochre": 1,
+        "deep_umber": 1,
+        "light_peach": 1,
+        "olive": 1,
+        "copper": 1,
+        "rose": 1,
+        "cool_brown": 1
+      },
+      "earWeights": {
+        "rounded": 4,
+        "pointed": 1
+      },
+      "hairWeights": {
+        "cropped": 3,
+        "bob": 2,
+        "tied": 2
+      },
+      "palette": "steam",
+      "outer": "realmfolk:outer/steam",
+      "speciesPolicy": "separate authored demographic pool; never derive from architecture",
+      "presentationWeights": {
+        "neutral": 1,
+        "masculine": 1,
+        "feminine": 1
+      }
+    },
+    "elven": {
+      "styleTags": [
+        "elven",
+        "shared"
+      ],
+      "bodyWeights": {
+        "standard": 6,
+        "slender": 3,
+        "sturdy": 3
+      },
+      "skinWeights": {
+        "warm_ochre": 1,
+        "deep_umber": 1,
+        "light_peach": 1,
+        "olive": 1,
+        "copper": 1,
+        "rose": 1,
+        "cool_brown": 1
+      },
+      "earWeights": {
+        "rounded": 4,
+        "pointed": 1
+      },
+      "hairWeights": {
+        "cropped": 3,
+        "bob": 2,
+        "tied": 2
+      },
+      "palette": "elven",
+      "outer": "realmfolk:outer/elven",
+      "speciesPolicy": "separate authored demographic pool; never derive from architecture",
+      "presentationWeights": {
+        "neutral": 1,
+        "masculine": 1,
+        "feminine": 1
+      }
+    }
+  },
+  "cityPatches": {
+    "academy_mixed_demo": {
+      "style": "academy",
+      "migrationShare": 0.25,
+      "allowedStyles": [
+        "academy",
+        "steam",
+        "elven"
+      ],
+      "note": "Illustrative city composition only; species is not inferred from style."
+    }
+  },
+  "professionBias": {
+    "resident": {
+      "maxAccessories": 1
+    },
+    "laborer": {
+      "prefer": [
+        "realmfolk:accessory/belt",
+        "realmfolk:accessory/pouch"
+      ],
+      "reject": [
+        "realmfolk:accessory/scholar_cap"
+      ],
+      "maxAccessories": 2
+    },
+    "scholar": {
+      "prefer": [
+        "realmfolk:accessory/badge",
+        "realmfolk:accessory/scholar_cap"
+      ],
+      "maxAccessories": 3
+    }
+  },
+  "solver": {
+    "order": [
+      "body",
+      "skin",
+      "face",
+      "eyes",
+      "ears",
+      "hair",
+      "beard",
+      "base",
+      "outer",
+      "accessories"
+    ],
+    "maxAttemptsPerSlot": 16,
+    "requiredFallbacks": {
+      "body": "realmfolk:body/standard",
+      "skin": "realmfolk:skin/neutral",
+      "face": "realmfolk:face/calm",
+      "eyes": "realmfolk:eyes/open",
+      "ears": "realmfolk:ears/rounded",
+      "base": "realmfolk:base/tunic"
+    },
+    "optionalFailure": "omit and record reason",
+    "persistResolvedIds": true,
+    "palettePolicy": "one palette per outfit; skin/hair/iris independent"
+  }
+}

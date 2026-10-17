@@ -1,0 +1,679 @@
+{
+  "schema": "realmfolk_rfmodel.draft1",
+  "id": "realmfolk:accessory/backpack",
+  "type": "accessory",
+  "skeleton": "realmfolk:humanoid_v1",
+  "variants": {
+    "standard": [
+      {
+        "name": "pack",
+        "bone": "spine",
+        "from": [
+          -3,
+          13,
+          2.7
+        ],
+        "to": [
+          3,
+          20,
+          5.5
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "leather",
+        "detail": "fabric"
+      },
+      {
+        "name": "pack_flap",
+        "bone": "spine",
+        "from": [
+          -3.15,
+          18,
+          5.5
+        ],
+        "to": [
+          3.15,
+          20.2,
+          5.8
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "cloth",
+        "detail": "fabric"
+      },
+      {
+        "name": "strap_-1",
+        "bone": "spine",
+        "from": [
+          -2.6999999999999997,
+          14,
+          -2.7
+        ],
+        "to": [
+          -2.1,
+          21.8,
+          -2.5
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "leather",
+        "detail": "fabric"
+      },
+      {
+        "name": "strap_1",
+        "bone": "spine",
+        "from": [
+          2.1,
+          14,
+          -2.7
+        ],
+        "to": [
+          2.6999999999999997,
+          21.8,
+          -2.5
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "leather",
+        "detail": "fabric"
+      }
+    ],
+    "slender": [
+      {
+        "name": "pack",
+        "bone": "spine",
+        "from": [
+          -3,
+          13,
+          2.45
+        ],
+        "to": [
+          3,
+          20,
+          5.25
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "leather",
+        "detail": "fabric"
+      },
+      {
+        "name": "pack_flap",
+        "bone": "spine",
+        "from": [
+          -3.15,
+          18,
+          5.25
+        ],
+        "to": [
+          3.15,
+          20.2,
+          5.55
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "cloth",
+        "detail": "fabric"
+      },
+      {
+        "name": "strap_-1",
+        "bone": "spine",
+        "from": [
+          -2.4,
+          14,
+          -2.45
+        ],
+        "to": [
+          -1.8,
+          21.8,
+          -2.25
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "leather",
+        "detail": "fabric"
+      },
+      {
+        "name": "strap_1",
+        "bone": "spine",
+        "from": [
+          1.8,
+          14,
+          -2.45
+        ],
+        "to": [
+          2.4,
+          21.8,
+          -2.25
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "leather",
+        "detail": "fabric"
+      }
+    ],
+    "sturdy": [
+      {
+        "name": "pack",
+        "bone": "spine",
+        "from": [
+          -3,
+          13,
+          3.2
+        ],
+        "to": [
+          3,
+          20,
+          6.0
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "leather",
+        "detail": "fabric"
+      },
+      {
+        "name": "pack_flap",
+        "bone": "spine",
+        "from": [
+          -3.15,
+          18,
+          6.0
+        ],
+        "to": [
+          3.15,
+          20.2,
+          6.3
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "cloth",
+        "detail": "fabric"
+      },
+      {
+        "name": "strap_-1",
+        "bone": "spine",
+        "from": [
+          -3.3,
+          14,
+          -3.2
+        ],
+        "to": [
+          -2.7,
+          21.8,
+          -3.0
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "leather",
+        "detail": "fabric"
+      },
+      {
+        "name": "strap_1",
+        "bone": "spine",
+        "from": [
+          2.7,
+          14,
+          -3.2
+        ],
+        "to": [
+          3.3,
+          21.8,
+          -3.0
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "leather",
+        "detail": "fabric"
+      }
+    ]
+  },
+  "material": "accessory_backpack",
+  "materials": {
+    "cloth": {
+      "texture": "realmfolk:appearance/textures/accessory_backpack__cloth.png",
+      "regionMask": "realmfolk:appearance/textures/accessory_backpack__cloth_regions.png",
+      "tintRegion": "cloth"
+    },
+    "leather": {
+      "texture": "realmfolk:appearance/textures/accessory_backpack__leather.png",
+      "regionMask": "realmfolk:appearance/textures/accessory_backpack__leather_regions.png",
+      "tintRegion": "leather"
+    }
+  },
+  "unit": "1/16 block",
+  "coordinateSystem": "RH +X character-left, +Y up, front -Z",
+  "runtimeSupported": false,
+  "variantCoordinates": "global rest coordinates; bone pivot local conversion required"
+}

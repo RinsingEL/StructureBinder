@@ -1,0 +1,346 @@
+{
+  "schema": "realmfolk_component.draft1",
+  "id": "realmfolk:ears/rounded",
+  "type": "ears",
+  "skeleton": "realmfolk:humanoid_v1",
+  "variants": {
+    "standard": [
+      {
+        "name": "ear_-1",
+        "bone": "head",
+        "from": [
+          -4.7,
+          24.3,
+          -0.8
+        ],
+        "to": [
+          -4,
+          26,
+          0.5
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "skin",
+        "detail": "skin"
+      },
+      {
+        "name": "ear_1",
+        "bone": "head",
+        "from": [
+          4,
+          24.3,
+          -0.8
+        ],
+        "to": [
+          4.7,
+          26,
+          0.5
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "skin",
+        "detail": "skin"
+      }
+    ],
+    "slender": [
+      {
+        "name": "ear_-1",
+        "bone": "head",
+        "from": [
+          -4.7,
+          24.3,
+          -0.8
+        ],
+        "to": [
+          -4,
+          26,
+          0.5
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "skin",
+        "detail": "skin"
+      },
+      {
+        "name": "ear_1",
+        "bone": "head",
+        "from": [
+          4,
+          24.3,
+          -0.8
+        ],
+        "to": [
+          4.7,
+          26,
+          0.5
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "skin",
+        "detail": "skin"
+      }
+    ],
+    "sturdy": [
+      {
+        "name": "ear_-1",
+        "bone": "head",
+        "from": [
+          -4.7,
+          24.3,
+          -0.8
+        ],
+        "to": [
+          -4,
+          26,
+          0.5
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "skin",
+        "detail": "skin"
+      },
+      {
+        "name": "ear_1",
+        "bone": "head",
+        "from": [
+          4,
+          24.3,
+          -0.8
+        ],
+        "to": [
+          4.7,
+          26,
+          0.5
+        ],
+        "uv": {
+          "north": [
+            0,
+            12,
+            12,
+            22
+          ],
+          "east": [
+            16,
+            12,
+            28,
+            22
+          ],
+          "south": [
+            32,
+            12,
+            44,
+            22
+          ],
+          "west": [
+            48,
+            12,
+            60,
+            22
+          ],
+          "up": [
+            64,
+            12,
+            76,
+            22
+          ],
+          "down": [
+            80,
+            12,
+            92,
+            22
+          ]
+        },
+        "region": "skin",
+        "detail": "skin"
+      }
+    ]
+  },
+  "material": "ears_rounded",
+  "materials": {
+    "skin": {
+      "texture": "realmfolk:appearance/textures/ears_rounded__skin.png",
+      "regionMask": "realmfolk:appearance/textures/ears_rounded__skin_regions.png",
+      "tintRegion": "skin"
+    }
+  }
+}

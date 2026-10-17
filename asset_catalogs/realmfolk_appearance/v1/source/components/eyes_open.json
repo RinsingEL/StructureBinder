@@ -1,0 +1,9 @@
+{
+  "schema": "realmfolk_component.draft1",
+  "id": "realmfolk:eyes/open",
+  "type": "eyes",
+  "skeleton": "realmfolk:humanoid_v1",
+  "variants": {},
+  "material": "eyes_open",
+  "materials": {}
+}

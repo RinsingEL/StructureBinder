@@ -1,0 +1,3359 @@
+{
+  "schema": "realmfolk_pose_fixture.draft1",
+  "runtimeSupported": false,
+  "angles": "degrees local XYZ",
+  "variants": {
+    "standard": {
+      "stand": {
+        "rotations": {},
+        "rootTranslation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "boneTranslations": {}
+      },
+      "walk": {
+        "rotations": {
+          "right_thigh": [
+            25.335157469048546,
+            0,
+            0
+          ],
+          "left_thigh": [
+            -25.335157469048546,
+            0,
+            0
+          ],
+          "right_shin": [
+            0.0,
+            0,
+            0
+          ],
+          "left_shin": [
+            20.26812597523884,
+            0,
+            0
+          ],
+          "right_upper_arm": [
+            -20.26812597523884,
+            0,
+            0
+          ],
+          "left_upper_arm": [
+            20.26812597523884,
+            0,
+            0
+          ],
+          "right_forearm": [
+            -8,
+            0,
+            0
+          ],
+          "left_forearm": [
+            -8,
+            0,
+            0
+          ]
+        },
+        "rootTranslation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "boneTranslations": {},
+        "clip": {
+          "loop": true,
+          "frames": [
+            {
+              "rotations": {
+                "left_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "left_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "right_thigh": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "left_thigh": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  0.0,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "left_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "left_shin": [
+                  15.839191898578665,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  -15.839191898578665,
+                  0,
+                  0
+                ],
+                "right_thigh": [
+                  19.79898987322333,
+                  0,
+                  0
+                ],
+                "left_thigh": [
+                  -19.79898987322333,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  15.839191898578665,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "left_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "left_shin": [
+                  22.400000000000002,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  -22.400000000000002,
+                  0,
+                  0
+                ],
+                "right_thigh": [
+                  28.0,
+                  0,
+                  0
+                ],
+                "left_thigh": [
+                  -28.0,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  22.400000000000002,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "left_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "left_shin": [
+                  15.839191898578665,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  -15.839191898578665,
+                  0,
+                  0
+                ],
+                "right_thigh": [
+                  19.79898987322333,
+                  0,
+                  0
+                ],
+                "left_thigh": [
+                  -19.79898987322333,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  15.839191898578665,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "left_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "left_shin": [
+                  3.552713678800501e-15,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  -3.552713678800501e-15,
+                  0,
+                  0
+                ],
+                "right_thigh": [
+                  3.552713678800501e-15,
+                  0,
+                  0
+                ],
+                "left_thigh": [
+                  -3.552713678800501e-15,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  3.552713678800501e-15,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "left_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_shin": [
+                  15.839191898578662,
+                  0,
+                  0
+                ],
+                "left_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  15.839191898578662,
+                  0,
+                  0
+                ],
+                "right_thigh": [
+                  -19.798989873223327,
+                  0,
+                  0
+                ],
+                "left_thigh": [
+                  19.798989873223327,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  -15.839191898578662,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "left_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_shin": [
+                  22.400000000000002,
+                  0,
+                  0
+                ],
+                "left_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  22.4,
+                  0,
+                  0
+                ],
+                "right_thigh": [
+                  -28.0,
+                  0,
+                  0
+                ],
+                "left_thigh": [
+                  28.0,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  -22.4,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "left_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_shin": [
+                  15.839191898578669,
+                  0,
+                  0
+                ],
+                "left_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  15.839191898578669,
+                  0,
+                  0
+                ],
+                "right_thigh": [
+                  -19.798989873223334,
+                  0,
+                  0
+                ],
+                "left_thigh": [
+                  19.798989873223334,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  -15.839191898578669,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            }
+          ]
+        }
+      },
+      "sit": {
+        "rotations": {
+          "right_thigh": [
+            90,
+            0,
+            -4
+          ],
+          "left_thigh": [
+            90,
+            0,
+            4
+          ],
+          "right_shin": [
+            -90,
+            0,
+            0
+          ],
+          "left_shin": [
+            -90,
+            0,
+            0
+          ],
+          "right_upper_arm": [
+            30,
+            0,
+            -10
+          ],
+          "left_upper_arm": [
+            30,
+            0,
+            10
+          ],
+          "right_forearm": [
+            45,
+            0,
+            0
+          ],
+          "left_forearm": [
+            45,
+            0,
+            0
+          ],
+          "hair_tail": [
+            -25,
+            0,
+            0
+          ]
+        },
+        "rootTranslation": [
+          0.0,
+          -5.0,
+          0.0
+        ],
+        "boneTranslations": {}
+      },
+      "sleep": {
+        "rotations": {
+          "root": [
+            90,
+            0,
+            0
+          ],
+          "hair_tail": [
+            0,
+            0,
+            0
+          ]
+        },
+        "rootTranslation": [
+          0.0,
+          8.1,
+          -15.0
+        ],
+        "boneTranslations": {
+          "head": [
+            0,
+            0,
+            -2
+          ]
+        }
+      },
+      "hold": {
+        "rotations": {
+          "right_upper_arm": [
+            45,
+            0,
+            -8
+          ],
+          "right_forearm": [
+            50,
+            0,
+            0
+          ]
+        },
+        "rootTranslation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "boneTranslations": {}
+      },
+      "eat": {
+        "rotations": {
+          "right_upper_arm": [
+            80,
+            -40,
+            0
+          ],
+          "right_forearm": [
+            68.61930820986407,
+            0,
+            0
+          ],
+          "head": [
+            3,
+            0,
+            0
+          ]
+        },
+        "rootTranslation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "boneTranslations": {},
+        "clip": {
+          "loop": true,
+          "frames": [
+            {
+              "rotations": {
+                "right_upper_arm": [
+                  80,
+                  -40,
+                  0
+                ],
+                "right_forearm": [
+                  65.0,
+                  0,
+                  0
+                ],
+                "head": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "right_upper_arm": [
+                  80,
+                  -40,
+                  0
+                ],
+                "right_forearm": [
+                  67.82842712474618,
+                  0,
+                  0
+                ],
+                "head": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "right_upper_arm": [
+                  80,
+                  -40,
+                  0
+                ],
+                "right_forearm": [
+                  69.0,
+                  0,
+                  0
+                ],
+                "head": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "right_upper_arm": [
+                  80,
+                  -40,
+                  0
+                ],
+                "right_forearm": [
+                  67.82842712474618,
+                  0,
+                  0
+                ],
+                "head": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "right_upper_arm": [
+                  80,
+                  -40,
+                  0
+                ],
+                "right_forearm": [
+                  65.0,
+                  0,
+                  0
+                ],
+                "head": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "right_upper_arm": [
+                  80,
+                  -40,
+                  0
+                ],
+                "right_forearm": [
+                  62.17157287525381,
+                  0,
+                  0
+                ],
+                "head": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "right_upper_arm": [
+                  80,
+                  -40,
+                  0
+                ],
+                "right_forearm": [
+                  61.0,
+                  0,
+                  0
+                ],
+                "head": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "right_upper_arm": [
+                  80,
+                  -40,
+                  0
+                ],
+                "right_forearm": [
+                  62.17157287525381,
+                  0,
+                  0
+                ],
+                "head": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            }
+          ]
+        }
+      },
+      "work": {
+        "rotations": {
+          "spine": [
+            8,
+            0,
+            0
+          ],
+          "right_upper_arm": [
+            71.71584925918447,
+            0,
+            -10
+          ],
+          "right_forearm": [
+            40,
+            0,
+            0
+          ],
+          "left_upper_arm": [
+            25,
+            0,
+            10
+          ],
+          "left_forearm": [
+            40,
+            0,
+            0
+          ]
+        },
+        "rootTranslation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "boneTranslations": {},
+        "clip": {
+          "loop": true,
+          "frames": [
+            {
+              "rotations": {
+                "spine": [
+                  8,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  50.0,
+                  0,
+                  -10
+                ],
+                "left_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  25,
+                  0,
+                  10
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "spine": [
+                  8,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  66.97056274847714,
+                  0,
+                  -10
+                ],
+                "left_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  25,
+                  0,
+                  10
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "spine": [
+                  8,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  74.0,
+                  0,
+                  -10
+                ],
+                "left_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  25,
+                  0,
+                  10
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "spine": [
+                  8,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  66.97056274847714,
+                  0,
+                  -10
+                ],
+                "left_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  25,
+                  0,
+                  10
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "spine": [
+                  8,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  50.0,
+                  0,
+                  -10
+                ],
+                "left_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  25,
+                  0,
+                  10
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "spine": [
+                  8,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  33.029437251522864,
+                  0,
+                  -10
+                ],
+                "left_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  25,
+                  0,
+                  10
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "spine": [
+                  8,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  26.0,
+                  0,
+                  -10
+                ],
+                "left_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  25,
+                  0,
+                  10
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "spine": [
+                  8,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  33.02943725152286,
+                  0,
+                  -10
+                ],
+                "left_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  25,
+                  0,
+                  10
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            }
+          ]
+        }
+      }
+    },
+    "slender": {
+      "stand": {
+        "rotations": {},
+        "rootTranslation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "boneTranslations": {}
+      },
+      "walk": {
+        "rotations": {
+          "right_thigh": [
+            25.335157469048546,
+            0,
+            0
+          ],
+          "left_thigh": [
+            -25.335157469048546,
+            0,
+            0
+          ],
+          "right_shin": [
+            0.0,
+            0,
+            0
+          ],
+          "left_shin": [
+            20.26812597523884,
+            0,
+            0
+          ],
+          "right_upper_arm": [
+            -20.26812597523884,
+            0,
+            0
+          ],
+          "left_upper_arm": [
+            20.26812597523884,
+            0,
+            0
+          ],
+          "right_forearm": [
+            -8,
+            0,
+            0
+          ],
+          "left_forearm": [
+            -8,
+            0,
+            0
+          ]
+        },
+        "rootTranslation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "boneTranslations": {},
+        "clip": {
+          "loop": true,
+          "frames": [
+            {
+              "rotations": {
+                "left_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "left_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "right_thigh": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "left_thigh": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  0.0,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "left_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "left_shin": [
+                  15.839191898578665,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  -15.839191898578665,
+                  0,
+                  0
+                ],
+                "right_thigh": [
+                  19.79898987322333,
+                  0,
+                  0
+                ],
+                "left_thigh": [
+                  -19.79898987322333,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  15.839191898578665,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "left_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "left_shin": [
+                  22.400000000000002,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  -22.400000000000002,
+                  0,
+                  0
+                ],
+                "right_thigh": [
+                  28.0,
+                  0,
+                  0
+                ],
+                "left_thigh": [
+                  -28.0,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  22.400000000000002,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "left_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "left_shin": [
+                  15.839191898578665,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  -15.839191898578665,
+                  0,
+                  0
+                ],
+                "right_thigh": [
+                  19.79898987322333,
+                  0,
+                  0
+                ],
+                "left_thigh": [
+                  -19.79898987322333,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  15.839191898578665,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "left_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "left_shin": [
+                  3.552713678800501e-15,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  -3.552713678800501e-15,
+                  0,
+                  0
+                ],
+                "right_thigh": [
+                  3.552713678800501e-15,
+                  0,
+                  0
+                ],
+                "left_thigh": [
+                  -3.552713678800501e-15,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  3.552713678800501e-15,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "left_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_shin": [
+                  15.839191898578662,
+                  0,
+                  0
+                ],
+                "left_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  15.839191898578662,
+                  0,
+                  0
+                ],
+                "right_thigh": [
+                  -19.798989873223327,
+                  0,
+                  0
+                ],
+                "left_thigh": [
+                  19.798989873223327,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  -15.839191898578662,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "left_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_shin": [
+                  22.400000000000002,
+                  0,
+                  0
+                ],
+                "left_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  22.4,
+                  0,
+                  0
+                ],
+                "right_thigh": [
+                  -28.0,
+                  0,
+                  0
+                ],
+                "left_thigh": [
+                  28.0,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  -22.4,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "left_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_shin": [
+                  15.839191898578669,
+                  0,
+                  0
+                ],
+                "left_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  15.839191898578669,
+                  0,
+                  0
+                ],
+                "right_thigh": [
+                  -19.798989873223334,
+                  0,
+                  0
+                ],
+                "left_thigh": [
+                  19.798989873223334,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  -15.839191898578669,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            }
+          ]
+        }
+      },
+      "sit": {
+        "rotations": {
+          "right_thigh": [
+            90,
+            0,
+            -4
+          ],
+          "left_thigh": [
+            90,
+            0,
+            4
+          ],
+          "right_shin": [
+            -90,
+            0,
+            0
+          ],
+          "left_shin": [
+            -90,
+            0,
+            0
+          ],
+          "right_upper_arm": [
+            30,
+            0,
+            -10
+          ],
+          "left_upper_arm": [
+            30,
+            0,
+            10
+          ],
+          "right_forearm": [
+            45,
+            0,
+            0
+          ],
+          "left_forearm": [
+            45,
+            0,
+            0
+          ],
+          "hair_tail": [
+            -25,
+            0,
+            0
+          ]
+        },
+        "rootTranslation": [
+          0.0,
+          -5.0,
+          0.0
+        ],
+        "boneTranslations": {}
+      },
+      "sleep": {
+        "rotations": {
+          "root": [
+            90,
+            0,
+            0
+          ],
+          "hair_tail": [
+            0,
+            0,
+            0
+          ]
+        },
+        "rootTranslation": [
+          0.0,
+          8.1,
+          -15.0
+        ],
+        "boneTranslations": {
+          "head": [
+            0,
+            0,
+            -2
+          ]
+        }
+      },
+      "hold": {
+        "rotations": {
+          "right_upper_arm": [
+            45,
+            0,
+            -8
+          ],
+          "right_forearm": [
+            50,
+            0,
+            0
+          ]
+        },
+        "rootTranslation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "boneTranslations": {}
+      },
+      "eat": {
+        "rotations": {
+          "right_upper_arm": [
+            80,
+            -34,
+            0
+          ],
+          "right_forearm": [
+            68.61930820986407,
+            0,
+            0
+          ],
+          "head": [
+            3,
+            0,
+            0
+          ]
+        },
+        "rootTranslation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "boneTranslations": {},
+        "clip": {
+          "loop": true,
+          "frames": [
+            {
+              "rotations": {
+                "right_upper_arm": [
+                  80,
+                  -34,
+                  0
+                ],
+                "right_forearm": [
+                  65.0,
+                  0,
+                  0
+                ],
+                "head": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "right_upper_arm": [
+                  80,
+                  -34,
+                  0
+                ],
+                "right_forearm": [
+                  67.82842712474618,
+                  0,
+                  0
+                ],
+                "head": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "right_upper_arm": [
+                  80,
+                  -34,
+                  0
+                ],
+                "right_forearm": [
+                  69.0,
+                  0,
+                  0
+                ],
+                "head": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "right_upper_arm": [
+                  80,
+                  -34,
+                  0
+                ],
+                "right_forearm": [
+                  67.82842712474618,
+                  0,
+                  0
+                ],
+                "head": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "right_upper_arm": [
+                  80,
+                  -34,
+                  0
+                ],
+                "right_forearm": [
+                  65.0,
+                  0,
+                  0
+                ],
+                "head": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "right_upper_arm": [
+                  80,
+                  -34,
+                  0
+                ],
+                "right_forearm": [
+                  62.17157287525381,
+                  0,
+                  0
+                ],
+                "head": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "right_upper_arm": [
+                  80,
+                  -34,
+                  0
+                ],
+                "right_forearm": [
+                  61.0,
+                  0,
+                  0
+                ],
+                "head": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "right_upper_arm": [
+                  80,
+                  -34,
+                  0
+                ],
+                "right_forearm": [
+                  62.17157287525381,
+                  0,
+                  0
+                ],
+                "head": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            }
+          ]
+        }
+      },
+      "work": {
+        "rotations": {
+          "spine": [
+            8,
+            0,
+            0
+          ],
+          "right_upper_arm": [
+            71.71584925918447,
+            0,
+            -10
+          ],
+          "right_forearm": [
+            40,
+            0,
+            0
+          ],
+          "left_upper_arm": [
+            25,
+            0,
+            10
+          ],
+          "left_forearm": [
+            40,
+            0,
+            0
+          ]
+        },
+        "rootTranslation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "boneTranslations": {},
+        "clip": {
+          "loop": true,
+          "frames": [
+            {
+              "rotations": {
+                "spine": [
+                  8,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  50.0,
+                  0,
+                  -10
+                ],
+                "left_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  25,
+                  0,
+                  10
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "spine": [
+                  8,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  66.97056274847714,
+                  0,
+                  -10
+                ],
+                "left_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  25,
+                  0,
+                  10
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "spine": [
+                  8,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  74.0,
+                  0,
+                  -10
+                ],
+                "left_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  25,
+                  0,
+                  10
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "spine": [
+                  8,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  66.97056274847714,
+                  0,
+                  -10
+                ],
+                "left_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  25,
+                  0,
+                  10
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "spine": [
+                  8,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  50.0,
+                  0,
+                  -10
+                ],
+                "left_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  25,
+                  0,
+                  10
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "spine": [
+                  8,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  33.029437251522864,
+                  0,
+                  -10
+                ],
+                "left_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  25,
+                  0,
+                  10
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "spine": [
+                  8,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  26.0,
+                  0,
+                  -10
+                ],
+                "left_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  25,
+                  0,
+                  10
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "spine": [
+                  8,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  33.02943725152286,
+                  0,
+                  -10
+                ],
+                "left_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  25,
+                  0,
+                  10
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            }
+          ]
+        }
+      }
+    },
+    "sturdy": {
+      "stand": {
+        "rotations": {},
+        "rootTranslation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "boneTranslations": {}
+      },
+      "walk": {
+        "rotations": {
+          "right_thigh": [
+            25.335157469048546,
+            0,
+            0
+          ],
+          "left_thigh": [
+            -25.335157469048546,
+            0,
+            0
+          ],
+          "right_shin": [
+            0.0,
+            0,
+            0
+          ],
+          "left_shin": [
+            20.26812597523884,
+            0,
+            0
+          ],
+          "right_upper_arm": [
+            -20.26812597523884,
+            0,
+            0
+          ],
+          "left_upper_arm": [
+            20.26812597523884,
+            0,
+            0
+          ],
+          "right_forearm": [
+            -8,
+            0,
+            0
+          ],
+          "left_forearm": [
+            -8,
+            0,
+            0
+          ]
+        },
+        "rootTranslation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "boneTranslations": {},
+        "clip": {
+          "loop": true,
+          "frames": [
+            {
+              "rotations": {
+                "left_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "left_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "right_thigh": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "left_thigh": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  0.0,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "left_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "left_shin": [
+                  15.839191898578665,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  -15.839191898578665,
+                  0,
+                  0
+                ],
+                "right_thigh": [
+                  19.79898987322333,
+                  0,
+                  0
+                ],
+                "left_thigh": [
+                  -19.79898987322333,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  15.839191898578665,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "left_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "left_shin": [
+                  22.400000000000002,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  -22.400000000000002,
+                  0,
+                  0
+                ],
+                "right_thigh": [
+                  28.0,
+                  0,
+                  0
+                ],
+                "left_thigh": [
+                  -28.0,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  22.400000000000002,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "left_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "left_shin": [
+                  15.839191898578665,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  -15.839191898578665,
+                  0,
+                  0
+                ],
+                "right_thigh": [
+                  19.79898987322333,
+                  0,
+                  0
+                ],
+                "left_thigh": [
+                  -19.79898987322333,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  15.839191898578665,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "left_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "left_shin": [
+                  3.552713678800501e-15,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  -3.552713678800501e-15,
+                  0,
+                  0
+                ],
+                "right_thigh": [
+                  3.552713678800501e-15,
+                  0,
+                  0
+                ],
+                "left_thigh": [
+                  -3.552713678800501e-15,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  3.552713678800501e-15,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "left_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_shin": [
+                  15.839191898578662,
+                  0,
+                  0
+                ],
+                "left_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  15.839191898578662,
+                  0,
+                  0
+                ],
+                "right_thigh": [
+                  -19.798989873223327,
+                  0,
+                  0
+                ],
+                "left_thigh": [
+                  19.798989873223327,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  -15.839191898578662,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "left_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_shin": [
+                  22.400000000000002,
+                  0,
+                  0
+                ],
+                "left_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  22.4,
+                  0,
+                  0
+                ],
+                "right_thigh": [
+                  -28.0,
+                  0,
+                  0
+                ],
+                "left_thigh": [
+                  28.0,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  -22.4,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "left_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  -8,
+                  0,
+                  0
+                ],
+                "right_shin": [
+                  15.839191898578669,
+                  0,
+                  0
+                ],
+                "left_shin": [
+                  0.0,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  15.839191898578669,
+                  0,
+                  0
+                ],
+                "right_thigh": [
+                  -19.798989873223334,
+                  0,
+                  0
+                ],
+                "left_thigh": [
+                  19.798989873223334,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  -15.839191898578669,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            }
+          ]
+        }
+      },
+      "sit": {
+        "rotations": {
+          "right_thigh": [
+            90,
+            0,
+            -4
+          ],
+          "left_thigh": [
+            90,
+            0,
+            4
+          ],
+          "right_shin": [
+            -90,
+            0,
+            0
+          ],
+          "left_shin": [
+            -90,
+            0,
+            0
+          ],
+          "right_upper_arm": [
+            30,
+            0,
+            -10
+          ],
+          "left_upper_arm": [
+            30,
+            0,
+            10
+          ],
+          "right_forearm": [
+            45,
+            0,
+            0
+          ],
+          "left_forearm": [
+            45,
+            0,
+            0
+          ],
+          "hair_tail": [
+            -25,
+            0,
+            0
+          ]
+        },
+        "rootTranslation": [
+          0.0,
+          -5.0,
+          0.0
+        ],
+        "boneTranslations": {}
+      },
+      "sleep": {
+        "rotations": {
+          "root": [
+            90,
+            0,
+            0
+          ],
+          "hair_tail": [
+            0,
+            0,
+            0
+          ]
+        },
+        "rootTranslation": [
+          0.0,
+          8.1,
+          -15.0
+        ],
+        "boneTranslations": {
+          "head": [
+            0,
+            0,
+            -2
+          ]
+        }
+      },
+      "hold": {
+        "rotations": {
+          "right_upper_arm": [
+            45,
+            0,
+            -8
+          ],
+          "right_forearm": [
+            50,
+            0,
+            0
+          ]
+        },
+        "rootTranslation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "boneTranslations": {}
+      },
+      "eat": {
+        "rotations": {
+          "right_upper_arm": [
+            80,
+            -52,
+            0
+          ],
+          "right_forearm": [
+            68.61930820986407,
+            0,
+            0
+          ],
+          "head": [
+            3,
+            0,
+            0
+          ]
+        },
+        "rootTranslation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "boneTranslations": {},
+        "clip": {
+          "loop": true,
+          "frames": [
+            {
+              "rotations": {
+                "right_upper_arm": [
+                  80,
+                  -52,
+                  0
+                ],
+                "right_forearm": [
+                  65.0,
+                  0,
+                  0
+                ],
+                "head": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "right_upper_arm": [
+                  80,
+                  -52,
+                  0
+                ],
+                "right_forearm": [
+                  67.82842712474618,
+                  0,
+                  0
+                ],
+                "head": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "right_upper_arm": [
+                  80,
+                  -52,
+                  0
+                ],
+                "right_forearm": [
+                  69.0,
+                  0,
+                  0
+                ],
+                "head": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "right_upper_arm": [
+                  80,
+                  -52,
+                  0
+                ],
+                "right_forearm": [
+                  67.82842712474618,
+                  0,
+                  0
+                ],
+                "head": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "right_upper_arm": [
+                  80,
+                  -52,
+                  0
+                ],
+                "right_forearm": [
+                  65.0,
+                  0,
+                  0
+                ],
+                "head": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "right_upper_arm": [
+                  80,
+                  -52,
+                  0
+                ],
+                "right_forearm": [
+                  62.17157287525381,
+                  0,
+                  0
+                ],
+                "head": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "right_upper_arm": [
+                  80,
+                  -52,
+                  0
+                ],
+                "right_forearm": [
+                  61.0,
+                  0,
+                  0
+                ],
+                "head": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "right_upper_arm": [
+                  80,
+                  -52,
+                  0
+                ],
+                "right_forearm": [
+                  62.17157287525381,
+                  0,
+                  0
+                ],
+                "head": [
+                  3,
+                  0,
+                  0
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            }
+          ]
+        }
+      },
+      "work": {
+        "rotations": {
+          "spine": [
+            8,
+            0,
+            0
+          ],
+          "right_upper_arm": [
+            71.71584925918447,
+            0,
+            -10
+          ],
+          "right_forearm": [
+            40,
+            0,
+            0
+          ],
+          "left_upper_arm": [
+            25,
+            0,
+            10
+          ],
+          "left_forearm": [
+            40,
+            0,
+            0
+          ]
+        },
+        "rootTranslation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "boneTranslations": {},
+        "clip": {
+          "loop": true,
+          "frames": [
+            {
+              "rotations": {
+                "spine": [
+                  8,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  50.0,
+                  0,
+                  -10
+                ],
+                "left_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  25,
+                  0,
+                  10
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "spine": [
+                  8,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  66.97056274847714,
+                  0,
+                  -10
+                ],
+                "left_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  25,
+                  0,
+                  10
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "spine": [
+                  8,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  74.0,
+                  0,
+                  -10
+                ],
+                "left_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  25,
+                  0,
+                  10
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "spine": [
+                  8,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  66.97056274847714,
+                  0,
+                  -10
+                ],
+                "left_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  25,
+                  0,
+                  10
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "spine": [
+                  8,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  50.0,
+                  0,
+                  -10
+                ],
+                "left_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  25,
+                  0,
+                  10
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "spine": [
+                  8,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  33.029437251522864,
+                  0,
+                  -10
+                ],
+                "left_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  25,
+                  0,
+                  10
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "spine": [
+                  8,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  26.0,
+                  0,
+                  -10
+                ],
+                "left_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  25,
+                  0,
+                  10
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            },
+            {
+              "rotations": {
+                "spine": [
+                  8,
+                  0,
+                  0
+                ],
+                "right_upper_arm": [
+                  33.02943725152286,
+                  0,
+                  -10
+                ],
+                "left_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "right_forearm": [
+                  40,
+                  0,
+                  0
+                ],
+                "left_upper_arm": [
+                  25,
+                  0,
+                  10
+                ]
+              },
+              "rootTranslation": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "boneTranslations": {}
+            }
+          ]
+        }
+      }
+    }
+  },
+  "note": "Editable held poses and 8-phase loops. Build reads these samples; no procedural skeleton/animation defaults. Hard cuts between actions."
+}

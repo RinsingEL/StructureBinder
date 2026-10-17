@@ -1,0 +1,47 @@
+{
+  "schema": "realmfolk_resolved_appearance.draft1",
+  "citizenDemoId": "demo_academy_sturdy",
+  "appearanceVersion": 1,
+  "catalogRevision": "draft-1",
+  "skeleton": "realmfolk:humanoid_v1",
+  "body": "realmfolk:body/sturdy",
+  "skinAsset": "realmfolk:skin/neutral",
+  "skin": "light_peach",
+  "face": "realmfolk:face/calm",
+  "eyes": "realmfolk:eyes/open",
+  "ears": "realmfolk:ears/rounded",
+  "hair": "realmfolk:hair/bob",
+  "hairColor": "ink",
+  "eyeColor": "#5c867f",
+  "base": "realmfolk:base/tunic",
+  "outer": "realmfolk:outer/academy",
+  "palette": "academy",
+  "accessories": [
+    "realmfolk:accessory/scholar_cap",
+    "realmfolk:accessory/belt",
+    "realmfolk:accessory/badge"
+  ],
+  "visualScale": 1.0,
+  "presentation": "neutral",
+  "species": "unspecified",
+  "generation": {
+    "method": "authored_reference_combination",
+    "notRandomPopulation": true
+  },
+  "immutable": true,
+  "migrationPolicy": "preserve_ids; missing optional draw fallback only, do not overwrite original IDs",
+  "colors": {
+    "cloth": "#303c72",
+    "secondary": "#dad6bf",
+    "trim": "#d8b968",
+    "leather": "#655044",
+    "metal": "#c7ac68",
+    "lens": "#8fc8c7",
+    "skin": "#dfb496",
+    "hair": "#252b32",
+    "eye": "#5c867f"
+  },
+  "optionalSlots": {
+    "beard": []
+  }
+}
