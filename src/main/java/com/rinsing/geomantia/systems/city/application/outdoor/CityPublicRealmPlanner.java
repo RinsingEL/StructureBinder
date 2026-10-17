@@ -13,6 +13,9 @@ import static com.rinsing.geomantia.systems.city.application.landuse.CityLandUse
 /** Deterministic composition on accepted district ground, followed by terrain-following fringe planting. */
 public final class CityPublicRealmPlanner {
     public static final String SOURCE="public_realm::";
+    /** 每类种植的缺省名额；缺省值合计 500，与默认 maxPlacements 对齐，避免先种的一类吃光全部名额。 */
+    private static final Map<String,Integer> DEFAULT_SLOT_LIMITS=Map.of(
+            "trees",80,"planters",40,"hedges",64,"shrubs",96,"flowers",220);
     private static final int[][] DIR={{1,0},{0,1},{-1,0},{0,-1}};
     private static final Comparator<BlockPoint> ORDER=Comparator.comparingInt(BlockPoint::z).thenComparingInt(BlockPoint::x);
     public record Result(CityLandUseSurfacePrintPlan surface,JsonObject report) {}
@@ -184,7 +187,11 @@ public final class CityPublicRealmPlanner {
         for(String slot:List.of("trees","planters","hedges","shrubs","flowers"))if(pools.has(slot)) {
             var choices=assets.pool(text(pools,slot,""));String expected=switch(slot){case "trees"->"tree";case "planters"->"planter";case "hedges"->"hedge";case "shrubs"->"shrub";default->"flowers";};
             if(choices.stream().anyMatch(c->!assets.asset(c.assetId()).kind().equals(expected)))throw new IllegalArgumentException("PUBLIC_REALM_POOL_KIND:"+slot);
-            int limit=Math.min(maximum-placed,integer(limits,slot,maximum,0,1000));
+            int requested=integer(limits,slot,DEFAULT_SLOT_LIMITS.getOrDefault(slot,maximum),0,1000);
+            if(requested==0)continue; // 作者显式关闭该类
+            int available=Math.max(0,maximum-placed),limit=Math.min(available,requested);
+            if(limit<requested)warnings.add("PUBLIC_REALM_SLOT_LIMITED:"+id+":"+slot+":requested="+requested+":allowed="+limit);
+            if(limit==0){warnings.add("PUBLIC_REALM_SLOT_STARVED:"+id+":"+slot);continue;}
             placed+=scatter(id+"/"+slot,choices,domain,integer(spacing,slot,slot.equals("trees")?13:5,2,64),limit,
                     config.has("layeredPlanting")&&config.get("layeredPlanting").getAsBoolean(),distances);
         }
