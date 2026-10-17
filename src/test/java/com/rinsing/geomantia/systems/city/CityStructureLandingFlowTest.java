@@ -720,7 +720,9 @@ final class CityStructureLandingFlowTest {
         JsonObject mask = result.reservationMaskPlan();
         assertTrue(result.asJson().get("ok").getAsBoolean());
         assertEquals(2, mask.getAsJsonArray("noVanillaStructureMask").size());
-        assertEquals(2, mask.getAsJsonArray("noVegetationMask").size());
+        // 结构包络 2 条 + 城市域整体 1 条（G01 起城区不再保留原生植被）。
+        assertEquals(3, mask.getAsJsonArray("noVegetationMask").size());
+        assertTrue(mask.getAsJsonArray("noVegetationMask").toString().contains("city_domain_no_vegetation"));
         assertTrue(mask.getAsJsonObject("hookRequirements").get("required").getAsBoolean());
         assertTrue(mask.get("requiresLockedMaterializationPlan").getAsBoolean());
         assertEquals("d7_after_worldgen_ledger", mask.get("roadPlanningStage").getAsString());

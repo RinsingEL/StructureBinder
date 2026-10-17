@@ -79,7 +79,7 @@ public final class DesignValidator {
             for(PublicActivity a:s.activities){
                 id(a.id,path+".activity.id");require(ids.add(a.id),path+": duplicate activity id");text(a.name,1,32,path+".activity.name");
                 number(a.start,0,23999,path+".activity.start");number(a.end,0,23999,path+".activity.end");require(a.start!=a.end,path+": activity interval cannot cover entire day");
-                number(a.capacity,1,32,path+".activity.capacity");number(a.maxDistance,16,256,path+".activity.maxDistance");
+                number(a.capacity,1,32,path+".activity.capacity");number(a.maxDistance,16,512,path+".activity.maxDistance");
                 require(Double.isFinite(a.participation)&&a.participation>=0&&a.participation<=1,path+": activity participation must be 0..1");list(a.placeTerms,1,32,80,path+".activity.placeTerms");
             }
         }
