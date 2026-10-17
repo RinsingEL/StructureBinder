@@ -31,6 +31,35 @@ class CityWorksheetTest {
           {"functionTerm":"餐饮","housing":false,"professions":["keeper"],"reason":"同一掌柜提供餐食"}]},
           "professions":{"keeper":{"name":"掌柜","capabilities":["conversation"],"workplaceTerms":["住宿","餐饮"],"restStart":12500,"restEnd":23000}}}
         """);}
+    @Test void templateFacilitiesMakeCapacityVisibleAndBlockShortJobLimits(){
+        var capacityEvidence=CityWorksheet.evidence(json("""
+            {"anchors":[
+              {"anchorId":"a","templateId":"inn","placementGroupId":"arrival"},
+              {"anchorId":"b","templateId":"inn","placementGroupId":"market"}]}
+            """),json("""
+            {"structureCatalog":{"semanticProfiles":[
+              {"semanticProfileId":"inn","reviewState":"approved","functionTerms":["住宿","餐饮"]}]}}
+            """),new FacilityCapacity(Map.of("inn",new FacilityCapacity.Row(6,3))));
+        var review=CityWorksheet.review(valid(),DesignCodec.defaults(),capacityEvidence,EconomyConfig.defaults());
+        @SuppressWarnings("unchecked") var capacity=(Map<String,Object>)review.get("capacity");
+        assertEquals(12,capacity.get("housingBeds"));
+        assertEquals(6,capacity.get("workSites"));
+        assertEquals(9,capacity.get("expectedPopulation"));
+        assertTrue(review.get("warnings").toString().contains("按模板设施估算"));
+
+        var shortLimits=valid();
+        shortLimits.getAsJsonObject("plan").getAsJsonObject("overrides").getAsJsonObject("jobs")
+                .getAsJsonObject("keeper").addProperty("max",4);
+        assertTrue(CityWorksheet.errors(shortLimits,DesignCodec.defaults(),capacityEvidence).stream()
+                .anyMatch(message->message.contains("群体上限之和 4 低于按模板床位估算的人口 9")));
+    }
+
+    @Test void missingFacilityCatalogKeepsLegacyBehaviour(){
+        var review=CityWorksheet.review(valid(),DesignCodec.defaults(),evidence(),EconomyConfig.defaults());
+        assertFalse(review.containsKey("capacity"));
+        assertTrue(review.get("warnings").toString().contains("无法估算床位与工位"));
+    }
+
     @Test void factsOnlyCountCompiledApprovedAnchorsAndKeepMultiUseIdentity(){
         var e=evidence();assertEquals(Set.of("住宿","餐饮"),e.terms());assertEquals(2,e.functions().get(0).buildingCount());
         assertEquals(Set.of("arrival","market"),e.functions().get(0).groupIds());assertEquals(List.of("c"),e.unclassifiedAnchors());
