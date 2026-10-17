@@ -78,3 +78,14 @@ class LivingFacilitiesTest(unittest.TestCase):
         data=dict(size=[8,5,8],sha256='test',palette=[dict(name='minecraft:barrel',properties={'facing':'up'})],blocks=[dict(pos=[3,1,3],state=0)])
         site=extract(data,{})['facilities'][0]
         self.assertEqual('work',site['kind']);self.assertEqual('north',site['facing'])
+
+    def test_usage_without_required_beds_or_worksites_warns(self):
+        data=dict(size=[8,5,8],sha256='test',palette=[dict(name='minecraft:stone',properties={})],blocks=[dict(pos=[0,0,0],state=0)])
+        house=extract(data,{'planning_role':'planning_role.house','name':'宿舍'})
+        self.assertEqual(1,len(house['warnings']))
+        self.assertIn('REALMFOLK_FACILITY_MISSING_BEDS',house['warnings'][0])
+        shop=extract(data,{'planning_role':'planning_role.shop','name':'杂货铺'})
+        self.assertEqual(1,len(shop['warnings']))
+        self.assertIn('REALMFOLK_FACILITY_MISSING_WORKSITES',shop['warnings'][0])
+        plain=extract(data,{'planning_role':'planning_role.decoration','name':'雕像'})
+        self.assertEqual([],plain['warnings'])
