@@ -15,6 +15,33 @@ class CityArrayVisualQualityGateTest {
     private final CityInternalStreetPlanner streets = new CityInternalStreetPlanner();
     private final CityBlueprintGroupLayoutPlanner layout = new CityBlueprintGroupLayoutPlanner();
 
+    @Test void manyRootGroupsAndOneRepeatedTemplateGetReviewWarnings() {
+        JsonArray anchors = new JsonArray();
+        for (int group = 0; group < 4; group++)
+            anchors.add(anchor("g" + group, "GRID", group * 40, 0, group * 40, 0, gridLayout(0, 0, group * 40, 0)));
+        for (int i = 0; i < 9; i++) {
+            var repeated = anchor("single", "GRID", i * 20, 100, i * 20, 100, gridLayout(0, i, i * 20, 100));
+            repeated.addProperty("templateRef", "studio:mg-27");
+            anchors.add(repeated);
+        }
+        var result = gate.evaluate(anchors, new JsonArray());
+        assertTrue(result.warnings().stream().anyMatch(w -> w.startsWith("CITY_REVIEW_TOO_MANY_ROOT_GROUPS")));
+        assertTrue(result.warnings().stream().anyMatch(w -> w.startsWith("CITY_REVIEW_TEMPLATE_REPEATED:studio:mg-27:9")));
+    }
+
+    @Test void threeRootGroupsWithVariedTemplatesDoNotWarn() {
+        JsonArray anchors = new JsonArray();
+        for (int group = 0; group < 2; group++)
+            anchors.add(anchor("g" + group, "GRID", group * 40, 0, group * 40, 0, gridLayout(0, 0, group * 40, 0)));
+        for (int i = 0; i < 6; i++) {
+            var varied = anchor("single", "GRID", i * 20, 100, i * 20, 100, gridLayout(0, i, i * 20, 100));
+            varied.addProperty("templateRef", "studio:t" + i);
+            anchors.add(varied);
+        }
+        var result = gate.evaluate(anchors, new JsonArray());
+        assertTrue(result.warnings().stream().noneMatch(w -> w.startsWith("CITY_REVIEW_")));
+    }
+
     @Test void contiguousDiagnosticsDistinguishEdgeAndCornerContact() {
         JsonArray anchors = new JsonArray();
         anchors.add(anchor("field", "CONTIGUOUS", 0, 0, 3, 3, new JsonObject()));

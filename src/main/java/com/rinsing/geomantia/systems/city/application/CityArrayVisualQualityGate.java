@@ -39,6 +39,21 @@ final class CityArrayVisualQualityGate {
 
         List<String> hardBlocks = new ArrayList<>();
         List<String> warnings = new ArrayList<>();
+        // 全城复核：根组团过多、单一素材重复过多时告警，交给 AI 修订而不是静默通过。
+        Set<String> rootGroups = new LinkedHashSet<>();
+        for (Anchor anchor : anchors) rootGroups.add(anchor.groupId());
+        if (rootGroups.size() > 3) warnings.add("CITY_REVIEW_TOO_MANY_ROOT_GROUPS:" + rootGroups.size());
+        Map<String, Integer> templateCounts = new LinkedHashMap<>();
+        for (JsonElement element : anchorsJson) {
+            if (!element.isJsonObject()) continue;
+            String templateRef = string(element.getAsJsonObject(), "templateRef");
+            if (!templateRef.isBlank()) templateCounts.merge(templateRef, 1, Integer::sum);
+        }
+        int templateTotal = templateCounts.values().stream().mapToInt(Integer::intValue).sum();
+        templateCounts.forEach((templateRef, count) -> {
+            if (count >= 8 && count * 5 >= templateTotal)
+                warnings.add("CITY_REVIEW_TEMPLATE_REPEATED:" + templateRef + ":" + count);
+        });
         int roadStructureOverlapCount = 0;
         for (JsonElement element : streetsJson) {
             if (!element.isJsonObject()) continue;
