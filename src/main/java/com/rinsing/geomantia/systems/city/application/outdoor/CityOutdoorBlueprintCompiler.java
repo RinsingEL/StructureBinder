@@ -157,6 +157,12 @@ public final class CityOutdoorBlueprintCompiler {
             String owner=blueprint.districtDesigns().stream().filter(d->d.groupIds().contains(group))
                     .map(CityBlueprint.DistrictDesign::districtId).findFirst().orElse(group);
             if(districtGroups.containsKey(owner)) {
+                double waterShare=waterShare(terrain,bounds(space));
+                if(waterShare>=0.5) {
+                    // 内院大部分是原生水塘时不作公共空间铺装，交给水景，避免在水面上薄铺。
+                    outdoorWarnings.add("CITY_PUBLIC_SPACE_ON_WATER:"+owner+":"+Math.round(waterShare*100));
+                    continue;
+                }
                 var members=new ArrayList<>(districtGroups.get(owner));members.add(bounds(space));districtGroups.put(owner,List.copyOf(members));
                 designedSpaces.add(new com.rinsing.geomantia.systems.city.algorithm.landuse.CityDistrictPlanner.Result.PublicSpace(
                         owner,bounds(space),stringValue(space,"purpose","public-space")));
@@ -1163,6 +1169,20 @@ public final class CityOutdoorBlueprintCompiler {
         long dx = (long) left.x() - right.x();
         long dz = (long) left.z() - right.z();
         return dx * dx + dz * dz;
+    }
+
+    /** 按粗地形格估算范围内的水面比例；未采样格不计入。 */
+    static double waterShare(LandUseTerrainField terrain, BlockBounds bounds) {
+        int step = Math.max(1, terrain.cellStepBlocks());
+        int total = 0, water = 0;
+        for (int z = bounds.minZ(); z <= bounds.maxZ(); z += step)
+            for (int x = bounds.minX(); x <= bounds.maxX(); x += step) {
+                var cell = terrain.cellAt(x, z);
+                if (cell.isEmpty() || !cell.get().sampled()) continue;
+                total++;
+                if (cell.get().water()) water++;
+            }
+        return total == 0 ? 0.0 : (double) water / total;
     }
 
     private static BlockBounds bounds(JsonObject object) {
