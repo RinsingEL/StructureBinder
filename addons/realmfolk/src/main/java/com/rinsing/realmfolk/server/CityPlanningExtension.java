@@ -133,8 +133,21 @@ public final class CityPlanningExtension implements PlanningExtension {
             var path=c.runDirectory().resolve("city_test_runs").resolve(c.citySeedId()).resolve("steps/blueprint/city_blueprint_catalog_snapshot.json").normalize();
             if(!path.startsWith(c.runDirectory()))throw new IllegalArgumentException("城市素材路径越界");
             var anchors=path.getParent().getParent().resolve("d4/structure_anchor_plan.json");
-            return CityWorksheet.evidence(JsonParser.parseString(java.nio.file.Files.readString(anchors)).getAsJsonObject(),JsonParser.parseString(java.nio.file.Files.readString(path)).getAsJsonObject());
+            return CityWorksheet.evidence(JsonParser.parseString(java.nio.file.Files.readString(anchors)).getAsJsonObject(),JsonParser.parseString(java.nio.file.Files.readString(path)).getAsJsonObject(),facilityCapacity(c.runDirectory()));
         }catch(java.io.IOException e){throw new IllegalArgumentException("CITY_PLAN_EVIDENCE_MISSING：无法读取本城作者功能快照",e);}
+    }
+    /** 模板设施目录给配置阶段估算床位与工位；找不到时返回 EMPTY，不阻断既有流程。 */
+    private static FacilityCapacity facilityCapacity(java.nio.file.Path runDirectory) {
+        var planningSource=runDirectory.resolve("planning_source/realmfolk_facilities.json");
+        if(java.nio.file.Files.isRegularFile(planningSource))return FacilityCapacity.load(planningSource);
+        var terrasense=runDirectory.resolve("config/structureTemplate/terrasense");
+        if(!java.nio.file.Files.isDirectory(terrasense))return FacilityCapacity.EMPTY;
+        try(var dirs=java.nio.file.Files.list(terrasense)){
+            var newest=dirs.filter(java.nio.file.Files::isDirectory).map(dir->dir.resolve("realmfolk_facilities.json"))
+                    .filter(java.nio.file.Files::isRegularFile)
+                    .max(java.util.Comparator.comparingLong(file->file.toFile().lastModified()));
+            return newest.map(FacilityCapacity::load).orElse(FacilityCapacity.EMPTY);
+        }catch(java.io.IOException e){return FacilityCapacity.EMPTY;}
     }
     private static PlanningTool tool(String name,String description,JsonObject schema){return new PlanningTool(name,description,schema);}
     private static JsonObject type(String type){var o=new JsonObject();o.addProperty("type",type);return o;}

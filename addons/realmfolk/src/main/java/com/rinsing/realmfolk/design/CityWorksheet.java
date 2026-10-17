@@ -9,15 +9,24 @@ public final class CityWorksheet {
     private CityWorksheet() {}
     public record Building(String anchorId,String groupId,String templateId,Set<String> terms) {}
     public record Fact(String functionTerm,int buildingCount,Set<String> groupIds,Set<String> templateIds) {}
-    public record Evidence(List<Building> buildings,List<Fact> functions,List<String> unclassifiedAnchors) {
+    public record Evidence(List<Building> buildings,List<Fact> functions,List<String> unclassifiedAnchors,
+            FacilityCapacity capacity) {
+        public Evidence(List<Building> buildings,List<Fact> functions,List<String> unclassifiedAnchors){
+            this(buildings,functions,unclassifiedAnchors,FacilityCapacity.EMPTY);
+        }
         public Set<String> terms(){var result=new TreeSet<String>();functions.forEach(f->result.add(f.functionTerm()));return result;}
     }
+    /** 配置阶段按模板设施目录估算的容量；known=false 表示没有目录，不能据此阻断发布。 */
+    public record CapacityView(int housingBeds,int workSites,int expectedPopulation,boolean known) {}
     public static class Work {
         public String taskRevision;
         public int baseRevision, revision;
         public JsonObject submission=new JsonObject();
     }
     public static Evidence evidence(JsonObject anchors,JsonObject snapshot){
+        return evidence(anchors,snapshot,FacilityCapacity.EMPTY);
+    }
+    public static Evidence evidence(JsonObject anchors,JsonObject snapshot,FacilityCapacity capacity){
         Map<String,Set<String>> profiles=new HashMap<>();
         for(var value:snapshot.getAsJsonObject("structureCatalog").getAsJsonArray("semanticProfiles")){
             var p=value.getAsJsonObject();var terms=new TreeSet<String>();
@@ -36,7 +45,21 @@ public final class CityWorksheet {
             for(var b:buildings.values())if(b.terms().contains(term)){count++;groups.add(b.groupId());templates.add(b.templateId());}
             rows.add(new Fact(term,count,groups,templates));
         }
-        return new Evidence(List.copyOf(buildings.values()),rows,buildings.values().stream().filter(b->b.terms().isEmpty()).map(Building::anchorId).toList());
+        return new Evidence(List.copyOf(buildings.values()),rows,
+                buildings.values().stream().filter(b->b.terms().isEmpty()).map(Building::anchorId).toList(),
+                capacity==null?FacilityCapacity.EMPTY:capacity);
+    }
+    /** 按住房功能命中建筑的模板床位与全部工位估算容量；模板目录缺失时 known=false。 */
+    public static CapacityView capacity(Evidence evidence,List<String> housingTerms,Double occupancy){
+        if(evidence.capacity()==null||!evidence.capacity().known())return new CapacityView(0,0,0,false);
+        int beds=0,workSites=0;
+        for(var building:evidence.buildings()){
+            var row=evidence.capacity().of(building.templateId());
+            workSites+=row.workSites();
+            if(housingTerms!=null&&!Collections.disjoint(building.terms(),housingTerms))beds+=row.beds();
+        }
+        double ratio=occupancy==null||!Double.isFinite(occupancy)||occupancy<=0?1.0:occupancy;
+        return new CapacityView(beds,workSites,(int)Math.floor(beds*ratio),true);
     }
     public static Work patch(Work previous,String taskRevision,int baseRevision,int expectedRevision,JsonObject delta){
         boolean current=previous!=null&&taskRevision.equals(previous.taskRevision);
@@ -87,6 +110,12 @@ public final class CityWorksheet {
         try{CityPlanEvidence.validate(in,active,evidence.terms());}catch(IllegalArgumentException ex){errors.add(ex.getMessage());}
         var jobs=in.plan.overrides.jobs==null?Map.<String,Design.Quota>of():in.plan.overrides.jobs;
         var housing=in.plan.overrides.housingTerms==null?List.<String>of():in.plan.overrides.housingTerms;
+        var capacity=capacity(evidence,housing,in.plan.overrides.housingOccupancy);
+        if(capacity.known()&&capacity.expectedPopulation()>0){
+            int maxSum=jobs.values().stream().mapToInt(q->q.max).sum();
+            if(maxSum<capacity.expectedPopulation())errors.add("群体上限之和 "+maxSum+" 低于按模板床位估算的人口 "
+                    +capacity.expectedPopulation()+"（"+capacity.housingBeds()+" 床）；提高各群体上限，或减少住房用途");
+        }
         var covered=new HashSet<String>();var linkedJobs=new HashSet<String>();
         for(String id:in.reuseProfessions)if(!active.professions.containsKey(id)||in.professions.containsKey(id)||!jobs.containsKey(id))errors.add("复用确认必须指向实际使用且未重定义的已有职业: "+id);
         for(var row:in.plan.functionAnswers){
@@ -141,6 +170,18 @@ public final class CityWorksheet {
         if(s.housingTerms!=null)for(var b:evidence.buildings())if(!Collections.disjoint(b.terms(),s.housingTerms))houses++;
         result.put("plannedHousingBuildings",houses);
         result.put("housingCapacityStatus","requires_physical_facilities");
+        var capacity=capacity(evidence,s.housingTerms,s.housingOccupancy);
+        if(capacity.known()){
+            result.put("capacity",Map.of("housingBeds",capacity.housingBeds(),"workSites",capacity.workSites(),
+                    "expectedPopulation",capacity.expectedPopulation(),"basis","template_facilities"));
+            warnings.add("按模板设施估算：住房 "+capacity.housingBeds()+" 床、工位 "+capacity.workSites()
+                    +"，预计人口 "+capacity.expectedPopulation()+"；实际以加载后的物理设施为准。");
+            int maxSum=s.jobs==null?0:s.jobs.values().stream().mapToInt(q->q.max).sum();
+            if(capacity.expectedPopulation()>0&&maxSum<capacity.expectedPopulation())
+                warnings.add("群体上限之和 "+maxSum+" 低于预计人口 "+capacity.expectedPopulation()+"，提交时会被容量校验拦住");
+        }else{
+            warnings.add("未提供模板设施目录，无法估算床位与工位；请加载后按物理设施预览核对。");
+        }
         result.put("populationSettings",s);result.put("keyPeople",in.plan.keyPeople);
         if("fixed".equals(s.populationMode)&&s.population!=null)result.put("configuredFixedPopulation",s.population);
         warnings.add("建筑用途不能证明床位数量；住房名额与人口以加载后的物理设施预览为准，未加载时不提供人数上限。");
