@@ -417,12 +417,14 @@ public final class CityD4Workflow {
     }
     private static JsonObject newRequest(JsonObject review){JsonObject r=new JsonObject();r.add("designReview",review);return r;}
     private static void validateBody(JsonObject body) {
-        require(Set.of("groups","arrayCompositions","relations","foundationGroupIds","landscapes","surfaceMaterials","core","publicRealm").containsAll(body.keySet()),
+        require(Set.of("groups","arrayCompositions","relations","foundationGroupIds","landscapes","surfaceMaterials","core","publicRealm","population").containsAll(body.keySet()),
                 "设计只接受阵列、嵌套、关系、foundationGroupIds、景观与局部表面方块；spatialGrounds 已删除。");
         if(body.has("publicRealm"))new com.rinsing.geomantia.systems.city.domain.blueprint.CityPublicRealmSpec(body.getAsJsonObject("publicRealm"));
+        if(body.has("population"))new com.rinsing.geomantia.systems.city.domain.blueprint.CityPopulationBudget(body.getAsJsonObject("population"));
         for(String key:List.of("groups","arrayCompositions","relations","foundationGroupIds","landscapes"))
             if(body.has(key)) require(body.get(key).isJsonArray(),key+" 必须是数组。");
         Set<String> ids=groupIds(body);
+        if(body.has("population"))for(var id:array(body.getAsJsonObject("population"),"housingGroupIds"))require(ids.contains(id.getAsString()),"住房组必须属于本区。");
         for(var e:array(body,"arrayCompositions")) {
             JsonObject composition=e.getAsJsonObject();require(ids.contains(text(composition,"centerGroupId")),"嵌套中心必须属于本区，不能合并其他已确认区。");
             for(var member:array(composition,"memberGroupIds")) require(ids.contains(member.getAsString()),"嵌套成员必须属于本区；同类区相邻不需要共同阵列。");
@@ -451,12 +453,13 @@ public final class CityD4Workflow {
     }
 
     static JsonObject mergeChanges(JsonObject before,JsonObject changes) {
-        require(Set.of("groups","arrayCompositions","relations","foundationGroupIds","landscapes","surfaceMaterials","publicRealm",
+        require(Set.of("groups","arrayCompositions","relations","foundationGroupIds","landscapes","surfaceMaterials","publicRealm","population",
                 "removeGroupIds","removeCompositionIds","removeLandscapeIds").containsAll(changes.keySet()),"changes 包含未知字段。");
         require(changes.size()>0,"changes 不能为空。");
-        for(String key:changes.keySet()) if(!Set.of("surfaceMaterials","publicRealm").contains(key)) require(changes.get(key).isJsonArray(),key+" 必须是数组。");
+        for(String key:changes.keySet()) if(!Set.of("surfaceMaterials","publicRealm","population").contains(key)) require(changes.get(key).isJsonArray(),key+" 必须是数组。");
         JsonObject result=before.deepCopy();
         if(changes.has("publicRealm"))result.add("publicRealm",changes.get("publicRealm").deepCopy());
+        if(changes.has("population"))result.add("population",changes.get("population").deepCopy());
         mergeItems(result,changes,"groups","groupId","removeGroupIds");
         mergeItems(result,changes,"arrayCompositions","compositionId","removeCompositionIds");
         mergeItems(result,changes,"landscapes","landscapeId","removeLandscapeIds");
@@ -513,6 +516,7 @@ public final class CityD4Workflow {
             JsonObject body=e.getValue().getAsJsonObject(),core=object(body,"core");
             if(core.size()>0) {
                 JsonObject roles=new JsonObject(); roles.addProperty("districtId",e.getKey());
+                if(body.has("population"))roles.add("population",body.get("population").deepCopy());
                 roles.addProperty("coreGroupId",text(core,"groupId"));roles.addProperty("coreStructureRef",text(core,"structureRef"));
                 JsonArray groups=new JsonArray();groupIds(body).forEach(groups::add);roles.add("groupIds",groups);districtDesigns.add(roles);
             }

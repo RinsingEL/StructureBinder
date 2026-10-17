@@ -1,0 +1,15 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    7,
+    3,
+    5
+  ],
+  "sourceSha256": "3ddbd1dc4990c33599e9900e5a68cc1e9838bb0224e14ea58550fb6c2a8bdb48",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 0
+  },
+  "facilities": [],
+  "warnings": []
+}

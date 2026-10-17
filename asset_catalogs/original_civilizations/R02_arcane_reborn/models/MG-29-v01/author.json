@@ -30,6 +30,28 @@
         2,
         2
       ]
+    },
+    {
+      "id": "garden_work",
+      "kind": "work",
+      "pos": [
+        8,
+        2,
+        4
+      ],
+      "name": "庭园养护",
+      "use": "staff"
+    },
+    {
+      "id": "garden_meeting",
+      "kind": "meeting",
+      "pos": [
+        8,
+        2,
+        12
+      ],
+      "name": "阅读会面",
+      "use": "public"
     }
   ],
   "connections": [],

@@ -30,6 +30,17 @@
         2,
         2
       ]
+    },
+    {
+      "id": "nursery_work",
+      "kind": "work",
+      "pos": [
+        11,
+        2,
+        6
+      ],
+      "name": "林业教学与养护",
+      "use": "staff"
     }
   ],
   "connections": [],

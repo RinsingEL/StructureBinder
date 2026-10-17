@@ -28,10 +28,11 @@ public final class CityWallPlanner {
             throw new IllegalArgumentException("WALL_REQUIRES_D5_RESERVATION: Run city_plan_d5 first.");
         }
         JsonArray line = array(wallReservationPlan, "wallLine");
+        String boundary=wallReservationPlan.has("boundaryPolicy")?stringValue(wallReservationPlan.getAsJsonObject("boundaryPolicy"),"form",""):"";
         if (line.isEmpty()) {
             line = array(wallReservationPlan, "wallCenterline");
         }
-        if (line.isEmpty()) {
+        if (line.isEmpty()&&boundary.isEmpty()) {
             throw new IllegalArgumentException("WALL_LINE_UNAVAILABLE: D5 wall reservation has no wallLine.");
         }
 
@@ -110,7 +111,11 @@ public final class CityWallPlanner {
             wallNodes.add(node);
         }
 
+        if(boundary.equals("GATEWAYS"))for(var e:gateSlots){var gate=e.getAsJsonObject();var unit=gate.deepCopy();
+            unit.addProperty("unitId","gateway_"+wallUnits.size());unit.addProperty("unitType","boundary_gateway");
+            unit.addProperty("wallAxis",stringValue(gate,"sideHint","").matches("(?i).*(north|south).*" )?"X":"Z");wallUnits.add(unit);generatedGates.add(gate.deepCopy());}
         JsonObject plan = new JsonObject();
+        if(wallReservationPlan.has("boundaryPolicy"))plan.add("boundaryPolicy",wallReservationPlan.get("boundaryPolicy").deepCopy());
         plan.addProperty("schema", "city_wall_plan");
         plan.addProperty("moduleSet", "guard_tower");
         plan.addProperty("cityId", stringValue(wallReservationPlan, "cityId", "unknown_city"));

@@ -22,7 +22,8 @@ public final class PopulationPlanner {
         List<Citizen> existing=world.citizens.values().stream().filter(c->c.town.equals(town.id)&&!c.visitor&&"realmfolk:citizen".equals(c.entityType)).toList();
         Map<String,Integer> counts=new TreeMap<>(),workers=new HashMap<>(),terms=new TreeMap<>();
         Set<Point> occupied=new HashSet<>();
-        for(Citizen c:existing){counts.merge(c.role,1,Integer::sum);occupied.add(c.home);workers.merge(c.workProperty==null||c.workProperty.isBlank()?c.property:c.workProperty,1,Integer::sum);}
+        for(Citizen c:existing){counts.merge(c.role,1,Integer::sum);occupied.add(c.home);
+            if(c.workSite!=null&&!c.workSite.isBlank())workers.merge(c.workProperty==null||c.workProperty.isBlank()?c.property:c.workProperty,1,Integer::sum);}
         List<Bed> beds=new ArrayList<>();int totalBeds=0,houses=0;
         for(Property p:sites){
             if(p.terms!=null)for(String term:p.terms)terms.merge(term,jobCapacity(p,settings),Integer::sum);
@@ -75,11 +76,17 @@ public final class PopulationPlanner {
                                Map<String,Integer> counts,List<Citizen> added,int existing,String job,KeyPerson key){
         if(beds.isEmpty()||existing+added.size()>=target)return false;
         Profession profile=design.professions.get(job);Property work=workplace(profile,sites,workers,settings);if(work==null)return false;
-        Bed bed=beds.remove(0);String id=UUID.nameUUIDFromBytes((seed+":"+town.id+":"+bed.property.id+":"+bed.siteId).getBytes(StandardCharsets.UTF_8)).toString();
+        Bed bed=beds.stream().min(Comparator.<Bed>comparingDouble(b->profile.workplaceTerms.isEmpty()
+                ?world.citizens.values().stream().filter(c->!c.visitor&&c.property.equals(b.property.id)).count()+added.stream().filter(c->c.property.equals(b.property.id)).count()
+                :b.point.distanceSquared(FacilityAssignments.jobs(work).get(0).approach))
+                .thenComparing(b->b.property.id).thenComparing(Bed::siteId)).orElseThrow();
+        beds.remove(bed);String id=UUID.nameUUIDFromBytes((seed+":"+town.id+":"+bed.property.id+":"+bed.siteId).getBytes(StandardCharsets.UTF_8)).toString();
         if(world.citizens.containsKey(id))return false; // Dead residents keep their identity; no silent resurrection.
         String name=key==null?settings.names.get((int)(unit(id+":name")*settings.names.size()))+"·"+id.substring(0,4):key.name;
         Property actual=profile.workplaceTerms.isEmpty()?bed.property:work;
-        var station=profile.workplaceTerms.isEmpty()?null:FacilityAssignments.jobs(actual).stream().skip(workers.getOrDefault(actual.id,0)).findFirst().orElse(null);
+        var station=profile.workplaceTerms.isEmpty()?null:FacilityAssignments.jobs(actual).stream()
+                .filter(s->world.citizens.values().stream().noneMatch(c->actual.id.equals(c.workProperty)&&s.id.equals(c.workSite))
+                        &&added.stream().noneMatch(c->actual.id.equals(c.workProperty)&&s.id.equals(c.workSite))).findFirst().orElse(null);
         Citizen c=new Citizen(id,name,town.id,bed.property.id,job,bed.point,station==null?bed.point:station.approach);
         c.bedSite=bed.siteId;c.workSite=station==null?"":station.id;
         c.workProperty=actual.id;c.keyPerson=key!=null;c.keyPersonId=key==null?"":key.id;
@@ -90,7 +97,8 @@ public final class PopulationPlanner {
     }
     private static Property workplace(Profession profile,List<Property> sites,Map<String,Integer> workers,Settings settings){
         if(profile.workplaceTerms.isEmpty())return sites.isEmpty()?null:sites.get(0);
-        return sites.stream().filter(p->p.price==0&&!p.owner.startsWith("player:")&&p.terms!=null&&!Collections.disjoint(p.terms,profile.workplaceTerms)&&workers.getOrDefault(p.id,0)<jobCapacity(p,settings)).findFirst().orElse(null);
+        return sites.stream().filter(p->p.price==0&&!p.owner.startsWith("player:")&&p.terms!=null&&!Collections.disjoint(p.terms,profile.workplaceTerms)&&workers.getOrDefault(p.id,0)<jobCapacity(p,settings))
+                .min(Comparator.<Property>comparingDouble(p->workers.getOrDefault(p.id,0)/(double)jobCapacity(p,settings)).thenComparing(p->p.id)).orElse(null);
     }
     private static int jobCapacity(Property p,Settings settings){return Math.min(settings.workplaceCapacity,FacilityAssignments.jobs(p).size());}
     public static int housingCapacity(Settings settings,List<String> terms){

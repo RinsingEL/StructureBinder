@@ -46,6 +46,9 @@ public final class CityReservationMaskRegistry {
     private static final long LEDGER_RETRY_DELAY_NANOS = 1_000_000_000L;
 
     private static volatile Map<String, ActiveMask> activeMasks = Map.of();
+    private static volatile com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityGenerationMask spawnMask =
+            com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityGenerationMask.empty();
+    public static com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityGenerationMask spawnMask(){return spawnMask;}
     private static volatile com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityGenerationMask generationMask =
             com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityGenerationMask.empty();
 
@@ -55,13 +58,16 @@ public final class CityReservationMaskRegistry {
 
     private static void rebuildGenerationMask() {
         var builder = new com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityGenerationMask.Builder();
+        var population = new com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityGenerationMask.Builder();
         for (ActiveMask mask : activeMasks.values()) {
             List<BlockBounds> bounds = new ArrayList<>(mask.noVegetation());
             bounds.addAll(mask.noVanillaStructure());
+            for(var area:mask.citySpawnRegion())for(int z=area.minZ();z<=area.maxZ();z++)for(int x=area.minX();x<=area.maxX();x++)population.terrain(mask.dimensionId(),x,z);
             for (BlockBounds area : bounds) for (int z = area.minZ(); z <= area.maxZ(); z++)
                 for (int x = area.minX(); x <= area.maxX(); x++) builder.terrain(mask.dimensionId(), x, z);
         }
         generationMask = builder.build();
+        spawnMask=population.build();
     }
     private static volatile Map<String, ActivePlannedStructures> activePlannedRegistries = Map.of();
     private static volatile List<PlannedStructure> activePlannedStructureIndex = List.of();
@@ -1262,9 +1268,9 @@ public final class CityReservationMaskRegistry {
     }
 
     private record ActiveMask(String cityId, String dimensionId, List<BlockBounds> noVegetation, List<BlockBounds> noVanillaStructure,
-                              List<BlockBounds> gateCorridor, List<BlockBounds> noRoadsideStructure) {
+                              List<BlockBounds> gateCorridor, List<BlockBounds> noRoadsideStructure,List<BlockBounds> citySpawnRegion) {
         static ActiveMask empty() {
-            return new ActiveMask("", "minecraft:overworld", List.of(), List.of(), List.of(), List.of());
+            return new ActiveMask("", "minecraft:overworld", List.of(), List.of(), List.of(), List.of(),List.of());
         }
 
         static ActiveMask from(JsonObject plan) {
@@ -1279,7 +1285,7 @@ public final class CityReservationMaskRegistry {
                     masks(plan.getAsJsonArray("noVegetationMask")),
                     masks(plan.getAsJsonArray("noVanillaStructureMask")),
                     masks(plan.getAsJsonArray("gateCorridorMask")),
-                    masks(channels.getAsJsonArray("noRoadsideStructure")));
+                    masks(channels.getAsJsonArray("noRoadsideStructure")),masks(plan.getAsJsonArray("citySpawnRegion")));
         }
 
         boolean containsNoVegetation(int x, int z) {
@@ -1307,6 +1313,7 @@ public final class CityReservationMaskRegistry {
             obj.add("noVegetationMask", maskJson(noVegetation));
             obj.add("noVanillaStructureMask", maskJson(noVanillaStructure));
             obj.add("gateCorridorMask", maskJson(gateCorridor));
+            obj.add("citySpawnRegion",maskJson(citySpawnRegion));
             JsonObject channels = new JsonObject();
             channels.add("noRoadsideStructure", maskJson(noRoadsideStructure));
             obj.add("worldgenMaskChannels", channels);

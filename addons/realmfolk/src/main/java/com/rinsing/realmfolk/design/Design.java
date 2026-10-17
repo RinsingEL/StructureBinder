@@ -23,6 +23,7 @@ public final class Design {
         public int restStart = 12500, restEnd = 23000, recruitFavor = 5, patrolRadius = 5;
         public Commission commission = new Commission();
         public String commissionPurpose="", goodsPurpose="";
+        public boolean servesMeals;
         public List<Offer> offers = new ArrayList<>();
         public List<String> itemPools = new ArrayList<>();
         public int stockSlots = 18;
@@ -60,7 +61,7 @@ public final class Design {
     }
     public static class PublicActivity {
         public String id="market", name="逛集市";
-        public int start=5000, end=8000, capacity=12, maxDistance=128;
+        public int start=5000, end=8000, capacity=12, maxDistance=512;
         public double participation=.6;
         public List<String> placeTerms=new ArrayList<>();
     }
@@ -78,11 +79,24 @@ public final class Design {
         public String id, name, profession, bio="";
     }
     public static class CityPlan {
+        public List<DistrictPopulation> districtPopulationPlan=new ArrayList<>();
         public String template="default";
         public Settings overrides=new Settings();
         public List<KeyPerson> keyPeople=new ArrayList<>();
         public com.rinsing.realmfolk.economy.EconomyConfig.Selection economy;
         public List<FunctionAnswer> functionAnswers=new ArrayList<>();
+    }
+    public static class DistrictPopulation {
+        public String districtId="",purpose="";
+        public int residents;
+        public List<DistrictJob> jobs=new ArrayList<>();
+        public List<String> housingGroupIds=new ArrayList<>();
+    }
+    public static class DistrictJob {
+        public String profession="",name="";
+        public int count;
+        public List<String> functions=new ArrayList<>();
+        public boolean servesMeals;
     }
     /** Authored coverage decisions; not a second source of runtime profession settings. */
     public static class FunctionAnswer {

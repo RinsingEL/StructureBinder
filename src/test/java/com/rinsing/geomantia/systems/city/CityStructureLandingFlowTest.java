@@ -51,6 +51,26 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class CityStructureLandingFlowTest {
+    @Test void academyMayChooseNoWallAndGatewayOnlyUsesAnAuthoredExternalExit() throws Exception {
+        JsonObject anchors=JsonParser.parseString("""
+                {"anchors":[{"plannedFootprint":{"minX":0,"minZ":0,"maxX":15,"maxZ":15}}],
+                 "cityDesignIntent":{"cityIdentity":"学院","theme":"教学","functionalRoles":["学习"]},
+                 "streetBands":[{"streetBandId":"internal","bounds":{"minX":0,"minZ":4,"maxX":60,"maxZ":8}}]}
+                """).getAsJsonObject();
+        var planner=new CityWallReservationPlanner();var coverage=new BlockBounds(-10000,-10000,10000,10000);
+        var open=planner.plan(fixture().review(),anchors,24,4,coverage);
+        assertEquals("NONE",open.getAsJsonObject("boundaryPolicy").get("form").getAsString());
+        assertTrue(open.getAsJsonArray("wallLine").isEmpty());assertTrue(open.getAsJsonArray("wallNodeSlots").isEmpty());
+        assertFalse(open.getAsJsonArray("cityBoundaryOutline").isEmpty());
+        var intent=anchors.getAsJsonObject("cityDesignIntent");intent.add("boundary",JsonParser.parseString("{\"form\":\"GATEWAYS\",\"reason\":\"开放学院入口\"}"));
+        var gateway=planner.plan(fixture().review(),anchors,24,4,coverage);assertTrue(gateway.getAsJsonArray("gateSlots").isEmpty());
+        anchors.add("externalAccess",JsonParser.parseString("{\"width\":5,\"waypoints\":[{\"x\":10,\"z\":6,\"surfaceY\":65},{\"x\":300,\"z\":6,\"surfaceY\":65}]}"));
+        gateway=planner.plan(fixture().review(),anchors,24,4,coverage);
+        assertEquals(1,gateway.getAsJsonArray("gateSlots").size());
+        var finalPlan=new CityWallPlanner().plan(gateway,CityWallPlanner.Options.defaults());
+        assertEquals(1,finalPlan.getAsJsonArray("wallUnits").size());assertTrue(finalPlan.getAsJsonArray("wallNodes").isEmpty());
+        assertEquals("boundary_gateway",finalPlan.getAsJsonArray("wallUnits").get(0).getAsJsonObject().get("unitType").getAsString());
+    }
     @Test
     void d4PublicSpacesSurviveAnchorMapAndD6Handoff() throws Exception {
         Fixture fixture = fixture();

@@ -133,7 +133,8 @@ public final class CityLandUseChunkExecutor {
                 .map(operation -> new ColumnKey(operation.x(), operation.z()))
                 .collect(java.util.stream.Collectors.toSet());
         Set<ColumnKey> bridgeColumns=featureOperations.stream()
-                .filter(operation->operation.kind()==CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK)
+                .filter(operation->operation.kind()==CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK
+                        ||operation.sourceId().startsWith(com.rinsing.geomantia.systems.city.application.landuse.CityEntranceAccessPlanner.BRIDGE_SOURCE))
                 .map(operation->new ColumnKey(operation.x(),operation.z())).collect(java.util.stream.Collectors.toSet());
         Map<ColumnKey,String> roadSources = new HashMap<>();
         for (var road : featureOperations) {
@@ -172,7 +173,8 @@ public final class CityLandUseChunkExecutor {
             ColumnKey key = new ColumnKey(feature.x(), feature.z());
             frozenRoadColumns.add(key);
             ColumnSample column = terrainView.sample(feature.x(), feature.z());
-            if (feature.kind() == CityLandUseSurfacePrintPlan.FeatureKind.TERRACE_GROUND) {
+            if (feature.kind() == CityLandUseSurfacePrintPlan.FeatureKind.TERRACE_GROUND || feature.sourceId().startsWith(com.rinsing.geomantia.systems.city.application.landuse.CityPublicGroundPlanner.SOURCE)
+                    &&feature.kind()!=CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK) {
                 connectionColumns.add(key);
                 if (!column.naturalSurface() || "minecraft:water".equals(column.surfaceBlockId())
                         || "minecraft:lava".equals(column.surfaceBlockId()) || Math.abs(column.surfaceY()-feature.targetSurfaceY())>6) {

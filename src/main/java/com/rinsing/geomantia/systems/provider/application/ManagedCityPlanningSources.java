@@ -52,6 +52,8 @@ public final class ManagedCityPlanningSources {
             profile.addProperty("entranceCatalogPath", directory.resolve(ENTRANCE_CATALOG).toAbsolutePath().normalize().toString());
         }
         templateSource.add("catalog", effectiveTemplates);
+        Path facilityFile=directory.resolve("realmfolk_facilities.json");
+        if(Files.isRegularFile(facilityFile))templateSource.add("facilityCatalog",readObject(facilityFile));
         JsonObject references = readObject(directory.resolve(REFERENCE_CATALOG));
         if (references.getAsJsonArray("algorithmProfiles").asList().stream()
                 .noneMatch(e -> "CONTIGUOUS".equals(e.getAsJsonObject().get("algorithm").getAsString()))) {

@@ -12,6 +12,8 @@
 
 结合 scaleDesignTask 的规模背景、功能需求和场地容量估计体量。体量服从骨架：宁可紧凑成整体，也不要为占满场地而分散。将主轴、中心、一级地标、各区相对位置和体量理由写入现有城市意图字段，说明缺失资料或条件限制。
 
+在 designIntent.boundary 用 form 和 reason 说明边界选择：NONE、GATEWAYS、LOW_BOUNDARY、LAND_ONLY 或 FULL_WALL。学院、宗教与无防御职责的小聚落通常采用开放边界；结合边境压力决定是否需要城防。天然水面保留，内街不构成城门；城门只服务真实对外道路或 externalAccess。
+
 ## 本阶段操作与规则
 
 用 city_d4_overview 提交全城设置和按主次排列的 districts，填写实际 schema 要求的 designAnswers。此阶段定义功能区与城市组织，具体建筑、阵列和景观在分区阶段提交；素材可按需查询。

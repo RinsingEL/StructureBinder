@@ -47,13 +47,14 @@ def house(number, name, w, d, terms, *, medium=False, furnishing='classroom'):
                 m.set(x,2,z-1,'dark_oak_stairs[facing=south]')
         m.point('teach','work',(cx,2,d-8),'教学讲台')
     elif furnishing=='dorm':
-        for x in (5,w-6):
-            for z in range(7,d-7,4):
+        for x in (5,7,w-8,w-6):
+            for z in range(6,d-6,3):
                 m.set(x,2,z,'purple_bed[facing=south,part=foot]');m.set(x,2,z+1,'purple_bed[facing=south,part=head]')
         m.box((cx,2,d-6),(cx+1,4,d-6),'bookshelf')
     elif furnishing=='dining':
         for z in range(8,d-6,5):
             m.box((7,2,z),(w-8,2,z),'oak_fence');m.box((7,3,z),(w-8,3,z),'dark_oak_slab[type=top]')
+            for x in (6,w-7):m.point(f'dining_{x}_{z}','meeting',(x,2,z),'用餐席位',use='public')
         m.set(5,2,d-6,'furnace');m.set(6,2,d-6,'smoker');m.set(7,2,d-6,'barrel')
     elif furnishing=='shed':
         m.box((5,2,d-6),(w-6,3,d-6),'barrel');m.set(5,2,7,'crafting_table');m.set(w-6,2,7,'composter')
@@ -69,6 +70,8 @@ def small_garden():
     for z in (5,11):
         for x in range(5,12):m.set(x,2,z,'dark_oak_stairs[facing='+('south' if z==5 else 'north')+']')
     m.point('front','entrance',(8,2,0),'庭园入口',approach=(8,2,2),direction='north')
+    m.point('garden_work','work',(8,2,4),'庭园养护',use='staff')
+    m.point('garden_meeting','meeting',(8,2,12),'阅读会面',use='public')
     m.meta['roof_min_y']=None
     return m
 
@@ -85,6 +88,7 @@ def herb_plot():
     m.box((7,2,8),(11,2,10),'air')
     m.box((8,1,0),(10,1,1),'dirt_path')
     m.point('front','entrance',(9,2,0),'田块入口',approach=(9,2,1),direction='north')
+    m.point('field_work','work',(9,2,9),'植物试种管理',use='staff')
     return m
 
 
@@ -100,6 +104,7 @@ def greenhouse():
     for x in (6,16):
         for z in range(7,21):m.set(x,2,z,'dirt');m.set(x,3,z,'flowering_azalea' if z%3==0 else 'fern')
     m.point('front','entrance',(11,2,0),'温室入口',approach=(11,2,2),direction='north')
+    m.point('greenhouse_work','work',(11,2,6),'温室教学与养护',use='staff')
     return m
 
 
@@ -114,13 +119,14 @@ def orchard():
                 for dz in range(-r,r+1):
                     if abs(dx)+abs(dz)<=r+1:m.set(x+dx,y,z+dz,'oak_leaves[persistent=true]')
     m.point('front','entrance',(11,2,0),'苗圃入口',approach=(11,2,2),direction='north')
+    m.point('nursery_work','work',(11,2,6),'林业教学与养护',use='staff')
     return m
 
 
 BUILDERS={
  'MG-25':lambda:house(25,'中等教学楼 · 双排课堂与藏书壁',35,31,['教学','阅读','研讨'],medium=True),
  'MG-26':lambda:house(26,'小课堂 · 尖拱教室与门廊',21,21,['教学','研讨']),
- 'MG-27':lambda:house(27,'小宿舍 · 四床与共享书架',19,23,['学生住宿','自习'],furnishing='dorm'),
+ 'MG-27':lambda:house(27,'学院宿舍 · 十六床与共享书架',19,23,['学生住宿','自习'],furnishing='dorm'),
  'MG-28':lambda:house(28,'小食堂 · 长桌与备餐间',25,27,['餐饮','集体用餐'],furnishing='dining'),
  'MG-29':small_garden,
  'MG-30':herb_plot,

@@ -30,6 +30,17 @@
         2,
         1
       ]
+    },
+    {
+      "id": "field_work",
+      "kind": "work",
+      "pos": [
+        9,
+        2,
+        9
+      ],
+      "name": "植物试种管理",
+      "use": "staff"
     }
   ],
   "connections": [],

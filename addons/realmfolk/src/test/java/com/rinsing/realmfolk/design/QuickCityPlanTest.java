@@ -7,6 +7,27 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class QuickCityPlanTest {
+    @Test void emptyGroupsConsumeDistrictPopulationBudgetAndRetainItInThePublishedPlan(){
+        var in=input();in.groups=List.of();
+        var districts=com.google.gson.JsonParser.parseString("""
+            [{"districtId":"market","purpose":"居民与餐食","residents":20,"housingGroupIds":["homes"],
+              "jobs":[{"profession":"merchant","name":"餐食商","count":2,"functions":["商店"],"servesMeals":true}]}]
+            """).getAsJsonArray();
+        var source=facts();var evidence=new CityWorksheet.Evidence(source.buildings(),source.functions(),List.of(),districts);
+        var expanded=QuickCityPlan.expand(in,DesignCodec.defaults(),"realm","town",evidence,EconomyConfig.defaults());
+        assertEquals(20,expanded.plan.overrides.jobs.values().stream().mapToInt(q->q.max).sum());
+        assertEquals(18,expanded.plan.overrides.jobs.get("planned_residents").max);
+        assertTrue(expanded.professions.get("planned_residents").workplaceTerms.isEmpty());
+        assertTrue(expanded.professions.values().stream().anyMatch(p->p.servesMeals&&p.workplaceTerms.equals(List.of("商店"))));
+        assertEquals(20,expanded.plan.districtPopulationPlan.get(0).residents);
+        assertTrue(CityWorksheet.errors(DesignCodec.JSON.toJsonTree(expanded).getAsJsonObject(),DesignCodec.defaults(),evidence).isEmpty());
+    }
+    @Test void studentsCanInheritAWorkerProfileWithoutBindingDormsAsWorkplaces(){
+        var in=input();var student=in.groups.get(1);student.functions=List.of("住宅");student.requiresWorkplace=false;
+        var expanded=QuickCityPlan.expand(in,DesignCodec.defaults(),"realm","town",facts(),EconomyConfig.defaults());
+        assertTrue(expanded.professions.get("traders").workplaceTerms.isEmpty());
+        assertTrue(expanded.plan.functionAnswers.stream().filter(f->f.functionTerm.equals("商店")).allMatch(f->!f.professions.contains("traders")));
+    }
     private CityWorksheet.Evidence facts(){
         return new CityWorksheet.Evidence(List.of(new CityWorksheet.Building("house","","home",Set.of("住宅")),new CityWorksheet.Building("shop","","shop",Set.of("商店")),new CityWorksheet.Building("square","","square",Set.of("广场"))),
             List.of(new CityWorksheet.Fact("住宅",1,Set.of(),Set.of()),new CityWorksheet.Fact("商店",1,Set.of(),Set.of()),new CityWorksheet.Fact("广场",1,Set.of(),Set.of())),List.of());

@@ -17,7 +17,9 @@ public abstract class CityWorldGenRegionSurfaceProtectionMixin {
                                                   CallbackInfoReturnable<Boolean> cir) {
         if (!CityFeatureWriteGuard.active()) return;
         WorldGenRegion level = (WorldGenRegion)(Object)this;
-        if (com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityGenerationProtection.protects(level.getLevel(), position))
+        if (com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityGenerationProtection.protects(level.getLevel(), position)){
+            CityFeatureWriteGuard.rejectFeature();
             cir.setReturnValue(false);
+        }else{var key=position.immutable();CityFeatureWriteGuard.record(key,()->{var previous=level.getBlockState(key);return ()->level.setBlock(key,previous,2);});}
     }
 }

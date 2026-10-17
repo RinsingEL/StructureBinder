@@ -413,6 +413,58 @@
       "clearanceBlocks": 1,
       "nbtSha256": "43ecd047e4828bccf81debceecf2388ee72b51ee3f160664e3355278c9675364",
       "authorSha256": "e6939f2bc9dbc211c24e121815d54b2506b7d29cb506ddff9479892876f5a915"
+    },
+    {
+      "assetId": "studio:mg-62-v01",
+      "kind": "planter",
+      "sizeXYZ": [
+        7,
+        3,
+        5
+      ],
+      "groundPlaneY": 1,
+      "anchorXYZ": [
+        3,
+        1,
+        2
+      ],
+      "groundMode": "EMBEDDED_SOIL",
+      "canopyBounds": null,
+      "rotations": [
+        0,
+        90,
+        180,
+        270
+      ],
+      "clearanceBlocks": 1,
+      "nbtSha256": "90172b71f3bb1bd0fd807c85162af64cd57cfce1ca6a0c782be6bd543133c2ff",
+      "authorSha256": "8ca6da76bda806d3e73e4c908297657dffa7f2f4b5029a7a6b0debd7f22e40db"
+    },
+    {
+      "assetId": "studio:mg-63-v01",
+      "kind": "planter",
+      "sizeXYZ": [
+        7,
+        3,
+        5
+      ],
+      "groundPlaneY": 1,
+      "anchorXYZ": [
+        3,
+        1,
+        2
+      ],
+      "groundMode": "EMBEDDED_SOIL",
+      "canopyBounds": null,
+      "rotations": [
+        0,
+        90,
+        180,
+        270
+      ],
+      "clearanceBlocks": 1,
+      "nbtSha256": "3ddbd1dc4990c33599e9900e5a68cc1e9838bb0224e14ea58550fb6c2a8bdb48",
+      "authorSha256": "8abca3703ed3bbf77ef246f35019042e2798c88e2058cf35352753b1a4679bb3"
     }
   ],
   "pools": {
@@ -508,6 +560,14 @@
       {
         "assetId": "studio:mg-61-v01",
         "weight": 1
+      },
+      {
+        "assetId": "studio:mg-62-v01",
+        "weight": 4
+      },
+      {
+        "assetId": "studio:mg-63-v01",
+        "weight": 4
       }
     ]
   },

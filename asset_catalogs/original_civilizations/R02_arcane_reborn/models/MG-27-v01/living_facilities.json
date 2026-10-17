@@ -5,15 +5,19 @@
     24,
     23
   ],
-  "sourceSha256": "1f78f589e2fcc3c914f13805ad892ec16a168c6fef69bb3138a215137ac6b906",
+  "sourceSha256": "3c7f0baf1495bed24f1c3b5e42c8565538d595b6b33fdc415549aa187ad4020f",
+  "capacity": {
+    "residentBeds": 16,
+    "workplaces": 0
+  },
   "facilities": [
     {
-      "id": "bed:5,2,8",
+      "id": "bed:5,2,7",
       "kind": "bed",
       "pos": [
         5,
         2,
-        8
+        7
       ],
       "block": "minecraft:purple_bed",
       "facing": "south",
@@ -24,12 +28,28 @@
       "seatHeight": 0.5
     },
     {
-      "id": "bed:5,2,12",
+      "id": "bed:5,2,10",
       "kind": "bed",
       "pos": [
         5,
         2,
-        12
+        10
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "building",
+      "room": "main",
+      "name": "bed",
+      "adapter": "bed",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "bed:5,2,13",
+      "kind": "bed",
+      "pos": [
+        5,
+        2,
+        13
       ],
       "block": "minecraft:purple_bed",
       "facing": "south",
@@ -56,12 +76,12 @@
       "seatHeight": 0.5
     },
     {
-      "id": "bed:13,2,8",
+      "id": "bed:7,2,7",
       "kind": "bed",
       "pos": [
-        13,
+        7,
         2,
-        8
+        7
       ],
       "block": "minecraft:purple_bed",
       "facing": "south",
@@ -72,12 +92,156 @@
       "seatHeight": 0.5
     },
     {
-      "id": "bed:13,2,12",
+      "id": "bed:7,2,10",
+      "kind": "bed",
+      "pos": [
+        7,
+        2,
+        10
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "building",
+      "room": "main",
+      "name": "bed",
+      "adapter": "bed",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "bed:7,2,13",
+      "kind": "bed",
+      "pos": [
+        7,
+        2,
+        13
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "building",
+      "room": "main",
+      "name": "bed",
+      "adapter": "bed",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "bed:7,2,16",
+      "kind": "bed",
+      "pos": [
+        7,
+        2,
+        16
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "building",
+      "room": "main",
+      "name": "bed",
+      "adapter": "bed",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "bed:11,2,7",
+      "kind": "bed",
+      "pos": [
+        11,
+        2,
+        7
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "building",
+      "room": "main",
+      "name": "bed",
+      "adapter": "bed",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "bed:11,2,10",
+      "kind": "bed",
+      "pos": [
+        11,
+        2,
+        10
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "building",
+      "room": "main",
+      "name": "bed",
+      "adapter": "bed",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "bed:11,2,13",
+      "kind": "bed",
+      "pos": [
+        11,
+        2,
+        13
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "building",
+      "room": "main",
+      "name": "bed",
+      "adapter": "bed",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "bed:11,2,16",
+      "kind": "bed",
+      "pos": [
+        11,
+        2,
+        16
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "building",
+      "room": "main",
+      "name": "bed",
+      "adapter": "bed",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "bed:13,2,7",
       "kind": "bed",
       "pos": [
         13,
         2,
-        12
+        7
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "building",
+      "room": "main",
+      "name": "bed",
+      "adapter": "bed",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "bed:13,2,10",
+      "kind": "bed",
+      "pos": [
+        13,
+        2,
+        10
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "building",
+      "room": "main",
+      "name": "bed",
+      "adapter": "bed",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "bed:13,2,13",
+      "kind": "bed",
+      "pos": [
+        13,
+        2,
+        13
       ],
       "block": "minecraft:purple_bed",
       "facing": "south",

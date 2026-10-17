@@ -36,6 +36,7 @@ public final class CityPublicRealmPlanner {
     private long seed;
     private int nodes,instances;
     private final Set<String> nodeIds=new HashSet<>();
+    private List<CityDistrictPlanner.Result.PublicSpace> publicSpaces=List.of();
 
     public Result plan(CityLandUseSurfacePrintPlan source,CityDistrictPlanner.Result district,
                        LandUseTerrainField terrain,List<com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan.CorridorExclusion> reservations,CityPublicRealmSpec spec) {
@@ -48,6 +49,7 @@ public final class CityPublicRealmPlanner {
         // Planner instances are deliberately single-use: no state can leak between cities.
         if(this.terrain!=null)throw new IllegalStateException("PUBLIC_REALM_PLANNER_ALREADY_USED");
         this.terrain=terrain;this.preciseGround=preciseGround;JsonObject config=spec.toJson();assets=CityPublicRealmAssets.load(text(config,"catalog","academy"));
+        publicSpaces=district.publicSpaces();
         seed=integer(config,"seed",0,Integer.MIN_VALUE,Integer.MAX_VALUE);
         for(var c:terrain.cells())terrainIndex.put(new BlockPoint(Math.floorDiv(c.blockMinX(),terrain.cellStepBlocks()),Math.floorDiv(c.blockMinZ(),terrain.cellStepBlocks())),c);
         for(var a:source.areas())if(a.recipe() instanceof UniformRecipe u)for(var s:u.platformSpans())for(int x=s.minX();x<=s.maxX();x++)heights.put(new BlockPoint(x,s.z()),s.targetY());
@@ -205,14 +207,19 @@ public final class CityPublicRealmPlanner {
             if(choices.stream().anyMatch(c->!assets.asset(c.assetId()).kind().equals(expected)))throw new IllegalArgumentException("PUBLIC_REALM_POOL_KIND:"+slot);
             int limit=allocated.get(slot);
             if(limit<requested.get(slot))warnings.add("PUBLIC_REALM_BUDGET_LIMIT:"+id+"/"+slot+":requested="+requested.get(slot)+":allocated="+limit);
-            int placed=scatter(id+"/"+slot,choices,domain,integer(spacing,slot,slot.equals("trees")?13:5,2,64),limit,
+            Set<BlockPoint> plantingDomain=domain;
+            if(id.equals("interior")&&slot.equals("planters")) {
+                plantingDomain=new HashSet<>(domain);
+                plantingDomain.removeIf(q->!near(paths,q,9)&&publicSpaces.stream().noneMatch(s->s.bounds().contains(q.x(),q.z())&&edgeDistance(s.bounds(),q)<=8));
+            }
+            int placed=scatter(id+"/"+slot,choices,plantingDomain,integer(spacing,slot,slot.equals("trees")?13:5,2,64),limit,
                     config.has("layeredPlanting")&&config.get("layeredPlanting").getAsBoolean(),distances);
             JsonObject result=new JsonObject();result.addProperty("requested",requested.get(slot));
             result.addProperty("allocated",limit);result.addProperty("placed",placed);budget.add(slot,result);
         }
     }
     private int scatter(String id,List<CityPublicRealmAssets.Choice> choices,Set<BlockPoint> domain,int spacing,int limit,boolean layered,Map<BlockPoint,Integer> distances) {
-        List<BlockPoint> candidates=new ArrayList<>(domain);candidates.sort(Comparator.comparingDouble((BlockPoint q)->random(id,q)).thenComparing(ORDER));
+        List<BlockPoint> candidates=new ArrayList<>(domain);candidates.sort(Comparator.comparingDouble((BlockPoint q)->compositionScore(id,q)).thenComparing(ORDER));
         List<BlockPoint> chosen=new ArrayList<>();int placed=0,maxDistance=distances.values().stream().mapToInt(Integer::intValue).max().orElse(1);
         for(var q:candidates) {
             if(placed>=limit)break;
@@ -222,6 +229,18 @@ public final class CityPublicRealmPlanner {
             if(ok){chosen.add(q);placed++;}
         }
         if(placed<limit)warnings.add("PUBLIC_REALM_CAPACITY:"+id+":"+placed+"/"+limit);return placed;
+    }
+    private static int edgeDistance(BlockBounds b,BlockPoint q){return Math.min(Math.min(q.x()-b.minX(),b.maxX()-q.x()),Math.min(q.z()-b.minZ(),b.maxZ()-q.z()));}
+    private double compositionScore(String id,BlockPoint q){
+        if(!id.startsWith("interior/"))return random(id,q);
+        for(var space:publicSpaces){var b=space.bounds();if(!b.contains(q.x(),q.z()))continue;
+            double nx=(q.x()-b.minX())/(double)Math.max(1,b.widthBlocks()-1),nz=(q.z()-b.minZ())/(double)Math.max(1,b.heightBlocks()-1);
+            if(id.endsWith("/trees"))return Math.min(Math.abs(nx-.25),Math.abs(nx-.75))+Math.min(Math.abs(nz-.25),Math.abs(nz-.75))+random(id,q)*.12;
+            if(id.endsWith("/hedges"))return Math.abs(edgeDistance(b,q)-4)*.05+random(id,q)*.1;
+            if(id.endsWith("/flowers")||id.endsWith("/shrubs"))return Math.min(Math.abs(nx-.15),Math.abs(nx-.85))+Math.min(Math.abs(nz-.15),Math.abs(nz-.85))+random(id,q)*.25;
+            return edgeDistance(b,q)*.02+random(id,q)*.1;
+        }
+        return 1+random(id,q);
     }
     private boolean place(String id,CityPublicRealmAssets.Asset a,BlockPoint center,int rotation,Set<BlockPoint> domain,boolean layered) {
         int rw=rotation%180==0?a.width():a.depth(),rd=rotation%180==0?a.depth():a.width();

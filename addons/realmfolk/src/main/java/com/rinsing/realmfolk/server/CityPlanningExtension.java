@@ -68,6 +68,7 @@ public final class CityPlanningExtension implements PlanningExtension {
         result.put("revision",s.design.revision);result.put("cityPlanId",key(c));result.put("realm",c.realmProfile());result.put("city",c.citySeed());
         result.put("currentPlanAvailable",true);
         var facts=evidence(c);result.put("functionCandidates",facts.terms());result.put("functionCount",facts.functions().size());result.put("uniquePlannedBuildings",facts.buildings().size());
+        result.put("facilityCapacities",facts.functions());result.put("districtPopulationPlan",facts.districtPopulationPlan());
         result.put("worksheet",worksheetRead(c,"summary",0,8));
         result.put("answerHints",List.of("currentPlan / defaultPopulation 是旧值，不代表已经匹配本城；housingTerms 只填 functionCandidates 中实际存在的住房词。", "professions 放在提交根对象，与 baseRevision、plan 同级；必须是 ID 到定义的对象，不能填数组。", "先用已有职业；workplaceTerms 不命中本城时才新增局部变体，包括 mayor。空工作地点代表无固定工作地，不能用来掩盖应有的岗位缺口。"));
         result.put("requiredQuestions",List.of("N1 选择本城住房功能标签 housingTerms；禁止自造或沿用未命中的词", "N2 populationMode 必填", "N3 housing 模式明确 residentsPerHouse 和 housingOccupancy；fixed 则填 population", "N5/N6 jobs 明确每职业 min/max/weight；N7 核对工作地点词，本城不命中则建立局部职业变体", "N8 keyPeople 明确空列表或关键人物；economy 明确池权重、档位、价格档"));
@@ -133,7 +134,9 @@ public final class CityPlanningExtension implements PlanningExtension {
             var path=c.runDirectory().resolve("city_test_runs").resolve(c.citySeedId()).resolve("steps/blueprint/city_blueprint_catalog_snapshot.json").normalize();
             if(!path.startsWith(c.runDirectory()))throw new IllegalArgumentException("城市素材路径越界");
             var anchors=path.getParent().getParent().resolve("d4/structure_anchor_plan.json");
-            return CityWorksheet.evidence(JsonParser.parseString(java.nio.file.Files.readString(anchors)).getAsJsonObject(),JsonParser.parseString(java.nio.file.Files.readString(path)).getAsJsonObject());
+            var snapshot=JsonParser.parseString(java.nio.file.Files.readString(path)).getAsJsonObject();
+            return CityWorksheet.evidence(JsonParser.parseString(java.nio.file.Files.readString(anchors)).getAsJsonObject(),snapshot,
+                    snapshot.has("facilityMetadata")?snapshot.getAsJsonObject("facilityMetadata"):FacilityRuntime.planningCatalog());
         }catch(java.io.IOException e){throw new IllegalArgumentException("CITY_PLAN_EVIDENCE_MISSING：无法读取本城作者功能快照",e);}
     }
     private static PlanningTool tool(String name,String description,JsonObject schema){return new PlanningTool(name,description,schema);}

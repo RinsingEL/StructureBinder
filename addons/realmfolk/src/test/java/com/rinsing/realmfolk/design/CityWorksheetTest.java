@@ -35,7 +35,7 @@ class CityWorksheetTest {
         var e=evidence();assertEquals(Set.of("住宿","餐饮"),e.terms());assertEquals(2,e.functions().get(0).buildingCount());
         assertEquals(Set.of("arrival","market"),e.functions().get(0).groupIds());assertEquals(List.of("c"),e.unclassifiedAnchors());
         var review=CityWorksheet.review(valid(),DesignCodec.defaults(),e,EconomyConfig.defaults());
-        assertEquals(2,review.get("plannedHousingBuildings"));assertEquals("requires_physical_facilities",review.get("housingCapacityStatus"));
+        assertEquals(2,review.get("plannedHousingBuildings"));assertEquals("partial_capacity_unknown",review.get("housingCapacityStatus"));
         assertFalse(review.containsKey("plannedHousingSlotsBeforeSaleAndStandability"));
         assertFalse(review.containsKey("plannedPopulationUpperBoundBeforeSaleAndStandability"));
     }

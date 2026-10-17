@@ -7,9 +7,16 @@ import java.util.*;
 /** Persistent authoring worksheet. Facts come from compiled anchors, never catalogue candidate counts. */
 public final class CityWorksheet {
     private CityWorksheet() {}
-    public record Building(String anchorId,String groupId,String templateId,Set<String> terms) {}
-    public record Fact(String functionTerm,int buildingCount,Set<String> groupIds,Set<String> templateIds) {}
-    public record Evidence(List<Building> buildings,List<Fact> functions,List<String> unclassifiedAnchors) {
+    public record Building(String anchorId,String groupId,String templateId,Set<String> terms,int beds,int workplaces,boolean capacityKnown) {
+        public Building(String anchorId,String groupId,String templateId,Set<String> terms){this(anchorId,groupId,templateId,terms,0,0,false);}
+    }
+    public record Fact(String functionTerm,int buildingCount,Set<String> groupIds,Set<String> templateIds,int beds,int workplaces,int capacityKnownBuildings) {
+        public Fact(String term,int count,Set<String> groups,Set<String> templates){this(term,count,groups,templates,0,0,0);}
+    }
+    public record Evidence(List<Building> buildings,List<Fact> functions,List<String> unclassifiedAnchors,JsonArray districtPopulationPlan) {
+        public Evidence(List<Building> buildings,List<Fact> functions,List<String> unknown){this(buildings,functions,unknown,new JsonArray());}
+        public Evidence {districtPopulationPlan=districtPopulationPlan==null?new JsonArray():districtPopulationPlan.deepCopy();}
+        @Override public JsonArray districtPopulationPlan(){return districtPopulationPlan.deepCopy();}
         public Set<String> terms(){var result=new TreeSet<String>();functions.forEach(f->result.add(f.functionTerm()));return result;}
     }
     public static class Work {
@@ -18,6 +25,9 @@ public final class CityWorksheet {
         public JsonObject submission=new JsonObject();
     }
     public static Evidence evidence(JsonObject anchors,JsonObject snapshot){
+        return evidence(anchors,snapshot,new JsonObject());
+    }
+    public static Evidence evidence(JsonObject anchors,JsonObject snapshot,JsonObject facilities){
         Map<String,Set<String>> profiles=new HashMap<>();
         for(var value:snapshot.getAsJsonObject("structureCatalog").getAsJsonArray("semanticProfiles")){
             var p=value.getAsJsonObject();var terms=new TreeSet<String>();
@@ -29,14 +39,26 @@ public final class CityWorksheet {
         for(var value:anchors.getAsJsonArray("anchors")){
             var a=value.getAsJsonObject();String id=a.get("anchorId").getAsString(),template=a.get("templateId").getAsString();
             String group=a.has("placementGroupId")?a.get("placementGroupId").getAsString():"";
-            buildings.put(id,new Building(id,group,template,profiles.getOrDefault(template,Set.of())));
+            String ref=a.has("templateRef")?a.get("templateRef").getAsString():template;
+            String hash=a.has("templateHash")?a.get("templateHash").getAsString():"";
+            JsonObject metadata=facilities.getAsJsonObject(ref+"/"+hash);int beds=0,jobs=0;
+            if(metadata!=null&&metadata.has("facilities"))for(var value2:metadata.getAsJsonArray("facilities")) {
+                var f=value2.getAsJsonObject();String kind=f.get("kind").getAsString(),use=f.has("use")?f.get("use").getAsString():"building";
+                if(kind.equals("bed")&&Set.of("building","resident").contains(use))beds++;
+                if(kind.equals("work"))jobs++;
+            }
+            buildings.put(id,new Building(id,group,template,profiles.getOrDefault(template,Set.of()),beds,jobs,metadata!=null));
         }
         var terms=new TreeSet<String>();buildings.values().forEach(b->terms.addAll(b.terms()));var rows=new ArrayList<Fact>();
         for(String term:terms){var groups=new TreeSet<String>();var templates=new TreeSet<String>();int count=0;
             for(var b:buildings.values())if(b.terms().contains(term)){count++;groups.add(b.groupId());templates.add(b.templateId());}
-            rows.add(new Fact(term,count,groups,templates));
+            String t=term;
+            rows.add(new Fact(term,count,groups,templates,buildings.values().stream().filter(b->b.terms().contains(t)).mapToInt(Building::beds).sum(),
+                    buildings.values().stream().filter(b->b.terms().contains(t)).mapToInt(Building::workplaces).sum(),
+                    (int)buildings.values().stream().filter(b->b.terms().contains(t)&&b.capacityKnown()).count()));
         }
-        return new Evidence(List.copyOf(buildings.values()),rows,buildings.values().stream().filter(b->b.terms().isEmpty()).map(Building::anchorId).toList());
+        return new Evidence(List.copyOf(buildings.values()),rows,buildings.values().stream().filter(b->b.terms().isEmpty()).map(Building::anchorId).toList(),
+                anchors.has("districtPopulationPlan")?anchors.getAsJsonArray("districtPopulationPlan"):new JsonArray());
     }
     public static Work patch(Work previous,String taskRevision,int baseRevision,int expectedRevision,JsonObject delta){
         boolean current=previous!=null&&taskRevision.equals(previous.taskRevision);
@@ -137,13 +159,22 @@ public final class CityWorksheet {
         for(var f:evidence.functions()){var row=new LinkedHashMap<String,Object>();row.put("fact",f);row.put("answer",answers.get(f.functionTerm()));rows.add(row);}
         result.put("functionTable",rows);result.put("functionCount",evidence.functions().size());result.put("uniquePlannedBuildings",evidence.buildings().size());
         result.put("unclassifiedAnchors",evidence.unclassifiedAnchors());
+        result.put("districtPopulationPlan",evidence.districtPopulationPlan());
         var s=in.plan.overrides;int houses=0;
         if(s.housingTerms!=null)for(var b:evidence.buildings())if(!Collections.disjoint(b.terms(),s.housingTerms))houses++;
         result.put("plannedHousingBuildings",houses);
-        result.put("housingCapacityStatus","requires_physical_facilities");
+        int beds=evidence.buildings().stream().filter(b->s.housingTerms!=null&&!Collections.disjoint(b.terms(),s.housingTerms)).mapToInt(Building::beds).sum();
+        int target="fixed".equals(s.populationMode)&&s.population!=null?s.population:(int)Math.floor(beds*(s.housingOccupancy==null?active.resolve("","").settings().housingOccupancy:s.housingOccupancy));
+        boolean known=evidence.buildings().stream().allMatch(Building::capacityKnown);
+        result.put("housingCapacityStatus",known?"exported_or_verified_facilities":"partial_capacity_unknown");
+        result.put("housingBeds",beds);result.put("populationTarget",Math.min(Design.MAX_POPULATION,target));
+        result.put("capacityWarnings",capacityWarnings(in,active,evidence,target));
+        warnings.addAll(capacityWarnings(in,active,evidence,target));
+        int plannedResidents=0;for(var e:evidence.districtPopulationPlan())plannedResidents+=e.getAsJsonObject().get("residents").getAsInt();
+        if(!evidence.districtPopulationPlan().isEmpty()&&plannedResidents!=target)warnings.add("CITY_POPULATION_DESIGN_CAPACITY_DIFFERENCE: designed="+plannedResidents+", physical_or_export_target="+target);
         result.put("populationSettings",s);result.put("keyPeople",in.plan.keyPeople);
         if("fixed".equals(s.populationMode)&&s.population!=null)result.put("configuredFixedPopulation",s.population);
-        warnings.add("建筑用途不能证明床位数量；住房名额与人口以加载后的物理设施预览为准，未加载时不提供人数上限。");
+        warnings.add("导出床位/工位用于规划预算；最终人口仍以落地后实际存在、可达且可用的设施为准。未知容量不按零容量证明。");
         var professionRows=new ArrayList<Object>();var commissions=new TreeMap<String,List<String>>();
         if(s.jobs!=null)for(var entry:s.jobs.entrySet()){
             String id=entry.getKey();var p=in.professions.getOrDefault(id,active.professions.get(id));if(p==null)continue;
@@ -158,6 +189,23 @@ public final class CityWorksheet {
         }
         commissions.values().stream().filter(ids->ids.size()>1).forEach(ids->warnings.add("委托材料、数量和奖励完全相同: "+String.join(", ",ids)));
         result.put("professionTable",professionRows);result.put("warnings",warnings);return result;
+    }
+    private static List<String> capacityWarnings(CityPlanning.Submission in,Design active,Evidence evidence,int target){
+        List<String> warnings=new ArrayList<>();var jobs=in.plan.overrides.jobs;
+        if(jobs==null)return warnings;
+        int total=jobs.values().stream().mapToInt(q->q.max).sum();
+        if(total<target)warnings.add("CITY_POPULATION_QUOTA_BELOW_TARGET: quotas="+total+", target="+target);
+        for(var e:jobs.entrySet()){
+            var p=in.professions.getOrDefault(e.getKey(),active.professions.get(e.getKey()));if(p==null||p.workplaceTerms.isEmpty())continue;
+            var buildings=evidence.buildings().stream().filter(b->!Collections.disjoint(b.terms(),p.workplaceTerms)).toList();
+            int limit=in.plan.overrides.workplaceCapacity==null?Integer.MAX_VALUE:in.plan.overrides.workplaceCapacity;
+            int capacity=buildings.stream().filter(Building::capacityKnown).mapToInt(b->Math.min(limit,b.workplaces())).sum();
+            if(capacity<e.getValue().min)warnings.add("CITY_WORKPLACE_BELOW_MINIMUM:"+e.getKey()+": known="+capacity+", minimum="+e.getValue().min);
+            if(e.getValue().max<buildings.stream().filter(b->b.workplaces()>0).count())warnings.add("CITY_STAFF_QUOTA_BELOW_BUILDINGS:"+e.getKey());
+        }
+        for(var b:evidence.buildings())if(b.workplaces()>0&&jobs.keySet().stream().noneMatch(id->{var p=in.professions.getOrDefault(id,active.professions.get(id));return p!=null&&!Collections.disjoint(b.terms(),p.workplaceTerms);}))
+            warnings.add("CITY_UNSTAFFED_BUILDING:"+b.anchorId()+":"+b.terms());
+        return List.copyOf(warnings);
     }
     private static void require(boolean valid,String message){if(!valid)throw new IllegalArgumentException("CITY_WORKSHEET: "+message);}
 }

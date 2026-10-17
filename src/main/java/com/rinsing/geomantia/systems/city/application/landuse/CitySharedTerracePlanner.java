@@ -23,6 +23,11 @@ public final class CitySharedTerracePlanner {
     public CityLandUseSurfacePrintPlan apply(CityLandUseSurfacePrintPlan source, CityDistrictPlanner.Result district,
             LandUseTerrainField terrain, LandUseAreaPlan landUse, List<LandUseAreaPlan.CorridorExclusion> reservations,
             Settings settings) {
+        return apply(source,district,terrain,landUse,reservations,settings,List.of());
+    }
+    public CityLandUseSurfacePrintPlan apply(CityLandUseSurfacePrintPlan source, CityDistrictPlanner.Result district,
+            LandUseTerrainField terrain, LandUseAreaPlan landUse, List<LandUseAreaPlan.CorridorExclusion> reservations,
+            Settings settings,List<LandUseSourceResolver.RoadBand> bands) {
         if (district == null || district.cores().isEmpty()) return source;
         Terrain samples = new Terrain(terrain);
         Map<String,Integer> datums = new TreeMap<>();
@@ -50,7 +55,7 @@ public final class CitySharedTerracePlanner {
         Map<BlockPoint,Integer> entrancePins = new HashMap<>();
         for(var a:landUse.areas())for(var gate:a.gateSlots())for(var p:roads.keySet())
             if(Math.abs(p.x()-gate.block().x())+Math.abs(p.z()-gate.block().z())<=2 && platforms.containsKey(p)) entrancePins.put(p,platforms.get(p));
-        var graded = new CityTerraceRoadGradePlanner().plan(source.featureCells(),platforms,entrancePins,samples::height);
+        var graded = new CityTerraceRoadGradePlanner().plan(source.featureCells(),platforms,entrancePins,samples::height,bands);
         // Re-read the frozen grade, including internal streets absent from coarse roadBands.
         roads.clear();
         for (var f : graded) if (circulation(f)) roads.put(new BlockPoint(f.x(),f.z()),f);

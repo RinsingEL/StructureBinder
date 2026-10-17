@@ -5,6 +5,7 @@ seating. Randomness never determines the plan. Frozen roads/structures win.
 """
 
 def apply_public_spaces(result, cells, sources, put):
+    natural_water={tuple(p) for p in result.get('naturalWaterRetained',[])}
     scene=result['scene']; specs={p['nodeId']:p for p in scene.get('publicSpaces',[])}
     if not specs:return []
     spaces={p['nodeId']:p for p in result.get('layoutSpaces',[])}
@@ -27,6 +28,7 @@ def apply_public_spaces(result, cells, sources, put):
         road_protected=protected.copy();protected.update(walk)
         counts={};writes=[]
         def safe(x,z,*,plant=False):
+            if (x,z) in natural_water:return False
             if not(x0<=x<x0+w and z0<=z<z0+d) or (x,z) not in supported:return False
             if plant and (x,z) in protected:return False
             if sources.get((x,y,z),'').startswith('building:'):return False

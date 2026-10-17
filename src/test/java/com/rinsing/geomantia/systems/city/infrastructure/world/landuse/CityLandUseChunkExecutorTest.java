@@ -14,6 +14,15 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandUseChunkExecutorTest {
+    @Test void entranceStairsOnABridgeRetainThinDeckSupport(){
+        var stairs=new CityLandUseChunkCompiler.FeatureOperation("entrance_access::bridge::door",2,2,"minecraft:stone_brick_stairs",0,
+                CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR,CityLandUseSurfacePrintPlan.HorizontalFacing.EAST,70);
+        var fs=List.of(stairs);var fragment=new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,"city","hash","palette",0,0,1,0,0,0,"minecraft:dirt",List.of(),List.of(),List.of(),fs,fs);
+        var world=new FakeWorld();var result=new CityLandUseChunkExecutor().execute(fragment,world,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED,result.status());
+        assertTrue(world.writes.contains("2,70,2=minecraft:stone_brick_stairs"));
+        assertTrue(world.writes.stream().noneMatch(w->w.matches("2,6[5-8],2=.*")),"an entrance ramp must not fill the channel below its bridge");
+    }
     @Test void stackedWallShapesSettleFromTheCapDown() {
         Map<BlockPos,String> states=new HashMap<>();
         for(int y=30;y<=70;y++)states.put(new BlockPos(2,y,2),"low");

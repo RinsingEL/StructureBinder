@@ -1,6 +1,6 @@
 {
   "schema": "structure-studio.validation.v1",
-  "nbt_sha256": "1f78f589e2fcc3c914f13805ad892ec16a168c6fef69bb3138a215137ac6b906",
+  "nbt_sha256": "3c7f0baf1495bed24f1c3b5e42c8565538d595b6b33fdc415549aa187ad4020f",
   "navigation": {
     "passed": true,
     "unreachable": [],
@@ -17,8 +17,8 @@
     24,
     23
   ],
-  "visible_blocks": 1704,
-  "explicit_air": 1076,
+  "visible_blocks": 1724,
+  "explicit_air": 1056,
   "palette": 15,
   "block_entities": 0,
   "agriculture": null,
@@ -31,10 +31,10 @@
     "minecraft:dark_oak_planks": 154,
     "minecraft:purple_stained_glass": 106,
     "minecraft:smooth_stone_slab": 36,
+    "minecraft:purple_bed": 32,
     "minecraft:polished_blackstone_bricks": 30,
     "minecraft:smooth_stone": 25,
     "minecraft:polished_blackstone_brick_slab": 18,
-    "minecraft:purple_bed": 12,
     "minecraft:bookshelf": 6
   },
   "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"

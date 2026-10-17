@@ -5,6 +5,16 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CityWallPlacementBackendTest {
+    @Test void aSingleWetColumnOmitsTheWholeWallOrTowerUnit(){
+        var plan=com.google.gson.JsonParser.parseString("""
+            {"wallUnits":[{"blockBounds":{"minX":0,"minZ":0,"maxX":7,"maxZ":4}},
+                          {"blockBounds":{"minX":8,"minZ":0,"maxX":15,"maxZ":4}}],
+             "wallNodes":[{"blockBounds":{"minX":16,"minZ":0,"maxX":22,"maxZ":9}}]}
+            """).getAsJsonObject();
+        CityWallPlacementBackend.trimWetUnits(plan,(x,z)->x==7&&z==4||x==20&&z==8);
+        assertEquals(1,plan.getAsJsonArray("wallUnits").size());assertTrue(plan.getAsJsonArray("wallNodes").isEmpty());
+        assertEquals(2,plan.getAsJsonArray("naturalWaterBoundaryOmissions").size());
+    }
     @Test void towerFrontAndEveryVoxelRotateInsideTheReservedFootprint() {
         var anchor = new com.rinsing.geomantia.systems.city.domain.model.BlockPoint(100,200);
         for (String facing : java.util.List.of("NORTH","EAST","SOUTH","WEST")) {

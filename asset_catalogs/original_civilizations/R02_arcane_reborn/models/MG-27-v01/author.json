@@ -1,7 +1,7 @@
 {
   "schema": "structure-studio.author.v1",
   "id": "MG-27-v01",
-  "name": "小宿舍 · 四床与共享书架",
+  "name": "学院宿舍 · 十六床与共享书架",
   "family": "MG-27",
   "civilization": "魔法学院新制",
   "planning_role": "planning_role.fill",
@@ -16,7 +16,7 @@
   "rooms": [
     {
       "id": "main",
-      "name": "小宿舍 · 四床与共享书架",
+      "name": "学院宿舍 · 十六床与共享书架",
       "min": [
         4,
         2,
@@ -99,5 +99,5 @@
   },
   "campus_consumer": "array",
   "design_revision": 1,
-  "nbt_sha256": "1f78f589e2fcc3c914f13805ad892ec16a168c6fef69bb3138a215137ac6b906"
+  "nbt_sha256": "3c7f0baf1495bed24f1c3b5e42c8565538d595b6b33fdc415549aa187ad4020f"
 }

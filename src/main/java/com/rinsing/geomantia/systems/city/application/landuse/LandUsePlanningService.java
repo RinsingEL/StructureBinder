@@ -195,11 +195,11 @@ public final class LandUsePlanningService {
         if (!sources.materialField().isEmpty()) surfacePrintPlan = new CityLandUseSurfacePrintPlanCodec().withComputedHash(surfacePrintPlan.withMaterials(sources.materialField()));
         surfacePrintPlan = new CitySharedTerracePlanner().apply(surfacePrintPlan, sources.district(), terrainField, plan,
                 new LandUseCorridorExclusionResolver().publicSpaceReservations(d5ReservationMaskPlan),
-                CitySharedTerracePlanner.Settings.defaults());
+                CitySharedTerracePlanner.Settings.defaults(),sources.roadBands());
         if (sources.district() != null) surfacePrintPlan = new CityPublicGreeneryPlanner().append(
                 surfacePrintPlan, sources.district(), plan, publicRealm==null?CityPublicGreeneryPlanner.Preset.load():
                         new CityPublicGreeneryPlanner.Preset("minecraft:grass_block",List.of("minecraft:allium"),0,2),
-                new LandUseCorridorExclusionResolver().publicSpaceReservations(d5ReservationMaskPlan),publicRealm==null);
+                new LandUseCorridorExclusionResolver().publicSpaceReservations(d5ReservationMaskPlan),publicRealm==null,boundaryGround(d5ReservationMaskPlan,terrainField));
         if (sources.district() != null) {
             Set<BlockPoint> managed = surfacePrintPlan.featureCells().stream()
                     .filter(f -> (f.sourceId().startsWith(CityPublicGreeneryPlanner.SOURCE)
@@ -213,18 +213,29 @@ public final class LandUsePlanningService {
                 new LandUseCorridorExclusionResolver().publicSpaceReservations(d5ReservationMaskPlan),
                 CityVillageRoadSettings.load(),scale);
         surfacePrintPlan = villageRoads.surface();
+        Map<BlockPoint,com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmPlanner.Ground> groundCache=new HashMap<>();
+        com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmPlanner.GroundSampler ground=preciseGround==null?null:
+                (x,z)->groundCache.computeIfAbsent(new BlockPoint(x,z),p->preciseGround.sample(p.x(),p.z()));
+        var publicGround=new CityPublicGroundPlanner().plan(surfacePrintPlan,sources.district(),terrainField,ground);
+        surfacePrintPlan=publicGround.surface();
+        var entrances=new CityEntranceAccessPlanner().plan(surfacePrintPlan,sources.seedGroups().stream().flatMap(g->g.gateSlots().stream()).toList(),
+                sources.district()==null?Set.of():sources.district().structures());
+        surfacePrintPlan=entrances.surface();
         JsonObject quality = quality(plan, sources, resolvedExpansion, connectionOutcomes,
                 residualResult.urbanSpacePlan(), skippedLandscapes, requiredLandscapeCapacities);
         quality.add("villageRoads",villageRoads.report());
+        quality.add("publicGround",publicGround.report());
+        quality.add("entranceAccess",entrances.report());quality.getAsJsonArray("warnings").addAll(entrances.report().getAsJsonArray("warnings"));
+        if(publicGround.report().has("warnings"))quality.getAsJsonArray("warnings").addAll(publicGround.report().getAsJsonArray("warnings"));
         if(publicRealm!=null) {
             var realm = new com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmPlanner().plan(
                     surfacePrintPlan,sources.district(),terrainField,
-                    new LandUseCorridorExclusionResolver().publicSpaceReservations(d5ReservationMaskPlan),publicRealm,preciseGround);
+                    new LandUseCorridorExclusionResolver().publicSpaceReservations(d5ReservationMaskPlan),publicRealm,ground);
             surfacePrintPlan=realm.surface();quality.add("publicRealm",realm.report());
             quality.getAsJsonArray("warnings").addAll(realm.report().getAsJsonArray("warnings"));
         }
         quality.addProperty("publicGreenGroundBlocks", surfacePrintPlan.featureCells().stream()
-                .filter(f -> f.sourceId().startsWith(CityPublicGreeneryPlanner.SOURCE) && f.surfaceOffset() == 0).count());
+                .filter(f -> (f.sourceId().startsWith(CityPublicGreeneryPlanner.SOURCE)||f.sourceId().startsWith(CityPublicGroundPlanner.SOURCE)) && f.surfaceOffset() == 0).count());
         quality.addProperty("coreTerraceCount", sources.district() == null ? 0 : sources.district().cores().size());
         quality.addProperty("designedPublicSpaceCount", sources.district() == null ? 0 : sources.district().publicSpaces().size());
         quality.addProperty("sharedTerraceGroundBlocks", surfacePrintPlan.featureCells().stream()
@@ -573,6 +584,16 @@ public final class LandUsePlanningService {
         return trace;
     }
 
+    private static Set<BlockPoint> boundaryGround(JsonObject mask,LandUseTerrainField terrain){
+        if(mask==null||!mask.has("wallReservationPlan"))return Set.of();var wall=mask.getAsJsonObject("wallReservationPlan");
+        if(!wall.has("boundaryPolicy")||!wall.has("cityBoundaryOutline")||wall.getAsJsonObject("boundaryPolicy").get("form").getAsString().equals("NONE"))return Set.of();
+        var outline=wall.getAsJsonArray("cityBoundaryOutline");Map<Integer,List<Integer>> rows=new HashMap<>();
+        for(var e:outline){var s=e.getAsJsonObject();var a=s.getAsJsonObject("from");var b=s.getAsJsonObject("to");
+            int x=a.get("x").getAsInt(),ax=b.get("x").getAsInt(),z=a.get("z").getAsInt(),bz=b.get("z").getAsInt();
+            if(x==ax)for(int r=Math.min(z,bz);r<Math.max(z,bz);r++)rows.computeIfAbsent(r,k->new ArrayList<>()).add(x);}
+        Set<BlockPoint> result=new HashSet<>();var bounds=terrain.planningBounds();
+        rows.forEach((z,xs)->{xs.sort(Integer::compare);for(int i=0;i+1<xs.size();i+=2)for(int x=xs.get(i);x<=xs.get(i+1);x++)if(bounds.contains(x,z))result.add(new BlockPoint(x,z));});return result;
+    }
     private static JsonObject quality(LandUseAreaPlan plan,
                                       LandUseSourceResolver.Resolution sources,
                                       LandUseExpansionResult expansion,

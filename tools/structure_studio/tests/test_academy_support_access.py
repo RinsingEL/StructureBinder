@@ -8,6 +8,13 @@ from studio.validate import validate
 
 
 class AcademySupportAccessTests(unittest.TestCase):
+    def test_dorm_exports_sixteen_physical_resident_beds(self):
+        registry=json.loads((TOOL/'.cache/registry.json').read_text(encoding='utf-8'))
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);BUILDERS['MG-27']().export(root,registry)
+            facilities=json.loads((root/'living_facilities.json').read_text(encoding='utf-8'))
+            self.assertEqual(16,facilities['capacity']['residentBeds'])
+            self.assertEqual(16,sum(f['kind']=='bed' for f in facilities['facilities']))
     def test_shared_house_variants_keep_the_indoor_access_target_reachable(self):
         registry = json.loads((TOOL / '.cache/registry.json').read_text(encoding='utf-8'))
         for key in ('MG-25', 'MG-26', 'MG-27', 'MG-28', 'MG-32'):

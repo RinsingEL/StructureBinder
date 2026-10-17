@@ -10,6 +10,9 @@ public final class CityExitRoadPlanner {
     private record Candidate(BlockPoint inside, BlockPoint outside, BlockPoint gate, double score) {}
     public JsonObject plan(String cityId, JsonObject anchors, JsonObject wall, BlockBounds domain,
                            List<InterCityNetwork.Link> network) {
+        if(array(wall,"wallLine").isEmpty()&&wall.has("cityBoundaryOutline")){
+            var routing=wall.deepCopy();routing.add("wallLine",wall.get("cityBoundaryOutline").deepCopy());return plan(cityId,anchors,routing,domain,network);
+        }
         JsonObject result=new JsonObject(); result.addProperty("schema","city_intercity_exit_plan");
         result.addProperty("cityId",cityId);
         JsonArray roads=new JsonArray(),portals=new JsonArray(),failures=new JsonArray();

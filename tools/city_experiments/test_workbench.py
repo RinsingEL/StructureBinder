@@ -15,6 +15,16 @@ def connected(spans):
 
 
 class CampusIntegration(unittest.TestCase):
+    def test_public_platform_never_caps_precise_natural_water(self):
+        result=dict(scene={},terrainColumns=[[0,0,62,'minecraft:water',60],[1,0,62,'minecraft:grass_block']],
+                    terraces=[dict(terraceId='court',spans=[dict(z=0,minX=0,maxX=1,targetY=64)])],
+                    members=[],mutations=[[0,64,0,'minecraft:smooth_stone','SURFACE_OR_ENGINEERING']],
+                    roadBands=[],layoutSpaces=[],surfacePrintPlan={'featureCells':[]})
+        world=api.compose(result,[])
+        self.assertEqual([(0,0)],result['naturalWaterRetained'])
+        blocks={tuple(b['pos'][i]+world['origin'][i] for i in range(3)):world['palette'][b['state']]['name'] for b in world['blocks']}
+        self.assertEqual('minecraft:water',blocks[(0,62,0)])
+        self.assertNotIn((0,64,0),blocks)
     def test_legacy_core_facing_is_an_actual_road_entrance(self):
         core=next(a for a in api.catalog() if a['id']=='MG-01-v01')
         self.assertEqual(core['entrances'],[dict(id='street',x=35,z=0,direction='NORTH')])

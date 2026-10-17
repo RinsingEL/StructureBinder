@@ -36,6 +36,7 @@ public final class FacilityRuntime {
     private static MinecraftServer owner;
     private static int cursor;
     private static final Map<String,Long> LAST_SCAN=new HashMap<>();
+    public static JsonObject planningCatalog(){var json=new JsonObject();new TreeMap<>(CATALOG).forEach((k,v)->json.add(k,v.deepCopy()));return json;}
     public static void start(MinecraftServer server){
         owner=server;cursor=0;CATALOG.clear();INVALID.clear();LAST_SCAN.clear();
         LivingBehaviorRuntime.reload(server);
@@ -260,6 +261,16 @@ public final class FacilityRuntime {
         var publicPoints=new LinkedHashSet<Point>();
         property.livingSites.stream().filter(s->s.available&&(s.kind.equals("seat")||s.kind.equals("meeting"))).forEach(s->publicPoints.add(s.approach));
         property.entrances.stream().filter(p->reachable.contains(p)&&standable(level,p)).forEach(publicPoints::add);
+        // Public service buildings need room for their customers, not just the single entrance.
+        // Only actual reachable floor, outside sleeping buildings and physical staff use positions.
+        if(property.slots.isEmpty()&&"PUBLIC".equals(property.access)&&property.price==0&&!property.owner.startsWith("player:")) {
+            var staff=new HashSet<Point>();jobs.forEach(s->staff.add(s.approach));
+            for(var p:reachable.stream().sorted(Comparator.comparingInt(Point::y).thenComparingInt(Point::z).thenComparingInt(Point::x)).toList()) {
+                if(publicPoints.size()>=32)break;
+                if(p.x()<=b.minX()||p.x()>=b.maxX()||p.z()<=b.minZ()||p.z()>=b.maxZ()||staff.contains(p))continue;
+                if(publicPoints.stream().allMatch(q->q.distanceSquared(p)>=9))publicPoints.add(p);
+            }
+        }
         property.publicPoints=new ArrayList<>(publicPoints.stream().filter(p->p.y()>=property.bounds.minY()).limit(32).toList());
     }
     public static void refresh(MinecraftServer server){

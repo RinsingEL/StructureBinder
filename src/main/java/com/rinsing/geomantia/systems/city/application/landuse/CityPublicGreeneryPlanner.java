@@ -46,8 +46,14 @@ public final class CityPublicGreeneryPlanner {
     public CityLandUseSurfacePrintPlan append(CityLandUseSurfacePrintPlan source,
             CityDistrictPlanner.Result district, LandUseAreaPlan landUse, Preset preset,
             List<LandUseAreaPlan.CorridorExclusion> reservations,boolean designedFixtures) {
+        return append(source,district,landUse,preset,reservations,designedFixtures,Set.of());
+    }
+    public CityLandUseSurfacePrintPlan append(CityLandUseSurfacePrintPlan source,
+            CityDistrictPlanner.Result district, LandUseAreaPlan landUse, Preset preset,
+            List<LandUseAreaPlan.CorridorExclusion> reservations,boolean designedFixtures,Set<BlockPoint> boundaryGround) {
         if (district == null || district.natural().isEmpty() && district.cores().isEmpty()) return source;
         Set<BlockPoint> available = new HashSet<>(district.natural());
+        available.addAll(boundaryGround);
         // Designed districts also own gardens on their shared platform, outside building lots.
         if (!district.cores().isEmpty()) available.addAll(district.construction());
         for (var area : landUse.areas()) if (district.cores().isEmpty()
@@ -56,13 +62,15 @@ public final class CityPublicGreeneryPlanner {
         for (var p : district.structures()) for(int dz=-2;dz<=2;dz++)for(int dx=-2;dx<=2;dx++)
             available.remove(new BlockPoint(p.x()+dx,p.z()+dz));
         Set<BlockPoint> circulation = new HashSet<>();
+        Set<BlockPoint> plantingClearance=new HashSet<>();
         Map<BlockPoint,CityLandUseSurfacePrintPlan.FeatureCell> connectionGround = new HashMap<>();
         for (var f : source.featureCells()) {
             var p=new BlockPoint(f.x(),f.z());
             if(f.kind()==CityLandUseSurfacePrintPlan.FeatureKind.TERRACE_GROUND) {
                 connectionGround.put(p,f);available.add(p);continue;
             }
-            for(int dz=-2;dz<=2;dz++)for(int dx=-2;dx<=2;dx++) circulation.add(new BlockPoint(f.x()+dx,f.z()+dz));
+            circulation.add(p);
+            for(int dz=-2;dz<=2;dz++)for(int dx=-2;dx<=2;dx++) plantingClearance.add(new BlockPoint(f.x()+dx,f.z()+dz));
         }
         available.removeAll(circulation);
         for (var corridor : landUse.corridorExclusions()) available.removeIf(p -> corridor.blockBounds().contains(p.x(), p.z()));
@@ -90,7 +98,7 @@ public final class CityPublicGreeneryPlanner {
             var original=connectionGround.get(point);
             features.add(original==null?cell(id,point,ground,0,path?CityLandUseSurfacePrintPlan.FeatureKind.GREEN_PATH:CityLandUseSurfacePrintPlan.FeatureKind.GREEN_GROUND)
                     :new CityLandUseSurfacePrintPlan.FeatureCell(original.sourceId(),point.x(),point.z(),ground,0,original.kind(),original.facing(),original.targetSurfaceY()));
-            if(path||preset.density()==0)continue;
+            if(path||preset.density()==0||plantingClearance.contains(point))continue;
             boolean hedge=depth==preset.edgeClearance()+1;
             int spacing=Math.max(2,(int)Math.ceil(1/Math.sqrt(preset.density())));
             boolean flower=depth>preset.edgeClearance()+1&&Math.floorMod(point.x(),spacing)==0&&Math.floorMod(point.z(),spacing)==0;
