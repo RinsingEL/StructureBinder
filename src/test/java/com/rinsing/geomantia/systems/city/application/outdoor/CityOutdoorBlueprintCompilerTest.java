@@ -39,6 +39,20 @@ class CityOutdoorBlueprintCompilerTest {
         assertTrue(planned.quality().has("publicRealm"));
         assertEquals(planned.surfacePrintPlan().planHash(),planned.quality().getAsJsonObject("publicRealm").get("surfacePlanHash").getAsString());
         assertTrue(planned.surfacePrintPlan().featureCells().stream().anyMatch(f->f.kind()==com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan.FeatureKind.AUTHORED_BLOCK));
+        assertTrue(planned.quality().getAsJsonArray("warnings").toString().contains("PUBLIC_REALM_SLOT_LIMIT_DEFAULTED"));
+        assertEquals("warning",planned.quality().get("status").getAsString());
+    }
+    @Test void frozenCourtyardReachesDistrictAndLandUseQualityReport() {
+        var d6=d6Plan();
+        d6.add("sourceStructureAnchorMap",JsonParser.parseString("""
+                {publicSpaces:[{ownerGroupId:'core_group',purpose:'garden',minX:26,minZ:40,maxX:35,maxZ:49}]}
+                """));
+        var compiled=compile(d6);
+        var spaces=compiled.resolution().district().publicSpaces();
+        assertEquals(1,spaces.size());assertEquals("core_group",spaces.get(0).owner());
+        assertEquals(new BlockBounds(26,40,35,49),spaces.get(0).bounds());
+        var result=new LandUsePlanningService().plan("city",compiled.resolution(),d5Corridor(),terrain(),compiled.residualConfig());
+        assertEquals(1,result.quality().get("designedPublicSpaceCount").getAsInt());
     }
     @Test void designedDistrictConsumesOneCoreAcrossItsNestedSupportArrays() {
         var b=blueprint();var bp=new CityBlueprint(b.schema(),b.cityId(),b.sourceD3Ref(),b.catalogSnapshotRef(),b.generationSeed(),

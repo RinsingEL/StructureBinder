@@ -16,6 +16,48 @@ class CityVillageRoadPlannerTest {
     @TempDir Path root;
     private CityVillageRoadSettings settings() { return CityVillageRoadSettings.load(root.resolve("missing.json")); }
 
+    @Test void townsCitiesAndUnknownScaleNeverAcquireVillageAppearance() {
+        for(CityScale scale:new CityScale[]{CityScale.TOWN,CityScale.CITY,CityScale.LARGE_CITY,null}) {
+            var input=surface();var result=new CityVillageRoadPlanner().plan(input,sources(),area(),List.of(),settings(),scale);
+            assertSame(input,result.surface());
+            assertEquals(0,result.report().get("appliedRoadCount").getAsInt());
+            assertTrue(result.report().toString().contains("not_village_scale"));
+        }
+        assertTrue(new CityVillageRoadPlanner().plan(surface(),sources(),area(),List.of(),settings(),CityScale.HAMLET)
+                .report().get("appliedRoadCount").getAsInt()>0);
+    }
+
+    @Test void explicitCityGroupAndRoadMaterialsPreserveTheWholeRoadIncludingCurbs() {
+        for(CitySurfaceMaterials selection:List.of(
+                new CitySurfaceMaterials(Map.of("roadSurface","minecraft:stone_brick_slab"),Map.of(),Map.of(),Map.of()),
+                new CitySurfaceMaterials(Map.of(),Map.of("house",Map.of("roadStair","minecraft:stone_brick_stairs")),Map.of(),Map.of()),
+                new CitySurfaceMaterials(Map.of(),Map.of(),Map.of("COMPACT_ALLEY",Map.of("roadBase","minecraft:stone_bricks")),Map.of()))) {
+            var base=sources();var field=new CityMaterialField(selection,base.materialField().owners(),base.materialField().roads());
+            var resolution=new LandUseSourceResolver.Resolution(List.of(),List.of(),List.of(),"seed",Map.of(),Map.of(),base.roadBands(),List.of(),List.of(),field);
+            var input=surface().withMaterials(field);
+            var result=new CityVillageRoadPlanner().plan(input,resolution,area(),List.of(),settings(),CityScale.VILLAGE);
+            assertSame(input,result.surface());
+            assertTrue(result.report().toString().contains("explicit_materials"));
+        }
+    }
+
+    @Test void frozenVillageFallbackIsPerRoadAndRemainsBelowExplicitSelections() {
+        var road=new CityMaterialField.Road("village","COMPACT_ALLEY",new BlockBounds(0,-1,100,1),
+                Map.of("roadStair","minecraft:oak_stairs","roadBase","minecraft:dirt"));
+        var selection=new CitySurfaceMaterials(Map.of(),Map.of("stone",Map.of("roadStair","minecraft:stone_brick_stairs")),Map.of(),Map.of());
+        var field=new CityMaterialField(selection,List.of(new CityMaterialField.Owner("stone",new BlockBounds(0,0,20,5)),
+                new CityMaterialField.Owner("rural",new BlockBounds(80,0,100,5))),List.of(road));
+        var restored=CityMaterialField.read(field.toJson());
+        assertEquals(field,restored);
+        assertEquals("minecraft:stone_brick_stairs",restored.at("roadStair",0,0,"village","fallback"));
+        assertEquals("minecraft:oak_stairs",restored.at("roadStair",100,0,"village","fallback"));
+        assertEquals("fallback",restored.at("roadStair",100,0,"other","fallback"));
+        var legacy=CityMaterialField.read(JsonParser.parseString("""
+                {selections:{},owners:[],roads:[{sourceId:'old',kind:'COMPACT_ALLEY',bounds:{minX:0,minZ:0,maxX:3,maxZ:3}}]}
+                """).getAsJsonObject());
+        assertFalse(legacy.toJson().getAsJsonArray("roads").get(0).getAsJsonObject().has("fallbackMaterials"));
+    }
+
     @Test void mixedVillageRoadRemovesOnlySideCurbsAndKeepsSlopeAndMainRoad() {
         var input=surface();var sources=sources();
         var actual=apply(input,sources,settings(),List.of());
@@ -67,15 +109,18 @@ class CityVillageRoadPlannerTest {
 
     private static CityLandUseSurfacePrintPlan apply(CityLandUseSurfacePrintPlan input,LandUseSourceResolver.Resolution sources,
             CityVillageRoadSettings settings,List<LandUseAreaPlan.CorridorExclusion> reservations) {
-        var area=new LandUseAreaPlan(LandUseAreaPlan.SCHEMA,"v1","city","hash",new BlockBounds(-20,-20,120,30),
+        return new CityVillageRoadPlanner().plan(input,sources,area(),reservations,settings,CityScale.VILLAGE).surface();
+    }
+    private static LandUseAreaPlan area() {
+        return new LandUseAreaPlan(LandUseAreaPlan.SCHEMA,"v1","city","hash",new BlockBounds(-20,-20,120,30),
                 List.of(),List.of(),List.of(),List.of(),List.of());
-        return new CityVillageRoadPlanner().apply(input,sources,area,reservations,settings);
     }
     private static LandUseSourceResolver.Resolution sources() {
         var band=new LandUseSourceResolver.RoadBand("village","group::network","COMPACT_ALLEY",
                 new BlockPoint(0,0),new BlockPoint(100,0),new BlockBounds(0,-1,100,1),3,"STAIR_SLAB_STAIR");
-        var field=new CityMaterialField(new CitySurfaceMaterials(Map.of("roadSurface","minecraft:stone_brick_slab"),Map.of(),Map.of(),Map.of()),
-                List.of(new CityMaterialField.Owner("house",new BlockBounds(0,3,20,5))),List.of());
+        var field=new CityMaterialField(CitySurfaceMaterials.empty(),
+                List.of(new CityMaterialField.Owner("house",new BlockBounds(0,3,20,5))),
+                List.of(new CityMaterialField.Road("village","COMPACT_ALLEY",band.bounds())));
         return new LandUseSourceResolver.Resolution(List.of(),List.of(),List.of(),"seed",Map.of(),Map.of(),List.of(band),List.of(),List.of(),field);
     }
     private static CityLandUseSurfacePrintPlan surface() {

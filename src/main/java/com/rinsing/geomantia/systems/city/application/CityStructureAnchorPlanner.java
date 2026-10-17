@@ -107,6 +107,9 @@ public final class CityStructureAnchorPlanner {
         if (structureAnchorPlan.has("streetBands") && structureAnchorPlan.get("streetBands").isJsonArray()) {
             anchorMap.add("streetBands", structureAnchorPlan.getAsJsonArray("streetBands").deepCopy());
         }
+        if (structureAnchorPlan.has("publicSpaces") && structureAnchorPlan.get("publicSpaces").isJsonArray()) {
+            anchorMap.add("publicSpaces", structureAnchorPlan.getAsJsonArray("publicSpaces").deepCopy());
+        }
         if (structureAnchorPlan.has("cityMainRoadPlan")
                 && structureAnchorPlan.get("cityMainRoadPlan").isJsonObject()) {
             anchorMap.add("cityMainRoadPlan",

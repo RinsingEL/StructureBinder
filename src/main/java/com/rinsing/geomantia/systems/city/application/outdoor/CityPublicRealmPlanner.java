@@ -31,6 +31,7 @@ public final class CityPublicRealmPlanner {
     private final Set<BlockPoint> hardReservations=new HashSet<>();
     private final List<Volume> volumes=new ArrayList<>();
     private final JsonArray placements=new JsonArray(),warnings=new JsonArray();
+    private final JsonObject plantingBudgets=new JsonObject();
     private final Map<String,Integer> counters=new TreeMap<>();
     private long seed;
     private int nodes,instances;
@@ -102,6 +103,7 @@ public final class CityPublicRealmPlanner {
         report.addProperty("fringeColumns",fringe.size());report.addProperty("authoredBlocks",writes.size());report.addProperty("surfacePlanHash",finalPlan.planHash());
         report.addProperty("naturalGroundSource",preciseGround==null?"d3_coarse_field":"exact_generator_columns");
         report.addProperty("naturalGroundSamples",groundSamples.size());
+        report.add("plantingBudgets",plantingBudgets);
         JsonObject counts=new JsonObject();counters.forEach(counts::addProperty);report.add("counts",counts);
         return new Result(finalPlan,report);
     }
@@ -179,14 +181,34 @@ public final class CityPublicRealmPlanner {
 
     private void plant(String id,JsonObject config,Set<BlockPoint> domain,Map<BlockPoint,Integer> distances) {
         fields(config,"pools","spacing","slotLimits","maxPlacements","layeredPlanting","width");
-        int maximum=integer(config,"maxPlacements",500,0,1000),placed=0;JsonObject pools=object(config,"pools"),spacing=object(config,"spacing"),limits=object(config,"slotLimits");
+        int maximum=integer(config,"maxPlacements",500,0,1000);JsonObject pools=object(config,"pools"),spacing=object(config,"spacing"),limits=object(config,"slotLimits");
         for(var o:List.of(pools,spacing,limits))fields(o,"trees","planters","hedges","shrubs","flowers");
-        for(String slot:List.of("trees","planters","hedges","shrubs","flowers"))if(pools.has(slot)) {
+        List<String> slots=List.of("trees","planters","hedges","shrubs","flowers").stream().filter(pools::has).toList();
+        Map<String,Integer> requested=new LinkedHashMap<>(),allocated=new LinkedHashMap<>();
+        for(String slot:slots) {
+            int fallback=(maximum+slots.size()-1)/slots.size();
+            int limit=integer(limits,slot,fallback,0,1000);requested.put(slot,limit);allocated.put(slot,0);
+            if(!limits.has(slot))warnings.add("PUBLIC_REALM_SLOT_LIMIT_DEFAULTED:"+id+"/"+slot+":"+limit);
+        }
+        // Reserve every category's budget before placing anything. Earlier categories cannot consume
+        // a later category's share, including when its explicit limit exceeds the shared maximum.
+        for(int remaining=maximum;remaining>0;) {
+            boolean advanced=false;
+            for(String slot:slots)if(remaining>0&&allocated.get(slot)<requested.get(slot)) {
+                allocated.merge(slot,1,Integer::sum);remaining--;advanced=true;
+            }
+            if(!advanced)break;
+        }
+        JsonObject budget=new JsonObject();plantingBudgets.add(id,budget);
+        for(String slot:slots) {
             var choices=assets.pool(text(pools,slot,""));String expected=switch(slot){case "trees"->"tree";case "planters"->"planter";case "hedges"->"hedge";case "shrubs"->"shrub";default->"flowers";};
             if(choices.stream().anyMatch(c->!assets.asset(c.assetId()).kind().equals(expected)))throw new IllegalArgumentException("PUBLIC_REALM_POOL_KIND:"+slot);
-            int limit=Math.min(maximum-placed,integer(limits,slot,maximum,0,1000));
-            placed+=scatter(id+"/"+slot,choices,domain,integer(spacing,slot,slot.equals("trees")?13:5,2,64),limit,
+            int limit=allocated.get(slot);
+            if(limit<requested.get(slot))warnings.add("PUBLIC_REALM_BUDGET_LIMIT:"+id+"/"+slot+":requested="+requested.get(slot)+":allocated="+limit);
+            int placed=scatter(id+"/"+slot,choices,domain,integer(spacing,slot,slot.equals("trees")?13:5,2,64),limit,
                     config.has("layeredPlanting")&&config.get("layeredPlanting").getAsBoolean(),distances);
+            JsonObject result=new JsonObject();result.addProperty("requested",requested.get(slot));
+            result.addProperty("allocated",limit);result.addProperty("placed",placed);budget.add(slot,result);
         }
     }
     private int scatter(String id,List<CityPublicRealmAssets.Choice> choices,Set<BlockPoint> domain,int spacing,int limit,boolean layered,Map<BlockPoint,Integer> distances) {

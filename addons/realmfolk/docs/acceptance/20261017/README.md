@@ -33,6 +33,10 @@
 
 ## 资料包内容与边界
 
+本轮首批修复对应路线图第 1～3 项：村路外观只作小聚落的缺省并保留显式材质；D4 内院元数据传递至 D6 和户外规划；绿化各类预留配额并公开缺省、预算压缩及空间不足。修复在 `codex/campus-playtest-fixes` 分支，验证明细见实现仓 City 故障索引。
+
+本批尚未游戏验收，G02 的素材与构图、C02 的水体与岸线问题仍未关闭；人口、道路横坡、城墙及其他修复继续按路线图排期。上述下载包保留原始故障现场，不是修复后的验收包。
+
 [实验资料下载](https://github.com/RinsingEL/StructureBinder/releases/tag/experiments/campus-20261017) · [上传清单](upload-manifest.json)；每个ZIP内的package-manifest.json提供文件清单和哈希。两个ZIP解压到同一新目录。
 
 - campus-save-20261017.zip：当前世界实际存档，省略realm_debug和session.lock；保留区块、实体、人口数据、玩家数据、生成结构、掩码及世界配置。

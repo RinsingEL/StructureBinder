@@ -1,24 +1,41 @@
 package com.rinsing.geomantia.systems.city.application.landuse;
 
-import com.rinsing.geomantia.systems.city.domain.blueprint.CitySurfaceMaterials;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.rinsing.geomantia.systems.city.domain.landuse.*;
 import com.rinsing.geomantia.systems.city.domain.model.*;
 import java.util.*;
 import static com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan.*;
 
-/** Compiles village appearance after city material overrides, before chunk ownership is assigned. */
+/** Applies village fallback appearance without replacing explicit city or district materials. */
 public final class CityVillageRoadPlanner {
     public static final String DECORATION_SOURCE = "village_road_decoration::";
     private record Key(int x,int z,int offset) { }
+    public record Result(CityLandUseSurfacePrintPlan surface, JsonObject report) { }
 
-    public CityLandUseSurfacePrintPlan apply(CityLandUseSurfacePrintPlan source,
+    public Result plan(CityLandUseSurfacePrintPlan source,
             LandUseSourceResolver.Resolution sources, LandUseAreaPlan landUse,
-            List<LandUseAreaPlan.CorridorExclusion> reservations, CityVillageRoadSettings settings) {
-        if (!settings.enabled()) return source;
+            List<LandUseAreaPlan.CorridorExclusion> reservations, CityVillageRoadSettings settings, CityScale scale) {
+        JsonObject report=new JsonObject();report.addProperty("schema","city_village_road_report.v1");
+        report.addProperty("scale",scale==null?"unknown":scale.contractName());
+        JsonArray decisions=new JsonArray();report.add("decisions",decisions);
+        boolean villageScale=scale==CityScale.HAMLET || scale==CityScale.VILLAGE;
+        Set<String> explicitlySelected=new HashSet<>();
+        var materials=sources.materialField();
+        if(settings.enabled() && villageScale)for(var f:source.featureCells()) if(f.kind()==FeatureKind.ROAD_SLAB || f.kind()==FeatureKind.ROAD_STAIR) {
+            for(String slot:List.of("roadSurface","roadStair","roadCurb","roadBase"))
+                if(materials.at(slot,f.x(),f.z(),f.sourceId(),null)!=null)explicitlySelected.add(f.sourceId());
+        }
         Map<String,LandUseSourceResolver.RoadBand> village=new TreeMap<>();
-        for(var band:sources.roadBands()) if(!band.bridge() && settings.roadKinds().contains(band.roadKind()))
-            village.put(band.streetBandId(),band);
-        if(village.isEmpty()) return source;
+        for(var band:sources.roadBands()) if(settings.roadKinds().contains(band.roadKind())) {
+            String reason=!settings.enabled()?"disabled":!villageScale?"not_village_scale":band.bridge()?"bridge":
+                    explicitlySelected.contains(band.streetBandId())?"explicit_materials":"village_fallback";
+            JsonObject decision=new JsonObject();decision.addProperty("sourceId",band.streetBandId());
+            decision.addProperty("roadKind",band.roadKind());decision.addProperty("reason",reason);decisions.add(decision);
+            if(reason.equals("village_fallback"))village.put(band.streetBandId(),band);
+        }
+        report.addProperty("appliedRoadCount",village.size());
+        if(village.isEmpty()) return new Result(source,report);
 
         long seed=mix(settings.seed() ^ source.cityId().hashCode());
         Map<Key,FeatureCell> cells=new HashMap<>();
@@ -88,17 +105,17 @@ public final class CityVillageRoadPlanner {
                 .thenComparingInt(FeatureCell::x).thenComparingInt(FeatureCell::surfaceOffset)).toList();
         // Freeze stair/base choices too: runtime transitions must not re-read edited configuration.
         CityMaterialField original=sources.materialField();
-        Map<String,Map<String,String>> roads=new TreeMap<>(original.selections().roads());
-        for(var band:village.values()) {
-            Map<String,String> slots=new TreeMap<>(roads.getOrDefault(band.roadKind(),Map.of()));
-            slots.put("roadStair",settings.stairBlockId());slots.put("roadBase",settings.baseBlockId());
-            roads.put(band.roadKind(),slots);
+        Map<String,CityMaterialField.Road> roads=new TreeMap<>();
+        original.roads().forEach(r->roads.put(r.sourceId(),r));
+        for(var band:sources.roadBands()) {
+            Map<String,String> fallbacks=village.containsKey(band.streetBandId())
+                    ?Map.of("roadStair",settings.stairBlockId(),"roadBase",settings.baseBlockId()):Map.of();
+            roads.put(band.streetBandId(),new CityMaterialField.Road(band.streetBandId(),band.roadKind(),band.bounds(),fallbacks));
         }
-        var selection=new CitySurfaceMaterials(original.selections().defaults(),original.selections().groups(),roads,original.selections().landscapes());
-        var field=new CityMaterialField(selection,original.owners(),sources.roadBands().stream()
-                .map(b->new CityMaterialField.Road(b.streetBandId(),b.roadKind(),b.bounds())).toList());
-        return new CityLandUseSurfacePrintPlanCodec().withComputedHash(new CityLandUseSurfacePrintPlan(source.schema(),
+        var field=new CityMaterialField(original.selections(),original.owners(),List.copyOf(roads.values()));
+        var surface=new CityLandUseSurfacePrintPlanCodec().withComputedHash(new CityLandUseSurfacePrintPlan(source.schema(),
                 source.cityId(),source.sourceLandUsePlanHash(),"",source.areas(),source.sharedBoundarySpans(),features,field));
+        return new Result(surface,report);
     }
     private static String surface(CityVillageRoadSettings s,long seed,int x,int z) {
         int choice=Math.floorMod(mix(seed ^ ((long)x<<32) ^ (z&0xffffffffL)),s.surfacePalette().stream().mapToInt(CityVillageRoadSettings.WeightedBlock::weight).sum());
