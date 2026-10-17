@@ -46,6 +46,9 @@ public final class CityTerraceRoadGradePlanner {
             if(entrancePins.containsKey(p))pins.put(p,entrancePins.get(p));
             else if(neighbors(p).stream().filter(roads::containsKey).count()==1)pins.put(p,y);
         }
+        // 台地分界可能顺着道路落在路面中间；同一横断面必须先统一高度，否则会在路宽方向铺出楼梯。
+        Map<BlockPoint,Section> sections=crossSections(distance.keySet());
+        unify(desired,sections,pins.keySet());
         Map<BlockPoint,Integer> lower=new HashMap<>(),upper=new HashMap<>();
         desired.forEach((p,y)->{lower.put(p,y-12);upper.put(p,y+12);});
         pins.forEach((p,y)->{lower.put(p,y);upper.put(p,y);});
@@ -57,6 +60,8 @@ public final class CityTerraceRoadGradePlanner {
             grade.put(p,Math.max(lo,Math.min(hi,desired.get(p))));
         }
         propagate(grade,false);
+        // 入口钉住的断面保持精确高度；其余断面再统一一次，避免钳制后重新出现横向台阶。
+        unify(grade,sections,pins.keySet());
         List<CityLandUseSurfacePrintPlan.FeatureCell> result=new ArrayList<>();
         for(var f:features) {
             var p=new BlockPoint(f.x(),f.z());Integer y=grade.get(p);
@@ -64,7 +69,11 @@ public final class CityTerraceRoadGradePlanner {
             String slab=f.blockId().endsWith("_stairs")?f.blockId().substring(0,f.blockId().length()-7)+"_slab":f.blockId();
             String stair=slab.endsWith("_slab")?slab.substring(0,slab.length()-5)+"_stairs":"";
             var facing=CityLandUseSurfacePrintPlan.HorizontalFacing.NONE;int target=y;
+            int axis=sections.containsKey(p)?sections.get(p).axis():-1;
             for(int i=0;i<DIRS.length;i++) {
+                // 楼梯只沿道路方向：横向高差由横断面统一消掉，不在路宽方向铺楼梯。
+                if(axis==0&&DIRS[i][1]!=0)continue;
+                if(axis==1&&DIRS[i][0]!=0)continue;
                 var q=new BlockPoint(p.x()+DIRS[i][0],p.z()+DIRS[i][1]);
                 if(grade.getOrDefault(q,y)==y+1&&!stair.isEmpty()) {
                     facing=switch(i){case 0->CityLandUseSurfacePrintPlan.HorizontalFacing.NORTH;
@@ -79,6 +88,44 @@ public final class CityTerraceRoadGradePlanner {
                     stepped?CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR:CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,facing,target));
         }
         return List.copyOf(result);
+    }
+    private record Section(int component,int axis) { }
+    /** 按连通道路组件的跨度判断主方向：0=沿 X，1=沿 Z；同一断面即同一 X 或 Z。 */
+    private static Map<BlockPoint,Section> crossSections(Set<BlockPoint> cells) {
+        Map<BlockPoint,Section> result=new HashMap<>();Set<BlockPoint> seen=new HashSet<>();int component=0;
+        for(var start:cells.stream().sorted(ORDER).toList()) {
+            if(!seen.add(start))continue;
+            List<BlockPoint> members=new ArrayList<>();ArrayDeque<BlockPoint> queue=new ArrayDeque<>();queue.add(start);
+            while(!queue.isEmpty()) {
+                var p=queue.removeFirst();members.add(p);
+                for(var q:neighbors(p))if(cells.contains(q)&&seen.add(q))queue.addLast(q);
+            }
+            int minX=members.stream().mapToInt(BlockPoint::x).min().orElseThrow();
+            int maxX=members.stream().mapToInt(BlockPoint::x).max().orElseThrow();
+            int minZ=members.stream().mapToInt(BlockPoint::z).min().orElseThrow();
+            int maxZ=members.stream().mapToInt(BlockPoint::z).max().orElseThrow();
+            var section=new Section(component++,(maxX-minX)>=(maxZ-minZ)?0:1);
+            members.forEach(p->result.put(p,section));
+        }
+        return result;
+    }
+    /** 同一横断面取众数高度；含入口钉的断面不动，保证门高精确。 */
+    private static void unify(Map<BlockPoint,Integer> heights,Map<BlockPoint,Section> sections,Set<BlockPoint> pinned) {
+        Map<String,List<BlockPoint>> lines=new TreeMap<>();
+        for(var p:heights.keySet().stream().sorted(ORDER).toList()) {
+            var section=sections.get(p);if(section==null)continue;
+            int coord=section.axis()==0?p.x():p.z();
+            lines.computeIfAbsent(section.component()+":"+coord,k->new ArrayList<>()).add(p);
+        }
+        for(var line:lines.values()) {
+            if(line.stream().anyMatch(pinned::contains))continue;
+            Map<Integer,Integer> counts=new TreeMap<>();
+            for(var p:line)counts.merge(heights.get(p),1,Integer::sum);
+            int mode=counts.entrySet().stream()
+                    .max(Comparator.<Map.Entry<Integer,Integer>>comparingInt(Map.Entry::getValue)
+                            .thenComparingInt(Map.Entry::getKey)).orElseThrow().getKey();
+            for(var p:line)heights.put(p,mode);
+        }
     }
     private static void propagate(Map<BlockPoint,Integer> heights,boolean maximum) {
         Comparator<Station> order=Comparator.comparingInt(Station::height);
