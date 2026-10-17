@@ -33,6 +33,30 @@ class CityPublicRealmPlannerTest {
             assertTrue(a.surface().featureCells().stream().filter(f->f.kind()==FeatureKind.AUTHORED_BLOCK).allMatch(f->f.targetSurfaceY()==64));
         }
     }
+    @Test void everyGreenerySlotHasItsOwnBudgetAndStarvedSlotsWarn(){
+        JsonObject s=spec(null);
+        s.add("greenery",JsonParser.parseString("{\"maxPlacements\":400,\"pools\":{\"trees\":\"courtyard_trees\","
+                + "\"planters\":\"planters\",\"hedges\":\"hedge_segments\",\"shrubs\":\"low_shrubs\","
+                + "\"flowers\":\"flower_patches\"}}").getAsJsonObject());
+        var result=run(s);
+        var ids=result.report().getAsJsonArray("placements").asList().stream()
+                .map(e->e.getAsJsonObject().get("id").getAsString()).toList();
+        long planters=ids.stream().filter(id->id.startsWith("interior/planters/")).count();
+        assertTrue(planters>0&&planters<=40,"planters="+planters);
+        assertTrue(ids.stream().anyMatch(id->id.startsWith("interior/shrubs/")),"shrubs missing");
+        assertTrue(ids.stream().anyMatch(id->id.startsWith("interior/hedges/")),"hedges missing");
+        assertTrue(ids.stream().anyMatch(id->id.startsWith("interior/flowers/")),"flowers missing");
+        assertTrue(ids.size()<=400);
+
+        JsonObject tight=spec(null);
+        tight.add("greenery",JsonParser.parseString("{\"maxPlacements\":5,\"slotLimits\":{\"trees\":5},"
+                + "\"pools\":{\"trees\":\"courtyard_trees\",\"planters\":\"planters\"}}").getAsJsonObject());
+        var starved=run(tight).report().getAsJsonArray("warnings").asList().stream()
+                .map(JsonElement::getAsString).toList();
+        assertTrue(starved.stream().anyMatch(w->w.startsWith("PUBLIC_REALM_SLOT_STARVED:interior:planters")),
+                starved.toString());
+    }
+
     @Test void dryFringeDoesNotCreateTerracesAndKeepsRoadReserveClear(){
         JsonObject s=spec(null);s.add("fringe",JsonParser.parseString("{\"width\":20,\"layeredPlanting\":true,\"pools\":{\"trees\":\"outer_trees\",\"flowers\":\"flower_patches\"},\"maxPlacements\":80,\"slotLimits\":{\"trees\":20,\"flowers\":60}}").getAsJsonObject());
         var result=run(s);assertTrue(result.report().getAsJsonArray("placements").size()>20);
