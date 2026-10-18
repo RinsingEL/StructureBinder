@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "images": [
+    {
+      "file": "宿舍区修复前.jpg",
+      "bytes": 347855,
+      "sha256": "16366acc08ca8efc79cf2e349f973f630e021535a16229d09863c99104426c64",
+      "source": "dev_docs/systems/city/archive/2375a427_v0.2.0_学院第二轮高度关系修复/buried-residences/用户现场.png",
+      "sourceSha256": "43489dc4c5ebb239ed89b03208c8a37207cfc3aa56e0043b52728b519fb4deff",
+      "originalSize": [
+        2560,
+        1392
+      ],
+      "publishedSize": [
+        1600,
+        870
+      ],
+      "note": "用户现场 (-2743,70,5010)，截图包含屋身被土覆盖和竖直土墙；拍摄时刻以原记录为准。"
+    },
+    {
+      "file": "宿舍区修复后.jpg",
+      "bytes": 322807,
+      "sha256": "04bc58578c48d8ae14ab20816fac2e1a955fe31735ab1aedb43c4a73f854cf8c",
+      "source": "run/campus_residence_fix_20261018/screenshots/realmfolk-1792306910064.png",
+      "sourceSha256": "d7cef8d9fad2d669d7c07155d5da4fe9449cbfc15860ac08f0e381484c6dca56",
+      "originalSize": [
+        1280,
+        800
+      ],
+      "publishedSize": [
+        1280,
+        800
+      ],
+      "note": "Campus_Residence_Fix；截图前 tp 参数 (-2728,93,4992), yaw=45, pitch=32；宿舍清土后的整体外观。"
+    },
+    {
+      "file": "宿舍间隙步行终点.jpg",
+      "bytes": 240848,
+      "sha256": "962dcec25f25ea95f275008420f87739265216715e26460d2c7d025a3b4d677e",
+      "source": "run/campus_residence_fix_20261018/screenshots/realmfolk-1792307065440.png",
+      "sourceSha256": "c81820d8862e719bf605911773567bc286a888b9356c21bbb5c491ab5d709384",
+      "originalSize": [
+        1280,
+        800
+      ],
+      "publishedSize": [
+        1280,
+        800
+      ],
+      "note": "步行终点 (-2765.5,63,5013.552)，60 tick 前进约12.95格、生命20；只证明这条采样路线。"
+    },
+    {
+      "file": "教学区共台复查.jpg",
+      "bytes": 329128,
+      "sha256": "3052a16ec006c973797b02825c9a659ba53a318e951631f7d55246862fd0f9c4",
+      "source": "run/campus_residence_fix_20261018/screenshots/realmfolk-1792307066390.png",
+      "sourceSha256": "5d0cb6e363ae5d2bc0a3a5e8ef81f97f0b3acebb43fa73e35cf33522677bcf9b",
+      "originalSize": [
+        1280,
+        800
+      ],
+      "publishedSize": [
+        1280,
+        800
+      ],
+      "note": "截图前 tp 参数 (-3028,98,5340), yaw=-130, pitch=42；确认前轮教学区共台修复仍在。"
+    },
+    {
+      "file": "书馆共台复查.jpg",
+      "bytes": 337319,
+      "sha256": "24b12df710f8968966423ab73ae9095a72cdc407fab53688200250347d0ef4f9",
+      "source": "run/campus_residence_fix_20261018/screenshots/realmfolk-1792307112144.png",
+      "sourceSha256": "e2162e906f6f74fc111c904e68a4079537d30618112722b5d111f98e539735c6",
+      "originalSize": [
+        1280,
+        800
+      ],
+      "publishedSize": [
+        1280,
+        800
+      ],
+      "note": "截图前 tp 参数 (-2947,92,5142), yaw=-90, pitch=35；确认前轮书馆共台修复仍在。"
+    }
+  ],
+  "transform": "保持画面内容，仅等比缩放并转换JPEG；原图保存在Release工作流包。"
+}

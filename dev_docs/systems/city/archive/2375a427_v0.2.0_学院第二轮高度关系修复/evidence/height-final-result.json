@@ -1,0 +1,48 @@
+{
+  "loopEnded": true,
+  "world": "Campus_Height_Round2B",
+  "coreSha256": "4BB9206B8815EB69FF01637358FB6060873D2F4B252E0354D75EC1835CF43264",
+  "workflow": "completed",
+  "plannedOwners": 842,
+  "appliedOwners": 842,
+  "failures": [],
+  "sampleSource": "exact_generator_columns",
+  "transitionConflictColumns": 1277,
+  "teachingWalk": {
+    "from": [
+      -3013.5,
+      70,
+      5328.5
+    ],
+    "to": [
+      -2998.393620610131,
+      70,
+      5328.5
+    ],
+    "health": 20,
+    "ticks": 70
+  },
+  "archiveWalk": {
+    "from": [
+      -2924.5,
+      68,
+      5128.5
+    ],
+    "to": [
+      -2920.300000011921,
+      68,
+      5128.5
+    ],
+    "health": 20,
+    "ticks": 30
+  },
+  "screenshots": [
+    "realmfolk-1792269247756.png",
+    "realmfolk-1792269349262.png"
+  ],
+  "limits": [
+    "1277 transition constraint columns remain reported; no blanket claim of every city edge walkable.",
+    "No NPC movement acceptance in this height run."
+  ],
+  "normalQuitRequested": true
+}

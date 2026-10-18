@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "release": "https://github.com/RinsingEL/StructureBinder/releases/tag/experiments/campus-round2-20261018",
+  "releaseId": 416504944,
+  "tag": "experiments/campus-round2-20261018",
+  "packages": [
+    {
+      "filename": "campus-height-save-20261018.zip",
+      "bytes": 130153103,
+      "sha256": "250c92627aaf6120b7cd33fd560688bd0a97c80b4a9abe66b3afc737368ff6f5",
+      "fileCount": 626,
+      "scope": "当前本机保存副本的只读快照；不宣称是实机取证瞬间快照。省略realm_debug与session.lock；当前城市流程另见workflow包。",
+      "url": "https://github.com/RinsingEL/StructureBinder/releases/download/experiments/campus-round2-20261018/campus-height-save-20261018.zip",
+      "assetId": 653707579,
+      "verifiedBy": "GitHub asset SHA-256 and size; ZIP CRC and per-file SHA-256 checked locally"
+    },
+    {
+      "filename": "campus-residence-save-20261018.zip",
+      "bytes": 151030895,
+      "sha256": "fed7b7e4992c84efd4f3f7fffba6723377d5d9e34739bf8b7fbe9b5832790e33",
+      "fileCount": 645,
+      "scope": "当前本机保存副本的只读快照；不宣称是实机取证瞬间快照。省略realm_debug与session.lock；当前城市流程另见workflow包。",
+      "url": "https://github.com/RinsingEL/StructureBinder/releases/download/experiments/campus-round2-20261018/campus-residence-save-20261018.zip",
+      "assetId": 653709804,
+      "verifiedBy": "GitHub asset SHA-256 and size; ZIP CRC and per-file SHA-256 checked locally"
+    },
+    {
+      "filename": "campus-round2-workflow-20261018.zip",
+      "bytes": 122230052,
+      "sha256": "b9a11d912c7ad4a9f2a03307d2f7d2e167a38aae26117e01f47773ffa9b74a1c",
+      "fileCount": 928,
+      "scope": "两轮取证JSON与原图、当前城市D3-D7和LandUse流程、Studio素材、两版本项目jar、相关配置。省略全世界调查缓存、外部服务/鉴权配置、启动参数、令牌、账号缓存、运行日志全文和第三方jar；第三方版本及哈希在mod-manifest.json。护栏期望图是手工示范，未进行护栏修复后实机复验。",
+      "url": "https://github.com/RinsingEL/StructureBinder/releases/download/experiments/campus-round2-20261018/campus-round2-workflow-20261018.zip",
+      "assetId": 653711874,
+      "verifiedBy": "GitHub asset SHA-256 and size; ZIP CRC and per-file SHA-256 checked locally"
+    }
+  ]
+}

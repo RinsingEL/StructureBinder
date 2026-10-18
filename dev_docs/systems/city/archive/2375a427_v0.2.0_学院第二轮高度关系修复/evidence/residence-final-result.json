@@ -1,0 +1,39 @@
+{
+  "loopEnded": true,
+  "world": "Campus_Residence_Fix",
+  "coreSha256": "705f842256286c16427fbe1d37b13f5e0d07eda789bce22404c545b8b9a47ae9",
+  "surfacePrintPlanHash": "6f1f7126fe0ce76aea2fec8701b17cbd05ee16bdbe08fb698e21d7566a339a4a",
+  "completion": {
+    "complete": true,
+    "status": "completed",
+    "plannedOwnerCount": 842,
+    "appliedAfterCount": 842,
+    "missingOwners": [],
+    "failures": []
+  },
+  "walk": {
+    "from": [
+      -2765.5,
+      63,
+      5026.5
+    ],
+    "health": 20,
+    "ticks": 60,
+    "to": [
+      -2765.5,
+      63,
+      5013.552211294206
+    ]
+  },
+  "screenshots": [
+    "realmfolk-1792306910064.png",
+    "realmfolk-1792307065440.png",
+    "realmfolk-1792307066390.png",
+    "realmfolk-1792307112144.png"
+  ],
+  "normalQuitRequested": true,
+  "limits": [
+    "Prior accepted and user-inspected saves are unchanged.",
+    "No claim that all city transition warnings or visitor issues are resolved."
+  ]
+}
