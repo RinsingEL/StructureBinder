@@ -1,0 +1,78 @@
+{
+  "world": "E:\\Mod_Dev\\StructureBinder\\run\\campus_fixes_playtest_20261017\\saves\\Campus_Fixes_PreD4_Round5",
+  "endedAt": "2026-10-18T00:45:40.730004",
+  "loopEnded": true,
+  "d7": {
+    "complete": true,
+    "status": "completed",
+    "plannedOwnerCount": 842,
+    "appliedAfterCount": 842,
+    "missingOwners": [],
+    "failures": []
+  },
+  "population": {
+    "buildings": 51,
+    "housingBeds": 188,
+    "created": 159,
+    "revision": 2,
+    "shortages": []
+  },
+  "walks": [
+    {
+      "case": "dorm",
+      "from": [
+        -2703.5,
+        63,
+        5185.5
+      ],
+      "to": [
+        -2694.9073806084366,
+        65,
+        5185.662139000289
+      ],
+      "ticks": 40,
+      "health": 20
+    },
+    {
+      "case": "R03",
+      "from": [
+        -2729.5,
+        63,
+        5370.5
+      ],
+      "to": [
+        -2729.5,
+        63,
+        5348.917848557868
+      ],
+      "ticks": 100,
+      "health": 20
+    }
+  ],
+  "nearbyNpcEvidence": "dorm-inbound-life-trace.json (Round3, unchanged entrance code)",
+  "images": [
+    "realmfolk-1792255443517.png",
+    "realmfolk-1792255474919.png"
+  ],
+  "tests": {
+    "core": {
+      "total": 1403,
+      "passed": 1388,
+      "skipped": 15,
+      "failures": 0
+    },
+    "realmfolk": {
+      "total": 136,
+      "passed": 136
+    }
+  },
+  "limits": [
+    "No claim of automatic D4 district-population handoff: population configured through explicit quick_city choices.",
+    "No complete per-block CHUNK_SAVE observation: formal query returned NOT_OBSERVED."
+  ],
+  "corrections": [
+    "Initial HTTP call before server ready refused; retry after startup succeeded.",
+    "First building import tour ran during generation; quick_city rejected unknown administrator function; after D7 completed repeated import tour and configuration succeeded."
+  ],
+  "normalSaveAndQuit": true
+}

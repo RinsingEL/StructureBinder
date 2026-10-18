@@ -547,6 +547,7 @@ export const cityBlueprintSchema = strictObject({
   generationSeed: { type: "integer", minimum: -9007199254740991, maximum: 9007199254740991,
     description: "后续程序化编译使用的 JavaScript-safe 稳定整数种子。" },
   designIntent: strictObject({
+    boundary: strictObject({form:{type:"string",enum:["NONE","GATEWAYS","LOW_BOUNDARY","LAND_ONLY","FULL_WALL"]},reason:nonEmptyString("采用此边界形式的原因")},["form","reason"]),
     cityIdentity: nonEmptyString("城市身份。"),
     theme: nonEmptyString("统一主题。"),
     functionalRoles: { type: "array", minItems: 1, uniqueItems: true, items: nonEmptyString("功能角色。") },
@@ -1552,6 +1553,9 @@ export const realmTools: ToolDefinition[] = [
       for (const key of ["groups", "arrayCompositions", "relations", "surfaceMaterials"]) fragment[key] = structuredClone(bp[key]);
       for (const key of ["foundationGroupIds", "landscapes"]) fragment[key] = structuredClone(bp.outdoorPlan.properties[key]);
       fragment.publicRealm=publicRealm;
+      fragment.population=strictObject({purpose:nonEmptyString("本区职责与日常活动"),residents:{type:"integer",minimum:0,maximum:10000},
+        jobs:{type:"array",maxItems:32,items:strictObject({profession:nonEmptyString("本城职业标识"),name:nonEmptyString("职业称呼"),count:{type:"integer",minimum:0,maximum:256},functions:{type:"array",items:nonEmptyString("实际岗位用途")},servesMeals:{type:"boolean"}},["profession","count","functions"])},
+        housingGroupIds:{type:"array",items:nonEmptyString("本区住房组ID")}},["purpose","residents","jobs","housingGroupIds"]);
       delete fragment.surfaceMaterials.properties.defaults;
       const update=name!=="city_d4_district";
       if(!update) {

@@ -187,6 +187,10 @@ public final class CityLandUseChunkCompiler {
             CityLandUseSurfacePrintPlan.AreaPrint printArea = printAreas.get(AreaKey.from(area));
             Set<BlockCell> frozenSurfaceExclusions = printArea == null ? Set.of()
                     : cellsClipped(printArea.exclusionSpans(), minChunkX, minChunkZ, maxChunkX, maxChunkZ);
+            // Foundation exclusions include preserved natural water. Ordinary decorative print
+            // exclusions still supply non-writing terrain context to neighbouring owners.
+            Set<BlockCell> gradingSurfaceExclusions = printArea == null || area.sourceGroupIds().stream().noneMatch(id->id.endsWith("::foundation")) ? Set.of()
+                    : cellsClipped(printArea.exclusionSpans(),minChunkX-halo,minChunkZ-halo,maxChunkX+halo,maxChunkZ+halo);
             String frozenBoundaryBlock = printArea == null ? "" : printArea.recipe().boundaryBlockId();
             String boundaryBlock = frozenBoundaryBlock.isBlank()
                     ? palette.boundaryMaterial(boundaryPolicy) : frozenBoundaryBlock;
@@ -245,7 +249,7 @@ public final class CityLandUseChunkCompiler {
                             final int px=x,pz=z;
                             if (area.memberSpans().stream().noneMatch(span -> span.z()==pz && px>=span.minX() && px<=span.maxX())) continue;
                             BlockCell cell=new BlockCell(x,z);
-                            if (!gradingFootprints.contains(cell) && !gradingCorridorExclusions.contains(cell) && !gates.contains(cell))
+                            if (!gradingFootprints.contains(cell) && !gradingCorridorExclusions.contains(cell) && !gates.contains(cell) && !gradingSurfaceExclusions.contains(cell))
                                 gradingMask.putIfAbsent(cell,new GradingMaskCell(areaId,x,z,false,reference.surfaceY(),true,reference.maxDelta()));
                         }
                 }
@@ -262,6 +266,7 @@ public final class CityLandUseChunkCompiler {
                         BlockCell cell = new BlockCell(x, z);
                         if (!gradingFootprints.contains(cell)
                                 && !gradingCorridorExclusions.contains(cell)
+                                && !gradingSurfaceExclusions.contains(cell)
                                 && !gates.contains(cell)) {
                             gradingMask.putIfAbsent(cell, new GradingMaskCell(areaId, x, z, foundationArea,
                                     platformHeights.get(cell)));
@@ -310,6 +315,8 @@ public final class CityLandUseChunkCompiler {
                         corridorExcluded++;
                     } else if (gates.contains(cell)) {
                         gateExcluded++;
+                    } else if (frozenSurfaceExclusions.contains(cell)) {
+                        corridorExcluded++;
                     } else if (printArea != null && printArea.recipe() instanceof CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe relay
                             && relay.regionAtOrNull(cell.x(),cell.z()) == null) {
                         continue;

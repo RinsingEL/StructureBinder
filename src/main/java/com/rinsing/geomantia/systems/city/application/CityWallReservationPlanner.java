@@ -51,6 +51,8 @@ public final class CityWallReservationPlanner {
         }
 
         int unitLength = DEFAULT_WALL_UNIT_LENGTH_BLOCKS;
+        JsonObject boundary=CityBoundaryPolicy.resolve(anchorMap,reviewPackage.targetScale().scale());
+        String form=boundary.get("form").getAsString();boolean formal=anchorMap.has("cityDesignIntent"),noWall=form.equals("NONE");
         List<BlockBounds> districtFootprints = new ArrayList<>();
         Set<String> districtGroups = new LinkedHashSet<>();
         for (JsonElement id : array(anchorMap, "districtGroupIds")) districtGroups.add(id.getAsString());
@@ -61,11 +63,16 @@ public final class CityWallReservationPlanner {
             BlockBounds footprint = anchorEnvelopeUnion(one);
             if (footprint != null) districtFootprints.add(footprint);
         }
-        List<Segment> segments = new com.rinsing.geomantia.systems.city.algorithm.landuse.CityDistrictBoundary()
+        Set<String> derivedRoads=new java.util.HashSet<>();
+        if(anchorMap.has("interCityExitPlan"))for(var e:array(anchorMap.getAsJsonObject("interCityExitPlan"),"streetBands"))derivedRoads.add(e.getAsJsonObject().get("streetBandId").getAsString());
+        if(formal)for(var e:array(anchorMap,"streetBands")){var road=e.getAsJsonObject();
+            if(road.has("bounds")&&!derivedRoads.contains(stringValue(road,"streetBandId","")))districtFootprints.add(bounds(road.getAsJsonObject("bounds")));}
+        List<Segment> outline = new com.rinsing.geomantia.systems.city.algorithm.landuse.CityDistrictBoundary()
                 .outline(districtFootprints, Math.max(margin, halfWidth + unitLength), 32).stream()
                 .map(edge -> segment(edge.side(), edge.from(), edge.to(), halfWidth)).toList();
-        BlockBounds wallBounds = union(segments);
-        BlockBounds corridorBounds = union(segments);
+        List<Segment> segments=noWall?List.of():formal?drySegments(outline,reviewPackage,halfWidth):outline;
+        BlockBounds wallBounds = union(outline);
+        BlockBounds corridorBounds = segments.isEmpty()?structureUnion:union(segments);
         int rescanMargin = Math.max(DEFAULT_COVERAGE_RESCAN_MARGIN_BLOCKS, halfWidth + unitLength);
         BlockBounds requiredCoverage = expand(union(corridorBounds, structureUnion), rescanMargin);
         BlockBounds coreGridCoverage = new BlockBounds(
@@ -84,11 +91,13 @@ public final class CityWallReservationPlanner {
         JsonArray wallLine = wallLine(segments);
         JsonArray wallCorridorMask = corridorMasks(segments);
         JsonArray gateSlots = gateSlots(segments, halfWidth, anchorMap);
-        JsonArray wallNodeSlots = wallNodeSlots(segments, gateSlots, anchorMap);
+        JsonArray wallNodeSlots = form.equals("LOW_BOUNDARY")||form.equals("GATEWAYS")?new JsonArray():wallNodeSlots(segments, gateSlots, anchorMap);
+        if(form.equals("GATEWAYS")){wallLine=new JsonArray();wallCorridorMask=gateSlotMasks(gateSlots);}
 
         JsonObject plan = new JsonObject();
         plan.addProperty("schema", SCHEMA);
         plan.addProperty("cityId", reviewPackage.cityId());
+        plan.add("boundaryPolicy",boundary);plan.add("cityBoundaryOutline",wallLine(outline));
         plan.addProperty("boundarySource", "district_coarse_exterior");
         plan.addProperty("wallPlanningStage", "d5_final_plane_and_worldgen_mask");
         plan.addProperty("finalBoundaryAuthority", "d5");
@@ -113,7 +122,7 @@ public final class CityWallReservationPlanner {
         plan.add("outerWallRing", wallLine.deepCopy());
         plan.add("wallCorridorMask", wallCorridorMask.deepCopy());
         plan.add("gateSlots", gateSlots.deepCopy());
-        plan.addProperty("exitRoadStatus", gateSlots.isEmpty() ? "EXIT_ROAD_REQUIRED" : "connected");
+        plan.addProperty("exitRoadStatus", noWall?"NOT_REQUIRED":gateSlots.isEmpty() ? (formal?"NO_EXTERNAL_ROAD":"EXIT_ROAD_REQUIRED") : "connected");
         plan.add("gateCorridorMask", gateSlotMasks(gateSlots));
         plan.add("wallNodeSlots", wallNodeSlots);
         plan.add("towerCandidatePoints", towerCandidates(wallNodeSlots));
@@ -269,9 +278,20 @@ public final class CityWallReservationPlanner {
 
     private static JsonArray gateSlots(List<Segment> segments, int halfWidth, JsonObject anchorMap) {
         JsonArray out = new JsonArray();
-        for (JsonElement element : array(anchorMap, "streetBands")) {
+        JsonArray roads=array(anchorMap,"streetBands").deepCopy();
+        if(anchorMap.has("externalAccess")){var access=anchorMap.getAsJsonObject("externalAccess");var points=array(access,"waypoints");
+            int width=access.has("width")?access.get("width").getAsInt():5;
+            for(int i=1;i<points.size();i++){var a=points.get(i-1).getAsJsonObject();var b=points.get(i).getAsJsonObject();
+                int ax=a.get("x").getAsInt(),az=a.get("z").getAsInt(),bx=b.get("x").getAsInt(),bz=b.get("z").getAsInt();
+                var road=new JsonObject();road.addProperty("streetBandId","public_external_access_"+i);road.addProperty("externalExit",true);
+                road.add("bounds",boundsJson(new BlockBounds(Math.min(ax,bx)-(ax==bx?width/2:0),Math.min(az,bz)-(az==bz?width/2:0),Math.max(ax,bx)+(ax==bx?width/2:0),Math.max(az,bz)+(az==bz?width/2:0))));roads.add(road);}
+        }
+        Set<String> external=new java.util.HashSet<>();
+        if(anchorMap.has("interCityExitPlan"))for(var e:array(anchorMap.getAsJsonObject("interCityExitPlan"),"streetBands"))external.add(stringValue(e.getAsJsonObject(),"streetBandId",""));
+        for (JsonElement element : roads) {
             if (!element.isJsonObject()) continue;
             JsonObject road = element.getAsJsonObject();
+            if(anchorMap.has("cityDesignIntent")&&!external.contains(stringValue(road,"streetBandId",""))&&!road.has("externalExit"))continue;
             if (!road.has("bounds")) continue;
             BlockBounds roadBounds = bounds(road.getAsJsonObject("bounds"));
             boolean roadHorizontal = roadBounds.widthBlocks() > roadBounds.heightBlocks();
@@ -298,6 +318,21 @@ public final class CityWallReservationPlanner {
             }
         }
         return out;
+    }
+
+    private static List<Segment> drySegments(List<Segment> outline,CityLandformReviewPackage review,int halfWidth){
+        Set<BlockPoint> water=new java.util.HashSet<>();int step=review.grid().cellStepBlocks();
+        for(var patch:review.landformPatches())if(patch.landformType()==com.rinsing.geomantia.systems.gis.domain.cell.LandformType.WATER)
+            for(var c:patch.memberCells())water.add(new BlockPoint(Math.floorDiv(c.blockMinX(),step),Math.floorDiv(c.blockMinZ(),step)));
+        List<Segment> result=new ArrayList<>();
+        for(var line:outline){int dx=Integer.compare(line.to.x(),line.from.x()),dz=Integer.compare(line.to.z(),line.from.z());
+            int length=Math.abs(line.to.x()-line.from.x())+Math.abs(line.to.z()-line.from.z());BlockPoint first=null,last=null;
+            for(int i=0;i<=length;i++){var p=new BlockPoint(line.from.x()+dx*i,line.from.z()+dz*i);boolean wet=false;
+                for(int cross=-halfWidth;cross<=halfWidth;cross++)if(water.contains(new BlockPoint(Math.floorDiv(p.x()+dz*cross,step),Math.floorDiv(p.z()+dx*cross,step))))wet=true;
+                if(!wet){if(first==null)first=p;last=p;}else if(first!=null){if(!first.equals(last))result.add(segment(line.side,first,last,halfWidth));first=null;}
+            }
+            if(first!=null&&!first.equals(last))result.add(segment(line.side,first,last,halfWidth));
+        }return List.copyOf(result);
     }
 
     private static JsonArray gateSlotMasks(JsonArray gateSlots) {

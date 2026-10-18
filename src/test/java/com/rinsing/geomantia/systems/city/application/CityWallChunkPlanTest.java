@@ -6,6 +6,15 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CityWallChunkPlanTest {
+    @Test void gatewayFragmentsRetainFrozenColumnsWithoutTheFullWallTerrainProfile(){
+        var plan=plan();plan.add("wallNodes",new JsonArray());
+        plan.add("boundaryPolicy",JsonParser.parseString("{\"form\":\"GATEWAYS\"}"));
+        var unit=plan.getAsJsonArray("wallUnits").get(0).getAsJsonObject();unit.add("boundaryColumns",JsonParser.parseString("[{\"x\":15,\"z\":2,\"baseY\":64},{\"x\":16,\"z\":2,\"baseY\":64}]"));
+        plan.getAsJsonObject("wallPlacementProfile").add("surfaceColumns",new JsonArray());
+        var west=CityWallChunkPlan.fragment(plan,new CityWallChunkPlan.Owner(0,0));var east=CityWallChunkPlan.fragment(plan,new CityWallChunkPlan.Owner(1,0));
+        assertEquals(west.getAsJsonArray("wallUnits"),east.getAsJsonArray("wallUnits"));
+        assertEquals("GATEWAYS",east.getAsJsonObject("boundaryPolicy").get("form").getAsString());
+    }
     static JsonObject plan() {
         JsonObject plan=JsonParser.parseString("""
                 {"wallUnits":[{"wallAxis":"X","unitType":"wall","blockBounds":{"minX":-8,"minZ":0,"maxX":24,"maxZ":4}}],

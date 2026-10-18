@@ -152,5 +152,13 @@ def extract(data, author, rules=None):
         rule = {'adapter': p.get('adapter', 'stand'), 'seatHeight': p.get('seat_height', .5)}
         if 'behavior' in p:rule['behavior']=p['behavior']
         add(kind, pos, state, p, rule)
+    terms=set(author.get('function_terms',[]))
+    bed_count=sum(f['kind']=='bed' and f['use'] in ('building','resident') for f in facilities)
+    work_count=sum(f['kind']=='work' for f in facilities)
+    needs_beds=any(any(word in t.lower() for word in ('住宿','宿舍','住宅','residen','housing','dorm')) for t in terms)
+    needs_work=any(any(word in t.lower() for word in ('教学','办事','行政','议事','养护','林业','医疗','餐饮','teaching','office','workshop')) for t in terms)
+    if needs_beds and not bed_count:warnings.append('LIVING_CAPACITY_MISSING_BEDS: '+','.join(sorted(terms)))
+    if needs_work and not work_count:warnings.append('LIVING_CAPACITY_MISSING_WORKPLACES: '+','.join(sorted(terms)))
     return dict(schema='realmfolk_facilities.v1', size=data['size'], sourceSha256=data['sha256'],
+                capacity=dict(residentBeds=bed_count,workplaces=work_count),
                 facilities=facilities, warnings=warnings)

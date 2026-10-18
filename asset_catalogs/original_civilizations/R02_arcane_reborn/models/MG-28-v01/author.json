@@ -61,6 +61,72 @@
         2,
         5
       ]
+    },
+    {
+      "id": "dining_6_8",
+      "kind": "meeting",
+      "pos": [
+        6,
+        2,
+        8
+      ],
+      "name": "用餐席位",
+      "use": "public"
+    },
+    {
+      "id": "dining_18_8",
+      "kind": "meeting",
+      "pos": [
+        18,
+        2,
+        8
+      ],
+      "name": "用餐席位",
+      "use": "public"
+    },
+    {
+      "id": "dining_6_13",
+      "kind": "meeting",
+      "pos": [
+        6,
+        2,
+        13
+      ],
+      "name": "用餐席位",
+      "use": "public"
+    },
+    {
+      "id": "dining_18_13",
+      "kind": "meeting",
+      "pos": [
+        18,
+        2,
+        13
+      ],
+      "name": "用餐席位",
+      "use": "public"
+    },
+    {
+      "id": "dining_6_18",
+      "kind": "meeting",
+      "pos": [
+        6,
+        2,
+        18
+      ],
+      "name": "用餐席位",
+      "use": "public"
+    },
+    {
+      "id": "dining_18_18",
+      "kind": "meeting",
+      "pos": [
+        18,
+        2,
+        18
+      ],
+      "name": "用餐席位",
+      "use": "public"
     }
   ],
   "connections": [],

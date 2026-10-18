@@ -16,7 +16,9 @@ public abstract class CityLevelGenerationProtectionMixin {
             at = @At("HEAD"), cancellable = true)
     private void geomantia$guardServerGeneration(BlockPos pos, BlockState state, int flags, int recursion,
                                                 CallbackInfoReturnable<Boolean> cir) {
-        if (CityFeatureWriteGuard.active() && (Object)this instanceof ServerLevel server
-                && CityGenerationProtection.protects(server, pos)) cir.setReturnValue(false);
+        if (CityFeatureWriteGuard.active() && (Object)this instanceof ServerLevel server){
+            if(CityGenerationProtection.protects(server,pos)){CityFeatureWriteGuard.rejectFeature();cir.setReturnValue(false);}
+            else {var key=pos.immutable();CityFeatureWriteGuard.record(key,()->{var previous=server.getBlockState(key);return ()->server.setBlock(key,previous,2);});}
+        }
     }
 }

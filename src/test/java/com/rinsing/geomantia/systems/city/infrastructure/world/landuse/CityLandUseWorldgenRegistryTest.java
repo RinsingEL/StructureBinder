@@ -31,6 +31,29 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandUseWorldgenRegistryTest {
+    @Test void deferredFlowerSoilLeavesGrassAtItsFrozenGradeWhenPlantingIsRejected() {
+        var area=areaPlan("city_flower_ground");
+        String source="public_realm::interior/flowers/1@flower#hash";
+        var cells=List.of(
+                new CityLandUseSurfacePrintPlan.FeatureCell(source,1,0,"minecraft:dirt",0,
+                        CityLandUseSurfacePrintPlan.FeatureKind.AUTHORED_BLOCK,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,67),
+                new CityLandUseSurfacePrintPlan.FeatureCell(source,1,0,"minecraft:allium",1,
+                        CityLandUseSurfacePrintPlan.FeatureKind.AUTHORED_BLOCK,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,67));
+        var surface=new com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlanCodec().withComputedHash(
+                new CityLandUseSurfacePrintPlan(CityLandUseSurfacePrintPlan.SCHEMA,area.cityId(),area.planHash(),"",List.of(),List.of(),cells));
+        CityLandUseWorldgenRegistry.setAuthoredSurfaceStateExistsForTests(ignored->true);
+        CityLandUseWorldgenRegistry.activate("minecraft:overworld",area,surface,serverRoot);
+        var world=new FakeWorld();
+        assertEquals(1,CityLandUseWorldgenRegistry.applyForChunk("minecraft:overworld",0,0,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES,world).appliedOwnerCount());
+        assertTrue(world.writes.contains("1,67,0=minecraft:grass_block"),
+                "deferred authored soil must retain public ground rather than the parcel's stone surface");
+        int writes=world.writes.size();
+        world.replaceable.put("1,68,0",false);
+        assertEquals(1,CityLandUseWorldgenRegistry.applyForChunk("minecraft:overworld",0,0,
+                CityLandUseChunkExecutor.GenerationEligibility.CONTROLLED_D7_BACKFILL,world).appliedOwnerCount());
+        assertEquals(writes,world.writes.size(),"rejecting the flowers must leave the base grass intact");
+    }
     @Test void rejectedPlantingIsWholeAcrossOwnersAndSurvivesReloadWithoutTouchingTerrain() {
         var area=areaPlan("city_planting");
         String source="public_realm::fringe/trees/1@tree#hash";

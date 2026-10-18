@@ -9,7 +9,7 @@ public final class DailySchedule {
         int offset=Math.floorMod(identity.hashCode(),321)-160;
         int time=(int)Math.floorMod(dayTime-offset,24000);
         if(in(time,job.restStart,job.restEnd))return Phase.SLEEP;
-        if(in(time,5000,7000))return Phase.MEAL;
+        if(in(time,5000,7000))return job.servesMeals?Phase.WORK:Phase.MEAL;
         if(in(time,10000,12300))return Phase.SOCIAL;
         return Phase.WORK;
     }

@@ -160,7 +160,9 @@ class CityPlanningEndpointHandlerTest {
                 .collect(java.util.stream.Collectors.toSet());
         assertTrue(featureKinds.contains("ROAD_SLAB"));
         // This fixture is level at y=70. Slope/stair transitions have dedicated planner tests.
-        assertFalse(featureKinds.contains("ROAD_STAIR"));
+        var parsedSurface=new com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlanCodec().fromJson(surfacePlan);
+        assertTrue(parsedSurface.featureCells().stream().filter(f->f.kind()==com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR)
+                .allMatch(f->parsedSurface.materialField().isCurb(f.sourceId(),f.x(),f.z())),"level carriageways retain only their authored curb stairs");
         assertTrue(surfacePlan.getAsJsonArray("featureCells").asList().stream()
                 .map(JsonElement::getAsJsonObject)
                 .filter(cell -> cell.get("kind").getAsString().equals("ROAD_SLAB"))

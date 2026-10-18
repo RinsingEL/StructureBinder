@@ -15,6 +15,28 @@ public final class CityGenerationMask {
     public static CityGenerationMask empty() { return new Builder().build(); }
     private static long key(int x, int z) { return ((long)x << 32) ^ (z & 0xffffffffL); }
 
+    public boolean containsColumn(String dimension, int x, int z) {
+        int[] chunk = dimensions.getOrDefault(dimension, Map.of()).get(key(x >> 4, z >> 4));
+        return chunk != null && chunk[((z & 15) << 4) | (x & 15)] != NONE;
+    }
+
+    public boolean nearColumn(String dimension, int x, int z, int radius) {
+        if (radius < 0) return false;
+        long squared = (long) radius * radius;
+        for (var entry : dimensions.getOrDefault(dimension, Map.of()).entrySet()) {
+            int minX = (int)(entry.getKey() >> 32) * 16, minZ = (int)(long)entry.getKey() * 16;
+            long dx = Math.max(Math.max((long)minX - x, (long)x - minX - 15), 0);
+            long dz = Math.max(Math.max((long)minZ - z, (long)z - minZ - 15), 0);
+            if (dx * dx + dz * dz > squared) continue;
+            int[] columns = entry.getValue();
+            for (int i = 0; i < columns.length; i++) if (columns[i] != NONE) {
+                dx = (long)minX + (i & 15) - x; dz = (long)minZ + (i >> 4) - z;
+                if (dx * dx + dz * dz <= squared) return true;
+            }
+        }
+        return false;
+    }
+
     public boolean protects(String dimension, int x, int y, int z, IntBinaryOperator terrainFloor) {
         int[] chunk = dimensions.getOrDefault(dimension, Map.of()).get(key(x >> 4, z >> 4));
         if (chunk == null) return false;

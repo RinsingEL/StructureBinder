@@ -17,6 +17,10 @@ public abstract class ConfiguredFeatureMaskMixin {
             net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration config,
             WorldGenLevel level, ChunkGenerator generator, RandomSource random, BlockPos origin) {
         CityReservationMaskRegistry.recordFeatureHookCall();
+        if(feature instanceof net.minecraft.world.level.levelgen.feature.TreeFeature
+                || config instanceof net.minecraft.world.level.levelgen.feature.configurations.TreeConfiguration)
+            return com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityFeatureWriteGuard.atomicFeature(
+                    ()->feature.place(config,level,generator,random,origin));
         return com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityFeatureWriteGuard.run(
                 () -> feature.place(config, level, generator, random, origin));
     }

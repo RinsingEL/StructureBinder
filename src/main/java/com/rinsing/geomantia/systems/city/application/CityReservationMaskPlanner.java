@@ -89,6 +89,7 @@ public final class CityReservationMaskPlanner {
         mask.add("sourceStructureAnchorMap", stripRetiredSafetyEnvelopes(structureAnchorMap));
         if (wallReservationPlan != null) {
             mask.add("wallReservationPlan", wallReservationPlan.deepCopy());
+            mask.add("citySpawnRegion",CityBoundaryPolicy.interiorSpans(wallReservationPlan));
         }
         JsonObject hook = new JsonObject();
         hook.addProperty("required", true);

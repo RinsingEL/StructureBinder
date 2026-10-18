@@ -7,6 +7,26 @@ import static com.rinsing.realmfolk.model.Society.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class HousingLifeTest {
+    @Test void residentsSpreadAcrossAvailableHousesAndWorkersChooseNearbyHousing(){
+        var balanced=world();populate(balanced);
+        for(String id:List.of("h0","h1","h2"))assertEquals(3,balanced.citizens.values().stream().filter(c->c.property.equals(id)).count());
+        var s=world();var teacher=DesignCodec.copy(s.design.active.professions.get("resident"),Design.Profession.class);teacher.workplaceTerms=List.of("教学");s.design.active.professions.put("teacher",teacher);
+        s.design.active.realms.get("default").population.jobs=Map.of("teacher",new Design.Quota(2,2,1));
+        for(var entry:Map.of("a",24,"b",0).entrySet()){
+            int x=entry.getValue();var p=new Property(entry.getKey(),"town","课堂",new Bounds(x,64,20,x+8,70,28),new Point(x,65,20));
+            p.terms=List.of("教学");p.work=new Point(x,65,20);p.slots=List.of(p.home);FacilityFixtures.physical(p,1);s.properties.put(p.id,p);
+        }
+        var result=population(s);assertEquals(2,result.citizens().size());
+        assertTrue(result.citizens().stream().anyMatch(c->c.workProperty.equals("a")&&c.property.equals("h2")));
+        assertTrue(result.citizens().stream().anyMatch(c->c.workProperty.equals("b")&&c.property.equals("h0")));
+    }
+    @Test void mealStaffStayOnDutyWhileOtherCitizensCanReachAFarDiningHall(){
+        Society s=world();populate(s);var staff=s.citizens.values().iterator().next();staff.profession.servesMeals=true;
+        var square=s.properties.get("square");square.publicPoints=List.of(new Point(300,65,0),new Point(303,65,0),new Point(306,65,0));
+        var activity=s.design.active.realms.get("default").population.activities.get(0);activity.maxDistance=512;activity.participation=1;activity.capacity=32;
+        var result=life(s,6500);assertFalse(result.visits().containsKey(staff.id));assertFalse(result.visits().isEmpty());
+        assertEquals(com.rinsing.realmfolk.life.DailySchedule.Phase.WORK,com.rinsing.realmfolk.life.DailySchedule.phase(staff.id,staff.profession,6500));
+    }
     private static Society world(){
         Society s=new Society();s.design.active=DesignCodec.defaults();s.design.revision=1;
         s.towns.put("town",new Town("town","realm","住宅镇",new Point(0,65,0)));
@@ -30,7 +50,7 @@ class HousingLifeTest {
     @Test void legacySettingsResolveToFixedAndNoActivities(){Design d=DesignCodec.defaults();var settings=d.realms.get("default").population;settings.populationMode=null;settings.housingOccupancy=null;settings.activities=null;var r=d.resolve("realm","town").settings();assertEquals("fixed",r.populationMode);assertEquals(1.0,r.housingOccupancy);assertTrue(r.activities.isEmpty());}
     @Test void missingJobCapacityIsExplainedRatherThanForcingPopulation(){Society s=world();s.design.active.realms.get("default").population.jobs=Map.of("resident",new Design.Quota(0,2,1));var p=population(s);assertEquals(9,p.summary().target());assertEquals(2,p.citizens().size());assertTrue(p.summary().shortages().stream().anyMatch(x->x.contains("职业权重")));}
     @Test void housingShortageDoesNotInvalidateMinimumRoles(){Society s=world();s.design.active.realms.get("default").population.jobs=Map.of("resident",new Design.Quota(15,20,1));assertTrue(new DesignValidator(i->true).validate(s.design.active).isEmpty());assertEquals(9,population(s).citizens().size());}
-    @Test void rejectsInvalidDensityAndActivityDefinitions(){for(double n:new double[]{-.1,1.1,Double.NaN}){Society s=world();s.design.active.realms.get("default").population.housingOccupancy=n;assertFalse(new DesignValidator(i->true).validate(s.design.active).isEmpty());}Society s=world();s.design.active.realms.get("default").population.activities.get(0).capacity=100;assertFalse(new DesignValidator(i->true).validate(s.design.active).isEmpty());}
+    @Test void rejectsInvalidDensityAndActivityDefinitions(){for(double n:new double[]{-.1,1.1,Double.NaN}){Society s=world();s.design.active.realms.get("default").population.housingOccupancy=n;assertFalse(new DesignValidator(i->true).validate(s.design.active).isEmpty());}Society s=world();s.design.active.realms.get("default").population.activities.get(0).capacity=257;assertFalse(new DesignValidator(i->true).validate(s.design.active).isEmpty());}
     @Test void publicVisitsAreBoundedAndUseDistinctPlaces(){Society s=world();populate(s);var a=s.design.active.realms.get("default").population.activities.get(0);a.participation=1;a.capacity=3;var result=life(s,6500);assertEquals(3,result.visits().size());assertEquals(3,result.visits().values().stream().map(PublicLifePlanner.Visit::point).distinct().count());assertTrue(result.visits().values().stream().allMatch(v->v.place().equals("square")));assertEquals(9,s.citizens.size());}
     @Test void respectsCompanionsDutyAndRest(){Society s=world();populate(s);var citizens=new ArrayList<>(s.citizens.values());citizens.get(0).leader="alice";citizens.get(1).mode="TRAVEL";citizens.get(2).profession.capabilities.add("law_enforcement");citizens.get(3).profession.restStart=6000;citizens.get(3).profession.restEnd=7000;s.design.active.realms.get("default").population.activities.get(0).participation=1;var result=life(s,6500);for(int i=0;i<4;i++)assertFalse(result.visits().containsKey(citizens.get(i).id));assertTrue(life(s,14000).visits().isEmpty());}
     @Test void privatePlacesOrMissingSitesLeaveDailyRoutineUntouched(){Society s=world();populate(s);s.properties.get("square").owner="player:alice";assertTrue(life(s,6500).visits().isEmpty());s.properties.get("square").owner="";s.properties.get("square").access="RESTRICTED";assertTrue(life(s,6500).visits().isEmpty());s.properties.remove("square");assertTrue(life(s,6500).visits().isEmpty());assertTrue(s.citizens.values().stream().allMatch(c->c.mode.equals("HOME")));}

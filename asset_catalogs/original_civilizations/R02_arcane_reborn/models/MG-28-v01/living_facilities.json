@@ -6,6 +6,10 @@
     27
   ],
   "sourceSha256": "3fe567896945c6f0129c9b4233a79176d6b50634f8b7d8d169432883b3018c44",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 3
+  },
   "facilities": [
     {
       "id": "work:5,2,21",
@@ -75,6 +79,102 @@
         2,
         2
       ]
+    },
+    {
+      "id": "meeting:6,2,8",
+      "kind": "meeting",
+      "pos": [
+        6,
+        2,
+        8
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "public",
+      "room": "main",
+      "name": "用餐席位",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "meeting:18,2,8",
+      "kind": "meeting",
+      "pos": [
+        18,
+        2,
+        8
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "public",
+      "room": "main",
+      "name": "用餐席位",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "meeting:6,2,13",
+      "kind": "meeting",
+      "pos": [
+        6,
+        2,
+        13
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "public",
+      "room": "main",
+      "name": "用餐席位",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "meeting:18,2,13",
+      "kind": "meeting",
+      "pos": [
+        18,
+        2,
+        13
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "public",
+      "room": "main",
+      "name": "用餐席位",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "meeting:6,2,18",
+      "kind": "meeting",
+      "pos": [
+        6,
+        2,
+        18
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "public",
+      "room": "main",
+      "name": "用餐席位",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "meeting:18,2,18",
+      "kind": "meeting",
+      "pos": [
+        18,
+        2,
+        18
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "public",
+      "room": "main",
+      "name": "用餐席位",
+      "adapter": "stand",
+      "seatHeight": 0.5
     }
   ],
   "warnings": []

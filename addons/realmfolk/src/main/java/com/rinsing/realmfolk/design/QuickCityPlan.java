@@ -18,6 +18,8 @@ public final class QuickCityPlan {
         public List<String> functions=new ArrayList<>();
         public int minimum=0,maximum=256;
         public double weight=1;
+        public Boolean requiresWorkplace;
+        public Boolean servesMeals;
     }
     public static CityPlanning.Submission expand(Input input,Design active,String realm,String city,CityWorksheet.Evidence facts,EconomyConfig economy){
         require(input.cityCharacter.length()<=600,"城市性格说明最多 600 字");require(input.groups.size()<=16,"最多 16 个职业群体");
@@ -26,6 +28,23 @@ public final class QuickCityPlan {
         var housing=input.housingTerms.isEmpty()?settings.housingTerms.stream().filter(available::contains).toList():input.housingTerms;
         require(!housing.isEmpty()&&available.containsAll(housing),"从实际建筑用途选择住房；本城没有匹配的文明默认时请填写 housingTerms");
         var groups=new ArrayList<>(input.groups);
+        if(groups.isEmpty()&&!facts.districtPopulationPlan().isEmpty()){
+            Map<String,Group> planned=new TreeMap<>();int residents=0;
+            for(var e:facts.districtPopulationPlan()){
+                var district=e.getAsJsonObject();residents+=district.get("residents").getAsInt();
+                if(district.has("jobs"))for(var value:district.getAsJsonArray("jobs")){
+                    var job=value.getAsJsonObject();String id=job.get("profession").getAsString();
+                    var g=planned.computeIfAbsent(id,k->{var next=new Group();next.id="planned_"+java.util.UUID.nameUUIDFromBytes(k.getBytes(java.nio.charset.StandardCharsets.UTF_8)).toString().substring(0,8);next.profession=active.professions.containsKey(k)?k:"resident";
+                        next.name=job.has("name")?job.get("name").getAsString():k;next.maximum=0;next.requiresWorkplace=true;return next;});
+                    int count=job.get("count").getAsInt();g.minimum+=count;g.maximum+=count;
+                    var functions=new TreeSet<>(g.functions);job.getAsJsonArray("functions").forEach(f->functions.add(f.getAsString()));g.functions=List.copyOf(functions);
+                    if(job.has("servesMeals"))g.servesMeals=job.get("servesMeals").getAsBoolean();
+                }
+            }
+            groups.addAll(planned.values());int workers=groups.stream().mapToInt(g->g.minimum).sum();
+            if(residents>workers){var residentsGroup=new Group();residentsGroup.id="planned_residents";residentsGroup.name="常住居民与学生";
+                residentsGroup.minimum=0;residentsGroup.maximum=residents-workers;residentsGroup.requiresWorkplace=false;groups.add(residentsGroup);}
+        }
         if(groups.isEmpty()){
             int index=0;
             for(var job:settings.jobs.entrySet()){
@@ -39,6 +58,7 @@ public final class QuickCityPlan {
         require(!groups.isEmpty()&&groups.size()<=16,"文明默认没有适合本城的职业，请选择少量群体");
         var result=new CityPlanning.Submission();result.baseRevision=input.baseRevision;
         result.plan.template=active.cityPlan(city).template;result.plan.overrides=settings;
+        result.plan.districtPopulationPlan=new ArrayList<>(Arrays.asList(DesignCodec.JSON.fromJson(facts.districtPopulationPlan(),Design.DistrictPopulation[].class)));
         result.plan.economy=DesignCodec.copy(input.economy==null?(active.cityPlan(city).economy==null?economy.defaults:active.cityPlan(city).economy):input.economy,EconomyConfig.Selection.class);
         settings.populationMode="housing";settings.housingTerms=new ArrayList<>(housing);settings.jobs=new LinkedHashMap<>();settings.residentsByFunction=null;
         settings.activities=new ArrayList<>();
@@ -58,9 +78,10 @@ public final class QuickCityPlan {
             var base=active.professions.get(g.profession);var p=DesignCodec.copy(base,Design.Profession.class);
             require(g.minimum>=0&&g.maximum>=g.minimum&&g.maximum<=256&&Double.isFinite(g.weight)&&g.weight>=0,"群体人数或权重无效");
             require(available.containsAll(g.functions),"群体使用未知建筑用途: "+g.id);
-            require(base.workplaceTerms.isEmpty()||!g.functions.isEmpty(),"工作职业必须选本城实际用途: "+g.id);
+            require(Boolean.FALSE.equals(g.requiresWorkplace)||base.workplaceTerms.isEmpty()||!g.functions.isEmpty(),"工作职业必须选本城实际用途: "+g.id);
             p.name=g.name.isBlank()?base.name:g.name;p.bio=g.purpose.isBlank()?(input.cityCharacter.isBlank()?base.bio:input.cityCharacter):g.purpose;
-            p.workplaceTerms=List.copyOf(g.functions);
+            p.workplaceTerms=Boolean.FALSE.equals(g.requiresWorkplace)?List.of():List.copyOf(g.functions);
+            if(g.servesMeals!=null)p.servesMeals=g.servesMeals;
             p.capabilities.remove("commission");p.commissionPurpose="";
             p.goodsPurpose="按文明与城市已选物品池经营，"+(g.purpose.isBlank()?p.name:g.purpose);
             p.itemPools=p.itemPools.stream().filter(id->result.plan.economy.pools.getOrDefault(id,0.0)>0).toList();
@@ -70,7 +91,7 @@ public final class QuickCityPlan {
         for(var key:result.plan.keyPeople)require(settings.jobs.containsKey(key.profession),"关键人物须引用本次群体 id: "+key.profession);
         for(String term:available){
             var row=new Design.FunctionAnswer();row.functionTerm=term;row.housing=housing.contains(term);
-            row.professions=groups.stream().filter(g->g.functions.contains(term)||(g.functions.isEmpty()&&housing.contains(term))).map(g->g.id).toList();
+            row.professions=groups.stream().filter(g->result.professions.get(g.id).workplaceTerms.contains(term)||(result.professions.get(g.id).workplaceTerms.isEmpty()&&housing.contains(term))).map(g->g.id).toList();
             row.reason=row.professions.isEmpty()?"本次群体不在此用途单独设置岗位；保留建筑实际用途。":"按文明默认与城市群体安排住房和岗位。";
             result.plan.functionAnswers.add(row);
         }
@@ -78,10 +99,15 @@ public final class QuickCityPlan {
     }
     public static CityWorksheet.Evidence loadedEvidence(com.rinsing.realmfolk.model.Society society,String town){
         var buildings=society.properties.values().stream().filter(p->p.town.equals(town)&&p.terms!=null&&!p.terms.isEmpty())
-            .map(p->new CityWorksheet.Building(p.id,"",p.templateId,new TreeSet<>(p.terms))).toList();
+            .map(p->new CityWorksheet.Building(p.id,"",p.templateId,new TreeSet<>(p.terms),com.rinsing.realmfolk.life.FacilityAssignments.beds(p).size(),
+                    com.rinsing.realmfolk.life.FacilityAssignments.jobs(p).size(),p.facilitySource!=null&&!p.facilitySource.isBlank())).toList();
         var terms=new TreeSet<String>();buildings.forEach(b->terms.addAll(b.terms()));
-        var facts=terms.stream().map(t->new CityWorksheet.Fact(t,(int)buildings.stream().filter(b->b.terms().contains(t)).count(),Set.<String>of(),Set.<String>of())).toList();
-        return new CityWorksheet.Evidence(buildings,facts,List.of());
+        var facts=terms.stream().map(t->new CityWorksheet.Fact(t,(int)buildings.stream().filter(b->b.terms().contains(t)).count(),Set.<String>of(),Set.<String>of(),
+                buildings.stream().filter(b->b.terms().contains(t)).mapToInt(CityWorksheet.Building::beds).sum(),
+                buildings.stream().filter(b->b.terms().contains(t)).mapToInt(CityWorksheet.Building::workplaces).sum(),
+                (int)buildings.stream().filter(b->b.terms().contains(t)&&b.capacityKnown()).count())).toList();
+        var city=society.towns.get(town);var plan=city==null?new Design.CityPlan():society.design.active.cityPlan(PopulationPlanner.cityKey(city));
+        return new CityWorksheet.Evidence(buildings,facts,List.of(),DesignCodec.JSON.toJsonTree(plan.districtPopulationPlan).getAsJsonArray());
     }
     private static void require(boolean condition,String message){if(!condition)throw new IllegalArgumentException("QUICK_CITY: "+message);}
 }

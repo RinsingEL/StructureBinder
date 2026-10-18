@@ -28,7 +28,8 @@ public record CityBlueprint(
     }
 
     /** City-specific roles, independent of authored material classification and scheduling priority. */
-    public record DistrictDesign(String districtId, String coreGroupId, String coreStructureRef, List<String> groupIds) {
+    public record DistrictDesign(String districtId, String coreGroupId, String coreStructureRef, List<String> groupIds,CityPopulationBudget population) {
+        public DistrictDesign(String id,String core,String ref,List<String> groups){this(id,core,ref,groups,null);}
         public DistrictDesign { groupIds = List.copyOf(groupIds); }
     }
 
@@ -53,10 +54,15 @@ public record CityBlueprint(
     public record ArtifactRef(String path, String schema, String contentHash) {
     }
 
-    public record DesignIntent(String cityIdentity, String theme, List<String> functionalRoles) {
+    public record DesignIntent(String cityIdentity, String theme, List<String> functionalRoles,Boundary boundary) {
+        public DesignIntent(String identity,String theme,List<String> roles){this(identity,theme,roles,null);}
         public DesignIntent {
             functionalRoles = List.copyOf(functionalRoles);
         }
+    }
+    public record Boundary(String form,String reason) {
+        public Boundary {if(!java.util.Set.of("NONE","GATEWAYS","LOW_BOUNDARY","LAND_ONLY","FULL_WALL").contains(form)||reason==null||reason.isBlank()||reason.length()>600)
+            throw new IllegalArgumentException("CITY_BOUNDARY_FORM_OR_REASON_INVALID");}
     }
 
     public record ProfileRef(String profileRef) {

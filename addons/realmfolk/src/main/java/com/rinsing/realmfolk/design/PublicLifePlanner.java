@@ -40,7 +40,8 @@ public final class PublicLifePlanner {
         return new Plan(Collections.unmodifiableMap(visits),List.copyOf(summaries));
     }
     public static boolean eligiblePlace(Property p,PublicActivity activity){return p.publicPoints!=null&&!p.publicPoints.isEmpty()&&p.terms!=null&&!Collections.disjoint(p.terms,activity.placeTerms)&&p.price==0&&"PUBLIC".equals(p.access)&&!p.owner.startsWith("player:");}
-    public static boolean eligibleCitizen(Citizen c,int time){return !c.dead&&"realmfolk:citizen".equals(c.entityType)&&c.profession!=null&&c.profession.has("public_life")&&!c.profession.has("law_enforcement")&&c.leader.isBlank()&&c.mode.equals("HOME")&&!resting(c.profession,time);}
+    public static boolean eligibleCitizen(Citizen c,int time){return !c.dead&&"realmfolk:citizen".equals(c.entityType)&&c.profession!=null&&c.profession.has("public_life")&&!c.profession.has("law_enforcement")
+            &&!(c.profession.servesMeals&&com.rinsing.realmfolk.life.DailySchedule.in(time,4840,7160))&&c.leader.isBlank()&&c.mode.equals("HOME")&&!resting(c.profession,time);}
     public static boolean resting(Profession p,long time){return p.restStart<p.restEnd?time>=p.restStart&&time<p.restEnd:time>=p.restStart||time<p.restEnd;}
     private static double unit(String key){return (UUID.nameUUIDFromBytes(key.getBytes(StandardCharsets.UTF_8)).getMostSignificantBits()>>>11)*0x1.0p-53;}
 }

@@ -113,7 +113,8 @@ public record CityLandUseSurfacePrintPlan(
             Objects.requireNonNull(kind, "kind");
             facing = facing == null ? HorizontalFacing.NONE : facing;
             boolean frozenSurface = surfaceOffset == 0 && (kind == FeatureKind.TERRACE_GROUND || kind == FeatureKind.ROAD_SLAB
-                    || kind == FeatureKind.ROAD_STAIR || kind == FeatureKind.BRIDGE_DECK);
+                    || kind == FeatureKind.ROAD_STAIR || kind == FeatureKind.BRIDGE_DECK
+                    || kind == FeatureKind.GREEN_PATH || kind == FeatureKind.GREEN_GROUND);
             boolean frozenBridgeRail = surfaceOffset > 0 && (kind == FeatureKind.BRIDGE_RAIL
                     || kind == FeatureKind.TERRACE_RAIL || kind == FeatureKind.GREEN_PLANT || kind == FeatureKind.GREEN_FIXTURE);
             if (targetSurfaceY != null && !frozenSurface && !frozenBridgeRail && kind!=FeatureKind.AUTHORED_BLOCK) {

@@ -110,6 +110,22 @@ public final class CityLandUseChunkExecutor {
             return ExecutionResult.failed(fragment, unresolvedAccess.reasonCode(), 0, 0,
                     0, 0, true, foundationPlan);
         }
+        Map<ColumnKey,CityLandUseMicroGrader.StairDecision> accessCuts=new HashMap<>();
+        foundationPlan.stairs().stream().filter(CityLandUseMicroGrader.StairDecision::platformAccess)
+                .forEach(s->accessCuts.put(new ColumnKey(s.x(),s.z()),s));
+        // A new access cut owns the former grass column as well as its overlay.
+        // Leaving the frozen green feature here would restore the old height over the stairs.
+        featureOperations=featureOperations.stream().filter(f->!accessCuts.containsKey(new ColumnKey(f.x(),f.z()))
+                || f.surfaceOffset()==0 || f.kind()==CityLandUseSurfacePrintPlan.FeatureKind.AUTHORED_BLOCK).map(f->{
+            var stair=accessCuts.get(new ColumnKey(f.x(),f.z()));
+            if(stair==null||f.surfaceOffset()!=0||f.kind()==CityLandUseSurfacePrintPlan.FeatureKind.AUTHORED_BLOCK
+                    ||f.kind()==CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
+                    ||f.kind()==CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR
+                    ||f.kind()==CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK)return f;
+            return new CityLandUseChunkCompiler.FeatureOperation(stair.sourceId(),stair.x(),stair.z(),
+                    fragment.materialField().at("accessStair",stair.x(),stair.z(),stair.blockId()),0,
+                    CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR,stair.facing(),stair.targetY());
+        }).toList();
         Map<ColumnKey, CityLandUseMicroGrader.FoundationDecision> foundationByColumn = new HashMap<>();
         for (CityLandUseMicroGrader.FoundationDecision decision : foundationPlan.decisions()) {
             ColumnKey key = new ColumnKey(decision.x(), decision.z());
@@ -133,7 +149,8 @@ public final class CityLandUseChunkExecutor {
                 .map(operation -> new ColumnKey(operation.x(), operation.z()))
                 .collect(java.util.stream.Collectors.toSet());
         Set<ColumnKey> bridgeColumns=featureOperations.stream()
-                .filter(operation->operation.kind()==CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK)
+                .filter(operation->operation.kind()==CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK
+                        ||operation.sourceId().startsWith(com.rinsing.geomantia.systems.city.application.landuse.CityEntranceAccessPlanner.BRIDGE_SOURCE))
                 .map(operation->new ColumnKey(operation.x(),operation.z())).collect(java.util.stream.Collectors.toSet());
         Map<ColumnKey,String> roadSources = new HashMap<>();
         for (var road : featureOperations) {
@@ -163,22 +180,35 @@ public final class CityLandUseChunkExecutor {
         Set<ColumnKey> frozenRoadColumns = new HashSet<>();
         Set<ColumnKey> connectionColumns = new HashSet<>();
         Map<ColumnKey,Integer> sharedTerraceHeights = new HashMap<>();
+        Set<ColumnKey> preservedPublicGround = new HashSet<>();
         for(var s:fragment.sharedTerraceSpans()) for(int x=s.minX();x<=s.maxX();x++)
             sharedTerraceHeights.put(new ColumnKey(x,s.z()),s.targetY());
+        for(var f:fragment.gradingFeatureOperations())if(CityLandUseMicroGrader.frozenGround(f)!=null)
+            sharedTerraceHeights.put(new ColumnKey(f.x(),f.z()),f.targetSurfaceY()
+                    -(f.kind()==CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR?1:0));
         surfaceOperations.forEach(operation -> surfaceColumns.add(new ColumnKey(operation.x(), operation.z())));
         for (var feature : featureOperations) {
             if (feature.targetSurfaceY() == null || feature.surfaceOffset() != 0) continue;
             if(feature.kind()==CityLandUseSurfacePrintPlan.FeatureKind.AUTHORED_BLOCK)continue;
             ColumnKey key = new ColumnKey(feature.x(), feature.z());
-            frozenRoadColumns.add(key);
             ColumnSample column = terrainView.sample(feature.x(), feature.z());
-            if (feature.kind() == CityLandUseSurfacePrintPlan.FeatureKind.TERRACE_GROUND) {
+            if (feature.kind() == CityLandUseSurfacePrintPlan.FeatureKind.TERRACE_GROUND || feature.sourceId().startsWith(com.rinsing.geomantia.systems.city.application.landuse.CityPublicGroundPlanner.SOURCE)
+                    &&feature.kind()!=CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK) {
                 connectionColumns.add(key);
+                column = world.samplePublicGround(feature.x(), feature.z());
+                terrain.put(key, column);
                 if (!column.naturalSurface() || "minecraft:water".equals(column.surfaceBlockId())
-                        || "minecraft:lava".equals(column.surfaceBlockId()) || Math.abs(column.surfaceY()-feature.targetSurfaceY())>6) {
-                    return ExecutionResult.failed(fragment,"CITY_SHARED_TERRACE_TERRAIN_CONFLICT",0,0,0,0,true,foundationPlan);
+                        || "minecraft:lava".equals(column.surfaceBlockId())
+                        || column.surfaceY()-feature.targetSurfaceY()>CityLandUseMicroGrader.FOUNDATION_MAX_CUT_DEPTH_BLOCKS) {
+                    // Carvers and local water can differ from the chunk-free design terrain.
+                    // Preserve this natural column without discarding the owner's roads and dry ground.
+                    preservedPublicGround.add(key);
+                    foundationByColumn.remove(key);
+                    fillByColumn.remove(key);
+                    continue;
                 }
             }
+            frozenRoadColumns.add(key);
             int targetY = feature.targetSurfaceY();
             int delta = targetY - column.surfaceY();
             if (delta != 0 && !column.naturalSurface()
@@ -194,26 +224,30 @@ public final class CityLandUseChunkExecutor {
                     feature.x(), feature.z(), column.surfaceY(), targetY,
                     bridgeColumns.contains(key) && targetY>column.surfaceY()+1
                             ? CityLandUseMicroGrader.FoundationMode.DECK
-                            : connectionColumns.contains(key) && targetY>column.surfaceY()
-                                ? CityLandUseMicroGrader.FoundationMode.FILL
-                                : CityLandUseMicroGrader.designedRealization(column.surfaceY(), targetY)));
+                            : CityLandUseMicroGrader.designedRealization(column.surfaceY(), targetY)));
             if (surfaceColumns.add(key)) surfaceOperations.add(new CityLandUseChunkCompiler.SurfaceOperation(
                     feature.sourceId(), "road", feature.x(), feature.z(), fragment.materialField().at("roadBase",feature.x(),feature.z(),feature.sourceId(),"minecraft:stone_bricks")));
         }
         Map<ColumnKey, CityLandUseMicroGrader.StairDecision> platformStairByColumn = new HashMap<>();
+        preservedPublicGround.forEach(sharedTerraceHeights::remove);
         for (CityLandUseMicroGrader.StairDecision stair : foundationPlan.stairs()) {
             if (frozenRoadColumns.contains(new ColumnKey(stair.x(), stair.z()))
                     || stair.platformAccess() && roadColumns.contains(new ColumnKey(stair.x(), stair.z()))) continue;
             platformStairByColumn.put(new ColumnKey(stair.x(), stair.z()), stair);
         }
         Map<ColumnKey, Integer> plannedSurfaceY = new HashMap<>();
-        Set<ColumnKey> countedNaturalSkips = new HashSet<>();
+        Set<ColumnKey> countedNaturalSkips = new HashSet<>(preservedPublicGround);
+        naturalSurfaceSkipped += preservedPublicGround.size();
         Set<ColumnKey> preparedFillColumns = new HashSet<>();
         Set<ColumnKey> preparedCutColumns = new HashSet<>();
         Set<ColumnKey> preservedFoundationColumns = new HashSet<>();
         Set<ColumnKey> openWaterColumns = new HashSet<>();
         for (CityLandUseChunkCompiler.SurfaceOperation operation : surfaceOperations) {
             ColumnKey key = new ColumnKey(operation.x(), operation.z());
+            if (preservedPublicGround.contains(key)) {
+                if (countedNaturalSkips.add(key)) naturalSurfaceSkipped++;
+                continue;
+            }
             if (rejectedLandscapeColumns.contains(key)) {
                 if(countedNaturalSkips.add(key)) naturalSurfaceSkipped++;
                 continue;
@@ -341,6 +375,8 @@ public final class CityLandUseChunkExecutor {
 
         for (CityLandUseMicroGrader.RetainingWallDecision wall : foundationPlan.retainingWalls()) {
             ColumnKey roadKey = new ColumnKey(wall.x(), wall.z());
+            if(preservedPublicGround.contains(roadKey))continue;
+            if(sharedTerraceHeights.containsKey(roadKey)&&wall.y()>sharedTerraceHeights.get(roadKey))continue;
             // A frozen graded road cuts through a platform edge; retaining masonry must
             // stop below its walking deck, rather than rebuilding the wall over the steps.
             if (roadColumns.contains(roadKey) && frozenRoadColumns.contains(roadKey)
@@ -363,6 +399,7 @@ public final class CityLandUseChunkExecutor {
                 .map(f->new ColumnKey(f.x(),f.z())).collect(java.util.stream.Collectors.toSet());
         explicitBoundaryColumns.addAll(designedRailColumns);
         for (CityLandUseMicroGrader.TerraceEdgeDecision edge : foundationPlan.terraceEdges()) {
+            if(preservedPublicGround.contains(new ColumnKey(edge.x(),edge.z())))continue;
             if (internalTerrace(sharedTerraceHeights,edge.x(),edge.z(),edge.y()-1)) continue;
             if (circulationColumns.contains(new ColumnKey(edge.x(), edge.z()))) continue;
             if (explicitBoundaryColumns.contains(new ColumnKey(edge.x(), edge.z()))) continue;
@@ -390,6 +427,7 @@ public final class CityLandUseChunkExecutor {
 
         for (CityLandUseChunkCompiler.BoundaryOperation operation : fragment.boundaryOperations()) {
             ColumnKey key = new ColumnKey(operation.x(), operation.z());
+            if(preservedPublicGround.contains(key))continue;
             if(designedRailColumns.contains(key))continue;
             if (rejectedLandscapeColumns.contains(key)) { occupiedBoundarySkipped++; continue; }
             if (preservedFoundationColumns.contains(key) || circulationColumns.contains(key)) continue;
@@ -460,6 +498,8 @@ public final class CityLandUseChunkExecutor {
         Set<ColumnKey> checkedDecorations = new HashSet<>();
         for (CityLandUseChunkCompiler.FeatureOperation operation : featureOperations) {
             ColumnKey key = new ColumnKey(operation.x(), operation.z());
+            if (preservedPublicGround.contains(key)
+                    && operation.kind()!=CityLandUseSurfacePrintPlan.FeatureKind.AUTHORED_BLOCK) continue;
             ColumnSample column = terrainView.sample(operation.x(), operation.z());
             boolean publicGreenery = operation.sourceId().startsWith(
                     com.rinsing.geomantia.systems.city.application.landuse.CityPublicGreeneryPlanner.SOURCE);
@@ -844,7 +884,7 @@ public final class CityLandUseChunkExecutor {
     private static boolean internalTerrace(Map<ColumnKey,Integer> heights,int x,int z,int y) {
         if(!heights.containsKey(new ColumnKey(x,z)))return false;
         for(int[] d:List.of(new int[]{1,0},new int[]{-1,0},new int[]{0,1},new int[]{0,-1}))
-            if(heights.getOrDefault(new ColumnKey(x+d[0],z+d[1]),Integer.MIN_VALUE)<y)return false;
+            if(heights.getOrDefault(new ColumnKey(x+d[0],z+d[1]),Integer.MIN_VALUE)<y-1)return false;
         return true;
     }
 

@@ -135,6 +135,8 @@ public final class CityBlueprintService {
         snapshot.addProperty("schema", SNAPSHOT_SCHEMA);
         snapshot.add("structureCatalog", structureCatalog.asJson());
         snapshot.add("templateCatalog", templateCatalogJson.deepCopy());
+        JsonObject facilities=loadFacilityCatalog(debugRoot,runDir,templateCatalogSource);
+        snapshot.add("facilityMetadata",facilities);
         snapshot.add("referenceCatalog", references.json().deepCopy());
         snapshot.add("terrainFieldRef", artifactRefJson(terrainFieldRef));
         CityBlueprint.ArtifactRef d3Ref = artifactRef(debugRoot, d3Path, string(d3, "schema"), d3Raw);
@@ -145,6 +147,15 @@ public final class CityBlueprintService {
         contextCore.addProperty("schema", CONTEXT_SCHEMA);
         contextCore.addProperty("runId", runId);
         contextCore.addProperty("cityId", cityId);
+        JsonArray capacities=new JsonArray();
+        facilities.entrySet().forEach(e->{var row=e.getValue().getAsJsonObject();int beds=0,jobs=0;
+            for(var f:row.getAsJsonArray("facilities")){var facility=f.getAsJsonObject();String kind=string(facility,"kind"),use=string(facility,"use");
+                if(kind.equals("bed")&&(use.isBlank()||java.util.Set.of("building","resident").contains(use)))beds++;
+                if(kind.equals("work"))jobs++;}
+            var fact=new JsonObject();fact.addProperty("templateRef",string(row,"templateRef"));fact.addProperty("templateHash",string(row,"templateHash"));
+            fact.addProperty("residentBeds",beds);fact.addProperty("workplaces",jobs);fact.addProperty("capacitySource","authored_export_not_world_verified");capacities.add(fact);});
+        contextCore.add("templateFacilityCapacities",capacities);
+        contextCore.addProperty("populationPlanningGuide","先写每区population职责、居民人数、岗位人数/用途与住房组，再按templateFacilityCapacities选楼和数量；同一居民不在居住区与工作区重复计数。未知容量不可当零容量。定稿核对床位/岗位和通勤，Realmfolk承接人口预算。");
         contextCore.add("sourceD3Ref", artifactRefJson(d3Ref));
         contextCore.add("catalogSnapshotRef", artifactRefJson(snapshotRef));
         if (patchReviewEvidence != null) {
@@ -785,6 +796,28 @@ public final class CityBlueprintService {
                 "CITY_BLUEPRINT_CATALOG_INVALID");
     }
 
+    private static JsonObject loadFacilityCatalog(Path debugRoot,Path runDir,JsonObject source)throws IOException{
+        var result=new JsonObject();
+        if(source.has("facilityCatalog"))return indexFacilities(source.getAsJsonObject("facilityCatalog"));
+        for(String key:java.util.List.of("catalogPath","templateCatalogPath","path"))if(source.has(key)){
+            Path requested=Path.of(string(source,key));Path path=requested.isAbsolute()?requested.normalize():runDir.resolve(requested).normalize();
+            if(!Files.isRegularFile(path)&&!requested.isAbsolute())path=debugRoot.resolve(requested).normalize();
+            Path file=path.getParent().resolve("realmfolk_facilities.json");
+            if(Files.isRegularFile(file)){
+                var catalog=parseObject(Files.readString(file),"CITY_FACILITY_CATALOG_INVALID");
+                return indexFacilities(catalog);
+            }
+            break;
+        }
+        return result;
+    }
+    private static JsonObject indexFacilities(JsonObject catalog){
+        if(!"realmfolk_facility_catalog.v1".equals(string(catalog,"schema")))throw new IllegalArgumentException("CITY_FACILITY_CATALOG_SCHEMA");
+        var result=new JsonObject();
+        for(var e:catalog.getAsJsonArray("templates")){var row=e.getAsJsonObject();String id=string(row,"templateRef")+"/"+string(row,"templateHash");
+            if(result.has(id)&&!result.get(id).equals(row))throw new IllegalArgumentException("CITY_FACILITY_CATALOG_CONFLICT:"+id);result.add(id,row.deepCopy());}
+        return result;
+    }
     private static JsonObject loadCitySeed(Path runDir, String cityId) throws IOException {
         JsonObject registry = readObject(runDir.resolve("city_seed_registry.json"),
                 CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_NOT_FOUND);

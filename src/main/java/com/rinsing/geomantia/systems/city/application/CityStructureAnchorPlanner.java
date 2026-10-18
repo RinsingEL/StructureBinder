@@ -99,6 +99,7 @@ public final class CityStructureAnchorPlanner {
         anchorMap.add("grid", reviewPackage.grid().asJson());
         anchorMap.add("sourceTerraSenseProfileSource", terraSenseProfileSource.deepCopy());
         anchorMap.add("semanticProfileSource", terraSenseProfileSource.deepCopy());
+        for(String field:List.of("cityDesignIntent","districtPopulationPlan","borderPressure","externalAccess"))if(structureAnchorPlan.has(field))anchorMap.add(field,structureAnchorPlan.get(field).deepCopy());
         if (structureAnchorPlan.has("cityBlueprintCompileProvenance")
                 && structureAnchorPlan.get("cityBlueprintCompileProvenance").isJsonObject()) {
             anchorMap.add("cityBlueprintCompileProvenance",
@@ -106,6 +107,9 @@ public final class CityStructureAnchorPlanner {
         }
         if (structureAnchorPlan.has("streetBands") && structureAnchorPlan.get("streetBands").isJsonArray()) {
             anchorMap.add("streetBands", structureAnchorPlan.getAsJsonArray("streetBands").deepCopy());
+        }
+        if (structureAnchorPlan.has("publicSpaces") && structureAnchorPlan.get("publicSpaces").isJsonArray()) {
+            anchorMap.add("publicSpaces", structureAnchorPlan.getAsJsonArray("publicSpaces").deepCopy());
         }
         if (structureAnchorPlan.has("cityMainRoadPlan")
                 && structureAnchorPlan.get("cityMainRoadPlan").isJsonObject()) {

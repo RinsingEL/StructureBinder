@@ -311,7 +311,7 @@
             "end": 8500,
             "participation": 0.6,
             "capacity": 12,
-            "maxDistance": 128,
+            "maxDistance": 512,
             "placeTerms": [
               "市场",
               "商业",
@@ -327,7 +327,7 @@
             "end": 12000,
             "participation": 0.4,
             "capacity": 8,
-            "maxDistance": 96,
+            "maxDistance": 512,
             "placeTerms": [
               "酒馆",
               "餐饮",

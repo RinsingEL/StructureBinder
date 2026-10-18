@@ -1,0 +1,69 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    17,
+    8,
+    17
+  ],
+  "sourceSha256": "b9d070903c20409ebf22ef031c795094390d762819a7a9ddcca2ae3de7abf50d",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 1
+  },
+  "facilities": [
+    {
+      "id": "entrance:8,2,0",
+      "kind": "entrance",
+      "pos": [
+        8,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "庭园入口",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        8,
+        2,
+        2
+      ]
+    },
+    {
+      "id": "work:8,2,4",
+      "kind": "work",
+      "pos": [
+        8,
+        2,
+        4
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "staff",
+      "room": "",
+      "name": "庭园养护",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "meeting:8,2,12",
+      "kind": "meeting",
+      "pos": [
+        8,
+        2,
+        12
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "public",
+      "room": "",
+      "name": "阅读会面",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    }
+  ],
+  "warnings": []
+}

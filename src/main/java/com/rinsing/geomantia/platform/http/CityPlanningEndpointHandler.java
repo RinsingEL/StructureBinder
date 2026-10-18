@@ -1476,7 +1476,7 @@ final class CityPlanningEndpointHandler {
                                                  ServerLevel level) throws IOException {
         long started = System.nanoTime();
         Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
+        JsonObject seed = loadCitySeed(runDir, runId, citySeedId);
         BlueprintOutdoorInputs inputs = loadBlueprintOutdoorInputs(debugRoot, runDir, citySeedId);
         CityOutdoorBlueprintCompiler.Result compiled = new CityOutdoorBlueprintCompiler().compile(
                 inputs.blueprint(), inputs.d6Plan(), inputs.terrainField(), inputs.referenceCatalog(),
@@ -1507,16 +1507,20 @@ final class CityPlanningEndpointHandler {
         }
 
         com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmPlanner.GroundSampler preciseGround = level==null?null:(x,z)->{
-            var source=level.getChunkSource();var generator=source.getGenerator();
-            int y=generator.getBaseHeight(x,z,net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                    level,source.randomState())-1;
-            var state=generator.getBaseColumn(x,z,level,source.randomState()).getBlock(y);
-            return new com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmPlanner.Ground(y,
+            var source=level.getChunkSource();
+            // Share the calibrated, chunk-free terrain source used by construction and protection.
+            // Raw generator columns repeat RTF noise evaluation for every public-ground/fringe block.
+            var sample=com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityWorldgenStructurePlacer
+                    .sampleDesignTerrain(source.getGenerator(),level.registryAccess(),source.randomState(),level,x,z);
+            var state=net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
+                    net.minecraft.resources.ResourceLocation.tryParse(sample.surfaceBlockId())).defaultBlockState();
+            return new com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmPlanner.Ground(sample.surfaceY(),
                     !state.isAir()&&state.getFluidState().isEmpty());
         };
         LandUsePlanningService.Result result = new LandUsePlanningService().plan(
                 citySeedId, compiled.resolution(), inputs.d5MaskPlan(), inputs.terrainField(),
-                compiled.residualConfig(), inputs.blueprint().outdoorPlan().publicRealm(), preciseGround);
+                compiled.residualConfig(), inputs.blueprint().outdoorPlan().publicRealm(), preciseGround,
+                com.rinsing.geomantia.systems.city.domain.model.CityScale.fromContractName(stringValue(seed,"theoreticalScale")));
 
         Path urbanSpacePath = outputDirectory.resolve("city_urban_space_plan.json");
         Path areaPath = outputDirectory.resolve("city_land_use_area_plan.json");

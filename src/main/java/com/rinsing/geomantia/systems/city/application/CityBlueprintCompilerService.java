@@ -483,6 +483,22 @@ public final class CityBlueprintCompilerService {
         JsonObject compilationAcceptance = compilationAcceptance(
                 blueprint, states, connectivityPlan, arrayVisualQuality, streetFinalization.trace(), mainRoads.plan());
         anchorPlan.add("compilationAcceptance", compilationAcceptance.deepCopy());
+        anchorPlan.add("cityDesignIntent",new CityBlueprintCodec().write(blueprint).get("designIntent"));
+        if(context.has("citySeed")&&context.getAsJsonObject("citySeed").has("borderPressure"))anchorPlan.add("borderPressure",context.getAsJsonObject("citySeed").get("borderPressure").deepCopy());
+        if(blueprint.outdoorPlan().publicRealm()!=null){var publicSpec=blueprint.outdoorPlan().publicRealm().toJson();
+            if(publicSpec.has("externalAccess"))anchorPlan.add("externalAccess",publicSpec.get("externalAccess").deepCopy());}
+        JsonArray populationPlan=new JsonArray();
+        for(var district:blueprint.districtDesigns())if(district.population()!=null){var p=district.population().toJson();p.addProperty("districtId",district.districtId());
+            populationPlan.add(p);}
+        anchorPlan.add("districtPopulationPlan",populationPlan);
+        var reviewWarnings=CityWholeCityReview.inspect(blueprint,anchors,array(anchorPlan,"publicSpaces"));
+        for(var e:array(anchorPlan,"publicSpaces")){var space=e.getAsJsonObject();
+            if(terrainField.cells().stream().anyMatch(c->c.water()&&c.blockMinX()<=space.get("maxX").getAsInt()&&c.blockMinX()+terrainField.cellStepBlocks()>space.get("minX").getAsInt()
+                    &&c.blockMinZ()<=space.get("maxZ").getAsInt()&&c.blockMinZ()+terrainField.cellStepBlocks()>space.get("minZ").getAsInt()))
+                reviewWarnings.add("CITY_REVIEW_PUBLIC_SPACE_TOUCHES_WATER:"+space.get("ownerGroupId").getAsString()+":retain_water_or_revise_court_bounds");}
+        compilationAcceptance.getAsJsonArray("warnings").addAll(reviewWarnings);
+        if(!reviewWarnings.isEmpty())compilationAcceptance.addProperty("qualityFullySatisfied",false);
+        anchorPlan.add("compilationAcceptance",compilationAcceptance.deepCopy());
         JsonObject designReview = designReview(blueprint, states, catalog);
         anchorPlan.add("designReview", designReview);
         anchorPlan.add("skippedMembers", states.values().stream().collect(JsonArray::new,

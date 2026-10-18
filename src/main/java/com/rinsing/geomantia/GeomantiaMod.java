@@ -26,6 +26,9 @@ public final class GeomantiaMod {
 
     public GeomantiaMod(FMLJavaModLoadingContext context) {
         IEventBus modEventBus = context.getModEventBus();
+        context.registerConfig(net.minecraftforge.fml.config.ModConfig.Type.SERVER,
+                com.rinsing.geomantia.systems.city.infrastructure.world.CityNaturalSpawnPolicy.SPEC,
+                "geomantia-city-spawn.toml");
         com.rinsing.geomantia.platform.BoundaryNetwork.register();
         CityTemplateTerrainStructureRegistries.register(modEventBus);
         modEventBus.addListener(this::onCommonSetup);

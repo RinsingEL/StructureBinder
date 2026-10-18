@@ -18,11 +18,37 @@ public final class CityWallPlacementBackend {
     /** Samples the generator only. Never obtains or generates a world chunk. */
     public static void prepare(ServerLevel level, JsonObject plan) {
         if (level == null) return;
+        plan.addProperty("placementMode","chunk_worldgen");
         try { CityWallModuleConfig.loadCurrent().freeze(plan); }
         catch (IOException ex) { throw new IllegalArgumentException(ex.getMessage(), ex); }
         var nativeTerrain = com.rinsing.geomantia.systems.realm_planning.adapter.minecraft.RtfTerrainPreviewProvider.probe(level);
         var generator = level.getChunkSource().getGenerator();
         var random = level.getChunkSource().randomState();
+        String form=string(object(plan,"boundaryPolicy"),"form","");
+        if(plan.has("boundaryPolicy")&&!"legacy_frozen_plan".equals(string(plan.getAsJsonObject("boundaryPolicy"),"source",""))){
+            Map<BlockPoint,Boolean> wet=new HashMap<>();
+            trimWetUnits(plan,(x,z)->wet.computeIfAbsent(new BlockPoint(x,z),p->{int y=generator.getBaseHeight(p.x(),p.z(),net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG,level,random)-1;
+                return !generator.getBaseColumn(p.x(),p.z(),level,random).getBlock(y).getFluidState().isEmpty();}));
+        }
+        if(form.equals("LOW_BOUNDARY")||form.equals("GATEWAYS")){
+            for(var e:array(plan,"wallUnits")){var unit=e.getAsJsonObject();var b=bounds(unit.getAsJsonObject("blockBounds"));
+                JsonArray columns=new JsonArray();List<Integer> levels=new ArrayList<>();
+                boolean alongX="X".equals(string(unit,"wallAxis",""));
+                for(int along=alongX?b.minX():b.minZ();along<=(alongX?b.maxX():b.maxZ());along++){
+                    int x=alongX?along:b.center().x(),z=alongX?b.center().z():along;
+                    int y=generator.getBaseHeight(x,z,net.minecraft.world.level.levelgen.Heightmap.Types.OCEAN_FLOOR_WG,level,random);
+                    var c=new JsonObject();c.addProperty("x",x);c.addProperty("z",z);c.addProperty("baseY",y);columns.add(c);levels.add(y);
+                }
+                levels.sort(Integer::compare);int base=levels.get(levels.size()/2);
+                if(form.equals("GATEWAYS")&&levels.get(levels.size()-1)-levels.get(0)>1)throw new IllegalArgumentException("CITY_GATEWAY_UNEVEN_GROUND");
+                if(form.equals("GATEWAYS"))for(var c:columns)c.getAsJsonObject().addProperty("baseY",base);
+                unit.add("boundaryColumns",columns);
+            }
+            var profile=new JsonObject();profile.addProperty("ok",true);profile.addProperty("reasonCode","CITY_BOUNDARY_PROFILE_FROZEN");profile.add("surfaceColumns",new JsonArray());plan.add("wallPlacementProfile",profile);return;
+        }
+        if(array(plan,"wallUnits").isEmpty()&&array(plan,"wallNodes").isEmpty()){
+            var profile=new JsonObject();profile.addProperty("ok",true);profile.addProperty("reasonCode","CITY_BOUNDARY_EMPTY_BY_DESIGN");profile.add("surfaceColumns",new JsonArray());plan.add("wallPlacementProfile",profile);return;
+        }
         Map<BlockPoint,Integer> sampled = new HashMap<>();
         Map<BlockPoint,Integer> surfaces = new LinkedHashMap<>();
         JsonArray samples = new JsonArray();
@@ -51,6 +77,22 @@ public final class CityWallPlacementBackend {
                 || state.is(net.minecraft.tags.BlockTags.DIRT)
                 || state.is(net.minecraft.world.level.block.Blocks.CLAY));
     }
+    public static void trimWetUnits(JsonObject plan,java.util.function.BiPredicate<Integer,Integer> wet){
+        JsonArray skipped=new JsonArray();
+        for(String key:List.of("wallUnits","wallNodes")){
+            JsonArray kept=new JsonArray();
+            for(var e:array(plan,key)){var unit=e.getAsJsonObject();var b=bounds(unit.getAsJsonObject("blockBounds"));boolean water=false;
+                for(int z=b.minZ();!water&&z<=b.maxZ();z++)for(int x=b.minX();x<=b.maxX();x++)if(wet.test(x,z)){water=true;break;}
+                if(water)skipped.add(unit.deepCopy());else kept.add(unit.deepCopy());}
+            plan.add(key,kept);
+        }
+        plan.add("naturalWaterBoundaryOmissions",skipped);
+        JsonArray gates=new JsonArray();
+        for(var e:array(plan,"generatedGates")){var gate=e.getAsJsonObject();boolean omitted=false;
+            if(gate.has("blockBounds")){var b=bounds(gate.getAsJsonObject("blockBounds"));for(var s:skipped)if(b.equals(bounds(s.getAsJsonObject().getAsJsonObject("blockBounds")))){omitted=true;break;}}
+            if(!omitted)gates.add(gate.deepCopy());}
+        if(plan.has("generatedGates"))plan.add("generatedGates",gates);
+    }
 
     static boolean verifiedBarrier(int surface, int base, int bottom, java.util.function.IntPredicate solidAtY) {
         if(surface<=base+12 || bottom>base+12)return false;
@@ -76,6 +118,9 @@ public final class CityWallPlacementBackend {
         report.addProperty("cityId",string(plan,"cityId","")); report.addProperty("backend","fixed_structure_modules");
         report.addProperty("ok",false); report.addProperty("changedBlocks",0);
         if(level==null) return failure(report,"CITY_WALL_LEVEL_UNAVAILABLE");
+        String boundary=string(object(plan,"boundaryPolicy"),"form","");
+        if(boundary.equals("NONE")){report.addProperty("ok",true);report.addProperty("reasonCode","CITY_BOUNDARY_NONE");return report;}
+        if(boundary.equals("LOW_BOUNDARY")||boundary.equals("GATEWAYS"))return simpleBoundary(level,plan,owner,boundary,report);
         BlockState foundationState;
         BlockState[][][] wallStates;
         List<BlockState> towerStates;
@@ -347,6 +392,36 @@ public final class CityWallPlacementBackend {
     }
     private static boolean contains(List<BlockBounds> areas,int x,int z) { return areas.stream().anyMatch(b->b.contains(x,z)); }
     private static JsonObject failure(JsonObject report,String reason) {report.addProperty("reasonCode",reason);return report;}
+    private static JsonObject simpleBoundary(net.minecraft.world.level.WorldGenLevel level,JsonObject plan,BlockBounds owner,String form,JsonObject report){
+        String conflict=geometryConflict(plan);if(!conflict.isEmpty())return failure(report,conflict);
+        Map<BlockPos,BlockState> changes=new LinkedHashMap<>();
+        for(var e:array(plan,"wallUnits")){
+            var unit=e.getAsJsonObject();if("gate_gap".equals(string(unit,"unitType","")))continue;
+            var b=bounds(unit.getAsJsonObject("blockBounds"));boolean alongX="X".equals(string(unit,"wallAxis",""));
+            int first=alongX?b.minX():b.minZ(),last=alongX?b.maxX():b.maxZ();
+            if(!unit.has("boundaryColumns"))return failure(report,"CITY_BOUNDARY_PROFILE_REQUIRED");
+            for(var column:array(unit,"boundaryColumns")){
+                var frozen=column.getAsJsonObject();int x=integer(frozen,"x",0),z=integer(frozen,"z",0),along=alongX?x:z;
+                if(!owner.contains(x,z))continue;
+                int ground=integer(frozen,"baseY",0);
+                if(!level.getFluidState(new BlockPos(x,ground-1,z)).isEmpty())continue;
+                boolean pillar=along==first||along==last;
+                for(int dy=0;dy<(form.equals("GATEWAYS")?5:2);dy++){
+                    if(form.equals("GATEWAYS")&&!pillar&&dy<4)continue;
+                    var pos=new BlockPos(x,ground+dy,z);var old=level.getBlockState(pos);
+                    var desired=form.equals("GATEWAYS")?net.minecraft.world.level.block.Blocks.STONE_BRICKS.defaultBlockState():net.minecraft.world.level.block.Blocks.STONE_BRICK_WALL.defaultBlockState();
+                    if(old.equals(desired))continue;
+                    if(!old.isAir()&&!old.canBeReplaced())return failure(report,"CITY_BOUNDARY_VOLUME_OCCUPIED");
+                    changes.put(pos,desired);
+                }
+            }
+        }
+        Map<BlockPos,BlockState> before=new LinkedHashMap<>();
+        try{for(var e:changes.entrySet()){if(level.getBlockEntity(e.getKey())!=null)throw new IllegalArgumentException("CITY_BOUNDARY_BLOCK_ENTITY");
+            before.put(e.getKey(),level.getBlockState(e.getKey()));if(!level.setBlock(e.getKey(),e.getValue(),2)&&!level.getBlockState(e.getKey()).equals(e.getValue()))throw new IllegalStateException("CITY_BOUNDARY_WRITE_FAILED");}}
+        catch(RuntimeException ex){var reverse=new ArrayList<>(before.entrySet());Collections.reverse(reverse);reverse.forEach(e->level.setBlock(e.getKey(),e.getValue(),2));return failure(report,ex.getMessage());}
+        report.addProperty("ok",true);report.addProperty("reasonCode","CITY_BOUNDARY_PLACED");report.addProperty("changedBlocks",changes.size());return report;
+    }
     private static JsonArray array(JsonObject object,String key) {return object.has(key)&&object.get(key).isJsonArray()?object.getAsJsonArray(key):new JsonArray();}
     private static JsonObject object(JsonObject object,String key) {return object.has(key)&&object.get(key).isJsonObject()?object.getAsJsonObject(key):new JsonObject();}
     private static String string(JsonObject object,String key,String fallback) {return object.has(key)?object.get(key).getAsString():fallback;}

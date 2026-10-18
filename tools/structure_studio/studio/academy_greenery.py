@@ -92,10 +92,24 @@ def planter():
     return m
 
 
+def low_planter(number):
+    wood=number==62
+    m=base(number,'木质宽花槽 · 低边花境' if wood else '石砖宽花坛 · 低边混植',(7,3,5),'planter',ground=1)
+    edge='dark_oak_slab[type=bottom]' if wood else 'stone_brick_slab[type=bottom]'
+    for x in range(7):
+        for z in range(5):
+            if x in (0,6) or z in (0,4):m.set(x,1,z,edge)
+            else:m.set(x,0,z,'dirt')
+    for x,z,flower in ((1,1,'white_tulip'),(3,1,'allium'),(5,1,'azure_bluet'),(2,3,'allium'),(4,3,'white_tulip')):
+        m.set(x,1,z,flower)
+    return m
+
+
 BUILDERS={f'MG-{i}-v01':partial(tree,i) for i in TREES}
 BUILDERS.update({f'MG-{i}-v01':partial(shrub,i) for i in (56,57,58)})
 BUILDERS.update({f'MG-{i}-v01':partial(flowers,i) for i in (59,60)})
 BUILDERS['MG-61-v01']=planter
+BUILDERS.update({f'MG-{i}-v01':partial(low_planter,i) for i in (62,63)})
 
 
 def export_pool():
@@ -121,7 +135,7 @@ def export_pool():
         'low_shrubs':weighted([(56,3),(57,2)]),
         'hedge_segments':weighted([(58,1)]),
         'flower_patches':weighted([(59,2),(60,1)]),
-        'planters':weighted([(61,1)]),
+        'planters':weighted([(61,1),(62,4),(63,4)]),
     }
     write_json(root/'greenery-pools.json',dict(schema='studio.greenery-pools.v1',
         scope='author_selection_only',style='arcane_academy',assets=assets,pools=pools,

@@ -55,10 +55,11 @@ public final class CityBlueprintCodec {
         for (var value : requiredArray(root,"districtDesigns","$.districtDesigns")) {
             String path = "$.districtDesigns[" + index++ + "]";
             JsonObject item = value.getAsJsonObject();
-            exactFields(item,Set.of("districtId","coreGroupId","coreStructureRef","groupIds"),Set.of(),path);
+            exactFields(item,Set.of("districtId","coreGroupId","coreStructureRef","groupIds","population"),Set.of("population"),path);
             List<String> ids = nonEmptyStringList(item,"groupIds",path+".groupIds");
             result.add(new CityBlueprint.DistrictDesign(requiredString(item,"districtId",path+".districtId"),
-                    requiredString(item,"coreGroupId",path+".coreGroupId"),requiredString(item,"coreStructureRef",path+".coreStructureRef"),ids));
+                    requiredString(item,"coreGroupId",path+".coreGroupId"),requiredString(item,"coreStructureRef",path+".coreStructureRef"),ids,
+                    item.has("population")?new com.rinsing.geomantia.systems.city.domain.blueprint.CityPopulationBudget(requiredObject(item,"population",path+".population")):null));
         }
         return result;
     }
@@ -70,7 +71,8 @@ public final class CityBlueprintCodec {
             for (var district : blueprint.districtDesigns()) {
                 JsonObject item = new JsonObject(); item.addProperty("districtId",district.districtId());
                 item.addProperty("coreGroupId",district.coreGroupId()); item.addProperty("coreStructureRef",district.coreStructureRef());
-                item.add("groupIds",strings(district.groupIds())); districts.add(item);
+                item.add("groupIds",strings(district.groupIds()));
+                if(district.population()!=null)item.add("population",district.population().toJson());districts.add(item);
             }
             root.add("districtDesigns",districts);
         }
@@ -80,6 +82,7 @@ public final class CityBlueprintCodec {
         root.add("catalogSnapshotRef", artifactRefJson(blueprint.catalogSnapshotRef()));
         root.addProperty("generationSeed", blueprint.generationSeed());
         JsonObject intent = new JsonObject();
+        if(blueprint.designIntent().boundary()!=null){var b=new JsonObject();b.addProperty("form",blueprint.designIntent().boundary().form());b.addProperty("reason",blueprint.designIntent().boundary().reason());intent.add("boundary",b);}
         intent.addProperty("cityIdentity", blueprint.designIntent().cityIdentity());
         intent.addProperty("theme", blueprint.designIntent().theme());
         intent.add("functionalRoles", strings(blueprint.designIntent().functionalRoles()));
@@ -286,7 +289,7 @@ public final class CityBlueprintCodec {
     }
 
     private static CityBlueprint.DesignIntent designIntent(JsonObject object) {
-        exactFields(object, Set.of("cityIdentity", "theme", "functionalRoles"), "$.designIntent");
+        exactFields(object, Set.of("cityIdentity", "theme", "functionalRoles","boundary"),Set.of("boundary"), "$.designIntent");
         List<String> roles = stringList(requiredArray(object, "functionalRoles", "$.designIntent.functionalRoles"),
                 "$.designIntent.functionalRoles");
         if (roles.isEmpty()) {
@@ -294,7 +297,12 @@ public final class CityBlueprintCodec {
                     "functionalRoles must not be empty.");
         }
         return new CityBlueprint.DesignIntent(requiredString(object, "cityIdentity", "$.designIntent.cityIdentity"),
-                requiredString(object, "theme", "$.designIntent.theme"), roles);
+                requiredString(object, "theme", "$.designIntent.theme"), roles,boundary(object));
+    }
+    private static CityBlueprint.Boundary boundary(JsonObject intent){
+        if(!intent.has("boundary"))return null;var b=requiredObject(intent,"boundary","$.designIntent.boundary");
+        exactFields(b,Set.of("form","reason"),"$.designIntent.boundary");
+        return new CityBlueprint.Boundary(requiredString(b,"form","$.designIntent.boundary.form"),requiredString(b,"reason","$.designIntent.boundary.reason"));
     }
 
     private static CityBlueprint.ProfileRef profileRef(JsonObject object, String path) {
