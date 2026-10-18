@@ -53,7 +53,8 @@ public final class CityPublicRealmPlanner {
         seed=integer(config,"seed",0,Integer.MIN_VALUE,Integer.MAX_VALUE);
         for(var c:terrain.cells())terrainIndex.put(new BlockPoint(Math.floorDiv(c.blockMinX(),terrain.cellStepBlocks()),Math.floorDiv(c.blockMinZ(),terrain.cellStepBlocks())),c);
         for(var a:source.areas())if(a.recipe() instanceof UniformRecipe u)for(var s:u.platformSpans())for(int x=s.minX();x<=s.maxX();x++)heights.put(new BlockPoint(x,s.z()),s.targetY());
-        for(var f:source.featureCells())if(f.surfaceOffset()==0&&f.targetSurfaceY()!=null)heights.put(p(f.x(),f.z()),f.targetSurfaceY());
+        for(var f:source.featureCells())if(f.surfaceOffset()==0&&f.targetSurfaceY()!=null)heights.put(p(f.x(),f.z()),
+                f.targetSurfaceY()-(f.kind()==FeatureKind.ROAD_STAIR?1:0));
         for(var p:district.structures())expand(blocked,p,1);
         for(var b:reservations)hardReservations.addAll(rect(b.blockBounds()));
         blocked.addAll(hardReservations);

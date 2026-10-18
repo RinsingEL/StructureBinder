@@ -216,11 +216,11 @@ public final class LandUsePlanningService {
         Map<BlockPoint,com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmPlanner.Ground> groundCache=new HashMap<>();
         com.rinsing.geomantia.systems.city.application.outdoor.CityPublicRealmPlanner.GroundSampler ground=preciseGround==null?null:
                 (x,z)->groundCache.computeIfAbsent(new BlockPoint(x,z),p->preciseGround.sample(p.x(),p.z()));
-        var publicGround=new CityPublicGroundPlanner().plan(surfacePrintPlan,sources.district(),terrainField,ground);
-        surfacePrintPlan=publicGround.surface();
         var entrances=new CityEntranceAccessPlanner().plan(surfacePrintPlan,sources.seedGroups().stream().flatMap(g->g.gateSlots().stream()).toList(),
                 sources.district()==null?Set.of():sources.district().structures());
         surfacePrintPlan=entrances.surface();
+        var publicGround=new CityPublicGroundPlanner().plan(surfacePrintPlan,sources.district(),terrainField,ground);
+        surfacePrintPlan=publicGround.surface();
         JsonObject quality = quality(plan, sources, resolvedExpansion, connectionOutcomes,
                 residualResult.urbanSpacePlan(), skippedLandscapes, requiredLandscapeCapacities);
         quality.add("villageRoads",villageRoads.report());

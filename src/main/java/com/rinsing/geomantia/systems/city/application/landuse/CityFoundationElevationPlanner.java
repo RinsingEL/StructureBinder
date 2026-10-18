@@ -53,7 +53,7 @@ public final class CityFoundationElevationPlanner {
                 BlockPoint point = queue.removeFirst(); component.add(point);
                 var sample = samples.get(new BlockPoint(Math.floorDiv(point.x(),step),Math.floorDiv(point.z(),step)));
                 if (sample != null && sample.sampled() && !sample.water()) {
-                    int y = Math.floorDiv((int)Math.round(sample.elevation())+2,4)*4;
+                    int y = (int)Math.round(sample.elevation());
                     counts.merge(y,1,Integer::sum);
                 }
                 for (BlockPoint next : List.of(new BlockPoint(point.x()-1,point.z()),
@@ -86,7 +86,7 @@ public final class CityFoundationElevationPlanner {
                         if (nearest == null && !sampledCells.contains(cellKey)) continue;
                         var sample = samples.get(cellKey);
                         if(sample != null && sample.sampled() && !sample.water()) {
-                            int y = Math.floorDiv((int)Math.round(sample.elevation())+2,4)*4;
+                            int y = (int)Math.round(sample.elevation());
                             localCounts.merge(y,1,Integer::sum);
                         }
                     }

@@ -33,6 +33,7 @@ public final class CitySharedTerracePlanner {
         Map<String,Integer> datums = new TreeMap<>();
         district.cores().forEach((id,core) -> datums.put(id,CityFoundationElevationPlanner.planForCore(
                 List.of(new LandUseAreaPlan.ScanlineSpan(core.center().z(),core.center().x(),core.center().x())),terrain,core).get(0).targetY()));
+        Map<BlockPoint,String> owners=platformOwners(source,district,datums.keySet());
         Map<BlockPoint,Integer> platforms = new HashMap<>();
         List<CityLandUseSurfacePrintPlan.AreaPrint> areas = new ArrayList<>();
         for (var area : source.areas()) {
@@ -41,8 +42,7 @@ public final class CitySharedTerracePlanner {
             Map<BlockPoint,Integer> local = new HashMap<>();
             for (var span : recipe.platformSpans()) for (int x=span.minX();x<=span.maxX();x++) {
                 BlockPoint p = new BlockPoint(x,span.z());
-                String owner = district.groups().entrySet().stream().filter(e -> datums.containsKey(e.getKey()) && e.getValue().contains(p))
-                        .map(Map.Entry::getKey).min(Comparator.naturalOrder()).orElse(null);
+                String owner = owners.get(p);
                 int y = owner == null ? span.targetY() : datums.get(owner);
                 local.put(p,y); platforms.put(p,y);
             }
@@ -95,7 +95,8 @@ public final class CitySharedTerracePlanner {
         Set<BlockPoint> traversable = new HashSet<>(candidates); traversable.addAll(platforms.keySet()); traversable.addAll(roads.keySet());
         Map<BlockPoint,RoadDatum> nearest = new HashMap<>(); ArrayDeque<BlockPoint> queue = new ArrayDeque<>();
         for(var p:roads.keySet().stream().sorted(ORDER).toList()) {
-            var f=roads.get(p); int y=f.targetSurfaceY()==null?platforms.getOrDefault(p,samples.height(p.x(),p.z())):f.targetSurfaceY();
+            var f=roads.get(p); int y=f.targetSurfaceY()==null?platforms.getOrDefault(p,samples.height(p.x(),p.z())):
+                    f.targetSurfaceY()-(f.kind()==CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR?1:0);
             nearest.put(p,new RoadDatum(p,y,0)); queue.add(p);
         }
         while(!queue.isEmpty()) {
@@ -157,6 +158,26 @@ public final class CitySharedTerracePlanner {
         return feature.surfaceOffset()==0 && (feature.kind()==CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
                 || feature.kind()==CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR
                 || feature.kind()==CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK);
+    }
+    private static Map<BlockPoint,String> platformOwners(CityLandUseSurfacePrintPlan source,
+            CityDistrictPlanner.Result district,Set<String> cores) {
+        Set<BlockPoint> domain=new HashSet<>();
+        for(var area:source.areas())if(area.recipe() instanceof CityLandUseSurfacePrintPlan.UniformRecipe u)
+            for(var span:u.platformSpans())for(int x=span.minX();x<=span.maxX();x++)domain.add(new BlockPoint(x,span.z()));
+        Map<BlockPoint,String> owners=new HashMap<>();ArrayDeque<BlockPoint> queue=new ArrayDeque<>();
+        // Road shoulders and the gap-closing pass extend construction beyond group masks. They
+        // are still part of that actual pad, not independent building-led platforms. Multi-source
+        // breadth-first ownership fills only the existing pad and resolves ties by district id.
+        for(var e:new TreeMap<>(district.groups()).entrySet())if(cores.contains(e.getKey()))
+            for(var p:e.getValue().stream().filter(domain::contains).sorted(ORDER).toList())
+                if(owners.putIfAbsent(p,e.getKey())==null)queue.add(p);
+        while(!queue.isEmpty()){
+            var p=queue.removeFirst();
+            for(var q:neighbors(p))if(domain.contains(q)&&!owners.containsKey(q)){
+                owners.put(q,owners.get(p));queue.addLast(q);
+            }
+        }
+        return owners;
     }
     public static List<CityLandUseSurfacePrintPlan.PlatformSpan> spans(Map<BlockPoint,Integer> cells) {
         List<CityLandUseSurfacePrintPlan.PlatformSpan> out=new ArrayList<>();var sorted=cells.keySet().stream().sorted(ORDER).toList();

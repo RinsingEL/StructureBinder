@@ -8,6 +8,17 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CitySharedTerracePlannerTest {
+    @Test void addedRoadShouldersInheritTheConnectedDistrictInsteadOfAnIndependentDatum() {
+        var input=source();var original=district();
+        // The eastern pad is a later shoulder/gap extension, outside the explicit group seed.
+        var extended=new CityDistrictPlanner.Result(original.construction(),original.envelope(),original.natural(),Set.of(),
+                Map.of("west",mask(0,2,0,12)),4,2,Map.of("west",new BlockBounds(1,1,5,5)));
+        var output=new CitySharedTerracePlanner().apply(input,extended,terrain(false,false),empty(),List.of(),CitySharedTerracePlanner.Settings.defaults());
+        var spans=((CityLandUseSurfacePrintPlan.UniformRecipe)output.areas().get(0).recipe()).platformSpans();
+        assertTrue(spans.stream().filter(s->s.minX()<10).allMatch(s->s.targetY()==64));
+        assertTrue(spans.stream().filter(s->s.minX()>20).allMatch(s->s.targetY()==72),"a disconnected unowned pad is not absorbed across natural ground");
+        assertEquals(input.areas().get(0).memberSpans(),output.areas().get(0).memberSpans());
+    }
     private static final BlockBounds BOUNDS=new BlockBounds(-4,-8,40,28);
     private static Set<BlockPoint> mask(int minX,int maxX,int minZ,int maxZ){Set<BlockPoint>s=new HashSet<>();for(int z=minZ;z<=maxZ;z++)for(int x=minX;x<=maxX;x++)s.add(new BlockPoint(x,z));return s;}
     private static LandUseTerrainField terrain(boolean water,boolean valley){

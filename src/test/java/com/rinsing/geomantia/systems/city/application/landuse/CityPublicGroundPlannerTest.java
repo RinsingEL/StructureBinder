@@ -10,6 +10,96 @@ import static org.junit.jupiter.api.Assertions.*;
 import static com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan.*;
 
 class CityPublicGroundPlannerTest {
+    @Test void diagonalGuardsIncludeSupportedInnerCornersInEveryDirection() {
+        for(int sx:new int[]{-1,1})for(int sz:new int[]{-1,1}) {
+            var plant=new FeatureCell("plant",15,15,"minecraft:grass",1,FeatureKind.GREEN_PLANT,HorizontalFacing.NONE,68);
+            var output=diagonalPad(sx,sz,List.of(plant));
+            var rails=output.featureCells().stream().filter(f->f.kind()==FeatureKind.TERRACE_RAIL)
+                    .map(f->new BlockPoint(f.x(),f.z())).collect(java.util.stream.Collectors.toSet());
+            for(int x=-2;x<=2;x++) {
+                assertTrue(rails.contains(new BlockPoint(15+sx*x,15-sz*x)),"missing inner corner "+x);
+                assertTrue(rails.contains(new BlockPoint(15+sx*x,15+sz*(1-x))),"missing rim "+x);
+            }
+            assertFalse(rails.contains(new BlockPoint(15+sx,15+sz)),"do not extend onto the lower terrace");
+            assertFalse(rails.contains(new BlockPoint(15-sx,15-sz)),"do not grow rails into the interior");
+            assertFalse(output.featureCells().contains(plant),"corner rail replaces planting at that position");
+        }
+    }
+
+    @Test void diagonalCornerCompletionKeepsRoadStairAndFixtureOpenings() {
+        for(var kind:List.of(FeatureKind.ROAD_SLAB,FeatureKind.ROAD_STAIR,FeatureKind.AUTHORED_BLOCK)) {
+            var obstacle=new FeatureCell("opening",15,15,"minecraft:stone_bricks",
+                    kind==FeatureKind.AUTHORED_BLOCK?1:0,kind,kind==FeatureKind.ROAD_STAIR?HorizontalFacing.EAST:HorizontalFacing.NONE,kind==FeatureKind.ROAD_STAIR?69:68);
+            var rails=diagonalPad(1,1,List.of(obstacle)).featureCells().stream().filter(f->f.kind()==FeatureKind.TERRACE_RAIL).toList();
+            assertFalse(rails.stream().anyMatch(f->f.x()==15&&f.z()==15));
+            if(kind!=FeatureKind.AUTHORED_BLOCK)
+                assertFalse(rails.stream().anyMatch(f->Math.abs(f.x()-15)<=2&&Math.abs(f.z()-15)<=2));
+            assertTrue(rails.stream().anyMatch(f->f.x()==12&&f.z()==18),"keep unrelated rim corners");
+        }
+    }
+
+    private CityLandUseSurfacePrintPlan diagonalPad(int sx,int sz,List<FeatureCell> features) {
+        Map<BlockPoint,Integer> heights=new HashMap<>();
+        for(int z=-4;z<=4;z++)for(int x=-4;x<=4;x++)heights.put(new BlockPoint(15+sx*x,15+sz*z),x+z<=1?68:64);
+        var members=java.util.stream.IntStream.rangeClosed(11,19).mapToObj(z->new LandUseAreaPlan.ScanlineSpan(z,11,19)).toList();
+        var area=new AreaPrint("pad","pad",List.of("city::foundation"),LandUseSurfaceSettings.defaults(SurfacePolicy.PAVE),
+                members,List.of(),LandUseSurfaceSettings.SurfaceAlgorithm.UNIFORM,null,
+                new UniformRecipe("minecraft:stone_bricks","",CitySharedTerracePlanner.spans(heights)));
+        return new CityPublicGroundPlanner().plan(source(List.of(area),features),district(List.of()),terrain,
+                (x,z)->new CityPublicRealmPlanner.Ground(64,true)).surface();
+    }
+
+    @Test void acceptedSharedPadCutsTheRecordedSevenAndEightBlockHillsAroundLowDorms() {
+        var members=new ArrayList<LandUseAreaPlan.ScanlineSpan>();var platforms=new ArrayList<PlatformSpan>();
+        for(int z=0;z<16;z++){members.add(new LandUseAreaPlan.ScanlineSpan(z,0,31));platforms.add(new PlatformSpan(z,0,31,62));}
+        var area=new AreaPrint("dorms","dorms",List.of("city::foundation"),LandUseSurfaceSettings.defaults(SurfacePolicy.PAVE),
+                members,List.of(),LandUseSurfaceSettings.SurfaceAlgorithm.UNIFORM,null,new UniformRecipe("minecraft:stone_bricks","",platforms));
+        var output=new CityPublicGroundPlanner().plan(source(List.of(area),green()),district(List.of()),terrain,
+                (x,z)->new CityPublicRealmPlanner.Ground(x<16?69:70,true));
+        assertEquals(platforms,((UniformRecipe)output.surface().areas().get(0).recipe()).platformSpans());
+        assertTrue(output.surface().areas().get(0).exclusionSpans().isEmpty(),"accepted terrace cuts must not become preserved high strips");
+        assertTrue(output.surface().featureCells().stream().filter(f->f.surfaceOffset()==0).allMatch(f->f.targetSurfaceY()==62));
+    }
+    @Test void guardsFollowTheFinalDistrictStepAndNeverThePublicSpaceRectangle() {
+        var platforms=new ArrayList<PlatformSpan>();var members=new ArrayList<LandUseAreaPlan.ScanlineSpan>();
+        for(int z=0;z<16;z++){
+            platforms.add(new PlatformSpan(z,0,15,68));platforms.add(new PlatformSpan(z,16,31,72));
+            members.add(new LandUseAreaPlan.ScanlineSpan(z,0,31));
+        }
+        var area=new AreaPrint("court","court",List.of("city::foundation"),LandUseSurfaceSettings.defaults(SurfacePolicy.PAVE),
+                members,List.of(),LandUseSurfaceSettings.SurfaceAlgorithm.UNIFORM,null,new UniformRecipe("minecraft:stone_bricks","",platforms));
+        var result=new CityPublicGroundPlanner().plan(source(List.of(area),green()),district(List.of(
+                new CityDistrictPlanner.Result.PublicSpace("court",new BlockBounds(4,2,11,13),"courtyard"))),terrain,
+                (x,z)->new CityPublicRealmPlanner.Ground(70,true));
+        var rails=result.surface().featureCells().stream().filter(f->f.kind()==FeatureKind.TERRACE_RAIL).toList();
+        assertTrue(rails.stream().anyMatch(f->f.x()==16&&f.z()==3&&f.targetSurfaceY()==72));
+        assertFalse(rails.stream().anyMatch(f->f.x()>0&&f.x()<15&&f.z()>0&&f.z()<15));
+        assertEquals(0,result.report().get("transitionConflictColumns").getAsInt());
+    }
+    @Test void teachingAndArchiveRectangleEdgesCannotChangeAnExistingSharedDatum() {
+        for(int natural:List.of(64,73)){
+            List<PlatformSpan> platforms=new ArrayList<>();List<LandUseAreaPlan.ScanlineSpan> members=new ArrayList<>();
+            for(int z=0;z<16;z++){platforms.add(new PlatformSpan(z,0,31,68));members.add(new LandUseAreaPlan.ScanlineSpan(z,0,31));}
+            var area=new AreaPrint("court","court",List.of("city::foundation"),LandUseSurfaceSettings.defaults(SurfacePolicy.PAVE),
+                    members,List.of(),LandUseSurfaceSettings.SurfaceAlgorithm.UNIFORM,null,new UniformRecipe("minecraft:stone_bricks","",platforms));
+            var result=new CityPublicGroundPlanner().plan(source(List.of(area),green()),
+                    district(List.of(new CityDistrictPlanner.Result.PublicSpace("court",new BlockBounds(8,4,23,11),"courtyard"))),terrain,
+                    (x,z)->new CityPublicRealmPlanner.Ground(natural,true));
+            assertTrue(result.surface().featureCells().stream().filter(f->f.surfaceOffset()==0).allMatch(f->f.targetSurfaceY()==68));
+            assertEquals(0,result.report().get("transitionConflictColumns").getAsInt());
+        }
+    }
+
+    @Test void deepDryHoleUnderPublicPlatformIsExcludedInsteadOfCappedWithGrass() {
+        var area=new AreaPrint("court","court",List.of("city::foundation"),LandUseSurfaceSettings.defaults(SurfacePolicy.PAVE),
+                List.of(new LandUseAreaPlan.ScanlineSpan(7,0,31)),List.of(),LandUseSurfaceSettings.SurfaceAlgorithm.UNIFORM,null,
+                new UniformRecipe("minecraft:stone_bricks","",List.of(new PlatformSpan(7,0,31,65))));
+        var result=new CityPublicGroundPlanner().plan(source(List.of(area),green().stream().filter(f->f.kind()!=FeatureKind.GREEN_PATH).toList()),
+                district(List.of()),terrain,(x,z)->new CityPublicRealmPlanner.Ground(x==12?34:65,true));
+        var recipe=(UniformRecipe)result.surface().areas().get(0).recipe();
+        assertFalse(recipe.platformSpans().stream().anyMatch(s->s.minX()<=12&&s.maxX()>=12));
+        assertTrue(result.surface().featureCells().stream().filter(f->f.x()==12).allMatch(f->f.targetSurfaceY()==34));
+    }
     @Test void courtyardGreenGroundInheritsItsFrozenSharedPlatformInsteadOfNaturalLevel() {
         var floor=new HashMap<BlockPoint,Integer>();
         for(int z=0;z<16;z++)for(int x=0;x<32;x++)floor.put(new BlockPoint(x,z),68);
