@@ -64,7 +64,32 @@ class CityLandUseChunkExecutorTest {
         assertEquals(CityLandUseChunkExecutor.Status.FAILED,new CityLandUseChunkExecutor().execute(fragment,blocked,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES).status());assertTrue(blocked.writes.isEmpty());
     }
     private final CityLandUseChunkExecutor executor = new CityLandUseChunkExecutor();
-    @Test void publicGreenGroundCapsADeepDryCarverWithoutRollingBackTheOwner() {
+    @Test void sharedPadCutsEightBlocksButOrdinaryGreeneryStillPreservesThatHill() {
+        for(boolean shared:List.of(true,false)){
+            var ground=new CityLandUseChunkCompiler.FeatureOperation(shared?"public_ground::shared::city":"public_ground::natural::city",3,3,"minecraft:grass_block",0,
+                    CityLandUseSurfacePrintPlan.FeatureKind.GREEN_GROUND,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,62);
+            var fragment=new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,"city","hash","palette",
+                    0,0,1,0,0,0,"minecraft:dirt",List.of(),List.of(),List.of(),List.of(ground),List.of(ground));
+            var world=new FakeWorld();world.columns.put("3,3",new CityLandUseChunkExecutor.ColumnSample(70,"minecraft:grass_block",true));
+            var result=executor.execute(fragment,world,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+            assertEquals(CityLandUseChunkExecutor.Status.APPLIED,result.status());
+            if(shared){
+                for(int y=63;y<=70;y++)assertTrue(world.writes.contains("3,"+y+",3=minecraft:air"),"uncut hill at "+y);
+                assertTrue(world.writes.contains("3,62,3=minecraft:grass_block"));
+            }else assertTrue(world.writes.isEmpty(),"a plain lawn must not inherit building earthworks");
+        }
+    }
+    @Test void boundedGreenTransitionUsesSolidSoilEvenWhenBuildingSupportWouldChooseADeck() {
+        var ground=new CityLandUseChunkCompiler.FeatureOperation("public_ground::transition::city",3,3,"minecraft:grass_block",0,
+                CityLandUseSurfacePrintPlan.FeatureKind.GREEN_GROUND,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,64);
+        var fragment=new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,"city","hash","palette",
+                0,0,1,0,0,0,"minecraft:dirt",List.of(),List.of(),List.of(),List.of(ground),List.of(ground));
+        var world=new FakeWorld();world.columns.put("3,3",new CityLandUseChunkExecutor.ColumnSample(58,"minecraft:stone",true));
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED,executor.execute(fragment,world,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES).status());
+        for(int y=59;y<64;y++)assertTrue(world.writes.contains("3,"+y+",3=minecraft:dirt"));
+        assertTrue(world.writes.contains("3,64,3=minecraft:grass_block"));
+    }
+    @Test void publicGreenGroundPreservesADeepDryCarverWithoutFloatingGrassOrRollingBackTheOwner() {
         var ground=new CityLandUseChunkCompiler.FeatureOperation("public_ground::city",3,3,"minecraft:grass_block",0,
                 CityLandUseSurfacePrintPlan.FeatureKind.GREEN_GROUND,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,64);
         var fragment=new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,"city","hash","palette",
@@ -72,8 +97,7 @@ class CityLandUseChunkExecutorTest {
         var world=new FakeWorld();world.columns.put("3,3",new CityLandUseChunkExecutor.ColumnSample(34,"minecraft:stone",true));
         var result=executor.execute(fragment,world,CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
         assertEquals(CityLandUseChunkExecutor.Status.APPLIED,result.status());
-        assertTrue(world.writes.contains("3,63,3=minecraft:stone_bricks"));
-        assertTrue(world.writes.contains("3,64,3=minecraft:grass_block"));
+        assertTrue(world.writes.isEmpty(),world.writes.toString());
     }
 
     @Test void accessCutReplacesFrozenGrassAndActuallyWritesItsStairs() {

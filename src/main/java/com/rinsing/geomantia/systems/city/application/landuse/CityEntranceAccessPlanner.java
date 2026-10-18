@@ -23,24 +23,40 @@ public final class CityEntranceAccessPlanner {
             var first=cells.get(new Key(door.x()+dx,door.z()+dz,0));if(!road(first)||first.targetSurfaceY()==null)continue;
             int street=grade(first),delta=floor-street;if(delta==0){connected++;continue;}
             if(Math.abs(delta)>6){warnings.add("CITY_ENTRANCE_GRADE_TOO_STEEP:"+gate.gateId());continue;}
-            int length=Math.abs(delta)+(delta<0?1:0);List<FeatureCell> pending=new ArrayList<>();boolean safe=true;
+            List<FeatureCell> pending=new ArrayList<>();boolean safe=false;
             for(int attempt=0;attempt<2;attempt++){
-            int halfWidth=attempt==0?1:0;pending.clear();safe=true;
+            int halfWidth=attempt==0?1:0;
+            for(int length=1;length<=12;length++){
+            pending.clear();safe=true;
+            // Resolve the untouched far landing first. The first road column is about to be
+            // replaced and cannot serve as the destination of the whole staircase.
+            Integer landing=null;
+            for(int side=-halfWidth;side<=halfWidth;side++){
+                var end=cells.get(new Key(door.x()+dx*(length+1)-dz*side,door.z()+dz*(length+1)+dx*side,0));
+                if(!road(end)||end.targetSurfaceY()==null||end.kind()==FeatureKind.ROAD_STAIR
+                        ||landing!=null&&landing!=grade(end)){safe=false;break;}
+                landing=grade(end);
+            }
+            if(!safe)continue;
+            int endDelta=floor-landing;
+            if(Math.abs(endDelta)>6||Math.abs(endDelta)+(endDelta<0?1:0)>length){safe=false;continue;}
             for(int n=1;n<=length&&safe;n++)for(int side=-halfWidth;side<=halfWidth;side++){
                 int x=door.x()+dx*n-dz*side,z=door.z()+dz*n+dx*side;var key=new Key(x,z,0);var old=cells.get(key);
                 if(structures.contains(new BlockPoint(x,z))||!road(old)||old.targetSurfaceY()==null){safe=false;break;}
                 var above=cells.get(new Key(x,z,1));
                 if(above!=null&&above.kind()!=FeatureKind.GREEN_PLANT){safe=false;break;}
-                int base=delta>0?Math.max(street,floor-n):Math.min(street,floor+n-1);
-                boolean stair=delta>0||n<length;
+                int base=endDelta>0?Math.max(landing,floor-n):Math.min(landing,floor+n-1);
+                boolean stair=endDelta>0?n<=endDelta:endDelta<0&&n<=-endDelta;
                 String fallbackStair=old.blockId().endsWith("_slab")?old.blockId().substring(0,old.blockId().length()-5)+"_stairs":old.blockId().endsWith("_stairs")?old.blockId():"minecraft:stone_brick_stairs";
                 String block=stair?source.materialField().at("accessStair",x,z,old.sourceId(),fallbackStair):
                         source.materialField().at("accessSurface",x,z,old.sourceId(),"minecraft:stone_brick_slab");
-                var facing=HorizontalFacing.NONE;if(stair){int fx=delta>0?-dx:dx,fz=delta>0?-dz:dz;
+                var facing=HorizontalFacing.NONE;if(stair){int fx=endDelta>0?-dx:dx,fz=endDelta>0?-dz:dz;
                     facing=fx<0?HorizontalFacing.WEST:fx>0?HorizontalFacing.EAST:fz<0?HorizontalFacing.NORTH:HorizontalFacing.SOUTH;}
                 boolean bridge=old.kind()==FeatureKind.BRIDGE_DECK||old.sourceId().startsWith(BRIDGE_SOURCE);
                 pending.add(new FeatureCell((bridge?BRIDGE_SOURCE:SOURCE)+gate.gateId(),x,z,block,0,
                         stair?FeatureKind.ROAD_STAIR:FeatureKind.ROAD_SLAB,facing,base+(stair?1:0)));
+            }
+            if(safe)break;
             }
             if(safe){if(halfWidth==0)warnings.add("CITY_ENTRANCE_NARROW_STAIR:"+gate.gateId());break;}
             }

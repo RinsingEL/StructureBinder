@@ -179,6 +179,7 @@ public final class CityLandUseChunkExecutor {
         Set<ColumnKey> surfaceColumns = new HashSet<>();
         Set<ColumnKey> frozenRoadColumns = new HashSet<>();
         Set<ColumnKey> connectionColumns = new HashSet<>();
+        Set<ColumnKey> grassColumns = new HashSet<>();
         Map<ColumnKey,Integer> sharedTerraceHeights = new HashMap<>();
         Set<ColumnKey> preservedPublicGround = new HashSet<>();
         for(var s:fragment.sharedTerraceSpans()) for(int x=s.minX();x<=s.maxX();x++)
@@ -195,14 +196,22 @@ public final class CityLandUseChunkExecutor {
             if (feature.kind() == CityLandUseSurfacePrintPlan.FeatureKind.TERRACE_GROUND || feature.sourceId().startsWith(com.rinsing.geomantia.systems.city.application.landuse.CityPublicGroundPlanner.SOURCE)
                     &&feature.kind()!=CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK) {
                 connectionColumns.add(key);
+                if(feature.kind()==CityLandUseSurfacePrintPlan.FeatureKind.GREEN_GROUND
+                        ||"minecraft:grass_block".equals(feature.blockId()))grassColumns.add(key);
                 column = world.samplePublicGround(feature.x(), feature.z());
                 terrain.put(key, column);
+                boolean shared=feature.kind()==CityLandUseSurfacePrintPlan.FeatureKind.TERRACE_GROUND
+                        ||feature.sourceId().startsWith(com.rinsing.geomantia.systems.city.application.landuse.CityPublicGroundPlanner.SHARED_SOURCE)
+                        ||foundationByColumn.containsKey(key);
                 if (!column.naturalSurface() || "minecraft:water".equals(column.surfaceBlockId())
                         || "minecraft:lava".equals(column.surfaceBlockId())
-                        || column.surfaceY()-feature.targetSurfaceY()>CityLandUseMicroGrader.FOUNDATION_MAX_CUT_DEPTH_BLOCKS) {
+                        || !com.rinsing.geomantia.systems.city.application.landuse.CityPublicGroundPlanner
+                            .permitsEarthwork(column.surfaceY(),feature.targetSurfaceY(),shared)) {
                     // Carvers and local water can differ from the chunk-free design terrain.
                     // Preserve this natural column without discarding the owner's roads and dry ground.
                     preservedPublicGround.add(key);
+                    LOGGER.warn("Public ground preserved: city={}, column={},{} actualY={} targetY={} source={}",
+                            fragment.cityId(),feature.x(),feature.z(),column.surfaceY(),feature.targetSurfaceY(),feature.sourceId());
                     foundationByColumn.remove(key);
                     fillByColumn.remove(key);
                     continue;
@@ -224,6 +233,8 @@ public final class CityLandUseChunkExecutor {
                     feature.x(), feature.z(), column.surfaceY(), targetY,
                     bridgeColumns.contains(key) && targetY>column.surfaceY()+1
                             ? CityLandUseMicroGrader.FoundationMode.DECK
+                            : connectionColumns.contains(key)
+                            ? (targetY<column.surfaceY()?CityLandUseMicroGrader.FoundationMode.CUT:CityLandUseMicroGrader.FoundationMode.FILL)
                             : CityLandUseMicroGrader.designedRealization(column.surfaceY(), targetY)));
             if (surfaceColumns.add(key)) surfaceOperations.add(new CityLandUseChunkCompiler.SurfaceOperation(
                     feature.sourceId(), "road", feature.x(), feature.z(), fragment.materialField().at("roadBase",feature.x(),feature.z(),feature.sourceId(),"minecraft:stone_bricks")));
@@ -312,7 +323,9 @@ public final class CityLandUseChunkExecutor {
             if (shouldFill && preparedFillColumns.add(key)) {
                 for (int y = column.surfaceY() + 1; y < targetSurfaceY; y++) {
                     PreparedMutation mutation = prepare(world, operation.areaId(), OperationPhase.MICRO_FILL,
-                            operation.x(), y, operation.z(), connectionColumns.contains(key)
+                            operation.x(), y, operation.z(), grassColumns.contains(key)
+                                    ? fragment.materialField().at("fill",operation.x(),operation.z(),fragment.microFillBlockId())
+                                    : connectionColumns.contains(key)
                                     ? fragment.materialField().at("retainingWall",operation.x(),operation.z(),"minecraft:stone_bricks")
                                     : frozenRoadColumns.contains(key)
                                     ? fragment.materialField().at("roadBase",operation.x(),operation.z(),roadSources.getOrDefault(key,operation.areaId()),"minecraft:stone_bricks")

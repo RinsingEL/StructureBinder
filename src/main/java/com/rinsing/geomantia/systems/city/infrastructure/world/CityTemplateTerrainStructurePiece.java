@@ -1,6 +1,7 @@
 package com.rinsing.geomantia.systems.city.infrastructure.world;
 
 import com.rinsing.geomantia.systems.city.application.CityTemplatePlacementGeometry;
+import com.rinsing.geomantia.systems.city.application.CityTemplateGroundPlane;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import net.minecraft.core.BlockPos;
@@ -12,8 +13,10 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
@@ -166,6 +169,15 @@ public final class CityTemplateTerrainStructurePiece extends StructurePiece {
                     .setIgnoreEntities(true)
                     .setKeepLiquids(false);
             StructureTemplate template = read.template().orElseThrow();
+            boolean decoration = com.rinsing.geomantia.systems.city.application.CityTemplateTerrainPosePolicy
+                    .STRUCTURE_START_DECORATION.equals(item.templatePlan().get("terrainPosePolicy").getAsString());
+            if (!decoration) {
+                var plan=item.templatePlan();
+                Integer authoredGround=CityTemplateGroundPlane.read(plan.has("groundPlaneY")?plan:
+                        plan.getAsJsonObject("structureTemplate"),sourceSize.height());
+                int firstFreeY=datumY+(authoredGround!=null?authoredGround:CityTemplateGroundLevel.offset(template));
+                clearBuildingSite(level,footprint,chunkBox,firstFreeY);
+            }
             boolean written = template.placeInWorld(level, transform.placementOrigin(),
                     transform.placementOrigin(), settings, random, 2);
             if (!written) {
@@ -174,8 +186,6 @@ public final class CityTemplateTerrainStructurePiece extends StructurePiece {
                         "StructureTemplate.placeInWorld returned false.");
                 return;
             }
-            boolean decoration = com.rinsing.geomantia.systems.city.application.CityTemplateTerrainPosePolicy
-                    .STRUCTURE_START_DECORATION.equals(item.templatePlan().get("terrainPosePolicy").getAsString());
             if (!decoration) supportBuildingFloor(level, footprint, chunkBox);
             CityWorldgenBlockObservationRegistry.watchStructureTemplate(template, templateHash,
                     transform.placementOrigin(), transform.minecraftMirror(), transform.minecraftRotation(),
@@ -193,6 +203,24 @@ public final class CityTemplateTerrainStructurePiece extends StructurePiece {
         } catch (RuntimeException ex) {
             CityReservationMaskRegistry.recordWorldgenFailure(item, chunkPos,
                     "TEMPLATE_TERRAIN_START_PLACEMENT_FAILED", message(ex));
+        }
+    }
+
+    /** Sparse NBT omits many empty exterior cells. A lowered building still owns a clear site there.
+     * Clear before placing authored blocks, above its ground plane and only inside this owner chunk.
+     * Trees/decorations do not enter this path; their canopy footprint must not excavate terrain.
+     */
+    static void clearBuildingSite(WorldGenLevel level,BlockBounds footprint,BoundingBox chunkBox,int firstFreeY) {
+        int minX=Math.max(footprint.minX(),chunkBox.minX()),maxX=Math.min(footprint.maxX(),chunkBox.maxX());
+        int minZ=Math.max(footprint.minZ(),chunkBox.minZ()),maxZ=Math.min(footprint.maxZ(),chunkBox.maxZ());
+        int bottom=Math.max(firstFreeY,level.getMinBuildHeight());
+        var cursor=new BlockPos.MutableBlockPos();
+        for(int z=minZ;z<=maxZ;z++)for(int x=minX;x<=maxX;x++){
+            int top=Math.min(level.getMaxBuildHeight()-1,level.getHeight(Heightmap.Types.WORLD_SURFACE_WG,x,z)-1);
+            for(int y=top;y>=bottom;y--){
+                cursor.set(x,y,z);
+                if(!level.getBlockState(cursor).isAir())level.setBlock(cursor,Blocks.AIR.defaultBlockState(),2);
+            }
         }
     }
 

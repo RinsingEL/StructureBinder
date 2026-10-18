@@ -10,6 +10,15 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CityFoundationElevationPlannerTest {
+    @Test void coreDatumDoesNotInventFourBlockTerracesOnLevelTerrain() {
+        for(int natural:List.of(65,66,67,69)){
+            var cells=new ArrayList<LandUseTerrainField.Cell>();
+            for(int x=-32;x<=31;x++)cells.add(cell(x,natural));
+            var result=CityFoundationElevationPlanner.planForCore(List.of(new LandUseAreaPlan.ScanlineSpan(0,-16,16)),
+                    terrain(cells),new BlockBounds(-2,0,2,0));
+            assertTrue(result.stream().allMatch(s->s.targetY()==natural));
+        }
+    }
     @Test
     void completePlatformClosesDeepPitAndKeepsSameHeightAcrossNegativeChunkBoundary() {
         var spans = List.of(new LandUseAreaPlan.ScanlineSpan(0, -32, 31));

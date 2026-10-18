@@ -6,6 +6,21 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan.*;
 class CityEntranceAccessPlannerTest {
+    @Test void ascendingExistingRoadMustMeetTheFarLandingAfterEntranceRewrite() {
+        var initial=source(66);
+        var features=initial.featureCells().stream().map(f->new FeatureCell(f.sourceId(),f.x(),f.z(),f.blockId(),0,
+                f.kind(),f.facing(),Math.min(66,62+(-2699-f.x())))).toList();
+        var input=new CityLandUseSurfacePrintPlan(initial.schema(),initial.cityId(),initial.sourceLandUsePlanHash(),"",initial.areas(),List.of(),features);
+        var result=new CityEntranceAccessPlanner().plan(input,List.of(new LandUseAreaPlan.GateSlot("dorm::front",
+                new BlockPoint(-2698,5185),CardinalDirection.WEST,"dorm")),Set.of());
+        assertEquals(1,result.report().get("connectedEntrances").getAsInt());
+        for(int z=5184;z<=5186;z++){
+            final int zz=z;var line=result.surface().featureCells().stream().filter(f->f.z()==zz).sorted(Comparator.comparingInt(FeatureCell::x).reversed()).toList();
+            int previous=66;
+            for(var f:line){int low=f.targetSurfaceY()-(f.kind()==FeatureKind.ROAD_STAIR?1:0);
+                assertTrue(Math.abs(previous-low)<=1,"broken landing at "+f);previous=low;}
+        }
+    }
     private CityLandUseSurfacePrintPlan source(int floor){
         var area=new AreaPrint("foundation","foundation",List.of("city::foundation"),LandUseSurfaceSettings.defaults(SurfacePolicy.PAVE),
                 List.of(new LandUseAreaPlan.ScanlineSpan(5185,-2698,-2693)),List.of(),LandUseSurfaceSettings.SurfaceAlgorithm.UNIFORM,null,
