@@ -123,6 +123,25 @@ public final class CityPublicGroundPlanner {
             if(edgeBlocked.contains(p)||CityPublicGroundGrade.neighbors(p).stream()
                     .noneMatch(q->y-finalGround.getOrDefault(q,ground.apply(q).surfaceY())>=2))continue;
             guarded.add(p);
+        }
+        // Diagonal rim cells only touch at a point. Join them through the supported
+        // inner corner; never grow onto the low side or bridge a protected opening.
+        Set<BlockPoint> corners=new HashSet<>();
+        for(var p:sharedEdges.keySet()) {
+            if(guarded.contains(p)||edgeBlocked.contains(p))continue;
+            int y=finalGround.getOrDefault(p,sharedEdges.get(p));
+            for(int dx:new int[]{-1,1})for(int dz:new int[]{-1,1}) {
+                var alongX=new BlockPoint(p.x()+dx,p.z());
+                var alongZ=new BlockPoint(p.x(),p.z()+dz);
+                var outside=new BlockPoint(p.x()+dx,p.z()+dz);
+                if(guarded.contains(alongX)&&guarded.contains(alongZ)
+                        &&Objects.equals(finalGround.get(alongX),y)&&Objects.equals(finalGround.get(alongZ),y)
+                        &&y-finalGround.getOrDefault(outside,ground.apply(outside).surfaceY())>=2)corners.add(p);
+            }
+        }
+        guarded.addAll(corners);
+        for(var p:guarded) {
+            int y=finalGround.getOrDefault(p,sharedEdges.get(p));
             kept.add(new FeatureCell(CitySharedTerracePlanner.SOURCE+source.cityId(),p.x(),p.z(),
                     source.materialField().at("railing",p.x(),p.z(),"minecraft:stone_brick_wall"),1,FeatureKind.TERRACE_RAIL,HorizontalFacing.NONE,y));
         }

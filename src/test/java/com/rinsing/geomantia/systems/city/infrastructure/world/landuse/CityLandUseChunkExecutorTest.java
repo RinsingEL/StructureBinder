@@ -15,6 +15,38 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandUseChunkExecutorTest {
+    @Test void diagonalCornerRailsSurviveExecutionAcrossOwnersButInteriorRailsAreRemoved() {
+        for(boolean explicit:List.of(false,true))for(int sx:new int[]{-1,1})for(int sz:new int[]{-1,1}) {
+            var mask=new ArrayList<CityLandUseChunkCompiler.GradingMaskCell>();
+            var allSurfaces=new ArrayList<CityLandUseChunkCompiler.SurfaceOperation>();
+            var heights=new HashMap<BlockPoint,Integer>();
+            var rails=new ArrayList<CityLandUseChunkCompiler.FeatureOperation>();
+            for(int z=-4;z<=4;z++)for(int x=-4;x<=4;x++) {
+                int xx=15+sx*x,zz=15+sz*z,y=x+z<=1?68:64;
+                heights.put(new BlockPoint(xx,zz),y);
+                mask.add(new CityLandUseChunkCompiler.GradingMaskCell("pad",xx,zz,true,y));
+                allSurfaces.add(new CityLandUseChunkCompiler.SurfaceOperation("pad","plaza",xx,zz,"minecraft:grass_block"));
+                if(explicit&&(x+z==0||x+z==1||x==-1&&z==-1))
+                    rails.add(new CityLandUseChunkCompiler.FeatureOperation("shared_terrace::city",xx,zz,"minecraft:stone_brick_wall",1,
+                            CityLandUseSurfacePrintPlan.FeatureKind.TERRACE_RAIL,CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,y));
+            }
+            var world=new FakeWorld();
+            // Reverse owner order as well: each corner must use the full frozen halo.
+            for(int cx:new int[]{1,0})for(int cz:new int[]{1,0}) {
+                var surfaces=allSurfaces.stream().filter(s->Math.floorDiv(s.x(),16)==cx&&Math.floorDiv(s.z(),16)==cz).toList();
+                var ownedRails=rails.stream().filter(s->Math.floorDiv(s.x(),16)==cx&&Math.floorDiv(s.z(),16)==cz).toList();
+                var fragment=new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,"city","hash","palette",
+                        cx,cz,surfaces.size(),0,0,0,"minecraft:dirt",mask,surfaces,List.of(),ownedRails,rails,List.of(),List.of(),null,
+                        com.rinsing.geomantia.systems.city.application.landuse.CitySharedTerracePlanner.spans(heights));
+                assertEquals(CityLandUseChunkExecutor.Status.APPLIED,new CityLandUseChunkExecutor().execute(fragment,world,
+                        CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES).status());
+            }
+            for(int x=-2;x<=2;x++)assertTrue(world.writes.contains((15+sx*x)+",69,"+(15-sz*x)+"=minecraft:stone_brick_wall"),
+                    "lost inner corner, explicit="+explicit+", direction="+sx+","+sz+", x="+x);
+            assertFalse(world.writes.contains((15-sx)+",69,"+(15-sz)+"=minecraft:stone_brick_wall"),"interior guard must stay suppressed");
+        }
+    }
+
     @Test void entranceStairsOnABridgeRetainThinDeckSupport(){
         var stairs=new CityLandUseChunkCompiler.FeatureOperation("entrance_access::bridge::door",2,2,"minecraft:stone_brick_stairs",0,
                 CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR,CityLandUseSurfacePrintPlan.HorizontalFacing.EAST,70);

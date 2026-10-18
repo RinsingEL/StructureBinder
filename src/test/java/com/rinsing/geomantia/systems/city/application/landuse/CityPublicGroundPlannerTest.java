@@ -10,6 +10,45 @@ import static org.junit.jupiter.api.Assertions.*;
 import static com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan.*;
 
 class CityPublicGroundPlannerTest {
+    @Test void diagonalGuardsIncludeSupportedInnerCornersInEveryDirection() {
+        for(int sx:new int[]{-1,1})for(int sz:new int[]{-1,1}) {
+            var plant=new FeatureCell("plant",15,15,"minecraft:grass",1,FeatureKind.GREEN_PLANT,HorizontalFacing.NONE,68);
+            var output=diagonalPad(sx,sz,List.of(plant));
+            var rails=output.featureCells().stream().filter(f->f.kind()==FeatureKind.TERRACE_RAIL)
+                    .map(f->new BlockPoint(f.x(),f.z())).collect(java.util.stream.Collectors.toSet());
+            for(int x=-2;x<=2;x++) {
+                assertTrue(rails.contains(new BlockPoint(15+sx*x,15-sz*x)),"missing inner corner "+x);
+                assertTrue(rails.contains(new BlockPoint(15+sx*x,15+sz*(1-x))),"missing rim "+x);
+            }
+            assertFalse(rails.contains(new BlockPoint(15+sx,15+sz)),"do not extend onto the lower terrace");
+            assertFalse(rails.contains(new BlockPoint(15-sx,15-sz)),"do not grow rails into the interior");
+            assertFalse(output.featureCells().contains(plant),"corner rail replaces planting at that position");
+        }
+    }
+
+    @Test void diagonalCornerCompletionKeepsRoadStairAndFixtureOpenings() {
+        for(var kind:List.of(FeatureKind.ROAD_SLAB,FeatureKind.ROAD_STAIR,FeatureKind.AUTHORED_BLOCK)) {
+            var obstacle=new FeatureCell("opening",15,15,"minecraft:stone_bricks",
+                    kind==FeatureKind.AUTHORED_BLOCK?1:0,kind,kind==FeatureKind.ROAD_STAIR?HorizontalFacing.EAST:HorizontalFacing.NONE,kind==FeatureKind.ROAD_STAIR?69:68);
+            var rails=diagonalPad(1,1,List.of(obstacle)).featureCells().stream().filter(f->f.kind()==FeatureKind.TERRACE_RAIL).toList();
+            assertFalse(rails.stream().anyMatch(f->f.x()==15&&f.z()==15));
+            if(kind!=FeatureKind.AUTHORED_BLOCK)
+                assertFalse(rails.stream().anyMatch(f->Math.abs(f.x()-15)<=2&&Math.abs(f.z()-15)<=2));
+            assertTrue(rails.stream().anyMatch(f->f.x()==12&&f.z()==18),"keep unrelated rim corners");
+        }
+    }
+
+    private CityLandUseSurfacePrintPlan diagonalPad(int sx,int sz,List<FeatureCell> features) {
+        Map<BlockPoint,Integer> heights=new HashMap<>();
+        for(int z=-4;z<=4;z++)for(int x=-4;x<=4;x++)heights.put(new BlockPoint(15+sx*x,15+sz*z),x+z<=1?68:64);
+        var members=java.util.stream.IntStream.rangeClosed(11,19).mapToObj(z->new LandUseAreaPlan.ScanlineSpan(z,11,19)).toList();
+        var area=new AreaPrint("pad","pad",List.of("city::foundation"),LandUseSurfaceSettings.defaults(SurfacePolicy.PAVE),
+                members,List.of(),LandUseSurfaceSettings.SurfaceAlgorithm.UNIFORM,null,
+                new UniformRecipe("minecraft:stone_bricks","",CitySharedTerracePlanner.spans(heights)));
+        return new CityPublicGroundPlanner().plan(source(List.of(area),features),district(List.of()),terrain,
+                (x,z)->new CityPublicRealmPlanner.Ground(64,true)).surface();
+    }
+
     @Test void acceptedSharedPadCutsTheRecordedSevenAndEightBlockHillsAroundLowDorms() {
         var members=new ArrayList<LandUseAreaPlan.ScanlineSpan>();var platforms=new ArrayList<PlatformSpan>();
         for(int z=0;z<16;z++){members.add(new LandUseAreaPlan.ScanlineSpan(z,0,31));platforms.add(new PlatformSpan(z,0,31,62));}

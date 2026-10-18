@@ -413,7 +413,7 @@ public final class CityLandUseChunkExecutor {
         explicitBoundaryColumns.addAll(designedRailColumns);
         for (CityLandUseMicroGrader.TerraceEdgeDecision edge : foundationPlan.terraceEdges()) {
             if(preservedPublicGround.contains(new ColumnKey(edge.x(),edge.z())))continue;
-            if (internalTerrace(sharedTerraceHeights,edge.x(),edge.z(),edge.y()-1)) continue;
+            if (internalTerraceRailing(sharedTerraceHeights,terrainView,edge.x(),edge.z(),edge.y()-1)) continue;
             if (circulationColumns.contains(new ColumnKey(edge.x(), edge.z()))) continue;
             if (explicitBoundaryColumns.contains(new ColumnKey(edge.x(), edge.z()))) continue;
             boolean clearedByBaseMutation = baseMutationClearsTarget(basePrepared,
@@ -566,7 +566,7 @@ public final class CityLandUseChunkExecutor {
             boolean bridgePost=bridgePierRails.contains(operation);
             if(operation.targetSurfaceY()!=null) surfaceY=operation.targetSurfaceY();
             if(operation.kind()==CityLandUseSurfacePrintPlan.FeatureKind.TERRACE_RAIL
-                    && internalTerrace(sharedTerraceHeights,operation.x(),operation.z(),surfaceY)) continue;
+                    && internalTerraceRailing(sharedTerraceHeights,terrainView,operation.x(),operation.z(),surfaceY)) continue;
             if(operation.kind()==CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_RAIL) {
                 String beam=fragment.materialField().at("bridgeBeam",operation.x(),operation.z(),operation.sourceId(),"minecraft:stone_bricks");
                 if(!world.supportsPublicRealm(operation.x(),surfaceY-1,operation.z())) {
@@ -898,6 +898,20 @@ public final class CityLandUseChunkExecutor {
         if(!heights.containsKey(new ColumnKey(x,z)))return false;
         for(int[] d:List.of(new int[]{1,0},new int[]{-1,0},new int[]{0,1},new int[]{0,-1}))
             if(heights.getOrDefault(new ColumnKey(x+d[0],z+d[1]),Integer.MIN_VALUE)<y-1)return false;
+        return true;
+    }
+
+    private static boolean internalTerraceRailing(Map<ColumnKey,Integer> heights,
+            CityLandUseMicroGrader.TerrainView terrain,int x,int z,int y) {
+        if(!internalTerrace(heights,x,z,y))return false;
+        // A supported inner corner has level cardinal neighbours, but connects
+        // two rim rails around a lower diagonal column. Keep it across owner seams.
+        for(int dx:new int[]{-1,1})for(int dz:new int[]{-1,1}) {
+            if(!Objects.equals(heights.get(new ColumnKey(x+dx,z)),y)
+                    ||!Objects.equals(heights.get(new ColumnKey(x,z+dz)),y))continue;
+            Integer outside=heights.get(new ColumnKey(x+dx,z+dz));
+            if(y-(outside==null?terrain.sample(x+dx,z+dz).surfaceY():outside)>=2)return false;
+        }
         return true;
     }
 
