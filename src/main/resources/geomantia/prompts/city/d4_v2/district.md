@@ -8,7 +8,7 @@
 
 先根据用途查询 city_d4_materials，比较尺寸、作者用途与风格。按需要使用公共空间目录、绿化池和布局案例。考虑人数、活动、服务范围与空间层次所需的实际体量；大核心落位之后，仍要设计它周围的日常配套。
 
-在 districtDesign.population 填 purpose、residents、jobs 与 housingGroupIds。residents 按居住区统计常住居民，工作区只统计岗位，避免重复计人；jobs 逐项填写 profession、count、functions，餐饮值班岗位设置 servesMeals。根据上下文 templateFacilityCapacities 的床位和工位决定建筑数量，未知容量应说明待核实，不能当成可用容量。学生和普通居民可无固定工作点。Realmfolk 会承接预算并审查配额、床位、岗位与通勤。
+在 districtDesign.population 填 purpose、residents、jobs 与 housingGroupIds，数字沿用总览中按人定区的估算（见手册“按人定区”与学院示范）。工作区填 jobs 和服务对象、residents 为 0；居住区按全城人口定床位，填 residents 与 housingGroupIds；公共区在 purpose 写明容量与服务对象。jobs 逐项填写 profession、count、functions，餐饮值班岗位设置 servesMeals。根据上下文 templateFacilityCapacities 的床位和工位决定建筑数量，未知容量应说明待核实，不能当成可用容量。学生和普通居民可无固定工作点。住处靠近工作地，公共区放在通勤路上。Realmfolk 会承接预算并审查配额、床位、岗位与通勤。
 
 把本区挂到全城骨架上：本区组团应嵌套进已有根组合，或紧贴主轴、广场布置；不要为本区另找远处的独立锚点。用完整阵列与嵌套表达院落、街坊或轴线：围合公共空间的建筑用 COURTYARD 并开启 faceInward；同类重复建筑放进同一个阵列；按本区在全城中的层级选择 gapBlocks 与密度（核心疏朗，生活与服务紧密，农林外围成片）。建筑、景观和台地安排应有地形依据，服务于本区活动及全城联系。
 
