@@ -14,3 +14,7 @@ tmp/** -text
 geomantia_harness/*.mjs text eol=lf
 geomantia_harness/src/*.mjs text eol=lf
 geomantia_harness/*.json text eol=lf
+
+# Preserve captured round-two evidence bytes and SHA-256 across checkouts.
+"dev_docs/systems/city/archive/2375a427_v0.2.0_学院第二轮高度关系修复/evidence/*.json" -text whitespace=cr-at-eol
+"dev_docs/systems/city/archive/a4cdacad_v0.2.0_台地护栏连续性修复/evidence/*.json" -text whitespace=cr-at-eol

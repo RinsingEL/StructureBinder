@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "images": [
+    {
+      "file": "护栏断口问题.jpg",
+      "bytes": 190551,
+      "sha256": "73088f32c9b37f50886f0cdeee2364925beec8018669d0e12d01be2690021cca",
+      "source": "dev_docs/systems/city/archive/a4cdacad_v0.2.0_台地护栏连续性修复/用户问题.png",
+      "sourceSha256": "04ef95a24022e1764c3d56e215d40161bddd9d6351c7062c8af6aa62b2fb02c9",
+      "originalSize": [
+        1126,
+        673
+      ],
+      "publishedSize": [
+        1126,
+        673
+      ],
+      "note": "用户提供的护栏断口截图；原记录未提供坐标，不补猜坐标。"
+    },
+    {
+      "file": "护栏手工补齐期望.jpg",
+      "bytes": 211475,
+      "sha256": "6437163460cadf74e6d9e56e0acc5fe67c4744a91bdabea682a01b96ce88761a",
+      "source": "dev_docs/systems/city/archive/a4cdacad_v0.2.0_台地护栏连续性修复/用户期望.png",
+      "sourceSha256": "905566a0054ed33ec4bda45f783242c4ba1d58786a7e957f014357345f2cd6f1",
+      "originalSize": [
+        1199,
+        784
+      ],
+      "publishedSize": [
+        1199,
+        784
+      ],
+      "note": "用户手工补齐的期望效果，非自动修复后的实机验收；原记录未提供坐标。"
+    }
+  ],
+  "transform": "保持画面内容，仅等比缩放并转换JPEG；原图保存在Release工作流包。"
+}

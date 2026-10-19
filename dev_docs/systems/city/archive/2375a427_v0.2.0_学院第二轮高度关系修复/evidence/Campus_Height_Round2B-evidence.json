@@ -1,0 +1,2159 @@
+{
+  "world": "E:\\Mod_Dev\\StructureBinder\\run\\campus_round2_20261018\\saves\\Campus_Height_Round2B",
+  "houses": [
+    {
+      "anchor": "resident_rooms_required_001",
+      "datum": 61,
+      "groundPlane": 2,
+      "bounds": {
+        "minX": -2815,
+        "minZ": 5005,
+        "maxX": -2797,
+        "maxZ": 5027
+      },
+      "columns": [
+        {
+          "x": -2806,
+          "z": 5016,
+          "platform": 62,
+          "excluded": true,
+          "coarseNatural": 68.0,
+          "feature": null,
+          "blocks": [
+            [
+              55,
+              55,
+              "minecraft:diorite"
+            ],
+            [
+              56,
+              60,
+              "minecraft:dirt"
+            ],
+            [
+              61,
+              61,
+              "minecraft:stone_bricks"
+            ],
+            [
+              62,
+              62,
+              "minecraft:dark_oak_planks"
+            ],
+            [
+              63,
+              76,
+              "minecraft:air"
+            ],
+            [
+              77,
+              77,
+              "minecraft:purple_terracotta"
+            ],
+            [
+              78,
+              78,
+              "minecraft:polished_blackstone_brick_slab"
+            ],
+            [
+              79,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2796,
+          "z": 5016,
+          "platform": null,
+          "excluded": true,
+          "coarseNatural": 70.0,
+          "feature": null,
+          "blocks": [
+            [
+              55,
+              55,
+              "minecraft:copper_ore"
+            ],
+            [
+              56,
+              60,
+              "minecraft:dirt"
+            ],
+            [
+              61,
+              62,
+              "minecraft:water"
+            ],
+            [
+              63,
+              66,
+              "minecraft:air"
+            ],
+            [
+              67,
+              67,
+              "minecraft:grass_block"
+            ],
+            [
+              68,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2794,
+          "z": 5016,
+          "platform": null,
+          "excluded": true,
+          "coarseNatural": 70.0,
+          "feature": {
+            "sourceId": "public_ground::natural::city_jingchao_capital",
+            "x": -2794,
+            "z": 5016,
+            "blockId": "minecraft:grass_block",
+            "surfaceOffset": 0,
+            "kind": "GREEN_GROUND",
+            "facing": "NONE",
+            "targetSurfaceY": 69
+          },
+          "blocks": [
+            [
+              55,
+              57,
+              "minecraft:andesite"
+            ],
+            [
+              58,
+              61,
+              "minecraft:dirt"
+            ],
+            [
+              62,
+              62,
+              "minecraft:grass_block"
+            ],
+            [
+              63,
+              64,
+              "minecraft:air"
+            ],
+            [
+              65,
+              67,
+              "minecraft:dirt"
+            ],
+            [
+              68,
+              69,
+              "minecraft:grass_block"
+            ],
+            [
+              70,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2806,
+          "z": 5004,
+          "platform": null,
+          "excluded": true,
+          "coarseNatural": 69.0,
+          "feature": {
+            "sourceId": "resident_rooms::ENTRANCE_APPROACH::segment_043",
+            "x": -2806,
+            "z": 5004,
+            "blockId": "minecraft:stone_brick_slab",
+            "surfaceOffset": 0,
+            "kind": "ROAD_SLAB",
+            "facing": "NONE",
+            "targetSurfaceY": 62
+          },
+          "blocks": [
+            [
+              55,
+              55,
+              "minecraft:diorite"
+            ],
+            [
+              56,
+              60,
+              "minecraft:dirt"
+            ],
+            [
+              61,
+              61,
+              "minecraft:water"
+            ],
+            [
+              62,
+              62,
+              "minecraft:stone_brick_slab"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2806,
+          "z": 5028,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 67.0,
+          "feature": null,
+          "blocks": [
+            [
+              55,
+              57,
+              "minecraft:andesite"
+            ],
+            [
+              58,
+              61,
+              "minecraft:dirt"
+            ],
+            [
+              62,
+              62,
+              "minecraft:stone_bricks"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "anchor": "resident_rooms_fill_002",
+      "datum": 61,
+      "groundPlane": 2,
+      "bounds": {
+        "minX": -2788,
+        "minZ": 5005,
+        "maxX": -2770,
+        "maxZ": 5027
+      },
+      "columns": [
+        {
+          "x": -2779,
+          "z": 5016,
+          "platform": 62,
+          "excluded": true,
+          "coarseNatural": 70.0,
+          "feature": null,
+          "blocks": [
+            [
+              55,
+              55,
+              "minecraft:diorite"
+            ],
+            [
+              56,
+              56,
+              "minecraft:andesite"
+            ],
+            [
+              57,
+              60,
+              "minecraft:dirt"
+            ],
+            [
+              61,
+              61,
+              "minecraft:stone_bricks"
+            ],
+            [
+              62,
+              62,
+              "minecraft:dark_oak_planks"
+            ],
+            [
+              63,
+              76,
+              "minecraft:air"
+            ],
+            [
+              77,
+              77,
+              "minecraft:purple_terracotta"
+            ],
+            [
+              78,
+              78,
+              "minecraft:polished_blackstone_brick_slab"
+            ],
+            [
+              79,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2769,
+          "z": 5016,
+          "platform": null,
+          "excluded": true,
+          "coarseNatural": 70.0,
+          "feature": null,
+          "blocks": [
+            [
+              55,
+              55,
+              "minecraft:diorite"
+            ],
+            [
+              56,
+              57,
+              "minecraft:andesite"
+            ],
+            [
+              58,
+              60,
+              "minecraft:dirt"
+            ],
+            [
+              61,
+              62,
+              "minecraft:water"
+            ],
+            [
+              63,
+              65,
+              "minecraft:air"
+            ],
+            [
+              66,
+              66,
+              "minecraft:diorite"
+            ],
+            [
+              67,
+              68,
+              "minecraft:dirt"
+            ],
+            [
+              69,
+              69,
+              "minecraft:grass_block"
+            ],
+            [
+              70,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2767,
+          "z": 5016,
+          "platform": null,
+          "excluded": true,
+          "coarseNatural": 68.0,
+          "feature": {
+            "sourceId": "public_ground::natural::city_jingchao_capital",
+            "x": -2767,
+            "z": 5016,
+            "blockId": "minecraft:grass_block",
+            "surfaceOffset": 0,
+            "kind": "GREEN_GROUND",
+            "facing": "NONE",
+            "targetSurfaceY": 69
+          },
+          "blocks": [
+            [
+              55,
+              55,
+              "minecraft:diorite"
+            ],
+            [
+              56,
+              59,
+              "minecraft:andesite"
+            ],
+            [
+              60,
+              61,
+              "minecraft:diorite"
+            ],
+            [
+              62,
+              62,
+              "minecraft:water"
+            ],
+            [
+              63,
+              65,
+              "minecraft:granite"
+            ],
+            [
+              66,
+              66,
+              "minecraft:diorite"
+            ],
+            [
+              67,
+              68,
+              "minecraft:dirt"
+            ],
+            [
+              69,
+              69,
+              "minecraft:grass_block"
+            ],
+            [
+              70,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2779,
+          "z": 5004,
+          "platform": null,
+          "excluded": true,
+          "coarseNatural": 68.0,
+          "feature": {
+            "sourceId": "resident_rooms::ENTRANCE_APPROACH::segment_048",
+            "x": -2779,
+            "z": 5004,
+            "blockId": "minecraft:stone_brick_slab",
+            "surfaceOffset": 0,
+            "kind": "ROAD_SLAB",
+            "facing": "NONE",
+            "targetSurfaceY": 62
+          },
+          "blocks": [
+            [
+              55,
+              55,
+              "minecraft:diorite"
+            ],
+            [
+              56,
+              57,
+              "minecraft:andesite"
+            ],
+            [
+              58,
+              60,
+              "minecraft:dirt"
+            ],
+            [
+              61,
+              61,
+              "minecraft:water"
+            ],
+            [
+              62,
+              62,
+              "minecraft:stone_brick_slab"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2779,
+          "z": 5028,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 67.0,
+          "feature": null,
+          "blocks": [
+            [
+              55,
+              55,
+              "minecraft:diorite"
+            ],
+            [
+              56,
+              57,
+              "minecraft:granite"
+            ],
+            [
+              58,
+              61,
+              "minecraft:dirt"
+            ],
+            [
+              62,
+              62,
+              "minecraft:stone_bricks"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "anchor": "resident_rooms_fill_003",
+      "datum": 61,
+      "groundPlane": 2,
+      "bounds": {
+        "minX": -2761,
+        "minZ": 5005,
+        "maxX": -2743,
+        "maxZ": 5027
+      },
+      "columns": [
+        {
+          "x": -2752,
+          "z": 5016,
+          "platform": 62,
+          "excluded": true,
+          "coarseNatural": 68.0,
+          "feature": null,
+          "blocks": [
+            [
+              55,
+              55,
+              "minecraft:diorite"
+            ],
+            [
+              56,
+              57,
+              "minecraft:andesite"
+            ],
+            [
+              58,
+              60,
+              "minecraft:dirt"
+            ],
+            [
+              61,
+              61,
+              "minecraft:stone_bricks"
+            ],
+            [
+              62,
+              62,
+              "minecraft:dark_oak_planks"
+            ],
+            [
+              63,
+              76,
+              "minecraft:air"
+            ],
+            [
+              77,
+              77,
+              "minecraft:purple_terracotta"
+            ],
+            [
+              78,
+              78,
+              "minecraft:polished_blackstone_brick_slab"
+            ],
+            [
+              79,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2742,
+          "z": 5016,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 68.0,
+          "feature": null,
+          "blocks": [
+            [
+              55,
+              57,
+              "minecraft:andesite"
+            ],
+            [
+              58,
+              60,
+              "minecraft:dirt"
+            ],
+            [
+              61,
+              61,
+              "minecraft:water"
+            ],
+            [
+              62,
+              62,
+              "minecraft:stone_bricks"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2740,
+          "z": 5016,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 68.0,
+          "feature": {
+            "sourceId": "public_ground::shared::city_jingchao_capital",
+            "x": -2740,
+            "z": 5016,
+            "blockId": "minecraft:grass_block",
+            "surfaceOffset": 0,
+            "kind": "GREEN_GROUND",
+            "facing": "NONE",
+            "targetSurfaceY": 62
+          },
+          "blocks": [
+            [
+              55,
+              58,
+              "minecraft:andesite"
+            ],
+            [
+              59,
+              60,
+              "minecraft:diorite"
+            ],
+            [
+              61,
+              61,
+              "minecraft:granite"
+            ],
+            [
+              62,
+              62,
+              "minecraft:grass_block"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2752,
+          "z": 5004,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 67.0,
+          "feature": {
+            "sourceId": "resident_rooms::ENTRANCE_APPROACH::segment_050",
+            "x": -2752,
+            "z": 5004,
+            "blockId": "minecraft:stone_brick_slab",
+            "surfaceOffset": 0,
+            "kind": "ROAD_SLAB",
+            "facing": "NONE",
+            "targetSurfaceY": 62
+          },
+          "blocks": [
+            [
+              55,
+              56,
+              "minecraft:andesite"
+            ],
+            [
+              57,
+              60,
+              "minecraft:dirt"
+            ],
+            [
+              61,
+              61,
+              "minecraft:water"
+            ],
+            [
+              62,
+              62,
+              "minecraft:stone_brick_slab"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2752,
+          "z": 5028,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 67.0,
+          "feature": null,
+          "blocks": [
+            [
+              55,
+              55,
+              "minecraft:diorite"
+            ],
+            [
+              56,
+              58,
+              "minecraft:granite"
+            ],
+            [
+              59,
+              61,
+              "minecraft:dirt"
+            ],
+            [
+              62,
+              62,
+              "minecraft:stone_bricks"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "anchor": "resident_rooms_fill_004",
+      "datum": 61,
+      "groundPlane": 2,
+      "bounds": {
+        "minX": -2815,
+        "minZ": 5036,
+        "maxX": -2797,
+        "maxZ": 5058
+      },
+      "columns": [
+        {
+          "x": -2806,
+          "z": 5047,
+          "platform": 62,
+          "excluded": true,
+          "coarseNatural": 68.0,
+          "feature": null,
+          "blocks": [
+            [
+              55,
+              55,
+              "minecraft:diorite"
+            ],
+            [
+              56,
+              57,
+              "minecraft:granite"
+            ],
+            [
+              58,
+              60,
+              "minecraft:dirt"
+            ],
+            [
+              61,
+              61,
+              "minecraft:stone_bricks"
+            ],
+            [
+              62,
+              62,
+              "minecraft:dark_oak_planks"
+            ],
+            [
+              63,
+              76,
+              "minecraft:air"
+            ],
+            [
+              77,
+              77,
+              "minecraft:purple_terracotta"
+            ],
+            [
+              78,
+              78,
+              "minecraft:polished_blackstone_brick_slab"
+            ],
+            [
+              79,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2796,
+          "z": 5047,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 67.0,
+          "feature": null,
+          "blocks": [
+            [
+              55,
+              58,
+              "minecraft:granite"
+            ],
+            [
+              59,
+              60,
+              "minecraft:dirt"
+            ],
+            [
+              61,
+              61,
+              "minecraft:grass_block"
+            ],
+            [
+              62,
+              62,
+              "minecraft:stone_bricks"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2794,
+          "z": 5047,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 67.0,
+          "feature": {
+            "sourceId": "public_ground::shared::city_jingchao_capital",
+            "x": -2794,
+            "z": 5047,
+            "blockId": "minecraft:grass_block",
+            "surfaceOffset": 0,
+            "kind": "GREEN_GROUND",
+            "facing": "NONE",
+            "targetSurfaceY": 62
+          },
+          "blocks": [
+            [
+              55,
+              56,
+              "minecraft:diorite"
+            ],
+            [
+              57,
+              60,
+              "minecraft:granite"
+            ],
+            [
+              61,
+              61,
+              "minecraft:dirt"
+            ],
+            [
+              62,
+              62,
+              "minecraft:grass_block"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2806,
+          "z": 5035,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 67.0,
+          "feature": {
+            "sourceId": "resident_rooms::ENTRANCE_APPROACH::segment_052",
+            "x": -2806,
+            "z": 5035,
+            "blockId": "minecraft:stone_brick_slab",
+            "surfaceOffset": 0,
+            "kind": "ROAD_SLAB",
+            "facing": "NONE",
+            "targetSurfaceY": 62
+          },
+          "blocks": [
+            [
+              55,
+              57,
+              "minecraft:andesite"
+            ],
+            [
+              58,
+              61,
+              "minecraft:dirt"
+            ],
+            [
+              62,
+              62,
+              "minecraft:stone_brick_slab"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2806,
+          "z": 5059,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 67.0,
+          "feature": null,
+          "blocks": [
+            [
+              55,
+              58,
+              "minecraft:granite"
+            ],
+            [
+              59,
+              61,
+              "minecraft:dirt"
+            ],
+            [
+              62,
+              62,
+              "minecraft:stone_bricks"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "anchor": "resident_rooms_fill_005",
+      "datum": 61,
+      "groundPlane": 2,
+      "bounds": {
+        "minX": -2788,
+        "minZ": 5036,
+        "maxX": -2770,
+        "maxZ": 5058
+      },
+      "columns": [
+        {
+          "x": -2779,
+          "z": 5047,
+          "platform": 62,
+          "excluded": true,
+          "coarseNatural": 66.0,
+          "feature": null,
+          "blocks": [
+            [
+              55,
+              55,
+              "minecraft:diorite"
+            ],
+            [
+              56,
+              56,
+              "minecraft:granite"
+            ],
+            [
+              57,
+              60,
+              "minecraft:dirt"
+            ],
+            [
+              61,
+              61,
+              "minecraft:stone_bricks"
+            ],
+            [
+              62,
+              62,
+              "minecraft:dark_oak_planks"
+            ],
+            [
+              63,
+              76,
+              "minecraft:air"
+            ],
+            [
+              77,
+              77,
+              "minecraft:purple_terracotta"
+            ],
+            [
+              78,
+              78,
+              "minecraft:polished_blackstone_brick_slab"
+            ],
+            [
+              79,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2769,
+          "z": 5047,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 66.0,
+          "feature": null,
+          "blocks": [
+            [
+              55,
+              57,
+              "minecraft:granite"
+            ],
+            [
+              58,
+              61,
+              "minecraft:dirt"
+            ],
+            [
+              62,
+              62,
+              "minecraft:stone_bricks"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2767,
+          "z": 5047,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 65.0,
+          "feature": {
+            "sourceId": "public_ground::shared::city_jingchao_capital",
+            "x": -2767,
+            "z": 5047,
+            "blockId": "minecraft:grass_block",
+            "surfaceOffset": 0,
+            "kind": "GREEN_GROUND",
+            "facing": "NONE",
+            "targetSurfaceY": 62
+          },
+          "blocks": [
+            [
+              55,
+              55,
+              "minecraft:diorite"
+            ],
+            [
+              56,
+              56,
+              "minecraft:granite"
+            ],
+            [
+              57,
+              57,
+              "minecraft:air"
+            ],
+            [
+              58,
+              58,
+              "minecraft:granite"
+            ],
+            [
+              59,
+              61,
+              "minecraft:dirt"
+            ],
+            [
+              62,
+              62,
+              "minecraft:grass_block"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2779,
+          "z": 5035,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 67.0,
+          "feature": {
+            "sourceId": "resident_rooms::ENTRANCE_APPROACH::segment_054",
+            "x": -2779,
+            "z": 5035,
+            "blockId": "minecraft:stone_brick_slab",
+            "surfaceOffset": 0,
+            "kind": "ROAD_SLAB",
+            "facing": "NONE",
+            "targetSurfaceY": 62
+          },
+          "blocks": [
+            [
+              55,
+              55,
+              "minecraft:diorite"
+            ],
+            [
+              56,
+              56,
+              "minecraft:granite"
+            ],
+            [
+              57,
+              60,
+              "minecraft:dirt"
+            ],
+            [
+              61,
+              61,
+              "minecraft:water"
+            ],
+            [
+              62,
+              62,
+              "minecraft:stone_brick_slab"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2779,
+          "z": 5059,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 65.0,
+          "feature": null,
+          "blocks": [
+            [
+              55,
+              59,
+              "minecraft:air"
+            ],
+            [
+              60,
+              61,
+              "minecraft:dirt"
+            ],
+            [
+              62,
+              62,
+              "minecraft:stone_bricks"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "anchor": "resident_rooms_fill_006",
+      "datum": 61,
+      "groundPlane": 2,
+      "bounds": {
+        "minX": -2761,
+        "minZ": 5036,
+        "maxX": -2743,
+        "maxZ": 5058
+      },
+      "columns": [
+        {
+          "x": -2752,
+          "z": 5047,
+          "platform": 62,
+          "excluded": true,
+          "coarseNatural": 65.0,
+          "feature": null,
+          "blocks": [
+            [
+              55,
+              57,
+              "minecraft:granite"
+            ],
+            [
+              58,
+              59,
+              "minecraft:dirt"
+            ],
+            [
+              60,
+              60,
+              "minecraft:grass_block"
+            ],
+            [
+              61,
+              61,
+              "minecraft:stone_bricks"
+            ],
+            [
+              62,
+              62,
+              "minecraft:dark_oak_planks"
+            ],
+            [
+              63,
+              76,
+              "minecraft:air"
+            ],
+            [
+              77,
+              77,
+              "minecraft:purple_terracotta"
+            ],
+            [
+              78,
+              78,
+              "minecraft:polished_blackstone_brick_slab"
+            ],
+            [
+              79,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2742,
+          "z": 5047,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 65.0,
+          "feature": null,
+          "blocks": [
+            [
+              55,
+              57,
+              "minecraft:granite"
+            ],
+            [
+              58,
+              59,
+              "minecraft:dirt"
+            ],
+            [
+              60,
+              60,
+              "minecraft:grass_block"
+            ],
+            [
+              61,
+              61,
+              "minecraft:dirt"
+            ],
+            [
+              62,
+              62,
+              "minecraft:stone_brick_slab"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2740,
+          "z": 5047,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 65.0,
+          "feature": {
+            "sourceId": "public_ground::shared::city_jingchao_capital",
+            "x": -2740,
+            "z": 5047,
+            "blockId": "minecraft:grass_block",
+            "surfaceOffset": 0,
+            "kind": "GREEN_GROUND",
+            "facing": "NONE",
+            "targetSurfaceY": 62
+          },
+          "blocks": [
+            [
+              55,
+              55,
+              "minecraft:diorite"
+            ],
+            [
+              56,
+              56,
+              "minecraft:granite"
+            ],
+            [
+              57,
+              59,
+              "minecraft:water"
+            ],
+            [
+              60,
+              61,
+              "minecraft:dirt"
+            ],
+            [
+              62,
+              62,
+              "minecraft:grass_block"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2752,
+          "z": 5035,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 67.0,
+          "feature": {
+            "sourceId": "resident_rooms::ENTRANCE_APPROACH::segment_056",
+            "x": -2752,
+            "z": 5035,
+            "blockId": "minecraft:stone_brick_slab",
+            "surfaceOffset": 0,
+            "kind": "ROAD_SLAB",
+            "facing": "NONE",
+            "targetSurfaceY": 62
+          },
+          "blocks": [
+            [
+              55,
+              55,
+              "minecraft:diorite"
+            ],
+            [
+              56,
+              57,
+              "minecraft:granite"
+            ],
+            [
+              58,
+              60,
+              "minecraft:dirt"
+            ],
+            [
+              61,
+              61,
+              "minecraft:water"
+            ],
+            [
+              62,
+              62,
+              "minecraft:stone_brick_slab"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2752,
+          "z": 5059,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 64.0,
+          "feature": null,
+          "blocks": [
+            [
+              55,
+              55,
+              "minecraft:diorite"
+            ],
+            [
+              56,
+              61,
+              "minecraft:water"
+            ],
+            [
+              62,
+              62,
+              "minecraft:stone_bricks"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "anchor": "resident_rooms_fill_007",
+      "datum": 61,
+      "groundPlane": 2,
+      "bounds": {
+        "minX": -2815,
+        "minZ": 5067,
+        "maxX": -2797,
+        "maxZ": 5089
+      },
+      "columns": [
+        {
+          "x": -2806,
+          "z": 5078,
+          "platform": 62,
+          "excluded": true,
+          "coarseNatural": 65.0,
+          "feature": null,
+          "blocks": [
+            [
+              55,
+              57,
+              "minecraft:granite"
+            ],
+            [
+              58,
+              60,
+              "minecraft:dirt"
+            ],
+            [
+              61,
+              61,
+              "minecraft:stone_bricks"
+            ],
+            [
+              62,
+              62,
+              "minecraft:dark_oak_planks"
+            ],
+            [
+              63,
+              76,
+              "minecraft:air"
+            ],
+            [
+              77,
+              77,
+              "minecraft:purple_terracotta"
+            ],
+            [
+              78,
+              78,
+              "minecraft:polished_blackstone_brick_slab"
+            ],
+            [
+              79,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2796,
+          "z": 5078,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 64.0,
+          "feature": null,
+          "blocks": [
+            [
+              55,
+              58,
+              "minecraft:granite"
+            ],
+            [
+              59,
+              59,
+              "minecraft:diorite"
+            ],
+            [
+              60,
+              61,
+              "minecraft:dirt"
+            ],
+            [
+              62,
+              62,
+              "minecraft:stone_bricks"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2794,
+          "z": 5078,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 64.0,
+          "feature": {
+            "sourceId": "public_ground::shared::city_jingchao_capital",
+            "x": -2794,
+            "z": 5078,
+            "blockId": "minecraft:grass_block",
+            "surfaceOffset": 0,
+            "kind": "GREEN_GROUND",
+            "facing": "NONE",
+            "targetSurfaceY": 62
+          },
+          "blocks": [
+            [
+              55,
+              56,
+              "minecraft:diorite"
+            ],
+            [
+              57,
+              60,
+              "minecraft:granite"
+            ],
+            [
+              61,
+              61,
+              "minecraft:diorite"
+            ],
+            [
+              62,
+              62,
+              "minecraft:grass_block"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2806,
+          "z": 5066,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 67.0,
+          "feature": {
+            "sourceId": "resident_rooms::ENTRANCE_APPROACH::segment_058",
+            "x": -2806,
+            "z": 5066,
+            "blockId": "minecraft:stone_brick_slab",
+            "surfaceOffset": 0,
+            "kind": "ROAD_SLAB",
+            "facing": "NONE",
+            "targetSurfaceY": 62
+          },
+          "blocks": [
+            [
+              55,
+              58,
+              "minecraft:granite"
+            ],
+            [
+              59,
+              61,
+              "minecraft:dirt"
+            ],
+            [
+              62,
+              62,
+              "minecraft:stone_brick_slab"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2806,
+          "z": 5090,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 67.0,
+          "feature": {
+            "sourceId": "city_main_road_008::segment_002",
+            "x": -2806,
+            "z": 5090,
+            "blockId": "minecraft:stone_brick_stairs",
+            "surfaceOffset": 0,
+            "kind": "ROAD_STAIR",
+            "facing": "NORTH",
+            "targetSurfaceY": 62
+          },
+          "blocks": [
+            [
+              55,
+              57,
+              "minecraft:andesite"
+            ],
+            [
+              58,
+              58,
+              "minecraft:diorite"
+            ],
+            [
+              59,
+              61,
+              "minecraft:dirt"
+            ],
+            [
+              62,
+              62,
+              "minecraft:stone_brick_stairs"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "anchor": "resident_rooms_fill_008",
+      "datum": 61,
+      "groundPlane": 2,
+      "bounds": {
+        "minX": -2788,
+        "minZ": 5067,
+        "maxX": -2770,
+        "maxZ": 5089
+      },
+      "columns": [
+        {
+          "x": -2779,
+          "z": 5078,
+          "platform": 62,
+          "excluded": true,
+          "coarseNatural": 64.0,
+          "feature": null,
+          "blocks": [
+            [
+              55,
+              57,
+              "minecraft:granite"
+            ],
+            [
+              58,
+              59,
+              "minecraft:dirt"
+            ],
+            [
+              60,
+              60,
+              "minecraft:grass_block"
+            ],
+            [
+              61,
+              61,
+              "minecraft:stone_bricks"
+            ],
+            [
+              62,
+              62,
+              "minecraft:dark_oak_planks"
+            ],
+            [
+              63,
+              76,
+              "minecraft:air"
+            ],
+            [
+              77,
+              77,
+              "minecraft:purple_terracotta"
+            ],
+            [
+              78,
+              78,
+              "minecraft:polished_blackstone_brick_slab"
+            ],
+            [
+              79,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2769,
+          "z": 5078,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 64.0,
+          "feature": null,
+          "blocks": [
+            [
+              55,
+              56,
+              "minecraft:granite"
+            ],
+            [
+              57,
+              61,
+              "minecraft:dirt"
+            ],
+            [
+              62,
+              62,
+              "minecraft:stone_bricks"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2767,
+          "z": 5078,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 63.0,
+          "feature": {
+            "sourceId": "public_ground::shared::city_jingchao_capital",
+            "x": -2767,
+            "z": 5078,
+            "blockId": "minecraft:grass_block",
+            "surfaceOffset": 0,
+            "kind": "GREEN_GROUND",
+            "facing": "NONE",
+            "targetSurfaceY": 62
+          },
+          "blocks": [
+            [
+              55,
+              57,
+              "minecraft:granite"
+            ],
+            [
+              58,
+              61,
+              "minecraft:dirt"
+            ],
+            [
+              62,
+              62,
+              "minecraft:grass_block"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2779,
+          "z": 5066,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 65.0,
+          "feature": {
+            "sourceId": "resident_rooms::ENTRANCE_APPROACH::segment_060",
+            "x": -2779,
+            "z": 5066,
+            "blockId": "minecraft:stone_brick_slab",
+            "surfaceOffset": 0,
+            "kind": "ROAD_SLAB",
+            "facing": "NONE",
+            "targetSurfaceY": 62
+          },
+          "blocks": [
+            [
+              55,
+              55,
+              "minecraft:granite"
+            ],
+            [
+              56,
+              56,
+              "minecraft:copper_ore"
+            ],
+            [
+              57,
+              57,
+              "minecraft:granite"
+            ],
+            [
+              58,
+              60,
+              "minecraft:dirt"
+            ],
+            [
+              61,
+              61,
+              "minecraft:stone_bricks"
+            ],
+            [
+              62,
+              62,
+              "minecraft:stone_brick_slab"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        },
+        {
+          "x": -2779,
+          "z": 5090,
+          "platform": 62,
+          "excluded": false,
+          "coarseNatural": 65.0,
+          "feature": {
+            "sourceId": "city_main_road_008::segment_002",
+            "x": -2779,
+            "z": 5090,
+            "blockId": "minecraft:stone_brick_stairs",
+            "surfaceOffset": 0,
+            "kind": "ROAD_STAIR",
+            "facing": "NORTH",
+            "targetSurfaceY": 62
+          },
+          "blocks": [
+            [
+              55,
+              57,
+              "minecraft:granite"
+            ],
+            [
+              58,
+              61,
+              "minecraft:dirt"
+            ],
+            [
+              62,
+              62,
+              "minecraft:stone_brick_stairs"
+            ],
+            [
+              63,
+              89,
+              "minecraft:air"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "templateCounts": {
+    "minecraft:stone_bricks": 486,
+    "minecraft:grass_block": 209,
+    "minecraft:polished_andesite": 200,
+    "minecraft:dark_oak_planks": 154,
+    "minecraft:calcite": 182,
+    "minecraft:air": 1056,
+    "minecraft:purple_bed": 32,
+    "minecraft:bookshelf": 6,
+    "minecraft:purple_stained_glass": 106,
+    "minecraft:smooth_stone_slab": 36,
+    "minecraft:smooth_stone": 25,
+    "minecraft:polished_blackstone_bricks": 30,
+    "minecraft:purple_terracotta": 240,
+    "minecraft:polished_blackstone_brick_slab": 18
+  },
+  "intrusions": [
+    {
+      "anchor": "resident_rooms_required_001",
+      "count": 318,
+      "samples": [
+        {
+          "x": -2815,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:grass_block",
+          "template": null
+        },
+        {
+          "x": -2814,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:grass_block",
+          "template": null
+        },
+        {
+          "x": -2813,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:grass_block",
+          "template": null
+        },
+        {
+          "x": -2812,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:grass_block",
+          "template": null
+        },
+        {
+          "x": -2811,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:grass_block",
+          "template": null
+        },
+        {
+          "x": -2810,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:grass_block",
+          "template": null
+        },
+        {
+          "x": -2809,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:grass_block",
+          "template": null
+        },
+        {
+          "x": -2808,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:grass_block",
+          "template": null
+        },
+        {
+          "x": -2807,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:grass_block",
+          "template": null
+        },
+        {
+          "x": -2806,
+          "y": 66,
+          "z": 5005,
+          "actual": "minecraft:dirt",
+          "template": null
+        },
+        {
+          "x": -2806,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:dirt",
+          "template": null
+        },
+        {
+          "x": -2806,
+          "y": 68,
+          "z": 5005,
+          "actual": "minecraft:dirt",
+          "template": null
+        }
+      ]
+    },
+    {
+      "anchor": "resident_rooms_fill_002",
+      "count": 480,
+      "samples": [
+        {
+          "x": -2788,
+          "y": 66,
+          "z": 5005,
+          "actual": "minecraft:granite",
+          "template": null
+        },
+        {
+          "x": -2788,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:dirt",
+          "template": null
+        },
+        {
+          "x": -2788,
+          "y": 68,
+          "z": 5005,
+          "actual": "minecraft:dirt",
+          "template": null
+        },
+        {
+          "x": -2788,
+          "y": 69,
+          "z": 5005,
+          "actual": "minecraft:dirt",
+          "template": null
+        },
+        {
+          "x": -2788,
+          "y": 70,
+          "z": 5005,
+          "actual": "minecraft:grass_block",
+          "template": null
+        },
+        {
+          "x": -2787,
+          "y": 66,
+          "z": 5005,
+          "actual": "minecraft:granite",
+          "template": null
+        },
+        {
+          "x": -2787,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:dirt",
+          "template": null
+        },
+        {
+          "x": -2787,
+          "y": 68,
+          "z": 5005,
+          "actual": "minecraft:dirt",
+          "template": null
+        },
+        {
+          "x": -2787,
+          "y": 69,
+          "z": 5005,
+          "actual": "minecraft:dirt",
+          "template": null
+        },
+        {
+          "x": -2787,
+          "y": 70,
+          "z": 5005,
+          "actual": "minecraft:grass_block",
+          "template": null
+        },
+        {
+          "x": -2786,
+          "y": 66,
+          "z": 5005,
+          "actual": "minecraft:dirt",
+          "template": null
+        },
+        {
+          "x": -2786,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:dirt",
+          "template": null
+        }
+      ]
+    },
+    {
+      "anchor": "resident_rooms_fill_003",
+      "count": 242,
+      "samples": [
+        {
+          "x": -2761,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:grass_block",
+          "template": null
+        },
+        {
+          "x": -2760,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:grass_block",
+          "template": null
+        },
+        {
+          "x": -2759,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:grass_block",
+          "template": null
+        },
+        {
+          "x": -2758,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:grass_block",
+          "template": null
+        },
+        {
+          "x": -2757,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:grass_block",
+          "template": null
+        },
+        {
+          "x": -2756,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:grass_block",
+          "template": null
+        },
+        {
+          "x": -2755,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:grass_block",
+          "template": null
+        },
+        {
+          "x": -2754,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:grass_block",
+          "template": null
+        },
+        {
+          "x": -2753,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:grass_block",
+          "template": null
+        },
+        {
+          "x": -2752,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:grass_block",
+          "template": null
+        },
+        {
+          "x": -2751,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:grass_block",
+          "template": null
+        },
+        {
+          "x": -2750,
+          "y": 67,
+          "z": 5005,
+          "actual": "minecraft:grass_block",
+          "template": null
+        }
+      ]
+    }
+  ]
+}
