@@ -108,6 +108,8 @@ public final class GeomantiaHttpServer {
                     realmController::handleCityPrepareD4BlueprintContext).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/realm/city/submit_d4_blueprint",
                     realmController::handleCitySubmitD4Blueprint).getFilters().add(planningController.ownershipFilter());
+            createdServer.createContext("/realm/city/debug_reset_d4",
+                    realmController::handleCityDebugResetD4).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/realm/city/post_d4_auto_compile_status",
                     realmController::handleCityPostD4AutoCompileStatus).getFilters().add(planningController.ownershipFilter());
             createdServer.createContext("/realm/city/post_d4_auto_compile_retry",

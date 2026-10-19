@@ -5,7 +5,10 @@ import java.io.IOException;
 import java.nio.file.*;
 
 /** Instance-wide MCP listener settings, independent of Provider credentials and world saves. */
-public record McpServerConfig(boolean enabled, int port, int flashPort, boolean embeddedAdvanced, boolean embeddedFlash) {
+public record McpServerConfig(boolean enabled, int port, int flashPort, boolean embeddedAdvanced, boolean embeddedFlash, boolean debug) {
+    public McpServerConfig(boolean enabled, int port, int flashPort, boolean embeddedAdvanced, boolean embeddedFlash) {
+        this(enabled, port, flashPort, embeddedAdvanced, embeddedFlash, false);
+    }
     public McpServerConfig(boolean enabled, int port, int flashPort) { this(enabled,port,flashPort,false,false); }
     public McpServerConfig(boolean enabled, int port) { this(enabled, port, port == 5002 ? 5003 : 5002); }
     public static McpServerConfig defaults() { return new McpServerConfig(true, 5001); }
@@ -32,11 +35,15 @@ public record McpServerConfig(boolean enabled, int port, int flashPort, boolean 
             int port = json.get("port").getAsBigDecimal().intValueExact();
             return new McpServerConfig(json.get("enabled").getAsBoolean(), port,
                     json.has("flashPort") ? json.get("flashPort").getAsBigDecimal().intValueExact() : port==5002 ? 5003 : 5002,
-                    flag(json,"embeddedAdvanced",false),flag(json,"embeddedFlash",json.has("embeddedFlash") ? false : legacyEnabled(directory)));
+                    flag(json,"embeddedAdvanced",false),flag(json,"embeddedFlash",json.has("embeddedFlash") ? false : legacyEnabled(directory)),
+                    flag(json,"debug",false));
         } catch (RuntimeException ex) { throw new IOException("MCP 配置无效：" + ex.getMessage(), ex); }
     }
     public void save(Path gameDirectory) throws IOException {
         saveDirectory(path(gameDirectory).getParent());
+    }
+    public static void requireDebug(Path gameDirectory) throws IOException {
+        if (!load(gameDirectory).debug()) throw new IllegalStateException("PLANNING_DEBUG_DISABLED");
     }
     public boolean handles(com.rinsing.geomantia.systems.provider.application.PlanningRole role) {
         return role == com.rinsing.geomantia.systems.provider.application.PlanningRole.ADVANCED ? embeddedAdvanced : embeddedFlash;
@@ -56,7 +63,7 @@ public record McpServerConfig(boolean enabled, int port, int flashPort, boolean 
         var old=loadDirectory(directory);
         new McpServerConfig(old.enabled,old.port,old.flashPort,
                 role==com.rinsing.geomantia.systems.provider.application.PlanningRole.ADVANCED ? enabled : old.embeddedAdvanced,
-                role==com.rinsing.geomantia.systems.provider.application.PlanningRole.FLASH ? enabled : old.embeddedFlash).saveDirectory(directory);
+                role==com.rinsing.geomantia.systems.provider.application.PlanningRole.FLASH ? enabled : old.embeddedFlash,old.debug).saveDirectory(directory);
     }
     public void saveDirectory(Path directory) throws IOException {
         synchronized(McpServerConfig.class) { saveDirectoryLocked(directory); }
@@ -67,6 +74,7 @@ public record McpServerConfig(boolean enabled, int port, int flashPort, boolean 
         JsonObject json = new JsonObject(); json.addProperty("enabled", enabled); json.addProperty("port", port);
         json.addProperty("flashPort", flashPort);
         json.addProperty("embeddedAdvanced",embeddedAdvanced); json.addProperty("embeddedFlash",embeddedFlash);
+        json.addProperty("debug",debug);
         Path staging = Files.createTempFile(target.getParent(), "mcp-settings-", ".json");
         try {
             Files.writeString(staging, new GsonBuilder().setPrettyPrinting().create().toJson(json));

@@ -8,7 +8,15 @@ import { formatAxiosError, isTimeoutError } from "./shared/http.js";
 import { beginMcpCall, completeMcpCall } from "./shared/logging.js";
 import type { ToolDefinition, ToolHandler } from "./shared/types.js";
 import axios from "axios";
-import { lobbyInstructions, planningTools, createPlanningHandlers } from "./planning.js";
+import { lobbyInstructions, planningTools, debugPlanningTools, createPlanningHandlers } from "./planning.js";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+function debugEnabled(): boolean {
+  try {
+    return JSON.parse(readFileSync(process.env.GEOMANTIA_MCP_CONFIG ?? resolve("config/geomantia/mcp_server.json"), "utf8")).debug === true;
+  } catch { return false; }
+}
 
 
 /** Each MCP client owns its own planning credential and tool session. */
@@ -21,6 +29,7 @@ export function createMcpServer(embeddedBridge = Boolean(process.env.GEOMANTIA_P
   );
 
   const tools: ToolDefinition[] = role ? planningTools : [...(embeddedBridge ? [] : planningTools), ...gisTools, ...realmTools];
+  const availableTools = () => !embeddedBridge && role !== "FLASH" && debugEnabled() ? [...tools, ...debugPlanningTools] : tools;
   const handlers: Record<string, ToolHandler> = {
     ...gisHandlers,
     ...realmHandlers,
@@ -29,7 +38,7 @@ export function createMcpServer(embeddedBridge = Boolean(process.env.GEOMANTIA_P
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     const bridge = embeddedBridge ? process.env.GEOMANTIA_PROVIDER_TOOL_URL : undefined;
-    if (!bridge) return { tools };
+    if (!bridge) return { tools: availableTools() };
     // Provider decisions use the host's scoped schema, including combined selection actions.
     return (await axios.get(bridge, { timeout: 10_000,
       headers: { "X-Geomantia-Bridge-Key": process.env.GEOMANTIA_PROVIDER_TOOL_KEY || "" },
@@ -41,7 +50,9 @@ export function createMcpServer(embeddedBridge = Boolean(process.env.GEOMANTIA_P
     const toolArgs = (request.params.arguments as Record<string, unknown>) || {};
     const call = beginMcpCall(toolName, toolArgs);
     try {
-      if (role && !planningTools.some(tool => tool.name === toolName)) throw new Error("PLANNING_SCOPED_ENTRY_REQUIRED: use planning_action");
+      if (debugPlanningTools.some(tool => tool.name === toolName) && (embeddedBridge || role === "FLASH" || !debugEnabled()))
+        throw new Error("PLANNING_DEBUG_DISABLED");
+      if (role && !availableTools().some(tool => tool.name === toolName)) throw new Error("PLANNING_SCOPED_ENTRY_REQUIRED: use planning_action");
       const handler = handlers[toolName];
       const bridge = embeddedBridge ? process.env.GEOMANTIA_PROVIDER_TOOL_URL : undefined;
       if (!bridge && !handler) {

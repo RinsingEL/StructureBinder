@@ -25,6 +25,9 @@ class PlanningOwnershipHttpTest {
             http.start();
             URI base = URI.create("http://127.0.0.1:" + http.getAddress().getPort());
             HttpClient client = HttpClient.newHttpClient();
+            var reset = client.send(HttpRequest.newBuilder(base.resolve("/planning/reset_d4"))
+                    .POST(HttpRequest.BodyPublishers.ofString("{\"debug\":true}")).build(), HttpResponse.BodyHandlers.ofString());
+            assertEquals(409, reset.statusCode()); assertTrue(reset.body().contains("PLANNING_DEBUG_DISABLED"));
             var invalid = client.send(HttpRequest.newBuilder(base.resolve("/planning/action"))
                     .POST(HttpRequest.BodyPublishers.ofString("{\"arguments\":\"{}\"}")).build(), HttpResponse.BodyHandlers.ofString());
             assertEquals(400, invalid.statusCode());

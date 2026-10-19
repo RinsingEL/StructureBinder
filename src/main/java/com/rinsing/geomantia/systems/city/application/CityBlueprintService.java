@@ -934,7 +934,7 @@ public final class CityBlueprintService {
         }
     }
 
-    private static Object submissionArtifactLock(Path outputDirectory) {
+    static Object submissionArtifactLock(Path outputDirectory) {
         return SUBMISSION_ARTIFACT_LOCKS.computeIfAbsent(outputDirectory.toAbsolutePath().normalize(),
                 ignored -> new Object());
     }

@@ -103,7 +103,8 @@ public final class ProviderPlanningToolGateway implements PlanningToolExecutor {
     }
 
     private JsonElement execute(String toolName, JsonObject suppliedArguments, boolean hostOnly) throws Exception {
-        Endpoint endpoint = ENDPOINTS.get(toolName);
+        Endpoint endpoint = hostOnly && "city_debug_reset_d4".equals(toolName)
+                ? new Endpoint("/realm/city/debug_reset_d4", true, false) : ENDPOINTS.get(toolName);
         if (endpoint == null) return error("PROVIDER_AGENT_TOOL_NOT_ALLOWED", toolName);
         JsonObject arguments = suppliedArguments == null ? new JsonObject() : suppliedArguments.deepCopy();
         if (com.rinsing.geomantia.systems.city.application.CityD4Workflow.TOOLS.contains(toolName)) arguments.addProperty("d4Tool", toolName);

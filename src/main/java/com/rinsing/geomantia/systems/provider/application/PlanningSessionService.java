@@ -40,6 +40,8 @@ public final class PlanningSessionService implements AutoCloseable {
     private volatile ProviderPlanningDiscovery.PlanningStep preparedStep;
     private volatile String taskId = "", preparedOwner = "", failure = "";
     private volatile boolean running;
+    private record D4ResetTarget(String runId, String cityId, String version) { }
+    private volatile D4ResetTarget d4ResetTarget;
     private String lastActionId = "";
     private String lastActionTask = "", lastActionInput = "";
     private JsonObject lastActionResult;
@@ -234,6 +236,16 @@ public final class PlanningSessionService implements AutoCloseable {
         result.addProperty("cursor", step.semanticIdentity() + ":" + taskId + ":" + running + ":" + error + ":" + result.get("owner"));
         result.addProperty("hasSavedProgress", Files.isDirectory(step.runDirectory()));
         result.addProperty("canRedesign", false);
+        if (com.rinsing.geomantia.platform.mcp.McpServerConfig.load(serverDirectory).debug()) {
+            result.addProperty("debug", true);
+            result.addProperty("canResetD4", false);
+            if (!running && (isCityDesign(step) || savedDesign(step))) {
+                try {
+                    result.addProperty("d4ResetVersion", com.rinsing.geomantia.systems.city.application.CityD4DraftReset.version(step.runDirectory(), step.citySeedId()));
+                    result.addProperty("canResetD4", true);
+                } catch (IllegalArgumentException blocked) { result.addProperty("resetD4BlockReason", blocked.getMessage()); }
+            }
+        }
         if (savedDesign(step)) {
             try {
                 com.rinsing.geomantia.systems.city.application.CityD4Workflow.requireRevisionAllowed(step.runDirectory(), step.citySeedId());
@@ -288,6 +300,49 @@ public final class PlanningSessionService implements AutoCloseable {
         JsonObject result = snapshot(); result.addProperty("leaseToken", acquired);
         result.addProperty("nextCall", "planning_next");
         return result;
+    }
+
+    /** Config-gated explicit reset; the normal redesign operation continues to preserve the design. */
+    public synchronized JsonObject resetD4(String owner, String token, PlanningRole role,
+                                           String runId, String cityId, String resetVersion, String reason) throws Exception {
+        com.rinsing.geomantia.platform.mcp.McpServerConfig.requireDebug(serverDirectory);
+        if (owner == null || !owner.matches("[A-Za-z0-9_-]{8,100}")) throw new IllegalArgumentException("PLANNING_OWNER_REQUIRED");
+        if (role != PlanningRole.ADVANCED) throw new IllegalStateException("PLANNING_RESET_D4_ADVANCED_REQUIRED");
+        if (reason == null || reason.isBlank() || reason.length() > 2000) throw new IllegalArgumentException("PLANNING_RESET_D4_REASON_REQUIRED");
+        if (running) throw new IllegalStateException("PLANNING_OPERATION_RUNNING");
+        var step = discovery.nextStep();
+        if (!step.runId().equals(runId) || !step.citySeedId().equals(cityId))
+            throw new IllegalStateException("PLANNING_TARGET_STALE: refresh geomantia_lobby");
+        if (!isCityDesign(step) && !savedDesign(step)) throw new IllegalStateException("PLANNING_RESET_D4_REQUIRES_DESIGN");
+        if (!com.rinsing.geomantia.systems.city.application.CityD4DraftReset.version(step.runDirectory(), cityId).equals(resetVersion))
+            throw new IllegalArgumentException("CITY_D4_RESET_VERSION_STALE: refresh geomantia_lobby");
+        if (!lease.owner().isEmpty() && lease.owner().equals("external-" + owner)) lease.require(token);
+        String acquired = lease.acquire("external-" + owner);
+        activeRole = role; prepared = null; preparedStep = null; taskId = ""; failure = ""; preparedOwner = acquired;
+        lastActionId = ""; lastActionTask = ""; lastActionInput = ""; lastActionResult = null;
+        dispatchRequests.clear();
+        JsonObject args = new JsonObject(); args.addProperty("resetVersion", resetVersion); args.addProperty("reason", reason);
+        AutoCloseable pin = lease.enter(acquired); running = true;
+        d4ResetTarget = new D4ResetTarget(runId, cityId, resetVersion);
+        worker.submit(() -> {
+            try (pin) {
+                com.rinsing.geomantia.platform.mcp.McpServerConfig.requireDebug(serverDirectory);
+                var output = gateway(step, acquired).executeHost("city_debug_reset_d4", args);
+                String error = PlanningTurnControl.failure(PlanningTurnControl.payload(output));
+                if (!error.isBlank()) throw new IllegalStateException(error);
+            } catch (Exception ex) { failure = message(ex); }
+            finally { d4ResetTarget = null; running = false; }
+        });
+        JsonObject result = snapshot(); result.addProperty("leaseToken", acquired);
+        result.addProperty("nextCall", "planning_next"); return result;
+    }
+
+    /** The internal reset endpoint must belong to the active advanced reset operation. */
+    public synchronized void requireD4ResetLease(String token, String runId, String cityId, String version) throws Exception {
+        com.rinsing.geomantia.platform.mcp.McpServerConfig.requireDebug(serverDirectory);
+        lease.require(token);
+        if (!running || activeRole != PlanningRole.ADVANCED || !new D4ResetTarget(runId, cityId, version).equals(d4ResetTarget))
+            throw new IllegalStateException("PLANNING_RESET_D4_SESSION_REQUIRED");
     }
 
     public synchronized JsonObject resume(String owner, String token, boolean retry) throws Exception {

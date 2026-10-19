@@ -23,6 +23,12 @@ export const planningTools = [
   tool("planning_artifact", "按需浏览/搜索/读取当前规划 run 的资料或实际图片；仅当前 run 内只读，path 为相对路径。", { operation: { type: "string", enum: ["list", "search", "text", "image"] }, path: str, query: str, offset: { type: "integer", minimum: 0 } }, ["operation"]),
 ];
 
+export const debugPlanningTools = [
+  tool("planning_reset_d4", "仅配置 debug=true 时可用。用户明确要求从零重做 D4 后调用：归档当前草稿或定稿及派生产物，保留 D3、冻结 Context、历史与失败预算，回到空白总览，不启动施工。runId/citySeedId/resetVersion 必须来自最新大厅的 d4ResetVersion；成功后 planning_next。已开始施工时拒绝，仅高级角色可用。", {
+    runId: str, citySeedId: str, resetVersion: str, reason: { type: "string", minLength: 1, maxLength: 2000 },
+  }, ["runId", "citySeedId", "resetVersion", "reason"]),
+];
+
 export function renderLobby(data: Record<string, any>): string {
   const stage: Record<string, string> = { W: "世界扫描", T1: "国度设计", T2: "国度选址", T3: "领土扩张", T4: "城市选址", CITY: "城市设计", EXTENSION: "附属内容设计", QUEUE_REFRESH: "城市队列准备", WAITING: "等待程序推进", COMPLETE: "规划完成" };
   return ["```text", "+-------- Geomantia · 存档大厅 --------+",
@@ -37,9 +43,11 @@ export function renderLobby(data: Record<string, any>): string {
     "+-------------------------------------+", "",
     `  [1] ${data.cityQueueStatus === "design_saved" ? "使用已保存方案继续施工" : data.status === "complete" ? "查看最终成果" : data.hasSavedProgress ? "继续规划" : "开始规划"}`,
     "  [2] 查看当前成果", "  [3] 查看规划状态与问题",
-    ...(data.canRedesign ? ["  [4] 重新设计当前城市（保留历史，尚不施工）"] : []), "```",
+    ...(data.canRedesign ? ["  [4] 重新设计当前城市（保留历史，尚不施工）"] : []),
+    ...(data.canResetD4 ? ["  [5] 调试：从零重做 D4（归档旧方案，保留 D3）"] : []), "```",
     "告诉我你想进行哪一项，也可以直接描述需求。",
     "执行指引：1 若 cityQueueStatus=design_saved，用户选择后调用 planning_resume(retry=true) 继续施工；其他未完成阶段调用 planning_next，已完成则查看成果；4 用户选择重设计时调用 planning_redesign(runId, citySeedId, reason)，之后 planning_next；2/3 使用 planning_artifact 查看当前 run 的资料，不启动规划。存在其他执行端占用时等待总调度交接，不抢占。",
+    ...(data.canResetD4 ? ["调试指引：用户明确选择从零重做时，调用 planning_reset_d4(runId, citySeedId, resetVersion=d4ResetVersion, reason)，之后 planning_next。"] : []),
     JSON.stringify(data),
   ].join("\n");
 }
@@ -87,7 +95,11 @@ export function createPlanningHandlers(baseUrl = MC_API_URL, role: "ADVANCED" | 
       return planningResult(data);
     },
     async geomantia_lobby() {
-      try { return textResult(renderLobby(await request("lobby"))); }
+      try {
+        const data = await request("lobby");
+        if (role === "FLASH") { delete data.canResetD4; delete data.d4ResetVersion; }
+        return textResult(renderLobby(data));
+      }
       catch { return textResult("```text\n+-- Geomantia · 存档大厅 --+\n  游戏状态：暂时无法读取存档\n  请确认已进入世界且游戏服务可用\n  [1] 重新连接 / 刷新大厅\n+-------------------------+\n```\n不要开始规划或编造进度。用户重试时调用 geomantia_lobby。"); }
     },
     async planning_resume(args) {
@@ -98,6 +110,11 @@ export function createPlanningHandlers(baseUrl = MC_API_URL, role: "ADVANCED" | 
     },
     async planning_redesign(args) {
       const data = await request("redesign", { ...args, ownerId });
+      token = data.leaseToken ?? ""; delete data.leaseToken;
+      return planningResult(data);
+    },
+    async planning_reset_d4(args) {
+      const data = await request("reset_d4", { ...args, ownerId });
       token = data.leaseToken ?? ""; delete data.leaseToken;
       return planningResult(data);
     },
