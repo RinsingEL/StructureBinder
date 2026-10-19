@@ -1,0 +1,60 @@
+{
+  "kind": "historical_probe_excerpt",
+  "rerunOnArchive": false,
+  "logs": [
+    {
+      "sourceLog": "codex-CodexGroundProbe.log",
+      "sourceSha256": "1cb72c98a0f8b2b70b5e5e51097fb7fc4bf8e4dcab7cb17ff7e08f14b299d15c",
+      "selectedOutput": [
+        "ENTRANCE_EXISTING_SLOPE {\"connectedEntrances\":1,\"gradedApproachColumns\":12,\"warnings\":[]}",
+        "approach x=1 kind=ROAD_STAIR target=72 facing=WEST",
+        "approach x=2 kind=ROAD_STAIR target=71 facing=WEST",
+        "approach x=3 kind=ROAD_STAIR target=70 facing=WEST",
+        "approach x=4 kind=ROAD_STAIR target=69 facing=WEST",
+        "approach x=5 kind=ROAD_SLAB target=72 facing=NONE",
+        "approach x=6 kind=ROAD_SLAB target=72 facing=NONE",
+        "approach x=7 kind=ROAD_SLAB target=72 facing=NONE",
+        "approach x=8 kind=ROAD_SLAB target=72 facing=NONE"
+      ]
+    },
+    {
+      "sourceLog": "codex-CoreReviewProbe.log",
+      "sourceSha256": "956a73cfde40ae2e843c4daddc400e4e2550c7cba75bd9c95429991d8c49d535",
+      "selectedOutput": [
+        "T_JUNCTION transverse_edges=0 max_neighbor_step=1 example=",
+        "EXPLICIT_DEFAULT_ROAD expected=minecraft:stone_brick_slab actual=minecraft:stone_brick_slab",
+        "NO_WALL_EXIT {\"schema\":\"city_intercity_exit_plan\",\"cityId\":\"city\",\"streetBands\":[{\"streetBandId\":\"link/city/1\",\"roadNetworkId\":\"link\",\"roadKind\":\"CITY_MAIN_ROAD\",\"widthBlocks\":5,\"crossSectionProfile\":\"STAIR_SLAB_STAIR\",\"start\":{\"x\":96,\"z\":64},\"end\":{\"x\":96,\"z\":60},\"bounds\":{\"minX\":94,\"minZ\":58,\"maxX\":98,\"maxZ\":66}},{\"streetBandId\":\"link/city/2\",\"roadNetworkId\":\"link\",\"roadKind\":\"CITY_MAIN_ROAD\",\"widthBlocks\":5,\"crossSectionProfile\":\"STAIR_SLAB_STAIR\",\"start\":{\"x\":96,\"z\":60},\"end\":{\"x\":141,\"z\":60},\"bounds\":{\"minX\":94,\"minZ\":58,\"maxX\":143,\"maxZ\":62}}],\"portals\":[{\"linkId\":\"link\",\"otherCityId\":\"other\",\"point\":{\"x\":141,\"z\":60},\"gate\":{\"x\":128,\"z\":60}}],\"unresolvedLinks\":[]}",
+        "D4_POPULATION accepted",
+        "MISSING_POPULATION_COUNTS accepted={\"purpose\":\"staff\",\"jobs\":[{\"profession\":\"teacher\",\"functions\":[\"teaching\"]}]}"
+      ]
+    },
+    {
+      "sourceLog": "codex-RealmReviewProbe.log",
+      "sourceSha256": "a31246e3a5b32b2891d96eeece9bdcfa702d832558e3c4623da14db556ed92d8",
+      "selectedOutput": [
+        "EXPLICIT_RADIUS configured=64 resolved=64",
+        "OPTIONAL_COUNT_EXPAND accepted_by_D4_then=java.lang.NullPointerException: Cannot invoke \"com.google.gson.JsonElement.getAsInt()\" because the return value of \"com.google.gson.JsonObject.get(String)\" is null",
+        "OPTIONAL_COUNT_EXPAND accepted_by_D4_then=java.lang.NullPointerException: Cannot invoke \"com.google.gson.JsonElement.getAsInt()\" because the return value of \"com.google.gson.JsonObject.get(String)\" is null"
+      ]
+    },
+    {
+      "sourceLog": "deepseek-CoreReviewProbe.log",
+      "sourceSha256": "26776720f4b66af3c11c4d26c92d0164de0b44638da1f7c5db0a6e0ee057d2de",
+      "selectedOutput": [
+        "T_JUNCTION transverse_edges=32 max_neighbor_step=3 example=20,21:72/69",
+        "EXPLICIT_DEFAULT_ROAD expected=minecraft:stone_brick_slab actual=minecraft:dirt_path",
+        "NO_WALL_EXIT {\"schema\":\"city_intercity_exit_plan\",\"cityId\":\"city\",\"streetBands\":[],\"portals\":[],\"unresolvedLinks\":[{\"linkId\":\"link\",\"reason\":\"NO_SAFE_CITY_EXIT\"}]}",
+        "D4_POPULATION java.lang.IllegalArgumentException: 设计只接受阵列、嵌套、关系、foundationGroupIds、景观与局部表面方块；spatialGrounds 已删除。",
+        "CITY_DOMAIN_MASK before=1 after_activation=0"
+      ]
+    },
+    {
+      "sourceLog": "deepseek-RealmReviewProbe.log",
+      "sourceSha256": "4479e4c81eb25b3d5dce3e988b9931d6b030cef6ef8a60187587baa75b31ae66",
+      "selectedOutput": [
+        "EXPLICIT_RADIUS configured=64 resolved=384",
+        "CAPACITY_PATH actual_catalog_known=true workflow_known=false"
+      ]
+    }
+  ]
+}

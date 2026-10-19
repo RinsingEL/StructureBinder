@@ -1,0 +1,16 @@
+{
+  "kind": "historical_probe_excerpt",
+  "rerunOnArchive": false,
+  "logs": [
+    {
+      "sourceLog": "height-probe.log",
+      "sourceSha256": "6a7b86794e11f664099b68e79c22b1d41f8f4145669e5eb16277024841cebc59",
+      "selectedOutput": [
+        "CORE_DATUM natural=65 planned=64",
+        "CORE_DATUM natural=66 planned=68",
+        "FLAT_COURT_EDGE natural=65/65 planned=65/68 stairs=0 report={\"sampleSource\":\"exact_generator_columns\",\"waterColumnsRetained\":0,\"gradedGreenColumns\":64,\"publicPathBridgeColumns\":0,\"warnings\":[]}",
+        "DEEP_GREEN natural=34 planned=64 status=APPLIED writes=[3,63,3=minecraft:stone_bricks, 3,64,3=minecraft:stone_bricks, 3,64,3=minecraft:grass_block]"
+      ]
+    }
+  ]
+}

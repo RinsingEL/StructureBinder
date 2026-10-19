@@ -1,0 +1,115 @@
+{
+  "source": "E:\\Mod_Dev\\StructureBinder\\run\\campus_residence_fix_20261018\\saves\\Campus_Residence_Fix\\data\\realmfolk_society.dat",
+  "citizens": 0,
+  "properties": 46,
+  "revision": 1,
+  "cityPlans": {},
+  "planningReceipts": {},
+  "housingTerms": [
+    "住宅",
+    "民居",
+    "住宿",
+    "residential",
+    "housing"
+  ],
+  "matchedHousing": [],
+  "studentHousing": [
+    {
+      "id": "provider_3d25631f_r19200:city_jingchao_capital:resident_rooms_fill_003",
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "slots": 16
+    },
+    {
+      "id": "provider_3d25631f_r19200:city_jingchao_capital:resident_rooms_fill_002",
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "slots": 16
+    },
+    {
+      "id": "provider_3d25631f_r19200:city_jingchao_capital:resident_rooms_fill_006",
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "slots": 16
+    },
+    {
+      "id": "provider_3d25631f_r19200:city_jingchao_capital:resident_rooms_fill_005",
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "slots": 16
+    },
+    {
+      "id": "provider_3d25631f_r19200:city_jingchao_capital:resident_rooms_required_001",
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "slots": 16
+    },
+    {
+      "id": "provider_3d25631f_r19200:city_jingchao_capital:resident_rooms_fill_004",
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "slots": 16
+    },
+    {
+      "id": "provider_3d25631f_r19200:city_jingchao_capital:resident_rooms_fill_007",
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "slots": 16
+    },
+    {
+      "id": "provider_3d25631f_r19200:city_jingchao_capital:resident_rooms_fill_008",
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "slots": 16
+    },
+    {
+      "id": "provider_3d25631f_r19200:city_jingchao_capital:residence_required_001",
+      "terms": [
+        "学生住宿",
+        "庭院休憩",
+        "自习"
+      ],
+      "slots": 16
+    },
+    {
+      "id": "provider_3d25631f_r19200:city_jingchao_capital:residence_required_002",
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "slots": 16
+    },
+    {
+      "id": "provider_3d25631f_r19200:city_jingchao_capital:residence_fill_003",
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "slots": 12
+    },
+    {
+      "id": "provider_3d25631f_r19200:city_jingchao_capital:residence_fill_004",
+      "terms": [
+        "学生住宿",
+        "自习"
+      ],
+      "slots": 16
+    }
+  ]
+}

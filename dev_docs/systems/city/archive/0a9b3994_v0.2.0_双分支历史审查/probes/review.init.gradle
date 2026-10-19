@@ -1,0 +1,9 @@
+allprojects {
+    afterEvaluate {
+        tasks.register('exportReviewClasspath') {
+            doLast {
+                new File(project.buildDir, 'review-classpath.txt').text = sourceSets.test.runtimeClasspath.asPath
+            }
+        }
+    }
+}
