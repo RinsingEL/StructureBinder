@@ -1,0 +1,514 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-15-v02",
+  "name": "愈疗圣堂 · 十二床十字病房与日照庭",
+  "family": "MG-15",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.key",
+  "size": [
+    65,
+    55,
+    71
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [
+    {
+      "id": "care",
+      "name": "采光照护中厅",
+      "min": [
+        25,
+        2,
+        17
+      ],
+      "max": [
+        39,
+        18,
+        57
+      ],
+      "purpose": "两侧病房围绕高窗中厅展开"
+    },
+    {
+      "id": "ward_6",
+      "name": "西侧六床病房",
+      "min": [
+        8,
+        2,
+        33
+      ],
+      "max": [
+        20,
+        6,
+        48
+      ],
+      "purpose": "两列各三床，中间纵向护理通道与中厅横向通道相连，床侧保留使用站位。",
+      "living_use": "care"
+    },
+    {
+      "id": "ward_42",
+      "name": "东侧六床病房",
+      "min": [
+        44,
+        2,
+        33
+      ],
+      "max": [
+        56,
+        6,
+        48
+      ],
+      "purpose": "两列各三床，中间纵向护理通道与中厅横向通道相连，床侧保留使用站位。",
+      "living_use": "care"
+    }
+  ],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        32,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "nurse_6",
+      "kind": "work",
+      "pos": [
+        15,
+        3,
+        37
+      ],
+      "name": "病房巡视与照护",
+      "approach": [
+        14,
+        2,
+        37
+      ],
+      "use": "staff"
+    },
+    {
+      "id": "nurse_42",
+      "kind": "work",
+      "pos": [
+        51,
+        3,
+        37
+      ],
+      "name": "病房巡视与照护",
+      "approach": [
+        50,
+        2,
+        37
+      ],
+      "use": "staff"
+    },
+    {
+      "id": "care",
+      "kind": "work",
+      "pos": [
+        33,
+        3,
+        49
+      ],
+      "name": "中央照护与配药台",
+      "approach": [
+        32,
+        2,
+        49
+      ],
+      "use": "staff"
+    },
+    {
+      "id": "patient_11_35",
+      "kind": "bed",
+      "pos": [
+        11,
+        2,
+        35
+      ],
+      "name": "病床",
+      "approach": [
+        12,
+        2,
+        35
+      ],
+      "use": "care"
+    },
+    {
+      "id": "patient_11_41",
+      "kind": "bed",
+      "pos": [
+        11,
+        2,
+        41
+      ],
+      "name": "病床",
+      "approach": [
+        12,
+        2,
+        41
+      ],
+      "use": "care"
+    },
+    {
+      "id": "patient_11_47",
+      "kind": "bed",
+      "pos": [
+        11,
+        2,
+        47
+      ],
+      "name": "病床",
+      "approach": [
+        12,
+        2,
+        47
+      ],
+      "use": "care"
+    },
+    {
+      "id": "patient_17_35",
+      "kind": "bed",
+      "pos": [
+        17,
+        2,
+        35
+      ],
+      "name": "病床",
+      "approach": [
+        18,
+        2,
+        35
+      ],
+      "use": "care"
+    },
+    {
+      "id": "patient_17_41",
+      "kind": "bed",
+      "pos": [
+        17,
+        2,
+        41
+      ],
+      "name": "病床",
+      "approach": [
+        18,
+        2,
+        41
+      ],
+      "use": "care"
+    },
+    {
+      "id": "patient_17_47",
+      "kind": "bed",
+      "pos": [
+        17,
+        2,
+        47
+      ],
+      "name": "病床",
+      "approach": [
+        18,
+        2,
+        47
+      ],
+      "use": "care"
+    },
+    {
+      "id": "patient_47_35",
+      "kind": "bed",
+      "pos": [
+        47,
+        2,
+        35
+      ],
+      "name": "病床",
+      "approach": [
+        48,
+        2,
+        35
+      ],
+      "use": "care"
+    },
+    {
+      "id": "patient_47_41",
+      "kind": "bed",
+      "pos": [
+        47,
+        2,
+        41
+      ],
+      "name": "病床",
+      "approach": [
+        48,
+        2,
+        41
+      ],
+      "use": "care"
+    },
+    {
+      "id": "patient_47_47",
+      "kind": "bed",
+      "pos": [
+        47,
+        2,
+        47
+      ],
+      "name": "病床",
+      "approach": [
+        48,
+        2,
+        47
+      ],
+      "use": "care"
+    },
+    {
+      "id": "patient_53_35",
+      "kind": "bed",
+      "pos": [
+        53,
+        2,
+        35
+      ],
+      "name": "病床",
+      "approach": [
+        54,
+        2,
+        35
+      ],
+      "use": "care"
+    },
+    {
+      "id": "patient_53_41",
+      "kind": "bed",
+      "pos": [
+        53,
+        2,
+        41
+      ],
+      "name": "病床",
+      "approach": [
+        54,
+        2,
+        41
+      ],
+      "use": "care"
+    },
+    {
+      "id": "patient_53_47",
+      "kind": "bed",
+      "pos": [
+        53,
+        2,
+        47
+      ],
+      "name": "病床",
+      "approach": [
+        54,
+        2,
+        47
+      ],
+      "use": "care"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。",
+    "2026-10-19 容量微调：保留 v01 外形、占地、屋面、入口和实体楼梯，只调整内部床位与生活空间。",
+    "中央照护厅按开间布置低位壁灯，两侧病房另设床头灯和墙灯，保证护理活动层有独立光源。",
+    "仅作者声明的工作点计入岗位容量；装饰桶、家庭储物与学生/访客使用设施不冒充员工工位。"
+  ],
+  "differences": [
+    "两侧病房各六张病床，保留中厅和十字护理通道；全部病床标为 care，不计居民住房。",
+    "2026-10-19 全学院可进入建筑：补齐功能工位/公共席位，分层分区照明，保留旧版本。"
+  ],
+  "floors": [
+    {
+      "name": "首层",
+      "y": 1,
+      "max_y": 8
+    }
+  ],
+  "roof_min_y": 23,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "医疗",
+    "照料",
+    "休养"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/academy_interiors.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "workplace_policy": "authored",
+  "interior_lighting": {
+    "source": "fixed_emitters_no_skylight_conservative_estimate",
+    "occupiedPointTarget": 8,
+    "floorTarget": 5,
+    "sampledPositions": 1363,
+    "fixtures": [
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          8,
+          1,
+          51
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          15,
+          1,
+          51
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          48,
+          1,
+          51
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          55,
+          1,
+          51
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          32,
+          5,
+          13
+        ],
+        "support": [
+          32,
+          13,
+          13
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          8,
+          1,
+          30
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          22,
+          1,
+          24
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          25,
+          1,
+          13
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          32,
+          1,
+          60
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          39,
+          1,
+          13
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          42,
+          1,
+          24
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          44,
+          1,
+          30
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          25,
+          1,
+          60
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          39,
+          1,
+          60
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          59,
+          5,
+          33
+        ],
+        "support": [
+          59,
+          14,
+          33
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          5,
+          5,
+          33
+        ],
+        "support": [
+          5,
+          14,
+          33
+        ]
+      }
+    ],
+    "note": "低位吊灯使用实际屋面或楼板承吊；高厅与开放处采用齐平星石灯。估计不替代 Minecraft 夜间验收。"
+  },
+  "nbt_sha256": "debc2123f66dcfe290d921040977d40f9370dd86defdc926fe8dc434841fb030"
+}

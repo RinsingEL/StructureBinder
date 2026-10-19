@@ -1,0 +1,233 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-32-v02",
+  "name": "农林工具房 · 储藏与修整台",
+  "family": "MG-32",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    17,
+    24,
+    21
+  ],
+  "terrain": {
+    "选址": "完整承载面；农林地块保持自然地形，独立建筑使用核心台地。"
+  },
+  "rooms": [
+    {
+      "id": "main",
+      "name": "农林工具房 · 储藏与修整台",
+      "min": [
+        4,
+        2,
+        5
+      ],
+      "max": [
+        12,
+        7,
+        16
+      ],
+      "purpose": "工具保管、园艺养护、林业教学"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        8,
+        2,
+        0
+      ],
+      "name": "主入口",
+      "direction": "north",
+      "approach": [
+        8,
+        2,
+        2
+      ]
+    },
+    {
+      "id": "main_access",
+      "kind": "circulation",
+      "pos": [
+        8,
+        2,
+        5
+      ],
+      "name": "室内通路",
+      "approach": [
+        8,
+        2,
+        5
+      ]
+    },
+    {
+      "id": "tool_repair",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        7
+      ],
+      "name": "工具维护人员",
+      "use": "staff",
+      "approach": [
+        6,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "tool_stock",
+      "kind": "work",
+      "pos": [
+        9,
+        2,
+        13
+      ],
+      "name": "工具保管人员",
+      "use": "staff",
+      "approach": [
+        8,
+        2,
+        13
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "学院组团配套；尺寸独立于大型文化核心。实际生产、居民和魔法行为另行配置。",
+    "仅作者声明的工作点计入岗位容量；装饰桶、家庭储物与学生/访客使用设施不冒充员工工位。"
+  ],
+  "differences": [
+    "2026-10-19 全学院可进入建筑：补齐功能工位/公共席位，分层分区照明，保留旧版本。"
+  ],
+  "floors": [
+    {
+      "name": "首层",
+      "y": 1,
+      "max_y": 8
+    }
+  ],
+  "roof_min_y": 10,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "工具保管",
+    "园艺养护",
+    "林业教学"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/academy_interiors.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部路面脚底为 Y=2。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "campus_consumer": "array",
+  "design_revision": 1,
+  "workplace_policy": "authored",
+  "interior_lighting": {
+    "source": "fixed_emitters_no_skylight_conservative_estimate",
+    "occupiedPointTarget": 8,
+    "floorTarget": 5,
+    "sampledPositions": 134,
+    "fixtures": [
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          6,
+          5,
+          7
+        ],
+        "support": [
+          6,
+          13,
+          7
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          8,
+          5,
+          13
+        ],
+        "support": [
+          8,
+          15,
+          13
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          2,
+          1,
+          3
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          2,
+          1,
+          10
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          2,
+          1,
+          17
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          11,
+          5,
+          5
+        ],
+        "support": [
+          11,
+          12,
+          5
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          12,
+          5,
+          16
+        ],
+        "support": [
+          12,
+          11,
+          16
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          14,
+          1,
+          9
+        ]
+      }
+    ],
+    "note": "低位吊灯使用实际屋面或楼板承吊；高厅与开放处采用齐平星石灯。估计不替代 Minecraft 夜间验收。"
+  },
+  "nbt_sha256": "3c84593c2c59276f2ab10e7144d469d9545107ec1fac8b92f8f7c91fffa2555a"
+}

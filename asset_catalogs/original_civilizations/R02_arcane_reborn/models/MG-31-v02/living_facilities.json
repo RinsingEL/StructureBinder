@@ -1,0 +1,79 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    23,
+    16,
+    27
+  ],
+  "sourceSha256": "8a6a365cdc7d1426f86df13a6305a34bc727ea09d29d7f56e26f0a4b0723f80d",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 2
+  },
+  "facilities": [
+    {
+      "id": "work:12,2,6",
+      "kind": "work",
+      "pos": [
+        12,
+        2,
+        6
+      ],
+      "block": "minecraft:composter",
+      "facing": "north",
+      "use": "staff",
+      "room": "",
+      "name": "温室教学与养护",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        11,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "work:12,2,19",
+      "kind": "work",
+      "pos": [
+        12,
+        2,
+        19
+      ],
+      "block": "minecraft:composter",
+      "facing": "north",
+      "use": "staff",
+      "room": "",
+      "name": "园艺学徒操作位",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        11,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "entrance:11,2,0",
+      "kind": "entrance",
+      "pos": [
+        11,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "温室入口",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        11,
+        2,
+        2
+      ]
+    }
+  ],
+  "warnings": []
+}

@@ -1,0 +1,286 @@
+{
+  "schema": "structure-studio.lighting-review.v1",
+  "nbt_sha256": "6836038cd11d9a607e855bcc2249610711fd34f5cc06aed7a30afde9d142a81f",
+  "scope": "Conservative offline block-light estimate for authored occupied spaces.\n\nThis is not Minecraft's light engine: no sky light, partial collision blocks are\nopaque, and state-dependent emitters are not simulated. It is an authoring check\nfor fixed lanterns, sea lanterns and end rods, not an in-game night acceptance.\n",
+  "emitterCount": 27,
+  "occupiedPointTarget": 8,
+  "floorTarget": 5,
+  "occupiedPoints": [
+    {
+      "id": "main_access",
+      "kind": "circulation",
+      "pos": [
+        17,
+        2,
+        5
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "teacher",
+      "kind": "work",
+      "pos": [
+        17,
+        2,
+        23
+      ],
+      "estimatedBlockLight": 11
+    },
+    {
+      "id": "assistant",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        21
+      ],
+      "estimatedBlockLight": 9
+    },
+    {
+      "id": "student_6_8",
+      "kind": "seat",
+      "pos": [
+        5,
+        2,
+        7
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "student_6_12",
+      "kind": "seat",
+      "pos": [
+        5,
+        2,
+        11
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "student_6_16",
+      "kind": "seat",
+      "pos": [
+        5,
+        2,
+        15
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "student_6_20",
+      "kind": "seat",
+      "pos": [
+        5,
+        2,
+        19
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "student_10_8",
+      "kind": "seat",
+      "pos": [
+        9,
+        2,
+        7
+      ],
+      "estimatedBlockLight": 11
+    },
+    {
+      "id": "student_10_12",
+      "kind": "seat",
+      "pos": [
+        9,
+        2,
+        11
+      ],
+      "estimatedBlockLight": 9
+    },
+    {
+      "id": "student_10_16",
+      "kind": "seat",
+      "pos": [
+        9,
+        2,
+        15
+      ],
+      "estimatedBlockLight": 11
+    },
+    {
+      "id": "student_10_20",
+      "kind": "seat",
+      "pos": [
+        9,
+        2,
+        19
+      ],
+      "estimatedBlockLight": 11
+    },
+    {
+      "id": "student_14_8",
+      "kind": "seat",
+      "pos": [
+        13,
+        2,
+        7
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "student_14_12",
+      "kind": "seat",
+      "pos": [
+        13,
+        2,
+        11
+      ],
+      "estimatedBlockLight": 14
+    },
+    {
+      "id": "student_14_16",
+      "kind": "seat",
+      "pos": [
+        13,
+        2,
+        15
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "student_14_20",
+      "kind": "seat",
+      "pos": [
+        13,
+        2,
+        19
+      ],
+      "estimatedBlockLight": 9
+    },
+    {
+      "id": "student_20_8",
+      "kind": "seat",
+      "pos": [
+        19,
+        2,
+        7
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "student_20_12",
+      "kind": "seat",
+      "pos": [
+        19,
+        2,
+        11
+      ],
+      "estimatedBlockLight": 8
+    },
+    {
+      "id": "student_20_16",
+      "kind": "seat",
+      "pos": [
+        19,
+        2,
+        15
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "student_20_20",
+      "kind": "seat",
+      "pos": [
+        19,
+        2,
+        19
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "student_24_8",
+      "kind": "seat",
+      "pos": [
+        23,
+        2,
+        7
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "student_24_12",
+      "kind": "seat",
+      "pos": [
+        23,
+        2,
+        11
+      ],
+      "estimatedBlockLight": 14
+    },
+    {
+      "id": "student_24_16",
+      "kind": "seat",
+      "pos": [
+        23,
+        2,
+        15
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "student_24_20",
+      "kind": "seat",
+      "pos": [
+        23,
+        2,
+        19
+      ],
+      "estimatedBlockLight": 9
+    },
+    {
+      "id": "student_28_8",
+      "kind": "seat",
+      "pos": [
+        27,
+        2,
+        7
+      ],
+      "estimatedBlockLight": 11
+    },
+    {
+      "id": "student_28_12",
+      "kind": "seat",
+      "pos": [
+        27,
+        2,
+        11
+      ],
+      "estimatedBlockLight": 9
+    },
+    {
+      "id": "student_28_16",
+      "kind": "seat",
+      "pos": [
+        27,
+        2,
+        15
+      ],
+      "estimatedBlockLight": 11
+    },
+    {
+      "id": "student_28_20",
+      "kind": "seat",
+      "pos": [
+        27,
+        2,
+        19
+      ],
+      "estimatedBlockLight": 11
+    }
+  ],
+  "floorSampleCount": 646,
+  "minimumOccupiedLight": 8,
+  "minimumFloorLight": 6,
+  "darkOccupiedPoints": [],
+  "darkFloorSamples": [],
+  "passed": true
+}

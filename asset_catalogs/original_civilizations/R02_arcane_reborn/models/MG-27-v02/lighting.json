@@ -1,0 +1,186 @@
+{
+  "schema": "structure-studio.lighting-review.v1",
+  "nbt_sha256": "a24ebf20fd3963670afa89118c8d1466243b41e329ec86bd23736b89ed0f6db1",
+  "scope": "Conservative offline block-light estimate for authored occupied spaces.\n\nThis is not Minecraft's light engine: no sky light, partial collision blocks are\nopaque, and state-dependent emitters are not simulated. It is an authoring check\nfor fixed lanterns, sea lanterns and end rods, not an in-game night acceptance.\n",
+  "emitterCount": 12,
+  "occupiedPointTarget": 8,
+  "floorTarget": 5,
+  "occupiedPoints": [
+    {
+      "id": "main_access",
+      "kind": "circulation",
+      "pos": [
+        9,
+        2,
+        5
+      ],
+      "estimatedBlockLight": 8
+    },
+    {
+      "id": "resident_bed_5_2_6",
+      "kind": "bed",
+      "pos": [
+        6,
+        2,
+        6
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_bed_5_2_9",
+      "kind": "bed",
+      "pos": [
+        6,
+        2,
+        9
+      ],
+      "estimatedBlockLight": 9
+    },
+    {
+      "id": "resident_bed_5_2_12",
+      "kind": "bed",
+      "pos": [
+        6,
+        2,
+        12
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "resident_bed_5_2_15",
+      "kind": "bed",
+      "pos": [
+        6,
+        2,
+        15
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_bed_7_2_6",
+      "kind": "bed",
+      "pos": [
+        8,
+        2,
+        6
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "resident_bed_7_2_9",
+      "kind": "bed",
+      "pos": [
+        8,
+        2,
+        9
+      ],
+      "estimatedBlockLight": 9
+    },
+    {
+      "id": "resident_bed_7_2_12",
+      "kind": "bed",
+      "pos": [
+        8,
+        2,
+        12
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_bed_7_2_15",
+      "kind": "bed",
+      "pos": [
+        8,
+        2,
+        15
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "resident_bed_11_2_6",
+      "kind": "bed",
+      "pos": [
+        12,
+        2,
+        6
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "resident_bed_11_2_9",
+      "kind": "bed",
+      "pos": [
+        12,
+        2,
+        9
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_bed_11_2_12",
+      "kind": "bed",
+      "pos": [
+        12,
+        2,
+        12
+      ],
+      "estimatedBlockLight": 9
+    },
+    {
+      "id": "resident_bed_11_2_15",
+      "kind": "bed",
+      "pos": [
+        12,
+        2,
+        15
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "resident_bed_13_2_6",
+      "kind": "bed",
+      "pos": [
+        14,
+        2,
+        6
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_bed_13_2_9",
+      "kind": "bed",
+      "pos": [
+        14,
+        2,
+        9
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "resident_bed_13_2_12",
+      "kind": "bed",
+      "pos": [
+        14,
+        2,
+        12
+      ],
+      "estimatedBlockLight": 9
+    },
+    {
+      "id": "resident_bed_13_2_15",
+      "kind": "bed",
+      "pos": [
+        14,
+        2,
+        15
+      ],
+      "estimatedBlockLight": 12
+    }
+  ],
+  "floorSampleCount": 185,
+  "minimumOccupiedLight": 8,
+  "minimumFloorLight": 6,
+  "darkOccupiedPoints": [],
+  "darkFloorSamples": [],
+  "passed": true
+}

@@ -1,0 +1,326 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    61,
+    61,
+    65
+  ],
+  "sourceSha256": "b8799ac3bb2eef580bfeaebaf4f8c0fe9aad0521666004dd3816c14043612647",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 2
+  },
+  "facilities": [
+    {
+      "id": "work:31,2,22",
+      "kind": "work",
+      "pos": [
+        31,
+        2,
+        22
+      ],
+      "block": "minecraft:lectern",
+      "facing": "north",
+      "use": "staff",
+      "room": "reading",
+      "name": "一层书目检索",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        30,
+        2,
+        22
+      ]
+    },
+    {
+      "id": "work:45,12,39",
+      "kind": "work",
+      "pos": [
+        45,
+        12,
+        39
+      ],
+      "block": "minecraft:lectern",
+      "facing": "north",
+      "use": "staff",
+      "room": "gallery",
+      "name": "上层环廊书架",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        44,
+        12,
+        39
+      ]
+    },
+    {
+      "id": "entrance:30,2,0",
+      "kind": "entrance",
+      "pos": [
+        30,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "临街步行入口",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "seat:19,2,36",
+      "kind": "seat",
+      "pos": [
+        19,
+        2,
+        36
+      ],
+      "block": "minecraft:birch_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "reading",
+      "name": "公共阅读、听课或用餐座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        20,
+        2,
+        36
+      ]
+    },
+    {
+      "id": "seat:19,2,38",
+      "kind": "seat",
+      "pos": [
+        19,
+        2,
+        38
+      ],
+      "block": "minecraft:birch_stairs",
+      "facing": "north",
+      "use": "public",
+      "room": "reading",
+      "name": "公共阅读、听课或用餐座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        20,
+        2,
+        38
+      ]
+    },
+    {
+      "id": "seat:21,2,36",
+      "kind": "seat",
+      "pos": [
+        21,
+        2,
+        36
+      ],
+      "block": "minecraft:birch_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "reading",
+      "name": "公共阅读、听课或用餐座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        22,
+        2,
+        36
+      ]
+    },
+    {
+      "id": "seat:21,2,38",
+      "kind": "seat",
+      "pos": [
+        21,
+        2,
+        38
+      ],
+      "block": "minecraft:birch_stairs",
+      "facing": "north",
+      "use": "public",
+      "room": "reading",
+      "name": "公共阅读、听课或用餐座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        22,
+        2,
+        38
+      ]
+    },
+    {
+      "id": "seat:23,2,36",
+      "kind": "seat",
+      "pos": [
+        23,
+        2,
+        36
+      ],
+      "block": "minecraft:birch_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "reading",
+      "name": "公共阅读、听课或用餐座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        24,
+        2,
+        36
+      ]
+    },
+    {
+      "id": "seat:23,2,38",
+      "kind": "seat",
+      "pos": [
+        23,
+        2,
+        38
+      ],
+      "block": "minecraft:birch_stairs",
+      "facing": "north",
+      "use": "public",
+      "room": "reading",
+      "name": "公共阅读、听课或用餐座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        24,
+        2,
+        38
+      ]
+    },
+    {
+      "id": "seat:37,2,36",
+      "kind": "seat",
+      "pos": [
+        37,
+        2,
+        36
+      ],
+      "block": "minecraft:birch_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "reading",
+      "name": "公共阅读、听课或用餐座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        38,
+        2,
+        36
+      ]
+    },
+    {
+      "id": "seat:37,2,38",
+      "kind": "seat",
+      "pos": [
+        37,
+        2,
+        38
+      ],
+      "block": "minecraft:birch_stairs",
+      "facing": "north",
+      "use": "public",
+      "room": "reading",
+      "name": "公共阅读、听课或用餐座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        38,
+        2,
+        38
+      ]
+    },
+    {
+      "id": "seat:39,2,36",
+      "kind": "seat",
+      "pos": [
+        39,
+        2,
+        36
+      ],
+      "block": "minecraft:birch_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "reading",
+      "name": "公共阅读、听课或用餐座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        40,
+        2,
+        36
+      ]
+    },
+    {
+      "id": "seat:39,2,38",
+      "kind": "seat",
+      "pos": [
+        39,
+        2,
+        38
+      ],
+      "block": "minecraft:birch_stairs",
+      "facing": "north",
+      "use": "public",
+      "room": "reading",
+      "name": "公共阅读、听课或用餐座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        40,
+        2,
+        38
+      ]
+    },
+    {
+      "id": "seat:41,2,36",
+      "kind": "seat",
+      "pos": [
+        41,
+        2,
+        36
+      ],
+      "block": "minecraft:birch_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "reading",
+      "name": "公共阅读、听课或用餐座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        42,
+        2,
+        36
+      ]
+    },
+    {
+      "id": "seat:41,2,38",
+      "kind": "seat",
+      "pos": [
+        41,
+        2,
+        38
+      ],
+      "block": "minecraft:birch_stairs",
+      "facing": "north",
+      "use": "public",
+      "room": "reading",
+      "name": "公共阅读、听课或用餐座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        42,
+        2,
+        38
+      ]
+    }
+  ],
+  "warnings": []
+}

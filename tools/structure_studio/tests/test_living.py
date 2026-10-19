@@ -7,6 +7,28 @@ from studio.model import Model, read_structure
 
 
 class LivingFacilitiesTest(unittest.TestCase):
+    def test_authored_workplace_policy_excludes_decorative_blocks_and_public_lecterns(self):
+        m = Model('test', 'authored jobs', (8, 5, 8))
+        m.set(2, 1, 2, 'barrel').set(3, 1, 2, 'lectern').set(4, 1, 2, 'lectern')
+        m.meta['workplace_policy'] = 'authored'
+        m.point('reader', 'meeting', (3, 1, 2), 'Public reading', use='public')
+        m.point('teacher', 'work', (4, 1, 2), 'Teacher', approach=(4, 1, 3), use='staff')
+        data = self.export(m)
+        rules = dict(facilities=[dict(blocks=['minecraft:barrel'], kind='work')])
+        result = extract(data, m.meta, rules)
+        self.assertEqual(1, result['capacity']['workplaces'])
+        work = [f for f in result['facilities'] if f['kind'] == 'work']
+        self.assertEqual([4, 1, 2], work[0]['pos'])
+        legacy = dict(m.meta)
+        legacy.pop('workplace_policy')
+        self.assertEqual(3, extract(data, legacy)['capacity']['workplaces'])
+
+    def test_unknown_workplace_policy_does_not_silently_change_capacity(self):
+        m = Model('test', 'invalid', (3, 3, 3))
+        m.meta['workplace_policy'] = 'unknown'
+        with self.assertRaisesRegex(ValueError, 'workplace_policy'):
+            self.export(m)
+
     def export(self, model):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)

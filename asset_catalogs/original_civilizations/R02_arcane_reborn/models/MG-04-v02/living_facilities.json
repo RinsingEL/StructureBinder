@@ -1,0 +1,95 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    73,
+    64,
+    73
+  ],
+  "sourceSha256": "070ecb67486fb8f7fd2954c0db26a07c70b59ac6bca6d3a5a6e0b7a7532cc337",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 3
+  },
+  "facilities": [
+    {
+      "id": "work:16,3,29",
+      "kind": "work",
+      "pos": [
+        16,
+        3,
+        29
+      ],
+      "block": "minecraft:brewing_stand",
+      "facing": "north",
+      "use": "staff",
+      "room": "",
+      "name": "独立实验长翼",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        15,
+        2,
+        29
+      ]
+    },
+    {
+      "id": "work:37,3,36",
+      "kind": "work",
+      "pos": [
+        37,
+        3,
+        36
+      ],
+      "block": "minecraft:brewing_stand",
+      "facing": "north",
+      "use": "staff",
+      "room": "crystal",
+      "name": "晶核实验观察环道",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        36,
+        2,
+        36
+      ]
+    },
+    {
+      "id": "work:58,3,29",
+      "kind": "work",
+      "pos": [
+        58,
+        3,
+        29
+      ],
+      "block": "minecraft:brewing_stand",
+      "facing": "north",
+      "use": "staff",
+      "room": "",
+      "name": "独立实验长翼",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        57,
+        2,
+        29
+      ]
+    },
+    {
+      "id": "entrance:36,2,0",
+      "kind": "entrance",
+      "pos": [
+        36,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "临街步行入口",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    }
+  ],
+  "warnings": []
+}

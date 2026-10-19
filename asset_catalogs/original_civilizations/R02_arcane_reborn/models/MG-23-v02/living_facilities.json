@@ -1,0 +1,95 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    53,
+    38,
+    59
+  ],
+  "sourceSha256": "b4c22f53563601eeee56666f2ef0cf24537feb348dc1cf89c7f436a85815f019",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 2
+  },
+  "facilities": [
+    {
+      "id": "work:12,3,49",
+      "kind": "work",
+      "pos": [
+        12,
+        3,
+        49
+      ],
+      "block": "minecraft:lectern",
+      "facing": "north",
+      "use": "staff",
+      "room": "",
+      "name": "左侧登船栈桥",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        11,
+        3,
+        49
+      ]
+    },
+    {
+      "id": "work:42,3,49",
+      "kind": "work",
+      "pos": [
+        42,
+        3,
+        49
+      ],
+      "block": "minecraft:lectern",
+      "facing": "north",
+      "use": "staff",
+      "room": "",
+      "name": "右侧登船栈桥",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        41,
+        3,
+        49
+      ]
+    },
+    {
+      "id": "entrance:26,2,0",
+      "kind": "entrance",
+      "pos": [
+        26,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "临街步行入口",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "meeting:26,3,28",
+      "kind": "meeting",
+      "pos": [
+        26,
+        3,
+        28
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "public",
+      "room": "",
+      "name": "候船券廊",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        26,
+        3,
+        28
+      ]
+    }
+  ],
+  "warnings": []
+}

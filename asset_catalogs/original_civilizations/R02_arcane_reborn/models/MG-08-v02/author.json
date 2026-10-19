@@ -1,0 +1,216 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-08-v02",
+  "name": "尖拱步廊桥 · 高券桥腹与玻璃廊顶",
+  "family": "MG-08",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.structure",
+  "size": [
+    29,
+    39,
+    59
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        14,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "bridge",
+      "kind": "circulation",
+      "pos": [
+        14,
+        10,
+        29
+      ],
+      "name": "跨水步廊",
+      "approach": [
+        14,
+        10,
+        29
+      ],
+      "use": "public"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。",
+    "仅作者声明的工作点计入岗位容量；装饰桶、家庭储物与学生/访客使用设施不冒充员工工位。"
+  ],
+  "differences": [
+    "2026-10-19 全学院可进入建筑：补齐功能工位/公共席位，分层分区照明，保留旧版本。"
+  ],
+  "floors": [
+    {
+      "name": "过桥廊面",
+      "y": 9,
+      "max_y": 19
+    }
+  ],
+  "roof_min_y": 21,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "步行过桥"
+  ],
+  "asset_tags": [
+    "infrastructure"
+  ],
+  "source": "tools/structure_studio/studio/academy_interiors.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "workplace_policy": "authored",
+  "interior_lighting": {
+    "source": "fixed_emitters_no_skylight_conservative_estimate",
+    "occupiedPointTarget": 8,
+    "floorTarget": 5,
+    "sampledPositions": 211,
+    "fixtures": [
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          14,
+          13,
+          29
+        ],
+        "support": [
+          14,
+          24,
+          29
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          10,
+          13,
+          19
+        ],
+        "support": [
+          10,
+          23,
+          19
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          10,
+          13,
+          26
+        ],
+        "support": [
+          10,
+          23,
+          26
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          10,
+          13,
+          33
+        ],
+        "support": [
+          10,
+          23,
+          33
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          11,
+          13,
+          39
+        ],
+        "support": [
+          11,
+          24,
+          39
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          14,
+          9,
+          22
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          15,
+          9,
+          35
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          16,
+          13,
+          17
+        ],
+        "support": [
+          16,
+          21,
+          17
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          16,
+          13,
+          41
+        ],
+        "support": [
+          16,
+          21,
+          41
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          18,
+          13,
+          25
+        ],
+        "support": [
+          18,
+          23,
+          25
+        ]
+      }
+    ],
+    "note": "低位吊灯使用实际屋面或楼板承吊；高厅与开放处采用齐平星石灯。估计不替代 Minecraft 夜间验收。"
+  },
+  "nbt_sha256": "bd5ee3d52196030fb7d2835628d04cccea3117bb597c5306fe98a9a6b5783f0f"
+}

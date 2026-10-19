@@ -1,0 +1,95 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    51,
+    64,
+    55
+  ],
+  "sourceSha256": "4ad1a6edb7faa6763e3f30770ca3a34b8a296cc6bec3fd815512e6c93498d276",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 3
+  },
+  "facilities": [
+    {
+      "id": "work:26,11,33",
+      "kind": "work",
+      "pos": [
+        26,
+        11,
+        33
+      ],
+      "block": "minecraft:lectern",
+      "facing": "north",
+      "use": "staff",
+      "room": "",
+      "name": "历法与星图层",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        25,
+        11,
+        33
+      ]
+    },
+    {
+      "id": "work:26,20,33",
+      "kind": "work",
+      "pos": [
+        26,
+        20,
+        33
+      ],
+      "block": "minecraft:lectern",
+      "facing": "north",
+      "use": "staff",
+      "room": "",
+      "name": "观测准备层",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        25,
+        20,
+        33
+      ]
+    },
+    {
+      "id": "work:26,29,22",
+      "kind": "work",
+      "pos": [
+        26,
+        29,
+        22
+      ],
+      "block": "minecraft:lectern",
+      "facing": "north",
+      "use": "staff",
+      "room": "",
+      "name": "星仪观测露台",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        25,
+        29,
+        22
+      ]
+    },
+    {
+      "id": "entrance:25,2,0",
+      "kind": "entrance",
+      "pos": [
+        25,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "临街步行入口",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    }
+  ],
+  "warnings": []
+}

@@ -1,0 +1,277 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-26-v02",
+  "name": "小课堂 · 八席研讨与讲台",
+  "family": "MG-26",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    21,
+    24,
+    21
+  ],
+  "terrain": {
+    "选址": "完整承载面；农林地块保持自然地形，独立建筑使用核心台地。"
+  },
+  "rooms": [
+    {
+      "id": "main",
+      "name": "小课堂",
+      "min": [
+        4,
+        2,
+        5
+      ],
+      "max": [
+        16,
+        7,
+        16
+      ],
+      "purpose": "8 个学生席位、1 个教师讲台与后墙教学板。"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        10,
+        2,
+        0
+      ],
+      "name": "主入口",
+      "direction": "north",
+      "approach": [
+        10,
+        2,
+        2
+      ]
+    },
+    {
+      "id": "main_access",
+      "kind": "circulation",
+      "pos": [
+        10,
+        2,
+        5
+      ],
+      "name": "室内通路",
+      "approach": [
+        10,
+        2,
+        5
+      ]
+    },
+    {
+      "id": "teacher",
+      "kind": "work",
+      "pos": [
+        10,
+        2,
+        14
+      ],
+      "name": "教师授课讲台",
+      "use": "staff",
+      "approach": [
+        10,
+        2,
+        13
+      ]
+    },
+    {
+      "id": "student_6_8",
+      "kind": "seat",
+      "pos": [
+        6,
+        2,
+        7
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        5,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "student_6_11",
+      "kind": "seat",
+      "pos": [
+        6,
+        2,
+        10
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        5,
+        2,
+        10
+      ]
+    },
+    {
+      "id": "student_8_8",
+      "kind": "seat",
+      "pos": [
+        8,
+        2,
+        7
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        7,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "student_8_11",
+      "kind": "seat",
+      "pos": [
+        8,
+        2,
+        10
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        7,
+        2,
+        10
+      ]
+    },
+    {
+      "id": "student_12_8",
+      "kind": "seat",
+      "pos": [
+        12,
+        2,
+        7
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        11,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "student_12_11",
+      "kind": "seat",
+      "pos": [
+        12,
+        2,
+        10
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        11,
+        2,
+        10
+      ]
+    },
+    {
+      "id": "student_14_8",
+      "kind": "seat",
+      "pos": [
+        14,
+        2,
+        7
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        13,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "student_14_11",
+      "kind": "seat",
+      "pos": [
+        14,
+        2,
+        10
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        13,
+        2,
+        10
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "学院组团配套；尺寸独立于大型文化核心。实际生产、居民和魔法行为另行配置。",
+    "中轴与桌列侧方保持步行通道；低位壁灯覆盖座位区，讲台设两点低垂灯，吊杆接到贯通木梁。",
+    "仅作者声明的工作点计入岗位容量；装饰桶、家庭储物与学生/访客使用设施不冒充员工工位。"
+  ],
+  "differences": [
+    "保留建筑外形和入口，重排实体学生桌椅、教师讲台与备课位；学生座位不算教师工位。",
+    "2026-10-19 全学院可进入建筑：补齐功能工位/公共席位，分层分区照明，保留旧版本。"
+  ],
+  "floors": [
+    {
+      "name": "首层",
+      "y": 1,
+      "max_y": 8
+    }
+  ],
+  "roof_min_y": 10,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "教学",
+    "研讨"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/academy_interiors.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部路面脚底为 Y=2。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "campus_consumer": "array",
+  "design_revision": 1,
+  "workplace_policy": "authored",
+  "interior_lighting": {
+    "source": "fixed_emitters_no_skylight_conservative_estimate",
+    "occupiedPointTarget": 8,
+    "floorTarget": 5,
+    "sampledPositions": 165,
+    "fixtures": [],
+    "note": "低位吊灯使用实际屋面或楼板承吊；高厅与开放处采用齐平星石灯。估计不替代 Minecraft 夜间验收。"
+  },
+  "nbt_sha256": "d3b9b7b0b653b2804eba73b6b64c7995d1c5926c35cd45ee6fe987e4fea04c23"
+}

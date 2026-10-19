@@ -1,0 +1,347 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    65,
+    55,
+    71
+  ],
+  "sourceSha256": "debc2123f66dcfe290d921040977d40f9370dd86defdc926fe8dc434841fb030",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 3
+  },
+  "facilities": [
+    {
+      "id": "bed:11,2,34",
+      "kind": "bed",
+      "pos": [
+        11,
+        2,
+        34
+      ],
+      "block": "minecraft:white_bed",
+      "facing": "north",
+      "use": "care",
+      "room": "ward_6",
+      "name": "病床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        12,
+        2,
+        35
+      ]
+    },
+    {
+      "id": "bed:11,2,40",
+      "kind": "bed",
+      "pos": [
+        11,
+        2,
+        40
+      ],
+      "block": "minecraft:white_bed",
+      "facing": "north",
+      "use": "care",
+      "room": "ward_6",
+      "name": "病床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        12,
+        2,
+        41
+      ]
+    },
+    {
+      "id": "bed:11,2,46",
+      "kind": "bed",
+      "pos": [
+        11,
+        2,
+        46
+      ],
+      "block": "minecraft:white_bed",
+      "facing": "north",
+      "use": "care",
+      "room": "ward_6",
+      "name": "病床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        12,
+        2,
+        47
+      ]
+    },
+    {
+      "id": "work:15,3,37",
+      "kind": "work",
+      "pos": [
+        15,
+        3,
+        37
+      ],
+      "block": "minecraft:brewing_stand",
+      "facing": "north",
+      "use": "staff",
+      "room": "ward_6",
+      "name": "病房巡视与照护",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        14,
+        2,
+        37
+      ]
+    },
+    {
+      "id": "bed:17,2,34",
+      "kind": "bed",
+      "pos": [
+        17,
+        2,
+        34
+      ],
+      "block": "minecraft:white_bed",
+      "facing": "north",
+      "use": "care",
+      "room": "ward_6",
+      "name": "病床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        18,
+        2,
+        35
+      ]
+    },
+    {
+      "id": "bed:17,2,40",
+      "kind": "bed",
+      "pos": [
+        17,
+        2,
+        40
+      ],
+      "block": "minecraft:white_bed",
+      "facing": "north",
+      "use": "care",
+      "room": "ward_6",
+      "name": "病床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        18,
+        2,
+        41
+      ]
+    },
+    {
+      "id": "bed:17,2,46",
+      "kind": "bed",
+      "pos": [
+        17,
+        2,
+        46
+      ],
+      "block": "minecraft:white_bed",
+      "facing": "north",
+      "use": "care",
+      "room": "ward_6",
+      "name": "病床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        18,
+        2,
+        47
+      ]
+    },
+    {
+      "id": "work:33,3,49",
+      "kind": "work",
+      "pos": [
+        33,
+        3,
+        49
+      ],
+      "block": "minecraft:brewing_stand",
+      "facing": "north",
+      "use": "staff",
+      "room": "care",
+      "name": "中央照护与配药台",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        32,
+        2,
+        49
+      ]
+    },
+    {
+      "id": "bed:47,2,34",
+      "kind": "bed",
+      "pos": [
+        47,
+        2,
+        34
+      ],
+      "block": "minecraft:white_bed",
+      "facing": "north",
+      "use": "care",
+      "room": "ward_42",
+      "name": "病床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        48,
+        2,
+        35
+      ]
+    },
+    {
+      "id": "bed:47,2,40",
+      "kind": "bed",
+      "pos": [
+        47,
+        2,
+        40
+      ],
+      "block": "minecraft:white_bed",
+      "facing": "north",
+      "use": "care",
+      "room": "ward_42",
+      "name": "病床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        48,
+        2,
+        41
+      ]
+    },
+    {
+      "id": "bed:47,2,46",
+      "kind": "bed",
+      "pos": [
+        47,
+        2,
+        46
+      ],
+      "block": "minecraft:white_bed",
+      "facing": "north",
+      "use": "care",
+      "room": "ward_42",
+      "name": "病床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        48,
+        2,
+        47
+      ]
+    },
+    {
+      "id": "work:51,3,37",
+      "kind": "work",
+      "pos": [
+        51,
+        3,
+        37
+      ],
+      "block": "minecraft:brewing_stand",
+      "facing": "north",
+      "use": "staff",
+      "room": "ward_42",
+      "name": "病房巡视与照护",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        50,
+        2,
+        37
+      ]
+    },
+    {
+      "id": "bed:53,2,34",
+      "kind": "bed",
+      "pos": [
+        53,
+        2,
+        34
+      ],
+      "block": "minecraft:white_bed",
+      "facing": "north",
+      "use": "care",
+      "room": "ward_42",
+      "name": "病床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        54,
+        2,
+        35
+      ]
+    },
+    {
+      "id": "bed:53,2,40",
+      "kind": "bed",
+      "pos": [
+        53,
+        2,
+        40
+      ],
+      "block": "minecraft:white_bed",
+      "facing": "north",
+      "use": "care",
+      "room": "ward_42",
+      "name": "病床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        54,
+        2,
+        41
+      ]
+    },
+    {
+      "id": "bed:53,2,46",
+      "kind": "bed",
+      "pos": [
+        53,
+        2,
+        46
+      ],
+      "block": "minecraft:white_bed",
+      "facing": "north",
+      "use": "care",
+      "room": "ward_42",
+      "name": "病床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        54,
+        2,
+        47
+      ]
+    },
+    {
+      "id": "entrance:32,2,0",
+      "kind": "entrance",
+      "pos": [
+        32,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "临街步行入口",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    }
+  ],
+  "warnings": []
+}

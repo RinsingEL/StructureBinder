@@ -1,0 +1,583 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    35,
+    32,
+    31
+  ],
+  "sourceSha256": "6836038cd11d9a607e855bcc2249610711fd34f5cc06aed7a30afde9d142a81f",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 2
+  },
+  "facilities": [
+    {
+      "id": "work:7,2,22",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        22
+      ],
+      "block": "minecraft:lectern",
+      "facing": "north",
+      "use": "staff",
+      "room": "main",
+      "name": "助教备课与课堂记录",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        7,
+        2,
+        21
+      ]
+    },
+    {
+      "id": "work:17,2,24",
+      "kind": "work",
+      "pos": [
+        17,
+        2,
+        24
+      ],
+      "block": "minecraft:lectern",
+      "facing": "north",
+      "use": "staff",
+      "room": "main",
+      "name": "教师授课讲台",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        17,
+        2,
+        23
+      ]
+    },
+    {
+      "id": "entrance:17,2,0",
+      "kind": "entrance",
+      "pos": [
+        17,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "主入口",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        17,
+        2,
+        2
+      ]
+    },
+    {
+      "id": "seat:6,2,7",
+      "kind": "seat",
+      "pos": [
+        6,
+        2,
+        7
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "main",
+      "name": "学生听课与书写座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        5,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "seat:6,2,11",
+      "kind": "seat",
+      "pos": [
+        6,
+        2,
+        11
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "main",
+      "name": "学生听课与书写座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        5,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "seat:6,2,15",
+      "kind": "seat",
+      "pos": [
+        6,
+        2,
+        15
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "main",
+      "name": "学生听课与书写座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        5,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "seat:6,2,19",
+      "kind": "seat",
+      "pos": [
+        6,
+        2,
+        19
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "main",
+      "name": "学生听课与书写座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        5,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "seat:10,2,7",
+      "kind": "seat",
+      "pos": [
+        10,
+        2,
+        7
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "main",
+      "name": "学生听课与书写座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        9,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "seat:10,2,11",
+      "kind": "seat",
+      "pos": [
+        10,
+        2,
+        11
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "main",
+      "name": "学生听课与书写座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        9,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "seat:10,2,15",
+      "kind": "seat",
+      "pos": [
+        10,
+        2,
+        15
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "main",
+      "name": "学生听课与书写座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        9,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "seat:10,2,19",
+      "kind": "seat",
+      "pos": [
+        10,
+        2,
+        19
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "main",
+      "name": "学生听课与书写座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        9,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "seat:14,2,7",
+      "kind": "seat",
+      "pos": [
+        14,
+        2,
+        7
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "main",
+      "name": "学生听课与书写座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        13,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "seat:14,2,11",
+      "kind": "seat",
+      "pos": [
+        14,
+        2,
+        11
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "main",
+      "name": "学生听课与书写座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        13,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "seat:14,2,15",
+      "kind": "seat",
+      "pos": [
+        14,
+        2,
+        15
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "main",
+      "name": "学生听课与书写座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        13,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "seat:14,2,19",
+      "kind": "seat",
+      "pos": [
+        14,
+        2,
+        19
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "main",
+      "name": "学生听课与书写座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        13,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "seat:20,2,7",
+      "kind": "seat",
+      "pos": [
+        20,
+        2,
+        7
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "main",
+      "name": "学生听课与书写座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        19,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "seat:20,2,11",
+      "kind": "seat",
+      "pos": [
+        20,
+        2,
+        11
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "main",
+      "name": "学生听课与书写座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        19,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "seat:20,2,15",
+      "kind": "seat",
+      "pos": [
+        20,
+        2,
+        15
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "main",
+      "name": "学生听课与书写座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        19,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "seat:20,2,19",
+      "kind": "seat",
+      "pos": [
+        20,
+        2,
+        19
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "main",
+      "name": "学生听课与书写座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        19,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "seat:24,2,7",
+      "kind": "seat",
+      "pos": [
+        24,
+        2,
+        7
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "main",
+      "name": "学生听课与书写座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        23,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "seat:24,2,11",
+      "kind": "seat",
+      "pos": [
+        24,
+        2,
+        11
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "main",
+      "name": "学生听课与书写座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        23,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "seat:24,2,15",
+      "kind": "seat",
+      "pos": [
+        24,
+        2,
+        15
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "main",
+      "name": "学生听课与书写座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        23,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "seat:24,2,19",
+      "kind": "seat",
+      "pos": [
+        24,
+        2,
+        19
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "main",
+      "name": "学生听课与书写座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        23,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "seat:28,2,7",
+      "kind": "seat",
+      "pos": [
+        28,
+        2,
+        7
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "main",
+      "name": "学生听课与书写座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        27,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "seat:28,2,11",
+      "kind": "seat",
+      "pos": [
+        28,
+        2,
+        11
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "main",
+      "name": "学生听课与书写座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        27,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "seat:28,2,15",
+      "kind": "seat",
+      "pos": [
+        28,
+        2,
+        15
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "main",
+      "name": "学生听课与书写座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        27,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "seat:28,2,19",
+      "kind": "seat",
+      "pos": [
+        28,
+        2,
+        19
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "public",
+      "room": "main",
+      "name": "学生听课与书写座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        27,
+        2,
+        19
+      ]
+    }
+  ],
+  "warnings": []
+}

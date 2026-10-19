@@ -1,0 +1,166 @@
+{
+  "schema": "structure-studio.lighting-review.v1",
+  "nbt_sha256": "debc2123f66dcfe290d921040977d40f9370dd86defdc926fe8dc434841fb030",
+  "scope": "Conservative offline block-light estimate for authored occupied spaces.\n\nThis is not Minecraft's light engine: no sky light, partial collision blocks are\nopaque, and state-dependent emitters are not simulated. It is an authoring check\nfor fixed lanterns, sea lanterns and end rods, not an in-game night acceptance.\n",
+  "emitterCount": 63,
+  "occupiedPointTarget": 8,
+  "floorTarget": 5,
+  "occupiedPoints": [
+    {
+      "id": "nurse_6",
+      "kind": "work",
+      "pos": [
+        14,
+        2,
+        37
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "nurse_42",
+      "kind": "work",
+      "pos": [
+        50,
+        2,
+        37
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "care",
+      "kind": "work",
+      "pos": [
+        32,
+        2,
+        49
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "patient_11_35",
+      "kind": "bed",
+      "pos": [
+        12,
+        2,
+        35
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "patient_11_41",
+      "kind": "bed",
+      "pos": [
+        12,
+        2,
+        41
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "patient_11_47",
+      "kind": "bed",
+      "pos": [
+        12,
+        2,
+        47
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "patient_17_35",
+      "kind": "bed",
+      "pos": [
+        18,
+        2,
+        35
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "patient_17_41",
+      "kind": "bed",
+      "pos": [
+        18,
+        2,
+        41
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "patient_17_47",
+      "kind": "bed",
+      "pos": [
+        18,
+        2,
+        47
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "patient_47_35",
+      "kind": "bed",
+      "pos": [
+        48,
+        2,
+        35
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "patient_47_41",
+      "kind": "bed",
+      "pos": [
+        48,
+        2,
+        41
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "patient_47_47",
+      "kind": "bed",
+      "pos": [
+        48,
+        2,
+        47
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "patient_53_35",
+      "kind": "bed",
+      "pos": [
+        54,
+        2,
+        35
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "patient_53_41",
+      "kind": "bed",
+      "pos": [
+        54,
+        2,
+        41
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "patient_53_47",
+      "kind": "bed",
+      "pos": [
+        54,
+        2,
+        47
+      ],
+      "estimatedBlockLight": 12
+    }
+  ],
+  "floorSampleCount": 1363,
+  "minimumOccupiedLight": 10,
+  "minimumFloorLight": 5,
+  "darkOccupiedPoints": [],
+  "darkFloorSamples": [],
+  "passed": true
+}

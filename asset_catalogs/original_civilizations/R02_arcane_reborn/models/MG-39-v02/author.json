@@ -1,0 +1,234 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-39-v02",
+  "name": "地面尖拱连廊 · 五开间连接件",
+  "family": "MG-39",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.structure",
+  "size": [
+    11,
+    25,
+    27
+  ],
+  "terrain": {
+    "选址": "核心台地的稳定承载面；连接件由连接系统确定位置与支撑。"
+  },
+  "rooms": [],
+  "points": [
+    {
+      "id": "north-1",
+      "kind": "circulation",
+      "pos": [
+        5,
+        2,
+        0
+      ],
+      "name": "连廊接口",
+      "direction": "north",
+      "approach": [
+        5,
+        2,
+        0
+      ]
+    },
+    {
+      "id": "south-1",
+      "kind": "circulation",
+      "pos": [
+        5,
+        2,
+        26
+      ],
+      "name": "连廊接口",
+      "direction": "south",
+      "approach": [
+        5,
+        2,
+        26
+      ]
+    },
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        5,
+        2,
+        0
+      ],
+      "name": "连接件地面入口",
+      "direction": "north",
+      "approach": [
+        5,
+        2,
+        1
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "north-1",
+      "point_id": "north-1",
+      "kind": "academy_gallery",
+      "pos": [
+        5,
+        2,
+        0
+      ],
+      "direction": "north",
+      "standing_y": 2,
+      "width": 3,
+      "height": 4,
+      "note": "端点脚底与翼楼同层端口对齐；高架支墩落地适配由程序负责。"
+    },
+    {
+      "id": "south-1",
+      "point_id": "south-1",
+      "kind": "academy_gallery",
+      "pos": [
+        5,
+        2,
+        26
+      ],
+      "direction": "south",
+      "standing_y": 2,
+      "width": 3,
+      "height": 4,
+      "note": "端点脚底与翼楼同层端口对齐；高架支墩落地适配由程序负责。"
+    }
+  ],
+  "design_notes": [
+    "补足大核心周围的多层翼楼、折角与围院，基础只覆盖实际楼体及通路。",
+    "连接端口为作者标记，尚未接入自动拼装；以局部坐标、方向、脚底高度和净空配对。",
+    "紫晶、仪器与符文均为原版静态方块，不声明魔法功能已经运行。",
+    "独立预览可从地面走通；连接件不能作为学院阵列建筑成员。",
+    "仅作者声明的工作点计入岗位容量；装饰桶、家庭储物与学生/访客使用设施不冒充员工工位。"
+  ],
+  "differences": [
+    "2026-10-19 全学院可进入建筑：补齐功能工位/公共席位，分层分区照明，保留旧版本。"
+  ],
+  "floors": [
+    {
+      "name": "第1层",
+      "y": 1,
+      "max_y": 9
+    }
+  ],
+  "roof_min_y": 11,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/academy_interiors.py:BUILDERS",
+  "function_terms": [
+    "楼间连接",
+    "步行通行"
+  ],
+  "asset_tags": [
+    "infrastructure"
+  ],
+  "campus_consumer": "infrastructure",
+  "ground_plane": {
+    "y": 2,
+    "note": "街面脚底 Y=2；教学组团二层接口脚底 Y=12。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 1,
+  "workplace_policy": "authored",
+  "interior_lighting": {
+    "source": "fixed_emitters_no_skylight_conservative_estimate",
+    "occupiedPointTarget": 8,
+    "floorTarget": 5,
+    "sampledPositions": 119,
+    "fixtures": [
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          5,
+          1,
+          0
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          5,
+          1,
+          26
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          3,
+          5,
+          5
+        ],
+        "support": [
+          3,
+          13,
+          5
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          3,
+          5,
+          12
+        ],
+        "support": [
+          3,
+          13,
+          12
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          3,
+          5,
+          19
+        ],
+        "support": [
+          3,
+          13,
+          19
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          7,
+          5,
+          8
+        ],
+        "support": [
+          7,
+          13,
+          8
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          7,
+          5,
+          15
+        ],
+        "support": [
+          7,
+          13,
+          15
+        ]
+      }
+    ],
+    "note": "低位吊灯使用实际屋面或楼板承吊；高厅与开放处采用齐平星石灯。估计不替代 Minecraft 夜间验收。"
+  },
+  "nbt_sha256": "ac4e8db1218496da4d2b900a13026f6969a858d27637613ccd389383d09fcab2"
+}

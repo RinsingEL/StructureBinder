@@ -1,0 +1,24 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "MG-15-v02",
+  "nbt_sha256": "debc2123f66dcfe290d921040977d40f9370dd86defdc926fe8dc434841fb030",
+  "author_sha256": "33a14dd7806fad5975f6e5121f3dc8573456e892c1256428109941c477254ce0",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-care",
+    "room-ward_6",
+    "room-ward_42",
+    "use-work",
+    "use-bed",
+    "annotations"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

@@ -1,0 +1,74 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    43,
+    33,
+    47
+  ],
+  "sourceSha256": "b28d79148f68b2b39527be48ea305053c70a512f0d155251efd4d50733979535",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 2
+  },
+  "facilities": [
+    {
+      "id": "work:13,2,24",
+      "kind": "work",
+      "pos": [
+        13,
+        2,
+        24
+      ],
+      "block": "minecraft:composter",
+      "facing": "north",
+      "use": "staff",
+      "room": "",
+      "name": "西温室园艺养护",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        12,
+        2,
+        24
+      ]
+    },
+    {
+      "id": "work:31,2,24",
+      "kind": "work",
+      "pos": [
+        31,
+        2,
+        24
+      ],
+      "block": "minecraft:composter",
+      "facing": "north",
+      "use": "staff",
+      "room": "",
+      "name": "东温室药草管理",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        30,
+        2,
+        24
+      ]
+    },
+    {
+      "id": "entrance:21,2,0",
+      "kind": "entrance",
+      "pos": [
+        21,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "临街步行入口",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    }
+  ],
+  "warnings": []
+}

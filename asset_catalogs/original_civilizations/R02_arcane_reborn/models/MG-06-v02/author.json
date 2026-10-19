@@ -1,0 +1,556 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-06-v02",
+  "name": "学院器材店 · 八角陈列窗与后部货间",
+  "family": "MG-06",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    43,
+    43,
+    49
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [
+    {
+      "id": "sales",
+      "name": "八角器材陈列厅",
+      "min": [
+        13,
+        2,
+        12
+      ],
+      "max": [
+        29,
+        10,
+        26
+      ],
+      "purpose": "环列陈设与居中的选购通道"
+    }
+  ],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        21,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "retail",
+      "kind": "work",
+      "pos": [
+        22,
+        2,
+        20
+      ],
+      "name": "中央选购通道",
+      "approach": [
+        21,
+        2,
+        20
+      ],
+      "use": "staff"
+    },
+    {
+      "id": "stock",
+      "kind": "work",
+      "pos": [
+        22,
+        2,
+        36
+      ],
+      "name": "后部补货间",
+      "approach": [
+        21,
+        2,
+        36
+      ],
+      "use": "staff"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。",
+    "仅作者声明的工作点计入岗位容量；装饰桶、家庭储物与学生/访客使用设施不冒充员工工位。"
+  ],
+  "differences": [
+    "2026-10-19 全学院可进入建筑：补齐功能工位/公共席位，分层分区照明，保留旧版本。"
+  ],
+  "floors": [
+    {
+      "name": "首层",
+      "y": 1,
+      "max_y": 8
+    }
+  ],
+  "roof_min_y": 15,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "商品零售",
+    "货物暂存"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/academy_interiors.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "workplace_policy": "authored",
+  "interior_lighting": {
+    "source": "fixed_emitters_no_skylight_conservative_estimate",
+    "occupiedPointTarget": 8,
+    "floorTarget": 5,
+    "sampledPositions": 629,
+    "fixtures": [
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          21,
+          1,
+          20
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          21,
+          1,
+          36
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          8,
+          5,
+          13
+        ],
+        "support": [
+          8,
+          13,
+          13
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          8,
+          5,
+          20
+        ],
+        "support": [
+          8,
+          13,
+          20
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          9,
+          5,
+          29
+        ],
+        "support": [
+          9,
+          13,
+          29
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          10,
+          5,
+          8
+        ],
+        "support": [
+          10,
+          13,
+          8
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          11,
+          5,
+          24
+        ],
+        "support": [
+          11,
+          16,
+          24
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          12,
+          1,
+          16
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          12,
+          5,
+          33
+        ],
+        "support": [
+          12,
+          12,
+          33
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          14,
+          1,
+          11
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          14,
+          5,
+          38
+        ],
+        "support": [
+          14,
+          14,
+          38
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          15,
+          1,
+          21
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          15,
+          5,
+          28
+        ],
+        "support": [
+          15,
+          15,
+          28
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          16,
+          5,
+          6
+        ],
+        "support": [
+          16,
+          13,
+          6
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          16,
+          5,
+          43
+        ],
+        "support": [
+          16,
+          16,
+          43
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          18,
+          1,
+          14
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          18,
+          5,
+          32
+        ],
+        "support": [
+          18,
+          13,
+          32
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          19,
+          1,
+          25
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          20,
+          5,
+          9
+        ],
+        "support": [
+          20,
+          16,
+          9
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          22,
+          5,
+          29
+        ],
+        "support": [
+          22,
+          8,
+          29
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          23,
+          5,
+          41
+        ],
+        "support": [
+          23,
+          12,
+          41
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          24,
+          5,
+          6
+        ],
+        "support": [
+          24,
+          13,
+          6
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          24,
+          1,
+          13
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          25,
+          1,
+          24
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          25,
+          1,
+          33
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          26,
+          1,
+          18
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          27,
+          5,
+          38
+        ],
+        "support": [
+          27,
+          15,
+          38
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          28,
+          5,
+          9
+        ],
+        "support": [
+          28,
+          16,
+          9
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          29,
+          5,
+          27
+        ],
+        "support": [
+          29,
+          16,
+          27
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          30,
+          1,
+          14
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          30,
+          1,
+          21
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          34,
+          5,
+          17
+        ],
+        "support": [
+          34,
+          13,
+          17
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          34,
+          5,
+          24
+        ],
+        "support": [
+          34,
+          13,
+          24
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          30,
+          5,
+          37
+        ],
+        "support": [
+          30,
+          12,
+          37
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          27,
+          5,
+          43
+        ],
+        "support": [
+          27,
+          15,
+          43
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          31,
+          5,
+          31
+        ],
+        "support": [
+          31,
+          13,
+          31
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          32,
+          5,
+          9
+        ],
+        "support": [
+          32,
+          13,
+          9
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          15,
+          5,
+          41
+        ],
+        "support": [
+          15,
+          6,
+          41
+        ]
+      }
+    ],
+    "note": "低位吊灯使用实际屋面或楼板承吊；高厅与开放处采用齐平星石灯。估计不替代 Minecraft 夜间验收。"
+  },
+  "nbt_sha256": "846f1a8f81401d1b3d58346580edcfe2dc900b633c0390ef14ec6a7474649d57"
+}

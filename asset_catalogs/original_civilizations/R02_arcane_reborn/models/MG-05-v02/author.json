@@ -1,0 +1,1413 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-05-v02",
+  "name": "回廊学生宿舍 · 双翼三层六十床",
+  "family": "MG-05",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.self_contained",
+  "size": [
+    69,
+    61,
+    67
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [
+    {
+      "id": "court",
+      "name": "双翼学习庭",
+      "min": [
+        27,
+        2,
+        19
+      ],
+      "max": [
+        41,
+        7,
+        45
+      ],
+      "purpose": "宿舍围成的安静步行庭院"
+    },
+    {
+      "id": "dorm_9_1",
+      "name": "西翼1层寝居",
+      "min": [
+        14,
+        2,
+        26
+      ],
+      "max": [
+        23,
+        6,
+        54
+      ],
+      "purpose": "前部八床多人间与后部双床小寝室，共十床；楼梯侧通道连接自习区与寝居区。",
+      "living_use": "resident"
+    },
+    {
+      "id": "dorm_9_2",
+      "name": "西翼2层寝居",
+      "min": [
+        14,
+        9,
+        26
+      ],
+      "max": [
+        23,
+        13,
+        54
+      ],
+      "purpose": "前部八床多人间与后部双床小寝室，共十床；楼梯侧通道连接自习区与寝居区。",
+      "living_use": "resident"
+    },
+    {
+      "id": "dorm_9_3",
+      "name": "西翼3层寝居",
+      "min": [
+        14,
+        16,
+        26
+      ],
+      "max": [
+        23,
+        20,
+        54
+      ],
+      "purpose": "前部八床多人间与后部双床小寝室，共十床；楼梯侧通道连接自习区与寝居区。",
+      "living_use": "resident"
+    },
+    {
+      "id": "dorm_43_1",
+      "name": "东翼1层寝居",
+      "min": [
+        48,
+        2,
+        26
+      ],
+      "max": [
+        57,
+        6,
+        54
+      ],
+      "purpose": "前部八床多人间与后部双床小寝室，共十床；楼梯侧通道连接自习区与寝居区。",
+      "living_use": "resident"
+    },
+    {
+      "id": "dorm_43_2",
+      "name": "东翼2层寝居",
+      "min": [
+        48,
+        9,
+        26
+      ],
+      "max": [
+        57,
+        13,
+        54
+      ],
+      "purpose": "前部八床多人间与后部双床小寝室，共十床；楼梯侧通道连接自习区与寝居区。",
+      "living_use": "resident"
+    },
+    {
+      "id": "dorm_43_3",
+      "name": "东翼3层寝居",
+      "min": [
+        48,
+        16,
+        26
+      ],
+      "max": [
+        57,
+        20,
+        54
+      ],
+      "purpose": "前部八床多人间与后部双床小寝室，共十床；楼梯侧通道连接自习区与寝居区。",
+      "living_use": "resident"
+    }
+  ],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        34,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "bed_9_2_43",
+      "kind": "bed",
+      "pos": [
+        16,
+        2,
+        43
+      ],
+      "name": "住床",
+      "approach": [
+        17,
+        2,
+        43
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "bed_b_9_2_43",
+      "kind": "bed",
+      "pos": [
+        21,
+        2,
+        43
+      ],
+      "name": "住床",
+      "approach": [
+        22,
+        2,
+        43
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "bed_9_2_51",
+      "kind": "bed",
+      "pos": [
+        16,
+        2,
+        51
+      ],
+      "name": "住床",
+      "approach": [
+        17,
+        2,
+        51
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "bed_b_9_2_51",
+      "kind": "bed",
+      "pos": [
+        21,
+        2,
+        51
+      ],
+      "name": "住床",
+      "approach": [
+        22,
+        2,
+        51
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "bed_9_9_43",
+      "kind": "bed",
+      "pos": [
+        16,
+        9,
+        43
+      ],
+      "name": "住床",
+      "approach": [
+        17,
+        9,
+        43
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "bed_b_9_9_43",
+      "kind": "bed",
+      "pos": [
+        21,
+        9,
+        43
+      ],
+      "name": "住床",
+      "approach": [
+        22,
+        9,
+        43
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "bed_9_9_51",
+      "kind": "bed",
+      "pos": [
+        16,
+        9,
+        51
+      ],
+      "name": "住床",
+      "approach": [
+        17,
+        9,
+        51
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "bed_b_9_9_51",
+      "kind": "bed",
+      "pos": [
+        21,
+        9,
+        51
+      ],
+      "name": "住床",
+      "approach": [
+        22,
+        9,
+        51
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "bed_9_16_43",
+      "kind": "bed",
+      "pos": [
+        16,
+        16,
+        43
+      ],
+      "name": "住床",
+      "approach": [
+        17,
+        16,
+        43
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "bed_b_9_16_43",
+      "kind": "bed",
+      "pos": [
+        21,
+        16,
+        43
+      ],
+      "name": "住床",
+      "approach": [
+        22,
+        16,
+        43
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "bed_9_16_51",
+      "kind": "bed",
+      "pos": [
+        16,
+        16,
+        51
+      ],
+      "name": "住床",
+      "approach": [
+        17,
+        16,
+        51
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "bed_b_9_16_51",
+      "kind": "bed",
+      "pos": [
+        21,
+        16,
+        51
+      ],
+      "name": "住床",
+      "approach": [
+        22,
+        16,
+        51
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "floor3_9",
+      "kind": "circulation",
+      "pos": [
+        17,
+        16,
+        37
+      ],
+      "name": "三层寝室公共通道",
+      "approach": [
+        17,
+        16,
+        37
+      ]
+    },
+    {
+      "id": "bed_43_2_43",
+      "kind": "bed",
+      "pos": [
+        50,
+        2,
+        43
+      ],
+      "name": "住床",
+      "approach": [
+        51,
+        2,
+        43
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "bed_b_43_2_43",
+      "kind": "bed",
+      "pos": [
+        55,
+        2,
+        43
+      ],
+      "name": "住床",
+      "approach": [
+        56,
+        2,
+        43
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "bed_43_2_51",
+      "kind": "bed",
+      "pos": [
+        50,
+        2,
+        51
+      ],
+      "name": "住床",
+      "approach": [
+        51,
+        2,
+        51
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "bed_b_43_2_51",
+      "kind": "bed",
+      "pos": [
+        55,
+        2,
+        51
+      ],
+      "name": "住床",
+      "approach": [
+        56,
+        2,
+        51
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "bed_43_9_43",
+      "kind": "bed",
+      "pos": [
+        50,
+        9,
+        43
+      ],
+      "name": "住床",
+      "approach": [
+        51,
+        9,
+        43
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "bed_b_43_9_43",
+      "kind": "bed",
+      "pos": [
+        55,
+        9,
+        43
+      ],
+      "name": "住床",
+      "approach": [
+        56,
+        9,
+        43
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "bed_43_9_51",
+      "kind": "bed",
+      "pos": [
+        50,
+        9,
+        51
+      ],
+      "name": "住床",
+      "approach": [
+        51,
+        9,
+        51
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "bed_b_43_9_51",
+      "kind": "bed",
+      "pos": [
+        55,
+        9,
+        51
+      ],
+      "name": "住床",
+      "approach": [
+        56,
+        9,
+        51
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "bed_43_16_43",
+      "kind": "bed",
+      "pos": [
+        50,
+        16,
+        43
+      ],
+      "name": "住床",
+      "approach": [
+        51,
+        16,
+        43
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "bed_b_43_16_43",
+      "kind": "bed",
+      "pos": [
+        55,
+        16,
+        43
+      ],
+      "name": "住床",
+      "approach": [
+        56,
+        16,
+        43
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "bed_43_16_51",
+      "kind": "bed",
+      "pos": [
+        50,
+        16,
+        51
+      ],
+      "name": "住床",
+      "approach": [
+        51,
+        16,
+        51
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "bed_b_43_16_51",
+      "kind": "bed",
+      "pos": [
+        55,
+        16,
+        51
+      ],
+      "name": "住床",
+      "approach": [
+        56,
+        16,
+        51
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "floor3_43",
+      "kind": "circulation",
+      "pos": [
+        51,
+        16,
+        37
+      ],
+      "name": "三层寝室公共通道",
+      "approach": [
+        51,
+        16,
+        37
+      ]
+    },
+    {
+      "id": "study_9_1",
+      "kind": "meeting",
+      "pos": [
+        17,
+        2,
+        22
+      ],
+      "name": "寝室自习与讨论",
+      "use": "public",
+      "approach": [
+        17,
+        2,
+        22
+      ]
+    },
+    {
+      "id": "resident_15_2_28",
+      "kind": "bed",
+      "pos": [
+        15,
+        2,
+        28
+      ],
+      "name": "住床",
+      "approach": [
+        16,
+        2,
+        28
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_15_2_34",
+      "kind": "bed",
+      "pos": [
+        15,
+        2,
+        34
+      ],
+      "name": "住床",
+      "approach": [
+        16,
+        2,
+        34
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_15_2_40",
+      "kind": "bed",
+      "pos": [
+        15,
+        2,
+        40
+      ],
+      "name": "住床",
+      "approach": [
+        16,
+        2,
+        40
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_19_2_28",
+      "kind": "bed",
+      "pos": [
+        19,
+        2,
+        28
+      ],
+      "name": "住床",
+      "approach": [
+        20,
+        2,
+        28
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_19_2_34",
+      "kind": "bed",
+      "pos": [
+        19,
+        2,
+        34
+      ],
+      "name": "住床",
+      "approach": [
+        20,
+        2,
+        34
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_19_2_40",
+      "kind": "bed",
+      "pos": [
+        19,
+        2,
+        40
+      ],
+      "name": "住床",
+      "approach": [
+        20,
+        2,
+        40
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "study_9_2",
+      "kind": "meeting",
+      "pos": [
+        17,
+        9,
+        22
+      ],
+      "name": "寝室自习与讨论",
+      "use": "public",
+      "approach": [
+        17,
+        9,
+        22
+      ]
+    },
+    {
+      "id": "resident_15_9_28",
+      "kind": "bed",
+      "pos": [
+        15,
+        9,
+        28
+      ],
+      "name": "住床",
+      "approach": [
+        16,
+        9,
+        28
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_15_9_34",
+      "kind": "bed",
+      "pos": [
+        15,
+        9,
+        34
+      ],
+      "name": "住床",
+      "approach": [
+        16,
+        9,
+        34
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_15_9_40",
+      "kind": "bed",
+      "pos": [
+        15,
+        9,
+        40
+      ],
+      "name": "住床",
+      "approach": [
+        16,
+        9,
+        40
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_19_9_28",
+      "kind": "bed",
+      "pos": [
+        19,
+        9,
+        28
+      ],
+      "name": "住床",
+      "approach": [
+        20,
+        9,
+        28
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_19_9_34",
+      "kind": "bed",
+      "pos": [
+        19,
+        9,
+        34
+      ],
+      "name": "住床",
+      "approach": [
+        20,
+        9,
+        34
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_19_9_40",
+      "kind": "bed",
+      "pos": [
+        19,
+        9,
+        40
+      ],
+      "name": "住床",
+      "approach": [
+        20,
+        9,
+        40
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "study_9_3",
+      "kind": "meeting",
+      "pos": [
+        17,
+        16,
+        22
+      ],
+      "name": "寝室自习与讨论",
+      "use": "public",
+      "approach": [
+        17,
+        16,
+        22
+      ]
+    },
+    {
+      "id": "resident_15_16_28",
+      "kind": "bed",
+      "pos": [
+        15,
+        16,
+        28
+      ],
+      "name": "住床",
+      "approach": [
+        16,
+        16,
+        28
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_15_16_34",
+      "kind": "bed",
+      "pos": [
+        15,
+        16,
+        34
+      ],
+      "name": "住床",
+      "approach": [
+        16,
+        16,
+        34
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_15_16_40",
+      "kind": "bed",
+      "pos": [
+        15,
+        16,
+        40
+      ],
+      "name": "住床",
+      "approach": [
+        16,
+        16,
+        40
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_19_16_28",
+      "kind": "bed",
+      "pos": [
+        19,
+        16,
+        28
+      ],
+      "name": "住床",
+      "approach": [
+        20,
+        16,
+        28
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_19_16_34",
+      "kind": "bed",
+      "pos": [
+        19,
+        16,
+        34
+      ],
+      "name": "住床",
+      "approach": [
+        20,
+        16,
+        34
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_19_16_40",
+      "kind": "bed",
+      "pos": [
+        19,
+        16,
+        40
+      ],
+      "name": "住床",
+      "approach": [
+        20,
+        16,
+        40
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "study_43_1",
+      "kind": "meeting",
+      "pos": [
+        51,
+        2,
+        22
+      ],
+      "name": "寝室自习与讨论",
+      "use": "public",
+      "approach": [
+        51,
+        2,
+        22
+      ]
+    },
+    {
+      "id": "resident_49_2_28",
+      "kind": "bed",
+      "pos": [
+        49,
+        2,
+        28
+      ],
+      "name": "住床",
+      "approach": [
+        50,
+        2,
+        28
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_49_2_34",
+      "kind": "bed",
+      "pos": [
+        49,
+        2,
+        34
+      ],
+      "name": "住床",
+      "approach": [
+        50,
+        2,
+        34
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_49_2_40",
+      "kind": "bed",
+      "pos": [
+        49,
+        2,
+        40
+      ],
+      "name": "住床",
+      "approach": [
+        50,
+        2,
+        40
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_53_2_28",
+      "kind": "bed",
+      "pos": [
+        53,
+        2,
+        28
+      ],
+      "name": "住床",
+      "approach": [
+        54,
+        2,
+        28
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_53_2_34",
+      "kind": "bed",
+      "pos": [
+        53,
+        2,
+        34
+      ],
+      "name": "住床",
+      "approach": [
+        54,
+        2,
+        34
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_53_2_40",
+      "kind": "bed",
+      "pos": [
+        53,
+        2,
+        40
+      ],
+      "name": "住床",
+      "approach": [
+        54,
+        2,
+        40
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "study_43_2",
+      "kind": "meeting",
+      "pos": [
+        51,
+        9,
+        22
+      ],
+      "name": "寝室自习与讨论",
+      "use": "public",
+      "approach": [
+        51,
+        9,
+        22
+      ]
+    },
+    {
+      "id": "resident_49_9_28",
+      "kind": "bed",
+      "pos": [
+        49,
+        9,
+        28
+      ],
+      "name": "住床",
+      "approach": [
+        50,
+        9,
+        28
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_49_9_34",
+      "kind": "bed",
+      "pos": [
+        49,
+        9,
+        34
+      ],
+      "name": "住床",
+      "approach": [
+        50,
+        9,
+        34
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_49_9_40",
+      "kind": "bed",
+      "pos": [
+        49,
+        9,
+        40
+      ],
+      "name": "住床",
+      "approach": [
+        50,
+        9,
+        40
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_53_9_28",
+      "kind": "bed",
+      "pos": [
+        53,
+        9,
+        28
+      ],
+      "name": "住床",
+      "approach": [
+        54,
+        9,
+        28
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_53_9_34",
+      "kind": "bed",
+      "pos": [
+        53,
+        9,
+        34
+      ],
+      "name": "住床",
+      "approach": [
+        54,
+        9,
+        34
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_53_9_40",
+      "kind": "bed",
+      "pos": [
+        53,
+        9,
+        40
+      ],
+      "name": "住床",
+      "approach": [
+        54,
+        9,
+        40
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "study_43_3",
+      "kind": "meeting",
+      "pos": [
+        51,
+        16,
+        22
+      ],
+      "name": "寝室自习与讨论",
+      "use": "public",
+      "approach": [
+        51,
+        16,
+        22
+      ]
+    },
+    {
+      "id": "resident_49_16_28",
+      "kind": "bed",
+      "pos": [
+        49,
+        16,
+        28
+      ],
+      "name": "住床",
+      "approach": [
+        50,
+        16,
+        28
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_49_16_34",
+      "kind": "bed",
+      "pos": [
+        49,
+        16,
+        34
+      ],
+      "name": "住床",
+      "approach": [
+        50,
+        16,
+        34
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_49_16_40",
+      "kind": "bed",
+      "pos": [
+        49,
+        16,
+        40
+      ],
+      "name": "住床",
+      "approach": [
+        50,
+        16,
+        40
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_53_16_28",
+      "kind": "bed",
+      "pos": [
+        53,
+        16,
+        28
+      ],
+      "name": "住床",
+      "approach": [
+        54,
+        16,
+        28
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_53_16_34",
+      "kind": "bed",
+      "pos": [
+        53,
+        16,
+        34
+      ],
+      "name": "住床",
+      "approach": [
+        54,
+        16,
+        34
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "resident_53_16_40",
+      "kind": "bed",
+      "pos": [
+        53,
+        16,
+        40
+      ],
+      "name": "住床",
+      "approach": [
+        54,
+        16,
+        40
+      ],
+      "use": "resident"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。",
+    "2026-10-19 容量微调：保留 v01 外形、占地、屋面、入口和实体楼梯，只调整内部床位与生活空间。",
+    "各层寝居、前部自习区和楼梯侧设低位壁灯；床头灯照亮各自床侧，照明不依赖高屋顶。",
+    "庭院步行面嵌入九处星石灯，保留中轴通道和花带，不设置阻路灯柱。",
+    "仅作者声明的工作点计入岗位容量；装饰桶、家庭储物与学生/访客使用设施不冒充员工工位。"
+  ],
+  "differences": [
+    "每翼每层从 4 床增至 10 床，共 60 床；保留前部自习桌、两段实体楼梯和二层桥廊。",
+    "2026-10-19 全学院可进入建筑：补齐功能工位/公共席位，分层分区照明，保留旧版本。"
+  ],
+  "floors": [
+    {
+      "name": "宿舍首层",
+      "y": 1,
+      "max_y": 7
+    },
+    {
+      "name": "寝居与桥廊",
+      "y": 8,
+      "max_y": 14
+    },
+    {
+      "name": "上层寝室",
+      "y": 15,
+      "max_y": 23
+    }
+  ],
+  "roof_min_y": 26,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "学生住宿",
+    "自习"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/academy_interiors.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "workplace_policy": "authored",
+  "interior_lighting": {
+    "source": "fixed_emitters_no_skylight_conservative_estimate",
+    "occupiedPointTarget": 8,
+    "floorTarget": 5,
+    "sampledPositions": 3579,
+    "fixtures": [
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          28,
+          5,
+          52
+        ],
+        "support": [
+          28,
+          8,
+          52
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          40,
+          5,
+          52
+        ],
+        "support": [
+          40,
+          8,
+          52
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          16,
+          1,
+          56
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          50,
+          1,
+          56
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          8,
+          1,
+          38
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          60,
+          1,
+          38
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          8,
+          1,
+          18
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          8,
+          1,
+          26
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          13,
+          1,
+          15
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          20,
+          1,
+          15
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          45,
+          1,
+          15
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          54,
+          1,
+          15
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          60,
+          1,
+          18
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          60,
+          1,
+          26
+        ]
+      }
+    ],
+    "note": "低位吊灯使用实际屋面或楼板承吊；高厅与开放处采用齐平星石灯。估计不替代 Minecraft 夜间验收。"
+  },
+  "nbt_sha256": "89cefcf2d2bbd110ad6dc345c82aede5fb0bc4f9fb8890cd7bf871de4dd68c7d"
+}

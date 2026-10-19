@@ -1,0 +1,106 @@
+{
+  "schema": "structure-studio.lighting-review.v1",
+  "nbt_sha256": "fd38d7116a1eb7613e26ebcf88784fc4a081b855e2d54f38985a7183a8d54104",
+  "scope": "Conservative offline block-light estimate for authored occupied spaces.\n\nThis is not Minecraft's light engine: no sky light, partial collision blocks are\nopaque, and state-dependent emitters are not simulated. It is an authoring check\nfor fixed lanterns, sea lanterns and end rods, not an in-game night acceptance.\n",
+  "emitterCount": 15,
+  "occupiedPointTarget": 8,
+  "floorTarget": 5,
+  "occupiedPoints": [
+    {
+      "id": "main_access",
+      "kind": "circulation",
+      "pos": [
+        12,
+        2,
+        5
+      ],
+      "estimatedBlockLight": 14
+    },
+    {
+      "id": "dining_6_8",
+      "kind": "seat",
+      "pos": [
+        5,
+        2,
+        8
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "dining_18_8",
+      "kind": "seat",
+      "pos": [
+        19,
+        2,
+        8
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "dining_6_13",
+      "kind": "seat",
+      "pos": [
+        5,
+        2,
+        13
+      ],
+      "estimatedBlockLight": 8
+    },
+    {
+      "id": "dining_18_13",
+      "kind": "seat",
+      "pos": [
+        19,
+        2,
+        13
+      ],
+      "estimatedBlockLight": 8
+    },
+    {
+      "id": "dining_6_18",
+      "kind": "seat",
+      "pos": [
+        5,
+        2,
+        18
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "dining_18_18",
+      "kind": "seat",
+      "pos": [
+        19,
+        2,
+        18
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "cook",
+      "kind": "work",
+      "pos": [
+        5,
+        2,
+        19
+      ],
+      "estimatedBlockLight": 11
+    },
+    {
+      "id": "service",
+      "kind": "work",
+      "pos": [
+        12,
+        2,
+        21
+      ],
+      "estimatedBlockLight": 14
+    }
+  ],
+  "floorSampleCount": 347,
+  "minimumOccupiedLight": 8,
+  "minimumFloorLight": 5,
+  "darkOccupiedPoints": [],
+  "darkFloorSamples": [],
+  "passed": true
+}

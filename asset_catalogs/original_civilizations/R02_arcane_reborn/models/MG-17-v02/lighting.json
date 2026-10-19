@@ -1,0 +1,176 @@
+{
+  "schema": "structure-studio.lighting-review.v1",
+  "nbt_sha256": "5a03627f9acde720271094aa37e1f4d0dda9ae4331c47624db11cef2dbdb6d5d",
+  "scope": "Conservative offline block-light estimate for authored occupied spaces.\n\nThis is not Minecraft's light engine: no sky light, partial collision blocks are\nopaque, and state-dependent emitters are not simulated. It is an authoring check\nfor fixed lanterns, sea lanterns and end rods, not an in-game night acceptance.\n",
+  "emitterCount": 41,
+  "occupiedPointTarget": 8,
+  "floorTarget": 5,
+  "occupiedPoints": [
+    {
+      "id": "bed_18",
+      "kind": "bed",
+      "pos": [
+        19,
+        10,
+        37
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "bed_23",
+      "kind": "bed",
+      "pos": [
+        24,
+        10,
+        37
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "study",
+      "kind": "work",
+      "pos": [
+        20,
+        2,
+        26
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "upper",
+      "kind": "circulation",
+      "pos": [
+        14,
+        10,
+        32
+      ],
+      "estimatedBlockLight": 8
+    },
+    {
+      "id": "family_18_23",
+      "kind": "bed",
+      "pos": [
+        19,
+        10,
+        23
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "family_18_29",
+      "kind": "bed",
+      "pos": [
+        19,
+        10,
+        29
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "family_23_23",
+      "kind": "bed",
+      "pos": [
+        24,
+        10,
+        23
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "family_23_29",
+      "kind": "bed",
+      "pos": [
+        24,
+        10,
+        29
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "seat_16_2_27",
+      "kind": "seat",
+      "pos": [
+        17,
+        2,
+        27
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "seat_16_2_29",
+      "kind": "seat",
+      "pos": [
+        17,
+        2,
+        29
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "seat_18_2_27",
+      "kind": "seat",
+      "pos": [
+        19,
+        2,
+        27
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "seat_18_2_29",
+      "kind": "seat",
+      "pos": [
+        19,
+        2,
+        29
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "seat_20_2_27",
+      "kind": "seat",
+      "pos": [
+        19,
+        2,
+        27
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "seat_20_2_29",
+      "kind": "seat",
+      "pos": [
+        21,
+        2,
+        29
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "seat_22_2_27",
+      "kind": "seat",
+      "pos": [
+        23,
+        2,
+        27
+      ],
+      "estimatedBlockLight": 9
+    },
+    {
+      "id": "seat_22_2_29",
+      "kind": "seat",
+      "pos": [
+        23,
+        2,
+        29
+      ],
+      "estimatedBlockLight": 11
+    }
+  ],
+  "floorSampleCount": 1027,
+  "minimumOccupiedLight": 8,
+  "minimumFloorLight": 5,
+  "darkOccupiedPoints": [],
+  "darkFloorSamples": [],
+  "passed": true
+}

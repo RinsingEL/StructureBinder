@@ -1,0 +1,74 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    49,
+    46,
+    51
+  ],
+  "sourceSha256": "a4397bdea1ac230a46c56327a02ec9e128a05762fd2bf901539f481dab69424c",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 2
+  },
+  "facilities": [
+    {
+      "id": "work:18,3,25",
+      "kind": "work",
+      "pos": [
+        18,
+        3,
+        25
+      ],
+      "block": "minecraft:brewing_stand",
+      "facing": "north",
+      "use": "staff",
+      "room": "workshop",
+      "name": "药剂配比与配售",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        17,
+        2,
+        25
+      ]
+    },
+    {
+      "id": "work:34,3,35",
+      "kind": "work",
+      "pos": [
+        34,
+        3,
+        35
+      ],
+      "block": "minecraft:brewing_stand",
+      "facing": "north",
+      "use": "staff",
+      "room": "",
+      "name": "后场冷却工间",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        33,
+        2,
+        35
+      ]
+    },
+    {
+      "id": "entrance:24,2,0",
+      "kind": "entrance",
+      "pos": [
+        24,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "临街步行入口",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    }
+  ],
+  "warnings": []
+}

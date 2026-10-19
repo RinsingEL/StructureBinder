@@ -1,0 +1,79 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    25,
+    24,
+    25
+  ],
+  "sourceSha256": "158ab8ef2ddaba12f9d7b76736ba3bb6f6ce4efabbeecaa038edbc70ad697f69",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 2
+  },
+  "facilities": [
+    {
+      "id": "work:6,2,3",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        3
+      ],
+      "block": "minecraft:lectern",
+      "facing": "north",
+      "use": "staff",
+      "room": "",
+      "name": "门前小摊服务位",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        5,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "work:13,2,16",
+      "kind": "work",
+      "pos": [
+        13,
+        2,
+        16
+      ],
+      "block": "minecraft:lectern",
+      "facing": "north",
+      "use": "staff",
+      "room": "main",
+      "name": "室内店员与货品登记",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        12,
+        2,
+        16
+      ]
+    },
+    {
+      "id": "entrance:12,2,0",
+      "kind": "entrance",
+      "pos": [
+        12,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "主入口",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        12,
+        2,
+        2
+      ]
+    }
+  ],
+  "warnings": []
+}

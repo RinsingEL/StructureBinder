@@ -1,0 +1,246 @@
+{
+  "schema": "structure-studio.lighting-review.v1",
+  "nbt_sha256": "48a4377218fc3a06893299613dc353165215dcb8efd44cad6e1e0a86a14eaf30",
+  "scope": "Conservative offline block-light estimate for authored occupied spaces.\n\nThis is not Minecraft's light engine: no sky light, partial collision blocks are\nopaque, and state-dependent emitters are not simulated. It is an authoring check\nfor fixed lanterns, sea lanterns and end rods, not an in-game night acceptance.\n",
+  "emitterCount": 61,
+  "occupiedPointTarget": 8,
+  "floorTarget": 5,
+  "occupiedPoints": [
+    {
+      "id": "upper-landing",
+      "kind": "circulation",
+      "pos": [
+        8,
+        12,
+        30
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "west-bed-1-0",
+      "kind": "bed",
+      "pos": [
+        9,
+        2,
+        12
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "west-bed-1-0-b",
+      "kind": "bed",
+      "pos": [
+        15,
+        2,
+        12
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "west-bed-1-1",
+      "kind": "bed",
+      "pos": [
+        9,
+        2,
+        17
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "west-bed-1-1-b",
+      "kind": "bed",
+      "pos": [
+        15,
+        2,
+        17
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "east-bed-1-0",
+      "kind": "bed",
+      "pos": [
+        31,
+        2,
+        12
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "east-bed-1-0-b",
+      "kind": "bed",
+      "pos": [
+        37,
+        2,
+        12
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "east-bed-1-1",
+      "kind": "bed",
+      "pos": [
+        31,
+        2,
+        17
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "east-bed-1-1-b",
+      "kind": "bed",
+      "pos": [
+        37,
+        2,
+        17
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "reading-1",
+      "kind": "meeting",
+      "pos": [
+        24,
+        2,
+        29
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "west-bed-11-0",
+      "kind": "bed",
+      "pos": [
+        9,
+        12,
+        12
+      ],
+      "estimatedBlockLight": 14
+    },
+    {
+      "id": "west-bed-11-0-b",
+      "kind": "bed",
+      "pos": [
+        15,
+        12,
+        12
+      ],
+      "estimatedBlockLight": 8
+    },
+    {
+      "id": "west-bed-11-1",
+      "kind": "bed",
+      "pos": [
+        9,
+        12,
+        17
+      ],
+      "estimatedBlockLight": 9
+    },
+    {
+      "id": "west-bed-11-1-b",
+      "kind": "bed",
+      "pos": [
+        15,
+        12,
+        17
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "east-bed-11-0",
+      "kind": "bed",
+      "pos": [
+        31,
+        12,
+        12
+      ],
+      "estimatedBlockLight": 14
+    },
+    {
+      "id": "east-bed-11-0-b",
+      "kind": "bed",
+      "pos": [
+        37,
+        12,
+        12
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "east-bed-11-1",
+      "kind": "bed",
+      "pos": [
+        31,
+        12,
+        17
+      ],
+      "estimatedBlockLight": 11
+    },
+    {
+      "id": "east-bed-11-1-b",
+      "kind": "bed",
+      "pos": [
+        37,
+        12,
+        17
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "reading-11",
+      "kind": "meeting",
+      "pos": [
+        24,
+        12,
+        29
+      ],
+      "estimatedBlockLight": 14
+    },
+    {
+      "id": "seat_20_2_9",
+      "kind": "seat",
+      "pos": [
+        21,
+        2,
+        9
+      ],
+      "estimatedBlockLight": 14
+    },
+    {
+      "id": "seat_20_2_20",
+      "kind": "seat",
+      "pos": [
+        21,
+        2,
+        20
+      ],
+      "estimatedBlockLight": 14
+    },
+    {
+      "id": "seat_24_2_9",
+      "kind": "seat",
+      "pos": [
+        25,
+        2,
+        9
+      ],
+      "estimatedBlockLight": 8
+    },
+    {
+      "id": "seat_24_2_20",
+      "kind": "seat",
+      "pos": [
+        25,
+        2,
+        20
+      ],
+      "estimatedBlockLight": 8
+    }
+  ],
+  "floorSampleCount": 1306,
+  "minimumOccupiedLight": 8,
+  "minimumFloorLight": 6,
+  "darkOccupiedPoints": [],
+  "darkFloorSamples": [],
+  "passed": true
+}
