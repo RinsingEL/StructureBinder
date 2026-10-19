@@ -1,0 +1,32 @@
+[
+  {
+    "sourceArtifact": "blueprint/city_blueprint.json",
+    "bytes": 19706,
+    "sha256": "9c0d449e169f30fb952454b1ac96436d971378a155c928834dea6a048602bc69"
+  },
+  {
+    "sourceArtifact": "blueprint/city_blueprint_catalog_snapshot.json",
+    "bytes": 1280993,
+    "sha256": "228d0a50461b3fed3765cc2ae6bb0a57e75ac1e2aad83435b15d53dd65105575"
+  },
+  {
+    "sourceArtifact": "blueprint/city_blueprint_geometry_commit.json",
+    "bytes": 1967705,
+    "sha256": "6a0105938a1c59d671606e885005f513c9b47f9a334ab2c3632a1d47bc15a20e"
+  },
+  {
+    "sourceArtifact": "d5/reservation_mask_plan.json",
+    "bytes": 457018,
+    "sha256": "da3f6af1e4d539dc8c296b87455ccb692192cff67c84e1f3f9fe690cb931c1c2"
+  },
+  {
+    "sourceArtifact": "d6/structure_materialization_plan.json",
+    "bytes": 726067,
+    "sha256": "a1d89a66a1724ee8076b16d34d5886afe05fadf656b704fff4360388c256c8be"
+  },
+  {
+    "sourceArtifact": "land_use/land_use_terrain_field.json",
+    "bytes": 2033448,
+    "sha256": "d63b7e2e90c5f9d5040ea4669615b31a915685eea5ebd885526c59211665e093"
+  }
+]

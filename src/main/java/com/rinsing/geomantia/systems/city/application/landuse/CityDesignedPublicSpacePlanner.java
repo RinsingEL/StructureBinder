@@ -36,7 +36,9 @@ public final class CityDesignedPublicSpacePlanner {
             String id=CityPublicGreeneryPlanner.SOURCE+space.owner()+"::"+space.purpose();var b=space.bounds();var center=b.center();
             boolean garden=space.purpose().toLowerCase(Locale.ROOT).contains("garden");
             for(var p:available)if(b.contains(p.x(),p.z())) {
-                cells.remove(new Key(p.x(),p.z(),1));
+                var plantingKey=new Key(p.x(),p.z(),1);
+                var previous=cells.get(plantingKey);
+                if(previous!=null&&previous.kind()==FeatureKind.GREEN_PLANT)cells.remove(plantingKey);
                 if(Math.abs(p.x()-center.x())<=2||Math.abs(p.z()-center.z())<=2)
                     emit(cells,id,p,0,source.materialField().at("accessSurface",p.x(),p.z(),"minecraft:polished_andesite"),FeatureKind.GREEN_PATH,HorizontalFacing.NONE,null);
             }

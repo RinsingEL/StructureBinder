@@ -1,0 +1,840 @@
+{
+  "districtDesigns": [
+    {
+      "districtId": "academic",
+      "coreGroupId": "book_court",
+      "coreStructureRef": "studio:mg-02-v02",
+      "groupIds": [
+        "book_court",
+        "teaching_court",
+        "council",
+        "classrooms"
+      ],
+      "population": {
+        "purpose": "文献、教学与议事服务91常住者，含60名学生。教学设施26+24+12=62座，教师6人分布3座教学建筑，每栋在岗不超过4；文献2人与院务4人，共12岗位。",
+        "residents": 0,
+        "jobs": [
+          {
+            "profession": "teacher",
+            "count": 6,
+            "functions": [
+              "教学",
+              "研讨"
+            ]
+          },
+          {
+            "profession": "librarian",
+            "count": 2,
+            "functions": [
+              "书籍借阅",
+              "文献保管"
+            ]
+          },
+          {
+            "profession": "registrar",
+            "count": 4,
+            "functions": [
+              "公共办事",
+              "议事"
+            ]
+          }
+        ],
+        "housingGroupIds": []
+      }
+    },
+    {
+      "districtId": "commons",
+      "coreGroupId": "residence",
+      "coreStructureRef": "studio:mg-05-v02",
+      "groupIds": [
+        "residence",
+        "rooms",
+        "meals",
+        "washhouse"
+      ],
+      "population": {
+        "purpose": "60学生加31教职服务人员共91常住者，108床，入住率84.3%。主食堂36座满足约三分之一人口同时用餐，2餐饮岗位及2洗浴岗位；公共餐厅在南向通勤街。",
+        "residents": 91,
+        "jobs": [
+          {
+            "profession": "cook",
+            "count": 2,
+            "functions": [
+              "餐饮",
+              "集体用餐"
+            ],
+            "servesMeals": true
+          },
+          {
+            "profession": "laundry",
+            "count": 2,
+            "functions": [
+              "洗浴",
+              "洗衣"
+            ]
+          }
+        ],
+        "housingGroupIds": [
+          "residence",
+          "rooms"
+        ]
+      }
+    },
+    {
+      "districtId": "arrival",
+      "coreGroupId": "quay_street",
+      "coreStructureRef": "studio:mg-23-v02",
+      "groupIds": [
+        "quay_street"
+      ],
+      "population": {
+        "purpose": "水运候船2岗位、日用品2岗位、仓储1岗位；接待访客与服务95常住者，街道连教学中心和餐饮生活区，候船容量未提供，不虚报人数。",
+        "residents": 0,
+        "jobs": [
+          {
+            "profession": "boatkeeper",
+            "count": 2,
+            "functions": [
+              "水运接驳",
+              "候船"
+            ]
+          },
+          {
+            "profession": "shopkeeper",
+            "count": 2,
+            "functions": [
+              "日用品交易"
+            ]
+          },
+          {
+            "profession": "storekeeper",
+            "count": 1,
+            "functions": [
+              "货物仓储"
+            ]
+          }
+        ],
+        "housingGroupIds": []
+      }
+    },
+    {
+      "districtId": "fieldwork",
+      "coreGroupId": "research_garden",
+      "coreStructureRef": "studio:mg-03-v02",
+      "groupIds": [
+        "research_garden"
+      ],
+      "population": {
+        "purpose": "为60名学生提供观象与实验、植物教学，观象3人、双实验楼4人、温室园艺2人、药草试种1人，共10岗位；保留北侧原林。",
+        "residents": 0,
+        "jobs": [
+          {
+            "profession": "astronomer",
+            "count": 3,
+            "functions": [
+              "天象观测",
+              "研究"
+            ]
+          },
+          {
+            "profession": "researcher",
+            "count": 4,
+            "functions": [
+              "实验教学",
+              "研究"
+            ]
+          },
+          {
+            "profession": "gardener",
+            "count": 3,
+            "functions": [
+              "植物教学",
+              "园艺养护",
+              "药草栽培"
+            ]
+          }
+        ],
+        "housingGroupIds": []
+      }
+    }
+  ],
+  "schema": "city_blueprint",
+  "cityId": "city_jingchao_capital",
+  "sourceD3Ref": {
+    "path": "provider_3d25631f_r19200/city_test_runs/city_jingchao_capital/steps/d3/city_landform_review_package.json",
+    "schema": "city_landform_review",
+    "contentHash": "sha256:96ef0c3cb1394d8f595ed6d1742c093640ba99ee7d69f32ef8dd57797f81c6ba"
+  },
+  "catalogSnapshotRef": {
+    "path": "provider_3d25631f_r19200/city_test_runs/city_jingchao_capital/steps/blueprint/city_blueprint_catalog_snapshot.json",
+    "schema": "city_blueprint_catalog_snapshot",
+    "contentHash": "sha256:228d0a50461b3fed3765cc2ae6bb0a57e75ac1e2aad83435b15d53dd65105575"
+  },
+  "generationSeed": 112208867599818,
+  "designIntent": {
+    "cityIdentity": "镜潮·林湾书院",
+    "theme": "从零设计的林湾书院：在平原28内组织紧凑的折线步行骨架。南岸迎客区约(-2940,5460)进入，沿北向书院街到中央教学庭院(-2930,5350)，藏书馆作为唯一一级公共地标坐落庭院北侧/轴线尽端；教学、议事配套围合近人尺度的公共内院。东侧(-2805,5370)为住宿与分散小食堂，公共用餐沿宿舍至教学的通勤面展开。观象和小型实验、植物教学构成西北短支径(-2980,5235)，以林带隔开喧闹迎客，观测塔是二级专业地标。南湾保留自然岸线，北部与西侧保留桦木林；边界NONE，学院无城防需求，不造内街城门。计划60名学生及约35名教职、研究和服务人员，共95常住人口，宿舍提供108床；学术区12岗位，迎客供应5岗位，居住餐饮洗浴8岗位，研究园艺10岗位。小食堂分三处，计划分批用餐，容量依作者目录核验。主体集中在约300×300方块范围，按现有建筑真实占地编译调整；不用超大礼堂挤压生活空间，教学和集会由作者标注的庭院教学、研讨及议事建筑承担。仅承诺作者已标注用途，不宣称魔法机制已实现。",
+    "functionalRoles": [
+      "教学研究",
+      "文献借阅保管",
+      "学院议事",
+      "访客水运接待",
+      "常住生活供应",
+      "观象与植物教学"
+    ]
+  },
+  "styleProfile": {
+    "profileRef": "style:studio_R02_arcane_reborn"
+  },
+  "groups": [
+    {
+      "groupId": "book_court",
+      "groupKind": "STRUCTURE",
+      "structureCount": 1,
+      "layout": {
+        "gapBlocks": 10,
+        "columns": 1,
+        "courtWidth": 36,
+        "courtDepth": 28,
+        "faceInward": false,
+        "crossAlign": "START",
+        "purpose": "public-space"
+      },
+      "role": "藏书馆：主轴尽端的一级公共地标",
+      "priority": "CORE",
+      "extentClass": "MEDIUM",
+      "densityClass": "BALANCED",
+      "algorithmProfileRef": "algorithm:grid",
+      "terrainPolicy": "BALANCED",
+      "requiredStructureRefs": [
+        "studio:mg-02-v02"
+      ],
+      "fillPoolRef": "pool:academy_20261019_small_020",
+      "compositionProfileRef": "composition:round_robin",
+      "attachedFeatures": [],
+      "targetAreaShare": 0.1,
+      "spaceComposition": {
+        "buildingShare": 0.65,
+        "landscapeShare": 0.10000000000000002,
+        "openSpaceShare": 0.25
+      },
+      "expansionPolicy": {
+        "allowOutwardExpansion": false,
+        "allowRelationConnection": true,
+        "stopWhenTargetReached": true
+      },
+      "buildingGreeneryPolicy": {
+        "coverage": "BALANCED",
+        "patternPreference": "MIXED",
+        "densityPreference": "LOW"
+      }
+    },
+    {
+      "groupId": "teaching_court",
+      "groupKind": "STRUCTURE",
+      "structureCount": 1,
+      "layout": {
+        "gapBlocks": 10,
+        "columns": 1,
+        "courtWidth": 36,
+        "courtDepth": 28,
+        "faceInward": false,
+        "crossAlign": "START",
+        "purpose": "public-space"
+      },
+      "role": "庭院教学，26席",
+      "priority": "STANDARD",
+      "extentClass": "MEDIUM",
+      "densityClass": "BALANCED",
+      "algorithmProfileRef": "algorithm:grid",
+      "terrainPolicy": "BALANCED",
+      "requiredStructureRefs": [
+        "studio:mg-36-v02"
+      ],
+      "fillPoolRef": "pool:academy_20261019_small_020",
+      "compositionProfileRef": "composition:round_robin",
+      "attachedFeatures": [],
+      "targetAreaShare": 0.1,
+      "spaceComposition": {
+        "buildingShare": 0.65,
+        "landscapeShare": 0.10000000000000002,
+        "openSpaceShare": 0.25
+      },
+      "expansionPolicy": {
+        "allowOutwardExpansion": false,
+        "allowRelationConnection": true,
+        "stopWhenTargetReached": true
+      },
+      "buildingGreeneryPolicy": {
+        "coverage": "BALANCED",
+        "patternPreference": "MIXED",
+        "densityPreference": "LOW"
+      }
+    },
+    {
+      "groupId": "council",
+      "groupKind": "STRUCTURE",
+      "structureCount": 1,
+      "layout": {
+        "gapBlocks": 10,
+        "columns": 1,
+        "courtWidth": 36,
+        "courtDepth": 28,
+        "faceInward": false,
+        "crossAlign": "START",
+        "purpose": "public-space"
+      },
+      "role": "院务与议事",
+      "priority": "STANDARD",
+      "extentClass": "MEDIUM",
+      "densityClass": "BALANCED",
+      "algorithmProfileRef": "algorithm:grid",
+      "terrainPolicy": "BALANCED",
+      "requiredStructureRefs": [
+        "studio:mg-13-v02"
+      ],
+      "fillPoolRef": "pool:academy_20261019_small_020",
+      "compositionProfileRef": "composition:round_robin",
+      "attachedFeatures": [],
+      "targetAreaShare": 0.1,
+      "spaceComposition": {
+        "buildingShare": 0.65,
+        "landscapeShare": 0.10000000000000002,
+        "openSpaceShare": 0.25
+      },
+      "expansionPolicy": {
+        "allowOutwardExpansion": false,
+        "allowRelationConnection": true,
+        "stopWhenTargetReached": true
+      },
+      "buildingGreeneryPolicy": {
+        "coverage": "BALANCED",
+        "patternPreference": "MIXED",
+        "densityPreference": "LOW"
+      }
+    },
+    {
+      "groupId": "classrooms",
+      "groupKind": "STRUCTURE",
+      "structureCount": 2,
+      "layout": {
+        "gapBlocks": 8,
+        "columns": 2,
+        "courtWidth": 36,
+        "courtDepth": 28,
+        "faceInward": false,
+        "crossAlign": "CENTER",
+        "purpose": "public-space"
+      },
+      "role": "小课堂与教学翼楼，共36席，围院南侧的两翼",
+      "priority": "STANDARD",
+      "extentClass": "MEDIUM",
+      "densityClass": "BALANCED",
+      "algorithmProfileRef": "algorithm:linear",
+      "terrainPolicy": "BALANCED",
+      "requiredStructureRefs": [
+        "studio:mg-25-v02",
+        "studio:mg-34-v03"
+      ],
+      "fillPoolRef": "pool:academy_20261019_small_020",
+      "compositionProfileRef": "composition:round_robin",
+      "attachedFeatures": [],
+      "targetAreaShare": 0.1,
+      "spaceComposition": {
+        "buildingShare": 0.65,
+        "landscapeShare": 0.10000000000000002,
+        "openSpaceShare": 0.25
+      },
+      "expansionPolicy": {
+        "allowOutwardExpansion": false,
+        "allowRelationConnection": true,
+        "stopWhenTargetReached": true
+      },
+      "buildingGreeneryPolicy": {
+        "coverage": "BALANCED",
+        "patternPreference": "MIXED",
+        "densityPreference": "LOW"
+      }
+    },
+    {
+      "groupId": "residence",
+      "groupKind": "STRUCTURE",
+      "structureCount": 1,
+      "layout": {
+        "gapBlocks": 5,
+        "columns": 1,
+        "courtWidth": 36,
+        "courtDepth": 28,
+        "faceInward": false,
+        "crossAlign": "START",
+        "purpose": "public-space"
+      },
+      "role": "主宿舍60床",
+      "priority": "STANDARD",
+      "extentClass": "MEDIUM",
+      "densityClass": "DENSE",
+      "algorithmProfileRef": "algorithm:grid",
+      "terrainPolicy": "BALANCED",
+      "requiredStructureRefs": [
+        "studio:mg-05-v02"
+      ],
+      "fillPoolRef": "pool:academy_20261019_small_014",
+      "compositionProfileRef": "composition:round_robin",
+      "attachedFeatures": [],
+      "targetAreaShare": 0.1,
+      "spaceComposition": {
+        "buildingShare": 0.75,
+        "landscapeShare": 0.1,
+        "openSpaceShare": 0.15
+      },
+      "expansionPolicy": {
+        "allowOutwardExpansion": false,
+        "allowRelationConnection": true,
+        "stopWhenTargetReached": true
+      },
+      "buildingGreeneryPolicy": {
+        "coverage": "BALANCED",
+        "patternPreference": "MIXED",
+        "densityPreference": "LOW"
+      }
+    },
+    {
+      "groupId": "rooms",
+      "groupKind": "STRUCTURE",
+      "structureCount": 3,
+      "layout": {
+        "gapBlocks": 5,
+        "columns": 2,
+        "courtWidth": 36,
+        "courtDepth": 28,
+        "faceInward": false,
+        "crossAlign": "START",
+        "purpose": "public-space"
+      },
+      "role": "小宿舍48床",
+      "priority": "STANDARD",
+      "extentClass": "MEDIUM",
+      "densityClass": "DENSE",
+      "algorithmProfileRef": "algorithm:grid",
+      "terrainPolicy": "BALANCED",
+      "requiredStructureRefs": [
+        "studio:mg-27-v02"
+      ],
+      "fillPoolRef": "pool:academy_20261019_small_014",
+      "compositionProfileRef": "composition:round_robin",
+      "attachedFeatures": [],
+      "targetAreaShare": 0.1,
+      "spaceComposition": {
+        "buildingShare": 0.75,
+        "landscapeShare": 0.1,
+        "openSpaceShare": 0.15
+      },
+      "expansionPolicy": {
+        "allowOutwardExpansion": false,
+        "allowRelationConnection": true,
+        "stopWhenTargetReached": true
+      },
+      "buildingGreeneryPolicy": {
+        "coverage": "BALANCED",
+        "patternPreference": "MIXED",
+        "densityPreference": "LOW"
+      }
+    },
+    {
+      "groupId": "meals",
+      "groupKind": "STRUCTURE",
+      "structureCount": 1,
+      "layout": {
+        "gapBlocks": 5,
+        "columns": 2,
+        "courtWidth": 36,
+        "courtDepth": 28,
+        "faceInward": false,
+        "crossAlign": "CENTER",
+        "purpose": "public-space"
+      },
+      "role": "36座公共主食堂，位于宿舍与迎客街之间",
+      "priority": "STANDARD",
+      "extentClass": "MEDIUM",
+      "densityClass": "DENSE",
+      "algorithmProfileRef": "algorithm:linear",
+      "terrainPolicy": "BALANCED",
+      "requiredStructureRefs": [
+        "studio:mg-07-v02"
+      ],
+      "fillPoolRef": "pool:academy_20261019_055",
+      "compositionProfileRef": "composition:round_robin",
+      "attachedFeatures": [],
+      "targetAreaShare": 0.1,
+      "spaceComposition": {
+        "buildingShare": 0.75,
+        "landscapeShare": 0.1,
+        "openSpaceShare": 0.15
+      },
+      "expansionPolicy": {
+        "allowOutwardExpansion": false,
+        "allowRelationConnection": true,
+        "stopWhenTargetReached": true
+      },
+      "buildingGreeneryPolicy": {
+        "coverage": "BALANCED",
+        "patternPreference": "MIXED",
+        "densityPreference": "LOW"
+      }
+    },
+    {
+      "groupId": "washhouse",
+      "groupKind": "STRUCTURE",
+      "structureCount": 1,
+      "layout": {
+        "gapBlocks": 5,
+        "columns": 1,
+        "courtWidth": 36,
+        "courtDepth": 28,
+        "faceInward": false,
+        "crossAlign": "START",
+        "purpose": "public-space"
+      },
+      "role": "洗衣洗浴服务",
+      "priority": "STANDARD",
+      "extentClass": "MEDIUM",
+      "densityClass": "DENSE",
+      "algorithmProfileRef": "algorithm:grid",
+      "terrainPolicy": "BALANCED",
+      "requiredStructureRefs": [
+        "studio:mg-44-v02"
+      ],
+      "fillPoolRef": "pool:academy_20261019_small_034",
+      "compositionProfileRef": "composition:round_robin",
+      "attachedFeatures": [],
+      "targetAreaShare": 0.1,
+      "spaceComposition": {
+        "buildingShare": 0.75,
+        "landscapeShare": 0.1,
+        "openSpaceShare": 0.15
+      },
+      "expansionPolicy": {
+        "allowOutwardExpansion": false,
+        "allowRelationConnection": true,
+        "stopWhenTargetReached": true
+      },
+      "buildingGreeneryPolicy": {
+        "coverage": "BALANCED",
+        "patternPreference": "MIXED",
+        "densityPreference": "LOW"
+      }
+    },
+    {
+      "groupId": "quay_street",
+      "groupKind": "STRUCTURE",
+      "anchorBlock": {
+        "x": -3000,
+        "z": 5430
+      },
+      "structureCount": 3,
+      "layout": {
+        "gapBlocks": 6,
+        "columns": 2,
+        "courtWidth": 36,
+        "courtDepth": 28,
+        "faceInward": false,
+        "crossAlign": "END",
+        "purpose": "贴岸迎客街"
+      },
+      "role": "水运候船、日用品交易、货物仓储的南湾迎客街",
+      "priority": "STANDARD",
+      "extentClass": "MEDIUM",
+      "densityClass": "DENSE",
+      "algorithmProfileRef": "algorithm:linear",
+      "terrainPolicy": "BALANCED",
+      "requiredStructureRefs": [
+        "studio:mg-23-v02",
+        "studio:mg-45-v02",
+        "studio:mg-20-v02"
+      ],
+      "fillPoolRef": "pool:academy_20261019_small_023",
+      "compositionProfileRef": "composition:round_robin",
+      "attachedFeatures": [],
+      "targetAreaShare": 0.1,
+      "spaceComposition": {
+        "buildingShare": 0.65,
+        "landscapeShare": 0.10000000000000002,
+        "openSpaceShare": 0.25
+      },
+      "expansionPolicy": {
+        "allowOutwardExpansion": false,
+        "allowRelationConnection": true,
+        "stopWhenTargetReached": true
+      },
+      "buildingGreeneryPolicy": {
+        "coverage": "BALANCED",
+        "patternPreference": "MIXED",
+        "densityPreference": "LOW"
+      }
+    },
+    {
+      "groupId": "research_garden",
+      "groupKind": "STRUCTURE",
+      "anchorBlock": {
+        "x": -2975,
+        "z": 5110
+      },
+      "structureCount": 5,
+      "layout": {
+        "gapBlocks": 8,
+        "columns": 3,
+        "courtWidth": 36,
+        "courtDepth": 28,
+        "faceInward": false,
+        "crossAlign": "CENTER",
+        "purpose": "观象塔旁的低层实验和植物教学"
+      },
+      "role": "林缘观象、双实验教学及药草园艺的研究组团",
+      "priority": "STANDARD",
+      "extentClass": "MEDIUM",
+      "densityClass": "BALANCED",
+      "algorithmProfileRef": "algorithm:grid",
+      "terrainPolicy": "BALANCED",
+      "requiredStructureRefs": [
+        "studio:mg-03-v02",
+        "studio:mg-43-v02",
+        "studio:mg-31-v02",
+        "studio:mg-30-v01"
+      ],
+      "fillPoolRef": "pool:academy_20261019_small_015",
+      "compositionProfileRef": "composition:round_robin",
+      "attachedFeatures": [],
+      "targetAreaShare": 0.1,
+      "spaceComposition": {
+        "buildingShare": 0.65,
+        "landscapeShare": 0.10000000000000002,
+        "openSpaceShare": 0.25
+      },
+      "expansionPolicy": {
+        "allowOutwardExpansion": false,
+        "allowRelationConnection": true,
+        "stopWhenTargetReached": true
+      },
+      "buildingGreeneryPolicy": {
+        "coverage": "BALANCED",
+        "patternPreference": "MIXED",
+        "densityPreference": "LOW"
+      }
+    }
+  ],
+  "arrayCompositions": [
+    {
+      "compositionId": "academy_court",
+      "algorithmProfileRef": "algorithm:courtyard",
+      "centerGroupId": "book_court",
+      "memberGroupIds": [
+        "teaching_court",
+        "council",
+        "classrooms"
+      ],
+      "anchorBlock": {
+        "x": -2936,
+        "z": 5320
+      },
+      "layout": {
+        "gapBlocks": 10,
+        "columns": 2,
+        "courtWidth": 48,
+        "courtDepth": 40,
+        "faceInward": true,
+        "crossAlign": "START",
+        "purpose": "教学与文献公共内院"
+      }
+    },
+    {
+      "compositionId": "living_block",
+      "algorithmProfileRef": "algorithm:grid",
+      "centerGroupId": "residence",
+      "memberGroupIds": [
+        "rooms",
+        "meals",
+        "washhouse"
+      ],
+      "anchorBlock": {
+        "x": -2820,
+        "z": 5250
+      },
+      "layout": {
+        "gapBlocks": 8,
+        "columns": 2,
+        "courtWidth": 36,
+        "courtDepth": 28,
+        "faceInward": false,
+        "crossAlign": "CENTER",
+        "purpose": "紧凑宿舍街坊，餐饮与洗浴在通勤一侧"
+      }
+    }
+  ],
+  "relations": [
+    {
+      "fromGroupId": "book_court",
+      "toGroupId": "teaching_court",
+      "relationKind": "CONNECTION",
+      "strength": "HARD",
+      "distancePreference": "NONE",
+      "directionPreference": "NONE"
+    },
+    {
+      "fromGroupId": "book_court",
+      "toGroupId": "council",
+      "relationKind": "CONNECTION",
+      "strength": "HARD",
+      "distancePreference": "NONE",
+      "directionPreference": "NONE"
+    },
+    {
+      "fromGroupId": "book_court",
+      "toGroupId": "classrooms",
+      "relationKind": "CONNECTION",
+      "strength": "HARD",
+      "distancePreference": "NONE",
+      "directionPreference": "NONE"
+    },
+    {
+      "fromGroupId": "book_court",
+      "toGroupId": "residence",
+      "relationKind": "CONNECTION",
+      "strength": "HARD",
+      "distancePreference": "NONE",
+      "directionPreference": "NONE"
+    },
+    {
+      "fromGroupId": "residence",
+      "toGroupId": "rooms",
+      "relationKind": "CONNECTION",
+      "strength": "HARD",
+      "distancePreference": "NONE",
+      "directionPreference": "NONE"
+    },
+    {
+      "fromGroupId": "residence",
+      "toGroupId": "meals",
+      "relationKind": "CONNECTION",
+      "strength": "HARD",
+      "distancePreference": "NONE",
+      "directionPreference": "NONE"
+    },
+    {
+      "fromGroupId": "residence",
+      "toGroupId": "washhouse",
+      "relationKind": "CONNECTION",
+      "strength": "HARD",
+      "distancePreference": "NONE",
+      "directionPreference": "NONE"
+    },
+    {
+      "fromGroupId": "quay_street",
+      "toGroupId": "book_court",
+      "relationKind": "CONNECTION",
+      "strength": "HARD",
+      "distancePreference": "NONE",
+      "directionPreference": "NONE"
+    },
+    {
+      "fromGroupId": "quay_street",
+      "toGroupId": "meals",
+      "relationKind": "CONNECTION",
+      "strength": "HARD",
+      "distancePreference": "NONE",
+      "directionPreference": "NONE"
+    },
+    {
+      "fromGroupId": "book_court",
+      "toGroupId": "research_garden",
+      "relationKind": "CONNECTION",
+      "strength": "HARD",
+      "distancePreference": "NONE",
+      "directionPreference": "NONE"
+    }
+  ],
+  "roadProfile": {
+    "profileRef": "road:town"
+  },
+  "surfaceDetailProfile": {
+    "profileRef": "surface:working"
+  },
+  "outdoorPlan": {
+    "publicRealm": {
+      "schema": "city_public_realm.v1",
+      "catalog": "academy",
+      "seed": 20261019,
+      "greenery": {
+        "pools": {
+          "trees": "street_trees",
+          "shrubs": "low_shrubs",
+          "flowers": "flower_patches"
+        },
+        "spacing": {
+          "trees": 16,
+          "shrubs": 7,
+          "flowers": 6
+        },
+        "slotLimits": {
+          "trees": 24,
+          "shrubs": 35,
+          "flowers": 60
+        },
+        "maxPlacements": 119,
+        "layeredPlanting": true
+      },
+      "fringe": {
+        "width": 12,
+        "pools": {
+          "trees": "outer_trees",
+          "flowers": "flower_patches"
+        },
+        "slotLimits": {
+          "trees": 40,
+          "flowers": 60
+        },
+        "maxPlacements": 100,
+        "layeredPlanting": true
+      },
+      "spaces": []
+    },
+    "mode": "GENERATE",
+    "envelopeProfile": "COMPACT",
+    "foundationProfileRef": "foundation:urban",
+    "foundationGroupIds": [
+      "book_court",
+      "teaching_court",
+      "council",
+      "classrooms",
+      "residence",
+      "rooms",
+      "meals",
+      "washhouse",
+      "quay_street",
+      "research_garden"
+    ],
+    "landscapes": []
+  },
+  "surfaceMaterials": {
+    "defaults": {
+      "groundAndRoad": {
+        "materials": {
+          "accessStair": "minecraft:stone_brick_stairs",
+          "accessSurface": "minecraft:stone_brick_slab",
+          "ground": "minecraft:stone_bricks",
+          "roadCurb": "minecraft:stone_brick_stairs",
+          "roadStair": "minecraft:stone_brick_stairs",
+          "roadSurface": "minecraft:stone_brick_slab"
+        }
+      },
+      "terrace": {
+        "materials": {
+          "railing": "minecraft:oak_fence",
+          "retainingWall": "minecraft:cobblestone"
+        }
+      }
+    },
+    "groups": {},
+    "roads": {},
+    "landscapes": {}
+  }
+}

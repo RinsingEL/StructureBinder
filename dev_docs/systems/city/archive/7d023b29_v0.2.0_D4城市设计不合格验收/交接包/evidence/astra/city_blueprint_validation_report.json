@@ -1,0 +1,9 @@
+{
+  "schema": "city_blueprint_validation_report",
+  "cityId": "city_jingchao_capital",
+  "contextId": "sha256:a2e4d6cf89ef2d2c9187e664ec048a0add5dfc42f91e754c2579e338b8ecc19d",
+  "valid": true,
+  "validatedAt": "2026-10-19T15:48:53.042447900Z",
+  "issues": [],
+  "designGeometryValidated": true
+}

@@ -1,0 +1,849 @@
+{
+  "schema": "city_structure_anchor_plan",
+  "cityId": "city_jingchao_capital",
+  "publicSpaces": [
+    {
+      "minX": -2960,
+      "minZ": 5300,
+      "maxX": -2913,
+      "maxZ": 5339,
+      "ownerGroupId": "book_court",
+      "purpose": "教学与文献公共内院"
+    }
+  ],
+  "compilationAcceptance": {
+    "passed": true,
+    "acceptancePolicy": "SAFE_MEMBERS_WITH_EXPLICIT_GAPS_V2",
+    "instruction": "格式、参数、引用错误需修正；设计后看本区和全城预览，可带 targetDistrictId、当前 baseDraftHash 和 assessment 重新提交该区完整 districtDesign。其他区设计与布局保留。qualityFullySatisfied、allFunctionAreasFormed、allRequiredContentPresent、structureGraphConnected 等均为诊断，不要求清零警告或补齐建筑。整城通过逐区选材与阵列修订形成整体性，允许隔河，不要求接触或固定距离。挤占不得清空或破坏其他区功能主体。",
+    "qualityFullySatisfied": false,
+    "previewCompiled": true,
+    "trafficGroupCount": 10,
+    "trafficConnectionCount": 10,
+    "requiredRelationCount": 10,
+    "requiredRelationsSatisfied": true,
+    "structureGraphConnected": true,
+    "allFunctionAreasFormed": true,
+    "allRequiredStructuresCommitted": true,
+    "allRequiredContentPresent": true,
+    "arrayVisualGeometryPassed": false,
+    "allStreetEntrancesConnected": true,
+    "hardBlocks": [],
+    "warnings": [
+      "book_court: GRID_STREET_NETWORK_DISCONNECTED",
+      "teaching_court: GRID_STREET_NETWORK_DISCONNECTED",
+      "residence: GRID_STREET_NETWORK_DISCONNECTED",
+      "CITY_REVIEW_TOO_MANY_ROOTS:4:organize_related_districts_on_a_shared_backbone"
+    ]
+  },
+  "designReview": {
+    "policy": "AI_REVIEW_PLANNED_AND_RETAINED_ARRAYS",
+    "fixedAreaGate": false,
+    "plannedLeafArrayCount": 10,
+    "retainedLeafArrayCount": 10,
+    "nestedLeafArrayCount": 8,
+    "plannedBuildingCount": 19,
+    "retainedBuildingCount": 19,
+    "nestedPlannedBuildingCount": 11,
+    "nestedRetainedLeafArrayCount": 8,
+    "nestedRetainedBuildingCount": 11,
+    "automaticBuildingCount": 0,
+    "groups": [
+      {
+        "groupId": "book_court",
+        "role": "藏书馆：主轴尽端的一级公共地标",
+        "algorithm": "GRID",
+        "plannedBuildingCount": 1,
+        "requestedBuildingCount": 1,
+        "retainedBuildingCount": 1,
+        "nested": true,
+        "empty": false,
+        "core": true,
+        "retainedCompositionCount": 5,
+        "selfContainedComposition": false,
+        "isolatedCore": false,
+        "skippedMembers": [],
+        "retainedBounds": {
+          "minX": -2966,
+          "minZ": 5225,
+          "maxX": -2906,
+          "maxZ": 5289
+        }
+      },
+      {
+        "groupId": "classrooms",
+        "role": "小课堂与教学翼楼，共36席，围院南侧的两翼",
+        "algorithm": "LINEAR",
+        "plannedBuildingCount": 2,
+        "requestedBuildingCount": 2,
+        "retainedBuildingCount": 2,
+        "nested": true,
+        "empty": false,
+        "core": false,
+        "retainedCompositionCount": 5,
+        "selfContainedComposition": false,
+        "isolatedCore": false,
+        "skippedMembers": [],
+        "retainedBounds": {
+          "minX": -2981,
+          "minZ": 5360,
+          "maxX": -2892,
+          "maxZ": 5390
+        }
+      },
+      {
+        "groupId": "council",
+        "role": "院务与议事",
+        "algorithm": "GRID",
+        "plannedBuildingCount": 1,
+        "requestedBuildingCount": 1,
+        "retainedBuildingCount": 1,
+        "nested": true,
+        "empty": false,
+        "core": false,
+        "retainedCompositionCount": 5,
+        "selfContainedComposition": false,
+        "isolatedCore": false,
+        "skippedMembers": [],
+        "retainedBounds": {
+          "minX": -2895,
+          "minZ": 5291,
+          "maxX": -2841,
+          "maxZ": 5349
+        }
+      },
+      {
+        "groupId": "quay_street",
+        "role": "水运候船、日用品交易、货物仓储的南湾迎客街",
+        "algorithm": "LINEAR",
+        "plannedBuildingCount": 3,
+        "requestedBuildingCount": 3,
+        "retainedBuildingCount": 3,
+        "nested": false,
+        "empty": false,
+        "core": true,
+        "retainedCompositionCount": 3,
+        "selfContainedComposition": false,
+        "isolatedCore": false,
+        "skippedMembers": [],
+        "retainedBounds": {
+          "minX": -3000,
+          "minZ": 5430,
+          "maxX": -2866,
+          "maxZ": 5488
+        }
+      },
+      {
+        "groupId": "research_garden",
+        "role": "林缘观象、双实验教学及药草园艺的研究组团",
+        "algorithm": "GRID",
+        "plannedBuildingCount": 5,
+        "requestedBuildingCount": 5,
+        "retainedBuildingCount": 5,
+        "nested": false,
+        "empty": false,
+        "core": true,
+        "retainedCompositionCount": 5,
+        "selfContainedComposition": false,
+        "isolatedCore": false,
+        "skippedMembers": [],
+        "retainedBounds": {
+          "minX": -2975,
+          "minZ": 5110,
+          "maxX": -2863,
+          "maxZ": 5197
+        }
+      },
+      {
+        "groupId": "residence",
+        "role": "主宿舍60床",
+        "algorithm": "GRID",
+        "plannedBuildingCount": 1,
+        "requestedBuildingCount": 1,
+        "retainedBuildingCount": 1,
+        "nested": true,
+        "empty": false,
+        "core": true,
+        "retainedCompositionCount": 6,
+        "selfContainedComposition": true,
+        "isolatedCore": false,
+        "skippedMembers": [],
+        "retainedBounds": {
+          "minX": -2820,
+          "minZ": 5250,
+          "maxX": -2752,
+          "maxZ": 5316
+        }
+      },
+      {
+        "groupId": "meals",
+        "role": "36座公共主食堂，位于宿舍与迎客街之间",
+        "algorithm": "LINEAR",
+        "plannedBuildingCount": 1,
+        "requestedBuildingCount": 1,
+        "retainedBuildingCount": 1,
+        "nested": true,
+        "empty": false,
+        "core": false,
+        "retainedCompositionCount": 6,
+        "selfContainedComposition": true,
+        "isolatedCore": false,
+        "skippedMembers": [],
+        "retainedBounds": {
+          "minX": -2814,
+          "minZ": 5325,
+          "maxX": -2758,
+          "maxZ": 5393
+        }
+      },
+      {
+        "groupId": "rooms",
+        "role": "小宿舍48床",
+        "algorithm": "GRID",
+        "plannedBuildingCount": 3,
+        "requestedBuildingCount": 3,
+        "retainedBuildingCount": 3,
+        "nested": true,
+        "empty": false,
+        "core": false,
+        "retainedCompositionCount": 6,
+        "selfContainedComposition": false,
+        "isolatedCore": false,
+        "skippedMembers": [],
+        "retainedBounds": {
+          "minX": -2743,
+          "minZ": 5258,
+          "maxX": -2701,
+          "maxZ": 5308
+        }
+      },
+      {
+        "groupId": "teaching_court",
+        "role": "庭院教学，26席",
+        "algorithm": "GRID",
+        "plannedBuildingCount": 1,
+        "requestedBuildingCount": 1,
+        "retainedBuildingCount": 1,
+        "nested": true,
+        "empty": false,
+        "core": false,
+        "retainedCompositionCount": 5,
+        "selfContainedComposition": false,
+        "isolatedCore": false,
+        "skippedMembers": [],
+        "retainedBounds": {
+          "minX": -3033,
+          "minZ": 5296,
+          "maxX": -2977,
+          "maxZ": 5344
+        }
+      },
+      {
+        "groupId": "washhouse",
+        "role": "洗衣洗浴服务",
+        "algorithm": "GRID",
+        "plannedBuildingCount": 1,
+        "requestedBuildingCount": 1,
+        "retainedBuildingCount": 1,
+        "nested": true,
+        "empty": false,
+        "core": false,
+        "retainedCompositionCount": 6,
+        "selfContainedComposition": false,
+        "isolatedCore": false,
+        "skippedMembers": [],
+        "retainedBounds": {
+          "minX": -2733,
+          "minZ": 5347,
+          "maxX": -2711,
+          "maxZ": 5371
+        }
+      }
+    ],
+    "isolatedCoreGroupIds": [],
+    "instruction": "Review actual core/support composition. Isolated cores must be repaired before FINAL; authored self-contained courts count as composition. Also judge visual scale and support quality; a numerical companion alone does not establish the intended effect. Use existing bounded failure handling and record rework counts."
+  },
+  "districtPopulationPlan": [
+    {
+      "purpose": "文献、教学与议事服务91常住者，含60名学生。教学设施26+24+12=62座，教师6人分布3座教学建筑，每栋在岗不超过4；文献2人与院务4人，共12岗位。",
+      "residents": 0,
+      "jobs": [
+        {
+          "profession": "teacher",
+          "count": 6,
+          "functions": [
+            "教学",
+            "研讨"
+          ]
+        },
+        {
+          "profession": "librarian",
+          "count": 2,
+          "functions": [
+            "书籍借阅",
+            "文献保管"
+          ]
+        },
+        {
+          "profession": "registrar",
+          "count": 4,
+          "functions": [
+            "公共办事",
+            "议事"
+          ]
+        }
+      ],
+      "housingGroupIds": [],
+      "districtId": "academic"
+    },
+    {
+      "purpose": "60学生加31教职服务人员共91常住者，108床，入住率84.3%。主食堂36座满足约三分之一人口同时用餐，2餐饮岗位及2洗浴岗位；公共餐厅在南向通勤街。",
+      "residents": 91,
+      "jobs": [
+        {
+          "profession": "cook",
+          "count": 2,
+          "functions": [
+            "餐饮",
+            "集体用餐"
+          ],
+          "servesMeals": true
+        },
+        {
+          "profession": "laundry",
+          "count": 2,
+          "functions": [
+            "洗浴",
+            "洗衣"
+          ]
+        }
+      ],
+      "housingGroupIds": [
+        "residence",
+        "rooms"
+      ],
+      "districtId": "commons"
+    },
+    {
+      "purpose": "水运候船2岗位、日用品2岗位、仓储1岗位；接待访客与服务95常住者，街道连教学中心和餐饮生活区，候船容量未提供，不虚报人数。",
+      "residents": 0,
+      "jobs": [
+        {
+          "profession": "boatkeeper",
+          "count": 2,
+          "functions": [
+            "水运接驳",
+            "候船"
+          ]
+        },
+        {
+          "profession": "shopkeeper",
+          "count": 2,
+          "functions": [
+            "日用品交易"
+          ]
+        },
+        {
+          "profession": "storekeeper",
+          "count": 1,
+          "functions": [
+            "货物仓储"
+          ]
+        }
+      ],
+      "housingGroupIds": [],
+      "districtId": "arrival"
+    },
+    {
+      "purpose": "为60名学生提供观象与实验、植物教学，观象3人、双实验楼4人、温室园艺2人、药草试种1人，共10岗位；保留北侧原林。",
+      "residents": 0,
+      "jobs": [
+        {
+          "profession": "astronomer",
+          "count": 3,
+          "functions": [
+            "天象观测",
+            "研究"
+          ]
+        },
+        {
+          "profession": "researcher",
+          "count": 4,
+          "functions": [
+            "实验教学",
+            "研究"
+          ]
+        },
+        {
+          "profession": "gardener",
+          "count": 3,
+          "functions": [
+            "植物教学",
+            "园艺养护",
+            "药草栽培"
+          ]
+        }
+      ],
+      "housingGroupIds": [],
+      "districtId": "fieldwork"
+    }
+  ],
+  "cityDesignIntent": {
+    "cityIdentity": "镜潮·林湾书院",
+    "theme": "从零设计的林湾书院：在平原28内组织紧凑的折线步行骨架。南岸迎客区约(-2940,5460)进入，沿北向书院街到中央教学庭院(-2930,5350)，藏书馆作为唯一一级公共地标坐落庭院北侧/轴线尽端；教学、议事配套围合近人尺度的公共内院。东侧(-2805,5370)为住宿与分散小食堂，公共用餐沿宿舍至教学的通勤面展开。观象和小型实验、植物教学构成西北短支径(-2980,5235)，以林带隔开喧闹迎客，观测塔是二级专业地标。南湾保留自然岸线，北部与西侧保留桦木林；边界NONE，学院无城防需求，不造内街城门。计划60名学生及约35名教职、研究和服务人员，共95常住人口，宿舍提供108床；学术区12岗位，迎客供应5岗位，居住餐饮洗浴8岗位，研究园艺10岗位。小食堂分三处，计划分批用餐，容量依作者目录核验。主体集中在约300×300方块范围，按现有建筑真实占地编译调整；不用超大礼堂挤压生活空间，教学和集会由作者标注的庭院教学、研讨及议事建筑承担。仅承诺作者已标注用途，不宣称魔法机制已实现。",
+    "functionalRoles": [
+      "教学研究",
+      "文献借阅保管",
+      "学院议事",
+      "访客水运接待",
+      "常住生活供应",
+      "观象与植物教学"
+    ]
+  },
+  "cityBlueprintCompileProvenance": {
+    "schema": "city_generation_compile_trace",
+    "generationSeed": 112208867599818,
+    "selectionMode": "programmatic_blueprint_compiler",
+    "contextId": "sha256:a2e4d6cf89ef2d2c9187e664ec048a0add5dfc42f91e754c2579e338b8ecc19d",
+    "sourceBlueprintHash": "sha256:5704a0532be38339577c00bd5936076815615e7d5262ce1b227d72293bd51164"
+  },
+  "skippedMembers": [],
+  "anchors": [
+    {
+      "anchorId": "quay_street_required_001",
+      "placementGroupId": "quay_street",
+      "blueprintStructureRef": "studio:mg-23-v02",
+      "plannedFootprint": {
+        "minX": -3000,
+        "minZ": 5430,
+        "maxX": -2948,
+        "maxZ": 5488
+      },
+      "anchorBlock": {
+        "x": -3000,
+        "z": 5430
+      },
+      "rotation": "NONE",
+      "rawSize": {
+        "width": 53,
+        "height": 38,
+        "depth": 59
+      },
+      "blueprintRequired": true,
+      "blueprintPlacementPhase": "required"
+    },
+    {
+      "anchorId": "quay_street_required_002",
+      "placementGroupId": "quay_street",
+      "blueprintStructureRef": "studio:mg-45-v02",
+      "plannedFootprint": {
+        "minX": -2941,
+        "minZ": 5464,
+        "maxX": -2917,
+        "maxZ": 5488
+      },
+      "anchorBlock": {
+        "x": -2941,
+        "z": 5464
+      },
+      "rotation": "NONE",
+      "rawSize": {
+        "width": 25,
+        "height": 24,
+        "depth": 25
+      },
+      "blueprintRequired": true,
+      "blueprintPlacementPhase": "required"
+    },
+    {
+      "anchorId": "quay_street_required_003",
+      "placementGroupId": "quay_street",
+      "blueprintStructureRef": "studio:mg-20-v02",
+      "plannedFootprint": {
+        "minX": -2910,
+        "minZ": 5434,
+        "maxX": -2866,
+        "maxZ": 5488
+      },
+      "anchorBlock": {
+        "x": -2910,
+        "z": 5434
+      },
+      "rotation": "NONE",
+      "rawSize": {
+        "width": 45,
+        "height": 38,
+        "depth": 55
+      },
+      "blueprintRequired": true,
+      "blueprintPlacementPhase": "required"
+    },
+    {
+      "anchorId": "research_garden_required_001",
+      "placementGroupId": "research_garden",
+      "blueprintStructureRef": "studio:mg-03-v02",
+      "plannedFootprint": {
+        "minX": -2975,
+        "minZ": 5110,
+        "maxX": -2925,
+        "maxZ": 5164
+      },
+      "anchorBlock": {
+        "x": -2975,
+        "z": 5110
+      },
+      "rotation": "NONE",
+      "rawSize": {
+        "width": 51,
+        "height": 64,
+        "depth": 55
+      },
+      "blueprintRequired": true,
+      "blueprintPlacementPhase": "required"
+    },
+    {
+      "anchorId": "research_garden_required_002",
+      "placementGroupId": "research_garden",
+      "blueprintStructureRef": "studio:mg-43-v02",
+      "plannedFootprint": {
+        "minX": -2916,
+        "minZ": 5125,
+        "maxX": -2894,
+        "maxZ": 5149
+      },
+      "anchorBlock": {
+        "x": -2916,
+        "z": 5125
+      },
+      "rotation": "NONE",
+      "rawSize": {
+        "width": 23,
+        "height": 24,
+        "depth": 25
+      },
+      "blueprintRequired": true,
+      "blueprintPlacementPhase": "required"
+    },
+    {
+      "anchorId": "research_garden_required_003",
+      "placementGroupId": "research_garden",
+      "blueprintStructureRef": "studio:mg-31-v02",
+      "plannedFootprint": {
+        "minX": -2885,
+        "minZ": 5124,
+        "maxX": -2863,
+        "maxZ": 5150
+      },
+      "anchorBlock": {
+        "x": -2885,
+        "z": 5124
+      },
+      "rotation": "NONE",
+      "rawSize": {
+        "width": 23,
+        "height": 16,
+        "depth": 27
+      },
+      "blueprintRequired": true,
+      "blueprintPlacementPhase": "required"
+    },
+    {
+      "anchorId": "research_garden_required_004",
+      "placementGroupId": "research_garden",
+      "blueprintStructureRef": "studio:mg-30-v01",
+      "plannedFootprint": {
+        "minX": -2959,
+        "minZ": 5176,
+        "maxX": -2941,
+        "maxZ": 5194
+      },
+      "anchorBlock": {
+        "x": -2959,
+        "z": 5176
+      },
+      "rotation": "NONE",
+      "rawSize": {
+        "width": 19,
+        "height": 5,
+        "depth": 19
+      },
+      "blueprintRequired": true,
+      "blueprintPlacementPhase": "required"
+    },
+    {
+      "anchorId": "research_garden_fill_005",
+      "placementGroupId": "research_garden",
+      "blueprintStructureRef": "studio:mg-43-v02",
+      "plannedFootprint": {
+        "minX": -2916,
+        "minZ": 5173,
+        "maxX": -2894,
+        "maxZ": 5197
+      },
+      "anchorBlock": {
+        "x": -2916,
+        "z": 5173
+      },
+      "rotation": "NONE",
+      "rawSize": {
+        "width": 23,
+        "height": 24,
+        "depth": 25
+      },
+      "blueprintRequired": false,
+      "blueprintPlacementPhase": "fill"
+    },
+    {
+      "anchorId": "book_court_required_001",
+      "placementGroupId": "book_court",
+      "blueprintStructureRef": "studio:mg-02-v02",
+      "plannedFootprint": {
+        "minX": -2966,
+        "minZ": 5225,
+        "maxX": -2906,
+        "maxZ": 5289
+      },
+      "anchorBlock": {
+        "x": -2966,
+        "z": 5225
+      },
+      "rotation": "NONE",
+      "rawSize": {
+        "width": 61,
+        "height": 61,
+        "depth": 65
+      },
+      "blueprintRequired": true,
+      "blueprintPlacementPhase": "required"
+    },
+    {
+      "anchorId": "classrooms_required_001",
+      "placementGroupId": "classrooms",
+      "blueprintStructureRef": "studio:mg-25-v02",
+      "plannedFootprint": {
+        "minX": -2981,
+        "minZ": 5360,
+        "maxX": -2947,
+        "maxZ": 5390
+      },
+      "anchorBlock": {
+        "x": -2981,
+        "z": 5360
+      },
+      "rotation": "NONE",
+      "rawSize": {
+        "width": 35,
+        "height": 32,
+        "depth": 31
+      },
+      "blueprintRequired": true,
+      "blueprintPlacementPhase": "required"
+    },
+    {
+      "anchorId": "classrooms_required_002",
+      "placementGroupId": "classrooms",
+      "blueprintStructureRef": "studio:mg-34-v03",
+      "plannedFootprint": {
+        "minX": -2938,
+        "minZ": 5361,
+        "maxX": -2892,
+        "maxZ": 5389
+      },
+      "anchorBlock": {
+        "x": -2938,
+        "z": 5361
+      },
+      "rotation": "NONE",
+      "rawSize": {
+        "width": 47,
+        "height": 49,
+        "depth": 29
+      },
+      "blueprintRequired": true,
+      "blueprintPlacementPhase": "required"
+    },
+    {
+      "anchorId": "council_required_001",
+      "placementGroupId": "council",
+      "blueprintStructureRef": "studio:mg-13-v02",
+      "plannedFootprint": {
+        "minX": -2895,
+        "minZ": 5291,
+        "maxX": -2841,
+        "maxZ": 5349
+      },
+      "anchorBlock": {
+        "x": -2895,
+        "z": 5291
+      },
+      "rotation": "NONE",
+      "rawSize": {
+        "width": 55,
+        "height": 68,
+        "depth": 59
+      },
+      "blueprintRequired": true,
+      "blueprintPlacementPhase": "required"
+    },
+    {
+      "anchorId": "teaching_court_required_001",
+      "placementGroupId": "teaching_court",
+      "blueprintStructureRef": "studio:mg-36-v02",
+      "plannedFootprint": {
+        "minX": -3033,
+        "minZ": 5296,
+        "maxX": -2977,
+        "maxZ": 5344
+      },
+      "anchorBlock": {
+        "x": -3033,
+        "z": 5296
+      },
+      "rotation": "NONE",
+      "rawSize": {
+        "width": 57,
+        "height": 51,
+        "depth": 49
+      },
+      "blueprintRequired": true,
+      "blueprintPlacementPhase": "required"
+    },
+    {
+      "anchorId": "residence_required_001",
+      "placementGroupId": "residence",
+      "blueprintStructureRef": "studio:mg-05-v02",
+      "plannedFootprint": {
+        "minX": -2820,
+        "minZ": 5250,
+        "maxX": -2752,
+        "maxZ": 5316
+      },
+      "anchorBlock": {
+        "x": -2820,
+        "z": 5250
+      },
+      "rotation": "NONE",
+      "rawSize": {
+        "width": 69,
+        "height": 61,
+        "depth": 67
+      },
+      "blueprintRequired": true,
+      "blueprintPlacementPhase": "required"
+    },
+    {
+      "anchorId": "meals_required_001",
+      "placementGroupId": "meals",
+      "blueprintStructureRef": "studio:mg-07-v02",
+      "plannedFootprint": {
+        "minX": -2814,
+        "minZ": 5325,
+        "maxX": -2758,
+        "maxZ": 5393
+      },
+      "anchorBlock": {
+        "x": -2814,
+        "z": 5325
+      },
+      "rotation": "NONE",
+      "rawSize": {
+        "width": 57,
+        "height": 56,
+        "depth": 69
+      },
+      "blueprintRequired": true,
+      "blueprintPlacementPhase": "required"
+    },
+    {
+      "anchorId": "rooms_required_001",
+      "placementGroupId": "rooms",
+      "blueprintStructureRef": "studio:mg-27-v02",
+      "plannedFootprint": {
+        "minX": -2743,
+        "minZ": 5258,
+        "maxX": -2725,
+        "maxZ": 5280
+      },
+      "anchorBlock": {
+        "x": -2743,
+        "z": 5258
+      },
+      "rotation": "NONE",
+      "rawSize": {
+        "width": 19,
+        "height": 24,
+        "depth": 23
+      },
+      "blueprintRequired": true,
+      "blueprintPlacementPhase": "required"
+    },
+    {
+      "anchorId": "washhouse_required_001",
+      "placementGroupId": "washhouse",
+      "blueprintStructureRef": "studio:mg-44-v02",
+      "plannedFootprint": {
+        "minX": -2733,
+        "minZ": 5347,
+        "maxX": -2711,
+        "maxZ": 5371
+      },
+      "anchorBlock": {
+        "x": -2733,
+        "z": 5347
+      },
+      "rotation": "NONE",
+      "rawSize": {
+        "width": 23,
+        "height": 24,
+        "depth": 25
+      },
+      "blueprintRequired": true,
+      "blueprintPlacementPhase": "required"
+    },
+    {
+      "anchorId": "rooms_fill_002",
+      "placementGroupId": "rooms",
+      "blueprintStructureRef": "studio:mg-27-v02",
+      "plannedFootprint": {
+        "minX": -2719,
+        "minZ": 5258,
+        "maxX": -2701,
+        "maxZ": 5280
+      },
+      "anchorBlock": {
+        "x": -2719,
+        "z": 5258
+      },
+      "rotation": "NONE",
+      "rawSize": {
+        "width": 19,
+        "height": 24,
+        "depth": 23
+      },
+      "blueprintRequired": false,
+      "blueprintPlacementPhase": "fill"
+    },
+    {
+      "anchorId": "rooms_fill_003",
+      "placementGroupId": "rooms",
+      "blueprintStructureRef": "studio:mg-27-v02",
+      "plannedFootprint": {
+        "minX": -2743,
+        "minZ": 5286,
+        "maxX": -2725,
+        "maxZ": 5308
+      },
+      "anchorBlock": {
+        "x": -2743,
+        "z": 5286
+      },
+      "rotation": "NONE",
+      "rawSize": {
+        "width": 19,
+        "height": 24,
+        "depth": 23
+      },
+      "blueprintRequired": false,
+      "blueprintPlacementPhase": "fill"
+    }
+  ]
+}

@@ -63,7 +63,7 @@ public final class McpServerService implements AutoCloseable {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 if (gameDirectory == null) throw new IOException("MCP 尚未初始化");
-                McpServerConfig config = new McpServerConfig(enabled, port, flashPort,advanced,flash);
+                McpServerConfig config = new McpServerConfig(enabled, port, flashPort,advanced,flash,McpServerConfig.load(gameDirectory).debug());
                 config.save(gameDirectory);
                 needsSetup=false;
                 if(appliedConfig==null || appliedConfig.enabled()!=enabled || appliedConfig.port()!=port || appliedConfig.flashPort()!=flashPort
@@ -92,6 +92,7 @@ public final class McpServerService implements AutoCloseable {
         builder.environment().remove("GEOMANTIA_PROVIDER_TOOL_KEY");
         builder.environment().put("GEOMANTIA_MCP_PORT", Integer.toString(config.port()));
         builder.environment().put("GEOMANTIA_FLASH_MCP_PORT", Integer.toString(config.flashPort()));
+        builder.environment().put("GEOMANTIA_MCP_CONFIG", McpServerConfig.path(gameDirectory).toString());
         builder.environment().put("GEOMANTIA_MC_API_URL", "http://127.0.0.1:" + Integer.getInteger("geomantia.apiPort", 5000));
         builder.environment().put("GEOMANTIA_PARENT_PID", Long.toString(ProcessHandle.current().pid()));
         if (closed || Thread.currentThread().isInterrupted()) throw new IOException("MCP 启动已取消");

@@ -265,6 +265,77 @@ class PlanningSessionServiceTest {
         } finally { http.stop(0); }
     }
 
+    @Test void debugResetRequiresConfigCurrentVersionAndLeaseThenInvalidatesOldTask() throws Exception {
+        Path run = root.resolve("provider_2a_r8192"); sealed(run);
+        Files.writeString(run.resolve("realm_profiles.json"), "[{realmId:'a'}]");
+        Files.writeString(run.resolve("realm_coordinate_selections.json"), "[{realmId:'a'}]");
+        Files.writeString(run.resolve("t3_report.json"), "{}"); Files.writeString(run.resolve("realm_territory_map.json"), "{}");
+        Files.writeString(run.resolve("city_seed_registry.json"), "{citySeeds:[{realmId:'a',citySeedId:'city_a',role:'capital'}]}");
+        Path bp = Files.createDirectories(run.resolve("city_test_runs/city_a/steps/blueprint"));
+        Files.writeString(bp.resolve("city_d4_workflow.json"), "{stage:'INTEGRATION',contextId:'ctx',revision:7,districts:[{groupId:'old'}],bodies:{old:{}}}");
+        Files.writeString(bp.resolve("city_blueprint_context.json"), "{contextId:'ctx'}");
+        Files.createDirectories(run.resolve("automation"));
+        JsonObject queueState = JsonParser.parseString(queue("waiting_for_agent")).getAsJsonObject();
+        queueState.addProperty("runId", "provider_2a_r8192");
+        queueState.addProperty("nextAction", "city_d4_integrate");
+        queueState.getAsJsonArray("items").get(0).getAsJsonObject().addProperty("reasonCode", "D4_CONTEXT_PREPARED");
+        Files.writeString(run.resolve("automation/city_design_queue.json"), queueState.toString());
+        AtomicInteger resets = new AtomicInteger();
+        HttpServer http = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        var holder = new java.util.concurrent.atomic.AtomicReference<PlanningSessionService>();
+        http.createContext("/", exchange -> {
+            JsonObject result;
+            try {
+                assertEquals("/realm/city/debug_reset_d4", exchange.getRequestURI().getPath());
+                var args = JsonParser.parseString(new String(exchange.getRequestBody().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
+                holder.get().requireD4ResetLease(exchange.getRequestHeaders().getFirst("X-Geomantia-Planning-Token"),
+                        args.get("runId").getAsString(), args.get("citySeedId").getAsString(), args.get("resetVersion").getAsString());
+                result = com.rinsing.geomantia.systems.city.application.CityD4DraftReset.reset(run, args.get("citySeedId").getAsString(),
+                        args.get("resetVersion").getAsString(), args.get("reason").getAsString());
+                var designQueue = new com.rinsing.geomantia.systems.city.application.queue.CityDesignQueue(root,root.resolve("queue_config.json"));
+                designQueue.onAgentWorkflowState("provider_2a_r8192", "city_a", "waiting_for_agent", "D4_CONTEXT_PREPARED", "");
+                designQueue.status("provider_2a_r8192");
+                resets.incrementAndGet();
+            } catch (Throwable ex) { result = new JsonObject(); result.addProperty("ok", false); result.addProperty("error", ex.toString()); }
+            byte[] bytes = result.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, bytes.length); exchange.getResponseBody().write(bytes); exchange.close();
+        }); http.start();
+        try (var service = new PlanningSessionService(root, root, http.getAddress().getPort(), 42,
+                (step, gateway) -> new PreparedPlanningTurn(step.state(), List.of(), List.of("city_d4_overview"),
+                        new PlanningTurnControl((name,args) -> JsonParser.parseString("{ok:true}"))))) {
+            holder.set(service);
+            assertFalse(service.snapshot().has("canResetD4"));
+            assertEquals("PLANNING_DEBUG_DISABLED", assertThrows(IllegalStateException.class,
+                    () -> service.resetD4("debug-agent", "", PlanningRole.ADVANCED, "provider_2a_r8192", "city_a", "", "重做")).getMessage());
+            new com.rinsing.geomantia.platform.mcp.McpServerConfig(true,5001,5002,false,false,true).save(root);
+            var lobby = service.snapshot(); assertTrue(lobby.get("canResetD4").getAsBoolean(), lobby.toString());
+            String version = lobby.get("d4ResetVersion").getAsString();
+            assertThrows(IllegalStateException.class, () -> service.resetD4("debug-agent", "", PlanningRole.FLASH, "provider_2a_r8192", "city_a", version, "重做"));
+            assertThrows(IllegalStateException.class, () -> service.resetD4("debug-agent", "", PlanningRole.ADVANCED, "provider_2a_r8192", "other", version, "重做"));
+            assertThrows(IllegalArgumentException.class, () -> service.resetD4("debug-agent", "", PlanningRole.ADVANCED, "provider_2a_r8192", "city_a", "stale", "重做"));
+            String busy = service.acquireEmbedded();
+            assertThrows(IllegalStateException.class, () -> service.resetD4("debug-agent", "", PlanningRole.ADVANCED, "provider_2a_r8192", "city_a", version, "重做"));
+            service.release(busy);
+            String token = service.resume("debug-agent", "", false, PlanningRole.ADVANCED).get("leaseToken").getAsString();
+            String oldTask = awaitTask(service, token).get("taskId").getAsString();
+            assertThrows(IllegalStateException.class, () -> service.requireD4ResetLease(token, "provider_2a_r8192", "city_a", version));
+            service.action(token, oldTask, "old-action", "city_d4_overview", new JsonObject());
+            assertThrows(IllegalStateException.class, () -> service.resetD4("debug-agent", "wrong", PlanningRole.ADVANCED, "provider_2a_r8192", "city_a", version, "重做"));
+            var started = service.resetD4("debug-agent", token, PlanningRole.ADVANCED, "provider_2a_r8192", "city_a", version, "重做");
+            assertEquals(token, started.get("leaseToken").getAsString()); waitForIdle(service);
+            assertEquals(1, resets.get(), service.snapshot().toString());
+            assertEquals("city_d4_overview", service.snapshot().get("nextAction").getAsString());
+            assertThrows(IllegalStateException.class, () -> service.action(token, oldTask, "old-action", "city_d4_overview", new JsonObject()));
+            assertThrows(IllegalArgumentException.class, () -> service.resetD4("debug-agent", token, PlanningRole.ADVANCED, "provider_2a_r8192", "city_a", version, "重试旧请求"));
+            service.next("debug-agent", token, PlanningRole.ADVANCED, 0, false);
+            assertNotEquals(oldTask, awaitTask(service, token).get("taskId").getAsString());
+            new com.rinsing.geomantia.platform.mcp.McpServerConfig(true,5001).save(root);
+            assertFalse(service.snapshot().has("canResetD4"));
+            assertThrows(IllegalStateException.class, () -> service.requireD4ResetLease(token, "provider_2a_r8192", "city_a", version));
+            service.release(token);
+        } finally { http.stop(0); }
+    }
+
     private static void waitForIdle(PlanningSessionService service) throws Exception {
         for (int i=0; i<200; i++) {
             if (!"running".equals(service.snapshot().get("status").getAsString())) return;

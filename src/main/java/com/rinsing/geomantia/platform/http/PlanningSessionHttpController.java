@@ -34,7 +34,7 @@ final class PlanningSessionHttpController {
         try {
             JsonObject args = GisHttpUtil.readJsonObject(exchange);
             String token = exchange.getRequestHeaders().getFirst("X-Geomantia-Planning-Token");
-            if(worldPreparing.getAsBoolean() && Set.of("resume","next","action","redesign").contains(operation))
+            if(worldPreparing.getAsBoolean() && Set.of("resume","next","action","redesign","reset_d4").contains(operation))
                 throw new IllegalStateException("WORLD_PREPARING: 首次世界扫描尚未完成，请等待进度完成后继续规划。");
             JsonObject result;
             switch (operation) {
@@ -61,6 +61,10 @@ final class PlanningSessionHttpController {
                             java.util.Objects.requireNonNullElse(exchange.getRequestHeaders().getFirst("X-Geomantia-Planning-Role"), "ADVANCED")),
                         string(args, "runId"), string(args, "citySeedId"), string(args, "reason"));
                 case "escalate" -> result = service().escalate(token, string(args, "taskId"), string(args, "reason"));
+                case "reset_d4" -> result = service().resetD4(string(args, "ownerId"), token,
+                        com.rinsing.geomantia.systems.provider.application.PlanningRole.valueOf(
+                            java.util.Objects.requireNonNullElse(exchange.getRequestHeaders().getFirst("X-Geomantia-Planning-Role"), "ADVANCED")),
+                        string(args, "runId"), string(args, "citySeedId"), string(args, "resetVersion"), string(args, "reason"));
                 case "action" -> result = service().action(token, string(args, "taskId"), string(args, "actionId"),
                         string(args, "tool"), actionArguments(args));
                 case "artifact" -> result = service().artifact(string(args, "operation"), string(args, "path"),

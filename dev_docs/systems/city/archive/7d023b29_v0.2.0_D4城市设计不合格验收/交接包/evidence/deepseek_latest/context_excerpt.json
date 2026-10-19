@@ -1,0 +1,490 @@
+{
+  "schema": "city_blueprint_decision_context.v0.1",
+  "contextId": "sha256:caf6d66b6de78b5672f59d568050b83d2b4910228fd51df73cded49c7bd4ed81",
+  "citySeed": {
+    "citySeedId": "city_jingchao_capital",
+    "realmId": "jingchao",
+    "name": "镜潮",
+    "role": "capital",
+    "theoreticalScale": "town",
+    "serviceHierarchy": "全国唯一城市，统筹学院教学、文献、议事和访客接待",
+    "positioning": "桦木林岛屿中的紧凑学院城；以公开迎客岸边、安静教学庭院、深处藏书和观测空间形成层次。固定岛域内集中生活与研究，保留林地，不另建独立城市。",
+    "anchorGrid": {
+      "x": -23,
+      "z": 42
+    },
+    "anchorBlock": {
+      "x": -2928,
+      "z": 5392
+    },
+    "candidateRangeCells": 4,
+    "planningRadiusCells": 2,
+    "subregionId": "jingchao_patch_plain-01",
+    "candidateId": "PLAIN-01",
+    "graphDistanceToNearestCity": -1,
+    "requiredConditions": [
+      "land",
+      "inside_realm"
+    ],
+    "coreFunctions": [
+      "教学研究",
+      "档案阅读",
+      "访客接待",
+      "日常生活供应"
+    ],
+    "functionalFocus": [
+      "教学研究",
+      "档案阅读",
+      "访客接待",
+      "日常生活供应"
+    ],
+    "gameplayRequirements": [
+      "同一城市内区分访客、教学、安静研究和常住生活",
+      "从迎客入口到藏书及观测区形成可辨识的探索层次",
+      "按真实可建面积取舍核心建筑，保留林地与通路",
+      "不把魔法建筑名称当作已实现传送、供能或药剂玩法"
+    ],
+    "styleDirection": {
+      "teaching": "魔法学院新制",
+      "library": "魔法学院新制",
+      "observation": "魔法学院新制",
+      "housing": "木石材质与桦木林协调，配套素材待D4作者目录核实",
+      "reception": "与主学院协调的木石迎客空间"
+    },
+    "trigger": "always",
+    "source": {
+      "reason": "已看学院岛群系、地形和全国范围图：桦木林与森林为主，PLAIN-01连续平地29696方块，较阶地容量更大，选择其作为唯一学院城的起点。城的物理规模取town，与全国唯一学术及议事服务地位独立。用户确认学院仅一城，港口迎客、教学、藏书、观测和生活都作为同城分区；使用作者魔法学院新制的审核功能，按71×83星厅、61×65藏书馆、51×55观测塔的实际占地取舍，不保证全部落下。具体可建面与通海入口须D3/D4验证，近海归属不等于可在水上任意建造。",
+      "patchSelectionRef": "psel_5fde9284185890bae1e2340eade1bf3d7154c1121af7424034655049c246e88d",
+      "patchCandidateId": "PLAIN-01",
+      "sourcePatchRefs": [
+        "minecraft:overworld:step.32:t.sha256_e1276ce6a2ac91845ae735bcd9f6a5b5c8f64b4b6bcd49a9e69b01d6e957460d:p.38"
+      ],
+      "selectionStage": "realm_t4",
+      "siteSelectionMode": "ai_candidate_selection"
+    },
+    "designBounds": {
+      "minX": -3440,
+      "minZ": 4880,
+      "maxX": -2416,
+      "maxZ": 5904
+    },
+    "protectionBounds": {
+      "minX": -3697,
+      "minZ": 4623,
+      "maxX": -2159,
+      "maxZ": 6161
+    }
+  },
+  "scaleDesignTask": {
+    "scale": "town",
+    "designTask": "结合本城服务地位、功能需求、实际地形和素材体量组织城市；规模名称提供背景，不规定建筑或阵列数量。通过当前预览判断功能、地形关联、整体性和体量是否充分。",
+    "placementResponsibility": "设计者用世界方块坐标确定根组或根组合的位置，嵌套成员由父布局组织；程序负责成员编译、边界/碰撞校验与实际保留反馈。"
+  },
+  "sourceD3Ref": {
+    "path": "provider_3d25631f_r19200/city_test_runs/city_jingchao_capital/steps/d3/city_landform_review_package.json",
+    "schema": "city_landform_review",
+    "contentHash": "sha256:96ef0c3cb1394d8f595ed6d1742c093640ba99ee7d69f32ef8dd57797f81c6ba"
+  },
+  "catalogSnapshotRef": {
+    "path": "provider_3d25631f_r19200/city_test_runs/city_jingchao_capital/steps/blueprint/city_blueprint_catalog_snapshot.json",
+    "schema": "city_blueprint_catalog_snapshot",
+    "contentHash": "sha256:228d0a50461b3fed3765cc2ae6bb0a57e75ac1e2aad83435b15d53dd65105575"
+  },
+  "preparedAt": "2026-10-19T14:02:35.924306800Z",
+  "populationPlanningGuide": "先写每区population职责、居民人数、岗位人数/用途与住房组，再按templateFacilityCapacities选楼和数量；同一居民不在居住区与工作区重复计数。未知容量不可当零容量。定稿核对床位/岗位和通勤，Realmfolk承接人口预算。",
+  "designGuide": {
+    "semanticAuthority": "pack_author_annotations_only",
+    "behaviorExamples": [
+      {
+        "id": "public_realm",
+        "title": "可配置公共空间与学院模板池",
+        "when": "构图、绿化或外城/港口出口设计"
+      },
+      {
+        "id": "deepen_blocks",
+        "title": "街坊太薄：增加纵深",
+        "when": "商业主体缺乏纵深。"
+      },
+      {
+        "id": "internal_nesting",
+        "title": "功能区缺少内部组织",
+        "when": "让住宅区拥有共享内院和自己的接入空间，而非照搬商业格网。"
+      },
+      {
+        "id": "purposeful_adjacency",
+        "title": "两区缺少过渡：靠接生活街坊",
+        "when": "商业和公共区之间需要有用途的过渡。"
+      }
+    ],
+    "surfaceMaterials": {
+      "instruction": "Optional cityBlueprint.surfaceMaterials: choose appearance groups groundAndRoad, terrace, bridge. Each group accepts {preset:name, materials:{slot:blockId}}; choose a preset first and only override exceptions. Put these groups under defaults, groups[groupId], or roads[roadKind]. Road scope only exposes road/bridge slots. Group overrides inherit defaults; road overrides win. Pillar spacing, caps, bands and bridge supports are automatic, not author parameters. Legacy flat slot maps remain readable; output is grouped. landscapes stays landscapeId -> supported slot overrides. Use blockMaterials for individual block search/preview. Structure materialSelections is separate.",
+      "appearanceGroups": {
+        "groundAndRoad": {
+          "label": "地面与道路",
+          "slots": [
+            "ground",
+            "roadSurface",
+            "roadStair",
+            "roadCurb",
+            "roadBase",
+            "accessSurface",
+            "accessStair"
+          ],
+          "presets": {
+            "stone": {
+              "ground": "minecraft:stone_bricks",
+              "roadBase": "minecraft:stone_bricks",
+              "roadSurface": "minecraft:stone_brick_slab",
+              "roadStair": "minecraft:stone_brick_stairs",
+              "roadCurb": "minecraft:stone_brick_stairs",
+              "accessSurface": "minecraft:stone_brick_slab",
+              "accessStair": "minecraft:stone_brick_stairs"
+            },
+            "sandstone": {
+              "ground": "minecraft:cut_sandstone",
+              "roadBase": "minecraft:cut_sandstone",
+              "roadSurface": "minecraft:sandstone_slab",
+              "roadStair": "minecraft:sandstone_stairs",
+              "roadCurb": "minecraft:sandstone_stairs",
+              "accessSurface": "minecraft:sandstone_slab",
+              "accessStair": "minecraft:sandstone_stairs"
+            }
+          }
+        },
+        "terrace": {
+          "label": "台面与挡土墙",
+          "slots": [
+            "retainingWall",
+            "wallColumn",
+            "wallCap",
+            "wallBand",
+            "deck",
+            "fill",
+            "pier",
+            "railing",
+            "lowWall",
+            "hedge"
+          ],
+          "presets": {
+            "stone": {
+              "retainingWall": "minecraft:cobblestone",
+              "wallColumn": "minecraft:stone_bricks",
+              "wallCap": "minecraft:stone_bricks",
+              "wallBand": "minecraft:stone_bricks",
+              "deck": "minecraft:cobblestone",
+              "fill": "minecraft:dirt",
+              "pier": "minecraft:stone_bricks",
+              "railing": "minecraft:stone_brick_wall",
+              "lowWall": "minecraft:stone_brick_wall",
+              "hedge": "minecraft:oak_leaves"
+            },
+            "timber_stone": {
+              "retainingWall": "minecraft:cobblestone",
+              "wallColumn": "minecraft:oak_log",
+              "wallCap": "minecraft:stone_bricks",
+              "wallBand": "minecraft:stone_bricks",
+              "deck": "minecraft:cobblestone",
+              "fill": "minecraft:dirt",
+              "pier": "minecraft:oak_log",
+              "railing": "minecraft:oak_fence",
+              "lowWall": "minecraft:oak_fence",
+              "hedge": "minecraft:oak_leaves"
+            },
+            "sandstone": {
+              "retainingWall": "minecraft:sandstone",
+              "wallColumn": "minecraft:chiseled_sandstone",
+              "wallCap": "minecraft:cut_sandstone",
+              "wallBand": "minecraft:cut_sandstone",
+              "deck": "minecraft:sandstone",
+              "fill": "minecraft:dirt",
+              "pier": "minecraft:chiseled_sandstone",
+              "railing": "minecraft:sandstone_wall",
+              "lowWall": "minecraft:sandstone_wall",
+              "hedge": "minecraft:oak_leaves"
+            }
+          }
+        },
+        "bridge": {
+          "label": "桥梁与栈道",
+          "slots": [
+            "bridgeSurface",
+            "bridgeRail",
+            "bridgeBeam",
+            "bridgePost",
+            "bridgePier"
+          ],
+          "presets": {
+            "timber": {
+              "bridgeSurface": "minecraft:spruce_slab",
+              "bridgeRail": "minecraft:spruce_fence",
+              "bridgeBeam": "minecraft:spruce_planks",
+              "bridgePost": "minecraft:stripped_spruce_log",
+              "bridgePier": "minecraft:stripped_spruce_log"
+            },
+            "stone": {
+              "bridgeSurface": "minecraft:stone_brick_slab",
+              "bridgeRail": "minecraft:stone_brick_wall",
+              "bridgeBeam": "minecraft:stone_bricks",
+              "bridgePost": "minecraft:chiseled_stone_bricks",
+              "bridgePier": "minecraft:stone_bricks"
+            },
+            "sandstone": {
+              "bridgeSurface": "minecraft:sandstone_slab",
+              "bridgeRail": "minecraft:sandstone_wall",
+              "bridgeBeam": "minecraft:cut_sandstone",
+              "bridgePost": "minecraft:chiseled_sandstone",
+              "bridgePier": "minecraft:sandstone"
+            }
+          }
+        }
+      },
+      "citySlots": [
+        "accessStair",
+        "accessSurface",
+        "bridgeBeam",
+        "bridgePier",
+        "bridgePost",
+        "bridgeRail",
+        "bridgeSurface",
+        "deck",
+        "fill",
+        "ground",
+        "hedge",
+        "lowWall",
+        "pier",
+        "railing",
+        "retainingWall",
+        "roadBase",
+        "roadCurb",
+        "roadStair",
+        "roadSurface",
+        "wallBand",
+        "wallCap",
+        "wallColumn"
+      ],
+      "roadKinds": [
+        "CENTER_AXIS_EAST",
+        "CENTER_AXIS_NORTH",
+        "CENTER_AXIS_PRIMARY",
+        "CENTER_AXIS_SOUTH",
+        "CENTER_AXIS_WEST",
+        "CITY_BRIDGE",
+        "CITY_MAIN_ROAD",
+        "COMPACT_ALLEY",
+        "COURTYARD_GATE",
+        "COURTYARD_RING_EAST",
+        "COURTYARD_RING_NORTH",
+        "COURTYARD_RING_SOUTH_EAST",
+        "COURTYARD_RING_SOUTH_WEST",
+        "COURTYARD_RING_WEST",
+        "ENTRANCE_SHORT_ALLEY",
+        "EXPANSION_UNIT_STREET",
+        "GRID_COLUMN_LANE",
+        "GRID_MAIN_STREET",
+        "GRID_ROW_LANE",
+        "LINEAR_STREET_BAND"
+      ],
+      "landscapeSupportedSlotsAndDefaults": {
+        "landscape:pasture": {
+          "boundaryBlockId": "minecraft:oak_fence",
+          "channelBankBlockId": "minecraft:coarse_dirt",
+          "surfaceBlockId": "minecraft:grass_block"
+        },
+        "landscape:farmland": {
+          "boundaryBlockId": "minecraft:oak_fence",
+          "channelBankBlockId": "minecraft:dirt",
+          "channelBankOverlayBlockId": "minecraft:stone_brick_slab",
+          "channelWaterBlockId": "minecraft:water",
+          "cropBlockId": "minecraft:wheat",
+          "surfaceBlockId": "minecraft:farmland"
+        },
+        "landscape:woodland": {
+          "boundaryBlockId": "minecraft:spruce_fence",
+          "channelBankBlockId": "minecraft:gravel",
+          "channelBankOverlayBlockId": "minecraft:oak_leaves",
+          "surfaceBlockId": "minecraft:podzol"
+        },
+        "landscape:flower_field": {
+          "channelBankBlockId": "minecraft:dirt",
+          "channelBankOverlayBlockId": "minecraft:moss_carpet",
+          "channelWaterBlockId": "minecraft:water",
+          "cropBlockId": "minecraft:poppy",
+          "surfaceBlockId": "minecraft:grass_block"
+        }
+      },
+      "defaultCandidates": {
+        "ground": [
+          "minecraft:stone_bricks",
+          "minecraft:gravel",
+          "minecraft:coarse_dirt"
+        ],
+        "roadSurface": [
+          "minecraft:polished_andesite_slab",
+          "minecraft:stone_brick_slab"
+        ],
+        "roadStair": [
+          "minecraft:polished_andesite_stairs",
+          "minecraft:stone_brick_stairs"
+        ],
+        "roadCurb": [
+          "minecraft:polished_andesite_stairs",
+          "minecraft:stone_brick_stairs"
+        ],
+        "roadBase": [
+          "minecraft:stone_bricks",
+          "minecraft:cobblestone"
+        ],
+        "retainingWall": [
+          "minecraft:stone_bricks",
+          "minecraft:cobblestone"
+        ],
+        "deck": [
+          "minecraft:stone_bricks",
+          "minecraft:spruce_planks"
+        ],
+        "fill": [
+          "minecraft:dirt",
+          "minecraft:stone"
+        ],
+        "pier": [
+          "minecraft:blackstone_wall",
+          "minecraft:stone_bricks"
+        ],
+        "railing": [
+          "minecraft:stone_brick_wall",
+          "minecraft:spruce_fence"
+        ],
+        "lowWall": [
+          "minecraft:stone_brick_wall",
+          "minecraft:cobblestone_wall"
+        ],
+        "hedge": [
+          "minecraft:oak_leaves",
+          "minecraft:flowering_azalea_leaves"
+        ],
+        "accessSurface": [
+          "minecraft:polished_andesite_slab",
+          "minecraft:stone_brick_slab"
+        ],
+        "accessStair": [
+          "minecraft:polished_andesite_stairs",
+          "minecraft:stone_brick_stairs"
+        ],
+        "bridgeSurface": [
+          "minecraft:spruce_slab",
+          "minecraft:stone_brick_slab"
+        ],
+        "bridgeRail": [
+          "minecraft:spruce_fence",
+          "minecraft:stone_brick_wall"
+        ],
+        "surfaceBlockId": [
+          "minecraft:farmland",
+          "minecraft:grass_block",
+          "minecraft:podzol"
+        ],
+        "cropBlockId": [
+          "minecraft:wheat",
+          "minecraft:carrots",
+          "minecraft:poppy"
+        ],
+        "channelBankBlockId": [
+          "minecraft:dirt",
+          "minecraft:coarse_dirt"
+        ],
+        "channelWaterBlockId": [
+          "minecraft:water"
+        ],
+        "channelBankOverlayBlockId": [
+          "minecraft:stone_brick_slab",
+          "minecraft:moss_carpet"
+        ],
+        "boundaryBlockId": [
+          "minecraft:oak_fence",
+          "minecraft:cobblestone_wall"
+        ],
+        "wallColumn": [
+          "minecraft:stone_bricks",
+          "minecraft:oak_log",
+          "minecraft:chiseled_sandstone"
+        ],
+        "wallCap": [
+          "minecraft:stone_bricks",
+          "minecraft:cut_sandstone"
+        ],
+        "wallBand": [
+          "minecraft:stone_bricks",
+          "minecraft:cut_sandstone"
+        ],
+        "bridgeBeam": [
+          "minecraft:spruce_planks",
+          "minecraft:stone_bricks"
+        ],
+        "bridgePost": [
+          "minecraft:stripped_spruce_log",
+          "minecraft:chiseled_stone_bricks"
+        ],
+        "bridgePier": [
+          "minecraft:stripped_spruce_log",
+          "minecraft:stone_bricks"
+        ]
+      }
+    },
+    "placementBoundary": "Place each root array or root composition with anchorBlock {x,z} in WORLD block coordinates. Nested children omit coordinates and inherit parent layout. No Patch selection or Top Patch review. Use the D3 terrain map for geographic judgment; coordinates are never snapped to patch centers or relocated for fit. Counts, nesting, dimensions and terrain/collision reports remain explicit. Out-of-bounds members are reported, not moved. CONNECTION requests roads between designed destinations.",
+    "availableArrayCapabilities": [
+      {
+        "algorithmProfileRef": "algorithm:center_symmetric",
+        "algorithm": "CENTER_SYMMETRIC",
+        "designUse": "Commit the center first, then symmetric fill pairs; both sides need usable space."
+      },
+      {
+        "algorithmProfileRef": "algorithm:compact",
+        "algorithm": "COMPACT",
+        "designUse": "Grow a compact group from its chosen origin while respecting local terrain and clearance."
+      },
+      {
+        "algorithmProfileRef": "algorithm:contiguous",
+        "algorithm": "CONTIGUOUS",
+        "designUse": "Edge-connected template landscapes with zero internal street gap and an irregular compact outline. Use generous structureCount (hundreds when space permits, up to 1024); repetition is desirable. Use authored landscape templates and pools that permit repetition. Scale coverage boldly, not random offsets or rotations. Terrain/collision losses are reported; inspect actual retained connectivity and seams. Natural landscapes remain available separately."
+      },
+      {
+        "algorithmProfileRef": "algorithm:courtyard",
+        "algorithm": "COURTYARD",
+        "designUse": "Arrange around shared inner space; reserve enough room for the court and surrounding buildings."
+      },
+      {
+        "algorithmProfileRef": "algorithm:grid",
+        "algorithm": "GRID",
+        "designUse": "Ordered rows of buildings with internal street clearance; suitable when regular blocks serve the design."
+      },
+      {
+        "algorithmProfileRef": "algorithm:linear",
+        "algorithm": "LINEAR",
+        "designUse": "Arrange buildings along a shared direction; consider a narrow terrain corridor or frontage."
+      },
+      {
+        "algorithmProfileRef": "algorithm:organic_compact",
+        "algorithm": "ORGANIC_COMPACT",
+        "designUse": "Grow a compact group from its chosen origin while respecting local terrain and clearance."
+      }
+    ],
+    "composition": "Read scaleDesignTask first. Use arrayCompositions to arrange whole child groups with any catalog array algorithm. A member group may itself be the centerGroupId of another composition; no duplicate parents or cycles. Leaf groups are counted once. Preserve authored functions and templates, do not replace the design with district presets. HIERARCHY expresses functional parent/child relationships only; it does not order geometric compilation or override composition centers. Functional hierarchy itself must be acyclic. BETWEEN_GROUPS references and array composition dependencies must separately be acyclic. Road ports are computed by the host.",
+    "boundaryPlacement": "Use explicit root anchorBlock coordinates. No Patch-boundary placement interface in new D4 designs. Terrain samples remain validation evidence.",
+    "landscapes": "Landscapes belong to function areas, independently of building survival. owner.groupId names the function group; omit legacy requiredStructureRef in new designs. Existing buildings are optional initial placement references, never lifetime owners. In the district intent explain whom each landscape serves, why it is located there and how people reach it; review these spatial relationships in the overview. Do not scatter isolated patches and declare success from names alone. Do not automatically build roads or claim access that was never designed. Use growth={seed:{x,z},targetCellCount,allowedLandformTypes} on required ATTACHED landscapes for independent size: choose a world-coordinate seed inside the design preview and copy landformType names from terrain data (empty list allows all otherwise admissible landforms). One cell is cellStepBlocks squared from the current terrain grid, not a chunk or a building; targetCellCount is the total per instance, distributed over parcelCount. This demand replaces building-area percentages. Cell shortage, clipped parcels and approximate content shares are preview feedback, not submission failures. Inspect actual area and shape as evidence; do not retry a nonempty initial district or edit landscape content during array expansion. The host preserves that initial shape and excludes later buildings and roads; a clipped field is reported, never allowed to overwrite a building or silently relocated.",
+    "roads": "Only explicit CONNECTION relations create main roads, and they must serve real destinations. Mere adjacency or a desire to fill a gap is not a road or bridge request.",
+    "recovery": "正常生成先形成各区有效初版，再看当前整城图复核；只对影响城市要求、整体性或规模的明确问题作必要修订，避免没有目标的反复重画。用户明确要求测试或修订时，可以复用同一 D3 多轮比较，以当前版本预览和宿主失败预算为准。使用 targetDistrictId 定向修改，保留其他区。最终依据实际预览保存。",
+    "behaviorHandbook": "# D4 城市设计流程\r\n\r\n## 设计目标\r\n\r\n把本城要求落实为适应现场地形、功能完整、具有整体性且体量相称的城市。每次进入世界都应能探索一座有文明生活的异世界城市；依据这次地形和作者素材作出具体设计。\r\n\r\n设计与终审始终检查四件事：\r\n\r\n1. **满足城市要求**：citySeed 的定位、coreFunctions、gameplayRequirements 与服务地位，落实到实际建筑、配套和公共空间。说明这些空间服务谁、发生什么活动。\r\n2. **地形与功能相互关联**：入口、中心、安静区域、生产和生活等安排利用真实地貌与群系；说明为何放在那里、如何与其他空间联系。\r\n3. **全城成为整体**：先有一个能一眼读懂的空间骨架，再有各区。整体性比数量优先：一座紧凑、主次分明的城胜过铺满场地的分散建筑。\r\n4. **体量与职责相称**：按城市职责和现场容量决定体量，不设建筑或阵列数量指标。扩展必须贴着已有骨架长出；在远处另开孤立组团不算扩展，而是削弱整体。\r\n\r\n## 空间构图手法\r\n\r\n以下是让城市\"成为整体、有层次\"的具体做法，按顺序使用。\r\n\r\n### 1. 先定骨架：一条主轴、一个中心\r\n\r\n- 在 D3 地图上找出入口（岸边、道路来向或低处）和制高点或最好的平地。连接两者的方向就是**主轴**，城市最重要的序列沿它展开：入口 → 前导空间 → 中心广场 → 核心建筑。\r\n- 全城只用**一个或极少数根组合**，用 anchorBlock 定位；其他组通过 arrayCompositions 嵌套在它下面。根锚点越多，城市越容易碎成互不相干的岛。确需第二个根时，它应紧贴主骨架（与已有组团净距通常不超过 30 格），而不是放在场地另一端。\r\n- 中心广场或主庭院放在主轴与次轴的交点。主要的二、三级建筑放在广场四边或轴线端点，形成\"在广场上能看到全城重要建筑\"的关系。\r\n\r\n### 2. 建筑分级：一个地标，少数次级地标，其余成组\r\n\r\n- **一级地标**：全城最大、最高、功能最重要的那座（例如礼堂、宫殿、主神殿）。放在主轴尽端或制高点，正面朝向主轴或广场。全城只有一个。\r\n- **二级地标**：2～4 座有独立功能的大建筑（书馆、观测台、议事厅、食堂）。放在广场边、轴线另一端或次轴端点，与一级地标保持可见关系。\r\n- **普通建筑**：同类小建筑（课堂、宿舍、商铺、作坊）放进**同一个**阵列，组成街坊或围院。不要把同类建筑拆成许多 1～2 栋的小组，那只会产生碎片。\r\n\r\n### 3. 公共空间是\"图形\"，不是剩余空地\r\n\r\n- 先定庭院和广场的尺寸，再让建筑围合它。用 COURTYARD 阵列并开启 `faceInward`，让围合建筑正面朝向公共空间。不开 `faceInward` 的庭院，四周的楼会背对庭院。\r\n- 尺度要和围合它的建筑相称：庭院边长约为围合建筑宽度的 1～1.5 倍，主广场约 50～80 格。超过周边建筑体量很多的空旷广场会显得空洞，过小又会被建筑压住。\r\n- 同一条主轴上，空间应有收放：前导空间较窄，中心广场开阔，核心庭院较安静。庭院、广场、花园各有服务对象和入口。\r\n- 绿化也要有结构。用 public_realm 的 `spaces` 为主要公共空间设计构图：主轴和主路两侧用 PATH_EDGE 种植区或 LINE 布置行道树；广场中心或轴线交点放一个 POINT 焦点（泉、标景、孤植大树）；庭院用 RING 或 GRID 对称布置。`greenery` 与 `fringe` 的随机撒点只作为底色，不能替代这些有意图的布置。`spaces` 为空时，全城绿化会是均匀散点，没有章法。\r\n\r\n### 4. 疏密梯度：中心疏朗，生活紧密，外围舒展\r\n\r\n- 不同组团用不同的 `gapBlocks` 与 `densityClass`。参考值：地标与主庭院 8～12，宿舍、商铺、作坊街坊 4～6（DENSE），农田与苗圃用 CONTIGUOUS 紧贴成片，放在外围。\r\n- 所有组都用同一个 gap、同一个密度，是\"看起来均匀撒开、没有层次\"的主要原因。\r\n\r\n### 5. 地形承担层级\r\n\r\n- 一级地标占高点或主轴尽端；台地按重要性分级，核心区台地最高，广场与生活区逐级降低。相邻台地的高差形成拾级而上的序列，而不是各区各自孤立的平台。\r\n- 岸边、低地给入口、码头和农林；陡坡、水湾和林带作为全城边界或区间的自然分隔，并说明它们在构图中的作用。\r\n\r\n### 6. 阵列拆分规则\r\n\r\n只有空间用途不同时才拆分阵列（例如\"围合主庭院的楼\"和\"宿舍街坊\"）。同一用途的重复建筑放进同一个阵列，用 count 与 fillPools 控制数量。子阵列应通过嵌套组合到父组团里，而不是各自用 anchorBlock 漂在地图上。\r\n\r\n## 按人定区：先定岗位，再定住处与公共空间\r\n\r\n城市热不热闹，取决于每个时段每类区域里有没有人，而不只取决于总人口。功能区按人在一天中去哪里分成三大类，在功能区 role 开头写明：\r\n\r\n| 大类 | 什么时候人多 | 规模怎么定 |\r\n| --- | --- | --- |\r\n| 【工作】 | 白天 | 由城市职责决定岗位，最先定 |\r\n| 【居住】 | 夜里、累了 | 由全城人口倒推床位 |\r\n| 【公共】 | 饭点、傍晚、节日 | 由全城人口推算座位与停留空间 |\r\n\r\n按以下顺序估算，并把结果写进各区的 population：\r\n\r\n1. **工作区定岗位和服务对象。** 每个工作区写清需要哪些职业、各多少人（jobs），以及服务多少不上班的人，例如教学区有 60 个学生座位（写在 purpose）。据此决定盖几栋，不要按“场地还空”加楼。templateFacilityCapacities 的 workplaces 是模板里的工位总数，不等于在岗人数：居民模组对每栋的在岗人数另有上限，按两者中较小的一个估算；上下文没有给出上限时，按每栋约 4 人估算并在说明里注明。\r\n2. **算全城人口。** 人口 = 各工作区岗位之和 + 不上班的人（学生、家属等）。商店、食堂既是店员的工作区，也是顾客的公共区；岗位计入工作，顾客计入公共容量，不重复计人。\r\n3. **居住区按人口定床位。** 床位约为人口除以入住率（约 0.85）。按 templateFacilityCapacities 的床位数决定宿舍栋数，写入居住区的 residents 与 housingGroupIds。住处尽量靠近工作地，例如教职宿舍贴近教学区。\r\n4. **公共区按人口定容量。** 食堂座位约为人口的三分之一（分批用餐），主广场能容纳全城人口的一部分同时停留。容量和服务对象写在公共区的 purpose。\r\n5. **公共区放在通勤路上。** 宿舍到工作区之间经过广场、食堂和集市，居民每天往返时自然从这里穿过。\r\n\r\n只统计一次：工作区只填 jobs、residents 为 0；居住区填 residents 与 housingGroupIds，jobs 只填在宿舍里值班的岗位。学生和普通居民可以没有固定工作点。\r\n\r\n## 对照示范：魔法学院的骨架\r\n\r\n下面是工作台中一座\"看起来是整体\"的魔法学院的组织方式，仅示范手法；具体坐标、素材和规模以本次地形和目录为准。\r\n\r\n```text\r\n海湾码头（东南岸）─┐\r\n                   ▼\r\n院务塔（南端，前导）  两侧：药草温室庭 / 器材店\r\n        │ 主轴（南→北，沿坡上行）\r\n星泉广场（主轴与东西横轴交点，泉水居中）\r\n   西：藏书馆（二级地标）    东：长桌食堂（二级地标）\r\n        │\r\n星穹主院（COURTYARD + faceInward：礼堂居北，双教学翼楼东西围合）\r\n        │\r\n礼堂（一级地标，主峰，台地最高）     东肩：观星台（二级地标）\r\n外围：西北书院课堂（DENSE 网格）、东侧宿舍街坊（DENSE 网格）、西南试种田与苗圃（CONTIGUOUS）\r\n```\r\n\r\n要点：只有一条主轴；广场四边全是重要建筑；生活与教学紧贴广场两侧；台地自北向南 72 → 68 → 64 逐级下降；农林和码头在外围低处。\r\n\r\n### 对照示范：同一座学院按人定区\r\n\r\n下面只示范估算顺序，数字为说明用；实际以本城职责和 templateFacilityCapacities 为准。\r\n\r\n```text\r\n【工作】教学区   教师 8、院务 2；服务学生 60 座 → 礼堂 1 + 课堂 3（每栋在岗按约 4 人估）\r\n【工作】研究区   研究员 8 → 实验楼 2（虽然每栋有 35 个工位，在岗仍按约 4 人估）\r\n【工作】文献区   文献员 3 → 藏书馆 1\r\n【工作】生活服务 餐食 6、洗衣 2、医护 2、用品 2 → 食堂 2、洗衣房 1、医务 1、商店 1\r\n          岗位合计 33；不上班的学生 60 → 全城人口 93\r\n【居住】东侧宿舍 床位 ≈ 93 ÷ 0.85 ≈ 110 → 主宿舍 16 床 ×1 + 小宿舍 16 床 ×6 = 112\r\n          教职 10 人住在贴近教学区的那两栋小宿舍\r\n【公共】星泉广场 位于宿舍与教学区之间的主轴上，早晚通勤必经\r\n          食堂 2 栋共约 30 座（人口的三分之一），夹在宿舍与广场之间\r\n```\r\n\r\n对应写法示例（教学区与东侧宿舍各一段）：\r\n\r\n```json\r\n{\"population\": {\"purpose\": \"【工作】教学与院务；服务 60 名学生上课\",\r\n  \"residents\": 0,\r\n  \"jobs\": [{\"profession\": \"teacher\", \"name\": \"教师\", \"count\": 8, \"functions\": [\"教学\"]},\r\n           {\"profession\": \"registrar\", \"name\": \"院务\", \"count\": 2, \"functions\": [\"公共办事\", \"议事\"]}],\r\n  \"housingGroupIds\": []}}\r\n```\r\n\r\n```json\r\n{\"population\": {\"purpose\": \"【居住】学生与教职住宿，全城人口 93，入住率约 0.85\",\r\n  \"residents\": 93,\r\n  \"jobs\": [],\r\n  \"housingGroupIds\": [\"residence\", \"resident_rooms\"]}}\r\n```\r\n\r\n## 流程与阶段成果\r\n\r\n| 阶段 | 目标 | 本阶段需要形成的成果 |\r\n| --- | --- | --- |\r\n| 理解要求与场地 | 把城市职责转成空间需求 | 需要哪些活动；入口、制高点、主轴方向；哪些条件尚不确定 |\r\n| 全城构思（OVERVIEW） | 定骨架、主次与人口 | 城市意图（写明主轴、中心、一级地标及其位置，以及按人定区估出的岗位、人口、床位和公共容量）、按主次排列且标明大类的 districts、全城设置 |\r\n| 逐区设计（DISTRICTS） | 把各区挂到骨架上 | 建筑与阵列、嵌套、公共空间和景观、本区 population，以及初次编译结果 |\r\n| 全城复核与修订（INTEGRATION） | 从实际图像修补整体性与人气 | 找出孤立组团、断开的轴线、尺度失衡的空地；核对各区人口之和与床位、岗位、公共容量，以及公共区是否在通勤路上；定向修订并再编译 |\r\n| 最终保存 | 证明四项目标均已落实 | 当前预览的具体 assessment、功能保留确认与定稿 |\r\n\r\n当前 d4Workflow.instruction 说明本阶段操作。程序自动推进只代表已保存一份有效初版；城市设计是否充分，仍需在全城复核时判断。\r\n\r\n## 信息与工具如何使用\r\n\r\n先读 citySeed、scaleDesignTask、D3 总览和 siteReviewDecision，再按本区用途查素材。materialCatalog 提供摘要；city_d4_materials 查询分类、原始用途、风格与尺寸，city_d4_example 查询布局案例及 public_realm 公共空间目录，city_d4_blocks 查询实际方块。具体工具参数以本次 schema 和 submissionRules 为准。无需为了设计读取整份存档或编译几何。\r\n\r\n素材的特色/通用类别、基建/景观标签、用途和风格相互独立。本次核心、必需配套、可选填充由设计决定。作者的原始用途与风格是依据，未实现的传送、供能等玩法不得从名称推断。\r\n\r\n## 字段与程序边界\r\n\r\n- 阵列算法：GRID、LINEAR、COURTYARD、CENTER_SYMMETRIC、COMPACT、ORGANIC_COMPACT、CONTIGUOUS。先明确空间目的再选算法。\r\n- 根建筑组或根组合用 anchorBlock 明确世界方块坐标；嵌套成员由父布局组织，省略独立坐标。按 D3 地图判断位置，程序负责具体成员落位和编译反馈。\r\n- 一个功能区声明一个核心，相关组共享该区台地归属。核心代表功能和高程归属，几何中心由设计决定。\r\n- 道路通过明确 CONNECTION 服务真实目的地。public_realm 提供可组合的庭院、广场模板和池。\r\n- D4 预览用于检查平面组织、边界、碰撞与实际保留内容；支撑、台地和跨水等适配仍需后续施工。将计划内容、预览保留内容和施工结果分清。\r\n\r\n## 看图修订与停止依据\r\n\r\n正常生成先完成各区有效初版，再实际读取当前 baseDraftHash 对应的局部与全城预览。修订优先级：整体性问题（孤立组团、根锚点过散、轴线断开、广场空洞）高于数量问题。避免为了细枝末节反复重画。用户明确要求测试或修订时，可复用同一 D3 多轮比较。输入错误按反馈修正，程序故障与失败预算遵循宿主状态。\r\n\r\n完成判断须回答四项目标，指出具体区域和可见关系。比较计划与实际保留内容：哪些必需内容仍成立，哪些缺口影响功能。当整体已经成立、各项职责都有承载空间时，就可以停止扩展；\"还有空地\"本身不是扩展理由，保留的自然空间也是构图的一部分。"
+  },
+  "decisionBoundary": {
+    "contextPreparationCountsAsAiCityDesignCall": false,
+    "maximumBlueprintCompileFailures": 5,
+    "submissionValidationFailuresCountTowardBudget": false,
+    "blueprintRevisionAllowedAfterCompileFailure": true,
+    "agentRecoveryBoundary": {
+      "evidenceSource": "tool_responses_and_returned_artifacts_only",
+      "sourceCodeInspectionAllowed": false,
+      "projectDocumentationInspectionAllowed": false,
+      "rawRunArtifactInspectionAllowed": false
+    }
+  }
+}

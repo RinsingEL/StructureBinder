@@ -1,0 +1,230 @@
+[
+  {
+    "file": "evidence/astra/city_d4_workflow.json",
+    "source": "D:\\PCL2-2.8.12\\.minecraft\\versions\\1.20.1-Forge_47.4.23\\saves\\Academy_D3_03_20261019\\realm_debug\\provider_3d25631f_r19200\\city_test_runs\\city_jingchao_capital\\steps\\blueprint\\city_d4_workflow.json",
+    "sourceSha256": "9a4b4d8661927e9f62dba92b1617315f19920fe3cb6a8f0e849cc812b354b6df",
+    "transformation": "原始文件，未改内容；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/astra/city_design_review.json",
+    "source": "D:\\PCL2-2.8.12\\.minecraft\\versions\\1.20.1-Forge_47.4.23\\saves\\Academy_D3_03_20261019\\realm_debug\\provider_3d25631f_r19200\\city_test_runs\\city_jingchao_capital\\steps\\blueprint\\city_design_review.json",
+    "sourceSha256": "f3466a2d8a8e9a2403a15a680bb0688a895223d865198b39b9ee78826b2ac085",
+    "transformation": "原始文件，未改内容；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/astra/city_blueprint_validation_report.json",
+    "source": "D:\\PCL2-2.8.12\\.minecraft\\versions\\1.20.1-Forge_47.4.23\\saves\\Academy_D3_03_20261019\\realm_debug\\provider_3d25631f_r19200\\city_test_runs\\city_jingchao_capital\\steps\\blueprint\\city_blueprint_validation_report.json",
+    "sourceSha256": "96e956b3f1f916d569f88b7fc11c9602078acad4ddfe4cc7fd81410c352fab37",
+    "transformation": "原始文件，未改内容；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/astra/city_blueprint_submission_trace.json",
+    "source": "D:\\PCL2-2.8.12\\.minecraft\\versions\\1.20.1-Forge_47.4.23\\saves\\Academy_D3_03_20261019\\realm_debug\\provider_3d25631f_r19200\\city_test_runs\\city_jingchao_capital\\steps\\blueprint\\city_blueprint_submission_trace.json",
+    "sourceSha256": "63d093869621c4b5dd62cddbf6e8177b1efc06322af4bc4acab936f26be4a1bb",
+    "transformation": "原始文件，未改内容；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "figures/astra_overview.png",
+    "source": "D:\\PCL2-2.8.12\\.minecraft\\versions\\1.20.1-Forge_47.4.23\\saves\\Academy_D3_03_20261019\\realm_debug\\provider_3d25631f_r19200\\city_test_runs\\city_jingchao_capital\\steps\\blueprint\\working_preview\\structure_anchor_preview.png",
+    "sourceSha256": "c37fca3150ed730fae11f176fff0beb1f1f40af2aca046bdf1f1fc57c1680936",
+    "transformation": "原始文件，未改内容"
+  },
+  {
+    "file": "evidence/astra/city_blueprint.json",
+    "source": "D:\\PCL2-2.8.12\\.minecraft\\versions\\1.20.1-Forge_47.4.23\\saves\\Academy_D3_03_20261019\\realm_debug\\provider_3d25631f_r19200\\city_test_runs\\city_jingchao_capital\\steps\\blueprint\\city_blueprint.json",
+    "sourceSha256": "5704a0532be38339577c00bd5936076815615e7d5262ce1b227d72293bd51164",
+    "transformation": "原始文件，未改内容；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/astra/draft_excerpt.json",
+    "source": "D:\\PCL2-2.8.12\\.minecraft\\versions\\1.20.1-Forge_47.4.23\\saves\\Academy_D3_03_20261019\\realm_debug\\provider_3d25631f_r19200\\city_test_runs\\city_jingchao_capital\\steps\\blueprint\\city_blueprint_draft.json",
+    "sourceSha256": "3fe554cb56ad5a63da27a6216efdd22cb942ef17de08110b9584a521b383e8fc",
+    "transformation": "提取设计及身份字段；省略大体积编译几何，原始文件哈希见清单；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/astra/compiled_layout_excerpt.json",
+    "source": "D:\\PCL2-2.8.12\\.minecraft\\versions\\1.20.1-Forge_47.4.23\\saves\\Academy_D3_03_20261019\\realm_debug\\provider_3d25631f_r19200\\city_test_runs\\city_jingchao_capital\\steps\\blueprint\\city_blueprint_geometry_commit.json",
+    "sourceSha256": "b89120bac6ec48291c30834a768f85efee95ad53038bc4329a8435a0072206c5",
+    "transformation": "保留编译后的实际建筑、位置、公共空间、质量诊断与人口；省略逐格道路及大型执行几何；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/deepseek_latest/city_d4_workflow.json",
+    "source": "D:\\PCL2-2.8.12\\.minecraft\\versions\\1.20.1-Forge_47.4.23\\saves\\Academy_D3_03_20261019\\realm_debug\\provider_3d25631f_r19200\\city_test_runs\\city_jingchao_capital\\steps\\blueprint\\debug_resets\\5795b01b-414d-432b-910c-508bada8f2e3\\city_test_runs\\city_jingchao_capital\\steps\\blueprint\\city_d4_workflow.json",
+    "sourceSha256": "821622ee6c7a6a7199ade8a36b07a6ef5d8483e2eaa5d435d14336a6c92f61e1",
+    "transformation": "原始文件，未改内容；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/deepseek_latest/city_design_review.json",
+    "source": "D:\\PCL2-2.8.12\\.minecraft\\versions\\1.20.1-Forge_47.4.23\\saves\\Academy_D3_03_20261019\\realm_debug\\provider_3d25631f_r19200\\city_test_runs\\city_jingchao_capital\\steps\\blueprint\\debug_resets\\5795b01b-414d-432b-910c-508bada8f2e3\\city_test_runs\\city_jingchao_capital\\steps\\blueprint\\city_design_review.json",
+    "sourceSha256": "87f5c5d5fe2a42fcad0f83d517706cbe42cd57dc4999ba57f541ccd25f8169f5",
+    "transformation": "原始文件，未改内容；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "figures/deepseek_latest_overview.png",
+    "source": "D:\\PCL2-2.8.12\\.minecraft\\versions\\1.20.1-Forge_47.4.23\\saves\\Academy_D3_03_20261019\\realm_debug\\provider_3d25631f_r19200\\city_test_runs\\city_jingchao_capital\\steps\\blueprint\\debug_resets\\5795b01b-414d-432b-910c-508bada8f2e3\\city_test_runs\\city_jingchao_capital\\steps\\blueprint\\working_preview\\structure_anchor_preview.png",
+    "sourceSha256": "0ae8f13f8a27f94c6aaff9fd26cc667609c7df88971d032aad898b81779228c1",
+    "transformation": "原始文件，未改内容"
+  },
+  {
+    "file": "evidence/deepseek_latest/draft_excerpt.json",
+    "source": "D:\\PCL2-2.8.12\\.minecraft\\versions\\1.20.1-Forge_47.4.23\\saves\\Academy_D3_03_20261019\\realm_debug\\provider_3d25631f_r19200\\city_test_runs\\city_jingchao_capital\\steps\\blueprint\\debug_resets\\5795b01b-414d-432b-910c-508bada8f2e3\\city_test_runs\\city_jingchao_capital\\steps\\blueprint\\city_blueprint_draft.json",
+    "sourceSha256": "6eee7cc39a1609b66ae4b0a7968d23239555190ebaf9fe682d258cab85ed4207",
+    "transformation": "提取设计及身份字段；省略大体积编译几何，原始文件哈希见清单；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/deepseek_latest/compiled_layout_excerpt.json",
+    "source": "D:\\PCL2-2.8.12\\.minecraft\\versions\\1.20.1-Forge_47.4.23\\saves\\Academy_D3_03_20261019\\realm_debug\\provider_3d25631f_r19200\\city_test_runs\\city_jingchao_capital\\steps\\blueprint\\debug_resets\\5795b01b-414d-432b-910c-508bada8f2e3\\city_test_runs\\city_jingchao_capital\\steps\\blueprint\\city_blueprint_draft.json",
+    "sourceSha256": "6eee7cc39a1609b66ae4b0a7968d23239555190ebaf9fe682d258cab85ed4207",
+    "transformation": "保留编译后的实际建筑、位置、公共空间、质量诊断与人口；省略逐格道路及大型执行几何；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "figures/astra_user_marked.png",
+    "source": "C:\\Users\\Rinsing\\AppData\\Local\\Temp\\codex-clipboard-047b19f6-c603-4e65-ba3f-49c3252bc3ee.png",
+    "sourceSha256": "bb20fad292c397e88c045f80bf7cccc46bed43098f6a888761bf76c27492952a",
+    "transformation": "原始文件，未改内容"
+  },
+  {
+    "file": "figures/deepseek_earlier_overview.png",
+    "source": "C:\\Users\\Rinsing\\Documents\\deepseek-harness\\default-workspace\\output\\镜潮学院城_总览.png",
+    "sourceSha256": "22f4ca5bb9bb13619041a1e5192c53acfd7725adf28c88a32b46e0b25914a908",
+    "transformation": "原始文件，未改内容"
+  },
+  {
+    "file": "evidence/deepseek_earlier/设计说明_旧28栋.md",
+    "source": "C:\\Users\\Rinsing\\Documents\\deepseek-harness\\default-workspace\\output\\镜潮学院城_设计说明.md",
+    "sourceSha256": "1ded61b9c2fdb6728fcdd8ec69f96d1b14987ff4921609d463bfbef6c83bb335",
+    "transformation": "原始文件，未改内容；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/deepseek_earlier/finalize2.json",
+    "source": "C:\\Users\\Rinsing\\Documents\\deepseek-harness\\default-workspace\\design\\finalize2.json",
+    "sourceSha256": "c264365f4dd4a8978fd392ca2545b1e5b0ca5178297201e4d392fcb13a47c2fc",
+    "transformation": "原始文件，未改内容"
+  },
+  {
+    "file": "evidence/deepseek_latest/overview_args.json",
+    "source": "C:\\Users\\Rinsing\\Documents\\deepseek-harness\\default-workspace\\overview_args.json",
+    "sourceSha256": "249b426591f1688937e3bc9763bef8ca74066d2b24b08f4f795ea597f7ee083a",
+    "transformation": "解码为 UTF-8 JSON；review_result 解包 text，其他保留字段；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/deepseek_latest/finalize_args.json",
+    "source": "C:\\Users\\Rinsing\\Documents\\deepseek-harness\\default-workspace\\finalize_args.json",
+    "sourceSha256": "26a41e48bfe5d4c50c6fd24ac7b2b72d35f2f2d75bcfdde543bb5a527c94e75a",
+    "transformation": "解码为 UTF-8 JSON；review_result 解包 text，其他保留字段；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/deepseek_latest/review_args.json",
+    "source": "C:\\Users\\Rinsing\\Documents\\deepseek-harness\\default-workspace\\review_args.json",
+    "sourceSha256": "700c11c374c9a70f27417d99759b1c8999fdb755504b39915860b58d404aa521",
+    "transformation": "解码为 UTF-8 JSON；review_result 解包 text，其他保留字段；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/deepseek_latest/review_result.json",
+    "source": "C:\\Users\\Rinsing\\Documents\\deepseek-harness\\default-workspace\\review_result.json",
+    "sourceSha256": "2778d0c1eef876c267907006758eac60628ad7e612e93d5f96826a5be2f4220d",
+    "transformation": "解码为 UTF-8 JSON；review_result 解包 text，其他保留字段；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/deepseek_latest/final5.json",
+    "source": "C:\\Users\\Rinsing\\Documents\\deepseek-harness\\default-workspace\\d4_out\\final5.json",
+    "sourceSha256": "07c4328415e2d07a42666d806e1d2fd5e657d73f612ed05e992425c56f8a1f83",
+    "transformation": "解码为 UTF-8 JSON；review_result 解包 text，其他保留字段；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/astra/context_excerpt.json",
+    "source": "D:\\PCL2-2.8.12\\.minecraft\\versions\\1.20.1-Forge_47.4.23\\saves\\Academy_D3_03_20261019\\realm_debug\\provider_3d25631f_r19200\\city_test_runs\\city_jingchao_capital\\steps\\blueprint\\city_blueprint_context.json",
+    "sourceSha256": "350f22116529875629407a6daa04b651835bdae7c9e2670a7ffdb79b9cd3c3d5",
+    "transformation": "保留任务来源、职责规模、设计指引和哈希；省略素材全目录；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/deepseek_latest/context_excerpt.json",
+    "source": "C:\\Users\\Rinsing\\Documents\\deepseek-harness\\default-workspace\\bp_context.json",
+    "sourceSha256": "27e531354c7bb72778694864914de07c123ea33d79d1aa50fef1320e0c0d34c1",
+    "transformation": "保留任务来源、职责规模、设计指引和哈希；省略素材全目录；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/shared/city_landform_review_package.json",
+    "source": "D:\\PCL2-2.8.12\\.minecraft\\versions\\1.20.1-Forge_47.4.23\\saves\\Academy_D3_03_20261019\\realm_debug\\provider_3d25631f_r19200\\city_test_runs\\city_jingchao_capital\\steps\\d3\\city_landform_review_package.json",
+    "sourceSha256": "96ef0c3cb1394d8f595ed6d1742c093640ba99ee7d69f32ef8dd57797f81c6ba",
+    "transformation": "原始文件，未改内容；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/shared/city_site_review_decision.json",
+    "source": "D:\\PCL2-2.8.12\\.minecraft\\versions\\1.20.1-Forge_47.4.23\\saves\\Academy_D3_03_20261019\\realm_debug\\provider_3d25631f_r19200\\city_test_runs\\city_jingchao_capital\\steps\\d3\\city_site_review_decision.json",
+    "sourceSha256": "50e47c94ec41707a3ef819217f5b47ee9902ed20692d546dea05638259750608",
+    "transformation": "原始文件，未改内容；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/prompts/deepseek_latest_handbook_raw.md",
+    "source": "C:\\Users\\Rinsing\\Documents\\deepseek-harness\\default-workspace\\handbook.md",
+    "sourceSha256": "db2f66a1e8dda0f6d17192d6459d4e1447c30a73a96832164ff9eefab3a76a3c",
+    "transformation": "原始文件，未改内容；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/prompts/deepseek_earlier_handbook.md",
+    "source": "C:\\Users\\Rinsing\\Documents\\deepseek-harness\\default-workspace\\notes\\handbook.md",
+    "sourceSha256": "b6d8443e6cf0121f4d74a2f6dd0141d018b2ff8cdcb6238bad46a41df14f7cb9",
+    "transformation": "原始文件，未改内容；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/prompts/repository_handbook.md",
+    "source": "E:\\Mod_Dev\\StructureBinder\\src\\main\\resources\\geomantia\\prompts\\city\\d4_v2\\handbook.md",
+    "sourceSha256": "19cfafc2a072c4a6b35be725015a8958fc16c8e7f2ac5e5edcc571964851c9b4",
+    "transformation": "原始文件，未改内容；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/prompts/repository_overview.md",
+    "source": "E:\\Mod_Dev\\StructureBinder\\src\\main\\resources\\geomantia\\prompts\\city\\d4_v2\\overview.md",
+    "sourceSha256": "61b0f4efb4119232c1e15df0080c4d07a36ea6b4c9a7351c7c8b560dc6c9157a",
+    "transformation": "原始文件，未改内容；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/prompts/repository_district.md",
+    "source": "E:\\Mod_Dev\\StructureBinder\\src\\main\\resources\\geomantia\\prompts\\city\\d4_v2\\district.md",
+    "sourceSha256": "df15bd8dbe6bc5075ea4f64f29f6e75d531a519e447f2670d9b000acd0b7b51a",
+    "transformation": "原始文件，未改内容；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/prompts/repository_integration.md",
+    "source": "E:\\Mod_Dev\\StructureBinder\\src\\main\\resources\\geomantia\\prompts\\city\\d4_v2\\integration.md",
+    "sourceSha256": "647e0ba5a647a6da91436482b45eeeabbf4a38c9642b6dab3569730ac3cfca46",
+    "transformation": "原始文件，未改内容；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/prompts/repository_finalize.md",
+    "source": "E:\\Mod_Dev\\StructureBinder\\src\\main\\resources\\geomantia\\prompts\\city\\d4_v2\\finalize.md",
+    "sourceSha256": "939e7d5745c124ce311fc12b0d8a75b4835604f583d57a7c3ac2a22b82e1ff43",
+    "transformation": "原始文件，未改内容；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/prompts/产品案_按功能区设计城市_快照.md",
+    "source": "E:\\Mod_Dev\\designer_territoryMod\\docs\\systems\\city\\10_product\\案子\\具体流程的案子\\30_D4蓝图编译\\按功能区设计城市\\README.md",
+    "sourceSha256": "9c712bbf0f3c53b9c8c680e52bc936590699d3037534b4a751c8bc87eebfc04c",
+    "transformation": "原始文件，未改内容；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/astra/public_messages.json",
+    "source": "C:\\Users\\Rinsing\\.codex\\sessions\\2026\\10\\19\\rollout-2026-10-19T22-56-13-01a154a9-c1c6-7b80-a1e7-e4bc882c1da6.jsonl",
+    "sourceSha256": "f941a7f0205211ad0322cf42ef3381a70e5019b0f4817681079ee74d69bc232b",
+    "transformation": "仅公开用户消息与助手答复；排除内部推理、凭据和运行环境指令；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/astra/tool_timeline.json",
+    "source": "C:\\Users\\Rinsing\\.codex\\sessions\\2026\\10\\19\\rollout-2026-10-19T22-56-13-01a154a9-c1c6-7b80-a1e7-e4bc882c1da6.jsonl",
+    "sourceSha256": "f941a7f0205211ad0322cf42ef3381a70e5019b0f4817681079ee74d69bc232b",
+    "transformation": "仅 D4 工具调用的时间、参数摘要与结果；不包含内部推理；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/astra/design_submissions.json",
+    "source": "C:\\Users\\Rinsing\\.codex\\sessions\\2026\\10\\19\\rollout-2026-10-19T22-56-13-01a154a9-c1c6-7b80-a1e7-e4bc882c1da6.jsonl",
+    "sourceSha256": "f941a7f0205211ad0322cf42ef3381a70e5019b0f4817681079ee74d69bc232b",
+    "transformation": "仅 D4 设计提交参数和回应摘要；不包含内部推理；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  },
+  {
+    "file": "evidence/prompts/astra_received_handbook.md",
+    "source": "C:\\Users\\Rinsing\\.codex\\sessions\\2026\\10\\19\\rollout-2026-10-19T22-56-13-01a154a9-c1c6-7b80-a1e7-e4bc882c1da6.jsonl",
+    "sourceSha256": "f941a7f0205211ad0322cf42ef3381a70e5019b0f4817681079ee74d69bc232b",
+    "transformation": "提取本次 city_d4_handbook 的实际返回正文；提交归档时统一 UTF-8/LF、去行尾空白，保留原始来源哈希与内容语义"
+  }
+]

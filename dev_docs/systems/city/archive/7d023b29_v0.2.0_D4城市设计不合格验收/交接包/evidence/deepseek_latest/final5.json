@@ -1,0 +1,612 @@
+{
+  "ok": true,
+  "designInProgress": true,
+  "nextAction": "city_d4_finalize",
+  "instruction": "# 阶段三：复核全城，修订并扩展\r\n\r\n## 目标\r\n\r\n通过当前实际全城图和必要局部图，检查城市要求、地形关联、整体性和规模；把薄弱部分改到足以承担这座城市的职责。\r\n\r\n## 复核顺序\r\n\r\n1. **要求是否落实**：按 citySeed 的主要功能与玩家活动检查实际保留内容。核心周围是否有足够配套、公共空间与通行组织？哪些活动还缺少承载空间？\r\n2. **地形是否参与设计**：位置与朝向、岸边和高差、安静与热闹区域、保留的自然空间是否有清楚的用途依据？计划中依赖的地形适配是否仍待施工？\r\n3. **是否是一座整体城市**：在全城图上依次检查：能否一眼读出主轴和中心？一级地标是否唯一且位于轴线尽端或高点？是否有远离骨架、只靠长路连接的孤立组团？根锚点是否过多、过散？广场是否比围合它的建筑大得多而显得空洞？庭院四周的楼是否朝向庭院？是否所有组团都用同样的间距和密度？隔河和合理留白可以成立，说明图上的依据。\r\n4. **人气是否成立**：各区 population 相加，核对全城人口与床位、岗位、公共容量是否对得上。按时段想一遍：白天工作区、饭点和傍晚公共区、夜里居住区，是否都有足够的人？公共区是否落在宿舍与工作区之间的通勤路上？住处离工作地是否过远？\r\n5. **体量是否相称**：比较本城服务地位、功能需求、现场容量和图中实际体量。还缺哪些承担职责的配套或次级公共空间？新增内容应贴着骨架补进已有组团或广场边，不在远处另开组团。停止扩展的理由可以是职责已有承载、容量限制或需要保留的环境；\"还有空地\"不是扩展理由。\r\n\r\n## 修订操作与规则\r\n\r\n编译结果里的 CITY_REVIEW_* 告警指出整体性和人口问题（根组团过多、间距或密度全同、同一素材重复过多、内院超尺度、缺人口预算等）。逐条判断：能改的就修订，确实合理的在 assessment 里写明理由，不要直接忽略。\r\n\r\n把发现的问题落实到具体功能区，用 city_d4_district 指定 targetDistrictId，提交新的完整 districtDesign、designAnswers、当前 baseDraftHash 与 assessment。其他区设计和布局保留。city_d4_mark 和 city_d4_integrate 是可选空间组织能力，其用途和允许修改范围以 schema、submissionRules 为准。\r\n\r\n正常生成只对复核中明确影响城市要求、整体性或体量的问题作必要修订，整体性问题优先；修改后重新编译并看新图，避免无目标的循环。功能确有需要时大胆配置阵列和配套，图中已成整体且职责有承载则完成。用户明确要求测试或修订时，可复用同一 D3 多轮比较。工具给出 finalize 作为 nextAction，表示允许提交，完成判断仍由上述四项复核决定。\r\n\r\n## 最终保存依据\r\n\r\nassessment 基于当前图，分别说明四项目标与人气核对结果，指出主轴、中心、一级地标的具体位置与可见关系、有效配套及停止扩展的理由。先解决影响职责成立的必需内容缺口；可选填充和适配告警结合用途判断。若当前证据不足，调用 city_d4_preview 补充图像。\r\n\r\n满足这些依据后，用 city_d4_finalize 提交当前 baseDraftHash、assessment、functionsPreserved=true。想保留后续修改机会时明确 autoAdvanceAfterD4=false；默认会推进后续施工准备。无法改善或遇到宿主阻塞时，如实报告当前结果与剩余问题。",
+  "assessmentRecorded": false,
+  "designReviewWorkflow": {
+    "baseDraftHash": "sha256:aed0d412d60ad7e3034ec6545c3807e19dde3294d4851aa7f6ad09c6fb35a906",
+    "isolatedCoreGroupIds": [
+      "harbor",
+      "hall"
+    ],
+    "coreReworkCount": 0,
+    "coreReworkExhausted": false,
+    "stage": "core_rework",
+    "pendingGroupIds": [],
+    "optionalUnreviewedGroupIds": [
+      "harbor",
+      "gate",
+      "inn",
+      "market",
+      "hall",
+      "teaching_wing",
+      "star_spring",
+      "library",
+      "scriptorium",
+      "reading_pavilion",
+      "observatory",
+      "laboratory",
+      "experiment_shed",
+      "dorm",
+      "small_dorm",
+      "dining",
+      "bath",
+      "shop",
+      "garden_team",
+      "storehouse"
+    ],
+    "groupAssessments": {},
+    "overviewReviewed": true,
+    "overviewAssessment": "全城 27 栋全部保留；港埠与星厅为单栋地标阵列，岛上平地不足以再容纳同组配套，配套由其门楼、市集、讲堂与星泉承担。",
+    "readyForFinal": false,
+    "instruction": "检查实际核心与配套的大小关系和组合效果。isolatedCoreGroupIds 非空时必须调整选材或阵列；完整素材自带装饰计入效果。coreReworkCount 按不同返工草稿计数，沿用原有失败边界，不无限重试。局部图按需查看。"
+  },
+  "d4Workflow": {
+    "contextId": "sha256:caf6d66b6de78b5672f59d568050b83d2b4910228fd51df73cded49c7bd4ed81",
+    "stage": "INTEGRATION",
+    "revision": 33,
+    "districtIndex": 6,
+    "protocolVersion": 3,
+    "districts": [
+      {
+        "groupId": "gateway",
+        "role": "【公共】海路迎客港埠：码头、门楼、访客前庭与市集，服务抵岸访客与全院居民，位于南岸低处、主轴起点。",
+        "intent": "南岸码头与门楼构成全城第一道前导空间；由岸线拾级而上进入星泉广场，访客在此得到引导、补给与住处。"
+      },
+      {
+        "groupId": "star_court",
+        "role": "【公共】星泉广场与星穹主院：全城中心与一级地标星厅，教学、礼仪、集会发生于此。",
+        "intent": "主轴与东西横轴交点为星泉广场；北侧星穹主院以礼堂居北、双教学翼楼东西围合，形成安静的教学核心。"
+      },
+      {
+        "groupId": "library",
+        "role": "【工作】藏阅区：藏书馆、抄书院与阅读庭院，服务全院师生与来访学者，位于广场西北的安静一侧。",
+        "intent": "由广场西北角经短巷进入，建筑围合内院，越往里越安静；与主院共享同一台地，低于观象台地。"
+      },
+      {
+        "groupId": "observatory",
+        "role": "【工作】观象台地：观测塔、实验楼与器材工坊，位于主轴尽端的北端最高台地，服务研究者与高年级学生。",
+        "intent": "主轴自礼堂后继续上行，经踏道登上全城最高台地；观测塔孤立于台地北缘，实验楼在其东侧，形成天际线。"
+      },
+      {
+        "groupId": "life",
+        "role": "【居住】学生生活区：宿舍街坊、食堂、浴室、医务与日用品，服务全城约101人，贴广场东侧通勤路。",
+        "intent": "宿舍在东北侧成街坊，食堂夹在宿舍与广场之间；学生每日往返教学区必经广场与食堂。"
+      },
+      {
+        "groupId": "garden",
+        "role": "【工作】园圃后勤区：药草温室、苗圃、仓储与工坊，服务全院供给，位于西南林缘与低地。",
+        "intent": "利用西南侧林地边缘与缓坡布置苗圃和温室，仓储靠近港埠与生活区之间的次路，保留原有林带作为分隔。"
+      }
+    ],
+    "overviewAnswers": {
+      "styles": [
+        "魔法学院新制"
+      ],
+      "roadProfileRef": "road:town",
+      "ground": "minecraft:stone_bricks",
+      "roadSurface": "minecraft:stone_brick_slab",
+      "groundTreatment": "GENERATE"
+    },
+    "districtDisposition": [
+      {
+        "districtId": "gateway",
+        "independent": false,
+        "reason": "城市入口，与主轴直接相连。"
+      },
+      {
+        "districtId": "star_court",
+        "independent": false,
+        "reason": "全城中心。"
+      },
+      {
+        "districtId": "library",
+        "independent": false,
+        "reason": "与主院同台地。"
+      },
+      {
+        "districtId": "observatory",
+        "independent": false,
+        "reason": "主轴尽端台地。"
+      },
+      {
+        "districtId": "life",
+        "independent": false,
+        "reason": "贴广场东侧的通勤路。"
+      },
+      {
+        "districtId": "garden",
+        "independent": false,
+        "reason": "北部林缘的生产后勤区。"
+      }
+    ],
+    "citySettings": {
+      "designIntent": {
+        "cityIdentity": "镜潮学院城（镜潮）",
+        "theme": "岛国唯一学院城的空间骨架：以南海码头为起点，一条南北主轴沿缓坡向北上溯——码头与门楼（前导，z≈5500–5440）→星泉广场（主轴与东西横轴交点，z≈5390，约70×55，泉居中心）→星穹主院（COURTYARD 围合，礼堂居北，双教学翼楼东西合抱，z≈5350–5270）→藏阅区（z≈5300 西侧）与观象台地（z≈5220 北端，全城最高台地）。一级地标为星厅（71×83，主轴尽端、主院北侧，正面朝南对广场）；二级地标为藏书馆（61×65，广场西北）、观测塔（51×55，北端台地）、长桌食堂（57×69，广场东侧）。生活区贴广场东侧（宿舍街坊、食堂、浴室、医务、日用品），园圃与仓储在西南林缘，港埠迎客与门楼在南岸低处。南低北高的台地序列（约62→67→72米）承担层级：岸线与主轴不设城墙，仅在教学与居住区外缘用低矮木石围墙（LOW_BOUNDARY），天然林带与水湾作为边界与区间分隔。按人定区：教学 10 岗（教师8、院务2）+研究 8 岗+文献 3 岗+观象 2 岗+生活服务 9 岗+港埠 4 岗+园圃后勤 5 岗，合计约41岗，服务60名学生，全城约101人；床位约119，由主宿舍60床、三栋小宿舍48床与教工住宅6床、园区宿舍16床承担；食堂座位约34（分批用餐）。公共区（广场、食堂、市集）位于宿舍与教学区的通勤路上。",
+        "functionalRoles": [
+          "教学研究",
+          "文献典藏与阅读",
+          "观象与研究",
+          "访客接待与港埠",
+          "学生住宿与生活服务",
+          "园圃与后勤供给"
+        ]
+      },
+      "styleProfile": {
+        "profileRef": "style:studio_R02_arcane_reborn"
+      },
+      "roadProfile": {
+        "profileRef": "road:town"
+      },
+      "surfaceDetailProfile": {
+        "profileRef": "surface:working"
+      },
+      "surfaceMaterials": {
+        "defaults": {
+          "ground": "minecraft:stone_bricks",
+          "roadBase": "minecraft:stone_bricks",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "roadStair": "minecraft:stone_brick_stairs",
+          "roadCurb": "minecraft:stone_brick_stairs",
+          "accessSurface": "minecraft:stone_brick_slab",
+          "accessStair": "minecraft:stone_brick_stairs",
+          "retainingWall": "minecraft:cobblestone",
+          "wallColumn": "minecraft:oak_log",
+          "wallCap": "minecraft:stone_bricks",
+          "wallBand": "minecraft:stone_bricks",
+          "deck": "minecraft:cobblestone",
+          "fill": "minecraft:dirt",
+          "pier": "minecraft:stone_bricks",
+          "railing": "minecraft:oak_fence",
+          "lowWall": "minecraft:stone_brick_wall",
+          "hedge": "minecraft:oak_leaves",
+          "bridgeSurface": "minecraft:spruce_slab",
+          "bridgeRail": "minecraft:spruce_fence",
+          "bridgeBeam": "minecraft:spruce_planks",
+          "bridgePost": "minecraft:stripped_spruce_log",
+          "bridgePier": "minecraft:stripped_spruce_log"
+        }
+      },
+      "outdoorPlan": {
+        "mode": "GENERATE",
+        "envelopeProfile": "COMPACT",
+        "foundationProfileRef": "foundation:urban"
+      }
+    },
+    "districtAnswers": {
+      "gateway": [
+        {
+          "groupId": "harbor",
+          "roadConnected": true,
+          "foundation": true,
+          "ground": "minecraft:stone_bricks",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "styles": [
+            "魔法学院新制"
+          ]
+        },
+        {
+          "groupId": "gate",
+          "roadConnected": true,
+          "foundation": true,
+          "ground": "minecraft:stone_bricks",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "styles": [
+            "魔法学院新制"
+          ]
+        },
+        {
+          "groupId": "inn",
+          "roadConnected": true,
+          "foundation": true,
+          "ground": "minecraft:stone_bricks",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "styles": [
+            "北欧"
+          ],
+          "exceptionReason": "客舍是抵岸访客的木石迎客建筑；作者在 citySeed.styleDirection 中指定居住与迎客用木石与桦木林协调，故仅此一栋采用北欧木石做法，与主学院石构形成主次对比。"
+        },
+        {
+          "groupId": "market",
+          "roadConnected": true,
+          "foundation": true,
+          "ground": "minecraft:stone_bricks",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "styles": [
+            "魔法学院新制"
+          ]
+        }
+      ],
+      "star_court": [
+        {
+          "groupId": "hall",
+          "roadConnected": true,
+          "foundation": true,
+          "ground": "minecraft:stone_bricks",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "styles": [
+            "魔法学院新制"
+          ]
+        },
+        {
+          "groupId": "teaching_wing",
+          "roadConnected": true,
+          "foundation": true,
+          "ground": "minecraft:stone_bricks",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "styles": [
+            "魔法学院新制"
+          ]
+        },
+        {
+          "groupId": "star_spring",
+          "roadConnected": true,
+          "foundation": true,
+          "ground": "minecraft:stone_bricks",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "styles": [
+            "魔法学院新制"
+          ]
+        }
+      ],
+      "library": [
+        {
+          "groupId": "library",
+          "roadConnected": true,
+          "foundation": true,
+          "ground": "minecraft:stone_bricks",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "styles": [
+            "魔法学院新制"
+          ]
+        },
+        {
+          "groupId": "scriptorium",
+          "roadConnected": true,
+          "foundation": true,
+          "ground": "minecraft:stone_bricks",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "styles": [
+            "魔法学院新制"
+          ]
+        },
+        {
+          "groupId": "reading_pavilion",
+          "roadConnected": true,
+          "foundation": true,
+          "ground": "minecraft:stone_bricks",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "styles": [
+            "魔法学院新制"
+          ]
+        }
+      ],
+      "observatory": [
+        {
+          "groupId": "observatory",
+          "roadConnected": true,
+          "foundation": true,
+          "ground": "minecraft:stone_bricks",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "styles": [
+            "魔法学院新制"
+          ]
+        },
+        {
+          "groupId": "laboratory",
+          "roadConnected": true,
+          "foundation": true,
+          "ground": "minecraft:stone_bricks",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "styles": [
+            "魔法学院新制"
+          ]
+        },
+        {
+          "groupId": "experiment_shed",
+          "roadConnected": true,
+          "foundation": true,
+          "ground": "minecraft:stone_bricks",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "styles": [
+            "魔法学院新制"
+          ]
+        }
+      ],
+      "life": [
+        {
+          "groupId": "dorm",
+          "roadConnected": true,
+          "foundation": true,
+          "ground": "minecraft:stone_bricks",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "styles": [
+            "魔法学院新制"
+          ]
+        },
+        {
+          "groupId": "small_dorm",
+          "roadConnected": true,
+          "foundation": true,
+          "ground": "minecraft:stone_bricks",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "styles": [
+            "魔法学院新制"
+          ]
+        },
+        {
+          "groupId": "dining",
+          "roadConnected": true,
+          "foundation": true,
+          "ground": "minecraft:stone_bricks",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "styles": [
+            "魔法学院新制"
+          ]
+        },
+        {
+          "groupId": "bath",
+          "roadConnected": true,
+          "foundation": true,
+          "ground": "minecraft:stone_bricks",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "styles": [
+            "魔法学院新制"
+          ]
+        },
+        {
+          "groupId": "shop",
+          "roadConnected": true,
+          "foundation": true,
+          "ground": "minecraft:stone_bricks",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "styles": [
+            "魔法学院新制"
+          ]
+        }
+      ],
+      "garden": [
+        {
+          "groupId": "garden_team",
+          "roadConnected": true,
+          "foundation": true,
+          "ground": "minecraft:stone_bricks",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "styles": [
+            "魔法学院新制"
+          ]
+        },
+        {
+          "groupId": "storehouse",
+          "roadConnected": true,
+          "foundation": true,
+          "ground": "minecraft:stone_bricks",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "styles": [
+            "魔法学院新制"
+          ]
+        }
+      ]
+    },
+    "activeDraftHash": "sha256:aed0d412d60ad7e3034ec6545c3807e19dde3294d4851aa7f6ad09c6fb35a906",
+    "markingsConfirmed": true,
+    "markingAssessment": "全城 27 栋全部保留。港埠与星厅为单栋地标阵列；岛上平地只够这两座超大单体各自落地，加入同组配套会导致门楼或星厅本身无法落位，故保持单栋并以其门楼、市集、讲堂、星泉承担周边配套。",
+    "savedDistricts": [
+      {
+        "districtId": "gateway",
+        "core": {
+          "groupId": "harbor",
+          "structureRef": "studio:mg-23-v02"
+        },
+        "needsCoreSelection": false,
+        "groupIds": [
+          "harbor",
+          "gate",
+          "inn",
+          "market"
+        ]
+      },
+      {
+        "districtId": "star_court",
+        "core": {
+          "groupId": "hall",
+          "structureRef": "studio:mg-01-v02"
+        },
+        "needsCoreSelection": false,
+        "groupIds": [
+          "hall",
+          "teaching_wing",
+          "star_spring"
+        ]
+      },
+      {
+        "districtId": "library",
+        "core": {
+          "groupId": "library",
+          "structureRef": "studio:mg-02-v02"
+        },
+        "needsCoreSelection": false,
+        "groupIds": [
+          "library",
+          "scriptorium",
+          "reading_pavilion"
+        ]
+      },
+      {
+        "districtId": "observatory",
+        "core": {
+          "groupId": "observatory",
+          "structureRef": "studio:mg-03-v02"
+        },
+        "needsCoreSelection": false,
+        "groupIds": [
+          "observatory",
+          "laboratory",
+          "experiment_shed"
+        ]
+      },
+      {
+        "districtId": "life",
+        "core": {
+          "groupId": "dorm",
+          "structureRef": "studio:mg-05-v02"
+        },
+        "needsCoreSelection": false,
+        "groupIds": [
+          "dorm",
+          "small_dorm",
+          "dining",
+          "bath",
+          "shop"
+        ]
+      },
+      {
+        "districtId": "garden",
+        "core": {
+          "groupId": "garden_team",
+          "structureRef": "studio:mg-33-v01"
+        },
+        "needsCoreSelection": false,
+        "groupIds": [
+          "garden_team",
+          "storehouse"
+        ]
+      }
+    ],
+    "nextAction": "city_d4_finalize",
+    "availableActions": [
+      "city_d4_history",
+      "city_d4_restore",
+      "city_d4_answers",
+      "city_d4_finalize",
+      "city_d4_district",
+      "city_d4_mark",
+      "city_d4_integrate",
+      "city_d4_preview",
+      "city_d4_materials",
+      "city_d4_example",
+      "city_d4_blocks",
+      "city_d4_handbook"
+    ],
+    "submissionRules": {
+      "savedCoreOwners": [
+        {
+          "districtId": "gateway",
+          "groupId": "harbor"
+        }
+      ],
+      "overviewCorrection": "首个有效分区保存前，可用当前 workflowRevision 重交 city_d4_overview 修正全城默认设置，无需 baseDraftHash；保存有效分区后总览锁定，不能借此重做已有初版。roadSurface 使用半砖 slab，roadStair/roadCurb 使用楼梯 stair；局部覆盖不会修正不合规的全城默认值。",
+      "coreRule": "每区一个显式 core:{groupId,structureRef}。核心必须列入该组 requiredStructureRefs；其他必需配套同列，可选填充用 fillPools。素材特色/通用、旧作者角色和全城 CORE 编译优先级均不决定本区角色。多个同类区可相邻，不强制共同核心或巨型阵列。",
+      "beforeSubmit": [
+        "每个建筑组 requiredStructureRefs 至少一个；fillPools 不能替代必需结构声明。",
+        "ADJACENCY/CONNECTION/HIERARCHY 等非 DISTANCE 关系：distancePreference=NONE；只有 DIRECTION 关系填写非 NONE 的 directionPreference。靠近用 ADJACENCY，不要为它填 NEAR。",
+        "foundationGroupIds 声明显式共同台地与落位时的地形工程承诺。落位后的非 SPARSE、非 CONFORM、无景观份额的 GRID/COURTYARD/CENTER_SYMMETRIC 建筑组也会整理共同地面及近旁路肩。Compact 村落默认保留簇间自然地面；绿化无需加入台地名单，总览不填。",
+        "核心结构必须按阵列同时安排配套，允许复用素材自带的完整院落装饰；不得为完整素材重复加一圈。使用角色标记与实际尺寸选择小型配套，COMPACT 可全部使用小模板。总览若仅留下孤立核心，需调整选材或阵列后重新审查。",
+        "嵌套成员不能同时有独立 placementRelation；保留嵌套时删除该成员的 placementRelation。不要为了修参数删掉建筑组或换算法。",
+        "ATTACHED 景观：提供 owner.groupId，instanceCount=1，省略 placementDomain；多块景观用所选 profile 允许范围内的 parcelCount。",
+        "公共空间可通过 publicRealm 配置真实模板池、嵌套点列/网格/环绕、分层种植、外围绿化及港口/外城出口；先查询 city_d4_example caseId=public_realm。场地 owner 是已声明院落的组或阵列 ID，必须落在冻结公共地面内；出口 waypoints 由 AI 指定且须连接已有道路。",
+        "提交前核对上述参数规则；地形与碰撞由程序处理；初次编译自动推进；已保存区仍可重新选材、调整并再编译。"
+      ],
+      "acceptanceInstruction": "格式、参数、引用错误需修正；设计后看本区和全城预览，可带 targetDistrictId、当前 baseDraftHash 和 assessment 重新提交该区完整 districtDesign。其他区设计与布局保留。qualityFullySatisfied、allFunctionAreasFormed、allRequiredContentPresent、structureGraphConnected 等均为诊断，不要求清零警告或补齐建筑。整城通过逐区选材与阵列修订形成整体性，允许隔河，不要求接触或固定距离。挤占不得清空或破坏其他区功能主体。"
+    },
+    "designQuestions": {
+      "instruction": "所有模型必答 designAnswers。总览明确素材风格、道路方案、实际 ground/roadSurface 方块及地表处理；每次分区/整合逐组回答接路、地基、实际方块、风格。不铺地或不接路必须给原因。继承也填写实际解析值。材料风格必须命中作者标签；补充池所有成员同样检查。整合后重答该区全部组。",
+      "overviewAnswers": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "styles": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          },
+          "roadProfileRef": {
+            "type": "string"
+          },
+          "ground": {
+            "type": "string"
+          },
+          "roadSurface": {
+            "type": "string"
+          },
+          "groundTreatment": {
+            "type": "string",
+            "enum": [
+              "GENERATE",
+              "PRESERVE"
+            ]
+          },
+          "preserveReason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "styles",
+          "roadProfileRef",
+          "ground",
+          "roadSurface",
+          "groundTreatment"
+        ]
+      },
+      "groupAnswers": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "groupId": {
+              "type": "string"
+            },
+            "roadConnected": {
+              "type": "boolean"
+            },
+            "foundation": {
+              "type": "boolean"
+            },
+            "ground": {
+              "type": "string"
+            },
+            "roadSurface": {
+              "type": "string"
+            },
+            "styles": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              }
+            },
+            "exceptionReason": {
+              "type": "string"
+            },
+            "noFoundationReason": {
+              "type": "string"
+            },
+            "isolatedReason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "groupId",
+            "roadConnected",
+            "foundation",
+            "ground",
+            "roadSurface",
+            "styles"
+          ]
+        }
+      }
+    },
+    "instruction": "# 阶段三：复核全城，修订并扩展\r\n\r\n## 目标\r\n\r\n通过当前实际全城图和必要局部图，检查城市要求、地形关联、整体性和规模；把薄弱部分改到足以承担这座城市的职责。\r\n\r\n## 复核顺序\r\n\r\n1. **要求是否落实**：按 citySeed 的主要功能与玩家活动检查实际保留内容。核心周围是否有足够配套、公共空间与通行组织？哪些活动还缺少承载空间？\r\n2. **地形是否参与设计**：位置与朝向、岸边和高差、安静与热闹区域、保留的自然空间是否有清楚的用途依据？计划中依赖的地形适配是否仍待施工？\r\n3. **是否是一座整体城市**：在全城图上依次检查：能否一眼读出主轴和中心？一级地标是否唯一且位于轴线尽端或高点？是否有远离骨架、只靠长路连接的孤立组团？根锚点是否过多、过散？广场是否比围合它的建筑大得多而显得空洞？庭院四周的楼是否朝向庭院？是否所有组团都用同样的间距和密度？隔河和合理留白可以成立，说明图上的依据。\r\n4. **人气是否成立**：各区 population 相加，核对全城人口与床位、岗位、公共容量是否对得上。按时段想一遍：白天工作区、饭点和傍晚公共区、夜里居住区，是否都有足够的人？公共区是否落在宿舍与工作区之间的通勤路上？住处离工作地是否过远？\r\n5. **体量是否相称**：比较本城服务地位、功能需求、现场容量和图中实际体量。还缺哪些承担职责的配套或次级公共空间？新增内容应贴着骨架补进已有组团或广场边，不在远处另开组团。停止扩展的理由可以是职责已有承载、容量限制或需要保留的环境；\"还有空地\"不是扩展理由。\r\n\r\n## 修订操作与规则\r\n\r\n编译结果里的 CITY_REVIEW_* 告警指出整体性和人口问题（根组团过多、间距或密度全同、同一素材重复过多、内院超尺度、缺人口预算等）。逐条判断：能改的就修订，确实合理的在 assessment 里写明理由，不要直接忽略。\r\n\r\n把发现的问题落实到具体功能区，用 city_d4_district 指定 targetDistrictId，提交新的完整 districtDesign、designAnswers、当前 baseDraftHash 与 assessment。其他区设计和布局保留。city_d4_mark 和 city_d4_integrate 是可选空间组织能力，其用途和允许修改范围以 schema、submissionRules 为准。\r\n\r\n正常生成只对复核中明确影响城市要求、整体性或体量的问题作必要修订，整体性问题优先；修改后重新编译并看新图，避免无目标的循环。功能确有需要时大胆配置阵列和配套，图中已成整体且职责有承载则完成。用户明确要求测试或修订时，可复用同一 D3 多轮比较。工具给出 finalize 作为 nextAction，表示允许提交，完成判断仍由上述四项复核决定。\r\n\r\n## 最终保存依据\r\n\r\nassessment 基于当前图，分别说明四项目标与人气核对结果，指出主轴、中心、一级地标的具体位置与可见关系、有效配套及停止扩展的理由。先解决影响职责成立的必需内容缺口；可选填充和适配告警结合用途判断。若当前证据不足，调用 city_d4_preview 补充图像。\r\n\r\n满足这些依据后，用 city_d4_finalize 提交当前 baseDraftHash、assessment、functionsPreserved=true。想保留后续修改机会时明确 autoAdvanceAfterD4=false；默认会推进后续施工准备。无法改善或遇到宿主阻塞时，如实报告当前结果与剩余问题。"
+  },
+  "artifacts": {
+    "testRunManifest": "provider_3d25631f_r19200/city_test_runs/city_jingchao_capital/test_run_manifest.json",
+    "testRunPackage": "provider_3d25631f_r19200/city_test_runs/city_jingchao_capital"
+  },
+  "presentation": "planning_decision_view.v0.1"
+}

@@ -592,6 +592,32 @@ final class RealmPlanningHttpController implements AutoCloseable {
         });
     }
 
+    void handleCityDebugResetD4(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            com.rinsing.geomantia.platform.mcp.McpServerConfig.requireDebug(server.getServerDirectory().toPath());
+            var session = com.rinsing.geomantia.systems.provider.application.PlanningHost.session();
+            if (session == null) throw new IllegalStateException("PLANNING_WORLD_UNAVAILABLE");
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId"), cityId = requiredString(request, "citySeedId");
+            session.requireD4ResetLease(exchange.getRequestHeaders().getFirst("X-Geomantia-Planning-Token"),
+                    runId, cityId, requiredString(request, "resetVersion"));
+            return postD4AutoCompileQueue.withDesignSubmission(runId, cityId, true, () -> {
+                com.rinsing.geomantia.platform.mcp.McpServerConfig.requireDebug(server.getServerDirectory().toPath());
+                cityDesignQueue.requireDesignVersionIfManaged(runId, cityId);
+                Path run = debugRoot().resolve(runId).toAbsolutePath().normalize();
+                if (!run.startsWith(debugRoot().toAbsolutePath().normalize()) || !run.toRealPath().startsWith(debugRoot().toRealPath()))
+                    throw new IllegalArgumentException("CITY_D4_RESET_PATH_OUTSIDE_RUN");
+                JsonObject response = com.rinsing.geomantia.systems.city.application.CityD4DraftReset.reset(run, cityId,
+                        requiredString(request, "resetVersion"), requiredString(request, "reason"));
+                if (Files.isRegularFile(run.resolve("city_seed_registry.json"))) {
+                    cityDesignQueue.onAgentWorkflowState(runId, cityId, "waiting_for_agent", "D4_CONTEXT_PREPARED", "");
+                    response.add("cityDesignQueue", cityDesignQueue.status(runId));
+                }
+                return response;
+            });
+        });
+    }
+
     void handleCityPostD4AutoCompileStatus(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);

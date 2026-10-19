@@ -1,0 +1,25 @@
+# 阶段二：将功能区设计成完整组团
+
+## 目标
+
+围绕 currentDistrict 的核心组织足够的配套、重复功能建筑与公共空间，使本区能承担城市要求，并与全城组织联系。
+
+## 设计工作
+
+先根据用途查询 city_d4_materials，比较尺寸、作者用途与风格。按需要使用公共空间目录、绿化池和布局案例。考虑人数、活动、服务范围与空间层次所需的实际体量；大核心落位之后，仍要设计它周围的日常配套。
+
+在 districtDesign.population 填 purpose、residents、jobs 与 housingGroupIds，数字沿用总览中按人定区的估算（见手册“按人定区”与学院示范）。工作区填 jobs 和服务对象、residents 为 0；居住区按全城人口定床位，填 residents 与 housingGroupIds；公共区在 purpose 写明容量与服务对象。jobs 逐项填写 profession、count、functions，餐饮值班岗位设置 servesMeals。根据上下文 templateFacilityCapacities 的床位和工位决定建筑数量，未知容量应说明待核实，不能当成可用容量。学生和普通居民可无固定工作点。住处靠近工作地，公共区放在通勤路上。Realmfolk 会承接预算并审查配额、床位、岗位与通勤。
+
+把本区挂到全城骨架上：本区组团应嵌套进已有根组合，或紧贴主轴、广场布置；不要为本区另找远处的独立锚点。用完整阵列与嵌套表达院落、街坊或轴线：围合公共空间的建筑用 COURTYARD 并开启 faceInward；同类重复建筑放进同一个阵列；按本区在全城中的层级选择 gapBlocks 与密度（核心疏朗，生活与服务紧密，农林外围成片）。建筑、景观和台地安排应有地形依据，服务于本区活动及全城联系。
+
+## 本阶段操作与规则
+
+用 city_d4_district 提交完整 districtDesign 与 designAnswers。core:{groupId,structureRef} 明确本区唯一核心；核心及必需配套列入 requiredStructureRefs，可选填充放入 fillPools。本区核心与全城 CORE priority 是两个概念。根组/根组合使用明确 anchorBlock，嵌套成员由父布局组织。
+
+编译后实际读取局部及全城预览，区分计划内容、保留内容、跳过项与适配交接。初次有效结果自动推进下一区；保存了初版之后，仍可以修订。
+
+正常生成中的必要修订，或用户明确要求的测试/修订，可修改已保存区。修订已有区时，使用 targetDistrictId、当前 baseDraftHash、assessment 以及新的完整 districtDesign 和 designAnswers。可重新选材、修改阵列与本区景观；其他区设计和布局保留。每次变化后再编译并查看新图。格式错误与失败预算遵循当前反馈。
+
+## 阶段完成依据
+
+初版已形成有用途、挂在骨架上的组团，实际保留内容和缺口有可判断的预览。把需要全城协调的问题带入复核；判断时先看本区与广场、主轴的关系，再看数量。

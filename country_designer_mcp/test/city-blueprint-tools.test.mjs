@@ -3,6 +3,26 @@ import test from "node:test";
 
 import { realmTools, blueprintReferenceCatalogSchema, cityBlueprintSchema } from "../dist/src/realm/tools.js";
 
+test("district and integration expose an optional complete population budget", () => {
+  for (const name of ["city_d4_district", "city_d4_integrate"]) {
+    const body = realmTools.find(t => t.name === name).inputSchema.properties[
+      name === "city_d4_district" ? "districtDesign" : "changes"];
+    const population = body.properties.population;
+    assert.ok(!body.required.includes("population"));
+    assert.equal(population.additionalProperties, false);
+    assert.deepEqual(population.required, ["purpose", "residents", "jobs", "housingGroupIds"]);
+    assert.equal(population.properties.residents.maximum, 10000);
+    assert.equal(population.properties.jobs.maxItems, 32);
+    const job = population.properties.jobs.items;
+    assert.equal(job.additionalProperties, false);
+    assert.deepEqual(job.required, ["profession", "count", "functions"]);
+    assert.equal(job.properties.profession.pattern, "^[a-z][a-z0-9_.-]{0,31}$");
+    assert.equal(job.properties.count.maximum, 256);
+    assert.equal(job.properties.functions.minItems, 1);
+    assert.equal(job.properties.servesMeals.type, "boolean");
+  }
+});
+
 test("district and integration expose rectangle layout with explicit root coordinates", () => {
   for (const name of ["city_d4_district", "city_d4_integrate"]) {
     const tool = realmTools.find(t => t.name === name);

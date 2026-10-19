@@ -10,6 +10,17 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class McpServerServiceTest {
     @TempDir Path root;
+    @Test void debugRequiresBooleanConfigAndSurvivesSavingRoleSettings() throws Exception {
+        assertFalse(McpServerConfig.load(root).debug());
+        assertThrows(IllegalStateException.class, () -> McpServerConfig.requireDebug(root));
+        new McpServerConfig(true,5001,5002,false,false,true).save(root);
+        McpServerConfig.requireDebug(root);
+        McpServerConfig.setTakeover(McpServerConfig.path(root).getParent(),
+                com.rinsing.geomantia.systems.provider.application.PlanningRole.FLASH,true);
+        assertTrue(McpServerConfig.load(root).debug());
+        Files.writeString(McpServerConfig.path(root),"{\"enabled\":true,\"port\":5001,\"debug\":\"true\"}");
+        assertThrows(java.io.IOException.class, () -> McpServerConfig.requireDebug(root));
+    }
     @Test void legacyFlashSettingMigratesAndBothRolesCanBeEnabledIndependently() throws Exception {
         Path directory=Files.createDirectories(root.resolve("config/geomantia"));
         Files.writeString(directory.resolve("provider.json"),"{\"enabled\":true}");
@@ -43,7 +54,7 @@ class McpServerServiceTest {
         int first=freePort(),second=freePort();
         while(first==second) second=freePort();
         int flash=freePort();while(flash==first||flash==second)flash=freePort();
-        new McpServerConfig(true,first,flash).save(root);
+        new McpServerConfig(true,first,flash,false,false,true).save(root);
         try(var service=new McpServerService()) {
             service.start(root);
             for(int i=0;i<600 && service.snapshot().state().equals("starting");i++) Thread.sleep(100);
@@ -65,8 +76,11 @@ class McpServerServiceTest {
                     .POST(HttpRequest.BodyPublishers.ofString("{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/list\"}")).build(),HttpResponse.BodyHandlers.ofString());
             assertEquals(200,stillConnected.statusCode(),"Role-only changes must keep existing MCP sessions alive");
             assertTrue(McpServerConfig.load(root).embeddedAdvanced());assertTrue(McpServerConfig.load(root).embeddedFlash());
+            assertTrue(McpServerConfig.load(root).debug());
+            assertTrue(stillConnected.body().contains("planning_reset_d4"));
             assertEquals("ready",service.save(true,second).get(40,TimeUnit.SECONDS).state());
             assertEquals(second,McpServerConfig.load(root).port());
+            assertTrue(McpServerConfig.load(root).debug());
             assertEquals(200,client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+second+"/health")).GET().build(),HttpResponse.BodyHandlers.ofString()).statusCode());
             assertEquals("disabled",service.save(false,second).get(10,TimeUnit.SECONDS).state());
             assertTrue(service.snapshot().url().isEmpty());

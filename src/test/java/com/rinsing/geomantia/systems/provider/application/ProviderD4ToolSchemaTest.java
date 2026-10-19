@@ -7,6 +7,31 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ProviderD4ToolSchemaTest {
+    @Test void districtAndIntegrationExposeCompleteOptionalPopulationBudget() {
+        for (String name : List.of("city_d4_district", "city_d4_integrate")) {
+            var body = schema(name).getAsJsonObject("properties").getAsJsonObject(
+                    name.equals("city_d4_district") ? "districtDesign" : "changes");
+            var population = body.getAsJsonObject("properties").getAsJsonObject("population");
+            assertNotNull(population,name+" must allow the authored budget");
+            assertFalse(body.has("required") && body.getAsJsonArray("required").toString().contains("population"));
+            assertFalse(population.get("additionalProperties").getAsBoolean());
+            var fields = population.getAsJsonObject("properties");
+            assertEquals(java.util.Set.of("purpose","residents","jobs","housingGroupIds"),fields.keySet());
+            assertEquals(10000,fields.getAsJsonObject("residents").get("maximum").getAsInt());
+            var jobs = fields.getAsJsonObject("jobs");
+            assertEquals(32,jobs.get("maxItems").getAsInt());
+            var job = jobs.getAsJsonObject("items");
+            assertFalse(job.get("additionalProperties").getAsBoolean());
+            var jobFields = job.getAsJsonObject("properties");
+            assertEquals(256,jobFields.getAsJsonObject("count").get("maximum").getAsInt());
+            assertEquals(1,jobFields.getAsJsonObject("functions").get("minItems").getAsInt());
+            assertEquals("boolean",jobFields.getAsJsonObject("servesMeals").get("type").getAsString());
+            // Unlike an array-item patch, population is replaced as a complete budget on revision.
+            for (String key : fields.keySet()) assertTrue(population.getAsJsonArray("required")
+                    .contains(new com.google.gson.JsonPrimitive(key)));
+        }
+    }
+
     @Test void districtAndIntegrationExposeOptionalRectangleLayoutsWithoutCoordinates() {
         for (String name : List.of("city_d4_district", "city_d4_integrate")) {
             String body = name.equals("city_d4_district") ? "districtDesign" : "changes";

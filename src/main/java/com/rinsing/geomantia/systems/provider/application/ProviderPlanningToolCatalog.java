@@ -266,6 +266,7 @@ public final class ProviderPlanningToolCatalog {
         fields.getAsJsonObject("surfaceMaterials").getAsJsonObject("properties").remove("defaults");
         JsonObject outdoor=blueprint.getAsJsonObject("outdoorPlan").getAsJsonObject("properties");
         for(String key:List.of("foundationGroupIds","landscapes","publicRealm"))fields.add(key,outdoor.get(key).deepCopy());
+        fields.add("population",populationSchema());
         if(update) {
             for(String key:List.of("groups","arrayCompositions","landscapes")) {
                 JsonObject item=fields.getAsJsonObject(key).getAsJsonObject("items"); relaxUpdateRequired(item);
@@ -277,8 +278,27 @@ public final class ProviderPlanningToolCatalog {
         }
         if(!update) fields.add("core",object(properties("groupId",string(),"structureRef",string()),"groupId","structureRef"));
         JsonObject schema=update?object(fields):object(fields,"groups","core");
-        if(update) schema.addProperty("description","按 ID 合并，未提供的字段保留；扩张不允许删除设计对象。relations 和 foundationGroupIds 如提供则替换本设计内清单。新对象仍须完整配置；已有组只允许 groupId、structureCount、densityClass、algorithmProfileRef、connectionPlan，改嵌套时可用 clearFields 清除 placementRelation。");
+        if(update) schema.addProperty("description","按 ID 合并，未提供的字段保留；扩张不允许删除设计对象。relations 和 foundationGroupIds 如提供则替换本设计内清单。population 如提供则完整替换本区预算，须随实际阵列或嵌套修改提交。新对象仍须完整配置；已有组只允许 groupId、structureCount、densityClass、algorithmProfileRef、connectionPlan、layout，改嵌套时可用 clearFields 清除 placementRelation。");
         return schema;
+    }
+
+    private static JsonObject populationSchema() {
+        JsonObject profession=nonEmptyString("本城职业标识；同一分区内不可重复。");
+        profession.addProperty("pattern","^[a-z][a-z0-9_.-]{0,31}$");
+        JsonObject jobs=array(object(properties("profession",profession,"name",nonEmptyString("职业称呼"),
+                "count",boundedInteger(0,256,"本区该职业的岗位人数。"),
+                "functions",nonEmptyArray(nonEmptyString("实际岗位用途")),"servesMeals",bool()),
+                "profession","count","functions"));
+        jobs.addProperty("maxItems",32);
+        return described(object(properties("purpose",nonEmptyString("本区职责与日常活动"),
+                "residents",boundedInteger(0,10000,"本区计划居住人数，包含学生等不占岗位的居民。"),
+                "jobs",jobs,"housingGroupIds",array(nonEmptyString("本区承担住房的建筑组 ID，不可引用其他区。"))),
+                "purpose","residents","jobs","housingGroupIds"),
+                "可选的人口需求预算；先定职责、居民和岗位，再选择配套与住房。提供时须完整填写。districtDesign 是完整设计，修订时需重交要保留的预算；integrate 的 changes 省略预算时保留，提供时整体替换。实际床位和工位容量仍独立核验。");
+    }
+
+    private static JsonObject nonEmptyString(String description) {
+        JsonObject value=described(string(),description);value.addProperty("minLength",1);return value;
     }
 
     private static void relaxUpdateRequired(com.google.gson.JsonElement node) {

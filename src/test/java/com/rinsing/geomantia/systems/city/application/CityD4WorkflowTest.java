@@ -8,6 +8,43 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CityD4WorkflowTest {
+    @Test void populationSurvivesSubmissionRevisionExpansionAndReloadWithoutChangingOtherDistricts() throws Exception {
+        overview();
+        var budget = json("{purpose:'teaching',residents:12,jobs:[{profession:'teacher',name:'Teacher',count:3,functions:['teaching'],servesMeals:false}],housingGroupIds:['a']}");
+        var initial = json("{districtDesign:{groups:[{groupId:'a'}]}}");
+        initial.getAsJsonObject("districtDesign").add("population",budget.deepCopy());
+        var submitted = call("city_d4_district",initial);
+        assertTrue(submitted.get("ok").getAsBoolean(),submitted.toString());
+        assertEquals(budget,lastCity.getAsJsonArray("districtDesigns").get(0).getAsJsonObject().get("population"));
+        design("b");mark();
+        var revision = currentRequest();
+        revision.addProperty("targetDistrictId","civic");
+        var design = CityD4Workflow.load(dir,"ctx").getAsJsonObject("bodies").getAsJsonObject("civic").deepCopy();
+        budget.addProperty("residents",18);
+        design.add("population",budget.deepCopy());
+        revision.add("districtDesign",design);
+        var revised = call("city_d4_district",revision);
+        assertTrue(revised.get("ok").getAsBoolean(),revised.toString());
+        assertEquals(budget,lastCity.getAsJsonArray("districtDesigns").get(0).getAsJsonObject().get("population"));
+        var before = CityD4Workflow.load(dir,"ctx");
+        var request = expansion("civic","a");
+        budget.addProperty("residents",24);
+        budget.getAsJsonArray("jobs").get(0).getAsJsonObject().addProperty("count",6);
+        request.getAsJsonObject("changes").add("population",budget.deepCopy());
+        var expanded = call("city_d4_integrate",request);
+        assertTrue(expanded.get("ok").getAsBoolean(),expanded.toString());
+        var after = CityD4Workflow.load(dir,"ctx");
+        assertEquals(budget,after.getAsJsonObject("bodies").getAsJsonObject("civic").get("population"));
+        assertEquals(budget,lastCity.getAsJsonArray("districtDesigns").get(0).getAsJsonObject().get("population"));
+        assertEquals(before.getAsJsonObject("bodies").get("market"),after.getAsJsonObject("bodies").get("market"));
+        var invalid = expansion("civic","a");
+        budget.add("housingGroupIds",JsonParser.parseString("['b']"));
+        invalid.getAsJsonObject("changes").add("population",budget);
+        var rejected = call("city_d4_integrate",invalid);
+        assertFalse(rejected.get("ok").getAsBoolean(),"housing in another district must be rejected");
+        assertEquals(after,CityD4Workflow.load(dir,"ctx"),"rejected budget must not overwrite saved design");
+    }
+
     @Test void publicRealmSurvivesDistrictAssemblyAndRevision() {
         JsonObject state=json("{citySettings:{outdoorPlan:{mode:'GENERATE'}},bodies:{a:{groups:[],publicRealm:{schema:'city_public_realm.v1',catalog:'academy',spaces:[{id:'a',owner:'a',plan:{}}]}},b:{groups:[],publicRealm:{schema:'city_public_realm.v1',catalog:'academy',spaces:[{id:'b',owner:'b',plan:{}}]}}}}");
         assertEquals(2,CityD4Workflow.assemble(state).getAsJsonObject("outdoorPlan").getAsJsonObject("publicRealm").getAsJsonArray("spaces").size());
