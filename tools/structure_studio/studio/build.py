@@ -63,6 +63,8 @@ from .elven_reborn import BUILDERS as ELVEN_REBORN
 from .dwarven_reborn import BUILDERS as DWARVEN_REBORN
 from .european_reborn import BUILDERS as EUROPEAN_REBORN
 from .arcane_revision2 import BUILDERS as ARCANE_REVISION2
+from .academy_capacity import BUILDERS as ACADEMY_CAPACITY
+from .academy_classrooms import BUILDERS as ACADEMY_CLASSROOMS
 from .academy_support import BUILDERS as ACADEMY_SUPPORT
 from .academy_wings import BUILDERS as ACADEMY_WINGS
 from .terrace_fixtures import BUILDERS as TERRACE_FIXTURES
@@ -72,6 +74,7 @@ from .academy_greenery import BUILDERS as ACADEMY_GREENERY
 from .dwarven_revision2 import BUILDERS as DWARVEN_REVISION2
 from .elven_revision2 import BUILDERS as ELVEN_REVISION2
 from .european_revision2 import BUILDERS as EUROPEAN_REVISION2
+from .academy_interiors import BUILDERS as ACADEMY_INTERIORS
 
 BUILDERS={"SR-01-v01":("01_steam_rail",steam_station),"WT-01-v01":("02_waterway_trade",passenger_quay)}
 BUILDERS["SR-F01-v01"]=("01_steam_rail",bakery)
@@ -131,6 +134,8 @@ BUILDERS.update({key:("R03_dwarven_reborn",builder) for key,builder in DWARVEN_R
 BUILDERS.update({key:("R04_european_reborn",fn) for key,fn in EUROPEAN_REBORN.items()})
 
 BUILDERS.update({key:("R02_arcane_reborn",fn) for key,fn in ARCANE_REVISION2.items()})
+BUILDERS.update({key:("R02_arcane_reborn",fn) for key,fn in ACADEMY_CAPACITY.items()})
+BUILDERS.update({key:("R02_arcane_reborn",fn) for key,fn in ACADEMY_CLASSROOMS.items()})
 BUILDERS.update({key:("R02_arcane_reborn",fn) for key,fn in ACADEMY_SUPPORT.items()})
 BUILDERS.update({key:("R02_arcane_reborn",fn) for key,fn in ACADEMY_WINGS.items()})
 BUILDERS.update(TERRACE_FIXTURES)
@@ -140,6 +145,7 @@ BUILDERS.update({key:("R02_arcane_reborn",fn) for key,fn in ACADEMY_GREENERY.ite
 BUILDERS.update({key:("R03_dwarven_reborn",fn) for key,fn in DWARVEN_REVISION2.items()})
 BUILDERS.update({key:("R01_elven_reborn",fn) for key,fn in ELVEN_REVISION2.items()})
 BUILDERS.update({key:("R04_european_reborn",fn) for key,fn in EUROPEAN_REVISION2.items()})
+BUILDERS.update({key:("R02_arcane_reborn",fn) for key,fn in ACADEMY_INTERIORS.items()})
 
 def main():
     p=argparse.ArgumentParser();p.add_argument("ids",nargs="+",help="Asset ID, family ID, or all")

@@ -1,0 +1,696 @@
+{
+  "schema": "structure-studio.lighting-review.v1",
+  "nbt_sha256": "89cefcf2d2bbd110ad6dc345c82aede5fb0bc4f9fb8890cd7bf871de4dd68c7d",
+  "scope": "Conservative offline block-light estimate for authored occupied spaces.\n\nThis is not Minecraft's light engine: no sky light, partial collision blocks are\nopaque, and state-dependent emitters are not simulated. It is an authoring check\nfor fixed lanterns, sea lanterns and end rods, not an in-game night acceptance.\n",
+  "emitterCount": 161,
+  "occupiedPointTarget": 8,
+  "floorTarget": 5,
+  "occupiedPoints": [
+    {
+      "id": "bed_9_2_43",
+      "kind": "bed",
+      "pos": [
+        17,
+        2,
+        43
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "bed_b_9_2_43",
+      "kind": "bed",
+      "pos": [
+        22,
+        2,
+        43
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "bed_9_2_51",
+      "kind": "bed",
+      "pos": [
+        17,
+        2,
+        51
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "bed_b_9_2_51",
+      "kind": "bed",
+      "pos": [
+        22,
+        2,
+        51
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "bed_9_9_43",
+      "kind": "bed",
+      "pos": [
+        17,
+        9,
+        43
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "bed_b_9_9_43",
+      "kind": "bed",
+      "pos": [
+        22,
+        9,
+        43
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "bed_9_9_51",
+      "kind": "bed",
+      "pos": [
+        17,
+        9,
+        51
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "bed_b_9_9_51",
+      "kind": "bed",
+      "pos": [
+        22,
+        9,
+        51
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "bed_9_16_43",
+      "kind": "bed",
+      "pos": [
+        17,
+        16,
+        43
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "bed_b_9_16_43",
+      "kind": "bed",
+      "pos": [
+        22,
+        16,
+        43
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "bed_9_16_51",
+      "kind": "bed",
+      "pos": [
+        17,
+        16,
+        51
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "bed_b_9_16_51",
+      "kind": "bed",
+      "pos": [
+        22,
+        16,
+        51
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "floor3_9",
+      "kind": "circulation",
+      "pos": [
+        17,
+        16,
+        37
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "bed_43_2_43",
+      "kind": "bed",
+      "pos": [
+        51,
+        2,
+        43
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "bed_b_43_2_43",
+      "kind": "bed",
+      "pos": [
+        56,
+        2,
+        43
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "bed_43_2_51",
+      "kind": "bed",
+      "pos": [
+        51,
+        2,
+        51
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "bed_b_43_2_51",
+      "kind": "bed",
+      "pos": [
+        56,
+        2,
+        51
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "bed_43_9_43",
+      "kind": "bed",
+      "pos": [
+        51,
+        9,
+        43
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "bed_b_43_9_43",
+      "kind": "bed",
+      "pos": [
+        56,
+        9,
+        43
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "bed_43_9_51",
+      "kind": "bed",
+      "pos": [
+        51,
+        9,
+        51
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "bed_b_43_9_51",
+      "kind": "bed",
+      "pos": [
+        56,
+        9,
+        51
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "bed_43_16_43",
+      "kind": "bed",
+      "pos": [
+        51,
+        16,
+        43
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "bed_b_43_16_43",
+      "kind": "bed",
+      "pos": [
+        56,
+        16,
+        43
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "bed_43_16_51",
+      "kind": "bed",
+      "pos": [
+        51,
+        16,
+        51
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "bed_b_43_16_51",
+      "kind": "bed",
+      "pos": [
+        56,
+        16,
+        51
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "floor3_43",
+      "kind": "circulation",
+      "pos": [
+        51,
+        16,
+        37
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "study_9_1",
+      "kind": "meeting",
+      "pos": [
+        17,
+        2,
+        22
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "resident_15_2_28",
+      "kind": "bed",
+      "pos": [
+        16,
+        2,
+        28
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_15_2_34",
+      "kind": "bed",
+      "pos": [
+        16,
+        2,
+        34
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_15_2_40",
+      "kind": "bed",
+      "pos": [
+        16,
+        2,
+        40
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_19_2_28",
+      "kind": "bed",
+      "pos": [
+        20,
+        2,
+        28
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_19_2_34",
+      "kind": "bed",
+      "pos": [
+        20,
+        2,
+        34
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_19_2_40",
+      "kind": "bed",
+      "pos": [
+        20,
+        2,
+        40
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "study_9_2",
+      "kind": "meeting",
+      "pos": [
+        17,
+        9,
+        22
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "resident_15_9_28",
+      "kind": "bed",
+      "pos": [
+        16,
+        9,
+        28
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_15_9_34",
+      "kind": "bed",
+      "pos": [
+        16,
+        9,
+        34
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_15_9_40",
+      "kind": "bed",
+      "pos": [
+        16,
+        9,
+        40
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_19_9_28",
+      "kind": "bed",
+      "pos": [
+        20,
+        9,
+        28
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_19_9_34",
+      "kind": "bed",
+      "pos": [
+        20,
+        9,
+        34
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_19_9_40",
+      "kind": "bed",
+      "pos": [
+        20,
+        9,
+        40
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "study_9_3",
+      "kind": "meeting",
+      "pos": [
+        17,
+        16,
+        22
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "resident_15_16_28",
+      "kind": "bed",
+      "pos": [
+        16,
+        16,
+        28
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_15_16_34",
+      "kind": "bed",
+      "pos": [
+        16,
+        16,
+        34
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_15_16_40",
+      "kind": "bed",
+      "pos": [
+        16,
+        16,
+        40
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_19_16_28",
+      "kind": "bed",
+      "pos": [
+        20,
+        16,
+        28
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_19_16_34",
+      "kind": "bed",
+      "pos": [
+        20,
+        16,
+        34
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_19_16_40",
+      "kind": "bed",
+      "pos": [
+        20,
+        16,
+        40
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "study_43_1",
+      "kind": "meeting",
+      "pos": [
+        51,
+        2,
+        22
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "resident_49_2_28",
+      "kind": "bed",
+      "pos": [
+        50,
+        2,
+        28
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_49_2_34",
+      "kind": "bed",
+      "pos": [
+        50,
+        2,
+        34
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_49_2_40",
+      "kind": "bed",
+      "pos": [
+        50,
+        2,
+        40
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_53_2_28",
+      "kind": "bed",
+      "pos": [
+        54,
+        2,
+        28
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_53_2_34",
+      "kind": "bed",
+      "pos": [
+        54,
+        2,
+        34
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_53_2_40",
+      "kind": "bed",
+      "pos": [
+        54,
+        2,
+        40
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "study_43_2",
+      "kind": "meeting",
+      "pos": [
+        51,
+        9,
+        22
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "resident_49_9_28",
+      "kind": "bed",
+      "pos": [
+        50,
+        9,
+        28
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_49_9_34",
+      "kind": "bed",
+      "pos": [
+        50,
+        9,
+        34
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_49_9_40",
+      "kind": "bed",
+      "pos": [
+        50,
+        9,
+        40
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_53_9_28",
+      "kind": "bed",
+      "pos": [
+        54,
+        9,
+        28
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_53_9_34",
+      "kind": "bed",
+      "pos": [
+        54,
+        9,
+        34
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_53_9_40",
+      "kind": "bed",
+      "pos": [
+        54,
+        9,
+        40
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "study_43_3",
+      "kind": "meeting",
+      "pos": [
+        51,
+        16,
+        22
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "resident_49_16_28",
+      "kind": "bed",
+      "pos": [
+        50,
+        16,
+        28
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_49_16_34",
+      "kind": "bed",
+      "pos": [
+        50,
+        16,
+        34
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_49_16_40",
+      "kind": "bed",
+      "pos": [
+        50,
+        16,
+        40
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_53_16_28",
+      "kind": "bed",
+      "pos": [
+        54,
+        16,
+        28
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_53_16_34",
+      "kind": "bed",
+      "pos": [
+        54,
+        16,
+        34
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "resident_53_16_40",
+      "kind": "bed",
+      "pos": [
+        54,
+        16,
+        40
+      ],
+      "estimatedBlockLight": 12
+    }
+  ],
+  "floorSampleCount": 3600,
+  "minimumOccupiedLight": 10,
+  "minimumFloorLight": 5,
+  "darkOccupiedPoints": [],
+  "darkFloorSamples": [],
+  "passed": true
+}

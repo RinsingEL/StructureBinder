@@ -1,0 +1,100 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    31,
+    49,
+    31
+  ],
+  "sourceSha256": "d92f8371cb0d9dd3ab96b433cce98828b6372cd6df11e261447aed8126e387e6",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 3
+  },
+  "facilities": [
+    {
+      "id": "work:18,22,18",
+      "kind": "work",
+      "pos": [
+        18,
+        22,
+        18
+      ],
+      "block": "minecraft:lectern",
+      "facing": "south",
+      "use": "staff",
+      "room": "upper",
+      "name": "上层研究讲台",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        19,
+        22,
+        18
+      ]
+    },
+    {
+      "id": "work:23,2,23",
+      "kind": "work",
+      "pos": [
+        23,
+        2,
+        23
+      ],
+      "block": "minecraft:lectern",
+      "facing": "south",
+      "use": "staff",
+      "room": "lower-1",
+      "name": "书目查询与研究桌",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        23,
+        2,
+        22
+      ]
+    },
+    {
+      "id": "work:23,12,23",
+      "kind": "work",
+      "pos": [
+        23,
+        12,
+        23
+      ],
+      "block": "minecraft:lectern",
+      "facing": "south",
+      "use": "staff",
+      "room": "lower-11",
+      "name": "书目查询与研究桌",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        23,
+        12,
+        22
+      ]
+    },
+    {
+      "id": "entrance:15,2,0",
+      "kind": "entrance",
+      "pos": [
+        15,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "临街主入口",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        15,
+        2,
+        2
+      ]
+    }
+  ],
+  "warnings": []
+}

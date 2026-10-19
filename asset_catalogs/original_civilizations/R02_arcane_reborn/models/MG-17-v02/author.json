@@ -1,0 +1,517 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-17-v02",
+  "name": "导师小院 · 三间家庭寝室与玻璃冬园",
+  "family": "MG-17",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.self_contained",
+  "size": [
+    47,
+    45,
+    53
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [
+    {
+      "id": "study",
+      "name": "书斋与会面厅",
+      "min": [
+        10,
+        2,
+        18
+      ],
+      "max": [
+        26,
+        8,
+        40
+      ],
+      "purpose": "导师家庭居住与独立书斋"
+    },
+    {
+      "id": "bedroom_1",
+      "name": "家庭双床寝室1",
+      "min": [
+        16,
+        10,
+        18
+      ],
+      "max": [
+        26,
+        13,
+        25
+      ],
+      "purpose": "两张实体床、独立储物和通往楼梯侧走廊的门洞。",
+      "living_use": "resident"
+    },
+    {
+      "id": "bedroom_2",
+      "name": "家庭双床寝室2",
+      "min": [
+        16,
+        10,
+        27
+      ],
+      "max": [
+        26,
+        13,
+        32
+      ],
+      "purpose": "两张实体床、独立储物和通往楼梯侧走廊的门洞。",
+      "living_use": "resident"
+    },
+    {
+      "id": "bedroom_3",
+      "name": "家庭双床寝室3",
+      "min": [
+        16,
+        10,
+        34
+      ],
+      "max": [
+        26,
+        13,
+        40
+      ],
+      "purpose": "两张实体床、独立储物和通往楼梯侧走廊的门洞。",
+      "living_use": "resident"
+    }
+  ],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        23,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "bed_18",
+      "kind": "bed",
+      "pos": [
+        18,
+        10,
+        37
+      ],
+      "name": "住床",
+      "approach": [
+        19,
+        10,
+        37
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "bed_23",
+      "kind": "bed",
+      "pos": [
+        23,
+        10,
+        37
+      ],
+      "name": "住床",
+      "approach": [
+        24,
+        10,
+        37
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "study",
+      "kind": "work",
+      "pos": [
+        21,
+        2,
+        26
+      ],
+      "name": "导师书斋",
+      "approach": [
+        20,
+        2,
+        26
+      ],
+      "use": "staff"
+    },
+    {
+      "id": "upper",
+      "kind": "circulation",
+      "pos": [
+        14,
+        10,
+        32
+      ],
+      "name": "家庭寝室与楼梯相连的走廊",
+      "approach": [
+        14,
+        10,
+        32
+      ]
+    },
+    {
+      "id": "family_18_23",
+      "kind": "bed",
+      "pos": [
+        18,
+        10,
+        23
+      ],
+      "name": "住床",
+      "approach": [
+        19,
+        10,
+        23
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "family_18_29",
+      "kind": "bed",
+      "pos": [
+        18,
+        10,
+        29
+      ],
+      "name": "住床",
+      "approach": [
+        19,
+        10,
+        29
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "family_23_23",
+      "kind": "bed",
+      "pos": [
+        23,
+        10,
+        23
+      ],
+      "name": "住床",
+      "approach": [
+        24,
+        10,
+        23
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "family_23_29",
+      "kind": "bed",
+      "pos": [
+        23,
+        10,
+        29
+      ],
+      "name": "住床",
+      "approach": [
+        24,
+        10,
+        29
+      ],
+      "use": "resident"
+    },
+    {
+      "id": "seat_16_2_27",
+      "kind": "seat",
+      "pos": [
+        16,
+        2,
+        27
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "resident",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        17,
+        2,
+        27
+      ]
+    },
+    {
+      "id": "seat_16_2_29",
+      "kind": "seat",
+      "pos": [
+        16,
+        2,
+        29
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "resident",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        17,
+        2,
+        29
+      ]
+    },
+    {
+      "id": "seat_18_2_27",
+      "kind": "seat",
+      "pos": [
+        18,
+        2,
+        27
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "resident",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        19,
+        2,
+        27
+      ]
+    },
+    {
+      "id": "seat_18_2_29",
+      "kind": "seat",
+      "pos": [
+        18,
+        2,
+        29
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "resident",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        19,
+        2,
+        29
+      ]
+    },
+    {
+      "id": "seat_20_2_27",
+      "kind": "seat",
+      "pos": [
+        20,
+        2,
+        27
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "resident",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        19,
+        2,
+        27
+      ]
+    },
+    {
+      "id": "seat_20_2_29",
+      "kind": "seat",
+      "pos": [
+        20,
+        2,
+        29
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "resident",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        21,
+        2,
+        29
+      ]
+    },
+    {
+      "id": "seat_22_2_27",
+      "kind": "seat",
+      "pos": [
+        22,
+        2,
+        27
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "resident",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        23,
+        2,
+        27
+      ]
+    },
+    {
+      "id": "seat_22_2_29",
+      "kind": "seat",
+      "pos": [
+        22,
+        2,
+        29
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "resident",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        23,
+        2,
+        29
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。",
+    "2026-10-19 容量微调：保留 v01 外形、占地、屋面、入口和实体楼梯，只调整内部床位与生活空间。",
+    "书斋、三间寝室、楼梯侧走廊和冬园分别设置低位壁灯，分隔后的房间独立获得照明。",
+    "仅作者声明的工作点计入岗位容量；装饰桶、家庭储物与学生/访客使用设施不冒充员工工位。"
+  ],
+  "differences": [
+    "上层从 2 床增至 6 床，三间双床寝室连接楼梯侧走廊；首层书斋与冬园保留。",
+    "2026-10-19 全学院可进入建筑：补齐功能工位/公共席位，分层分区照明，保留旧版本。"
+  ],
+  "floors": [
+    {
+      "name": "书斋与冬园",
+      "y": 1,
+      "max_y": 8
+    },
+    {
+      "name": "寝居",
+      "y": 9,
+      "max_y": 16
+    }
+  ],
+  "roof_min_y": 19,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "家庭居住",
+    "研究"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/academy_interiors.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "workplace_policy": "authored",
+  "interior_lighting": {
+    "source": "fixed_emitters_no_skylight_conservative_estimate",
+    "occupiedPointTarget": 8,
+    "floorTarget": 5,
+    "sampledPositions": 1024,
+    "fixtures": [
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          7,
+          1,
+          37
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          16,
+          1,
+          43
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          14,
+          1,
+          15
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          21,
+          1,
+          15
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          23,
+          1,
+          43
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          30,
+          5,
+          37
+        ],
+        "support": [
+          30,
+          11,
+          37
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          7,
+          1,
+          18
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          29,
+          1,
+          18
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          30,
+          5,
+          25
+        ],
+        "support": [
+          30,
+          11,
+          25
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          32,
+          5,
+          42
+        ],
+        "support": [
+          32,
+          14,
+          42
+        ]
+      }
+    ],
+    "note": "低位吊灯使用实际屋面或楼板承吊；高厅与开放处采用齐平星石灯。估计不替代 Minecraft 夜间验收。"
+  },
+  "nbt_sha256": "5a03627f9acde720271094aa37e1f4d0dda9ae4331c47624db11cef2dbdb6d5d"
+}

@@ -1,0 +1,31 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "MG-20-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex",
+  "nbt_sha256": "7d2bcc8c0eff24e66408ea08592ab4f450f0b1e408bfe9ac2a6601bbfa8adbaf",
+  "author_sha256": "bfd1ec5e3d7c73458ed5d01c4b816b7da82e7857ca66b34ff64765dffc27293a",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/left.png",
+    "previews/right.png",
+    "previews/top.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/room-stock.png",
+    "previews/use-work.png",
+    "previews/annotations.png"
+  ],
+  "checks": [
+    "逐一查看本版外立面、去顶、分层、房间及使用视角；屋顶轮廓与学院配色保留。",
+    "功能家具与对应使用位置可辨认，床位/工位旁留有进出空间；地嵌光源与低位灯具未占据主要走道。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "Studio 截图使用统一预览光照；实际夜间亮度以 lighting.json 保守估算作辅助，尚未在 Minecraft 内验证。"
+  ]
+}

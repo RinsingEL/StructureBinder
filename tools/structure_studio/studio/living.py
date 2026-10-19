@@ -18,6 +18,10 @@ def extract(data, author, rules=None):
     tags = rules.get('tags', {})
     blocks = {tuple(b['pos']): data['palette'][b['state']] for b in data['blocks']}
     points = author.get('points', [])
+    workplace_policy = author.get('workplace_policy', 'legacy_blocks')
+    if workplace_policy not in ('legacy_blocks', 'authored'):
+        raise ValueError(f'Invalid workplace_policy: {workplace_policy}')
+    authored_work = {tuple(p['pos']) for p in points if p.get('kind') == 'work'}
     facilities, occupied, warnings = [], set(), []
 
     def match(selector, name):
@@ -103,6 +107,8 @@ def extract(data, author, rules=None):
             kind=rule.get('kind')
             if kind not in ('work','seat','bed','meeting'):
                 raise ValueError('Invalid custom living facility kind')
+            if kind == 'work' and workplace_policy == 'authored' and pos not in authored_work:
+                continue
             rule.setdefault('id','legacy_'+str(index))
             facing=horizontal_facing(state,rule)
             slots=rule.get('slots',[{'id':'default'}])
@@ -141,7 +147,8 @@ def extract(data, author, rules=None):
                 continue
             annotation = next((p for p in points if p.get('kind') == 'bed' and tuple(p['pos']) in (pos, foot)), annotation)
             add('bed', pos, state, annotation)
-        elif name in {'minecraft:' + n for n in VANILLA_WORK} and 'work' not in configured_kinds:
+        elif (name in {'minecraft:' + n for n in VANILLA_WORK} and 'work' not in configured_kinds
+              and (workplace_policy == 'legacy_blocks' or pos in authored_work)):
             add('work', pos, state, annotation)
     for p in points:
         kind = p.get('kind')

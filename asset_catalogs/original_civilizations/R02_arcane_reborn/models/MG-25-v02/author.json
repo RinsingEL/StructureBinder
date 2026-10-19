@@ -1,0 +1,623 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-25-v02",
+  "name": "中等教学楼 · 二十四席课堂与双教师工位",
+  "family": "MG-25",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    35,
+    32,
+    31
+  ],
+  "terrain": {
+    "选址": "完整承载面；农林地块保持自然地形，独立建筑使用核心台地。"
+  },
+  "rooms": [
+    {
+      "id": "main",
+      "name": "中等教学楼",
+      "min": [
+        4,
+        2,
+        5
+      ],
+      "max": [
+        30,
+        7,
+        26
+      ],
+      "purpose": "24 个学生席位、1 个授课讲台、1 个助教备课位。"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        17,
+        2,
+        0
+      ],
+      "name": "主入口",
+      "direction": "north",
+      "approach": [
+        17,
+        2,
+        2
+      ]
+    },
+    {
+      "id": "main_access",
+      "kind": "circulation",
+      "pos": [
+        17,
+        2,
+        5
+      ],
+      "name": "室内通路",
+      "approach": [
+        17,
+        2,
+        5
+      ]
+    },
+    {
+      "id": "teacher",
+      "kind": "work",
+      "pos": [
+        17,
+        2,
+        24
+      ],
+      "name": "教师授课讲台",
+      "use": "staff",
+      "approach": [
+        17,
+        2,
+        23
+      ]
+    },
+    {
+      "id": "assistant",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        22
+      ],
+      "name": "助教备课与课堂记录",
+      "use": "staff",
+      "approach": [
+        7,
+        2,
+        21
+      ]
+    },
+    {
+      "id": "student_6_8",
+      "kind": "seat",
+      "pos": [
+        6,
+        2,
+        7
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        5,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "student_6_12",
+      "kind": "seat",
+      "pos": [
+        6,
+        2,
+        11
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        5,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "student_6_16",
+      "kind": "seat",
+      "pos": [
+        6,
+        2,
+        15
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        5,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "student_6_20",
+      "kind": "seat",
+      "pos": [
+        6,
+        2,
+        19
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        5,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "student_10_8",
+      "kind": "seat",
+      "pos": [
+        10,
+        2,
+        7
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        9,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "student_10_12",
+      "kind": "seat",
+      "pos": [
+        10,
+        2,
+        11
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        9,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "student_10_16",
+      "kind": "seat",
+      "pos": [
+        10,
+        2,
+        15
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        9,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "student_10_20",
+      "kind": "seat",
+      "pos": [
+        10,
+        2,
+        19
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        9,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "student_14_8",
+      "kind": "seat",
+      "pos": [
+        14,
+        2,
+        7
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        13,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "student_14_12",
+      "kind": "seat",
+      "pos": [
+        14,
+        2,
+        11
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        13,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "student_14_16",
+      "kind": "seat",
+      "pos": [
+        14,
+        2,
+        15
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        13,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "student_14_20",
+      "kind": "seat",
+      "pos": [
+        14,
+        2,
+        19
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        13,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "student_20_8",
+      "kind": "seat",
+      "pos": [
+        20,
+        2,
+        7
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        19,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "student_20_12",
+      "kind": "seat",
+      "pos": [
+        20,
+        2,
+        11
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        19,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "student_20_16",
+      "kind": "seat",
+      "pos": [
+        20,
+        2,
+        15
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        19,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "student_20_20",
+      "kind": "seat",
+      "pos": [
+        20,
+        2,
+        19
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        19,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "student_24_8",
+      "kind": "seat",
+      "pos": [
+        24,
+        2,
+        7
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        23,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "student_24_12",
+      "kind": "seat",
+      "pos": [
+        24,
+        2,
+        11
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        23,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "student_24_16",
+      "kind": "seat",
+      "pos": [
+        24,
+        2,
+        15
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        23,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "student_24_20",
+      "kind": "seat",
+      "pos": [
+        24,
+        2,
+        19
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        23,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "student_28_8",
+      "kind": "seat",
+      "pos": [
+        28,
+        2,
+        7
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        27,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "student_28_12",
+      "kind": "seat",
+      "pos": [
+        28,
+        2,
+        11
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        27,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "student_28_16",
+      "kind": "seat",
+      "pos": [
+        28,
+        2,
+        15
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        27,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "student_28_20",
+      "kind": "seat",
+      "pos": [
+        28,
+        2,
+        19
+      ],
+      "name": "学生听课与书写座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        27,
+        2,
+        19
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "学院组团配套；尺寸独立于大型文化核心。实际生产、居民和魔法行为另行配置。",
+    "中轴与桌列侧方保持步行通道；低位壁灯覆盖座位区，讲台设两点低垂灯，吊杆接到贯通木梁。",
+    "仅作者声明的工作点计入岗位容量；装饰桶、家庭储物与学生/访客使用设施不冒充员工工位。"
+  ],
+  "differences": [
+    "保留建筑外形和入口，重排实体学生桌椅、教师讲台与备课位；学生座位不算教师工位。",
+    "2026-10-19 全学院可进入建筑：补齐功能工位/公共席位，分层分区照明，保留旧版本。"
+  ],
+  "floors": [
+    {
+      "name": "首层",
+      "y": 1,
+      "max_y": 8
+    }
+  ],
+  "roof_min_y": 10,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "教学",
+    "阅读",
+    "研讨"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/academy_interiors.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外部路面脚底为 Y=2。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "campus_consumer": "array",
+  "design_revision": 1,
+  "workplace_policy": "authored",
+  "interior_lighting": {
+    "source": "fixed_emitters_no_skylight_conservative_estimate",
+    "occupiedPointTarget": 8,
+    "floorTarget": 5,
+    "sampledPositions": 590,
+    "fixtures": [
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          17,
+          1,
+          28
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          2,
+          1,
+          28
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          13,
+          1,
+          11
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          23,
+          1,
+          11
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          32,
+          1,
+          28
+        ]
+      }
+    ],
+    "note": "低位吊灯使用实际屋面或楼板承吊；高厅与开放处采用齐平星石灯。估计不替代 Minecraft 夜间验收。"
+  },
+  "nbt_sha256": "6836038cd11d9a607e855bcc2249610711fd34f5cc06aed7a30afde9d142a81f"
+}

@@ -140,8 +140,8 @@ test('original 12-style inventory is covered without changing author data; real 
   const before = JSON.stringify(rows);
   assert.deepEqual([...new Set(rows.flatMap(row => describe(row).unmapped))], []);
   const bakery = rows.filter(row => matches(row, {functions: ['retail.food.bread', 'production.food.baking']}));
-  assert.deepEqual(bakery.map(r => r.id).sort(), ['AA-F01-v01', 'CN-F01-v01', 'DS-F01-v01', 'MF-F01-v01', 'ML-F01-v01', 'SR-F01-v01']);
-  assert.deepEqual(bakery.filter(row => matches(row, {functions: ['housing.family']})).map(r => r.id), ['SR-F01-v01']);
+  assert.deepEqual(bakery.map(r => r.id).sort(), ['AA-F01-v01', 'CN-F01-v01', 'DS-F01-v01', 'MF-F01-v01', 'ML-F01-v01', 'SR-F01-v01', 'WT-F01-v01']);
+  assert.deepEqual(bakery.filter(row => matches(row, {functions: ['housing.family']})).map(r => r.id).sort(), ['SR-F01-v01', 'WT-F01-v01']);
   assert.equal(rows.filter(row => matches(row, {style: '北欧', functions: ['storage.goods']})).length, 4);
   assert.equal(rows.filter(row => matches(row, {style: '空艇幻想', functions: ['housing.shared']})).length, 6);
   assert.equal(rows.filter(row => matches(row, {style: '北欧', functions: ['production.food.baking']})).length, 0);

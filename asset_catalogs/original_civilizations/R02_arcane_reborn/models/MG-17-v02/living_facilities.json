@@ -1,0 +1,347 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    47,
+    45,
+    53
+  ],
+  "sourceSha256": "5a03627f9acde720271094aa37e1f4d0dda9ae4331c47624db11cef2dbdb6d5d",
+  "capacity": {
+    "residentBeds": 6,
+    "workplaces": 1
+  },
+  "facilities": [
+    {
+      "id": "bed:18,10,22",
+      "kind": "bed",
+      "pos": [
+        18,
+        10,
+        22
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "bedroom_1",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        19,
+        10,
+        23
+      ]
+    },
+    {
+      "id": "bed:18,10,28",
+      "kind": "bed",
+      "pos": [
+        18,
+        10,
+        28
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "bedroom_2",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        19,
+        10,
+        29
+      ]
+    },
+    {
+      "id": "bed:18,10,36",
+      "kind": "bed",
+      "pos": [
+        18,
+        10,
+        36
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "bedroom_3",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        19,
+        10,
+        37
+      ]
+    },
+    {
+      "id": "work:21,2,26",
+      "kind": "work",
+      "pos": [
+        21,
+        2,
+        26
+      ],
+      "block": "minecraft:lectern",
+      "facing": "north",
+      "use": "staff",
+      "room": "study",
+      "name": "导师书斋",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        20,
+        2,
+        26
+      ]
+    },
+    {
+      "id": "bed:23,10,22",
+      "kind": "bed",
+      "pos": [
+        23,
+        10,
+        22
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "bedroom_1",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        24,
+        10,
+        23
+      ]
+    },
+    {
+      "id": "bed:23,10,28",
+      "kind": "bed",
+      "pos": [
+        23,
+        10,
+        28
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "bedroom_2",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        24,
+        10,
+        29
+      ]
+    },
+    {
+      "id": "bed:23,10,36",
+      "kind": "bed",
+      "pos": [
+        23,
+        10,
+        36
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "bedroom_3",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        24,
+        10,
+        37
+      ]
+    },
+    {
+      "id": "entrance:23,2,0",
+      "kind": "entrance",
+      "pos": [
+        23,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "临街步行入口",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "seat:16,2,27",
+      "kind": "seat",
+      "pos": [
+        16,
+        2,
+        27
+      ],
+      "block": "minecraft:birch_stairs",
+      "facing": "south",
+      "use": "resident",
+      "room": "study",
+      "name": "公共阅读、听课或用餐座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        17,
+        2,
+        27
+      ]
+    },
+    {
+      "id": "seat:16,2,29",
+      "kind": "seat",
+      "pos": [
+        16,
+        2,
+        29
+      ],
+      "block": "minecraft:birch_stairs",
+      "facing": "north",
+      "use": "resident",
+      "room": "study",
+      "name": "公共阅读、听课或用餐座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        17,
+        2,
+        29
+      ]
+    },
+    {
+      "id": "seat:18,2,27",
+      "kind": "seat",
+      "pos": [
+        18,
+        2,
+        27
+      ],
+      "block": "minecraft:birch_stairs",
+      "facing": "south",
+      "use": "resident",
+      "room": "study",
+      "name": "公共阅读、听课或用餐座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        19,
+        2,
+        27
+      ]
+    },
+    {
+      "id": "seat:18,2,29",
+      "kind": "seat",
+      "pos": [
+        18,
+        2,
+        29
+      ],
+      "block": "minecraft:birch_stairs",
+      "facing": "north",
+      "use": "resident",
+      "room": "study",
+      "name": "公共阅读、听课或用餐座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        19,
+        2,
+        29
+      ]
+    },
+    {
+      "id": "seat:20,2,27",
+      "kind": "seat",
+      "pos": [
+        20,
+        2,
+        27
+      ],
+      "block": "minecraft:birch_stairs",
+      "facing": "south",
+      "use": "resident",
+      "room": "study",
+      "name": "公共阅读、听课或用餐座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        19,
+        2,
+        27
+      ]
+    },
+    {
+      "id": "seat:20,2,29",
+      "kind": "seat",
+      "pos": [
+        20,
+        2,
+        29
+      ],
+      "block": "minecraft:birch_stairs",
+      "facing": "north",
+      "use": "resident",
+      "room": "study",
+      "name": "公共阅读、听课或用餐座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        21,
+        2,
+        29
+      ]
+    },
+    {
+      "id": "seat:22,2,27",
+      "kind": "seat",
+      "pos": [
+        22,
+        2,
+        27
+      ],
+      "block": "minecraft:birch_stairs",
+      "facing": "south",
+      "use": "resident",
+      "room": "study",
+      "name": "公共阅读、听课或用餐座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        23,
+        2,
+        27
+      ]
+    },
+    {
+      "id": "seat:22,2,29",
+      "kind": "seat",
+      "pos": [
+        22,
+        2,
+        29
+      ],
+      "block": "minecraft:birch_stairs",
+      "facing": "north",
+      "use": "resident",
+      "room": "study",
+      "name": "公共阅读、听课或用餐座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        23,
+        2,
+        29
+      ]
+    }
+  ],
+  "warnings": []
+}

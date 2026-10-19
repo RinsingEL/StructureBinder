@@ -1,0 +1,116 @@
+{
+  "schema": "structure-studio.lighting-review.v1",
+  "nbt_sha256": "d3b9b7b0b653b2804eba73b6b64c7995d1c5926c35cd45ee6fe987e4fea04c23",
+  "scope": "Conservative offline block-light estimate for authored occupied spaces.\n\nThis is not Minecraft's light engine: no sky light, partial collision blocks are\nopaque, and state-dependent emitters are not simulated. It is an authoring check\nfor fixed lanterns, sea lanterns and end rods, not an in-game night acceptance.\n",
+  "emitterCount": 8,
+  "occupiedPointTarget": 8,
+  "floorTarget": 5,
+  "occupiedPoints": [
+    {
+      "id": "main_access",
+      "kind": "circulation",
+      "pos": [
+        10,
+        2,
+        5
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "teacher",
+      "kind": "work",
+      "pos": [
+        10,
+        2,
+        13
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "student_6_8",
+      "kind": "seat",
+      "pos": [
+        5,
+        2,
+        7
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "student_6_11",
+      "kind": "seat",
+      "pos": [
+        5,
+        2,
+        10
+      ],
+      "estimatedBlockLight": 9
+    },
+    {
+      "id": "student_8_8",
+      "kind": "seat",
+      "pos": [
+        7,
+        2,
+        7
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "student_8_11",
+      "kind": "seat",
+      "pos": [
+        7,
+        2,
+        10
+      ],
+      "estimatedBlockLight": 8
+    },
+    {
+      "id": "student_12_8",
+      "kind": "seat",
+      "pos": [
+        11,
+        2,
+        7
+      ],
+      "estimatedBlockLight": 11
+    },
+    {
+      "id": "student_12_11",
+      "kind": "seat",
+      "pos": [
+        11,
+        2,
+        10
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "student_14_8",
+      "kind": "seat",
+      "pos": [
+        13,
+        2,
+        7
+      ],
+      "estimatedBlockLight": 10
+    },
+    {
+      "id": "student_14_11",
+      "kind": "seat",
+      "pos": [
+        13,
+        2,
+        10
+      ],
+      "estimatedBlockLight": 8
+    }
+  ],
+  "floorSampleCount": 193,
+  "minimumOccupiedLight": 8,
+  "minimumFloorLight": 5,
+  "darkOccupiedPoints": [],
+  "darkFloorSamples": [],
+  "passed": true
+}

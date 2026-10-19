@@ -1,0 +1,36 @@
+{
+  "schema": "structure-studio.lighting-review.v1",
+  "nbt_sha256": "ac4e8db1218496da4d2b900a13026f6969a858d27637613ccd389383d09fcab2",
+  "scope": "Conservative offline block-light estimate for authored occupied spaces.\n\nThis is not Minecraft's light engine: no sky light, partial collision blocks are\nopaque, and state-dependent emitters are not simulated. It is an authoring check\nfor fixed lanterns, sea lanterns and end rods, not an in-game night acceptance.\n",
+  "emitterCount": 7,
+  "occupiedPointTarget": 8,
+  "floorTarget": 5,
+  "occupiedPoints": [
+    {
+      "id": "north-1",
+      "kind": "circulation",
+      "pos": [
+        5,
+        2,
+        0
+      ],
+      "estimatedBlockLight": 14
+    },
+    {
+      "id": "south-1",
+      "kind": "circulation",
+      "pos": [
+        5,
+        2,
+        26
+      ],
+      "estimatedBlockLight": 14
+    }
+  ],
+  "floorSampleCount": 125,
+  "minimumOccupiedLight": 14,
+  "minimumFloorLight": 7,
+  "darkOccupiedPoints": [],
+  "darkFloorSamples": [],
+  "passed": true
+}

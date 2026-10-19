@@ -14,6 +14,7 @@ for (const block of data.blocksArray) {
   const shapeIds=data.blockCollisionShapes.blocks[block.name];
   const ids=Array.isArray(shapeIds)?shapeIds:[shapeIds];
   registry[`minecraft:${block.name}`] = {properties, default: defaults, transparent: block.transparent, boundingBox: block.boundingBox,
+    light_emission:block.emitLight, light_filter:block.filterLight,
     state_order:block.states.map(s=>s.name), collisions:ids.map(id=>data.blockCollisionShapes.shapes[id]??null)};
 }
 mkdirSync('.cache', {recursive: true});

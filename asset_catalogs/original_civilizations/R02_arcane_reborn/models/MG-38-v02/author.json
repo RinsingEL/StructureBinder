@@ -1,0 +1,875 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-38-v02",
+  "name": "阶顶研究书楼 · 三层书室与观景露台",
+  "family": "MG-38",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    31,
+    49,
+    31
+  ],
+  "terrain": {
+    "选址": "核心台地的稳定承载面；连接件由连接系统确定位置与支撑。"
+  },
+  "rooms": [
+    {
+      "id": "lower-1",
+      "name": "藏书研读大厅",
+      "min": [
+        6,
+        2,
+        7
+      ],
+      "max": [
+        24,
+        8,
+        24
+      ],
+      "purpose": "阅读、书目查询与研究"
+    },
+    {
+      "id": "lower-11",
+      "name": "藏书研读大厅",
+      "min": [
+        6,
+        12,
+        7
+      ],
+      "max": [
+        24,
+        18,
+        24
+      ],
+      "purpose": "阅读、书目查询与研究"
+    },
+    {
+      "id": "upper",
+      "name": "上层研究书室",
+      "min": [
+        10,
+        22,
+        11
+      ],
+      "max": [
+        20,
+        28,
+        21
+      ],
+      "purpose": "研究与研讨"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        15,
+        2,
+        0
+      ],
+      "name": "临街主入口",
+      "direction": "north",
+      "approach": [
+        15,
+        2,
+        2
+      ]
+    },
+    {
+      "id": "second-landing",
+      "kind": "circulation",
+      "pos": [
+        7,
+        12,
+        20
+      ],
+      "name": "楼梯上层平台",
+      "approach": [
+        7,
+        12,
+        20
+      ]
+    },
+    {
+      "id": "third-landing",
+      "kind": "circulation",
+      "pos": [
+        11,
+        22,
+        21
+      ],
+      "name": "楼梯上层平台",
+      "approach": [
+        11,
+        22,
+        21
+      ]
+    },
+    {
+      "id": "catalogue-1",
+      "kind": "work",
+      "pos": [
+        23,
+        2,
+        23
+      ],
+      "name": "书目查询与研究桌",
+      "look_at": [
+        23,
+        3,
+        23
+      ],
+      "approach": [
+        23,
+        2,
+        22
+      ],
+      "use": "staff"
+    },
+    {
+      "id": "catalogue-11",
+      "kind": "work",
+      "pos": [
+        23,
+        12,
+        23
+      ],
+      "name": "书目查询与研究桌",
+      "look_at": [
+        23,
+        13,
+        23
+      ],
+      "approach": [
+        23,
+        12,
+        22
+      ],
+      "use": "staff"
+    },
+    {
+      "id": "research-21",
+      "kind": "work",
+      "pos": [
+        18,
+        22,
+        18
+      ],
+      "name": "上层研究讲台",
+      "look_at": [
+        18,
+        23,
+        18
+      ],
+      "approach": [
+        19,
+        22,
+        18
+      ],
+      "use": "staff"
+    },
+    {
+      "id": "terrace",
+      "kind": "circulation",
+      "pos": [
+        23,
+        22,
+        16
+      ],
+      "name": "高层观景露台",
+      "approach": [
+        23,
+        22,
+        16
+      ]
+    },
+    {
+      "id": "west-ground",
+      "kind": "circulation",
+      "pos": [
+        0,
+        2,
+        23
+      ],
+      "name": "连接廊端口",
+      "direction": "west",
+      "approach": [
+        1,
+        2,
+        23
+      ]
+    },
+    {
+      "id": "west-upper",
+      "kind": "circulation",
+      "pos": [
+        0,
+        12,
+        23
+      ],
+      "name": "连接廊端口",
+      "direction": "west",
+      "approach": [
+        1,
+        12,
+        23
+      ]
+    },
+    {
+      "id": "east-ground",
+      "kind": "circulation",
+      "pos": [
+        30,
+        2,
+        16
+      ],
+      "name": "连接廊端口",
+      "direction": "east",
+      "approach": [
+        29,
+        2,
+        16
+      ]
+    },
+    {
+      "id": "east-upper",
+      "kind": "circulation",
+      "pos": [
+        30,
+        12,
+        16
+      ],
+      "name": "连接廊端口",
+      "direction": "east",
+      "approach": [
+        29,
+        12,
+        16
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "west-ground",
+      "point_id": "west-ground",
+      "kind": "academy_gallery",
+      "pos": [
+        0,
+        2,
+        23
+      ],
+      "direction": "west",
+      "standing_y": 2,
+      "width": 3,
+      "height": 4,
+      "note": "中心线处 3 格宽、4 格高净空；原点为边缘地板上方脚底；需由程序旋转对接。"
+    },
+    {
+      "id": "west-upper",
+      "point_id": "west-upper",
+      "kind": "academy_gallery",
+      "pos": [
+        0,
+        12,
+        23
+      ],
+      "direction": "west",
+      "standing_y": 12,
+      "width": 3,
+      "height": 4,
+      "note": "中心线处 3 格宽、4 格高净空；原点为边缘地板上方脚底；需由程序旋转对接。"
+    },
+    {
+      "id": "east-ground",
+      "point_id": "east-ground",
+      "kind": "academy_gallery",
+      "pos": [
+        30,
+        2,
+        16
+      ],
+      "direction": "east",
+      "standing_y": 2,
+      "width": 3,
+      "height": 4,
+      "note": "中心线处 3 格宽、4 格高净空；原点为边缘地板上方脚底；需由程序旋转对接。"
+    },
+    {
+      "id": "east-upper",
+      "point_id": "east-upper",
+      "kind": "academy_gallery",
+      "pos": [
+        30,
+        12,
+        16
+      ],
+      "direction": "east",
+      "standing_y": 12,
+      "width": 3,
+      "height": 4,
+      "note": "中心线处 3 格宽、4 格高净空；原点为边缘地板上方脚底；需由程序旋转对接。"
+    }
+  ],
+  "design_notes": [
+    "补足大核心周围的多层翼楼、折角与围院，基础只覆盖实际楼体及通路。",
+    "连接端口为作者标记，尚未接入自动拼装；以局部坐标、方向、脚底高度和净空配对。",
+    "紫晶、仪器与符文均为原版静态方块，不声明魔法功能已经运行。",
+    "仅作者声明的工作点计入岗位容量；装饰桶、家庭储物与学生/访客使用设施不冒充员工工位。"
+  ],
+  "differences": [
+    "2026-10-19 全学院可进入建筑：补齐功能工位/公共席位，分层分区照明，保留旧版本。"
+  ],
+  "floors": [
+    {
+      "name": "第1层",
+      "y": 1,
+      "max_y": 9
+    },
+    {
+      "name": "第2层",
+      "y": 11,
+      "max_y": 19
+    },
+    {
+      "name": "第3层",
+      "y": 21,
+      "max_y": 29
+    }
+  ],
+  "roof_min_y": 31,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/academy_interiors.py:BUILDERS",
+  "function_terms": [
+    "阅读",
+    "研究",
+    "研讨"
+  ],
+  "asset_tags": [],
+  "campus_consumer": "array",
+  "ground_plane": {
+    "y": 2,
+    "note": "街面脚底 Y=2；教学组团二层接口脚底 Y=12。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 1,
+  "workplace_policy": "authored",
+  "interior_lighting": {
+    "source": "fixed_emitters_no_skylight_conservative_estimate",
+    "occupiedPointTarget": 8,
+    "floorTarget": 5,
+    "sampledPositions": 731,
+    "fixtures": [
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          1,
+          5,
+          23
+        ],
+        "support": [
+          1,
+          11,
+          23
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          1,
+          11,
+          23
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          7,
+          15,
+          20
+        ],
+        "support": [
+          7,
+          21,
+          20
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          11,
+          25,
+          21
+        ],
+        "support": [
+          11,
+          34,
+          21
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          19,
+          25,
+          18
+        ],
+        "support": [
+          19,
+          34,
+          18
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          23,
+          5,
+          22
+        ],
+        "support": [
+          23,
+          11,
+          22
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          23,
+          15,
+          22
+        ],
+        "support": [
+          23,
+          21,
+          22
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          29,
+          5,
+          16
+        ],
+        "support": [
+          29,
+          11,
+          16
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          29,
+          11,
+          16
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          6,
+          5,
+          7
+        ],
+        "support": [
+          6,
+          11,
+          7
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          6,
+          5,
+          20
+        ],
+        "support": [
+          6,
+          11,
+          20
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          6,
+          15,
+          7
+        ],
+        "support": [
+          6,
+          21,
+          7
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          6,
+          15,
+          14
+        ],
+        "support": [
+          6,
+          21,
+          14
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          8,
+          21,
+          9
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          8,
+          21,
+          16
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          9,
+          5,
+          14
+        ],
+        "support": [
+          9,
+          6,
+          14
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          9,
+          5,
+          24
+        ],
+        "support": [
+          9,
+          11,
+          24
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          10,
+          15,
+          10
+        ],
+        "support": [
+          10,
+          17,
+          10
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          10,
+          15,
+          24
+        ],
+        "support": [
+          10,
+          21,
+          24
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          11,
+          5,
+          9
+        ],
+        "support": [
+          11,
+          11,
+          9
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          12,
+          5,
+          18
+        ],
+        "support": [
+          12,
+          11,
+          18
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          12,
+          25,
+          12
+        ],
+        "support": [
+          12,
+          35,
+          12
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          13,
+          15,
+          14
+        ],
+        "support": [
+          13,
+          21,
+          14
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          14,
+          15,
+          7
+        ],
+        "support": [
+          14,
+          21,
+          7
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          14,
+          15,
+          20
+        ],
+        "support": [
+          14,
+          21,
+          20
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          15,
+          5,
+          6
+        ],
+        "support": [
+          15,
+          8,
+          6
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          15,
+          5,
+          13
+        ],
+        "support": [
+          15,
+          11,
+          13
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          15,
+          5,
+          22
+        ],
+        "support": [
+          15,
+          8,
+          22
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          17,
+          15,
+          11
+        ],
+        "support": [
+          17,
+          21,
+          11
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          17,
+          15,
+          24
+        ],
+        "support": [
+          17,
+          21,
+          24
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          18,
+          5,
+          17
+        ],
+        "support": [
+          18,
+          11,
+          17
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          18,
+          15,
+          17
+        ],
+        "support": [
+          18,
+          21,
+          17
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          18,
+          25,
+          11
+        ],
+        "support": [
+          18,
+          35,
+          11
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          19,
+          5,
+          9
+        ],
+        "support": [
+          19,
+          11,
+          9
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          21,
+          15,
+          7
+        ],
+        "support": [
+          21,
+          21,
+          7
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          21,
+          25,
+          7
+        ],
+        "support": [
+          21,
+          35,
+          7
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          22,
+          5,
+          13
+        ],
+        "support": [
+          22,
+          11,
+          13
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          22,
+          15,
+          13
+        ],
+        "support": [
+          22,
+          21,
+          13
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          22,
+          21,
+          14
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          22,
+          21,
+          22
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          24,
+          1,
+          7
+        ]
+      }
+    ],
+    "note": "低位吊灯使用实际屋面或楼板承吊；高厅与开放处采用齐平星石灯。估计不替代 Minecraft 夜间验收。"
+  },
+  "nbt_sha256": "d92f8371cb0d9dd3ab96b433cce98828b6372cd6df11e261447aed8126e387e6"
+}

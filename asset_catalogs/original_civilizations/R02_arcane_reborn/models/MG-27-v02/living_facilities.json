@@ -1,0 +1,373 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    19,
+    24,
+    23
+  ],
+  "sourceSha256": "a24ebf20fd3963670afa89118c8d1466243b41e329ec86bd23736b89ed0f6db1",
+  "capacity": {
+    "residentBeds": 16,
+    "workplaces": 0
+  },
+  "facilities": [
+    {
+      "id": "bed:5,2,7",
+      "kind": "bed",
+      "pos": [
+        5,
+        2,
+        7
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "resident",
+      "room": "main",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        6,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "bed:5,2,10",
+      "kind": "bed",
+      "pos": [
+        5,
+        2,
+        10
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "resident",
+      "room": "main",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        6,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "bed:5,2,13",
+      "kind": "bed",
+      "pos": [
+        5,
+        2,
+        13
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "resident",
+      "room": "main",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        6,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "bed:5,2,16",
+      "kind": "bed",
+      "pos": [
+        5,
+        2,
+        16
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "resident",
+      "room": "main",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        6,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "bed:7,2,7",
+      "kind": "bed",
+      "pos": [
+        7,
+        2,
+        7
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "resident",
+      "room": "main",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        8,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "bed:7,2,10",
+      "kind": "bed",
+      "pos": [
+        7,
+        2,
+        10
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "resident",
+      "room": "main",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        8,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "bed:7,2,13",
+      "kind": "bed",
+      "pos": [
+        7,
+        2,
+        13
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "resident",
+      "room": "main",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        8,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "bed:7,2,16",
+      "kind": "bed",
+      "pos": [
+        7,
+        2,
+        16
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "resident",
+      "room": "main",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        8,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "bed:11,2,7",
+      "kind": "bed",
+      "pos": [
+        11,
+        2,
+        7
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "resident",
+      "room": "main",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        12,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "bed:11,2,10",
+      "kind": "bed",
+      "pos": [
+        11,
+        2,
+        10
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "resident",
+      "room": "main",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        12,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "bed:11,2,13",
+      "kind": "bed",
+      "pos": [
+        11,
+        2,
+        13
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "resident",
+      "room": "main",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        12,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "bed:11,2,16",
+      "kind": "bed",
+      "pos": [
+        11,
+        2,
+        16
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "resident",
+      "room": "main",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        12,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "bed:13,2,7",
+      "kind": "bed",
+      "pos": [
+        13,
+        2,
+        7
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "resident",
+      "room": "main",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        14,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "bed:13,2,10",
+      "kind": "bed",
+      "pos": [
+        13,
+        2,
+        10
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "resident",
+      "room": "main",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        14,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "bed:13,2,13",
+      "kind": "bed",
+      "pos": [
+        13,
+        2,
+        13
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "resident",
+      "room": "main",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        14,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "bed:13,2,16",
+      "kind": "bed",
+      "pos": [
+        13,
+        2,
+        16
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "south",
+      "use": "resident",
+      "room": "main",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        14,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "entrance:9,2,0",
+      "kind": "entrance",
+      "pos": [
+        9,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "主入口",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        9,
+        2,
+        2
+      ]
+    }
+  ],
+  "warnings": []
+}

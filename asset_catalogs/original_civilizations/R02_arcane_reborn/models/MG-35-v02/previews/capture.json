@@ -1,0 +1,26 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "MG-35-v02",
+  "nbt_sha256": "14e2c9240334a7dffe298929b14a9c646711ce367ab4ce8496063d076732e575",
+  "author_sha256": "f4f3beb7c762a5149975c73587465d1a43f2360bbefd1fdc27421c7291216d2f",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "floor-2",
+    "room-seminar-1",
+    "room-research-1",
+    "room-seminar-11",
+    "room-research-11",
+    "use-work",
+    "use-seat",
+    "annotations"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

@@ -1,0 +1,37 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    11,
+    35,
+    27
+  ],
+  "sourceSha256": "212eb150214eca0637ca7d474e13651d7185c07bf085f780709c99d2bf4c640b",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 0
+  },
+  "facilities": [
+    {
+      "id": "entrance:5,2,0",
+      "kind": "entrance",
+      "pos": [
+        5,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "连接件地面入口",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        5,
+        2,
+        1
+      ]
+    }
+  ],
+  "warnings": []
+}

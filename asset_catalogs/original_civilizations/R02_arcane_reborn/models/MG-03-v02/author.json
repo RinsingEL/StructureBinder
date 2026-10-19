@@ -1,0 +1,1418 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-03-v02",
+  "name": "子午观星台 · 阶塔与开瓣星穹",
+  "family": "MG-03",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.key",
+  "size": [
+    51,
+    64,
+    55
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [
+    {
+      "id": "archive",
+      "name": "星图档案",
+      "min": [
+        17,
+        2,
+        20
+      ],
+      "max": [
+        33,
+        9,
+        38
+      ],
+      "purpose": "星图存放与接待"
+    }
+  ],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        25,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "chart",
+      "kind": "work",
+      "pos": [
+        26,
+        11,
+        33
+      ],
+      "name": "历法与星图层",
+      "approach": [
+        25,
+        11,
+        33
+      ],
+      "use": "staff"
+    },
+    {
+      "id": "study",
+      "kind": "work",
+      "pos": [
+        26,
+        20,
+        33
+      ],
+      "name": "观测准备层",
+      "approach": [
+        25,
+        20,
+        33
+      ],
+      "use": "staff"
+    },
+    {
+      "id": "sky",
+      "kind": "work",
+      "pos": [
+        26,
+        29,
+        22
+      ],
+      "name": "星仪观测露台",
+      "approach": [
+        25,
+        29,
+        22
+      ],
+      "use": "staff"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。",
+    "仅作者声明的工作点计入岗位容量；装饰桶、家庭储物与学生/访客使用设施不冒充员工工位。"
+  ],
+  "differences": [
+    "2026-10-19 全学院可进入建筑：补齐功能工位/公共席位，分层分区照明，保留旧版本。"
+  ],
+  "floors": [
+    {
+      "name": "档案",
+      "y": 1,
+      "max_y": 9
+    },
+    {
+      "name": "星图工作层",
+      "y": 10,
+      "max_y": 18
+    },
+    {
+      "name": "准备层",
+      "y": 19,
+      "max_y": 27
+    },
+    {
+      "name": "星仪露台",
+      "y": 28,
+      "max_y": 48
+    }
+  ],
+  "roof_min_y": 30,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "天象观测",
+    "研究"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/academy_interiors.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "workplace_policy": "authored",
+  "interior_lighting": {
+    "source": "fixed_emitters_no_skylight_conservative_estimate",
+    "occupiedPointTarget": 8,
+    "floorTarget": 5,
+    "sampledPositions": 2190,
+    "fixtures": [
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          25,
+          14,
+          33
+        ],
+        "support": [
+          25,
+          19,
+          33
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          25,
+          23,
+          33
+        ],
+        "support": [
+          25,
+          28,
+          33
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          25,
+          28,
+          22
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          11,
+          5,
+          25
+        ],
+        "support": [
+          11,
+          10,
+          25
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          11,
+          5,
+          32
+        ],
+        "support": [
+          11,
+          10,
+          32
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          11,
+          14,
+          19
+        ],
+        "support": [
+          11,
+          19,
+          19
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          11,
+          14,
+          26
+        ],
+        "support": [
+          11,
+          19,
+          26
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          11,
+          14,
+          33
+        ],
+        "support": [
+          11,
+          19,
+          33
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          11,
+          19,
+          19
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          11,
+          23,
+          26
+        ],
+        "support": [
+          11,
+          28,
+          26
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          11,
+          23,
+          33
+        ],
+        "support": [
+          11,
+          28,
+          33
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          12,
+          5,
+          18
+        ],
+        "support": [
+          12,
+          10,
+          18
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          12,
+          5,
+          39
+        ],
+        "support": [
+          12,
+          10,
+          39
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          12,
+          14,
+          39
+        ],
+        "support": [
+          12,
+          19,
+          39
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          12,
+          23,
+          39
+        ],
+        "support": [
+          12,
+          28,
+          39
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          13,
+          32,
+          29
+        ],
+        "support": [
+          13,
+          34,
+          29
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          15,
+          5,
+          28
+        ],
+        "support": [
+          15,
+          10,
+          28
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          15,
+          5,
+          35
+        ],
+        "support": [
+          15,
+          10,
+          35
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          15,
+          14,
+          15
+        ],
+        "support": [
+          15,
+          19,
+          15
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          15,
+          14,
+          29
+        ],
+        "support": [
+          15,
+          19,
+          29
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          15,
+          14,
+          43
+        ],
+        "support": [
+          15,
+          19,
+          43
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          15,
+          19,
+          15
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          15,
+          23,
+          29
+        ],
+        "support": [
+          15,
+          28,
+          29
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          15,
+          19,
+          43
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          16,
+          5,
+          42
+        ],
+        "support": [
+          16,
+          10,
+          42
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          16,
+          14,
+          21
+        ],
+        "support": [
+          16,
+          19,
+          21
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          16,
+          14,
+          35
+        ],
+        "support": [
+          16,
+          19,
+          35
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          16,
+          23,
+          35
+        ],
+        "support": [
+          16,
+          28,
+          35
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          17,
+          5,
+          15
+        ],
+        "support": [
+          17,
+          10,
+          15
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          17,
+          5,
+          22
+        ],
+        "support": [
+          17,
+          10,
+          22
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          17,
+          23,
+          20
+        ],
+        "support": [
+          17,
+          28,
+          20
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          19,
+          5,
+          31
+        ],
+        "support": [
+          19,
+          10,
+          31
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          19,
+          5,
+          38
+        ],
+        "support": [
+          19,
+          10,
+          38
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          19,
+          14,
+          25
+        ],
+        "support": [
+          19,
+          19,
+          25
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          19,
+          14,
+          39
+        ],
+        "support": [
+          19,
+          19,
+          39
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          19,
+          23,
+          25
+        ],
+        "support": [
+          19,
+          28,
+          25
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          19,
+          23,
+          39
+        ],
+        "support": [
+          19,
+          28,
+          39
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          20,
+          14,
+          17
+        ],
+        "support": [
+          20,
+          19,
+          17
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          20,
+          14,
+          31
+        ],
+        "support": [
+          20,
+          19,
+          31
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          20,
+          23,
+          31
+        ],
+        "support": [
+          20,
+          28,
+          31
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          21,
+          5,
+          11
+        ],
+        "support": [
+          21,
+          7,
+          11
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          21,
+          5,
+          18
+        ],
+        "support": [
+          21,
+          10,
+          18
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          21,
+          5,
+          25
+        ],
+        "support": [
+          21,
+          10,
+          25
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          21,
+          23,
+          16
+        ],
+        "support": [
+          21,
+          28,
+          16
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          22,
+          5,
+          43
+        ],
+        "support": [
+          22,
+          10,
+          43
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          22,
+          14,
+          43
+        ],
+        "support": [
+          22,
+          19,
+          43
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          22,
+          23,
+          43
+        ],
+        "support": [
+          22,
+          28,
+          43
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          23,
+          5,
+          34
+        ],
+        "support": [
+          23,
+          10,
+          34
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          23,
+          14,
+          21
+        ],
+        "support": [
+          23,
+          19,
+          21
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          23,
+          23,
+          21
+        ],
+        "support": [
+          23,
+          28,
+          21
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          24,
+          14,
+          27
+        ],
+        "support": [
+          24,
+          19,
+          27
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          24,
+          23,
+          27
+        ],
+        "support": [
+          24,
+          28,
+          27
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          25,
+          5,
+          14
+        ],
+        "support": [
+          25,
+          11,
+          14
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          25,
+          5,
+          21
+        ],
+        "support": [
+          25,
+          10,
+          21
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          25,
+          5,
+          28
+        ],
+        "support": [
+          25,
+          10,
+          28
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          25,
+          5,
+          39
+        ],
+        "support": [
+          25,
+          10,
+          39
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          25,
+          14,
+          15
+        ],
+        "support": [
+          25,
+          19,
+          15
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          25,
+          28,
+          35
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          26,
+          14,
+          39
+        ],
+        "support": [
+          26,
+          19,
+          39
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          26,
+          23,
+          39
+        ],
+        "support": [
+          26,
+          28,
+          39
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          27,
+          23,
+          15
+        ],
+        "support": [
+          27,
+          28,
+          15
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          28,
+          5,
+          32
+        ],
+        "support": [
+          28,
+          10,
+          32
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          28,
+          14,
+          19
+        ],
+        "support": [
+          28,
+          19,
+          19
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          28,
+          23,
+          23
+        ],
+        "support": [
+          28,
+          28,
+          23
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          29,
+          5,
+          11
+        ],
+        "support": [
+          29,
+          7,
+          11
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          29,
+          5,
+          18
+        ],
+        "support": [
+          29,
+          10,
+          18
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          29,
+          5,
+          25
+        ],
+        "support": [
+          29,
+          10,
+          25
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          29,
+          5,
+          42
+        ],
+        "support": [
+          29,
+          10,
+          42
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          29,
+          14,
+          25
+        ],
+        "support": [
+          29,
+          19,
+          25
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          29,
+          14,
+          43
+        ],
+        "support": [
+          29,
+          19,
+          43
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          29,
+          23,
+          29
+        ],
+        "support": [
+          29,
+          28,
+          29
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          29,
+          23,
+          43
+        ],
+        "support": [
+          29,
+          28,
+          43
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          30,
+          14,
+          31
+        ],
+        "support": [
+          30,
+          19,
+          31
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          30,
+          23,
+          35
+        ],
+        "support": [
+          30,
+          28,
+          35
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          31,
+          5,
+          36
+        ],
+        "support": [
+          31,
+          10,
+          36
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          31,
+          14,
+          37
+        ],
+        "support": [
+          31,
+          19,
+          37
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          31,
+          23,
+          18
+        ],
+        "support": [
+          31,
+          28,
+          18
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          31,
+          28,
+          29
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          32,
+          5,
+          29
+        ],
+        "support": [
+          32,
+          10,
+          29
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          32,
+          14,
+          15
+        ],
+        "support": [
+          32,
+          19,
+          15
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          33,
+          5,
+          15
+        ],
+        "support": [
+          33,
+          10,
+          15
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          33,
+          5,
+          22
+        ],
+        "support": [
+          33,
+          10,
+          22
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          33,
+          14,
+          21
+        ],
+        "support": [
+          33,
+          19,
+          21
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          33,
+          23,
+          25
+        ],
+        "support": [
+          33,
+          28,
+          25
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          33,
+          23,
+          39
+        ],
+        "support": [
+          33,
+          28,
+          39
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          34,
+          5,
+          40
+        ],
+        "support": [
+          34,
+          10,
+          40
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          34,
+          14,
+          27
+        ],
+        "support": [
+          34,
+          19,
+          27
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          34,
+          14,
+          41
+        ],
+        "support": [
+          34,
+          19,
+          41
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          35,
+          5,
+          33
+        ],
+        "support": [
+          35,
+          10,
+          33
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          35,
+          19,
+          15
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          36,
+          5,
+          26
+        ],
+        "support": [
+          36,
+          10,
+          26
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          36,
+          23,
+          21
+        ],
+        "support": [
+          36,
+          28,
+          21
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          36,
+          23,
+          29
+        ],
+        "support": [
+          36,
+          28,
+          29
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          37,
+          5,
+          18
+        ],
+        "support": [
+          37,
+          10,
+          18
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          37,
+          14,
+          17
+        ],
+        "support": [
+          37,
+          19,
+          17
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          37,
+          14,
+          31
+        ],
+        "support": [
+          37,
+          19,
+          31
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          38,
+          14,
+          23
+        ],
+        "support": [
+          38,
+          19,
+          23
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          38,
+          14,
+          37
+        ],
+        "support": [
+          38,
+          19,
+          37
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          38,
+          19,
+          34
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          39,
+          5,
+          30
+        ],
+        "support": [
+          39,
+          10,
+          30
+        ]
+      }
+    ],
+    "note": "低位吊灯使用实际屋面或楼板承吊；高厅与开放处采用齐平星石灯。估计不替代 Minecraft 夜间验收。"
+  },
+  "nbt_sha256": "4ad1a6edb7faa6763e3f30770ca3a34b8a296cc6bec3fd815512e6c93498d276"
+}

@@ -1,0 +1,116 @@
+{
+  "schema": "structure-studio.lighting-review.v1",
+  "nbt_sha256": "d92f8371cb0d9dd3ab96b433cce98828b6372cd6df11e261447aed8126e387e6",
+  "scope": "Conservative offline block-light estimate for authored occupied spaces.\n\nThis is not Minecraft's light engine: no sky light, partial collision blocks are\nopaque, and state-dependent emitters are not simulated. It is an authoring check\nfor fixed lanterns, sea lanterns and end rods, not an in-game night acceptance.\n",
+  "emitterCount": 41,
+  "occupiedPointTarget": 8,
+  "floorTarget": 5,
+  "occupiedPoints": [
+    {
+      "id": "second-landing",
+      "kind": "circulation",
+      "pos": [
+        7,
+        12,
+        20
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "third-landing",
+      "kind": "circulation",
+      "pos": [
+        11,
+        22,
+        21
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "catalogue-1",
+      "kind": "work",
+      "pos": [
+        23,
+        2,
+        22
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "catalogue-11",
+      "kind": "work",
+      "pos": [
+        23,
+        12,
+        22
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "research-21",
+      "kind": "work",
+      "pos": [
+        19,
+        22,
+        18
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "terrace",
+      "kind": "circulation",
+      "pos": [
+        23,
+        22,
+        16
+      ],
+      "estimatedBlockLight": 11
+    },
+    {
+      "id": "west-ground",
+      "kind": "circulation",
+      "pos": [
+        1,
+        2,
+        23
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "west-upper",
+      "kind": "circulation",
+      "pos": [
+        1,
+        12,
+        23
+      ],
+      "estimatedBlockLight": 14
+    },
+    {
+      "id": "east-ground",
+      "kind": "circulation",
+      "pos": [
+        29,
+        2,
+        16
+      ],
+      "estimatedBlockLight": 12
+    },
+    {
+      "id": "east-upper",
+      "kind": "circulation",
+      "pos": [
+        29,
+        12,
+        16
+      ],
+      "estimatedBlockLight": 14
+    }
+  ],
+  "floorSampleCount": 758,
+  "minimumOccupiedLight": 11,
+  "minimumFloorLight": 5,
+  "darkOccupiedPoints": [],
+  "darkFloorSamples": [],
+  "passed": true
+}

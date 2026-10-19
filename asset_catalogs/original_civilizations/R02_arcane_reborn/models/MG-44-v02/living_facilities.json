@@ -1,0 +1,100 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    23,
+    24,
+    25
+  ],
+  "sourceSha256": "7f2a51947c6643b8789032c55d4c1a6dc5096478bd5840eac834f0bca72422c7",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 2
+  },
+  "facilities": [
+    {
+      "id": "work:12,2,7",
+      "kind": "work",
+      "pos": [
+        12,
+        2,
+        7
+      ],
+      "block": "minecraft:lectern",
+      "facing": "north",
+      "use": "staff",
+      "room": "main",
+      "name": "洗浴接待与清洁",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        11,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "work:12,2,18",
+      "kind": "work",
+      "pos": [
+        12,
+        2,
+        18
+      ],
+      "block": "minecraft:lectern",
+      "facing": "north",
+      "use": "staff",
+      "room": "main",
+      "name": "洗衣与毛巾管理",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        11,
+        2,
+        18
+      ]
+    },
+    {
+      "id": "entrance:11,2,0",
+      "kind": "entrance",
+      "pos": [
+        11,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "主入口",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        11,
+        2,
+        2
+      ]
+    },
+    {
+      "id": "meeting:11,2,14",
+      "kind": "meeting",
+      "pos": [
+        11,
+        2,
+        14
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "public",
+      "room": "main",
+      "name": "池间洗浴通路",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        11,
+        2,
+        14
+      ]
+    }
+  ],
+  "warnings": []
+}

@@ -1,0 +1,1942 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "MG-36-v02",
+  "name": "三翼教学庭院 · U 形围院与双门塔",
+  "family": "MG-36",
+  "civilization": "魔法学院新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    57,
+    51,
+    49
+  ],
+  "terrain": {
+    "选址": "核心台地的稳定承载面；连接件由连接系统确定位置与支撑。"
+  },
+  "rooms": [
+    {
+      "id": "west-1",
+      "name": "课堂",
+      "min": [
+        7,
+        2,
+        15
+      ],
+      "max": [
+        16,
+        8,
+        26
+      ],
+      "purpose": "课堂教学与研讨"
+    },
+    {
+      "id": "east-1",
+      "name": "课堂",
+      "min": [
+        40,
+        2,
+        15
+      ],
+      "max": [
+        49,
+        8,
+        26
+      ],
+      "purpose": "课堂教学与研讨"
+    },
+    {
+      "id": "rear-1",
+      "name": "研读室",
+      "min": [
+        20,
+        2,
+        31
+      ],
+      "max": [
+        35,
+        8,
+        40
+      ],
+      "purpose": "阅读与小组研究"
+    },
+    {
+      "id": "west-11",
+      "name": "课堂",
+      "min": [
+        7,
+        12,
+        15
+      ],
+      "max": [
+        16,
+        18,
+        26
+      ],
+      "purpose": "课堂教学与研讨"
+    },
+    {
+      "id": "east-11",
+      "name": "课堂",
+      "min": [
+        40,
+        12,
+        15
+      ],
+      "max": [
+        49,
+        18,
+        26
+      ],
+      "purpose": "课堂教学与研讨"
+    },
+    {
+      "id": "rear-11",
+      "name": "研读室",
+      "min": [
+        20,
+        12,
+        31
+      ],
+      "max": [
+        35,
+        18,
+        40
+      ],
+      "purpose": "阅读与小组研究"
+    }
+  ],
+  "points": [
+    {
+      "id": "front",
+      "kind": "entrance",
+      "pos": [
+        28,
+        2,
+        0
+      ],
+      "name": "临街主入口",
+      "direction": "north",
+      "approach": [
+        28,
+        2,
+        2
+      ]
+    },
+    {
+      "id": "upper-landing",
+      "kind": "circulation",
+      "pos": [
+        9,
+        12,
+        39
+      ],
+      "name": "楼梯上层平台",
+      "approach": [
+        9,
+        12,
+        39
+      ]
+    },
+    {
+      "id": "west-desk-1",
+      "kind": "work",
+      "pos": [
+        11,
+        2,
+        24
+      ],
+      "name": "教学与研读讲台",
+      "look_at": [
+        11,
+        3,
+        24
+      ],
+      "approach": [
+        11,
+        2,
+        25
+      ],
+      "use": "staff"
+    },
+    {
+      "id": "east-desk-1",
+      "kind": "work",
+      "pos": [
+        44,
+        2,
+        24
+      ],
+      "name": "教学与研读讲台",
+      "look_at": [
+        44,
+        3,
+        24
+      ],
+      "approach": [
+        44,
+        2,
+        25
+      ],
+      "use": "staff"
+    },
+    {
+      "id": "rear-desk-1",
+      "kind": "work",
+      "pos": [
+        27,
+        2,
+        38
+      ],
+      "name": "教学与研读讲台",
+      "look_at": [
+        27,
+        3,
+        38
+      ],
+      "approach": [
+        27,
+        2,
+        39
+      ],
+      "use": "staff"
+    },
+    {
+      "id": "west-desk-11",
+      "kind": "work",
+      "pos": [
+        11,
+        12,
+        24
+      ],
+      "name": "教学与研读讲台",
+      "look_at": [
+        11,
+        13,
+        24
+      ],
+      "approach": [
+        11,
+        12,
+        25
+      ],
+      "use": "staff"
+    },
+    {
+      "id": "east-desk-11",
+      "kind": "work",
+      "pos": [
+        44,
+        12,
+        24
+      ],
+      "name": "教学与研读讲台",
+      "look_at": [
+        44,
+        13,
+        24
+      ],
+      "approach": [
+        44,
+        12,
+        25
+      ],
+      "use": "staff"
+    },
+    {
+      "id": "rear-desk-11",
+      "kind": "work",
+      "pos": [
+        27,
+        12,
+        38
+      ],
+      "name": "教学与研读讲台",
+      "look_at": [
+        27,
+        13,
+        38
+      ],
+      "approach": [
+        27,
+        12,
+        39
+      ],
+      "use": "staff"
+    },
+    {
+      "id": "west-ground",
+      "kind": "circulation",
+      "pos": [
+        0,
+        2,
+        21
+      ],
+      "name": "连接廊端口",
+      "direction": "west",
+      "approach": [
+        1,
+        2,
+        21
+      ]
+    },
+    {
+      "id": "west-upper",
+      "kind": "circulation",
+      "pos": [
+        0,
+        12,
+        21
+      ],
+      "name": "连接廊端口",
+      "direction": "west",
+      "approach": [
+        1,
+        12,
+        21
+      ]
+    },
+    {
+      "id": "east-ground",
+      "kind": "circulation",
+      "pos": [
+        56,
+        2,
+        21
+      ],
+      "name": "连接廊端口",
+      "direction": "east",
+      "approach": [
+        55,
+        2,
+        21
+      ]
+    },
+    {
+      "id": "east-upper",
+      "kind": "circulation",
+      "pos": [
+        56,
+        12,
+        21
+      ],
+      "name": "连接廊端口",
+      "direction": "east",
+      "approach": [
+        55,
+        12,
+        21
+      ]
+    },
+    {
+      "id": "seat_9_2_17",
+      "kind": "seat",
+      "pos": [
+        9,
+        2,
+        17
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        10,
+        2,
+        17
+      ]
+    },
+    {
+      "id": "seat_9_2_22",
+      "kind": "seat",
+      "pos": [
+        9,
+        2,
+        22
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        10,
+        2,
+        22
+      ]
+    },
+    {
+      "id": "seat_9_12_17",
+      "kind": "seat",
+      "pos": [
+        9,
+        12,
+        17
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        10,
+        12,
+        17
+      ]
+    },
+    {
+      "id": "seat_9_12_22",
+      "kind": "seat",
+      "pos": [
+        9,
+        12,
+        22
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        10,
+        12,
+        22
+      ]
+    },
+    {
+      "id": "seat_14_2_17",
+      "kind": "seat",
+      "pos": [
+        14,
+        2,
+        17
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        15,
+        2,
+        17
+      ]
+    },
+    {
+      "id": "seat_14_2_22",
+      "kind": "seat",
+      "pos": [
+        14,
+        2,
+        22
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        15,
+        2,
+        22
+      ]
+    },
+    {
+      "id": "seat_14_12_17",
+      "kind": "seat",
+      "pos": [
+        14,
+        12,
+        17
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        15,
+        12,
+        17
+      ]
+    },
+    {
+      "id": "seat_14_12_22",
+      "kind": "seat",
+      "pos": [
+        14,
+        12,
+        22
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        15,
+        12,
+        22
+      ]
+    },
+    {
+      "id": "seat_22_2_33",
+      "kind": "seat",
+      "pos": [
+        22,
+        2,
+        33
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        23,
+        2,
+        33
+      ]
+    },
+    {
+      "id": "seat_22_12_33",
+      "kind": "seat",
+      "pos": [
+        22,
+        12,
+        33
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        23,
+        12,
+        33
+      ]
+    },
+    {
+      "id": "seat_26_2_10",
+      "kind": "seat",
+      "pos": [
+        26,
+        2,
+        10
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        27,
+        2,
+        10
+      ]
+    },
+    {
+      "id": "seat_26_2_25",
+      "kind": "seat",
+      "pos": [
+        26,
+        2,
+        25
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        27,
+        2,
+        25
+      ]
+    },
+    {
+      "id": "seat_27_2_33",
+      "kind": "seat",
+      "pos": [
+        27,
+        2,
+        33
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        28,
+        2,
+        33
+      ]
+    },
+    {
+      "id": "seat_27_12_33",
+      "kind": "seat",
+      "pos": [
+        27,
+        12,
+        33
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        28,
+        12,
+        33
+      ]
+    },
+    {
+      "id": "seat_30_2_10",
+      "kind": "seat",
+      "pos": [
+        30,
+        2,
+        10
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        31,
+        2,
+        10
+      ]
+    },
+    {
+      "id": "seat_30_2_25",
+      "kind": "seat",
+      "pos": [
+        30,
+        2,
+        25
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        31,
+        2,
+        25
+      ]
+    },
+    {
+      "id": "seat_32_2_33",
+      "kind": "seat",
+      "pos": [
+        32,
+        2,
+        33
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        33,
+        2,
+        33
+      ]
+    },
+    {
+      "id": "seat_32_12_33",
+      "kind": "seat",
+      "pos": [
+        32,
+        12,
+        33
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        33,
+        12,
+        33
+      ]
+    },
+    {
+      "id": "seat_42_2_17",
+      "kind": "seat",
+      "pos": [
+        42,
+        2,
+        17
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        43,
+        2,
+        17
+      ]
+    },
+    {
+      "id": "seat_42_2_22",
+      "kind": "seat",
+      "pos": [
+        42,
+        2,
+        22
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        43,
+        2,
+        22
+      ]
+    },
+    {
+      "id": "seat_42_12_17",
+      "kind": "seat",
+      "pos": [
+        42,
+        12,
+        17
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        43,
+        12,
+        17
+      ]
+    },
+    {
+      "id": "seat_42_12_22",
+      "kind": "seat",
+      "pos": [
+        42,
+        12,
+        22
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        43,
+        12,
+        22
+      ]
+    },
+    {
+      "id": "seat_47_2_17",
+      "kind": "seat",
+      "pos": [
+        47,
+        2,
+        17
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        48,
+        2,
+        17
+      ]
+    },
+    {
+      "id": "seat_47_2_22",
+      "kind": "seat",
+      "pos": [
+        47,
+        2,
+        22
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        48,
+        2,
+        22
+      ]
+    },
+    {
+      "id": "seat_47_12_17",
+      "kind": "seat",
+      "pos": [
+        47,
+        12,
+        17
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        48,
+        12,
+        17
+      ]
+    },
+    {
+      "id": "seat_47_12_22",
+      "kind": "seat",
+      "pos": [
+        47,
+        12,
+        22
+      ],
+      "name": "公共阅读、听课或用餐座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        48,
+        12,
+        22
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "west-ground",
+      "point_id": "west-ground",
+      "kind": "academy_gallery",
+      "pos": [
+        0,
+        2,
+        21
+      ],
+      "direction": "west",
+      "standing_y": 2,
+      "width": 3,
+      "height": 4,
+      "note": "中心线处 3 格宽、4 格高净空；原点为边缘地板上方脚底；需由程序旋转对接。"
+    },
+    {
+      "id": "west-upper",
+      "point_id": "west-upper",
+      "kind": "academy_gallery",
+      "pos": [
+        0,
+        12,
+        21
+      ],
+      "direction": "west",
+      "standing_y": 12,
+      "width": 3,
+      "height": 4,
+      "note": "中心线处 3 格宽、4 格高净空；原点为边缘地板上方脚底；需由程序旋转对接。"
+    },
+    {
+      "id": "east-ground",
+      "point_id": "east-ground",
+      "kind": "academy_gallery",
+      "pos": [
+        56,
+        2,
+        21
+      ],
+      "direction": "east",
+      "standing_y": 2,
+      "width": 3,
+      "height": 4,
+      "note": "中心线处 3 格宽、4 格高净空；原点为边缘地板上方脚底；需由程序旋转对接。"
+    },
+    {
+      "id": "east-upper",
+      "point_id": "east-upper",
+      "kind": "academy_gallery",
+      "pos": [
+        56,
+        12,
+        21
+      ],
+      "direction": "east",
+      "standing_y": 12,
+      "width": 3,
+      "height": 4,
+      "note": "中心线处 3 格宽、4 格高净空；原点为边缘地板上方脚底；需由程序旋转对接。"
+    }
+  ],
+  "design_notes": [
+    "补足大核心周围的多层翼楼、折角与围院，基础只覆盖实际楼体及通路。",
+    "连接端口为作者标记，尚未接入自动拼装；以局部坐标、方向、脚底高度和净空配对。",
+    "紫晶、仪器与符文均为原版静态方块，不声明魔法功能已经运行。",
+    "仅作者声明的工作点计入岗位容量；装饰桶、家庭储物与学生/访客使用设施不冒充员工工位。"
+  ],
+  "differences": [
+    "2026-10-19 全学院可进入建筑：补齐功能工位/公共席位，分层分区照明，保留旧版本。"
+  ],
+  "floors": [
+    {
+      "name": "第1层",
+      "y": 1,
+      "max_y": 9
+    },
+    {
+      "name": "第2层",
+      "y": 11,
+      "max_y": 19
+    }
+  ],
+  "roof_min_y": 23,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "source": "tools/structure_studio/studio/academy_interiors.py:BUILDERS",
+  "function_terms": [
+    "教学",
+    "研讨",
+    "研究",
+    "庭院休憩"
+  ],
+  "asset_tags": [],
+  "campus_consumer": "array",
+  "ground_plane": {
+    "y": 2,
+    "note": "街面脚底 Y=2；教学组团二层接口脚底 Y=12。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 1,
+  "workplace_policy": "authored",
+  "interior_lighting": {
+    "source": "fixed_emitters_no_skylight_conservative_estimate",
+    "occupiedPointTarget": 8,
+    "floorTarget": 5,
+    "sampledPositions": 2101,
+    "fixtures": [
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          1,
+          5,
+          21
+        ],
+        "support": [
+          1,
+          11,
+          21
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          1,
+          11,
+          21
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          9,
+          11,
+          39
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          10,
+          5,
+          17
+        ],
+        "support": [
+          10,
+          11,
+          17
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          10,
+          11,
+          17
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          11,
+          5,
+          25
+        ],
+        "support": [
+          11,
+          11,
+          25
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          11,
+          11,
+          25
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          15,
+          5,
+          22
+        ],
+        "support": [
+          15,
+          11,
+          22
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          15,
+          11,
+          22
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          23,
+          5,
+          33
+        ],
+        "support": [
+          23,
+          11,
+          33
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          23,
+          11,
+          33
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          27,
+          1,
+          10
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          27,
+          1,
+          25
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          27,
+          5,
+          39
+        ],
+        "support": [
+          27,
+          11,
+          39
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          27,
+          11,
+          39
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          33,
+          5,
+          33
+        ],
+        "support": [
+          33,
+          11,
+          33
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          33,
+          11,
+          33
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          43,
+          5,
+          17
+        ],
+        "support": [
+          43,
+          11,
+          17
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          43,
+          11,
+          17
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          44,
+          5,
+          25
+        ],
+        "support": [
+          44,
+          11,
+          25
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          44,
+          11,
+          25
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          48,
+          5,
+          22
+        ],
+        "support": [
+          48,
+          11,
+          22
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          48,
+          11,
+          22
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          55,
+          5,
+          21
+        ],
+        "support": [
+          55,
+          11,
+          21
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          55,
+          11,
+          21
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          6,
+          5,
+          9
+        ],
+        "support": [
+          6,
+          11,
+          9
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          6,
+          5,
+          23
+        ],
+        "support": [
+          6,
+          11,
+          23
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          6,
+          5,
+          30
+        ],
+        "support": [
+          6,
+          11,
+          30
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          6,
+          5,
+          37
+        ],
+        "support": [
+          6,
+          11,
+          37
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          6,
+          15,
+          9
+        ],
+        "support": [
+          6,
+          25,
+          9
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          6,
+          15,
+          23
+        ],
+        "support": [
+          6,
+          25,
+          23
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          6,
+          15,
+          30
+        ],
+        "support": [
+          6,
+          25,
+          30
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          9,
+          5,
+          41
+        ],
+        "support": [
+          9,
+          11,
+          41
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          10,
+          11,
+          33
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          11,
+          5,
+          11
+        ],
+        "support": [
+          11,
+          11,
+          11
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          11,
+          5,
+          32
+        ],
+        "support": [
+          11,
+          11,
+          32
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          11,
+          11,
+          11
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          13,
+          5,
+          37
+        ],
+        "support": [
+          13,
+          11,
+          37
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          14,
+          15,
+          29
+        ],
+        "support": [
+          14,
+          26,
+          29
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          14,
+          11,
+          36
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          15,
+          5,
+          14
+        ],
+        "support": [
+          15,
+          11,
+          14
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          15,
+          5,
+          29
+        ],
+        "support": [
+          15,
+          11,
+          29
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          15,
+          11,
+          14
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          16,
+          5,
+          41
+        ],
+        "support": [
+          16,
+          11,
+          41
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          16,
+          15,
+          41
+        ],
+        "support": [
+          16,
+          26,
+          41
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          17,
+          5,
+          9
+        ],
+        "support": [
+          17,
+          11,
+          9
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          17,
+          5,
+          34
+        ],
+        "support": [
+          17,
+          11,
+          34
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          17,
+          15,
+          9
+        ],
+        "support": [
+          17,
+          26,
+          9
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          18,
+          5,
+          18
+        ],
+        "support": [
+          18,
+          11,
+          18
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          18,
+          15,
+          18
+        ],
+        "support": [
+          18,
+          25,
+          18
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          18,
+          15,
+          26
+        ],
+        "support": [
+          18,
+          25,
+          26
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          19,
+          5,
+          25
+        ],
+        "support": [
+          19,
+          7,
+          25
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          21,
+          5,
+          38
+        ],
+        "support": [
+          21,
+          11,
+          38
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          21,
+          11,
+          38
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          26,
+          15,
+          29
+        ],
+        "support": [
+          26,
+          26,
+          29
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          28,
+          5,
+          31
+        ],
+        "support": [
+          28,
+          11,
+          31
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          32,
+          5,
+          41
+        ],
+        "support": [
+          32,
+          11,
+          41
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          32,
+          15,
+          41
+        ],
+        "support": [
+          32,
+          26,
+          41
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          36,
+          1,
+          9
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          36,
+          1,
+          16
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          36,
+          1,
+          23
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          36,
+          5,
+          37
+        ],
+        "support": [
+          36,
+          11,
+          37
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          36,
+          11,
+          29
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          36,
+          11,
+          37
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          37,
+          5,
+          29
+        ],
+        "support": [
+          37,
+          11,
+          29
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          38,
+          15,
+          9
+        ],
+        "support": [
+          38,
+          25,
+          9
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          38,
+          15,
+          19
+        ],
+        "support": [
+          38,
+          25,
+          19
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          39,
+          5,
+          41
+        ],
+        "support": [
+          39,
+          11,
+          41
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          39,
+          15,
+          41
+        ],
+        "support": [
+          39,
+          26,
+          41
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          40,
+          5,
+          12
+        ],
+        "support": [
+          40,
+          11,
+          12
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          40,
+          5,
+          33
+        ],
+        "support": [
+          40,
+          11,
+          33
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          40,
+          11,
+          32
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          43,
+          5,
+          8
+        ],
+        "support": [
+          43,
+          11,
+          8
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          43,
+          5,
+          37
+        ],
+        "support": [
+          43,
+          11,
+          37
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          43,
+          11,
+          36
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          45,
+          5,
+          31
+        ],
+        "support": [
+          45,
+          11,
+          31
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          45,
+          11,
+          8
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          46,
+          5,
+          13
+        ],
+        "support": [
+          46,
+          6,
+          13
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          46,
+          5,
+          41
+        ],
+        "support": [
+          46,
+          11,
+          41
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          46,
+          11,
+          30
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          46,
+          11,
+          40
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          47,
+          11,
+          14
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          48,
+          5,
+          35
+        ],
+        "support": [
+          48,
+          11,
+          35
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          49,
+          5,
+          9
+        ],
+        "support": [
+          49,
+          11,
+          9
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          49,
+          5,
+          28
+        ],
+        "support": [
+          49,
+          11,
+          28
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          49,
+          15,
+          34
+        ],
+        "support": [
+          49,
+          26,
+          34
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          50,
+          5,
+          16
+        ],
+        "support": [
+          50,
+          11,
+          16
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          50,
+          15,
+          10
+        ],
+        "support": [
+          50,
+          25,
+          10
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          50,
+          11,
+          27
+        ]
+      },
+      {
+        "kind": "supported_pendant",
+        "pos": [
+          24,
+          15,
+          41
+        ],
+        "support": [
+          24,
+          26,
+          41
+        ]
+      },
+      {
+        "kind": "inlaid_floor",
+        "pos": [
+          28,
+          11,
+          33
+        ]
+      }
+    ],
+    "note": "低位吊灯使用实际屋面或楼板承吊；高厅与开放处采用齐平星石灯。估计不替代 Minecraft 夜间验收。"
+  },
+  "nbt_sha256": "3acf97be27fac6fa29f8da7ef69090acf520df7dac2840c77c2753cdcc03dbb9"
+}

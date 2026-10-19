@@ -1,0 +1,74 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    65,
+    65,
+    65
+  ],
+  "sourceSha256": "e8b20338c2748a6a006d9d2d1571c6dbd8af0624d4cf49a318ad54b2ffa389de",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 2
+  },
+  "facilities": [
+    {
+      "id": "work:22,2,32",
+      "kind": "work",
+      "pos": [
+        22,
+        2,
+        32
+      ],
+      "block": "minecraft:crafting_table",
+      "facing": "north",
+      "use": "staff",
+      "room": "core",
+      "name": "晶核外围检修通道",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        21,
+        2,
+        32
+      ]
+    },
+    {
+      "id": "work:33,2,13",
+      "kind": "work",
+      "pos": [
+        33,
+        2,
+        13
+      ],
+      "block": "minecraft:crafting_table",
+      "facing": "north",
+      "use": "staff",
+      "room": "",
+      "name": "前部物资与停机登记",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        32,
+        2,
+        13
+      ]
+    },
+    {
+      "id": "entrance:32,2,0",
+      "kind": "entrance",
+      "pos": [
+        32,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "临街步行入口",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    }
+  ],
+  "warnings": []
+}

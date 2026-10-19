@@ -1,0 +1,499 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    45,
+    43,
+    39
+  ],
+  "sourceSha256": "48a4377218fc3a06893299613dc353165215dcb8efd44cad6e1e0a86a14eaf30",
+  "capacity": {
+    "residentBeds": 16,
+    "workplaces": 0
+  },
+  "facilities": [
+    {
+      "id": "bed:8,2,11",
+      "kind": "bed",
+      "pos": [
+        8,
+        2,
+        11
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "north",
+      "use": "building",
+      "room": "west-1",
+      "name": "学生床位",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        9,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "bed:8,2,16",
+      "kind": "bed",
+      "pos": [
+        8,
+        2,
+        16
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "north",
+      "use": "building",
+      "room": "west-1",
+      "name": "学生床位",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        9,
+        2,
+        17
+      ]
+    },
+    {
+      "id": "bed:8,12,11",
+      "kind": "bed",
+      "pos": [
+        8,
+        12,
+        11
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "north",
+      "use": "building",
+      "room": "west-11",
+      "name": "学生床位",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        9,
+        12,
+        12
+      ]
+    },
+    {
+      "id": "bed:8,12,16",
+      "kind": "bed",
+      "pos": [
+        8,
+        12,
+        16
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "north",
+      "use": "building",
+      "room": "west-11",
+      "name": "学生床位",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        9,
+        12,
+        17
+      ]
+    },
+    {
+      "id": "bed:14,2,11",
+      "kind": "bed",
+      "pos": [
+        14,
+        2,
+        11
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "north",
+      "use": "building",
+      "room": "west-1",
+      "name": "学生床位",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        15,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "bed:14,2,16",
+      "kind": "bed",
+      "pos": [
+        14,
+        2,
+        16
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "north",
+      "use": "building",
+      "room": "west-1",
+      "name": "学生床位",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        15,
+        2,
+        17
+      ]
+    },
+    {
+      "id": "bed:14,12,11",
+      "kind": "bed",
+      "pos": [
+        14,
+        12,
+        11
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "north",
+      "use": "building",
+      "room": "west-11",
+      "name": "学生床位",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        15,
+        12,
+        12
+      ]
+    },
+    {
+      "id": "bed:14,12,16",
+      "kind": "bed",
+      "pos": [
+        14,
+        12,
+        16
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "north",
+      "use": "building",
+      "room": "west-11",
+      "name": "学生床位",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        15,
+        12,
+        17
+      ]
+    },
+    {
+      "id": "bed:30,2,11",
+      "kind": "bed",
+      "pos": [
+        30,
+        2,
+        11
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "north",
+      "use": "building",
+      "room": "east-1",
+      "name": "学生床位",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        31,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "bed:30,2,16",
+      "kind": "bed",
+      "pos": [
+        30,
+        2,
+        16
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "north",
+      "use": "building",
+      "room": "east-1",
+      "name": "学生床位",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        31,
+        2,
+        17
+      ]
+    },
+    {
+      "id": "bed:30,12,11",
+      "kind": "bed",
+      "pos": [
+        30,
+        12,
+        11
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "north",
+      "use": "building",
+      "room": "east-11",
+      "name": "学生床位",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        31,
+        12,
+        12
+      ]
+    },
+    {
+      "id": "bed:30,12,16",
+      "kind": "bed",
+      "pos": [
+        30,
+        12,
+        16
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "north",
+      "use": "building",
+      "room": "east-11",
+      "name": "学生床位",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        31,
+        12,
+        17
+      ]
+    },
+    {
+      "id": "bed:36,2,11",
+      "kind": "bed",
+      "pos": [
+        36,
+        2,
+        11
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "north",
+      "use": "building",
+      "room": "east-1",
+      "name": "学生床位",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        37,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "bed:36,2,16",
+      "kind": "bed",
+      "pos": [
+        36,
+        2,
+        16
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "north",
+      "use": "building",
+      "room": "east-1",
+      "name": "学生床位",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        37,
+        2,
+        17
+      ]
+    },
+    {
+      "id": "bed:36,12,11",
+      "kind": "bed",
+      "pos": [
+        36,
+        12,
+        11
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "north",
+      "use": "building",
+      "room": "east-11",
+      "name": "学生床位",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        37,
+        12,
+        12
+      ]
+    },
+    {
+      "id": "bed:36,12,16",
+      "kind": "bed",
+      "pos": [
+        36,
+        12,
+        16
+      ],
+      "block": "minecraft:purple_bed",
+      "facing": "north",
+      "use": "building",
+      "room": "east-11",
+      "name": "学生床位",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        37,
+        12,
+        17
+      ]
+    },
+    {
+      "id": "entrance:22,2,0",
+      "kind": "entrance",
+      "pos": [
+        22,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "临街主入口",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        22,
+        2,
+        2
+      ]
+    },
+    {
+      "id": "meeting:24,2,30",
+      "kind": "meeting",
+      "pos": [
+        24,
+        2,
+        30
+      ],
+      "block": "minecraft:lectern",
+      "facing": "south",
+      "use": "public",
+      "room": "",
+      "name": "共享书廊研读位",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        24,
+        2,
+        29
+      ]
+    },
+    {
+      "id": "meeting:24,12,30",
+      "kind": "meeting",
+      "pos": [
+        24,
+        12,
+        30
+      ],
+      "block": "minecraft:lectern",
+      "facing": "south",
+      "use": "public",
+      "room": "",
+      "name": "共享书廊研读位",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        24,
+        12,
+        29
+      ]
+    },
+    {
+      "id": "seat:20,2,9",
+      "kind": "seat",
+      "pos": [
+        20,
+        2,
+        9
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "resident",
+      "room": "",
+      "name": "公共阅读、听课或用餐座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        21,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "seat:20,2,20",
+      "kind": "seat",
+      "pos": [
+        20,
+        2,
+        20
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "north",
+      "use": "resident",
+      "room": "",
+      "name": "公共阅读、听课或用餐座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        21,
+        2,
+        20
+      ]
+    },
+    {
+      "id": "seat:24,2,9",
+      "kind": "seat",
+      "pos": [
+        24,
+        2,
+        9
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "south",
+      "use": "resident",
+      "room": "",
+      "name": "公共阅读、听课或用餐座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        25,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "seat:24,2,20",
+      "kind": "seat",
+      "pos": [
+        24,
+        2,
+        20
+      ],
+      "block": "minecraft:dark_oak_stairs",
+      "facing": "north",
+      "use": "resident",
+      "room": "",
+      "name": "公共阅读、听课或用餐座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        25,
+        2,
+        20
+      ]
+    }
+  ],
+  "warnings": []
+}

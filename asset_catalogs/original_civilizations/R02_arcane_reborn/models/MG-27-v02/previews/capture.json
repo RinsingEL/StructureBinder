@@ -1,0 +1,21 @@
+{
+  "schema": "structure-studio.capture.v1",
+  "id": "MG-27-v02",
+  "nbt_sha256": "a24ebf20fd3963670afa89118c8d1466243b41e329ec86bd23736b89ed0f6db1",
+  "author_sha256": "e2cfb52805e48ad0ad4c8fd8f56c14a82448844931a2a8154b727322096a3327",
+  "shots": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "roof-off",
+    "floor-1",
+    "room-main",
+    "use-bed",
+    "annotations"
+  ],
+  "render_errors": [],
+  "missing_textures": [],
+  "visual_review": "pending"
+}

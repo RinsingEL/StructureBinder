@@ -1,0 +1,79 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    17,
+    24,
+    21
+  ],
+  "sourceSha256": "3c84593c2c59276f2ab10e7144d469d9545107ec1fac8b92f8f7c91fffa2555a",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 2
+  },
+  "facilities": [
+    {
+      "id": "work:7,2,7",
+      "kind": "work",
+      "pos": [
+        7,
+        2,
+        7
+      ],
+      "block": "minecraft:crafting_table",
+      "facing": "north",
+      "use": "staff",
+      "room": "main",
+      "name": "工具维护人员",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        6,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "work:9,2,13",
+      "kind": "work",
+      "pos": [
+        9,
+        2,
+        13
+      ],
+      "block": "minecraft:crafting_table",
+      "facing": "north",
+      "use": "staff",
+      "room": "main",
+      "name": "工具保管人员",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        8,
+        2,
+        13
+      ]
+    },
+    {
+      "id": "entrance:8,2,0",
+      "kind": "entrance",
+      "pos": [
+        8,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "主入口",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        8,
+        2,
+        2
+      ]
+    }
+  ],
+  "warnings": []
+}

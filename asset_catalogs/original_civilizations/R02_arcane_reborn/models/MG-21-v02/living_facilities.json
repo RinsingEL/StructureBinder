@@ -1,0 +1,95 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    59,
+    34,
+    51
+  ],
+  "sourceSha256": "5223fc1162bd6f3fae8e8130cc5f32fa279950906aa79706bd91fe51471e5fbb",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 3
+  },
+  "facilities": [
+    {
+      "id": "work:15,2,27",
+      "kind": "work",
+      "pos": [
+        15,
+        2,
+        27
+      ],
+      "block": "minecraft:composter",
+      "facing": "north",
+      "use": "staff",
+      "room": "greenhouse",
+      "name": "温室试植与通行带",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        14,
+        2,
+        27
+      ]
+    },
+    {
+      "id": "work:30,2,27",
+      "kind": "work",
+      "pos": [
+        30,
+        2,
+        27
+      ],
+      "block": "minecraft:composter",
+      "facing": "north",
+      "use": "staff",
+      "room": "greenhouse",
+      "name": "温室试植与通行带",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        29,
+        2,
+        27
+      ]
+    },
+    {
+      "id": "work:45,2,27",
+      "kind": "work",
+      "pos": [
+        45,
+        2,
+        27
+      ],
+      "block": "minecraft:composter",
+      "facing": "north",
+      "use": "staff",
+      "room": "greenhouse",
+      "name": "温室试植与通行带",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        44,
+        2,
+        27
+      ]
+    },
+    {
+      "id": "entrance:29,2,0",
+      "kind": "entrance",
+      "pos": [
+        29,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "临街步行入口",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    }
+  ],
+  "warnings": []
+}

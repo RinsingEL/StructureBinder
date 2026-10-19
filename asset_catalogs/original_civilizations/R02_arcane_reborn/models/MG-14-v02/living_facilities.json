@@ -1,0 +1,95 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    61,
+    57,
+    69
+  ],
+  "sourceSha256": "ad67e01dc68a5219b53d297b8e70d19971518bb06d373cef07d5a8285fd6199e",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 3
+  },
+  "facilities": [
+    {
+      "id": "work:11,2,37",
+      "kind": "work",
+      "pos": [
+        11,
+        2,
+        37
+      ],
+      "block": "minecraft:lectern",
+      "facing": "north",
+      "use": "staff",
+      "room": "",
+      "name": "目的地校准与出行登记",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        10,
+        2,
+        37
+      ]
+    },
+    {
+      "id": "work:31,2,43",
+      "kind": "work",
+      "pos": [
+        31,
+        2,
+        43
+      ],
+      "block": "minecraft:lectern",
+      "facing": "north",
+      "use": "staff",
+      "room": "rings",
+      "name": "三环校准通道",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        30,
+        2,
+        43
+      ]
+    },
+    {
+      "id": "work:51,2,37",
+      "kind": "work",
+      "pos": [
+        51,
+        2,
+        37
+      ],
+      "block": "minecraft:lectern",
+      "facing": "north",
+      "use": "staff",
+      "room": "",
+      "name": "目的地校准与出行登记",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        50,
+        2,
+        37
+      ]
+    },
+    {
+      "id": "entrance:30,2,0",
+      "kind": "entrance",
+      "pos": [
+        30,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "临街步行入口",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    }
+  ],
+  "warnings": []
+}
