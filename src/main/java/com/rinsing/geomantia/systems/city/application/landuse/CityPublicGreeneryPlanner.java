@@ -66,14 +66,14 @@ public final class CityPublicGreeneryPlanner {
         Map<BlockPoint,CityLandUseSurfacePrintPlan.FeatureCell> connectionGround = new HashMap<>();
         for (var f : source.featureCells()) {
             var p=new BlockPoint(f.x(),f.z());
-            // Generated terrace guards are reconciled after green grading; they cannot reserve a
-            // strip of ungraded natural ground between the lawn and its shared platform.
-            if(f.kind()==CityLandUseSurfacePrintPlan.FeatureKind.TERRACE_RAIL
-                    &&f.sourceId().startsWith(CitySharedTerracePlanner.SOURCE))continue;
             if(f.kind()==CityLandUseSurfacePrintPlan.FeatureKind.TERRACE_GROUND) {
                 connectionGround.put(p,f);available.add(p);continue;
             }
-            circulation.add(p);
+            // Shared guards still reserve planting clearance, but their ground must be graded
+            // with the lawn before the later pass reconciles the terrace boundary.
+            boolean sharedGuard=f.kind()==CityLandUseSurfacePrintPlan.FeatureKind.TERRACE_RAIL
+                    &&f.sourceId().startsWith(CitySharedTerracePlanner.SOURCE);
+            if(!sharedGuard)circulation.add(p);
             for(int dz=-2;dz<=2;dz++)for(int dx=-2;dx<=2;dx++) plantingClearance.add(new BlockPoint(f.x()+dx,f.z()+dz));
         }
         available.removeAll(circulation);

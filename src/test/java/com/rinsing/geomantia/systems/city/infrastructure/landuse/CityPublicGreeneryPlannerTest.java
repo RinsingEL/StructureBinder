@@ -10,6 +10,48 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CityPublicGreeneryPlannerTest {
+    @Test void sharedTerraceRailKeepsGradedGroundWithoutOverlappingPlants() {
+        assertRailClearance(false);
+    }
+
+    @Test void designedPublicSpacePreservesRailAndTerraceDatum() {
+        assertRailClearance(true);
+    }
+
+    private void assertRailClearance(boolean designedSpace) {
+        var bounds = new BlockBounds(-2866,5021,-2860,5027);
+        Set<BlockPoint> ground = new HashSet<>();
+        for (int z=bounds.minZ();z<=bounds.maxZ();z++) for (int x=bounds.minX();x<=bounds.maxX();x++)
+            ground.add(new BlockPoint(x,z));
+        var district = new CityDistrictPlanner.Result(ground,ground,ground,Set.of(),Map.of(),0,0);
+        if (designedSpace) district = district.withPublicSpaces(List.of(
+                new CityDistrictPlanner.Result.PublicSpace("teaching",bounds,"garden")));
+        var rail = new CityLandUseSurfacePrintPlan.FeatureCell(CitySharedTerracePlanner.SOURCE+"city_jingchao_capital",
+                -2865,5022,"minecraft:oak_fence",1,CityLandUseSurfacePrintPlan.FeatureKind.TERRACE_RAIL,
+                CityLandUseSurfacePrintPlan.HorizontalFacing.NONE,66);
+        List<CityLandUseSurfacePrintPlan.FeatureCell> features = new ArrayList<>(List.of(rail));
+        if (designedSpace) features.add(new CityLandUseSurfacePrintPlan.FeatureCell(rail.sourceId(),rail.x(),rail.z(),
+                "minecraft:stone",0,CityLandUseSurfacePrintPlan.FeatureKind.TERRACE_GROUND,rail.facing(),66));
+        var source = new CityLandUseSurfacePrintPlan(CityLandUseSurfacePrintPlan.SCHEMA,"city_jingchao_capital",
+                "fixture","",List.of(),List.of(),features);
+        var landUse = new LandUseAreaPlan(LandUseAreaPlan.SCHEMA,"fixture",source.cityId(),"",bounds,
+                List.of(),List.of(),List.of(),List.of(),List.of());
+        var preset = new CityPublicGreeneryPlanner.Preset("minecraft:grass_block",List.of("minecraft:poppy"),.16,1);
+        var planner = new CityPublicGreeneryPlanner();
+        var result = planner.append(source,district,landUse,preset,List.of(),designedSpace);
+        assertEquals(result,planner.append(source,district,landUse,preset,List.of(),designedSpace));
+        assertTrue(result.featureCells().contains(rail),"existing guard must survive both planting passes");
+        var support = result.featureCells().stream().filter(f -> f.x()==rail.x() && f.z()==rail.z()
+                && f.surfaceOffset()==0).findFirst().orElseThrow();
+        assertEquals("minecraft:grass_block",support.blockId());
+        assertEquals(designedSpace ? Integer.valueOf(66) : null,support.targetSurfaceY());
+        var plants = result.featureCells().stream().filter(f -> f.kind()==CityLandUseSurfacePrintPlan.FeatureKind.GREEN_PLANT).toList();
+        assertTrue(plants.stream().noneMatch(f -> Math.abs(f.x()-rail.x())<=2 && Math.abs(f.z()-rail.z())<=2));
+        if (!designedSpace) assertFalse(plants.isEmpty(),"rail clearance must not disable all planting");
+        assertEquals(ground.size(),result.featureCells().stream().filter(f -> f.surfaceOffset()==0).count(),
+                "rail clearance must not leave an ungraded ground strip");
+    }
+
     @Test void noPlatformCityStillPrintsSharedGreeneryAndPreservesRoadsWaterAndTemplates() {
         BlockBounds bounds = new BlockBounds(0,0,39,23);
         List<LandUseTerrainField.Cell> cells = new ArrayList<>();

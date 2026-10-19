@@ -363,7 +363,7 @@ public final class CityD4Workflow {
     }
     private static void validateExpansion(JsonObject before,JsonObject changes,String mode){
         require(Set.of("ADJUST_ARRAY","OUTWARD_ARRAY","REPAIR_CORE").contains(mode),"使用调整阵列、向外阵列或孤立核心修复。");
-        require(Set.of("groups","arrayCompositions","relations","foundationGroupIds").containsAll(changes.keySet()),"扩张只修改阵列与嵌套，不重做景观、素材、用途或删除其他设计。");
+        require(Set.of("groups","arrayCompositions","relations","foundationGroupIds","population").containsAll(changes.keySet()),"扩张只修改阵列、嵌套及本区人口预算，不重做景观、素材、建筑用途或删除其他设计。");
         require(!array(changes,"groups").isEmpty()||!array(changes,"arrayCompositions").isEmpty(),"需要实际阵列或嵌套修改。");
         Set<String> old=groupIds(before);boolean added=false;
         for(var e:array(changes,"groups")){JsonObject g=e.getAsJsonObject();String id=text(g,"groupId");

@@ -1554,8 +1554,9 @@ export const realmTools: ToolDefinition[] = [
       for (const key of ["foundationGroupIds", "landscapes"]) fragment[key] = structuredClone(bp.outdoorPlan.properties[key]);
       fragment.publicRealm=publicRealm;
       fragment.population=strictObject({purpose:nonEmptyString("本区职责与日常活动"),residents:{type:"integer",minimum:0,maximum:10000},
-        jobs:{type:"array",maxItems:32,items:strictObject({profession:nonEmptyString("本城职业标识"),name:nonEmptyString("职业称呼"),count:{type:"integer",minimum:0,maximum:256},functions:{type:"array",items:nonEmptyString("实际岗位用途")},servesMeals:{type:"boolean"}},["profession","count","functions"])},
+        jobs:{type:"array",maxItems:32,items:strictObject({profession:{...nonEmptyString("本城职业标识；同一分区内不可重复"),pattern:"^[a-z][a-z0-9_.-]{0,31}$"},name:nonEmptyString("职业称呼"),count:{type:"integer",minimum:0,maximum:256},functions:{type:"array",minItems:1,items:nonEmptyString("实际岗位用途")},servesMeals:{type:"boolean"}},["profession","count","functions"])},
         housingGroupIds:{type:"array",items:nonEmptyString("本区住房组ID")}},["purpose","residents","jobs","housingGroupIds"]);
+      fragment.population.description="可选的人口需求预算；提供时须完整填写。districtDesign 是完整设计，修订时需重交要保留的预算；integrate 的 changes 省略预算时保留，提供时整体替换。住房组必须属于本区；实际床位和工位容量仍独立核验。";
       delete fragment.surfaceMaterials.properties.defaults;
       const update=name!=="city_d4_district";
       if(!update) {
@@ -1572,7 +1573,7 @@ export const realmTools: ToolDefinition[] = [
         for(const key of ["removeGroupIds","removeCompositionIds","removeLandscapeIds"]) fragment[key]={type:"array",items:nonEmptyString("明确删除的 ID。")};
       }
       const key=update?"changes":"districtDesign";properties[key]=strictObject(fragment,update?[]:["groups","core"]);required.push(key);
-      if(update) properties[key].description="按 ID 合并，未提供字段保留；扩张不允许删除设计对象。relations 与 foundationGroupIds 提供时替换本设计内清单；新增对象需完整配置；已有组只允许 groupId、structureCount、densityClass、algorithmProfileRef、connectionPlan、layout，改嵌套时可用 clearFields 清除 placementRelation。";
+      if(update) properties[key].description="按 ID 合并，未提供字段保留；扩张不允许删除设计对象。relations 与 foundationGroupIds 提供时替换本设计内清单；population 提供时完整替换本区预算，须随实际阵列或嵌套修改提交。新增对象需完整配置；已有组只允许 groupId、structureCount、densityClass、algorithmProfileRef、connectionPlan、layout，改嵌套时可用 clearFields 清除 placementRelation。";
       if(name==="city_d4_integrate") {
         for(const field of ["landscapes","surfaceMaterials","removeGroupIds","removeCompositionIds","removeLandscapeIds"])delete fragment[field];
         properties.integrationIntent=nonEmptyString("面向整体性的扩张用途与目标方向。");properties.targetDistrictId=nonEmptyString("本次扩大哪个非独立功能区。");
