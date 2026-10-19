@@ -1,0 +1,289 @@
+{
+  "world": "E:\\Mod_Dev\\StructureBinder\\run\\campus_fixes_playtest_20261017\\saves\\Campus_Fixes_PreD4_Round5",
+  "citizens": 163,
+  "visitors": [
+    {
+      "id": "c0726c4e-5063-31ef-9497-cd90dd4b4e91",
+      "name": "艾琳（旅人）",
+      "town": "provider_3d25631f_r19200:city_jingchao_capital",
+      "property": "provider_3d25631f_r19200:city_jingchao_capital:archives_required_001",
+      "home": {
+        "x": -2930,
+        "y": 69,
+        "z": 5055
+      },
+      "bedSite": "",
+      "visitor": true,
+      "workSite": "",
+      "dead": false,
+      "propertyTerms": [
+        "书籍借阅",
+        "文献保管",
+        "阅读"
+      ],
+      "claimedBedExists": false
+    },
+    {
+      "id": "f827fe4a-8acd-3aad-be3f-e4b8be94e0b8",
+      "name": "罗文（旅人）",
+      "town": "provider_3d25631f_r19200:city_jingchao_capital",
+      "property": "provider_3d25631f_r19200:city_jingchao_capital:archives_required_003",
+      "home": {
+        "x": -2854,
+        "y": 69,
+        "z": 5136
+      },
+      "bedSite": "",
+      "visitor": true,
+      "workSite": "",
+      "dead": false,
+      "propertyTerms": [
+        "研究",
+        "研讨",
+        "阅读"
+      ],
+      "claimedBedExists": false
+    },
+    {
+      "id": "a068f64e-9886-3840-9398-82f92bd4dedd",
+      "name": "米拉（旅人）",
+      "town": "provider_3d25631f_r19200:city_jingchao_capital",
+      "property": "provider_3d25631f_r19200:city_jingchao_capital:archives_required_004",
+      "home": {
+        "x": -2907,
+        "y": 69,
+        "z": 5181
+      },
+      "bedSite": "",
+      "visitor": true,
+      "workSite": "",
+      "dead": false,
+      "propertyTerms": [
+        "休憩",
+        "花草观赏",
+        "阅读"
+      ],
+      "claimedBedExists": false
+    },
+    {
+      "id": "e073c3dc-30f1-3725-911d-dd2fc82ab44f",
+      "name": "阿德（旅人）",
+      "town": "provider_3d25631f_r19200:city_jingchao_capital",
+      "property": "provider_3d25631f_r19200:city_jingchao_capital:council_fill_003",
+      "home": {
+        "x": -2929,
+        "y": 69,
+        "z": 4974
+      },
+      "bedSite": "",
+      "visitor": true,
+      "workSite": "",
+      "dead": false,
+      "propertyTerms": [
+        "教学",
+        "研讨",
+        "阅读"
+      ],
+      "claimedBedExists": false
+    }
+  ],
+  "spaces": [
+    {
+      "owner": "teaching",
+      "bounds": {
+        "minX": -3006,
+        "minZ": 5270,
+        "maxX": -2935,
+        "maxZ": 5329,
+        "ownerGroupId": "teaching",
+        "purpose": "公共教学交流庭院"
+      },
+      "greenColumns": 4120,
+      "plannedGreenHeights": {
+        "68": 4120
+      },
+      "coarseTerrainHeights": {
+        "66.0": 2178,
+        "65.0": 1928,
+        "64.0": 14
+      },
+      "platformHeights": {
+        "68": 4120
+      }
+    },
+    {
+      "owner": "archives",
+      "bounds": {
+        "minX": -2924,
+        "minZ": 5128,
+        "maxX": -2877,
+        "maxZ": 5171,
+        "ownerGroupId": "archives",
+        "purpose": "安静阅读与文献交流内院"
+      },
+      "greenColumns": 1479,
+      "plannedGreenHeights": {
+        "68": 1479
+      },
+      "coarseTerrainHeights": {
+        "72.0": 769,
+        "73.0": 364,
+        "71.0": 248,
+        "70.0": 98
+      },
+      "platformHeights": {
+        "68": 1479
+      }
+    },
+    {
+      "owner": "residence",
+      "bounds": {
+        "minX": -2754,
+        "minZ": 5163,
+        "maxX": -2707,
+        "maxZ": 5206,
+        "ownerGroupId": "residence",
+        "purpose": "住宿共享休息内院"
+      },
+      "greenColumns": 271,
+      "plannedGreenHeights": {
+        "64": 271
+      },
+      "coarseTerrainHeights": {
+        "62.0": 243,
+        "63.0": 28
+      },
+      "platformHeights": {
+        "64": 271
+      }
+    }
+  ],
+  "samples": [
+    {
+      "x": -2959,
+      "z": 5273,
+      "feature": {
+        "sourceId": "public_realm::interior/flowers/14@studio:mg-59-v01#56f740b03f6a8afab0bf7574a175fb0a3643f75a09912451edbdf17b45b27ff1",
+        "x": -2959,
+        "z": 5273,
+        "blockId": "minecraft:dirt",
+        "surfaceOffset": 0,
+        "kind": "AUTHORED_BLOCK",
+        "facing": "NONE",
+        "targetSurfaceY": 68
+      },
+      "platform": 68,
+      "coarseTerrain": {
+        "elevation": 65.0,
+        "water": false,
+        "blockMinX": -2960,
+        "blockMinZ": 5264
+      }
+    },
+    {
+      "x": -2986,
+      "z": 5270,
+      "feature": {
+        "sourceId": "public_ground::city_jingchao_capital",
+        "x": -2986,
+        "z": 5270,
+        "blockId": "minecraft:grass_block",
+        "surfaceOffset": 0,
+        "kind": "GREEN_GROUND",
+        "facing": "NONE",
+        "targetSurfaceY": 68
+      },
+      "platform": 68,
+      "coarseTerrain": {
+        "elevation": 66.0,
+        "water": false,
+        "blockMinX": -2992,
+        "blockMinZ": 5264
+      }
+    },
+    {
+      "x": -3006,
+      "z": 5270,
+      "feature": {
+        "sourceId": "public_ground::city_jingchao_capital",
+        "x": -3006,
+        "z": 5270,
+        "blockId": "minecraft:grass_block",
+        "surfaceOffset": 0,
+        "kind": "GREEN_GROUND",
+        "facing": "NONE",
+        "targetSurfaceY": 68
+      },
+      "platform": 68,
+      "coarseTerrain": {
+        "elevation": 66.0,
+        "water": false,
+        "blockMinX": -3008,
+        "blockMinZ": 5264
+      }
+    },
+    {
+      "x": -3006,
+      "z": 5269,
+      "feature": {
+        "sourceId": "public_ground::city_jingchao_capital",
+        "x": -3006,
+        "z": 5269,
+        "blockId": "minecraft:grass_block",
+        "surfaceOffset": 0,
+        "kind": "GREEN_GROUND",
+        "facing": "NONE",
+        "targetSurfaceY": 66
+      },
+      "platform": 68,
+      "coarseTerrain": {
+        "elevation": 66.0,
+        "water": false,
+        "blockMinX": -3008,
+        "blockMinZ": 5264
+      }
+    },
+    {
+      "x": -3007,
+      "z": 5270,
+      "feature": {
+        "sourceId": "public_ground::city_jingchao_capital",
+        "x": -3007,
+        "z": 5270,
+        "blockId": "minecraft:grass_block",
+        "surfaceOffset": 0,
+        "kind": "GREEN_GROUND",
+        "facing": "NONE",
+        "targetSurfaceY": 66
+      },
+      "platform": 68,
+      "coarseTerrain": {
+        "elevation": 66.0,
+        "water": false,
+        "blockMinX": -3008,
+        "blockMinZ": 5264
+      }
+    },
+    {
+      "x": -2729,
+      "z": 5356,
+      "feature": {
+        "sourceId": "public_ground::city_jingchao_capital",
+        "x": -2729,
+        "z": 5356,
+        "blockId": "minecraft:polished_andesite",
+        "surfaceOffset": 0,
+        "kind": "GREEN_PATH",
+        "facing": "NONE",
+        "targetSurfaceY": 62
+      },
+      "platform": null,
+      "coarseTerrain": {
+        "elevation": 63.0,
+        "water": false,
+        "blockMinX": -2736,
+        "blockMinZ": 5344
+      }
+    }
+  ]
+}

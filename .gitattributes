@@ -18,3 +18,8 @@ geomantia_harness/*.json text eol=lf
 # Preserve captured round-two evidence bytes and SHA-256 across checkouts.
 "dev_docs/systems/city/archive/2375a427_v0.2.0_学院第二轮高度关系修复/evidence/*.json" -text whitespace=cr-at-eol
 "dev_docs/systems/city/archive/a4cdacad_v0.2.0_台地护栏连续性修复/evidence/*.json" -text whitespace=cr-at-eol
+
+# Keep archived diagnostic JSON bytes stable across Windows checkouts.
+"dev_docs/systems/city/archive/0a9b3994_v0.2.0_双分支历史审查/*.json" -text whitespace=cr-at-eol
+"dev_docs/systems/city/archive/0a9b3994_v0.2.0_旅人与绿化高度复核/*.json" -text whitespace=cr-at-eol
+"dev_docs/systems/realmfolk/archive/0a9b3994_v0.2.0_高度验收副本人口核对/*.json" -text whitespace=cr-at-eol
