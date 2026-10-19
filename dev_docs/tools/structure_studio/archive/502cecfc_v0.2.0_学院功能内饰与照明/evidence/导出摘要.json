@@ -1,0 +1,31 @@
+{
+  "selected": 36,
+  "nbtBytesUnmodified": true,
+  "facilityWarnings": 0,
+  "groundPlaneCoverage": {
+    "markedCount": 36,
+    "unmarkedCount": 0,
+    "unmarkedIds": []
+  },
+  "classificationCoverage": {
+    "totalCount": 36,
+    "classifiedCount": 32,
+    "unclassifiedCount": 4,
+    "unclassifiedRefs": [
+      "studio:mg-22-v02",
+      "studio:mg-23-v02",
+      "studio:mg-39-v02",
+      "studio:mg-40-v02"
+    ],
+    "unmappedFunctionTerms": [
+      "候船",
+      "出入通行",
+      "楼间连接",
+      "步行通行",
+      "水运接驳",
+      "照料",
+      "驻守"
+    ]
+  },
+  "gameplayValidated": false
+}
