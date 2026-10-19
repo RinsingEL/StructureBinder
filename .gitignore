@@ -66,3 +66,6 @@ geomantia_mcp_log.jsonl
 
 .DS_Store
 * 2.*
+
+# Local branch-review builds and machine-specific launch wrappers; probe sources are archived in dev_docs.
+/runtime/campus-branch-review/
