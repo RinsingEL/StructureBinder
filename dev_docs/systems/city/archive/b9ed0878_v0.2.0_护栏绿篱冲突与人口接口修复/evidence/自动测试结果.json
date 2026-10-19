@@ -1,0 +1,57 @@
+{
+  "test": {
+    "tests": 1421,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 15,
+    "passed": 1406,
+    "skippedCases": [
+      "com.rinsing.geomantia.platform.http.CityWallSavedD5ReplayTest.savedCityCompilesThroughOfficialD5WithOutwardStraightWallTowers()",
+      "com.rinsing.geomantia.systems.city.application.CityBoundaryCapturedReplayTest.originalProposalCompilesWithoutMovingAuthoredGroups()",
+      "com.rinsing.geomantia.systems.city.application.CityD4VersionsTest.versionFileCannotFollowSymlinkOutsideCity()",
+      "com.rinsing.geomantia.systems.city.application.CitySavedBlueprintReplayTest.renderSavedReplay()",
+      "com.rinsing.geomantia.systems.city.application.CitySavedBlueprintReplayTest.savedCapitalDraftCompilesWithCurrentRoadPlanner()",
+      "com.rinsing.geomantia.systems.city.application.DesignFirstCapturedReplayTest.unchangedFiveDistrictDesignCompilesFromCapturedTerrain()",
+      "com.rinsing.geomantia.systems.city.application.landuse.CityFrozenOutdoorReplayTest.frozenD6CanProduceCompleteSurfacePlan()",
+      "com.rinsing.geomantia.systems.city.application.landuse.LandscapeSavedOutdoorReplayTest.blockedCityCompletesOutdoorPlanWithApproximateLandscape()",
+      "com.rinsing.geomantia.systems.city.application.landuse.QadirOutdoorReplayTest.replayFrozenOutdoorInputsWithoutWritingWorld()",
+      "com.rinsing.geomantia.systems.city.application.QadirCompilationReplayTest.replayAcceptedDesignWithoutMutatingTheWorld()",
+      "com.rinsing.geomantia.systems.city.infrastructure.world.landuse.QadirOwnerPreflightReplayTest.preparesActualOwnersWithoutMinecraftOrWorldWrites()",
+      "com.rinsing.geomantia.systems.provider.application.CityD3ReviewDecisionViewTest.realWorldFixtureWhenProvided()",
+      "com.rinsing.geomantia.systems.provider.application.CityRevisionEvidenceTest.capturedRealFailurePreservesAllReportedHardBlocks()",
+      "com.rinsing.geomantia.systems.provider.application.PlanningBoundaryTest.capturedLiveContextFitsHarnessWithoutLosingAnyAuthorProfile()",
+      "com.rinsing.geomantia.systems.provider.application.RealmCoreAtlasTest.installedBundleCanBePreparedWithoutMinecraft()"
+    ]
+  },
+  "coreMcpTest": {
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 3,
+    "skippedCases": []
+  },
+  "adventureTest": {
+    "tests": 13,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 13,
+    "skippedCases": []
+  },
+  "mcpNodeTests": {
+    "tests": 26,
+    "passed": 26,
+    "failures": 0
+  },
+  "focusedBefore": {
+    "tests": 30,
+    "failed": 4,
+    "note": "New regression tests failed against baseline production code"
+  },
+  "focusedAfter": {
+    "tests": 47,
+    "failed": 0
+  },
+  "build": "gradlew.bat test coreMcpTest build verifyAddonPackaging: BUILD SUCCESSFUL"
+}

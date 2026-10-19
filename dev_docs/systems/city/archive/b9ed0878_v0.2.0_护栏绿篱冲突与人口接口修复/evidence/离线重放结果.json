@@ -1,0 +1,1191 @@
+{
+  "ok": true,
+  "scope": "Frozen artifacts; sampled terrain only, no live ground sampler or world mutation",
+  "cityId": "city_jingchao_capital",
+  "publicRealmPresent": false,
+  "surfacePlanHash": "da51208f6a5becf0fe002bb1be99629e8374c629b72789eda70771962e7c88d1",
+  "featureCells": 96784,
+  "terraceRails": 313,
+  "plants": 12208,
+  "originalConflictColumn": [
+    {
+      "sourceId": "public_ground::shared::city_jingchao_capital",
+      "x": -2865,
+      "z": 5022,
+      "blockId": "minecraft:grass_block",
+      "surfaceOffset": 0,
+      "kind": "GREEN_GROUND",
+      "facing": "NONE",
+      "targetSurfaceY": 66
+    }
+  ],
+  "quality": {
+    "schema": "city_land_use_quality",
+    "status": "warning",
+    "seedGroupCount": 4,
+    "areaCount": 15,
+    "corridorExclusionCount": 0,
+    "claimedBlockCount": 100748,
+    "automaticSurfaceConnectionCount": 0,
+    "unreachedAutomaticSurfaceConnectionCount": 0,
+    "skippedLandscapeCount": 0,
+    "skippedLandscapeParcelCount": 0,
+    "skippedOptionalLandscapeCount": 0,
+    "skippedOptionalParcelCount": 0,
+    "skippedRequiredParcelCount": 0,
+    "degradedRequiredLandscapeCount": 0,
+    "requiredLandscapeCapacityResults": [
+      {
+        "landscapeInstanceId": "garden_fields::instance_01",
+        "requestedBlocks": 7536,
+        "realizedBlocks": 7536,
+        "realizationRatioBasisPoints": 10000,
+        "status": "accepted"
+      }
+    ],
+    "belowMinimumGroupCount": 0,
+    "belowMinimumGrowthRegionCount": 0,
+    "groupResults": [
+      {
+        "groupId": "city_jingchao_capital::foundation",
+        "claimedAreaBlocks": 93212,
+        "minAreaBlocks": 93212,
+        "preferredAreaBlocks": 93212,
+        "maxAreaBlocks": 93212,
+        "status": "covered_by_landscape_overlay",
+        "growthRegionResults": [
+          {
+            "regionId": "city_jingchao_capital::foundation",
+            "claimedAreaBlocks": 93212,
+            "minAreaBlocks": 93212,
+            "preferredAreaBlocks": 93212,
+            "maxAreaBlocks": 93212,
+            "status": "covered_by_landscape_overlay"
+          }
+        ]
+      },
+      {
+        "groupId": "garden_fields::instance_01::parcel_01",
+        "claimedAreaBlocks": 2611,
+        "minAreaBlocks": 2611,
+        "preferredAreaBlocks": 2611,
+        "maxAreaBlocks": 2611,
+        "status": "accepted",
+        "growthRegionResults": [
+          {
+            "regionId": "garden_fields::instance_01::parcel_01",
+            "claimedAreaBlocks": 2611,
+            "minAreaBlocks": 2611,
+            "preferredAreaBlocks": 2611,
+            "maxAreaBlocks": 2611,
+            "status": "accepted"
+          }
+        ]
+      },
+      {
+        "groupId": "garden_fields::instance_01::parcel_02",
+        "claimedAreaBlocks": 2442,
+        "minAreaBlocks": 2442,
+        "preferredAreaBlocks": 2442,
+        "maxAreaBlocks": 2442,
+        "status": "accepted",
+        "growthRegionResults": [
+          {
+            "regionId": "garden_fields::instance_01::parcel_02",
+            "claimedAreaBlocks": 2442,
+            "minAreaBlocks": 2442,
+            "preferredAreaBlocks": 2442,
+            "maxAreaBlocks": 2442,
+            "status": "accepted"
+          }
+        ]
+      },
+      {
+        "groupId": "garden_fields::instance_01::parcel_03",
+        "claimedAreaBlocks": 2483,
+        "minAreaBlocks": 2483,
+        "preferredAreaBlocks": 2483,
+        "maxAreaBlocks": 2483,
+        "status": "accepted",
+        "growthRegionResults": [
+          {
+            "regionId": "garden_fields::instance_01::parcel_03",
+            "claimedAreaBlocks": 2483,
+            "minAreaBlocks": 2483,
+            "preferredAreaBlocks": 2483,
+            "maxAreaBlocks": 2483,
+            "status": "accepted"
+          }
+        ]
+      }
+    ],
+    "warnings": [
+      "REQUIRED_LANDSCAPE_TERRAIN_REDUCED_WARNING:garden_fields:0",
+      "CITY_ENTRANCE_NARROW_STAIR:living_students_required_002::front",
+      "CITY_ENTRANCE_NARROW_STAIR:living_students_required_004::front",
+      "CITY_PUBLIC_SPACE_NATURAL_WATER_RETAINED:living",
+      "CITY_PUBLIC_SPACE_NATURAL_WATER_RETAINED:reception",
+      "CITY_PUBLIC_GROUND_TRANSITION_SPACE_REQUIRED:columns\u003d267"
+    ],
+    "urbanSpaceStatus": "resolved",
+    "urbanSpaceEnabled": true,
+    "urbanEnvelopeBlocks": 155648,
+    "urbanAbsorbedResidualBlocks": 0,
+    "urbanExplicitResidualBlocks": 53561,
+    "urbanUnknownResidualBlocks": 0,
+    "urbanResidualRegionCount": 83,
+    "urbanSpacePlanHash": "36fd5eefd2141e11e370eed9839f2a1bb1cc882a7452e52ba9354b8f1645c63e",
+    "villageRoads": {
+      "schema": "city_village_road_report.v1",
+      "scale": "unknown",
+      "decisions": [
+        {
+          "sourceId": "academy_court::COMPACT_MEANDERING_SPINE::segment_001::detour_1",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "academy_court::COMPACT_MEANDERING_SPINE::segment_001::detour_2",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "academy_court::COMPACT_MEANDERING_SPINE::segment_001::detour_3",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "academy_court::COMPACT_MEANDERING_SPINE::segment_001::detour_4",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "academy_court::COMPACT_MEANDERING_SPINE::segment_001::detour_5",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "academy_court::COMPACT_MEANDERING_SPINE::segment_001::detour_6",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "academy_court::COMPACT_MEANDERING_SPINE::segment_001::detour_7",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "academy_court::ENTRANCE_APPROACH::segment_013",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "academy_court::ENTRANCE_APPROACH::segment_015",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "academy_court::ENTRANCE_SHORT_ALLEYS::segment_014",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "academy_court::ENTRANCE_SHORT_ALLEYS::segment_016",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "academy_hall::COMPACT_MEANDERING_SPINE::segment_001::detour_1",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "academy_hall::ENTRANCE_APPROACH::segment_017",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "academy_hall::ENTRANCE_APPROACH::segment_019",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "academy_hall::ENTRANCE_APPROACH::segment_021",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "academy_hall::ENTRANCE_SHORT_ALLEYS::segment_018",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "academy_hall::ENTRANCE_SHORT_ALLEYS::segment_020",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "academy_hall::ENTRANCE_SHORT_ALLEYS::segment_022",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "library_hall::COMPACT_MEANDERING_SPINE::segment_001",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "library_hall::ENTRANCE_APPROACH::segment_001",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "library_hall::ENTRANCE_APPROACH::segment_003",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "library_hall::ENTRANCE_APPROACH::segment_005",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "library_hall::ENTRANCE_SHORT_ALLEYS::segment_002",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "library_hall::ENTRANCE_SHORT_ALLEYS::segment_004",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "library_hall::ENTRANCE_SHORT_ALLEYS::segment_006",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "living_family::COMPACT_MEANDERING_SPINE::segment_001::detour_1",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "living_family::COMPACT_MEANDERING_SPINE::segment_001::detour_2",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "living_family::COMPACT_MEANDERING_SPINE::segment_001::detour_3",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "living_family::COMPACT_MEANDERING_SPINE::segment_001::detour_4",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "living_family::COMPACT_MEANDERING_SPINE::segment_001::detour_5",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "living_family::COMPACT_MEANDERING_SPINE::segment_001::detour_6",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "living_family::ENTRANCE_APPROACH::segment_023",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "living_family::ENTRANCE_APPROACH::segment_027",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "living_family::ENTRANCE_SHORT_ALLEYS::segment_024",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "living_family::ENTRANCE_SHORT_ALLEYS::segment_028",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "living_family::ENTRANCE_SHORT_ALLEYS::segment_029",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "observatory_tower::COMPACT_MEANDERING_SPINE::segment_001",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "observatory_tower::ENTRANCE_APPROACH::segment_007",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "observatory_tower::ENTRANCE_APPROACH::segment_009",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "observatory_tower::ENTRANCE_APPROACH::segment_011",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "observatory_tower::ENTRANCE_SHORT_ALLEYS::segment_008",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "observatory_tower::ENTRANCE_SHORT_ALLEYS::segment_010",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "observatory_tower::ENTRANCE_SHORT_ALLEYS::segment_012",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "reception_food::COMPACT_MEANDERING_SPINE::segment_001",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "reception_food::ENTRANCE_APPROACH::segment_036",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "reception_food::ENTRANCE_APPROACH::segment_040",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "reception_food::ENTRANCE_SHORT_ALLEYS::segment_037",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "reception_food::ENTRANCE_SHORT_ALLEYS::segment_041",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "reception_water::COMPACT_MEANDERING_SPINE::segment_001",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "reception_water::ENTRANCE_APPROACH::segment_038",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        },
+        {
+          "sourceId": "reception_water::ENTRANCE_SHORT_ALLEYS::segment_039",
+          "roadKind": "COMPACT_ALLEY",
+          "reason": "not_village_scale"
+        }
+      ],
+      "appliedRoadCount": 0
+    },
+    "publicGround": {
+      "sampleSource": "coarse_d3",
+      "waterColumnsRetained": 0,
+      "unsupportedPlatformColumnsRetained": 0,
+      "transitionConflictColumns": 267,
+      "gradedGreenColumns": 28539,
+      "publicPathBridgeColumns": 0,
+      "warnings": [
+        "CITY_PUBLIC_SPACE_NATURAL_WATER_RETAINED:living",
+        "CITY_PUBLIC_SPACE_NATURAL_WATER_RETAINED:reception",
+        "CITY_PUBLIC_GROUND_TRANSITION_SPACE_REQUIRED:columns\u003d267"
+      ],
+      "transitionConflictSamples": [
+        {
+          "x": -2785,
+          "z": 5024,
+          "naturalY": 68,
+          "neighbors": [
+            {
+              "x": -2786,
+              "z": 5024,
+              "green": true,
+              "naturalY": 68
+            },
+            {
+              "x": -2784,
+              "z": 5024,
+              "green": false,
+              "naturalY": 67
+            },
+            {
+              "x": -2785,
+              "z": 5023,
+              "green": false,
+              "naturalY": 70
+            },
+            {
+              "x": -2785,
+              "z": 5025,
+              "green": true,
+              "naturalY": 68
+            }
+          ]
+        },
+        {
+          "x": -2801,
+          "z": 5141,
+          "naturalY": 66,
+          "neighbors": [
+            {
+              "x": -2802,
+              "z": 5141,
+              "green": true,
+              "naturalY": 66
+            },
+            {
+              "x": -2800,
+              "z": 5141,
+              "fixedY": 62,
+              "green": true,
+              "naturalY": 64
+            },
+            {
+              "x": -2801,
+              "z": 5140,
+              "green": true,
+              "naturalY": 66
+            },
+            {
+              "x": -2801,
+              "z": 5142,
+              "green": true,
+              "naturalY": 66
+            }
+          ]
+        },
+        {
+          "x": -2800,
+          "z": 5141,
+          "naturalY": 64,
+          "fixedY": 62,
+          "neighbors": [
+            {
+              "x": -2801,
+              "z": 5141,
+              "green": true,
+              "naturalY": 66
+            },
+            {
+              "x": -2799,
+              "z": 5141,
+              "fixedY": 62,
+              "green": true,
+              "naturalY": 64
+            },
+            {
+              "x": -2800,
+              "z": 5140,
+              "green": true,
+              "naturalY": 64
+            },
+            {
+              "x": -2800,
+              "z": 5142,
+              "fixedY": 62,
+              "green": true,
+              "naturalY": 64
+            }
+          ]
+        },
+        {
+          "x": -2802,
+          "z": 5142,
+          "naturalY": 66,
+          "neighbors": [
+            {
+              "x": -2803,
+              "z": 5142,
+              "green": true,
+              "naturalY": 66
+            },
+            {
+              "x": -2801,
+              "z": 5142,
+              "green": true,
+              "naturalY": 66
+            },
+            {
+              "x": -2802,
+              "z": 5141,
+              "green": true,
+              "naturalY": 66
+            },
+            {
+              "x": -2802,
+              "z": 5143,
+              "green": false,
+              "naturalY": 66
+            }
+          ]
+        },
+        {
+          "x": -2801,
+          "z": 5142,
+          "naturalY": 66,
+          "neighbors": [
+            {
+              "x": -2802,
+              "z": 5142,
+              "green": true,
+              "naturalY": 66
+            },
+            {
+              "x": -2800,
+              "z": 5142,
+              "fixedY": 62,
+              "green": true,
+              "naturalY": 64
+            },
+            {
+              "x": -2801,
+              "z": 5141,
+              "green": true,
+              "naturalY": 66
+            },
+            {
+              "x": -2801,
+              "z": 5143,
+              "green": false,
+              "naturalY": 66
+            }
+          ]
+        },
+        {
+          "x": -2800,
+          "z": 5142,
+          "naturalY": 64,
+          "fixedY": 62,
+          "neighbors": [
+            {
+              "x": -2801,
+              "z": 5142,
+              "green": true,
+              "naturalY": 66
+            },
+            {
+              "x": -2799,
+              "z": 5142,
+              "fixedY": 62,
+              "green": true,
+              "naturalY": 64
+            },
+            {
+              "x": -2800,
+              "z": 5141,
+              "fixedY": 62,
+              "green": true,
+              "naturalY": 64
+            },
+            {
+              "x": -2800,
+              "z": 5143,
+              "fixedY": 62,
+              "green": true,
+              "naturalY": 64
+            }
+          ]
+        },
+        {
+          "x": -2799,
+          "z": 5142,
+          "naturalY": 64,
+          "fixedY": 62,
+          "neighbors": [
+            {
+              "x": -2800,
+              "z": 5142,
+              "fixedY": 62,
+              "green": true,
+              "naturalY": 64
+            },
+            {
+              "x": -2798,
+              "z": 5142,
+              "fixedY": 62,
+              "green": true,
+              "naturalY": 64
+            },
+            {
+              "x": -2799,
+              "z": 5141,
+              "fixedY": 62,
+              "green": true,
+              "naturalY": 64
+            },
+            {
+              "x": -2799,
+              "z": 5143,
+              "fixedY": 62,
+              "green": true,
+              "naturalY": 64
+            }
+          ]
+        },
+        {
+          "x": -2800,
+          "z": 5143,
+          "naturalY": 64,
+          "fixedY": 62,
+          "neighbors": [
+            {
+              "x": -2801,
+              "z": 5143,
+              "green": false,
+              "naturalY": 66
+            },
+            {
+              "x": -2799,
+              "z": 5143,
+              "fixedY": 62,
+              "green": true,
+              "naturalY": 64
+            },
+            {
+              "x": -2800,
+              "z": 5142,
+              "fixedY": 62,
+              "green": true,
+              "naturalY": 64
+            },
+            {
+              "x": -2800,
+              "z": 5144,
+              "fixedY": 62,
+              "green": true,
+              "naturalY": 64
+            }
+          ]
+        },
+        {
+          "x": -2928,
+          "z": 5146,
+          "naturalY": 73,
+          "neighbors": [
+            {
+              "x": -2929,
+              "z": 5146,
+              "green": true,
+              "naturalY": 72
+            },
+            {
+              "x": -2927,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2928,
+              "z": 5145,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2928,
+              "z": 5147,
+              "green": true,
+              "naturalY": 73
+            }
+          ]
+        },
+        {
+          "x": -2927,
+          "z": 5146,
+          "naturalY": 73,
+          "neighbors": [
+            {
+              "x": -2928,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2926,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2927,
+              "z": 5145,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2927,
+              "z": 5147,
+              "green": true,
+              "naturalY": 73
+            }
+          ]
+        },
+        {
+          "x": -2926,
+          "z": 5146,
+          "naturalY": 73,
+          "neighbors": [
+            {
+              "x": -2927,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2925,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2926,
+              "z": 5145,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2926,
+              "z": 5147,
+              "green": true,
+              "naturalY": 73
+            }
+          ]
+        },
+        {
+          "x": -2925,
+          "z": 5146,
+          "naturalY": 73,
+          "neighbors": [
+            {
+              "x": -2926,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2924,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2925,
+              "z": 5145,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2925,
+              "z": 5147,
+              "green": true,
+              "naturalY": 73
+            }
+          ]
+        },
+        {
+          "x": -2924,
+          "z": 5146,
+          "naturalY": 73,
+          "neighbors": [
+            {
+              "x": -2925,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2923,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2924,
+              "z": 5145,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2924,
+              "z": 5147,
+              "green": true,
+              "naturalY": 73
+            }
+          ]
+        },
+        {
+          "x": -2923,
+          "z": 5146,
+          "naturalY": 73,
+          "neighbors": [
+            {
+              "x": -2924,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2922,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2923,
+              "z": 5145,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2923,
+              "z": 5147,
+              "green": true,
+              "naturalY": 73
+            }
+          ]
+        },
+        {
+          "x": -2922,
+          "z": 5146,
+          "naturalY": 73,
+          "neighbors": [
+            {
+              "x": -2923,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2921,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2922,
+              "z": 5145,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2922,
+              "z": 5147,
+              "green": true,
+              "naturalY": 73
+            }
+          ]
+        },
+        {
+          "x": -2921,
+          "z": 5146,
+          "naturalY": 73,
+          "neighbors": [
+            {
+              "x": -2922,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2920,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2921,
+              "z": 5145,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2921,
+              "z": 5147,
+              "green": true,
+              "naturalY": 73
+            }
+          ]
+        },
+        {
+          "x": -2920,
+          "z": 5146,
+          "naturalY": 73,
+          "neighbors": [
+            {
+              "x": -2921,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2919,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2920,
+              "z": 5145,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2920,
+              "z": 5147,
+              "green": true,
+              "naturalY": 73
+            }
+          ]
+        },
+        {
+          "x": -2919,
+          "z": 5146,
+          "naturalY": 73,
+          "neighbors": [
+            {
+              "x": -2920,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2918,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2919,
+              "z": 5145,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2919,
+              "z": 5147,
+              "green": true,
+              "naturalY": 73
+            }
+          ]
+        },
+        {
+          "x": -2918,
+          "z": 5146,
+          "naturalY": 73,
+          "neighbors": [
+            {
+              "x": -2919,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2917,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2918,
+              "z": 5145,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2918,
+              "z": 5147,
+              "green": true,
+              "naturalY": 73
+            }
+          ]
+        },
+        {
+          "x": -2917,
+          "z": 5146,
+          "naturalY": 73,
+          "neighbors": [
+            {
+              "x": -2918,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2916,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2917,
+              "z": 5145,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2917,
+              "z": 5147,
+              "green": true,
+              "naturalY": 73
+            }
+          ]
+        },
+        {
+          "x": -2916,
+          "z": 5146,
+          "naturalY": 73,
+          "neighbors": [
+            {
+              "x": -2917,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2915,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2916,
+              "z": 5145,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2916,
+              "z": 5147,
+              "green": true,
+              "naturalY": 73
+            }
+          ]
+        },
+        {
+          "x": -2915,
+          "z": 5146,
+          "naturalY": 73,
+          "neighbors": [
+            {
+              "x": -2916,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2914,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2915,
+              "z": 5145,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2915,
+              "z": 5147,
+              "green": true,
+              "naturalY": 73
+            }
+          ]
+        },
+        {
+          "x": -2914,
+          "z": 5146,
+          "naturalY": 73,
+          "neighbors": [
+            {
+              "x": -2915,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2913,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2914,
+              "z": 5145,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2914,
+              "z": 5147,
+              "green": true,
+              "naturalY": 73
+            }
+          ]
+        },
+        {
+          "x": -2913,
+          "z": 5146,
+          "naturalY": 73,
+          "neighbors": [
+            {
+              "x": -2914,
+              "z": 5146,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2912,
+              "z": 5146,
+              "green": true,
+              "naturalY": 72
+            },
+            {
+              "x": -2913,
+              "z": 5145,
+              "green": true,
+              "naturalY": 73
+            },
+            {
+              "x": -2913,
+              "z": 5147,
+              "green": true,
+              "naturalY": 73
+            }
+          ]
+        }
+      ]
+    },
+    "entranceAccess": {
+      "connectedEntrances": 22,
+      "gradedApproachColumns": 4,
+      "warnings": [
+        "CITY_ENTRANCE_NARROW_STAIR:living_students_required_002::front",
+        "CITY_ENTRANCE_NARROW_STAIR:living_students_required_004::front"
+      ]
+    },
+    "publicGreenGroundBlocks": 73919,
+    "coreTerraceCount": 5,
+    "designedPublicSpaceCount": 2,
+    "sharedTerraceGroundBlocks": 1097,
+    "publicGreenPlantBlocks": 12083
+  }
+}

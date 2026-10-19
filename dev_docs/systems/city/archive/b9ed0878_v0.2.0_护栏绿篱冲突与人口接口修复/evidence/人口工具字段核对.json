@@ -1,0 +1,30 @@
+[
+  {
+    "tool": "city_d4_district",
+    "field": "districtDesign",
+    "properties": [
+      "groups",
+      "arrayCompositions",
+      "relations",
+      "surfaceMaterials",
+      "foundationGroupIds",
+      "landscapes",
+      "publicRealm",
+      "core"
+    ],
+    "additionalProperties": false,
+    "populationExposed": false
+  },
+  {
+    "tool": "city_d4_integrate",
+    "field": "changes",
+    "properties": [
+      "groups",
+      "arrayCompositions",
+      "relations",
+      "foundationGroupIds"
+    ],
+    "additionalProperties": false,
+    "populationExposed": false
+  }
+]

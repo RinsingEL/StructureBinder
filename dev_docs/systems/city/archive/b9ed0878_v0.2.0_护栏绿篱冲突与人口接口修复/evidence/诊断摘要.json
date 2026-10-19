@@ -1,0 +1,16 @@
+{
+  "runId": "provider_3d25631f_r19200",
+  "cityId": "city_jingchao_capital",
+  "d4Status": "accepted",
+  "geometryValidated": true,
+  "blueprintHash": "sha256:9c0d449e169f30fb952454b1ac96436d971378a155c928834dea6a048602bc69",
+  "blueprintFileSha256": "9c0d449e169f30fb952454b1ac96436d971378a155c928834dea6a048602bc69",
+  "postD4Status": "blocked_by_program",
+  "reasonCode": "CITY_LAND_USE_SURFACE_FEATURE_CELL_DUPLICATE",
+  "error": "CITY_LAND_USE_SURFACE_FEATURE_CELL_DUPLICATE:-2865:5022:1:previous=FeatureCell[sourceId=shared_terrace::city_jingchao_capital, x=-2865, z=5022, blockId=minecraft:oak_fence, surfaceOffset=1, kind=TERRACE_RAIL, facing=NONE, targetSurfaceY=66]:incoming=FeatureCell[sourceId=public_greenery::city_jingchao_capital, x=-2865, z=5022, blockId=minecraft:oak_leaves, surfaceOffset=1, kind=GREEN_PLANT, facing=NONE, targetSurfaceY=null]",
+  "publicRealmPresent": false,
+  "plannedBuildingCount": 28,
+  "retainedBuildingCount": 28,
+  "districtPopulationPlan": [],
+  "sourceUnmodified": true
+}
