@@ -1,0 +1,135 @@
+{
+  "runId": "provider_3d25631f_r19200",
+  "citySeedId": "city_jingchao_capital",
+  "contextId": "sha256:caf6d66b6de78b5672f59d568050b83d2b4910228fd51df73cded49c7bd4ed81",
+  "workflowRevision": 0,
+  "overview": {
+    "citySettings": {
+      "designIntent": {
+        "cityIdentity": "镜潮学院城（镜潮）",
+        "theme": "岛国唯一学院城的空间骨架：以南海码头为起点，一条南北主轴沿缓坡向北上溯——码头与门楼（前导，z≈5500–5440）→星泉广场（主轴与东西横轴交点，z≈5390，约70×55，泉居中心）→星穹主院（COURTYARD 围合，礼堂居北，双教学翼楼东西合抱，z≈5350–5270）→藏阅区（z≈5300 西侧）与观象台地（z≈5220 北端，全城最高台地）。一级地标为星厅（71×83，主轴尽端、主院北侧，正面朝南对广场）；二级地标为藏书馆（61×65，广场西北）、观测塔（51×55，北端台地）、长桌食堂（57×69，广场东侧）。生活区贴广场东侧（宿舍街坊、食堂、浴室、医务、日用品），园圃与仓储在西南林缘，港埠迎客与门楼在南岸低处。南低北高的台地序列（约62→67→72米）承担层级：岸线与主轴不设城墙，仅在教学与居住区外缘用低矮木石围墙（LOW_BOUNDARY），天然林带与水湾作为边界与区间分隔。按人定区：教学 10 岗（教师8、院务2）+研究 8 岗+文献 3 岗+观象 2 岗+生活服务 9 岗+港埠 4 岗+园圃后勤 5 岗，合计约41岗，服务60名学生，全城约101人；床位约119，由主宿舍60床、三栋小宿舍48床与教工住宅6床、园区宿舍16床承担；食堂座位约34（分批用餐）。公共区（广场、食堂、市集）位于宿舍与教学区的通勤路上。",
+        "functionalRoles": [
+          "教学研究",
+          "文献典藏与阅读",
+          "观象与研究",
+          "访客接待与港埠",
+          "学生住宿与生活服务",
+          "园圃与后勤供给"
+        ]
+      },
+      "styleProfile": {
+        "profileRef": "style:studio_R02_arcane_reborn"
+      },
+      "roadProfile": {
+        "profileRef": "road:town"
+      },
+      "surfaceDetailProfile": {
+        "profileRef": "surface:working"
+      },
+      "surfaceMaterials": {
+        "defaults": {
+          "ground": "minecraft:stone_bricks",
+          "roadBase": "minecraft:stone_bricks",
+          "roadSurface": "minecraft:stone_brick_slab",
+          "roadStair": "minecraft:stone_brick_stairs",
+          "roadCurb": "minecraft:stone_brick_stairs",
+          "accessSurface": "minecraft:stone_brick_slab",
+          "accessStair": "minecraft:stone_brick_stairs",
+          "retainingWall": "minecraft:cobblestone",
+          "wallColumn": "minecraft:oak_log",
+          "wallCap": "minecraft:stone_bricks",
+          "wallBand": "minecraft:stone_bricks",
+          "deck": "minecraft:cobblestone",
+          "fill": "minecraft:dirt",
+          "pier": "minecraft:stone_bricks",
+          "railing": "minecraft:oak_fence",
+          "lowWall": "minecraft:stone_brick_wall",
+          "hedge": "minecraft:oak_leaves",
+          "bridgeSurface": "minecraft:spruce_slab",
+          "bridgeRail": "minecraft:spruce_fence",
+          "bridgeBeam": "minecraft:spruce_planks",
+          "bridgePost": "minecraft:stripped_spruce_log",
+          "bridgePier": "minecraft:stripped_spruce_log"
+        }
+      },
+      "outdoorPlan": {
+        "mode": "GENERATE",
+        "envelopeProfile": "COMPACT",
+        "foundationProfileRef": "foundation:urban"
+      }
+    },
+    "districts": [
+      {
+        "groupId": "gateway",
+        "role": "【公共】海路迎客港埠：码头、门楼、访客前庭与市集，服务抵岸访客与全院居民，位于南岸低处、主轴起点。",
+        "intent": "南岸码头与门楼构成全城第一道前导空间；由岸线拾级而上进入星泉广场，访客在此得到引导、补给与住处。"
+      },
+      {
+        "groupId": "star_court",
+        "role": "【公共】星泉广场与星穹主院：全城中心与一级地标星厅，教学、礼仪、集会发生于此。",
+        "intent": "主轴与东西横轴交点为星泉广场；北侧星穹主院以礼堂居北、双教学翼楼东西围合，形成安静的教学核心。"
+      },
+      {
+        "groupId": "library",
+        "role": "【工作】藏阅区：藏书馆、抄书院与阅读庭院，服务全院师生与来访学者，位于广场西北的安静一侧。",
+        "intent": "由广场西北角经短巷进入，建筑围合内院，越往里越安静；与主院共享同一台地，低于观象台地。"
+      },
+      {
+        "groupId": "observatory",
+        "role": "【工作】观象台地：观测塔、实验楼与器材工坊，位于主轴尽端的北端最高台地，服务研究者与高年级学生。",
+        "intent": "主轴自礼堂后继续上行，经踏道登上全城最高台地；观测塔孤立于台地北缘，实验楼在其东侧，形成天际线。"
+      },
+      {
+        "groupId": "life",
+        "role": "【居住】学生生活区：宿舍街坊、食堂、浴室、医务与日用品，服务全城约101人，贴广场东侧通勤路。",
+        "intent": "宿舍在东北侧成街坊，食堂夹在宿舍与广场之间；学生每日往返教学区必经广场与食堂。"
+      },
+      {
+        "groupId": "garden",
+        "role": "【工作】园圃后勤区：药草温室、苗圃、仓储与工坊，服务全院供给，位于西南林缘与低地。",
+        "intent": "利用西南侧林地边缘与缓坡布置苗圃和温室，仓储靠近港埠与生活区之间的次路，保留原有林带作为分隔。"
+      }
+    ],
+    "districtDisposition": [
+      {
+        "districtId": "gateway",
+        "independent": false,
+        "reason": "城市入口，与主轴直接相连，不独立。"
+      },
+      {
+        "districtId": "star_court",
+        "independent": false,
+        "reason": "全城中心，所有区围绕它组织。"
+      },
+      {
+        "districtId": "library",
+        "independent": false,
+        "reason": "与主院同台地、由广场短巷连接。"
+      },
+      {
+        "districtId": "observatory",
+        "independent": false,
+        "reason": "主轴尽端台地，经踏道与主院相连。"
+      },
+      {
+        "districtId": "life",
+        "independent": false,
+        "reason": "贴广场东侧，是全院日常通勤的一部分。"
+      },
+      {
+        "districtId": "garden",
+        "independent": false,
+        "reason": "西南林缘的生产后勤区，经次路与港埠、生活区相连。"
+      }
+    ]
+  },
+  "designAnswers": {
+    "styles": [
+      "魔法学院新制"
+    ],
+    "roadProfileRef": "road:town",
+    "ground": "minecraft:stone_bricks",
+    "roadSurface": "minecraft:stone_brick_slab",
+    "groundTreatment": "GENERATE"
+  }
+}

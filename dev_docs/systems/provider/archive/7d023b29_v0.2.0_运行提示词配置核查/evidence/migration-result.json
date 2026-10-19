@@ -1,0 +1,35 @@
+{
+  "backupDirectory": "E:\\Mod_Dev\\StructureBinder\\runtime\\config-audit-20261019\\backup-20261019-211451",
+  "targets": {
+    "game": {
+      "verified": 12,
+      "changed": [
+        "README.md",
+        "agent.md",
+        "city/d4_v2/complete.md",
+        "city/d4_v2/district.md",
+        "city/d4_v2/finalize.md",
+        "city/d4_v2/handbook.md",
+        "city/d4_v2/integration.md",
+        "city/d4_v2/overview.md",
+        "providers/direct.md",
+        "realm/environment_style.md",
+        "realm/t1.md"
+      ]
+    },
+    "development": {
+      "verified": 12,
+      "changed": [
+        "README.md",
+        "agent.md",
+        "city/d4_v2/district.md",
+        "city/d4_v2/finalize.md",
+        "city/d4_v2/handbook.md",
+        "city/d4_v2/integration.md",
+        "city/d4_v2/overview.md",
+        "realm/t1.md"
+      ]
+    }
+  },
+  "protectedFilesVerified": 40
+}

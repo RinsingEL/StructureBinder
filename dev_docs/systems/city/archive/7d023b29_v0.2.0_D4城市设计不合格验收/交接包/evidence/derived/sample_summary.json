@@ -1,0 +1,751 @@
+{
+  "astra": {
+    "contextId": "sha256:a2e4d6cf89ef2d2c9187e664ec048a0add5dfc42f91e754c2579e338b8ecc19d",
+    "stage": "COMPLETE",
+    "revision": 10,
+    "activeDraftHash": "sha256:5704a0532be38339577c00bd5936076815615e7d5262ce1b227d72293bd51164",
+    "districts": [
+      {
+        "districtId": "academic",
+        "groupCount": 4,
+        "groups": [
+          {
+            "id": "book_court",
+            "role": "藏书馆：主轴尽端的一级公共地标",
+            "structureCount": 1,
+            "required": [
+              "studio:mg-02-v02"
+            ],
+            "anchorBlock": null
+          },
+          {
+            "id": "teaching_court",
+            "role": "庭院教学，26席",
+            "structureCount": 1,
+            "required": [
+              "studio:mg-36-v02"
+            ],
+            "anchorBlock": null
+          },
+          {
+            "id": "council",
+            "role": "院务与议事",
+            "structureCount": 1,
+            "required": [
+              "studio:mg-13-v02"
+            ],
+            "anchorBlock": null
+          },
+          {
+            "id": "classrooms",
+            "role": "小课堂与教学翼楼，共36席，围院南侧的两翼",
+            "structureCount": 2,
+            "required": [
+              "studio:mg-25-v02",
+              "studio:mg-34-v03"
+            ],
+            "anchorBlock": null
+          }
+        ],
+        "population": {
+          "purpose": "文献、教学与议事服务91常住者，含60名学生。教学设施26+24+12=62座，教师6人分布3座教学建筑，每栋在岗不超过4；文献2人与院务4人，共12岗位。",
+          "residents": 0,
+          "jobs": [
+            {
+              "profession": "teacher",
+              "count": 6,
+              "functions": [
+                "教学",
+                "研讨"
+              ]
+            },
+            {
+              "profession": "librarian",
+              "count": 2,
+              "functions": [
+                "书籍借阅",
+                "文献保管"
+              ]
+            },
+            {
+              "profession": "registrar",
+              "count": 4,
+              "functions": [
+                "公共办事",
+                "议事"
+              ]
+            }
+          ],
+          "housingGroupIds": []
+        },
+        "arrayCount": 1
+      },
+      {
+        "districtId": "commons",
+        "groupCount": 4,
+        "groups": [
+          {
+            "id": "residence",
+            "role": "主宿舍60床",
+            "structureCount": 1,
+            "required": [
+              "studio:mg-05-v02"
+            ],
+            "anchorBlock": null
+          },
+          {
+            "id": "rooms",
+            "role": "小宿舍48床",
+            "structureCount": 3,
+            "required": [
+              "studio:mg-27-v02"
+            ],
+            "anchorBlock": null
+          },
+          {
+            "id": "meals",
+            "role": "36座公共主食堂，位于宿舍与迎客街之间",
+            "structureCount": 1,
+            "required": [
+              "studio:mg-07-v02"
+            ],
+            "anchorBlock": null
+          },
+          {
+            "id": "washhouse",
+            "role": "洗衣洗浴服务",
+            "structureCount": 1,
+            "required": [
+              "studio:mg-44-v02"
+            ],
+            "anchorBlock": null
+          }
+        ],
+        "population": {
+          "purpose": "60学生加31教职服务人员共91常住者，108床，入住率84.3%。主食堂36座满足约三分之一人口同时用餐，2餐饮岗位及2洗浴岗位；公共餐厅在南向通勤街。",
+          "residents": 91,
+          "jobs": [
+            {
+              "profession": "cook",
+              "count": 2,
+              "functions": [
+                "餐饮",
+                "集体用餐"
+              ],
+              "servesMeals": true
+            },
+            {
+              "profession": "laundry",
+              "count": 2,
+              "functions": [
+                "洗浴",
+                "洗衣"
+              ]
+            }
+          ],
+          "housingGroupIds": [
+            "residence",
+            "rooms"
+          ]
+        },
+        "arrayCount": 1
+      },
+      {
+        "districtId": "arrival",
+        "groupCount": 1,
+        "groups": [
+          {
+            "id": "quay_street",
+            "role": "水运候船、日用品交易、货物仓储的南湾迎客街",
+            "structureCount": 3,
+            "required": [
+              "studio:mg-23-v02",
+              "studio:mg-45-v02",
+              "studio:mg-20-v02"
+            ],
+            "anchorBlock": {
+              "x": -3000,
+              "z": 5430
+            }
+          }
+        ],
+        "population": {
+          "purpose": "水运候船2岗位、日用品2岗位、仓储1岗位；接待访客与服务95常住者，街道连教学中心和餐饮生活区，候船容量未提供，不虚报人数。",
+          "residents": 0,
+          "jobs": [
+            {
+              "profession": "boatkeeper",
+              "count": 2,
+              "functions": [
+                "水运接驳",
+                "候船"
+              ]
+            },
+            {
+              "profession": "shopkeeper",
+              "count": 2,
+              "functions": [
+                "日用品交易"
+              ]
+            },
+            {
+              "profession": "storekeeper",
+              "count": 1,
+              "functions": [
+                "货物仓储"
+              ]
+            }
+          ],
+          "housingGroupIds": []
+        },
+        "arrayCount": 0
+      },
+      {
+        "districtId": "fieldwork",
+        "groupCount": 1,
+        "groups": [
+          {
+            "id": "research_garden",
+            "role": "林缘观象、双实验教学及药草园艺的研究组团",
+            "structureCount": 5,
+            "required": [
+              "studio:mg-03-v02",
+              "studio:mg-43-v02",
+              "studio:mg-31-v02",
+              "studio:mg-30-v01"
+            ],
+            "anchorBlock": {
+              "x": -2975,
+              "z": 5110
+            }
+          }
+        ],
+        "population": {
+          "purpose": "为60名学生提供观象与实验、植物教学，观象3人、双实验楼4人、温室园艺2人、药草试种1人，共10岗位；保留北侧原林。",
+          "residents": 0,
+          "jobs": [
+            {
+              "profession": "astronomer",
+              "count": 3,
+              "functions": [
+                "天象观测",
+                "研究"
+              ]
+            },
+            {
+              "profession": "researcher",
+              "count": 4,
+              "functions": [
+                "实验教学",
+                "研究"
+              ]
+            },
+            {
+              "profession": "gardener",
+              "count": 3,
+              "functions": [
+                "植物教学",
+                "园艺养护",
+                "药草栽培"
+              ]
+            }
+          ],
+          "housingGroupIds": []
+        },
+        "arrayCount": 0
+      }
+    ],
+    "finalAssessment": "已实际检查revision9全城图及相关局部图。城市要求：19栋全部保留，教学62座（庭院教学26、小课堂24、翼楼12），藏书馆承担文献阅读保管，院务楼议事，观象塔与双实验、温室及药草地承担研究教学，南湾水运候船/日用品/仓储，东侧宿舍食堂洗浴覆盖常住生活。地形：主体在平原28，北侧研究贴林缘台地；生活区整体北移75格后，最新洗浴、宿舍和食堂局部图显示主体落在陆地并保留东南水湾，岸边与台地施工适配仍需后续验证，不声称已施工或具有魔法玩法。整体：南岸quay_street(-3000..-2866,5430..5488)经双课堂到48×40中央内院，藏书馆(-2966..-2906,5225..5289)在主轴尽端，为唯一公共一级焦点；西教学、东议事、南双课堂共同围合，北侧研究与书馆净距28，东生活街坊与议事净距约21，港街与课堂净距40，四根组沿一条主骨架和短支路组织，不是四个孤岛，因此保留4根警告。structureGraphConnected=true、10条关系均满足、allStreetEntrancesConnected=true；单栋GRID的局部网络警告保留，由已看局部图确认建筑入口有主路接入，不宣称所有可视化诊断为零。人口与体量：最终以分区population为准，12学术+10研究+5迎客+4生活服务=31岗位，加60学生=91常住者；108床入住率84.3%，36餐座约容纳40%人口，62教学座满足60学生。教学工位20?不作额外总量宣称，老师6人分三栋，均不超过每栋约4人估算。总览中的95人/三食堂为初估，已被本次设施容量核对后的91人/一座36座主食堂取代。主食堂位于住宿至教学及迎客的通勤面，早中晚均有明确活动。当前规模承载本城全部核心职责，继续扩张会占用保留林地而无必要，故停止。精确公共空间树列/标景配置因宿主将schema允许的origin.x、plan.entries.x误判FORBIDDEN_PLACEMENT_FIELD而未提交；已保留内院及可接受的greenery/fringe池，不宣称精确种植已实现。仅保存D4设计，不进入施工。",
+    "markingAssessment": null
+  },
+  "deepseek_latest": {
+    "contextId": "sha256:caf6d66b6de78b5672f59d568050b83d2b4910228fd51df73cded49c7bd4ed81",
+    "stage": "INTEGRATION",
+    "revision": 33,
+    "activeDraftHash": "sha256:aed0d412d60ad7e3034ec6545c3807e19dde3294d4851aa7f6ad09c6fb35a906",
+    "districts": [
+      {
+        "districtId": "gateway",
+        "groupCount": 4,
+        "groups": [
+          {
+            "id": "harbor",
+            "role": "【公共】水运接驳：海路登岸与候船，迎客序列的起点。",
+            "structureCount": 1,
+            "required": [
+              "studio:mg-23-v02"
+            ],
+            "anchorBlock": {
+              "x": -2955,
+              "z": 5444
+            }
+          },
+          {
+            "id": "gate",
+            "role": "【公共】门楼：登记、驻守与进入星泉广场的门户。",
+            "structureCount": 1,
+            "required": [
+              "studio:mg-22-v02"
+            ],
+            "anchorBlock": {
+              "x": -2956,
+              "z": 5397
+            }
+          },
+          {
+            "id": "inn",
+            "role": "【公共】迎客木石客舍：抵岸访客的住宿与热食。",
+            "structureCount": 1,
+            "required": [
+              "studio:ns-09-v02"
+            ],
+            "anchorBlock": {
+              "x": -3028,
+              "z": 5408
+            }
+          },
+          {
+            "id": "market",
+            "role": "【公共】港埠市集：补给、货物暂存与访客采买。",
+            "structureCount": 1,
+            "required": [
+              "studio:mg-06-v02"
+            ],
+            "anchorBlock": {
+              "x": -2879,
+              "z": 5431
+            }
+          }
+        ],
+        "population": {
+          "purpose": "【公共】海路迎客：码头与门楼每日接待抵岸访客与朝圣者约 10–20 人，前庭可容 40 人停留；客舍与市集服务访客及全院居民。",
+          "residents": 0,
+          "jobs": [
+            {
+              "profession": "dockhand",
+              "name": "码头工",
+              "count": 2,
+              "functions": [
+                "水运接驳",
+                "货物暂存"
+              ]
+            },
+            {
+              "profession": "gatekeeper",
+              "name": "门卫",
+              "count": 1,
+              "functions": [
+                "出入通行",
+                "登记"
+              ]
+            },
+            {
+              "profession": "innkeeper",
+              "name": "客舍主人",
+              "count": 1,
+              "functions": [
+                "旅宿",
+                "餐饮"
+              ],
+              "servesMeals": true
+            },
+            {
+              "profession": "shopkeeper",
+              "name": "市集店主",
+              "count": 1,
+              "functions": [
+                "商品零售"
+              ]
+            }
+          ],
+          "housingGroupIds": []
+        },
+        "arrayCount": 0
+      },
+      {
+        "districtId": "star_court",
+        "groupCount": 3,
+        "groups": [
+          {
+            "id": "hall",
+            "role": "【公共】星厅：全城一级地标，教学、礼仪与集会的礼堂，正面朝南面对星泉广场。",
+            "structureCount": 1,
+            "required": [
+              "studio:mg-01-v02"
+            ],
+            "anchorBlock": {
+              "x": -2963,
+              "z": 5257
+            }
+          },
+          {
+            "id": "teaching_wing",
+            "role": "【公共】双教学翼楼的东翼：讲堂、研讨与阅读教室，与西侧藏书馆共同围合星穹主院。",
+            "structureCount": 3,
+            "required": [
+              "studio:mg-34-v03",
+              "studio:mg-25-v02"
+            ],
+            "anchorBlock": {
+              "x": -2888,
+              "z": 5345
+            }
+          },
+          {
+            "id": "star_spring",
+            "role": "【公共】星泉：主院中央的水景与停留点，位于主轴与东西横轴交点。",
+            "structureCount": 1,
+            "required": [
+              "studio:mg-10-v01"
+            ],
+            "anchorBlock": {
+              "x": -3020,
+              "z": 5320
+            }
+          }
+        ],
+        "population": {
+          "purpose": "【公共】教学与礼仪：星厅 60 个学生座位与全院集会容量（约 100 人）；东翼讲堂设 3 间教室与研讨室，服务 60 名学生与来访学者。",
+          "residents": 0,
+          "jobs": [
+            {
+              "profession": "teacher",
+              "name": "教师",
+              "count": 8,
+              "functions": [
+                "教学",
+                "研讨"
+              ]
+            },
+            {
+              "profession": "registrar",
+              "name": "院务",
+              "count": 2,
+              "functions": [
+                "公共办事",
+                "议事"
+              ]
+            }
+          ],
+          "housingGroupIds": []
+        },
+        "arrayCount": 0
+      },
+      {
+        "districtId": "library",
+        "groupCount": 3,
+        "groups": [
+          {
+            "id": "library",
+            "role": "【工作】藏书馆：书目检索、文献保管与阅读，藏阅区的主体与二级地标。",
+            "structureCount": 2,
+            "required": [
+              "studio:mg-02-v02"
+            ],
+            "anchorBlock": {
+              "x": -3050,
+              "z": 5328
+            }
+          },
+          {
+            "id": "scriptorium",
+            "role": "【工作】抄书院：文献抄写、书籍制作与档案整理，位于藏书馆北侧的安静深处。",
+            "structureCount": 1,
+            "required": [
+              "studio:mg-19-v02"
+            ],
+            "anchorBlock": {
+              "x": -3053,
+              "z": 5248
+            }
+          },
+          {
+            "id": "reading_pavilion",
+            "role": "【公共】阅读亭：藏书馆南侧的小型露天阅读与休憩点。",
+            "structureCount": 1,
+            "required": [
+              "studio:mg-29-v01"
+            ],
+            "anchorBlock": {
+              "x": -3060,
+              "z": 5398
+            }
+          }
+        ],
+        "population": {
+          "purpose": "【工作】文献典藏与阅读：藏书馆设 10 个阅览位与书目检索，抄书院设 4 个抄写位；服务全院 60 名学生、10 名教师与来访学者。",
+          "residents": 0,
+          "jobs": [
+            {
+              "profession": "librarian",
+              "name": "文献员",
+              "count": 3,
+              "functions": [
+                "书籍借阅",
+                "文献保管",
+                "阅读"
+              ]
+            },
+            {
+              "profession": "scribe",
+              "name": "抄写员",
+              "count": 2,
+              "functions": [
+                "文献抄写",
+                "书籍制作"
+              ]
+            }
+          ],
+          "housingGroupIds": []
+        },
+        "arrayCount": 0
+      },
+      {
+        "districtId": "observatory",
+        "groupCount": 3,
+        "groups": [
+          {
+            "id": "observatory",
+            "role": "【工作】观测塔：天象观测与研究，立于北端台地。",
+            "structureCount": 2,
+            "required": [
+              "studio:mg-03-v02"
+            ],
+            "anchorBlock": {
+              "x": -2760,
+              "z": 5040
+            }
+          },
+          {
+            "id": "laboratory",
+            "role": "【工作】实验楼：实验研究与药剂制作的研究主体。",
+            "structureCount": 1,
+            "required": [
+              "studio:mg-04-v02"
+            ],
+            "anchorBlock": {
+              "x": -2960,
+              "z": 5170
+            }
+          },
+          {
+            "id": "experiment_shed",
+            "role": "【工作】实验教学棚：小型实验教学与器材暂存。",
+            "structureCount": 1,
+            "required": [
+              "studio:mg-43-v02"
+            ],
+            "anchorBlock": {
+              "x": -2903,
+              "z": 5278
+            }
+          }
+        ],
+        "population": {
+          "purpose": "【工作】观象与研究：观测塔设 2 个观测位，实验楼设 8 个研究位与药剂制作间；服务 20 名高年级学生与来访研究者。",
+          "residents": 0,
+          "jobs": [
+            {
+              "profession": "astronomer",
+              "name": "观象员",
+              "count": 2,
+              "functions": [
+                "天象观测",
+                "研究"
+              ]
+            },
+            {
+              "profession": "researcher",
+              "name": "研究员",
+              "count": 6,
+              "functions": [
+                "实验研究",
+                "药剂制作"
+              ]
+            },
+            {
+              "profession": "technician",
+              "name": "器材工",
+              "count": 1,
+              "functions": [
+                "器材维护",
+                "实验教学"
+              ]
+            }
+          ],
+          "housingGroupIds": []
+        },
+        "arrayCount": 0
+      },
+      {
+        "districtId": "life",
+        "groupCount": 5,
+        "groups": [
+          {
+            "id": "dorm",
+            "role": "【居住】学生主宿舍：60 床，底层自习室；靠近教学区与实验楼。",
+            "structureCount": 1,
+            "required": [
+              "studio:mg-05-v02"
+            ],
+            "anchorBlock": {
+              "x": -2800,
+              "z": 5245
+            }
+          },
+          {
+            "id": "small_dorm",
+            "role": "【居住】两栋小宿舍：各 16 床，带自习与庭院，供高年级学生与教职居住。",
+            "structureCount": 2,
+            "required": [
+              "studio:mg-27-v02"
+            ],
+            "anchorBlock": {
+              "x": -2768,
+              "z": 5322
+            }
+          },
+          {
+            "id": "dining",
+            "role": "【公共】长桌食堂：集体用餐与热食供应，位于宿舍与教学区之间的通勤路上。",
+            "structureCount": 1,
+            "required": [
+              "studio:mg-28-v02"
+            ],
+            "anchorBlock": {
+              "x": -2860,
+              "z": 5310
+            }
+          },
+          {
+            "id": "bath",
+            "role": "【公共】浴室与洗衣房：生活服务，服务全院居民。",
+            "structureCount": 1,
+            "required": [
+              "studio:mg-44-v02"
+            ],
+            "anchorBlock": {
+              "x": -2860,
+              "z": 5442
+            }
+          },
+          {
+            "id": "shop",
+            "role": "【公共】日用品店：日常补给与生活服务，靠近宿舍与主院东侧。",
+            "structureCount": 1,
+            "required": [
+              "studio:mg-45-v02"
+            ],
+            "anchorBlock": {
+              "x": -2800,
+              "z": 5150
+            }
+          }
+        ],
+        "population": {
+          "purpose": "【居住】学生与教职住宿，全城人口约 92，入住率约 0.85；主宿舍 60 床、两栋小宿舍各 16 床，共 92 床。",
+          "residents": 92,
+          "jobs": [
+            {
+              "profession": "cook",
+              "name": "厨工",
+              "count": 4,
+              "functions": [
+                "餐饮",
+                "集体用餐"
+              ],
+              "servesMeals": true
+            },
+            {
+              "profession": "caretaker",
+              "name": "舍监",
+              "count": 2,
+              "functions": [
+                "学生住宿",
+                "生活服务"
+              ]
+            }
+          ],
+          "housingGroupIds": [
+            "dorm",
+            "small_dorm"
+          ]
+        },
+        "arrayCount": 0
+      },
+      {
+        "districtId": "garden",
+        "groupCount": 2,
+        "groups": [
+          {
+            "id": "garden_team",
+            "role": "【工作】园圃班房：苗圃、药草栽培、工具保管与林业教学，服务全院的药草与苗木供应。",
+            "structureCount": 3,
+            "required": [
+              "studio:mg-33-v01",
+              "studio:mg-32-v02"
+            ],
+            "anchorBlock": {
+              "x": -2895,
+              "z": 5095
+            }
+          },
+          {
+            "id": "storehouse",
+            "role": "【工作】后勤仓房：粮食、药草与建材暂存，靠近园圃与东北侧道路。",
+            "structureCount": 1,
+            "required": [
+              "studio:mg-20-v02"
+            ],
+            "anchorBlock": {
+              "x": -3000,
+              "z": 5060
+            }
+          }
+        ],
+        "population": {
+          "purpose": "【工作】园圃与后勤：苗圃 1 片、园圃班房 3 栋与仓房 1 座；供应全院食材与药材，并承担林业教学。",
+          "residents": 0,
+          "jobs": [
+            {
+              "profession": "gardener",
+              "name": "园丁",
+              "count": 3,
+              "functions": [
+                "园艺养护",
+                "药草栽培"
+              ]
+            },
+            {
+              "profession": "forester",
+              "name": "林务员",
+              "count": 2,
+              "functions": [
+                "苗木培育",
+                "林业教学"
+              ]
+            },
+            {
+              "profession": "storekeeper",
+              "name": "仓管",
+              "count": 1,
+              "functions": [
+                "货物仓储",
+                "材料保管"
+              ]
+            }
+          ],
+          "housingGroupIds": []
+        },
+        "arrayCount": 0
+      }
+    ],
+    "finalAssessment": null,
+    "markingAssessment": "全城 27 栋全部保留。港埠与星厅为单栋地标阵列；岛上平地只够这两座超大单体各自落地，加入同组配套会导致门楼或星厅本身无法落位，故保持单栋并以其门楼、市集、讲堂、星泉承担周边配套。"
+  },
+  "modelIdentity": {
+    "astra": "gpt-6-astra，源会话 turn_context 元数据确认",
+    "deepseek_latest": "DeepSeek Flash，按用户标识；工作区证据未独立证明精确 API 型号"
+  },
+  "timezone": "Asia/Shanghai"
+}

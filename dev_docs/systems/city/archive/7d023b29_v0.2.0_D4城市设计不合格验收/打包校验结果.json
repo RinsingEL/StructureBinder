@@ -1,0 +1,41 @@
+{
+  "status": "PASS",
+  "fileCount": 45,
+  "uncompressedBytes": 2024646,
+  "zipBytes": 566292,
+  "zipSha256": "8740eb68df05605a3e196d739292a17f1fb9aa7695ca1063ebf448f0ab0e3528",
+  "images": [
+    {
+      "file": "figures/astra_overview.png",
+      "width": 1280,
+      "height": 900,
+      "bytes": 108374
+    },
+    {
+      "file": "figures/astra_user_marked.png",
+      "width": 966,
+      "height": 872,
+      "bytes": 93401
+    },
+    {
+      "file": "figures/deepseek_earlier_overview.png",
+      "width": 1280,
+      "height": 900,
+      "bytes": 117346
+    },
+    {
+      "file": "figures/deepseek_latest_overview.png",
+      "width": 1280,
+      "height": 900,
+      "bytes": 117232
+    }
+  ],
+  "checks": [
+    "主报告/入口链接完整",
+    "UTF-8 JSON 可解析",
+    "样本身份与建筑数量一致",
+    "四张图片已解码，均小于500KB",
+    "敏感字段扫描",
+    "ZIP CRC 与内容哈希一致"
+  ]
+}

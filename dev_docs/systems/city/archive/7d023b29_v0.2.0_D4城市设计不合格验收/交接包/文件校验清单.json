@@ -1,0 +1,227 @@
+{
+  "date": "2026-10-20",
+  "timezone": "Asia/Shanghai",
+  "selfExcluded": true,
+  "files": [
+    {
+      "file": ".gitattributes",
+      "bytes": 8,
+      "sha256": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da"
+    },
+    {
+      "file": "evidence/astra/city_blueprint.json",
+      "bytes": 24440,
+      "sha256": "1262aa8dc0ce75287d2e5811fd6ba8e731b7ce3665cf7038bc6c47f58487d3a4"
+    },
+    {
+      "file": "evidence/astra/city_blueprint_submission_trace.json",
+      "bytes": 1140,
+      "sha256": "68a06a547206d971547f93335e610bd56310a360bb5847c877f5961f7c7c6e85"
+    },
+    {
+      "file": "evidence/astra/city_blueprint_validation_report.json",
+      "bytes": 297,
+      "sha256": "3bb4f6f448727a8a13978813599c417523a1e4b7b369cd3059569a87f15bef0a"
+    },
+    {
+      "file": "evidence/astra/city_d4_workflow.json",
+      "bytes": 20102,
+      "sha256": "4d4f3e5c94692e19d025ae8e00021d132e2581dd43a9723005ac8119d3f98526"
+    },
+    {
+      "file": "evidence/astra/city_design_review.json",
+      "bytes": 3669,
+      "sha256": "adedbbf16a45ea86f33659545566b80ad9a58b40ee5baa52939fdc546858af89"
+    },
+    {
+      "file": "evidence/astra/compiled_layout_excerpt.json",
+      "bytes": 23733,
+      "sha256": "4ba644e998c89b865e1c508b23624ef31043e4a311a1c9473f2950411756a87f"
+    },
+    {
+      "file": "evidence/astra/context_excerpt.json",
+      "bytes": 36364,
+      "sha256": "3195566be9de092d6ebcf62ad7c24cfa740247019398c98c7e4fc26929db4bae"
+    },
+    {
+      "file": "evidence/astra/design_submissions.json",
+      "bytes": 101983,
+      "sha256": "cb3540a2faf3f09b300e705f49f9447758cb1afb3aeab637353075d59afc7246"
+    },
+    {
+      "file": "evidence/astra/draft_excerpt.json",
+      "bytes": 43,
+      "sha256": "905bc26c92102c0da9bdbeefea90837faaf403ce88138606f856af921043e157"
+    },
+    {
+      "file": "evidence/astra/public_messages.json",
+      "bytes": 21280,
+      "sha256": "21054a84578300ab418f4c434c917a35bd95b284637b7762e2ea07246f5bae62"
+    },
+    {
+      "file": "evidence/astra/tool_timeline.json",
+      "bytes": 34094,
+      "sha256": "f22e2f54b130a70c6dda0d2b761cabd8025463bae93bb42ced72220ab7a9d3bf"
+    },
+    {
+      "file": "evidence/deepseek_earlier/finalize2.json",
+      "bytes": 1171,
+      "sha256": "c264365f4dd4a8978fd392ca2545b1e5b0ca5178297201e4d392fcb13a47c2fc"
+    },
+    {
+      "file": "evidence/deepseek_earlier/设计说明_旧28栋.md",
+      "bytes": 4785,
+      "sha256": "a0ac51f36524cdb0bb1fb9c5c887a3c4af08200ebae92953375bb578bcb7e594"
+    },
+    {
+      "file": "evidence/deepseek_latest/city_d4_workflow.json",
+      "bytes": 33144,
+      "sha256": "b8ec642fea6ff46d1f7fb048f8622fa03f2686bd1149ce9386a3667788a3a8b8"
+    },
+    {
+      "file": "evidence/deepseek_latest/city_design_review.json",
+      "bytes": 3023,
+      "sha256": "00205831b8ce52daeb3d0db219698f472670dc35f460f076bdeb11e145699a3a"
+    },
+    {
+      "file": "evidence/deepseek_latest/compiled_layout_excerpt.json",
+      "bytes": 37371,
+      "sha256": "d05e4e1505ae2a241f19e76f62bf490035375b081e360099daf2db9e029fe3ad"
+    },
+    {
+      "file": "evidence/deepseek_latest/context_excerpt.json",
+      "bytes": 35813,
+      "sha256": "f33807ef396467f9a24d8775e8e5f7aebacd3ea141cb90b040b563c6cedafda5"
+    },
+    {
+      "file": "evidence/deepseek_latest/draft_excerpt.json",
+      "bytes": 42460,
+      "sha256": "33d1091033e1bc63ab3587e6f83ebc58f3976389eac8482130c8dc9f054c886b"
+    },
+    {
+      "file": "evidence/deepseek_latest/final5.json",
+      "bytes": 30406,
+      "sha256": "017bfd7cba2399894b4ce9236943b1c7c52a937dc877bcdc7e17ab7812a40a76"
+    },
+    {
+      "file": "evidence/deepseek_latest/finalize_args.json",
+      "bytes": 1230,
+      "sha256": "4528a43370e682e852c7ae34ede42eb88524f585f157da37d81c1bb262f91303"
+    },
+    {
+      "file": "evidence/deepseek_latest/overview_args.json",
+      "bytes": 6957,
+      "sha256": "02104c5cff557def81a26f6366a1a80cb201e2c72d4da2c1b9e87e7a50c6e074"
+    },
+    {
+      "file": "evidence/deepseek_latest/review_args.json",
+      "bytes": 1565,
+      "sha256": "da104e61dcc15d83555bdfbe0ac40fffc0b1e8939aee512dbd801e3c8c54632b"
+    },
+    {
+      "file": "evidence/deepseek_latest/review_result.json",
+      "bytes": 2728,
+      "sha256": "a26e0e2d526fe24bd49a6881f039cb8f3186e462bfeafee0d9dd8910c78e48d9"
+    },
+    {
+      "file": "evidence/derived/sample_summary.json",
+      "bytes": 24156,
+      "sha256": "0af111efe626c983c6b53c353d1dd2df2b361641e399f7fbe988c3568e5c424a"
+    },
+    {
+      "file": "evidence/prompts/astra_received_handbook.md",
+      "bytes": 13274,
+      "sha256": "47d16eb450d61d32d29717afe23ab50789985d5525613513045295da136ca4c6"
+    },
+    {
+      "file": "evidence/prompts/deepseek_earlier_handbook.md",
+      "bytes": 8741,
+      "sha256": "a33b43c203fe6255c68cbc0ac17fc3f6f7c00448369a8e8dc15a3b165e781c95"
+    },
+    {
+      "file": "evidence/prompts/deepseek_latest_handbook_raw.md",
+      "bytes": 13274,
+      "sha256": "47d16eb450d61d32d29717afe23ab50789985d5525613513045295da136ca4c6"
+    },
+    {
+      "file": "evidence/prompts/repository_district.md",
+      "bytes": 3008,
+      "sha256": "fc6aa6640acb756d5b006f5b222a05b0c285b7b0489ad03e71582d2ab956b38c"
+    },
+    {
+      "file": "evidence/prompts/repository_finalize.md",
+      "bytes": 948,
+      "sha256": "b3e8a760369753fe48ac9708aaedbb6e7b971624b733ccc11069f4a1108fbc64"
+    },
+    {
+      "file": "evidence/prompts/repository_handbook.md",
+      "bytes": 13274,
+      "sha256": "47d16eb450d61d32d29717afe23ab50789985d5525613513045295da136ca4c6"
+    },
+    {
+      "file": "evidence/prompts/repository_integration.md",
+      "bytes": 3612,
+      "sha256": "4a3a03712d03885864889b4f7e9fc4d68d64253c555b3a5b81baea843430026d"
+    },
+    {
+      "file": "evidence/prompts/repository_overview.md",
+      "bytes": 2648,
+      "sha256": "022ff603ae948845e508213dc5c00a34547e2017a74c9757e5b38cdcf9257fdc"
+    },
+    {
+      "file": "evidence/prompts/产品案_按功能区设计城市_快照.md",
+      "bytes": 9168,
+      "sha256": "beebae662ae6a839ef9ccb30095265c1e8e0a4caa9eecf25f2af745758ef08fe"
+    },
+    {
+      "file": "evidence/shared/city_landform_review_package.json",
+      "bytes": 983065,
+      "sha256": "ae14d87ea9b0fd780f82019def19d2a46ffa86a48137225f3fb6f35a2803d2c0"
+    },
+    {
+      "file": "evidence/shared/city_site_review_decision.json",
+      "bytes": 1795,
+      "sha256": "1e6313b25345904c5d632214430dbd5949a23cdd648a00340e07401c74d87b22"
+    },
+    {
+      "file": "evidence/来源清单.json",
+      "bytes": 18605,
+      "sha256": "e10790a2d5d406481060c03f6586079ed2892901cac394d102ab83a7f9beeebc"
+    },
+    {
+      "file": "figures/astra_overview.png",
+      "bytes": 108374,
+      "sha256": "c37fca3150ed730fae11f176fff0beb1f1f40af2aca046bdf1f1fc57c1680936"
+    },
+    {
+      "file": "figures/astra_user_marked.png",
+      "bytes": 93401,
+      "sha256": "bb20fad292c397e88c045f80bf7cccc46bed43098f6a888761bf76c27492952a"
+    },
+    {
+      "file": "figures/deepseek_earlier_overview.png",
+      "bytes": 117346,
+      "sha256": "22f4ca5bb9bb13619041a1e5192c53acfd7725adf28c88a32b46e0b25914a908"
+    },
+    {
+      "file": "figures/deepseek_latest_overview.png",
+      "bytes": 117232,
+      "sha256": "0ae8f13f8a27f94c6aaff9fd26cc667609c7df88971d032aad898b81779228c1"
+    },
+    {
+      "file": "README.md",
+      "bytes": 4900,
+      "sha256": "fbd2e51fe87adfdac76c416c1fab20af02c4dc6b95dd34af59616d2a39cf7391"
+    },
+    {
+      "file": "用户原始验收意见.md",
+      "bytes": 1788,
+      "sha256": "4102dedf04c3f515814b73641fbbcbefeb94e6c7cf1b85a1dbdc85628781aecf"
+    },
+    {
+      "file": "验收报告.md",
+      "bytes": 18231,
+      "sha256": "9ac5163002ab783d80ad4905c0be757209a163a1d7a304a30b909ed73516d6ec"
+    }
+  ]
+}

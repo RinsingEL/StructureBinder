@@ -1,0 +1,76 @@
+{
+  "contextId": "sha256:caf6d66b6de78b5672f59d568050b83d2b4910228fd51df73cded49c7bd4ed81",
+  "overview": {
+    "viewed": "sha256:aed0d412d60ad7e3034ec6545c3807e19dde3294d4851aa7f6ad09c6fb35a906:0ae8f13f8a27f94c6aaff9fd26cc667609c7df88971d032aad898b81779228c1",
+    "reviewed": "sha256:aed0d412d60ad7e3034ec6545c3807e19dde3294d4851aa7f6ad09c6fb35a906:0ae8f13f8a27f94c6aaff9fd26cc667609c7df88971d032aad898b81779228c1",
+    "assessment": "全城 27 栋全部保留；港埠与星厅为单栋地标阵列，岛上平地不足以再容纳同组配套，配套由其门楼、市集、讲堂与星泉承担。"
+  },
+  "groups": {
+    "harbor": {
+      "viewed": "a7dff098db702d2b757e6dba2ece27f9b0c4cacc77e903738bc7b8fd26773142"
+    },
+    "gate": {
+      "viewed": "1a66577a9ea2a394980649bee0d5bd2254db954511fe6a439cadf9f6139b20bd"
+    },
+    "inn": {
+      "viewed": "dfcdcce2d3eb1dc712c16805bcc79fe43aca85d514e6f401c00f43cbb940213f"
+    },
+    "market": {
+      "viewed": "31f66f84a1e9c2a4a11a12e012e362bf61dad974bbbe6a064d9bbd460ea463e1"
+    },
+    "hall": {
+      "viewed": "ea50b86630d0cd96752ee76f634a5d821e0b686dc85d4583299e44f14747c856"
+    },
+    "teaching_wing": {
+      "viewed": "c9da0978a75a10e52c77e2aec4b3f2c07199c15f7049e2379308c0f967149488"
+    },
+    "star_spring": {
+      "viewed": "dc5c3764ed3838262bd344ba9c7ca7ba881e2e875c6c2f6be4a4bb7ced564e4b"
+    },
+    "library": {
+      "viewed": "788978b24e9b7bee8542e0d8a71981ba13c148e9e5864c8f2472341dbf4bc436"
+    },
+    "scriptorium": {
+      "viewed": "00b448562e505bdbf915051615aeb54be096274476d08bd2cf3de6ee50516a83"
+    },
+    "reading_pavilion": {
+      "viewed": "b92066b466c7e2ef7682c129eff7782e5c98a17986f3adb05b09bad168d22e43"
+    },
+    "observatory": {
+      "viewed": "2a2ad1005e84b4582e248717799e526951495eb5e5e61979adc91955ce3e9ace"
+    },
+    "laboratory": {
+      "viewed": "cd94a89117fe5c200f7a8863124fc9826ee104e05459cafe998a30e632f7a117"
+    },
+    "experiment_shed": {
+      "viewed": "71a9c119bcb9b9cdf1c771876e853841bd0aa72aff6a197a3ab39cea806bb851"
+    },
+    "dorm": {
+      "viewed": "fdfa37b37eb5718f1f4bea6422e2c491f2dba6b3f5498f977d454f940943635d"
+    },
+    "small_dorm": {
+      "viewed": "255b0b1389915444264c9c7f0f9fdd049ec73bac1c1885b9d40d640906ed1642"
+    },
+    "dining": {
+      "viewed": "be859d73e5e01ea924dd3788bfc85ad51dabe8b69dd15ab775412d435dfb9184"
+    },
+    "bath": {
+      "viewed": "151ca78d9b791588fb887c18c5f0e8de0d6e4f4585d2733a5424120c309c4f82"
+    },
+    "shop": {
+      "viewed": "c06dbe91c885743020ba0beb9b801f20ea69935ba1eb94754f181e919d34ff7f"
+    },
+    "garden_team": {
+      "viewed": "5cff50b9f9b42367b715a1a54f29a7f7824014838bca08204f191839c529bbf2"
+    },
+    "storehouse": {
+      "viewed": "8c784ccd07e2645a7c60d679c454ecf5ca0c41f386eefdace7b357dc0699aeda"
+    },
+    "hall_pavilion": {
+      "viewed": "ade0dc5dc3a7847961da3612a854017d02dc16ef3d85f37859f931c036e9ffe8"
+    },
+    "harbor_pavilion": {
+      "viewed": "38c4442abbd55b235797eefa20fb88274145435798d0209e5fbd0f399d00ccf4"
+    }
+  }
+}

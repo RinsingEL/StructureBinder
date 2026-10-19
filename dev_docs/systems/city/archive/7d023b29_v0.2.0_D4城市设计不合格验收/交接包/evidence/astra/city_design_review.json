@@ -1,0 +1,40 @@
+{
+  "contextId": "sha256:a2e4d6cf89ef2d2c9187e664ec048a0add5dfc42f91e754c2579e338b8ecc19d",
+  "overview": {
+    "viewed": "sha256:5704a0532be38339577c00bd5936076815615e7d5262ce1b227d72293bd51164:c37fca3150ed730fae11f176fff0beb1f1f40af2aca046bdf1f1fc57c1680936",
+    "reviewed": "sha256:5704a0532be38339577c00bd5936076815615e7d5262ce1b227d72293bd51164:c37fca3150ed730fae11f176fff0beb1f1f40af2aca046bdf1f1fc57c1680936",
+    "assessment": "已实际检查revision9全城图及相关局部图。城市要求：19栋全部保留，教学62座（庭院教学26、小课堂24、翼楼12），藏书馆承担文献阅读保管，院务楼议事，观象塔与双实验、温室及药草地承担研究教学，南湾水运候船/日用品/仓储，东侧宿舍食堂洗浴覆盖常住生活。地形：主体在平原28，北侧研究贴林缘台地；生活区整体北移75格后，最新洗浴、宿舍和食堂局部图显示主体落在陆地并保留东南水湾，岸边与台地施工适配仍需后续验证，不声称已施工或具有魔法玩法。整体：南岸quay_street(-3000..-2866,5430..5488)经双课堂到48×40中央内院，藏书馆(-2966..-2906,5225..5289)在主轴尽端，为唯一公共一级焦点；西教学、东议事、南双课堂共同围合，北侧研究与书馆净距28，东生活街坊与议事净距约21，港街与课堂净距40，四根组沿一条主骨架和短支路组织，不是四个孤岛，因此保留4根警告。structureGraphConnected=true、10条关系均满足、allStreetEntrancesConnected=true；单栋GRID的局部网络警告保留，由已看局部图确认建筑入口有主路接入，不宣称所有可视化诊断为零。人口与体量：最终以分区population为准，12学术+10研究+5迎客+4生活服务=31岗位，加60学生=91常住者；108床入住率84.3%，36餐座约容纳40%人口，62教学座满足60学生。教学工位20?不作额外总量宣称，老师6人分三栋，均不超过每栋约4人估算。总览中的95人/三食堂为初估，已被本次设施容量核对后的91人/一座36座主食堂取代。主食堂位于住宿至教学及迎客的通勤面，早中晚均有明确活动。当前规模承载本城全部核心职责，继续扩张会占用保留林地而无必要，故停止。精确公共空间树列/标景配置因宿主将schema允许的origin.x、plan.entries.x误判FORBIDDEN_PLACEMENT_FIELD而未提交；已保留内院及可接受的greenery/fringe池，不宣称精确种植已实现。仅保存D4设计，不进入施工。"
+  },
+  "groups": {
+    "book_court": {
+      "viewed": "60bc9bed8092c074b7bde67173cbd5b13adad202ee3256f9b412dac406751a7b"
+    },
+    "residence": {
+      "viewed": "9885373fbf35e90d22598faac3d912bd965ca0453b35bb349068907974d1e23f"
+    },
+    "rooms": {
+      "viewed": "15c01e5f6bfc994886a4f98291bd994187cb044cbda83fa2105717810028f52c"
+    },
+    "meals": {
+      "viewed": "f3250ebdde6509746415dae3ffa5cad53cb0e0c99b158ac564fbd83e1574b345"
+    },
+    "washhouse": {
+      "viewed": "16210f79cc675c7cb93fad0f63d991cf067118d43c5557f35171afce9084f39c"
+    },
+    "quay_street": {
+      "viewed": "ff50e81fe093dbe83bab956f47562ca9ebb5f962deac6dd57d34d7825830eec5"
+    },
+    "research_garden": {
+      "viewed": "e88554f61352a19870face9382647af5decfc04d17cb5b9af3d4e5946351fcbf"
+    },
+    "teaching_court": {
+      "viewed": "d66d6a860a89f99151993e1a0dfa36d2bbaf5d0f1f4e504c53d373ddf8328de0"
+    },
+    "council": {
+      "viewed": "61e25001e34f3a9add22fee1047fcbbc8c6c560bd9b59f691a7705512df64807"
+    },
+    "classrooms": {
+      "viewed": "e8c3391f35d5d9b1f873ba30249ad2c72b83ed68fcff7b6dc4073e45539455b9"
+    }
+  }
+}

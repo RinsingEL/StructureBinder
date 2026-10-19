@@ -1,0 +1,110 @@
+{
+  "date": "2026-10-20",
+  "commands": [
+    ".\\gradlew.bat test adventureTest coreMcpTest verifyAddonPackaging --console=plain",
+    "country_designer_mcp: npm test",
+    "addons/realmfolk: .\\gradlew.bat test --console=plain"
+  ],
+  "suites": {
+    "main": {
+      "tests": 1426,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 15,
+      "passed": 1411,
+      "skippedCases": [
+        {
+          "class": "com.rinsing.geomantia.platform.http.CityWallSavedD5ReplayTest",
+          "test": "savedCityCompilesThroughOfficialD5WithOutwardStraightWallTowers()"
+        },
+        {
+          "class": "com.rinsing.geomantia.systems.city.application.CityBoundaryCapturedReplayTest",
+          "test": "originalProposalCompilesWithoutMovingAuthoredGroups()"
+        },
+        {
+          "class": "com.rinsing.geomantia.systems.city.application.CityD4VersionsTest",
+          "test": "versionFileCannotFollowSymlinkOutsideCity()"
+        },
+        {
+          "class": "com.rinsing.geomantia.systems.city.application.CitySavedBlueprintReplayTest",
+          "test": "renderSavedReplay()"
+        },
+        {
+          "class": "com.rinsing.geomantia.systems.city.application.CitySavedBlueprintReplayTest",
+          "test": "savedCapitalDraftCompilesWithCurrentRoadPlanner()"
+        },
+        {
+          "class": "com.rinsing.geomantia.systems.city.application.DesignFirstCapturedReplayTest",
+          "test": "unchangedFiveDistrictDesignCompilesFromCapturedTerrain()"
+        },
+        {
+          "class": "com.rinsing.geomantia.systems.city.application.landuse.CityFrozenOutdoorReplayTest",
+          "test": "frozenD6CanProduceCompleteSurfacePlan()"
+        },
+        {
+          "class": "com.rinsing.geomantia.systems.city.application.landuse.LandscapeSavedOutdoorReplayTest",
+          "test": "blockedCityCompletesOutdoorPlanWithApproximateLandscape()"
+        },
+        {
+          "class": "com.rinsing.geomantia.systems.city.application.landuse.QadirOutdoorReplayTest",
+          "test": "replayFrozenOutdoorInputsWithoutWritingWorld()"
+        },
+        {
+          "class": "com.rinsing.geomantia.systems.city.application.QadirCompilationReplayTest",
+          "test": "replayAcceptedDesignWithoutMutatingTheWorld()"
+        },
+        {
+          "class": "com.rinsing.geomantia.systems.city.infrastructure.world.landuse.QadirOwnerPreflightReplayTest",
+          "test": "preparesActualOwnersWithoutMinecraftOrWorldWrites()"
+        },
+        {
+          "class": "com.rinsing.geomantia.systems.provider.application.CityD3ReviewDecisionViewTest",
+          "test": "realWorldFixtureWhenProvided()"
+        },
+        {
+          "class": "com.rinsing.geomantia.systems.provider.application.CityRevisionEvidenceTest",
+          "test": "capturedRealFailurePreservesAllReportedHardBlocks()"
+        },
+        {
+          "class": "com.rinsing.geomantia.systems.provider.application.PlanningBoundaryTest",
+          "test": "capturedLiveContextFitsHarnessWithoutLosingAnyAuthorProfile()"
+        },
+        {
+          "class": "com.rinsing.geomantia.systems.provider.application.RealmCoreAtlasTest",
+          "test": "installedBundleCanBePreparedWithoutMinecraft()"
+        }
+      ]
+    },
+    "adventure": {
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 13,
+      "skippedCases": []
+    },
+    "coreMcp": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 4,
+      "skippedCases": []
+    },
+    "realmfolk": {
+      "tests": 136,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 136,
+      "skippedCases": [],
+      "execution": "UP-TO-DATE: inputs unchanged, retained Gradle test results"
+    }
+  },
+  "mcp": {
+    "tests": 27,
+    "passed": 27
+  },
+  "packaging": "verifyAddonPackaging and reobfuscated jars passed",
+  "gameAcceptance": "not performed"
+}
