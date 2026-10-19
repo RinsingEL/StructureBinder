@@ -9,7 +9,7 @@ final class CityD4SubmissionGuidance {
     private CityD4SubmissionGuidance() { }
     static String acceptanceInstruction() {
         return "格式、参数、引用错误需修正；设计后看本区和全城预览，可带 targetDistrictId、当前 baseDraftHash 和 assessment 重新提交该区完整 districtDesign。其他区设计与布局保留。"
-                + "qualityFullySatisfied、allFunctionAreasFormed、allRequiredContentPresent、structureGraphConnected 等均为诊断，不要求清零警告或补齐建筑。"
+                + "qualityFullySatisfied、allFunctionAreasFormed、allRequiredContentPresent、structureGraphConnected 等均为诊断，不设清零门槛；其中指向功能未展开、组团不相接或缺少生活空间的提示，应修订或在 assessment 写明理由。"
                 + "整城通过逐区选材与阵列修订形成整体性，允许隔河，不要求接触或固定距离。挤占不得清空或破坏其他区功能主体。";
     }
 
