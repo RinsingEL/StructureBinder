@@ -155,7 +155,7 @@ public final class CityBlueprintService {
             var fact=new JsonObject();fact.addProperty("templateRef",string(row,"templateRef"));fact.addProperty("templateHash",string(row,"templateHash"));
             fact.addProperty("residentBeds",beds);fact.addProperty("workplaces",jobs);fact.addProperty("capacitySource","authored_export_not_world_verified");capacities.add(fact);});
         contextCore.add("templateFacilityCapacities",capacities);
-        contextCore.addProperty("populationPlanningGuide","先写每区population职责、居民人数、岗位人数/用途与住房组，再按templateFacilityCapacities选楼和数量；同一居民不在居住区与工作区重复计数。未知容量不可当零容量。定稿核对床位/岗位和通勤，Realmfolk承接人口预算。");
+        contextCore.addProperty("populationPlanningGuide","先按职责把片区展开成子区并选楼，再在每区population写职责、居民人数、岗位人数/用途与住房组；人数是估算范围，用来核对templateFacilityCapacities的床位/岗位和通勤，不为对上数字压缩城市。同一居民不在居住区与工作区重复计数。未知容量不可当零容量。Realmfolk承接人口预算。");
         contextCore.add("sourceD3Ref", artifactRefJson(d3Ref));
         contextCore.add("catalogSnapshotRef", artifactRefJson(snapshotRef));
         if (patchReviewEvidence != null) {
