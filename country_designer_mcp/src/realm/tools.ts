@@ -856,7 +856,7 @@ const originalRealmTools: ToolDefinition[] = [
         patchSelectionRef: { type: "string" },
         name: { type: "string", description: "城市名称" },
         theoreticalScale: { type: "string", enum: ["large_city", "city", "town", "village", "hamlet", "outpost", "capital"] },
-        serviceHierarchy: { type: "string", description: "自由描述城市在全国体系中的服务范围与分工，如双中心之一、宗教中心或季节性据点；与物理规模独立。旧层级标签仍可使用。" },
+        serviceHierarchy: { type: "string", description: "自由描述城市在全国体系中的服务范围与分工，明确是否全国唯一城市及承担的全国职责；与物理规模独立。首都或全国唯一城市不能默认缩成小镇；连续、留白有理由不等于城市要小。依据真实场地判断，不盲目扩大所有城。旧层级标签仍可使用。" },
         positioning: { type: "string", description: "城市定位与选址依据简述" },
         candidateRangeCells: { type: "integer", minimum: 1 },
         minimumAreaBlocks: { type: "integer", minimum: 0 },
@@ -885,7 +885,7 @@ const originalRealmTools: ToolDefinition[] = [
         name: { type: "string", description: "城市名称" },
         role: { type: "string" },
         theoreticalScale: { type: "string", enum: ["large_city", "city", "town", "village", "hamlet", "outpost"] },
-        serviceHierarchy: { type: "string", description: "自由描述城市在全国体系中的服务范围与分工，如双中心之一、宗教中心或季节性据点；与物理规模独立。旧层级标签仍可使用。" },
+        serviceHierarchy: { type: "string", description: "自由描述城市在全国体系中的服务范围与分工，明确是否全国唯一城市及承担的全国职责；与物理规模独立。首都或全国唯一城市不能默认缩成小镇；连续、留白有理由不等于城市要小。依据真实场地判断，不盲目扩大所有城。旧层级标签仍可使用。" },
         positioning: { type: "string", description: "城市定位与选址依据简述" },
         candidateRangeCells: { type: "integer", minimum: 1 },
         minimumAreaBlocks: { type: "integer", minimum: 0 },
@@ -1541,6 +1541,7 @@ export const realmTools: ToolDefinition[] = [
       required.push("designAnswers");
     }
     if (name === "city_d4_overview") {
+      properties.baseDraftHash={type:"string"}; properties.assessment={type:"string",description:"已有有效分区后增补/拆分总览须绑定当前草稿并说明依据；已保存区和全城设置冻结。"};
       const settings: any = {};
       for (const key of ["designIntent", "styleProfile", "roadProfile", "surfaceDetailProfile", "surfaceMaterials"]) settings[key] = bp[key];
       const outdoor: any = {}; for(const key of ["mode","envelopeProfile","foundationProfileRef"]) outdoor[key]=bp.outdoorPlan.properties[key];

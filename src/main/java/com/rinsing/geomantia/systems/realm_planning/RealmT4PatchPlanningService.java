@@ -726,6 +726,7 @@ public final class RealmT4PatchPlanningService {
         JsonObject result = new JsonObject();
         result.addProperty("ok", true);
         result.addProperty("schema", "realm_t4_patch_planning_response");
+        result.addProperty("citySeedDesignGuidance", "结合 role、serviceHierarchy、coreFunctions 与实际地形确定城市职责和规模。首都或全国唯一城市应充分展开全国服务，不能默认缩成小镇；普通地方聚落不盲目扩大。连续承载与紧凑指城市连续、骨架清楚，留白要有具体理由，不是要求城市小。theoreticalScale 是场地起点，不是 D4 建筑数或子区数上限；保留真实地形、边界与保护范围校验。");
         result.addProperty("operation", operation);
         result.addProperty("runId", requiredString(session, "runId"));
         result.addProperty("planningSessionId", requiredString(session, "planningSessionId"));

@@ -33,6 +33,20 @@ final class CityScaleDesignTask {
         return task;
     }
 
+    static JsonObject describe(CityScale scale, JsonObject seed) {
+        JsonObject task = describe(scale);
+        JsonObject responsibility = new JsonObject();
+        for (String key : List.of("role", "serviceHierarchy", "coreFunctions", "positioning", "gameplayRequirements"))
+            if (seed.has(key)) responsibility.add(key, seed.get(key).deepCopy());
+        task.add("cityResponsibility", responsibility);
+        // Free-text hierarchy is interpreted by the designer, not guessed by keyword matching.
+        task.remove("suggestedInitialLeafArraysMin");
+        task.remove("suggestedInitialLeafArraysMax");
+        task.addProperty("designTask", "先结合 cityResponsibility 的 role、serviceHierarchy、coreFunctions 与定位展开职责，再结合真实地形安排子区。首都或全国唯一城市应充分承担全国服务，不能因 theoreticalScale=town 而压成几个大标签或小镇。普通地方聚落按实际职责设计，不盲目扩大。先工作空间，再公共与居住，最后核对人口。城市连续、留白有具体理由，不等于城市要小。");
+        task.addProperty("counting", "物理规模仅为场地参考和初版起点；不提供脱离职责的阵列数量目标，不设建筑数、子区数、覆盖率门槛或上限。依据职责展开、主要用地去向与全城预览判断完成。");
+        return task;
+    }
+
     static String violation(CityBlueprint blueprint, CityScale scale) {
         if (scale != CityScale.CITY && scale != CityScale.LARGE_CITY) return "";
         Set<String> ids = blueprint.groups().stream().map(CityBlueprint.Group::groupId).collect(Collectors.toSet());

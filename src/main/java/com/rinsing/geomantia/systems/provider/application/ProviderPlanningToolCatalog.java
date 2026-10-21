@@ -175,7 +175,7 @@ public final class ProviderPlanningToolCatalog {
                 "patchSelectionRef", string(), "candidateRangeCells", integer(), "minimumAreaBlocks", integer(),
                 "subregionId", string(), "requiredConditions", array(string()), "coreFunctions", array(string()),
                 "functionalFocus", array(string()), "name", string(),
-                "serviceHierarchy", described(string(), "自由描述城市在全国体系中的服务范围与分工，如双中心之一、宗教中心或季节性据点；与物理规模独立。旧层级标签仍可使用。"),
+                "serviceHierarchy", described(string(), "自由描述城市在全国体系中的服务范围与分工，明确是否全国唯一城市及承担的全国职责；与物理规模独立。首都或全国唯一城市不能默认缩成小镇；连续、留白有理由不等于城市要小。依据真实场地判断，不盲目扩大所有城。旧层级标签仍可使用。"),
                 "positioning", string(), "gameplayRequirements", array(string()),
                 "theoreticalScale", enumeration("large_city", "city", "town", "village", "hamlet", "outpost", "capital"),
                 "selectionReason", string());
@@ -210,6 +210,7 @@ public final class ProviderPlanningToolCatalog {
                 required.addAll(List.of("baseDraftHash","overviewAnswers","districtAnswers"));
             }
             case "city_d4_overview" -> {
+                p.add("baseDraftHash",string());p.add("assessment",described(string(),"已有有效分区后增补/拆分总览时，绑定当前草稿并说明依据；已保存区和全城设置冻结。"));
                 JsonObject settings=new JsonObject();
                 for(String key:List.of("designIntent","styleProfile","roadProfile","surfaceDetailProfile","surfaceMaterials")) settings.add(key,blueprint.get(key).deepCopy());
                 settings.add("outdoorPlan",object(properties("mode",enumeration("GENERATE","PRESERVE"),"envelopeProfile",enumeration("COMPACT","BALANCED","LOOSE"),"foundationProfileRef",string(),"publicRealm",publicRealmSchema()),"mode","envelopeProfile","foundationProfileRef"));

@@ -178,7 +178,7 @@ public final class CityBlueprintService {
         contextCore.add("decisionBoundary", boundary);
         contextCore.add("designGuide", CityDesignGuide.from(references));
         contextCore.add("scaleDesignTask", CityScaleDesignTask.describe(
-                com.rinsing.geomantia.systems.city.domain.model.CityScale.fromContractName(string(seed, "theoreticalScale"))));
+                com.rinsing.geomantia.systems.city.domain.model.CityScale.fromContractName(string(seed, "theoreticalScale")), seed));
         contextCore.add("citySeed", seed.deepCopy());
         contextCore.add("d3ReviewPackage", d3.deepCopy());
         contextCore.add("catalogSnapshot", snapshot.deepCopy());

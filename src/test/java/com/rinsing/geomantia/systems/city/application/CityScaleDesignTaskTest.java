@@ -16,6 +16,20 @@ class CityScaleDesignTaskTest {
             return b;
         }
     }
+    @Test void responsibilityGuidanceDoesNotCapCapitalOrInflateLocalSettlement() {
+        for(String role:java.util.List.of("capital","town")) {
+            var seed=new com.google.gson.JsonObject();seed.addProperty("role",role);
+            seed.addProperty("serviceHierarchy",role.equals("capital")?"全国唯一城市":"local_town");
+            seed.add("coreFunctions",com.google.gson.JsonParser.parseString("[ 'teaching', 'research' ]"));
+            var task=CityScaleDesignTask.describe(CityScale.TOWN,seed);
+            assertEquals(seed,task.get("cityResponsibility"));
+            assertFalse(task.has("suggestedInitialLeafArraysMax"));
+            assertTrue(task.get("designTask").getAsString().contains("普通地方聚落按实际职责设计"));
+            seed.addProperty("role","changed");
+            assertEquals(role,task.getAsJsonObject("cityResponsibility").get("role").getAsString());
+        }
+    }
+
     @Test void everyScaleHasSeparateAdviceAndCapitalDoesNotSilentlyBecomeLarge() {
         assertEquals(5,CityScale.values().length);
         assertEquals(CityScale.LARGE_CITY,CityScale.fromContractName("large_city"));

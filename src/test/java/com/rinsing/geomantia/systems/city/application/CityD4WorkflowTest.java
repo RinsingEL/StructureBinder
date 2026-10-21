@@ -131,6 +131,70 @@ class CityD4WorkflowTest {
         assertEquals("market",state().getAsJsonObject("currentDistrict").get("groupId").getAsString());
     }
 
+    private JsonObject overviewRevision() throws Exception {
+        JsonObject saved=CityD4Workflow.load(dir,"ctx"), request=currentRequest(), overview=new JsonObject();
+        overview.add("citySettings",saved.get("citySettings").deepCopy());
+        overview.add("districts",saved.get("districts").deepCopy());
+        request.add("overview",overview);request.add("designAnswers",saved.get("overviewAnswers").deepCopy());
+        return request;
+    }
+
+    @Test void overviewAdditionPreservesSavedWorkAndRejectsStaleOrDestructiveChanges() throws Exception {
+        districts();mark();
+        JsonObject before=CityD4Workflow.load(dir,"ctx");
+        String draft=Files.readString(dir.resolve(CityBlueprintDraft.FILE));
+        JsonObject add=overviewRevision();
+        add.getAsJsonObject("overview").getAsJsonArray("districts").add(json("{groupId:'library',role:'public',intent:'reading'}"));
+        assertTrue(call("city_d4_overview",add).get("ok").getAsBoolean());
+        JsonObject after=CityD4Workflow.load(dir,"ctx");
+        for(String key:List.of("bodies","districtAnswers","citySettings","overviewAnswers","activeDraftHash","districtDisposition"))
+            assertEquals(before.get(key),after.get(key),key);
+        assertEquals(draft,Files.readString(dir.resolve(CityBlueprintDraft.FILE)));
+        assertEquals("library",state().getAsJsonObject("currentDistrict").get("groupId").getAsString());
+        assertEquals(before.get("revision").getAsInt()+1,after.get("revision").getAsInt());
+        assertFalse(CityD4Workflow.submit(dir,"ctx","city",add,this::compile).get("ok").getAsBoolean());
+        JsonObject remove=overviewRevision();remove.getAsJsonObject("overview").getAsJsonArray("districts").remove(0);
+        assertFalse(call("city_d4_overview",remove).get("ok").getAsBoolean());
+        assertEquals(after,CityD4Workflow.load(dir,"ctx"));
+        JsonObject stale=overviewRevision();stale.addProperty("baseDraftHash","old");
+        stale.getAsJsonObject("overview").getAsJsonArray("districts").add(json("{groupId:'new',role:'public',intent:'new'}"));
+        assertFalse(call("city_d4_overview",stale).get("ok").getAsBoolean());
+        assertEquals(after,CityD4Workflow.load(dir,"ctx"));
+        design("c");
+        assertEquals("INTEGRATION",state().get("stage").getAsString());
+        assertEquals(3,lastCity.getAsJsonArray("groups").size());
+        assertEquals(before.getAsJsonObject("bodies").get("civic"),CityD4Workflow.load(dir,"ctx").getAsJsonObject("bodies").get("civic"));
+    }
+
+    @Test void overviewRevisionRejectsCompilerFailureAndExecutionWithoutChangingState() throws Exception {
+        overview();design("a");
+        JsonObject before=CityD4Workflow.load(dir,"ctx"),request=overviewRevision();
+        request.addProperty("d4Tool","city_d4_overview");request.add("workflowRevision",before.get("revision"));
+        request.getAsJsonObject("overview").getAsJsonArray("districts").add(json("{groupId:'new',role:'public',intent:'reading'}"));
+        assertFalse(CityD4Workflow.submit(dir,"ctx","city",request,r->json("{ok:false}")).get("ok").getAsBoolean());
+        assertEquals(before,CityD4Workflow.load(dir,"ctx"));
+        Path run=dir.resolve("run"),job=run.resolve("automation/post_d4/city.json");Files.createDirectories(job.getParent());Files.writeString(job,"{}");
+        assertFalse(CityD4Workflow.submit(dir,"ctx","city",request,r->{fail("frozen run must not invoke compiler");return null;},run).get("ok").getAsBoolean());
+        assertEquals(before,CityD4Workflow.load(dir,"ctx"));
+        request.getAsJsonObject("overview").getAsJsonArray("districts").get(0).getAsJsonObject().addProperty("intent","changed owner purpose");
+        assertFalse(CityD4Workflow.submit(dir,"ctx","city",request,r->{fail("saved definition must not be rewritten");return null;}).get("ok").getAsBoolean());
+        assertEquals(before,CityD4Workflow.load(dir,"ctx"));
+    }
+
+    @Test void overviewCanSplitPendingDistrictWhileKeepingCompletedDistrict() throws Exception {
+        overview();design("a");
+        JsonObject saved=CityD4Workflow.load(dir,"ctx");
+        saved.add("districtDisposition",JsonParser.parseString("[{districtId:'civic',independent:false},{districtId:'market',independent:true}]"));
+        Files.writeString(dir.resolve("city_d4_workflow.json"),saved.toString());
+        JsonObject request=overviewRevision();JsonArray list=request.getAsJsonObject("overview").getAsJsonArray("districts");
+        list.remove(1);list.add(json("{groupId:'shops',role:'market',intent:'shops'}"));list.add(json("{groupId:'food',role:'market',intent:'food'}"));
+        JsonObject bodies=CityD4Workflow.load(dir,"ctx").getAsJsonObject("bodies").deepCopy();
+        assertTrue(call("city_d4_overview",request).get("ok").getAsBoolean());
+        assertEquals(bodies,CityD4Workflow.load(dir,"ctx").get("bodies"));
+        assertEquals("shops",state().getAsJsonObject("currentDistrict").get("groupId").getAsString());
+        assertEquals(JsonParser.parseString("[{districtId:'civic',independent:false}]"),CityD4Workflow.load(dir,"ctx").get("districtDisposition"));
+    }
+
     @Test void invalidOverviewCorrectionDoesNotOverwriteSavedSettings() throws Exception {
         overview();
         JsonObject before=CityD4Workflow.load(dir,"ctx"), request=correctedOverview();
@@ -143,7 +207,7 @@ class CityD4WorkflowTest {
         overview();design("a");
         JsonObject before=CityD4Workflow.load(dir,"ctx");
         String draft=Files.readString(dir.resolve(CityBlueprintDraft.FILE));
-        assertFalse(state().getAsJsonArray("availableActions").contains(new JsonPrimitive("city_d4_overview")));
+        assertTrue(state().getAsJsonArray("availableActions").contains(new JsonPrimitive("city_d4_overview")));
         assertFalse(CityD4Workflow.submit(dir,"ctx","city",correctedOverview(),this::compile).get("ok").getAsBoolean());
         assertEquals(before,CityD4Workflow.load(dir,"ctx"));
         assertEquals(draft,Files.readString(dir.resolve(CityBlueprintDraft.FILE)));

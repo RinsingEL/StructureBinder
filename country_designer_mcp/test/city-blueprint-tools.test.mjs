@@ -426,3 +426,11 @@ test("version history, reopening and restoring are strict stage tools", () => {
   assert.ok(restore.inputSchema.properties.baseDraftHash);
   assert.ok(restore.inputSchema.properties.baseBlueprintHash);
 });
+
+test("overview revision binds hash and assessment without requiring them for initial overview", () => {
+  const schema=realmTools.find(t=>t.name==="city_d4_overview").inputSchema;
+  for(const key of ["baseDraftHash","assessment"]) {
+    assert.equal(schema.properties[key].type,"string");
+    assert.ok(!schema.required.includes(key));
+  }
+});

@@ -167,6 +167,8 @@ class RealmT4PatchPlanningServiceTest {
         Files.createDirectories(quantityConfig.getParent());
         Files.writeString(quantityConfig, new RealmPopulationConfig(3,2,2).asJson().toString());
         JsonObject created = service.create(createRequest);
+        assertTrue(created.get("citySeedDesignGuidance").getAsString().contains("不能默认缩成小镇"));
+        assertTrue(created.get("citySeedDesignGuidance").getAsString().contains("普通地方聚落不盲目扩大"));
         assertEquals(2,created.getAsJsonObject("planningSession").getAsJsonObject("cityCountRequirements").get("minCitiesPerRealm").getAsInt());
         // An active session keeps its frozen contract when the player changes future defaults.
         Files.writeString(quantityConfig, new RealmPopulationConfig(3,1,1).asJson().toString());

@@ -564,12 +564,22 @@ public final class CityBlueprintCodec {
                     && path.matches("\\$\\.outdoorPlan\\.landscapes\\[[0-9]+\\]\\.growth\\.seed");
             boolean arrayCoordinate = (path.matches("\\$\\.(groups|arrayCompositions)\\[[0-9]+\\]") && entry.getKey().equals("anchorBlock"))
                     || (path.matches("\\$\\.(groups|arrayCompositions)\\[[0-9]+\\]\\.anchorBlock") && Set.of("x","z").contains(entry.getKey()));
-            if (FORBIDDEN_FIELDS.contains(entry.getKey()) && !landscapeSeedCoordinate && !arrayCoordinate) {
+            if (FORBIDDEN_FIELDS.contains(entry.getKey()) && !landscapeSeedCoordinate && !arrayCoordinate && !publicRealmCoordinate(path, entry.getKey())) {
                 fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FORBIDDEN_PLACEMENT_FIELD,
                         path + "." + entry.getKey(), "Coordinate, candidate, template and free algorithm fields are forbidden.");
             }
             rejectForbidden(entry.getValue(), path + "." + entry.getKey());
         }
+    }
+
+    private static boolean publicRealmCoordinate(String path, String key) {
+        String space = "\\$\\.outdoorPlan\\.publicRealm\\.spaces\\[[0-9]+\\]";
+        String node = space + "\\.plan\\.nodes\\[[0-9]+\\](\\.children\\[[0-9]+\\])*";
+        if (key.equals("rotation")) return path.matches(node);
+        if (!Set.of("x", "z").contains(key)) return false;
+        return path.matches(node) || path.matches(space + "\\.origin")
+                || path.matches(space + "\\.plan\\.(entries|clearings|plantingZones)\\[[0-9]+\\]")
+                || path.matches("\\$\\.outdoorPlan\\.publicRealm\\.externalAccess\\.waypoints\\[[0-9]+\\]");
     }
 
     private static <E extends Enum<E>> E enumValue(JsonObject object, String key, Class<E> type, String path) {

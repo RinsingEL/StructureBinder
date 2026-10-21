@@ -7,6 +7,13 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ProviderD4ToolSchemaTest {
+    @Test void overviewRevisionExposesOptionalHashAndAssessment() {
+        var overview=schema("city_d4_overview");
+        for(String key:List.of("baseDraftHash","assessment")) {
+            assertEquals("string",overview.getAsJsonObject("properties").getAsJsonObject(key).get("type").getAsString());
+            assertFalse(overview.getAsJsonArray("required").contains(new com.google.gson.JsonPrimitive(key)));
+        }
+    }
     @Test void districtAndIntegrationExposeCompleteOptionalPopulationBudget() {
         for (String name : List.of("city_d4_district", "city_d4_integrate")) {
             var body = schema(name).getAsJsonObject("properties").getAsJsonObject(

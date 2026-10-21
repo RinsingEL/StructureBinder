@@ -66,8 +66,8 @@ public final class CityD4Workflow {
                 if(!state.has("overviewAnswers")) next="city_d4_answers";
             }
             actions.add(next);
-            // No effective initial district exists yet: allow correcting locked city defaults.
-            if(stage.equals("DISTRICTS") && object(state,"bodies").size()==0) actions.add("city_d4_overview");
+            // Overview list revisions preserve all saved district bodies and frozen defaults.
+            if(!stage.equals("OVERVIEW")) actions.add("city_d4_overview");
             if(!stage.equals("OVERVIEW") && !actions.asList().contains(new JsonPrimitive("city_d4_district"))) actions.add("city_d4_district");
             if(stage.equals("INTEGRATION") || stage.equals("FINAL")) {
                 actions.add("city_d4_mark"); actions.add("city_d4_integrate");
@@ -182,14 +182,40 @@ public final class CityD4Workflow {
                 CityDesignQuestions.overview(settings,object(request,"designAnswers"));
                 require(!outdoor.has("landscapes")&&!outdoor.has("spatialGrounds")&&!outdoor.has("foundationGroupIds"),"景观与台地组在功能区初版设置。");
                 Set<String> ids=new HashSet<>();for(var d:array(overview,"districts"))require(!text(d.getAsJsonObject(),"groupId").isBlank()&&ids.add(text(d.getAsJsonObject(),"groupId")),"功能区 ID 不可空或重复。");
+                boolean extending = object(state,"bodies").size()>0;
+                if(runDir!=null) CityD4Versions.requireEditableRun(runDir,cityId);
+                if(extending) {
+                    JsonObject base=CityBlueprintDraft.current(dir,contextId,cityId);
+                    require(base!=null && text(request,"baseDraftHash").equals(text(base,"baseDraftHash")),"总览修订必须绑定当前 baseDraftHash。");
+                    require(!text(request,"assessment").isBlank(),"说明增补或拆分子区的预览依据。");
+                    require(settings.equals(object(state,"citySettings")) && object(request,"designAnswers").equals(object(state,"overviewAnswers")),"已有有效分区后，全城设置与总览问答冻结。");
+                    for(var old:array(state,"districts")) {
+                        String id=text(old.getAsJsonObject(),"groupId");
+                        if(object(state,"bodies").has(id))
+                            require(array(overview,"districts").asList().contains(old),"已保存区的 ID、职责及归属不可删除或改写；可新增相邻子区，原区通过定向修订调整。");
+                    }
+                    require(!array(overview,"districts").equals(array(state,"districts")),"总览未改变。");
+                    require(!overview.has("districtDisposition") || array(overview,"districtDisposition").equals(array(state,"districtDisposition")),"总览增补不得改写已确认的区间归属。");
+                }
                 JsonObject candidate=state.deepCopy();candidate.add("districts",array(overview,"districts").deepCopy());
                 candidate.addProperty("districtIndex",0);
-                candidate.remove("districtDisposition");
+                if(!extending) candidate.remove("districtDisposition");
+                else if(candidate.has("districtDisposition")) {
+                    JsonArray retained=new JsonArray();
+                    for(var disposition:array(candidate,"districtDisposition"))
+                        if(ids.contains(text(disposition.getAsJsonObject(),"districtId"))) retained.add(disposition.deepCopy());
+                    candidate.add("districtDisposition",retained);
+                }
+                if(extending) candidate.addProperty("overviewRevisionAssessment",text(request,"assessment"));
                 candidate.add("overviewAnswers",request.get("designAnswers").deepCopy());
-                if(overview.has("districtDisposition")) candidate.add("districtDisposition",validateDisposition(candidate,array(overview,"districtDisposition")));
+                if(!extending && overview.has("districtDisposition")) candidate.add("districtDisposition",validateDisposition(candidate,array(overview,"districtDisposition")));
                 JsonObject intent=new JsonObject(),groups=new JsonObject();groups.add("groups",array(overview,"districts").deepCopy());intent.add("designIntent",groups);
                 JsonObject response=compiler.call(intent);if(!ok(response))return receipt(state,response);
-                candidate.add("citySettings",settings.deepCopy());candidate.addProperty("stage","DISTRICTS");
+                candidate.add("citySettings",settings.deepCopy());
+                int next=0;
+                while(next<array(candidate,"districts").size() && object(candidate,"bodies").has(text(array(candidate,"districts").get(next).getAsJsonObject(),"groupId"))) next++;
+                candidate.addProperty("districtIndex",next);
+                candidate.addProperty("stage",next==array(candidate,"districts").size()?"INTEGRATION":"DISTRICTS");
                 save(dir,candidate);return receipt(candidate,response);
             }
             JsonObject draft=CityBlueprintDraft.current(dir,contextId,cityId);
@@ -397,6 +423,7 @@ public final class CityD4Workflow {
             case "city_d4_preview"->List.of("baseDraftHash");case "city_d4_materials"->List.of("materialSelections");
             case "city_d4_example"->List.of("designExample");case "city_d4_blocks"->List.of("blockMaterials");default->List.of();};
         if(tool.equals("city_d4_restore")) fields.addAll(List.of("baseBlueprintHash","baseDraftHash"));
+        if(tool.equals("city_d4_overview")) fields.addAll(List.of("baseDraftHash","assessment"));
         if(tool.equals("city_d4_district")) fields.addAll(List.of("targetDistrictId","baseDraftHash","assessment"));
         fields.addAll(required);if(tool.equals("city_d4_integrate"))fields.add("previousExpansionComplete");
         if(Set.of("city_d4_overview","city_d4_district","city_d4_integrate").contains(tool)) {

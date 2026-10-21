@@ -25,7 +25,7 @@ final class CityD4SubmissionGuidance {
             occupiedElsewhere |= !entry.getKey().equals(current);
         }
         result.add("savedCoreOwners",owners);
-        result.addProperty("overviewCorrection", "首个有效分区保存前，可用当前 workflowRevision 重交 city_d4_overview 修正全城默认设置，无需 baseDraftHash；保存有效分区后总览锁定，不能借此重做已有初版。roadSurface 使用半砖 slab，roadStair/roadCurb 使用楼梯 stair；局部覆盖不会修正不合规的全城默认值。");
+        result.addProperty("overviewCorrection", "首个有效分区保存前，可用当前 workflowRevision 重交 city_d4_overview 修正全城默认设置，无需 baseDraftHash；保存有效分区后，可携当前 baseDraftHash、workflowRevision 与 assessment 增补子区或拆分未设计区；全城设置、总览问答和已保存区定义/归属冻结，已有阵列、选材、人口与布局保留。已完成大区可保留原区并增补相邻子区，再用定向修订调整原区内容；不能重交总览删除或迁移已有成果。已定稿须先重开，施工开始后拒绝修订。roadSurface 使用半砖 slab，roadStair/roadCurb 使用楼梯 stair；局部覆盖不会修正不合规的全城默认值。");
         result.addProperty("coreRule","每区一个显式 core:{groupId,structureRef}。核心必须列入该组 requiredStructureRefs；其他必需配套同列，可选填充用 fillPools。素材特色/通用、旧作者角色和全城 CORE 编译优先级均不决定本区角色。多个同类区可相邻，不强制共同核心或巨型阵列。");
         JsonArray rules=new JsonArray();
         for(String rule:List.of(

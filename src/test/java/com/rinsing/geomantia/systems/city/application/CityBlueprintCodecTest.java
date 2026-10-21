@@ -26,6 +26,27 @@ class CityBlueprintCodecTest {
         var copy=blueprint.outdoorPlan().publicRealm().toJson();copy.addProperty("seed",3);
         assertEquals(42,blueprint.outdoorPlan().publicRealm().toJson().get("seed").getAsInt());
     }
+    @Test void publicRealmCoordinatesAreAllowedOnlyAtContractPaths() throws IOException {
+        var json=fixture("valid_city_blueprint.json");
+        var spec=JsonParser.parseString("{schema:'city_public_realm.v1',catalog:'academy',spaces:[{id:'court',owner:'a',origin:{x:1,z:2},plan:{entries:[{x:0,z:1}],clearings:[{x:2,z:3,width:4,depth:4}],plantingZones:[{x:0,z:0}],nodes:[{x:1,z:2,rotation:90,children:[{x:0,z:1,rotation:180}]}]}}],externalAccess:{waypoints:[{x:10,z:20,surfaceY:64},{x:10,z:25,surfaceY:64}]}}").getAsJsonObject();
+        json.getAsJsonObject("outdoorPlan").add("publicRealm",spec);
+        assertEquals(spec,codec.read(json).outdoorPlan().publicRealm().toJson());
+        assertEquals(codec.read(json),codec.read(codec.write(codec.read(json))));
+        var node=spec.getAsJsonArray("spaces").get(0).getAsJsonObject().getAsJsonObject("plan").getAsJsonArray("nodes").get(0).getAsJsonObject();
+        for(String field:java.util.List.of("y","templateId","anchorBlock","mirror")) {
+            node.addProperty(field,1);
+            assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_FORBIDDEN_PLACEMENT_FIELD,assertThrows(CityBlueprintContractException.class,()->codec.read(json)).reasonCode());
+            node.remove(field);
+        }
+        spec.addProperty("x",1);
+        assertThrows(CityBlueprintContractException.class,()->codec.read(json));spec.remove("x");
+        var origin=spec.getAsJsonArray("spaces").get(0).getAsJsonObject().getAsJsonObject("origin");
+        origin.addProperty("rotation",90);assertThrows(CityBlueprintContractException.class,()->codec.read(json));origin.remove("rotation");
+        node.add("unrecognized",JsonParser.parseString("{x:1,z:2}"));assertThrows(CityBlueprintContractException.class,()->codec.read(json));node.remove("unrecognized");
+        json.getAsJsonArray("groups").get(0).getAsJsonObject().addProperty("x",1);
+        assertThrows(CityBlueprintContractException.class,()->codec.read(json));
+    }
+
     private final CityBlueprintCodec codec = new CityBlueprintCodec();
     @Test void intentionalLayoutRoundTripsOnLeafAndNestedComposition() throws IOException {
         var json=fixture("valid_city_blueprint.json");
