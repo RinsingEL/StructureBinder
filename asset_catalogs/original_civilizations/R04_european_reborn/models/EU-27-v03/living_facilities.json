@@ -1,0 +1,74 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    11,
+    12,
+    13
+  ],
+  "sourceSha256": "3abd4af1ba9a79c3be9293c16c5d2ff17f6f193f3d98f8b75f00a6e11fdbc3a8",
+  "capacity": {
+    "residentBeds": 2,
+    "workplaces": 0
+  },
+  "facilities": [
+    {
+      "id": "bed:3,2,8",
+      "kind": "bed",
+      "pos": [
+        3,
+        2,
+        8
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_0",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        3,
+        2,
+        10
+      ]
+    },
+    {
+      "id": "bed:5,2,8",
+      "kind": "bed",
+      "pos": [
+        5,
+        2,
+        8
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_0",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        5,
+        2,
+        10
+      ]
+    },
+    {
+      "id": "entrance:4,2,1",
+      "kind": "entrance",
+      "pos": [
+        4,
+        2,
+        1
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "门前步行入口",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    }
+  ],
+  "warnings": []
+}

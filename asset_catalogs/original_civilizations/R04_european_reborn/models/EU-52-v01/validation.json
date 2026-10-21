@@ -1,0 +1,38 @@
+{
+  "schema": "structure-studio.validation.v1",
+  "nbt_sha256": "5f529a2b60f07a2932df2dac618befd4e347710ac4abc65dc8f3e3e5a9e0f699",
+  "navigation": {
+    "passed": true,
+    "unreachable": [],
+    "nodes": 284,
+    "highest_standing_y": 2,
+    "truncated": false,
+    "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "size": [
+    13,
+    11,
+    15
+  ],
+  "visible_blocks": 685,
+  "explicit_air": 346,
+  "palette": 14,
+  "block_entities": 0,
+  "agriculture": null,
+  "materials": {
+    "minecraft:spruce_planks": 386,
+    "minecraft:cobblestone": 133,
+    "minecraft:white_terracotta": 53,
+    "minecraft:bricks": 46,
+    "minecraft:dark_oak_log": 30,
+    "minecraft:spruce_log": 22,
+    "minecraft:oak_log": 8,
+    "minecraft:glass_pane": 4,
+    "minecraft:lantern": 2,
+    "minecraft:furnace": 1
+  },
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+}

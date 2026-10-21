@@ -75,6 +75,8 @@ from .dwarven_revision2 import BUILDERS as DWARVEN_REVISION2
 from .elven_revision2 import BUILDERS as ELVEN_REVISION2
 from .european_revision2 import BUILDERS as EUROPEAN_REVISION2
 from .academy_interiors import BUILDERS as ACADEMY_INTERIORS
+from .european_village import get_builders as european_village_builders
+from .european_character import BUILDERS as EUROPEAN_CHARACTER
 
 BUILDERS={"SR-01-v01":("01_steam_rail",steam_station),"WT-01-v01":("02_waterway_trade",passenger_quay)}
 BUILDERS["SR-F01-v01"]=("01_steam_rail",bakery)
@@ -146,6 +148,8 @@ BUILDERS.update({key:("R03_dwarven_reborn",fn) for key,fn in DWARVEN_REVISION2.i
 BUILDERS.update({key:("R01_elven_reborn",fn) for key,fn in ELVEN_REVISION2.items()})
 BUILDERS.update({key:("R04_european_reborn",fn) for key,fn in EUROPEAN_REVISION2.items()})
 BUILDERS.update({key:("R02_arcane_reborn",fn) for key,fn in ACADEMY_INTERIORS.items()})
+BUILDERS.update({key:("R04_european_reborn",fn) for key,fn in european_village_builders().items()})
+BUILDERS.update({key:("R04_european_reborn",fn) for key,fn in EUROPEAN_CHARACTER.items()})
 
 def main():
     p=argparse.ArgumentParser();p.add_argument("ids",nargs="+",help="Asset ID, family ID, or all")

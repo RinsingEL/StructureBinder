@@ -1,0 +1,32 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "EU-33-v03",
+  "status": "needs_redesign",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex",
+  "nbt_sha256": "6594f7b34953c7745dd0052d8ed452efba41e64f491459ada7ca64bcc21786f9",
+  "author_sha256": "2017c32968f7d95d6278b4f4efbb7b549279652fdc8252082e2a2ea4a9a4a368",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png"
+  ],
+  "checks": [
+    "售窗、遮棚、陈列与货物操作面可辨。",
+    "实际查看前后外观、去屋顶和首层图；数据与离线通路检查另行核对。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "作者图审不等于用户审美批准；未验证夜间光照、世界生成与真实NPC行为。"
+  ],
+  "previous_status": "accepted",
+  "design_feedback": {
+    "date": "2026-10-21",
+    "source": "user",
+    "text": "建筑缺少特色，保留为功能与尺度原型；此前作者设计质量结论撤回。",
+    "previous_commit": "20f0263a"
+  }
+}

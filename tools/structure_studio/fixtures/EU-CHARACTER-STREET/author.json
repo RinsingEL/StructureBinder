@@ -1,0 +1,435 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "EU-CHARACTER-STREET",
+  "name": "四栋特色重设计 · 同尺度街景",
+  "family": "EU-CHARACTER-STREET",
+  "civilization": "fixture",
+  "planning_role": "planning_role.structure",
+  "size": [
+    98,
+    28,
+    39
+  ],
+  "terrain": {
+    "选址": "离线手工尺度对照，不是生成结果。"
+  },
+  "rooms": [],
+  "points": [
+    {
+      "id": "EU-27-v05_entry",
+      "kind": "entrance",
+      "pos": [
+        9,
+        2,
+        10
+      ],
+      "name": "陆路主入口",
+      "facing": "north"
+    },
+    {
+      "id": "EU-27-v05_bed_3",
+      "kind": "bed",
+      "pos": [
+        6,
+        2,
+        18
+      ],
+      "name": "住床",
+      "use": "resident",
+      "approach": [
+        6,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "EU-27-v05_bed_5",
+      "kind": "bed",
+      "pos": [
+        8,
+        2,
+        18
+      ],
+      "name": "住床",
+      "use": "resident",
+      "approach": [
+        8,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "EU-27-v05_seat_3",
+      "kind": "seat",
+      "pos": [
+        10,
+        2,
+        14
+      ],
+      "name": "座位",
+      "use": "resident",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        9,
+        2,
+        14
+      ]
+    },
+    {
+      "id": "EU-27-v05_street_view",
+      "kind": "circulation",
+      "pos": [
+        10,
+        2,
+        1
+      ],
+      "name": "街上玩家高度观察",
+      "facing": "north",
+      "look_at": [
+        10,
+        7,
+        18
+      ]
+    },
+    {
+      "id": "EU-32-v02_entry",
+      "kind": "entrance",
+      "pos": [
+        34,
+        2,
+        11
+      ],
+      "name": "陆路主入口",
+      "facing": "north"
+    },
+    {
+      "id": "EU-32-v02_landing_1",
+      "kind": "circulation",
+      "pos": [
+        36,
+        7,
+        21
+      ],
+      "name": "实体楼梯上层平台"
+    },
+    {
+      "id": "EU-32-v02_guest_4_7",
+      "kind": "bed",
+      "pos": [
+        28,
+        7,
+        15
+      ],
+      "name": "客床",
+      "use": "public",
+      "approach": [
+        28,
+        7,
+        16
+      ]
+    },
+    {
+      "id": "EU-32-v02_guest_4_16",
+      "kind": "bed",
+      "pos": [
+        28,
+        7,
+        24
+      ],
+      "name": "客床",
+      "use": "public",
+      "approach": [
+        28,
+        7,
+        25
+      ]
+    },
+    {
+      "id": "EU-32-v02_guest_7_7",
+      "kind": "bed",
+      "pos": [
+        31,
+        7,
+        15
+      ],
+      "name": "客床",
+      "use": "public",
+      "approach": [
+        31,
+        7,
+        16
+      ]
+    },
+    {
+      "id": "EU-32-v02_guest_7_16",
+      "kind": "bed",
+      "pos": [
+        31,
+        7,
+        24
+      ],
+      "name": "客床",
+      "use": "public",
+      "approach": [
+        31,
+        7,
+        25
+      ]
+    },
+    {
+      "id": "EU-32-v02_work_6",
+      "kind": "work",
+      "pos": [
+        41,
+        2,
+        23
+      ],
+      "name": "厨师",
+      "use": "staff",
+      "approach": [
+        40,
+        2,
+        23
+      ]
+    },
+    {
+      "id": "EU-32-v02_staff",
+      "kind": "bed",
+      "pos": [
+        39,
+        2,
+        25
+      ],
+      "name": "住床",
+      "use": "staff",
+      "approach": [
+        39,
+        2,
+        26
+      ]
+    },
+    {
+      "id": "EU-32-v02_work_8",
+      "kind": "work",
+      "pos": [
+        28,
+        2,
+        21
+      ],
+      "name": "酒保",
+      "use": "staff",
+      "approach": [
+        29,
+        2,
+        21
+      ]
+    },
+    {
+      "id": "EU-32-v02_seat_9",
+      "kind": "seat",
+      "pos": [
+        31,
+        2,
+        15
+      ],
+      "name": "座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        32,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "EU-32-v02_seat_10",
+      "kind": "seat",
+      "pos": [
+        31,
+        2,
+        24
+      ],
+      "name": "座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        32,
+        2,
+        24
+      ]
+    },
+    {
+      "id": "EU-32-v02_street_view",
+      "kind": "circulation",
+      "pos": [
+        34,
+        2,
+        1
+      ],
+      "name": "街上玩家高度观察",
+      "facing": "north",
+      "look_at": [
+        34,
+        7,
+        18
+      ]
+    },
+    {
+      "id": "EU-07-v02_work_0",
+      "kind": "work",
+      "pos": [
+        56,
+        2,
+        19
+      ],
+      "name": "锻炉操作",
+      "use": "staff",
+      "approach": [
+        56,
+        2,
+        17
+      ]
+    },
+    {
+      "id": "EU-07-v02_work_1",
+      "kind": "work",
+      "pos": [
+        61,
+        2,
+        15
+      ],
+      "name": "砧台锻造",
+      "use": "staff",
+      "approach": [
+        62,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "EU-07-v02_entry",
+      "kind": "entrance",
+      "pos": [
+        61,
+        2,
+        9
+      ],
+      "name": "开放修理与牵马面",
+      "facing": "north"
+    },
+    {
+      "id": "EU-07-v02_street_view",
+      "kind": "circulation",
+      "pos": [
+        59,
+        2,
+        1
+      ],
+      "name": "街上玩家高度观察",
+      "facing": "north",
+      "look_at": [
+        59,
+        7,
+        18
+      ]
+    },
+    {
+      "id": "EU-55-v02_entry",
+      "kind": "entrance",
+      "pos": [
+        82,
+        2,
+        8
+      ],
+      "name": "岸上低街入口"
+    },
+    {
+      "id": "EU-55-v02_upper",
+      "kind": "circulation",
+      "pos": [
+        86,
+        10,
+        20
+      ],
+      "name": "上层装卸平台"
+    },
+    {
+      "id": "EU-55-v02_work_2",
+      "kind": "work",
+      "pos": [
+        83,
+        4,
+        24
+      ],
+      "name": "仓管登记",
+      "use": "staff",
+      "approach": [
+        83,
+        4,
+        23
+      ]
+    },
+    {
+      "id": "EU-55-v02_work_3",
+      "kind": "work",
+      "pos": [
+        89,
+        4,
+        25
+      ],
+      "name": "装卸理货",
+      "use": "staff",
+      "approach": [
+        89,
+        4,
+        24
+      ]
+    },
+    {
+      "id": "EU-55-v02_street_view",
+      "kind": "circulation",
+      "pos": [
+        83,
+        2,
+        1
+      ],
+      "name": "街上玩家高度观察",
+      "facing": "north",
+      "look_at": [
+        83,
+        7,
+        18
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "四栋统一尺度；街面观察点眼高由Studio漫游相机给出，非真实游戏截图。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "街面",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 25,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "workplace_policy": "authored",
+  "function_terms": [
+    "尺度对照"
+  ],
+  "ground_plane": {
+    "y": 2,
+    "note": "统一街面脚底Y=2，仅作者手工布置的对照场景。"
+  },
+  "nbt_sha256": "5c7d6bac9d4303aac545f0fb72c119958f8b3b79e7fdbe19cd29e2f5bc029dae"
+}

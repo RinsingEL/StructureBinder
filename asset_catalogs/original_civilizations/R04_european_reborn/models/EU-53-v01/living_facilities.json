@@ -1,0 +1,95 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    11,
+    10,
+    13
+  ],
+  "sourceSha256": "e250d1ecb2043f31fc9b0dda50c04fe26d06e65c21fc50dfd008afe2ecf8c4f1",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 1
+  },
+  "facilities": [
+    {
+      "id": "work:8,2,8",
+      "kind": "work",
+      "pos": [
+        8,
+        2,
+        8
+      ],
+      "block": "minecraft:barrel",
+      "facing": "west",
+      "use": "staff",
+      "room": "room_0",
+      "name": "渡口值守",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        7,
+        2,
+        8
+      ]
+    },
+    {
+      "id": "entrance:5,2,1",
+      "kind": "entrance",
+      "pos": [
+        5,
+        2,
+        1
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "开放作业面入口",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "seat:3,2,5",
+      "kind": "seat",
+      "pos": [
+        3,
+        2,
+        5
+      ],
+      "block": "minecraft:spruce_stairs",
+      "facing": "east",
+      "use": "public",
+      "room": "room_0",
+      "name": "座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        4,
+        2,
+        5
+      ]
+    },
+    {
+      "id": "seat:3,2,8",
+      "kind": "seat",
+      "pos": [
+        3,
+        2,
+        8
+      ],
+      "block": "minecraft:spruce_stairs",
+      "facing": "east",
+      "use": "public",
+      "room": "room_0",
+      "name": "座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        4,
+        2,
+        8
+      ]
+    }
+  ],
+  "warnings": []
+}

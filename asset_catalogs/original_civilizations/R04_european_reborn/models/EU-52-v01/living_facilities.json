@@ -1,0 +1,53 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    13,
+    11,
+    15
+  ],
+  "sourceSha256": "5f529a2b60f07a2932df2dac618befd4e347710ac4abc65dc8f3e3e5a9e0f699",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 1
+  },
+  "facilities": [
+    {
+      "id": "work:5,2,7",
+      "kind": "work",
+      "pos": [
+        5,
+        2,
+        7
+      ],
+      "block": "minecraft:furnace",
+      "facing": "north",
+      "use": "staff",
+      "room": "room_0",
+      "name": "炭窑维护",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        5,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "entrance:6,2,1",
+      "kind": "entrance",
+      "pos": [
+        6,
+        2,
+        1
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "开放作业面入口",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    }
+  ],
+  "warnings": []
+}

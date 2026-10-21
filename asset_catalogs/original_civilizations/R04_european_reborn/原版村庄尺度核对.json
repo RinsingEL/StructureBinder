@@ -1,0 +1,367 @@
+{
+  "date": "2026-10-21",
+  "source": "Minecraft Java Edition 1.20.1 minecraft-client.jar",
+  "method": "Read gzipped structure NBT size [x,y,z]; count palette bed states with part=head. Bounds include template air, foundations and accessories; not interior dimensions.",
+  "entries": [
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_accessory_1.nbt",
+      "size_xyz": [
+        3,
+        2,
+        5
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "4eca5979c602948943d62829072018f0267925f32987e896dca09e3695c9c1ad"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_animal_pen_1.nbt",
+      "size_xyz": [
+        5,
+        8,
+        6
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "496125e6728a6829f1ac49657f553c1e6cc71b329cd27149584592f16cca2405"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_animal_pen_2.nbt",
+      "size_xyz": [
+        7,
+        7,
+        11
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "8f1c7982d153f871c35b81fad656193c3f66d5e2d5b30a22af8d2dfec686d72e"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_animal_pen_3.nbt",
+      "size_xyz": [
+        8,
+        6,
+        11
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "4709c2938cf5b57ab6a72d98bbb48d43479616b62da8ec8ed2de3ed8684c6413"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_armorer_house_1.nbt",
+      "size_xyz": [
+        9,
+        8,
+        8
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "48228dc6ad376f948c1b09c44c0f6222912cbb6ed65a0dbce628b7736ca4ce57"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_big_house_1.nbt",
+      "size_xyz": [
+        7,
+        11,
+        11
+      ],
+      "bed_heads": 4,
+      "nbt_sha256": "ea92b9f92a711a3a21d22e886a761fa6e1d13d30220ed856e0ebb981d92eca87"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_butcher_shop_1.nbt",
+      "size_xyz": [
+        11,
+        8,
+        12
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "0891f6ea77a3c362f0751ab19bc324cec544062055c85fe205c63a05760fde3a"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_butcher_shop_2.nbt",
+      "size_xyz": [
+        15,
+        12,
+        7
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "1a4c521919d084cb3a39ff5d7c227a23edc79e314193eb7417fa425dfb5d8b09"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_cartographer_1.nbt",
+      "size_xyz": [
+        10,
+        8,
+        7
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "0c4558b70377c37dd46eddba04416f1c1c893ac2d48eec1c2363655af5b16c8a"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_fisher_cottage_1.nbt",
+      "size_xyz": [
+        11,
+        9,
+        10
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "abb7ff92bec6891d80fda118efb0447bea05627be4a292cff8a48308efcf1180"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_fletcher_house_1.nbt",
+      "size_xyz": [
+        9,
+        7,
+        11
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "c8c6ac4824d04c09ccd796e40c00d9c9cfad5ad117afefdca0ebd5dbf51e272e"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_large_farm_1.nbt",
+      "size_xyz": [
+        13,
+        6,
+        9
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "88ad3e6cc852a03500d1f7b77b963f0d012cef22b1e58170b2773bcce9b86017"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_library_1.nbt",
+      "size_xyz": [
+        11,
+        10,
+        17
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "8e10a21a97aa469561bdf9b54ce7fe15201d142b39be134a311f1a1104696942"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_library_2.nbt",
+      "size_xyz": [
+        8,
+        10,
+        9
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "0eec910c106ac0ac5f21925ca5eb2cd3158716ff8e2e8f58c8918705615b4924"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_masons_house_1.nbt",
+      "size_xyz": [
+        8,
+        7,
+        9
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "97ddb676b795b0e348fc00a6e498c034c3eb0fa958df727ff6a6ce805c8f24d7"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_medium_house_1.nbt",
+      "size_xyz": [
+        13,
+        8,
+        11
+      ],
+      "bed_heads": 2,
+      "nbt_sha256": "e257923a554cc472ed45aa13cddb8d45b58e4bd5ce0c278595ff8fdc7d58e012"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_medium_house_2.nbt",
+      "size_xyz": [
+        7,
+        6,
+        13
+      ],
+      "bed_heads": 2,
+      "nbt_sha256": "133b5d3924536fb8e3a246c83a6eb5298749312ccb2148f22bbfc5210cb9c0e6"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_meeting_point_4.nbt",
+      "size_xyz": [
+        10,
+        7,
+        16
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "8e7b4f08450bbe2ab0c29a1308dcf58b7f0563647c6dcea5a0a8ab1456afb3ef"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_meeting_point_5.nbt",
+      "size_xyz": [
+        10,
+        6,
+        11
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "06f9d315be93c2aa0738c99f59686ff841cd586542d75871e9e85992e099766d"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_shepherds_house_1.nbt",
+      "size_xyz": [
+        9,
+        6,
+        13
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "8adcd7d79ddd827e3cc1060d4b7d7620f59dec258bc594f674c0a8a3e047d27e"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_small_farm_1.nbt",
+      "size_xyz": [
+        7,
+        6,
+        9
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "d17d75e31473fd07174c5161f965a7110d912e0cc4fdfe143ed2484d556982c3"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_small_house_1.nbt",
+      "size_xyz": [
+        7,
+        7,
+        7
+      ],
+      "bed_heads": 1,
+      "nbt_sha256": "98a7ee84e987d6d69758bcf845a6fc2415cc13f772b88f0838bf323f9b406d0a"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_small_house_2.nbt",
+      "size_xyz": [
+        7,
+        7,
+        7
+      ],
+      "bed_heads": 1,
+      "nbt_sha256": "1053918548c7cde814979f3e92d7f7211b8ae15815e15f0f18b2a57dd2477b4c"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_small_house_3.nbt",
+      "size_xyz": [
+        7,
+        7,
+        7
+      ],
+      "bed_heads": 1,
+      "nbt_sha256": "dfd14a0c437534004038674c7be4dcdbed00de6cd3114aadaf56ef255626ab19"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_small_house_4.nbt",
+      "size_xyz": [
+        7,
+        7,
+        7
+      ],
+      "bed_heads": 1,
+      "nbt_sha256": "c177ac209f12d551d037beafac1ac28ff522e85d4b72e422c0beb0929763bf1a"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_small_house_5.nbt",
+      "size_xyz": [
+        9,
+        11,
+        9
+      ],
+      "bed_heads": 1,
+      "nbt_sha256": "a7afdffdfaa24c970fd01cdad21c6cfe8490fddd3e90bf1be0d69cc19dffbf82"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_small_house_6.nbt",
+      "size_xyz": [
+        7,
+        7,
+        7
+      ],
+      "bed_heads": 1,
+      "nbt_sha256": "b07e6d0e8b7483d293cc7b7831ec83a42f2a63c278836baa0ba14e319cb470c4"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_small_house_7.nbt",
+      "size_xyz": [
+        7,
+        7,
+        8
+      ],
+      "bed_heads": 1,
+      "nbt_sha256": "23e29d27b60983ccebf2ab3bd6027fe1e2750f99acce55ea03116732ff7a594e"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_small_house_8.nbt",
+      "size_xyz": [
+        8,
+        9,
+        9
+      ],
+      "bed_heads": 1,
+      "nbt_sha256": "4d77ebdfd9005acc92fd4b844be82d0c9b8daae8f619ee8e582a67c4c1fbc1de"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_stable_1.nbt",
+      "size_xyz": [
+        9,
+        7,
+        16
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "2de009896cf94bef507271e929e130d89860cbe2e30a70a61505ff8253740886"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_stable_2.nbt",
+      "size_xyz": [
+        7,
+        6,
+        17
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "a494d648b80ac18774bdff0590a4dd632f27a8dade59918a205e494dec198258"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_tannery_1.nbt",
+      "size_xyz": [
+        8,
+        7,
+        10
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "dc5a6644fe37805777c32d6220bfaec6f6b4fd025732eea75005d0e24d6523f2"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_temple_3.nbt",
+      "size_xyz": [
+        11,
+        7,
+        7
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "625772c0f37984f3dced556fdbeaf059dd6b7ccbe18d411944d5f946e541f2df"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_temple_4.nbt",
+      "size_xyz": [
+        10,
+        12,
+        7
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "633a5718cf85e188059494fdb9380a824725631648c384513885c10c12a6c546"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_tool_smith_1.nbt",
+      "size_xyz": [
+        9,
+        6,
+        12
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "4c70e7954a155953c23a8336ac7bb4adfa9748cecf3efa821b20bfc4695ee48f"
+    },
+    {
+      "resource": "data/minecraft/structures/village/plains/houses/plains_weaponsmith_1.nbt",
+      "size_xyz": [
+        9,
+        8,
+        11
+      ],
+      "bed_heads": 0,
+      "nbt_sha256": "23f3478f3f8dd1b37e093085925d8361aad1af402f80e6c4b6cd549b7a69cc18"
+    }
+  ]
+}

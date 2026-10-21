@@ -1,0 +1,1154 @@
+{
+  "date": "2026-10-21",
+  "scope": "offline_asset_review",
+  "models": 68,
+  "new_versions": 61,
+  "revised_versions": 7,
+  "shots": 944,
+  "runtime_installed": false,
+  "worldgen_verified": false,
+  "rows": [
+    {
+      "id": "EU-02-v02",
+      "name": "十字钟塔教堂 · 圆券侧廊与后部半圆祭堂",
+      "group": "旧模型修订",
+      "size_xyz": [
+        65,
+        46,
+        81
+      ],
+      "beds": {},
+      "workplaces": 2,
+      "residentBeds": 0,
+      "shots": 12,
+      "nbt_sha256": "412353b061c72838de3fc5485ccfa364be5e8c26b4d1e6c647c015eaf81e49da",
+      "author_sha256": "760767622725a5da8b0cc7a1fe5411f61c86b873903a5baebabe909be400ac48"
+    },
+    {
+      "id": "EU-03-v02",
+      "name": "市政会馆 · 石券底廊与三山墙挑楼",
+      "group": "旧模型修订",
+      "size_xyz": [
+        61,
+        28,
+        57
+      ],
+      "beds": {},
+      "workplaces": 3,
+      "residentBeds": 0,
+      "shots": 14,
+      "nbt_sha256": "737775551ad9a2a495519e79b1ee4f2e00ac409e693c55156ae5d2451cdc637a",
+      "author_sha256": "b532f908cfba654f88425b8c5d8f4d45c81152501ce7ca65a7c0bcd8910f4090"
+    },
+    {
+      "id": "EU-05-v02",
+      "name": "挑楼街屋 · 紧凑三层三户",
+      "group": "旧模型修订",
+      "size_xyz": [
+        13,
+        24,
+        17
+      ],
+      "beds": {
+        "resident": 9
+      },
+      "workplaces": 0,
+      "residentBeds": 9,
+      "shots": 25,
+      "nbt_sha256": "e1780a2cc5d57ced308162ff48637615a7f33cd9561aee1a38eb8878d3b626fc",
+      "author_sha256": "f4937626410045de1944ef4ca577b026ea5d85ba36d39d3a69bdc1422af9defa"
+    },
+    {
+      "id": "EU-15-v02",
+      "name": "商人行会馆 · 阶梯山墙与双层秤量厅",
+      "group": "旧模型修订",
+      "size_xyz": [
+        57,
+        39,
+        61
+      ],
+      "beds": {},
+      "workplaces": 2,
+      "residentBeds": 0,
+      "shots": 13,
+      "nbt_sha256": "17a646c546468eb7e0b03d303917dee9d8083a4ab85161b5942c5dff0fd708fa",
+      "author_sha256": "7869df32323cf2858db20c17e22d82b2d42d636053d4c760ccdccd156fbc8194"
+    },
+    {
+      "id": "EU-16-v02",
+      "name": "城镇钟楼 · 石基木钟室与四面表盘",
+      "group": "旧模型修订",
+      "size_xyz": [
+        39,
+        54,
+        43
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 13,
+      "nbt_sha256": "06627e57ab8e2f59cac10193909e55c8a18d48ada0c7998d245a2dd8ecd7f856",
+      "author_sha256": "a293874adcea1e1e5c2ae826927b670fa16fd73ace8f9d8b6d9cc492d49770d5"
+    },
+    {
+      "id": "EU-18-v02",
+      "name": "双窑面包坊 · 前店木屋与后部圆窑",
+      "group": "旧模型修订",
+      "size_xyz": [
+        49,
+        28,
+        53
+      ],
+      "beds": {},
+      "workplaces": 2,
+      "residentBeds": 0,
+      "shots": 11,
+      "nbt_sha256": "7d2747ad731adb3a74b402702748f62f1d4a8ef3a72cde033efe47d540982903",
+      "author_sha256": "7561c625d38b6419f88714fb77b4b7f287ba27de6d8b88bb8a1e34206c9ef57f"
+    },
+    {
+      "id": "EU-21-v02",
+      "name": "守卫营房 · 双层二十四床",
+      "group": "旧模型修订",
+      "size_xyz": [
+        19,
+        22,
+        23
+      ],
+      "beds": {
+        "resident": 24
+      },
+      "workplaces": 1,
+      "residentBeds": 24,
+      "shots": 38,
+      "nbt_sha256": "bb3389f5339560f0b9edc96384c88cad997e737b34a58623ed08ae233d546b0b",
+      "author_sha256": "bcce1830a00276bbeeefd3378c5f93dbeefc381f7b9820b0aa44ad8db4535ce7"
+    },
+    {
+      "id": "EU-27-v01",
+      "name": "木架小屋 · 端门双床与灶角",
+      "group": "日常与服务",
+      "size_xyz": [
+        9,
+        12,
+        11
+      ],
+      "beds": {
+        "resident": 2
+      },
+      "workplaces": 0,
+      "residentBeds": 2,
+      "shots": 13,
+      "nbt_sha256": "450a2c5ee77ce8e692f7978f7ddb033e252d35b72dd7733092b297344dbad4ba",
+      "author_sha256": "d7a6909ff314f45a37124297f9b2634abc746347bb18e3bc2b260ddf70ff7f19"
+    },
+    {
+      "id": "EU-27-v02",
+      "name": "木架小屋 · 侧门长屋与储物间",
+      "group": "日常与服务",
+      "size_xyz": [
+        9,
+        12,
+        13
+      ],
+      "beds": {
+        "resident": 2
+      },
+      "workplaces": 0,
+      "residentBeds": 2,
+      "shots": 13,
+      "nbt_sha256": "38ee93b8069a2591b9d8d06376c1cdba1d7fd7f2bc018e50a9a71c93f54857f9",
+      "author_sha256": "79eec2782462611d541d4265cac245097b3a3ef961c1a123b594298e8862fc2f"
+    },
+    {
+      "id": "EU-27-v03",
+      "name": "木架小屋 · 短翼储物间",
+      "group": "日常与服务",
+      "size_xyz": [
+        11,
+        12,
+        13
+      ],
+      "beds": {
+        "resident": 2
+      },
+      "workplaces": 0,
+      "residentBeds": 2,
+      "shots": 13,
+      "nbt_sha256": "3abd4af1ba9a79c3be9293c16c5d2ff17f6f193f3d98f8b75f00a6e11fdbc3a8",
+      "author_sha256": "14128bb79c80109ae5a2bdbdb55132cbcbafbbde5b064151459a191ca171418a"
+    },
+    {
+      "id": "EU-27-v04",
+      "name": "木架小屋 · 两格坡差与上坡寝室",
+      "group": "日常与服务",
+      "size_xyz": [
+        9,
+        14,
+        14
+      ],
+      "beds": {
+        "resident": 2
+      },
+      "workplaces": 0,
+      "residentBeds": 2,
+      "shots": 14,
+      "nbt_sha256": "e5d5e36a0fb6c7789d31d77fa592214df507fdf75bb37cd02a8e50291ba475c2",
+      "author_sha256": "253f498d1eb1c942207c229b38efb3d60cc1a7b0077beabca1e3f72024a903e4"
+    },
+    {
+      "id": "EU-28-v01",
+      "name": "半木架家宅 · 双层山墙四床",
+      "group": "日常与服务",
+      "size_xyz": [
+        13,
+        19,
+        15
+      ],
+      "beds": {
+        "resident": 4
+      },
+      "workplaces": 0,
+      "residentBeds": 4,
+      "shots": 19,
+      "nbt_sha256": "9e7c4da29a7843d084f8f1de7e583a44ac32e747a19e2deafaf1952d41c1c565",
+      "author_sha256": "46b4181e70bc2278a147db371cbcc225023f267738f84122697bfbbc4c72ae67"
+    },
+    {
+      "id": "EU-28-v02",
+      "name": "半木架家宅 · 窄面侧廊六床",
+      "group": "日常与服务",
+      "size_xyz": [
+        11,
+        18,
+        15
+      ],
+      "beds": {
+        "resident": 6
+      },
+      "workplaces": 0,
+      "residentBeds": 6,
+      "shots": 21,
+      "nbt_sha256": "5fb4b9efaf2d432f0be31a16e829cadadf70d33d64adb4ab4ed346ee7eacdc40",
+      "author_sha256": "ab57fe92e7b16e14fcc707b4a19c568ce0199fa2e92d2f36e1b91c9a146e7735"
+    },
+    {
+      "id": "EU-28-v03",
+      "name": "半木架家宅 · 短L形餐厅翼",
+      "group": "日常与服务",
+      "size_xyz": [
+        15,
+        12,
+        15
+      ],
+      "beds": {
+        "resident": 4
+      },
+      "workplaces": 0,
+      "residentBeds": 4,
+      "shots": 17,
+      "nbt_sha256": "44b2f4cd5d7af099ee0aae9be01653331236b7e53087548c029f2776a9e9ca23",
+      "author_sha256": "e808caeed37e1190d76277116e5600039d982278b4907badc9477facae6591e1"
+    },
+    {
+      "id": "EU-29-v01",
+      "name": "连排街屋 · 共墙中户",
+      "group": "日常与服务",
+      "size_xyz": [
+        7,
+        18,
+        13
+      ],
+      "beds": {
+        "resident": 2
+      },
+      "workplaces": 0,
+      "residentBeds": 2,
+      "shots": 15,
+      "nbt_sha256": "0c51fa678936ac339a1762ffb6b9cda08a076de2ab59254bd9b15d7a13e202b9",
+      "author_sha256": "f0ebdba3b2d7db66f6d5e25d7cf72f3470ee25a5a36bd1df84c3fc9b570c7139"
+    },
+    {
+      "id": "EU-29-v02",
+      "name": "连排街屋 · 山墙端户",
+      "group": "日常与服务",
+      "size_xyz": [
+        7,
+        18,
+        13
+      ],
+      "beds": {
+        "resident": 2
+      },
+      "workplaces": 0,
+      "residentBeds": 2,
+      "shots": 15,
+      "nbt_sha256": "f79d8015cfb1fd5af348d5d7f2fe31e882e3ab17dbefc013ae92019fa55cc223",
+      "author_sha256": "857e15de57d9ce10c57eeaf8290ea0fe2353d1208c27f33ec8f0ac3d11f7bc95"
+    },
+    {
+      "id": "EU-29-v03",
+      "name": "连排街屋 · 转角侧门户",
+      "group": "日常与服务",
+      "size_xyz": [
+        7,
+        18,
+        13
+      ],
+      "beds": {
+        "resident": 2
+      },
+      "workplaces": 0,
+      "residentBeds": 2,
+      "shots": 15,
+      "nbt_sha256": "6b34cac4e26ee0cb090006bd88d6ed4da3f25da2450fa8fe4434706312f47abb",
+      "author_sha256": "3c3a2b8a0b77c33753b502fa95654a66828959c07614ee2800cec30020f0bb3b"
+    },
+    {
+      "id": "EU-30-v01",
+      "name": "下店上宅 · 杂货双层店屋",
+      "group": "日常与服务",
+      "size_xyz": [
+        11,
+        18,
+        13
+      ],
+      "beds": {
+        "resident": 2
+      },
+      "workplaces": 1,
+      "residentBeds": 2,
+      "shots": 16,
+      "nbt_sha256": "b7805c726215a55499744a7c366fdde51db40086f05dc407e04202931e6e9833",
+      "author_sha256": "15540800aa6824eb62f3f97ccfefdef51a3197f066059180b4aa9a4c3aa1b4f2"
+    },
+    {
+      "id": "EU-30-v02",
+      "name": "下店上宅 · 布料裁衣店屋",
+      "group": "日常与服务",
+      "size_xyz": [
+        11,
+        18,
+        13
+      ],
+      "beds": {
+        "resident": 2
+      },
+      "workplaces": 1,
+      "residentBeds": 2,
+      "shots": 16,
+      "nbt_sha256": "1eb6c8292f6cf4cd127992a9194d36cb735b98ebecf32c8ecc89bd9409de7723",
+      "author_sha256": "cd9653f387ae3032f5b539f7c41cad7b98bda39eca5918b63bb5df3b53253dc8"
+    },
+    {
+      "id": "EU-31-v01",
+      "name": "富商宅邸 · 石基门厅与三翼小院",
+      "group": "日常与服务",
+      "size_xyz": [
+        21,
+        12,
+        23
+      ],
+      "beds": {
+        "resident": 8
+      },
+      "workplaces": 1,
+      "residentBeds": 8,
+      "shots": 21,
+      "nbt_sha256": "19c1fb9dbc0c094f739bc763f3fdd498b8eda2abf6263c2c81eaa30eb151e96b",
+      "author_sha256": "8677097d212cdfeda365bfdcdaeadc61ed5c75a82c194490d9180af114b9114d"
+    },
+    {
+      "id": "EU-32-v01",
+      "name": "街角酒馆 · 横脊客房与侧厨房",
+      "group": "日常与服务",
+      "size_xyz": [
+        15,
+        21,
+        19
+      ],
+      "beds": {
+        "public": 4,
+        "staff": 2
+      },
+      "workplaces": 2,
+      "residentBeds": 0,
+      "shots": 24,
+      "nbt_sha256": "66429a6da9750fba2dde5c57a773a8759d87780bf51869ea856058f503356a4e",
+      "author_sha256": "3b7439f4ed7304ae3b30fee0825a53e3f29b23818f586e9843401863a1de296b"
+    },
+    {
+      "id": "EU-33-v01",
+      "name": "小商铺 · 杂货前店后仓",
+      "group": "日常与服务",
+      "size_xyz": [
+        9,
+        12,
+        11
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 11,
+      "nbt_sha256": "b896580abcc25238f20f4abd9f892b20d278e2d4144678daa6bef4873b5d0b0c",
+      "author_sha256": "33a15e5dcfa3d59d8bdabf3132767e0230eb0b95e131f15bdf9d0258898f2b05"
+    },
+    {
+      "id": "EU-33-v02",
+      "name": "小商铺 · 工具转角售卖",
+      "group": "日常与服务",
+      "size_xyz": [
+        11,
+        13,
+        11
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 11,
+      "nbt_sha256": "3efea711646a9a34e5aa355c1676fd38e63e5bc15a51a20c7336922bdaff4162",
+      "author_sha256": "6864d0e7e36483ac1f74fccaa9c749486456b67a8bc0411e3b5bd8de0bd06c26"
+    },
+    {
+      "id": "EU-33-v03",
+      "name": "小商铺 · 药草采光柜台",
+      "group": "日常与服务",
+      "size_xyz": [
+        9,
+        12,
+        11
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 11,
+      "nbt_sha256": "6594f7b34953c7745dd0052d8ed452efba41e64f491459ada7ca64bcc21786f9",
+      "author_sha256": "2017c32968f7d95d6278b4f4efbb7b549279652fdc8252082e2a2ea4a9a4a368"
+    },
+    {
+      "id": "EU-34-v01",
+      "name": "集市摊棚 · 布料单面棚",
+      "group": "日常与服务",
+      "size_xyz": [
+        7,
+        7,
+        7
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 10,
+      "nbt_sha256": "7ae744c334c9a3baeb9babbe3683ed9fe6538ccd74909e2c1f9d9f72dde31d2e",
+      "author_sha256": "29bedcf2af7500af48709872114deba95e1e161a73a76956de452bf928f60e57"
+    },
+    {
+      "id": "EU-34-v02",
+      "name": "集市摊棚 · 果蔬双开口",
+      "group": "日常与服务",
+      "size_xyz": [
+        7,
+        7,
+        7
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 11,
+      "nbt_sha256": "bcbc729c8fd5fb3434bbb0fe22c40b1cd4bf51fda784a93a90ee221d94de2f2b",
+      "author_sha256": "8346ab31c6deab4312a8f273acd4b3f7ad5c5ec2905a9138e152672ca7fe8c96"
+    },
+    {
+      "id": "EU-34-v03",
+      "name": "集市摊棚 · 陶器贴墙棚",
+      "group": "日常与服务",
+      "size_xyz": [
+        7,
+        7,
+        7
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 10,
+      "nbt_sha256": "bd7a8323de9ec8c3f231e05444dc2a50ef2cdff26b63b9d181b6984a291e3c10",
+      "author_sha256": "ac858ad3ad9315a06eae21cf4926c89cd6fa42f208d5103d12e9110d7b68c72d"
+    },
+    {
+      "id": "EU-35-v01",
+      "name": "草药诊所 · 采光病室与药柜",
+      "group": "日常与服务",
+      "size_xyz": [
+        11,
+        13,
+        15
+      ],
+      "beds": {
+        "care": 2
+      },
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 14,
+      "nbt_sha256": "7f8ea3be0a27c3c779b9ccbfddd1ad6b21d44cc0f496645a794e1a7288a25725",
+      "author_sha256": "0213b5071a5f99dec3ffdb0c7d7e7e7567259952feaa808443e79051b7a3d934"
+    },
+    {
+      "id": "EU-36-v01",
+      "name": "公共洗浴 · 开敞洗衣棚",
+      "group": "日常与服务",
+      "size_xyz": [
+        9,
+        12,
+        11
+      ],
+      "beds": {},
+      "workplaces": 2,
+      "residentBeds": 0,
+      "shots": 12,
+      "nbt_sha256": "449966d70fdf2b0ed5b411dc8e70c40460828a003087c74de48957aa84a68fda",
+      "author_sha256": "c52c2ba51ad68e8a2b363f7f650afd1ac8ff2571d3e527f9218441d8f57c6271"
+    },
+    {
+      "id": "EU-36-v02",
+      "name": "公共洗浴 · 双池浴室与更衣间",
+      "group": "日常与服务",
+      "size_xyz": [
+        15,
+        15,
+        17
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 13,
+      "nbt_sha256": "d25e011000c5ba980db6ab0d19cb368c81925c3aed0b50b4acd5ab62a74a2875",
+      "author_sha256": "3fc6a1ac610e5b63ea736e2bbf06a00137e839d4f34ecaedc76c764202823268"
+    },
+    {
+      "id": "EU-37-v01",
+      "name": "街口哨亭 · 开敞木亭",
+      "group": "日常与服务",
+      "size_xyz": [
+        5,
+        9,
+        5
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 10,
+      "nbt_sha256": "cadd05fb1ff937706d22a185d0288cdd7b2fed89237fced333e44f491352c698",
+      "author_sha256": "cded4eae4b5aeb04ad0a96e4a8c455bba0bbd2d40dfc96a43bd1c87968b965be"
+    },
+    {
+      "id": "EU-37-v02",
+      "name": "街口哨亭 · 石墙值守亭",
+      "group": "日常与服务",
+      "size_xyz": [
+        5,
+        9,
+        5
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 10,
+      "nbt_sha256": "1b9119914e2279f2a350d5e767cb5cf7b9841daabe6c8261d359e6b51261d4f5",
+      "author_sha256": "ac4cf71fb45a97126ed139c5076746d1db86ab53dce8c8fcb80d2c5fc1d1b4b4"
+    },
+    {
+      "id": "EU-38-v01",
+      "name": "街角配套 · 双人长椅",
+      "group": "日常与服务",
+      "size_xyz": [
+        7,
+        4,
+        5
+      ],
+      "beds": {},
+      "workplaces": 0,
+      "residentBeds": 0,
+      "shots": 11,
+      "nbt_sha256": "d07ef5d878d6f62713087d57cc83be1cfa006a2b8bb9b272f49a0dd5a0a4b7de",
+      "author_sha256": "c4985a96d6d2e632b8c02786bf745b5c6db6b39fc8aba2478f4385e4c5c9e2b3"
+    },
+    {
+      "id": "EU-38-v02",
+      "name": "街角配套 · 布告栏与停留位",
+      "group": "日常与服务",
+      "size_xyz": [
+        7,
+        6,
+        5
+      ],
+      "beds": {},
+      "workplaces": 0,
+      "residentBeds": 0,
+      "shots": 10,
+      "nbt_sha256": "2cae0bc5d551380c70f33714ccb7d370caffe6caa4674040da4398470e468cd3",
+      "author_sha256": "90ff94ba9bc53b5cb4dad2b17a96fcbdff37b9e094c8386231379c00d3a80020"
+    },
+    {
+      "id": "EU-39-v01",
+      "name": "教区学堂 · 八席课堂与书柜",
+      "group": "日常与服务",
+      "size_xyz": [
+        13,
+        14,
+        15
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 19,
+      "nbt_sha256": "673953ac22c5d34028b229cde5e6db2c266870b6ce3dd96c1eb248c2fb400497",
+      "author_sha256": "713e32617907544e11ae761151792c95a61741458500f57ccb9fa3db0b9f4cf0"
+    },
+    {
+      "id": "EU-40-v01",
+      "name": "农舍 · 低矮横厅与四床后室",
+      "group": "日常与服务",
+      "size_xyz": [
+        13,
+        14,
+        15
+      ],
+      "beds": {
+        "resident": 4
+      },
+      "workplaces": 0,
+      "residentBeds": 4,
+      "shots": 16,
+      "nbt_sha256": "d61f07bf522aaaefe04fdec20e375fb91358d57141fea9c3aaad69522dd5ef1e",
+      "author_sha256": "3cb7e0b890049e78205fb7a7a00b0cd2a227e6889991f9c53262a39f36d4b775"
+    },
+    {
+      "id": "EU-40-v02",
+      "name": "农舍 · 分隔寝室与侧入灶间",
+      "group": "日常与服务",
+      "size_xyz": [
+        13,
+        14,
+        15
+      ],
+      "beds": {
+        "resident": 4
+      },
+      "workplaces": 0,
+      "residentBeds": 4,
+      "shots": 16,
+      "nbt_sha256": "649eafcddb6f41284db622d6e8a3f47b208cfa484931110510bef64852d6ebd7",
+      "author_sha256": "98ff28fd1ca8a0ebb630486e9534d4dec6fbc758063134c13ce07dd74328de03"
+    },
+    {
+      "id": "EU-41-v01",
+      "name": "畜牧配套 · 双栏饲养棚",
+      "group": "日常与服务",
+      "size_xyz": [
+        11,
+        13,
+        15
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 11,
+      "nbt_sha256": "d0e7a76376615ae1464c6a49bf1451369ee95296a939b68b7930b646fbac453a",
+      "author_sha256": "60695973d380aac8b1563fbefaf133cb78f7e9110a74c1b34a51434b1f9a134e"
+    },
+    {
+      "id": "EU-41-v02",
+      "name": "畜牧配套 · 独立双门围栏",
+      "group": "日常与服务",
+      "size_xyz": [
+        11,
+        3,
+        15
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 10,
+      "nbt_sha256": "c681cc1201458619caafe68ba7270d29d25498bf5f8b88df0f42c20fa776f404",
+      "author_sha256": "6c2799fecdfd8d46fb8e37b756e06a2f1fbe3ed32e34e47c6204cf30531a36f0"
+    },
+    {
+      "id": "EU-42-v01",
+      "name": "木匠作坊 · 临街封闭工房",
+      "group": "日常与服务",
+      "size_xyz": [
+        11,
+        13,
+        13
+      ],
+      "beds": {},
+      "workplaces": 2,
+      "residentBeds": 0,
+      "shots": 12,
+      "nbt_sha256": "397a378073b4dc6316f3a1093a1dd43990097ccb079119e52ab3be479e09011f",
+      "author_sha256": "cf43df4c178db07c6c2d8a0c316e43efa7cf2951ab9724417df7459c9217a55a"
+    },
+    {
+      "id": "EU-42-v02",
+      "name": "木匠作坊 · 林边开敞工棚",
+      "group": "日常与服务",
+      "size_xyz": [
+        11,
+        13,
+        13
+      ],
+      "beds": {},
+      "workplaces": 2,
+      "residentBeds": 0,
+      "shots": 12,
+      "nbt_sha256": "ac0f67da60059f5659e7fb41fab1a1600b4a1ff295a856b300c4b02bda3dc9a5",
+      "author_sha256": "ca6f8e448f3439bb2a9d930567f7a44a87b3aa8ef8969b4d7670cbb024f2d1b1"
+    },
+    {
+      "id": "EU-43-v01",
+      "name": "村庄礼拜堂 · 山墙钟架与单厅",
+      "group": "日常与服务",
+      "size_xyz": [
+        11,
+        18,
+        17
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 17,
+      "nbt_sha256": "18e6563e3836fb90879e084580279ab46c945241e208ebf6d140760178705958",
+      "author_sha256": "7bced740c78a6c6ab091bcc1c3de46237380325f6dee5c6f0f0df749f4a27947"
+    },
+    {
+      "id": "EU-43-v02",
+      "name": "村庄礼拜堂 · 侧塔与石砌小堂",
+      "group": "日常与服务",
+      "size_xyz": [
+        11,
+        18,
+        17
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 17,
+      "nbt_sha256": "b93385e6c6c31fe4772bfeb4370c15be34dcc51f00bdf2d45d9c7105552a060d",
+      "author_sha256": "0074eb7f46bde4ec36ce233fb4b5175ce5959c6938ed96bcfe7dfd7b48b7f5a8"
+    },
+    {
+      "id": "EU-44-v01",
+      "name": "路边神龛 · 独立木顶石龛",
+      "group": "日常与服务",
+      "size_xyz": [
+        5,
+        9,
+        5
+      ],
+      "beds": {},
+      "workplaces": 0,
+      "residentBeds": 0,
+      "shots": 10,
+      "nbt_sha256": "a2252bfa7718b4c5d8261ad6666402aa8251323812c78fe54309c4ece1ba9f9a",
+      "author_sha256": "b69ce46e003bb0de50f53442dd3cf66518d0ff14d92baaca7992c716da6131be"
+    },
+    {
+      "id": "EU-44-v02",
+      "name": "路边神龛 · 贴墙小龛",
+      "group": "日常与服务",
+      "size_xyz": [
+        5,
+        6,
+        5
+      ],
+      "beds": {},
+      "workplaces": 0,
+      "residentBeds": 0,
+      "shots": 10,
+      "nbt_sha256": "e5a7de198d271520de82bd405b9d71e958e73854b26ed3b4e7006f36d262ba42",
+      "author_sha256": "fca4f8bb11b7b2fba35ff5d4b6bb0bdbb57eab682d7f4c643f1d042f4f27b501"
+    },
+    {
+      "id": "EU-45-v01",
+      "name": "渔家小屋 · 侧向网具操作廊",
+      "group": "日常与服务",
+      "size_xyz": [
+        11,
+        12,
+        13
+      ],
+      "beds": {
+        "resident": 2
+      },
+      "workplaces": 1,
+      "residentBeds": 2,
+      "shots": 13,
+      "nbt_sha256": "763357707637cba04182e7578b4b36b1775c7df12dd8e8bef5e3381be94114e9",
+      "author_sha256": "a3cbf7c7a257962e3ab43d76f589ae46595f24b679584074d54866eae836ce9f"
+    },
+    {
+      "id": "EU-46-v01",
+      "name": "独立谷仓",
+      "group": "地域配套",
+      "size_xyz": [
+        11,
+        14,
+        15
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 11,
+      "nbt_sha256": "12aba3990643b0c3130fad4fe375ec87eccd23f2dec6851d555a2b7d6f5474c3",
+      "author_sha256": "5dcde41a862856e74ccf64343c22425d3c9f0b8afd132c3fae49153057d3ad2c"
+    },
+    {
+      "id": "EU-47-v01",
+      "name": "村口小粮磨",
+      "group": "地域配套",
+      "size_xyz": [
+        13,
+        14,
+        15
+      ],
+      "beds": {},
+      "workplaces": 2,
+      "residentBeds": 0,
+      "shots": 12,
+      "nbt_sha256": "d7622773fe07c495b3f2582ad9cdabcfeabd180c0b5682100ad3df979e3f5752",
+      "author_sha256": "6ff0626f0c72148603e8e206bfd6f46c5b2943bbfc5c1f6401983686326cc4ff"
+    },
+    {
+      "id": "EU-48-v01",
+      "name": "小型烘焙屋",
+      "group": "地域配套",
+      "size_xyz": [
+        11,
+        13,
+        13
+      ],
+      "beds": {},
+      "workplaces": 2,
+      "residentBeds": 0,
+      "shots": 12,
+      "nbt_sha256": "df8ca53d004730a669f86fa3766e97b2d112c822bb3b7281a6a96d4c1d402474",
+      "author_sha256": "22dd4e845373a8cdbfba4a8b578165d61f5a78aff1f75d23a21f18d314645355"
+    },
+    {
+      "id": "EU-49-v01",
+      "name": "独立粮食晒场",
+      "group": "地域配套",
+      "size_xyz": [
+        13,
+        3,
+        13
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 10,
+      "nbt_sha256": "95073b94576853194e494cfb64242c462fab01165ee3aadb5ea0500dd2a70ca8",
+      "author_sha256": "ce4164174f6cbd3ee3fb328a989b38ec421e6c140c6c8a456a21d31ff67f0f43"
+    },
+    {
+      "id": "EU-50-v01",
+      "name": "林务小屋",
+      "group": "地域配套",
+      "size_xyz": [
+        9,
+        12,
+        13
+      ],
+      "beds": {
+        "resident": 2
+      },
+      "workplaces": 1,
+      "residentBeds": 2,
+      "shots": 13,
+      "nbt_sha256": "fe30aac313b6083df8ae5581a44029e7124c0937c472fa39e20c49282b61eaf5",
+      "author_sha256": "f719cce5b7f0f3b35e6f65bd2e8078508843c260e3ab7fe90b3461f719e3f3b4"
+    },
+    {
+      "id": "EU-51-v01",
+      "name": "木料堆场",
+      "group": "地域配套",
+      "size_xyz": [
+        13,
+        11,
+        15
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 11,
+      "nbt_sha256": "4d7f19ce153d2b6aac0f2f6bb7bf99ce4ca2f201e5a5c7f1e76c63bfb29a4794",
+      "author_sha256": "c47a798bd28234b6784acca92de3897d102b8f6591f3c6c4d380766c04fbe258"
+    },
+    {
+      "id": "EU-52-v01",
+      "name": "炭烧棚",
+      "group": "地域配套",
+      "size_xyz": [
+        13,
+        11,
+        15
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 11,
+      "nbt_sha256": "5f529a2b60f07a2932df2dac618befd4e347710ac4abc65dc8f3e3e5a9e0f699",
+      "author_sha256": "009d8c04760b9e4269684e27db6a3c7e24ac6cd4ba162cbe63530bbe5d7328d7"
+    },
+    {
+      "id": "EU-53-v01",
+      "name": "小渡口候船棚",
+      "group": "地域配套",
+      "size_xyz": [
+        11,
+        10,
+        13
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 13,
+      "nbt_sha256": "e250d1ecb2043f31fc9b0dda50c04fe26d06e65c21fc50dfd008afe2ecf8c4f1",
+      "author_sha256": "535bf7791758b943a070c0e00e5b2586324112f2d3b16ff0c9abc780a36ca413"
+    },
+    {
+      "id": "EU-54-v01",
+      "name": "桥头收费屋",
+      "group": "地域配套",
+      "size_xyz": [
+        9,
+        12,
+        11
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 11,
+      "nbt_sha256": "1f625234c2ce1d6862846914b3ec5747e8e1c014cb5d6cdfae27d6f85493937c",
+      "author_sha256": "454359416399891c206abdc69d16b8fcce5214aad561192156a9c4cf1f51f507"
+    },
+    {
+      "id": "EU-55-v01",
+      "name": "岸边仓房",
+      "group": "地域配套",
+      "size_xyz": [
+        11,
+        13,
+        15
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 11,
+      "nbt_sha256": "19989911faff6ebbf0133eb970c5304ae67fb0b5f0b815706ea2ce2dce57708c",
+      "author_sha256": "7b909efff561ac1d91d7ae516af71c64c2abc9558982ea9ff115159af978f1d0"
+    },
+    {
+      "id": "EU-56-v01",
+      "name": "分段木栈桥",
+      "group": "地域配套",
+      "size_xyz": [
+        7,
+        5,
+        13
+      ],
+      "beds": {},
+      "workplaces": 0,
+      "residentBeds": 0,
+      "shots": 10,
+      "nbt_sha256": "9b26a5c59ce845397a92eaa6afdfa8820db2b1fb791371f3020d5cff2e725d5f",
+      "author_sha256": "ee63d21b20cffa72a2e456f42fa5b5192053ac400f665a3ed6e13a641398bde3"
+    },
+    {
+      "id": "EU-57-v01",
+      "name": "山口旅舍",
+      "group": "地域配套",
+      "size_xyz": [
+        13,
+        14,
+        17
+      ],
+      "beds": {
+        "public": 8
+      },
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 19,
+      "nbt_sha256": "56b91d42551b03f95e5395c68187617755b4167302c73574ba920551e44eb489",
+      "author_sha256": "2c4b62c9bba8b3312f6438829c073d33b2e3eaded9e24051cfd245f2e95921e4"
+    },
+    {
+      "id": "EU-58-v01",
+      "name": "山口小关卡",
+      "group": "地域配套",
+      "size_xyz": [
+        13,
+        14,
+        15
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 12,
+      "nbt_sha256": "98e268ab44d3ee2983d95cc8c90bb56e4b75f556fcf78b0bb9a0b137c2db543a",
+      "author_sha256": "c244e3e27e83ac43f17a7e22980df70b861c535541183adb2ea9513b1230d9de"
+    },
+    {
+      "id": "EU-59-v01",
+      "name": "矿口作业棚",
+      "group": "地域配套",
+      "size_xyz": [
+        11,
+        10,
+        13
+      ],
+      "beds": {},
+      "workplaces": 2,
+      "residentBeds": 0,
+      "shots": 12,
+      "nbt_sha256": "d734b9cace967341f6a02b27e1324add00401bef5b229c3cbd912d2adc79eb24",
+      "author_sha256": "ab569aa25c5ca5a24dbdf924e14c7d7bcd3118bb886fce3ad84e1a39aea8a13b"
+    },
+    {
+      "id": "EU-60-v01",
+      "name": "矿料分拣仓",
+      "group": "地域配套",
+      "size_xyz": [
+        13,
+        14,
+        15
+      ],
+      "beds": {},
+      "workplaces": 2,
+      "residentBeds": 0,
+      "shots": 12,
+      "nbt_sha256": "298aa2fe28f5da8fda1e15453583951ce6766e0eb22b9c4e6c0a500528cbc338",
+      "author_sha256": "239872e93855eb8563afc06e6236a1b97578215c7b9b2e2f704f1fb41bd76b16"
+    },
+    {
+      "id": "EU-61-v01",
+      "name": "渔网棚",
+      "group": "地域配套",
+      "size_xyz": [
+        9,
+        9,
+        13
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 11,
+      "nbt_sha256": "f9d84cd62db05bc45be3205c446eabb41f228a569fdac769f92fadf5a2445287",
+      "author_sha256": "4267b53024d2fae158487888f3eb4b734f7c0aca3ee7dd5f92e2628a1e4d31ef"
+    },
+    {
+      "id": "EU-62-v01",
+      "name": "腌鱼作坊",
+      "group": "地域配套",
+      "size_xyz": [
+        11,
+        13,
+        13
+      ],
+      "beds": {},
+      "workplaces": 2,
+      "residentBeds": 0,
+      "shots": 12,
+      "nbt_sha256": "57ef28a91225cb24693e1f7376f89611b64d5e3373347bd61cddb98c9906ea35",
+      "author_sha256": "b5cd0dce471d085ecf1fd2c06fd47f53d0acd2eb13cc81c1af3fff7857cebe13"
+    },
+    {
+      "id": "EU-63-v01",
+      "name": "小船棚",
+      "group": "地域配套",
+      "size_xyz": [
+        13,
+        16,
+        19
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 11,
+      "nbt_sha256": "cbe4d388b83991678305297423343248648a7d8f5cec53cdd5211d4079ba35fe",
+      "author_sha256": "fac559b25c1fa96de083d3e25dc7dfdf5e92fd7b13c5b9663e8f35d96f3cbcb4"
+    },
+    {
+      "id": "EU-64-v01",
+      "name": "庄园管事屋",
+      "group": "地域配套",
+      "size_xyz": [
+        11,
+        13,
+        13
+      ],
+      "beds": {
+        "resident": 2
+      },
+      "workplaces": 1,
+      "residentBeds": 2,
+      "shots": 13,
+      "nbt_sha256": "f1924e62c9cc5441aab2257b05efa4aa08de8aa85adbcc2ff98920a434260098",
+      "author_sha256": "566f3d08bac4f7c65a1f6636385642c9be7bbfc4c96c85b44bd976eabfab0b93"
+    },
+    {
+      "id": "EU-65-v01",
+      "name": "侍从住处",
+      "group": "地域配套",
+      "size_xyz": [
+        13,
+        14,
+        15
+      ],
+      "beds": {
+        "resident": 8
+      },
+      "workplaces": 1,
+      "residentBeds": 8,
+      "shots": 19,
+      "nbt_sha256": "16564cdebdad57ad58f07aab11f54825de6ab1091f7202bbdd7bb5b09469941b",
+      "author_sha256": "304b04c8e262634591048349d2bc1c6f50cf95046c8f2ee510b9d589ecd95541"
+    },
+    {
+      "id": "EU-66-v01",
+      "name": "朝圣旅舍",
+      "group": "地域配套",
+      "size_xyz": [
+        13,
+        14,
+        19
+      ],
+      "beds": {
+        "public": 12
+      },
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 23,
+      "nbt_sha256": "ede164075853ddba9e6ac9c90c97bab6dbe102e43dd901ac2718f0c1a8205232",
+      "author_sha256": "b75724d8d3826b4bdaee3be6b460e808988d1d081ecdcc5441ae686de5a0f3f8"
+    },
+    {
+      "id": "EU-67-v01",
+      "name": "水磨进出水渠段",
+      "group": "地域配套",
+      "size_xyz": [
+        7,
+        3,
+        15
+      ],
+      "beds": {},
+      "workplaces": 1,
+      "residentBeds": 0,
+      "shots": 10,
+      "nbt_sha256": "6e674f236bfa6a97cb5b3464016e18618eab45c92480d0d484d77a12709c126e",
+      "author_sha256": "2f81264273ee92ceee4c6d1295a536043a9c0a40f137cbadd3ecbbaca8a4ddb3"
+    }
+  ],
+  "design_quality": "rejected_by_user",
+  "current_status": "functional_scale_prototypes",
+  "quality_feedback": "2026-10-21 用户认为缺乏特色，不能以离线技术验收代替设计质量。"
+}

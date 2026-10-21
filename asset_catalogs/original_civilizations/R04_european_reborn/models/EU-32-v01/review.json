@@ -1,0 +1,33 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "EU-32-v01",
+  "status": "needs_redesign",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex",
+  "nbt_sha256": "66429a6da9750fba2dde5c57a773a8759d87780bf51869ea856058f503356a4e",
+  "author_sha256": "3b7439f4ed7304ae3b30fee0825a53e3f29b23818f586e9843401863a1de296b",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png"
+  ],
+  "checks": [
+    "酒馆下层服务与上层客床、员工床分开。",
+    "实际查看前后外观、去屋顶和首层图；数据与离线通路检查另行核对。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "作者图审不等于用户审美批准；未验证夜间光照、世界生成与真实NPC行为。"
+  ],
+  "previous_status": "accepted",
+  "design_feedback": {
+    "date": "2026-10-21",
+    "source": "user",
+    "text": "建筑缺少特色，保留为功能与尺度原型；此前作者设计质量结论撤回。",
+    "previous_commit": "20f0263a"
+  }
+}

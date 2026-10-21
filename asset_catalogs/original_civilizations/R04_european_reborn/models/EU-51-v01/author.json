@@ -1,0 +1,96 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "EU-51-v01",
+  "name": "木料堆场",
+  "family": "EU-51",
+  "civilization": "欧洲中世纪新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    13,
+    11,
+    15
+  ],
+  "terrain": {
+    "选址": "建筑基础轮廓需稳定承载；门前与街面脚底高程 Y=2，屋檐不可侵入相邻建筑。"
+  },
+  "rooms": [
+    {
+      "id": "room_0",
+      "name": "木料堆场",
+      "min": [
+        2,
+        2,
+        3
+      ],
+      "max": [
+        10,
+        5,
+        12
+      ],
+      "purpose": "有顶长材堆放与中央装卸通道"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        6,
+        2,
+        1
+      ],
+      "name": "开放作业面入口"
+    },
+    {
+      "id": "work_1",
+      "kind": "work",
+      "pos": [
+        2,
+        2,
+        4
+      ],
+      "name": "木料整理",
+      "use": "staff",
+      "approach": [
+        3,
+        2,
+        4
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-21 紧凑日常建筑；实际房间与通路决定容量；无整块地块平台。"
+  ],
+  "differences": [
+    "木料堆场：按真实作业空间设计，独立于大型城镇同用途地标。"
+  ],
+  "floors": [
+    {
+      "name": "首层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 6,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "木料仓储"
+  ],
+  "workplace_policy": "authored",
+  "source": "tools/structure_studio/studio/european_village.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "首层脚底 Y=2；仅本体基础与门前踏步，院落另组。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3
+  },
+  "nbt_sha256": "4d7f19ce153d2b6aac0f2f6bb7bf99ce4ca2f201e5a5c7f1e76c63bfb29a4794"
+}

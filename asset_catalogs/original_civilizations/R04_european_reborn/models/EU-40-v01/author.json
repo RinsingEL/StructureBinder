@@ -1,0 +1,181 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "EU-40-v01",
+  "name": "农舍 · 低矮横厅与四床后室",
+  "family": "EU-40",
+  "civilization": "欧洲中世纪新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    13,
+    14,
+    15
+  ],
+  "terrain": {
+    "选址": "建筑基础轮廓需稳定承载；门前与街面脚底高程 Y=2，屋檐不可侵入相邻建筑。"
+  },
+  "rooms": [
+    {
+      "id": "room_0",
+      "name": "农家起居",
+      "min": [
+        2,
+        2,
+        3
+      ],
+      "max": [
+        10,
+        5,
+        12
+      ],
+      "purpose": "农家起居"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry_0",
+      "kind": "entrance",
+      "pos": [
+        6,
+        2,
+        1
+      ],
+      "name": "门前步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "bed_3",
+      "kind": "bed",
+      "pos": [
+        3,
+        2,
+        11
+      ],
+      "name": "住床",
+      "use": "resident",
+      "approach": [
+        3,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "bed_5",
+      "kind": "bed",
+      "pos": [
+        5,
+        2,
+        11
+      ],
+      "name": "住床",
+      "use": "resident",
+      "approach": [
+        5,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "bed_7",
+      "kind": "bed",
+      "pos": [
+        7,
+        2,
+        11
+      ],
+      "name": "住床",
+      "use": "resident",
+      "approach": [
+        7,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "bed_9",
+      "kind": "bed",
+      "pos": [
+        9,
+        2,
+        11
+      ],
+      "name": "住床",
+      "use": "resident",
+      "approach": [
+        9,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "seat_5",
+      "kind": "seat",
+      "pos": [
+        9,
+        2,
+        4
+      ],
+      "name": "座位",
+      "use": "resident",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        8,
+        2,
+        4
+      ]
+    },
+    {
+      "id": "seat_6",
+      "kind": "seat",
+      "pos": [
+        9,
+        2,
+        6
+      ],
+      "name": "座位",
+      "use": "resident",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        8,
+        2,
+        6
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-21 紧凑日常建筑；实际房间与通路决定容量；无整块地块平台。"
+  ],
+  "differences": [
+    "前厅与后部四床寝室实体隔断；谷仓和农院独立，不捆绑底板。"
+  ],
+  "floors": [
+    {
+      "name": "首层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 6,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "家庭居住"
+  ],
+  "workplace_policy": "authored",
+  "source": "tools/structure_studio/studio/european_village.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "首层脚底 Y=2；仅本体基础与门前踏步，院落另组。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3
+  },
+  "nbt_sha256": "d61f07bf522aaaefe04fdec20e375fb91358d57141fea9c3aaad69522dd5ef1e"
+}

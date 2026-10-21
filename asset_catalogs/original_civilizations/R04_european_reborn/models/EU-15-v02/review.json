@@ -1,0 +1,32 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "EU-15-v02",
+  "status": "needs_redesign",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex",
+  "nbt_sha256": "17a646c546468eb7e0b03d303917dee9d8083a4ab85161b5942c5dff0fd708fa",
+  "author_sha256": "7869df32323cf2858db20c17e22d82b2d42d636053d4c760ccdccd156fbc8194",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png"
+  ],
+  "checks": [
+    "保留行会秤量与集会空间，明确两类员工岗位。",
+    "实际查看前后外观、去屋顶和首层图；数据与离线通路检查另行核对。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "作者图审不等于用户审美批准；未验证夜间光照、世界生成与真实NPC行为。"
+  ],
+  "previous_status": "accepted",
+  "design_feedback": {
+    "date": "2026-10-21",
+    "source": "user",
+    "text": "建筑缺少特色，保留为功能与尺度原型；此前作者设计质量结论撤回。",
+    "previous_commit": "20f0263a"
+  }
+}

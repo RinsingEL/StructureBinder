@@ -1,0 +1,32 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "EU-49-v01",
+  "status": "needs_redesign",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex",
+  "nbt_sha256": "95073b94576853194e494cfb64242c462fab01165ee3aadb5ea0500dd2a70ca8",
+  "author_sha256": "ce4164174f6cbd3ee3fb328a989b38ec421e6c140c6c8a456a21d31ff67f0f43",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png"
+  ],
+  "checks": [
+    "独立晒粮场，粮堆沿边布置，中心操作区开放。",
+    "实际查看前后外观、去屋顶和首层图；数据与离线通路检查另行核对。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "作者图审不等于用户审美批准；未验证夜间光照、世界生成与真实NPC行为。"
+  ],
+  "previous_status": "accepted",
+  "design_feedback": {
+    "date": "2026-10-21",
+    "source": "user",
+    "text": "建筑缺少特色，保留为功能与尺度原型；此前作者设计质量结论撤回。",
+    "previous_commit": "20f0263a"
+  }
+}

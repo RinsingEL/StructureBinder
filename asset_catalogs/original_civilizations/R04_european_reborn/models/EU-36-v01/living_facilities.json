@@ -1,0 +1,74 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    9,
+    12,
+    11
+  ],
+  "sourceSha256": "449966d70fdf2b0ed5b411dc8e70c40460828a003087c74de48957aa84a68fda",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 2
+  },
+  "facilities": [
+    {
+      "id": "entrance:4,2,1",
+      "kind": "entrance",
+      "pos": [
+        4,
+        2,
+        1
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "门前步行入口",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "work:6,2,5",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        5
+      ],
+      "block": "minecraft:water_cauldron",
+      "facing": "north",
+      "use": "staff",
+      "room": "room_0",
+      "name": "洗衣操作",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        5,
+        2,
+        5
+      ]
+    },
+    {
+      "id": "work:6,2,7",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        7
+      ],
+      "block": "minecraft:water_cauldron",
+      "facing": "north",
+      "use": "staff",
+      "room": "room_0",
+      "name": "洗衣操作",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        5,
+        2,
+        7
+      ]
+    }
+  ],
+  "warnings": []
+}
